@@ -1,0 +1,66 @@
+The SAS System
+
+12713      
+12714      /* STAT-REG-011: REG — REWEIGHT / Reweighting Observations in an Analysis
+12715       * Source: S154 / Chapter 105 / `REWEIGHT Statement` (PDF pp. 8595–8598); S154 / Chapter 105 / `Reweighting Observations in an Analysis` (PDF pp.
+12715    ! 8636–8642).
+12716       * Discriminates: Explicit REWEIGHT statement behavior on seeded synthetic inputs.
+12717       */
+12718      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+12718    ! validmemname=compatible locale=en_US;
+12719      %let syscc=0;
+12720      title; footnote;
+12721      ods _all_ close;
+12722      ods listing gpath="%sysfunc(pathname(work))";
+12723      ods graphics off;
+12724      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.USPOPULATION (memtype=DATA).
+12724    !                                         quit;
+
+
+12725      ods path work.templat(update) sashelp.tmplmst(read);
+12726      
+12727      data sample;
+12728      call streaminit(314159);
+12729      do id=1 to 90;
+12730       x=rand('normal'); z=rand('normal'); w=rand('normal');
+12731       group=1+mod(id,3); block=1+mod(id,5);
+12732       y=5+1.5*x-0.6*z+0.4*group+rand('normal');
+12733       y2=2+0.5*x+0.8*z+rand('normal'); output;
+12734      end;
+12735      run;
+
+NOTE: The data set WORK.SAMPLE has 90 observations and 8 variables.
+
+12736      proc reg data=sample; model y=x z; run;
+
+12736    !                                         reweight obs. le 5; refit; run;
+
+NOTE: Observation 1 is deleted.
+NOTE: Observation 2 is deleted.
+NOTE: Observation 3 is deleted.
+NOTE: Observation 4 is deleted.
+NOTE: Observation 5 is deleted.
+NOTE: 5 observations are deleted.
+NOTE: Due to a REWEIGHT statement, the model label is now MODEL1.1.
+12736    !                                                                         reweight allobs / reset; refit; run;
+
+NOTE: All observations are reset.
+NOTE: Due to a REWEIGHT statement, the model label is now MODEL1.2.
+12736    !                                                                                                              quit;
+
+NOTE: The PROCEDURE REG printed page 977.
+
+12737      
+12738      
+12739      
+12740      
+The SAS System
+
+12741      

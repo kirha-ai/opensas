@@ -1,0 +1,66 @@
+The SAS System
+
+12412      
+12413      /* STAT-LIFETEST-003: LIFETEST — TIME / Breslow, Fleming-Harrington, and Kaplan-Meier Methods / Life-Table Method
+12414       * Source: S154 / Chapter 77 / `TIME Statement` (PDF pp. 5669–5670); S154 / Chapter 77 / `Breslow, Fleming-Harrington, and Kaplan-Meier Methods`
+12414    ! (PDF pp. 5671–5674); S154 / Chapter 77 / `Life-Table Method` (PDF pp. 5674–5676).
+12415       * Discriminates: Example 77.3: Life-Table Estimates for Males with Angina Pectoris; explicit statements: TIME
+12416       */
+12417      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+12417    ! validmemname=compatible locale=en_US;
+12418      %let syscc=0;
+12419      title; footnote;
+12420      ods _all_ close;
+12421      ods listing gpath="%sysfunc(pathname(work))";
+12422      ods graphics off;
+12423      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SURVIVAL (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+12423    !                                         quit;
+
+
+12424      ods path work.templat(update) sashelp.tmplmst(read);
+12425      
+12426      title 'Survival of Males with Angina Pectoris';
+12427      data Males;
+12428      keep Freq Years Censored;
+12429      retain Years -.5;
+12430      input fail withdraw @@;
+12431      Years + 1;
+12432      Censored=0;
+12433      Freq=fail;
+12434      output;
+12435      Censored=1;
+12436      Freq=withdraw;
+12437      output;
+12438      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.MALES has 32 observations and 3 variables.
+
+12442      ;
+12443      ods graphics on;
+12444      proc lifetest data=Males method=lt intervals=(0 to 15 by 1)
+12445      plots=(s,ls,lls,h,p);
+12446      time Years*Censored(1);
+12447      freq Freq;
+12448      run;
+
+NOTE: The LOGLOG transform is used to compute the confidence limits for the quartiles of the survivor distribution. To suppress using this transform, specify 
+      CONFTYPE=LINEAR in the PROC LIFETEST statement.
+NOTE: 2 observations with invalid time, censoring, or frequency values were deleted.
+NOTE: The PROCEDURE LIFETEST printed page 861.
+
+12449      ods graphics off;
+12450      run;
+12451      quit;
+12452      
+12453      
+12454      
+12455      
+The SAS System
+
+12456      

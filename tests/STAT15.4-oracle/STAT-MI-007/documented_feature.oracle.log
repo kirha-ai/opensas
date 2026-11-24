@@ -1,0 +1,55 @@
+The SAS System
+
+2495       
+2496       /* STAT-MI-007: MI — Monotone Propensity Score Method / Checking Convergence in FCS Methods / Combining Inferences from Multiply Imputed Data Sets
+2497        * Source: S154 / Chapter 82 / `Monotone Propensity Score Method` (PDF pp. 6463–6464); S154 / Chapter 82 / `Checking Convergence in FCS Methods`
+2497     ! (PDF pp. 6466–6467); S154 / Chapter 82 / `Combining Inferences from Multiply Imputed Data Sets` (PDF pp. 6479–6481).
+2498        * Discriminates: Example 82.11: Checking Convergence in MCMC
+2499        */
+2500       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+2500     ! validmemname=compatible locale=en_US;
+2501       %let syscc=0;
+2502       title; footnote;
+2503       ods _all_ close;
+2504       ods listing gpath="%sysfunc(pathname(work))";
+2505       ods graphics off;
+2506       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.FISH2 (memtype=DATA).
+NOTE: Deleting WORK.OUTEX4 (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+2506     !                                         quit;
+
+
+2507       ods path work.templat(update) sashelp.tmplmst(read);
+2508       
+2509       data Fitness1;
+2510       input Oxygen RunTime RunPulse @@;
+2511       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.FITNESS1 has 31 observations and 3 variables.
+
+2528       ;
+2529       run;
+2530       ods graphics on;
+2531       proc mi data=Fitness1 seed=501213 nimpute=5 mu0=50 10 180;
+2532       mcmc plots=(trace(mean(Oxygen)) acf(mean(Oxygen)));
+2533       var Oxygen RunTime RunPulse;
+2534       run;
+
+NOTE: The EM algorithm (MLE) converges in 12 iterations.
+NOTE: The EM algorithm (posterior mode) converges in 7 iterations.
+NOTE: The PROCEDURE MI printed pages 194-195.
+
+2535       
+2536       
+2537       
+2538       
+The SAS System
+
+2539       

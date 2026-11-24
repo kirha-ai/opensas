@@ -1,0 +1,38 @@
+
+The REG Procedure
+Model: MODEL1
+Dependent Variable: y 
+
+NOTE: Restrictions have been applied to parameter estimates.
+
+
+Number of Observations Read          90
+Number of Observations Used          90
+
+
+                             Analysis of Variance
+ 
+                                    Sum of           Mean
+Source                   DF        Squares         Square    F Value    Pr > F
+
+Model                     1      140.64301      140.64301     117.73    <.0001
+Error                    88      105.12673        1.19462                     
+Corrected Total          89      245.76974                                    
+
+
+Root MSE              1.09299    R-Square     0.5723
+Dependent Mean        5.66685    Adj R-Sq     0.5674
+Coeff Var            19.28739                       
+
+
+                        Parameter Estimates
+ 
+                     Parameter       Standard
+Variable     DF       Estimate          Error    t Value    Pr > |t|
+
+Intercept     1        5.87410        0.11678      50.30     <.0001 
+x             1        1.39063        0.12816      10.85     <.0001 
+z             1    7.50555E-18              0      Infty     <.0001 
+RESTRICT     -1      -58.81264       10.28469      -5.72     <.0001*
+
+* Probability computed using beta distribution.

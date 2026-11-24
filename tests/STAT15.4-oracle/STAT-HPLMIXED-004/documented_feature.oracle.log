@@ -1,0 +1,66 @@
+The SAS System
+
+2764       
+2765       /* STAT-HPLMIXED-004: HPLMIXED — Matrix Notation / Formulation of the Mixed Model / Estimating Covariance Parameters in the Mixed Model
+2766        * Source: S154 / Chapter 60 / `Matrix Notation` (PDF pp. 4718–4719); S154 / Chapter 60 / `Formulation of the Mixed Model` (PDF pp. 4719–4724);
+2766     ! S154 / Chapter 60 / `Estimating Covariance Parameters in the Mixed Model` (PDF pp. 4724–4725).
+2767        * Discriminates: Getting Started: HPLMIXED Procedure
+2768        */
+2769       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+2769     ! validmemname=compatible locale=en_US;
+2770       %let syscc=0;
+2771       title; footnote;
+2772       ods _all_ close;
+2773       ods listing gpath="%sysfunc(pathname(work))";
+2774       ods graphics off;
+2775       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SCHOOLSAMPLE (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+2775     !                                         quit;
+
+
+2776       ods path work.templat(update) sashelp.tmplmst(read);
+2777       
+2778       data SchoolSample;
+2779       do SchoolID = 1 to 300;
+2780       do nID = 1 to 25;
+2781       Neighborhood = (SchoolID-1)*5 + nId;
+2782       bInt = 5 *ranuni(1);
+2783       bTime = 5 *ranuni(1);
+2784       bTime2 = ranuni(1);
+2785       do sID = 1 to 2;
+2786       do Time = 1 to 4;
+2787       Math = bInt + bTime*Time + bTime2*Time*Time + rannor(2);
+2788       output;
+2789       end;
+2790       end;
+2791       end;
+2792       end;
+2793       run;
+
+NOTE: The data set WORK.SCHOOLSAMPLE has 60000 observations and 9 variables.
+
+2794       proc hplmixed data=SchoolSample;
+2795       class Neighborhood SchoolID;
+2796       model Math = Time Time*Time / solution;
+2797       random int Time Time *Time / sub=Neighborhood(SchoolID) type=un;
+2798       run;
+
+NOTE: The HPLMIXED procedure is executing in single-machine mode.
+NOTE: Convergence criterion (ABSGCONV=0.00001) satisfied.
+NOTE: The PROCEDURE HPLMIXED printed page 179.
+
+2799       
+2800       
+2801       
+2802       
+The SAS System
+
+2803       

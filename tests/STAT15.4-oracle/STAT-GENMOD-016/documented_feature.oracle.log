@@ -1,0 +1,62 @@
+The SAS System
+
+22696      
+22697      /* STAT-GENMOD-016: GENMOD — CODE / Predicted Values of the Mean
+22698       * Source: S154 / Chapter 51 / `CODE Statement` (PDF pp. 3529–3530); S154 / Chapter 51 / `Predicted Values of the Mean` (PDF pp. 3585–3586).
+22699       * Discriminates: Verified default procedure context
+22700       */
+22701      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+22701    ! validmemname=compatible locale=en_US;
+22702      %let syscc=0;
+22703      title; footnote;
+22704      ods _all_ close;
+22705      ods listing gpath="%sysfunc(pathname(work))";
+22706      ods graphics off;
+22707      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.NOR (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.RESIDUALS (memtype=DATA).
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+22707    !                                         quit;
+
+
+22708      ods path work.templat(update) sashelp.tmplmst(read);
+22709      
+22710      data nor;
+22711      input x y;
+22712      datalines;
+
+NOTE: The data set WORK.NOR has 16 observations and 2 variables.
+
+22729      ;
+22730      proc genmod data=nor;
+22731      model y = x / dist = normal
+22732      link = log;
+22733      output out = Residuals
+22734      pred = Pred
+22735      resraw = Resraw
+22736      reschi = Reschi
+22737      resdev = Resdev
+22738      stdreschi = Stdreschi
+22739      stdresdev = Stdresdev
+22740      reslik = Reslik;
+22741      run;
+
+NOTE: Algorithm converged.
+NOTE: The scale parameter was estimated by maximum likelihood.
+NOTE: The data set WORK.RESIDUALS has 16 observations and 9 variables.
+NOTE: The PROCEDURE GENMOD printed page 2387.
+
+22742      
+22743      
+22744      
+22745      
+The SAS System
+
+22746      

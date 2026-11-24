@@ -1,0 +1,73 @@
+The SAS System
+
+25944      
+25945      /* STAT-GLM-013: GLM — LSMEANS / MEANS / Means versus LS-Means
+25946       * Source: S154 / Chapter 53 / `LSMEANS Statement` (PDF pp. 4072–4081); S154 / Chapter 53 / `MEANS Statement` (PDF pp. 4086–4092); S154 / Chapter
+25946    !  53 / `Means versus LS-Means` (PDF pp. 4129–4131).
+25947       * Discriminates: Example 53.1: Randomized Complete Blocks with Means Comparisons and Contrasts; explicit statements: MEANS
+25948       */
+25949      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+25949    ! validmemname=compatible locale=en_US;
+25950      %let syscc=0;
+25951      title; footnote;
+25952      ods _all_ close;
+25953      ods listing gpath="%sysfunc(pathname(work))";
+25954      ods graphics off;
+25955      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.MACHINE (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+25955    !                                         quit;
+
+
+25956      ods path work.templat(update) sashelp.tmplmst(read);
+25957      
+25958      title 'Balanced Data from Randomized Complete Block';
+25959      data plants;
+25960      input Type $ @;
+25961      do Block = 1 to 3;
+25962      input StemLength @;
+25963      output;
+25964      end;
+25965      datalines;
+
+NOTE: The data set WORK.PLANTS has 21 observations and 3 variables.
+
+25973      ;
+25974      proc glm;
+25975      class Block Type;
+25976      model StemLength = Block Type;
+25977      run;
+
+
+NOTE: The PROCEDURE GLM printed pages 2550-2551.
+
+25978      proc glm order=data;
+25979      class Block Type;
+25980      model StemLength = Block Type / solution;
+25981      /*----------------------------------clrn-cltn-knox-onel-cpst-wbsh-wstr */
+25982      contrast 'Compost vs. others' Type -1 -1 -1 -1 6 -1 -1;
+25983      contrast 'River soils vs. non' Type -1 -1 -1 -1 0 5 -1,
+25984      Type -1 4 -1 -1 0 0 -1;
+25985      contrast 'Glacial vs. drift' Type -1 0 1 1 0 0 -1;
+25986      contrast 'Clarion vs. Webster' Type -1 0 0 0 0 0 1;
+25987      contrast "Knox vs. O'Neill" Type 0 0 1 -1 0 0 0;
+25988      run;
+
+25989      means Type / waller regwq;
+25990      run;
+
+NOTE: Means from the MEANS statement are not adjusted for other terms in the model.  For adjusted means, use the LSMEANS statement.
+25991      
+25992      
+25993      
+25994      
+The SAS System
+
+25995      

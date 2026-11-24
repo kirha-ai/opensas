@@ -1,0 +1,56 @@
+The SAS System
+
+9153       
+9154       /* STAT-IRT-010: IRT — Prior Distributions for Parameters
+9155        * Source: S154 / Chapter 72 / `Prior Distributions for Parameters` (PDF pp. 5348–5349).
+9156        * Discriminates: Verified default procedure context
+9157        */
+9158       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+9158     ! validmemname=compatible locale=en_US;
+9159       %let syscc=0;
+9160       title; footnote;
+9161       ods _all_ close;
+9162       ods listing gpath="%sysfunc(pathname(work))";
+9163       ods graphics off;
+9164       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.RESPONSES (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+9164     !                                         quit;
+
+
+9165       ods path work.templat(update) sashelp.tmplmst(read);
+9166       
+9167       data responses;
+9168       call streaminit(329);
+9169       array item[5] item1-item5;
+9170       do subject=1 to 150;
+9171       theta=rand('normal');
+9172       do k=1 to 5;
+9173       item[k]=rand('bernoulli',1/(1+exp(-(theta-(k-3)/2))));
+9174       end;
+9175       output;
+9176       end;
+9177       keep item1-item5;
+9178       run;
+
+NOTE: The data set WORK.RESPONSES has 150 observations and 5 variables.
+
+9179       proc irt data=responses;
+9180       var item1-item5;
+9181       run;
+
+NOTE: The observed frequency is zero for some response patterns. As a result, the Pearson chi-square model fit statistic is not calculated.
+WARNING: Over 20 percent of the response patterns have expected frequency less than 5. The chi-square distribution might not provide valid statistical 
+         inferences about the model fit when you use the Pearson chi-square and the likelihood ratio chi-square.
+NOTE: The PROCEDURE IRT printed pages 669-673.
+
+9182       
+9183       
+9184       
+9185       
+The SAS System
+
+9186       

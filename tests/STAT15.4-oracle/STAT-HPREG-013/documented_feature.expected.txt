@@ -1,0 +1,893 @@
+
+The HPREG Procedure
+
+      Performance Information
+
+Execution Mode       Single-Machine
+Number of Threads    2             
+
+
+          Data Access Information
+ 
+Data            Engine    Role     Path
+
+WORK.EX3DATA    V9        Input    On Client
+
+
+        Model Information
+
+Data Source           WORK.EX3DATA
+Dependent Variable    y           
+
+
+                 Selection Information
+
+Selection Method             Forward with Pairwise Swaps
+Select Criterion             R-Square                   
+Stop Criterion               R-Square                   
+Choose Criterion             SBC                        
+Effect Hierarchy Enforced    None                       
+Stop Horizon                 3                          
+Maximum Number of Effects    15                         
+
+
+Number of Observations Read           10000
+Number of Observations Used           10000
+
+
+           Dimensions
+
+Number of Effects            174
+Number of Parameters         174
+
+The HPREG Procedure
+Forward Swap Selection: Step 0
+Effects Included: Intercept x1 x2 x1*x2 x3 x1*x3 x2*x3 
+
+                            Analysis of Variance
+ 
+                                  Sum of           Mean
+Source                 DF        Squares         Square    F Value    Pr > F
+
+Model                   6         105136          17523    12660.4    <.0001
+Error                9993          13831        1.38406                     
+Corrected Total      9999         118967                                    
+
+
+Root MSE        1.17646
+R-Square        0.88374
+Adj R-Sq        0.88367
+AIC               13259
+AICC              13259
+SBC          3307.68358
+ASE             1.38309
+
+
+                         Parameter Estimates
+ 
+                                       Standard
+Parameter    DF        Estimate           Error    t Value    Pr > |t|
+
+Intercept     1        0.441239        0.071672       6.16      <.0001
+x1            1        3.526012        0.106645      33.06      <.0001
+x2            1        9.063597        0.107340      84.44      <.0001
+x1*x2         1        0.036494        0.139837       0.26      0.7941
+x3            1       -4.965453        0.109322     -45.42      <.0001
+x1*x3         1        4.930550        0.141678      34.80      <.0001
+x2*x3         1       -0.017743        0.141064      -0.13      0.8999
+
+The HPREG Procedure
+Forward Swap Selection: Step 1
+Effect Entered: x2*x13 
+
+     Best 10 Entry Candidates
+ 
+      Rank    Effect     R-Square
+
+         1    x2*x13       0.8992
+         2    x7*x13       0.8963
+         3    x7*x11       0.8959
+         4    x11*x13      0.8957
+         5    x7           0.8912
+         6    x13          0.8911
+         7    x7*x7        0.8907
+         8    x4*x7        0.8906
+         9    x11          0.8904
+        10    x4*x13       0.8904
+
+
+                            Analysis of Variance
+ 
+                                  Sum of           Mean
+Source                 DF        Squares         Square    F Value    Pr > F
+
+Model                   7         106972          15282    12729.7    <.0001
+Error                9992          11995        1.20047                     
+Corrected Total      9999         118967                                    
+
+
+Root MSE        1.09566
+R-Square        0.89917
+Adj R-Sq        0.89910
+AIC               11837
+AICC              11837
+SBC          1892.84034
+ASE             1.19951
+
+
+                         Parameter Estimates
+ 
+                                       Standard
+Parameter    DF        Estimate           Error    t Value    Pr > |t|
+
+Intercept     1        0.418132        0.066753       6.26      <.0001
+x1            1        3.550203        0.099322      35.74      <.0001
+x2            1        7.791395        0.105128      74.11      <.0001
+x1*x2         1        0.006859        0.130236       0.05      0.9580
+x3            1       -4.901906        0.101826     -48.14      <.0001
+x1*x3         1        4.866822        0.131958      36.88      <.0001
+x2*x3         1       -0.066166        0.131382      -0.50      0.6145
+x2*x13        1        2.591068        0.066259      39.11      <.0001
+
+The HPREG Procedure
+Forward Swap Selection: Step 2
+Effect Removed: x1*x2  Effect Entered: x7*x11
+
+             Best 10 Candidates
+ 
+              Effect     Effect
+      Rank    Dropped    Added     R-Square
+
+         1    x1*x2      x7*x11      0.9112
+         2    x2*x3      x7*x11      0.9112
+         3    x1*x2      x7          0.9065
+         4    x2*x3      x7          0.9065
+         5    x1*x2      x7*x7       0.9060
+         6    x2*x3      x7*x7       0.9060
+         7    x1*x2      x4*x7       0.9060
+         8    x2*x3      x4*x7       0.9060
+         9    x1*x2      x11         0.9058
+        10    x2*x3      x11         0.9058
+
+
+                            Analysis of Variance
+ 
+                                  Sum of           Mean
+Source                 DF        Squares         Square    F Value    Pr > F
+
+Model                   7         108407          15487    14653.1    <.0001
+Error                9992          10560        1.05688                     
+Corrected Total      9999         118967                                    
+
+
+Root MSE        1.02805
+R-Square        0.91123
+Adj R-Sq        0.91117
+AIC               10563
+AICC              10563
+SBC           618.92976
+ASE             1.05604
+
+
+                         Parameter Estimates
+ 
+                                       Standard
+Parameter    DF        Estimate           Error    t Value    Pr > |t|
+
+Intercept     1       -0.017251        0.055916      -0.31      0.7577
+x1            1        3.544306        0.070555      50.24      <.0001
+x2            1        7.824651        0.077475     101.00      <.0001
+x3            1       -4.896428        0.095543     -51.25      <.0001
+x1*x3         1        4.883367        0.123815      39.44      <.0001
+x2*x3         1       -0.107163        0.123278      -0.87      0.3847
+x7*x11        1        1.710830        0.046434      36.84      <.0001
+x2*x13        1        2.586542        0.062169      41.60      <.0001
+
+The HPREG Procedure
+Forward Swap Selection: Step 3
+Effect Removed: x2*x3  Effect Entered: x1*x4
+
+             Best 10 Candidates
+ 
+              Effect     Effect
+      Rank    Dropped    Added     R-Square
+
+         1    x2*x3      x1*x4       0.9131
+         2    x2*x3      x13         0.9130
+         3    x2*x3      x4*x7       0.9127
+         4    x2*x3      x4          0.9126
+         5    x2*x3      x2*x4       0.9124
+         6    x2*x3      x3*x4       0.9123
+         7    x2*x3      x4*x11      0.9123
+         8    x2*x3      x1*x13      0.9121
+         9    x2*x3      x3*x13      0.9121
+        10    x2*x3      x4*x10      0.9121
+
+
+                            Analysis of Variance
+ 
+                                  Sum of           Mean
+Source                 DF        Squares         Square    F Value    Pr > F
+
+Model                   7         108630          15519    15000.3    <.0001
+Error                9992          10337        1.03455                     
+Corrected Total      9999         118967                                    
+
+
+Root MSE        1.01713
+R-Square        0.91311
+Adj R-Sq        0.91305
+AIC               10350
+AICC              10350
+SBC           405.37511
+ASE             1.03373
+
+
+                         Parameter Estimates
+ 
+                                       Standard
+Parameter    DF        Estimate           Error    t Value    Pr > |t|
+
+Intercept     1        0.012095        0.045712       0.26      0.7913
+x1            1        3.087078        0.076390      40.41      <.0001
+x2            1        7.775180        0.046815     166.08      <.0001
+x3            1       -4.957140        0.070995     -69.82      <.0001
+x1*x3         1        4.910115        0.122503      40.08      <.0001
+x1*x4         1        0.890436        0.060523      14.71      <.0001
+x7*x11        1        1.708469        0.045939      37.19      <.0001
+x2*x13        1        2.584078        0.061506      42.01      <.0001
+
+The HPREG Procedure
+Forward Swap Selection: Step 4
+Effect Entered: x13 
+
+     Best 10 Entry Candidates
+ 
+      Rank    Effect     R-Square
+
+         1    x13          0.9148
+         2    x1*x13       0.9140
+         3    x3*x13       0.9140
+         4    x4*x13       0.9136
+         5    x13*x20      0.9135
+         6    x7           0.9135
+         7    x7*x7        0.9134
+         8    x8*x13       0.9134
+         9    x12*x13      0.9134
+        10    x13*x18      0.9134
+
+
+                            Analysis of Variance
+ 
+                                  Sum of           Mean
+Source                 DF        Squares         Square    F Value    Pr > F
+
+Model                   8         108836          13604    13415.7    <.0001
+Error                9991          10132        1.01407                     
+Corrected Total      9999         118967                                    
+
+
+Root MSE        1.00701
+R-Square        0.91484
+Adj R-Sq        0.91477
+AIC               10151
+AICC              10151
+SBC           213.61396
+ASE             1.01316
+
+
+                         Parameter Estimates
+ 
+                                       Standard
+Parameter    DF        Estimate           Error    t Value    Pr > |t|
+
+Intercept     1        0.516308        0.057460       8.99      <.0001
+x1            1        3.098225        0.075634      40.96      <.0001
+x2            1        7.017843        0.070542      99.48      <.0001
+x3            1       -4.951722        0.070289     -70.45      <.0001
+x1*x3         1        4.889605        0.121293      40.31      <.0001
+x1*x4         1        0.887593        0.059922      14.81      <.0001
+x7*x11        1        1.700403        0.045485      37.38      <.0001
+x13           1       -0.996886        0.069998     -14.24      <.0001
+x2*x13        1        4.077511        0.121263      33.63      <.0001
+
+The HPREG Procedure
+Forward Swap Selection: Step 5
+Effect Entered: x7 
+
+     Best 10 Entry Candidates
+ 
+      Rank    Effect     R-Square
+
+         1    x7           0.9152
+         2    x7*x7        0.9151
+         3    x1*x7        0.9151
+         4    x2*x7        0.9151
+         5    x7*x13       0.9151
+         6    x6*x7        0.9151
+         7    x5*x7        0.9150
+         8    x4*x7        0.9150
+         9    x7*x10       0.9150
+        10    x10*x11      0.9150
+
+
+                            Analysis of Variance
+ 
+                                  Sum of           Mean
+Source                 DF        Squares         Square    F Value    Pr > F
+
+Model                   9         108878          12098    11979.2    <.0001
+Error                9990          10089        1.00988                     
+Corrected Total      9999         118967                                    
+
+
+Root MSE        1.00493
+R-Square        0.91520
+Adj R-Sq        0.91512
+AIC               10110
+AICC              10110
+SBC           180.44572
+ASE             1.00887
+
+
+                         Parameter Estimates
+ 
+                                       Standard
+Parameter    DF        Estimate           Error    t Value    Pr > |t|
+
+Intercept     1        0.438777        0.058564       7.49      <.0001
+x1            1        3.091159        0.075485      40.95      <.0001
+x2            1        7.011959        0.070402      99.60      <.0001
+x3            1       -4.958973        0.070153     -70.69      <.0001
+x1*x3         1        4.897481        0.121048      40.46      <.0001
+x1*x4         1        0.890837        0.059800      14.90      <.0001
+x7            1        0.299574        0.045993       6.51      <.0001
+x7*x11        1        1.443666        0.060116      24.01      <.0001
+x13           1       -1.001209        0.069857     -14.33      <.0001
+x2*x13        1        4.083275        0.121015      33.74      <.0001
+
+The HPREG Procedure
+Forward Swap Selection: Step 6
+Effect Removed: x7*x11  Effect Entered: x11
+
+             Best 10 Candidates
+ 
+              Effect     Effect
+      Rank    Dropped    Added      R-Square
+
+         1    x7*x11     x11          0.9167
+         2    x7*x11     x2*x11       0.9153
+         3    x1*x4      x4*x11       0.9152
+         4    x7*x11     x11*x13      0.9151
+         5    x7*x11     x3*x11       0.9151
+         6    x7*x11     x1*x11       0.9150
+         7    x13        x11          0.9150
+         8    x1*x4      x11          0.9148
+         9    x1*x4      x4           0.9147
+        10    x1*x4      x2*x4        0.9145
+
+
+                            Analysis of Variance
+ 
+                                  Sum of           Mean
+Source                 DF        Squares         Square    F Value    Pr > F
+
+Model                   9         109057          12117    12215.7    <.0001
+Error                9990     9909.71057        0.99196                     
+Corrected Total      9999         118967                                    
+
+
+Root MSE        0.99597
+R-Square        0.91670
+Adj R-Sq        0.91663
+AIC          9931.30049
+AICC         9931.32692
+SBC             1.40389
+ASE             0.99097
+
+
+                         Parameter Estimates
+ 
+                                       Standard
+Parameter    DF        Estimate           Error    t Value    Pr > |t|
+
+Intercept     1       -0.033741        0.060739      -0.56      0.5786
+x1            1        3.088083        0.074811      41.28      <.0001
+x2            1        7.010284        0.069771     100.48      <.0001
+x3            1       -4.962033        0.069527     -71.37      <.0001
+x1*x3         1        4.901388        0.119969      40.86      <.0001
+x1*x4         1        0.889512        0.059267      15.01      <.0001
+x7            1        1.020599        0.034418      29.65      <.0001
+x11           1        0.956770        0.034534      27.71      <.0001
+x13           1       -0.999190        0.069233     -14.43      <.0001
+x2*x13        1        4.072395        0.119940      33.95      <.0001
+
+The HPREG Procedure
+Forward Swap Selection: Step 7
+Effect Entered: x10*x11 
+
+     Best 10 Entry Candidates
+ 
+      Rank    Effect     R-Square
+
+         1    x10*x11      0.9168
+         2    x3*x7        0.9168
+         3    x10*x18      0.9167
+         4    x6*x10       0.9167
+         5    x3*x10       0.9167
+         6    x10          0.9167
+         7    x10*x16      0.9167
+         8    x6*x7        0.9167
+         9    x1*x10       0.9167
+        10    x5*x7        0.9167
+
+
+                            Analysis of Variance
+ 
+                                  Sum of           Mean
+Source                 DF        Squares         Square    F Value    Pr > F
+
+Model                  10         109066          10907    11002.9    <.0001
+Error                9989     9901.51373        0.99124                     
+Corrected Total      9999         118967                                    
+
+
+Root MSE        0.99561
+R-Square        0.91677
+Adj R-Sq        0.91669
+AIC          9925.02554
+AICC         9925.05678
+SBC             2.33928
+ASE             0.99015
+
+
+                         Parameter Estimates
+ 
+                                       Standard
+Parameter    DF        Estimate           Error    t Value    Pr > |t|
+
+Intercept     1       -0.033528        0.060717      -0.55      0.5808
+x1            1        3.087065        0.074785      41.28      <.0001
+x2            1        7.009874        0.069745     100.51      <.0001
+x3            1       -4.961325        0.069502     -71.38      <.0001
+x1*x3         1        4.903180        0.119927      40.88      <.0001
+x1*x4         1        0.890196        0.059246      15.03      <.0001
+x7            1        1.020812        0.034405      29.67      <.0001
+x11           1        0.869751        0.045907      18.95      <.0001
+x10*x11       1        0.173523        0.060343       2.88      0.0040
+x13           1       -1.001795        0.069214     -14.47      <.0001
+x2*x13        1        4.075354        0.119900      33.99      <.0001
+
+The HPREG Procedure
+Forward Swap Selection: Step 8
+Effect Entered: x3*x7 
+
+     Best 10 Entry Candidates
+ 
+      Rank    Effect     R-Square
+
+         1    x3*x7        0.9168
+         2    x6*x7        0.9168
+         3    x5*x7        0.9168
+         4    x5*x20       0.9168
+         5    x16*x18      0.9168
+         6    x1*x14       0.9168
+         7    x5*x16       0.9168
+         8    x10*x13      0.9168
+         9    x12*x20      0.9168
+        10    x8*x11       0.9168
+
+
+                            Analysis of Variance
+ 
+                                  Sum of           Mean
+Source                 DF        Squares         Square    F Value    Pr > F
+
+Model                  11         109073     9915.69219    10009.4    <.0001
+Error                9988     9894.53602        0.99064                     
+Corrected Total      9999         118967                                    
+
+
+Root MSE        0.99531
+R-Square        0.91683
+Adj R-Sq        0.91674
+AIC          9919.97595
+AICC         9920.01240
+SBC             4.50003
+ASE             0.98945
+
+
+                         Parameter Estimates
+ 
+                                       Standard
+Parameter    DF        Estimate           Error    t Value    Pr > |t|
+
+Intercept     1       -0.112037        0.067524      -1.66      0.0971
+x1            1        3.083649        0.074773      41.24      <.0001
+x2            1        7.010388        0.069725     100.54      <.0001
+x3            1       -4.803210        0.091526     -52.48      <.0001
+x1*x3         1        4.905416        0.119893      40.91      <.0001
+x1*x4         1        0.892963        0.059237      15.07      <.0001
+x7            1        1.179380        0.068940      17.11      <.0001
+x3*x7         1       -0.318008        0.119823      -2.65      0.0080
+x11           1        0.868070        0.045897      18.91      <.0001
+x10*x11       1        0.175969        0.060331       2.92      0.0035
+x13           1       -1.001017        0.069194     -14.47      <.0001
+x2*x13        1        4.075714        0.119864      34.00      <.0001
+
+The HPREG Procedure
+Forward Swap Selection: Step 9
+Effect Entered: x6*x7 
+
+     Best 10 Entry Candidates
+ 
+      Rank    Effect     R-Square
+
+         1    x6*x7        0.9169
+         2    x5*x7        0.9169
+         3    x5*x20       0.9169
+         4    x16*x18      0.9168
+         5    x1*x14       0.9168
+         6    x12*x20      0.9168
+         7    x5*x16       0.9168
+         8    x13*x20      0.9168
+         9    x2*x19       0.9168
+        10    x10*x13      0.9168
+
+
+                            Analysis of Variance
+ 
+                                  Sum of           Mean
+Source                 DF        Squares         Square    F Value    Pr > F
+
+Model                  12         109076     9089.68553    9177.98    <.0001
+Error                9987     9890.92374        0.99038                     
+Corrected Total      9999         118967                                    
+
+
+Root MSE        0.99518
+R-Square        0.91686
+Adj R-Sq        0.91676
+AIC          9918.32449
+AICC         9918.36656
+SBC            10.05892
+ASE             0.98909
+
+
+                         Parameter Estimates
+ 
+                                       Standard
+Parameter    DF        Estimate           Error    t Value    Pr > |t|
+
+Intercept     1       -0.110993        0.067517      -1.64      0.1002
+x1            1        3.085528        0.074770      41.27      <.0001
+x2            1        7.007343        0.069734     100.49      <.0001
+x3            1       -4.803857        0.091514     -52.49      <.0001
+x1*x3         1        4.903625        0.119881      40.90      <.0001
+x1*x4         1        0.893678        0.059230      15.09      <.0001
+x7            1        1.120309        0.075552      14.83      <.0001
+x3*x7         1       -0.315997        0.119812      -2.64      0.0084
+x6*x7         1        0.114354        0.059877       1.91      0.0562
+x11           1        0.867464        0.045892      18.90      <.0001
+x10*x11       1        0.177431        0.060328       2.94      0.0033
+x13           1       -1.002506        0.069189     -14.49      <.0001
+x2*x13        1        4.080024        0.119870      34.04      <.0001
+
+The HPREG Procedure
+Forward Swap Selection: Step 10
+Effect Entered: x3*x6 
+
+     Best 10 Entry Candidates
+ 
+      Rank    Effect     R-Square
+
+         1    x3*x6        0.9169
+         2    x4*x6        0.9169
+         3    x6*x11       0.9169
+         4    x5*x20       0.9169
+         5    x5*x7        0.9169
+         6    x6*x12       0.9169
+         7    x6           0.9169
+         8    x16*x18      0.9169
+         9    x1*x14       0.9169
+        10    x6*x13       0.9169
+
+
+                            Analysis of Variance
+ 
+                                  Sum of           Mean
+Source                 DF        Squares         Square    F Value    Pr > F
+
+Model                  13         109082     8390.94733    8476.82    <.0001
+Error                9986     9884.83484        0.98987                     
+Corrected Total      9999         118967                                    
+
+
+Root MSE        0.99492
+R-Square        0.91691
+Adj R-Sq        0.91680
+AIC          9914.16655
+AICC         9914.21463
+SBC            13.11131
+ASE             0.98848
+
+
+                         Parameter Estimates
+ 
+                                       Standard
+Parameter    DF        Estimate           Error    t Value    Pr > |t|
+
+Intercept     1       -0.112391        0.067502      -1.67      0.0959
+x1            1        3.088437        0.074760      41.31      <.0001
+x2            1        7.007423        0.069716     100.51      <.0001
+x3            1       -4.688272        0.102677     -45.66      <.0001
+x1*x3         1        4.896560        0.119884      40.84      <.0001
+x1*x4         1        0.894624        0.059216      15.11      <.0001
+x3*x6         1       -0.224877        0.090670      -2.48      0.0131
+x7            1        1.034725        0.083042      12.46      <.0001
+x3*x7         1       -0.313304        0.119786      -2.62      0.0089
+x6*x7         1        0.282961        0.090581       3.12      0.0018
+x11           1        0.867061        0.045881      18.90      <.0001
+x10*x11       1        0.177116        0.060313       2.94      0.0033
+x13           1       -1.002582        0.069171     -14.49      <.0001
+x2*x13        1        4.080740        0.119839      34.05      <.0001
+
+The HPREG Procedure
+Forward Swap Selection: Step 11
+Effect Entered: x5*x20 
+
+     Best 10 Entry Candidates
+ 
+      Rank    Effect     R-Square
+
+         1    x5*x20       0.9169
+         2    x5*x7        0.9169
+         3    x16*x18      0.9169
+         4    x1*x14       0.9169
+         5    x4*x6        0.9169
+         6    x2*x19       0.9169
+         7    x12*x20      0.9169
+         8    x10*x13      0.9169
+         9    x13*x20      0.9169
+        10    x5*x16       0.9169
+
+
+                            Analysis of Variance
+ 
+                                  Sum of           Mean
+Source                 DF        Squares         Square    F Value    Pr > F
+
+Model                  14         109085     7791.79588    7873.00    <.0001
+Error                9985     9882.00774        0.98969                     
+Corrected Total      9999         118967                                    
+
+
+Root MSE        0.99483
+R-Square        0.91693
+Adj R-Sq        0.91682
+AIC          9913.30611
+AICC         9913.36060
+SBC            19.46121
+ASE             0.98820
+
+
+                         Parameter Estimates
+ 
+                                       Standard
+Parameter    DF        Estimate           Error    t Value    Pr > |t|
+
+Intercept     1       -0.129177        0.068222      -1.89      0.0583
+x1            1        3.086449        0.074762      41.28      <.0001
+x2            1        7.005903        0.069715     100.49      <.0001
+x3            1       -4.690481        0.102675     -45.68      <.0001
+x1*x3         1        4.898230        0.119877      40.86      <.0001
+x1*x4         1        0.896339        0.059220      15.14      <.0001
+x3*x6         1       -0.224229        0.090663      -2.47      0.0134
+x7            1        1.032304        0.083047      12.43      <.0001
+x3*x7         1       -0.309971        0.119791      -2.59      0.0097
+x6*x7         1        0.281713        0.090576       3.11      0.0019
+x11           1        0.868004        0.045880      18.92      <.0001
+x10*x11       1        0.175325        0.060317       2.91      0.0037
+x13           1       -1.002324        0.069165     -14.49      <.0001
+x2*x13        1        4.081483        0.119829      34.06      <.0001
+x5*x20        1        0.076231        0.045103       1.69      0.0910
+
+The HPREG Procedure
+Forward Swap Selection: Step 12
+Effect Removed: x3*x6  Effect Entered: x13*x20
+
+             Best 10 Candidates
+ 
+              Effect     Effect
+      Rank    Dropped    Added      R-Square
+
+         1    x3*x6      x13*x20      0.9169
+         2    x3*x7      x13*x20      0.9169
+         3    x3*x6      x1*x20       0.9169
+         4    x3*x6      x12*x20      0.9169
+         5    x10*x11    x13*x20      0.9169
+         6    x3*x7      x1*x20       0.9169
+         7    x3*x6      x3*x20       0.9169
+         8    x3*x6      x4*x6        0.9169
+         9    x3*x7      x3*x20       0.9169
+        10    x3*x7      x12*x20      0.9169
+
+
+                            Analysis of Variance
+ 
+                                  Sum of           Mean
+Source                 DF        Squares         Square    F Value    Pr > F
+
+Model                  14         109086     7791.87306    7873.94    <.0001
+Error                9985     9880.92728        0.98958                     
+Corrected Total      9999         118967                                    
+
+
+Root MSE        0.99477
+R-Square        0.91694
+Adj R-Sq        0.91683
+AIC          9912.21269
+AICC         9912.26718
+SBC            18.36779
+ASE             0.98809
+
+
+                         Parameter Estimates
+ 
+                                       Standard
+Parameter    DF        Estimate           Error    t Value    Pr > |t|
+
+Intercept     1       -0.147463        0.068605      -2.15      0.0316
+x1            1        3.081956        0.074751      41.23      <.0001
+x2            1        7.004307        0.069713     100.47      <.0001
+x3            1       -4.802145        0.091494     -52.49      <.0001
+x1*x3         1        4.902909        0.119840      40.91      <.0001
+x1*x4         1        0.895941        0.059215      15.13      <.0001
+x7            1        1.120502        0.075546      14.83      <.0001
+x3*x7         1       -0.315047        0.119783      -2.63      0.0085
+x6*x7         1        0.111180        0.059862       1.86      0.0633
+x11           1        0.866627        0.045882      18.89      <.0001
+x10*x11       1        0.175568        0.060313       2.91      0.0036
+x13           1       -0.905553        0.077975     -11.61      <.0001
+x2*x13        1        4.082425        0.119823      34.07      <.0001
+x5*x20        1        0.157649        0.054249       2.91      0.0037
+x13*x20       1       -0.192415        0.071662      -2.69      0.0073
+
+The HPREG Procedure
+Forward Swap Selection: Step 13
+Effect Removed: x6*x7  Effect Entered: x5*x5
+
+             Best 10 Candidates
+ 
+              Effect     Effect
+      Rank    Dropped    Added     R-Square
+
+         1    x6*x7      x5*x5       0.9170
+         2    x6*x7      x5          0.9170
+         3    x6*x7      x5*x10      0.9170
+         4    x6*x7      x5*x11      0.9170
+         5    x3*x7      x5*x5       0.9170
+         6    x3*x7      x5*x6       0.9170
+         7    x6*x7      x2*x5       0.9170
+         8    x10*x11    x5*x5       0.9170
+         9    x3*x7      x5          0.9170
+        10    x6*x7      x1*x5       0.9170
+
+
+                            Analysis of Variance
+ 
+                                  Sum of           Mean
+Source                 DF        Squares         Square    F Value    Pr > F
+
+Model                  14         109092     7792.31249    7879.29    <.0001
+Error                9985     9874.77532        0.98896                     
+Corrected Total      9999         118967                                    
+
+
+Root MSE        0.99447
+R-Square        0.91700
+Adj R-Sq        0.91688
+AIC          9905.98465
+AICC         9906.03915
+SBC            12.13976
+ASE             0.98748
+
+
+                         Parameter Estimates
+ 
+                                       Standard
+Parameter    DF        Estimate           Error    t Value    Pr > |t|
+
+Intercept     1       -0.145560        0.068588      -2.12      0.0338
+x1            1        3.081254        0.074722      41.24      <.0001
+x2            1        7.008062        0.069674     100.58      <.0001
+x3            1       -4.801641        0.091465     -52.50      <.0001
+x1*x3         1        4.902720        0.119801      40.92      <.0001
+x1*x4         1        0.894923        0.059196      15.12      <.0001
+x7            1        1.175957        0.068911      17.06      <.0001
+x3*x7         1       -0.315540        0.119742      -2.64      0.0084
+x11           1        0.865986        0.045868      18.88      <.0001
+x10*x11       1        0.175668        0.060291       2.91      0.0036
+x13           1       -0.828469        0.081551     -10.16      <.0001
+x2*x13        1        4.079145        0.119765      34.06      <.0001
+x5*x5         1       -0.164294        0.052827      -3.11      0.0019
+x5*x20        1        0.365877        0.085792       4.26      <.0001
+x13*x20       1       -0.345169        0.086493      -3.99      <.0001
+
+The HPREG Procedure
+
+                            Selection Summary
+ 
+              Effect     Effect       Number                      Model 
+      Step    Entered    Removed  Effects In           SBC     R-Square 
+
+         0    Intercept                    1                            
+              x1                           2                            
+              x2                           3                            
+              x1*x2                        4                            
+              x3                           5                            
+              x1*x3                        6                            
+              x2*x3                        7     3307.6836       0.8837 
+------------------------------------------------------------------------
+         1    x2*x13                       8     1892.8403       0.8992 
+         2    x7*x11     x1*x2             8      618.9298       0.9112 
+         3    x1*x4      x2*x3             8      405.3751       0.9131 
+         4    x13                          9      213.6140       0.9148 
+         5    x7                          10      180.4457       0.9152 
+         6    x11        x7*x11           10        1.4039*      0.9167 
+         7    x10*x11                     11        2.3393       0.9168 
+         8    x3*x7                       12        4.5000       0.9168 
+         9    x6*x7                       13       10.0589       0.9169 
+        10    x3*x6                       14       13.1113       0.9169 
+        11    x5*x20                      15       19.4612       0.9169 
+        12    x13*x20    x3*x6            15       18.3678       0.9169 
+        13    x5*x5      x6*x7            15       12.1398       0.9170*
+
+* Optimal Value of Criterion
+
+
+Selection stopped because the model contains the specified maximum number of effects (15).
+
+
+ The model at step 6 is selected where SBC is 1.403892.
+
+The HPREG Procedure
+Selected Model
+
+Selected Effects: Intercept x1 x2 x3 x1*x3 x1*x4 x7 x11 x13 x2*x13
+
+
+                            Analysis of Variance
+ 
+                                  Sum of           Mean
+Source                 DF        Squares         Square    F Value    Pr > F
+
+Model                   9         109057          12117    12215.7    <.0001
+Error                9990     9909.71057        0.99196                     
+Corrected Total      9999         118967                                    
+
+
+Root MSE        0.99597
+R-Square        0.91670
+Adj R-Sq        0.91663
+AIC          9931.30049
+AICC         9931.32692
+SBC             1.40389
+ASE             0.99097
+
+
+                         Parameter Estimates
+ 
+                                       Standard
+Parameter    DF        Estimate           Error    t Value    Pr > |t|
+
+Intercept     1       -0.033741        0.060739      -0.56      0.5786
+x1            1        3.088083        0.074811      41.28      <.0001
+x2            1        7.010284        0.069771     100.48      <.0001
+x3            1       -4.962033        0.069527     -71.37      <.0001
+x1*x3         1        4.901388        0.119969      40.86      <.0001
+x1*x4         1        0.889512        0.059267      15.01      <.0001
+x7            1        1.020599        0.034418      29.65      <.0001
+x11           1        0.956770        0.034534      27.71      <.0001
+x13           1       -0.999190        0.069233     -14.43      <.0001
+x2*x13        1        4.072395        0.119940      33.95      <.0001

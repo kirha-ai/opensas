@@ -1,0 +1,67 @@
+The SAS System
+
+26520      
+26521      /* STAT-GLMMOD-001: GLMMOD — Data input, variable roles, and basic options
+26522       * Source: S154 / Chapter 54 / `PROC GLMMOD Statement` (PDF pp. 4236–4238); S154 / Chapter 54 / `BY Statement` (PDF p. 4238); S154 / Chapter 54 /
+26522    ! `FREQ and WEIGHT Statements` (PDF p. 4239); S154 / Chapter 54 / `Missing Values` (PDF p. 4240).
+26523       * Discriminates: Verified default procedure context
+26524       */
+26525      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+26525    ! validmemname=compatible locale=en_US;
+26526      %let syscc=0;
+26527      title; footnote;
+26528      ods _all_ close;
+26529      ods listing gpath="%sysfunc(pathname(work))";
+26530      ods graphics off;
+26531      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.MILEAGE (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+26531    !                                         quit;
+
+
+26532      ods path work.templat(update) sashelp.tmplmst(read);
+26533      
+26534      title 'Nitrogen Content of Red Clover Plants';
+26535      data Clover;
+26536      input Strain $ Nitrogen @@;
+26537      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.CLOVER has 30 observations and 2 variables.
+
+26544      ;
+26545      proc glmmod data=Clover;
+26546      class Strain;
+26547      model Nitrogen = Strain;
+26548      run;
+
+NOTE: There were 30 observations read from the data set WORK.CLOVER.
+NOTE: The PROCEDURE GLMMOD printed pages 2627-2629.
+
+26549      proc glmmod data=Clover outdesign=CloverDesign noprint;
+26550      class Strain;
+26551      model Nitrogen = Strain;
+26552      run;
+
+NOTE: There were 30 observations read from the data set WORK.CLOVER.
+NOTE: The data set WORK.CLOVERDESIGN has 30 observations and 8 variables.
+
+26553      proc reg data=CloverDesign;
+26554      model Nitrogen = Col2-Col7;
+26555      run;
+
+26556      
+26557      
+26558      
+26559      
+The SAS System
+
+26560      

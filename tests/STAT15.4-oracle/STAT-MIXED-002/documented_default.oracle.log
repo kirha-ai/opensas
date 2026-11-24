@@ -1,0 +1,60 @@
+The SAS System
+
+3559       
+3560       /* STAT-MIXED-002: MIXED — Linear mixed model estimation and fixed-effect inference
+3561        * Source: S154 / Chapter 84 / `Getting Started: MIXED Procedure` (PDF pp. 6618–6624); S154 / Chapter 84 / `Overview: MIXED Procedure` (PDF pp.
+3561     ! 6614–6618).
+3562        * Discriminates: Getting Started: MIXED Procedure
+3563        */
+3564       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+3564     ! validmemname=compatible locale=en_US;
+3565       %let syscc=0;
+3566       title; footnote;
+3567       ods _all_ close;
+3568       ods listing gpath="%sysfunc(pathname(work))";
+3569       ods graphics off;
+3570       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.HEIGHTS (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK._ORACLE_INPUT (memtype=DATA).
+3570     !                                         quit;
+
+
+3571       ods path work.templat(update) sashelp.tmplmst(read);
+3572       
+3573       data heights;
+3574       input Family Gender$ Height @@;
+3575       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.HEIGHTS has 18 observations and 3 variables.
+
+3579       ;
+3580       proc mixed data=heights;
+3581       class Family Gender;
+3582       model Height = Gender Family Family*Gender;
+3583       run;
+
+NOTE: The PROCEDURE MIXED printed page 287.
+
+3584       proc mixed;
+3585       class Family Gender;
+3586       model Height = Gender;
+3587       random Family Family*Gender;
+3588       run;
+
+NOTE: Convergence criteria met.
+NOTE: The PROCEDURE MIXED printed page 288.
+
+3589       
+3590       
+3591       
+3592       
+The SAS System
+
+3593       

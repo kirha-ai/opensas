@@ -1,0 +1,150 @@
+
+Linear Inference
+
+The GLIMMIX Procedure
+
+                    Model Information
+
+Data Set                     WORK.PARMS                   
+Response Variable            Value                        
+Response Distribution        Gaussian                     
+Link Function                Identity                     
+Variance Function            Default                      
+Variance Matrix              Not blocked                  
+Estimation Technique         Restricted Maximum Likelihood
+Degrees of Freedom Method    None                         
+
+
+                  Class Level Information
+ 
+Class    Levels    Values
+
+name          6    alpha1 beta1 gamma1 alpha2 beta2 gamma2 
+
+
+Number of Observations Read           6
+Number of Observations Used           6
+
+
+           Dimensions
+
+R-side Cov. Parameters         1
+Columns in X                   6
+Columns in Z                   0
+Subjects (Blocks in V)         1
+Max Obs per Subject            6
+
+
+    Parameter Search
+ 
+               Objective
+   CovP1        Function
+
+  1.0000    -1.33227E-15
+
+
+     Optimization Information
+
+Optimization Technique    None    
+Parameters                1       
+Lower Boundaries          0       
+Upper Boundaries          0       
+Fixed Effects             Profiled
+Starting From             Data    
+
+                   No optimization performed.                   
+
+
+           Fit Statistics
+
+-2 Res Log Likelihood          -0.00
+AIC  (smaller is better)        2.00
+AICC (smaller is better)        6.00
+BIC  (smaller is better)       -0.00
+CAIC (smaller is better)        1.00
+HQIC (smaller is better)       -0.00
+Generalized Chi-Square          0.00
+Gener. Chi-Square / DF           .  
+
+
+                      Estimated V Matrix for Subject 1
+ 
+ Row        Col1        Col2        Col3        Col4        Col5        Col6
+
+   1    0.007462    -0.00522     0.01023                                    
+   2    -0.00522     0.04820    -0.01059                                    
+   3     0.01023    -0.01059      0.2160                                    
+   4                                         0.03126    -0.00910     0.01579
+   5                                        -0.00910     0.03949    -0.02000
+   6                                         0.01579    -0.02000      0.1262
+
+
+Covariance Parameter Estimates
+ 
+Cov                   Standard
+Parm      Estimate       Error
+
+LIN(1)      1.0000           .
+
+
+                      Solutions for Fixed Effects
+ 
+                                Standard
+Effect    name      Estimate       Error       DF    t Value    Pr > |t|
+
+name      alpha1     -3.5671     0.08638    Infty     -41.29      <.0001
+name      beta1       0.4421      0.2195    Infty       2.01      0.0440
+name      gamma1     -2.6230      0.4648    Infty      -5.64      <.0001
+name      alpha2     -3.0111      0.1768    Infty     -17.03      <.0001
+name      beta2       0.3977      0.1987    Infty       2.00      0.0454
+name      gamma2     -2.4442      0.3552    Infty      -6.88      <.0001
+
+
+      Type III Tests of Fixed Effects
+ 
+           Num      Den
+Effect      DF       DF    F Value    Pr > F
+
+name         6    Infty     354.93    <.0001
+
+Linear Inference
+
+The PLM Procedure
+
+              Store Information
+
+Item Store               WORK.ARTIFICIALMODEL
+Data Set Created From    WORK.PARMS          
+Created By               PROC GLIMMIX        
+Date Created             24NOV26:13:06:58    
+Response Variable        Value               
+Link Function            Identity            
+Distribution             Normal              
+Class Variable           name                
+Model Effect             name                
+
+
+                  Class Level Information
+ 
+Class    Levels    Values
+
+name          6    alpha1 beta1 gamma1 alpha2 beta2 gamma2 
+
+
+                                    Estimates
+                        Adjustment for Multiplicity: Holm
+ 
+                               Standard
+Label              Estimate       Error       DF    t Value    Pr > |t|     Adj P
+
+alpha1 = alpha2     -0.5560      0.1968    Infty      -2.83      0.0047    0.0142
+beta1 = beta2       0.04440      0.2961    Infty       0.15      0.8808    1.0000
+gamma1 = gamma2     -0.1788      0.5850    Infty      -0.31      0.7599    1.0000
+
+
+              F Test for Estimates
+ 
+                Num      Den
+Label            DF       DF    F Value    Pr > F
+
+Homogeneity       3    Infty       2.79    0.0389

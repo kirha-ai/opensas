@@ -1,0 +1,67 @@
+The SAS System
+
+14882      
+14883      /* STAT-RSREG-001: RSREG — Data input, variable roles, and basic options
+14884       * Source: S154 / Chapter 108 / `PROC RSREG Statement` (PDF pp. 8870–8874); S154 / Chapter 108 / `BY Statement` (PDF p. 8874); S154 / Chapter 108 /
+14884    !  `ID Statement` (PDF p. 8874); S154 / Chapter 108 / `WEIGHT Statement` (PDF pp. 8878–8879); S154 / Chapter 108 / `Missing Values` (PDF pp.
+14884    ! 8881–8882).
+14885       * Discriminates: Verified default procedure context
+14886       */
+14887      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+14887    ! validmemname=compatible locale=en_US;
+14888      %let syscc=0;
+14889      title; footnote;
+14890      ods _all_ close;
+14891      ods listing gpath="%sysfunc(pathname(work))";
+14892      ods graphics off;
+14893      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.RECOVER (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.ROBOUT (memtype=DATA).
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+14893    !                                         quit;
+
+
+14894      ods path work.templat(update) sashelp.tmplmst(read);
+14895      
+14896      title 'Response Surface with a Simple Optimum';
+14897      data smell;
+14898      input Odor T R H @@;
+14899      label
+14900      T = "Temperature"
+14901      R = "Gas-Liquid Ratio"
+14902      H = "Packing Height";
+14903      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.SMELL has 15 observations and 4 variables.
+
+14908      ;
+14909      proc rsreg data=smell;
+14910      model Odor = T R H / lackfit;
+14911      run;
+
+NOTE: The PROCEDURE RSREG printed pages 1100-1101.
+
+14912      ods graphics on;
+14913      proc rsreg data=smell
+14914      plots(unpack)=surface(3d at(H=7.541050));
+14915      model Odor = T R H;
+14916      ods select 'T * R = Pred';
+14917      run;
+
+
+14918      ods graphics off;
+14919      run;
+14920      quit;
+14921      
+14922      
+14923      
+14924      
+The SAS System
+
+14925      

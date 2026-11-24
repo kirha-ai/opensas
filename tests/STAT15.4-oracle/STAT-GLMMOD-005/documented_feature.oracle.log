@@ -1,0 +1,143 @@
+The SAS System
+
+26692      
+26693      /* STAT-GLMMOD-005: GLMMOD — Displayed Output / ODS Table Names
+26694       * Source: S154 / Chapter 54 / `Displayed Output` (PDF pp. 4239–4240); S154 / Chapter 54 / `ODS Table Names` (PDF pp. 4241–4242).
+26695       * Discriminates: Getting Started: GLMMOD Procedure
+26696       */
+26697      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+26697    ! validmemname=compatible locale=en_US;
+26698      %let syscc=0;
+26699      title; footnote;
+26700      ods _all_ close;
+26701      ods listing gpath="%sysfunc(pathname(work))";
+26702      ods graphics off;
+
+NOTE: The PROCEDURE REG printed page 2642.
+
+26703      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.CLOVER (memtype=DATA).
+NOTE: Deleting WORK.CLOVERDESIGN (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+26703    !                                         quit;
+
+
+26704      ods path work.templat(update) sashelp.tmplmst(read);
+26705      
+26706      ods trace on;
+26707      title 'Nitrogen Content of Red Clover Plants';
+26708      data Clover;
+26709      input Strain $ Nitrogen @@;
+26710      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.CLOVER has 30 observations and 2 variables.
+
+26717      ;
+26718      proc glmmod data=Clover;
+26719      class Strain;
+26720      model Nitrogen = Strain;
+26721      run;
+
+
+Output Added:
+-------------
+Name:       ClassLevels
+Label:      Class Levels
+Template:   STAT.GLM.ClassLevels
+Path:       GLMMod.ClassLevels
+-------------
+
+Output Added:
+-------------
+Name:       NObs
+Label:      Number of Observations
+Template:   STAT.GLM.NObsNotitle
+Path:       GLMMod.NObs
+-------------
+
+Output Added:
+-------------
+Name:       Parameters
+Label:      Parameters
+Template:   Stat.Glmmod.Parameters
+Path:       GLMMod.Parameters
+-------------
+
+Output Added:
+-------------
+Name:       DesignPoints
+Label:      Design Points
+Template:   Stat.Glmmod.DesignPoints
+Path:       GLMMod.DesignPoints
+-------------
+NOTE: There were 30 observations read from the data set WORK.CLOVER.
+NOTE: The PROCEDURE GLMMOD printed pages 2643-2645.
+
+26722      proc glmmod data=Clover outdesign=CloverDesign noprint;
+26723      class Strain;
+26724      model Nitrogen = Strain;
+26725      run;
+
+NOTE: There were 30 observations read from the data set WORK.CLOVER.
+NOTE: The data set WORK.CLOVERDESIGN has 30 observations and 8 variables.
+
+26726      proc reg data=CloverDesign;
+26727      model Nitrogen = Col2-Col7;
+26728      run;
+
+
+Output Added:
+-------------
+Name:       NObs
+Label:      Number of Observations
+Template:   Stat.Reg.NObs
+Path:       Reg.MODEL1.Fit.Nitrogen.NObs
+-------------
+
+Output Added:
+-------------
+Name:       ANOVA
+Label:      Analysis of Variance
+Template:   Stat.REG.ANOVA
+Path:       Reg.MODEL1.Fit.Nitrogen.ANOVA
+-------------
+
+Output Added:
+-------------
+Name:       FitStatistics
+Label:      Fit Statistics
+Template:   Stat.REG.FitStatistics
+Path:       Reg.MODEL1.Fit.Nitrogen.FitStatistics
+-------------
+
+Output Added:
+-------------
+Name:       DependenceEquations
+Label:      Dependence Equations
+Template:   Stat.REG.Equation
+Path:       Reg.MODEL1.Fit.Nitrogen.DependenceEquations
+-------------
+
+Output Added:
+-------------
+Name:       ParameterEstimates
+Label:      Parameter Estimates
+Template:   Stat.REG.ParameterEstimates
+Path:       Reg.MODEL1.Fit.Nitrogen.ParameterEstimates
+-------------
+26729      ods trace off;
+26730      
+26731      
+26732      
+26733      
+The SAS System
+
+26734      

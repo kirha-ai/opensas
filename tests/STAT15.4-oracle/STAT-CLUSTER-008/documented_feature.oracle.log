@@ -1,0 +1,277 @@
+The SAS System
+
+14237      
+14238      /* STAT-CLUSTER-008: CLUSTER — ODS Graphics
+14239       * Source: S154 / Chapter 40 / `ODS Graphics` (PDF pp. 2528–2529).
+14240       * Discriminates: Example 40.1: Cluster Analysis of Flying Mileages between 10 American Cities
+14241       */
+14242      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+14242    ! validmemname=compatible locale=en_US;
+14243      %let syscc=0;
+14244      title; footnote;
+14245      ods _all_ close;
+14246      ods listing gpath="%sysfunc(pathname(work))";
+14247      ods graphics off;
+14248      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.DATA37 (memtype=DATA).
+NOTE: Deleting WORK.DATA38 (memtype=DATA).
+NOTE: Deleting WORK.DATA39 (memtype=DATA).
+NOTE: Deleting WORK.DATA40 (memtype=DATA).
+NOTE: Deleting WORK.DATA41 (memtype=DATA).
+NOTE: Deleting WORK.DATA42 (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+14248    !                                         quit;
+
+
+14249      ods path work.templat(update) sashelp.tmplmst(read);
+14250      
+14251      ods graphics on;
+14252      ods trace on;
+14253      ods trace on;
+14254      proc print noobs data=sashelp.mileages;
+14255      run;
+
+
+Output Added:
+-------------
+Name:       Print
+Label:      Data Set SASHELP.MILEAGES
+Data Name:  ProcPrintTable
+Path:       Print.Print
+-------------
+NOTE: There were 10 observations read from the data set SASHELP.MILEAGES.
+NOTE: The PROCEDURE PRINT printed page 1958.
+
+14256      title 'Cluster Analysis of Flying Mileages Between 10 American Cities';
+14257      ods graphics on;
+14258      title2 'Using METHOD=AVERAGE';
+14259      proc cluster data=sashelp.mileages(type=distance) method=average pseudo;
+14260      id City;
+14261      run;
+
+NOTE: The input data set is a TYPE=DISTANCE data set. For such a data set, the procedure requires that the order of the rows match the order of the variables.
+NOTE: Input distances have been squared.
+
+Output Added:
+-------------
+Name:       AvDist
+Label:      Root-Mean-Square Distance Between Observations
+Template:   stat.Cluster.RootMeanSqDistBtwnObs
+Path:       Cluster.AvDist
+-------------
+
+Output Added:
+-------------
+Name:       ClusterHistory
+Label:      Cluster History
+Template:   stat.cluster.ClusterHistory
+Path:       Cluster.ClusterHistory
+-------------
+
+Output Added:
+-------------
+Name:       PsfAndPsTSqPlot
+Label:      Criteria for the Number of Clusters
+Template:   Stat.Cluster.Graphics.PsfAndPsTSqPlot
+Path:       Cluster.PsfAndPsTSqPlot
+-------------
+
+Output Added:
+-------------
+Name:       Dendrogram
+Label:      Dendrogram
+Template:   Stat.Cluster.Graphics.Dendrogram
+Path:       Cluster.Dendrogram
+-------------
+NOTE: The data set WORK.DATA43 has 19 observations and 11 variables.
+NOTE: The PROCEDURE CLUSTER printed page 1959.
+
+14262      title2 'Using METHOD=CENTROID';
+14263      proc cluster data=sashelp.mileages(type=distance) method=centroid pseudo;
+14264      id City;
+14265      run;
+
+NOTE: The input data set is a TYPE=DISTANCE data set. For such a data set, the procedure requires that the order of the rows match the order of the variables.
+NOTE: Input distances have been squared.
+
+Output Added:
+-------------
+Name:       AvDist
+Label:      Root-Mean-Square Distance Between Observations
+Template:   stat.Cluster.RootMeanSqDistBtwnObs
+Path:       Cluster.AvDist
+-------------
+
+Output Added:
+-------------
+Name:       ClusterHistory
+Label:      Cluster History
+Template:   stat.cluster.ClusterHistory
+Path:       Cluster.ClusterHistory
+-------------
+
+Output Added:
+-------------
+Name:       PsfAndPsTSqPlot
+Label:      Criteria for the Number of Clusters
+Template:   Stat.Cluster.Graphics.PsfAndPsTSqPlot
+Path:       Cluster.PsfAndPsTSqPlot
+-------------
+
+Output Added:
+-------------
+Name:       Dendrogram
+Label:      Dendrogram
+Template:   Stat.Cluster.Graphics.Dendrogram
+Path:       Cluster.Dendrogram
+-------------
+NOTE: The data set WORK.DATA44 has 19 observations and 11 variables.
+NOTE: The PROCEDURE CLUSTER printed page 1960.
+
+14266      title2 'Using METHOD=DENSITY K=3';
+14267      proc cluster data=sashelp.mileages(type=distance) method=density k=3;
+14268      id City;
+14269      run;
+
+NOTE: The input data set is a TYPE=DISTANCE data set. For such a data set, the procedure requires that the order of the rows match the order of the variables.
+
+Output Added:
+-------------
+Name:       ClusterHistory
+Label:      Cluster History
+Template:   stat.cluster.ClusterHistory
+Path:       Cluster.ClusterHistory
+-------------
+NOTE: 2 modal clusters have been formed.
+WARNING: Ties for minimum distance between clusters have been detected at 1 level(s) in the cluster history.
+
+Output Added:
+-------------
+Name:       Dendrogram
+Label:      Dendrogram
+Template:   Stat.Cluster.Graphics.Dendrogram
+Path:       Cluster.Dendrogram
+-------------
+NOTE: The data set WORK.DATA45 has 19 observations and 8 variables.
+NOTE: The PROCEDURE CLUSTER printed page 1961.
+
+14270      title2 'Using METHOD=SINGLE';
+14271      proc cluster data=sashelp.mileages(type=distance) method=single;
+14272      id City;
+14273      run;
+
+NOTE: The input data set is a TYPE=DISTANCE data set. For such a data set, the procedure requires that the order of the rows match the order of the variables.
+
+Output Added:
+-------------
+Name:       AvDist
+Label:      Mean Distance Between Observations
+Template:   stat.Cluster.MeanDistBtwnObs
+Path:       Cluster.AvDist
+-------------
+
+Output Added:
+-------------
+Name:       ClusterHistory
+Label:      Cluster History
+Template:   stat.cluster.ClusterHistory
+Path:       Cluster.ClusterHistory
+-------------
+
+Output Added:
+-------------
+Name:       Dendrogram
+Label:      Dendrogram
+Template:   Stat.Cluster.Graphics.Dendrogram
+Path:       Cluster.Dendrogram
+-------------
+NOTE: The data set WORK.DATA46 has 19 observations and 6 variables.
+NOTE: The PROCEDURE CLUSTER printed page 1962.
+
+14274      title2 'Using METHOD=TWOSTAGE K=3';
+14275      proc cluster data=sashelp.mileages(type=distance) method=twostage k=3;
+14276      id City;
+14277      run;
+
+NOTE: The input data set is a TYPE=DISTANCE data set. For such a data set, the procedure requires that the order of the rows match the order of the variables.
+
+Output Added:
+-------------
+Name:       ClusterHistory
+Label:      Cluster History
+Template:   stat.cluster.ClusterHistory
+Path:       Cluster.ClusterHistory
+-------------
+NOTE: 2 modal clusters have been formed.
+WARNING: Ties for minimum distance between clusters have been detected at 1 level(s) in the cluster history.
+
+Output Added:
+-------------
+Name:       Dendrogram
+Label:      Dendrogram
+Template:   Stat.Cluster.Graphics.Dendrogram
+Path:       Cluster.Dendrogram
+-------------
+NOTE: The data set WORK.DATA47 has 19 observations and 8 variables.
+NOTE: The PROCEDURE CLUSTER printed page 1963.
+
+14278      title2 'Using METHOD=WARD';
+14279      proc cluster data=sashelp.mileages(type=distance) method=ward pseudo;
+14280      id City;
+14281      run;
+
+NOTE: The input data set is a TYPE=DISTANCE data set. For such a data set, the procedure requires that the order of the rows match the order of the variables.
+NOTE: Input distances have been squared.
+
+Output Added:
+-------------
+Name:       AvDist
+Label:      Root-Mean-Square Distance Between Observations
+Template:   stat.Cluster.RootMeanSqDistBtwnObs
+Path:       Cluster.AvDist
+-------------
+
+Output Added:
+-------------
+Name:       ClusterHistory
+Label:      Cluster History
+Template:   stat.cluster.ClusterHistory
+Path:       Cluster.ClusterHistory
+-------------
+
+Output Added:
+-------------
+Name:       PsfAndPsTSqPlot
+Label:      Criteria for the Number of Clusters
+Template:   Stat.Cluster.Graphics.PsfAndPsTSqPlot
+Path:       Cluster.PsfAndPsTSqPlot
+-------------
+
+Output Added:
+-------------
+Name:       Dendrogram
+Label:      Dendrogram
+Template:   Stat.Cluster.Graphics.Dendrogram
+Path:       Cluster.Dendrogram
+-------------
+NOTE: The data set WORK.DATA48 has 19 observations and 11 variables.
+NOTE: The PROCEDURE CLUSTER printed page 1964.
+
+14282      ods trace off;
+14283      ods trace off;
+14284      ods graphics off;
+14285      
+14286      
+14287      
+14288      
+The SAS System
+
+14289      

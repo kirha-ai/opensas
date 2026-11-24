@@ -1,0 +1,56 @@
+The SAS System
+
+1166       
+1167       /* STAT-COMMON-030: STORE Statement
+1168        * Source: S154 / Chapter 20 / `STORE Statement` (PDF pp. 543–545).
+1169        * Discriminates: Stored model metadata, restoration and scoring
+1170        */
+1171       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+1171     ! validmemname=compatible locale=en_US;
+1172       %let syscc=0;
+1173       title; footnote;
+1174       ods _all_ close;
+1175       ods listing gpath="%sysfunc(pathname(work))";
+1176       ods graphics off;
+1177       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.FACTORIAL (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SAMPLE (memtype=DATA).
+1177     !                                         quit;
+
+
+1178       ods path work.templat(update) sashelp.tmplmst(read);
+1179       
+1180       data sample;
+1181        input x z y group $ weight freq;
+1182        datalines;
+
+NOTE: The data set WORK.SAMPLE has 12 observations and 6 variables.
+
+1195       ;
+1196       run;
+1197       proc glm data=sample; class group; model y=group x; store work.fitted; run;
+
+1197     !                                                                             quit;
+
+NOTE: The GLM procedure generated the model item store WORK.FITTED.
+NOTE: The PROCEDURE GLM printed pages 62-63.
+
+1198       proc plm restore=work.fitted; lsmeans group / diff cl; score data=sample out=scored predicted; run;
+
+NOTE: The data set WORK.SCORED has 12 observations and 7 variables.
+NOTE: The PROCEDURE PLM printed page 64.
+
+1199       proc print data=scored noobs; run;
+
+NOTE: There were 12 observations read from the data set WORK.SCORED.
+NOTE: The PROCEDURE PRINT printed page 65.
+
+1200       
+1201       
+1202       
+1203       
+The SAS System
+
+1204       

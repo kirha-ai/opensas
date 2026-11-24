@@ -1,0 +1,56 @@
+The SAS System
+
+11750      
+11751      /* STAT-CANCORR-007: CANCORR — Official examples and feature integration regression
+11752       * Source: S154 / Chapter 34 / `Getting Started: CANCORR Procedure` (PDF pp. 2121–2126); S154 / Chapter 34 / `Overview: CANCORR Procedure` (PDF pp.
+11752    !  2120–2121).
+11753       * Discriminates: Getting Started: CANCORR Procedure
+11754       */
+11755      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+11755    ! validmemname=compatible locale=en_US;
+11756      %let syscc=0;
+11757      title; footnote;
+11758      ods _all_ close;
+11759      ods listing gpath="%sysfunc(pathname(work))";
+11760      ods graphics off;
+11761      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.JOBS (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+11761    !                                         quit;
+
+
+11762      ods path work.templat(update) sashelp.tmplmst(read);
+11763      
+11764      data Jobs;
+11765      input Career Supervisor Finance Variety Feedback Autonomy;
+11766      label Career ='Career Satisfaction' Variety ='Task Variety'
+11767      Supervisor='Supervisor Satisfaction' Feedback='Amount of Feedback'
+11768      Finance ='Financial Satisfaction' Autonomy='Degree of Autonomy';
+11769      datalines;
+
+NOTE: The data set WORK.JOBS has 14 observations and 6 variables.
+
+11784      ;
+11785      proc cancorr data=Jobs
+11786      vprefix=Satisfaction wprefix=Characteristics
+11787      vname='Satisfaction Areas' wname='Job Characteristics';
+11788      var Career Supervisor Finance;
+11789      with Variety Feedback Autonomy;
+11790      run;
+
+NOTE: The PROCEDURE CANCORR printed pages 1688-1691.
+
+11791      
+11792      
+11793      
+11794      
+The SAS System
+
+11795      

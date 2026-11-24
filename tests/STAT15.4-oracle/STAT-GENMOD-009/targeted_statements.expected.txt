@@ -1,0 +1,139 @@
+
+The GENMOD Procedure
+ 
+Bayesian Analysis
+
+        Model Information
+
+Data Set              WORK.SAMPLE
+Burn-In Size                  200
+MC Sample Size               1000
+Thinning                        1
+Sampling Algorithm      Conjugate
+Distribution               Normal
+Link Function            Identity
+Dependent Variable              y
+
+
+Number of Observations Read          90
+Number of Observations Used          90
+
+
+Algorithm converged.                                                       
+
+
+      Analysis Of Maximum Likelihood Parameter Estimates
+ 
+                               Standard     Wald 95% Confidence
+Parameter    DF    Estimate       Error           Limits
+
+Intercept     1      5.8291      0.0917      5.6493      6.0089
+x             1      1.3725      0.1005      1.1755      1.5695
+z             1     -0.6642      0.0910     -0.8427     -0.4858
+Scale         1      0.8567      0.0639      0.7403      0.9915
+
+NOTE: The scale parameter was estimated by maximum likelihood.
+
+The GENMOD Procedure
+ 
+Bayesian Analysis
+
+Uniform Prior for Regression Coefficients
+ 
+Parameter     Prior
+
+Intercept     Constant
+x             Constant
+z             Constant
+
+
+Algorithm converged.                                                       
+
+
+Independent Prior Distributions for Model Parameters
+ 
+              Prior
+Parameter     Distribution
+
+Dispersion    Improper    
+
+
+                       Initial Values of the Chain
+ 
+   Chain          Seed    Intercept           x           z    Dispersion
+
+       1        314159     5.829099    1.372486    -0.66423      0.717616
+
+
+                 Fit Statistics
+
+DIC (smaller is better)                  235.619
+pD (effective number of parameters)        3.936
+
+The GENMOD Procedure
+ 
+Bayesian Analysis
+
+                                Posterior Summaries
+ 
+                                       Standard               Percentiles
+Parameter            N        Mean    Deviation         25%         50%         75%
+
+Intercept         1000      5.8289       0.0945      5.7663      5.8295      5.8879
+x                 1000      1.3773       0.1016      1.3062      1.3754      1.4476
+z                 1000     -0.6633       0.0937     -0.7230     -0.6632     -0.6019
+Dispersion        1000      0.7804       0.1204      0.6920      0.7676      0.8511
+
+
+                        Posterior Intervals
+ 
+Parameter     Alpha     Equal-Tail Interval        HPD Interval
+
+Intercept     0.050      5.6424      6.0198      5.6371      6.0091
+x             0.050      1.1758      1.5693      1.1765      1.5698
+z             0.050     -0.8460     -0.4707     -0.8348     -0.4641
+Dispersion    0.050      0.5901      1.0483      0.5621      1.0014
+
+
+                  Posterior Correlation Matrix
+ 
+Parameter       Intercept           x           z      Dispersion
+
+Intercept           1.000       0.161       0.059          -0.005
+x                   0.161       1.000      -0.010          -0.006
+z                   0.059      -0.010       1.000           0.003
+Dispersion         -0.005      -0.006       0.003           1.000
+
+The GENMOD Procedure
+ 
+Bayesian Analysis
+
+              Posterior Autocorrelations
+ 
+Parameter       Lag 1      Lag 5     Lag 10     Lag 50
+
+Intercept     -0.0001    -0.0135     0.0129     0.0722
+x             -0.0072    -0.0447    -0.0159     0.0183
+z             -0.0113    -0.0238    -0.0122    -0.0508
+Dispersion     0.0445     0.0380    -0.0388     0.0030
+
+
+        Geweke Diagnostics
+ 
+Parameter            z    Pr > |z|
+
+Intercept       1.1871      0.2352
+x              -0.2219      0.8244
+z               1.3364      0.1814
+Dispersion     -1.8394      0.0659
+
+
+                Effective Sample Sizes
+ 
+                          Autocorrelation
+Parameter          ESS               Time    Efficiency
+
+Intercept       1000.0             1.0000        1.0000
+x               1000.0             1.0000        1.0000
+z               1102.2             0.9073        1.1022
+Dispersion       790.3             1.2653        0.7903

@@ -1,0 +1,53 @@
+The SAS System
+
+5149       
+5150       /* STAT-ANOVA-006: ANOVA — MANOVA / TEST
+5151        * Source: S154 / Chapter 29 / `MANOVA Statement` (PDF pp. 1119–1123); S154 / Chapter 29 / `TEST Statement` (PDF pp. 1134–1135).
+5152        * Discriminates: Example 29.3: Split Plot; explicit statements: TEST
+5153        */
+5154       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+5154     ! validmemname=compatible locale=en_US;
+5155       %let syscc=0;
+5156       title; footnote;
+5157       ods _all_ close;
+5158       ods listing gpath="%sysfunc(pathname(work))";
+5159       ods graphics off;
+
+NOTE: The PROCEDURE ANOVA printed pages 378-381.
+
+5160       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.CLOVER (memtype=DATA).
+NOTE: Deleting WORK.RCB (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+5160     !                                         quit;
+
+
+5161       ods path work.templat(update) sashelp.tmplmst(read);
+5162       
+5163       title1 'Split Plot Design';
+5164       data Split;
+5165       input Block 1 A 2 B 3 Response;
+5166       datalines;
+
+NOTE: The data set WORK.SPLIT has 16 observations and 4 variables.
+
+5183       ;
+5184       proc anova data=Split;
+5185       class Block A B;
+5186       model Response = Block A Block*A B A*B;
+5187       test h=A e=Block*A;
+5188       run;
+
+5189       
+5190       
+5191       
+5192       
+The SAS System
+
+5193       

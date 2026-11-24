@@ -1,0 +1,54 @@
+The SAS System
+
+13599      
+13600      /* STAT-RMSTREG-010: RMSTREG — STORE
+13601       * Source: S154 / Chapter 106 / `STORE Statement` (PDF pp. 8747–8748).
+13602       * Discriminates: Verified default procedure context
+13603       */
+13604      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+13604    ! validmemname=compatible locale=en_US;
+13605      %let syscc=0;
+13606      title; footnote;
+13607      ods _all_ close;
+13608      ods listing gpath="%sysfunc(pathname(work))";
+13609      ods graphics off;
+13610      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SURVIVAL (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+13610    !                                         quit;
+
+
+13611      ods path work.templat(update) sashelp.tmplmst(read);
+13612      
+13613      data survival;
+13614      call streaminit(218);
+13615      do id=1 to 100;
+13616      age=25+mod(id*7,40);
+13617      x=mod(id,2);
+13618      time=exp(0.5+0.15*x+0.01*age+rand('normal')*0.7);
+13619      status=(mod(id,4) ne 0);
+13620      output;
+13621      end;
+13622      run;
+
+NOTE: The data set WORK.SURVIVAL has 100 observations and 5 variables.
+
+13623      proc rmstreg data=survival tau=5;
+13624      model time*status(0)=age x / link=linear method=pv;
+13625      run;
+
+NOTE: Algorithm converged.
+NOTE: The PROCEDURE RMSTREG printed page 1043.
+
+13626      
+13627      
+13628      
+13629      
+The SAS System
+
+13630      

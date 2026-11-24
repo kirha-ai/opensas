@@ -1,0 +1,63 @@
+The SAS System
+
+5668       
+5669       /* STAT-NLIN-004: NLIN — CONTROL / PROFILE / RETAIN
+5670        * Source: S154 / Chapter 88 / `CONTROL Statement` (PDF p. 7002); S154 / Chapter 88 / `PROFILE Statement` (PDF pp. 7011–7012); S154 / Chapter 88 /
+5670     ! `RETAIN Statement` (PDF pp. 7012–7013).
+5671        * Discriminates: Example 88.7: Parameter Profiling and Bootstrapping; explicit statements: PROFILE
+5672        */
+5673       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+5673     ! validmemname=compatible locale=en_US;
+5674       %let syscc=0;
+5675       title; footnote;
+5676       ods _all_ close;
+5677       ods listing gpath="%sysfunc(pathname(work))";
+5678       ods graphics off;
+5679       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.ENZYME (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+5679     !                                         quit;
+
+
+5680       ods path work.templat(update) sashelp.tmplmst(read);
+5681       
+5682       data clarke1987a;
+5683       input x y;
+5684       datalines;
+
+NOTE: The data set WORK.CLARKE1987A has 13 observations and 2 variables.
+
+5698       ;
+5699       ods graphics on;
+5700       proc nlin data=clarke1987a plots(stats=none)=diagnostics;
+5701       parms theta1=-0.15
+5702       theta2=2.0
+5703       theta3=0.80;
+5704       profile theta1 theta3 / range = -6 to 2 by 0.2 all;
+5705       bootstrap / nsamples=999 seed=123 bootplots bootci bootcov;
+5706       model y = theta3 + theta2*exp(theta1*x);
+5707       run;
+
+NOTE: DER.theta1 not initialized or missing. It will be computed automatically.
+NOTE: DER.theta2 not initialized or missing. It will be computed automatically.
+NOTE: DER.theta3 not initialized or missing. It will be computed automatically.
+NOTE: Convergence criterion met.
+NOTE: NSAMPLES has been set to 1000, the minimum value.
+NOTE: Bootstrap confidence limits are based on the specified or default value of the ALPHA= option in the PROC NLIN statement.
+NOTE: The PROCEDURE NLIN printed page 383.
+
+5708       ods graphics off;
+5709       run;
+5710       quit;
+5711       
+5712       
+5713       
+5714       
+The SAS System
+
+5715       

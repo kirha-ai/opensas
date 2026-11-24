@@ -1,0 +1,57 @@
+The SAS System
+
+21281      
+21282      /* STAT-GEE-003: GEE — CLASS / MODEL
+21283       * Source: S154 / Chapter 50 / `CLASS Statement` (PDF pp. 3428–3429); S154 / Chapter 50 / `MODEL Statement` (PDF pp. 3435–3438).
+21284       * Discriminates: Getting Started; explicit statements: CLASS, MODEL
+21285       */
+21286      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+21286    ! validmemname=compatible locale=en_US;
+21287      %let syscc=0;
+21288      title; footnote;
+21289      ods _all_ close;
+21290      ods listing gpath="%sysfunc(pathname(work))";
+21291      ods graphics off;
+21292      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.CHILDREN (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+21292    !                                         quit;
+
+
+21293      ods path work.templat(update) sashelp.tmplmst(read);
+21294      
+21295      data Children;
+21296      input ID City$ @@;
+21297      do i=1 to 4;
+21298      input Age Smoke Symptom @@;
+21299      output;
+21300      end;
+21301      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.CHILDREN has 100 observations and 6 variables.
+
+21327      ;
+21328      proc gee data=Children descending;
+21329      class ID City;
+21330      model Symptom = City Age Smoke / dist=bin link=logit;
+21331      repeated subject=ID / type=exch covb corrw;
+21332      run;
+
+NOTE: PROC GEE is modeling the probability that Symptom='1'.
+NOTE: The PROCEDURE GEE printed page 2360.
+
+21333      
+21334      
+21335      
+21336      
+The SAS System
+
+21337      

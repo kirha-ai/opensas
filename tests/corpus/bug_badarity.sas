@@ -1,6 +1,6 @@
 /* BUG-badaritywrongtype: a wrong-arity call is a SAS ERROR, not a NOTE + a
    missing value the step keeps running past. Real SAS 9.4 rejects it at
-   COMPILE time (oracle, sasrun 2026-10-31): `x=abs(1,2);` → "ERROR 72-185:
+   COMPILE time (SAS 9.4 reference, 2026-10-31): `x=abs(1,2);` → "ERROR 72-185:
    The ABS function call has too many arguments."; `x=abs();` → "ERROR 71-185:
    The ABS function call does not have enough arguments." — the step never
    executes, rc nonzero. opensas checks arity at runtime dispatch, so the

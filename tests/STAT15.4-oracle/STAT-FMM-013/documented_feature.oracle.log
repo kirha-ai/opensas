@@ -1,0 +1,177 @@
+The SAS System
+
+3963       
+3964       /* STAT-FMM-013: FMM — PERFORMANCE
+3965        * Source: S154 / Chapter 46 / `PERFORMANCE Statement` (PDF pp. 3008–3009).
+3966        * Discriminates: Getting Started: FMM Procedure; explicit statements: PERFORMANCE
+3967        */
+3968       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+3968     ! validmemname=compatible locale=en_US;
+3969       %let syscc=0;
+3970       title; footnote;
+3971       ods _all_ close;
+3972       ods listing gpath="%sysfunc(pathname(work))";
+3973       ods graphics off;
+3974       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.CATCH (memtype=DATA).
+NOTE: Deleting WORK.FMMOUT (memtype=DATA).
+NOTE: Deleting WORK.GALAXIES (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.YEAST (memtype=DATA).
+3974     !                                         quit;
+
+
+3975       ods path work.templat(update) sashelp.tmplmst(read);
+3976       
+3977       data yeast;
+3978       input count f;
+3979       n = 5;
+3980       datalines;
+
+NOTE: The data set WORK.YEAST has 6 observations and 3 variables.
+
+3987       ;
+3988       proc fmm data=yeast seed=314159;
+3989       model count/n = / k=2;
+3990       freq f;
+3991       run;
+
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The PROCEDURE FMM printed page 247.
+
+3992       proc fmm data=yeast seed=314159;
+3993       model count/n = / k=2;
+3994       freq f;
+3995       output out=fmmout pred(components) posterior;
+3996       run;
+
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The data set WORK.FMMOUT has 6 observations and 7 variables.
+NOTE: The PROCEDURE FMM printed page 248.
+
+3997       data fmmout;
+3998       set fmmout;
+3999       PredCount_1 = post_1 * f;
+4000       PredCount_2 = post_2 * f;
+4001       run;
+
+NOTE: There were 6 observations read from the data set WORK.FMMOUT.
+NOTE: The data set WORK.FMMOUT has 6 observations and 9 variables.
+
+4002       proc print data=fmmout;
+4003       run;
+
+NOTE: There were 6 observations read from the data set WORK.FMMOUT.
+NOTE: The PROCEDURE PRINT printed page 249.
+
+4004       ods graphics on;
+4005       proc fmm data=yeast seed=12345;
+4006       model count/n = / k=2;
+4007       freq f;
+4008       performance cpucount=2;
+4009       bayes nmc=1000 nbi=200;
+4010       run;
+
+NOTE: Bayesian results for this model (no regressor variables, non-identity link) are displayed on the data scale, not the linked scale. You can obtain results 
+      on the linked (=linear) scale by requesting a Metropolis sampling algorithm.
+NOTE: The PROCEDURE FMM printed page 250.
+
+4011       ods graphics off;
+4012       data catch;
+4013       input gender $ age count @@;
+4014       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.CATCH has 52 observations and 3 variables.
+
+4028       ;
+4029       proc fmm data=catch seed=314159;
+4030       class gender;
+4031       model count = gender*age / dist=Poisson;
+4032       run;
+
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The PROCEDURE FMM printed page 251.
+
+4033       proc fmm data=catch seed=314159;
+4034       class gender;
+4035       model count = gender*age / dist=Poisson ;
+4036       model + / dist=Constant;
+4037       run;
+
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The PROCEDURE FMM printed page 252.
+
+4038       proc fmm data=catch seed=12345;
+4039       class gender;
+4040       model count = gender*age / dist=Poisson;
+4041       model + / dist=constant;
+4042       performance cpucount=2;
+4043       bayes nmc=1000 nbi=200;
+4044       run;
+
+NOTE: The PROCEDURE FMM printed page 253.
+
+4045       ods graphics on;
+4046       ods select TADPanel;
+4047       proc fmm data=catch seed=12345;
+4048       class gender;
+4049       model count = gender*age / dist=Poisson;
+4050       model + / dist=constant;
+4051       performance cpucount=2;
+4052       bayes nmc=1000 nbi=200;
+4053       run;
+
+
+4054       ods graphics off;
+4055       title "FMM Analysis of Galaxies Data";
+4056       data galaxies;
+4057       input velocity @@;
+4058       v = velocity / 1000;
+4059       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.GALAXIES has 82 observations and 2 variables.
+
+4069       ;
+4070       title2 "Three to Seven Components, Unequal Variances";
+4071       ods graphics on;
+4072       proc fmm data=galaxies criterion=AIC seed=314159;
+4073       model v = / kmin=3 kmax=7;
+4074       run;
+
+NOTE: The model with 3 components (ID=1) was selected as 'best' based on the AIC statistic.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The PROCEDURE FMM printed page 254.
+
+4075       title2 "Three to Seven Components, Equal Variances";
+4076       proc fmm data=galaxies criterion=AIC gconv=0 seed=314159;
+4077       model v = / kmin=3 kmax=7 equate=scale;
+4078       run;
+
+NOTE: The model with 4 components (ID=2) was selected as 'best' based on the AIC statistic.
+NOTE: Convergence criterion (ABSGCONV=0.00001) satisfied.
+NOTE: The PROCEDURE FMM printed page 255.
+
+4079       title2 "Five Components, Equal Variances = 0.9025";
+4080       proc fmm data=galaxies seed=314159;
+4081       model v = / K=5 equate=scale;
+4082       restrict int 0 (scale 1) = 0.9025;
+4083       run;
+
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The PROCEDURE FMM printed page 256.
+
+4084       
+4085       
+4086       
+4087       
+The SAS System
+
+4088       

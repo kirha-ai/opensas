@@ -1,0 +1,116 @@
+The SAS System
+
+20342      
+20343      /* STAT-GAM-011: GAM — ODS Table Names
+20344       * Source: S154 / Chapter 48 / `ODS Table Names` (PDF pp. 3321–3322).
+20345       * Discriminates: Getting Started: GAM Procedure
+20346       */
+20347      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+20347    ! validmemname=compatible locale=en_US;
+20348      %let syscc=0;
+20349      title; footnote;
+20350      ods _all_ close;
+20351      ods listing gpath="%sysfunc(pathname(work))";
+20352      ods graphics off;
+20353      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.EXPERIMENTA (memtype=DATA).
+NOTE: Deleting WORK.EXPERIMENTB (memtype=DATA).
+NOTE: Deleting WORK.PREDGAM (memtype=DATA).
+NOTE: Deleting WORK.PREDGAMB (memtype=DATA).
+NOTE: Deleting WORK.PREDLOESS (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+20353    !                                         quit;
+
+
+20354      ods path work.templat(update) sashelp.tmplmst(read);
+20355      
+20356      ods trace on;
+20357      title 'Patterns of Diabetes';
+20358      data diabetes;
+20359      input Age BaseDeficit CPeptide @@;
+20360      logCP = log(CPeptide);
+20361      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.DIABETES has 43 observations and 4 variables.
+
+20377      ;
+20378      ods graphics on;
+20379      proc gam data=diabetes;
+20380      model logCP = spline(Age) spline(BaseDeficit);
+20381      run;
+
+
+Output Added:
+-------------
+Name:       InputSummary
+Label:      Summary of Input
+Template:   Stat.GAM.InputSummary
+Path:       GAM.InputSummary
+-------------
+
+Output Added:
+-------------
+Name:       IterSummary
+Label:      Iteration Summary
+Template:   Stat.GAM.IterSummary
+Path:       GAM.IterSummary
+-------------
+
+Output Added:
+-------------
+Name:       ConvergenceStatus
+Label:      Convergence Status
+Template:   Stat.GAM.ConvergenceStatus
+Path:       GAM.ConvergenceStatus
+-------------
+
+Output Added:
+-------------
+Name:       ParameterEstimates
+Label:      Parameter Estimates
+Template:   Stat.Gam.ParameterEstimates
+Path:       GAM.ParameterEstimates
+-------------
+
+Output Added:
+-------------
+Name:       FitSummary
+Label:      Nonparametric Fit Summary
+Template:   Stat.Gam.FitSummary
+Path:       GAM.FitSummary
+-------------
+
+Output Added:
+-------------
+Name:       ANODEV
+Label:      Analysis of Deviance
+Template:   Stat.Gam.ANODEV
+Path:       GAM.ANODEV
+-------------
+
+Output Added:
+-------------
+Name:       SmoothingComponentPlot
+Label:      Panel 1
+Template:   Stat.Gam.Graphics.SmoothingComponentPanel
+Path:       GAM.SmoothingComponentPlots.SmoothingComponentPlot
+-------------
+NOTE: The PROCEDURE GAM printed page 2339.
+
+20382      ods trace off;
+20383      
+20384      
+20385      
+20386      
+The SAS System
+
+20387      

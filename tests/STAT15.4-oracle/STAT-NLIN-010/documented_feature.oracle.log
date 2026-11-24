@@ -1,0 +1,55 @@
+The SAS System
+
+5938       
+5939       /* STAT-NLIN-010: NLIN — CONTRAST / ESTIMATE / Confidence Intervals
+5940        * Source: S154 / Chapter 88 / `CONTRAST Statement` (PDF p. 7002); S154 / Chapter 88 / `ESTIMATE Statement` (PDF p. 7003); S154 / Chapter 88 /
+5940     ! `Confidence Intervals` (PDF pp. 7034–7035).
+5941        * Discriminates: Getting Started: NLIN Procedure
+5942        */
+5943       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+5943     ! validmemname=compatible locale=en_US;
+5944       %let syscc=0;
+5945       title; footnote;
+5946       ods _all_ close;
+5947       ods listing gpath="%sysfunc(pathname(work))";
+5948       ods graphics off;
+5949       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.CLARKE1987A (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+5949     !                                         quit;
+
+
+5950       ods path work.templat(update) sashelp.tmplmst(read);
+5951       
+5952       data Enzyme;
+5953       input Concentration Velocity @@;
+5954       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.ENZYME has 14 observations and 2 variables.
+
+5962       ;
+5963       proc nlin data=Enzyme method=marquardt hougaard;
+5964       parms theta1=155
+5965       theta2=0 to 0.07 by 0.01;
+5966       model Velocity = theta1*Concentration / (theta2 + Concentration);
+5967       run;
+
+NOTE: DER.theta1 not initialized or missing. It will be computed automatically.
+NOTE: DER.theta2 not initialized or missing. It will be computed automatically.
+NOTE: Convergence criterion met.
+NOTE: The PROCEDURE NLIN printed pages 394-395.
+
+5968       
+5969       
+5970       
+5971       
+The SAS System
+
+5972       

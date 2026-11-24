@@ -1,0 +1,7 @@
+Output Added:
+-------------
+Name:       BOXPLOT
+Label:      Panel 1
+Data Name:  GRSEG
+Path:       Boxplot.KWatts.BOXPLOT
+-------------

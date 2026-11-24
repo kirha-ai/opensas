@@ -1,0 +1,38 @@
+
+The Multtest Procedure
+
+                       Model Information
+
+Test for discrete variables                 Cochran-Armitage    
+Z-score approximation used                  Everywhere          
+Continuity correction                       0                   
+Tails for discrete tests                    Two-tailed          
+Strata weights                              None                
+P-value adjustment                          Bootstrap           
+Number of resamples                         199                 
+Seed                                        41287               
+
+
+                 Contrast Coefficients
+ 
+                                Dose
+ 
+Contrast             0MG             1MG             2MG
+
+Trend                  0               1               2
+
+
+                    p-Values
+ 
+Variable     Contrast           Raw     Bootstrap
+
+SideEff1     Trend           0.0519        0.3166
+SideEff2     Trend           0.1949        0.8693
+SideEff3     Trend           0.0662        0.5126
+SideEff4     Trend           0.0126        0.0553
+SideEff5     Trend           0.0382        0.2010
+SideEff6     Trend           0.0614        0.4070
+SideEff7     Trend           0.0095        0.0402
+SideEff8     Trend           0.0519        0.3166
+SideEff9     Trend           0.1949        0.8693
+SideEff10    Trend           0.2123        0.9246

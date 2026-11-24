@@ -1,0 +1,63 @@
+The SAS System
+
+13686      
+13687      /* STAT-CAUSALTRT-006: CAUSALTRT — BOOTSTRAP
+13688       * Source: S154 / Chapter 39 / `BOOTSTRAP Statement` (PDF pp. 2445–2448).
+13689       * Discriminates: Getting Started: CAUSALTRT Procedure
+13690       */
+13691      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+13691    ! validmemname=compatible locale=en_US;
+13692      %let syscc=0;
+13693      title; footnote;
+13694      ods _all_ close;
+13695      ods listing gpath="%sysfunc(pathname(work))";
+13696      ods graphics off;
+13697      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.DRUGS (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+13697    !                                         quit;
+
+
+13698      ods path work.templat(update) sashelp.tmplmst(read);
+13699      
+13700      data drugs; call streaminit(193); length Drug $6 Gender $1 Diabetes2 $3; do ID=1 to 200; Age=20+mod(id*7,45); BMI=20+mod(id,12); if mod(id,2) then
+13700    ! Gender='F'; else Gender='M'; if rand('bernoulli',0.5) then Drug='Drug_A'; else Drug='Drug_B'; if rand('bernoulli',0.3+0.1*(Drug='Drug_A')) then
+13700    ! Diabetes2='Yes'; else Diabetes2='No'; output; end; run;
+
+NOTE: The data set WORK.DRUGS has 200 observations and 6 variables.
+
+13701      
+13702      proc causaltrt data=drugs method=ipwr ppsmodel;
+13703      class Gender;
+13704      psmodel Drug(ref='Drug_A') = Age Gender BMI;
+13705      model Diabetes2(ref='No') / dist = bin;
+13706      run;
+
+NOTE: PROC CAUSALTRT is modeling the probability that Diabetes2='Yes'.
+NOTE: PROC CAUSALTRT is modeling the probability that Drug='Drug_B'.
+NOTE: The PROCEDURE CAUSALTRT printed pages 1879-1881.
+
+13707      proc causaltrt data=drugs method=aipw;
+13708      class Gender;
+13709      psmodel Drug(ref='Drug_A') = Age Gender BMI;
+13710      model Diabetes2(ref='No') = Age Gender BMI / dist = bin;
+13711      run;
+
+NOTE: PROC CAUSALTRT is modeling the probability that Diabetes2='Yes'.
+NOTE: PROC CAUSALTRT is modeling the probability that Drug='Drug_B'.
+NOTE: The PROCEDURE CAUSALTRT printed pages 1882-1883.
+
+13712      
+13713      
+13714      
+13715      
+The SAS System
+
+13716      

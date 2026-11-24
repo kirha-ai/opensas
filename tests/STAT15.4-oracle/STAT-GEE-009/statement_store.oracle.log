@@ -1,0 +1,62 @@
+The SAS System
+
+208        
+209        /* STAT-GEE-009: GEE — STORE
+210         * Source: S154 / Chapter 50 / `STORE Statement` (PDF pp. 3443–3444).
+211         * Discriminates: Save the fitted item store and inspect it through PROC PLM SHOW ALL.
+212         */
+213        options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+213      ! validmemname=compatible locale=en_US;
+214        %let syscc=0;
+215        title; footnote;
+216        ods _all_ close;
+217        ods listing gpath="%sysfunc(pathname(work))";
+218        ods graphics off;
+219        proc datasets library=work kill nolist;
+NOTE: Deleting WORK.CHILDREN (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK._ORACLE_INPUT (memtype=DATA).
+219      !                                         quit;
+
+
+220        ods path work.templat(update) sashelp.tmplmst(read);
+221        
+222        data Children;
+223        input ID City$ @@;
+224        do i=1 to 4;
+225        input Age Smoke Symptom @@;
+226        output;
+227        end;
+228        datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.CHILDREN has 100 observations and 6 variables.
+
+254        ;
+255        proc gee data=Children descending;
+256        class ID City;
+257        model Symptom = City Age Smoke / dist=bin link=logit;
+258        repeated subject=ID / type=exch covb corrw;
+259        
+260        store out=work._oracle_store;
+261        run;
+
+NOTE: PROC GEE is modeling the probability that Symptom='1'.
+NOTE: The GEE procedure generated the model item store WORK._ORACLE_STORE.
+NOTE: The PROCEDURE GEE printed page 8.
+
+262        
+263        proc plm restore=work._oracle_store; show all; run;
+
+NOTE: The PROCEDURE PLM printed page 9.
+
+264        
+265        
+266        
+267        
+The SAS System
+
+268        

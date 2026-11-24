@@ -1,0 +1,69 @@
+The SAS System
+
+618        
+619        /* STAT-FMM-001: FMM — Data input, variable roles, and basic options
+620         * Source: S154 / Chapter 46 / `PROC FMM Statement` (PDF pp. 2972–2986); S154 / Chapter 46 / `BY Statement` (PDF pp. 2995–2996); S154 / Chapter
+620      ! 46 / `FREQ Statement` (PDF pp. 2996–2997); S154 / Chapter 46 / `ID Statement` (PDF p. 2997); S154 / Chapter 46 / `WEIGHT Statement` (PDF p. 3015).
+621         * Discriminates: Two explicit BY groups contain identical inputs, exposing group boundaries and per-group results.
+622         */
+623        options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+623      ! validmemname=compatible locale=en_US;
+624        %let syscc=0;
+625        title; footnote;
+626        ods _all_ close;
+627        ods listing gpath="%sysfunc(pathname(work))";
+628        ods graphics off;
+629        proc datasets library=work kill nolist;
+NOTE: Deleting WORK.COEF (memtype=DATA).
+NOTE: Deleting WORK.EIGENVECTORS (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SOCIOECONOMICS (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK._ORACLE_INPUT (memtype=DATA).
+629      !                                         quit;
+
+
+630        ods path work.templat(update) sashelp.tmplmst(read);
+631        
+632        data yeast;
+633        input count f;
+634        n = 5;
+635        datalines;
+
+NOTE: The data set WORK.YEAST has 6 observations and 3 variables.
+
+642        ;
+643        data _oracle_input; set yeast; do _oracle_by=1 to 2; output; end; run;
+
+NOTE: There were 6 observations read from the data set WORK.YEAST.
+NOTE: The data set WORK._ORACLE_INPUT has 12 observations and 4 variables.
+
+644        proc sort data=_oracle_input; by _oracle_by; run;
+
+NOTE: There were 12 observations read from the data set WORK._ORACLE_INPUT.
+NOTE: The data set WORK._ORACLE_INPUT has 12 observations and 4 variables.
+
+645        proc fmm data=_oracle_input seed=314159;
+646        by _oracle_by;
+647        model count/n = / k=2;
+648        freq f;
+649        run;
+
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The above message was for the following BY group:
+      _oracle_by=1
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The above message was for the following BY group:
+      _oracle_by=2
+NOTE: The PROCEDURE FMM printed pages 81-82.
+
+650        quit;
+651        
+652        
+653        
+654        
+The SAS System
+
+655        

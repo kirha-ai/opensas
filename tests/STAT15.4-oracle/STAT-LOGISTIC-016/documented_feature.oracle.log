@@ -1,0 +1,82 @@
+The SAS System
+
+14622      
+14623      /* STAT-LOGISTIC-016: LOGISTIC — LSMEANS / LSMESTIMATE / SLICE
+14624       * Source: S154 / Chapter 79 / `LSMEANS Statement` (PDF pp. 5867–5869); S154 / Chapter 79 / `LSMESTIMATE Statement` (PDF pp. 5869–5870); S154 /
+14624    ! Chapter 79 / `SLICE Statement` (PDF pp. 5900–5901).
+14625       * Discriminates: Example 79.17: Using the LSMEANS Statement; explicit statements: LSMEANS, LSMESTIMATE, SLICE
+14626       */
+14627      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+14627    ! validmemname=compatible locale=en_US;
+14628      %let syscc=0;
+14629      title; footnote;
+14630      ods _all_ close;
+14631      ods listing gpath="%sysfunc(pathname(work))";
+14632      ods graphics off;
+14633      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.ASSOCIATION (memtype=DATA).
+NOTE: Deleting WORK.BETAS (memtype=DATA).
+NOTE: Deleting WORK.PRED (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.REMISSION (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+14633    !                                         quit;
+
+
+14634      ods path work.templat(update) sashelp.tmplmst(read);
+14635      
+14636      data Neuralgia;
+14637      input Treatment $ Sex $ Age Duration Pain $ @@;
+14638      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.NEURALGIA has 60 observations and 5 variables.
+
+14660      ;
+14661      run;
+14662      proc logistic data=Neuralgia;
+14663      class Treatment Sex / param=glm;
+14664      model Pain= Treatment|Sex Age;
+14665      oddsratio Treatment;
+14666      lsmeans Treatment / e diff oddsratio cl adjust=bon;
+14667      run;
+
+NOTE: PROC LOGISTIC is modeling the probability that Pain='No'. One way to change this to model the probability that Pain='Yes' is to specify the response 
+      variable option EVENT='Yes'.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: There were 60 observations read from the data set WORK.NEURALGIA.
+NOTE: The PROCEDURE LOGISTIC printed page 1220.
+
+14668      proc logistic data=Neuralgia;
+14669      class Treatment Sex / param=glm;
+14670      model Pain= Treatment|Sex Age;
+14671      lsmestimate treatment 1 0 -1, 0 1 -1 / joint;
+14672      run;
+
+NOTE: PROC LOGISTIC is modeling the probability that Pain='No'. One way to change this to model the probability that Pain='Yes' is to specify the response 
+      variable option EVENT='Yes'.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: There were 60 observations read from the data set WORK.NEURALGIA.
+NOTE: The PROCEDURE LOGISTIC printed page 1221.
+
+14673      proc logistic data=Neuralgia;
+14674      class Treatment Sex / param=glm;
+14675      model Pain= Treatment|Sex Age;
+14676      slice Treatment*Sex / sliceby=Sex diff oddsratio cl adjust=bon;
+14677      run;
+
+NOTE: PROC LOGISTIC is modeling the probability that Pain='No'. One way to change this to model the probability that Pain='Yes' is to specify the response 
+      variable option EVENT='Yes'.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: There were 60 observations read from the data set WORK.NEURALGIA.
+NOTE: The PROCEDURE LOGISTIC printed page 1222.
+
+14678      
+14679      
+14680      
+14681      
+The SAS System
+
+14682      

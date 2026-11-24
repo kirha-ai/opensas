@@ -1,0 +1,104 @@
+
+The HPQUANTSELECT Procedure
+
+      Performance Information
+
+Execution Mode       Single-Machine
+Number of Threads    1             
+
+
+          Data Access Information
+ 
+Data           Engine    Role     Path
+
+WORK.SAMPLE    V9        Input    On Client
+
+
+          Model Information
+
+Data Source               WORK.SAMPLE
+Dependent Variable        y          
+Class Parameterization    GLM        
+Optimization Algorithm    Interior   
+
+
+       Selection Information
+
+Selection Method             Forward
+Select Criterion             SBC    
+Stop Criterion               SBC    
+Choose Criterion             SBC    
+Effect Hierarchy Enforced    None   
+Stop Horizon                 3      
+
+
+Number of Observations Read             120
+Number of Observations Used             120
+
+
+  Class Level Information
+ 
+Class    Levels      Values
+
+group         3 *    1 2 3 
+
+* Associated Parameters Split
+
+
+                Dimensions
+
+Number of Effects                        5
+Number of Effects after Splits           7
+Number of Parameters                     7
+
+The HPQUANTSELECT Procedure
+Quantile Level = 0.5
+
+                 Selection Summary
+ 
+              Effect         Number
+      Step    Entered    Effects In           SBC 
+
+         0    Intercept           1      -85.7179 
+--------------------------------------------------
+         1    x                   2     -204.2282 
+         2    z                   3     -227.4099 
+         3    group_1             4     -238.1112*
+         4    group_2             5     -235.8470 
+         5    group_3             6     -235.8470 
+
+* Optimal Value of Criterion
+
+
+Selection stopped at a local minimum of the STOP criterion.
+
+
+ The model at step 3 is selected where SBC is -238.111.
+
+The HPQUANTSELECT Procedure
+Quantile Level = 0.5
+Selected Model
+
+Selected Effects: Intercept x z group_1
+
+
+         Fit Statistics
+
+Objective Function       41.08200
+R1                        0.50083
+Adj R1                    0.48792
+AIC                    -249.26120
+AICC                   -248.91338
+SBC                    -238.11124
+ACL                       0.34235
+
+
+                                     Parameter Estimates
+ 
+                                   Standard
+Parameter    DF      Estimate         Error      95% Confidence Limits     t Value    Pr > |t|
+
+Intercept     1       2.84748       0.15514       2.54021       3.15476      18.35      <.0001
+x             1       1.50494       0.10253       1.30188       1.70801      14.68      <.0001
+z             1      -0.72924       0.11608      -0.95916      -0.49932      -6.28      <.0001
+group_1       1      -0.64565       0.20067      -1.04312      -0.24819      -3.22      0.0017

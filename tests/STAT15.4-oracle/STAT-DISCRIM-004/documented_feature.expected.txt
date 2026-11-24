@@ -1,0 +1,571 @@
+
+Discriminant Analysis of Fisher (1936) Iris Data
+Using Normal Density Estimates with Equal Variance
+
+The DISCRIM Procedure
+
+Total Sample Size                  150          DF Total                           149
+Variables                            2          DF Within Classes                  147
+Classes                              3          DF Between Classes                   2
+
+
+Number of Observations Read            150
+Number of Observations Used            150
+
+
+                            Class Level Information
+ 
+              Variable                                                    Prior
+Species       Name          Frequency       Weight    Proportion    Probability
+
+Setosa        Setosa               50      50.0000      0.333333       0.333333
+Versicolor    Versicolor           50      50.0000      0.333333       0.333333
+Virginica     Virginica            50      50.0000      0.333333       0.333333
+
+Discriminant Analysis of Fisher (1936) Iris Data
+Using Normal Density Estimates with Equal Variance
+
+The DISCRIM Procedure
+Classification Results for Calibration Data: SASHELP.IRIS
+Cross-validation Results using Linear Discriminant Function
+
+Generalized Squared Distance Function
+
+ 2         _          -1     _     
+D (X) = (X-X    )' COV    (X-X    )
+ j          (X)j      (X)     (X)j 
+
+Posterior Probability of Membership in Each Species
+
+                   2                    2    
+Pr(j|X) = exp(-.5 D (X)) / SUM exp(-.5 D (X))
+                   j        k           k    
+
+
+              Posterior Probability of Membership in Species
+ 
+       From          Classified
+Obs    Species       into Species        Setosa    Versicolor     Virginica
+
+ 53    Versicolor    Virginica  *        0.0000        0.2130        0.7870
+100    Versicolor    Virginica  *        0.0000        0.3118        0.6882
+103    Virginica     Versicolor *        0.0000        0.8453        0.1547
+113    Virginica     Versicolor *        0.0000        0.8322        0.1678
+124    Virginica     Versicolor *        0.0000        0.8057        0.1943
+136    Virginica     Versicolor *        0.0000        0.8903        0.1097
+
+* Misclassified observation    
+
+Discriminant Analysis of Fisher (1936) Iris Data
+Using Normal Density Estimates with Equal Variance
+
+The DISCRIM Procedure
+Classification Summary for Calibration Data: SASHELP.IRIS
+Cross-validation Summary using Linear Discriminant Function
+
+Generalized Squared Distance Function
+
+ 2         _          -1     _     
+D (X) = (X-X    )' COV    (X-X    )
+ j          (X)j      (X)     (X)j 
+
+Posterior Probability of Membership in Each Species
+
+                   2                    2    
+Pr(j|X) = exp(-.5 D (X)) / SUM exp(-.5 D (X))
+                   j        k           k    
+
+
+    Number of Observations and Percent Classified into Species
+ 
+From
+Species          Setosa      Versicolor      Virginica        Total
+
+Setosa               50               0              0           50
+                 100.00            0.00           0.00       100.00
+
+Versicolor            0              48              2           50
+                   0.00           96.00           4.00       100.00
+
+Virginica             0               4             46           50
+                   0.00            8.00          92.00       100.00
+
+Total                50              52             48          150
+                  33.33           34.67          32.00       100.00
+
+Priors          0.33333         0.33333        0.33333             
+                                                                   
+
+               Error Count Estimates for Species
+ 
+                  Setosa    Versicolor    Virginica       Total
+
+Rate              0.0000        0.0400       0.0800      0.0400
+Priors            0.3333        0.3333       0.3333            
+
+Discriminant Analysis of Fisher (1936) Iris Data
+Using Normal Density Estimates with Equal Variance
+
+The DISCRIM Procedure
+Classification Summary for Test Data: WORK.PLOTDATA
+Classification Summary using Linear Discriminant Function
+
+Generalized Squared Distance Function
+
+ 2         _       -1   _  
+D (X) = (X-X )' COV  (X-X )
+ j          j            j 
+
+Posterior Probability of Membership in Each Species
+
+                   2                    2    
+Pr(j|X) = exp(-.5 D (X)) / SUM exp(-.5 D (X))
+                   j        k           k    
+
+
+    Observation Profile for Test Data
+
+Number of Observations Read          11175
+Number of Observations Used          11175
+
+
+    Number of Observations and Percent Classified into Species
+ 
+                 Setosa      Versicolor      Virginica        Total
+
+Total              3670            4243           3262        11175
+                  32.84           37.97          29.19       100.00
+
+Priors          0.33333         0.33333        0.33333             
+                                                                   
+
+Discriminant Analysis of Fisher (1936) Iris Data
+Using Normal Density Estimates with Unequal Variance
+
+The DISCRIM Procedure
+
+Total Sample Size                  150          DF Total                           149
+Variables                            2          DF Within Classes                  147
+Classes                              3          DF Between Classes                   2
+
+
+Number of Observations Read            150
+Number of Observations Used            150
+
+
+                            Class Level Information
+ 
+              Variable                                                    Prior
+Species       Name          Frequency       Weight    Proportion    Probability
+
+Setosa        Setosa               50      50.0000      0.333333       0.333333
+Versicolor    Versicolor           50      50.0000      0.333333       0.333333
+Virginica     Virginica            50      50.0000      0.333333       0.333333
+
+Discriminant Analysis of Fisher (1936) Iris Data
+Using Normal Density Estimates with Unequal Variance
+
+The DISCRIM Procedure
+Classification Results for Calibration Data: SASHELP.IRIS
+Cross-validation Results using Quadratic Discriminant Function
+
+Generalized Squared Distance Function
+
+ 2         _          -1     _                    
+D (X) = (X-X    )' COV    (X-X    ) + ln |COV    |
+ j          (X)j      (X)j    (X)j           (X)j 
+
+Posterior Probability of Membership in Each Species
+
+                   2                    2    
+Pr(j|X) = exp(-.5 D (X)) / SUM exp(-.5 D (X))
+                   j        k           k    
+
+
+              Posterior Probability of Membership in Species
+ 
+       From          Classified
+Obs    Species       into Species        Setosa    Versicolor     Virginica
+
+ 53    Versicolor    Virginica  *        0.0000        0.0903        0.9097
+100    Versicolor    Virginica  *        0.0000        0.4675        0.5325
+103    Virginica     Versicolor *        0.0000        0.7288        0.2712
+113    Virginica     Versicolor *        0.0000        0.5196        0.4804
+136    Virginica     Versicolor *        0.0000        0.8335        0.1665
+
+* Misclassified observation    
+
+Discriminant Analysis of Fisher (1936) Iris Data
+Using Normal Density Estimates with Unequal Variance
+
+The DISCRIM Procedure
+Classification Summary for Calibration Data: SASHELP.IRIS
+Cross-validation Summary using Quadratic Discriminant Function
+
+Generalized Squared Distance Function
+
+ 2         _          -1     _                    
+D (X) = (X-X    )' COV    (X-X    ) + ln |COV    |
+ j          (X)j      (X)j    (X)j           (X)j 
+
+Posterior Probability of Membership in Each Species
+
+                   2                    2    
+Pr(j|X) = exp(-.5 D (X)) / SUM exp(-.5 D (X))
+                   j        k           k    
+
+
+    Number of Observations and Percent Classified into Species
+ 
+From
+Species          Setosa      Versicolor      Virginica        Total
+
+Setosa               50               0              0           50
+                 100.00            0.00           0.00       100.00
+
+Versicolor            0              48              2           50
+                   0.00           96.00           4.00       100.00
+
+Virginica             0               3             47           50
+                   0.00            6.00          94.00       100.00
+
+Total                50              51             49          150
+                  33.33           34.00          32.67       100.00
+
+Priors          0.33333         0.33333        0.33333             
+                                                                   
+
+               Error Count Estimates for Species
+ 
+                  Setosa    Versicolor    Virginica       Total
+
+Rate              0.0000        0.0400       0.0600      0.0333
+Priors            0.3333        0.3333       0.3333            
+
+Discriminant Analysis of Fisher (1936) Iris Data
+Using Normal Density Estimates with Unequal Variance
+
+The DISCRIM Procedure
+Classification Summary for Test Data: WORK.PLOTDATA
+Classification Summary using Quadratic Discriminant Function
+
+Generalized Squared Distance Function
+
+ 2         _       -1   _              
+D (X) = (X-X )' COV  (X-X ) + ln |COV |
+ j          j      j     j           j 
+
+Posterior Probability of Membership in Each Species
+
+                   2                    2    
+Pr(j|X) = exp(-.5 D (X)) / SUM exp(-.5 D (X))
+                   j        k           k    
+
+
+    Observation Profile for Test Data
+
+Number of Observations Read          11175
+Number of Observations Used          11175
+
+
+    Number of Observations and Percent Classified into Species
+ 
+                 Setosa      Versicolor      Virginica        Total
+
+Total              1382            1345           8448        11175
+                  12.37           12.04          75.60       100.00
+
+Priors          0.33333         0.33333        0.33333             
+                                                                   
+
+Discriminant Analysis of Fisher (1936) Iris Data
+Using Kernel Density Estimates with Equal Bandwidth
+
+The DISCRIM Procedure
+
+Total Sample Size                  150          DF Total                           149
+Variables                            2          DF Within Classes                  147
+Classes                              3          DF Between Classes                   2
+
+
+Number of Observations Read            150
+Number of Observations Used            150
+
+
+                            Class Level Information
+ 
+              Variable                                                    Prior
+Species       Name          Frequency       Weight    Proportion    Probability
+
+Setosa        Setosa               50      50.0000      0.333333       0.333333
+Versicolor    Versicolor           50      50.0000      0.333333       0.333333
+Virginica     Virginica            50      50.0000      0.333333       0.333333
+
+Discriminant Analysis of Fisher (1936) Iris Data
+Using Kernel Density Estimates with Equal Bandwidth
+
+The DISCRIM Procedure
+Classification Results for Calibration Data: SASHELP.IRIS
+Cross-validation Results using Normal Kernel Density
+
+Squared Distance Function
+
+ 2                  -1     
+D (X,Y) = (X-Y)' COV  (X-Y)
+
+Posterior Probability of Membership in Each Species
+
+          -1               2           2  
+F(X|j) = n   SUM exp( -.5 D (X,Y  ) / R  )
+          j   i                 ji        
+
+Pr(j|X) = PRIOR  F(X|j) / SUM PRIOR  F(X|k)
+               j           k       k       
+
+
+              Posterior Probability of Membership in Species
+ 
+       From          Classified
+Obs    Species       into Species        Setosa    Versicolor     Virginica
+
+ 53    Versicolor    Virginica  *        0.0000        0.0800        0.9200
+100    Versicolor    Virginica  *        0.0000        0.4123        0.5877
+103    Virginica     Versicolor *        0.0000        0.7474        0.2526
+113    Virginica     Versicolor *        0.0000        0.5863        0.4137
+136    Virginica     Versicolor *        0.0000        0.8358        0.1642
+
+* Misclassified observation    
+
+Discriminant Analysis of Fisher (1936) Iris Data
+Using Kernel Density Estimates with Equal Bandwidth
+
+The DISCRIM Procedure
+Classification Summary for Calibration Data: SASHELP.IRIS
+Cross-validation Summary using Normal Kernel Density
+
+Squared Distance Function
+
+ 2                  -1     
+D (X,Y) = (X-Y)' COV  (X-Y)
+
+Posterior Probability of Membership in Each Species
+
+          -1               2           2  
+F(X|j) = n   SUM exp( -.5 D (X,Y  ) / R  )
+          j   i                 ji        
+
+Pr(j|X) = PRIOR  F(X|j) / SUM PRIOR  F(X|k)
+               j           k       k       
+
+
+    Number of Observations and Percent Classified into Species
+ 
+From
+Species          Setosa      Versicolor      Virginica        Total
+
+Setosa               50               0              0           50
+                 100.00            0.00           0.00       100.00
+
+Versicolor            0              48              2           50
+                   0.00           96.00           4.00       100.00
+
+Virginica             0               3             47           50
+                   0.00            6.00          94.00       100.00
+
+Total                50              51             49          150
+                  33.33           34.00          32.67       100.00
+
+Priors          0.33333         0.33333        0.33333             
+                                                                   
+
+               Error Count Estimates for Species
+ 
+                  Setosa    Versicolor    Virginica       Total
+
+Rate              0.0000        0.0400       0.0600      0.0333
+Priors            0.3333        0.3333       0.3333            
+
+Discriminant Analysis of Fisher (1936) Iris Data
+Using Kernel Density Estimates with Equal Bandwidth
+
+The DISCRIM Procedure
+Classification Summary for Test Data: WORK.PLOTDATA
+Classification Summary using Normal Kernel Density
+
+Squared Distance Function
+
+ 2                  -1     
+D (X,Y) = (X-Y)' COV  (X-Y)
+
+Posterior Probability of Membership in Each Species
+
+          -1               2           2  
+F(X|j) = n   SUM exp( -.5 D (X,Y  ) / R  )
+          j   i                 ji        
+
+Pr(j|X) = PRIOR  F(X|j) / SUM PRIOR  F(X|k)
+               j           k       k       
+
+
+    Observation Profile for Test Data
+
+Number of Observations Read          11175
+Number of Observations Used          11175
+
+
+    Number of Observations and Percent Classified into Species
+ 
+                 Setosa      Versicolor      Virginica        Total
+
+Total              3195            2492           5488        11175
+                  28.59           22.30          49.11       100.00
+
+Priors          0.33333         0.33333        0.33333             
+                                                                   
+
+Discriminant Analysis of Fisher (1936) Iris Data
+Using Kernel Density Estimates with Unequal Bandwidth
+
+The DISCRIM Procedure
+
+Total Sample Size                  150          DF Total                           149
+Variables                            2          DF Within Classes                  147
+Classes                              3          DF Between Classes                   2
+
+
+Number of Observations Read            150
+Number of Observations Used            150
+
+
+                            Class Level Information
+ 
+              Variable                                                    Prior
+Species       Name          Frequency       Weight    Proportion    Probability
+
+Setosa        Setosa               50      50.0000      0.333333       0.333333
+Versicolor    Versicolor           50      50.0000      0.333333       0.333333
+Virginica     Virginica            50      50.0000      0.333333       0.333333
+
+Discriminant Analysis of Fisher (1936) Iris Data
+Using Kernel Density Estimates with Unequal Bandwidth
+
+The DISCRIM Procedure
+Classification Results for Calibration Data: SASHELP.IRIS
+Cross-validation Results using Normal Kernel Density
+
+Squared Distance Function
+
+ 2                  -1     
+D (X,Y) = (X-Y)' COV  (X-Y)
+                    j      
+
+Posterior Probability of Membership in Each Species
+
+          -1               2           2  
+F(X|j) = n   SUM exp( -.5 D (X,Y  ) / R  )
+          j   i                 ji        
+
+Pr(j|X) = PRIOR  F(X|j) / SUM PRIOR  F(X|k)
+               j           k       k       
+
+
+              Posterior Probability of Membership in Species
+ 
+       From          Classified
+Obs    Species       into Species        Setosa    Versicolor     Virginica
+
+ 53    Versicolor    Virginica  *        0.0000        0.0516        0.9484
+100    Versicolor    Virginica  *        0.0000        0.3773        0.6227
+103    Virginica     Versicolor *        0.0000        0.7826        0.2174
+136    Virginica     Versicolor *        0.0000        0.8802        0.1198
+
+* Misclassified observation    
+
+Discriminant Analysis of Fisher (1936) Iris Data
+Using Kernel Density Estimates with Unequal Bandwidth
+
+The DISCRIM Procedure
+Classification Summary for Calibration Data: SASHELP.IRIS
+Cross-validation Summary using Normal Kernel Density
+
+Squared Distance Function
+
+ 2                  -1     
+D (X,Y) = (X-Y)' COV  (X-Y)
+                    j      
+
+Posterior Probability of Membership in Each Species
+
+          -1               2           2  
+F(X|j) = n   SUM exp( -.5 D (X,Y  ) / R  )
+          j   i                 ji        
+
+Pr(j|X) = PRIOR  F(X|j) / SUM PRIOR  F(X|k)
+               j           k       k       
+
+
+    Number of Observations and Percent Classified into Species
+ 
+From
+Species          Setosa      Versicolor      Virginica        Total
+
+Setosa               50               0              0           50
+                 100.00            0.00           0.00       100.00
+
+Versicolor            0              48              2           50
+                   0.00           96.00           4.00       100.00
+
+Virginica             0               2             48           50
+                   0.00            4.00          96.00       100.00
+
+Total                50              50             50          150
+                  33.33           33.33          33.33       100.00
+
+Priors          0.33333         0.33333        0.33333             
+                                                                   
+
+               Error Count Estimates for Species
+ 
+                  Setosa    Versicolor    Virginica       Total
+
+Rate              0.0000        0.0400       0.0400      0.0267
+Priors            0.3333        0.3333       0.3333            
+
+Discriminant Analysis of Fisher (1936) Iris Data
+Using Kernel Density Estimates with Unequal Bandwidth
+
+The DISCRIM Procedure
+Classification Summary for Test Data: WORK.PLOTDATA
+Classification Summary using Normal Kernel Density
+
+Squared Distance Function
+
+ 2                  -1     
+D (X,Y) = (X-Y)' COV  (X-Y)
+                    j      
+
+Posterior Probability of Membership in Each Species
+
+          -1               2           2  
+F(X|j) = n   SUM exp( -.5 D (X,Y  ) / R  )
+          j   i                 ji        
+
+Pr(j|X) = PRIOR  F(X|j) / SUM PRIOR  F(X|k)
+               j           k       k       
+
+
+    Observation Profile for Test Data
+
+Number of Observations Read          11175
+Number of Observations Used          11175
+
+
+    Number of Observations and Percent Classified into Species
+ 
+                 Setosa      Versicolor      Virginica        Total
+
+Total              1370            1505           8300        11175
+                  12.26           13.47          74.27       100.00
+
+Priors          0.33333         0.33333        0.33333             
+                                                                   

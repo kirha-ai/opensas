@@ -1,0 +1,61 @@
+The SAS System
+
+4987       
+4988       /* STAT-HPQUANTSELECT-009: HPQUANTSELECT — Diagnostic Statistics
+4989        * Source: S154 / Chapter 66 / `Diagnostic Statistics` (PDF p. 5002).
+4990        * Discriminates: Seeded synthetic quantile-regression fixture: Diagnostic Statistics
+4991        */
+4992       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+4992     ! validmemname=compatible locale=en_US;
+4993       %let syscc=0;
+4994       title; footnote;
+4995       ods _all_ close;
+4996       ods listing gpath="%sysfunc(pathname(work))";
+4997       ods graphics off;
+4998       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SAMPLE (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+4998     !                                         quit;
+
+
+4999       ods path work.templat(update) sashelp.tmplmst(read);
+5000       
+5001       data sample;
+5002       call streaminit(314159);
+5003       do id=1 to 120;
+5004        x=rand('normal'); z=rand('normal'); w=rand('normal'); group=1+mod(id,3);
+5005        y=2+1.5*x-0.6*z+0.4*group+rand('normal');
+5006        role=mod(id,4); output;
+5007       end;
+5008       run;
+
+NOTE: The data set WORK.SAMPLE has 120 observations and 7 variables.
+
+5009       
+5010       proc hpquantselect data=sample;
+5011       class group;
+5012       model y=x z w group / quantile=0.5 clb;
+5013       id id;
+5014       output out=predicted p=pred r=resid stdp=se lclm=lo uclm=hi;
+5015       performance nthreads=1;
+5016       run;
+
+NOTE: The HPQUANTSELECT procedure is executing in single-machine mode.
+NOTE: The data set WORK.PREDICTED has 120 observations and 6 variables.
+NOTE: The PROCEDURE HPQUANTSELECT printed pages 193-194.
+
+5017       proc print data=predicted(obs=10); run;
+
+NOTE: There were 10 observations read from the data set WORK.PREDICTED.
+NOTE: The PROCEDURE PRINT printed page 195.
+
+5018       
+5019       
+5020       
+5021       
+The SAS System
+
+5022       

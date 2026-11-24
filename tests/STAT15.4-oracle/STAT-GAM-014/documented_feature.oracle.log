@@ -1,0 +1,106 @@
+The SAS System
+
+20488      
+20489      /* STAT-GAM-014: GAM — Official examples and feature integration regression
+20490       * Source: S154 / Chapter 48 / `Examples: GAM Procedure` (PDF pp. 3323–3345).
+20491       * Discriminates: Example 48.2: Poisson Regression Analysis of Component Reliability
+20492       */
+20493      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+20493    ! validmemname=compatible locale=en_US;
+20494      %let syscc=0;
+20495      title; footnote;
+20496      ods _all_ close;
+20497      ods listing gpath="%sysfunc(pathname(work))";
+20498      ods graphics off;
+20499      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.DIABETES (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+20499    !                                         quit;
+
+
+20500      ods path work.templat(update) sashelp.tmplmst(read);
+20501      
+20502      title 'Analysis of Component Reliability';
+20503      data equip;
+20504      input year month removals @@;
+20505      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.EQUIP has 48 observations and 3 variables.
+
+20522      ;
+20523      title2 'Two-way model';
+20524      proc genmod data=equip;
+20525      class year month;
+20526      model removals=year month / dist=Poisson link=log type3;
+20527      run;
+
+NOTE: Algorithm converged.
+NOTE: The scale parameter was held fixed.
+NOTE: The PROCEDURE GENMOD printed page 2342.
+
+20528      title2 'One-way model';
+20529      proc gam data=equip;
+20530      class month;
+20531      model removals=param(month) / dist=Poisson;
+20532      output out=est p;
+20533      run;
+
+NOTE: The data set WORK.EST has 48 observations and 4 variables.
+NOTE: The PROCEDURE GAM printed page 2343.
+
+20534      proc sort data=est;
+20535      by month;
+20536      run;
+
+NOTE: There were 48 observations read from the data set WORK.EST.
+NOTE: The data set WORK.EST has 48 observations and 4 variables.
+
+20537      proc sgplot data=est;
+20538      title "Predicted Seasonal Trend";
+20539      yaxis label="Number of Removals";
+20540      xaxis integer values=(1 to 12);
+20541      scatter x=Month y=Removals / name="points"
+20542      legendLabel="Removals";
+20543      series x=Month y=p_Removals / name="line"
+20544      legendLabel="Predicted Removals"
+20545      lineattrs = GRAPHFIT;
+20546      discretelegend "points" "line";
+20547      run;
+
+NOTE: Listing image output written to /saswork/SAS_work5D120001108E_odaws02-euw1.oda.sas.com/SAS_workCCDC0001108E_odaws02-euw1.oda.sas.com/SGPlot8.png.
+NOTE: There were 48 observations read from the data set WORK.EST.
+
+20548      title 'Analysis of Component Reliability';
+20549      title2 'Spline model';
+20550      proc gam data=equip;
+20551      model removals=spline(month) / dist=Poisson method=gcv;
+20552      run;
+
+NOTE: The PROCEDURE GAM printed page 2344.
+
+20553      ods graphics on;
+20554      proc gam data=equip plots=components(clm);
+20555      model removals=spline(month) / dist=Poisson method=gcv;
+20556      run;
+
+NOTE: The PROCEDURE GAM printed page 2345.
+
+20557      ods graphics off;
+20558      run;
+20559      quit;
+20560      
+20561      
+20562      
+20563      
+The SAS System
+
+20564      

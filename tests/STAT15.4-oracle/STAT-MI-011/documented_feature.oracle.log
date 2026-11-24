@@ -1,0 +1,72 @@
+The SAS System
+
+2710       
+2711       /* STAT-MI-011: MI — MCMC / MCMC Method for Arbitrary Missing Multivariate Normal Data / Producing Monotone Missingness with the MCMC Method
+2712        * Source: S154 / Chapter 82 / `MCMC Statement` (PDF pp. 6436–6440); S154 / Chapter 82 / `MCMC Method for Arbitrary Missing Multivariate Normal
+2712     ! Data` (PDF pp. 6467–6471); S154 / Chapter 82 / `Producing Monotone Missingness with the MCMC Method` (PDF pp. 6471–6473).
+2713        * Discriminates: Example 82.10: Producing Monotone Missingness with MCMC; explicit statements: MCMC
+2714        */
+2715       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+2715     ! validmemname=compatible locale=en_US;
+2716       %let syscc=0;
+2717       title; footnote;
+2718       ods _all_ close;
+2719       ods listing gpath="%sysfunc(pathname(work))";
+2720       ods graphics off;
+2721       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.FITNESS1 (memtype=DATA).
+NOTE: Deleting WORK.OUTEX14 (memtype=DATA).
+NOTE: Deleting WORK.OUTEX14A (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+2721     !                                         quit;
+
+
+2722       ods path work.templat(update) sashelp.tmplmst(read);
+2723       
+2724       data Fitness1;
+2725       input Oxygen RunTime RunPulse @@;
+2726       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.FITNESS1 has 31 observations and 3 variables.
+
+2743       ;
+2744       run;
+2745       proc mi data=Fitness1 seed=17655417 out=outex10;
+2746       mcmc impute=monotone;
+2747       var Oxygen RunTime RunPulse;
+2748       run;
+
+WARNING: The default number of imputations has been changed from 5 to 25.
+NOTE: The EM algorithm (MLE) converges in 12 iterations.
+NOTE: The EM algorithm (posterior mode) converges in 7 iterations.
+NOTE: The data set WORK.OUTEX10 has 775 observations and 4 variables.
+NOTE: The PROCEDURE MI printed page 232.
+
+2749       proc mi data=outex10 seed=15541 nimpute=0;
+2750       var Oxygen RunTime RunPulse;
+2751       run;
+
+NOTE: The PROCEDURE MI printed page 233.
+
+2752       proc mi data=outex10 nimpute=1 seed=51343672 out=outex10a;
+2753       monotone method=reg;
+2754       var Oxygen RunTime RunPulse;
+2755       by _Imputation_;
+2756       run;
+
+NOTE: The data set WORK.OUTEX10A has 775 observations and 4 variables.
+NOTE: The PROCEDURE MI printed pages 234-258.
+
+2757       
+2758       
+2759       
+2760       
+The SAS System
+
+2761       

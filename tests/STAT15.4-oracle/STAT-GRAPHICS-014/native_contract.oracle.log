@@ -1,0 +1,111 @@
+The SAS System
+
+2408       
+2409       /* STAT-GRAPHICS-014: ODS graphics — Changing the Default Markers and Lines / Changing the Default Style
+2410        * Source: S154 / Chapter 24 / `Changing the Default Markers and Lines` (PDF pp. 753–761); S154 / Chapter 24 / `Changing the Default Style` (PDF
+2410     ! pp. 761–763).
+2411        * Discriminates: ODS graphics enablement, explicit SVG format/size, graph identity and generated image file names
+2412        */
+2413       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+2413     ! validmemname=compatible locale=en_US;
+2414       %let syscc=0;
+2415       title; footnote;
+2416       ods _all_ close;
+2417       ods listing gpath="%sysfunc(pathname(work))";
+2418       ods graphics off;
+2419       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.GRAPH_FILES (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SAMPLE (memtype=DATA).
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+2419     !                                         quit;
+
+
+2420       ods path work.templat(update) sashelp.tmplmst(read);
+2421       
+2422       options dlcreatedir; libname _gpath "%sysfunc(pathname(work))/stat_graphics_014"; libname _gpath clear;
+NOTE: Library _GPATH was created.
+NOTE: Libref _GPATH was successfully assigned as follows: 
+      Engine:        V9 
+      Physical Name: /saswork/SAS_work5D120001108E_odaws02-euw1.oda.sas.com/SAS_workCCDC0001108E_odaws02-euw1.oda.sas.com/stat_graphics_014
+NOTE: Libref _GPATH has been deassigned.
+2423       ods listing gpath="%sysfunc(pathname(work))/stat_graphics_014";
+2424       ods graphics on / reset=all imagename="oracle" imagefmt=svg width=5in height=3in;
+2425       ods trace on;
+2426       data sample;
+2427        input x z y group $ weight freq;
+2428        datalines;
+
+NOTE: The data set WORK.SAMPLE has 12 observations and 6 variables.
+
+2441       ;
+2442       run;
+2443       proc reg data=sample plots(only)=fitplot; model y=x; run;
+
+
+Output Added:
+-------------
+Name:       NObs
+Label:      Number of Observations
+Template:   Stat.Reg.NObs
+Path:       Reg.MODEL1.Fit.y.NObs
+-------------
+
+Output Added:
+-------------
+Name:       ANOVA
+Label:      Analysis of Variance
+Template:   Stat.REG.ANOVA
+Path:       Reg.MODEL1.Fit.y.ANOVA
+-------------
+
+Output Added:
+-------------
+Name:       FitStatistics
+Label:      Fit Statistics
+Template:   Stat.REG.FitStatistics
+Path:       Reg.MODEL1.Fit.y.FitStatistics
+-------------
+
+Output Added:
+-------------
+Name:       ParameterEstimates
+Label:      Parameter Estimates
+Template:   Stat.REG.ParameterEstimates
+Path:       Reg.MODEL1.Fit.y.ParameterEstimates
+-------------
+
+Output Added:
+-------------
+Name:       FitPlot
+Label:      Fit Plot
+Template:   Stat.REG.Graphics.Fit
+Path:       Reg.MODEL1.ObswiseStats.y.FitPlot
+-------------
+2443     !                                                           quit;
+
+NOTE: The PROCEDURE REG printed page 111.
+
+2444       ods trace off; ods graphics off;
+2445       data graph_files; length name $128; rc=filename('_gdir',"%sysfunc(pathname(work))/stat_graphics_014"); did=dopen('_gdir'); if did then do; do i=1 to
+2445     ! dnum(did); name=dread(did,i); if lowcase(scan(name,-1,'.')) in ('svg','png') then output; end; rc=dclose(did); end; keep name; run;
+
+NOTE: The data set WORK.GRAPH_FILES has 1 observations and 1 variables.
+
+2446       proc print data=graph_files noobs; run;
+
+NOTE: There were 1 observations read from the data set WORK.GRAPH_FILES.
+NOTE: The PROCEDURE PRINT printed page 112.
+
+2447       
+2448       
+2449       
+2450       
+The SAS System
+
+2451       

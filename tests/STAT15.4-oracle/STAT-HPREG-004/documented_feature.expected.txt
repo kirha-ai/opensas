@@ -1,0 +1,2545 @@
+
+          Oracle
+Role       ASE
+
+TEST     25.5784
+TRAIN    25.4008
+VAL      25.8993
+
+          Oracle
+Role       ASE
+
+TEST     25.5784
+TRAIN    25.4008
+VAL      25.8993
+
+The HPREG Procedure
+
+      Performance Information
+
+Execution Mode       Single-Machine
+Number of Threads    2             
+
+
+             Data Access Information
+ 
+Data                 Engine    Role     Path
+
+WORK.ANALYSISDATA    V9        Input    On Client
+
+
+             Model Information
+
+Data Source               WORK.ANALYSISDATA
+Dependent Variable        y                
+Class Parameterization    GLM              
+
+
+               Selection Information
+
+Selection Method                  Stepwise          
+Select Criterion                  Significance Level
+Stop Criterion                    Significance Level
+Choose Criterion                  Validation ASE    
+Effect Hierarchy Enforced         Single            
+Entry Significance Level (SLE)    0.1               
+Stay Significance Level (SLS)     0.15              
+Stop Horizon                      1                 
+
+
+Number of Observations Read                          15000
+Number of Observations Used                          15000
+Number of Observations Used for Training              5000
+Number of Observations Used for Validation            5000
+Number of Observations Used for Testing               5000
+
+
+            Class Level Information
+ 
+Class    Levels    Values
+
+c1            8    1 2 3 4 5 6 7 8             
+c2            4    0 1 2 3                     
+c3            5    tiny small average big huge 
+
+
+           Dimensions
+
+Number of Effects            278
+Number of Parameters         661
+
+The HPREG Procedure
+Stepwise Selection: Step 0
+Effects Included: Intercept 
+
+                            Analysis of Variance
+ 
+                                  Sum of           Mean
+Source                 DF        Squares         Square    F Value    Pr > F
+
+Model                   0    2.32831E-10              .        .       .    
+Error                4999         493017       98.62310                     
+Corrected Total      4999         493017                                    
+
+
+Root MSE              9.93092
+R-Square          4.44089E-16
+Adj R-Sq          3.33067E-16
+AIC                     27960
+AICC                    27960
+SBC                     22964
+ASE (Train)          98.60338
+ASE (Validate)       98.38953
+ASE (Test)           98.20385
+
+
+                                 Parameter Estimates
+ 
+                                   Standardized        Standard
+Parameter    DF        Estimate        Estimate           Error    t Value    Pr > |t|
+
+Intercept     1       21.597069               0        0.140444     153.78      <.0001
+
+The HPREG Procedure
+Stepwise Selection: Step 1
+Effect Entered: c1 
+
+                            Analysis of Variance
+ 
+                                  Sum of           Mean
+Source                 DF        Squares         Square    F Value    Pr > F
+
+Model                   7         321949          45993    1342.13    <.0001
+Error                4992         171068       34.26839                     
+Corrected Total      4999         493017                                    
+
+
+Root MSE              5.85392
+R-Square              0.65302
+Adj R-Sq              0.65253
+AIC                     22681
+AICC                    22681
+SBC                     17731
+ASE (Train)          34.21356
+ASE (Validate)       34.85722
+ASE (Test)           36.00842
+
+
+                                 Parameter Estimates
+ 
+                                   Standardized        Standard
+Parameter    DF        Estimate        Estimate           Error    t Value    Pr > |t|
+
+Intercept     1       17.305285               0        0.234157      73.90      <.0001
+c1 1          1        0.390736        0.013014        0.331148       1.18      0.2381
+c1 2          1        0.400790        0.013348        0.331148       1.21      0.2262
+c1 3          1       24.388357        0.812261        0.331148      73.65      <.0001
+c1 4          1        0.257206        0.008566        0.331148       0.78      0.4374
+c1 5          1        0.409887        0.013651        0.331148       1.24      0.2159
+c1 6          1        0.299206        0.009965        0.331148       0.90      0.3663
+c1 7          1        8.188093        0.272707        0.331148      24.73      <.0001
+c1 8          0               0               0               .        .         .    
+
+The HPREG Procedure
+Stepwise Selection: Step 2
+Effect Entered: x7 
+
+                            Analysis of Variance
+ 
+                                  Sum of           Mean
+Source                 DF        Squares         Square    F Value    Pr > F
+
+Model                   8         332587          41573    1293.35    <.0001
+Error                4991         160430       32.14393                     
+Corrected Total      4999         493017                                    
+
+
+Root MSE              5.66956
+R-Square              0.67459
+Adj R-Sq              0.67407
+AIC                     22362
+AICC                    22362
+SBC                     17419
+ASE (Train)          32.08607
+ASE (Validate)       32.55306
+ASE (Test)           33.11996
+
+
+                                 Parameter Estimates
+ 
+                                   Standardized        Standard
+Parameter    DF        Estimate        Estimate           Error    t Value    Pr > |t|
+
+Intercept     1       14.697452               0        0.268292      54.78      <.0001
+c1 1          1        0.376455        0.012538        0.320720       1.17      0.2405
+c1 2          1        0.510855        0.017014        0.320776       1.59      0.1113
+c1 3          1       24.462104        0.814717        0.320744      76.27      <.0001
+c1 4          1        0.318523        0.010609        0.320737       0.99      0.3207
+c1 5          1        0.426548        0.014206        0.320720       1.33      0.1836
+c1 6          1        0.373758        0.012448        0.320745       1.17      0.2440
+c1 7          1        8.254393        0.274915        0.320740      25.74      <.0001
+c1 8          0               0               0               .        .         .    
+x7            1        5.106291        0.146944        0.280696      18.19      <.0001
+
+The HPREG Procedure
+Stepwise Selection: Step 3
+Effect Entered: x6 
+
+                            Analysis of Variance
+ 
+                                  Sum of           Mean
+Source                 DF        Squares         Square    F Value    Pr > F
+
+Model                   9         339587          37732    1227.15    <.0001
+Error                4990         153430       30.74752                     
+Corrected Total      4999         493017                                    
+
+
+Root MSE              5.54504
+R-Square              0.68879
+Adj R-Sq              0.68823
+AIC                     22141
+AICC                    22141
+SBC                     17204
+ASE (Train)          30.68602
+ASE (Validate)       31.06463
+ASE (Test)           31.70101
+
+
+                                 Parameter Estimates
+ 
+                                   Standardized        Standard
+Parameter    DF        Estimate        Estimate           Error    t Value    Pr > |t|
+
+Intercept     1       12.677401               0        0.294580      43.04      <.0001
+c1 1          1        0.348132        0.011595        0.313682       1.11      0.2671
+c1 2          1        0.463786        0.015447        0.313746       1.48      0.1394
+c1 3          1       24.457364        0.814559        0.313700      77.96      <.0001
+c1 4          1        0.272724        0.009083        0.313707       0.87      0.3847
+c1 5          1        0.410154        0.013660        0.313678       1.31      0.1911
+c1 6          1        0.341800        0.011384        0.313708       1.09      0.2760
+c1 7          1        8.272432        0.275516        0.313698      26.37      <.0001
+c1 8          0               0               0               .        .         .    
+x6            1        4.141773        0.119190        0.274495      15.09      <.0001
+x7            1        5.047919        0.145265        0.274558      18.39      <.0001
+
+The HPREG Procedure
+Stepwise Selection: Step 4
+Effect Entered: x20 
+
+                            Analysis of Variance
+ 
+                                  Sum of           Mean
+Source                 DF        Squares         Square    F Value    Pr > F
+
+Model                  10         346355          34635    1178.19    <.0001
+Error                4989         146662       29.39710                     
+Corrected Total      4999         493017                                    
+
+
+Root MSE              5.42191
+R-Square              0.70252
+Adj R-Sq              0.70192
+AIC                     21917
+AICC                    21918
+SBC                     16987
+ASE (Train)          29.33243
+ASE (Validate)       29.70780
+ASE (Test)           30.03315
+
+
+                                 Parameter Estimates
+ 
+                                   Standardized        Standard
+Parameter    DF        Estimate        Estimate           Error    t Value    Pr > |t|
+
+Intercept     1       10.695536               0        0.316270      33.82      <.0001
+c1 1          1        0.245799        0.008186        0.306790       0.80      0.4231
+c1 2          1        0.464084        0.015456        0.306779       1.51      0.1304
+c1 3          1       24.430993        0.813681        0.306739      79.65      <.0001
+c1 4          1        0.279037        0.009293        0.306741       0.91      0.3630
+c1 5          1        0.373251        0.012431        0.306722       1.22      0.2237
+c1 6          1        0.335030        0.011158        0.306742       1.09      0.2748
+c1 7          1        8.239750        0.274427        0.306739      26.86      <.0001
+c1 8          0               0               0               .        .         .    
+x6            1        4.103187        0.118079        0.268412      15.29      <.0001
+x7            1        5.107439        0.146977        0.268490      19.02      <.0001
+x20           1        4.048827        0.117229        0.266841      15.17      <.0001
+
+The HPREG Procedure
+Stepwise Selection: Step 5
+Effect Entered: x6*x7 
+
+                            Analysis of Variance
+ 
+                                  Sum of           Mean
+Source                 DF        Squares         Square    F Value    Pr > F
+
+Model                  11         349590          31781    1105.26    <.0001
+Error                4988         143427       28.75435                     
+Corrected Total      4999         493017                                    
+
+
+Root MSE              5.36231
+R-Square              0.70908
+Adj R-Sq              0.70844
+AIC                     21808
+AICC                    21808
+SBC                     16884
+ASE (Train)          28.68534
+ASE (Validate)       29.22098
+ASE (Test)           29.64946
+
+
+                                 Parameter Estimates
+ 
+                                   Standardized        Standard
+Parameter    DF        Estimate        Estimate           Error    t Value    Pr > |t|
+
+Intercept     1       13.070811               0        0.384683      33.98      <.0001
+c1 1          1        0.194088        0.006464        0.303457       0.64      0.5225
+c1 2          1        0.458563        0.015273        0.303407       1.51      0.1308
+c1 3          1       24.446470        0.814197        0.303371      80.58      <.0001
+c1 4          1        0.263738        0.008784        0.303373       0.87      0.3847
+c1 5          1        0.388691        0.012945        0.303354       1.28      0.2001
+c1 6          1        0.316536        0.010542        0.303375       1.04      0.2968
+c1 7          1        8.276629        0.275655        0.303387      27.28      <.0001
+c1 8          0               0               0               .        .         .    
+x6            1       -0.826796       -0.023793        0.535233      -1.54      0.1225
+x7            1        0.272165        0.007832        0.527537       0.52      0.6059
+x6*x7         1        9.824528        0.215950        0.926184      10.61      <.0001
+x20           1        4.135697        0.119744        0.264035      15.66      <.0001
+
+The HPREG Procedure
+Stepwise Selection: Step 6
+Effect Entered: x10 
+
+                            Analysis of Variance
+ 
+                                  Sum of           Mean
+Source                 DF        Squares         Square    F Value    Pr > F
+
+Model                  12         352706          29392    1044.68    <.0001
+Error                4987         140311       28.13525                     
+Corrected Total      4999         493017                                    
+
+
+Root MSE              5.30427
+R-Square              0.71540
+Adj R-Sq              0.71472
+AIC                     21700
+AICC                    21700
+SBC                     16783
+ASE (Train)          28.06210
+ASE (Validate)       28.66830
+ASE (Test)           28.70023
+
+
+                                 Parameter Estimates
+ 
+                                   Standardized        Standard
+Parameter    DF        Estimate        Estimate           Error    t Value    Pr > |t|
+
+Intercept     1       11.749724               0        0.400690      29.32      <.0001
+c1 1          1        0.224265        0.007469        0.300186       0.75      0.4550
+c1 2          1        0.418649        0.013943        0.300147       1.39      0.1631
+c1 3          1       24.449080        0.814284        0.300087      81.47      <.0001
+c1 4          1        0.241487        0.008043        0.300096       0.80      0.4210
+c1 5          1        0.368384        0.012269        0.300077       1.23      0.2196
+c1 6          1        0.276732        0.009217        0.300115       0.92      0.3565
+c1 7          1        8.329392        0.277413        0.300145      27.75      <.0001
+c1 8          0               0               0               .        .         .    
+x6            1       -0.855515       -0.024620        0.529446      -1.62      0.1062
+x7            1        0.295353        0.008499        0.521832       0.57      0.5714
+x6*x7         1        9.758983        0.214509        0.916181      10.65      <.0001
+x10           1        2.737374        0.079591        0.260104      10.52      <.0001
+x20           1        4.104263        0.118834        0.261194      15.71      <.0001
+
+The HPREG Procedure
+Stepwise Selection: Step 7
+Effect Entered: x1 
+
+                            Analysis of Variance
+ 
+                                  Sum of           Mean
+Source                 DF        Squares         Square    F Value    Pr > F
+
+Model                  13         355281          27329     989.31    <.0001
+Error                4986         137736       27.62453                     
+Corrected Total      4999         493017                                    
+
+
+Root MSE              5.25590
+R-Square              0.72063
+Adj R-Sq              0.71990
+AIC                     21610
+AICC                    21610
+SBC                     16699
+ASE (Train)          27.54718
+ASE (Validate)       28.32504
+ASE (Test)           28.06084
+
+
+                                 Parameter Estimates
+ 
+                                   Standardized        Standard
+Parameter    DF        Estimate        Estimate           Error    t Value    Pr > |t|
+
+Intercept     1       10.569944               0        0.415419      25.44      <.0001
+c1 1          1        0.272381        0.009072        0.297491       0.92      0.3599
+c1 2          1        0.468109        0.015591        0.297455       1.57      0.1156
+c1 3          1       24.462869        0.814743        0.297354      82.27      <.0001
+c1 4          1        0.251177        0.008366        0.297362       0.84      0.3983
+c1 5          1        0.395141        0.013160        0.297354       1.33      0.1840
+c1 6          1        0.337484        0.011240        0.297445       1.13      0.2566
+c1 7          1        8.357516        0.278349        0.297423      28.10      <.0001
+c1 8          0               0               0               .        .         .    
+x1            1        2.493367        0.072338        0.258272       9.65      <.0001
+x6            1       -0.998612       -0.028738        0.524828      -1.90      0.0571
+x7            1        0.199656        0.005746        0.517169       0.39      0.6995
+x6*x7         1        9.905542        0.217731        0.907954      10.91      <.0001
+x10           1        2.758407        0.080203        0.257741      10.70      <.0001
+x20           1        4.091804        0.118474        0.258815      15.81      <.0001
+
+The HPREG Procedure
+Stepwise Selection: Step 8
+Effect Entered: x5 
+
+                            Analysis of Variance
+ 
+                                  Sum of           Mean
+Source                 DF        Squares         Square    F Value    Pr > F
+
+Model                  14         356739          25481     932.10    <.0001
+Error                4985         136278       27.33763                     
+Corrected Total      4999         493017                                    
+
+
+Root MSE              5.22854
+R-Square              0.72358
+Adj R-Sq              0.72281
+AIC                     21558
+AICC                    21558
+SBC                     16654
+ASE (Train)          27.25562
+ASE (Validate)       27.97665
+ASE (Test)           27.69029
+
+
+                                 Parameter Estimates
+ 
+                                   Standardized        Standard
+Parameter    DF        Estimate        Estimate           Error    t Value    Pr > |t|
+
+Intercept     1        9.636005               0        0.432593      22.27      <.0001
+c1 1          1        0.270621        0.009013        0.295942       0.91      0.3605
+c1 2          1        0.462160        0.015392        0.295907       1.56      0.1184
+c1 3          1       24.477267        0.815222        0.295813      82.75      <.0001
+c1 4          1        0.276989        0.009225        0.295835       0.94      0.3492
+c1 5          1        0.416463        0.013870        0.295820       1.41      0.1592
+c1 6          1        0.326572        0.010877        0.295900       1.10      0.2698
+c1 7          1        8.367651        0.278687        0.295878      28.28      <.0001
+c1 8          0               0               0               .        .         .    
+x1            1        2.484237        0.072073        0.256931       9.67      <.0001
+x5            1        1.878067        0.054429        0.257182       7.30      <.0001
+x6            1       -1.039920       -0.029926        0.522127      -1.99      0.0465
+x7            1        0.230061        0.006620        0.514493       0.45      0.6548
+x6*x7         1        9.971875        0.219189        0.903273      11.04      <.0001
+x10           1        2.742251        0.079733        0.256409      10.69      <.0001
+x20           1        4.083004        0.118219        0.257471      15.86      <.0001
+
+The HPREG Procedure
+Stepwise Selection: Step 9
+Effect Entered: c3 
+
+                            Analysis of Variance
+ 
+                                  Sum of           Mean
+Source                 DF        Squares         Square    F Value    Pr > F
+
+Model                  18         357579          19866     730.60    <.0001
+Error                4981         135438       27.19084                     
+Corrected Total      4999         493017                                    
+
+
+Root MSE              5.21448
+R-Square              0.72529
+Adj R-Sq              0.72430
+AIC                     21535
+AICC                    21536
+SBC                     16657
+ASE (Train)          27.08751
+ASE (Validate)       27.82879
+ASE (Test)           27.41663
+
+
+                                  Parameter Estimates
+ 
+                                    Standardized        Standard
+Parameter     DF        Estimate        Estimate           Error    t Value    Pr > |t|
+
+Intercept      1        9.745932               0        0.432074      22.56      <.0001
+c1 1           1        0.271946        0.009057        0.295149       0.92      0.3569
+c1 2           1        0.461712        0.015377        0.295119       1.56      0.1178
+c1 3           1       24.478872        0.815276        0.295020      82.97      <.0001
+c1 4           1        0.279501        0.009309        0.295043       0.95      0.3435
+c1 5           1        0.417104        0.013892        0.295025       1.41      0.1575
+c1 6           1        0.329120        0.010961        0.295108       1.12      0.2648
+c1 7           1        8.368507        0.278715        0.295084      28.36      <.0001
+c1 8           0               0               0               .        .         .    
+c3 tiny        1       -0.270215       -0.001584        1.268558      -0.21      0.8313
+c3 small       1       -1.311256       -0.015071        0.646901      -2.03      0.0427
+c3 average     1       -2.213557       -0.033699        0.488784      -4.53      <.0001
+c3 big         1       -1.039750       -0.020519        0.376980      -2.76      0.0058
+c3 huge        0               0               0               .        .         .    
+x1             1        2.504479        0.072660        0.256308       9.77      <.0001
+x5             1        1.899125        0.055039        0.256598       7.40      <.0001
+x6             1       -1.069274       -0.030771        0.521223      -2.05      0.0403
+x7             1        0.238084        0.006851        0.513554       0.46      0.6430
+x6*x7          1        9.960736        0.218944        0.901573      11.05      <.0001
+x10            1        2.711306        0.078833        0.255954      10.59      <.0001
+x20            1        4.101146        0.118744        0.256935      15.96      <.0001
+
+The HPREG Procedure
+Stepwise Selection: Step 10
+Effect Entered: c1*c3 
+
+                            Analysis of Variance
+ 
+                                  Sum of           Mean
+Source                 DF        Squares         Square    F Value    Pr > F
+
+Model                  46         367215     7982.93105     314.30    <.0001
+Error                4953         125802       25.39916                     
+Corrected Total      4999         493017                                    
+
+
+Root MSE              5.03976
+R-Square              0.74483
+Adj R-Sq              0.74246
+AIC                     21222
+AICC                    21223
+SBC                     16527
+ASE (Train)          25.16041
+ASE (Validate)       25.97010
+ASE (Test)           25.83436
+
+
+                                    Parameter Estimates
+ 
+                                         Standardized        Standard
+Parameter          DF        Estimate        Estimate           Error    t Value    Pr > |t|
+
+Intercept           1        9.479114               0        0.422843      22.42      <.0001
+c1 1                1        0.279417        0.009306        0.297405       0.94      0.3475
+c1 2                1        0.615589        0.020502        0.297332       2.07      0.0385
+c1 3                1       25.678601        0.855233        0.297280      86.38      <.0001
+c1 4                1        0.420360        0.014000        0.297283       1.41      0.1574
+c1 5                1        0.473986        0.015786        0.297265       1.59      0.1109
+c1 6                1        0.394044        0.013124        0.297299       1.33      0.1851
+c1 7                1        8.469793        0.282089        0.297345      28.48      <.0001
+c1 8                0               0               0               .        .         .    
+c3 tiny             1       -0.920428       -0.005396        3.571089      -0.26      0.7966
+c3 small            1        2.502030        0.028757        1.695360       1.48      0.1401
+c3 average          1        0.982006        0.014950        1.363733       0.72      0.4715
+c3 big              1        1.222300        0.024121        1.031714       1.18      0.2362
+c3 huge             0               0               0               .        .         .    
+c1*c3 1 tiny        1       12.897818        0.025972        5.051859       2.55      0.0107
+c1*c3 1 small       1       -2.382979       -0.009592        2.469648      -0.96      0.3346
+c1*c3 1 average     1       -0.221993       -0.001223        1.896611      -0.12      0.9068
+c1*c3 1 big         1       -0.240262       -0.001707        1.458424      -0.16      0.8692
+c1*c3 1 huge        0               0               0               .        .         .    
+c1*c3 2 tiny        1       -3.416510       -0.008425        4.611946      -0.74      0.4589
+c1*c3 2 small       1       -2.994121       -0.012051        2.469745      -1.21      0.2254
+c1*c3 2 average     1       -2.099348       -0.011171        1.928949      -1.09      0.2765
+c1*c3 2 big         1       -1.129165       -0.008021        1.457379      -0.77      0.4385
+c1*c3 2 huge        0               0               0               .        .         .    
+c1*c3 3 tiny        1      -15.989176       -0.032198        5.052163      -3.16      0.0016
+c1*c3 3 small       1      -23.926693       -0.096305        2.470196      -9.69      <.0001
+c1*c3 3 average     1      -16.787181       -0.092457        1.896990      -8.85      <.0001
+c1*c3 3 big         1      -10.928362       -0.077626        1.457896      -7.50      <.0001
+c1*c3 3 huge        0               0               0               .        .         .    
+c1*c3 4 tiny        1        7.761980        0.015630        5.050911       1.54      0.1244
+c1*c3 4 small       1       -1.716708       -0.006910        2.469250      -0.70      0.4869
+c1*c3 4 average     1       -3.260438       -0.017957        1.897410      -1.72      0.0858
+c1*c3 4 big         1       -1.571055       -0.011159        1.458327      -1.08      0.2814
+c1*c3 4 huge        0               0               0               .        .         .    
+c1*c3 5 tiny        1        2.623230        0.005282        5.049787       0.52      0.6035
+c1*c3 5 small       1       -1.399993       -0.005976        2.397634      -0.58      0.5593
+c1*c3 5 average     1       -0.984653       -0.005240        1.928634      -0.51      0.6097
+c1*c3 5 big         1       -0.552779       -0.003926        1.458076      -0.38      0.7046
+c1*c3 5 huge        0               0               0               .        .         .    
+c1*c3 6 tiny        1        0.149599        0.000301        5.052092       0.03      0.9764
+c1*c3 6 small       1        0.834326        0.003358        2.468314       0.34      0.7354
+c1*c3 6 average     1       -0.550724       -0.003033        1.896688      -0.29      0.7716
+c1*c3 6 big         1       -1.560705       -0.011086        1.458357      -1.07      0.2846
+c1*c3 6 huge        0               0               0               .        .         .    
+c1*c3 7 tiny        1        3.387473        0.006821        5.051498       0.67      0.5025
+c1*c3 7 small       1        0.357693        0.001440        2.468993       0.14      0.8848
+c1*c3 7 average     1       -1.241876       -0.006840        1.897166      -0.65      0.5128
+c1*c3 7 big         1       -2.128899       -0.015122        1.457512      -1.46      0.1442
+c1*c3 7 huge        0               0               0               .        .         .    
+c1*c3 8 tiny        0               0               0               .        .         .    
+c1*c3 8 small       0               0               0               .        .         .    
+c1*c3 8 average     0               0               0               .        .         .    
+c1*c3 8 big         0               0               0               .        .         .    
+c1*c3 8 huge        0               0               0               .        .         .    
+x1                  1        2.460089        0.071372        0.248612       9.90      <.0001
+x5                  1        1.979987        0.057383        0.248833       7.96      <.0001
+x6                  1       -0.983110       -0.028291        0.505160      -1.95      0.0517
+x7                  1        0.380408        0.010947        0.497859       0.76      0.4449
+x6*x7               1        9.767293        0.214692        0.873186      11.19      <.0001
+x10                 1        2.728325        0.079328        0.247982      11.00      <.0001
+x20                 1        4.017319        0.116317        0.249135      16.13      <.0001
+
+The HPREG Procedure
+Stepwise Selection: Step 11
+Effect Entered: x10*c1 
+
+                            Analysis of Variance
+ 
+                                  Sum of           Mean
+Source                 DF        Squares         Square    F Value    Pr > F
+
+Model                  53         367678     6937.31585     273.75    <.0001
+Error                4946         125339       25.34152                     
+Corrected Total      4999         493017                                    
+
+
+Root MSE              5.03404
+R-Square              0.74577
+Adj R-Sq              0.74305
+AIC                     21218
+AICC                    21219
+SBC                     16568
+ASE (Train)          25.06783
+ASE (Validate)       26.06961
+ASE (Test)           25.86736
+
+
+                                    Parameter Estimates
+ 
+                                         Standardized        Standard
+Parameter          DF        Estimate        Estimate           Error    t Value    Pr > |t|
+
+Intercept           1        8.978923               0        0.532737      16.85      <.0001
+c1 1                1        0.136885        0.004559        0.565946       0.24      0.8089
+c1 2                1        1.640755        0.054646        0.585732       2.80      0.0051
+c1 3                1       25.677913        0.855210        0.567541      45.24      <.0001
+c1 4                1        1.504192        0.050098        0.584699       2.57      0.0101
+c1 5                1        1.457373        0.048538        0.570526       2.55      0.0107
+c1 6                1        1.360526        0.045313        0.582950       2.33      0.0196
+c1 7                1        8.473136        0.282200        0.561156      15.10      <.0001
+c1 8                0               0               0               .        .         .    
+c3 tiny             1       -0.793149       -0.004650        3.568105      -0.22      0.8241
+c3 small            1        2.538703        0.029179        1.693575       1.50      0.1339
+c3 average          1        1.077230        0.016399        1.363767       0.79      0.4296
+c3 big              1        1.238021        0.024431        1.030604       1.20      0.2297
+c3 huge             0               0               0               .        .         .    
+c1*c3 1 tiny        1       12.172282        0.024511        5.055705       2.41      0.0161
+c1*c3 1 small       1       -2.429124       -0.009777        2.466940      -0.98      0.3248
+c1*c3 1 average     1       -0.222248       -0.001224        1.896442      -0.12      0.9067
+c1*c3 1 big         1       -0.259093       -0.001840        1.456807      -0.18      0.8588
+c1*c3 1 huge        0               0               0               .        .         .    
+c1*c3 2 tiny        1       -3.755439       -0.009261        4.609695      -0.81      0.4153
+c1*c3 2 small       1       -3.351399       -0.013489        2.475210      -1.35      0.1758
+c1*c3 2 average     1       -2.266251       -0.012060        1.928576      -1.18      0.2400
+c1*c3 2 big         1       -1.137862       -0.008082        1.455771      -0.78      0.4345
+c1*c3 2 huge        0               0               0               .        .         .    
+c1*c3 3 tiny        1      -16.060340       -0.032341        5.047415      -3.18      0.0015
+c1*c3 3 small       1      -24.025230       -0.096702        2.467806      -9.74      <.0001
+c1*c3 3 average     1      -16.883054       -0.092985        1.895956      -8.90      <.0001
+c1*c3 3 big         1      -10.934451       -0.077669        1.456310      -7.51      <.0001
+c1*c3 3 huge        0               0               0               .        .         .    
+c1*c3 4 tiny        1        7.569014        0.015242        5.046176       1.50      0.1337
+c1*c3 4 small       1       -1.842913       -0.007418        2.467131      -0.75      0.4551
+c1*c3 4 average     1       -3.422159       -0.018848        1.896914      -1.80      0.0713
+c1*c3 4 big         1       -1.540203       -0.010940        1.456925      -1.06      0.2905
+c1*c3 4 huge        0               0               0               .        .         .    
+c1*c3 5 tiny        1        2.551347        0.005138        5.044818       0.51      0.6131
+c1*c3 5 small       1       -1.393304       -0.005948        2.395111      -0.58      0.5608
+c1*c3 5 average     1       -1.108720       -0.005900        1.927716      -0.58      0.5652
+c1*c3 5 big         1       -0.512035       -0.003637        1.456895      -0.35      0.7253
+c1*c3 5 huge        0               0               0               .        .         .    
+c1*c3 6 tiny        1        0.315249        0.000635        5.050498       0.06      0.9502
+c1*c3 6 small       1        0.821920        0.003308        2.465654       0.33      0.7389
+c1*c3 6 average     1       -0.810751       -0.004465        1.899512      -0.43      0.6695
+c1*c3 6 big         1       -1.505172       -0.010691        1.457451      -1.03      0.3018
+c1*c3 6 huge        0               0               0               .        .         .    
+c1*c3 7 tiny        1        3.064488        0.006171        5.047827       0.61      0.5438
+c1*c3 7 small       1        0.307765        0.001239        2.466290       0.12      0.9007
+c1*c3 7 average     1       -1.300040       -0.007160        1.896435      -0.69      0.4930
+c1*c3 7 big         1       -2.215088       -0.015734        1.456595      -1.52      0.1284
+c1*c3 7 huge        0               0               0               .        .         .    
+c1*c3 8 tiny        0               0               0               .        .         .    
+c1*c3 8 small       0               0               0               .        .         .    
+c1*c3 8 average     0               0               0               .        .         .    
+c1*c3 8 big         0               0               0               .        .         .    
+c1*c3 8 huge        0               0               0               .        .         .    
+x1                  1        2.470914        0.071686        0.248472       9.94      <.0001
+x5                  1        1.994909        0.057815        0.248671       8.02      <.0001
+x6                  1       -0.961355       -0.027665        0.504711      -1.90      0.0569
+x7                  1        0.409167        0.011775        0.497490       0.82      0.4109
+x6*x7               1        9.742764        0.214153        0.872443      11.17      <.0001
+x10                 1        3.658095        0.106362        0.691477       5.29      <.0001
+x10*c1 1            1        0.321503        0.006173        0.979137       0.33      0.7427
+x10*c1 2            1       -2.016686       -0.039881        0.994011      -2.03      0.0425
+x10*c1 3            1        0.011750        0.000229        0.974102       0.01      0.9904
+x10*c1 4            1       -2.157769       -0.041988        1.003602      -2.15      0.0316
+x10*c1 5            1       -1.967277       -0.038819        0.975052      -2.02      0.0437
+x10*c1 6            1       -1.914707       -0.037841        0.994155      -1.93      0.0542
+x10*c1 7            1        0.045041        0.000853        0.979339       0.05      0.9633
+x10*c1 8            0               0               0               .        .         .    
+x20                 1        4.025480        0.116553        0.248927      16.17      <.0001
+
+The HPREG Procedure
+Stepwise Selection: Step 12
+Effect Entered: x4 
+
+                            Analysis of Variance
+ 
+                                  Sum of           Mean
+Source                 DF        Squares         Square    F Value    Pr > F
+
+Model                  54         367835     6811.75145     269.08    <.0001
+Error                4945         125182       25.31493                     
+Corrected Total      4999         493017                                    
+
+
+Root MSE              5.03139
+R-Square              0.74609
+Adj R-Sq              0.74332
+AIC                     21214
+AICC                    21215
+SBC                     16570
+ASE (Train)          25.03646
+ASE (Validate)       26.15944
+ASE (Test)           25.89621
+
+
+                                    Parameter Estimates
+ 
+                                         Standardized        Standard
+Parameter          DF        Estimate        Estimate           Error    t Value    Pr > |t|
+
+Intercept           1        8.659578               0        0.547697      15.81      <.0001
+c1 1                1        0.189396        0.006308        0.566042       0.33      0.7379
+c1 2                1        1.700504        0.056636        0.585917       2.90      0.0037
+c1 3                1       25.689906        0.855610        0.567264      45.29      <.0001
+c1 4                1        1.519987        0.050624        0.584427       2.60      0.0093
+c1 5                1        1.492444        0.049706        0.570401       2.62      0.0089
+c1 6                1        1.388463        0.046243        0.582752       2.38      0.0172
+c1 7                1        8.499068        0.283064        0.560959      15.15      <.0001
+c1 8                0               0               0               .        .         .    
+c3 tiny             1       -0.845316       -0.004955        3.566294      -0.24      0.8126
+c3 small            1        2.626605        0.030189        1.693055       1.55      0.1209
+c3 average          1        1.016832        0.015480        1.363267       0.75      0.4558
+c3 big              1        1.226333        0.024201        1.030074       1.19      0.2339
+c3 huge             0               0               0               .        .         .    
+c1*c3 1 tiny        1       12.358341        0.024886        5.053604       2.45      0.0145
+c1*c3 1 small       1       -2.546501       -0.010250        2.466096      -1.03      0.3018
+c1*c3 1 average     1       -0.144524       -0.000796        1.895704      -0.08      0.9392
+c1*c3 1 big         1       -0.239297       -0.001700        1.456064      -0.16      0.8695
+c1*c3 1 huge        0               0               0               .        .         .    
+c1*c3 2 tiny        1       -3.710870       -0.009151        4.607310      -0.81      0.4206
+c1*c3 2 small       1       -3.509172       -0.014124        2.474723      -1.42      0.1563
+c1*c3 2 average     1       -2.311440       -0.012300        1.927649      -1.20      0.2305
+c1*c3 2 big         1       -1.057049       -0.007508        1.455369      -0.73      0.4677
+c1*c3 2 huge        0               0               0               .        .         .    
+c1*c3 3 tiny        1      -15.910592       -0.032039        5.045125      -3.15      0.0016
+c1*c3 3 small       1      -24.076677       -0.096909        2.466597      -9.76      <.0001
+c1*c3 3 average     1      -16.828494       -0.092685        1.895088      -8.88      <.0001
+c1*c3 3 big         1      -10.851379       -0.077079        1.455929      -7.45      <.0001
+c1*c3 3 huge        0               0               0               .        .         .    
+c1*c3 4 tiny        1        7.673677        0.015453        5.043703       1.52      0.1282
+c1*c3 4 small       1       -1.912269       -0.007697        2.465994      -0.78      0.4381
+c1*c3 4 average     1       -3.411156       -0.018787        1.895924      -1.80      0.0720
+c1*c3 4 big         1       -1.550473       -0.011013        1.456166      -1.06      0.2870
+c1*c3 4 huge        0               0               0               .        .         .    
+c1*c3 5 tiny        1        2.530048        0.005095        5.042177       0.50      0.6158
+c1*c3 5 small       1       -1.483156       -0.006331        2.394127      -0.62      0.5356
+c1*c3 5 average     1       -1.118852       -0.005954        1.926708      -0.58      0.5615
+c1*c3 5 big         1       -0.512786       -0.003642        1.456131      -0.35      0.7247
+c1*c3 5 huge        0               0               0               .        .         .    
+c1*c3 6 tiny        1        0.256484        0.000516        5.047903       0.05      0.9595
+c1*c3 6 small       1        0.837423        0.003371        2.464368       0.34      0.7340
+c1*c3 6 average     1       -0.758665       -0.004178        1.898631      -0.40      0.6895
+c1*c3 6 big         1       -1.507754       -0.010710        1.456686      -1.04      0.3007
+c1*c3 6 huge        0               0               0               .        .         .    
+c1*c3 7 tiny        1        3.005816        0.006053        5.045232       0.60      0.5514
+c1*c3 7 small       1        0.241358        0.000971        2.465141       0.10      0.9220
+c1*c3 7 average     1       -1.270057       -0.006995        1.895478      -0.67      0.5029
+c1*c3 7 big         1       -2.259617       -0.016050        1.455940      -1.55      0.1207
+c1*c3 7 huge        0               0               0               .        .         .    
+c1*c3 8 tiny        0               0               0               .        .         .    
+c1*c3 8 small       0               0               0               .        .         .    
+c1*c3 8 average     0               0               0               .        .         .    
+c1*c3 8 big         0               0               0               .        .         .    
+c1*c3 8 huge        0               0               0               .        .         .    
+x1                  1        2.476803        0.071857        0.248353       9.97      <.0001
+x4                  1        0.622611        0.017936        0.250137       2.49      0.0128
+x5                  1        2.002736        0.058042        0.248560       8.06      <.0001
+x6                  1       -0.981119       -0.028234        0.504509      -1.94      0.0519
+x7                  1        0.395193        0.011373        0.497261       0.79      0.4268
+x6*x7               1        9.769193        0.214734        0.872050      11.20      <.0001
+x10                 1        3.720615        0.108179        0.691570       5.38      <.0001
+x10*c1 1            1        0.219459        0.004214        0.979481       0.22      0.8227
+x10*c1 2            1       -2.141330       -0.042345        0.994751      -2.15      0.0314
+x10*c1 3            1       -0.040773       -0.000795        0.973819      -0.04      0.9666
+x10*c1 4            1       -2.196246       -0.042737        1.003194      -2.19      0.0286
+x10*c1 5            1       -2.040092       -0.040256        0.974979      -2.09      0.0364
+x10*c1 6            1       -1.985940       -0.039249        0.994045      -2.00      0.0458
+x10*c1 7            1       -0.009862       -0.000187        0.979074      -0.01      0.9920
+x10*c1 8            0               0               0               .        .         .    
+x20                 1        4.011157        0.116138        0.248863      16.12      <.0001
+
+The HPREG Procedure
+Stepwise Selection: Step 13
+Effect Entered: x4*x10 
+
+                            Analysis of Variance
+ 
+                                  Sum of           Mean
+Source                 DF        Squares         Square    F Value    Pr > F
+
+Model                  55         368050     6691.82135     264.75    <.0001
+Error                4944         124967       25.27644                     
+Corrected Total      4999         493017                                    
+
+
+Root MSE              5.02757
+R-Square              0.74653
+Adj R-Sq              0.74371
+AIC                     21207
+AICC                    21208
+SBC                     16570
+ASE (Train)          24.99334
+ASE (Validate)       26.18143
+ASE (Test)           25.91903
+
+
+                                    Parameter Estimates
+ 
+                                         Standardized        Standard
+Parameter          DF        Estimate        Estimate           Error    t Value    Pr > |t|
+
+Intercept           1        9.304084               0        0.590098      15.77      <.0001
+c1 1                1        0.148726        0.004953        0.565783       0.26      0.7927
+c1 2                1        1.667278        0.055529        0.585582       2.85      0.0044
+c1 3                1       25.712302        0.856356        0.566884      45.36      <.0001
+c1 4                1        1.507284        0.050201        0.583999       2.58      0.0099
+c1 5                1        1.452132        0.048364        0.570134       2.55      0.0109
+c1 6                1        1.375505        0.045812        0.582326       2.36      0.0182
+c1 7                1        8.481428        0.282476        0.560565      15.13      <.0001
+c1 8                0               0               0               .        .         .    
+c3 tiny             1       -0.523499       -0.003069        3.565286      -0.15      0.8833
+c3 small            1        2.531066        0.029091        1.692084       1.50      0.1348
+c3 average          1        0.990237        0.015075        1.362261       0.73      0.4673
+c3 big              1        1.195738        0.023597        1.029344       1.16      0.2454
+c3 huge             0               0               0               .        .         .    
+c1*c3 1 tiny        1       12.263571        0.024695        5.049866       2.43      0.0152
+c1*c3 1 small       1       -2.431274       -0.009786        2.464536      -0.99      0.3239
+c1*c3 1 average     1       -0.153846       -0.000847        1.894265      -0.08      0.9353
+c1*c3 1 big         1       -0.171314       -0.001217        1.455143      -0.12      0.9063
+c1*c3 1 huge        0               0               0               .        .         .    
+c1*c3 2 tiny        1       -4.150528       -0.010235        4.606267      -0.90      0.3676
+c1*c3 2 small       1       -3.443156       -0.013859        2.472944      -1.39      0.1639
+c1*c3 2 average     1       -2.317584       -0.012333        1.926184      -1.20      0.2290
+c1*c3 2 big         1       -0.996479       -0.007078        1.454410      -0.69      0.4933
+c1*c3 2 huge        0               0               0               .        .         .    
+c1*c3 3 tiny        1      -15.943152       -0.032105        5.041301      -3.16      0.0016
+c1*c3 3 small       1      -24.008050       -0.096633        2.464834      -9.74      <.0001
+c1*c3 3 average     1      -16.797980       -0.092517        1.893676      -8.87      <.0001
+c1*c3 3 big         1      -10.856502       -0.077115        1.454823      -7.46      <.0001
+c1*c3 3 huge        0               0               0               .        .         .    
+c1*c3 4 tiny        1        7.264912        0.014629        5.041811       1.44      0.1497
+c1*c3 4 small       1       -1.800094       -0.007245        2.464418      -0.73      0.4652
+c1*c3 4 average     1       -3.346956       -0.018434        1.894610      -1.77      0.0774
+c1*c3 4 big         1       -1.449717       -0.010298        1.455468      -1.00      0.3193
+c1*c3 4 huge        0               0               0               .        .         .    
+c1*c3 5 tiny        1        2.193733        0.004418        5.039659       0.44      0.6634
+c1*c3 5 small       1       -1.421444       -0.006068        2.392399      -0.59      0.5524
+c1*c3 5 average     1       -1.136102       -0.006046        1.925252      -0.59      0.5551
+c1*c3 5 big         1       -0.456407       -0.003242        1.455151      -0.31      0.7538
+c1*c3 5 huge        0               0               0               .        .         .    
+c1*c3 6 tiny        1       -0.175253       -0.000353        5.046230      -0.03      0.9723
+c1*c3 6 small       1        0.926790        0.003730        2.462684       0.38      0.7067
+c1*c3 6 average     1       -0.620183       -0.003416        1.897779      -0.33      0.7438
+c1*c3 6 big         1       -1.466700       -0.010418        1.455646      -1.01      0.3137
+c1*c3 6 huge        0               0               0               .        .         .    
+c1*c3 7 tiny        1        2.739630        0.005517        5.042220       0.54      0.5869
+c1*c3 7 small       1        0.374544        0.001508        2.463688       0.15      0.8792
+c1*c3 7 average     1       -1.140285       -0.006280        1.894557      -0.60      0.5473
+c1*c3 7 big         1       -2.209696       -0.015696        1.454933      -1.52      0.1289
+c1*c3 7 huge        0               0               0               .        .         .    
+c1*c3 8 tiny        0               0               0               .        .         .    
+c1*c3 8 small       0               0               0               .        .         .    
+c1*c3 8 average     0               0               0               .        .         .    
+c1*c3 8 big         0               0               0               .        .         .    
+c1*c3 8 huge        0               0               0               .        .         .    
+x1                  1        2.484227        0.072073        0.248177      10.01      <.0001
+x4                  1       -0.647937       -0.018665        0.501730      -1.29      0.1966
+x5                  1        1.986461        0.057570        0.248434       8.00      <.0001
+x6                  1       -1.007634       -0.028997        0.504207      -2.00      0.0457
+x7                  1        0.393940        0.011336        0.496883       0.79      0.4279
+x6*x7               1        9.798911        0.215387        0.871446      11.24      <.0001
+x10                 1        2.492163        0.072461        0.808992       3.08      0.0021
+x10*c1 1            1        0.222088        0.004264        0.978737       0.23      0.8205
+x10*c1 2            1       -2.157970       -0.042675        0.994011      -2.17      0.0300
+x10*c1 3            1       -0.125630       -0.002450        0.973513      -0.13      0.8973
+x10*c1 4            1       -2.210787       -0.043020        1.002443      -2.21      0.0275
+x10*c1 5            1       -2.014580       -0.039753        0.974277      -2.07      0.0387
+x10*c1 6            1       -2.019078       -0.039904        0.993354      -2.03      0.0421
+x10*c1 7            1       -0.027431       -0.000519        0.978348      -0.03      0.9776
+x10*c1 8            0               0               0               .        .         .    
+x4*x10              1        2.530465        0.055684        0.866439       2.92      0.0035
+x20                 1        4.025502        0.116554        0.248722      16.18      <.0001
+
+The HPREG Procedure
+Stepwise Selection: Step 14
+Effect Entered: x20*c1 
+
+                            Analysis of Variance
+ 
+                                  Sum of           Mean
+Source                 DF        Squares         Square    F Value    Pr > F
+
+Model                  62         368487     5943.33427     235.62    <.0001
+Error                4937         124530       25.22385                     
+Corrected Total      4999         493017                                    
+
+
+Root MSE              5.02234
+R-Square              0.74741
+Adj R-Sq              0.74424
+AIC                     21204
+AICC                    21205
+SBC                     16612
+ASE (Train)          24.90603
+ASE (Validate)       26.32936
+ASE (Test)           25.98610
+
+
+                                    Parameter Estimates
+ 
+                                         Standardized        Standard
+Parameter          DF        Estimate        Estimate           Error    t Value    Pr > |t|
+
+Intercept           1        8.986039               0        0.671514      13.38      <.0001
+c1 1                1       -0.113721       -0.003788        0.763412      -0.15      0.8816
+c1 2                1        1.602673        0.053377        0.760851       2.11      0.0352
+c1 3                1       25.888787        0.862233        0.745860      34.71      <.0001
+c1 4                1        2.100426        0.069955        0.760679       2.76      0.0058
+c1 5                1        2.234911        0.074434        0.747393       2.99      0.0028
+c1 6                1        1.451981        0.048359        0.752807       1.93      0.0538
+c1 7                1        9.820358        0.327070        0.736628      13.33      <.0001
+c1 8                0               0               0               .        .         .    
+c3 tiny             1       -0.582355       -0.003414        3.561993      -0.16      0.8701
+c3 small            1        2.523266        0.029001        1.690326       1.49      0.1356
+c3 average          1        0.991354        0.015092        1.360844       0.73      0.4664
+c3 big              1        1.218911        0.024054        1.028514       1.19      0.2360
+c3 huge             0               0               0               .        .         .    
+c1*c3 1 tiny        1       11.971455        0.024107        5.049519       2.37      0.0178
+c1*c3 1 small       1       -2.519667       -0.010142        2.462652      -1.02      0.3063
+c1*c3 1 average     1       -0.199751       -0.001100        1.892478      -0.11      0.9159
+c1*c3 1 big         1       -0.065653       -0.000466        1.455847      -0.05      0.9640
+c1*c3 1 huge        0               0               0               .        .         .    
+c1*c3 2 tiny        1       -4.203307       -0.010366        4.602632      -0.91      0.3612
+c1*c3 2 small       1       -3.372370       -0.013574        2.470886      -1.36      0.1724
+c1*c3 2 average     1       -2.297647       -0.012227        1.924261      -1.19      0.2325
+c1*c3 2 big         1       -1.009799       -0.007173        1.453096      -0.69      0.4871
+c1*c3 2 huge        0               0               0               .        .         .    
+c1*c3 3 tiny        1      -15.934428       -0.032087        5.038161      -3.16      0.0016
+c1*c3 3 small       1      -23.974180       -0.096496        2.462587      -9.74      <.0001
+c1*c3 3 average     1      -16.787437       -0.092458        1.891883      -8.87      <.0001
+c1*c3 3 big         1      -10.846445       -0.077044        1.454810      -7.46      <.0001
+c1*c3 3 huge        0               0               0               .        .         .    
+c1*c3 4 tiny        1        7.362491        0.014826        5.037119       1.46      0.1439
+c1*c3 4 small       1       -1.758416       -0.007078        2.462265      -0.71      0.4752
+c1*c3 4 average     1       -3.272030       -0.018021        1.895187      -1.73      0.0843
+c1*c3 4 big         1       -1.434871       -0.010192        1.454852      -0.99      0.3241
+c1*c3 4 huge        0               0               0               .        .         .    
+c1*c3 5 tiny        1        2.309600        0.004651        5.035012       0.46      0.6465
+c1*c3 5 small       1       -1.386268       -0.005918        2.390041      -0.58      0.5619
+c1*c3 5 average     1       -1.053004       -0.005603        1.924173      -0.55      0.5842
+c1*c3 5 big         1       -0.414965       -0.002948        1.454434      -0.29      0.7754
+c1*c3 5 huge        0               0               0               .        .         .    
+c1*c3 6 tiny        1       -0.335813       -0.000676        5.047395      -0.07      0.9470
+c1*c3 6 small       1        0.983633        0.003959        2.460721       0.40      0.6894
+c1*c3 6 average     1       -0.566099       -0.003118        1.896739      -0.30      0.7654
+c1*c3 6 big         1       -1.440235       -0.010230        1.455446      -0.99      0.3224
+c1*c3 6 huge        0               0               0               .        .         .    
+c1*c3 7 tiny        1        2.439987        0.004913        5.038307       0.48      0.6282
+c1*c3 7 small       1        0.392656        0.001580        2.461132       0.16      0.8732
+c1*c3 7 average     1       -0.747828       -0.004119        1.896456      -0.39      0.6934
+c1*c3 7 big         1       -2.051935       -0.014575        1.454505      -1.41      0.1584
+c1*c3 7 huge        0               0               0               .        .         .    
+c1*c3 8 tiny        0               0               0               .        .         .    
+c1*c3 8 small       0               0               0               .        .         .    
+c1*c3 8 average     0               0               0               .        .         .    
+c1*c3 8 big         0               0               0               .        .         .    
+c1*c3 8 huge        0               0               0               .        .         .    
+x1                  1        2.491391        0.072280        0.248207      10.04      <.0001
+x4                  1       -0.675964       -0.019473        0.501581      -1.35      0.1778
+x5                  1        1.976514        0.057282        0.248503       7.95      <.0001
+x6                  1       -1.031852       -0.029694        0.503925      -2.05      0.0406
+x7                  1        0.355809        0.010239        0.496476       0.72      0.4736
+x6*x7               1        9.874715        0.217053        0.871047      11.34      <.0001
+x10                 1        2.469984        0.071816        0.808284       3.06      0.0023
+x10*c1 1            1        0.257798        0.004950        0.977958       0.26      0.7921
+x10*c1 2            1       -2.174824       -0.043008        0.993036      -2.19      0.0286
+x10*c1 3            1       -0.138305       -0.002697        0.972613      -0.14      0.8869
+x10*c1 4            1       -2.223969       -0.043276        1.001483      -2.22      0.0264
+x10*c1 5            1       -1.988316       -0.039234        0.973461      -2.04      0.0412
+x10*c1 6            1       -2.045603       -0.040428        0.992697      -2.06      0.0394
+x10*c1 7            1        0.016362        0.000310        0.977426       0.02      0.9866
+x10*c1 8            0               0               0               .        .         .    
+x4*x10              1        2.579851        0.056770        0.866172       2.98      0.0029
+x20                 1        4.732541        0.137025        0.711838       6.65      <.0001
+x20*c1 1            1        0.439764        0.008716        1.007848       0.44      0.6626
+x20*c1 2            1        0.147073        0.002811        1.004545       0.15      0.8836
+x20*c1 3            1       -0.357387       -0.006940        0.994486      -0.36      0.7193
+x20*c1 4            1       -1.214429       -0.023241        1.000331      -1.21      0.2248
+x20*c1 5            1       -1.628047       -0.031545        1.004281      -1.62      0.1051
+x20*c1 6            1       -0.137989       -0.002665        0.993686      -0.14      0.8896
+x20*c1 7            1       -2.789453       -0.054457        0.990828      -2.82      0.0049
+x20*c1 8            0               0               0               .        .         .    
+
+The HPREG Procedure
+Stepwise Selection: Step 15
+Effect Entered: x1*c3 
+
+                            Analysis of Variance
+ 
+                                  Sum of           Mean
+Source                 DF        Squares         Square    F Value    Pr > F
+
+Model                  66         368769     5587.40995     221.84    <.0001
+Error                4933         124248       25.18707                     
+Corrected Total      4999         493017                                    
+
+
+Root MSE              5.01867
+R-Square              0.74798
+Adj R-Sq              0.74461
+AIC                     21200
+AICC                    21202
+SBC                     16635
+ASE (Train)          24.84957
+ASE (Validate)       26.39445
+ASE (Test)           26.08578
+
+
+                                    Parameter Estimates
+ 
+                                         Standardized        Standard
+Parameter          DF        Estimate        Estimate           Error    t Value    Pr > |t|
+
+Intercept           1        8.920059               0        0.671376      13.29      <.0001
+c1 1                1       -0.126401       -0.004210        0.763170      -0.17      0.8685
+c1 2                1        1.624511        0.054105        0.760845       2.14      0.0328
+c1 3                1       25.882150        0.862012        0.745470      34.72      <.0001
+c1 4                1        2.121039        0.070642        0.760293       2.79      0.0053
+c1 5                1        2.203639        0.073393        0.746988       2.95      0.0032
+c1 6                1        1.445147        0.048131        0.752306       1.92      0.0548
+c1 7                1        9.821738        0.327116        0.736348      13.34      <.0001
+c1 8                0               0               0               .        .         .    
+c3 tiny             1       -6.511199       -0.038169        5.735724      -1.14      0.2563
+c3 small            1        2.092229        0.024047        2.308036       0.91      0.3647
+c3 average          1        2.093541        0.031871        1.609111       1.30      0.1933
+c3 big              1        3.427214        0.067633        1.294896       2.65      0.0082
+c3 huge             0               0               0               .        .         .    
+c1*c3 1 tiny        1       13.588346        0.027363        5.190463       2.62      0.0089
+c1*c3 1 small       1       -2.362171       -0.009508        2.506768      -0.94      0.3461
+c1*c3 1 average     1       -0.244423       -0.001346        1.891405      -0.13      0.8972
+c1*c3 1 big         1       -0.597565       -0.004245        1.467054      -0.41      0.6838
+c1*c3 1 huge        0               0               0               .        .         .    
+c1*c3 2 tiny        1       -2.848460       -0.007024        4.709266      -0.60      0.5453
+c1*c3 2 small       1       -3.290518       -0.013244        2.484679      -1.32      0.1855
+c1*c3 2 average     1       -2.189281       -0.011650        1.925204      -1.14      0.2555
+c1*c3 2 big         1       -1.412718       -0.010035        1.459154      -0.97      0.3330
+c1*c3 2 huge        0               0               0               .        .         .    
+c1*c3 3 tiny        1      -11.087949       -0.022328        6.197326      -1.79      0.0737
+c1*c3 3 small       1      -23.910243       -0.096239        2.469594      -9.68      <.0001
+c1*c3 3 average     1      -16.817627       -0.092625        1.890657      -8.90      <.0001
+c1*c3 3 big         1      -11.239036       -0.079832        1.460442      -7.70      <.0001
+c1*c3 3 huge        0               0               0               .        .         .    
+c1*c3 4 tiny        1       10.709005        0.021565        5.624132       1.90      0.0570
+c1*c3 4 small       1       -1.515613       -0.006100        2.572115      -0.59      0.5557
+c1*c3 4 average     1       -2.942433       -0.016206        1.914009      -1.54      0.1243
+c1*c3 4 big         1       -1.819402       -0.012923        1.460370      -1.25      0.2129
+c1*c3 4 huge        0               0               0               .        .         .    
+c1*c3 5 tiny        1        3.992778        0.008040        5.187800       0.77      0.4415
+c1*c3 5 small       1       -1.123260       -0.004795        2.519604      -0.45      0.6558
+c1*c3 5 average     1       -0.848017       -0.004513        1.930289      -0.44      0.6604
+c1*c3 5 big         1       -0.801866       -0.005696        1.459952      -0.55      0.5829
+c1*c3 5 huge        0               0               0               .        .         .    
+c1*c3 6 tiny        1       -0.236525       -0.000476        5.044513      -0.05      0.9626
+c1*c3 6 small       1        0.921223        0.003708        2.465765       0.37      0.7087
+c1*c3 6 average     1       -0.532975       -0.002935        1.895581      -0.28      0.7786
+c1*c3 6 big         1       -2.040350       -0.014493        1.470218      -1.39      0.1653
+c1*c3 6 huge        0               0               0               .        .         .    
+c1*c3 7 tiny        1        3.221488        0.006487        5.067804       0.64      0.5250
+c1*c3 7 small       1        0.488870        0.001968        2.475315       0.20      0.8434
+c1*c3 7 average     1       -1.011746       -0.005572        1.907168      -0.53      0.5958
+c1*c3 7 big         1       -2.556787       -0.018161        1.464747      -1.75      0.0810
+c1*c3 7 huge        0               0               0               .        .         .    
+c1*c3 8 tiny        0               0               0               .        .         .    
+c1*c3 8 small       0               0               0               .        .         .    
+c1*c3 8 average     0               0               0               .        .         .    
+c1*c3 8 big         0               0               0               .        .         .    
+c1*c3 8 huge        0               0               0               .        .         .    
+x1                  1        2.660427        0.077184        0.257522      10.33      <.0001
+x1*c3 tiny          1        7.603867        0.027847        5.813739       1.31      0.1910
+x1*c3 small         1        0.670575        0.004280        2.577035       0.26      0.7947
+x1*c3 average       1       -2.253557       -0.019959        1.761838      -1.28      0.2009
+x1*c3 big           1       -3.519113       -0.041374        1.254241      -2.81      0.0050
+x1*c3 huge          0               0               0               .        .         .    
+x4                  1       -0.690628       -0.019895        0.501350      -1.38      0.1684
+x5                  1        1.985108        0.057531        0.248395       7.99      <.0001
+x6                  1       -1.050399       -0.030228        0.503782      -2.09      0.0371
+x7                  1        0.348408        0.010026        0.496170       0.70      0.4826
+x6*x7               1        9.898465        0.217575        0.870614      11.37      <.0001
+x10                 1        2.478962        0.072078        0.807759       3.07      0.0022
+x10*c1 1            1        0.245207        0.004708        0.978004       0.25      0.8020
+x10*c1 2            1       -2.198704       -0.043480        0.992637      -2.22      0.0268
+x10*c1 3            1       -0.136614       -0.002664        0.972011      -0.14      0.8882
+x10*c1 4            1       -2.310523       -0.044961        1.001178      -2.31      0.0211
+x10*c1 5            1       -1.959092       -0.038658        0.972913      -2.01      0.0441
+x10*c1 6            1       -2.084866       -0.041204        0.992144      -2.10      0.0357
+x10*c1 7            1       -0.038931       -0.000737        0.976910      -0.04      0.9682
+x10*c1 8            0               0               0               .        .         .    
+x4*x10              1        2.611467        0.057466        0.865666       3.02      0.0026
+x20                 1        4.691543        0.135838        0.711603       6.59      <.0001
+x20*c1 1            1        0.480964        0.009533        1.007272       0.48      0.6330
+x20*c1 2            1        0.131295        0.002510        1.004463       0.13      0.8960
+x20*c1 3            1       -0.345891       -0.006717        0.994046      -0.35      0.7279
+x20*c1 4            1       -1.168491       -0.022362        1.000012      -1.17      0.2427
+x20*c1 5            1       -1.593247       -0.030871        1.003684      -1.59      0.1125
+x20*c1 6            1       -0.077530       -0.001497        0.993429      -0.08      0.9378
+x20*c1 7            1       -2.737695       -0.053447        0.990730      -2.76      0.0057
+x20*c1 8            0               0               0               .        .         .    
+
+The HPREG Procedure
+Stepwise Selection: Step 16
+Effect Entered: x1*x7 
+
+                            Analysis of Variance
+ 
+                                  Sum of           Mean
+Source                 DF        Squares         Square    F Value    Pr > F
+
+Model                  67         368892     5505.85379     218.77    <.0001
+Error                4932         124125       25.16721                     
+Corrected Total      4999         493017                                    
+
+
+Root MSE              5.01669
+R-Square              0.74823
+Adj R-Sq              0.74481
+AIC                     21197
+AICC                    21199
+SBC                     16638
+ASE (Train)          24.82494
+ASE (Validate)       26.36319
+ASE (Test)           26.05155
+
+
+                                    Parameter Estimates
+ 
+                                         Standardized        Standard
+Parameter          DF        Estimate        Estimate           Error    t Value    Pr > |t|
+
+Intercept           1        9.393352               0        0.704393      13.34      <.0001
+c1 1                1       -0.160328       -0.005340        0.763023      -0.21      0.8336
+c1 2                1        1.620834        0.053982        0.760547       2.13      0.0331
+c1 3                1       25.862060        0.861343        0.745231      34.70      <.0001
+c1 4                1        2.096273        0.069817        0.760075       2.76      0.0058
+c1 5                1        2.212908        0.073702        0.746705       2.96      0.0031
+c1 6                1        1.421575        0.047346        0.752085       1.89      0.0588
+c1 7                1        9.816311        0.326935        0.736061      13.34      <.0001
+c1 8                0               0               0               .        .         .    
+c3 tiny             1       -6.645414       -0.038956        5.733783      -1.16      0.2465
+c3 small            1        2.233031        0.025666        2.308004       0.97      0.3333
+c3 average          1        2.172400        0.033072        1.608871       1.35      0.1770
+c3 big              1        3.316427        0.065447        1.295354       2.56      0.0105
+c3 huge             0               0               0               .        .         .    
+c1*c3 1 tiny        1       13.557610        0.027301        5.188435       2.61      0.0090
+c1*c3 1 small       1       -2.501869       -0.010070        2.506575      -1.00      0.3183
+c1*c3 1 average     1       -0.309536       -0.001705        1.890888      -0.16      0.8700
+c1*c3 1 big         1       -0.500965       -0.003558        1.467126      -0.34      0.7328
+c1*c3 1 huge        0               0               0               .        .         .    
+c1*c3 2 tiny        1       -2.704580       -0.006670        4.707858      -0.57      0.5657
+c1*c3 2 small       1       -3.452609       -0.013897        2.484780      -1.39      0.1647
+c1*c3 2 average     1       -2.221408       -0.011821        1.924500      -1.15      0.2484
+c1*c3 2 big         1       -1.302990       -0.009255        1.459422      -0.89      0.3720
+c1*c3 2 huge        0               0               0               .        .         .    
+c1*c3 3 tiny        1      -10.957071       -0.022064        6.195165      -1.77      0.0770
+c1*c3 3 small       1      -24.045877       -0.096785        2.469381      -9.74      <.0001
+c1*c3 3 average     1      -16.874166       -0.092936        1.890084      -8.93      <.0001
+c1*c3 3 big         1      -11.132210       -0.079074        1.460665      -7.62      <.0001
+c1*c3 3 huge        0               0               0               .        .         .    
+c1*c3 4 tiny        1       10.738370        0.021624        5.621930       1.91      0.0562
+c1*c3 4 small       1       -1.633396       -0.006574        2.571652      -0.64      0.5254
+c1*c3 4 average     1       -3.046594       -0.016779        1.913834      -1.59      0.1115
+c1*c3 4 big         1       -1.715948       -0.012189        1.460543      -1.17      0.2401
+c1*c3 4 huge        0               0               0               .        .         .    
+c1*c3 5 tiny        1        4.219656        0.008497        5.186769       0.81      0.4159
+c1*c3 5 small       1       -1.187067       -0.005067        2.518775      -0.47      0.6375
+c1*c3 5 average     1       -0.907789       -0.004831        1.929717      -0.47      0.6381
+c1*c3 5 big         1       -0.717851       -0.005099        1.459871      -0.49      0.6229
+c1*c3 5 huge        0               0               0               .        .         .    
+c1*c3 6 tiny        1        0.056131        0.000113        5.044259       0.01      0.9911
+c1*c3 6 small       1        0.917933        0.003695        2.464793       0.37      0.7096
+c1*c3 6 average     1       -0.605205       -0.003333        1.895114      -0.32      0.7495
+c1*c3 6 big         1       -1.984997       -0.014100        1.469852      -1.35      0.1769
+c1*c3 6 huge        0               0               0               .        .         .    
+c1*c3 7 tiny        1        3.292697        0.006631        5.065908       0.65      0.5157
+c1*c3 7 small       1        0.413162        0.001663        2.474576       0.17      0.8674
+c1*c3 7 average     1       -1.048302       -0.005774        1.906488      -0.55      0.5824
+c1*c3 7 big         1       -2.456752       -0.017451        1.464868      -1.68      0.0936
+c1*c3 7 huge        0               0               0               .        .         .    
+c1*c3 8 tiny        0               0               0               .        .         .    
+c1*c3 8 small       0               0               0               .        .         .    
+c1*c3 8 average     0               0               0               .        .         .    
+c1*c3 8 big         0               0               0               .        .         .    
+c1*c3 8 huge        0               0               0               .        .         .    
+x1                  1        1.678114        0.048686        0.513290       3.27      0.0011
+x1*c3 tiny          1        7.737731        0.028338        5.811761       1.33      0.1831
+x1*c3 small         1        0.562073        0.003588        2.576485       0.22      0.8273
+x1*c3 average       1       -2.277690       -0.020172        1.761177      -1.29      0.1960
+x1*c3 big           1       -3.489851       -0.041030        1.253816      -2.78      0.0054
+x1*c3 huge          0               0               0               .        .         .    
+x4                  1       -0.679133       -0.019564        0.501180      -1.36      0.1755
+x5                  1        1.969459        0.057077        0.248398       7.93      <.0001
+x6                  1       -0.992852       -0.028572        0.504255      -1.97      0.0490
+x7                  1       -0.559982       -0.016115        0.643917      -0.87      0.3845
+x1*x7               1        1.945488        0.042905        0.879496       2.21      0.0270
+x6*x7               1        9.803442        0.215486        0.871330      11.25      <.0001
+x10                 1        2.478938        0.072077        0.807441       3.07      0.0022
+x10*c1 1            1        0.259226        0.004977        0.977639       0.27      0.7909
+x10*c1 2            1       -2.224132       -0.043983        0.992312      -2.24      0.0250
+x10*c1 3            1       -0.153206       -0.002987        0.971657      -0.16      0.8747
+x10*c1 4            1       -2.329404       -0.045328        1.000820      -2.33      0.0200
+x10*c1 5            1       -1.994013       -0.039347        0.972657      -2.05      0.0404
+x10*c1 6            1       -2.065326       -0.040818        0.991792      -2.08      0.0374
+x10*c1 7            1       -0.061923       -0.001172        0.976580      -0.06      0.9494
+x10*c1 8            0               0               0               .        .         .    
+x4*x10              1        2.609964        0.057433        0.865325       3.02      0.0026
+x20                 1        4.659270        0.134904        0.711472       6.55      <.0001
+x20*c1 1            1        0.538344        0.010670        1.007209       0.53      0.5930
+x20*c1 2            1        0.174839        0.003342        1.004260       0.17      0.8618
+x20*c1 3            1       -0.299203       -0.005810        0.993878      -0.30      0.7634
+x20*c1 4            1       -1.126521       -0.021558        0.999797      -1.13      0.2599
+x20*c1 5            1       -1.561694       -0.030260        1.003390      -1.56      0.1197
+x20*c1 6            1       -0.063167       -0.001220        0.993059      -0.06      0.9493
+x20*c1 7            1       -2.719364       -0.053089        0.990374      -2.75      0.0061
+x20*c1 8            0               0               0               .        .         .    
+
+The HPREG Procedure
+Stepwise Selection: Step 17
+Effect Entered: x7*x10 
+
+                            Analysis of Variance
+ 
+                                  Sum of           Mean
+Source                 DF        Squares         Square    F Value    Pr > F
+
+Model                  68         369009     5426.60045     215.78    <.0001
+Error                4931         124008       25.14866                     
+Corrected Total      4999         493017                                    
+
+
+Root MSE              5.01484
+R-Square              0.74847
+Adj R-Sq              0.74500
+AIC                     21195
+AICC                    21197
+SBC                     16642
+ASE (Train)          24.80161
+ASE (Validate)       26.41198
+ASE (Test)           26.04487
+
+
+                                    Parameter Estimates
+ 
+                                         Standardized        Standard
+Parameter          DF        Estimate        Estimate           Error    t Value    Pr > |t|
+
+Intercept           1        8.903637               0        0.739944      12.03      <.0001
+c1 1                1       -0.168578       -0.005615        0.762751      -0.22      0.8251
+c1 2                1        1.667021        0.055521        0.760569       2.19      0.0284
+c1 3                1       25.892878        0.862370        0.745094      34.75      <.0001
+c1 4                1        2.116809        0.070501        0.759855       2.79      0.0054
+c1 5                1        2.221860        0.074000        0.746442       2.98      0.0029
+c1 6                1        1.460837        0.048654        0.752029       1.94      0.0521
+c1 7                1        9.830495        0.327407        0.735820      13.36      <.0001
+c1 8                0               0               0               .        .         .    
+c3 tiny             1       -6.844791       -0.040125        5.732417      -1.19      0.2325
+c3 small            1        2.208474        0.025383        2.307181       0.96      0.3385
+c3 average          1        2.160946        0.032898        1.608287       1.34      0.1791
+c3 big              1        3.322202        0.065561        1.294879       2.57      0.0103
+c3 huge             0               0               0               .        .         .    
+c1*c3 1 tiny        1       13.485981        0.027157        5.186629       2.60      0.0093
+c1*c3 1 small       1       -2.471015       -0.009946        2.505692      -0.99      0.3241
+c1*c3 1 average     1       -0.293346       -0.001616        1.890206      -0.16      0.8767
+c1*c3 1 big         1       -0.442001       -0.003140        1.466841      -0.30      0.7632
+c1*c3 1 huge        0               0               0               .        .         .    
+c1*c3 2 tiny        1       -2.620277       -0.006462        4.706286      -0.56      0.5777
+c1*c3 2 small       1       -3.460925       -0.013930        2.483867      -1.39      0.1636
+c1*c3 2 average     1       -2.206796       -0.011743        1.923802      -1.15      0.2514
+c1*c3 2 big         1       -1.266987       -0.009000        1.458980      -0.87      0.3852
+c1*c3 2 huge        0               0               0               .        .         .    
+c1*c3 3 tiny        1      -10.961876       -0.022074        6.192882      -1.77      0.0768
+c1*c3 3 small       1      -24.007050       -0.096628        2.468537      -9.73      <.0001
+c1*c3 3 average     1      -16.805017       -0.092555        1.889660      -8.89      <.0001
+c1*c3 3 big         1      -11.135044       -0.079094        1.460127      -7.63      <.0001
+c1*c3 3 huge        0               0               0               .        .         .    
+c1*c3 4 tiny        1       10.908873        0.021967        5.620416       1.94      0.0523
+c1*c3 4 small       1       -1.624437       -0.006538        2.570708      -0.63      0.5275
+c1*c3 4 average     1       -2.971610       -0.016366        1.913445      -1.55      0.1205
+c1*c3 4 big         1       -1.708122       -0.012133        1.460010      -1.17      0.2421
+c1*c3 4 huge        0               0               0               .        .         .    
+c1*c3 5 tiny        1        4.339973        0.008739        5.185158       0.84      0.4026
+c1*c3 5 small       1       -1.133267       -0.004838        2.517971      -0.45      0.6527
+c1*c3 5 average     1       -0.807487       -0.004297        1.929568      -0.42      0.6756
+c1*c3 5 big         1       -0.729123       -0.005179        1.459342      -0.50      0.6174
+c1*c3 5 huge        0               0               0               .        .         .    
+c1*c3 6 tiny        1       -0.103455       -0.000208        5.042944      -0.02      0.9836
+c1*c3 6 small       1        0.940232        0.003784        2.463906       0.38      0.7028
+c1*c3 6 average     1       -0.529116       -0.002914        1.894745      -0.28      0.7801
+c1*c3 6 big         1       -2.045737       -0.014531        1.469581      -1.39      0.1640
+c1*c3 6 huge        0               0               0               .        .         .    
+c1*c3 7 tiny        1        3.386624        0.006820        5.064228       0.67      0.5037
+c1*c3 7 small       1        0.404604        0.001629        2.473667       0.16      0.8701
+c1*c3 7 average     1       -1.005192       -0.005536        1.905890      -0.53      0.5979
+c1*c3 7 big         1       -2.482045       -0.017630        1.464375      -1.69      0.0901
+c1*c3 7 huge        0               0               0               .        .         .    
+c1*c3 8 tiny        0               0               0               .        .         .    
+c1*c3 8 small       0               0               0               .        .         .    
+c1*c3 8 average     0               0               0               .        .         .    
+c1*c3 8 big         0               0               0               .        .         .    
+c1*c3 8 huge        0               0               0               .        .         .    
+x1                  1        1.699419        0.049304        0.513196       3.31      0.0009
+x1*c3 tiny          1        7.876753        0.028847        5.809978       1.36      0.1752
+x1*c3 small         1        0.628896        0.004014        2.575722       0.24      0.8071
+x1*c3 average       1       -2.364524       -0.020941        1.760990      -1.34      0.1794
+x1*c3 big           1       -3.489679       -0.041028        1.253354      -2.78      0.0054
+x1*c3 huge          0               0               0               .        .         .    
+x4                  1       -0.709928       -0.020451        0.501199      -1.42      0.1567
+x5                  1        1.972725        0.057172        0.248311       7.94      <.0001
+x6                  1       -1.007132       -0.028983        0.504113      -2.00      0.0458
+x7                  1        0.369176        0.010624        0.774912       0.48      0.6338
+x1*x7               1        1.927213        0.042502        0.879213       2.19      0.0284
+x6*x7               1        9.835821        0.216198        0.871139      11.29      <.0001
+x10                 1        3.436625        0.099922        0.921549       3.73      0.0002
+x10*c1 1            1        0.267022        0.005127        0.977285       0.27      0.7847
+x10*c1 2            1       -2.286686       -0.045220        0.992371      -2.30      0.0212
+x10*c1 3            1       -0.215003       -0.004192        0.971722      -0.22      0.8249
+x10*c1 4            1       -2.349627       -0.045722        1.000495      -2.35      0.0189
+x10*c1 5            1       -2.013192       -0.039725        0.972339      -2.07      0.0385
+x10*c1 6            1       -2.096450       -0.041433        0.991532      -2.11      0.0345
+x10*c1 7            1       -0.086169       -0.001631        0.976285      -0.09      0.9297
+x10*c1 8            0               0               0               .        .         .    
+x4*x10              1        2.651747        0.058352        0.865224       3.06      0.0022
+x7*x10              1       -1.873076       -0.041668        0.869789      -2.15      0.0313
+x20                 1        4.678298        0.135455        0.711264       6.58      <.0001
+x20*c1 1            1        0.540427        0.010712        1.006838       0.54      0.5915
+x20*c1 2            1        0.150766        0.002882        1.003952       0.15      0.8806
+x20*c1 3            1       -0.308023       -0.005981        0.993520      -0.31      0.7565
+x20*c1 4            1       -1.140889       -0.021833        0.999451      -1.14      0.2537
+x20*c1 5            1       -1.550835       -0.030049        1.003032      -1.55      0.1221
+x20*c1 6            1       -0.104006       -0.002009        0.992874      -0.10      0.9166
+x20*c1 7            1       -2.708269       -0.052872        0.990023      -2.74      0.0062
+x20*c1 8            0               0               0               .        .         .    
+
+The HPREG Procedure
+Stepwise Selection: Step 18
+Effect Entered: x1*x20 
+
+                            Analysis of Variance
+ 
+                                  Sum of           Mean
+Source                 DF        Squares         Square    F Value    Pr > F
+
+Model                  69         369082     5349.02126     212.78    <.0001
+Error                4930         123934       25.13883                     
+Corrected Total      4999         493017                                    
+
+
+Root MSE              5.01386
+R-Square              0.74862
+Adj R-Sq              0.74510
+AIC                     21194
+AICC                    21196
+SBC                     16648
+ASE (Train)          24.78688
+ASE (Validate)       26.43304
+ASE (Test)           26.07078
+
+
+                                    Parameter Estimates
+ 
+                                         Standardized        Standard
+Parameter          DF        Estimate        Estimate           Error    t Value    Pr > |t|
+
+Intercept           1        9.244243               0        0.766100      12.07      <.0001
+c1 1                1       -0.181622       -0.006049        0.762640      -0.24      0.8118
+c1 2                1        1.680913        0.055983        0.760464       2.21      0.0271
+c1 3                1       25.908249        0.862882        0.745002      34.78      <.0001
+c1 4                1        2.122330        0.070685        0.759713       2.79      0.0052
+c1 5                1        2.197452        0.073187        0.746432       2.94      0.0033
+c1 6                1        1.459250        0.048601        0.751882       1.94      0.0523
+c1 7                1        9.821580        0.327111        0.735694      13.35      <.0001
+c1 8                0               0               0               .        .         .    
+c3 tiny             1       -6.732615       -0.039467        5.731671      -1.17      0.2402
+c3 small            1        2.248609        0.025845        2.306849       0.97      0.3297
+c3 average          1        2.248466        0.034230        1.608786       1.40      0.1623
+c3 big              1        3.360010        0.066307        1.294815       2.59      0.0095
+c3 huge             0               0               0               .        .         .    
+c1*c3 1 tiny        1       13.418913        0.027022        5.185763       2.59      0.0097
+c1*c3 1 small       1       -2.470749       -0.009945        2.505202      -0.99      0.3241
+c1*c3 1 average     1       -0.297616       -0.001639        1.889838      -0.16      0.8749
+c1*c3 1 big         1       -0.494871       -0.003515        1.466879      -0.34      0.7359
+c1*c3 1 huge        0               0               0               .        .         .    
+c1*c3 2 tiny        1       -2.787121       -0.006873        4.706375      -0.59      0.5537
+c1*c3 2 small       1       -3.512159       -0.014136        2.483562      -1.41      0.1574
+c1*c3 2 average     1       -2.244839       -0.011946        1.923555      -1.17      0.2433
+c1*c3 2 big         1       -1.288264       -0.009151        1.458747      -0.88      0.3772
+c1*c3 2 huge        0               0               0               .        .         .    
+c1*c3 3 tiny        1      -10.939366       -0.022029        6.191685      -1.77      0.0773
+c1*c3 3 small       1      -24.083152       -0.096935        2.468455      -9.76      <.0001
+c1*c3 3 average     1      -16.833370       -0.092711        1.889363      -8.91      <.0001
+c1*c3 3 big         1      -11.149574       -0.079197        1.459866      -7.64      <.0001
+c1*c3 3 huge        0               0               0               .        .         .    
+c1*c3 4 tiny        1       10.856734        0.021862        5.619399       1.93      0.0534
+c1*c3 4 small       1       -1.686080       -0.006786        2.570457      -0.66      0.5119
+c1*c3 4 average     1       -3.003290       -0.016541        1.913161      -1.57      0.1165
+c1*c3 4 big         1       -1.766307       -0.012546        1.460120      -1.21      0.2265
+c1*c3 4 huge        0               0               0               .        .         .    
+c1*c3 5 tiny        1        4.361158        0.008782        5.184159       0.84      0.4003
+c1*c3 5 small       1       -1.158998       -0.004947        2.517523      -0.46      0.6453
+c1*c3 5 average     1       -0.843097       -0.004486        1.929303      -0.44      0.6621
+c1*c3 5 big         1       -0.763226       -0.005421        1.459193      -0.52      0.6010
+c1*c3 5 huge        0               0               0               .        .         .    
+c1*c3 6 tiny        1       -0.201819       -0.000406        5.042286      -0.04      0.9681
+c1*c3 6 small       1        0.893186        0.003595        2.463578       0.36      0.7170
+c1*c3 6 average     1       -0.579710       -0.003193        1.894605      -0.31      0.7596
+c1*c3 6 big         1       -2.094283       -0.014876        1.469567      -1.43      0.1542
+c1*c3 6 huge        0               0               0               .        .         .    
+c1*c3 7 tiny        1        3.424052        0.006895        5.063285       0.68      0.4989
+c1*c3 7 small       1        0.300579        0.001210        2.473930       0.12      0.9033
+c1*c3 7 average     1       -1.020033       -0.005618        1.905537      -0.54      0.5925
+c1*c3 7 big         1       -2.531840       -0.017984        1.464378      -1.73      0.0839
+c1*c3 7 huge        0               0               0               .        .         .    
+c1*c3 8 tiny        0               0               0               .        .         .    
+c1*c3 8 small       0               0               0               .        .         .    
+c1*c3 8 average     0               0               0               .        .         .    
+c1*c3 8 big         0               0               0               .        .         .    
+c1*c3 8 huge        0               0               0               .        .         .    
+x1                  1        0.973520        0.028244        0.665700       1.46      0.1437
+x1*c3 tiny          1        7.670339        0.028091        5.810094       1.32      0.1868
+x1*c3 small         1        0.638316        0.004074        2.575225       0.25      0.8042
+x1*c3 average       1       -2.459538       -0.021783        1.761520      -1.40      0.1627
+x1*c3 big           1       -3.498495       -0.041131        1.253120      -2.79      0.0053
+x1*c3 huge          0               0               0               .        .         .    
+x4                  1       -0.713434       -0.020552        0.501105      -1.42      0.1546
+x5                  1        1.979913        0.057380        0.248298       7.97      <.0001
+x6                  1       -0.985486       -0.028360        0.504173      -1.95      0.0507
+x7                  1        0.371868        0.010701        0.774762       0.48      0.6313
+x1*x7               1        1.943008        0.042851        0.879089       2.21      0.0271
+x6*x7               1        9.827255        0.216010        0.870983      11.28      <.0001
+x10                 1        3.444801        0.100160        0.921381       3.74      0.0002
+x10*c1 1            1        0.277937        0.005337        0.977115       0.28      0.7761
+x10*c1 2            1       -2.326472       -0.046007        0.992449      -2.34      0.0191
+x10*c1 3            1       -0.215791       -0.004208        0.971532      -0.22      0.8242
+x10*c1 4            1       -2.342285       -0.045579        1.000308      -2.34      0.0192
+x10*c1 5            1       -1.999132       -0.039448        0.972184      -2.06      0.0398
+x10*c1 6            1       -2.129481       -0.042086        0.991526      -2.15      0.0318
+x10*c1 7            1       -0.064560       -0.001222        0.976176      -0.07      0.9473
+x10*c1 8            0               0               0               .        .         .    
+x4*x10              1        2.657933        0.058489        0.865062       3.07      0.0021
+x7*x10              1       -1.884600       -0.041924        0.869645      -2.17      0.0303
+x20                 1        3.948213        0.114316        0.829258       4.76      <.0001
+x20*c1 1            1        0.546977        0.010842        1.006649       0.54      0.5869
+x20*c1 2            1        0.178908        0.003420        1.003890       0.18      0.8586
+x20*c1 3            1       -0.327892       -0.006367        0.993394      -0.33      0.7414
+x20*c1 4            1       -1.131284       -0.021650        0.999271      -1.13      0.2576
+x20*c1 5            1       -1.524273       -0.029535        1.002956      -1.52      0.1286
+x20*c1 6            1       -0.067335       -0.001300        0.992911      -0.07      0.9459
+x20*c1 7            1       -2.713403       -0.052972        0.989833      -2.74      0.0061
+x20*c1 8            0               0               0               .        .         .    
+x1*x20              1        1.464620        0.032059        0.855758       1.71      0.0871
+
+The HPREG Procedure
+
+                      Selection Summary
+ 
+              Effect         Number    Validation          p
+      Step    Entered    Effects In           ASE      Value
+
+         0    Intercept           1       98.3895     1.0000
+------------------------------------------------------------
+         1    c1                  2       34.8572     <.0001
+         2    x7                  3       32.5531     <.0001
+         3    x6                  4       31.0646     <.0001
+         4    x20                 5       29.7078     <.0001
+         5    x6*x7               6       29.2210     <.0001
+         6    x10                 7       28.6683     <.0001
+         7    x1                  8       28.3250     <.0001
+         8    x5                  9       27.9766     <.0001
+         9    c3                 10       27.8288     <.0001
+        10    c1*c3              11       25.9701*    <.0001
+        11    x10*c1             12       26.0696     0.0109
+        12    x4                 13       26.1594     0.0128
+        13    x4*x10             14       26.1814     0.0035
+        14    x20*c1             15       26.3294     0.0156
+        15    x1*c3              16       26.3945     0.0244
+        16    x1*x7              17       26.3632     0.0270
+        17    x7*x10             18       26.4120     0.0313
+        18    x1*x20             19       26.4330     0.0871
+
+* Optimal Value of Criterion
+
+
+Selection stopped because all candidates for removal are significant at the 0.15 level and no candidate for entry is significant at the 0.1 level.
+
+
+ The model at step 10 is selected where Validation ASE is 25.9701.
+
+The HPREG Procedure
+Selected Model
+
+Selected Effects: Intercept c1 c3 c1*c3 x1 x5 x6 x7 x6*x7 x10 x20
+
+
+                            Analysis of Variance
+ 
+                                  Sum of           Mean
+Source                 DF        Squares         Square    F Value    Pr > F
+
+Model                  46         367215     7982.93105     314.30    <.0001
+Error                4953         125802       25.39916                     
+Corrected Total      4999         493017                                    
+
+
+Root MSE              5.03976
+R-Square              0.74483
+Adj R-Sq              0.74246
+AIC                     21222
+AICC                    21223
+SBC                     16527
+ASE (Train)          25.16041
+ASE (Validate)       25.97010
+ASE (Test)           25.83436
+
+
+                                    Parameter Estimates
+ 
+                                         Standardized        Standard
+Parameter          DF        Estimate        Estimate           Error    t Value    Pr > |t|
+
+Intercept           1        9.479114               0        0.422843      22.42      <.0001
+c1 1                1        0.279417        0.009306        0.297405       0.94      0.3475
+c1 2                1        0.615589        0.020502        0.297332       2.07      0.0385
+c1 3                1       25.678601        0.855233        0.297280      86.38      <.0001
+c1 4                1        0.420360        0.014000        0.297283       1.41      0.1574
+c1 5                1        0.473986        0.015786        0.297265       1.59      0.1109
+c1 6                1        0.394044        0.013124        0.297299       1.33      0.1851
+c1 7                1        8.469793        0.282089        0.297345      28.48      <.0001
+c1 8                0               0               0               .        .         .    
+c3 tiny             1       -0.920428       -0.005396        3.571089      -0.26      0.7966
+c3 small            1        2.502030        0.028757        1.695360       1.48      0.1401
+c3 average          1        0.982006        0.014950        1.363733       0.72      0.4715
+c3 big              1        1.222300        0.024121        1.031714       1.18      0.2362
+c3 huge             0               0               0               .        .         .    
+c1*c3 1 tiny        1       12.897818        0.025972        5.051859       2.55      0.0107
+c1*c3 1 small       1       -2.382979       -0.009592        2.469648      -0.96      0.3346
+c1*c3 1 average     1       -0.221993       -0.001223        1.896611      -0.12      0.9068
+c1*c3 1 big         1       -0.240262       -0.001707        1.458424      -0.16      0.8692
+c1*c3 1 huge        0               0               0               .        .         .    
+c1*c3 2 tiny        1       -3.416510       -0.008425        4.611946      -0.74      0.4589
+c1*c3 2 small       1       -2.994121       -0.012051        2.469745      -1.21      0.2254
+c1*c3 2 average     1       -2.099348       -0.011171        1.928949      -1.09      0.2765
+c1*c3 2 big         1       -1.129165       -0.008021        1.457379      -0.77      0.4385
+c1*c3 2 huge        0               0               0               .        .         .    
+c1*c3 3 tiny        1      -15.989176       -0.032198        5.052163      -3.16      0.0016
+c1*c3 3 small       1      -23.926693       -0.096305        2.470196      -9.69      <.0001
+c1*c3 3 average     1      -16.787181       -0.092457        1.896990      -8.85      <.0001
+c1*c3 3 big         1      -10.928362       -0.077626        1.457896      -7.50      <.0001
+c1*c3 3 huge        0               0               0               .        .         .    
+c1*c3 4 tiny        1        7.761980        0.015630        5.050911       1.54      0.1244
+c1*c3 4 small       1       -1.716708       -0.006910        2.469250      -0.70      0.4869
+c1*c3 4 average     1       -3.260438       -0.017957        1.897410      -1.72      0.0858
+c1*c3 4 big         1       -1.571055       -0.011159        1.458327      -1.08      0.2814
+c1*c3 4 huge        0               0               0               .        .         .    
+c1*c3 5 tiny        1        2.623230        0.005282        5.049787       0.52      0.6035
+c1*c3 5 small       1       -1.399993       -0.005976        2.397634      -0.58      0.5593
+c1*c3 5 average     1       -0.984653       -0.005240        1.928634      -0.51      0.6097
+c1*c3 5 big         1       -0.552779       -0.003926        1.458076      -0.38      0.7046
+c1*c3 5 huge        0               0               0               .        .         .    
+c1*c3 6 tiny        1        0.149599        0.000301        5.052092       0.03      0.9764
+c1*c3 6 small       1        0.834326        0.003358        2.468314       0.34      0.7354
+c1*c3 6 average     1       -0.550724       -0.003033        1.896688      -0.29      0.7716
+c1*c3 6 big         1       -1.560705       -0.011086        1.458357      -1.07      0.2846
+c1*c3 6 huge        0               0               0               .        .         .    
+c1*c3 7 tiny        1        3.387473        0.006821        5.051498       0.67      0.5025
+c1*c3 7 small       1        0.357693        0.001440        2.468993       0.14      0.8848
+c1*c3 7 average     1       -1.241876       -0.006840        1.897166      -0.65      0.5128
+c1*c3 7 big         1       -2.128899       -0.015122        1.457512      -1.46      0.1442
+c1*c3 7 huge        0               0               0               .        .         .    
+c1*c3 8 tiny        0               0               0               .        .         .    
+c1*c3 8 small       0               0               0               .        .         .    
+c1*c3 8 average     0               0               0               .        .         .    
+c1*c3 8 big         0               0               0               .        .         .    
+c1*c3 8 huge        0               0               0               .        .         .    
+x1                  1        2.460089        0.071372        0.248612       9.90      <.0001
+x5                  1        1.979987        0.057383        0.248833       7.96      <.0001
+x6                  1       -0.983110       -0.028291        0.505160      -1.95      0.0517
+x7                  1        0.380408        0.010947        0.497859       0.76      0.4449
+x6*x7               1        9.767293        0.214692        0.873186      11.19      <.0001
+x10                 1        2.728325        0.079328        0.247982      11.00      <.0001
+x20                 1        4.017319        0.116317        0.249135      16.13      <.0001
+
+The HPREG Procedure
+
+      Performance Information
+
+Execution Mode       Single-Machine
+Number of Threads    2             
+
+
+             Data Access Information
+ 
+Data                 Engine    Role     Path
+
+WORK.ANALYSISDATA    V9        Input    On Client
+
+
+             Model Information
+
+Data Source               WORK.ANALYSISDATA
+Dependent Variable        y                
+Class Parameterization    GLM              
+
+
+               Selection Information
+
+Selection Method                  Stepwise          
+Select Criterion                  Significance Level
+Stop Criterion                    Significance Level
+Choose Criterion                  Validation ASE    
+Effect Hierarchy Enforced         Single            
+Entry Significance Level (SLE)    0.1               
+Stay Significance Level (SLS)     0.15              
+Stop Horizon                      1                 
+
+
+Number of Observations Read                          15000
+Number of Observations Used                          15000
+Number of Observations Used for Training              5000
+Number of Observations Used for Validation            5000
+Number of Observations Used for Testing               5000
+
+
+             Class Level Information
+ 
+Class    Levels      Values
+
+c1            8 *    1 2 3 4 5 6 7 8             
+c2            4      0 1 2 3                     
+c3            5      tiny small average big huge 
+
+* Associated Parameters Split
+
+
+                Dimensions
+
+Number of Effects                      278
+Number of Effects after Splits         439
+Number of Parameters                   661
+
+The HPREG Procedure
+Stepwise Selection: Step 0
+Effects Included: Intercept 
+
+                            Analysis of Variance
+ 
+                                  Sum of           Mean
+Source                 DF        Squares         Square    F Value    Pr > F
+
+Model                   0    2.32831E-10              .        .       .    
+Error                4999         493017       98.62310                     
+Corrected Total      4999         493017                                    
+
+
+Root MSE              9.93092
+R-Square          4.44089E-16
+Adj R-Sq          3.33067E-16
+AIC                     27960
+AICC                    27960
+SBC                     22964
+ASE (Train)          98.60338
+ASE (Validate)       98.38953
+ASE (Test)           98.20385
+
+
+                                 Parameter Estimates
+ 
+                                   Standardized        Standard
+Parameter    DF        Estimate        Estimate           Error    t Value    Pr > |t|
+
+Intercept     1       21.597069               0        0.140444     153.78      <.0001
+
+The HPREG Procedure
+Stepwise Selection: Step 1
+Effect Entered: c1_3 
+
+                            Analysis of Variance
+ 
+                                  Sum of           Mean
+Source                 DF        Squares         Square    F Value    Pr > F
+
+Model                   1         288480         288480    7049.22    <.0001
+Error                4998         204537       40.92371                     
+Corrected Total      4999         493017                                    
+
+
+Root MSE              6.39716
+R-Square              0.58513
+Adj R-Sq              0.58505
+AIC                     23563
+AICC                    23563
+SBC                     18574
+ASE (Train)          40.90734
+ASE (Validate)       41.72698
+ASE (Test)           42.10062
+
+
+                                 Parameter Estimates
+ 
+                                   Standardized        Standard
+Parameter    DF        Estimate        Estimate           Error    t Value    Pr > |t|
+
+Intercept     1       18.726130               0        0.096716     193.62      <.0001
+c1_3          1       22.967512        0.764939        0.273554      83.96      <.0001
+
+The HPREG Procedure
+Stepwise Selection: Step 2
+Effect Entered: c1_7 
+
+                            Analysis of Variance
+ 
+                                  Sum of           Mean
+Source                 DF        Squares         Square    F Value    Pr > F
+
+Model                   2         321873         160936    4698.96    <.0001
+Error                4997         171144       34.24936                     
+Corrected Total      4999         493017                                    
+
+
+Root MSE              5.85230
+R-Square              0.65286
+Adj R-Sq              0.65272
+AIC                     22673
+AICC                    22673
+SBC                     17691
+ASE (Train)          34.22881
+ASE (Validate)       34.84166
+ASE (Test)           36.02380
+
+
+                                 Parameter Estimates
+ 
+                                   Standardized        Standard
+Parameter    DF        Estimate        Estimate           Error    t Value    Pr > |t|
+
+Intercept     1       17.598256               0        0.095568     184.14      <.0001
+c1_3          1       24.095386        0.802504        0.252848      95.30      <.0001
+c1_7          1        7.895122        0.262949        0.252848      31.22      <.0001
+
+The HPREG Procedure
+Stepwise Selection: Step 3
+Effect Entered: x7 
+
+                            Analysis of Variance
+ 
+                                  Sum of           Mean
+Source                 DF        Squares         Square    F Value    Pr > F
+
+Model                   3         332490         110830    3449.30    <.0001
+Error                4996         160527       32.13115                     
+Corrected Total      4999         493017                                    
+
+
+Root MSE              5.66843
+R-Square              0.67440
+Adj R-Sq              0.67420
+AIC                     22355
+AICC                    22355
+SBC                     17379
+ASE (Train)          32.10544
+ASE (Validate)       32.52827
+ASE (Test)           33.12483
+
+
+                                 Parameter Estimates
+ 
+                                   Standardized        Standard
+Parameter    DF        Estimate        Estimate           Error    t Value    Pr > |t|
+
+Intercept     1       15.035173               0        0.168672      89.14      <.0001
+c1_3          1       24.127705        0.803580        0.244911      98.52      <.0001
+c1_7          1        7.920003        0.263778        0.244908      32.34      <.0001
+x7            1        5.099597        0.146752        0.280544      18.18      <.0001
+
+The HPREG Procedure
+Stepwise Selection: Step 4
+Effect Entered: x6 
+
+                            Analysis of Variance
+ 
+                                  Sum of           Mean
+Source                 DF        Squares         Square    F Value    Pr > F
+
+Model                   4         339503          84876    2761.68    <.0001
+Error                4995         153514       30.73345                     
+Corrected Total      4999         493017                                    
+
+
+Root MSE              5.54378
+R-Square              0.68862
+Adj R-Sq              0.68837
+AIC                     22134
+AICC                    22134
+SBC                     17164
+ASE (Train)          30.70271
+ASE (Validate)       31.04746
+ASE (Test)           31.70353
+
+
+                                 Parameter Estimates
+ 
+                                   Standardized        Standard
+Parameter    DF        Estimate        Estimate           Error    t Value    Pr > |t|
+
+Intercept     1       12.984563               0        0.213632      60.78      <.0001
+c1_3          1       24.151249        0.804364        0.239530     100.83      <.0001
+c1_7          1        7.966346        0.265321        0.239542      33.26      <.0001
+x6            1        4.145443        0.119296        0.274413      15.11      <.0001
+x7            1        5.042141        0.145098        0.274401      18.38      <.0001
+
+The HPREG Procedure
+Stepwise Selection: Step 5
+Effect Entered: x20 
+
+                            Analysis of Variance
+ 
+                                  Sum of           Mean
+Source                 DF        Squares         Square    F Value    Pr > F
+
+Model                   5         346277          69255    2356.96    <.0001
+Error                4994         146740       29.38332                     
+Corrected Total      4999         493017                                    
+
+
+Root MSE              5.42064
+R-Square              0.70236
+Adj R-Sq              0.70206
+AIC                     21910
+AICC                    21910
+SBC                     16947
+ASE (Train)          29.34806
+ASE (Validate)       29.69984
+ASE (Test)           30.03698
+
+
+                                 Parameter Estimates
+ 
+                                   Standardized        Standard
+Parameter    DF        Estimate        Estimate           Error    t Value    Pr > |t|
+
+Intercept     1       10.980377               0        0.247101      44.44      <.0001
+c1_3          1       24.148099        0.804259        0.234210     103.10      <.0001
+c1_7          1        7.956889        0.265006        0.234222      33.97      <.0001
+x6            1        4.107051        0.118191        0.268330      15.31      <.0001
+x7            1        5.099699        0.146755        0.268333      19.01      <.0001
+x20           1        4.048781        0.117228        0.266671      15.18      <.0001
+
+The HPREG Procedure
+Stepwise Selection: Step 6
+Effect Entered: x6*x7 
+
+                            Analysis of Variance
+ 
+                                  Sum of           Mean
+Source                 DF        Squares         Square    F Value    Pr > F
+
+Model                   6         349509          58251    2026.71    <.0001
+Error                4993         143508       28.74189                     
+Corrected Total      4999         493017                                    
+
+
+Root MSE              5.36115
+R-Square              0.70892
+Adj R-Sq              0.70857
+AIC                     21801
+AICC                    21801
+SBC                     16844
+ASE (Train)          28.70165
+ASE (Validate)       29.20901
+ASE (Test)           29.64917
+
+
+                                 Parameter Estimates
+ 
+                                   Standardized        Standard
+Parameter    DF        Estimate        Estimate           Error    t Value    Pr > |t|
+
+Intercept     1       13.342092               0        0.330646      40.35      <.0001
+c1_3          1       24.176150        0.805194        0.231654     104.36      <.0001
+c1_7          1        8.006326        0.266653        0.231698      34.55      <.0001
+x6            1       -0.819374       -0.023580        0.535025      -1.53      0.1257
+x7            1        0.267760        0.007705        0.527309       0.51      0.6116
+x6*x7         1        9.816996        0.215784        0.925754      10.60      <.0001
+x20           1        4.134467        0.119709        0.263868      15.67      <.0001
+
+The HPREG Procedure
+Stepwise Selection: Step 7
+Effect Entered: x10 
+
+                            Analysis of Variance
+ 
+                                  Sum of           Mean
+Source                 DF        Squares         Square    F Value    Pr > F
+
+Model                   7         352640          50377    1791.48    <.0001
+Error                4992         140377       28.12037                     
+Corrected Total      4999         493017                                    
+
+
+Root MSE              5.30286
+R-Square              0.71527
+Adj R-Sq              0.71487
+AIC                     21692
+AICC                    21693
+SBC                     16743
+ASE (Train)          28.07538
+ASE (Validate)       28.66015
+ASE (Test)           28.70473
+
+
+                                 Parameter Estimates
+ 
+                                   Standardized        Standard
+Parameter    DF        Estimate        Estimate           Error    t Value    Pr > |t|
+
+Intercept     1       12.002209               0        0.350835      34.21      <.0001
+c1_3          1       24.194164        0.805793        0.229142     105.59      <.0001
+c1_7          1        8.074596        0.268927        0.229271      35.22      <.0001
+x6            1       -0.850211       -0.024467        0.529217      -1.61      0.1082
+x7            1        0.291108        0.008377        0.521581       0.56      0.5768
+x6*x7         1        9.754616        0.214413        0.915709      10.65      <.0001
+x10           1        2.743039        0.079756        0.259942      10.55      <.0001
+x20           1        4.104629        0.118845        0.261015      15.73      <.0001
+
+The HPREG Procedure
+Stepwise Selection: Step 8
+Effect Entered: x1 
+
+                            Analysis of Variance
+ 
+                                  Sum of           Mean
+Source                 DF        Squares         Square    F Value    Pr > F
+
+Model                   8         355199          44400    1607.92    <.0001
+Error                4991         137818       27.61323                     
+Corrected Total      4999         493017                                    
+
+
+Root MSE              5.25483
+R-Square              0.72046
+Adj R-Sq              0.72001
+AIC                     21602
+AICC                    21603
+SBC                     16659
+ASE (Train)          27.56353
+ASE (Validate)       28.31521
+ASE (Test)           28.06257
+
+
+                                 Parameter Estimates
+ 
+                                   Standardized        Standard
+Parameter    DF        Estimate        Estimate           Error    t Value    Pr > |t|
+
+Intercept     1       10.858908               0        0.367381      29.56      <.0001
+c1_3          1       24.175559        0.805174        0.227075     106.47      <.0001
+c1_7          1        8.070292        0.268783        0.227194      35.52      <.0001
+x1            1        2.485028        0.072096        0.258128       9.63      <.0001
+x6            1       -0.993573       -0.028593        0.524635      -1.89      0.0583
+x7            1        0.193976        0.005582        0.516955       0.38      0.7075
+x6*x7         1        9.902879        0.217672        0.907545      10.91      <.0001
+x10           1        2.764389        0.080376        0.257597      10.73      <.0001
+x20           1        4.092868        0.118504        0.258654      15.82      <.0001
+
+The HPREG Procedure
+Stepwise Selection: Step 9
+Effect Entered: x5 
+
+                            Analysis of Variance
+ 
+                                  Sum of           Mean
+Source                 DF        Squares         Square    F Value    Pr > F
+
+Model                   9         356657          39629    1450.18    <.0001
+Error                4990         136360       27.32671                     
+Corrected Total      4999         493017                                    
+
+
+Root MSE              5.22750
+R-Square              0.72342
+Adj R-Sq              0.72292
+AIC                     21551
+AICC                    21551
+SBC                     16614
+ASE (Train)          27.27205
+ASE (Validate)       27.97002
+ASE (Test)           27.69161
+
+
+                                 Parameter Estimates
+ 
+                                   Standardized        Standard
+Parameter    DF        Estimate        Estimate           Error    t Value    Pr > |t|
+
+Intercept     1        9.929439               0        0.386997      25.66      <.0001
+c1_3          1       24.185194        0.805495        0.225897     107.06      <.0001
+c1_7          1        8.075667        0.268962        0.226014      35.73      <.0001
+x1            1        2.476594        0.071851        0.256787       9.64      <.0001
+x5            1        1.877330        0.054407        0.257068       7.30      <.0001
+x6            1       -1.034298       -0.029765        0.521935      -1.98      0.0476
+x7            1        0.225124        0.006478        0.514283       0.44      0.6616
+x6*x7         1        9.968054        0.219105        0.902869      11.04      <.0001
+x10           1        2.748219        0.079906        0.256266      10.72      <.0001
+x20           1        4.083949        0.118246        0.257311      15.87      <.0001
+
+The HPREG Procedure
+Stepwise Selection: Step 10
+Effect Entered: c3 
+
+                            Analysis of Variance
+ 
+                                  Sum of           Mean
+Source                 DF        Squares         Square    F Value    Pr > F
+
+Model                  13         357497          27500    1011.76    <.0001
+Error                4986         135520       27.18006                     
+Corrected Total      4999         493017                                    
+
+
+Root MSE              5.21345
+R-Square              0.72512
+Adj R-Sq              0.72440
+AIC                     21528
+AICC                    21528
+SBC                     16618
+ASE (Train)          27.10395
+ASE (Validate)       27.82218
+ASE (Test)           27.41783
+
+
+                                  Parameter Estimates
+ 
+                                    Standardized        Standard
+Parameter     DF        Estimate        Estimate           Error    t Value    Pr > |t|
+
+Intercept      1       10.040500               0        0.386665      25.97      <.0001
+c1_3           1       24.185704        0.805512        0.225291     107.35      <.0001
+c1_7           1        8.075428        0.268954        0.225407      35.83      <.0001
+c3 tiny        1       -0.260916       -0.001530        1.268260      -0.21      0.8370
+c3 small       1       -1.313304       -0.015095        0.646762      -2.03      0.0424
+c3 average     1       -2.212979       -0.033690        0.488683      -4.53      <.0001
+c3 big         1       -1.039664       -0.020517        0.376905      -2.76      0.0058
+c3 huge        0               0               0               .        .         .    
+x1             1        2.496791        0.072437        0.256165       9.75      <.0001
+x5             1        1.898355        0.055017        0.256485       7.40      <.0001
+x6             1       -1.063683       -0.030610        0.521031      -2.04      0.0413
+x7             1        0.233144        0.006709        0.513344       0.45      0.6497
+x6*x7          1        9.957039        0.218863        0.901168      11.05      <.0001
+x10            1        2.717257        0.079006        0.255812      10.62      <.0001
+x20            1        4.102040        0.118770        0.256776      15.98      <.0001
+
+The HPREG Procedure
+Stepwise Selection: Step 11
+Effect Entered: c1_3*c3 
+
+                            Analysis of Variance
+ 
+                                  Sum of           Mean
+Source                 DF        Squares         Square    F Value    Pr > F
+
+Model                  17         366436          21555     848.37    <.0001
+Error                4982         126581       25.40769                     
+Corrected Total      4999         493017                                    
+
+
+Root MSE              5.04060
+R-Square              0.74325
+Adj R-Sq              0.74238
+AIC                     21195
+AICC                    21195
+SBC                     16311
+ASE (Train)          25.31622
+ASE (Validate)       25.98055
+ASE (Test)           25.76059
+
+
+                                    Parameter Estimates
+ 
+                                         Standardized        Standard
+Parameter          DF        Estimate        Estimate           Error    t Value    Pr > |t|
+
+Intercept           1        9.882635               0        0.374057      26.42      <.0001
+c1_3                1       25.310427        0.842971        0.226916     111.54      <.0001
+c1_7                1        8.076190        0.268980        0.217934      37.06      <.0001
+c3 tiny             1        1.982679        0.011623        1.305675       1.52      0.1289
+c3 small            1        1.466632        0.016857        0.667076       2.20      0.0280
+c3 average          1       -0.213470       -0.003250        0.506192      -0.42      0.6732
+c3 big              1        0.194989        0.003848        0.389547       0.50      0.6167
+c3 huge             0               0               0               .        .         .    
+c1_3*c3 tiny        1      -18.892716       -0.038044        3.804609      -4.97      <.0001
+c1_3*c3 small       1      -22.892627       -0.092143        1.915923     -11.95      <.0001
+c1_3*c3 average     1      -15.594623       -0.085889        1.412774     -11.04      <.0001
+c1_3*c3 big         1       -9.903426       -0.070345        1.101560      -8.99      <.0001
+c1_3*c3 huge        0               0               0               .        .         .    
+x1                  1        2.452973        0.071166        0.247802       9.90      <.0001
+x5                  1        1.963147        0.056895        0.248123       7.91      <.0001
+x6                  1       -1.011507       -0.029109        0.503860      -2.01      0.0447
+x7                  1        0.348193        0.010020        0.496713       0.70      0.4833
+x6*x7               1        9.763194        0.214602        0.871803      11.20      <.0001
+x10                 1        2.763585        0.080353        0.247400      11.17      <.0001
+x20                 1        3.997732        0.115750        0.248356      16.10      <.0001
+
+The HPREG Procedure
+Stepwise Selection: Step 12
+Effect Entered: x20*c1_7 
+
+                            Analysis of Variance
+ 
+                                  Sum of           Mean
+Source                 DF        Squares         Square    F Value    Pr > F
+
+Model                  18         366688          20372     803.23    <.0001
+Error                4981         126329       25.36214                     
+Corrected Total      4999         493017                                    
+
+
+Root MSE              5.03608
+R-Square              0.74376
+Adj R-Sq              0.74284
+AIC                     21187
+AICC                    21187
+SBC                     16309
+ASE (Train)          25.26576
+ASE (Validate)       26.05958
+ASE (Test)           25.80376
+
+
+                                    Parameter Estimates
+ 
+                                         Standardized        Standard
+Parameter          DF        Estimate        Estimate           Error    t Value    Pr > |t|
+
+Intercept           1        9.729842               0        0.376849      25.82      <.0001
+c1_3                1       25.310908        0.842987        0.226713     111.64      <.0001
+c1_7                1        9.225459        0.307257        0.424498      21.73      <.0001
+c3 tiny             1        1.891628        0.011089        1.304823       1.45      0.1472
+c3 small            1        1.465848        0.016848        0.666478       2.20      0.0279
+c3 average          1       -0.165058       -0.002513        0.505971      -0.33      0.7443
+c3 big              1        0.224569        0.004432        0.389310       0.58      0.5641
+c3 huge             0               0               0               .        .         .    
+c1_3*c3 tiny        1      -18.852109       -0.037963        3.801219      -4.96      <.0001
+c1_3*c3 small       1      -22.873396       -0.092066        1.914214     -11.95      <.0001
+c1_3*c3 average     1      -15.631949       -0.086095        1.411557     -11.07      <.0001
+c1_3*c3 big         1       -9.903804       -0.070348        1.100572      -9.00      <.0001
+c1_3*c3 huge        0               0               0               .        .         .    
+x1                  1        2.462236        0.071435        0.247597       9.94      <.0001
+x5                  1        1.971160        0.057127        0.247913       7.95      <.0001
+x6                  1       -1.035442       -0.029797        0.503465      -2.06      0.0398
+x7                  1        0.321474        0.009251        0.496340       0.65      0.5172
+x6*x7               1        9.827462        0.216014        0.871259      11.28      <.0001
+x10                 1        2.767114        0.080456        0.247180      11.19      <.0001
+x20                 1        4.301412        0.124543        0.266160      16.16      <.0001
+x20*c1_7            1       -2.322588       -0.045343        0.736427      -3.15      0.0016
+
+The HPREG Procedure
+Stepwise Selection: Step 13
+Effect Entered: x4 
+
+                            Analysis of Variance
+ 
+                                  Sum of           Mean
+Source                 DF        Squares         Square    F Value    Pr > F
+
+Model                  19         366819          19306     761.86    <.0001
+Error                4980         126198       25.34089                     
+Corrected Total      4999         493017                                    
+
+
+Root MSE              5.03397
+R-Square              0.74403
+Adj R-Sq              0.74305
+AIC                     21184
+AICC                    21184
+SBC                     16312
+ASE (Train)          25.23952
+ASE (Validate)       26.13568
+ASE (Test)           25.82323
+
+
+                                    Parameter Estimates
+ 
+                                         Standardized        Standard
+Parameter          DF        Estimate        Estimate           Error    t Value    Pr > |t|
+
+Intercept           1        9.467865               0        0.393893      24.04      <.0001
+c1_3                1       25.299653        0.842612        0.226672     111.61      <.0001
+c1_7                1        9.229066        0.307377        0.424323      21.75      <.0001
+c3 tiny             1        1.868593        0.010954        1.304316       1.43      0.1520
+c3 small            1        1.485091        0.017069        0.666252       2.23      0.0259
+c3 average          1       -0.203881       -0.003104        0.506047      -0.40      0.6870
+c3 big              1        0.219480        0.004331        0.389154       0.56      0.5728
+c3 huge             0               0               0               .        .         .    
+c1_3*c3 tiny        1      -18.740775       -0.037739        3.799941      -4.93      <.0001
+c1_3*c3 small       1      -22.858380       -0.092005        1.913423     -11.95      <.0001
+c1_3*c3 average     1      -15.598534       -0.085910        1.411042     -11.05      <.0001
+c1_3*c3 big         1       -9.833583       -0.069849        1.100543      -8.94      <.0001
+c1_3*c3 huge        0               0               0               .        .         .    
+x1                  1        2.467375        0.071584        0.247503       9.97      <.0001
+x4                  1        0.567360        0.016344        0.249340       2.28      0.0229
+x5                  1        1.977263        0.057304        0.247824       7.98      <.0001
+x6                  1       -1.055268       -0.030368        0.503330      -2.10      0.0361
+x7                  1        0.306246        0.008813        0.496177       0.62      0.5371
+x6*x7               1        9.854538        0.216610        0.870975      11.31      <.0001
+x10                 1        2.765311        0.080403        0.247078      11.19      <.0001
+x20                 1        4.289493        0.124197        0.266100      16.12      <.0001
+x20*c1_7            1       -2.333093       -0.045548        0.736133      -3.17      0.0015
+
+The HPREG Procedure
+Stepwise Selection: Step 14
+Effect Entered: x4*x10 
+
+                            Analysis of Variance
+ 
+                                  Sum of           Mean
+Source                 DF        Squares         Square    F Value    Pr > F
+
+Model                  20         367051          18353     725.41    <.0001
+Error                4979         125966       25.29942                     
+Corrected Total      4999         493017                                    
+
+
+Root MSE              5.02985
+R-Square              0.74450
+Adj R-Sq              0.74347
+AIC                     21177
+AICC                    21177
+SBC                     16312
+ASE (Train)          25.19316
+ASE (Validate)       26.16815
+ASE (Test)           25.85537
+
+
+                                    Parameter Estimates
+ 
+                                         Standardized        Standard
+Parameter          DF        Estimate        Estimate           Error    t Value    Pr > |t|
+
+Intercept           1       10.111772               0        0.447381      22.60      <.0001
+c1_3                1       25.307093        0.842860        0.226500     111.73      <.0001
+c1_7                1        9.243561        0.307859        0.424002      21.80      <.0001
+c3 tiny             1        1.897418        0.011123        1.303283       1.46      0.1455
+c3 small            1        1.470471        0.016901        0.665724       2.21      0.0272
+c3 average          1       -0.185362       -0.002822        0.505669      -0.37      0.7140
+c3 big              1        0.243752        0.004810        0.388918       0.63      0.5309
+c3 huge             0               0               0               .        .         .    
+c1_3*c3 tiny        1      -18.467301       -0.037188        3.797906      -4.86      <.0001
+c1_3*c3 small       1      -22.875756       -0.092075        1.911866     -11.97      <.0001
+c1_3*c3 average     1      -15.613006       -0.085990        1.409895     -11.07      <.0001
+c1_3*c3 big         1       -9.893761       -0.070277        1.099822      -9.00      <.0001
+c1_3*c3 huge        0               0               0               .        .         .    
+x1                  1        2.475463        0.071818        0.247315      10.01      <.0001
+x4                  1       -0.743925       -0.021430        0.499737      -1.49      0.1366
+x5                  1        1.958727        0.056766        0.247697       7.91      <.0001
+x6                  1       -1.080493       -0.031094        0.502987      -2.15      0.0317
+x7                  1        0.308520        0.008878        0.495772       0.62      0.5338
+x6*x7               1        9.880816        0.217187        0.870306      11.35      <.0001
+x10                 1        1.479940        0.043030        0.491194       3.01      0.0026
+x4*x10              1        2.611317        0.057463        0.862695       3.03      0.0025
+x20                 1        4.306905        0.124702        0.265945      16.19      <.0001
+x20*c1_7            1       -2.356019       -0.045995        0.735570      -3.20      0.0014
+
+The HPREG Procedure
+Stepwise Selection: Step 15
+Effect Entered: x1*x7 
+
+                            Analysis of Variance
+ 
+                                  Sum of           Mean
+Source                 DF        Squares         Square    F Value    Pr > F
+
+Model                  21         367171          17484     691.62    <.0001
+Error                4978         125845       25.28032                     
+Corrected Total      4999         493017                                    
+
+
+Root MSE              5.02795
+R-Square              0.74474
+Adj R-Sq              0.74367
+AIC                     21174
+AICC                    21174
+SBC                     16315
+ASE (Train)          25.16908
+ASE (Validate)       26.13080
+ASE (Test)           25.82438
+
+
+                                    Parameter Estimates
+ 
+                                         Standardized        Standard
+Parameter          DF        Estimate        Estimate           Error    t Value    Pr > |t|
+
+Intercept           1       10.567475               0        0.493562      21.41      <.0001
+c1_3                1       25.303156        0.842729        0.226421     111.75      <.0001
+c1_7                1        9.245570        0.307926        0.423843      21.81      <.0001
+c3 tiny             1        1.954009        0.011455        1.303049       1.50      0.1338
+c3 small            1        1.481910        0.017032        0.665494       2.23      0.0260
+c3 average          1       -0.173013       -0.002634        0.505510      -0.34      0.7322
+c3 big              1        0.226808        0.004476        0.388848       0.58      0.5597
+c3 huge             0               0               0               .        .         .    
+c1_3*c3 tiny        1      -18.504112       -0.037262        3.796509      -4.87      <.0001
+c1_3*c3 small       1      -22.939504       -0.092332        1.911367     -12.00      <.0001
+c1_3*c3 average     1      -15.615318       -0.086003        1.409363     -11.08      <.0001
+c1_3*c3 big         1       -9.866961       -0.070086        1.099476      -8.97      <.0001
+c1_3*c3 huge        0               0               0               .        .         .    
+x1                  1        1.507757        0.043743        0.507692       2.97      0.0030
+x4                  1       -0.734888       -0.021170        0.499565      -1.47      0.1413
+x5                  1        1.943331        0.056320        0.247704       7.85      <.0001
+x6                  1       -1.023913       -0.029466        0.503465      -2.03      0.0420
+x7                  1       -0.587759       -0.016914        0.643647      -0.91      0.3612
+x1*x7               1        1.914423        0.042220        0.877247       2.18      0.0291
+x6*x7               1        9.788164        0.215151        0.871013      11.24      <.0001
+x10                 1        1.467357        0.042664        0.491042       2.99      0.0028
+x4*x10              1        2.614634        0.057536        0.862371       3.03      0.0024
+x20                 1        4.308725        0.124754        0.265846      16.21      <.0001
+x20*c1_7            1       -2.370278       -0.046274        0.735321      -3.22      0.0013
+
+The HPREG Procedure
+Stepwise Selection: Step 16
+Effect Entered: x1*c3 
+
+                            Analysis of Variance
+ 
+                                  Sum of           Mean
+Source                 DF        Squares         Square    F Value    Pr > F
+
+Model                  25         367422          14697     582.05    <.0001
+Error                4974         125595       25.25038                     
+Corrected Total      4999         493017                                    
+
+
+Root MSE              5.02498
+R-Square              0.74525
+Adj R-Sq              0.74397
+AIC                     21172
+AICC                    21172
+SBC                     16340
+ASE (Train)          25.11908
+ASE (Validate)       26.15870
+ASE (Test)           25.86700
+
+
+                                    Parameter Estimates
+ 
+                                         Standardized        Standard
+Parameter          DF        Estimate        Estimate           Error    t Value    Pr > |t|
+
+Intercept           1       10.498652               0        0.494188      21.24      <.0001
+c1_3                1       25.299011        0.842591        0.226293     111.80      <.0001
+c1_7                1        9.234337        0.307552        0.423697      21.79      <.0001
+c3 tiny             1        1.485492        0.008708        3.316843       0.45      0.6543
+c3 small            1        0.613221        0.007048        1.278359       0.48      0.6315
+c3 average          1        1.202175        0.018302        1.005320       1.20      0.2318
+c3 big              1        1.884327        0.037186        0.744308       2.53      0.0114
+c3 huge             0               0               0               .        .         .    
+c1_3*c3 tiny        1      -18.081249       -0.036410        4.431371      -4.08      <.0001
+c1_3*c3 small       1      -23.046119       -0.092761        1.914003     -12.04      <.0001
+c1_3*c3 average     1      -15.713719       -0.086545        1.410082     -11.14      <.0001
+c1_3*c3 big         1       -9.854806       -0.070000        1.098837      -8.97      <.0001
+c1_3*c3 huge        0               0               0               .        .         .    
+x1                  1        1.680723        0.048761        0.512431       3.28      0.0010
+x1*c3 tiny          1        0.735473        0.002693        5.010365       0.15      0.8833
+x1*c3 small         1        1.827156        0.011662        2.291741       0.80      0.4253
+x1*c3 average       1       -2.683511       -0.023766        1.691343      -1.59      0.1127
+x1*c3 big           1       -3.230159       -0.037977        1.236742      -2.61      0.0090
+x1*c3 huge          0               0               0               .        .         .    
+x4                  1       -0.742326       -0.021384        0.499524      -1.49      0.1373
+x5                  1        1.940666        0.056243        0.247642       7.84      <.0001
+x6                  1       -1.042696       -0.030006        0.503453      -2.07      0.0384
+x7                  1       -0.589040       -0.016951        0.643346      -0.92      0.3599
+x1*x7               1        1.909905        0.042120        0.876981       2.18      0.0295
+x6*x7               1        9.807590        0.215578        0.870697      11.26      <.0001
+x10                 1        1.449196        0.042136        0.490863       2.95      0.0032
+x4*x10              1        2.651673        0.058351        0.862096       3.08      0.0021
+x20                 1        4.304200        0.124623        0.265789      16.19      <.0001
+x20*c1_7            1       -2.382222       -0.046507        0.735126      -3.24      0.0012
+
+The HPREG Procedure
+Stepwise Selection: Step 17
+Effect Entered: x7*x10 
+
+                            Analysis of Variance
+ 
+                                  Sum of           Mean
+Source                 DF        Squares         Square    F Value    Pr > F
+
+Model                  26         367527          14136     560.18    <.0001
+Error                4973         125489       25.23415                     
+Corrected Total      4999         493017                                    
+
+
+Root MSE              5.02336
+R-Square              0.74547
+Adj R-Sq              0.74414
+AIC                     21170
+AICC                    21170
+SBC                     16344
+ASE (Train)          25.09789
+ASE (Validate)       26.20044
+ASE (Test)           25.86144
+
+
+                                    Parameter Estimates
+ 
+                                         Standardized        Standard
+Parameter          DF        Estimate        Estimate           Error    t Value    Pr > |t|
+
+Intercept           1       10.052293               0        0.539923      18.62      <.0001
+c1_3                1       25.293174        0.842396        0.226238     111.80      <.0001
+c1_7                1        9.228285        0.307351        0.423572      21.79      <.0001
+c3 tiny             1        1.421326        0.008332        3.315925       0.43      0.6682
+c3 small            1        0.611507        0.007028        1.277949       0.48      0.6323
+c3 average          1        1.228520        0.018703        1.005079       1.22      0.2216
+c3 big              1        1.889968        0.037297        0.744074       2.54      0.0111
+c3 huge             0               0               0               .        .         .    
+c1_3*c3 tiny        1      -18.187135       -0.036624        4.430248      -4.11      <.0001
+c1_3*c3 small       1      -23.026423       -0.092681        1.913412     -12.03      <.0001
+c1_3*c3 average     1      -15.692488       -0.086428        1.409667     -11.13      <.0001
+c1_3*c3 big         1       -9.858373       -0.070025        1.098485      -8.97      <.0001
+c1_3*c3 huge        0               0               0               .        .         .    
+x1                  1        1.701332        0.049359        0.512365       3.32      0.0009
+x1*c3 tiny          1        0.723849        0.002651        5.008758       0.14      0.8851
+x1*c3 small         1        1.878581        0.011991        2.291142       0.82      0.4123
+x1*c3 average       1       -2.751167       -0.024366        1.691121      -1.63      0.1038
+x1*c3 big           1       -3.228476       -0.037957        1.236345      -2.61      0.0090
+x1*c3 huge          0               0               0               .        .         .    
+x4                  1       -0.770215       -0.022188        0.499549      -1.54      0.1232
+x5                  1        1.942218        0.056288        0.247564       7.85      <.0001
+x6                  1       -1.053865       -0.030328        0.503321      -2.09      0.0363
+x7                  1        0.295720        0.008510        0.774642       0.38      0.7027
+x1*x7               1        1.891637        0.041718        0.876744       2.16      0.0310
+x6*x7               1        9.834967        0.216179        0.870520      11.30      <.0001
+x10                 1        2.335159        0.067896        0.654019       3.57      0.0004
+x4*x10              1        2.687051        0.059129        0.861992       3.12      0.0018
+x7*x10              1       -1.778574       -0.039566        0.867998      -2.05      0.0405
+x20                 1        4.311121        0.124824        0.265725      16.22      <.0001
+x20*c1_7            1       -2.361633       -0.046105        0.734959      -3.21      0.0013
+
+The HPREG Procedure
+
+                      Selection Summary
+ 
+              Effect         Number    Validation          p
+      Step    Entered    Effects In           ASE      Value
+
+         0    Intercept           1       98.3895     1.0000
+------------------------------------------------------------
+         1    c1_3                2       41.7270     <.0001
+         2    c1_7                3       34.8417     <.0001
+         3    x7                  4       32.5283     <.0001
+         4    x6                  5       31.0475     <.0001
+         5    x20                 6       29.6998     <.0001
+         6    x6*x7               7       29.2090     <.0001
+         7    x10                 8       28.6601     <.0001
+         8    x1                  9       28.3152     <.0001
+         9    x5                 10       27.9700     <.0001
+        10    c3                 11       27.8222     <.0001
+        11    c1_3*c3            12       25.9806*    <.0001
+        12    x20*c1_7           13       26.0596     0.0016
+        13    x4                 14       26.1357     0.0229
+        14    x4*x10             15       26.1681     0.0025
+        15    x1*x7              16       26.1308     0.0291
+        16    x1*c3              17       26.1587     0.0422
+        17    x7*x10             18       26.2004     0.0405
+
+* Optimal Value of Criterion
+
+
+Selection stopped because all candidates for removal are significant at the 0.15 level and no candidate for entry is significant at the 0.1 level.
+
+
+ The model at step 11 is selected where Validation ASE is 25.98055.
+
+The HPREG Procedure
+Selected Model
+
+Selected Effects: Intercept c1_3 c1_7 c3 c1_3*c3 x1 x5 x6 x7 x6*x7 x10 x20
+
+
+                            Analysis of Variance
+ 
+                                  Sum of           Mean
+Source                 DF        Squares         Square    F Value    Pr > F
+
+Model                  17         366436          21555     848.37    <.0001
+Error                4982         126581       25.40769                     
+Corrected Total      4999         493017                                    
+
+
+Root MSE              5.04060
+R-Square              0.74325
+Adj R-Sq              0.74238
+AIC                     21195
+AICC                    21195
+SBC                     16311
+ASE (Train)          25.31622
+ASE (Validate)       25.98055
+ASE (Test)           25.76059
+
+
+                                    Parameter Estimates
+ 
+                                         Standardized        Standard
+Parameter          DF        Estimate        Estimate           Error    t Value    Pr > |t|
+
+Intercept           1        9.882635               0        0.374057      26.42      <.0001
+c1_3                1       25.310427        0.842971        0.226916     111.54      <.0001
+c1_7                1        8.076190        0.268980        0.217934      37.06      <.0001
+c3 tiny             1        1.982679        0.011623        1.305675       1.52      0.1289
+c3 small            1        1.466632        0.016857        0.667076       2.20      0.0280
+c3 average          1       -0.213470       -0.003250        0.506192      -0.42      0.6732
+c3 big              1        0.194989        0.003848        0.389547       0.50      0.6167
+c3 huge             0               0               0               .        .         .    
+c1_3*c3 tiny        1      -18.892716       -0.038044        3.804609      -4.97      <.0001
+c1_3*c3 small       1      -22.892627       -0.092143        1.915923     -11.95      <.0001
+c1_3*c3 average     1      -15.594623       -0.085889        1.412774     -11.04      <.0001
+c1_3*c3 big         1       -9.903426       -0.070345        1.101560      -8.99      <.0001
+c1_3*c3 huge        0               0               0               .        .         .    
+x1                  1        2.452973        0.071166        0.247802       9.90      <.0001
+x5                  1        1.963147        0.056895        0.248123       7.91      <.0001
+x6                  1       -1.011507       -0.029109        0.503860      -2.01      0.0447
+x7                  1        0.348193        0.010020        0.496713       0.70      0.4833
+x6*x7               1        9.763194        0.214602        0.871803      11.20      <.0001
+x10                 1        2.763585        0.080353        0.247400      11.17      <.0001
+x20                 1        3.997732        0.115750        0.248356      16.10      <.0001

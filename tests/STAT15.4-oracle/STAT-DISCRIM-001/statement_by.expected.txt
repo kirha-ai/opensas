@@ -1,0 +1,284 @@
+
+Fish Measurement Data
+
+_oracle_by=1
+
+The DISCRIM Procedure
+
+Total Sample Size                  158          DF Total                           157
+Variables                            6          DF Within Classes                  151
+Classes                              7          DF Between Classes                   6
+
+
+Number of Observations Read            159
+Number of Observations Used            158
+
+
+                           Class Level Information
+ 
+             Variable                                                   Prior
+Species      Name         Frequency       Weight    Proportion    Probability
+
+Bream        Bream               34      34.0000      0.215190       0.142857
+Parkki       Parkki              11      11.0000      0.069620       0.142857
+Perch        Perch               56      56.0000      0.354430       0.142857
+Pike         Pike                17      17.0000      0.107595       0.142857
+Roach        Roach               20      20.0000      0.126582       0.142857
+Smelt        Smelt               14      14.0000      0.088608       0.142857
+Whitefish    Whitefish            6       6.0000      0.037975       0.142857
+
+
+Pooled Covariance Matrix Information
+ 
+               Natural Log of the
+ Covariance    Determinant of the
+Matrix Rank     Covariance Matrix
+
+          6               4.17613
+
+Fish Measurement Data
+
+_oracle_by=1
+
+The DISCRIM Procedure
+
+Pairwise Generalized Squared Distances Between Groups
+
+ 2         _   _       -1  _   _  
+D (i|j) = (X - X )' COV   (X - X )
+            i   j           i   j 
+
+
+                                  Generalized Squared Distance to Species
+ 
+From
+Species           Bream        Parkki         Perch          Pike         Roach         Smelt     Whitefish
+
+Bream                 0      83.32523     243.66688     310.52333     133.06721     252.75503     132.05820
+Parkki         83.32523             0      57.09760     174.20918      27.00096      60.52076      26.54855
+Perch         243.66688      57.09760             0     101.06791      29.21632      29.26806      20.43791
+Pike          310.52333     174.20918     101.06791             0      92.40876     127.82177      99.90673
+Roach         133.06721      27.00096      29.21632      92.40876             0      33.84280       6.31997
+Smelt         252.75503      60.52076      29.26806     127.82177      33.84280             0      46.37326
+Whitefish     132.05820      26.54855      20.43791      99.90673       6.31997      46.37326             0
+
+Linear Discriminant Function
+
+               _     -1 _                              -1 _ 
+Constant = -.5 X' COV   X      Coefficient Vector = COV   X 
+                j        j                                 j
+
+
+                                 Linear Discriminant Function for Species
+ 
+Variable         Bream        Parkki         Perch          Pike         Roach         Smelt     Whitefish
+
+Constant    -185.91682     -64.92517     -48.68009    -148.06402     -62.65963     -19.70401     -67.44603
+Weight        -0.10912      -0.09031      -0.09418      -0.13805      -0.09901      -0.05778      -0.09948
+Length1      -23.02273     -13.64180     -19.45368     -20.92442     -14.63635      -4.09257     -22.57117
+Length2      -26.70692      -5.38195      17.33061       6.19887      -7.47195      -3.63996       3.83450
+Length3       50.55780      20.89531       5.25993      22.94989      25.00702      10.60171      21.12638
+Height        13.91638       8.44567      -1.42833      -8.99687      -0.26083      -1.84569       0.64957
+Width        -23.71895     -13.38592       1.32749      -9.13410      -3.74542      -3.43630      -2.52442
+
+Fish Measurement Data
+
+_oracle_by=1
+
+The DISCRIM Procedure
+Classification Summary for Calibration Data: WORK._ORACLE_INPUT
+Resubstitution Summary using Linear Discriminant Function
+
+Generalized Squared Distance Function
+
+ 2         _       -1   _  
+D (X) = (X-X )' COV  (X-X )
+ j          j            j 
+
+Posterior Probability of Membership in Each Species
+
+                   2                    2    
+Pr(j|X) = exp(-.5 D (X)) / SUM exp(-.5 D (X))
+                   j        k           k    
+
+
+                            Number of Observations and Percent Classified into Species
+ 
+From
+Species          Bream       Parkki        Perch         Pike        Roach        Smelt      Whitefish        Total
+
+Bream               34            0            0            0            0            0              0           34
+                100.00         0.00         0.00         0.00         0.00         0.00           0.00       100.00
+
+Parkki               0           11            0            0            0            0              0           11
+                  0.00       100.00         0.00         0.00         0.00         0.00           0.00       100.00
+
+Perch                0            0           53            0            0            3              0           56
+                  0.00         0.00        94.64         0.00         0.00         5.36           0.00       100.00
+
+Pike                 0            0            0           17            0            0              0           17
+                  0.00         0.00         0.00       100.00         0.00         0.00           0.00       100.00
+
+Roach                0            0            0            0           20            0              0           20
+                  0.00         0.00         0.00         0.00       100.00         0.00           0.00       100.00
+
+Smelt                0            0            0            0            0           14              0           14
+                  0.00         0.00         0.00         0.00         0.00       100.00           0.00       100.00
+
+Whitefish            0            0            0            0            0            0              6            6
+                  0.00         0.00         0.00         0.00         0.00         0.00         100.00       100.00
+
+Total               34           11           53           17           20           17              6          158
+                 21.52         6.96        33.54        10.76        12.66        10.76           3.80       100.00
+
+Priors         0.14286      0.14286      0.14286      0.14286      0.14286      0.14286        0.14286             
+                                                                                                                   
+
+                                      Error Count Estimates for Species
+ 
+                   Bream      Parkki       Perch        Pike       Roach       Smelt    Whitefish       Total
+
+Rate              0.0000      0.0000      0.0536      0.0000      0.0000      0.0000       0.0000      0.0077
+Priors            0.1429      0.1429      0.1429      0.1429      0.1429      0.1429       0.1429            
+
+Fish Measurement Data
+
+_oracle_by=2
+
+The DISCRIM Procedure
+
+Total Sample Size                  158          DF Total                           157
+Variables                            6          DF Within Classes                  151
+Classes                              7          DF Between Classes                   6
+
+
+Number of Observations Read            159
+Number of Observations Used            158
+
+
+                           Class Level Information
+ 
+             Variable                                                   Prior
+Species      Name         Frequency       Weight    Proportion    Probability
+
+Bream        Bream               34      34.0000      0.215190       0.142857
+Parkki       Parkki              11      11.0000      0.069620       0.142857
+Perch        Perch               56      56.0000      0.354430       0.142857
+Pike         Pike                17      17.0000      0.107595       0.142857
+Roach        Roach               20      20.0000      0.126582       0.142857
+Smelt        Smelt               14      14.0000      0.088608       0.142857
+Whitefish    Whitefish            6       6.0000      0.037975       0.142857
+
+
+Pooled Covariance Matrix Information
+ 
+               Natural Log of the
+ Covariance    Determinant of the
+Matrix Rank     Covariance Matrix
+
+          6               4.17613
+
+Fish Measurement Data
+
+_oracle_by=2
+
+The DISCRIM Procedure
+
+Pairwise Generalized Squared Distances Between Groups
+
+ 2         _   _       -1  _   _  
+D (i|j) = (X - X )' COV   (X - X )
+            i   j           i   j 
+
+
+                                  Generalized Squared Distance to Species
+ 
+From
+Species           Bream        Parkki         Perch          Pike         Roach         Smelt     Whitefish
+
+Bream                 0      83.32523     243.66688     310.52333     133.06721     252.75503     132.05820
+Parkki         83.32523             0      57.09760     174.20918      27.00096      60.52076      26.54855
+Perch         243.66688      57.09760             0     101.06791      29.21632      29.26806      20.43791
+Pike          310.52333     174.20918     101.06791             0      92.40876     127.82177      99.90673
+Roach         133.06721      27.00096      29.21632      92.40876             0      33.84280       6.31997
+Smelt         252.75503      60.52076      29.26806     127.82177      33.84280             0      46.37326
+Whitefish     132.05820      26.54855      20.43791      99.90673       6.31997      46.37326             0
+
+Linear Discriminant Function
+
+               _     -1 _                              -1 _ 
+Constant = -.5 X' COV   X      Coefficient Vector = COV   X 
+                j        j                                 j
+
+
+                                 Linear Discriminant Function for Species
+ 
+Variable         Bream        Parkki         Perch          Pike         Roach         Smelt     Whitefish
+
+Constant    -185.91682     -64.92517     -48.68009    -148.06402     -62.65963     -19.70401     -67.44603
+Weight        -0.10912      -0.09031      -0.09418      -0.13805      -0.09901      -0.05778      -0.09948
+Length1      -23.02273     -13.64180     -19.45368     -20.92442     -14.63635      -4.09257     -22.57117
+Length2      -26.70692      -5.38195      17.33061       6.19887      -7.47195      -3.63996       3.83450
+Length3       50.55780      20.89531       5.25993      22.94989      25.00702      10.60171      21.12638
+Height        13.91638       8.44567      -1.42833      -8.99687      -0.26083      -1.84569       0.64957
+Width        -23.71895     -13.38592       1.32749      -9.13410      -3.74542      -3.43630      -2.52442
+
+Fish Measurement Data
+
+_oracle_by=2
+
+The DISCRIM Procedure
+Classification Summary for Calibration Data: WORK._ORACLE_INPUT
+Resubstitution Summary using Linear Discriminant Function
+
+Generalized Squared Distance Function
+
+ 2         _       -1   _  
+D (X) = (X-X )' COV  (X-X )
+ j          j            j 
+
+Posterior Probability of Membership in Each Species
+
+                   2                    2    
+Pr(j|X) = exp(-.5 D (X)) / SUM exp(-.5 D (X))
+                   j        k           k    
+
+
+                            Number of Observations and Percent Classified into Species
+ 
+From
+Species          Bream       Parkki        Perch         Pike        Roach        Smelt      Whitefish        Total
+
+Bream               34            0            0            0            0            0              0           34
+                100.00         0.00         0.00         0.00         0.00         0.00           0.00       100.00
+
+Parkki               0           11            0            0            0            0              0           11
+                  0.00       100.00         0.00         0.00         0.00         0.00           0.00       100.00
+
+Perch                0            0           53            0            0            3              0           56
+                  0.00         0.00        94.64         0.00         0.00         5.36           0.00       100.00
+
+Pike                 0            0            0           17            0            0              0           17
+                  0.00         0.00         0.00       100.00         0.00         0.00           0.00       100.00
+
+Roach                0            0            0            0           20            0              0           20
+                  0.00         0.00         0.00         0.00       100.00         0.00           0.00       100.00
+
+Smelt                0            0            0            0            0           14              0           14
+                  0.00         0.00         0.00         0.00         0.00       100.00           0.00       100.00
+
+Whitefish            0            0            0            0            0            0              6            6
+                  0.00         0.00         0.00         0.00         0.00         0.00         100.00       100.00
+
+Total               34           11           53           17           20           17              6          158
+                 21.52         6.96        33.54        10.76        12.66        10.76           3.80       100.00
+
+Priors         0.14286      0.14286      0.14286      0.14286      0.14286      0.14286        0.14286             
+                                                                                                                   
+
+                                      Error Count Estimates for Species
+ 
+                   Bream      Parkki       Perch        Pike       Roach       Smelt    Whitefish       Total
+
+Rate              0.0000      0.0000      0.0536      0.0000      0.0000      0.0000       0.0000      0.0077
+Priors            0.1429      0.1429      0.1429      0.1429      0.1429      0.1429       0.1429            

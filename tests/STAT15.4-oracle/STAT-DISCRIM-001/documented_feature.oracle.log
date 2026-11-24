@@ -1,0 +1,50 @@
+The SAS System
+
+14860      
+14861      /* STAT-DISCRIM-001: DISCRIM — Data input, variable roles, and basic options
+14862       * Source: S154 / Chapter 42 / `PROC DISCRIM Statement` (PDF pp. 2652–2660); S154 / Chapter 42 / `BY Statement` (PDF pp. 2660–2661); S154 /
+14862    ! Chapter 42 / `CLASS Statement` (PDF p. 2661); S154 / Chapter 42 / `FREQ Statement` (PDF pp. 2661–2662); S154 / Chapter 42 / `ID Statement` (PDF p.
+14862    ! 2662); S154 / Chapter 42 / `VAR Statement` (PDF pp. 2663–2664); S154 / Chapter 42 / `WEIGHT Statement` (PDF p. 2664); S154 / Chapter 42 / `Missing
+14862    ! Values` (PDF p. 2664); S154 / Chapter 42 / `Input Data Sets` (PDF pp. 2675–2676).
+14863       * Discriminates: Verified default procedure context; explicit statements: CLASS
+14864       */
+14865      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+14865    ! validmemname=compatible locale=en_US;
+14866      %let syscc=0;
+14867      title; footnote;
+14868      ods _all_ close;
+14869      ods listing gpath="%sysfunc(pathname(work))";
+14870      ods graphics off;
+14871      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.USPOP (memtype=DATA).
+14871    !                                         quit;
+
+
+14872      ods path work.templat(update) sashelp.tmplmst(read);
+14873      
+14874      title 'Fish Measurement Data';
+14875      proc discrim data=sashelp.fish;
+14876      class Species;
+14877      run;
+
+WARNING: 1 observations in DATA= data set or BY group will not be included in the analysis due to missing values.
+WARNING: A total of 1 of the 159 observations in the DATA= data set were excluded (frequency sum = 158).
+NOTE: There were 159 observations read from the data set SASHELP.FISH.
+NOTE: The PROCEDURE DISCRIM printed pages 1991-1993.
+
+14878      
+14879      
+14880      
+14881      
+The SAS System
+
+14882      

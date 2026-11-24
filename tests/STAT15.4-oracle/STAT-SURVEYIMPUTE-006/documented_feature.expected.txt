@@ -1,0 +1,158 @@
+
+The SURVEYIMPUTE Procedure
+
+       Imputation Information
+
+Data Set                 WORK.SMOKE  
+Weight Variable          wtpfqx6     
+Imputation Method        FEFI        
+Replication Method       REPWEIGHTS  
+Number of Replicates     4           
+
+
+Number of Observations Read              512
+Number of Observations Used              512
+Sum of Weights Read                   1024.5
+Sum of Weights Used                   1024.5
+
+
+   Class Level Information
+ 
+Class         Levels    Values
+
+HFF1MI             2    1 2   
+HAN6SRMI           2    1 2   
+HAR3RMI            2    1 2   
+HAT28MI            2    1 2   
+
+
+                                        Missing Data Patterns
+ 
+                                                                     Sum of    Unweighted    Weighted
+Group    HFF1MI    HAN6SRMI    HAR3RMI    HAT28MI        Freq       Weights       Percent     Percent
+
+    1      X          X           X          X            365         730.5         71.29       71.30
+    2      X          X           X          .             37          72.5          7.23        7.08
+    3      X          X           .          X             26          50.5          5.08        4.93
+    4      X          X           .          .              2             4          0.39        0.39
+    5      X          .           X          X             35          74.5          6.84        7.27
+    6      X          .           .          X              4           8.5          0.78        0.83
+    7      .          X           X          X             33            66          6.45        6.44
+    8      .          X           X          .              1             2          0.20        0.20
+    9      .          X           .          X              2           3.5          0.39        0.34
+   10      .          .           X          X              6          10.5          1.17        1.02
+   11      .          .           .          X              1             2          0.20        0.20
+
+                                                        Missing Data Patterns
+ 
+         ---------------------------------------------------------Group Means--------------------------------------------------------
+Group        HFF1MI 1        HFF1MI 2      HAN6SRMI 1      HAN6SRMI 2       HAR3RMI 1       HAR3RMI 2       HAT28MI 1       HAT28MI 2
+
+    1        0.545517        0.454483        0.494182        0.505818        0.553730        0.446270        0.607803        0.392197
+    2        0.462069        0.537931        0.427586        0.572414        0.406897        0.593103               .               .
+    3        0.455446        0.544554        0.376238        0.623762               .               .        0.534653        0.465347
+    4        1.000000               0               0        1.000000               .               .               .               .
+    5        0.449664        0.550336               .               .        0.489933        0.510067        0.604027        0.395973
+    6        0.470588        0.529412               .               .               .               .        0.529412        0.470588
+    7               .               .        0.280303        0.719697        0.515152        0.484848        0.469697        0.530303
+    8               .               .               0        1.000000        1.000000               0               .               .
+    9               .               .        0.428571        0.571429               .               .        1.000000               0
+   10               .               .               .               .        0.714286        0.285714        0.761905        0.238095
+   11               .               .               .               .               .               .               0        1.000000
+
+
+        Donor Cell Counts
+ 
+                           Total
+  Donors       Units        Rows
+
+       0         365         365
+       1          11          11
+       2         120         240
+       3           5          15
+       4          10          40
+       8           1           8
+
+
+          Iteration History
+ 
+                Maximum       Maximum
+Iteration      Absolute      Relative
+   Number    Difference    Difference
+
+        1      0.275996       0.95068
+        2      0.120828       0.10799
+        3       0.05438       0.05763
+        4      0.023945       0.02930
+        5      0.010515       0.01406
+        6      0.004627       0.00653
+        7      0.002042       0.00298
+        8      0.000903       0.00135
+        9        0.0004       0.00060
+
+                     EM algorithm converged                     
+
+
+                Imputation Summary
+ 
+                           Number of        Sum of
+Observation Status      Observations       Weights
+
+Nonmissing                       365         730.5
+Missing                          147           294
+
+Missing, Imputed                 147           294
+Missing, Not Imputed               0             0
+
+The SURVEYFREQ Procedure
+
+            Data Summary
+
+Number of Observations           679
+Sum of Weights                1024.5
+
+
+        Variance Estimation
+
+Method                           BRR
+Replicate Weights       SMOKEIMPUTED
+Number of Replicates               4
+Fay Coefficient                0.300
+
+
+                              Table of HFF1MI by HAR3RMI
+ 
+                                     Weighted    Std Err of                Std Err of
+HFF1MI    HAR3RMI     Frequency     Frequency      Wgt Freq     Percent       Percent
+-------------------------------------------------------------------------------------
+     1          1           187     287.07153      24.31590     28.0206        2.3975
+                2           168     254.53950      16.27720     24.8452        1.6023
+
+            Total           355     541.61103      39.73104     52.8659        3.9177
+-------------------------------------------------------------------------------------
+     2          1           174     264.98051      18.69342     25.8644        1.8255
+                2           150     217.90846      30.52214     21.2697        2.9574
+
+            Total           324     482.88897      40.50161     47.1341        3.9177
+-------------------------------------------------------------------------------------
+ Total          1           361     552.05203      20.04762     53.8850        2.0138
+                2           318     472.44797      21.13723     46.1150        2.0138
+
+            Total           679          1025       1.11803    100.0000              
+-------------------------------------------------------------------------------------
+
+
+                       Table of Education by HAT28MI
+ 
+                                      Std Err of         Row     Std Err of
+Education      HAT28MI     Percent       Percent     Percent    Row Percent
+---------------------------------------------------------------------------
+College              1     25.8378        0.7604     59.4184         2.1182
+                     2     17.6468        1.0953     40.5816         2.1182
+---------------------------------------------------------------------------
+Elementary           1     14.2993        1.3574     57.1134         5.0715
+                     2     10.7373        1.2181     42.8866         5.0715
+---------------------------------------------------------------------------
+High School          1     19.5881        1.0680     62.2263         3.5932
+                     2     11.8907        1.2045     37.7737         3.5932
+---------------------------------------------------------------------------

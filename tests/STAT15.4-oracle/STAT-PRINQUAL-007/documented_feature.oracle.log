@@ -1,0 +1,70 @@
+The SAS System
+
+8688       
+8689       /* STAT-PRINQUAL-007: PRINQUAL — Output Data Set
+8690        * Source: S154 / Chapter 99 / `Output Data Set` (PDF pp. 8065–8068).
+8691        * Discriminates: Verified default procedure context
+8692        */
+8693       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+8693     ! validmemname=compatible locale=en_US;
+8694       %let syscc=0;
+8695       title; footnote;
+8696       ods _all_ close;
+8697       ods listing gpath="%sysfunc(pathname(work))";
+8698       ods graphics off;
+8699       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SCALED (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+8699     !                                         quit;
+
+
+8700       ods path work.templat(update) sashelp.tmplmst(read);
+8701       
+8702       proc prinqual data=sashelp.class out=scaled;
+8703       transform identity(height weight age);
+8704       run;
+
+
+Output Added:
+-------------
+Name:       MTV
+Label:      Iteration History
+Template:   Stat.Transreg.MTV
+Path:       Prinqual.MTV
+-------------
+
+Output Added:
+-------------
+Name:       ConvergenceStatus
+Label:      Convergence Status
+Template:   Stat.Transreg.ConvergenceStatus
+Path:       Prinqual.ConvergenceStatus
+-------------
+NOTE: Algorithm converged.
+NOTE: The data set WORK.SCALED has 19 observations and 8 variables.
+NOTE: The PROCEDURE PRINQUAL printed page 595.
+
+8705       proc print data=scaled(obs=5) noobs;
+8706       run;
+
+
+Output Added:
+-------------
+Name:       Print
+Label:      Data Set WORK.SCALED
+Data Name:  ProcPrintTable
+Path:       Print.Print
+-------------
+NOTE: There were 5 observations read from the data set WORK.SCALED.
+NOTE: The PROCEDURE PRINT printed page 596.
+
+8707       
+8708       
+8709       
+8710       
+The SAS System
+
+8711       

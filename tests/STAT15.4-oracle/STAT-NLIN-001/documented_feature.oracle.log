@@ -1,0 +1,54 @@
+The SAS System
+
+5557       
+5558       /* STAT-NLIN-001: NLIN — Data input, variable roles, and basic options
+5559        * Source: S154 / Chapter 88 / `PROC NLIN Statement` (PDF pp. 6987–6998); S154 / Chapter 88 / `BY Statement` (PDF pp. 7001–7002); S154 / Chapter
+5559     ! 88 / `ID Statement` (PDF p. 7003); S154 / Chapter 88 / `Missing Values` (PDF p. 7024).
+5560        * Discriminates: Verified default procedure context; explicit statements: BY
+5561        */
+5562       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+5562     ! validmemname=compatible locale=en_US;
+5563       %let syscc=0;
+5564       title; footnote;
+5565       ods _all_ close;
+5566       ods listing gpath="%sysfunc(pathname(work))";
+5567       ods graphics off;
+5568       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.AUTO (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+5568     !                                         quit;
+
+
+5569       ods path work.templat(update) sashelp.tmplmst(read);
+5570       
+5571       data Enzyme;
+5572       input Concentration Velocity @@;
+5573       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.ENZYME has 14 observations and 2 variables.
+
+5581       ;
+5582       proc nlin data=Enzyme method=marquardt hougaard;
+5583       parms theta1=155
+5584       theta2=0 to 0.07 by 0.01;
+5585       model Velocity = theta1*Concentration / (theta2 + Concentration);
+5586       run;
+
+NOTE: DER.theta1 not initialized or missing. It will be computed automatically.
+NOTE: DER.theta2 not initialized or missing. It will be computed automatically.
+NOTE: Convergence criterion met.
+NOTE: The PROCEDURE NLIN printed pages 377-378.
+
+5587       
+5588       
+5589       
+5590       
+The SAS System
+
+5591       

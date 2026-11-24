@@ -1,0 +1,95 @@
+The SAS System
+
+928        
+929        /* STAT-COMMON-024: EFFECTPLOT Statement
+930         * Source: S154 / Chapter 20 / `EFFECTPLOT Statement` (PDF pp. 444–472).
+931         * Discriminates: EFFECTPLOT fit request and ODS graph identity
+932         */
+933        options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+933      ! validmemname=compatible locale=en_US;
+934        %let syscc=0;
+935        title; footnote;
+936        ods _all_ close;
+937        ods listing gpath="%sysfunc(pathname(work))";
+938        ods graphics off;
+939        proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SAMPLE (memtype=DATA).
+939      !                                         quit;
+
+
+940        ods path work.templat(update) sashelp.tmplmst(read);
+941        
+942        data sample;
+943         input x z y group $ weight freq;
+944         datalines;
+
+NOTE: The data set WORK.SAMPLE has 12 observations and 6 variables.
+
+957        ;
+958        run;
+959        ods trace on; ods graphics on;
+960        proc genmod data=sample; model y=x z / dist=normal; effectplot fit(x=x); run;
+
+
+
+Output Added:
+-------------
+Name:       ModelInfo
+Label:      Model Information
+Template:   Stat.Genmod.ModelInfo
+Path:       Genmod.ModelInfo
+-------------
+
+Output Added:
+-------------
+Name:       NObs
+Label:      Number of Observations
+Template:   Stat.Genmod.NObs
+Path:       Genmod.NObs
+-------------
+
+Output Added:
+-------------
+Name:       ModelFit
+Label:      Criteria For Assessing Goodness Of Fit
+Template:   stat.genmod.ModelFit
+Path:       Genmod.ModelFit
+-------------
+
+Output Added:
+-------------
+Name:       ConvergenceStatus
+Label:      Convergence Status
+Template:   Stat.Genmod.ConvergenceStatus
+Path:       Genmod.ConvergenceStatus
+-------------
+NOTE: Algorithm converged.
+
+Output Added:
+-------------
+Name:       ParameterEstimates
+Label:      Analysis Of Parameter Estimates
+Template:   stat.genmod.parameterestimates
+Path:       Genmod.ParameterEstimates
+-------------
+NOTE: The scale parameter was estimated by maximum likelihood.
+
+Output Added:
+-------------
+Name:       FitPlot
+Label:      Fit Plot 1
+Template:   Stat.Genmod.Graphics.FitPlot
+Path:       Genmod.EffectPlots.FitPlot
+-------------
+NOTE: The PROCEDURE GENMOD printed page 52.
+
+961        ods graphics off; ods trace off;
+962        
+963        
+964        
+965        
+The SAS System
+
+966        

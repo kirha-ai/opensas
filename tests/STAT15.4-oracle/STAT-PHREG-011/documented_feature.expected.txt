@@ -1,0 +1,460 @@
+
+Intensity Model and Proportional Means Model
+
+The PHREG Procedure
+
+          Model Information
+
+Data Set                 WORK.BLADDER
+Dependent Variable       TStart      
+Dependent Variable       TStop       
+Censoring Variable       Status      
+Censoring Value(s)       0           
+Ties Handling            BRESLOW     
+
+
+Number of Observations Read         178
+Number of Observations Used         178
+
+
+Summary of the Number of Event and Censored Values
+ 
+                                     Percent
+   Total       Event    Censored    Censored
+
+     178         112          66       37.08
+
+
+                       Convergence Status
+
+         Convergence criterion (GCONV=1E-8) satisfied.          
+
+
+         Model Fit Statistics
+ 
+                 Without           With
+Criterion     Covariates     Covariates
+
+-2 LOG L         923.258        906.485
+AIC              923.258        912.485
+SBC              923.258        920.641
+
+
+          Testing Global Null Hypothesis: BETA=0
+ 
+Test                    Chi-Square       DF     Pr > ChiSq
+
+Likelihood Ratio           16.7728        3         0.0008
+Score (Model-Based)        18.5698        3         0.0003
+Score (Sandwich)           11.4359        3         0.0096
+Wald (Model-Based)         18.2097        3         0.0004
+Wald (Sandwich)            11.7595        3         0.0083
+
+
+                     Analysis of Maximum Likelihood Estimates
+                        with Model-Based Variance Estimate
+ 
+                    Parameter      Standard                                  Hazard
+Parameter    DF      Estimate         Error    Chi-Square    Pr > ChiSq       Ratio
+
+Trt           1      -0.45979       0.19996        5.2873        0.0215       0.631
+Number        1       0.17165       0.04733       13.1541        0.0003       1.187
+Size          1      -0.04256       0.06903        0.3801        0.5375       0.958
+
+
+                          Analysis of Maximum Likelihood Estimates
+                               with Sandwich Variance Estimate
+ 
+                    Parameter      Standard    StdErr                                  Hazard
+Parameter    DF      Estimate         Error     Ratio    Chi-Square    Pr > ChiSq       Ratio
+
+Trt           1      -0.45979       0.25801     1.290        3.1757        0.0747       0.631
+Number        1       0.17165       0.06131     1.296        7.8373        0.0051       1.187
+Size          1      -0.04256       0.07555     1.094        0.3174        0.5732       0.958
+
+PWP Total Time Model with Noncommon Effects
+
+The PHREG Procedure
+
+          Model Information
+
+Data Set                 WORK.BLADDER2
+Dependent Variable       TStart       
+Dependent Variable       TStop        
+Censoring Variable       Status       
+Censoring Value(s)       0            
+Ties Handling            BRESLOW      
+
+
+Number of Observations Read         184
+Number of Observations Used         178
+
+
+         Summary of the Number of Event and Censored Values
+ 
+                                                            Percent
+Stratum    Visit          Total       Event    Censored    Censored
+
+      1    1                 85          47          38       44.71
+      2    2                 46          29          17       36.96
+      3    3                 27          22           5       18.52
+      4    4                 20          14           6       30.00
+-------------------------------------------------------------------
+  Total                     178         112          66       37.08
+
+
+                       Convergence Status
+
+         Convergence criterion (GCONV=1E-8) satisfied.          
+
+
+         Model Fit Statistics
+ 
+                 Without           With
+Criterion     Covariates     Covariates
+
+-2 LOG L         645.831        632.285
+AIC              645.831        656.285
+SBC              645.831        688.907
+
+
+        Testing Global Null Hypothesis: BETA=0
+ 
+Test                 Chi-Square       DF     Pr > ChiSq
+
+Likelihood Ratio        13.5459       12         0.3306
+Score                   14.7012       12         0.2582
+Wald                    14.0698       12         0.2963
+
+
+                     Analysis of Maximum Likelihood Estimates
+ 
+                    Parameter      Standard                                  Hazard
+Parameter    DF      Estimate         Error    Chi-Square    Pr > ChiSq       Ratio
+
+Trt1          1      -0.51757       0.31576        2.6868        0.1012       0.596
+Trt2          1      -0.45967       0.40642        1.2792        0.2581       0.631
+Trt3          1       0.11700       0.67183        0.0303        0.8617       1.124
+Trt4          1      -0.04059       0.79251        0.0026        0.9592       0.960
+Number1       1       0.23605       0.07607        9.6287        0.0019       1.266
+Number2       1      -0.02044       0.09052        0.0510        0.8213       0.980
+Number3       1       0.01219       0.18208        0.0045        0.9466       1.012
+Number4       1       0.18915       0.24443        0.5989        0.4390       1.208
+Size1         1       0.06790       0.10125        0.4498        0.5024       1.070
+Size2         1      -0.15425       0.12300        1.5728        0.2098       0.857
+Size3         1       0.14891       0.26299        0.3206        0.5713       1.161
+Size4         1     0.0000732       0.34297        0.0000        0.9998       1.000
+
+PWP Gap-Time Model with Noncommon Effects
+
+The PHREG Procedure
+
+          Model Information
+
+Data Set                 WORK.BLADDER2
+Dependent Variable       Gaptime      
+Censoring Variable       Status       
+Censoring Value(s)       0            
+Ties Handling            BRESLOW      
+
+
+Number of Observations Read         184
+Number of Observations Used         184
+
+
+         Summary of the Number of Event and Censored Values
+ 
+                                                            Percent
+Stratum    Visit          Total       Event    Censored    Censored
+
+      1    1                 86          47          39       45.35
+      2    2                 47          29          18       38.30
+      3    3                 29          22           7       24.14
+      4    4                 22          14           8       36.36
+-------------------------------------------------------------------
+  Total                     184         112          72       39.13
+
+
+                       Convergence Status
+
+         Convergence criterion (GCONV=1E-8) satisfied.          
+
+
+         Model Fit Statistics
+ 
+                 Without           With
+Criterion     Covariates     Covariates
+
+-2 LOG L         735.076        717.268
+AIC              735.076        741.268
+SBC              735.076        773.890
+
+
+        Testing Global Null Hypothesis: BETA=0
+ 
+Test                 Chi-Square       DF     Pr > ChiSq
+
+Likelihood Ratio        17.8089       12         0.1216
+Score                   19.6097       12         0.0748
+Wald                    18.4759       12         0.1020
+
+
+                     Analysis of Maximum Likelihood Estimates
+ 
+                    Parameter      Standard                                  Hazard
+Parameter    DF      Estimate         Error    Chi-Square    Pr > ChiSq       Ratio
+
+Trt1          1      -0.51757       0.31576        2.6868        0.1012       0.596
+Trt2          1      -0.25911       0.40511        0.4091        0.5224       0.772
+Trt3          1       0.22105       0.54909        0.1621        0.6873       1.247
+Trt4          1      -0.19498       0.64184        0.0923        0.7613       0.823
+Number1       1       0.23605       0.07607        9.6287        0.0019       1.266
+Number2       1      -0.00571       0.09667        0.0035        0.9529       0.994
+Number3       1       0.12935       0.15970        0.6561        0.4180       1.138
+Number4       1       0.42079       0.19816        4.5091        0.0337       1.523
+Size1         1       0.06790       0.10125        0.4498        0.5024       1.070
+Size2         1      -0.11636       0.11924        0.9524        0.3291       0.890
+Size3         1       0.24995       0.23113        1.1695        0.2795       1.284
+Size4         1       0.03557       0.29043        0.0150        0.9025       1.036
+
+PWP Gap-Time Model with Noncommon Effects
+PWP Total Time Model with Common Effects
+
+The PHREG Procedure
+
+          Model Information
+
+Data Set                 WORK.BLADDER2
+Dependent Variable       TStart       
+Dependent Variable       TStop        
+Censoring Variable       Status       
+Censoring Value(s)       0            
+Ties Handling            BRESLOW      
+
+
+Number of Observations Read         184
+Number of Observations Used         178
+
+
+         Summary of the Number of Event and Censored Values
+ 
+                                                            Percent
+Stratum    Visit          Total       Event    Censored    Censored
+
+      1    1                 85          47          38       44.71
+      2    2                 46          29          17       36.96
+      3    3                 27          22           5       18.52
+      4    4                 20          14           6       30.00
+-------------------------------------------------------------------
+  Total                     178         112          66       37.08
+
+
+                       Convergence Status
+
+         Convergence criterion (GCONV=1E-8) satisfied.          
+
+
+         Model Fit Statistics
+ 
+                 Without           With
+Criterion     Covariates     Covariates
+
+-2 LOG L         645.831        639.718
+AIC              645.831        645.718
+SBC              645.831        653.874
+
+
+        Testing Global Null Hypothesis: BETA=0
+ 
+Test                 Chi-Square       DF     Pr > ChiSq
+
+Likelihood Ratio         6.1130        3         0.1062
+Score                    6.4533        3         0.0915
+Wald                     6.4070        3         0.0934
+
+
+                     Analysis of Maximum Likelihood Estimates
+ 
+                    Parameter      Standard                                  Hazard
+Parameter    DF      Estimate         Error    Chi-Square    Pr > ChiSq       Ratio
+
+Trt           1      -0.33430       0.21609        2.3933        0.1219       0.716
+Number        1       0.11565       0.05368        4.6416        0.0312       1.123
+Size          1      -0.00805       0.07273        0.0123        0.9119       0.992
+
+PWP Gap-Time Model with Noncommon Effects
+PWP Gap Time Model with Common Effects
+
+The PHREG Procedure
+
+          Model Information
+
+Data Set                 WORK.BLADDER2
+Dependent Variable       Gaptime      
+Censoring Variable       Status       
+Censoring Value(s)       0            
+Ties Handling            BRESLOW      
+
+
+Number of Observations Read         184
+Number of Observations Used         184
+
+
+         Summary of the Number of Event and Censored Values
+ 
+                                                            Percent
+Stratum    Visit          Total       Event    Censored    Censored
+
+      1    1                 86          47          39       45.35
+      2    2                 47          29          18       38.30
+      3    3                 29          22           7       24.14
+      4    4                 22          14           8       36.36
+-------------------------------------------------------------------
+  Total                     184         112          72       39.13
+
+
+                       Convergence Status
+
+         Convergence criterion (GCONV=1E-8) satisfied.          
+
+
+         Model Fit Statistics
+ 
+                 Without           With
+Criterion     Covariates     Covariates
+
+-2 LOG L         735.076        726.320
+AIC              735.076        732.320
+SBC              735.076        740.476
+
+
+        Testing Global Null Hypothesis: BETA=0
+ 
+Test                 Chi-Square       DF     Pr > ChiSq
+
+Likelihood Ratio         8.7559        3         0.0327
+Score                    9.5977        3         0.0223
+Wald                     9.4570        3         0.0238
+
+
+                     Analysis of Maximum Likelihood Estimates
+ 
+                    Parameter      Standard                                  Hazard
+Parameter    DF      Estimate         Error    Chi-Square    Pr > ChiSq       Ratio
+
+Trt           1      -0.26952       0.20766        1.6845        0.1943       0.764
+Number        1       0.15353       0.05211        8.6823        0.0032       1.166
+Size          1       0.00684       0.07001        0.0095        0.9222       1.007
+
+Wei-Lin-Weissfeld Model
+
+The PHREG Procedure
+
+          Model Information
+
+Data Set                 WORK.BLADDER
+Dependent Variable       TStop       
+Censoring Variable       Status      
+Censoring Value(s)       0           
+Ties Handling            BRESLOW     
+
+
+Number of Observations Read         344
+Number of Observations Used         344
+
+
+         Summary of the Number of Event and Censored Values
+ 
+                                                            Percent
+Stratum    Visit          Total       Event    Censored    Censored
+
+      1    1                 86          47          39       45.35
+      2    2                 86          29          57       66.28
+      3    3                 86          22          64       74.42
+      4    4                 86          14          72       83.72
+-------------------------------------------------------------------
+  Total                     344         112         232       67.44
+
+
+                       Convergence Status
+
+         Convergence criterion (GCONV=1E-8) satisfied.          
+
+
+         Model Fit Statistics
+ 
+                 Without           With
+Criterion     Covariates     Covariates
+
+-2 LOG L         880.828        851.435
+AIC              880.828        875.435
+SBC              880.828        908.057
+
+
+          Testing Global Null Hypothesis: BETA=0
+ 
+Test                    Chi-Square       DF     Pr > ChiSq
+
+Likelihood Ratio           29.3932       12         0.0034
+Score (Model-Based)        33.0747       12         0.0009
+Score (Sandwich)           17.7990       12         0.1219
+Wald (Model-Based)         31.0544       12         0.0019
+Wald (Sandwich)            34.8311       12         0.0005
+
+
+                          Analysis of Maximum Likelihood Estimates
+ 
+                    Parameter      Standard    StdErr                                  Hazard
+Parameter    DF      Estimate         Error     Ratio    Chi-Square    Pr > ChiSq       Ratio
+
+Trt1          1      -0.51762       0.30750     0.974        2.8336        0.0923       0.596
+Trt2          1      -0.61944       0.36391     0.926        2.8975        0.0887       0.538
+Trt3          1      -0.69988       0.41516     0.903        2.8419        0.0918       0.497
+Trt4          1      -0.65079       0.48971     0.848        1.7661        0.1839       0.522
+Number1       1       0.23599       0.07208     0.947       10.7204        0.0011       1.266
+Number2       1       0.13756       0.08690     0.946        2.5059        0.1134       1.147
+Number3       1       0.16984       0.10356     0.984        2.6896        0.1010       1.185
+Number4       1       0.32880       0.11382     0.909        8.3453        0.0039       1.389
+Size1         1       0.06789       0.08529     0.842        0.6336        0.4260       1.070
+Size2         1      -0.07612       0.11812     0.881        0.4153        0.5193       0.927
+Size3         1      -0.21131       0.17198     0.943        1.5097        0.2192       0.810
+Size4         1      -0.20317       0.19106     0.830        1.1308        0.2876       0.816
+
+Wei-Lin-Weissfeld Model
+
+The PHREG Procedure
+
+                Linear Coefficients for Test TREATMENT
+ 
+                                                                Average
+Parameter       Row 1       Row 2       Row 3       Row 4        Effect
+
+Trt1                1           0           0           0       0.67684
+Trt2                0           1           0           0       0.25723
+Trt3                0           0           1           0      -0.07547
+Trt4                0           0           0           1       0.14140
+Number1             0           0           0           0       0.00000
+Number2             0           0           0           0       0.00000
+Number3             0           0           0           0       0.00000
+Number4             0           0           0           0       0.00000
+Size1               0           0           0           0       0.00000
+Size2               0           0           0           0       0.00000
+Size3               0           0           0           0       0.00000
+Size4               0           0           0           0       0.00000
+CONSTANT            0           0           0           0       0.00000
+
+
+     Test TREATMENT Results
+ 
+       Wald
+ Chi-Square      DF    Pr > ChiSq
+
+     3.9668       4        0.4105
+
+
+         Average Effect for Test TREATMENT
+ 
+                Standard
+  Estimate         Error       z-Score    Pr > |z|
+
+   -0.5489        0.2853       -1.9240      0.0543

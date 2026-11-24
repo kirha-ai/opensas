@@ -1,0 +1,55 @@
+The SAS System
+
+8317       
+8318       /* STAT-HPGENSELECT-001: HPGENSELECT — Data input, variable roles, and basic options
+8319        * Source: S154 / Chapter 59 / `PROC HPGENSELECT Statement` (PDF pp. 4629–4636); S154 / Chapter 59 / `BY Statement` (PDF p. 4636); S154 / Chapter
+8319     ! 59 / `FREQ Statement` (PDF pp. 4637–4638); S154 / Chapter 59 / `ID Statement` (PDF p. 4638); S154 / Chapter 59 / `WEIGHT Statement` (PDF p. 4652);
+8319     ! S154 / Chapter 59 / `Missing Values` (PDF pp. 4653–4654).
+8320        * Discriminates: Verified default procedure context
+8321        */
+8322       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+8322     ! validmemname=compatible locale=en_US;
+8323       %let syscc=0;
+8324       title; footnote;
+8325       ods _all_ close;
+8326       ods listing gpath="%sysfunc(pathname(work))";
+8327       ods graphics off;
+8328       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.ASSAY (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+8328     !                                         quit;
+
+
+8329       ods path work.templat(update) sashelp.tmplmst(read);
+8330       
+8331       data getStarted;
+8332       input C1-C5 Y Total;
+8333       datalines;
+
+NOTE: The data set WORK.GETSTARTED has 100 observations and 7 variables.
+
+8434       ;
+8435       proc hpgenselect data=getStarted;
+8436       class C1-C5;
+8437       model Y = C1-C5 / Distribution=Poisson Link=Log;
+8438       run;
+
+NOTE: The HPGENSELECT procedure is executing in single-machine mode.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: There were 100 observations read from the data set WORK.GETSTARTED.
+NOTE: The PROCEDURE HPGENSELECT printed page 648.
+
+8439       
+8440       
+8441       
+8442       
+The SAS System
+
+8443       

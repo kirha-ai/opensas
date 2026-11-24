@@ -1,0 +1,60 @@
+The SAS System
+
+14377      
+14378      /* STAT-LOGISTIC-012: LOGISTIC — ROC / ROCCONTRAST / Receiver Operating Characteristic Curves
+14379       * Source: S154 / Chapter 79 / `ROC Statement` (PDF pp. 5896–5897); S154 / Chapter 79 / `ROCCONTRAST Statement` (PDF pp. 5897–5898); S154 /
+14379    ! Chapter 79 / `Receiver Operating Characteristic Curves` (PDF pp. 5934–5937).
+14380       * Discriminates: Example 79.8: Comparing Receiver Operating Characteristic Curves; explicit statements: ROC, ROCCONTRAST
+14381       */
+14382      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+14382    ! validmemname=compatible locale=en_US;
+14383      %let syscc=0;
+14384      title; footnote;
+14385      ods _all_ close;
+14386      ods listing gpath="%sysfunc(pathname(work))";
+14387      ods graphics off;
+14388      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.DATA1 (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+14388    !                                         quit;
+
+
+14389      ods path work.templat(update) sashelp.tmplmst(read);
+14390      
+14391      data roc;
+14392      input alb tp totscore popind @@;
+14393      totscore = 10 - totscore;
+14394      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.ROC has 43 observations and 4 variables.
+
+14406      ;
+14407      ods graphics on;
+14408      proc logistic data=roc plots=roc(id=prob);
+14409      model popind(event='0') = alb tp totscore / nofit;
+14410      roc 'Albumin' alb;
+14411      roc 'K-G Score' totscore;
+14412      roc 'Total Protein' tp;
+14413      roccontrast reference('K-G Score') / estimate e;
+14414      run;
+
+NOTE: The NOFIT option is specified.  No parameters are estimated and all other MODEL statement options (except EQUALSLOPES, FIRTH, LINK=, NOINT, OFFSET=, 
+      TECHNIQUE=, and UNEQUALSLOPES) are ignored.
+NOTE: PROC LOGISTIC is modeling the probability that popind=0.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied for Albumin.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied for K-G Score.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied for Total Protein.
+NOTE: There were 43 observations read from the data set WORK.ROC.
+NOTE: The PROCEDURE LOGISTIC printed page 1210.
+
+14415      
+14416      
+14417      
+14418      
+The SAS System
+
+14419      

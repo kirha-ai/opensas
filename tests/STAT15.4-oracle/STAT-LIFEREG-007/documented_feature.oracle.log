@@ -1,0 +1,96 @@
+The SAS System
+
+11584      
+11585      /* STAT-LIFEREG-007: LIFEREG — BAYES / Bayesian Analysis
+11586       * Source: S154 / Chapter 76 / `BAYES Statement` (PDF pp. 5538–5548); S154 / Chapter 76 / `Bayesian Analysis` (PDF pp. 5583–5587).
+11587       * Discriminates: Getting Started: LIFEREG Procedure; explicit statements: BAYES
+11588       */
+11589      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+11589    ! validmemname=compatible locale=en_US;
+11590      %let syscc=0;
+11591      title; footnote;
+11592      ods _all_ close;
+11593      ods listing gpath="%sysfunc(pathname(work))";
+11594      ods graphics off;
+11595      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.FAN (memtype=DATA).
+NOTE: Deleting WORK.HEADACHE (memtype=DATA).
+NOTE: Deleting WORK.NEW (memtype=DATA).
+NOTE: Deleting WORK.POST (memtype=DATA).
+NOTE: Deleting WORK.PROB (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+11595    !                                         quit;
+
+
+11596      ods path work.templat(update) sashelp.tmplmst(read);
+11597      
+11598      data Headache;
+11599      input Minutes Group Censor @@;
+11600      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.HEADACHE has 38 observations and 3 variables.
+
+11611      ;
+11612      proc lifereg data=Headache;
+11613      class Group;
+11614      model Minutes*Censor(1)=Group;
+11615      output out=New cdf=Prob;
+11616      run;
+
+NOTE: Algorithm converged.
+NOTE: The data set WORK.NEW has 38 observations and 5 variables.
+NOTE: The PROCEDURE LIFEREG printed page 803.
+
+11617      proc sgplot data=New;
+11618      scatter x=Minutes y=Prob / group=Group;
+11619      discretelegend;
+11620      run;
+
+NOTE: Listing image output written to /saswork/SAS_work7EA200001C34_odaws01-euw1.oda.sas.com/SAS_work29EF00001C34_odaws01-euw1.oda.sas.com/SGPlot6.png.
+NOTE: There were 38 observations read from the data set WORK.NEW.
+
+11621      data Fan;
+11622      input Lifetime Censor@@;
+11623      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.FAN has 70 observations and 2 variables.
+
+11638      ;
+11639      ods graphics on;
+11640      proc lifereg data=Fan;
+11641      model Lifetime*Censor( 1 )= / dist=lognormal;
+11642      bayes seed=1 outpost=Post nmc=1000 nbi=200;
+11643      run;
+
+NOTE: Algorithm converged.
+NOTE: The data set WORK.POST has 1000 observations and 5 variables.
+NOTE: The PROCEDURE LIFEREG printed pages 804-807.
+
+11644      data Prob;
+11645      set Post;
+11646      Frac = ProbNorm(( log(8000) - Intercept ) / Scale );
+11647      label Frac= 'Fraction Failing in 8000 Hours';
+11648      run;
+
+NOTE: There were 1000 observations read from the data set WORK.POST.
+NOTE: The data set WORK.PROB has 1000 observations and 6 variables.
+
+11649      proc means data = Prob(keep=Frac) n mean p10 p25 p50 p75 p90;
+11650      run;
+
+NOTE: There were 1000 observations read from the data set WORK.PROB.
+NOTE: The PROCEDURE MEANS printed page 808.
+
+11651      
+11652      
+11653      
+11654      
+The SAS System
+
+11655      

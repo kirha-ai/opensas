@@ -1,0 +1,64 @@
+The SAS System
+
+244        
+245        /* STAT-CANCORR-001: CANCORR — Data input, variable roles, and basic options
+246         * Source: S154 / Chapter 34 / `PROC CANCORR Statement` (PDF pp. 2126–2132); S154 / Chapter 34 / `BY Statement` (PDF p. 2132); S154 / Chapter 34 /
+246      ! `FREQ Statement` (PDF pp. 2132–2133); S154 / Chapter 34 / `VAR Statement` (PDF p. 2133); S154 / Chapter 34 / `WEIGHT Statement` (PDF p. 2133); S154
+246      !  / Chapter 34 / `Missing Values` (PDF p. 2134).
+247         * Discriminates: Two explicit BY groups contain identical inputs, exposing group boundaries and per-group results.
+248         */
+249        options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+249      ! validmemname=compatible locale=en_US;
+250        %let syscc=0;
+251        title; footnote;
+252        ods _all_ close;
+253        ods listing gpath="%sysfunc(pathname(work))";
+254        ods graphics off;
+255        proc datasets library=work kill nolist;
+NOTE: Deleting WORK.MULTICENTER (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK._ORACLE_INPUT (memtype=DATA).
+255      !                                         quit;
+
+
+256        ods path work.templat(update) sashelp.tmplmst(read);
+257        
+258        data Jobs;
+259        input Career Supervisor Finance Variety Feedback Autonomy;
+260        label Career ='Career Satisfaction' Variety ='Task Variety'
+261        Supervisor='Supervisor Satisfaction' Feedback='Amount of Feedback'
+262        Finance ='Financial Satisfaction' Autonomy='Degree of Autonomy';
+263        datalines;
+
+NOTE: The data set WORK.JOBS has 14 observations and 6 variables.
+
+278        ;
+279        data _oracle_input; set Jobs; do _oracle_by=1 to 2; output; end; run;
+
+NOTE: There were 14 observations read from the data set WORK.JOBS.
+NOTE: The data set WORK._ORACLE_INPUT has 28 observations and 7 variables.
+
+280        proc sort data=_oracle_input; by _oracle_by; run;
+
+NOTE: There were 28 observations read from the data set WORK._ORACLE_INPUT.
+NOTE: The data set WORK._ORACLE_INPUT has 28 observations and 7 variables.
+
+281        proc cancorr data=_oracle_input
+282        vprefix=Satisfaction wprefix=Characteristics
+283        vname='Satisfaction Areas' wname='Job Characteristics';
+284        by _oracle_by;
+285        var Career Supervisor Finance;
+286        with Variety Feedback Autonomy;
+287        run;
+
+NOTE: The PROCEDURE CANCORR printed pages 21-28.
+
+288        
+289        
+290        
+291        
+The SAS System
+
+292        

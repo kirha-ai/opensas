@@ -1,0 +1,66 @@
+The SAS System
+
+13620      
+13621      /* STAT-CAUSALTRT-004: CAUSALTRT — Causal Effects: Definitions, Assumptions, and Identification / Estimating the Average Treatment Effect (ATE) /
+13621    ! Estimating the Average Treatment Effect for the Treated (ATT)
+13622       * Source: S154 / Chapter 39 / `Causal Effects: Definitions, Assumptions, and Identification` (PDF pp. 2459–2462); S154 / Chapter 39 / `Estimating
+13622    ! the Average Treatment Effect (ATE)` (PDF pp. 2462–2467); S154 / Chapter 39 / `Estimating the Average Treatment Effect for the Treated (ATT)` (PDF
+13622    ! pp. 2467–2469).
+13623       * Discriminates: Getting Started: CAUSALTRT Procedure
+13624       */
+13625      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+13625    ! validmemname=compatible locale=en_US;
+13626      %let syscc=0;
+13627      title; footnote;
+13628      ods _all_ close;
+13629      ods listing gpath="%sysfunc(pathname(work))";
+13630      ods graphics off;
+13631      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.DRUGS (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+13631    !                                         quit;
+
+
+13632      ods path work.templat(update) sashelp.tmplmst(read);
+13633      
+13634      data drugs; call streaminit(193); length Drug $6 Gender $1 Diabetes2 $3; do ID=1 to 200; Age=20+mod(id*7,45); BMI=20+mod(id,12); if mod(id,2) then
+13634    ! Gender='F'; else Gender='M'; if rand('bernoulli',0.5) then Drug='Drug_A'; else Drug='Drug_B'; if rand('bernoulli',0.3+0.1*(Drug='Drug_A')) then
+13634    ! Diabetes2='Yes'; else Diabetes2='No'; output; end; run;
+
+NOTE: The data set WORK.DRUGS has 200 observations and 6 variables.
+
+13635      
+13636      proc causaltrt data=drugs method=ipwr ppsmodel;
+13637      class Gender;
+13638      psmodel Drug(ref='Drug_A') = Age Gender BMI;
+13639      model Diabetes2(ref='No') / dist = bin;
+13640      run;
+
+NOTE: PROC CAUSALTRT is modeling the probability that Diabetes2='Yes'.
+NOTE: PROC CAUSALTRT is modeling the probability that Drug='Drug_B'.
+NOTE: The PROCEDURE CAUSALTRT printed pages 1869-1871.
+
+13641      proc causaltrt data=drugs method=aipw;
+13642      class Gender;
+13643      psmodel Drug(ref='Drug_A') = Age Gender BMI;
+13644      model Diabetes2(ref='No') = Age Gender BMI / dist = bin;
+13645      run;
+
+NOTE: PROC CAUSALTRT is modeling the probability that Diabetes2='Yes'.
+NOTE: PROC CAUSALTRT is modeling the probability that Drug='Drug_B'.
+NOTE: The PROCEDURE CAUSALTRT printed pages 1872-1873.
+
+13646      
+13647      
+13648      
+13649      
+The SAS System
+
+13650      

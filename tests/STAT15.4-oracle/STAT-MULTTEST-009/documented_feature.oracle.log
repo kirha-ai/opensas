@@ -1,0 +1,49 @@
+The SAS System
+
+5248       
+5249       /* STAT-MULTTEST-009: MULTTEST — Official examples and feature integration regression
+5250        * Source: S154 / Chapter 86 / `Examples: MULTTEST Procedure` (PDF pp. 6936–6960).
+5251        * Discriminates: Example 86.5: Inputting Raw p-Values
+5252        */
+5253       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+5253     ! validmemname=compatible locale=en_US;
+5254       %let syscc=0;
+5255       title; footnote;
+5256       ods _all_ close;
+5257       ods listing gpath="%sysfunc(pathname(work))";
+5258       ods graphics off;
+5259       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.DRUG (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+5259     !                                         quit;
+
+
+5260       ods path work.templat(update) sashelp.tmplmst(read);
+5261       
+5262       data a;
+5263       input Test$ Raw_P @@;
+5264       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.A has 24 observations and 2 variables.
+
+5273       ;
+5274       proc multtest inpvalues=a holm hoc fdr;
+5275       run;
+
+NOTE: There were 24 observations read from the data set WORK.A.
+NOTE: The PROCEDURE MULTTEST printed page 370.
+
+5276       
+5277       
+5278       
+5279       
+The SAS System
+
+5280       

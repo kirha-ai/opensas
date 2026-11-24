@@ -1,0 +1,122 @@
+The SAS System
+
+36         
+37         /* STAT-HPGENSELECT-011: HPGENSELECT — Displayed Output / ODS Table Names
+38          * Source: S154 / Chapter 59 / `Displayed Output` (PDF pp. 4671–4675); S154 / Chapter 59 / `ODS Table
+38       ! Names` (PDF pp. 4675–4677).
+39          * Discriminates: Getting Started: HPGENSELECT Procedure
+40          */
+41         options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+41       ! validmemname=compatible locale=en_US;
+42         %let syscc=0;
+43         title; footnote;
+44         ods _all_ close;
+45         ods listing gpath="%sysfunc(pathname(work))";
+46         ods graphics off;
+47         proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+47       !                                         quit;
+
+
+48         ods path work.templat(update) sashelp.tmplmst(read);
+49         
+50         ods trace on;
+51         data getStarted;
+52         input C1-C5 Y Total;
+53         datalines;
+
+NOTE: The data set WORK.GETSTARTED has 100 observations and 7 variables.
+
+154        ;
+155        proc hpgenselect data=getStarted;
+156        class C1-C5;
+157        model Y = C1-C5 / Distribution=Poisson Link=Log;
+158        run;
+
+NOTE: The HPGENSELECT procedure is executing in single-machine mode.
+
+Output Added:
+-------------
+Name:       PerformanceInfo
+Label:      Performance Information
+Template:   HPA.Common.PerfInfo
+Path:       Hpgenselect.PerformanceInfo
+-------------
+
+Output Added:
+-------------
+Name:       DataAccessInfo
+Label:      Data Access Information
+Template:   HPA.Common.DataAccessInfo
+Path:       Hpgenselect.DataAccessInfo
+-------------
+
+Output Added:
+-------------
+Name:       ModelInfo
+Label:      Model Information
+Template:   HPSTAT.HPGenselect.ModelInfo
+Path:       Hpgenselect.ModelInfo
+-------------
+
+Output Added:
+-------------
+Name:       NObs
+Label:      Number of Observations
+Template:   HPA.Common.NObs
+Path:       Hpgenselect.NObs
+-------------
+
+Output Added:
+-------------
+Name:       ClassLevels
+Label:      Class Level Information
+Template:   HPA.Common.ClassLevels
+Path:       Hpgenselect.ClassLevels
+-------------
+
+Output Added:
+-------------
+Name:       Dimensions
+Label:      Dimensions
+Template:   HPSTAT.HPGenselect.Dimensions
+Path:       Hpgenselect.Dimensions
+-------------
+
+Output Added:
+-------------
+Name:       FitStatistics
+Label:      Fit Statistics
+Template:   HPSTAT.HPGenselect.FitStatistics
+Path:       Hpgenselect.FitStatistics
+-------------
+
+Output Added:
+-------------
+Name:       ParameterEstimates
+Label:      Parameter Estimates
+Template:   HPSTAT.HPGenselect.ParameterEstimates
+Path:       Hpgenselect.ParameterEstimates
+-------------
+
+Output Added:
+-------------
+Name:       ConvergenceStatus
+Label:      Convergence Status
+Template:   HPA.Common.ConvergenceStatus
+Path:       Hpgenselect.ConvergenceStatus
+-------------
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: There were 100 observations read from the data set WORK.GETSTARTED.
+NOTE: The PROCEDURE HPGENSELECT printed page 1.
+
+159        ods trace off;
+160        
+161        
+162        
+163        
+The SAS System
+
+164        

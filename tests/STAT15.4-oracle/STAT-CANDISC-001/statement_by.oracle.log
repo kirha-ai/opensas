@@ -1,0 +1,88 @@
+The SAS System
+
+295        
+296        /* STAT-CANDISC-001: CANDISC — Data input, variable roles, and basic options
+297         * Source: S154 / Chapter 35 / `PROC CANDISC Statement` (PDF pp. 2156–2159); S154 / Chapter 35 / `BY Statement` (PDF p. 2159); S154 / Chapter 35 /
+297      ! `CLASS Statement` (PDF pp. 2159–2160); S154 / Chapter 35 / `FREQ Statement` (PDF p. 2160); S154 / Chapter 35 / `VAR Statement` (PDF p. 2160); S154
+297      ! / Chapter 35 / `WEIGHT Statement` (PDF pp. 2160–2161); S154 / Chapter 35 / `Missing Values` (PDF p. 2161); S154 / Chapter 35 / `Input Data Set`
+297      ! (PDF pp. 2162–2163).
+298         * Discriminates: Two explicit BY groups contain identical inputs, exposing group boundaries and per-group results.
+299         */
+300        options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+300      ! validmemname=compatible locale=en_US;
+301        %let syscc=0;
+302        title; footnote;
+303        ods _all_ close;
+304        ods listing gpath="%sysfunc(pathname(work))";
+305        ods graphics off;
+306        proc datasets library=work kill nolist;
+NOTE: Deleting WORK.JOBS (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK._ORACLE_INPUT (memtype=DATA).
+306      !                                         quit;
+
+
+307        ods path work.templat(update) sashelp.tmplmst(read);
+308        
+309        title 'Fish Measurement Data';
+310        data _oracle_input; set sashelp.fish; do _oracle_by=1 to 2; output; end; run;
+
+NOTE: There were 159 observations read from the data set SASHELP.FISH.
+NOTE: The data set WORK._ORACLE_INPUT has 318 observations and 8 variables.
+
+311        proc sort data=_oracle_input; by _oracle_by; run;
+
+NOTE: There were 318 observations read from the data set WORK._ORACLE_INPUT.
+NOTE: The data set WORK._ORACLE_INPUT has 318 observations and 8 variables.
+
+312        proc candisc data=_oracle_input ncan=3 out=outcan;
+313        by _oracle_by;
+314        ods exclude tstruc bstruc pstruc tcoef pcoef;
+315        class Species;
+316        var Weight Length1 Length2 Length3 Height Width;
+317        run;
+
+WARNING: 1 observations in DATA= data set or BY group will not be included in the analysis due to missing values.
+WARNING: A total of 1 of the 159 observations in the DATA= data set were excluded (frequency sum = 158).
+NOTE: The above message was for the following BY group:
+      _oracle_by=1
+WARNING: 1 observations in DATA= data set or BY group will not be included in the analysis due to missing values.
+WARNING: A total of 1 of the 159 observations in the DATA= data set were excluded (frequency sum = 158).
+NOTE: The above message was for the following BY group:
+      _oracle_by=2
+NOTE: There were 318 observations read from the data set WORK._ORACLE_INPUT.
+NOTE: The data set WORK.OUTCAN has 318 observations and 11 variables.
+NOTE: The PROCEDURE CANDISC printed pages 29-36.
+
+318        proc template;
+319        define statgraph scatter;
+320        begingraph / attrpriority=none;
+321        entrytitle 'Fish Measurement Data';
+322        layout overlayequated / equatetype=fit
+323        xaxisopts=(label='Canonical Variable 1')
+324        yaxisopts=(label='Canonical Variable 2');
+325        scatterplot x=Can1 y=Can2 / group=species name='fish'
+326        markerattrs=(size=3px);
+327        layout gridded / autoalign=(topright);
+328        discretelegend 'fish' / border=false opaque=false;
+329        endlayout;
+330        endlayout;
+331        endgraph;
+332        end;
+NOTE: STATGRAPH 'Scatter' has been saved to: WORK.TEMPLAT
+333        run;
+
+334        proc sgrender data=outcan template=scatter;
+335        run;
+
+NOTE: Listing image output written to /saswork/SAS_workF8DD0000198D_odaws01-euw1.oda.sas.com/SAS_work3E660000198D_odaws01-euw1.oda.sas.com/SGRender.png.
+NOTE: There were 318 observations read from the data set WORK.OUTCAN.
+
+336        
+337        
+338        
+339        
+The SAS System
+
+340        

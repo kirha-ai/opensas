@@ -1,0 +1,84 @@
+The SAS System
+
+2646       
+2647       /* STAT-TEMPLATE-003: Graph templates — Saving Customized Templates / Using Customized Templates
+2648        * Source: S154 / Chapter 25 / `Saving Customized Templates` (PDF pp. 841–842); S154 / Chapter 25 / `Using Customized Templates` (PDF p. 842).
+2649        * Discriminates: Custom GTL template definition and rendering through SGRENDER
+2650        */
+2651       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+2651     ! validmemname=compatible locale=en_US;
+2652       %let syscc=0;
+2653       title; footnote;
+2654       ods _all_ close;
+2655       ods listing gpath="%sysfunc(pathname(work))";
+2656       ods graphics off;
+2657       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.GRAPH_FILES (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SAMPLE (memtype=DATA).
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+2657     !                                         quit;
+
+
+2658       ods path work.templat(update) sashelp.tmplmst(read);
+2659       
+2660       options dlcreatedir; libname _gpath "%sysfunc(pathname(work))/stat_template_003"; libname _gpath clear;
+NOTE: Library _GPATH was created.
+NOTE: Libref _GPATH was successfully assigned as follows: 
+      Engine:        V9 
+      Physical Name: /saswork/SAS_work5D120001108E_odaws02-euw1.oda.sas.com/SAS_workCCDC0001108E_odaws02-euw1.oda.sas.com/stat_template_003
+NOTE: Libref _GPATH has been deassigned.
+2661       ods listing gpath="%sysfunc(pathname(work))/stat_template_003";
+2662       ods graphics on / reset=all imagename="oracle" imagefmt=svg width=5in height=3in;
+2663       ods trace on;
+2664       data sample;
+2665        input x z y group $ weight freq;
+2666        datalines;
+
+NOTE: The data set WORK.SAMPLE has 12 observations and 6 variables.
+
+2679       ;
+2680       run;
+2681       proc template; define statgraph oracle_graph; begingraph; entrytitle "Oracle scatter"; layout overlay; scatterplot x=x y=y / group=group; endlayout;
+2681     ! endgraph; end; run;
+NOTE: Overwriting existing template/link: Oracle_graph
+NOTE: STATGRAPH 'Oracle_graph' has been saved to: WORK.TEMPLAT
+
+2682       proc sgrender data=sample template=oracle_graph; run;
+
+
+Output Added:
+-------------
+Name:       SGRender
+Label:      The SGRender Procedure
+Template:   oracle_graph
+Path:       SGRender.SGRender
+-------------
+NOTE: Listing image output written to 
+      /saswork/SAS_work5D120001108E_odaws02-euw1.oda.sas.com/SAS_workCCDC0001108E_odaws02-euw1.oda.sas.com/stat_template_003/oracle.svg.
+NOTE: There were 12 observations read from the data set WORK.SAMPLE.
+
+2683       
+2684       ods trace off; ods graphics off;
+2685       data graph_files; length name $128; rc=filename('_gdir',"%sysfunc(pathname(work))/stat_template_003"); did=dopen('_gdir'); if did then do; do i=1 to
+2685     ! dnum(did); name=dread(did,i); if lowcase(scan(name,-1,'.')) in ('svg','png') then output; end; rc=dclose(did); end; keep name; run;
+
+NOTE: The data set WORK.GRAPH_FILES has 1 observations and 1 variables.
+
+2686       proc print data=graph_files noobs; run;
+
+NOTE: There were 1 observations read from the data set WORK.GRAPH_FILES.
+NOTE: The PROCEDURE PRINT printed page 117.
+
+2687       
+2688       
+2689       
+2690       
+The SAS System
+
+2691       

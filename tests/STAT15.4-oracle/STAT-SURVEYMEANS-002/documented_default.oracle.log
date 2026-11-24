@@ -1,0 +1,107 @@
+The SAS System
+
+21758      
+21759      /* STAT-SURVEYMEANS-002: SURVEYMEANS — Mean, total, and proportion estimation for complex surveys
+21760       * Source: S154 / Chapter 121 / `Getting Started: SURVEYMEANS Procedure` (PDF pp. 9900–9907); S154 / Chapter 121 / `Overview: SURVEYMEANS
+21760    ! Procedure` (PDF p. 9900).
+21761       * Discriminates: Getting Started: SURVEYMEANS Procedure
+21762       */
+21763      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+21763    ! validmemname=compatible locale=en_US;
+21764      %let syscc=0;
+21765      title; footnote;
+21766      ods _all_ close;
+21767      ods listing gpath="%sysfunc(pathname(work))";
+21768      ods graphics off;
+21769      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.ICECREAM (memtype=DATA).
+NOTE: Deleting WORK.MYSTAT (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.STUDENTTOTALS (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK._ORACLE_INPUT (memtype=DATA).
+21769    !                                         quit;
+
+
+21770      ods path work.templat(update) sashelp.tmplmst(read);
+21771      
+21772      data IceCream;
+21773      input Grade Spending @@;
+21774      if (Spending < 10) then Group='less';
+21775      else Group='more';
+21776      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.ICECREAM has 40 observations and 3 variables.
+
+21781      ;
+21782      ods graphics on;
+21783      title1 'Analysis of Ice Cream Spending';
+21784      title2 'Simple Random Sample Design';
+21785      proc surveymeans data=IceCream total=4000;
+21786      var Spending Group;
+21787      run;
+
+NOTE: The PROCEDURE SURVEYMEANS printed page 1436.
+
+21788      data StudentTotals;
+21789      input Grade _total_;
+21790      datalines;
+
+NOTE: The data set WORK.STUDENTTOTALS has 3 observations and 2 variables.
+
+21794      ;
+21795      data IceCream;
+21796      set IceCream;
+21797      if Grade=7 then Prob=20/1824;
+21798      if Grade=8 then Prob=9/1025;
+21799      if Grade=9 then Prob=11/1151;
+21800      Weight=1/Prob;
+21801      run;
+
+NOTE: There were 40 observations read from the data set WORK.ICECREAM.
+NOTE: The data set WORK.ICECREAM has 40 observations and 5 variables.
+
+21802      title1 'Analysis of Ice Cream Spending';
+21803      title2 'Stratified Sample Design';
+21804      proc surveymeans data=IceCream total=StudentTotals;
+21805      stratum Grade / list;
+21806      var Spending Group;
+21807      weight Weight;
+21808      run;
+
+NOTE: The PROCEDURE SURVEYMEANS printed page 1437.
+
+21809      title1 'Analysis of Ice Cream Spending';
+21810      title2 'Stratified Sample Design';
+21811      proc surveymeans data=IceCream total=StudentTotals;
+21812      stratum Grade / list;
+21813      var Spending Group;
+21814      weight Weight;
+21815      ods output Statistics=MyStat;
+21816      run;
+
+NOTE: The data set WORK.MYSTAT has 3 observations and 7 variables.
+NOTE: The PROCEDURE SURVEYMEANS printed page 1438.
+
+21817      ods output Statistics=MyStat;
+21818      proc print data=MyStat;
+21819      run;
+
+WARNING: Output 'Statistics' was not created.  Make sure that the output object name, label, or path is spelled correctly.  Also, verify that the appropriate 
+         procedure options are used to produce the requested output object.  For example, verify that the NOPRINT option is not used.
+NOTE: There were 3 observations read from the data set WORK.MYSTAT.
+NOTE: The PROCEDURE PRINT printed page 1439.
+
+21820      
+21821      
+21822      
+21823      
+The SAS System
+
+21824      

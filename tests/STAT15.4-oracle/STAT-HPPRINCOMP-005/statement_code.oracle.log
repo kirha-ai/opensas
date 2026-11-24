@@ -1,0 +1,70 @@
+The SAS System
+
+3602       
+3603       /* STAT-HPPRINCOMP-005: HPPRINCOMP — CODE
+3604        * Source: S154 / Chapter 65 / `CODE Statement` (PDF p. 4955).
+3605        * Discriminates: Generate DATA step scoring code, execute it against the input rows, and print the scored data.
+3606        */
+3607       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+3607     ! validmemname=compatible locale=en_US;
+3608       %let syscc=0;
+3609       title; footnote;
+3610       ods _all_ close;
+3611       ods listing gpath="%sysfunc(pathname(work))";
+3612       ods graphics off;
+3613       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.CRIME (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+3613     !                                         quit;
+
+
+3614       ods path work.templat(update) sashelp.tmplmst(read);
+3615       
+3616       filename _orcode "%sysfunc(pathname(work))/_oracle_score.sas";
+3617       
+3618       
+3619       title 'Crime Rates per 100,000 Population by State';
+3620       data Crime;
+3621       length State $15;
+3622       input State :$15. Murder Rape Robbery Assault
+3623       Burglary Larceny Auto_Theft;
+3624       datalines;
+
+NOTE: The data set WORK.CRIME has 50 observations and 8 variables.
+
+3675       ;
+3676       proc hpprincomp data=Crime;
+3677       code file="%sysfunc(pathname(work))/_oracle_score.sas";
+3678       
+3679       run;
+
+NOTE: The HPPRINCOMP procedure is executing in single-machine mode.
+WARNING: 2 observations omitted due to missing values.
+NOTE: External file /saswork/SAS_work7EA200001C34_odaws01-euw1.oda.sas.com/SAS_work29EF00001C34_odaws01-euw1.oda.sas.com/_oracle_score.sas opened.
+NOTE: The HPPRINCOMP procedure wrote the DATA step code to external file 
+      /saswork/SAS_work7EA200001C34_odaws01-euw1.oda.sas.com/SAS_work29EF00001C34_odaws01-euw1.oda.sas.com/_oracle_score.sas.
+NOTE: The PROCEDURE HPPRINCOMP printed page 164.
+
+3680       
+3681       data _oracle_scored; set Crime;
+3682       %include _orcode;
+4198       run;
+
+NOTE: There were 50 observations read from the data set WORK.CRIME.
+NOTE: The data set WORK._ORACLE_SCORED has 50 observations and 15 variables.
+
+4199       proc print data=_oracle_scored(obs=10); run;
+
+NOTE: There were 10 observations read from the data set WORK._ORACLE_SCORED.
+NOTE: The PROCEDURE PRINT printed page 165.
+
+4200       
+4201       
+4202       
+4203       
+The SAS System
+
+4204       

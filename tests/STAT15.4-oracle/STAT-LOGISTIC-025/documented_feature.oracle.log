@@ -1,0 +1,66 @@
+The SAS System
+
+15423      
+15424      /* STAT-LOGISTIC-025: LOGISTIC — Existence of Maximum Likelihood Estimates
+15425       * Source: S154 / Chapter 79 / `Existence of Maximum Likelihood Estimates` (PDF pp. 5911–5913).
+15426       * Discriminates: Example 79.11: Conditional Logistic Regression for Matched Pairs Data
+15427       */
+15428      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+15428    ! validmemname=compatible locale=en_US;
+15429      %let syscc=0;
+15430      title; footnote;
+15431      ods _all_ close;
+15432      ods listing gpath="%sysfunc(pathname(work))";
+15433      ods graphics off;
+15434      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.CHEESE (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+15434    !                                         quit;
+
+
+15435      ods path work.templat(update) sashelp.tmplmst(read);
+15436      
+15437      data Data1;
+15438      do ID=1 to 63;
+15439      do Outcome = 1 to 0 by -1;
+15440      input Gall Hyper @@;
+15441      output;
+15442      end;
+15443      end;
+15444      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.DATA1 has 126 observations and 4 variables.
+
+15458      ;
+15459      proc logistic data=Data1;
+15460      strata ID;
+15461      model outcome(event='1')=Gall;
+15462      run;
+
+NOTE: PROC LOGISTIC is modeling the probability that Outcome=1.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: There were 126 observations read from the data set WORK.DATA1.
+NOTE: The PROCEDURE LOGISTIC printed page 1257.
+
+15463      proc logistic data=Data1 exactonly;
+15464      strata ID;
+15465      model outcome(event='1')=Gall;
+15466      exact Gall / estimate=both;
+15467      run;
+
+NOTE: PROC LOGISTIC is modeling the probability that Outcome=1.
+NOTE: There were 126 observations read from the data set WORK.DATA1.
+NOTE: The PROCEDURE LOGISTIC printed page 1258.
+
+15468      
+15469      
+15470      
+15471      
+The SAS System
+
+15472      

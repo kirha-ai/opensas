@@ -1,0 +1,57 @@
+The SAS System
+
+21517      
+21518      /* STAT-GEE-007: GEE — ESTIMATE / Type 3 Analysis
+21519       * Source: S154 / Chapter 50 / `ESTIMATE Statement` (PDF pp. 3430–3431); S154 / Chapter 50 / `Type 3 Analysis` (PDF p. 3456).
+21520       * Discriminates: Verified default procedure context
+21521       */
+21522      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+21522    ! validmemname=compatible locale=en_US;
+21523      %let syscc=0;
+21524      title; footnote;
+21525      ods _all_ close;
+21526      ods listing gpath="%sysfunc(pathname(work))";
+21527      ods graphics off;
+21528      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.CHILDREN (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+21528    !                                         quit;
+
+
+21529      ods path work.templat(update) sashelp.tmplmst(read);
+21530      
+21531      data Children;
+21532      input ID City$ @@;
+21533      do i=1 to 4;
+21534      input Age Smoke Symptom @@;
+21535      output;
+21536      end;
+21537      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.CHILDREN has 100 observations and 6 variables.
+
+21563      ;
+21564      proc gee data=Children descending;
+21565      class ID City;
+21566      model Symptom = City Age Smoke / dist=bin link=logit;
+21567      repeated subject=ID / type=exch covb corrw;
+21568      run;
+
+NOTE: PROC GEE is modeling the probability that Symptom='1'.
+NOTE: The PROCEDURE GEE printed page 2364.
+
+21569      
+21570      
+21571      
+21572      
+The SAS System
+
+21573      

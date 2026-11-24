@@ -1,0 +1,71 @@
+The SAS System
+
+5452       
+5453       /* STAT-HPNLMOD-004: HPNLMOD — PREDICT / Least Squares Estimation / Built-In Log-Likelihood Functions
+5454        * Source: S154 / Chapter 63 / `PREDICT Statement` (PDF pp. 4885–4886); S154 / Chapter 63 / `Least Squares Estimation` (PDF p. 4889); S154 /
+5454     ! Chapter 63 / `Built-In Log-Likelihood Functions` (PDF pp. 4889–4891).
+5455        * Discriminates: Example 63.1: Segmented Model; explicit statements: PREDICT
+5456        */
+5457       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+5457     ! validmemname=compatible locale=en_US;
+5458       %let syscc=0;
+5459       title; footnote;
+5460       ods _all_ close;
+5461       ods listing gpath="%sysfunc(pathname(work))";
+5462       ods graphics off;
+5463       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.ENZYME (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.REMISS (memtype=DATA).
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+5463     !                                         quit;
+
+
+5464       ods path work.templat(update) sashelp.tmplmst(read);
+5465       
+5466       data a;
+5467       input y x @@;
+5468       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.A has 16 observations and 2 variables.
+
+5472       ;
+5473       proc hpnlmod data=a out=b;
+5474       parms alpha=.45 beta=.05 gamma=-.0025;
+5475       x0 = -.5*beta / gamma;
+5476       if (x < x0) then
+5477       yp = alpha + beta*x + gamma *x*x;
+5478       else
+5479       yp = alpha + beta*x0 + gamma*x0*x0;
+5480       model y ~ residual(yp);
+5481       estimate 'join point' -beta/2/gamma;
+5482       estimate 'plateau value c' alpha - beta**2/(4*gamma);
+5483       predict 'predicted' yp pred=yp;
+5484       predict 'response' y pred=y;
+5485       predict 'x' x pred=x;
+5486       run;
+
+
+NOTE: The HPNLMOD procedure is executing in single-machine mode.
+NOTE: The predicted value of the expression labeled 'predicted' is mapped to yp in the OUT= data set.
+NOTE: The predicted value of the expression labeled 'response' is mapped to y in the OUT= data set.
+NOTE: The predicted value of the expression labeled 'x' is mapped to x in the OUT= data set.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: There were 16 observations read from the data set WORK.A.
+NOTE: The data set WORK.B has 16 observations and 3 variables.
+NOTE: The PROCEDURE HPNLMOD printed page 228.
+
+5487       
+5488       
+5489       
+5490       
+The SAS System
+
+5491       

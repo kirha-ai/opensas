@@ -1,0 +1,169 @@
+The SAS System
+
+14983      
+14984      /* STAT-LOGISTIC-019: LOGISTIC — Scoring Data Sets
+14985       * Source: S154 / Chapter 79 / `Scoring Data Sets` (PDF pp. 5941–5946).
+14986       * Discriminates: Example 79.16: Scoring Data Sets
+14987       */
+14988      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+14988    ! validmemname=compatible locale=en_US;
+14989      %let syscc=0;
+14990      title; footnote;
+14991      ods _all_ close;
+14992      ods listing gpath="%sysfunc(pathname(work))";
+14993      ods graphics off;
+14994      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.INGOTS (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK._ORACLE_SCORED (memtype=DATA).
+14994    !                                         quit;
+
+
+14995      ods path work.templat(update) sashelp.tmplmst(read);
+14996      
+14997      data Crops;
+14998      length Crop $ 10;
+14999      infile datalines truncover;
+15000      input Crop $ @@;
+15001      do i=1 to 3;
+15002      input x1-x4 @@;
+15003      if (x1 ^= .) then output;
+15004      end;
+15005      input;
+15006      datalines;
+
+NOTE: The data set WORK.CROPS has 36 observations and 6 variables.
+
+15020      ;
+15021      ods graphics on;
+15022      proc logistic data=Crops;
+15023      model Crop=x1-x4 / link=glogit;
+15024      score out=Score1;
+15025      effectplot slicefit(x=x3);
+15026      run;
+
+NOTE: PROC LOGISTIC is fitting the generalized logit model. The logits modeled contrast each response level against the reference level (Crop='Sugarbeets'). 
+      Use the response variable option REF= if you want to change the reference level.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: There were 36 observations read from the data set WORK.CROPS.
+NOTE: The data set WORK.SCORE1 has 36 observations and 13 variables.
+NOTE: The PROCEDURE LOGISTIC printed page 1237.
+
+15027      proc logistic data=Crops outmodel=work.CropModel;
+15028      model Crop=x1-x4 / link=glogit;
+15029      score data=Crops out=Score2;
+15030      store CropModel2;
+15031      run;
+
+NOTE: PROC LOGISTIC is fitting the generalized logit model. The logits modeled contrast each response level against the reference level (Crop='Sugarbeets'). 
+      Use the response variable option REF= if you want to change the reference level.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The LOGISTIC procedure generated the model item store WORK.CROPMODEL2.
+NOTE: There were 36 observations read from the data set WORK.CROPS.
+NOTE: The data set WORK.CROPMODEL has 252 observations and 6 variables.
+NOTE: The data set WORK.SCORE2 has 36 observations and 13 variables.
+NOTE: The PROCEDURE LOGISTIC printed page 1238.
+
+15032      proc logistic inmodel=work.CropModel;
+15033      score data=Crops out=Score3;
+15034      run;
+
+NOTE: The data set WORK.SCORE3 has 36 observations and 13 variables.
+
+15035      proc plm source=CropModel2;
+15036      score data=Crops out=ScorePLM predicted=p / ilink;
+15037      run;
+
+NOTE: The data set WORK.SCOREPLM has 180 observations and 8 variables.
+NOTE: The PROCEDURE PLM printed page 1239.
+
+15038      proc transpose data=ScorePLM out=Score4 prefix=P_ let;
+15039      id _LEVEL_;
+15040      var p;
+15041      by x1-x4 notsorted;
+15042      run;
+
+NOTE: There were 180 observations read from the data set WORK.SCOREPLM.
+NOTE: The data set WORK.SCORE4 has 36 observations and 11 variables.
+
+15043      data Score4(drop=_NAME_ _LABEL_);
+15044      merge Score4 Crops(keep=Crop x1-x4);
+15045      F_Crop=Crop;
+15046      run;
+
+NOTE: There were 36 observations read from the data set WORK.SCORE4.
+NOTE: There were 36 observations read from the data set WORK.CROPS.
+NOTE: The data set WORK.SCORE4 has 36 observations and 11 variables.
+
+15047      proc summary data=ScorePLM nway;
+15048      by x1-x4 notsorted;
+15049      var p;
+15050      output out=into maxid(p(_LEVEL_))=I_Crop;
+15051      run;
+
+NOTE: There were 180 observations read from the data set WORK.SCOREPLM.
+NOTE: The data set WORK.INTO has 36 observations and 7 variables.
+
+15052      data Score4;
+15053      merge Score4 into(keep=I_Crop);
+15054      run;
+
+NOTE: There were 36 observations read from the data set WORK.SCORE4.
+NOTE: There were 36 observations read from the data set WORK.INTO.
+NOTE: The data set WORK.SCORE4 has 36 observations and 12 variables.
+
+15055      data Prior;
+15056      length Crop $10.;
+15057      input Crop _PRIOR_;
+15058      datalines;
+
+NOTE: The data set WORK.PRIOR has 5 observations and 2 variables.
+
+15064      ;
+15065      proc logistic inmodel=work.CropModel;
+15066      score data=Crops prior=prior out=Score5 fitstat;
+15067      run;
+
+NOTE: The data set WORK.SCORE5 has 36 observations and 13 variables.
+NOTE: The PROCEDURE LOGISTIC printed page 1240.
+
+15068      proc freq data=Score1;
+15069      table F_Crop*I_Crop / nocol nocum nopercent;
+15070      run;
+
+NOTE: There were 36 observations read from the data set WORK.SCORE1.
+NOTE: The PROCEDURE FREQ printed page 1241.
+
+15071      data Test;
+15072      input Crop $ 1-10 x1-x4;
+15073      datalines;
+
+NOTE: The data set WORK.TEST has 5 observations and 5 variables.
+
+15079      ;
+15080      proc logistic noprint inmodel=work.CropModel;
+15081      score data=Test out=ScoredTest;
+15082      run;
+
+NOTE: The data set WORK.SCOREDTEST has 5 observations and 12 variables.
+
+15083      proc print data=ScoredTest label noobs;
+15084      var F_Crop I_Crop P_Clover P_Corn P_Cotton P_Soybeans P_Sugarbeets;
+15085      run;
+
+NOTE: There were 5 observations read from the data set WORK.SCOREDTEST.
+NOTE: The PROCEDURE PRINT printed page 1242.
+
+15086      run;
+15087      quit;
+15088      
+15089      
+15090      
+15091      
+The SAS System
+
+15092      

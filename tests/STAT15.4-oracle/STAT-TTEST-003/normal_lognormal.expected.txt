@@ -1,0 +1,34 @@
+
+The TTEST Procedure
+ 
+Variable:  x
+
+  N        Mean     Std Dev     Std Err     Minimum     Maximum
+
+ 12     89.7500     19.9687      5.7645     43.0000       121.0
+
+    Mean       95% CL Mean        Std Dev      95% CL Std Dev
+
+ 89.7500     77.0625    102.4     19.9687     14.1457  33.9045
+
+    DF    t Value    Pr > |t|
+
+    11      15.57      <.0001
+
+The TTEST Procedure
+ 
+Variable:  x
+
+       Geometric     Coefficient
+  N         Mean    of Variation     Minimum     Maximum
+
+ 12      87.2660          0.2682     43.0000       121.0
+
+Geometric                          Coefficient
+     Mean       95% CL Mean       of Variation        95% CL CV
+
+  87.2660     73.8122    103.2          0.2682      0.1883   0.4708
+
+    DF    t Value    Pr > |t|
+
+    11      58.75      <.0001

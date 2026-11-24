@@ -1,0 +1,367 @@
+The SAS System
+
+26287      
+26288      /* STAT-GLM-019: GLM — Displayed Output / ODS Table Names
+26289       * Source: S154 / Chapter 53 / `Displayed Output` (PDF pp. 4166–4167); S154 / Chapter 53 / `ODS Table Names` (PDF pp. 4167–4170).
+26290       * Discriminates: Getting Started: GLM Procedure
+26291       */
+26292      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+26292    ! validmemname=compatible locale=en_US;
+26293      %let syscc=0;
+26294      title; footnote;
+26295      ods _all_ close;
+26296      ods listing gpath="%sysfunc(pathname(work))";
+26297      ods graphics off;
+26298      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.A (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+26298    !                                         quit;
+
+
+26299      ods path work.templat(update) sashelp.tmplmst(read);
+26300      
+26301      ods trace on;
+26302      title 'Analysis of Unbalanced 2-by-2 Factorial';
+26303      data exp;
+26304      input A $ B $ Y @@;
+26305      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.EXP has 7 observations and 3 variables.
+
+26308      ;
+26309      proc glm data=exp;
+26310      class A B;
+26311      model Y=A B A*B;
+26312      run;
+
+
+Output Added:
+-------------
+Name:       ClassLevels
+Label:      Class Levels
+Template:   STAT.GLM.ClassLevels
+Path:       GLM.Data.ClassLevels
+-------------
+
+Output Added:
+-------------
+Name:       NObs
+Label:      Number of Observations
+Template:   STAT.GLM.NObsNotitle
+Path:       GLM.Data.NObs
+-------------
+
+Output Added:
+-------------
+Name:       OverallANOVA
+Label:      Overall ANOVA
+Template:   stat.GLM.OverallANOVA
+Path:       GLM.ANOVA.Y.OverallANOVA
+-------------
+
+Output Added:
+-------------
+Name:       FitStatistics
+Label:      Fit Statistics
+Template:   stat.GLM.FitStatistics
+Path:       GLM.ANOVA.Y.FitStatistics
+-------------
+
+Output Added:
+-------------
+Name:       ModelANOVA
+Label:      Type I Model ANOVA
+Template:   stat.GLM.Tests
+Path:       GLM.ANOVA.Y.ModelANOVA
+-------------
+
+Output Added:
+-------------
+Name:       ModelANOVA
+Label:      Type III Model ANOVA
+Template:   stat.GLM.Tests
+Path:       GLM.ANOVA.Y.ModelANOVA
+-------------
+26313      ods graphics on;
+
+NOTE: The PROCEDURE GLM printed pages 2594-2595.
+
+26314      proc glm data=exp;
+26315      class A B;
+26316      model Y=A B A*B;
+26317      run;
+
+
+Output Added:
+-------------
+Name:       ClassLevels
+Label:      Class Levels
+Template:   STAT.GLM.ClassLevels
+Path:       GLM.Data.ClassLevels
+-------------
+
+Output Added:
+-------------
+Name:       NObs
+Label:      Number of Observations
+Template:   STAT.GLM.NObsNotitle
+Path:       GLM.Data.NObs
+-------------
+
+Output Added:
+-------------
+Name:       OverallANOVA
+Label:      Overall ANOVA
+Template:   stat.GLM.OverallANOVA
+Path:       GLM.ANOVA.Y.OverallANOVA
+-------------
+
+Output Added:
+-------------
+Name:       FitStatistics
+Label:      Fit Statistics
+Template:   stat.GLM.FitStatistics
+Path:       GLM.ANOVA.Y.FitStatistics
+-------------
+
+Output Added:
+-------------
+Name:       ModelANOVA
+Label:      Type I Model ANOVA
+Template:   stat.GLM.Tests
+Path:       GLM.ANOVA.Y.ModelANOVA
+-------------
+
+Output Added:
+-------------
+Name:       ModelANOVA
+Label:      Type III Model ANOVA
+Template:   stat.GLM.Tests
+Path:       GLM.ANOVA.Y.ModelANOVA
+-------------
+
+Output Added:
+-------------
+Name:       IntPlot
+Label:      Interaction Plot
+Template:   Stat.GLM.Graphics.IntPlot
+Path:       GLM.ANOVA.Y.IntPlot
+-------------
+26318      ods graphics off;
+26319      title 'Regression in PROC GLM';
+
+NOTE: The PROCEDURE GLM printed pages 2596-2597.
+
+26320      data iron;
+26321      input fe loss @@;
+26322      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.IRON has 13 observations and 2 variables.
+
+26327      ;
+26328      proc sgscatter data=iron;
+26329      plot loss*fe;
+26330      run;
+
+
+Output Added:
+-------------
+Name:       SGScatter
+Label:      The SGScatter Procedure
+Data Label: SGScatter
+Path:       SGScatter.SGScatter
+-------------
+NOTE: Listing image output written to /saswork/SAS_work5D120001108E_odaws02-euw1.oda.sas.com/SAS_workCCDC0001108E_odaws02-euw1.oda.sas.com/SGScatter9.png.
+NOTE: There were 13 observations read from the data set WORK.IRON.
+
+26331      ods graphics off;
+26332      proc glm data=iron;
+26333      model loss=fe fe*fe;
+26334      run;
+
+
+Output Added:
+-------------
+Name:       NObs
+Label:      Number of Observations
+Template:   STAT.GLM.NObsNotitle
+Path:       GLM.Data.NObs
+-------------
+
+Output Added:
+-------------
+Name:       OverallANOVA
+Label:      Overall ANOVA
+Template:   stat.GLM.OverallANOVA
+Path:       GLM.ANOVA.loss.OverallANOVA
+-------------
+
+Output Added:
+-------------
+Name:       FitStatistics
+Label:      Fit Statistics
+Template:   stat.GLM.FitStatistics
+Path:       GLM.ANOVA.loss.FitStatistics
+-------------
+
+Output Added:
+-------------
+Name:       ModelANOVA
+Label:      Type I Model ANOVA
+Template:   stat.GLM.Tests
+Path:       GLM.ANOVA.loss.ModelANOVA
+-------------
+
+Output Added:
+-------------
+Name:       ModelANOVA
+Label:      Type III Model ANOVA
+Template:   stat.GLM.Tests
+Path:       GLM.ANOVA.loss.ModelANOVA
+-------------
+
+Output Added:
+-------------
+Name:       ParameterEstimates
+Label:      Solution
+Template:   stat.GLM.Estimates
+Path:       GLM.ANOVA.loss.ParameterEstimates
+-------------
+26335      ods graphics on;
+
+NOTE: The PROCEDURE GLM printed pages 2598-2599.
+
+26336      proc glm data=iron;
+26337      model loss=fe fe*fe;
+26338      run;
+
+
+Output Added:
+-------------
+Name:       NObs
+Label:      Number of Observations
+Template:   STAT.GLM.NObsNotitle
+Path:       GLM.Data.NObs
+-------------
+
+Output Added:
+-------------
+Name:       OverallANOVA
+Label:      Overall ANOVA
+Template:   stat.GLM.OverallANOVA
+Path:       GLM.ANOVA.loss.OverallANOVA
+-------------
+
+Output Added:
+-------------
+Name:       FitStatistics
+Label:      Fit Statistics
+Template:   stat.GLM.FitStatistics
+Path:       GLM.ANOVA.loss.FitStatistics
+-------------
+
+Output Added:
+-------------
+Name:       ModelANOVA
+Label:      Type I Model ANOVA
+Template:   stat.GLM.Tests
+Path:       GLM.ANOVA.loss.ModelANOVA
+-------------
+
+Output Added:
+-------------
+Name:       ModelANOVA
+Label:      Type III Model ANOVA
+Template:   stat.GLM.Tests
+Path:       GLM.ANOVA.loss.ModelANOVA
+-------------
+
+Output Added:
+-------------
+Name:       ParameterEstimates
+Label:      Solution
+Template:   stat.GLM.Estimates
+Path:       GLM.ANOVA.loss.ParameterEstimates
+-------------
+
+Output Added:
+-------------
+Name:       FitPlot
+Label:      Fit Plot
+Template:   Stat.GLM.Graphics.Fit
+Path:       GLM.ANOVA.loss.FitPlot
+-------------
+26339      ods graphics off;
+
+NOTE: The PROCEDURE GLM printed pages 2600-2601.
+
+26340      proc glm data=iron;
+26341      model loss=fe;
+26342      run;
+
+
+Output Added:
+-------------
+Name:       NObs
+Label:      Number of Observations
+Template:   STAT.GLM.NObsNotitle
+Path:       GLM.Data.NObs
+-------------
+
+Output Added:
+-------------
+Name:       OverallANOVA
+Label:      Overall ANOVA
+Template:   stat.GLM.OverallANOVA
+Path:       GLM.ANOVA.loss.OverallANOVA
+-------------
+
+Output Added:
+-------------
+Name:       FitStatistics
+Label:      Fit Statistics
+Template:   stat.GLM.FitStatistics
+Path:       GLM.ANOVA.loss.FitStatistics
+-------------
+
+Output Added:
+-------------
+Name:       ModelANOVA
+Label:      Type I Model ANOVA
+Template:   stat.GLM.Tests
+Path:       GLM.ANOVA.loss.ModelANOVA
+-------------
+
+Output Added:
+-------------
+Name:       ModelANOVA
+Label:      Type III Model ANOVA
+Template:   stat.GLM.Tests
+Path:       GLM.ANOVA.loss.ModelANOVA
+-------------
+
+Output Added:
+-------------
+Name:       ParameterEstimates
+Label:      Solution
+Template:   stat.GLM.Estimates
+Path:       GLM.ANOVA.loss.ParameterEstimates
+-------------
+26343      ods trace off;
+26344      
+26345      
+26346      
+26347      
+The SAS System
+
+26348      

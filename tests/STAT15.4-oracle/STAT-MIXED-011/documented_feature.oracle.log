@@ -1,0 +1,62 @@
+The SAS System
+
+3996       
+3997       /* STAT-MIXED-011: MIXED — LSMESTIMATE
+3998        * Source: S154 / Chapter 84 / `LSMESTIMATE Statement` (PDF pp. 6652–6653).
+3999        * Discriminates: Example 84.10: Isotonic Contrasts for Ordered Mean Values; explicit statements: LSMESTIMATE
+4000        */
+4001       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+4001     ! validmemname=compatible locale=en_US;
+4002       %let syscc=0;
+4003       title; footnote;
+4004       ods _all_ close;
+4005       ods listing gpath="%sysfunc(pathname(work))";
+4006       ods graphics off;
+4007       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.LINE (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+4007     !                                         quit;
+
+
+4008       ods path work.templat(update) sashelp.tmplmst(read);
+4009       
+4010       data FerriteCores;
+4011       do Temp = 1 to 4;
+4012       do rep = 1 to 5;
+4013       drop rep;
+4014       input MagneticForce @@;
+4015       output;
+4016       end;
+4017       end;
+4018       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.FERRITECORES has 20 observations and 2 variables.
+
+4023       ;
+4024       proc mixed data=FerriteCores;
+4025       class Temp;
+4026       model MagneticForce = Temp;
+4027       lsmestimate Temp
+4028       'avg(1:1)<avg(2:4)' -3 1 1 1 divisor=3,
+4029       'avg(1:2)<avg(3:4)' -1 -1 1 1 divisor=2,
+4030       'avg(1:3)<avg(4:4)' -1 -1 -1 3 divisor=3
+4031       / adjust=simulate(seed=1) cl upper;
+4032       ods select LSMestimates;
+4033       run;
+
+NOTE: Random number seed for this analysis set to 1.
+NOTE: The PROCEDURE MIXED printed page 308.
+
+4034       
+4035       
+4036       
+4037       
+The SAS System
+
+4038       

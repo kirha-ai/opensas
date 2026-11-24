@@ -1,0 +1,92 @@
+The SAS System
+
+3011       
+3012       /* STAT-SIM2D-003: SIM2D — COORDINATES / GRID / RESTORE
+3013        * Source: S154 / Chapter 112 / `COORDINATES Statement` (PDF pp. 9322–9323); S154 / Chapter 112 / `GRID Statement` (PDF pp. 9323–9326); S154 /
+3013     ! Chapter 112 / `RESTORE Statement` (PDF pp. 9326–9328).
+3014        * Discriminates: Getting Started: SIM2D Procedure; explicit statements: COORDINATES, GRID
+3015        */
+3016       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+3016     ! validmemname=compatible locale=en_US;
+3017       %let syscc=0;
+3018       title; footnote;
+3019       ods _all_ close;
+3020       ods listing gpath="%sysfunc(pathname(work))";
+3021       ods graphics off;
+3022       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+3022     !                                         quit;
+
+
+3023       ods path work.templat(update) sashelp.tmplmst(read);
+3024       
+3025       
+3026       title 'Using PROC SIM2D for Spatial Simulation';
+3027       data thick;
+3028       input East North Thick @@;
+3029       label Thick='Coal Seam Thickness';
+3030       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.THICK has 75 observations and 3 variables.
+
+3056       ;
+3057       ods graphics on;
+3058       proc sim2d data=thick outsim=sim plot=(observ sim);
+3059       coordinates xc=East yc=North;
+3060       simulate var=Thick numreal=100 seed=79931
+3061       scale=7.4599 range=30.1111 nugget=1e-8 form=gauss;
+3062       mean 40.1173;
+3063       grid x=0 to 100 by 25 y=0 to 100 by 25;
+3064       run;
+
+NOTE: The data set WORK.SIM has 2500 observations and 6 variables.
+NOTE: The PROCEDURE SIM2D printed page 215.
+
+3065       data selected;
+3066       set sim(where=((gxc=0 and gyc=0) or (gxc=75 and gyc=75)));
+3067       label gxc = "X-coord";
+3068       label gyc = "Y-coord";
+3069       run;
+
+NOTE: There were 200 observations read from the data set WORK.SIM.
+      WHERE ((gxc=0) and (gyc=0)) or ((gxc=75) and (gyc=75));
+NOTE: The data set WORK.SELECTED has 200 observations and 6 variables.
+
+3070       proc sort data=selected;
+3071       by gxc gyc;
+3072       run;
+
+NOTE: There were 200 observations read from the data set WORK.SELECTED.
+NOTE: The data set WORK.SELECTED has 200 observations and 6 variables.
+
+3073       proc means data=selected Mean Std Max;
+3074       class gxc gyc;
+3075       ways 2;
+3076       where ( ((gxc = 0) & (gyc = 0))
+3077       | ((gxc = 75) & (gyc = 75)));
+3078       var SValue;
+3079       run;
+
+NOTE: There were 200 observations read from the data set WORK.SELECTED.
+      WHERE ((gxc=0) and (gyc=0)) or ((gxc=75) and (gyc=75));
+NOTE: The PROCEDURE MEANS printed page 216.
+
+3080       ods graphics off;
+3081       run;
+3082       quit;
+3083       
+3084       
+3085       
+3086       
+The SAS System
+
+3087       

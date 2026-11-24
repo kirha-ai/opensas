@@ -1,0 +1,63 @@
+The SAS System
+
+80         
+81         /* STAT-NLMIXED-008: NLMIXED — Active Set Methods / Line-Search Methods / Covariance Matrix
+82          * Source: S154 / Chapter 89 / `Active Set Methods` (PDF pp. 7153–7155); S154 / Chapter 89 / `Line-Search Methods` (PDF pp. 7155–7156); S154 /
+82       ! Chapter 89 / `Covariance Matrix` (PDF pp. 7160–7161).
+83          * Discriminates: Verified default procedure context
+84          */
+85         options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+85       ! validmemname=compatible locale=en_US;
+86         %let syscc=0;
+87         title; footnote;
+88         ods _all_ close;
+89         ods listing gpath="%sysfunc(pathname(work))";
+90         ods graphics off;
+91         proc datasets library=work kill nolist;
+NOTE: Deleting WORK.NESTED (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+91       !                                         quit;
+
+
+92         ods path work.templat(update) sashelp.tmplmst(read);
+93         
+94         %let na = 100;
+95         %let nb = 5;
+96         %let nr = 2;
+97         data nested;
+98         do A = 1 to &na;
+99         err1 = 3*rannor(339205);
+100        do B = 1 to &nb;
+101        err2 = 2*rannor(314159);
+102        do rep = 1 to &nr;
+103        err3 = 1*rannor(314159);
+104        resp = 10 + err1 + err2 + err3;
+105        output;
+106        end;
+107        end;
+108        end;
+109        run;
+
+NOTE: The data set WORK.NESTED has 1000 observations and 7 variables.
+
+110        proc nlmixed data = nested;
+111        bounds vara >=0, varb_a >=0;
+112        mean = intercept + aeffect + beffect;
+113        model resp ~ normal (mean, s2);
+114        random aeffect ~ normal(0,vara) subject = A;
+115        random beffect ~ normal(0,varb_a) subject = B(A);
+116        run;
+
+NOTE: To assign starting values to parameters, use the PARMS statement. The default starting value of 1.0 is in effect for all parameters.
+NOTE: Convergence criterion (GCONV=1E-6) satisfied.
+NOTE: At least one element of the gradient is greater than 1e-3.
+NOTE: The PROCEDURE NLMIXED printed page 2.
+
+117        
+118        
+119        
+120        
+The SAS System
+
+121        

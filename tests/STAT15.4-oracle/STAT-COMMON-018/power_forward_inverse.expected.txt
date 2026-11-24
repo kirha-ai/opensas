@@ -1,0 +1,47 @@
+
+The POWER Procedure
+Two-Sample t Test for Mean Difference
+
+     Fixed Scenario Elements
+
+Distribution                Normal
+Method                       Exact
+Alpha                         0.05
+Mean Difference                  2
+Standard Deviation               3
+Nominal Power                  0.8
+Number of Sides                  2
+Null Difference                  0
+Group 1 Weight                   1
+Group 2 Weight                   1
+
+
+Computed N Total
+ 
+Actual        N
+ Power    Total
+
+ 0.808       74
+
+The POWER Procedure
+Two-Sample t Test for Mean Difference
+
+     Fixed Scenario Elements
+
+Distribution                Normal
+Method                       Exact
+Alpha                         0.05
+Mean Difference                  2
+Standard Deviation               3
+Total Sample Size              100
+Number of Sides                  2
+Null Difference                  0
+Group 1 Weight                   1
+Group 2 Weight                   1
+
+
+Computed Power
+ 
+Power
+
+0.910

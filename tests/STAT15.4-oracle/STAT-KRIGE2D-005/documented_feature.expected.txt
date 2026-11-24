@@ -1,0 +1,112 @@
+
+Effect of Model Specification on Prediction
+
+The VARIOGRAM Procedure
+Dependent Variable: Thick
+
+Number of Observations Read          75
+Number of Observations Used          75
+
+Effect of Model Specification on Prediction
+
+The VARIOGRAM Procedure
+Dependent Variable: Thick
+
+        Empirical Semivariogram
+ 
+  Lag      Pair     Average
+Class     Count    Distance     Semivariance 
+
+    0         7        2.64       0.034
+    1        82        7.29       0.394
+    2       138       14.16       1.179
+    3       169       21.08       2.799
+    4       205       27.93       4.602
+    5       213       35.17       5.928
+    6       214       42.20       7.518
+    7       250       48.78       7.221
+    8       247       56.16       7.195
+    9       281       62.89       6.845
+   10       250       69.93       6.358
+
+Effect of Model Specification on Prediction
+
+The VARIOGRAM Procedure
+Dependent Variable: Thick
+Angle: Omnidirectional
+Current Model: Spherical
+
+      Semivariogram Model Fitting
+
+Name                 Spherical          
+Label                Sph                
+Output Item Store    WORK.SEMIVSTORESPH 
+Item Store Label     Thickness Sph Model
+
+
+  Model Information
+ 
+              Initial
+Parameter       Value
+
+Nugget              0
+Scale          6.7992
+Range         34.9635
+
+
+           Optimization Information
+
+Optimization Technique        Dual Quasi-Newton
+Parameters in Optimization    3                
+Lower Boundaries              3                
+Upper Boundaries              0                
+Starting Values From          PROC             
+
+Effect of Model Specification on Prediction
+
+The VARIOGRAM Procedure
+Dependent Variable: Thick
+Angle: Omnidirectional
+Current Model: Spherical
+
+Dual Quasi-Newton Optimization
+
+Dual Broyden - Fletcher - Goldfarb - Shanno Update (DBFGS)
+Hessian Computed by Finite Differences (Using Analytic Gradient)
+
+                                            Optimization Results
+
+Iterations                                         11  Function Calls                                     42
+Gradient Calls                                      0  Active Constraints                                  1
+Objective Function                       52.267907673  Max Abs Gradient Element                 2.2071419E-7
+Slope of Search Direction                -9.03124E-10                                                       
+
+Convergence criterion (GCONV=1E-8) satisfied.                                                     
+
+
+                      Parameter Estimates
+ 
+                            Approx                       Approx
+Parameter    Estimate    Std Error    DF    t Value    Pr > |t|
+
+Nugget       8.22E-18            0     8        .         .    
+Scale          7.1914       0.2827     8      25.44      <.0001
+Range         63.2351       4.1050     8      15.40      <.0001
+
+
+           Fit Summary
+ 
+           Weighted
+Model           SSE           AIC
+
+Sph        52.26791      23.14336
+
+Effect of Model Specification on Prediction
+
+The MEANS Procedure
+
+Variable       N            Mean         Std Dev         Minimum         Maximum
+--------------------------------------------------------------------------------
+prdRelDif    121      -0.0544593       1.3384023      -5.0751449       5.1926236
+stdRelDif    121     -96.2515099       5.9400029     -99.8974418     -65.9275907
+--------------------------------------------------------------------------------

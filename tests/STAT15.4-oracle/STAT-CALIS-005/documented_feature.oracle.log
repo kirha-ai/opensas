@@ -1,0 +1,236 @@
+The SAS System
+
+7553       
+7554       /* STAT-CALIS-005: CALIS — AUXILIARY / MATRIX / RENAMEPARM / VARNAMES
+7555        * Source: S154 / Chapter 33 / `AUXILIARY Statement` (PDF pp. 1532–1533); S154 / Chapter 33 / `MATRIX Statement` (PDF pp. 1589–1602); S154 /
+7555     ! Chapter 33 / `RENAMEPARM Statement` (PDF pp. 1651–1652); S154 / Chapter 33 / `VARNAMES Statement` (PDF pp. 1661–1662).
+7556        * Discriminates: Example 33.22: Testing Equality of Covariance and Mean Matrices between Independent Groups; explicit statements: MATRIX, RENAMEPARM
+7557        */
+7558       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+7558     ! validmemname=compatible locale=en_US;
+7559       %let syscc=0;
+7560       title; footnote;
+7561       ods _all_ close;
+7562       ods listing gpath="%sysfunc(pathname(work))";
+7563       ods graphics off;
+
+
+7564       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.MEASURES (memtype=DATA).
+NOTE: Deleting WORK.MULTIPLE (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+7564     !                                         quit;
+
+
+7565       ods path work.templat(update) sashelp.tmplmst(read);
+7566       
+7567       data g1(type=corr);
+7568       length _name_ $32 _type_ $8;
+7569       infile datalines truncover;
+7570       
+7571       Input _type_ :$8. _name_ :$32. x1-x9;
+7572       datalines;
+
+NOTE: The data set WORK.G1 has 12 observations and 11 variables.
+
+7585       ;
+7586       data g2(type=corr);
+7587       Input _type_ :$8. _name_ :$32. x1-x9;
+7588       datalines;
+
+NOTE: The data set WORK.G2 has 12 observations and 11 variables.
+
+7601       ;
+7602       data g3(type=corr);
+7603       Input _type_ :$8. _name_ :$32. x1-x9;
+7604       datalines;
+
+NOTE: The data set WORK.G3 has 12 observations and 11 variables.
+
+7617       ;
+7618       proc calis covpattern=eqcovmat meanpattern=eqmeanvec;
+7619       var x1-x9;
+7620       group 1 / data=g1;
+7621       group 2 / data=g2;
+7622       group 3 / data=g3;
+7623       fitindex NoIndexType On(only)=[chisq df probchi rmsea aic caic sbc];
+7624       run;
+
+NOTE: Group 1 is fitted by Model 1, which is defined with the COVPATTERN= or MEANPATTERN= option.
+NOTE: Group 2 is fitted by Model 2, which is defined with the COVPATTERN= or MEANPATTERN= option.
+NOTE: Group 3 is fitted by Model 3, which is defined with the COVPATTERN= or MEANPATTERN= option.
+NOTE: Convergence criterion (ABSGCONV=0.00001) satisfied.
+NOTE: The PROCEDURE CALIS printed pages 526-534.
+
+7625       proc calis covpattern=eqcovmat meanpattern=saturated;
+7626       var x1-x9;
+7627       group 1 / data=g1;
+7628       group 2 / data=g2;
+7629       group 3 / data=g3;
+7630       fitindex NoIndexType On(only)=[chisq df probchi rmsea aic caic sbc];
+7631       run;
+
+NOTE: Group 1 is fitted by Model 1, which is defined with the COVPATTERN= or MEANPATTERN= option.
+NOTE: Group 2 is fitted by Model 2, which is defined with the COVPATTERN= or MEANPATTERN= option.
+NOTE: Group 3 is fitted by Model 3, which is defined with the COVPATTERN= or MEANPATTERN= option.
+NOTE: Convergence criterion (ABSGCONV=0.00001) satisfied.
+NOTE: The PROCEDURE CALIS printed pages 535-543.
+
+7632       proc calis covpattern=eqcovmat meanpattern=eqmeanvec modification;
+7633       var x1-x9;
+7634       group 1 / data=g1;
+7635       group 2 / data=g2;
+7636       group 3 / data=g3;
+7637       fitindex NoIndexType On(only)=[chisq df probchi rmsea aic caic sbc];
+7638       run;
+
+NOTE: Group 1 is fitted by Model 1, which is defined with the COVPATTERN= or MEANPATTERN= option.
+NOTE: Group 2 is fitted by Model 2, which is defined with the COVPATTERN= or MEANPATTERN= option.
+NOTE: Group 3 is fitted by Model 3, which is defined with the COVPATTERN= or MEANPATTERN= option.
+NOTE: Convergence criterion (ABSGCONV=0.00001) satisfied.
+NOTE: The PROCEDURE CALIS printed pages 544-557.
+
+7639       proc calis modification;
+7640       var x1-x9;
+7641       group 1 / data=g1;
+7642       group 2 / data=g2;
+7643       group 3 / data=g3;
+7644       model 1 / group = 1;
+7645       mstruct;
+7646       matrix _cov_ = cov01-cov45;
+7647       matrix _mean_ = mean1-mean9;
+7648       model 2 / group = 2;
+7649       refmodel 1;
+7650       model 3 / group = 3;
+7651       refmodel 1;
+7652       renameparm mean3=mean3_mdl3;
+7653       fitindex NoIndexType On(only)=[chisq df probchi rmsea aic caic sbc];
+7654       run;
+
+NOTE: Model 1. Because the VAR= option is not provided in the MSTRUCT statement, all numerical variables specified in the associated groups are analyzed in the 
+      model.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The PROCEDURE CALIS printed pages 558-571.
+
+7655       proc calis modification;
+7656       var x1-x9;
+7657       group 1 / data=g1;
+7658       group 2 / data=g2;
+7659       group 3 / data=g3;
+7660       model 1 / group = 1;
+7661       mstruct;
+7662       matrix _cov_ = cov01-cov45;
+7663       matrix _mean_ = mean1-mean9;
+7664       model 2 / group = 2;
+7665       refmodel 1;
+7666       renameparm mean2=mean2_new;
+7667       /* constraint a */
+7668       model 3 / group = 3;
+7669       refmodel 1;
+7670       renameparm mean2=mean2_new, /* constraint a */
+7671       mean3=mean3_mdl3;
+7672       fitindex NoIndexType On(only)=[chisq df probchi rmsea aic caic sbc];
+7673       run;
+
+NOTE: Model 1. Because the VAR= option is not provided in the MSTRUCT statement, all numerical variables specified in the associated groups are analyzed in the 
+      model.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The PROCEDURE CALIS printed pages 572-585.
+
+7674       proc calis modification;
+7675       var x1-x9;
+7676       group 1 / data=g1;
+7677       group 2 / data=g2;
+7678       group 3 / data=g3;
+7679       model 1 / group = 1;
+7680       mstruct;
+7681       matrix _cov_ = cov01-cov45;
+7682       matrix _mean_ = mean1-mean9;
+7683       model 2 / group = 2;
+7684       refmodel 1;
+7685       renameparm mean2=mean2_new, /* constraint a */
+7686       mean6=mean6_mdl2;
+7687       model 3 / group = 3;
+7688       refmodel 1;
+7689       renameparm mean2=mean2_new, /* constraint a */
+7690       mean3=mean3_mdl3;
+7691       fitindex NoIndexType On(only)=[chisq df probchi rmsea aic caic sbc];
+7692       run;
+
+NOTE: Model 1. Because the VAR= option is not provided in the MSTRUCT statement, all numerical variables specified in the associated groups are analyzed in the 
+      model.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The PROCEDURE CALIS printed pages 586-599.
+
+7693       proc calis modification;
+7694       var x1-x9;
+7695       group 1 / data=g1;
+7696       group 2 / data=g2;
+7697       group 3 / data=g3;
+7698       model 1 / group = 1;
+7699       mstruct;
+7700       matrix _cov_ = cov01-cov45;
+7701       matrix _mean_ = mean1-mean9;
+7702       model 2 / group = 2;
+7703       refmodel 1;
+7704       renameparm mean2=mean2_new, /* constraint a */
+7705       mean4=mean4_new, /* constraint b */
+7706       mean6=mean6_mdl2;
+7707       model 3 / group = 3;
+7708       refmodel 1;
+7709       renameparm mean2=mean2_new, /* constraint a */
+7710       mean3=mean3_mdl3,
+7711       mean4=mean4_new;
+7712       /* constraint b */
+7713       fitindex NoIndexType On(only)=[chisq df probchi rmsea aic caic sbc];
+7714       run;
+
+NOTE: Model 1. Because the VAR= option is not provided in the MSTRUCT statement, all numerical variables specified in the associated groups are analyzed in the 
+      model.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The PROCEDURE CALIS printed pages 600-613.
+
+7715       proc calis modification;
+7716       var x1-x9;
+7717       group 1 / data=g1;
+7718       group 2 / data=g2;
+7719       group 3 / data=g3;
+7720       model 1 / group = 1;
+7721       mstruct;
+7722       matrix _cov_ = cov01-cov45;
+7723       matrix _mean_ = mean1-mean9;
+7724       model 2 / group = 2;
+7725       refmodel 1;
+7726       renameparm mean1=mean1_new, /* constraint c */
+7727       mean2=mean2_new, /* constraint a */
+7728       mean4=mean4_new, /* constraint b */
+7729       mean6=mean6_mdl2;
+7730       model 3 / group = 3;
+7731       refmodel 1;
+7732       renameparm mean1=mean1_new, /* constraint c */
+7733       mean2=mean2_new, /* constraint a */
+7734       mean3=mean3_mdl3,
+7735       mean4=mean4_new;
+7736       /* constraint b */
+7737       fitindex NoIndexType On(only)=[chisq df probchi rmsea aic caic sbc];
+7738       run;
+
+NOTE: Model 1. Because the VAR= option is not provided in the MSTRUCT statement, all numerical variables specified in the associated groups are analyzed in the 
+      model.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The PROCEDURE CALIS printed pages 614-627.
+
+7739       
+7740       
+7741       
+7742       
+The SAS System
+
+7743       

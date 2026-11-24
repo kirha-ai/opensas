@@ -1,0 +1,50 @@
+The SAS System
+
+29231      
+29232      /* STAT-VARCLUS-003: VARCLUS — PARTIAL / SEED / Using the VARCLUS procedure
+29233       * Source: S154 / Chapter 129 / `PARTIAL Statement` (PDF p. 10708); S154 / Chapter 129 / `SEED Statement` (PDF p. 10708); S154 / Chapter 129 / `Using
+29233    !  the VARCLUS procedure` (PDF pp. 10709–10710).
+29234       * Discriminates: Verified default procedure context
+29235       */
+29236      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+29236    ! validmemname=compatible locale=en_US;
+29237      %let syscc=0;
+29238      title; footnote;
+29239      ods _all_ close;
+29240      ods listing gpath="%sysfunc(pathname(work))";
+29241      ods graphics off;
+29242      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.STRUCTURE (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+29242    !                                         quit;
+
+
+29243      ods path work.templat(update) sashelp.tmplmst(read);
+29244      
+29245      proc varclus data=sashelp.iris maxclusters=2 outstat=structure;
+29246      var SepalLength SepalWidth PetalLength PetalWidth;
+29247      run;
+
+NOTE: Clustering algorithm converged.
+NOTE: Clustering algorithm converged.
+NOTE: The data set WORK.STRUCTURE has 26 observations and 7 variables.
+NOTE: The PROCEDURE VARCLUS printed page 1789.
+
+29248      proc print data=structure(obs=15) noobs;
+29249      run;
+
+NOTE: There were 15 observations read from the data set WORK.STRUCTURE.
+NOTE: The PROCEDURE PRINT printed page 1790.
+
+29250      
+29251      
+29252      
+29253      
+The SAS System
+
+29254      

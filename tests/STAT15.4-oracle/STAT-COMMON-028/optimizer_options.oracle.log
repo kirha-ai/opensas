@@ -1,0 +1,47 @@
+The SAS System
+
+1087       
+1088       /* STAT-COMMON-028: NLOPTIONS Statement
+1089        * Source: S154 / Chapter 20 / `NLOPTIONS Statement` (PDF pp. 522–539).
+1090        * Discriminates: Explicit optimizer technique, iteration limit and convergence state
+1091        */
+1092       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+1092     ! validmemname=compatible locale=en_US;
+1093       %let syscc=0;
+1094       title; footnote;
+1095       ods _all_ close;
+1096       ods listing gpath="%sysfunc(pathname(work))";
+1097       ods graphics off;
+1098       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SAMPLE (memtype=DATA).
+1098     !                                         quit;
+
+
+1099       ods path work.templat(update) sashelp.tmplmst(read);
+1100       
+1101       data sample;
+1102        input x z y group $ weight freq;
+1103        datalines;
+
+NOTE: The data set WORK.SAMPLE has 12 observations and 6 variables.
+
+1116       ;
+1117       run;
+1118       proc glimmix data=sample; model y=x z / solution; nloptions tech=quanew maxiter=50; run;
+
+
+
+
+
+NOTE: Convergence criterion (ABSGCONV=0.00001) satisfied.
+NOTE: The PROCEDURE GLIMMIX printed page 60.
+
+1119       
+1120       
+1121       
+1122       
+The SAS System
+
+1123       

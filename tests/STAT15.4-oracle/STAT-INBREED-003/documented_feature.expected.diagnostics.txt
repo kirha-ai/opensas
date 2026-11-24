@@ -1,0 +1,2 @@
+WARNING: Individual Swine_Number=2501 has been previously defined.  Observation 4 corresponding to this individual will not be processed.
+WARNING: The gender of the second parent Dam=3501 has been incorrectly specified as 'M'.  This contradiction arose at observation 8.  The previous gender 

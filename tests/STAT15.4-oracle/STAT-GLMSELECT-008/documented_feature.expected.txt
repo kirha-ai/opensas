@@ -1,0 +1,3357 @@
+
+The GLMSELECT Procedure
+
+Data Set                     WORK.EX7DATA
+Dependent Variable                      y
+Selection Method                    LASSO
+Stop Criterion                        SBC
+Effect Hierarchy Enforced            None
+
+
+Number of Observations Read        5000
+Number of Observations Used        5000
+
+
+     Class Level Information
+ 
+Class         Levels    Values
+
+cIn1               3    1 2 3     
+cIn2               4    1 2 3 4   
+cOut1              3    1 2 3     
+cOut2              4    1 2 3 4   
+cOut3              5    1 2 3 4 5 
+cOut4              2    1 2       
+cOut5              3    1 2 3     
+cOut6              4    1 2 3 4   
+cOut7              5    1 2 3 4 5 
+cOut8              2    1 2       
+cOut9              3    1 2 3     
+cOut10             4    1 2 3 4   
+cOut11             5    1 2 3 4 5 
+cOut12             2    1 2       
+cOut13             3    1 2 3     
+cOut14             4    1 2 3 4   
+cOut15             5    1 2 3 4 5 
+cOut16             2    1 2       
+cOut17             3    1 2 3     
+cOut18             4    1 2 3 4   
+cOut19             5    1 2 3 4 5 
+cOut20             2    1 2       
+cOut21             3    1 2 3     
+cOut22             4    1 2 3 4   
+cOut23             5    1 2 3 4 5 
+cOut24             2    1 2       
+cOut25             3    1 2 3     
+cOut26             4    1 2 3 4   
+cOut27             5    1 2 3 4 5 
+cOut28             2    1 2       
+cOut29             3    1 2 3     
+cOut30             4    1 2 3 4   
+cOut31             5    1 2 3 4 5 
+cOut32             2    1 2       
+cOut33             3    1 2 3     
+cOut34             4    1 2 3 4   
+cOut35             5    1 2 3 4 5 
+cOut36             2    1 2       
+cOut37             3    1 2 3     
+cOut38             4    1 2 3 4   
+cOut39             5    1 2 3 4 5 
+cOut40             2    1 2       
+cOut41             3    1 2 3     
+cOut42             4    1 2 3 4   
+cOut43             5    1 2 3 4 5 
+cOut44             2    1 2       
+cOut45             3    1 2 3     
+cOut46             4    1 2 3 4   
+cOut47             5    1 2 3 4 5 
+cOut48             2    1 2       
+cOut49             3    1 2 3     
+cOut50             4    1 2 3 4   
+cOut51             5    1 2 3 4 5 
+cOut52             2    1 2       
+cOut53             3    1 2 3     
+cOut54             4    1 2 3 4   
+cOut55             5    1 2 3 4 5 
+cOut56             2    1 2       
+cOut57             3    1 2 3     
+cOut58             4    1 2 3 4   
+cOut59             5    1 2 3 4 5 
+cOut60             2    1 2       
+cOut61             3    1 2 3     
+cOut62             4    1 2 3 4   
+cOut63             5    1 2 3 4 5 
+cOut64             2    1 2       
+cOut65             3    1 2 3     
+cOut66             4    1 2 3 4   
+cOut67             5    1 2 3 4 5 
+cOut68             2    1 2       
+cOut69             3    1 2 3     
+cOut70             4    1 2 3 4   
+cOut71             5    1 2 3 4 5 
+cOut72             2    1 2       
+cOut73             3    1 2 3     
+cOut74             4    1 2 3 4   
+cOut75             5    1 2 3 4 5 
+cOut76             2    1 2       
+cOut77             3    1 2 3     
+cOut78             4    1 2 3 4   
+cOut79             5    1 2 3 4 5 
+cOut80             2    1 2       
+cOut81             3    1 2 3     
+cOut82             4    1 2 3 4   
+cOut83             5    1 2 3 4 5 
+cOut84             2    1 2       
+cOut85             3    1 2 3     
+cOut86             4    1 2 3 4   
+cOut87             5    1 2 3 4 5 
+cOut88             2    1 2       
+cOut89             3    1 2 3     
+cOut90             4    1 2 3 4   
+cOut91             5    1 2 3 4 5 
+cOut92             2    1 2       
+cOut93             3    1 2 3     
+cOut94             4    1 2 3 4   
+cOut95             5    1 2 3 4 5 
+cOut96             2    1 2       
+cOut97             3    1 2 3     
+cOut98             4    1 2 3 4   
+cOut99             5    1 2 3 4 5 
+cOut100            2    1 2       
+cOut101            3    1 2 3     
+cOut102            4    1 2 3 4   
+cOut103            5    1 2 3 4 5 
+cOut104            2    1 2       
+cOut105            3    1 2 3     
+cOut106            4    1 2 3 4   
+cOut107            5    1 2 3 4 5 
+cOut108            2    1 2       
+cOut109            3    1 2 3     
+cOut110            4    1 2 3 4   
+cOut111            5    1 2 3 4 5 
+cOut112            2    1 2       
+cOut113            3    1 2 3     
+cOut114            4    1 2 3 4   
+cOut115            5    1 2 3 4 5 
+cOut116            2    1 2       
+cOut117            3    1 2 3     
+cOut118            4    1 2 3 4   
+cOut119            5    1 2 3 4 5 
+cOut120            2    1 2       
+cOut121            3    1 2 3     
+cOut122            4    1 2 3 4   
+cOut123            5    1 2 3 4 5 
+cOut124            2    1 2       
+cOut125            3    1 2 3     
+cOut126            4    1 2 3 4   
+cOut127            5    1 2 3 4 5 
+cOut128            2    1 2       
+cOut129            3    1 2 3     
+cOut130            4    1 2 3 4   
+cOut131            5    1 2 3 4 5 
+cOut132            2    1 2       
+cOut133            3    1 2 3     
+cOut134            4    1 2 3 4   
+cOut135            5    1 2 3 4 5 
+cOut136            2    1 2       
+cOut137            3    1 2 3     
+cOut138            4    1 2 3 4   
+cOut139            5    1 2 3 4 5 
+cOut140            2    1 2       
+cOut141            3    1 2 3     
+cOut142            4    1 2 3 4   
+cOut143            5    1 2 3 4 5 
+cOut144            2    1 2       
+cOut145            3    1 2 3     
+cOut146            4    1 2 3 4   
+cOut147            5    1 2 3 4 5 
+cOut148            2    1 2       
+cOut149            3    1 2 3     
+cOut150            4    1 2 3 4   
+cOut151            5    1 2 3 4 5 
+cOut152            2    1 2       
+cOut153            3    1 2 3     
+cOut154            4    1 2 3 4   
+cOut155            5    1 2 3 4 5 
+cOut156            2    1 2       
+cOut157            3    1 2 3     
+cOut158            4    1 2 3 4   
+cOut159            5    1 2 3 4 5 
+cOut160            2    1 2       
+cOut161            3    1 2 3     
+cOut162            4    1 2 3 4   
+cOut163            5    1 2 3 4 5 
+cOut164            2    1 2       
+cOut165            3    1 2 3     
+cOut166            4    1 2 3 4   
+cOut167            5    1 2 3 4 5 
+cOut168            2    1 2       
+cOut169            3    1 2 3     
+cOut170            4    1 2 3 4   
+cOut171            5    1 2 3 4 5 
+cOut172            2    1 2       
+cOut173            3    1 2 3     
+cOut174            4    1 2 3 4   
+cOut175            5    1 2 3 4 5 
+cOut176            2    1 2       
+cOut177            3    1 2 3     
+cOut178            4    1 2 3 4   
+cOut179            5    1 2 3 4 5 
+cOut180            2    1 2       
+cOut181            3    1 2 3     
+cOut182            4    1 2 3 4   
+cOut183            5    1 2 3 4 5 
+cOut184            2    1 2       
+cOut185            3    1 2 3     
+cOut186            4    1 2 3 4   
+cOut187            5    1 2 3 4 5 
+cOut188            2    1 2       
+cOut189            3    1 2 3     
+cOut190            4    1 2 3 4   
+cOut191            5    1 2 3 4 5 
+cOut192            2    1 2       
+cOut193            3    1 2 3     
+cOut194            4    1 2 3 4   
+cOut195            5    1 2 3 4 5 
+cOut196            2    1 2       
+cOut197            3    1 2 3     
+cOut198            4    1 2 3 4   
+cOut199            5    1 2 3 4 5 
+cOut200            2    1 2       
+cOut201            3    1 2 3     
+cOut202            4    1 2 3 4   
+cOut203            5    1 2 3 4 5 
+cOut204            2    1 2       
+cOut205            3    1 2 3     
+cOut206            4    1 2 3 4   
+cOut207            5    1 2 3 4 5 
+cOut208            2    1 2       
+cOut209            3    1 2 3     
+cOut210            4    1 2 3 4   
+cOut211            5    1 2 3 4 5 
+cOut212            2    1 2       
+cOut213            3    1 2 3     
+cOut214            4    1 2 3 4   
+cOut215            5    1 2 3 4 5 
+cOut216            2    1 2       
+cOut217            3    1 2 3     
+cOut218            4    1 2 3 4   
+cOut219            5    1 2 3 4 5 
+cOut220            2    1 2       
+cOut221            3    1 2 3     
+cOut222            4    1 2 3 4   
+cOut223            5    1 2 3 4 5 
+cOut224            2    1 2       
+cOut225            3    1 2 3     
+cOut226            4    1 2 3 4   
+cOut227            5    1 2 3 4 5 
+cOut228            2    1 2       
+cOut229            3    1 2 3     
+cOut230            4    1 2 3 4   
+cOut231            5    1 2 3 4 5 
+cOut232            2    1 2       
+cOut233            3    1 2 3     
+cOut234            4    1 2 3 4   
+cOut235            5    1 2 3 4 5 
+cOut236            2    1 2       
+cOut237            3    1 2 3     
+cOut238            4    1 2 3 4   
+cOut239            5    1 2 3 4 5 
+cOut240            2    1 2       
+cOut241            3    1 2 3     
+cOut242            4    1 2 3 4   
+cOut243            5    1 2 3 4 5 
+cOut244            2    1 2       
+cOut245            3    1 2 3     
+cOut246            4    1 2 3 4   
+cOut247            5    1 2 3 4 5 
+cOut248            2    1 2       
+cOut249            3    1 2 3     
+cOut250            4    1 2 3 4   
+cOut251            5    1 2 3 4 5 
+cOut252            2    1 2       
+cOut253            3    1 2 3     
+cOut254            4    1 2 3 4   
+cOut255            5    1 2 3 4 5 
+cOut256            2    1 2       
+cOut257            3    1 2 3     
+cOut258            4    1 2 3 4   
+cOut259            5    1 2 3 4 5 
+cOut260            2    1 2       
+cOut261            3    1 2 3     
+cOut262            4    1 2 3 4   
+cOut263            5    1 2 3 4 5 
+cOut264            2    1 2       
+cOut265            3    1 2 3     
+cOut266            4    1 2 3 4   
+cOut267            5    1 2 3 4 5 
+cOut268            2    1 2       
+cOut269            3    1 2 3     
+cOut270            4    1 2 3 4   
+cOut271            5    1 2 3 4 5 
+cOut272            2    1 2       
+cOut273            3    1 2 3     
+cOut274            4    1 2 3 4   
+cOut275            5    1 2 3 4 5 
+cOut276            2    1 2       
+cOut277            3    1 2 3     
+cOut278            4    1 2 3 4   
+cOut279            5    1 2 3 4 5 
+cOut280            2    1 2       
+cOut281            3    1 2 3     
+cOut282            4    1 2 3 4   
+cOut283            5    1 2 3 4 5 
+cOut284            2    1 2       
+cOut285            3    1 2 3     
+cOut286            4    1 2 3 4   
+cOut287            5    1 2 3 4 5 
+cOut288            2    1 2       
+cOut289            3    1 2 3     
+cOut290            4    1 2 3 4   
+cOut291            5    1 2 3 4 5 
+cOut292            2    1 2       
+cOut293            3    1 2 3     
+cOut294            4    1 2 3 4   
+cOut295            5    1 2 3 4 5 
+cOut296            2    1 2       
+cOut297            3    1 2 3     
+cOut298            4    1 2 3 4   
+cOut299            5    1 2 3 4 5 
+cOut300            2    1 2       
+cOut301            3    1 2 3     
+cOut302            4    1 2 3 4   
+cOut303            5    1 2 3 4 5 
+cOut304            2    1 2       
+cOut305            3    1 2 3     
+cOut306            4    1 2 3 4   
+cOut307            5    1 2 3 4 5 
+cOut308            2    1 2       
+cOut309            3    1 2 3     
+cOut310            4    1 2 3 4   
+cOut311            5    1 2 3 4 5 
+cOut312            2    1 2       
+cOut313            3    1 2 3     
+cOut314            4    1 2 3 4   
+cOut315            5    1 2 3 4 5 
+cOut316            2    1 2       
+cOut317            3    1 2 3     
+cOut318            4    1 2 3 4   
+cOut319            5    1 2 3 4 5 
+cOut320            2    1 2       
+cOut321            3    1 2 3     
+cOut322            4    1 2 3 4   
+cOut323            5    1 2 3 4 5 
+cOut324            2    1 2       
+cOut325            3    1 2 3     
+cOut326            4    1 2 3 4   
+cOut327            5    1 2 3 4 5 
+cOut328            2    1 2       
+cOut329            3    1 2 3     
+cOut330            4    1 2 3 4   
+cOut331            5    1 2 3 4 5 
+cOut332            2    1 2       
+cOut333            3    1 2 3     
+cOut334            4    1 2 3 4   
+cOut335            5    1 2 3 4 5 
+cOut336            2    1 2       
+cOut337            3    1 2 3     
+cOut338            4    1 2 3 4   
+cOut339            5    1 2 3 4 5 
+cOut340            2    1 2       
+cOut341            3    1 2 3     
+cOut342            4    1 2 3 4   
+cOut343            5    1 2 3 4 5 
+cOut344            2    1 2       
+cOut345            3    1 2 3     
+cOut346            4    1 2 3 4   
+cOut347            5    1 2 3 4 5 
+cOut348            2    1 2       
+cOut349            3    1 2 3     
+cOut350            4    1 2 3 4   
+cOut351            5    1 2 3 4 5 
+cOut352            2    1 2       
+cOut353            3    1 2 3     
+cOut354            4    1 2 3 4   
+cOut355            5    1 2 3 4 5 
+cOut356            2    1 2       
+cOut357            3    1 2 3     
+cOut358            4    1 2 3 4   
+cOut359            5    1 2 3 4 5 
+cOut360            2    1 2       
+cOut361            3    1 2 3     
+cOut362            4    1 2 3 4   
+cOut363            5    1 2 3 4 5 
+cOut364            2    1 2       
+cOut365            3    1 2 3     
+cOut366            4    1 2 3 4   
+cOut367            5    1 2 3 4 5 
+cOut368            2    1 2       
+cOut369            3    1 2 3     
+cOut370            4    1 2 3 4   
+cOut371            5    1 2 3 4 5 
+cOut372            2    1 2       
+cOut373            3    1 2 3     
+cOut374            4    1 2 3 4   
+cOut375            5    1 2 3 4 5 
+cOut376            2    1 2       
+cOut377            3    1 2 3     
+cOut378            4    1 2 3 4   
+cOut379            5    1 2 3 4 5 
+cOut380            2    1 2       
+cOut381            3    1 2 3     
+cOut382            4    1 2 3 4   
+cOut383            5    1 2 3 4 5 
+cOut384            2    1 2       
+cOut385            3    1 2 3     
+cOut386            4    1 2 3 4   
+cOut387            5    1 2 3 4 5 
+cOut388            2    1 2       
+cOut389            3    1 2 3     
+cOut390            4    1 2 3 4   
+cOut391            5    1 2 3 4 5 
+cOut392            2    1 2       
+cOut393            3    1 2 3     
+cOut394            4    1 2 3 4   
+cOut395            5    1 2 3 4 5 
+cOut396            2    1 2       
+cOut397            3    1 2 3     
+cOut398            4    1 2 3 4   
+cOut399            5    1 2 3 4 5 
+cOut400            2    1 2       
+cOut401            3    1 2 3     
+cOut402            4    1 2 3 4   
+cOut403            5    1 2 3 4 5 
+cOut404            2    1 2       
+cOut405            3    1 2 3     
+cOut406            4    1 2 3 4   
+cOut407            5    1 2 3 4 5 
+cOut408            2    1 2       
+cOut409            3    1 2 3     
+cOut410            4    1 2 3 4   
+cOut411            5    1 2 3 4 5 
+cOut412            2    1 2       
+cOut413            3    1 2 3     
+cOut414            4    1 2 3 4   
+cOut415            5    1 2 3 4 5 
+cOut416            2    1 2       
+cOut417            3    1 2 3     
+cOut418            4    1 2 3 4   
+cOut419            5    1 2 3 4 5 
+cOut420            2    1 2       
+cOut421            3    1 2 3     
+cOut422            4    1 2 3 4   
+cOut423            5    1 2 3 4 5 
+cOut424            2    1 2       
+cOut425            3    1 2 3     
+cOut426            4    1 2 3 4   
+cOut427            5    1 2 3 4 5 
+cOut428            2    1 2       
+cOut429            3    1 2 3     
+cOut430            4    1 2 3 4   
+cOut431            5    1 2 3 4 5 
+cOut432            2    1 2       
+cOut433            3    1 2 3     
+cOut434            4    1 2 3 4   
+cOut435            5    1 2 3 4 5 
+cOut436            2    1 2       
+cOut437            3    1 2 3     
+cOut438            4    1 2 3 4   
+cOut439            5    1 2 3 4 5 
+cOut440            2    1 2       
+cOut441            3    1 2 3     
+cOut442            4    1 2 3 4   
+cOut443            5    1 2 3 4 5 
+cOut444            2    1 2       
+cOut445            3    1 2 3     
+cOut446            4    1 2 3 4   
+cOut447            5    1 2 3 4 5 
+cOut448            2    1 2       
+cOut449            3    1 2 3     
+cOut450            4    1 2 3 4   
+cOut451            5    1 2 3 4 5 
+cOut452            2    1 2       
+cOut453            3    1 2 3     
+cOut454            4    1 2 3 4   
+cOut455            5    1 2 3 4 5 
+cOut456            2    1 2       
+cOut457            3    1 2 3     
+cOut458            4    1 2 3 4   
+cOut459            5    1 2 3 4 5 
+cOut460            2    1 2       
+cOut461            3    1 2 3     
+cOut462            4    1 2 3 4   
+cOut463            5    1 2 3 4 5 
+cOut464            2    1 2       
+cOut465            3    1 2 3     
+cOut466            4    1 2 3 4   
+cOut467            5    1 2 3 4 5 
+cOut468            2    1 2       
+cOut469            3    1 2 3     
+cOut470            4    1 2 3 4   
+cOut471            5    1 2 3 4 5 
+cOut472            2    1 2       
+cOut473            3    1 2 3     
+cOut474            4    1 2 3 4   
+cOut475            5    1 2 3 4 5 
+cOut476            2    1 2       
+cOut477            3    1 2 3     
+cOut478            4    1 2 3 4   
+cOut479            5    1 2 3 4 5 
+cOut480            2    1 2       
+cOut481            3    1 2 3     
+cOut482            4    1 2 3 4   
+cOut483            5    1 2 3 4 5 
+cOut484            2    1 2       
+cOut485            3    1 2 3     
+cOut486            4    1 2 3 4   
+cOut487            5    1 2 3 4 5 
+cOut488            2    1 2       
+cOut489            3    1 2 3     
+cOut490            4    1 2 3 4   
+cOut491            5    1 2 3 4 5 
+cOut492            2    1 2       
+cOut493            3    1 2 3     
+cOut494            4    1 2 3 4   
+cOut495            5    1 2 3 4 5 
+cOut496            2    1 2       
+cOut497            3    1 2 3     
+cOut498            4    1 2 3 4   
+cOut499            5    1 2 3 4 5 
+cOut500            2    1 2       
+cOut501            3    1 2 3     
+cOut502            4    1 2 3 4   
+cOut503            5    1 2 3 4 5 
+cOut504            2    1 2       
+cOut505            3    1 2 3     
+cOut506            4    1 2 3 4   
+cOut507            5    1 2 3 4 5 
+cOut508            2    1 2       
+cOut509            3    1 2 3     
+cOut510            4    1 2 3 4   
+cOut511            5    1 2 3 4 5 
+cOut512            2    1 2       
+cOut513            3    1 2 3     
+cOut514            4    1 2 3 4   
+cOut515            5    1 2 3 4 5 
+cOut516            2    1 2       
+cOut517            3    1 2 3     
+cOut518            4    1 2 3 4   
+cOut519            5    1 2 3 4 5 
+cOut520            2    1 2       
+cOut521            3    1 2 3     
+cOut522            4    1 2 3 4   
+cOut523            5    1 2 3 4 5 
+cOut524            2    1 2       
+cOut525            3    1 2 3     
+cOut526            4    1 2 3 4   
+cOut527            5    1 2 3 4 5 
+cOut528            2    1 2       
+cOut529            3    1 2 3     
+cOut530            4    1 2 3 4   
+cOut531            5    1 2 3 4 5 
+cOut532            2    1 2       
+cOut533            3    1 2 3     
+cOut534            4    1 2 3 4   
+cOut535            5    1 2 3 4 5 
+cOut536            2    1 2       
+cOut537            3    1 2 3     
+cOut538            4    1 2 3 4   
+cOut539            5    1 2 3 4 5 
+cOut540            2    1 2       
+cOut541            3    1 2 3     
+cOut542            4    1 2 3 4   
+cOut543            5    1 2 3 4 5 
+cOut544            2    1 2       
+cOut545            3    1 2 3     
+cOut546            4    1 2 3 4   
+cOut547            5    1 2 3 4 5 
+cOut548            2    1 2       
+cOut549            3    1 2 3     
+cOut550            4    1 2 3 4   
+cOut551            5    1 2 3 4 5 
+cOut552            2    1 2       
+cOut553            3    1 2 3     
+cOut554            4    1 2 3 4   
+cOut555            5    1 2 3 4 5 
+cOut556            2    1 2       
+cOut557            3    1 2 3     
+cOut558            4    1 2 3 4   
+cOut559            5    1 2 3 4 5 
+cOut560            2    1 2       
+cOut561            3    1 2 3     
+cOut562            4    1 2 3 4   
+cOut563            5    1 2 3 4 5 
+cOut564            2    1 2       
+cOut565            3    1 2 3     
+cOut566            4    1 2 3 4   
+cOut567            5    1 2 3 4 5 
+cOut568            2    1 2       
+cOut569            3    1 2 3     
+cOut570            4    1 2 3 4   
+cOut571            5    1 2 3 4 5 
+cOut572            2    1 2       
+cOut573            3    1 2 3     
+cOut574            4    1 2 3 4   
+cOut575            5    1 2 3 4 5 
+cOut576            2    1 2       
+cOut577            3    1 2 3     
+cOut578            4    1 2 3 4   
+cOut579            5    1 2 3 4 5 
+cOut580            2    1 2       
+cOut581            3    1 2 3     
+cOut582            4    1 2 3 4   
+cOut583            5    1 2 3 4 5 
+cOut584            2    1 2       
+cOut585            3    1 2 3     
+cOut586            4    1 2 3 4   
+cOut587            5    1 2 3 4 5 
+cOut588            2    1 2       
+cOut589            3    1 2 3     
+cOut590            4    1 2 3 4   
+cOut591            5    1 2 3 4 5 
+cOut592            2    1 2       
+cOut593            3    1 2 3     
+cOut594            4    1 2 3 4   
+cOut595            5    1 2 3 4 5 
+cOut596            2    1 2       
+cOut597            3    1 2 3     
+cOut598            4    1 2 3 4   
+cOut599            5    1 2 3 4 5 
+cOut600            2    1 2       
+cOut601            3    1 2 3     
+cOut602            4    1 2 3 4   
+cOut603            5    1 2 3 4 5 
+cOut604            2    1 2       
+cOut605            3    1 2 3     
+cOut606            4    1 2 3 4   
+cOut607            5    1 2 3 4 5 
+cOut608            2    1 2       
+cOut609            3    1 2 3     
+cOut610            4    1 2 3 4   
+cOut611            5    1 2 3 4 5 
+cOut612            2    1 2       
+cOut613            3    1 2 3     
+cOut614            4    1 2 3 4   
+cOut615            5    1 2 3 4 5 
+cOut616            2    1 2       
+cOut617            3    1 2 3     
+cOut618            4    1 2 3 4   
+cOut619            5    1 2 3 4 5 
+cOut620            2    1 2       
+cOut621            3    1 2 3     
+cOut622            4    1 2 3 4   
+cOut623            5    1 2 3 4 5 
+cOut624            2    1 2       
+cOut625            3    1 2 3     
+cOut626            4    1 2 3 4   
+cOut627            5    1 2 3 4 5 
+cOut628            2    1 2       
+cOut629            3    1 2 3     
+cOut630            4    1 2 3 4   
+cOut631            5    1 2 3 4 5 
+cOut632            2    1 2       
+cOut633            3    1 2 3     
+cOut634            4    1 2 3 4   
+cOut635            5    1 2 3 4 5 
+cOut636            2    1 2       
+cOut637            3    1 2 3     
+cOut638            4    1 2 3 4   
+cOut639            5    1 2 3 4 5 
+cOut640            2    1 2       
+cOut641            3    1 2 3     
+cOut642            4    1 2 3 4   
+cOut643            5    1 2 3 4 5 
+cOut644            2    1 2       
+cOut645            3    1 2 3     
+cOut646            4    1 2 3 4   
+cOut647            5    1 2 3 4 5 
+cOut648            2    1 2       
+cOut649            3    1 2 3     
+cOut650            4    1 2 3 4   
+cOut651            5    1 2 3 4 5 
+cOut652            2    1 2       
+cOut653            3    1 2 3     
+cOut654            4    1 2 3 4   
+cOut655            5    1 2 3 4 5 
+cOut656            2    1 2       
+cOut657            3    1 2 3     
+cOut658            4    1 2 3 4   
+cOut659            5    1 2 3 4 5 
+cOut660            2    1 2       
+cOut661            3    1 2 3     
+cOut662            4    1 2 3 4   
+cOut663            5    1 2 3 4 5 
+cOut664            2    1 2       
+cOut665            3    1 2 3     
+cOut666            4    1 2 3 4   
+cOut667            5    1 2 3 4 5 
+cOut668            2    1 2       
+cOut669            3    1 2 3     
+cOut670            4    1 2 3 4   
+cOut671            5    1 2 3 4 5 
+cOut672            2    1 2       
+cOut673            3    1 2 3     
+cOut674            4    1 2 3 4   
+cOut675            5    1 2 3 4 5 
+cOut676            2    1 2       
+cOut677            3    1 2 3     
+cOut678            4    1 2 3 4   
+cOut679            5    1 2 3 4 5 
+cOut680            2    1 2       
+cOut681            3    1 2 3     
+cOut682            4    1 2 3 4   
+cOut683            5    1 2 3 4 5 
+cOut684            2    1 2       
+cOut685            3    1 2 3     
+cOut686            4    1 2 3 4   
+cOut687            5    1 2 3 4 5 
+cOut688            2    1 2       
+cOut689            3    1 2 3     
+cOut690            4    1 2 3 4   
+cOut691            5    1 2 3 4 5 
+cOut692            2    1 2       
+cOut693            3    1 2 3     
+cOut694            4    1 2 3 4   
+cOut695            5    1 2 3 4 5 
+cOut696            2    1 2       
+cOut697            3    1 2 3     
+cOut698            4    1 2 3 4   
+cOut699            5    1 2 3 4 5 
+cOut700            2    1 2       
+cOut701            3    1 2 3     
+cOut702            4    1 2 3 4   
+cOut703            5    1 2 3 4 5 
+cOut704            2    1 2       
+cOut705            3    1 2 3     
+cOut706            4    1 2 3 4   
+cOut707            5    1 2 3 4 5 
+cOut708            2    1 2       
+cOut709            3    1 2 3     
+cOut710            4    1 2 3 4   
+cOut711            5    1 2 3 4 5 
+cOut712            2    1 2       
+cOut713            3    1 2 3     
+cOut714            4    1 2 3 4   
+cOut715            5    1 2 3 4 5 
+cOut716            2    1 2       
+cOut717            3    1 2 3     
+cOut718            4    1 2 3 4   
+cOut719            5    1 2 3 4 5 
+cOut720            2    1 2       
+cOut721            3    1 2 3     
+cOut722            4    1 2 3 4   
+cOut723            5    1 2 3 4 5 
+cOut724            2    1 2       
+cOut725            3    1 2 3     
+cOut726            4    1 2 3 4   
+cOut727            5    1 2 3 4 5 
+cOut728            2    1 2       
+cOut729            3    1 2 3     
+cOut730            4    1 2 3 4   
+cOut731            5    1 2 3 4 5 
+cOut732            2    1 2       
+cOut733            3    1 2 3     
+cOut734            4    1 2 3 4   
+cOut735            5    1 2 3 4 5 
+cOut736            2    1 2       
+cOut737            3    1 2 3     
+cOut738            4    1 2 3 4   
+cOut739            5    1 2 3 4 5 
+cOut740            2    1 2       
+cOut741            3    1 2 3     
+cOut742            4    1 2 3 4   
+cOut743            5    1 2 3 4 5 
+cOut744            2    1 2       
+cOut745            3    1 2 3     
+cOut746            4    1 2 3 4   
+cOut747            5    1 2 3 4 5 
+cOut748            2    1 2       
+cOut749            3    1 2 3     
+cOut750            4    1 2 3 4   
+cOut751            5    1 2 3 4 5 
+cOut752            2    1 2       
+cOut753            3    1 2 3     
+cOut754            4    1 2 3 4   
+cOut755            5    1 2 3 4 5 
+cOut756            2    1 2       
+cOut757            3    1 2 3     
+cOut758            4    1 2 3 4   
+cOut759            5    1 2 3 4 5 
+cOut760            2    1 2       
+cOut761            3    1 2 3     
+cOut762            4    1 2 3 4   
+cOut763            5    1 2 3 4 5 
+cOut764            2    1 2       
+cOut765            3    1 2 3     
+cOut766            4    1 2 3 4   
+cOut767            5    1 2 3 4 5 
+cOut768            2    1 2       
+cOut769            3    1 2 3     
+cOut770            4    1 2 3 4   
+cOut771            5    1 2 3 4 5 
+cOut772            2    1 2       
+cOut773            3    1 2 3     
+cOut774            4    1 2 3 4   
+cOut775            5    1 2 3 4 5 
+cOut776            2    1 2       
+cOut777            3    1 2 3     
+cOut778            4    1 2 3 4   
+cOut779            5    1 2 3 4 5 
+cOut780            2    1 2       
+cOut781            3    1 2 3     
+cOut782            4    1 2 3 4   
+cOut783            5    1 2 3 4 5 
+cOut784            2    1 2       
+cOut785            3    1 2 3     
+cOut786            4    1 2 3 4   
+cOut787            5    1 2 3 4 5 
+cOut788            2    1 2       
+cOut789            3    1 2 3     
+cOut790            4    1 2 3 4   
+cOut791            5    1 2 3 4 5 
+cOut792            2    1 2       
+cOut793            3    1 2 3     
+cOut794            4    1 2 3 4   
+cOut795            5    1 2 3 4 5 
+cOut796            2    1 2       
+cOut797            3    1 2 3     
+cOut798            4    1 2 3 4   
+cOut799            5    1 2 3 4 5 
+cOut800            2    1 2       
+cOut801            3    1 2 3     
+cOut802            4    1 2 3 4   
+cOut803            5    1 2 3 4 5 
+cOut804            2    1 2       
+cOut805            3    1 2 3     
+cOut806            4    1 2 3 4   
+cOut807            5    1 2 3 4 5 
+cOut808            2    1 2       
+cOut809            3    1 2 3     
+cOut810            4    1 2 3 4   
+cOut811            5    1 2 3 4 5 
+cOut812            2    1 2       
+cOut813            3    1 2 3     
+cOut814            4    1 2 3 4   
+cOut815            5    1 2 3 4 5 
+cOut816            2    1 2       
+cOut817            3    1 2 3     
+cOut818            4    1 2 3 4   
+cOut819            5    1 2 3 4 5 
+cOut820            2    1 2       
+cOut821            3    1 2 3     
+cOut822            4    1 2 3 4   
+cOut823            5    1 2 3 4 5 
+cOut824            2    1 2       
+cOut825            3    1 2 3     
+cOut826            4    1 2 3 4   
+cOut827            5    1 2 3 4 5 
+cOut828            2    1 2       
+cOut829            3    1 2 3     
+cOut830            4    1 2 3 4   
+cOut831            5    1 2 3 4 5 
+cOut832            2    1 2       
+cOut833            3    1 2 3     
+cOut834            4    1 2 3 4   
+cOut835            5    1 2 3 4 5 
+cOut836            2    1 2       
+cOut837            3    1 2 3     
+cOut838            4    1 2 3 4   
+cOut839            5    1 2 3 4 5 
+cOut840            2    1 2       
+cOut841            3    1 2 3     
+cOut842            4    1 2 3 4   
+cOut843            5    1 2 3 4 5 
+cOut844            2    1 2       
+cOut845            3    1 2 3     
+cOut846            4    1 2 3 4   
+cOut847            5    1 2 3 4 5 
+cOut848            2    1 2       
+cOut849            3    1 2 3     
+cOut850            4    1 2 3 4   
+cOut851            5    1 2 3 4 5 
+cOut852            2    1 2       
+cOut853            3    1 2 3     
+cOut854            4    1 2 3 4   
+cOut855            5    1 2 3 4 5 
+cOut856            2    1 2       
+cOut857            3    1 2 3     
+cOut858            4    1 2 3 4   
+cOut859            5    1 2 3 4 5 
+cOut860            2    1 2       
+cOut861            3    1 2 3     
+cOut862            4    1 2 3 4   
+cOut863            5    1 2 3 4 5 
+cOut864            2    1 2       
+cOut865            3    1 2 3     
+cOut866            4    1 2 3 4   
+cOut867            5    1 2 3 4 5 
+cOut868            2    1 2       
+cOut869            3    1 2 3     
+cOut870            4    1 2 3 4   
+cOut871            5    1 2 3 4 5 
+cOut872            2    1 2       
+cOut873            3    1 2 3     
+cOut874            4    1 2 3 4   
+cOut875            5    1 2 3 4 5 
+cOut876            2    1 2       
+cOut877            3    1 2 3     
+cOut878            4    1 2 3 4   
+cOut879            5    1 2 3 4 5 
+cOut880            2    1 2       
+cOut881            3    1 2 3     
+cOut882            4    1 2 3 4   
+cOut883            5    1 2 3 4 5 
+cOut884            2    1 2       
+cOut885            3    1 2 3     
+cOut886            4    1 2 3 4   
+cOut887            5    1 2 3 4 5 
+cOut888            2    1 2       
+cOut889            3    1 2 3     
+cOut890            4    1 2 3 4   
+cOut891            5    1 2 3 4 5 
+cOut892            2    1 2       
+cOut893            3    1 2 3     
+cOut894            4    1 2 3 4   
+cOut895            5    1 2 3 4 5 
+cOut896            2    1 2       
+cOut897            3    1 2 3     
+cOut898            4    1 2 3 4   
+cOut899            5    1 2 3 4 5 
+cOut900            2    1 2       
+cOut901            3    1 2 3     
+cOut902            4    1 2 3 4   
+cOut903            5    1 2 3 4 5 
+cOut904            2    1 2       
+cOut905            3    1 2 3     
+cOut906            4    1 2 3 4   
+cOut907            5    1 2 3 4 5 
+cOut908            2    1 2       
+cOut909            3    1 2 3     
+cOut910            4    1 2 3 4   
+cOut911            5    1 2 3 4 5 
+cOut912            2    1 2       
+cOut913            3    1 2 3     
+cOut914            4    1 2 3 4   
+cOut915            5    1 2 3 4 5 
+cOut916            2    1 2       
+cOut917            3    1 2 3     
+cOut918            4    1 2 3 4   
+cOut919            5    1 2 3 4 5 
+cOut920            2    1 2       
+cOut921            3    1 2 3     
+cOut922            4    1 2 3 4   
+cOut923            5    1 2 3 4 5 
+cOut924            2    1 2       
+cOut925            3    1 2 3     
+cOut926            4    1 2 3 4   
+cOut927            5    1 2 3 4 5 
+cOut928            2    1 2       
+cOut929            3    1 2 3     
+cOut930            4    1 2 3 4   
+cOut931            5    1 2 3 4 5 
+cOut932            2    1 2       
+cOut933            3    1 2 3     
+cOut934            4    1 2 3 4   
+cOut935            5    1 2 3 4 5 
+cOut936            2    1 2       
+cOut937            3    1 2 3     
+cOut938            4    1 2 3 4   
+cOut939            5    1 2 3 4 5 
+cOut940            2    1 2       
+cOut941            3    1 2 3     
+cOut942            4    1 2 3 4   
+cOut943            5    1 2 3 4 5 
+cOut944            2    1 2       
+cOut945            3    1 2 3     
+cOut946            4    1 2 3 4   
+cOut947            5    1 2 3 4 5 
+cOut948            2    1 2       
+cOut949            3    1 2 3     
+cOut950            4    1 2 3 4   
+cOut951            5    1 2 3 4 5 
+cOut952            2    1 2       
+cOut953            3    1 2 3     
+cOut954            4    1 2 3 4   
+cOut955            5    1 2 3 4 5 
+cOut956            2    1 2       
+cOut957            3    1 2 3     
+cOut958            4    1 2 3 4   
+cOut959            5    1 2 3 4 5 
+cOut960            2    1 2       
+cOut961            3    1 2 3     
+cOut962            4    1 2 3 4   
+cOut963            5    1 2 3 4 5 
+cOut964            2    1 2       
+cOut965            3    1 2 3     
+cOut966            4    1 2 3 4   
+cOut967            5    1 2 3 4 5 
+cOut968            2    1 2       
+cOut969            3    1 2 3     
+cOut970            4    1 2 3 4   
+cOut971            5    1 2 3 4 5 
+cOut972            2    1 2       
+cOut973            3    1 2 3     
+cOut974            4    1 2 3 4   
+cOut975            5    1 2 3 4 5 
+cOut976            2    1 2       
+cOut977            3    1 2 3     
+cOut978            4    1 2 3 4   
+cOut979            5    1 2 3 4 5 
+cOut980            2    1 2       
+cOut981            3    1 2 3     
+cOut982            4    1 2 3 4   
+cOut983            5    1 2 3 4 5 
+cOut984            2    1 2       
+cOut985            3    1 2 3     
+cOut986            4    1 2 3 4   
+cOut987            5    1 2 3 4 5 
+cOut988            2    1 2       
+cOut989            3    1 2 3     
+cOut990            4    1 2 3 4   
+cOut991            5    1 2 3 4 5 
+cOut992            2    1 2       
+cOut993            3    1 2 3     
+cOut994            4    1 2 3 4   
+cOut995            5    1 2 3 4 5 
+cOut996            2    1 2       
+cOut997            3    1 2 3     
+cOut998            4    1 2 3 4   
+cOut999            5    1 2 3 4 5 
+cOut1000           2    1 2       
+
+
+              Dimensions
+
+Number of Effects                 2008
+Number of Effects after Splits    4513
+Number of Parameters              4513
+
+The GLMSELECT Procedure
+
+                  LASSO Selection Summary
+ 
+         Effect      Effect          Number
+ Step    Entered     Removed     Effects In           SBC 
+
+    0    Intercept                        1    10413.6418 
+----------------------------------------------------------
+    1    cIn2_1                           2    10335.5423 
+    2    cIn2_4                           3     7237.0701 
+    3    cIn1_1                           4     7186.9642 
+    4    cIn1_3                           5     6753.6076 
+    5    xIn5                             6     6609.0322 
+    6    cIn2_3                           7     6510.2639 
+    7    xIn4                             8     5797.1607 
+    8    xIn3                             9     5487.4432 
+    9    xIn2                            10     2894.0166 
+   10    xIn1                            11      310.9340*
+
+               * Optimal Value of Criterion
+
+
+Selection stopped at a local minimum of the SBC criterion.
+
+
+                     Stop Details
+ 
+Candidate                  Candidate         Compare
+For          Effect              SBC         SBC
+
+Entry        cOut561_2      314.7979    >    310.9340  
+
+The GLMSELECT Procedure
+Selected Model
+
+The selected model is the model at the last step (Step 10).
+
+
+Effects: Intercept xIn1 xIn2 xIn3 xIn4 xIn5 cIn1_1 cIn1_3 cIn2_1 cIn2_3 cIn2_4 
+
+
+                       Analysis of Variance
+ 
+                                  Sum of           Mean
+Source                 DF        Squares         Square    F Value
+
+Model                  10          34841     3484.13522    3328.66
+Error                4989     5222.03352        1.04671           
+Corrected Total      4999          40063                          
+
+
+Root MSE              1.02309
+Dependent Mean       -1.25888
+R-Square               0.8697
+Adj R-Sq               0.8694
+AIC                5241.24489
+AICC               5241.30745
+SBC                 310.93401
+
+
+      Parameter Estimates
+ 
+Parameter    DF        Estimate
+
+Intercept     1        0.255521
+xIn1          1       -0.823553
+xIn2          1        1.348559
+xIn3          1       -1.521438
+xIn4          1        1.815846
+xIn5          1       -2.015872
+cIn1_1        1       -0.969808
+cIn1_3        1        0.892276
+cIn2_1        1        2.032478
+cIn2_3        1       -1.847686
+cIn2_4        1       -3.832549
+
+The GLMSELECT Procedure
+
+Data Set                     WORK.EX7DATA
+Dependent Variable                      y
+Selection Method                    LASSO
+Stop Criterion                        SBC
+Effect Hierarchy Enforced            None
+
+
+Number of Observations Read        5000
+Number of Observations Used        5000
+
+
+     Class Level Information
+ 
+Class         Levels    Values
+
+cIn1               3    1 2 3     
+cIn2               4    1 2 3 4   
+cOut1              3    1 2 3     
+cOut2              4    1 2 3 4   
+cOut3              5    1 2 3 4 5 
+cOut4              2    1 2       
+cOut5              3    1 2 3     
+cOut6              4    1 2 3 4   
+cOut7              5    1 2 3 4 5 
+cOut8              2    1 2       
+cOut9              3    1 2 3     
+cOut10             4    1 2 3 4   
+cOut11             5    1 2 3 4 5 
+cOut12             2    1 2       
+cOut13             3    1 2 3     
+cOut14             4    1 2 3 4   
+cOut15             5    1 2 3 4 5 
+cOut16             2    1 2       
+cOut17             3    1 2 3     
+cOut18             4    1 2 3 4   
+cOut19             5    1 2 3 4 5 
+cOut20             2    1 2       
+cOut21             3    1 2 3     
+cOut22             4    1 2 3 4   
+cOut23             5    1 2 3 4 5 
+cOut24             2    1 2       
+cOut25             3    1 2 3     
+cOut26             4    1 2 3 4   
+cOut27             5    1 2 3 4 5 
+cOut28             2    1 2       
+cOut29             3    1 2 3     
+cOut30             4    1 2 3 4   
+cOut31             5    1 2 3 4 5 
+cOut32             2    1 2       
+cOut33             3    1 2 3     
+cOut34             4    1 2 3 4   
+cOut35             5    1 2 3 4 5 
+cOut36             2    1 2       
+cOut37             3    1 2 3     
+cOut38             4    1 2 3 4   
+cOut39             5    1 2 3 4 5 
+cOut40             2    1 2       
+cOut41             3    1 2 3     
+cOut42             4    1 2 3 4   
+cOut43             5    1 2 3 4 5 
+cOut44             2    1 2       
+cOut45             3    1 2 3     
+cOut46             4    1 2 3 4   
+cOut47             5    1 2 3 4 5 
+cOut48             2    1 2       
+cOut49             3    1 2 3     
+cOut50             4    1 2 3 4   
+cOut51             5    1 2 3 4 5 
+cOut52             2    1 2       
+cOut53             3    1 2 3     
+cOut54             4    1 2 3 4   
+cOut55             5    1 2 3 4 5 
+cOut56             2    1 2       
+cOut57             3    1 2 3     
+cOut58             4    1 2 3 4   
+cOut59             5    1 2 3 4 5 
+cOut60             2    1 2       
+cOut61             3    1 2 3     
+cOut62             4    1 2 3 4   
+cOut63             5    1 2 3 4 5 
+cOut64             2    1 2       
+cOut65             3    1 2 3     
+cOut66             4    1 2 3 4   
+cOut67             5    1 2 3 4 5 
+cOut68             2    1 2       
+cOut69             3    1 2 3     
+cOut70             4    1 2 3 4   
+cOut71             5    1 2 3 4 5 
+cOut72             2    1 2       
+cOut73             3    1 2 3     
+cOut74             4    1 2 3 4   
+cOut75             5    1 2 3 4 5 
+cOut76             2    1 2       
+cOut77             3    1 2 3     
+cOut78             4    1 2 3 4   
+cOut79             5    1 2 3 4 5 
+cOut80             2    1 2       
+cOut81             3    1 2 3     
+cOut82             4    1 2 3 4   
+cOut83             5    1 2 3 4 5 
+cOut84             2    1 2       
+cOut85             3    1 2 3     
+cOut86             4    1 2 3 4   
+cOut87             5    1 2 3 4 5 
+cOut88             2    1 2       
+cOut89             3    1 2 3     
+cOut90             4    1 2 3 4   
+cOut91             5    1 2 3 4 5 
+cOut92             2    1 2       
+cOut93             3    1 2 3     
+cOut94             4    1 2 3 4   
+cOut95             5    1 2 3 4 5 
+cOut96             2    1 2       
+cOut97             3    1 2 3     
+cOut98             4    1 2 3 4   
+cOut99             5    1 2 3 4 5 
+cOut100            2    1 2       
+cOut101            3    1 2 3     
+cOut102            4    1 2 3 4   
+cOut103            5    1 2 3 4 5 
+cOut104            2    1 2       
+cOut105            3    1 2 3     
+cOut106            4    1 2 3 4   
+cOut107            5    1 2 3 4 5 
+cOut108            2    1 2       
+cOut109            3    1 2 3     
+cOut110            4    1 2 3 4   
+cOut111            5    1 2 3 4 5 
+cOut112            2    1 2       
+cOut113            3    1 2 3     
+cOut114            4    1 2 3 4   
+cOut115            5    1 2 3 4 5 
+cOut116            2    1 2       
+cOut117            3    1 2 3     
+cOut118            4    1 2 3 4   
+cOut119            5    1 2 3 4 5 
+cOut120            2    1 2       
+cOut121            3    1 2 3     
+cOut122            4    1 2 3 4   
+cOut123            5    1 2 3 4 5 
+cOut124            2    1 2       
+cOut125            3    1 2 3     
+cOut126            4    1 2 3 4   
+cOut127            5    1 2 3 4 5 
+cOut128            2    1 2       
+cOut129            3    1 2 3     
+cOut130            4    1 2 3 4   
+cOut131            5    1 2 3 4 5 
+cOut132            2    1 2       
+cOut133            3    1 2 3     
+cOut134            4    1 2 3 4   
+cOut135            5    1 2 3 4 5 
+cOut136            2    1 2       
+cOut137            3    1 2 3     
+cOut138            4    1 2 3 4   
+cOut139            5    1 2 3 4 5 
+cOut140            2    1 2       
+cOut141            3    1 2 3     
+cOut142            4    1 2 3 4   
+cOut143            5    1 2 3 4 5 
+cOut144            2    1 2       
+cOut145            3    1 2 3     
+cOut146            4    1 2 3 4   
+cOut147            5    1 2 3 4 5 
+cOut148            2    1 2       
+cOut149            3    1 2 3     
+cOut150            4    1 2 3 4   
+cOut151            5    1 2 3 4 5 
+cOut152            2    1 2       
+cOut153            3    1 2 3     
+cOut154            4    1 2 3 4   
+cOut155            5    1 2 3 4 5 
+cOut156            2    1 2       
+cOut157            3    1 2 3     
+cOut158            4    1 2 3 4   
+cOut159            5    1 2 3 4 5 
+cOut160            2    1 2       
+cOut161            3    1 2 3     
+cOut162            4    1 2 3 4   
+cOut163            5    1 2 3 4 5 
+cOut164            2    1 2       
+cOut165            3    1 2 3     
+cOut166            4    1 2 3 4   
+cOut167            5    1 2 3 4 5 
+cOut168            2    1 2       
+cOut169            3    1 2 3     
+cOut170            4    1 2 3 4   
+cOut171            5    1 2 3 4 5 
+cOut172            2    1 2       
+cOut173            3    1 2 3     
+cOut174            4    1 2 3 4   
+cOut175            5    1 2 3 4 5 
+cOut176            2    1 2       
+cOut177            3    1 2 3     
+cOut178            4    1 2 3 4   
+cOut179            5    1 2 3 4 5 
+cOut180            2    1 2       
+cOut181            3    1 2 3     
+cOut182            4    1 2 3 4   
+cOut183            5    1 2 3 4 5 
+cOut184            2    1 2       
+cOut185            3    1 2 3     
+cOut186            4    1 2 3 4   
+cOut187            5    1 2 3 4 5 
+cOut188            2    1 2       
+cOut189            3    1 2 3     
+cOut190            4    1 2 3 4   
+cOut191            5    1 2 3 4 5 
+cOut192            2    1 2       
+cOut193            3    1 2 3     
+cOut194            4    1 2 3 4   
+cOut195            5    1 2 3 4 5 
+cOut196            2    1 2       
+cOut197            3    1 2 3     
+cOut198            4    1 2 3 4   
+cOut199            5    1 2 3 4 5 
+cOut200            2    1 2       
+cOut201            3    1 2 3     
+cOut202            4    1 2 3 4   
+cOut203            5    1 2 3 4 5 
+cOut204            2    1 2       
+cOut205            3    1 2 3     
+cOut206            4    1 2 3 4   
+cOut207            5    1 2 3 4 5 
+cOut208            2    1 2       
+cOut209            3    1 2 3     
+cOut210            4    1 2 3 4   
+cOut211            5    1 2 3 4 5 
+cOut212            2    1 2       
+cOut213            3    1 2 3     
+cOut214            4    1 2 3 4   
+cOut215            5    1 2 3 4 5 
+cOut216            2    1 2       
+cOut217            3    1 2 3     
+cOut218            4    1 2 3 4   
+cOut219            5    1 2 3 4 5 
+cOut220            2    1 2       
+cOut221            3    1 2 3     
+cOut222            4    1 2 3 4   
+cOut223            5    1 2 3 4 5 
+cOut224            2    1 2       
+cOut225            3    1 2 3     
+cOut226            4    1 2 3 4   
+cOut227            5    1 2 3 4 5 
+cOut228            2    1 2       
+cOut229            3    1 2 3     
+cOut230            4    1 2 3 4   
+cOut231            5    1 2 3 4 5 
+cOut232            2    1 2       
+cOut233            3    1 2 3     
+cOut234            4    1 2 3 4   
+cOut235            5    1 2 3 4 5 
+cOut236            2    1 2       
+cOut237            3    1 2 3     
+cOut238            4    1 2 3 4   
+cOut239            5    1 2 3 4 5 
+cOut240            2    1 2       
+cOut241            3    1 2 3     
+cOut242            4    1 2 3 4   
+cOut243            5    1 2 3 4 5 
+cOut244            2    1 2       
+cOut245            3    1 2 3     
+cOut246            4    1 2 3 4   
+cOut247            5    1 2 3 4 5 
+cOut248            2    1 2       
+cOut249            3    1 2 3     
+cOut250            4    1 2 3 4   
+cOut251            5    1 2 3 4 5 
+cOut252            2    1 2       
+cOut253            3    1 2 3     
+cOut254            4    1 2 3 4   
+cOut255            5    1 2 3 4 5 
+cOut256            2    1 2       
+cOut257            3    1 2 3     
+cOut258            4    1 2 3 4   
+cOut259            5    1 2 3 4 5 
+cOut260            2    1 2       
+cOut261            3    1 2 3     
+cOut262            4    1 2 3 4   
+cOut263            5    1 2 3 4 5 
+cOut264            2    1 2       
+cOut265            3    1 2 3     
+cOut266            4    1 2 3 4   
+cOut267            5    1 2 3 4 5 
+cOut268            2    1 2       
+cOut269            3    1 2 3     
+cOut270            4    1 2 3 4   
+cOut271            5    1 2 3 4 5 
+cOut272            2    1 2       
+cOut273            3    1 2 3     
+cOut274            4    1 2 3 4   
+cOut275            5    1 2 3 4 5 
+cOut276            2    1 2       
+cOut277            3    1 2 3     
+cOut278            4    1 2 3 4   
+cOut279            5    1 2 3 4 5 
+cOut280            2    1 2       
+cOut281            3    1 2 3     
+cOut282            4    1 2 3 4   
+cOut283            5    1 2 3 4 5 
+cOut284            2    1 2       
+cOut285            3    1 2 3     
+cOut286            4    1 2 3 4   
+cOut287            5    1 2 3 4 5 
+cOut288            2    1 2       
+cOut289            3    1 2 3     
+cOut290            4    1 2 3 4   
+cOut291            5    1 2 3 4 5 
+cOut292            2    1 2       
+cOut293            3    1 2 3     
+cOut294            4    1 2 3 4   
+cOut295            5    1 2 3 4 5 
+cOut296            2    1 2       
+cOut297            3    1 2 3     
+cOut298            4    1 2 3 4   
+cOut299            5    1 2 3 4 5 
+cOut300            2    1 2       
+cOut301            3    1 2 3     
+cOut302            4    1 2 3 4   
+cOut303            5    1 2 3 4 5 
+cOut304            2    1 2       
+cOut305            3    1 2 3     
+cOut306            4    1 2 3 4   
+cOut307            5    1 2 3 4 5 
+cOut308            2    1 2       
+cOut309            3    1 2 3     
+cOut310            4    1 2 3 4   
+cOut311            5    1 2 3 4 5 
+cOut312            2    1 2       
+cOut313            3    1 2 3     
+cOut314            4    1 2 3 4   
+cOut315            5    1 2 3 4 5 
+cOut316            2    1 2       
+cOut317            3    1 2 3     
+cOut318            4    1 2 3 4   
+cOut319            5    1 2 3 4 5 
+cOut320            2    1 2       
+cOut321            3    1 2 3     
+cOut322            4    1 2 3 4   
+cOut323            5    1 2 3 4 5 
+cOut324            2    1 2       
+cOut325            3    1 2 3     
+cOut326            4    1 2 3 4   
+cOut327            5    1 2 3 4 5 
+cOut328            2    1 2       
+cOut329            3    1 2 3     
+cOut330            4    1 2 3 4   
+cOut331            5    1 2 3 4 5 
+cOut332            2    1 2       
+cOut333            3    1 2 3     
+cOut334            4    1 2 3 4   
+cOut335            5    1 2 3 4 5 
+cOut336            2    1 2       
+cOut337            3    1 2 3     
+cOut338            4    1 2 3 4   
+cOut339            5    1 2 3 4 5 
+cOut340            2    1 2       
+cOut341            3    1 2 3     
+cOut342            4    1 2 3 4   
+cOut343            5    1 2 3 4 5 
+cOut344            2    1 2       
+cOut345            3    1 2 3     
+cOut346            4    1 2 3 4   
+cOut347            5    1 2 3 4 5 
+cOut348            2    1 2       
+cOut349            3    1 2 3     
+cOut350            4    1 2 3 4   
+cOut351            5    1 2 3 4 5 
+cOut352            2    1 2       
+cOut353            3    1 2 3     
+cOut354            4    1 2 3 4   
+cOut355            5    1 2 3 4 5 
+cOut356            2    1 2       
+cOut357            3    1 2 3     
+cOut358            4    1 2 3 4   
+cOut359            5    1 2 3 4 5 
+cOut360            2    1 2       
+cOut361            3    1 2 3     
+cOut362            4    1 2 3 4   
+cOut363            5    1 2 3 4 5 
+cOut364            2    1 2       
+cOut365            3    1 2 3     
+cOut366            4    1 2 3 4   
+cOut367            5    1 2 3 4 5 
+cOut368            2    1 2       
+cOut369            3    1 2 3     
+cOut370            4    1 2 3 4   
+cOut371            5    1 2 3 4 5 
+cOut372            2    1 2       
+cOut373            3    1 2 3     
+cOut374            4    1 2 3 4   
+cOut375            5    1 2 3 4 5 
+cOut376            2    1 2       
+cOut377            3    1 2 3     
+cOut378            4    1 2 3 4   
+cOut379            5    1 2 3 4 5 
+cOut380            2    1 2       
+cOut381            3    1 2 3     
+cOut382            4    1 2 3 4   
+cOut383            5    1 2 3 4 5 
+cOut384            2    1 2       
+cOut385            3    1 2 3     
+cOut386            4    1 2 3 4   
+cOut387            5    1 2 3 4 5 
+cOut388            2    1 2       
+cOut389            3    1 2 3     
+cOut390            4    1 2 3 4   
+cOut391            5    1 2 3 4 5 
+cOut392            2    1 2       
+cOut393            3    1 2 3     
+cOut394            4    1 2 3 4   
+cOut395            5    1 2 3 4 5 
+cOut396            2    1 2       
+cOut397            3    1 2 3     
+cOut398            4    1 2 3 4   
+cOut399            5    1 2 3 4 5 
+cOut400            2    1 2       
+cOut401            3    1 2 3     
+cOut402            4    1 2 3 4   
+cOut403            5    1 2 3 4 5 
+cOut404            2    1 2       
+cOut405            3    1 2 3     
+cOut406            4    1 2 3 4   
+cOut407            5    1 2 3 4 5 
+cOut408            2    1 2       
+cOut409            3    1 2 3     
+cOut410            4    1 2 3 4   
+cOut411            5    1 2 3 4 5 
+cOut412            2    1 2       
+cOut413            3    1 2 3     
+cOut414            4    1 2 3 4   
+cOut415            5    1 2 3 4 5 
+cOut416            2    1 2       
+cOut417            3    1 2 3     
+cOut418            4    1 2 3 4   
+cOut419            5    1 2 3 4 5 
+cOut420            2    1 2       
+cOut421            3    1 2 3     
+cOut422            4    1 2 3 4   
+cOut423            5    1 2 3 4 5 
+cOut424            2    1 2       
+cOut425            3    1 2 3     
+cOut426            4    1 2 3 4   
+cOut427            5    1 2 3 4 5 
+cOut428            2    1 2       
+cOut429            3    1 2 3     
+cOut430            4    1 2 3 4   
+cOut431            5    1 2 3 4 5 
+cOut432            2    1 2       
+cOut433            3    1 2 3     
+cOut434            4    1 2 3 4   
+cOut435            5    1 2 3 4 5 
+cOut436            2    1 2       
+cOut437            3    1 2 3     
+cOut438            4    1 2 3 4   
+cOut439            5    1 2 3 4 5 
+cOut440            2    1 2       
+cOut441            3    1 2 3     
+cOut442            4    1 2 3 4   
+cOut443            5    1 2 3 4 5 
+cOut444            2    1 2       
+cOut445            3    1 2 3     
+cOut446            4    1 2 3 4   
+cOut447            5    1 2 3 4 5 
+cOut448            2    1 2       
+cOut449            3    1 2 3     
+cOut450            4    1 2 3 4   
+cOut451            5    1 2 3 4 5 
+cOut452            2    1 2       
+cOut453            3    1 2 3     
+cOut454            4    1 2 3 4   
+cOut455            5    1 2 3 4 5 
+cOut456            2    1 2       
+cOut457            3    1 2 3     
+cOut458            4    1 2 3 4   
+cOut459            5    1 2 3 4 5 
+cOut460            2    1 2       
+cOut461            3    1 2 3     
+cOut462            4    1 2 3 4   
+cOut463            5    1 2 3 4 5 
+cOut464            2    1 2       
+cOut465            3    1 2 3     
+cOut466            4    1 2 3 4   
+cOut467            5    1 2 3 4 5 
+cOut468            2    1 2       
+cOut469            3    1 2 3     
+cOut470            4    1 2 3 4   
+cOut471            5    1 2 3 4 5 
+cOut472            2    1 2       
+cOut473            3    1 2 3     
+cOut474            4    1 2 3 4   
+cOut475            5    1 2 3 4 5 
+cOut476            2    1 2       
+cOut477            3    1 2 3     
+cOut478            4    1 2 3 4   
+cOut479            5    1 2 3 4 5 
+cOut480            2    1 2       
+cOut481            3    1 2 3     
+cOut482            4    1 2 3 4   
+cOut483            5    1 2 3 4 5 
+cOut484            2    1 2       
+cOut485            3    1 2 3     
+cOut486            4    1 2 3 4   
+cOut487            5    1 2 3 4 5 
+cOut488            2    1 2       
+cOut489            3    1 2 3     
+cOut490            4    1 2 3 4   
+cOut491            5    1 2 3 4 5 
+cOut492            2    1 2       
+cOut493            3    1 2 3     
+cOut494            4    1 2 3 4   
+cOut495            5    1 2 3 4 5 
+cOut496            2    1 2       
+cOut497            3    1 2 3     
+cOut498            4    1 2 3 4   
+cOut499            5    1 2 3 4 5 
+cOut500            2    1 2       
+cOut501            3    1 2 3     
+cOut502            4    1 2 3 4   
+cOut503            5    1 2 3 4 5 
+cOut504            2    1 2       
+cOut505            3    1 2 3     
+cOut506            4    1 2 3 4   
+cOut507            5    1 2 3 4 5 
+cOut508            2    1 2       
+cOut509            3    1 2 3     
+cOut510            4    1 2 3 4   
+cOut511            5    1 2 3 4 5 
+cOut512            2    1 2       
+cOut513            3    1 2 3     
+cOut514            4    1 2 3 4   
+cOut515            5    1 2 3 4 5 
+cOut516            2    1 2       
+cOut517            3    1 2 3     
+cOut518            4    1 2 3 4   
+cOut519            5    1 2 3 4 5 
+cOut520            2    1 2       
+cOut521            3    1 2 3     
+cOut522            4    1 2 3 4   
+cOut523            5    1 2 3 4 5 
+cOut524            2    1 2       
+cOut525            3    1 2 3     
+cOut526            4    1 2 3 4   
+cOut527            5    1 2 3 4 5 
+cOut528            2    1 2       
+cOut529            3    1 2 3     
+cOut530            4    1 2 3 4   
+cOut531            5    1 2 3 4 5 
+cOut532            2    1 2       
+cOut533            3    1 2 3     
+cOut534            4    1 2 3 4   
+cOut535            5    1 2 3 4 5 
+cOut536            2    1 2       
+cOut537            3    1 2 3     
+cOut538            4    1 2 3 4   
+cOut539            5    1 2 3 4 5 
+cOut540            2    1 2       
+cOut541            3    1 2 3     
+cOut542            4    1 2 3 4   
+cOut543            5    1 2 3 4 5 
+cOut544            2    1 2       
+cOut545            3    1 2 3     
+cOut546            4    1 2 3 4   
+cOut547            5    1 2 3 4 5 
+cOut548            2    1 2       
+cOut549            3    1 2 3     
+cOut550            4    1 2 3 4   
+cOut551            5    1 2 3 4 5 
+cOut552            2    1 2       
+cOut553            3    1 2 3     
+cOut554            4    1 2 3 4   
+cOut555            5    1 2 3 4 5 
+cOut556            2    1 2       
+cOut557            3    1 2 3     
+cOut558            4    1 2 3 4   
+cOut559            5    1 2 3 4 5 
+cOut560            2    1 2       
+cOut561            3    1 2 3     
+cOut562            4    1 2 3 4   
+cOut563            5    1 2 3 4 5 
+cOut564            2    1 2       
+cOut565            3    1 2 3     
+cOut566            4    1 2 3 4   
+cOut567            5    1 2 3 4 5 
+cOut568            2    1 2       
+cOut569            3    1 2 3     
+cOut570            4    1 2 3 4   
+cOut571            5    1 2 3 4 5 
+cOut572            2    1 2       
+cOut573            3    1 2 3     
+cOut574            4    1 2 3 4   
+cOut575            5    1 2 3 4 5 
+cOut576            2    1 2       
+cOut577            3    1 2 3     
+cOut578            4    1 2 3 4   
+cOut579            5    1 2 3 4 5 
+cOut580            2    1 2       
+cOut581            3    1 2 3     
+cOut582            4    1 2 3 4   
+cOut583            5    1 2 3 4 5 
+cOut584            2    1 2       
+cOut585            3    1 2 3     
+cOut586            4    1 2 3 4   
+cOut587            5    1 2 3 4 5 
+cOut588            2    1 2       
+cOut589            3    1 2 3     
+cOut590            4    1 2 3 4   
+cOut591            5    1 2 3 4 5 
+cOut592            2    1 2       
+cOut593            3    1 2 3     
+cOut594            4    1 2 3 4   
+cOut595            5    1 2 3 4 5 
+cOut596            2    1 2       
+cOut597            3    1 2 3     
+cOut598            4    1 2 3 4   
+cOut599            5    1 2 3 4 5 
+cOut600            2    1 2       
+cOut601            3    1 2 3     
+cOut602            4    1 2 3 4   
+cOut603            5    1 2 3 4 5 
+cOut604            2    1 2       
+cOut605            3    1 2 3     
+cOut606            4    1 2 3 4   
+cOut607            5    1 2 3 4 5 
+cOut608            2    1 2       
+cOut609            3    1 2 3     
+cOut610            4    1 2 3 4   
+cOut611            5    1 2 3 4 5 
+cOut612            2    1 2       
+cOut613            3    1 2 3     
+cOut614            4    1 2 3 4   
+cOut615            5    1 2 3 4 5 
+cOut616            2    1 2       
+cOut617            3    1 2 3     
+cOut618            4    1 2 3 4   
+cOut619            5    1 2 3 4 5 
+cOut620            2    1 2       
+cOut621            3    1 2 3     
+cOut622            4    1 2 3 4   
+cOut623            5    1 2 3 4 5 
+cOut624            2    1 2       
+cOut625            3    1 2 3     
+cOut626            4    1 2 3 4   
+cOut627            5    1 2 3 4 5 
+cOut628            2    1 2       
+cOut629            3    1 2 3     
+cOut630            4    1 2 3 4   
+cOut631            5    1 2 3 4 5 
+cOut632            2    1 2       
+cOut633            3    1 2 3     
+cOut634            4    1 2 3 4   
+cOut635            5    1 2 3 4 5 
+cOut636            2    1 2       
+cOut637            3    1 2 3     
+cOut638            4    1 2 3 4   
+cOut639            5    1 2 3 4 5 
+cOut640            2    1 2       
+cOut641            3    1 2 3     
+cOut642            4    1 2 3 4   
+cOut643            5    1 2 3 4 5 
+cOut644            2    1 2       
+cOut645            3    1 2 3     
+cOut646            4    1 2 3 4   
+cOut647            5    1 2 3 4 5 
+cOut648            2    1 2       
+cOut649            3    1 2 3     
+cOut650            4    1 2 3 4   
+cOut651            5    1 2 3 4 5 
+cOut652            2    1 2       
+cOut653            3    1 2 3     
+cOut654            4    1 2 3 4   
+cOut655            5    1 2 3 4 5 
+cOut656            2    1 2       
+cOut657            3    1 2 3     
+cOut658            4    1 2 3 4   
+cOut659            5    1 2 3 4 5 
+cOut660            2    1 2       
+cOut661            3    1 2 3     
+cOut662            4    1 2 3 4   
+cOut663            5    1 2 3 4 5 
+cOut664            2    1 2       
+cOut665            3    1 2 3     
+cOut666            4    1 2 3 4   
+cOut667            5    1 2 3 4 5 
+cOut668            2    1 2       
+cOut669            3    1 2 3     
+cOut670            4    1 2 3 4   
+cOut671            5    1 2 3 4 5 
+cOut672            2    1 2       
+cOut673            3    1 2 3     
+cOut674            4    1 2 3 4   
+cOut675            5    1 2 3 4 5 
+cOut676            2    1 2       
+cOut677            3    1 2 3     
+cOut678            4    1 2 3 4   
+cOut679            5    1 2 3 4 5 
+cOut680            2    1 2       
+cOut681            3    1 2 3     
+cOut682            4    1 2 3 4   
+cOut683            5    1 2 3 4 5 
+cOut684            2    1 2       
+cOut685            3    1 2 3     
+cOut686            4    1 2 3 4   
+cOut687            5    1 2 3 4 5 
+cOut688            2    1 2       
+cOut689            3    1 2 3     
+cOut690            4    1 2 3 4   
+cOut691            5    1 2 3 4 5 
+cOut692            2    1 2       
+cOut693            3    1 2 3     
+cOut694            4    1 2 3 4   
+cOut695            5    1 2 3 4 5 
+cOut696            2    1 2       
+cOut697            3    1 2 3     
+cOut698            4    1 2 3 4   
+cOut699            5    1 2 3 4 5 
+cOut700            2    1 2       
+cOut701            3    1 2 3     
+cOut702            4    1 2 3 4   
+cOut703            5    1 2 3 4 5 
+cOut704            2    1 2       
+cOut705            3    1 2 3     
+cOut706            4    1 2 3 4   
+cOut707            5    1 2 3 4 5 
+cOut708            2    1 2       
+cOut709            3    1 2 3     
+cOut710            4    1 2 3 4   
+cOut711            5    1 2 3 4 5 
+cOut712            2    1 2       
+cOut713            3    1 2 3     
+cOut714            4    1 2 3 4   
+cOut715            5    1 2 3 4 5 
+cOut716            2    1 2       
+cOut717            3    1 2 3     
+cOut718            4    1 2 3 4   
+cOut719            5    1 2 3 4 5 
+cOut720            2    1 2       
+cOut721            3    1 2 3     
+cOut722            4    1 2 3 4   
+cOut723            5    1 2 3 4 5 
+cOut724            2    1 2       
+cOut725            3    1 2 3     
+cOut726            4    1 2 3 4   
+cOut727            5    1 2 3 4 5 
+cOut728            2    1 2       
+cOut729            3    1 2 3     
+cOut730            4    1 2 3 4   
+cOut731            5    1 2 3 4 5 
+cOut732            2    1 2       
+cOut733            3    1 2 3     
+cOut734            4    1 2 3 4   
+cOut735            5    1 2 3 4 5 
+cOut736            2    1 2       
+cOut737            3    1 2 3     
+cOut738            4    1 2 3 4   
+cOut739            5    1 2 3 4 5 
+cOut740            2    1 2       
+cOut741            3    1 2 3     
+cOut742            4    1 2 3 4   
+cOut743            5    1 2 3 4 5 
+cOut744            2    1 2       
+cOut745            3    1 2 3     
+cOut746            4    1 2 3 4   
+cOut747            5    1 2 3 4 5 
+cOut748            2    1 2       
+cOut749            3    1 2 3     
+cOut750            4    1 2 3 4   
+cOut751            5    1 2 3 4 5 
+cOut752            2    1 2       
+cOut753            3    1 2 3     
+cOut754            4    1 2 3 4   
+cOut755            5    1 2 3 4 5 
+cOut756            2    1 2       
+cOut757            3    1 2 3     
+cOut758            4    1 2 3 4   
+cOut759            5    1 2 3 4 5 
+cOut760            2    1 2       
+cOut761            3    1 2 3     
+cOut762            4    1 2 3 4   
+cOut763            5    1 2 3 4 5 
+cOut764            2    1 2       
+cOut765            3    1 2 3     
+cOut766            4    1 2 3 4   
+cOut767            5    1 2 3 4 5 
+cOut768            2    1 2       
+cOut769            3    1 2 3     
+cOut770            4    1 2 3 4   
+cOut771            5    1 2 3 4 5 
+cOut772            2    1 2       
+cOut773            3    1 2 3     
+cOut774            4    1 2 3 4   
+cOut775            5    1 2 3 4 5 
+cOut776            2    1 2       
+cOut777            3    1 2 3     
+cOut778            4    1 2 3 4   
+cOut779            5    1 2 3 4 5 
+cOut780            2    1 2       
+cOut781            3    1 2 3     
+cOut782            4    1 2 3 4   
+cOut783            5    1 2 3 4 5 
+cOut784            2    1 2       
+cOut785            3    1 2 3     
+cOut786            4    1 2 3 4   
+cOut787            5    1 2 3 4 5 
+cOut788            2    1 2       
+cOut789            3    1 2 3     
+cOut790            4    1 2 3 4   
+cOut791            5    1 2 3 4 5 
+cOut792            2    1 2       
+cOut793            3    1 2 3     
+cOut794            4    1 2 3 4   
+cOut795            5    1 2 3 4 5 
+cOut796            2    1 2       
+cOut797            3    1 2 3     
+cOut798            4    1 2 3 4   
+cOut799            5    1 2 3 4 5 
+cOut800            2    1 2       
+cOut801            3    1 2 3     
+cOut802            4    1 2 3 4   
+cOut803            5    1 2 3 4 5 
+cOut804            2    1 2       
+cOut805            3    1 2 3     
+cOut806            4    1 2 3 4   
+cOut807            5    1 2 3 4 5 
+cOut808            2    1 2       
+cOut809            3    1 2 3     
+cOut810            4    1 2 3 4   
+cOut811            5    1 2 3 4 5 
+cOut812            2    1 2       
+cOut813            3    1 2 3     
+cOut814            4    1 2 3 4   
+cOut815            5    1 2 3 4 5 
+cOut816            2    1 2       
+cOut817            3    1 2 3     
+cOut818            4    1 2 3 4   
+cOut819            5    1 2 3 4 5 
+cOut820            2    1 2       
+cOut821            3    1 2 3     
+cOut822            4    1 2 3 4   
+cOut823            5    1 2 3 4 5 
+cOut824            2    1 2       
+cOut825            3    1 2 3     
+cOut826            4    1 2 3 4   
+cOut827            5    1 2 3 4 5 
+cOut828            2    1 2       
+cOut829            3    1 2 3     
+cOut830            4    1 2 3 4   
+cOut831            5    1 2 3 4 5 
+cOut832            2    1 2       
+cOut833            3    1 2 3     
+cOut834            4    1 2 3 4   
+cOut835            5    1 2 3 4 5 
+cOut836            2    1 2       
+cOut837            3    1 2 3     
+cOut838            4    1 2 3 4   
+cOut839            5    1 2 3 4 5 
+cOut840            2    1 2       
+cOut841            3    1 2 3     
+cOut842            4    1 2 3 4   
+cOut843            5    1 2 3 4 5 
+cOut844            2    1 2       
+cOut845            3    1 2 3     
+cOut846            4    1 2 3 4   
+cOut847            5    1 2 3 4 5 
+cOut848            2    1 2       
+cOut849            3    1 2 3     
+cOut850            4    1 2 3 4   
+cOut851            5    1 2 3 4 5 
+cOut852            2    1 2       
+cOut853            3    1 2 3     
+cOut854            4    1 2 3 4   
+cOut855            5    1 2 3 4 5 
+cOut856            2    1 2       
+cOut857            3    1 2 3     
+cOut858            4    1 2 3 4   
+cOut859            5    1 2 3 4 5 
+cOut860            2    1 2       
+cOut861            3    1 2 3     
+cOut862            4    1 2 3 4   
+cOut863            5    1 2 3 4 5 
+cOut864            2    1 2       
+cOut865            3    1 2 3     
+cOut866            4    1 2 3 4   
+cOut867            5    1 2 3 4 5 
+cOut868            2    1 2       
+cOut869            3    1 2 3     
+cOut870            4    1 2 3 4   
+cOut871            5    1 2 3 4 5 
+cOut872            2    1 2       
+cOut873            3    1 2 3     
+cOut874            4    1 2 3 4   
+cOut875            5    1 2 3 4 5 
+cOut876            2    1 2       
+cOut877            3    1 2 3     
+cOut878            4    1 2 3 4   
+cOut879            5    1 2 3 4 5 
+cOut880            2    1 2       
+cOut881            3    1 2 3     
+cOut882            4    1 2 3 4   
+cOut883            5    1 2 3 4 5 
+cOut884            2    1 2       
+cOut885            3    1 2 3     
+cOut886            4    1 2 3 4   
+cOut887            5    1 2 3 4 5 
+cOut888            2    1 2       
+cOut889            3    1 2 3     
+cOut890            4    1 2 3 4   
+cOut891            5    1 2 3 4 5 
+cOut892            2    1 2       
+cOut893            3    1 2 3     
+cOut894            4    1 2 3 4   
+cOut895            5    1 2 3 4 5 
+cOut896            2    1 2       
+cOut897            3    1 2 3     
+cOut898            4    1 2 3 4   
+cOut899            5    1 2 3 4 5 
+cOut900            2    1 2       
+cOut901            3    1 2 3     
+cOut902            4    1 2 3 4   
+cOut903            5    1 2 3 4 5 
+cOut904            2    1 2       
+cOut905            3    1 2 3     
+cOut906            4    1 2 3 4   
+cOut907            5    1 2 3 4 5 
+cOut908            2    1 2       
+cOut909            3    1 2 3     
+cOut910            4    1 2 3 4   
+cOut911            5    1 2 3 4 5 
+cOut912            2    1 2       
+cOut913            3    1 2 3     
+cOut914            4    1 2 3 4   
+cOut915            5    1 2 3 4 5 
+cOut916            2    1 2       
+cOut917            3    1 2 3     
+cOut918            4    1 2 3 4   
+cOut919            5    1 2 3 4 5 
+cOut920            2    1 2       
+cOut921            3    1 2 3     
+cOut922            4    1 2 3 4   
+cOut923            5    1 2 3 4 5 
+cOut924            2    1 2       
+cOut925            3    1 2 3     
+cOut926            4    1 2 3 4   
+cOut927            5    1 2 3 4 5 
+cOut928            2    1 2       
+cOut929            3    1 2 3     
+cOut930            4    1 2 3 4   
+cOut931            5    1 2 3 4 5 
+cOut932            2    1 2       
+cOut933            3    1 2 3     
+cOut934            4    1 2 3 4   
+cOut935            5    1 2 3 4 5 
+cOut936            2    1 2       
+cOut937            3    1 2 3     
+cOut938            4    1 2 3 4   
+cOut939            5    1 2 3 4 5 
+cOut940            2    1 2       
+cOut941            3    1 2 3     
+cOut942            4    1 2 3 4   
+cOut943            5    1 2 3 4 5 
+cOut944            2    1 2       
+cOut945            3    1 2 3     
+cOut946            4    1 2 3 4   
+cOut947            5    1 2 3 4 5 
+cOut948            2    1 2       
+cOut949            3    1 2 3     
+cOut950            4    1 2 3 4   
+cOut951            5    1 2 3 4 5 
+cOut952            2    1 2       
+cOut953            3    1 2 3     
+cOut954            4    1 2 3 4   
+cOut955            5    1 2 3 4 5 
+cOut956            2    1 2       
+cOut957            3    1 2 3     
+cOut958            4    1 2 3 4   
+cOut959            5    1 2 3 4 5 
+cOut960            2    1 2       
+cOut961            3    1 2 3     
+cOut962            4    1 2 3 4   
+cOut963            5    1 2 3 4 5 
+cOut964            2    1 2       
+cOut965            3    1 2 3     
+cOut966            4    1 2 3 4   
+cOut967            5    1 2 3 4 5 
+cOut968            2    1 2       
+cOut969            3    1 2 3     
+cOut970            4    1 2 3 4   
+cOut971            5    1 2 3 4 5 
+cOut972            2    1 2       
+cOut973            3    1 2 3     
+cOut974            4    1 2 3 4   
+cOut975            5    1 2 3 4 5 
+cOut976            2    1 2       
+cOut977            3    1 2 3     
+cOut978            4    1 2 3 4   
+cOut979            5    1 2 3 4 5 
+cOut980            2    1 2       
+cOut981            3    1 2 3     
+cOut982            4    1 2 3 4   
+cOut983            5    1 2 3 4 5 
+cOut984            2    1 2       
+cOut985            3    1 2 3     
+cOut986            4    1 2 3 4   
+cOut987            5    1 2 3 4 5 
+cOut988            2    1 2       
+cOut989            3    1 2 3     
+cOut990            4    1 2 3 4   
+cOut991            5    1 2 3 4 5 
+cOut992            2    1 2       
+cOut993            3    1 2 3     
+cOut994            4    1 2 3 4   
+cOut995            5    1 2 3 4 5 
+cOut996            2    1 2       
+cOut997            3    1 2 3     
+cOut998            4    1 2 3 4   
+cOut999            5    1 2 3 4 5 
+cOut1000           2    1 2       
+
+
+              Dimensions
+
+Number of Effects                 2008
+Number of Effects after Splits    4513
+Number of Parameters              4513
+
+
+          Screening Information
+
+Screening Method    SASVI (safe screening)
+
+The GLMSELECT Procedure
+
+                  LASSO Selection Summary
+ 
+         Effect      Effect          Number
+ Step    Entered     Removed     Effects In           SBC 
+
+    0    Intercept                        1    10413.6418 
+----------------------------------------------------------
+    1    cIn2_1                           2    10335.5423 
+    2    cIn2_4                           3     7237.0701 
+    3    cIn1_1                           4     7186.9642 
+    4    cIn1_3                           5     6753.6076 
+    5    xIn5                             6     6609.0322 
+    6    cIn2_3                           7     6510.2639 
+    7    xIn4                             8     5797.1607 
+    8    xIn3                             9     5487.4432 
+    9    xIn2                            10     2894.0166 
+   10    xIn1                            11      310.9340*
+
+               * Optimal Value of Criterion
+
+
+Selection stopped at a local minimum of the SBC criterion.
+
+
+                     Stop Details
+ 
+Candidate                  Candidate         Compare
+For          Effect              SBC         SBC
+
+Entry        cOut561_2      314.7979    >    310.9340  
+
+The GLMSELECT Procedure
+Selected Model
+
+The selected model is the model at the last step (Step 10).
+
+
+Effects: Intercept xIn1 xIn2 xIn3 xIn4 xIn5 cIn1_1 cIn1_3 cIn2_1 cIn2_3 cIn2_4 
+
+
+                       Analysis of Variance
+ 
+                                  Sum of           Mean
+Source                 DF        Squares         Square    F Value
+
+Model                  10          34841     3484.13522    3328.66
+Error                4989     5222.03352        1.04671           
+Corrected Total      4999          40063                          
+
+
+Root MSE              1.02309
+Dependent Mean       -1.25888
+R-Square               0.8697
+Adj R-Sq               0.8694
+AIC                5241.24489
+AICC               5241.30745
+SBC                 310.93401
+
+
+      Parameter Estimates
+ 
+Parameter    DF        Estimate
+
+Intercept     1        0.255521
+xIn1          1       -0.823553
+xIn2          1        1.348559
+xIn3          1       -1.521438
+xIn4          1        1.815846
+xIn5          1       -2.015872
+cIn1_1        1       -0.969808
+cIn1_3        1        0.892276
+cIn2_1        1        2.032478
+cIn2_3        1       -1.847686
+cIn2_4        1       -3.832549
+
+The GLMSELECT Procedure
+
+Data Set                     WORK.EX7DATA
+Dependent Variable                      y
+Selection Method                    LASSO
+Stop Criterion                        SBC
+Effect Hierarchy Enforced            None
+
+
+Number of Observations Read        5000
+Number of Observations Used        5000
+
+
+     Class Level Information
+ 
+Class         Levels    Values
+
+cIn1               3    1 2 3     
+cIn2               4    1 2 3 4   
+cOut1              3    1 2 3     
+cOut2              4    1 2 3 4   
+cOut3              5    1 2 3 4 5 
+cOut4              2    1 2       
+cOut5              3    1 2 3     
+cOut6              4    1 2 3 4   
+cOut7              5    1 2 3 4 5 
+cOut8              2    1 2       
+cOut9              3    1 2 3     
+cOut10             4    1 2 3 4   
+cOut11             5    1 2 3 4 5 
+cOut12             2    1 2       
+cOut13             3    1 2 3     
+cOut14             4    1 2 3 4   
+cOut15             5    1 2 3 4 5 
+cOut16             2    1 2       
+cOut17             3    1 2 3     
+cOut18             4    1 2 3 4   
+cOut19             5    1 2 3 4 5 
+cOut20             2    1 2       
+cOut21             3    1 2 3     
+cOut22             4    1 2 3 4   
+cOut23             5    1 2 3 4 5 
+cOut24             2    1 2       
+cOut25             3    1 2 3     
+cOut26             4    1 2 3 4   
+cOut27             5    1 2 3 4 5 
+cOut28             2    1 2       
+cOut29             3    1 2 3     
+cOut30             4    1 2 3 4   
+cOut31             5    1 2 3 4 5 
+cOut32             2    1 2       
+cOut33             3    1 2 3     
+cOut34             4    1 2 3 4   
+cOut35             5    1 2 3 4 5 
+cOut36             2    1 2       
+cOut37             3    1 2 3     
+cOut38             4    1 2 3 4   
+cOut39             5    1 2 3 4 5 
+cOut40             2    1 2       
+cOut41             3    1 2 3     
+cOut42             4    1 2 3 4   
+cOut43             5    1 2 3 4 5 
+cOut44             2    1 2       
+cOut45             3    1 2 3     
+cOut46             4    1 2 3 4   
+cOut47             5    1 2 3 4 5 
+cOut48             2    1 2       
+cOut49             3    1 2 3     
+cOut50             4    1 2 3 4   
+cOut51             5    1 2 3 4 5 
+cOut52             2    1 2       
+cOut53             3    1 2 3     
+cOut54             4    1 2 3 4   
+cOut55             5    1 2 3 4 5 
+cOut56             2    1 2       
+cOut57             3    1 2 3     
+cOut58             4    1 2 3 4   
+cOut59             5    1 2 3 4 5 
+cOut60             2    1 2       
+cOut61             3    1 2 3     
+cOut62             4    1 2 3 4   
+cOut63             5    1 2 3 4 5 
+cOut64             2    1 2       
+cOut65             3    1 2 3     
+cOut66             4    1 2 3 4   
+cOut67             5    1 2 3 4 5 
+cOut68             2    1 2       
+cOut69             3    1 2 3     
+cOut70             4    1 2 3 4   
+cOut71             5    1 2 3 4 5 
+cOut72             2    1 2       
+cOut73             3    1 2 3     
+cOut74             4    1 2 3 4   
+cOut75             5    1 2 3 4 5 
+cOut76             2    1 2       
+cOut77             3    1 2 3     
+cOut78             4    1 2 3 4   
+cOut79             5    1 2 3 4 5 
+cOut80             2    1 2       
+cOut81             3    1 2 3     
+cOut82             4    1 2 3 4   
+cOut83             5    1 2 3 4 5 
+cOut84             2    1 2       
+cOut85             3    1 2 3     
+cOut86             4    1 2 3 4   
+cOut87             5    1 2 3 4 5 
+cOut88             2    1 2       
+cOut89             3    1 2 3     
+cOut90             4    1 2 3 4   
+cOut91             5    1 2 3 4 5 
+cOut92             2    1 2       
+cOut93             3    1 2 3     
+cOut94             4    1 2 3 4   
+cOut95             5    1 2 3 4 5 
+cOut96             2    1 2       
+cOut97             3    1 2 3     
+cOut98             4    1 2 3 4   
+cOut99             5    1 2 3 4 5 
+cOut100            2    1 2       
+cOut101            3    1 2 3     
+cOut102            4    1 2 3 4   
+cOut103            5    1 2 3 4 5 
+cOut104            2    1 2       
+cOut105            3    1 2 3     
+cOut106            4    1 2 3 4   
+cOut107            5    1 2 3 4 5 
+cOut108            2    1 2       
+cOut109            3    1 2 3     
+cOut110            4    1 2 3 4   
+cOut111            5    1 2 3 4 5 
+cOut112            2    1 2       
+cOut113            3    1 2 3     
+cOut114            4    1 2 3 4   
+cOut115            5    1 2 3 4 5 
+cOut116            2    1 2       
+cOut117            3    1 2 3     
+cOut118            4    1 2 3 4   
+cOut119            5    1 2 3 4 5 
+cOut120            2    1 2       
+cOut121            3    1 2 3     
+cOut122            4    1 2 3 4   
+cOut123            5    1 2 3 4 5 
+cOut124            2    1 2       
+cOut125            3    1 2 3     
+cOut126            4    1 2 3 4   
+cOut127            5    1 2 3 4 5 
+cOut128            2    1 2       
+cOut129            3    1 2 3     
+cOut130            4    1 2 3 4   
+cOut131            5    1 2 3 4 5 
+cOut132            2    1 2       
+cOut133            3    1 2 3     
+cOut134            4    1 2 3 4   
+cOut135            5    1 2 3 4 5 
+cOut136            2    1 2       
+cOut137            3    1 2 3     
+cOut138            4    1 2 3 4   
+cOut139            5    1 2 3 4 5 
+cOut140            2    1 2       
+cOut141            3    1 2 3     
+cOut142            4    1 2 3 4   
+cOut143            5    1 2 3 4 5 
+cOut144            2    1 2       
+cOut145            3    1 2 3     
+cOut146            4    1 2 3 4   
+cOut147            5    1 2 3 4 5 
+cOut148            2    1 2       
+cOut149            3    1 2 3     
+cOut150            4    1 2 3 4   
+cOut151            5    1 2 3 4 5 
+cOut152            2    1 2       
+cOut153            3    1 2 3     
+cOut154            4    1 2 3 4   
+cOut155            5    1 2 3 4 5 
+cOut156            2    1 2       
+cOut157            3    1 2 3     
+cOut158            4    1 2 3 4   
+cOut159            5    1 2 3 4 5 
+cOut160            2    1 2       
+cOut161            3    1 2 3     
+cOut162            4    1 2 3 4   
+cOut163            5    1 2 3 4 5 
+cOut164            2    1 2       
+cOut165            3    1 2 3     
+cOut166            4    1 2 3 4   
+cOut167            5    1 2 3 4 5 
+cOut168            2    1 2       
+cOut169            3    1 2 3     
+cOut170            4    1 2 3 4   
+cOut171            5    1 2 3 4 5 
+cOut172            2    1 2       
+cOut173            3    1 2 3     
+cOut174            4    1 2 3 4   
+cOut175            5    1 2 3 4 5 
+cOut176            2    1 2       
+cOut177            3    1 2 3     
+cOut178            4    1 2 3 4   
+cOut179            5    1 2 3 4 5 
+cOut180            2    1 2       
+cOut181            3    1 2 3     
+cOut182            4    1 2 3 4   
+cOut183            5    1 2 3 4 5 
+cOut184            2    1 2       
+cOut185            3    1 2 3     
+cOut186            4    1 2 3 4   
+cOut187            5    1 2 3 4 5 
+cOut188            2    1 2       
+cOut189            3    1 2 3     
+cOut190            4    1 2 3 4   
+cOut191            5    1 2 3 4 5 
+cOut192            2    1 2       
+cOut193            3    1 2 3     
+cOut194            4    1 2 3 4   
+cOut195            5    1 2 3 4 5 
+cOut196            2    1 2       
+cOut197            3    1 2 3     
+cOut198            4    1 2 3 4   
+cOut199            5    1 2 3 4 5 
+cOut200            2    1 2       
+cOut201            3    1 2 3     
+cOut202            4    1 2 3 4   
+cOut203            5    1 2 3 4 5 
+cOut204            2    1 2       
+cOut205            3    1 2 3     
+cOut206            4    1 2 3 4   
+cOut207            5    1 2 3 4 5 
+cOut208            2    1 2       
+cOut209            3    1 2 3     
+cOut210            4    1 2 3 4   
+cOut211            5    1 2 3 4 5 
+cOut212            2    1 2       
+cOut213            3    1 2 3     
+cOut214            4    1 2 3 4   
+cOut215            5    1 2 3 4 5 
+cOut216            2    1 2       
+cOut217            3    1 2 3     
+cOut218            4    1 2 3 4   
+cOut219            5    1 2 3 4 5 
+cOut220            2    1 2       
+cOut221            3    1 2 3     
+cOut222            4    1 2 3 4   
+cOut223            5    1 2 3 4 5 
+cOut224            2    1 2       
+cOut225            3    1 2 3     
+cOut226            4    1 2 3 4   
+cOut227            5    1 2 3 4 5 
+cOut228            2    1 2       
+cOut229            3    1 2 3     
+cOut230            4    1 2 3 4   
+cOut231            5    1 2 3 4 5 
+cOut232            2    1 2       
+cOut233            3    1 2 3     
+cOut234            4    1 2 3 4   
+cOut235            5    1 2 3 4 5 
+cOut236            2    1 2       
+cOut237            3    1 2 3     
+cOut238            4    1 2 3 4   
+cOut239            5    1 2 3 4 5 
+cOut240            2    1 2       
+cOut241            3    1 2 3     
+cOut242            4    1 2 3 4   
+cOut243            5    1 2 3 4 5 
+cOut244            2    1 2       
+cOut245            3    1 2 3     
+cOut246            4    1 2 3 4   
+cOut247            5    1 2 3 4 5 
+cOut248            2    1 2       
+cOut249            3    1 2 3     
+cOut250            4    1 2 3 4   
+cOut251            5    1 2 3 4 5 
+cOut252            2    1 2       
+cOut253            3    1 2 3     
+cOut254            4    1 2 3 4   
+cOut255            5    1 2 3 4 5 
+cOut256            2    1 2       
+cOut257            3    1 2 3     
+cOut258            4    1 2 3 4   
+cOut259            5    1 2 3 4 5 
+cOut260            2    1 2       
+cOut261            3    1 2 3     
+cOut262            4    1 2 3 4   
+cOut263            5    1 2 3 4 5 
+cOut264            2    1 2       
+cOut265            3    1 2 3     
+cOut266            4    1 2 3 4   
+cOut267            5    1 2 3 4 5 
+cOut268            2    1 2       
+cOut269            3    1 2 3     
+cOut270            4    1 2 3 4   
+cOut271            5    1 2 3 4 5 
+cOut272            2    1 2       
+cOut273            3    1 2 3     
+cOut274            4    1 2 3 4   
+cOut275            5    1 2 3 4 5 
+cOut276            2    1 2       
+cOut277            3    1 2 3     
+cOut278            4    1 2 3 4   
+cOut279            5    1 2 3 4 5 
+cOut280            2    1 2       
+cOut281            3    1 2 3     
+cOut282            4    1 2 3 4   
+cOut283            5    1 2 3 4 5 
+cOut284            2    1 2       
+cOut285            3    1 2 3     
+cOut286            4    1 2 3 4   
+cOut287            5    1 2 3 4 5 
+cOut288            2    1 2       
+cOut289            3    1 2 3     
+cOut290            4    1 2 3 4   
+cOut291            5    1 2 3 4 5 
+cOut292            2    1 2       
+cOut293            3    1 2 3     
+cOut294            4    1 2 3 4   
+cOut295            5    1 2 3 4 5 
+cOut296            2    1 2       
+cOut297            3    1 2 3     
+cOut298            4    1 2 3 4   
+cOut299            5    1 2 3 4 5 
+cOut300            2    1 2       
+cOut301            3    1 2 3     
+cOut302            4    1 2 3 4   
+cOut303            5    1 2 3 4 5 
+cOut304            2    1 2       
+cOut305            3    1 2 3     
+cOut306            4    1 2 3 4   
+cOut307            5    1 2 3 4 5 
+cOut308            2    1 2       
+cOut309            3    1 2 3     
+cOut310            4    1 2 3 4   
+cOut311            5    1 2 3 4 5 
+cOut312            2    1 2       
+cOut313            3    1 2 3     
+cOut314            4    1 2 3 4   
+cOut315            5    1 2 3 4 5 
+cOut316            2    1 2       
+cOut317            3    1 2 3     
+cOut318            4    1 2 3 4   
+cOut319            5    1 2 3 4 5 
+cOut320            2    1 2       
+cOut321            3    1 2 3     
+cOut322            4    1 2 3 4   
+cOut323            5    1 2 3 4 5 
+cOut324            2    1 2       
+cOut325            3    1 2 3     
+cOut326            4    1 2 3 4   
+cOut327            5    1 2 3 4 5 
+cOut328            2    1 2       
+cOut329            3    1 2 3     
+cOut330            4    1 2 3 4   
+cOut331            5    1 2 3 4 5 
+cOut332            2    1 2       
+cOut333            3    1 2 3     
+cOut334            4    1 2 3 4   
+cOut335            5    1 2 3 4 5 
+cOut336            2    1 2       
+cOut337            3    1 2 3     
+cOut338            4    1 2 3 4   
+cOut339            5    1 2 3 4 5 
+cOut340            2    1 2       
+cOut341            3    1 2 3     
+cOut342            4    1 2 3 4   
+cOut343            5    1 2 3 4 5 
+cOut344            2    1 2       
+cOut345            3    1 2 3     
+cOut346            4    1 2 3 4   
+cOut347            5    1 2 3 4 5 
+cOut348            2    1 2       
+cOut349            3    1 2 3     
+cOut350            4    1 2 3 4   
+cOut351            5    1 2 3 4 5 
+cOut352            2    1 2       
+cOut353            3    1 2 3     
+cOut354            4    1 2 3 4   
+cOut355            5    1 2 3 4 5 
+cOut356            2    1 2       
+cOut357            3    1 2 3     
+cOut358            4    1 2 3 4   
+cOut359            5    1 2 3 4 5 
+cOut360            2    1 2       
+cOut361            3    1 2 3     
+cOut362            4    1 2 3 4   
+cOut363            5    1 2 3 4 5 
+cOut364            2    1 2       
+cOut365            3    1 2 3     
+cOut366            4    1 2 3 4   
+cOut367            5    1 2 3 4 5 
+cOut368            2    1 2       
+cOut369            3    1 2 3     
+cOut370            4    1 2 3 4   
+cOut371            5    1 2 3 4 5 
+cOut372            2    1 2       
+cOut373            3    1 2 3     
+cOut374            4    1 2 3 4   
+cOut375            5    1 2 3 4 5 
+cOut376            2    1 2       
+cOut377            3    1 2 3     
+cOut378            4    1 2 3 4   
+cOut379            5    1 2 3 4 5 
+cOut380            2    1 2       
+cOut381            3    1 2 3     
+cOut382            4    1 2 3 4   
+cOut383            5    1 2 3 4 5 
+cOut384            2    1 2       
+cOut385            3    1 2 3     
+cOut386            4    1 2 3 4   
+cOut387            5    1 2 3 4 5 
+cOut388            2    1 2       
+cOut389            3    1 2 3     
+cOut390            4    1 2 3 4   
+cOut391            5    1 2 3 4 5 
+cOut392            2    1 2       
+cOut393            3    1 2 3     
+cOut394            4    1 2 3 4   
+cOut395            5    1 2 3 4 5 
+cOut396            2    1 2       
+cOut397            3    1 2 3     
+cOut398            4    1 2 3 4   
+cOut399            5    1 2 3 4 5 
+cOut400            2    1 2       
+cOut401            3    1 2 3     
+cOut402            4    1 2 3 4   
+cOut403            5    1 2 3 4 5 
+cOut404            2    1 2       
+cOut405            3    1 2 3     
+cOut406            4    1 2 3 4   
+cOut407            5    1 2 3 4 5 
+cOut408            2    1 2       
+cOut409            3    1 2 3     
+cOut410            4    1 2 3 4   
+cOut411            5    1 2 3 4 5 
+cOut412            2    1 2       
+cOut413            3    1 2 3     
+cOut414            4    1 2 3 4   
+cOut415            5    1 2 3 4 5 
+cOut416            2    1 2       
+cOut417            3    1 2 3     
+cOut418            4    1 2 3 4   
+cOut419            5    1 2 3 4 5 
+cOut420            2    1 2       
+cOut421            3    1 2 3     
+cOut422            4    1 2 3 4   
+cOut423            5    1 2 3 4 5 
+cOut424            2    1 2       
+cOut425            3    1 2 3     
+cOut426            4    1 2 3 4   
+cOut427            5    1 2 3 4 5 
+cOut428            2    1 2       
+cOut429            3    1 2 3     
+cOut430            4    1 2 3 4   
+cOut431            5    1 2 3 4 5 
+cOut432            2    1 2       
+cOut433            3    1 2 3     
+cOut434            4    1 2 3 4   
+cOut435            5    1 2 3 4 5 
+cOut436            2    1 2       
+cOut437            3    1 2 3     
+cOut438            4    1 2 3 4   
+cOut439            5    1 2 3 4 5 
+cOut440            2    1 2       
+cOut441            3    1 2 3     
+cOut442            4    1 2 3 4   
+cOut443            5    1 2 3 4 5 
+cOut444            2    1 2       
+cOut445            3    1 2 3     
+cOut446            4    1 2 3 4   
+cOut447            5    1 2 3 4 5 
+cOut448            2    1 2       
+cOut449            3    1 2 3     
+cOut450            4    1 2 3 4   
+cOut451            5    1 2 3 4 5 
+cOut452            2    1 2       
+cOut453            3    1 2 3     
+cOut454            4    1 2 3 4   
+cOut455            5    1 2 3 4 5 
+cOut456            2    1 2       
+cOut457            3    1 2 3     
+cOut458            4    1 2 3 4   
+cOut459            5    1 2 3 4 5 
+cOut460            2    1 2       
+cOut461            3    1 2 3     
+cOut462            4    1 2 3 4   
+cOut463            5    1 2 3 4 5 
+cOut464            2    1 2       
+cOut465            3    1 2 3     
+cOut466            4    1 2 3 4   
+cOut467            5    1 2 3 4 5 
+cOut468            2    1 2       
+cOut469            3    1 2 3     
+cOut470            4    1 2 3 4   
+cOut471            5    1 2 3 4 5 
+cOut472            2    1 2       
+cOut473            3    1 2 3     
+cOut474            4    1 2 3 4   
+cOut475            5    1 2 3 4 5 
+cOut476            2    1 2       
+cOut477            3    1 2 3     
+cOut478            4    1 2 3 4   
+cOut479            5    1 2 3 4 5 
+cOut480            2    1 2       
+cOut481            3    1 2 3     
+cOut482            4    1 2 3 4   
+cOut483            5    1 2 3 4 5 
+cOut484            2    1 2       
+cOut485            3    1 2 3     
+cOut486            4    1 2 3 4   
+cOut487            5    1 2 3 4 5 
+cOut488            2    1 2       
+cOut489            3    1 2 3     
+cOut490            4    1 2 3 4   
+cOut491            5    1 2 3 4 5 
+cOut492            2    1 2       
+cOut493            3    1 2 3     
+cOut494            4    1 2 3 4   
+cOut495            5    1 2 3 4 5 
+cOut496            2    1 2       
+cOut497            3    1 2 3     
+cOut498            4    1 2 3 4   
+cOut499            5    1 2 3 4 5 
+cOut500            2    1 2       
+cOut501            3    1 2 3     
+cOut502            4    1 2 3 4   
+cOut503            5    1 2 3 4 5 
+cOut504            2    1 2       
+cOut505            3    1 2 3     
+cOut506            4    1 2 3 4   
+cOut507            5    1 2 3 4 5 
+cOut508            2    1 2       
+cOut509            3    1 2 3     
+cOut510            4    1 2 3 4   
+cOut511            5    1 2 3 4 5 
+cOut512            2    1 2       
+cOut513            3    1 2 3     
+cOut514            4    1 2 3 4   
+cOut515            5    1 2 3 4 5 
+cOut516            2    1 2       
+cOut517            3    1 2 3     
+cOut518            4    1 2 3 4   
+cOut519            5    1 2 3 4 5 
+cOut520            2    1 2       
+cOut521            3    1 2 3     
+cOut522            4    1 2 3 4   
+cOut523            5    1 2 3 4 5 
+cOut524            2    1 2       
+cOut525            3    1 2 3     
+cOut526            4    1 2 3 4   
+cOut527            5    1 2 3 4 5 
+cOut528            2    1 2       
+cOut529            3    1 2 3     
+cOut530            4    1 2 3 4   
+cOut531            5    1 2 3 4 5 
+cOut532            2    1 2       
+cOut533            3    1 2 3     
+cOut534            4    1 2 3 4   
+cOut535            5    1 2 3 4 5 
+cOut536            2    1 2       
+cOut537            3    1 2 3     
+cOut538            4    1 2 3 4   
+cOut539            5    1 2 3 4 5 
+cOut540            2    1 2       
+cOut541            3    1 2 3     
+cOut542            4    1 2 3 4   
+cOut543            5    1 2 3 4 5 
+cOut544            2    1 2       
+cOut545            3    1 2 3     
+cOut546            4    1 2 3 4   
+cOut547            5    1 2 3 4 5 
+cOut548            2    1 2       
+cOut549            3    1 2 3     
+cOut550            4    1 2 3 4   
+cOut551            5    1 2 3 4 5 
+cOut552            2    1 2       
+cOut553            3    1 2 3     
+cOut554            4    1 2 3 4   
+cOut555            5    1 2 3 4 5 
+cOut556            2    1 2       
+cOut557            3    1 2 3     
+cOut558            4    1 2 3 4   
+cOut559            5    1 2 3 4 5 
+cOut560            2    1 2       
+cOut561            3    1 2 3     
+cOut562            4    1 2 3 4   
+cOut563            5    1 2 3 4 5 
+cOut564            2    1 2       
+cOut565            3    1 2 3     
+cOut566            4    1 2 3 4   
+cOut567            5    1 2 3 4 5 
+cOut568            2    1 2       
+cOut569            3    1 2 3     
+cOut570            4    1 2 3 4   
+cOut571            5    1 2 3 4 5 
+cOut572            2    1 2       
+cOut573            3    1 2 3     
+cOut574            4    1 2 3 4   
+cOut575            5    1 2 3 4 5 
+cOut576            2    1 2       
+cOut577            3    1 2 3     
+cOut578            4    1 2 3 4   
+cOut579            5    1 2 3 4 5 
+cOut580            2    1 2       
+cOut581            3    1 2 3     
+cOut582            4    1 2 3 4   
+cOut583            5    1 2 3 4 5 
+cOut584            2    1 2       
+cOut585            3    1 2 3     
+cOut586            4    1 2 3 4   
+cOut587            5    1 2 3 4 5 
+cOut588            2    1 2       
+cOut589            3    1 2 3     
+cOut590            4    1 2 3 4   
+cOut591            5    1 2 3 4 5 
+cOut592            2    1 2       
+cOut593            3    1 2 3     
+cOut594            4    1 2 3 4   
+cOut595            5    1 2 3 4 5 
+cOut596            2    1 2       
+cOut597            3    1 2 3     
+cOut598            4    1 2 3 4   
+cOut599            5    1 2 3 4 5 
+cOut600            2    1 2       
+cOut601            3    1 2 3     
+cOut602            4    1 2 3 4   
+cOut603            5    1 2 3 4 5 
+cOut604            2    1 2       
+cOut605            3    1 2 3     
+cOut606            4    1 2 3 4   
+cOut607            5    1 2 3 4 5 
+cOut608            2    1 2       
+cOut609            3    1 2 3     
+cOut610            4    1 2 3 4   
+cOut611            5    1 2 3 4 5 
+cOut612            2    1 2       
+cOut613            3    1 2 3     
+cOut614            4    1 2 3 4   
+cOut615            5    1 2 3 4 5 
+cOut616            2    1 2       
+cOut617            3    1 2 3     
+cOut618            4    1 2 3 4   
+cOut619            5    1 2 3 4 5 
+cOut620            2    1 2       
+cOut621            3    1 2 3     
+cOut622            4    1 2 3 4   
+cOut623            5    1 2 3 4 5 
+cOut624            2    1 2       
+cOut625            3    1 2 3     
+cOut626            4    1 2 3 4   
+cOut627            5    1 2 3 4 5 
+cOut628            2    1 2       
+cOut629            3    1 2 3     
+cOut630            4    1 2 3 4   
+cOut631            5    1 2 3 4 5 
+cOut632            2    1 2       
+cOut633            3    1 2 3     
+cOut634            4    1 2 3 4   
+cOut635            5    1 2 3 4 5 
+cOut636            2    1 2       
+cOut637            3    1 2 3     
+cOut638            4    1 2 3 4   
+cOut639            5    1 2 3 4 5 
+cOut640            2    1 2       
+cOut641            3    1 2 3     
+cOut642            4    1 2 3 4   
+cOut643            5    1 2 3 4 5 
+cOut644            2    1 2       
+cOut645            3    1 2 3     
+cOut646            4    1 2 3 4   
+cOut647            5    1 2 3 4 5 
+cOut648            2    1 2       
+cOut649            3    1 2 3     
+cOut650            4    1 2 3 4   
+cOut651            5    1 2 3 4 5 
+cOut652            2    1 2       
+cOut653            3    1 2 3     
+cOut654            4    1 2 3 4   
+cOut655            5    1 2 3 4 5 
+cOut656            2    1 2       
+cOut657            3    1 2 3     
+cOut658            4    1 2 3 4   
+cOut659            5    1 2 3 4 5 
+cOut660            2    1 2       
+cOut661            3    1 2 3     
+cOut662            4    1 2 3 4   
+cOut663            5    1 2 3 4 5 
+cOut664            2    1 2       
+cOut665            3    1 2 3     
+cOut666            4    1 2 3 4   
+cOut667            5    1 2 3 4 5 
+cOut668            2    1 2       
+cOut669            3    1 2 3     
+cOut670            4    1 2 3 4   
+cOut671            5    1 2 3 4 5 
+cOut672            2    1 2       
+cOut673            3    1 2 3     
+cOut674            4    1 2 3 4   
+cOut675            5    1 2 3 4 5 
+cOut676            2    1 2       
+cOut677            3    1 2 3     
+cOut678            4    1 2 3 4   
+cOut679            5    1 2 3 4 5 
+cOut680            2    1 2       
+cOut681            3    1 2 3     
+cOut682            4    1 2 3 4   
+cOut683            5    1 2 3 4 5 
+cOut684            2    1 2       
+cOut685            3    1 2 3     
+cOut686            4    1 2 3 4   
+cOut687            5    1 2 3 4 5 
+cOut688            2    1 2       
+cOut689            3    1 2 3     
+cOut690            4    1 2 3 4   
+cOut691            5    1 2 3 4 5 
+cOut692            2    1 2       
+cOut693            3    1 2 3     
+cOut694            4    1 2 3 4   
+cOut695            5    1 2 3 4 5 
+cOut696            2    1 2       
+cOut697            3    1 2 3     
+cOut698            4    1 2 3 4   
+cOut699            5    1 2 3 4 5 
+cOut700            2    1 2       
+cOut701            3    1 2 3     
+cOut702            4    1 2 3 4   
+cOut703            5    1 2 3 4 5 
+cOut704            2    1 2       
+cOut705            3    1 2 3     
+cOut706            4    1 2 3 4   
+cOut707            5    1 2 3 4 5 
+cOut708            2    1 2       
+cOut709            3    1 2 3     
+cOut710            4    1 2 3 4   
+cOut711            5    1 2 3 4 5 
+cOut712            2    1 2       
+cOut713            3    1 2 3     
+cOut714            4    1 2 3 4   
+cOut715            5    1 2 3 4 5 
+cOut716            2    1 2       
+cOut717            3    1 2 3     
+cOut718            4    1 2 3 4   
+cOut719            5    1 2 3 4 5 
+cOut720            2    1 2       
+cOut721            3    1 2 3     
+cOut722            4    1 2 3 4   
+cOut723            5    1 2 3 4 5 
+cOut724            2    1 2       
+cOut725            3    1 2 3     
+cOut726            4    1 2 3 4   
+cOut727            5    1 2 3 4 5 
+cOut728            2    1 2       
+cOut729            3    1 2 3     
+cOut730            4    1 2 3 4   
+cOut731            5    1 2 3 4 5 
+cOut732            2    1 2       
+cOut733            3    1 2 3     
+cOut734            4    1 2 3 4   
+cOut735            5    1 2 3 4 5 
+cOut736            2    1 2       
+cOut737            3    1 2 3     
+cOut738            4    1 2 3 4   
+cOut739            5    1 2 3 4 5 
+cOut740            2    1 2       
+cOut741            3    1 2 3     
+cOut742            4    1 2 3 4   
+cOut743            5    1 2 3 4 5 
+cOut744            2    1 2       
+cOut745            3    1 2 3     
+cOut746            4    1 2 3 4   
+cOut747            5    1 2 3 4 5 
+cOut748            2    1 2       
+cOut749            3    1 2 3     
+cOut750            4    1 2 3 4   
+cOut751            5    1 2 3 4 5 
+cOut752            2    1 2       
+cOut753            3    1 2 3     
+cOut754            4    1 2 3 4   
+cOut755            5    1 2 3 4 5 
+cOut756            2    1 2       
+cOut757            3    1 2 3     
+cOut758            4    1 2 3 4   
+cOut759            5    1 2 3 4 5 
+cOut760            2    1 2       
+cOut761            3    1 2 3     
+cOut762            4    1 2 3 4   
+cOut763            5    1 2 3 4 5 
+cOut764            2    1 2       
+cOut765            3    1 2 3     
+cOut766            4    1 2 3 4   
+cOut767            5    1 2 3 4 5 
+cOut768            2    1 2       
+cOut769            3    1 2 3     
+cOut770            4    1 2 3 4   
+cOut771            5    1 2 3 4 5 
+cOut772            2    1 2       
+cOut773            3    1 2 3     
+cOut774            4    1 2 3 4   
+cOut775            5    1 2 3 4 5 
+cOut776            2    1 2       
+cOut777            3    1 2 3     
+cOut778            4    1 2 3 4   
+cOut779            5    1 2 3 4 5 
+cOut780            2    1 2       
+cOut781            3    1 2 3     
+cOut782            4    1 2 3 4   
+cOut783            5    1 2 3 4 5 
+cOut784            2    1 2       
+cOut785            3    1 2 3     
+cOut786            4    1 2 3 4   
+cOut787            5    1 2 3 4 5 
+cOut788            2    1 2       
+cOut789            3    1 2 3     
+cOut790            4    1 2 3 4   
+cOut791            5    1 2 3 4 5 
+cOut792            2    1 2       
+cOut793            3    1 2 3     
+cOut794            4    1 2 3 4   
+cOut795            5    1 2 3 4 5 
+cOut796            2    1 2       
+cOut797            3    1 2 3     
+cOut798            4    1 2 3 4   
+cOut799            5    1 2 3 4 5 
+cOut800            2    1 2       
+cOut801            3    1 2 3     
+cOut802            4    1 2 3 4   
+cOut803            5    1 2 3 4 5 
+cOut804            2    1 2       
+cOut805            3    1 2 3     
+cOut806            4    1 2 3 4   
+cOut807            5    1 2 3 4 5 
+cOut808            2    1 2       
+cOut809            3    1 2 3     
+cOut810            4    1 2 3 4   
+cOut811            5    1 2 3 4 5 
+cOut812            2    1 2       
+cOut813            3    1 2 3     
+cOut814            4    1 2 3 4   
+cOut815            5    1 2 3 4 5 
+cOut816            2    1 2       
+cOut817            3    1 2 3     
+cOut818            4    1 2 3 4   
+cOut819            5    1 2 3 4 5 
+cOut820            2    1 2       
+cOut821            3    1 2 3     
+cOut822            4    1 2 3 4   
+cOut823            5    1 2 3 4 5 
+cOut824            2    1 2       
+cOut825            3    1 2 3     
+cOut826            4    1 2 3 4   
+cOut827            5    1 2 3 4 5 
+cOut828            2    1 2       
+cOut829            3    1 2 3     
+cOut830            4    1 2 3 4   
+cOut831            5    1 2 3 4 5 
+cOut832            2    1 2       
+cOut833            3    1 2 3     
+cOut834            4    1 2 3 4   
+cOut835            5    1 2 3 4 5 
+cOut836            2    1 2       
+cOut837            3    1 2 3     
+cOut838            4    1 2 3 4   
+cOut839            5    1 2 3 4 5 
+cOut840            2    1 2       
+cOut841            3    1 2 3     
+cOut842            4    1 2 3 4   
+cOut843            5    1 2 3 4 5 
+cOut844            2    1 2       
+cOut845            3    1 2 3     
+cOut846            4    1 2 3 4   
+cOut847            5    1 2 3 4 5 
+cOut848            2    1 2       
+cOut849            3    1 2 3     
+cOut850            4    1 2 3 4   
+cOut851            5    1 2 3 4 5 
+cOut852            2    1 2       
+cOut853            3    1 2 3     
+cOut854            4    1 2 3 4   
+cOut855            5    1 2 3 4 5 
+cOut856            2    1 2       
+cOut857            3    1 2 3     
+cOut858            4    1 2 3 4   
+cOut859            5    1 2 3 4 5 
+cOut860            2    1 2       
+cOut861            3    1 2 3     
+cOut862            4    1 2 3 4   
+cOut863            5    1 2 3 4 5 
+cOut864            2    1 2       
+cOut865            3    1 2 3     
+cOut866            4    1 2 3 4   
+cOut867            5    1 2 3 4 5 
+cOut868            2    1 2       
+cOut869            3    1 2 3     
+cOut870            4    1 2 3 4   
+cOut871            5    1 2 3 4 5 
+cOut872            2    1 2       
+cOut873            3    1 2 3     
+cOut874            4    1 2 3 4   
+cOut875            5    1 2 3 4 5 
+cOut876            2    1 2       
+cOut877            3    1 2 3     
+cOut878            4    1 2 3 4   
+cOut879            5    1 2 3 4 5 
+cOut880            2    1 2       
+cOut881            3    1 2 3     
+cOut882            4    1 2 3 4   
+cOut883            5    1 2 3 4 5 
+cOut884            2    1 2       
+cOut885            3    1 2 3     
+cOut886            4    1 2 3 4   
+cOut887            5    1 2 3 4 5 
+cOut888            2    1 2       
+cOut889            3    1 2 3     
+cOut890            4    1 2 3 4   
+cOut891            5    1 2 3 4 5 
+cOut892            2    1 2       
+cOut893            3    1 2 3     
+cOut894            4    1 2 3 4   
+cOut895            5    1 2 3 4 5 
+cOut896            2    1 2       
+cOut897            3    1 2 3     
+cOut898            4    1 2 3 4   
+cOut899            5    1 2 3 4 5 
+cOut900            2    1 2       
+cOut901            3    1 2 3     
+cOut902            4    1 2 3 4   
+cOut903            5    1 2 3 4 5 
+cOut904            2    1 2       
+cOut905            3    1 2 3     
+cOut906            4    1 2 3 4   
+cOut907            5    1 2 3 4 5 
+cOut908            2    1 2       
+cOut909            3    1 2 3     
+cOut910            4    1 2 3 4   
+cOut911            5    1 2 3 4 5 
+cOut912            2    1 2       
+cOut913            3    1 2 3     
+cOut914            4    1 2 3 4   
+cOut915            5    1 2 3 4 5 
+cOut916            2    1 2       
+cOut917            3    1 2 3     
+cOut918            4    1 2 3 4   
+cOut919            5    1 2 3 4 5 
+cOut920            2    1 2       
+cOut921            3    1 2 3     
+cOut922            4    1 2 3 4   
+cOut923            5    1 2 3 4 5 
+cOut924            2    1 2       
+cOut925            3    1 2 3     
+cOut926            4    1 2 3 4   
+cOut927            5    1 2 3 4 5 
+cOut928            2    1 2       
+cOut929            3    1 2 3     
+cOut930            4    1 2 3 4   
+cOut931            5    1 2 3 4 5 
+cOut932            2    1 2       
+cOut933            3    1 2 3     
+cOut934            4    1 2 3 4   
+cOut935            5    1 2 3 4 5 
+cOut936            2    1 2       
+cOut937            3    1 2 3     
+cOut938            4    1 2 3 4   
+cOut939            5    1 2 3 4 5 
+cOut940            2    1 2       
+cOut941            3    1 2 3     
+cOut942            4    1 2 3 4   
+cOut943            5    1 2 3 4 5 
+cOut944            2    1 2       
+cOut945            3    1 2 3     
+cOut946            4    1 2 3 4   
+cOut947            5    1 2 3 4 5 
+cOut948            2    1 2       
+cOut949            3    1 2 3     
+cOut950            4    1 2 3 4   
+cOut951            5    1 2 3 4 5 
+cOut952            2    1 2       
+cOut953            3    1 2 3     
+cOut954            4    1 2 3 4   
+cOut955            5    1 2 3 4 5 
+cOut956            2    1 2       
+cOut957            3    1 2 3     
+cOut958            4    1 2 3 4   
+cOut959            5    1 2 3 4 5 
+cOut960            2    1 2       
+cOut961            3    1 2 3     
+cOut962            4    1 2 3 4   
+cOut963            5    1 2 3 4 5 
+cOut964            2    1 2       
+cOut965            3    1 2 3     
+cOut966            4    1 2 3 4   
+cOut967            5    1 2 3 4 5 
+cOut968            2    1 2       
+cOut969            3    1 2 3     
+cOut970            4    1 2 3 4   
+cOut971            5    1 2 3 4 5 
+cOut972            2    1 2       
+cOut973            3    1 2 3     
+cOut974            4    1 2 3 4   
+cOut975            5    1 2 3 4 5 
+cOut976            2    1 2       
+cOut977            3    1 2 3     
+cOut978            4    1 2 3 4   
+cOut979            5    1 2 3 4 5 
+cOut980            2    1 2       
+cOut981            3    1 2 3     
+cOut982            4    1 2 3 4   
+cOut983            5    1 2 3 4 5 
+cOut984            2    1 2       
+cOut985            3    1 2 3     
+cOut986            4    1 2 3 4   
+cOut987            5    1 2 3 4 5 
+cOut988            2    1 2       
+cOut989            3    1 2 3     
+cOut990            4    1 2 3 4   
+cOut991            5    1 2 3 4 5 
+cOut992            2    1 2       
+cOut993            3    1 2 3     
+cOut994            4    1 2 3 4   
+cOut995            5    1 2 3 4 5 
+cOut996            2    1 2       
+cOut997            3    1 2 3     
+cOut998            4    1 2 3 4   
+cOut999            5    1 2 3 4 5 
+cOut1000           2    1 2       
+
+
+              Dimensions
+
+Number of Effects                 2008
+Number of Effects after Splits    4513
+Number of Parameters              4513
+
+
+                  Screening Information
+
+Screening Method         SIS (sure independence screening)
+Screening Keep Number                                   15
+Actual Kept Number                                      15
+Actual Kept Ratio                                    0.003
+
+
+    Effect Screening by Correlation
+ 
+                                Maximum
+                               Absolute
+    Rank    Effect          Correlation
+
+       1    cIn2_1            0.621286 
+       2    cIn2_4            0.611998 
+       3    cIn1_1            0.261449 
+       4    cIn1_3            0.259374 
+       5    cIn2_3            0.215103 
+       6    xIn5              0.212433 
+       7    xIn4              0.201704 
+       8    cIn2_2            0.195087 
+       9    xIn3              0.174133 
+      10    xIn2              0.170705 
+      11    xIn1              0.083742 
+      12    cOut447_4         0.061958 
+      13    cOut238_1         0.052981 
+      14    cOut538_4         0.052165 
+      15    cOut747_5         0.051390 
+      16    xOut345           0.050114*
+      17    cOut511_5         0.047524*
+      18    cOut630_2         0.047440*
+      19    cOut672_2         0.045937*
+      20    cOut672_1         0.045937*
+
+         * Screened Out Effect
+
+The GLMSELECT Procedure
+
+                  LASSO Selection Summary
+ 
+         Effect      Effect          Number
+ Step    Entered     Removed     Effects In           SBC 
+
+    0    Intercept                        1    10413.6418 
+----------------------------------------------------------
+    1    cIn2_1                           2    10335.5423 
+    2    cIn2_4                           3     7237.0701 
+    3    cIn1_1                           4     7186.9642 
+    4    cIn1_3                           5     6753.6076 
+    5    xIn5                             6     6609.0322 
+    6    cIn2_3                           7     6510.2639 
+    7    xIn4                             8     5797.1607 
+    8    xIn3                             9     5487.4432 
+    9    xIn2                            10     2894.0166 
+   10    xIn1                            11      245.9693 
+   11    cOut747_5                       12      238.4427*
+
+               * Optimal Value of Criterion
+
+
+Selection stopped at a local minimum of the SBC criterion.
+
+
+                     Stop Details
+ 
+Candidate                  Candidate         Compare
+For          Effect              SBC         SBC
+
+Entry        cOut538_4      246.4327    >    238.4427  
+
+The GLMSELECT Procedure
+Selected Model
+
+The selected model is the model at the last step (Step 11).
+
+
+Effects: Intercept xIn1 xIn2 xIn3 xIn4 xIn5 cIn1_1 cIn1_3 cIn2_1 cIn2_3 cIn2_4 cOut747_5 
+
+
+                       Analysis of Variance
+ 
+                                  Sum of           Mean
+Source                 DF        Squares         Square    F Value
+
+Model                  11          34925     3175.02512    3082.27
+Error                4988     5138.10941        1.03009           
+Corrected Total      4999          40063                          
+
+
+Root MSE              1.01494
+Dependent Mean       -1.25888
+R-Square               0.8718
+Adj R-Sq               0.8715
+AIC                5162.23640
+AICC               5162.30940
+SBC                 238.44272
+
+
+      Parameter Estimates
+ 
+Parameter    DF        Estimate
+
+Intercept     1        0.346318
+xIn1          1       -0.913314
+xIn2          1        1.429125
+xIn3          1       -1.606892
+xIn4          1        1.903284
+xIn5          1       -2.106242
+cIn1_1        1       -1.006896
+cIn1_3        1        0.925909
+cIn2_1        1        2.033772
+cIn2_3        1       -1.934611
+cIn2_4        1       -3.920436
+cOut747_5     1        0.014164

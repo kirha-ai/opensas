@@ -1,0 +1,60 @@
+The SAS System
+
+16382      
+16383      /* STAT-SEQTEST-006: SEQTEST — Repeated Confidence Intervals
+16384       * Source: S154 / Chapter 111 / `Repeated Confidence Intervals` (PDF pp. 9178–9180).
+16385       * Discriminates: Verified default procedure context
+16386       */
+16387      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+16387    ! validmemname=compatible locale=en_US;
+16388      %let syscc=0;
+16389      title; footnote;
+16390      ods _all_ close;
+16391      ods listing gpath="%sysfunc(pathname(work))";
+16392      ods graphics off;
+16393      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.BOUNDARIES (memtype=DATA).
+NOTE: Deleting WORK.ESTIMATES (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+16393    !                                         quit;
+
+
+16394      ods path work.templat(update) sashelp.tmplmst(read);
+16395      
+16396      proc seqdesign altref=-10;
+16397      TwoSided: design nstages=4 method=obf;
+16398      samplesize model=twosamplemean(stddev=20);
+16399      ods output Boundary=boundaries;
+16400      run;
+
+NOTE: The data set WORK.BOUNDARIES has 4 observations and 13 variables.
+NOTE: The PROCEDURE SEQDESIGN printed page 1173.
+
+16401      data estimates;
+16402      length Variable $8 _Scale_ $8;
+16403      Variable='Trt';
+16404      _Scale_='MLE';
+16405      _Stage_=1;
+16406      Estimate=-7;
+16407      StdErr=4.5;
+16408      run;
+
+NOTE: The data set WORK.ESTIMATES has 1 observations and 5 variables.
+
+16409      proc seqtest boundary=boundaries parms(testvar=Trt)=estimates infoadj=prop;
+16410      run;
+
+NOTE: The PROCEDURE SEQTEST printed page 1174.
+
+16411      
+16412      
+16413      
+16414      
+The SAS System
+
+16415      

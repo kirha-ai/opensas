@@ -1,0 +1,47 @@
+The SAS System
+
+729        
+730        /* STAT-COMMON-019: Clustering distances, transformations, and tie rules
+731         * Source: S154 / Chapter 12 / `Introduction to Clustering Procedures` (PDF pp. 213–252); S154 / Chapter 10 / `Introduction to Multivariate
+731      ! Procedures` (PDF pp. 199–204); S154 / Chapter 11 / `Introduction to Discriminant Procedures` (PDF pp. 205–212).
+732         * Discriminates: Distance symmetry, scaling and output matrix layout
+733         */
+734        options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+734      ! validmemname=compatible locale=en_US;
+735        %let syscc=0;
+736        title; footnote;
+737        ods _all_ close;
+738        ods listing gpath="%sysfunc(pathname(work))";
+739        ods graphics off;
+740        proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+740      !                                         quit;
+
+
+741        ods path work.templat(update) sashelp.tmplmst(read);
+742        
+743        data sample;
+744         input x z y group $ weight freq;
+745         datalines;
+
+NOTE: The data set WORK.SAMPLE has 12 observations and 6 variables.
+
+758        ;
+759        run;
+760        proc distance data=sample method=euclid out=dist; var interval(x z / std=std); run;
+
+NOTE: The data set WORK.DIST has 12 observations and 12 variables.
+
+761        proc print data=dist noobs; format _numeric_ best32.; run;
+
+NOTE: There were 12 observations read from the data set WORK.DIST.
+NOTE: The PROCEDURE PRINT printed page 40.
+
+762        
+763        
+764        
+765        
+The SAS System
+
+766        

@@ -1,0 +1,62 @@
+The SAS System
+
+9540       
+9541       /* STAT-KDE-004: KDE — Kernel Density Estimates / Binning / Kernel Distribution Estimates
+9542        * Source: S154 / Chapter 73 / `Kernel Density Estimates` (PDF pp. 5406–5407); S154 / Chapter 73 / `Binning` (PDF pp. 5407–5409); S154 / Chapter
+9542     ! 73 / `Kernel Distribution Estimates` (PDF pp. 5409–5411).
+9543        * Discriminates: Example 73.5: Univariate KDE Graphics
+9544        */
+9545       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+9545     ! validmemname=compatible locale=en_US;
+9546       %let syscc=0;
+9547       title; footnote;
+9548       ods _all_ close;
+9549       ods listing gpath="%sysfunc(pathname(work))";
+9550       ods graphics off;
+9551       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.BIVNORMAL (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+9551     !                                         quit;
+
+
+9552       ods path work.templat(update) sashelp.tmplmst(read);
+9553       
+9554       data bivnormal;
+9555       seed = 1283470;
+9556       do i = 1 to 1000;
+9557       z1 = rannor(seed);
+9558       z2 = rannor(seed);
+9559       z3 = rannor(seed);
+9560       x = 3*z1+z2;
+9561       y = 3*z1+z3;
+9562       output;
+9563       end;
+9564       drop seed;
+9565       run;
+
+NOTE: The data set WORK.BIVNORMAL has 1000 observations and 6 variables.
+
+9566       ods graphics on;
+9567       proc kde data=bivnormal;
+9568       univar x / plots=(density histogram histdensity);
+9569       univar x y / plots=densityoverlay;
+9570       run;
+
+NOTE: Processing UNIVAR statement number 1.
+NOTE: Processing UNIVAR statement number 2.
+NOTE: The PROCEDURE KDE printed pages 704-706.
+
+9571       ods graphics off;
+9572       run;
+9573       quit;
+9574       
+9575       
+9576       
+9577       
+The SAS System
+
+9578       

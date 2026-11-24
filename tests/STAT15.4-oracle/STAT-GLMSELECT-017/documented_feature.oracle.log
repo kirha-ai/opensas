@@ -1,0 +1,407 @@
+The SAS System
+
+6285       
+6286       /* STAT-GLMSELECT-017: GLMSELECT — ODS Graphics
+6287        * Source: S154 / Chapter 56 / `ODS Graphics` (PDF pp. 4391–4398).
+6288        * Discriminates: Getting Started: GLMSELECT Procedure
+6289        */
+6290       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+6290     ! validmemname=compatible locale=en_US;
+6291       %let syscc=0;
+6292       title; footnote;
+6293       ods _all_ close;
+6294       ods listing gpath="%sysfunc(pathname(work))";
+6295       ods graphics off;
+6296       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+6296     !                                         quit;
+
+
+6297       ods path work.templat(update) sashelp.tmplmst(read);
+6298       
+6299       ods graphics on;
+6300       ods trace on;
+6301       ods trace on;
+6302       proc contents varnum data=sashelp.baseball;
+6303       ods select position;
+6304       run;
+
+
+Output Added:
+-------------
+Name:       Position
+Label:      Varnum
+Template:   Base.Contents.Position
+Path:       Contents.DataSet.Position
+-------------
+NOTE: The PROCEDURE CONTENTS printed page 462.
+
+6305       ods graphics on;
+6306       proc glmselect data=sashelp.baseball plots=all seed=314159;
+6307       class league division;
+6308       model logSalary = nAtBat nHits nHome nRuns nRBI nBB
+6309       yrMajor crAtBat crHits crHome crRuns crRbi
+6310       crBB league division nOuts nAssts nError
+6311       / details=all stats=all;
+6312       run;
+
+
+Output Added:
+-------------
+Name:       ModelInfo
+Label:      Model Information
+Template:   Stat.GLMSELECT.ModelInfo
+Path:       GLMSelect.ModelInfo
+-------------
+
+Output Added:
+-------------
+Name:       NObs
+Label:      Number of Observations
+Template:   Stat.GLMSELECT.NObs
+Path:       GLMSelect.NObs
+-------------
+
+Output Added:
+-------------
+Name:       ClassLevelInfo
+Label:      Class Level Information
+Template:   Stat.GLMSELECT.ClassLevelInfo
+Path:       GLMSelect.ClassLevelInfo
+-------------
+
+Output Added:
+-------------
+Name:       Dimensions
+Label:      Dimensions
+Template:   Stat.GLMSELECT.Dimensions
+Path:       GLMSelect.Dimensions
+-------------
+
+Output Added:
+-------------
+Name:       ANOVA
+Label:      ANOVA
+Template:   Stat.GLMSELECT.ANOVA
+Path:       GLMSelect.StepDetails.Step0.ANOVA
+-------------
+
+Output Added:
+-------------
+Name:       FitStatistics
+Label:      Fit Statistics
+Template:   Stat.GLMSELECT.FitStatistics
+Path:       GLMSelect.StepDetails.Step0.FitStatistics
+-------------
+
+Output Added:
+-------------
+Name:       ParameterEstimates
+Label:      Parameter Estimates
+Template:   Stat.GLMSELECT.ParameterEstimates
+Path:       GLMSelect.StepDetails.Step0.ParameterEstimates
+-------------
+
+Output Added:
+-------------
+Name:       ANOVA
+Label:      ANOVA
+Template:   Stat.GLMSELECT.ANOVA
+Path:       GLMSelect.StepDetails.Step1.ANOVA
+-------------
+
+Output Added:
+-------------
+Name:       FitStatistics
+Label:      Fit Statistics
+Template:   Stat.GLMSELECT.FitStatistics
+Path:       GLMSelect.StepDetails.Step1.FitStatistics
+-------------
+
+Output Added:
+-------------
+Name:       ParameterEstimates
+Label:      Parameter Estimates
+Template:   Stat.GLMSELECT.ParameterEstimates
+Path:       GLMSelect.StepDetails.Step1.ParameterEstimates
+-------------
+
+Output Added:
+-------------
+Name:       Candidates
+Label:      Best 10 Entry Candidates
+Template:   Stat.GLMSELECT.Candidates
+Path:       GLMSelect.StepDetails.Step1.Candidates
+-------------
+
+Output Added:
+-------------
+Name:       CandidatesPlot
+Label:      Candidates Plot
+Template:   Stat.GLMSELECT.Graphics.CandidatesPlot
+Path:       GLMSelect.StepDetails.Step1.CandidatesPlot
+-------------
+
+Output Added:
+-------------
+Name:       ANOVA
+Label:      ANOVA
+Template:   Stat.GLMSELECT.ANOVA
+Path:       GLMSelect.StepDetails.Step2.ANOVA
+-------------
+
+Output Added:
+-------------
+Name:       FitStatistics
+Label:      Fit Statistics
+Template:   Stat.GLMSELECT.FitStatistics
+Path:       GLMSelect.StepDetails.Step2.FitStatistics
+-------------
+
+Output Added:
+-------------
+Name:       ParameterEstimates
+Label:      Parameter Estimates
+Template:   Stat.GLMSELECT.ParameterEstimates
+Path:       GLMSelect.StepDetails.Step2.ParameterEstimates
+-------------
+
+Output Added:
+-------------
+Name:       Candidates
+Label:      Best 10 Entry Candidates
+Template:   Stat.GLMSELECT.Candidates
+Path:       GLMSelect.StepDetails.Step2.Candidates
+-------------
+
+Output Added:
+-------------
+Name:       CandidatesPlot
+Label:      Candidates Plot
+Template:   Stat.GLMSELECT.Graphics.CandidatesPlot
+Path:       GLMSelect.StepDetails.Step2.CandidatesPlot
+-------------
+
+Output Added:
+-------------
+Name:       ANOVA
+Label:      ANOVA
+Template:   Stat.GLMSELECT.ANOVA
+Path:       GLMSelect.StepDetails.Step3.ANOVA
+-------------
+
+Output Added:
+-------------
+Name:       FitStatistics
+Label:      Fit Statistics
+Template:   Stat.GLMSELECT.FitStatistics
+Path:       GLMSelect.StepDetails.Step3.FitStatistics
+-------------
+
+Output Added:
+-------------
+Name:       ParameterEstimates
+Label:      Parameter Estimates
+Template:   Stat.GLMSELECT.ParameterEstimates
+Path:       GLMSelect.StepDetails.Step3.ParameterEstimates
+-------------
+
+Output Added:
+-------------
+Name:       Candidates
+Label:      Best 10 Entry Candidates
+Template:   Stat.GLMSELECT.Candidates
+Path:       GLMSelect.StepDetails.Step3.Candidates
+-------------
+
+Output Added:
+-------------
+Name:       CandidatesPlot
+Label:      Candidates Plot
+Template:   Stat.GLMSELECT.Graphics.CandidatesPlot
+Path:       GLMSelect.StepDetails.Step3.CandidatesPlot
+-------------
+
+Output Added:
+-------------
+Name:       ANOVA
+Label:      ANOVA
+Template:   Stat.GLMSELECT.ANOVA
+Path:       GLMSelect.StepDetails.Step4.ANOVA
+-------------
+
+Output Added:
+-------------
+Name:       FitStatistics
+Label:      Fit Statistics
+Template:   Stat.GLMSELECT.FitStatistics
+Path:       GLMSelect.StepDetails.Step4.FitStatistics
+-------------
+
+Output Added:
+-------------
+Name:       ParameterEstimates
+Label:      Parameter Estimates
+Template:   Stat.GLMSELECT.ParameterEstimates
+Path:       GLMSelect.StepDetails.Step4.ParameterEstimates
+-------------
+
+Output Added:
+-------------
+Name:       Candidates
+Label:      Removal Candidates
+Template:   Stat.GLMSELECT.Candidates
+Path:       GLMSelect.StepDetails.Step4.Candidates
+-------------
+
+Output Added:
+-------------
+Name:       CandidatesPlot
+Label:      Candidates Plot
+Template:   Stat.GLMSELECT.Graphics.CandidatesPlot
+Path:       GLMSelect.StepDetails.Step4.CandidatesPlot
+-------------
+
+Output Added:
+-------------
+Name:       ANOVA
+Label:      ANOVA
+Template:   Stat.GLMSELECT.ANOVA
+Path:       GLMSelect.StepDetails.Step5.ANOVA
+-------------
+
+Output Added:
+-------------
+Name:       FitStatistics
+Label:      Fit Statistics
+Template:   Stat.GLMSELECT.FitStatistics
+Path:       GLMSelect.StepDetails.Step5.FitStatistics
+-------------
+
+Output Added:
+-------------
+Name:       ParameterEstimates
+Label:      Parameter Estimates
+Template:   Stat.GLMSELECT.ParameterEstimates
+Path:       GLMSelect.StepDetails.Step5.ParameterEstimates
+-------------
+
+Output Added:
+-------------
+Name:       Candidates
+Label:      Best 10 Entry Candidates
+Template:   Stat.GLMSELECT.Candidates
+Path:       GLMSelect.StepDetails.Step5.Candidates
+-------------
+
+Output Added:
+-------------
+Name:       CandidatesPlot
+Label:      Candidates Plot
+Template:   Stat.GLMSELECT.Graphics.CandidatesPlot
+Path:       GLMSelect.StepDetails.Step5.CandidatesPlot
+-------------
+
+Output Added:
+-------------
+Name:       SelectionSummary
+Label:      Stepwise Selection Summary
+Template:   Stat.GLMSELECT.SelectionSummary
+Path:       GLMSelect.Summary.SelectionSummary
+-------------
+
+Output Added:
+-------------
+Name:       StopReason
+Label:      Stop Reason
+Template:   Stat.GLMSELECT.StopReason
+Path:       GLMSelect.Summary.StopReason
+-------------
+
+Output Added:
+-------------
+Name:       StopDetails
+Label:      Stop Details
+Template:   Stat.GLMSELECT.StopDetails
+Path:       GLMSelect.Summary.StopDetails
+-------------
+
+Output Added:
+-------------
+Name:       CoefficientPanel
+Label:      Coefficient Plot
+Template:   Stat.GLMSELECT.Graphics.CoefficientPanel
+Path:       GLMSelect.Summary.CoefficientPanel
+-------------
+
+Output Added:
+-------------
+Name:       CriterionPanel
+Label:      Criterion Panel
+Template:   Stat.GLMSELECT.Graphics.CriterionPanel
+Path:       GLMSelect.Summary.CriterionPanel
+-------------
+
+Output Added:
+-------------
+Name:       ASEPlot
+Label:      ASE Plot
+Template:   Stat.GLMSELECT.Graphics.ASEPlot
+Path:       GLMSelect.Summary.ASEPlot
+-------------
+
+Output Added:
+-------------
+Name:       SelectedEffects
+Label:      Selected Effects
+Template:   Stat.GLMSELECT.SelectedEffects
+Path:       GLMSelect.SelectedModel.SelectedEffects
+-------------
+
+Output Added:
+-------------
+Name:       ANOVA
+Label:      ANOVA
+Template:   Stat.GLMSELECT.ANOVA
+Path:       GLMSelect.SelectedModel.ANOVA
+-------------
+
+Output Added:
+-------------
+Name:       FitStatistics
+Label:      Fit Statistics
+Template:   Stat.GLMSELECT.FitStatistics
+Path:       GLMSelect.SelectedModel.FitStatistics
+-------------
+
+Output Added:
+-------------
+Name:       ParameterEstimates
+Label:      Parameter Estimates
+Template:   Stat.GLMSELECT.ParameterEstimates
+Path:       GLMSelect.SelectedModel.ParameterEstimates
+-------------
+NOTE: There were 322 observations read from the data set SASHELP.BASEBALL.
+NOTE: The PROCEDURE GLMSELECT printed pages 463-471.
+
+6313       ods graphics off;
+6314       run;
+6315       quit;
+6316       ods trace off;
+6317       ods trace off;
+6318       ods graphics off;
+6319       
+6320       
+6321       
+6322       
+The SAS System
+
+6323       

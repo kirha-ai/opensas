@@ -1,0 +1,83 @@
+The SAS System
+
+4900       
+4901       /* STAT-PLM-007: PLM — LSMEANS / LSMESTIMATE / SLICE
+4902        * Source: S154 / Chapter 94 / `LSMEANS Statement` (PDF pp. 7636–7637); S154 / Chapter 94 / `LSMESTIMATE Statement` (PDF pp. 7637–7639); S154 /
+4902     ! Chapter 94 / `SLICE Statement` (PDF pp. 7643–7644).
+4903        * Discriminates: Getting Started: PLM Procedure; explicit statements: LSMEANS, LSMESTIMATE, SLICE
+4904        */
+4905       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+4905     ! validmemname=compatible locale=en_US;
+4906       %let syscc=0;
+4907       title; footnote;
+4908       ods _all_ close;
+4909       ods listing gpath="%sysfunc(pathname(work))";
+4910       ods graphics off;
+4911       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SIMUDATA (memtype=DATA).
+NOTE: Deleting WORK.SIMUMODEL (memtype=ITEMSTOR).
+NOTE: Deleting WORK.TEST (memtype=DATA).
+NOTE: Deleting WORK.TESTOUT (memtype=DATA).
+4911     !                                         quit;
+
+
+4912       ods path work.templat(update) sashelp.tmplmst(read);
+4913       
+4914       data BlockDesign;
+4915       input block a b y @@;
+4916       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.BLOCKDESIGN has 24 observations and 4 variables.
+
+4929       ;
+4930       proc glm data=BlockDesign;
+4931       class block a b;
+4932       model y = block a b a*b / solution;
+4933       store work.BlockAnalysis / label='PLM: Getting Started';
+4934       run;
+
+
+NOTE: The GLM procedure generated the model item store WORK.BLOCKANALYSIS.
+NOTE: The PROCEDURE GLM printed pages 367-368.
+
+4935       proc plm restore=work.BlockAnalysis;
+4936       run;
+
+NOTE: The PROCEDURE PLM printed page 369.
+
+4937       proc plm restore=work.BlockAnalysis;
+4938       show fit parms;
+4939       test a b a*b;
+4940       run;
+
+NOTE: The PROCEDURE PLM printed page 370.
+
+4941       proc plm restore=work.BlockAnalysis seed=3;
+4942       lsmeans a / diff;
+4943       lsmestimate a -1 1,
+4944       1 1 -2 / uppertailed ftest;
+4945       run;
+
+NOTE: Random number seed for this analysis set to 3.
+NOTE: The PROCEDURE PLM printed page 371.
+
+4946       ods graphics on;
+4947       proc plm restore=work.BlockAnalysis;
+4948       slice a*b / sliceby(b='1') diff;
+4949       run;
+
+NOTE: The PROCEDURE PLM printed page 372.
+
+4950       ods graphics off;
+4951       run;
+4952       quit;
+4953       
+4954       
+4955       
+4956       
+The SAS System
+
+4957       

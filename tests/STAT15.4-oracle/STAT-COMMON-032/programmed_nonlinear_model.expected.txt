@@ -1,0 +1,50 @@
+
+The NLIN Procedure
+Dependent Variable y
+Method: Gauss-Newton
+
+              Iterative Phase
+                                    Sum of
+ Iter    intercept       slope     Squares
+
+    0            0      1.0000      1017.0
+    1       1.7121      2.0315     14.7751
+
+
+NOTE: Convergence criterion met.                                
+
+
+         Estimation Summary
+
+Method                  Gauss-Newton
+Iterations                         1
+R                                  0
+PPC                                0
+RPC(intercept)               1712121
+Object                      0.985472
+Objective                   14.77506
+Observations Read                 12
+Observations Used                 12
+Observations Missing               0
+
+
+                                  Sum of        Mean               Approx
+Source                    DF     Squares      Square    F Value    Pr > F
+
+Model                      1       590.1       590.1     399.42    <.0001
+Error                     10     14.7751      1.4775                     
+Corrected Total           11       604.9                                 
+
+
+                              Approx
+Parameter      Estimate    Std Error    Approximate 95% Confidence Limits
+
+intercept        1.7121       0.7481      0.0452      3.3790
+slope            2.0315       0.1016      1.8050      2.2580
+
+
+     Approximate Correlation Matrix
+                intercept           slope
+
+intercept       1.0000000      -0.8831761
+slope          -0.8831761       1.0000000

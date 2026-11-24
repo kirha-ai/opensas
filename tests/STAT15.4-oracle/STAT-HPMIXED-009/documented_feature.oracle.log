@@ -1,0 +1,63 @@
+The SAS System
+
+5077       
+5078       /* STAT-HPMIXED-009: HPMIXED — Hypothesis Tests for Fixed Effects
+5079        * Source: S154 / Chapter 62 / `Hypothesis Tests for Fixed Effects` (PDF pp. 4847–4848).
+5080        * Discriminates: Example 62.2: Comparing Results from PROC HPMIXED and PROC MIXED
+5081        */
+5082       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+5082     ! validmemname=compatible locale=en_US;
+5083       %let syscc=0;
+5084       title; footnote;
+5085       ods _all_ close;
+5086       ods listing gpath="%sysfunc(pathname(work))";
+5087       ods graphics off;
+5088       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SIM (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+5088     !                                         quit;
+
+
+5089       ods path work.templat(update) sashelp.tmplmst(read);
+5090       
+5091       data heights;
+5092       input Family Gender$ Height @@;
+5093       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.HEIGHTS has 18 observations and 3 variables.
+
+5097       ;
+5098       proc mixed;
+5099       class Family Gender;
+5100       model Height = Gender / s;
+5101       random Family Family*Gender / s;
+5102       run;
+
+NOTE: Convergence criteria met.
+NOTE: The PROCEDURE MIXED printed page 216.
+
+5103       proc hpmixed;
+5104       class Family Gender;
+5105       model Height = Gender / s;
+5106       random Family Family*Gender / s;
+5107       test gender;
+5108       run;
+
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The PROCEDURE HPMIXED printed page 217.
+
+5109       
+5110       
+5111       
+5112       
+The SAS System
+
+5113       

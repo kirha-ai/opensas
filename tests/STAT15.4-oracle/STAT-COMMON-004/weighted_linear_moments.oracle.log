@@ -1,0 +1,53 @@
+The SAS System
+
+157        
+158        /* STAT-COMMON-004: Linear model moments and covariance foundations
+159         * Source: S154 / Chapter 4 / `Expectations of Random Variables and Vectors` (PDF pp. 65–68); S154 / Chapter 4 / `Mean Squared Error` (PDF pp.
+159      ! 68–69); S154 / Chapter 4 / `Linear Model Theory` (PDF pp. 69–80); S154 / Chapter 7 / `Introduction to Mixed Modeling Procedures` (PDF pp.
+159      ! 135–148).
+160         * Discriminates: Weighted normal equations, residual variance and coefficient covariance
+161         */
+162        options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+162      ! validmemname=compatible locale=en_US;
+163        %let syscc=0;
+164        title; footnote;
+165        ods _all_ close;
+166        ods listing gpath="%sysfunc(pathname(work))";
+167        ods graphics off;
+168        proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SAMPLE (memtype=DATA).
+NOTE: Deleting WORK.SINGULAR (memtype=DATA).
+168      !                                         quit;
+
+
+169        ods path work.templat(update) sashelp.tmplmst(read);
+170        
+171        data sample;
+172         input x z y group $ weight freq;
+173         datalines;
+
+NOTE: The data set WORK.SAMPLE has 12 observations and 6 variables.
+
+186        ;
+187        run;
+188        proc reg data=sample outest=est covout; model y=x z; weight weight; run;
+
+188      !                                                                          quit;
+
+NOTE: The data set WORK.EST has 4 observations and 9 variables.
+NOTE: The PROCEDURE REG printed page 5.
+
+189        proc print data=est noobs; format _numeric_ best32.; run;
+
+NOTE: There were 4 observations read from the data set WORK.EST.
+NOTE: The PROCEDURE PRINT printed page 6.
+
+190        
+191        
+192        
+193        
+The SAS System
+
+194        

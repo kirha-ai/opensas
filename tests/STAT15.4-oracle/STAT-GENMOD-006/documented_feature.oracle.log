@@ -1,0 +1,93 @@
+The SAS System
+
+22184      
+22185      /* STAT-GENMOD-006: GENMOD — Zero-Inflated Models / Tweedie Distribution for Generalized Linear Models
+22186       * Source: S154 / Chapter 51 / `Zero-Inflated Models` (PDF pp. 3588–3589); S154 / Chapter 51 / `Tweedie Distribution for Generalized Linear Models`
+22186    !  (PDF pp. 3589–3591).
+22187       * Discriminates: Example 51.12: Tweedie Regression
+22188       */
+22189      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+22189    ! validmemname=compatible locale=en_US;
+22190      %let syscc=0;
+22191      title; footnote;
+22192      ods _all_ close;
+22193      ods listing gpath="%sysfunc(pathname(work))";
+22194      ods graphics off;
+22195      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.ICECREAM (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+22195    !                                         quit;
+
+
+22196      ods path work.templat(update) sashelp.tmplmst(read);
+22197      
+22198      %let nObs = 250;
+22199      %let nClass = 5;
+22200      %let nLevs = 4;
+22201      %let seed = 100;
+22202      data tmp1;
+22203      array c{&nClass};
+22204      keep c1-c&nClass yTweedie d1 d2;
+22205      /* Tweedie parms */
+22206      phi=0.5;
+22207      p=1.5;
+22208      do i=1 to &nObs;
+22209      do j=1 to &nClass;
+22210      c{j} = int(ranuni(1)*&nLevs);
+22211      end;
+22212      d1 = ranuni(&seed);
+22213      d2 = ranuni(&seed);
+22214      xBeta = 0.5 *((c2<2) - 2*(c1=1) + 0.5*c&nClass + 0.05*d1);
+22215      mu = exp(xBeta);
+22216      /* Poisson distributions parms */
+22217      lambda = mu**(2-p)/(phi*(2-p));
+22218      /* Gamma distribution parms */
+22219      alpha = (2-p)/(p-1);
+22220      gamma = phi*(p-1)*(mu**(p-1));
+22221      rpoi = ranpoi(&seed,lambda);
+22222      if rpoi=0 then yTweedie=0;
+22223      else do;
+22224      yTweedie=0;
+22225      do j=1 to rpoi;
+22226      yTweedie = yTweedie + rangam(&seed,alpha);
+22227      end;
+22228      yTweedie = yTweedie * gamma;
+22229      end;
+22230      output;
+22231      end;
+22232      run;
+
+NOTE: The data set WORK.TMP1 has 250 observations and 8 variables.
+
+22233      proc genmod data=tmp1;
+22234      class C1-C5;
+22235      model yTweedie = C1-C5 D1 D2 / dist=Tweedie type3;
+22236      run;
+
+NOTE: Algorithm converged.
+NOTE: The Tweedie dispersion parameter was estimated by maximum likelihood.
+NOTE: The PROCEDURE GENMOD printed page 2376.
+
+22237      proc genmod data=tmp1;
+22238      class C1 C2;
+22239      model yTweedie = C1 C2 D1 / dist=Tweedie(p=1.5) type3;
+22240      run;
+
+NOTE: Algorithm converged.
+NOTE: The Tweedie dispersion parameter was estimated by maximum likelihood.
+NOTE: The PROCEDURE GENMOD printed page 2377.
+
+22241      
+22242      
+22243      
+22244      
+The SAS System
+
+22245      

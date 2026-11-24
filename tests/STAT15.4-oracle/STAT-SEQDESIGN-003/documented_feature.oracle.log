@@ -1,0 +1,61 @@
+The SAS System
+
+15792      
+15793      /* STAT-SEQDESIGN-003: SEQDESIGN — DESIGN / SAMPLESIZE / Fixed-Sample Clinical Trials
+15794       * Source: S154 / Chapter 110 / `DESIGN Statement` (PDF pp. 8943–8949); S154 / Chapter 110 / `SAMPLESIZE Statement` (PDF pp. 8949–8959); S154 /
+15794    ! Chapter 110 / `Fixed-Sample Clinical Trials` (PDF pp. 8959–8963).
+15795       * Discriminates: Example 110.1: Creating Fixed-Sample Designs; explicit statements: DESIGN, SAMPLESIZE
+15796       */
+15797      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+15797    ! validmemname=compatible locale=en_US;
+15798      %let syscc=0;
+15799      title; footnote;
+15800      ods _all_ close;
+15801      ods listing gpath="%sysfunc(pathname(work))";
+15802      ods graphics off;
+15803      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.BND_LDL (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+15803    !                                         quit;
+
+
+15804      ods path work.templat(update) sashelp.tmplmst(read);
+15805      
+15806      ods graphics on;
+15807      proc seqdesign pss
+15808      ;
+15809      OneSidedFixedSample: design nstages=1
+15810      alt=upper
+15811      alpha=0.025 beta=0.10
+15812      ;
+15813      samplesize model=onesamplemean(mean=0.25);
+15814      run;
+
+NOTE: The PROCEDURE SEQDESIGN printed page 1142.
+
+15815      ods graphics on;
+15816      proc seqdesign altref=1.2
+15817      pss
+15818      ;
+15819      TwoSidedFixedSample: design nstages=1
+15820      alt=twosided
+15821      alpha=0.05 beta=0.10
+15822      ;
+15823      samplesize model=twosamplemean(stddev=2 weight=2);
+15824      run;
+
+NOTE: The PROCEDURE SEQDESIGN printed page 1143.
+
+15825      
+15826      
+15827      
+15828      
+The SAS System
+
+15829      

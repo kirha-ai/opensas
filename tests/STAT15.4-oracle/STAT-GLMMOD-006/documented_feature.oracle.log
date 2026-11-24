@@ -1,0 +1,73 @@
+The SAS System
+
+26737      
+26738      /* STAT-GLMMOD-006: GLMMOD — Official examples and feature integration regression
+26739       * Source: S154 / Chapter 54 / `Examples: GLMMOD Procedure` (PDF pp. 4242–4250).
+26740       * Discriminates: Example 54.1: A Two-Way Design
+26741       */
+26742      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+26742    ! validmemname=compatible locale=en_US;
+26743      %let syscc=0;
+26744      title; footnote;
+26745      ods _all_ close;
+26746      ods listing gpath="%sysfunc(pathname(work))";
+26747      ods graphics off;
+
+NOTE: The PROCEDURE REG printed page 2646.
+
+26748      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.CLOVER (memtype=DATA).
+NOTE: Deleting WORK.CLOVERDESIGN (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+26748    !                                         quit;
+
+
+26749      ods path work.templat(update) sashelp.tmplmst(read);
+26750      
+26751      data Plants;
+26752      input Type $ @;
+26753      do Block=1 to 3;
+26754      input StemLength @;
+26755      output;
+26756      end;
+26757      datalines;
+
+NOTE: The data set WORK.PLANTS has 21 observations and 3 variables.
+
+26765      ;
+26766      proc glmmod data=Plants outparm=Parm outdesign=Design;
+26767      class Type Block;
+26768      model StemLength = Type|Block;
+26769      run;
+
+NOTE: There were 21 observations read from the data set WORK.PLANTS.
+NOTE: The data set WORK.PARM has 32 observations and 4 variables.
+NOTE: The data set WORK.DESIGN has 21 observations and 33 variables.
+NOTE: The PROCEDURE GLMMOD printed pages 2647-2649.
+
+26770      proc print data=Parm;
+26771      run;
+
+NOTE: There were 32 observations read from the data set WORK.PARM.
+NOTE: The PROCEDURE PRINT printed page 2650.
+
+26772      proc print data=Design;
+26773      run;
+
+NOTE: There were 21 observations read from the data set WORK.DESIGN.
+NOTE: The PROCEDURE PRINT printed page 2651.
+
+26774      
+26775      
+26776      
+26777      
+The SAS System
+
+26778      

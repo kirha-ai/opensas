@@ -1,0 +1,63 @@
+The SAS System
+
+4207       
+4208       /* STAT-HPLOGISTIC-009: HPLOGISTIC — OUTPUT
+4209        * Source: S154 / Chapter 61 / `OUTPUT Statement` (PDF pp. 4760–4762).
+4210        * Discriminates: Example 61.3: Ordinal Logistic Regression; explicit statements: OUTPUT
+4211        */
+4212       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+4212     ! validmemname=compatible locale=en_US;
+4213       %let syscc=0;
+4214       title; footnote;
+4215       ods _all_ close;
+4216       ods listing gpath="%sysfunc(pathname(work))";
+4217       ods graphics off;
+4218       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.GETSTARTED (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+4218     !                                         quit;
+
+
+4219       ods path work.templat(update) sashelp.tmplmst(read);
+4220       
+4221       data Cheese;
+4222       do Additive = 1 to 4;
+4223       do y = 1 to 9;
+4224       input freq @@;
+4225       output;
+4226       end;
+4227       end;
+4228       label y='Taste Rating';
+4229       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.CHEESE has 36 observations and 3 variables.
+
+4234       ;
+4235       proc hplogistic data=Cheese;
+4236       freq freq;
+4237       class Additive(ref='4') / param=ref ;
+4238       model y=Additive;
+4239       title 'Multiple Response Cheese Tasting Experiment';
+4240       run;
+
+NOTE: The HPLOGISTIC procedure is executing in single-machine mode.
+NOTE: You are modeling the probabilities of levels of y having lower Ordered Values in the Response Profile Table.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: There were 36 observations read from the data set WORK.CHEESE.
+NOTE: The PROCEDURE HPLOGISTIC printed page 198.
+
+4241       
+4242       
+4243       
+4244       
+The SAS System
+
+4245       

@@ -1,0 +1,157 @@
+The SAS System
+
+16209      
+16210      /* STAT-FASTCLUS-005: FASTCLUS — Displayed Output / ODS Table Names
+16211       * Source: S154 / Chapter 45 / `Displayed Output` (PDF pp. 2920–2922); S154 / Chapter 45 / `ODS Table Names` (PDF pp. 2922–2923).
+16212       * Discriminates: Verified default procedure context
+16213       */
+16214      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+16214    ! validmemname=compatible locale=en_US;
+16215      %let syscc=0;
+16216      title; footnote;
+16217      ods _all_ close;
+16218      ods listing gpath="%sysfunc(pathname(work))";
+16219      ods graphics off;
+16220      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.CLUSTERS (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+16220    !                                         quit;
+
+
+16221      ods path work.templat(update) sashelp.tmplmst(read);
+16222      
+16223      ods trace on;
+16224      proc fastclus data=sashelp.iris maxclusters=3 maxiter=50 out=clusters;
+16225      var SepalLength SepalWidth PetalLength PetalWidth;
+16226      run;
+
+
+Output Added:
+-------------
+Name:       InitialSeeds
+Label:      Initial Seeds
+Template:   stat.fastclus.InitialSeeds
+Path:       Fastclus.InitialSeeds
+-------------
+
+Output Added:
+-------------
+Name:       MinDist
+Label:      Minimum Distance
+Template:   stat.fastclus.MinDist
+Path:       Fastclus.MinDist
+-------------
+
+Output Added:
+-------------
+Name:       IterHistory
+Label:      Iteration History
+Template:   stat.fastclus.IterHistory
+Path:       Fastclus.IterHistory
+-------------
+NOTE: Convergence criterion is satisfied.
+
+Output Added:
+-------------
+Name:       ConvergenceStatus
+Label:      Convergence Status
+Template:   stat.fastclus.ConvergenceStatus
+Path:       Fastclus.ConvergenceStatus
+-------------
+
+Output Added:
+-------------
+Name:       Criterion
+Label:      Criterion
+Template:   stat.fastclus.Criterion
+Path:       Fastclus.Criterion
+-------------
+
+Output Added:
+-------------
+Name:       ClusterSum
+Label:      Cluster Summary
+Template:   stat.fastclus.ClusterSum
+Path:       Fastclus.ClusterSum
+-------------
+
+Output Added:
+-------------
+Name:       VariableStat
+Label:      Statistics for Variables
+Template:   stat.fastclus.VariableStat
+Path:       Fastclus.VariableStat
+-------------
+
+Output Added:
+-------------
+Name:       PseudoFStat
+Label:      Pseudo F Statistic
+Template:   stat.fastclus.PseudoFStat
+Path:       Fastclus.PseudoFStat
+-------------
+
+Output Added:
+-------------
+Name:       ApproxExpOverAllRSq
+Label:      Approximate Expected Over-All R-Squared
+Template:   stat.fastclus.ApproxExpOverAllRSq
+Path:       Fastclus.ApproxExpOverAllRSq
+-------------
+
+Output Added:
+-------------
+Name:       CCC
+Label:      Cubic Clustering Criterion
+Template:   stat.fastclus.CCC
+Path:       Fastclus.CCC
+-------------
+
+Output Added:
+-------------
+Name:       ClusterCenters
+Label:      Cluster Means
+Template:   stat.fastclus.ClusterCenters
+Path:       Fastclus.ClusterCenters
+-------------
+
+Output Added:
+-------------
+Name:       ClusterDispersion
+Label:      Cluster Standard Deviations
+Template:   stat.fastclus.ClusterDispersion
+Path:       Fastclus.ClusterDispersion
+-------------
+NOTE: The data set WORK.CLUSTERS has 150 observations and 7 variables.
+NOTE: The PROCEDURE FASTCLUS printed page 2140.
+
+16227      proc freq data=clusters;
+16228      tables Species*Cluster;
+16229      run;
+
+
+Output Added:
+-------------
+Name:       CrossTabFreqs
+Label:      Cross-Tabular Freq Table
+Template:   Base.Freq.CrossTabFreqs
+Path:       Freq.Table1.CrossTabFreqs
+-------------
+NOTE: There were 150 observations read from the data set WORK.CLUSTERS.
+NOTE: The PROCEDURE FREQ printed page 2141.
+
+16230      ods trace off;
+16231      
+16232      
+16233      
+16234      
+The SAS System
+
+16235      

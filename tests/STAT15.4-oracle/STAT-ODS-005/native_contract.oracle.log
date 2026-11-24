@@ -1,0 +1,51 @@
+The SAS System
+
+1647       
+1648       /* STAT-ODS-005: ODS — The Master Template Store / Controlling Output Appearance with Templates
+1649        * Source: S154 / Chapter 23 / `The Master Template Store` (PDF pp. 594–595); S154 / Chapter 23 / `Controlling Output Appearance with Templates`
+1649     ! (PDF pp. 595–601).
+1650        * Discriminates: ODS object paths, TRACE names and table selection
+1651        */
+1652       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+1652     ! validmemname=compatible locale=en_US;
+1653       %let syscc=0;
+1654       title; footnote;
+1655       ods _all_ close;
+1656       ods listing gpath="%sysfunc(pathname(work))";
+1657       ods graphics off;
+1658       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SAMPLE (memtype=DATA).
+1658     !                                         quit;
+
+
+1659       ods path work.templat(update) sashelp.tmplmst(read);
+1660       
+1661       data sample;
+1662        input x z y group $ weight freq;
+1663        datalines;
+
+NOTE: The data set WORK.SAMPLE has 12 observations and 6 variables.
+
+1676       ;
+1677       run;
+1678       ods trace on; ods select ParameterEstimates; proc reg data=sample; model y=x z; run; quit; ods select all; ods trace off;
+
+
+Output Added:
+-------------
+Name:       ParameterEstimates
+Label:      Parameter Estimates
+Template:   Stat.REG.ParameterEstimates
+Path:       Reg.MODEL1.Fit.y.ParameterEstimates
+-------------
+NOTE: The PROCEDURE REG printed page 82.
+
+1679       
+1680       
+1681       
+1682       
+The SAS System
+
+1683       

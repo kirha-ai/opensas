@@ -1,0 +1,58 @@
+The SAS System
+
+9831       
+9832       /* STAT-KRIGE2D-001: KRIGE2D — Data input, variable roles, and basic options
+9833        * Source: S154 / Chapter 74 / `PROC KRIGE2D Statement` (PDF pp. 5443–5449); S154 / Chapter 74 / `BY Statement` (PDF pp. 5449–5450); S154 /
+9833     ! Chapter 74 / `ID Statement` (PDF p. 5453).
+9834        * Discriminates: Verified default procedure context; explicit statements: BY
+9835        */
+9836       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+9836     ! validmemname=compatible locale=en_US;
+9837       %let syscc=0;
+9838       title; footnote;
+9839       ods _all_ close;
+9840       ods listing gpath="%sysfunc(pathname(work))";
+9841       ods graphics off;
+9842       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.BIVNORMAL (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+9842     !                                         quit;
+
+
+9843       ods path work.templat(update) sashelp.tmplmst(read);
+9844       
+9845       title 'Spatial Prediction With Kriging';
+9846       data thick;
+9847       input East North Thick @@;
+9848       label Thick='Coal Seam Thickness';
+9849       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.THICK has 75 observations and 3 variables.
+
+9875       ;
+9876       ods graphics on;
+9877       proc krige2d data=thick;
+9878       coordinates xc=East yc=North;
+9879       predict var=Thick radius=60;
+9880       model scale=7.4599 range=30.1111 form=gauss;
+9881       grid x=0 to 100 by 2.5 y=0 to 100 by 2.5;
+9882       run;
+
+NOTE: The data set WORK.DATA5 has 1681 observations and 7 variables.
+NOTE: The PROCEDURE KRIGE2D printed pages 717-718.
+
+9883       ods graphics off;
+9884       run;
+9885       quit;
+9886       
+9887       
+9888       
+9889       
+The SAS System
+
+9890       

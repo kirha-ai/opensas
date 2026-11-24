@@ -1,0 +1,131 @@
+The SAS System
+
+3701       
+3702       /* STAT-SASHELP-002: SASHELP example data — Body Mass Index for Men / Isopod Burrows Data / Bone Marrow Transplant Data
+3703        * Source: S154 / Sashelp Data Sets / `Body Mass Index for Men` (PDF pp. 10902–10903); S154 / Sashelp Data Sets / `Isopod Burrows Data` (PDF pp.
+3703     ! 10903–10905); S154 / Sashelp Data Sets / `Bone Marrow Transplant Data` (PDF pp. 10905–10906).
+3704        * Discriminates: Published SASHELP data availability, row counts, first observations and descriptors: bmimen, burrows, bmt, bweight
+3705        */
+3706       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+3706     ! validmemname=compatible locale=en_US;
+3707       %let syscc=0;
+3708       title; footnote;
+3709       ods _all_ close;
+3710       ods listing gpath="%sysfunc(pathname(work))";
+3711       ods graphics off;
+3712       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK._DESCRIPTOR (memtype=DATA).
+3712     !                                         quit;
+
+
+3713       ods path work.templat(update) sashelp.tmplmst(read);
+3714       
+3715       proc contents data=sashelp.bmimen out=_descriptor(keep=name type length varnum label) noprint; run;
+
+NOTE: The data set WORK._DESCRIPTOR has 2 observations and 5 variables.
+
+3716       proc sort data=_descriptor; by varnum; run;
+
+NOTE: There were 2 observations read from the data set WORK._DESCRIPTOR.
+NOTE: The data set WORK._DESCRIPTOR has 2 observations and 5 variables.
+
+3717       proc print data=_descriptor noobs; run;
+
+NOTE: There were 2 observations read from the data set WORK._DESCRIPTOR.
+NOTE: The PROCEDURE PRINT printed page 230.
+
+3718       proc print data=sashelp.bmimen(obs=5) noobs; run;
+
+NOTE: There were 5 observations read from the data set SASHELP.BMIMEN.
+NOTE: The PROCEDURE PRINT printed page 231.
+
+3719       proc sql;
+3719     !           select count(*) as Observations from sashelp.bmimen;
+3719     !                                                                quit;
+NOTE: The PROCEDURE SQL printed page 232.
+
+3720       proc contents data=sashelp.burrows out=_descriptor(keep=name type length varnum label) noprint; run;
+
+NOTE: The data set WORK._DESCRIPTOR has 14 observations and 5 variables.
+
+3721       proc sort data=_descriptor; by varnum; run;
+
+NOTE: There were 14 observations read from the data set WORK._DESCRIPTOR.
+NOTE: The data set WORK._DESCRIPTOR has 14 observations and 5 variables.
+
+3722       proc print data=_descriptor noobs; run;
+
+NOTE: There were 14 observations read from the data set WORK._DESCRIPTOR.
+NOTE: The PROCEDURE PRINT printed page 233.
+
+3723       proc print data=sashelp.burrows(obs=5) noobs; run;
+
+NOTE: There were 5 observations read from the data set SASHELP.BURROWS.
+NOTE: The PROCEDURE PRINT printed page 234.
+
+3724       proc sql;
+3724     !           select count(*) as Observations from sashelp.burrows;
+3724     !                                                                 quit;
+NOTE: The PROCEDURE SQL printed page 235.
+
+3725       proc contents data=sashelp.bmt out=_descriptor(keep=name type length varnum label) noprint; run;
+
+NOTE: The data set WORK._DESCRIPTOR has 3 observations and 5 variables.
+
+3726       proc sort data=_descriptor; by varnum; run;
+
+NOTE: There were 3 observations read from the data set WORK._DESCRIPTOR.
+NOTE: The data set WORK._DESCRIPTOR has 3 observations and 5 variables.
+
+3727       proc print data=_descriptor noobs; run;
+
+NOTE: There were 3 observations read from the data set WORK._DESCRIPTOR.
+NOTE: The PROCEDURE PRINT printed page 236.
+
+3728       proc print data=sashelp.bmt(obs=5) noobs; run;
+
+NOTE: There were 5 observations read from the data set SASHELP.BMT.
+NOTE: The PROCEDURE PRINT printed page 237.
+
+3729       proc sql;
+3729     !           select count(*) as Observations from sashelp.bmt;
+3729     !                                                             quit;
+NOTE: The PROCEDURE SQL printed page 238.
+
+3730       proc contents data=sashelp.bweight out=_descriptor(keep=name type length varnum label) noprint; run;
+
+NOTE: The data set WORK._DESCRIPTOR has 10 observations and 5 variables.
+
+3731       proc sort data=_descriptor; by varnum; run;
+
+NOTE: There were 10 observations read from the data set WORK._DESCRIPTOR.
+NOTE: The data set WORK._DESCRIPTOR has 10 observations and 5 variables.
+
+3732       proc print data=_descriptor noobs; run;
+
+NOTE: There were 10 observations read from the data set WORK._DESCRIPTOR.
+NOTE: The PROCEDURE PRINT printed page 239.
+
+3733       proc print data=sashelp.bweight(obs=5) noobs; run;
+
+NOTE: There were 5 observations read from the data set SASHELP.BWEIGHT.
+NOTE: The PROCEDURE PRINT printed page 240.
+
+3734       proc sql;
+3734     !           select count(*) as Observations from sashelp.bweight;
+3734     !                                                                 quit;
+NOTE: The PROCEDURE SQL printed page 241.
+
+3735       
+3736       
+3737       
+3738       
+The SAS System
+
+3739       

@@ -1,0 +1,146 @@
+
+The QUANTREG Procedure
+
+              Model Information
+
+Data Set                               WORK.A
+Dependent Variable                          y
+Number of Independent Variables             2
+Number of Observations                   1000
+Optimization Algorithm                Simplex
+Method for Confidence Limits         Inv_Rank
+
+
+Number of Observations Read        1000
+Number of Observations Used        1000
+
+
+                                Summary Statistics
+ 
+                                                              Standard
+Variable           Q1      Median          Q3        Mean    Deviation         MAD
+
+x1            -0.6546      0.0230      0.7099      0.0222       0.9933      1.0085
+x2            -0.7891     -0.0747      0.6839     -0.0401       1.0394      1.0857
+y              6.1045     10.6936     14.9569     14.4864      20.4087      6.5696
+
+
+ Quantile Level and Objective Function
+
+Quantile Level                      0.5
+Objective Function            2441.1927
+Predicted Value at Mean         10.0259
+
+
+           Parameter Estimates
+ 
+                         95% Confidence
+Parameter DF Estimate        Limits
+
+Intercept  1  10.0364    9.9959   10.0756
+x1         1   5.0106    4.9602    5.0388
+x2         1   3.0294    2.9944    3.0630
+
+The QUANTREG Procedure
+
+             Model Information
+
+Data Set                             WORK.A
+Dependent Variable                        y
+Number of Independent Variables           2
+Number of Observations                 1000
+Optimization Algorithm             Interior
+
+
+Number of Observations Read        1000
+Number of Observations Used        1000
+
+The QUANTREG Procedure
+Quantile Level = 0.5
+
+    Iteration History of Interior Point Algorithm
+ 
+           Duality    Primal      Dual     Objective
+Iter           Gap      Step      Step      Function
+
+   1      2622.675    0.3113    0.4910      3303.469
+   2      3214.640    0.0427    1.0000      2461.377
+   3      1126.899    0.9882    0.3653      2451.134
+   4       760.887    0.3381    1.0000      2442.810
+   5     77.102902    1.0000    0.8916      2441.263
+   6      8.436664    0.9370    0.8381      2441.208
+   7      1.828685    0.8375    0.7674      2441.199
+   8      0.405843    0.6980    0.8636      2441.195
+   9      0.095499    0.9438    0.5955      2441.193
+  10     0.0066528    0.9818    0.9304      2441.193
+  11    0.00022482    0.9179    0.9994      2441.193
+  12     5.4466E-8    1.0000    1.0000      2441.193
+
+
+ Quantile Level and Objective Function
+
+Quantile Level                      0.5
+Objective Function            2441.1927
+Predicted Value at Mean         10.0259
+
+
+ Parameter Estimates
+ 
+Parameter DF Estimate
+
+Intercept  1  10.0364
+x1         1   5.0106
+x2         1   3.0294
+
+The QUANTREG Procedure
+
+             Model Information
+
+Data Set                             WORK.A
+Dependent Variable                        y
+Number of Independent Variables           2
+Number of Observations                 1000
+Optimization Algorithm               Smooth
+
+
+Number of Observations Read        1000
+Number of Observations Used        1000
+
+The QUANTREG Procedure
+Quantile Level = 0.5
+
+                Iteration History of Smoothing Algorithm
+ 
+                      Refactor-        Full     Partial       Objective
+Iter     Threshold      ization      Update      Update        Function
+
+   1     227.24557            1        1000           0       4267.0988
+  15     116.94090            4        1480        2420       3631.9653
+  17       1.44064            4        1480        2583       2441.4719
+  20       0.72032            5        1980        2598       2441.3315
+  22       0.36016            6        2248        2607       2441.2369
+  24       0.18008            7        2376        2608       2441.2056
+  26       0.09004            8        2446        2613       2441.1997
+  28       0.04502            9        2481        2617       2441.1971
+  30       0.02251           10        2497        2618       2441.1956
+  32       0.01126           11        2505        2620       2441.1946
+  34       0.00563           12        2510        2621       2441.1933
+  35       0.00281           13        2514        2621       2441.1930
+  36     0.0000846           14        2517        2621       2441.1927
+  37         1E-12           14        2517        2621       2441.1927
+
+
+ Quantile Level and Objective Function
+
+Quantile Level                      0.5
+Objective Function            2441.1927
+Predicted Value at Mean         10.0259
+
+
+ Parameter Estimates
+ 
+Parameter DF Estimate
+
+Intercept  1  10.0364
+x1         1   5.0106
+x2         1   3.0294

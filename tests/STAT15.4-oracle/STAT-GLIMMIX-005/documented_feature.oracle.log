@@ -1,0 +1,68 @@
+The SAS System
+
+23397      
+23398      /* STAT-GLIMMIX-005: GLIMMIX — Response-Level Ordering and Referencing
+23399       * Source: S154 / Chapter 52 / `Response-Level Ordering and Referencing` (PDF pp. 3881–3882).
+23400       * Discriminates: Getting Started: GLIMMIX Procedure
+23401       */
+23402      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+23402    ! validmemname=compatible locale=en_US;
+23403      %let syscc=0;
+23404      title; footnote;
+23405      ods _all_ close;
+23406      ods listing gpath="%sysfunc(pathname(work))";
+23407      ods graphics off;
+23408      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.DIALLEL (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.ZMAT (memtype=DATA).
+23408    !                                         quit;
+
+
+23409      ods path work.templat(update) sashelp.tmplmst(read);
+23410      
+23411      data multicenter;
+23412      input center group$ n sideeffect;
+23413      datalines;
+
+NOTE: The data set WORK.MULTICENTER has 30 observations and 4 variables.
+
+23444      ;
+23445      proc glimmix data=multicenter;
+23446      class center group;
+23447      model sideeffect/n = group / solution;
+23448      random intercept / subject=center;
+23449      run;
+
+
+
+NOTE: Convergence criterion (PCONV=1.11022E-8) satisfied.
+NOTE: The PROCEDURE GLIMMIX printed page 2403.
+
+23450      ods select lsmeans;
+23451      proc glimmix data=multicenter;
+23452      class center group;
+23453      model sideeffect/n = group / solution;
+23454      random intercept / subject=center;
+23455      lsmeans group / cl ilink;
+23456      run;
+
+
+
+NOTE: Convergence criterion (PCONV=1.11022E-8) satisfied.
+NOTE: The PROCEDURE GLIMMIX printed page 2404.
+
+23457      
+23458      
+23459      
+23460      
+The SAS System
+
+23461      

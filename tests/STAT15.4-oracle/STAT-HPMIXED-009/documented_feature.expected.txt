@@ -1,0 +1,217 @@
+
+The Mixed Procedure
+
+                  Model Information
+
+Data Set                     WORK.HEIGHTS             
+Dependent Variable           Height                   
+Covariance Structure         Variance Components      
+Estimation Method            REML                     
+Residual Variance Method     Profile                  
+Fixed Effects SE Method      Model-Based              
+Degrees of Freedom Method    Containment              
+
+
+             Class Level Information
+ 
+Class     Levels    Values
+
+Family         4    1 2 3 4                       
+Gender         2    F M                           
+
+
+            Dimensions
+
+Covariance Parameters             3
+Columns in X                      3
+Columns in Z                     12
+Subjects                          1
+Max Obs per Subject              18
+
+
+          Number of Observations
+
+Number of Observations Read              18
+Number of Observations Used              18
+Number of Observations Not Used           0
+
+
+                     Iteration History
+ 
+Iteration    Evaluations    -2 Res Log Like       Criterion
+
+        0              1        74.11074833                
+        1              2        71.51614003      0.01441208
+        2              1        71.13845990      0.00412226
+        3              1        71.03613556      0.00058188
+        4              1        71.02281757      0.00001689
+        5              1        71.02245904      0.00000002
+        6              1        71.02245869      0.00000000
+
+
+                   Convergence criteria met.                    
+
+
+   Covariance Parameter
+        Estimates
+ 
+Cov Parm          Estimate
+
+Family              2.4010
+Family*Gender       1.7657
+Residual            2.1668
+
+
+           Fit Statistics
+
+-2 Res Log Likelihood            71.0
+AIC (Smaller is Better)          77.0
+AICC (Smaller is Better)         79.0
+BIC (Smaller is Better)          75.2
+
+
+                        Solution for Fixed Effects
+ 
+                                   Standard
+Effect       Gender    Estimate       Error      DF    t Value    Pr > |t|
+
+Intercept               68.2114      1.1477       3      59.43      <.0001
+Gender       F          -3.3621      1.1923       3      -2.82      0.0667
+Gender       M                0           .       .        .         .    
+
+
+                              Solution for Random Effects
+ 
+                                                  Std Err
+Effect           Gender    Family    Estimate        Pred      DF    t Value    Pr > |t|
+
+Family                     1           1.2680      1.1201      10       1.13      0.2840
+Family                     2          0.08980      1.1121      10       0.08      0.9372
+Family                     3          -1.6660      1.1712      10      -1.42      0.1853
+Family                     4           0.3082      1.1201      10       0.28      0.7888
+Family*Gender    F         1          -0.3198      1.0810      10      -0.30      0.7734
+Family*Gender    M         1           1.2523      1.0933      10       1.15      0.2787
+Family*Gender    F         2          -0.4299      1.0774      10      -0.40      0.6983
+Family*Gender    M         2           0.4959      1.0774      10       0.46      0.6551
+Family*Gender    F         3         -0.08229      1.1409      10      -0.07      0.9439
+Family*Gender    M         3          -1.1429      1.1409      10      -1.00      0.3401
+Family*Gender    F         4           0.8320      1.0933      10       0.76      0.4642
+Family*Gender    M         4          -0.6053      1.0810      10      -0.56      0.5878
+
+
+        Type 3 Tests of Fixed Effects
+ 
+              Num     Den
+Effect         DF      DF    F Value    Pr > F
+
+Gender          1       3       7.95    0.0667
+
+The HPMIXED Procedure
+
+                        Model Information
+
+Data Set                     WORK.HEIGHTS                        
+Response Variable            Height                              
+Estimation Method            Restricted Maximum Likelihood (REML)
+Degrees of Freedom Method    Residual                            
+
+
+  Class Level Information
+ 
+Class     Levels    Values
+
+Family         4    1 2 3 4
+Gender         2    F M    
+
+
+Number of Observations Read          18
+Number of Observations Used          18
+
+
+             Dimensions
+
+G-side Cov. Parameters             2
+R-side Cov. Parameters             1
+Columns in X                       3
+Columns in Z                      12
+Subjects (Blocks in V)             1
+
+
+           Optimization Information
+
+Optimization Technique        Dual Quasi-Newton
+Parameters in Optimization    2                
+Lower Boundaries              2                
+Upper Boundaries              0                
+Residual Variance             Profiled         
+
+
+                          Iteration History
+ 
+                               Objective                         Max
+Iteration    Evaluations        Function          Change    Gradient
+
+        0              4    71.023177956       .            0.034074
+        1              3    71.022519936      0.00065802    0.007839
+        2              3    71.022477283      0.00004265    0.004674
+        3              2      71.0224587      0.00001858    0.000168
+        4              2    71.022458689      0.00000001     3.28E-6
+
+                          Convergence criterion (GCONV=1E-8) satisfied.                           
+
+
+  Covariance Parameter
+        Estimates
+ 
+Cov Parm         Estimate
+
+Family             2.4010
+Family*Gender      1.7657
+Residual           2.1668
+
+
+            Fit Statistics
+
+-2 Res Log Likelihood          71.02246
+AIC  (Smaller is Better)       77.02246
+AICC (Smaller is Better)       79.02246
+BIC  (Smaller is Better)       75.18134
+CAIC (Smaller is Better)       78.18134
+HQIC (Smaller is Better)       72.98226
+
+
+                        Solution for Fixed Effects
+ 
+                                   Standard
+Effect       Gender    Estimate       Error       DF    t Value    Pr > |t|
+
+Intercept                     0           .        .        .         .    
+Gender       F          64.8493      1.1477       16      56.50      <.0001
+Gender       M          68.2114      1.1477       16      59.43      <.0001
+
+
+                               Solution for Random Effects
+ 
+                                                  Std Err
+Effect           Gender    Family    Estimate        Pred       DF    t Value    Pr > |t|
+
+Family                     1           1.2680      1.1201       16       1.13      0.2743
+Family                     2          0.08980      1.1121       16       0.08      0.9366
+Family                     3          -1.6660      1.1712       16      -1.42      0.1741
+Family                     4           0.3082      1.1201       16       0.28      0.7867
+Family*Gender    F         1          -0.3198      1.0810       16      -0.30      0.7712
+Family*Gender    M         1           1.2523      1.0933       16       1.15      0.2689
+Family*Gender    F         2          -0.4299      1.0774       16      -0.40      0.6951
+Family*Gender    M         2           0.4959      1.0774       16       0.46      0.6515
+Family*Gender    F         3         -0.08229      1.1409       16      -0.07      0.9434
+Family*Gender    M         3          -1.1429      1.1409       16      -1.00      0.3314
+Family*Gender    F         4           0.8320      1.0933       16       0.76      0.4577
+Family*Gender    M         4          -0.6053      1.0810       16      -0.56      0.5832
+
+
+        Type III Tests of Fixed Effects
+ 
+              Num      Den
+Effect         DF       DF    F Value    Pr > F
+
+Gender          1       16       7.95    0.0123

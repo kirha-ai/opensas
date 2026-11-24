@@ -1,0 +1,25 @@
+
+The PLS Procedure
+
+Data Set                                WORK.PENTATRAIN
+Factor Extraction Method          Partial Least Squares
+PLS Algorithm                                    NIPALS
+Number of Response Variables                          1
+Number of Predictor Parameters                        8
+Missing Value Handling                          Exclude
+Number of Factors                                     2
+
+Number of Observations Read             15
+Number of Observations Used             15
+
+The PLS Procedure
+
+             Percent Variation Accounted for
+             by Partial Least Squares Factors
+ 
+Number of
+Extracted        Model Effects        Dependent Variables
+  Factors     Current       Total     Current       Total
+
+        1     28.5163     28.5163     90.7983     90.7983
+        2     19.1750     47.6913      5.9785     96.7769

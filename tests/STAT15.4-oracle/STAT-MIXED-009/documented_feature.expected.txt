@@ -1,0 +1,221 @@
+
+The Mixed Procedure
+
+                  Model Information
+
+Data Set                     WORK.SP                  
+Dependent Variable           Y                        
+Covariance Structure         Variance Components      
+Estimation Method            REML                     
+Residual Variance Method     Profile                  
+Fixed Effects SE Method      Model-Based              
+Degrees of Freedom Method    Containment              
+
+
+             Class Level Information
+ 
+Class    Levels    Values
+
+A             3    1 2 3                         
+B             2    1 2                           
+Block         4    1 2 3 4                       
+
+
+            Dimensions
+
+Covariance Parameters             3
+Columns in X                     12
+Columns in Z                     16
+Subjects                          1
+Max Obs per Subject              24
+
+
+          Number of Observations
+
+Number of Observations Read              24
+Number of Observations Used              24
+Number of Observations Not Used           0
+
+
+                     Iteration History
+ 
+Iteration    Evaluations    -2 Res Log Like       Criterion
+
+        0              1       139.81461222                
+        1              1       119.76184570      0.00000000
+
+
+                   Convergence criteria met.                    
+
+
+Covariance Parameter
+      Estimates
+ 
+Cov Parm     Estimate
+
+Block         62.3958
+A*Block       15.3819
+Residual       9.3611
+
+
+           Fit Statistics
+
+-2 Res Log Likelihood           119.8
+AIC (Smaller is Better)         125.8
+AICC (Smaller is Better)        127.5
+BIC (Smaller is Better)         123.9
+
+
+        Type 3 Tests of Fixed Effects
+ 
+              Num     Den
+Effect         DF      DF    F Value    Pr > F
+
+A               2       6       4.07    0.0764
+B               1       9      19.39    0.0017
+A*B             2       9       4.02    0.0566
+
+The GLM Procedure
+
+    Class Level Information
+ 
+Class         Levels    Values
+
+A                  3    1 2 3   
+
+B                  2    1 2     
+
+Block              4    1 2 3 4 
+
+
+Number of Observations Read          24
+Number of Observations Used          24
+
+The GLM Procedure
+ 
+Dependent Variable: Y   
+
+                                        Sum of
+Source                      DF         Squares     Mean Square    F Value    Pr > F
+
+Model                       14     2067.583333      147.684524      15.78    0.0001
+
+Error                        9       84.250000        9.361111                     
+
+Corrected Total             23     2151.833333                                     
+
+
+R-Square     Coeff Var      Root MSE        Y Mean
+
+0.960847      9.896259      3.059593      30.91667
+
+
+Source                      DF       Type I SS     Mean Square    F Value    Pr > F
+
+A                            2      326.583333      163.291667      17.44    0.0008
+B                            1      181.500000      181.500000      19.39    0.0017
+A*B                          2       75.250000       37.625000       4.02    0.0566
+Block                        3     1243.500000      414.500000      44.28    <.0001
+A*Block                      6      240.750000       40.125000       4.29    0.0256
+
+
+Source                      DF     Type III SS     Mean Square    F Value    Pr > F
+
+A                            2      326.583333      163.291667      17.44    0.0008
+B                            1      181.500000      181.500000      19.39    0.0017
+A*B                          2       75.250000       37.625000       4.02    0.0566
+Block                        3     1243.500000      414.500000      44.28    <.0001
+A*Block                      6      240.750000       40.125000       4.29    0.0256
+
+
+      Tests of Hypotheses Using the Type III MS for A*Block as an Error Term
+ 
+Source                      DF     Type III SS     Mean Square    F Value    Pr > F
+
+A                            2     326.5833333     163.2916667       4.07    0.0764
+
+The Mixed Procedure
+
+                  Model Information
+
+Data Set                     WORK.SP                  
+Dependent Variable           Y                        
+Covariance Structure         Variance Components      
+Estimation Method            REML                     
+Residual Variance Method     Profile                  
+Fixed Effects SE Method      Model-Based              
+Degrees of Freedom Method    Containment              
+
+
+             Class Level Information
+ 
+Class    Levels    Values
+
+A             3    1 2 3                         
+B             2    1 2                           
+Block         4    1 2 3 4                       
+
+
+            Dimensions
+
+Covariance Parameters             3
+Columns in X                     12
+Columns in Z                     16
+Subjects                          1
+Max Obs per Subject              24
+
+
+          Number of Observations
+
+Number of Observations Read              24
+Number of Observations Used              24
+Number of Observations Not Used           0
+
+
+                     Iteration History
+ 
+Iteration    Evaluations    -2 Res Log Like       Criterion
+
+        0              1       139.81461222                
+        1              1       119.76184570      0.00000000
+
+
+                   Convergence criteria met.                    
+
+
+Covariance Parameter
+      Estimates
+ 
+Cov Parm     Estimate
+
+Block         62.3958
+A*Block       15.3819
+Residual       9.3611
+
+
+           Fit Statistics
+
+-2 Res Log Likelihood           119.8
+AIC (Smaller is Better)         125.8
+AICC (Smaller is Better)        127.5
+BIC (Smaller is Better)         123.9
+
+
+        Type 3 Tests of Fixed Effects
+ 
+              Num     Den
+Effect         DF      DF    F Value    Pr > F
+
+A               2       6       4.07    0.0764
+B               1       9      19.39    0.0017
+A*B             2       9       4.02    0.0566
+
+
+                               Estimates
+ 
+                                Standard
+Label               Estimate       Error      DF    t Value    Pr > |t|
+
+a1 mean narrow       32.8750      1.0817       9      30.39      <.0001
+a1 mean intermed     32.8750      2.2396       9      14.68      <.0001
+a1 mean broad        32.8750      4.5403       9       7.24      <.0001

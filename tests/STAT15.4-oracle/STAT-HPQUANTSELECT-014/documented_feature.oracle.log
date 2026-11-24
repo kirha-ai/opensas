@@ -1,0 +1,54 @@
+The SAS System
+
+5368       
+5369       /* STAT-HPQUANTSELECT-014: HPQUANTSELECT — Official examples and feature integration regression
+5370        * Source: S154 / Chapter 66 / `Examples: HPQUANTSELECT Procedure` (PDF pp. 5012–5018).
+5371        * Discriminates: Seeded synthetic quantile-regression fixture: Official examples and feature integration regression
+5372        */
+5373       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+5373     ! validmemname=compatible locale=en_US;
+5374       %let syscc=0;
+5375       title; footnote;
+5376       ods _all_ close;
+5377       ods listing gpath="%sysfunc(pathname(work))";
+5378       ods graphics off;
+5379       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SAMPLE (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+5379     !                                         quit;
+
+
+5380       ods path work.templat(update) sashelp.tmplmst(read);
+5381       
+5382       data sample;
+5383       call streaminit(314159);
+5384       do id=1 to 120;
+5385        x=rand('normal'); z=rand('normal'); w=rand('normal'); group=1+mod(id,3);
+5386        y=2+1.5*x-0.6*z+0.4*group+rand('normal');
+5387        role=mod(id,4); output;
+5388       end;
+5389       run;
+
+NOTE: The data set WORK.SAMPLE has 120 observations and 7 variables.
+
+5390       
+5391       proc hpquantselect data=sample;
+5392       class group;
+5393       model y=x z w group / quantile=0.25 0.75 clb;
+5394       selection method=backward(select=sbc choose=sbc);
+5395       performance nthreads=1;
+5396       run;
+
+NOTE: The HPQUANTSELECT procedure is executing in single-machine mode.
+NOTE: The PROCEDURE HPQUANTSELECT printed pages 211-215.
+
+5397       
+5398       
+5399       
+5400       
+The SAS System
+
+5401       

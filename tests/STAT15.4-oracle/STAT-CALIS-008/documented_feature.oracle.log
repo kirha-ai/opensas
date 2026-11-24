@@ -1,0 +1,84 @@
+The SAS System
+
+7894       
+7895       /* STAT-CALIS-008: CALIS — FACTOR / The FACTOR Model
+7896        * Source: S154 / Chapter 33 / `FACTOR Statement` (PDF pp. 1551–1561); S154 / Chapter 33 / `The FACTOR Model` (PDF pp. 1689–1696).
+7897        * Discriminates: Example 33.13: Confirmatory Factor Models: Some Variations; explicit statements: FACTOR
+7898        */
+7899       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+7899     ! validmemname=compatible locale=en_US;
+7900       %let syscc=0;
+7901       title; footnote;
+7902       ods _all_ close;
+7903       ods listing gpath="%sysfunc(pathname(work))";
+7904       ods graphics off;
+7905       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.KINZER (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+7905     !                                         quit;
+
+
+7906       ods path work.templat(update) sashelp.tmplmst(read);
+7907       
+7908       data scores;
+7909       input x1 x2 x3 y1 y2 y3;
+7910       datalines;
+
+NOTE: The data set WORK.SCORES has 32 observations and 6 variables.
+
+7943       ;
+7944       run;
+7945       proc calis data=scores;
+7946       factor
+7947       verbal ===> x1-x3 = load1 load1 load1,
+7948       math ===> y1-y3 = load2 load2 load2;
+7949       pvar
+7950       verbal = 1.,
+7951       math = 1.,
+7952       x1-x3 = 3 *evar1,
+7953       y1-y3 = 3 *evar2;
+7954       run;
+
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The PROCEDURE CALIS printed pages 659-665.
+
+7955       proc calis data=scores;
+7956       factor
+7957       verbal ===> x1-x3 = load1 load1 load1,
+7958       math ===> y1-y3 = load2 load2 load2;
+7959       pvar
+7960       verbal = 1.,
+7961       math = 1.;
+7962       run;
+
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The PROCEDURE CALIS printed pages 666-672.
+
+7963       proc calis data=scores;
+7964       factor
+7965       verbal ===> x1-x3 = load1 load1 alpha,
+7966       math ===> y1-y3 = beta load2 load2;
+7967       pvar
+7968       verbal = 1.,
+7969       math = 1.,
+7970       x1-x3 = evar1 evar1 phi,
+7971       y1-y3 = theta evar2 evar2;
+7972       run;
+
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The PROCEDURE CALIS printed pages 673-679.
+
+7973       
+7974       
+7975       
+7976       
+The SAS System
+
+7977       

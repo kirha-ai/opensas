@@ -1,0 +1,159 @@
+The SAS System
+
+27324      
+27325      /* STAT-GLMPOWER-009: GLMPOWER — Error and Information Output / Displayed Output / ODS Table Names
+27326       * Source: S154 / Chapter 55 / `Error and Information Output` (PDF pp. 4282–4283); S154 / Chapter 55 / `Displayed Output` (PDF pp. 4283–4284);
+27326    ! S154 / Chapter 55 / `ODS Table Names` (PDF pp. 4284–4285).
+27327       * Discriminates: Getting Started: GLMPOWER Procedure
+27328       */
+27329      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+27329    ! validmemname=compatible locale=en_US;
+27330      %let syscc=0;
+27331      title; footnote;
+27332      ods _all_ close;
+27333      ods listing gpath="%sysfunc(pathname(work))";
+27334      ods graphics off;
+27335      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.EXEMPLARY (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+27335    !                                         quit;
+
+
+27336      ods path work.templat(update) sashelp.tmplmst(read);
+27337      
+27338      ods trace on;
+27339      data Exemplary;
+27340      do Variety = 1 to 2;
+27341      do Exposure = 1 to 3;
+27342      input Height @@;
+27343      output;
+27344      end;
+27345      end;
+27346      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.EXEMPLARY has 6 observations and 3 variables.
+
+27349      ;
+27350      proc glmpower data=Exemplary;
+27351      class Variety Exposure;
+27352      model Height = Variety | Exposure;
+27353      power
+27354      stddev = 5
+27355      ntotal = 60
+27356      power = .;
+27357      run;
+
+
+Output Added:
+-------------
+Name:       FixedElements
+Label:      Fixed Scenario Elements
+Template:   Stat.GLMPOWER.FixedElements
+Path:       GLMPower.Power.FixedElements
+-------------
+
+Output Added:
+-------------
+Name:       Output
+Label:      Output
+Template:   Stat.GLMPOWER.Output
+Path:       GLMPower.Power.Output
+-------------
+NOTE: There were 6 observations read from the data set WORK.EXEMPLARY.
+NOTE: The PROCEDURE GLMPOWER printed page 2674.
+
+27358      ods graphics on;
+27359      proc glmpower data=Exemplary;
+27360      class Variety Exposure;
+27361      model Height = Variety | Exposure;
+27362      power
+27363      stddev = 4 6.5
+27364      ntotal = 60
+27365      power = .;
+27366      plot x=n min=30 max=90;
+27367      run;
+
+
+Output Added:
+-------------
+Name:       FixedElements
+Label:      Fixed Scenario Elements
+Template:   Stat.GLMPOWER.FixedElements
+Path:       GLMPower.Power.FixedElements
+-------------
+
+Output Added:
+-------------
+Name:       Output
+Label:      Output
+Template:   Stat.GLMPOWER.Output
+Path:       GLMPower.Power.Output
+-------------
+NOTE: The input sample size is adjusted in 60 scenarios in the plot.
+NOTE: Plotting computed Power on the y-axis, versus N Total on the x-axis with 21 points per curve between 30 and 90.
+
+Output Added:
+-------------
+Name:       PowerPlot
+Label:      Power vs. N Total
+Template:   Stat.POWER.Graphics.GLMPowerBasicPlot
+Path:       GLMPower.Power.PlotStatement1.PowerNTotal.PowerPlot
+-------------
+NOTE: There were 6 observations read from the data set WORK.EXEMPLARY.
+NOTE: The PROCEDURE GLMPOWER printed page 2675.
+
+27368      ods graphics off;
+27369      data Exemplary;
+27370      input Variety $ Exposure $ HeightOrig HeightNew Weight;
+27371      datalines;
+
+NOTE: The data set WORK.EXEMPLARY has 6 observations and 5 variables.
+
+27378      ;
+27379      proc glmpower data=Exemplary;
+27380      class Variety Exposure;
+27381      model HeightOrig HeightNew = Variety | Exposure;
+27382      weight Weight;
+27383      contrast 'Exposure=1 vs Exposure=3' Exposure 1 0 -1;
+27384      power
+27385      stddev = 5
+27386      ntotal = 60
+27387      power = .;
+27388      run;
+
+
+Output Added:
+-------------
+Name:       FixedElements
+Label:      Fixed Scenario Elements
+Template:   Stat.GLMPOWER.FixedElements
+Path:       GLMPower.Power.FixedElements
+-------------
+
+Output Added:
+-------------
+Name:       Output
+Label:      Output
+Template:   Stat.GLMPOWER.Output
+Path:       GLMPower.Power.Output
+-------------
+NOTE: There were 6 observations read from the data set WORK.EXEMPLARY.
+NOTE: The PROCEDURE GLMPOWER printed page 2676.
+
+27389      ods trace off;
+27390      
+27391      
+27392      
+27393      
+The SAS System
+
+27394      

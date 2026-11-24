@@ -1,0 +1,78 @@
+The SAS System
+
+1404       
+1405       /* STAT-LIFETEST-007: LIFETEST — TEST / Pointwise Confidence Limits in the OUTSURV= Data Set / Simultaneous Confidence Intervals for Kaplan-Meier
+1405     ! Curves
+1406        * Source: S154 / Chapter 77 / `TEST Statement` (PDF pp. 5668–5669); S154 / Chapter 77 / `Pointwise Confidence Limits in the OUTSURV= Data Set`
+1406     ! (PDF pp. 5676–5677); S154 / Chapter 77 / `Simultaneous Confidence Intervals for Kaplan-Meier Curves` (PDF pp. 5677–5679).
+1407        * Discriminates: Getting Started: LIFETEST Procedure; explicit statements: TEST
+1408        */
+1409       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+1409     ! validmemname=compatible locale=en_US;
+1410       %let syscc=0;
+1411       title; footnote;
+1412       ods _all_ close;
+1413       ods listing gpath="%sysfunc(pathname(work))";
+1414       ods graphics off;
+1415       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.EXPOSED (memtype=DATA).
+NOTE: Deleting WORK.FORMATS (memtype=CATALOG).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+1415     !                                         quit;
+
+
+1416       ods path work.templat(update) sashelp.tmplmst(read);
+1417       
+1418       proc format;
+1418     !              value Rx 1='Drug X' 0='Placebo';
+NOTE: Format RX has been output.
+1418     !                                               run;
+
+
+1419       data exposed;
+1420       input Days Status Treatment Sex $ @@;
+1421       format Treatment Rx.;
+1422       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.EXPOSED has 40 observations and 4 variables.
+
+1443       ;
+1444       ods graphics on;
+1445       proc lifetest data=Exposed plots=(survival(atrisk) logsurv);
+1446       time Days*Status(0);
+1447       strata Treatment;
+1448       run;
+
+NOTE: The LOGLOG transform is used to compute the confidence limits for the quartiles of the survivor distribution. To suppress using this transform, specify 
+      CONFTYPE=LINEAR in the PROC LIFETEST statement.
+NOTE: The PROCEDURE LIFETEST printed pages 113-115.
+
+1449       ods graphics off;
+1450       proc lifetest data=Exposed notable;
+1451       time Days*Status(0);
+1452       strata Sex / group=Treatment;
+1453       run;
+
+NOTE: The PROCEDURE LIFETEST printed pages 116-117.
+
+1454       proc lifetest data=Exposed notable;
+1455       time Days*Status(0);
+1456       test Treatment;
+1457       run;
+
+NOTE: The PROCEDURE LIFETEST printed page 118.
+
+1458       
+1459       
+1460       
+1461       
+The SAS System
+
+1462       

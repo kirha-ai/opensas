@@ -1,0 +1,54 @@
+The SAS System
+
+7818       
+7819       /* STAT-PRINCOMP-003: PRINCOMP — PARTIAL
+7820        * Source: S154 / Chapter 98 / `PARTIAL Statement` (PDF p. 8006).
+7821        * Discriminates: Explicit PARTIAL statement behavior on seeded synthetic inputs.
+7822        */
+7823       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+7823     ! validmemname=compatible locale=en_US;
+7824       %let syscc=0;
+7825       title; footnote;
+7826       ods _all_ close;
+7827       ods listing gpath="%sysfunc(pathname(work))";
+7828       ods graphics off;
+7829       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.CRIME (memtype=DATA).
+NOTE: Deleting WORK.CRIME_COMPONENTS (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+7829     !                                         quit;
+
+
+7830       ods path work.templat(update) sashelp.tmplmst(read);
+7831       
+7832       data sample;
+7833       call streaminit(314159);
+7834       do id=1 to 90;
+7835        x=rand('normal'); z=rand('normal'); w=rand('normal');
+7836        group=1+mod(id,3); block=1+mod(id,5);
+7837        y=5+1.5*x-0.6*z+0.4*group+rand('normal');
+7838        y2=2+0.5*x+0.8*z+rand('normal'); output;
+7839       end;
+7840       run;
+
+NOTE: The data set WORK.SAMPLE has 90 observations and 8 variables.
+
+7841       proc princomp data=sample out=scores; var x y y2; partial z; run;
+
+NOTE: The data set WORK.SCORES has 90 observations and 14 variables.
+NOTE: The PROCEDURE PRINCOMP printed page 579.
+
+7841     !                                                                   proc print data=scores(obs=8); run;
+
+NOTE: There were 8 observations read from the data set WORK.SCORES.
+NOTE: The PROCEDURE PRINT printed page 580.
+
+7842       
+7843       
+7844       
+7845       
+The SAS System
+
+7846       

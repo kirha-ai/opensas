@@ -1,0 +1,42 @@
+The SAS System
+
+2033       
+2034       /* STAT-MDS-006: MDS — OUTFIT= Data Set / OUTRES= Data Set
+2035        * Source: S154 / Chapter 81 / `OUTFIT= Data Set` (PDF pp. 6398–6399); S154 / Chapter 81 / `OUTRES= Data Set` (PDF pp. 6399–6400).
+2036        * Discriminates: Getting Started: MDS Procedure
+2037        */
+2038       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+2038     ! validmemname=compatible locale=en_US;
+2039       %let syscc=0;
+2040       title; footnote;
+2041       ods _all_ close;
+2042       ods listing gpath="%sysfunc(pathname(work))";
+2043       ods graphics off;
+2044       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+2044     !                                         quit;
+
+
+2045       ods path work.templat(update) sashelp.tmplmst(read);
+2046       
+2047       title 'Analysis of Flying Mileages between Ten U.S. Cities';
+2048       ods graphics on;
+2049       proc mds data=sashelp.mileages level=absolute;
+2050       id city;
+2051       run;
+
+NOTE: The PROCEDURE MDS printed page 154.
+
+2052       
+2053       
+2054       
+2055       
+The SAS System
+
+2056       

@@ -1,0 +1,96 @@
+The SAS System
+
+1795       
+1796       /* STAT-PHREG-002: PHREG — Partial likelihood estimation for proportional hazards regression
+1797        * Source: S154 / Chapter 92 / `Getting Started: PHREG Procedure` (PDF pp. 7315–7323); S154 / Chapter 92 / `Overview: PHREG Procedure` (PDF pp.
+1797     ! 7313–7315).
+1798        * Discriminates: Getting Started: PHREG Procedure
+1799        */
+1800       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+1800     ! validmemname=compatible locale=en_US;
+1801       %let syscc=0;
+1802       title; footnote;
+1803       ods _all_ close;
+1804       ods listing gpath="%sysfunc(pathname(work))";
+1805       ods graphics off;
+1806       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.NEW (memtype=DATA).
+NOTE: Deleting WORK.POST (memtype=DATA).
+NOTE: Deleting WORK.RATS (memtype=DATA).
+NOTE: Deleting WORK.REGIMES (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK._ORACLE_INPUT (memtype=DATA).
+1806     !                                         quit;
+
+
+1807       ods path work.templat(update) sashelp.tmplmst(read);
+1808       
+1809       data Rats;
+1810       label Days ='Days from Exposure to Death';
+1811       input Days Status Group @@;
+1812       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.RATS has 40 observations and 3 variables.
+
+1823       ;
+1824       data Regimes;
+1825       Group=0;
+1826       output;
+1827       Group=1;
+1828       output;
+1829       run;
+
+NOTE: The data set WORK.REGIMES has 2 observations and 1 variables.
+
+1830       ods graphics on;
+1831       proc phreg data=Rats plot(overlay)=survival;
+1832       model Days*Status(0)=Group;
+1833       baseline covariates=regimes out=_null_;
+1834       run;
+
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The PROCEDURE PHREG printed page 208.
+
+1835       proc phreg data=Rats;
+1836       model Days*Status(0)=Group X;
+1837       X=Group*(log(Days) - 5.4);
+1838       run;
+
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The PROCEDURE PHREG printed page 209.
+
+1839       ods graphics on;
+1840       proc phreg data=Rats;
+1841       model Days*Status(0)=Group;
+1842       bayes seed=1 outpost=Post nmc=1000 nbi=200;
+1843       run;
+
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The data set WORK.POST has 1000 observations and 4 variables.
+NOTE: The PROCEDURE PHREG printed pages 210-212.
+
+1844       data New;
+1845       set Post;
+1846       Indicator=(Group < 0);
+1847       label Indicator='Group < 0';
+1848       run;
+
+NOTE: There were 1000 observations read from the data set WORK.POST.
+NOTE: The data set WORK.NEW has 1000 observations and 5 variables.
+
+1849       proc means data=New(keep=Indicator) n mean;
+1850       run;
+
+NOTE: There were 1000 observations read from the data set WORK.NEW.
+NOTE: The PROCEDURE MEANS printed page 213.
+
+1851       
+1852       
+1853       
+1854       
+The SAS System
+
+1855       

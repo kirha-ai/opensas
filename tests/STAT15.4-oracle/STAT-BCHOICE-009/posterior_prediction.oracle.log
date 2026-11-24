@@ -1,0 +1,61 @@
+The SAS System
+
+460        
+461        /* STAT-BCHOICE-009: BCHOICE — PREDDIST
+462         * Source: S154 / Chapter 30 / `PREDDIST Statement` (PDF pp. 1195–1196).
+463         * Discriminates: Explicit PREDDIST and printed posterior predictive draws.
+464         */
+465        options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+465      ! validmemname=compatible locale=en_US;
+466        %let syscc=0;
+467        title; footnote;
+468        ods _all_ close;
+469        ods listing gpath="%sysfunc(pathname(work))";
+470        ods graphics off;
+471        proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SAMPLE (memtype=DATA).
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+471      !                                         quit;
+
+
+472        ods path work.templat(update) sashelp.tmplmst(read);
+473        
+474        proc print data=Sashelp.Margarin (obs=24);
+475        by HouseID Set;
+476        id HouseID Set;
+477        run;
+
+NOTE: There were 24 observations read from the data set SASHELP.MARGARIN.
+NOTE: The PROCEDURE PRINT printed page 44.
+
+478        proc bchoice data=Sashelp.Margarin seed=123 nmc=1000 thin=2
+479        nthreads=4 plots=none nbi=200;
+480        class Brand(ref='PPk') HouseID Set;
+481        model Choice = / choiceset=(HouseID Set);
+482        random Brand LogPrice / subject=HouseID remean=(LogInc FamSize)
+483        type=un monitor=(1);
+484        preddist outpred=posterior_prediction;
+485        run;
+
+NOTE: Generating the burn-in samples.
+NOTE: Beginning sample generation.
+NOTE: Beginning calculation of summary and diagnostics statistics.
+NOTE: The data set WORK.POSTERIOR_PREDICTION has 500 observations and 20431 variables.
+NOTE: The PROCEDURE BCHOICE printed page 45.
+
+486        
+487        proc print data=posterior_prediction(obs=5); run;
+
+NOTE: There were 5 observations read from the data set WORK.POSTERIOR_PREDICTION.
+NOTE: The PROCEDURE PRINT printed page 46.
+
+488        
+489        
+490        
+491        
+The SAS System
+
+492        

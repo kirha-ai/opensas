@@ -1,0 +1,117 @@
+The SAS System
+
+5747       
+5748       /* STAT-PLS-005: PLS — Cross Validation
+5749        * Source: S154 / Chapter 95 / `Cross Validation` (PDF pp. 7702–7703).
+5750        * Discriminates: Getting Started: PLS Procedure
+5751        */
+5752       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+5752     ! validmemname=compatible locale=en_US;
+5753       %let syscc=0;
+5754       title; footnote;
+5755       ods _all_ close;
+5756       ods listing gpath="%sysfunc(pathname(work))";
+5757       ods graphics off;
+5758       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.ALL (memtype=DATA).
+NOTE: Deleting WORK.NEWOBS (memtype=DATA).
+NOTE: Deleting WORK.PRED (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SAMPLE (memtype=DATA).
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+5758     !                                         quit;
+
+
+5759       ods path work.templat(update) sashelp.tmplmst(read);
+5760       
+5761       data Sample;
+5762       input obsnam $ v1-v27 ls ha dt @@;
+5763       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.SAMPLE has 16 observations and 31 variables.
+
+5812       ;
+5813       proc pls data=sample;
+5814       model ls ha dt = v1-v27;
+5815       run;
+
+NOTE: Maximum number of factors to extract set to 15.  This may be too high; you should consider using either the NFAC= option or the CV= option to set the 
+      number of factors.
+NOTE: There were 16 observations read from the data set WORK.SAMPLE.
+NOTE: The PROCEDURE PLS printed pages 456-457.
+
+5816       proc pls data=sample cv=split;
+5817       model ls ha dt = v1-v27;
+5818       run;
+
+NOTE: Maximum number of factors to extract set to 15.
+NOTE: There were 16 observations read from the data set WORK.SAMPLE.
+NOTE: The PROCEDURE PLS printed pages 458-459.
+
+5819       proc pls data=sample cv=split cvtest(seed=12345);
+5820       model ls ha dt = v1-v27;
+5821       run;
+
+NOTE: Maximum number of factors to extract set to 15.
+NOTE: There were 16 observations read from the data set WORK.SAMPLE.
+NOTE: The PROCEDURE PLS printed pages 460-461.
+
+5822       data newobs;
+5823       input obsnam $ v1-v27 @@;
+5824       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.NEWOBS has 2 observations and 28 variables.
+
+5831       ;
+5832       data all;
+5833       set sample newobs;
+5834       run;
+
+NOTE: There were 16 observations read from the data set WORK.SAMPLE.
+NOTE: There were 2 observations read from the data set WORK.NEWOBS.
+NOTE: The data set WORK.ALL has 18 observations and 31 variables.
+
+5835       proc pls data=all nfac=3;
+5836       model ls ha dt = v1-v27;
+5837       output out=pred p=p_ls p_ha p_dt;
+5838       run;
+
+NOTE: There were 18 observations read from the data set WORK.ALL.
+NOTE: The data set WORK.PRED has 18 observations and 34 variables.
+NOTE: The PROCEDURE PLS printed pages 462-463.
+
+5839       proc print data=pred;
+5840       where (obsnam in ('EM17','EM25'));
+5841       var obsnam p_ls p_ha p_dt;
+5842       run;
+
+NOTE: There were 2 observations read from the data set WORK.PRED.
+      WHERE obsnam in ('EM17', 'EM25');
+NOTE: The PROCEDURE PRINT printed page 464.
+
+5843       ods graphics on;
+5844       proc pls data=sample cv=split cvtest(seed=12345);
+5845       model ls ha dt = v1-v27;
+5846       run;
+
+NOTE: Maximum number of factors to extract set to 15.
+NOTE: There were 16 observations read from the data set WORK.SAMPLE.
+NOTE: The PROCEDURE PLS printed pages 465-466.
+
+5847       proc pls data=sample nfac=3 plot=corrload(nfac=3);
+5848       model ls ha dt = v1-v27;
+5849       run;
+
+NOTE: There were 16 observations read from the data set WORK.SAMPLE.
+NOTE: The PROCEDURE PLS printed pages 467-468.
+
+5850       
+5851       
+5852       
+5853       
+The SAS System
+
+5854       

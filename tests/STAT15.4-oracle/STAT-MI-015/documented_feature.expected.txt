@@ -1,0 +1,86 @@
+
+Fish Measurement Data
+
+The MI Procedure
+
+                     Model Information
+
+Data Set                             WORK.FISH3             
+Method                               FCS                    
+Number of Imputations                5                      
+Number of Burn-in Iterations         20                     
+Seed for random number generator     1305417                
+
+
+      FCS Model Specification
+ 
+                       Imputed
+Method                 Variables
+
+Regression             Length Width
+Logistic Regression    Species     
+
+
+                                   Missing Data Patterns
+ 
+                                                               ---------Group Means--------
+Group    Species    Length    Width        Freq     Percent          Length           Width
+
+    1    X          X         X              67       77.01       27.910448        4.361860
+    2    X          X         .               5        5.75       24.620000               .
+    3    X          .         X               6        6.90               .        4.167667
+    4    .          X         X               6        6.90       26.683333        4.136233
+    5    .          X         .               2        2.30       31.500000               .
+    6    .          .         X               1        1.15               .        3.663600
+
+
+                                           Logistic Models for FCS Method
+ 
+Imputed                                 ---------------------------------Imputation---------------------------------
+Variable    Effect          Species                1               2               3               4               5
+
+Species     Intercept       Parkki         -2.172588       -2.324226       -2.418362       -1.832884       -0.929242
+Species     Intercept       Perch           1.878263        0.445966        1.585375        0.919562        1.547549
+Species     Length          Parkki          6.107448        6.377145        2.447654       -1.004869        2.363073
+Species     Length          Perch          -5.493897       -4.711566       -7.778194       -5.400749       -0.053788
+Species     Width           Parkki         -8.624156       -6.965179       -5.718729       -0.997851       -2.978868
+Species     Width           Perch           8.111323        5.608314        9.426901        5.502755        1.241239
+Species     Length*Width    Parkki         -0.006404        2.138551        0.883903        0.072525       -0.152662
+Species     Length*Width    Perch           1.151183        1.278025        1.117492       -0.195462        0.672738
+
+Fish Measurement Data
+
+The MI Procedure
+
+                                    Variance Information (5 Imputations)
+ 
+                                                                      Relative       Fraction
+            -----------------Variance-----------------                Increase        Missing       Relative
+Variable         Between         Within          Total       DF    in Variance    Information     Efficiency
+
+Length          0.005177       0.815388       0.821601   83.332       0.007620       0.007590       0.998484
+Width           0.000108       0.028944       0.029074   83.656       0.004496       0.004486       0.999104
+
+
+                                                     Parameter Estimates (5 Imputations)
+ 
+                                                                                                                          t for H0:
+Variable            Mean      Std Error    95% Confidence Limits        DF        Minimum        Maximum            Mu0    Mean=Mu0   Pr > |t|
+
+Length         27.606967       0.906422     25.80424     29.40970   83.332      27.485512      27.675952              0       30.46     <.0001
+Width           4.307702       0.170510      3.96860      4.64680   83.656       4.297146       4.321571              0       25.26     <.0001
+
+First 10 Observations of the Imputed Data Set
+
+Obs    _Imputation_    Species     Length     Width
+
+  1          1          Roach     16.2000    2.26800
+  2          1          Roach     20.3000    2.82170
+  3          1          Roach     21.2000    3.40493
+  4          1          Roach     22.4203    3.17460
+  5          1          Roach     22.2000    3.57420
+  6          1          Roach     22.8000    3.35160
+  7          1          Roach     23.1000    3.39570
+  8          1          Roach     23.7000    3.73166
+  9          1          Roach     24.7000    3.75440
+ 10          1          Roach     24.3000    3.54780

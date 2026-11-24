@@ -1,0 +1,435 @@
+The SAS System
+
+14544      
+14545      /* STAT-ROBUSTREG-010: ROBUSTREG — ODS Graphics
+14546       * Source: S154 / Chapter 107 / `ODS Graphics` (PDF pp. 8827–8830).
+14547       * Discriminates: Getting Started: ROBUSTREG Procedure
+14548       */
+14549      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+14549    ! validmemname=compatible locale=en_US;
+14550      %let syscc=0;
+14551      title; footnote;
+14552      ods _all_ close;
+14553      ods listing gpath="%sysfunc(pathname(work))";
+14554      ods graphics off;
+14555      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.HBK (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.STACK (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+14555    !                                         quit;
+
+
+14556      ods path work.templat(update) sashelp.tmplmst(read);
+14557      
+14558      ods graphics on;
+14559      ods trace on;
+14560      ods trace on;
+14561      data Stack;
+14562      input x1 x2 x3 y exp $ @@;
+14563      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.STACK has 21 observations and 5 variables.
+
+14575      ;
+14576      proc robustreg data=stack;
+14577      model y = x1 x2 x3 / diagnostics leverage;
+14578      id exp;
+14579      test x3;
+14580      run;
+
+
+Output Added:
+-------------
+Name:       ModelInfo
+Label:      Model Information
+Template:   Stat.Robustreg.ModelInfo
+Path:       Robustreg.ModelInfo
+-------------
+
+Output Added:
+-------------
+Name:       NObs
+Label:      Number of Observations
+Template:   Stat.Robustreg.NObs
+Path:       Robustreg.NObs
+-------------
+
+Output Added:
+-------------
+Name:       ParmInfo
+Label:      Parameter Information
+Template:   Stat.Robustreg.ParmInfo
+Path:       Robustreg.ParmInfo
+-------------
+
+Output Added:
+-------------
+Name:       SummaryStatistics
+Label:      Summary Statistics
+Template:   stat.Robustreg.SummaryStatistics
+Path:       Robustreg.SummaryStatistics
+-------------
+NOTE: Algorithm converged for the M estimates.
+
+Output Added:
+-------------
+Name:       ParameterEstimates
+Label:      Parameter Estimates
+Template:   stat.Robustreg.ParameterEstimates
+Path:       Robustreg.ParameterEstimates
+-------------
+NOTE: The MCD estimators for covariates have been successfully computed.
+WARNING: The data set contains one or more high leverage points, for which M estimation is not robust. It is recommended that you use METHOD=LTS or METHOD=MM 
+         for this data set.
+
+Output Added:
+-------------
+Name:       Diagnostics
+Label:      Diagnostics
+Template:   Stat.Robustreg.Diagnostics
+Path:       Robustreg.Diagnostics
+-------------
+
+Output Added:
+-------------
+Name:       DiagSummary
+Label:      Diagnostics Summary
+Template:   Stat.Robustreg.DiagSummary
+Path:       Robustreg.DiagSummary
+-------------
+NOTE: Algorithm converged for the location-scale M estimates.
+
+Output Added:
+-------------
+Name:       GoodFit
+Label:      Goodness-of-Fit
+Template:   stat.Robustreg.GoodFit
+Path:       Robustreg.GoodFit
+-------------
+NOTE: Test: Algorithm converged for the M estimates in the reduced model.
+
+Output Added:
+-------------
+Name:       ParameterEstimatesR
+Label:      Reduced Model Parameter Estimates
+Template:   stat.Robustreg.ParameterEstimatesR
+Path:       Robustreg.ParameterEstimatesR
+-------------
+
+Output Added:
+-------------
+Name:       Tests
+Label:      Test
+Template:   stat.Robustreg.Tests
+Path:       Robustreg.Tests
+-------------
+NOTE: The PROCEDURE ROBUSTREG printed page 1085.
+
+14581      ods graphics on;
+14582      proc robustreg data=stack plots=(rdplot ddplot histogram qqplot);
+14583      model y = x1 x2 x3;
+14584      run;
+
+
+Output Added:
+-------------
+Name:       ModelInfo
+Label:      Model Information
+Template:   Stat.Robustreg.ModelInfo
+Path:       Robustreg.ModelInfo
+-------------
+
+Output Added:
+-------------
+Name:       NObs
+Label:      Number of Observations
+Template:   Stat.Robustreg.NObs
+Path:       Robustreg.NObs
+-------------
+
+Output Added:
+-------------
+Name:       ParmInfo
+Label:      Parameter Information
+Template:   Stat.Robustreg.ParmInfo
+Path:       Robustreg.ParmInfo
+-------------
+
+Output Added:
+-------------
+Name:       SummaryStatistics
+Label:      Summary Statistics
+Template:   stat.Robustreg.SummaryStatistics
+Path:       Robustreg.SummaryStatistics
+-------------
+NOTE: Algorithm converged for the M estimates.
+
+Output Added:
+-------------
+Name:       ParameterEstimates
+Label:      Parameter Estimates
+Template:   stat.Robustreg.ParameterEstimates
+Path:       Robustreg.ParameterEstimates
+-------------
+NOTE: The MCD estimators for covariates have been successfully computed.
+WARNING: The data set contains one or more high leverage points, for which M estimation is not robust. It is recommended that you use METHOD=LTS or METHOD=MM 
+         for this data set.
+
+Output Added:
+-------------
+Name:       DiagSummary
+Label:      Diagnostics Summary
+Template:   Stat.Robustreg.DiagSummary
+Path:       Robustreg.DiagSummary
+-------------
+
+Output Added:
+-------------
+Name:       RDPlot
+Label:      Residual by Distance
+Template:   Stat.Robustreg.Graphics.RDPlot
+Path:       Robustreg.DiagnosticPlots.RDPlot
+-------------
+
+Output Added:
+-------------
+Name:       DDPlot
+Label:      Distance by Distance
+Template:   Stat.Robustreg.Graphics.DDPlot
+Path:       Robustreg.DiagnosticPlots.DDPlot
+-------------
+
+Output Added:
+-------------
+Name:       Histogram
+Label:      Residual Histogram
+Template:   Stat.Robustreg.Graphics.Histogram
+Path:       Robustreg.DiagnosticPlots.Histogram
+-------------
+
+Output Added:
+-------------
+Name:       QQPlot
+Label:      Residual Q-Q Plot
+Template:   Stat.Robustreg.Graphics.QQPlot
+Path:       Robustreg.DiagnosticPlots.QQPlot
+-------------
+NOTE: Algorithm converged for the location-scale M estimates.
+
+Output Added:
+-------------
+Name:       GoodFit
+Label:      Goodness-of-Fit
+Template:   stat.Robustreg.GoodFit
+Path:       Robustreg.GoodFit
+-------------
+NOTE: The PROCEDURE ROBUSTREG printed page 1086.
+
+14585      ods graphics off;
+14586      proc robustreg method=m(wf=bisquare(c=3.5)) data=stack;
+14587      model y = x1 x2 x3 / diagnostics leverage;
+14588      id exp;
+14589      test x3;
+14590      run;
+
+
+Output Added:
+-------------
+Name:       ModelInfo
+Label:      Model Information
+Template:   Stat.Robustreg.ModelInfo
+Path:       Robustreg.ModelInfo
+-------------
+
+Output Added:
+-------------
+Name:       NObs
+Label:      Number of Observations
+Template:   Stat.Robustreg.NObs
+Path:       Robustreg.NObs
+-------------
+
+Output Added:
+-------------
+Name:       ParmInfo
+Label:      Parameter Information
+Template:   Stat.Robustreg.ParmInfo
+Path:       Robustreg.ParmInfo
+-------------
+
+Output Added:
+-------------
+Name:       SummaryStatistics
+Label:      Summary Statistics
+Template:   stat.Robustreg.SummaryStatistics
+Path:       Robustreg.SummaryStatistics
+-------------
+NOTE: Algorithm converged for the M estimates.
+
+Output Added:
+-------------
+Name:       ParameterEstimates
+Label:      Parameter Estimates
+Template:   stat.Robustreg.ParameterEstimates
+Path:       Robustreg.ParameterEstimates
+-------------
+NOTE: The MCD estimators for covariates have been successfully computed.
+WARNING: The data set contains one or more high leverage points, for which M estimation is not robust. It is recommended that you use METHOD=LTS or METHOD=MM 
+         for this data set.
+
+Output Added:
+-------------
+Name:       Diagnostics
+Label:      Diagnostics
+Template:   Stat.Robustreg.Diagnostics
+Path:       Robustreg.Diagnostics
+-------------
+
+Output Added:
+-------------
+Name:       DiagSummary
+Label:      Diagnostics Summary
+Template:   Stat.Robustreg.DiagSummary
+Path:       Robustreg.DiagSummary
+-------------
+NOTE: Algorithm converged for the location-scale M estimates.
+
+Output Added:
+-------------
+Name:       GoodFit
+Label:      Goodness-of-Fit
+Template:   stat.Robustreg.GoodFit
+Path:       Robustreg.GoodFit
+-------------
+NOTE: Test: Algorithm converged for the M estimates in the reduced model.
+
+Output Added:
+-------------
+Name:       ParameterEstimatesR
+Label:      Reduced Model Parameter Estimates
+Template:   stat.Robustreg.ParameterEstimatesR
+Path:       Robustreg.ParameterEstimatesR
+-------------
+
+Output Added:
+-------------
+Name:       Tests
+Label:      Test
+Template:   stat.Robustreg.Tests
+Path:       Robustreg.Tests
+-------------
+NOTE: The PROCEDURE ROBUSTREG printed page 1087.
+
+14591      data hbk;
+14592      input index $ x1 x2 x3 y @@;
+14593      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.HBK has 75 observations and 5 variables.
+
+14632      ;
+14633      proc robustreg data=hbk fwls method=lts;
+14634      model y = x1 x2 x3 / diagnostics leverage;
+14635      id index;
+14636      run;
+
+
+Output Added:
+-------------
+Name:       ModelInfo
+Label:      Model Information
+Template:   Stat.Robustreg.ModelInfo
+Path:       Robustreg.ModelInfo
+-------------
+
+Output Added:
+-------------
+Name:       NObs
+Label:      Number of Observations
+Template:   Stat.Robustreg.NObs
+Path:       Robustreg.NObs
+-------------
+
+Output Added:
+-------------
+Name:       ParmInfo
+Label:      Parameter Information
+Template:   Stat.Robustreg.ParmInfo
+Path:       Robustreg.ParmInfo
+-------------
+
+Output Added:
+-------------
+Name:       SummaryStatistics
+Label:      Summary Statistics
+Template:   stat.Robustreg.SummaryStatistics
+Path:       Robustreg.SummaryStatistics
+-------------
+
+Output Added:
+-------------
+Name:       LTSProfile
+Label:      LTS Profile
+Template:   Stat.Robustreg.LTSProfile
+Path:       Robustreg.LTSProfile
+-------------
+
+Output Added:
+-------------
+Name:       LTSEstimates
+Label:      LTS Parameter Estimates
+Template:   stat.Robustreg.LTSEstimates
+Path:       Robustreg.LTSEstimates
+-------------
+NOTE: The MCD estimators for covariates have been successfully computed.
+
+Output Added:
+-------------
+Name:       Diagnostics
+Label:      Diagnostics
+Template:   Stat.Robustreg.Diagnostics
+Path:       Robustreg.Diagnostics
+-------------
+
+Output Added:
+-------------
+Name:       DiagSummary
+Label:      Diagnostics Summary
+Template:   Stat.Robustreg.DiagSummary
+Path:       Robustreg.DiagSummary
+-------------
+
+Output Added:
+-------------
+Name:       LTSRSquare
+Label:      R-Square for LTS Estimation
+Template:   stat.Robustreg.LTSRSquare
+Path:       Robustreg.LTSRSquare
+-------------
+
+Output Added:
+-------------
+Name:       ParameterEstimatesF
+Label:      Final WLS Parameter Estimates
+Template:   stat.Robustreg.ParameterEstimatesF
+Path:       Robustreg.ParameterEstimatesF
+-------------
+NOTE: The PROCEDURE ROBUSTREG printed page 1088.
+
+14637      ods trace off;
+14638      ods trace off;
+14639      ods graphics off;
+14640      
+14641      
+14642      
+14643      
+The SAS System
+
+14644      

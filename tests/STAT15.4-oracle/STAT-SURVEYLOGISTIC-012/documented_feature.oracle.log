@@ -1,0 +1,61 @@
+The SAS System
+
+21057      
+21058      /* STAT-SURVEYLOGISTIC-012: SURVEYLOGISTIC — Bootstrap Method
+21059       * Source: S154 / Chapter 120 / `Bootstrap Method` (PDF pp. 9857–9859).
+21060       * Discriminates: Verified default procedure context
+21061       */
+21062      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+21062    ! validmemname=compatible locale=en_US;
+21063      %let syscc=0;
+21064      title; footnote;
+21065      ods _all_ close;
+21066      ods listing gpath="%sysfunc(pathname(work))";
+21067      ods graphics off;
+21068      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SURVEY (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+21068    !                                         quit;
+
+
+21069      ods path work.templat(update) sashelp.tmplmst(read);
+21070      
+21071      data survey;
+21072      call streaminit(722);
+21073      do stratum=1 to 2;
+21074      do cluster=1 to 4;
+21075      do id=1 to 12;
+21076      age=20+mod(id*7+cluster,45);
+21077      event=rand('bernoulli',0.3);
+21078      weight=2+stratum+cluster/10;
+21079      output;
+21080      end;
+21081      end;
+21082      end;
+21083      run;
+
+NOTE: The data set WORK.SURVEY has 96 observations and 6 variables.
+
+21084      proc surveylogistic data=survey;
+21085      strata stratum;
+21086      cluster cluster;
+21087      weight weight;
+21088      model event(event='1')=age;
+21089      run;
+
+NOTE: PROC SURVEYLOGISTIC is modeling the probability that event=1.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The PROCEDURE SURVEYLOGISTIC printed page 1417.
+
+21090      
+21091      
+21092      
+21093      
+The SAS System
+
+21094      

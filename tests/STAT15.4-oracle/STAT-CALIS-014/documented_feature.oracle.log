@@ -1,0 +1,97 @@
+The SAS System
+
+8562       
+8563       /* STAT-CALIS-014: CALIS — Estimation Criteria / Relationships among Estimation Criteria
+8564        * Source: S154 / Chapter 33 / `Estimation Criteria` (PDF pp. 1757–1768); S154 / Chapter 33 / `Relationships among Estimation Criteria` (PDF pp.
+8564     ! 1768–1770).
+8565        * Discriminates: Example 33.32: Ordinal Relations among Factor Loadings
+8566        */
+8567       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+8567     ! validmemname=compatible locale=en_US;
+8568       %let syscc=0;
+8569       title; footnote;
+8570       ods _all_ close;
+8571       ods listing gpath="%sysfunc(pathname(work))";
+8572       ods graphics off;
+8573       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.WHEATON (memtype=DATA).
+8573     !                                         quit;
+
+
+8574       ods path work.templat(update) sashelp.tmplmst(read);
+8575       
+8576       data kinzer(type=corr);
+8577       title "Data Matrix of Kinzer & Kinzer, see GUTTMAN (1957)";
+8578       _type_ = 'corr';
+8579       input _name_ $ var1-var6;
+8580       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.KINZER has 6 observations and 8 variables.
+
+8588       ;
+8589       
+8590       run;
+8591       
+8592       proc calis data=Kinzer nobs=326 nose;
+8593       cosan
+8594       var= var1-var6,
+8595       D(6,DIA) * B(2,GEN) + D(6,DIA) * Psi(6,DIA);
+8596       matrix B
+8597       [ ,1]= b11 b21 b31 b41 b51 b61,
+8598       [ ,2]= 0. b22 b32 b42 b52 b62;
+8599       matrix Psi
+8600       [1,1]= psi1-psi6;
+8601       matrix D
+8602       [1,1]= d1-d6 ;
+8603       lincon
+8604       b61 <= b51,
+8605       b51 <= b41,
+8606       b41 <= b31,
+8607       b31 <= b21,
+8608       b21 <= b11,
+8609       0. <= b22,
+8610       b22 <= b32,
+8611       b32 <= b42,
+8612       b42 <= b52,
+8613       b52 <= b62;
+8614       /* SAS Programming Statements */
+8615       /* 6 Constraints on Correlation structures */
+8616       psi1 = 1. - b11 * b11;
+8617       psi2 = 1. - b21 * b21 - b22 * b22;
+8618       psi3 = 1. - b31 * b31 - b32 * b32;
+8619       psi4 = 1. - b41 * b41 - b42 * b42;
+8620       psi5 = 1. - b51 * b51 - b52 * b52;
+8621       psi6 = 1. - b61 * b61 - b62 * b62;
+8622       vnames
+8623       B = [factor1 factor2],
+8624       Psi = [var1-var6],
+8625       D = Psi;
+8626       run;
+
+NOTE: Your code contains 6 program statements.
+NOTE: A central symmetric matrix is not specified in term 1 of the COSAN model.
+NOTE: The means of one or more variables in the input data set WORK.KINZER are missing and are assumed to be 0.
+NOTE: The standard deviations of one or more variables in the input data set WORK.KINZER are missing and are assumed to be 1.
+NOTE: Convergence criterion (ABSGCONV=0.00001) satisfied.
+WARNING: There are 2 active boundary or linear inequality constraints at the solution. The standard errors and chi-square test statistic assume that the 
+         solution is located in the interior of the parameter space; hence, they do not apply if it is likely that some different set of inequality constraints 
+         could be active.
+NOTE: The degrees of freedom are increased by the number of active boundary and inequality constraints. To turn off the adjustment, use the NOADJDF option.
+NOTE: The PROCEDURE CALIS printed pages 833-843.
+
+8627       
+8628       
+8629       
+8630       
+The SAS System
+
+8631       

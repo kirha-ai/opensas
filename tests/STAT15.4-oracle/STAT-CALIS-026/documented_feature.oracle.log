@@ -1,0 +1,91 @@
+The SAS System
+
+610        
+611        /* STAT-CALIS-026: CALIS — Case-Level Residuals, Outliers, Leverage Observations, and Residual Diagnostics
+612         * Source: S154 / Chapter 33 / `Case-Level Residuals, Outliers, Leverage Observations, and Residual Diagnostics` (PDF pp. 1789–1793).
+613         * Discriminates: Example 33.14: Residual Diagnostics and Robust Estimation
+614         */
+615        options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+615      ! validmemname=compatible locale=en_US;
+616        %let syscc=0;
+617        title; footnote;
+618        ods _all_ close;
+619        ods listing gpath="%sysfunc(pathname(work))";
+620        ods graphics off;
+621        proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGION1 (memtype=DATA).
+NOTE: Deleting WORK.REGION2 (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.WHEATON (memtype=DATA).
+621      !                                         quit;
+
+
+622        ods path work.templat(update) sashelp.tmplmst(read);
+623        
+624        data mardia;
+625        call streaminit(314159);
+626        do id=1 to 120;
+627         fact=rand('normal');
+628         mechanics=60+8*fact+4*rand('normal');
+629         vector=65+7*fact+4*rand('normal');
+630         algebra=63+9*fact+4*rand('normal');
+631         analysis=64+6*fact+4*rand('normal');
+632         statistics=66+8*fact+4*rand('normal');
+633         if id=120 then mechanics=mechanics+30;
+634         output;
+635        end;
+636        drop fact id;
+637        run;
+
+NOTE: The data set WORK.MARDIA has 120 observations and 5 variables.
+
+638        ods graphics on;
+639        proc calis data=mardia residual plots=caseresid;
+640        path
+641        fact1 ===> mechanics vector algebra analysis statistics = 1. ;
+642        run;
+
+NOTE: The parameter list is shorter than the path list that contains fact1 ===> vector in the PATH statement. The path fact1 ===> vector and all the remaining 
+      paths are free parameters.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The PROCEDURE CALIS printed pages 72-83.
+
+643        ods graphics off;
+644        ods graphics on;
+645        proc calis data=mardia residual robust plots=caseresid pcorr;
+646        path
+647        fact1 ===> mechanics vector algebra analysis statistics = 1. ;
+648        run;
+
+NOTE: The parameter list is shorter than the path list that contains fact1 ===> vector in the PATH statement. The path fact1 ===> vector and all the remaining 
+      paths are free parameters.
+NOTE: Saturated mean structures in models are analyzed with the ROBUST or ROBUST=RESID option.
+NOTE: The robust mean and covariance matrices with the 2-stage robust method are obtained successfully in 10 iterations.
+NOTE: The leverage M-Distances are computed by using the results of the 2-stage robust method.
+NOTE: Robust estimation with the iteratively reweighted least squares method converges in 11 iterations.
+NOTE: The PROCEDURE CALIS printed pages 84-95.
+
+649        ods graphics off;
+650        proc calis data=mardia robust=sat pcorr;
+651        path
+652        fact1 ===> mechanics vector algebra analysis statistics = 1. ;
+653        run;
+
+NOTE: The parameter list is shorter than the path list that contains fact1 ===> vector in the PATH statement. The path fact1 ===> vector and all the remaining 
+      paths are free parameters.
+NOTE: The robust mean and covariance matrices with the 2-stage robust method are obtained successfully in 10 iterations.
+NOTE: Convergence criterion (ABSGCONV=0.00001) satisfied.
+NOTE: The PROCEDURE CALIS printed pages 96-103.
+
+654        
+655        
+656        
+657        
+The SAS System
+
+658        

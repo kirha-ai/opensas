@@ -1,0 +1,46 @@
+The SAS System
+
+14885      
+14886      /* STAT-DISCRIM-002: DISCRIM — Discriminant rule estimation and classification
+14887       * Source: S154 / Chapter 42 / `Getting Started: DISCRIM Procedure` (PDF pp. 2649–2652); S154 / Chapter 42 / `Overview: DISCRIM Procedure` (PDF pp.
+14887    !  2648–2649).
+14888       * Discriminates: Getting Started: DISCRIM Procedure
+14889       */
+14890      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+14890    ! validmemname=compatible locale=en_US;
+14891      %let syscc=0;
+14892      title; footnote;
+14893      ods _all_ close;
+14894      ods listing gpath="%sysfunc(pathname(work))";
+14895      ods graphics off;
+14896      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+14896    !                                         quit;
+
+
+14897      ods path work.templat(update) sashelp.tmplmst(read);
+14898      
+14899      title 'Fish Measurement Data';
+14900      proc discrim data=sashelp.fish;
+14901      class Species;
+14902      run;
+
+WARNING: 1 observations in DATA= data set or BY group will not be included in the analysis due to missing values.
+WARNING: A total of 1 of the 159 observations in the DATA= data set were excluded (frequency sum = 158).
+NOTE: There were 159 observations read from the data set SASHELP.FISH.
+NOTE: The PROCEDURE DISCRIM printed pages 1994-1996.
+
+14903      
+14904      
+14905      
+14906      
+The SAS System
+
+14907      

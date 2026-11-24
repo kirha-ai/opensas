@@ -1,0 +1,57 @@
+The SAS System
+
+9266       
+9267       /* STAT-PROBIT-006: PROBIT — Tolerance Distribution / OUTEST= SAS-data-set / XDATA= SAS-data-set
+9268        * Source: S154 / Chapter 100 / `Tolerance Distribution` (PDF pp. 8126–8127); S154 / Chapter 100 / `OUTEST= SAS-data-set` (PDF p. 8128); S154 /
+9268     ! Chapter 100 / `XDATA= SAS-data-set` (PDF pp. 8128–8129).
+9269        * Discriminates: Getting Started: PROBIT Procedure
+9270        */
+9271       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+9271     ! validmemname=compatible locale=en_US;
+9272       %let syscc=0;
+9273       title; footnote;
+9274       ods _all_ close;
+9275       ods listing gpath="%sysfunc(pathname(work))";
+9276       ods graphics off;
+9277       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.NEW (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.STUDY (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+9277     !                                         quit;
+
+
+9278       ods path work.templat(update) sashelp.tmplmst(read);
+9279       
+9280       data study;
+9281       input Dose Respond @@;
+9282       Number = 15;
+9283       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.STUDY has 12 observations and 3 variables.
+
+9286       ;
+9287       ods graphics on;
+9288       proc probit data=study log10 optc plots=(predpplot ippplot);
+9289       model respond/number=dose;
+9290       output out=new p=p_hat;
+9291       run;
+
+NOTE: Algorithm converged.
+NOTE: The confidence limits displayed on the plots are conditioned on the estimated threshold. The variation in estimating the threshold is ignored.
+NOTE: The data set WORK.NEW has 12 observations and 4 variables.
+NOTE: The PROCEDURE PROBIT printed page 617.
+
+9292       
+9293       
+9294       
+9295       
+The SAS System
+
+9296       

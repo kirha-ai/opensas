@@ -1,0 +1,54 @@
+The SAS System
+
+5296       
+5297       /* STAT-HPQUANTSELECT-013: HPQUANTSELECT — PERFORMANCE
+5298        * Source: S154 / Chapter 66 / `PERFORMANCE Statement` (PDF pp. 4993–4994).
+5299        * Discriminates: Seeded synthetic quantile-regression fixture: PERFORMANCE
+5300        */
+5301       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+5301     ! validmemname=compatible locale=en_US;
+5302       %let syscc=0;
+5303       title; footnote;
+5304       ods _all_ close;
+5305       ods listing gpath="%sysfunc(pathname(work))";
+5306       ods graphics off;
+5307       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SAMPLE (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+5307     !                                         quit;
+
+
+5308       ods path work.templat(update) sashelp.tmplmst(read);
+5309       
+5310       data sample;
+5311       call streaminit(314159);
+5312       do id=1 to 120;
+5313        x=rand('normal'); z=rand('normal'); w=rand('normal'); group=1+mod(id,3);
+5314        y=2+1.5*x-0.6*z+0.4*group+rand('normal');
+5315        role=mod(id,4); output;
+5316       end;
+5317       run;
+
+NOTE: The data set WORK.SAMPLE has 120 observations and 7 variables.
+
+5318       
+5319       proc hpquantselect data=sample;
+5320       class group;
+5321       model y=x z w group / quantile=0.5 clb;
+5322       
+5323       performance nthreads=1;
+5324       run;
+
+NOTE: The HPQUANTSELECT procedure is executing in single-machine mode.
+NOTE: The PROCEDURE HPQUANTSELECT printed pages 207-208.
+
+5325       
+5326       
+5327       
+5328       
+The SAS System
+
+5329       

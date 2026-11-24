@@ -1,0 +1,22 @@
+
+The MCMC Procedure
+
+Number of Observations Read          12
+Number of Observations Used          12
+
+
+                                   Parameters
+ 
+                       Sampling      Initial
+Block    Parameter     Method          Value    Prior Distribution
+
+    1    mu            Conjugate     90.0000    normal(0,var=10000)             
+
+The MCMC Procedure
+
+                  Posterior Summaries and Intervals
+ 
+                                      Standard
+Parameter           N        Mean    Deviation      95% HPD Interval
+
+mu               1000     89.6811       2.9942     83.6713     95.2243

@@ -1,0 +1,185 @@
+The SAS System
+
+2606       
+2607       /* STAT-PHREG-011: PHREG — Proportional Rates/Means Models for Recurrent Events / Analysis of Multivariate Failure Time Data
+2608        * Source: S154 / Chapter 92 / `Proportional Rates/Means Models for Recurrent Events` (PDF pp. 7400–7401); S154 / Chapter 92 / `Analysis of
+2608     ! Multivariate Failure Time Data` (PDF pp. 7419–7428).
+2609        * Discriminates: Example 92.10: Analysis of Recurrent Events Data
+2610        */
+2611       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+2611     ! validmemname=compatible locale=en_US;
+2612       %let syscc=0;
+2613       title; footnote;
+2614       ods _all_ close;
+2615       ods listing gpath="%sysfunc(pathname(work))";
+2616       ods graphics off;
+2617       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.NEW (memtype=DATA).
+NOTE: Deleting WORK.POST (memtype=DATA).
+NOTE: Deleting WORK.RATS (memtype=DATA).
+NOTE: Deleting WORK.REGIMES (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+2617     !                                         quit;
+
+
+2618       ods path work.templat(update) sashelp.tmplmst(read);
+2619       
+2620       data Bladder;
+2621       keep ID TStart TStop Status Trt Number Size Visit;
+2622       retain ID TStart 0;
+2623       array tt[4] T1-T4;
+2624       infile datalines missover;
+2625       input Trt Time Number Size T1-T4;
+2626       ID + 1;
+2627       TStart=0;
+2628       do Visit=1 to 4;
+2629       if tt[Visit] = . then do;
+2630       TStop=Time;
+2631       Status=0;
+2632       end;
+2633       else do;
+2634       TStop=tt[Visit];
+2635       Status=1;
+2636       end;
+2637       output;
+2638       TStart=TStop;
+2639       end;
+2640       if (TStart < Time) then delete;
+2641       datalines;
+
+NOTE: The data set WORK.BLADDER has 344 observations and 8 variables.
+
+2728       ;
+2729       title 'Intensity Model and Proportional Means Model';
+2730       proc phreg data=Bladder covm covs(aggregate);
+2731       model (TStart, TStop) * Status(0) = Trt Number Size;
+2732       id id;
+2733       where TStart < TStop;
+2734       run;
+
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The PROCEDURE PHREG printed page 236.
+
+2735       data Bladder2(drop=LastStatus);
+2736       retain LastStatus;
+2737       set Bladder;
+2738       by ID;
+2739       if first.id then LastStatus=1;
+2740       if (Status=0 and LastStatus=0) then delete;
+2741       LastStatus=Status;
+2742       Gaptime=Tstop-Tstart;
+2743       run;
+
+NOTE: There were 344 observations read from the data set WORK.BLADDER.
+NOTE: The data set WORK.BLADDER2 has 184 observations and 9 variables.
+
+2744       title 'PWP Total Time Model with Noncommon Effects';
+2745       proc phreg data=Bladder2;
+2746       model (TStart,Tstop) * Status(0) = Trt1-Trt4 Number1-Number4
+2747       Size1-Size4;
+2748       Trt1= Trt * (Visit=1);
+2749       Trt2= Trt * (Visit=2);
+2750       Trt3= Trt * (Visit=3);
+2751       Trt4= Trt * (Visit=4);
+2752       Number1= Number * (Visit=1);
+2753       Number2= Number * (Visit=2);
+2754       Number3= Number * (Visit=3);
+2755       Number4= Number * (Visit=4);
+2756       Size1= Size * (Visit=1);
+2757       Size2= Size * (Visit=2);
+2758       Size3= Size * (Visit=3);
+2759       Size4= Size * (Visit=4);
+2760       strata Visit;
+2761       run;
+
+NOTE: 1 observations were deleted in the 1st stratum due either to missing or invalid values for the time, censoring, frequency or explanatory variables or to 
+      invalid operations in generating the values for some of the explanatory variables.
+NOTE: 1 observations were deleted in the 2nd stratum due either to missing or invalid values for the time, censoring, frequency or explanatory variables or to 
+      invalid operations in generating the values for some of the explanatory variables.
+NOTE: 2 observations were deleted in the 3rd stratum due either to missing or invalid values for the time, censoring, frequency or explanatory variables or to 
+      invalid operations in generating the values for some of the explanatory variables.
+NOTE: 2 observations were deleted in the 4th stratum due either to missing or invalid values for the time, censoring, frequency or explanatory variables or to 
+      invalid operations in generating the values for some of the explanatory variables.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The PROCEDURE PHREG printed page 237.
+
+2762       title 'PWP Gap-Time Model with Noncommon Effects';
+2763       proc phreg data=Bladder2;
+2764       model Gaptime * Status(0) = Trt1-Trt4 Number1-Number4
+2765       Size1-Size4;
+2766       Trt1= Trt * (Visit=1);
+2767       Trt2= Trt * (Visit=2);
+2768       Trt3= Trt * (Visit=3);
+2769       Trt4= Trt * (Visit=4);
+2770       Number1= Number * (Visit=1);
+2771       Number2= Number * (Visit=2);
+2772       Number3= Number * (Visit=3);
+2773       Number4= Number * (Visit=4);
+2774       Size1= Size * (Visit=1);
+2775       Size2= Size * (Visit=2);
+2776       Size3= Size * (Visit=3);
+2777       Size4= Size * (Visit=4);
+2778       strata Visit;
+2779       run;
+
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The PROCEDURE PHREG printed page 238.
+
+2780       title2 'PWP Total Time Model with Common Effects';
+2781       proc phreg data=Bladder2;
+2782       model (tstart,tstop) * status(0) = Trt Number Size;
+2783       strata Visit;
+2784       run;
+
+NOTE: 1 observations were deleted in the 1st stratum due either to missing or invalid values for the time, censoring, frequency or explanatory variables or to 
+      invalid operations in generating the values for some of the explanatory variables.
+NOTE: 1 observations were deleted in the 2nd stratum due either to missing or invalid values for the time, censoring, frequency or explanatory variables or to 
+      invalid operations in generating the values for some of the explanatory variables.
+NOTE: 2 observations were deleted in the 3rd stratum due either to missing or invalid values for the time, censoring, frequency or explanatory variables or to 
+      invalid operations in generating the values for some of the explanatory variables.
+NOTE: 2 observations were deleted in the 4th stratum due either to missing or invalid values for the time, censoring, frequency or explanatory variables or to 
+      invalid operations in generating the values for some of the explanatory variables.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The PROCEDURE PHREG printed page 239.
+
+2785       title2 'PWP Gap Time Model with Common Effects';
+2786       proc phreg data=Bladder2;
+2787       model Gaptime * Status(0) = Trt Number Size;
+2788       strata Visit;
+2789       run;
+
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The PROCEDURE PHREG printed page 240.
+
+2790       title 'Wei-Lin-Weissfeld Model';
+2791       proc phreg data=Bladder covs(aggregate);
+2792       model TStop*Status(0)=Trt1-Trt4 Number1-Number4 Size1-Size4;
+2793       Trt1= Trt * (Visit=1);
+2794       Trt2= Trt * (Visit=2);
+2795       Trt3= Trt * (Visit=3);
+2796       Trt4= Trt * (Visit=4);
+2797       Number1= Number * (Visit=1);
+2798       Number2= Number * (Visit=2);
+2799       Number3= Number * (Visit=3);
+2800       Number4= Number * (Visit=4);
+2801       Size1= Size * (Visit=1);
+2802       Size2= Size * (Visit=2);
+2803       Size3= Size * (Visit=3);
+2804       Size4= Size * (Visit=4);
+2805       strata Visit;
+2806       id ID;
+2807       TREATMENT: test trt1,trt2,trt3,trt4/average e;
+2808       run;
+
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The PROCEDURE PHREG printed pages 241-242.
+
+2809       
+2810       
+2811       
+2812       
+The SAS System
+
+2813       

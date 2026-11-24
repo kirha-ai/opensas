@@ -1,0 +1,1 @@
+WARNING: Ties for minimum distance between clusters have been detected at 48 level(s) in the cluster history.

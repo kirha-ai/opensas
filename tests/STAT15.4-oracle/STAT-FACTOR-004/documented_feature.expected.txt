@@ -1,0 +1,294 @@
+
+The FACTOR Procedure
+
+Input Data Type                 Raw Data
+Number of Records Read                12
+Number of Records Used                12
+N for Significance Tests              12
+
+
+Means and Standard Deviations from 12 Observations
+ 
+Variable            Mean       Std Dev
+
+Population      6241.667     3439.9943
+School            11.442        1.7865
+Employment      2333.333     1241.2115
+Services         120.833      114.9275
+HouseValue     17000.000     6367.5313
+
+
+                                       Correlations
+ 
+                Population          School      Employment        Services      HouseValue
+
+Population         1.00000         0.00975         0.97245         0.43887         0.02241
+School             0.00975         1.00000         0.15428         0.69141         0.86307
+Employment         0.97245         0.15428         1.00000         0.51472         0.12193
+Services           0.43887         0.69141         0.51472         1.00000         0.77765
+HouseValue         0.02241         0.86307         0.12193         0.77765         1.00000
+
+The FACTOR Procedure
+Initial Factor Method: Principal Components
+
+Prior Communality Estimates: ONE    
+
+
+
+Eigenvalues of the Correlation Matrix: Total = 5  Average = 1
+ 
+        Eigenvalue    Difference    Proportion    Cumulative
+
+   1    2.87331359    1.07665350        0.5747        0.5747
+   2    1.79666009    1.58182321        0.3593        0.9340
+   3    0.21483689    0.11490283        0.0430        0.9770
+   4    0.09993405    0.08467868        0.0200        0.9969
+   5    0.01525537                      0.0031        1.0000
+
+2 factors will be retained by the MINEIGEN criterion.
+
+
+
+              Factor Pattern
+ 
+                   Factor1         Factor2
+
+Population         0.58096         0.80642
+School             0.76704        -0.54476
+Employment         0.67243         0.72605
+Services           0.93239        -0.10431
+HouseValue         0.79116        -0.55818
+
+
+Variance Explained by Each Factor
+ 
+   Factor1         Factor2
+
+ 2.8733136       1.7966601
+
+
+               Final Communality Estimates: Total = 4.669974
+ 
+Population          School      Employment        Services      HouseValue
+
+0.98782629      0.88510555      0.97930583      0.88023562      0.93750041
+
+The FACTOR Procedure
+
+Input Data Type                 Raw Data
+Number of Records Read                12
+Number of Records Used                12
+N for Significance Tests              12
+
+The FACTOR Procedure
+Initial Factor Method: Principal Components
+
+Average Partial Correlations Controlling Principal Components
+ 
+N Prin Comp                Fourth-
+ Partialled      Squared   Powered
+
+          0      0.3270    0.2151 
+          1      0.4568    0.3188 
+          2      0.2400*   0.0962*
+          3      0.4474    0.3470 
+          4      1.0000    1.0000 
+
+ * MAP = Minimum Values in Columns
+
+
+       Parallel Analysis:
+   NSims=10000 Seed=20170229
+ 
+          Observed    Simulated
+        Eigenvalue     Crit Val
+
+   1        2.8733      2.6286*
+   2        1.7967      1.7157*
+   3        0.2148      1.2256 
+   4        0.0999      0.8803 
+   5        0.0153      0.5716 
+
+* Retained Dimension (Obs > Crit, alpha=0.01)
+
+The FACTOR Procedure
+Initial Factor Method: Principal Components
+
+Prior Communality Estimates: ONE    
+
+
+
+Eigenvalues of the Correlation Matrix: Total = 5  Average = 1
+ 
+        Eigenvalue    Difference    Proportion    Cumulative
+
+   1    2.87331359    1.07665350        0.5747        0.5747
+   2    1.79666009    1.58182321        0.3593        0.9340
+   3    0.21483689    0.11490283        0.0430        0.9770
+   4    0.09993405    0.08467868        0.0200        0.9969
+   5    0.01525537                      0.0031        1.0000
+
+2 factors will be retained by the MINEIGEN criterion.
+
+
+
+              Factor Pattern
+ 
+                   Factor1         Factor2
+
+Population         0.58096         0.80642
+School             0.76704        -0.54476
+Employment         0.67243         0.72605
+Services           0.93239        -0.10431
+HouseValue         0.79116        -0.55818
+
+
+Variance Explained by Each Factor
+ 
+   Factor1         Factor2
+
+ 2.8733136       1.7966601
+
+
+               Final Communality Estimates: Total = 4.669974
+ 
+Population          School      Employment        Services      HouseValue
+
+0.98782629      0.88510555      0.97930583      0.88023562      0.93750041
+
+The FACTOR Procedure
+
+Input Data Type                 Raw Data
+Number of Records Read                12
+Number of Records Used                12
+N for Significance Tests              12
+
+The FACTOR Procedure
+Initial Factor Method: Principal Components
+
+       Parallel Analysis:
+   NSims=10000 Seed=20170229
+ 
+          Observed    Simulated
+        Eigenvalue     Crit Val
+
+   1        2.8733      2.6286*
+   2        1.7967      1.7157*
+   3        0.2148      1.2256 
+   4        0.0999      0.8803 
+   5        0.0153      0.5716 
+
+* Retained Dimension (Obs > Crit, alpha=0.01)
+
+The FACTOR Procedure
+Initial Factor Method: Principal Components
+
+Prior Communality Estimates: ONE    
+
+
+
+Eigenvalues of the Correlation Matrix: Total = 5  Average = 1
+ 
+        Eigenvalue    Difference    Proportion    Cumulative
+
+   1    2.87331359    1.07665350        0.5747        0.5747
+   2    1.79666009    1.58182321        0.3593        0.9340
+   3    0.21483689    0.11490283        0.0430        0.9770
+   4    0.09993405    0.08467868        0.0200        0.9969
+   5    0.01525537                      0.0031        1.0000
+
+2 factors will be retained by the method of parallel analysis (with alpha=0.01).
+
+
+
+              Factor Pattern
+ 
+                   Factor1         Factor2
+
+Population         0.58096         0.80642
+School             0.76704        -0.54476
+Employment         0.67243         0.72605
+Services           0.93239        -0.10431
+HouseValue         0.79116        -0.55818
+
+
+Variance Explained by Each Factor
+ 
+   Factor1         Factor2
+
+ 2.8733136       1.7966601
+
+
+               Final Communality Estimates: Total = 4.669974
+ 
+Population          School      Employment        Services      HouseValue
+
+0.98782629      0.88510555      0.97930583      0.88023562      0.93750041
+
+The FACTOR Procedure
+
+Input Data Type                 Raw Data
+Number of Records Read                12
+Number of Records Used                12
+N for Significance Tests              12
+
+The FACTOR Procedure
+Initial Factor Method: Principal Components
+
+Average Partial Correlations Controlling Principal Components
+ 
+N Prin Comp                Fourth-
+ Partialled      Squared   Powered
+
+          0      0.3270    0.2151 
+          1      0.4568    0.3188 
+          2      0.2400*   0.0962*
+          3      0.4474    0.3470 
+          4      1.0000    1.0000 
+
+ * MAP = Minimum Values in Columns
+
+The FACTOR Procedure
+Initial Factor Method: Principal Components
+
+Prior Communality Estimates: ONE    
+
+
+
+Eigenvalues of the Correlation Matrix: Total = 5  Average = 1
+ 
+        Eigenvalue    Difference    Proportion    Cumulative
+
+   1    2.87331359    1.07665350        0.5747        0.5747
+   2    1.79666009    1.58182321        0.3593        0.9340
+   3    0.21483689    0.11490283        0.0430        0.9770
+   4    0.09993405    0.08467868        0.0200        0.9969
+   5    0.01525537                      0.0031        1.0000
+
+2 factors will be retained by the method of minimum average squared partial correlation (MAP2).
+
+
+
+              Factor Pattern
+ 
+                   Factor1         Factor2
+
+Population         0.58096         0.80642
+School             0.76704        -0.54476
+Employment         0.67243         0.72605
+Services           0.93239        -0.10431
+HouseValue         0.79116        -0.55818
+
+
+Variance Explained by Each Factor
+ 
+   Factor1         Factor2
+
+ 2.8733136       1.7966601
+
+
+               Final Communality Estimates: Total = 4.669974
+ 
+Population          School      Employment        Services      HouseValue
+
+0.98782629      0.88510555      0.97930583      0.88023562      0.93750041

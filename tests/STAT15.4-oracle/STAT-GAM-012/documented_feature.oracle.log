@@ -1,0 +1,116 @@
+The SAS System
+
+20390      
+20391      /* STAT-GAM-012: GAM — ODS Graphics
+20392       * Source: S154 / Chapter 48 / `ODS Graphics` (PDF pp. 3322–3323).
+20393       * Discriminates: Getting Started: GAM Procedure
+20394       */
+20395      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+20395    ! validmemname=compatible locale=en_US;
+20396      %let syscc=0;
+20397      title; footnote;
+20398      ods _all_ close;
+20399      ods listing gpath="%sysfunc(pathname(work))";
+20400      ods graphics off;
+20401      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.DIABETES (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+20401    !                                         quit;
+
+
+20402      ods path work.templat(update) sashelp.tmplmst(read);
+20403      
+20404      ods graphics on;
+20405      ods trace on;
+20406      ods trace on;
+20407      title 'Patterns of Diabetes';
+20408      data diabetes;
+20409      input Age BaseDeficit CPeptide @@;
+20410      logCP = log(CPeptide);
+20411      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.DIABETES has 43 observations and 4 variables.
+
+20427      ;
+20428      ods graphics on;
+20429      proc gam data=diabetes;
+20430      model logCP = spline(Age) spline(BaseDeficit);
+20431      run;
+
+
+Output Added:
+-------------
+Name:       InputSummary
+Label:      Summary of Input
+Template:   Stat.GAM.InputSummary
+Path:       GAM.InputSummary
+-------------
+
+Output Added:
+-------------
+Name:       IterSummary
+Label:      Iteration Summary
+Template:   Stat.GAM.IterSummary
+Path:       GAM.IterSummary
+-------------
+
+Output Added:
+-------------
+Name:       ConvergenceStatus
+Label:      Convergence Status
+Template:   Stat.GAM.ConvergenceStatus
+Path:       GAM.ConvergenceStatus
+-------------
+
+Output Added:
+-------------
+Name:       ParameterEstimates
+Label:      Parameter Estimates
+Template:   Stat.Gam.ParameterEstimates
+Path:       GAM.ParameterEstimates
+-------------
+
+Output Added:
+-------------
+Name:       FitSummary
+Label:      Nonparametric Fit Summary
+Template:   Stat.Gam.FitSummary
+Path:       GAM.FitSummary
+-------------
+
+Output Added:
+-------------
+Name:       ANODEV
+Label:      Analysis of Deviance
+Template:   Stat.Gam.ANODEV
+Path:       GAM.ANODEV
+-------------
+
+Output Added:
+-------------
+Name:       SmoothingComponentPlot
+Label:      Panel 1
+Template:   Stat.Gam.Graphics.SmoothingComponentPanel
+Path:       GAM.SmoothingComponentPlots.SmoothingComponentPlot
+-------------
+NOTE: The PROCEDURE GAM printed page 2340.
+
+20432      ods trace off;
+20433      ods trace off;
+20434      ods graphics off;
+20435      
+20436      
+20437      
+20438      
+The SAS System
+
+20439      

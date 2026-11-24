@@ -1,0 +1,56 @@
+The SAS System
+
+6830       
+6831       /* STAT-HPFMM-002: HPFMM — High-performance finite mixture model estimation
+6832        * Source: S154 / Chapter 58 / `Getting Started: HPFMM Procedure` (PDF pp. 4508–4532); S154 / Chapter 58 / `Overview: HPFMM Procedure` (PDF pp.
+6832     ! 4504–4508).
+6833        * Discriminates: Documented default analysis with explicit complete public or synthetic inputs
+6834        */
+6835       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+6835     ! validmemname=compatible locale=en_US;
+6836       %let syscc=0;
+6837       title; footnote;
+6838       ods _all_ close;
+6839       ods listing gpath="%sysfunc(pathname(work))";
+6840       ods graphics off;
+6841       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.YEAST (memtype=DATA).
+6841     !                                         quit;
+
+
+6842       ods path work.templat(update) sashelp.tmplmst(read);
+6843       
+6844       data yeast;
+6845       input count f;
+6846       n = 5;
+6847       datalines;
+
+NOTE: The data set WORK.YEAST has 6 observations and 3 variables.
+
+6854       ;
+6855       proc hpfmm data=yeast seed=314159;
+6856       model count/n = / k=2;
+6857       freq f;
+6858       run;
+
+NOTE: The HPFMM procedure is executing in single-machine mode.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: There were 6 observations read from the data set WORK.YEAST.
+NOTE: The PROCEDURE HPFMM printed page 542.
+
+6859       quit;
+6860       
+6861       
+6862       
+6863       
+The SAS System
+
+6864       

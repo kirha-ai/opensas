@@ -1,0 +1,272 @@
+The SAS System
+
+7431       
+7432       /* STAT-ICLIFETEST-007: ICLIFETEST — ODS Graphics
+7433        * Source: S154 / Chapter 69 / `ODS Graphics` (PDF pp. 5189–5190).
+7434        * Discriminates: Getting Started: ICLIFETEST Procedure
+7435        */
+7436       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+7436     ! validmemname=compatible locale=en_US;
+7437       %let syscc=0;
+7438       title; footnote;
+7439       ods _all_ close;
+7440       ods listing gpath="%sysfunc(pathname(work))";
+7441       ods graphics off;
+7442       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.BCS (memtype=DATA).
+NOTE: Deleting WORK.RCT (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.RT (memtype=DATA).
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+7442     !                                         quit;
+
+
+7443       ods path work.templat(update) sashelp.tmplmst(read);
+7444       
+7445       ods graphics on;
+7446       ods trace on;
+7447       ods trace on;
+7448       data RT;
+7449       input lTime rTime @@;
+7450       trt = ' RT';
+7451       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.RT has 46 observations and 3 variables.
+
+7468       ;
+7469       data RCT;
+7470       input lTime rTime @@;
+7471       trt = 'RCT';
+7472       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.RCT has 48 observations and 3 variables.
+
+7489       ;
+7490       data BCS;
+7491       set RT RCT;
+7492       run;
+
+NOTE: There were 46 observations read from the data set WORK.RT.
+NOTE: There were 48 observations read from the data set WORK.RCT.
+NOTE: The data set WORK.BCS has 94 observations and 3 variables.
+
+7493       ods graphics on;
+7494       proc iclifetest plots=(survival logsurv) data=BCS impute(seed=1234);
+7495       strata trt;
+7496       time (lTime, rTime);
+7497       run;
+
+
+Output Added:
+-------------
+Name:       DataInfo
+Label:      Data and Methods Information
+Template:   Stat.ICLIFETEST.DataInfo
+Path:       ICLifetest.DataInfo
+-------------
+NOTE: Start processing Stratum 1: trt = RT.
+NOTE: Algorithm converges in 21 steps.
+NOTE: Algorithm finds a maximum likelihood estimate.
+NOTE: Start processing Stratum 2: trt = RCT.
+NOTE: Algorithm converges in 27 steps.
+NOTE: Algorithm finds a maximum likelihood estimate.
+
+Output Added:
+-------------
+Name:       ProbabilityEstimates
+Label:      Probability Estimates
+Template:   Stat.ICLIFETEST.ProbabilityEstimates
+Path:       ICLifetest.NonparametricEstimation.Stratum1.ProbabilityEstimates
+-------------
+
+Output Added:
+-------------
+Name:       ConvergenceStatus
+Label:      Convergence Status
+Template:   Stat.ICLIFETEST.ConvergenceStatus
+Path:       ICLifetest.NonparametricEstimation.Stratum1.ConvergenceStatus
+-------------
+
+Output Added:
+-------------
+Name:       Quartiles
+Label:      Quartile Estimates
+Template:   Stat.ICLIFETEST.Quartiles
+Path:       ICLifetest.NonparametricEstimation.Stratum1.Quartiles
+-------------
+
+Output Added:
+-------------
+Name:       ProbabilityEstimates
+Label:      Probability Estimates
+Template:   Stat.ICLIFETEST.ProbabilityEstimates
+Path:       ICLifetest.NonparametricEstimation.Stratum2.ProbabilityEstimates
+-------------
+
+Output Added:
+-------------
+Name:       ConvergenceStatus
+Label:      Convergence Status
+Template:   Stat.ICLIFETEST.ConvergenceStatus
+Path:       ICLifetest.NonparametricEstimation.Stratum2.ConvergenceStatus
+-------------
+
+Output Added:
+-------------
+Name:       Quartiles
+Label:      Quartile Estimates
+Template:   Stat.ICLIFETEST.Quartiles
+Path:       ICLifetest.NonparametricEstimation.Stratum2.Quartiles
+-------------
+
+Output Added:
+-------------
+Name:       CensoredSummary
+Label:      Censoring Summary
+Template:   Stat.ICLIFETEST.CensoredSummary
+Path:       ICLifetest.CensoredSummary
+-------------
+
+Output Added:
+-------------
+Name:       SurvivalPlot
+Label:      Survival Curves
+Template:   Stat.ICLIFETEST.Graphics.Survival
+Path:       ICLifetest.SurvivalPlots.SurvivalPlot
+-------------
+
+Output Added:
+-------------
+Name:       NegLogSurvivalPlot
+Label:      Negative Log Survival Curves
+Template:   Stat.ICLIFETEST.Graphics.Survival
+Path:       ICLifetest.SurvivalPlots.NegLogSurvivalPlot
+-------------
+NOTE: The PROCEDURE ICLIFETEST printed pages 549-551.
+
+7498       proc iclifetest data=BCS impute(seed=1234);
+7499       time (lTime, rTime);
+7500       test trt;
+7501       run;
+
+
+Output Added:
+-------------
+Name:       DataInfo
+Label:      Data and Methods Information
+Template:   Stat.ICLIFETEST.DataInfo
+Path:       ICLifetest.DataInfo
+-------------
+NOTE: Start processing Group 1: trt = RT.
+NOTE: Algorithm converges in 21 steps.
+NOTE: Algorithm finds a maximum likelihood estimate.
+NOTE: Start processing Group 2: trt = RCT.
+NOTE: Algorithm converges in 27 steps.
+NOTE: Algorithm finds a maximum likelihood estimate.
+
+Output Added:
+-------------
+Name:       ProbabilityEstimates
+Label:      Probability Estimates
+Template:   Stat.ICLIFETEST.ProbabilityEstimates
+Path:       ICLifetest.NonparametricEstimation.Group1.ProbabilityEstimates
+-------------
+
+Output Added:
+-------------
+Name:       ConvergenceStatus
+Label:      Convergence Status
+Template:   Stat.ICLIFETEST.ConvergenceStatus
+Path:       ICLifetest.NonparametricEstimation.Group1.ConvergenceStatus
+-------------
+
+Output Added:
+-------------
+Name:       Quartiles
+Label:      Quartile Estimates
+Template:   Stat.ICLIFETEST.Quartiles
+Path:       ICLifetest.NonparametricEstimation.Group1.Quartiles
+-------------
+
+Output Added:
+-------------
+Name:       ProbabilityEstimates
+Label:      Probability Estimates
+Template:   Stat.ICLIFETEST.ProbabilityEstimates
+Path:       ICLifetest.NonparametricEstimation.Group2.ProbabilityEstimates
+-------------
+
+Output Added:
+-------------
+Name:       ConvergenceStatus
+Label:      Convergence Status
+Template:   Stat.ICLIFETEST.ConvergenceStatus
+Path:       ICLifetest.NonparametricEstimation.Group2.ConvergenceStatus
+-------------
+
+Output Added:
+-------------
+Name:       Quartiles
+Label:      Quartile Estimates
+Template:   Stat.ICLIFETEST.Quartiles
+Path:       ICLifetest.NonparametricEstimation.Group2.Quartiles
+-------------
+NOTE: Algorithm converges in 25 steps.
+NOTE: Algorithm finds a maximum likelihood estimate.
+
+Output Added:
+-------------
+Name:       HomStats
+Label:      Generalized Log-Rank Statistics
+Template:   Stat.ICLIFETEST.HomStats
+Path:       ICLifetest.SurvivalComparisons.HomStats
+-------------
+
+Output Added:
+-------------
+Name:       HomCov
+Label:      Covariance Matrix
+Template:   Stat.ICLIFETEST.HomCov
+Path:       ICLifetest.SurvivalComparisons.HomCov
+-------------
+
+Output Added:
+-------------
+Name:       HomTests
+Label:      Test of Survival Equality
+Template:   Stat.ICLIFETEST.HomTests
+Path:       ICLifetest.SurvivalComparisons.HomTests
+-------------
+
+Output Added:
+-------------
+Name:       CensoredSummary
+Label:      Censoring Summary
+Template:   Stat.ICLIFETEST.CensoredSummary
+Path:       ICLifetest.CensoredSummary
+-------------
+
+Output Added:
+-------------
+Name:       SurvivalPlot
+Label:      Survival Curves
+Template:   Stat.ICLIFETEST.Graphics.Survival
+Path:       ICLifetest.SurvivalPlots.SurvivalPlot
+-------------
+NOTE: The PROCEDURE ICLIFETEST printed pages 552-555.
+
+7502       ods trace off;
+7503       ods trace off;
+7504       ods graphics off;
+7505       
+7506       
+7507       
+7508       
+The SAS System
+
+7509       

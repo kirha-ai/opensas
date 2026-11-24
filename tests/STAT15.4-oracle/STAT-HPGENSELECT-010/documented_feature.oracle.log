@@ -1,0 +1,78 @@
+The SAS System
+
+2476       
+2477       /* STAT-HPGENSELECT-010: HPGENSELECT — OUTPUT
+2478        * Source: S154 / Chapter 59 / `OUTPUT Statement` (PDF pp. 4644–4647).
+2479        * Discriminates: Example 59.4: Model Selection by the LASSO Method; explicit statements: OUTPUT
+2480        */
+2481       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+2481     ! validmemname=compatible locale=en_US;
+2482       %let syscc=0;
+2483       title; footnote;
+2484       ods _all_ close;
+2485       ods listing gpath="%sysfunc(pathname(work))";
+2486       ods graphics off;
+2487       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.EX4DATA (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+2487     !                                         quit;
+
+
+2488       ods path work.templat(update) sashelp.tmplmst(read);
+2489       
+2490       %let nObs = 1500;
+2491       %let nContIn = 5;
+2492       %let nContOut = 10;
+2493       %let Seed = 12345;
+2494       data ex4Data;
+2495       array xIn{&nContIn};
+2496       array xOut{&nContOut};
+2497       drop i j sign xBeta expXbeta;
+2498       seed = &Seed;
+2499       do i=1 to &nObs;
+2500       sign = -1;
+2501       xBeta = 0;
+2502       do j=1 to dim(xIn);
+2503       call ranuni(seed,xIn[j]);
+2504       xBeta = xBeta + j *sign*xIn{j};
+2505       sign = -sign;
+2506       end;
+2507       do j=1 to dim(xOut);
+2508       call ranuni(seed,xOut[j]);
+2509       end;
+2510       call ranuni(seed,xSubtle);
+2511       call ranuni(seed,xTiny);
+2512       xBeta = xBeta + 0.1*xSubtle + 0.05*xTiny;
+2513       expXbeta = exp(xBeta/20);
+2514       call ranpoi(seed,expXbeta,yPoisson);
+2515       output;
+2516       end;
+2517       run;
+
+NOTE: The data set WORK.EX4DATA has 1500 observations and 19 variables.
+
+2518       proc hpgenselect data=ex4Data(Obs=10000);
+2519       model yPoisson = x: / dist=Poisson;
+2520       selection method=Lasso(choose=SBC) details=all;
+2521       performance details;
+2522       run;
+
+NOTE: The HPGENSELECT procedure is executing in single-machine mode.
+NOTE: * Optimal Value of Criterion
+NOTE: There were 1500 observations read from the data set WORK.EX4DATA.
+NOTE: The PROCEDURE HPGENSELECT printed pages 170-171.
+
+2523       
+2524       
+2525       
+2526       
+The SAS System
+
+2527       

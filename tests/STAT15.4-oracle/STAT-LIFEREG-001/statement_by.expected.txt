@@ -1,0 +1,276 @@
+
+_oracle_by=1
+
+The LIFEREG Procedure
+
+              Model Information
+
+Data Set                    WORK._ORACLE_INPUT
+Dependent Variable                Log(Minutes)
+Censoring Variable                      Censor
+Censoring Value(s)                           1
+Number of Observations                      38
+Noncensored Values                          30
+Right Censored Values                        8
+Left Censored Values                         0
+Interval Censored Values                     0
+Number of Parameters                         3
+Name of Distribution                   Weibull
+Log Likelihood                     -9.37930239
+
+
+Number of Observations Read          38
+Number of Observations Used          38
+
+
+_oracle_by=1
+
+  Class Level Information
+ 
+Name       Levels    Values
+
+Group           2    1 2   
+
+
+           Fit Statistics
+
+-2 Log Likelihood              18.759
+AIC (smaller is better)        24.759
+AICC (smaller is better)       25.464
+BIC (smaller is better)        29.671
+
+
+     Fit Statistics (Unlogged Response)
+
+-2 Log Likelihood                     199.747
+Weibull AIC (smaller is better)       205.747
+Weibull AICC (smaller is better)      206.453
+Weibull BIC (smaller is better)       210.660
+
+
+Algorithm converged.                                                       
+
+
+         Type III Analysis of Effects
+ 
+                             Wald
+Effect           DF    Chi-Square    Pr > ChiSq
+
+Group             1        6.0540        0.0139
+
+
+           Analysis of Maximum Likelihood Parameter Estimates
+ 
+                            Standard   95% Confidence     Chi-
+Parameter       DF Estimate    Error       Limits       Square Pr > ChiSq
+
+Intercept        1   3.3091   0.0589   3.1938   3.4245 3161.70     <.0001
+Group         1  1  -0.1933   0.0786  -0.3473  -0.0393    6.05     0.0139
+Group         2  0   0.0000    .        .        .         .        .    
+Scale            1   0.2122   0.0304   0.1603   0.2809                   
+Weibull Shape    1   4.7128   0.6742   3.5604   6.2381                   
+
+_oracle_by=2
+
+The LIFEREG Procedure
+
+              Model Information
+
+Data Set                    WORK._ORACLE_INPUT
+Dependent Variable                Log(Minutes)
+Censoring Variable                      Censor
+Censoring Value(s)                           1
+Number of Observations                      38
+Noncensored Values                          30
+Right Censored Values                        8
+Left Censored Values                         0
+Interval Censored Values                     0
+Number of Parameters                         3
+Name of Distribution                   Weibull
+Log Likelihood                     -9.37930239
+
+
+Number of Observations Read          38
+Number of Observations Used          38
+
+
+_oracle_by=2
+
+  Class Level Information
+ 
+Name       Levels    Values
+
+Group           2    1 2   
+
+
+           Fit Statistics
+
+-2 Log Likelihood              18.759
+AIC (smaller is better)        24.759
+AICC (smaller is better)       25.464
+BIC (smaller is better)        29.671
+
+
+     Fit Statistics (Unlogged Response)
+
+-2 Log Likelihood                     199.747
+Weibull AIC (smaller is better)       205.747
+Weibull AICC (smaller is better)      206.453
+Weibull BIC (smaller is better)       210.660
+
+
+Algorithm converged.                                                       
+
+
+         Type III Analysis of Effects
+ 
+                             Wald
+Effect           DF    Chi-Square    Pr > ChiSq
+
+Group             1        6.0540        0.0139
+
+
+           Analysis of Maximum Likelihood Parameter Estimates
+ 
+                            Standard   95% Confidence     Chi-
+Parameter       DF Estimate    Error       Limits       Square Pr > ChiSq
+
+Intercept        1   3.3091   0.0589   3.1938   3.4245 3161.70     <.0001
+Group         1  1  -0.1933   0.0786  -0.3473  -0.0393    6.05     0.0139
+Group         2  0   0.0000    .        .        .         .        .    
+Scale            1   0.2122   0.0304   0.1603   0.2809                   
+Weibull Shape    1   4.7128   0.6742   3.5604   6.2381                   
+
+The LIFEREG Procedure
+ 
+Bayesian Analysis
+
+            Model Information
+
+Data Set                         WORK.FAN
+Dependent Variable          Log(Lifetime)
+Censoring Variable                 Censor
+Censoring Value(s)                      1
+Number of Observations                 70
+Noncensored Values                     12
+Right Censored Values                  58
+Left Censored Values                    0
+Interval Censored Values                0
+Number of Parameters                    2
+Burn-In Size                          200
+MC Sample Size                       1000
+Thinning                                1
+Name of Distribution            Lognormal
+Log Likelihood               -41.64492483
+
+
+Number of Observations Read          70
+Number of Observations Used          70
+
+
+Algorithm converged.                                                       
+
+
+ Analysis of Maximum Likelihood Parameter Estimates
+ 
+                          Standard   95% Confidence
+Parameter     DF Estimate    Error       Limits
+
+Intercept      1  10.1432   0.5211   9.1219  11.1646
+Scale          1   1.6796   0.3893   1.0664   2.6453
+
+The LIFEREG Procedure
+ 
+Bayesian Analysis
+
+Uniform Prior for Regression Coefficients
+ 
+Parameter    Prior
+
+Intercept    Constant
+
+
+           Independent Prior Distributions for Model Parameters
+ 
+             Prior
+Parameter    Distribution                   Hyperparameters
+
+Scale        Gamma           Shape       0.001    Inverse Scale       0.001
+
+
+          Initial Values of the Chain
+ 
+   Chain          Seed    Intercept       Scale
+
+       1             1      10.0501     1.59544
+
+
+                 Fit Statistics
+
+DIC (smaller is better)                   86.960
+pD (effective number of parameters)        1.719
+
+The LIFEREG Procedure
+ 
+Bayesian Analysis
+
+                               Posterior Summaries
+ 
+                                      Standard               Percentiles
+Parameter           N        Mean    Deviation         25%         50%         75%
+
+Intercept        1000     10.3812       0.5947      9.9475     10.2942     10.7256
+Scale            1000      1.8846       0.4581      1.5412      1.8115      2.1327
+
+
+                       Posterior Intervals
+ 
+Parameter    Alpha     Equal-Tail Interval        HPD Interval
+
+Intercept    0.050      9.4454     11.7964      9.3528     11.6253
+Scale        0.050      1.2111      2.9730      1.1503      2.8624
+
+
+    Posterior Correlation Matrix
+ 
+Parameter      Intercept       Scale
+
+Intercept         1.0000      0.8353
+Scale             0.8353      1.0000
+
+The LIFEREG Procedure
+ 
+Bayesian Analysis
+
+             Posterior Autocorrelations
+ 
+Parameter      Lag 1      Lag 5     Lag 10     Lag 50
+
+Intercept     0.7124     0.2870     0.1146    -0.0321
+Scale         0.6919     0.2557     0.1465    -0.0332
+
+
+       Geweke Diagnostics
+ 
+Parameter           z    Pr > |z|
+
+Intercept     -1.8778      0.0604
+Scale         -1.7009      0.0890
+
+
+                Effective Sample Sizes
+ 
+                         Autocorrelation
+Parameter         ESS               Time    Efficiency
+
+Intercept       103.4             9.6677        0.1034
+Scale           109.6             9.1268        0.1096
+
+The MEANS Procedure
+
+                       Analysis Variable : Frac Fraction Failing in 8000 Hours
+ 
+   N            Mean       10th Pctl       25th Pctl       50th Pctl       75th Pctl       90th Pctl
+----------------------------------------------------------------------------------------------------
+1000       0.2400380       0.1662858       0.1992472       0.2357937       0.2772576       0.3157876
+----------------------------------------------------------------------------------------------------

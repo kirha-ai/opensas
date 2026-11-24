@@ -1,0 +1,330 @@
+
+Comparing PROC GAM with PROC GENMOD
+
+The GENMOD Procedure
+
+         Model Information
+
+Data Set              WORK.KYPHOSIS
+Distribution               Binomial
+Link Function                 Logit
+Dependent Variable         Kyphosis
+
+
+Number of Observations Read          83
+Number of Observations Used          83
+Number of Events                     18
+Number of Trials                     83
+
+
+         Response Profile
+ 
+ Ordered                    Total
+   Value    Kyphosis    Frequency
+
+       1    1                  18
+       2    0                  65
+
+PROC GENMOD is modeling the probability that Kyphosis='1'.
+
+
+             Criteria For Assessing Goodness Of Fit
+ 
+Criterion                     DF           Value        Value/DF
+
+Log Likelihood                          -32.4365                
+Full Log Likelihood                     -32.4365                
+AIC (smaller is better)                  72.8730                
+AICC (smaller is better)                 73.3858                
+BIC (smaller is better)                  82.5483                
+
+
+Algorithm converged.                                                       
+
+
+                    Analysis Of Maximum Likelihood Parameter Estimates
+ 
+                               Standard     Wald 95% Confidence          Wald
+Parameter    DF    Estimate       Error           Limits           Chi-Square    Pr > ChiSq
+
+Intercept     1     -1.2497      1.2424     -3.6848      1.1853          1.01        0.3145
+Age           1      0.0061      0.0055     -0.0048      0.0170          1.21        0.2713
+StartVert     1     -0.1972      0.0657     -0.3260     -0.0684          9.01        0.0027
+NumVert       1      0.3031      0.1790     -0.0477      0.6540          2.87        0.0904
+Scale         0      1.0000      0.0000      1.0000      1.0000                            
+
+NOTE: The scale parameter was held fixed.
+
+Comparing PROC GAM with PROC GENMOD
+
+The GAM Procedure
+Dependent Variable: Kyphosis
+Smoothing Model Component(s): spline(Age) spline(StartVert) spline(NumVert) 
+
+        Summary of Input Data Set
+
+Number of Observations                  83
+Number of Missing Observations           0
+Distribution                      Binomial
+Link Function                        Logit
+
+
+           Response Profile
+ 
+ Ordered                        Total
+   Value        Kyphosis    Frequency
+
+       1               0           65
+       2               1           18
+
+NOTE: PROC GAM is modeling the probability that Kyphosis=1. One way to change this to model the probability that Kyphosis=0 is to specify the response variable 
+      option EVENT='0'.
+
+
+           Iteration Summary and Fit Statistics
+
+Number of local scoring iterations                        9
+Local scoring convergence criterion            2.6635652E-9
+Final Number of Backfitting Iterations                    1
+Final Backfitting Criterion                    5.2326578E-9
+The Deviance of the Final Estimate             46.610922438
+
+
+The local scoring algorithm converged.                          
+
+
+                      Regression Model Analysis
+                         Parameter Estimates
+ 
+                       Parameter       Standard
+Parameter               Estimate          Error    t Value    Pr > |t|
+
+Intercept               -2.01533        1.45620      -1.38      0.1706
+Linear(Age)              0.01213        0.00794       1.53      0.1308
+Linear(StartVert)       -0.18615        0.07628      -2.44      0.0171
+Linear(NumVert)          0.38347        0.19102       2.01      0.0484
+
+
+                          Smoothing Model Analysis
+                    Fit Summary for Smoothing Components
+ 
+                                                                          Num
+                        Smoothing                                      Unique
+Component               Parameter              DF             GCV         Obs
+
+Spline(Age)              0.999996        2.000000      328.512831          66
+Spline(StartVert)        0.999551        2.000000      317.646685          16
+Spline(NumVert)          0.921758        2.000000       20.144056          10
+
+
+                          Smoothing Model Analysis
+                            Analysis of Deviance
+ 
+                                          Sum of
+Source                        DF         Squares    Chi-Square    Pr > ChiSq
+
+Spline(Age)              2.00000       10.494369       10.4944        0.0053
+Spline(StartVert)        2.00000        5.494968        5.4950        0.0641
+Spline(NumVert)          2.00000        2.184518        2.1845        0.3355
+
+PROC GAM with Approximate Analysis of Deviance
+
+The GAM Procedure
+Dependent Variable: Kyphosis
+Smoothing Model Component(s): spline(Age) spline(StartVert) spline(NumVert) 
+
+        Summary of Input Data Set
+
+Number of Observations                  83
+Number of Missing Observations           0
+Distribution                      Binomial
+Link Function                        Logit
+
+
+           Response Profile
+ 
+ Ordered                        Total
+   Value        Kyphosis    Frequency
+
+       1               0           65
+       2               1           18
+
+NOTE: PROC GAM is modeling the probability that Kyphosis=1. One way to change this to model the probability that Kyphosis=0 is to specify the response variable 
+      option EVENT='0'.
+
+
+           Iteration Summary and Fit Statistics
+
+Number of local scoring iterations                        9
+Local scoring convergence criterion            2.6635652E-9
+Final Number of Backfitting Iterations                    1
+Final Backfitting Criterion                    5.2326578E-9
+The Deviance of the Final Estimate             46.610922438
+
+
+The local scoring algorithm converged.                          
+
+
+                      Regression Model Analysis
+                         Parameter Estimates
+ 
+                       Parameter       Standard
+Parameter               Estimate          Error    t Value    Pr > |t|
+
+Intercept               -2.01533        1.45620      -1.38      0.1706
+Linear(Age)              0.01213        0.00794       1.53      0.1308
+Linear(StartVert)       -0.18615        0.07628      -2.44      0.0171
+Linear(NumVert)          0.38347        0.19102       2.01      0.0484
+
+
+                          Smoothing Model Analysis
+                    Fit Summary for Smoothing Components
+ 
+                                                                          Num
+                        Smoothing                                      Unique
+Component               Parameter              DF             GCV         Obs
+
+Spline(Age)              0.999996        2.000000      328.512831          66
+Spline(StartVert)        0.999551        2.000000      317.646685          16
+Spline(NumVert)          0.921758        2.000000       20.144056          10
+
+
+                  Smoothing Model Analysis
+              Approximate Analysis of Deviance
+ 
+Source                        DF    Chi-Square    Pr > ChiSq
+
+Spline(Age)              2.00000        7.0888        0.0289
+Spline(StartVert)        2.00000        5.0431        0.0803
+Spline(NumVert)          2.00000        2.2471        0.3251
+
+PROC GAM with Approximate Analysis of Deviance
+
+The GAM Procedure
+Dependent Variable: Kyphosis
+Smoothing Model Component(s): spline(Age) spline(StartVert) spline(NumVert) 
+
+        Summary of Input Data Set
+
+Number of Observations                  83
+Number of Missing Observations           0
+Distribution                      Binomial
+Link Function                        Logit
+
+
+           Response Profile
+ 
+ Ordered                        Total
+   Value        Kyphosis    Frequency
+
+       1               0           65
+       2               1           18
+
+NOTE: PROC GAM is modeling the probability that Kyphosis=1. One way to change this to model the probability that Kyphosis=0 is to specify the response variable 
+      option EVENT='0'.
+
+
+           Iteration Summary and Fit Statistics
+
+Number of local scoring iterations                        9
+Local scoring convergence criterion            2.6635652E-9
+Final Number of Backfitting Iterations                    1
+Final Backfitting Criterion                    5.2326578E-9
+The Deviance of the Final Estimate             46.610922438
+
+
+The local scoring algorithm converged.                          
+
+
+                      Regression Model Analysis
+                         Parameter Estimates
+ 
+                       Parameter       Standard
+Parameter               Estimate          Error    t Value    Pr > |t|
+
+Intercept               -2.01533        1.45620      -1.38      0.1706
+Linear(Age)              0.01213        0.00794       1.53      0.1308
+Linear(StartVert)       -0.18615        0.07628      -2.44      0.0171
+Linear(NumVert)          0.38347        0.19102       2.01      0.0484
+
+
+                          Smoothing Model Analysis
+                    Fit Summary for Smoothing Components
+ 
+                                                                          Num
+                        Smoothing                                      Unique
+Component               Parameter              DF             GCV         Obs
+
+Spline(Age)              0.999996        2.000000      328.512831          66
+Spline(StartVert)        0.999551        2.000000      317.646685          16
+Spline(NumVert)          0.921758        2.000000       20.144056          10
+
+
+                          Smoothing Model Analysis
+                            Analysis of Deviance
+ 
+                                          Sum of
+Source                        DF         Squares    Chi-Square    Pr > ChiSq
+
+Spline(Age)              2.00000       10.494369       10.4944        0.0053
+Spline(StartVert)        2.00000        5.494968        5.4950        0.0641
+Spline(NumVert)          2.00000        2.184518        2.1845        0.3355
+
+Comparing PROC GAM with PROC GENMOD
+
+The GENMOD Procedure
+
+         Model Information
+
+Data Set              WORK.KYPHOSIS
+Distribution               Binomial
+Link Function                 Logit
+Dependent Variable         Kyphosis
+
+
+Number of Observations Read          83
+Number of Observations Used          83
+Number of Events                     18
+Number of Trials                     83
+
+
+         Response Profile
+ 
+ Ordered                    Total
+   Value    Kyphosis    Frequency
+
+       1    1                  18
+       2    0                  65
+
+PROC GENMOD is modeling the probability that Kyphosis='1'.
+
+
+             Criteria For Assessing Goodness Of Fit
+ 
+Criterion                     DF           Value        Value/DF
+
+Log Likelihood                          -25.0017                
+Full Log Likelihood                     -25.0017                
+AIC (smaller is better)                  64.0035                
+AICC (smaller is better)                 65.4968                
+BIC (smaller is better)                  80.9354                
+
+
+Algorithm converged.                                                       
+
+
+                         Analysis Of Maximum Likelihood Parameter Estimates
+ 
+                                         Standard     Wald 95% Confidence          Wald
+Parameter              DF    Estimate       Error           Limits           Chi-Square    Pr > ChiSq
+
+Intercept               1     -5.8134      2.5618    -10.8345     -0.7923          5.15        0.0233
+Age                     1      0.0819      0.0345      0.0143      0.1496          5.63        0.0176
+Age*Age                 1     -0.0004      0.0002     -0.0008     -0.0000          4.32        0.0376
+StartVert               1      0.4394      0.3234     -0.1944      1.0733          1.85        0.1742
+StartVert*StartVert     1     -0.0396      0.0202     -0.0791     -0.0001          3.86        0.0495
+NumVert                 1      0.3798      0.5988     -0.7939      1.5535          0.40        0.5259
+NumVert*NumVert         1      0.0020      0.0420     -0.0803      0.0843          0.00        0.9621
+Scale                   0      1.0000      0.0000      1.0000      1.0000                            
+
+NOTE: The scale parameter was held fixed.

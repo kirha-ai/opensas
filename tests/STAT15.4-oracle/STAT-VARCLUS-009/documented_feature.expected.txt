@@ -1,0 +1,101 @@
+
+Eight Physical Measurements on 305 School Girls
+Harman: Modern Factor Analysis, 3rd Ed, p22
+
+Oblique Principal Component Cluster Analysis
+
+Observations          10000    Proportion          0
+Variables                 8    Maxeigen            1
+
+
+Clustering algorithm converged.                                            
+
+
+                      Cluster Summary for 1 Cluster
+ 
+                        Cluster    Variation    Proportion        Second
+Cluster    Members    Variation    Explained     Explained    Eigenvalue
+------------------------------------------------------------------------
+      1          8            8      4.67288        0.5841        1.7710
+
+Total variation explained = 4.67288 Proportion = 0.5841
+
+Cluster 1 will be split because it has the largest second eigenvalue, 1.770983, which is greater than the MAXEIGEN=1 value.
+
+
+Clustering algorithm converged.                                            
+
+
+                     Cluster Summary for 2 Clusters
+ 
+                        Cluster    Variation    Proportion        Second
+Cluster    Members    Variation    Explained     Explained    Eigenvalue
+------------------------------------------------------------------------
+      1          4            4     3.509218        0.8773        0.2361
+      2          4            4     2.917284        0.7293        0.4764
+
+Total variation explained = 6.426502 Proportion = 0.8033
+
+
+                            R-squared with
+2 Clusters                ------------------
+                              Own       Next    1-R**2    Variable
+Cluster       Variable    Cluster    Closest     Ratio    Label
+---------------------------------------------------------------------------------
+Cluster 1     ArmSpan      0.9002     0.1658    0.1196    Arm Span               
+              Forearm      0.8661     0.1413    0.1560    Length of Forearm      
+              LowerLeg     0.8652     0.1829    0.1650    Length of Lower Leg    
+              Height       0.8777     0.2088    0.1545                           
+---------------------------------------------------------------------------------
+Cluster 2     BitDiam      0.7386     0.1341    0.3019    Bitrochanteric Diameter
+              Girth        0.6981     0.0929    0.3328    Chest Girth            
+              Width        0.6329     0.1619    0.4380    Chest Width            
+              Weight       0.8477     0.1974    0.1898                           
+
+
+                Standardized Scoring Coefficients
+ 
+Cluster                                           1             2
+-----------------------------------------------------------------
+ArmSpan       Arm Span                     0.270377      0.000000
+Forearm       Length of Forearm            0.265194      0.000000
+LowerLeg      Length of Lower Leg          0.265057      0.000000
+BitDiam       Bitrochanteric Diameter      0.000000      0.294591
+Girth         Chest Girth                  0.000000      0.286407
+Width         Chest Width                  0.000000      0.272710
+Height                                     0.266977      0.000000
+Weight                                     0.000000      0.315597
+
+
+                        Cluster Structure
+ 
+Cluster                                           1             2
+-----------------------------------------------------------------
+ArmSpan       Arm Span                     0.948813      0.407210
+Forearm       Length of Forearm            0.930624      0.375865
+LowerLeg      Length of Lower Leg          0.930142      0.427715
+BitDiam       Bitrochanteric Diameter      0.366201      0.859404
+Girth         Chest Girth                  0.304779      0.835529
+Width         Chest Width                  0.402430      0.795572
+Height                                     0.936881      0.456908
+Weight                                     0.444281      0.920686
+
+
+    Inter-Cluster Correlations
+ 
+Cluster             1             2
+
+1             1.00000       0.44513
+2             0.44513       1.00000
+
+No cluster meets the criterion for splitting.
+
+
+                 Total     Proportion       Minimum       Maximum                  Maximum
+             Variation             of    Proportion        Second      Minimum      1-R**2
+  Number     Explained      Variation     Explained    Eigenvalue    R-squared       Ratio
+      of            by      Explained          by a          in a        for a       for a
+Clusters      Clusters    by Clusters       Cluster       Cluster     Variable    Variable
+------------------------------------------------------------------------------------------
+       1      4.672880         0.5841        0.5841      1.770983       0.3810            
+       2      6.426502         0.8033        0.7293      0.476418       0.6329      0.4380

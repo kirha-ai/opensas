@@ -1,0 +1,60 @@
+
+The KDE Procedure
+
+                      Inputs
+
+Data Set                          WORK.BIVNORMAL   
+Number of Observations Used       1000             
+Variable                          x                
+Bandwidth Method                  Sheather-Jones   
+                                  Plug In          
+
+
+             Controls
+ 
+                                  x
+
+Grid Points                     401
+Lower Grid Limit             -13.48
+Upper Grid Limit             11.374
+Bandwidth Multiplier              1
+
+The KDE Procedure
+
+                      Inputs
+
+Data Set                          WORK.BIVNORMAL   
+Number of Observations Used       1000             
+Variable                          x                
+Bandwidth Method                  Sheather-Jones   
+                                  Plug In          
+
+
+             Controls
+ 
+                                  x
+
+Grid Points                     401
+Lower Grid Limit             -13.48
+Upper Grid Limit             11.374
+Bandwidth Multiplier              1
+
+The KDE Procedure
+
+                      Inputs
+
+Data Set                          WORK.BIVNORMAL   
+Number of Observations Used       1000             
+Variable                          y                
+Bandwidth Method                  Sheather-Jones   
+                                  Plug In          
+
+
+             Controls
+ 
+                                  y
+
+Grid Points                     401
+Lower Grid Limit             -12.74
+Upper Grid Limit             11.718
+Bandwidth Multiplier              1

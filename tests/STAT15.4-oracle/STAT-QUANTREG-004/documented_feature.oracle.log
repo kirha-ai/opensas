@@ -1,0 +1,68 @@
+The SAS System
+
+2421       
+2422       /* STAT-QUANTREG-004: QUANTREG — CONDDIST / Quantile Regression as an Optimization Problem / Optimization Algorithms
+2423        * Source: S154 / Chapter 103 / `CONDDIST Statement` (PDF pp. 8379–8384); S154 / Chapter 103 / `Quantile Regression as an Optimization Problem`
+2423     ! (PDF pp. 8393–8394); S154 / Chapter 103 / `Optimization Algorithms` (PDF pp. 8394–8402).
+2424        * Discriminates: Example 103.3: Quantile Regression Analysis of Birth-Weight Data
+2425        */
+2426       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+2426     ! validmemname=compatible locale=en_US;
+2427       %let syscc=0;
+2428       title; footnote;
+2429       ods _all_ close;
+2430       ods listing gpath="%sysfunc(pathname(work))";
+2431       ods graphics off;
+2432       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.FORMATS (memtype=CATALOG).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+2432     !                                         quit;
+
+
+2433       ods path work.templat(update) sashelp.tmplmst(read);
+2434       
+2435       proc contents varnum data=sashelp.bweight;
+2436       ods select position;
+2437       run;
+
+NOTE: The PROCEDURE CONTENTS printed page 108.
+
+2438       proc format;
+2439       value vfmt 0 = 'No Visit' 1 = 'Second Trimester'
+2440       2 = 'Last Trimester' 3 = 'First Trimester';
+NOTE: Format VFMT has been output.
+2441       value efmt 0 = 'High School' 1 = 'Some College'
+2442       2 = 'College' 3 = 'Less Than High School';
+NOTE: Format EFMT has been output.
+2443       run;
+
+
+2444       ods graphics on;
+2445       proc quantreg ci=sparsity/iid algorithm=interior(tolerance=5.e-4)
+2446       data=sashelp.bweight order=internal;
+2447       class Visit MomEdLevel;
+2448       model Weight = Black Married Boy Visit MomEdLevel MomSmoke
+2449       CigsPerDay MomAge MomAge*MomAge
+2450       MomWtGain MomWtGain*MomWtGain /
+2451       quantile= 0.05 to 0.95 by 0.05
+2452       plot=quantplot seed=314159;
+2453       format Visit vfmt. MomEdLevel efmt.;
+2454       run;
+
+NOTE: The PROCEDURE QUANTREG printed pages 109-128.
+
+2455       
+2456       
+2457       
+2458       
+The SAS System
+
+2459       

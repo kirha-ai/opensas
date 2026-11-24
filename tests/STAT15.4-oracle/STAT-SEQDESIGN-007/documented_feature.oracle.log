@@ -1,0 +1,67 @@
+The SAS System
+
+2970       
+2971       /* STAT-SEQDESIGN-007: SEQDESIGN — Error Spending Methods / Acceptance (beta) Boundary / Boundary Adjustments for Overlapping Lower and Upper beta
+2971     ! Boundaries
+2972        * Source: S154 / Chapter 110 / `Error Spending Methods` (PDF pp. 8989–8991); S154 / Chapter 110 / `Acceptance (beta) Boundary` (PDF pp.
+2972     ! 8991–8994); S154 / Chapter 110 / `Boundary Adjustments for Overlapping Lower and Upper beta Boundaries` (PDF pp. 8994–8995).
+2973        * Discriminates: Example 110.10: Creating Two-Sided Error Spending Designs with and without Overlapping Lower and Upper beta Boundaries
+2974        */
+2975       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+2975     ! validmemname=compatible locale=en_US;
+2976       %let syscc=0;
+2977       title; footnote;
+2978       ods _all_ close;
+2979       ods listing gpath="%sysfunc(pathname(work))";
+2980       ods graphics off;
+2981       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.A (memtype=DATA).
+NOTE: Deleting WORK.B (memtype=DATA).
+NOTE: Deleting WORK.FITNESS (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK._ORACLE_INPUT (memtype=DATA).
+2981     !                                         quit;
+
+
+2982       ods path work.templat(update) sashelp.tmplmst(read);
+2983       
+2984       ods graphics on;
+2985       proc seqdesign altref=0.2 errspend;
+2986       design nstages=3
+2987       method=errfuncpow
+2988       alt=twosided stop=accept
+2989       betaoverlap=noadjust
+2990       beta=0.09
+2991       ;
+2992       run;
+
+NOTE: The PROCEDURE SEQDESIGN printed page 213.
+
+2993       ods graphics on;
+2994       proc seqdesign altref=0.2 errspend;
+2995       design nstages=3
+2996       method=errfuncpow
+2997       alt=twosided
+2998       stop=accept
+2999       betaoverlap=adjust
+3000       beta=0.09
+3001       ;
+3002       run;
+
+NOTE: The PROCEDURE SEQDESIGN printed page 214.
+
+3003       ods graphics off;
+3004       
+3005       
+3006       
+3007       
+The SAS System
+
+3008       

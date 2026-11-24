@@ -1,0 +1,95 @@
+The SAS System
+
+14664      
+14665      /* STAT-CORRESP-007: CORRESP — Displayed Output / ODS Table Names
+14666       * Source: S154 / Chapter 41 / `Displayed Output` (PDF pp. 2617–2619); S154 / Chapter 41 / `ODS Table Names` (PDF pp. 2619–2621).
+14667       * Discriminates: Getting Started: CORRESP Procedure
+14668       */
+14669      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+14669    ! validmemname=compatible locale=en_US;
+14670      %let syscc=0;
+14671      title; footnote;
+14672      ods _all_ close;
+14673      ods listing gpath="%sysfunc(pathname(work))";
+14674      ods graphics off;
+14675      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.PHD (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.RESULTS (memtype=DATA).
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+14675    !                                         quit;
+
+
+14676      ods path work.templat(update) sashelp.tmplmst(read);
+14677      
+14678      ods trace on;
+14679      title "Number of Ph.D.'s Awarded from 1973 to 1978";
+14680      data PhD;
+14681      input Science $ 1-19 y1973-y1978;
+14682      label y1973 = '1973'
+14683      y1974 = '1974'
+14684      y1975 = '1975'
+14685      y1976 = '1976'
+14686      y1977 = '1977'
+14687      y1978 = '1978';
+14688      datalines;
+
+NOTE: The data set WORK.PHD has 6 observations and 7 variables.
+
+14695      ;
+14696      ods graphics on;
+14697      proc corresp data=PhD out=Results short chi2p;
+14698      var y1973-y1978;
+14699      id Science;
+14700      run;
+
+
+Output Added:
+-------------
+Name:       InertiaChart
+Label:      Inertia Decomposition Chart
+Template:   Stat.CORRESP.Graphics.InertiaChart
+Path:       Corresp.InertiaChart
+-------------
+
+Output Added:
+-------------
+Name:       RowCoors
+Label:      Coordinates
+Template:   Stat.Corresp.RowCoors
+Path:       Corresp.Rows.RowCoors
+-------------
+
+Output Added:
+-------------
+Name:       ColCoors
+Label:      Coordinates
+Template:   Stat.Corresp.ColCoors
+Path:       Corresp.Columns.ColCoors
+-------------
+
+Output Added:
+-------------
+Name:       ConfigPlot
+Label:      2 by 1
+Template:   Stat.Corresp.Graphics.Configuration
+Path:       Corresp.Configuration.ConfigPlot
+-------------
+NOTE: The data set WORK.RESULTS has 13 observations and 14 variables.
+NOTE: The PROCEDURE CORRESP printed page 1986.
+
+14701      ods trace off;
+14702      
+14703      
+14704      
+14705      
+The SAS System
+
+14706      

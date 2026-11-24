@@ -1,0 +1,54 @@
+The SAS System
+
+15561      
+15562      /* STAT-MCMC-001: MCMC — Data input, variable roles, and basic options
+15563       * Source: S154 / Chapter 80 / `PROC MCMC Statement` (PDF pp. 6099–6117); S154 / Chapter 80 / `BY Statement` (PDF pp. 6119–6120); S154 / Chapter
+15563    ! 80 / `Handling of Missing Data` (PDF pp. 6221–6224).
+15564       * Discriminates: Verified default procedure context
+15565       */
+15566      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+15566    ! validmemname=compatible locale=en_US;
+15567      %let syscc=0;
+15568      title; footnote;
+15569      ods _all_ close;
+15570      ods listing gpath="%sysfunc(pathname(work))";
+15571      ods graphics off;
+15572      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.ASSOCIATION (memtype=DATA).
+NOTE: Deleting WORK.BETAS (memtype=DATA).
+NOTE: Deleting WORK.PRED (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.REMISSION (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+15572    !                                         quit;
+
+
+15573      ods path work.templat(update) sashelp.tmplmst(read);
+15574      
+15575      data sample;
+15576      input x y group $ freq weight;
+15577      datalines;
+
+NOTE: The data set WORK.SAMPLE has 12 observations and 5 variables.
+
+15590      ;
+15591      run;
+15592      proc mcmc data=sample seed=271828 nbi=100 nmc=1000 diag=none;
+15593      parms mu 90;
+15594      prior mu ~ normal(0,var=10000);
+15595      model x ~ normal(mu,var=100);
+15596      run;
+
+NOTE: Generating the burn-in samples.
+NOTE: Beginning sample generation.
+NOTE: The PROCEDURE MCMC printed pages 1264-1265.
+
+15597      
+15598      
+15599      
+15600      
+The SAS System
+
+15601      

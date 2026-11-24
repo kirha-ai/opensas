@@ -1,0 +1,1847 @@
+
+The CALIS Procedure
+Mean and Covariance Structures: Model and Initial Values
+
+                                   Modeling Information
+                               Maximum Likelihood Estimation
+ 
+Group    Label       Data Set         N Obs    Model      Type       Analysis
+
+    1    Region 1    WORK.REGION1       378    Model 1    PATH       Means and Covariances
+    2    Region 2    WORK.REGION2       423    Model 1    PATH       Means and Covariances
+
+
+                   Model 1. Variables in the Model
+
+Endogenous    Manifest     Availability  Courtesy  Delivery  Helpful 
+                           Pricing  Quality  Responsive  Spend02     
+                           Spend03                                   
+              Latent                                                 
+Exogenous     Manifest                                               
+              Latent       Product  Service                          
+
+                  Number of Endogenous Variables = 9
+                  Number of Exogenous Variables  = 2
+
+
+         Model 1. Initial Estimates for PATH List
+ 
+-------------Path--------------    Parameter      Estimate
+
+Service    ===>    Spend02         _Parm01               .
+Service    ===>    Spend03         _Parm02               .
+Product    ===>    Spend02         _Parm03               .
+Product    ===>    Spend03         _Parm04               .
+Spend02    ===>    Spend03         _Parm05               .
+Service    ===>    Courtesy        _Parm06               .
+Service    ===>    Responsive      _Parm07               .
+Service    ===>    Helpful         _Parm08               .
+Service    ===>    Delivery        _Parm09               .
+Product    ===>    Pricing         _Parm10               .
+Product    ===>    Availability    _Parm11               .
+Product    ===>    Quality         _Parm12               .
+
+
+ Model 1. Initial Estimates for Variance Parameters
+ 
+Variance
+Type         Variable        Parameter      Estimate
+
+Error        Courtesy        _Parm13               .
+             Responsive      _Parm14               .
+             Helpful         _Parm15               .
+             Delivery        _Parm16               .
+             Pricing         _Parm17               .
+             Availability    _Parm18               .
+             Quality         _Parm19               .
+             Spend02         _Parm20               .
+             Spend03         _Parm21               .
+Exogenous    Service                         1.00000
+             Product                         1.00000
+
+
+Model 1. Initial Estimates for Covariances Among Exogenous Variables
+ 
+Var1       Var2       Parameter      Estimate
+
+Service    Product    _Parm22               .
+
+
+Model 1. Initial Estimates for Means and Intercepts
+ 
+Type         Variable        Parameter      Estimate
+
+Intercept    Spend02         _Add1                 .
+             Spend03         _Add2                 .
+             Courtesy        _Add3                 .
+             Responsive      _Add4                 .
+             Helpful         _Add5                 .
+             Delivery        _Add6                 .
+             Pricing         _Add7                 .
+             Availability    _Add8                 .
+             Quality         _Add9                 .
+
+NOTE: Parameters with prefix '_Add' are added by PROC CALIS.
+
+The CALIS Procedure
+Mean and Covariance Structures: Descriptive Statistics
+
+           Group 1. Region 1
+           Simple Statistics
+ 
+  Variable            Mean       Std Dev
+
+Spend02          183.50000       3.79842
+Spend03          301.92100       3.76537
+Courtesy           4.31200       1.28141
+Responsive         4.72400       1.72540
+Helpful            3.92100       1.67362
+Delivery           4.35700       1.95704
+Pricing            6.14400       1.46697
+Availability       4.99400       1.54013
+Quality            5.97100       1.65922
+
+The CALIS Procedure
+Mean and Covariance Structures: Descriptive Statistics
+
+           Group 2. Region 2
+           Simple Statistics
+ 
+  Variable            Mean       Std Dev
+
+Spend02          156.25000       3.80644
+Spend03          313.67000       3.76404
+Courtesy           2.41200       1.81163
+Responsive         2.72700       1.64833
+Helpful            5.22400       1.42056
+Delivery           6.37600       1.73176
+Pricing            7.14700       1.58493
+Availability       3.23300       1.44395
+Quality            5.11900       1.64256
+
+The CALIS Procedure
+Mean and Covariance Structures: Optimization
+
+        Initial Estimation Methods
+
+       1    Instrumental Variables Method
+       2    McDonald Method              
+
+
+              Optimization Start
+              Parameter Estimates
+ 
+    N    Parameter      Estimate      Gradient
+
+    1    _Parm01         0.40408       0.06000
+    2    _Parm02         1.31728       0.01764
+    3    _Parm03         0.81207      -0.17906
+    4    _Parm04         1.53731       0.16560
+    5    _Parm05        -0.01059      17.99989
+    6    _Parm06         0.75997       0.05445
+    7    _Parm07         0.86405       0.03106
+    8    _Parm08         0.61842      -0.03240
+    9    _Parm09         0.65802      -0.01762
+   10    _Parm10         0.67762       0.07498
+   11    _Parm11         0.76543      -0.06307
+   12    _Parm12         0.74262      -0.03076
+   13    _Add1         169.10955     0.0002845
+   14    _Add2         309.91575    -0.0001868
+   15    _Add3           3.30863     0.0001422
+   16    _Add4           3.66940     0.0001382
+   17    _Add5           4.60910    -0.0000884
+   18    _Add6           5.42321    -0.0000938
+   19    _Add7           6.67367    -0.0000833
+   20    _Add8           4.06403     0.0001406
+   21    _Add9           5.52107     0.0000472
+   22    _Parm13         1.93052      -0.27220
+   23    _Parm14         2.09311      -0.24993
+   24    _Parm15         2.00506      -0.10097
+   25    _Parm16         2.95816      -0.11514
+   26    _Parm17         1.88295      -0.10578
+   27    _Parm18         1.63455      -0.27339
+   28    _Parm19         2.17247      -0.03510
+   29    _Parm20        13.41566      -1.01968
+   30    _Parm21         8.75339      -0.46582
+   31    _Parm22         0.33800       0.08791
+
+  Value of Objective Function = 19.941706757
+
+The CALIS Procedure
+Mean and Covariance Structures: Optimization
+
+Levenberg-Marquardt Optimization
+
+Scaling Update of More (1978)
+
+Parameter Estimates                   31
+Functions (Observations)             108
+
+                                             Optimization Start
+
+Active Constraints                                  0  Objective Function                       19.941706757
+Max Abs Gradient Element                 17.999894059  Radius                                   1290.5965061
+
+
+                                                                                                         Ratio
+                                                                                                       Between
+                                                                                                        Actual
+                                                                 Objective     Max Abs                     and
+                     Function         Active        Objective     Function    Gradient               Predicted
+Iter     Restarts       Calls    Constraints         Function       Change     Element     Lambda       Change
+
+   1            0           6              0         14.29622       5.6455      9.8051    0.00037       0.0399
+   2            0           8              0          7.96411       6.3321      0.5951    0.00049        0.174
+   3            0          11              0          7.07230       0.8918      0.7914    5.37E-6        1.261
+   4            0          15              0          6.90177       0.1705      0.7021    0.00226        0.186
+   5            0          17              0          6.01059       0.8912      0.4402    0.00002        1.062
+   6            0          19              0          4.96003       1.0506      0.0521    0.00037        1.908
+   7            0          21              0          3.59176       1.3683      0.4160    1.73E-7        3.225
+   8            0          24              0          3.53624       0.0555      0.0611    3.14E-6        1.260
+   9            0          26              0          3.53247      0.00377      0.0306          0        0.611
+  10            0          28              0          3.53006      0.00241      0.0297          0        0.902
+  11            0          30              0          3.52991     0.000145     0.00933          0        0.629
+  12            0          32              0          3.52984     0.000067      0.0131          0        0.646
+  13            0          34              0          3.52981     0.000035     0.00485    9.21E-8        0.731
+  14            0          36              0          3.52979     0.000022     0.00725          0        0.867
+  15            0          38              0          3.52977     0.000015     0.00279          0        1.049
+  16            0          40              0          3.52976     0.000011     0.00434          0        1.226
+  17            0          42              0          3.52975     7.426E-6     0.00164    0.00139        1.386
+  18            0          44              0          3.52975      5.81E-6     0.00264    6.49E-7        1.621
+  19            0          46              0          3.52974     4.425E-6     0.00111          0        1.730
+  20            0          48              0          3.52974     3.453E-6     0.00187          0        1.789
+  21            0          50              0          3.52974     2.726E-6     0.00108          0        1.834
+  22            0          52              0          3.52973     2.171E-6     0.00139          0        1.859
+  23            0          54              0          3.52973     1.742E-6    0.000965          0        1.878
+  24            0          56              0          3.52973     1.406E-6     0.00107          0        1.888
+  25            0          58              0          3.52973     1.141E-6    0.000833          0        1.896
+  26            0          60              0          3.52973     9.308E-7    0.000850          0        1.901
+  27            0          62              0          3.52973     7.623E-7    0.000708          0        1.905
+  28            0          64              0          3.52973     6.266E-7    0.000689          0        1.907
+  29            0          66              0          3.52973     5.167E-7    0.000597          0        1.909
+  30            0          68              0          3.52973     4.274E-7    0.000566          0        1.911
+  31            0          70              0          3.52973     3.545E-7    0.000502          0        1.912
+  32            0          72              0          3.52973     2.947E-7    0.000469          0        1.913
+  33            0          74              0          3.52973     2.456E-7    0.000422          0        1.914
+  34            0          76              0          3.52973      2.05E-7    0.000392          0        1.915
+  35            0          78              0          3.52973     1.715E-7    0.000356          0        1.916
+  36            0          80              0          3.52973     1.437E-7    0.000328          0        1.916
+  37            0          82              0          3.52973     1.206E-7    0.000300          0        1.917
+  38            0          84              0          3.52973     1.013E-7    0.000276          0        1.917
+  39            0          86              0          3.52973     8.523E-8    0.000253          0        1.918
+  40            0          88              0          3.52973      7.18E-8    0.000233          0        1.918
+  41            0          90              0          3.52973     6.054E-8    0.000214          0        1.919
+  42            0          92              0          3.52973      5.11E-8    0.000197          0        1.919
+  43            0          94              0          3.52973     4.317E-8    0.000181          0        1.920
+  44            0          96              0          3.52973      3.65E-8    0.000167          0        1.920
+  45            0          98              0          3.52973     3.089E-8    0.000153          0        1.920
+
+                                            Optimization Results
+
+Iterations                                         45  Function Calls                                    101
+Jacobian Calls                                     47  Active Constraints                                  0
+Objective Function                       3.5297251162  Max Abs Gradient Element                  0.000153427
+Lambda                                              0  Actual Over Pred Change                  1.9203403837
+Radius                                   0.0077237703                                                       
+
+Convergence criterion (GCONV=1E-8) satisfied.                                                     
+
+The CALIS Procedure
+Mean and Covariance Structures: Maximum Likelihood Estimation
+
+                            Fit Summary
+
+Modeling Info        Number of Observations                     801
+                     Number of Variables                          9
+                     Number of Moments                          108
+                     Number of Parameters                        31
+                     Number of Active Constraints                 0
+                     Baseline Model Function Value           0.5003
+                     Baseline Model Chi-Square             399.7468
+                     Baseline Model Chi-Square DF                72
+                     Pr > Baseline Model Chi-Square          <.0001
+Absolute Index       Fit Function                            3.5297
+                     Chi-Square                           2820.2504
+                     Chi-Square DF                               77
+                     Pr > Chi-Square                         <.0001
+                     Z-Test of Wilson & Hilferty            43.2575
+                     Hoelter Critical N                          29
+                     Root Mean Square Residual (RMR)        28.2208
+                     Standardized RMR (SRMR)                 2.1367
+                     Goodness of Fit Index (GFI)             0.9996
+Parsimony Index      Adjusted GFI (AGFI)                     0.9995
+                     Parsimonious GFI                        1.0690
+                     RMSEA Estimate                          0.2986
+                     RMSEA Lower 90% Confidence Limit        0.2892
+                     RMSEA Upper 90% Confidence Limit        0.3081
+                     Probability of Close Fit                <.0001
+                     Akaike Information Criterion         2882.2504
+                     Bozdogan CAIC                        3058.5121
+                     Schwarz Bayesian Criterion           3027.5121
+                     McDonald Centrality                     0.1804
+Incremental Index    Bentler Comparative Fit Index           0.0000
+                     Bentler-Bonett NFI                     -6.0551
+                     Bentler-Bonett Non-normed Index        -6.8265
+                     Bollen Normed Index Rho1               -5.5970
+                     Bollen Non-normed Index Delta2         -7.4997
+                     James et al. Parsimonious NFI          -6.4756
+
+The CALIS Procedure
+Mean and Covariance Structures: Maximum Likelihood Estimation
+
+                                 Fit Comparison Among Groups
+ 
+                                                          Overall      Region 1      Region 2
+
+Modeling Info    Number of Observations                       801           378           423
+                 Number of Variables                            9             9             9
+                 Number of Moments                            108            54            54
+                 Number of Parameters                          31            31            31
+                 Number of Active Constraints                   0             0             0
+                 Baseline Model Function Value             0.5003        0.4601        0.5363
+                 Baseline Model Chi-Square               399.7468      173.4482      226.2986
+                 Baseline Model Chi-Square DF                  72            36            36
+Fit Index        Fit Function                              3.5297        3.6408        3.4305
+                 Percent Contribution to Chi-Square           100            49            51
+                 Root Mean Square Residual (RMR)          28.2208       28.2339       28.2091
+                 Standardized RMR (SRMR)                   2.1367        2.1534        2.1217
+                 Goodness of Fit Index (GFI)               0.9996        0.9996        0.9996
+                 Bentler-Bonett NFI                       -6.0551       -6.9136       -5.3971
+
+The CALIS Procedure
+Mean and Covariance Structures: Maximum Likelihood Estimation
+
+                                       Model 1. PATH List
+ 
+                                                                Standard
+-------------Path--------------    Parameter      Estimate         Error     t Value    Pr > |t|
+
+Service    ===>    Spend02         _Parm01       -17.28075       3.20198     -5.3969      <.0001
+Service    ===>    Spend03         _Parm02        -9.10825       9.85222     -0.9245      0.3552
+Product    ===>    Spend02         _Parm03        -3.41764       3.33797     -1.0239      0.3059
+Product    ===>    Spend03         _Parm04        -0.03740       1.28586     -0.0291      0.9768
+Spend02    ===>    Spend03         _Parm05        -1.04847       0.65464     -1.6016      0.1092
+Service    ===>    Courtesy        _Parm06        -0.90333       0.06534    -13.8247      <.0001
+Service    ===>    Responsive      _Parm07        -0.95356       0.06929    -13.7626      <.0001
+Service    ===>    Helpful         _Parm08         0.60358       0.05853     10.3125      <.0001
+Service    ===>    Delivery        _Parm09         0.93428       0.07396     12.6322      <.0001
+Product    ===>    Pricing         _Parm10        -0.25173       0.06703     -3.7555      0.0002
+Product    ===>    Availability    _Parm11         1.19128       0.08239     14.4597      <.0001
+Product    ===>    Quality         _Parm12         0.69877       0.06933     10.0783      <.0001
+
+
+                               Model 1. Variance Parameters
+ 
+Variance                                                  Standard
+Type         Variable        Parameter      Estimate         Error     t Value    Pr > |t|
+
+Error        Courtesy        _Parm13         2.59181       0.13600     19.0574      <.0001
+             Responsive      _Parm14         2.92423       0.15325     19.0821      <.0001
+             Helpful         _Parm15         2.44625       0.12320     19.8566      <.0001
+             Delivery        _Parm16         3.53408       0.18169     19.4510      <.0001
+             Pricing         _Parm17         2.52948       0.12784     19.7869      <.0001
+             Availability    _Parm18         1.57410       0.16884      9.3230      <.0001
+             Quality         _Parm19         2.41658       0.13230     18.2661      <.0001
+             Spend02         _Parm20       -14.40124      16.92863     -0.8507      0.3949
+             Spend03         _Parm21        22.79309       5.75120      3.9632      <.0001
+Exogenous    Service                         1.00000                                      
+             Product                         1.00000                                      
+
+
+                  Model 1. Covariances Among Exogenous Variables
+ 
+                                                   Standard
+Var1       Var2       Parameter      Estimate         Error     t Value    Pr > |t|
+
+Service    Product    _Parm22        -0.81605       0.06210    -13.1415      <.0001
+
+
+                              Model 1. Means and Intercepts
+ 
+                                                          Standard
+Type         Variable        Parameter      Estimate         Error     t Value    Pr > |t|
+
+Intercept    Spend02         _Add1         169.10763       0.49970       338.4      <.0001
+             Spend03         _Add2         485.43044     110.70594      4.3849      <.0001
+             Courtesy        _Add3           3.30850       0.06531     50.6601      <.0001
+             Responsive      _Add4           3.66926       0.06927     52.9729      <.0001
+             Helpful         _Add5           4.60919       0.05931     77.7145      <.0001
+             Delivery        _Add6           5.42336       0.07427     73.0251      <.0001
+             Pricing         _Add7           6.67374       0.05697       117.2      <.0001
+             Availability    _Add8           4.06391       0.06121     66.3967      <.0001
+             Quality         _Add9           5.52101       0.06030     91.5651      <.0001
+
+
+       Model 1. Squared Multiple Correlations
+ 
+                     Error         Total
+Variable          Variance      Variance    R-Square
+
+Availability       1.57410       2.99324      0.4741
+Courtesy           2.59181       3.40782      0.2395
+Delivery           3.53408       4.40696      0.1981
+Helpful            2.44625       2.81056      0.1296
+Pricing            2.52948       2.59284      0.0244
+Quality            2.41658       2.90485      0.1681
+Responsive         2.92423       3.83352      0.2372
+Spend02          -14.40124     199.51198           .
+Spend03           22.79309      48.57300      0.5307
+
+The CALIS Procedure
+Mean and Covariance Structures: Maximum Likelihood Estimation
+
+                          Model 1. Standardized Results for PATH List
+ 
+                                                                Standard
+-------------Path--------------    Parameter      Estimate         Error     t Value    Pr > |t|
+
+Service    ===>    Spend02         _Parm01        -1.22343       0.22500     -5.4375      <.0001
+Service    ===>    Spend03         _Parm02        -1.30689       1.41272     -0.9251      0.3549
+Product    ===>    Spend02         _Parm03        -0.24196       0.23633     -1.0238      0.3059
+Product    ===>    Spend03         _Parm04        -0.00537       0.18450     -0.0291      0.9768
+Spend02    ===>    Spend03         _Parm05        -2.12492       1.32557     -1.6030      0.1089
+Service    ===>    Courtesy        _Parm06        -0.48934       0.02958    -16.5418      <.0001
+Service    ===>    Responsive      _Parm07        -0.48702       0.02962    -16.4419      <.0001
+Service    ===>    Helpful         _Parm08         0.36003       0.03157     11.4049      <.0001
+Service    ===>    Delivery        _Parm09         0.44505       0.03031     14.6847      <.0001
+Product    ===>    Pricing         _Parm10        -0.15633       0.04108     -3.8054      0.0001
+Product    ===>    Availability    _Parm11         0.68856       0.04073     16.9059      <.0001
+Product    ===>    Quality         _Parm12         0.40999       0.03708     11.0578      <.0001
+
+
+                  Model 1. Standardized Results for Variance Parameters
+ 
+Variance                                                  Standard
+Type         Variable        Parameter      Estimate         Error     t Value    Pr > |t|
+
+Error        Courtesy        _Parm13         0.76055       0.02895     26.2699      <.0001
+             Responsive      _Parm14         0.76281       0.02885     26.4385      <.0001
+             Helpful         _Parm15         0.87038       0.02273     38.2911      <.0001
+             Delivery        _Parm16         0.80193       0.02698     29.7274      <.0001
+             Pricing         _Parm17         0.97556       0.01284     75.9522      <.0001
+             Availability    _Parm18         0.52588       0.05609      9.3759      <.0001
+             Quality         _Parm19         0.83191       0.03040     27.3637      <.0001
+             Spend02         _Parm20        -0.07218       0.08494     -0.8498      0.3954
+             Spend03         _Parm21         0.46925       0.11855      3.9584      <.0001
+Exogenous    Service                         1.00000                                      
+             Product                         1.00000                                      
+
+
+      Model 1. Standardized Results for Covariances Among Exogenous Variables
+ 
+                                                   Standard
+Var1       Var2       Parameter      Estimate         Error     t Value    Pr > |t|
+
+Service    Product    _Parm22        -0.81605       0.06210    -13.1415      <.0001
+
+The CALIS Procedure
+Mean and Covariance Structures: Models and Initial Values
+
+                                          Modeling Information
+                                      Maximum Likelihood Estimation
+ 
+Group    Label       Data Set         N Obs    Model      Type       Base Model    Analysis
+
+    1    Region 1    WORK.REGION1       378    Model 1    PATH                     Means and Covariances
+    2    Region 2    WORK.REGION2       423    Model 2    PATH       Model 1       Means and Covariances
+
+
+                   Model 1. Variables in the Model
+
+Endogenous    Manifest     Availability  Courtesy  Delivery  Helpful 
+                           Pricing  Quality  Responsive  Spend02     
+                           Spend03                                   
+              Latent                                                 
+Exogenous     Manifest                                               
+              Latent       Product  Service                          
+
+                  Number of Endogenous Variables = 9
+                  Number of Exogenous Variables  = 2
+
+
+         Model 1. Initial Estimates for PATH List
+ 
+-------------Path--------------    Parameter      Estimate
+
+Service    ===>    Spend02         _Parm01               .
+Service    ===>    Spend03         _Parm02               .
+Product    ===>    Spend02         _Parm03               .
+Product    ===>    Spend03         _Parm04               .
+Spend02    ===>    Spend03         _Parm05               .
+Service    ===>    Courtesy        _Parm06               .
+Service    ===>    Responsive      _Parm07               .
+Service    ===>    Helpful         _Parm08               .
+Service    ===>    Delivery        _Parm09               .
+Product    ===>    Pricing         _Parm10               .
+Product    ===>    Availability    _Parm11               .
+Product    ===>    Quality         _Parm12               .
+
+
+ Model 1. Initial Estimates for Variance Parameters
+ 
+Variance
+Type         Variable        Parameter      Estimate
+
+Error        Courtesy        _Parm13               .
+             Responsive      _Parm14               .
+             Helpful         _Parm15               .
+             Delivery        _Parm16               .
+             Pricing         _Parm17               .
+             Availability    _Parm18               .
+             Quality         _Parm19               .
+             Spend02         _Parm20               .
+             Spend03         _Parm21               .
+Exogenous    Service                         1.00000
+             Product                         1.00000
+
+
+Model 1. Initial Estimates for Covariances Among Exogenous Variables
+ 
+Var1       Var2       Parameter      Estimate
+
+Service    Product    _Parm22               .
+
+
+Model 1. Initial Estimates for Means and Intercepts
+ 
+Type         Variable        Parameter      Estimate
+
+Intercept    Spend02         _Add01                .
+             Spend03         _Add02                .
+             Courtesy        _Add03                .
+             Responsive      _Add04                .
+             Helpful         _Add05                .
+             Delivery        _Add06                .
+             Pricing         _Add07                .
+             Availability    _Add08                .
+             Quality         _Add09                .
+
+NOTE: Parameters with prefix '_Add' are added by PROC CALIS.
+
+
+                   Model 2. Variables in the Model
+
+Endogenous    Manifest     Availability  Courtesy  Delivery  Helpful 
+                           Pricing  Quality  Responsive  Spend02     
+                           Spend03                                   
+              Latent                                                 
+Exogenous     Manifest                                               
+              Latent       Product  Service                          
+
+                  Number of Endogenous Variables = 9
+                  Number of Exogenous Variables  = 2
+
+
+          Model 2. Initial Estimates for PATH List
+ 
+-------------Path--------------    Parameter         Estimate
+
+Service    ===>    Spend02         _Parm01_mdl2             .
+Service    ===>    Spend03         _Parm02_mdl2             .
+Product    ===>    Spend02         _Parm03_mdl2             .
+Product    ===>    Spend03         _Parm04_mdl2             .
+Spend02    ===>    Spend03         _Parm05_mdl2             .
+Service    ===>    Courtesy        _Parm06_mdl2             .
+Service    ===>    Responsive      _Parm07_mdl2             .
+Service    ===>    Helpful         _Parm08_mdl2             .
+Service    ===>    Delivery        _Parm09_mdl2             .
+Product    ===>    Pricing         _Parm10_mdl2             .
+Product    ===>    Availability    _Parm11_mdl2             .
+Product    ===>    Quality         _Parm12_mdl2             .
+
+
+  Model 2. Initial Estimates for Variance Parameters
+ 
+Variance
+Type         Variable        Parameter         Estimate
+
+Error        Courtesy        _Parm13_mdl2             .
+             Responsive      _Parm14_mdl2             .
+             Helpful         _Parm15_mdl2             .
+             Delivery        _Parm16_mdl2             .
+             Pricing         _Parm17_mdl2             .
+             Availability    _Parm18_mdl2             .
+             Quality         _Parm19_mdl2             .
+             Spend02         _Parm20_mdl2             .
+             Spend03         _Parm21_mdl2             .
+Exogenous    Service                            1.00000
+             Product                            1.00000
+
+
+Model 2. Initial Estimates for Covariances Among Exogenous Variables
+ 
+Var1       Var2       Parameter         Estimate
+
+Service    Product    _Parm22_mdl2             .
+
+
+Model 2. Initial Estimates for Means and Intercepts
+ 
+Type         Variable        Parameter      Estimate
+
+Intercept    Spend02         _Add10                .
+             Spend03         _Add11                .
+             Courtesy        _Add12                .
+             Responsive      _Add13                .
+             Helpful         _Add14                .
+             Delivery        _Add15                .
+             Pricing         _Add16                .
+             Availability    _Add17                .
+             Quality         _Add18                .
+
+NOTE: Parameters with prefix '_Add' are added by PROC CALIS.
+
+The CALIS Procedure
+Mean and Covariance Structures: Descriptive Statistics
+
+           Group 1. Region 1
+           Simple Statistics
+ 
+  Variable            Mean       Std Dev
+
+Spend02          183.50000       3.79842
+Spend03          301.92100       3.76537
+Courtesy           4.31200       1.28141
+Responsive         4.72400       1.72540
+Helpful            3.92100       1.67362
+Delivery           4.35700       1.95704
+Pricing            6.14400       1.46697
+Availability       4.99400       1.54013
+Quality            5.97100       1.65922
+
+The CALIS Procedure
+Mean and Covariance Structures: Descriptive Statistics
+
+           Group 2. Region 2
+           Simple Statistics
+ 
+  Variable            Mean       Std Dev
+
+Spend02          156.25000       3.80644
+Spend03          313.67000       3.76404
+Courtesy           2.41200       1.81163
+Responsive         2.72700       1.64833
+Helpful            5.22400       1.42056
+Delivery           6.37600       1.73176
+Pricing            7.14700       1.58493
+Availability       3.23300       1.44395
+Quality            5.11900       1.64256
+
+The CALIS Procedure
+Mean and Covariance Structures: Optimization
+
+        Initial Estimation Methods
+
+       1    Instrumental Variables Method
+       2    McDonald Method              
+
+
+                Optimization Start
+               Parameter Estimates
+ 
+    N    Parameter         Estimate      Gradient
+
+    1    _Parm01            0.38266      -0.00670
+    2    _Parm02            1.39698       0.02890
+    3    _Parm03            0.86300      -0.00510
+    4    _Parm04            1.58877       0.02328
+    5    _Parm05           -0.01353     0.0002209
+    6    _Parm06            0.66640       0.00432
+    7    _Parm07            0.82574       0.00331
+    8    _Parm08            0.71553       0.00302
+    9    _Parm09            0.76850       0.00186
+   10    _Parm10            0.63483       0.00386
+   11    _Parm11            0.74792       0.01205
+   12    _Parm12            0.78035       0.00380
+   13    _Add01           183.50000    -8.736E-18
+   14    _Add02           304.40392    -2.517E-17
+   15    _Add03             4.31200     -3.46E-19
+   16    _Add04             4.72400    -2.238E-19
+   17    _Add05             3.92100    -1.944E-19
+   18    _Add06             4.35700    -1.475E-19
+   19    _Add07             6.14400    4.3025E-16
+   20    _Add08             4.99400    -5.568E-17
+   21    _Add09             5.97100    -4.911E-17
+   22    _Parm13            1.19792      -0.01182
+   23    _Parm14            2.29515      -0.00513
+   24    _Parm15            2.28902      -0.00392
+   25    _Parm16            3.23940      -0.00215
+   26    _Parm17            1.74899      -0.00541
+   27    _Parm18            1.81262      -0.01016
+   28    _Parm19            2.14405      -0.00542
+   29    _Parm20           13.35633     0.0002518
+   30    _Parm21            8.55166      -0.01284
+   31    _Parm22            0.27325       0.04101
+   32    _Parm01_mdl2       0.42435      -0.00374
+   33    _Parm02_mdl2       1.24241       0.03449
+   34    _Parm03_mdl2       0.77395      -0.00594
+   35    _Parm04_mdl2       1.49406       0.03208
+   36    _Parm05_mdl2      -0.01000      -0.00585
+   37    _Parm06_mdl2       0.87562       0.01498
+   38    _Parm07_mdl2       0.82864      -0.01209
+   39    _Parm08_mdl2       0.49505      -0.02761
+   40    _Parm09_mdl2       0.60096       0.00628
+   41    _Parm10_mdl2       0.70083       0.01768
+   42    _Parm11_mdl2       0.78099       0.00868
+   43    _Parm12_mdl2       0.70468      -0.00859
+   44    _Add10           156.25000    -3.168E-18
+   45    _Add11           315.23250    -1.319E-17
+   46    _Add12             2.41200    -2.934E-17
+   47    _Add13             2.72700    1.9664E-16
+   48    _Add14             5.22400    -2.354E-17
+   49    _Add15             6.37600     -1.92E-17
+   50    _Add16             7.14700    -3.056E-18
+   51    _Add17             3.23300    -4.666E-18
+   52    _Add18             5.11900    -2.821E-18
+   53    _Parm13_mdl2       2.51530      -0.00858
+   54    _Parm14_mdl2       2.03035     0.0003058
+   55    _Parm15_mdl2       1.77293       0.00554
+   56    _Parm16_mdl2       2.63784      -0.00287
+   57    _Parm17_mdl2       2.02084      -0.01058
+   58    _Parm18_mdl2       1.47505      -0.01497
+   59    _Parm19_mdl2       2.20143      -0.00104
+   60    _Parm20_mdl2      13.44577     0.0001891
+   61    _Parm21_mdl2       8.94045      -0.01329
+   62    _Parm22_mdl2       0.40215       0.03550
+
+    Value of Objective Function = 0.1491572638
+
+The CALIS Procedure
+Mean and Covariance Structures: Optimization
+
+Levenberg-Marquardt Optimization
+
+Scaling Update of More (1978)
+
+Parameter Estimates                   62
+Functions (Observations)             108
+
+                                             Optimization Start
+
+Active Constraints                                  0  Objective Function                       0.1491572638
+Max Abs Gradient Element                 0.0410102565  Radius                                              1
+
+
+                                                                                                         Ratio
+                                                                                                       Between
+                                                                                                        Actual
+                                                                 Objective     Max Abs                     and
+                     Function         Active        Objective     Function    Gradient               Predicted
+Iter     Restarts       Calls    Constraints         Function       Change     Element     Lambda       Change
+
+   1            0           8              0          0.04597       0.1032     0.00779          0        0.748
+   2            0          10              0          0.03711      0.00887     0.00165          0        1.077
+   3            0          12              0          0.03707     0.000036     0.00116          0        0.611
+   4            0          14              0          0.03706     6.687E-6    0.000378          0        0.554
+   5            0          16              0          0.03706     1.386E-6    0.000215          0        0.534
+   6            0          18              0          0.03706     3.059E-7    0.000089          0        0.531
+   7            0          20              0          0.03706     6.758E-8    0.000045          0        0.529
+   8            0          22              0          0.03706     1.506E-8    0.000020          0        0.529
+   9            0          24              0          0.03706     3.349E-9     9.89E-6          0        0.528
+
+                                            Optimization Results
+
+Iterations                                          9  Function Calls                                     27
+Jacobian Calls                                     11  Active Constraints                                  0
+Objective Function                       0.0370627032  Max Abs Gradient Element                 9.8899803E-6
+Lambda                                              0  Actual Over Pred Change                   0.528146263
+Radius                                   0.0004146168                                                       
+
+Convergence criterion (ABSGCONV=0.00001) satisfied.                                               
+
+The CALIS Procedure
+Mean and Covariance Structures: Maximum Likelihood Estimation
+
+                            Fit Summary
+
+Modeling Info        Number of Observations                     801
+                     Number of Variables                          9
+                     Number of Moments                          108
+                     Number of Parameters                        62
+                     Number of Active Constraints                 0
+                     Baseline Model Function Value           0.5003
+                     Baseline Model Chi-Square             399.7468
+                     Baseline Model Chi-Square DF                72
+                     Pr > Baseline Model Chi-Square          <.0001
+Absolute Index       Fit Function                            0.0371
+                     Chi-Square                             29.6131
+                     Chi-Square DF                               46
+                     Pr > Chi-Square                         0.9710
+                     Z-Test of Wilson & Hilferty            -1.8950
+                     Hoelter Critical N                        1697
+                     Root Mean Square Residual (RMR)         0.0670
+                     Standardized RMR (SRMR)                 0.0220
+                     Goodness of Fit Index (GFI)             1.0000
+Parsimony Index      Adjusted GFI (AGFI)                     1.0000
+                     Parsimonious GFI                        0.6389
+                     RMSEA Estimate                          0.0000
+                     RMSEA Lower 90% Confidence Limit        0.0000
+                     RMSEA Upper 90% Confidence Limit        0.0000
+                     Probability of Close Fit                1.0000
+                     Akaike Information Criterion          153.6131
+                     Bozdogan CAIC                         506.1365
+                     Schwarz Bayesian Criterion            444.1365
+                     McDonald Centrality                     1.0103
+Incremental Index    Bentler Comparative Fit Index           1.0000
+                     Bentler-Bonett NFI                      0.9259
+                     Bentler-Bonett Non-normed Index         1.0783
+                     Bollen Normed Index Rho1                0.8840
+                     Bollen Non-normed Index Delta2          1.0463
+                     James et al. Parsimonious NFI           0.5916
+
+The CALIS Procedure
+Mean and Covariance Structures: Maximum Likelihood Estimation
+
+                                 Fit Comparison Among Groups
+ 
+                                                          Overall      Region 1      Region 2
+
+Modeling Info    Number of Observations                       801           378           423
+                 Number of Variables                            9             9             9
+                 Number of Moments                            108            54            54
+                 Number of Parameters                          62            31            31
+                 Number of Active Constraints                   0             0             0
+                 Baseline Model Function Value             0.5003        0.4601        0.5363
+                 Baseline Model Chi-Square               399.7468      173.4482      226.2986
+                 Baseline Model Chi-Square DF                  72            36            36
+Fit Index        Fit Function                              0.0371        0.0023        0.0681
+                 Percent Contribution to Chi-Square           100             3            97
+                 Root Mean Square Residual (RMR)           0.0670        0.0172        0.0907
+                 Standardized RMR (SRMR)                   0.0220        0.0057        0.0298
+                 Goodness of Fit Index (GFI)               1.0000        1.0000        1.0000
+                 Bentler-Bonett NFI                        0.9259        0.9950        0.8730
+
+The CALIS Procedure
+Mean and Covariance Structures: Maximum Likelihood Estimation
+
+                                       Model 1. PATH List
+ 
+                                                                Standard
+-------------Path--------------    Parameter      Estimate         Error     t Value    Pr > |t|
+
+Service    ===>    Spend02         _Parm01         0.43887       0.29135      1.5063      0.1320
+Service    ===>    Spend03         _Parm02         0.59659       0.28634      2.0835      0.0372
+Product    ===>    Spend02         _Parm03         0.81320       0.30338      2.6805      0.0074
+Product    ===>    Spend03         _Parm04         0.59698       0.30817      1.9372      0.0527
+Spend02    ===>    Spend03         _Parm05         0.08771       0.05416      1.6195      0.1053
+Service    ===>    Courtesy        _Parm06         0.66060       0.09595      6.8847      <.0001
+Service    ===>    Responsive      _Parm07         0.82447       0.12670      6.5073      <.0001
+Service    ===>    Helpful         _Parm08         0.70957       0.12039      5.8938      <.0001
+Service    ===>    Delivery        _Parm09         0.76422       0.13968      5.4710      <.0001
+Product    ===>    Pricing         _Parm10         0.66495       0.11464      5.8003      <.0001
+Product    ===>    Availability    _Parm11         0.73071       0.12231      5.9740      <.0001
+Product    ===>    Quality         _Parm12         0.81121       0.13333      6.0843      <.0001
+
+
+                               Model 1. Variance Parameters
+ 
+Variance                                                  Standard
+Type         Variable        Parameter      Estimate         Error     t Value    Pr > |t|
+
+Error        Courtesy        _Parm13         1.20561       0.13111      9.1955      <.0001
+             Responsive      _Parm14         2.29725       0.22940     10.0141      <.0001
+             Helpful         _Parm15         2.29751       0.20875     11.0061      <.0001
+             Delivery        _Parm16         3.24598       0.28205     11.5084      <.0001
+             Pricing         _Parm17         1.70985       0.17232      9.9223      <.0001
+             Availability    _Parm18         1.83806       0.19481      9.4353      <.0001
+             Quality         _Parm19         2.09494       0.23054      9.0870      <.0001
+             Spend02         _Parm20        13.38947       1.04510     12.8117      <.0001
+             Spend03         _Parm21        13.00548       1.00221     12.9768      <.0001
+Exogenous    Service                         1.00000                                      
+             Product                         1.00000                                      
+
+
+                  Model 1. Covariances Among Exogenous Variables
+ 
+                                                   Standard
+Var1       Var2       Parameter      Estimate         Error     t Value    Pr > |t|
+
+Service    Product    _Parm22         0.25866       0.10352      2.4986      0.0125
+
+
+                              Model 1. Means and Intercepts
+ 
+                                                          Standard
+Type         Variable        Parameter      Estimate         Error     t Value    Pr > |t|
+
+Intercept    Spend02         _Add01        183.50000       0.19563       938.0      <.0001
+             Spend03         _Add02        285.82650       9.93996     28.7553      <.0001
+             Courtesy        _Add03          4.31200       0.06600     65.3376      <.0001
+             Responsive      _Add04          4.72400       0.08886     53.1608      <.0001
+             Helpful         _Add05          3.92100       0.08620     45.4895      <.0001
+             Delivery        _Add06          4.35700       0.10079     43.2274      <.0001
+             Pricing         _Add07          6.14400       0.07555     81.3206      <.0001
+             Availability    _Add08          4.99400       0.07932     62.9596      <.0001
+             Quality         _Add09          5.97100       0.08545     69.8738      <.0001
+
+
+       Model 1. Squared Multiple Correlations
+ 
+                     Error         Total
+Variable          Variance      Variance    R-Square
+
+Availability       1.83806       2.37200      0.2251
+Courtesy           1.20561       1.64200      0.2658
+Delivery           3.24598       3.83000      0.1525
+Helpful            2.29751       2.80100      0.1798
+Pricing            1.70985       2.15200      0.2055
+Quality            2.09494       2.75300      0.2390
+Responsive         2.29725       2.97700      0.2283
+Spend02           13.38947      14.42800      0.0720
+Spend03           13.00548      14.17800      0.0827
+
+
+                                        Model 2. PATH List
+ 
+                                                                   Standard
+-------------Path--------------    Parameter         Estimate         Error     t Value    Pr > |t|
+
+Service    ===>    Spend02         _Parm01_mdl2       0.35223       0.30033      1.1728      0.2409
+Service    ===>    Spend03         _Parm02_mdl2       0.51099       0.29302      1.7438      0.0812
+Product    ===>    Spend02         _Parm03_mdl2       0.79348       0.30798      2.5764      0.0100
+Product    ===>    Spend03         _Parm04_mdl2       0.60610       0.30946      1.9586      0.0502
+Spend02    ===>    Spend03         _Parm05_mdl2       0.08968       0.05051      1.7756      0.0758
+Service    ===>    Courtesy        _Parm06_mdl2       0.80152       0.12327      6.5023      <.0001
+Service    ===>    Responsive      _Parm07_mdl2       0.92868       0.11973      7.7562      <.0001
+Service    ===>    Helpful         _Parm08_mdl2       0.60272       0.09605      6.2750      <.0001
+Service    ===>    Delivery        _Parm09_mdl2       0.58840       0.11522      5.1067      <.0001
+Product    ===>    Pricing         _Parm10_mdl2       0.61809       0.10963      5.6380      <.0001
+Product    ===>    Availability    _Parm11_mdl2       0.79166       0.11073      7.1496      <.0001
+Product    ===>    Quality         _Parm12_mdl2       0.79480       0.11966      6.6424      <.0001
+
+
+                                Model 2. Variance Parameters
+ 
+Variance                                                     Standard
+Type         Variable        Parameter         Estimate         Error     t Value    Pr > |t|
+
+Error        Courtesy        _Parm13_mdl2       2.63957       0.23246     11.3549      <.0001
+             Responsive      _Parm14_mdl2       1.85456       0.21696      8.5481      <.0001
+             Helpful         _Parm15_mdl2       1.65473       0.14163     11.6834      <.0001
+             Delivery        _Parm16_mdl2       2.65278       0.20607     12.8733      <.0001
+             Pricing         _Parm17_mdl2       2.12997       0.17738     12.0082      <.0001
+             Availability    _Parm18_mdl2       1.45827       0.17404      8.3789      <.0001
+             Quality         _Parm19_mdl2       2.06629       0.20530     10.0646      <.0001
+             Spend02         _Parm20_mdl2      13.52513       0.98738     13.6980      <.0001
+             Spend03         _Parm21_mdl2      13.02982       0.94201     13.8319      <.0001
+Exogenous    Service                            1.00000                                      
+             Product                            1.00000                                      
+
+
+                    Model 2. Covariances Among Exogenous Variables
+ 
+                                                      Standard
+Var1       Var2       Parameter         Estimate         Error     t Value    Pr > |t|
+
+Service    Product    _Parm22_mdl2       0.37602       0.09444      3.9816      <.0001
+
+
+                              Model 2. Means and Intercepts
+ 
+                                                          Standard
+Type         Variable        Parameter      Estimate         Error     t Value    Pr > |t|
+
+Intercept    Spend02         _Add10        156.25000       0.18529       843.3      <.0001
+             Spend03         _Add11        299.65771       7.89378     37.9613      <.0001
+             Courtesy        _Add12          2.41200       0.08819     27.3504      <.0001
+             Responsive      _Add13          2.72700       0.08024     33.9857      <.0001
+             Helpful         _Add14          5.22400       0.06915     75.5438      <.0001
+             Delivery        _Add15          6.37600       0.08430     75.6339      <.0001
+             Pricing         _Add16          7.14700       0.07715     92.6340      <.0001
+             Availability    _Add17          3.23300       0.07029     45.9948      <.0001
+             Quality         _Add18          5.11900       0.07996     64.0207      <.0001
+
+
+       Model 2. Squared Multiple Correlations
+ 
+                     Error         Total
+Variable          Variance      Variance    R-Square
+
+Availability       1.45827       2.08500      0.3006
+Courtesy           2.63957       3.28200      0.1957
+Delivery           2.65278       2.99900      0.1154
+Helpful            1.65473       2.01800      0.1800
+Pricing            2.12997       2.51200      0.1521
+Quality            2.06629       2.69800      0.2341
+Responsive         1.85456       2.71700      0.3174
+Spend02           13.52513      14.48900      0.0665
+Spend03           13.02982      14.16800      0.0803
+
+The CALIS Procedure
+Mean and Covariance Structures: Maximum Likelihood Estimation
+
+                          Model 1. Standardized Results for PATH List
+ 
+                                                                Standard
+-------------Path--------------    Parameter      Estimate         Error     t Value    Pr > |t|
+
+Service    ===>    Spend02         _Parm01         0.11554       0.07638      1.5126      0.1304
+Service    ===>    Spend03         _Parm02         0.15844       0.07544      2.1003      0.0357
+Product    ===>    Spend02         _Parm03         0.21409       0.07879      2.7174      0.0066
+Product    ===>    Spend03         _Parm04         0.15854       0.08128      1.9506      0.0511
+Spend02    ===>    Spend03         _Parm05         0.08848       0.05447      1.6243      0.1043
+Service    ===>    Courtesy        _Parm06         0.51553       0.06883      7.4903      <.0001
+Service    ===>    Responsive      _Parm07         0.47784       0.06799      7.0285      <.0001
+Service    ===>    Helpful         _Parm08         0.42397       0.06742      6.2886      <.0001
+Service    ===>    Delivery        _Parm09         0.39050       0.06745      5.7894      <.0001
+Product    ===>    Pricing         _Parm10         0.45328       0.07350      6.1674      <.0001
+Product    ===>    Availability    _Parm11         0.47445       0.07447      6.3708      <.0001
+Product    ===>    Quality         _Parm12         0.48891       0.07522      6.5000      <.0001
+
+
+                  Model 1. Standardized Results for Variance Parameters
+ 
+Variance                                                  Standard
+Type         Variable        Parameter      Estimate         Error     t Value    Pr > |t|
+
+Error        Courtesy        _Parm13         0.73423       0.07096     10.3467      <.0001
+             Responsive      _Parm14         0.77167       0.06497     11.8766      <.0001
+             Helpful         _Parm15         0.82025       0.05717     14.3481      <.0001
+             Delivery        _Parm16         0.84751       0.05268     16.0887      <.0001
+             Pricing         _Parm17         0.79454       0.06663     11.9250      <.0001
+             Availability    _Parm18         0.77490       0.07067     10.9657      <.0001
+             Quality         _Parm19         0.76097       0.07355     10.3464      <.0001
+             Spend02         _Parm20         0.92802       0.03655     25.3913      <.0001
+             Spend03         _Parm21         0.91730       0.03565     25.7278      <.0001
+Exogenous    Service                         1.00000                                      
+             Product                         1.00000                                      
+
+
+      Model 1. Standardized Results for Covariances Among Exogenous Variables
+ 
+                                                   Standard
+Var1       Var2       Parameter      Estimate         Error     t Value    Pr > |t|
+
+Service    Product    _Parm22         0.25866       0.10352      2.4986      0.0125
+
+
+                            Model 2. Standardized Results for PATH List
+ 
+                                                                   Standard
+-------------Path--------------    Parameter         Estimate         Error     t Value    Pr > |t|
+
+Service    ===>    Spend02         _Parm01_mdl2       0.09254       0.07872      1.1755      0.2398
+Service    ===>    Spend03         _Parm02_mdl2       0.13575       0.07746      1.7526      0.0797
+Product    ===>    Spend02         _Parm03_mdl2       0.20846       0.08000      2.6058      0.0092
+Product    ===>    Spend03         _Parm04_mdl2       0.16102       0.08169      1.9711      0.0487
+Spend02    ===>    Spend03         _Parm05_mdl2       0.09069       0.05091      1.7813      0.0749
+Service    ===>    Courtesy        _Parm06_mdl2       0.44243       0.06344      6.9738      <.0001
+Service    ===>    Responsive      _Parm07_mdl2       0.56340       0.06623      8.5063      <.0001
+Service    ===>    Helpful         _Parm08_mdl2       0.42428       0.06331      6.7013      <.0001
+Service    ===>    Delivery        _Parm09_mdl2       0.33977       0.06363      5.3402      <.0001
+Product    ===>    Pricing         _Parm10_mdl2       0.38998       0.06556      5.9480      <.0001
+Product    ===>    Availability    _Parm11_mdl2       0.54826       0.07089      7.7334      <.0001
+Product    ===>    Quality         _Parm12_mdl2       0.48388       0.06786      7.1311      <.0001
+
+
+                    Model 2. Standardized Results for Variance Parameters
+ 
+Variance                                                     Standard
+Type         Variable        Parameter         Estimate         Error     t Value    Pr > |t|
+
+Error        Courtesy        _Parm13_mdl2       0.80426       0.05614     14.3267      <.0001
+             Responsive      _Parm14_mdl2       0.68258       0.07463      9.1459      <.0001
+             Helpful         _Parm15_mdl2       0.81998       0.05373     15.2624      <.0001
+             Delivery        _Parm16_mdl2       0.88455       0.04324     20.4587      <.0001
+             Pricing         _Parm17_mdl2       0.84792       0.05114     16.5813      <.0001
+             Availability    _Parm18_mdl2       0.69941       0.07774      8.9971      <.0001
+             Quality         _Parm19_mdl2       0.76586       0.06567     11.6626      <.0001
+             Spend02         _Parm20_mdl2       0.93348       0.03261     28.6216      <.0001
+             Spend03         _Parm21_mdl2       0.91967       0.03250     28.2965      <.0001
+Exogenous    Service                            1.00000                                      
+             Product                            1.00000                                      
+
+
+       Model 2. Standardized Results for Covariances Among Exogenous Variables
+ 
+                                                      Standard
+Var1       Var2       Parameter         Estimate         Error     t Value    Pr > |t|
+
+Service    Product    _Parm22_mdl2       0.37602       0.09444      3.9816      <.0001
+
+The CALIS Procedure
+Mean and Covariance Structures: Models and Initial Values
+
+                              Modeling Information
+                         Maximum Likelihood Estimation
+ 
+Group    Label       Data Set         N Obs    Model      Analysis
+
+    1    Region 1    WORK.REGION1       378    Model 1    Means and Covariances
+    2    Region 2    WORK.REGION2       423    Model 2    Means and Covariances
+
+
+                       Model Summary
+ 
+Model    Label                        Type       Base Model
+
+    3    Model for References Only    PATH                 
+    1                                 PATH       Model 3   
+    2                                 PATH       Model 3   
+
+
+                   Model 1. Variables in the Model
+
+Endogenous    Manifest     Availability  Courtesy  Delivery  Helpful 
+                           Pricing  Quality  Responsive  Spend02     
+                           Spend03                                   
+              Latent                                                 
+Exogenous     Manifest                                               
+              Latent       Product  Service                          
+
+                  Number of Endogenous Variables = 9
+                  Number of Exogenous Variables  = 2
+
+
+         Model 1. Initial Estimates for PATH List
+ 
+-------------Path--------------    Parameter      Estimate
+
+Service    ===>    Spend02         _Parm01               .
+Service    ===>    Spend03         _Parm02               .
+Product    ===>    Spend02         _Parm03               .
+Product    ===>    Spend03         _Parm04               .
+Spend02    ===>    Spend03         _Parm05               .
+Service    ===>    Courtesy        _Parm06               .
+Service    ===>    Responsive      _Parm07               .
+Service    ===>    Helpful         _Parm08               .
+Service    ===>    Delivery        _Parm09               .
+Product    ===>    Pricing         _Parm10               .
+Product    ===>    Availability    _Parm11               .
+Product    ===>    Quality         _Parm12               .
+
+
+ Model 1. Initial Estimates for Variance Parameters
+ 
+Variance
+Type         Variable        Parameter      Estimate
+
+Error        Courtesy        _Parm13               .
+             Responsive      _Parm14               .
+             Helpful         _Parm15               .
+             Delivery        _Parm16               .
+             Pricing         _Parm17               .
+             Availability    _Parm18               .
+             Quality         _Parm19               .
+             Spend02         _Parm20               .
+             Spend03         _Parm21               .
+Exogenous    Service                         1.00000
+             Product                         1.00000
+
+
+Model 1. Initial Estimates for Covariances Among Exogenous Variables
+ 
+Var1       Var2       Parameter      Estimate
+
+Service    Product    _Parm22               .
+
+
+   Model 1. Initial Estimates for Means and Intercepts
+ 
+Type         Variable        Parameter            Estimate
+
+Intercept    Spend02         G1_InterSpend02             .
+             Spend03         G1_InterSpend03             .
+             Courtesy        G1_intercept01              .
+             Responsive      G1_intercept02              .
+             Helpful         G1_intercept03              .
+             Delivery        G1_intercept04              .
+             Pricing         G1_intercept05              .
+             Availability    G1_intercept06              .
+             Quality         G1_intercept07              .
+
+
+                   Model 2. Variables in the Model
+
+Endogenous    Manifest     Availability  Courtesy  Delivery  Helpful 
+                           Pricing  Quality  Responsive  Spend02     
+                           Spend03                                   
+              Latent                                                 
+Exogenous     Manifest                                               
+              Latent       Product  Service                          
+
+                  Number of Endogenous Variables = 9
+                  Number of Exogenous Variables  = 2
+
+
+         Model 2. Initial Estimates for PATH List
+ 
+-------------Path--------------    Parameter      Estimate
+
+Service    ===>    Spend02         _Parm01               .
+Service    ===>    Spend03         _Parm02               .
+Product    ===>    Spend02         _Parm03               .
+Product    ===>    Spend03         _Parm04               .
+Spend02    ===>    Spend03         _Parm05               .
+Service    ===>    Courtesy        _Parm06               .
+Service    ===>    Responsive      _Parm07               .
+Service    ===>    Helpful         _Parm08               .
+Service    ===>    Delivery        _Parm09               .
+Product    ===>    Pricing         _Parm10               .
+Product    ===>    Availability    _Parm11               .
+Product    ===>    Quality         _Parm12               .
+
+
+ Model 2. Initial Estimates for Variance Parameters
+ 
+Variance
+Type         Variable        Parameter      Estimate
+
+Error        Courtesy        _Parm13               .
+             Responsive      _Parm14               .
+             Helpful         _Parm15               .
+             Delivery        _Parm16               .
+             Pricing         _Parm17               .
+             Availability    _Parm18               .
+             Quality         _Parm19               .
+             Spend02         _Parm20               .
+             Spend03         _Parm21               .
+Exogenous    Service                         1.00000
+             Product                         1.00000
+
+
+Model 2. Initial Estimates for Covariances Among Exogenous Variables
+ 
+Var1       Var2       Parameter      Estimate
+
+Service    Product    _Parm22               .
+
+
+   Model 2. Initial Estimates for Means and Intercepts
+ 
+Type         Variable        Parameter            Estimate
+
+Intercept    Spend02         G2_InterSpend02             .
+             Spend03         G2_InterSpend03             .
+             Courtesy        G2_intercept01              .
+             Responsive      G2_intercept02              .
+             Helpful         G2_intercept03              .
+             Delivery        G2_intercept04              .
+             Pricing         G2_intercept05              .
+             Availability    G2_intercept06              .
+             Quality         G2_intercept07              .
+
+The CALIS Procedure
+Mean and Covariance Structures: Descriptive Statistics
+
+           Group 1. Region 1
+           Simple Statistics
+ 
+  Variable            Mean       Std Dev
+
+Spend02          183.50000       3.79842
+Spend03          301.92100       3.76537
+Courtesy           4.31200       1.28141
+Responsive         4.72400       1.72540
+Helpful            3.92100       1.67362
+Delivery           4.35700       1.95704
+Pricing            6.14400       1.46697
+Availability       4.99400       1.54013
+Quality            5.97100       1.65922
+
+The CALIS Procedure
+Mean and Covariance Structures: Descriptive Statistics
+
+           Group 2. Region 2
+           Simple Statistics
+ 
+  Variable            Mean       Std Dev
+
+Spend02          156.25000       3.80644
+Spend03          313.67000       3.76404
+Courtesy           2.41200       1.81163
+Responsive         2.72700       1.64833
+Helpful            5.22400       1.42056
+Delivery           6.37600       1.73176
+Pricing            7.14700       1.58493
+Availability       3.23300       1.44395
+Quality            5.11900       1.64256
+
+The CALIS Procedure
+Mean and Covariance Structures: Optimization
+
+        Initial Estimation Methods
+
+       1    Instrumental Variables Method
+       2    McDonald Method              
+
+
+                 Optimization Start
+                 Parameter Estimates
+ 
+    N    Parameter            Estimate      Gradient
+
+    1    _Parm01               0.40468      -0.00973
+    2    _Parm02               1.31535       0.06201
+    3    _Parm03               0.81597      -0.01121
+    4    _Parm04               1.53875       0.05444
+    5    _Parm05              -0.01167       1.45361
+    6    _Parm06               0.77688       0.02404
+    7    _Parm07               0.82728      -0.01113
+    8    _Parm08               0.59910      -0.01962
+    9    _Parm09               0.68003       0.01243
+   10    _Parm10               0.66968       0.02386
+   11    _Parm11               0.76538       0.02040
+   12    _Parm12               0.74039      -0.00330
+   13    G1_InterSpend02     183.50000      -0.00226
+   14    G1_InterSpend03     304.40392       0.02894
+   15    G1_intercept01        4.31200      -0.00920
+   16    G1_intercept02        4.72400      -0.00861
+   17    G1_intercept03        3.92100      -0.00666
+   18    G1_intercept04        4.35700      -0.00522
+   19    G1_intercept05        6.14400      -0.00918
+   20    G1_intercept06        4.99400      -0.01215
+   21    G1_intercept07        5.97100      -0.00884
+   22    _Parm13               1.89361      -0.02285
+   23    _Parm14               2.15531      -0.00440
+   24    _Parm15               2.01648      -0.00234
+   25    _Parm16               2.92173      -0.00690
+   26    _Parm17               1.89255      -0.01723
+   27    _Parm18               1.63435      -0.02450
+   28    _Parm19               2.17435      -0.00703
+   29    _Parm20              13.40356     0.0004264
+   30    _Parm21               8.75698      -0.02673
+   31    _Parm22               0.34132       0.07265
+   32    G2_InterSpend02     156.25000       0.00192
+   33    G2_InterSpend03     315.23250      -0.02465
+   34    G2_intercept01        2.41200       0.00784
+   35    G2_intercept02        2.72700       0.00733
+   36    G2_intercept03        5.22400       0.00567
+   37    G2_intercept04        6.37600       0.00444
+   38    G2_intercept05        7.14700       0.00782
+   39    G2_intercept06        3.23300       0.01035
+   40    G2_intercept07        5.11900       0.00753
+
+     Value of Objective Function = 0.2530364658
+
+The CALIS Procedure
+Mean and Covariance Structures: Optimization
+
+Levenberg-Marquardt Optimization
+
+Scaling Update of More (1978)
+
+Parameter Estimates                   40
+Functions (Observations)             108
+
+                                             Optimization Start
+
+Active Constraints                                  0  Objective Function                       0.2530364658
+Max Abs Gradient Element                 1.4536087597  Radius                                   104.44674116
+
+
+                                                                                                         Ratio
+                                                                                                       Between
+                                                                                                        Actual
+                                                                 Objective     Max Abs                     and
+                     Function         Active        Objective     Function    Gradient               Predicted
+Iter     Restarts       Calls    Constraints         Function       Change     Element     Lambda       Change
+
+   1            0           4              0          0.14400       0.1090     0.00843          0        0.745
+   2            0           6              0          0.13460      0.00940    0.000435          0        1.095
+   3            0           8              0          0.13460     1.479E-6    0.000052          0        1.054
+   4            0          10              0          0.13460     2.681E-8    9.254E-6          0        1.118
+
+                                            Optimization Results
+
+Iterations                                          4  Function Calls                                     13
+Jacobian Calls                                      6  Active Constraints                                  0
+Objective Function                       0.1346009108  Max Abs Gradient Element                 9.2541901E-6
+Lambda                                              0  Actual Over Pred Change                  1.1182347364
+Radius                                   0.0017870126                                                       
+
+Convergence criterion (ABSGCONV=0.00001) satisfied.                                               
+
+The CALIS Procedure
+Mean and Covariance Structures: Maximum Likelihood Estimation
+
+                            Fit Summary
+
+Modeling Info        Number of Observations                     801
+                     Number of Variables                          9
+                     Number of Moments                          108
+                     Number of Parameters                        40
+                     Number of Active Constraints                 0
+                     Baseline Model Function Value           0.5003
+                     Baseline Model Chi-Square             399.7468
+                     Baseline Model Chi-Square DF                72
+                     Pr > Baseline Model Chi-Square          <.0001
+Absolute Index       Fit Function                            0.1346
+                     Chi-Square                            107.5461
+                     Chi-Square DF                               68
+                     Pr > Chi-Square                         0.0016
+                     Z-Test of Wilson & Hilferty             2.9452
+                     Hoelter Critical N                         657
+                     Root Mean Square Residual (RMR)         0.1577
+                     Standardized RMR (SRMR)                 0.0678
+                     Goodness of Fit Index (GFI)             1.0000
+Parsimony Index      Adjusted GFI (AGFI)                     0.9999
+                     Parsimonious GFI                        0.9444
+                     RMSEA Estimate                          0.0382
+                     RMSEA Lower 90% Confidence Limit        0.0237
+                     RMSEA Upper 90% Confidence Limit        0.0514
+                     Probability of Close Fit                0.9275
+                     Akaike Information Criterion          187.5461
+                     Bozdogan CAIC                         414.9806
+                     Schwarz Bayesian Criterion            374.9806
+                     McDonald Centrality                     0.9756
+Incremental Index    Bentler Comparative Fit Index           0.8793
+                     Bentler-Bonett NFI                      0.7310
+                     Bentler-Bonett Non-normed Index         0.8722
+                     Bollen Normed Index Rho1                0.7151
+                     Bollen Non-normed Index Delta2          0.8808
+                     James et al. Parsimonious NFI           0.6904
+
+The CALIS Procedure
+Mean and Covariance Structures: Maximum Likelihood Estimation
+
+                                 Fit Comparison Among Groups
+ 
+                                                          Overall      Region 1      Region 2
+
+Modeling Info    Number of Observations                       801           378           423
+                 Number of Variables                            9             9             9
+                 Number of Moments                            108            54            54
+                 Number of Parameters                          40            31            31
+                 Number of Active Constraints                   0             0             0
+                 Baseline Model Function Value             0.5003        0.4601        0.5363
+                 Baseline Model Chi-Square               399.7468      173.4482      226.2986
+                 Baseline Model Chi-Square DF                  72            36            36
+Fit Index        Fit Function                              0.1346        0.1261        0.1422
+                 Percent Contribution to Chi-Square           100            44            56
+                 Root Mean Square Residual (RMR)           0.1577        0.1552        0.1599
+                 Standardized RMR (SRMR)                   0.0678        0.0792        0.0557
+                 Goodness of Fit Index (GFI)               1.0000        1.0000        1.0000
+                 Bentler-Bonett NFI                        0.7310        0.7260        0.7348
+
+The CALIS Procedure
+Mean and Covariance Structures: Maximum Likelihood Estimation
+
+                                       Model 1. PATH List
+ 
+                                                                Standard
+-------------Path--------------    Parameter      Estimate         Error     t Value    Pr > |t|
+
+Service    ===>    Spend02         _Parm01         0.37475       0.21318      1.7579      0.0788
+Service    ===>    Spend03         _Parm02         0.53851       0.20840      2.5840      0.0098
+Product    ===>    Spend02         _Parm03         0.80372       0.21939      3.6635      0.0002
+Product    ===>    Spend03         _Parm04         0.59879       0.22144      2.7041      0.0068
+Spend02    ===>    Spend03         _Parm05         0.08952       0.03694      2.4233      0.0154
+Service    ===>    Courtesy        _Parm06         0.72418       0.07989      9.0648      <.0001
+Service    ===>    Responsive      _Parm07         0.90452       0.08886     10.1797      <.0001
+Service    ===>    Helpful         _Parm08         0.64969       0.07683      8.4557      <.0001
+Service    ===>    Delivery        _Parm09         0.64473       0.09021      7.1468      <.0001
+Product    ===>    Pricing         _Parm10         0.63452       0.07916      8.0160      <.0001
+Product    ===>    Availability    _Parm11         0.76737       0.08265      9.2852      <.0001
+Product    ===>    Quality         _Parm12         0.79716       0.08922      8.9347      <.0001
+
+
+                               Model 1. Variance Parameters
+ 
+Variance                                                  Standard
+Type         Variable        Parameter      Estimate         Error     t Value    Pr > |t|
+
+Error        Courtesy        _Parm13         1.98374       0.13169     15.0638      <.0001
+             Responsive      _Parm14         2.02152       0.16159     12.5101      <.0001
+             Helpful         _Parm15         1.96535       0.12263     16.0273      <.0001
+             Delivery        _Parm16         2.97542       0.17049     17.4518      <.0001
+             Pricing         _Parm17         1.93952       0.12326     15.7358      <.0001
+             Availability    _Parm18         1.63156       0.13067     12.4865      <.0001
+             Quality         _Parm19         2.08849       0.15329     13.6246      <.0001
+             Spend02         _Parm20        13.47066       0.71842     18.7505      <.0001
+             Spend03         _Parm21        13.02883       0.68682     18.9697      <.0001
+Exogenous    Service                         1.00000                                      
+             Product                         1.00000                                      
+
+
+                  Model 1. Covariances Among Exogenous Variables
+ 
+                                                   Standard
+Var1       Var2       Parameter      Estimate         Error     t Value    Pr > |t|
+
+Service    Product    _Parm22         0.33725       0.07061      4.7760      <.0001
+
+
+                                 Model 1. Means and Intercepts
+ 
+                                                                Standard
+Type         Variable        Parameter            Estimate         Error     t Value    Pr > |t|
+
+Intercept    Spend02         G1_InterSpend02     183.50000       0.19585       937.0      <.0001
+             Spend03         G1_InterSpend03     285.49480       6.78127     42.1005      <.0001
+             Courtesy        G1_intercept01        4.31200       0.08157     52.8652      <.0001
+             Responsive      G1_intercept02        4.72400       0.08679     54.4310      <.0001
+             Helpful         G1_intercept03        3.92100       0.07958     49.2720      <.0001
+             Delivery        G1_intercept04        4.35700       0.09484     45.9397      <.0001
+             Pricing         G1_intercept05        6.14400       0.07882     77.9499      <.0001
+             Availability    G1_intercept06        4.99400       0.07674     65.0732      <.0001
+             Quality         G1_intercept07        5.97100       0.08500     70.2454      <.0001
+
+
+       Model 1. Squared Multiple Correlations
+ 
+                     Error         Total
+Variable          Variance      Variance    R-Square
+
+Availability       1.63156       2.22042      0.2652
+Courtesy           1.98374       2.50818      0.2091
+Delivery           2.97542       3.39110      0.1226
+Helpful            1.96535       2.38745      0.1768
+Pricing            1.93952       2.34214      0.1719
+Quality            2.08849       2.72395      0.2333
+Responsive         2.02152       2.83968      0.2881
+Spend02           13.47066      14.46022      0.0684
+Spend03           13.02883      14.17272      0.0807
+
+
+                                       Model 2. PATH List
+ 
+                                                                Standard
+-------------Path--------------    Parameter      Estimate         Error     t Value    Pr > |t|
+
+Service    ===>    Spend02         _Parm01         0.37475       0.21318      1.7579      0.0788
+Service    ===>    Spend03         _Parm02         0.53851       0.20840      2.5840      0.0098
+Product    ===>    Spend02         _Parm03         0.80372       0.21939      3.6635      0.0002
+Product    ===>    Spend03         _Parm04         0.59879       0.22144      2.7041      0.0068
+Spend02    ===>    Spend03         _Parm05         0.08952       0.03694      2.4233      0.0154
+Service    ===>    Courtesy        _Parm06         0.72418       0.07989      9.0648      <.0001
+Service    ===>    Responsive      _Parm07         0.90452       0.08886     10.1797      <.0001
+Service    ===>    Helpful         _Parm08         0.64969       0.07683      8.4557      <.0001
+Service    ===>    Delivery        _Parm09         0.64473       0.09021      7.1468      <.0001
+Product    ===>    Pricing         _Parm10         0.63452       0.07916      8.0160      <.0001
+Product    ===>    Availability    _Parm11         0.76737       0.08265      9.2852      <.0001
+Product    ===>    Quality         _Parm12         0.79716       0.08922      8.9347      <.0001
+
+
+                               Model 2. Variance Parameters
+ 
+Variance                                                  Standard
+Type         Variable        Parameter      Estimate         Error     t Value    Pr > |t|
+
+Error        Courtesy        _Parm13         1.98374       0.13169     15.0638      <.0001
+             Responsive      _Parm14         2.02152       0.16159     12.5101      <.0001
+             Helpful         _Parm15         1.96535       0.12263     16.0273      <.0001
+             Delivery        _Parm16         2.97542       0.17049     17.4518      <.0001
+             Pricing         _Parm17         1.93952       0.12326     15.7358      <.0001
+             Availability    _Parm18         1.63156       0.13067     12.4865      <.0001
+             Quality         _Parm19         2.08849       0.15329     13.6246      <.0001
+             Spend02         _Parm20        13.47066       0.71842     18.7505      <.0001
+             Spend03         _Parm21        13.02883       0.68682     18.9697      <.0001
+Exogenous    Service                         1.00000                                      
+             Product                         1.00000                                      
+
+
+                  Model 2. Covariances Among Exogenous Variables
+ 
+                                                   Standard
+Var1       Var2       Parameter      Estimate         Error     t Value    Pr > |t|
+
+Service    Product    _Parm22         0.33725       0.07061      4.7760      <.0001
+
+
+                                 Model 2. Means and Intercepts
+ 
+                                                                Standard
+Type         Variable        Parameter            Estimate         Error     t Value    Pr > |t|
+
+Intercept    Spend02         G2_InterSpend02     156.25000       0.18511       844.1      <.0001
+             Spend03         G2_InterSpend03     299.68311       5.77478     51.8952      <.0001
+             Courtesy        G2_intercept01        2.41200       0.07709     31.2863      <.0001
+             Responsive      G2_intercept02        2.72700       0.08203     33.2435      <.0001
+             Helpful         G2_intercept03        5.22400       0.07522     69.4532      <.0001
+             Delivery        G2_intercept04        6.37600       0.08964     71.1270      <.0001
+             Pricing         G2_intercept05        7.14700       0.07450     95.9343      <.0001
+             Availability    G2_intercept06        3.23300       0.07254     44.5702      <.0001
+             Quality         G2_intercept07        5.11900       0.08034     63.7150      <.0001
+
+
+       Model 2. Squared Multiple Correlations
+ 
+                     Error         Total
+Variable          Variance      Variance    R-Square
+
+Availability       1.63156       2.22042      0.2652
+Courtesy           1.98374       2.50818      0.2091
+Delivery           2.97542       3.39110      0.1226
+Helpful            1.96535       2.38745      0.1768
+Pricing            1.93952       2.34214      0.1719
+Quality            2.08849       2.72395      0.2333
+Responsive         2.02152       2.83968      0.2881
+Spend02           13.47066      14.46022      0.0684
+Spend03           13.02883      14.17272      0.0807
+
+
+                                 Simultaneous Tests
+ 
+Simultaneous       Parametric            Function
+Test               Function                 Value        DF    Chi-Square    p Value
+
+SpendDiff                                                 2         10458     <.0001
+                   Spend02Diff          -27.25000         1         10225     <.0001
+                   Spend03Diff           14.18831         1     185.86725     <.0001
+MeasurementDiff                                           7          1610     <.0001
+                   CourtesyDiff          -1.90000         1     286.58605     <.0001
+                   ResponsiveDiff        -1.99700         1     279.63659     <.0001
+                   HelpfulDiff            1.30300         1     141.59942     <.0001
+                   DeliveryDiff           2.01900         1     239.35318     <.0001
+                   PricingDiff            1.00300         1      85.52567     <.0001
+                   AvailabilityDiff      -1.76100         1     278.09360     <.0001
+                   QualityDiff           -0.85200         1      53.06240     <.0001
+
+The CALIS Procedure
+Mean and Covariance Structures: Maximum Likelihood Estimation
+
+                          Model 1. Standardized Results for PATH List
+ 
+                                                                Standard
+-------------Path--------------    Parameter      Estimate         Error     t Value    Pr > |t|
+
+Service    ===>    Spend02         _Parm01         0.09855       0.05591      1.7627      0.0780
+Service    ===>    Spend03         _Parm02         0.14304       0.05504      2.5991      0.0093
+Product    ===>    Spend02         _Parm03         0.21136       0.05700      3.7081      0.0002
+Product    ===>    Spend03         _Parm04         0.15906       0.05844      2.7215      0.0065
+Spend02    ===>    Spend03         _Parm05         0.09042       0.03719      2.4310      0.0151
+Service    ===>    Courtesy        _Parm06         0.45726       0.04698      9.7340      <.0001
+Service    ===>    Responsive      _Parm07         0.53676       0.04841     11.0884      <.0001
+Service    ===>    Helpful         _Parm08         0.42047       0.04669      9.0057      <.0001
+Service    ===>    Delivery        _Parm09         0.35011       0.04678      7.4839      <.0001
+Product    ===>    Pricing         _Parm10         0.41461       0.04888      8.4817      <.0001
+Product    ===>    Availability    _Parm11         0.51498       0.05164      9.9733      <.0001
+Product    ===>    Quality         _Parm12         0.48300       0.05052      9.5601      <.0001
+
+
+                  Model 1. Standardized Results for Variance Parameters
+ 
+Variance                                                  Standard
+Type         Variable        Parameter      Estimate         Error     t Value    Pr > |t|
+
+Error        Courtesy        _Parm13         0.79091       0.04296     18.4099      <.0001
+             Responsive      _Parm14         0.71188       0.05197     13.6987      <.0001
+             Helpful         _Parm15         0.82320       0.03926     20.9660      <.0001
+             Delivery        _Parm16         0.87742       0.03276     26.7847      <.0001
+             Pricing         _Parm17         0.82810       0.04053     20.4296      <.0001
+             Availability    _Parm18         0.73480       0.05318     13.8165      <.0001
+             Quality         _Parm19         0.76671       0.04880     15.7100      <.0001
+             Spend02         _Parm20         0.93157       0.02436     38.2428      <.0001
+             Spend03         _Parm21         0.91929       0.02397     38.3516      <.0001
+Exogenous    Service                         1.00000                                      
+             Product                         1.00000                                      
+
+
+      Model 1. Standardized Results for Covariances Among Exogenous Variables
+ 
+                                                   Standard
+Var1       Var2       Parameter      Estimate         Error     t Value    Pr > |t|
+
+Service    Product    _Parm22         0.33725       0.07061      4.7760      <.0001
+
+
+                          Model 2. Standardized Results for PATH List
+ 
+                                                                Standard
+-------------Path--------------    Parameter      Estimate         Error     t Value    Pr > |t|
+
+Service    ===>    Spend02         _Parm01         0.09855       0.05591      1.7627      0.0780
+Service    ===>    Spend03         _Parm02         0.14304       0.05504      2.5991      0.0093
+Product    ===>    Spend02         _Parm03         0.21136       0.05700      3.7081      0.0002
+Product    ===>    Spend03         _Parm04         0.15906       0.05844      2.7215      0.0065
+Spend02    ===>    Spend03         _Parm05         0.09042       0.03719      2.4310      0.0151
+Service    ===>    Courtesy        _Parm06         0.45726       0.04698      9.7340      <.0001
+Service    ===>    Responsive      _Parm07         0.53676       0.04841     11.0884      <.0001
+Service    ===>    Helpful         _Parm08         0.42047       0.04669      9.0057      <.0001
+Service    ===>    Delivery        _Parm09         0.35011       0.04678      7.4839      <.0001
+Product    ===>    Pricing         _Parm10         0.41461       0.04888      8.4817      <.0001
+Product    ===>    Availability    _Parm11         0.51498       0.05164      9.9733      <.0001
+Product    ===>    Quality         _Parm12         0.48300       0.05052      9.5601      <.0001
+
+
+                  Model 2. Standardized Results for Variance Parameters
+ 
+Variance                                                  Standard
+Type         Variable        Parameter      Estimate         Error     t Value    Pr > |t|
+
+Error        Courtesy        _Parm13         0.79091       0.04296     18.4099      <.0001
+             Responsive      _Parm14         0.71188       0.05197     13.6987      <.0001
+             Helpful         _Parm15         0.82320       0.03926     20.9660      <.0001
+             Delivery        _Parm16         0.87742       0.03276     26.7847      <.0001
+             Pricing         _Parm17         0.82810       0.04053     20.4296      <.0001
+             Availability    _Parm18         0.73480       0.05318     13.8165      <.0001
+             Quality         _Parm19         0.76671       0.04880     15.7100      <.0001
+             Spend02         _Parm20         0.93157       0.02436     38.2428      <.0001
+             Spend03         _Parm21         0.91929       0.02397     38.3516      <.0001
+Exogenous    Service                         1.00000                                      
+             Product                         1.00000                                      
+
+
+      Model 2. Standardized Results for Covariances Among Exogenous Variables
+ 
+                                                   Standard
+Var1       Var2       Parameter      Estimate         Error     t Value    Pr > |t|
+
+Service    Product    _Parm22         0.33725       0.07061      4.7760      <.0001
+
+The CALIS Procedure
+Mean and Covariance Structures: Maximum Likelihood Estimation
+
+                        Stepwise Multivariate Wald Test
+ 
+                   ------Cumulative Statistics-----    --Univariate Increment--
+Parm               Chi-Square      DF    Pr > ChiSq    Chi-Square    Pr > ChiSq
+
+_Parm01               3.09039       1        0.0788       3.09039        0.0788
+
+The CALIS Procedure
+Mean and Covariance Structures: Maximum Likelihood Estimation
+
+ Model 1. Rank Order of the 10 Largest LM Stat for Path Relations
+ 
+                                                              Parm
+To            From             LM Stat    Pr > ChiSq        Change
+
+Service       Courtesy        11.15249        0.0008      -0.17145
+Service       Helpful          3.09038        0.0788       0.09431
+Service       Delivery         2.59511        0.1072       0.07504
+Courtesy      Responsive       1.75943        0.1847      -0.07730
+Delivery      Courtesy         1.66721        0.1966       0.08669
+Helpful       Courtesy         1.62005        0.2031       0.07277
+Courtesy      Product          1.48928        0.2223      -0.14815
+Service       Product          0.83498        0.3608      -0.12327
+Responsive    Helpful          0.76664        0.3813      -0.05625
+Product       Helpful          0.53020        0.4665      -0.03831
+
+
+Model 1. Rank Order of the 2 Largest LM Stat for Covariances of Exogenous Variables
+ 
+                                                        Parm
+Var1       Var2          LM Stat    Pr > ChiSq        Change
+
+Product    Product       0.16190        0.6874       0.08120
+Service    Service     0.0000253        0.9960     0.0009619
+
+
+Model 1. Rank Order of the 10 Largest LM Stat for Error Variances and Covariances
+ 
+Error         Error                                             Parm
+of            of                 LM Stat    Pr > ChiSq        Change
+
+Responsive    Helpful            1.26589        0.2605      -0.15774
+Delivery      Courtesy           0.70230        0.4020       0.12577
+Helpful       Courtesy           0.50167        0.4788       0.09103
+Quality       Availability       0.47993        0.4885      -0.09739
+Quality       Pricing            0.45925        0.4980       0.09449
+Responsive    Availability       0.25734        0.6120       0.05965
+Helpful       Availability       0.24811        0.6184      -0.05413
+Responsive    Pricing            0.23748        0.6260      -0.05911
+Spend02       Availability       0.19634        0.6577      -0.13200
+Responsive    Courtesy           0.18212        0.6696       0.06201
+
+NOTE: No LM statistic in the default test set for the means is nonsingular. Ranking is not displayed.
+
+
+NOTE: There is no parameter to free in the default LM tests for the intercepts. Ranking is not displayed.
+
+
+The CALIS Procedure
+Mean and Covariance Structures: Maximum Likelihood Estimation
+
+ Model 2. Rank Order of the 10 Largest LM Stat for Path Relations
+ 
+                                                              Parm
+To            From             LM Stat    Pr > ChiSq        Change
+
+Delivery      Courtesy        16.91167        <.0001      -0.26641
+Service       Courtesy         9.11235        0.0025       0.15430
+Courtesy      Delivery         8.12091        0.0044      -0.12989
+Courtesy      Responsive       8.03954        0.0046       0.16215
+Pricing       Responsive       5.48406        0.0192       0.10424
+Courtesy      Product          4.39347        0.0361       0.24412
+Courtesy      Quality          3.52147        0.0606       0.08672
+Service       Delivery         3.20160        0.0736      -0.08281
+Service       Helpful          2.97015        0.0848      -0.09198
+Responsive    Pricing          2.91498        0.0878       0.08943
+
+
+Model 2. Rank Order of the 2 Largest LM Stat for Covariances of Exogenous Variables
+ 
+                                                        Parm
+Var1       Var2          LM Stat    Pr > ChiSq        Change
+
+Product    Product       0.16182        0.6875      -0.08119
+Service    Service     0.0000248        0.9960    -0.0009524
+
+
+Model 2. Rank Order of the 10 Largest LM Stat for Error Variances and Covariances
+ 
+Error         Error                                             Parm
+of            of                 LM Stat    Pr > ChiSq        Change
+
+Delivery      Courtesy          16.00996        <.0001      -0.57408
+Responsive    Pricing            4.89190        0.0270       0.25403
+Helpful       Delivery           3.33480        0.0678       0.25299
+Delivery      Availability       2.79513        0.0946       0.20656
+Responsive    Availability       2.16944        0.1408      -0.16421
+Quality       Courtesy           2.14952        0.1426       0.17094
+Responsive    Courtesy           2.12832        0.1446       0.20604
+Quality       Pricing            2.00978        0.1563      -0.19154
+Quality       Availability       1.99477        0.1578       0.19459
+Responsive    Quality            1.88736        0.1695      -0.16963
+
+NOTE: No LM statistic in the default test set for the means is nonsingular. Ranking is not displayed.
+
+
+NOTE: There is no parameter to free in the default LM tests for the intercepts. Ranking is not displayed.
+
+
+The CALIS Procedure
+Mean and Covariance Structures: Maximum Likelihood Estimation
+
+                       Lagrange Multiplier Statistics for Releasing Equality Constraints
+ 
+           ---------------Released Parameter---------------                                -------Changes------
+                                                                                           Original    Released
+Parm       Model    Type       Var1            Var2               LM Stat    Pr > ChiSq        Parm        Parm
+
+_Parm01        1    DV_IV      Spend02         Service            0.01554        0.9008     -0.0213      0.0238
+               2    DV_IV      Spend02         Service            0.01554        0.9008      0.0238     -0.0213
+_Parm02        1    DV_IV      Spend03         Service            0.01763        0.8944     -0.0222      0.0248
+               2    DV_IV      Spend03         Service            0.01763        0.8944      0.0248     -0.0222
+_Parm03        1    DV_IV      Spend02         Product          0.0003403        0.9853    -0.00321     0.00355
+               2    DV_IV      Spend02         Product          0.0003403        0.9853     0.00355    -0.00321
+_Parm04        1    DV_IV      Spend03         Product            0.00176        0.9665     0.00714    -0.00802
+               2    DV_IV      Spend03         Product            0.00176        0.9665    -0.00802     0.00714
+_Parm05        1    DV_DV      Spend03         Spend02          0.0009698        0.9752    -0.00100     0.00112
+               2    DV_DV      Spend03         Spend02          0.0009698        0.9752     0.00112    -0.00100
+_Parm06        1    DV_IV      Courtesy        Service           19.17225        <.0001      0.2851     -0.3191
+               2    DV_IV      Courtesy        Service           19.17225        <.0001     -0.3191      0.2851
+_Parm07        1    DV_IV      Responsive      Service            0.21266        0.6447     -0.0304      0.0341
+               2    DV_IV      Responsive      Service            0.21266        0.6447      0.0341     -0.0304
+_Parm08        1    DV_IV      Helpful         Service            4.60629        0.0319     -0.1389      0.1555
+               2    DV_IV      Helpful         Service            4.60629        0.0319      0.1555     -0.1389
+_Parm09        1    DV_IV      Delivery        Service            3.59763        0.0579     -0.1508      0.1687
+               2    DV_IV      Delivery        Service            3.59763        0.0579      0.1687     -0.1508
+_Parm10        1    DV_IV      Pricing         Product            0.50974        0.4753      0.0468     -0.0524
+               2    DV_IV      Pricing         Product            0.50974        0.4753     -0.0524      0.0468
+_Parm11        1    DV_IV      Availability    Product            0.57701        0.4475     -0.0457      0.0512
+               2    DV_IV      Availability    Product            0.57701        0.4475      0.0512     -0.0457
+_Parm12        1    DV_IV      Quality         Product            0.00566        0.9400    -0.00511     0.00574
+               2    DV_IV      Quality         Product            0.00566        0.9400     0.00574    -0.00511
+_Parm13        1    COVERR     Courtesy        Courtesy          45.24725        <.0001      0.7204     -0.8064
+               2    COVERR     Courtesy        Courtesy          45.24725        <.0001     -0.8064      0.7204
+_Parm14        1    COVERR     Responsive      Responsive         1.73499        0.1878     -0.1555      0.1740
+               2    COVERR     Responsive      Responsive         1.73499        0.1878      0.1740     -0.1555
+_Parm15        1    COVERR     Helpful         Helpful           11.13266        0.0008     -0.3448      0.3860
+               2    COVERR     Helpful         Helpful           11.13266        0.0008      0.3860     -0.3448
+_Parm16        1    COVERR     Delivery        Delivery           4.99097        0.0255     -0.3364      0.3766
+               2    COVERR     Delivery        Delivery           4.99097        0.0255      0.3766     -0.3364
+_Parm17        1    COVERR     Pricing         Pricing            2.86428        0.0906      0.1729     -0.1936
+               2    COVERR     Pricing         Pricing            2.86428        0.0906     -0.1936      0.1729
+_Parm18        1    COVERR     Availability    Availability       2.53147        0.1116     -0.1494      0.1672
+               2    COVERR     Availability    Availability       2.53147        0.1116      0.1672     -0.1494
+_Parm19        1    COVERR     Quality         Quality            0.07328        0.7866     -0.0315      0.0352
+               2    COVERR     Quality         Quality            0.07328        0.7866      0.0352     -0.0315
+_Parm20        1    COVERR     Spend02         Spend02            0.00214        0.9631      0.0304     -0.0340
+               2    COVERR     Spend02         Spend02            0.00214        0.9631     -0.0340      0.0304
+_Parm21        1    COVERR     Spend03         Spend03          0.0001773        0.9894    -0.00842     0.00946
+               2    COVERR     Spend03         Spend03          0.0001773        0.9894     0.00946    -0.00842
+_Parm22        1    COVEXOG    Service         Product            0.87147        0.3505      0.0605     -0.0678
+               2    COVEXOG    Service         Product            0.87147        0.3505     -0.0678      0.0605

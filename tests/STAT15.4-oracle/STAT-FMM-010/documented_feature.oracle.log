@@ -1,0 +1,177 @@
+The SAS System
+
+3571       
+3572       /* STAT-FMM-010: FMM — OUTPUT
+3573        * Source: S154 / Chapter 46 / `OUTPUT Statement` (PDF pp. 3005–3008).
+3574        * Discriminates: Getting Started: FMM Procedure; explicit statements: OUTPUT
+3575        */
+3576       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+3576     ! validmemname=compatible locale=en_US;
+3577       %let syscc=0;
+3578       title; footnote;
+3579       ods _all_ close;
+3580       ods listing gpath="%sysfunc(pathname(work))";
+3581       ods graphics off;
+3582       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.CATCH (memtype=DATA).
+NOTE: Deleting WORK.FMMOUT (memtype=DATA).
+NOTE: Deleting WORK.GALAXIES (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.YEAST (memtype=DATA).
+3582     !                                         quit;
+
+
+3583       ods path work.templat(update) sashelp.tmplmst(read);
+3584       
+3585       data yeast;
+3586       input count f;
+3587       n = 5;
+3588       datalines;
+
+NOTE: The data set WORK.YEAST has 6 observations and 3 variables.
+
+3595       ;
+3596       proc fmm data=yeast seed=314159;
+3597       model count/n = / k=2;
+3598       freq f;
+3599       run;
+
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The PROCEDURE FMM printed page 217.
+
+3600       proc fmm data=yeast seed=314159;
+3601       model count/n = / k=2;
+3602       freq f;
+3603       output out=fmmout pred(components) posterior;
+3604       run;
+
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The data set WORK.FMMOUT has 6 observations and 7 variables.
+NOTE: The PROCEDURE FMM printed page 218.
+
+3605       data fmmout;
+3606       set fmmout;
+3607       PredCount_1 = post_1 * f;
+3608       PredCount_2 = post_2 * f;
+3609       run;
+
+NOTE: There were 6 observations read from the data set WORK.FMMOUT.
+NOTE: The data set WORK.FMMOUT has 6 observations and 9 variables.
+
+3610       proc print data=fmmout;
+3611       run;
+
+NOTE: There were 6 observations read from the data set WORK.FMMOUT.
+NOTE: The PROCEDURE PRINT printed page 219.
+
+3612       ods graphics on;
+3613       proc fmm data=yeast seed=12345;
+3614       model count/n = / k=2;
+3615       freq f;
+3616       performance cpucount=2;
+3617       bayes nmc=1000 nbi=200;
+3618       run;
+
+NOTE: Bayesian results for this model (no regressor variables, non-identity link) are displayed on the data scale, not the linked scale. You can obtain results 
+      on the linked (=linear) scale by requesting a Metropolis sampling algorithm.
+NOTE: The PROCEDURE FMM printed page 220.
+
+3619       ods graphics off;
+3620       data catch;
+3621       input gender $ age count @@;
+3622       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.CATCH has 52 observations and 3 variables.
+
+3636       ;
+3637       proc fmm data=catch seed=314159;
+3638       class gender;
+3639       model count = gender*age / dist=Poisson;
+3640       run;
+
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The PROCEDURE FMM printed page 221.
+
+3641       proc fmm data=catch seed=314159;
+3642       class gender;
+3643       model count = gender*age / dist=Poisson ;
+3644       model + / dist=Constant;
+3645       run;
+
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The PROCEDURE FMM printed page 222.
+
+3646       proc fmm data=catch seed=12345;
+3647       class gender;
+3648       model count = gender*age / dist=Poisson;
+3649       model + / dist=constant;
+3650       performance cpucount=2;
+3651       bayes nmc=1000 nbi=200;
+3652       run;
+
+NOTE: The PROCEDURE FMM printed page 223.
+
+3653       ods graphics on;
+3654       ods select TADPanel;
+3655       proc fmm data=catch seed=12345;
+3656       class gender;
+3657       model count = gender*age / dist=Poisson;
+3658       model + / dist=constant;
+3659       performance cpucount=2;
+3660       bayes nmc=1000 nbi=200;
+3661       run;
+
+
+3662       ods graphics off;
+3663       title "FMM Analysis of Galaxies Data";
+3664       data galaxies;
+3665       input velocity @@;
+3666       v = velocity / 1000;
+3667       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.GALAXIES has 82 observations and 2 variables.
+
+3677       ;
+3678       title2 "Three to Seven Components, Unequal Variances";
+3679       ods graphics on;
+3680       proc fmm data=galaxies criterion=AIC seed=314159;
+3681       model v = / kmin=3 kmax=7;
+3682       run;
+
+NOTE: The model with 3 components (ID=1) was selected as 'best' based on the AIC statistic.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The PROCEDURE FMM printed page 224.
+
+3683       title2 "Three to Seven Components, Equal Variances";
+3684       proc fmm data=galaxies criterion=AIC gconv=0 seed=314159;
+3685       model v = / kmin=3 kmax=7 equate=scale;
+3686       run;
+
+NOTE: The model with 4 components (ID=2) was selected as 'best' based on the AIC statistic.
+NOTE: Convergence criterion (ABSGCONV=0.00001) satisfied.
+NOTE: The PROCEDURE FMM printed page 225.
+
+3687       title2 "Five Components, Equal Variances = 0.9025";
+3688       proc fmm data=galaxies seed=314159;
+3689       model v = / K=5 equate=scale;
+3690       restrict int 0 (scale 1) = 0.9025;
+3691       run;
+
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The PROCEDURE FMM printed page 226.
+
+3692       
+3693       
+3694       
+3695       
+The SAS System
+
+3696       

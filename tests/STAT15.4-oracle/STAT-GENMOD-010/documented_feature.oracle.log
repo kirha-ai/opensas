@@ -1,0 +1,67 @@
+The SAS System
+
+22396      
+22397      /* STAT-GENMOD-010: GENMOD — EXACT / EXACTOPTIONS / Exact Logistic and Exact Poisson Regression
+22398       * Source: S154 / Chapter 51 / `EXACT Statement` (PDF pp. 3535–3538); S154 / Chapter 51 / `EXACTOPTIONS Statement` (PDF pp. 3538–3541); S154 /
+22398    ! Chapter 51 / `Exact Logistic and Exact Poisson Regression` (PDF pp. 3612–3615).
+22399       * Discriminates: Example 51.11: Exact Poisson Regression; explicit statements: EXACT, EXACTOPTIONS
+22400       */
+22401      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+22401    ! validmemname=compatible locale=en_US;
+22402      %let syscc=0;
+22403      title; footnote;
+22404      ods _all_ close;
+22405      ods listing gpath="%sysfunc(pathname(work))";
+22406      ods graphics off;
+22407      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.NOR (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.RESIDUALS (memtype=DATA).
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+22407    !                                         quit;
+
+
+22408      ods path work.templat(update) sashelp.tmplmst(read);
+22409      
+22410      data ingots;
+22411      input Heat Soak Notready Total @@;
+22412      lnTotal= log(Total);
+22413      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.INGOTS has 19 observations and 5 variables.
+
+22419      ;
+22420      proc genmod data=ingots;
+22421      class Heat Soak / param=ref;
+22422      model Notready=Heat Soak / offset=lnTotal dist=Poisson link=log;
+22423      exact Heat Soak / joint estimate;
+22424      exactoptions statustime=10;
+22425      run;
+
+NOTE: Algorithm converged.
+NOTE: The scale parameter was held fixed.
+NOTE: There are 2 sets of 19 records to process. 
+      Elapsed Time   Set being   Record being     Percent 
+      (in seconds)   Processed      Processed   of Record
+               0.0           2              8       15.34
+               0.1           2             10        9.80
+               0.2           2             12       15.91
+               0.4           2             13       61.80
+               0.7           2             15       55.92
+               2.2           2             18       41.64
+NOTE: The PROCEDURE GENMOD printed pages 2380-2381.
+
+22426      
+22427      
+22428      
+22429      
+The SAS System
+
+22430      

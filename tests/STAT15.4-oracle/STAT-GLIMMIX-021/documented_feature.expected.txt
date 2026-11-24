@@ -1,0 +1,211 @@
+
+The NLIN Procedure
+Dependent Variable conc
+Method: Gauss-Newton
+
+                                     Iterative Phase
+                                                                                   Sum of
+ Iter     beta1_1     beta2_1     beta3_1     beta1_2     beta2_2     beta3_2     Squares
+
+    0     -3.2200      0.4700     -2.4500     -3.2200      0.4700     -2.4500       289.1
+    1     -3.6211      0.4510     -2.6694     -3.0300      0.4032     -2.4421       140.7
+    2     -3.5667      0.4419     -2.6224     -3.0111      0.3971     -2.4439       138.9
+    3     -3.5671      0.4421     -2.6230     -3.0111      0.3978     -2.4443       138.9
+    4     -3.5671      0.4421     -2.6230     -3.0111      0.3977     -2.4442       138.9
+
+
+NOTE: Convergence criterion met.                                
+
+
+         Estimation Summary
+
+Method                  Gauss-Newton
+Iterations                         4
+R                           6.934E-6
+PPC(beta2_2)                0.000033
+RPC(beta2_2)                0.000238
+Object                      2.309E-9
+Objective                   138.8917
+Observations Read                 98
+Observations Used                 98
+Observations Missing               0
+
+
+NOTE: An intercept was not specified for this model.
+
+                                  Sum of        Mean               Approx
+Source                    DF     Squares      Square    F Value    Pr > F
+
+Model                      6      3247.9       541.3     358.56    <.0001
+Error                     92       138.9      1.5097                     
+Uncorrected Total         98      3386.8                                 
+
+
+                              Approx
+Parameter      Estimate    Std Error    Approximate 95% Confidence Limits
+
+beta1_1         -3.5671       0.0864     -3.7387     -3.3956
+beta2_1          0.4421       0.1349      0.1742      0.7101
+beta3_1         -2.6230       0.1265     -2.8742     -2.3718
+beta1_2         -3.0111       0.1061     -3.2219     -2.8003
+beta2_2          0.3977       0.1987     0.00305      0.7924
+beta3_2         -2.4442       0.1618     -2.7655     -2.1229
+
+
+                                    Approximate Correlation Matrix
+                beta1_1         beta2_1         beta3_1         beta1_2         beta2_2         beta3_2
+
+beta1_1       1.0000000      -0.4481544       0.9365775       0.0000000       0.0000000       0.0000000
+beta2_1      -0.4481544       1.0000000      -0.6206223       0.0000000       0.0000000       0.0000000
+beta3_1       0.9365775      -0.6206223       1.0000000       0.0000000       0.0000000       0.0000000
+beta1_2       0.0000000       0.0000000       0.0000000       1.0000000      -0.4313329       0.9194679
+beta2_2       0.0000000       0.0000000       0.0000000      -0.4313329       1.0000000      -0.6220257
+beta3_2       0.0000000       0.0000000       0.0000000       0.9194679      -0.6220257       1.0000000
+
+Obs       col1         col2         col3         col4         col5         col6      row    Parm
+
+ 1      0.007462    -0.005222     0.010234     0.000000     0.000000     0.000000     1       1 
+ 2     -0.005222     0.018197    -0.010590     0.000000     0.000000     0.000000     2       1 
+ 3      0.010234    -0.010590     0.015999     0.000000     0.000000     0.000000     3       1 
+ 4      0.000000     0.000000     0.000000     0.011261    -0.009096     0.015785     4       1 
+ 5      0.000000     0.000000     0.000000    -0.009096     0.039487    -0.019996     5       1 
+ 6      0.000000     0.000000     0.000000     0.015785    -0.019996     0.026172     6       1 
+
+The GLIMMIX Procedure
+
+                    Model Information
+
+Data Set                     WORK.ESTS                    
+Response Variable            Estimate                     
+Response Distribution        Gaussian                     
+Link Function                Identity                     
+Variance Function            Default                      
+Variance Matrix              Not blocked                  
+Estimation Technique         Restricted Maximum Likelihood
+Degrees of Freedom Method    Containment                  
+
+
+                      Class Level Information
+ 
+Class        Levels    Values
+
+Parameter         6    beta1_1 beta2_1 beta3_1 beta1_2 beta2_2      
+                       beta3_2                                      
+
+
+Number of Observations Read           6
+Number of Observations Used           6
+
+
+           Dimensions
+
+R-side Cov. Parameters         1
+Columns in X                   6
+Columns in Z                   0
+Subjects (Blocks in V)         1
+Max Obs per Subject            6
+
+
+    Parameter Search
+ 
+               Objective
+   CovP1        Function
+
+  1.0000    -4.88498E-15
+
+
+     Optimization Information
+
+Optimization Technique    None    
+Parameters                1       
+Lower Boundaries          0       
+Upper Boundaries          0       
+Fixed Effects             Profiled
+Starting From             Data    
+
+                   No optimization performed.                   
+
+
+           Fit Statistics
+
+-2 Res Log Likelihood          -0.00
+AIC  (smaller is better)        2.00
+AICC (smaller is better)        6.00
+BIC  (smaller is better)       -0.00
+CAIC (smaller is better)        1.00
+HQIC (smaller is better)       -0.00
+Generalized Chi-Square          0.00
+Gener. Chi-Square / DF           .  
+
+
+                      Estimated V Matrix for Subject 1
+ 
+ Row        Col1        Col2        Col3        Col4        Col5        Col6
+
+   1    0.007462    -0.00522     0.01023                                    
+   2    -0.00522     0.01820    -0.01059                                    
+   3     0.01023    -0.01059     0.01600                                    
+   4                                         0.01126    -0.00910     0.01579
+   5                                        -0.00910     0.03949    -0.02000
+   6                                         0.01579    -0.02000     0.02617
+
+
+Covariance Parameter Estimates
+ 
+Cov                   Standard
+Parm      Estimate       Error
+
+LIN(1)      1.0000           .
+
+
+                         Solutions for Fixed Effects
+ 
+                                      Standard
+Effect       Parameter    Estimate       Error       DF    t Value    Pr > |t|
+
+Parameter    beta1_1       -3.5671     0.08638       92     -41.29      <.0001
+Parameter    beta2_1        0.4421      0.1349       92       3.28      0.0015
+Parameter    beta3_1       -2.6230      0.1265       92     -20.74      <.0001
+Parameter    beta1_2       -3.0111      0.1061       92     -28.37      <.0001
+Parameter    beta2_2        0.3977      0.1987       92       2.00      0.0483
+Parameter    beta3_2       -2.4442      0.1618       92     -15.11      <.0001
+
+
+        Type III Tests of Fixed Effects
+ 
+              Num      Den
+Effect         DF       DF    F Value    Pr > F
+
+Parameter       6       92    1066.97    <.0001
+
+
+                                   Parameter Least Squares Means
+ 
+                         Standard
+Parameter    Estimate       Error       DF    t Value    Pr > |t|     Alpha       Lower       Upper
+
+beta1_1       -3.5671     0.08638       92     -41.29      <.0001      0.05     -3.7387     -3.3956
+beta2_1        0.4421      0.1349       92       3.28      0.0015      0.05      0.1742      0.7101
+beta3_1       -2.6230      0.1265       92     -20.74      <.0001      0.05     -2.8742     -2.3718
+beta1_2       -3.0111      0.1061       92     -28.37      <.0001      0.05     -3.2219     -2.8003
+beta2_2        0.3977      0.1987       92       2.00      0.0483      0.05    0.003050      0.7924
+beta3_2       -2.4442      0.1618       92     -15.11      <.0001      0.05     -2.7655     -2.1229
+
+
+                                    Least Squares Means Estimates
+                                  Adjustment for Multiplicity: Holm
+ 
+                                                    Standard
+Effect       Label                      Estimate       Error       DF    t Value    Pr > |t|     Adj P
+
+Parameter    beta1 eq. across groups     -0.5560      0.1368       92      -4.06      0.0001    0.0003
+Parameter    beta2 eq. across groups     0.04443      0.2402       92       0.18      0.8537    0.8537
+Parameter    beta3 eq. across groups     -0.1788      0.2054       92      -0.87      0.3862    0.7725
+
+
+    F Test for Least Squares Means Estimates
+ 
+                Num      Den
+Label            DF       DF    F Value    Pr > F
+
+Homogeneity       3       92      30.52    <.0001

@@ -1,0 +1,83 @@
+The SAS System
+
+478        
+479        /* STAT-GLIMMIX-001: GLIMMIX — Data input, variable roles, and basic options
+480         * Source: S154 / Chapter 52 / `PROC GLIMMIX Statement` (PDF pp. 3703–3730); S154 / Chapter 52 / `BY Statement` (PDF pp. 3730–3731); S154 /
+480      ! Chapter 52 / `FREQ Statement` (PDF p. 3750); S154 / Chapter 52 / `ID Statement` (PDF pp. 3750–3751); S154 / Chapter 52 / `WEIGHT Statement` (PDF p.
+480      !  3817); S154 / Chapter 52 / `Missing Level Combinations` (PDF p. 3876).
+481         * Discriminates: Two explicit BY groups contain identical inputs, exposing group boundaries and per-group results.
+482         */
+483        options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+483      ! validmemname=compatible locale=en_US;
+484        %let syscc=0;
+485        title; footnote;
+486        ods _all_ close;
+487        ods listing gpath="%sysfunc(pathname(work))";
+488        ods graphics off;
+489        proc datasets library=work kill nolist;
+NOTE: Deleting WORK.NOR (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.RESIDUALS (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK._ORACLE_STORE (memtype=ITEMSTOR).
+489      !                                         quit;
+
+
+490        ods path work.templat(update) sashelp.tmplmst(read);
+491        
+492        data multicenter;
+493        input center group$ n sideeffect;
+494        datalines;
+
+NOTE: The data set WORK.MULTICENTER has 30 observations and 4 variables.
+
+525        ;
+526        data _oracle_input; set multicenter; do _oracle_by=1 to 2; output; end; run;
+
+NOTE: There were 30 observations read from the data set WORK.MULTICENTER.
+NOTE: The data set WORK._ORACLE_INPUT has 60 observations and 5 variables.
+
+527        proc sort data=_oracle_input; by _oracle_by; run;
+
+NOTE: There were 60 observations read from the data set WORK._ORACLE_INPUT.
+NOTE: The data set WORK._ORACLE_INPUT has 60 observations and 5 variables.
+
+528        proc glimmix data=_oracle_input;
+529        by _oracle_by;
+530        class center group;
+531        model sideeffect/n = group / solution;
+532        random intercept / subject=center;
+533        run;
+
+
+
+NOTE: Convergence criterion (PCONV=1.11022E-8) satisfied.
+NOTE: The above message was for the following BY group:
+      _oracle_by=1
+NOTE: Convergence criterion (PCONV=1.11022E-8) satisfied.
+NOTE: The above message was for the following BY group:
+      _oracle_by=2
+NOTE: The PROCEDURE GLIMMIX printed pages 16-17.
+
+534        ods select lsmeans;
+535        proc glimmix data=multicenter;
+536        class center group;
+537        model sideeffect/n = group / solution;
+538        random intercept / subject=center;
+539        lsmeans group / cl ilink;
+540        run;
+
+
+
+NOTE: Convergence criterion (PCONV=1.11022E-8) satisfied.
+NOTE: The PROCEDURE GLIMMIX printed page 18.
+
+541        
+542        
+543        
+544        
+The SAS System
+
+545        

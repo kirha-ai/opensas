@@ -1,0 +1,473 @@
+
+The CONTENTS Procedure
+
+                 Variables in Creation Order
+ 
+ #    Variable     Type    Len    Label
+
+ 1    Name         Char     18    Player's Name              
+ 2    Team         Char     14    Team at the End of 1986    
+ 3    nAtBat       Num       8    Times at Bat in 1986       
+ 4    nHits        Num       8    Hits in 1986               
+ 5    nHome        Num       8    Home Runs in 1986          
+ 6    nRuns        Num       8    Runs in 1986               
+ 7    nRBI         Num       8    RBIs in 1986               
+ 8    nBB          Num       8    Walks in 1986              
+ 9    YrMajor      Num       8    Years in the Major Leagues 
+10    CrAtBat      Num       8    Career Times at Bat        
+11    CrHits       Num       8    Career Hits                
+12    CrHome       Num       8    Career Home Runs           
+13    CrRuns       Num       8    Career Runs                
+14    CrRbi        Num       8    Career RBIs                
+15    CrBB         Num       8    Career Walks               
+16    League       Char      8    League at the End of 1986  
+17    Division     Char      8    Division at the End of 1986
+18    Position     Char      8    Position(s) in 1986        
+19    nOuts        Num       8    Put Outs in 1986           
+20    nAssts       Num       8    Assists in 1986            
+21    nError       Num       8    Errors in 1986             
+22    Salary       Num       8    1987 Salary in $ Thousands 
+23    Div          Char     16    League and Division        
+24    logSalary    Num       8    Log Salary                 
+
+The GLMSELECT Procedure
+
+Data Set                     SASHELP.BASEBALL
+Dependent Variable                  logSalary
+Selection Method                     Stepwise
+Select Criterion                          SBC
+Stop Criterion                            SBC
+Effect Hierarchy Enforced                None
+
+
+Number of Observations Read         322
+Number of Observations Used         263
+
+
+         Class Level Information
+ 
+Class         Levels    Values
+
+League             2    American National 
+Division           2    East West         
+
+
+        Dimensions
+
+Number of Effects       19
+Number of Parameters    21
+
+The GLMSELECT Procedure
+Stepwise Selection: Step 0
+Effect Entered: Intercept 
+
+                       Analysis of Variance
+ 
+                                  Sum of           Mean
+Source                 DF        Squares         Square    F Value
+
+Model                   0              0              .        .  
+Error                 262      207.15373        0.79066           
+Corrected Total       262      207.15373                          
+
+
+Root MSE              0.88919
+Dependent Mean        5.92722
+R-Square               0.0000
+Adj R-Sq               0.0000
+AIC                 204.22378
+AICC                204.26994
+BIC                 -60.63970
+C(p)                375.92751
+PRESS               208.73808
+SBC                 -57.20406
+ASE                   0.78766
+
+
+                   Parameter Estimates
+ 
+                                       Standard
+Parameter    DF        Estimate           Error    t Value
+
+Intercept     1        5.927222        0.054830     108.10
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+The GLMSELECT Procedure
+Stepwise Selection: Step 1
+Effect Entered: CrRuns
+
+                       Analysis of Variance
+ 
+                                  Sum of           Mean
+Source                 DF        Squares         Square    F Value
+
+Model                   1       86.73997       86.73997     188.01
+Error                 261      120.41377        0.46136           
+Corrected Total       262      207.15373                          
+
+
+Root MSE              0.67923
+Dependent Mean        5.92722
+R-Square               0.4187
+Adj R-Sq               0.4165
+AIC                  63.53910
+AICC                 63.63176
+BIC                -200.78721
+C(p)                111.23152
+PRESS               123.91950
+SBC                -194.31659
+ASE                   0.45785
+
+
+                   Parameter Estimates
+ 
+                                       Standard
+Parameter    DF        Estimate           Error    t Value
+
+Intercept     1        5.294720        0.062306      84.98
+CrRuns        1        0.001718        0.000125      13.71
+
+
+   Best 10 Entry Candidates
+ 
+ Rank    Effect            SBC
+
+    1    CrRuns      -194.3166
+    2    CrHits      -193.6696
+    3    CrAtBat     -189.0930
+    4    CrRbi       -184.2781
+    5    CrBB        -155.6647
+    6    YrMajor     -152.4843
+    7    CrHome      -144.8972
+    8    nHits       -124.6362
+    9    nRBI        -122.2701
+   10    nBB         -117.0282
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+The GLMSELECT Procedure
+Stepwise Selection: Step 2
+Effect Entered: nHits
+
+                       Analysis of Variance
+ 
+                                  Sum of           Mean
+Source                 DF        Squares         Square    F Value
+
+Model                   2      112.69006       56.34503     155.08
+Error                 260       94.46368        0.36332           
+Corrected Total       262      207.15373                          
+
+
+Root MSE              0.60276
+Dependent Mean        5.92722
+R-Square               0.5440
+Adj R-Sq               0.5405
+AIC                   1.70413
+AICC                  1.85917
+BIC                -261.88066
+C(p)                 33.44378
+PRESS                97.63679
+SBC                -252.57941
+ASE                   0.35918
+
+
+                   Parameter Estimates
+ 
+                                       Standard
+Parameter    DF        Estimate           Error    t Value
+
+Intercept     1        4.573767        0.101658      44.99
+nHits         1        0.007348        0.000869       8.45
+CrRuns        1        0.001498        0.000114      13.11
+
+
+    Best 10 Entry Candidates
+ 
+ Rank    Effect             SBC
+
+    1    nHits        -252.5794
+    2    nAtBat       -241.5789
+    3    nRuns        -240.1010
+    4    nRBI         -232.2880
+    5    nBB          -223.3741
+    6    nHome        -208.0565
+    7    nOuts        -205.8107
+    8    Division     -194.4688
+    9    CrBB         -191.5141
+   10    nAssts       -190.9425
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+The GLMSELECT Procedure
+Stepwise Selection: Step 3
+Effect Entered: YrMajor
+
+                       Analysis of Variance
+ 
+                                  Sum of           Mean
+Source                 DF        Squares         Square    F Value
+
+Model                   3      118.17256       39.39085     114.66
+Error                 259       88.98118        0.34356           
+Corrected Total       262      207.15373                          
+
+
+Root MSE              0.58614
+Dependent Mean        5.92722
+R-Square               0.5705
+Adj R-Sq               0.5655
+AIC                 -12.02078
+AICC                -11.78732
+BIC                -275.33335
+C(p)                 18.58695
+PRESS                92.29975
+SBC                -262.73216
+ASE                   0.33833
+
+
+                   Parameter Estimates
+ 
+                                       Standard
+Parameter    DF        Estimate           Error    t Value
+
+Intercept     1        4.226639        0.131617      32.11
+nHits         1        0.008933        0.000934       9.56
+YrMajor       1        0.068765        0.017214       3.99
+CrRuns        1        0.000590        0.000253       2.33
+
+
+    Best 10 Entry Candidates
+ 
+ Rank    Effect             SBC
+
+    1    YrMajor      -262.7322
+    2    nBB          -251.8655
+    3    nOuts        -251.4540
+    4    Division     -250.8852
+    5    CrAtBat      -250.4977
+    6    nError       -249.9216
+    7    CrHits       -249.0382
+    8    CrRbi        -248.9753
+    9    League       -248.9301
+   10    nAtBat       -248.5747
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+The GLMSELECT Procedure
+Stepwise Selection: Step 4
+Effect Removed: CrRuns
+
+                       Analysis of Variance
+ 
+                                  Sum of           Mean
+Source                 DF        Squares         Square    F Value
+
+Model                   2      116.30283       58.15142     166.42
+Error                 260       90.85090        0.34943           
+Corrected Total       262      207.15373                          
+
+
+Root MSE              0.59112
+Dependent Mean        5.92722
+R-Square               0.5614
+Adj R-Sq               0.5581
+AIC                  -8.55173
+AICC                 -8.39669
+BIC                -271.90946
+C(p)                 22.33572
+PRESS                93.14816
+SBC                -262.83527
+ASE                   0.34544
+
+
+                   Parameter Estimates
+ 
+                                       Standard
+Parameter    DF        Estimate           Error    t Value
+
+Intercept     1        4.064812        0.112805      36.03
+nHits         1        0.009962        0.000830      12.00
+YrMajor       1        0.104843        0.007623      13.75
+
+
+      Removal Candidates
+ 
+ Rank    Effect            SBC
+
+    1    CrRuns      -262.8353
+    2    YrMajor     -252.5794
+    3    nHits       -188.7487
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+The GLMSELECT Procedure
+Stepwise Selection: Step 5
+Effect Entered: nBB
+
+                       Analysis of Variance
+ 
+                                  Sum of           Mean
+Source                 DF        Squares         Square    F Value
+
+Model                   3      120.52553       40.17518     120.12
+Error                 259       86.62820        0.33447           
+Corrected Total       262      207.15373                          
+
+
+Root MSE              0.57834
+Dependent Mean        5.92722
+R-Square               0.5818
+Adj R-Sq               0.5770
+AIC                 -19.06903
+AICC                -18.83557
+BIC                -282.17004
+C(p)                 11.35235
+PRESS                89.54336
+SBC                -269.78041
+ASE                   0.32938
+
+
+                   Parameter Estimates
+ 
+                                       Standard
+Parameter    DF        Estimate           Error    t Value
+
+Intercept     1        4.013911        0.111290      36.07
+nHits         1        0.007929        0.000994       7.98
+nBB           1        0.007280        0.002049       3.55
+YrMajor       1        0.100663        0.007551      13.33
+
+
+    Best 10 Entry Candidates
+ 
+ Rank    Effect             SBC
+
+    1    nBB          -269.7804
+    2    CrRuns       -262.7322
+    3    Division     -262.0250
+    4    nOuts        -261.8965
+    5    CrRbi        -261.5897
+    6    CrBB         -261.4219
+    7    CrHits       -260.8516
+    8    nRuns        -260.7938
+    9    CrHome       -260.7473
+   10    CrAtBat      -260.5797
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+The GLMSELECT Procedure
+
+                                                                  Stepwise Selection Summary
+ 
+      Effect     Effect         Number   Number    Model Adjusted 
+ Step Entered    Removed    Effects In Parms In R-Square R-Square         AIC        AICC         BIC          CP         SBC       PRESS         ASE F Value
+
+    0 Intercept                      1        1   0.0000   0.0000    204.2238    204.2699    -60.6397    375.9275    -57.2041    208.7381      0.7877    0.00
+-------------------------------------------------------------------------------------------------------------------------------------------------------------
+    1 CrRuns                         2        2   0.4187   0.4165     63.5391     63.6318   -200.7872    111.2315   -194.3166    123.9195      0.4578  188.01
+    2 nHits                          3        3   0.5440   0.5405      1.7041      1.8592   -261.8807     33.4438   -252.5794     97.6368      0.3592   71.42
+    3 YrMajor                        4        4   0.5705   0.5655    -12.0208    -11.7873   -275.3333     18.5870   -262.7322     92.2998      0.3383   15.96
+    4            CrRuns              3        3   0.5614   0.5581     -8.5517     -8.3967   -271.9095     22.3357   -262.8353     93.1482      0.3454    5.44
+    5 nBB                            4        4   0.5818   0.5770*   -19.0690*   -18.8356*  -282.1700*    11.3524*  -269.7804*    89.5434*     0.3294   12.62
+
+                                                                 * Optimal Value of Criterion
+
+    Stepwise Selection Summary
+ 
+      Effect     Effect
+ Step Entered    Removed    Pr > F
+
+    0 Intercept             1.0000
+----------------------------------
+    1 CrRuns                <.0001
+    2 nHits                 <.0001
+    3 YrMajor               <.0001
+    4            CrRuns     0.0204
+    5 nBB                   0.0005
+
+   * Optimal Value of Criterion
+
+
+Selection stopped at a local minimum of the SBC criterion.
+
+
+                     Stop Details
+ 
+Candidate                 Candidate         Compare
+For          Effect             SBC         SBC
+
+Entry        Division     -268.6094    >    -269.7804 
+Removal      nBB          -262.8353    >    -269.7804 
+
+The GLMSELECT Procedure
+Selected Model
+
+The selected model is the model at the last step (Step 5).
+
+
+Effects: Intercept nHits nBB YrMajor 
+
+
+                       Analysis of Variance
+ 
+                                  Sum of           Mean
+Source                 DF        Squares         Square    F Value
+
+Model                   3      120.52553       40.17518     120.12
+Error                 259       86.62820        0.33447           
+Corrected Total       262      207.15373                          
+
+
+Root MSE              0.57834
+Dependent Mean        5.92722
+R-Square               0.5818
+Adj R-Sq               0.5770
+AIC                 -19.06903
+AICC                -18.83557
+BIC                -282.17004
+C(p)                 11.35235
+PRESS                89.54336
+SBC                -269.78041
+ASE                   0.32938
+
+
+                   Parameter Estimates
+ 
+                                       Standard
+Parameter    DF        Estimate           Error    t Value
+
+Intercept     1        4.013911        0.111290      36.07
+nHits         1        0.007929        0.000994       7.98
+nBB           1        0.007280        0.002049       3.55
+YrMajor       1        0.100663        0.007551      13.33
+
+                                                                                                                                    P
+                                                                                                                                    _
+                                                                                                                            l       l
+                                                                                             D   P                          o       o
+                                                       Y   C                                 i   o                          g       g
+                                   n                   r   r    C   C   C             L      v   s       n   n    S         S       S
+                                   A   n   n  n        M   A    r   r   r   C         e      i   i   n   A   E    a         a       a
+            N              T       t   H   H  R  n     a   t    H   H   R   r   C     a      s   t   O   s   r    l         l       l
+ O          a              e       B   i   o  u  R  n  j   B    i   o   u   R   r     g      i   i   u   s   r    a   D     a       a
+ b          m              a       a   t   m  n  B  B  o   a    t   m   n   b   B     u      o   o   t   t   o    r   i     r       r
+ s          e              m       t   s   e  s  I  B  r   t    s   e   s   i   B     e      n   n   s   s   r    y   v     y       y
+
+  1 Allanson, Andy    Cleveland   293  66  1 30 29 14  1  293   66   1  30  29  14 American East C  446  33 20     .  AE  .      4.73980
+  2 Ashby, Alan       Houston     315  81  7 24 38 39 14 3449  835  69 321 414 375 National West C  632  43 10  475.0 NW 6.16331 6.34935
+  3 Davis, Alan       Seattle     479 130 18 66 72 76  3 1624  457  63 224 266 263 American West 1B 880  82 14  480.0 AW 6.17379 5.89993
+  4 Dawson, Andre     Montreal    496 141 20 65 78 37 11 5628 1575 225 828 838 354 National East RF 200  11  3  500.0 NE 6.21461 6.50852
+  5 Galarraga, Andres Montreal    321  87 10 39 42 30  2  396  101  12  48  46  33 National East 1B 805  40  4   91.5 NE 4.51634 5.12344
+  6 Griffin, Alfredo  Oakland     594 169  4 74 51 35 11 4408 1133  19 501 336 194 American West SS 282 421 25  750.0 AW 6.62007 6.71597
+  7 Newman, Al        Montreal    185  37  1 23  8 21  2  214   42   1  30   9  24 National East 2B  76 127  7   70.0 NE 4.24850 4.66148
+  8 Salazar, Argenis  Kansas City 298  73  0 24 24  7  3  509  108   0  41  37  12 American West SS 121 283  9  100.0 AW 4.60517 4.94566
+  9 Thomas, Andres    Atlanta     323  81  6 26 32  8  2  341   86   6  32  34   8 National West SS 143 290 19   75.0 NW 4.31749 4.91571
+ 10 Thornton, Andre   Cleveland   401  92 17 49 66 65 13 5206 1332 253 784 890 866 American East DH   0   0  0 1100.0 AE 7.00307 6.52518

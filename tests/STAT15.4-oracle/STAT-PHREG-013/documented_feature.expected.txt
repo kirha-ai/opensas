@@ -1,0 +1,335 @@
+
+The PHREG Procedure
+ 
+Bayesian Analysis
+
+                              Model Information
+
+Data Set                 WORK.RATS                                            
+Dependent Variable       Days                      Days from Exposure to Death
+Censoring Variable       Status                                               
+Censoring Value(s)       0                                                    
+Model                    Piecewise Exponential                                
+Sampling Algorithm       ARMS                                                 
+Burn-In Size             200                                                  
+MC Sample Size           1000                                                 
+Thinning                 1                                                    
+
+
+Number of Observations Read          40
+Number of Observations Used          40
+
+
+Summary of the Number of Event and Censored Values
+ 
+                                     Percent
+   Total       Event    Censored    Censored
+
+      40          36           4       10.00
+
+
+              Constant Hazard Time Intervals
+ 
+      Interval                                  Hazard
+ [Lower,      Upper)           N       Event    Parameter
+
+       0         176           5           5    Lambda1  
+     176       201.5           5           5    Lambda2  
+   201.5         218           7           5    Lambda3  
+     218       232.5           5           5    Lambda4  
+   232.5       233.5           4           4    Lambda5  
+   233.5       253.5           5           4    Lambda6  
+   253.5         288           4           4    Lambda7  
+     288       Infty           5           4    Lambda8  
+
+
+                 Maximum Likelihood Estimates
+ 
+                               Standard
+Parameter    DF    Estimate       Error    95% Confidence Limits
+
+Lambda1       1    0.000953    0.000443    0.000084     0.00182
+Lambda2       1     0.00794     0.00371    0.000672      0.0152
+Lambda3       1      0.0156     0.00734     0.00120      0.0300
+Lambda4       1      0.0236      0.0115     0.00112      0.0461
+Lambda5       1      0.3669      0.1959           0      0.7509
+Lambda6       1      0.0276      0.0148           0      0.0566
+Lambda7       1      0.0262      0.0146           0      0.0548
+Lambda8       1      0.0545      0.0310           0      0.1152
+Group         1     -0.6223      0.3468     -1.3020      0.0573
+
+
+Improper Prior for Hazards
+ 
+Parameter    Prior
+
+Lambda1      1 / Lambda1  
+Lambda2      1 / Lambda2  
+Lambda3      1 / Lambda3  
+Lambda4      1 / Lambda4  
+Lambda5      1 / Lambda5  
+Lambda6      1 / Lambda6  
+Lambda7      1 / Lambda7  
+Lambda8      1 / Lambda8  
+
+
+Uniform Prior for Regression Coefficients
+ 
+Parameter    Prior
+
+Group        Constant
+
+
+                                                  Initial Values of the Chain
+ 
+Chain          Seed     Lambda1     Lambda2     Lambda3     Lambda4     Lambda5     Lambda6     Lambda7     Lambda8       Group
+
+    1             1    0.000953     0.00794      0.0156      0.0236      0.3669      0.0276      0.0262      0.0545     -0.6223
+
+
+                 Fit Statistics
+
+DIC (smaller is better)                  400.086
+pD (Effective Number of Parameters)        9.141
+
+The PHREG Procedure
+ 
+Bayesian Analysis
+
+                               Posterior Summaries
+ 
+                                      Standard               Percentiles
+Parameter           N        Mean    Deviation         25%         50%         75%
+
+Lambda1          1000    0.000943     0.000437    0.000629    0.000886     0.00118
+Lambda2          1000     0.00791      0.00374     0.00516     0.00732     0.00996
+Lambda3          1000      0.0153      0.00737      0.0101      0.0141      0.0192
+Lambda4          1000      0.0241       0.0116      0.0157      0.0221      0.0307
+Lambda5          1000      0.3694       0.1985      0.2213      0.3401      0.4744
+Lambda6          1000      0.0283       0.0152      0.0174      0.0257      0.0365
+Lambda7          1000      0.0272       0.0149      0.0165      0.0248      0.0346
+Lambda8          1000      0.0563       0.0328      0.0335      0.0499      0.0711
+Group            1000     -0.6381       0.3607     -0.8911     -0.6551     -0.3907
+
+
+                       Posterior Intervals
+ 
+Parameter    Alpha     Equal-Tail Interval        HPD Interval
+
+Lambda1      0.050    0.000289     0.00195    0.000182     0.00174
+Lambda2      0.050     0.00243      0.0168     0.00223      0.0156
+Lambda3      0.050     0.00467      0.0330     0.00359      0.0300
+Lambda4      0.050     0.00805      0.0537     0.00656      0.0467
+Lambda5      0.050      0.0854      0.8631      0.0519      0.7354
+Lambda6      0.050     0.00758      0.0651     0.00682      0.0592
+Lambda7      0.050     0.00711      0.0657     0.00498      0.0565
+Lambda8      0.050      0.0132      0.1439     0.00734      0.1242
+Group        0.050     -1.3236      0.0935     -1.3459      0.0339
+
+The PHREG Procedure
+ 
+Bayesian Analysis
+
+             Posterior Autocorrelations
+ 
+Parameter      Lag 1      Lag 5     Lag 10     Lag 50
+
+Lambda1       0.0936     0.0270    -0.0062    -0.0051
+Lambda2       0.0416    -0.0119    -0.0632     0.0069
+Lambda3       0.0973    -0.0449     0.0025     0.0059
+Lambda4       0.0984     0.0279    -0.0146     0.0401
+Lambda5       0.1140     0.0007     0.0051     0.0321
+Lambda6       0.1399     0.0038    -0.0214    -0.0057
+Lambda7       0.1341     0.0036     0.0078    -0.0038
+Lambda8       0.1835    -0.0601     0.0322     0.0668
+Group         0.5401     0.0263    -0.0713     0.0593
+
+
+       Geweke Diagnostics
+ 
+Parameter           z    Pr > |z|
+
+Lambda1        1.2999      0.1936
+Lambda2        0.5547      0.5791
+Lambda3        1.1822      0.2371
+Lambda4        1.5027      0.1329
+Lambda5        1.0855      0.2777
+Lambda6        1.9446      0.0518
+Lambda7        2.2163      0.0267
+Lambda8        0.4415      0.6589
+Group         -1.7481      0.0804
+
+
+                Effective Sample Sizes
+ 
+                         Autocorrelation
+Parameter         ESS               Time    Efficiency
+
+Lambda1         842.4             1.1871        0.8424
+Lambda2        1123.0             0.8904        1.1230
+Lambda3         703.8             1.4209        0.7038
+Lambda4         715.1             1.3984        0.7151
+Lambda5         739.2             1.3529        0.7392
+Lambda6         609.1             1.6417        0.6091
+Lambda7         699.3             1.4301        0.6993
+Lambda8         620.7             1.6110        0.6207
+Group           334.0             2.9939        0.3340
+
+The PHREG Procedure
+ 
+Bayesian Analysis
+
+                          Model Information
+
+Data Set                 WORK.RATS                                   
+Dependent Variable       Days             Days from Exposure to Death
+Censoring Variable       Status                                      
+Censoring Value(s)       0                                           
+Baseline Hazard          Cubic Spline                                
+Sampling Algorithm       Metropolis                                  
+Burn-In Size             200                                         
+MC Sample Size           1000                                        
+Thinning                 1                                           
+
+
+Number of Observations Read          40
+Number of Observations Used          40
+
+
+Summary of the Number of Event and Censored Values
+ 
+                                     Percent
+   Total       Event    Censored    Censored
+
+      40          36           4       10.00
+
+
+Cubic Spline Parameter Information
+ 
+Parameter        Knot
+
+Gamma1            142
+Gamma2            220
+Gamma3            323
+
+
+                 Maximum Likelihood Estimates
+ 
+                               Standard
+Parameter    DF    Estimate       Error    95% Confidence Limits
+
+Gamma1        1    -46.4434     12.0727    -70.1054    -22.7815
+Gamma2        1      8.6328      2.2795      4.1651     13.1004
+Gamma3        1      9.1720      5.9082     -2.4077     20.7518
+Group         1     -0.6331      0.3502     -1.3195      0.0533
+
+
+Uniform Prior for Spline Parameters
+ 
+Parameter    Prior
+
+Gamma1       Constant
+Gamma2       Constant
+Gamma3       Constant
+
+
+Uniform Prior for Regression Coefficients
+ 
+Parameter    Prior
+
+Group        Constant
+
+
+                    Initial Values of the Chain
+ 
+Chain          Seed      Gamma1      Gamma2      Gamma3       Group
+
+    1             1    -46.4434      8.6328      9.1720     -0.6331
+
+
+         Tuning History
+ 
+                     Acceptance
+Phase       Scale          Rate
+
+    1      2.3800        0.3020
+
+
+    Burn-In History
+ 
+            Acceptance
+   Scale          Rate
+
+  2.3800        0.2850
+
+
+   Sampling History
+ 
+            Acceptance
+   Scale          Rate
+
+  2.3800        0.3010
+
+
+                 Fit Statistics
+
+DIC (smaller is better)                  391.139
+pD (Effective Number of Parameters)        3.494
+
+The PHREG Procedure
+ 
+Bayesian Analysis
+
+                               Posterior Summaries
+ 
+                                      Standard               Percentiles
+Parameter           N        Mean    Deviation         25%         50%         75%
+
+Gamma1           1000    -47.3578      11.4893    -54.7979    -46.2171    -39.8255
+Gamma2           1000      8.7999       2.1671      7.3171      8.5869     10.2168
+Gamma3           1000      9.4308       5.5330      5.3293      9.3515     12.8236
+Group            1000     -0.7140       0.3434     -0.9608     -0.7171     -0.5027
+
+
+                       Posterior Intervals
+ 
+Parameter    Alpha     Equal-Tail Interval        HPD Interval
+
+Gamma1       0.050    -72.4952    -26.9968    -66.4563    -24.5439
+Gamma2       0.050      5.0101     13.5723      4.5174     12.4404
+Gamma3       0.050     -1.3348     21.8641     -1.7915     19.4425
+Group        0.050     -1.3914     -0.0207     -1.2914     0.00263
+
+The PHREG Procedure
+ 
+Bayesian Analysis
+
+             Posterior Autocorrelations
+ 
+Parameter      Lag 1      Lag 5     Lag 10     Lag 50
+
+Gamma1        0.8313     0.3729     0.1418    -0.0031
+Gamma2        0.8316     0.3725     0.1426    -0.0028
+Gamma3        0.8234     0.3395     0.1201     0.0602
+Group         0.8411     0.4587     0.2540     0.1036
+
+
+       Geweke Diagnostics
+ 
+Parameter           z    Pr > |z|
+
+Gamma1         0.3981      0.6906
+Gamma2        -0.3435      0.7312
+Gamma3        -0.4695      0.6387
+Group         -5.7011      <.0001
+
+
+                Effective Sample Sizes
+ 
+                         Autocorrelation
+Parameter         ESS               Time    Efficiency
+
+Gamma1           99.3            10.0677        0.0993
+Gamma2           99.4            10.0557        0.0994
+Gamma3          112.0             8.9276        0.1120
+Group            37.4            26.7222        0.0374

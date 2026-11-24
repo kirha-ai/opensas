@@ -1,0 +1,66 @@
+The SAS System
+
+6395       
+6396       /* STAT-NLMIXED-003: NLMIXED — MODEL
+6397        * Source: S154 / Chapter 89 / `MODEL Statement` (PDF p. 7122).
+6398        * Discriminates: Example 89.6: Simulated Nested Linear Random-Effects Model; explicit statements: MODEL
+6399        */
+6400       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+6400     ! validmemname=compatible locale=en_US;
+6401       %let syscc=0;
+6402       title; footnote;
+6403       ods _all_ close;
+6404       ods listing gpath="%sysfunc(pathname(work))";
+6405       ods graphics off;
+6406       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.NESTED (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+6406     !                                         quit;
+
+
+6407       ods path work.templat(update) sashelp.tmplmst(read);
+6408       
+6409       %let na = 100;
+6410       %let nb = 5;
+6411       %let nr = 2;
+6412       data nested;
+6413       do A = 1 to &na;
+6414       err1 = 3*rannor(339205);
+6415       do B = 1 to &nb;
+6416       err2 = 2*rannor(314159);
+6417       do rep = 1 to &nr;
+6418       err3 = 1*rannor(314159);
+6419       resp = 10 + err1 + err2 + err3;
+6420       output;
+6421       end;
+6422       end;
+6423       end;
+6424       run;
+
+NOTE: The data set WORK.NESTED has 1000 observations and 7 variables.
+
+6425       proc nlmixed data = nested;
+6426       bounds vara >=0, varb_a >=0;
+6427       mean = intercept + aeffect + beffect;
+6428       model resp ~ normal (mean, s2);
+6429       random aeffect ~ normal(0,vara) subject = A;
+6430       random beffect ~ normal(0,varb_a) subject = B(A);
+6431       run;
+
+NOTE: To assign starting values to parameters, use the PARMS statement. The default starting value of 1.0 is in effect for all parameters.
+NOTE: Convergence criterion (GCONV=1E-6) satisfied.
+NOTE: At least one element of the gradient is greater than 1e-3.
+NOTE: The PROCEDURE NLMIXED printed page 412.
+
+6432       
+6433       
+6434       
+6435       
+The SAS System
+
+6436       

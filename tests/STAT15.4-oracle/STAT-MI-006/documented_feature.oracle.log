@@ -1,0 +1,64 @@
+The SAS System
+
+2436       
+2437       /* STAT-MI-006: MI — Monotone and FCS Predictive Mean Matching Methods / Monotone and FCS Discriminant Function Methods / Monotone and FCS Logistic
+2437     !  Regression Methods
+2438        * Source: S154 / Chapter 82 / `Monotone and FCS Predictive Mean Matching Methods` (PDF pp. 6457–6458); S154 / Chapter 82 / `Monotone and FCS
+2438     ! Discriminant Function Methods` (PDF pp. 6458–6460); S154 / Chapter 82 / `Monotone and FCS Logistic Regression Methods` (PDF pp. 6460–6463).
+2439        * Discriminates: Example 82.4: Monotone Logistic Regression Method for CLASS Variables
+2440        */
+2441       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+2441     ! validmemname=compatible locale=en_US;
+2442       %let syscc=0;
+2443       title; footnote;
+2444       ods _all_ close;
+2445       ods listing gpath="%sysfunc(pathname(work))";
+2446       ods graphics off;
+2447       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.FISH1 (memtype=DATA).
+NOTE: Deleting WORK.OUTEX3 (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+2447     !                                         quit;
+
+
+2448       ods path work.templat(update) sashelp.tmplmst(read);
+2449       
+2450       data Fish2;
+2451       title 'Fish Measurement Data';
+2452       input Species $ Length Width @@;
+2453       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.FISH2 has 67 observations and 3 variables.
+
+2477       ;
+2478       run;
+2479       proc mi data=Fish2 seed=1305417 nimpute=15 out=outex4;
+2480       class Species;
+2481       monotone reg( Width/ details)
+2482       logistic( Species= Length Width Length*Width/ details);
+2483       var Length Width Species;
+2484       run;
+
+NOTE: The data set WORK.OUTEX4 has 1005 observations and 4 variables.
+NOTE: The PROCEDURE MI printed page 192.
+
+2485       proc print data=outex4(obs=10);
+2486       title 'First 10 Observations of the Imputed Data Set';
+2487       run;
+
+NOTE: There were 10 observations read from the data set WORK.OUTEX4.
+NOTE: The PROCEDURE PRINT printed page 193.
+
+2488       
+2489       
+2490       
+2491       
+The SAS System
+
+2492       

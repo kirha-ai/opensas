@@ -1,0 +1,58 @@
+The SAS System
+
+5657       
+5658       /* STAT-GLMSELECT-003: GLMSELECT — CLASS / EFFECT / MODEL
+5659        * Source: S154 / Chapter 56 / `CLASS Statement` (PDF pp. 4332–4336); S154 / Chapter 56 / `EFFECT Statement` (PDF pp. 4336–4337); S154 / Chapter
+5659     ! 56 / `MODEL Statement` (PDF pp. 4337–4348).
+5660        * Discriminates: Getting Started: GLMSELECT Procedure; explicit statements: CLASS, MODEL
+5661        */
+5662       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+5662     ! validmemname=compatible locale=en_US;
+5663       %let syscc=0;
+5664       title; footnote;
+5665       ods _all_ close;
+5666       ods listing gpath="%sysfunc(pathname(work))";
+5667       ods graphics off;
+5668       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+5668     !                                         quit;
+
+
+5669       ods path work.templat(update) sashelp.tmplmst(read);
+5670       
+5671       proc contents varnum data=sashelp.baseball;
+5672       ods select position;
+5673       run;
+
+NOTE: The PROCEDURE CONTENTS printed page 306.
+
+5674       ods graphics on;
+5675       proc glmselect data=sashelp.baseball plots=all seed=314159;
+5676       class league division;
+5677       model logSalary = nAtBat nHits nHome nRuns nRBI nBB
+5678       yrMajor crAtBat crHits crHome crRuns crRbi
+5679       crBB league division nOuts nAssts nError
+5680       / details=all stats=all;
+5681       run;
+
+NOTE: There were 322 observations read from the data set SASHELP.BASEBALL.
+NOTE: The PROCEDURE GLMSELECT printed pages 307-315.
+
+5682       ods graphics off;
+5683       run;
+5684       quit;
+5685       
+5686       
+5687       
+5688       
+The SAS System
+
+5689       

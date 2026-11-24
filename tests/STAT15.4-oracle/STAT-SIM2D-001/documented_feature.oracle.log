@@ -1,0 +1,52 @@
+The SAS System
+
+16534      
+16535      /* STAT-SIM2D-001: SIM2D — Data input, variable roles, and basic options
+16536       * Source: S154 / Chapter 112 / `PROC SIM2D Statement` (PDF pp. 9316–9322); S154 / Chapter 112 / `BY Statement` (PDF p. 9322); S154 / Chapter 112 /
+16536    !  `ID Statement` (PDF p. 9326).
+16537       * Discriminates: Verified default procedure context; explicit statements: BY
+16538       */
+16539      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+16539    ! validmemname=compatible locale=en_US;
+16540      %let syscc=0;
+16541      title; footnote;
+16542      ods _all_ close;
+16543      ods listing gpath="%sysfunc(pathname(work))";
+16544      ods graphics off;
+16545      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.BOUNDARIES (memtype=DATA).
+NOTE: Deleting WORK.ESTIMATES (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+16545    !                                         quit;
+
+
+16546      ods path work.templat(update) sashelp.tmplmst(read);
+16547      
+16548      proc sim2d data=sashelp.thick outsim=sim;
+16549      coordinates xc=East yc=North;
+16550      simulate var=Thick numreal=2 seed=79931 scale=7.4599 range=30.1111 nugget=1e-8 form=gauss;
+16551      mean 40.1173;
+16552      grid x=0 to 20 by 10 y=0 to 20 by 10;
+16553      run;
+
+NOTE: The data set WORK.SIM has 18 observations and 6 variables.
+NOTE: The PROCEDURE SIM2D printed page 1181.
+
+16554      proc print data=sim noobs;
+16555      run;
+
+NOTE: There were 18 observations read from the data set WORK.SIM.
+NOTE: The PROCEDURE PRINT printed page 1182.
+
+16556      
+16557      
+16558      
+16559      
+The SAS System
+
+16560      

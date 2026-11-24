@@ -1,0 +1,106 @@
+The SAS System
+
+1014       
+1015       /* STAT-PHREG-004: PHREG — CLASS / EFFECT / MODEL
+1016        * Source: S154 / Chapter 92 / `CLASS Statement` (PDF pp. 7355–7359); S154 / Chapter 92 / `EFFECT Statement` (PDF p. 7362); S154 / Chapter 92 /
+1016     ! `MODEL Statement` (PDF pp. 7370–7380).
+1017        * Discriminates: Example 92.15: Analysis of Competing-Risks Data; explicit statements: CLASS, MODEL
+1018        */
+1019       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+1019     ! validmemname=compatible locale=en_US;
+1020       %let syscc=0;
+1021       title; footnote;
+1022       ods _all_ close;
+1023       ods listing gpath="%sysfunc(pathname(work))";
+1024       ods graphics off;
+1025       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.HEART (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+1025     !                                         quit;
+
+
+1026       ods path work.templat(update) sashelp.tmplmst(read);
+1027       
+1028       proc format;
+1028     !              value DiseaseGroup 1='ALL' 2='AML-Low Risk' 3='AML-High Risk';
+NOTE: Format DISEASEGROUP has been output.
+1028     !                                                                             run;
+
+
+1029       data Bmt;
+1030       input Disease T Status @@;
+1031       label T='Disease-Free Survival in Days';
+1032       format Disease DiseaseGroup.;
+1033       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.BMT has 137 observations and 3 variables.
+
+1062       ;
+1063       data Risk;
+1064       Disease=1;
+1065       output;
+1066       Disease=2;
+1067       output;
+1068       Disease=3;
+1069       output;
+1070       format Disease DiseaseGroup.;
+1071       run;
+
+NOTE: The data set WORK.RISK has 3 observations and 1 variables.
+
+1072       ods graphics on;
+1073       proc phreg data=Bmt plots(overlay=stratum)=cif;
+1074       class Disease (order=internal ref=first);
+1075       model T*Status(0)=Disease / eventcode=1;
+1076       Hazardratio 'Pairwise' Disease / diff=pairwise;
+1077       baseline covariates=Risk out=out1 cif=_all_ / seed=191;
+1078       run;
+
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The data set WORK.OUT1 has 126 observations and 6 variables.
+NOTE: The PROCEDURE PHREG printed page 34.
+
+1079       proc print data=Out1(where=(Disease=1));
+1080       title 'CIFs Estimates and 95% Confidence limits for the ALL Group';
+1081       run;
+
+NOTE: There were 42 observations read from the data set WORK.OUT1.
+      WHERE Disease=1;
+NOTE: The PROCEDURE PRINT printed page 35.
+
+1082       ods graphics on;
+1083       title 'Cause-specific Analysis';
+1084       proc phreg data=Bmt plots(overlay)=cif;
+1085       class Disease (order=internal ref=first);
+1086       model T*Status(0)=Disease / eventcode(cox)=1;
+1087       baseline covariates=Risk out=out2 cif=_all_;
+1088       run;
+
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The above message was for Status=1.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The above message was for Status=2.
+NOTE: The data set WORK.OUT2 has 126 observations and 6 variables.
+NOTE: The PROCEDURE PHREG printed page 36.
+
+1089       proc print data=Out2(where=(Disease=1));
+1090       title 'CIF Estimates and 95% Confidence limits for the ALL Group';
+1091       run;
+
+NOTE: There were 42 observations read from the data set WORK.OUT2.
+      WHERE Disease=1;
+NOTE: The PROCEDURE PRINT printed page 37.
+
+1092       
+1093       
+1094       
+1095       
+The SAS System
+
+1096       

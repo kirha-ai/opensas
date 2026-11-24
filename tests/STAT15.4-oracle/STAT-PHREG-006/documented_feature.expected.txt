@@ -1,0 +1,305 @@
+
+The PHREG Procedure
+
+                         Model Information
+
+Data Set                 WORK.BMT                                  
+Dependent Variable       T            Disease-Free Survival in Days
+Status Variable          Status                                    
+Event of Interest        1                                         
+Competing Event          2                                         
+Censored Value           0                                         
+
+
+Number of Observations Read         137
+Number of Observations Used         137
+
+
+        Class Level Information
+ 
+                                Design
+Class       Value             Variables
+
+Disease     ALL                0      0
+            AML-Low Risk       1      0
+            AML-High Risk      0      1
+
+
+         Summary of Failure Outcomes
+ 
+            Event of    Competing
+   Total    Interest        Event    Censored
+
+     137          42           41          54
+
+
+                       Convergence Status
+
+         Convergence criterion (GCONV=1E-8) satisfied.          
+
+
+         Model Fit Statistics
+ 
+                 Without           With
+Criterion     Covariates     Covariates
+
+-2 LOG L         398.600        386.457
+AIC              398.600        390.457
+SBC              398.600        393.932
+
+
+        Testing Global Null Hypothesis: BETA=0
+ 
+Test                 Chi-Square       DF     Pr > ChiSq
+
+Wald                    11.6406        2         0.0030
+
+
+               Type 3 Tests
+ 
+                         Wald
+Effect       DF    Chi-Square    Pr > ChiSq
+
+Disease       2       11.6406        0.0030
+
+
+                                         Analysis of Maximum Likelihood Estimates
+ 
+                                  Parameter      Standard                                  Hazard
+Parameter                  DF      Estimate         Error    Chi-Square    Pr > ChiSq       Ratio    Label
+
+Disease   AML-Low Risk      1      -0.80340       0.42846        3.5160        0.0608       0.448    Disease AML-Low Risk 
+Disease   AML-High Risk     1       0.50849       0.36618        1.9283        0.1649       1.663    Disease AML-High Risk
+
+
+                   Pairwise: Hazard Ratios for Disease
+ 
+                                             Point     95% Wald Confidence
+Description                               Estimate           Limits
+
+Disease ALL vs AML-Low Risk                  2.233       0.964       5.171
+Disease AML-Low Risk vs ALL                  0.448       0.193       1.037
+Disease ALL vs AML-High Risk                 0.601       0.293       1.233
+Disease AML-High Risk vs ALL                 1.663       0.811       3.408
+Disease AML-Low Risk vs AML-High Risk        0.269       0.127       0.573
+Disease AML-High Risk vs AML-Low Risk        3.713       1.745       7.900
+
+CIFs Estimates and 95% Confidence limits for the ALL Group
+
+                                     StdErr      Lower      Upper
+Obs    Disease      T      CIF         CIF        CIF        CIF
+
+  1      ALL        0    0.00000     .           .          .     
+  2      ALL       32    0.00727    0.007237    0.00103    0.05114
+  3      ALL       47    0.02183    0.014323    0.00604    0.07898
+  4      ALL       48    0.02922    0.017822    0.00884    0.09657
+  5      ALL       55    0.03663    0.019106    0.01318    0.10181
+  6      ALL       64    0.04405    0.019259    0.01870    0.10378
+  7      ALL       74    0.05151    0.019951    0.02411    0.11005
+  8      ALL       76    0.05897    0.025533    0.02524    0.13778
+  9      ALL       84    0.06646    0.025378    0.03145    0.14048
+ 10      ALL       93    0.07400    0.025092    0.03807    0.14383
+ 11      ALL      100    0.08158    0.030460    0.03924    0.16959
+ 12      ALL      104    0.08920    0.029038    0.04712    0.16883
+ 13      ALL      109    0.09682    0.033564    0.04907    0.19100
+ 14      ALL      110    0.10443    0.035734    0.05341    0.20422
+ 15      ALL      113    0.11205    0.041176    0.05453    0.23026
+ 16      ALL      115    0.11972    0.037619    0.06467    0.22163
+ 17      ALL      120    0.12742    0.036521    0.07266    0.22347
+ 18      ALL      122    0.13518    0.042929    0.07254    0.25190
+ 19      ALL      129    0.14293    0.041747    0.08063    0.25336
+ 20      ALL      157    0.15068    0.046376    0.08243    0.27545
+ 21      ALL      192    0.15848    0.051406    0.08392    0.29928
+ 22      ALL      211    0.16628    0.058106    0.08383    0.32983
+ 23      ALL      219    0.17404    0.056257    0.09236    0.32794
+ 24      ALL      230    0.18185    0.053563    0.10210    0.32392
+ 25      ALL      242    0.18967    0.065355    0.09653    0.37265
+ 26      ALL      248    0.19753    0.057829    0.11128    0.35062
+ 27      ALL      268    0.20535    0.054765    0.12176    0.34634
+ 28      ALL      272    0.21322    0.058189    0.12489    0.36402
+ 29      ALL      273    0.22105    0.061340    0.12832    0.38080
+ 30      ALL      381    0.22893    0.061228    0.13554    0.38669
+ 31      ALL      383    0.23677    0.062212    0.14147    0.39626
+ 32      ALL      390    0.24461    0.063708    0.14682    0.40754
+ 33      ALL      421    0.25250    0.070833    0.14571    0.43757
+ 34      ALL      422    0.26035    0.063694    0.16118    0.42053
+ 35      ALL      456    0.26825    0.067518    0.16379    0.43932
+ 36      ALL      467    0.27621    0.073253    0.16424    0.46450
+ 37      ALL      486    0.28422    0.066216    0.18004    0.44871
+ 38      ALL      606    0.29233    0.067521    0.18590    0.45971
+ 39      ALL      609    0.30039    0.079301    0.17905    0.50396
+ 40      ALL      625    0.30845    0.067182    0.20128    0.47270
+ 41      ALL      662    0.31657    0.070668    0.20439    0.49033
+ 42      ALL      748    0.32469    0.082845    0.19692    0.53537
+
+Cause-specific Analysis
+
+The PHREG Procedure
+
+                         Model Information
+
+Data Set                 WORK.BMT                                  
+Dependent Variable       T            Disease-Free Survival in Days
+Status Variable          Status                                    
+Event of Interest        1                                         
+Competing Event          2                                         
+Censoring Value(s)       0                                         
+Ties Handling            BRESLOW                                   
+
+
+Number of Observations Read         137
+Number of Observations Used         137
+
+
+        Class Level Information
+ 
+                                Design
+Class       Value             Variables
+
+Disease     ALL                0      0
+            AML-Low Risk       1      0
+            AML-High Risk      0      1
+
+
+         Summary of Failure Outcomes
+ 
+            Event of    Competing
+   Total    Interest        Event    Censored
+
+     137          42           41          54
+
+
+Status=1
+
+
+                       Convergence Status
+
+         Convergence criterion (GCONV=1E-8) satisfied.          
+
+
+         Model Fit Statistics
+ 
+                 Without           With
+Criterion     Covariates     Covariates
+
+-2 LOG L         380.487        364.610
+AIC              380.487        368.610
+SBC              380.487        372.086
+
+
+        Testing Global Null Hypothesis: BETA=0
+ 
+Test                 Chi-Square       DF     Pr > ChiSq
+
+Likelihood Ratio        15.8766        2         0.0004
+Score                   16.4771        2         0.0003
+Wald                    14.3130        2         0.0008
+
+
+               Type 3 Tests
+ 
+                         Wald
+Effect       DF    Chi-Square    Pr > ChiSq
+
+Disease       2       14.3130        0.0008
+
+
+                                         Analysis of Maximum Likelihood Estimates
+ 
+                                  Parameter      Standard                                  Hazard
+Parameter                  DF      Estimate         Error    Chi-Square    Pr > ChiSq       Ratio    Label
+
+Disease   AML-Low Risk      1      -0.89403       0.44222        4.0872        0.0432       0.409    Disease AML-Low Risk 
+Disease   AML-High Risk     1       0.61009       0.36213        2.8384        0.0920       1.841    Disease AML-High Risk
+
+
+Status=2
+
+
+                       Convergence Status
+
+         Convergence criterion (GCONV=1E-8) satisfied.          
+
+
+         Model Fit Statistics
+ 
+                 Without           With
+Criterion     Covariates     Covariates
+
+-2 LOG L         366.232        364.723
+AIC              366.232        368.723
+SBC              366.232        372.151
+
+
+        Testing Global Null Hypothesis: BETA=0
+ 
+Test                 Chi-Square       DF     Pr > ChiSq
+
+Likelihood Ratio         1.5085        2         0.4704
+Score                    1.5045        2         0.4713
+Wald                     1.4860        2         0.4757
+
+
+               Type 3 Tests
+ 
+                         Wald
+Effect       DF    Chi-Square    Pr > ChiSq
+
+Disease       2        1.4860        0.4757
+
+
+                                         Analysis of Maximum Likelihood Estimates
+ 
+                                  Parameter      Standard                                  Hazard
+Parameter                  DF      Estimate         Error    Chi-Square    Pr > ChiSq       Ratio    Label
+
+Disease   AML-Low Risk      1      -0.33593       0.38508        0.7610        0.3830       0.715    Disease AML-Low Risk 
+Disease   AML-High Risk     1       0.09667       0.40220        0.0578        0.8101       1.101    Disease AML-High Risk
+
+CIF Estimates and 95% Confidence limits for the ALL Group
+
+                                     StdErr      Lower      Upper
+Obs    Disease      T      CIF         CIF        CIF        CIF
+
+  1      ALL        0    0.00000     .           .          .     
+  2      ALL       32    0.00703    0.007196    0.00094    0.05230
+  3      ALL       47    0.02109    0.013077    0.00626    0.07110
+  4      ALL       48    0.02821    0.015490    0.00962    0.08276
+  5      ALL       55    0.03530    0.017695    0.01322    0.09429
+  6      ALL       64    0.04243    0.019793    0.01701    0.10587
+  7      ALL       74    0.04961    0.021812    0.02096    0.11744
+  8      ALL       76    0.05683    0.023773    0.02503    0.12902
+  9      ALL       84    0.06407    0.025660    0.02922    0.14046
+ 10      ALL       93    0.07135    0.027513    0.03351    0.15192
+ 11      ALL      100    0.07868    0.029329    0.03789    0.16337
+ 12      ALL      104    0.08607    0.031112    0.04238    0.17480
+ 13      ALL      109    0.09346    0.032867    0.04691    0.18620
+ 14      ALL      110    0.10085    0.034598    0.05149    0.19756
+ 15      ALL      113    0.10825    0.036306    0.05609    0.20889
+ 16      ALL      115    0.11570    0.037994    0.06078    0.22022
+ 17      ALL      120    0.12321    0.039660    0.06556    0.23155
+ 18      ALL      122    0.13079    0.041305    0.07043    0.24288
+ 19      ALL      129    0.13836    0.042948    0.07530    0.25423
+ 20      ALL      157    0.14594    0.044576    0.08020    0.26556
+ 21      ALL      192    0.15385    0.046239    0.08536    0.27728
+ 22      ALL      211    0.16176    0.047906    0.09053    0.28904
+ 23      ALL      219    0.16962    0.049524    0.09571    0.30061
+ 24      ALL      230    0.17752    0.051140    0.10093    0.31222
+ 25      ALL      242    0.18541    0.052744    0.10617    0.32380
+ 26      ALL      248    0.19339    0.054330    0.11151    0.33540
+ 27      ALL      268    0.20131    0.055867    0.11686    0.34681
+ 28      ALL      272    0.20932    0.057383    0.12231    0.35823
+ 29      ALL      273    0.21727    0.058852    0.12777    0.36945
+ 30      ALL      381    0.22542    0.060350    0.13339    0.38096
+ 31      ALL      383    0.23351    0.061798    0.13900    0.39226
+ 32      ALL      390    0.24159    0.063238    0.14464    0.40354
+ 33      ALL      421    0.24964    0.064650    0.15027    0.41471
+ 34      ALL      422    0.25760    0.066011    0.15589    0.42567
+ 35      ALL      456    0.26568    0.067348    0.16165    0.43665
+ 36      ALL      467    0.27387    0.068691    0.16752    0.44776
+ 37      ALL      486    0.28211    0.069989    0.17348    0.45877
+ 38      ALL      606    0.29042    0.071368    0.17941    0.47011
+ 39      ALL      609    0.29863    0.072688    0.18533    0.48119
+ 40      ALL      625    0.30685    0.074004    0.19126    0.49228
+ 41      ALL      662    0.31511    0.075276    0.19729    0.50327
+ 42      ALL      748    0.32342    0.076548    0.20338    0.51432

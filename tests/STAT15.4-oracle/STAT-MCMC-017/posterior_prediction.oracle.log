@@ -1,0 +1,60 @@
+The SAS System
+
+1526       
+1527       /* STAT-MCMC-017: MCMC — PREDDIST
+1528        * Source: S154 / Chapter 80 / `PREDDIST Statement` (PDF pp. 6133–6134).
+1529        * Discriminates: Explicit PREDDIST and printed posterior predictive draws.
+1530        */
+1531       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+1531     ! validmemname=compatible locale=en_US;
+1532       %let syscc=0;
+1533       title; footnote;
+1534       ods _all_ close;
+1535       ods listing gpath="%sysfunc(pathname(work))";
+1536       ods graphics off;
+1537       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.EXPOSED (memtype=DATA).
+NOTE: Deleting WORK.FORMATS (memtype=CATALOG).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+1537     !                                         quit;
+
+
+1538       ods path work.templat(update) sashelp.tmplmst(read);
+1539       
+1540       data sample;
+1541        input x y group $ freq weight;
+1542        datalines;
+
+NOTE: The data set WORK.SAMPLE has 12 observations and 5 variables.
+
+1555       ;
+1556       run;
+1557       proc mcmc data=sample seed=271828 nbi=100 nmc=1000 diag=none; parms mu 90; prior mu ~ normal(0,var=10000); model x ~ normal(mu,var=100); preddist
+1557     ! outpred=posterior_prediction nsim=100;
+1558       run;
+
+NOTE: Generating the burn-in samples.
+NOTE: Beginning sample generation.
+NOTE: Generating predictive samples.
+NOTE: The data set WORK.POSTERIOR_PREDICTION has 100 observations and 12 variables.
+NOTE: The PROCEDURE MCMC printed pages 125-126.
+
+1559       
+1560       proc print data=posterior_prediction(obs=5); run;
+
+NOTE: There were 5 observations read from the data set WORK.POSTERIOR_PREDICTION.
+NOTE: The PROCEDURE PRINT printed page 127.
+
+1561       
+1562       
+1563       
+1564       
+The SAS System
+
+1565       

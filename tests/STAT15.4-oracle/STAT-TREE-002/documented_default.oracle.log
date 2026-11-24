@@ -1,0 +1,51 @@
+The SAS System
+
+28462      
+28463      /* STAT-TREE-002: TREE — Hierarchical tree input, cutting, and cluster membership
+28464       * Source: S154 / Chapter 127 / `Getting Started: TREE Procedure` (PDF pp. 10570–10575); S154 / Chapter 127 / `Overview: TREE Procedure` (PDF p.
+28464    ! 10570).
+28465       * Discriminates: Documented default analysis with explicit complete public or synthetic inputs
+28466       */
+28467      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+28467    ! validmemname=compatible locale=en_US;
+28468      %let syscc=0;
+28469      title; footnote;
+28470      ods _all_ close;
+28471      ods listing gpath="%sysfunc(pathname(work))";
+28472      ods graphics off;
+28473      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.MEMBERS (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TREE (memtype=DATA).
+NOTE: Deleting WORK._ORACLE_INPUT (memtype=DATA).
+28473    !                                         quit;
+
+
+28474      ods path work.templat(update) sashelp.tmplmst(read);
+28475      
+28476      proc cluster data=sashelp.iris method=ward outtree=tree noprint; var SepalLength SepalWidth PetalLength PetalWidth; run;
+
+WARNING: Ties for minimum distance between clusters have been detected at 48 level(s) in the cluster history.
+NOTE: The data set WORK.TREE has 299 observations and 20 variables.
+
+28477      proc tree data=tree nclusters=3 out=members noprint; run;
+
+NOTE: The data set WORK.MEMBERS has 150 observations and 3 variables.
+
+28478      proc print data=members(obs=12) noobs; run;
+
+NOTE: There were 12 observations read from the data set WORK.MEMBERS.
+NOTE: The PROCEDURE PRINT printed page 1761.
+
+28479      
+28480      
+28481      
+28482      
+The SAS System
+
+28483      

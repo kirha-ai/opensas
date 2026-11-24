@@ -1,0 +1,105 @@
+The SAS System
+
+21953      
+21954      /* STAT-SURVEYMEANS-005: SURVEYMEANS — Mean / Variance and Standard Error of the Mean / t Test for the Mean
+21955       * Source: S154 / Chapter 121 / `Mean` (PDF pp. 9938–9939); S154 / Chapter 121 / `Variance and Standard Error of the Mean` (PDF pp. 9939–9940);
+21955    ! S154 / Chapter 121 / `t Test for the Mean` (PDF p. 9940).
+21956       * Discriminates: Getting Started: SURVEYMEANS Procedure
+21957       */
+21958      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+21958    ! validmemname=compatible locale=en_US;
+21959      %let syscc=0;
+21960      title; footnote;
+21961      ods _all_ close;
+21962      ods listing gpath="%sysfunc(pathname(work))";
+21963      ods graphics off;
+21964      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.ICECREAMDATADOMAIN (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.STUDENTTOTALS (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+21964    !                                         quit;
+
+
+21965      ods path work.templat(update) sashelp.tmplmst(read);
+21966      
+21967      data IceCream;
+21968      input Grade Spending @@;
+21969      if (Spending < 10) then Group='less';
+21970      else Group='more';
+21971      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.ICECREAM has 40 observations and 3 variables.
+
+21976      ;
+21977      ods graphics on;
+21978      title1 'Analysis of Ice Cream Spending';
+21979      title2 'Simple Random Sample Design';
+21980      proc surveymeans data=IceCream total=4000;
+21981      var Spending Group;
+21982      run;
+
+NOTE: The PROCEDURE SURVEYMEANS printed page 1446.
+
+21983      data StudentTotals;
+21984      input Grade _total_;
+21985      datalines;
+
+NOTE: The data set WORK.STUDENTTOTALS has 3 observations and 2 variables.
+
+21989      ;
+21990      data IceCream;
+21991      set IceCream;
+21992      if Grade=7 then Prob=20/1824;
+21993      if Grade=8 then Prob=9/1025;
+21994      if Grade=9 then Prob=11/1151;
+21995      Weight=1/Prob;
+21996      run;
+
+NOTE: There were 40 observations read from the data set WORK.ICECREAM.
+NOTE: The data set WORK.ICECREAM has 40 observations and 5 variables.
+
+21997      title1 'Analysis of Ice Cream Spending';
+21998      title2 'Stratified Sample Design';
+21999      proc surveymeans data=IceCream total=StudentTotals;
+22000      stratum Grade / list;
+22001      var Spending Group;
+22002      weight Weight;
+22003      run;
+
+NOTE: The PROCEDURE SURVEYMEANS printed page 1447.
+
+22004      title1 'Analysis of Ice Cream Spending';
+22005      title2 'Stratified Sample Design';
+22006      proc surveymeans data=IceCream total=StudentTotals;
+22007      stratum Grade / list;
+22008      var Spending Group;
+22009      weight Weight;
+22010      ods output Statistics=MyStat;
+22011      run;
+
+NOTE: The data set WORK.MYSTAT has 3 observations and 7 variables.
+NOTE: The PROCEDURE SURVEYMEANS printed page 1448.
+
+22012      ods output Statistics=MyStat;
+22013      proc print data=MyStat;
+22014      run;
+
+WARNING: Output 'Statistics' was not created.  Make sure that the output object name, label, or path is spelled correctly.  Also, verify that the appropriate 
+         procedure options are used to produce the requested output object.  For example, verify that the NOPRINT option is not used.
+NOTE: There were 3 observations read from the data set WORK.MYSTAT.
+NOTE: The PROCEDURE PRINT printed page 1449.
+
+22015      
+22016      
+22017      
+22018      
+The SAS System
+
+22019      

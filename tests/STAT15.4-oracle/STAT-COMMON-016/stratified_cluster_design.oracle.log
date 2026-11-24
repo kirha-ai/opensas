@@ -1,0 +1,47 @@
+The SAS System
+
+624        
+625        /* STAT-COMMON-016: Complex survey design and variance interfaces
+626         * Source: S154 / Chapter 15 / `Survey Design Specification` (PDF pp. 271–273); S154 / Chapter 15 / `Variance Estimation` (PDF pp. 273–274).
+627         * Discriminates: Stratum and PSU identities, sampling weights and Taylor standard errors
+628         */
+629        options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+629      ! validmemname=compatible locale=en_US;
+630        %let syscc=0;
+631        title; footnote;
+632        ods _all_ close;
+633        ods listing gpath="%sysfunc(pathname(work))";
+634        ods graphics off;
+635        proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SURVIVAL (memtype=DATA).
+635      !                                         quit;
+
+
+636        ods path work.templat(update) sashelp.tmplmst(read);
+637        
+638        data sample;
+639         input x z y group $ weight freq;
+640         datalines;
+
+NOTE: The data set WORK.SAMPLE has 12 observations and 6 variables.
+
+653        ;
+654        run;
+655        data survey; set sample; stratum=1+(x>6); psu=ceil(x/2); sampling_weight=1+mod(x,3); run;
+
+NOTE: There were 12 observations read from the data set WORK.SAMPLE.
+NOTE: The data set WORK.SURVEY has 12 observations and 9 variables.
+
+656        proc surveymeans data=survey mean stderr clm; strata stratum; cluster psu; weight sampling_weight; var y; run;
+
+NOTE: The PROCEDURE SURVEYMEANS printed page 36.
+
+657        
+658        
+659        
+660        
+The SAS System
+
+661        

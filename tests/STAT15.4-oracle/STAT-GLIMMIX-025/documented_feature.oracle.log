@@ -1,0 +1,165 @@
+The SAS System
+
+25020      
+25021      /* STAT-GLIMMIX-025: GLIMMIX — Default Output / ODS Table Names
+25022       * Source: S154 / Chapter 52 / `Default Output` (PDF pp. 3887–3891); S154 / Chapter 52 / `ODS Table Names` (PDF pp. 3893–3895).
+25023       * Discriminates: Getting Started: GLIMMIX Procedure
+25024       */
+25025      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+25025    ! validmemname=compatible locale=en_US;
+25026      %let syscc=0;
+25027      title; footnote;
+25028      ods _all_ close;
+25029      ods listing gpath="%sysfunc(pathname(work))";
+25030      ods graphics off;
+25031      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.FERRITECORES (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+25031    !                                         quit;
+
+
+25032      ods path work.templat(update) sashelp.tmplmst(read);
+25033      
+25034      ods trace on;
+25035      data multicenter;
+25036      input center group$ n sideeffect;
+25037      datalines;
+
+NOTE: The data set WORK.MULTICENTER has 30 observations and 4 variables.
+
+25068      ;
+25069      proc glimmix data=multicenter;
+25070      class center group;
+25071      model sideeffect/n = group / solution;
+25072      random intercept / subject=center;
+25073      run;
+
+
+
+
+Output Added:
+-------------
+Name:       ModelInfo
+Label:      Model Information
+Template:   Stat.Glimmix.ModelInfo
+Path:       Glimmix.ModelInfo
+-------------
+
+Output Added:
+-------------
+Name:       ClassLevels
+Label:      Class Level Information
+Template:   Stat.Glimmix.ClassLevels
+Path:       Glimmix.ClassLevels
+-------------
+
+Output Added:
+-------------
+Name:       NObs
+Label:      Number of Observations
+Template:   Stat.Glimmix.NObs
+Path:       Glimmix.NObs
+-------------
+
+Output Added:
+-------------
+Name:       Dimensions
+Label:      Dimensions
+Template:   Stat.Glimmix.Dimensions
+Path:       Glimmix.Dimensions
+-------------
+
+Output Added:
+-------------
+Name:       OptInfo
+Label:      Optimization Information
+Template:   Stat.Glimmix.OptInfo
+Path:       Glimmix.OptInfo
+-------------
+
+Output Added:
+-------------
+Name:       IterHistory
+Label:      Iteration History
+Template:   Stat.Glimmix.IterHistory
+Path:       Glimmix.IterHistory
+-------------
+
+Output Added:
+-------------
+Name:       ConvergenceStatus
+Label:      Convergence Status
+Template:   Stat.Glimmix.ConvergenceStatus
+Path:       Glimmix.ConvergenceStatus
+-------------
+NOTE: Convergence criterion (PCONV=1.11022E-8) satisfied.
+
+Output Added:
+-------------
+Name:       FitStatistics
+Label:      Fit Statistics
+Template:   Stat.Glimmix.FitStatistics
+Path:       Glimmix.FitStatistics
+-------------
+
+Output Added:
+-------------
+Name:       CovParms
+Label:      Covariance Parameter Estimates
+Template:   Stat.Glimmix.CovParms
+Path:       Glimmix.CovParms
+-------------
+
+Output Added:
+-------------
+Name:       ParameterEstimates
+Label:      Solutions for Fixed Effects
+Template:   Stat.Glimmix.ParameterEstimates
+Path:       Glimmix.ParameterEstimates
+-------------
+
+Output Added:
+-------------
+Name:       Tests3
+Label:      Type III Tests of Fixed Effects
+Template:   Stat.Glimmix.Tests3
+Path:       Glimmix.Tests3
+-------------
+NOTE: The PROCEDURE GLIMMIX printed page 2445.
+
+25074      ods select lsmeans;
+25075      proc glimmix data=multicenter;
+25076      class center group;
+25077      model sideeffect/n = group / solution;
+25078      random intercept / subject=center;
+25079      lsmeans group / cl ilink;
+25080      run;
+
+
+
+NOTE: Convergence criterion (PCONV=1.11022E-8) satisfied.
+
+Output Added:
+-------------
+Name:       LSMeans
+Label:      group LS-Means
+Template:   Stat.Glimmix.LSMeans
+Path:       Glimmix.LSMeans.LSMeans
+-------------
+NOTE: The PROCEDURE GLIMMIX printed page 2446.
+
+25081      ods trace off;
+25082      
+25083      
+25084      
+25085      
+The SAS System
+
+25086      

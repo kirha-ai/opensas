@@ -1,0 +1,147 @@
+The SAS System
+
+16152      
+16153      /* STAT-SEQDESIGN-013: SEQDESIGN — Graphics Output / ODS Graphics
+16154       * Source: S154 / Chapter 110 / `Graphics Output` (PDF pp. 9027–9029); S154 / Chapter 110 / `ODS Graphics` (PDF p. 9029).
+16155       * Discriminates: Example 110.4: Generating Graphics Display for Sequential Designs
+16156       */
+16157      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+16157    ! validmemname=compatible locale=en_US;
+16158      %let syscc=0;
+16159      title; footnote;
+16160      ods _all_ close;
+16161      ods listing gpath="%sysfunc(pathname(work))";
+16162      ods graphics off;
+16163      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.BND_LDL (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+16163    !                                         quit;
+
+
+16164      ods path work.templat(update) sashelp.tmplmst(read);
+16165      
+16166      ods graphics on;
+16167      ods trace on;
+16168      ods trace on;
+16169      ods graphics on;
+16170      proc seqdesign altref=0.4
+16171      plots=all
+16172      ;
+16173      TwoSidedPocock: design nstages=4 method=poc;
+16174      TwoSidedOBrienFleming: design nstages=4 method=obf;
+16175      run;
+
+
+Output Added:
+-------------
+Name:       Design
+Label:      Design Information
+Template:   Stat.SeqDesign.Design
+Path:       Seqdesign.TwoSidedPocock.Design
+-------------
+
+Output Added:
+-------------
+Name:       Method
+Label:      Method Information
+Template:   Stat.SeqDesign.Method
+Path:       Seqdesign.TwoSidedPocock.Method
+-------------
+
+Output Added:
+-------------
+Name:       Boundary
+Label:      Boundary Information
+Template:   Stat.SeqDesign.Boundary
+Path:       Seqdesign.TwoSidedPocock.Boundary
+-------------
+
+Output Added:
+-------------
+Name:       BoundaryPlot
+Label:      Boundary Plot
+Template:   Stat.SeqDesign.Graphics.BoundaryPlot
+Path:       Seqdesign.TwoSidedPocock.BoundaryPlot
+-------------
+
+Output Added:
+-------------
+Name:       Design
+Label:      Design Information
+Template:   Stat.SeqDesign.Design
+Path:       Seqdesign.TwoSidedOBrienFleming.Design
+-------------
+
+Output Added:
+-------------
+Name:       Method
+Label:      Method Information
+Template:   Stat.SeqDesign.Method
+Path:       Seqdesign.TwoSidedOBrienFleming.Method
+-------------
+
+Output Added:
+-------------
+Name:       Boundary
+Label:      Boundary Information
+Template:   Stat.SeqDesign.Boundary
+Path:       Seqdesign.TwoSidedOBrienFleming.Boundary
+-------------
+
+Output Added:
+-------------
+Name:       BoundaryPlot
+Label:      Boundary Plot
+Template:   Stat.SeqDesign.Graphics.BoundaryPlot
+Path:       Seqdesign.TwoSidedOBrienFleming.BoundaryPlot
+-------------
+
+Output Added:
+-------------
+Name:       CombinedBoundaryPlot
+Label:      Combined Boundary
+Template:   Stat.SeqDesign.Graphics.CombinedBoundaryPlot
+Path:       Seqdesign.Plots.CombinedBoundaryPlot
+-------------
+
+Output Added:
+-------------
+Name:       ErrSpendPlot
+Label:      Error Spending
+Template:   Stat.SeqDesign.Graphics.ErrSpendPlot
+Path:       Seqdesign.Plots.ErrSpendPlot
+-------------
+
+Output Added:
+-------------
+Name:       ASNPlot
+Label:      ASN
+Template:   Stat.SeqDesign.Graphics.ASNPlot
+Path:       Seqdesign.Plots.ASNPlot
+-------------
+
+Output Added:
+-------------
+Name:       PowerPlot
+Label:      Power
+Template:   Stat.SeqDesign.Graphics.PowerPlot
+Path:       Seqdesign.Plots.PowerPlot
+-------------
+NOTE: The PROCEDURE SEQDESIGN printed pages 1159-1160.
+
+16176      ods trace off;
+16177      ods trace off;
+16178      ods graphics off;
+16179      
+16180      
+16181      
+16182      
+The SAS System
+
+16183      

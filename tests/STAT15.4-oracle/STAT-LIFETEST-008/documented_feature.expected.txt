@@ -1,0 +1,266 @@
+
+The LIFETEST Procedure
+ 
+Stratum 1: Treatment = Drug X
+
+                 Product-Limit Survival Estimates
+ 
+                                     Survival
+                                     Standard    Number    Number
+    Days     Survival    Failure      Error      Failed     Left
+
+   0.000       1.0000           0           0       0        20  
+ 171.000       0.9500      0.0500      0.0487       1        19  
+ 179.000       0.9000      0.1000      0.0671       2        18  
+ 217.000       0.8500      0.1500      0.0798       3        17  
+ 224.000*           .           .           .       3        16  
+ 225.000       0.7969      0.2031      0.0908       4        15  
+ 255.000            .           .           .       5        14  
+ 255.000       0.6906      0.3094      0.1053       6        13  
+ 256.000            .           .           .       7        12  
+ 256.000            .           .           .       8        11  
+ 256.000            .           .           .       9        10  
+ 256.000       0.4781      0.5219      0.1146      10         9  
+ 262.000       0.4250      0.5750      0.1135      11         8  
+ 264.000       0.3719      0.6281      0.1111      12         7  
+ 287.000       0.3187      0.6813      0.1071      13         6  
+ 319.000            .           .           .      14         5  
+ 319.000       0.2125      0.7875      0.0942      15         4  
+ 325.000            .           .           .      16         3  
+ 325.000       0.1062      0.8938      0.0710      17         2  
+ 355.000       0.0531      0.9469      0.0517      18         1  
+ 378.000*           .           .           .      18         0  
+
+NOTE: The marked survival times are censored observations.
+
+
+Summary Statistics for Time Variable Days
+
+                   Quartile Estimates
+ 
+              Point         95% Confidence Interval
+Percent    Estimate    Transform      [Lower      Upper)
+
+     75     319.000    LOGLOG        256.000     355.000
+     50     256.000    LOGLOG        255.000     319.000
+     25     255.000    LOGLOG        171.000     256.000
+
+
+            Standard
+    Mean       Error
+
+ 271.131      11.877
+
+NOTE: The mean survival time and its standard error were underestimated because the largest observation was censored and the estimation was restricted to the 
+      largest event time.
+
+The LIFETEST Procedure
+ 
+Stratum 2: Treatment = Placebo
+
+                 Product-Limit Survival Estimates
+ 
+                                     Survival
+                                     Standard    Number    Number
+    Days     Survival    Failure      Error      Failed     Left
+
+   0.000       1.0000           0           0       0        20  
+ 156.000       0.9500      0.0500      0.0487       1        19  
+ 157.000       0.9000      0.1000      0.0671       2        18  
+ 180.000       0.8500      0.1500      0.0798       3        17  
+ 206.000            .           .           .       4        16  
+ 206.000       0.7500      0.2500      0.0968       5        15  
+ 209.000       0.7000      0.3000      0.1025       6        14  
+ 211.000       0.6500      0.3500      0.1067       7        13  
+ 226.000       0.6000      0.4000      0.1095       8        12  
+ 229.000       0.5500      0.4500      0.1112       9        11  
+ 234.000       0.5000      0.5000      0.1118      10        10  
+ 237.000       0.4500      0.5500      0.1112      11         9  
+ 237.000*           .           .           .      11         8  
+ 242.000       0.3938      0.6063      0.1106      12         7  
+ 249.000       0.3375      0.6625      0.1082      13         6  
+ 253.000       0.2813      0.7188      0.1038      14         5  
+ 257.000       0.2250      0.7750      0.0971      15         4  
+ 268.000*           .           .           .      15         3  
+ 270.000       0.1500      0.8500      0.0891      16         2  
+ 291.000       0.0750      0.9250      0.0693      17         1  
+ 323.000            0      1.0000           .      18         0  
+
+NOTE: The marked survival times are censored observations.
+
+
+Summary Statistics for Time Variable Days
+
+                   Quartile Estimates
+ 
+              Point         95% Confidence Interval
+Percent    Estimate    Transform      [Lower      Upper)
+
+     75     257.000    LOGLOG        237.000        .   
+     50     235.500    LOGLOG        206.000     253.000
+     25     207.500    LOGLOG        156.000     229.000
+
+
+            Standard
+    Mean       Error
+
+ 235.156      10.211
+
+
+     Summary of the Number of Censored and Uncensored Values
+ 
+                                                         Percent
+Stratum    Treatment       Total  Failed    Censored    Censored
+
+      1    Drug X             20      18           2       10.00
+      2    Placebo            20      18           2       10.00
+----------------------------------------------------------------
+  Total                       40      36           4       10.00
+
+The LIFETEST Procedure
+
+Testing Homogeneity of Survival Curves for Days over Strata
+
+
+         Rank Statistics
+ 
+Treatment    Log-Rank    Wilcoxon
+
+Drug X        -6.2708     -157.00
+Placebo        6.2708      157.00
+
+
+Covariance Matrix for the Log-Rank Statistics
+ 
+Treatment        Drug X       Placebo
+
+Drug X          6.96167      -6.96167
+Placebo        -6.96167       6.96167
+
+
+Covariance Matrix for the Wilcoxon Statistics
+ 
+Treatment        Drug X       Placebo
+
+Drug X          4899.22      -4899.22
+Placebo        -4899.22       4899.22
+
+
+       Test of Equality over Strata
+ 
+                                   Pr >
+Test      Chi-Square      DF    Chi-Square
+
+Log-Rank      5.6485       1      0.0175  
+Wilcoxon      5.0312       1      0.0249  
+-2Log(LR)     0.1983       1      0.6561  
+
+The LIFETEST Procedure
+
+           Summary of the Number of Censored and Uncensored Values
+ 
+                                                                      Percent
+ Stratum    Sex         Treatment       Total  Failed    Censored    Censored
+
+       1    F           Drug X              9       8           1       11.11
+       1    F           Placebo            11      10           1        9.09
+Subtotal                                   20      18           2       10.00
+       2    M           Drug X             11      10           1        9.09
+       2    M           Placebo             9       8           1       11.11
+Subtotal                                   20      18           2       10.00
+-----------------------------------------------------------------------------
+   Total                                   40      36           4       10.00
+
+The LIFETEST Procedure
+
+Stratified Comparison of Survival Curves for Days over Group
+
+
+         Rank Statistics
+ 
+Treatment    Log-Rank    Wilcoxon
+
+Drug X        -6.8021     -87.000
+Placebo        6.8021      87.000
+
+
+Covariance Matrix for the Log-Rank Statistics
+ 
+Treatment        Drug X       Placebo
+
+Drug X          6.38489      -6.38489
+Placebo        -6.38489       6.38489
+
+
+Covariance Matrix for the Wilcoxon Statistics
+ 
+Treatment        Drug X       Placebo
+
+Drug X          1279.00      -1279.00
+Placebo        -1279.00       1279.00
+
+
+  Stratified Test of Equality over Group
+ 
+                                   Pr >
+Test      Chi-Square      DF    Chi-Square
+
+Log-Rank      7.2466       1      0.0071  
+Wilcoxon      5.9179       1      0.0150  
+
+The LIFETEST Procedure
+
+Summary of the Number of Censored and Uncensored Values
+ 
+                                 Percent
+   Total  Failed    Censored    Censored
+
+      40      36           4       10.00
+
+
+Rank Tests for the Association of Days with Covariates
+
+         Univariate Chi-Squares for the Wilcoxon Test
+ 
+                Test       Standard                     Pr >
+Variable     Statistic        Error    Chi-Square    Chi-Square
+
+Treatment      3.9525        1.7524       5.0875       0.0241  
+
+
+Covariance Matrix for the Wilcoxon Statistics
+ 
+Variable       Treatment
+
+Treatment        3.07074
+
+
+     Forward Stepwise Sequence of Chi-Squares for the Wilcoxon Test
+ 
+                                      Pr >       Chi-Square      Pr >
+Variable       DF    Chi-Square    Chi-Square    Increment     Increment
+
+Treatment       1       5.0875       0.0241         5.0875      0.0241  
+
+
+         Univariate Chi-Squares for the Log-Rank Test
+ 
+                Test       Standard                     Pr >
+Variable     Statistic        Error    Chi-Square    Chi-Square
+
+Treatment      6.2708        2.6793       5.4779       0.0193  
+
+
+Covariance Matrix for the Log-Rank Statistics
+ 
+Variable       Treatment
+
+Treatment        7.17853
+
+
+     Forward Stepwise Sequence of Chi-Squares for the Log-Rank Test
+ 
+                                      Pr >       Chi-Square      Pr >
+Variable       DF    Chi-Square    Chi-Square    Increment     Increment
+
+Treatment       1       5.4779       0.0193         5.4779      0.0193  

@@ -1,0 +1,49 @@
+The SAS System
+
+8181       
+8182       /* STAT-PRINCOMP-008: PRINCOMP — Official examples and feature integration regression
+8183        * Source: S154 / Chapter 98 / `Examples: PRINCOMP Procedure` (PDF pp. 8012–8032).
+8184        * Discriminates: Getting Started: PRINCOMP Procedure
+8185        */
+8186       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+8186     ! validmemname=compatible locale=en_US;
+8187       %let syscc=0;
+8188       title; footnote;
+8189       ods _all_ close;
+8190       ods listing gpath="%sysfunc(pathname(work))";
+8191       ods graphics off;
+8192       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.CRIME (memtype=DATA).
+NOTE: Deleting WORK.CRIME_COMPONENTS (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+8192     !                                         quit;
+
+
+8193       ods path work.templat(update) sashelp.tmplmst(read);
+8194       
+8195       title 'Crime Rates per 100,000 Population by State';
+8196       data Crime;
+8197       input State $1-15 Murder Rape Robbery Assault
+8198       Burglary Larceny Auto_Theft;
+8199       datalines;
+
+NOTE: The data set WORK.CRIME has 50 observations and 8 variables.
+
+8250       ;
+8251       ods graphics on;
+8252       proc princomp out=Crime_Components plots= score(ellipse ncomp=3);
+8253       id State;
+8254       run;
+
+NOTE: The data set WORK.CRIME_COMPONENTS has 50 observations and 15 variables.
+NOTE: The PROCEDURE PRINCOMP printed page 585.
+
+8255       
+8256       
+8257       
+8258       
+The SAS System
+
+8259       

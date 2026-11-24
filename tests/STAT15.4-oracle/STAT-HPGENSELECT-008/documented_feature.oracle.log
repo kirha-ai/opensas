@@ -1,0 +1,47 @@
+The SAS System
+
+36         
+37         /* STAT-HPGENSELECT-008: HPGENSELECT — Using Validation and Test Data
+38          * Source: S154 / Chapter 59 / `Using Validation and Test Data` (PDF pp. 4666–4667).
+39          * Discriminates: Getting Started: HPGENSELECT Procedure
+40          */
+41         options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+41       ! validmemname=compatible locale=en_US;
+42         %let syscc=0;
+43         title; footnote;
+44         ods _all_ close;
+45         ods listing gpath="%sysfunc(pathname(work))";
+46         ods graphics off;
+47         proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+47       !                                         quit;
+
+
+48         ods path work.templat(update) sashelp.tmplmst(read);
+49         
+50         data getStarted;
+51         input C1-C5 Y Total;
+52         datalines;
+
+NOTE: The data set WORK.GETSTARTED has 100 observations and 7 variables.
+
+153        ;
+154        proc hpgenselect data=getStarted;
+155        class C1-C5;
+156        model Y = C1-C5 / Distribution=Poisson Link=Log;
+157        run;
+
+NOTE: The HPGENSELECT procedure is executing in single-machine mode.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: There were 100 observations read from the data set WORK.GETSTARTED.
+NOTE: The PROCEDURE HPGENSELECT printed page 1.
+
+158        
+159        
+160        
+161        
+The SAS System
+
+162        

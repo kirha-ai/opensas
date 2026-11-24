@@ -1,0 +1,133 @@
+The SAS System
+
+5757       
+5758       /* STAT-HPREG-006: HPREG — PARTITION / SELECTION / Criteria Used in Model Selection
+5759        * Source: S154 / Chapter 67 / `PARTITION Statement` (PDF p. 5035); S154 / Chapter 67 / `SELECTION Statement` (PDF pp. 5036–5038); S154 / Chapter
+5759     ! 67 / `Criteria Used in Model Selection` (PDF pp. 5038–5040).
+5760        * Discriminates: Example 67.1: Model Selection with Validation; explicit statements: PARTITION, SELECTION
+5761        */
+5762       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+5762     ! validmemname=compatible locale=en_US;
+5763       %let syscc=0;
+5764       title; footnote;
+5765       ods _all_ close;
+5766       ods listing gpath="%sysfunc(pathname(work))";
+5767       ods graphics off;
+5768       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.ANALYSISDATA (memtype=DATA).
+NOTE: Deleting WORK.ASE (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+5768     !                                         quit;
+
+
+5769       ods path work.templat(update) sashelp.tmplmst(read);
+5770       
+5771       data analysisData;
+5772       drop i j c3Num;
+5773       length c3$ 7;
+5774       array x{20} x1-x20;
+5775       do i=1 to 15000;
+5776       do j=1 to 20;
+5777       x{j} = ranuni(1);
+5778       end;
+5779       c1 = 1 + mod(i,8);
+5780       c2 = ranbin(1,3,.6);
+5781       if i < 50 then do;
+5782       c3 = 'tiny';
+5783       c3Num=1;
+5784       end;
+5785       else if i < 250 then do;
+5786       c3 = 'small';
+5787       c3Num=1;
+5788       end;
+5789       else if i < 600 then do;
+5790       c3 = 'average';
+5791       c3Num=2;
+5792       end;
+5793       else if i < 1200 then do;
+5794       c3 = 'big';
+5795       c3Num=3;
+5796       end;
+5797       else do;
+5798       c3 = 'huge';
+5799       c3Num=5;
+5800       end;
+5801       yTrue = 10 + x1 + 2*x5 + 3*x10 + 4*x20 + 3 *x1*x7 + 8*x6*x7
+5802       + 5*(c1=3)*c3Num + 8*(c1=7);
+5803       error = 5*rannor(1);
+5804       y = yTrue + error;
+5805       if mod(i,3)=1 then Role = 'TRAIN';
+5806       else if mod(i,3)=2 then Role = 'VAL';
+5807       else Role = 'TEST';
+5808       output;
+5809       end;
+5810       run;
+
+NOTE: The data set WORK.ANALYSISDATA has 15000 observations and 27 variables.
+
+5811       proc summary data=analysisData;
+5812       class role;
+5813       ways 1;
+5814       var error;
+5815       output out=ASE uss=uss n=n;
+
+NOTE: There were 15000 observations read from the data set WORK.ANALYSISDATA.
+NOTE: The data set WORK.ASE has 3 observations and 5 variables.
+
+5816       data ASE;
+5817       set ASE;
+5818       OracleASE = uss / n;
+5819       label OracleASE = 'Oracle ASE';
+5820       keep Role OracleASE;
+
+NOTE: There were 3 observations read from the data set WORK.ASE.
+NOTE: The data set WORK.ASE has 3 observations and 2 variables.
+
+5821       proc print data=ASE label noobs;
+5822       run;
+
+NOTE: There were 3 observations read from the data set WORK.ASE.
+NOTE: The PROCEDURE PRINT printed page 342.
+
+5823       proc print data=ASE label noobs;
+5824       run;
+
+NOTE: There were 3 observations read from the data set WORK.ASE.
+NOTE: The PROCEDURE PRINT printed page 343.
+
+5825       proc hpreg data=analysisData;
+5826       partition roleVar=role(train='TRAIN' validate='VAL' test='TEST');
+5827       class c1 c2 c3(order=data);
+5828       model y = c1|c2|c3|x1|x2|x3|x4|x5|x5|x6|x7|x8|x9|x10
+5829       |x11|x12|x13|x14|x15|x16|x17|x18|x19|x20 @2 /stb;
+5830       selection method = stepwise(select=sl sle=0.1 sls=0.15 choose=validate)
+5831       hierarchy=single details=steps;
+5832       run;
+
+NOTE: The HPREG procedure is executing in single-machine mode.
+NOTE: There were 15000 observations read from the data set WORK.ANALYSISDATA.
+NOTE: The PROCEDURE HPREG printed pages 344-365.
+
+5833       proc hpreg data=analysisData;
+5834       partition roleVar=role(train='TRAIN' validate='VAL' test='TEST');
+5835       class c1(split) c2 c3(order=data);
+5836       model y = c1|c2|c3|x1|x2|x3|x4|x5|x5|x6|x7|x8|x9|x10
+5837       |x11|x12|x13|x14|x15|x16|x17|x18|x19|x20 @2 /stb;
+5838       selection method = stepwise(select=sl sle=0.1 sls=0.15 choose=validate)
+5839       hierarchy=single details=steps;
+5840       run;
+
+NOTE: The HPREG procedure is executing in single-machine mode.
+NOTE: There were 15000 observations read from the data set WORK.ANALYSISDATA.
+NOTE: The PROCEDURE HPREG printed pages 366-386.
+
+5841       
+5842       
+5843       
+5844       
+The SAS System
+
+5845       

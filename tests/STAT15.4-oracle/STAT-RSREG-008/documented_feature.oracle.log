@@ -1,0 +1,150 @@
+The SAS System
+
+15271      
+15272      /* STAT-RSREG-008: RSREG — Plotting the Surface / ODS Graphics
+15273       * Source: S154 / Chapter 108 / `Plotting the Surface` (PDF p. 8882); S154 / Chapter 108 / `ODS Graphics` (PDF pp. 8890–8891).
+15274       * Discriminates: Example 108.1: A Saddle Surface Response Using Ridge Analysis
+15275       */
+15276      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+15276    ! validmemname=compatible locale=en_US;
+15277      %let syscc=0;
+15278      title; footnote;
+15279      ods _all_ close;
+15280      ods listing gpath="%sysfunc(pathname(work))";
+15281      ods graphics off;
+15282      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.SMELL (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+15282    !                                         quit;
+
+
+15283      ods path work.templat(update) sashelp.tmplmst(read);
+15284      
+15285      ods graphics on;
+15286      ods trace on;
+15287      ods trace on;
+15288      data d;
+15289      input Time Temp MBT;
+15290      label Time = "Reaction Time (Hours)"
+15291      Temp = "Temperature (Degrees Centigrade)"
+15292      MBT = "Percent Yield Mercaptobenzothiazole";
+15293      datalines;
+
+NOTE: The data set WORK.D has 12 observations and 3 variables.
+
+15306      ;
+15307      ods graphics on;
+15308      proc rsreg data=d plots=(ridge surface);
+15309      model MBT=Time Temp / lackfit;
+15310      ridge max;
+15311      run;
+
+
+Output Added:
+-------------
+Name:       Coding
+Label:      Coding
+Template:   Stat.RSREG.Coding
+Path:       RSReg.Coding
+-------------
+
+Output Added:
+-------------
+Name:       FitStatistics
+Label:      Fit Statistics
+Template:   Stat.RSREG.FitStatistics
+Path:       RSReg.MBT.ANOVA.FitStatistics
+-------------
+
+Output Added:
+-------------
+Name:       ModelANOVA
+Label:      Model
+Template:   Stat.RSREG.ModelANOVA
+Path:       RSReg.MBT.ANOVA.ModelANOVA
+-------------
+
+Output Added:
+-------------
+Name:       ErrorANOVA
+Label:      Error
+Template:   Stat.RSREG.ErrorANOVA
+Path:       RSReg.MBT.ANOVA.ErrorANOVA
+-------------
+
+Output Added:
+-------------
+Name:       ParameterEstimates
+Label:      Parameter Estimates
+Template:   Stat.RSREG.ParameterEstimates
+Path:       RSReg.MBT.ANOVA.ParameterEstimates
+-------------
+
+Output Added:
+-------------
+Name:       FactorANOVA
+Label:      Factor Tests
+Template:   Stat.RSREG.FactorANOVA
+Path:       RSReg.MBT.ANOVA.FactorANOVA
+-------------
+
+Output Added:
+-------------
+Name:       StationaryPoint
+Label:      Stationary Point
+Template:   stat.rsreg.StationaryCoded
+Path:       RSReg.MBT.Canonical.StationaryPoint
+-------------
+
+Output Added:
+-------------
+Name:       Spectral
+Label:      Spectral Analysis
+Template:   stat.rsreg.spectral
+Path:       RSReg.MBT.Canonical.Spectral
+-------------
+
+Output Added:
+-------------
+Name:       Ridge
+Label:      Maximum Ridge
+Template:   stat.rsreg.ridge
+Path:       RSReg.MBT.Ridge
+-------------
+
+Output Added:
+-------------
+Name:       RidgePlots
+Label:      Maximum Ridge
+Template:   Stat.Rsreg.Graphics.RidgePlots
+Path:       RSReg.MBT.RidgePlots.RidgePlots
+-------------
+
+Output Added:
+-------------
+Name:       Contour
+Label:      Time * Temp = Pred
+Template:   Stat.Rsreg.Graphics.Contour
+Path:       RSReg.Contours.Contour
+-------------
+NOTE: The PROCEDURE RSREG printed pages 1121-1123.
+
+15312      ods graphics off;
+15313      run;
+15314      quit;
+15315      ods trace off;
+15316      ods trace off;
+15317      ods graphics off;
+15318      
+15319      
+15320      
+15321      
+The SAS System
+
+15322      

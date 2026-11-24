@@ -1,0 +1,62 @@
+The SAS System
+
+10513      
+10514      /* STAT-KRIGE2D-010: KRIGE2D — Spatial Random Fields / Ordinary Kriging
+10515       * Source: S154 / Chapter 74 / `Spatial Random Fields` (PDF p. 5483); S154 / Chapter 74 / `Ordinary Kriging` (PDF pp. 5483–5486).
+10516       * Discriminates: Getting Started: KRIGE2D Procedure
+10517       */
+10518      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+10518    ! validmemname=compatible locale=en_US;
+10519      %let syscc=0;
+10520      title; footnote;
+10521      ods _all_ close;
+10522      ods listing gpath="%sysfunc(pathname(work))";
+10523      ods graphics off;
+10524      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.COMPARE (memtype=DATA).
+NOTE: Deleting WORK.PRED1 (memtype=DATA).
+NOTE: Deleting WORK.PRED2 (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.SEMIVSTOREGAU (memtype=ITEMSTOR).
+NOTE: Deleting WORK.SEMIVSTORESPH (memtype=ITEMSTOR).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.THICK (memtype=DATA).
+10524    !                                         quit;
+
+
+10525      ods path work.templat(update) sashelp.tmplmst(read);
+10526      
+10527      title 'Spatial Prediction With Kriging';
+10528      data thick;
+10529      input East North Thick @@;
+10530      label Thick='Coal Seam Thickness';
+10531      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.THICK has 75 observations and 3 variables.
+
+10557      ;
+10558      ods graphics on;
+10559      proc krige2d data=thick;
+10560      coordinates xc=East yc=North;
+10561      predict var=Thick radius=60;
+10562      model scale=7.4599 range=30.1111 form=gauss;
+10563      grid x=0 to 100 by 2.5 y=0 to 100 by 2.5;
+10564      run;
+
+NOTE: The data set WORK.DATA10 has 1681 observations and 7 variables.
+NOTE: The PROCEDURE KRIGE2D printed pages 747-748.
+
+10565      ods graphics off;
+10566      run;
+10567      quit;
+10568      
+10569      
+10570      
+10571      
+The SAS System
+
+10572      

@@ -1,0 +1,43 @@
+The SAS System
+
+1955       
+1956       /* STAT-MDS-003: MDS — INVAR / MATRIX / Formulas
+1957        * Source: S154 / Chapter 81 / `INVAR Statement` (PDF p. 6394); S154 / Chapter 81 / `MATRIX Statement` (PDF pp. 6394–6395); S154 / Chapter 81 /
+1957     ! `Formulas` (PDF pp. 6395–6397).
+1958        * Discriminates: Getting Started: MDS Procedure
+1959        */
+1960       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+1960     ! validmemname=compatible locale=en_US;
+1961       %let syscc=0;
+1962       title; footnote;
+1963       ods _all_ close;
+1964       ods listing gpath="%sysfunc(pathname(work))";
+1965       ods graphics off;
+1966       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+1966     !                                         quit;
+
+
+1967       ods path work.templat(update) sashelp.tmplmst(read);
+1968       
+1969       title 'Analysis of Flying Mileages between Ten U.S. Cities';
+1970       ods graphics on;
+1971       proc mds data=sashelp.mileages level=absolute;
+1972       id city;
+1973       run;
+
+NOTE: The PROCEDURE MDS printed page 151.
+
+1974       
+1975       
+1976       
+1977       
+The SAS System
+
+1978       

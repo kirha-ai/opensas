@@ -1,0 +1,59 @@
+The SAS System
+
+19308      
+19309      /* STAT-SURVEYFREQ-007: SURVEYFREQ — Replication Variance Estimation
+19310       * Source: S154 / Chapter 118 / `Replication Variance Estimation` (PDF p. 9633).
+19311       * Discriminates: Verified default procedure context
+19312       */
+19313      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+19313    ! validmemname=compatible locale=en_US;
+19314      %let syscc=0;
+19315      title; footnote;
+19316      ods _all_ close;
+19317      ods listing gpath="%sysfunc(pathname(work))";
+19318      ods graphics off;
+19319      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SURVEY (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+19319    !                                         quit;
+
+
+19320      ods path work.templat(update) sashelp.tmplmst(read);
+19321      
+19322      data survey;
+19323      do state=1 to 2;
+19324      do school=1 to 4;
+19325      do id=1 to 6;
+19326      response=1+mod(id+school,3);
+19327      schooltype=1+mod(school,2);
+19328      samplingweight=2+state+school/10;
+19329      output;
+19330      end;
+19331      end;
+19332      end;
+19333      run;
+
+NOTE: The data set WORK.SURVEY has 48 observations and 6 variables.
+
+19334      proc surveyfreq data=survey;
+19335      strata state;
+19336      cluster school;
+19337      weight samplingweight;
+19338      tables schooltype*response / row chisq;
+19339      run;
+
+NOTE: The Rao-Scott chi-square test cannot be computed for the table of schooltype by response because the design correction is not positive.
+NOTE: The PROCEDURE SURVEYFREQ printed page 1383.
+
+19340      
+19341      
+19342      
+19343      
+The SAS System
+
+19344      

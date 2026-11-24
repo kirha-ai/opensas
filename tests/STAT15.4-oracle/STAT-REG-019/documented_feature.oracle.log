@@ -1,0 +1,76 @@
+The SAS System
+
+13216      
+13217      /* STAT-REG-019: REG — Computer Resources in Regression Analysis
+13218       * Source: S154 / Chapter 105 / `Computer Resources in Regression Analysis` (PDF p. 8650).
+13219       * Discriminates: Example 105.4: Regression with Quantitative and Qualitative Variables
+13220       */
+13221      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+13221    ! validmemname=compatible locale=en_US;
+13222      %let syscc=0;
+13223      title; footnote;
+13224      ods _all_ close;
+13225      ods listing gpath="%sysfunc(pathname(work))";
+13226      ods graphics off;
+13227      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.USPOPULATION (memtype=DATA).
+13227    !                                         quit;
+
+
+13228      ods path work.templat(update) sashelp.tmplmst(read);
+13229      
+13230      title 'Regression with Quantitative and Qualitative Variables';
+13231      data insurance;
+13232      input time size type @@;
+13233      sizetype=size*type;
+13234      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.INSURANCE has 20 observations and 4 variables.
+
+13238      ;
+13239      proc reg data=insurance;
+13240      model time = size type sizetype;
+13241      run;
+
+13242      delete sizetype;
+13243      print;
+13244      run;
+
+NOTE: Variable sizetype is deleted.
+NOTE: Due to a DELETE statement, the model label is now MODEL1.1.
+13245      output out=out r=r p=p;
+13246      run;
+
+
+NOTE: The data set WORK.OUT has 20 observations and 6 variables.
+NOTE: The PROCEDURE REG printed pages 1030-1031.
+
+13247      proc sgplot data=out;
+13248      scatter x=p y=r / markerchar=type group=type;
+13249      run;
+
+NOTE: Listing image output written to /saswork/SAS_work35F80001D7BA_odaws01-euw1.oda.sas.com/SAS_workC7D80001D7BA_odaws01-euw1.oda.sas.com/SGPlot4.png.
+NOTE: There were 20 observations read from the data set WORK.OUT.
+
+13250      proc sgplot data=out;
+13251      scatter x=size y=p / markerchar=type group=type;
+13252      run;
+
+NOTE: Listing image output written to /saswork/SAS_work35F80001D7BA_odaws01-euw1.oda.sas.com/SAS_workC7D80001D7BA_odaws01-euw1.oda.sas.com/SGPlot5.png.
+NOTE: There were 20 observations read from the data set WORK.OUT.
+
+13253      
+13254      
+13255      
+13256      
+The SAS System
+
+13257      

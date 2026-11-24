@@ -1,0 +1,31 @@
+
+Spatial Prediction With Kriging
+
+The KRIGE2D Procedure
+Dependent Variable: Thick
+
+Number of Observations Read          75
+Number of Observations Used          75
+
+
+              Kriging Information
+
+Prediction Grid Points                     1681
+Type of Analysis                          Local
+Neighborhood Search Radius                   60
+Minimum Neighbors                            20
+Maximum Neighbors             All Within Radius
+
+Spatial Prediction With Kriging
+
+The KRIGE2D Procedure
+Dependent Variable: Thick
+Prediction: Pred1, Model: Model1
+
+Covariance Model Information
+
+Type                Gaussian
+Sill                  7.4599
+Range                30.1111
+Effective Range    52.153955
+Nugget Effect              0

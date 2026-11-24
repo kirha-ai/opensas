@@ -1,0 +1,98 @@
+The SAS System
+
+12885      
+12886      /* STAT-REG-014: REG — CODE / Predicted and Residual Values
+12887       * Source: S154 / Chapter 105 / `CODE Statement` (PDF p. 8575); S154 / Chapter 105 / `Predicted and Residual Values` (PDF pp. 8619–8623).
+12888       * Discriminates: Generate DATA step scoring code, execute it against the input rows, and print the scored data.
+12889       */
+12890      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+12890    ! validmemname=compatible locale=en_US;
+12891      %let syscc=0;
+12892      title; footnote;
+12893      ods _all_ close;
+12894      ods listing gpath="%sysfunc(pathname(work))";
+12895      ods graphics off;
+12896      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.USPOPULATION (memtype=DATA).
+12896    !                                         quit;
+
+
+12897      ods path work.templat(update) sashelp.tmplmst(read);
+12898      
+12899      filename _orcode "%sysfunc(pathname(work))/_oracle_score.sas";
+12900      
+12901      
+12902      proc reg data=sashelp.class;
+12903      model Weight = Height;
+12904      
+12905      code file="%sysfunc(pathname(work))/_oracle_score.sas";
+12906      run;
+
+NOTE: External file /saswork/SAS_work35F80001D7BA_odaws01-euw1.oda.sas.com/SAS_workC7D80001D7BA_odaws01-euw1.oda.sas.com/_oracle_score.sas opened.
+
+NOTE: The REG procedure wrote the DATA step code to external file 
+      /saswork/SAS_work35F80001D7BA_odaws01-euw1.oda.sas.com/SAS_workC7D80001D7BA_odaws01-euw1.oda.sas.com/_oracle_score.sas.
+NOTE: The PROCEDURE REG printed page 996.
+
+12907      data USPopulation;
+12908      input Population @@;
+12909      retain Year 1780;
+12910      Year = Year+10;
+12911      YearSq = Year *Year;
+12912      Population = Population/1000;
+12913      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.USPOPULATION has 22 observations and 3 variables.
+
+12917      ;
+12918      proc reg data=USPopulation plots=ResidualByPredicted;
+12919      var YearSq;
+12920      model Population=Year / r clm cli;
+12921      run;
+
+WARNING: You must enable ODS graphics before requesting plots with the PLOTS option in the PROC REG statement.
+12922      add YearSq;
+12923      print;
+12924      run;
+
+NOTE: Variable YearSq is added.
+NOTE: Due to an ADD statement, the model label is now MODEL1.1.
+
+NOTE: The PROCEDURE REG printed pages 997-1000.
+
+12925      proc reg data=USPopulation plots=predictions(X=Year);
+12926      model Population=Year Yearsq;
+12927      quit;
+
+WARNING: You must enable ODS graphics before requesting plots with the PLOTS option in the PROC REG statement.
+NOTE: The PROCEDURE REG printed page 1001.
+
+12928      ods graphics off;
+12929      quit;
+12930      
+12931      data _oracle_scored; set sashelp.class;
+12932      %include _orcode;
+12963      run;
+
+NOTE: There were 19 observations read from the data set SASHELP.CLASS.
+NOTE: The data set WORK._ORACLE_SCORED has 19 observations and 6 variables.
+
+12964      proc print data=_oracle_scored(obs=10); run;
+
+NOTE: There were 10 observations read from the data set WORK._ORACLE_SCORED.
+NOTE: The PROCEDURE PRINT printed page 1002.
+
+12965      
+12966      
+12967      
+12968      
+The SAS System
+
+12969      

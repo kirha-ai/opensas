@@ -1,0 +1,83 @@
+The SAS System
+
+36         
+37         /* STAT-ACECLUS-001: ACECLUS — Data input, variable roles, and basic options
+38          * Source: S154 / Chapter 27 / `PROC ACECLUS Statement` (PDF pp. 1028–1033); S154 / Chapter 27 / `BY
+38       ! Statement` (PDF pp. 1033–1034); S154 / Chapter 27 / `FREQ Statement` (PDF p. 1034); S154 / Chapter 27 /
+38       ! `VAR Statement` (PDF p. 1034); S154 / Chapter 27 / `WEIGHT Statement` (PDF pp. 1034–1035); S154 / Chapter
+38       ! 27 / `Missing Values` (PDF p. 1035).
+39          * Discriminates: Two explicit BY groups contain identical inputs, exposing group boundaries and per-group
+39       ! results.
+40          */
+41         options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+41       ! validmemname=compatible locale=en_US;
+42         %let syscc=0;
+43         title; footnote;
+44         ods _all_ close;
+45         ods listing gpath="%sysfunc(pathname(work))";
+46         ods graphics off;
+47         proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+47       !                                         quit;
+
+
+48         ods path work.templat(update) sashelp.tmplmst(read);
+49         
+50         title 'Fisher (1936) Iris Data';
+51         data _oracle_input; set sashelp.iris; do _oracle_by=1 to 2; output; end; run;
+
+NOTE: There were 150 observations read from the data set SASHELP.IRIS.
+NOTE: The data set WORK._ORACLE_INPUT has 300 observations and 6 variables.
+
+52         proc sort data=_oracle_input; by _oracle_by; run;
+
+NOTE: There were 300 observations read from the data set WORK._ORACLE_INPUT.
+NOTE: The data set WORK._ORACLE_INPUT has 300 observations and 6 variables.
+
+53         proc aceclus data=_oracle_input out=ace p=.02 outstat=score;
+54         by _oracle_by;
+55         var SepalLength SepalWidth PetalLength PetalWidth ;
+56         run;
+
+NOTE: Algorithm converged.
+NOTE: The above message was for the following BY group:
+      _oracle_by=1
+NOTE: Algorithm converged.
+NOTE: The above message was for the following BY group:
+      _oracle_by=2
+NOTE: The data set WORK.ACE has 300 observations and 10 variables.
+NOTE: The data set WORK.SCORE has 40 observations and 7 variables.
+NOTE: The PROCEDURE ACECLUS printed pages 1-2.
+
+57         proc sgplot data=ace;
+58         scatter y=can2 x=can1 / group=Species;
+59         keylegend / title="Species";
+60         run;
+
+NOTE: Listing image output written to /saswork/SAS_workF8DD0000198D_odaws01-euw1.oda.sas.com/SAS_work3E660000198D_odaws01-euw1.oda.sas.com/SGPlot.png.
+NOTE: There were 300 observations read from the data set WORK.ACE.
+
+61         proc fastclus data=ace maxc=3 maxiter=10 conv=0 out=clus;
+62         var can:;
+63         run;
+
+NOTE: Convergence criterion is satisfied.
+NOTE: The data set WORK.CLUS has 300 observations and 12 variables.
+NOTE: The PROCEDURE FASTCLUS printed page 3.
+
+64         proc freq;
+65         tables cluster*Species;
+66         run;
+
+NOTE: There were 300 observations read from the data set WORK.CLUS.
+NOTE: The PROCEDURE FREQ printed page 4.
+
+67         
+68         
+69         
+70         
+The SAS System
+
+71         

@@ -1,0 +1,84 @@
+
+Fish Measurement Data
+
+The MI Procedure
+
+                     Model Information
+
+Data Set                             WORK.FISH1             
+Method                               Monotone               
+Number of Imputations                8                      
+Seed for random number generator     13951639               
+
+
+   Monotone Model Specification
+ 
+                          Imputed
+Method                    Variables
+
+Regression                Length2  
+Regression-PMM( K= 5)     Length3  
+
+
+                                             Missing Data Patterns
+ 
+                                                                  -----------------Group Means----------------
+Group    Length1    Length2    Length3        Freq     Percent         Length1         Length2         Length3
+
+    1    X          X          X                30       85.71       30.603333       33.436667       38.720000
+    2    X          X          .                 3        8.57       29.033333       31.666667               .
+    3    X          .          .                 2        5.71       27.750000               .               .
+
+
+                                                          Regression Models for Monotone Method
+ 
+Imputed                             ------------------------------------------------------Imputation-----------------------------------------------------
+Variable   Effect        Obs-Data              1              2              3              4              5              6              7              8
+
+Length2    Intercept     -0.04249      -0.049184      -0.055470      -0.051346      -0.064193      -0.030719      -0.030694      -0.050964      -0.017976
+Length2    Length1        0.98587       1.001934       0.995275       0.992294       0.983122       0.995883       0.989193       0.968480       0.977476
+
+
+                                                 Regression Models for Monotone Predicted Mean Matching Method
+ 
+Imputed                                   ------------------------------------------------------Imputation-----------------------------------------------------
+Variable   Effect              Obs Data              1              2              3              4              5              6              7              8
+
+Length3    Intercept           -0.01304       0.004134      -0.011417      -0.034177      -0.010532       0.004685      -0.013917       0.012658      -0.020144
+Length3    Length1             -0.01332       0.025320      -0.037494       0.308765       0.156606      -0.147118       0.097745      -0.254054       0.086950
+Length3    Length2              0.98918       0.955510       1.025741       0.673374       0.828384       1.146440       0.860564       1.226015       0.879854
+Length3    Length1*Length2     -0.02521      -0.034964      -0.022017      -0.017919      -0.029335      -0.034671      -0.023384      -0.023829      -0.026785
+
+
+                                    Variance Information (8 Imputations)
+ 
+                                                                      Relative       Fraction
+            -----------------Variance-----------------                Increase        Missing       Relative
+Variable         Between         Within          Total       DF    in Variance    Information     Efficiency
+
+Length2      0.000089650       0.439208       0.439309   32.155       0.000230       0.000230       0.999971
+Length3         0.000433       0.487356       0.487842    32.13       0.000998       0.000998       0.999875
+
+
+                                                     Parameter Estimates (8 Imputations)
+ 
+                                                                                                                          t for H0:
+Variable            Mean      Std Error    95% Confidence Limits        DF        Minimum        Maximum            Mu0    Mean=Mu0   Pr > |t|
+
+Length2        33.106071       0.662804     31.75624     34.45590   32.155      33.088571      33.117143      35.000000       -2.86     0.0074
+Length3        38.416786       0.698457     36.99430     39.83927    32.13      38.382857      38.445714      45.000000       -9.43     <.0001
+
+First 10 Observations of the Imputed Data Set
+
+Obs    _Imputation_    Length1    Length2    Length3
+
+  1          1           23.2       25.4       30.0 
+  2          1           24.0       26.3       31.2 
+  3          1           23.9       26.5       31.1 
+  4          1           26.3       29.0       33.5 
+  5          1           26.5       29.0       34.7 
+  6          1           26.8       29.7       34.7 
+  7          1           26.8       28.8       34.7 
+  8          1           27.6       30.0       35.0 
+  9          1           27.6       30.0       35.1 
+ 10          1           28.5       30.7       36.2 

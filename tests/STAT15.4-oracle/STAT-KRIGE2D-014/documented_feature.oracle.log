@@ -1,0 +1,58 @@
+The SAS System
+
+10769      
+10770      /* STAT-KRIGE2D-014: KRIGE2D — Computational Resources
+10771       * Source: S154 / Chapter 74 / `Computational Resources` (PDF p. 5486).
+10772       * Discriminates: Getting Started: KRIGE2D Procedure
+10773       */
+10774      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+10774    ! validmemname=compatible locale=en_US;
+10775      %let syscc=0;
+10776      title; footnote;
+10777      ods _all_ close;
+10778      ods listing gpath="%sysfunc(pathname(work))";
+10779      ods graphics off;
+10780      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.DATA13 (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.THICK (memtype=DATA).
+10780    !                                         quit;
+
+
+10781      ods path work.templat(update) sashelp.tmplmst(read);
+10782      
+10783      title 'Spatial Prediction With Kriging';
+10784      data thick;
+10785      input East North Thick @@;
+10786      label Thick='Coal Seam Thickness';
+10787      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.THICK has 75 observations and 3 variables.
+
+10813      ;
+10814      ods graphics on;
+10815      proc krige2d data=thick;
+10816      coordinates xc=East yc=North;
+10817      predict var=Thick radius=60;
+10818      model scale=7.4599 range=30.1111 form=gauss;
+10819      grid x=0 to 100 by 2.5 y=0 to 100 by 2.5;
+10820      run;
+
+NOTE: The data set WORK.DATA14 has 1681 observations and 7 variables.
+NOTE: The PROCEDURE KRIGE2D printed pages 755-756.
+
+10821      ods graphics off;
+10822      run;
+10823      quit;
+10824      
+10825      
+10826      
+10827      
+The SAS System
+
+10828      

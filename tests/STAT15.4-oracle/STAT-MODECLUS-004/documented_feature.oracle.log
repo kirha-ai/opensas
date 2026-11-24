@@ -1,0 +1,68 @@
+The SAS System
+
+4639       
+4640       /* STAT-MODECLUS-004: MODECLUS — Output Data Sets
+4641        * Source: S154 / Chapter 85 / `Output Data Sets` (PDF pp. 6838–6840).
+4642        * Discriminates: Getting Started: MODECLUS Procedure
+4643        */
+4644       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+4644     ! validmemname=compatible locale=en_US;
+4645       %let syscc=0;
+4646       title; footnote;
+4647       ods _all_ close;
+4648       ods listing gpath="%sysfunc(pathname(work))";
+4649       ods graphics off;
+4650       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.EXAMPLE (memtype=DATA).
+NOTE: Deleting WORK.OUT (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+4650     !                                         quit;
+
+
+4651       ods path work.templat(update) sashelp.tmplmst(read);
+4652       
+4653       data example;
+4654       input x y @@;
+4655       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.EXAMPLE has 30 observations and 2 variables.
+
+4660       ;
+4661       proc sgplot;
+4662       scatter y=y x=x;
+4663       run;
+
+NOTE: Listing image output written to /saswork/SAS_work0B6E00009FAA_odaws02-euw1.oda.sas.com/SAS_work530800009FAA_odaws02-euw1.oda.sas.com/SGPlot15.png.
+NOTE: There were 30 observations read from the data set WORK.EXAMPLE.
+
+4664       proc modeclus data=example method=1 r=10 15 35 out=out;
+4665       run;
+
+NOTE: No VAR statement is given. All numerical variables not named elsewhere make up the first set of variables.
+NOTE: The data set WORK.OUT has 90 observations and 7 variables.
+NOTE: The PROCEDURE MODECLUS printed pages 344-347.
+
+4666       proc sgplot data=out noautolegend;
+4667       scatter y=y x=x / group=cluster markerchar=cluster;
+4668       by _r_;
+4669       run;
+
+NOTE: Listing image output written to /saswork/SAS_work0B6E00009FAA_odaws02-euw1.oda.sas.com/SAS_work530800009FAA_odaws02-euw1.oda.sas.com/SGPlot16.png.
+NOTE: Listing image output written to /saswork/SAS_work0B6E00009FAA_odaws02-euw1.oda.sas.com/SAS_work530800009FAA_odaws02-euw1.oda.sas.com/SGPlot17.png.
+NOTE: Listing image output written to /saswork/SAS_work0B6E00009FAA_odaws02-euw1.oda.sas.com/SAS_work530800009FAA_odaws02-euw1.oda.sas.com/SGPlot18.png.
+NOTE: There were 90 observations read from the data set WORK.OUT.
+
+4670       
+4671       
+4672       
+4673       
+The SAS System
+
+4674       

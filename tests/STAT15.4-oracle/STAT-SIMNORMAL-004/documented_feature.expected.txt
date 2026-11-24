@@ -1,0 +1,32 @@
+
+The CORR Procedure
+
+   2  Variables:    s1       s2       
+
+
+     Covariance Matrix, DF = 499
+ 
+                  s1                s2
+
+s1       2.101927270       0.536956641
+s2       0.536956641       3.891852250
+
+
+                                    Simple Statistics
+ 
+Variable           N          Mean       Std Dev           Sum       Minimum       Maximum
+
+s1               500       1.32531       1.44980     662.65682      -2.77983       5.50843
+s2               500       2.09504       1.97278          1048      -5.69812       7.83275
+
+
+Pearson Correlation Coefficients, N = 500 
+        Prob > |r| under H0: Rho=0
+ 
+              s1            s2
+
+s1       1.00000       0.18774
+                        <.0001
+
+s2       0.18774       1.00000
+          <.0001              

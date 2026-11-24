@@ -1,0 +1,54 @@
+The SAS System
+
+5594       
+5595       /* STAT-NLIN-002: NLIN — Nonlinear least squares parameter estimation
+5596        * Source: S154 / Chapter 88 / `Getting Started: NLIN Procedure` (PDF pp. 6980–6986); S154 / Chapter 88 / `Overview: NLIN Procedure` (PDF pp.
+5596     ! 6978–6980).
+5597        * Discriminates: Getting Started: NLIN Procedure
+5598        */
+5599       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+5599     ! validmemname=compatible locale=en_US;
+5600       %let syscc=0;
+5601       title; footnote;
+5602       ods _all_ close;
+5603       ods listing gpath="%sysfunc(pathname(work))";
+5604       ods graphics off;
+5605       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.ENZYME (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+5605     !                                         quit;
+
+
+5606       ods path work.templat(update) sashelp.tmplmst(read);
+5607       
+5608       data Enzyme;
+5609       input Concentration Velocity @@;
+5610       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.ENZYME has 14 observations and 2 variables.
+
+5618       ;
+5619       proc nlin data=Enzyme method=marquardt hougaard;
+5620       parms theta1=155
+5621       theta2=0 to 0.07 by 0.01;
+5622       model Velocity = theta1*Concentration / (theta2 + Concentration);
+5623       run;
+
+NOTE: DER.theta1 not initialized or missing. It will be computed automatically.
+NOTE: DER.theta2 not initialized or missing. It will be computed automatically.
+NOTE: Convergence criterion met.
+NOTE: The PROCEDURE NLIN printed pages 379-380.
+
+5624       
+5625       
+5626       
+5627       
+The SAS System
+
+5628       

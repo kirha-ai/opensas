@@ -1,0 +1,97 @@
+
+NAME        TYPE    LENGTH    VARNUM    LABEL
+
+HouseID       1        8         1           
+Set           1        8         2           
+Choice        1        8         3           
+Brand         2        8         4           
+LogPrice      1        8         5           
+LogInc        1        8         6           
+FamSize       1        8         7           
+
+                                                             Fam
+HouseID    Set    Choice    Brand    LogPrice     LogInc    Size
+
+2100016     1        1      PPk      -0.41552    3.48124      2 
+2100016     1        0      PBB      -0.40048    3.48124      2 
+2100016     1        0      PFl       0.08618    3.48124      2 
+2100016     1        0      PHse     -0.56212    3.48124      2 
+2100016     1        0      PGen     -1.02165    3.48124      2 
+
+Observations
+------------
+       20430
+
+NAME            TYPE    LENGTH    VARNUM    LABEL
+
+Atlanta           1        8         1           
+Chicago           1        8         2           
+Denver            1        8         3           
+Houston           1        8         4           
+LosAngeles        1        8         5           
+Miami             1        8         6           
+NewYork           1        8         7           
+SanFrancisco      1        8         8           
+Seattle           1        8         9           
+WashingtonDC      1        8        10           
+City              2       15        11           
+
+                                             Los                New       San                  Washington
+Atlanta    Chicago    Denver    Houston    Angeles    Miami    York    Francisco    Seattle        DC        City
+
+     0          .         .          .        .         .        .         .           .            .        Atlanta    
+   587          0         .          .        .         .        .         .           .            .        Chicago    
+  1212        920         0          .        .         .        .         .           .            .        Denver     
+   701        940       879          0        .         .        .         .           .            .        Houston    
+  1936       1745       831       1374        0         .        .         .           .            .        Los Angeles
+
+Observations
+------------
+          10
+
+NAME                  TYPE    LENGTH    VARNUM    LABEL
+
+Latitude                1        8         1           
+Longitude               1        8         2           
+Depth                   1        8         3           
+Magnitude               1        8         4           
+dNearestStation         1        8         5           
+RootMeanSquareTime      1        8         6           
+Type                    2       10         7           
+
+                                                             Root
+                                                    d        Mean
+                                                 Nearest    Square
+Latitude    Longitude     Depth     Magnitude    Station     Time        Type
+
+ 35.6880     -121.129     6.2500       2.75      0.02121    0.0700    earthquake
+ 41.9009     -119.622     0.0000       4.59      0.50700    0.0742    earthquake
+ 41.8836     -119.641     0.5329       3.19      0.49300    0.0000    earthquake
+ 41.8897     -119.640     0.5077       3.12      0.49400    0.0119    earthquake
+ 40.8783     -123.270    33.5700       2.60      0.22160    0.0600    earthquake
+
+Observations
+------------
+       15578
+
+NAME         TYPE    LENGTH    VARNUM    LABEL
+
+Latitude       1        8         1           
+Longitude      1        8         2           
+Name           2       34         3           
+Area           2       14         4           
+Type           2        9         5           
+Farenheit      1        8         6           
+Celsius        1        8         7           
+
+Latitude    Longitude    Name                                 Area            Type       Farenheit    Celsius
+
+ 51.925      -177.160    Fumaroles on Kanaga Island           Adak          Hotspring       219         104  
+ 65.858      -164.710    Serpentine Hot Springs               Bendeleben    Hotspring       171          77  
+ 53.851      -166.918    Hot Springs Near Makushin Volcano    Unalaska      Hotspring         H           H  
+ 53.877      -166.448    Hot Springs Near Summer Bay          Unalaska      Hotspring         H           H  
+ 52.270      -174.042    Hot Springs on Atka Island           Atka          Hotspring         H           H  
+
+Observations
+------------
+        1587

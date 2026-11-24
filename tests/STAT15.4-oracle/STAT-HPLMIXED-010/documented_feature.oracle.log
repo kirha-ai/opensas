@@ -1,0 +1,163 @@
+The SAS System
+
+3090       
+3091       /* STAT-HPLMIXED-010: HPLMIXED — Displayed Output / ODS Table Names
+3092        * Source: S154 / Chapter 60 / `Displayed Output` (PDF pp. 4728–4731); S154 / Chapter 60 / `ODS Table Names` (PDF p. 4731).
+3093        * Discriminates: Getting Started: HPLMIXED Procedure
+3094        */
+3095       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+3095     ! validmemname=compatible locale=en_US;
+3096       %let syscc=0;
+3097       title; footnote;
+3098       ods _all_ close;
+3099       ods listing gpath="%sysfunc(pathname(work))";
+3100       ods graphics off;
+3101       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SCHOOLSAMPLE (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+3101     !                                         quit;
+
+
+3102       ods path work.templat(update) sashelp.tmplmst(read);
+3103       
+3104       ods trace on;
+3105       data SchoolSample;
+3106       do SchoolID = 1 to 300;
+3107       do nID = 1 to 25;
+3108       Neighborhood = (SchoolID-1)*5 + nId;
+3109       bInt = 5 *ranuni(1);
+3110       bTime = 5 *ranuni(1);
+3111       bTime2 = ranuni(1);
+3112       do sID = 1 to 2;
+3113       do Time = 1 to 4;
+3114       Math = bInt + bTime*Time + bTime2*Time*Time + rannor(2);
+3115       output;
+3116       end;
+3117       end;
+3118       end;
+3119       end;
+3120       run;
+
+NOTE: The data set WORK.SCHOOLSAMPLE has 60000 observations and 9 variables.
+
+3121       proc hplmixed data=SchoolSample;
+3122       class Neighborhood SchoolID;
+3123       model Math = Time Time*Time / solution;
+3124       random int Time Time *Time / sub=Neighborhood(SchoolID) type=un;
+3125       run;
+
+NOTE: The HPLMIXED procedure is executing in single-machine mode.
+
+Output Added:
+-------------
+Name:       PerformanceInfo
+Label:      Performance Information
+Template:   HPA.Common.PerfInfo
+Path:       HPLMixed.PerformanceInfo
+-------------
+
+Output Added:
+-------------
+Name:       DataAccessInfo
+Label:      Data Access Information
+Template:   HPA.Common.DataAccessInfo
+Path:       HPLMixed.DataAccessInfo
+-------------
+
+Output Added:
+-------------
+Name:       ModelInfo
+Label:      Model Information
+Template:   HPSTAT.Hplmixed.ModelInfo
+Path:       HPLMixed.ModelInfo
+-------------
+NOTE: Convergence criterion (ABSGCONV=0.00001) satisfied.
+
+Output Added:
+-------------
+Name:       ClassLevels
+Label:      Class Level Information
+Template:   HPA.Common.ClassLevels
+Path:       HPLMixed.ClassLevels
+-------------
+
+Output Added:
+-------------
+Name:       Dimensions
+Label:      Dimensions
+Template:   HPSTAT.Hplmixed.Dimensions
+Path:       HPLMixed.Dimensions
+-------------
+
+Output Added:
+-------------
+Name:       NObs
+Label:      Number of Observations
+Template:   HPSTAT.Hplmixed.NObs
+Path:       HPLMixed.NObs
+-------------
+
+Output Added:
+-------------
+Name:       OptInfo
+Label:      Optimization Information
+Template:   HPA.Common.OptInfo
+Path:       HPLMixed.OptInfo
+-------------
+
+Output Added:
+-------------
+Name:       IterHistory
+Label:      Iteration History
+Template:   HPA.Common.IterHistory
+Path:       HPLMixed.IterHistory
+-------------
+
+Output Added:
+-------------
+Name:       ConvergenceStatus
+Label:      Convergence Status
+Template:   HPA.Common.ConvergenceStatus
+Path:       HPLMixed.ConvergenceStatus
+-------------
+
+Output Added:
+-------------
+Name:       CovParms
+Label:      Covariance Parameter Estimates
+Template:   HPSTAT.Hplmixed.CovParms
+Path:       HPLMixed.CovParms
+-------------
+
+Output Added:
+-------------
+Name:       FitStatistics
+Label:      Fit Statistics
+Template:   HPSTAT.Hplmixed.FitStatistics
+Path:       HPLMixed.FitStatistics
+-------------
+
+Output Added:
+-------------
+Name:       SolutionF
+Label:      Solution for Fixed Effects
+Template:   HPSTAT.Hplmixed.SolutionF
+Path:       HPLMixed.SolutionF
+-------------
+NOTE: The PROCEDURE HPLMIXED printed page 185.
+
+3126       ods trace off;
+3127       
+3128       
+3129       
+3130       
+The SAS System
+
+3131       

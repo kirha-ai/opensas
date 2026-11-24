@@ -1,0 +1,57 @@
+The SAS System
+
+4953       
+4954       /* STAT-MULTTEST-004: MULTTEST — CONTRAST / TEST
+4955        * Source: S154 / Chapter 86 / `CONTRAST Statement` (PDF pp. 6910–6911); S154 / Chapter 86 / `TEST Statement` (PDF pp. 6912–6914).
+4956        * Discriminates: Getting Started: MULTTEST Procedure; explicit statements: CONTRAST, TEST
+4957        */
+4958       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+4958     ! validmemname=compatible locale=en_US;
+4959       %let syscc=0;
+4960       title; footnote;
+4961       ods _all_ close;
+4962       ods listing gpath="%sysfunc(pathname(work))";
+4963       ods graphics off;
+4964       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.DRUG (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+4964     !                                         quit;
+
+
+4965       ods path work.templat(update) sashelp.tmplmst(read);
+4966       
+4967       data Drug;
+4968       input Dose$ SideEff1-SideEff10;
+4969       datalines;
+
+NOTE: The data set WORK.DRUG has 15 observations and 11 variables.
+
+4985       ;
+4986       ods graphics on;
+4987       proc multtest bootstrap nsample=499 seed=41287 notables
+4988       plots=PByTest(vref=0.05 0.1);
+4989       class Dose;
+4990       test ca(SideEff1-SideEff10);
+4991       contrast 'Trend' 0 1 2;
+4992       run;
+
+NOTE: No input data set is specified.  The data set WORK.DRUG is used.
+NOTE: There were 15 observations read from the data set WORK.DRUG.
+NOTE: The PROCEDURE MULTTEST printed page 362.
+
+4993       ods graphics off;
+4994       run;
+4995       quit;
+4996       
+4997       
+4998       
+4999       
+The SAS System
+
+5000       

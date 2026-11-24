@@ -1,0 +1,82 @@
+The SAS System
+
+4677       
+4678       /* STAT-PLM-003: PLM — FILTER / SHOW / WHERE
+4679        * Source: S154 / Chapter 94 / `FILTER Statement` (PDF pp. 7635–7636); S154 / Chapter 94 / `SHOW Statement` (PDF pp. 7641–7643); S154 / Chapter
+4679     ! 94 / `WHERE Statement` (PDF pp. 7644–7646).
+4680        * Discriminates: Getting Started: PLM Procedure; explicit statements: SHOW
+4681        */
+4682       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+4682     ! validmemname=compatible locale=en_US;
+4683       %let syscc=0;
+4684       title; footnote;
+4685       ods _all_ close;
+4686       ods listing gpath="%sysfunc(pathname(work))";
+4687       ods graphics off;
+4688       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.BLOCKANALYSIS (memtype=ITEMSTOR).
+NOTE: Deleting WORK.BLOCKDESIGN (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+4688     !                                         quit;
+
+
+4689       ods path work.templat(update) sashelp.tmplmst(read);
+4690       
+4691       data BlockDesign;
+4692       input block a b y @@;
+4693       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.BLOCKDESIGN has 24 observations and 4 variables.
+
+4706       ;
+4707       proc glm data=BlockDesign;
+4708       class block a b;
+4709       model y = block a b a*b / solution;
+4710       store work.BlockAnalysis / label='PLM: Getting Started';
+4711       run;
+
+
+NOTE: The GLM procedure generated the model item store WORK.BLOCKANALYSIS.
+NOTE: The PROCEDURE GLM printed pages 355-356.
+
+4712       proc plm restore=work.BlockAnalysis;
+4713       run;
+
+NOTE: The PROCEDURE PLM printed page 357.
+
+4714       proc plm restore=work.BlockAnalysis;
+4715       show fit parms;
+4716       test a b a*b;
+4717       run;
+
+NOTE: The PROCEDURE PLM printed page 358.
+
+4718       proc plm restore=work.BlockAnalysis seed=3;
+4719       lsmeans a / diff;
+4720       lsmestimate a -1 1,
+4721       1 1 -2 / uppertailed ftest;
+4722       run;
+
+NOTE: Random number seed for this analysis set to 3.
+NOTE: The PROCEDURE PLM printed page 359.
+
+4723       ods graphics on;
+4724       proc plm restore=work.BlockAnalysis;
+4725       slice a*b / sliceby(b='1') diff;
+4726       run;
+
+NOTE: The PROCEDURE PLM printed page 360.
+
+4727       ods graphics off;
+4728       run;
+4729       quit;
+4730       
+4731       
+4732       
+4733       
+The SAS System
+
+4734       

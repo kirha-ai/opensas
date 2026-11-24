@@ -1,0 +1,58 @@
+The SAS System
+
+5975       
+5976       /* STAT-NLIN-011: NLIN — Measures of Nonlinearity, Diagnostics and Inference
+5977        * Source: S154 / Chapter 88 / `Measures of Nonlinearity, Diagnostics and Inference` (PDF pp. 7016–7024).
+5978        * Discriminates: Example 88.6: ODS Graphics and Diagnostics
+5979        */
+5980       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+5980     ! validmemname=compatible locale=en_US;
+5981       %let syscc=0;
+5982       title; footnote;
+5983       ods _all_ close;
+5984       ods listing gpath="%sysfunc(pathname(work))";
+5985       ods graphics off;
+5986       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.ENZYME (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+5986     !                                         quit;
+
+
+5987       ods path work.templat(update) sashelp.tmplmst(read);
+5988       
+5989       data contrived;
+5990       input x1 x2 y;
+5991       datalines;
+
+NOTE: The data set WORK.CONTRIVED has 13 observations and 3 variables.
+
+6005       ;
+6006       ods graphics on;
+6007       proc nlin data=contrived bias hougaard
+6008       NLINMEASURES plots(stats=all)=(diagnostics);
+6009       parms alpha=2.0
+6010       gamma=0.0;
+6011       model y = alpha*x1 + exp(gamma*x2);
+6012       run;
+
+NOTE: DER.alpha not initialized or missing. It will be computed automatically.
+NOTE: DER.gamma not initialized or missing. It will be computed automatically.
+NOTE: Convergence criterion met.
+NOTE: Convergence could not be attained for maximum parameter-effects curvature.
+NOTE: The PROCEDURE NLIN printed page 396.
+
+6013       ods graphics off;
+6014       run;
+6015       quit;
+6016       
+6017       
+6018       
+6019       
+The SAS System
+
+6020       

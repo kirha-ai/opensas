@@ -1,0 +1,46 @@
+The SAS System
+
+16563      
+16564      /* STAT-SIM2D-002: SIM2D — Conditional/unconditional two-dimensional spatial random field simulation
+16565       * Source: S154 / Chapter 112 / `Getting Started: SIM2D Procedure` (PDF pp. 9307–9314); S154 / Chapter 112 / `Overview: SIM2D Procedure` (PDF pp.
+16565    ! 9306–9307).
+16566       * Discriminates: Documented default analysis with explicit complete public or synthetic inputs
+16567       */
+16568      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+16568    ! validmemname=compatible locale=en_US;
+16569      %let syscc=0;
+16570      title; footnote;
+16571      ods _all_ close;
+16572      ods listing gpath="%sysfunc(pathname(work))";
+16573      ods graphics off;
+16574      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SIM (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+16574    !                                         quit;
+
+
+16575      ods path work.templat(update) sashelp.tmplmst(read);
+16576      
+16577      proc sim2d data=sashelp.thick outsim=sim; coordinates xc=East yc=North; simulate var=Thick numreal=2 seed=79931 scale=7.4599 range=30.1111
+16577    ! nugget=1e-8 form=gauss; mean 40.1173; grid x=0 to 20 by 10 y=0 to 20 by 10; run;
+
+NOTE: The data set WORK.SIM has 18 observations and 6 variables.
+NOTE: The PROCEDURE SIM2D printed page 1183.
+
+16578      proc print data=sim noobs; run;
+
+NOTE: There were 18 observations read from the data set WORK.SIM.
+NOTE: The PROCEDURE PRINT printed page 1184.
+
+16579      
+16580      
+16581      
+16582      
+The SAS System
+
+16583      

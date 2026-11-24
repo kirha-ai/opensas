@@ -1,0 +1,103 @@
+The SAS System
+
+24238      
+24239      /* STAT-SURVEYREG-007: SURVEYREG — Multiple R-Square / Adjusted R-Square / Root Mean Square Errors
+24240       * Source: S154 / Chapter 123 / `Multiple R-Square` (PDF p. 10147); S154 / Chapter 123 / `Adjusted R-Square` (PDF p. 10147); S154 / Chapter 123 /
+24240    ! `Root Mean Square Errors` (PDF pp. 10147–10148).
+24241       * Discriminates: Getting Started: SURVEYREG Procedure
+24242       */
+24243      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+24243    ! validmemname=compatible locale=en_US;
+24244      %let syscc=0;
+24245      title; footnote;
+24246      ods _all_ close;
+24247      ods listing gpath="%sysfunc(pathname(work))";
+24248      ods graphics off;
+24249      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SAMPLE (memtype=DATA).
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.STRATUMTOTALS (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+24249    !                                         quit;
+
+
+24250      ods path work.templat(update) sashelp.tmplmst(read);
+24251      
+24252      data IceCream;
+24253      input Grade Spending Income Kids @@;
+24254      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.ICECREAM has 40 observations and 4 variables.
+
+24269      ;
+24270      title1 'Ice Cream Spending Analysis';
+24271      title2 'Simple Random Sample Design';
+24272      proc surveyreg data=IceCream total=4000;
+24273      class Kids;
+24274      model Spending = Income Kids / solution;
+24275      run;
+
+NOTE: The PROCEDURE SURVEYREG printed page 1540.
+
+24276      data StudentTotals;
+24277      input Grade _TOTAL_;
+24278      datalines;
+
+NOTE: The data set WORK.STUDENTTOTALS has 3 observations and 2 variables.
+
+24282      ;
+24283      data IceCream;
+24284      set IceCream;
+24285      if Grade=7 then Prob=20/1824;
+24286      if Grade=8 then Prob=9/1025;
+24287      if Grade=9 then Prob=11/1151;
+24288      Weight=1/Prob;
+24289      run;
+
+NOTE: There were 40 observations read from the data set WORK.ICECREAM.
+NOTE: The data set WORK.ICECREAM has 40 observations and 6 variables.
+
+24290      ods graphics on;
+24291      title1 'Ice Cream Spending Analysis';
+24292      title2 'Stratified Sample Design';
+24293      proc surveyreg data=IceCream total=StudentTotals;
+24294      strata Grade /list;
+24295      model Spending = Income;
+24296      weight Weight;
+24297      run;
+
+NOTE: The PROCEDURE SURVEYREG printed page 1541.
+
+24298      title1 'Ice Cream Spending Analysis';
+24299      title2 'Stratified Sample Design';
+24300      proc surveyreg data=IceCream total=StudentTotals;
+24301      strata Grade /list;
+24302      model Spending = Income;
+24303      weight Weight;
+24304      ods output ParameterEstimates = MyParmEst;
+24305      run;
+
+NOTE: The data set WORK.MYPARMEST has 2 observations and 6 variables.
+NOTE: The PROCEDURE SURVEYREG printed page 1542.
+
+24306      ods output ParameterEstimates = MyParmEst;
+24307      proc print data=MyParmEst;
+24308      run;
+
+WARNING: Output 'ParameterEstimates' was not created.  Make sure that the output object name, label, or path is spelled correctly.  Also, verify that the 
+         appropriate procedure options are used to produce the requested output object.  For example, verify that the NOPRINT option is not used.
+NOTE: There were 2 observations read from the data set WORK.MYPARMEST.
+NOTE: The PROCEDURE PRINT printed page 1543.
+
+24309      
+24310      
+24311      
+24312      
+The SAS System
+
+24313      

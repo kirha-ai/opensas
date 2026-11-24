@@ -1,0 +1,284 @@
+The SAS System
+
+5013       
+5014       /* STAT-PLM-009: PLM — ODS Table Names
+5015        * Source: S154 / Chapter 94 / `ODS Table Names` (PDF pp. 7649–7650).
+5016        * Discriminates: Getting Started: PLM Procedure
+5017        */
+5018       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+5018     ! validmemname=compatible locale=en_US;
+5019       %let syscc=0;
+5020       title; footnote;
+5021       ods _all_ close;
+5022       ods listing gpath="%sysfunc(pathname(work))";
+5023       ods graphics off;
+5024       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SIMUDATA (memtype=DATA).
+NOTE: Deleting WORK.SIMUMODEL (memtype=ITEMSTOR).
+NOTE: Deleting WORK.TEST (memtype=DATA).
+NOTE: Deleting WORK.TESTOUT (memtype=DATA).
+5024     !                                         quit;
+
+
+5025       ods path work.templat(update) sashelp.tmplmst(read);
+5026       
+5027       ods trace on;
+5028       data BlockDesign;
+5029       input block a b y @@;
+5030       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.BLOCKDESIGN has 24 observations and 4 variables.
+
+5043       ;
+5044       proc glm data=BlockDesign;
+5045       class block a b;
+5046       model y = block a b a*b / solution;
+5047       store work.BlockAnalysis / label='PLM: Getting Started';
+5048       run;
+
+
+Output Added:
+-------------
+Name:       ClassLevels
+Label:      Class Levels
+Template:   STAT.GLM.ClassLevels
+Path:       GLM.Data.ClassLevels
+-------------
+
+Output Added:
+-------------
+Name:       NObs
+Label:      Number of Observations
+Template:   STAT.GLM.NObsNotitle
+Path:       GLM.Data.NObs
+-------------
+
+Output Added:
+-------------
+Name:       OverallANOVA
+Label:      Overall ANOVA
+Template:   stat.GLM.OverallANOVA
+Path:       GLM.ANOVA.y.OverallANOVA
+-------------
+
+Output Added:
+-------------
+Name:       FitStatistics
+Label:      Fit Statistics
+Template:   stat.GLM.FitStatistics
+Path:       GLM.ANOVA.y.FitStatistics
+-------------
+
+Output Added:
+-------------
+Name:       ModelANOVA
+Label:      Type I Model ANOVA
+Template:   stat.GLM.Tests
+Path:       GLM.ANOVA.y.ModelANOVA
+-------------
+
+Output Added:
+-------------
+Name:       ModelANOVA
+Label:      Type III Model ANOVA
+Template:   stat.GLM.Tests
+Path:       GLM.ANOVA.y.ModelANOVA
+-------------
+
+Output Added:
+-------------
+Name:       ParameterEstimates
+Label:      Solution
+Template:   stat.GLM.Estimates
+Path:       GLM.ANOVA.y.ParameterEstimates
+-------------
+
+NOTE: The GLM procedure generated the model item store WORK.BLOCKANALYSIS.
+NOTE: The PROCEDURE GLM printed pages 375-376.
+
+5049       proc plm restore=work.BlockAnalysis;
+5050       run;
+
+
+Output Added:
+-------------
+Name:       StoreInfo
+Label:      Store Information
+Template:   Stat.Plm.StoreInfo
+Path:       PLM.StoreInfo
+-------------
+
+Output Added:
+-------------
+Name:       ClassLevels
+Label:      Class Level Information
+Template:   Stat.Plm.ClassLevels
+Path:       PLM.ClassLevels
+-------------
+NOTE: The PROCEDURE PLM printed page 377.
+
+5051       proc plm restore=work.BlockAnalysis;
+5052       show fit parms;
+5053       test a b a*b;
+5054       run;
+
+
+Output Added:
+-------------
+Name:       StoreInfo
+Label:      Store Information
+Template:   Stat.Plm.StoreInfo
+Path:       PLM.StoreInfo
+-------------
+
+Output Added:
+-------------
+Name:       ClassLevels
+Label:      Class Level Information
+Template:   Stat.Plm.ClassLevels
+Path:       PLM.ClassLevels
+-------------
+
+Output Added:
+-------------
+Name:       FitStatistics
+Label:      Fit Statistics
+Template:   Stat.PLM.FitStatistics
+Path:       PLM.Contents.FitStatistics
+-------------
+
+Output Added:
+-------------
+Name:       ParameterEstimates
+Label:      Parameter Estimates
+Template:   Stat.PLM.ParameterEstimates
+Path:       PLM.Contents.ParameterEstimates
+-------------
+
+Output Added:
+-------------
+Name:       Tests3
+Label:      Type III Tests of Model Effects
+Template:   Stat.PLM.Tests3
+Path:       PLM.Tests.Tests3
+-------------
+NOTE: The PROCEDURE PLM printed page 378.
+
+5055       proc plm restore=work.BlockAnalysis seed=3;
+5056       lsmeans a / diff;
+5057       lsmestimate a -1 1,
+5058       1 1 -2 / uppertailed ftest;
+5059       run;
+
+NOTE: Random number seed for this analysis set to 3.
+
+Output Added:
+-------------
+Name:       StoreInfo
+Label:      Store Information
+Template:   Stat.Plm.StoreInfo
+Path:       PLM.StoreInfo
+-------------
+
+Output Added:
+-------------
+Name:       ClassLevels
+Label:      Class Level Information
+Template:   Stat.Plm.ClassLevels
+Path:       PLM.ClassLevels
+-------------
+
+Output Added:
+-------------
+Name:       LSMeans
+Label:      a LS-Means
+Template:   Stat.PLM.LSMeans
+Path:       PLM.LSMeans.LSMeans
+-------------
+
+Output Added:
+-------------
+Name:       Diffs
+Label:      a Diffs
+Template:   Stat.PLM.Diffs
+Path:       PLM.LSMeans.Diffs
+-------------
+
+Output Added:
+-------------
+Name:       LSMEstimates
+Label:      Least Squares Means Estimates
+Template:   Stat.PLM.LSMEstimates
+Path:       PLM.LSMEstimates.LSMEstimates
+-------------
+
+Output Added:
+-------------
+Name:       Contrasts
+Label:      F Test
+Template:   Stat.PLM.FTest
+Path:       PLM.LSMEstimates.Contrasts
+-------------
+NOTE: The PROCEDURE PLM printed page 379.
+
+5060       ods graphics on;
+5061       proc plm restore=work.BlockAnalysis;
+5062       slice a*b / sliceby(b='1') diff;
+5063       run;
+
+
+Output Added:
+-------------
+Name:       StoreInfo
+Label:      Store Information
+Template:   Stat.Plm.StoreInfo
+Path:       PLM.StoreInfo
+-------------
+
+Output Added:
+-------------
+Name:       ClassLevels
+Label:      Class Level Information
+Template:   Stat.Plm.ClassLevels
+Path:       PLM.ClassLevels
+-------------
+
+Output Added:
+-------------
+Name:       SliceTests
+Label:      a*b F Test
+Template:   Stat.PLM.FTest
+Path:       PLM.Slices.SliceTests
+-------------
+
+Output Added:
+-------------
+Name:       SliceDiffs
+Label:      a*b Diffs
+Template:   Stat.PLM.Diffs
+Path:       PLM.Slices.SliceDiffs
+-------------
+
+Output Added:
+-------------
+Name:       DiffPlot
+Label:      a*b Diffogram
+Template:   Stat.PLM.Graphics.DiffPlot
+Path:       PLM.Slices.DiffPlot
+-------------
+NOTE: The PROCEDURE PLM printed page 380.
+
+5064       ods graphics off;
+5065       run;
+5066       quit;
+5067       ods trace off;
+5068       
+5069       
+5070       
+5071       
+The SAS System
+
+5072       

@@ -1,0 +1,79 @@
+The SAS System
+
+22160      
+22161      /* STAT-SURVEYMEANS-008: SURVEYMEANS — Ratio / Domain Statistics / Quantiles
+22162       * Source: S154 / Chapter 121 / `Ratio` (PDF pp. 9945–9946); S154 / Chapter 121 / `Domain Statistics` (PDF pp. 9946–9949); S154 / Chapter 121 /
+22162    ! `Quantiles` (PDF pp. 9949–9956).
+22163       * Discriminates: Example 121.6: Comparing Domain Means
+22164       */
+22165      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+22165    ! validmemname=compatible locale=en_US;
+22166      %let syscc=0;
+22167      title; footnote;
+22168      ods _all_ close;
+22169      ods listing gpath="%sysfunc(pathname(work))";
+22170      ods graphics off;
+22171      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.ICECREAM (memtype=DATA).
+NOTE: Deleting WORK.MYSTAT (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.STUDENTTOTALS (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+22171    !                                         quit;
+
+
+22172      ods path work.templat(update) sashelp.tmplmst(read);
+22173      
+22174      data IceCreamDataDomain;
+22175      input Grade Spending Gender$ @@;
+22176      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.ICECREAMDATADOMAIN has 40 observations and 3 variables.
+
+22191      ;
+22192      data IceCreamDataDomain;
+22193      set IceCreamDataDomain;
+22194      if Grade=7 then Prob=20/1824;
+22195      if Grade=8 then Prob=9/1025;
+22196      if Grade=9 then Prob=11/1151;
+22197      Weight=1/Prob;
+22198      run;
+
+NOTE: There were 40 observations read from the data set WORK.ICECREAMDATADOMAIN.
+NOTE: The data set WORK.ICECREAMDATADOMAIN has 40 observations and 5 variables.
+
+22199      data StudentTotals;
+22200      input Grade _TOTAL_;
+22201      datalines;
+
+NOTE: The data set WORK.STUDENTTOTALS has 3 observations and 2 variables.
+
+22205      ;
+22206      ods graphics on;
+22207      proc surveymeans data=IceCreamDataDomain total=StudentTotals;
+22208      strata Grade;
+22209      var spending;
+22210      domain Grade / diffmeans adjust=bon;
+22211      domain Gender*Grade('8') / diffmeans;
+22212      weight Weight;
+22213      run;
+
+NOTE: STRATA variables are also used for Grade domains, the degrees of freedom may be adjusted in domain analysis.
+NOTE: STRATA variables are also used for Gender*Grade domains, the degrees of freedom may be adjusted in domain analysis.
+NOTE: The PROCEDURE SURVEYMEANS printed pages 1458-1460.
+
+22214      run;
+22215      quit;
+22216      
+22217      
+22218      
+22219      
+The SAS System
+
+22220      

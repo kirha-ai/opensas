@@ -1,0 +1,2 @@
+WARNING: Too many factors for a unique solution.
+ERROR: Converged, but not to a proper optimum.

@@ -1,0 +1,53 @@
+The SAS System
+
+80         
+81         /* STAT-NLMIXED-011: NLMIXED — CONTRAST / ESTIMATE
+82          * Source: S154 / Chapter 89 / `CONTRAST Statement` (PDF p. 7121); S154 / Chapter 89 / `ESTIMATE Statement` (PDF pp. 7121–7122).
+83          * Discriminates: Example 89.4: Poisson-Normal Model with Count Data; explicit statements: ESTIMATE
+84          */
+85         options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+85       ! validmemname=compatible locale=en_US;
+86         %let syscc=0;
+87         title; footnote;
+88         ods _all_ close;
+89         ods listing gpath="%sysfunc(pathname(work))";
+90         ods graphics off;
+91         proc datasets library=work kill nolist;
+NOTE: Deleting WORK.NESTED (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+91       !                                         quit;
+
+
+92         ods path work.templat(update) sashelp.tmplmst(read);
+93         
+94         data pump;
+95         input y t group;
+96         pump = _n_;
+97         logtstd = log(t) - 2.4564900;
+98         datalines;
+
+NOTE: The data set WORK.PUMP has 10 observations and 5 variables.
+
+109        ;
+110        proc nlmixed data=pump;
+111        parms logsig 0 beta1 1 beta2 1 alpha1 1 alpha2 1;
+112        if (group = 1) then eta = alpha1 + beta1*logtstd + e;
+113        else eta = alpha2 + beta2*logtstd + e;
+114        lambda = exp(eta);
+115        model y ~ poisson(lambda);
+116        random e ~ normal(0,exp(2*logsig)) subject=pump;
+117        estimate 'alpha1-alpha2' alpha1-alpha2;
+118        estimate 'beta1-beta2' beta1-beta2;
+119        run;
+
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The PROCEDURE NLMIXED printed page 2.
+
+120        
+121        
+122        
+123        
+The SAS System
+
+124        

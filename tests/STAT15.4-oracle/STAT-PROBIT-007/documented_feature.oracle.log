@@ -1,0 +1,78 @@
+The SAS System
+
+2208       
+2209       /* STAT-PROBIT-007: PROBIT — ESTIMATE / TEST / Inverse Confidence Limits
+2210        * Source: S154 / Chapter 100 / `ESTIMATE Statement` (PDF pp. 8109–8110); S154 / Chapter 100 / `TEST Statement` (PDF p. 8120); S154 / Chapter 100 /
+2210     !  `Inverse Confidence Limits` (PDF pp. 8127–8128).
+2211        * Discriminates: Example 100.4: An Epidemiology Study; explicit statements: TEST
+2212        */
+2213       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+2213     ! validmemname=compatible locale=en_US;
+2214       %let syscc=0;
+2215       title; footnote;
+2216       ods _all_ close;
+2217       ods listing gpath="%sysfunc(pathname(work))";
+2218       ods graphics off;
+2219       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.BBALL (memtype=DATA).
+NOTE: Deleting WORK.BBALLM (memtype=DATA).
+NOTE: Deleting WORK.MAXRANK (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TBBALL (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+2219     !                                         quit;
+
+
+2220       ods path work.templat(update) sashelp.tmplmst(read);
+2221       
+2222       data epidemic;
+2223       input treat$ dose n r sex @@;
+2224       label dose = Dose;
+2225       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.EPIDEMIC has 10 observations and 5 variables.
+
+2229       ;
+2230       data xval;
+2231       input treat $ dose sex;
+2232       datalines;
+
+NOTE: The data set WORK.XVAL has 1 observations and 3 variables.
+
+2234       ;
+2235       ods graphics on;
+2236       proc probit optc lackfit covout data=epidemic
+2237       outest = out1 xdata = xval
+2238       Plots=(predpplot ippplot lpredplot);
+2239       class treat sex;
+2240       model r/n = dose treat sex sex*treat/corrb covb inversecl;
+2241       estimate 'Dose coefficient' dose 1;
+2242       test dose;
+2243       output out = out2 p =p;
+2244       run;
+
+NOTE: Algorithm converged.
+NOTE: Since the chi-square is small (p > 0.1000), fiducial limits will be calculated using a z value of  1.96.
+WARNING: The observed probability is not less than 1 for record 1, no point was plotted for this record.
+NOTE: The confidence limits displayed on the plots are conditioned on the estimated threshold. The variation in estimating the threshold is ignored.
+NOTE: The data set WORK.OUT1 has 12 observations and 18 variables.
+NOTE: The data set WORK.OUT2 has 10 observations and 6 variables.
+NOTE: The PROCEDURE PROBIT printed pages 69-70.
+
+2245       
+2246       ods graphics off;
+2247       
+2248       
+2249       
+2250       
+The SAS System
+
+2251       

@@ -1,0 +1,96 @@
+The SAS System
+
+564        
+565        /* STAT-FACTOR-001: FACTOR — Data input, variable roles, and basic options
+566         * Source: S154 / Chapter 44 / `PROC FACTOR Statement` (PDF pp. 2797–2816); S154 / Chapter 44 / `BY Statement` (PDF p. 2816); S154 / Chapter 44 /
+566      ! `FREQ Statement` (PDF pp. 2816–2817); S154 / Chapter 44 / `VAR Statement` (PDF p. 2823); S154 / Chapter 44 / `WEIGHT Statement` (PDF pp.
+566      ! 2823–2824); S154 / Chapter 44 / `Input Data Set` (PDF pp. 2824–2826); S154 / Chapter 44 / `Missing Values` (PDF pp. 2834–2835).
+567         * Discriminates: Two explicit BY groups contain identical inputs, exposing group boundaries and per-group results.
+568         */
+569        options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+569      ! validmemname=compatible locale=en_US;
+570        %let syscc=0;
+571        title; footnote;
+572        ods _all_ close;
+573        ods listing gpath="%sysfunc(pathname(work))";
+574        ods graphics off;
+575        proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK._ORACLE_INPUT (memtype=DATA).
+575      !                                         quit;
+
+
+576        ods path work.templat(update) sashelp.tmplmst(read);
+577        
+578        data SocioEconomics;
+579        input Population School Employment Services HouseValue;
+580        datalines;
+
+NOTE: The data set WORK.SOCIOECONOMICS has 12 observations and 5 variables.
+
+593        ;
+594        data _oracle_input; set SocioEconomics; do _oracle_by=1 to 2; output; end; run;
+
+NOTE: There were 12 observations read from the data set WORK.SOCIOECONOMICS.
+NOTE: The data set WORK._ORACLE_INPUT has 24 observations and 6 variables.
+
+595        proc sort data=_oracle_input; by _oracle_by; run;
+
+NOTE: There were 24 observations read from the data set WORK._ORACLE_INPUT.
+NOTE: The data set WORK._ORACLE_INPUT has 24 observations and 6 variables.
+
+596        proc factor data=_oracle_input simple corr;
+597        by _oracle_by;
+598        run;
+
+NOTE: 2 factors will be retained by the MINEIGEN criterion.
+NOTE: The above message was for the following BY group:
+      _oracle_by=1
+NOTE: 2 factors will be retained by the MINEIGEN criterion.
+NOTE: The above message was for the following BY group:
+      _oracle_by=2
+NOTE: The PROCEDURE FACTOR printed pages 69-72.
+
+599        proc factor data=SocioEconomics n=5 score;
+600        run;
+
+NOTE: 5 factors will be retained by the NFACTOR criterion.
+NOTE: The PROCEDURE FACTOR printed pages 73-75.
+
+601        proc princomp data=SocioEconomics;
+602        run;
+
+NOTE: The PROCEDURE PRINCOMP printed page 76.
+
+603        proc factor data=SocioEconomics n=5 score;
+604        ods output StdScoreCoef=Coef;
+605        run;
+
+NOTE: 5 factors will be retained by the NFACTOR criterion.
+NOTE: The data set WORK.COEF has 5 observations and 6 variables.
+NOTE: The PROCEDURE FACTOR printed pages 77-79.
+
+606        proc stdize method=ustd mult=.44721 data=Coef out=eigenvectors;
+607        var Factor1-Factor5;
+608        run;
+
+NOTE: VARDEF= DF is equivalent to VARDEF= N when USTD is used for standardization or for the initial estimates for the A estimates.
+NOTE: There were 5 observations read from the data set WORK.COEF.
+NOTE: The data set WORK.EIGENVECTORS has 5 observations and 6 variables.
+
+609        proc print data=eigenvectors;
+610        run;
+
+NOTE: There were 5 observations read from the data set WORK.EIGENVECTORS.
+NOTE: The PROCEDURE PRINT printed page 80.
+
+611        
+612        
+613        
+614        
+The SAS System
+
+615        

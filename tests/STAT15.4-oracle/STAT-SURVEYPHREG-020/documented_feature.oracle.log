@@ -1,0 +1,139 @@
+The SAS System
+
+23592      
+23593      /* STAT-SURVEYPHREG-020: SURVEYPHREG — ODS Graphics
+23594       * Source: S154 / Chapter 122 / `ODS Graphics` (PDF p. 10083).
+23595       * Discriminates: Verified default procedure context
+23596       */
+23597      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+23597    ! validmemname=compatible locale=en_US;
+23598      %let syscc=0;
+23599      title; footnote;
+23600      ods _all_ close;
+23601      ods listing gpath="%sysfunc(pathname(work))";
+23602      ods graphics off;
+23603      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SURVEY (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+23603    !                                         quit;
+
+
+23604      ods path work.templat(update) sashelp.tmplmst(read);
+23605      
+23606      ods graphics on;
+23607      ods trace on;
+23608      ods trace on;
+23609      data survey;
+23610      call streaminit(722);
+23611      do stratum=1 to 2;
+23612      do cluster=1 to 4;
+23613      do id=1 to 12;
+23614      age=20+mod(id*7+cluster,45);
+23615      time=1+rand('exponential')*10;
+23616      status=(mod(id,4) ne 0);
+23617      weight=2+stratum+cluster/10;
+23618      output;
+23619      end;
+23620      end;
+23621      end;
+23622      run;
+
+NOTE: The data set WORK.SURVEY has 96 observations and 7 variables.
+
+23623      proc surveyphreg data=survey;
+23624      strata stratum;
+23625      cluster cluster;
+23626      weight weight;
+23627      model time*status(0)=age;
+23628      run;
+
+
+Output Added:
+-------------
+Name:       ModelInfo
+Label:      Model Information
+Template:   Stat.SURVEYPHREG.ModelInfo
+Path:       Surveyphreg.ModelInfo
+-------------
+
+Output Added:
+-------------
+Name:       NObs
+Label:      Summary
+Template:   Stat.SURVEYPHREG.NObs
+Path:       Surveyphreg.NObs
+-------------
+
+Output Added:
+-------------
+Name:       DesignSummary
+Label:      Design Summary
+Template:   Stat.SURVEYPHREG.DesignSummary
+Path:       Surveyphreg.DesignSummary
+-------------
+
+Output Added:
+-------------
+Name:       CensoredSummary
+Label:      Summary of Event and Censored Observations
+Template:   Stat.SURVEYPHREG.CensoredSummary
+Path:       Surveyphreg.CensoredSummary
+-------------
+
+Output Added:
+-------------
+Name:       WeightedCensoredSummary
+Label:      Summary of Weighted Event and Censored Observations
+Template:   Stat.SURVEYPHREG.WeightedCensoredSummary
+Path:       Surveyphreg.WeightedCensoredSummary
+-------------
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+
+Output Added:
+-------------
+Name:       VarianceEstimation
+Label:      Variance Estimation
+Template:   Stat.SURVEYPHREG.VarianceEstimation
+Path:       Surveyphreg.VarianceEstimation
+-------------
+
+Output Added:
+-------------
+Name:       FitStatistics
+Label:      Model Fit Statistics
+Template:   Stat.SURVEYPHREG.FitStatistics
+Path:       Surveyphreg.FitStatistics
+-------------
+
+Output Added:
+-------------
+Name:       GlobalTests
+Label:      Test of Global Null Hypothesis
+Template:   Stat.SURVEYPHREG.GlobalTests
+Path:       Surveyphreg.GlobalTests
+-------------
+
+Output Added:
+-------------
+Name:       ParameterEstimates
+Label:      Maximum Likelihood Estimates of Model Parameters
+Template:   Stat.SURVEYPHREG.ParameterEstimates
+Path:       Surveyphreg.ParameterEstimates
+-------------
+NOTE: The PROCEDURE SURVEYPHREG printed page 1513.
+
+23629      ods trace off;
+23630      ods trace off;
+23631      ods graphics off;
+23632      
+23633      
+23634      
+23635      
+The SAS System
+
+23636      

@@ -1,0 +1,106 @@
+
+The NLIN Procedure
+Dependent Variable y
+Method: Gauss-Newton
+
+             Iterative Phase
+                                   Sum of
+ Iter       alpha       gamma     Squares
+
+    0      2.0000           0     24.1300
+    1      1.9289      0.1192     24.0119
+    2      1.9686      0.0425     23.9467
+    3      1.9373      0.0941     23.9280
+    4      1.9610      0.0473     23.9255
+    5      1.9346      0.0915     23.9153
+    6      1.9459      0.0699     23.8996
+    7      1.9384      0.0782     23.8978
+    8      1.9447      0.0656     23.8971
+    9      1.9390      0.0749     23.8957
+   10      1.9424      0.0678     23.8956
+   11      1.9384      0.0742     23.8951
+   12      1.9398      0.0713     23.8948
+   13      1.9379      0.0735     23.8947
+   14      1.9396      0.0701     23.8947
+   15      1.9381      0.0726     23.8946
+   16      1.9390      0.0708     23.8946
+   17      1.9380      0.0724     23.8945
+   18      1.9383      0.0717     23.8945
+   19      1.9378      0.0722     23.8945
+   20      1.9383      0.0714     23.8945
+   21      1.9379      0.0720     23.8945
+   22      1.9381      0.0715     23.8945
+   23      1.9379      0.0720     23.8945
+   24      1.9380      0.0718     23.8945
+   25      1.9378      0.0719     23.8945
+   26      1.9380      0.0717     23.8945
+   27      1.9378      0.0719     23.8945
+   28      1.9379      0.0718     23.8945
+   29      1.9378      0.0718     23.8945
+   30      1.9379      0.0718     23.8945
+   31      1.9378      0.0718     23.8945
+   32      1.9379      0.0718     23.8945
+   33      1.9378      0.0718     23.8945
+   34      1.9378      0.0718     23.8945
+   35      1.9378      0.0718     23.8945
+   36      1.9378      0.0718     23.8945
+   37      1.9378      0.0718     23.8945
+   38      1.9378      0.0718     23.8945
+   39      1.9378      0.0718     23.8945
+   40      1.9378      0.0718     23.8945
+   41      1.9378      0.0718     23.8945
+   42      1.9378      0.0718     23.8945
+
+
+NOTE: Convergence criterion met.                                
+
+
+         Estimation Summary
+
+Method                   Gauss-Newton
+Iterations                         42
+Subiterations                      65
+Average Subiterations        1.547619
+R                            4.126E-6
+PPC(gamma)                   0.000083
+RPC(gamma)                   0.000356
+Object                       1.17E-11
+Objective                    23.89448
+Observations Read                  13
+Observations Used                  13
+Observations Missing                0
+
+
+NOTE: An intercept was not specified for this model.
+
+                                  Sum of        Mean               Approx
+Source                    DF     Squares      Square    F Value    Pr > F
+
+Model                      2       404.2       202.1      93.05    <.0001
+Error                     11     23.8945      2.1722                     
+Uncorrected Total         13       428.1                                 
+
+
+                              Approx       Approximate 95%                              Percent
+Parameter      Estimate    Std Error      Confidence Limits     Skewness        Bias       Bias
+
+alpha            1.9378       0.4704      0.9024      2.9733      6.6491      0.5763       29.7
+gamma            0.0718       0.7923     -1.6720      1.8156     -7.5596     -0.9982      -1390
+
+
+   Approximate Correlation Matrix
+                alpha           gamma
+
+alpha       1.0000000      -0.9511628
+gamma      -0.9511628       1.0000000
+
+
+       Global Nonlinearity Measures
+
+Max Intrinsic Curvature              6.6007
+RMS Intrinsic Curvature              4.0421
+Max Parameter-Effects Curvature      3.5719
+RMS Parameter-Effects Curvature      2.1873
+Curvature Critical Value             0.5011
+Raw Residual Variance                2.1722
+Projected Residual Variance          1.4551

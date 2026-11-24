@@ -1,0 +1,265 @@
+
+Semivariogram Model Fitting of Log-Arsenic Concentration
+
+The VARIOGRAM Procedure
+Dependent Variable: logAs
+
+Number of Observations Read         138
+Number of Observations Used         138
+
+
+              Pairs Information
+
+Number of Lags                              51
+Lag Distance                             13.95
+Maximum Data Distance in East           496.50
+Maximum Data Distance in North          489.70
+Maximum Data Distance                   697.37
+
+
+               Pairwise Distance Intervals
+ 
+                                     Number
+  Lag                                    of    Percentage
+Class    ---------Bounds---------     Pairs      of Pairs
+
+    0          0.00          6.97         6        0.06% 
+    1          6.97         20.92        34        0.36% 
+    2         20.92         34.87        87        0.92% 
+    3         34.87         48.82       155        1.64% 
+    4         48.82         62.76       151        1.60% 
+    5         62.76         76.71       184        1.95% 
+    6         76.71         90.66       219        2.32% 
+    7         90.66        104.60       259        2.74% 
+    8        104.60        118.55       275        2.91% 
+    9        118.55        132.50       301        3.18% 
+   10        132.50        146.45       306        3.24% 
+   11        146.45        160.39       348        3.68% 
+   12        160.39        174.34       353        3.73% 
+   13        174.34        188.29       376        3.98% 
+   14        188.29        202.24       346        3.66% 
+   15        202.24        216.18       358        3.79% 
+   16        216.18        230.13       391        4.14% 
+   17        230.13        244.08       389        4.12% 
+   18        244.08        258.03       350        3.70% 
+   19        258.03        271.97       387        4.09% 
+   20        271.97        285.92       375        3.97% 
+   21        285.92        299.87       347        3.67% 
+   22        299.87        313.81       342        3.62% 
+   23        313.81        327.76       318        3.36% 
+   24        327.76        341.71       323        3.42% 
+   25        341.71        355.66       327        3.46% 
+   26        355.66        369.60       274        2.90% 
+   27        369.60        383.55       300        3.17% 
+   28        383.55        397.50       255        2.70% 
+   29        397.50        411.45       227        2.40% 
+   30        411.45        425.39       222        2.35% 
+   31        425.39        439.34       210        2.22% 
+   32        439.34        453.29       154        1.63% 
+   33        453.29        467.23       127        1.34% 
+   34        467.23        481.18       114        1.21% 
+   35        481.18        495.13        78        0.83% 
+   36        495.13        509.08        44        0.47% 
+   37        509.08        523.02        40        0.42% 
+   38        523.02        536.97        27        0.29% 
+   39        536.97        550.92        21        0.22% 
+   40        550.92        564.87        18        0.19% 
+   41        564.87        578.81        13        0.14% 
+   42        578.81        592.76         8        0.08% 
+   43        592.76        606.71         7        0.07% 
+   44        606.71        620.66         3        0.03% 
+   45        620.66        634.60         2        0.02% 
+   46        634.60        648.55         2        0.02% 
+   47        648.55        662.50         0        0.00% 
+   48        662.50        676.44         0        0.00% 
+   49        676.44        690.39         0        0.00% 
+   50        690.39        704.34         0        0.00% 
+
+Semivariogram Model Fitting of Log-Arsenic Concentration
+
+The VARIOGRAM Procedure
+Dependent Variable: logAs
+
+Number of Observations Read         138
+Number of Observations Used         138
+
+Semivariogram Model Fitting of Log-Arsenic Concentration
+
+The VARIOGRAM Procedure
+Dependent Variable: logAs
+
+        Empirical Semivariogram
+ 
+  Lag      Pair     Average
+Class     Count    Distance     Semivariance 
+
+    0         1        1.86       0.111
+    1         5        4.90       0.145
+    2         6        9.68       0.286
+    3        11       14.60       0.545
+    4        27       20.04       0.900
+    5        37       24.90       0.893
+    6        18       30.27       1.576
+    7        38       34.80       0.801
+    8        74       39.96       1.729
+    9        48       45.40       1.397
+   10        43       49.62       1.424
+   11        63       54.69       1.576
+   12        61       60.34       1.086
+   13        57       64.65       1.553
+   14        70       69.97       1.337
+   15        78       75.06       1.461
+   16        72       79.73       1.368
+   17        70       84.72       1.513
+   18        86       90.02       1.711
+   19        76       95.00       1.964
+   20       104       99.92       2.018
+   21       101      104.89       1.786
+   22        88      109.91       1.731
+   23       111      115.00       1.459
+   24       106      119.84       1.466
+   25       112      125.03       1.664
+   26       108      130.06       1.574
+   27       108      134.95       1.825
+   28       112      139.93       1.744
+   29       117      145.10       1.585
+   30       135      149.91       1.855
+   31       106      154.93       1.509
+   32       117      159.80       1.697
+   33       130      165.08       1.626
+   34       134      169.99       1.839
+   35       130      175.01       1.517
+   36       131      180.06       1.765
+   37       140      185.01       1.815
+   38       119      189.90       1.387
+   39       116      194.94       1.395
+   40       142      200.09       1.514
+
+Semivariogram Model Fitting of Log-Arsenic Concentration
+
+The VARIOGRAM Procedure
+Dependent Variable: logAs
+
+Number of Observations Read         138
+Number of Observations Used         138
+
+Semivariogram Model Fitting of Log-Arsenic Concentration
+
+The VARIOGRAM Procedure
+Dependent Variable: logAs
+
+        Empirical Semivariogram
+ 
+  Lag      Pair     Average
+Class     Count    Distance     Semivariance 
+
+    0         1        1.86       0.111
+    1         5        4.90       0.145
+    2         6        9.68       0.286
+    3        11       14.60       0.545
+    4        27       20.04       0.900
+    5        37       24.90       0.893
+    6        18       30.27       1.576
+    7        38       34.80       0.801
+    8        74       39.96       1.729
+    9        48       45.40       1.397
+   10        43       49.62       1.424
+   11        63       54.69       1.576
+   12        61       60.34       1.086
+   13        57       64.65       1.553
+   14        70       69.97       1.337
+   15        78       75.06       1.461
+   16        72       79.73       1.368
+   17        70       84.72       1.513
+   18        86       90.02       1.711
+   19        76       95.00       1.964
+   20       104       99.92       2.018
+   21       101      104.89       1.786
+   22        88      109.91       1.731
+   23       111      115.00       1.459
+   24       106      119.84       1.466
+   25       112      125.03       1.664
+   26       108      130.06       1.574
+   27       108      134.95       1.825
+   28       112      139.93       1.744
+   29       117      145.10       1.585
+   30       135      149.91       1.855
+   31       106      154.93       1.509
+   32       117      159.80       1.697
+   33       130      165.08       1.626
+   34       134      169.99       1.839
+   35       130      175.01       1.517
+   36       131      180.06       1.765
+   37       140      185.01       1.815
+   38       119      189.90       1.387
+   39       116      194.94       1.395
+   40       142      200.09       1.514
+
+Semivariogram Model Fitting of Log-Arsenic Concentration
+
+The VARIOGRAM Procedure
+Dependent Variable: logAs
+Angle: Omnidirectional
+
+              Semivariogram Model Fitting
+
+Model                Selection from 12 form combinations
+Output Item Store    WORK.SEMIVASSTORE                  
+Item Store Label     LogAs Concentration Models         
+
+
+                 Fit Summary
+ 
+                      Weighted
+Class    Model             SSE           AIC
+
+    1    Gau-Gau      25.42435      -9.59246
+         Gau-Mat      25.42513      -7.59119
+         Mat-Mat      25.44471      -5.55962
+    2    Exp-Gau      26.36544      -8.10224
+    3    Exp-Mat      26.36846      -6.09754
+    4    Mat          26.37519     -10.08708
+    5    Gau          26.78629     -11.45296
+    6    Exp          28.01200      -9.61851
+         Exp-Exp      28.01200      -5.61850
+         Mat-Exp      28.01200      -3.61850
+         Gau-Exp      28.01200      -5.61850
+
+
+          Semivariogram Model Fitting
+
+Name                 Gaussian-Gaussian         
+Label                Gau-Gau                   
+
+
+  Model Information
+ 
+              Initial
+Parameter       Value
+
+Nugget         0.0903
+GauScale1      0.6709
+GauRange1       100.0
+GauScale2      0.6709
+GauRange2     50.0230
+
+
+           Optimization Information
+
+Optimization Technique        Dual Quasi-Newton
+Parameters in Optimization    5                
+Lower Boundaries              5                
+Upper Boundaries              0                
+Starting Values From          PROC             
+
+
+                      Parameter Estimates
+ 
+                            Approx                       Approx
+Parameter    Estimate    Std Error    DF    t Value    Pr > |t|
+
+Nugget        0.08308      0.05097    36       1.63      0.1118
+GauScale1      0.3277       0.2077    36       1.58      0.1234
+GauRange1     62.3130      19.8489    36       3.14      0.0034
+GauScale2      1.2615       0.2070    36       6.10      <.0001
+GauRange2     21.4596       3.2722    36       6.56      <.0001

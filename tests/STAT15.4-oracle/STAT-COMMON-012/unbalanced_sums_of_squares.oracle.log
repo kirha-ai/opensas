@@ -1,0 +1,45 @@
+The SAS System
+
+468        
+469        /* STAT-COMMON-012: Type III / IV sums of squares and estimable functions
+470         * Source: S154 / Chapter 16 / `Type III and IV SS and Estimable Functions` (PDF pp. 289–293); S154 / Chapter 6 / `Introduction to Analysis of
+470      ! Variance Procedures` (PDF pp. 123–134).
+471         * Discriminates: Unbalanced effect tests and the requested sums-of-squares type
+472         */
+473        options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+473      ! validmemname=compatible locale=en_US;
+474        %let syscc=0;
+475        title; footnote;
+476        ods _all_ close;
+477        ods listing gpath="%sysfunc(pathname(work))";
+478        ods graphics off;
+479        proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SAMPLE (memtype=DATA).
+479      !                                         quit;
+
+
+480        ods path work.templat(update) sashelp.tmplmst(read);
+481        
+482        data sample;
+483         input x z y group $ weight freq;
+484         datalines;
+
+NOTE: The data set WORK.SAMPLE has 12 observations and 6 variables.
+
+497        ;
+498        run;
+499        proc glm data=sample; class group; model y=group x z / ss3 ss4; run;
+
+499      !                                                                      quit;
+
+NOTE: The PROCEDURE GLM printed pages 25-26.
+
+500        
+501        
+502        
+503        
+The SAS System
+
+504        

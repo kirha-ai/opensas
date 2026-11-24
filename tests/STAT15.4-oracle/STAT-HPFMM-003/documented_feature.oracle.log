@@ -1,0 +1,142 @@
+The SAS System
+
+6867       
+6868       /* STAT-HPFMM-003: HPFMM — CLASS / MODEL / PROBMODEL
+6869        * Source: S154 / Chapter 58 / `CLASS Statement` (PDF p. 4554); S154 / Chapter 58 / `MODEL Statement` (PDF pp. 4555–4563); S154 / Chapter 58 /
+6869     ! `PROBMODEL Statement` (PDF pp. 4566–4568).
+6870        * Discriminates: Example 58.1: Modeling Mixing Probabilities: All Mice Are Equal, but Some Mice Are More Equal Than Others; explicit statements:
+6870     ! CLASS, MODEL, PROBMODEL
+6871        */
+6872       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+6872     ! validmemname=compatible locale=en_US;
+6873       %let syscc=0;
+6874       title; footnote;
+6875       ods _all_ close;
+6876       ods listing gpath="%sysfunc(pathname(work))";
+6877       ods graphics off;
+6878       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.YEAST (memtype=DATA).
+6878     !                                         quit;
+
+
+6879       ods path work.templat(update) sashelp.tmplmst(read);
+6880       
+6881       data ossi;
+6882       length tx $8;
+6883       input tx$ n @@;
+6884       do i=1 to n;
+6885       input y m @@;
+6886       output;
+6887       end;
+6888       drop i;
+6889       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.OSSI has 81 observations and 4 variables.
+
+6899       ;
+6900       data ossi;
+6901       set ossi;
+6902       array xx{3} x1-x3;
+6903       do i=1 to 3;
+6904       xx{i}=0;
+6905       end;
+6906       pht = 0;
+6907       tcpo = 0;
+6908       if (tx='TCPO') then do;
+6909       xx{1} = 1;
+6910       tcpo = 100;
+6911       end;
+6912       else if (tx='PHT') then do;
+6913       xx{2} = 1;
+6914       pht = 60;
+6915       end;
+6916       else if (tx='PHT+TCPO') then do;
+6917       pht = 60;
+6918       tcpo = 100;
+6919       xx{1} = 1;
+6920       xx{2} = 1;
+6921       xx{3}=1;
+6922       end;
+6923       run;
+
+NOTE: There were 81 observations read from the data set WORK.OSSI.
+NOTE: The data set WORK.OSSI has 81 observations and 10 variables.
+
+6924       proc hpfmm data=ossi seed=314159;
+6925       class pht tcpo;
+6926       model y/m = / dist=binomcluster;
+6927       probmodel pht tcpo pht*tcpo;
+6928       run;
+
+NOTE: The binomial cluster distribution implies a two-component model. The K parameter of this model is set to 2.
+NOTE: The HPFMM procedure is executing in single-machine mode.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: There were 81 observations read from the data set WORK.OSSI.
+NOTE: The PROCEDURE HPFMM printed page 543.
+
+6929       proc hpfmm data=ossi seed=314159;
+6930       class pht tcpo;
+6931       model y/m = pht tcpo pht*tcpo / dist=binomcluster;
+6932       probmodel pht tcpo pht *tcpo;
+6933       run;
+
+NOTE: The binomial cluster distribution implies a two-component model. The K parameter of this model is set to 2.
+NOTE: The HPFMM procedure is executing in single-machine mode.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: There were 81 observations read from the data set WORK.OSSI.
+NOTE: The PROCEDURE HPFMM printed page 544.
+
+6934       proc hpfmm data=ossi seed=314159;
+6935       model y/m = x1-x3 / dist=binomcluster;
+6936       probmodel x1-x3;
+6937       run;
+
+NOTE: The binomial cluster distribution implies a two-component model. The K parameter of this model is set to 2.
+NOTE: The HPFMM procedure is executing in single-machine mode.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: There were 81 observations read from the data set WORK.OSSI.
+NOTE: The PROCEDURE HPFMM printed page 545.
+
+6938       proc hpfmm data=ossi seed=314159;
+6939       model y/m = x1-x3 / dist=binomial;
+6940       run;
+
+NOTE: The HPFMM procedure is executing in single-machine mode.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: There were 81 observations read from the data set WORK.OSSI.
+NOTE: The PROCEDURE HPFMM printed page 546.
+
+6941       proc hpfmm data=ossi seed=314159;
+6942       model y/m = x1-x3 / dist=betabinomial;
+6943       run;
+
+NOTE: The HPFMM procedure is executing in single-machine mode.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: There were 81 observations read from the data set WORK.OSSI.
+NOTE: The PROCEDURE HPFMM printed page 547.
+
+6944       data cattle;
+6945       input LogInt Count @@;
+6946       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.CATTLE has 16 observations and 2 variables.
+
+6952       run;
+6953       quit;
+6954       
+6955       
+6956       
+6957       
+The SAS System
+
+6958       

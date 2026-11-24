@@ -1,0 +1,57 @@
+The SAS System
+
+6069       
+6070       /* STAT-GLMSELECT-012: GLMSELECT — Full Model Fitted (NONE)
+6071        * Source: S154 / Chapter 56 / `Full Model Fitted (NONE)` (PDF p. 4357).
+6072        * Discriminates: Getting Started: GLMSELECT Procedure
+6073        */
+6074       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+6074     ! validmemname=compatible locale=en_US;
+6075       %let syscc=0;
+6076       title; footnote;
+6077       ods _all_ close;
+6078       ods listing gpath="%sysfunc(pathname(work))";
+6079       ods graphics off;
+6080       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+6080     !                                         quit;
+
+
+6081       ods path work.templat(update) sashelp.tmplmst(read);
+6082       
+6083       proc contents varnum data=sashelp.baseball;
+6084       ods select position;
+6085       run;
+
+NOTE: The PROCEDURE CONTENTS printed page 413.
+
+6086       ods graphics on;
+6087       proc glmselect data=sashelp.baseball plots=all seed=314159;
+6088       class league division;
+6089       model logSalary = nAtBat nHits nHome nRuns nRBI nBB
+6090       yrMajor crAtBat crHits crHome crRuns crRbi
+6091       crBB league division nOuts nAssts nError
+6092       / details=all stats=all;
+6093       run;
+
+NOTE: There were 322 observations read from the data set SASHELP.BASEBALL.
+NOTE: The PROCEDURE GLMSELECT printed pages 414-422.
+
+6094       ods graphics off;
+6095       run;
+6096       quit;
+6097       
+6098       
+6099       
+6100       
+The SAS System
+
+6101       

@@ -1,0 +1,61 @@
+The SAS System
+
+12286      
+12287      /* STAT-LIFEREG-016: LIFEREG — Official examples and feature integration regression
+12288       * Source: S154 / Chapter 76 / `Examples: LIFEREG Procedure` (PDF pp. 5602–5636).
+12289       * Discriminates: Example 76.6: Probability Plotting—Arbitrary Censoring
+12290       */
+12291      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+12291    ! validmemname=compatible locale=en_US;
+12292      %let syscc=0;
+12293      title; footnote;
+12294      ods _all_ close;
+12295      ods listing gpath="%sysfunc(pathname(work))";
+12296      ods graphics off;
+12297      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.FAN (memtype=DATA).
+NOTE: Deleting WORK.HEADACHE (memtype=DATA).
+NOTE: Deleting WORK.NEW (memtype=DATA).
+NOTE: Deleting WORK.POST (memtype=DATA).
+NOTE: Deleting WORK.PROB (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+12297    !                                         quit;
+
+
+12298      ods path work.templat(update) sashelp.tmplmst(read);
+12299      
+12300      data Micro;
+12301      input t1 t2 f;
+12302      datalines;
+
+NOTE: The data set WORK.MICRO has 14 observations and 3 variables.
+
+12317      ;
+12318      ods graphics on;
+12319      proc lifereg data=Micro;
+12320      model ( t1 t2 ) = / d=lognormal intercept=25 scale=5;
+12321      weight f;
+12322      probplot
+12323      pupper = 10
+12324      itprintem
+12325      printprobs
+12326      maxitem = (1000,25)
+12327      ppout;
+12328      inset;
+12329      run;
+
+NOTE: Algorithm converged.
+NOTE: Turnbull algorithm converged.
+NOTE: The PROCEDURE LIFEREG printed page 854.
+
+12330      
+12331      
+12332      
+12333      
+The SAS System
+
+12334      

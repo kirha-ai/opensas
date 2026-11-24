@@ -1,0 +1,54 @@
+The SAS System
+
+6175       
+6176       /* STAT-NLIN-015: NLIN — DER / Other Programming Statements
+6177        * Source: S154 / Chapter 88 / `DER Statement` (PDF pp. 7002–7003); S154 / Chapter 88 / `Other Programming Statements` (PDF pp. 7013–7014).
+6178        * Discriminates: Getting Started: NLIN Procedure
+6179        */
+6180       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+6180     ! validmemname=compatible locale=en_US;
+6181       %let syscc=0;
+6182       title; footnote;
+6183       ods _all_ close;
+6184       ods listing gpath="%sysfunc(pathname(work))";
+6185       ods graphics off;
+6186       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.CONTRIVED (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+6186     !                                         quit;
+
+
+6187       ods path work.templat(update) sashelp.tmplmst(read);
+6188       
+6189       data Enzyme;
+6190       input Concentration Velocity @@;
+6191       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.ENZYME has 14 observations and 2 variables.
+
+6199       ;
+6200       proc nlin data=Enzyme method=marquardt hougaard;
+6201       parms theta1=155
+6202       theta2=0 to 0.07 by 0.01;
+6203       model Velocity = theta1*Concentration / (theta2 + Concentration);
+6204       run;
+
+NOTE: DER.theta1 not initialized or missing. It will be computed automatically.
+NOTE: DER.theta2 not initialized or missing. It will be computed automatically.
+NOTE: Convergence criterion met.
+NOTE: The PROCEDURE NLIN printed pages 402-403.
+
+6205       
+6206       
+6207       
+6208       
+The SAS System
+
+6209       

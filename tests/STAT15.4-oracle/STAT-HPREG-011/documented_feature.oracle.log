@@ -1,0 +1,313 @@
+The SAS System
+
+6102       
+6103       /* STAT-HPREG-011: HPREG — Displayed Output / ODS Table Names
+6104        * Source: S154 / Chapter 67 / `Displayed Output` (PDF pp. 5046–5050); S154 / Chapter 67 / `ODS Table Names` (PDF pp. 5050–5052).
+6105        * Discriminates: Getting Started: HPREG Procedure
+6106        */
+6107       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+6107     ! validmemname=compatible locale=en_US;
+6108       %let syscc=0;
+6109       title; footnote;
+6110       ods _all_ close;
+6111       ods listing gpath="%sysfunc(pathname(work))";
+6112       ods graphics off;
+6113       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.BASEBALLOUT (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+6113     !                                         quit;
+
+
+6114       ods path work.templat(update) sashelp.tmplmst(read);
+6115       
+6116       ods trace on;
+6117       proc contents varnum data=sashelp.baseball;
+6118       ods select position;
+6119       run;
+
+
+Output Added:
+-------------
+Name:       Position
+Label:      Varnum
+Template:   Base.Contents.Position
+Path:       Contents.DataSet.Position
+-------------
+NOTE: The PROCEDURE CONTENTS printed page 428.
+
+6120       proc hpreg data=sashelp.baseball;
+6121       class league division;
+6122       model logSalary = nAtBat nHits nHome nRuns nRBI nBB
+6123       yrMajor crAtBat crHits crHome crRuns crRbi
+6124       crBB league division nOuts nAssts nError;
+6125       selection method=stepwise;
+6126       run;
+
+NOTE: The HPREG procedure is executing in single-machine mode.
+
+Output Added:
+-------------
+Name:       PerformanceInfo
+Label:      Performance Information
+Template:   HPA.Common.PerfInfo
+Path:       HPReg.PerformanceInfo
+-------------
+
+Output Added:
+-------------
+Name:       DataAccessInfo
+Label:      Data Access Information
+Template:   HPA.Common.DataAccessInfo
+Path:       HPReg.DataAccessInfo
+-------------
+
+Output Added:
+-------------
+Name:       ModelInfo
+Label:      Model Information
+Template:   HPSTAT.HPREG.ModelInfo
+Path:       HPReg.ModelInfo
+-------------
+
+Output Added:
+-------------
+Name:       SelectionInfo
+Label:      Selection Information
+Template:   HPA.Common.SelectionInfo
+Path:       HPReg.SelectionInfo
+-------------
+
+Output Added:
+-------------
+Name:       NObs
+Label:      Number of Observations
+Template:   HPSTAT.HPREG.NOBS
+Path:       HPReg.NObs
+-------------
+
+Output Added:
+-------------
+Name:       ClassLevels
+Label:      Class Level Information
+Template:   HPA.Common.ClassLevels
+Path:       HPReg.ClassLevels
+-------------
+
+Output Added:
+-------------
+Name:       Dimensions
+Label:      Dimensions
+Template:   HPSTAT.HPREG.Dimensions
+Path:       HPReg.Dimensions
+-------------
+
+Output Added:
+-------------
+Name:       SelectionSummary
+Label:      Selection Summary
+Template:   HPA.Common.SelectionSummary
+Path:       HPReg.Summary.SelectionSummary
+-------------
+
+Output Added:
+-------------
+Name:       StopReason
+Label:      Stop Reason
+Template:   HPA.Common.StopReason
+Path:       HPReg.Summary.StopReason
+-------------
+
+Output Added:
+-------------
+Name:       SelectionReason
+Label:      Selection Reason
+Template:   HPA.Common.SelectionReason
+Path:       HPReg.Summary.SelectionReason
+-------------
+
+Output Added:
+-------------
+Name:       SelectedEffects
+Label:      Selected Effects
+Template:   HPA.Common.SelectedEffects
+Path:       HPReg.SelectedModel.SelectedEffects
+-------------
+
+Output Added:
+-------------
+Name:       ANOVA
+Label:      ANOVA
+Template:   HPSTAT.HPREG.ANOVA
+Path:       HPReg.SelectedModel.ANOVA
+-------------
+
+Output Added:
+-------------
+Name:       FitStatistics
+Label:      Fit Statistics
+Template:   HPSTAT.HPREG.FitStatistics
+Path:       HPReg.SelectedModel.FitStatistics
+-------------
+
+Output Added:
+-------------
+Name:       ParameterEstimates
+Label:      Parameter Estimates
+Template:   HPSTAT.HPREG.ParameterEstimates
+Path:       HPReg.SelectedModel.ParameterEstimates
+-------------
+NOTE: There were 322 observations read from the data set SASHELP.BASEBALL.
+NOTE: The PROCEDURE HPREG printed pages 429-431.
+
+6127       proc hpreg data=sashelp.baseball;
+6128       id name;
+6129       class league division;
+6130       model logSalary = nAtBat nHits nHome nRuns nRBI nBB
+6131       yrMajor crAtBat crHits crHome crRuns crRbi
+6132       crBB league division nOuts nAssts nError / vif clb;
+6133       selection method=stepwise;
+6134       output out=baseballOut p=predictedLogSalary r h cookd rstudent;
+6135       run;
+
+NOTE: The HPREG procedure is executing in single-machine mode.
+
+Output Added:
+-------------
+Name:       PerformanceInfo
+Label:      Performance Information
+Template:   HPA.Common.PerfInfo
+Path:       HPReg.PerformanceInfo
+-------------
+
+Output Added:
+-------------
+Name:       DataAccessInfo
+Label:      Data Access Information
+Template:   HPA.Common.DataAccessInfo
+Path:       HPReg.DataAccessInfo
+-------------
+
+Output Added:
+-------------
+Name:       ModelInfo
+Label:      Model Information
+Template:   HPSTAT.HPREG.ModelInfo
+Path:       HPReg.ModelInfo
+-------------
+
+Output Added:
+-------------
+Name:       SelectionInfo
+Label:      Selection Information
+Template:   HPA.Common.SelectionInfo
+Path:       HPReg.SelectionInfo
+-------------
+
+Output Added:
+-------------
+Name:       NObs
+Label:      Number of Observations
+Template:   HPSTAT.HPREG.NOBS
+Path:       HPReg.NObs
+-------------
+
+Output Added:
+-------------
+Name:       ClassLevels
+Label:      Class Level Information
+Template:   HPA.Common.ClassLevels
+Path:       HPReg.ClassLevels
+-------------
+
+Output Added:
+-------------
+Name:       Dimensions
+Label:      Dimensions
+Template:   HPSTAT.HPREG.Dimensions
+Path:       HPReg.Dimensions
+-------------
+
+Output Added:
+-------------
+Name:       SelectionSummary
+Label:      Selection Summary
+Template:   HPA.Common.SelectionSummary
+Path:       HPReg.Summary.SelectionSummary
+-------------
+
+Output Added:
+-------------
+Name:       StopReason
+Label:      Stop Reason
+Template:   HPA.Common.StopReason
+Path:       HPReg.Summary.StopReason
+-------------
+
+Output Added:
+-------------
+Name:       SelectionReason
+Label:      Selection Reason
+Template:   HPA.Common.SelectionReason
+Path:       HPReg.Summary.SelectionReason
+-------------
+
+Output Added:
+-------------
+Name:       SelectedEffects
+Label:      Selected Effects
+Template:   HPA.Common.SelectedEffects
+Path:       HPReg.SelectedModel.SelectedEffects
+-------------
+
+Output Added:
+-------------
+Name:       ANOVA
+Label:      ANOVA
+Template:   HPSTAT.HPREG.ANOVA
+Path:       HPReg.SelectedModel.ANOVA
+-------------
+
+Output Added:
+-------------
+Name:       FitStatistics
+Label:      Fit Statistics
+Template:   HPSTAT.HPREG.FitStatistics
+Path:       HPReg.SelectedModel.FitStatistics
+-------------
+
+Output Added:
+-------------
+Name:       ParameterEstimates
+Label:      Parameter Estimates
+Template:   HPSTAT.HPREG.ParameterEstimates
+Path:       HPReg.SelectedModel.ParameterEstimates
+-------------
+NOTE: There were 322 observations read from the data set SASHELP.BASEBALL.
+NOTE: The data set WORK.BASEBALLOUT has 322 observations and 6 variables.
+NOTE: The PROCEDURE HPREG printed pages 432-434.
+
+6136       proc print data=baseballOut(obs=5);
+6137       run;
+
+
+Output Added:
+-------------
+Name:       Print
+Label:      Data Set WORK.BASEBALLOUT
+Data Name:  ProcPrintTable
+Path:       Print.Print
+-------------
+NOTE: There were 5 observations read from the data set WORK.BASEBALLOUT.
+NOTE: The PROCEDURE PRINT printed page 435.
+
+6138       ods trace off;
+6139       
+6140       
+6141       
+6142       
+The SAS System
+
+6143       

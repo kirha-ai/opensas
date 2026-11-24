@@ -1,0 +1,47 @@
+The SAS System
+
+1126       
+1127       /* STAT-COMMON-029: SLICE Statement
+1128        * Source: S154 / Chapter 20 / `SLICE Statement` (PDF pp. 539–543).
+1129        * Discriminates: Simple effects and pairwise differences within interaction slices
+1130        */
+1131       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+1131     ! validmemname=compatible locale=en_US;
+1132       %let syscc=0;
+1133       title; footnote;
+1134       ods _all_ close;
+1135       ods listing gpath="%sysfunc(pathname(work))";
+1136       ods graphics off;
+1137       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SAMPLE (memtype=DATA).
+1137     !                                         quit;
+
+
+1138       ods path work.templat(update) sashelp.tmplmst(read);
+1139       
+1140       data sample;
+1141        input x z y group $ weight freq;
+1142        datalines;
+
+NOTE: The data set WORK.SAMPLE has 12 observations and 6 variables.
+
+1155       ;
+1156       run;
+1157       data factorial; set sample; h=mod(_n_,2); run;
+
+NOTE: There were 12 observations read from the data set WORK.SAMPLE.
+NOTE: The data set WORK.FACTORIAL has 12 observations and 7 variables.
+
+1158       proc mixed data=factorial; class group h; model y=group|h; slice group*h / sliceby=h diff; run;
+
+NOTE: The PROCEDURE MIXED printed page 61.
+
+1159       
+1160       
+1161       
+1162       
+The SAS System
+
+1163       

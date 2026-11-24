@@ -1,0 +1,68 @@
+The SAS System
+
+421        
+422        /* STAT-GENMOD-017: GENMOD — STORE
+423         * Source: S154 / Chapter 51 / `STORE Statement` (PDF p. 3565).
+424         * Discriminates: Save the fitted item store and inspect it through PROC PLM SHOW ALL.
+425         */
+426        options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+426      ! validmemname=compatible locale=en_US;
+427        %let syscc=0;
+428        title; footnote;
+429        ods _all_ close;
+430        ods listing gpath="%sysfunc(pathname(work))";
+431        ods graphics off;
+432        proc datasets library=work kill nolist;
+NOTE: Deleting WORK.NOR (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.RESIDUALS (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK._NAMEDAT (memtype=DATA).
+NOTE: Deleting WORK._ORACLE_SCORED (memtype=DATA).
+432      !                                         quit;
+
+
+433        ods path work.templat(update) sashelp.tmplmst(read);
+434        
+435        data nor;
+436        input x y;
+437        datalines;
+
+NOTE: The data set WORK.NOR has 16 observations and 2 variables.
+
+454        ;
+455        proc genmod data=nor;
+456        model y = x / dist = normal
+457        link = log;
+458        output out = Residuals
+459        pred = Pred
+460        resraw = Resraw
+461        reschi = Reschi
+462        resdev = Resdev
+463        stdreschi = Stdreschi
+464        stdresdev = Stdresdev
+465        reslik = Reslik;
+466        
+467        store out=work._oracle_store;
+468        run;
+
+NOTE: Algorithm converged.
+NOTE: The scale parameter was estimated by maximum likelihood.
+NOTE: The GENMOD procedure generated the model item store WORK._ORACLE_STORE.
+NOTE: The data set WORK.RESIDUALS has 16 observations and 9 variables.
+NOTE: The PROCEDURE GENMOD printed page 14.
+
+469        
+470        proc plm restore=work._oracle_store; show all; run;
+
+NOTE: The PROCEDURE PLM printed page 15.
+
+471        
+472        
+473        
+474        
+The SAS System
+
+475        

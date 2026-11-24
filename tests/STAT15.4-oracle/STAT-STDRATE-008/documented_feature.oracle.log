@@ -1,0 +1,135 @@
+The SAS System
+
+3692       
+3693       /* STAT-STDRATE-008: STDRATE — Graphics Output / ODS Graphics
+3694        * Source: S154 / Chapter 116 / `Graphics Output` (PDF pp. 9525–9526); S154 / Chapter 116 / `ODS Graphics` (PDF pp. 9526–9527).
+3695        * Discriminates: Getting Started: STDRATE Procedure
+3696        */
+3697       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+3697     ! validmemname=compatible locale=en_US;
+3698       %let syscc=0;
+3699       title; footnote;
+3700       ods _all_ close;
+3701       ods listing gpath="%sysfunc(pathname(work))";
+3702       ods graphics off;
+3703       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.FLORIDA_C43 (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.US_C43 (memtype=DATA).
+3703     !                                         quit;
+
+
+3704       ods path work.templat(update) sashelp.tmplmst(read);
+3705       
+3706       ods graphics on;
+3707       ods trace on;
+3708       ods trace on;
+3709       data Florida_C43;
+3710       input Age :$5. Event PYear:comma9.;
+3711       datalines;
+
+NOTE: The data set WORK.FLORIDA_C43 has 10 observations and 3 variables.
+
+3722       ;
+3723       data US_C43;
+3724       input Age :$5. Event:comma5. PYear:comma10.;
+3725       datalines;
+
+NOTE: The data set WORK.US_C43 has 10 observations and 3 variables.
+
+3736       ;
+3737       ods graphics on;
+3738       proc stdrate data=Florida_C43 refdata=US_C43
+3739       method=indirect
+3740       stat=rate(mult=100000)
+3741       plots=all
+3742       ;
+3743       population event=Event total=PYear;
+3744       reference event=Event total=PYear;
+3745       strata Age / stats smr;
+3746       run;
+
+
+Output Added:
+-------------
+Name:       StdInfo
+Label:      Standardization Information
+Template:   Stat.StdRate.StdInfo
+Path:       Stdrate.StdInfo
+-------------
+
+Output Added:
+-------------
+Name:       StrataStats
+Label:      Indirect Standardization
+Template:   Stat.StdRate.StrataStats
+Path:       Stdrate.Strata.StrataStats
+-------------
+
+Output Added:
+-------------
+Name:       StrataSMR
+Label:      Strata SMR Estimates
+Template:   Stat.StdRate.StrataSMR
+Path:       Stdrate.Strata.StrataSMR
+-------------
+
+Output Added:
+-------------
+Name:       StrataRatePlot
+Label:      Strata Rate Estimate Plot
+Template:   Stat.StdRate.Graphics.StrataRatePlot
+Path:       Stdrate.Strata.StrataRatePlot
+-------------
+
+Output Added:
+-------------
+Name:       StrataDistPlot
+Label:      Strata Distribution Plot
+Template:   Stat.StdRate.Graphics.StrataDistPlot
+Path:       Stdrate.Strata.StrataDistPlot
+-------------
+
+Output Added:
+-------------
+Name:       StrataSMRPlot
+Label:      Strata SMR Plot
+Template:   Stat.StdRate.Graphics.StrataSMRPlot
+Path:       Stdrate.Strata.StrataSMRPlot
+-------------
+
+Output Added:
+-------------
+Name:       Smr
+Label:      Standardized Morbidity/Mortality Ratio
+Template:   Stat.StdRate.Smr
+Path:       Stdrate.Smr
+-------------
+
+Output Added:
+-------------
+Name:       StdRate
+Label:      Standardized Rate Estimates
+Template:   Stat.StdRate.StdRate
+Path:       Stdrate.StdRate
+-------------
+NOTE: The PROCEDURE STDRATE printed pages 233-234.
+
+3747       ods trace off;
+3748       ods trace off;
+3749       ods graphics off;
+3750       
+3751       
+3752       
+3753       
+The SAS System
+
+3754       

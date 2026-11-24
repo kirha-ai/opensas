@@ -1,0 +1,55 @@
+The SAS System
+
+3642       
+3643       /* STAT-HPLOGISTIC-004: HPLOGISTIC — Response Distributions / Log-Likelihood Functions / The Hosmer-Lemeshow Goodness-of-Fit Test
+3644        * Source: S154 / Chapter 61 / `Response Distributions` (PDF pp. 4765–4766); S154 / Chapter 61 / `Log-Likelihood Functions` (PDF pp. 4766–4767);
+3644     ! S154 / Chapter 61 / `The Hosmer-Lemeshow Goodness-of-Fit Test` (PDF pp. 4774–4775).
+3645        * Discriminates: Getting Started: HPLOGISTIC Procedure
+3646        */
+3647       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+3647     ! validmemname=compatible locale=en_US;
+3648       %let syscc=0;
+3649       title; footnote;
+3650       ods _all_ close;
+3651       ods listing gpath="%sysfunc(pathname(work))";
+3652       ods graphics off;
+3653       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.GETSTARTED (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+3653     !                                         quit;
+
+
+3654       ods path work.templat(update) sashelp.tmplmst(read);
+3655       
+3656       data getStarted;
+3657       input C$ y x1-x10;
+3658       datalines;
+
+NOTE: The data set WORK.GETSTARTED has 100 observations and 12 variables.
+
+3759       ;
+3760       proc hplogistic data=getStarted;
+3761       class C;
+3762       model y = C x1-x10;
+3763       run;
+
+NOTE: The HPLOGISTIC procedure is executing in single-machine mode.
+NOTE: You are modeling the probability that y='0'.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: There were 100 observations read from the data set WORK.GETSTARTED.
+NOTE: The PROCEDURE HPLOGISTIC printed page 191.
+
+3764       
+3765       
+3766       
+3767       
+The SAS System
+
+3768       

@@ -1,0 +1,70 @@
+The SAS System
+
+3519       
+3520       /* STAT-MIXED-001: MIXED — Data input, variable roles, and basic options
+3521        * Source: S154 / Chapter 84 / `PROC MIXED Statement` (PDF pp. 6626–6638); S154 / Chapter 84 / `BY Statement` (PDF pp. 6638–6639); S154 / Chapter
+3521     !  84 / `ID Statement` (PDF pp. 6645–6646); S154 / Chapter 84 / `WEIGHT Statement` (PDF pp. 6694–6695).
+3522        * Discriminates: Two explicit BY groups contain identical inputs, exposing group boundaries and per-group results.
+3523        */
+3524       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+3524     ! validmemname=compatible locale=en_US;
+3525       %let syscc=0;
+3526       title; footnote;
+3527       ods _all_ close;
+3528       ods listing gpath="%sysfunc(pathname(work))";
+3529       ods graphics off;
+3530       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.HEIGHTS (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+3530     !                                         quit;
+
+
+3531       ods path work.templat(update) sashelp.tmplmst(read);
+3532       
+3533       data heights;
+3534       input Family Gender$ Height @@;
+3535       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.HEIGHTS has 18 observations and 3 variables.
+
+3539       ;
+3540       data _oracle_input; set heights; do _oracle_by=1 to 2; output; end; run;
+
+NOTE: There were 18 observations read from the data set WORK.HEIGHTS.
+NOTE: The data set WORK._ORACLE_INPUT has 36 observations and 4 variables.
+
+3541       proc sort data=_oracle_input; by _oracle_by; run;
+
+NOTE: There were 36 observations read from the data set WORK._ORACLE_INPUT.
+NOTE: The data set WORK._ORACLE_INPUT has 36 observations and 4 variables.
+
+3542       proc mixed data=_oracle_input;
+3543       by _oracle_by;
+3544       class Family Gender;
+3545       model Height = Gender Family Family*Gender;
+3546       run;
+
+NOTE: The PROCEDURE MIXED printed pages 284-285.
+
+3547       proc mixed;
+3548       class Family Gender;
+3549       model Height = Gender;
+3550       random Family Family*Gender;
+3551       run;
+
+NOTE: Convergence criteria met.
+NOTE: The PROCEDURE MIXED printed page 286.
+
+3552       
+3553       
+3554       
+3555       
+The SAS System
+
+3556       

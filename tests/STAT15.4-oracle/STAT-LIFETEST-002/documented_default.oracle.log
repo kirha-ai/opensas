@@ -1,0 +1,45 @@
+The SAS System
+
+12377      
+12378      /* STAT-LIFETEST-002: LIFETEST — Nonparametric survival distributions and group comparisons
+12379       * Source: S154 / Chapter 77 / `Getting Started: LIFETEST Procedure` (PDF pp. 5641–5649); S154 / Chapter 77 / `Overview: LIFETEST Procedure` (PDF
+12379    ! pp. 5640–5641).
+12380       * Discriminates: Documented default analysis with explicit complete public or synthetic inputs
+12381       */
+12382      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+12382    ! validmemname=compatible locale=en_US;
+12383      %let syscc=0;
+12384      title; footnote;
+12385      ods _all_ close;
+12386      ods listing gpath="%sysfunc(pathname(work))";
+12387      ods graphics off;
+12388      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SURVIVAL (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+12388    !                                         quit;
+
+
+12389      ods path work.templat(update) sashelp.tmplmst(read);
+12390      
+12391      data survival; input time status group $; datalines;
+
+NOTE: The data set WORK.SURVIVAL has 10 observations and 3 variables.
+
+12402      ;
+12403      run;
+12404      proc lifetest data=survival; time time*status(0); strata group; run;
+
+NOTE: The LOGLOG transform is used to compute the confidence limits for the quartiles of the survivor distribution. To suppress using this transform, specify 
+      CONFTYPE=LINEAR in the PROC LIFETEST statement.
+NOTE: The PROCEDURE LIFETEST printed pages 858-860.
+
+12405      
+12406      
+12407      
+12408      
+The SAS System
+
+12409      

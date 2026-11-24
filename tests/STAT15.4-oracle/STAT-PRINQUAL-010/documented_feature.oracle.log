@@ -1,0 +1,50 @@
+The SAS System
+
+8869       
+8870       /* STAT-PRINQUAL-010: PRINQUAL — Computational Resources
+8871        * Source: S154 / Chapter 99 / `Computational Resources` (PDF pp. 8070–8071).
+8872        * Discriminates: Verified default procedure context
+8873        */
+8874       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+8874     ! validmemname=compatible locale=en_US;
+8875       %let syscc=0;
+8876       title; footnote;
+8877       ods _all_ close;
+8878       ods listing gpath="%sysfunc(pathname(work))";
+8879       ods graphics off;
+8880       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.BBALL (memtype=DATA).
+NOTE: Deleting WORK.BBALLM (memtype=DATA).
+NOTE: Deleting WORK.MAXRANK (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TBBALL (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+8880     !                                         quit;
+
+
+8881       ods path work.templat(update) sashelp.tmplmst(read);
+8882       
+8883       proc prinqual data=sashelp.class out=scaled;
+8884       transform identity(height weight age);
+8885       run;
+
+NOTE: Algorithm converged.
+NOTE: The data set WORK.SCALED has 19 observations and 8 variables.
+NOTE: The PROCEDURE PRINQUAL printed page 602.
+
+8886       proc print data=scaled(obs=5) noobs;
+8887       run;
+
+NOTE: There were 5 observations read from the data set WORK.SCALED.
+NOTE: The PROCEDURE PRINT printed page 603.
+
+8888       
+8889       
+8890       
+8891       
+The SAS System
+
+8892       

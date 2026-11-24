@@ -1,0 +1,58 @@
+
+The SURVEYMEANS Procedure
+
+            Data Summary
+
+Number of Strata                   3
+Number of Observations            40
+Sum of Weights                  4000
+
+
+                                   Statistics
+ 
+                                               Std Error
+Variable               N            Mean         of Mean       95% CL for Mean
+---------------------------------------------------------------------------------
+Spending              40        9.141298        0.531799    8.06377052 10.2188254
+---------------------------------------------------------------------------------
+
+The SURVEYMEANS Procedure
+
+                                 Statistics for Grade Domains
+ 
+                                                           Std Error
+   Grade    Variable               N            Mean         of Mean       95% CL for Mean
+---------------------------------------------------------------------------------------------
+       7    Spending              20        5.000000        0.763551     3.4018694  6.5981306
+       8    Spending               9       15.444444        1.126773    12.8461011 18.0427878
+       9    Spending              11       10.090909        0.971908     7.9253640 12.2564542
+---------------------------------------------------------------------------------------------
+
+
+                          Differences of Spending Means for Grade Domains
+ 
+                                    Diff             Std
+   Grade          -Grade        Estimate           Error        DF    t Value    Pr > |t|     Adj P
+
+       7               8      -10.444444        1.361113        19      -7.67      <.0001    <.0001
+       7               9       -5.090909        1.235967        19      -4.12      0.0006    0.0018
+       8               9        5.353535        1.488026         8       3.60      0.0070    0.0210
+
+The SURVEYMEANS Procedure
+
+                                   Statistics for Gender*Grade Domains
+ 
+                                                                       Std Error
+Gender         Grade    Variable               N            Mean         of Mean       95% CL for Mean
+---------------------------------------------------------------------------------------------------------
+F                  8    Spending               5       15.600000        1.355626    12.4739216 18.7260784
+M                  8    Spending               4       15.250000        1.880699    10.9131011 19.5868989
+---------------------------------------------------------------------------------------------------------
+
+
+                             Differences of Spending Means for Gender*Grade Domains
+ 
+                                                            Diff             Std
+Gender      -Gender        Grade          -Grade        Estimate           Error        DF    t Value    Pr > |t|
+
+F           M                  8               8        0.350000        5.593545         8       0.06      0.9516

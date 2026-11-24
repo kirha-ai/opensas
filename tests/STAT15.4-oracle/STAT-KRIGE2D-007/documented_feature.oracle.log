@@ -1,0 +1,109 @@
+The SAS System
+
+10234      
+10235      /* STAT-KRIGE2D-007: KRIGE2D — The Pentaspherical Semivariogram Model / The Sine Hole Effect Semivariogram Model / The Power Semivariogram Model
+10236       * Source: S154 / Chapter 74 / `The Pentaspherical Semivariogram Model` (PDF p. 5469); S154 / Chapter 74 / `The Sine Hole Effect Semivariogram Model`
+10236    !  (PDF pp. 5469–5470); S154 / Chapter 74 / `The Power Semivariogram Model` (PDF pp. 5470–5471).
+10237       * Discriminates: Example 74.2: Investigating the Effect of Model Specification on Spatial Prediction
+10238       */
+10239      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+10239    ! validmemname=compatible locale=en_US;
+10240      %let syscc=0;
+10241      title; footnote;
+10242      ods _all_ close;
+10243      ods listing gpath="%sysfunc(pathname(work))";
+10244      ods graphics off;
+10245      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.DATA9 (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.THICK (memtype=DATA).
+10245    !                                         quit;
+
+
+10246      ods path work.templat(update) sashelp.tmplmst(read);
+10247      
+10248      title 'Effect of Model Specification on Prediction';
+10249      data thick;
+10250      input East North Thick @@;
+10251      label Thick='Coal Seam Thickness';
+10252      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.THICK has 75 observations and 3 variables.
+
+10278      ;
+10279      ods graphics on;
+10280      proc variogram data=thick noprint;
+10281      store out=SemivStoreGau / label='Thickness Gaussian Model';
+10282      compute lagd=7 maxlag=10;
+10283      coord xc=East yc=North;
+10284      model form=gau;
+10285      var Thick;
+10286      run;
+
+NOTE: No DIRECTIONS statement and no NDIRECTIONS=, or NDIRECTIONS=0 specified: Computing omnidirectional semivariogram.
+
+10287      proc krige2d data=thick outest=pred1 noprint;
+10288      restore in=SemivStoreGau;
+10289      coordinates xc=East yc=North;
+10290      predict var=Thick r=60;
+10291      model storeselect;
+10292      grid x=0 to 100 by 10 y=0 to 100 by 10;
+10293      run;
+
+NOTE: The data set WORK.PRED1 has 121 observations and 7 variables.
+
+10294      proc variogram data=thick plots(only)=fit;
+10295      store out=SemivStoreSph / label='Thickness Sph Model';
+10296      compute lagd=7 maxlag=10;
+10297      coord xc=East yc=North;
+10298      model form=sph;
+10299      var Thick;
+10300      run;
+
+NOTE: No DIRECTIONS statement and no NDIRECTIONS=, or NDIRECTIONS=0 specified: Computing omnidirectional semivariogram.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The PROCEDURE VARIOGRAM printed pages 732-735.
+
+10301      proc krige2d data=thick outest=pred2 noprint;
+10302      restore in=SemivStoreSph;
+10303      coordinates xc=East yc=North;
+10304      predict var=Thick r=60;
+10305      model storeselect;
+10306      grid x=0 to 100 by 10 y=0 to 100 by 10;
+10307      run;
+
+NOTE: The data set WORK.PRED2 has 121 observations and 7 variables.
+
+10308      data compare;
+10309      merge pred1(rename=(estimate=g_prd stderr=g_std))
+10310      pred2(rename=(estimate=s_prd stderr=s_std));
+10311      prdRelDif = ((g_prd-s_prd) / s_prd) * 100;
+10312      stdRelDif = ((g_std-s_std) / s_std) * 100;
+10313      run;
+
+NOTE: There were 121 observations read from the data set WORK.PRED1.
+NOTE: There were 121 observations read from the data set WORK.PRED2.
+NOTE: The data set WORK.COMPARE has 121 observations and 11 variables.
+
+10314      proc means data=compare;
+10315      var prdRelDif stdRelDif;
+10316      run;
+
+NOTE: There were 121 observations read from the data set WORK.COMPARE.
+NOTE: The PROCEDURE MEANS printed page 736.
+
+10317      ods graphics off;
+10318      run;
+10319      quit;
+10320      
+10321      
+10322      
+10323      
+The SAS System
+
+10324      

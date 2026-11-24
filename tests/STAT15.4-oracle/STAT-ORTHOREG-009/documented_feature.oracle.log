@@ -1,0 +1,180 @@
+The SAS System
+
+1550       
+1551       /* STAT-ORTHOREG-009: ORTHOREG — EFFECTPLOT / ODS Graphics
+1552        * Source: S154 / Chapter 91 / `EFFECTPLOT Statement` (PDF pp. 7291–7292); S154 / Chapter 91 / `ODS Graphics` (PDF pp. 7299–7300).
+1553        * Discriminates: Example 91.3: Fitting Polynomials; explicit statements: EFFECTPLOT
+1554        */
+1555       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+1555     ! validmemname=compatible locale=en_US;
+1556       %let syscc=0;
+1557       title; footnote;
+1558       ods _all_ close;
+1559       ods listing gpath="%sysfunc(pathname(work))";
+1560       ods graphics off;
+
+NOTE: The PROCEDURE GLM printed page 186.
+
+1561       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.LONGLEY (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+1561     !                                         quit;
+
+
+1562       ods path work.templat(update) sashelp.tmplmst(read);
+1563       
+1564       ods graphics on;
+1565       ods trace on;
+1566       ods trace on;
+1567       title 'Polynomial Data';
+1568       data Polynomial;
+1569       do i = 1 to 101;
+1570       x = (i-1)/(101-1);
+1571       y = 10**(9/2);
+1572       do j = 0 to 8;
+1573       y = y * (x - j/8);
+1574       end;
+1575       output;
+1576       end;
+1577       run;
+
+NOTE: The data set WORK.POLYNOMIAL has 101 observations and 4 variables.
+
+1578       ods graphics on;
+1579       proc orthoreg data=Polynomial;
+1580       effect xMod = polynomial(x / degree=9);
+1581       model y = xMod;
+1582       effectplot fit / obs;
+1583       store OStore;
+1584       run;
+
+
+Output Added:
+-------------
+Name:       ANOVA
+Label:      Overall ANOVA
+Template:   stat.ORTHOREG.ANOVA
+Path:       Orthoreg.ANOVA
+-------------
+
+Output Added:
+-------------
+Name:       FitStatistics
+Label:      Fit Statistics
+Template:   Stat.ORTHOREG.FitStatistics
+Path:       Orthoreg.FitStatistics
+-------------
+
+Output Added:
+-------------
+Name:       ParameterEstimates
+Label:      Parameter Estimates
+Template:   Stat.ORTHOREG.ParameterEstimates
+Path:       Orthoreg.ParameterEstimates
+-------------
+
+Output Added:
+-------------
+Name:       FitPlot
+Label:      Fit Plot 1
+Template:   Stat.Orthoreg.Graphics.FitPlot
+Path:       Orthoreg.EffectPlots.FitPlot
+-------------
+NOTE: The ORTHOREG procedure generated the model item store WORK.OSTORE.
+NOTE: There were 101 observations read from the data set WORK.POLYNOMIAL.
+NOTE: The PROCEDURE ORTHOREG printed page 187.
+
+1585       ods graphics off;
+1586       data Zeros(keep=x);
+1587       do j = 0 to 8;
+1588       x = j/8;
+1589       output;
+1590       end;
+1591       run;
+
+NOTE: The data set WORK.ZEROS has 9 observations and 1 variables.
+
+1592       proc plm restore=OStore noprint;
+1593       score data=Zeros out=OZeros pred=OPred;
+1594       run;
+
+NOTE: The data set WORK.OZEROS has 9 observations and 2 variables.
+
+1595       proc print noobs;
+1596       run;
+
+
+Output Added:
+-------------
+Name:       Print
+Label:      Data Set WORK.OZEROS
+Data Name:  ProcPrintTable
+Path:       Print.Print
+-------------
+NOTE: There were 9 observations read from the data set WORK.OZEROS.
+NOTE: The PROCEDURE PRINT printed page 188.
+
+1597       proc glm data=Polynomial;
+1598       model y = x|x|x|x|x|x|x|x|x;
+1599       store GStore;
+1600       run;
+
+
+Output Added:
+-------------
+Name:       NObs
+Label:      Number of Observations
+Template:   STAT.GLM.NObsNotitle
+Path:       GLM.Data.NObs
+-------------
+
+Output Added:
+-------------
+Name:       OverallANOVA
+Label:      Overall ANOVA
+Template:   stat.GLM.OverallANOVA
+Path:       GLM.ANOVA.y.OverallANOVA
+-------------
+
+Output Added:
+-------------
+Name:       FitStatistics
+Label:      Fit Statistics
+Template:   stat.GLM.FitStatistics
+Path:       GLM.ANOVA.y.FitStatistics
+-------------
+
+Output Added:
+-------------
+Name:       ModelANOVA
+Label:      Type I Model ANOVA
+Template:   stat.GLM.Tests
+Path:       GLM.ANOVA.y.ModelANOVA
+-------------
+
+Output Added:
+-------------
+Name:       ModelANOVA
+Label:      Type III Model ANOVA
+Template:   stat.GLM.Tests
+Path:       GLM.ANOVA.y.ModelANOVA
+-------------
+
+Output Added:
+-------------
+Name:       ParameterEstimates
+Label:      Solution
+Template:   stat.GLM.Estimates
+Path:       GLM.ANOVA.y.ParameterEstimates
+-------------
+1601       ods trace off;
+1602       ods trace off;
+1603       ods graphics off;
+1604       
+1605       
+1606       
+1607       
+The SAS System
+
+1608       

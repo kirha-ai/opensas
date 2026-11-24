@@ -1,0 +1,43 @@
+The SAS System
+
+75         
+76         /* STAT-COMMON-022: EFFECT — Multimember Effects / Polynomial Effects
+77          * Source: S154 / Chapter 20 / `Multimember Effects` (PDF pp. 429–431); S154 / Chapter 20 / `Polynomial Effects` (PDF pp. 431–434).
+78          * Discriminates: Polynomial effect construction through second degree
+79          */
+80         options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+80       ! validmemname=compatible locale=en_US;
+81         %let syscc=0;
+82         title; footnote;
+83         ods _all_ close;
+84         ods listing gpath="%sysfunc(pathname(work))";
+85         ods graphics off;
+86         proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SAMPLE (memtype=DATA).
+86       !                                         quit;
+
+
+87         ods path work.templat(update) sashelp.tmplmst(read);
+88         
+89         data sample;
+90          input x z y group $ weight freq;
+91          datalines;
+
+NOTE: The data set WORK.SAMPLE has 12 observations and 6 variables.
+
+104        ;
+105        run;
+106        proc glmselect data=sample seed=314159; effect poly=polynomial(x z / degree=2); model y=poly / selection=none; run;
+
+NOTE: There were 12 observations read from the data set WORK.SAMPLE.
+NOTE: The PROCEDURE GLMSELECT printed pages 4-6.
+
+107        
+108        
+109        
+110        
+The SAS System
+
+111        

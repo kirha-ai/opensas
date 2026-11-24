@@ -1,0 +1,74 @@
+The SAS System
+
+25517      
+25518      /* STAT-SURVEYSELECT-004: SURVEYSELECT — Systematic Random Sampling / Sequential Random Sampling
+25519       * Source: S154 / Chapter 124 / `Systematic Random Sampling` (PDF pp. 10247–10248); S154 / Chapter 124 / `Sequential Random Sampling` (PDF pp.
+25519    ! 10248–10249).
+25520       * Discriminates: Example 124.3: PPS (Dollar-Unit) Sampling
+25521       */
+25522      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+25522    ! validmemname=compatible locale=en_US;
+25523      %let syscc=0;
+25524      title; footnote;
+25525      ods _all_ close;
+25526      ods listing gpath="%sysfunc(pathname(work))";
+25527      ods graphics off;
+25528      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.AUDITSAMPLE (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPSORTSIZE (memtype=DATA).
+NOTE: Deleting WORK.TRAVELEXPENSE (memtype=DATA).
+25528    !                                         quit;
+
+
+25529      ods path work.templat(update) sashelp.tmplmst(read);
+25530      
+25531      data TravelExpense;
+25532      input ID$ Amount @@;
+25533      if (Amount < 500) then Level='1_Low ';
+25534      else if (Amount > 1500) then Level='3_High';
+25535      else Level='2_Avg ';
+25536      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.TRAVELEXPENSE has 41 observations and 3 variables.
+
+25551      ;
+25552      proc sort data=TravelExpense;
+25553      by Level;
+25554      run;
+
+NOTE: There were 41 observations read from the data set WORK.TRAVELEXPENSE.
+NOTE: The data set WORK.TRAVELEXPENSE has 41 observations and 3 variables.
+
+25555      title1 'Travel Expense Audit';
+25556      title2 'Stratified PPS (Dollar-Unit) Sampling';
+25557      proc surveyselect data=TravelExpense method=pps n=(6 10 4)
+25558      seed=47279 out=AuditSample;
+25559      size Amount;
+25560      strata Level;
+25561      run;
+
+NOTE: The data set WORK.AUDITSAMPLE has 20 observations and 5 variables.
+NOTE: The PROCEDURE SURVEYSELECT printed page 1598.
+
+25562      title1 'Travel Expense Audit';
+25563      title2 'Sample Selected by Stratified PPS Design';
+25564      proc print data=AuditSample;
+25565      run;
+
+NOTE: There were 20 observations read from the data set WORK.AUDITSAMPLE.
+NOTE: The PROCEDURE PRINT printed page 1599.
+
+25566      
+25567      
+25568      
+25569      
+The SAS System
+
+25570      

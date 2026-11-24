@@ -1,0 +1,55 @@
+The SAS System
+
+25844      
+25845      /* STAT-GLM-011: GLM — CONTRAST / ESTIMATE / MANOVA
+25846       * Source: S154 / Chapter 53 / `CONTRAST Statement` (PDF pp. 4068–4070); S154 / Chapter 53 / `ESTIMATE Statement` (PDF pp. 4070–4071); S154 /
+25846    ! Chapter 53 / `MANOVA Statement` (PDF pp. 4081–4086).
+25847       * Discriminates: Example 53.6: Multivariate Analysis of Variance; explicit statements: CONTRAST, MANOVA
+25848       */
+25849      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+25849    ! validmemname=compatible locale=en_US;
+25850      %let syscc=0;
+25851      title; footnote;
+25852      ods _all_ close;
+25853      ods listing gpath="%sysfunc(pathname(work))";
+25854      ods graphics off;
+
+NOTE: The PROCEDURE GLM printed pages 2532-2536.
+
+25855      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.DOGS (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+25855    !                                         quit;
+
+
+25856      ods path work.templat(update) sashelp.tmplmst(read);
+25857      
+25858      title "Romano-British Pottery";
+25859      data pottery;
+25860      input Site $12. Al Fe Mg Ca Na;
+25861      datalines;
+
+NOTE: The data set WORK.POTTERY has 26 observations and 6 variables.
+
+25888      ;
+25889      proc glm data=pottery;
+25890      class Site;
+25891      model Al Fe Mg Ca Na = Site;
+25892      contrast 'Llanederyn vs. the rest' Site 1 1 1 -3;
+25893      manova h=_all_ / printe printh;
+25894      run;
+
+25895      
+25896      
+25897      
+25898      
+The SAS System
+
+25899      

@@ -1,0 +1,76 @@
+The SAS System
+
+2254       
+2255       /* STAT-QUANTREG-001: QUANTREG — Data input, variable roles, and basic options
+2256        * Source: S154 / Chapter 103 / `proc quantreg Statement` (PDF pp. 8372–8378); S154 / Chapter 103 / `BY Statement` (PDF p. 8378); S154 / Chapter
+2256     ! 103 / `ID Statement` (PDF pp. 8385–8386); S154 / Chapter 103 / `WEIGHT Statement` (PDF p. 8393).
+2257        * Discriminates: Verified default procedure context
+2258        */
+2259       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+2259     ! validmemname=compatible locale=en_US;
+2260       %let syscc=0;
+2261       title; footnote;
+2262       ods _all_ close;
+2263       ods listing gpath="%sysfunc(pathname(work))";
+2264       ods graphics off;
+2265       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.EPIDEMIC (memtype=DATA).
+NOTE: Deleting WORK.OUT1 (memtype=DATA).
+NOTE: Deleting WORK.OUT2 (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.XVAL (memtype=DATA).
+2265     !                                         quit;
+
+
+2266       ods path work.templat(update) sashelp.tmplmst(read);
+2267       
+2268       data a (drop=i);
+2269       do i=1 to 1000;
+2270       x1=rannor(1234);
+2271       x2=rannor(1234);
+2272       e=rannor(1234);
+2273       if i > 950 then y=100 + 10*e;
+2274       else y=10 + 5*x1 + 3*x2 + 0.5 * e;
+2275       output;
+2276       end;
+2277       run;
+
+NOTE: The data set WORK.A has 1000 observations and 4 variables.
+
+2278       proc quantreg data=a;
+2279       model y = x1 x2 / seed=314159;
+2280       run;
+
+NOTE: No valid quantiles are specified. PROC QUANTREG computes median regression.
+NOTE: The PROCEDURE QUANTREG printed page 71.
+
+2281       proc quantreg algorithm=interior(tolerance=1e-6)
+2282       ci=none data=a;
+2283       model y = x1 x2 / itprint nosummary seed=314159;
+2284       run;
+
+NOTE: No valid quantiles are specified. PROC QUANTREG computes median regression.
+NOTE: The PROCEDURE QUANTREG printed pages 72-73.
+
+2285       proc quantreg algorithm=smooth(rratio=.5) ci=none data=a;
+2286       model y = x1 x2 / itprint nosummary seed=314159;
+2287       run;
+
+NOTE: No valid quantiles are specified. PROC QUANTREG computes median regression.
+NOTE: The PROCEDURE QUANTREG printed pages 74-75.
+
+2288       
+2289       
+2290       
+2291       
+The SAS System
+
+2292       

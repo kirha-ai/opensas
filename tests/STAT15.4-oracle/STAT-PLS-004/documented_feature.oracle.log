@@ -1,0 +1,117 @@
+The SAS System
+
+5637       
+5638       /* STAT-PLS-004: PLS — Regression Methods / Centering and Scaling
+5639        * Source: S154 / Chapter 95 / `Regression Methods` (PDF pp. 7697–7702); S154 / Chapter 95 / `Centering and Scaling` (PDF pp. 7703–7704).
+5640        * Discriminates: Getting Started: PLS Procedure
+5641        */
+5642       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+5642     ! validmemname=compatible locale=en_US;
+5643       %let syscc=0;
+5644       title; footnote;
+5645       ods _all_ close;
+5646       ods listing gpath="%sysfunc(pathname(work))";
+5647       ods graphics off;
+5648       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.ALL (memtype=DATA).
+NOTE: Deleting WORK.NEWOBS (memtype=DATA).
+NOTE: Deleting WORK.PRED (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SAMPLE (memtype=DATA).
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+5648     !                                         quit;
+
+
+5649       ods path work.templat(update) sashelp.tmplmst(read);
+5650       
+5651       data Sample;
+5652       input obsnam $ v1-v27 ls ha dt @@;
+5653       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.SAMPLE has 16 observations and 31 variables.
+
+5702       ;
+5703       proc pls data=sample;
+5704       model ls ha dt = v1-v27;
+5705       run;
+
+NOTE: Maximum number of factors to extract set to 15.  This may be too high; you should consider using either the NFAC= option or the CV= option to set the 
+      number of factors.
+NOTE: There were 16 observations read from the data set WORK.SAMPLE.
+NOTE: The PROCEDURE PLS printed pages 443-444.
+
+5706       proc pls data=sample cv=split;
+5707       model ls ha dt = v1-v27;
+5708       run;
+
+NOTE: Maximum number of factors to extract set to 15.
+NOTE: There were 16 observations read from the data set WORK.SAMPLE.
+NOTE: The PROCEDURE PLS printed pages 445-446.
+
+5709       proc pls data=sample cv=split cvtest(seed=12345);
+5710       model ls ha dt = v1-v27;
+5711       run;
+
+NOTE: Maximum number of factors to extract set to 15.
+NOTE: There were 16 observations read from the data set WORK.SAMPLE.
+NOTE: The PROCEDURE PLS printed pages 447-448.
+
+5712       data newobs;
+5713       input obsnam $ v1-v27 @@;
+5714       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.NEWOBS has 2 observations and 28 variables.
+
+5721       ;
+5722       data all;
+5723       set sample newobs;
+5724       run;
+
+NOTE: There were 16 observations read from the data set WORK.SAMPLE.
+NOTE: There were 2 observations read from the data set WORK.NEWOBS.
+NOTE: The data set WORK.ALL has 18 observations and 31 variables.
+
+5725       proc pls data=all nfac=3;
+5726       model ls ha dt = v1-v27;
+5727       output out=pred p=p_ls p_ha p_dt;
+5728       run;
+
+NOTE: There were 18 observations read from the data set WORK.ALL.
+NOTE: The data set WORK.PRED has 18 observations and 34 variables.
+NOTE: The PROCEDURE PLS printed pages 449-450.
+
+5729       proc print data=pred;
+5730       where (obsnam in ('EM17','EM25'));
+5731       var obsnam p_ls p_ha p_dt;
+5732       run;
+
+NOTE: There were 2 observations read from the data set WORK.PRED.
+      WHERE obsnam in ('EM17', 'EM25');
+NOTE: The PROCEDURE PRINT printed page 451.
+
+5733       ods graphics on;
+5734       proc pls data=sample cv=split cvtest(seed=12345);
+5735       model ls ha dt = v1-v27;
+5736       run;
+
+NOTE: Maximum number of factors to extract set to 15.
+NOTE: There were 16 observations read from the data set WORK.SAMPLE.
+NOTE: The PROCEDURE PLS printed pages 452-453.
+
+5737       proc pls data=sample nfac=3 plot=corrload(nfac=3);
+5738       model ls ha dt = v1-v27;
+5739       run;
+
+NOTE: There were 16 observations read from the data set WORK.SAMPLE.
+NOTE: The PROCEDURE PLS printed pages 454-455.
+
+5740       
+5741       
+5742       
+5743       
+The SAS System
+
+5744       

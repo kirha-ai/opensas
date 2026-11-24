@@ -1,0 +1,51 @@
+The SAS System
+
+77         
+78         /* STAT-COMMON-002: Statistical data selection, missing values, and observation weight interfaces
+79          * Source: S154 / Chapter 13 / `Introduction to Scoring, Standardization, and Ranking Procedures` (PDF pp. 253–254); S154 / Chapter 22 / `FREQ
+79       ! Statement` (PDF p. 564); S154 / Chapter 22 / `ID Statement` (PDF p. 564); S154 / Chapter 22 / `VAR Statement` (PDF p. 570); S154 / Chapter 22 /
+79       ! `WEIGHT Statement` (PDF p. 570).
+80          * Discriminates: BY selection and the distinct frequency/analysis weight roles
+81          */
+82         options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+82       ! validmemname=compatible locale=en_US;
+83         %let syscc=0;
+84         title; footnote;
+85         ods _all_ close;
+86         ods listing gpath="%sysfunc(pathname(work))";
+87         ods graphics off;
+88         proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.RUNTIME (memtype=DATA).
+NOTE: Deleting WORK.SAMPLE (memtype=DATA).
+88       !                                         quit;
+
+
+89         ods path work.templat(update) sashelp.tmplmst(read);
+90         
+91         data sample;
+92          input x z y group $ weight freq;
+93          datalines;
+
+NOTE: The data set WORK.SAMPLE has 12 observations and 6 variables.
+
+106        ;
+107        run;
+108        proc sort data=sample; by group; run;
+
+NOTE: There were 12 observations read from the data set WORK.SAMPLE.
+NOTE: The data set WORK.SAMPLE has 12 observations and 6 variables.
+
+109        proc means data=sample n mean std sum; by group; var x y; freq freq; weight weight; run;
+
+NOTE: There were 12 observations read from the data set WORK.SAMPLE.
+NOTE: The PROCEDURE MEANS printed page 3.
+
+110        
+111        
+112        
+113        
+The SAS System
+
+114        

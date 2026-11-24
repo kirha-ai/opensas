@@ -1,0 +1,125 @@
+The SAS System
+
+3045       
+3046       /* STAT-FMM-005: FMM — RANDSTART / The Form of the Finite Mixture Model / Mixture Models Contrasted with Mixing and Mixed Models: Untangling the
+3046     ! Terminology Web
+3047        * Source: S154 / Chapter 46 / `RANDSTART Statement` (PDF pp. 3011–3013); S154 / Chapter 46 / `The Form of the Finite Mixture Model` (PDF pp.
+3047     ! 3015–3016); S154 / Chapter 46 / `Mixture Models Contrasted with Mixing and Mixed Models: Untangling the Terminology Web` (PDF pp. 3016–3018).
+3048        * Discriminates: Example 46.1: Modeling Mixing Probabilities: All Mice Are Equal, but Some Mice Are More Equal Than Others
+3049        */
+3050       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+3050     ! validmemname=compatible locale=en_US;
+3051       %let syscc=0;
+3052       title; footnote;
+3053       ods _all_ close;
+3054       ods listing gpath="%sysfunc(pathname(work))";
+3055       ods graphics off;
+3056       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.CATCH (memtype=DATA).
+NOTE: Deleting WORK.FMMOUT (memtype=DATA).
+NOTE: Deleting WORK.GALAXIES (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.YEAST (memtype=DATA).
+3056     !                                         quit;
+
+
+3057       ods path work.templat(update) sashelp.tmplmst(read);
+3058       
+3059       data ossi;
+3060       length tx $8;
+3061       input tx$ n @@;
+3062       do i=1 to n;
+3063       input y m @@;
+3064       output;
+3065       end;
+3066       drop i;
+3067       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.OSSI has 81 observations and 4 variables.
+
+3077       ;
+3078       data ossi;
+3079       set ossi;
+3080       array xx{3} x1-x3;
+3081       do i=1 to 3;
+3082       xx{i}=0;
+3083       end;
+3084       pht = 0;
+3085       tcpo = 0;
+3086       if (tx='TCPO') then do;
+3087       xx{1} = 1;
+3088       tcpo = 100;
+3089       end;
+3090       else if (tx='PHT') then do;
+3091       xx{2} = 1;
+3092       pht = 60;
+3093       end;
+3094       else if (tx='PHT+TCPO') then do;
+3095       pht = 60;
+3096       tcpo = 100;
+3097       xx{1} = 1;
+3098       xx{2} = 1;
+3099       xx{3}=1;
+3100       end;
+3101       run;
+
+NOTE: There were 81 observations read from the data set WORK.OSSI.
+NOTE: The data set WORK.OSSI has 81 observations and 10 variables.
+
+3102       proc fmm data=ossi seed=314159;
+3103       class pht tcpo;
+3104       model y/m = / dist=binomcluster;
+3105       probmodel pht tcpo pht*tcpo;
+3106       run;
+
+NOTE: The binomial cluster distribution implies a two-component model. The K parameter of this model is set to 2.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The PROCEDURE FMM printed page 179.
+
+3107       proc fmm data=ossi seed=314159;
+3108       class pht tcpo;
+3109       model y/m = pht tcpo pht*tcpo / dist=binomcluster;
+3110       probmodel pht tcpo pht *tcpo;
+3111       run;
+
+NOTE: The binomial cluster distribution implies a two-component model. The K parameter of this model is set to 2.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The PROCEDURE FMM printed page 180.
+
+3112       proc fmm data=ossi seed=314159;
+3113       model y/m = x1-x3 / dist=binomcluster;
+3114       probmodel x1-x3;
+3115       run;
+
+NOTE: The binomial cluster distribution implies a two-component model. The K parameter of this model is set to 2.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The PROCEDURE FMM printed page 181.
+
+3116       proc fmm data=ossi seed=314159;
+3117       model y/m = x1-x3 / dist=binomial;
+3118       run;
+
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The PROCEDURE FMM printed page 182.
+
+3119       proc fmm data=ossi seed=314159;
+3120       model y/m = x1-x3 / dist=betabinomial;
+3121       run;
+
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The PROCEDURE FMM printed page 183.
+
+3122       
+3123       
+3124       
+3125       
+The SAS System
+
+3126       

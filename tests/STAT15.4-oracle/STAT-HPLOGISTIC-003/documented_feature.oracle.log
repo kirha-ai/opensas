@@ -1,0 +1,54 @@
+The SAS System
+
+3513       
+3514       /* STAT-HPLOGISTIC-003: HPLOGISTIC — CLASS / MODEL
+3515        * Source: S154 / Chapter 61 / `CLASS Statement` (PDF p. 4752); S154 / Chapter 61 / `MODEL Statement` (PDF pp. 4753–4760).
+3516        * Discriminates: Getting Started: HPLOGISTIC Procedure; explicit statements: CLASS, MODEL
+3517        */
+3518       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+3518     ! validmemname=compatible locale=en_US;
+3519       %let syscc=0;
+3520       title; footnote;
+3521       ods _all_ close;
+3522       ods listing gpath="%sysfunc(pathname(work))";
+3523       ods graphics off;
+3524       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.GETSTARTED (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+3524     !                                         quit;
+
+
+3525       ods path work.templat(update) sashelp.tmplmst(read);
+3526       
+3527       data getStarted;
+3528       input C$ y x1-x10;
+3529       datalines;
+
+NOTE: The data set WORK.GETSTARTED has 100 observations and 12 variables.
+
+3630       ;
+3631       proc hplogistic data=getStarted;
+3632       class C;
+3633       model y = C x1-x10;
+3634       run;
+
+NOTE: The HPLOGISTIC procedure is executing in single-machine mode.
+NOTE: You are modeling the probability that y='0'.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: There were 100 observations read from the data set WORK.GETSTARTED.
+NOTE: The PROCEDURE HPLOGISTIC printed page 190.
+
+3635       
+3636       
+3637       
+3638       
+The SAS System
+
+3639       

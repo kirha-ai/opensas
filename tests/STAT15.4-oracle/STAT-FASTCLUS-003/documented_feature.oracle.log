@@ -1,0 +1,52 @@
+The SAS System
+
+16155      
+16156      /* STAT-FASTCLUS-003: FASTCLUS — Updates in the FASTCLUS Procedure / Using PROC FASTCLUS
+16157       * Source: S154 / Chapter 45 / `Updates in the FASTCLUS Procedure` (PDF pp. 2912–2913); S154 / Chapter 45 / `Using PROC FASTCLUS` (PDF pp.
+16157    ! 2918–2920).
+16158       * Discriminates: Verified default procedure context
+16159       */
+16160      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+16160    ! validmemname=compatible locale=en_US;
+16161      %let syscc=0;
+16162      title; footnote;
+16163      ods _all_ close;
+16164      ods listing gpath="%sysfunc(pathname(work))";
+16165      ods graphics off;
+16166      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.CLUSTERS (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+16166    !                                         quit;
+
+
+16167      ods path work.templat(update) sashelp.tmplmst(read);
+16168      
+16169      proc fastclus data=sashelp.iris maxclusters=3 maxiter=50 out=clusters;
+16170      var SepalLength SepalWidth PetalLength PetalWidth;
+16171      run;
+
+NOTE: Convergence criterion is satisfied.
+NOTE: The data set WORK.CLUSTERS has 150 observations and 7 variables.
+NOTE: The PROCEDURE FASTCLUS printed page 2136.
+
+16172      proc freq data=clusters;
+16173      tables Species*Cluster;
+16174      run;
+
+NOTE: There were 150 observations read from the data set WORK.CLUSTERS.
+NOTE: The PROCEDURE FREQ printed page 2137.
+
+16175      
+16176      
+16177      
+16178      
+The SAS System
+
+16179      

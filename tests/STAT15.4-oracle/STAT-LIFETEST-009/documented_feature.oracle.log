@@ -1,0 +1,125 @@
+The SAS System
+
+12752      
+12753      /* STAT-LIFETEST-009: LIFETEST — Displayed Output / ODS Table Names
+12754       * Source: S154 / Chapter 77 / `Displayed Output` (PDF pp. 5695–5705); S154 / Chapter 77 / `ODS Table Names` (PDF pp. 5710–5712).
+12755       * Discriminates: Example 77.3: Life-Table Estimates for Males with Angina Pectoris
+12756       */
+12757      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+12757    ! validmemname=compatible locale=en_US;
+12758      %let syscc=0;
+12759      title; footnote;
+12760      ods _all_ close;
+12761      ods listing gpath="%sysfunc(pathname(work))";
+12762      ods graphics off;
+
+
+12763      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.EXPOSED (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+12763    !                                         quit;
+
+
+12764      ods path work.templat(update) sashelp.tmplmst(read);
+12765      
+12766      ods trace on;
+12767      title 'Survival of Males with Angina Pectoris';
+12768      data Males;
+12769      keep Freq Years Censored;
+12770      retain Years -.5;
+12771      input fail withdraw @@;
+12772      Years + 1;
+12773      Censored=0;
+12774      Freq=fail;
+12775      output;
+12776      Censored=1;
+12777      Freq=withdraw;
+12778      output;
+12779      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.MALES has 32 observations and 3 variables.
+
+12783      ;
+12784      ods graphics on;
+12785      proc lifetest data=Males method=lt intervals=(0 to 15 by 1)
+12786      plots=(s,ls,lls,h,p);
+12787      time Years*Censored(1);
+12788      freq Freq;
+12789      run;
+
+NOTE: The LOGLOG transform is used to compute the confidence limits for the quartiles of the survivor distribution. To suppress using this transform, specify 
+      CONFTYPE=LINEAR in the PROC LIFETEST statement.
+
+Output Added:
+-------------
+Name:       LifetableEstimates
+Label:      Lifetable Estimates
+Template:   Stat.Lifetest.LifetableEstimates
+Path:       Lifetest.Stratum1.LifetableEstimates
+-------------
+
+Output Added:
+-------------
+Name:       SurvivalPlot
+Label:      Life-Table Survival Curve
+Template:   Stat.Lifetest.Graphics.LifetableSurvival
+Path:       Lifetest.Stratum1.SurvivalPlot
+-------------
+
+Output Added:
+-------------
+Name:       NegLogSurvivalPlot
+Label:      LOGSURV Plot
+Template:   Stat.Lifetest.Graphics.NegLogSurvival
+Path:       Lifetest.Stratum1.NegLogSurvivalPlot
+-------------
+
+Output Added:
+-------------
+Name:       LogNegLogSurvivalPlot
+Label:      Log[-Log(Survival))] Plot
+Template:   Stat.Lifetest.Graphics.LogNegLogSurvival
+Path:       Lifetest.Stratum1.LogNegLogSurvivalPlot
+-------------
+
+Output Added:
+-------------
+Name:       DensityPlot
+Label:      Estimated Density
+Template:   Stat.Lifetest.Graphics.Density
+Path:       Lifetest.Stratum1.DensityPlot
+-------------
+
+Output Added:
+-------------
+Name:       HazardPlot
+Label:      Estimated Hazard
+Template:   Stat.Lifetest.Graphics.Hazard
+Path:       Lifetest.Stratum1.HazardPlot
+-------------
+NOTE: 2 observations with invalid time, censoring, or frequency values were deleted.
+
+Output Added:
+-------------
+Name:       CensoredSummary
+Label:      Censored Summary
+Template:   Stat.Lifetest.CensoredSummary
+Path:       Lifetest.CensoredSummary
+-------------
+NOTE: The PROCEDURE LIFETEST printed page 877.
+
+12790      ods graphics off;
+12791      run;
+12792      quit;
+12793      ods trace off;
+12794      
+12795      
+12796      
+12797      
+The SAS System
+
+12798      

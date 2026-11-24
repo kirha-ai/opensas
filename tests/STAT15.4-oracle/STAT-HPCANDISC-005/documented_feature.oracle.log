@@ -1,0 +1,158 @@
+The SAS System
+
+6658       
+6659       /* STAT-HPCANDISC-005: HPCANDISC — Displayed Output / ODS Table Names
+6660        * Source: S154 / Chapter 57 / `Displayed Output` (PDF pp. 4493–4496); S154 / Chapter 57 / `ODS Table Names` (PDF pp. 4496–4497).
+6661        * Discriminates: Getting Started: HPCANDISC Procedure
+6662        */
+6663       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+6663     ! validmemname=compatible locale=en_US;
+6664       %let syscc=0;
+6665       title; footnote;
+6666       ods _all_ close;
+6667       ods listing gpath="%sysfunc(pathname(work))";
+6668       ods graphics off;
+6669       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.OUTCAN (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+6669     !                                         quit;
+
+
+6670       ods path work.templat(update) sashelp.tmplmst(read);
+6671       
+6672       ods trace on;
+6673       title 'Fish Measurement Data';
+6674       proc hpcandisc data=sashelp.fish ncan=3 out=outcan;
+6675       ods exclude tstruc bstruc pstruc tcoef pcoef;
+6676       id Species;
+6677       class Species;
+6678       var Weight Length1 Length2 Length3 Height Width;
+6679       run;
+
+NOTE: The HPCANDISC procedure is executing in single-machine mode.
+
+Output Added:
+-------------
+Name:       PerformanceInfo
+Label:      Performance Information
+Template:   HPA.Common.PerfInfo
+Path:       HPCandisc.PerformanceInfo
+-------------
+
+Output Added:
+-------------
+Name:       DataAccessInfo
+Label:      Data Access Information
+Template:   HPA.Common.DataAccessInfo
+Path:       HPCandisc.DataAccessInfo
+-------------
+
+Output Added:
+-------------
+Name:       Counts
+Label:      Counts
+Template:   HPSTAT.HPCANDISC.Counts
+Path:       HPCandisc.Counts
+-------------
+
+Output Added:
+-------------
+Name:       NObs
+Label:      Number of Observations
+Template:   HPSTAT.HPCANDISC.NObs
+Path:       HPCandisc.NObs
+-------------
+
+Output Added:
+-------------
+Name:       ClassLevels
+Label:      Class Level Information
+Template:   HPSTAT.HPCANDISC.ClassLevels
+Path:       HPCandisc.ClassLevels
+-------------
+WARNING: 1 observations in DATA= data set or BY group will not be included in the analysis due to missing values.
+WARNING: A total of 1 of the 159 observations in the DATA= data set were excluded (frequency sum = 158).
+
+Output Added:
+-------------
+Name:       MultStat
+Label:      Multivariate Statistics
+Template:   HPSTAT.HPCANDISC.MultStat
+Path:       HPCandisc.MultStat
+-------------
+
+Output Added:
+-------------
+Name:       CanCorr
+Label:      Canonical Correlations
+Template:   HPSTAT.HPCANDISC.CanCorr
+Path:       HPCandisc.CanonicalAnalysis.CanCorr
+-------------
+
+Output Added:
+-------------
+Name:       RCoef
+Label:      Raw
+Template:   HPSTAT.HPCANDISC.RCoef
+Path:       HPCandisc.CanonicalAnalysis.Coefficients.RCoef
+-------------
+
+Output Added:
+-------------
+Name:       CanonicalMeans
+Label:      Class Means
+Template:   HPSTAT.HPCANDISC.CanonicalMeans
+Path:       HPCandisc.CanonicalAnalysis.CanonicalMeans
+-------------
+NOTE: There were 159 observations read from the data set SASHELP.FISH.
+NOTE: The data set WORK.OUTCAN has 159 observations and 4 variables.
+NOTE: The PROCEDURE HPCANDISC printed pages 523-526.
+
+6680       proc template;
+6681       define statgraph scatter;
+6682       begingraph;
+6683       entrytitle 'Fish Measurement Data';
+6684       layout overlayequated / equatetype=fit
+6685       xaxisopts=(label='Canonical Variable 1')
+6686       yaxisopts=(label='Canonical Variable 2');
+6687       scatterplot x=Can1 y=Can2 / group=species name='fish';
+6688       layout gridded / autoalign=(topright);
+6689       discretelegend 'fish' / border=false opaque=false;
+6690       endlayout;
+6691       endlayout;
+6692       endgraph;
+6693       end;
+NOTE: Overwriting existing template/link: Scatter
+NOTE: STATGRAPH 'Scatter' has been saved to: WORK.TEMPLAT
+6694       run;
+
+6695       proc sgrender data=outcan template=scatter;
+6696       run;
+
+
+Output Added:
+-------------
+Name:       SGRender
+Label:      The SGRender Procedure
+Template:   scatter
+Path:       SGRender.SGRender
+-------------
+NOTE: Listing image output written to /saswork/SAS_workB3110001D02A_odaws02-euw1.oda.sas.com/SAS_work0A040001D02A_odaws02-euw1.oda.sas.com/SGRender20.png.
+NOTE: There were 159 observations read from the data set WORK.OUTCAN.
+
+6697       ods trace off;
+6698       
+6699       
+6700       
+6701       
+The SAS System
+
+6702       

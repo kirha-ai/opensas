@@ -1,0 +1,96 @@
+The SAS System
+
+5829       
+5830       /* STAT-NLIN-008: NLIN — BOUNDS / PARAMETERS
+5831        * Source: S154 / Chapter 88 / `BOUNDS Statement` (PDF pp. 7000–7001); S154 / Chapter 88 / `PARAMETERS Statement` (PDF pp. 7008–7011).
+5832        * Discriminates: Example 88.4: Affecting Curvature through Parameterization; explicit statements: PARAMETERS
+5833        */
+5834       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+5834     ! validmemname=compatible locale=en_US;
+5835       %let syscc=0;
+5836       title; footnote;
+5837       ods _all_ close;
+5838       ods listing gpath="%sysfunc(pathname(work))";
+5839       ods graphics off;
+5840       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.ENZYME (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+5840     !                                         quit;
+
+
+5841       ods path work.templat(update) sashelp.tmplmst(read);
+5842       
+5843       data logistic;
+5844       input dose y;
+5845       logdose = log(dose);
+5846       datalines;
+
+NOTE: The data set WORK.LOGISTIC has 7 observations and 3 variables.
+
+5854       ;
+5855       proc sgplot data=logistic;
+5856       scatter y=y x=dose;
+5857       xaxis type=log logstyle=linear;
+5858       run;
+
+NOTE: Some of the tick values have been thinned.
+NOTE: Listing image output written to /saswork/SAS_work0B6E00009FAA_odaws02-euw1.oda.sas.com/SAS_work530800009FAA_odaws02-euw1.oda.sas.com/SGPlot33.png.
+NOTE: There were 7 observations read from the data set WORK.LOGISTIC.
+
+5859       proc nlin data=logistic bias hougaard nlinmeasures;
+5860       parameters alpha=100 beta=3 gamma=300;
+5861       delta = 0;
+5862       Switch = 1/(1+gamma*exp(beta*log(dose)));
+5863       model y = delta + (alpha - delta)*Switch;
+5864       run;
+
+NOTE: DER.alpha not initialized or missing. It will be computed automatically.
+NOTE: DER.beta not initialized or missing. It will be computed automatically.
+NOTE: DER.gamma not initialized or missing. It will be computed automatically.
+NOTE: Convergence criterion met.
+NOTE: The PROCEDURE NLIN printed page 390.
+
+5865       proc nlin data=logistic bias hougaard;
+5866       parameters alpha=100 beta=3 LD50=0.15;
+5867       delta = 0;
+5868       Switch = 1/(1+exp(beta*log(dose/LD50)));
+5869       model y = delta + (alpha - delta)*Switch;
+5870       output out=nlinout pred=p lcl=lcl ucl=ucl;
+5871       run;
+
+NOTE: DER.alpha not initialized or missing. It will be computed automatically.
+NOTE: DER.beta not initialized or missing. It will be computed automatically.
+NOTE: DER.LD50 not initialized or missing. It will be computed automatically.
+NOTE: Convergence criterion met.
+NOTE: The data set WORK.NLINOUT has 7 observations and 6 variables.
+NOTE: The PROCEDURE NLIN printed page 391.
+
+5872       proc nlin data=logistic bias hougaard nlinmeasures;
+5873       parameters alpha=100 mustar=20 LD50=0.15;
+5874       delta = 0;
+5875       xstar = 0.3;
+5876       beta = log((alpha - mustar)/(mustar - delta)) / log(xstar/LD50);
+5877       Switch = 1/(1+exp(beta *log(dose/LD50)));
+5878       model y = delta + (alpha - delta)*Switch;
+5879       output out=nlinout pred=p lcl=lcl ucl=ucl;
+5880       run;
+
+NOTE: DER.alpha not initialized or missing. It will be computed automatically.
+NOTE: DER.mustar not initialized or missing. It will be computed automatically.
+NOTE: DER.LD50 not initialized or missing. It will be computed automatically.
+NOTE: Convergence criterion met.
+NOTE: The data set WORK.NLINOUT has 7 observations and 6 variables.
+NOTE: The PROCEDURE NLIN printed page 392.
+
+5881       
+5882       
+5883       
+5884       
+The SAS System
+
+5885       

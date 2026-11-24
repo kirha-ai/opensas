@@ -1,0 +1,52 @@
+The SAS System
+
+28912      
+28913      /* STAT-TTEST-006: TTEST — PAIRED / Paired Design
+28914       * Source: S154 / Chapter 128 / `PAIRED Statement` (PDF p. 10617); S154 / Chapter 128 / `Paired Design` (PDF pp. 10623–10624).
+28915       * Discriminates: Paired differences, reversed direction and one-sided inference
+28916       */
+28917      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+28917    ! validmemname=compatible locale=en_US;
+28918      %let syscc=0;
+28919      title; footnote;
+28920      ods _all_ close;
+28921      ods listing gpath="%sysfunc(pathname(work))";
+28922      ods graphics off;
+
+
+28923      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TIME (memtype=DATA).
+28923    !                                         quit;
+
+
+28924      ods path work.templat(update) sashelp.tmplmst(read);
+28925      
+28926      data sample;
+28927       input x y group $ freq weight;
+28928       datalines;
+
+NOTE: The data set WORK.SAMPLE has 12 observations and 5 variables.
+
+28941      ;
+28942      run;
+28943      proc ttest data=sample; paired x*y; run;
+
+NOTE: The PROCEDURE TTEST printed page 1772.
+
+28944      proc ttest data=sample sides=u; paired y*x; run;
+
+NOTE: The PROCEDURE TTEST printed page 1773.
+
+28945      
+28946      
+28947      
+28948      
+The SAS System
+
+28949      

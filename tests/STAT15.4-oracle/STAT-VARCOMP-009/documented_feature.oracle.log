@@ -1,0 +1,74 @@
+The SAS System
+
+29959      
+29960      /* STAT-VARCOMP-009: VARCOMP — Official examples and feature integration regression
+29961       * Source: S154 / Chapter 130 / `Examples: VARCOMP Procedure` (PDF pp. 10742–10749).
+29962       * Discriminates: Example 130.1: Using the Four General Estimation Methods
+29963       */
+29964      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+29964    ! validmemname=compatible locale=en_US;
+29965      %let syscc=0;
+29966      title; footnote;
+29967      ods _all_ close;
+29968      ods listing gpath="%sysfunc(pathname(work))";
+29969      ods graphics off;
+29970      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.CURE (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+29970    !                                         quit;
+
+
+29971      ods path work.templat(update) sashelp.tmplmst(read);
+29972      
+29973      data a;
+29974      input a b y @@;
+29975      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.A has 16 observations and 3 variables.
+
+29979      ;
+29980      proc varcomp method=type1 data=a;
+29981      class a b;
+29982      model y=a|b / fixed=1;
+29983      run;
+
+NOTE: There were 16 observations read from the data set WORK.A.
+NOTE: The PROCEDURE VARCOMP printed page 1811.
+
+29984      proc varcomp method=mivque0 data=a;
+29985      class a b;
+29986      model y=a|b / fixed=1;
+29987      run;
+
+NOTE: There were 16 observations read from the data set WORK.A.
+NOTE: The PROCEDURE VARCOMP printed page 1812.
+
+29988      proc varcomp method=ml data=a;
+29989      class a b;
+29990      model y=a|b / fixed=1;
+29991      run;
+
+NOTE: There were 16 observations read from the data set WORK.A.
+NOTE: The PROCEDURE VARCOMP printed page 1813.
+
+29992      proc varcomp method=reml data=a;
+29993      class a b;
+29994      model y=a|b / fixed=1;
+29995      run;
+
+NOTE: There were 16 observations read from the data set WORK.A.
+NOTE: The PROCEDURE VARCOMP printed page 1814.
+
+29996      
+29997      
+29998      
+29999      
+The SAS System
+
+30000      

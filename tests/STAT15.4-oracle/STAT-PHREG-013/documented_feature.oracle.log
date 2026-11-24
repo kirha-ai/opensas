@@ -1,0 +1,56 @@
+The SAS System
+
+2916       
+2917       /* STAT-PHREG-013: PHREG — BAYES / Specifics for Bayesian Analysis
+2918        * Source: S154 / Chapter 92 / `BAYES Statement` (PDF pp. 7341–7355); S154 / Chapter 92 / `Specifics for Bayesian Analysis` (PDF pp. 7455–7466).
+2919        * Discriminates: Example 92.14: Bayesian Analysis of Piecewise Exponential Model; explicit statements: BAYES
+2920        */
+2921       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+2921     ! validmemname=compatible locale=en_US;
+2922       %let syscc=0;
+2923       title; footnote;
+2924       ods _all_ close;
+2925       ods listing gpath="%sysfunc(pathname(work))";
+2926       ods graphics off;
+2927       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.MYELOMA (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+2927     !                                         quit;
+
+
+2928       ods path work.templat(update) sashelp.tmplmst(read);
+2929       
+2930       data Rats;
+2931       label Days ='Days from Exposure to Death';
+2932       input Days Status Group @@;
+2933       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.RATS has 40 observations and 3 variables.
+
+2944       ;
+2945       proc phreg data=Rats;
+2946       model Days*Status(0)=Group;
+2947       bayes seed=1 piecewise=hazard statistics=(summary interval)
+2948       diagnostics=(autocorr geweke ess) nmc=1000 nbi=200;
+2949       run;
+
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The PROCEDURE PHREG printed pages 245-247.
+
+2950       proc phreg data=Rats;
+2951       model Days*Status(0)=Group;
+2952       bayes seed=1 spline statistics=(summary interval)
+2953       diagnostics=(autocorr geweke ess) nmc=1000 nbi=200;
+2954       run;
+
+NOTE: The PROCEDURE PHREG printed pages 248-250.
+
+2955       
+2956       
+2957       
+2958       
+The SAS System
+
+2959       

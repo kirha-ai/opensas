@@ -1,0 +1,73 @@
+
+The NLMIXED Procedure
+
+                         Specifications
+
+Data Set                                    WORK.REPEATED       
+Dependent Variable                          y                   
+Distribution for Dependent Variable         Normal              
+Random Effects                              u                   
+Distribution for Random Effects             Normal              
+Subject Variable                            cluster             
+Optimization Technique                      Dual Quasi-Newton   
+Integration Method                          Adaptive Gaussian   
+                                            Quadrature          
+
+
+               Dimensions
+
+Observations Used                     96
+Observations Not Used                  0
+Total Observations                    96
+Subjects                               8
+Max Obs per Subject                   12
+Parameters                             4
+Quadrature Points                      5
+
+
+                    Initial Parameters
+ 
+                                                  Negative
+                                                       Log
+      b0          b1          s1          se    Likelihood
+
+       2           1        0.25        0.25    76.3085575
+
+
+                          Iteration History
+ 
+                      Negative
+                           Log                   Maximum
+Iteration Calls     Likelihood    Difference    Gradient       Slope
+
+       1      5     76.2058845      0.102673     9.34617    -65.8510
+       2     10     75.9103443       0.29554     7.81320    -20.0147
+       3     13     75.8551602      0.055184     7.43588    -1.45652
+       4     16     75.8405637      0.014596     6.95597    -0.88014
+       5     20     75.8066143      0.033949     0.30661    -0.08845
+       6     23     75.8063956      0.000219    0.067510    -0.00051
+       7     26     75.8063822      0.000013    0.018224    -0.00003
+       8     29     75.8063817      4.754E-7    0.000579    -9.78E-7
+       9     32     75.8063817      9.39E-10    0.000010    -1.94E-9
+
+
+          NOTE: GCONV convergence criterion satisfied.          
+
+
+             Fit Statistics
+
+-2 Log Likelihood                  151.6
+AIC (smaller is better)            159.6
+AICC (smaller is better)           160.1
+BIC (smaller is better)            159.9
+
+
+                                        Parameter Estimates
+ 
+                         Standard                                      95% Confidence
+Parameter    Estimate       Error      DF    t Value    Pr > |t|           Limits           Gradient
+
+b0             1.9323      0.1952       7       9.90      <.0001      1.4708      2.3938    -0.00001
+b1             1.1125      0.1819       7       6.11      0.0005      0.6823      1.5428    -8.74E-6
+s1             0.1674     0.09358       7       1.79      0.1167    -0.05384      0.3887    5.659E-6
+se             0.2354     0.03549       7       6.63      0.0003      0.1515      0.3193    2.587E-6

@@ -1,0 +1,50 @@
+The SAS System
+
+6812       
+6813       /* STAT-HPSPLIT-014: HPSPLIT — PERFORMANCE
+6814        * Source: S154 / Chapter 68 / `PERFORMANCE Statement` (PDF p. 5095).
+6815        * Discriminates: Verified default procedure context
+6816        */
+6817       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+6817     ! validmemname=compatible locale=en_US;
+6818       %let syscc=0;
+6819       title; footnote;
+6820       ods _all_ close;
+6821       ods listing gpath="%sysfunc(pathname(work))";
+6822       ods graphics off;
+6823       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.HPSPLOUT (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+6823     !                                         quit;
+
+
+6824       ods path work.templat(update) sashelp.tmplmst(read);
+6825       
+6826       ods graphics on;
+6827       proc hpsplit data=sashelp.baseball seed=123;
+6828       class league division;
+6829       model logSalary = nAtBat nHits nHome nRuns nRBI nBB
+6830       yrMajor crAtBat crHits crHome crRuns crRbi
+6831       crBB league division nOuts nAssts nError;
+6832       output out=hpsplout;
+6833       run;
+
+NOTE: The ASSIGNMISSING= option has not been specified.  Because of this, all observations with missing values in the explanatory variables will be excluded 
+      from tree construction.
+NOTE: The HPSPLIT procedure is executing in single-machine mode.
+NOTE: Cross-validating using 10 folds.
+NOTE: There were 322 observations read from the data set SASHELP.BASEBALL.
+NOTE: The data set WORK.HPSPLOUT has 322 observations and 4 variables.
+NOTE: The PROCEDURE HPSPLIT printed pages 491-492.
+
+6834       
+6835       
+6836       
+6837       
+The SAS System
+
+6838       

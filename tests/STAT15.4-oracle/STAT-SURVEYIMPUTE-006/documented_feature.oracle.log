@@ -1,0 +1,105 @@
+The SAS System
+
+3979       
+3980       /* STAT-SURVEYIMPUTE-006: SURVEYIMPUTE — Replication Variance Estimation
+3981        * Source: S154 / Chapter 119 / `Replication Variance Estimation` (PDF pp. 9756–9763).
+3982        * Discriminates: Example 119.3: Fully Efficient Fractional Imputation, Fay's Balanced Repeated Replication, and Domain Analysis
+3983        */
+3984       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+3984     ! validmemname=compatible locale=en_US;
+3985       %let syscc=0;
+3986       title; footnote;
+3987       ods _all_ close;
+3988       ods listing gpath="%sysfunc(pathname(work))";
+3989       ods graphics off;
+3990       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SMOKE (memtype=DATA).
+NOTE: Deleting WORK.SMOKEIMPUTED (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+3990     !                                         quit;
+
+
+3991       ods path work.templat(update) sashelp.tmplmst(read);
+3992       
+3993       /* Seeded synthetic survey input; not the externally distributed NHANES file. */
+3994       data Smoke;
+3995       call streaminit(314159);
+3996       array reps{4} wtpqrp1-wtpqrp4;
+3997       do seqn=1 to 512;
+3998        HFA7=6+mod(seqn,12); DMARETHN=1+mod(floor((seqn-1)/2),4); HSSEX=1+mod(seqn,2);
+3999        stratum=1+mod(floor((seqn-1)/8),2); psu=1+mod(floor((seqn-1)/16),2);
+4000        wtpfqx6=1.5+mod(seqn,3)/2;
+4001        HFF1MI=1+rand('bernoulli',0.45); HAN6SRMI=1+rand('bernoulli',0.55);
+4002        HAR3RMI=1+rand('bernoulli',0.5); HAT28MI=1+rand('bernoulli',0.4);
+4003        HFF1IF=1+rand('bernoulli',0.08); HAN6SRIF=1+rand('bernoulli',0.08);
+4004        HAR3RIF=1+rand('bernoulli',0.08); HAT28IF=1+rand('bernoulli',0.08);
+4005        do r=1 to 4;
+4006         choice=1+mod(floor((r-1)/(2**(stratum-1))),2);
+4007         if psu=choice then reps{r}=1.7*wtpfqx6; else reps{r}=0.3*wtpfqx6;
+4008        end;
+4009        output;
+4010       end;
+4011       drop r choice;
+4012       run;
+
+NOTE: The data set WORK.SMOKE has 512 observations and 19 variables.
+
+4013       data Smoke;
+4014       set Smoke;
+4015       if HFA7 <=8 then Education='Elementary ';
+4016       if HFA7 > 8 and HFA7 <= 12 then Education='High School';
+4017       if HFA7 > 12 and HFA7 <= 17 then Education='College ';
+4018       if HFA7 > 17 then Education='Unknown ';
+4019       if DMARETHN = 1 & HSSEX = 1 then ImputationCells=1;
+4020       if DMARETHN = 1 & HSSEX = 2 then ImputationCells=2;
+4021       if DMARETHN = 2 & HSSEX = 1 then ImputationCells=3;
+4022       if DMARETHN = 2 & HSSEX = 2 then ImputationCells=4;
+4023       if DMARETHN = 3 & HSSEX = 1 then ImputationCells=5;
+4024       if DMARETHN = 3 & HSSEX = 2 then ImputationCells=6;
+4025       if DMARETHN = 4 then ImputationCells=7;
+4026       if HFF1IF = 2 then HFF1MI = .;
+4027       if HAN6SRIF = 2 then HAN6SRMI = .;
+4028       if HAR3RIF = 2 then HAR3RMI = .;
+4029       if HAT28IF = 2 then HAT28MI = .;
+4030       run;
+
+NOTE: There were 512 observations read from the data set WORK.SMOKE.
+NOTE: The data set WORK.SMOKE has 512 observations and 21 variables.
+
+4031       proc surveyimpute data=Smoke method=FEFI varmethod=BRR;
+4032       weight wtpfqx6;
+4033       repweights wtpqrp:;
+4034       id seqn;
+4035       class hff1mi han6srmi har3rmi hat28mi;
+4036       var hff1mi han6srmi har3rmi hat28mi;
+4037       cells ImputationCells;
+4038       output out=SmokeImputed;
+4039       run;
+
+NOTE: Convergence achieved; maximum relative difference less than 0.001 for fractional weights for the EM algorithm.
+NOTE: The data set WORK.SMOKEIMPUTED has 679 observations and 27 variables.
+NOTE: The PROCEDURE SURVEYIMPUTE printed page 241.
+
+4040       proc surveyfreq data=SmokeImputed varmethod=brr(fay=0.3) varheader=label;
+4041       weight ImpWt;
+4042       repweights ImpRepWt_:;
+4043       table HFF1MI*HAR3RMI;
+4044       table Education*HAT28MI / row nototal nofreq nowt;
+4045       run;
+
+NOTE: The PROCEDURE SURVEYFREQ printed page 242.
+
+4046       
+4047       
+4048       
+4049       
+The SAS System
+
+4050       

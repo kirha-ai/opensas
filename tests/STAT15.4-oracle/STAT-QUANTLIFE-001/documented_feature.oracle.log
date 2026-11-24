@@ -1,0 +1,56 @@
+The SAS System
+
+10116      
+10117      /* STAT-QUANTLIFE-001: QUANTLIFE — Data input, variable roles, and basic options
+10118       * Source: S154 / Chapter 102 / `PROC QUANTLIFE Statement` (PDF pp. 8332–8335); S154 / Chapter 102 / `BY Statement` (PDF pp. 8335–8336); S154 /
+10118    ! Chapter 102 / `WEIGHT Statement` (PDF p. 8339).
+10119       * Discriminates: Verified default procedure context
+10120       */
+10121      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+10121    ! validmemname=compatible locale=en_US;
+10122      %let syscc=0;
+10123      title; footnote;
+10124      ods _all_ close;
+10125      ods listing gpath="%sysfunc(pathname(work))";
+10126      ods graphics off;
+10127      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.MATCHED (memtype=DATA).
+NOTE: Deleting WORK.PATIENTS (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+10127    !                                         quit;
+
+
+10128      ods path work.templat(update) sashelp.tmplmst(read);
+10129      
+10130      data survival;
+10131      call streaminit(518);
+10132      do id=1 to 80;
+10133      drug=mod(id,2);
+10134      age=25+mod(id*7,40);
+10135      time=exp(2+0.25*drug+0.008*age+rand('normal')*0.4);
+10136      status=(mod(id,5) ne 0);
+10137      output;
+10138      end;
+10139      run;
+
+NOTE: The data set WORK.SURVIVAL has 80 observations and 5 variables.
+
+10140      proc quantlife data=survival seed=1268;
+10141      class drug;
+10142      model time*status(0)=drug age / quantile=0.5;
+10143      run;
+
+NOTE: The PROCEDURE QUANTLIFE printed page 665.
+
+10144      
+10145      
+10146      
+10147      
+The SAS System
+
+10148      

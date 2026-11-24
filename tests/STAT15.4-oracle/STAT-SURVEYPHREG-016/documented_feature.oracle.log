@@ -1,0 +1,61 @@
+The SAS System
+
+23426      
+23427      /* STAT-SURVEYPHREG-016: SURVEYPHREG — Model Fit Statistics / Residuals
+23428       * Source: S154 / Chapter 122 / `Model Fit Statistics` (PDF p. 10070); S154 / Chapter 122 / `Residuals` (PDF pp. 10072–10074).
+23429       * Discriminates: Verified default procedure context
+23430       */
+23431      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+23431    ! validmemname=compatible locale=en_US;
+23432      %let syscc=0;
+23433      title; footnote;
+23434      ods _all_ close;
+23435      ods listing gpath="%sysfunc(pathname(work))";
+23436      ods graphics off;
+23437      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SURVEY (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+23437    !                                         quit;
+
+
+23438      ods path work.templat(update) sashelp.tmplmst(read);
+23439      
+23440      data survey;
+23441      call streaminit(722);
+23442      do stratum=1 to 2;
+23443      do cluster=1 to 4;
+23444      do id=1 to 12;
+23445      age=20+mod(id*7+cluster,45);
+23446      time=1+rand('exponential')*10;
+23447      status=(mod(id,4) ne 0);
+23448      weight=2+stratum+cluster/10;
+23449      output;
+23450      end;
+23451      end;
+23452      end;
+23453      run;
+
+NOTE: The data set WORK.SURVEY has 96 observations and 7 variables.
+
+23454      proc surveyphreg data=survey;
+23455      strata stratum;
+23456      cluster cluster;
+23457      weight weight;
+23458      model time*status(0)=age;
+23459      run;
+
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The PROCEDURE SURVEYPHREG printed page 1509.
+
+23460      
+23461      
+23462      
+23463      
+The SAS System
+
+23464      

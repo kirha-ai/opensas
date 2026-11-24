@@ -1,0 +1,28 @@
+
+The POWER Procedure
+Likelihood Ratio Chi-square Test for One Predictor
+
+                  Fixed Scenario Elements
+
+Method                           Shieh-O'Brien approximation
+Alpha                                                    0.1
+Test Predictor                                          Heat
+Odds Ratio for Test Predictor                            1.2
+Unit for Test Pred Odds Ratio                              5
+Nominal Power                                            0.9
+
+
+                                        Computed N Total
+ 
+                                                                        Total
+            Response                                                        N    Actual        N
+   Index        Prob    -Covariates--    ---Cov ORs--    -Cov Units-     Bins     Power    Total
+
+       1        0.15    Soak    Mass1     1.4     1.0     1        1      120     0.900     1878
+       2        0.15    Soak    Mass1     1.4     1.3     1        1      120     0.900     1872
+       3        0.15    Soak    Mass2     1.4     1.0     1        1      120     0.900     1878
+       4        0.15    Soak    Mass2     1.4     1.3     1        1      120     0.900     1857
+       5        0.25    Soak    Mass1     1.4     1.0     1        1      120     0.900     1342
+       6        0.25    Soak    Mass1     1.4     1.3     1        1      120     0.900     1348
+       7        0.25    Soak    Mass2     1.4     1.0     1        1      120     0.900     1342
+       8        0.25    Soak    Mass2     1.4     1.3     1        1      120     0.900     1369

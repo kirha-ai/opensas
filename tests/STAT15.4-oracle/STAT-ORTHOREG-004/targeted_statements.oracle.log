@@ -1,0 +1,51 @@
+The SAS System
+
+818        
+819        /* STAT-ORTHOREG-004: ORTHOREG — ESTIMATE / TEST
+820         * Source: S154 / Chapter 91 / `ESTIMATE Statement` (PDF pp. 7292–7293); S154 / Chapter 91 / `TEST Statement` (PDF p. 7297).
+821         * Discriminates: Explicit ESTIMATE, TEST statement behavior on seeded synthetic inputs.
+822         */
+823        options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+823      ! validmemname=compatible locale=en_US;
+824        %let syscc=0;
+825        title; footnote;
+826        ods _all_ close;
+827        ods listing gpath="%sysfunc(pathname(work))";
+828        ods graphics off;
+829        proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.REPEATED (memtype=DATA).
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+829      !                                         quit;
+
+
+830        ods path work.templat(update) sashelp.tmplmst(read);
+831        
+832        data sample;
+833        call streaminit(314159);
+834        do id=1 to 90;
+835         x=rand('normal'); z=rand('normal'); w=rand('normal');
+836         group=1+mod(id,3); block=1+mod(id,5);
+837         y=5+1.5*x-0.6*z+0.4*group+rand('normal');
+838         y2=2+0.5*x+0.8*z+rand('normal'); output;
+839        end;
+840        run;
+
+NOTE: The data set WORK.SAMPLE has 90 observations and 8 variables.
+
+841        proc orthoreg data=sample; model y=x z; estimate 'x coefficient' x 1; test x z; run;
+
+NOTE: There were 90 observations read from the data set WORK.SAMPLE.
+NOTE: The PROCEDURE ORTHOREG printed page 31.
+
+842        
+843        
+844        
+845        
+The SAS System
+
+846        

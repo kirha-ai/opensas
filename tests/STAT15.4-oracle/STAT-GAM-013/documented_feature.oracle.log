@@ -1,0 +1,54 @@
+The SAS System
+
+20442      
+20443      /* STAT-GAM-013: GAM — Computational Resources
+20444       * Source: S154 / Chapter 48 / `Computational Resources` (PDF pp. 3319–3321).
+20445       * Discriminates: Getting Started: GAM Procedure
+20446       */
+20447      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+20447    ! validmemname=compatible locale=en_US;
+20448      %let syscc=0;
+20449      title; footnote;
+20450      ods _all_ close;
+20451      ods listing gpath="%sysfunc(pathname(work))";
+20452      ods graphics off;
+20453      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.DIABETES (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+20453    !                                         quit;
+
+
+20454      ods path work.templat(update) sashelp.tmplmst(read);
+20455      
+20456      title 'Patterns of Diabetes';
+20457      data diabetes;
+20458      input Age BaseDeficit CPeptide @@;
+20459      logCP = log(CPeptide);
+20460      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.DIABETES has 43 observations and 4 variables.
+
+20476      ;
+20477      ods graphics on;
+20478      proc gam data=diabetes;
+20479      model logCP = spline(Age) spline(BaseDeficit);
+20480      run;
+
+NOTE: The PROCEDURE GAM printed page 2341.
+
+20481      
+20482      
+20483      
+20484      
+The SAS System
+
+20485      

@@ -1,0 +1,57 @@
+The SAS System
+
+5692       
+5693       /* STAT-GLMSELECT-004: GLMSELECT — CLASS Variable Parameterization and the SPLIT Option
+5694        * Source: S154 / Chapter 56 / `CLASS Variable Parameterization and the SPLIT Option` (PDF pp. 4370–4372).
+5695        * Discriminates: Getting Started: GLMSELECT Procedure
+5696        */
+5697       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+5697     ! validmemname=compatible locale=en_US;
+5698       %let syscc=0;
+5699       title; footnote;
+5700       ods _all_ close;
+5701       ods listing gpath="%sysfunc(pathname(work))";
+5702       ods graphics off;
+5703       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+5703     !                                         quit;
+
+
+5704       ods path work.templat(update) sashelp.tmplmst(read);
+5705       
+5706       proc contents varnum data=sashelp.baseball;
+5707       ods select position;
+5708       run;
+
+NOTE: The PROCEDURE CONTENTS printed page 316.
+
+5709       ods graphics on;
+5710       proc glmselect data=sashelp.baseball plots=all seed=314159;
+5711       class league division;
+5712       model logSalary = nAtBat nHits nHome nRuns nRBI nBB
+5713       yrMajor crAtBat crHits crHome crRuns crRbi
+5714       crBB league division nOuts nAssts nError
+5715       / details=all stats=all;
+5716       run;
+
+NOTE: There were 322 observations read from the data set SASHELP.BASEBALL.
+NOTE: The PROCEDURE GLMSELECT printed pages 317-325.
+
+5717       ods graphics off;
+5718       run;
+5719       quit;
+5720       
+5721       
+5722       
+5723       
+The SAS System
+
+5724       

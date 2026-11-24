@@ -1,0 +1,110 @@
+The SAS System
+
+5797       
+5798       /* STAT-GLMSELECT-007: GLMSELECT — MODELAVERAGE / PARTITION / Forward Selection (FORWARD)
+5799        * Source: S154 / Chapter 56 / `MODELAVERAGE Statement` (PDF pp. 4348–4352); S154 / Chapter 56 / `PARTITION Statement` (PDF pp. 4354–4355); S154
+5799     ! / Chapter 56 / `Forward Selection (FORWARD)` (PDF pp. 4357–4360).
+5800        * Discriminates: Example 56.1: Modeling Baseball Salaries Using Performance Statistics; explicit statements: PARTITION
+5801        */
+5802       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+5802     ! validmemname=compatible locale=en_US;
+5803       %let syscc=0;
+5804       title; footnote;
+5805       ods _all_ close;
+5806       ods listing gpath="%sysfunc(pathname(work))";
+5807       ods graphics off;
+5808       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+5808     !                                         quit;
+
+
+5809       ods path work.templat(update) sashelp.tmplmst(read);
+5810       
+5811       ods graphics on;
+5812       proc glmselect data=sashelp.baseball plot=CriterionPanel seed=314159;
+5813       class league division;
+5814       model logSalary = nAtBat nHits nHome nRuns nRBI nBB
+5815       yrMajor crAtBat crHits crHome crRuns crRbi
+5816       crBB league division nOuts nAssts nError
+5817       / selection=stepwise(select=SL) stats=all;
+5818       run;
+
+NOTE: There were 322 observations read from the data set SASHELP.BASEBALL.
+NOTE: The PROCEDURE GLMSELECT printed pages 346-348.
+
+5819       proc glmselect data=sashelp.baseball seed=314159;
+5820       class league division;
+5821       model logSalary = nAtBat nHits nHome nRuns nRBI nBB
+5822       yrMajor crAtBat crHits crHome crRuns crRbi
+5823       crBB league division nOuts nAssts nError
+5824       / selection=stepwise(select=SL choose=PRESS);
+5825       run;
+
+NOTE: There were 322 observations read from the data set SASHELP.BASEBALL.
+NOTE: The PROCEDURE GLMSELECT printed pages 349-351.
+
+5826       proc glmselect data=sashelp.baseball plot=Coefficients seed=314159;
+5827       class league division;
+5828       model logSalary = nAtBat nHits nHome nRuns nRBI nBB
+5829       yrMajor crAtBat crHits crHome crRuns crRbi
+5830       crBB league division nOuts nAssts nError
+5831       / selection=stepwise(select=SL stop=PRESS);
+5832       run;
+
+NOTE: There were 322 observations read from the data set SASHELP.BASEBALL.
+NOTE: The PROCEDURE GLMSELECT printed pages 352-354.
+
+5833       proc glmselect data=sashelp.baseball plot=Candidates seed=314159;
+5834       class league division;
+5835       model logSalary = nAtBat nHits nHome nRuns nRBI nBB
+5836       yrMajor crAtBat crHits crHome crRuns crRbi
+5837       crBB league division nOuts nAssts nError
+5838       / selection=stepwise(select=CV drop=competitive)
+5839       cvMethod=split(5);
+5840       run;
+
+NOTE: There were 322 observations read from the data set SASHELP.BASEBALL.
+NOTE: The PROCEDURE GLMSELECT printed pages 355-357.
+
+5841       proc glmselect data=sashelp.baseball plots=(CriterionPanel ASE) seed=1;
+5842       partition fraction(validate=0.3 test=0.2);
+5843       class league division;
+5844       model logSalary = nAtBat nHits nHome nRuns nRBI nBB
+5845       yrMajor crAtBat crHits crHome crRuns crRbi
+5846       crBB league division nOuts nAssts nError
+5847       / selection=forward(choose=validate stop=10);
+5848       run;
+
+NOTE: There were 322 observations read from the data set SASHELP.BASEBALL.
+NOTE: The PROCEDURE GLMSELECT printed pages 358-360.
+
+5849       proc glmselect data=sashelp.baseball plot=CriterionPanel  seed=314159;
+5850       class league division;
+5851       model logSalary = nAtBat nHits nHome nRuns nRBI nBB
+5852       yrMajor crAtBat crHits crHome crRuns crRbi
+5853       crBB league division nOuts nAssts nError
+5854       / selection=LASSO(choose=CP steps=20);
+5855       run;
+
+NOTE: All classification variables are split with LAR, LASSO and ELASTICNET selection.
+NOTE: There were 322 observations read from the data set SASHELP.BASEBALL.
+NOTE: The PROCEDURE GLMSELECT printed pages 361-363.
+
+5856       ods graphics off;
+5857       run;
+5858       quit;
+5859       
+5860       
+5861       
+5862       
+The SAS System
+
+5863       

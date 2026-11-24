@@ -1,0 +1,55 @@
+The SAS System
+
+10174      
+10175      /* STAT-QUANTLIFE-003: QUANTLIFE — CLASS / EFFECT / MODEL
+10176       * Source: S154 / Chapter 102 / `CLASS Statement` (PDF p. 8336); S154 / Chapter 102 / `EFFECT Statement` (PDF pp. 8336–8337); S154 / Chapter 102 /
+10176    ! `MODEL Statement` (PDF pp. 8337–8338).
+10177       * Discriminates: Verified default procedure context; explicit statements: CLASS, MODEL
+10178       */
+10179      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+10179    ! validmemname=compatible locale=en_US;
+10180      %let syscc=0;
+10181      title; footnote;
+10182      ods _all_ close;
+10183      ods listing gpath="%sysfunc(pathname(work))";
+10184      ods graphics off;
+10185      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SURVIVAL (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+10185    !                                         quit;
+
+
+10186      ods path work.templat(update) sashelp.tmplmst(read);
+10187      
+10188      data survival;
+10189      call streaminit(518);
+10190      do id=1 to 80;
+10191      drug=mod(id,2);
+10192      age=25+mod(id*7,40);
+10193      time=exp(2+0.25*drug+0.008*age+rand('normal')*0.4);
+10194      status=(mod(id,5) ne 0);
+10195      output;
+10196      end;
+10197      run;
+
+NOTE: The data set WORK.SURVIVAL has 80 observations and 5 variables.
+
+10198      proc quantlife data=survival seed=1268;
+10199      class drug;
+10200      model time*status(0)=drug age / quantile=0.5;
+10201      run;
+
+NOTE: The PROCEDURE QUANTLIFE printed page 667.
+
+10202      
+10203      
+10204      
+10205      
+The SAS System
+
+10206      

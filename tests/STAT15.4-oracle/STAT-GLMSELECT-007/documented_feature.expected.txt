@@ -1,0 +1,656 @@
+
+The GLMSELECT Procedure
+
+Data Set                            SASHELP.BASEBALL
+Dependent Variable                         logSalary
+Selection Method                            Stepwise
+Select Criterion                  Significance Level
+Stop Criterion                    Significance Level
+Entry Significance Level (SLE)                  0.15
+Stay Significance Level (SLS)                   0.15
+Effect Hierarchy Enforced                       None
+
+
+Number of Observations Read         322
+Number of Observations Used         263
+
+
+         Class Level Information
+ 
+Class         Levels    Values
+
+League             2    American National 
+Division           2    East West         
+
+
+        Dimensions
+
+Number of Effects       19
+Number of Parameters    21
+
+The GLMSELECT Procedure
+
+                                                                  Stepwise Selection Summary
+ 
+      Effect     Effect         Number   Number    Model Adjusted 
+ Step Entered    Removed    Effects In Parms In R-Square R-Square         AIC        AICC         BIC          CP         SBC       PRESS         ASE F Value
+
+    0 Intercept                      1        1   0.0000   0.0000    204.2238    204.2699    -60.6397    375.9275    -57.2041    208.7381      0.7877    0.00
+-------------------------------------------------------------------------------------------------------------------------------------------------------------
+    1 CrRuns                         2        2   0.4187   0.4165     63.5391     63.6318   -200.7872    111.2315   -194.3166    123.9195      0.4578  188.01
+    2 nHits                          3        3   0.5440   0.5405      1.7041      1.8592   -261.8807     33.4438   -252.5794     97.6368      0.3592   71.42
+    3 YrMajor                        4        4   0.5705   0.5655    -12.0208    -11.7873   -275.3333     18.5870   -262.7322     92.2998      0.3383   15.96
+    4 nBB                            5        5   0.5853   0.5789    -19.2591    -18.9310   -282.3024     11.1436   -266.3983     89.6538      0.3267    9.22
+    5 Division                       6        6   0.5920   0.5840    -21.5293    -21.0901   -284.3860      8.8894   -265.0964     88.8445      0.3214    4.21
+    6            CrRuns              5        5   0.5888   0.5824    -21.4702    -21.1421   -284.4295      8.9322   -268.6094*    88.7214      0.3239    2.02
+    7 nOuts                          6        6   0.5936   0.5857    -22.5809    -22.1417   -285.3891      7.8524   -266.1480     88.7077      0.3201    3.06
+    8 CrHits                         7        7   0.5981   0.5887    -23.5134    -22.9465   -286.1311      6.9821   -263.5083     88.6866      0.3166    2.87
+    9 nAtBat                         8        8   0.6019   0.5909    -23.9852    -23.2738   -286.3941      6.5875   -260.4080     88.5528*     0.3136    2.41
+   10 CrBB                           9        9   0.6059   0.5935*   -24.6602*   -23.7871*  -286.8058*     6.0214*  -257.5108     88.6321      0.3104    2.60
+
+                                                                 * Optimal Value of Criterion
+
+    Stepwise Selection Summary
+ 
+      Effect     Effect
+ Step Entered    Removed    Pr > F
+
+    0 Intercept             1.0000
+----------------------------------
+    1 CrRuns                <.0001
+    2 nHits                 <.0001
+    3 YrMajor               <.0001
+    4 nBB                   0.0026
+    5 Division              0.0413
+    6            CrRuns     0.1564
+    7 nOuts                 0.0815
+    8 CrHits                0.0914
+    9 nAtBat                0.1220
+   10 CrBB                  0.1083
+
+   * Optimal Value of Criterion
+
+
+Selection stopped because the candidate for entry has SLE > 0.15 and the candidate for removal has SLS < 0.15.
+
+
+                          Stop Details
+ 
+Candidate                 Candidate         Compare
+For          Effect    Significance         Significance    
+
+Entry        CrRuns          0.2039    >    0.1500          (SLE)
+Removal      CrBB            0.1083    <    0.1500          (SLS)
+
+The GLMSELECT Procedure
+Selected Model
+
+The selected model is the model at the last step (Step 10).
+
+
+Effects: Intercept nAtBat nHits nBB YrMajor CrHits CrBB Division nOuts 
+
+
+                       Analysis of Variance
+ 
+                                  Sum of           Mean
+Source                 DF        Squares         Square    F Value
+
+Model                   8      125.51176       15.68897      48.81
+Error                 254       81.64198        0.32143           
+Corrected Total       262      207.15373                          
+
+
+Root MSE              0.56694
+Dependent Mean        5.92722
+R-Square               0.6059
+Adj R-Sq               0.5935
+AIC                 -24.66016
+AICC                -23.78714
+BIC                -286.80577
+C(p)                  6.02140
+PRESS                88.63211
+SBC                -257.51077
+ASE                   0.31043
+
+
+                      Parameter Estimates
+ 
+                                            Standard
+Parameter         DF        Estimate           Error    t Value
+
+Intercept          1        4.159467        0.150425      27.65
+nAtBat             1       -0.001563        0.000945      -1.65
+nHits              1        0.010392        0.003004       3.46
+nBB                1        0.010191        0.002799       3.64
+YrMajor            1        0.074428        0.019046       3.91
+CrHits             1        0.000434        0.000184       2.36
+CrBB               1       -0.000613        0.000380      -1.61
+Division  East     1        0.152959        0.071016       2.15
+Division  West     0               0               .        .  
+nOuts              1        0.000227        0.000133       1.70
+
+The GLMSELECT Procedure
+
+Data Set                            SASHELP.BASEBALL
+Dependent Variable                         logSalary
+Selection Method                            Stepwise
+Select Criterion                  Significance Level
+Stop Criterion                    Significance Level
+Choose Criterion                               PRESS
+Entry Significance Level (SLE)                  0.15
+Stay Significance Level (SLS)                   0.15
+Effect Hierarchy Enforced                       None
+
+
+Number of Observations Read         322
+Number of Observations Used         263
+
+
+         Class Level Information
+ 
+Class         Levels    Values
+
+League             2    American National 
+Division           2    East West         
+
+
+        Dimensions
+
+Number of Effects       19
+Number of Parameters    21
+
+The GLMSELECT Procedure
+
+                                Stepwise Selection Summary
+ 
+         Effect     Effect         Number      Number
+ Step    Entered    Removed    Effects In    Parms In         PRESS     F Value    Pr > F
+
+    0    Intercept                      1           1      208.7381        0.00    1.0000
+-----------------------------------------------------------------------------------------
+    1    CrRuns                         2           2      123.9195      188.01    <.0001
+    2    nHits                          3           3       97.6368       71.42    <.0001
+    3    YrMajor                        4           4       92.2998       15.96    <.0001
+    4    nBB                            5           5       89.6538        9.22    0.0026
+    5    Division                       6           6       88.8445        4.21    0.0413
+    6               CrRuns              5           5       88.7214        2.02    0.1564
+    7    nOuts                          6           6       88.7077        3.06    0.0815
+    8    CrHits                         7           7       88.6866        2.87    0.0914
+    9    nAtBat                         8           8       88.5528*       2.41    0.1220
+   10    CrBB                           9           9       88.6321        2.60    0.1083
+
+                               * Optimal Value of Criterion
+
+
+Selection stopped because the candidate for entry has SLE > 0.15 and the candidate for removal has SLS < 0.15.
+
+
+                          Stop Details
+ 
+Candidate                 Candidate         Compare
+For          Effect    Significance         Significance    
+
+Entry        CrRuns          0.2039    >    0.1500          (SLE)
+Removal      CrBB            0.1083    <    0.1500          (SLS)
+
+The GLMSELECT Procedure
+Selected Model
+
+The selected model, based on PRESS, is the model at Step 9.
+
+
+Effects: Intercept nAtBat nHits nBB YrMajor CrHits Division nOuts 
+
+
+                       Analysis of Variance
+ 
+                                  Sum of           Mean
+Source                 DF        Squares         Square    F Value
+
+Model                   7      124.67715       17.81102      55.07
+Error                 255       82.47658        0.32344           
+Corrected Total       262      207.15373                          
+
+
+Root MSE              0.56872
+Dependent Mean        5.92722
+R-Square               0.6019
+Adj R-Sq               0.5909
+AIC                 -23.98522
+AICC                -23.27376
+PRESS                88.55275
+SBC                -260.40799
+
+
+                      Parameter Estimates
+ 
+                                            Standard
+Parameter         DF        Estimate           Error    t Value
+
+Intercept          1        4.176133        0.150539      27.74
+nAtBat             1       -0.001468        0.000946      -1.55
+nHits              1        0.011078        0.002983       3.71
+nBB                1        0.007226        0.002115       3.42
+YrMajor            1        0.070056        0.018911       3.70
+CrHits             1        0.000247        0.000143       1.72
+Division  East     1        0.143082        0.070972       2.02
+Division  West     0               0               .        .  
+nOuts              1        0.000241        0.000134       1.81
+
+The GLMSELECT Procedure
+
+Data Set                            SASHELP.BASEBALL
+Dependent Variable                         logSalary
+Selection Method                            Stepwise
+Select Criterion                  Significance Level
+Stop Criterion                                 PRESS
+Entry Significance Level (SLE)                  0.15
+Stay Significance Level (SLS)                   0.15
+Effect Hierarchy Enforced                       None
+
+
+Number of Observations Read         322
+Number of Observations Used         263
+
+
+         Class Level Information
+ 
+Class         Levels    Values
+
+League             2    American National 
+Division           2    East West         
+
+
+        Dimensions
+
+Number of Effects       19
+Number of Parameters    21
+
+The GLMSELECT Procedure
+
+                                Stepwise Selection Summary
+ 
+         Effect     Effect         Number      Number
+ Step    Entered    Removed    Effects In    Parms In         PRESS     F Value    Pr > F
+
+    0    Intercept                      1           1      208.7381        0.00    1.0000
+-----------------------------------------------------------------------------------------
+    1    CrRuns                         2           2      123.9195      188.01    <.0001
+    2    nHits                          3           3       97.6368       71.42    <.0001
+    3    YrMajor                        4           4       92.2998       15.96    <.0001
+    4    nBB                            5           5       89.6538        9.22    0.0026
+    5    Division                       6           6       88.8445        4.21    0.0413
+    6               CrRuns              5           5       88.7214        2.02    0.1564
+    7    nOuts                          6           6       88.7077        3.06    0.0815
+    8    CrHits                         7           7       88.6866        2.87    0.0914
+    9    nAtBat                         8           8       88.5528*       2.41    0.1220
+
+                               * Optimal Value of Criterion
+
+
+Selection stopped at a local minimum of the PRESS criterion.
+
+
+                    Stop Details
+ 
+Candidate               Candidate         Compare
+For          Effect         PRESS         PRESS
+
+Entry        CrBB         88.6321    >    88.5528   
+Removal      nAtBat       88.6866    >    88.5528   
+
+The GLMSELECT Procedure
+Selected Model
+
+The selected model is the model at the last step (Step 9).
+
+
+Effects: Intercept nAtBat nHits nBB YrMajor CrHits Division nOuts 
+
+
+                       Analysis of Variance
+ 
+                                  Sum of           Mean
+Source                 DF        Squares         Square    F Value
+
+Model                   7      124.67715       17.81102      55.07
+Error                 255       82.47658        0.32344           
+Corrected Total       262      207.15373                          
+
+
+Root MSE              0.56872
+Dependent Mean        5.92722
+R-Square               0.6019
+Adj R-Sq               0.5909
+AIC                 -23.98522
+AICC                -23.27376
+PRESS                88.55275
+SBC                -260.40799
+
+
+                      Parameter Estimates
+ 
+                                            Standard
+Parameter         DF        Estimate           Error    t Value
+
+Intercept          1        4.176133        0.150539      27.74
+nAtBat             1       -0.001468        0.000946      -1.55
+nHits              1        0.011078        0.002983       3.71
+nBB                1        0.007226        0.002115       3.42
+YrMajor            1        0.070056        0.018911       3.70
+CrHits             1        0.000247        0.000143       1.72
+Division  East     1        0.143082        0.070972       2.02
+Division  West     0               0               .        .  
+nOuts              1        0.000241        0.000134       1.81
+
+The GLMSELECT Procedure
+
+Data Set                                   SASHELP.BASEBALL
+Dependent Variable                                logSalary
+Selection Method             Stepwise with Competitive Drop
+Select Criterion                           Cross Validation
+Stop Criterion                             Cross Validation
+Cross Validation Method                               Split
+Cross Validation Fold                                     5
+Effect Hierarchy Enforced                              None
+
+
+Number of Observations Read         322
+Number of Observations Used         263
+
+
+         Class Level Information
+ 
+Class         Levels    Values
+
+League             2    American National 
+Division           2    East West         
+
+
+        Dimensions
+
+Number of Effects       19
+Number of Parameters    21
+
+The GLMSELECT Procedure
+
+                     Stepwise Selection Summary
+ 
+         Effect     Effect         Number      Number
+ Step    Entered    Removed    Effects In    Parms In      CV PRESS 
+
+    0    Intercept                      1           1      208.9638 
+--------------------------------------------------------------------
+    1    CrRuns                         2           2      122.5755 
+    2    nHits                          3           3       96.3949 
+    3    YrMajor                        4           4       92.2117 
+    4    nBB                            5           5       89.5242 
+    5               CrRuns              4           4       88.6917 
+    6    League                         5           5       88.0417 
+    7    nError                         6           6       87.3170 
+    8    Division                       7           7       87.2147 
+    9    nHome                          8           8       87.0960*
+
+                    * Optimal Value of Criterion
+
+
+Selection stopped at a local minimum of the cross validation PRESS.
+
+
+                    Stop Details
+ 
+Candidate               Candidate         Compare
+For          Effect      CV PRESS         CV PRESS
+
+Removal      nHome        87.2147    >    87.0960   
+
+The GLMSELECT Procedure
+Selected Model
+
+The selected model is the model at the last step (Step 9).
+
+
+Effects: Intercept nHits nHome nBB YrMajor League Division nError 
+
+
+                       Analysis of Variance
+ 
+                                  Sum of           Mean
+Source                 DF        Squares         Square    F Value
+
+Model                   7      123.78177       17.68311      54.09
+Error                 255       83.37196        0.32695           
+Corrected Total       262      207.15373                          
+
+
+Root MSE              0.57179
+Dependent Mean        5.92722
+R-Square               0.5975
+Adj R-Sq               0.5865
+AIC                 -21.14544
+AICC                -20.43398
+SBC                -257.56821
+CV PRESS             87.09595
+
+
+                        Parameter Estimates
+ 
+                                                Standard
+Parameter             DF        Estimate           Error    t Value
+
+Intercept              1        4.070720        0.121996      33.37
+nHits                  1        0.008164        0.001126       7.25
+nHome                  1        0.003997        0.004947       0.81
+nBB                    1        0.006369        0.002073       3.07
+YrMajor                1        0.098156        0.007583      12.94
+League    American     1       -0.127252        0.072748      -1.75
+League    National     0               0               .        .  
+Division  East         1        0.145405        0.070973       2.05
+Division  West         0               0               .        .  
+nError                 1       -0.008995        0.005793      -1.55
+
+The GLMSELECT Procedure
+
+Data Set                               SASHELP.BASEBALL
+Dependent Variable                            logSalary
+Selection Method                                Forward
+Select Criterion                                    SBC
+Stop at Specified Number of Effects                  10
+Choose Criterion                         Validation ASE
+Effect Hierarchy Enforced                          None
+Random Number Seed                                    1
+
+
+Number of Observations Read                        322
+Number of Observations Used                        263
+Number of Observations Used for Training           132
+Number of Observations Used for Validation          80
+Number of Observations Used for Testing             51
+
+
+         Class Level Information
+ 
+Class         Levels    Values
+
+League             2    American National 
+Division           2    East West         
+
+
+        Dimensions
+
+Number of Effects       19
+Number of Parameters    21
+
+The GLMSELECT Procedure
+
+                                      Forward Selection Summary
+ 
+         Effect         Number      Number                                 Validation 
+ Step    Entered    Effects In    Parms In           SBC            ASE           ASE       Test ASE
+
+    0    Intercept           1           1      -30.8531         0.7628        0.7843         0.8818
+----------------------------------------------------------------------------------------------------
+    1    CrRuns              2           2      -93.9367         0.4558        0.4947         0.4210
+    2    nHits               3           3     -126.2647         0.3439        0.3248         0.4697
+    3    YrMajor             4           4     -128.7570         0.3252        0.2920*        0.4614
+    4    nBB                 5           5     -132.2409*        0.3052        0.3065         0.4297
+    5    Division            6           6     -130.7794         0.2974        0.3050         0.4218
+    6    nOuts               7           7     -128.5897         0.2914        0.3028         0.4186
+    7    nRBI                8           8     -125.7825         0.2868        0.3097         0.4489
+    8    nHome               9           9     -124.7709         0.2786        0.3383         0.4533
+    9    nAtBat             10          10     -121.3767         0.2754        0.3337         0.4580
+
+                                    * Optimal Value of Criterion
+
+
+Selection stopped at the first model containing the specified number of effects (10).
+
+The GLMSELECT Procedure
+Selected Model
+
+The selected model, based on Validation ASE, is the model at Step 3.
+
+
+Effects: Intercept nHits YrMajor CrRuns 
+
+
+                       Analysis of Variance
+ 
+                                  Sum of           Mean
+Source                 DF        Squares         Square    F Value
+
+Model                   3       57.76995       19.25665      57.43
+Error                 128       42.92294        0.33534           
+Corrected Total       131      100.69289                          
+
+
+Root MSE              0.57908
+Dependent Mean        5.85804
+R-Square               0.5737
+Adj R-Sq               0.5637
+AIC                  -6.28821
+AICC                 -5.81202
+SBC                -128.75701
+ASE (Train)           0.32517
+ASE (Validate)        0.29201
+ASE (Test)            0.46137
+
+
+                   Parameter Estimates
+ 
+                                       Standard
+Parameter    DF        Estimate           Error    t Value
+
+Intercept     1        4.213666        0.176293      23.90
+nHits         1        0.008915        0.001243       7.17
+YrMajor       1        0.064262        0.023695       2.71
+CrRuns        1        0.000583        0.000343       1.70
+
+The GLMSELECT Procedure
+
+Data Set                             SASHELP.BASEBALL
+Dependent Variable                          logSalary
+Selection Method                                LASSO
+Stop at Specified Number of Steps                  20
+Choose Criterion                                 C(p)
+Effect Hierarchy Enforced                        None
+
+
+Number of Observations Read         322
+Number of Observations Used         263
+
+
+         Class Level Information
+ 
+Class         Levels    Values
+
+League             2    American National 
+Division           2    East West         
+
+
+             Dimensions
+
+Number of Effects                 19
+Number of Effects after Splits    21
+Number of Parameters              21
+
+The GLMSELECT Procedure
+
+                       LASSO Selection Summary
+ 
+         Effect           Effect               Number
+ Step    Entered          Removed          Effects In            CP 
+
+    0    Intercept                                  1      375.9275 
+--------------------------------------------------------------------
+    1    CrRuns                                     2      328.6492 
+    2    CrHits                                     3      239.5392 
+    3    nHits                                      4      134.0374 
+    4    nBB                                        5      111.6638 
+    5    CrRbi                                      6       81.7296 
+    6    YrMajor                                    7       75.0428 
+    7    nRBI                                       8       30.4494 
+    8    Division_East                              9       29.9913 
+    9    nOuts                                     10       25.1656 
+   10                     CrRuns                    9       18.7295 
+   11                     CrRbi                     8       15.1683 
+   12    nError                                     9       16.6233 
+   13    nHome                                     10       16.3741 
+   14    League_American                           11       14.8794 
+   15                     nRBI                     10        8.8477*
+   16    CrBB                                      11        9.2242 
+   17    CrRuns                                    12       10.7608 
+   18    nAtBat                                    13       11.6266 
+   19    nAssts                                    14       11.8572 
+   20    CrAtBat                                   15       13.4020 
+
+                    * Optimal Value of Criterion
+
+
+Selection stopped at the specified number of steps (20).
+
+The GLMSELECT Procedure
+Selected Model
+
+The selected model, based on C(p), is the model at Step 15.
+
+
+Effects: Intercept nHits nHome nBB YrMajor CrHits League_American Division_East nOuts nError 
+
+
+                       Analysis of Variance
+ 
+                                  Sum of           Mean
+Source                 DF        Squares         Square    F Value
+
+Model                   9      125.24302       13.91589      42.98
+Error                 253       81.91071        0.32376           
+Corrected Total       262      207.15373                          
+
+
+Root MSE              0.56900
+Dependent Mean        5.92722
+R-Square               0.6046
+Adj R-Sq               0.5905
+AIC                 -21.79589
+AICC                -20.74409
+BIC                -283.91417
+C(p)                  8.84767
+SBC                -251.07435
+
+
+         Parameter Estimates
+ 
+Parameter          DF        Estimate
+
+Intercept           1        4.204236
+nHits               1        0.006942
+nHome               1        0.002785
+nBB                 1        0.005727
+YrMajor             1        0.067054
+CrHits              1        0.000249
+League_American     1       -0.079607
+Division_East       1        0.134723
+nOuts               1        0.000183
+nError              1       -0.007213

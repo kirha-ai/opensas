@@ -1,0 +1,68 @@
+The SAS System
+
+1097       
+1098       /* STAT-ORTHOREG-002: ORTHOREG — General linear model estimation for ill-conditioned designs
+1099        * Source: S154 / Chapter 91 / `Getting Started: ORTHOREG Procedure` (PDF pp. 7284–7287); S154 / Chapter 91 / `Overview: ORTHOREG Procedure` (PDF
+1099     ! p. 7284).
+1100        * Discriminates: Getting Started: ORTHOREG Procedure
+1101        */
+1102       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+1102     ! validmemname=compatible locale=en_US;
+1103       %let syscc=0;
+1104       title; footnote;
+1105       ods _all_ close;
+1106       ods listing gpath="%sysfunc(pathname(work))";
+1107       ods graphics off;
+
+NOTE: The PROCEDURE GLM printed page 167.
+
+1108       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.LONGLEY (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK._ORACLE_INPUT (memtype=DATA).
+1108     !                                         quit;
+
+
+1109       ods path work.templat(update) sashelp.tmplmst(read);
+1110       
+1111       title 'PROC ORTHOREG used with Longley data';
+1112       data Longley;
+1113       input Employment Prices GNP Jobless Military PopSize Year;
+1114       datalines;
+
+NOTE: The data set WORK.LONGLEY has 16 observations and 7 variables.
+
+1131       ;
+1132       proc orthoreg data=Longley;
+1133       model Employment = Prices Prices *Prices
+1134       GNP GNP *GNP
+1135       Jobless Jobless *Jobless
+1136       Military Military*Military
+1137       PopSize PopSize *PopSize
+1138       Year Year *Year;
+1139       run;
+
+NOTE: There were 16 observations read from the data set WORK.LONGLEY.
+NOTE: The PROCEDURE ORTHOREG printed page 168.
+
+1140       proc glm data=Longley;
+1141       model Employment = Prices Prices *Prices
+1142       GNP GNP *GNP
+1143       Jobless Jobless *Jobless
+1144       Military Military*Military
+1145       PopSize PopSize *PopSize
+1146       Year Year *Year;
+1147       ods select OverallANOVA
+1148       FitStatistics
+1149       ParameterEstimates
+1150       Notes;
+1151       run;
+
+1152       
+1153       
+1154       
+1155       
+The SAS System
+
+1156       

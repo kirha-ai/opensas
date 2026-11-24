@@ -1,0 +1,61 @@
+The SAS System
+
+14621      
+14622      /* STAT-CORRESP-006: CORRESP — Output Data Sets
+14623       * Source: S154 / Chapter 41 / `Output Data Sets` (PDF pp. 2606–2608).
+14624       * Discriminates: Getting Started: CORRESP Procedure
+14625       */
+14626      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+14626    ! validmemname=compatible locale=en_US;
+14627      %let syscc=0;
+14628      title; footnote;
+14629      ods _all_ close;
+14630      ods listing gpath="%sysfunc(pathname(work))";
+14631      ods graphics off;
+14632      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.PHD (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.RESULTS (memtype=DATA).
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+14632    !                                         quit;
+
+
+14633      ods path work.templat(update) sashelp.tmplmst(read);
+14634      
+14635      title "Number of Ph.D.'s Awarded from 1973 to 1978";
+14636      data PhD;
+14637      input Science $ 1-19 y1973-y1978;
+14638      label y1973 = '1973'
+14639      y1974 = '1974'
+14640      y1975 = '1975'
+14641      y1976 = '1976'
+14642      y1977 = '1977'
+14643      y1978 = '1978';
+14644      datalines;
+
+NOTE: The data set WORK.PHD has 6 observations and 7 variables.
+
+14651      ;
+14652      ods graphics on;
+14653      proc corresp data=PhD out=Results short chi2p;
+14654      var y1973-y1978;
+14655      id Science;
+14656      run;
+
+NOTE: The data set WORK.RESULTS has 13 observations and 14 variables.
+NOTE: The PROCEDURE CORRESP printed page 1985.
+
+14657      
+14658      
+14659      
+14660      
+The SAS System
+
+14661      

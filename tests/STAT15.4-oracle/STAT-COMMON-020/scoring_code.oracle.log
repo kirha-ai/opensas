@@ -1,0 +1,67 @@
+The SAS System
+
+769        
+770        /* STAT-COMMON-020: CODE Statement
+771         * Source: S154 / Chapter 20 / `CODE Statement` (PDF pp. 421–424).
+772         * Discriminates: Generated DATA step scoring code and fitted model coefficients
+773         */
+774        options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+774      ! validmemname=compatible locale=en_US;
+775        %let syscc=0;
+776        title; footnote;
+777        ods _all_ close;
+778        ods listing gpath="%sysfunc(pathname(work))";
+779        ods graphics off;
+780        proc datasets library=work kill nolist;
+NOTE: Deleting WORK.DIST (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SAMPLE (memtype=DATA).
+780      !                                         quit;
+
+
+781        ods path work.templat(update) sashelp.tmplmst(read);
+782        
+783        data sample;
+784         input x z y group $ weight freq;
+785         datalines;
+
+NOTE: The data set WORK.SAMPLE has 12 observations and 6 variables.
+
+798        ;
+799        run;
+800        filename scocode temp;
+801        proc reg data=sample; model y=x z; code file=scocode; run;
+
+NOTE: Fileref SCOCODE opened.
+801      !                                                            quit;
+
+NOTE: The REG procedure wrote the DATA step code to external file SCOCODE .
+NOTE: The PROCEDURE REG printed page 41.
+
+802        data code_lines; length line $250; infile scocode truncover; input line $char250.; run;
+
+NOTE: The infile SCOCODE is:
+      Filename=/saswork/SAS_work5D120001108E_odaws02-euw1.oda.sas.com/#LN00011,
+      Owner Name=u64592586,Group Name=oda,
+      Access Permission=-rw-r--r--,
+      Last Modified=24Nov2026:12:32:26,
+      File Size (bytes)=588
+
+NOTE: 32 records were read from the infile SCOCODE.
+      The minimum record length was 0.
+      The maximum record length was 48.
+NOTE: The data set WORK.CODE_LINES has 32 observations and 1 variables.
+
+803        proc print data=code_lines noobs; run;
+
+NOTE: There were 32 observations read from the data set WORK.CODE_LINES.
+NOTE: The PROCEDURE PRINT printed page 42.
+
+804        
+805        
+806        
+807        
+The SAS System
+
+808        

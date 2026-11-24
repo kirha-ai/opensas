@@ -1,0 +1,56 @@
+The SAS System
+
+18979      
+18980      /* STAT-GAM-001: GAM — Data input, variable roles, and basic options
+18981       * Source: S154 / Chapter 48 / `PROC GAM Statement` (PDF pp. 3296–3298); S154 / Chapter 48 / `BY Statement` (PDF pp. 3298–3299); S154 / Chapter
+18981    ! 48 / `FREQ Statement` (PDF p. 3300); S154 / Chapter 48 / `Missing Values` (PDF p. 3307).
+18982       * Discriminates: Verified default procedure context
+18983       */
+18984      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+18984    ! validmemname=compatible locale=en_US;
+18985      %let syscc=0;
+18986      title; footnote;
+18987      ods _all_ close;
+18988      ods listing gpath="%sysfunc(pathname(work))";
+18989      ods graphics off;
+
+
+18990      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.DRUGS (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+18990    !                                         quit;
+
+
+18991      ods path work.templat(update) sashelp.tmplmst(read);
+18992      
+18993      title 'Patterns of Diabetes';
+18994      data diabetes;
+18995      input Age BaseDeficit CPeptide @@;
+18996      logCP = log(CPeptide);
+18997      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.DIABETES has 43 observations and 4 variables.
+
+19013      ;
+19014      ods graphics on;
+19015      proc gam data=diabetes;
+19016      model logCP = spline(Age) spline(BaseDeficit);
+19017      run;
+
+NOTE: The PROCEDURE GAM printed page 2310.
+
+19018      
+19019      
+19020      
+19021      
+The SAS System
+
+19022      

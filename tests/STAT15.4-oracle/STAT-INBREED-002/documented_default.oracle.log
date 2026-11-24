@@ -1,0 +1,47 @@
+The SAS System
+
+8608       
+8609       /* STAT-INBREED-002: INBREED — Inbreeding coefficient and relationship recursions
+8610        * Source: S154 / Chapter 71 / `Getting Started: INBREED Procedure` (PDF pp. 5270–5274); S154 / Chapter 71 / `Overview: INBREED Procedure` (PDF p.
+8610     ! 5270).
+8611        * Discriminates: Documented default analysis with explicit complete public or synthetic inputs
+8612        */
+8613       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+8613     ! validmemname=compatible locale=en_US;
+8614       %let syscc=0;
+8615       title; footnote;
+8616       ods _all_ close;
+8617       ods listing gpath="%sysfunc(pathname(work))";
+8618       ods graphics off;
+8619       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.PEDIGREE (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+8619     !                                         quit;
+
+
+8620       ods path work.templat(update) sashelp.tmplmst(read);
+8621       
+8622       data pedigree; input animal $ sire $ dam $; datalines;
+
+NOTE: The data set WORK.PEDIGREE has 5 observations and 3 variables.
+
+8628       ;
+8629       run;
+8630       proc inbreed data=pedigree covar matrix; var animal sire dam; run;
+
+NOTE: First parent sire of individual animal=A is missing at observation 1.
+NOTE: Second parent dam of individual animal=A is missing at observation 1.
+NOTE: First parent sire of individual animal=B is missing at observation 2.
+NOTE: Second parent dam of individual animal=B is missing at observation 2.
+NOTE: The PROCEDURE INBREED printed page 600.
+
+8631       
+8632       
+8633       
+8634       
+The SAS System
+
+8635       

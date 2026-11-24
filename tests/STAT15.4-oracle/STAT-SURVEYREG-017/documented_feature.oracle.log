@@ -1,0 +1,266 @@
+The SAS System
+
+25042      
+25043      /* STAT-SURVEYREG-017: SURVEYREG — Displayed Output / ODS Table Names
+25044       * Source: S154 / Chapter 123 / `Displayed Output` (PDF pp. 10159–10164); S154 / Chapter 123 / `ODS Table Names` (PDF pp. 10164–10165).
+25045       * Discriminates: Getting Started: SURVEYREG Procedure
+25046       */
+25047      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+25047    ! validmemname=compatible locale=en_US;
+25048      %let syscc=0;
+25049      title; footnote;
+25050      ods _all_ close;
+25051      ods listing gpath="%sysfunc(pathname(work))";
+25052      ods graphics off;
+25053      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.ICECREAM (memtype=DATA).
+NOTE: Deleting WORK.MYPARMEST (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.STUDENTTOTALS (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+25053    !                                         quit;
+
+
+25054      ods path work.templat(update) sashelp.tmplmst(read);
+25055      
+25056      ods trace on;
+25057      data IceCream;
+25058      input Grade Spending Income Kids @@;
+25059      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.ICECREAM has 40 observations and 4 variables.
+
+25074      ;
+25075      title1 'Ice Cream Spending Analysis';
+25076      title2 'Simple Random Sample Design';
+25077      proc surveyreg data=IceCream total=4000;
+25078      class Kids;
+25079      model Spending = Income Kids / solution;
+25080      run;
+
+
+Output Added:
+-------------
+Name:       DataSummary
+Label:      Summary
+Template:   Stat.SurveyReg.DataSummary
+Path:       Surveyreg.DependentVariable.DataSummary
+-------------
+
+Output Added:
+-------------
+Name:       FitStatistics
+Label:      Fit Statistics
+Template:   Stat.SurveyReg.FitStatistics
+Path:       Surveyreg.DependentVariable.FitStatistics
+-------------
+
+Output Added:
+-------------
+Name:       ClassVarInfo
+Label:      Class Levels
+Template:   Stat.SurveyReg.ClassVarInfo
+Path:       Surveyreg.DependentVariable.ClassVarInfo
+-------------
+
+Output Added:
+-------------
+Name:       Effects
+Label:      Effects
+Template:   Stat.SurveyReg.TestEffects
+Path:       Surveyreg.DependentVariable.Effects
+-------------
+
+Output Added:
+-------------
+Name:       ParameterEstimates
+Label:      Regression Coeff
+Template:   Stat.SurveyReg.ParameterEstimates
+Path:       Surveyreg.DependentVariable.ParameterEstimates
+-------------
+NOTE: The PROCEDURE SURVEYREG printed page 1579.
+
+25081      data StudentTotals;
+25082      input Grade _TOTAL_;
+25083      datalines;
+
+NOTE: The data set WORK.STUDENTTOTALS has 3 observations and 2 variables.
+
+25087      ;
+25088      data IceCream;
+25089      set IceCream;
+25090      if Grade=7 then Prob=20/1824;
+25091      if Grade=8 then Prob=9/1025;
+25092      if Grade=9 then Prob=11/1151;
+25093      Weight=1/Prob;
+25094      run;
+
+NOTE: There were 40 observations read from the data set WORK.ICECREAM.
+NOTE: The data set WORK.ICECREAM has 40 observations and 6 variables.
+
+25095      ods graphics on;
+25096      title1 'Ice Cream Spending Analysis';
+25097      title2 'Stratified Sample Design';
+25098      proc surveyreg data=IceCream total=StudentTotals;
+25099      strata Grade /list;
+25100      model Spending = Income;
+25101      weight Weight;
+25102      run;
+
+
+Output Added:
+-------------
+Name:       DataSummary
+Label:      Summary
+Template:   Stat.SurveyReg.DataSummary
+Path:       Surveyreg.DependentVariable.DataSummary
+-------------
+
+Output Added:
+-------------
+Name:       DesignSummary
+Label:      Design Summary
+Template:   Stat.SurveyReg.DesignSummary
+Path:       Surveyreg.DependentVariable.DesignSummary
+-------------
+
+Output Added:
+-------------
+Name:       FitStatistics
+Label:      Fit Statistics
+Template:   Stat.SurveyReg.FitStatistics
+Path:       Surveyreg.DependentVariable.FitStatistics
+-------------
+
+Output Added:
+-------------
+Name:       StrataInfo
+Label:      Strata
+Template:   Stat.SurveyReg.StrataInfo
+Path:       Surveyreg.DependentVariable.StrataInfo
+-------------
+
+Output Added:
+-------------
+Name:       Effects
+Label:      Effects
+Template:   Stat.SurveyReg.TestEffects
+Path:       Surveyreg.DependentVariable.Effects
+-------------
+
+Output Added:
+-------------
+Name:       ParameterEstimates
+Label:      Regression Coeff
+Template:   Stat.SurveyReg.ParameterEstimates
+Path:       Surveyreg.DependentVariable.ParameterEstimates
+-------------
+
+Output Added:
+-------------
+Name:       FitPlot
+Label:      Fit Plot
+Template:   Stat.SurveyReg.Graphics.FitBubble
+Path:       Surveyreg.DependentVariable.FitPlot
+-------------
+NOTE: The PROCEDURE SURVEYREG printed page 1580.
+
+25103      title1 'Ice Cream Spending Analysis';
+25104      title2 'Stratified Sample Design';
+25105      proc surveyreg data=IceCream total=StudentTotals;
+25106      strata Grade /list;
+25107      model Spending = Income;
+25108      weight Weight;
+25109      ods output ParameterEstimates = MyParmEst;
+25110      run;
+
+
+Output Added:
+-------------
+Name:       DataSummary
+Label:      Summary
+Template:   Stat.SurveyReg.DataSummary
+Path:       Surveyreg.DependentVariable.DataSummary
+-------------
+
+Output Added:
+-------------
+Name:       DesignSummary
+Label:      Design Summary
+Template:   Stat.SurveyReg.DesignSummary
+Path:       Surveyreg.DependentVariable.DesignSummary
+-------------
+
+Output Added:
+-------------
+Name:       FitStatistics
+Label:      Fit Statistics
+Template:   Stat.SurveyReg.FitStatistics
+Path:       Surveyreg.DependentVariable.FitStatistics
+-------------
+
+Output Added:
+-------------
+Name:       StrataInfo
+Label:      Strata
+Template:   Stat.SurveyReg.StrataInfo
+Path:       Surveyreg.DependentVariable.StrataInfo
+-------------
+
+Output Added:
+-------------
+Name:       Effects
+Label:      Effects
+Template:   Stat.SurveyReg.TestEffects
+Path:       Surveyreg.DependentVariable.Effects
+-------------
+
+Output Added:
+-------------
+Name:       ParameterEstimates
+Label:      Regression Coeff
+Template:   Stat.SurveyReg.ParameterEstimates
+Path:       Surveyreg.DependentVariable.ParameterEstimates
+-------------
+
+Output Added:
+-------------
+Name:       FitPlot
+Label:      Fit Plot
+Template:   Stat.SurveyReg.Graphics.FitBubble
+Path:       Surveyreg.DependentVariable.FitPlot
+-------------
+NOTE: The data set WORK.MYPARMEST has 2 observations and 6 variables.
+NOTE: The PROCEDURE SURVEYREG printed page 1581.
+
+25111      ods output ParameterEstimates = MyParmEst;
+25112      proc print data=MyParmEst;
+25113      run;
+
+
+Output Added:
+-------------
+Name:       Print
+Label:      Data Set WORK.MYPARMEST
+Data Name:  ProcPrintTable
+Path:       Print.Print
+-------------
+WARNING: Output 'ParameterEstimates' was not created.  Make sure that the output object name, label, or path is spelled correctly.  Also, verify that the 
+         appropriate procedure options are used to produce the requested output object.  For example, verify that the NOPRINT option is not used.
+NOTE: There were 2 observations read from the data set WORK.MYPARMEST.
+NOTE: The PROCEDURE PRINT printed page 1582.
+
+25114      ods trace off;
+25115      
+25116      
+25117      
+25118      
+The SAS System
+
+25119      

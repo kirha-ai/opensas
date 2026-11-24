@@ -1,0 +1,107 @@
+
+Optimal Monotonic Transformation of Ranked Teams
+with Constrained Estimation of Unranked Teams
+
+The PRINQUAL Procedure
+
+                  PRINQUAL MTV Algorithm Iteration History
+ 
+Iteration    Average    Maximum     Proportion    Criterion
+   Number     Change     Change    of Variance       Change    Note
+----------------------------------------------------------------------------
+        1    0.18563    0.76531        0.85850                              
+        2    0.03225    0.14627        0.94362      0.08512                 
+        3    0.02126    0.10530        0.94669      0.00307                 
+        4    0.01467    0.07526        0.94801      0.00132                 
+        5    0.01067    0.05282        0.94865      0.00064                 
+        6    0.00800    0.03669        0.94899      0.00034                 
+        7    0.00617    0.02862        0.94919      0.00020                 
+        8    0.00486    0.02636        0.94932      0.00013                 
+        9    0.00395    0.02453        0.94941      0.00009                 
+       10    0.00327    0.02300        0.94947      0.00006                 
+       11    0.00275    0.02166        0.94952      0.00005                 
+       12    0.00236    0.02041        0.94956      0.00004                 
+       13    0.00205    0.01927        0.94959      0.00003                 
+       14    0.00181    0.01818        0.94962      0.00003                 
+       15    0.00162    0.01719        0.94964      0.00002                 
+       16    0.00147    0.01629        0.94966      0.00002                 
+       17    0.00136    0.01546        0.94968      0.00002                 
+       18    0.00128    0.01469        0.94970      0.00002                 
+       19    0.00121    0.01398        0.94971      0.00001                 
+       20    0.00115    0.01332        0.94973      0.00001                 
+       21    0.00111    0.01271        0.94974      0.00001                 
+       22    0.00105    0.01213        0.94975      0.00001                 
+       23    0.00099    0.01155        0.94976      0.00001                 
+       24    0.00095    0.01095        0.94977      0.00001                 
+       25    0.00091    0.01038        0.94978      0.00001                 
+       26    0.00088    0.00986        0.94978      0.00001                 
+       27    0.00084    0.00936        0.94979      0.00001                 
+       28    0.00081    0.00889        0.94980      0.00001                 
+       29    0.00077    0.00846        0.94980      0.00000                 
+       30    0.00073    0.00805        0.94980      0.00000    Not Converged
+
+WARNING: Failed to converge, however criterion change is less than 0.0001.
+
+Optimal Monotonic Transformation of Ranked Teams
+with Constrained Estimation of Unranked Teams
+Principal Component Analysis
+
+The FACTOR Procedure
+Initial Factor Method: Principal Components
+
+                             Factor Pattern
+ 
+                                                                 Factor1
+
+TCSN                    CSN Transformation                       0.91136
+TDurhamSun              DurhamSun Transformation                 0.98887
+TDurhamHerald           DurhamHerald Transformation              0.97402
+TWashingtonPost         WashingtonPost Transformation            0.97408
+TUSA_Today              USA_Today Transformation                 0.98867
+TSportMagazine          SportMagazine Transformation             0.95331
+TInsideSports           InsideSports Transformation              0.98521
+TUPI                    UPI Transformation                       0.98534
+TAP                     AP Transformation                        0.99590
+TSportsIllustrated      SportsIllustrated Transformation         0.98615
+
+Optimal Monotonic Transformation of Ranked Teams
+with Constrained Estimation of Unranked Teams
+Teams Ordered by Scores on First Principal Component
+
+Obs    School             Prin1
+
+  1    Georgia_Tech     -6.20315
+  2    UNC              -5.93314
+  3    Michigan         -5.71034
+  4    Kansas           -4.78699
+  5    Duke             -4.75896
+  6    Illinois         -4.19220
+  7    Georgetown       -4.02861
+  8    Louisville       -3.73087
+  9    Syracuse         -3.47497
+ 10    Auburn           -1.78429
+ 11    LSU              -0.35928
+ 12    Memphis_State     0.46737
+ 13    Kentucky          0.63661
+ 14    Notre_Dame        0.71919
+ 15    Navy              0.76187
+ 16    UAB               0.98316
+ 17    DePaul            1.09891
+ 18    Oklahoma          1.12012
+ 19    NC_State          1.15144
+ 20    UNLV              1.28766
+ 21    Iowa              1.45260
+ 22    Indiana           1.48123
+ 23    Maryland          1.54935
+ 24    Virginia          2.01385
+ 25    Arkansas          2.02718
+ 26    Washington        2.10878
+ 27    Tennessee         2.27770
+ 28    Virginia_Tech     2.36103
+ 29    St._Johns         2.37387
+ 30    Montana           2.43502
+ 31    UCLA              2.52481
+ 32    Pittsburgh        3.00907
+ 33    Old_Dominion      3.03324
+ 34    St._Joseph's      3.39259
+ 35    Houston           4.69614

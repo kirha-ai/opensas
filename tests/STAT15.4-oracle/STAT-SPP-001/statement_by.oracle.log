@@ -1,0 +1,69 @@
+The SAS System
+
+17544      
+17545      /* STAT-SPP-001: SPP — Data input, variable roles, and basic options
+17546       * Source: S154 / Chapter 114 / `PROC SPP Statement` (PDF pp. 9391–9398); S154 / Chapter 114 / `BY Statement` (PDF p. 9398).
+17547       * Discriminates: Two explicit BY groups contain identical inputs, exposing group boundaries and per-group results.
+17548       */
+17549      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+17549    ! validmemname=compatible locale=en_US;
+17550      %let syscc=0;
+17551      title; footnote;
+17552      ods _all_ close;
+17553      ods listing gpath="%sysfunc(pathname(work))";
+17554      ods graphics off;
+17555      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK._DOCTMP000000000000000000024 (memtype=DATA).
+NOTE: Deleting WORK._DOCTMP000000000000000000025 (memtype=DATA).
+NOTE: Deleting WORK._DOCTMP000000000000000000026 (memtype=DATA).
+NOTE: Deleting WORK._DOCTMP000000000000000000027 (memtype=DATA).
+NOTE: Deleting WORK._DOCTMP000000000000000000028 (memtype=DATA).
+17555    !                                         quit;
+
+
+17556      ods path work.templat(update) sashelp.tmplmst(read);
+17557      
+17558      ods graphics on;
+17559      data _oracle_input; set sashelp.bei; do _oracle_by=1 to 2; output; end; run;
+
+NOTE: There were 24205 observations read from the data set SASHELP.BEI.
+NOTE: The data set WORK._ORACLE_INPUT has 48410 observations and 25 variables.
+
+17560      proc sort data=_oracle_input; by _oracle_by; run;
+
+NOTE: There were 48410 observations read from the data set WORK._ORACLE_INPUT.
+NOTE: The data set WORK._ORACLE_INPUT has 48410 observations and 25 variables.
+
+17561      proc spp data=_oracle_input plots(equate)=(trends observations);
+17562      by _oracle_by;
+17563      process trees = (x, y /area=(0,0,1000,500) Event=Trees);
+17564      trend grad = field(x,y, gradient);
+17565      trend elev = field(x,y, elevation);
+17566      run;
+
+NOTE: The PROCEDURE SPP printed pages 1207-1208.
+
+17567      proc spp data=sashelp.bei plots(equate)=(residual intensity);
+17568      process trees = (x,y /area=(0,0,1000,500) event=Trees);
+17569      trend elev = field(x,y,elevation);
+17570      trend grad = field(x,y,gradient);
+17571      model trees = elev grad / grid(64,64) residual(B=70) ;
+17572      run;
+
+NOTE: Convergence criterion (Absolute gradient, ABSGCONV=0.00001) satisfied.
+NOTE: The PROCEDURE SPP printed page 1209.
+
+17573      
+17574      
+17575      
+17576      
+The SAS System
+
+17577      

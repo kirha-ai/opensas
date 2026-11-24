@@ -1,0 +1,42 @@
+The SAS System
+
+1048       
+1049       /* STAT-COMMON-027: LSMESTIMATE Statement
+1050        * Source: S154 / Chapter 20 / `LSMESTIMATE Statement` (PDF pp. 510–522).
+1051        * Discriminates: LSMESTIMATE coefficient interpretation and confidence limits
+1052        */
+1053       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+1053     ! validmemname=compatible locale=en_US;
+1054       %let syscc=0;
+1055       title; footnote;
+1056       ods _all_ close;
+1057       ods listing gpath="%sysfunc(pathname(work))";
+1058       ods graphics off;
+1059       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SAMPLE (memtype=DATA).
+1059     !                                         quit;
+
+
+1060       ods path work.templat(update) sashelp.tmplmst(read);
+1061       
+1062       data sample;
+1063        input x z y group $ weight freq;
+1064        datalines;
+
+NOTE: The data set WORK.SAMPLE has 12 observations and 6 variables.
+
+1077       ;
+1078       run;
+1079       proc mixed data=sample; class group; model y=group x; lsmestimate group 'B minus A' -1 1 / cl; run;
+
+NOTE: The PROCEDURE MIXED printed page 59.
+
+1080       
+1081       
+1082       
+1083       
+The SAS System
+
+1084       

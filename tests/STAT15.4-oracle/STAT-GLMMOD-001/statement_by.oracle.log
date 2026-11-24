@@ -1,0 +1,76 @@
+The SAS System
+
+953        
+954        /* STAT-GLMMOD-001: GLMMOD — Data input, variable roles, and basic options
+955         * Source: S154 / Chapter 54 / `PROC GLMMOD Statement` (PDF pp. 4236–4238); S154 / Chapter 54 / `BY Statement` (PDF p. 4238); S154 / Chapter 54 /
+955      ! `FREQ and WEIGHT Statements` (PDF p. 4239); S154 / Chapter 54 / `Missing Values` (PDF p. 4240).
+956         * Discriminates: Two explicit BY groups contain identical inputs, exposing group boundaries and per-group results.
+957         */
+958        options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+958      ! validmemname=compatible locale=en_US;
+959        %let syscc=0;
+960        title; footnote;
+961        ods _all_ close;
+962        ods listing gpath="%sysfunc(pathname(work))";
+963        ods graphics off;
+964        proc datasets library=work kill nolist;
+NOTE: Deleting WORK.EXP (memtype=DATA).
+NOTE: Deleting WORK.IRON (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK._ORACLE_STORE (memtype=ITEMSTOR).
+964      !                                         quit;
+
+
+965        ods path work.templat(update) sashelp.tmplmst(read);
+966        
+967        title 'Nitrogen Content of Red Clover Plants';
+968        data Clover;
+969        input Strain $ Nitrogen @@;
+970        datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.CLOVER has 30 observations and 2 variables.
+
+977        ;
+978        data _oracle_input; set Clover; do _oracle_by=1 to 2; output; end; run;
+
+NOTE: There were 30 observations read from the data set WORK.CLOVER.
+NOTE: The data set WORK._ORACLE_INPUT has 60 observations and 3 variables.
+
+979        proc sort data=_oracle_input; by _oracle_by; run;
+
+NOTE: There were 60 observations read from the data set WORK._ORACLE_INPUT.
+NOTE: The data set WORK._ORACLE_INPUT has 60 observations and 3 variables.
+
+980        proc glmmod data=_oracle_input;
+981        by _oracle_by;
+982        class Strain;
+983        model Nitrogen = Strain;
+984        run;
+
+NOTE: There were 60 observations read from the data set WORK._ORACLE_INPUT.
+NOTE: The PROCEDURE GLMMOD printed pages 47-52.
+
+985        proc glmmod data=Clover outdesign=CloverDesign noprint;
+986        class Strain;
+987        model Nitrogen = Strain;
+988        run;
+
+NOTE: There were 30 observations read from the data set WORK.CLOVER.
+NOTE: The data set WORK.CLOVERDESIGN has 30 observations and 8 variables.
+
+989        proc reg data=CloverDesign;
+990        model Nitrogen = Col2-Col7;
+991        run;
+
+992        
+993        
+994        
+995        
+The SAS System
+
+996        

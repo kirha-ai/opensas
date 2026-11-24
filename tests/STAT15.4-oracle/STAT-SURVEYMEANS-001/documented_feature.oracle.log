@@ -1,0 +1,109 @@
+The SAS System
+
+21617      
+21618      /* STAT-SURVEYMEANS-001: SURVEYMEANS — Data input, variable roles, and basic options
+21619       * Source: S154 / Chapter 121 / `PROC SURVEYMEANS Statement` (PDF pp. 9907–9923); S154 / Chapter 121 / `BY Statement` (PDF pp. 9923–9924); S154 /
+21619    !  Chapter 121 / `CLASS Statement` (PDF p. 9924); S154 / Chapter 121 / `CLUSTER Statement` (PDF pp. 9924–9925); S154 / Chapter 121 / `REPWEIGHTS
+21619    ! Statement` (PDF pp. 9931–9933); S154 / Chapter 121 / `STRATA Statement` (PDF p. 9933); S154 / Chapter 121 / `VAR Statement` (PDF pp. 9933–9934);
+21619    ! S154 / Chapter 121 / `WEIGHT Statement` (PDF p. 9934); S154 / Chapter 121 / `Missing Values` (PDF pp. 9934–9935).
+21620       * Discriminates: Verified default procedure context; explicit statements: VAR, WEIGHT
+21621       */
+21622      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+21622    ! validmemname=compatible locale=en_US;
+21623      %let syscc=0;
+21624      title; footnote;
+21625      ods _all_ close;
+21626      ods listing gpath="%sysfunc(pathname(work))";
+21627      ods graphics off;
+
+
+21628      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.ENROLLMENT (memtype=DATA).
+NOTE: Deleting WORK.FORMATS (memtype=CATALOG).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.WEBSURVEY (memtype=DATA).
+21628    !                                         quit;
+
+
+21629      ods path work.templat(update) sashelp.tmplmst(read);
+21630      
+21631      data IceCream;
+21632      input Grade Spending @@;
+21633      if (Spending < 10) then Group='less';
+21634      else Group='more';
+21635      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.ICECREAM has 40 observations and 3 variables.
+
+21640      ;
+21641      ods graphics on;
+21642      title1 'Analysis of Ice Cream Spending';
+21643      title2 'Simple Random Sample Design';
+21644      proc surveymeans data=IceCream total=4000;
+21645      var Spending Group;
+21646      run;
+
+NOTE: The PROCEDURE SURVEYMEANS printed page 1427.
+
+21647      data StudentTotals;
+21648      input Grade _total_;
+21649      datalines;
+
+NOTE: The data set WORK.STUDENTTOTALS has 3 observations and 2 variables.
+
+21653      ;
+21654      data IceCream;
+21655      set IceCream;
+21656      if Grade=7 then Prob=20/1824;
+21657      if Grade=8 then Prob=9/1025;
+21658      if Grade=9 then Prob=11/1151;
+21659      Weight=1/Prob;
+21660      run;
+
+NOTE: There were 40 observations read from the data set WORK.ICECREAM.
+NOTE: The data set WORK.ICECREAM has 40 observations and 5 variables.
+
+21661      title1 'Analysis of Ice Cream Spending';
+21662      title2 'Stratified Sample Design';
+21663      proc surveymeans data=IceCream total=StudentTotals;
+21664      stratum Grade / list;
+21665      var Spending Group;
+21666      weight Weight;
+21667      run;
+
+NOTE: The PROCEDURE SURVEYMEANS printed page 1428.
+
+21668      title1 'Analysis of Ice Cream Spending';
+21669      title2 'Stratified Sample Design';
+21670      proc surveymeans data=IceCream total=StudentTotals;
+21671      stratum Grade / list;
+21672      var Spending Group;
+21673      weight Weight;
+21674      ods output Statistics=MyStat;
+21675      run;
+
+NOTE: The data set WORK.MYSTAT has 3 observations and 7 variables.
+NOTE: The PROCEDURE SURVEYMEANS printed page 1429.
+
+21676      ods output Statistics=MyStat;
+21677      proc print data=MyStat;
+21678      run;
+
+WARNING: Output 'Statistics' was not created.  Make sure that the output object name, label, or path is spelled correctly.  Also, verify that the appropriate 
+         procedure options are used to produce the requested output object.  For example, verify that the NOPRINT option is not used.
+NOTE: There were 3 observations read from the data set WORK.MYSTAT.
+NOTE: The PROCEDURE PRINT printed page 1430.
+
+21679      
+21680      
+21681      
+21682      
+The SAS System
+
+21683      

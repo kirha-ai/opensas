@@ -1,0 +1,79 @@
+The SAS System
+
+193        
+194        /* STAT-BGLIMM-001: BGLIMM — Data input, variable roles, and basic options
+195         * Source: S154 / Chapter 31 / `PROC BGLIMM Statement` (PDF pp. 1275–1283); S154 / Chapter 31 / `BY Statement` (PDF pp. 1283–1284); S154 /
+195      ! Chapter 31 / `Models with Missing Values` (PDF p. 1315); S154 / Chapter 31 / `Missing Data` (PDF p. 1323).
+196         * Discriminates: Two explicit BY groups contain identical inputs, exposing group boundaries and per-group results.
+197         */
+198        options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+198      ! validmemname=compatible locale=en_US;
+199        %let syscc=0;
+200        title; footnote;
+201        ods _all_ close;
+202        ods listing gpath="%sysfunc(pathname(work))";
+203        ods graphics off;
+
+NOTE: The PROCEDURE ANOVA printed pages 15-18.
+
+204        proc datasets library=work kill nolist;
+NOTE: Deleting WORK.CLOVER (memtype=DATA).
+NOTE: Deleting WORK.RCB (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK._ORACLE_INPUT (memtype=DATA).
+204      !                                         quit;
+
+
+205        ods path work.templat(update) sashelp.tmplmst(read);
+206        
+207        data MultiCenter;
+208        input Center Group$ N SideEffect @@;
+209        datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.MULTICENTER has 30 observations and 4 variables.
+
+225        ;
+226        ods graphics on;
+227        data _oracle_input; set MultiCenter; do _oracle_by=1 to 2; output; end; run;
+
+NOTE: There were 30 observations read from the data set WORK.MULTICENTER.
+NOTE: The data set WORK._ORACLE_INPUT has 60 observations and 5 variables.
+
+228        proc sort data=_oracle_input; by _oracle_by; run;
+
+NOTE: There were 60 observations read from the data set WORK._ORACLE_INPUT.
+NOTE: The data set WORK._ORACLE_INPUT has 60 observations and 5 variables.
+
+229        proc bglimm data=_oracle_input nmc=1000 thin=2 seed=976352
+230        plots=all nbi=200;
+231        by _oracle_by;
+232        class Center Group;
+233        model SideEffect/N = Group / noint;
+234        random int / subject = Center;
+235        run;
+
+NOTE: Generating the burn-in samples.
+NOTE: Beginning sample generation.
+NOTE: Beginning calculation of summary and diagnostics statistics.
+NOTE: Generating diagnostic plots.
+NOTE: The above message was for the following BY group:
+      _oracle_by=1
+NOTE: Generating the burn-in samples.
+NOTE: Beginning sample generation.
+NOTE: Beginning calculation of summary and diagnostics statistics.
+NOTE: Generating diagnostic plots.
+NOTE: The above message was for the following BY group:
+      _oracle_by=2
+NOTE: The PROCEDURE BGLIMM printed pages 19-20.
+
+236        quit;
+237        
+238        
+239        
+240        
+The SAS System
+
+241        

@@ -1,0 +1,42 @@
+The SAS System
+
+8288       
+8289       /* STAT-PRINQUAL-002: PRINQUAL — Optimal scaling transformations and principal component analysis
+8290        * Source: S154 / Chapter 99 / `Getting Started: PRINQUAL Procedure` (PDF pp. 8035–8040); S154 / Chapter 99 / `Overview: PRINQUAL Procedure` (PDF
+8290     ! pp. 8034–8035).
+8291        * Discriminates: Documented default analysis with explicit complete public or synthetic inputs
+8292        */
+8293       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+8293     ! validmemname=compatible locale=en_US;
+8294       %let syscc=0;
+8295       title; footnote;
+8296       ods _all_ close;
+8297       ods listing gpath="%sysfunc(pathname(work))";
+8298       ods graphics off;
+8299       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SCALED (memtype=DATA).
+8299     !                                         quit;
+
+
+8300       ods path work.templat(update) sashelp.tmplmst(read);
+8301       
+8302       proc prinqual data=sashelp.class out=scaled; transform identity(height weight age); run;
+
+NOTE: Algorithm converged.
+NOTE: The data set WORK.SCALED has 19 observations and 8 variables.
+NOTE: The PROCEDURE PRINQUAL printed page 588.
+
+8303       proc print data=scaled(obs=5) noobs; run;
+
+NOTE: There were 5 observations read from the data set WORK.SCALED.
+NOTE: The PROCEDURE PRINT printed page 589.
+
+8304       
+8305       
+8306       
+8307       
+The SAS System
+
+8308       

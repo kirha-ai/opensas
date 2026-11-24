@@ -1,0 +1,58 @@
+
+Number of Ph.D.'s Awarded from 1973 to 1978
+
+_oracle_by=1
+
+The CORRESP Procedure
+
+               Row Coordinates
+ 
+                               Dim1       Dim2
+
+Life Sciences                0.0258     0.0081
+Physical Sciences           -0.0413    -0.0024
+Social Sciences              0.0014    -0.0114
+Behavioral Sciences          0.1100    -0.0013
+Engineering                 -0.0704    -0.0037
+Mathematics                 -0.0639     0.0228
+
+
+      Column Coordinates
+ 
+               Dim1       Dim2
+
+1973        -0.0840     0.0033
+1974        -0.0509     0.0029
+1975        -0.0148     0.0008
+1976         0.0242    -0.0129
+1977         0.0512    -0.0082
+1978         0.0864     0.0143
+
+Number of Ph.D.'s Awarded from 1973 to 1978
+
+_oracle_by=2
+
+The CORRESP Procedure
+
+               Row Coordinates
+ 
+                               Dim1       Dim2
+
+Life Sciences                0.0258     0.0081
+Physical Sciences           -0.0413    -0.0024
+Social Sciences              0.0014    -0.0114
+Behavioral Sciences          0.1100    -0.0013
+Engineering                 -0.0704    -0.0037
+Mathematics                 -0.0639     0.0228
+
+
+      Column Coordinates
+ 
+               Dim1       Dim2
+
+1973        -0.0840     0.0033
+1974        -0.0509     0.0029
+1975        -0.0148     0.0008
+1976         0.0242    -0.0129
+1977         0.0512    -0.0082
+1978         0.0864     0.0143

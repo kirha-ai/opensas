@@ -1,0 +1,4 @@
+WARNING: At smoothing parameter 0.1, the local SSCP matrix for 35 fit point(s) is numerically singular. The fitted value and standard errors at those points 
+WARNING: There is insufficient variation in the data to create a density plot.
+WARNING: At smoothing parameter 0.1, the local SSCP matrix for 35 fit point(s) is numerically singular. The fitted value and standard errors at those points 
+WARNING: There is insufficient variation in the data to create a density plot.

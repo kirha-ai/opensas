@@ -1,0 +1,71 @@
+The SAS System
+
+6601       
+6602       /* STAT-HPSPLIT-010: HPSPLIT — CODE / Scoring
+6603        * Source: S154 / Chapter 68 / `CODE Statement` (PDF pp. 5089–5090); S154 / Chapter 68 / `Scoring` (PDF pp. 5110–5111).
+6604        * Discriminates: Generate DATA step scoring code, execute it against the input rows, and print the scored data.
+6605        */
+6606       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+6606     ! validmemname=compatible locale=en_US;
+6607       %let syscc=0;
+6608       title; footnote;
+6609       ods _all_ close;
+6610       ods listing gpath="%sysfunc(pathname(work))";
+6611       ods graphics off;
+6612       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.HPSPLOUT (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+6612     !                                         quit;
+
+
+6613       ods path work.templat(update) sashelp.tmplmst(read);
+6614       
+6615       filename _orcode "%sysfunc(pathname(work))/_oracle_score.sas";
+6616       
+6617       
+6618       ods graphics on;
+6619       proc hpsplit data=sashelp.baseball seed=123;
+6620       class league division;
+6621       model logSalary = nAtBat nHits nHome nRuns nRBI nBB
+6622       yrMajor crAtBat crHits crHome crRuns crRbi
+6623       crBB league division nOuts nAssts nError;
+6624       output out=hpsplout;
+6625       
+6626       code file="%sysfunc(pathname(work))/_oracle_score.sas";
+6627       run;
+
+NOTE: The ASSIGNMISSING= option has not been specified.  Because of this, all observations with missing values in the explanatory variables will be excluded 
+      from tree construction.
+NOTE: External file /saswork/SAS_work7EA200001C34_odaws01-euw1.oda.sas.com/SAS_work29EF00001C34_odaws01-euw1.oda.sas.com/_oracle_score.sas opened.
+NOTE: The HPSPLIT procedure is executing in single-machine mode.
+NOTE: Cross-validating using 10 folds.
+NOTE: The HPSPLIT procedure wrote the DATA step code to external file 
+      /saswork/SAS_work7EA200001C34_odaws01-euw1.oda.sas.com/SAS_work29EF00001C34_odaws01-euw1.oda.sas.com/_oracle_score.sas.
+NOTE: There were 322 observations read from the data set SASHELP.BASEBALL.
+NOTE: The data set WORK.HPSPLOUT has 322 observations and 4 variables.
+NOTE: The PROCEDURE HPSPLIT printed pages 482-483.
+
+6628       
+6629       data _oracle_scored; set sashelp.baseball;
+6630       %include _orcode;
+6708       run;
+
+NOTE: There were 322 observations read from the data set SASHELP.BASEBALL.
+NOTE: The data set WORK._ORACLE_SCORED has 322 observations and 28 variables.
+
+6709       proc print data=_oracle_scored(obs=10); run;
+
+NOTE: There were 10 observations read from the data set WORK._ORACLE_SCORED.
+NOTE: The PROCEDURE PRINT printed page 484.
+
+6710       
+6711       
+6712       
+6713       
+The SAS System
+
+6714       

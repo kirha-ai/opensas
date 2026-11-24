@@ -1,0 +1,42 @@
+
+Travel Expense Audit
+Stratified PPS (Dollar-Unit) Sampling
+
+The SURVEYSELECT Procedure
+
+Selection Method    PPS, Without Replacement
+Size Measure                          Amount
+Strata Variable                        Level
+
+Input Data Set        TRAVELEXPENSE
+Random Number Seed            47279
+Number of Strata                  3
+Total Sample Size                20
+Output Data Set         AUDITSAMPLE
+
+Travel Expense Audit
+Sample Selected by Stratified PPS Design
+
+                                   Selection    Sampling
+Obs    Level     ID      Amount       Prob       Weight
+
+  1    1_Low     024     142.90     0.23949      4.17553
+  2    1_Low     614     230.56     0.38640      2.58797
+  3    1_Low     110     237.18     0.39750      2.51574
+  4    1_Low     782     258.10     0.43256      2.31183
+  5    1_Low     192     314.58     0.52721      1.89676
+  6    1_Low     216     325.36     0.54528      1.83392
+  7    2_Avg     239     620.10     0.42503      2.35278
+  8    2_Avg     308     688.43     0.47186      2.11925
+  9    2_Avg     496     753.30     0.51633      1.93676
+ 10    2_Avg     478     806.90     0.55307      1.80810
+ 11    2_Avg     142     810.25     0.55536      1.80063
+ 12    2_Avg     517     940.35     0.64454      1.55151
+ 13    2_Avg     672     979.66     0.67148      1.48925
+ 14    2_Avg     139    1183.45     0.81116      1.23280
+ 15    2_Avg     411    1287.23     0.88229      1.13341
+ 16    2_Avg     289    1348.34     0.92418      1.08204
+ 17    3_High    568    1670.80     0.64385      1.55316
+ 18    3_High    263    1893.40     0.72963      1.37056
+ 19    3_High    545    2214.80     0.85348      1.17167
+ 20    3_High    486    2580.35     0.99435      1.00568

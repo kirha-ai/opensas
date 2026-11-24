@@ -1,0 +1,69 @@
+The SAS System
+
+27560      
+27561      /* STAT-TRANSREG-010: TRANSREG — Redundancy Analysis / Optimal Scaling / OPSCORE, MONOTONE, UNTIE, and LINEAR Transformations
+27562       * Source: S154 / Chapter 126 / `Redundancy Analysis` (PDF pp. 10481–10484); S154 / Chapter 126 / `Optimal Scaling` (PDF pp. 10484–10485); S154 /
+27562    !  Chapter 126 / `OPSCORE, MONOTONE, UNTIE, and LINEAR Transformations` (PDF pp. 10485–10486).
+27563       * Discriminates: Example 126.2: Box-Cox Transformations
+27564       */
+27565      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+27565    ! validmemname=compatible locale=en_US;
+27566      %let syscc=0;
+27567      title; footnote;
+27568      ods _all_ close;
+27569      ods listing gpath="%sysfunc(pathname(work))";
+27570      ods graphics off;
+27571      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.A (memtype=DATA).
+NOTE: Deleting WORK.DATA33 (memtype=DATA).
+NOTE: Deleting WORK.GAS (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+27571    !                                         quit;
+
+
+27572      ods path work.templat(update) sashelp.tmplmst(read);
+27573      
+27574      title 'Yarn Strength';
+27575      proc format;
+27576      value a -1 = 8 0 = 9 1 = 10;
+NOTE: Format A has been output.
+27577      value l -1 = 250 0 = 300 1 = 350;
+NOTE: Format L has been output.
+27578      value o -1 = 40 0 = 45 1 = 50;
+NOTE: Format O has been output.
+27579      run;
+
+
+27580      data yarn;
+27581      input Fail Amplitude Length Load @@;
+27582      format amplitude a. length l. load o.;
+27583      label fail = 'Time in Cycles until Failure';
+27584      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.YARN has 27 observations and 4 variables.
+
+27592      ;
+27593      ods graphics on;
+27594      proc transreg details data=yarn ss2
+27595      plots=(transformation(dependent) obp);
+27596      model BoxCox(fail / convenient lambda=-2 to 2 by 0.05) =
+27597      qpoint(length amplitude load);
+27598      run;
+
+NOTE: There were 27 observations read from the data set WORK.YARN.
+NOTE: The PROCEDURE TRANSREG printed page 1695.
+
+27599      
+27600      
+27601      
+27602      
+The SAS System
+
+27603      

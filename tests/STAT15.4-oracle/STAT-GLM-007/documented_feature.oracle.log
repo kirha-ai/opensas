@@ -1,0 +1,68 @@
+The SAS System
+
+25646      
+25647      /* STAT-GLM-007: GLM — Homogeneity of Variance in One-Way Models / Multivariate Analysis of Variance / Random-Effects Analysis
+25648       * Source: S154 / Chapter 53 / `Homogeneity of Variance in One-Way Models` (PDF pp. 4143–4144); S154 / Chapter 53 / `Multivariate Analysis of
+25648    ! Variance` (PDF pp. 4147–4149); S154 / Chapter 53 / `Random-Effects Analysis` (PDF pp. 4157–4160).
+25649       * Discriminates: Example 53.8: Mixed Model Analysis of Variance with the RANDOM Statement
+25650       */
+25651      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+25651    ! validmemname=compatible locale=en_US;
+25652      %let syscc=0;
+25653      title; footnote;
+25654      ods _all_ close;
+25655      ods listing gpath="%sysfunc(pathname(work))";
+25656      ods graphics off;
+
+NOTE: The PROCEDURE GLM printed pages 2510-2511.
+
+25657      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.EXP (memtype=DATA).
+NOTE: Deleting WORK.IRON (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+25657    !                                         quit;
+
+
+25658      ods path work.templat(update) sashelp.tmplmst(read);
+25659      
+25660      data machine;
+25661      input machine person rating @@;
+25662      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.MACHINE has 44 observations and 3 variables.
+
+25670      ;
+25671      proc glm data=machine;
+25672      class machine person;
+25673      model rating=machine person machine*person;
+25674      random person machine*person / test;
+25675      run;
+
+NOTE: TYPE I EMS not available without the E1 option.
+
+NOTE: The PROCEDURE GLM printed pages 2512-2515.
+
+25676      proc mixed data=machine method=type3;
+25677      class machine person;
+25678      model rating = machine;
+25679      random person machine*person;
+25680      run;
+
+NOTE: The PROCEDURE MIXED printed page 2516.
+
+25681      
+25682      
+25683      
+25684      
+The SAS System
+
+25685      

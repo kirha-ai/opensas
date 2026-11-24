@@ -1,0 +1,215 @@
+The SAS System
+
+9508       
+9509       /* STAT-PROBIT-012: PROBIT — EFFECTPLOT / Plot Options Superseded by ODS Graphics / ODS Graphics
+9510        * Source: S154 / Chapter 100 / `EFFECTPLOT Statement` (PDF pp. 8108–8109); S154 / Chapter 100 / `Plot Options Superseded by ODS Graphics` (PDF pp.
+9510     !  8129–8165); S154 / Chapter 100 / `ODS Graphics` (PDF pp. 8167–8171).
+9511        * Discriminates: Example 100.5: Model Postfitting Analysis; explicit statements: EFFECTPLOT
+9512        */
+9513       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+9513     ! validmemname=compatible locale=en_US;
+9514       %let syscc=0;
+9515       title; footnote;
+9516       ods _all_ close;
+9517       ods listing gpath="%sysfunc(pathname(work))";
+9518       ods graphics off;
+9519       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.NEW (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.STUDY (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+9519     !                                         quit;
+
+
+9520       ods path work.templat(update) sashelp.tmplmst(read);
+9521       
+9522       ods graphics on;
+9523       ods trace on;
+9524       ods trace on;
+9525       data epidemic;
+9526       input treat$ dose n r sex @@;
+9527       label dose = Dose;
+9528       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.EPIDEMIC has 10 observations and 5 variables.
+
+9532       ;
+9533       run;
+9534       proc probit data=epidemic;
+9535       class treat sex;
+9536       model r/n = dose treat sex treat*sex;
+9537       slice treat*sex / diff;
+9538       effectplot;
+9539       run;
+
+
+Output Added:
+-------------
+Name:       ModelInfo
+Label:      Model Information
+Template:   Stat.Lifereg.ModelInfo
+Path:       Probit.ModelInfo
+-------------
+
+Output Added:
+-------------
+Name:       NObs
+Label:      Observations Summary
+Template:   Stat.Lifereg.NObs
+Path:       Probit.NObs
+-------------
+
+Output Added:
+-------------
+Name:       ClassLevels
+Label:      Class Level Information
+Template:   Stat.Lifereg.Classlevels
+Path:       Probit.ClassLevels
+-------------
+NOTE: Algorithm converged.
+
+Output Added:
+-------------
+Name:       ConvergenceStatus
+Label:      Convergence Status
+Template:   Stat.Lifereg.ConvergenceStatus
+Path:       Probit.ConvergenceStatus
+-------------
+
+Output Added:
+-------------
+Name:       Type3Analysis
+Label:      Type 3 Analysis
+Template:   Stat.Lifereg.Type3Analysis
+Path:       Probit.Type3Analysis
+-------------
+
+Output Added:
+-------------
+Name:       ParameterEstimates
+Label:      Analysis of Parameter Estimates
+Template:   stat.lifereg.parameterestimates
+Path:       Probit.ParameterEstimates
+-------------
+
+Output Added:
+-------------
+Name:       SliceTests
+Label:      treat*sex Chi-Square Test
+Template:   Stat.Probit.FTest
+Path:       Probit.SliceTests
+-------------
+
+Output Added:
+-------------
+Name:       SliceDiffs
+Label:      treat*sex Diffs
+Template:   Stat.Probit.Diffs
+Path:       Probit.SliceDiffs
+-------------
+
+Output Added:
+-------------
+Name:       DiffPlot
+Label:      treat*sex Diffogram
+Template:   Stat.Probit.Graphics.DiffPlot
+Path:       Probit.DiffPlot
+-------------
+
+Output Added:
+-------------
+Name:       SliceTests
+Label:      treat*sex Chi-Square Test
+Template:   Stat.Probit.FTest
+Path:       Probit.SliceTests
+-------------
+
+Output Added:
+-------------
+Name:       SliceDiffs
+Label:      treat*sex Diffs
+Template:   Stat.Probit.Diffs
+Path:       Probit.SliceDiffs
+-------------
+
+Output Added:
+-------------
+Name:       DiffPlot
+Label:      treat*sex Diffogram
+Template:   Stat.Probit.Graphics.DiffPlot
+Path:       Probit.DiffPlot
+-------------
+
+Output Added:
+-------------
+Name:       SliceTests
+Label:      treat*sex Chi-Square Test
+Template:   Stat.Probit.FTest
+Path:       Probit.SliceTests
+-------------
+
+Output Added:
+-------------
+Name:       SliceDiffs
+Label:      treat*sex Diffs
+Template:   Stat.Probit.Diffs
+Path:       Probit.SliceDiffs
+-------------
+
+Output Added:
+-------------
+Name:       DiffPlot
+Label:      treat*sex Diffogram
+Template:   Stat.Probit.Graphics.DiffPlot
+Path:       Probit.DiffPlot
+-------------
+
+Output Added:
+-------------
+Name:       SliceTests
+Label:      treat*sex Chi-Square Test
+Template:   Stat.Probit.FTest
+Path:       Probit.SliceTests
+-------------
+
+Output Added:
+-------------
+Name:       SliceDiffs
+Label:      treat*sex Diffs
+Template:   Stat.Probit.Diffs
+Path:       Probit.SliceDiffs
+-------------
+
+Output Added:
+-------------
+Name:       DiffPlot
+Label:      treat*sex Diffogram
+Template:   Stat.Probit.Graphics.DiffPlot
+Path:       Probit.DiffPlot
+-------------
+
+Output Added:
+-------------
+Name:       SliceFitPlot
+Label:      Sliced Fit Plot 1
+Template:   Stat.Probit.Graphics.SLICEFITPlot
+Path:       Probit.EffectPlots.SliceFitPlot
+-------------
+NOTE: The PROCEDURE PROBIT printed page 624.
+
+9540       ods trace off;
+9541       ods trace off;
+9542       ods graphics off;
+9543       
+9544       
+9545       
+9546       
+The SAS System
+
+9547       

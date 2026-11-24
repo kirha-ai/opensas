@@ -1,0 +1,121 @@
+The SAS System
+
+23799      
+23800      /* STAT-SURVEYREG-001: SURVEYREG — Data input, variable roles, and basic options
+23801       * Source: S154 / Chapter 123 / `PROC SURVEYREG Statement` (PDF pp. 10113–10124); S154 / Chapter 123 / `BY Statement` (PDF pp. 10124–10125); S154
+23801    !  / Chapter 123 / `CLUSTER Statement` (PDF pp. 10126–10127); S154 / Chapter 123 / `REPWEIGHTS Statement` (PDF pp. 10137–10139); S154 / Chapter 123
+23801    !  / `STRATA Statement` (PDF p. 10140); S154 / Chapter 123 / `WEIGHT Statement` (PDF pp. 10141–10142); S154 / Chapter 123 / `Missing Values` (PDF pp.
+23801    !  10142–10143).
+23802       * Discriminates: Two explicit BY groups contain identical inputs, exposing group boundaries and per-group results.
+23803       */
+23804      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+23804    ! validmemname=compatible locale=en_US;
+23805      %let syscc=0;
+23806      title; footnote;
+23807      ods _all_ close;
+23808      ods listing gpath="%sysfunc(pathname(work))";
+23809      ods graphics off;
+23810      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.ICECREAM (memtype=DATA).
+NOTE: Deleting WORK.MYPARMEST (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.STUDENTTOTALS (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+23810    !                                         quit;
+
+
+23811      ods path work.templat(update) sashelp.tmplmst(read);
+23812      
+23813      data IceCream;
+23814      input Grade Spending Income Kids @@;
+23815      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.ICECREAM has 40 observations and 4 variables.
+
+23830      ;
+23831      title1 'Ice Cream Spending Analysis';
+23832      title2 'Simple Random Sample Design';
+23833      data _oracle_input; set IceCream; do _oracle_by=1 to 2; output; end; run;
+
+NOTE: There were 40 observations read from the data set WORK.ICECREAM.
+NOTE: The data set WORK._ORACLE_INPUT has 80 observations and 5 variables.
+
+23834      proc sort data=_oracle_input; by _oracle_by; run;
+
+NOTE: There were 80 observations read from the data set WORK._ORACLE_INPUT.
+NOTE: The data set WORK._ORACLE_INPUT has 80 observations and 5 variables.
+
+23835      proc surveyreg data=_oracle_input total=4000;
+23836      by _oracle_by;
+23837      class Kids;
+23838      model Spending = Income Kids / solution;
+23839      run;
+
+NOTE: The BY statement provides completely separate analyses of the BY groups.  It does not provide a statistically valid subpopulation or domain analysis, 
+      where the total number of units in the subpopulation is not known with certainty. If you want a domain analysis, you should include the DOMAIN variables 
+      in a DOMAIN statement.
+NOTE: The PROCEDURE SURVEYREG printed pages 1520-1521.
+
+23840      data StudentTotals;
+23841      input Grade _TOTAL_;
+23842      datalines;
+
+NOTE: The data set WORK.STUDENTTOTALS has 3 observations and 2 variables.
+
+23846      ;
+23847      data IceCream;
+23848      set IceCream;
+23849      if Grade=7 then Prob=20/1824;
+23850      if Grade=8 then Prob=9/1025;
+23851      if Grade=9 then Prob=11/1151;
+23852      Weight=1/Prob;
+23853      run;
+
+NOTE: There were 40 observations read from the data set WORK.ICECREAM.
+NOTE: The data set WORK.ICECREAM has 40 observations and 6 variables.
+
+23854      ods graphics on;
+23855      title1 'Ice Cream Spending Analysis';
+23856      title2 'Stratified Sample Design';
+23857      proc surveyreg data=IceCream total=StudentTotals;
+23858      strata Grade /list;
+23859      model Spending = Income;
+23860      weight Weight;
+23861      run;
+
+NOTE: The PROCEDURE SURVEYREG printed page 1522.
+
+23862      title1 'Ice Cream Spending Analysis';
+23863      title2 'Stratified Sample Design';
+23864      proc surveyreg data=IceCream total=StudentTotals;
+23865      strata Grade /list;
+23866      model Spending = Income;
+23867      weight Weight;
+23868      ods output ParameterEstimates = MyParmEst;
+23869      run;
+
+NOTE: The data set WORK.MYPARMEST has 2 observations and 6 variables.
+NOTE: The PROCEDURE SURVEYREG printed page 1523.
+
+23870      ods output ParameterEstimates = MyParmEst;
+23871      proc print data=MyParmEst;
+23872      run;
+
+WARNING: Output 'ParameterEstimates' was not created.  Make sure that the output object name, label, or path is spelled correctly.  Also, verify that the 
+         appropriate procedure options are used to produce the requested output object.  For example, verify that the NOPRINT option is not used.
+NOTE: There were 2 observations read from the data set WORK.MYPARMEST.
+NOTE: The PROCEDURE PRINT printed page 1524.
+
+23873      
+23874      
+23875      
+23876      
+The SAS System
+
+23877      

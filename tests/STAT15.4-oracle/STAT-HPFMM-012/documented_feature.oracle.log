@@ -1,0 +1,1096 @@
+The SAS System
+
+7988       
+7989       /* STAT-HPFMM-012: HPFMM — ODS Graphics
+7990        * Source: S154 / Chapter 58 / `ODS Graphics` (PDF pp. 4595–4596).
+7991        * Discriminates: Getting Started: HPFMM Procedure
+7992        */
+7993       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+7993     ! validmemname=compatible locale=en_US;
+7994       %let syscc=0;
+7995       title; footnote;
+7996       ods _all_ close;
+7997       ods listing gpath="%sysfunc(pathname(work))";
+7998       ods graphics off;
+7999       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.CATCH (memtype=DATA).
+NOTE: Deleting WORK.GALAXIES (memtype=DATA).
+NOTE: Deleting WORK.HPFMMOUT (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.YEAST (memtype=DATA).
+7999     !                                         quit;
+
+
+8000       ods path work.templat(update) sashelp.tmplmst(read);
+8001       
+8002       ods graphics on;
+8003       ods trace on;
+8004       ods trace on;
+8005       data yeast;
+8006       input count f;
+8007       n = 5;
+8008       datalines;
+
+NOTE: The data set WORK.YEAST has 6 observations and 3 variables.
+
+8015       ;
+8016       proc hpfmm data=yeast seed=314159;
+8017       model count/n = / k=2;
+8018       freq f;
+8019       run;
+
+NOTE: The HPFMM procedure is executing in single-machine mode.
+
+Output Added:
+-------------
+Name:       PerformanceInfo
+Label:      Performance Information
+Template:   HPA.Common.PerfInfo
+Path:       HPFMM.PerformanceInfo
+-------------
+
+Output Added:
+-------------
+Name:       DataAccessInfo
+Label:      Data Access Information
+Template:   HPA.Common.DataAccessInfo
+Path:       HPFMM.DataAccessInfo
+-------------
+
+Output Added:
+-------------
+Name:       ModelInfo
+Label:      Model Information
+Template:   HPSTAT.HPFMM.ModelInfo
+Path:       HPFMM.ModelInfo
+-------------
+
+Output Added:
+-------------
+Name:       NObs
+Label:      Number of Observations
+Template:   HPA.Common.NObs
+Path:       HPFMM.NObs
+-------------
+
+Output Added:
+-------------
+Name:       OptInfo
+Label:      Optimization Information
+Template:   HPSTAT.HPFMM.OptInfo
+Path:       HPFMM.OptInfo
+-------------
+
+Output Added:
+-------------
+Name:       IterHistory
+Label:      Iteration History
+Template:   HPSTAT.HPFMM.IterHistory
+Path:       HPFMM.IterHistory
+-------------
+
+Output Added:
+-------------
+Name:       ConvergenceStatus
+Label:      Convergence Status
+Template:   HPSTAT.HPFMM.ConvergenceStatus
+Path:       HPFMM.ConvergenceStatus
+-------------
+
+Output Added:
+-------------
+Name:       FitStatistics
+Label:      Fit Statistics
+Template:   HPSTAT.HPFMM.FitStatistics
+Path:       HPFMM.FitStatistics
+-------------
+
+Output Added:
+-------------
+Name:       ParameterEstimates
+Label:      Parameter Estimates for Binomial Model
+Template:   HPSTAT.HPFMM.ParameterEstimates
+Path:       HPFMM.ParameterEstimates
+-------------
+
+Output Added:
+-------------
+Name:       MixingProbs
+Label:      Parameter Estimates for Mixing Probabilities
+Template:   HPSTAT.HPFMM.MixingProbs
+Path:       HPFMM.MixingProbs
+-------------
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+
+Output Added:
+-------------
+Name:       DensityPlot
+Label:      Density plot
+Template:   HPSTAT.HPFMM.Graphics.DensityPlot2
+Path:       HPFMM.DensityPlot
+-------------
+NOTE: There were 6 observations read from the data set WORK.YEAST.
+NOTE: The PROCEDURE HPFMM printed page 623.
+
+8020       proc hpfmm data=yeast seed=314159;
+8021       model count/n = / k=2;
+8022       freq f;
+8023       id f n;
+8024       output out=hpfmmout pred(components) posterior;
+8025       run;
+
+NOTE: The HPFMM procedure is executing in single-machine mode.
+
+Output Added:
+-------------
+Name:       PerformanceInfo
+Label:      Performance Information
+Template:   HPA.Common.PerfInfo
+Path:       HPFMM.PerformanceInfo
+-------------
+
+Output Added:
+-------------
+Name:       DataAccessInfo
+Label:      Data Access Information
+Template:   HPA.Common.DataAccessInfo
+Path:       HPFMM.DataAccessInfo
+-------------
+
+Output Added:
+-------------
+Name:       ModelInfo
+Label:      Model Information
+Template:   HPSTAT.HPFMM.ModelInfo
+Path:       HPFMM.ModelInfo
+-------------
+
+Output Added:
+-------------
+Name:       NObs
+Label:      Number of Observations
+Template:   HPA.Common.NObs
+Path:       HPFMM.NObs
+-------------
+
+Output Added:
+-------------
+Name:       OptInfo
+Label:      Optimization Information
+Template:   HPSTAT.HPFMM.OptInfo
+Path:       HPFMM.OptInfo
+-------------
+
+Output Added:
+-------------
+Name:       IterHistory
+Label:      Iteration History
+Template:   HPSTAT.HPFMM.IterHistory
+Path:       HPFMM.IterHistory
+-------------
+
+Output Added:
+-------------
+Name:       ConvergenceStatus
+Label:      Convergence Status
+Template:   HPSTAT.HPFMM.ConvergenceStatus
+Path:       HPFMM.ConvergenceStatus
+-------------
+
+Output Added:
+-------------
+Name:       FitStatistics
+Label:      Fit Statistics
+Template:   HPSTAT.HPFMM.FitStatistics
+Path:       HPFMM.FitStatistics
+-------------
+
+Output Added:
+-------------
+Name:       ParameterEstimates
+Label:      Parameter Estimates for Binomial Model
+Template:   HPSTAT.HPFMM.ParameterEstimates
+Path:       HPFMM.ParameterEstimates
+-------------
+
+Output Added:
+-------------
+Name:       MixingProbs
+Label:      Parameter Estimates for Mixing Probabilities
+Template:   HPSTAT.HPFMM.MixingProbs
+Path:       HPFMM.MixingProbs
+-------------
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+
+Output Added:
+-------------
+Name:       DensityPlot
+Label:      Density plot
+Template:   HPSTAT.HPFMM.Graphics.DensityPlot2
+Path:       HPFMM.DensityPlot
+-------------
+NOTE: There were 6 observations read from the data set WORK.YEAST.
+NOTE: The data set WORK.HPFMMOUT has 6 observations and 6 variables.
+NOTE: The PROCEDURE HPFMM printed page 624.
+
+8026       data hpfmmout;
+8027       set hpfmmout;
+8028       PredCount_1 = post_1 * f;
+8029       PredCount_2 = post_2 * f;
+8030       run;
+
+NOTE: There were 6 observations read from the data set WORK.HPFMMOUT.
+NOTE: The data set WORK.HPFMMOUT has 6 observations and 8 variables.
+
+8031       proc print data=hpfmmout;
+8032       run;
+
+
+Output Added:
+-------------
+Name:       Print
+Label:      Data Set WORK.HPFMMOUT
+Data Name:  ProcPrintTable
+Path:       Print.Print
+-------------
+NOTE: There were 6 observations read from the data set WORK.HPFMMOUT.
+NOTE: The PROCEDURE PRINT printed page 625.
+
+8033       ods graphics on;
+8034       proc hpfmm data=yeast seed=12345;
+8035       model count/n = / k=2;
+8036       freq f;
+8037       performance nthreads=2;
+8038       bayes nmc=1000 nbi=200;
+8039       run;
+
+NOTE: The HPFMM procedure is executing in single-machine mode.
+
+Output Added:
+-------------
+Name:       PerformanceInfo
+Label:      Performance Information
+Template:   HPA.Common.PerfInfo
+Path:       HPFMM.PerformanceInfo
+-------------
+
+Output Added:
+-------------
+Name:       DataAccessInfo
+Label:      Data Access Information
+Template:   HPA.Common.DataAccessInfo
+Path:       HPFMM.DataAccessInfo
+-------------
+
+Output Added:
+-------------
+Name:       ModelInfo
+Label:      Model Information
+Template:   HPSTAT.HPFMM.ModelInfo
+Path:       HPFMM.ModelInfo
+-------------
+
+Output Added:
+-------------
+Name:       NObs
+Label:      Number of Observations
+Template:   HPA.Common.NObs
+Path:       HPFMM.NObs
+-------------
+
+Output Added:
+-------------
+Name:       BayesInfo
+Label:      Bayes Information
+Template:   HPSTAT.HPFMM.OptInfo
+Path:       HPFMM.BayesInfo
+-------------
+
+Output Added:
+-------------
+Name:       PriorInfo
+Label:      Prior Distributions
+Template:   HPSTAT.HPFMM.PriorInfo
+Path:       HPFMM.PriorInfo
+-------------
+
+Output Added:
+-------------
+Name:       FitStatistics
+Label:      Bayesian Fit Statistics
+Template:   HPSTAT.HPFMM.FitStatistics
+Path:       HPFMM.FitStatistics
+-------------
+
+Output Added:
+-------------
+Name:       PostSummaries
+Label:      Posterior Summary Statistics
+Template:   HPSTAT.HPFMM.PostSummaries
+Path:       HPFMM.PostSummaries
+-------------
+
+Output Added:
+-------------
+Name:       PostIntervals
+Label:      Posterior Interval Statistics
+Template:   HPSTAT.HPFMM.PostIntervals
+Path:       HPFMM.PostIntervals
+-------------
+
+Output Added:
+-------------
+Name:       AutoCorr
+Label:      Posterior Autocorrelations
+Template:   HPSTAT.HPFMM.AutoCorr
+Path:       HPFMM.AutoCorr
+-------------
+
+Output Added:
+-------------
+Name:       ESS
+Label:      Effective Sample Sizes
+Template:   HPSTAT.HPFMM.ESS
+Path:       HPFMM.ESS
+-------------
+NOTE: Bayesian results for this model (no regressor variables, non-identity link) are displayed on the data scale, not the linked scale. You can obtain results 
+      on the linked (=linear) scale by requesting a Metropolis sampling algorithm.
+
+Output Added:
+-------------
+Name:       TADPanel
+Label:      Success Probability, Component 1
+Template:   HPSTAT.HPFMM.Graphics.TADPanel
+Path:       HPFMM.TracePlots.TADPanel
+-------------
+
+Output Added:
+-------------
+Name:       TADPanel
+Label:      Success Probability, Component 2
+Template:   HPSTAT.HPFMM.Graphics.TADPanel
+Path:       HPFMM.TracePlots.TADPanel
+-------------
+
+Output Added:
+-------------
+Name:       TADPanel
+Label:      Probability, Component 1
+Template:   HPSTAT.HPFMM.Graphics.TADPanel
+Path:       HPFMM.TracePlots.TADPanel
+-------------
+
+Output Added:
+-------------
+Name:       DensityPlot
+Label:      Density plot
+Template:   HPSTAT.HPFMM.Graphics.DensityPlot2
+Path:       HPFMM.DensityPlot
+-------------
+NOTE: There were 6 observations read from the data set WORK.YEAST.
+NOTE: The PROCEDURE HPFMM printed page 626.
+
+8040       ods graphics off;
+8041       data catch;
+8042       input gender $ age count @@;
+8043       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.CATCH has 52 observations and 3 variables.
+
+8057       ;
+8058       proc hpfmm data=catch seed=314159;
+8059       class gender;
+8060       model count = gender*age / dist=Poisson;
+8061       run;
+
+NOTE: The HPFMM procedure is executing in single-machine mode.
+
+Output Added:
+-------------
+Name:       PerformanceInfo
+Label:      Performance Information
+Template:   HPA.Common.PerfInfo
+Path:       HPFMM.PerformanceInfo
+-------------
+
+Output Added:
+-------------
+Name:       DataAccessInfo
+Label:      Data Access Information
+Template:   HPA.Common.DataAccessInfo
+Path:       HPFMM.DataAccessInfo
+-------------
+
+Output Added:
+-------------
+Name:       ModelInfo
+Label:      Model Information
+Template:   HPSTAT.HPFMM.ModelInfo
+Path:       HPFMM.ModelInfo
+-------------
+
+Output Added:
+-------------
+Name:       ClassLevels
+Label:      Class Level Information
+Template:   HPA.Common.ClassLevels
+Path:       HPFMM.ClassLevels
+-------------
+
+Output Added:
+-------------
+Name:       NObs
+Label:      Number of Observations
+Template:   HPA.Common.NObs
+Path:       HPFMM.NObs
+-------------
+
+Output Added:
+-------------
+Name:       OptInfo
+Label:      Optimization Information
+Template:   HPSTAT.HPFMM.OptInfo
+Path:       HPFMM.OptInfo
+-------------
+
+Output Added:
+-------------
+Name:       IterHistory
+Label:      Iteration History
+Template:   HPSTAT.HPFMM.IterHistory
+Path:       HPFMM.IterHistory
+-------------
+
+Output Added:
+-------------
+Name:       ConvergenceStatus
+Label:      Convergence Status
+Template:   HPSTAT.HPFMM.ConvergenceStatus
+Path:       HPFMM.ConvergenceStatus
+-------------
+
+Output Added:
+-------------
+Name:       FitStatistics
+Label:      Fit Statistics
+Template:   HPSTAT.HPFMM.FitStatistics
+Path:       HPFMM.FitStatistics
+-------------
+
+Output Added:
+-------------
+Name:       ParameterEstimates
+Label:      Parameter Estimates for Poisson Model
+Template:   HPSTAT.HPFMM.ParameterEstimates
+Path:       HPFMM.ParameterEstimates
+-------------
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: There were 52 observations read from the data set WORK.CATCH.
+NOTE: The PROCEDURE HPFMM printed page 627.
+
+8062       proc hpfmm data=catch seed=314159;
+8063       class gender;
+8064       model count = gender*age / dist=Poisson ;
+8065       model + / dist=Constant;
+8066       run;
+
+NOTE: The HPFMM procedure is executing in single-machine mode.
+
+Output Added:
+-------------
+Name:       PerformanceInfo
+Label:      Performance Information
+Template:   HPA.Common.PerfInfo
+Path:       HPFMM.PerformanceInfo
+-------------
+
+Output Added:
+-------------
+Name:       DataAccessInfo
+Label:      Data Access Information
+Template:   HPA.Common.DataAccessInfo
+Path:       HPFMM.DataAccessInfo
+-------------
+
+Output Added:
+-------------
+Name:       ModelInfo
+Label:      Model Information
+Template:   HPSTAT.HPFMM.ModelInfo
+Path:       HPFMM.ModelInfo
+-------------
+
+Output Added:
+-------------
+Name:       ClassLevels
+Label:      Class Level Information
+Template:   HPA.Common.ClassLevels
+Path:       HPFMM.ClassLevels
+-------------
+
+Output Added:
+-------------
+Name:       NObs
+Label:      Number of Observations
+Template:   HPA.Common.NObs
+Path:       HPFMM.NObs
+-------------
+
+Output Added:
+-------------
+Name:       OptInfo
+Label:      Optimization Information
+Template:   HPSTAT.HPFMM.OptInfo
+Path:       HPFMM.OptInfo
+-------------
+
+Output Added:
+-------------
+Name:       IterHistory
+Label:      Iteration History
+Template:   HPSTAT.HPFMM.IterHistory
+Path:       HPFMM.IterHistory
+-------------
+
+Output Added:
+-------------
+Name:       ConvergenceStatus
+Label:      Convergence Status
+Template:   HPSTAT.HPFMM.ConvergenceStatus
+Path:       HPFMM.ConvergenceStatus
+-------------
+
+Output Added:
+-------------
+Name:       FitStatistics
+Label:      Fit Statistics
+Template:   HPSTAT.HPFMM.FitStatistics
+Path:       HPFMM.FitStatistics
+-------------
+
+Output Added:
+-------------
+Name:       ParameterEstimates
+Label:      Parameter Estimates for Poisson Model
+Template:   HPSTAT.HPFMM.ParameterEstimates
+Path:       HPFMM.ParameterEstimates
+-------------
+
+Output Added:
+-------------
+Name:       MixingProbs
+Label:      Parameter Estimates for Mixing Probabilities
+Template:   HPSTAT.HPFMM.MixingProbs
+Path:       HPFMM.MixingProbs
+-------------
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: There were 52 observations read from the data set WORK.CATCH.
+NOTE: The PROCEDURE HPFMM printed page 628.
+
+8067       proc hpfmm data=catch seed=12345;
+8068       class gender;
+8069       model count = gender*age / dist=Poisson;
+8070       model + / dist=constant;
+8071       performance nthreads=2;
+8072       bayes nmc=1000 nbi=200;
+8073       run;
+
+NOTE: The HPFMM procedure is executing in single-machine mode.
+
+Output Added:
+-------------
+Name:       PerformanceInfo
+Label:      Performance Information
+Template:   HPA.Common.PerfInfo
+Path:       HPFMM.PerformanceInfo
+-------------
+
+Output Added:
+-------------
+Name:       DataAccessInfo
+Label:      Data Access Information
+Template:   HPA.Common.DataAccessInfo
+Path:       HPFMM.DataAccessInfo
+-------------
+
+Output Added:
+-------------
+Name:       ModelInfo
+Label:      Model Information
+Template:   HPSTAT.HPFMM.ModelInfo
+Path:       HPFMM.ModelInfo
+-------------
+
+Output Added:
+-------------
+Name:       ClassLevels
+Label:      Class Level Information
+Template:   HPA.Common.ClassLevels
+Path:       HPFMM.ClassLevels
+-------------
+
+Output Added:
+-------------
+Name:       NObs
+Label:      Number of Observations
+Template:   HPA.Common.NObs
+Path:       HPFMM.NObs
+-------------
+
+Output Added:
+-------------
+Name:       BayesInfo
+Label:      Bayes Information
+Template:   HPSTAT.HPFMM.OptInfo
+Path:       HPFMM.BayesInfo
+-------------
+
+Output Added:
+-------------
+Name:       PriorInfo
+Label:      Prior Distributions
+Template:   HPSTAT.HPFMM.PriorInfo
+Path:       HPFMM.PriorInfo
+-------------
+
+Output Added:
+-------------
+Name:       FitStatistics
+Label:      Bayesian Fit Statistics
+Template:   HPSTAT.HPFMM.FitStatistics
+Path:       HPFMM.FitStatistics
+-------------
+
+Output Added:
+-------------
+Name:       PostSummaries
+Label:      Posterior Summary Statistics
+Template:   HPSTAT.HPFMM.PostSummaries
+Path:       HPFMM.PostSummaries
+-------------
+
+Output Added:
+-------------
+Name:       PostIntervals
+Label:      Posterior Interval Statistics
+Template:   HPSTAT.HPFMM.PostIntervals
+Path:       HPFMM.PostIntervals
+-------------
+
+Output Added:
+-------------
+Name:       AutoCorr
+Label:      Posterior Autocorrelations
+Template:   HPSTAT.HPFMM.AutoCorr
+Path:       HPFMM.AutoCorr
+-------------
+
+Output Added:
+-------------
+Name:       ESS
+Label:      Effective Sample Sizes
+Template:   HPSTAT.HPFMM.ESS
+Path:       HPFMM.ESS
+-------------
+NOTE: There were 52 observations read from the data set WORK.CATCH.
+NOTE: The PROCEDURE HPFMM printed page 629.
+
+8074       ods graphics on;
+8075       ods select TADPanel;
+8076       proc hpfmm data=catch seed=12345;
+8077       class gender;
+8078       model count = gender*age / dist=Poisson;
+8079       model + / dist=constant;
+8080       performance nthreads=2;
+8081       bayes nmc=1000 nbi=200;
+8082       run;
+
+NOTE: The HPFMM procedure is executing in single-machine mode.
+
+Output Added:
+-------------
+Name:       TADPanel
+Label:      Intercept, Component 1
+Template:   HPSTAT.HPFMM.Graphics.TADPanel
+Path:       HPFMM.TracePlots.TADPanel
+-------------
+
+Output Added:
+-------------
+Name:       TADPanel
+Label:      age*gender F, Component 1
+Template:   HPSTAT.HPFMM.Graphics.TADPanel
+Path:       HPFMM.TracePlots.TADPanel
+-------------
+
+Output Added:
+-------------
+Name:       TADPanel
+Label:      age*gender M, Component 1
+Template:   HPSTAT.HPFMM.Graphics.TADPanel
+Path:       HPFMM.TracePlots.TADPanel
+-------------
+
+Output Added:
+-------------
+Name:       TADPanel
+Label:      Probability, Component 1
+Template:   HPSTAT.HPFMM.Graphics.TADPanel
+Path:       HPFMM.TracePlots.TADPanel
+-------------
+NOTE: There were 52 observations read from the data set WORK.CATCH.
+
+8083       ods graphics off;
+8084       title "HPFMM Analysis of Galaxies Data";
+8085       data galaxies;
+8086       input velocity @@;
+8087       v = velocity / 1000;
+8088       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.GALAXIES has 82 observations and 2 variables.
+
+8098       ;
+8099       title2 "Three to Seven Components, Unequal Variances";
+8100       ods graphics on;
+8101       proc hpfmm data=galaxies criterion=AIC seed=314159;
+8102       model v = / kmin=3 kmax=7;
+8103       ods exclude IterHistory OptInfo ComponentInfo;
+8104       run;
+
+NOTE: The HPFMM procedure is executing in single-machine mode.
+
+Output Added:
+-------------
+Name:       PerformanceInfo
+Label:      Performance Information
+Template:   HPA.Common.PerfInfo
+Path:       HPFMM.PerformanceInfo
+-------------
+
+Output Added:
+-------------
+Name:       DataAccessInfo
+Label:      Data Access Information
+Template:   HPA.Common.DataAccessInfo
+Path:       HPFMM.DataAccessInfo
+-------------
+
+Output Added:
+-------------
+Name:       ModelInfo
+Label:      Model Information
+Template:   HPSTAT.HPFMM.ModelInfo
+Path:       HPFMM.ModelInfo
+-------------
+
+Output Added:
+-------------
+Name:       NObs
+Label:      Number of Observations
+Template:   HPA.Common.NObs
+Path:       HPFMM.NObs
+-------------
+
+Output Added:
+-------------
+Name:       CompDescription
+Label:      Component Description for Mixture Models
+Template:   HPSTAT.HPFMM.CompDescription
+Path:       HPFMM.CompDescription
+-------------
+
+Output Added:
+-------------
+Name:       CompEvaluation
+Label:      Component Evaluation for Mixture Models
+Template:   HPSTAT.HPFMM.CompEvaluation
+Path:       HPFMM.CompEvaluation
+-------------
+
+Output Added:
+-------------
+Name:       ConvergenceStatus
+Label:      Convergence Status
+Template:   HPSTAT.HPFMM.ConvergenceStatus
+Path:       HPFMM.ConvergenceStatus
+-------------
+
+Output Added:
+-------------
+Name:       FitStatistics
+Label:      Fit Statistics
+Template:   HPSTAT.HPFMM.FitStatistics
+Path:       HPFMM.FitStatistics
+-------------
+
+Output Added:
+-------------
+Name:       ParameterEstimates
+Label:      Parameter Estimates for Normal Model
+Template:   HPSTAT.HPFMM.ParameterEstimates
+Path:       HPFMM.ParameterEstimates
+-------------
+
+Output Added:
+-------------
+Name:       MixingProbs
+Label:      Parameter Estimates for Mixing Probabilities
+Template:   HPSTAT.HPFMM.MixingProbs
+Path:       HPFMM.MixingProbs
+-------------
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+
+Output Added:
+-------------
+Name:       DensityPlot
+Label:      Density plot
+Template:   HPSTAT.HPFMM.Graphics.DensityPlot2
+Path:       HPFMM.DensityPlot
+-------------
+
+Output Added:
+-------------
+Name:       CriterionPanel
+Label:      Criterion Panel
+Template:   HPSTAT.HPFMM.Graphics.CriterionPanel
+Path:       HPFMM.CriterionPanel
+-------------
+NOTE: There were 82 observations read from the data set WORK.GALAXIES.
+NOTE: The PROCEDURE HPFMM printed page 630.
+
+8105       title2 "Three to Seven Components, Equal Variances";
+8106       proc hpfmm data=galaxies criterion=AIC gconv=0 seed=314159;
+8107       model v = / kmin=3 kmax=7 equate=scale;
+8108       run;
+
+NOTE: The HPFMM procedure is executing in single-machine mode.
+
+Output Added:
+-------------
+Name:       PerformanceInfo
+Label:      Performance Information
+Template:   HPA.Common.PerfInfo
+Path:       HPFMM.PerformanceInfo
+-------------
+
+Output Added:
+-------------
+Name:       DataAccessInfo
+Label:      Data Access Information
+Template:   HPA.Common.DataAccessInfo
+Path:       HPFMM.DataAccessInfo
+-------------
+
+Output Added:
+-------------
+Name:       ModelInfo
+Label:      Model Information
+Template:   HPSTAT.HPFMM.ModelInfo
+Path:       HPFMM.ModelInfo
+-------------
+
+Output Added:
+-------------
+Name:       NObs
+Label:      Number of Observations
+Template:   HPA.Common.NObs
+Path:       HPFMM.NObs
+-------------
+
+Output Added:
+-------------
+Name:       CompDescription
+Label:      Component Description for Mixture Models
+Template:   HPSTAT.HPFMM.CompDescription
+Path:       HPFMM.CompDescription
+-------------
+
+Output Added:
+-------------
+Name:       CompEvaluation
+Label:      Component Evaluation for Mixture Models
+Template:   HPSTAT.HPFMM.CompEvaluation
+Path:       HPFMM.CompEvaluation
+-------------
+
+Output Added:
+-------------
+Name:       ConvergenceStatus
+Label:      Convergence Status
+Template:   HPSTAT.HPFMM.ConvergenceStatus
+Path:       HPFMM.ConvergenceStatus
+-------------
+
+Output Added:
+-------------
+Name:       FitStatistics
+Label:      Fit Statistics
+Template:   HPSTAT.HPFMM.FitStatistics
+Path:       HPFMM.FitStatistics
+-------------
+
+Output Added:
+-------------
+Name:       ParameterEstimates
+Label:      Parameter Estimates for Normal Model
+Template:   HPSTAT.HPFMM.ParameterEstimates
+Path:       HPFMM.ParameterEstimates
+-------------
+
+Output Added:
+-------------
+Name:       MixingProbs
+Label:      Parameter Estimates for Mixing Probabilities
+Template:   HPSTAT.HPFMM.MixingProbs
+Path:       HPFMM.MixingProbs
+-------------
+NOTE: Convergence criterion (ABSGCONV=0.00001) satisfied.
+
+Output Added:
+-------------
+Name:       DensityPlot
+Label:      Density plot
+Template:   HPSTAT.HPFMM.Graphics.DensityPlot2
+Path:       HPFMM.DensityPlot
+-------------
+
+Output Added:
+-------------
+Name:       CriterionPanel
+Label:      Criterion Panel
+Template:   HPSTAT.HPFMM.Graphics.CriterionPanel
+Path:       HPFMM.CriterionPanel
+-------------
+NOTE: There were 82 observations read from the data set WORK.GALAXIES.
+NOTE: The PROCEDURE HPFMM printed page 631.
+
+8109       title2 "Five Components, Equal Variances = 0.9025";
+8110       proc hpfmm data=galaxies seed=314159;
+8111       model v = / K=5 equate=scale;
+8112       restrict int 0 (scale 1) = 0.9025;
+8113       run;
+
+NOTE: The HPFMM procedure is executing in single-machine mode.
+
+Output Added:
+-------------
+Name:       PerformanceInfo
+Label:      Performance Information
+Template:   HPA.Common.PerfInfo
+Path:       HPFMM.PerformanceInfo
+-------------
+
+Output Added:
+-------------
+Name:       DataAccessInfo
+Label:      Data Access Information
+Template:   HPA.Common.DataAccessInfo
+Path:       HPFMM.DataAccessInfo
+-------------
+
+Output Added:
+-------------
+Name:       ModelInfo
+Label:      Model Information
+Template:   HPSTAT.HPFMM.ModelInfo
+Path:       HPFMM.ModelInfo
+-------------
+
+Output Added:
+-------------
+Name:       NObs
+Label:      Number of Observations
+Template:   HPA.Common.NObs
+Path:       HPFMM.NObs
+-------------
+
+Output Added:
+-------------
+Name:       OptInfo
+Label:      Optimization Information
+Template:   HPSTAT.HPFMM.OptInfo
+Path:       HPFMM.OptInfo
+-------------
+
+Output Added:
+-------------
+Name:       IterHistory
+Label:      Iteration History
+Template:   HPSTAT.HPFMM.IterHistory
+Path:       HPFMM.IterHistory
+-------------
+
+Output Added:
+-------------
+Name:       ConvergenceStatus
+Label:      Convergence Status
+Template:   HPSTAT.HPFMM.ConvergenceStatus
+Path:       HPFMM.ConvergenceStatus
+-------------
+
+Output Added:
+-------------
+Name:       FitStatistics
+Label:      Fit Statistics
+Template:   HPSTAT.HPFMM.FitStatistics
+Path:       HPFMM.FitStatistics
+-------------
+
+Output Added:
+-------------
+Name:       Constraints
+Label:      Linear Constraints at Solution
+Template:   HPSTAT.HPFMM.Constraints
+Path:       HPFMM.Constraints
+-------------
+
+Output Added:
+-------------
+Name:       ParameterEstimates
+Label:      Parameter Estimates for Normal Model
+Template:   HPSTAT.HPFMM.ParameterEstimates
+Path:       HPFMM.ParameterEstimates
+-------------
+
+Output Added:
+-------------
+Name:       MixingProbs
+Label:      Parameter Estimates for Mixing Probabilities
+Template:   HPSTAT.HPFMM.MixingProbs
+Path:       HPFMM.MixingProbs
+-------------
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+
+Output Added:
+-------------
+Name:       DensityPlot
+Label:      Density plot
+Template:   HPSTAT.HPFMM.Graphics.DensityPlot2
+Path:       HPFMM.DensityPlot
+-------------
+NOTE: There were 82 observations read from the data set WORK.GALAXIES.
+NOTE: The PROCEDURE HPFMM printed page 632.
+
+8114       ods graphics off;
+8115       run;
+8116       quit;
+8117       ods trace off;
+8118       ods trace off;
+8119       ods graphics off;
+8120       
+8121       
+8122       
+8123       
+The SAS System
+
+8124       

@@ -1,0 +1,200 @@
+The SAS System
+
+17960      
+17961      /* STAT-SPP-014: SPP — ODS Graphics
+17962       * Source: S154 / Chapter 114 / `ODS Graphics` (PDF pp. 9428–9431).
+17963       * Discriminates: Getting Started: SPP Procedure
+17964       */
+17965      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+17965    ! validmemname=compatible locale=en_US;
+17966      %let syscc=0;
+17967      title; footnote;
+17968      ods _all_ close;
+17969      ods listing gpath="%sysfunc(pathname(work))";
+17970      ods graphics off;
+17971      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK._DOCTMP000000000000000000076 (memtype=DATA).
+NOTE: Deleting WORK._DOCTMP000000000000000000077 (memtype=DATA).
+NOTE: Deleting WORK._DOCTMP000000000000000000078 (memtype=DATA).
+NOTE: Deleting WORK._DOCTMP000000000000000000079 (memtype=DATA).
+NOTE: Deleting WORK._DOCTMP000000000000000000080 (memtype=DATA).
+17971    !                                         quit;
+
+
+17972      ods path work.templat(update) sashelp.tmplmst(read);
+17973      
+17974      ods graphics on;
+17975      ods trace on;
+17976      ods trace on;
+17977      ods graphics on;
+17978      proc spp data=sashelp.bei plots(equate)=(trends observations);
+17979      process trees = (x, y /area=(0,0,1000,500) Event=Trees);
+17980      trend grad = field(x,y, gradient);
+17981      trend elev = field(x,y, elevation);
+17982      run;
+
+
+Output Added:
+-------------
+Name:       NObs
+Label:      Number of Observations
+Template:   Stat.SPP.NObs
+Path:       SPP.Data.NObs
+-------------
+
+Output Added:
+-------------
+Name:       ExploratoryInfo
+Label:      Summary of Point Pattern
+Template:   Stat.SPP.ExploratoryInfo
+Path:       SPP.Data.ExploratoryInfo
+-------------
+
+Output Added:
+-------------
+Name:       ObservationsPlot
+Label:      Spatial Distribution Plot
+Template:   Stat.SPP.Graphics.ObservationsEqt
+Path:       SPP.Data.ObservationsPlot
+-------------
+
+Output Added:
+-------------
+Name:       TrendCovariatePlot
+Label:      Gradient Surface
+Template:   Stat.SPP.Graphics.TrendCovariatePlotEqt
+Path:       SPP.Data.TrendCovariatePlot
+-------------
+
+Output Added:
+-------------
+Name:       TrendCovariatePlot
+Label:      Elevation Surface
+Template:   Stat.SPP.Graphics.TrendCovariatePlotEqt
+Path:       SPP.Data.TrendCovariatePlot
+-------------
+
+Output Added:
+-------------
+Name:       PearsonsChiSq
+Label:      CSR Test
+Template:   Stat.SPP.PearsonsChiSq
+Path:       SPP.QuadratTest.PearsonsChiSq
+-------------
+NOTE: The PROCEDURE SPP printed page 1231.
+
+17983      proc spp data=sashelp.bei plots(equate)=(residual intensity);
+17984      process trees = (x,y /area=(0,0,1000,500) event=Trees);
+17985      trend elev = field(x,y,elevation);
+17986      trend grad = field(x,y,gradient);
+17987      model trees = elev grad / grid(64,64) residual(B=70) ;
+17988      run;
+
+
+Output Added:
+-------------
+Name:       NObs
+Label:      Number of Observations
+Template:   Stat.SPP.NObs
+Path:       SPP.Data.NObs
+-------------
+
+Output Added:
+-------------
+Name:       ExploratoryInfo
+Label:      Summary of Point Pattern
+Template:   Stat.SPP.ExploratoryInfo
+Path:       SPP.Data.ExploratoryInfo
+-------------
+
+Output Added:
+-------------
+Name:       ObservationsPlot
+Label:      Spatial Distribution Plot
+Template:   Stat.SPP.Graphics.ObservationsEqt
+Path:       SPP.Data.ObservationsPlot
+-------------
+
+Output Added:
+-------------
+Name:       PearsonsChiSq
+Label:      CSR Test
+Template:   Stat.SPP.PearsonsChiSq
+Path:       SPP.QuadratTest.PearsonsChiSq
+-------------
+
+Output Added:
+-------------
+Name:       ModelInfo
+Label:      Poisson Model Information
+Template:   Stat.SPP.ModelInfo
+Path:       SPP.IntensityModel.ModelInfo
+-------------
+
+Output Added:
+-------------
+Name:       OptInfo
+Label:      Optimization Information
+Template:   Stat.SPP.OptInfo
+Path:       SPP.IntensityModel.OptInfo
+-------------
+
+Output Added:
+-------------
+Name:       ConvergenceStatus
+Label:      Convergence Status
+Template:   Stat.SPP.ConvergenceStatus
+Path:       SPP.IntensityModel.ConvergenceStatus
+-------------
+
+Output Added:
+-------------
+Name:       ParameterEstimates
+Label:      Poisson Parameter Estimates
+Template:   Stat.SPP.ParameterEstimates
+Path:       SPP.IntensityModel.ParameterEstimates
+-------------
+
+Output Added:
+-------------
+Name:       FitStatistics
+Label:      Fit Statistics
+Template:   Stat.SPP.FitStatistics
+Path:       SPP.IntensityModel.FitStatistics
+-------------
+
+Output Added:
+-------------
+Name:       IntensityPlot
+Label:      Intensity Plot
+Template:   Stat.SPP.Graphics.IntensityEqt
+Path:       SPP.IntensityModel.IntensityPlot
+-------------
+
+Output Added:
+-------------
+Name:       ResidualPanel
+Label:      Residual Diagnostics for trees
+Template:   Stat.SPP.Graphics.ResidualPanel
+Path:       SPP.IntensityModel.ResidualPanel
+-------------
+NOTE: Convergence criterion (Absolute gradient, ABSGCONV=0.00001) satisfied.
+NOTE: The PROCEDURE SPP printed page 1232.
+
+17989      ods trace off;
+17990      ods trace off;
+17991      ods graphics off;
+17992      
+17993      
+17994      
+17995      
+The SAS System
+
+17996      

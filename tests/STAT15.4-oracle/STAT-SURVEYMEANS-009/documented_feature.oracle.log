@@ -1,0 +1,105 @@
+The SAS System
+
+22223      
+22224      /* STAT-SURVEYMEANS-009: SURVEYMEANS — Geometric Mean / Poststratification / Balanced Repeated Replication (BRR) Method
+22225       * Source: S154 / Chapter 121 / `Geometric Mean` (PDF pp. 9956–9958); S154 / Chapter 121 / `Poststratification` (PDF pp. 9958–9965); S154 /
+22225    ! Chapter 121 / `Balanced Repeated Replication (BRR) Method` (PDF pp. 9967–9968).
+22226       * Discriminates: Getting Started: SURVEYMEANS Procedure
+22227       */
+22228      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+22228    ! validmemname=compatible locale=en_US;
+22229      %let syscc=0;
+22230      title; footnote;
+22231      ods _all_ close;
+22232      ods listing gpath="%sysfunc(pathname(work))";
+22233      ods graphics off;
+22234      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.ICECREAMDATADOMAIN (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.STUDENTTOTALS (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+22234    !                                         quit;
+
+
+22235      ods path work.templat(update) sashelp.tmplmst(read);
+22236      
+22237      data IceCream;
+22238      input Grade Spending @@;
+22239      if (Spending < 10) then Group='less';
+22240      else Group='more';
+22241      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.ICECREAM has 40 observations and 3 variables.
+
+22246      ;
+22247      ods graphics on;
+22248      title1 'Analysis of Ice Cream Spending';
+22249      title2 'Simple Random Sample Design';
+22250      proc surveymeans data=IceCream total=4000;
+22251      var Spending Group;
+22252      run;
+
+NOTE: The PROCEDURE SURVEYMEANS printed page 1461.
+
+22253      data StudentTotals;
+22254      input Grade _total_;
+22255      datalines;
+
+NOTE: The data set WORK.STUDENTTOTALS has 3 observations and 2 variables.
+
+22259      ;
+22260      data IceCream;
+22261      set IceCream;
+22262      if Grade=7 then Prob=20/1824;
+22263      if Grade=8 then Prob=9/1025;
+22264      if Grade=9 then Prob=11/1151;
+22265      Weight=1/Prob;
+22266      run;
+
+NOTE: There were 40 observations read from the data set WORK.ICECREAM.
+NOTE: The data set WORK.ICECREAM has 40 observations and 5 variables.
+
+22267      title1 'Analysis of Ice Cream Spending';
+22268      title2 'Stratified Sample Design';
+22269      proc surveymeans data=IceCream total=StudentTotals;
+22270      stratum Grade / list;
+22271      var Spending Group;
+22272      weight Weight;
+22273      run;
+
+NOTE: The PROCEDURE SURVEYMEANS printed page 1462.
+
+22274      title1 'Analysis of Ice Cream Spending';
+22275      title2 'Stratified Sample Design';
+22276      proc surveymeans data=IceCream total=StudentTotals;
+22277      stratum Grade / list;
+22278      var Spending Group;
+22279      weight Weight;
+22280      ods output Statistics=MyStat;
+22281      run;
+
+NOTE: The data set WORK.MYSTAT has 3 observations and 7 variables.
+NOTE: The PROCEDURE SURVEYMEANS printed page 1463.
+
+22282      ods output Statistics=MyStat;
+22283      proc print data=MyStat;
+22284      run;
+
+WARNING: Output 'Statistics' was not created.  Make sure that the output object name, label, or path is spelled correctly.  Also, verify that the appropriate 
+         procedure options are used to produce the requested output object.  For example, verify that the NOPRINT option is not used.
+NOTE: There were 3 observations read from the data set WORK.MYSTAT.
+NOTE: The PROCEDURE PRINT printed page 1464.
+
+22285      
+22286      
+22287      
+22288      
+The SAS System
+
+22289      

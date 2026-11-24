@@ -1,0 +1,128 @@
+The SAS System
+
+6777       
+6778       /* STAT-HPSPLIT-013: HPSPLIT — ODS Graphics
+6779        * Source: S154 / Chapter 68 / `ODS Graphics` (PDF p. 5117).
+6780        * Discriminates: Example 68.3: Creating a Regression Tree
+6781        */
+6782       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+6782     ! validmemname=compatible locale=en_US;
+6783       %let syscc=0;
+6784       title; footnote;
+6785       ods _all_ close;
+6786       ods listing gpath="%sysfunc(pathname(work))";
+6787       ods graphics off;
+6788       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.HPSPLOUT (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+6788     !                                         quit;
+
+
+6789       ods path work.templat(update) sashelp.tmplmst(read);
+6790       
+6791       ods graphics on;
+6792       ods trace on;
+6793       ods trace on;
+6794       ods graphics on;
+6795       proc hpsplit data=sashelp.baseball seed=123;
+6796       class league division;
+6797       model logSalary = nAtBat nHits nHome nRuns nRBI nBB
+6798       yrMajor crAtBat crHits crHome crRuns crRbi
+6799       crBB league division nOuts nAssts nError;
+6800       output out=hpsplout;
+6801       run;
+
+NOTE: The ASSIGNMISSING= option has not been specified.  Because of this, all observations with missing values in the explanatory variables will be excluded 
+      from tree construction.
+NOTE: The HPSPLIT procedure is executing in single-machine mode.
+NOTE: Cross-validating using 10 folds.
+
+Output Added:
+-------------
+Name:       PerformanceInfo
+Label:      Performance Information
+Template:   HPA.Common.PerfInfo
+Path:       HPSplit.PerformanceInfo
+-------------
+
+Output Added:
+-------------
+Name:       DataAccessInfo
+Label:      Data Access Information
+Template:   HPA.Common.DataAccessInfo
+Path:       HPSplit.DataAccessInfo
+-------------
+
+Output Added:
+-------------
+Name:       ModelInfo
+Label:      Model Information
+Template:   HPStat.HPSplit.ModelInfo
+Path:       HPSplit.ModelInfo
+-------------
+
+Output Added:
+-------------
+Name:       NObs
+Label:      Observation Information
+Template:   HPStat.HPSplit.NObs
+Path:       HPSplit.NObs
+-------------
+
+Output Added:
+-------------
+Name:       CrossValidationASEPlot
+Label:      Cost-Complexity
+Template:   HPStat.HPSplit.Graphics.CCAnalysis
+Path:       HPSplit.CrossValidation.CrossValidationASEPlot
+-------------
+
+Output Added:
+-------------
+Name:       WholeTreePlot
+Label:      Overview
+Template:   HPStat.HPSplit.Graphics.WholeRegressionTreePlot
+Path:       HPSplit.TreePlots.WholeTreePlot
+-------------
+
+Output Added:
+-------------
+Name:       ZoomedTreePlot
+Label:      Subtree, Starting at Node=0
+Template:   HPStat.HPSplit.Graphics.ZoomedRegressionTreePlot
+Path:       HPSplit.TreePlots.ZoomedTreePlot
+-------------
+
+Output Added:
+-------------
+Name:       TreePerformance
+Label:      Fit Statistics
+Template:   HPStat.HPSplit.SingleTreePerformance
+Path:       HPSplit.ModelAssessment.TreePerformance
+-------------
+
+Output Added:
+-------------
+Name:       VarImportance
+Label:      Variable Importance
+Template:   HPStat.HPSplit.VarImportance
+Path:       HPSplit.ModelAssessment.VarImportance
+-------------
+NOTE: There were 322 observations read from the data set SASHELP.BASEBALL.
+NOTE: The data set WORK.HPSPLOUT has 322 observations and 4 variables.
+NOTE: The PROCEDURE HPSPLIT printed pages 489-490.
+
+6802       ods trace off;
+6803       ods trace off;
+6804       ods graphics off;
+6805       
+6806       
+6807       
+6808       
+The SAS System
+
+6809       

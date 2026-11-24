@@ -1,0 +1,176 @@
+
+_oracle_by=1
+
+The FMM Procedure
+
+                Model Information
+
+Data Set                      WORK._ORACLE_INPUT 
+Response Variable (Events)    count              
+Response Variable (Trials)    n                  
+Frequency Variable            f                  
+Type of Model                 Homogeneous Mixture
+Distribution                  Binomial           
+Components                    2                  
+Link Function                 Logit              
+Estimation Method             Maximum Likelihood 
+Random Number Seed            314159             
+
+
+Number of Observations Read           6
+Number of Observations Used           6
+Sum of Frequencies Read             400
+Sum of Frequencies Used             400
+Number of Events                    273
+Number of Trials                   2000
+
+
+           Optimization Information
+
+Optimization Technique        Dual Quasi-Newton
+Parameters in Optimization    3                
+Mean Function Parameters      2                
+Scale Parameters              0                
+Mixing Prob Parameters        1                
+Number of Threads             2                
+
+
+                          Iteration History
+ 
+                               Objective                         Max
+Iteration    Evaluations        Function          Change    Gradient
+
+        0              6     482.3795678                    71.64677
+        1              2     458.7268304     23.65273737    6.391589
+        2              4     452.8266370      5.90019341    28.85939
+        3              2     448.2963114      4.53032566    7.687053
+        4              3     447.3682020      0.92810939    7.045741
+        5              2     447.0668361      0.30136592    2.781221
+        6              2     446.7774479      0.28938812    4.833393
+        7              4     445.7611359      1.01631207    4.070425
+        8              4     445.6212194      0.13991649    1.213247
+        9              3     445.6101981      0.01102132    0.391991
+       10              3     445.6084976      0.00170049    0.050484
+       11              3     445.6084545      0.00004306    0.007859
+       12              3     445.6084541      0.00000040    0.000259
+
+         Convergence criterion (GCONV=1E-8) satisfied.          
+
+
+           Fit Statistics
+
+-2 Log Likelihood              891.2
+AIC  (Smaller is Better)       897.2
+AICC (Smaller is Better)       897.3
+BIC  (Smaller is Better)       909.2
+Pearson Statistic              396.7
+Effective Parameters               3
+Effective Components               2
+
+
+                        Parameter Estimates for Binomial Model
+ 
+                                                                              Inverse
+                                          Standard                             Linked
+   Component    Parameter     Estimate       Error    z Value    Pr > |z|    Estimate
+
+           1    Intercept      -2.2316      0.1522     -14.66      <.0001     0.09695
+           2    Intercept      -0.2974      0.3655      -0.81      0.4158      0.4262
+
+
+               Parameter Estimates for Mixing Probabilities
+ 
+                            -----------------Linked Scale-----------------
+                  Mixing                   Standard
+Component    Probability    Logit(Prob)       Error    z Value    Pr > |z|
+
+        1         0.8799         1.9913      0.5725       3.48      0.0005
+        2         0.1201        -1.9913                                   
+
+_oracle_by=2
+
+The FMM Procedure
+
+                Model Information
+
+Data Set                      WORK._ORACLE_INPUT 
+Response Variable (Events)    count              
+Response Variable (Trials)    n                  
+Frequency Variable            f                  
+Type of Model                 Homogeneous Mixture
+Distribution                  Binomial           
+Components                    2                  
+Link Function                 Logit              
+Estimation Method             Maximum Likelihood 
+Random Number Seed            314159             
+
+
+Number of Observations Read           6
+Number of Observations Used           6
+Sum of Frequencies Read             400
+Sum of Frequencies Used             400
+Number of Events                    273
+Number of Trials                   2000
+
+
+           Optimization Information
+
+Optimization Technique        Dual Quasi-Newton
+Parameters in Optimization    3                
+Mean Function Parameters      2                
+Scale Parameters              0                
+Mixing Prob Parameters        1                
+Number of Threads             2                
+
+
+                          Iteration History
+ 
+                               Objective                         Max
+Iteration    Evaluations        Function          Change    Gradient
+
+        0              6     482.3795678                    71.64677
+        1              2     458.7268304     23.65273737    6.391589
+        2              4     452.8266370      5.90019341    28.85939
+        3              2     448.2963114      4.53032566    7.687053
+        4              3     447.3682020      0.92810939    7.045741
+        5              2     447.0668361      0.30136592    2.781221
+        6              2     446.7774479      0.28938812    4.833393
+        7              4     445.7611359      1.01631207    4.070425
+        8              4     445.6212194      0.13991649    1.213247
+        9              3     445.6101981      0.01102132    0.391991
+       10              3     445.6084976      0.00170049    0.050484
+       11              3     445.6084545      0.00004306    0.007859
+       12              3     445.6084541      0.00000040    0.000259
+
+         Convergence criterion (GCONV=1E-8) satisfied.          
+
+
+           Fit Statistics
+
+-2 Log Likelihood              891.2
+AIC  (Smaller is Better)       897.2
+AICC (Smaller is Better)       897.3
+BIC  (Smaller is Better)       909.2
+Pearson Statistic              396.7
+Effective Parameters               3
+Effective Components               2
+
+
+                        Parameter Estimates for Binomial Model
+ 
+                                                                              Inverse
+                                          Standard                             Linked
+   Component    Parameter     Estimate       Error    z Value    Pr > |z|    Estimate
+
+           1    Intercept      -2.2316      0.1522     -14.66      <.0001     0.09695
+           2    Intercept      -0.2974      0.3655      -0.81      0.4158      0.4262
+
+
+               Parameter Estimates for Mixing Probabilities
+ 
+                            -----------------Linked Scale-----------------
+                  Mixing                   Standard
+Component    Probability    Logit(Prob)       Error    z Value    Pr > |z|
+
+        1         0.8799         1.9913      0.5725       3.48      0.0005
+        2         0.1201        -1.9913                                   

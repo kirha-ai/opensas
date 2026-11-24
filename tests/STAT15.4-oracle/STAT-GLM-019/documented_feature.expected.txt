@@ -1,0 +1,238 @@
+
+Analysis of Unbalanced 2-by-2 Factorial
+
+The GLM Procedure
+
+   Class Level Information
+ 
+Class         Levels    Values
+
+A                  2    A1 A2 
+
+B                  2    B1 B2 
+
+
+Number of Observations Read           7
+Number of Observations Used           7
+
+Analysis of Unbalanced 2-by-2 Factorial
+
+The GLM Procedure
+ 
+Dependent Variable: Y   
+
+                                        Sum of
+Source                      DF         Squares     Mean Square    F Value    Pr > F
+
+Model                        3     91.71428571     30.57142857      15.29    0.0253
+
+Error                        3      6.00000000      2.00000000                     
+
+Corrected Total              6     97.71428571                                     
+
+
+R-Square     Coeff Var      Root MSE        Y Mean
+
+0.938596      9.801480      1.414214      14.42857
+
+
+Source                      DF       Type I SS     Mean Square    F Value    Pr > F
+
+A                            1     80.04761905     80.04761905      40.02    0.0080
+B                            1     11.26666667     11.26666667       5.63    0.0982
+A*B                          1      0.40000000      0.40000000       0.20    0.6850
+
+
+Source                      DF     Type III SS     Mean Square    F Value    Pr > F
+
+A                            1     67.60000000     67.60000000      33.80    0.0101
+B                            1     10.00000000     10.00000000       5.00    0.1114
+A*B                          1      0.40000000      0.40000000       0.20    0.6850
+
+Analysis of Unbalanced 2-by-2 Factorial
+
+The GLM Procedure
+
+   Class Level Information
+ 
+Class         Levels    Values
+
+A                  2    A1 A2 
+
+B                  2    B1 B2 
+
+
+Number of Observations Read           7
+Number of Observations Used           7
+
+Analysis of Unbalanced 2-by-2 Factorial
+
+The GLM Procedure
+ 
+Dependent Variable: Y   
+
+                                        Sum of
+Source                      DF         Squares     Mean Square    F Value    Pr > F
+
+Model                        3     91.71428571     30.57142857      15.29    0.0253
+
+Error                        3      6.00000000      2.00000000                     
+
+Corrected Total              6     97.71428571                                     
+
+
+R-Square     Coeff Var      Root MSE        Y Mean
+
+0.938596      9.801480      1.414214      14.42857
+
+
+Source                      DF       Type I SS     Mean Square    F Value    Pr > F
+
+A                            1     80.04761905     80.04761905      40.02    0.0080
+B                            1     11.26666667     11.26666667       5.63    0.0982
+A*B                          1      0.40000000      0.40000000       0.20    0.6850
+
+
+Source                      DF     Type III SS     Mean Square    F Value    Pr > F
+
+A                            1     67.60000000     67.60000000      33.80    0.0101
+B                            1     10.00000000     10.00000000       5.00    0.1114
+A*B                          1      0.40000000      0.40000000       0.20    0.6850
+
+Regression in PROC GLM
+
+The GLM Procedure
+
+Number of Observations Read          13
+Number of Observations Used          13
+
+Regression in PROC GLM
+
+The GLM Procedure
+ 
+Dependent Variable: loss   
+
+                                        Sum of
+Source                      DF         Squares     Mean Square    F Value    Pr > F
+
+Model                        2     3296.530589     1648.265295     164.68    <.0001
+
+Error                       10      100.086334       10.008633                     
+
+Corrected Total             12     3396.616923                                     
+
+
+R-Square     Coeff Var      Root MSE     loss Mean
+
+0.970534      2.907348      3.163642      108.8154
+
+
+Source                      DF       Type I SS     Mean Square    F Value    Pr > F
+
+fe                           1     3293.766690     3293.766690     329.09    <.0001
+fe*fe                        1        2.763899        2.763899       0.28    0.6107
+
+
+Source                      DF     Type III SS     Mean Square    F Value    Pr > F
+
+fe                           1     356.7572421     356.7572421      35.64    0.0001
+fe*fe                        1       2.7638994       2.7638994       0.28    0.6107
+
+
+                                  Standard
+Parameter         Estimate           Error    t Value    Pr > |t|
+
+Intercept      130.3199337      1.77096213      73.59      <.0001
+fe             -26.2203900      4.39177557      -5.97      0.0001
+fe*fe            1.1552018      2.19828568       0.53      0.6107
+
+Regression in PROC GLM
+
+The GLM Procedure
+
+Number of Observations Read          13
+Number of Observations Used          13
+
+Regression in PROC GLM
+
+The GLM Procedure
+ 
+Dependent Variable: loss   
+
+                                        Sum of
+Source                      DF         Squares     Mean Square    F Value    Pr > F
+
+Model                        2     3296.530589     1648.265295     164.68    <.0001
+
+Error                       10      100.086334       10.008633                     
+
+Corrected Total             12     3396.616923                                     
+
+
+R-Square     Coeff Var      Root MSE     loss Mean
+
+0.970534      2.907348      3.163642      108.8154
+
+
+Source                      DF       Type I SS     Mean Square    F Value    Pr > F
+
+fe                           1     3293.766690     3293.766690     329.09    <.0001
+fe*fe                        1        2.763899        2.763899       0.28    0.6107
+
+
+Source                      DF     Type III SS     Mean Square    F Value    Pr > F
+
+fe                           1     356.7572421     356.7572421      35.64    0.0001
+fe*fe                        1       2.7638994       2.7638994       0.28    0.6107
+
+
+                                  Standard
+Parameter         Estimate           Error    t Value    Pr > |t|
+
+Intercept      130.3199337      1.77096213      73.59      <.0001
+fe             -26.2203900      4.39177557      -5.97      0.0001
+fe*fe            1.1552018      2.19828568       0.53      0.6107
+
+Regression in PROC GLM
+
+The GLM Procedure
+
+Number of Observations Read          13
+Number of Observations Used          13
+
+Regression in PROC GLM
+
+The GLM Procedure
+ 
+Dependent Variable: loss   
+
+                                        Sum of
+Source                      DF         Squares     Mean Square    F Value    Pr > F
+
+Model                        1     3293.766690     3293.766690     352.27    <.0001
+
+Error                       11      102.850233        9.350021                     
+
+Corrected Total             12     3396.616923                                     
+
+
+R-Square     Coeff Var      Root MSE     loss Mean
+
+0.969720      2.810063      3.057780      108.8154
+
+
+Source                      DF       Type I SS     Mean Square    F Value    Pr > F
+
+fe                           1     3293.766690     3293.766690     352.27    <.0001
+
+
+Source                      DF     Type III SS     Mean Square    F Value    Pr > F
+
+fe                           1     3293.766690     3293.766690     352.27    <.0001
+
+
+                                  Standard
+Parameter         Estimate           Error    t Value    Pr > |t|
+
+Intercept      129.7865993      1.40273671      92.52      <.0001
+fe             -24.0198934      1.27976715     -18.77      <.0001

@@ -1,0 +1,84 @@
+The SAS System
+
+6304       
+6305       /* STAT-NLMIXED-001: NLMIXED — Data input, variable roles, and basic options
+6306        * Source: S154 / Chapter 89 / `PROC NLMIXED Statement` (PDF pp. 7097–7116); S154 / Chapter 89 / `BY Statement` (PDF p. 7117); S154 / Chapter 89 /
+6306     ! `ID Statement` (PDF p. 7122).
+6307        * Discriminates: Two explicit BY groups contain identical inputs, exposing group boundaries and per-group results.
+6308        */
+6309       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+6309     ! validmemname=compatible locale=en_US;
+6310       %let syscc=0;
+6311       title; footnote;
+6312       ods _all_ close;
+6313       ods listing gpath="%sysfunc(pathname(work))";
+6314       ods graphics off;
+6315       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.NESTED (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+6315     !                                         quit;
+
+
+6316       ods path work.templat(update) sashelp.tmplmst(read);
+6317       
+6318       %let na = 100;
+6319       %let nb = 5;
+6320       %let nr = 2;
+6321       data nested;
+6322       do A = 1 to &na;
+6323       err1 = 3*rannor(339205);
+6324       do B = 1 to &nb;
+6325       err2 = 2*rannor(314159);
+6326       do rep = 1 to &nr;
+6327       err3 = 1*rannor(314159);
+6328       resp = 10 + err1 + err2 + err3;
+6329       output;
+6330       end;
+6331       end;
+6332       end;
+6333       run;
+
+NOTE: The data set WORK.NESTED has 1000 observations and 7 variables.
+
+6334       data _oracle_input; set nested; do _oracle_by=1 to 2; output; end; run;
+
+NOTE: There were 1000 observations read from the data set WORK.NESTED.
+NOTE: The data set WORK._ORACLE_INPUT has 2000 observations and 8 variables.
+
+6335       proc sort data=_oracle_input; by _oracle_by; run;
+
+NOTE: There were 2000 observations read from the data set WORK._ORACLE_INPUT.
+NOTE: The data set WORK._ORACLE_INPUT has 2000 observations and 8 variables.
+
+6336       proc nlmixed data = _oracle_input;
+6337       by _oracle_by;
+6338       bounds vara >=0, varb_a >=0;
+6339       mean = intercept + aeffect + beffect;
+6340       model resp ~ normal (mean, s2);
+6341       random aeffect ~ normal(0,vara) subject = A;
+6342       random beffect ~ normal(0,varb_a) subject = B(A);
+6343       run;
+
+NOTE: To assign starting values to parameters, use the PARMS statement. The default starting value of 1.0 is in effect for all parameters.
+NOTE: Convergence criterion (GCONV=1E-6) satisfied.
+NOTE: At least one element of the gradient is greater than 1e-3.
+NOTE: The above message was for the following BY group:
+      _oracle_by=1
+NOTE: Convergence criterion (GCONV=1E-6) satisfied.
+NOTE: At least one element of the gradient is greater than 1e-3.
+NOTE: The above message was for the following BY group:
+      _oracle_by=2
+NOTE: The PROCEDURE NLMIXED printed pages 408-410.
+
+6344       
+6345       
+6346       
+6347       
+The SAS System
+
+6348       

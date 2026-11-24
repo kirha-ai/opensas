@@ -1,0 +1,80 @@
+The SAS System
+
+1241       
+1242       /* STAT-BGLIMM-003: BGLIMM — CLASS / MODEL
+1243        * Source: S154 / Chapter 31 / `CLASS Statement` (PDF pp. 1284–1286); S154 / Chapter 31 / `MODEL Statement` (PDF pp. 1288–1294).
+1244        * Discriminates: Getting Started: BGLIMM Procedure; explicit statements: CLASS, MODEL
+1245        */
+1246       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+1246     ! validmemname=compatible locale=en_US;
+1247       %let syscc=0;
+1248       title; footnote;
+1249       ods _all_ close;
+1250       ods listing gpath="%sysfunc(pathname(work))";
+1251       ods graphics off;
+1252       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.MULTICENTER (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+1252     !                                         quit;
+
+
+1253       ods path work.templat(update) sashelp.tmplmst(read);
+1254       
+1255       data MultiCenter;
+1256       input Center Group$ N SideEffect @@;
+1257       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.MULTICENTER has 30 observations and 4 variables.
+
+1273       ;
+1274       ods graphics on;
+1275       proc bglimm data=MultiCenter nmc=1000 thin=2 seed=976352
+1276       plots=all nbi=200;
+1277       class Center Group;
+1278       model SideEffect/N = Group / noint;
+1279       random int / subject = Center;
+1280       run;
+
+NOTE: Generating the burn-in samples.
+NOTE: Beginning sample generation.
+NOTE: Beginning calculation of summary and diagnostics statistics.
+NOTE: Generating diagnostic plots.
+NOTE: The PROCEDURE BGLIMM printed page 54.
+
+1281       proc bglimm data=MultiCenter nmc=1000 thin=2 seed=976352
+1282       outpost=CenterOut nbi=200;
+1283       class Center Group;
+1284       model SideEffect/N = Group / noint;
+1285       random int / subject=Center monitor;
+1286       estimate "log OR" group 1 -1;
+1287       run;
+
+NOTE: Generating the burn-in samples.
+NOTE: Beginning sample generation.
+NOTE: Beginning calculation of summary and diagnostics statistics.
+NOTE: The data set WORK.CENTEROUT has 500 observations and 20 variables.
+NOTE: The PROCEDURE BGLIMM printed page 55.
+
+1288       data prob;
+1289       set CenterOut;
+1290       pDiff = logistic(group_a) - logistic(group_b);
+1291       run;
+
+NOTE: There were 500 observations read from the data set WORK.CENTEROUT.
+NOTE: The data set WORK.PROB has 500 observations and 21 variables.
+
+1292       %sumint(data=prob, var=pDiff)
+1293       proc sgplot data=prob noautolegend;
+1294       run;
+
+NOTE: The SAS System stopped processing this step because of errors.
+1295       
+1296       
+1297       
+1298       
+The SAS System
+
+1299       

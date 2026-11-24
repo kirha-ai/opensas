@@ -1,0 +1,77 @@
+The SAS System
+
+18648      
+18649      /* STAT-STDRATE-005: STDRATE — Attributable Fraction and Population Attributable Fraction / Applicable Data Sets and Required Variables for Method
+18649    ! Specifications
+18650       * Source: S154 / Chapter 116 / `Attributable Fraction and Population Attributable Fraction` (PDF pp. 9514–9518); S154 / Chapter 116 / `Applicable
+18650    ! Data Sets and Required Variables for Method Specifications` (PDF pp. 9518–9519).
+18651       * Discriminates: Example 116.3: Computing Attributable Fraction Estimates
+18652       */
+18653      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+18653    ! validmemname=compatible locale=en_US;
+18654      %let syscc=0;
+18655      title; footnote;
+18656      ods _all_ close;
+18657      ods listing gpath="%sysfunc(pathname(work))";
+18658      ods graphics off;
+18659      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.SCHOOL (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+18659    !                                         quit;
+
+
+18660      ods path work.templat(update) sashelp.tmplmst(read);
+18661      
+18662      data Factory;
+18663      input Age $ Event_E Count_E Event_NE Count_NE;
+18664      datalines;
+
+NOTE: The data set WORK.FACTORY has 6 observations and 5 variables.
+
+18671      ;
+18672      ods graphics on;
+18673      proc stdrate data=Factory
+18674      refdata=Factory
+18675      method=indirect(af)
+18676      stat=risk
+18677      plots(stratum=horizontal)
+18678      ;
+18679      population event=Event_E total=Count_E;
+18680      reference event=Event_NE total=Count_NE;
+18681      strata Age / stats;
+18682      run;
+
+NOTE: The PROCEDURE STDRATE printed pages 1306-1307.
+
+18683      data Factory1;
+18684      input Exposure $ Age $ Event Count;
+18685      datalines;
+
+NOTE: The data set WORK.FACTORY1 has 12 observations and 4 variables.
+
+18698      ;
+18699      proc stdrate data=Factory1
+18700      method=mh(af)
+18701      stat=risk
+18702      effect
+18703      ;
+18704      population group(order=data exposed='Yes')=Exposure
+18705      event=Event total=Count;
+18706      strata Age;
+18707      run;
+
+NOTE: The PROCEDURE STDRATE printed pages 1308-1309.
+
+18708      
+18709      
+18710      
+18711      
+The SAS System
+
+18712      

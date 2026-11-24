@@ -1,0 +1,51 @@
+The SAS System
+
+13284      
+13285      /* STAT-CAUSALMED-002: CAUSALMED — Causal mediation effect estimation
+13286       * Source: S154 / Chapter 38 / `Getting Started: CAUSALMED Procedure` (PDF pp. 2368–2372); S154 / Chapter 38 / `Overview: CAUSALMED Procedure` (PDF
+13286    !  pp. 2364–2368).
+13287       * Discriminates: Documented default analysis with explicit complete public or synthetic inputs
+13288       */
+13289      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+13289    ! validmemname=compatible locale=en_US;
+13290      %let syscc=0;
+13291      title; footnote;
+13292      ods _all_ close;
+13293      ods listing gpath="%sysfunc(pathname(work))";
+13294      ods graphics off;
+13295      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+13295    !                                         quit;
+
+
+13296      ods path work.templat(update) sashelp.tmplmst(read);
+13297      
+13298      proc causalmed data=sashelp.birthwgt decomp;
+13299      class LowBirthWgt Smoking Death AgeGroup Married Race
+13300      Drinking SomeCollege /descending;
+13301      mediator LowBirthWgt = Smoking;
+13302      model Death = LowBirthWgt | Smoking;
+13303      covar AgeGroup Married Race Drinking SomeCollege;
+13304      evaluate 'Low Birth-Weight' LowBirthWgt='Yes' / nodecomp;
+13305      evaluate 'Normal Birth-Weight' LowBirthWgt='No' / nodecomp;
+13306      run;
+
+NOTE: PROC CAUSALMED is modeling the probability that Death='Yes' in the outcome model.
+NOTE: PROC CAUSALMED is modeling the probability that LowBirthWgt='Yes' in the mediator model.
+NOTE: The PROCEDURE CAUSALMED printed pages 1808-1813.
+
+13307      quit;
+13308      
+13309      
+13310      
+13311      
+The SAS System
+
+13312      

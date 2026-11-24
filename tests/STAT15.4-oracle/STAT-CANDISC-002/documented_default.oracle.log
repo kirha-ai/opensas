@@ -1,0 +1,76 @@
+The SAS System
+
+11843      
+11844      /* STAT-CANDISC-002: CANDISC — Canonical discriminant analysis between groups
+11845       * Source: S154 / Chapter 35 / `Getting Started: CANDISC Procedure` (PDF pp. 2151–2155); S154 / Chapter 35 / `Overview: CANDISC Procedure` (PDF pp.
+11845    !  2150–2151).
+11846       * Discriminates: Getting Started: CANDISC Procedure
+11847       */
+11848      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+11848    ! validmemname=compatible locale=en_US;
+11849      %let syscc=0;
+11850      title; footnote;
+11851      ods _all_ close;
+11852      ods listing gpath="%sysfunc(pathname(work))";
+11853      ods graphics off;
+11854      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.OUTCAN (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+11854    !                                         quit;
+
+
+11855      ods path work.templat(update) sashelp.tmplmst(read);
+11856      
+11857      title 'Fish Measurement Data';
+11858      proc candisc data=sashelp.fish ncan=3 out=outcan;
+11859      ods exclude tstruc bstruc pstruc tcoef pcoef;
+11860      class Species;
+11861      var Weight Length1 Length2 Length3 Height Width;
+11862      run;
+
+WARNING: 1 observations in DATA= data set or BY group will not be included in the analysis due to missing values.
+WARNING: A total of 1 of the 159 observations in the DATA= data set were excluded (frequency sum = 158).
+NOTE: There were 159 observations read from the data set SASHELP.FISH.
+NOTE: The data set WORK.OUTCAN has 159 observations and 10 variables.
+NOTE: The PROCEDURE CANDISC printed pages 1696-1699.
+
+11863      proc template;
+11864      define statgraph scatter;
+11865      begingraph / attrpriority=none;
+11866      entrytitle 'Fish Measurement Data';
+11867      layout overlayequated / equatetype=fit
+11868      xaxisopts=(label='Canonical Variable 1')
+11869      yaxisopts=(label='Canonical Variable 2');
+11870      scatterplot x=Can1 y=Can2 / group=species name='fish'
+11871      markerattrs=(size=3px);
+11872      layout gridded / autoalign=(topright);
+11873      discretelegend 'fish' / border=false opaque=false;
+11874      endlayout;
+11875      endlayout;
+11876      endgraph;
+11877      end;
+NOTE: Overwriting existing template/link: Scatter
+NOTE: STATGRAPH 'Scatter' has been saved to: WORK.TEMPLAT
+11878      run;
+
+11879      proc sgrender data=outcan template=scatter;
+11880      run;
+
+NOTE: Listing image output written to /saswork/SAS_work5D120001108E_odaws02-euw1.oda.sas.com/SAS_workCCDC0001108E_odaws02-euw1.oda.sas.com/SGRender2.png.
+NOTE: There were 159 observations read from the data set WORK.OUTCAN.
+
+11881      
+11882      
+11883      
+11884      
+The SAS System
+
+11885      

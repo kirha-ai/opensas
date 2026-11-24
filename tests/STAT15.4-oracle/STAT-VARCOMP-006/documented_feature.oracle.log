@@ -1,0 +1,51 @@
+The SAS System
+
+29786      
+29787      /* STAT-VARCOMP-006: VARCOMP — Fixed and Random Effects
+29788       * Source: S154 / Chapter 130 / `Fixed and Random Effects` (PDF pp. 10733–10734).
+29789       * Discriminates: Getting Started: VARCOMP Procedure
+29790       */
+29791      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+29791    ! validmemname=compatible locale=en_US;
+29792      %let syscc=0;
+29793      title; footnote;
+29794      ods _all_ close;
+29795      ods listing gpath="%sysfunc(pathname(work))";
+29796      ods graphics off;
+29797      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.CURE (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+29797    !                                         quit;
+
+
+29798      ods path work.templat(update) sashelp.tmplmst(read);
+29799      
+29800      data Cure;
+29801      input Lab Temp Batch $ Cure @@;
+29802      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.CURE has 108 observations and 4 variables.
+
+29830      ;
+29831      title 'Analyzing the Cure Rate of Rubber';
+29832      proc varcomp method=reml data=cure;
+29833      class temp lab batch;
+29834      model cure=temp|lab batch(lab temp) / fixed=1;
+29835      run;
+
+NOTE: There were 108 observations read from the data set WORK.CURE.
+NOTE: The PROCEDURE VARCOMP printed page 1808.
+
+29836      
+29837      
+29838      
+29839      
+The SAS System
+
+29840      

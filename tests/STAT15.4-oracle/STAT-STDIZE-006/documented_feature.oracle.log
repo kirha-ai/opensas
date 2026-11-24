@@ -1,0 +1,317 @@
+The SAS System
+
+18328      
+18329      /* STAT-STDIZE-006: STDIZE — Displayed Output / ODS Table Names
+18330       * Source: S154 / Chapter 115 / `Displayed Output` (PDF pp. 9470–9471); S154 / Chapter 115 / `ODS Table Names` (PDF p. 9471).
+18331       * Discriminates: Getting Started: STDIZE Procedure
+18332       */
+18333      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+18333    ! validmemname=compatible locale=en_US;
+18334      %let syscc=0;
+18335      title; footnote;
+18336      ods _all_ close;
+18337      ods listing gpath="%sysfunc(pathname(work))";
+18338      ods graphics off;
+18339      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.DATA11 (memtype=DATA).
+NOTE: Deleting WORK.DATA12 (memtype=DATA).
+NOTE: Deleting WORK.DATA13 (memtype=DATA).
+NOTE: Deleting WORK.DATA14 (memtype=DATA).
+NOTE: Deleting WORK.DATA15 (memtype=DATA).
+NOTE: Deleting WORK.NOOUTLIER (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TOTALSCORES (memtype=DATA).
+18339    !                                         quit;
+
+
+18340      ods path work.templat(update) sashelp.tmplmst(read);
+18341      
+18342      ods trace on;
+18343      data TotalScores;
+18344      title 'High School Scores Data';
+18345      input id Type $ total @@;
+18346      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.TOTALSCORES has 40 observations and 3 variables.
+
+18355      ;
+18356      ods graphics on;
+18357      proc boxplot data=TotalScores;
+18358      plot total*Type / boxstyle=schematic noserifs;
+18359      run;
+
+NOTE: Processing beginning for PLOT statement number 1.
+
+Output Added:
+-------------
+Name:       Boxplot
+Label:      Panel 1
+Template:   Stat.Boxplot.Graphics.BoxPlot
+Path:       Boxplot.total.Boxplot
+-------------
+NOTE: There were 40 observations read from the data set WORK.TOTALSCORES.
+
+18360      proc univariate data=TotalScores;
+18361      var total;
+18362      by Type;
+18363      run;
+
+
+Output Added:
+-------------
+Name:       Moments
+Label:      Moments
+Template:   base.univariate.Moments
+Path:       Univariate.ByGroup1.total.Moments
+-------------
+
+Output Added:
+-------------
+Name:       BasicMeasures
+Label:      Basic Measures of Location and Variability
+Template:   base.univariate.Measures
+Path:       Univariate.ByGroup1.total.BasicMeasures
+-------------
+
+Output Added:
+-------------
+Name:       TestsForLocation
+Label:      Tests For Location
+Template:   base.univariate.Location
+Path:       Univariate.ByGroup1.total.TestsForLocation
+-------------
+
+Output Added:
+-------------
+Name:       Quantiles
+Label:      Quantiles
+Template:   base.univariate.Quantiles
+Path:       Univariate.ByGroup1.total.Quantiles
+-------------
+
+Output Added:
+-------------
+Name:       ExtremeObs
+Label:      Extreme Observations
+Template:   base.univariate.ExtObs
+Path:       Univariate.ByGroup1.total.ExtremeObs
+-------------
+NOTE: The above message was for the following BY group:
+      Type=rural
+
+Output Added:
+-------------
+Name:       Moments
+Label:      Moments
+Template:   base.univariate.Moments
+Path:       Univariate.ByGroup2.total.Moments
+-------------
+
+Output Added:
+-------------
+Name:       BasicMeasures
+Label:      Basic Measures of Location and Variability
+Template:   base.univariate.Measures
+Path:       Univariate.ByGroup2.total.BasicMeasures
+-------------
+
+Output Added:
+-------------
+Name:       TestsForLocation
+Label:      Tests For Location
+Template:   base.univariate.Location
+Path:       Univariate.ByGroup2.total.TestsForLocation
+-------------
+
+Output Added:
+-------------
+Name:       Quantiles
+Label:      Quantiles
+Template:   base.univariate.Quantiles
+Path:       Univariate.ByGroup2.total.Quantiles
+-------------
+
+Output Added:
+-------------
+Name:       ExtremeObs
+Label:      Extreme Observations
+Template:   base.univariate.ExtObs
+Path:       Univariate.ByGroup2.total.ExtremeObs
+-------------
+NOTE: The above message was for the following BY group:
+      Type=urban
+NOTE: The PROCEDURE UNIVARIATE printed pages 1276-1277.
+
+18364      proc stdize data=totalscores method=std pstat;
+18365      title2 'METHOD=STD';
+18366      var total;
+18367      by Type;
+18368      run;
+
+
+Output Added:
+-------------
+Name:       Statistics
+Label:      Location and Scale Measures
+Template:   Stat.Stdize.Statistics
+Path:       Stdize.ByGroup1.Statistics
+-------------
+NOTE: The above message was for the following BY group:
+      Type=rural
+
+Output Added:
+-------------
+Name:       Statistics
+Label:      Location and Scale Measures
+Template:   Stat.Stdize.Statistics
+Path:       Stdize.ByGroup2.Statistics
+-------------
+NOTE: The above message was for the following BY group:
+      Type=urban
+NOTE: There were 40 observations read from the data set WORK.TOTALSCORES.
+NOTE: The data set WORK.DATA16 has 40 observations and 3 variables.
+NOTE: The PROCEDURE STDIZE printed pages 1278-1279.
+
+18369      proc stdize data=totalscores method=mad pstat;
+18370      title2 'METHOD=MAD';
+18371      var total;
+18372      by Type;
+18373      run;
+
+
+Output Added:
+-------------
+Name:       Statistics
+Label:      Location and Scale Measures
+Template:   Stat.Stdize.Statistics
+Path:       Stdize.ByGroup1.Statistics
+-------------
+NOTE: The above message was for the following BY group:
+      Type=rural
+
+Output Added:
+-------------
+Name:       Statistics
+Label:      Location and Scale Measures
+Template:   Stat.Stdize.Statistics
+Path:       Stdize.ByGroup2.Statistics
+-------------
+NOTE: The above message was for the following BY group:
+      Type=urban
+NOTE: There were 40 observations read from the data set WORK.TOTALSCORES.
+NOTE: The data set WORK.DATA17 has 40 observations and 3 variables.
+NOTE: The PROCEDURE STDIZE printed pages 1280-1281.
+
+18374      proc stdize data=totalscores method=iqr pstat;
+18375      title2 'METHOD=IQR';
+18376      var total;
+18377      by Type;
+18378      run;
+
+
+Output Added:
+-------------
+Name:       Statistics
+Label:      Location and Scale Measures
+Template:   Stat.Stdize.Statistics
+Path:       Stdize.ByGroup1.Statistics
+-------------
+NOTE: The above message was for the following BY group:
+      Type=rural
+
+Output Added:
+-------------
+Name:       Statistics
+Label:      Location and Scale Measures
+Template:   Stat.Stdize.Statistics
+Path:       Stdize.ByGroup2.Statistics
+-------------
+NOTE: The above message was for the following BY group:
+      Type=urban
+NOTE: There were 40 observations read from the data set WORK.TOTALSCORES.
+NOTE: The data set WORK.DATA18 has 40 observations and 3 variables.
+NOTE: The PROCEDURE STDIZE printed pages 1282-1283.
+
+18379      proc stdize data=totalscores method=abw(4) pstat;
+18380      title2 'METHOD=ABW(4)';
+18381      var total;
+18382      by Type;
+18383      run;
+
+
+Output Added:
+-------------
+Name:       Statistics
+Label:      Location and Scale Measures
+Template:   Stat.Stdize.Statistics
+Path:       Stdize.ByGroup1.Statistics
+-------------
+NOTE: The above message was for the following BY group:
+      Type=rural
+
+Output Added:
+-------------
+Name:       Statistics
+Label:      Location and Scale Measures
+Template:   Stat.Stdize.Statistics
+Path:       Stdize.ByGroup2.Statistics
+-------------
+NOTE: The above message was for the following BY group:
+      Type=urban
+NOTE: There were 40 observations read from the data set WORK.TOTALSCORES.
+NOTE: The data set WORK.DATA19 has 40 observations and 3 variables.
+NOTE: The PROCEDURE STDIZE printed pages 1284-1285.
+
+18384      data NoOutlier;
+18385      set totalscores;
+18386      if (total = 64) then delete;
+18387      run;
+
+NOTE: There were 40 observations read from the data set WORK.TOTALSCORES.
+NOTE: The data set WORK.NOOUTLIER has 39 observations and 3 variables.
+
+18388      proc stdize data=NoOutlier method=std pstat;
+18389      title2 'After Removing Outlier, METHOD=STD';
+18390      var total;
+18391      by Type;
+18392      run;
+
+
+Output Added:
+-------------
+Name:       Statistics
+Label:      Location and Scale Measures
+Template:   Stat.Stdize.Statistics
+Path:       Stdize.ByGroup1.Statistics
+-------------
+NOTE: The above message was for the following BY group:
+      Type=rural
+
+Output Added:
+-------------
+Name:       Statistics
+Label:      Location and Scale Measures
+Template:   Stat.Stdize.Statistics
+Path:       Stdize.ByGroup2.Statistics
+-------------
+NOTE: The above message was for the following BY group:
+      Type=urban
+NOTE: There were 39 observations read from the data set WORK.NOOUTLIER.
+NOTE: The data set WORK.DATA20 has 39 observations and 3 variables.
+NOTE: The PROCEDURE STDIZE printed pages 1286-1287.
+
+18393      ods trace off;
+18394      
+18395      
+18396      
+18397      
+The SAS System
+
+18398      

@@ -1,0 +1,155 @@
+
+The SURVEYMEANS Procedure
+
+            Data Summary
+
+Number of Strata                   3
+Number of Observations            40
+Sum of Weights                  4000
+
+
+                                   Statistics
+ 
+                                               Std Error
+Variable               N            Mean         of Mean       95% CL for Mean
+---------------------------------------------------------------------------------
+Spending              40        9.141298        0.531799    8.06377052 10.2188254
+---------------------------------------------------------------------------------
+
+The SURVEYMEANS Procedure
+
+                                Statistics for Gender Domains
+ 
+                                                           Std Error
+Gender      Variable               N            Mean         of Mean       95% CL for Mean
+---------------------------------------------------------------------------------------------
+F           Spending              19        9.376111        1.077927    7.19202418 11.5601988
+M           Spending              21        8.923052        1.003423    6.88992385 10.9561807
+---------------------------------------------------------------------------------------------
+
+Ice Cream Spending Analysis
+Compare Domain Statistics
+
+The SURVEYREG Procedure
+ 
+Regression Analysis for Dependent Variable Spending
+
+             Data Summary
+
+Number of Observations               40
+Sum of Weights                   4000.0
+Weighted Mean of Spending       9.14130
+Weighted Sum of Spending        36565.2
+
+
+        Design Summary
+
+Number of Strata             3
+
+
+      Fit Statistics
+
+R-Square          0.001783
+Root MSE            5.4951
+Denominator DF          37
+
+
+   Class Level Information
+ 
+CLASS
+Variable      Levels    Values
+
+Gender             2    F M   
+
+
+         Tests of Model Effects
+ 
+Effect       Num DF    F Value    Pr > F
+
+Model             1       0.06    0.8008
+Intercept         1     288.89    <.0001
+Gender            1       0.06    0.8008
+
+NOTE: The denominator degrees of freedom for the F tests is 37.
+
+
+                  Gender Least Squares Means
+ 
+                      Standard
+Gender    Estimate       Error       DF    t Value    Pr > |t|
+
+F           9.3761      1.0779       37       8.70      <.0001
+M           8.9231      1.0034       37       8.89      <.0001
+
+
+                Differences of Gender Least Squares Means
+ 
+                                 Standard
+Gender    _Gender    Estimate       Error       DF    t Value    Pr > |t|
+
+F         M            0.4531      1.7828       37       0.25      0.8008
+
+Ice Cream Spending Analysis
+Compare Domain Statistics
+
+The SURVEYREG Procedure
+ 
+Regression Analysis for Dependent Variable Spending
+
+             Data Summary
+
+Number of Observations               40
+Sum of Weights                   4000.0
+Weighted Mean of Spending       9.14130
+Weighted Sum of Spending        36565.2
+
+
+        Design Summary
+
+Number of Strata             3
+
+
+      Fit Statistics
+
+R-Square            0.6354
+Root MSE            3.3655
+Denominator DF          37
+
+
+   Class Level Information
+ 
+CLASS
+Variable      Levels    Values
+
+Grade              3    7 8 9 
+
+
+         Tests of Model Effects
+ 
+Effect       Num DF    F Value    Pr > F
+
+Model             2      30.65    <.0001
+Intercept         1     333.33    <.0001
+Grade             2      30.65    <.0001
+
+NOTE: The denominator degrees of freedom for the F tests is 37.
+
+
+                  Grade Least Squares Means
+ 
+                     Standard
+Grade    Estimate       Error       DF    t Value    Pr > |t|
+
+7          5.0000      0.7636       37       6.55      <.0001
+8         15.4444      1.1268       37      13.71      <.0001
+9         10.0909      0.9719       37      10.38      <.0001
+
+
+               Differences of Grade Least Squares Means
+ 
+                               Standard
+Grade    _Grade    Estimate       Error       DF    t Value    Pr > |t|
+
+7        8         -10.4444      1.3611       37      -7.67      <.0001
+7        9          -5.0909      1.2360       37      -4.12      0.0002
+8        9           5.3535      1.4880       37       3.60      0.0009

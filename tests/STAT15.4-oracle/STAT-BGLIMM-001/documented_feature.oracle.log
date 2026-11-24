@@ -1,0 +1,53 @@
+The SAS System
+
+1145       
+1146       /* STAT-BGLIMM-001: BGLIMM — Data input, variable roles, and basic options
+1147        * Source: S154 / Chapter 31 / `PROC BGLIMM Statement` (PDF pp. 1275–1283); S154 / Chapter 31 / `BY Statement` (PDF pp. 1283–1284); S154 /
+1147     ! Chapter 31 / `Models with Missing Values` (PDF p. 1315); S154 / Chapter 31 / `Missing Data` (PDF p. 1323).
+1148        * Discriminates: Verified default procedure context
+1149        */
+1150       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+1150     ! validmemname=compatible locale=en_US;
+1151       %let syscc=0;
+1152       title; footnote;
+1153       ods _all_ close;
+1154       ods listing gpath="%sysfunc(pathname(work))";
+1155       ods graphics off;
+1156       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+1156     !                                         quit;
+
+
+1157       ods path work.templat(update) sashelp.tmplmst(read);
+1158       
+1159       data MultiCenter;
+1160       input Center Group$ N SideEffect @@;
+1161       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.MULTICENTER has 30 observations and 4 variables.
+
+1177       ;
+1178       ods graphics on;
+1179       proc bglimm data=MultiCenter nmc=1000 thin=2 seed=976352
+1180       plots=all nbi=200;
+1181       class Center Group;
+1182       model SideEffect/N = Group / noint;
+1183       random int / subject = Center;
+1184       run;
+
+NOTE: Generating the burn-in samples.
+NOTE: Beginning sample generation.
+NOTE: Beginning calculation of summary and diagnostics statistics.
+NOTE: Generating diagnostic plots.
+NOTE: The PROCEDURE BGLIMM printed page 52.
+
+1185       quit;
+1186       
+1187       
+1188       
+1189       
+The SAS System
+
+1190       

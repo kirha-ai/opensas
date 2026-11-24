@@ -1,0 +1,97 @@
+
+The SURVEYLOGISTIC Procedure
+
+                  Model Information
+
+Data Set                      WORK.SURVEY            
+Response Variable             event                  
+Number of Response Levels     2                      
+Stratum Variable              stratum                
+Number of Strata              2                      
+Cluster Variable              cluster                
+Number of Clusters            8                      
+Weight Variable               weight                 
+Model                         Binary Logit           
+Optimization Technique        Fisher's Scoring       
+Variance Adjustment           Degrees of Freedom (DF)
+
+
+             Variance Estimation
+
+Method                           Taylor Series
+Variance Adjustment    Degrees of Freedom (DF)
+
+
+Number of Observations Read          96
+Number of Observations Used          96
+Sum of Weights Read                 360
+Sum of Weights Used                 360
+
+
+                  Response Profile
+ 
+ Ordered                      Total            Total
+   Value        event     Frequency           Weight
+
+       1            0            72        262.80000
+       2            1            24         97.20000
+
+Probability modeled is event=1.
+
+
+                    Model Convergence Status
+
+         Convergence criterion (GCONV=1E-8) satisfied.          
+
+
+         Model Fit Statistics
+ 
+                             Intercept
+              Intercept            and
+Criterion          Only     Covariates
+
+AIC             421.946        419.697
+SC              425.832        427.469
+-2 Log L        419.946        415.697
+
+
+             Testing Global Null Hypothesis: BETA=0
+ 
+Test                 F Value       Num DF       Den DF     Pr > F
+
+Likelihood Ratio        0.29            1            6     0.6110
+Score                   0.39            1            6     0.5530
+Wald                    0.28            1            6     0.6136
+
+          NOTE: First-order Rao-Scott design correction
+          3.9397 applied to the likelihood ratio test.
+
+
+        Analysis of Maximum Likelihood Estimates
+ 
+                         Standard
+Parameter    Estimate       Error    t Value    Pr > |t|
+
+Intercept     -0.1399      1.4365      -0.10      0.9256
+age           -0.0199      0.0374      -0.53      0.6136
+
+   NOTE: The degrees of freedom for the t tests is 6.
+
+
+           Odds Ratio Estimates
+                     
+             Point       95% Confidence
+Effect    Estimate           Limits
+
+age          0.980       0.895       1.074
+
+NOTE: The degrees of freedom in computing
+       the confidence limits is 6.
+
+
+Association of Predicted Probabilities and Observed Responses
+
+Percent Concordant     56.3    Somers' D    0.142
+Percent Discordant     42.0    Gamma        0.145
+Percent Tied            1.7    Tau-a        0.054
+Pairs                  1728    c            0.571

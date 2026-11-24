@@ -1,0 +1,153 @@
+
+The Mixed Procedure
+
+                  Model Information
+
+Data Set                     WORK.LINE                
+Dependent Variable           Y                        
+Covariance Structures        Variance Components,     
+                             Toeplitz                 
+Subject Effect               Block*Cult               
+Estimation Method            REML                     
+Residual Variance Method     Profile                  
+Fixed Effects SE Method      Model-Based              
+Degrees of Freedom Method    Containment              
+
+
+             Class Level Information
+ 
+Class    Levels    Values
+
+Block         3    1 2 3                         
+Cult          3    Bridger Luke Nugaines         
+Dir           2    North South                   
+Irrig         6    1 2 3 4 5 6                   
+
+
+            Dimensions
+
+Covariance Parameters             7
+Columns in X                     48
+Columns in Z                     27
+Subjects                          1
+Max Obs per Subject             108
+
+
+          Number of Observations
+
+Number of Observations Read             108
+Number of Observations Used             108
+Number of Observations Not Used           0
+
+
+                     Iteration History
+ 
+Iteration    Evaluations    -2 Res Log Like       Criterion
+
+        0              1       226.25427252                
+        1              4       187.99336173       .        
+        2              3       186.62579299      0.10431081
+        3              1       184.38218213      0.04807260
+        4              1       183.41836853      0.00886548
+        5              1       183.25111475      0.00075353
+        6              1       183.23809997      0.00000748
+        7              1       183.23797748      0.00000000
+
+
+                   Convergence criteria met.                    
+
+
+                                                     Estimated R Matrix for Block*Cult 1 Bridger
+ 
+ Row        Col1        Col2        Col3        Col4        Col5        Col6        Col7        Col8        Col9       Col10       Col11       Col12
+
+   1      0.2850    0.007986    0.001452    -0.09253                                                                                                
+   2    0.007986      0.2850    0.007986    0.001452    -0.09253                                                                                    
+   3    0.001452    0.007986      0.2850    0.007986    0.001452    -0.09253                                                                        
+   4    -0.09253    0.001452    0.007986      0.2850    0.007986    0.001452    -0.09253                                                            
+   5                -0.09253    0.001452    0.007986      0.2850    0.007986    0.001452    -0.09253                                                
+   6                            -0.09253    0.001452    0.007986      0.2850    0.007986    0.001452    -0.09253                                    
+   7                                        -0.09253    0.001452    0.007986      0.2850    0.007986    0.001452    -0.09253                        
+   8                                                    -0.09253    0.001452    0.007986      0.2850    0.007986    0.001452    -0.09253            
+   9                                                                -0.09253    0.001452    0.007986      0.2850    0.007986    0.001452    -0.09253
+  10                                                                            -0.09253    0.001452    0.007986      0.2850    0.007986    0.001452
+  11                                                                                        -0.09253    0.001452    0.007986      0.2850    0.007986
+  12                                                                                                    -0.09253    0.001452    0.007986      0.2850
+
+
+    Covariance Parameter Estimates
+ 
+Cov Parm        Subject       Estimate
+
+Block                           0.2194
+Block*Dir                      0.01768
+Block*Irrig                    0.03539
+TOEP(2)         Block*Cult    0.007986
+TOEP(3)         Block*Cult    0.001452
+TOEP(4)         Block*Cult    -0.09253
+Residual                        0.2850
+
+
+           Fit Statistics
+
+-2 Res Log Likelihood           183.2
+AIC (Smaller is Better)         197.2
+AICC (Smaller is Better)        198.8
+BIC (Smaller is Better)         190.9
+
+
+         Type 3 Tests of Fixed Effects
+ 
+               Num     Den
+Effect          DF      DF    F Value    Pr > F
+
+Cult             2      68       7.98    0.0008
+Dir              1       2       3.95    0.1852
+Cult*Dir         2      68       3.44    0.0379
+Irrig            5      10     102.60    <.0001
+Cult*Irrig      10      68       1.91    0.0580
+Dir*Irrig        5      68       6.12    <.0001
+
+
+                                 Estimates
+ 
+                                     Standard
+Label                    Estimate       Error      DF    t Value    Pr > |t|
+
+Bridger vs Luke          -0.03889     0.09524      68      -0.41      0.6843
+Linear Irrig              30.6444      1.4412      10      21.26      <.0001
+B vs L x Linear Irrig     -9.8667      2.7400      68      -3.60      0.0006
+
+
+                                 Least Squares Means
+ 
+                                               Standard
+Effect        Cult        Irrig    Estimate       Error      DF    t Value    Pr > |t|
+
+Cult          Bridger                5.0306      0.2874      68      17.51      <.0001
+Cult          Luke                   5.0694      0.2874      68      17.64      <.0001
+Cult          Nugaines               4.7222      0.2874      68      16.43      <.0001
+Irrig                     1          2.4222      0.3220      10       7.52      <.0001
+Irrig                     2          3.1833      0.3220      10       9.88      <.0001
+Irrig                     3          5.0556      0.3220      10      15.70      <.0001
+Irrig                     4          6.1889      0.3220      10      19.22      <.0001
+Irrig                     5          6.4000      0.3140      10      20.38      <.0001
+Irrig                     6          6.3944      0.3227      10      19.81      <.0001
+Cult*Irrig    Bridger     1          2.8500      0.3679      68       7.75      <.0001
+Cult*Irrig    Bridger     2          3.4167      0.3679      68       9.29      <.0001
+Cult*Irrig    Bridger     3          5.1500      0.3679      68      14.00      <.0001
+Cult*Irrig    Bridger     4          6.2500      0.3679      68      16.99      <.0001
+Cult*Irrig    Bridger     5          6.3000      0.3463      68      18.19      <.0001
+Cult*Irrig    Bridger     6          6.2167      0.3697      68      16.81      <.0001
+Cult*Irrig    Luke        1          2.1333      0.3679      68       5.80      <.0001
+Cult*Irrig    Luke        2          2.8667      0.3679      68       7.79      <.0001
+Cult*Irrig    Luke        3          5.2333      0.3679      68      14.22      <.0001
+Cult*Irrig    Luke        4          6.5500      0.3679      68      17.80      <.0001
+Cult*Irrig    Luke        5          6.8833      0.3463      68      19.87      <.0001
+Cult*Irrig    Luke        6          6.7500      0.3697      68      18.26      <.0001
+Cult*Irrig    Nugaines    1          2.2833      0.3679      68       6.21      <.0001
+Cult*Irrig    Nugaines    2          3.2667      0.3679      68       8.88      <.0001
+Cult*Irrig    Nugaines    3          4.7833      0.3679      68      13.00      <.0001
+Cult*Irrig    Nugaines    4          5.7667      0.3679      68      15.67      <.0001
+Cult*Irrig    Nugaines    5          6.0167      0.3463      68      17.37      <.0001
+Cult*Irrig    Nugaines    6          6.2167      0.3697      68      16.81      <.0001

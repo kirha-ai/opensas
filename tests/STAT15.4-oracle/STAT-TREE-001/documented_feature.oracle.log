@@ -1,0 +1,54 @@
+The SAS System
+
+28407      
+28408      /* STAT-TREE-001: TREE — Data input, variable roles, and basic options
+28409       * Source: S154 / Chapter 127 / `PROC TREE Statement` (PDF pp. 10575–10581); S154 / Chapter 127 / `BY Statement` (PDF p. 10581); S154 / Chapter 127
+28409    !  / `COPY Statement` (PDF p. 10581); S154 / Chapter 127 / `FREQ Statement` (PDF pp. 10581–10582); S154 / Chapter 127 / `ID Statement` (PDF p. 10582)
+28409    ! ; S154 / Chapter 127 / `Missing Values` (PDF p. 10583).
+28410       * Discriminates: Verified default procedure context
+28411       */
+28412      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+28412    ! validmemname=compatible locale=en_US;
+28413      %let syscc=0;
+28414      title; footnote;
+28415      ods _all_ close;
+28416      ods listing gpath="%sysfunc(pathname(work))";
+28417      ods graphics off;
+28418      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+28418    !                                         quit;
+
+
+28419      ods path work.templat(update) sashelp.tmplmst(read);
+28420      
+28421      proc cluster data=sashelp.iris method=ward outtree=tree noprint;
+28422      var SepalLength SepalWidth PetalLength PetalWidth;
+28423      run;
+
+WARNING: Ties for minimum distance between clusters have been detected at 48 level(s) in the cluster history.
+NOTE: The data set WORK.TREE has 299 observations and 20 variables.
+
+28424      proc tree data=tree nclusters=3 out=members noprint;
+28425      run;
+
+NOTE: The data set WORK.MEMBERS has 150 observations and 3 variables.
+
+28426      proc print data=members(obs=12) noobs;
+28427      run;
+
+NOTE: There were 12 observations read from the data set WORK.MEMBERS.
+NOTE: The PROCEDURE PRINT printed page 1759.
+
+28428      
+28429      
+28430      
+28431      
+The SAS System
+
+28432      

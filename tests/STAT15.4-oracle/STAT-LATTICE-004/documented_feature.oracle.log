@@ -1,0 +1,50 @@
+The SAS System
+
+11049      
+11050      /* STAT-LATTICE-004: LATTICE — Official examples and feature integration regression
+11051       * Source: S154 / Chapter 75 / `Getting Started: LATTICE Procedure` (PDF pp. 5512–5514); S154 / Chapter 75 / `Overview: LATTICE Procedure` (PDF pp.
+11051    !  5511–5512).
+11052       * Discriminates: Getting Started: LATTICE Procedure
+11053       */
+11054      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+11054    ! validmemname=compatible locale=en_US;
+11055      %let syscc=0;
+11056      title; footnote;
+11057      ods _all_ close;
+11058      ods listing gpath="%sysfunc(pathname(work))";
+11059      ods graphics off;
+11060      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.PIGS (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+11060    !                                         quit;
+
+
+11061      ods path work.templat(update) sashelp.tmplmst(read);
+11062      
+11063      title 'Examining the Growth Rate of Pigs';
+11064      data Pigs;
+11065      input Group Block Treatment Weight @@;
+11066      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.PIGS has 36 observations and 4 variables.
+
+11075      ;
+11076      proc lattice data=Pigs;
+11077      var Weight;
+11078      run;
+
+NOTE: The design specified is a balanced square lattice. With this design only one variance term, Variance of Means in Same Block, is appropriate.
+NOTE: There were 36 observations read from the data set WORK.PIGS.
+NOTE: The PROCEDURE LATTICE printed page 764.
+
+11079      
+11080      
+11081      
+11082      
+The SAS System
+
+11083      

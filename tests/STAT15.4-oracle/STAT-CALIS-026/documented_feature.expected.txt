@@ -1,0 +1,1149 @@
+
+The CALIS Procedure
+Covariance Structure Analysis: Model and Initial Values
+
+     Modeling Information
+ Maximum Likelihood Estimation
+
+Data Set            WORK.MARDIA
+N Records Read      120        
+N Records Used      120        
+N Obs               120        
+Model Type          PATH       
+Analysis            Covariances
+
+
+                        Variables in the Model
+
+Endogenous    Manifest     algebra  analysis  mechanics  statistics  
+                           vector                                    
+              Latent                                                 
+Exogenous     Manifest                                               
+              Latent       fact1                                     
+
+                  Number of Endogenous Variables = 5
+                  Number of Exogenous Variables  = 1
+
+
+           Initial Estimates for PATH List
+ 
+-----------Path------------    Parameter      Estimate
+
+fact1    ===>    mechanics                     1.00000
+fact1    ===>    vector        _Parm1                .
+fact1    ===>    algebra       _Parm2                .
+fact1    ===>    analysis      _Parm3                .
+fact1    ===>    statistics    _Parm4                .
+
+
+    Initial Estimates for Variance Parameters
+ 
+Variance
+Type         Variable      Parameter      Estimate
+
+Exogenous    fact1         _Add1                 .
+Error        mechanics     _Add2                 .
+             vector        _Add3                 .
+             algebra       _Add4                 .
+             analysis      _Add5                 .
+             statistics    _Add6                 .
+
+NOTE: Parameters with prefix '_Add' are added by PROC CALIS.
+
+The CALIS Procedure
+Covariance Structure Analysis: Descriptive Statistics
+
+          Simple Statistics
+ 
+ Variable           Mean       Std Dev
+
+mechanics       59.85852       9.99422
+vector          64.47174       8.36267
+algebra         62.35003      10.89032
+analysis        64.42448       7.53831
+statistics      65.87982       9.33324
+
+The CALIS Procedure
+Covariance Structure Analysis: Optimization
+
+        Initial Estimation Methods
+
+       1    Instrumental Variables Method
+       2    McDonald Method              
+
+
+              Optimization Start
+              Parameter Estimates
+ 
+    N    Parameter      Estimate      Gradient
+
+    1    _Parm1          0.84842      -0.05048
+    2    _Parm2          1.16700      -0.01224
+    3    _Parm3          0.74621       0.06082
+    4    _Parm4          0.98574      -0.02796
+    5    _Add1          78.96428    -0.0000128
+    6    _Add2          20.92016      -0.00160
+    7    _Add3          13.09480       0.00361
+    8    _Add4          11.05924       0.00218
+    9    _Add5          12.85654      -0.00326
+   10    _Add6          10.38056       0.00337
+
+  Value of Objective Function = 0.0621035244
+
+The CALIS Procedure
+Covariance Structure Analysis: Optimization
+
+Levenberg-Marquardt Optimization
+
+Scaling Update of More (1978)
+
+Parameter Estimates                   10
+Functions (Observations)              15
+
+                                             Optimization Start
+
+Active Constraints                                  0  Objective Function                       0.0621035244
+Max Abs Gradient Element                 0.0608233255  Radius                                              1
+
+
+                                                                                                         Ratio
+                                                                                                       Between
+                                                                                                        Actual
+                                                                 Objective     Max Abs                     and
+                     Function         Active        Objective     Function    Gradient               Predicted
+Iter     Restarts       Calls    Constraints         Function       Change     Element     Lambda       Change
+
+   1            0           4              0          0.05680      0.00531     0.00657          0        0.906
+   2            0           6              0          0.05673     0.000065    0.000799          0        0.889
+   3            0           8              0          0.05673     8.212E-7    0.000087          0        0.887
+   4            0          10              0          0.05673     1.068E-8    0.000010          0        0.887
+   5            0          12              0          0.05673     1.39E-10    1.123E-6          0        0.887
+
+                                            Optimization Results
+
+Iterations                                          5  Function Calls                                     15
+Jacobian Calls                                      7  Active Constraints                                  0
+Objective Function                        0.056731117  Max Abs Gradient Element                 1.1234594E-6
+Lambda                                              0  Actual Over Pred Change                  0.8867984447
+Radius                                   0.0000418811                                                       
+
+Convergence criterion (GCONV=1E-8) satisfied.                                                     
+
+The CALIS Procedure
+Covariance Structure Analysis: Maximum Likelihood Estimation
+
+                            Fit Summary
+
+Modeling Info        Number of Observations                     120
+                     Number of Variables                          5
+                     Number of Moments                           15
+                     Number of Parameters                        10
+                     Number of Active Constraints                 0
+                     Baseline Model Function Value           5.9271
+                     Baseline Model Chi-Square             705.3204
+                     Baseline Model Chi-Square DF                10
+                     Pr > Baseline Model Chi-Square          <.0001
+Absolute Index       Fit Function                            0.0567
+                     Chi-Square                              6.7510
+                     Chi-Square DF                                5
+                     Pr > Chi-Square                         0.2398
+                     Z-Test of Wilson & Hilferty             0.7101
+                     Hoelter Critical N                         196
+                     Root Mean Square Residual (RMR)         0.8937
+                     Standardized RMR (SRMR)                 0.0122
+                     Goodness of Fit Index (GFI)             0.9793
+Parsimony Index      Adjusted GFI (AGFI)                     0.9379
+                     Parsimonious GFI                        0.4896
+                     RMSEA Estimate                          0.0542
+                     RMSEA Lower 90% Confidence Limit        0.0000
+                     RMSEA Upper 90% Confidence Limit        0.1466
+                     Probability of Close Fit                0.3953
+                     ECVI Estimate                           0.2337
+                     ECVI Lower 90% Confidence Limit         0.2212
+                     ECVI Upper 90% Confidence Limit         0.3292
+                     Akaike Information Criterion           26.7510
+                     Bozdogan CAIC                          64.6259
+                     Schwarz Bayesian Criterion             54.6259
+                     McDonald Centrality                     0.9927
+Incremental Index    Bentler Comparative Fit Index           0.9975
+                     Bentler-Bonett NFI                      0.9904
+                     Bentler-Bonett Non-normed Index         0.9950
+                     Bollen Normed Index Rho1                0.9809
+                     Bollen Non-normed Index Delta2          0.9975
+                     James et al. Parsimonious NFI           0.4952
+
+The CALIS Procedure
+Covariance Structure Analysis: Maximum Likelihood Estimation
+
+Diagnostics of the 6 Largest Case-Level Residuals (alpha=0.01)
+ 
+     Case        Residual    ----Diagnostics-----
+   Number    (M-Distance)    Outlier     Leverage
+
+      120         6.18263       *                
+       54         3.57267                        
+      105         3.29538                        
+       68         3.10480                        
+       99         3.05408                        
+       88         2.89535                        
+
+
+Diagnostics of the 7 Largest Case-Level Leverages (alpha=0.01)
+ 
+     Case        Leverage    ----Diagnostics-----
+   Number    (M-Distance)    Leverage    Outlier
+
+       77         2.93401        *               
+        8         2.87967        *               
+       91         2.39867                        
+       92         2.07292                        
+        6         1.99875                        
+       30         1.95387                        
+       83         1.93986                        
+
+The CALIS Procedure
+Covariance Structure Analysis: Maximum Likelihood Estimation
+
+Largest Departures From the Theoretical Residual Distribution
+ 
+Percentile         Case      Quantile    Percentile
+    Region       Number     Deviation     Deviation
+
+      <.05           10      -0.19782              
+                    107      -0.20221              
+ (.05,.10)           84      -0.16407              
+                     40      -0.18943              
+                     63      -0.17992              
+ (.10,.35)          114      -0.16663              
+                      4      -0.15993              
+                    102      -0.16525      -0.05418
+                     89                    -0.05445
+ (.35,.65)           77                    -0.05602
+                     57                    -0.06119
+                     65                    -0.06643
+                    109                    -0.07428
+                     72                    -0.07471
+                     30                    -0.07648
+                     12                    -0.07517
+ (.65,.90)           56                    -0.08252
+      >.95           88      -0.18812              
+                    120       2.47933              
+
+The CALIS Procedure
+Covariance Structure Analysis: Maximum Likelihood Estimation
+
+                         Raw Residual Matrix
+ 
+             mechanics      vector     algebra    analysis  statistics
+
+mechanics      0.00000     0.85186     0.54662    -2.64368     0.24630
+vector         0.85186     0.00000    -0.76070     1.73877    -0.48885
+algebra        0.54662    -0.76070     0.00000     0.06405     0.23934
+analysis      -2.64368     1.73877     0.06405     0.00000    -0.07044
+statistics     0.24630    -0.48885     0.23934    -0.07044     0.00000
+
+Average Absolute Residual                         0.510041
+Average Off-diagonal Absolute Residual            0.765062
+
+
+Rank Order of the 7 Largest Raw Residuals
+ 
+Var1          Var2           Residual
+
+analysis      mechanics      -2.64368
+analysis      vector          1.73877
+vector        mechanics       0.85186
+algebra       vector         -0.76070
+algebra       mechanics       0.54662
+statistics    vector         -0.48885
+statistics    mechanics       0.24630
+
+The CALIS Procedure
+Covariance Structure Analysis: Maximum Likelihood Estimation
+
+             Asymptotically Standardized Residual Matrix
+ 
+             mechanics      vector     algebra    analysis  statistics
+
+mechanics      0.00000     0.69528     0.60305    -1.95833     0.25804
+vector         0.69528     0.00000    -1.21323     1.77611    -0.73205
+algebra        0.60305    -1.21323     0.00000     0.08735     0.54362
+analysis      -1.95833     1.77611     0.08735     0.00000    -0.09160
+statistics     0.25804    -0.73205     0.54362    -0.09160     0.00000
+
+Average Standardized Residual                     0.530576
+Average Off-diagonal Standardized Residual        0.795864
+
+
+Rank Order of the 7 Largest Asymptotically Standardized Residuals
+ 
+Var1          Var2           Residual
+
+analysis      mechanics      -1.95833
+analysis      vector          1.77611
+algebra       vector         -1.21323
+statistics    vector         -0.73205
+vector        mechanics       0.69528
+algebra       mechanics       0.60305
+statistics    algebra         0.54362
+
+The CALIS Procedure
+Covariance Structure Analysis: Maximum Likelihood Estimation
+
+           Distribution of Asymptotically Standardized Residuals
+                       Each * Represents 1 Residuals
+ 
+----------Range---------    Freq    Percent
+
+  -2.00000      -1.75000       1       6.67    *                          
+  -1.75000      -1.50000       0       0.00                               
+  -1.50000      -1.25000       0       0.00                               
+  -1.25000      -1.00000       1       6.67    *                          
+  -1.00000      -0.75000       0       0.00                               
+  -0.75000      -0.50000       1       6.67    *                          
+  -0.50000      -0.25000       0       0.00                               
+  -0.25000             0       1       6.67    *                          
+         0       0.25000       6      40.00    ******                     
+   0.25000       0.50000       1       6.67    *                          
+   0.50000       0.75000       3      20.00    ***                        
+   0.75000       1.00000       0       0.00                               
+   1.00000       1.25000       0       0.00                               
+   1.25000       1.50000       0       0.00                               
+   1.50000       1.75000       0       0.00                               
+   1.75000       2.00000       1       6.67    *                          
+
+The CALIS Procedure
+Covariance Structure Analysis: Maximum Likelihood Estimation
+
+                                         PATH List
+ 
+                                                            Standard
+-----------Path------------    Parameter      Estimate         Error     t Value    Pr > |t|
+
+fact1    ===>    mechanics                     1.00000                                      
+fact1    ===>    vector        _Parm1          0.85913       0.05668     15.1569      <.0001
+fact1    ===>    algebra       _Parm2          1.17668       0.06825     17.2417      <.0001
+fact1    ===>    analysis      _Parm3          0.74467       0.05375     13.8540      <.0001
+fact1    ===>    statistics    _Parm4          0.99569       0.05972     16.6720      <.0001
+
+
+                                  Variance Parameters
+ 
+Variance                                                Standard
+Type         Variable      Parameter      Estimate         Error     t Value    Pr > |t|
+
+Exogenous    fact1         _Add1          78.01261      12.73076      6.1279      <.0001
+Error        mechanics     _Add2          21.87183       3.23624      6.7584      <.0001
+             vector        _Add3          12.35241       1.91374      6.4546      <.0001
+             algebra       _Add4          10.58526       2.15233      4.9180      <.0001
+             analysis      _Add5          13.56603       1.97696      6.8621      <.0001
+             statistics    _Add6           9.76718       1.76751      5.5259      <.0001
+
+
+          Squared Multiple Correlations
+ 
+                   Error         Total
+Variable        Variance      Variance    R-Square
+
+algebra         10.58526     118.59899      0.9107
+analysis        13.56603      56.82619      0.7613
+mechanics       21.87183      99.88444      0.7810
+statistics       9.76718      87.10928      0.8879
+vector          12.35241      69.93422      0.8234
+
+The CALIS Procedure
+Covariance Structure Analysis: Maximum Likelihood Estimation
+
+                             Standardized Results for PATH List
+ 
+                                                            Standard
+-----------Path------------    Parameter      Estimate         Error     t Value    Pr > |t|
+
+fact1    ===>    mechanics                     0.88376       0.02193     40.2961      <.0001
+fact1    ===>    vector        _Parm1          0.90740       0.01818     49.9256      <.0001
+fact1    ===>    algebra       _Parm2          0.95433       0.01098     86.9023      <.0001
+fact1    ===>    analysis      _Parm3          0.87251       0.02370     36.8101      <.0001
+fact1    ===>    statistics    _Parm4          0.94227       0.01273     74.0134      <.0001
+
+
+                      Standardized Results for Variance Parameters
+ 
+Variance                                                Standard
+Type         Variable      Parameter      Estimate         Error     t Value    Pr > |t|
+
+Exogenous    fact1         _Add1           1.00000                                      
+Error        mechanics     _Add2           0.21897       0.03876      5.6488      <.0001
+             vector        _Add3           0.17663       0.03298      5.3550      <.0001
+             algebra       _Add4           0.08925       0.02096      4.2582      <.0001
+             analysis      _Add5           0.23873       0.04136      5.7717      <.0001
+             statistics    _Add6           0.11213       0.02399      4.6734      <.0001
+
+The CALIS Procedure
+Mean and Covariance Structures: Model and Initial Values
+
+          Modeling Information
+  Robust Maximum Likelihood Estimation
+
+Data Set            WORK.MARDIA          
+N Records Read      120                  
+N Records Used      120                  
+N Obs               120                  
+Model Type          PATH                 
+Analysis            Means and Covariances
+
+
+                        Variables in the Model
+
+Endogenous    Manifest     algebra  analysis  mechanics  statistics  
+                           vector                                    
+              Latent                                                 
+Exogenous     Manifest                                               
+              Latent       fact1                                     
+
+                  Number of Endogenous Variables = 5
+                  Number of Exogenous Variables  = 1
+
+
+           Initial Estimates for PATH List
+ 
+-----------Path------------    Parameter      Estimate
+
+fact1    ===>    mechanics                     1.00000
+fact1    ===>    vector        _Parm1                .
+fact1    ===>    algebra       _Parm2                .
+fact1    ===>    analysis      _Parm3                .
+fact1    ===>    statistics    _Parm4                .
+
+
+    Initial Estimates for Variance Parameters
+ 
+Variance
+Type         Variable      Parameter      Estimate
+
+Exogenous    fact1         _Add01                .
+Error        mechanics     _Add02                .
+             vector        _Add03                .
+             algebra       _Add04                .
+             analysis      _Add05                .
+             statistics    _Add06                .
+
+NOTE: Parameters with prefix '_Add' are added by PROC CALIS.
+
+
+    Initial Estimates for Means and Intercepts
+ 
+Type         Variable      Parameter      Estimate
+
+Intercept    mechanics     _Add07                .
+             vector        _Add08                .
+             algebra       _Add09                .
+             analysis      _Add10                .
+             statistics    _Add11                .
+
+NOTE: Parameters with prefix '_Add' are added by PROC CALIS.
+
+The CALIS Procedure
+Mean and Covariance Structures: Descriptive Statistics
+
+          Simple Statistics
+ 
+ Variable           Mean       Std Dev
+
+mechanics       59.85852       9.99422
+vector          64.47174       8.36267
+algebra         62.35003      10.89032
+analysis        64.42448       7.53831
+statistics      65.87982       9.33324
+
+                               Covariance Matrix (DF = 119)
+ 
+                 mechanics          vector         algebra        analysis      statistics
+
+mechanics         99.88444        67.87505        92.34222        55.44967        77.92292
+vector            67.87505        69.93422        78.10391        51.64868        66.24569
+algebra           92.34222        78.10391       118.59899        68.42113        91.63960
+analysis          55.44967        51.64868        68.42113        56.82619        57.77272
+statistics        77.92292        66.24569        91.63960        57.77272        87.10928
+
+Determinant      10934302    Ln     16.207415
+
+                                        Means
+ 
+   mechanics            vector           algebra          analysis        statistics
+
+    59.85852          64.47174          62.35003          64.42448          65.87982
+
+The CALIS Procedure
+Mean and Covariance Structures: Optimization
+
+        Initial Estimation Methods
+
+       1    Instrumental Variables Method
+       2    McDonald Method              
+
+
+              Optimization Start
+              Parameter Estimates
+ 
+    N    Parameter      Estimate      Gradient
+
+    1    _Parm1          0.85913       0.05535
+    2    _Parm2          1.17668      -0.07168
+    3    _Parm3          0.74467      -0.07540
+    4    _Parm4          0.99569      -0.09392
+    5    _Add07         59.85852       0.00934
+    6    _Add08         64.47174       0.00423
+    7    _Add09         62.35003      -0.00396
+    8    _Add10         64.42448      -0.00232
+    9    _Add11         65.87982      -0.00498
+   10    _Add01         78.01261    -0.0000661
+   11    _Add02         21.87183       0.00806
+   12    _Add03         12.35241    8.17047E-6
+   13    _Add04         10.58526     0.0003997
+   14    _Add05         13.56603       0.00119
+   15    _Add06          9.76718     0.0004533
+
+   Value of Objective Function = 0.073862274
+
+The CALIS Procedure
+Mean and Covariance Structures: Robust Maximum Likelihood Estimation
+
+                            Fit Summary
+
+Modeling Info        Number of Observations                     120
+                     Number of Variables                          5
+                     Number of Moments                           15
+                     Number of Parameters                        10
+                     Number of Active Constraints                 0
+                     Baseline Model Function Value           6.1170
+                     Baseline Model Chi-Square             727.9284
+                     Baseline Model Chi-Square DF                10
+                     Pr > Baseline Model Chi-Square          <.0001
+Absolute Index       Fit Function                            0.0474
+                     Chi-Square                              5.6391
+                     Chi-Square DF                                5
+                     Pr > Chi-Square                         0.3429
+                     Z-Test of Wilson & Hilferty             0.4049
+                     Hoelter Critical N                         234
+                     Root Mean Square Residual (RMR)         0.7663
+                     Standardized RMR (SRMR)                 0.0109
+                     Goodness of Fit Index (GFI)             0.9814
+Parsimony Index      Adjusted GFI (AGFI)                     0.9442
+                     Parsimonious GFI                        0.4907
+                     RMSEA Estimate                          0.0328
+                     RMSEA Lower 90% Confidence Limit        0.0000
+                     RMSEA Upper 90% Confidence Limit        0.1349
+                     Probability of Close Fit                0.5069
+                     ECVI Estimate                           0.2244
+                     ECVI Lower 90% Confidence Limit         0.2212
+                     ECVI Upper 90% Confidence Limit         0.3125
+                     Akaike Information Criterion           25.6391
+                     Bozdogan CAIC                          63.5140
+                     Schwarz Bayesian Criterion             53.5140
+                     McDonald Centrality                     0.9973
+Incremental Index    Bentler Comparative Fit Index           0.9991
+                     Bentler-Bonett NFI                      0.9923
+                     Bentler-Bonett Non-normed Index         0.9982
+                     Bollen Normed Index Rho1                0.9845
+                     Bollen Non-normed Index Delta2          0.9991
+                     James et al. Parsimonious NFI           0.4961
+
+           NOTE: Saturated mean structure parameters are
+          excluded from the computations of fit indices.
+
+The CALIS Procedure
+Mean and Covariance Structures: Robust Maximum Likelihood Estimation
+
+                                 Robust Covariance Matrix
+ 
+                 mechanics          vector         algebra        analysis      statistics
+
+mechanics         91.79029        65.15536        91.31777        55.60855        77.44523
+vector            65.15536        69.46307        78.41405        52.05294        66.68267
+algebra           91.31777        78.41405       119.82823        69.55474        92.64866
+analysis          55.60855        52.05294        69.55474        57.52772        58.75616
+statistics        77.44523        66.68267        92.64866        58.75616        88.28266
+
+Determinant       8555855    Ln     15.962126
+
+                                    Robust Means
+ 
+   mechanics            vector           algebra          analysis        statistics
+
+    59.67251          64.38044          62.28839          64.38992          65.83538
+
+                                  Predicted Covariances
+ 
+                 mechanics          vector         algebra        analysis      statistics
+
+mechanics         91.79029        65.46252        90.65570        57.61901        76.87073
+vector            65.46252        69.46307        78.94877        50.17831        66.94393
+algebra           90.65570        78.94877       119.82823        69.48938        92.70723
+analysis          57.61901        50.17831        69.48938        57.52772        58.92293
+statistics        76.87073        66.94393        92.70723        58.92293        88.28266
+
+Determinant       8971052    Ln     16.009513
+
+                                   Predicted Means
+ 
+   mechanics            vector           algebra          analysis        statistics
+
+    59.67251          64.38044          62.28839          64.38992          65.83538
+
+The CALIS Procedure
+Mean and Covariance Structures: Robust Maximum Likelihood Estimation
+
+Diagnostics of the 6 Largest Case-Level Residuals (alpha=0.01)
+ 
+     Case        Residual    ----Diagnostics-----
+   Number    (M-Distance)    Outlier     Leverage
+
+      120         6.97327       *                
+       54         3.63967                        
+      105         3.34847                        
+       68         3.14250                        
+       99         3.07344                        
+      108         2.99065                        
+
+
+Diagnostics of the 7 Largest Case-Level Leverages (alpha=0.01)
+ 
+     Case        Leverage    ----Diagnostics-----
+   Number    (M-Distance)    Leverage    Outlier
+
+       77         3.03747        *               
+        8         2.93088        *               
+       91         2.43614                        
+       92         2.13699                        
+        6         2.07190                        
+       30         1.98887                        
+       83         1.95910                        
+
+The CALIS Procedure
+Mean and Covariance Structures: Robust Maximum Likelihood Estimation
+
+Largest Departures From the Theoretical Residual Distribution
+ 
+Percentile         Case      Quantile    Percentile
+    Region       Number     Deviation     Deviation
+
+      <.05           10      -0.15409              
+                    107      -0.19653              
+                     71      -0.17731              
+                    111      -0.12872              
+ (.05,.10)          114      -0.12985              
+                     49      -0.14493              
+ (.10,.35)           84      -0.16094      -0.04623
+                    100      -0.13910              
+                     97                     0.04719
+                    103                     0.04535
+                     47                     0.05613
+                     35                     0.05091
+                     95                     0.04746
+                     23                     0.06207
+                     22                     0.05597
+                     90                     0.04978
+ (.35,.65)           52                     0.05087
+      >.95           54       0.15927              
+                    120       3.26997              
+
+The CALIS Procedure
+Mean and Covariance Structures: Robust Maximum Likelihood Estimation
+
+                         Raw Residual Matrix
+ 
+             mechanics      vector     algebra    analysis  statistics
+
+mechanics      0.00000    -0.30716     0.66207    -2.01046     0.57451
+vector        -0.30716     0.00000    -0.53472     1.87463    -0.26126
+algebra        0.66207    -0.53472     0.00000     0.06535    -0.05857
+analysis      -2.01046     1.87463     0.06535     0.00000    -0.16677
+statistics     0.57451    -0.26126    -0.05857    -0.16677     0.00000
+_MEAN_         0.00000     0.00000     0.00000     0.00000     0.00000
+
+Average Absolute Residual                         0.325775
+Average Absolute Residual in Covariances          0.434367
+Average Off-diagonal Absolute Residual            0.651550
+Average Absolute Residual in Means                       0
+
+
+Rank Order of the 10 Largest Raw Residuals
+ 
+Var1          Var2           Residual
+
+analysis      mechanics      -2.01046
+analysis      vector          1.87463
+algebra       mechanics       0.66207
+statistics    mechanics       0.57451
+algebra       vector         -0.53472
+vector        mechanics      -0.30716
+statistics    vector         -0.26126
+statistics    analysis       -0.16677
+analysis      algebra         0.06535
+statistics    algebra        -0.05857
+
+The CALIS Procedure
+Mean and Covariance Structures: Robust Maximum Likelihood Estimation
+
+             Asymptotically Standardized Residual Matrix
+ 
+             mechanics      vector     algebra    analysis  statistics
+
+mechanics      0.00000    -0.29138     0.87429    -1.76008     0.71888
+vector        -0.29138     0.00000    -0.81887     1.89915    -0.37892
+algebra        0.87429    -0.81887     0.00000     0.08873    -0.12945
+analysis      -1.76008     1.89915     0.08873     0.00000    -0.21713
+statistics     0.71888    -0.37892    -0.12945    -0.21713     0.00000
+_MEAN_         0.00000     0.00000     0.00000     0.00000     0.00000
+
+Average Standardized Residual                     0.358844
+Average Standardized Residual in Covariances      0.478458
+Average Off-diagonal Standardized Residual        0.717687
+Average Standardized Residual in Means                   0
+
+
+Rank Order of the 10 Largest Asymptotically Standardized Residuals
+ 
+Var1          Var2           Residual
+
+analysis      vector          1.89915
+analysis      mechanics      -1.76008
+algebra       mechanics       0.87429
+algebra       vector         -0.81887
+statistics    mechanics       0.71888
+statistics    vector         -0.37892
+vector        mechanics      -0.29138
+statistics    analysis       -0.21713
+statistics    algebra        -0.12945
+analysis      algebra         0.08873
+
+The CALIS Procedure
+Mean and Covariance Structures: Robust Maximum Likelihood Estimation
+
+          Distribution of Asymptotically Standardized Residuals
+                      Each * Represents 1 Residuals
+ 
+----------Range---------    Freq    Percent
+
+  -2.00000      -1.75000       1       5.00    *                         
+  -1.75000      -1.50000       0       0.00                              
+  -1.50000      -1.25000       0       0.00                              
+  -1.25000      -1.00000       0       0.00                              
+  -1.00000      -0.75000       1       5.00    *                         
+  -0.75000      -0.50000       0       0.00                              
+  -0.50000      -0.25000       2      10.00    **                        
+  -0.25000             0       2      10.00    **                        
+         0       0.25000      11      55.00    ***********               
+   0.25000       0.50000       0       0.00                              
+   0.50000       0.75000       1       5.00    *                         
+   0.75000       1.00000       1       5.00    *                         
+   1.00000       1.25000       0       0.00                              
+   1.25000       1.50000       0       0.00                              
+   1.50000       1.75000       0       0.00                              
+   1.75000       2.00000       1       5.00    *                         
+
+The CALIS Procedure
+Mean and Covariance Structures: Robust Maximum Likelihood Estimation
+
+                                         PATH List
+ 
+                                                            Standard
+-----------Path------------    Parameter      Estimate         Error     t Value    Pr > |t|
+
+fact1    ===>    mechanics                     1.00000                                      
+fact1    ===>    vector        _Parm1          0.87086       0.05413     16.0895      <.0001
+fact1    ===>    algebra       _Parm2          1.20601       0.06406     18.8251      <.0001
+fact1    ===>    analysis      _Parm3          0.76652       0.05193     14.7610      <.0001
+fact1    ===>    statistics    _Parm4          1.02263       0.05644     18.1194      <.0001
+
+
+                                  Variance Parameters
+ 
+Variance                                                Standard
+Type         Variable      Parameter      Estimate         Error     t Value    Pr > |t|
+
+Exogenous    fact1         _Add01         75.16965      11.77933      6.3815      <.0001
+Error        mechanics     _Add02         16.62065       2.53649      6.5526      <.0001
+             vector        _Add03         12.45413       1.90486      6.5381      <.0001
+             algebra       _Add04         10.49612       2.10053      4.9969      <.0001
+             analysis      _Add05         13.36161       1.94429      6.8722      <.0001
+             statistics    _Add06          9.67235       1.73342      5.5799      <.0001
+
+
+                                  Means and Intercepts
+ 
+                                                        Standard
+Type         Variable      Parameter      Estimate         Error     t Value    Pr > |t|
+
+Intercept    mechanics     _Add07         59.67251       0.87826     67.9437      <.0001
+             vector        _Add08         64.38044       0.76402     84.2656      <.0001
+             algebra       _Add09         62.28839       1.00347     62.0728      <.0001
+             analysis      _Add10         64.38992       0.69529     92.6089      <.0001
+             statistics    _Add11         65.83538       0.86132     76.4355      <.0001
+
+
+          Squared Multiple Correlations
+ 
+                   Error         Total
+Variable        Variance      Variance    R-Square
+
+algebra         10.49612     119.82823      0.9124
+analysis        13.36161      57.52772      0.7677
+mechanics       16.62065      91.79029      0.8189
+statistics       9.67235      88.28266      0.8904
+vector          12.45413      69.46307      0.8207
+
+The CALIS Procedure
+Mean and Covariance Structures: Robust Maximum Likelihood Estimation
+
+                             Standardized Results for PATH List
+ 
+                                                            Standard
+-----------Path------------    Parameter      Estimate         Error     t Value    Pr > |t|
+
+fact1    ===>    mechanics                     0.90495       0.01845     49.0478      <.0001
+fact1    ===>    vector        _Parm1          0.90593       0.01829     49.5237      <.0001
+fact1    ===>    algebra       _Parm2          0.95520       0.01065     89.7234      <.0001
+fact1    ===>    analysis      _Parm3          0.87621       0.02302     38.0581      <.0001
+fact1    ===>    statistics    _Parm4          0.94363       0.01235     76.4201      <.0001
+
+
+                      Standardized Results for Variance Parameters
+ 
+Variance                                                Standard
+Type         Variable      Parameter      Estimate         Error     t Value    Pr > |t|
+
+Exogenous    fact1         _Add01          1.00000                                      
+Error        mechanics     _Add02          0.18107       0.03339      5.4224      <.0001
+             vector        _Add03          0.17929       0.03314      5.4095      <.0001
+             algebra       _Add04          0.08759       0.02034      4.3068      <.0001
+             analysis      _Add05          0.23226       0.04035      5.7569      <.0001
+             statistics    _Add06          0.10956       0.02330      4.7014      <.0001
+
+The CALIS Procedure
+Mean and Covariance Structures: Model and Initial Values
+
+              Modeling Information
+         Maximum Likelihood Estimation
+
+Data Set            WORK.MARDIA                 
+N Records Read      120                         
+N Records Used      120                         
+N Obs               120                         
+Model Type          PATH                        
+Analysis            Robust Means and Covariances
+
+
+                        Variables in the Model
+
+Endogenous    Manifest     algebra  analysis  mechanics  statistics  
+                           vector                                    
+              Latent                                                 
+Exogenous     Manifest                                               
+              Latent       fact1                                     
+
+                  Number of Endogenous Variables = 5
+                  Number of Exogenous Variables  = 1
+
+
+           Initial Estimates for PATH List
+ 
+-----------Path------------    Parameter      Estimate
+
+fact1    ===>    mechanics                     1.00000
+fact1    ===>    vector        _Parm1                .
+fact1    ===>    algebra       _Parm2                .
+fact1    ===>    analysis      _Parm3                .
+fact1    ===>    statistics    _Parm4                .
+
+
+    Initial Estimates for Variance Parameters
+ 
+Variance
+Type         Variable      Parameter      Estimate
+
+Exogenous    fact1         _Add01                .
+Error        mechanics     _Add02                .
+             vector        _Add03                .
+             algebra       _Add04                .
+             analysis      _Add05                .
+             statistics    _Add06                .
+
+NOTE: Parameters with prefix '_Add' are added by PROC CALIS.
+
+
+    Initial Estimates for Means and Intercepts
+ 
+Type         Variable      Parameter      Estimate
+
+Intercept    mechanics     _Add07                .
+             vector        _Add08                .
+             algebra       _Add09                .
+             analysis      _Add10                .
+             statistics    _Add11                .
+
+NOTE: Parameters with prefix '_Add' are added by PROC CALIS.
+
+The CALIS Procedure
+Mean and Covariance Structures: Descriptive Statistics
+
+          Simple Statistics
+ 
+ Variable           Mean       Std Dev
+
+mechanics       59.85852       9.99422
+vector          64.47174       8.36267
+algebra         62.35003      10.89032
+analysis        64.42448       7.53831
+statistics      65.87982       9.33324
+
+                               Covariance Matrix (DF = 119)
+ 
+                 mechanics          vector         algebra        analysis      statistics
+
+mechanics         99.88444        67.87505        92.34222        55.44967        77.92292
+vector            67.87505        69.93422        78.10391        51.64868        66.24569
+algebra           92.34222        78.10391       118.59899        68.42113        91.63960
+analysis          55.44967        51.64868        68.42113        56.82619        57.77272
+statistics        77.92292        66.24569        91.63960        57.77272        87.10928
+
+Determinant      10934302    Ln     16.207415
+
+                                        Means
+ 
+   mechanics            vector           algebra          analysis        statistics
+
+    59.85852          64.47174          62.35003          64.42448          65.87982
+
+                                 Robust Covariance Matrix
+ 
+                 mechanics          vector         algebra        analysis      statistics
+
+mechanics         88.42954        61.65397        86.44873        53.26348        73.75759
+vector            61.65397        65.46116        72.95420        49.70047        62.60080
+algebra           86.44873        72.95420       112.10230        66.01981        86.98328
+analysis          53.26348        49.70047        66.01981        56.11212        56.12788
+statistics        73.75759        62.60080        86.98328        56.12788        84.00292
+
+Determinant       7690281    Ln     15.855468
+
+                                    Robust Means
+ 
+   mechanics            vector           algebra          analysis        statistics
+
+    59.70962          64.42671          62.31596          64.42480          65.86271
+
+The CALIS Procedure
+Mean and Covariance Structures: Optimization
+
+        Initial Estimation Methods
+
+       1    Instrumental Variables Method
+       2    McDonald Method              
+
+
+              Optimization Start
+              Parameter Estimates
+ 
+    N    Parameter      Estimate      Gradient
+
+    1    _Parm1          0.84755      -0.05858
+    2    _Parm2          1.18417       0.00105
+    3    _Parm3          0.76975       0.03856
+    4    _Parm4          1.00943      -0.01041
+    5    _Add07         59.70962             0
+    6    _Add08         64.42671             0
+    7    _Add09         62.31596             0
+    8    _Add10         64.42480             0
+    9    _Add11         65.86271             0
+   10    _Add01         72.71867    -4.6843E-6
+   11    _Add02         15.71086      -0.00172
+   12    _Add03         13.22481       0.00386
+   13    _Add04         10.13194     0.0002159
+   14    _Add05         13.02471      -0.00219
+   15    _Add06          9.90578       0.00132
+
+  Value of Objective Function = 0.0617340779
+
+The CALIS Procedure
+Mean and Covariance Structures: Optimization
+
+Levenberg-Marquardt Optimization
+
+Scaling Update of More (1978)
+
+Parameter Estimates                   15
+Functions (Observations)              20
+
+                                             Optimization Start
+
+Active Constraints                                  0  Objective Function                       0.0617340779
+Max Abs Gradient Element                 0.0585799933  Radius                                              1
+
+
+                                                                                                         Ratio
+                                                                                                       Between
+                                                                                                        Actual
+                                                                 Objective     Max Abs                     and
+                     Function         Active        Objective     Function    Gradient               Predicted
+Iter     Restarts       Calls    Constraints         Function       Change     Element     Lambda       Change
+
+   1            0           4              0          0.05843      0.00331     0.00593          0        0.951
+   2            0           6              0          0.05839     0.000037    0.000605          0        0.926
+   3            0           8              0          0.05839     4.718E-7    0.000084          0        0.928
+   4            0          10              0          0.05839     6.187E-9    7.973E-6          0        0.931
+
+                                            Optimization Results
+
+Iterations                                          4  Function Calls                                     13
+Jacobian Calls                                      6  Active Constraints                                  0
+Objective Function                       0.0583885897  Max Abs Gradient Element                 7.9734715E-6
+Lambda                                              0  Actual Over Pred Change                  0.9308874045
+Radius                                   0.0003795137                                                       
+
+Convergence criterion (ABSGCONV=0.00001) satisfied.                                               
+
+The CALIS Procedure
+Mean and Covariance Structures: Two-Stage Robust Maximum Likelihood Estimation
+
+                            Fit Summary
+
+Modeling Info        Number of Observations                     120
+                     Number of Variables                          5
+                     Number of Moments                           15
+                     Number of Parameters                        10
+                     Number of Active Constraints                 0
+                     Baseline Model Function Value           5.9858
+                     Baseline Model Chi-Square             712.3114
+                     Baseline Model Chi-Square DF                10
+                     Pr > Baseline Model Chi-Square          <.0001
+Absolute Index       Fit Function                            0.0584
+                     Chi-Square                              6.9482
+                     Chi-Square DF                                5
+                     Pr > Chi-Square                         0.2245
+                     Z-Test of Wilson & Hilferty             0.7607
+                     Hoelter Critical N                         190
+                     Root Mean Square Residual (RMR)         0.8401
+                     Standardized RMR (SRMR)                 0.0125
+                     Goodness of Fit Index (GFI)             0.9774
+Parsimony Index      Adjusted GFI (AGFI)                     0.9322
+                     Parsimonious GFI                        0.4887
+                     RMSEA Estimate                          0.0572
+                     RMSEA Lower 90% Confidence Limit        0.0000
+                     RMSEA Upper 90% Confidence Limit        0.1486
+                     Probability of Close Fit                0.3774
+                     ECVI Estimate                           0.2354
+                     ECVI Lower 90% Confidence Limit         0.2212
+                     ECVI Upper 90% Confidence Limit         0.3321
+                     Akaike Information Criterion           26.9482
+                     Bozdogan CAIC                          64.8232
+                     Schwarz Bayesian Criterion             54.8232
+                     McDonald Centrality                     0.9919
+Incremental Index    Bentler Comparative Fit Index           0.9972
+                     Bentler-Bonett NFI                      0.9902
+                     Bentler-Bonett Non-normed Index         0.9945
+                     Bollen Normed Index Rho1                0.9805
+                     Bollen Non-normed Index Delta2          0.9972
+                     James et al. Parsimonious NFI           0.4951
+
+           NOTE: Saturated mean structure parameters are
+          excluded from the computations of fit indices.
+
+The CALIS Procedure
+Mean and Covariance Structures: Two-Stage Robust Maximum Likelihood Estimation
+
+                                  Predicted Covariances
+ 
+                 mechanics          vector         algebra        analysis      statistics
+
+mechanics         88.42954        61.91166        85.71233        55.46419        73.20377
+vector            61.91166        65.46116        73.60228        47.62781        62.86101
+algebra           85.71233        73.60228       112.10230        65.93735        87.02664
+analysis          55.46419        47.62781        65.93735        56.11212        56.31467
+statistics        73.20377        62.86101        87.02664        56.31467        84.00292
+
+Determinant       8152674    Ln     15.913856
+
+                                   Predicted Means
+ 
+   mechanics            vector           algebra          analysis        statistics
+
+    59.70962          64.42671          62.31596          64.42480          65.86271
+
+The CALIS Procedure
+Mean and Covariance Structures: Two-Stage Robust Maximum Likelihood Estimation
+
+                                         PATH List
+ 
+                                                            Standard
+-----------Path------------    Parameter      Estimate         Error     t Value    Pr > |t|
+
+fact1    ===>    mechanics                     1.00000                                      
+fact1    ===>    vector        _Parm1          0.85871       0.05453     15.7490      <.0001
+fact1    ===>    algebra       _Parm2          1.18883       0.06420     18.5183      <.0001
+fact1    ===>    analysis      _Parm3          0.76929       0.05306     14.4989      <.0001
+fact1    ===>    statistics    _Parm4          1.01533       0.05712     17.7754      <.0001
+
+
+                                  Variance Parameters
+ 
+Variance                                                Standard
+Type         Variable      Parameter      Estimate         Error     t Value    Pr > |t|
+
+Exogenous    fact1         _Add01         72.09822      11.34550      6.3548      <.0001
+Error        mechanics     _Add02         16.33132       2.50213      6.5270      <.0001
+             vector        _Add03         12.29683       1.87672      6.5523      <.0001
+             algebra       _Add04         10.20513       2.04513      4.9900      <.0001
+             analysis      _Add05         13.44426       1.95746      6.8682      <.0001
+             statistics    _Add06          9.67665       1.72665      5.6043      <.0001
+
+
+                                  Means and Intercepts
+ 
+                                                        Standard
+Type         Variable      Parameter      Estimate         Error     t Value    Pr > |t|
+
+Intercept    mechanics     _Add07         59.70962       0.86204     69.2658      <.0001
+             vector        _Add08         64.42671       0.74168     86.8656      <.0001
+             algebra       _Add09         62.31596       0.97059     64.2045      <.0001
+             analysis      _Add10         64.42480       0.68668     93.8206      <.0001
+             statistics    _Add11         65.86271       0.84018     78.3909      <.0001
+
+
+          Squared Multiple Correlations
+ 
+                   Error         Total
+Variable        Variance      Variance    R-Square
+
+algebra         10.20513     112.10230      0.9090
+analysis        13.44426      56.11212      0.7604
+mechanics       16.33132      88.42954      0.8153
+statistics       9.67665      84.00292      0.8848
+vector          12.29683      65.46116      0.8122
+
+The CALIS Procedure
+Mean and Covariance Structures: Two-Stage Robust Maximum Likelihood Estimation
+
+                             Standardized Results for PATH List
+ 
+                                                            Standard
+-----------Path------------    Parameter      Estimate         Error     t Value    Pr > |t|
+
+fact1    ===>    mechanics                     0.90295       0.01888     47.8334      <.0001
+fact1    ===>    vector        _Parm1          0.90119       0.01916     47.0431      <.0001
+fact1    ===>    algebra       _Parm2          0.95340       0.01108     86.0098      <.0001
+fact1    ===>    analysis      _Parm3          0.87201       0.02378     36.6760      <.0001
+fact1    ===>    statistics    _Parm4          0.94064       0.01296     72.6000      <.0001
+
+
+                      Standardized Results for Variance Parameters
+ 
+Variance                                                Standard
+Type         Variable      Parameter      Estimate         Error     t Value    Pr > |t|
+
+Exogenous    fact1         _Add01          1.00000                                      
+Error        mechanics     _Add02          0.18468       0.03409      5.4175      <.0001
+             vector        _Add03          0.18785       0.03453      5.4405      <.0001
+             algebra       _Add04          0.09103       0.02114      4.3070      <.0001
+             analysis      _Add05          0.23960       0.04147      5.7781      <.0001
+             statistics    _Add06          0.11519       0.02437      4.7260      <.0001

@@ -1,0 +1,42 @@
+
+drug1    _TYPE_    _FREQ_    _STAT_      pef1
+
+ for        0         7       N          7.000
+ for        0         7       MIN      250.000
+ for        0         7       MAX      410.000
+ for        0         7       MEAN     337.143
+ for        0         7       STD       53.763
+ sal        0         6       N          6.000
+ sal        0         6       MIN       90.000
+ sal        0         6       MAX      380.000
+ sal        0         6       MEAN     283.333
+ sal        0         6       STD      105.388
+
+The TTEST Procedure
+ 
+Variable:  pef1
+
+drug1         Method            N        Mean     Std Dev     Std Err     Minimum     Maximum
+
+for                             7       337.1     53.7631     20.3206       250.0       410.0
+sal                             6       283.3       105.4     43.0245     90.0000       380.0
+Diff (1-2)    Pooled                  53.8095     81.3948     45.2839                        
+Diff (1-2)    Satterthwaite           53.8095                 47.5819                        
+
+drug1         Method               Mean       95% CL Mean        Std Dev      95% CL Std Dev
+
+for                               337.1       287.4    386.9     53.7631     34.6446    118.4
+sal                               283.3       172.7    393.9       105.4     65.7841    258.5
+Diff (1-2)    Pooled            53.8095    -45.8596    153.5     81.3948     57.6597    138.2
+Diff (1-2)    Satterthwaite     53.8095    -58.1293    165.7                                 
+
+Method           Variances        DF    t Value    Pr > |t|
+
+Pooled           Equal            11       1.19      0.2597
+Satterthwaite    Unequal      7.1817       1.13      0.2945
+
+              Equality of Variances
+ 
+Method      Num DF    Den DF    F Value    Pr > F
+
+Folded F         5         6       3.84    0.1319

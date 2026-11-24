@@ -1,0 +1,61 @@
+The SAS System
+
+17394      
+17395      /* STAT-SIMNORMAL-004: SIMNORMAL — Conditional Simulation
+17396       * Source: S154 / Chapter 113 / `Conditional Simulation` (PDF pp. 9372–9373).
+17397       * Discriminates: Verified default procedure context
+17398       */
+17399      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+17399    ! validmemname=compatible locale=en_US;
+17400      %let syscc=0;
+17401      title; footnote;
+17402      ods _all_ close;
+17403      ods listing gpath="%sysfunc(pathname(work))";
+17404      ods graphics off;
+17405      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.DRAWS (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SCOV (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+17405    !                                         quit;
+
+
+17406      ods path work.templat(update) sashelp.tmplmst(read);
+17407      
+17408      data scov(type=cov);
+17409      length _name_ $32 _type_ $8;
+17410      infile datalines truncover;
+17411      
+17412      length _TYPE_ $8 _NAME_ $8;
+WARNING: Length of character variable _name_ has already been set. 
+         Use the LENGTH statement as the very first statement in the DATA STEP to declare the length of a character variable.
+17413      input _TYPE_ $ _NAME_ $ s1 s2;
+17414      datalines;
+
+NOTE: The data set WORK.SCOV has 3 observations and 4 variables.
+
+17418      ;
+17419      run;
+17420      proc simnorm data=scov outsim=draws numreal=500 seed=54321;
+17421      var s1 s2;
+17422      run;
+
+NOTE: The data set WORK.DRAWS has 500 observations and 3 variables.
+
+17423      proc corr data=draws cov;
+17424      var s1 s2;
+17425      run;
+
+NOTE: The PROCEDURE CORR printed page 1202.
+
+17426      
+17427      
+17428      
+17429      
+The SAS System
+
+17430      

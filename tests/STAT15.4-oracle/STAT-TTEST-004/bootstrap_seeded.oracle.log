@@ -1,0 +1,52 @@
+The SAS System
+
+28818      
+28819      /* STAT-TTEST-004: TTEST — BOOTSTRAP / Bootstrap Methods
+28820       * Source: S154 / Chapter 128 / `BOOTSTRAP Statement` (PDF pp. 10613–10615); S154 / Chapter 128 / `Bootstrap Methods` (PDF pp. 10631–10640).
+28821       * Discriminates: Bootstrap sampling, fixed seed, percentile intervals and BOOTDATA layout
+28822       */
+28823      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+28823    ! validmemname=compatible locale=en_US;
+28824      %let syscc=0;
+28825      title; footnote;
+28826      ods _all_ close;
+28827      ods listing gpath="%sysfunc(pathname(work))";
+28828      ods graphics off;
+28829      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SAMPLE (memtype=DATA).
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+28829    !                                         quit;
+
+
+28830      ods path work.templat(update) sashelp.tmplmst(read);
+28831      
+28832      data sample;
+28833       input x y group $ freq weight;
+28834       datalines;
+
+NOTE: The data set WORK.SAMPLE has 12 observations and 5 variables.
+
+28847      ;
+28848      run;
+28849      proc ttest data=sample; class group; var x; bootstrap / nsamples=199 seed=314159 bootci=percentile bootdata=draws; run;
+
+NOTE: The data set WORK.DRAWS has 199 observations and 6 variables.
+NOTE: The PROCEDURE TTEST printed page 1769.
+
+28850      proc print data=draws(obs=12) noobs; run;
+
+NOTE: There were 12 observations read from the data set WORK.DRAWS.
+NOTE: The PROCEDURE PRINT printed page 1770.
+
+28851      
+28852      
+28853      
+28854      
+The SAS System
+
+28855      

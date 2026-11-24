@@ -1,0 +1,154 @@
+
+                   Sepal    Sepal     Petal    Petal
+Obs    Species    Length    Width    Length    Width
+
+  1    Setosa       50        33       14        2  
+  2    Setosa       46        34       14        3  
+  3    Setosa       46        36       10        2  
+  4    Setosa       51        33       17        5  
+  5    Setosa       55        35       13        2  
+  6    Setosa       48        31       16        2  
+  7    Setosa       52        34       14        2  
+  8    Setosa       49        36       14        1  
+  9    Setosa       44        32       13        2  
+ 10    Setosa       50        35       16        6  
+
+The GLIMMIX Procedure
+
+           Fit Statistics
+
+-2 Res Log Likelihood        2812.89
+AIC  (smaller is better)     2872.89
+AICC (smaller is better)     2876.23
+BIC  (smaller is better)     2963.21
+CAIC (smaller is better)     2993.21
+HQIC (smaller is better)     2909.58
+Generalized Chi-Square        588.00
+Gener. Chi-Square / DF          1.00
+
+
+                 Covariance Parameter Estimates
+ 
+Cov                                                     Standard
+Parm       Subject    Group                 Estimate       Error
+
+UN(1,1)    id         Species Setosa         12.4249      2.5102
+UN(2,1)    id         Species Setosa          9.9216      2.3775
+UN(2,2)    id         Species Setosa         14.3690      2.9030
+UN(3,1)    id         Species Setosa          1.6355      0.9052
+UN(3,2)    id         Species Setosa          1.1698      0.9552
+UN(3,3)    id         Species Setosa          3.0159      0.6093
+UN(4,1)    id         Species Setosa          1.0331      0.5508
+UN(4,2)    id         Species Setosa          0.9298      0.5859
+UN(4,3)    id         Species Setosa          0.6069      0.2755
+UN(4,4)    id         Species Setosa          1.1106      0.2244
+UN(1,1)    id         Species Versicolor     26.6433      5.3828
+UN(2,1)    id         Species Versicolor      8.5184      2.6144
+UN(2,2)    id         Species Versicolor      9.8469      1.9894
+UN(3,1)    id         Species Versicolor     18.2898      4.3398
+UN(3,2)    id         Species Versicolor      8.2653      2.4149
+UN(3,3)    id         Species Versicolor     22.0816      4.4612
+UN(4,1)    id         Species Versicolor      5.5780      1.6617
+UN(4,2)    id         Species Versicolor      4.1204      1.0641
+UN(4,3)    id         Species Versicolor      7.3102      1.6891
+UN(4,4)    id         Species Versicolor      3.9106      0.7901
+UN(1,1)    id         Species Virginica      40.4343      8.1690
+UN(2,1)    id         Species Virginica       9.3763      3.2213
+UN(2,2)    id         Species Virginica      10.4004      2.1012
+UN(3,1)    id         Species Virginica      30.3290      6.6262
+UN(3,2)    id         Species Virginica       7.1380      2.7395
+UN(3,3)    id         Species Virginica      30.4588      6.1536
+UN(4,1)    id         Species Virginica       4.9094      2.5916
+UN(4,2)    id         Species Virginica       4.7629      1.4367
+UN(4,3)    id         Species Virginica       4.8824      2.2750
+UN(4,4)    id         Species Virginica       7.5433      1.5240
+
+
+                    Tests of Covariance Parameters
+                  Based on the Restricted Likelihood
+ 
+Label            DF    -2 Res Log Like      ChiSq    Pr > ChiSq    Note
+
+Homogeneity      20            2959.55     146.66        <.0001    DF  
+
+DF: P-value based on a chi-square with DF degrees of freedom.
+
+The GLIMMIX Procedure
+
+           Fit Statistics
+
+-2 Res Log Likelihood        2812.89
+AIC  (smaller is better)     2872.89
+AICC (smaller is better)     2876.23
+BIC  (smaller is better)     2963.21
+CAIC (smaller is better)     2993.21
+HQIC (smaller is better)     2909.58
+Generalized Chi-Square        588.00
+Gener. Chi-Square / DF          1.00
+
+
+                  Covariance Parameter Estimates
+ 
+                                                          Standard
+Cov Parm     Subject    Group                 Estimate       Error
+
+Var(1)       id         Species Setosa         12.4249      2.5102
+Var(2)       id         Species Setosa         14.3690      2.9030
+Var(3)       id         Species Setosa          3.0159      0.6093
+Var(4)       id         Species Setosa          1.1106      0.2244
+Corr(2,1)    id         Species Setosa          0.7425     0.06409
+Corr(3,1)    id         Species Setosa          0.2672      0.1327
+Corr(3,2)    id         Species Setosa          0.1777      0.1383
+Corr(4,1)    id         Species Setosa          0.2781      0.1318
+Corr(4,2)    id         Species Setosa          0.2328      0.1351
+Corr(4,3)    id         Species Setosa          0.3316      0.1271
+Var(1)       id         Species Versicolor     26.6433      5.3828
+Var(2)       id         Species Versicolor      9.8469      1.9894
+Var(3)       id         Species Versicolor     22.0816      4.4612
+Var(4)       id         Species Versicolor      3.9106      0.7901
+Corr(2,1)    id         Species Versicolor      0.5259      0.1033
+Corr(3,1)    id         Species Versicolor      0.7540     0.06163
+Corr(3,2)    id         Species Versicolor      0.5605     0.09797
+Corr(4,1)    id         Species Versicolor      0.5465      0.1002
+Corr(4,2)    id         Species Versicolor      0.6640     0.07987
+Corr(4,3)    id         Species Versicolor      0.7867     0.05445
+Var(1)       id         Species Virginica      40.4343      8.1690
+Var(2)       id         Species Virginica      10.4004      2.1012
+Var(3)       id         Species Virginica      30.4588      6.1536
+Var(4)       id         Species Virginica       7.5433      1.5240
+Corr(2,1)    id         Species Virginica       0.4572      0.1130
+Corr(3,1)    id         Species Virginica       0.8642     0.03616
+Corr(3,2)    id         Species Virginica       0.4010      0.1199
+Corr(4,1)    id         Species Virginica       0.2811      0.1316
+Corr(4,2)    id         Species Virginica       0.5377      0.1015
+Corr(4,3)    id         Species Virginica       0.3221      0.1280
+
+
+                                                                 Tests of Covariance Parameters
+                                                               Based on the Restricted Likelihood
+ 
+                                                                        --------------------------------------Estimates H0--------------------------------------
+Label                         DF  -2 Res Log Like    ChiSq  Pr > ChiSq  Est1      Est2      Est3      Est4      Est5      Est6      Est7      Est8      Est9
+
+Equal Covariance Matrices     20          2959.55   146.66      <.0001   26.5004   11.5395   18.5179    4.1883    0.5302    0.7562    0.3779    0.3645    0.4705
+Equal Correlation Matrices    12          2876.38    63.49      <.0001   16.4715   14.8656    4.8427    1.4392    0.5612    0.6827    0.4016    0.3844    0.4976
+
+                                                               Tests of Covariance Parameters
+                                                             Based on the Restricted Likelihood
+ 
+                            ----------------------------------------------------------Estimates H0----------------------------------------------------------
+Label                       Est10     Est11     Est12     Est13     Est14     Est15     Est16     Est17     Est18     Est19     Est20     Est21     Est22
+
+Equal Covariance Matrices     0.4845   26.5004   11.5395   18.5179    4.1883    0.5302    0.7562    0.3779    0.3645    0.4705    0.4845   26.5004   11.5395
+Equal Correlation Matrices    0.5219   24.4020    9.1566   17.4434    3.0021    0.5612    0.6827    0.4016    0.3844    0.4976    0.5219   35.0544   10.8350
+
+                                                 Tests of Covariance Parameters
+                                               Based on the Restricted Likelihood
+ 
+                            ----------------------------------------Estimates H0----------------------------------------
+Label                       Est23       Est24       Est25       Est26       Est27       Est28       Est29       Est30       Note
+
+Equal Covariance Matrices    18.5179      4.1883      0.5302      0.7562      0.3779      0.3645      0.4705      0.4845    DF  
+Equal Correlation Matrices   27.3593      8.1395      0.5612      0.6827      0.4016      0.3844      0.4976      0.5219    DF  
+
+DF: P-value based on a chi-square with DF degrees of freedom.

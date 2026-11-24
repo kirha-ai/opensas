@@ -1,0 +1,56 @@
+The SAS System
+
+2764       
+2765       /* STAT-MI-012: MI — MCMC Method Specifications / Checking Convergence in MCMC
+2766        * Source: S154 / Chapter 82 / `MCMC Method Specifications` (PDF pp. 6473–6474); S154 / Chapter 82 / `Checking Convergence in MCMC` (PDF pp.
+2766     ! 6474–6476).
+2767        * Discriminates: Example 82.11: Checking Convergence in MCMC
+2768        */
+2769       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+2769     ! validmemname=compatible locale=en_US;
+2770       %let syscc=0;
+2771       title; footnote;
+2772       ods _all_ close;
+2773       ods listing gpath="%sysfunc(pathname(work))";
+2774       ods graphics off;
+2775       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.FITNESS1 (memtype=DATA).
+NOTE: Deleting WORK.OUTEX10 (memtype=DATA).
+NOTE: Deleting WORK.OUTEX10A (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+2775     !                                         quit;
+
+
+2776       ods path work.templat(update) sashelp.tmplmst(read);
+2777       
+2778       data Fitness1;
+2779       input Oxygen RunTime RunPulse @@;
+2780       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.FITNESS1 has 31 observations and 3 variables.
+
+2797       ;
+2798       run;
+2799       ods graphics on;
+2800       proc mi data=Fitness1 seed=501213 nimpute=5 mu0=50 10 180;
+2801       mcmc plots=(trace(mean(Oxygen)) acf(mean(Oxygen)));
+2802       var Oxygen RunTime RunPulse;
+2803       run;
+
+NOTE: The EM algorithm (MLE) converges in 12 iterations.
+NOTE: The EM algorithm (posterior mode) converges in 7 iterations.
+NOTE: The PROCEDURE MI printed pages 259-260.
+
+2804       
+2805       
+2806       
+2807       
+The SAS System
+
+2808       

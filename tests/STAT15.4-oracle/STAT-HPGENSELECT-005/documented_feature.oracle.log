@@ -1,0 +1,54 @@
+The SAS System
+
+8833       
+8834       /* STAT-HPGENSELECT-005: HPGENSELECT — Log-Likelihood Functions / First- or Second-Order Algorithms / Algorithm Descriptions
+8835        * Source: S154 / Chapter 59 / `Log-Likelihood Functions` (PDF pp. 4659–4663); S154 / Chapter 59 / `First- or Second-Order Algorithms` (PDF pp.
+8835     ! 4668–4669); S154 / Chapter 59 / `Algorithm Descriptions` (PDF pp. 4669–4671).
+8836        * Discriminates: Getting Started: HPGENSELECT Procedure
+8837        */
+8838       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+8838     ! validmemname=compatible locale=en_US;
+8839       %let syscc=0;
+8840       title; footnote;
+8841       ods _all_ close;
+8842       ods listing gpath="%sysfunc(pathname(work))";
+8843       ods graphics off;
+8844       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.GETSTARTED (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+8844     !                                         quit;
+
+
+8845       ods path work.templat(update) sashelp.tmplmst(read);
+8846       
+8847       data getStarted;
+8848       input C1-C5 Y Total;
+8849       datalines;
+
+NOTE: The data set WORK.GETSTARTED has 100 observations and 7 variables.
+
+8950       ;
+8951       proc hpgenselect data=getStarted;
+8952       class C1-C5;
+8953       model Y = C1-C5 / Distribution=Poisson Link=Log;
+8954       run;
+
+NOTE: The HPGENSELECT procedure is executing in single-machine mode.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: There were 100 observations read from the data set WORK.GETSTARTED.
+NOTE: The PROCEDURE HPGENSELECT printed page 652.
+
+8955       
+8956       
+8957       
+8958       
+The SAS System
+
+8959       

@@ -1,0 +1,96 @@
+The SAS System
+
+30710      
+30711      /* STAT-VARIOGRAM-011: VARIOGRAM — NLOPTIONS / PARMS / Parameter Initialization
+30712       * Source: S154 / Chapter 131 / `NLOPTIONS Statement` (PDF pp. 10794–10795); S154 / Chapter 131 / `PARMS Statement` (PDF pp. 10795–10799); S154 /
+30712    !  Chapter 131 / `Parameter Initialization` (PDF pp. 10821–10823).
+30713       * Discriminates: Example 131.2: An Anisotropic Case Study with Surface Trend in the Data; explicit statements: PARMS
+30714       */
+30715      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+30715    ! validmemname=compatible locale=en_US;
+30716      %let syscc=0;
+30717      title; footnote;
+30718      ods _all_ close;
+30719      ods listing gpath="%sysfunc(pathname(work))";
+30720      ods graphics off;
+30721      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.OUTV (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.SEMIVSTOREGAU (memtype=ITEMSTOR).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+30721    !                                         quit;
+
+
+30722      ods path work.templat(update) sashelp.tmplmst(read);
+30723      
+30724      title 'Semivariogram Analysis in Anisotropic Case With Trend Removal';
+30725      data ozoneSet;
+30726      input East North Ozone @@;
+30727      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.OZONESET has 300 observations and 3 variables.
+
+30803      ;
+30804      ods graphics on;
+30805      proc variogram data=ozoneSet;
+30806      compute novariogram nhc=35;
+30807      coord xc=East yc=North;
+30808      var Ozone;
+30809      run;
+
+NOTE: The PROCEDURE VARIOGRAM printed page 1912.
+
+30810      proc glm data=ozoneSet plots=none;
+30811      model ozone = East East*East North North*North;
+30812      output out=gmout predicted=pred residual=ResidualOzone;
+30813      run;
+
+
+NOTE: The data set WORK.GMOUT has 300 observations and 5 variables.
+NOTE: The PROCEDURE GLM printed pages 1913-1914.
+
+30814      proc variogram data=gmout plots(only)=observ;
+30815      compute novariogram nhc=35;
+30816      coord xc=East yc=North;
+30817      var ResidualOzone;
+30818      run;
+
+NOTE: The PROCEDURE VARIOGRAM printed page 1915.
+
+30819      proc variogram data=gmout plot(only)=semivar;
+30820      compute lagd=4 maxlag=16 ndir=12 atol=22.5 bandw=20;
+30821      coord xc=East yc=North;
+30822      var ResidualOzone;
+30823      run;
+
+NOTE: The PROCEDURE VARIOGRAM printed pages 1916-1917.
+
+30824      proc variogram data=gmout plot(only)=fit;
+30825      compute lagd=4 maxlag=16;
+30826      directions 0(22.5,10) 90(22.5,10);
+30827      coord xc=East yc=North;
+30828      model form=exp;
+30829      parms (0.) (2 to 3 by 0.5) (5 to 25 by 10) / hold=(1);
+30830      var ResidualOzone;
+30831      run;
+
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The PROCEDURE VARIOGRAM printed pages 1918-1923.
+
+30832      ods graphics off;
+30833      run;
+30834      quit;
+30835      
+30836      
+30837      
+30838      
+The SAS System
+
+30839      

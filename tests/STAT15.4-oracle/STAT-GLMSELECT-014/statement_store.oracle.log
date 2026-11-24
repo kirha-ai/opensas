@@ -1,0 +1,61 @@
+The SAS System
+
+1186       
+1187       /* STAT-GLMSELECT-014: GLMSELECT — STORE / Using the STORE
+1188        * Source: S154 / Chapter 56 / `STORE Statement` (PDF p. 4356); S154 / Chapter 56 / `Using the STORE Statement` (PDF pp. 4374–4375).
+1189        * Discriminates: Save the fitted item store and inspect it through PROC PLM SHOW ALL.
+1190        */
+1191       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+1191     ! validmemname=compatible locale=en_US;
+1192       %let syscc=0;
+1193       title; footnote;
+1194       ods _all_ close;
+1195       ods listing gpath="%sysfunc(pathname(work))";
+1196       ods graphics off;
+1197       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK._NAMEDAT (memtype=DATA).
+NOTE: Deleting WORK._ORACLE_SCORED (memtype=DATA).
+1197     !                                         quit;
+
+
+1198       ods path work.templat(update) sashelp.tmplmst(read);
+1199       
+1200       proc contents varnum data=sashelp.baseball;
+1201       ods select position;
+1202       run;
+
+NOTE: The PROCEDURE CONTENTS printed page 89.
+
+1203       ods graphics on;
+1204       proc glmselect data=sashelp.baseball plots=all seed=314159;
+1205       class league division;
+1206       model logSalary = nAtBat nHits nHome nRuns nRBI nBB
+1207       yrMajor crAtBat crHits crHome crRuns crRbi
+1208       crBB league division nOuts nAssts nError
+1209       / details=all stats=all;
+1210       
+1211       store out=work._oracle_store;
+1212       run;
+
+NOTE: The GLMSELECT procedure generated the model item store WORK._ORACLE_STORE.
+NOTE: There were 322 observations read from the data set SASHELP.BASEBALL.
+NOTE: The PROCEDURE GLMSELECT printed pages 90-98.
+
+1213       quit;
+1214       
+1215       proc plm restore=work._oracle_store; show all; run;
+
+NOTE: The PROCEDURE PLM printed page 99.
+
+1216       
+1217       
+1218       
+1219       
+The SAS System
+
+1220       

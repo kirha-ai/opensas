@@ -1,0 +1,65 @@
+The SAS System
+
+22783      
+22784      /* STAT-SURVEYMEANS-017: SURVEYMEANS — Official examples and feature integration regression
+22785       * Source: S154 / Chapter 121 / `Examples: SURVEYMEANS Procedure` (PDF pp. 9984–9999).
+22786       * Discriminates: Example 121.4: Analyzing Survey Data with Missing Values
+22787       */
+22788      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+22788    ! validmemname=compatible locale=en_US;
+22789      %let syscc=0;
+22790      title; footnote;
+22791      ods _all_ close;
+22792      ods listing gpath="%sysfunc(pathname(work))";
+22793      ods graphics off;
+22794      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.ICECREAM (memtype=DATA).
+NOTE: Deleting WORK.MYSTAT (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.STUDENTTOTALS (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+22794    !                                         quit;
+
+
+22795      ods path work.templat(update) sashelp.tmplmst(read);
+22796      
+22797      data IceCream;
+22798      input Grade Spending @@;
+22799      if Grade=7 then Prob=20/1824;
+22800      if Grade=8 then Prob=9/1025;
+22801      if Grade=9 then Prob=11/1151;
+22802      Weight=1/Prob;
+22803      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.ICECREAM has 40 observations and 4 variables.
+
+22808      ;
+22809      data StudentTotals;
+22810      input Grade _total_;
+22811      datalines;
+
+NOTE: The data set WORK.STUDENTTOTALS has 3 observations and 2 variables.
+
+22815      ;
+22816      title 'Analysis of Ice Cream Spending';
+22817      proc surveymeans data=IceCream total=StudentTotals nomcar mean sum;
+22818      strata Grade;
+22819      var Spending;
+22820      weight Weight;
+22821      run;
+
+NOTE: The PROCEDURE SURVEYMEANS printed page 1493.
+
+22822      
+22823      
+22824      
+22825      
+The SAS System
+
+22826      

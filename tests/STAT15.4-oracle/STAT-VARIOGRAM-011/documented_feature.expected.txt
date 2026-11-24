@@ -1,0 +1,707 @@
+
+Semivariogram Analysis in Anisotropic Case With Trend Removal
+
+The VARIOGRAM Procedure
+Dependent Variable: Ozone
+
+Number of Observations Read         300
+Number of Observations Used         300
+
+
+              Pairs Information
+
+Number of Lags                              36
+Lag Distance                              4.02
+Maximum Data Distance in East            99.70
+Maximum Data Distance in North           99.40
+Maximum Data Distance                   140.79
+
+
+               Pairwise Distance Intervals
+ 
+                                     Number
+  Lag                                    of    Percentage
+Class    ---------Bounds---------     Pairs      of Pairs
+
+    0          0.00          2.01        52        0.12% 
+    1          2.01          6.03       420        0.94% 
+    2          6.03         10.06       815        1.82% 
+    3         10.06         14.08      1143        2.55% 
+    4         14.08         18.10      1518        3.38% 
+    5         18.10         22.12      1680        3.75% 
+    6         22.12         26.15      1931        4.31% 
+    7         26.15         30.17      2135        4.76% 
+    8         30.17         34.19      2285        5.09% 
+    9         34.19         38.21      2408        5.37% 
+   10         38.21         42.24      2551        5.69% 
+   11         42.24         46.26      2444        5.45% 
+   12         46.26         50.28      2535        5.65% 
+   13         50.28         54.30      2487        5.55% 
+   14         54.30         58.33      2460        5.48% 
+   15         58.33         62.35      2391        5.33% 
+   16         62.35         66.37      2302        5.13% 
+   17         66.37         70.39      2285        5.09% 
+   18         70.39         74.41      2079        4.64% 
+   19         74.41         78.44      1786        3.98% 
+   20         78.44         82.46      1640        3.66% 
+   21         82.46         86.48      1493        3.33% 
+   22         86.48         90.50      1243        2.77% 
+   23         90.50         94.53       925        2.06% 
+   24         94.53         98.55       710        1.58% 
+   25         98.55        102.57       421        0.94% 
+   26        102.57        106.59       274        0.61% 
+   27        106.59        110.62       200        0.45% 
+   28        110.62        114.64       120        0.27% 
+   29        114.64        118.66        55        0.12% 
+   30        118.66        122.68        35        0.08% 
+   31        122.68        126.71        14        0.03% 
+   32        126.71        130.73        11        0.02% 
+   33        130.73        134.75         2        0.00% 
+   34        134.75        138.77         0        0.00% 
+   35        138.77        142.80         0        0.00% 
+
+Semivariogram Analysis in Anisotropic Case With Trend Removal
+
+The GLM Procedure
+
+Number of Observations Read         300
+Number of Observations Used         300
+
+Semivariogram Analysis in Anisotropic Case With Trend Removal
+
+The GLM Procedure
+ 
+Dependent Variable: Ozone   
+
+                                        Sum of
+Source                      DF         Squares     Mean Square    F Value    Pr > F
+
+Model                        4     32262.47637      8065.61909    3053.42    <.0001
+
+Error                      295       779.24363         2.64150                     
+
+Corrected Total            299     33041.72000                                     
+
+
+R-Square     Coeff Var      Root MSE    Ozone Mean
+
+0.976416      0.570791      1.625270      284.7400
+
+
+Source                      DF       Type I SS     Mean Square    F Value    Pr > F
+
+East                         1      4768.55263      4768.55263    1805.24    <.0001
+East*East                    1        80.97240        80.97240      30.65    <.0001
+North                        1     25325.29541     25325.29541    9587.45    <.0001
+North*North                  1      2087.65593      2087.65593     790.33    <.0001
+
+
+Source                      DF     Type III SS     Mean Square    F Value    Pr > F
+
+East                         1        0.605887        0.605887       0.23    0.6323
+East*East                    1      180.207699      180.207699      68.22    <.0001
+North                        1       21.383059       21.383059       8.10    0.0047
+North*North                  1     2087.655926     2087.655926     790.33    <.0001
+
+
+                                    Standard
+Parameter           Estimate           Error    t Value    Pr > |t|
+
+Intercept        270.6798273      0.40595731     666.77      <.0001
+East               0.0065148      0.01360281       0.48      0.6323
+East*East          0.0010726      0.00012987       8.26      <.0001
+North             -0.0369159      0.01297491      -2.85      0.0047
+North*North        0.0035587      0.00012659      28.11      <.0001
+
+Semivariogram Analysis in Anisotropic Case With Trend Removal
+
+The VARIOGRAM Procedure
+Dependent Variable: ResidualOzone
+
+Number of Observations Read         300
+Number of Observations Used         300
+
+
+              Pairs Information
+
+Number of Lags                              36
+Lag Distance                              4.02
+Maximum Data Distance in East            99.70
+Maximum Data Distance in North           99.40
+Maximum Data Distance                   140.79
+
+
+               Pairwise Distance Intervals
+ 
+                                     Number
+  Lag                                    of    Percentage
+Class    ---------Bounds---------     Pairs      of Pairs
+
+    0          0.00          2.01        52        0.12% 
+    1          2.01          6.03       420        0.94% 
+    2          6.03         10.06       815        1.82% 
+    3         10.06         14.08      1143        2.55% 
+    4         14.08         18.10      1518        3.38% 
+    5         18.10         22.12      1680        3.75% 
+    6         22.12         26.15      1931        4.31% 
+    7         26.15         30.17      2135        4.76% 
+    8         30.17         34.19      2285        5.09% 
+    9         34.19         38.21      2408        5.37% 
+   10         38.21         42.24      2551        5.69% 
+   11         42.24         46.26      2444        5.45% 
+   12         46.26         50.28      2535        5.65% 
+   13         50.28         54.30      2487        5.55% 
+   14         54.30         58.33      2460        5.48% 
+   15         58.33         62.35      2391        5.33% 
+   16         62.35         66.37      2302        5.13% 
+   17         66.37         70.39      2285        5.09% 
+   18         70.39         74.41      2079        4.64% 
+   19         74.41         78.44      1786        3.98% 
+   20         78.44         82.46      1640        3.66% 
+   21         82.46         86.48      1493        3.33% 
+   22         86.48         90.50      1243        2.77% 
+   23         90.50         94.53       925        2.06% 
+   24         94.53         98.55       710        1.58% 
+   25         98.55        102.57       421        0.94% 
+   26        102.57        106.59       274        0.61% 
+   27        106.59        110.62       200        0.45% 
+   28        110.62        114.64       120        0.27% 
+   29        114.64        118.66        55        0.12% 
+   30        118.66        122.68        35        0.08% 
+   31        122.68        126.71        14        0.03% 
+   32        126.71        130.73        11        0.02% 
+   33        130.73        134.75         2        0.00% 
+   34        134.75        138.77         0        0.00% 
+   35        138.77        142.80         0        0.00% 
+
+Semivariogram Analysis in Anisotropic Case With Trend Removal
+
+The VARIOGRAM Procedure
+Dependent Variable: ResidualOzone
+
+Number of Observations Read         300
+Number of Observations Used         300
+
+Semivariogram Analysis in Anisotropic Case With Trend Removal
+
+The VARIOGRAM Procedure
+Dependent Variable: ResidualOzone
+
+   Empirical Semivariogram at Angle=0
+ 
+  Lag      Pair     Average
+Class     Count    Distance     Semivariance 
+
+    0        13        1.29       0.799
+    1        97        4.37       1.966
+    2       177        8.08       2.310
+    3       300       12.09       2.504
+    4       350       16.14       2.664
+    5       416       20.01       2.162
+    6       482       24.01       2.122
+    7       546       28.04       2.684
+    8       601       32.00       2.959
+    9       571       36.11       2.361
+   10       674       39.93       2.332
+   11       626       44.04       2.555
+   12       657       48.03       2.571
+   13       662       52.01       3.116
+   14       601       56.00       3.147
+   15       546       59.93       2.549
+   16       524       63.91       2.787
+
+
+  Empirical Semivariogram at Angle=15
+ 
+  Lag      Pair     Average
+Class     Count    Distance     Semivariance 
+
+    0        15        1.16       0.584
+    1       107        4.30       1.928
+    2       185        8.17       2.495
+    3       296       12.09       2.459
+    4       355       16.08       2.526
+    5       429       20.07       2.089
+    6       495       23.97       2.038
+    7       542       28.01       2.539
+    8       596       32.00       3.356
+    9       580       36.09       2.989
+   10       643       39.91       2.587
+   11       639       43.98       2.580
+   12       642       48.07       2.505
+   13       671       51.99       2.836
+   14       619       56.02       3.149
+   15       551       60.03       2.787
+   16       524       63.94       3.018
+
+
+  Empirical Semivariogram at Angle=30
+ 
+  Lag      Pair     Average
+Class     Count    Distance     Semivariance 
+
+    0        14        1.20       0.628
+    1       109        4.40       1.683
+    2       205        8.12       2.277
+    3       288       12.06       2.192
+    4       360       16.10       2.427
+    5       431       20.11       2.004
+    6       466       24.02       2.256
+    7       544       28.04       2.531
+    8       626       32.03       3.057
+    9       617       36.09       3.092
+   10       630       39.97       2.916
+   11       604       44.00       2.709
+   12       644       48.08       2.477
+   13       665       52.03       2.875
+   14       569       56.04       2.817
+   15       523       59.99       2.755
+   16       499       63.98       2.620
+
+
+  Empirical Semivariogram at Angle=45
+ 
+  Lag      Pair     Average
+Class     Count    Distance     Semivariance 
+
+    0        15        1.21       0.514
+    1       104        4.46       1.471
+    2       218        8.14       2.054
+    3       293       12.06       2.340
+    4       386       16.10       2.420
+    5       432       20.12       2.455
+    6       470       24.09       2.421
+    7       527       28.02       2.778
+    8       592       32.07       2.987
+    9       617       36.06       3.129
+   10       628       40.00       3.005
+   11       578       43.99       2.574
+   12       611       48.02       2.591
+   13       636       52.01       2.751
+   14       556       55.97       2.722
+   15       494       60.06       2.686
+   16       465       64.02       2.328
+
+
+  Empirical Semivariogram at Angle=60
+ 
+  Lag      Pair     Average
+Class     Count    Distance     Semivariance 
+
+    0        12        1.29       0.484
+    1       107        4.44       1.025
+    2       230        8.13       1.705
+    3       287       12.11       2.147
+    4       379       16.16       2.236
+    5       416       20.05       2.394
+    6       462       24.12       2.651
+    7       519       28.07       2.931
+    8       600       32.06       2.696
+    9       627       35.99       2.888
+   10       649       40.06       3.508
+   11       617       44.00       2.787
+   12       630       48.03       3.006
+   13       634       52.02       2.892
+   14       572       55.97       2.828
+   15       492       60.05       2.396
+   16       454       64.00       2.400
+
+
+  Empirical Semivariogram at Angle=75
+ 
+  Lag      Pair     Average
+Class     Count    Distance     Semivariance 
+
+    0        16        1.30       0.399
+    1       119        4.35       0.890
+    2       227        8.17       1.330
+    3       265       12.09       1.887
+    4       372       16.15       1.997
+    5       448       20.03       2.097
+    6       478       24.14       2.313
+    7       530       28.01       2.648
+    8       564       32.04       2.698
+    9       646       35.96       2.730
+   10       673       40.05       3.146
+   11       644       44.02       2.838
+   12       664       47.99       3.023
+   13       632       52.01       2.692
+   14       609       55.87       2.763
+   15       500       60.00       2.556
+   16       455       63.94       2.705
+
+
+  Empirical Semivariogram at Angle=90
+ 
+  Lag      Pair     Average
+Class     Count    Distance     Semivariance 
+
+    0        13        1.31       0.243
+    1       119        4.27       0.767
+    2       222        8.08       1.284
+    3       268       12.07       1.457
+    4       384       16.09       1.960
+    5       445       20.03       1.791
+    6       462       24.04       2.396
+    7       535       28.01       2.622
+    8       577       31.99       2.771
+    9       636       35.92       2.805
+   10       647       39.99       3.248
+   11       632       44.01       2.911
+   12       667       48.02       3.031
+   13       610       52.01       2.655
+   14       620       55.92       2.892
+   15       486       59.99       2.603
+   16       473       63.89       2.766
+
+
+  Empirical Semivariogram at Angle=105
+ 
+  Lag      Pair     Average
+Class     Count    Distance     Semivariance 
+
+    0        11        1.35       0.155
+    1       114        4.29       0.801
+    2       213        8.13       1.344
+    3       261       12.04       1.683
+    4       394       16.06       2.217
+    5       416       20.04       2.274
+    6       464       24.02       2.377
+    7       537       28.01       2.717
+    8       558       31.93       2.671
+    9       588       35.99       2.795
+   10       615       39.97       2.684
+   11       602       44.04       2.684
+   12       638       47.99       2.698
+   13       584       52.02       2.472
+   14       606       55.86       2.672
+   15       505       59.96       2.589
+   16       448       63.91       2.857
+
+
+  Empirical Semivariogram at Angle=120
+ 
+  Lag      Pair     Average
+Class     Count    Distance     Semivariance 
+
+    0        10        1.07       0.201
+    1       107        4.29       0.831
+    2       195        8.27       1.706
+    3       282       12.09       2.183
+    4       401       16.01       2.769
+    5       380       20.04       2.926
+    6       477       23.93       2.785
+    7       522       28.08       3.043
+    8       543       31.95       2.710
+    9       560       36.02       2.781
+   10       578       39.95       2.878
+   11       575       44.00       2.781
+   12       597       48.02       2.445
+   13       547       51.93       2.268
+   14       513       55.89       2.381
+   15       486       59.94       2.573
+   16       439       63.98       2.654
+
+
+  Empirical Semivariogram at Angle=135
+ 
+  Lag      Pair     Average
+Class     Count    Distance     Semivariance 
+
+    0        10        1.12       0.489
+    1        96        4.23       1.075
+    2       188        8.33       2.325
+    3       279       12.16       2.828
+    4       373       16.03       3.053
+    5       378       20.04       3.387
+    6       491       23.96       2.545
+    7       517       28.10       2.974
+    8       499       31.99       2.436
+    9       560       36.01       2.545
+   10       586       39.99       2.512
+   11       582       44.04       2.558
+   12       602       48.03       2.281
+   13       547       51.88       2.361
+   14       495       55.90       2.274
+   15       499       59.99       2.559
+   16       416       63.90       2.515
+
+
+  Empirical Semivariogram at Angle=150
+ 
+  Lag      Pair     Average
+Class     Count    Distance     Semivariance 
+
+    0        13        1.17       0.758
+    1        88        4.28       1.486
+    2       177        8.21       2.479
+    3       296       12.14       2.813
+    4       365       16.06       3.122
+    5       410       20.04       2.925
+    6       484       23.99       2.440
+    7       527       28.09       2.872
+    8       515       32.07       2.434
+    9       589       36.02       2.207
+   10       628       39.95       2.297
+   11       560       44.06       2.556
+   12       627       47.99       2.303
+   13       569       51.88       2.700
+   14       492       55.99       2.557
+   15       519       60.00       2.799
+   16       440       63.88       2.668
+
+
+  Empirical Semivariogram at Angle=165
+ 
+  Lag      Pair     Average
+Class     Count    Distance     Semivariance 
+
+    0        11        1.34       0.814
+    1        81        4.27       1.974
+    2       178        8.06       2.682
+    3       305       12.14       2.850
+    4       360       16.10       2.863
+    5       412       20.02       2.724
+    6       484       24.01       2.132
+    7       529       28.04       2.837
+    8       536       32.04       2.715
+    9       561       36.01       2.245
+   10       654       39.92       2.164
+   11       595       44.05       2.273
+   12       632       48.00       2.540
+   13       614       51.94       3.036
+   14       588       55.99       2.956
+   15       525       59.94       2.698
+   16       488       63.96       2.643
+
+Semivariogram Analysis in Anisotropic Case With Trend Removal
+
+The VARIOGRAM Procedure
+Dependent Variable: ResidualOzone
+
+Number of Observations Read         300
+Number of Observations Used         300
+
+Semivariogram Analysis in Anisotropic Case With Trend Removal
+
+The VARIOGRAM Procedure
+Dependent Variable: ResidualOzone
+
+   Empirical Semivariogram at Angle=0
+ 
+  Lag      Pair     Average
+Class     Count    Distance     Semivariance 
+
+    0        13        1.29       0.799
+    1        97        4.37       1.966
+    2       177        8.08       2.310
+    3       300       12.09       2.504
+    4       350       16.14       2.664
+    5       416       20.01       2.162
+    6       482       24.01       2.122
+    7       509       27.99       2.675
+    8       490       31.96       2.966
+    9       411       36.00       2.324
+   10       441       39.87       2.393
+   11       392       44.00       2.474
+   12       351       48.01       2.675
+   13       343       51.92       3.241
+   14       329       55.97       3.168
+   15       262       59.94       2.524
+   16       274       63.96       2.983
+
+
+  Empirical Semivariogram at Angle=90
+ 
+  Lag      Pair     Average
+Class     Count    Distance     Semivariance 
+
+    0        13        1.31       0.243
+    1       119        4.27       0.767
+    2       222        8.08       1.284
+    3       268       12.07       1.457
+    4       384       16.09       1.960
+    5       445       20.03       1.791
+    6       462       24.04       2.396
+    7       503       27.97       2.578
+    8       461       31.98       2.886
+    9       475       35.91       2.747
+   10       433       39.98       2.786
+   11       386       43.96       2.927
+   12       371       47.94       2.954
+   13       320       51.92       2.614
+   14       321       55.86       2.755
+   15       266       60.04       2.421
+   16       235       63.86       2.612
+
+Semivariogram Analysis in Anisotropic Case With Trend Removal
+
+The VARIOGRAM Procedure
+Dependent Variable: ResidualOzone
+Angle: 0
+Current Model: Exponential
+
+Semivariogram Model Fitting at Angle=0
+
+Name     Exponential
+Label    Exp        
+
+
+                   Parameter Search
+ 
+                                             Objective
+       Set    Nugget     Scale     Range      Function
+
+         1         0         2         5     391.06593
+         2         0         2        15        1740.0
+         3         0         2        25        5167.5
+         4         0       2.5         5      64.86565
+         5         0       2.5        15     664.03665
+         6         0       2.5        25        2480.5
+         7         0         3         5      72.86743
+         8         0         3        15     305.53306
+         9         0         3        25        1305.0
+
+
+       Model Information
+ 
+              Initial
+Parameter       Value    Status
+
+Nugget              0    Fixed 
+Scale          2.5000          
+Range          5.0000          
+
+
+           Optimization Information
+
+Optimization Technique        Dual Quasi-Newton
+Parameters in Optimization    2                
+Fixed Parameters              1                
+Lower Boundaries              2                
+Upper Boundaries              0                
+Starting Values From          PARMS Statement  
+
+Semivariogram Analysis in Anisotropic Case With Trend Removal
+
+The VARIOGRAM Procedure
+Dependent Variable: ResidualOzone
+Angle: 0
+Current Model: Exponential
+
+Dual Quasi-Newton Optimization
+
+Dual Broyden - Fletcher - Goldfarb - Shanno Update (DBFGS)
+Hessian Computed by Finite Differences (Using Analytic Gradient)
+
+                                            Optimization Results
+
+Iterations                                          7  Function Calls                                     25
+Gradient Calls                                      0  Active Constraints                                  0
+Objective Function                       43.351025937  Max Abs Gradient Element                 1.8101435E-8
+Slope of Search Direction                -1.14976E-11                                                       
+
+Convergence criterion (GCONV=1E-8) satisfied.                                                     
+
+
+                      Parameter Estimates
+ 
+                            Approx                       Approx
+Parameter    Estimate    Std Error    DF    t Value    Pr > |t|
+
+Scale          2.6657      0.03830    15      69.60      <.0001
+Range          3.7277       0.5609    15       6.65      <.0001
+
+
+           Fit Summary
+ 
+           Weighted
+Model           SSE           AIC
+
+Exp        43.35103      19.91399
+
+Semivariogram Analysis in Anisotropic Case With Trend Removal
+
+The VARIOGRAM Procedure
+Dependent Variable: ResidualOzone
+Angle: 90
+Current Model: Exponential
+
+Semivariogram Model Fitting at Angle=90
+
+Name     Exponential
+Label    Exp        
+
+
+                   Parameter Search
+ 
+                                             Objective
+       Set    Nugget     Scale     Range      Function
+
+         1         0         2         5     302.54551
+         2         0         2        15     635.93338
+         3         0         2        25        1996.0
+         4         0       2.5         5      95.09939
+         5         0       2.5        15     104.56776
+         6         0       2.5        25     662.06813
+         7         0         3         5     155.50670
+         8         0         3        15      20.48482
+         9         0         3        25     190.30599
+
+
+       Model Information
+ 
+              Initial
+Parameter       Value    Status
+
+Nugget              0    Fixed 
+Scale          3.0000          
+Range         15.0000          
+
+
+           Optimization Information
+
+Optimization Technique        Dual Quasi-Newton
+Parameters in Optimization    2                
+Fixed Parameters              1                
+Lower Boundaries              2                
+Upper Boundaries              0                
+Starting Values From          PARMS Statement  
+
+Semivariogram Analysis in Anisotropic Case With Trend Removal
+
+The VARIOGRAM Procedure
+Dependent Variable: ResidualOzone
+Angle: 90
+Current Model: Exponential
+
+Dual Quasi-Newton Optimization
+
+Dual Broyden - Fletcher - Goldfarb - Shanno Update (DBFGS)
+Hessian Computed by Finite Differences (Using Analytic Gradient)
+
+                                            Optimization Results
+
+Iterations                                          6  Function Calls                                     20
+Gradient Calls                                      0  Active Constraints                                  0
+Objective Function                       19.122459419  Max Abs Gradient Element                 1.2247385E-7
+Slope of Search Direction                 -2.6508E-11                                                       
+
+Convergence criterion (GCONV=1E-8) satisfied.                                                     
+
+
+                      Parameter Estimates
+ 
+                            Approx                       Approx
+Parameter    Estimate    Std Error    DF    t Value    Pr > |t|
+
+Scale          2.9199      0.07007    15      41.67      <.0001
+Range         14.7576       0.9530    15      15.49      <.0001
+
+
+           Fit Summary
+ 
+           Weighted
+Model           SSE           AIC
+
+Exp        19.12246       6.00005

@@ -1,0 +1,88 @@
+The SAS System
+
+4755       
+4756       /* STAT-MODECLUS-007: MODECLUS — Official examples and feature integration regression
+4757        * Source: S154 / Chapter 85 / `Examples: MODECLUS Procedure` (PDF pp. 6844–6888).
+4758        * Discriminates: Example 85.3: Cluster Analysis with Significance Tests
+4759        */
+4760       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+4760     ! validmemname=compatible locale=en_US;
+4761       %let syscc=0;
+4762       title; footnote;
+4763       ods _all_ close;
+4764       ods listing gpath="%sysfunc(pathname(work))";
+4765       ods graphics off;
+4766       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.EXAMPLE (memtype=DATA).
+NOTE: Deleting WORK.OUT (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+4766     !                                         quit;
+
+
+4767       ods path work.templat(update) sashelp.tmplmst(read);
+4768       
+4769       title 'Modeclus Analysis with the JOIN= option';
+4770       title2 'A Normal Cluster Surrounded by a Ring Cluster';
+4771       data circle;
+4772       keep x y;
+4773       c=1;
+4774       do n=1 to 30;
+4775       x=rannor(5);
+4776       y=rannor(5);
+4777       output;
+4778       end;
+4779       c=2;
+4780       do n=1 to 300;
+4781       x=rannor(5);
+4782       y=rannor(5);
+4783       z=rannor(5)+8;
+4784       l=z/sqrt(x**2+y**2);
+4785       x=x*l;
+4786       y=y*l;
+4787       output;
+4788       end;
+4789       run;
+
+NOTE: The data set WORK.CIRCLE has 330 observations and 2 variables.
+
+4790       proc modeclus data=circle m=1 r=1 to 3.5 by .25 join=20 short;
+4791       run;
+
+NOTE: No VAR statement is given. All numerical variables not named elsewhere make up the first set of variables.
+NOTE: The PROCEDURE MODECLUS printed page 356.
+
+4792       proc modeclus data=circle m=1 r=2.5 join out=out;
+4793       run;
+
+NOTE: No VAR statement is given. All numerical variables not named elsewhere make up the first set of variables.
+NOTE: The data set WORK.OUT has 1980 observations and 8 variables.
+NOTE: The PROCEDURE MODECLUS printed pages 357-358.
+
+4794       proc sgplot data=out noautolegend;
+4795       yaxis values=(-10 to 10 by 5);
+4796       xaxis values=(-15 to 15 by 5);
+4797       scatter y=y x=x / group=cluster Markerchar=cluster;
+4798       by _NJOIN_;
+4799       run;
+
+NOTE: Listing image output written to /saswork/SAS_work0B6E00009FAA_odaws02-euw1.oda.sas.com/SAS_work530800009FAA_odaws02-euw1.oda.sas.com/SGPlot27.png.
+NOTE: Listing image output written to /saswork/SAS_work0B6E00009FAA_odaws02-euw1.oda.sas.com/SAS_work530800009FAA_odaws02-euw1.oda.sas.com/SGPlot28.png.
+NOTE: Listing image output written to /saswork/SAS_work0B6E00009FAA_odaws02-euw1.oda.sas.com/SAS_work530800009FAA_odaws02-euw1.oda.sas.com/SGPlot29.png.
+NOTE: Listing image output written to /saswork/SAS_work0B6E00009FAA_odaws02-euw1.oda.sas.com/SAS_work530800009FAA_odaws02-euw1.oda.sas.com/SGPlot30.png.
+NOTE: Listing image output written to /saswork/SAS_work0B6E00009FAA_odaws02-euw1.oda.sas.com/SAS_work530800009FAA_odaws02-euw1.oda.sas.com/SGPlot31.png.
+NOTE: Listing image output written to /saswork/SAS_work0B6E00009FAA_odaws02-euw1.oda.sas.com/SAS_work530800009FAA_odaws02-euw1.oda.sas.com/SGPlot32.png.
+NOTE: There were 1980 observations read from the data set WORK.OUT.
+
+4800       
+4801       
+4802       
+4803       
+The SAS System
+
+4804       

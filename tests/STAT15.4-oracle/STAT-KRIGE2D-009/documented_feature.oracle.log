@@ -1,0 +1,113 @@
+The SAS System
+
+10420      
+10421      /* STAT-KRIGE2D-009: KRIGE2D — Zonal Anisotropy / Anisotropic Nugget Effect / Introduction
+10422       * Source: S154 / Chapter 74 / `Zonal Anisotropy` (PDF pp. 5478–5482); S154 / Chapter 74 / `Anisotropic Nugget Effect` (PDF p. 5482); S154 /
+10422    ! Chapter 74 / `Introduction` (PDF pp. 5482–5483).
+10423       * Discriminates: Example 74.2: Investigating the Effect of Model Specification on Spatial Prediction
+10424       */
+10425      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+10425    ! validmemname=compatible locale=en_US;
+10426      %let syscc=0;
+10427      title; footnote;
+10428      ods _all_ close;
+10429      ods listing gpath="%sysfunc(pathname(work))";
+10430      ods graphics off;
+10431      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.COMPARE (memtype=DATA).
+NOTE: Deleting WORK.PRED1 (memtype=DATA).
+NOTE: Deleting WORK.PRED2 (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.SEMIVSTOREGAU (memtype=ITEMSTOR).
+NOTE: Deleting WORK.SEMIVSTORESPH (memtype=ITEMSTOR).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.THICK (memtype=DATA).
+10431    !                                         quit;
+
+
+10432      ods path work.templat(update) sashelp.tmplmst(read);
+10433      
+10434      title 'Effect of Model Specification on Prediction';
+10435      data thick;
+10436      input East North Thick @@;
+10437      label Thick='Coal Seam Thickness';
+10438      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.THICK has 75 observations and 3 variables.
+
+10464      ;
+10465      ods graphics on;
+10466      proc variogram data=thick noprint;
+10467      store out=SemivStoreGau / label='Thickness Gaussian Model';
+10468      compute lagd=7 maxlag=10;
+10469      coord xc=East yc=North;
+10470      model form=gau;
+10471      var Thick;
+10472      run;
+
+NOTE: No DIRECTIONS statement and no NDIRECTIONS=, or NDIRECTIONS=0 specified: Computing omnidirectional semivariogram.
+
+10473      proc krige2d data=thick outest=pred1 noprint;
+10474      restore in=SemivStoreGau;
+10475      coordinates xc=East yc=North;
+10476      predict var=Thick r=60;
+10477      model storeselect;
+10478      grid x=0 to 100 by 10 y=0 to 100 by 10;
+10479      run;
+
+NOTE: The data set WORK.PRED1 has 121 observations and 7 variables.
+
+10480      proc variogram data=thick plots(only)=fit;
+10481      store out=SemivStoreSph / label='Thickness Sph Model';
+10482      compute lagd=7 maxlag=10;
+10483      coord xc=East yc=North;
+10484      model form=sph;
+10485      var Thick;
+10486      run;
+
+NOTE: No DIRECTIONS statement and no NDIRECTIONS=, or NDIRECTIONS=0 specified: Computing omnidirectional semivariogram.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The PROCEDURE VARIOGRAM printed pages 742-745.
+
+10487      proc krige2d data=thick outest=pred2 noprint;
+10488      restore in=SemivStoreSph;
+10489      coordinates xc=East yc=North;
+10490      predict var=Thick r=60;
+10491      model storeselect;
+10492      grid x=0 to 100 by 10 y=0 to 100 by 10;
+10493      run;
+
+NOTE: The data set WORK.PRED2 has 121 observations and 7 variables.
+
+10494      data compare;
+10495      merge pred1(rename=(estimate=g_prd stderr=g_std))
+10496      pred2(rename=(estimate=s_prd stderr=s_std));
+10497      prdRelDif = ((g_prd-s_prd) / s_prd) * 100;
+10498      stdRelDif = ((g_std-s_std) / s_std) * 100;
+10499      run;
+
+NOTE: There were 121 observations read from the data set WORK.PRED1.
+NOTE: There were 121 observations read from the data set WORK.PRED2.
+NOTE: The data set WORK.COMPARE has 121 observations and 11 variables.
+
+10500      proc means data=compare;
+10501      var prdRelDif stdRelDif;
+10502      run;
+
+NOTE: There were 121 observations read from the data set WORK.COMPARE.
+NOTE: The PROCEDURE MEANS printed page 746.
+
+10503      ods graphics off;
+10504      run;
+10505      quit;
+10506      
+10507      
+10508      
+10509      
+The SAS System
+
+10510      

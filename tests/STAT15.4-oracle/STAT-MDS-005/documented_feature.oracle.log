@@ -1,0 +1,42 @@
+The SAS System
+
+2007       
+2008       /* STAT-MDS-005: MDS — INITIAL= Data Set
+2009        * Source: S154 / Chapter 81 / `INITIAL= Data Set` (PDF p. 6400).
+2010        * Discriminates: Getting Started: MDS Procedure
+2011        */
+2012       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+2012     ! validmemname=compatible locale=en_US;
+2013       %let syscc=0;
+2014       title; footnote;
+2015       ods _all_ close;
+2016       ods listing gpath="%sysfunc(pathname(work))";
+2017       ods graphics off;
+2018       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+2018     !                                         quit;
+
+
+2019       ods path work.templat(update) sashelp.tmplmst(read);
+2020       
+2021       title 'Analysis of Flying Mileages between Ten U.S. Cities';
+2022       ods graphics on;
+2023       proc mds data=sashelp.mileages level=absolute;
+2024       id city;
+2025       run;
+
+NOTE: The PROCEDURE MDS printed page 153.
+
+2026       
+2027       
+2028       
+2029       
+The SAS System
+
+2030       

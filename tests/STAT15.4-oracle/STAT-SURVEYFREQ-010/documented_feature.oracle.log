@@ -1,0 +1,59 @@
+The SAS System
+
+19425      
+19426      /* STAT-SURVEYFREQ-010: SURVEYFREQ — Expected Weighted Frequency
+19427       * Source: S154 / Chapter 118 / `Expected Weighted Frequency` (PDF p. 9652).
+19428       * Discriminates: Verified default procedure context
+19429       */
+19430      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+19430    ! validmemname=compatible locale=en_US;
+19431      %let syscc=0;
+19432      title; footnote;
+19433      ods _all_ close;
+19434      ods listing gpath="%sysfunc(pathname(work))";
+19435      ods graphics off;
+19436      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SURVEY (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+19436    !                                         quit;
+
+
+19437      ods path work.templat(update) sashelp.tmplmst(read);
+19438      
+19439      data survey;
+19440      do state=1 to 2;
+19441      do school=1 to 4;
+19442      do id=1 to 6;
+19443      response=1+mod(id+school,3);
+19444      schooltype=1+mod(school,2);
+19445      samplingweight=2+state+school/10;
+19446      output;
+19447      end;
+19448      end;
+19449      end;
+19450      run;
+
+NOTE: The data set WORK.SURVEY has 48 observations and 6 variables.
+
+19451      proc surveyfreq data=survey;
+19452      strata state;
+19453      cluster school;
+19454      weight samplingweight;
+19455      tables schooltype*response / row chisq;
+19456      run;
+
+NOTE: The Rao-Scott chi-square test cannot be computed for the table of schooltype by response because the design correction is not positive.
+NOTE: The PROCEDURE SURVEYFREQ printed page 1386.
+
+19457      
+19458      
+19459      
+19460      
+The SAS System
+
+19461      

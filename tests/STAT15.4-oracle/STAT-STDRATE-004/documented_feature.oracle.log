@@ -1,0 +1,59 @@
+The SAS System
+
+18601      
+18602      /* STAT-STDRATE-004: STDRATE — Direct Standardization / Mantel-Haenszel Effect Estimation / Indirect Standardization and Standardized
+18602    ! Morbidity/Mortality Ratio
+18603       * Source: S154 / Chapter 116 / `Direct Standardization` (PDF pp. 9507–9509); S154 / Chapter 116 / `Mantel-Haenszel Effect Estimation` (PDF pp.
+18603    ! 9509–9511); S154 / Chapter 116 / `Indirect Standardization and Standardized Morbidity/Mortality Ratio` (PDF pp. 9511–9514).
+18604       * Discriminates: Example 116.2: Computing Mantel-Haenszel Risk Estimation
+18605       */
+18606      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+18606    ! validmemname=compatible locale=en_US;
+18607      %let syscc=0;
+18608      title; footnote;
+18609      ods _all_ close;
+18610      ods listing gpath="%sysfunc(pathname(work))";
+18611      ods graphics off;
+
+
+18612      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.FLORIDA_C43 (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.US_C43 (memtype=DATA).
+18612    !                                         quit;
+
+
+18613      ods path work.templat(update) sashelp.tmplmst(read);
+18614      
+18615      data School;
+18616      input Smoking $ Pet $ Grade $ Case Student;
+18617      datalines;
+
+NOTE: The data set WORK.SCHOOL has 12 observations and 5 variables.
+
+18630      ;
+18631      ods graphics on;
+18632      proc stdrate data=School
+18633      method=mh
+18634      stat=risk
+18635      effect=diff
+18636      plots=all
+18637      ;
+18638      population group=Smoking event=Case total=Student;
+18639      strata Pet Grade / order=data stats(cl=none) effect;
+18640      run;
+
+NOTE: The PROCEDURE STDRATE printed pages 1304-1305.
+
+18641      
+18642      
+18643      
+18644      
+The SAS System
+
+18645      

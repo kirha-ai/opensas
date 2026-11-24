@@ -1,0 +1,72 @@
+The SAS System
+
+23666      
+23667      /* STAT-GLIMMIX-008: GLIMMIX — Pseudo-likelihood Estimation Based on Linearization / Singly or Doubly Iterative Fitting / Default Estimation
+23667    ! Techniques
+23668       * Source: S154 / Chapter 52 / `Pseudo-likelihood Estimation Based on Linearization` (PDF pp. 3830–3835); S154 / Chapter 52 / `Singly or Doubly
+23668    ! Iterative Fitting` (PDF pp. 3884–3886); S154 / Chapter 52 / `Default Estimation Techniques` (PDF pp. 3886–3887).
+23669       * Discriminates: Getting Started: GLIMMIX Procedure
+23670       */
+23671      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+23671    ! validmemname=compatible locale=en_US;
+23672      %let syscc=0;
+23673      title; footnote;
+23674      ods _all_ close;
+23675      ods listing gpath="%sysfunc(pathname(work))";
+23676      ods graphics off;
+23677      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.FOOTSHAPE (memtype=DATA).
+NOTE: Deleting WORK.FOOT_MV (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.SOLR (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+23677    !                                         quit;
+
+
+23678      ods path work.templat(update) sashelp.tmplmst(read);
+23679      
+23680      data multicenter;
+23681      input center group$ n sideeffect;
+23682      datalines;
+
+NOTE: The data set WORK.MULTICENTER has 30 observations and 4 variables.
+
+23713      ;
+23714      proc glimmix data=multicenter;
+23715      class center group;
+23716      model sideeffect/n = group / solution;
+23717      random intercept / subject=center;
+23718      run;
+
+
+
+NOTE: Convergence criterion (PCONV=1.11022E-8) satisfied.
+NOTE: The PROCEDURE GLIMMIX printed page 2409.
+
+23719      ods select lsmeans;
+23720      proc glimmix data=multicenter;
+23721      class center group;
+23722      model sideeffect/n = group / solution;
+23723      random intercept / subject=center;
+23724      lsmeans group / cl ilink;
+23725      run;
+
+
+
+NOTE: Convergence criterion (PCONV=1.11022E-8) satisfied.
+NOTE: The PROCEDURE GLIMMIX printed page 2410.
+
+23726      
+23727      
+23728      
+23729      
+The SAS System
+
+23730      

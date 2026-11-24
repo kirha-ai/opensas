@@ -1,0 +1,52 @@
+The SAS System
+
+6841       
+6842       /* STAT-HPSPLIT-014: HPSPLIT — PERFORMANCE
+6843        * Source: S154 / Chapter 68 / `PERFORMANCE Statement` (PDF p. 5095).
+6844        * Discriminates: Explicit single-thread performance settings with the documented baseline computation.
+6845        */
+6846       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+6846     ! validmemname=compatible locale=en_US;
+6847       %let syscc=0;
+6848       title; footnote;
+6849       ods _all_ close;
+6850       ods listing gpath="%sysfunc(pathname(work))";
+6851       ods graphics off;
+6852       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.HPSPLOUT (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+6852     !                                         quit;
+
+
+6853       ods path work.templat(update) sashelp.tmplmst(read);
+6854       
+6855       ods graphics on;
+6856       proc hpsplit data=sashelp.baseball seed=123;
+6857       class league division;
+6858       model logSalary = nAtBat nHits nHome nRuns nRBI nBB
+6859       yrMajor crAtBat crHits crHome crRuns crRbi
+6860       crBB league division nOuts nAssts nError;
+6861       output out=hpsplout;
+6862       
+6863       performance nthreads=1;
+6864       run;
+
+NOTE: The ASSIGNMISSING= option has not been specified.  Because of this, all observations with missing values in the explanatory variables will be excluded 
+      from tree construction.
+NOTE: The HPSPLIT procedure is executing in single-machine mode.
+NOTE: Cross-validating using 10 folds.
+NOTE: There were 322 observations read from the data set SASHELP.BASEBALL.
+NOTE: The data set WORK.HPSPLOUT has 322 observations and 4 variables.
+NOTE: The PROCEDURE HPSPLIT printed pages 493-494.
+
+6865       
+6866       
+6867       
+6868       
+The SAS System
+
+6869       

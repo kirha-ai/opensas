@@ -1,0 +1,419 @@
+The SAS System
+
+6079       
+6080       /* STAT-PLS-008: PLS — ODS Graphics
+6081        * Source: S154 / Chapter 95 / `ODS Graphics` (PDF pp. 7706–7708).
+6082        * Discriminates: Getting Started: PLS Procedure
+6083        */
+6084       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+6084     ! validmemname=compatible locale=en_US;
+6085       %let syscc=0;
+6086       title; footnote;
+6087       ods _all_ close;
+6088       ods listing gpath="%sysfunc(pathname(work))";
+6089       ods graphics off;
+6090       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.ALL (memtype=DATA).
+NOTE: Deleting WORK.NEWOBS (memtype=DATA).
+NOTE: Deleting WORK.PRED (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SAMPLE (memtype=DATA).
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+6090     !                                         quit;
+
+
+6091       ods path work.templat(update) sashelp.tmplmst(read);
+6092       
+6093       ods graphics on;
+6094       ods trace on;
+6095       ods trace on;
+6096       data Sample;
+6097       input obsnam $ v1-v27 ls ha dt @@;
+6098       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.SAMPLE has 16 observations and 31 variables.
+
+6147       ;
+6148       proc pls data=sample;
+6149       model ls ha dt = v1-v27;
+6150       run;
+
+
+Output Added:
+-------------
+Name:       ModelInfo
+Label:      Model Information
+Template:   Stat.PLS.ModelInfo
+Path:       PLS.ModelInfo
+-------------
+
+Output Added:
+-------------
+Name:       NObs
+Label:      Number of Observations
+Template:   STAT.PLS.NObs
+Path:       PLS.NObs
+-------------
+NOTE: Maximum number of factors to extract set to 15.  This may be too high; you should consider using either the NFAC= option or the CV= option to set the 
+      number of factors.
+
+Output Added:
+-------------
+Name:       PercentVariation
+Label:      Percent Variation Accounted for by Extracted Factors
+Template:   STAT.PLS.PercentVariation
+Path:       PLS.PercentVariation
+-------------
+
+Output Added:
+-------------
+Name:       R2Plot
+Label:      R-Square Plot
+Template:   Stat.PLS.Graphics.R2Plot
+Path:       PLS.R2Plot
+-------------
+
+Output Added:
+-------------
+Name:       CorrLoadPlot
+Label:      Correlation Loading Plot for Factors 1 and 2
+Template:   Stat.PLS.Graphics.CorrLoadPlot
+Path:       PLS.CorrLoadPlot
+-------------
+NOTE: There were 16 observations read from the data set WORK.SAMPLE.
+NOTE: The PROCEDURE PLS printed pages 495-496.
+
+6151       proc pls data=sample cv=split;
+6152       model ls ha dt = v1-v27;
+6153       run;
+
+
+Output Added:
+-------------
+Name:       ModelInfo
+Label:      Model Information
+Template:   Stat.PLS.ModelInfo
+Path:       PLS.ModelInfo
+-------------
+
+Output Added:
+-------------
+Name:       NObs
+Label:      Number of Observations
+Template:   STAT.PLS.NObs
+Path:       PLS.NObs
+-------------
+NOTE: Maximum number of factors to extract set to 15.
+
+Output Added:
+-------------
+Name:       ResidualSummary
+Label:      Residual Summary
+Template:   STAT.PLS.ResidualSummary
+Path:       PLS.CV.ResidualSummary
+-------------
+
+Output Added:
+-------------
+Name:       CVResults
+Label:      Results
+Template:   Stat.PLS.CVResults
+Path:       PLS.CV.CVResults
+-------------
+
+Output Added:
+-------------
+Name:       PercentVariation
+Label:      Percent Variation Accounted for by Extracted Factors
+Template:   STAT.PLS.PercentVariation
+Path:       PLS.PercentVariation
+-------------
+
+Output Added:
+-------------
+Name:       CVPlot
+Label:      Cross-Validation Plot
+Template:   Stat.PLS.Graphics.CVPlot
+Path:       PLS.CVPlot
+-------------
+
+Output Added:
+-------------
+Name:       CorrLoadPlot
+Label:      Correlation Loading Plot for Factors 1 and 2
+Template:   Stat.PLS.Graphics.CorrLoadPlot
+Path:       PLS.CorrLoadPlot
+-------------
+NOTE: There were 16 observations read from the data set WORK.SAMPLE.
+NOTE: The PROCEDURE PLS printed pages 497-498.
+
+6154       proc pls data=sample cv=split cvtest(seed=12345);
+6155       model ls ha dt = v1-v27;
+6156       run;
+
+
+Output Added:
+-------------
+Name:       ModelInfo
+Label:      Model Information
+Template:   Stat.PLS.ModelInfo
+Path:       PLS.ModelInfo
+-------------
+
+Output Added:
+-------------
+Name:       NObs
+Label:      Number of Observations
+Template:   STAT.PLS.NObs
+Path:       PLS.NObs
+-------------
+NOTE: Maximum number of factors to extract set to 15.
+
+Output Added:
+-------------
+Name:       ResidualSummary
+Label:      Residual Summary
+Template:   STAT.PLS.ResidualSummary
+Path:       PLS.CV.ResidualSummary
+-------------
+
+Output Added:
+-------------
+Name:       CVResults
+Label:      Results
+Template:   Stat.PLS.CVResults
+Path:       PLS.CV.CVResults
+-------------
+
+Output Added:
+-------------
+Name:       PercentVariation
+Label:      Percent Variation Accounted for by Extracted Factors
+Template:   STAT.PLS.PercentVariation
+Path:       PLS.PercentVariation
+-------------
+
+Output Added:
+-------------
+Name:       CVPlot
+Label:      Cross-Validation Plot
+Template:   Stat.PLS.Graphics.CVPlot
+Path:       PLS.CVPlot
+-------------
+
+Output Added:
+-------------
+Name:       CorrLoadPlot
+Label:      Correlation Loading Plot for Factors 1 and 2
+Template:   Stat.PLS.Graphics.CorrLoadPlot
+Path:       PLS.CorrLoadPlot
+-------------
+NOTE: There were 16 observations read from the data set WORK.SAMPLE.
+NOTE: The PROCEDURE PLS printed pages 499-500.
+
+6157       data newobs;
+6158       input obsnam $ v1-v27 @@;
+6159       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.NEWOBS has 2 observations and 28 variables.
+
+6166       ;
+6167       data all;
+6168       set sample newobs;
+6169       run;
+
+NOTE: There were 16 observations read from the data set WORK.SAMPLE.
+NOTE: There were 2 observations read from the data set WORK.NEWOBS.
+NOTE: The data set WORK.ALL has 18 observations and 31 variables.
+
+6170       proc pls data=all nfac=3;
+6171       model ls ha dt = v1-v27;
+6172       output out=pred p=p_ls p_ha p_dt;
+6173       run;
+
+
+Output Added:
+-------------
+Name:       ModelInfo
+Label:      Model Information
+Template:   Stat.PLS.ModelInfo
+Path:       PLS.ModelInfo
+-------------
+
+Output Added:
+-------------
+Name:       NObs
+Label:      Number of Observations
+Template:   STAT.PLS.NObs
+Path:       PLS.NObs
+-------------
+
+Output Added:
+-------------
+Name:       PercentVariation
+Label:      Percent Variation Accounted for by Extracted Factors
+Template:   STAT.PLS.PercentVariation
+Path:       PLS.PercentVariation
+-------------
+
+Output Added:
+-------------
+Name:       R2Plot
+Label:      R-Square Plot
+Template:   Stat.PLS.Graphics.R2Plot
+Path:       PLS.R2Plot
+-------------
+
+Output Added:
+-------------
+Name:       CorrLoadPlot
+Label:      Correlation Loading Plot for Factors 1 and 2
+Template:   Stat.PLS.Graphics.CorrLoadPlot
+Path:       PLS.CorrLoadPlot
+-------------
+NOTE: There were 18 observations read from the data set WORK.ALL.
+NOTE: The data set WORK.PRED has 18 observations and 34 variables.
+NOTE: The PROCEDURE PLS printed pages 501-502.
+
+6174       proc print data=pred;
+6175       where (obsnam in ('EM17','EM25'));
+6176       var obsnam p_ls p_ha p_dt;
+6177       run;
+
+
+Output Added:
+-------------
+Name:       Print
+Label:      Data Set WORK.PRED
+Data Name:  ProcPrintTable
+Path:       Print.Print
+-------------
+NOTE: There were 2 observations read from the data set WORK.PRED.
+      WHERE obsnam in ('EM17', 'EM25');
+NOTE: The PROCEDURE PRINT printed page 503.
+
+6178       ods graphics on;
+6179       proc pls data=sample cv=split cvtest(seed=12345);
+6180       model ls ha dt = v1-v27;
+6181       run;
+
+
+Output Added:
+-------------
+Name:       ModelInfo
+Label:      Model Information
+Template:   Stat.PLS.ModelInfo
+Path:       PLS.ModelInfo
+-------------
+
+Output Added:
+-------------
+Name:       NObs
+Label:      Number of Observations
+Template:   STAT.PLS.NObs
+Path:       PLS.NObs
+-------------
+NOTE: Maximum number of factors to extract set to 15.
+
+Output Added:
+-------------
+Name:       ResidualSummary
+Label:      Residual Summary
+Template:   STAT.PLS.ResidualSummary
+Path:       PLS.CV.ResidualSummary
+-------------
+
+Output Added:
+-------------
+Name:       CVResults
+Label:      Results
+Template:   Stat.PLS.CVResults
+Path:       PLS.CV.CVResults
+-------------
+
+Output Added:
+-------------
+Name:       PercentVariation
+Label:      Percent Variation Accounted for by Extracted Factors
+Template:   STAT.PLS.PercentVariation
+Path:       PLS.PercentVariation
+-------------
+
+Output Added:
+-------------
+Name:       CVPlot
+Label:      Cross-Validation Plot
+Template:   Stat.PLS.Graphics.CVPlot
+Path:       PLS.CVPlot
+-------------
+
+Output Added:
+-------------
+Name:       CorrLoadPlot
+Label:      Correlation Loading Plot for Factors 1 and 2
+Template:   Stat.PLS.Graphics.CorrLoadPlot
+Path:       PLS.CorrLoadPlot
+-------------
+NOTE: There were 16 observations read from the data set WORK.SAMPLE.
+NOTE: The PROCEDURE PLS printed pages 504-505.
+
+6182       proc pls data=sample nfac=3 plot=corrload(nfac=3);
+6183       model ls ha dt = v1-v27;
+6184       run;
+
+
+Output Added:
+-------------
+Name:       ModelInfo
+Label:      Model Information
+Template:   Stat.PLS.ModelInfo
+Path:       PLS.ModelInfo
+-------------
+
+Output Added:
+-------------
+Name:       NObs
+Label:      Number of Observations
+Template:   STAT.PLS.NObs
+Path:       PLS.NObs
+-------------
+
+Output Added:
+-------------
+Name:       PercentVariation
+Label:      Percent Variation Accounted for by Extracted Factors
+Template:   STAT.PLS.PercentVariation
+Path:       PLS.PercentVariation
+-------------
+
+Output Added:
+-------------
+Name:       R2Plot
+Label:      R-Square Plot
+Template:   Stat.PLS.Graphics.R2Plot
+Path:       PLS.R2Plot
+-------------
+
+Output Added:
+-------------
+Name:       CorrLoadPlot
+Label:      Correlation Loading Plots
+Template:   Stat.PLS.Graphics.CorrLoadMatrix
+Path:       PLS.CorrLoadPlot
+-------------
+NOTE: There were 16 observations read from the data set WORK.SAMPLE.
+NOTE: The PROCEDURE PLS printed pages 506-507.
+
+6185       ods trace off;
+6186       ods trace off;
+6187       ods graphics off;
+6188       
+6189       
+6190       
+6191       
+The SAS System
+
+6192       

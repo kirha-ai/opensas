@@ -1,0 +1,65 @@
+
+The NLIN Procedure
+Dependent Variable y
+Method: Gauss-Newton
+
+                   Iterative Phase
+                                               Sum of
+ Iter      theta1      theta2      theta3     Squares
+
+    0     -0.1500      2.0000      0.8000      5.8637
+    1     -0.0952      2.3870      1.0831      0.2262
+    2     -0.1038      2.5098      0.9722      0.0535
+    3     -0.1030      2.5190      0.9631      0.0535
+    4     -0.1031      2.5190      0.9631      0.0535
+
+
+NOTE: Convergence criterion met.                                
+
+
+         Estimation Summary
+
+Method                  Gauss-Newton
+Iterations                         4
+R                           3.835E-7
+PPC(theta3)                     4E-7
+RPC(theta1)                 0.000051
+Object                      3.491E-7
+Objective                   0.053454
+Observations Read                 13
+Observations Used                 13
+Observations Missing               0
+
+
+                                  Sum of        Mean               Approx
+Source                    DF     Squares      Square    F Value    Pr > F
+
+Model                      2      3.2554      1.6277     304.51    <.0001
+Error                     10      0.0535     0.00535                     
+Corrected Total           12      3.3088                                 
+
+
+                                                                                   Bootstrap
+                              Approx       Approximate 95%      Bootstrap     Bias-Corrected 95%
+Parameter      Estimate    Std Error      Confidence Limits       Std Dev      Confidence Limits
+
+theta1          -0.1031       0.0255     -0.1599     -0.0462       0.0251     -0.1513     -0.0544
+theta2           2.5190       0.2658      1.9268      3.1112       0.5004      2.1683      3.4449
+theta3           0.9631       0.3216      0.2466      1.6797       0.5428     -0.2083      1.3744
+
+
+            Approximate Correlation Matrix
+                theta1          theta2          theta3
+
+theta1       1.0000000       0.9233045      -0.9841058
+theta2       0.9233045       1.0000000      -0.9723891
+theta3      -0.9841058      -0.9723891       1.0000000
+
+
+         Bootstrap Covariance Matrix Estimate
+ 
+                theta1          theta2          theta3
+
+theta1      0.00063129      0.00856880      -.01027127
+theta2      0.00856880      0.25040993      -.26883762
+theta3      -.01027127      -.26883762      0.29458960

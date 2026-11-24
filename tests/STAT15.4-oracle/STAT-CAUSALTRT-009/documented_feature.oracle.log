@@ -1,0 +1,169 @@
+The SAS System
+
+13785      
+13786      /* STAT-CAUSALTRT-009: CAUSALTRT — ODS Table Names
+13787       * Source: S154 / Chapter 39 / `ODS Table Names` (PDF pp. 2473–2474).
+13788       * Discriminates: Getting Started: CAUSALTRT Procedure
+13789       */
+13790      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+13790    ! validmemname=compatible locale=en_US;
+13791      %let syscc=0;
+13792      title; footnote;
+13793      ods _all_ close;
+13794      ods listing gpath="%sysfunc(pathname(work))";
+13795      ods graphics off;
+13796      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.DRUGS (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+13796    !                                         quit;
+
+
+13797      ods path work.templat(update) sashelp.tmplmst(read);
+13798      
+13799      ods trace on;
+13800      data drugs; call streaminit(193); length Drug $6 Gender $1 Diabetes2 $3; do ID=1 to 200; Age=20+mod(id*7,45); BMI=20+mod(id,12); if mod(id,2) then
+13800    ! Gender='F'; else Gender='M'; if rand('bernoulli',0.5) then Drug='Drug_A'; else Drug='Drug_B'; if rand('bernoulli',0.3+0.1*(Drug='Drug_A')) then
+13800    ! Diabetes2='Yes'; else Diabetes2='No'; output; end; run;
+
+NOTE: The data set WORK.DRUGS has 200 observations and 6 variables.
+
+13801      
+13802      proc causaltrt data=drugs method=ipwr ppsmodel;
+13803      class Gender;
+13804      psmodel Drug(ref='Drug_A') = Age Gender BMI;
+13805      model Diabetes2(ref='No') / dist = bin;
+13806      run;
+
+
+Output Added:
+-------------
+Name:       ModelInfo
+Label:      Model Information
+Template:   Stat.CausalTRT.ModelInfo
+Path:       Causaltrt.ModelInfo
+-------------
+
+Output Added:
+-------------
+Name:       NObs
+Label:      Number of Observations
+Template:   Stat.CausalTRT.NObs
+Path:       Causaltrt.NObs
+-------------
+
+Output Added:
+-------------
+Name:       ClassLevels
+Label:      Class Level Information
+Template:   Stat.CausalTRT.Classlevels
+Path:       Causaltrt.ClassLevels
+-------------
+
+Output Added:
+-------------
+Name:       ResponseProfile
+Label:      Response Profile
+Template:   Stat.CausalTRT.ResponseProfile
+Path:       Causaltrt.ResponseProfile
+-------------
+NOTE: PROC CAUSALTRT is modeling the probability that Diabetes2='Yes'.
+
+Output Added:
+-------------
+Name:       TreatmentProfile
+Label:      Treatment Profile
+Template:   Stat.CausalTRT.TreatmentProfile
+Path:       Causaltrt.TreatmentProfile
+-------------
+NOTE: PROC CAUSALTRT is modeling the probability that Drug='Drug_B'.
+
+Output Added:
+-------------
+Name:       CausalEffects
+Label:      Causal Effect
+Template:   Stat.CausalTRT.CausalEffects
+Path:       Causaltrt.CausalEffects
+-------------
+
+Output Added:
+-------------
+Name:       PSModelEstimates
+Label:      Estimates
+Template:   Stat.CausalTRT.PSModelEstimates
+Path:       Causaltrt.PSModTab.PSModelEstimates
+-------------
+NOTE: The PROCEDURE CAUSALTRT printed pages 1894-1896.
+
+13807      proc causaltrt data=drugs method=aipw;
+13808      class Gender;
+13809      psmodel Drug(ref='Drug_A') = Age Gender BMI;
+13810      model Diabetes2(ref='No') = Age Gender BMI / dist = bin;
+13811      run;
+
+
+Output Added:
+-------------
+Name:       ModelInfo
+Label:      Model Information
+Template:   Stat.CausalTRT.ModelInfo
+Path:       Causaltrt.ModelInfo
+-------------
+
+Output Added:
+-------------
+Name:       NObs
+Label:      Number of Observations
+Template:   Stat.CausalTRT.NObs
+Path:       Causaltrt.NObs
+-------------
+
+Output Added:
+-------------
+Name:       ClassLevels
+Label:      Class Level Information
+Template:   Stat.CausalTRT.Classlevels
+Path:       Causaltrt.ClassLevels
+-------------
+
+Output Added:
+-------------
+Name:       ResponseProfile
+Label:      Response Profile
+Template:   Stat.CausalTRT.ResponseProfile
+Path:       Causaltrt.ResponseProfile
+-------------
+NOTE: PROC CAUSALTRT is modeling the probability that Diabetes2='Yes'.
+
+Output Added:
+-------------
+Name:       TreatmentProfile
+Label:      Treatment Profile
+Template:   Stat.CausalTRT.TreatmentProfile
+Path:       Causaltrt.TreatmentProfile
+-------------
+NOTE: PROC CAUSALTRT is modeling the probability that Drug='Drug_B'.
+
+Output Added:
+-------------
+Name:       CausalEffects
+Label:      Causal Effect
+Template:   Stat.CausalTRT.CausalEffects
+Path:       Causaltrt.CausalEffects
+-------------
+NOTE: The PROCEDURE CAUSALTRT printed pages 1897-1898.
+
+13812      ods trace off;
+13813      
+13814      
+13815      
+13816      
+The SAS System
+
+13817      

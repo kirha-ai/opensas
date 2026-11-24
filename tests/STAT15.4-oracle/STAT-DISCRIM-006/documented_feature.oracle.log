@@ -1,0 +1,45 @@
+The SAS System
+
+15092      
+15093      /* STAT-DISCRIM-006: DISCRIM — Saving and Using Calibration Information
+15094       * Source: S154 / Chapter 42 / `Saving and Using Calibration Information` (PDF pp. 2674–2675).
+15095       * Discriminates: Getting Started: DISCRIM Procedure
+15096       */
+15097      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+15097    ! validmemname=compatible locale=en_US;
+15098      %let syscc=0;
+15099      title; footnote;
+15100      ods _all_ close;
+15101      ods listing gpath="%sysfunc(pathname(work))";
+15102      ods graphics off;
+15103      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+15103    !                                         quit;
+
+
+15104      ods path work.templat(update) sashelp.tmplmst(read);
+15105      
+15106      title 'Fish Measurement Data';
+15107      proc discrim data=sashelp.fish;
+15108      class Species;
+15109      run;
+
+WARNING: 1 observations in DATA= data set or BY group will not be included in the analysis due to missing values.
+WARNING: A total of 1 of the 159 observations in the DATA= data set were excluded (frequency sum = 158).
+NOTE: There were 159 observations read from the data set SASHELP.FISH.
+NOTE: The PROCEDURE DISCRIM printed pages 2019-2021.
+
+15110      
+15111      
+15112      
+15113      
+The SAS System
+
+15114      

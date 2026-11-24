@@ -1,0 +1,73 @@
+The SAS System
+
+2462       
+2463       /* STAT-QUANTREG-005: QUANTREG — Covariance-Correlation / Linear Test / Estimating Probability Functions by Using the CONDDIST
+2464        * Source: S154 / Chapter 103 / `Covariance-Correlation` (PDF pp. 8405–8406); S154 / Chapter 103 / `Linear Test` (PDF pp. 8406–8407); S154 /
+2464     ! Chapter 103 / `Estimating Probability Functions by Using the CONDDIST Statement` (PDF pp. 8407–8413).
+2465        * Discriminates: Verified default procedure context
+2466        */
+2467       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+2467     ! validmemname=compatible locale=en_US;
+2468       %let syscc=0;
+2469       title; footnote;
+2470       ods _all_ close;
+2471       ods listing gpath="%sysfunc(pathname(work))";
+2472       ods graphics off;
+2473       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.FORMATS (memtype=CATALOG).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+2473     !                                         quit;
+
+
+2474       ods path work.templat(update) sashelp.tmplmst(read);
+2475       
+2476       data a (drop=i);
+2477       do i=1 to 1000;
+2478       x1=rannor(1234);
+2479       x2=rannor(1234);
+2480       e=rannor(1234);
+2481       if i > 950 then y=100 + 10*e;
+2482       else y=10 + 5*x1 + 3*x2 + 0.5 * e;
+2483       output;
+2484       end;
+2485       run;
+
+NOTE: The data set WORK.A has 1000 observations and 4 variables.
+
+2486       proc quantreg data=a;
+2487       model y = x1 x2 / seed=314159;
+2488       run;
+
+NOTE: No valid quantiles are specified. PROC QUANTREG computes median regression.
+NOTE: The PROCEDURE QUANTREG printed page 129.
+
+2489       proc quantreg algorithm=interior(tolerance=1e-6)
+2490       ci=none data=a;
+2491       model y = x1 x2 / itprint nosummary seed=314159;
+2492       run;
+
+NOTE: No valid quantiles are specified. PROC QUANTREG computes median regression.
+NOTE: The PROCEDURE QUANTREG printed pages 130-131.
+
+2493       proc quantreg algorithm=smooth(rratio=.5) ci=none data=a;
+2494       model y = x1 x2 / itprint nosummary seed=314159;
+2495       run;
+
+NOTE: No valid quantiles are specified. PROC QUANTREG computes median regression.
+NOTE: The PROCEDURE QUANTREG printed pages 132-133.
+
+2496       
+2497       
+2498       
+2499       
+The SAS System
+
+2500       

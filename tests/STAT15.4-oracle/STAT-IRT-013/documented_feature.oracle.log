@@ -1,0 +1,126 @@
+The SAS System
+
+9263       
+9264       /* STAT-IRT-013: IRT — ODS Graphics
+9265        * Source: S154 / Chapter 72 / `ODS Graphics` (PDF pp. 5354–5355).
+9266        * Discriminates: Verified default procedure context
+9267        */
+9268       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+9268     ! validmemname=compatible locale=en_US;
+9269       %let syscc=0;
+9270       title; footnote;
+9271       ods _all_ close;
+9272       ods listing gpath="%sysfunc(pathname(work))";
+9273       ods graphics off;
+9274       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.RESPONSES (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+9274     !                                         quit;
+
+
+9275       ods path work.templat(update) sashelp.tmplmst(read);
+9276       
+9277       ods graphics on;
+9278       ods trace on;
+9279       ods trace on;
+9280       data responses;
+9281       call streaminit(329);
+9282       array item[5] item1-item5;
+9283       do subject=1 to 150;
+9284       theta=rand('normal');
+9285       do k=1 to 5;
+9286       item[k]=rand('bernoulli',1/(1+exp(-(theta-(k-3)/2))));
+9287       end;
+9288       output;
+9289       end;
+9290       keep item1-item5;
+9291       run;
+
+NOTE: The data set WORK.RESPONSES has 150 observations and 5 variables.
+
+9292       proc irt data=responses;
+9293       var item1-item5;
+9294       run;
+
+
+Output Added:
+-------------
+Name:       ModelInfo
+Label:      Model Information
+Template:   Stat.IRT.ModelInfo
+Path:       IRT.ModelSpecification.ModelInfo
+-------------
+
+Output Added:
+-------------
+Name:       ItemInfo
+Label:      Item Information
+Template:   Stat.IRT.ItemInfo
+Path:       IRT.ModelSpecification.ItemInfo
+-------------
+
+Output Added:
+-------------
+Name:       Eigenvalues
+Label:      Eigenvalues
+Template:   Stat.IRT.Eigenvalues
+Path:       IRT.DescriptiveStatistics.Eigenvalues
+-------------
+
+Output Added:
+-------------
+Name:       OptInfo
+Label:      Optimization Information
+Template:   Stat.IRT.OptInfo
+Path:       IRT.Optimization.OptInfo
+-------------
+
+Output Added:
+-------------
+Name:       IterHistory
+Label:      Iteration History
+Template:   Stat.IRT.IterHistory
+Path:       IRT.Optimization.IterHistory
+-------------
+NOTE: The observed frequency is zero for some response patterns. As a result, the Pearson chi-square model fit statistic is not calculated.
+WARNING: Over 20 percent of the response patterns have expected frequency less than 5. The chi-square distribution might not provide valid statistical 
+         inferences about the model fit when you use the Pearson chi-square and the likelihood ratio chi-square.
+
+Output Added:
+-------------
+Name:       ConvergenceStatus
+Label:      Convergence Status
+Template:   Stat.IRT.ConvergenceStatus
+Path:       IRT.Optimization.ConvergenceStatus
+-------------
+
+Output Added:
+-------------
+Name:       FitStatistics
+Label:      Model Fit
+Template:   Stat.IRT.FitStatistics
+Path:       IRT.FitStatistics.FitStatistics
+-------------
+
+Output Added:
+-------------
+Name:       ParameterEstimates
+Label:      Item Parameter
+Template:   Stat.IRT.ParameterEstimates
+Path:       IRT.EstimationResults.ParameterEstimates
+-------------
+NOTE: The PROCEDURE IRT printed pages 684-688.
+
+9295       ods trace off;
+9296       ods trace off;
+9297       ods graphics off;
+9298       
+9299       
+9300       
+9301       
+The SAS System
+
+9302       

@@ -1,0 +1,60 @@
+The SAS System
+
+965        
+966        /* STAT-FREQ-021: FREQ — Official examples and feature integration regression
+967         * Source: S154 / Chapter 47 / `Examples: FREQ Procedure` (PDF pp. 3257–3283).
+968         * Discriminates: Example 47.10: Cochran's Q Test
+969         */
+970        options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+970      ! validmemname=compatible locale=en_US;
+971        %let syscc=0;
+972        title; footnote;
+973        ods _all_ close;
+974        ods listing gpath="%sysfunc(pathname(work))";
+975        ods graphics off;
+976        proc datasets library=work kill nolist;
+NOTE: Deleting WORK.FATCOMP (memtype=DATA).
+NOTE: Deleting WORK.FORMATS (memtype=CATALOG).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+976      !                                         quit;
+
+
+977        ods path work.templat(update) sashelp.tmplmst(read);
+978        
+979        proc format;
+979      !              value $ResponseFmt 'F'='Favorable' 'U'='Unfavorable';
+NOTE: Format $RESPONSEFMT has been output.
+979      !                                                                    run;
+
+
+980        data drugs;
+981        input Drug_A $ Drug_B $ Drug_C $ Count @@;
+982        datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.DRUGS has 8 observations and 4 variables.
+
+987        ;
+988        proc freq data=Drugs;
+989        tables Drug_A Drug_B Drug_C / nocum;
+990        tables Drug_A*Drug_B*Drug_C / agree noprint;
+991        format Drug_A Drug_B Drug_C $ResponseFmt.;
+992        weight Count;
+993        title 'Study of Three Drug Treatments for a Chronic Disease';
+994        run;
+
+NOTE: There were 8 observations read from the data set WORK.DRUGS.
+NOTE: The PROCEDURE FREQ printed pages 118-120.
+
+995        
+996        
+997        
+998        
+The SAS System
+
+999        

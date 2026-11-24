@@ -1,0 +1,69 @@
+The SAS System
+
+1764       
+1765       /* STAT-ODS-008: ODS destination compatibility scope and the D-022 migration design
+1766        * Source: S154 / Chapter 23 / `Output Objects and ODS Destinations` (PDF pp. 586–587); S154 / Chapter 23 / `The ODS Statement` (PDF pp.
+1766     ! 587–588).
+1767        * Discriminates: Real HTML destination creation versus LISTING behavior and observable destination content
+1768        */
+1769       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+1769     ! validmemname=compatible locale=en_US;
+1770       %let syscc=0;
+1771       title; footnote;
+1772       ods _all_ close;
+1773       ods listing gpath="%sysfunc(pathname(work))";
+1774       ods graphics off;
+1775       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SAMPLE (memtype=DATA).
+1775     !                                         quit;
+
+
+1776       ods path work.templat(update) sashelp.tmplmst(read);
+1777       
+1778       data sample;
+1779        input x z y group $ weight freq;
+1780        datalines;
+
+NOTE: The data set WORK.SAMPLE has 12 observations and 6 variables.
+
+1793       ;
+1794       run;
+1795       filename _html temp;
+1796       ods html(id=oracle) file=_html style=htmlblue;
+NOTE: Writing HTML(ORACLE) Body file: _HTML
+1797       proc means data=sample n mean std; var y; run;
+
+NOTE: There were 12 observations read from the data set WORK.SAMPLE.
+NOTE: The PROCEDURE MEANS printed page 85.
+
+1798       ods html(id=oracle) close;
+1799       data html_evidence; length line $32767; retain lines 0 has_html 0 has_table 0; infile _html end=eof lrecl=32767 truncover; input line $char32767.;
+1799     ! lines+1; has_html=max(has_html,index(lowcase(line),'<html')>0); has_table=max(has_table,index(lowcase(line),'<table')>0); if eof then output; keep
+1799     ! lines has_html has_table; run;
+
+NOTE: The infile _HTML is:
+      Filename=/saswork/SAS_work5D120001108E_odaws02-euw1.oda.sas.com/#LN00020,
+      Owner Name=u64592586,Group Name=oda,
+      Access Permission=-rw-r--r--,
+      Last Modified=24Nov2026:12:32:39,
+      File Size (bytes)=34728
+
+NOTE: 1668 records were read from the infile _HTML.
+      The minimum record length was 0.
+      The maximum record length was 145.
+NOTE: The data set WORK.HTML_EVIDENCE has 1 observations and 3 variables.
+
+1800       proc print data=html_evidence noobs; run;
+
+NOTE: There were 1 observations read from the data set WORK.HTML_EVIDENCE.
+NOTE: The PROCEDURE PRINT printed page 86.
+
+1801       
+1802       
+1803       
+1804       
+The SAS System
+
+1805       

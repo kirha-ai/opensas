@@ -1,0 +1,53 @@
+The SAS System
+
+8574       
+8575       /* STAT-INBREED-001: INBREED — Data input, variable roles, and basic options
+8576        * Source: S154 / Chapter 71 / `PROC INBREED Statement` (PDF pp. 5274–5276); S154 / Chapter 71 / `BY Statement` (PDF pp. 5276–5277); S154 /
+8576     ! Chapter 71 / `CLASS Statement` (PDF p. 5277); S154 / Chapter 71 / `VAR Statement` (PDF p. 5278); S154 / Chapter 71 / `Missing Values` (PDF pp.
+8576     ! 5278–5279).
+8577        * Discriminates: Verified default procedure context; explicit statements: VAR
+8578        */
+8579       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+8579     ! validmemname=compatible locale=en_US;
+8580       %let syscc=0;
+8581       title; footnote;
+8582       ods _all_ close;
+8583       ods listing gpath="%sysfunc(pathname(work))";
+8584       ods graphics off;
+8585       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.HYPER (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+8585     !                                         quit;
+
+
+8586       ods path work.templat(update) sashelp.tmplmst(read);
+8587       
+8588       data pedigree;
+8589       input animal $ sire $ dam $;
+8590       datalines;
+
+NOTE: The data set WORK.PEDIGREE has 5 observations and 3 variables.
+
+8596       ;
+8597       run;
+8598       proc inbreed data=pedigree covar matrix;
+8599       var animal sire dam;
+8600       run;
+
+NOTE: First parent sire of individual animal=A is missing at observation 1.
+NOTE: Second parent dam of individual animal=A is missing at observation 1.
+NOTE: First parent sire of individual animal=B is missing at observation 2.
+NOTE: Second parent dam of individual animal=B is missing at observation 2.
+NOTE: The PROCEDURE INBREED printed page 599.
+
+8601       
+8602       
+8603       
+8604       
+The SAS System
+
+8605       

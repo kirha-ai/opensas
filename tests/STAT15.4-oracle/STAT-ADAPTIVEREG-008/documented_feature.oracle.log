@@ -1,0 +1,231 @@
+The SAS System
+
+458        
+459        /* STAT-ADAPTIVEREG-008: ADAPTIVEREG — ODS Table Names
+460         * Source: S154 / Chapter 28 / `ODS Table Names` (PDF pp. 1082–1083).
+461         * Discriminates: Verified default procedure context
+462         */
+463        options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+463      ! validmemname=compatible locale=en_US;
+464        %let syscc=0;
+465        title; footnote;
+466        ods _all_ close;
+467        ods listing gpath="%sysfunc(pathname(work))";
+468        ods graphics off;
+469        proc datasets library=work kill nolist;
+NOTE: Deleting WORK.MIXTURE (memtype=DATA).
+NOTE: Deleting WORK.NEW (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+469      !                                         quit;
+
+
+470        ods path work.templat(update) sashelp.tmplmst(read);
+471        
+472        ods trace on;
+473        data Mixture;
+474        drop i;
+475        do i=1 to 1000;
+476        X1 = ranuni(1);
+477        C1 = int(3*ranuni(1));
+478        if C1=0 then Y=exp(5*(X1-0.3)**2)+rannor(1);
+479        else if C1=1 then Y=log(X1*(1-X1))+rannor(1);
+480        else Y=7*X1+rannor(1);
+481        output;
+482        end;
+483        run;
+
+NOTE: The data set WORK.MIXTURE has 1000 observations and 3 variables.
+
+484        ods graphics on;
+485        proc adaptivereg data=Mixture plots=fit;
+486        class c1;
+487        model y=c1 x1;
+488        run;
+
+
+Output Added:
+-------------
+Name:       ModelInfo
+Label:      Model Information
+Template:   Stat.AdaptiveReg.ModelInformation
+Path:       Adaptivereg.ModelInfo
+-------------
+
+Output Added:
+-------------
+Name:       FitControls
+Label:      Fit Control Parameters
+Template:   Stat.AdaptiveReg.FitControls
+Path:       Adaptivereg.FitControls
+-------------
+
+Output Added:
+-------------
+Name:       ClassInfo
+Label:      Class Level Information
+Template:   Stat.AdaptiveReg.ClassLevels
+Path:       Adaptivereg.ClassInfo
+-------------
+
+Output Added:
+-------------
+Name:       NObs
+Label:      Number of Observations
+Template:   Stat.AdaptiveReg.NObs
+Path:       Adaptivereg.NObs
+-------------
+
+Output Added:
+-------------
+Name:       FitStatistics
+Label:      Fit Statistics
+Template:   Stat.AdaptiveReg.FitStatistics
+Path:       Adaptivereg.FitStatistics
+-------------
+
+Output Added:
+-------------
+Name:       BWDParams
+Label:      Parameter Estimates by Backward Selection
+Template:   Stat.AdaptiveReg.ParameterEstimates
+Path:       Adaptivereg.BWDParams
+-------------
+
+Output Added:
+-------------
+Name:       ANOVA
+Label:      ANOVA Decomposition
+Template:   Stat.AdaptiveReg.ANOVA
+Path:       Adaptivereg.ANOVA
+-------------
+
+Output Added:
+-------------
+Name:       VarImp
+Label:      Variable Importance
+Template:   Stat.AdaptiveReg.VariableImportance
+Path:       Adaptivereg.VarImp
+-------------
+
+Output Added:
+-------------
+Name:       FitPlot
+Label:      Fit Plot
+Template:   Stat.AdaptiveReg.Graphics.FitPlot
+Path:       Adaptivereg.FitPlot
+-------------
+NOTE: The PROCEDURE ADAPTIVEREG printed page 20.
+
+489        proc adaptivereg data=Mixture details=bases;
+490        class c1;
+491        model y=c1 x1;
+492        run;
+
+
+Output Added:
+-------------
+Name:       ModelInfo
+Label:      Model Information
+Template:   Stat.AdaptiveReg.ModelInformation
+Path:       Adaptivereg.ModelInfo
+-------------
+
+Output Added:
+-------------
+Name:       FitControls
+Label:      Fit Control Parameters
+Template:   Stat.AdaptiveReg.FitControls
+Path:       Adaptivereg.FitControls
+-------------
+
+Output Added:
+-------------
+Name:       ClassInfo
+Label:      Class Level Information
+Template:   Stat.AdaptiveReg.ClassLevels
+Path:       Adaptivereg.ClassInfo
+-------------
+
+Output Added:
+-------------
+Name:       NObs
+Label:      Number of Observations
+Template:   Stat.AdaptiveReg.NObs
+Path:       Adaptivereg.NObs
+-------------
+
+Output Added:
+-------------
+Name:       FitStatistics
+Label:      Fit Statistics
+Template:   Stat.AdaptiveReg.FitStatistics
+Path:       Adaptivereg.FitStatistics
+-------------
+
+Output Added:
+-------------
+Name:       Bases
+Label:      Basis Transformation
+Template:   Stat.AdaptiveReg.Bases
+Path:       Adaptivereg.Bases
+-------------
+
+Output Added:
+-------------
+Name:       BWDParams
+Label:      Parameter Estimates by Backward Selection
+Template:   Stat.AdaptiveReg.ParameterEstimates
+Path:       Adaptivereg.BWDParams
+-------------
+
+Output Added:
+-------------
+Name:       ANOVA
+Label:      ANOVA Decomposition
+Template:   Stat.AdaptiveReg.ANOVA
+Path:       Adaptivereg.ANOVA
+-------------
+
+Output Added:
+-------------
+Name:       VarImp
+Label:      Variable Importance
+Template:   Stat.AdaptiveReg.VariableImportance
+Path:       Adaptivereg.VarImp
+-------------
+NOTE: The PROCEDURE ADAPTIVEREG printed page 21.
+
+493        data New;
+494        set Mixture;
+495        basis1 = (c1=1 OR c1=0);
+496        basis3 = (c1=1);
+497        basis5 = NOT(c1=1) *MAX(x1-0.7665019053,0);
+498        basis7 = NOT(c1=1 OR c1=0) *MAX(x1-0.7665019053,0);
+499        basis8 = NOT(c1=1 OR c1=0) *MAX(0.7665019053-x1,0);
+500        basis9 = (c1=1) *MAX(x1-0.5530566455,0);
+501        basis10 = (c1=1)*MAX(0.5530566455-x1,0);
+502        basis11 = (c1=1)*MAX(x1-0.045800759,0);
+503        basis13 = (c1=1)*MAX(x1-0.9526330293,0);
+504        basis15 = (c1=1 OR c1=0)*MAX(x1-0.9499325226,0);
+505        basis17 = (c1=1 OR c1=0)*MAX(x1-0.5142821095,0);
+506        basis19 = (c1=1 OR c1=0)*MAX(x1-0.9889635476,0);
+507        pred = 5.3829 - 4.3871 *basis1 + 32.7761*basis3 +
+508        20.2859*basis5 - 11.4183*basis7 - 7.0758*basis8 +
+509        58.4911*basis9 - 71.6388*basis10 - 69.0764*basis11 -
+510        119.71*basis13 + 66.5733*basis15 + 6.6681*basis17 -
+511        185.21*basis19;
+512        run;
+
+NOTE: There were 1000 observations read from the data set WORK.MIXTURE.
+NOTE: The data set WORK.NEW has 1000 observations and 16 variables.
+
+513        ods trace off;
+514        
+515        
+516        
+517        
+The SAS System
+
+518        

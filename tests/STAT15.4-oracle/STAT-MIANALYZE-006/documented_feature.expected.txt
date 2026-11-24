@@ -1,0 +1,43 @@
+
+Parameter Estimates from Imputed Data Sets
+
+Obs    _Imputation_    _TYPE_     _NAME_      Intercept     RunTime    RunPulse
+
+  1          1         PARMS                     86.544    -2.82231    -0.05873
+  2          1         COV       Intercept      100.145    -0.53519    -0.55077
+  3          1         COV       RunTime         -0.535     0.10774    -0.00345
+  4          1         COV       RunPulse        -0.551    -0.00345     0.00343
+  5          2         PARMS                     83.021    -3.00023    -0.02491
+  6          2         COV       Intercept       79.032    -0.66765    -0.41918
+  7          2         COV       RunTime         -0.668     0.11456    -0.00313
+  8          2         COV       RunPulse        -0.419    -0.00313     0.00264
+
+Parameter Estimates from Imputed Data Sets
+
+The MIANALYZE Procedure
+
+          Model Information
+
+Data Set                  WORK.OUTREG 
+Number of Imputations     25          
+
+
+                                    Variance Information (25 Imputations)
+ 
+                                                                       Relative       Fraction
+             -----------------Variance-----------------                Increase        Missing       Relative
+Parameter         Between         Within          Total       DF    in Variance    Information     Efficiency
+
+Intercept       22.485821      75.413875      98.799129   428.38       0.310092       0.240234       0.990482
+RunTime          0.021126       0.124930       0.146902   1072.9       0.175870       0.151147       0.993990
+RunPulse         0.000656       0.002622       0.003304   562.35       0.260376       0.209393       0.991694
+
+
+                                                         Parameter Estimates (25 Imputations)
+ 
+                                                                                                                                  t for H0:
+Parameter        Estimate      Std Error    95% Confidence Limits        DF        Minimum        Maximum         Theta0   Parameter=Theta0   Pr > |t|
+
+Intercept       92.700420       9.939775     73.16362     112.2372   428.38      83.020730     100.839807              0               9.33     <.0001
+RunTime         -3.030325       0.383278     -3.78238      -2.2783   1072.9      -3.280042      -2.754668              0              -7.91     <.0001
+RunPulse        -0.079621       0.057482     -0.19253       0.0333   562.35      -0.135862      -0.024910              0              -1.39     0.1666

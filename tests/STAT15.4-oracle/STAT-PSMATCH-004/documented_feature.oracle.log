@@ -1,0 +1,67 @@
+The SAS System
+
+9708       
+9709       /* STAT-PSMATCH-004: PSMATCH — MATCH / PSDATA / PSWEIGHT
+9710        * Source: S154 / Chapter 101 / `MATCH Statement` (PDF pp. 8223–8230); S154 / Chapter 101 / `PSDATA Statement` (PDF p. 8232); S154 / Chapter 101 /
+9710     ! `PSWEIGHT Statement` (PDF pp. 8233–8234).
+9711        * Discriminates: Verified default procedure context; explicit statements: MATCH
+9712        */
+9713       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+9713     ! validmemname=compatible locale=en_US;
+9714       %let syscc=0;
+9715       title; footnote;
+9716       ods _all_ close;
+9717       ods listing gpath="%sysfunc(pathname(work))";
+9718       ods graphics off;
+9719       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.MATCHED (memtype=DATA).
+NOTE: Deleting WORK.PATIENTS (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+9719     !                                         quit;
+
+
+9720       ods path work.templat(update) sashelp.tmplmst(read);
+9721       
+9722       data patients;
+9723       call streaminit(419);
+9724       do patientid=1 to 100;
+9725       gender=mod(patientid,2);
+9726       age=30+mod(patientid*7,45);
+9727       bmi=20+mod(patientid,12);
+9728       drug=rand('bernoulli',0.5);
+9729       output;
+9730       end;
+9731       run;
+
+NOTE: The data set WORK.PATIENTS has 100 observations and 5 variables.
+
+9732       proc psmatch data=patients region=cs;
+9733       class drug gender;
+9734       psmodel drug(treated='1')=gender age bmi;
+9735       match method=greedy(k=1) distance=lps caliper=0.5;
+9736       assess lps var=(age bmi);
+9737       output out(obs=match)=matched matchid=matchid;
+9738       run;
+
+WARNING: Some treated units do not have matched controls because there are not enough available controls for these treated units.
+NOTE: The data set WORK.MATCHED has 94 observations and 8 variables.
+NOTE: The PROCEDURE PSMATCH printed pages 635-636.
+
+9739       proc print data=matched(obs=10) noobs;
+9740       run;
+
+NOTE: There were 10 observations read from the data set WORK.MATCHED.
+NOTE: The PROCEDURE PRINT printed page 637.
+
+9741       
+9742       
+9743       
+9744       
+The SAS System
+
+9745       

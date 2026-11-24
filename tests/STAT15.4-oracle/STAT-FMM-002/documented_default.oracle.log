@@ -1,0 +1,52 @@
+The SAS System
+
+2822       
+2823       /* STAT-FMM-002: FMM — Default likelihood estimation for finite mixture models
+2824        * Source: S154 / Chapter 46 / `Getting Started: FMM Procedure` (PDF pp. 2948–2972); S154 / Chapter 46 / `Overview: FMM Procedure` (PDF pp.
+2824     ! 2944–2948).
+2825        * Discriminates: Documented default analysis with explicit complete public or synthetic inputs
+2826        */
+2827       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+2827     ! validmemname=compatible locale=en_US;
+2828       %let syscc=0;
+2829       title; footnote;
+2830       ods _all_ close;
+2831       ods listing gpath="%sysfunc(pathname(work))";
+2832       ods graphics off;
+2833       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.YEAST (memtype=DATA).
+2833     !                                         quit;
+
+
+2834       ods path work.templat(update) sashelp.tmplmst(read);
+2835       
+2836       data yeast;
+2837       input count f;
+2838       n = 5;
+2839       datalines;
+
+NOTE: The data set WORK.YEAST has 6 observations and 3 variables.
+
+2846       ;
+2847       proc fmm data=yeast seed=314159;
+2848       model count/n = / k=2;
+2849       freq f;
+2850       run;
+
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The PROCEDURE FMM printed page 165.
+
+2851       quit;
+2852       
+2853       
+2854       
+2855       
+The SAS System
+
+2856       

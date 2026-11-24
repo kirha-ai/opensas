@@ -1,0 +1,55 @@
+The SAS System
+
+11603      
+11604      /* STAT-CANCORR-004: CANCORR — Output Data Sets
+11605       * Source: S154 / Chapter 34 / `Output Data Sets` (PDF pp. 2135–2137).
+11606       * Discriminates: Getting Started: CANCORR Procedure
+11607       */
+11608      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+11608    ! validmemname=compatible locale=en_US;
+11609      %let syscc=0;
+11610      title; footnote;
+11611      ods _all_ close;
+11612      ods listing gpath="%sysfunc(pathname(work))";
+11613      ods graphics off;
+11614      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.JOBS (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+11614    !                                         quit;
+
+
+11615      ods path work.templat(update) sashelp.tmplmst(read);
+11616      
+11617      data Jobs;
+11618      input Career Supervisor Finance Variety Feedback Autonomy;
+11619      label Career ='Career Satisfaction' Variety ='Task Variety'
+11620      Supervisor='Supervisor Satisfaction' Feedback='Amount of Feedback'
+11621      Finance ='Financial Satisfaction' Autonomy='Degree of Autonomy';
+11622      datalines;
+
+NOTE: The data set WORK.JOBS has 14 observations and 6 variables.
+
+11637      ;
+11638      proc cancorr data=Jobs
+11639      vprefix=Satisfaction wprefix=Characteristics
+11640      vname='Satisfaction Areas' wname='Job Characteristics';
+11641      var Career Supervisor Finance;
+11642      with Variety Feedback Autonomy;
+11643      run;
+
+NOTE: The PROCEDURE CANCORR printed pages 1676-1679.
+
+11644      
+11645      
+11646      
+11647      
+The SAS System
+
+11648      

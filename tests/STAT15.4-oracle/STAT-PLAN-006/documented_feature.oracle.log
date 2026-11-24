@@ -1,0 +1,77 @@
+The SAS System
+
+4446       
+4447       /* STAT-PLAN-006: PLAN — OUTPUT / Output Data Sets
+4448        * Source: S154 / Chapter 93 / `OUTPUT Statement` (PDF pp. 7591–7594); S154 / Chapter 93 / `Output Data Sets` (PDF pp. 7595–7597).
+4449        * Discriminates: Getting Started: PLAN Procedure; explicit statements: OUTPUT
+4450        */
+4451       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+4451     ! validmemname=compatible locale=en_US;
+4452       %let syscc=0;
+4453       title; footnote;
+4454       ods _all_ close;
+4455       ods listing gpath="%sysfunc(pathname(work))";
+4456       ods graphics off;
+
+NOTE: At the  end  of processing, random number seed=1846928552.
+NOTE: The PROCEDURE PLAN printed page 335.
+
+4457       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.RANDOMIZED (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.UNRANDOMIZED (memtype=DATA).
+4457     !                                         quit;
+
+
+4458       ods path work.templat(update) sashelp.tmplmst(read);
+4459       
+4460       data Unrandomized;
+4461       do Unit=1 to 12;
+4462       if (Unit <= 6) then Treatment=1;
+4463       else Treatment=2;
+4464       output;
+4465       end;
+4466       run;
+
+NOTE: The data set WORK.UNRANDOMIZED has 12 observations and 2 variables.
+
+4467       proc plan seed=27371;
+NOTE: At the start of processing, random number seed=27371.
+4468       factors Unit=12;
+4469       output data=Unrandomized out=Randomized;
+4470       run;
+
+NOTE: The data set WORK.RANDOMIZED has 12 observations and 2 variables.
+
+NOTE: At the  end  of processing, random number seed=1846928552.
+NOTE: The PROCEDURE PLAN printed page 336.
+
+4471       proc sort data=Randomized;
+4472       by Unit;
+4473       run;
+
+NOTE: There were 12 observations read from the data set WORK.RANDOMIZED.
+NOTE: The data set WORK.RANDOMIZED has 12 observations and 2 variables.
+
+4474       proc print;
+4475       run;
+
+NOTE: There were 12 observations read from the data set WORK.RANDOMIZED.
+NOTE: The PROCEDURE PRINT printed page 337.
+
+4476       proc plan seed=27371;
+NOTE: At the start of processing, random number seed=27371.
+4477       factors Unit=12;
+4478       treatments Treatment=12 cyclic (1 1 1 1 1 1 2 2 2 2 2 2);
+4479       output out=Randomized;
+4480       run;
+
+NOTE: The data set WORK.RANDOMIZED has 12 observations and 2 variables.
+4481       
+4482       
+4483       
+4484       
+The SAS System
+
+4485       

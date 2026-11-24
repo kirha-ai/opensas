@@ -1,0 +1,52 @@
+The SAS System
+
+884        
+885        /* STAT-FACTOR-012: FACTOR — Heywood Cases and Other Anomalies about Communality Estimates / Cautions
+886         * Source: S154 / Chapter 44 / `Heywood Cases and Other Anomalies about Communality Estimates` (PDF pp. 2833–2834); S154 / Chapter 44 / `Cautions`
+886      ! (PDF p. 2835).
+887         * Discriminates: Example 44.4: Maximum Likelihood Factor Analysis
+888         */
+889        options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+889      ! validmemname=compatible locale=en_US;
+890        %let syscc=0;
+891        title; footnote;
+892        ods _all_ close;
+893        ods listing gpath="%sysfunc(pathname(work))";
+894        ods graphics off;
+895        proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SOCIOECONOMICS (memtype=DATA).
+895      !                                         quit;
+
+
+896        ods path work.templat(update) sashelp.tmplmst(read);
+897        
+898        data SocioEconomics;
+899        input Population School Employment Services HouseValue;
+900        datalines;
+
+NOTE: The data set WORK.SOCIOECONOMICS has 12 observations and 5 variables.
+
+913        ;
+914        run;
+915        /* Deliberate negative case: retain too many ML factors for a proper optimum. */
+916        proc factor data=SocioEconomics method=ml heywood n=3; run;
+
+NOTE: 3 factors will be retained by the NFACTOR criterion.
+WARNING: Too many factors for a unique solution.
+ERROR: Converged, but not to a proper optimum.
+NOTE: Try a different 'PRIORS' statement.
+NOTE: The PROCEDURE FACTOR printed pages 115-116.
+
+917        
+918        
+919        
+920        
+The SAS System
+
+921        

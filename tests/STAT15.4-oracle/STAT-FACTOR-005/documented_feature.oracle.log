@@ -1,0 +1,90 @@
+The SAS System
+
+15650      
+15651      /* STAT-FACTOR-005: FACTOR — PRIORS
+15652       * Source: S154 / Chapter 44 / `PRIORS Statement` (PDF p. 2823).
+15653       * Discriminates: Example 44.2: Principal Factor Analysis; explicit statements: PRIORS
+15654       */
+15655      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+15655    ! validmemname=compatible locale=en_US;
+15656      %let syscc=0;
+15657      title; footnote;
+15658      ods _all_ close;
+15659      ods listing gpath="%sysfunc(pathname(work))";
+15660      ods graphics off;
+15661      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.SOCIOECONOMICS (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+15661    !                                         quit;
+
+
+15662      ods path work.templat(update) sashelp.tmplmst(read);
+15663      
+15664      data SocioEconomics;
+15665      input Population School Employment Services HouseValue;
+15666      datalines;
+
+NOTE: The data set WORK.SOCIOECONOMICS has 12 observations and 5 variables.
+
+15679      ;
+15680      run;
+15681      ods graphics on;
+15682      proc factor data=SocioEconomics
+15683      priors=smc msa residual
+15684      rotate=promax reorder
+15685      outstat=fact_all
+15686      plots=(scree initloadings preloadings loadings);
+15687      run;
+
+NOTE: 2 factors will be retained by the PROPORTION criterion.
+NOTE: Rotation converged.  Criterion changed from 1.786655 to 10.398338 in 2 cycles.
+NOTE: The data set WORK.FACT_ALL has 34 observations and 7 variables.
+NOTE: The PROCEDURE FACTOR printed pages 2081-2085.
+
+15688      ods graphics off;
+15689      proc print data=fact_all;
+15690      run;
+
+NOTE: There were 34 observations read from the data set WORK.FACT_ALL.
+NOTE: The PROCEDURE PRINT printed page 2086.
+
+15691      data fact2(type=factor);
+15692      set fact_all;
+15693      if _TYPE_ in('PATTERN' 'FCORR') then delete;
+15694      if _TYPE_='UNROTATE' then _TYPE_='PATTERN';
+15695      run;
+
+NOTE: There were 34 observations read from the data set WORK.FACT_ALL.
+NOTE: The data set WORK.FACT2 has 30 observations and 7 variables.
+
+15696      proc factor data=fact2 rotate=quartimax reorder;
+15697      run;
+
+NOTE: Rotation converged.  Criterion changed from 3.020617 to 4.620182 in 2 cycles.
+NOTE: The PROCEDURE FACTOR printed pages 2087-2088.
+
+15698      ods graphics on;
+15699      proc factor data=fact2 rotate=hk norm=weight reorder plots=loadings;
+15700      run;
+
+NOTE: Rotation converged.  Criterion changed from 0.571964 to 2.953620 in 2 cycles.
+NOTE: The PROCEDURE FACTOR printed pages 2089-2090.
+
+15701      ods graphics off;
+15702      run;
+15703      quit;
+15704      
+15705      
+15706      
+15707      
+The SAS System
+
+15708      

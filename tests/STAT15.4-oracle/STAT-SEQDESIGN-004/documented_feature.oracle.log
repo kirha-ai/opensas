@@ -1,0 +1,52 @@
+The SAS System
+
+15832      
+15833      /* STAT-SEQDESIGN-004: SEQDESIGN — One-Sided Fixed-Sample Tests in Clinical Trials / Two-Sided Fixed-Sample Tests in Clinical Trials / Group
+15833    ! Sequential Methods
+15834       * Source: S154 / Chapter 110 / `One-Sided Fixed-Sample Tests in Clinical Trials` (PDF pp. 8963–8965); S154 / Chapter 110 / `Two-Sided Fixed-Sample
+15834    !  Tests in Clinical Trials` (PDF pp. 8965–8968); S154 / Chapter 110 / `Group Sequential Methods` (PDF pp. 8968–8971).
+15835       * Discriminates: Example 110.8: Creating a One-Sided Error Spending Design
+15836       */
+15837      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+15837    ! validmemname=compatible locale=en_US;
+15838      %let syscc=0;
+15839      title; footnote;
+15840      ods _all_ close;
+15841      ods listing gpath="%sysfunc(pathname(work))";
+15842      ods graphics off;
+15843      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+15843    !                                         quit;
+
+
+15844      ods path work.templat(update) sashelp.tmplmst(read);
+15845      
+15846      ods graphics on;
+15847      proc seqdesign altref=0.2 errspend
+15848      pss(cref=0 0.5 1)
+15849      stopprob(cref=0 0.5 1)
+15850      plots=(asn power errspend)
+15851      ;
+15852      OneSidedErrorSpending: design nstages=5
+15853      method(alpha)=errfuncobf
+15854      method(beta)=errfuncpoc
+15855      alt=upper stop=both
+15856      alpha=0.025
+15857      ;
+15858      run;
+
+NOTE: The PROCEDURE SEQDESIGN printed page 1144.
+
+15859      
+15860      
+15861      
+15862      
+The SAS System
+
+15863      

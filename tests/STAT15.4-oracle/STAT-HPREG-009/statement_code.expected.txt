@@ -1,0 +1,276 @@
+
+The CONTENTS Procedure
+
+                 Variables in Creation Order
+ 
+ #    Variable     Type    Len    Label
+
+ 1    Name         Char     18    Player's Name              
+ 2    Team         Char     14    Team at the End of 1986    
+ 3    nAtBat       Num       8    Times at Bat in 1986       
+ 4    nHits        Num       8    Hits in 1986               
+ 5    nHome        Num       8    Home Runs in 1986          
+ 6    nRuns        Num       8    Runs in 1986               
+ 7    nRBI         Num       8    RBIs in 1986               
+ 8    nBB          Num       8    Walks in 1986              
+ 9    YrMajor      Num       8    Years in the Major Leagues 
+10    CrAtBat      Num       8    Career Times at Bat        
+11    CrHits       Num       8    Career Hits                
+12    CrHome       Num       8    Career Home Runs           
+13    CrRuns       Num       8    Career Runs                
+14    CrRbi        Num       8    Career RBIs                
+15    CrBB         Num       8    Career Walks               
+16    League       Char      8    League at the End of 1986  
+17    Division     Char      8    Division at the End of 1986
+18    Position     Char      8    Position(s) in 1986        
+19    nOuts        Num       8    Put Outs in 1986           
+20    nAssts       Num       8    Assists in 1986            
+21    nError       Num       8    Errors in 1986             
+22    Salary       Num       8    1987 Salary in $ Thousands 
+23    Div          Char     16    League and Division        
+24    logSalary    Num       8    Log Salary                 
+
+The HPREG Procedure
+
+      Performance Information
+
+Execution Mode       Single-Machine
+Number of Threads    2             
+
+
+            Data Access Information
+ 
+Data                Engine    Role     Path
+
+SASHELP.BASEBALL    V9        Input    On Client
+
+
+            Model Information
+
+Data Source               SASHELP.BASEBALL
+Dependent Variable        logSalary       
+Class Parameterization    GLM             
+
+
+        Selection Information
+
+Selection Method             Stepwise
+Select Criterion             SBC     
+Stop Criterion               SBC     
+Effect Hierarchy Enforced    None    
+Stop Horizon                 3       
+
+
+Number of Observations Read             322
+Number of Observations Used             263
+
+
+        Class Level Information
+ 
+Class       Levels    Values
+
+League           2    American National 
+Division         2    East West         
+
+
+           Dimensions
+
+Number of Effects             19
+Number of Parameters          21
+
+The HPREG Procedure
+
+                     Selection Summary
+ 
+              Effect     Effect       Number
+      Step    Entered    Removed  Effects In           SBC 
+
+         0    Intercept                    1      -57.2041 
+-----------------------------------------------------------
+         1    CrRuns                       2     -194.3166 
+         2    nHits                        3     -252.5794 
+         3    YrMajor                      4     -262.7322 
+         4               CrRuns            3     -262.8353 
+         5    nBB                          4     -269.7804*
+
+* Optimal Value of Criterion
+
+
+Stepwise selection stopped because adding or removing an effect does not improve the SBC criterion.
+
+
+The model at step 5 is selected.
+
+The HPREG Procedure
+Selected Model
+
+Selected Effects: Intercept nHits nBB YrMajor
+
+
+                            Analysis of Variance
+ 
+                                  Sum of           Mean
+Source                 DF        Squares         Square    F Value    Pr > F
+
+Model                   3      120.52553       40.17518     120.12    <.0001
+Error                 259       86.62820        0.33447                     
+Corrected Total       262      207.15373                                    
+
+
+Root MSE        0.57834
+R-Square        0.58182
+Adj R-Sq        0.57697
+AIC           -19.06903
+AICC          -18.83557
+SBC          -269.78041
+ASE             0.32938
+
+
+                         Parameter Estimates
+ 
+                                       Standard
+Parameter    DF        Estimate           Error    t Value    Pr > |t|
+
+Intercept     1        4.013911        0.111290      36.07      <.0001
+nHits         1        0.007929        0.000994       7.98      <.0001
+nBB           1        0.007280        0.002049       3.55      0.0005
+YrMajor       1        0.100663        0.007551      13.33      <.0001
+
+The HPREG Procedure
+
+      Performance Information
+
+Execution Mode       Single-Machine
+Number of Threads    2             
+
+
+             Data Access Information
+ 
+Data                Engine    Role      Path
+
+SASHELP.BASEBALL    V9        Input     On Client
+WORK.BASEBALLOUT    V9        Output    On Client
+
+
+            Model Information
+
+Data Source               SASHELP.BASEBALL
+Dependent Variable        logSalary       
+Class Parameterization    GLM             
+
+
+        Selection Information
+
+Selection Method             Stepwise
+Select Criterion             SBC     
+Stop Criterion               SBC     
+Effect Hierarchy Enforced    None    
+Stop Horizon                 3       
+
+
+Number of Observations Read             322
+Number of Observations Used             263
+
+
+        Class Level Information
+ 
+Class       Levels    Values
+
+League           2    American National 
+Division         2    East West         
+
+
+           Dimensions
+
+Number of Effects             19
+Number of Parameters          21
+
+The HPREG Procedure
+
+                     Selection Summary
+ 
+              Effect     Effect       Number
+      Step    Entered    Removed  Effects In           SBC 
+
+         0    Intercept                    1      -57.2041 
+-----------------------------------------------------------
+         1    CrRuns                       2     -194.3166 
+         2    nHits                        3     -252.5794 
+         3    YrMajor                      4     -262.7322 
+         4               CrRuns            3     -262.8353 
+         5    nBB                          4     -269.7804*
+
+* Optimal Value of Criterion
+
+
+Stepwise selection stopped because adding or removing an effect does not improve the SBC criterion.
+
+
+The model at step 5 is selected.
+
+The HPREG Procedure
+Selected Model
+
+Selected Effects: Intercept nHits nBB YrMajor
+
+
+                            Analysis of Variance
+ 
+                                  Sum of           Mean
+Source                 DF        Squares         Square    F Value    Pr > F
+
+Model                   3      120.52553       40.17518     120.12    <.0001
+Error                 259       86.62820        0.33447                     
+Corrected Total       262      207.15373                                    
+
+
+Root MSE        0.57834
+R-Square        0.58182
+Adj R-Sq        0.57697
+AIC           -19.06903
+AICC          -18.83557
+SBC          -269.78041
+ASE             0.32938
+
+
+                                                Parameter Estimates
+ 
+                                       Standard                              Variance
+Parameter    DF        Estimate           Error    t Value    Pr > |t|      Inflation       95% Confidence Limits
+
+Intercept     1        4.013911        0.111290      36.07      <.0001              0        3.79476        4.23306
+nHits         1        0.007929        0.000994       7.98      <.0001        1.49642        0.00597        0.00989
+nBB           1        0.007280        0.002049       3.55      0.0005        1.52109        0.00325        0.01131
+YrMajor       1        0.100663        0.007551      13.33      <.0001        1.02488        0.08579        0.11553
+
+                            predicted
+Obs    Name                 LogSalary    Residual        H            COOKD    RSTUDENT
+
+  1    Allanson, Andy        4.73980       .         0.016087    .               .     
+  2    Ashby, Alan           6.34935     -0.18603    0.012645    .000335535    -0.32316
+  3    Davis, Alan           5.89993      0.27385    0.019909    .001161794     0.47759
+  4    Dawson, Andre         6.50852     -0.29392    0.011060    .000730178    -0.51031
+  5    Galarraga, Andres     5.12344     -0.60711    0.009684    .002720358    -1.05510
+
+                                                                                                                                    P
+                                                                                                                                    _
+                                                                                                                            l       l
+                                                                                             D   P                          o       o
+                                                       Y   C                                 i   o                          g       g
+                                   n                   r   r    C   C   C             L      v   s       n   n    S         S       S
+                                   A   n   n  n        M   A    r   r   r   C         e      i   i   n   A   E    a         a       a
+            N              T       t   H   H  R  n     a   t    H   H   R   r   C     a      s   t   O   s   r    l         l       l
+ O          a              e       B   i   o  u  R  n  j   B    i   o   u   R   r     g      i   i   u   s   r    a   D     a       a
+ b          m              a       a   t   m  n  B  B  o   a    t   m   n   b   B     u      o   o   t   t   o    r   i     r       r
+ s          e              m       t   s   e  s  I  B  r   t    s   e   s   i   B     e      n   n   s   s   r    y   v     y       y
+
+  1 Allanson, Andy    Cleveland   293  66  1 30 29 14  1  293   66   1  30  29  14 American East C  446  33 20     .  AE  .      4.73980
+  2 Ashby, Alan       Houston     315  81  7 24 38 39 14 3449  835  69 321 414 375 National West C  632  43 10  475.0 NW 6.16331 6.34935
+  3 Davis, Alan       Seattle     479 130 18 66 72 76  3 1624  457  63 224 266 263 American West 1B 880  82 14  480.0 AW 6.17379 5.89993
+  4 Dawson, Andre     Montreal    496 141 20 65 78 37 11 5628 1575 225 828 838 354 National East RF 200  11  3  500.0 NE 6.21461 6.50852
+  5 Galarraga, Andres Montreal    321  87 10 39 42 30  2  396  101  12  48  46  33 National East 1B 805  40  4   91.5 NE 4.51634 5.12344
+  6 Griffin, Alfredo  Oakland     594 169  4 74 51 35 11 4408 1133  19 501 336 194 American West SS 282 421 25  750.0 AW 6.62007 6.71597
+  7 Newman, Al        Montreal    185  37  1 23  8 21  2  214   42   1  30   9  24 National East 2B  76 127  7   70.0 NE 4.24850 4.66148
+  8 Salazar, Argenis  Kansas City 298  73  0 24 24  7  3  509  108   0  41  37  12 American West SS 121 283  9  100.0 AW 4.60517 4.94566
+  9 Thomas, Andres    Atlanta     323  81  6 26 32  8  2  341   86   6  32  34   8 National West SS 143 290 19   75.0 NW 4.31749 4.91571
+ 10 Thornton, Andre   Cleveland   401  92 17 49 66 65 13 5206 1332 253 784 890 866 American East DH   0   0  0 1100.0 AE 7.00307 6.52518

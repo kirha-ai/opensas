@@ -1,0 +1,1 @@
+WARNING: Some rows of the L matrix for the CONTRAST statement 'C2' are linearly dependent. These rows will be ignored.

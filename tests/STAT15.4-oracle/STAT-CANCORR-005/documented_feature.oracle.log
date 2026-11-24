@@ -1,0 +1,138 @@
+The SAS System
+
+11651      
+11652      /* STAT-CANCORR-005: CANCORR — Displayed Output / ODS Table Names
+11653       * Source: S154 / Chapter 34 / `Displayed Output` (PDF pp. 2138–2140); S154 / Chapter 34 / `ODS Table Names` (PDF pp. 2140–2142).
+11654       * Discriminates: Getting Started: CANCORR Procedure
+11655       */
+11656      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+11656    ! validmemname=compatible locale=en_US;
+11657      %let syscc=0;
+11658      title; footnote;
+11659      ods _all_ close;
+11660      ods listing gpath="%sysfunc(pathname(work))";
+11661      ods graphics off;
+11662      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.JOBS (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+11662    !                                         quit;
+
+
+11663      ods path work.templat(update) sashelp.tmplmst(read);
+11664      
+11665      ods trace on;
+11666      data Jobs;
+11667      input Career Supervisor Finance Variety Feedback Autonomy;
+11668      label Career ='Career Satisfaction' Variety ='Task Variety'
+11669      Supervisor='Supervisor Satisfaction' Feedback='Amount of Feedback'
+11670      Finance ='Financial Satisfaction' Autonomy='Degree of Autonomy';
+11671      datalines;
+
+NOTE: The data set WORK.JOBS has 14 observations and 6 variables.
+
+11686      ;
+11687      proc cancorr data=Jobs
+11688      vprefix=Satisfaction wprefix=Characteristics
+11689      vname='Satisfaction Areas' wname='Job Characteristics';
+11690      var Career Supervisor Finance;
+11691      with Variety Feedback Autonomy;
+11692      run;
+
+
+Output Added:
+-------------
+Name:       CanCorr
+Label:      Canonical Correlations
+Template:   Stat.CanCorr.Canon
+Path:       Cancorr.CanonicalCorrelations.CanCorr
+-------------
+
+Output Added:
+-------------
+Name:       MultStat
+Label:      Multivariate Statistics
+Template:   Stat.CanCorr.MultStat
+Path:       Cancorr.CanonicalCorrelations.MultStat
+-------------
+
+Output Added:
+-------------
+Name:       RawCanCoefV
+Label:      For the Satisfaction Areas
+Template:   Stat.CanCorr.RawCanCoef
+Path:       Cancorr.CanonicalCorrelations.RawCanCoeffs.RawCanCoefV
+-------------
+
+Output Added:
+-------------
+Name:       RawCanCoefW
+Label:      For the Job Characteristics
+Template:   Stat.CanCorr.RawCanCoef
+Path:       Cancorr.CanonicalCorrelations.RawCanCoeffs.RawCanCoefW
+-------------
+
+Output Added:
+-------------
+Name:       StdCanCoefV
+Label:      For the Satisfaction Areas
+Template:   Stat.CanCorr.StdCanCoef
+Path:       Cancorr.CanonicalCorrelations.StdCanCoeffs.StdCanCoefV
+-------------
+
+Output Added:
+-------------
+Name:       StdCanCoefW
+Label:      For the Job Characteristics
+Template:   Stat.CanCorr.StdCanCoef
+Path:       Cancorr.CanonicalCorrelations.StdCanCoeffs.StdCanCoefW
+-------------
+
+Output Added:
+-------------
+Name:       CanStructureVCan
+Label:      Satisfaction Areas and Their Canonical Variables
+Template:   Stat.CanCorr.CanStructure
+Path:       Cancorr.CanonicalStructure.CanStructureVCan
+-------------
+
+Output Added:
+-------------
+Name:       CanStructureWCan
+Label:      Job Characteristics and Their Canonical Variables
+Template:   Stat.CanCorr.CanStructure
+Path:       Cancorr.CanonicalStructure.CanStructureWCan
+-------------
+
+Output Added:
+-------------
+Name:       CanStructureWCan
+Label:      Satisfaction Areas and the Canonical Variables of Job Characteristics
+Template:   Stat.CanCorr.CanStructure
+Path:       Cancorr.CanonicalStructure.CanStructureWCan
+-------------
+
+Output Added:
+-------------
+Name:       CanStructureVCan
+Label:      Job Characteristics and the Canonical Variables of Satisfaction Areas
+Template:   Stat.CanCorr.CanStructure
+Path:       Cancorr.CanonicalStructure.CanStructureVCan
+-------------
+NOTE: The PROCEDURE CANCORR printed pages 1680-1683.
+
+11693      
+11694      ods trace off;
+11695      
+11696      
+11697      
+11698      
+The SAS System
+
+11699      

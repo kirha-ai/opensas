@@ -1,0 +1,62 @@
+
+The STDRATE Procedure
+
+      Standardization Information
+
+Data Set                     WORK.SCHOOL
+Group Variable                   Smoking
+Method                   Mantel-Haenszel
+Statistic                           Risk
+Number of Strata                       6
+
+The STDRATE Procedure
+
+                                Mantel-Haenszel Standardized Strata Statistics
+ 
+                                               --------------Study Population--------------  --Mantel-Haenszel-
+            Stratum                            Observed  -Number of Observations-     Crude            Expected
+Smoking       Index    Pet         Grade         Events         Value  Proportion      Risk    Weight    Events
+
+No                1    Yes         K-1              284          2403      0.1427  0.118186    604.12    71.398
+No                2    Yes         2-3              266          2237      0.1329  0.118909    584.37    69.487
+No                3    Yes         4-5              273          2279      0.1353  0.119789    628.59    75.298
+No                4    No          K-1              414          3398      0.2018  0.121836    955.35   116.396
+No                5    No          2-3              372          3251      0.1931  0.114426    947.38   108.405
+No                6    No          4-5              382          3270      0.1942  0.116820   1071.62   125.187
+Yes               1    Yes         K-1              109           807      0.1200  0.135068    604.12    81.597
+Yes               2    Yes         2-3              106           791      0.1176  0.134008    584.37    78.310
+Yes               3    Yes         4-5              112           868      0.1291  0.129032    628.59    81.108
+Yes               4    No          K-1              168          1329      0.1976  0.126411    955.35   120.767
+Yes               5    No          2-3              162          1337      0.1988  0.121167    947.38   114.791
+Yes               6    No          4-5              183          1594      0.2370  0.114806   1071.62   123.028
+
+
+                                    Strata Risk Effect Estimates
+ 
+Stratum                            ------Smoking-----        Risk    Standard        95% Normal
+  Index    Pet         Grade             No       Yes  Difference       Error     Confidence Limits
+
+      1    Yes         K-1          0.11819   0.13507    -.016883    0.013716    -.043766  0.010001
+      2    Yes         2-3          0.11891   0.13401    -.015098    0.013912    -.042366  0.012169
+      3    Yes         4-5          0.11979   0.12903    -.009243    0.013257    -.035225  0.016740
+      4    No          K-1          0.12184   0.12641    -.004574    0.010704    -.025554  0.016405
+      5    No          2-3          0.11443   0.12117    -.006740    0.010527    -.027373  0.013892
+      6    No          4-5          0.11682   0.11481    0.002014    0.009762    -.017120  0.021148
+
+
+                              Mantel-Haenszel Standardized Risk Estimates
+ 
+            --------Study Population--------  --Mantel-Haenszel-  -----------Standardized Risk----------
+            Observed     Number of     Crude  Expected                      Standard      95% Normal
+Smoking       Events  Observations      Risk    Events    Weight  Estimate     Error   Confidence Limits
+
+No              1991         16838    0.1182   566.172   4791.43    0.1182   0.00250    0.1133    0.1231
+Yes              840          6726    0.1249   599.602   4791.43    0.1251   0.00404    0.1172    0.1331
+
+
+                                Risk Effect Estimates
+ 
+------Smoking-----        Risk        95% Normal      Standard
+      No       Yes  Difference     Confidence Limits     Error          Z    Pr > |Z|
+
+  0.1182    0.1251    -0.00698    -.016284  0.002330   0.00475      -1.47      0.1418

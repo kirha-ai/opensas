@@ -1,0 +1,53 @@
+The SAS System
+
+400        
+401        /* STAT-ANOVA-004: ANOVA — ABSORB / Using PROC ANOVA Interactively / Computational Method
+402         * Source: S154 / Chapter 29 / `ABSORB Statement` (PDF p. 1117); S154 / Chapter 29 / `Using PROC ANOVA Interactively` (PDF p. 1138); S154 / Chapter
+402      ! 29 / `Computational Method` (PDF p. 1140).
+403         * Discriminates: Explicit ABSORB statement behavior on seeded synthetic inputs.
+404         */
+405        options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+405      ! validmemname=compatible locale=en_US;
+406        %let syscc=0;
+407        title; footnote;
+408        ods _all_ close;
+409        ods listing gpath="%sysfunc(pathname(work))";
+410        ods graphics off;
+411        proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SAMPLE (memtype=DATA).
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.STRUCTURE (memtype=DATA).
+NOTE: Deleting WORK._ORACLE_DESCRIPTOR (memtype=DATA).
+NOTE: Deleting WORK._ORACLE_MEMBER (memtype=DATA).
+411      !                                         quit;
+
+
+412        ods path work.templat(update) sashelp.tmplmst(read);
+413        
+414        data sample;
+415        call streaminit(314159);
+416        do block=1 to 4; do group=1 to 2; do replicate=1 to 5;
+417        y=10+block+2*group+rand('normal');
+418        y1=y+rand('normal'); y2=y+1+rand('normal'); y3=y+2+rand('normal');
+419        output;
+420        end; end; end;
+421        run;
+
+NOTE: The data set WORK.SAMPLE has 40 observations and 7 variables.
+
+422        proc anova data=sample; absorb block; class group; model y=group; run;
+
+422      !                                                                        quit;
+
+NOTE: The PROCEDURE ANOVA printed pages 34-35.
+
+423        
+424        
+425        
+426        
+The SAS System
+
+427        

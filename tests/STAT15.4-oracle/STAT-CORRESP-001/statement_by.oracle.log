@@ -1,0 +1,75 @@
+The SAS System
+
+490        
+491        /* STAT-CORRESP-001: CORRESP — Data input, variable roles, and basic options
+492         * Source: S154 / Chapter 41 / `PROC CORRESP Statement` (PDF pp. 2579–2589); S154 / Chapter 41 / `BY Statement` (PDF pp. 2589–2590); S154 /
+492      ! Chapter 41 / `ID Statement` (PDF p. 2590); S154 / Chapter 41 / `VAR Statement` (PDF p. 2591); S154 / Chapter 41 / `WEIGHT Statement` (PDF pp.
+492      ! 2591–2592); S154 / Chapter 41 / `Input Data Set` (PDF p. 2592); S154 / Chapter 41 / `Missing and Invalid Data` (PDF p. 2601).
+493         * Discriminates: Two explicit BY groups contain identical inputs, exposing group boundaries and per-group results.
+494         */
+495        options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+495      ! validmemname=compatible locale=en_US;
+496        %let syscc=0;
+497        title; footnote;
+498        ods _all_ close;
+499        ods listing gpath="%sysfunc(pathname(work))";
+500        ods graphics off;
+501        proc datasets library=work kill nolist;
+NOTE: Deleting WORK.DATA1 (memtype=DATA).
+NOTE: Deleting WORK.DATA2 (memtype=DATA).
+NOTE: Deleting WORK.DATA3 (memtype=DATA).
+NOTE: Deleting WORK.DATA4 (memtype=DATA).
+NOTE: Deleting WORK.DATA5 (memtype=DATA).
+NOTE: Deleting WORK.DATA6 (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK._ORACLE_INPUT (memtype=DATA).
+501      !                                         quit;
+
+
+502        ods path work.templat(update) sashelp.tmplmst(read);
+503        
+504        title "Number of Ph.D.'s Awarded from 1973 to 1978";
+505        data PhD;
+506        input Science $ 1-19 y1973-y1978;
+507        label y1973 = '1973'
+508        y1974 = '1974'
+509        y1975 = '1975'
+510        y1976 = '1976'
+511        y1977 = '1977'
+512        y1978 = '1978';
+513        datalines;
+
+NOTE: The data set WORK.PHD has 6 observations and 7 variables.
+
+520        ;
+521        ods graphics on;
+522        data _oracle_input; set PhD; do _oracle_by=1 to 2; output; end; run;
+
+NOTE: There were 6 observations read from the data set WORK.PHD.
+NOTE: The data set WORK._ORACLE_INPUT has 12 observations and 8 variables.
+
+523        proc sort data=_oracle_input; by _oracle_by; run;
+
+NOTE: There were 12 observations read from the data set WORK._ORACLE_INPUT.
+NOTE: The data set WORK._ORACLE_INPUT has 12 observations and 8 variables.
+
+524        proc corresp data=_oracle_input out=Results short chi2p;
+525        by _oracle_by;
+526        var y1973-y1978;
+527        id Science;
+528        run;
+
+NOTE: The data set WORK.RESULTS has 26 observations and 15 variables.
+NOTE: The PROCEDURE CORRESP printed pages 61-62.
+
+529        
+530        
+531        
+532        
+The SAS System
+
+533        

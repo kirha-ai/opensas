@@ -1,0 +1,94 @@
+
+The GLIMMIX Procedure
+
+                     Model Information
+
+Data Set                       WORK.DIALLEL                 
+Response Variable              time                         
+Response Distribution          Gaussian                     
+Link Function                  Identity                     
+Variance Function              Default                      
+Variance Matrix                Not blocked                  
+Estimation Technique           Restricted Maximum Likelihood
+Degrees of Freedom Method      Kenward-Roger                
+Fixed Effects SE Adjustment    Kenward-Roger                
+
+
+                    Class Level Information
+ 
+Class    Levels    Values
+
+block         2    1 2                                          
+sym          28    1,2 1,3 1,4 1,5 1,6 1,7 1,8 2,3 2,4 2,5 2,6  
+                   2,7 2,8 3,4 3,5 3,6 3,7 3,8 4,5 4,6 4,7 4,8  
+                   5,6 5,7 5,8 6,7 6,8 7,8                      
+p             8    1 2 3 4 5 6 7 8                              
+m             8    1 2 3 4 5 6 7 8                              
+
+
+Number of Observations Read         112
+Number of Observations Used         112
+
+
+           Dimensions
+
+G-side Cov. Parameters         5
+R-side Cov. Parameters         1
+Columns in X                   3
+Columns in Z                 108
+Subjects (Blocks in V)         1
+Max Obs per Subject          112
+
+
+           Optimization Information
+
+Optimization Technique        Dual Quasi-Newton
+Parameters in Optimization    5                
+Lower Boundaries              5                
+Upper Boundaries              0                
+Fixed Effects                 Profiled         
+Residual Variance             Profiled         
+Starting From                 Data             
+
+
+                                Iteration History
+ 
+                                           Objective                         Max
+Iteration    Restarts    Evaluations        Function          Change    Gradient
+
+        0           0              4    567.61189449       .            5.84E-14
+
+      Convergence criterion (ABSGCONV=0.00001) satisfied.       
+
+
+           Fit Statistics
+
+-2 Res Log Likelihood         567.61
+AIC  (smaller is better)      579.61
+AICC (smaller is better)      580.43
+BIC  (smaller is better)      567.61
+CAIC (smaller is better)      573.61
+HQIC (smaller is better)      567.61
+Generalized Chi-Square        398.48
+Gener. Chi-Square / DF          3.62
+
+
+ Covariance Parameter Estimates
+ 
+                        Standard
+Cov Parm    Estimate       Error
+
+line          5.1047      4.0021
+sym           2.3856      1.9025
+p             3.3080      3.4053
+m             1.9134      2.9891
+p*m           4.0196      1.8323
+Residual      3.6225      0.6908
+
+
+        Type III Tests of Fixed Effects
+ 
+              Num      Den
+Effect         DF       DF    F Value    Pr > F
+
+block           1       55       1.19    0.2795

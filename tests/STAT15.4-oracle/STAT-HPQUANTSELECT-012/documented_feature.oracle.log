@@ -1,0 +1,120 @@
+The SAS System
+
+5259       
+5260       /* STAT-HPQUANTSELECT-012: HPQUANTSELECT — Displayed Output / ODS Table Names
+5261        * Source: S154 / Chapter 66 / `Displayed Output` (PDF pp. 5008–5011); S154 / Chapter 66 / `ODS Table Names` (PDF pp. 5011–5012).
+5262        * Discriminates: Seeded synthetic quantile-regression fixture: Displayed Output / ODS Table Names
+5263        */
+5264       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+5264     ! validmemname=compatible locale=en_US;
+5265       %let syscc=0;
+5266       title; footnote;
+5267       ods _all_ close;
+5268       ods listing gpath="%sysfunc(pathname(work))";
+5269       ods graphics off;
+5270       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.PREDICTED (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SAMPLE (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+5270     !                                         quit;
+
+
+5271       ods path work.templat(update) sashelp.tmplmst(read);
+5272       
+5273       data sample;
+5274       call streaminit(314159);
+5275       do id=1 to 120;
+5276        x=rand('normal'); z=rand('normal'); w=rand('normal'); group=1+mod(id,3);
+5277        y=2+1.5*x-0.6*z+0.4*group+rand('normal');
+5278        role=mod(id,4); output;
+5279       end;
+5280       run;
+
+NOTE: The data set WORK.SAMPLE has 120 observations and 7 variables.
+
+5281       ods trace on;
+5282       proc hpquantselect data=sample;
+5283       class group;
+5284       model y=x z w group / quantile=0.5 clb;
+5285       
+5286       performance nthreads=1;
+5287       run;
+
+NOTE: The HPQUANTSELECT procedure is executing in single-machine mode.
+
+Output Added:
+-------------
+Name:       PerformanceInfo
+Label:      Performance Information
+Template:   HPA.Common.PerfInfo
+Path:       HPQuantselect.PerformanceInfo
+-------------
+
+Output Added:
+-------------
+Name:       DataAccessInfo
+Label:      Data Access Information
+Template:   HPA.Common.DataAccessInfo
+Path:       HPQuantselect.DataAccessInfo
+-------------
+
+Output Added:
+-------------
+Name:       ModelInfo
+Label:      Model Information
+Template:   HPSTAT.HPQUANTSELECT.ModelInfo
+Path:       HPQuantselect.ModelInfo
+-------------
+
+Output Added:
+-------------
+Name:       NObs
+Label:      Number of Observations
+Template:   HPSTAT.HPQUANTSELECT.NOBS
+Path:       HPQuantselect.NObs
+-------------
+
+Output Added:
+-------------
+Name:       ClassLevels
+Label:      Class Level Information
+Template:   HPA.Common.ClassLevels
+Path:       HPQuantselect.ClassLevels
+-------------
+
+Output Added:
+-------------
+Name:       Dimensions
+Label:      Dimensions
+Template:   HPSTAT.HPQUANTSELECT.Dimensions
+Path:       HPQuantselect.Dimensions
+-------------
+
+Output Added:
+-------------
+Name:       FitStatistics
+Label:      Fit Statistics
+Template:   HPSTAT.HPQUANTSELECT.FitStatistics
+Path:       HPQuantselect.Quantile1.FitStatistics
+-------------
+
+Output Added:
+-------------
+Name:       ParameterEstimates
+Label:      Parameter Estimates
+Template:   HPSTAT.HPQUANTSELECT.ParameterEstimates
+Path:       HPQuantselect.Quantile1.ParameterEstimates
+-------------
+NOTE: The PROCEDURE HPQUANTSELECT printed pages 205-206.
+
+5288       ods trace off;
+5289       
+5290       
+5291       
+5292       
+The SAS System
+
+5293       

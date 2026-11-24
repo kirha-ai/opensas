@@ -1,0 +1,59 @@
+The SAS System
+
+10017      
+10018      /* STAT-KRIGE2D-004: KRIGE2D — COORDINATES / GRID / PREDICT
+10019       * Source: S154 / Chapter 74 / `COORDINATES Statement` (PDF p. 5450); S154 / Chapter 74 / `GRID Statement` (PDF pp. 5450–5453); S154 / Chapter 74 /
+10019    !  `PREDICT Statement` (PDF pp. 5453–5455).
+10020       * Discriminates: Getting Started: KRIGE2D Procedure; explicit statements: COORDINATES, GRID, PREDICT
+10021       */
+10022      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+10022    ! validmemname=compatible locale=en_US;
+10023      %let syscc=0;
+10024      title; footnote;
+10025      ods _all_ close;
+10026      ods listing gpath="%sysfunc(pathname(work))";
+10027      ods graphics off;
+10028      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.DATA7 (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.THICK (memtype=DATA).
+10028    !                                         quit;
+
+
+10029      ods path work.templat(update) sashelp.tmplmst(read);
+10030      
+10031      title 'Spatial Prediction With Kriging';
+10032      data thick;
+10033      input East North Thick @@;
+10034      label Thick='Coal Seam Thickness';
+10035      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.THICK has 75 observations and 3 variables.
+
+10061      ;
+10062      ods graphics on;
+10063      proc krige2d data=thick;
+10064      coordinates xc=East yc=North;
+10065      predict var=Thick radius=60;
+10066      model scale=7.4599 range=30.1111 form=gauss;
+10067      grid x=0 to 100 by 2.5 y=0 to 100 by 2.5;
+10068      run;
+
+NOTE: The data set WORK.DATA8 has 1681 observations and 7 variables.
+NOTE: The PROCEDURE KRIGE2D printed pages 723-724.
+
+10069      ods graphics off;
+10070      run;
+10071      quit;
+10072      
+10073      
+10074      
+10075      
+The SAS System
+
+10076      

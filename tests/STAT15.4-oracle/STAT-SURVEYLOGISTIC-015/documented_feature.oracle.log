@@ -1,0 +1,62 @@
+The SAS System
+
+21177      
+21178      /* STAT-SURVEYLOGISTIC-015: SURVEYLOGISTIC — LSMEANS / LSMESTIMATE / SLICE
+21179       * Source: S154 / Chapter 120 / `LSMEANS Statement` (PDF pp. 9820–9821); S154 / Chapter 120 / `LSMESTIMATE Statement` (PDF pp. 9821–9823); S154 /
+21179    !  Chapter 120 / `SLICE Statement` (PDF p. 9836).
+21180       * Discriminates: Verified default procedure context
+21181       */
+21182      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+21182    ! validmemname=compatible locale=en_US;
+21183      %let syscc=0;
+21184      title; footnote;
+21185      ods _all_ close;
+21186      ods listing gpath="%sysfunc(pathname(work))";
+21187      ods graphics off;
+21188      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SURVEY (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+21188    !                                         quit;
+
+
+21189      ods path work.templat(update) sashelp.tmplmst(read);
+21190      
+21191      data survey;
+21192      call streaminit(722);
+21193      do stratum=1 to 2;
+21194      do cluster=1 to 4;
+21195      do id=1 to 12;
+21196      age=20+mod(id*7+cluster,45);
+21197      event=rand('bernoulli',0.3);
+21198      weight=2+stratum+cluster/10;
+21199      output;
+21200      end;
+21201      end;
+21202      end;
+21203      run;
+
+NOTE: The data set WORK.SURVEY has 96 observations and 6 variables.
+
+21204      proc surveylogistic data=survey;
+21205      strata stratum;
+21206      cluster cluster;
+21207      weight weight;
+21208      model event(event='1')=age;
+21209      run;
+
+NOTE: PROC SURVEYLOGISTIC is modeling the probability that event=1.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The PROCEDURE SURVEYLOGISTIC printed page 1420.
+
+21210      
+21211      
+21212      
+21213      
+The SAS System
+
+21214      

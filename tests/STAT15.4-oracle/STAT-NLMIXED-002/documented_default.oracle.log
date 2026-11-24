@@ -1,0 +1,68 @@
+The SAS System
+
+6351       
+6352       /* STAT-NLMIXED-002: NLMIXED — Marginal likelihood estimation for nonlinear mixed models
+6353        * Source: S154 / Chapter 89 / `Getting Started: NLMIXED Procedure` (PDF pp. 7090–7097); S154 / Chapter 89 / `Overview: NLMIXED Procedure` (PDF pp.
+6353     !  7088–7090).
+6354        * Discriminates: Example 89.6: Simulated Nested Linear Random-Effects Model
+6355        */
+6356       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+6356     ! validmemname=compatible locale=en_US;
+6357       %let syscc=0;
+6358       title; footnote;
+6359       ods _all_ close;
+6360       ods listing gpath="%sysfunc(pathname(work))";
+6361       ods graphics off;
+6362       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.NESTED (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK._ORACLE_INPUT (memtype=DATA).
+6362     !                                         quit;
+
+
+6363       ods path work.templat(update) sashelp.tmplmst(read);
+6364       
+6365       %let na = 100;
+6366       %let nb = 5;
+6367       %let nr = 2;
+6368       data nested;
+6369       do A = 1 to &na;
+6370       err1 = 3*rannor(339205);
+6371       do B = 1 to &nb;
+6372       err2 = 2*rannor(314159);
+6373       do rep = 1 to &nr;
+6374       err3 = 1*rannor(314159);
+6375       resp = 10 + err1 + err2 + err3;
+6376       output;
+6377       end;
+6378       end;
+6379       end;
+6380       run;
+
+NOTE: The data set WORK.NESTED has 1000 observations and 7 variables.
+
+6381       proc nlmixed data = nested;
+6382       bounds vara >=0, varb_a >=0;
+6383       mean = intercept + aeffect + beffect;
+6384       model resp ~ normal (mean, s2);
+6385       random aeffect ~ normal(0,vara) subject = A;
+6386       random beffect ~ normal(0,varb_a) subject = B(A);
+6387       run;
+
+NOTE: To assign starting values to parameters, use the PARMS statement. The default starting value of 1.0 is in effect for all parameters.
+NOTE: Convergence criterion (GCONV=1E-6) satisfied.
+NOTE: At least one element of the gradient is greater than 1e-3.
+NOTE: The PROCEDURE NLMIXED printed page 411.
+
+6388       
+6389       
+6390       
+6391       
+The SAS System
+
+6392       

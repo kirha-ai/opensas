@@ -1,0 +1,62 @@
+The SAS System
+
+127        
+128        /* STAT-NLMIXED-012: NLMIXED — Prediction
+129         * Source: S154 / Chapter 89 / `Prediction` (PDF pp. 7161–7162).
+130         * Discriminates: Verified default procedure context
+131         */
+132        options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+132      ! validmemname=compatible locale=en_US;
+133        %let syscc=0;
+134        title; footnote;
+135        ods _all_ close;
+136        ods listing gpath="%sysfunc(pathname(work))";
+137        ods graphics off;
+138        proc datasets library=work kill nolist;
+NOTE: Deleting WORK.PUMP (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+138      !                                         quit;
+
+
+139        ods path work.templat(update) sashelp.tmplmst(read);
+140        
+141        %let na = 100;
+142        %let nb = 5;
+143        %let nr = 2;
+144        data nested;
+145        do A = 1 to &na;
+146        err1 = 3*rannor(339205);
+147        do B = 1 to &nb;
+148        err2 = 2*rannor(314159);
+149        do rep = 1 to &nr;
+150        err3 = 1*rannor(314159);
+151        resp = 10 + err1 + err2 + err3;
+152        output;
+153        end;
+154        end;
+155        end;
+156        run;
+
+NOTE: The data set WORK.NESTED has 1000 observations and 7 variables.
+
+157        proc nlmixed data = nested;
+158        bounds vara >=0, varb_a >=0;
+159        mean = intercept + aeffect + beffect;
+160        model resp ~ normal (mean, s2);
+161        random aeffect ~ normal(0,vara) subject = A;
+162        random beffect ~ normal(0,varb_a) subject = B(A);
+163        run;
+
+NOTE: To assign starting values to parameters, use the PARMS statement. The default starting value of 1.0 is in effect for all parameters.
+NOTE: Convergence criterion (GCONV=1E-6) satisfied.
+NOTE: At least one element of the gradient is greater than 1e-3.
+NOTE: The PROCEDURE NLMIXED printed page 3.
+
+164        
+165        
+166        
+167        
+The SAS System
+
+168        

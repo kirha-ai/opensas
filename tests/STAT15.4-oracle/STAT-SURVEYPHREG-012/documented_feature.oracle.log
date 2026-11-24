@@ -1,0 +1,61 @@
+The SAS System
+
+23262      
+23263      /* STAT-SURVEYPHREG-012: SURVEYPHREG — Bootstrap Method
+23264       * Source: S154 / Chapter 122 / `Bootstrap Method` (PDF pp. 10061–10062).
+23265       * Discriminates: Verified default procedure context
+23266       */
+23267      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+23267    ! validmemname=compatible locale=en_US;
+23268      %let syscc=0;
+23269      title; footnote;
+23270      ods _all_ close;
+23271      ods listing gpath="%sysfunc(pathname(work))";
+23272      ods graphics off;
+23273      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SURVEY (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+23273    !                                         quit;
+
+
+23274      ods path work.templat(update) sashelp.tmplmst(read);
+23275      
+23276      data survey;
+23277      call streaminit(722);
+23278      do stratum=1 to 2;
+23279      do cluster=1 to 4;
+23280      do id=1 to 12;
+23281      age=20+mod(id*7+cluster,45);
+23282      time=1+rand('exponential')*10;
+23283      status=(mod(id,4) ne 0);
+23284      weight=2+stratum+cluster/10;
+23285      output;
+23286      end;
+23287      end;
+23288      end;
+23289      run;
+
+NOTE: The data set WORK.SURVEY has 96 observations and 7 variables.
+
+23290      proc surveyphreg data=survey;
+23291      strata stratum;
+23292      cluster cluster;
+23293      weight weight;
+23294      model time*status(0)=age;
+23295      run;
+
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The PROCEDURE SURVEYPHREG printed page 1505.
+
+23296      
+23297      
+23298      
+23299      
+The SAS System
+
+23300      

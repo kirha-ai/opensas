@@ -1,0 +1,485 @@
+
+The HPFMM Procedure
+
+      Performance Information
+
+Execution Mode       Single-Machine
+Number of Threads    2             
+
+
+         Data Access Information
+ 
+Data          Engine    Role     Path
+
+WORK.ASSAY    V9        Input    On Client
+
+
+              Model Information
+
+Data Set              WORK.ASSAY              
+Response Variable     num                     
+Type of Model         Generalized Linear (GLM)
+Distribution          Poisson                 
+Components            1                       
+Link Function         Log                     
+Estimation Method     Maximum Likelihood      
+Random Number Seed    314159                  
+
+
+Number of Observations Read              18
+Number of Observations Used              18
+
+
+           Optimization Information
+
+Optimization Technique        Dual Quasi-Newton
+Parameters in Optimization    3                
+Mean Function Parameters      3                
+Scale Parameters              0                
+
+
+                          Iteration History
+ 
+                               Objective                         Max
+Iteration    Evaluations        Function          Change    Gradient
+
+        0              5    68.596310674                    22.32818
+        1              3    68.166948194      0.42936248    4.947558
+        2              4    68.153984989      0.01296321    4.886072
+        3              3    68.145914282      0.00807071    4.505123
+        4              4    68.126008107      0.01990618    0.067595
+        5              2    68.126003309      0.00000480    0.000301
+        6              3    68.126003309      0.00000000    3.561E-7
+
+         Convergence criterion (GCONV=1E-8) satisfied.          
+
+
+           Fit Statistics
+
+-2 Log Likelihood              136.3
+AIC  (Smaller is Better)       142.3
+AICC (Smaller is Better)       144.0
+BIC  (Smaller is Better)       144.9
+Pearson Statistic            46.2707
+
+
+         Parameter Estimates for Poisson Model
+ 
+                         Standard
+Effect       Estimate       Error    z Value    Pr > |z|
+
+Intercept      2.1728      0.2184       9.95      <.0001
+dose         -0.00101    0.000245      -4.13      <.0001
+logd           0.3198     0.05700       5.61      <.0001
+
+The HPFMM Procedure
+
+      Performance Information
+
+Execution Mode       Single-Machine
+Number of Threads    2             
+
+
+         Data Access Information
+ 
+Data          Engine    Role     Path
+
+WORK.ASSAY    V9        Input    On Client
+
+
+                 Model Information
+
+Data Set              WORK.ASSAY                    
+Response Variable     num                           
+Type of Model         Homogeneous Regression Mixture
+Distribution          Poisson                       
+Components            2                             
+Link Function         Log                           
+Estimation Method     Maximum Likelihood            
+Random Number Seed    314159                        
+
+
+Number of Observations Read              18
+Number of Observations Used              18
+
+
+           Optimization Information
+
+Optimization Technique        Dual Quasi-Newton
+Parameters in Optimization    7                
+Mean Function Parameters      6                
+Scale Parameters              0                
+Mixing Prob Parameters        1                
+Equality Constraints          2                
+
+
+                          Iteration History
+ 
+                               Objective                    Max Proj.
+Iteration    Evaluations        Function          Change     Gradient
+
+        0              6     1174.767283                     4604.364
+        1              4    313.37363927    861.39364369      742.112
+        2              3    121.08601858    192.28762070     173.5486
+        3              4    97.324987642     23.76103094     104.4592
+        4              2    91.481216698      5.84377094     85.08972
+        5              4    85.435763811      6.04545289     35.81337
+        6              2    76.069074356      9.36668945     53.12847
+        7              3    72.858793723      3.21028063     10.56971
+        8              3    72.084307914      0.77448581     4.657749
+        9              4     68.14236692      3.94194099     8.397208
+       10              3    67.661809338      0.48055758     8.025258
+       11              3     67.62272336      0.03908598     3.164248
+       12              4    67.527583264      0.09514010     7.807115
+       13              4    67.234395732      0.29318753     18.55577
+       14              2    66.936507395      0.29788834     3.482818
+       15              5    64.549465416      2.38704198     56.88853
+       16              3    63.638065571      0.91139984     26.40122
+       17              3    63.167055584      0.47100999     36.50293
+       18              4    61.894210045      1.27284554     32.87103
+       19              3    61.106037281      0.78817276     10.76217
+       20              3    60.937454929      0.16858235     2.869622
+       21              3    60.908601933      0.02885300     0.859297
+       22              3    60.907110172      0.00149176     0.240993
+       23              3    60.907071994      0.00003818     0.023286
+       24              3    60.907071199      0.00000080     0.003047
+       25              3    60.907071162      0.00000004      0.00025
+
+         Convergence criterion (GCONV=1E-8) satisfied.          
+
+
+           Fit Statistics
+
+-2 Log Likelihood              121.8
+AIC  (Smaller is Better)       131.8
+AICC (Smaller is Better)       136.8
+BIC  (Smaller is Better)       136.3
+Pearson Statistic            16.1573
+Effective Parameters               5
+Effective Components               2
+
+
+       Linear Constraints at Solution
+ 
+k =                               Constraint
+1       k = 2                     Active
+
+dose    - dose     =     0        Yes       
+logd    - logd     =     0        Yes       
+
+
+                  Parameter Estimates for Poisson Model
+ 
+                                         Standard
+   Component    Effect       Estimate       Error    z Value    Pr > |z|
+
+           1    Intercept      1.9097      0.2654       7.20      <.0001
+           1    dose         -0.00126    0.000273      -4.62      <.0001
+           1    logd           0.3639     0.06602       5.51      <.0001
+           2    Intercept      2.4770      0.2731       9.07      <.0001
+           2    dose         -0.00126    0.000273      -4.62      <.0001
+           2    logd           0.3639     0.06602       5.51      <.0001
+
+
+               Parameter Estimates for Mixing Probabilities
+ 
+                            -----------------Linked Scale-----------------
+                  Mixing                   Standard
+Component    Probability    Logit(Prob)       Error    z Value    Pr > |z|
+
+        1         0.8173         1.4984      0.6875       2.18      0.0293
+        2         0.1827        -1.4984                                   
+
+The HPFMM Procedure
+
+      Performance Information
+
+Execution Mode       Single-Machine
+Number of Threads    2             
+
+
+         Data Access Information
+ 
+Data          Engine    Role     Path
+
+WORK.ASSAY    V9        Input    On Client
+
+
+                 Model Information
+
+Data Set              WORK.ASSAY                    
+Response Variable     num                           
+Type of Model         Homogeneous Regression Mixture
+Distribution          Poisson                       
+Components            2                             
+Link Function         Log                           
+Estimation Method     Maximum Likelihood            
+Random Number Seed    314159                        
+
+
+Number of Observations Read              18
+Number of Observations Used              18
+
+
+           Optimization Information
+
+Optimization Technique        Dual Quasi-Newton
+Parameters in Optimization    7                
+Mean Function Parameters      6                
+Scale Parameters              0                
+Mixing Prob Parameters        1                
+Equality Constraints          2                
+
+
+                          Iteration History
+ 
+                               Objective                         Max
+Iteration    Evaluations        Function          Change    Gradient
+
+        0              6     281.2856693                    450.5682
+        1              2    73.112282299    208.17338700    65.56912
+        2              3      64.5127555      8.59952680    25.31498
+        3              2    63.173179229      1.33957627    9.130547
+        4              2    62.556690985      0.61648824    8.432898
+        5              4    62.054537947      0.50215304    5.461828
+        6              3    61.885086726      0.16945122    3.743976
+        7              2    61.823780721      0.06130601    10.53389
+        8              4    61.606598777      0.21718194     1.60608
+        9              2    61.378412486      0.22818629    6.478051
+       10              2    61.142273778      0.23613871    4.144917
+       11              2    60.981089844      0.16118393    3.691253
+       12              3    60.911587461      0.06950238    0.770531
+       13              3    60.907838296      0.00374916    0.316465
+       14              3    60.907093579      0.00074472     0.06031
+       15              3    60.907071308      0.00002227     0.00679
+       16              3    60.907071163      0.00000014    0.000454
+
+         Convergence criterion (GCONV=1E-8) satisfied.          
+
+
+           Fit Statistics
+
+-2 Log Likelihood              121.8
+AIC  (Smaller is Better)       131.8
+AICC (Smaller is Better)       136.8
+BIC  (Smaller is Better)       136.3
+Pearson Statistic            16.1574
+Effective Parameters               5
+Effective Components               2
+
+
+              Linear Constraints at Solution
+ 
+               k =                               Constraint
+Label          1       k = 2                     Active
+
+common dose    dose    - dose     =     0        Yes       
+common logd    logd    - logd     =     0        Yes       
+
+
+                  Parameter Estimates for Poisson Model
+ 
+                                         Standard
+   Component    Effect       Estimate       Error    z Value    Pr > |z|
+
+           1    Intercept      1.9097      0.2654       7.20      <.0001
+           1    dose         -0.00126    0.000273      -4.62      <.0001
+           1    logd           0.3639     0.06602       5.51      <.0001
+           2    Intercept      2.4770      0.2731       9.07      <.0001
+           2    dose         -0.00126    0.000273      -4.62      <.0001
+           2    logd           0.3639     0.06602       5.51      <.0001
+
+
+               Parameter Estimates for Mixing Probabilities
+ 
+                            -----------------Linked Scale-----------------
+                  Mixing                   Standard
+Component    Probability    Logit(Prob)       Error    z Value    Pr > |z|
+
+        1         0.8173         1.4984      0.6875       2.18      0.0293
+        2         0.1827        -1.4984                                   
+
+The HPFMM Procedure
+
+      Performance Information
+
+Execution Mode       Single-Machine
+Number of Threads    2             
+
+
+         Data Access Information
+ 
+Data          Engine    Role     Path
+
+WORK.ASSAY    V9        Input    On Client
+
+
+                 Model Information
+
+Data Set              WORK.ASSAY                    
+Response Variable     num                           
+Type of Model         Homogeneous Regression Mixture
+Distribution          Poisson                       
+Components            2                             
+Link Function         Log                           
+Estimation Method     Maximum Likelihood            
+Random Number Seed    314159                        
+
+
+Number of Observations Read              17
+Number of Observations Used              17
+
+
+           Optimization Information
+
+Optimization Technique        Dual Quasi-Newton
+Parameters in Optimization    7                
+Mean Function Parameters      6                
+Scale Parameters              0                
+Mixing Prob Parameters        1                
+Equality Constraints          2                
+
+
+                          Iteration History
+ 
+                               Objective                    Max Proj.
+Iteration    Evaluations        Function          Change     Gradient
+
+        0              6    1034.3629928                     4000.651
+        1              4    204.18666941    830.17632336      562.817
+        2              3    89.612103675    114.57456574     153.0954
+        3              4    80.921978032      8.69012564     47.88998
+        4              2    74.557215305      6.36476273      53.5419
+        5              4    66.630172235      7.92704307     154.6663
+        6              2    57.232858038      9.39731420     37.43317
+        7              3     56.15093405      1.08192399     5.909582
+        8              3    56.077046753      0.07388730      8.28596
+        9              3     56.03103761      0.04600914     0.985051
+       10              2    55.971987952      0.05904966     2.700333
+       11              2    55.899382421      0.07260553     0.326967
+       12              3     55.89654634      0.00283608     2.181314
+       13              6    55.817066701      0.07947964     2.457495
+       14              3    55.768372188      0.04869451     3.025421
+       15              3     55.75368507      0.01468712     0.935821
+       16              2    55.735475501      0.01820957     1.187877
+       17              3    55.732122883      0.00335262     0.380434
+       18              3    55.731965259      0.00015762     0.093048
+       19              3    55.731960412      0.00000485      0.00516
+       20              3    55.731960248      0.00000016     0.001041
+
+         Convergence criterion (GCONV=1E-8) satisfied.          
+
+
+           Fit Statistics
+
+-2 Log Likelihood              111.5
+AIC  (Smaller is Better)       121.5
+AICC (Smaller is Better)       126.9
+BIC  (Smaller is Better)       125.6
+Pearson Statistic            16.5987
+Effective Parameters               5
+Effective Components               2
+
+
+       Linear Constraints at Solution
+ 
+k =                               Constraint
+1       k = 2                     Active
+
+dose    - dose     =     0        Yes       
+logd    - logd     =     0        Yes       
+
+
+                  Parameter Estimates for Poisson Model
+ 
+                                         Standard
+   Component    Effect       Estimate       Error    z Value    Pr > |z|
+
+           1    Intercept      2.2272      0.3022       7.37      <.0001
+           1    dose         -0.00065    0.000445      -1.46      0.1440
+           1    logd           0.2432      0.1045       2.33      0.0199
+           2    Intercept      2.5477      0.3331       7.65      <.0001
+           2    dose         -0.00065    0.000445      -1.46      0.1440
+           2    logd           0.2432      0.1045       2.33      0.0199
+
+
+               Parameter Estimates for Mixing Probabilities
+ 
+                            -----------------Linked Scale-----------------
+                  Mixing                   Standard
+Component    Probability    Logit(Prob)       Error    z Value    Pr > |z|
+
+        1         0.5777         0.3134      1.7261       0.18      0.8559
+        2         0.4223        -0.3134                                   
+
+The HPFMM Procedure
+
+      Performance Information
+
+Execution Mode       Single-Machine
+Number of Threads    2             
+
+
+         Data Access Information
+ 
+Data          Engine    Role     Path
+
+WORK.ASSAY    V9        Input    On Client
+
+
+              Model Information
+
+Data Set              WORK.ASSAY              
+Response Variable     num                     
+Type of Model         Generalized Linear (GLM)
+Distribution          Poisson                 
+Components            1                       
+Link Function         Log                     
+Estimation Method     Maximum Likelihood      
+Random Number Seed    314159                  
+
+
+Number of Observations Read              17
+Number of Observations Used              17
+
+
+           Optimization Information
+
+Optimization Technique        Dual Quasi-Newton
+Parameters in Optimization    3                
+Mean Function Parameters      3                
+Scale Parameters              0                
+
+
+                          Iteration History
+ 
+                               Objective                         Max
+Iteration    Evaluations        Function          Change    Gradient
+
+        0              5    57.275712665                    13.97508
+        1              4    57.077953972      0.19775869    4.758375
+        2              4    57.056910037      0.02104393    1.866098
+        3              3    57.025172149      0.03173789    0.018385
+        4              2    57.025171701      0.00000045    0.000196
+        5              2    57.025171701      0.00000000    9.559E-7
+
+         Convergence criterion (GCONV=1E-8) satisfied.          
+
+
+           Fit Statistics
+
+-2 Log Likelihood              114.1
+AIC  (Smaller is Better)       120.1
+AICC (Smaller is Better)       121.9
+BIC  (Smaller is Better)       122.5
+Pearson Statistic            27.8008
+
+
+         Parameter Estimates for Poisson Model
+ 
+                         Standard
+Effect       Estimate       Error    z Value    Pr > |z|
+
+Intercept      2.3164      0.2244      10.32      <.0001
+dose         -0.00072    0.000258      -2.78      0.0055
+logd           0.2603     0.05996       4.34      <.0001

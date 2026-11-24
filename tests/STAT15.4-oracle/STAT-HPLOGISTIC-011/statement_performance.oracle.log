@@ -1,0 +1,55 @@
+The SAS System
+
+2324       
+2325       /* STAT-HPLOGISTIC-011: HPLOGISTIC — PERFORMANCE / Computational Method: Multithreading
+2326        * Source: S154 / Chapter 61 / `PERFORMANCE Statement` (PDF pp. 4762–4763); S154 / Chapter 61 / `Computational Method: Multithreading` (PDF p.
+2326     ! 4775).
+2327        * Discriminates: Explicit single-thread performance settings with the documented baseline computation.
+2328        */
+2329       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+2329     ! validmemname=compatible locale=en_US;
+2330       %let syscc=0;
+2331       title; footnote;
+2332       ods _all_ close;
+2333       ods listing gpath="%sysfunc(pathname(work))";
+2334       ods graphics off;
+2335       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.GETSTARTED (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK._NAMEDAT (memtype=DATA).
+NOTE: Deleting WORK._ORACLE_SCORED (memtype=DATA).
+2335     !                                         quit;
+
+
+2336       ods path work.templat(update) sashelp.tmplmst(read);
+2337       
+2338       data getStarted;
+2339       input C$ y x1-x10;
+2340       datalines;
+
+NOTE: The data set WORK.GETSTARTED has 100 observations and 12 variables.
+
+2441       ;
+2442       proc hplogistic data=getStarted;
+2443       class C;
+2444       model y = C x1-x10;
+2445       
+2446       performance nthreads=1;
+2447       run;
+
+NOTE: The HPLOGISTIC procedure is executing in single-machine mode.
+NOTE: You are modeling the probability that y='0'.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: There were 100 observations read from the data set WORK.GETSTARTED.
+NOTE: The PROCEDURE HPLOGISTIC printed page 126.
+
+2448       
+2449       
+2450       
+2451       
+The SAS System
+
+2452       

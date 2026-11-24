@@ -1,0 +1,76 @@
+The SAS System
+
+6502       
+6503       /* STAT-POWER-004: POWER — MULTREG / ONECORR / ONESAMPLEFREQ
+6504        * Source: S154 / Chapter 96 / `MULTREG Statement` (PDF pp. 7763–7768); S154 / Chapter 96 / `ONECORR Statement` (PDF pp. 7768–7772); S154 /
+6504     ! Chapter 96 / `ONESAMPLEFREQ Statement` (PDF pp. 7772–7780).
+6505        * Discriminates: Example 96.5: Multiple Regression and Correlation; explicit statements: MULTREG, ONECORR
+6506        */
+6507       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+6507     ! validmemname=compatible locale=en_US;
+6508       %let syscc=0;
+6509       title; footnote;
+6510       ods _all_ close;
+6511       ods listing gpath="%sysfunc(pathname(work))";
+6512       ods graphics off;
+6513       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.EXEMPLARY (memtype=DATA).
+NOTE: Deleting WORK.FITFULL (memtype=DATA).
+NOTE: Deleting WORK.POWER (memtype=DATA).
+NOTE: Deleting WORK.PRIMNC (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.STATSFULL (memtype=DATA).
+NOTE: Deleting WORK.STATSRED (memtype=DATA).
+6513     !                                         quit;
+
+
+6514       ods path work.templat(update) sashelp.tmplmst(read);
+6515       
+6516       ods graphics on;
+6517       proc power;
+6518       multreg
+6519       model = random
+6520       nfullpredictors = 7
+6521       ntestpredictors = 1
+6522       partialcorr = 0.35
+6523       ntotal = 100
+6524       power = .;
+6525       plot x=n min=50 max=150;
+6526       run;
+
+NOTE: Plotting computed Power on the y-axis, versus N Total on the x-axis with 21 points per curve between 50 and 150.
+NOTE: The PROCEDURE POWER printed page 525.
+
+6527       ods graphics off;
+6528       proc power;
+6529       onecorr dist=fisherz
+6530       npvars = 6
+6531       corr = 0.35
+6532       nullcorr = 0.2
+6533       sides = 1
+6534       ntotal = 100
+6535       power = .;
+6536       run;
+
+NOTE: The PROCEDURE POWER printed page 526.
+
+6537       proc power;
+6538       onecorr dist=fisherz
+6539       npvars = 6
+6540       corr = 0.35
+6541       nullcorr = 0.2
+6542       sides = 1
+6543       ntotal = .
+6544       power = 0.85 0.95;
+6545       run;
+
+NOTE: The PROCEDURE POWER printed page 527.
+
+6546       
+6547       
+6548       
+6549       
+The SAS System
+
+6550       

@@ -1,0 +1,110 @@
+The SAS System
+
+1992       
+1993       /* STAT-GRAPHICS-005: ODS graphics — Specifying an ODS Destination for Graphics / Viewing Your Graphs in the SAS Windowing Environment /
+1993     ! Determining Graph Names and Labels
+1994        * Source: S154 / Chapter 24 / `Specifying an ODS Destination for Graphics` (PDF pp. 689–691); S154 / Chapter 24 / `Viewing Your Graphs in the SAS
+1994     ! Windowing Environment` (PDF p. 691); S154 / Chapter 24 / `Determining Graph Names and Labels` (PDF pp. 691–694).
+1995        * Discriminates: ODS graphics enablement, explicit SVG format/size, graph identity and generated image file names
+1996        */
+1997       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+1997     ! validmemname=compatible locale=en_US;
+1998       %let syscc=0;
+1999       title; footnote;
+2000       ods _all_ close;
+2001       ods listing gpath="%sysfunc(pathname(work))";
+2002       ods graphics off;
+2003       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.GRAPH_FILES (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SAMPLE (memtype=DATA).
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+2003     !                                         quit;
+
+
+2004       ods path work.templat(update) sashelp.tmplmst(read);
+2005       
+2006       options dlcreatedir; libname _gpath "%sysfunc(pathname(work))/stat_graphics_005"; libname _gpath clear;
+NOTE: Library _GPATH was created.
+NOTE: Libref _GPATH was successfully assigned as follows: 
+      Engine:        V9 
+      Physical Name: /saswork/SAS_work5D120001108E_odaws02-euw1.oda.sas.com/SAS_workCCDC0001108E_odaws02-euw1.oda.sas.com/stat_graphics_005
+NOTE: Libref _GPATH has been deassigned.
+2007       ods listing gpath="%sysfunc(pathname(work))/stat_graphics_005";
+2008       ods graphics on / reset=all imagename="oracle" imagefmt=svg width=5in height=3in;
+2009       ods trace on;
+2010       data sample;
+2011        input x z y group $ weight freq;
+2012        datalines;
+
+NOTE: The data set WORK.SAMPLE has 12 observations and 6 variables.
+
+2025       ;
+2026       run;
+2027       proc reg data=sample plots(only)=fitplot; model y=x; run;
+
+
+Output Added:
+-------------
+Name:       NObs
+Label:      Number of Observations
+Template:   Stat.Reg.NObs
+Path:       Reg.MODEL1.Fit.y.NObs
+-------------
+
+Output Added:
+-------------
+Name:       ANOVA
+Label:      Analysis of Variance
+Template:   Stat.REG.ANOVA
+Path:       Reg.MODEL1.Fit.y.ANOVA
+-------------
+
+Output Added:
+-------------
+Name:       FitStatistics
+Label:      Fit Statistics
+Template:   Stat.REG.FitStatistics
+Path:       Reg.MODEL1.Fit.y.FitStatistics
+-------------
+
+Output Added:
+-------------
+Name:       ParameterEstimates
+Label:      Parameter Estimates
+Template:   Stat.REG.ParameterEstimates
+Path:       Reg.MODEL1.Fit.y.ParameterEstimates
+-------------
+
+Output Added:
+-------------
+Name:       FitPlot
+Label:      Fit Plot
+Template:   Stat.REG.Graphics.Fit
+Path:       Reg.MODEL1.ObswiseStats.y.FitPlot
+-------------
+2027     !                                                           quit;
+
+NOTE: The PROCEDURE REG printed page 95.
+
+2028       ods trace off; ods graphics off;
+2029       data graph_files; length name $128; rc=filename('_gdir',"%sysfunc(pathname(work))/stat_graphics_005"); did=dopen('_gdir'); if did then do; do i=1 to
+2029     ! dnum(did); name=dread(did,i); if lowcase(scan(name,-1,'.')) in ('svg','png') then output; end; rc=dclose(did); end; keep name; run;
+
+NOTE: The data set WORK.GRAPH_FILES has 1 observations and 1 variables.
+
+2030       proc print data=graph_files noobs; run;
+
+NOTE: There were 1 observations read from the data set WORK.GRAPH_FILES.
+NOTE: The PROCEDURE PRINT printed page 96.
+
+2031       
+2032       
+2033       
+2034       
+The SAS System
+
+2035       

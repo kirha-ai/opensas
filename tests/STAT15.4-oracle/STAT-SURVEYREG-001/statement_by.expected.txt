@@ -1,0 +1,244 @@
+
+Ice Cream Spending Analysis
+Simple Random Sample Design
+
+_oracle_by=1
+
+The SURVEYREG Procedure
+ 
+ 
+ 
+Regression Analysis for Dependent Variable Spending
+
+            Data Summary
+
+Number of Observations            40
+Mean of Spending             8.75000
+Sum of Spending            350.00000
+
+
+      Fit Statistics
+
+R-Square            0.8132
+Root MSE            2.4506
+Denominator DF          39
+
+
+    Class Level Information
+ 
+CLASS
+Variable      Levels    Values
+
+Kids               4    1 2 3 4 
+
+
+         Tests of Model Effects
+ 
+Effect       Num DF    F Value    Pr > F
+
+Model             4     119.15    <.0001
+Intercept         1     153.32    <.0001
+Income            1     324.45    <.0001
+Kids              3       0.92    0.4385
+
+NOTE: The denominator degrees of freedom for the F tests is 39.
+
+
+             Estimated Regression Coefficients
+ 
+                             Standard
+Parameter      Estimate         Error    t Value    Pr > |t|
+
+Intercept    -26.084677    2.46720403     -10.57      <.0001
+Income         0.775330    0.04304415      18.01      <.0001
+Kids 1         0.897655    1.12352876       0.80      0.4292
+Kids 2         1.494032    1.24705263       1.20      0.2381
+Kids 3        -0.513181    1.33454891      -0.38      0.7027
+Kids 4         0.000000    0.00000000        .         .    
+
+NOTE: The degrees of freedom for the t tests is 39.
+      Matrix X'X is singular and a generalized inverse was used to solve the normal equations.  Estimates are not unique.
+
+Ice Cream Spending Analysis
+Simple Random Sample Design
+
+_oracle_by=2
+
+The SURVEYREG Procedure
+ 
+ 
+ 
+Regression Analysis for Dependent Variable Spending
+
+            Data Summary
+
+Number of Observations            40
+Mean of Spending             8.75000
+Sum of Spending            350.00000
+
+
+      Fit Statistics
+
+R-Square            0.8132
+Root MSE            2.4506
+Denominator DF          39
+
+
+    Class Level Information
+ 
+CLASS
+Variable      Levels    Values
+
+Kids               4    1 2 3 4 
+
+
+         Tests of Model Effects
+ 
+Effect       Num DF    F Value    Pr > F
+
+Model             4     119.15    <.0001
+Intercept         1     153.32    <.0001
+Income            1     324.45    <.0001
+Kids              3       0.92    0.4385
+
+NOTE: The denominator degrees of freedom for the F tests is 39.
+
+
+             Estimated Regression Coefficients
+ 
+                             Standard
+Parameter      Estimate         Error    t Value    Pr > |t|
+
+Intercept    -26.084677    2.46720403     -10.57      <.0001
+Income         0.775330    0.04304415      18.01      <.0001
+Kids 1         0.897655    1.12352876       0.80      0.4292
+Kids 2         1.494032    1.24705263       1.20      0.2381
+Kids 3        -0.513181    1.33454891      -0.38      0.7027
+Kids 4         0.000000    0.00000000        .         .    
+
+NOTE: The degrees of freedom for the t tests is 39.
+      Matrix X'X is singular and a generalized inverse was used to solve the normal equations.  Estimates are not unique.
+
+Ice Cream Spending Analysis
+Stratified Sample Design
+
+The SURVEYREG Procedure
+ 
+Regression Analysis for Dependent Variable Spending
+
+             Data Summary
+
+Number of Observations               40
+Sum of Weights                   4000.0
+Weighted Mean of Spending       9.14130
+Weighted Sum of Spending        36565.2
+
+
+        Design Summary
+
+Number of Strata             3
+
+
+      Fit Statistics
+
+R-Square            0.8037
+Root MSE            2.4371
+Denominator DF          37
+
+
+                    Stratum Information
+ 
+Stratum                              Population    Sampling
+ Index        Grade       N Obs           Total        Rate
+
+   1              7          20            1824      1.10% 
+   2              8           9            1025      0.88% 
+   3              9          11            1151      0.96% 
+
+
+         Tests of Model Effects
+ 
+Effect       Num DF    F Value    Pr > F
+
+Model             1     492.39    <.0001
+Intercept         1     225.81    <.0001
+Income            1     492.39    <.0001
+
+NOTE: The denominator degrees of freedom for the F tests is 37.
+
+
+             Estimated Regression Coefficients
+ 
+                             Standard
+Parameter      Estimate         Error    t Value    Pr > |t|
+
+Intercept    -23.416322    1.55827214     -15.03      <.0001
+Income         0.731052    0.03294520      22.19      <.0001
+
+NOTE: The degrees of freedom for the t tests is 37.
+
+Ice Cream Spending Analysis
+Stratified Sample Design
+
+The SURVEYREG Procedure
+ 
+Regression Analysis for Dependent Variable Spending
+
+             Data Summary
+
+Number of Observations               40
+Sum of Weights                   4000.0
+Weighted Mean of Spending       9.14130
+Weighted Sum of Spending        36565.2
+
+
+        Design Summary
+
+Number of Strata             3
+
+
+      Fit Statistics
+
+R-Square            0.8037
+Root MSE            2.4371
+Denominator DF          37
+
+
+                    Stratum Information
+ 
+Stratum                              Population    Sampling
+ Index        Grade       N Obs           Total        Rate
+
+   1              7          20            1824      1.10% 
+   2              8           9            1025      0.88% 
+   3              9          11            1151      0.96% 
+
+
+         Tests of Model Effects
+ 
+Effect       Num DF    F Value    Pr > F
+
+Model             1     492.39    <.0001
+Intercept         1     225.81    <.0001
+Income            1     492.39    <.0001
+
+NOTE: The denominator degrees of freedom for the F tests is 37.
+
+
+             Estimated Regression Coefficients
+ 
+                             Standard
+Parameter      Estimate         Error    t Value    Pr > |t|
+
+Intercept    -23.416322    1.55827214     -15.03      <.0001
+Income         0.731052    0.03294520      22.19      <.0001
+
+NOTE: The degrees of freedom for the t tests is 37.
+
+Ice Cream Spending Analysis
+Stratified Sample Design
+
+Obs    Parameter      Estimate        StdErr     DenDF     tValue     Probt
+
+ 1     Intercept    -23.416322    1.55827214        37     -15.03    <.0001
+ 2     Income         0.731052    0.03294520        37      22.19    <.0001

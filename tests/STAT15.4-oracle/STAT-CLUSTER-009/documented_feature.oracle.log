@@ -1,0 +1,111 @@
+The SAS System
+
+14292      
+14293      /* STAT-CLUSTER-009: CLUSTER — Computational Resources
+14294       * Source: S154 / Chapter 40 / `Computational Resources` (PDF pp. 2520–2521).
+14295       * Discriminates: Example 40.1: Cluster Analysis of Flying Mileages between 10 American Cities
+14296       */
+14297      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+14297    ! validmemname=compatible locale=en_US;
+14298      %let syscc=0;
+14299      title; footnote;
+14300      ods _all_ close;
+14301      ods listing gpath="%sysfunc(pathname(work))";
+14302      ods graphics off;
+14303      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.DATA43 (memtype=DATA).
+NOTE: Deleting WORK.DATA44 (memtype=DATA).
+NOTE: Deleting WORK.DATA45 (memtype=DATA).
+NOTE: Deleting WORK.DATA46 (memtype=DATA).
+NOTE: Deleting WORK.DATA47 (memtype=DATA).
+NOTE: Deleting WORK.DATA48 (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+14303    !                                         quit;
+
+
+14304      ods path work.templat(update) sashelp.tmplmst(read);
+14305      
+14306      proc print noobs data=sashelp.mileages;
+14307      run;
+
+NOTE: There were 10 observations read from the data set SASHELP.MILEAGES.
+NOTE: The PROCEDURE PRINT printed page 1965.
+
+14308      title 'Cluster Analysis of Flying Mileages Between 10 American Cities';
+14309      ods graphics on;
+14310      title2 'Using METHOD=AVERAGE';
+14311      proc cluster data=sashelp.mileages(type=distance) method=average pseudo;
+14312      id City;
+14313      run;
+
+NOTE: The input data set is a TYPE=DISTANCE data set. For such a data set, the procedure requires that the order of the rows match the order of the variables.
+NOTE: Input distances have been squared.
+NOTE: The data set WORK.DATA49 has 19 observations and 11 variables.
+NOTE: The PROCEDURE CLUSTER printed page 1966.
+
+14314      title2 'Using METHOD=CENTROID';
+14315      proc cluster data=sashelp.mileages(type=distance) method=centroid pseudo;
+14316      id City;
+14317      run;
+
+NOTE: The input data set is a TYPE=DISTANCE data set. For such a data set, the procedure requires that the order of the rows match the order of the variables.
+NOTE: Input distances have been squared.
+NOTE: The data set WORK.DATA50 has 19 observations and 11 variables.
+NOTE: The PROCEDURE CLUSTER printed page 1967.
+
+14318      title2 'Using METHOD=DENSITY K=3';
+14319      proc cluster data=sashelp.mileages(type=distance) method=density k=3;
+14320      id City;
+14321      run;
+
+NOTE: The input data set is a TYPE=DISTANCE data set. For such a data set, the procedure requires that the order of the rows match the order of the variables.
+NOTE: 2 modal clusters have been formed.
+WARNING: Ties for minimum distance between clusters have been detected at 1 level(s) in the cluster history.
+NOTE: The data set WORK.DATA51 has 19 observations and 8 variables.
+NOTE: The PROCEDURE CLUSTER printed page 1968.
+
+14322      title2 'Using METHOD=SINGLE';
+14323      proc cluster data=sashelp.mileages(type=distance) method=single;
+14324      id City;
+14325      run;
+
+NOTE: The input data set is a TYPE=DISTANCE data set. For such a data set, the procedure requires that the order of the rows match the order of the variables.
+NOTE: The data set WORK.DATA52 has 19 observations and 6 variables.
+NOTE: The PROCEDURE CLUSTER printed page 1969.
+
+14326      title2 'Using METHOD=TWOSTAGE K=3';
+14327      proc cluster data=sashelp.mileages(type=distance) method=twostage k=3;
+14328      id City;
+14329      run;
+
+NOTE: The input data set is a TYPE=DISTANCE data set. For such a data set, the procedure requires that the order of the rows match the order of the variables.
+NOTE: 2 modal clusters have been formed.
+WARNING: Ties for minimum distance between clusters have been detected at 1 level(s) in the cluster history.
+NOTE: The data set WORK.DATA53 has 19 observations and 8 variables.
+NOTE: The PROCEDURE CLUSTER printed page 1970.
+
+14330      title2 'Using METHOD=WARD';
+14331      proc cluster data=sashelp.mileages(type=distance) method=ward pseudo;
+14332      id City;
+14333      run;
+
+NOTE: The input data set is a TYPE=DISTANCE data set. For such a data set, the procedure requires that the order of the rows match the order of the variables.
+NOTE: Input distances have been squared.
+NOTE: The data set WORK.DATA54 has 19 observations and 11 variables.
+NOTE: The PROCEDURE CLUSTER printed page 1971.
+
+14334      
+14335      
+14336      
+14337      
+The SAS System
+
+14338      

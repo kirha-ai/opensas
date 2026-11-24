@@ -1,0 +1,60 @@
+The SAS System
+
+4129       
+4130       /* STAT-MIXED-014: MIXED — CODE
+4131        * Source: S154 / Chapter 84 / `CODE Statement` (PDF p. 6640).
+4132        * Discriminates: Getting Started: MIXED Procedure
+4133        */
+4134       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+4134     ! validmemname=compatible locale=en_US;
+4135       %let syscc=0;
+4136       title; footnote;
+4137       ods _all_ close;
+4138       ods listing gpath="%sysfunc(pathname(work))";
+4139       ods graphics off;
+4140       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.ABSORB (memtype=DATA).
+NOTE: Deleting WORK.INF (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+4140     !                                         quit;
+
+
+4141       ods path work.templat(update) sashelp.tmplmst(read);
+4142       
+4143       data heights;
+4144       input Family Gender$ Height @@;
+4145       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.HEIGHTS has 18 observations and 3 variables.
+
+4149       ;
+4150       proc mixed data=heights;
+4151       class Family Gender;
+4152       model Height = Gender Family Family*Gender;
+4153       run;
+
+NOTE: The PROCEDURE MIXED printed page 316.
+
+4154       proc mixed;
+4155       class Family Gender;
+4156       model Height = Gender;
+4157       random Family Family*Gender;
+4158       run;
+
+NOTE: Convergence criteria met.
+NOTE: The PROCEDURE MIXED printed page 317.
+
+4159       
+4160       
+4161       
+4162       
+The SAS System
+
+4163       

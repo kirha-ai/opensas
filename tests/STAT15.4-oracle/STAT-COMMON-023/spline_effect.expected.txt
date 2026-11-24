@@ -1,0 +1,61 @@
+
+The GLMSELECT Procedure
+
+Data Set              WORK.SAMPLE
+Dependent Variable              y
+Selection Method             None
+
+
+Number of Observations Read          12
+Number of Observations Used          12
+
+
+       Dimensions
+
+Number of Effects       2
+Number of Parameters    4
+
+The GLMSELECT Procedure
+
+                  Least Squares Summary
+ 
+         Effect         Number      Number
+ Step    Entered    Effects In    Parms In           SBC 
+
+    0    Intercept           1           1       49.5271 
+---------------------------------------------------------
+    1    smooth              2           3        9.5662*
+
+               * Optimal Value of Criterion
+
+The GLMSELECT Procedure
+Least Squares Model (No Selection)
+
+                            Analysis of Variance
+ 
+                                  Sum of           Mean
+Source                 DF        Squares         Square    F Value    Pr > F
+
+Model                   2      590.60808      295.30404     185.74    <.0001
+Error                   9       14.30859        1.58984                     
+Corrected Total        11      604.91667                                    
+
+
+Root MSE              1.26089
+Dependent Mean       14.91667
+R-Square               0.9763
+Adj R-Sq               0.9711
+AIC                  22.11144
+AICC                 27.82572
+SBC                   9.56616
+
+
+                          Parameter Estimates
+ 
+                                         Standard
+Parameter      DF        Estimate           Error    t Value    Pr > |t|
+
+Intercept       1        1.286964        1.103757       1.17      0.2736
+smooth    1     0               0               .        .         .    
+smooth    2     1        2.156446        0.253678       8.50      <.0001
+smooth    3     1       -0.030298        0.055934      -0.54      0.6012

@@ -1,0 +1,100 @@
+The SAS System
+
+150        
+151        /* STAT-DATASET-007: Statistical data sets — TYPE=SSCP Data Sets / TYPE=TREE Data Sets / TYPE=UCORR Data Sets
+152         * Source: S154 / Special SAS Data Sets / `TYPE=SSCP Data Sets` (PDF pp. 10891–10892); S154 / Special SAS Data Sets / `TYPE=TREE Data Sets` (PDF
+152      ! pp. 10892–10893); S154 / Special SAS Data Sets / `TYPE=UCORR Data Sets` (PDF p. 10893); S154 / Special SAS Data Sets / `Definitional Formulas` (PDF
+152      !  pp. 10893–10894).
+153         * Discriminates: Native correlation/covariance/SSCP rows, reserved variables and data set metadata
+154         */
+155        options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+155      ! validmemname=compatible locale=en_US;
+156        %let syscc=0;
+157        title; footnote;
+158        ods _all_ close;
+159        ods listing gpath="%sysfunc(pathname(work))";
+160        ods graphics off;
+161        proc datasets library=work kill nolist;
+NOTE: Deleting WORK.PEARSON (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SAMPLE (memtype=DATA).
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SSCP (memtype=DATA).
+NOTE: Deleting WORK._ORACLE_DESCRIPTOR (memtype=DATA).
+NOTE: Deleting WORK._ORACLE_MEMBER (memtype=DATA).
+161      !                                         quit;
+
+
+162        ods path work.templat(update) sashelp.tmplmst(read);
+163        
+164        %macro _oracle_descriptor(ds);
+165        proc contents data=&ds out=_oracle_descriptor(keep=name type length varnum label format informat) noprint; run;
+166        proc sort data=_oracle_descriptor; by varnum; run;
+167        proc print data=_oracle_descriptor noobs; run;
+168        data _oracle_member;
+169        length Dataset $64 DatasetType $16;
+170        Dataset="&ds"; _handle=open("&ds");
+171        DatasetType=attrc(_handle,'TYPE'); NObs=attrn(_handle,'NOBS'); NVars=attrn(_handle,'NVARS');
+172        _close=close(_handle); drop _handle _close;
+173        run;
+174        proc print data=_oracle_member noobs; run;
+175        %mend;
+176        
+177        
+178        data sample;
+179         input x z y group $ weight freq;
+180         datalines;
+
+NOTE: The data set WORK.SAMPLE has 12 observations and 6 variables.
+
+193        ;
+194        run;
+195        proc corr data=sample outp=pearson cov csscp sscp; var x z y; run;
+
+NOTE: The data set WORK.PEARSON has 16 observations and 6 variables.
+NOTE: The PROCEDURE CORR printed page 11.
+
+196        proc print data=pearson noobs; format _numeric_ best32.; run;
+
+NOTE: There were 16 observations read from the data set WORK.PEARSON.
+NOTE: The PROCEDURE PRINT printed page 12.
+
+197        %_oracle_descriptor(pearson);
+
+NOTE: The data set WORK._ORACLE_DESCRIPTOR has 6 observations and 7 variables.
+
+
+NOTE: There were 6 observations read from the data set WORK._ORACLE_DESCRIPTOR.
+NOTE: The data set WORK._ORACLE_DESCRIPTOR has 6 observations and 7 variables.
+
+
+NOTE: There were 6 observations read from the data set WORK._ORACLE_DESCRIPTOR.
+NOTE: The PROCEDURE PRINT printed page 13.
+
+
+NOTE: The data set WORK._ORACLE_MEMBER has 1 observations and 4 variables.
+
+
+NOTE: There were 1 observations read from the data set WORK._ORACLE_MEMBER.
+NOTE: The PROCEDURE PRINT printed page 14.
+
+198        data sscp(type=sscp); set pearson; where _TYPE_='SSCP'; run;
+
+NOTE: There were 4 observations read from the data set WORK.PEARSON.
+      WHERE _TYPE_='SSCP';
+NOTE: The data set WORK.SSCP has 4 observations and 6 variables.
+
+199        proc print data=sscp noobs; run;
+
+NOTE: There were 4 observations read from the data set WORK.SSCP.
+NOTE: The PROCEDURE PRINT printed page 15.
+
+200        
+201        
+202        
+203        
+The SAS System
+
+204        

@@ -1,0 +1,53 @@
+The SAS System
+
+710        
+711        /* STAT-BCHOICE-001: BCHOICE — Data input, variable roles, and basic options
+712         * Source: S154 / Chapter 30 / `PROC BCHOICE Statement` (PDF pp. 1178–1188); S154 / Chapter 30 / `BY Statement` (PDF pp. 1188–1189).
+713         * Discriminates: Verified default procedure context; explicit statements: BY
+714         */
+715        options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+715      ! validmemname=compatible locale=en_US;
+716        %let syscc=0;
+717        title; footnote;
+718        ods _all_ close;
+719        ods listing gpath="%sysfunc(pathname(work))";
+720        ods graphics off;
+721        proc datasets library=work kill nolist;
+NOTE: Deleting WORK.MIXTURE (memtype=DATA).
+NOTE: Deleting WORK.NEW (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+721      !                                         quit;
+
+
+722        ods path work.templat(update) sashelp.tmplmst(read);
+723        
+724        proc print data=Sashelp.Margarin (obs=24);
+725        by HouseID Set;
+726        id HouseID Set;
+727        run;
+
+NOTE: There were 24 observations read from the data set SASHELP.MARGARIN.
+NOTE: The PROCEDURE PRINT printed page 28.
+
+728        proc bchoice data=Sashelp.Margarin seed=123 nmc=1000 thin=2
+729        nthreads=4 plots=none nbi=200;
+730        class Brand(ref='PPk') HouseID Set;
+731        model Choice = / choiceset=(HouseID Set);
+732        random Brand LogPrice / subject=HouseID remean=(LogInc FamSize)
+733        type=un monitor=(1);
+734        run;
+
+NOTE: Generating the burn-in samples.
+NOTE: Beginning sample generation.
+NOTE: Beginning calculation of summary and diagnostics statistics.
+NOTE: The PROCEDURE BCHOICE printed page 29.
+
+735        
+736        
+737        
+738        
+The SAS System
+
+739        

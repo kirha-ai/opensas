@@ -1,0 +1,113 @@
+The SAS System
+
+3093       
+3094       /* STAT-HPPLS-010: HPPLS — PERFORMANCE
+3095        * Source: S154 / Chapter 64 / `PERFORMANCE Statement` (PDF p. 4924).
+3096        * Discriminates: Explicit single-thread performance settings with the documented baseline computation.
+3097        */
+3098       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+3098     ! validmemname=compatible locale=en_US;
+3099       %let syscc=0;
+3100       title; footnote;
+3101       ods _all_ close;
+3102       ods listing gpath="%sysfunc(pathname(work))";
+3103       ods graphics off;
+3104       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.ALL (memtype=DATA).
+NOTE: Deleting WORK.NEWOBS (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.RESULT (memtype=DATA).
+NOTE: Deleting WORK.SAMPLE (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK._ORACLE_INPUT (memtype=DATA).
+3104     !                                         quit;
+
+
+3105       ods path work.templat(update) sashelp.tmplmst(read);
+3106       
+3107       data Sample;
+3108       input obsnam $ v1-v27 ls ha dt Role $5. @@;
+3109       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.SAMPLE has 16 observations and 32 variables.
+
+3158       ;
+3159       proc hppls data=sample;
+3160       model ls ha dt = v1-v27;
+3161       
+3162       performance nthreads=1;
+3163       run;
+
+NOTE: The HPPLS procedure is executing in single-machine mode.
+NOTE: Maximum number of factors to extract set to 15. This may be too high; you should consider using either NFAC= to set the number of factors or PARTITION 
+      statement to select the number of factors by test set validation.
+NOTE: There were 16 observations read from the data set WORK.SAMPLE.
+NOTE: The PROCEDURE HPPLS printed page 151.
+
+3164       proc hppls data=sample;
+3165       model ls ha dt = v1-v27;
+3166       partition roleVar = Role(train='TRAIN' test='TEST');
+3167       run;
+
+NOTE: The HPPLS procedure is executing in single-machine mode.
+NOTE: Maximum number of factors to extract set to 9.
+NOTE: There were 16 observations read from the data set WORK.SAMPLE.
+NOTE: The PROCEDURE HPPLS printed pages 152-153.
+
+3168       proc hppls data=sample cvtest(pval=0.15 seed=12345);
+3169       model ls ha dt = v1-v27;
+3170       partition roleVar = Role(train='TRAIN' test='TEST');
+3171       run;
+
+NOTE: The HPPLS procedure is executing in single-machine mode.
+NOTE: Maximum number of factors to extract set to 9.
+NOTE: There were 16 observations read from the data set WORK.SAMPLE.
+NOTE: The PROCEDURE HPPLS printed pages 154-155.
+
+3172       data newobs;
+3173       input obsnam $ v1-v27 @@;
+3174       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.NEWOBS has 2 observations and 28 variables.
+
+3181       ;
+3182       data all;
+3183       set sample newobs;
+3184       run;
+
+NOTE: There were 16 observations read from the data set WORK.SAMPLE.
+NOTE: There were 2 observations read from the data set WORK.NEWOBS.
+NOTE: The data set WORK.ALL has 18 observations and 32 variables.
+
+3185       proc hppls data=all nfac=2;
+3186       model ls ha dt = v1-v27;
+3187       partition roleVar = Role(train='TRAIN' test='TEST');
+3188       output out=result pred=p;
+3189       id obsnam;
+3190       run;
+
+NOTE: The HPPLS procedure is executing in single-machine mode.
+NOTE: There were 18 observations read from the data set WORK.ALL.
+NOTE: The data set WORK.RESULT has 18 observations and 4 variables.
+NOTE: The PROCEDURE HPPLS printed pages 156-157.
+
+3191       proc print data=result;
+3192       where (obsnam in ('EM17','EM25'));
+3193       var obsnam p_ls p_ha p_dt;
+3194       run;
+
+NOTE: There were 2 observations read from the data set WORK.RESULT.
+      WHERE obsnam in ('EM17', 'EM25');
+NOTE: The PROCEDURE PRINT printed page 158.
+
+3195       
+3196       
+3197       
+3198       
+The SAS System
+
+3199       

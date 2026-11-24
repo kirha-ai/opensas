@@ -1,0 +1,54 @@
+
+Hair Color of European Children
+
+Geographic Region=1
+
+The FREQ Procedure
+
+                Hair Color
+ 
+                                      Test
+Hair      Frequency     Percent     Percent
+-------------------------------------------
+fair            76       30.89       30.00 
+red             19        7.72       12.00 
+medium          83       33.74       30.00 
+dark            65       26.42       25.00 
+black            3        1.22        3.00 
+
+
+     Chi-Square Test
+for Specified Proportions
+
+Chi-Square    7.7602
+DF                 4
+Pr > ChiSq    0.1008
+
+Sample Size = 246
+
+Hair Color of European Children
+
+Geographic Region=2
+
+The FREQ Procedure
+
+                Hair Color
+ 
+                                      Test
+Hair      Frequency     Percent     Percent
+-------------------------------------------
+fair           152       29.46       30.00 
+red             94       18.22       12.00 
+medium         134       25.97       30.00 
+dark           117       22.67       25.00 
+black           19        3.68        3.00 
+
+
+     Chi-Square Test
+for Specified Proportions
+
+Chi-Square    21.3824
+DF                  4
+Pr > ChiSq     0.0003
+
+Sample Size = 516

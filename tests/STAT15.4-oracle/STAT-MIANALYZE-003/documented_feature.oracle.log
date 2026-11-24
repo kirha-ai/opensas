@@ -1,0 +1,86 @@
+The SAS System
+
+3155       
+3156       /* STAT-MIANALYZE-003: MIANALYZE — MODELEFFECTS / STDERR / Combining Inferences from Imputed Data Sets
+3157        * Source: S154 / Chapter 83 / `MODELEFFECTS Statement` (PDF p. 6564); S154 / Chapter 83 / `STDERR Statement` (PDF pp. 6564–6565); S154 / Chapter
+3157     ! 83 / `Combining Inferences from Imputed Data Sets` (PDF pp. 6571–6572).
+3158        * Discriminates: Getting Started: MIANALYZE Procedure; explicit statements: MODELEFFECTS
+3159        */
+3160       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+3160     ! validmemname=compatible locale=en_US;
+3161       %let syscc=0;
+3162       title; footnote;
+3163       ods _all_ close;
+3164       ods listing gpath="%sysfunc(pathname(work))";
+3165       ods graphics off;
+3166       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.FITNESS1 (memtype=DATA).
+NOTE: Deleting WORK.OUTMI (memtype=DATA).
+NOTE: Deleting WORK.OUTREG (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+3166     !                                         quit;
+
+
+3167       ods path work.templat(update) sashelp.tmplmst(read);
+3168       
+3169       *----------------- Data on Physical Fitness -----------------*
+3170       | These measurements were made on men involved in a physical |
+3171       | fitness course at N.C. State University. |
+3172       | Only selected variables of |
+3173       | Oxygen (oxygen intake, ml per kg body weight per minute), |
+3174       | Runtime (time to run 1.5 miles in minutes), and |
+3175       | RunPulse (heart rate while running) are used. |
+3176       | Certain values were changed to missing for the analysis. |
+3177       *------------------------------------------------------------*;
+3178       data Fitness1;
+3179       input Oxygen RunTime RunPulse @@;
+3180       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.FITNESS1 has 31 observations and 3 variables.
+
+3197       ;
+3198       proc mi data=Fitness1 seed=3237851 noprint out=outmi;
+3199       var Oxygen RunTime RunPulse;
+3200       run;
+
+WARNING: The default number of imputations has been changed from 5 to 25.
+NOTE: The EM algorithm (MLE) converges in 12 iterations.
+NOTE: The EM algorithm (posterior mode) converges in 7 iterations.
+NOTE: The data set WORK.OUTMI has 775 observations and 4 variables.
+
+3201       proc reg data=outmi outest=outreg covout noprint;
+3202       model Oxygen= RunTime RunPulse;
+3203       by _Imputation_;
+3204       run;
+
+NOTE: Interactivity disabled with BY processing.
+NOTE: The data set WORK.OUTREG has 100 observations and 10 variables.
+
+3205       proc print data=outreg(obs=8);
+3206       var _Imputation_ _Type_ _Name_
+3207       Intercept RunTime RunPulse;
+3208       title 'Parameter Estimates from Imputed Data Sets';
+3209       run;
+
+NOTE: There were 8 observations read from the data set WORK.OUTREG.
+NOTE: The PROCEDURE PRINT printed page 272.
+
+3210       proc mianalyze data=outreg;
+3211       modeleffects Intercept RunTime RunPulse;
+3212       run;
+
+NOTE: The PROCEDURE MIANALYZE printed page 273.
+
+3213       
+3214       
+3215       
+3216       
+The SAS System
+
+3217       

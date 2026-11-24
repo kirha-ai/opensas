@@ -1,0 +1,74 @@
+The SAS System
+
+12551      
+12552      /* STAT-CATMOD-010: CATMOD — CONTRAST
+12553       * Source: S154 / Chapter 36 / `CONTRAST Statement` (PDF pp. 2193–2196).
+12554       * Discriminates: Example 36.8: Repeated Measures, Logistic Analysis of Growth Curve; explicit statements: CONTRAST
+12555       */
+12556      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+12556    ! validmemname=compatible locale=en_US;
+12557      %let syscc=0;
+12558      title; footnote;
+12559      ods _all_ close;
+12560      ods listing gpath="%sysfunc(pathname(work))";
+12561      ods graphics off;
+12562      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.GROUP (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+12562    !                                         quit;
+
+
+12563      ods path work.templat(update) sashelp.tmplmst(read);
+12564      
+12565      title 'Growth Curve Analysis';
+12566      data growth2;
+12567      input Diagnosis $ Treatment $ week1 $ week2 $ week4 $ count @@;
+12568      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.GROWTH2 has 32 observations and 6 variables.
+
+12585      ;
+12586      proc catmod data=growth2 order=data;
+12587      title2 'Reduced Logistic Model';
+12588      weight count;
+12589      population Diagnosis Treatment;
+12590      response logit;
+12591      model week1*week2*week4=(1 0 0 0, /* mild, std */
+12592      1 0 1 0,
+12593      1 0 2 0,
+12594      1 0 0 0, /* mild, new */
+12595      1 0 0 1,
+12596      1 0 0 2,
+12597      0 1 0 0, /* severe, std */
+12598      0 1 1 0,
+12599      0 1 2 0,
+12600      0 1 0 0, /* severe, new */
+12601      0 1 0 1,
+12602      0 1 0 2)
+12603      (1='Mild diagnosis, week 1',
+12604      2='Severe diagnosis, week 1',
+12605      3='Time effect for std trt',
+12606      4='Time effect for new trt')
+12607      / freq design;
+12608      contrast 'Diagnosis effect, week 1' all_parms 1 -1 0 0;
+12609      contrast 'Equal time effects' all_parms 0 0 1 -1;
+12610      quit;
+
+NOTE: There were 32 observations read from the data set WORK.GROWTH2.
+NOTE: The PROCEDURE CATMOD printed page 1758.
+
+12611      
+12612      
+12613      
+12614      
+The SAS System
+
+12615      

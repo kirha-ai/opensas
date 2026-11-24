@@ -1,0 +1,79 @@
+The SAS System
+
+608        
+609        /* STAT-MIXED-014: MIXED — CODE
+610         * Source: S154 / Chapter 84 / `CODE Statement` (PDF p. 6640).
+611         * Discriminates: Generate DATA step scoring code, execute it against the input rows, and print the scored data.
+612         */
+613        options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+613      ! validmemname=compatible locale=en_US;
+614        %let syscc=0;
+615        title; footnote;
+616        ods _all_ close;
+617        ods listing gpath="%sysfunc(pathname(work))";
+618        ods graphics off;
+619        proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SURVIVAL (memtype=DATA).
+619      !                                         quit;
+
+
+620        ods path work.templat(update) sashelp.tmplmst(read);
+621        
+622        filename _orcode "%sysfunc(pathname(work))/_oracle_score.sas";
+623        
+624        
+625        data heights;
+626        input Family Gender$ Height @@;
+627        datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.HEIGHTS has 18 observations and 3 variables.
+
+631        ;
+632        proc mixed data=heights;
+633        class Family Gender;
+634        model Height = Gender Family Family*Gender;
+635        
+636        code file="%sysfunc(pathname(work))/_oracle_score.sas";
+637        run;
+
+NOTE: External file /saswork/SAS_workFCBA00018F54_odaws02-euw1.oda.sas.com/SAS_workA81400018F54_odaws02-euw1.oda.sas.com/_oracle_score.sas opened.
+NOTE: The MIXED procedure wrote the DATA step code to external file 
+      /saswork/SAS_workFCBA00018F54_odaws02-euw1.oda.sas.com/SAS_workA81400018F54_odaws02-euw1.oda.sas.com/_oracle_score.sas.
+NOTE: The PROCEDURE MIXED printed page 25.
+
+638        proc mixed data=heights;
+639        class Family Gender;
+640        model Height = Gender;
+641        random Family Family*Gender;
+642        run;
+
+NOTE: Convergence criteria met.
+NOTE: The PROCEDURE MIXED printed page 26.
+
+643        
+644        data _oracle_scored; set heights;
+645        %include _orcode;
+726        run;
+
+NOTE: There were 18 observations read from the data set WORK.HEIGHTS.
+NOTE: The data set WORK._ORACLE_SCORED has 18 observations and 4 variables.
+
+727        proc print data=_oracle_scored(obs=10); run;
+
+NOTE: There were 10 observations read from the data set WORK._ORACLE_SCORED.
+NOTE: The PROCEDURE PRINT printed page 27.
+
+728        
+729        
+730        
+731        
+The SAS System
+
+732        

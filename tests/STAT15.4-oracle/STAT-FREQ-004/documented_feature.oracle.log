@@ -1,0 +1,68 @@
+The SAS System
+
+924        
+925        /* STAT-FREQ-004: FREQ — EXACT / Exact Statistics
+926         * Source: S154 / Chapter 47 / `EXACT Statement` (PDF pp. 3085–3094); S154 / Chapter 47 / `Exact Statistics` (PDF pp. 3234–3238).
+927         * Discriminates: Example 47.5: Analysis of a 2x2 Contingency Table; explicit statements: EXACT
+928         */
+929        options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+929      ! validmemname=compatible locale=en_US;
+930        %let syscc=0;
+931        title; footnote;
+932        ods _all_ close;
+933        ods listing gpath="%sysfunc(pathname(work))";
+934        ods graphics off;
+935        proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SOCIOECONOMICS (memtype=DATA).
+935      !                                         quit;
+
+
+936        ods path work.templat(update) sashelp.tmplmst(read);
+937        
+938        proc format;
+938      !              value ExpFmt 1='High Cholesterol Diet' 0='Low Cholesterol Diet';
+NOTE: Format EXPFMT has been output.
+938      !                                                                               value RspFmt 1='Yes' 0='No';
+NOTE: Format RSPFMT has been output.
+938      !                                                                                                            run;
+
+
+939        data FatComp;
+940        input Exposure Response Count;
+941        label Response='Heart Disease';
+942        datalines;
+
+NOTE: The data set WORK.FATCOMP has 4 observations and 3 variables.
+
+947        ;
+948        proc sort data=FatComp;
+949        by descending Exposure descending Response;
+950        run;
+
+NOTE: There were 4 observations read from the data set WORK.FATCOMP.
+NOTE: The data set WORK.FATCOMP has 4 observations and 3 variables.
+
+951        proc freq data=FatComp order=data;
+952        format Exposure ExpFmt. Response RspFmt.;
+953        tables Exposure*Response / chisq relrisk;
+954        exact pchi or;
+955        weight Count;
+956        title 'Case-Control Study of High Fat/Cholesterol Diet';
+957        run;
+
+NOTE: There were 4 observations read from the data set WORK.FATCOMP.
+NOTE: The PROCEDURE FREQ printed page 117.
+
+958        
+959        
+960        
+961        
+The SAS System
+
+962        

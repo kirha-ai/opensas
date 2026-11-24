@@ -1,0 +1,60 @@
+The SAS System
+
+19191      
+19192      /* STAT-SURVEYFREQ-004: SURVEYFREQ — Balanced Repeated Replication (BRR) Method / Fay’s BRR Method
+19193       * Source: S154 / Chapter 118 / `Balanced Repeated Replication (BRR) Method` (PDF pp. 9635–9637); S154 / Chapter 118 / `Fay’s BRR Method` (PDF
+19193    ! pp. 9637–9639).
+19194       * Discriminates: Verified default procedure context
+19195       */
+19196      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+19196    ! validmemname=compatible locale=en_US;
+19197      %let syscc=0;
+19198      title; footnote;
+19199      ods _all_ close;
+19200      ods listing gpath="%sysfunc(pathname(work))";
+19201      ods graphics off;
+19202      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SURVEY (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+19202    !                                         quit;
+
+
+19203      ods path work.templat(update) sashelp.tmplmst(read);
+19204      
+19205      data survey;
+19206      do state=1 to 2;
+19207      do school=1 to 4;
+19208      do id=1 to 6;
+19209      response=1+mod(id+school,3);
+19210      schooltype=1+mod(school,2);
+19211      samplingweight=2+state+school/10;
+19212      output;
+19213      end;
+19214      end;
+19215      end;
+19216      run;
+
+NOTE: The data set WORK.SURVEY has 48 observations and 6 variables.
+
+19217      proc surveyfreq data=survey;
+19218      strata state;
+19219      cluster school;
+19220      weight samplingweight;
+19221      tables schooltype*response / row chisq;
+19222      run;
+
+NOTE: The Rao-Scott chi-square test cannot be computed for the table of schooltype by response because the design correction is not positive.
+NOTE: The PROCEDURE SURVEYFREQ printed page 1380.
+
+19223      
+19224      
+19225      
+19226      
+The SAS System
+
+19227      

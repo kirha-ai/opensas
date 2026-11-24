@@ -1,0 +1,104 @@
+The SAS System
+
+23721      
+23722      /* STAT-SURVEYREG-001: SURVEYREG — Data input, variable roles, and basic options
+23723       * Source: S154 / Chapter 123 / `PROC SURVEYREG Statement` (PDF pp. 10113–10124); S154 / Chapter 123 / `BY Statement` (PDF pp. 10124–10125); S154
+23723    !  / Chapter 123 / `CLUSTER Statement` (PDF pp. 10126–10127); S154 / Chapter 123 / `REPWEIGHTS Statement` (PDF pp. 10137–10139); S154 / Chapter 123
+23723    !  / `STRATA Statement` (PDF p. 10140); S154 / Chapter 123 / `WEIGHT Statement` (PDF pp. 10141–10142); S154 / Chapter 123 / `Missing Values` (PDF pp.
+23723    !  10142–10143).
+23724       * Discriminates: Verified default procedure context; explicit statements: STRATA, WEIGHT
+23725       */
+23726      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+23726    ! validmemname=compatible locale=en_US;
+23727      %let syscc=0;
+23728      title; footnote;
+23729      ods _all_ close;
+23730      ods listing gpath="%sysfunc(pathname(work))";
+23731      ods graphics off;
+23732      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SURVEY (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+23732    !                                         quit;
+
+
+23733      ods path work.templat(update) sashelp.tmplmst(read);
+23734      
+23735      data IceCream;
+23736      input Grade Spending Income Kids @@;
+23737      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.ICECREAM has 40 observations and 4 variables.
+
+23752      ;
+23753      title1 'Ice Cream Spending Analysis';
+23754      title2 'Simple Random Sample Design';
+23755      proc surveyreg data=IceCream total=4000;
+23756      class Kids;
+23757      model Spending = Income Kids / solution;
+23758      run;
+
+NOTE: The PROCEDURE SURVEYREG printed page 1516.
+
+23759      data StudentTotals;
+23760      input Grade _TOTAL_;
+23761      datalines;
+
+NOTE: The data set WORK.STUDENTTOTALS has 3 observations and 2 variables.
+
+23765      ;
+23766      data IceCream;
+23767      set IceCream;
+23768      if Grade=7 then Prob=20/1824;
+23769      if Grade=8 then Prob=9/1025;
+23770      if Grade=9 then Prob=11/1151;
+23771      Weight=1/Prob;
+23772      run;
+
+NOTE: There were 40 observations read from the data set WORK.ICECREAM.
+NOTE: The data set WORK.ICECREAM has 40 observations and 6 variables.
+
+23773      ods graphics on;
+23774      title1 'Ice Cream Spending Analysis';
+23775      title2 'Stratified Sample Design';
+23776      proc surveyreg data=IceCream total=StudentTotals;
+23777      strata Grade /list;
+23778      model Spending = Income;
+23779      weight Weight;
+23780      run;
+
+NOTE: The PROCEDURE SURVEYREG printed page 1517.
+
+23781      title1 'Ice Cream Spending Analysis';
+23782      title2 'Stratified Sample Design';
+23783      proc surveyreg data=IceCream total=StudentTotals;
+23784      strata Grade /list;
+23785      model Spending = Income;
+23786      weight Weight;
+23787      ods output ParameterEstimates = MyParmEst;
+23788      run;
+
+NOTE: The data set WORK.MYPARMEST has 2 observations and 6 variables.
+NOTE: The PROCEDURE SURVEYREG printed page 1518.
+
+23789      ods output ParameterEstimates = MyParmEst;
+23790      proc print data=MyParmEst;
+23791      run;
+
+WARNING: Output 'ParameterEstimates' was not created.  Make sure that the output object name, label, or path is spelled correctly.  Also, verify that the 
+         appropriate procedure options are used to produce the requested output object.  For example, verify that the NOPRINT option is not used.
+NOTE: There were 2 observations read from the data set WORK.MYPARMEST.
+NOTE: The PROCEDURE PRINT printed page 1519.
+
+23792      
+23793      
+23794      
+23795      
+The SAS System
+
+23796      

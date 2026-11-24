@@ -1,0 +1,282 @@
+
+High School Scores Data
+
+Type=rural
+
+The UNIVARIATE Procedure
+Variable:  total
+
+                            Moments
+
+N                          20    Sum Weights                 20
+Mean                   167.05    Sum Observations          3341
+Std Deviation      41.9567133    Variance            1760.36579
+Skewness           0.37623522    Kurtosis            -0.8418865
+Uncorrected SS         591561    Corrected SS          33446.95
+Coeff Variation    25.1162606    Std Error Mean       9.3818063
+
+
+              Basic Statistical Measures
+ 
+    Location                    Variability
+
+Mean     167.0500     Std Deviation           41.95671
+Median   166.0000     Variance                    1760
+Mode        .         Range                  143.00000
+                      Interquartile Range     61.00000
+
+
+           Tests for Location: Mu0=0
+ 
+Test           -Statistic-    -----p Value------
+
+Student's t    t  17.80574    Pr > |t|    <.0001
+Sign           M        10    Pr >= |M|   <.0001
+Signed Rank    S       105    Pr >= |S|   <.0001
+
+
+Quantiles (Definition 5)
+ 
+Level         Quantile
+
+100% Max         253.0
+99%              253.0
+95%              238.5
+90%              223.5
+75% Q3           191.5
+50% Median       166.0
+25% Q1           130.5
+10%              115.5
+5%               110.5
+1%               110.0
+0% Min           110.0
+
+
+        Extreme Observations
+ 
+----Lowest----        ----Highest---
+ 
+Value      Obs        Value      Obs
+
+  110       19          193        8
+  111       16          217       20
+  120       11          223        3
+  125        2          224        4
+  128       18          253        6
+
+High School Scores Data
+
+Type=urban
+
+The UNIVARIATE Procedure
+Variable:  total
+
+                            Moments
+
+N                          20    Sum Weights                 20
+Mean                    153.3    Sum Observations          3066
+Std Deviation      30.0667678    Variance            904.010526
+Skewness            -1.168342    Kurtosis            3.04805606
+Uncorrected SS         487194    Corrected SS           17176.2
+Coeff Variation    19.6130253    Std Error Mean      6.72313367
+
+
+              Basic Statistical Measures
+ 
+    Location                    Variability
+
+Mean     153.3000     Std Deviation           30.06677
+Median   153.0000     Variance               904.01053
+Mode     151.0000     Range                  134.00000
+                      Interquartile Range     30.00000
+
+Note: The mode displayed is the smallest of 2 modes with a count of 2.
+
+
+           Tests for Location: Mu0=0
+ 
+Test           -Statistic-    -----p Value------
+
+Student's t    t  22.80187    Pr > |t|    <.0001
+Sign           M        10    Pr >= |M|   <.0001
+Signed Rank    S       105    Pr >= |S|   <.0001
+
+
+Quantiles (Definition 5)
+ 
+Level         Quantile
+
+100% Max         198.0
+99%              198.0
+95%              195.0
+90%              190.5
+75% Q3           168.5
+50% Median       153.0
+25% Q1           138.5
+10%              125.0
+5%                93.5
+1%                64.0
+0% Min            64.0
+
+
+        Extreme Observations
+ 
+----Lowest----        ----Highest---
+ 
+Value      Obs        Value      Obs
+
+   64       23          170       39
+  123       40          186       22
+  127       37          189       29
+  130       27          192       21
+  133       25          198       32
+
+High School Scores Data
+METHOD=STD
+
+Type=rural
+
+The STDIZE Procedure
+
+Location and Scale Measures
+ 
+Location = mean     Scale = standard deviation
+ 
+Name         Location           Scale           N
+
+total      167.050000       41.956713          20
+
+High School Scores Data
+METHOD=STD
+
+Type=urban
+
+The STDIZE Procedure
+
+Location and Scale Measures
+ 
+Location = mean     Scale = standard deviation
+ 
+Name         Location           Scale           N
+
+total      153.300000       30.066768          20
+
+High School Scores Data
+METHOD=MAD
+
+Type=rural
+
+The STDIZE Procedure
+
+Location and Scale Measures
+ 
+Location = median     Scale = median abs dev from median
+ 
+Name         Location           Scale           N
+
+total      166.000000       32.000000          20
+
+High School Scores Data
+METHOD=MAD
+
+Type=urban
+
+The STDIZE Procedure
+
+Location and Scale Measures
+ 
+Location = median     Scale = median abs dev from median
+ 
+Name         Location           Scale           N
+
+total      153.000000       15.500000          20
+
+High School Scores Data
+METHOD=IQR
+
+Type=rural
+
+The STDIZE Procedure
+
+Location and Scale Measures
+ 
+Location = median     Scale = interquartile range
+ 
+Name         Location           Scale           N
+
+total      166.000000       61.000000          20
+
+High School Scores Data
+METHOD=IQR
+
+Type=urban
+
+The STDIZE Procedure
+
+Location and Scale Measures
+ 
+Location = median     Scale = interquartile range
+ 
+Name         Location           Scale           N
+
+total      153.000000       30.000000          20
+
+High School Scores Data
+METHOD=ABW(4)
+
+Type=rural
+
+The STDIZE Procedure
+
+Location and Scale Measures
+ 
+Location = biweight 1-step M-estimate     Scale = biweight A-estimate
+ 
+Name         Location           Scale           N
+
+total      162.889603       56.662855          20
+
+High School Scores Data
+METHOD=ABW(4)
+
+Type=urban
+
+The STDIZE Procedure
+
+Location and Scale Measures
+ 
+Location = biweight 1-step M-estimate     Scale = biweight A-estimate
+ 
+Name         Location           Scale           N
+
+total      156.014608       28.615980          20
+
+High School Scores Data
+After Removing Outlier, METHOD=STD
+
+Type=rural
+
+The STDIZE Procedure
+
+Location and Scale Measures
+ 
+Location = mean     Scale = standard deviation
+ 
+Name         Location           Scale           N
+
+total      167.050000       41.956713          20
+
+High School Scores Data
+After Removing Outlier, METHOD=STD
+
+Type=urban
+
+The STDIZE Procedure
+
+Location and Scale Measures
+ 
+Location = mean     Scale = standard deviation
+ 
+Name         Location           Scale           N
+
+total      158.000000       22.088207          19

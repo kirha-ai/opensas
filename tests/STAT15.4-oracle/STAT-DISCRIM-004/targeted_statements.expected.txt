@@ -1,0 +1,212 @@
+
+The DISCRIM Procedure
+
+Total Sample Size                   90          DF Total                            89
+Variables                            2          DF Within Classes                   87
+Classes                              3          DF Between Classes                   2
+
+
+Number of Observations Read             90
+Number of Observations Used             90
+
+
+                         Class Level Information
+ 
+          Variable                                                  Prior
+ group    Name        Frequency       Weight    Proportion    Probability
+
+     1    _1                 30      30.0000      0.333333       0.333333
+     2    _2                 30      30.0000      0.333333       0.333333
+     3    _3                 30      30.0000      0.333333       0.333333
+
+
+Pooled Covariance Matrix Information
+ 
+               Natural Log of the
+ Covariance    Determinant of the
+Matrix Rank     Covariance Matrix
+
+          2              -0.09423
+
+The DISCRIM Procedure
+
+Pairwise Generalized Squared Distances Between Groups
+
+ 2         _   _       -1  _   _  
+D (i|j) = (X - X )' COV   (X - X )
+            i   j           i   j 
+
+
+      Generalized Squared Distance to group
+ 
+  From
+ group             1             2             3
+
+     1             0       0.19070       0.63411
+     2       0.19070             0       0.13124
+     3       0.63411       0.13124             0
+
+Linear Discriminant Function
+
+               _     -1 _                              -1 _ 
+Constant = -.5 X' COV   X      Coefficient Vector = COV   X 
+                j        j                                 j
+
+
+      Linear Discriminant Function for group
+ 
+Variable             1             2             3
+
+Constant     -13.62221     -15.99664     -18.07884
+x             -7.15722      -7.76332      -8.32075
+y              4.99701       5.41487       5.75460
+
+The DISCRIM Procedure
+Classification Summary for Calibration Data: WORK.SAMPLE
+Resubstitution Summary using Linear Discriminant Function
+
+Generalized Squared Distance Function
+
+ 2         _       -1   _  
+D (X) = (X-X )' COV  (X-X )
+ j          j            j 
+
+Posterior Probability of Membership in Each group
+
+                   2                    2    
+Pr(j|X) = exp(-.5 D (X)) / SUM exp(-.5 D (X))
+                   j        k           k    
+
+
+ Number of Observations and Percent Classified into group
+ 
+  From
+ group            1            2            3        Total
+
+     1           17            4            9           30
+              56.67        13.33        30.00       100.00
+
+     2           12            6           12           30
+              40.00        20.00        40.00       100.00
+
+     3            9            4           17           30
+              30.00        13.33        56.67       100.00
+
+ Total           38           14           38           90
+              42.22        15.56        42.22       100.00
+
+Priors      0.33333      0.33333      0.33333             
+                                                          
+
+              Error Count Estimates for group
+ 
+                       1           2           3       Total
+
+Rate              0.4333      0.8000      0.4333      0.5556
+Priors            0.3333      0.3333      0.3333            
+
+The DISCRIM Procedure
+
+Total Sample Size                   90          DF Total                            89
+Variables                            2          DF Within Classes                   87
+Classes                              3          DF Between Classes                   2
+
+
+Number of Observations Read             90
+Number of Observations Used             90
+
+
+                         Class Level Information
+ 
+          Variable                                                  Prior
+ group    Name        Frequency       Weight    Proportion    Probability
+
+     1    _1                 30      30.0000      0.333333       0.333333
+     2    _2                 30      30.0000      0.333333       0.333333
+     3    _3                 30      30.0000      0.333333       0.333333
+
+
+Pooled Covariance Matrix Information
+ 
+               Natural Log of the
+ Covariance    Determinant of the
+Matrix Rank     Covariance Matrix
+
+          2              -0.09423
+
+The DISCRIM Procedure
+
+Pairwise Generalized Squared Distances Between Groups
+
+ 2         _   _       -1  _   _                
+D (i|j) = (X - X )' COV   (X - X ) - 2 ln PRIOR 
+            i   j           i   j              j
+
+
+      Generalized Squared Distance to group
+ 
+  From
+ group             1             2             3
+
+     1       2.19722       2.38792       2.83133
+     2       2.38792       2.19722       2.32846
+     3       2.83133       2.32846       2.19722
+
+Linear Discriminant Function
+
+               _     -1 _                                  -1 _ 
+Constant = -.5 X' COV   X  + ln PRIOR     Coefficient = COV   X 
+                j        j           j    Vector               j
+
+
+      Linear Discriminant Function for group
+ 
+Variable             1             2             3
+
+Constant     -14.72082     -17.09525     -19.17745
+x             -7.15722      -7.76332      -8.32075
+y              4.99701       5.41487       5.75460
+
+The DISCRIM Procedure
+Classification Summary for Calibration Data: WORK.SAMPLE
+Resubstitution Summary using Linear Discriminant Function
+
+Generalized Squared Distance Function
+
+ 2         _       -1   _                
+D (X) = (X-X )' COV  (X-X ) - 2 ln PRIOR 
+ j          j            j              j
+
+Posterior Probability of Membership in Each group
+
+                   2                    2    
+Pr(j|X) = exp(-.5 D (X)) / SUM exp(-.5 D (X))
+                   j        k           k    
+
+
+ Number of Observations and Percent Classified into group
+ 
+  From
+ group            1            2            3        Total
+
+     1           17            4            9           30
+              56.67        13.33        30.00       100.00
+
+     2           12            6           12           30
+              40.00        20.00        40.00       100.00
+
+     3            9            4           17           30
+              30.00        13.33        56.67       100.00
+
+ Total           38           14           38           90
+              42.22        15.56        42.22       100.00
+
+Priors      0.33333      0.33333      0.33333             
+                                                          
+
+              Error Count Estimates for group
+ 
+                       1           2           3       Total
+
+Rate              0.4333      0.8000      0.4333      0.5556
+Priors            0.3333      0.3333      0.3333            

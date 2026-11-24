@@ -1,0 +1,75 @@
+The SAS System
+
+6547       
+6548       /* STAT-NLMIXED-005: NLMIXED — REPLICATE / Modeling Assumptions and Notation / Integral Approximations
+6549        * Source: S154 / Chapter 89 / `REPLICATE Statement` (PDF pp. 7125–7126); S154 / Chapter 89 / `Modeling Assumptions and Notation` (PDF pp.
+6549     ! 7128–7129); S154 / Chapter 89 / `Integral Approximations` (PDF pp. 7129–7131).
+6550        * Discriminates: Example 89.3: Probit-Normal Model with Ordinal Data; explicit statements: REPLICATE
+6551        */
+6552       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+6552     ! validmemname=compatible locale=en_US;
+6553       %let syscc=0;
+6554       title; footnote;
+6555       ods _all_ close;
+6556       ods listing gpath="%sysfunc(pathname(work))";
+6557       ods graphics off;
+6558       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.CDF (memtype=DATA).
+NOTE: Deleting WORK.EB (memtype=DATA).
+NOTE: Deleting WORK.EST (memtype=DATA).
+NOTE: Deleting WORK.HEADACHE (memtype=DATA).
+NOTE: Deleting WORK.NEW (memtype=DATA).
+NOTE: Deleting WORK.PRED (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TREST (memtype=DATA).
+6558     !                                         quit;
+
+
+6559       ods path work.templat(update) sashelp.tmplmst(read);
+6560       
+6561       data inhaler;
+6562       input clarity group time freq @@;
+6563       gt = group*time;
+6564       sub = floor((_n_+1)/2);
+6565       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.INHALER has 38 observations and 6 variables.
+
+6572       ;
+6573       proc nlmixed data=inhaler corr ecorr;
+6574       parms b0=0 b1=0 b2=0 b3=0 sd=1 i1=1 i2=1;
+6575       bounds i1 > 0, i2 > 0;
+6576       eta = b0 + b1*group + b2*time + b3*gt + u;
+6577       if (clarity=1) then p = probnorm(-eta);
+6578       else if (clarity=2) then
+6579       p = probnorm(i1-eta) - probnorm(-eta);
+6580       else if (clarity=3) then
+6581       p = probnorm(i1+i2-eta) - probnorm(i1-eta);
+6582       else p = 1 - probnorm(i1+i2-eta);
+6583       if (p > 1e-8) then ll = log(p);
+6584       else ll = -1e20;
+6585       model clarity ~ general(ll);
+6586       random u ~ normal(0,sd*sd) subject=sub;
+6587       replicate freq;
+6588       estimate 'thresh2' i1;
+6589       estimate 'thresh3' i1 + i2;
+6590       estimate 'icc' sd*sd/(1+sd*sd);
+6591       run;
+
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The PROCEDURE NLMIXED printed page 418.
+
+6592       
+6593       
+6594       
+6595       
+The SAS System
+
+6596       

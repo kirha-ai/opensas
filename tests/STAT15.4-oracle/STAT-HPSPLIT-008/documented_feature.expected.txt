@@ -1,0 +1,61 @@
+
+The HPSPLIT Procedure
+
+      Performance Information
+
+Execution Mode       Single-Machine
+Number of Threads    2             
+
+
+           Data Access Information
+ 
+Data             Engine    Role     Path
+
+WORK.MBE_DATA    V9        Input    On Client
+
+
+                   Model Information
+
+Split Criterion Used                            Entropy
+Pruning Method                                  Entropy
+Subtree Evaluation Criterion                  Full Tree
+Number of Branches                                    2
+Maximum Tree Depth Requested                          6
+Maximum Tree Depth Achieved                           3
+Tree Depth                                            3
+Number of Leaves Before Pruning                       6
+Number of Leaves After Pruning                        6
+Model Event Level                              Unusable
+
+
+Number of Observations Read                     20
+Number of Observations Used                     20
+
+The HPSPLIT Procedure
+
+        Model-Based Confusion Matrix
+ 
+                   Predicted           Error
+Actual       Unusable       Usable      Rate
+
+Unusable           13            0    0.0000
+Usable              0            7    0.0000
+
+
+                                   Model-Based Fit Statistics for Selected Tree
+ 
+      N                    Mis-
+ Leaves           ASE     class    Sensitivity    Specificity       Entropy          Gini           RSS       AUC
+
+      6             0    0.0000         1.0000         1.0000             0             0             0    1.0000
+
+
+                              Variable Importance
+ 
+            Variable                                  Training
+Variable    Label                              Relative    Importance      Count
+
+gTemp       Growth Temperature of Substrate      1.0000        2.1022          2
+Dopant      Dopant Atom                          0.7522        1.5811          1
+aTemp       Anneal Temperature                   0.6228        1.3093          1
+Rot         Rotation Speed                       0.3250        0.6831          1

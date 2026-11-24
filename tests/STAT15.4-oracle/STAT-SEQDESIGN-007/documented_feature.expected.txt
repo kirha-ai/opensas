@@ -1,0 +1,106 @@
+
+The SEQDESIGN Procedure
+Design: Design_1
+
+                    Design Information
+
+Statistic Distribution                               Normal
+Boundary Scale                               Standardized Z
+Alternative Hypothesis                            Two-Sided
+Early Stop                                      Accept Null
+Method                                       Error Spending
+Boundary Key                                           Both
+Alternative Reference                                   0.2
+Number of Stages                                          3
+Alpha                                                  0.05
+Beta                                                   0.09
+Power                                                  0.91
+Max Information (Percent of Fixed Sample)          103.8789
+Max Information                                    282.9328
+Null Ref ASN (Percent of Fixed Sample)             79.20197
+Alt Ref ASN (Percent of Fixed Sample)              102.1476
+
+
+                                          Method Information
+ 
+                                                      ----Error Spending----   Alternative
+Boundary      Method              Alpha       Beta    Function                   Reference       Drift
+
+Upper Beta    Error Spending    0.02500    0.09000    Power (Rho=2)                    0.2    3.364121
+Lower Beta    Error Spending    0.02500    0.09000    Power (Rho=2)                   -0.2    -3.36412
+
+
+                       Boundary Information (Standardized Z Scale)
+                                    Null Reference = 0
+ 
+                                     -------Alternative------    -----Boundary Values----
+           ---Information Level--    --------Reference-------    ---Lower--    ---Upper--
+_Stage_    Proportion      Actual         Lower         Upper          Beta          Beta
+
+      1        0.3333    94.31094      -1.94228       1.94228      -0.08239       0.08239
+      2        0.6667    188.6219      -2.74679       2.74679      -0.90351       0.90351
+      3        1.0000    282.9328      -3.36412       3.36412      -1.92519       1.92519
+
+
+                        Error Spending Information
+ 
+                                  --------Cumulative Error Spending-------
+           -Information Level-    -------Lower------    -------Upper------
+_Stage_             Proportion      Alpha       Beta       Beta      Alpha
+
+      1                 0.3333    0.00000    0.01000    0.01000    0.00000
+      2                 0.6667    0.00000    0.04000    0.04000    0.00000
+      3                 1.0000    0.02500    0.09000    0.09000    0.02500
+
+The SEQDESIGN Procedure
+Design: Design_1
+
+                    Design Information
+
+Statistic Distribution                               Normal
+Boundary Scale                               Standardized Z
+Alternative Hypothesis                            Two-Sided
+Early Stop                                      Accept Null
+Method                                       Error Spending
+Boundary Key                                           Both
+Alternative Reference                                   0.2
+Number of Stages                                          3
+Alpha                                                  0.05
+Beta                                                   0.09
+Power                                                  0.91
+Max Information (Percent of Fixed Sample)          101.9388
+Max Information                                     277.649
+Null Ref ASN (Percent of Fixed Sample)             80.56408
+Alt Ref ASN (Percent of Fixed Sample)               100.792
+
+
+                                          Method Information
+ 
+                                                      ----Error Spending----   Alternative
+Boundary      Method              Alpha       Beta    Function                   Reference       Drift
+
+Upper Beta    Error Spending    0.02500    0.09000    Power (Rho=2)                    0.2    3.332561
+Lower Beta    Error Spending    0.02500    0.09000    Power (Rho=2)                   -0.2    -3.33256
+
+
+                       Boundary Information (Standardized Z Scale)
+                                    Null Reference = 0
+ 
+                                     -------Alternative------    -----Boundary Values----
+           ---Information Level--    --------Reference-------    ---Lower--    ---Upper--
+_Stage_    Proportion      Actual         Lower         Upper          Beta          Beta
+
+      1        0.3333    92.54967      -1.92405       1.92405             .             .
+      2        0.6667    185.0993      -2.72102       2.72102      -0.89469       0.89469
+      3        1.0000     277.649      -3.33256       3.33256      -1.93494       1.93494
+
+
+                        Error Spending Information
+ 
+                                  --------Cumulative Error Spending-------
+           -Information Level-    -------Lower------    -------Upper------
+_Stage_             Proportion      Alpha       Beta       Beta      Alpha
+
+      1                 0.3333    0.00000    0.00000    0.00000    0.00000
+      2                 0.6667    0.00000    0.03375    0.03375    0.00000
+      3                 1.0000    0.02500    0.09000    0.09000    0.02500

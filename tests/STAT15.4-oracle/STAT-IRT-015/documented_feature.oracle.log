@@ -1,0 +1,56 @@
+The SAS System
+
+9341       
+9342       /* STAT-IRT-015: IRT — Official examples and feature integration regression
+9343        * Source: S154 / Chapter 72 / `Examples: IRT Procedure` (PDF pp. 5355–5386).
+9344        * Discriminates: Verified default procedure context
+9345        */
+9346       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+9346     ! validmemname=compatible locale=en_US;
+9347       %let syscc=0;
+9348       title; footnote;
+9349       ods _all_ close;
+9350       ods listing gpath="%sysfunc(pathname(work))";
+9351       ods graphics off;
+9352       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.RESPONSES (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+9352     !                                         quit;
+
+
+9353       ods path work.templat(update) sashelp.tmplmst(read);
+9354       
+9355       data responses;
+9356       call streaminit(329);
+9357       array item[5] item1-item5;
+9358       do subject=1 to 150;
+9359       theta=rand('normal');
+9360       do k=1 to 5;
+9361       item[k]=rand('bernoulli',1/(1+exp(-(theta-(k-3)/2))));
+9362       end;
+9363       output;
+9364       end;
+9365       keep item1-item5;
+9366       run;
+
+NOTE: The data set WORK.RESPONSES has 150 observations and 5 variables.
+
+9367       proc irt data=responses;
+9368       var item1-item5;
+9369       run;
+
+NOTE: The observed frequency is zero for some response patterns. As a result, the Pearson chi-square model fit statistic is not calculated.
+WARNING: Over 20 percent of the response patterns have expected frequency less than 5. The chi-square distribution might not provide valid statistical 
+         inferences about the model fit when you use the Pearson chi-square and the likelihood ratio chi-square.
+NOTE: The PROCEDURE IRT printed pages 694-698.
+
+9370       
+9371       
+9372       
+9373       
+The SAS System
+
+9374       

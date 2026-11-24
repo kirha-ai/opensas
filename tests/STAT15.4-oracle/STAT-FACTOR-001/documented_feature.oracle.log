@@ -1,0 +1,89 @@
+The SAS System
+
+15452      
+15453      /* STAT-FACTOR-001: FACTOR — Data input, variable roles, and basic options
+15454       * Source: S154 / Chapter 44 / `PROC FACTOR Statement` (PDF pp. 2797–2816); S154 / Chapter 44 / `BY Statement` (PDF p. 2816); S154 / Chapter 44 /
+15454    ! `FREQ Statement` (PDF pp. 2816–2817); S154 / Chapter 44 / `VAR Statement` (PDF p. 2823); S154 / Chapter 44 / `WEIGHT Statement` (PDF pp.
+15454    ! 2823–2824); S154 / Chapter 44 / `Input Data Set` (PDF pp. 2824–2826); S154 / Chapter 44 / `Missing Values` (PDF pp. 2834–2835).
+15455       * Discriminates: Verified default procedure context; explicit statements: VAR
+15456       */
+15457      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+15457    ! validmemname=compatible locale=en_US;
+15458      %let syscc=0;
+15459      title; footnote;
+15460      ods _all_ close;
+15461      ods listing gpath="%sysfunc(pathname(work))";
+15462      ods graphics off;
+
+
+15463      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.DATA61 (memtype=DATA).
+NOTE: Deleting WORK.DATA62 (memtype=DATA).
+NOTE: Deleting WORK.DISTDCORR (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.STOCK (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+15463    !                                         quit;
+
+
+15464      ods path work.templat(update) sashelp.tmplmst(read);
+15465      
+15466      data SocioEconomics;
+15467      input Population School Employment Services HouseValue;
+15468      datalines;
+
+NOTE: The data set WORK.SOCIOECONOMICS has 12 observations and 5 variables.
+
+15481      ;
+15482      proc factor data=SocioEconomics simple corr;
+15483      run;
+
+NOTE: 2 factors will be retained by the MINEIGEN criterion.
+NOTE: The PROCEDURE FACTOR printed pages 2047-2048.
+
+15484      proc factor data=SocioEconomics n=5 score;
+15485      run;
+
+NOTE: 5 factors will be retained by the NFACTOR criterion.
+NOTE: The PROCEDURE FACTOR printed pages 2049-2051.
+
+15486      proc princomp data=SocioEconomics;
+15487      run;
+
+NOTE: The PROCEDURE PRINCOMP printed page 2052.
+
+15488      proc factor data=SocioEconomics n=5 score;
+15489      ods output StdScoreCoef=Coef;
+15490      run;
+
+NOTE: 5 factors will be retained by the NFACTOR criterion.
+NOTE: The data set WORK.COEF has 5 observations and 6 variables.
+NOTE: The PROCEDURE FACTOR printed pages 2053-2055.
+
+15491      proc stdize method=ustd mult=.44721 data=Coef out=eigenvectors;
+15492      var Factor1-Factor5;
+15493      run;
+
+NOTE: VARDEF= DF is equivalent to VARDEF= N when USTD is used for standardization or for the initial estimates for the A estimates.
+NOTE: There were 5 observations read from the data set WORK.COEF.
+NOTE: The data set WORK.EIGENVECTORS has 5 observations and 6 variables.
+
+15494      proc print data=eigenvectors;
+15495      run;
+
+NOTE: There were 5 observations read from the data set WORK.EIGENVECTORS.
+NOTE: The PROCEDURE PRINT printed page 2056.
+
+15496      
+15497      
+15498      
+15499      
+The SAS System
+
+15500      

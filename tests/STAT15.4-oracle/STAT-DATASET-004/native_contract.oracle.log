@@ -1,0 +1,100 @@
+The SAS System
+
+93         
+94         /* STAT-DATASET-004: Statistical data sets — TYPE=COV Data Sets / TYPE=CSSCP Data Sets / TYPE=DISTANCE Data Sets
+95          * Source: S154 / Special SAS Data Sets / `TYPE=COV Data Sets` (PDF p. 10888); S154 / Special SAS Data Sets / `TYPE=CSSCP Data Sets` (PDF p. 10888);
+95       ! S154 / Special SAS Data Sets / `TYPE=DISTANCE Data Sets` (PDF pp. 10888–10889); S154 / Special SAS Data Sets / `Definitional Formulas` (PDF pp.
+95       ! 10893–10894).
+96          * Discriminates: Native correlation/covariance/SSCP rows, reserved variables and data set metadata
+97          */
+98         options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+98       ! validmemname=compatible locale=en_US;
+99         %let syscc=0;
+100        title; footnote;
+101        ods _all_ close;
+102        ods listing gpath="%sysfunc(pathname(work))";
+103        ods graphics off;
+104        proc datasets library=work kill nolist;
+NOTE: Deleting WORK.PEARSON (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SAMPLE (memtype=DATA).
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SSCP (memtype=DATA).
+NOTE: Deleting WORK._ORACLE_DESCRIPTOR (memtype=DATA).
+NOTE: Deleting WORK._ORACLE_MEMBER (memtype=DATA).
+104      !                                         quit;
+
+
+105        ods path work.templat(update) sashelp.tmplmst(read);
+106        
+107        %macro _oracle_descriptor(ds);
+108        proc contents data=&ds out=_oracle_descriptor(keep=name type length varnum label format informat) noprint; run;
+109        proc sort data=_oracle_descriptor; by varnum; run;
+110        proc print data=_oracle_descriptor noobs; run;
+111        data _oracle_member;
+112        length Dataset $64 DatasetType $16;
+113        Dataset="&ds"; _handle=open("&ds");
+114        DatasetType=attrc(_handle,'TYPE'); NObs=attrn(_handle,'NOBS'); NVars=attrn(_handle,'NVARS');
+115        _close=close(_handle); drop _handle _close;
+116        run;
+117        proc print data=_oracle_member noobs; run;
+118        %mend;
+119        
+120        
+121        data sample;
+122         input x z y group $ weight freq;
+123         datalines;
+
+NOTE: The data set WORK.SAMPLE has 12 observations and 6 variables.
+
+136        ;
+137        run;
+138        proc corr data=sample outp=pearson cov csscp sscp; var x z y; run;
+
+NOTE: The data set WORK.PEARSON has 16 observations and 6 variables.
+NOTE: The PROCEDURE CORR printed page 6.
+
+139        proc print data=pearson noobs; format _numeric_ best32.; run;
+
+NOTE: There were 16 observations read from the data set WORK.PEARSON.
+NOTE: The PROCEDURE PRINT printed page 7.
+
+140        %_oracle_descriptor(pearson);
+
+NOTE: The data set WORK._ORACLE_DESCRIPTOR has 6 observations and 7 variables.
+
+
+NOTE: There were 6 observations read from the data set WORK._ORACLE_DESCRIPTOR.
+NOTE: The data set WORK._ORACLE_DESCRIPTOR has 6 observations and 7 variables.
+
+
+NOTE: There were 6 observations read from the data set WORK._ORACLE_DESCRIPTOR.
+NOTE: The PROCEDURE PRINT printed page 8.
+
+
+NOTE: The data set WORK._ORACLE_MEMBER has 1 observations and 4 variables.
+
+
+NOTE: There were 1 observations read from the data set WORK._ORACLE_MEMBER.
+NOTE: The PROCEDURE PRINT printed page 9.
+
+141        data sscp(type=sscp); set pearson; where _TYPE_='SSCP'; run;
+
+NOTE: There were 4 observations read from the data set WORK.PEARSON.
+      WHERE _TYPE_='SSCP';
+NOTE: The data set WORK.SSCP has 4 observations and 6 variables.
+
+142        proc print data=sscp noobs; run;
+
+NOTE: There were 4 observations read from the data set WORK.SSCP.
+NOTE: The PROCEDURE PRINT printed page 10.
+
+143        
+144        
+145        
+146        
+The SAS System
+
+147        

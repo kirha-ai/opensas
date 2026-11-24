@@ -1,0 +1,57 @@
+The SAS System
+
+9016       
+9017       /* STAT-PROBIT-001: PROBIT — Data input, variable roles, and basic options
+9018        * Source: S154 / Chapter 100 / `PROC PROBIT Statement` (PDF pp. 8100–8105); S154 / Chapter 100 / `BY Statement` (PDF pp. 8105–8106); S154 /
+9018     ! Chapter 100 / `WEIGHT Statement` (PDF p. 8120); S154 / Chapter 100 / `Missing Values` (PDF p. 8120).
+9019        * Discriminates: Verified default procedure context
+9020        */
+9021       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+9021     ! validmemname=compatible locale=en_US;
+9022       %let syscc=0;
+9023       title; footnote;
+9024       ods _all_ close;
+9025       ods listing gpath="%sysfunc(pathname(work))";
+9026       ods graphics off;
+9027       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.BBALL (memtype=DATA).
+NOTE: Deleting WORK.BBALLM (memtype=DATA).
+NOTE: Deleting WORK.MAXRANK (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TBBALL (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+9027     !                                         quit;
+
+
+9028       ods path work.templat(update) sashelp.tmplmst(read);
+9029       
+9030       data study;
+9031       input Dose Respond @@;
+9032       Number = 15;
+9033       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.STUDY has 12 observations and 3 variables.
+
+9036       ;
+9037       ods graphics on;
+9038       proc probit data=study log10 optc plots=(predpplot ippplot);
+9039       model respond/number=dose;
+9040       output out=new p=p_hat;
+9041       run;
+
+NOTE: Algorithm converged.
+NOTE: The confidence limits displayed on the plots are conditioned on the estimated threshold. The variation in estimating the threshold is ignored.
+NOTE: The data set WORK.NEW has 12 observations and 4 variables.
+NOTE: The PROCEDURE PROBIT printed page 607.
+
+9042       
+9043       
+9044       
+9045       
+The SAS System
+
+9046       

@@ -1,0 +1,120 @@
+
+The GLIMMIX Procedure
+
+                     Model Information
+
+Data Set                       WORK.PR                      
+Response Variable              y                            
+Response Distribution          Gaussian                     
+Link Function                  Identity                     
+Variance Function              Default                      
+Variance Matrix Blocked By     child                        
+Estimation Technique           Restricted Maximum Likelihood
+Degrees of Freedom Method      Kenward-Roger                
+Fixed Effects SE Adjustment    Kenward-Roger                
+
+
+                    Model Based Covariance Matrix for Fixed Effects (Unadjusted)
+ 
+Effect        gender     Row        Col1        Col2        Col3        Col4        Col5        Col6
+
+Intercept                  1      0.9969     -0.9969                -0.07620     0.07620            
+gender        F            2     -0.9969      2.4470                 0.07620     -0.1870            
+gender        M            3                                                                        
+age                        4    -0.07620     0.07620                0.007581    -0.00758            
+age*gender    F            5     0.07620     -0.1870                -0.00758     0.01861            
+age*gender    M            6                                                                        
+
+
+                                Covariance Matrix for Fixed Effects
+ 
+Effect        gender     Row        Col1        Col2        Col3        Col4        Col5        Col6
+
+Intercept                  1      0.9724     -0.9724                -0.07412     0.07412            
+gender        F            2     -0.9724      2.3868                 0.07412     -0.1819            
+gender        M            3                                                                        
+age                        4    -0.07412     0.07412                0.007256    -0.00726            
+age*gender    F            5     0.07412     -0.1819                -0.00726     0.01781            
+age*gender    M            6                                                                        
+
+
+      Diagnostics for Covariance Matrices of Fixed Effects
+ 
+                                               Model-
+                                                Based    Adjusted
+
+Dimensions     Rows                                 6           6
+               Non-zero entries                    16          16
+                                                                 
+Summaries      Trace                           3.4701      3.3843
+               Log determinant                 -11.95      -12.17
+                                                                 
+Eigenvalues    > 0                                  4           4
+               = 0                                  2           2
+               max abs                          2.972      2.8988
+               min abs non-zero                0.0009      0.0008
+               Condition number                3467.8      3698.2
+                                                                 
+Norms          Frobenius                       3.0124      2.9382
+               Infinity                        3.7072      3.6153
+                                                                 
+Comparisons    Concordance correlation                     0.9979
+               Discrepancy function                        0.0084
+               Frobenius norm of difference                0.0742
+               Trace(Adjusted Inv(MBased))                 3.7801
+
+Determinant and inversion results apply to the nonsingular partitions of the covariance matrices.
+
+The GLIMMIX Procedure
+
+                       Model Information
+
+Data Set                       WORK.PR                         
+Response Variable              y                               
+Response Distribution          Gaussian                        
+Link Function                  Identity                        
+Variance Function              Default                         
+Variance Matrix Blocked By     child                           
+Estimation Technique           Restricted Maximum Likelihood   
+Degrees of Freedom Method      Kenward-Roger                   
+Fixed Effects SE Adjustment    Prasad-Rao-Kackar-Harville-Jeske
+
+
+                                Covariance Matrix for Fixed Effects
+ 
+Effect        gender     Row        Col1        Col2        Col3        Col4        Col5        Col6
+
+Intercept                  1      1.0122     -1.0122                -0.07758     0.07758            
+gender        F            2     -1.0122      2.4845                 0.07758     -0.1904            
+gender        M            3                                                                        
+age                        4    -0.07758     0.07758                0.007706    -0.00771            
+age*gender    F            5     0.07758     -0.1904                -0.00771     0.01891            
+age*gender    M            6                                                                        
+
+
+      Diagnostics for Covariance Matrices of Fixed Effects
+ 
+                                               Model-
+                                                Based    Adjusted
+
+Dimensions     Rows                                 6           6
+               Non-zero entries                    16          16
+                                                                 
+Summaries      Trace                           3.4701      3.5234
+               Log determinant                 -11.95      -11.91
+                                                                 
+Eigenvalues    > 0                                  4           4
+               = 0                                  2           2
+               max abs                          2.972      3.0176
+               min abs non-zero                0.0009      0.0009
+               Condition number                3467.8      3513.4
+                                                                 
+Norms          Frobenius                       3.0124      3.0587
+               Infinity                        3.7072      3.7647
+                                                                 
+Comparisons    Concordance correlation                     0.9999
+               Discrepancy function                        0.0003
+               Frobenius norm of difference                0.0463
+               Trace(Adjusted Inv(MBased))                 4.0352
+
+Determinant and inversion results apply to the nonsingular partitions of the covariance matrices.

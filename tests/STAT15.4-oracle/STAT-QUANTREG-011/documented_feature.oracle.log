@@ -1,0 +1,456 @@
+The SAS System
+
+2741       
+2742       /* STAT-QUANTREG-011: QUANTREG — ODS Graphics
+2743        * Source: S154 / Chapter 103 / `ODS Graphics` (PDF pp. 8416–8422).
+2744        * Discriminates: Example 103.3: Quantile Regression Analysis of Birth-Weight Data
+2745        */
+2746       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+2746     ! validmemname=compatible locale=en_US;
+2747       %let syscc=0;
+2748       title; footnote;
+2749       ods _all_ close;
+2750       ods listing gpath="%sysfunc(pathname(work))";
+2751       ods graphics off;
+2752       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.A (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+2752     !                                         quit;
+
+
+2753       ods path work.templat(update) sashelp.tmplmst(read);
+2754       
+2755       ods graphics on;
+2756       ods trace on;
+2757       ods trace on;
+2758       proc contents varnum data=sashelp.bweight;
+2759       ods select position;
+2760       run;
+
+
+Output Added:
+-------------
+Name:       Position
+Label:      Varnum
+Template:   Base.Contents.Position
+Path:       Contents.DataSet.Position
+-------------
+NOTE: The PROCEDURE CONTENTS printed page 159.
+
+2761       proc format;
+2762       value vfmt 0 = 'No Visit' 1 = 'Second Trimester'
+2763       2 = 'Last Trimester' 3 = 'First Trimester';
+NOTE: Format VFMT has been output.
+2764       value efmt 0 = 'High School' 1 = 'Some College'
+2765       2 = 'College' 3 = 'Less Than High School';
+NOTE: Format EFMT has been output.
+2766       run;
+
+
+2767       ods graphics on;
+2768       proc quantreg ci=sparsity/iid algorithm=interior(tolerance=5.e-4)
+2769       data=sashelp.bweight order=internal;
+2770       class Visit MomEdLevel;
+2771       model Weight = Black Married Boy Visit MomEdLevel MomSmoke
+2772       CigsPerDay MomAge MomAge*MomAge
+2773       MomWtGain MomWtGain*MomWtGain /
+2774       quantile= 0.05 to 0.95 by 0.05
+2775       plot=quantplot seed=314159;
+2776       format Visit vfmt. MomEdLevel efmt.;
+2777       run;
+
+
+Output Added:
+-------------
+Name:       ModelInfo
+Label:      Model Information
+Template:   Stat.Quantreg.ModelInfoLabel
+Path:       Quantreg.ModelInfo
+-------------
+
+Output Added:
+-------------
+Name:       NObs
+Label:      Number of Observations
+Template:   Stat.Quantreg.NObs
+Path:       Quantreg.NObs
+-------------
+
+Output Added:
+-------------
+Name:       ClassLevels
+Label:      Class Level Information
+Template:   Stat.Quantreg.Classlevels
+Path:       Quantreg.ClassLevels
+-------------
+
+Output Added:
+-------------
+Name:       ParmInfo
+Label:      Parameter Information
+Template:   Stat.Quantreg.Parminfo
+Path:       Quantreg.ParmInfo
+-------------
+
+Output Added:
+-------------
+Name:       SummaryStatistics
+Label:      Summary Statistics
+Template:   stat.Quantreg.summarystatistics
+Path:       Quantreg.SummaryStatistics
+-------------
+
+Output Added:
+-------------
+Name:       ObjFunction
+Label:      Quantile Level and Objective Function
+Template:   Stat.Quantreg.ObjFunction
+Path:       Quantreg.Quantile1.ObjFunction
+-------------
+
+Output Added:
+-------------
+Name:       ParameterEstimates
+Label:      Parameter Estimates
+Template:   stat.Quantreg.parameterestimates
+Path:       Quantreg.Quantile1.ParameterEstimates
+-------------
+
+Output Added:
+-------------
+Name:       ObjFunction
+Label:      Quantile Level and Objective Function
+Template:   Stat.Quantreg.ObjFunction
+Path:       Quantreg.Quantile2.ObjFunction
+-------------
+
+Output Added:
+-------------
+Name:       ParameterEstimates
+Label:      Parameter Estimates
+Template:   stat.Quantreg.parameterestimates
+Path:       Quantreg.Quantile2.ParameterEstimates
+-------------
+
+Output Added:
+-------------
+Name:       ObjFunction
+Label:      Quantile Level and Objective Function
+Template:   Stat.Quantreg.ObjFunction
+Path:       Quantreg.Quantile3.ObjFunction
+-------------
+
+Output Added:
+-------------
+Name:       ParameterEstimates
+Label:      Parameter Estimates
+Template:   stat.Quantreg.parameterestimates
+Path:       Quantreg.Quantile3.ParameterEstimates
+-------------
+
+Output Added:
+-------------
+Name:       ObjFunction
+Label:      Quantile Level and Objective Function
+Template:   Stat.Quantreg.ObjFunction
+Path:       Quantreg.Quantile4.ObjFunction
+-------------
+
+Output Added:
+-------------
+Name:       ParameterEstimates
+Label:      Parameter Estimates
+Template:   stat.Quantreg.parameterestimates
+Path:       Quantreg.Quantile4.ParameterEstimates
+-------------
+
+Output Added:
+-------------
+Name:       ObjFunction
+Label:      Quantile Level and Objective Function
+Template:   Stat.Quantreg.ObjFunction
+Path:       Quantreg.Quantile5.ObjFunction
+-------------
+
+Output Added:
+-------------
+Name:       ParameterEstimates
+Label:      Parameter Estimates
+Template:   stat.Quantreg.parameterestimates
+Path:       Quantreg.Quantile5.ParameterEstimates
+-------------
+
+Output Added:
+-------------
+Name:       ObjFunction
+Label:      Quantile Level and Objective Function
+Template:   Stat.Quantreg.ObjFunction
+Path:       Quantreg.Quantile6.ObjFunction
+-------------
+
+Output Added:
+-------------
+Name:       ParameterEstimates
+Label:      Parameter Estimates
+Template:   stat.Quantreg.parameterestimates
+Path:       Quantreg.Quantile6.ParameterEstimates
+-------------
+
+Output Added:
+-------------
+Name:       ObjFunction
+Label:      Quantile Level and Objective Function
+Template:   Stat.Quantreg.ObjFunction
+Path:       Quantreg.Quantile7.ObjFunction
+-------------
+
+Output Added:
+-------------
+Name:       ParameterEstimates
+Label:      Parameter Estimates
+Template:   stat.Quantreg.parameterestimates
+Path:       Quantreg.Quantile7.ParameterEstimates
+-------------
+
+Output Added:
+-------------
+Name:       ObjFunction
+Label:      Quantile Level and Objective Function
+Template:   Stat.Quantreg.ObjFunction
+Path:       Quantreg.Quantile8.ObjFunction
+-------------
+
+Output Added:
+-------------
+Name:       ParameterEstimates
+Label:      Parameter Estimates
+Template:   stat.Quantreg.parameterestimates
+Path:       Quantreg.Quantile8.ParameterEstimates
+-------------
+
+Output Added:
+-------------
+Name:       ObjFunction
+Label:      Quantile Level and Objective Function
+Template:   Stat.Quantreg.ObjFunction
+Path:       Quantreg.Quantile9.ObjFunction
+-------------
+
+Output Added:
+-------------
+Name:       ParameterEstimates
+Label:      Parameter Estimates
+Template:   stat.Quantreg.parameterestimates
+Path:       Quantreg.Quantile9.ParameterEstimates
+-------------
+
+Output Added:
+-------------
+Name:       ObjFunction
+Label:      Quantile Level and Objective Function
+Template:   Stat.Quantreg.ObjFunction
+Path:       Quantreg.Quantile10.ObjFunction
+-------------
+
+Output Added:
+-------------
+Name:       ParameterEstimates
+Label:      Parameter Estimates
+Template:   stat.Quantreg.parameterestimates
+Path:       Quantreg.Quantile10.ParameterEstimates
+-------------
+
+Output Added:
+-------------
+Name:       ObjFunction
+Label:      Quantile Level and Objective Function
+Template:   Stat.Quantreg.ObjFunction
+Path:       Quantreg.Quantile11.ObjFunction
+-------------
+
+Output Added:
+-------------
+Name:       ParameterEstimates
+Label:      Parameter Estimates
+Template:   stat.Quantreg.parameterestimates
+Path:       Quantreg.Quantile11.ParameterEstimates
+-------------
+
+Output Added:
+-------------
+Name:       ObjFunction
+Label:      Quantile Level and Objective Function
+Template:   Stat.Quantreg.ObjFunction
+Path:       Quantreg.Quantile12.ObjFunction
+-------------
+
+Output Added:
+-------------
+Name:       ParameterEstimates
+Label:      Parameter Estimates
+Template:   stat.Quantreg.parameterestimates
+Path:       Quantreg.Quantile12.ParameterEstimates
+-------------
+
+Output Added:
+-------------
+Name:       ObjFunction
+Label:      Quantile Level and Objective Function
+Template:   Stat.Quantreg.ObjFunction
+Path:       Quantreg.Quantile13.ObjFunction
+-------------
+
+Output Added:
+-------------
+Name:       ParameterEstimates
+Label:      Parameter Estimates
+Template:   stat.Quantreg.parameterestimates
+Path:       Quantreg.Quantile13.ParameterEstimates
+-------------
+
+Output Added:
+-------------
+Name:       ObjFunction
+Label:      Quantile Level and Objective Function
+Template:   Stat.Quantreg.ObjFunction
+Path:       Quantreg.Quantile14.ObjFunction
+-------------
+
+Output Added:
+-------------
+Name:       ParameterEstimates
+Label:      Parameter Estimates
+Template:   stat.Quantreg.parameterestimates
+Path:       Quantreg.Quantile14.ParameterEstimates
+-------------
+
+Output Added:
+-------------
+Name:       ObjFunction
+Label:      Quantile Level and Objective Function
+Template:   Stat.Quantreg.ObjFunction
+Path:       Quantreg.Quantile15.ObjFunction
+-------------
+
+Output Added:
+-------------
+Name:       ParameterEstimates
+Label:      Parameter Estimates
+Template:   stat.Quantreg.parameterestimates
+Path:       Quantreg.Quantile15.ParameterEstimates
+-------------
+
+Output Added:
+-------------
+Name:       ObjFunction
+Label:      Quantile Level and Objective Function
+Template:   Stat.Quantreg.ObjFunction
+Path:       Quantreg.Quantile16.ObjFunction
+-------------
+
+Output Added:
+-------------
+Name:       ParameterEstimates
+Label:      Parameter Estimates
+Template:   stat.Quantreg.parameterestimates
+Path:       Quantreg.Quantile16.ParameterEstimates
+-------------
+
+Output Added:
+-------------
+Name:       ObjFunction
+Label:      Quantile Level and Objective Function
+Template:   Stat.Quantreg.ObjFunction
+Path:       Quantreg.Quantile17.ObjFunction
+-------------
+
+Output Added:
+-------------
+Name:       ParameterEstimates
+Label:      Parameter Estimates
+Template:   stat.Quantreg.parameterestimates
+Path:       Quantreg.Quantile17.ParameterEstimates
+-------------
+
+Output Added:
+-------------
+Name:       ObjFunction
+Label:      Quantile Level and Objective Function
+Template:   Stat.Quantreg.ObjFunction
+Path:       Quantreg.Quantile18.ObjFunction
+-------------
+
+Output Added:
+-------------
+Name:       ParameterEstimates
+Label:      Parameter Estimates
+Template:   stat.Quantreg.parameterestimates
+Path:       Quantreg.Quantile18.ParameterEstimates
+-------------
+
+Output Added:
+-------------
+Name:       ObjFunction
+Label:      Quantile Level and Objective Function
+Template:   Stat.Quantreg.ObjFunction
+Path:       Quantreg.Quantile19.ObjFunction
+-------------
+
+Output Added:
+-------------
+Name:       ParameterEstimates
+Label:      Parameter Estimates
+Template:   stat.Quantreg.parameterestimates
+Path:       Quantreg.Quantile19.ParameterEstimates
+-------------
+
+Output Added:
+-------------
+Name:       QuantPanel
+Label:      Panel 1
+Template:   Stat.Quantreg.Graphics.QuantPanel
+Path:       Quantreg.QuantPlots.QuantPanel
+-------------
+
+Output Added:
+-------------
+Name:       QuantPanel
+Label:      Panel 2
+Template:   Stat.Quantreg.Graphics.QuantPanel
+Path:       Quantreg.QuantPlots.QuantPanel
+-------------
+
+Output Added:
+-------------
+Name:       QuantPanel
+Label:      Panel 3
+Template:   Stat.Quantreg.Graphics.QuantPanel
+Path:       Quantreg.QuantPlots.QuantPanel
+-------------
+
+Output Added:
+-------------
+Name:       QuantPanel
+Label:      Panel 4
+Template:   Stat.Quantreg.Graphics.QuantPanel
+Path:       Quantreg.QuantPlots.QuantPanel
+-------------
+NOTE: The PROCEDURE QUANTREG printed pages 160-179.
+
+2778       ods trace off;
+2779       ods trace off;
+2780       ods graphics off;
+2781       
+2782       
+2783       
+2784       
+The SAS System
+
+2785       

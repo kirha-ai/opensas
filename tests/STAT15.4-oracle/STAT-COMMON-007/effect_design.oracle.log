@@ -1,0 +1,60 @@
+The SAS System
+
+266        
+267        /* STAT-COMMON-007: Design matrices for main effects, interactions, and nesting
+268         * Source: S154 / Chapter 20 / `GLM Parameterization of Classification Variables and Effects` (PDF pp. 414–418).
+269         * Discriminates: Main, interaction, continuous-by-class and intercept design columns
+270         */
+271        options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+271      ! validmemname=compatible locale=en_US;
+272        %let syscc=0;
+273        title; footnote;
+274        ods _all_ close;
+275        ods listing gpath="%sysfunc(pathname(work))";
+276        ods graphics off;
+277        proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SAMPLE (memtype=DATA).
+277      !                                         quit;
+
+
+278        ods path work.templat(update) sashelp.tmplmst(read);
+279        
+280        data sample;
+281         input x z y group $ weight freq;
+282         datalines;
+
+NOTE: The data set WORK.SAMPLE has 12 observations and 6 variables.
+
+295        ;
+296        run;
+297        data design_input; set sample; h=mod(_n_,3); run;
+
+NOTE: There were 12 observations read from the data set WORK.SAMPLE.
+NOTE: The data set WORK.DESIGN_INPUT has 12 observations and 7 variables.
+
+298        proc glmmod data=design_input outdesign=matrix outparm=columns noprint;
+299         class group h; model y=group h group*h x group*x; run;
+
+NOTE: There were 12 observations read from the data set WORK.DESIGN_INPUT.
+NOTE: The data set WORK.MATRIX has 12 observations and 16 variables.
+NOTE: The data set WORK.COLUMNS has 15 observations and 4 variables.
+
+300        proc print data=columns noobs; run;
+
+NOTE: There were 15 observations read from the data set WORK.COLUMNS.
+NOTE: The PROCEDURE PRINT printed page 14.
+
+301        proc print data=matrix noobs; run;
+
+NOTE: There were 12 observations read from the data set WORK.MATRIX.
+NOTE: The PROCEDURE PRINT printed page 15.
+
+302        
+303        
+304        
+305        
+The SAS System
+
+306        

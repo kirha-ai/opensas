@@ -1,0 +1,320 @@
+
+The HPPLS Procedure
+
+      Performance Information
+
+Execution Mode       Single-Machine
+Number of Threads    2             
+
+
+             Data Access Information
+ 
+Data                  Engine    Role     Path
+
+WORK._ORACLE_INPUT    V9        Input    On Client
+
+_oracle_by=1
+
+The HPPLS Procedure
+
+                Model Information
+
+Data Source                 WORK._ORACLE_INPUT   
+Factor Extraction Method    Partial Least Squares
+PLS Algorithm               NIPALS               
+Validation Method           None                 
+
+
+Number of Observations Read          16
+Number of Observations Used          16
+
+
+                Dimensions
+
+Number of Response Variables             3
+Number of Effects                       27
+Number of Predictor Parameters          27
+Number of Factors                       15
+
+
+   Percent Variation Accounted for by Partial Least Squares Factors
+ 
+Number of
+Extracted           Model Effects              Dependent Variables
+  Factors        Current          Total        Current          Total
+
+        1       97.46068       97.46068       41.91546       41.91546
+        2        2.18296       99.64365       24.24355       66.15900
+        3        0.17806       99.82170       24.53393       90.69293
+        4        0.11973       99.94143        3.78978       94.48271
+        5        0.04146       99.98289        1.00454       95.48725
+        6        0.01058       99.99347        2.28084       97.76809
+        7        0.00168       99.99515        1.16935       98.93744
+        8     0.00097586       99.99613        0.50410       99.44153
+        9        0.00142       99.99755        0.12292       99.56446
+       10     0.00097037       99.99852        0.11027       99.67472
+       11     0.00032725       99.99884        0.15227       99.82699
+       12     0.00029338       99.99914        0.12907       99.95606
+       13     0.00024792       99.99939        0.03121       99.98727
+       14     0.00042742       99.99981        0.00651       99.99378
+       15     0.00018639      100.00000        0.00622      100.00000
+
+_oracle_by=2
+
+The HPPLS Procedure
+
+                Model Information
+
+Data Source                 WORK._ORACLE_INPUT   
+Factor Extraction Method    Partial Least Squares
+PLS Algorithm               NIPALS               
+Validation Method           None                 
+
+
+Number of Observations Read          16
+Number of Observations Used          16
+
+
+                Dimensions
+
+Number of Response Variables             3
+Number of Effects                       27
+Number of Predictor Parameters          27
+Number of Factors                       15
+
+
+   Percent Variation Accounted for by Partial Least Squares Factors
+ 
+Number of
+Extracted           Model Effects              Dependent Variables
+  Factors        Current          Total        Current          Total
+
+        1       97.46068       97.46068       41.91546       41.91546
+        2        2.18296       99.64365       24.24355       66.15900
+        3        0.17806       99.82170       24.53393       90.69293
+        4        0.11973       99.94143        3.78978       94.48271
+        5        0.04146       99.98289        1.00454       95.48725
+        6        0.01058       99.99347        2.28084       97.76809
+        7        0.00168       99.99515        1.16935       98.93744
+        8     0.00097586       99.99613        0.50410       99.44153
+        9        0.00142       99.99755        0.12292       99.56446
+       10     0.00097037       99.99852        0.11027       99.67472
+       11     0.00032725       99.99884        0.15227       99.82699
+       12     0.00029338       99.99914        0.12907       99.95606
+       13     0.00024792       99.99939        0.03121       99.98727
+       14     0.00042742       99.99981        0.00651       99.99378
+       15     0.00018639      100.00000        0.00622      100.00000
+
+The HPPLS Procedure
+
+      Performance Information
+
+Execution Mode       Single-Machine
+Number of Threads    2             
+
+
+          Data Access Information
+ 
+Data           Engine    Role     Path
+
+WORK.SAMPLE    V9        Input    On Client
+
+
+                Model Information
+
+Data Source                 WORK.SAMPLE          
+Factor Extraction Method    Partial Least Squares
+PLS Algorithm               NIPALS               
+Validation Method           Test Set Validation  
+
+
+Number of Observations Read                       16
+Number of Observations Used                       16
+Number of Observations Used for Training           9
+Number of Observations Used for Testing            7
+
+
+                Dimensions
+
+Number of Response Variables             3
+Number of Effects                       27
+Number of Predictor Parameters          27
+Maximum Number of Factors                9
+
+The HPPLS Procedure
+
+Test Set Validation for the Number of Extracted Factors
+ 
+Number of        Root
+Extracted        Mean
+  Factors       PRESS
+
+        0    1.426362
+        1    1.276694
+        2    1.181752
+        3    0.656999
+        4     0.43457
+        5    0.420916
+        6    0.585031
+        7    0.576586
+        8    0.563935
+        9    0.563935
+
+
+Minimum Root Mean PRESS         0.420916
+Minimizing Number of Factors           5
+
+
+   Percent Variation Accounted for by Partial Least Squares Factors
+ 
+Number of
+Extracted           Model Effects              Dependent Variables
+  Factors        Current          Total        Current          Total
+
+        1       95.92495       95.92495       37.27071       37.27071
+        2        3.86407       99.78903       32.38167       69.65238
+        3        0.10170       99.89073       20.76882       90.42120
+        4        0.08979       99.98052        4.66666       95.08787
+        5        0.01142       99.99194        3.88184       98.96971
+
+The HPPLS Procedure
+
+      Performance Information
+
+Execution Mode       Single-Machine
+Number of Threads    2             
+
+
+          Data Access Information
+ 
+Data           Engine    Role     Path
+
+WORK.SAMPLE    V9        Input    On Client
+
+
+                     Model Information
+
+Data Source                           WORK.SAMPLE          
+Factor Extraction Method              Partial Least Squares
+PLS Algorithm                         NIPALS               
+Validation Method                     Test Set Validation  
+Validation Testing Criterion          Prob T**2 > 0.15     
+Number of Random Permutations         1000                 
+Random Number Seed for Permutation    12345                
+
+
+Number of Observations Read                       16
+Number of Observations Used                       16
+Number of Observations Used for Training           9
+Number of Observations Used for Testing            7
+
+
+                Dimensions
+
+Number of Response Variables             3
+Number of Effects                       27
+Number of Predictor Parameters          27
+Maximum Number of Factors                9
+
+The HPPLS Procedure
+
+Test Set Validation for the Number of Extracted Factors
+ 
+Number of        Root
+Extracted        Mean                Prob >
+  Factors       PRESS        T**2      T**2
+
+        0    1.426362    5.191629    0.0480
+        1    1.276694    6.174825    <.0001
+        2    1.181752     4.60203    0.0620
+        3    0.656999     3.09999    0.5390
+        4     0.43457    4.980227    0.0970
+        5    0.420916           0    1.0000
+        6    0.585031     2.05496    0.7450
+        7    0.576586    3.009172    0.4800
+        8    0.563935    2.416635    0.7510
+        9    0.563935    2.416635    0.7260
+
+
+Minimum Root Mean PRESS                     0.420916
+Minimizing Number of Factors                       5
+Smallest Number of Factors with p > 0.15           3
+
+
+   Percent Variation Accounted for by Partial Least Squares Factors
+ 
+Number of
+Extracted           Model Effects              Dependent Variables
+  Factors        Current          Total        Current          Total
+
+        1       95.92495       95.92495       37.27071       37.27071
+        2        3.86407       99.78903       32.38167       69.65238
+        3        0.10170       99.89073       20.76882       90.42120
+
+The HPPLS Procedure
+
+      Performance Information
+
+Execution Mode       Single-Machine
+Number of Threads    2             
+
+
+          Data Access Information
+ 
+Data           Engine    Role      Path
+
+WORK.ALL       V9        Input     On Client
+WORK.RESULT    V9        Output    On Client
+
+
+                Model Information
+
+Data Source                 WORK.ALL             
+Factor Extraction Method    Partial Least Squares
+PLS Algorithm               NIPALS               
+Validation Method           Test Set Validation  
+
+
+Number of Observations Read                       18
+Number of Observations Used                       16
+Number of Observations Used for Training           9
+Number of Observations Used for Testing            7
+
+
+                Dimensions
+
+Number of Response Variables             3
+Number of Effects                       27
+Number of Predictor Parameters          27
+Maximum Number of Factors                2
+
+The HPPLS Procedure
+
+Test Set Validation for the Number of Extracted Factors
+ 
+Number of        Root
+Extracted        Mean
+  Factors       PRESS
+
+        0    1.426362
+        1    1.276694
+        2    1.181752
+
+
+Minimum Root Mean PRESS         1.181752
+Minimizing Number of Factors           2
+
+
+   Percent Variation Accounted for by Partial Least Squares Factors
+ 
+Number of
+Extracted           Model Effects              Dependent Variables
+  Factors        Current          Total        Current          Total
+
+        1       95.92495       95.92495       37.27071       37.27071
+        2        3.86407       99.78903       32.38167       69.65238
+
+Obs    obsnam      p_ls       p_ha       p_dt
+
+ 17     EM17     2.63326    0.22343    80.2027
+ 18     EM25     0.69865    0.14308    98.9937

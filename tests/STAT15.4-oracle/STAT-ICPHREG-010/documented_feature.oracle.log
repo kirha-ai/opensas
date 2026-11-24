@@ -1,0 +1,84 @@
+The SAS System
+
+8270       
+8271       /* STAT-ICPHREG-010: ICPHREG — OUTPUT / Input and Output Data Sets
+8272        * Source: S154 / Chapter 70 / `OUTPUT Statement` (PDF pp. 5227–5228); S154 / Chapter 70 / `Input and Output Data Sets` (PDF p. 5246).
+8273        * Discriminates: Example 70.2: Plotting Predicted Survival and Cumulative Hazard Functions; explicit statements: OUTPUT
+8274        */
+8275       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+8275     ! validmemname=compatible locale=en_US;
+8276       %let syscc=0;
+8277       title; footnote;
+8278       ods _all_ close;
+8279       ods listing gpath="%sysfunc(pathname(work))";
+8280       ods graphics off;
+8281       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.HIV (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+8281     !                                         quit;
+
+
+8282       ods path work.templat(update) sashelp.tmplmst(read);
+8283       
+8284       data hiv;
+8285       input Left Right Stage Dose CdLow CdHigh;
+8286       if (Left=0) then Left=.;
+8287       if (Right>=26) then Right=.;
+8288       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.HIV has 31 observations and 6 variables.
+
+8321       ;
+8322       run;
+8323       ods graphics on;
+8324       proc icphreg data=hiv plot=surv;
+8325       class Stage / desc;
+8326       model (Left, Right) = Stage / basehaz=splines;
+8327       run;
+
+NOTE: No option is specified for the cubic splines model. Fitting the model with 3 knots.
+NOTE: Convergence criterion (ABSGCONV=0.00001) satisfied.
+NOTE: The PROCEDURE ICPHREG printed page 589.
+
+8328       data cov;
+8329       Stage=0;
+8330       output;
+8331       Stage=1;
+8332       output;
+8333       run;
+
+NOTE: The data set WORK.COV has 2 observations and 1 variables.
+
+8334       proc icphreg data=hiv plot=surv;
+8335       class Stage / desc;
+8336       model (Left, Right) = Stage / basehaz=splines;
+8337       baseline covariates=cov;
+8338       run;
+
+NOTE: No option is specified for the cubic splines model. Fitting the model with 3 knots.
+NOTE: Convergence criterion (ABSGCONV=0.00001) satisfied.
+NOTE: The data set WORK.DATA3 has 6 observations and 2 variables.
+NOTE: The PROCEDURE ICPHREG printed page 590.
+
+8339       proc icphreg data=hiv plot=cumhaz;
+8340       class Stage / desc;
+8341       model (Left, Right) = Stage / basehaz=splines;
+8342       baseline covariates=cov;
+8343       run;
+
+NOTE: No option is specified for the cubic splines model. Fitting the model with 3 knots.
+NOTE: Convergence criterion (ABSGCONV=0.00001) satisfied.
+NOTE: The data set WORK.DATA4 has 6 observations and 2 variables.
+NOTE: The PROCEDURE ICPHREG printed page 591.
+
+8344       
+8345       
+8346       
+8347       
+The SAS System
+
+8348       

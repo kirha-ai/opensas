@@ -1,0 +1,103 @@
+
+Oblique Principal Component Cluster Analysis
+
+Observations            150    Proportion          1
+Variables                 4    Maxeigen            0
+
+
+Clustering algorithm converged.                                            
+
+
+                      Cluster Summary for 1 Cluster
+ 
+                        Cluster    Variation    Proportion        Second
+Cluster    Members    Variation    Explained     Explained    Eigenvalue
+------------------------------------------------------------------------
+      1          4            4     2.918498        0.7296        0.9140
+
+Total variation explained = 2.918498 Proportion = 0.7296
+
+Cluster 1 will be split because it has the largest second eigenvalue, 0.91403, which is greater than the MAXEIGEN=0 value.
+
+
+Clustering algorithm converged.                                            
+
+
+                     Cluster Summary for 2 Clusters
+ 
+                        Cluster    Variation    Proportion        Second
+Cluster    Members    Variation    Explained     Explained    Eigenvalue
+------------------------------------------------------------------------
+      1          3            3     2.769741        0.9232        0.1994
+      2          1            1            1        1.0000              
+
+Total variation explained = 3.769741 Proportion = 0.9424
+
+
+                               R-squared with
+2 Clusters                   ------------------
+                                 Own       Next    1-R**2    Variable
+Cluster       Variable       Cluster    Closest     Ratio    Label
+------------------------------------------------------------------------------
+Cluster 1     SepalLength     0.8675     0.0138    0.1344    Sepal Length (mm)
+              PetalLength     0.9690     0.1836    0.0379    Petal Length (mm)
+              PetalWidth      0.9332     0.1340    0.0771    Petal Width (mm) 
+------------------------------------------------------------------------------
+Cluster 2     SepalWidth      1.0000     0.1021    0.0000    Sepal Width (mm) 
+
+
+              Standardized Scoring Coefficients
+ 
+Cluster                                        1             2
+--------------------------------------------------------------
+SepalLength      Sepal Length (mm)       0.33627       0.00000
+SepalWidth       Sepal Width (mm)        0.00000       1.00000
+PetalLength      Petal Length (mm)       0.35541       0.00000
+PetalWidth       Petal Width (mm)        0.34879       0.00000
+
+
+                      Cluster Structure
+ 
+Cluster                                        1             2
+--------------------------------------------------------------
+SepalLength      Sepal Length (mm)       0.93139      -0.11757
+SepalWidth       Sepal Width (mm)       -0.31951       1.00000
+PetalLength      Petal Length (mm)       0.98439      -0.42844
+PetalWidth       Petal Width (mm)        0.96605      -0.36613
+
+
+    Inter-Cluster Correlations
+ 
+Cluster             1             2
+
+1             1.00000      -0.31951
+2            -0.31951       1.00000
+
+
+                 Total     Proportion       Minimum       Maximum                  Maximum
+             Variation             of    Proportion        Second      Minimum      1-R**2
+  Number     Explained      Variation     Explained    Eigenvalue    R-squared       Ratio
+      of            by      Explained          by a          in a        for a       for a
+Clusters      Clusters    by Clusters       Cluster       Cluster     Variable    Variable
+------------------------------------------------------------------------------------------
+       1      2.918498         0.7296        0.7296      0.914030       0.2117            
+       2      3.769741         0.9424        0.9232      0.199412       0.8675      0.1344
+
+                                       Sepal       Sepal       Petal       Petal
+_NCL_    _TYPE_      _NAME_           Length       Width      Length       Width
+
+  .      MEAN                         58.433      30.573      37.580      11.993
+  .      STD                           8.281       4.359      17.653       7.622
+  .      N                           150.000     150.000     150.000     150.000
+  .      CORR        SepalLength       1.000      -0.118       0.872       0.818
+  .      CORR        SepalWidth       -0.118       1.000      -0.428      -0.366
+  .      CORR        PetalLength       0.872      -0.428       1.000       0.963
+  .      CORR        PetalWidth        0.818      -0.366       0.963       1.000
+  1      MEMBERS                       4.000        .           .           .   
+  1      VAREXP                        2.918        .           .           .   
+  1      PROPOR                        0.730        .           .           .   
+  1      GROUP                         1.000       1.000       1.000       1.000
+  1      RSQUARED                      0.792       0.212       0.983       0.931
+  1      SCORE       Clus1             0.305      -0.158       0.340       0.331
+  1      STRUCTUR    Clus1             0.890      -0.460       0.992       0.965
+  1      CCORR       Clus1             1.000        .           .           .   

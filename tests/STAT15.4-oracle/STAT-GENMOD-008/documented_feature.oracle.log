@@ -1,0 +1,63 @@
+The SAS System
+
+22290      
+22291      /* STAT-GENMOD-008: GENMOD — ASSESS
+22292       * Source: S154 / Chapter 51 / `ASSESS Statement` (PDF pp. 3514–3515).
+22293       * Discriminates: Verified default procedure context
+22294       */
+22295      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+22295    ! validmemname=compatible locale=en_US;
+22296      %let syscc=0;
+22297      title; footnote;
+22298      ods _all_ close;
+22299      ods listing gpath="%sysfunc(pathname(work))";
+22300      ods graphics off;
+
+
+22301      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.RESP (memtype=DATA).
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+22301    !                                         quit;
+
+
+22302      ods path work.templat(update) sashelp.tmplmst(read);
+22303      
+22304      data nor;
+22305      input x y;
+22306      datalines;
+
+NOTE: The data set WORK.NOR has 16 observations and 2 variables.
+
+22323      ;
+22324      proc genmod data=nor;
+22325      model y = x / dist = normal
+22326      link = log;
+22327      output out = Residuals
+22328      pred = Pred
+22329      resraw = Resraw
+22330      reschi = Reschi
+22331      resdev = Resdev
+22332      stdreschi = Stdreschi
+22333      stdresdev = Stdresdev
+22334      reslik = Reslik;
+22335      run;
+
+NOTE: Algorithm converged.
+NOTE: The scale parameter was estimated by maximum likelihood.
+NOTE: The data set WORK.RESIDUALS has 16 observations and 9 variables.
+NOTE: The PROCEDURE GENMOD printed page 2378.
+
+22336      
+22337      
+22338      
+22339      
+The SAS System
+
+22340      

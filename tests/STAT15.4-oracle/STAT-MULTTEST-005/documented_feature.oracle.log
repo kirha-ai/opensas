@@ -1,0 +1,57 @@
+The SAS System
+
+5003       
+5004       /* STAT-MULTTEST-005: MULTTEST — Output Data Sets
+5005        * Source: S154 / Chapter 86 / `Output Data Sets` (PDF pp. 6931–6933).
+5006        * Discriminates: Getting Started: MULTTEST Procedure
+5007        */
+5008       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+5008     ! validmemname=compatible locale=en_US;
+5009       %let syscc=0;
+5010       title; footnote;
+5011       ods _all_ close;
+5012       ods listing gpath="%sysfunc(pathname(work))";
+5013       ods graphics off;
+5014       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.DRUG (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+5014     !                                         quit;
+
+
+5015       ods path work.templat(update) sashelp.tmplmst(read);
+5016       
+5017       data Drug;
+5018       input Dose$ SideEff1-SideEff10;
+5019       datalines;
+
+NOTE: The data set WORK.DRUG has 15 observations and 11 variables.
+
+5035       ;
+5036       ods graphics on;
+5037       proc multtest bootstrap nsample=499 seed=41287 notables
+5038       plots=PByTest(vref=0.05 0.1);
+5039       class Dose;
+5040       test ca(SideEff1-SideEff10);
+5041       contrast 'Trend' 0 1 2;
+5042       run;
+
+NOTE: No input data set is specified.  The data set WORK.DRUG is used.
+NOTE: There were 15 observations read from the data set WORK.DRUG.
+NOTE: The PROCEDURE MULTTEST printed page 363.
+
+5043       ods graphics off;
+5044       run;
+5045       quit;
+5046       
+5047       
+5048       
+5049       
+The SAS System
+
+5050       

@@ -1,0 +1,164 @@
+The SAS System
+
+12155      
+12156      /* STAT-LIFEREG-014: LIFEREG — INSET / Probability Plotting / Plot Options Superseded by ODS Graphics / ODS Graphics
+12157       * Source: S154 / Chapter 76 / `INSET Statement` (PDF pp. 5550–5551); S154 / Chapter 76 / `Probability Plotting` (PDF pp. 5576–5581); S154 /
+12157    ! Chapter 76 / `Plot Options Superseded by ODS Graphics` (PDF pp. 5590–5599); S154 / Chapter 76 / `ODS Graphics` (PDF pp. 5601–5602).
+12158       * Discriminates: Example 76.6: Probability Plotting—Arbitrary Censoring; explicit statements: INSET
+12159       */
+12160      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+12160    ! validmemname=compatible locale=en_US;
+12161      %let syscc=0;
+12162      title; footnote;
+12163      ods _all_ close;
+12164      ods listing gpath="%sysfunc(pathname(work))";
+12165      ods graphics off;
+12166      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.FAN (memtype=DATA).
+NOTE: Deleting WORK.HEADACHE (memtype=DATA).
+NOTE: Deleting WORK.NEW (memtype=DATA).
+NOTE: Deleting WORK.POST (memtype=DATA).
+NOTE: Deleting WORK.PROB (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+12166    !                                         quit;
+
+
+12167      ods path work.templat(update) sashelp.tmplmst(read);
+12168      
+12169      ods graphics on;
+12170      ods trace on;
+12171      ods trace on;
+12172      data Micro;
+12173      input t1 t2 f;
+12174      datalines;
+
+NOTE: The data set WORK.MICRO has 14 observations and 3 variables.
+
+12189      ;
+12190      ods graphics on;
+12191      proc lifereg data=Micro;
+12192      model ( t1 t2 ) = / d=lognormal intercept=25 scale=5;
+12193      weight f;
+12194      probplot
+12195      pupper = 10
+12196      itprintem
+12197      printprobs
+12198      maxitem = (1000,25)
+12199      ppout;
+12200      inset;
+12201      run;
+
+
+Output Added:
+-------------
+Name:       ModelInfo
+Label:      Model Information
+Template:   Stat.Lifereg.ModelInfo
+Path:       Lifereg.ModelInfo
+-------------
+
+Output Added:
+-------------
+Name:       NObs
+Label:      Observations Summary
+Template:   Stat.Lifereg.NObs
+Path:       Lifereg.NObs
+-------------
+
+Output Added:
+-------------
+Name:       FitStatistics
+Label:      Model Fit Statistics
+Template:   Stat.Lifereg.FitStatistics
+Path:       Lifereg.FitStatistics
+-------------
+
+Output Added:
+-------------
+Name:       FitStatisticsUL
+Label:      Model Fit Statistics (Unlogged Response)
+Template:   Stat.Lifereg.FitStatisticsUL
+Path:       Lifereg.FitStatisticsUL
+-------------
+NOTE: Algorithm converged.
+
+Output Added:
+-------------
+Name:       ConvergenceStatus
+Label:      Convergence Status
+Template:   Stat.Lifereg.ConvergenceStatus
+Path:       Lifereg.ConvergenceStatus
+-------------
+
+Output Added:
+-------------
+Name:       Type3Analysis
+Label:      Type 3 Analysis
+Template:   Stat.Lifereg.Type3Analysis
+Path:       Lifereg.Type3Analysis
+-------------
+
+Output Added:
+-------------
+Name:       ParameterEstimates
+Label:      Analysis of Parameter Estimates
+Template:   stat.lifereg.parameterestimates
+Path:       Lifereg.ParameterEstimates
+-------------
+
+Output Added:
+-------------
+Name:       IterEM
+Label:      Turnbull Estimate Iteration History
+Template:   stat.lifereg.IterEM
+Path:       Lifereg.IterEM
+-------------
+NOTE: Turnbull algorithm converged.
+
+Output Added:
+-------------
+Name:       TConvergenceStatus
+Label:      Convergence Status for Turnbull Algorithm
+Template:   stat.lifereg.TConvergenceStatus
+Path:       Lifereg.TConvergenceStatus
+-------------
+
+Output Added:
+-------------
+Name:       Turnbull
+Label:      Turnbull Estimate Gradient and Lagrange Multipliers
+Template:   stat.lifereg.Turnbull
+Path:       Lifereg.Turnbull
+-------------
+
+Output Added:
+-------------
+Name:       ProbabilityEstimates
+Label:      Cumulative Probability Estimates
+Template:   stat.lifereg.ProbabilityEstimates
+Path:       Lifereg.ProbabilityEstimates
+-------------
+
+Output Added:
+-------------
+Name:       ProbPlot
+Label:      Probability Plot
+Template:   Stat.Lifereg.Graphics.ProbabilityPlot
+Path:       Lifereg.ProbPlot
+-------------
+NOTE: The PROCEDURE LIFEREG printed page 847.
+
+12202      ods trace off;
+12203      ods trace off;
+12204      ods graphics off;
+12205      
+12206      
+12207      
+12208      
+The SAS System
+
+12209      

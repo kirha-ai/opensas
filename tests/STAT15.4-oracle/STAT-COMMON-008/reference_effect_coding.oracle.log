@@ -1,0 +1,60 @@
+The SAS System
+
+309        
+310        /* STAT-COMMON-008: Alternative parameterizations and reference coding
+311         * Source: S154 / Chapter 20 / `Other Parameterizations` (PDF pp. 418–421).
+312         * Discriminates: Reference versus effect coding with an explicit response event
+313         */
+314        options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+314      ! validmemname=compatible locale=en_US;
+315        %let syscc=0;
+316        title; footnote;
+317        ods _all_ close;
+318        ods listing gpath="%sysfunc(pathname(work))";
+319        ods graphics off;
+320        proc datasets library=work kill nolist;
+NOTE: Deleting WORK.COLUMNS (memtype=DATA).
+NOTE: Deleting WORK.DESIGN_INPUT (memtype=DATA).
+NOTE: Deleting WORK.MATRIX (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SAMPLE (memtype=DATA).
+320      !                                         quit;
+
+
+321        ods path work.templat(update) sashelp.tmplmst(read);
+322        
+323        data sample;
+324         input x z y group $ weight freq;
+325         datalines;
+
+NOTE: The data set WORK.SAMPLE has 12 observations and 6 variables.
+
+338        ;
+339        run;
+340        data binary; set sample; event=(mod(_n_,3)=0); run;
+
+NOTE: There were 12 observations read from the data set WORK.SAMPLE.
+NOTE: The data set WORK.BINARY has 12 observations and 7 variables.
+
+341        proc logistic data=binary; class group(ref='A') / param=ref; model event(event='1')=group x; run;
+
+NOTE: PROC LOGISTIC is modeling the probability that event=1.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: There were 12 observations read from the data set WORK.BINARY.
+NOTE: The PROCEDURE LOGISTIC printed page 16.
+
+342        proc logistic data=binary; class group(ref='A') / param=effect; model event(event='1')=group x; run;
+
+NOTE: PROC LOGISTIC is modeling the probability that event=1.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: There were 12 observations read from the data set WORK.BINARY.
+NOTE: The PROCEDURE LOGISTIC printed page 17.
+
+343        
+344        
+345        
+346        
+The SAS System
+
+347        

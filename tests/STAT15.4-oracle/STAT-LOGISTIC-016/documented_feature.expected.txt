@@ -1,0 +1,475 @@
+
+The LOGISTIC Procedure
+
+              Model Information
+
+Data Set                      WORK.NEURALGIA  
+Response Variable             Pain            
+Number of Response Levels     2               
+Model                         binary logit    
+Optimization Technique        Fisher's scoring
+
+
+Number of Observations Read          60
+Number of Observations Used          60
+
+
+          Response Profile
+ 
+ Ordered                      Total
+   Value     Pain         Frequency
+
+       1     No                  35
+       2     Yes                 25
+
+Probability modeled is Pain='No'.
+
+
+        Class Level Information
+ 
+Class         Value     Design Variables
+
+Treatment     A          1      0      0
+              B          0      1      0
+              P          0      0      1
+
+Sex           F          1      0       
+              M          0      1       
+
+
+                    Model Convergence Status
+
+         Convergence criterion (GCONV=1E-8) satisfied.          
+
+
+         Model Fit Statistics
+ 
+                             Intercept
+              Intercept            and
+Criterion          Only     Covariates
+
+AIC              83.503         62.621
+SC               85.598         77.281
+-2 Log L         81.503         48.621
+
+
+        Testing Global Null Hypothesis: BETA=0
+ 
+Test                 Chi-Square       DF     Pr > ChiSq
+
+Likelihood Ratio        32.8826        6         <.0001
+Score                   25.6768        6         0.0003
+Wald                    14.4001        6         0.0255
+
+
+           Type 3 Analysis of Effects
+ 
+                               Wald
+Effect             DF    Chi-Square    Pr > ChiSq
+
+Treatment           2       12.1297        0.0023
+Sex                 1        5.3229        0.0210
+Treatment*Sex       2        0.1482        0.9286
+Age                 1        7.5992        0.0058
+
+
+                 Analysis of Maximum Likelihood Estimates
+ 
+                                       Standard          Wald
+Parameter            DF    Estimate       Error    Chi-Square    Pr > ChiSq
+
+Intercept             1     16.0726      6.5070        6.1011        0.0135
+Treatment     A       1      3.5486      1.5086        5.5334        0.0187
+Treatment     B       1      3.9600      1.6049        6.0885        0.0136
+Treatment     P       0           0           .         .             .    
+Sex           F       1      2.1366      1.3915        2.3577        0.1247
+Sex           M       0           0           .         .             .    
+Treatment*Sex A F     1     -0.7218      1.9322        0.1395        0.7087
+Treatment*Sex A M     0           0           .         .             .    
+Treatment*Sex B F     1     -0.2107      1.9312        0.0119        0.9131
+Treatment*Sex B M     0           0           .         .             .    
+Treatment*Sex P F     0           0           .         .             .    
+Treatment*Sex P M     0           0           .         .             .    
+Age                   1     -0.2714      0.0984        7.5992        0.0058
+
+
+           Odds Ratio Estimates
+                     
+             Point          95% Wald
+Effect    Estimate      Confidence Limits
+
+Age          0.762       0.629       0.925
+
+
+Association of Predicted Probabilities and Observed Responses
+
+Percent Concordant     90.5    Somers' D    0.816
+Percent Discordant      8.9    Gamma        0.821
+Percent Tied            0.6    Tau-a        0.403
+Pairs                   875    c            0.908
+
+
+      Odds Ratio Estimates and Wald Confidence Intervals
+ 
+Odds Ratio                   Estimate    95% Confidence Limits
+
+Treatment A vs B at Sex=F       0.398       0.016        9.722
+Treatment A vs P at Sex=F      16.892       1.269      224.838
+Treatment B vs P at Sex=F      42.492       2.276      793.254
+Treatment A vs B at Sex=M       0.663       0.078        5.623
+Treatment A vs P at Sex=M      34.766       1.807      668.724
+Treatment B vs P at Sex=M      52.458       2.258     >999.999
+
+
+           Coefficients for Treatment Least Squares Means
+ 
+Parameter              Treatment    Sex      Row1      Row2      Row3
+
+Intercept: Pain=No                              1         1         1
+Treatment A            A                        1                    
+Treatment B            B                                  1          
+Treatment P            P                                            1
+Sex F                               F         0.5       0.5       0.5
+Sex M                               M         0.5       0.5       0.5
+Treatment A * Sex F    A            F         0.5                    
+Treatment A * Sex M    A            M         0.5                    
+Treatment B * Sex F    B            F                   0.5          
+Treatment B * Sex M    B            M                   0.5          
+Treatment P * Sex F    P            F                             0.5
+Treatment P * Sex M    P            M                             0.5
+Age                                         70.05     70.05     70.05
+
+
+                              Treatment Least Squares Means
+ 
+                         Standard
+Treatment    Estimate       Error    z Value    Pr > |z|     Alpha       Lower       Upper
+
+A              1.3195      0.6664       1.98      0.0477      0.05     0.01331      2.6257
+B              1.9864      0.7874       2.52      0.0116      0.05      0.4431      3.5297
+P             -1.8682      0.7620      -2.45      0.0142      0.05     -3.3618     -0.3747
+
+
+                                                     Differences of Treatment Least Squares Means
+                                                   Adjustment for Multiple Comparisons: Bonferroni
+ 
+                                                                                                                                     Lower       Upper
+                                                                                                                                Confidence  Confidence
+                                 Standard                                                              Adj       Adj      Odds   Limit for   Limit for
+Treatment  _Treatment  Estimate     Error  z Value  Pr > |z|   Adj P   Alpha     Lower     Upper     Lower     Upper     Ratio  Odds Ratio  Odds Ratio
+
+A          B            -0.6669    1.0026    -0.67    0.5059  1.0000    0.05   -2.6321    1.2982   -3.0672    1.7334     0.513       0.072       3.663
+A          P             3.1877    1.0376     3.07    0.0021  0.0064    0.05    1.1541    5.2214    0.7037    5.6717    24.234       3.171     185.195
+B          P             3.8547    1.2126     3.18    0.0015  0.0044    0.05    1.4780    6.2313    0.9517    6.7576    47.213       4.384     508.441
+
+ Differences of Treatment Least Squares Means
+Adjustment for Multiple Comparisons: Bonferroni
+ 
+                        Adj Lower     Adj Upper
+Treatment  _Treatment  Odds Ratio    Odds Ratio
+
+A          B                0.047         5.660
+A          P                2.021       290.542
+B          P                2.590       860.612
+
+The LOGISTIC Procedure
+
+              Model Information
+
+Data Set                      WORK.NEURALGIA  
+Response Variable             Pain            
+Number of Response Levels     2               
+Model                         binary logit    
+Optimization Technique        Fisher's scoring
+
+
+Number of Observations Read          60
+Number of Observations Used          60
+
+
+          Response Profile
+ 
+ Ordered                      Total
+   Value     Pain         Frequency
+
+       1     No                  35
+       2     Yes                 25
+
+Probability modeled is Pain='No'.
+
+
+        Class Level Information
+ 
+Class         Value     Design Variables
+
+Treatment     A          1      0      0
+              B          0      1      0
+              P          0      0      1
+
+Sex           F          1      0       
+              M          0      1       
+
+
+                    Model Convergence Status
+
+         Convergence criterion (GCONV=1E-8) satisfied.          
+
+
+         Model Fit Statistics
+ 
+                             Intercept
+              Intercept            and
+Criterion          Only     Covariates
+
+AIC              83.503         62.621
+SC               85.598         77.281
+-2 Log L         81.503         48.621
+
+
+        Testing Global Null Hypothesis: BETA=0
+ 
+Test                 Chi-Square       DF     Pr > ChiSq
+
+Likelihood Ratio        32.8826        6         <.0001
+Score                   25.6768        6         0.0003
+Wald                    14.4001        6         0.0255
+
+
+           Type 3 Analysis of Effects
+ 
+                               Wald
+Effect             DF    Chi-Square    Pr > ChiSq
+
+Treatment           2       12.1297        0.0023
+Sex                 1        5.3229        0.0210
+Treatment*Sex       2        0.1482        0.9286
+Age                 1        7.5992        0.0058
+
+
+                 Analysis of Maximum Likelihood Estimates
+ 
+                                       Standard          Wald
+Parameter            DF    Estimate       Error    Chi-Square    Pr > ChiSq
+
+Intercept             1     16.0726      6.5070        6.1011        0.0135
+Treatment     A       1      3.5486      1.5086        5.5334        0.0187
+Treatment     B       1      3.9600      1.6049        6.0885        0.0136
+Treatment     P       0           0           .         .             .    
+Sex           F       1      2.1366      1.3915        2.3577        0.1247
+Sex           M       0           0           .         .             .    
+Treatment*Sex A F     1     -0.7218      1.9322        0.1395        0.7087
+Treatment*Sex A M     0           0           .         .             .    
+Treatment*Sex B F     1     -0.2107      1.9312        0.0119        0.9131
+Treatment*Sex B M     0           0           .         .             .    
+Treatment*Sex P F     0           0           .         .             .    
+Treatment*Sex P M     0           0           .         .             .    
+Age                   1     -0.2714      0.0984        7.5992        0.0058
+
+
+           Odds Ratio Estimates
+                     
+             Point          95% Wald
+Effect    Estimate      Confidence Limits
+
+Age          0.762       0.629       0.925
+
+
+Association of Predicted Probabilities and Observed Responses
+
+Percent Concordant     90.5    Somers' D    0.816
+Percent Discordant      8.9    Gamma        0.821
+Percent Tied            0.6    Tau-a        0.403
+Pairs                   875    c            0.908
+
+
+                  Least Squares Means Estimates
+ 
+                                  Standard
+Effect       Label    Estimate       Error    z Value    Pr > |z|
+
+Treatment    Row 1      3.1877      1.0376       3.07      0.0021
+Treatment    Row 2      3.8547      1.2126       3.18      0.0015
+
+
+           Chi-Square Test for Least
+            Squares Means Estimates
+ 
+              Num
+Effect         DF    Chi-Square      Pr > ChiSq
+
+Treatment       2         12.13          0.0023
+
+The LOGISTIC Procedure
+
+              Model Information
+
+Data Set                      WORK.NEURALGIA  
+Response Variable             Pain            
+Number of Response Levels     2               
+Model                         binary logit    
+Optimization Technique        Fisher's scoring
+
+
+Number of Observations Read          60
+Number of Observations Used          60
+
+
+          Response Profile
+ 
+ Ordered                      Total
+   Value     Pain         Frequency
+
+       1     No                  35
+       2     Yes                 25
+
+Probability modeled is Pain='No'.
+
+
+        Class Level Information
+ 
+Class         Value     Design Variables
+
+Treatment     A          1      0      0
+              B          0      1      0
+              P          0      0      1
+
+Sex           F          1      0       
+              M          0      1       
+
+
+                    Model Convergence Status
+
+         Convergence criterion (GCONV=1E-8) satisfied.          
+
+
+         Model Fit Statistics
+ 
+                             Intercept
+              Intercept            and
+Criterion          Only     Covariates
+
+AIC              83.503         62.621
+SC               85.598         77.281
+-2 Log L         81.503         48.621
+
+
+        Testing Global Null Hypothesis: BETA=0
+ 
+Test                 Chi-Square       DF     Pr > ChiSq
+
+Likelihood Ratio        32.8826        6         <.0001
+Score                   25.6768        6         0.0003
+Wald                    14.4001        6         0.0255
+
+
+           Type 3 Analysis of Effects
+ 
+                               Wald
+Effect             DF    Chi-Square    Pr > ChiSq
+
+Treatment           2       12.1297        0.0023
+Sex                 1        5.3229        0.0210
+Treatment*Sex       2        0.1482        0.9286
+Age                 1        7.5992        0.0058
+
+
+                 Analysis of Maximum Likelihood Estimates
+ 
+                                       Standard          Wald
+Parameter            DF    Estimate       Error    Chi-Square    Pr > ChiSq
+
+Intercept             1     16.0726      6.5070        6.1011        0.0135
+Treatment     A       1      3.5486      1.5086        5.5334        0.0187
+Treatment     B       1      3.9600      1.6049        6.0885        0.0136
+Treatment     P       0           0           .         .             .    
+Sex           F       1      2.1366      1.3915        2.3577        0.1247
+Sex           M       0           0           .         .             .    
+Treatment*Sex A F     1     -0.7218      1.9322        0.1395        0.7087
+Treatment*Sex A M     0           0           .         .             .    
+Treatment*Sex B F     1     -0.2107      1.9312        0.0119        0.9131
+Treatment*Sex B M     0           0           .         .             .    
+Treatment*Sex P F     0           0           .         .             .    
+Treatment*Sex P M     0           0           .         .             .    
+Age                   1     -0.2714      0.0984        7.5992        0.0058
+
+
+           Odds Ratio Estimates
+                     
+             Point          95% Wald
+Effect    Estimate      Confidence Limits
+
+Age          0.762       0.629       0.925
+
+
+Association of Predicted Probabilities and Observed Responses
+
+Percent Concordant     90.5    Somers' D    0.816
+Percent Discordant      8.9    Gamma        0.821
+Percent Tied            0.6    Tau-a        0.403
+Pairs                   875    c            0.908
+
+
+     Chi-Square Test for Treatment*Sex
+         Least Squares Means Slice
+ 
+          Num
+Slice      DF    Chi-Square      Pr > ChiSq
+
+Sex F       2          8.22          0.0164
+
+
+                                                   Simple Differences of Treatment*Sex Least Squares Means
+                                                       Adjustment for Multiple Comparisons: Bonferroni
+ 
+                                                                                                                                            Lower       Upper
+                                                                                                                                       Confidence  Confidence
+                                        Standard                                                              Adj       Adj      Odds   Limit for   Limit for
+Slice  Treatment  _Treatment  Estimate     Error  z Value  Pr > |z|   Adj P   Alpha     Lower     Upper     Lower     Upper     Ratio  Odds Ratio  Odds Ratio
+
+Sex F  A          B            -0.9224    1.6311    -0.57    0.5717  1.0000    0.05   -4.1193    2.2744   -4.8272    2.9824     0.398       0.016       9.722
+Sex F  A          P             2.8269    1.3207     2.14    0.0323  0.0970    0.05    0.2384    5.4154   -0.3348    5.9886    16.892       1.269     224.838
+Sex F  B          P             3.7493    1.4933     2.51    0.0120  0.0361    0.05    0.8225    6.6761    0.1744    7.3243    42.492       2.276     793.254
+
+         Simple Differences of Treatment*Sex
+                 Least Squares Means
+   Adjustment for Multiple Comparisons: Bonferroni
+ 
+                               Adj Lower     Adj Upper
+Slice  Treatment  _Treatment  Odds Ratio    Odds Ratio
+
+Sex F  A          B                0.008        19.734
+Sex F  A          P                0.715       398.848
+Sex F  B          P                1.190      >999.999
+
+
+     Chi-Square Test for Treatment*Sex
+         Least Squares Means Slice
+ 
+          Num
+Slice      DF    Chi-Square      Pr > ChiSq
+
+Sex M       2          6.64          0.0361
+
+
+                                                   Simple Differences of Treatment*Sex Least Squares Means
+                                                       Adjustment for Multiple Comparisons: Bonferroni
+ 
+                                                                                                                                            Lower       Upper
+                                                                                                                                       Confidence  Confidence
+                                        Standard                                                              Adj       Adj      Odds   Limit for   Limit for
+Slice  Treatment  _Treatment  Estimate     Error  z Value  Pr > |z|   Adj P   Alpha     Lower     Upper     Lower     Upper     Ratio  Odds Ratio  Odds Ratio
+
+Sex M  A          B            -0.4114    1.0910    -0.38    0.7061  1.0000    0.05   -2.5496    1.7268   -3.0231    2.2003     0.663       0.078       5.623
+Sex M  A          P             3.5486    1.5086     2.35    0.0187  0.0560    0.05    0.5919    6.5054  -0.06286    7.1601    34.766       1.807     668.724
+Sex M  B          P             3.9600    1.6049     2.47    0.0136  0.0408    0.05    0.8145    7.1055    0.1180    7.8021    52.458       2.258    >999.999
+
+         Simple Differences of Treatment*Sex
+                 Least Squares Means
+   Adjustment for Multiple Comparisons: Bonferroni
+ 
+                               Adj Lower     Adj Upper
+Slice  Treatment  _Treatment  Odds Ratio    Odds Ratio
+
+Sex M  A          B                0.049         9.028
+Sex M  A          P                0.939      >999.999
+Sex M  B          P                1.125      >999.999

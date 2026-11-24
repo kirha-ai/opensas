@@ -1,0 +1,106 @@
+The SAS System
+
+22430      
+22431      /* STAT-SURVEYMEANS-012: SURVEYMEANS — Confidence Limits for the Mean / Confidence Limits for the Total
+22432       * Source: S154 / Chapter 121 / `Confidence Limits for the Mean` (PDF pp. 9941–9942); S154 / Chapter 121 / `Confidence Limits for the Total` (PDF
+22432    ! p. 9944).
+22433       * Discriminates: Getting Started: SURVEYMEANS Procedure
+22434       */
+22435      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+22435    ! validmemname=compatible locale=en_US;
+22436      %let syscc=0;
+22437      title; footnote;
+22438      ods _all_ close;
+22439      ods listing gpath="%sysfunc(pathname(work))";
+22440      ods graphics off;
+22441      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.ICECREAM (memtype=DATA).
+NOTE: Deleting WORK.MYSTAT (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.STUDENTTOTALS (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+22441    !                                         quit;
+
+
+22442      ods path work.templat(update) sashelp.tmplmst(read);
+22443      
+22444      data IceCream;
+22445      input Grade Spending @@;
+22446      if (Spending < 10) then Group='less';
+22447      else Group='more';
+22448      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.ICECREAM has 40 observations and 3 variables.
+
+22453      ;
+22454      ods graphics on;
+22455      title1 'Analysis of Ice Cream Spending';
+22456      title2 'Simple Random Sample Design';
+22457      proc surveymeans data=IceCream total=4000;
+22458      var Spending Group;
+22459      run;
+
+NOTE: The PROCEDURE SURVEYMEANS printed page 1473.
+
+22460      data StudentTotals;
+22461      input Grade _total_;
+22462      datalines;
+
+NOTE: The data set WORK.STUDENTTOTALS has 3 observations and 2 variables.
+
+22466      ;
+22467      data IceCream;
+22468      set IceCream;
+22469      if Grade=7 then Prob=20/1824;
+22470      if Grade=8 then Prob=9/1025;
+22471      if Grade=9 then Prob=11/1151;
+22472      Weight=1/Prob;
+22473      run;
+
+NOTE: There were 40 observations read from the data set WORK.ICECREAM.
+NOTE: The data set WORK.ICECREAM has 40 observations and 5 variables.
+
+22474      title1 'Analysis of Ice Cream Spending';
+22475      title2 'Stratified Sample Design';
+22476      proc surveymeans data=IceCream total=StudentTotals;
+22477      stratum Grade / list;
+22478      var Spending Group;
+22479      weight Weight;
+22480      run;
+
+NOTE: The PROCEDURE SURVEYMEANS printed page 1474.
+
+22481      title1 'Analysis of Ice Cream Spending';
+22482      title2 'Stratified Sample Design';
+22483      proc surveymeans data=IceCream total=StudentTotals;
+22484      stratum Grade / list;
+22485      var Spending Group;
+22486      weight Weight;
+22487      ods output Statistics=MyStat;
+22488      run;
+
+NOTE: The data set WORK.MYSTAT has 3 observations and 7 variables.
+NOTE: The PROCEDURE SURVEYMEANS printed page 1475.
+
+22489      ods output Statistics=MyStat;
+22490      proc print data=MyStat;
+22491      run;
+
+WARNING: Output 'Statistics' was not created.  Make sure that the output object name, label, or path is spelled correctly.  Also, verify that the appropriate 
+         procedure options are used to produce the requested output object.  For example, verify that the NOPRINT option is not used.
+NOTE: There were 3 observations read from the data set WORK.MYSTAT.
+NOTE: The PROCEDURE PRINT printed page 1476.
+
+22492      
+22493      
+22494      
+22495      
+The SAS System
+
+22496      

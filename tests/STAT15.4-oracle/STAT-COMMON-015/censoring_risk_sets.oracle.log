@@ -1,0 +1,41 @@
+The SAS System
+
+589        
+590        /* STAT-COMMON-015: Survival data and censoring contracts
+591         * Source: S154 / Chapter 14 / `Introduction to Survival Analysis Procedures` (PDF pp. 255–262).
+592         * Discriminates: Event/censoring ties, stratum boundaries and survival result contract
+593         */
+594        options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+594      ! validmemname=compatible locale=en_US;
+595        %let syscc=0;
+596        title; footnote;
+597        ods _all_ close;
+598        ods listing gpath="%sysfunc(pathname(work))";
+599        ods graphics off;
+600        proc datasets library=work kill nolist;
+NOTE: Deleting WORK.POSTERIOR (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SAMPLE (memtype=DATA).
+600      !                                         quit;
+
+
+601        ods path work.templat(update) sashelp.tmplmst(read);
+602        
+603        data survival; input time status group $ x; datalines;
+
+NOTE: The data set WORK.SURVIVAL has 10 observations and 4 variables.
+
+614        ;
+615        run;
+616        proc lifetest data=survival notable; time time*status(0); strata group; run;
+
+NOTE: The PROCEDURE LIFETEST printed pages 34-35.
+
+617        
+618        
+619        
+620        
+The SAS System
+
+621        

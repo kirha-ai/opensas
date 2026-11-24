@@ -1,0 +1,81 @@
+The SAS System
+
+138        
+139        /* STAT-ANOVA-001: ANOVA — Data input, variable roles, and basic options
+140         * Source: S154 / Chapter 29 / `PROC ANOVA Statement` (PDF pp. 1115–1117); S154 / Chapter 29 / `BY Statement` (PDF pp. 1117–1118); S154 / Chapter
+140      !  29 / `FREQ Statement` (PDF p. 1119); S154 / Chapter 29 / `Missing Values` (PDF pp. 1138–1139).
+141         * Discriminates: Two explicit BY groups contain identical inputs, exposing group boundaries and per-group results.
+142         */
+143        options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+143      ! validmemname=compatible locale=en_US;
+144        %let syscc=0;
+145        title; footnote;
+146        ods _all_ close;
+147        ods listing gpath="%sysfunc(pathname(work))";
+148        ods graphics off;
+149        proc datasets library=work kill nolist;
+NOTE: Deleting WORK.MIXTURE (memtype=DATA).
+NOTE: Deleting WORK.NEW (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK._ORACLE_INPUT (memtype=DATA).
+149      !                                         quit;
+
+
+150        ods path work.templat(update) sashelp.tmplmst(read);
+151        
+152        title1 'Nitrogen Content of Red Clover Plants';
+153        data Clover;
+154        input Strain $ Nitrogen @@;
+155        datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.CLOVER has 30 observations and 2 variables.
+
+162        ;
+163        ods graphics on;
+164        data _oracle_input; set Clover; do _oracle_by=1 to 2; output; end; run;
+
+NOTE: There were 30 observations read from the data set WORK.CLOVER.
+NOTE: The data set WORK._ORACLE_INPUT has 60 observations and 3 variables.
+
+165        proc sort data=_oracle_input; by _oracle_by; run;
+
+NOTE: There were 60 observations read from the data set WORK._ORACLE_INPUT.
+NOTE: The data set WORK._ORACLE_INPUT has 60 observations and 3 variables.
+
+166        proc anova data = _oracle_input;
+167        by _oracle_by;
+168        class Strain;
+169        model Nitrogen = Strain;
+170        means Strain / tukey;
+171        run;
+
+NOTE: Interactivity disabled with BY processing.
+NOTE: The PROCEDURE ANOVA printed pages 9-14.
+
+172        title1 'Randomized Complete Block';
+173        data RCB;
+174        input Block Treatment $ Yield Worth @@;
+175        datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.RCB has 9 observations and 4 variables.
+
+179        ;
+180        proc anova data=RCB;
+181        class Block Treatment;
+182        model Yield Worth=Block Treatment;
+183        run;
+
+184        means Treatment;
+185        run;
+
+186        
+187        
+188        
+189        
+The SAS System
+
+190        

@@ -1,0 +1,56 @@
+The SAS System
+
+15325      
+15326      /* STAT-RSREG-009: RSREG — Official examples and feature integration regression
+15327       * Source: S154 / Chapter 108 / `Examples: RSREG Procedure` (PDF pp. 8891–8900).
+15328       * Discriminates: Example 108.1: A Saddle Surface Response Using Ridge Analysis
+15329       */
+15330      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+15330    ! validmemname=compatible locale=en_US;
+15331      %let syscc=0;
+15332      title; footnote;
+15333      ods _all_ close;
+15334      ods listing gpath="%sysfunc(pathname(work))";
+15335      ods graphics off;
+15336      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.D (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+15336    !                                         quit;
+
+
+15337      ods path work.templat(update) sashelp.tmplmst(read);
+15338      
+15339      data d;
+15340      input Time Temp MBT;
+15341      label Time = "Reaction Time (Hours)"
+15342      Temp = "Temperature (Degrees Centigrade)"
+15343      MBT = "Percent Yield Mercaptobenzothiazole";
+15344      datalines;
+
+NOTE: The data set WORK.D has 12 observations and 3 variables.
+
+15357      ;
+15358      ods graphics on;
+15359      proc rsreg data=d plots=(ridge surface);
+15360      model MBT=Time Temp / lackfit;
+15361      ridge max;
+15362      run;
+
+NOTE: The PROCEDURE RSREG printed pages 1124-1126.
+
+15363      ods graphics off;
+15364      run;
+15365      quit;
+15366      
+15367      
+15368      
+15369      
+The SAS System
+
+15370      

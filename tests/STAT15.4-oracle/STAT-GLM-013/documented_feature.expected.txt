@@ -1,0 +1,200 @@
+
+Balanced Data from Randomized Complete Block
+
+The GLM Procedure
+
+                          Class Level Information
+ 
+Class         Levels    Values
+
+Block              3    1 2 3                                               
+
+Type               7    Clarion Clinton Compost Knox O'Neill Wabash Webster 
+
+
+Number of Observations Read          21
+Number of Observations Used          21
+
+Balanced Data from Randomized Complete Block
+
+The GLM Procedure
+ 
+Dependent Variable: StemLength   
+
+                                        Sum of
+Source                      DF         Squares     Mean Square    F Value    Pr > F
+
+Model                        8     142.1885714      17.7735714      10.80    0.0002
+
+Error                       12      19.7428571       1.6452381                     
+
+Corrected Total             20     161.9314286                                     
+
+
+R-Square     Coeff Var      Root MSE    StemLength Mean
+
+0.878079      3.939745      1.282668           32.55714
+
+
+Source                      DF       Type I SS     Mean Square    F Value    Pr > F
+
+Block                        2      39.0371429      19.5185714      11.86    0.0014
+Type                         6     103.1514286      17.1919048      10.45    0.0004
+
+
+Source                      DF     Type III SS     Mean Square    F Value    Pr > F
+
+Block                        2      39.0371429      19.5185714      11.86    0.0014
+Type                         6     103.1514286      17.1919048      10.45    0.0004
+
+Balanced Data from Randomized Complete Block
+
+The GLM Procedure
+
+                          Class Level Information
+ 
+Class         Levels    Values
+
+Block              3    1 2 3                                               
+
+Type               7    Clarion Clinton Knox O'Neill Compost Wabash Webster 
+
+
+Number of Observations Read          21
+Number of Observations Used          21
+
+Balanced Data from Randomized Complete Block
+
+The GLM Procedure
+ 
+Dependent Variable: StemLength   
+
+                                        Sum of
+Source                      DF         Squares     Mean Square    F Value    Pr > F
+
+Model                        8     142.1885714      17.7735714      10.80    0.0002
+
+Error                       12      19.7428571       1.6452381                     
+
+Corrected Total             20     161.9314286                                     
+
+
+R-Square     Coeff Var      Root MSE    StemLength Mean
+
+0.878079      3.939745      1.282668           32.55714
+
+
+Source                      DF       Type I SS     Mean Square    F Value    Pr > F
+
+Block                        2      39.0371429      19.5185714      11.86    0.0014
+Type                         6     103.1514286      17.1919048      10.45    0.0004
+
+
+Source                      DF     Type III SS     Mean Square    F Value    Pr > F
+
+Block                        2      39.0371429      19.5185714      11.86    0.0014
+Type                         6     103.1514286      17.1919048      10.45    0.0004
+
+
+Contrast                    DF     Contrast SS     Mean Square    F Value    Pr > F
+
+Compost vs. others           1     29.24198413     29.24198413      17.77    0.0012
+River soils vs. non          2     48.24694444     24.12347222      14.66    0.0006
+Glacial vs. drift            1     22.14083333     22.14083333      13.46    0.0032
+Clarion vs. Webster          1      1.70666667      1.70666667       1.04    0.3285
+Knox vs. O'Neill             1      1.81500000      1.81500000       1.10    0.3143
+
+
+                                            Standard
+Parameter                 Estimate             Error    t Value    Pr > |t|
+
+Intercept              29.35714286 B      0.83970354      34.96      <.0001
+Block     1             3.32857143 B      0.68561507       4.85      0.0004
+Block     2             1.90000000 B      0.68561507       2.77      0.0169
+Block     3             0.00000000 B       .                .         .    
+Type      Clarion       1.06666667 B      1.04729432       1.02      0.3285
+Type      Clinton      -0.80000000 B      1.04729432      -0.76      0.4597
+Type      Knox          3.80000000 B      1.04729432       3.63      0.0035
+Type      O'Neill       2.70000000 B      1.04729432       2.58      0.0242
+Type      Compost      -1.43333333 B      1.04729432      -1.37      0.1962
+Type      Wabash        4.86666667 B      1.04729432       4.65      0.0006
+Type      Webster       0.00000000 B       .                .         .    
+
+NOTE: The X'X matrix has been found to be singular, and a generalized inverse was used to solve the normal equations.  Terms whose estimates are followed by 
+      the letter 'B' are not uniquely estimable.
+
+Balanced Data from Randomized Complete Block
+
+The GLM Procedure
+ 
+Waller-Duncan K-ratio t Test for StemLength
+
+NOTE: This test minimizes the Bayes risk under additive loss and certain other assumptions.
+
+
+Kratio                              100
+Error Degrees of Freedom             12
+Error Mean Square              1.645238
+F Value                           10.45
+Critical Value of t             2.12034
+Minimum Significant Difference   2.2206
+
+
+Means with the same letter are not significantly different.
+ 
+ 
+Waller
+Groupi
+  ng            Mean      N    Type
+
+     A        35.967      3    Wabash 
+     A                                
+     A        34.900      3    Knox   
+     A                                
+B    A        33.800      3    O'Neill
+B                                     
+B    C        32.167      3    Clarion
+     C                                
+D    C        31.100      3    Webster
+D    C                                
+D    C        30.300      3    Clinton
+D                                     
+D             29.667      3    Compost
+
+Balanced Data from Randomized Complete Block
+
+The GLM Procedure
+ 
+Ryan-Einot-Gabriel-Welsch Multiple Range Test for StemLength
+
+NOTE: This test controls the Type I experimentwise error rate.
+
+
+Alpha                        0.05
+Error Degrees of Freedom       12
+Error Mean Square        1.645238
+
+
+Number of Means              2              3              4              5              6              7
+Critical Range       2.9875528      3.2837322      3.4395625      3.5402383      3.5402383      3.6653133
+
+
+Means with the same letter are not significantly different.
+ 
+ 
+   REGWQ
+ Grouping            Mean      N    Type
+
+     A             35.967      3    Wabash 
+     A                                     
+B    A             34.900      3    Knox   
+B    A                                     
+B    A    C        33.800      3    O'Neill
+B         C                                
+B    D    C        32.167      3    Clarion
+     D    C                                
+     D    C        31.100      3    Webster
+     D                                     
+     D             30.300      3    Clinton
+     D                                     
+     D             29.667      3    Compost

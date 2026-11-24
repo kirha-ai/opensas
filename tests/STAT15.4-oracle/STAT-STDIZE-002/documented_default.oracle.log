@@ -1,0 +1,60 @@
+The SAS System
+
+18074      
+18075      /* STAT-STDIZE-002: STDIZE — Variable standardization and location/scale estimation
+18076       * Source: S154 / Chapter 115 / `Getting Started: STDIZE Procedure` (PDF pp. 9448–9455); S154 / Chapter 115 / `Overview: STDIZE Procedure` (PDF p.
+18076    ! 9448).
+18077       * Discriminates: Within-group standardization, reported location/scale and transformed values
+18078       */
+18079      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+18079    ! validmemname=compatible locale=en_US;
+18080      %let syscc=0;
+18081      title; footnote;
+18082      ods _all_ close;
+18083      ods listing gpath="%sysfunc(pathname(work))";
+18084      ods graphics off;
+18085      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SAMPLE (memtype=DATA).
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.STANDARDIZED (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+18085    !                                         quit;
+
+
+18086      ods path work.templat(update) sashelp.tmplmst(read);
+18087      
+18088      data sample;
+18089       input x z y group $ weight freq;
+18090       datalines;
+
+NOTE: The data set WORK.SAMPLE has 12 observations and 6 variables.
+
+18103      ;
+18104      run;
+18105      proc sort data=sample; by group; run;
+
+NOTE: There were 12 observations read from the data set WORK.SAMPLE.
+NOTE: The data set WORK.SAMPLE has 12 observations and 6 variables.
+
+18106      proc stdize data=sample out=standardized method=std pstat; by group; var x z y; run;
+
+NOTE: There were 12 observations read from the data set WORK.SAMPLE.
+NOTE: The data set WORK.STANDARDIZED has 12 observations and 6 variables.
+NOTE: The PROCEDURE STDIZE printed pages 1237-1238.
+
+18107      proc print data=standardized noobs; format _numeric_ best32.; run;
+
+NOTE: There were 12 observations read from the data set WORK.STANDARDIZED.
+NOTE: The PROCEDURE PRINT printed page 1239.
+
+18108      
+18109      
+18110      
+18111      
+The SAS System
+
+18112      

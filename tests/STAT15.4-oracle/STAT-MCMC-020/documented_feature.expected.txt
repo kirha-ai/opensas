@@ -1,0 +1,84 @@
+
+Simulating Samples from a Normal Density
+
+The MCMC Procedure
+
+                                   Parameters
+ 
+                       Sampling     Initial
+Block    Parameter     Method         Value    Prior Distribution
+
+    1    alpha         Direct             0    normal(0, sd=1)                 
+
+Simulating Samples from a Normal Density
+
+The MCMC Procedure
+
+                  Posterior Summaries and Intervals
+ 
+                                      Standard
+Parameter           N        Mean    Deviation      95% HPD Interval
+
+alpha            1000      0.0271       1.0275     -1.9155      2.1311
+
+beta(4, 12) distribution.
+
+The MCMC Procedure
+
+                  Posterior Summaries and Intervals
+ 
+                                      Standard
+Parameter           N        Mean    Deviation      95% HPD Interval
+
+alpha            1000      0.2484       0.1044      0.0788      0.4653
+
+beta(4, 12) distribution.
+
+The MCMC Procedure
+
+                  Posterior Summaries and Intervals
+ 
+                                      Standard
+Parameter           N        Mean    Deviation      95% HPD Interval
+
+int              1000      0.4300       0.4953           0      1.0000
+
+Simulating Samples from a Mixture of Normal Densities
+
+The MCMC Procedure
+
+Number of Observations Read           0
+Number of Observations Used           0
+
+
+                                   Parameters
+ 
+                       Sampling     Initial
+Block    Parameter     Method         Value    Prior Distribution
+
+    1    z             Direct        2.0000    tabled(p)                       
+    2    alpha         Direct        2.0000    normal(mu[z], sd=sd[z])         
+
+Simulating Samples from a Mixture of Normal Densities
+
+The MCMC Procedure
+
+                  Posterior Summaries and Intervals
+ 
+                                      Standard
+Parameter           N        Mean    Deviation      95% HPD Interval
+
+z                1000      1.9680       0.7665      1.0000      3.0000
+alpha            1000      2.6864       5.5535     -6.4175     14.5452
+
+Simulating Samples from a Mixture of Normal Densities
+
+The MCMC Procedure
+
+                Effective Sample Sizes
+ 
+                         Autocorrelation
+Parameter         ESS               Time    Efficiency
+
+z              1298.5             0.7701        1.2985
+alpha          1067.8             0.9365        1.0678

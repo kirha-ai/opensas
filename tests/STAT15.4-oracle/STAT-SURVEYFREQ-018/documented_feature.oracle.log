@@ -1,0 +1,85 @@
+The SAS System
+
+19737      
+19738      /* STAT-SURVEYFREQ-018: SURVEYFREQ — Displayed Output / ODS Table Names
+19739       * Source: S154 / Chapter 118 / `Displayed Output` (PDF pp. 9672–9679); S154 / Chapter 118 / `ODS Table Names` (PDF pp. 9679–9681).
+19740       * Discriminates: Verified default procedure context
+19741       */
+19742      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+19742    ! validmemname=compatible locale=en_US;
+19743      %let syscc=0;
+19744      title; footnote;
+19745      ods _all_ close;
+19746      ods listing gpath="%sysfunc(pathname(work))";
+19747      ods graphics off;
+19748      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SURVEY (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+19748    !                                         quit;
+
+
+19749      ods path work.templat(update) sashelp.tmplmst(read);
+19750      
+19751      ods trace on;
+19752      data survey;
+19753      do state=1 to 2;
+19754      do school=1 to 4;
+19755      do id=1 to 6;
+19756      response=1+mod(id+school,3);
+19757      schooltype=1+mod(school,2);
+19758      samplingweight=2+state+school/10;
+19759      output;
+19760      end;
+19761      end;
+19762      end;
+19763      run;
+
+NOTE: The data set WORK.SURVEY has 48 observations and 6 variables.
+
+19764      proc surveyfreq data=survey;
+19765      strata state;
+19766      cluster school;
+19767      weight samplingweight;
+19768      tables schooltype*response / row chisq;
+19769      run;
+
+
+Output Added:
+-------------
+Name:       Summary
+Label:      Data Summary
+Template:   Stat.SurveyFreq.Summary
+Path:       Surveyfreq.Summary
+-------------
+
+Output Added:
+-------------
+Name:       CrossTabs
+Label:      CrossTabulation Table
+Template:   Stat.SurveyFreq.CrossTabFreqs
+Path:       Surveyfreq.Table1.CrossTabs
+-------------
+NOTE: The Rao-Scott chi-square test cannot be computed for the table of schooltype by response because the design correction is not positive.
+
+Output Added:
+-------------
+Name:       ChiSq
+Label:      Rao-Scott Chi-Square Test
+Template:   Stat.SurveyFreq.Factoid
+Path:       Surveyfreq.Table1.ChiSq
+-------------
+NOTE: The PROCEDURE SURVEYFREQ printed page 1394.
+
+19770      ods trace off;
+19771      
+19772      
+19773      
+19774      
+The SAS System
+
+19775      

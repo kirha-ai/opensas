@@ -1,0 +1,52 @@
+The SAS System
+
+1569       
+1570       /* STAT-ODS-003: ODS — Paths and Selection / RUN-Group Processing
+1571        * Source: S154 / Chapter 23 / `Paths and Selection` (PDF pp. 588–592); S154 / Chapter 23 / `RUN-Group Processing` (PDF p. 592).
+1572        * Discriminates: ODS object paths, TRACE names and table selection
+1573        */
+1574       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+1574     ! validmemname=compatible locale=en_US;
+1575       %let syscc=0;
+1576       title; footnote;
+1577       ods _all_ close;
+1578       ods listing gpath="%sysfunc(pathname(work))";
+1579       ods graphics off;
+1580       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.HTML_EVIDENCE (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SAMPLE (memtype=DATA).
+NOTE: Deleting WORK.SASMAC4 (memtype=CATALOG).
+1580     !                                         quit;
+
+
+1581       ods path work.templat(update) sashelp.tmplmst(read);
+1582       
+1583       data sample;
+1584        input x z y group $ weight freq;
+1585        datalines;
+
+NOTE: The data set WORK.SAMPLE has 12 observations and 6 variables.
+
+1598       ;
+1599       run;
+1600       ods trace on; ods select ParameterEstimates; proc reg data=sample; model y=x z; run; quit; ods select all; ods trace off;
+
+
+Output Added:
+-------------
+Name:       ParameterEstimates
+Label:      Parameter Estimates
+Template:   Stat.REG.ParameterEstimates
+Path:       Reg.MODEL1.Fit.y.ParameterEstimates
+-------------
+NOTE: The PROCEDURE REG printed page 80.
+
+1601       
+1602       
+1603       
+1604       
+The SAS System
+
+1605       

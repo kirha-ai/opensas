@@ -1,0 +1,79 @@
+The SAS System
+
+781        
+782        /* STAT-DISTANCE-005: DISTANCE — Official examples and feature integration regression
+783         * Source: S154 / Chapter 43 / `Examples: DISTANCE Procedure` (PDF pp. 2770–2782).
+784         * Discriminates: Example 43.2: Financial Data—Stock Dividends
+785         */
+786        options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+786      ! validmemname=compatible locale=en_US;
+787        %let syscc=0;
+788        title; footnote;
+789        ods _all_ close;
+790        ods listing gpath="%sysfunc(pathname(work))";
+791        ods graphics off;
+792        proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.USPOP (memtype=DATA).
+792      !                                         quit;
+
+
+793        ods path work.templat(update) sashelp.tmplmst(read);
+794        
+795        title 'Stock Dividends';
+796        data stock;
+797        length Company $ 27;
+798        input Company :$27. Div_1986 Div_1987 Div_1988 Div_1989 Div_1990;
+799        datalines;
+
+NOTE: The data set WORK.STOCK has 15 observations and 6 variables.
+
+815        ;
+816        proc distance data=stock method=dcorr out=distdcorr;
+817        var interval(div_1986 div_1987 div_1988 div_1989 div_1990);
+818        id company;
+819        run;
+
+NOTE: The data set WORK.DISTDCORR has 15 observations and 16 variables.
+
+820        proc print data=distdcorr;
+821        id company;
+822        title2 'Distance Matrix for 15 Utility Stocks';
+823        run;
+
+NOTE: There were 15 observations read from the data set WORK.DISTDCORR.
+NOTE: The PROCEDURE PRINT printed page 108.
+
+824        title2;
+825        ods graphics on;
+826        proc cluster data=distdcorr method=ward pseudo plots(only)=(psf dendrogram);
+827        id company;
+828        run;
+
+NOTE: The input data set is a TYPE=DISTANCE data set. For such a data set, the procedure requires that the order of the rows match the order of the variables.
+NOTE: Input distances have been squared.
+NOTE: The data set WORK.DATA1 has 29 observations and 11 variables.
+NOTE: The PROCEDURE CLUSTER printed page 109.
+
+829        proc cluster data=distdcorr method=average pseudo plots(only)=(psf dendrogram);
+830        id company;
+831        run;
+
+NOTE: The input data set is a TYPE=DISTANCE data set. For such a data set, the procedure requires that the order of the rows match the order of the variables.
+NOTE: Input distances have been squared.
+NOTE: The data set WORK.DATA2 has 29 observations and 11 variables.
+NOTE: The PROCEDURE CLUSTER printed page 110.
+
+832        
+833        
+834        
+835        
+The SAS System
+
+836        

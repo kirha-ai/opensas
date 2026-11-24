@@ -1,0 +1,54 @@
+The SAS System
+
+2288       
+2289       /* STAT-MI-003: MI — EM / FCS / MNAR
+2290        * Source: S154 / Chapter 82 / `EM Statement` (PDF pp. 6430–6431); S154 / Chapter 82 / `FCS Statement` (PDF pp. 6431–6436); S154 / Chapter 82 /
+2290     ! `MNAR Statement` (PDF pp. 6440–6443).
+2291        * Discriminates: Example 82.1: EM Algorithm for MLE; explicit statements: EM
+2292        */
+2293       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+2293     ! validmemname=compatible locale=en_US;
+2294       %let syscc=0;
+2295       title; footnote;
+2296       ods _all_ close;
+2297       ods listing gpath="%sysfunc(pathname(work))";
+2298       ods graphics off;
+2299       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.FITNESS1 (memtype=DATA).
+NOTE: Deleting WORK.OUTEM (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+2299     !                                         quit;
+
+
+2300       ods path work.templat(update) sashelp.tmplmst(read);
+2301       
+2302       data Fitness1;
+2303       input Oxygen RunTime RunPulse @@;
+2304       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.FITNESS1 has 31 observations and 3 variables.
+
+2321       ;
+2322       run;
+2323       proc mi data=Fitness1 seed=1518971 simple nimpute=0;
+2324       em itprint outem=outem;
+2325       var Oxygen RunTime RunPulse;
+2326       run;
+
+NOTE: The EM algorithm (MLE) converges in 12 iterations.
+NOTE: The data set WORK.OUTEM has 4 observations and 5 variables.
+NOTE: The PROCEDURE MI printed page 162.
+
+2327       
+2328       
+2329       
+2330       
+The SAS System
+
+2331       

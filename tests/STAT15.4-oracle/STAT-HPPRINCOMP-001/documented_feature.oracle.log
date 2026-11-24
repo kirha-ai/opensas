@@ -1,0 +1,54 @@
+The SAS System
+
+3202       
+3203       /* STAT-HPPRINCOMP-001: HPPRINCOMP — Data input, variable roles, and basic options
+3204        * Source: S154 / Chapter 65 / `PROC HPPRINCOMP Statement` (PDF pp. 4950–4954); S154 / Chapter 65 / `BY Statement` (PDF pp. 4954–4955); S154 /
+3204     ! Chapter 65 / `FREQ Statement` (PDF pp. 4955–4956); S154 / Chapter 65 / `ID Statement` (PDF p. 4956); S154 / Chapter 65 / `VAR Statement` (PDF p.
+3204     ! 4958); S154 / Chapter 65 / `WEIGHT Statement` (PDF p. 4958); S154 / Chapter 65 / `Missing Values` (PDF pp. 4959–4960).
+3205        * Discriminates: Verified default procedure context; explicit statements: BY
+3206        */
+3207       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+3207     ! validmemname=compatible locale=en_US;
+3208       %let syscc=0;
+3209       title; footnote;
+3210       ods _all_ close;
+3211       ods listing gpath="%sysfunc(pathname(work))";
+3212       ods graphics off;
+3213       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.ALL (memtype=DATA).
+NOTE: Deleting WORK.NEWOBS (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.RESULT (memtype=DATA).
+NOTE: Deleting WORK.SAMPLE (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+3213     !                                         quit;
+
+
+3214       ods path work.templat(update) sashelp.tmplmst(read);
+3215       
+3216       title 'Crime Rates per 100,000 Population by State';
+3217       data Crime;
+3218       length State $15;
+3219       input State :$15. Murder Rape Robbery Assault
+3220       Burglary Larceny Auto_Theft;
+3221       datalines;
+
+NOTE: The data set WORK.CRIME has 50 observations and 8 variables.
+
+3272       ;
+3273       proc hpprincomp data=Crime;
+3274       run;
+
+NOTE: The HPPRINCOMP procedure is executing in single-machine mode.
+WARNING: 2 observations omitted due to missing values.
+NOTE: The PROCEDURE HPPRINCOMP printed page 159.
+
+3275       
+3276       
+3277       
+3278       
+The SAS System
+
+3279       

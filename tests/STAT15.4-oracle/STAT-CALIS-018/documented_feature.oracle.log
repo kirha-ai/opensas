@@ -1,0 +1,97 @@
+The SAS System
+
+9136       
+9137       /* STAT-CALIS-018: CALIS — BOUNDS / LINCON / NLINCON
+9138        * Source: S154 / Chapter 33 / `BOUNDS Statement` (PDF pp. 1533–1534); S154 / Chapter 33 / `LINCON Statement` (PDF pp. 1568–1569); S154 / Chapter
+9138     !  33 / `NLINCON Statement` (PDF p. 1610).
+9139        * Discriminates: Example 33.32: Ordinal Relations among Factor Loadings; explicit statements: LINCON
+9140        */
+9141       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+9141     ! validmemname=compatible locale=en_US;
+9142       %let syscc=0;
+9143       title; footnote;
+9144       ods _all_ close;
+9145       ods listing gpath="%sysfunc(pathname(work))";
+9146       ods graphics off;
+9147       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.WHEATON (memtype=DATA).
+9147     !                                         quit;
+
+
+9148       ods path work.templat(update) sashelp.tmplmst(read);
+9149       
+9150       data kinzer(type=corr);
+9151       title "Data Matrix of Kinzer & Kinzer, see GUTTMAN (1957)";
+9152       _type_ = 'corr';
+9153       input _name_ $ var1-var6;
+9154       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.KINZER has 6 observations and 8 variables.
+
+9162       ;
+9163       
+9164       run;
+9165       
+9166       proc calis data=Kinzer nobs=326 nose;
+9167       cosan
+9168       var= var1-var6,
+9169       D(6,DIA) * B(2,GEN) + D(6,DIA) * Psi(6,DIA);
+9170       matrix B
+9171       [ ,1]= b11 b21 b31 b41 b51 b61,
+9172       [ ,2]= 0. b22 b32 b42 b52 b62;
+9173       matrix Psi
+9174       [1,1]= psi1-psi6;
+9175       matrix D
+9176       [1,1]= d1-d6 ;
+9177       lincon
+9178       b61 <= b51,
+9179       b51 <= b41,
+9180       b41 <= b31,
+9181       b31 <= b21,
+9182       b21 <= b11,
+9183       0. <= b22,
+9184       b22 <= b32,
+9185       b32 <= b42,
+9186       b42 <= b52,
+9187       b52 <= b62;
+9188       /* SAS Programming Statements */
+9189       /* 6 Constraints on Correlation structures */
+9190       psi1 = 1. - b11 * b11;
+9191       psi2 = 1. - b21 * b21 - b22 * b22;
+9192       psi3 = 1. - b31 * b31 - b32 * b32;
+9193       psi4 = 1. - b41 * b41 - b42 * b42;
+9194       psi5 = 1. - b51 * b51 - b52 * b52;
+9195       psi6 = 1. - b61 * b61 - b62 * b62;
+9196       vnames
+9197       B = [factor1 factor2],
+9198       Psi = [var1-var6],
+9199       D = Psi;
+9200       run;
+
+NOTE: Your code contains 6 program statements.
+NOTE: A central symmetric matrix is not specified in term 1 of the COSAN model.
+NOTE: The means of one or more variables in the input data set WORK.KINZER are missing and are assumed to be 0.
+NOTE: The standard deviations of one or more variables in the input data set WORK.KINZER are missing and are assumed to be 1.
+NOTE: Convergence criterion (ABSGCONV=0.00001) satisfied.
+WARNING: There are 2 active boundary or linear inequality constraints at the solution. The standard errors and chi-square test statistic assume that the 
+         solution is located in the interior of the parameter space; hence, they do not apply if it is likely that some different set of inequality constraints 
+         could be active.
+NOTE: The degrees of freedom are increased by the number of active boundary and inequality constraints. To turn off the adjustment, use the NOADJDF option.
+NOTE: The PROCEDURE CALIS printed pages 1083-1093.
+
+9201       
+9202       
+9203       
+9204       
+The SAS System
+
+9205       

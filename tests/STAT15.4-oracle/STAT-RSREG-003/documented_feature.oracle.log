@@ -1,0 +1,65 @@
+The SAS System
+
+15023      
+15024      /* STAT-RSREG-003: RSREG — MODEL
+15025       * Source: S154 / Chapter 108 / `MODEL Statement` (PDF pp. 8874–8877).
+15026       * Discriminates: Getting Started: RSREG Procedure; explicit statements: MODEL
+15027       */
+15028      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+15028    ! validmemname=compatible locale=en_US;
+15029      %let syscc=0;
+15030      title; footnote;
+15031      ods _all_ close;
+15032      ods listing gpath="%sysfunc(pathname(work))";
+15033      ods graphics off;
+15034      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.SMELL (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+15034    !                                         quit;
+
+
+15035      ods path work.templat(update) sashelp.tmplmst(read);
+15036      
+15037      title 'Response Surface with a Simple Optimum';
+15038      data smell;
+15039      input Odor T R H @@;
+15040      label
+15041      T = "Temperature"
+15042      R = "Gas-Liquid Ratio"
+15043      H = "Packing Height";
+15044      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.SMELL has 15 observations and 4 variables.
+
+15049      ;
+15050      proc rsreg data=smell;
+15051      model Odor = T R H / lackfit;
+15052      run;
+
+NOTE: The PROCEDURE RSREG printed pages 1108-1109.
+
+15053      ods graphics on;
+15054      proc rsreg data=smell
+15055      plots(unpack)=surface(3d at(H=7.541050));
+15056      model Odor = T R H;
+15057      ods select 'T * R = Pred';
+15058      run;
+
+
+15059      ods graphics off;
+15060      run;
+15061      quit;
+15062      
+15063      
+15064      
+15065      
+The SAS System
+
+15066      

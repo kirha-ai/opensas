@@ -1,0 +1,106 @@
+The SAS System
+
+7746       
+7747       /* STAT-CALIS-006: CALIS — MODEL / Default Analysis Type and Default Parameterization / Naming Variables and Parameters
+7748        * Source: S154 / Chapter 33 / `MODEL Statement` (PDF pp. 1605–1607); S154 / Chapter 33 / `Default Analysis Type and Default Parameterization` (PDF
+7748     !  pp. 1683–1685); S154 / Chapter 33 / `Naming Variables and Parameters` (PDF pp. 1728–1729).
+7749        * Discriminates: Example 33.33: Longitudinal Factor Analysis; explicit statements: MODEL
+7750        */
+7751       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+7751     ! validmemname=compatible locale=en_US;
+7752       %let syscc=0;
+7753       title; footnote;
+7754       ods _all_ close;
+7755       ods listing gpath="%sysfunc(pathname(work))";
+7756       ods graphics off;
+7757       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.G1 (memtype=DATA).
+NOTE: Deleting WORK.G2 (memtype=DATA).
+NOTE: Deleting WORK.G3 (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+7757     !                                         quit;
+
+
+7758       ods path work.templat(update) sashelp.tmplmst(read);
+7759       
+7760       Title "Swaminathan's Longitudinal Factor Model, Data: McDONALD(1980)";
+7761       Title2 "Constructed Singular Correlation Matrix, GLS & ML not possible";
+7762       data Mcdon(TYPE=CORR);
+7763       length _name_ $32 _type_ $8;
+7764       infile datalines truncover;
+7765       
+7766       _TYPE_ = 'CORR';
+7767       INPUT _NAME_ $ obs1-obs9;
+7768       datalines;
+
+NOTE: The data set WORK.MCDON has 9 observations and 11 variables.
+
+7778       ;
+7779       proc calis data=Mcdon method=ls nobs=100 corr;
+7780       cosan
+7781       var = obs1-obs9,
+7782       F1(6,GEN) * F2(6,DIA) * F3(6,DIA) * L(6,LOW) * F3(6,DIA,INV)
+7783       * F2(6,DIA,INV) * P(6,DIA) + U(9,SYM);
+7784       matrix F1
+7785       [1 , @1] = x1-x3,
+7786       [2 , @2] = x4-x5,
+7787       [4 , @3] = x6-x8,
+7788       [5 , @4] = x9-x10,
+7789       [7 , @5] = x11-x13,
+7790       [8 , @6] = x14-x15;
+7791       matrix F2
+7792       [1,1]= 2 * 1. x16 x17 x16 x17;
+7793       matrix F3
+7794       [1,1]= 4 * 1. x18 x19;
+7795       matrix L
+7796       [1,1]= 6 * 1.,
+7797       [3,1]= 4 * 1.,
+7798       [5,1]= 2 * 1.;
+7799       matrix P
+7800       [1,1]= 2 * 1. x20-x23;
+7801       matrix U
+7802       [1,1]= x24-x32,
+7803       [4,1]= x33-x38,
+7804       [7,1]= x39-x41;
+7805       bounds 0. <= x24-x32,
+7806       -1. <= x16-x19 <= 1.;
+7807       /* SAS programming statements for dependent parameters */
+7808       x20 = 1. - x16 * x16;
+7809       x21 = 1. - x17 * x17;
+7810       x22 = 1. - x18 * x18;
+7811       x23 = 1. - x19 * x19;
+7812       run;
+
+NOTE: Your code contains 4 program statements.
+NOTE: The means of one or more variables in the input data set WORK.MCDON are missing and are assumed to be 0.
+NOTE: The standard deviations of one or more variables in the input data set WORK.MCDON are missing and are assumed to be 1.
+NOTE: Convergence criterion (ABSGCONV=0.00001) satisfied.
+WARNING: There are 3 active boundary or linear inequality constraints at the solution. The standard errors and chi-square test statistic assume that the 
+         solution is located in the interior of the parameter space; hence, they do not apply if it is likely that some different set of inequality constraints 
+         could be active.
+NOTE: The degrees of freedom are increased by the number of active boundary and inequality constraints. To turn off the adjustment, use the NOADJDF option.
+WARNING: Although all predicted variances for the observed variables are positive, the corresponding predicted covariance matrix is not positive definite. It 
+         has one negative eigenvalue.
+WARNING: The estimated variance of variable 6 is essentially zero in the central matrix P of term 1 of the COSAN model.
+WARNING: The central matrix P of term 1 of the COSAN model is not positive definite. It has one zero eigenvalue.
+WARNING: The estimated variance of obs5 is essentially zero in the central matrix U of term 2 of the COSAN model.
+WARNING: The estimated variance of obs9 is essentially zero in the central matrix U of term 2 of the COSAN model.
+WARNING: The central matrix U of term 2 of the COSAN model is not positive definite. It has 3 negative eigenvalues.
+NOTE: The PROCEDURE CALIS printed pages 628-647.
+
+7813       run;
+7814       quit;
+7815       
+7816       
+7817       
+7818       
+The SAS System
+
+7819       

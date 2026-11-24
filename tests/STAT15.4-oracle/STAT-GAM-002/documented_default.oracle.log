@@ -1,0 +1,55 @@
+The SAS System
+
+19025      
+19026      /* STAT-GAM-002: GAM — Default generalized additive model smoothing and fitting
+19027       * Source: S154 / Chapter 48 / `Getting Started: GAM Procedure` (PDF pp. 3293–3296); S154 / Chapter 48 / `Overview: GAM Procedure` (PDF pp.
+19027    ! 3292–3293).
+19028       * Discriminates: Getting Started: GAM Procedure
+19029       */
+19030      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+19030    ! validmemname=compatible locale=en_US;
+19031      %let syscc=0;
+19032      title; footnote;
+19033      ods _all_ close;
+19034      ods listing gpath="%sysfunc(pathname(work))";
+19035      ods graphics off;
+19036      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.DIABETES (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+19036    !                                         quit;
+
+
+19037      ods path work.templat(update) sashelp.tmplmst(read);
+19038      
+19039      title 'Patterns of Diabetes';
+19040      data diabetes;
+19041      input Age BaseDeficit CPeptide @@;
+19042      logCP = log(CPeptide);
+19043      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.DIABETES has 43 observations and 4 variables.
+
+19059      ;
+19060      ods graphics on;
+19061      proc gam data=diabetes;
+19062      model logCP = spline(Age) spline(BaseDeficit);
+19063      run;
+
+NOTE: The PROCEDURE GAM printed page 2311.
+
+19064      
+19065      
+19066      
+19067      
+The SAS System
+
+19068      

@@ -1,0 +1,40 @@
+
+The ORTHOREG Procedure
+ 
+Dependent Variable: y   
+
+                                   Sum of
+Source                 DF         Squares     Mean Square    F Value    Pr > F
+
+Model                   2     179.7081259     89.85406294     118.33    <.0001
+Error                  87     66.06161693     0.759328930                     
+Corrected Total        89     245.7697428                                     
+
+
+Root MSE    0.8713948188
+R-Square    0.7312052485
+
+
+                                             Standard
+Variable     DF    Parameter Estimate           Error    t Value    Pr > |t|
+
+Intercept     1        5.829098792919    0.0933179528      62.46      <.0001
+x             1        1.372486084418     0.102211918      13.43      <.0001
+z             1       -0.664229885621    0.0926059420      -7.17      <.0001
+
+
+                              Estimate
+ 
+                             Standard
+Label            Estimate       Error       DF    t Value    Pr > |t|
+
+x coefficient      1.3725      0.1022       87      13.43      <.0001
+
+
+        Type III Tests of Model Effects
+ 
+              Num      Den
+Effect         DF       DF    F Value    Pr > F
+
+x               1       87     180.31    <.0001
+z               1       87      51.45    <.0001

@@ -1,0 +1,61 @@
+The SAS System
+
+14535      
+14536      /* STAT-CORRESP-004: CORRESP — Using the VAR / Coding, Fuzzy Coding, and Doubling / Creating a Data Set Containing the Crosstabulation
+14537       * Source: S154 / Chapter 41 / `Using the VAR Statement` (PDF pp. 2600–2601); S154 / Chapter 41 / `Coding, Fuzzy Coding, and Doubling` (PDF pp.
+14537    ! 2601–2604); S154 / Chapter 41 / `Creating a Data Set Containing the Crosstabulation` (PDF pp. 2604–2606).
+14538       * Discriminates: Getting Started: CORRESP Procedure
+14539       */
+14540      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+14540    ! validmemname=compatible locale=en_US;
+14541      %let syscc=0;
+14542      title; footnote;
+14543      ods _all_ close;
+14544      ods listing gpath="%sysfunc(pathname(work))";
+14545      ods graphics off;
+14546      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.USPOP (memtype=DATA).
+14546    !                                         quit;
+
+
+14547      ods path work.templat(update) sashelp.tmplmst(read);
+14548      
+14549      title "Number of Ph.D.'s Awarded from 1973 to 1978";
+14550      data PhD;
+14551      input Science $ 1-19 y1973-y1978;
+14552      label y1973 = '1973'
+14553      y1974 = '1974'
+14554      y1975 = '1975'
+14555      y1976 = '1976'
+14556      y1977 = '1977'
+14557      y1978 = '1978';
+14558      datalines;
+
+NOTE: The data set WORK.PHD has 6 observations and 7 variables.
+
+14565      ;
+14566      ods graphics on;
+14567      proc corresp data=PhD out=Results short chi2p;
+14568      var y1973-y1978;
+14569      id Science;
+14570      run;
+
+NOTE: The data set WORK.RESULTS has 13 observations and 14 variables.
+NOTE: The PROCEDURE CORRESP printed page 1983.
+
+14571      
+14572      
+14573      
+14574      
+The SAS System
+
+14575      

@@ -1,0 +1,243 @@
+The SAS System
+
+11219      
+11220      /* STAT-CALIS-033: CALIS — Computational Problems
+11221       * Source: S154 / Chapter 33 / `Computational Problems` (PDF pp. 1814–1817).
+11222       * Discriminates: Getting Started: CALIS Procedure
+11223       */
+11224      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+11224    ! validmemname=compatible locale=en_US;
+11225      %let syscc=0;
+11226      title; footnote;
+11227      ods _all_ close;
+11228      ods listing gpath="%sysfunc(pathname(work))";
+11229      ods graphics off;
+11230      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.WHEATON (memtype=DATA).
+11230    !                                         quit;
+
+
+11231      ods path work.templat(update) sashelp.tmplmst(read);
+11232      
+11233      data Wheaton(TYPE=COV);
+11234      length _name_ $32 _type_ $8;
+11235      infile datalines truncover;
+11236      
+11237      _type_ = 'cov';
+11238      input _name_ :$32. Anomie67 Powerless67 Anomie71 Powerless71
+11239      Education SEI;
+11240      label Anomie67='Anomie (1967)' Powerless67='Powerlessness (1967)'
+11241      Anomie71='Anomie (1971)' Powerless71='Powerlessness (1971)'
+11242      Education='Education' SEI='Occupational Status Index';
+11243      datalines;
+
+NOTE: The data set WORK.WHEATON has 6 observations and 8 variables.
+
+11250      ;
+11251      run;
+11252      proc calis nobs=932 data=Wheaton;
+11253      path
+11254      Anomie67 <=== Alien67 = 1.0,
+11255      Powerless67 <=== Alien67 = 0.833,
+11256      Anomie71 <=== Alien71 = 1.0,
+11257      Powerless71 <=== Alien71 = 0.833,
+11258      Education <=== SES = 1.0,
+11259      SEI <=== SES = lambda,
+11260      Alien67 <=== SES = gamma1,
+11261      Alien71 <=== SES = gamma2,
+11262      Alien71 <=== Alien67 = beta;
+11263      pvar
+11264      Anomie67 = theta1,
+11265      Powerless67 = theta2,
+11266      Anomie71 = theta1,
+11267      Powerless71 = theta2,
+11268      Education = theta3,
+11269      SEI = theta4,
+11270      Alien67 = psi1,
+11271      Alien71 = psi2,
+11272      SES = phi;
+11273      pcov
+11274      Anomie67 Anomie71 = theta5,
+11275      Powerless67 Powerless71 = theta5;
+11276      run;
+
+NOTE: The means of one or more variables in the input data set WORK.WHEATON are missing and are assumed to be 0.
+NOTE: Convergence criterion (ABSGCONV=0.00001) satisfied.
+NOTE: The PROCEDURE CALIS printed pages 1596-1602.
+
+11277      proc calis nobs=932 data=Wheaton;
+11278      ram
+11279      var = Anomie67 /* 1 */
+11280      Powerless67 /* 2 */
+11281      Anomie71 /* 3 */
+11282      Powerless71 /* 4 */
+11283      Education /* 5 */
+11284      SEI /* 6 */
+11285      Alien67 /* 7 */
+11286      Alien71 /* 8 */
+11287      SES, /* 9 */
+11288      _A_ 1 7 1.0,
+11289      _A_ 2 7 0.833,
+11290      _A_ 3 8 1.0,
+11291      _A_ 4 8 0.833,
+11292      _A_ 5 9 1.0,
+11293      _A_ 6 9 lambda,
+11294      _A_ 7 9 gamma1,
+11295      _A_ 8 9 gamma2,
+11296      _A_ 8 7 beta,
+11297      _P_ 1 1 theta1,
+11298      _P_ 2 2 theta2,
+11299      _P_ 3 3 theta1,
+11300      _P_ 4 4 theta2,
+11301      _P_ 5 5 theta3,
+11302      _P_ 6 6 theta4,
+11303      _P_ 7 7 psi1,
+11304      _P_ 8 8 psi2,
+11305      _P_ 9 9 phi,
+11306      _P_ 1 3 theta5,
+11307      _P_ 2 4 theta5;
+11308      run;
+
+NOTE: The means of one or more variables in the input data set WORK.WHEATON are missing and are assumed to be 0.
+NOTE: Convergence criterion (ABSGCONV=0.00001) satisfied.
+NOTE: The PROCEDURE CALIS printed pages 1603-1609.
+
+11309      proc calis nobs=932 data=Wheaton;
+11310      lineqs
+11311      Anomie67 = 1.0 * f_Alien67 + E1,
+11312      Powerless67 = 0.833 * f_Alien67 + E2,
+11313      Anomie71 = 1.0 * f_Alien71 + E3,
+11314      Powerless71 = 0.833 * f_Alien71 + E4,
+11315      Education = 1.0 * f_SES + E5,
+11316      SEI = lambda * f_SES + E6,
+11317      f_Alien67 = gamma1 * f_SES + D1,
+11318      f_Alien71 = gamma2 * f_SES + beta * f_Alien67 + D2;
+11319      std
+11320      E1 = theta1,
+11321      E2 = theta2,
+11322      E3 = theta1,
+11323      E4 = theta2,
+11324      E5 = theta3,
+11325      E6 = theta4,
+11326      D1 = psi1,
+11327      D2 = psi2,
+11328      f_SES = phi;
+11329      cov
+11330      E1 E3 = theta5,
+11331      E2 E4 = theta5;
+11332      run;
+
+NOTE: The means of one or more variables in the input data set WORK.WHEATON are missing and are assumed to be 0.
+NOTE: Convergence criterion (ABSGCONV=0.00001) satisfied.
+NOTE: The PROCEDURE CALIS printed pages 1610-1616.
+
+11333      proc calis nobs=932 data=Wheaton;
+11334      lismod
+11335      yvar = Anomie67 Powerless67 Anomie71 Powerless71,
+11336      xvar = Education SEI,
+11337      etav = Alien67 Alien71,
+11338      xiv = SES;
+11339      matrix _LAMBDAY_ [1,1] = 1.0,
+11340      [2,1] = 0.833,
+11341      [3,2] = 1.0,
+11342      [4,2] = 0.833;
+11343      matrix _LAMBDAX_ [1,1] = 1.0,
+11344      [2,1] = lambda;
+11345      matrix _GAMMA_ [1,1] = gamma1,
+11346      [2,1] = gamma2;
+11347      matrix _BETA_ [2,1] = beta;
+11348      matrix _THETAY_ [1,1] = theta1,
+11349      [2,2] = theta2,
+11350      [3,3] = theta1,
+11351      [4,4] = theta2,
+11352      [3,1] = theta5,
+11353      [4,2] = theta5;
+11354      matrix _THETAX_ [1,1] = theta3,
+11355      [2,2] = theta4;
+11356      matrix _PSI_ [1,1] = psi1,
+11357      [2,2] = psi2;
+11358      matrix _PHI_ [1,1] = phi;
+11359      run;
+
+NOTE: The means of one or more variables in the input data set WORK.WHEATON are missing and are assumed to be 0.
+NOTE: Convergence criterion (ABSGCONV=0.00001) satisfied.
+NOTE: The PROCEDURE CALIS printed pages 1617-1623.
+
+11360      proc calis nobs=932 data=Wheaton corr;
+11361      factor n=2 rotate=varimax;
+11362      run;
+
+NOTE: The means of one or more variables in the input data set WORK.WHEATON are missing and are assumed to be 0.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The PROCEDURE CALIS printed pages 1624-1631.
+
+11363      proc factor nobs=932 data=Wheaton n=2 rotate=varimax method=ml;
+11364      run;
+
+NOTE: The means of one or more variables in the input data set WORK.WHEATON are missing and are assumed to be 0.
+NOTE: 2 factors will be retained by the NFACTOR criterion.
+NOTE: Convergence criterion satisfied.
+NOTE: Rotation converged.  Criterion changed from 0.674639 to 10.045888 in 2 cycles.
+NOTE: The PROCEDURE FACTOR printed pages 1632-1634.
+
+11365      proc calis nobs=932 data=Wheaton;
+11366      factor
+11367      Alien67 ===> Anomie67 Powerless67 = 1.0 load1,
+11368      Alien71 ===> Anomie71 Powerless71 = 1.0 load2,
+11369      SES ===> Education SEI = 1.0 load3;
+11370      pvar
+11371      Alien67 = phi11,
+11372      Alien71 = phi22,
+11373      SES = phi33,
+11374      Anomie67 = theta1,
+11375      Powerless67 = theta2,
+11376      Anomie71 = theta3,
+11377      Powerless71 = theta4,
+11378      Education = theta5,
+11379      SEI = theta6;
+11380      cov
+11381      Alien71 Alien67 = phi21,
+11382      SES Alien67 = phi31,
+11383      SES Alien71 = phi32;
+11384      run;
+
+NOTE: The means of one or more variables in the input data set WORK.WHEATON are missing and are assumed to be 0.
+NOTE: Convergence criterion (ABSGCONV=0.00001) satisfied.
+NOTE: The PROCEDURE CALIS printed pages 1635-1641.
+
+11385      proc calis nobs=932 data=Wheaton;
+11386      mstruct
+11387      var = Anomie67 Powerless67 Anomie71 Powerless71;
+11388      matrix _COV_ [1,1] = phi1,
+11389      [2,2] = phi2,
+11390      [3,3] = phi1,
+11391      [4,4] = phi2,
+11392      [2,1] = theta1,
+11393      [3,1] = theta2,
+11394      [3,2] = theta1,
+11395      [4,1] = theta1,
+11396      [4,2] = theta3,
+11397      [4,3] = theta1;
+11398      run;
+
+NOTE: The means of one or more variables in the input data set WORK.WHEATON are missing and are assumed to be 0.
+NOTE: Convergence criterion (ABSGCONV=0.00001) satisfied.
+NOTE: The PROCEDURE CALIS printed pages 1642-1648.
+
+11399      run;
+11400      quit;
+11401      
+11402      
+11403      
+11404      
+The SAS System
+
+11405      

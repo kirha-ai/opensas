@@ -1,0 +1,128 @@
+The SAS System
+
+4492       
+4493       /* STAT-ADAPTIVEREG-006: ADAPTIVEREG — SCORE
+4494        * Source: S154 / Chapter 28 / `SCORE Statement` (PDF pp. 1073–1074).
+4495        * Discriminates: Example 28.1: Surface Fitting with Many Noisy Variables; explicit statements: SCORE
+4496        */
+4497       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+4497     ! validmemname=compatible locale=en_US;
+4498       %let syscc=0;
+4499       title; footnote;
+4500       ods _all_ close;
+4501       ods listing gpath="%sysfunc(pathname(work))";
+4502       ods graphics off;
+4503       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.MIXTURE (memtype=DATA).
+NOTE: Deleting WORK.PREDICTED (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+4503     !                                         quit;
+
+
+4504       ods path work.templat(update) sashelp.tmplmst(read);
+4505       
+4506       data artificial;
+4507       drop i;
+4508       array X{10};
+4509       do i=1 to 400;
+4510       do j=1 to 10;
+4511       X{j} = ranuni(1);
+4512       end;
+4513       Y = 40*exp(8*((X1-0.5)**2+(X2-0.5)**2))/
+4514       (exp(8*((X1-0.2)**2+(X2-0.7)**2))+
+4515       exp(8*((X1-0.7)**2+(X2-0.2)**2)))+rannor(1);
+4516       output;
+4517       end;
+4518       run;
+
+NOTE: The data set WORK.ARTIFICIAL has 400 observations and 12 variables.
+
+4519       ods graphics on;
+4520       proc adaptivereg data=artificial plots=fit;
+4521       model y=x1-x10;
+4522       run;
+
+NOTE: The PROCEDURE ADAPTIVEREG printed page 334.
+
+4523       data score;
+4524       do X1=0 to 1 by 0.01;
+4525       do X2=0 to 1 by 0.01;
+4526       Y=40*exp(8*((X1-0.5)**2+(X2-0.5)**2))/
+4527       (exp(8*((X1-0.2)**2+(X2-0.7)**2))+
+4528       exp(8*((X1-0.7)**2+(X2-0.2)**2)));
+4529       output;
+4530       end;
+4531       end;
+4532       run;
+
+NOTE: The data set WORK.SCORE has 10201 observations and 3 variables.
+
+4533       proc adaptivereg data=artificial;
+4534       model y=x1-x10;
+4535       score data=score out=scoreout;
+4536       run;
+
+NOTE: The data set WORK.SCOREOUT has 10201 observations and 4 variables.
+NOTE: The PROCEDURE ADAPTIVEREG printed page 335.
+
+4537       %let off0 = offsetmin=0 offsetmax=0;
+4538       %let off0 = xaxisopts=(&off0) yaxisopts=(&off0);
+4539       %let eopt = location=outside valign=top textattrs=graphlabeltext;
+4540       proc template;
+4541       define statgraph surfaces;
+4542       begingraph / designheight=360px;
+4543       layout lattice/columns=2;
+4544       layout overlay / &off0;
+4545       entry "True Model" / &eopt;
+4546       contourplotparm z=y y=x2 x=x1;
+4547       endlayout;
+4548       layout overlay / &off0;
+4549       entry "Fitted Model" / &eopt;
+4550       contourplotparm z=pred y=x2 x=x1;
+4551       endlayout;
+4552       endlayout;
+4553       endgraph;
+4554       end;
+NOTE: STATGRAPH 'Surfaces' has been saved to: WORK.TEMPLAT
+4555       run;
+
+4556       proc sgrender data=scoreout template=surfaces;
+4557       run;
+
+NOTE: Listing image output written to /saswork/SAS_work5D120001108E_odaws02-euw1.oda.sas.com/SAS_workCCDC0001108E_odaws02-euw1.oda.sas.com/SGRender.png.
+NOTE: There were 10201 observations read from the data set WORK.SCOREOUT.
+
+4558       data artificial;
+4559       drop i;
+4560       array x{10};
+4561       do i=1 to 400;
+4562       do j=1 to 10;
+4563       x{j} = ranuni(12345);
+4564       end;
+4565       y = 40*exp(8*((x1-0.5)**2+(x2-0.5)**2))/
+4566       (exp(8*((x1-0.2)**2+(x2-0.7)**2))+
+4567       exp(8*((x1-0.7)**2+(x2-0.2)**2)))+rannor(1);
+4568       output;
+4569       end;
+4570       run;
+
+NOTE: The data set WORK.ARTIFICIAL has 400 observations and 12 variables.
+
+4571       proc adaptivereg data=artificial;
+4572       model y=x1-x10;
+4573       run;
+
+NOTE: The PROCEDURE ADAPTIVEREG printed page 336.
+
+4574       
+4575       
+4576       
+4577       
+The SAS System
+
+4578       

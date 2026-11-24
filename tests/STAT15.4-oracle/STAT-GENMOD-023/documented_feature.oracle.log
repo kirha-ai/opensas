@@ -1,0 +1,62 @@
+The SAS System
+
+23059      
+23060      /* STAT-GENMOD-023: GENMOD — Official examples and feature integration regression
+23061       * Source: S154 / Chapter 51 / `Examples: GENMOD Procedure` (PDF pp. 3633–3683).
+23062       * Discriminates: Example 51.2: Normal Regression, Log Link
+23063       */
+23064      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+23064    ! validmemname=compatible locale=en_US;
+23065      %let syscc=0;
+23066      title; footnote;
+23067      ods _all_ close;
+23068      ods listing gpath="%sysfunc(pathname(work))";
+23069      ods graphics off;
+23070      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.NOR (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.RESIDUALS (memtype=DATA).
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+23070    !                                         quit;
+
+
+23071      ods path work.templat(update) sashelp.tmplmst(read);
+23072      
+23073      data nor;
+23074      input x y;
+23075      datalines;
+
+NOTE: The data set WORK.NOR has 16 observations and 2 variables.
+
+23092      ;
+23093      proc genmod data=nor;
+23094      model y = x / dist = normal
+23095      link = log;
+23096      output out = Residuals
+23097      pred = Pred
+23098      resraw = Resraw
+23099      reschi = Reschi
+23100      resdev = Resdev
+23101      stdreschi = Stdreschi
+23102      stdresdev = Stdresdev
+23103      reslik = Reslik;
+23104      run;
+
+NOTE: Algorithm converged.
+NOTE: The scale parameter was estimated by maximum likelihood.
+NOTE: The data set WORK.RESIDUALS has 16 observations and 9 variables.
+NOTE: The PROCEDURE GENMOD printed page 2395.
+
+23105      
+23106      
+23107      
+23108      
+The SAS System
+
+23109      

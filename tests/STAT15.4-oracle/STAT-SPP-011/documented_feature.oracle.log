@@ -1,0 +1,53 @@
+The SAS System
+
+17859      
+17860      /* STAT-SPP-011: SPP — Likelihood Methods for Model Fitting / Fitted Model Validation That Uses Residuals
+17861       * Source: S154 / Chapter 114 / `Likelihood Methods for Model Fitting` (PDF pp. 9420–9421); S154 / Chapter 114 / `Fitted Model Validation That Uses
+17861    !  Residuals` (PDF pp. 9421–9423).
+17862       * Discriminates: Getting Started: SPP Procedure
+17863       */
+17864      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+17864    ! validmemname=compatible locale=en_US;
+17865      %let syscc=0;
+17866      title; footnote;
+17867      ods _all_ close;
+17868      ods listing gpath="%sysfunc(pathname(work))";
+17869      ods graphics off;
+17870      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+17870    !                                         quit;
+
+
+17871      ods path work.templat(update) sashelp.tmplmst(read);
+17872      
+17873      ods graphics on;
+17874      proc spp data=sashelp.bei plots(equate)=(trends observations);
+17875      process trees = (x, y /area=(0,0,1000,500) Event=Trees);
+17876      trend grad = field(x,y, gradient);
+17877      trend elev = field(x,y, elevation);
+17878      run;
+
+NOTE: The PROCEDURE SPP printed page 1225.
+
+17879      proc spp data=sashelp.bei plots(equate)=(residual intensity);
+17880      process trees = (x,y /area=(0,0,1000,500) event=Trees);
+17881      trend elev = field(x,y,elevation);
+17882      trend grad = field(x,y,gradient);
+17883      model trees = elev grad / grid(64,64) residual(B=70) ;
+17884      run;
+
+NOTE: Convergence criterion (Absolute gradient, ABSGCONV=0.00001) satisfied.
+NOTE: The PROCEDURE SPP printed page 1226.
+
+17885      
+17886      
+17887      
+17888      
+The SAS System
+
+17889      

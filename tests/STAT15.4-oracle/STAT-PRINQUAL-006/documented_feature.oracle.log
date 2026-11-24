@@ -1,0 +1,74 @@
+The SAS System
+
+8662       
+8663       /* STAT-PRINQUAL-006: PRINQUAL — Character OPSCORE Variables / REITERATE Option Usage / Passive Observations
+8664        * Source: S154 / Chapter 99 / `Character OPSCORE Variables` (PDF p. 8068); S154 / Chapter 99 / `REITERATE Option Usage` (PDF pp. 8068–8069); S154
+8664     ! / Chapter 99 / `Passive Observations` (PDF pp. 8069–8070).
+8665        * Discriminates: Verified default procedure context
+8666        */
+8667       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+8667     ! validmemname=compatible locale=en_US;
+8668       %let syscc=0;
+8669       title; footnote;
+8670       ods _all_ close;
+8671       ods listing gpath="%sysfunc(pathname(work))";
+8672       ods graphics off;
+
+
+8673       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.CARPREF (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.RESULTS (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+8673     !                                         quit;
+
+
+8674       ods path work.templat(update) sashelp.tmplmst(read);
+8675       
+8676       proc prinqual data=sashelp.class out=scaled;
+8677       transform identity(height weight age);
+8678       run;
+
+
+Output Added:
+-------------
+Name:       MTV
+Label:      Iteration History
+Template:   Stat.Transreg.MTV
+Path:       Prinqual.MTV
+-------------
+
+Output Added:
+-------------
+Name:       ConvergenceStatus
+Label:      Convergence Status
+Template:   Stat.Transreg.ConvergenceStatus
+Path:       Prinqual.ConvergenceStatus
+-------------
+NOTE: Algorithm converged.
+NOTE: The data set WORK.SCALED has 19 observations and 8 variables.
+NOTE: The PROCEDURE PRINQUAL printed page 593.
+
+8679       proc print data=scaled(obs=5) noobs;
+8680       run;
+
+
+Output Added:
+-------------
+Name:       Print
+Label:      Data Set WORK.SCALED
+Data Name:  ProcPrintTable
+Path:       Print.Print
+-------------
+NOTE: There were 5 observations read from the data set WORK.SCALED.
+NOTE: The PROCEDURE PRINT printed page 594.
+
+8681       
+8682       
+8683       
+8684       
+The SAS System
+
+8685       

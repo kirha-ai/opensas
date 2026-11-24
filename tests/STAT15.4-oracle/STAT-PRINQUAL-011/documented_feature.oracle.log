@@ -1,0 +1,135 @@
+The SAS System
+
+2087       
+2088       /* STAT-PRINQUAL-011: PRINQUAL — Official examples and feature integration regression
+2089        * Source: S154 / Chapter 99 / `Examples: PRINQUAL Procedure` (PDF pp. 8073–8090).
+2090        * Discriminates: Example 99.2: Principal Components of Basketball Rankings
+2091        */
+2092       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+2092     ! validmemname=compatible locale=en_US;
+2093       %let syscc=0;
+2094       title; footnote;
+2095       ods _all_ close;
+2096       ods listing gpath="%sysfunc(pathname(work))";
+2097       ods graphics off;
+2098       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.BBALL (memtype=DATA).
+NOTE: Deleting WORK.BBALLM (memtype=DATA).
+NOTE: Deleting WORK.MAXRANK (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TBBALL (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+2098     !                                         quit;
+
+
+2099       ods path work.templat(update) sashelp.tmplmst(read);
+2100       
+2101       data bballm;
+2102       input School :$13. CSN DurhamSun DurhamHerald WashingtonPost
+2103       USA_Today SportMagazine InsideSports UPI AP SportsIllustrated;
+2104       label CSN = 'Community Sports News (Chapel Hill, NC)'
+2105       DurhamSun = 'Durham Sun'
+2106       DurhamHerald = 'Durham Morning Herald'
+2107       WashingtonPost = 'Washington Post'
+2108       USA_Today = 'USA Today'
+2109       SportMagazine = 'Sport Magazine'
+2110       InsideSports = 'Inside Sports'
+2111       UPI = 'United Press International'
+2112       AP = 'Associated Press'
+2113       SportsIllustrated = 'Sports Illustrated'
+2114       ;
+2115       format CSN--SportsIllustrated 5.1;
+2116       datalines;
+
+NOTE: The data set WORK.BBALLM has 35 observations and 11 variables.
+
+2152       ;
+2153       * Find maximum rank for each news service and replace
+2154       * each missing value with the next highest rank.;
+2155       proc means data=bballm noprint;
+2156       output out=maxrank
+2157       max=mcsn mdurs mdurh mwas musa mspom mins mupi map mspoi;
+2158       run;
+
+NOTE: There were 35 observations read from the data set WORK.BBALLM.
+NOTE: The data set WORK.MAXRANK has 1 observations and 12 variables.
+
+2159       data bball;
+2160       set bballm;
+2161       if _n_=1 then set maxrank;
+2162       array services[10] CSN--SportsIllustrated;
+2163       array maxranks[10] mcsn--mspoi;
+2164       keep School CSN--SportsIllustrated;
+2165       do i=1 to 10;
+2166       if services[i]=. then services[i]=maxranks[i]+1;
+2167       end;
+2168       run;
+
+NOTE: There were 35 observations read from the data set WORK.BBALLM.
+NOTE: There were 1 observations read from the data set WORK.MAXRANK.
+NOTE: The data set WORK.BBALL has 35 observations and 11 variables.
+
+2169       * Assume that the ranks are ordinal and that unranked teams would have
+2170       * been ranked lower than ranked teams. Monotonically transform all ranked
+2171       * teams while estimating the unranked teams. Enforce the constraint that
+2172       * the missing ranks are estimated to be less than the observed ranks.
+2173       * Order the unranked teams optimally within this constraint. Do this so
+2174       * as to maximize the variance accounted for by one linear combination.
+2175       * This makes the data as nearly rank one as possible, given the constraints.
+2176       *
+2177       * NOTE: The UNTIE transformation should be used with caution.
+2178       * It frequently produces degenerate results.;
+2179       ods graphics on;
+2180       proc prinqual data=bball out=tbball scores n=1 tstandard=z
+2181       plots=transformations;
+2182       title2 'Optimal Monotonic Transformation of Ranked Teams';
+2183       title3 'with Constrained Estimation of Unranked Teams';
+2184       transform untie(CSN -- SportsIllustrated);
+2185       id School;
+2186       run;
+
+WARNING: Failed to converge, however criterion change is less than 0.0001.
+NOTE: The data set WORK.TBBALL has 35 observations and 24 variables.
+NOTE: The PROCEDURE PRINQUAL printed page 66.
+
+2187       * Perform the Final Principal Component Analysis;
+2188       proc factor nfactors=1 plots=scree;
+2189       title4 'Principal Component Analysis';
+2190       ods select factorpattern screeplot;
+2191       var TCSN -- TSportsIllustrated;
+2192       run;
+
+WARNING: Data set WORK.TBBALL has _TYPE_ and _NAME_ variables but is not TYPE=ACE, CORR, COV, EST, FACTOR, SSCP, UCORR, or UCOV.
+NOTE: 1 factor will be retained by the NFACTOR criterion.
+NOTE: The PROCEDURE FACTOR printed page 67.
+
+2193       proc sort;
+2194       by Prin1;
+2195       run;
+
+NOTE: There were 35 observations read from the data set WORK.TBBALL.
+NOTE: The data set WORK.TBBALL has 35 observations and 24 variables.
+
+2196       * Display Scores on the First Principal Component;
+2197       proc print;
+2198       title4 'Teams Ordered by Scores on First Principal Component';
+2199       var School Prin1;
+2200       run;
+
+NOTE: There were 35 observations read from the data set WORK.TBBALL.
+NOTE: The PROCEDURE PRINT printed page 68.
+
+2201       
+2202       
+2203       
+2204       
+The SAS System
+
+2205       

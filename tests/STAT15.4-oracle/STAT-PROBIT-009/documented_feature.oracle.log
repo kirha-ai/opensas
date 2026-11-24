@@ -1,0 +1,60 @@
+The SAS System
+
+9386       
+9387       /* STAT-PROBIT-009: PROBIT — STORE
+9388        * Source: S154 / Chapter 100 / `STORE Statement` (PDF pp. 8119–8120).
+9389        * Discriminates: Example 100.3: Logistic Regression and Scoring New Data; explicit statements: STORE
+9390        */
+9391       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+9391     ! validmemname=compatible locale=en_US;
+9392       %let syscc=0;
+9393       title; footnote;
+9394       ods _all_ close;
+9395       ods listing gpath="%sysfunc(pathname(work))";
+9396       ods graphics off;
+9397       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.EPIDEMIC (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+9397     !                                         quit;
+
+
+9398       ods path work.templat(update) sashelp.tmplmst(read);
+9399       
+9400       data news;
+9401       input sex $ age subs @@;
+9402       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.NEWS has 40 observations and 3 variables.
+
+9423       ;
+9424       proc format;
+9425       value subscrib 1 = 'accept' 0 = 'reject';
+NOTE: Format SUBSCRIB has been output.
+9426       run;
+
+
+9427       proc probit data=news;
+9428       class sex;
+9429       model subs(event="accept")=sex age / d=logistic itprint;
+9430       format subs subscrib.;
+9431       store out=LogitModel;
+9432       run;
+
+NOTE: PROC PROBIT is modeling the probabilities of levels of subs having LOWER Ordered Values in the response profile table.
+NOTE: Algorithm converged.
+NOTE: The PROBIT procedure generated the model item store WORK.LOGITMODEL.
+NOTE: The PROCEDURE PROBIT printed page 621.
+
+9433       
+9434       
+9435       
+9436       
+The SAS System
+
+9437       

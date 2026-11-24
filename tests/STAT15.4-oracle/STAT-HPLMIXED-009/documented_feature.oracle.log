@@ -1,0 +1,66 @@
+The SAS System
+
+3048       
+3049       /* STAT-HPLMIXED-009: HPLMIXED — OUTPUT
+3050        * Source: S154 / Chapter 60 / `OUTPUT Statement` (PDF pp. 4708–4709).
+3051        * Discriminates: Getting Started: HPLMIXED Procedure; explicit statements: OUTPUT
+3052        */
+3053       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+3053     ! validmemname=compatible locale=en_US;
+3054       %let syscc=0;
+3055       title; footnote;
+3056       ods _all_ close;
+3057       ods listing gpath="%sysfunc(pathname(work))";
+3058       ods graphics off;
+3059       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.BLUPS (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.WEEKSIM (memtype=DATA).
+3059     !                                         quit;
+
+
+3060       ods path work.templat(update) sashelp.tmplmst(read);
+3061       
+3062       data SchoolSample;
+3063       do SchoolID = 1 to 300;
+3064       do nID = 1 to 25;
+3065       Neighborhood = (SchoolID-1)*5 + nId;
+3066       bInt = 5 *ranuni(1);
+3067       bTime = 5 *ranuni(1);
+3068       bTime2 = ranuni(1);
+3069       do sID = 1 to 2;
+3070       do Time = 1 to 4;
+3071       Math = bInt + bTime*Time + bTime2*Time*Time + rannor(2);
+3072       output;
+3073       end;
+3074       end;
+3075       end;
+3076       end;
+3077       run;
+
+NOTE: The data set WORK.SCHOOLSAMPLE has 60000 observations and 9 variables.
+
+3078       proc hplmixed data=SchoolSample;
+3079       class Neighborhood SchoolID;
+3080       model Math = Time Time*Time / solution;
+3081       random int Time Time *Time / sub=Neighborhood(SchoolID) type=un;
+3082       run;
+
+NOTE: The HPLMIXED procedure is executing in single-machine mode.
+NOTE: Convergence criterion (ABSGCONV=0.00001) satisfied.
+NOTE: The PROCEDURE HPLMIXED printed page 184.
+
+3083       
+3084       
+3085       
+3086       
+The SAS System
+
+3087       

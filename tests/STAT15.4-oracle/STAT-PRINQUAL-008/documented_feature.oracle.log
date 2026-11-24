@@ -1,0 +1,72 @@
+The SAS System
+
+8714       
+8715       /* STAT-PRINQUAL-008: PRINQUAL — Displayed Output / ODS Table Names
+8716        * Source: S154 / Chapter 99 / `Displayed Output` (PDF pp. 8071–8072); S154 / Chapter 99 / `ODS Table Names` (PDF p. 8072).
+8717        * Discriminates: Verified default procedure context
+8718        */
+8719       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+8719     ! validmemname=compatible locale=en_US;
+8720       %let syscc=0;
+8721       title; footnote;
+8722       ods _all_ close;
+8723       ods listing gpath="%sysfunc(pathname(work))";
+8724       ods graphics off;
+8725       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SCALED (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+8725     !                                         quit;
+
+
+8726       ods path work.templat(update) sashelp.tmplmst(read);
+8727       
+8728       ods trace on;
+8729       proc prinqual data=sashelp.class out=scaled;
+8730       transform identity(height weight age);
+8731       run;
+
+
+Output Added:
+-------------
+Name:       MTV
+Label:      Iteration History
+Template:   Stat.Transreg.MTV
+Path:       Prinqual.MTV
+-------------
+
+Output Added:
+-------------
+Name:       ConvergenceStatus
+Label:      Convergence Status
+Template:   Stat.Transreg.ConvergenceStatus
+Path:       Prinqual.ConvergenceStatus
+-------------
+NOTE: Algorithm converged.
+NOTE: The data set WORK.SCALED has 19 observations and 8 variables.
+NOTE: The PROCEDURE PRINQUAL printed page 597.
+
+8732       proc print data=scaled(obs=5) noobs;
+8733       run;
+
+
+Output Added:
+-------------
+Name:       Print
+Label:      Data Set WORK.SCALED
+Data Name:  ProcPrintTable
+Path:       Print.Print
+-------------
+NOTE: There were 5 observations read from the data set WORK.SCALED.
+NOTE: The PROCEDURE PRINT printed page 598.
+
+8734       ods trace off;
+8735       
+8736       
+8737       
+8738       
+The SAS System
+
+8739       

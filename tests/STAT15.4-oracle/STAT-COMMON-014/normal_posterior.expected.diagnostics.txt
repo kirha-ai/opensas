@@ -1,0 +1,1 @@
+WARNING: The Markov chain sample size of 1000 is not enough to perform a Raftery-Lewis diagnostic test.  The minimum sample size needed is 3746. Consider 

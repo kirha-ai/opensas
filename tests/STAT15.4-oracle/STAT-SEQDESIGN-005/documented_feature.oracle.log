@@ -1,0 +1,45 @@
+The SAS System
+
+15866      
+15867      /* STAT-SEQDESIGN-005: SEQDESIGN — Statistical Assumptions for Group Sequential Designs / Boundary Scales / Boundary Variables
+15868       * Source: S154 / Chapter 110 / `Statistical Assumptions for Group Sequential Designs` (PDF pp. 8971–8973); S154 / Chapter 110 / `Boundary Scales`
+15868    ! (PDF pp. 8973–8975); S154 / Chapter 110 / `Boundary Variables` (PDF pp. 8975–8978).
+15869       * Discriminates: Example 110.4: Generating Graphics Display for Sequential Designs
+15870       */
+15871      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+15871    ! validmemname=compatible locale=en_US;
+15872      %let syscc=0;
+15873      title; footnote;
+15874      ods _all_ close;
+15875      ods listing gpath="%sysfunc(pathname(work))";
+15876      ods graphics off;
+15877      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+15877    !                                         quit;
+
+
+15878      ods path work.templat(update) sashelp.tmplmst(read);
+15879      
+15880      ods graphics on;
+15881      proc seqdesign altref=0.4
+15882      plots=all
+15883      ;
+15884      TwoSidedPocock: design nstages=4 method=poc;
+15885      TwoSidedOBrienFleming: design nstages=4 method=obf;
+15886      run;
+
+NOTE: The PROCEDURE SEQDESIGN printed pages 1145-1146.
+
+15887      
+15888      
+15889      
+15890      
+The SAS System
+
+15891      

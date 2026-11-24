@@ -1,0 +1,94 @@
+The SAS System
+
+658        
+659        /* STAT-FREQ-001: FREQ — Data input, variable roles, and basic options
+660         * Source: S154 / Chapter 47 / `PROC FREQ Statement` (PDF pp. 3082–3084); S154 / Chapter 47 / `BY Statement` (PDF pp. 3084–3085); S154 / Chapter
+660      ! 47 / `WEIGHT Statement` (PDF pp. 3157–3158); S154 / Chapter 47 / `Inputting Frequency Counts` (PDF pp. 3158–3159); S154 / Chapter 47 / `Grouping
+660      ! with Formats` (PDF pp. 3159–3160); S154 / Chapter 47 / `Missing Values` (PDF pp. 3160–3162).
+661         * Discriminates: Two explicit BY groups contain identical inputs, exposing group boundaries and per-group results.
+662         */
+663        options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+663      ! validmemname=compatible locale=en_US;
+664        %let syscc=0;
+665        title; footnote;
+666        ods _all_ close;
+667        ods listing gpath="%sysfunc(pathname(work))";
+668        ods graphics off;
+669        proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.YEAST (memtype=DATA).
+NOTE: Deleting WORK._ORACLE_INPUT (memtype=DATA).
+669      !                                         quit;
+
+
+670        ods path work.templat(update) sashelp.tmplmst(read);
+671        
+672        data SummerSchool;
+673        input Gender $ Internship $ Enrollment $ Count @@;
+674        datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.SUMMERSCHOOL has 8 observations and 4 variables.
+
+679        ;
+680        data _oracle_input; set SummerSchool; do _oracle_by=1 to 2; output; end; run;
+
+NOTE: There were 8 observations read from the data set WORK.SUMMERSCHOOL.
+NOTE: The data set WORK._ORACLE_INPUT has 16 observations and 5 variables.
+
+681        proc sort data=_oracle_input; by _oracle_by; run;
+
+NOTE: There were 16 observations read from the data set WORK._ORACLE_INPUT.
+NOTE: The data set WORK._ORACLE_INPUT has 16 observations and 5 variables.
+
+682        proc freq data=_oracle_input order=data;
+683        by _oracle_by;
+684        tables Internship*Enrollment / chisq;
+685        weight Count;
+686        run;
+
+NOTE: There were 16 observations read from the data set WORK._ORACLE_INPUT.
+NOTE: The PROCEDURE FREQ printed pages 83-84.
+
+687        ods graphics on;
+688        proc freq data=SummerSchool;
+689        tables Gender*Internship*Enrollment /
+690        chisq cmh plots(only)=freqplot(twoway=cluster);
+691        weight Count;
+692        run;
+
+NOTE: There were 8 observations read from the data set WORK.SUMMERSCHOOL.
+NOTE: The PROCEDURE FREQ printed pages 85-86.
+
+693        ods graphics off;
+694        data SkinCondition;
+695        input Derm1 $ Derm2 $ Count;
+696        datalines;
+
+NOTE: The data set WORK.SKINCONDITION has 16 observations and 3 variables.
+
+713        ;
+714        ods graphics on;
+715        proc freq data=SkinCondition order=data;
+716        tables Derm1*Derm2 /
+717        agree noprint plots=agreeplot;
+718        test kappa;
+719        weight Count;
+720        run;
+
+NOTE: There were 16 observations read from the data set WORK.SKINCONDITION.
+NOTE: The PROCEDURE FREQ printed page 87.
+
+721        ods graphics off;
+722        
+723        run; quit;
+724        
+725        
+726        
+727        
+The SAS System
+
+728        

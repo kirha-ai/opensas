@@ -1,0 +1,48 @@
+
+The SPP Procedure
+
+Observations Read                 24205
+Observations Used                 23905
+Event Observations Read            3604
+Event Observations Used            3604
+Gradient Observations Read        20301
+Gradient Observations Used        20301
+Elevation Observations Read       20301
+Elevation Observations Used       20301
+
+
+          Summary of Point Pattern
+
+Data Type                 Point Pattern      
+Pattern Name              trees              
+Region Type               User Defined Window
+Region X Range            [0,1000] Units     
+Region Y Range            [0,500] Units      
+Region X Size             1000 Units         
+Region Y Size             500 Units          
+Region Area               500000 Square Units
+Observations in Window    3604               
+Average Intensity         0.007208           
+Grid Nodes in X           50                 
+Grid Nodes in Y           50                 
+Grid Nodes in Window      2500               
+Quadrat Dimension in X    10                 
+Quadrat Dimension in Y    10                 
+
+
+             Pearson Chi-Square Test for CSR
+ 
+Expected              Dispersion                    Pr >
+Frequency       DF         Index    Chi-Square     ChiSq
+
+    36.04       99        33.222       3288.95    <.0001
+
+
+ Kolmogorov-Smirnov Weighted EDF
+    Test for Covariate Values
+ 
+                 D
+Source       Statistic    p Value
+
+Gradient      0.194805    <0.0010
+Elevation     0.106492    <0.0010

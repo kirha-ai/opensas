@@ -1,0 +1,380 @@
+
+Stability of Alienation
+Data Matrix of WHEATON, MUTHEN, ALWIN & SUMMERS (1977)
+
+The CALIS Procedure
+Covariance Structure Analysis: Model and Initial Values
+
+      Modeling Information
+ Maximum Likelihood Estimation
+
+Data Set            WORK.WHEATON
+N Obs               932         
+Model Type          PATH        
+Analysis            Covariances 
+
+
+                        Variables in the Model
+
+Endogenous    Manifest     Anomie67  Anomie71  Education  Powerless67
+                           Powerless71  SEI                          
+              Latent       Alien67  Alien71                          
+Exogenous     Manifest                                               
+              Latent       SES                                       
+
+                  Number of Endogenous Variables = 8
+                  Number of Exogenous Variables  = 1
+
+
+             Initial Estimates for PATH List
+ 
+-------------Path-------------    Parameter      Estimate
+
+Anomie67       <===    Alien67                    1.00000
+Powerless67    <===    Alien67                    0.83300
+Anomie71       <===    Alien71                    1.00000
+Powerless71    <===    Alien71                    0.83300
+Education      <===    SES                        1.00000
+SEI            <===    SES        lambda                .
+Alien67        <===    SES        gamma1                .
+Alien71        <===    SES        gamma2                .
+Alien71        <===    Alien67    beta                  .
+
+
+     Initial Estimates for Variance Parameters
+ 
+Variance
+Type         Variable       Parameter      Estimate
+
+Error        Anomie67       theta1                .
+             Powerless67    theta2                .
+             Anomie71       theta1                .
+             Powerless71    theta2                .
+             Education      theta3                .
+             SEI            theta4                .
+             Alien67        psi1                  .
+             Alien71        psi2                  .
+Exogenous    SES            phi                   .
+
+
+   Initial Estimates for Covariances Among Errors
+ 
+Error of       Error of       Parameter      Estimate
+
+Anomie67       Anomie71       theta5                .
+Powerless67    Powerless71    theta5                .
+
+Stability of Alienation
+Data Matrix of WHEATON, MUTHEN, ALWIN & SUMMERS (1977)
+
+The CALIS Procedure
+Covariance Structure Analysis: Descriptive Statistics
+
+                         Simple Statistics
+ 
+                Variable                          Mean       Std Dev
+
+Anomie67       Anomie (1967)                         0       3.44006
+Powerless67    Powerlessness (1967)                  0       3.06007
+Anomie71       Anomie (1971)                         0       3.54006
+Powerless71    Powerlessness (1971)                  0       3.16006
+Education      Education                             0       3.10000
+SEI            Occupational Status Index             0      21.21999
+
+Stability of Alienation
+Data Matrix of WHEATON, MUTHEN, ALWIN & SUMMERS (1977)
+
+The CALIS Procedure
+Covariance Structure Analysis: Optimization
+
+        Initial Estimation Methods
+
+       1    Instrumental Variables Method
+       2    McDonald Method              
+       3    Two-Stage Least Squares      
+
+
+              Optimization Start
+              Parameter Estimates
+ 
+    N    Parameter      Estimate      Gradient
+
+    1    lambda          4.99508      -0.00206
+    2    gamma1         -0.62322      -0.04069
+    3    gamma2         -0.20437      -0.03816
+    4    beta            0.66589       0.03789
+    5    theta1          3.51433      -0.00409
+    6    theta2          3.65991       0.01182
+    7    theta3          2.49860      -0.00578
+    8    theta4        272.85274     0.0000194
+    9    psi1            5.57764      -0.00217
+   10    psi2            3.79636      -0.00935
+   11    phi             7.11140       0.00108
+   12    theta5          0.45298      -0.06463
+
+  Value of Objective Function = 0.0365979443
+
+Stability of Alienation
+Data Matrix of WHEATON, MUTHEN, ALWIN & SUMMERS (1977)
+
+The CALIS Procedure
+Covariance Structure Analysis: Optimization
+
+Levenberg-Marquardt Optimization
+
+Scaling Update of More (1978)
+
+Parameter Estimates                   12
+Functions (Observations)              21
+
+                                             Optimization Start
+
+Active Constraints                                  0  Objective Function                       0.0365979443
+Max Abs Gradient Element                 0.0646338767  Radius                                              1
+
+
+                                                                                                         Ratio
+                                                                                                       Between
+                                                                                                        Actual
+                                                                 Objective     Max Abs                     and
+                     Function         Active        Objective     Function    Gradient               Predicted
+Iter     Restarts       Calls    Constraints         Function       Change     Element     Lambda       Change
+
+   1            0           4              0          0.01453       0.0221     0.00142          0        1.013
+   2            0           6              0          0.01448     0.000046    0.000249          0        1.001
+   3            0           8              0          0.01448     1.007E-7    4.717E-6          0        1.006
+
+                                            Optimization Results
+
+Iterations                                          3  Function Calls                                     11
+Jacobian Calls                                      5  Active Constraints                                  0
+Objective Function                       0.0144844814  Max Abs Gradient Element                 4.7172823E-6
+Lambda                                              0  Actual Over Pred Change                  1.0060912036
+Radius                                    0.001390392                                                       
+
+Convergence criterion (ABSGCONV=0.00001) satisfied.                                               
+
+Stability of Alienation
+Data Matrix of WHEATON, MUTHEN, ALWIN & SUMMERS (1977)
+
+The CALIS Procedure
+Covariance Structure Analysis: Maximum Likelihood Estimation
+
+                            Fit Summary
+
+Modeling Info        Number of Observations                     932
+                     Number of Variables                          6
+                     Number of Moments                           21
+                     Number of Parameters                        12
+                     Number of Active Constraints                 0
+                     Baseline Model Function Value           2.2894
+                     Baseline Model Chi-Square            2131.4327
+                     Baseline Model Chi-Square DF                15
+                     Pr > Baseline Model Chi-Square          <.0001
+Absolute Index       Fit Function                            0.0145
+                     Chi-Square                             13.4851
+                     Chi-Square DF                                9
+                     Pr > Chi-Square                         0.1419
+                     Z-Test of Wilson & Hilferty             1.0754
+                     Hoelter Critical N                        1169
+                     Root Mean Square Residual (RMR)         0.2281
+                     Standardized RMR (SRMR)                 0.0150
+                     Goodness of Fit Index (GFI)             0.9953
+Parsimony Index      Adjusted GFI (AGFI)                     0.9890
+                     Parsimonious GFI                        0.5972
+                     RMSEA Estimate                          0.0231
+                     RMSEA Lower 90% Confidence Limit        0.0000
+                     RMSEA Upper 90% Confidence Limit        0.0470
+                     Probability of Close Fit                0.9705
+                     ECVI Estimate                           0.0405
+                     ECVI Lower 90% Confidence Limit         0.0357
+                     ECVI Upper 90% Confidence Limit         0.0556
+                     Akaike Information Criterion           37.4851
+                     Bozdogan CAIC                         107.5330
+                     Schwarz Bayesian Criterion             95.5330
+                     McDonald Centrality                     0.9976
+Incremental Index    Bentler Comparative Fit Index           0.9979
+                     Bentler-Bonett NFI                      0.9937
+                     Bentler-Bonett Non-normed Index         0.9965
+                     Bollen Normed Index Rho1                0.9895
+                     Bollen Non-normed Index Delta2          0.9979
+                     James et al. Parsimonious NFI           0.5962
+
+Stability of Alienation
+Data Matrix of WHEATON, MUTHEN, ALWIN & SUMMERS (1977)
+
+The CALIS Procedure
+Covariance Structure Analysis: Maximum Likelihood Estimation
+
+                                                Raw Residual Matrix
+ 
+                                           Anomie67  Powerless67     Anomie71  Powerless71    Education          SEI
+
+Anomie67     Anomie (1967)                 -0.06997      0.03642     -0.01116     -0.15200      0.32892      0.47786
+Powerless67  Powerlessness (1967)           0.03642      0.01261      0.15600      0.01135     -0.41712     -0.19108
+Anomie71     Anomie (1971)                 -0.01116      0.15600     -0.08381     -0.00854      0.22464      0.07976
+Powerless71  Powerlessness (1971)          -0.15200      0.01135     -0.00854      0.14067     -0.23832     -0.59248
+Education    Education                      0.32892     -0.41712      0.22464     -0.23832      0.00000      0.00000
+SEI          Occupational Status Index      0.47786     -0.19108      0.07976     -0.59248      0.00000      0.00002
+
+Average Absolute Residual                         0.153940
+Average Off-diagonal Absolute Residual            0.195044
+
+
+Rank Order of the 10 Largest Raw Residuals
+ 
+Var1           Var2             Residual
+
+SEI            Powerless71      -0.59248
+SEI            Anomie67          0.47786
+Education      Powerless67      -0.41712
+Education      Anomie67          0.32892
+Education      Powerless71      -0.23832
+Education      Anomie71          0.22464
+SEI            Powerless67      -0.19108
+Anomie71       Powerless67       0.15600
+Powerless71    Anomie67         -0.15200
+Powerless71    Powerless71       0.14067
+
+Stability of Alienation
+Data Matrix of WHEATON, MUTHEN, ALWIN & SUMMERS (1977)
+
+The CALIS Procedure
+Covariance Structure Analysis: Maximum Likelihood Estimation
+
+                                    Asymptotically Standardized Residual Matrix
+ 
+                                           Anomie67  Powerless67     Anomie71  Powerless71    Education          SEI
+
+Anomie67     Anomie (1967)                 -0.30882      0.52686     -0.05619     -0.86507      2.55338      0.46484
+Powerless67  Powerlessness (1967)           0.52686      0.05464      0.87613      0.05735     -2.76371     -0.17015
+Anomie71     Anomie (1971)                 -0.05619      0.87613     -0.35460     -0.12169      1.69781      0.07009
+Powerless71  Powerlessness (1971)          -0.86507      0.05735     -0.12169      0.58521     -1.55750     -0.49608
+Education    Education                      2.55338     -2.76371      1.69781     -1.55750      0.00000      0.00000
+SEI          Occupational Status Index      0.46484     -0.17015      0.07009     -0.49608      0.00000      0.00000
+
+Average Standardized Residual                     0.646672
+Average Off-diagonal Standardized Residual        0.818456
+
+
+Rank Order of the 10 Largest Asymptotically Standardized Residuals
+ 
+Var1           Var2             Residual
+
+Education      Powerless67      -2.76371
+Education      Anomie67          2.55338
+Education      Anomie71          1.69781
+Education      Powerless71      -1.55750
+Anomie71       Powerless67       0.87613
+Powerless71    Anomie67         -0.86507
+Powerless71    Powerless71       0.58521
+Powerless67    Anomie67          0.52686
+SEI            Powerless71      -0.49608
+SEI            Anomie67          0.46484
+
+Stability of Alienation
+Data Matrix of WHEATON, MUTHEN, ALWIN & SUMMERS (1977)
+
+The CALIS Procedure
+Covariance Structure Analysis: Maximum Likelihood Estimation
+
+                                           PATH List
+ 
+                                                               Standard
+-------------Path-------------    Parameter      Estimate         Error     t Value    Pr > |t|
+
+Anomie67       <===    Alien67                    1.00000                                      
+Powerless67    <===    Alien67                    0.83300                                      
+Anomie71       <===    Alien71                    1.00000                                      
+Powerless71    <===    Alien71                    0.83300                                      
+Education      <===    SES                        1.00000                                      
+SEI            <===    SES        lambda          5.36883       0.43371     12.3788      <.0001
+Alien67        <===    SES        gamma1         -0.62994       0.05634    -11.1809      <.0001
+Alien71        <===    SES        gamma2         -0.24086       0.05489     -4.3884      <.0001
+Alien71        <===    Alien67    beta            0.59312       0.04678     12.6788      <.0001
+
+
+                                   Variance Parameters
+ 
+Variance                                                 Standard
+Type         Variable       Parameter      Estimate         Error     t Value    Pr > |t|
+
+Error        Anomie67       theta1          3.60796       0.20092     17.9572      <.0001
+             Powerless67    theta2          3.59488       0.16448     21.8556      <.0001
+             Anomie71       theta1          3.60796       0.20092     17.9572      <.0001
+             Powerless71    theta2          3.59488       0.16448     21.8556      <.0001
+             Education      theta3          2.99366       0.49861      6.0040      <.0001
+             SEI            theta4        259.57639      18.31151     14.1756      <.0001
+             Alien67        psi1            5.67046       0.42301     13.4050      <.0001
+             Alien71        psi2            4.51479       0.33532     13.4639      <.0001
+Exogenous    SES            phi             6.61634       0.63914     10.3519      <.0001
+
+
+                                 Covariances Among Errors
+ 
+                                                           Standard
+Error of       Error of       Parameter      Estimate         Error     t Value    Pr > |t|
+
+Anomie67       Anomie71       theta5          0.90580       0.12167      7.4447      <.0001
+Powerless67    Powerless71    theta5          0.90580       0.12167      7.4447      <.0001
+
+
+           Squared Multiple Correlations
+ 
+                    Error         Total
+Variable         Variance      Variance    R-Square
+
+Anomie67          3.60796      11.90397      0.6969
+Anomie71          3.60796      12.61581      0.7140
+Education         2.99366       9.61000      0.6885
+Powerless67       3.59488       9.35139      0.6156
+Powerless71       3.59488       9.84533      0.6349
+SEI             259.57639     450.28798      0.4235
+Alien67           5.67046       8.29601      0.3165
+Alien71           4.51479       9.00786      0.4988
+
+Stability of Alienation
+Data Matrix of WHEATON, MUTHEN, ALWIN & SUMMERS (1977)
+
+The CALIS Procedure
+Covariance Structure Analysis: Maximum Likelihood Estimation
+
+                              Standardized Results for PATH List
+ 
+                                                               Standard
+-------------Path-------------    Parameter      Estimate         Error     t Value    Pr > |t|
+
+Anomie67       <===    Alien67                    0.83481       0.01093     76.3531      <.0001
+Powerless67    <===    Alien67                    0.78459       0.01163     67.4776      <.0001
+Anomie71       <===    Alien71                    0.84499       0.01031     81.9796      <.0001
+Powerless71    <===    Alien71                    0.79678       0.01107     71.9626      <.0001
+Education      <===    SES                        0.82975       0.03172     26.1599      <.0001
+SEI            <===    SES        lambda          0.65079       0.03019     21.5533      <.0001
+Alien67        <===    SES        gamma1         -0.56257       0.03456    -16.2796      <.0001
+Alien71        <===    SES        gamma2         -0.20642       0.04483     -4.6043      <.0001
+Alien71        <===    Alien67    beta            0.56920       0.04066     14.0000      <.0001
+
+
+                      Standardized Results for Variance Parameters
+ 
+Variance                                                 Standard
+Type         Variable       Parameter      Estimate         Error     t Value    Pr > |t|
+
+Error        Anomie67       theta1          0.30309       0.01825     16.6031      <.0001
+             Powerless67    theta2          0.38442       0.01825     21.0695      <.0001
+             Anomie71       theta1          0.28599       0.01742     16.4178      <.0001
+             Powerless71    theta2          0.36514       0.01764     20.6942      <.0001
+             Education      theta3          0.31152       0.05264      5.9182      <.0001
+             SEI            theta4          0.57647       0.03930     14.6680      <.0001
+             Alien67        psi1            0.68352       0.03888     17.5797      <.0001
+             Alien71        psi2            0.50121       0.03321     15.0897      <.0001
+Exogenous    SES            phi             1.00000                                      
+
+
+                     Standardized Results for Covariances Among Errors
+ 
+                                                           Standard
+Error of       Error of       Parameter      Estimate         Error     t Value    Pr > |t|
+
+Anomie67       Anomie71       theta5          0.07391       0.01013      7.2957      <.0001
+Powerless67    Powerless71    theta5          0.09440       0.01274      7.4092      <.0001

@@ -1,0 +1,47 @@
+The SAS System
+
+937        
+938        /* STAT-NPAR1WAY-011: NPAR1WAY — Official examples and feature integration regression
+939         * Source: S154 / Chapter 90 / `Examples: NPAR1WAY Procedure` (PDF pp. 7270–7279).
+940         * Discriminates: Example 90.5: Exact Savage Multisample Test
+941         */
+942        options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+942      ! validmemname=compatible locale=en_US;
+943        %let syscc=0;
+944        title; footnote;
+945        ods _all_ close;
+946        ods listing gpath="%sysfunc(pathname(work))";
+947        ods graphics off;
+948        proc datasets library=work kill nolist;
+NOTE: Deleting WORK.GOSSYPOL (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+948      !                                         quit;
+
+
+949        ods path work.templat(update) sashelp.tmplmst(read);
+950        
+951        data Mice;
+952        input Treatment $ Days @@;
+953        datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.MICE has 15 observations and 2 variables.
+
+957        ;
+958        proc npar1way savage data=Mice;
+959        class Treatment;
+960        var Days;
+961        exact savage;
+962        run;
+
+NOTE: The PROCEDURE NPAR1WAY printed page 162.
+
+963        
+964        
+965        
+966        
+The SAS System
+
+967        

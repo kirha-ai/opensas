@@ -1,0 +1,96 @@
+
+The REG Procedure
+Model: MODEL1
+Dependent Variable: x4 conversion percentage
+
+Number of Observations Read          16
+Number of Observations Used          16
+
+
+                             Analysis of Variance
+ 
+                                    Sum of           Mean
+Source                   DF        Squares         Square    F Value    Pr > F
+
+Model                     5     2110.34685      422.06937     315.86    <.0001
+Error                    10       13.36253        1.33625                     
+Corrected Total          15     2123.70937                                    
+
+
+Root MSE              1.15596    R-Square     0.9937
+Dependent Mean       36.10625    Adj R-Sq     0.9906
+Coeff Var             3.20156                       
+
+
+                                         Parameter Estimates
+ 
+                                                      Parameter       Standard
+Variable     Label                            DF       Estimate          Error    t Value    Pr > |t|
+
+Intercept    Intercept                         1      390.53822      211.52287       1.85      0.0946
+x1           reactor temperature(celsius)      1       -0.77676        0.32448      -2.39      0.0377
+x2           h2 to n-heptone ratio             1       10.17351        0.94301      10.79      <.0001
+x3           contact time(sec)                 1     -121.62608       69.01749      -1.76      0.1085
+x1x2         temperature-ratio interaction     1       -0.00805     0.00077209     -10.43      <.0001
+x1x1         squared temperature               1     0.00039831     0.00012528       3.18      0.0098
+
+Obs    _MODEL_    _TYPE_      _DEPVAR_    _RIDGE_    _PCOMIT_     _RMSE_    Intercept          x1         x2          x3        x1x2       x1x1    x4
+
+  1    MODEL1     PARMS          x4         .            .       1.15596      390.538       -0.78     10.174    -121.626      -0.008       0.00    -1
+  2    MODEL1     RIDGEVIF       x4        0.000         .        .              .        7682.37    320.022      53.525     344.545    6643.32    -1
+  3    MODEL1     RIDGE          x4        0.000         .       1.15596      390.538       -0.78     10.174    -121.626      -0.008       0.00    -1
+  4    MODEL1     RIDGEVIF       x4        0.002         .        .              .          11.18     58.731      10.744      63.208      11.22    -1
+  5    MODEL1     RIDGE          x4        0.002         .       2.69721     -103.388        0.05      4.404      -9.065      -0.003       0.00    -1
+  6    MODEL1     RIDGEVIF       x4        0.004         .        .              .           4.36     23.939       9.996      25.744       5.15    -1
+  7    MODEL1     RIDGE          x4        0.004         .       3.22340      -93.797        0.06      2.839     -21.338      -0.002       0.00    -1
+  8    MODEL1     RIDGEVIF       x4        0.006         .        .              .           2.93     13.011       9.383      13.976       3.81    -1
+  9    MODEL1     RIDGE          x4        0.006         .       3.47752      -87.687        0.06      2.110     -28.447      -0.001       0.00    -1
+ 10    MODEL1     RIDGEVIF       x4        0.008         .        .              .           2.36      8.224       8.838       8.821       3.23    -1
+ 11    MODEL1     RIDGE          x4        0.008         .       3.62677      -83.593        0.06      1.689     -33.377      -0.001       0.00    -1
+ 12    MODEL1     RIDGEVIF       x4        0.010         .        .              .           2.04      5.709       8.343       6.112       2.89    -1
+ 13    MODEL1     RIDGE          x4        0.010         .       3.72505      -80.603        0.06      1.414     -37.177      -0.001       0.00    -1
+ 14    MODEL1     RIDGEVIF       x4        0.012         .        .              .           1.84      4.226       7.891       4.514       2.65    -1
+ 15    MODEL1     RIDGE          x4        0.012         .       3.79477      -78.276        0.06      1.221     -40.297      -0.001       0.00    -1
+ 16    MODEL1     RIDGEVIF       x4        0.014         .        .              .           1.69      3.279       7.476       3.493       2.46    -1
+ 17    MODEL1     RIDGE          x4        0.014         .       3.84693      -76.381        0.06      1.078     -42.965      -0.001       0.00    -1
+ 18    MODEL1     RIDGEVIF       x4        0.016         .        .              .           1.57      2.637       7.094       2.801       2.31    -1
+ 19    MODEL1     RIDGE          x4        0.016         .       3.88750      -74.785        0.06      0.968     -45.309      -0.001       0.00    -1
+ 20    MODEL1     RIDGEVIF       x4        0.018         .        .              .           1.47      2.182       6.741       2.310       2.18    -1
+ 21    MODEL1     RIDGE          x4        0.018         .       3.92004      -73.407        0.06      0.880     -47.407      -0.000       0.00    -1
+ 22    MODEL1     RIDGEVIF       x4        0.020         .        .              .           1.39      1.847       6.415       1.949       2.06    -1
+ 23    MODEL1     RIDGE          x4        0.020         .       3.94679      -72.193        0.06      0.809     -49.310      -0.000       0.00    -1
+
+The REG Procedure
+Model: MODEL1
+Dependent Variable: x4 conversion percentage
+
+Number of Observations Read          16
+Number of Observations Used          16
+
+
+                             Analysis of Variance
+ 
+                                    Sum of           Mean
+Source                   DF        Squares         Square    F Value    Pr > F
+
+Model                     5     2110.34685      422.06937     315.86    <.0001
+Error                    10       13.36253        1.33625                     
+Corrected Total          15     2123.70937                                    
+
+
+Root MSE              1.15596    R-Square     0.9937
+Dependent Mean       36.10625    Adj R-Sq     0.9906
+Coeff Var             3.20156                       
+
+
+                                         Parameter Estimates
+ 
+                                                      Parameter       Standard
+Variable     Label                            DF       Estimate          Error    t Value    Pr > |t|
+
+Intercept    Intercept                         1      390.53822      211.52287       1.85      0.0946
+x1           reactor temperature(celsius)      1       -0.77676        0.32448      -2.39      0.0377
+x2           h2 to n-heptone ratio             1       10.17351        0.94301      10.79      <.0001
+x3           contact time(sec)                 1     -121.62608       69.01749      -1.76      0.1085
+x1x2         temperature-ratio interaction     1       -0.00805     0.00077209     -10.43      <.0001
+x1x1         squared temperature               1     0.00039831     0.00012528       3.18      0.0098

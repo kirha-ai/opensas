@@ -1,0 +1,90 @@
+The SAS System
+
+3900       
+3901       /* STAT-HPLOGISTIC-006: HPLOGISTIC — PARTITION / SELECTION / Using Validation and Test Data
+3902        * Source: S154 / Chapter 61 / `PARTITION Statement` (PDF p. 4762); S154 / Chapter 61 / `SELECTION Statement` (PDF pp. 4763–4764); S154 / Chapter
+3902     ! 61 / `Using Validation and Test Data` (PDF pp. 4768–4770).
+3903        * Discriminates: Example 61.4: Partitioning Data; explicit statements: PARTITION, SELECTION
+3904        */
+3905       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+3905     ! validmemname=compatible locale=en_US;
+3906       %let syscc=0;
+3907       title; footnote;
+3908       ods _all_ close;
+3909       ods listing gpath="%sysfunc(pathname(work))";
+3910       ods graphics off;
+3911       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.GETSTARTED (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+3911     !                                         quit;
+
+
+3912       ods path work.templat(update) sashelp.tmplmst(read);
+3913       
+3914       proc hplogistic data=Sashelp.JunkMail;
+3915       model Class(event='1')=Make Address All _3d Our Over Remove Internet Order
+3916       Mail Receive Will People Report Addresses Free Business Email You
+3917       Credit Your Font _000 Money HP HPL George _650 Lab Labs Telnet _857
+3918       Data _415 _85 Technology _1999 Parts PM Direct CS Meeting Original
+3919       Project RE Edu Table Conference Semicolon Paren Bracket Exclamation
+3920       Dollar Pound CapAvg CapLong CapTotal;
+3921       partition rolevar=Test(train='0' test='1');
+3922       selection method=forward;
+3923       run;
+
+NOTE: The HPLOGISTIC procedure is executing in single-machine mode.
+NOTE: You are modeling the probability that Class='1'.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: There were 4601 observations read from the data set SASHELP.JUNKMAIL.
+NOTE: The PROCEDURE HPLOGISTIC printed page 193.
+
+3924       proc hplogistic data=Sashelp.JunkMail;
+3925       model Class(event='1')= Our Over Remove Internet Order Will
+3926       Free Business You Your Font _000 Money HP George Parts
+3927       Meeting RE Edu Semicolon Exclamation Dollar CapAvg
+3928       CapLong;
+3929       partition fraction(test=0 validation=0);
+3930       run;
+
+NOTE: The HPLOGISTIC procedure is executing in single-machine mode.
+NOTE: You are modeling the probability that Class='1'.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: There were 4601 observations read from the data set SASHELP.JUNKMAIL.
+NOTE: The PROCEDURE HPLOGISTIC printed page 194.
+
+3931       data JunkMail;
+3932       set Sashelp.JunkMail;
+3933       Role=0;
+3934       run;
+
+NOTE: There were 4601 observations read from the data set SASHELP.JUNKMAIL.
+NOTE: The data set WORK.JUNKMAIL has 4601 observations and 60 variables.
+
+3935       proc hplogistic data=JunkMail;
+3936       model Class(event='1')= Our Over Remove Internet Order Will
+3937       Free Business You Your Font _000 Money HP George Parts
+3938       Meeting RE Edu Semicolon Exclamation Dollar CapAvg
+3939       CapLong;
+3940       partition role=Role(train='0');
+3941       run;
+
+NOTE: The HPLOGISTIC procedure is executing in single-machine mode.
+NOTE: You are modeling the probability that Class='1'.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: There were 4601 observations read from the data set WORK.JUNKMAIL.
+NOTE: The PROCEDURE HPLOGISTIC printed page 195.
+
+3942       
+3943       
+3944       
+3945       
+The SAS System
+
+3946       

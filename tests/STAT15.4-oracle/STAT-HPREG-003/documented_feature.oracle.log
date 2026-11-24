@@ -1,0 +1,71 @@
+The SAS System
+
+5533       
+5534       /* STAT-HPREG-003: HPREG — CLASS / MODEL
+5535        * Source: S154 / Chapter 67 / `CLASS Statement` (PDF p. 5030); S154 / Chapter 67 / `MODEL Statement` (PDF pp. 5031–5033).
+5536        * Discriminates: Getting Started: HPREG Procedure; explicit statements: CLASS, MODEL
+5537        */
+5538       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+5538     ! validmemname=compatible locale=en_US;
+5539       %let syscc=0;
+5540       title; footnote;
+5541       ods _all_ close;
+5542       ods listing gpath="%sysfunc(pathname(work))";
+5543       ods graphics off;
+5544       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.BASEBALLOUT (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+5544     !                                         quit;
+
+
+5545       ods path work.templat(update) sashelp.tmplmst(read);
+5546       
+5547       proc contents varnum data=sashelp.baseball;
+5548       ods select position;
+5549       run;
+
+NOTE: The PROCEDURE CONTENTS printed page 244.
+
+5550       proc hpreg data=sashelp.baseball;
+5551       class league division;
+5552       model logSalary = nAtBat nHits nHome nRuns nRBI nBB
+5553       yrMajor crAtBat crHits crHome crRuns crRbi
+5554       crBB league division nOuts nAssts nError;
+5555       selection method=stepwise;
+5556       run;
+
+NOTE: The HPREG procedure is executing in single-machine mode.
+NOTE: There were 322 observations read from the data set SASHELP.BASEBALL.
+NOTE: The PROCEDURE HPREG printed pages 245-247.
+
+5557       proc hpreg data=sashelp.baseball;
+5558       id name;
+5559       class league division;
+5560       model logSalary = nAtBat nHits nHome nRuns nRBI nBB
+5561       yrMajor crAtBat crHits crHome crRuns crRbi
+5562       crBB league division nOuts nAssts nError / vif clb;
+5563       selection method=stepwise;
+5564       output out=baseballOut p=predictedLogSalary r h cookd rstudent;
+5565       run;
+
+NOTE: The HPREG procedure is executing in single-machine mode.
+NOTE: There were 322 observations read from the data set SASHELP.BASEBALL.
+NOTE: The data set WORK.BASEBALLOUT has 322 observations and 6 variables.
+NOTE: The PROCEDURE HPREG printed pages 248-250.
+
+5566       proc print data=baseballOut(obs=5);
+5567       run;
+
+NOTE: There were 5 observations read from the data set WORK.BASEBALLOUT.
+NOTE: The PROCEDURE PRINT printed page 251.
+
+5568       
+5569       
+5570       
+5571       
+The SAS System
+
+5572       

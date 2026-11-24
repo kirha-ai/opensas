@@ -1,0 +1,65 @@
+The SAS System
+
+15894      
+15895      /* STAT-SEQDESIGN-006: SEQDESIGN — Unified Family Methods / Haybittle-Peto Method / Whitehead Methods
+15896       * Source: S154 / Chapter 110 / `Unified Family Methods` (PDF pp. 8980–8985); S154 / Chapter 110 / `Haybittle-Peto Method` (PDF p. 8985); S154 /
+15896    ! Chapter 110 / `Whitehead Methods` (PDF pp. 8985–8989).
+15897       * Discriminates: Example 110.5: Creating Designs Using Haybittle-Peto Methods
+15898       */
+15899      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+15899    ! validmemname=compatible locale=en_US;
+15900      %let syscc=0;
+15901      title; footnote;
+15902      ods _all_ close;
+15903      ods listing gpath="%sysfunc(pathname(work))";
+15904      ods graphics off;
+15905      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+15905    !                                         quit;
+
+
+15906      ods path work.templat(update) sashelp.tmplmst(read);
+15907      
+15908      ods graphics on;
+15909      proc seqdesign altref=0.25
+15910      errspend
+15911      stopprob
+15912      plots=errspend
+15913      ;
+15914      OneSidedPeto: design nstages=3
+15915      method=peto( z=3)
+15916      alt=upper stop=reject
+15917      alpha=0.05 beta=0.10;
+15918      run;
+
+NOTE: The PROCEDURE SEQDESIGN printed page 1147.
+
+15919      ods graphics on;
+15920      proc seqdesign altref=0.25
+15921      maxinfo=200
+15922      errspend
+15923      stopprob
+15924      plots=errspend
+15925      ;
+15926      OneSidedPeto: design nstages=3
+15927      method=peto(z=3 2.5 2)
+15928      alt=upper stop=reject
+15929      boundarykey=none
+15930      ;
+15931      run;
+
+NOTE: The PROCEDURE SEQDESIGN printed page 1148.
+
+15932      
+15933      
+15934      
+15935      
+The SAS System
+
+15936      

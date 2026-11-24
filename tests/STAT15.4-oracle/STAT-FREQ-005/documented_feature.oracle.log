@@ -1,0 +1,72 @@
+The SAS System
+
+17905      
+17906      /* STAT-FREQ-005: FREQ — Chi-Square Tests and Statistics
+17907       * Source: S154 / Chapter 47 / `Chi-Square Tests and Statistics` (PDF pp. 3165–3170).
+17908       * Discriminates: Example 47.3: Chi-Square Goodness-of-Fit Tests
+17909       */
+17910      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+17910    ! validmemname=compatible locale=en_US;
+17911      %let syscc=0;
+17912      title; footnote;
+17913      ods _all_ close;
+17914      ods listing gpath="%sysfunc(pathname(work))";
+17915      ods graphics off;
+
+
+17916      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.FATCOMP (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+17916    !                                         quit;
+
+
+17917      ods path work.templat(update) sashelp.tmplmst(read);
+17918      
+17919      data Color;
+17920      input Region Eyes $ Hair $ Count @@;
+17921      label Eyes ='Eye Color'
+17922      Hair ='Hair Color'
+17923      Region='Geographic Region';
+17924      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.COLOR has 27 observations and 4 variables.
+
+17934      ;
+17935      run;
+17936      proc sort data=Color;
+17937      by Region;
+17938      run;
+
+NOTE: There were 27 observations read from the data set WORK.COLOR.
+NOTE: The data set WORK.COLOR has 27 observations and 4 variables.
+
+17939      ods graphics on;
+17940      proc freq data=Color order=data;
+17941      tables Hair / nocum chisq testp=(30 12 30 25 3)
+17942      plots(only)=deviationplot(type=dotplot);
+17943      weight Count;
+17944      by Region;
+17945      title 'Hair Color of European Children';
+17946      run;
+
+NOTE: There were 27 observations read from the data set WORK.COLOR.
+NOTE: The PROCEDURE FREQ printed pages 2256-2257.
+
+17947      ods graphics off;
+17948      run;
+17949      quit;
+17950      
+17951      
+17952      
+17953      
+The SAS System
+
+17954      

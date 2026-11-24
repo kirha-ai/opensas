@@ -1,0 +1,66 @@
+The SAS System
+
+14173      
+14174      /* STAT-ROBUSTREG-005: ROBUSTREG — Robust Distance / Implementation of the WEIGHT / INEST= Data Set
+14175       * Source: S154 / Chapter 107 / `Robust Distance` (PDF pp. 8815–8821); S154 / Chapter 107 / `Implementation of the WEIGHT Statement` (PDF pp.
+14175    ! 8822–8823); S154 / Chapter 107 / `INEST= Data Set` (PDF pp. 8823–8824).
+14176       * Discriminates: Example 107.2: Robust ANOVA
+14177       */
+14178      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+14178    ! validmemname=compatible locale=en_US;
+14179      %let syscc=0;
+14180      title; footnote;
+14181      ods _all_ close;
+14182      ods listing gpath="%sysfunc(pathname(work))";
+14183      ods graphics off;
+14184      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.HBK (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.STACK (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+14184    !                                         quit;
+
+
+14185      ods path work.templat(update) sashelp.tmplmst(read);
+14186      
+14187      data recover;
+14188      input T1 $ T2 $ time @@;
+14189      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.RECOVER has 16 observations and 3 variables.
+
+14194      ;
+14195      proc glm data=recover;
+14196      class T1 T2;
+14197      model time = T1 T2 T1*T2;
+14198      run;
+
+
+NOTE: The PROCEDURE GLM printed pages 1067-1068.
+
+14199      proc robustreg data=recover;
+14200      class T1 T2;
+14201      model time = T1 T2 T1*T2 / diagnostics;
+14202      T1_T2: test T1*T2;
+14203      output out=robout r=resid sr=stdres;
+14204      run;
+
+NOTE: Algorithm converged for the M estimates.
+NOTE: Algorithm converged for the location-scale M estimates.
+NOTE: Test T1_T2: Algorithm converged for the M estimates in the reduced model.
+NOTE: The data set WORK.ROBOUT has 16 observations and 5 variables.
+NOTE: The PROCEDURE ROBUSTREG printed page 1069.
+
+14205      
+14206      
+14207      
+14208      
+The SAS System
+
+14209      

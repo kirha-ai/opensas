@@ -1,0 +1,86 @@
+The SAS System
+
+18873      
+18874      /* STAT-FREQ-020: FREQ — In-Database Computation / Computational Resources
+18875       * Source: S154 / Chapter 47 / `In-Database Computation` (PDF pp. 3162–3163); S154 / Chapter 47 / `Computational Resources` (PDF pp. 3238–3239).
+18876       * Discriminates: Getting Started: FREQ Procedure
+18877       */
+18878      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+18878    ! validmemname=compatible locale=en_US;
+18879      %let syscc=0;
+18880      title; footnote;
+18881      ods _all_ close;
+18882      ods listing gpath="%sysfunc(pathname(work))";
+18883      ods graphics off;
+18884      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.SKINCONDITION (memtype=DATA).
+NOTE: Deleting WORK.SUMMERSCHOOL (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+18884    !                                         quit;
+
+
+18885      ods path work.templat(update) sashelp.tmplmst(read);
+18886      
+18887      data SummerSchool;
+18888      input Gender $ Internship $ Enrollment $ Count @@;
+18889      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.SUMMERSCHOOL has 8 observations and 4 variables.
+
+18894      ;
+18895      proc freq data=SummerSchool order=data;
+18896      tables Internship*Enrollment / chisq;
+18897      weight Count;
+18898      run;
+
+NOTE: There were 8 observations read from the data set WORK.SUMMERSCHOOL.
+NOTE: The PROCEDURE FREQ printed page 2306.
+
+18899      ods graphics on;
+18900      proc freq data=SummerSchool;
+18901      tables Gender*Internship*Enrollment /
+18902      chisq cmh plots(only)=freqplot(twoway=cluster);
+18903      weight Count;
+18904      run;
+
+NOTE: There were 8 observations read from the data set WORK.SUMMERSCHOOL.
+NOTE: The PROCEDURE FREQ printed pages 2307-2308.
+
+18905      ods graphics off;
+18906      data SkinCondition;
+18907      input Derm1 $ Derm2 $ Count;
+18908      datalines;
+
+NOTE: The data set WORK.SKINCONDITION has 16 observations and 3 variables.
+
+18925      ;
+18926      ods graphics on;
+18927      proc freq data=SkinCondition order=data;
+18928      tables Derm1*Derm2 /
+18929      agree noprint plots=agreeplot;
+18930      test kappa;
+18931      weight Count;
+18932      run;
+
+NOTE: There were 16 observations read from the data set WORK.SKINCONDITION.
+NOTE: The PROCEDURE FREQ printed page 2309.
+
+18933      ods graphics off;
+18934      run;
+18935      quit;
+18936      
+18937      
+18938      
+18939      
+The SAS System
+
+18940      

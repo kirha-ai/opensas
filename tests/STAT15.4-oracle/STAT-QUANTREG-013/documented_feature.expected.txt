@@ -1,0 +1,729 @@
+
+The CONTENTS Procedure
+
+                   Variables in Creation Order
+ 
+ #    Variable      Type    Len    Label
+
+ 1    Weight        Num       8    Infant Birth Weight           
+ 2    Black         Num       8    Black Mother                  
+ 3    Married       Num       8    Married Mother                
+ 4    Boy           Num       8    Baby Boy                      
+ 5    MomAge        Num       8    Mother's Age                  
+ 6    MomSmoke      Num       8    Smoking Mother                
+ 7    CigsPerDay    Num       8    Cigarettes Per Day            
+ 8    MomWtGain     Num       8    Mother's Pregnancy Weight Gain
+ 9    Visit         Num       8    Prenatal Visit                
+10    MomEdLevel    Num       8    Mother's Education Level      
+
+The QUANTREG Procedure
+
+                                    Model Information
+
+Data Set                                      SASHELP.BWEIGHT    Infant Birth Weight      
+Dependent Variable                                     Weight    Infant Birth Weight      
+Number of Independent Variables                             9                             
+Number of Continuous Independent Variables                  7                             
+Number of Class Independent Variables                       2                             
+Number of Observations                                  50000                             
+Optimization Algorithm                               Interior                             
+Method for Confidence Limits                         Sparsity                             
+
+
+Number of Observations Read       50000
+Number of Observations Used       50000
+
+
+                              Class Level Information
+ 
+Name            Levels    Values
+
+Visit                4    No Visit Second Trimester Last Trimester First Trimester 
+MomEdLevel           4    High School Some College College Less Than High School   
+
+
+                                       Parameter Information
+ 
+Parameter                          Effect                 Visit               MomEdLevel
+
+Intercept                          Intercept                                                       
+Black                              Black                                                           
+Married                            Married                                                         
+Boy                                Boy                                                             
+VisitNo_Visit                      Visit                  No Visit                                 
+VisitSecond_Trimester              Visit                  Second Trimester                         
+VisitLast_Trimester                Visit                  Last Trimester                           
+VisitFirst_Trimester               Visit                  First Trimester                          
+MomEdLevelHigh_School              MomEdLevel                                 High School          
+MomEdLevelSome_College             MomEdLevel                                 Some College         
+MomEdLevelCollege                  MomEdLevel                                 College              
+MomEdLevelLess_Than_High_School    MomEdLevel                                 Less Than High School
+MomSmoke                           MomSmoke                                                        
+CigsPerDay                         CigsPerDay                                                      
+MomAge                             MomAge                                                          
+MomAgeMomAge                       MomAge*MomAge                                                   
+MomWtGain                          MomWtGain                                                       
+MomWtGainMomWtGain                 MomWtGain*MomWtGain                                             
+
+
+                                     Summary Statistics
+ 
+                                                                        Standard
+Variable                     Q1      Median          Q3        Mean    Deviation         MAD
+
+Black                         0           0           0      0.1628       0.3692           0
+Married                       0      1.0000      1.0000      0.7126       0.4525           0
+Boy                           0      1.0000      1.0000      0.5158       0.4998           0
+MomSmoke                      0           0           0      0.1307       0.3370           0
+CigsPerDay                    0           0           0      1.4766       4.6541           0
+MomAge                  -4.0000           0      5.0000      0.4161       5.7285      5.9304
+MomAge*MomAge            4.0000     16.0000     49.0000     32.9877      39.2861     22.2390
+MomWtGain               -8.0000           0      9.0000      0.7092      12.8761     11.8608
+MomWtGain*MomWtGain     16.0000     64.0000       196.0       166.3        298.8     88.9561
+Weight                   3062.0      3402.0      3720.0      3370.8        566.4       504.1
+
+The QUANTREG Procedure
+Quantile Level = 0.05
+
+ Quantile Level and Objective Function
+
+Quantile Level                     0.05
+Objective Function         3295452.0138
+Predicted Value at Mean       2431.8588
+
+
+                                        Parameter Estimates
+ 
+                                                      Standard    95% Confidence
+Parameter                                 DF Estimate    Error        Limits       t Value Pr > |t|
+
+Intercept                                  1 2478.497  25.0082 2429.4809 2527.5137   99.11   <.0001
+Black                                      1 -280.170  18.7496 -316.9194 -243.4205  -14.94   <.0001
+Married                                    1 110.2018  17.1018   76.6821  143.7215    6.44   <.0001
+Boy                                        1  39.6281  12.7584   14.6216   64.6346    3.11   0.0019
+Visit               No Visit               1 -383.480  71.7628 -524.1361 -242.8241   -5.34   <.0001
+Visit               Second Trimester       1  41.4674  19.8710    2.5199   80.4148    2.09   0.0369
+Visit               Last Trimester         1 136.1833  43.8071   50.3208  222.0457    3.11   0.0019
+Visit               First Trimester        0   0.0000   0.0000    0.0000    0.0000     .      .    
+MomEdLevel          High School            1  20.3352  19.8397  -18.5509   59.2213    1.02   0.3054
+MomEdLevel          Some College           1  38.0410  22.0847   -5.2452   81.3272    1.72   0.0850
+MomEdLevel          College                1 104.8922  23.7703   58.3021  151.4824    4.41   <.0001
+MomEdLevel          Less Than High School  0   0.0000   0.0000    0.0000    0.0000     .      .    
+MomSmoke                                   1 -155.015  33.2834 -220.2510  -89.7792   -4.66   <.0001
+CigsPerDay                                 1  -6.2174   2.3901  -10.9021   -1.5327   -2.60   0.0093
+MomAge                                     1   0.3796   1.4083   -2.3806    3.1398    0.27   0.7875
+MomAge*MomAge                              1  -0.7312   0.1806   -1.0852   -0.3772   -4.05   <.0001
+MomWtGain                                  1  19.8980   0.5277   18.8636   20.9324   37.70   <.0001
+MomWtGain*MomWtGain                        1  -0.3650   0.0227   -0.4095   -0.3206  -16.09   <.0001
+
+The QUANTREG Procedure
+Quantile Level = 0.1
+
+ Quantile Level and Objective Function
+
+Quantile Level                      0.1
+Objective Function         5136682.4094
+Predicted Value at Mean       2716.5110
+
+
+                                        Parameter Estimates
+ 
+                                                      Standard    95% Confidence
+Parameter                                 DF Estimate    Error        Limits       t Value Pr > |t|
+
+Intercept                                  1 2728.421  17.9998 2693.1413 2763.7009  151.58   <.0001
+Black                                      1 -233.903  13.4952 -260.3541 -207.4528  -17.33   <.0001
+Married                                    1  73.0136  12.3091   48.8876   97.1396    5.93   <.0001
+Boy                                        1  70.2472   9.1829   52.2486   88.2458    7.65   <.0001
+Visit               No Visit               1 -308.978  51.6517 -410.2155 -207.7396   -5.98   <.0001
+Visit               Second Trimester       1  15.9398  14.3023  -12.0929   43.9724    1.11   0.2651
+Visit               Last Trimester         1  67.9957  31.5304    6.1957  129.7957    2.16   0.0310
+Visit               First Trimester        0   0.0000   0.0000    0.0000    0.0000     .      .    
+MomEdLevel          High School            1  20.1138  14.2798   -7.8747   48.1023    1.41   0.1590
+MomEdLevel          Some College           1  35.6468  15.8956    4.4913   66.8023    2.24   0.0249
+MomEdLevel          College                1  72.8340  17.1088   39.3005  106.3675    4.26   <.0001
+MomEdLevel          Less Than High School  0   0.0000   0.0000    0.0000    0.0000     .      .    
+MomSmoke                                   1 -133.753  23.9559 -180.7065  -86.7986   -5.58   <.0001
+CigsPerDay                                 1  -7.5956   1.7203  -10.9674   -4.2237   -4.42   <.0001
+MomAge                                     1   2.9801   1.0136    0.9934    4.9668    2.94   0.0033
+MomAge*MomAge                              1  -0.6092   0.1300   -0.8640   -0.3544   -4.69   <.0001
+MomWtGain                                  1  12.2134   0.3798   11.4689   12.9579   32.15   <.0001
+MomWtGain*MomWtGain                        1  -0.1395   0.0163   -0.1715   -0.1075   -8.54   <.0001
+
+The QUANTREG Procedure
+Quantile Level = 0.15
+
+ Quantile Level and Objective Function
+
+Quantile Level                     0.15
+Objective Function         6485813.9498
+Predicted Value at Mean       2863.0724
+
+
+                                        Parameter Estimates
+ 
+                                                      Standard    95% Confidence
+Parameter                                 DF Estimate    Error        Limits       t Value Pr > |t|
+
+Intercept                                  1 2859.081  13.9206 2831.7964 2886.3654  205.39   <.0001
+Black                                      1 -210.040  10.4368 -230.4963 -189.5838  -20.12   <.0001
+Married                                    1  64.6513   9.5195   45.9929   83.3097    6.79   <.0001
+Boy                                        1  83.3416   7.1018   69.4219   97.2612   11.74   <.0001
+Visit               No Visit               1 -232.532  39.9461 -310.8267 -154.2371   -5.82   <.0001
+Visit               Second Trimester       1   1.8524  11.0610  -19.8273   23.5322    0.17   0.8670
+Visit               Last Trimester         1  29.7862  24.3848  -18.0083   77.5807    1.22   0.2219
+Visit               First Trimester        0   0.0000   0.0000    0.0000    0.0000     .      .    
+MomEdLevel          High School            1  22.6483  11.0436    1.0027   44.2938    2.05   0.0403
+MomEdLevel          Some College           1  46.5201  12.2932   22.4252   70.6149    3.78   0.0002
+MomEdLevel          College                1  60.0573  13.2315   34.1234   85.9913    4.54   <.0001
+MomEdLevel          Less Than High School  0   0.0000   0.0000    0.0000    0.0000     .      .    
+MomSmoke                                   1 -163.002  18.5269 -199.3151 -126.6892   -8.80   <.0001
+CigsPerDay                                 1  -5.2139   1.3304   -7.8216   -2.6062   -3.92   <.0001
+MomAge                                     1   3.5183   0.7839    1.9819    5.0548    4.49   <.0001
+MomAge*MomAge                              1  -0.5112   0.1005   -0.7082   -0.3141   -5.08   <.0001
+MomWtGain                                  1   9.7021   0.2938    9.1263   10.2779   33.03   <.0001
+MomWtGain*MomWtGain                        1  -0.0803   0.0126   -0.1051   -0.0555   -6.36   <.0001
+
+The QUANTREG Procedure
+Quantile Level = 0.2
+
+ Quantile Level and Objective Function
+
+Quantile Level                      0.2
+Objective Function         7539270.6264
+Predicted Value at Mean       2972.0605
+
+
+                                        Parameter Estimates
+ 
+                                                      Standard    95% Confidence
+Parameter                                 DF Estimate    Error        Limits       t Value Pr > |t|
+
+Intercept                                  1 2964.936  12.5317 2940.3741 2989.4986  236.60   <.0001
+Black                                      1 -199.422   9.3955 -217.8370 -181.0065  -21.23   <.0001
+Married                                    1  53.6890   8.5698   36.8922   70.4858    6.26   <.0001
+Boy                                        1  93.0916   6.3933   80.5608  105.6225   14.56   <.0001
+Visit               No Visit               1 -184.747  35.9606 -255.2300 -114.2637   -5.14   <.0001
+Visit               Second Trimester       1   4.2968   9.9574  -15.2198   23.8135    0.43   0.6661
+Visit               Last Trimester         1  20.3263  21.9519  -22.6996   63.3522    0.93   0.3545
+Visit               First Trimester        0   0.0000   0.0000    0.0000    0.0000     .      .    
+MomEdLevel          High School            1  19.6289   9.9417    0.1429   39.1148    1.97   0.0483
+MomEdLevel          Some College           1  30.3680  11.0667    8.6771   52.0588    2.74   0.0061
+MomEdLevel          College                1  54.9363  11.9114   31.5899   78.2828    4.61   <.0001
+MomEdLevel          Less Than High School  0   0.0000   0.0000    0.0000    0.0000     .      .    
+MomSmoke                                   1 -160.952  16.6784 -193.6422 -128.2624   -9.65   <.0001
+CigsPerDay                                 1  -4.0222   1.1977   -6.3697   -1.6747   -3.36   0.0008
+MomAge                                     1   4.5652   0.7057    3.1821    5.9484    6.47   <.0001
+MomAge*MomAge                              1  -0.5409   0.0905   -0.7183   -0.3635   -5.98   <.0001
+MomWtGain                                  1   8.9011   0.2644    8.3828    9.4194   33.66   <.0001
+MomWtGain*MomWtGain                        1  -0.0606   0.0114   -0.0829   -0.0383   -5.33   <.0001
+
+The QUANTREG Procedure
+Quantile Level = 0.25
+
+ Quantile Level and Objective Function
+
+Quantile Level                     0.25
+Objective Function         8361944.5238
+Predicted Value at Mean       3058.4128
+
+
+                                        Parameter Estimates
+ 
+                                                      Standard    95% Confidence
+Parameter                                 DF Estimate    Error        Limits       t Value Pr > |t|
+
+Intercept                                  1 3045.180  11.1097 3023.4044 3066.9548  274.10   <.0001
+Black                                      1 -194.638   8.3294 -210.9641 -178.3127  -23.37   <.0001
+Married                                    1  46.2533   7.5974   31.3624   61.1442    6.09   <.0001
+Boy                                        1  97.3341   5.6678   86.2251  108.4431   17.17   <.0001
+Visit               No Visit               1 -169.683  31.8802 -232.1686 -107.1976   -5.32   <.0001
+Visit               Second Trimester       1   0.1005   8.8276  -17.2017   17.4026    0.01   0.9909
+Visit               Last Trimester         1  -8.2506  19.4610  -46.3944   29.8932   -0.42   0.6716
+Visit               First Trimester        0   0.0000   0.0000    0.0000    0.0000     .      .    
+MomEdLevel          High School            1  13.1478   8.8137   -4.1271   30.4227    1.49   0.1358
+MomEdLevel          Some College           1  30.7926   9.8110   11.5630   50.0222    3.14   0.0017
+MomEdLevel          College                1  50.9222  10.5598   30.2248   71.6196    4.82   <.0001
+MomEdLevel          Less Than High School  0   0.0000   0.0000    0.0000    0.0000     .      .    
+MomSmoke                                   1 -166.153  14.7859 -195.1340 -137.1728  -11.24   <.0001
+CigsPerDay                                 1  -3.3319   1.0618   -5.4131   -1.2508   -3.14   0.0017
+MomAge                                     1   5.4012   0.6256    4.1749    6.6274    8.63   <.0001
+MomAge*MomAge                              1  -0.4334   0.0802   -0.5907   -0.2761   -5.40   <.0001
+MomWtGain                                  1   8.4701   0.2344    8.0106    8.9296   36.13   <.0001
+MomWtGain*MomWtGain                        1  -0.0335   0.0101   -0.0533   -0.0137   -3.32   0.0009
+
+The QUANTREG Procedure
+Quantile Level = 0.3
+
+ Quantile Level and Objective Function
+
+Quantile Level                      0.3
+Objective Function         8992989.1638
+Predicted Value at Mean       3127.4102
+
+
+                                        Parameter Estimates
+ 
+                                                      Standard    95% Confidence
+Parameter                                 DF Estimate    Error        Limits       t Value Pr > |t|
+
+Intercept                                  1 3101.107  10.7683 3080.0012 3122.2133  287.98   <.0001
+Black                                      1 -184.600   8.0734 -200.4239 -168.7759  -22.87   <.0001
+Married                                    1  52.1619   7.3639   37.7286   66.5952    7.08   <.0001
+Boy                                        1 104.9672   5.4936   94.1996  115.7348   19.11   <.0001
+Visit               No Visit               1 -158.545  30.9005 -219.1106  -97.9799   -5.13   <.0001
+Visit               Second Trimester       1  -2.0093   8.5563  -18.7798   14.7611   -0.23   0.8143
+Visit               Last Trimester         1  12.1953  18.8630  -24.7763   49.1670    0.65   0.5179
+Visit               First Trimester        0   0.0000   0.0000    0.0000    0.0000     .      .    
+MomEdLevel          High School            1  16.0201   8.5428   -0.7239   32.7642    1.88   0.0608
+MomEdLevel          Some College           1  35.5711   9.5095   16.9324   54.2098    3.74   0.0002
+MomEdLevel          College                1  53.3013  10.2353   33.2400   73.3627    5.21   <.0001
+MomEdLevel          Less Than High School  0   0.0000   0.0000    0.0000    0.0000     .      .    
+MomSmoke                                   1 -161.289  14.3316 -189.3793 -133.1991  -11.25   <.0001
+CigsPerDay                                 1  -3.6508   1.0292   -5.6680   -1.6336   -3.55   0.0004
+MomAge                                     1   5.2185   0.6064    4.0300    6.4071    8.61   <.0001
+MomAge*MomAge                              1  -0.4104   0.0778   -0.5628   -0.2579   -5.28   <.0001
+MomWtGain                                  1   8.0920   0.2272    7.6466    8.5374   35.61   <.0001
+MomWtGain*MomWtGain                        1  -0.0172   0.0098   -0.0364    0.0019   -1.76   0.0780
+
+The QUANTREG Procedure
+Quantile Level = 0.35
+
+ Quantile Level and Objective Function
+
+Quantile Level                     0.35
+Objective Function         9454543.8945
+Predicted Value at Mean       3194.0898
+
+
+                                        Parameter Estimates
+ 
+                                                      Standard    95% Confidence
+Parameter                                 DF Estimate    Error        Limits       t Value Pr > |t|
+
+Intercept                                  1 3160.959  10.2774 3140.8154 3181.1031  307.56   <.0001
+Black                                      1 -183.574   7.7054 -198.6762 -168.4710  -23.82   <.0001
+Married                                    1  54.6917   7.0282   40.9164   68.4670    7.78   <.0001
+Boy                                        1 107.8681   5.2432   97.5914  118.1448   20.57   <.0001
+Visit               No Visit               1 -161.117  29.4918 -218.9207 -103.3123   -5.46   <.0001
+Visit               Second Trimester       1   0.7326   8.1662  -15.2733   16.7385    0.09   0.9285
+Visit               Last Trimester         1   1.1500  18.0030  -34.1361   36.4361    0.06   0.9491
+Visit               First Trimester        0   0.0000   0.0000    0.0000    0.0000     .      .    
+MomEdLevel          High School            1  12.5974   8.1534   -3.3832   28.5781    1.55   0.1223
+MomEdLevel          Some College           1  34.8861   9.0759   17.0971   52.6750    3.84   0.0001
+MomEdLevel          College                1  49.0475   9.7687   29.9008   68.1943    5.02   <.0001
+MomEdLevel          Less Than High School  0   0.0000   0.0000    0.0000    0.0000     .      .    
+MomSmoke                                   1 -160.287  13.6782 -187.0968 -133.4779  -11.72   <.0001
+CigsPerDay                                 1  -3.6647   0.9823   -5.5899   -1.7395   -3.73   0.0002
+MomAge                                     1   5.5781   0.5787    4.4438    6.7125    9.64   <.0001
+MomAge*MomAge                              1  -0.3831   0.0742   -0.5286   -0.2376   -5.16   <.0001
+MomWtGain                                  1   7.7042   0.2169    7.2791    8.1293   35.52   <.0001
+MomWtGain*MomWtGain                        1  -0.0023   0.0093   -0.0206    0.0160   -0.25   0.8030
+
+The QUANTREG Procedure
+Quantile Level = 0.4
+
+ Quantile Level and Objective Function
+
+Quantile Level                      0.4
+Objective Function         9760319.3323
+Predicted Value at Mean       3261.0410
+
+
+                                        Parameter Estimates
+ 
+                                                      Standard    95% Confidence
+Parameter                                 DF Estimate    Error        Limits       t Value Pr > |t|
+
+Intercept                                  1 3226.167  10.1618 3206.2497 3246.0844  317.48   <.0001
+Black                                      1 -182.105   7.6187 -197.0374 -167.1718  -23.90   <.0001
+Married                                    1  55.0021   6.9491   41.3817   68.6225    7.91   <.0001
+Boy                                        1 109.6165   5.1842   99.4553  119.7776   21.14   <.0001
+Visit               No Visit               1 -147.863  29.1601 -205.0168  -90.7084   -5.07   <.0001
+Visit               Second Trimester       1  -1.6925   8.0744  -17.5184   14.1334   -0.21   0.8340
+Visit               Last Trimester         1  -6.4751  17.8006  -41.3644   28.4143   -0.36   0.7160
+Visit               First Trimester        0   0.0000   0.0000    0.0000    0.0000     .      .    
+MomEdLevel          High School            1  10.2678   8.0617   -5.5332   26.0688    1.27   0.2028
+MomEdLevel          Some College           1  27.3962   8.9739    9.8073   44.9852    3.05   0.0023
+MomEdLevel          College                1  37.1575   9.6588   18.2260   56.0889    3.85   0.0001
+MomEdLevel          Less Than High School  0   0.0000   0.0000    0.0000    0.0000     .      .    
+MomSmoke                                   1 -162.051  13.5244 -188.5591 -135.5431  -11.98   <.0001
+CigsPerDay                                 1  -3.8228   0.9712   -5.7264   -1.9192   -3.94   <.0001
+MomAge                                     1   6.5393   0.5722    5.4177    7.6609   11.43   <.0001
+MomAge*MomAge                              1  -0.3983   0.0734   -0.5421   -0.2545   -5.43   <.0001
+MomWtGain                                  1   7.6221   0.2144    7.2018    8.0424   35.54   <.0001
+MomWtGain*MomWtGain                        1   0.0037   0.0092   -0.0144    0.0218    0.40   0.6868
+
+The QUANTREG Procedure
+Quantile Level = 0.45
+
+ Quantile Level and Objective Function
+
+Quantile Level                     0.45
+Objective Function         9916581.3039
+Predicted Value at Mean       3321.5957
+
+
+                                        Parameter Estimates
+ 
+                                                      Standard    95% Confidence
+Parameter                                 DF Estimate    Error        Limits       t Value Pr > |t|
+
+Intercept                                  1 3278.506   9.8488 3259.2026 3297.8101  332.88   <.0001
+Black                                      1 -174.596   7.3840 -189.0691 -160.1236  -23.65   <.0001
+Married                                    1  56.4737   6.7351   43.2729   69.6745    8.39   <.0001
+Boy                                        1 116.6831   5.0245  106.8349  126.5312   23.22   <.0001
+Visit               No Visit               1 -125.782  28.2618 -181.1754  -70.3883   -4.45   <.0001
+Visit               Second Trimester       1  -4.6747   7.8257  -20.0130   10.6637   -0.60   0.5503
+Visit               Last Trimester         1   0.9737  17.2522  -32.8409   34.7883    0.06   0.9550
+Visit               First Trimester        0   0.0000   0.0000    0.0000    0.0000     .      .    
+MomEdLevel          High School            1   8.3707   7.8133   -6.9436   23.6849    1.07   0.2840
+MomEdLevel          Some College           1  23.7248   8.6974    6.6777   40.7719    2.73   0.0064
+MomEdLevel          College                1  30.8428   9.3613   12.4946   49.1911    3.29   0.0010
+MomEdLevel          Less Than High School  0   0.0000   0.0000    0.0000    0.0000     .      .    
+MomSmoke                                   1 -162.100  13.1078 -187.7916 -136.4089  -12.37   <.0001
+CigsPerDay                                 1  -3.6419   0.9413   -5.4868   -1.7969   -3.87   0.0001
+MomAge                                     1   7.2830   0.5546    6.1960    8.3700   13.13   <.0001
+MomAge*MomAge                              1  -0.4034   0.0711   -0.5428   -0.2639   -5.67   <.0001
+MomWtGain                                  1   7.3218   0.2078    6.9144    7.7291   35.23   <.0001
+MomWtGain*MomWtGain                        1   0.0164   0.0089   -0.0011    0.0339    1.83   0.0665
+
+The QUANTREG Procedure
+Quantile Level = 0.5
+
+ Quantile Level and Objective Function
+
+Quantile Level                      0.5
+Objective Function         9930479.5196
+Predicted Value at Mean       3372.2279
+
+
+                                        Parameter Estimates
+ 
+                                                      Standard    95% Confidence
+Parameter                                 DF Estimate    Error        Limits       t Value Pr > |t|
+
+Intercept                                  1 3325.281   9.5378 3306.5868 3343.9752  348.64   <.0001
+Black                                      1 -175.020   7.1508 -189.0361 -161.0046  -24.48   <.0001
+Married                                    1  54.9446   6.5224   42.1606   67.7285    8.42   <.0001
+Boy                                        1 121.6381   4.8659  112.1010  131.1752   25.00   <.0001
+Visit               No Visit               1 -107.942  27.3694 -161.5861  -54.2976   -3.94   <.0001
+Visit               Second Trimester       1  -2.6388   7.5785  -17.4929   12.2152   -0.35   0.7277
+Visit               Last Trimester         1  -4.5973  16.7074  -37.3440   28.1495   -0.28   0.7832
+Visit               First Trimester        0   0.0000   0.0000    0.0000    0.0000     .      .    
+MomEdLevel          High School            1  15.9590   7.5666    1.1284   30.7896    2.11   0.0349
+MomEdLevel          Some College           1  29.4554   8.4228   12.9467   45.9642    3.50   0.0005
+MomEdLevel          College                1  37.8687   9.0657   20.0999   55.6375    4.18   <.0001
+MomEdLevel          Less Than High School  0   0.0000   0.0000    0.0000    0.0000     .      .    
+MomSmoke                                   1 -158.113  12.6938 -182.9935 -133.2334  -12.46   <.0001
+CigsPerDay                                 1  -3.7037   0.9116   -5.4904   -1.9171   -4.06   <.0001
+MomAge                                     1   7.0968   0.5371    6.0441    8.1495   13.21   <.0001
+MomAge*MomAge                              1  -0.3587   0.0689   -0.4938   -0.2237   -5.21   <.0001
+MomWtGain                                  1   7.0397   0.2013    6.6452    7.4342   34.98   <.0001
+MomWtGain*MomWtGain                        1   0.0214   0.0087    0.0045    0.0384    2.48   0.0133
+
+The QUANTREG Procedure
+Quantile Level = 0.55
+
+ Quantile Level and Objective Function
+
+Quantile Level                     0.55
+Objective Function         9805716.4573
+Predicted Value at Mean       3425.6321
+
+
+                                        Parameter Estimates
+ 
+                                                      Standard    95% Confidence
+Parameter                                 DF Estimate    Error        Limits       t Value Pr > |t|
+
+Intercept                                  1 3376.891  10.3157 3356.6724 3397.1101  327.36   <.0001
+Black                                      1 -172.711   7.7341 -187.8699 -157.5522  -22.33   <.0001
+Married                                    1  52.3530   7.0543   38.5264   66.1795    7.42   <.0001
+Boy                                        1 124.4903   5.2627  114.1753  134.8053   23.66   <.0001
+Visit               No Visit               1 -97.9267  29.6016 -155.9461  -39.9073   -3.31   0.0009
+Visit               Second Trimester       1  -1.4758   8.1966  -17.5413   14.5897   -0.18   0.8571
+Visit               Last Trimester         1 -13.8205  18.0701  -49.2381   21.5970   -0.76   0.4444
+Visit               First Trimester        0   0.0000   0.0000    0.0000    0.0000     .      .    
+MomEdLevel          High School            1  20.9765   8.1837    4.9364   37.0167    2.56   0.0104
+MomEdLevel          Some College           1  33.3609   9.1097   15.5057   51.2161    3.66   0.0003
+MomEdLevel          College                1  35.6884   9.8051   16.4703   54.9064    3.64   0.0003
+MomEdLevel          Less Than High School  0   0.0000   0.0000    0.0000    0.0000     .      .    
+MomSmoke                                   1 -145.847  13.7291 -172.7558 -118.9373  -10.62   <.0001
+CigsPerDay                                 1  -4.4017   0.9859   -6.3341   -2.4693   -4.46   <.0001
+MomAge                                     1   7.5125   0.5809    6.3739    8.6510   12.93   <.0001
+MomAge*MomAge                              1  -0.3534   0.0745   -0.4995   -0.2074   -4.74   <.0001
+MomWtGain                                  1   6.9808   0.2177    6.5541    7.4074   32.07   <.0001
+MomWtGain*MomWtGain                        1   0.0269   0.0094    0.0086    0.0453    2.88   0.0040
+
+The QUANTREG Procedure
+Quantile Level = 0.6
+
+ Quantile Level and Objective Function
+
+Quantile Level                      0.6
+Objective Function         9534506.7726
+Predicted Value at Mean       3489.3549
+
+
+                                        Parameter Estimates
+ 
+                                                      Standard    95% Confidence
+Parameter                                 DF Estimate    Error        Limits       t Value Pr > |t|
+
+Intercept                                  1 3438.292  10.3551 3417.9960 3458.5883  332.04   <.0001
+Black                                      1 -172.884   7.7636 -188.1011 -157.6675  -22.27   <.0001
+Married                                    1  54.6407   7.0813   40.7612   68.5201    7.72   <.0001
+Boy                                        1 127.0117   5.2828  116.6573  137.3661   24.04   <.0001
+Visit               No Visit               1 -102.439  29.7147 -160.6798  -44.1973   -3.45   0.0006
+Visit               Second Trimester       1   2.0470   8.2280  -14.0799   18.1739    0.25   0.8035
+Visit               Last Trimester         1 -17.2915  18.1391  -52.8445   18.2614   -0.95   0.3405
+Visit               First Trimester        0   0.0000   0.0000    0.0000    0.0000     .      .    
+MomEdLevel          High School            1  20.0584   8.2150    3.9569   36.1599    2.44   0.0146
+MomEdLevel          Some College           1  29.9976   9.1446   12.0741   47.9210    3.28   0.0010
+MomEdLevel          College                1  27.6715   9.8426    8.3800   46.9630    2.81   0.0049
+MomEdLevel          Less Than High School  0   0.0000   0.0000    0.0000    0.0000     .      .    
+MomSmoke                                   1 -152.908  13.7816 -179.9203 -125.8960  -11.10   <.0001
+CigsPerDay                                 1  -4.2204   0.9897   -6.1601   -2.2806   -4.26   <.0001
+MomAge                                     1   7.8606   0.5831    6.7177    9.0035   13.48   <.0001
+MomAge*MomAge                              1  -0.3964   0.0748   -0.5430   -0.2498   -5.30   <.0001
+MomWtGain                                  1   6.7530   0.2185    6.3247    7.1813   30.90   <.0001
+MomWtGain*MomWtGain                        1   0.0360   0.0094    0.0176    0.0544    3.83   0.0001
+
+The QUANTREG Procedure
+Quantile Level = 0.65
+
+ Quantile Level and Objective Function
+
+Quantile Level                     0.65
+Objective Function         9112080.4237
+Predicted Value at Mean       3551.6553
+
+
+                                        Parameter Estimates
+ 
+                                                      Standard    95% Confidence
+Parameter                                 DF Estimate    Error        Limits       t Value Pr > |t|
+
+Intercept                                  1 3499.031  10.4103 3478.6264 3519.4351  336.11   <.0001
+Black                                      1 -172.394   7.8050 -187.6918 -157.0959  -22.09   <.0001
+Married                                    1  53.1430   7.1191   39.1895   67.0965    7.46   <.0001
+Boy                                        1 130.1914   5.3110  119.7818  140.6011   24.51   <.0001
+Visit               No Visit               1 -122.076  29.8732 -180.6276  -63.5239   -4.09   <.0001
+Visit               Second Trimester       1   1.6203   8.2718  -14.5926   17.8332    0.20   0.8447
+Visit               Last Trimester         1 -22.2596  18.2359  -58.0022   13.4829   -1.22   0.2222
+Visit               First Trimester        0   0.0000   0.0000    0.0000    0.0000     .      .    
+MomEdLevel          High School            1  15.7449   8.2588   -0.4424   31.9323    1.91   0.0566
+MomEdLevel          Some College           1  30.1689   9.1933   12.1498   48.1879    3.28   0.0010
+MomEdLevel          College                1  27.5514   9.8950    8.1570   46.9458    2.78   0.0054
+MomEdLevel          Less Than High School  0   0.0000   0.0000    0.0000    0.0000     .      .    
+MomSmoke                                   1 -148.603  13.8551 -175.7590 -121.4466  -10.73   <.0001
+CigsPerDay                                 1  -4.8142   0.9950   -6.7643   -2.8641   -4.84   <.0001
+MomAge                                     1   7.9135   0.5862    6.7645    9.0625   13.50   <.0001
+MomAge*MomAge                              1  -0.4059   0.0752   -0.5533   -0.2586   -5.40   <.0001
+MomWtGain                                  1   6.5155   0.2197    6.0849    6.9460   29.66   <.0001
+MomWtGain*MomWtGain                        1   0.0461   0.0094    0.0276    0.0646    4.88   <.0001
+
+The QUANTREG Procedure
+Quantile Level = 0.7
+
+ Quantile Level and Objective Function
+
+Quantile Level                      0.7
+Objective Function         8532373.3820
+Predicted Value at Mean       3610.7568
+
+
+                                        Parameter Estimates
+ 
+                                                      Standard    95% Confidence
+Parameter                                 DF Estimate    Error        Limits       t Value Pr > |t|
+
+Intercept                                  1 3557.427  10.6867 3536.4812 3578.3734  332.88   <.0001
+Black                                      1 -175.791   8.0123 -191.4952 -160.0870  -21.94   <.0001
+Married                                    1  50.3370   7.3081   36.0130   64.6609    6.89   <.0001
+Boy                                        1 133.0596   5.4520  122.3736  143.7456   24.41   <.0001
+Visit               No Visit               1 -118.759  30.6663 -178.8650  -58.6523   -3.87   0.0001
+Visit               Second Trimester       1   3.5749   8.4915  -13.0684   20.2183    0.42   0.6738
+Visit               Last Trimester         1 -24.3816  18.7200  -61.0731   12.3098   -1.30   0.1928
+Visit               First Trimester        0   0.0000   0.0000    0.0000    0.0000     .      .    
+MomEdLevel          High School            1  25.0926   8.4781    8.4754   41.7097    2.96   0.0031
+MomEdLevel          Some College           1  36.9628   9.4374   18.4653   55.4602    3.92   <.0001
+MomEdLevel          College                1  32.4956  10.1577   12.5863   52.4049    3.20   0.0014
+MomEdLevel          Less Than High School  0   0.0000   0.0000    0.0000    0.0000     .      .    
+MomSmoke                                   1 -151.146  14.2230 -179.0236 -123.2693  -10.63   <.0001
+CigsPerDay                                 1  -4.6327   1.0214   -6.6346   -2.6308   -4.54   <.0001
+MomAge                                     1   8.0194   0.6018    6.8399    9.1989   13.33   <.0001
+MomAge*MomAge                              1  -0.3753   0.0772   -0.5266   -0.2240   -4.86   <.0001
+MomWtGain                                  1   6.4279   0.2255    5.9859    6.8700   28.50   <.0001
+MomWtGain*MomWtGain                        1   0.0512   0.0097    0.0322    0.0702    5.28   <.0001
+
+The QUANTREG Procedure
+Quantile Level = 0.75
+
+ Quantile Level and Objective Function
+
+Quantile Level                     0.75
+Objective Function         7785916.6582
+Predicted Value at Mean       3682.0058
+
+
+                                        Parameter Estimates
+ 
+                                                      Standard    95% Confidence
+Parameter                                 DF Estimate    Error        Limits       t Value Pr > |t|
+
+Intercept                                  1 3632.120  11.0755 3610.4115 3653.8278  327.94   <.0001
+Black                                      1 -178.032   8.3038 -194.3076 -161.7567  -21.44   <.0001
+Married                                    1  45.2756   7.5740   30.4305   60.1207    5.98   <.0001
+Boy                                        1 136.0837   5.6504  125.0089  147.1585   24.08   <.0001
+Visit               No Visit               1 -136.275  31.7820 -198.5680  -73.9816   -4.29   <.0001
+Visit               Second Trimester       1   1.7011   8.8004  -15.5478   18.9500    0.19   0.8467
+Visit               Last Trimester         1 -21.1619  19.4011  -59.1883   16.8646   -1.09   0.2754
+Visit               First Trimester        0   0.0000   0.0000    0.0000    0.0000     .      .    
+MomEdLevel          High School            1  24.4589   8.7865    7.2371   41.6806    2.78   0.0054
+MomEdLevel          Some College           1  29.5539   9.7808   10.3835   48.7243    3.02   0.0025
+MomEdLevel          College                1  31.6773  10.5273   11.0437   52.3110    3.01   0.0026
+MomEdLevel          Less Than High School  0   0.0000   0.0000    0.0000    0.0000     .      .    
+MomSmoke                                   1 -165.619  14.7404 -194.5100 -136.7272  -11.24   <.0001
+CigsPerDay                                 1  -3.7588   1.0585   -5.8335   -1.6841   -3.55   0.0004
+MomAge                                     1   8.7325   0.6237    7.5100    9.9549   14.00   <.0001
+MomAge*MomAge                              1  -0.4135   0.0800   -0.5702   -0.2567   -5.17   <.0001
+MomWtGain                                  1   6.4459   0.2337    5.9878    6.9040   27.58   <.0001
+MomWtGain*MomWtGain                        1   0.0544   0.0100    0.0347    0.0741    5.41   <.0001
+
+The QUANTREG Procedure
+Quantile Level = 0.8
+
+ Quantile Level and Objective Function
+
+Quantile Level                      0.8
+Objective Function         6856507.7212
+Predicted Value at Mean       3752.9288
+
+
+                                        Parameter Estimates
+ 
+                                                      Standard    95% Confidence
+Parameter                                 DF Estimate    Error        Limits       t Value Pr > |t|
+
+Intercept                                  1 3688.900  11.6381 3666.0889 3711.7106  316.97   <.0001
+Black                                      1 -172.850   8.7256 -189.9523 -155.7479  -19.81   <.0001
+Married                                    1  54.9444   7.9587   39.3452   70.5435    6.90   <.0001
+Boy                                        1 135.5158   5.9374  123.8784  147.1531   22.82   <.0001
+Visit               No Visit               1 -114.072  33.3965 -179.5290  -48.6141   -3.42   0.0006
+Visit               Second Trimester       1   4.2997   9.2474  -13.8254   22.4247    0.46   0.6420
+Visit               Last Trimester         1 -11.8856  20.3866  -51.8436   28.0725   -0.58   0.5599
+Visit               First Trimester        0   0.0000   0.0000    0.0000    0.0000     .      .    
+MomEdLevel          High School            1  35.8101   9.2329   17.7136   53.9066    3.88   0.0001
+MomEdLevel          Some College           1  32.7767  10.2776   12.6325   52.9209    3.19   0.0014
+MomEdLevel          College                1  35.3023  11.0621   13.6205   56.9841    3.19   0.0014
+MomEdLevel          Less Than High School  0   0.0000   0.0000    0.0000    0.0000     .      .    
+MomSmoke                                   1 -163.143  15.4892 -193.5015 -132.7835  -10.53   <.0001
+CigsPerDay                                 1  -3.3582   1.1123   -5.5384   -1.1781   -3.02   0.0025
+MomAge                                     1   8.7994   0.6554    7.5149   10.0839   13.43   <.0001
+MomAge*MomAge                              1  -0.3105   0.0841   -0.4753   -0.1458   -3.69   0.0002
+MomWtGain                                  1   6.4620   0.2456    5.9806    6.9434   26.31   <.0001
+MomWtGain*MomWtGain                        1   0.0685   0.0106    0.0478    0.0892    6.49   <.0001
+
+The QUANTREG Procedure
+Quantile Level = 0.85
+
+ Quantile Level and Objective Function
+
+Quantile Level                     0.85
+Objective Function         5716675.7126
+Predicted Value at Mean       3842.3531
+
+
+                                        Parameter Estimates
+ 
+                                                      Standard    95% Confidence
+Parameter                                 DF Estimate    Error        Limits       t Value Pr > |t|
+
+Intercept                                  1 3773.536  12.2698 3749.4872 3797.5851  307.55   <.0001
+Black                                      1 -168.056   9.1992 -186.0869 -150.0260  -18.27   <.0001
+Married                                    1  55.4498   8.3907   39.0040   71.8956    6.61   <.0001
+Boy                                        1 136.1718   6.2596  123.9029  148.4408   21.75   <.0001
+Visit               No Visit               1 -101.272  35.2091 -170.2819  -32.2615   -2.88   0.0040
+Visit               Second Trimester       1   4.8006   9.7493  -14.3082   23.9095    0.49   0.6224
+Visit               Last Trimester         1 -25.6406  21.4931  -67.7674   16.4862   -1.19   0.2329
+Visit               First Trimester        0   0.0000   0.0000    0.0000    0.0000     .      .    
+MomEdLevel          High School            1  38.0580   9.7340   18.9793   57.1367    3.91   <.0001
+MomEdLevel          Some College           1  34.3460  10.8354   13.1084   55.5835    3.17   0.0015
+MomEdLevel          College                1  37.2396  11.6625   14.3810   60.0982    3.19   0.0014
+MomEdLevel          Less Than High School  0   0.0000   0.0000    0.0000    0.0000     .      .    
+MomSmoke                                   1 -150.093  16.3299 -182.0995 -118.0860   -9.19   <.0001
+CigsPerDay                                 1  -3.7800   1.1727   -6.0784   -1.4815   -3.22   0.0013
+MomAge                                     1   9.5622   0.6909    8.2079   10.9164   13.84   <.0001
+MomAge*MomAge                              1  -0.2947   0.0886   -0.4684   -0.1210   -3.33   0.0009
+MomWtGain                                  1   6.4671   0.2589    5.9596    6.9746   24.98   <.0001
+MomWtGain*MomWtGain                        1   0.0768   0.0111    0.0550    0.0986    6.90   <.0001
+
+The QUANTREG Procedure
+Quantile Level = 0.9
+
+ Quantile Level and Objective Function
+
+Quantile Level                      0.9
+Objective Function         4324907.0955
+Predicted Value at Mean       3968.7037
+
+
+                                        Parameter Estimates
+ 
+                                                      Standard    95% Confidence
+Parameter                                 DF Estimate    Error        Limits       t Value Pr > |t|
+
+Intercept                                  1 3896.844  15.3487 3866.7602 3926.9272  253.89   <.0001
+Black                                      1 -161.613  11.5075 -184.1681 -139.0585  -14.04   <.0001
+Married                                    1  59.7405  10.4961   39.1680   80.3131    5.69   <.0001
+Boy                                        1 134.2353   7.8304  118.8877  149.5829   17.14   <.0001
+Visit               No Visit               1 -51.5464  44.0441 -137.8732   34.7805   -1.17   0.2419
+Visit               Second Trimester       1   0.3240  12.1957  -23.5798   24.2278    0.03   0.9788
+Visit               Last Trimester         1 -36.1123  26.8864  -88.8099   16.5853   -1.34   0.1792
+Visit               First Trimester        0   0.0000   0.0000    0.0000    0.0000     .      .    
+MomEdLevel          High School            1  31.7348  12.1765    7.8686   55.6009    2.61   0.0092
+MomEdLevel          Some College           1  26.0069  13.5543   -0.5598   52.5736    1.92   0.0550
+MomEdLevel          College                1  17.2888  14.5889  -11.3057   45.8832    1.19   0.2360
+MomEdLevel          Less Than High School  0   0.0000   0.0000    0.0000    0.0000     .      .    
+MomSmoke                                   1 -182.840  20.4275 -222.8783 -142.8020   -8.95   <.0001
+CigsPerDay                                 1  -2.0877   1.4669   -4.9629    0.7875   -1.42   0.1547
+MomAge                                     1   9.8763   0.8643    8.1822   11.5704   11.43   <.0001
+MomAge*MomAge                              1  -0.2966   0.1109   -0.5138   -0.0793   -2.68   0.0075
+MomWtGain                                  1   6.6397   0.3239    6.0048    7.2745   20.50   <.0001
+MomWtGain*MomWtGain                        1   0.0860   0.0139    0.0587    0.1133    6.17   <.0001
+
+The QUANTREG Procedure
+Quantile Level = 0.95
+
+ Quantile Level and Objective Function
+
+Quantile Level                     0.95
+Objective Function         2564088.7170
+Predicted Value at Mean       4157.7875
+
+
+                                        Parameter Estimates
+ 
+                                                      Standard    95% Confidence
+Parameter                                 DF Estimate    Error        Limits       t Value Pr > |t|
+
+Intercept                                  1 4078.409  17.8529 4043.4168 4113.4004  228.45   <.0001
+Black                                      1 -151.266  13.3850 -177.5011 -125.0316  -11.30   <.0001
+Married                                    1  74.7011  12.2086   50.7720   98.6301    6.12   <.0001
+Boy                                        1 133.3504   9.1079  115.4987  151.2021   14.64   <.0001
+Visit               No Visit               1 -13.5236  51.2301 -113.9351   86.8879   -0.26   0.7918
+Visit               Second Trimester       1  13.1395  14.1855  -14.6643   40.9433    0.93   0.3543
+Visit               Last Trimester         1 -39.3565  31.2730 -100.6520   21.9390   -1.26   0.2082
+Visit               First Trimester        0   0.0000   0.0000    0.0000    0.0000     .      .    
+MomEdLevel          High School            1  27.9254  14.1632    0.1654   55.6854    1.97   0.0487
+MomEdLevel          Some College           1  18.4876  15.7658  -12.4136   49.3887    1.17   0.2409
+MomEdLevel          College                1  -5.1195  16.9692  -38.3792   28.1403   -0.30   0.7629
+MomEdLevel          Less Than High School  0   0.0000   0.0000    0.0000    0.0000     .      .    
+MomSmoke                                   1 -211.809  23.7604 -258.3796 -165.2384   -8.91   <.0001
+CigsPerDay                                 1  -0.9210   1.7063   -4.2653    2.4233   -0.54   0.5894
+MomAge                                     1  12.0838   1.0053   10.1134   14.0543   12.02   <.0001
+MomAge*MomAge                              1  -0.4118   0.1289   -0.6645   -0.1590   -3.19   0.0014
+MomWtGain                                  1   6.6294   0.3767    5.8910    7.3678   17.60   <.0001
+MomWtGain*MomWtGain                        1   0.0895   0.0162    0.0577    0.1212    5.52   <.0001

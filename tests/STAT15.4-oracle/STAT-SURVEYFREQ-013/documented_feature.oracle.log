@@ -1,0 +1,60 @@
+The SAS System
+
+19542      
+19543      /* STAT-SURVEYFREQ-013: SURVEYFREQ — Sensitivity and Specificity / Risks and Risk Difference / Odds Ratio and Relative Risks
+19544       * Source: S154 / Chapter 118 / `Sensitivity and Specificity` (PDF pp. 9652–9653); S154 / Chapter 118 / `Risks and Risk Difference` (PDF pp.
+19544    ! 9653–9655); S154 / Chapter 118 / `Odds Ratio and Relative Risks` (PDF pp. 9655–9657).
+19545       * Discriminates: Verified default procedure context
+19546       */
+19547      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+19547    ! validmemname=compatible locale=en_US;
+19548      %let syscc=0;
+19549      title; footnote;
+19550      ods _all_ close;
+19551      ods listing gpath="%sysfunc(pathname(work))";
+19552      ods graphics off;
+19553      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SURVEY (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+19553    !                                         quit;
+
+
+19554      ods path work.templat(update) sashelp.tmplmst(read);
+19555      
+19556      data survey;
+19557      do state=1 to 2;
+19558      do school=1 to 4;
+19559      do id=1 to 6;
+19560      response=1+mod(id+school,3);
+19561      schooltype=1+mod(school,2);
+19562      samplingweight=2+state+school/10;
+19563      output;
+19564      end;
+19565      end;
+19566      end;
+19567      run;
+
+NOTE: The data set WORK.SURVEY has 48 observations and 6 variables.
+
+19568      proc surveyfreq data=survey;
+19569      strata state;
+19570      cluster school;
+19571      weight samplingweight;
+19572      tables schooltype*response / row chisq;
+19573      run;
+
+NOTE: The Rao-Scott chi-square test cannot be computed for the table of schooltype by response because the design correction is not positive.
+NOTE: The PROCEDURE SURVEYFREQ printed page 1389.
+
+19574      
+19575      
+19576      
+19577      
+The SAS System
+
+19578      

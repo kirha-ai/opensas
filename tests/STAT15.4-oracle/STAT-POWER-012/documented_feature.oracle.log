@@ -1,0 +1,141 @@
+The SAS System
+
+7020       
+7021       /* STAT-POWER-012: POWER — Analyses in the MULTREG / Analyses in the ONECORR / Analyses in the ONESAMPLEFREQ
+7022        * Source: S154 / Chapter 96 / `Analyses in the MULTREG Statement` (PDF pp. 7865–7867); S154 / Chapter 96 / `Analyses in the ONECORR Statement`
+7022     ! (PDF pp. 7867–7869); S154 / Chapter 96 / `Analyses in the ONESAMPLEFREQ Statement` (PDF pp. 7869–7887).
+7023        * Discriminates: Example 96.2: The Sawtooth Power Function in Proportion Analyses
+7024        */
+7025       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+7025     ! validmemname=compatible locale=en_US;
+7026       %let syscc=0;
+7027       title; footnote;
+7028       ods _all_ close;
+7029       ods listing gpath="%sysfunc(pathname(work))";
+7030       ods graphics off;
+7031       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.EXEMPLARY (memtype=DATA).
+NOTE: Deleting WORK.FITFULL (memtype=DATA).
+NOTE: Deleting WORK.POWER (memtype=DATA).
+NOTE: Deleting WORK.PRIMNC (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.STATSFULL (memtype=DATA).
+NOTE: Deleting WORK.STATSRED (memtype=DATA).
+7031     !                                         quit;
+
+
+7032       ods path work.templat(update) sashelp.tmplmst(read);
+7033       
+7034       proc power;
+7035       onesamplefreq test=z method=normal
+7036       sides = 1
+7037       alpha = 0.05
+7038       nullproportion = 0.3
+7039       proportion = 0.2
+7040       ntotal = .
+7041       power = 0.8;
+7042       run;
+
+NOTE: The PROCEDURE POWER printed page 555.
+
+7043       proc power;
+7044       onesamplefreq test=adjz method=normal
+7045       sides = 1
+7046       alpha = 0.05
+7047       nullproportion = 0.3
+7048       proportion = 0.2
+7049       ntotal = .
+7050       power = 0.8;
+7051       run;
+
+NOTE: The PROCEDURE POWER printed page 556.
+
+7052       ods graphics on;
+7053       proc power plotonly;
+7054       onesamplefreq test=exact
+7055       sides = 1
+7056       alpha = 0.05
+7057       nullproportion = 0.3
+7058       proportion = 0.2
+7059       ntotal = 119
+7060       power = .;
+7061       plot x=n min=110 max=140 step=1
+7062       yopts=(ref=.8) xopts=(ref=119 129);
+7063       run;
+
+NOTE: Plotting computed Power on the y-axis, versus N Total on the x-axis with 31 points per curve between 110 and 140.
+
+7064       proc power plotonly;
+7065       onesamplefreq test=exact
+7066       sides = 1
+7067       alpha = 0.05
+7068       nullproportion = 0.3
+7069       proportion = 0.18 0.2 0.22
+7070       ntotal = 119
+7071       power = .;
+7072       plot x=n min=110 max=140 step=1
+7073       yopts=(ref=.8) xopts=(ref=119 129);
+7074       run;
+
+NOTE: Plotting computed Power on the y-axis, versus N Total on the x-axis with 31 points per curve between 110 and 140.
+
+7075       proc power plotonly;
+7076       ods output plotcontent=PlotData;
+7077       onesamplefreq test=exact
+7078       sides = 1
+7079       alpha = 0.05
+7080       nullproportion = 0.3
+7081       proportion = 0.2
+7082       ntotal = 119
+7083       power = .;
+7084       plot x=n min=110 max=140 step=1
+7085       yopts=(ref=.8) xopts=(ref=119 129);
+7086       run;
+
+NOTE: Plotting computed Power on the y-axis, versus N Total on the x-axis with 31 points per curve between 110 and 140.
+NOTE: The data set WORK.PLOTDATA has 31 observations and 15 variables.
+
+7087       proc print data=PlotData;
+7088       var NTotal LowerCritVal Alpha Power;
+7089       run;
+
+NOTE: There were 31 observations read from the data set WORK.PLOTDATA.
+NOTE: The PROCEDURE PRINT printed page 557.
+
+7090       proc power plotonly;
+7091       onesamplefreq test=exact
+7092       sides = 1
+7093       alpha = 0.05
+7094       nullproportion = 0.2
+7095       proportion = 0.3
+7096       ntotal = 119
+7097       power = .;
+7098       plot x=n min=110 max=140 step=1;
+7099       run;
+
+NOTE: Plotting computed Power on the y-axis, versus N Total on the x-axis with 31 points per curve between 110 and 140.
+
+7100       proc power plotonly;
+7101       onesamplefreq test=exact
+7102       sides = 2
+7103       alpha = 0.2
+7104       nullproportion = 0.1
+7105       proportion = 0.09
+7106       ntotal = 10
+7107       power = .;
+7108       plot x=n min=2 max=100 step=1;
+7109       run;
+
+NOTE: Plotting computed Power on the y-axis, versus N Total on the x-axis with 99 points per curve between 2 and 100.
+
+7110       ods graphics off;
+7111       run;
+7112       quit;
+7113       
+7114       
+7115       
+7116       
+The SAS System
+
+7117       

@@ -1,0 +1,152 @@
+
+The BCHOICE Procedure
+
+                  Model Information
+
+Data Set                     WORK.TRAVEL2             
+Response Variable            Choice                   
+Type of Model                Nested Logit             
+Type of Choice Response      Binary                   
+Fixed Effects Included       Yes                      
+Random Effects Included      No                       
+Sampling Algorithm           Random Walk Metropolis   
+Burn-In Size                 200                      
+Simulation Size              1000                     
+Thinning                     2                        
+Random Number Seed           124                      
+Number of Threads            1                        
+
+
+       Class Level Information
+ 
+Class    Levels    Values
+
+Mode          3    Auto Plane Transit 
+
+
+                     Choice Sets Summary
+ 
+           Choice           Total          Chosen         Not
+Pattern      Sets    Alternatives    Alternatives      Chosen
+
+      1        21               3               1           2
+
+
+        Number of Observations
+
+Number of Observations Read          63
+Number of Observations Used          63
+
+
+Independent Normal Priors for Fixed Effects
+ 
+Parameter          Mean    Variance
+
+Mode Auto             0         100
+Mode Plane            0         100
+TravTime              0         100
+
+
+                   Posterior Summaries and Intervals
+ 
+                                       Standard
+Parameter            N        Mean    Deviation      95% HPD Interval
+
+Mode Auto          500    -0.00779       0.7308     -1.1743      1.3950
+Mode Plane         500     -1.5778       1.2948     -4.0725      0.3630
+TravTime           500     -0.5132       0.2027     -0.8863     -0.1470
+Lambda 1           500      0.9863       0.4796      0.2115      1.9511
+
+
+                Effective Sample Sizes
+ 
+                          Autocorrelation
+Parameter          ESS               Time    Efficiency
+
+Mode Auto         13.4            37.2994        0.0268
+Mode Plane         8.6            58.1329        0.0172
+TravTime          17.4            28.8124        0.0347
+Lambda 1          23.2            21.5900        0.0463
+
+
+             Deviance Information Criterion
+
+Dbar (Posterior Mean of Deviance)                  33.103
+Dmean (Deviance Evaluated at Posterior Mean)       30.347
+pD (Effective Number of Parameters)                 2.756
+DIC (Smaller is Better)                            35.858
+
+The BCHOICE Procedure
+
+                  Model Information
+
+Data Set                     WORK.TRAVEL2             
+Response Variable            Choice                   
+Type of Model                Logit                    
+Type of Choice Response      Binary                   
+Fixed Effects Included       Yes                      
+Random Effects Included      No                       
+Sampling Algorithm           Gamerman Metropolis      
+Burn-In Size                 200                      
+Simulation Size              1000                     
+Thinning                     2                        
+Random Number Seed           124                      
+Number of Threads            1                        
+
+
+       Class Level Information
+ 
+Class    Levels    Values
+
+Mode          3    Auto Plane Transit 
+
+
+                     Choice Sets Summary
+ 
+           Choice           Total          Chosen         Not
+Pattern      Sets    Alternatives    Alternatives      Chosen
+
+      1        21               3               1           2
+
+
+        Number of Observations
+
+Number of Observations Read          63
+Number of Observations Used          63
+
+
+Independent Normal Priors for Fixed Effects
+ 
+Parameter          Mean    Variance
+
+Mode Auto             0         100
+Mode Plane            0         100
+TravTime              0         100
+
+
+                   Posterior Summaries and Intervals
+ 
+                                       Standard
+Parameter            N        Mean    Deviation      95% HPD Interval
+
+Mode Auto          500     -0.0985       0.8007     -1.3128      1.9871
+Mode Plane         500     -1.6857       1.1519     -3.4118      1.0370
+TravTime           500     -0.5562       0.1894     -0.9114     -0.2502
+
+
+                Effective Sample Sizes
+ 
+                          Autocorrelation
+Parameter          ESS               Time    Efficiency
+
+Mode Auto         60.5             8.2622        0.1210
+Mode Plane        63.7             7.8435        0.1275
+TravTime          66.7             7.4996        0.1333
+
+
+             Deviance Information Criterion
+
+Dbar (Posterior Mean of Deviance)                  33.355
+Dmean (Deviance Evaluated at Posterior Mean)       30.496
+pD (Effective Number of Parameters)                 2.859
+DIC (Smaller is Better)                            36.214

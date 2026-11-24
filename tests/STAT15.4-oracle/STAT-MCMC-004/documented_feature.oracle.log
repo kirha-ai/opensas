@@ -1,0 +1,112 @@
+The SAS System
+
+15739      
+15740      /* STAT-MCMC-004: MCMC — ARRAY / BEGINCNST/ENDCNST / BEGINNODATA/ENDNODATA Statements
+15741       * Source: S154 / Chapter 80 / `ARRAY Statement` (PDF p. 6117); S154 / Chapter 80 / `BEGINCNST/ENDCNST Statement` (PDF pp. 6117–6119); S154 /
+15741    ! Chapter 80 / `BEGINNODATA/ENDNODATA Statements` (PDF p. 6119).
+15742       * Discriminates: Example 80.4: Logistic Regression Model with Jeffreys' Prior; explicit statements: ARRAY
+15743       */
+15744      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+15744    ! validmemname=compatible locale=en_US;
+15745      %let syscc=0;
+15746      title; footnote;
+15747      ods _all_ close;
+15748      ods listing gpath="%sysfunc(pathname(work))";
+15749      ods graphics off;
+15750      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.BEHRENS (memtype=DATA).
+NOTE: Deleting WORK.CLASSOUT (memtype=DATA).
+NOTE: Deleting WORK.FORMATS (memtype=CATALOG).
+NOTE: Deleting WORK.HEIGHTS (memtype=DATA).
+NOTE: Deleting WORK.INPUT (memtype=DATA).
+NOTE: Deleting WORK.POSTOUT (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+15750    !                                         quit;
+
+
+15751      ods path work.templat(update) sashelp.tmplmst(read);
+15752      
+15753      title 'Logistic Regression Model with Jeffreys Prior';
+15754      data vaso;
+15755      input vol rate resp @@;
+15756      lvol = log(vol);
+15757      lrate = log(rate);
+15758      ind = _n_;
+15759      cnst = 1;
+15760      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.VASO has 39 observations and 7 variables.
+
+15771      ;
+15772      %let n = 39;
+15773      proc mcmc data=vaso nmc=1000 outpost=mcmcout seed=17 nbi=200;
+15774      ods select PostSumInt;
+15775      array beta[3] beta0 beta1 beta2;
+15776      array m[&n, &n];
+15777      array x[1] / nosymbols;
+15778      array xt[3, &n];
+15779      array xtm[3, &n];
+15780      array xmx[3, 3];
+15781      array p[&n];
+15782      parms beta0 1 beta1 1 beta2 1;
+15783      begincnst;
+15784      if (ind eq 1) then do;
+15785      rc = read_array("vaso", x, "cnst", "lvol", "lrate");
+15786      call transpose(x, xt);
+15787      call zeromatrix(m);
+15788      end;
+15789      endcnst;
+15790      beginnodata;
+15791      call mult(x, beta, p);
+15792      /* p = x * beta */
+15793      do i = 1 to &n;
+15794      p[i] = 1 / (1 + exp(-p[i]));
+15795      /* p[i] = 1/(1+exp(-x*beta)) */
+15796      m[i,i] = p[i] * (1-p[i]);
+15797      end;
+15798      call mult (xt, m, xtm);
+15799      /* xtm = xt * m */
+15800      call mult (xtm, x, xmx);
+15801      /* xmx = xtm * x */
+15802      call det (xmx, lp);
+15803      /* lp = det(xmx) */
+15804      lp = 0.5 * log(lp);
+15805      /* lp = -0.5 * log(lp) */
+15806      prior beta: ~ general(lp);
+15807      endnodata;
+15808      model resp ~ bern(p[ind]);
+15809      run;
+
+NOTE: The input data set variable ind appears in the distributional specification for beta0. This might lead to incorrect results.
+NOTE: Tuning the proposal distribution.
+NOTE: Generating the burn-in samples.
+NOTE: Beginning sample generation.
+NOTE: The data set WORK.MCMCOUT has 1000 observations and 7 variables.
+NOTE: The PROCEDURE MCMC printed page 1275.
+
+15810      proc genmod data=vaso descending;
+15811      ods select PostSummaries PostIntervals;
+15812      model resp = lvol lrate / d=bin link=logit;
+15813      bayes seed=17 coeffprior=jeffreys nmc=1000 thin=2 nbi=200;
+15814      run;
+
+NOTE: The default sampling algorithm is the Gamerman algorithm, which is different from the default in SAS/STAT 9.3 and earlier releases. To revert to the 
+      previous behavior, specify the SAMPLING=ARMS option in the BAYES statement.
+NOTE: PROC GENMOD is modeling the probability that resp='1'.
+NOTE: Algorithm converged.
+NOTE: The scale parameter was held fixed.
+NOTE: Algorithm converged.
+NOTE: The PROCEDURE GENMOD printed page 1276.
+
+15815      
+15816      
+15817      
+15818      
+The SAS System
+
+15819      

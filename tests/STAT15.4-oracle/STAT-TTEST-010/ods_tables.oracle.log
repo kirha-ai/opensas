@@ -1,0 +1,104 @@
+The SAS System
+
+29060      
+29061      /* STAT-TTEST-010: TTEST — Displayed Output / ODS Table Names
+29062       * Source: S154 / Chapter 128 / `Displayed Output` (PDF pp. 10640–10644); S154 / Chapter 128 / `ODS Table Names` (PDF p. 10644).
+29063       * Discriminates: ODS table names, row/column content, full-precision numeric values and descriptor
+29064       */
+29065      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+29065    ! validmemname=compatible locale=en_US;
+29066      %let syscc=0;
+29067      title; footnote;
+29068      ods _all_ close;
+29069      ods listing gpath="%sysfunc(pathname(work))";
+29070      ods graphics off;
+29071      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SAMPLE (memtype=DATA).
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+29071    !                                         quit;
+
+
+29072      ods path work.templat(update) sashelp.tmplmst(read);
+29073      
+29074      data sample;
+29075       input x y group $ freq weight;
+29076       datalines;
+
+NOTE: The data set WORK.SAMPLE has 12 observations and 5 variables.
+
+29089      ;
+29090      run;
+29091      ods trace on;
+29092      ods output Statistics=stats ConfLimits=limits TTests=tests Equality=variance;
+29093      proc ttest data=sample; class group; var x; run;
+
+
+Output Added:
+-------------
+Name:       Statistics
+Label:      Statistics
+Template:   Stat.TTest.Statistics
+Path:       Ttest.x.Statistics
+-------------
+
+Output Added:
+-------------
+Name:       ConfLimits
+Label:      Confidence Limits
+Template:   Stat.TTest.ConfLimits
+Path:       Ttest.x.ConfLimits
+-------------
+
+Output Added:
+-------------
+Name:       TTests
+Label:      T-Tests
+Template:   Stat.TTest.TTests
+Path:       Ttest.x.TTests
+-------------
+
+Output Added:
+-------------
+Name:       Equality
+Label:      Equality of Variances
+Template:   Stat.TTest.Equality
+Path:       Ttest.x.Equality
+-------------
+NOTE: The data set WORK.VARIANCE has 1 observations and 6 variables.
+NOTE: The data set WORK.TESTS has 2 observations and 6 variables.
+NOTE: The data set WORK.LIMITS has 4 observations and 12 variables.
+NOTE: The data set WORK.STATS has 4 observations and 15 variables.
+NOTE: The PROCEDURE TTEST printed page 1777.
+
+29094      ods trace off;
+29095      proc print data=stats noobs; format _numeric_ best32.; run;
+
+NOTE: There were 4 observations read from the data set WORK.STATS.
+NOTE: The PROCEDURE PRINT printed page 1778.
+
+29096      proc print data=limits noobs; format _numeric_ best32.; run;
+
+NOTE: There were 4 observations read from the data set WORK.LIMITS.
+NOTE: The PROCEDURE PRINT printed page 1779.
+
+29097      proc print data=tests noobs; format _numeric_ best32.; run;
+
+NOTE: There were 2 observations read from the data set WORK.TESTS.
+NOTE: The PROCEDURE PRINT printed page 1780.
+
+29098      proc contents data=tests varnum; run;
+
+NOTE: The PROCEDURE CONTENTS printed page 1781.
+
+29099      
+29100      
+29101      
+29102      
+The SAS System
+
+29103      

@@ -1,0 +1,125 @@
+The SAS System
+
+23565      
+23566      /* STAT-GLIMMIX-007: GLIMMIX — Maximum Likelihood Estimation Based on Adaptive Quadrature / Aspects Common to Adaptive Quadrature and Laplace
+23566    ! Approximation
+23567       * Source: S154 / Chapter 52 / `Maximum Likelihood Estimation Based on Adaptive Quadrature` (PDF pp. 3838–3841); S154 / Chapter 52 / `Aspects
+23567    ! Common to Adaptive Quadrature and Laplace Approximation` (PDF pp. 3841–3843).
+23568       * Discriminates: Example 52.11: Maximum Likelihood in Proportional Odds Model with Random Effects
+23569       */
+23570      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+23570    ! validmemname=compatible locale=en_US;
+23571      %let syscc=0;
+23572      title; footnote;
+23573      ods _all_ close;
+23574      ods listing gpath="%sysfunc(pathname(work))";
+23575      ods graphics off;
+23576      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.FOOTSHAPE (memtype=DATA).
+NOTE: Deleting WORK.FOOT_MV (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.SOLR (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+23576    !                                         quit;
+
+
+23577      ods path work.templat(update) sashelp.tmplmst(read);
+23578      
+23579      data foot_mv;
+23580      input yr b1 b2 b3 k1 k2 k3;
+23581      sire = _n_;
+23582      datalines;
+
+NOTE: The data set WORK.FOOT_MV has 34 observations and 8 variables.
+
+23617      ;
+23618      data footshape;
+23619      set foot_mv;
+23620      array k{3};
+23621      do Shape = 1 to 3;
+23622      count = k{Shape};
+23623      output;
+23624      end;
+23625      drop k:;
+23626      run;
+
+NOTE: There were 34 observations read from the data set WORK.FOOT_MV.
+NOTE: The data set WORK.FOOTSHAPE has 102 observations and 7 variables.
+
+23627      proc glimmix data=footshape method=quad;
+23628      class sire;
+23629      model Shape = yr b1 b2 b3 / s link=cumprobit dist=multinomial;
+23630      random int / sub=sire s cl;
+23631      ods output Solutionr=solr;
+23632      freq count;
+23633      run;
+
+
+
+NOTE: Some observations are not used in the analysis because of: zero or negative frequency (n=6).
+NOTE: The GLIMMIX procedure is modeling the probabilities of levels of Shape having lower Ordered Values in the Response Profile table.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: At least one element of the (projected) gradient is greater than 1e-3.
+NOTE: The data set WORK.SOLR has 34 observations and 10 variables.
+NOTE: The PROCEDURE GLIMMIX printed page 2407.
+
+23634      ods select FitStatistics CovParms Covtests;
+23635      proc glimmix data=footshape method=quad;
+23636      class sire;
+23637      model Shape = yr b1 b2 b3 / link=cumprobit dist=multinomial;
+23638      random int / sub=sire;
+23639      covtest GLM;
+23640      freq count;
+23641      run;
+
+
+
+NOTE: Some observations are not used in the analysis because of: zero or negative frequency (n=6).
+NOTE: The GLIMMIX procedure is modeling the probabilities of levels of Shape having lower Ordered Values in the Response Profile table.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: At least one element of the (projected) gradient is greater than 1e-3.
+NOTE: The PROCEDURE GLIMMIX printed page 2408.
+
+23642      proc sort data=solr;
+23643      by Estimate;
+23644      run;
+
+NOTE: There were 34 observations read from the data set WORK.SOLR.
+NOTE: The data set WORK.SOLR has 34 observations and 10 variables.
+
+23645      data solr;
+23646      set solr;
+23647      length sire $2;
+23648      obs = _n_;
+23649      sire = left(substr(Subject,6,2));
+23650      run;
+
+NOTE: There were 34 observations read from the data set WORK.SOLR.
+NOTE: The data set WORK.SOLR has 34 observations and 12 variables.
+
+23651      proc sgplot data=solr;
+23652      scatter x=obs y=estimate /
+23653      markerchar = sire
+23654      yerrorupper = upper
+23655      yerrorlower = lower;
+23656      xaxis grid label='Sire Rank' values=(1 5 10 15 20 25 30);
+23657      yaxis grid label='Predicted Sire Effect';
+23658      run;
+
+NOTE: Listing image output written to /saswork/SAS_work5D120001108E_odaws02-euw1.oda.sas.com/SAS_workCCDC0001108E_odaws02-euw1.oda.sas.com/SGPlot11.png.
+NOTE: There were 34 observations read from the data set WORK.SOLR.
+
+23659      
+23660      
+23661      
+23662      
+The SAS System
+
+23663      

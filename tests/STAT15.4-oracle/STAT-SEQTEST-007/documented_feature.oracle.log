@@ -1,0 +1,118 @@
+The SAS System
+
+16418      
+16419      /* STAT-SEQTEST-007: SEQTEST — Table Output / ODS Table Names
+16420       * Source: S154 / Chapter 111 / `Table Output` (PDF pp. 9184–9188); S154 / Chapter 111 / `ODS Table Names` (PDF p. 9188).
+16421       * Discriminates: Verified default procedure context
+16422       */
+16423      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+16423    ! validmemname=compatible locale=en_US;
+16424      %let syscc=0;
+16425      title; footnote;
+16426      ods _all_ close;
+16427      ods listing gpath="%sysfunc(pathname(work))";
+16428      ods graphics off;
+16429      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.BOUNDARIES (memtype=DATA).
+NOTE: Deleting WORK.ESTIMATES (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+16429    !                                         quit;
+
+
+16430      ods path work.templat(update) sashelp.tmplmst(read);
+16431      
+16432      ods trace on;
+16433      proc seqdesign altref=-10;
+16434      TwoSided: design nstages=4 method=obf;
+16435      samplesize model=twosamplemean(stddev=20);
+16436      ods output Boundary=boundaries;
+16437      run;
+
+
+Output Added:
+-------------
+Name:       Design
+Label:      Design Information
+Template:   Stat.SeqDesign.Design
+Path:       Seqdesign.TwoSided.Design
+-------------
+
+Output Added:
+-------------
+Name:       Method
+Label:      Method Information
+Template:   Stat.SeqDesign.Method
+Path:       Seqdesign.TwoSided.Method
+-------------
+
+Output Added:
+-------------
+Name:       Boundary
+Label:      Boundary Information
+Template:   Stat.SeqDesign.Boundary
+Path:       Seqdesign.TwoSided.Boundary
+-------------
+
+Output Added:
+-------------
+Name:       SampleSizeSummary
+Label:      Sample Size Summary
+Template:   Stat.SeqDesign.SampleSizeSummary
+Path:       Seqdesign.TwoSided.SampleSizeSummary
+-------------
+
+Output Added:
+-------------
+Name:       SampleSize
+Label:      Sample Size Information
+Template:   Stat.SeqDesign.SampleSize
+Path:       Seqdesign.TwoSided.SampleSize
+-------------
+NOTE: The data set WORK.BOUNDARIES has 4 observations and 13 variables.
+NOTE: The PROCEDURE SEQDESIGN printed page 1175.
+
+16438      data estimates;
+16439      length Variable $8 _Scale_ $8;
+16440      Variable='Trt';
+16441      _Scale_='MLE';
+16442      _Stage_=1;
+16443      Estimate=-7;
+16444      StdErr=4.5;
+16445      run;
+
+NOTE: The data set WORK.ESTIMATES has 1 observations and 5 variables.
+
+16446      proc seqtest boundary=boundaries parms(testvar=Trt)=estimates infoadj=prop;
+16447      run;
+
+
+Output Added:
+-------------
+Name:       Design
+Label:      Design Information
+Template:   Stat.SeqTest.Design
+Path:       Seqtest.Design
+-------------
+
+Output Added:
+-------------
+Name:       Test
+Label:      Test Information
+Template:   Stat.SeqTest.Test
+Path:       Seqtest.Test
+-------------
+NOTE: The PROCEDURE SEQTEST printed page 1176.
+
+16448      ods trace off;
+16449      
+16450      
+16451      
+16452      
+The SAS System
+
+16453      

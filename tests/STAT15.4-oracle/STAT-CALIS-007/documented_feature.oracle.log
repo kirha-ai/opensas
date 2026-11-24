@@ -1,0 +1,93 @@
+The SAS System
+
+695        
+696        /* STAT-CALIS-007: CALIS — COSAN / The COSAN Model
+697         * Source: S154 / Chapter 33 / `COSAN Statement` (PDF pp. 1534–1544); S154 / Chapter 33 / `The COSAN Model` (PDF pp. 1685–1689).
+698         * Discriminates: Example 33.31: Linear Relations among Factor Loadings: COSAN Model Specification; explicit statements: COSAN
+699         */
+700        options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+700      ! validmemname=compatible locale=en_US;
+701        %let syscc=0;
+702        title; footnote;
+703        ods _all_ close;
+704        ods listing gpath="%sysfunc(pathname(work))";
+705        ods graphics off;
+706        proc datasets library=work kill nolist;
+NOTE: Deleting WORK.GSEG (memtype=CATALOG).
+NOTE: Deleting WORK.OILSCHEMATIC (memtype=DATA).
+NOTE: Deleting WORK.OILSUM (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TURBINE (memtype=DATA).
+706      !                                         quit;
+
+
+707        ods path work.templat(update) sashelp.tmplmst(read);
+708        
+709        data kinzer(type=corr);
+710        length _name_ $32 _type_ $8;
+711        infile datalines truncover;
+712        
+713        title "Data Matrix of Kinzer & Kinzer, see GUTTMAN (1957)";
+714        _type_ = 'corr';
+715        input _name_ $ var1-var6;
+716        datalines;
+
+NOTE: The data set WORK.KINZER has 6 observations and 8 variables.
+
+723        ;
+724        run;
+725        proc calis data=Kinzer nobs=326 nose;
+726        cosan
+727        var= var1-var6,
+728        D(6,DIA) * B(2,GEN) + D(6,DIA) * Psi(6,DIA);
+729        matrix B
+730        [ ,1] = b11 b21 b31 b41 b51 b61,
+731        [ ,2] = b12 b22 b32 b42 b52 b62;
+732        matrix Psi
+733        [1,1] = psi1-psi6;
+734        matrix D
+735        [1,1] = d1-d6;
+736        parameters alpha (1.);
+737        /* SAS Programming Statements to Define Dependent Parameters*/
+738        /* 6 constraints on the factor loadings */
+739        b12 = alpha - b11;
+740        b22 = alpha - b21;
+741        b32 = alpha - b31;
+742        b42 = alpha - b41;
+743        b52 = alpha - b51;
+744        b62 = alpha - b61;
+745        /* 6 Constraints on Correlation structures */
+746        psi1 = 1. - b11 * b11 - b12 * b12;
+747        psi2 = 1. - b21 * b21 - b22 * b22;
+748        psi3 = 1. - b31 * b31 - b32 * b32;
+749        psi4 = 1. - b41 * b41 - b42 * b42;
+750        psi5 = 1. - b51 * b51 - b52 * b52;
+751        psi6 = 1. - b61 * b61 - b62 * b62;
+752        vnames
+753        D = [var1-var6],
+754        B = [factor1 factor2],
+755        Psi = D;
+756        run;
+
+NOTE: Your code contains 12 program statements.
+NOTE: A central symmetric matrix is not specified in term 1 of the COSAN model.
+NOTE: The means of one or more variables in the input data set WORK.KINZER are missing and are assumed to be 0.
+NOTE: The standard deviations of one or more variables in the input data set WORK.KINZER are missing and are assumed to be 1.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The PROCEDURE CALIS printed pages 47-57.
+
+757        run;
+758        quit;
+759        
+760        
+761        
+762        
+The SAS System
+
+763        

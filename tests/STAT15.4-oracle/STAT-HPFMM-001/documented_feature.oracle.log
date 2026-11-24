@@ -1,0 +1,57 @@
+The SAS System
+
+6793       
+6794       /* STAT-HPFMM-001: HPFMM — Data input, variable roles, and basic options
+6795        * Source: S154 / Chapter 58 / `PROC HPFMM Statement` (PDF pp. 4532–4544); S154 / Chapter 58 / `BY Statement` (PDF pp. 4553–4554); S154 / Chapter
+6795     !  58 / `FREQ Statement` (PDF p. 4554); S154 / Chapter 58 / `ID Statement` (PDF pp. 4554–4555); S154 / Chapter 58 / `WEIGHT Statement` (PDF p. 4570).
+6796        * Discriminates: Verified default procedure context; explicit statements: FREQ
+6797        */
+6798       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+6798     ! validmemname=compatible locale=en_US;
+6799       %let syscc=0;
+6800       title; footnote;
+6801       ods _all_ close;
+6802       ods listing gpath="%sysfunc(pathname(work))";
+6803       ods graphics off;
+6804       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.OUTCAN (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+6804     !                                         quit;
+
+
+6805       ods path work.templat(update) sashelp.tmplmst(read);
+6806       
+6807       data yeast;
+6808       input count f;
+6809       n = 5;
+6810       datalines;
+
+NOTE: The data set WORK.YEAST has 6 observations and 3 variables.
+
+6817       ;
+6818       proc hpfmm data=yeast seed=314159;
+6819       model count/n = / k=2;
+6820       freq f;
+6821       run;
+
+NOTE: The HPFMM procedure is executing in single-machine mode.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: There were 6 observations read from the data set WORK.YEAST.
+NOTE: The PROCEDURE HPFMM printed page 541.
+
+6822       quit;
+6823       
+6824       
+6825       
+6826       
+The SAS System
+
+6827       

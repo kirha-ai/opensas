@@ -1,0 +1,59 @@
+The SAS System
+
+3839       
+3840       /* STAT-MIXED-008: MIXED — PRIOR
+3841        * Source: S154 / Chapter 84 / `PRIOR Statement` (PDF pp. 6671–6675).
+3842        * Discriminates: Getting Started: MIXED Procedure
+3843        */
+3844       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+3844     ! validmemname=compatible locale=en_US;
+3845       %let syscc=0;
+3846       title; footnote;
+3847       ods _all_ close;
+3848       ods listing gpath="%sysfunc(pathname(work))";
+3849       ods graphics off;
+3850       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.PR (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+3850     !                                         quit;
+
+
+3851       ods path work.templat(update) sashelp.tmplmst(read);
+3852       
+3853       data heights;
+3854       input Family Gender$ Height @@;
+3855       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.HEIGHTS has 18 observations and 3 variables.
+
+3859       ;
+3860       proc mixed data=heights;
+3861       class Family Gender;
+3862       model Height = Gender Family Family*Gender;
+3863       run;
+
+NOTE: The PROCEDURE MIXED printed page 301.
+
+3864       proc mixed;
+3865       class Family Gender;
+3866       model Height = Gender;
+3867       random Family Family*Gender;
+3868       run;
+
+NOTE: Convergence criteria met.
+NOTE: The PROCEDURE MIXED printed page 302.
+
+3869       
+3870       
+3871       
+3872       
+The SAS System
+
+3873       

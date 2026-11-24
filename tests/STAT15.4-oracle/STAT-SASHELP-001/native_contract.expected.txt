@@ -1,0 +1,246 @@
+
+NAME            TYPE    LENGTH    VARNUM    LABEL
+
+Atlanta           1        8         1           
+Chicago           1        8         2           
+Denver            1        8         3           
+Houston           1        8         4           
+LosAngeles        1        8         5           
+Miami             1        8         6           
+NewYork           1        8         7           
+SanFrancisco      1        8         8           
+Seattle           1        8         9           
+WashingtonDC      1        8        10           
+City              2       15        11           
+
+                                             Los                New       San                  Washington
+Atlanta    Chicago    Denver    Houston    Angeles    Miami    York    Francisco    Seattle        DC        City
+
+     0          .         .          .        .         .        .         .           .            .        Atlanta    
+   587          0         .          .        .         .        .         .           .            .        Chicago    
+  1212        920         0          .        .         .        .         .           .            .        Denver     
+   701        940       879          0        .         .        .         .           .            .        Houston    
+  1936       1745       831       1374        0         .        .         .           .            .        Los Angeles
+
+Observations
+------------
+          10
+
+NAME                  TYPE    LENGTH    VARNUM    LABEL
+
+Latitude                1        8         1           
+Longitude               1        8         2           
+Depth                   1        8         3           
+Magnitude               1        8         4           
+dNearestStation         1        8         5           
+RootMeanSquareTime      1        8         6           
+Type                    2       10         7           
+
+                                                             Root
+                                                    d        Mean
+                                                 Nearest    Square
+Latitude    Longitude     Depth     Magnitude    Station     Time        Type
+
+ 35.6880     -121.129     6.2500       2.75      0.02121    0.0700    earthquake
+ 41.9009     -119.622     0.0000       4.59      0.50700    0.0742    earthquake
+ 41.8836     -119.641     0.5329       3.19      0.49300    0.0000    earthquake
+ 41.8897     -119.640     0.5077       3.12      0.49400    0.0119    earthquake
+ 40.8783     -123.270    33.5700       2.60      0.22160    0.0600    earthquake
+
+Observations
+------------
+       15578
+
+NAME         TYPE    LENGTH    VARNUM    LABEL
+
+Latitude       1        8         1           
+Longitude      1        8         2           
+Name           2       34         3           
+Area           2       14         4           
+Type           2        9         5           
+Farenheit      1        8         6           
+Celsius        1        8         7           
+
+Latitude    Longitude    Name                                 Area            Type       Farenheit    Celsius
+
+ 51.925      -177.160    Fumaroles on Kanaga Island           Adak          Hotspring       219         104  
+ 65.858      -164.710    Serpentine Hot Springs               Bendeleben    Hotspring       171          77  
+ 53.851      -166.918    Hot Springs Near Makushin Volcano    Unalaska      Hotspring         H           H  
+ 53.877      -166.448    Hot Springs Near Summer Bay          Unalaska      Hotspring         H           H  
+ 52.270      -174.042    Hot Springs on Atka Island           Atka          Hotspring         H           H  
+
+Observations
+------------
+        1587
+
+NAME     TYPE    LENGTH    VARNUM           LABEL
+
+East       1        8         1                         
+North      1        8         2                         
+Thick      1        8         3      Coal Seam Thickness
+
+East    North    Thick
+
+ 0.7     59.6     34.1
+ 2.1     82.7     42.2
+ 4.7     75.1     39.5
+ 4.8     52.8     34.3
+ 5.9     67.1     37.0
+
+Observations
+------------
+          75
+
+NAME           TYPE    LENGTH    VARNUM    LABEL
+
+LogVoteRate      1        8         1      Log Votes Cast per County            
+Pop              1        8         2      Population of 18 Years and Older     
+Edu              1        8         3      Population with 12th Grade and Higher
+Houses           1        8         4      Number of Owned Housing Units        
+Income           1        8         5      Aggregate Income                     
+Longitude        1        8         6      Scaled Longitude                     
+Latitude         1        8         7      Scaled Latitude                      
+
+ LogVote
+  Rate        Pop        Edu       Houses     Income    Longitude    Latitude
+
+-0.66156     9.9729     9.2463    9.00405    12.1349     -0.86641     0.32542
+-0.65086    10.9033    10.2212    9.96576    13.0566     -0.87755     0.30655
+-0.61711     9.7222     8.7535    8.70765    11.6306     -0.85389     0.31863
+-0.63907     9.2737     8.1831    8.27741    11.2437     -0.87127     0.32997
+-0.70027    10.1515     9.2077    9.24068    12.1551     -0.86566     0.33980
+
+Observations
+------------
+        3107
+
+NAME         TYPE    LENGTH    VARNUM    LABEL
+
+Name           2       18         1      Player's Name              
+Team           2       14         2      Team at the End of 1986    
+nAtBat         1        8         3      Times at Bat in 1986       
+nHits          1        8         4      Hits in 1986               
+nHome          1        8         5      Home Runs in 1986          
+nRuns          1        8         6      Runs in 1986               
+nRBI           1        8         7      RBIs in 1986               
+nBB            1        8         8      Walks in 1986              
+YrMajor        1        8         9      Years in the Major Leagues 
+CrAtBat        1        8        10      Career Times at Bat        
+CrHits         1        8        11      Career Hits                
+CrHome         1        8        12      Career Home Runs           
+CrRuns         1        8        13      Career Runs                
+CrRbi          1        8        14      Career RBIs                
+CrBB           1        8        15      Career Walks               
+League         2        8        16      League at the End of 1986  
+Division       2        8        17      Division at the End of 1986
+Position       2        8        18      Position(s) in 1986        
+nOuts          1        8        19      Put Outs in 1986           
+nAssts         1        8        20      Assists in 1986            
+nError         1        8        21      Errors in 1986             
+Salary         1        8        22      1987 Salary in $ Thousands 
+Div            2       16        23      League and Division        
+logSalary      1        8        24      Log Salary                 
+
+                             n                                 Cr
+                             At   n    n    n             Yr   At   Cr   Cr   Cr   Cr                                   n    n     n                log
+Name                Team    Bat Hits Home Runs nRBI nBB Major  Bat Hits Home Runs Rbi CrBB  League  Division Position Outs Assts Error Salary Div  Salary
+
+Allanson, Andy    Cleveland 293   66   1   30   29   14    1   293   66    1   30  29   14 American   East      C      446   33    20      .  AE   .     
+Ashby, Alan       Houston   315   81   7   24   38   39   14  3449  835   69  321 414  375 National   West      C      632   43    10   475.0 NW  6.16331
+Davis, Alan       Seattle   479  130  18   66   72   76    3  1624  457   63  224 266  263 American   West      1B     880   82    14   480.0 AW  6.17379
+Dawson, Andre     Montreal  496  141  20   65   78   37   11  5628 1575  225  828 838  354 National   East      RF     200   11     3   500.0 NE  6.21461
+Galarraga, Andres Montreal  321   87  10   39   42   30    2   396  101   12   48  46   33 National   East      1B     805   40     4    91.5 NE  4.51634
+
+Observations
+------------
+         322
+
+NAME           TYPE    LENGTH    VARNUM    LABEL
+
+X                1        8         1           
+Y                1        8         2           
+Elevation        1        8         3           
+Gradient         1        8         4           
+Aluminum         1        8         5           
+Boron            1        8         6           
+Calcium          1        8         7           
+Copper           1        8         8           
+Iron             1        8         9           
+Potassium        1        8        10           
+Magnesium        1        8        11           
+Manganese        1        8        12           
+Sodium           1        8        13           
+Phosphorus       1        8        14           
+Sulphur          1        8        15           
+Zinc             1        8        16           
+Ammonia          1        8        17           
+Nitrate          1        8        18           
+TotalNitro       1        8        19           
+MinAmmonia       1        8        20           
+MinNitrate       1        8        21           
+MinNitrogen      1        8        22           
+pH               1        8        23           
+Trees            1        8        24           
+
+                                                                                                                 M
+                                                                         P                        T    M    M    i
+                  E                                  P    M    M         h                        o    i    i    n
+                  l    G    A                        o    a    a         o                        t    n    n    N
+                  e    r    l         C              t    g    n         s    S         A    N    a    A    N    i
+                  v    a    u         a    C         a    n    g    S    p    u         m    i    l    m    i    t
+                  a    d    m    B    l    o         s    e    a    o    h    l         m    t    N    m    t    r         T
+                  t    i    i    o    c    p    I    s    s    n    d    o    p    Z    o    r    i    o    r    o         r
+                  i    e    n    r    i    p    r    i    i    e    i    r    h    i    n    a    t    n    a    g         e
+                  o    n    u    o    u    e    o    u    u    s    u    u    u    n    i    t    r    i    t    e    p    e
+  X        Y      n    t    m    n    m    r    n    m    m    e    m    s    r    c    a    e    o    a    e    n    H    s
+
+ 11.7    151.1    .    .    .    .    .    .    .    .    .    .    .    .    .    .    .    .    .    .    .    .    .    1
+998.9    430.5    .    .    .    .    .    .    .    .    .    .    .    .    .    .    .    .    .    .    .    .    .    1
+980.1    433.5    .    .    .    .    .    .    .    .    .    .    .    .    .    .    .    .    .    .    .    .    .    1
+986.5    425.8    .    .    .    .    .    .    .    .    .    .    .    .    .    .    .    .    .    .    .    .    .    1
+944.1    415.1    .    .    .    .    .    .    .    .    .    .    .    .    .    .    .    .    .    .    .    .    .    1
+
+Observations
+------------
+       24205
+
+NAME           TYPE    LENGTH    VARNUM    LABEL
+
+LowBirthWgt      2        3         1           
+Married          2        3         2           
+AgeGroup         1        8         3           
+Race             2        9         4           
+Drinking         2        3         5           
+Death            2        3         6           
+Smoking          2        3         7           
+SomeCollege      2        3         8           
+
+  Low                   Age                                                Some
+BirthWgt    Married    Group     Race     Drinking    Death    Smoking    College
+
+  No          No         3      Asian        No        No        No         Yes  
+  No          No         2      White        No        No        No         No   
+  Yes         Yes        2      Native       No        Yes       No         No   
+  No          No         2      White        No        No        No         No   
+  No          No         2      White        No        No        No         Yes  
+
+Observations
+------------
+      100000
+
+NAME    TYPE    LENGTH    VARNUM    LABEL
+
+Age       1        8         1           
+BMI       1        8         2           
+
+Age     BMI
+
+2.0    18.6
+2.0    17.1
+2.0    19.0
+2.0    16.8
+2.1    19.0
+
+Observations
+------------
+        3264

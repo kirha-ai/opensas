@@ -1,0 +1,80 @@
+The SAS System
+
+23733      
+23734      /* STAT-GLIMMIX-009: GLIMMIX — Design-Adjusted MBN Estimator / Residual-Based Estimators
+23735       * Source: S154 / Chapter 52 / `Design-Adjusted MBN Estimator` (PDF pp. 3859–3861); S154 / Chapter 52 / `Residual-Based Estimators` (PDF pp.
+23735    ! 3858–3859).
+23736       * Discriminates: Example 52.8: Adjusted Covariance Matrices of Fixed Effects
+23737       */
+23738      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+23738    ! validmemname=compatible locale=en_US;
+23739      %let syscc=0;
+23740      title; footnote;
+23741      ods _all_ close;
+23742      ods listing gpath="%sysfunc(pathname(work))";
+23743      ods graphics off;
+23744      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.MULTICENTER (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+23744    !                                         quit;
+
+
+23745      ods path work.templat(update) sashelp.tmplmst(read);
+23746      
+23747      data pr;
+23748      input child gender$ y1 y2 y3 y4;
+23749      array yy y1-y4;
+23750      do time=1 to 4;
+23751      age = time*2 + 6;
+23752      y = yy{time};
+23753      output;
+23754      end;
+23755      drop y1-y4;
+23756      datalines;
+
+NOTE: The data set WORK.PR has 108 observations and 5 variables.
+
+23784      ;
+23785      proc glimmix data=pr;
+23786      class child gender time;
+23787      model y = gender age gender*age / covb(details) ddfm=kr;
+23788      random intercept age / type=chol sub=child;
+23789      random time / subject=child type=ar(1) residual;
+23790      ods select ModelInfo CovB CovBModelBased CovBDetails;
+23791      run;
+
+
+
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: At least one element of the gradient is greater than 1e-3.
+NOTE: The PROCEDURE GLIMMIX printed page 2411.
+
+23792      proc glimmix data=pr;
+23793      class child gender time;
+23794      model y = gender age gender*age / covb(details)
+23795      ddfm=kr(firstorder);
+23796      random intercept age / type=chol sub=child;
+23797      random time / subject=child type=ar(1) residual;
+23798      ods select ModelInfo CovB CovBDetails;
+23799      run;
+
+
+
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: At least one element of the gradient is greater than 1e-3.
+NOTE: The PROCEDURE GLIMMIX printed page 2412.
+
+23800      
+23801      
+23802      
+23803      
+The SAS System
+
+23804      

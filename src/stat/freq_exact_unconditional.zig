@@ -856,8 +856,6 @@ test "RR NOSCORE high alpha follows independently inverted unconditional tail" {
 }
 
 // Support evidence lives only in /tmp/opensas-stat-batch2/EXACT-RR-support/.
-// Command: /Users/thomas/sas/bin/sasrun .../transition-b0.sas -f text
-// -o .../transition-b0.txt -l .../transition-b0.log (likewise b1..b3).
 // ODS nValue1 BEST32 and the plain listing independently identify column1.
 // Near-crossing runtime stops are excluded, never treated as numerical endpoints.
 test "SAS RR NOSCORE outer profile predicts transitions and held-out reversals" {

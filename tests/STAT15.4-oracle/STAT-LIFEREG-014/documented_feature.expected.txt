@@ -1,0 +1,96 @@
+
+The LIFEREG Procedure
+
+           Model Information
+
+Data Set                      WORK.MICRO
+Dependent Variable               Log(t1)
+Dependent Variable               Log(t2)
+Weight Variable                        f
+Number of Observations                13
+Noncensored Values                     0
+Right Censored Values                  6
+Left Censored Values                   1
+Interval Censored Values               6
+Number of Parameters                   2
+Name of Distribution           Lognormal
+Log Likelihood              -104.1208276
+
+
+Number of Observations Read          14
+Number of Observations Used          13
+Sum of Weights                     1423
+Missing Values                        1
+
+
+           Fit Statistics
+
+-2 Log Likelihood             208.242
+AIC (smaller is better)       212.242
+AICC (smaller is better)      212.250
+BIC (smaller is better)       222.763
+
+
+      Fit Statistics (Unlogged Response)
+
+-2 Log Likelihood                       208.242
+Lognormal AIC (smaller is better)       212.242
+Lognormal AICC (smaller is better)      212.250
+Lognormal BIC (smaller is better)       222.763
+
+
+Algorithm converged.                                                       
+
+
+
+
+          Analysis of Maximum Likelihood Parameter Estimates
+ 
+                          Standard   95% Confidence     Chi-
+Parameter     DF Estimate    Error       Limits       Square Pr > ChiSq
+
+Intercept      1  26.6131   6.1860  14.4888  38.7374   18.51     <.0001
+Scale          1   9.3012   2.6423   5.3300  16.2310                   
+
+
+                                            Iteration History for the Turnbull Estimate of the CDF
+Iteration    Loglikelihood        (., 6)       (6, 12)      (24, 48)     (48, 168)    (168, 500)    (500, 1000)    (1000, 2000)     (2000, .)
+
+        0       -1133.4051         0.125         0.125         0.125         0.125         0.125          0.125           0.125         0.125
+       25       -104.16622    0.00421644    0.00140548    0.00140648    0.00173338    0.00237846     0.00846094      0.04565407    0.93474475
+       50       -101.15151    0.00421644    0.00140548    0.00140648    0.00173293    0.00234891     0.00727679      0.01174486    0.96986811
+       75       -101.06641    0.00421644    0.00140548    0.00140648    0.00173293    0.00234891     0.00727127      0.00835638     0.9732621
+      100       -101.06534    0.00421644    0.00140548    0.00140648    0.00173293    0.00234891     0.00727125      0.00801814    0.97360037
+      125       -101.06533    0.00421644    0.00140548    0.00140648    0.00173293    0.00234891     0.00727125      0.00798438    0.97363413
+      130       -101.06533    0.00421644    0.00140548    0.00140648    0.00173293    0.00234891     0.00727125        0.007983    0.97363551
+
+
+Turnbull algorithm converged.                                              
+
+
+   Lower       Upper                        Reduced        Lagrange
+Lifetime    Lifetime    Probability        Gradient      Multiplier
+
+       .           6         0.0042               0               0
+       6          12         0.0014               0               0
+      24          48         0.0014               0               0
+      48         168         0.0017               0               0
+     168         500         0.0023               0               0
+     500        1000         0.0073    -7.219342E-9               0
+    1000        2000         0.0080    -0.037063236               0
+    2000           .         0.9736    0.0003038877               0
+
+
+                  Cumulative Probability Estimates
+                                         Pointwise 95%
+                                          Confidence
+   Lower       Upper     Cumulative         Limits         Standard
+Lifetime    Lifetime    Probability     Lower     Upper       Error
+
+       6           6         0.0042    0.0019    0.0094      0.0017
+      12          24         0.0056    0.0028    0.0112      0.0020
+      48          48         0.0070    0.0038    0.0130      0.0022
+     168         168         0.0088    0.0047    0.0164      0.0028
+     500         500         0.0111    0.0058    0.0211      0.0037
+    1000        1000         0.0184    0.0094    0.0357      0.0063
+    2000        2000         0.0264    0.0124    0.0553      0.0101

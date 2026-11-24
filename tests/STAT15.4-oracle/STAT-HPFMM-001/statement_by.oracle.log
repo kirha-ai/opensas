@@ -1,0 +1,69 @@
+The SAS System
+
+1318       
+1319       /* STAT-HPFMM-001: HPFMM — Data input, variable roles, and basic options
+1320        * Source: S154 / Chapter 58 / `PROC HPFMM Statement` (PDF pp. 4532–4544); S154 / Chapter 58 / `BY Statement` (PDF pp. 4553–4554); S154 / Chapter
+1320     !  58 / `FREQ Statement` (PDF p. 4554); S154 / Chapter 58 / `ID Statement` (PDF pp. 4554–4555); S154 / Chapter 58 / `WEIGHT Statement` (PDF p. 4570).
+1321        * Discriminates: Two explicit BY groups contain identical inputs, exposing group boundaries and per-group results.
+1322        */
+1323       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+1323     ! validmemname=compatible locale=en_US;
+1324       %let syscc=0;
+1325       title; footnote;
+1326       ods _all_ close;
+1327       ods listing gpath="%sysfunc(pathname(work))";
+1328       ods graphics off;
+1329       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.OUTCAN (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+1329     !                                         quit;
+
+
+1330       ods path work.templat(update) sashelp.tmplmst(read);
+1331       
+1332       data yeast;
+1333       input count f;
+1334       n = 5;
+1335       datalines;
+
+NOTE: The data set WORK.YEAST has 6 observations and 3 variables.
+
+1342       ;
+1343       data _oracle_input; set yeast; do _oracle_by=1 to 2; output; end; run;
+
+NOTE: There were 6 observations read from the data set WORK.YEAST.
+NOTE: The data set WORK._ORACLE_INPUT has 12 observations and 4 variables.
+
+1344       proc sort data=_oracle_input; by _oracle_by; run;
+
+NOTE: There were 12 observations read from the data set WORK._ORACLE_INPUT.
+NOTE: The data set WORK._ORACLE_INPUT has 12 observations and 4 variables.
+
+1345       proc hpfmm data=_oracle_input seed=314159;
+1346       by _oracle_by;
+1347       model count/n = / k=2;
+1348       freq f;
+1349       run;
+
+NOTE: The HPFMM procedure is executing in single-machine mode.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The above message was for the following BY group:
+      _oracle_by=1
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The above message was for the following BY group:
+      _oracle_by=2
+NOTE: There were 12 observations read from the data set WORK._ORACLE_INPUT.
+NOTE: The PROCEDURE HPFMM printed pages 112-114.
+
+1350       quit;
+1351       
+1352       
+1353       
+1354       
+The SAS System
+
+1355       

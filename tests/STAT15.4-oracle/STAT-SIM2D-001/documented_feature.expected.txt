@@ -1,0 +1,43 @@
+
+The SIM2D Procedure
+Simulation: SIM1, Dependent Variable: Thick
+
+Number of Observations Read          75
+Number of Observations Used          75
+
+
+       Simulation Information
+
+Simulation Grid Points              9
+Type                      Conditional
+Number of Realizations              2
+
+
+Covariance Model Information
+
+Type                Gaussian
+Sill                  7.4599
+Range                30.1111
+Effective Range    52.153955
+Nugget Effect           1E-8
+
+LABEL    VARNAME    _ITER_    GXC    GYC     SVALUE
+
+SIM1      Thick        1        0      0    41.1585
+SIM1      Thick        1        0     10    40.4828
+SIM1      Thick        1        0     20    38.1323
+SIM1      Thick        1       10      0    44.3963
+SIM1      Thick        1       10     10    42.7452
+SIM1      Thick        1       10     20    40.2856
+SIM1      Thick        1       20      0    44.4241
+SIM1      Thick        1       20     10    43.2885
+SIM1      Thick        1       20     20    41.1602
+SIM1      Thick        2        0      0    41.0421
+SIM1      Thick        2        0     10    39.9805
+SIM1      Thick        2        0     20    37.8212
+SIM1      Thick        2       10      0    44.3887
+SIM1      Thick        2       10     10    42.5952
+SIM1      Thick        2       10     20    40.2178
+SIM1      Thick        2       20      0    44.3952
+SIM1      Thick        2       20     10    43.2894
+SIM1      Thick        2       20     20    41.1562

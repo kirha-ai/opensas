@@ -1,0 +1,57 @@
+The SAS System
+
+16024      
+16025      /* STAT-SEQDESIGN-009: SEQDESIGN — Applicable One-Sample Tests and Sample Size Computation / Applicable Two-Sample Tests and Sample Size
+16025    ! Computation / Applicable Regression Parameter Tests and Sample Size Computation
+16026       * Source: S154 / Chapter 110 / `Applicable One-Sample Tests and Sample Size Computation` (PDF pp. 9005–9007); S154 / Chapter 110 / `Applicable
+16026    ! Two-Sample Tests and Sample Size Computation` (PDF pp. 9007–9015); S154 / Chapter 110 / `Applicable Regression Parameter Tests and Sample Size
+16026    ! Computation` (PDF pp. 9015–9018).
+16027       * Discriminates: Example 110.14: Computing Sample Size for Survival Data That Have Uniform Accrual
+16028       */
+16029      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+16029    ! validmemname=compatible locale=en_US;
+16030      %let syscc=0;
+16031      title; footnote;
+16032      ods _all_ close;
+16033      ods listing gpath="%sysfunc(pathname(work))";
+16034      ods graphics off;
+16035      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+16035    !                                         quit;
+
+
+16036      ods path work.templat(update) sashelp.tmplmst(read);
+16037      
+16038      proc seqdesign;
+16039      ErrorSpend: design nstages=4 method=errfuncobf
+16040      ;
+16041      samplesize model=twosamplesurvival
+16042      ( nullhazard=0.03466 hazard=0.01733
+16043      accrual=uniform accrate=15);
+16044      run;
+
+NOTE: The PROCEDURE SEQDESIGN printed page 1153.
+
+16045      proc seqdesign;
+16046      ErrorSpend: design nstages=4 method=errfuncobf
+16047      ;
+16048      samplesize model(ceiladjdesign=include)=twosamplesurvival
+16049      ( nullhazard=0.03466 hazard=0.01733
+16050      accrual=uniform accrate=15 acctime=18
+16051      ceiling=time);
+16052      run;
+
+NOTE: The PROCEDURE SEQDESIGN printed page 1154.
+
+16053      
+16054      
+16055      
+16056      
+The SAS System
+
+16057      

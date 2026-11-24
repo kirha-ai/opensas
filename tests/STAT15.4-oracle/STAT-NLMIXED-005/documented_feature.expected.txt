@@ -1,0 +1,113 @@
+
+The NLMIXED Procedure
+
+                         Specifications
+
+Data Set                                    WORK.INHALER        
+Dependent Variable                          clarity             
+Distribution for Dependent Variable         General             
+Random Effects                              u                   
+Distribution for Random Effects             Normal              
+Subject Variable                            sub                 
+Replicate Variable                          freq                
+Optimization Technique                      Dual Quasi-Newton   
+Integration Method                          Adaptive Gaussian   
+                                            Quadrature          
+
+
+               Dimensions
+
+Observations Used                     38
+Observations Not Used                  0
+Total Observations                    38
+Subjects                             286
+Max Obs per Subject                    2
+Parameters                             7
+Quadrature Points                      5
+
+
+                                      Initial Parameters
+ 
+                                                                                      Negative
+                                                                                           Log
+      b0          b1          b2          b3          sd          i1          i2    Likelihood
+
+       0           0           0           0           1           1           1    538.484276
+
+
+                          Iteration History
+ 
+                      Negative
+                           Log                   Maximum
+Iteration Calls     Likelihood    Difference    Gradient       Slope
+
+       1      4       476.3825      62.10176     43.7506    -1431.40
+       2      7       463.2282      13.15431     14.2465    -106.753
+       3      9       458.5281       4.70008     48.3132    -33.0389
+       4     11       450.9757      7.552383     22.6010    -40.9954
+       5     14       448.0127      2.963033     14.8688    -16.7453
+       6     17       447.2452      0.767549     7.77419    -2.26743
+       7     19       446.7277      0.517483     3.79353    -1.59278
+       8     22       446.5183      0.209396     0.86864    -0.37801
+       9     26       446.5145      0.003745     0.32857    -0.02356
+      10     29       446.5133      0.001187    0.056778    -0.00183
+      11     32       446.5133      0.000027    0.010785    -0.00004
+      12     35       446.5133      3.956E-6    0.004922    -5.41E-6
+      13     38       446.5133      1.989E-7    0.000470       -4E-7
+
+
+          NOTE: GCONV convergence criterion satisfied.          
+
+
+             Fit Statistics
+
+-2 Log Likelihood                  893.0
+AIC (smaller is better)            907.0
+AICC (smaller is better)           910.8
+BIC (smaller is better)            932.6
+
+
+                                        Parameter Estimates
+ 
+                         Standard                                      95% Confidence
+Parameter    Estimate       Error      DF    t Value    Pr > |t|           Limits           Gradient
+
+b0            -0.6364      0.1342     285      -4.74      <.0001     -0.9006     -0.3722    0.000470
+b1             0.6007      0.1770     285       3.39      0.0008      0.2523      0.9491    0.000265
+b2             0.6015      0.1582     285       3.80      0.0002      0.2900      0.9129    0.000080
+b3            -1.4817      0.2385     285      -6.21      <.0001     -1.9512     -1.0122    0.000102
+sd             0.6599      0.1312     285       5.03      <.0001      0.4017      0.9181    -0.00009
+i1             1.7450      0.1474     285      11.84      <.0001      1.4548      2.0352    0.000202
+i2             0.5985      0.1427     285       4.19      <.0001      0.3176      0.8794    0.000087
+
+
+                   Correlation Matrix of Parameter Estimates
+ 
+           b0         b1         b2         b3         sd         i1         i2
+
+b0     1.0000    -0.7370    -0.6739     0.4926    -0.2751    -0.0972    -0.0405
+b1    -0.7370     1.0000     0.5230    -0.6353     0.1864     0.1892     0.0524
+b2    -0.6739     0.5230     1.0000    -0.7120     0.2035     0.1998     0.0455
+b3     0.4926    -0.6353    -0.7120     1.0000    -0.3304    -0.3193    -0.0865
+sd    -0.2751     0.1864     0.2035    -0.3304     1.0000     0.6081     0.1839
+i1    -0.0972     0.1892     0.1998    -0.3193     0.6081     1.0000     0.0206
+i2    -0.0405     0.0524     0.0455    -0.0865     0.1839     0.0206     1.0000
+
+
+                                     Additional Estimates
+ 
+                       Standard
+Label      Estimate       Error      DF    t Value    Pr > |t|    Alpha       Lower       Upper
+
+thresh2      1.7450      0.1474     285      11.84      <.0001     0.05      1.4548      2.0352
+thresh3      2.3435      0.2073     285      11.31      <.0001     0.05      1.9355      2.7516
+icc          0.3034     0.08402     285       3.61      0.0004     0.05      0.1380      0.4687
+
+
+Correlation Matrix of Additional Estimates
+ 
+Label        Corr1      Corr2      Corr3
+
+thresh2     1.0000     0.7254     0.6081
+thresh3     0.7254     1.0000     0.5591
+icc         0.6081     0.5591     1.0000

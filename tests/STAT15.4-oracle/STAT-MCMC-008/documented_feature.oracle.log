@@ -1,0 +1,82 @@
+The SAS System
+
+16080      
+16081      /* STAT-MCMC-008: MCMC — Specifying a New Distribution / Truncation and Censoring / Some Useful SAS Functions
+16082       * Source: S154 / Chapter 80 / `Specifying a New Distribution` (PDF pp. 6174–6175); S154 / Chapter 80 / `Truncation and Censoring` (PDF pp.
+16082    ! 6178–6180); S154 / Chapter 80 / `Some Useful SAS Functions` (PDF pp. 6180–6182).
+16083       * Discriminates: Example 80.17: Normal Regression with Interval Censoring
+16084       */
+16085      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+16085    ! validmemname=compatible locale=en_US;
+16086      %let syscc=0;
+16087      title; footnote;
+16088      ods _all_ close;
+16089      ods listing gpath="%sysfunc(pathname(work))";
+16090      ods graphics off;
+16091      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.POSTOUT (memtype=DATA).
+NOTE: Deleting WORK.RATS (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+16091    !                                         quit;
+
+
+16092      ods path work.templat(update) sashelp.tmplmst(read);
+16093      
+16094      title 'Normal Regression with Interval Censoring';
+16095      data cosmetic;
+16096      t = .;
+16097      label tl = 'Time to Event (Months)';
+16098      input tl tr @@;
+16099      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.COSMETIC has 46 observations and 3 variables.
+
+16106      ;
+16107      proc mcmc data=cosmetic outpost=postout seed=1 nmc=1000 missing=AC nbi=200;
+16108      ods select PostSumInt;
+16109      parms mu 60 sigma 50;
+16110      prior mu ~ normal(0, sd=1000);
+16111      prior sigma ~ gamma(shape=0.001,iscale=0.001);
+16112      if (tl^=. and tr^=. and tl=tr) then
+16113      llike = logpdf('normal',tr,mu,sigma);
+16114      else if (tl^=. and tr=.) then
+16115      llike = logsdf('normal',tl,mu,sigma);
+16116      else if (tl=. and tr^=.) then
+16117      llike = logcdf('normal',tr,mu,sigma);
+16118      else
+16119      llike = log(sdf('normal',tl,mu,sigma) -
+16120      sdf('normal',tr,mu,sigma));
+16121      model general(llike);
+16122      run;
+
+NOTE: Tuning the proposal distribution.
+NOTE: Generating the burn-in samples.
+NOTE: Beginning sample generation.
+NOTE: The data set WORK.POSTOUT has 1000 observations and 6 variables.
+NOTE: The PROCEDURE MCMC printed page 1293.
+
+16123      proc mcmc data=cosmetic outpost=postout seed=117207154
+16124      nmc=1000 missing=ACMODELY nbi=200;
+16125      ods select none;
+16126      parms mu 60 sigma 50;
+16127      prior mu ~ normal(0, sd=1000);
+16128      prior sigma ~ gamma(shape=0.001,iscale=0.001);
+16129      model t ~ normal(mu, sd=sigma, clower=tl, cupper=tr);
+16130      run;
+
+NOTE: Tuning the proposal distribution.
+NOTE: Generating the burn-in samples.
+NOTE: Beginning sample generation.
+NOTE: The data set WORK.POSTOUT has 1000 observations and 53 variables.
+
+16131      
+16132      
+16133      
+16134      
+The SAS System
+
+16135      

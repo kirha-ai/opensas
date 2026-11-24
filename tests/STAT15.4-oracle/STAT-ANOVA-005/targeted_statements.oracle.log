@@ -1,0 +1,51 @@
+The SAS System
+
+430        
+431        /* STAT-ANOVA-005: ANOVA — REPEATED
+432         * Source: S154 / Chapter 29 / `REPEATED Statement` (PDF pp. 1129–1134).
+433         * Discriminates: Explicit REPEATED statement behavior on seeded synthetic inputs.
+434         */
+435        options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+435      ! validmemname=compatible locale=en_US;
+436        %let syscc=0;
+437        title; footnote;
+438        ods _all_ close;
+439        ods listing gpath="%sysfunc(pathname(work))";
+440        ods graphics off;
+441        proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SAMPLE (memtype=DATA).
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+441      !                                         quit;
+
+
+442        ods path work.templat(update) sashelp.tmplmst(read);
+443        
+444        data sample;
+445        call streaminit(314159);
+446        do block=1 to 4; do group=1 to 2; do replicate=1 to 5;
+447        y=10+block+2*group+rand('normal');
+448        y1=y+rand('normal'); y2=y+1+rand('normal'); y3=y+2+rand('normal');
+449        output;
+450        end; end; end;
+451        run;
+
+NOTE: The data set WORK.SAMPLE has 40 observations and 7 variables.
+
+452        proc anova data=sample; class group; model y1-y3=group; repeated time 3 (0 1 2) polynomial / summary; run;
+
+NOTE: The Huynh-Feldt epsilon and the corresponding adjusted p-value have been enhanced to include a correction based on Lecoutre (1991). Use the UEPSDEF=HF 
+      option on the REPEATED statement to revert to the previous definition.
+452      !                                                                                                            quit;
+
+NOTE: The PROCEDURE ANOVA printed pages 36-43.
+
+453        
+454        
+455        
+456        
+The SAS System
+
+457        

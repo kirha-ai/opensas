@@ -1,0 +1,146 @@
+The SAS System
+
+1568       
+1569       /* STAT-MCMC-019: MCMC — Regenerating Diagnostics Plots / Caterpillar Plot / ODS Graphics
+1570        * Source: S154 / Chapter 80 / `Regenerating Diagnostics Plots` (PDF pp. 6208–6210); S154 / Chapter 80 / `Caterpillar Plot` (PDF pp. 6210–6212);
+1570     ! S154 / Chapter 80 / `ODS Graphics` (PDF pp. 6244–6245).
+1571        * Discriminates: Native chain diagnostics and an independently regenerated posterior trace from OUTPOST.
+1572        */
+1573       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+1573     ! validmemname=compatible locale=en_US;
+1574       %let syscc=0;
+1575       title; footnote;
+1576       ods _all_ close;
+1577       ods listing gpath="%sysfunc(pathname(work))";
+1578       ods graphics off;
+1579       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.POSTERIOR_PREDICTION (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SAMPLE (memtype=DATA).
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+1579     !                                         quit;
+
+
+1580       ods path work.templat(update) sashelp.tmplmst(read);
+1581       
+1582       data sample;
+1583        input x y group $ freq weight;
+1584        datalines;
+
+NOTE: The data set WORK.SAMPLE has 12 observations and 5 variables.
+
+1597       ;
+1598       run;
+1599       
+1600       ods graphics on;
+1601       ods trace on;
+1602       proc mcmc data=sample outpost=posterior seed=314159 nmc=1500 nbi=300 plots=all;
+1603        parms mu 80 sigma2 200;
+1604        prior mu ~ normal(0,var=10000);
+1605        prior sigma2 ~ igamma(shape=3,scale=300);
+1606        model x ~ normal(mu,var=sigma2);
+1607       run;
+
+
+Output Added:
+-------------
+Name:       NObs
+Label:      Number of Observations
+Template:   Stat.MCMC.NObs
+Path:       MCMC.NObs
+-------------
+
+Output Added:
+-------------
+Name:       Parameters
+Label:      Parameters
+Template:   Stat.MCMC.Parameters
+Path:       MCMC.Parameters
+-------------
+NOTE: Generating the burn-in samples.
+NOTE: Beginning sample generation.
+
+Output Added:
+-------------
+Name:       PosteriorSample
+Label:      Posterior Samples
+Template:   Stat.MCMC.PosteriorSample
+Path:       MCMC.PosteriorSample
+-------------
+
+Output Added:
+-------------
+Name:       PostSumInt
+Label:      Summary and Interval Statistics
+Template:   Stat.MCMC.PostSumInt
+Path:       MCMC.Summary.PostSumInt
+-------------
+
+Output Added:
+-------------
+Name:       ESS
+Label:      Effective Sample Sizes
+Template:   Stat.MCMC.ESS
+Path:       MCMC.Diagnostics.ESS
+-------------
+NOTE: Generating diagnostic plots.
+
+Output Added:
+-------------
+Name:       TADPanel
+Label:      mu
+Template:   Stat.MCMC.Graphics.TraceAutocorrDensity
+Path:       MCMC.TADPanel.TADPanel
+-------------
+
+Output Added:
+-------------
+Name:       TADPanel
+Label:      sigma2
+Template:   Stat.MCMC.Graphics.TraceAutocorrDensity
+Path:       MCMC.TADPanel.TADPanel
+-------------
+NOTE: The data set WORK.POSTERIOR has 1500 observations and 6 variables.
+NOTE: The PROCEDURE MCMC printed pages 128-130.
+
+1608       proc sgplot data=posterior;
+1609        series x=Iteration y=mu;
+1610       run;
+
+
+Output Added:
+-------------
+Name:       SGPlot
+Label:      The SGPlot Procedure
+Data Label: SGPlot
+Path:       SGPlot.SGPlot
+-------------
+NOTE: Listing image output written to /saswork/SAS_work0B6E00009FAA_odaws02-euw1.oda.sas.com/SAS_work530800009FAA_odaws02-euw1.oda.sas.com/SGPlot.png.
+NOTE: There were 1500 observations read from the data set WORK.POSTERIOR.
+
+1611       proc print data=posterior(obs=8); run;
+
+
+Output Added:
+-------------
+Name:       Print
+Label:      Data Set WORK.POSTERIOR
+Data Name:  ProcPrintTable
+Path:       Print.Print
+-------------
+NOTE: There were 8 observations read from the data set WORK.POSTERIOR.
+NOTE: The PROCEDURE PRINT printed page 131.
+
+1612       ods trace off;
+1613       ods graphics off;
+1614       
+1615       
+1616       
+1617       
+The SAS System
+
+1618       

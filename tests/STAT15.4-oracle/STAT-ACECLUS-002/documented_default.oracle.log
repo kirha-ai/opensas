@@ -1,0 +1,71 @@
+The SAS System
+
+4005       
+4006       /* STAT-ACECLUS-002: ACECLUS — Approximate within-cluster covariance estimation and canonical transformation
+4007        * Source: S154 / Chapter 27 / `Getting Started: ACECLUS Procedure` (PDF pp. 1022–1028); S154 / Chapter 27 / `Overview: ACECLUS Procedure` (PDF pp.
+4007     !  1016–1022).
+4008        * Discriminates: Example 27.1: Transformation and Cluster Analysis of Fisher Iris Data
+4009        */
+4010       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+4010     ! validmemname=compatible locale=en_US;
+4011       %let syscc=0;
+4012       title; footnote;
+4013       ods _all_ close;
+4014       ods listing gpath="%sysfunc(pathname(work))";
+4015       ods graphics off;
+4016       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.ACE (memtype=DATA).
+NOTE: Deleting WORK.CLUS (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.SCORE (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+4016     !                                         quit;
+
+
+4017       ods path work.templat(update) sashelp.tmplmst(read);
+4018       
+4019       title 'Fisher (1936) Iris Data';
+4020       proc aceclus data=sashelp.iris out=ace p=.02 outstat=score;
+4021       var SepalLength SepalWidth PetalLength PetalWidth ;
+4022       run;
+
+NOTE: Algorithm converged.
+NOTE: The data set WORK.ACE has 150 observations and 9 variables.
+NOTE: The data set WORK.SCORE has 20 observations and 6 variables.
+NOTE: The PROCEDURE ACECLUS printed page 306.
+
+4023       proc sgplot data=ace;
+4024       scatter y=can2 x=can1 / group=Species;
+4025       keylegend / title="Species";
+4026       run;
+
+NOTE: Listing image output written to /saswork/SAS_work5D120001108E_odaws02-euw1.oda.sas.com/SAS_workCCDC0001108E_odaws02-euw1.oda.sas.com/SGPlot1.png.
+NOTE: There were 150 observations read from the data set WORK.ACE.
+
+4027       proc fastclus data=ace maxc=3 maxiter=10 conv=0 out=clus;
+4028       var can:;
+4029       run;
+
+NOTE: Convergence criterion is satisfied.
+NOTE: The data set WORK.CLUS has 150 observations and 11 variables.
+NOTE: The PROCEDURE FASTCLUS printed page 307.
+
+4030       proc freq;
+4031       tables cluster*Species;
+4032       run;
+
+NOTE: There were 150 observations read from the data set WORK.CLUS.
+NOTE: The PROCEDURE FREQ printed page 308.
+
+4033       
+4034       
+4035       
+4036       
+The SAS System
+
+4037       

@@ -1,0 +1,97 @@
+The SAS System
+
+12459      
+12460      /* STAT-LIFETEST-004: LIFETEST — Kernel-Smoothed Hazard Estimate / Comparison of Two or More Groups of Survival Data / Rank Tests for the
+12460    ! Association of Survival Time with Covariates
+12461       * Source: S154 / Chapter 77 / `Kernel-Smoothed Hazard Estimate` (PDF pp. 5679–5681); S154 / Chapter 77 / `Comparison of Two or More Groups of
+12461    ! Survival Data` (PDF pp. 5681–5686); S154 / Chapter 77 / `Rank Tests for the Association of Survival Time with Covariates` (PDF pp. 5686–5687).
+12462       * Discriminates: Example 77.2: Enhanced Survival Plot and Multiple-Comparison Adjustments
+12463       */
+12464      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+12464    ! validmemname=compatible locale=en_US;
+12465      %let syscc=0;
+12466      title; footnote;
+12467      ods _all_ close;
+12468      ods listing gpath="%sysfunc(pathname(work))";
+12469      ods graphics off;
+12470      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.MALES (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+12470    !                                         quit;
+
+
+12471      ods path work.templat(update) sashelp.tmplmst(read);
+12472      
+12473      proc print data=Sashelp.BMT(obs=10);
+12474      run;
+
+NOTE: There were 10 observations read from the data set SASHELP.BMT.
+NOTE: The PROCEDURE PRINT printed page 862.
+
+12475      ods graphics on;
+12476      proc lifetest data=sashelp.BMT plots=survival(atrisk=0 to 2500 by 500);
+12477      time T * Status(0);
+12478      strata Group / test=logrank adjust=sidak;
+12479      run;
+
+NOTE: The LOGLOG transform is used to compute the confidence limits for the quartiles of the survivor distribution. To suppress using this transform, specify 
+      CONFTYPE=LINEAR in the PROC LIFETEST statement.
+NOTE: The PROCEDURE LIFETEST printed pages 863-866.
+
+12480      proc lifetest data=sashelp.BMT notable plots=none;
+12481      time T * Status(0);
+12482      strata Group / test=logrank adjust=sidak diff=control('AML-Low Risk');
+12483      run;
+
+NOTE: The PROCEDURE LIFETEST printed pages 867-868.
+
+12484      proc format;
+12485      invalue $bmtifmt 'ALL' = 1 'AML-Low Risk' = 2 'AML-High Risk' = 3;
+NOTE: Informat $BMTIFMT has been output.
+12486      value bmtfmt 1 = 'ALL' 2 = 'AML-Low Risk' 3 = 'AML-High Risk';
+NOTE: Format BMTFMT has been output.
+12487      run;
+
+
+12488      data Bmt2;
+12489      set sashelp.BMT(rename=(Group=G));
+12490      Group = input(input(G, $bmtifmt.), 1.);
+12491      label Group = 'Disease Group';
+12492      format Group bmtfmt.;
+12493      run;
+
+NOTE: There were 137 observations read from the data set SASHELP.BMT.
+NOTE: The data set WORK.BMT2 has 137 observations and 4 variables.
+
+12494      proc LIFETEST data=Bmt2 plots=s(atrisk(outside maxlen=13)=0 to 2500 by 500);
+12495      time T*Status(0);
+12496      strata Group / order=internal;
+12497      run;
+
+NOTE: The LOGLOG transform is used to compute the confidence limits for the quartiles of the survivor distribution. To suppress using this transform, specify 
+      CONFTYPE=LINEAR in the PROC LIFETEST statement.
+NOTE: The PROCEDURE LIFETEST printed pages 869-872.
+
+12498      proc lifetest data=Bmt2 plots=survival(cl cb=hw strata=panel);
+12499      time T * Status(0);
+12500      strata Group/order=internal;
+12501      run;
+
+NOTE: The LOGLOG transform is used to compute the confidence limits for the quartiles of the survivor distribution and the confidence limit for the survivor 
+      function. To suppress using this transform, specify CONFTYPE=LINEAR in the PROC LIFETEST statement.
+NOTE: The PROCEDURE LIFETEST printed pages 873-876.
+
+12502      ods graphics off;
+12503      run;
+12504      quit;
+12505      
+12506      
+12507      
+12508      
+The SAS System
+
+12509      

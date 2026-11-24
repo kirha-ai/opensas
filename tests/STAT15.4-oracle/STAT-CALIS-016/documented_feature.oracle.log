@@ -1,0 +1,175 @@
+The SAS System
+
+8827       
+8828       /* STAT-CALIS-016: CALIS — STRUCTEQ / Standardized Solutions / Measures of Multivariate Kurtosis
+8829        * Source: S154 / Chapter 33 / `STRUCTEQ Statement` (PDF p. 1653); S154 / Chapter 33 / `Standardized Solutions` (PDF pp. 1799–1800); S154 / Chapter
+8829     !  33 / `Measures of Multivariate Kurtosis` (PDF pp. 1803–1805).
+8830        * Discriminates: Example 33.7: Multivariate Regression Models
+8831        */
+8832       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+8832     ! validmemname=compatible locale=en_US;
+8833       %let syscc=0;
+8834       title; footnote;
+8835       ods _all_ close;
+8836       ods listing gpath="%sysfunc(pathname(work))";
+8837       ods graphics off;
+8838       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.G1 (memtype=DATA).
+NOTE: Deleting WORK.G2 (memtype=DATA).
+NOTE: Deleting WORK.G3 (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+8838     !                                         quit;
+
+
+8839       ods path work.templat(update) sashelp.tmplmst(read);
+8840       
+8841       data sales;
+8842       input q1 q2 q3 q4;
+8843       datalines;
+
+NOTE: The data set WORK.SALES has 14 observations and 4 variables.
+
+8858       ;
+8859       run;
+8860       proc calis data=sales;
+8861       path q1 q2 q3 ===> q4;
+8862       run;
+
+NOTE: Convergence criterion (ABSGCONV=0.00001) satisfied.
+NOTE: The PROCEDURE CALIS printed pages 946-952.
+
+8863       proc calis data=sales;
+8864       path q1 ===> q2,
+8865       q2 ===> q3,
+8866       q1 q2 q3 ===> q4;
+8867       run;
+
+NOTE: Convergence criterion (ABSGCONV=0.00001) satisfied.
+NOTE: The PROCEDURE CALIS printed pages 953-959.
+
+8868       proc calis data=sales;
+8869       path q1 ===> q2,
+8870       q2 ===> q3,
+8871       q3 ===> q4;
+8872       run;
+
+NOTE: Convergence criterion (ABSGCONV=0.00001) satisfied.
+NOTE: The PROCEDURE CALIS printed pages 960-966.
+
+8873       proc calis data=sales;
+8874       path q1 ===> q2 = gamma,
+8875       q2 ===> q3 = gamma,
+8876       q3 ===> q4 = gamma;
+8877       run;
+
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The PROCEDURE CALIS printed pages 967-973.
+
+8878       proc calis data=sales;
+8879       path q1 ===> q2 = gamma,
+8880       q2 ===> q3 = gamma,
+8881       q3 ===> q4 = gamma;
+8882       pvar q2 q3 q4 = 3 * evar;
+8883       run;
+
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The PROCEDURE CALIS printed pages 974-980.
+
+8884       proc calis data=sales;
+8885       path q1 ===> q2 = gamma,
+8886       q2 ===> q3 = gamma,
+8887       q3 ===> q4 = gamma;
+8888       pvar q2 q3 = 2 * evar,
+8889       q4 q1;
+8890       run;
+
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The PROCEDURE CALIS printed pages 981-987.
+
+8891       proc calis data=sales;
+8892       path q1 ===> q2 = gamma,
+8893       q2 ===> q3 = gamma,
+8894       q3 ===> q4 = gamma,
+8895       <==> q2 q3 = 2 * evar,
+8896       <==> q4 q1;
+8897       run;
+
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The PROCEDURE CALIS printed pages 988-994.
+
+8898       proc calis data=sales;
+8899       path q1 ===> q2 = gamma,
+8900       q2 ===> q3 = gamma,
+8901       q3 ===> q4 = gamma,
+8902       q2 <==> q2 = evar,
+8903       q3 <==> q3 = evar,
+8904       q4 <==> q4,
+8905       q1 <==> q1;
+8906       run;
+
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The PROCEDURE CALIS printed pages 995-1001.
+
+8907       proc calis data=sales;
+8908       path q1 q2 q3 ===> q4;
+8909       run;
+
+NOTE: Convergence criterion (ABSGCONV=0.00001) satisfied.
+NOTE: The PROCEDURE CALIS printed pages 1002-1008.
+
+8910       proc calis data=sales;
+8911       path q1 ===> q4 ,
+8912       q2 ===> q4 ,
+8913       q3 ===> q4 ,
+8914       q1 <==> q1 ,
+8915       q2 <==> q2 ,
+8916       q3 <==> q3 ,
+8917       q1 <==> q2 ,
+8918       q2 <==> q3 ,
+8919       q1 <==> q3 ,
+8920       q4 <==> q4 ;
+8921       run;
+
+NOTE: Convergence criterion (ABSGCONV=0.00001) satisfied.
+NOTE: The PROCEDURE CALIS printed pages 1009-1015.
+
+8922       proc calis data=sales;
+8923       path q1 q2 q3 ===> q4 ,
+8924       <==> [q1-q3] ,
+8925       <==> q4 ;
+8926       run;
+
+NOTE: Convergence criterion (ABSGCONV=0.00001) satisfied.
+NOTE: The PROCEDURE CALIS printed pages 1016-1022.
+
+8927       proc calis data=sales;
+8928       path q1 ===> q4 ,
+8929       q2 ===> q4 ,
+8930       q3 ===> q4 ,
+8931       q1 <==> q1 ,
+8932       q2 <==> q1 ,
+8933       q2 <==> q2 ,
+8934       q3 <==> q1 ,
+8935       q3 <==> q2 ,
+8936       q3 <==> q3 ,
+8937       q4 <==> q4 ;
+8938       run;
+
+NOTE: Convergence criterion (ABSGCONV=0.00001) satisfied.
+NOTE: The PROCEDURE CALIS printed pages 1023-1029.
+
+8939       quit;
+8940       
+8941       
+8942       
+8943       
+The SAS System
+
+8944       

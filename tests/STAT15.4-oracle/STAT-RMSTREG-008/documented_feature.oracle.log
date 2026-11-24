@@ -1,0 +1,55 @@
+The SAS System
+
+13531      
+13532      /* STAT-RMSTREG-008: RMSTREG — LSMEANS / LSMESTIMATE / SLICE
+13533       * Source: S154 / Chapter 106 / `LSMEANS Statement` (PDF pp. 8742–8743); S154 / Chapter 106 / `LSMESTIMATE Statement` (PDF pp. 8743–8745); S154 /
+13533    !  Chapter 106 / `SLICE Statement` (PDF p. 8747).
+13534       * Discriminates: Verified default procedure context
+13535       */
+13536      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+13536    ! validmemname=compatible locale=en_US;
+13537      %let syscc=0;
+13538      title; footnote;
+13539      ods _all_ close;
+13540      ods listing gpath="%sysfunc(pathname(work))";
+13541      ods graphics off;
+13542      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SURVIVAL (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+13542    !                                         quit;
+
+
+13543      ods path work.templat(update) sashelp.tmplmst(read);
+13544      
+13545      data survival;
+13546      call streaminit(218);
+13547      do id=1 to 100;
+13548      age=25+mod(id*7,40);
+13549      x=mod(id,2);
+13550      time=exp(0.5+0.15*x+0.01*age+rand('normal')*0.7);
+13551      status=(mod(id,4) ne 0);
+13552      output;
+13553      end;
+13554      run;
+
+NOTE: The data set WORK.SURVIVAL has 100 observations and 5 variables.
+
+13555      proc rmstreg data=survival tau=5;
+13556      model time*status(0)=age x / link=linear method=pv;
+13557      run;
+
+NOTE: Algorithm converged.
+NOTE: The PROCEDURE RMSTREG printed page 1041.
+
+13558      
+13559      
+13560      
+13561      
+The SAS System
+
+13562      

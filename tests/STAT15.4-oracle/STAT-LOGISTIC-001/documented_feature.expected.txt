@@ -1,0 +1,236 @@
+
+The LOGISTIC Procedure
+
+               Model Information
+
+Data Set                       WORK.INGOTS     
+Response Variable (Events)     r               
+Response Variable (Trials)     n               
+Model                          binary logit    
+Optimization Technique         Fisher's scoring
+
+
+Number of Observations Read          19
+Number of Observations Used          19
+Sum of Frequencies Read             387
+Sum of Frequencies Used             387
+
+
+          Response Profile
+ 
+ Ordered     Binary           Total
+   Value     Outcome      Frequency
+
+       1     Event               12
+       2     Nonevent           375
+
+
+                    Model Convergence Status
+
+         Convergence criterion (GCONV=1E-8) satisfied.          
+
+
+                Model Fit Statistics
+ 
+                             Intercept and Covariates
+              Intercept            Log       Full Log
+Criterion          Only     Likelihood     Likelihood
+
+AIC             108.988        103.222         35.957
+SC              112.947        119.056         51.791
+-2 Log L        106.988         95.222         27.957
+
+
+        Testing Global Null Hypothesis: BETA=0
+ 
+Test                 Chi-Square       DF     Pr > ChiSq
+
+Likelihood Ratio        11.7663        3         0.0082
+Score                   16.5417        3         0.0009
+Wald                    13.4588        3         0.0037
+
+
+             Analysis of Maximum Likelihood Estimates
+ 
+                               Standard          Wald
+Parameter    DF    Estimate       Error    Chi-Square    Pr > ChiSq
+
+Intercept     1     -5.9901      1.6666       12.9182        0.0003
+Heat          1      0.0963      0.0471        4.1895        0.0407
+Soak          1      0.2996      0.7551        0.1574        0.6916
+Heat*Soak     1    -0.00884      0.0253        0.1219        0.7270
+
+
+Association of Predicted Probabilities and Observed Responses
+
+Percent Concordant     73.2    Somers' D    0.541
+Percent Discordant     19.1    Gamma        0.586
+Percent Tied            7.6    Tau-a        0.033
+Pairs                  4500    c            0.771
+
+
+   Odds Ratio Estimates and Wald Confidence Intervals
+ 
+Odds Ratio             Estimate    95% Confidence Limits
+
+Heat at Soak=1            1.091       1.032        1.154
+Heat at Soak=2            1.082       1.028        1.139
+Heat at Soak=3            1.072       0.986        1.166
+Heat at Soak=4            1.063       0.935        1.208
+
+The LOGISTIC Procedure
+
+               Model Information
+
+Data Set                       WORK.INGOTS     
+Response Variable (Events)     r               
+Response Variable (Trials)     n               
+Model                          binary logit    
+Optimization Technique         Fisher's scoring
+
+
+Number of Observations Read          19
+Number of Observations Used          19
+Sum of Frequencies Read             387
+Sum of Frequencies Used             387
+
+
+          Response Profile
+ 
+ Ordered     Binary           Total
+   Value     Outcome      Frequency
+
+       1     Event               12
+       2     Nonevent           375
+
+
+                    Model Convergence Status
+
+         Convergence criterion (GCONV=1E-8) satisfied.          
+
+
+                Model Fit Statistics
+ 
+                             Intercept and Covariates
+              Intercept            Log       Full Log
+Criterion          Only     Likelihood     Likelihood
+
+AIC             108.988        101.346         34.080
+SC              112.947        113.221         45.956
+-2 Log L        106.988         95.346         28.080
+
+
+        Testing Global Null Hypothesis: BETA=0
+ 
+Test                 Chi-Square       DF     Pr > ChiSq
+
+Likelihood Ratio        11.6428        2         0.0030
+Score                   15.1091        2         0.0005
+Wald                    13.0315        2         0.0015
+
+
+             Analysis of Maximum Likelihood Estimates
+ 
+                               Standard          Wald
+Parameter    DF    Estimate       Error    Chi-Square    Pr > ChiSq
+
+Intercept     1     -5.5592      1.1197       24.6503        <.0001
+Heat          1      0.0820      0.0237       11.9454        0.0005
+Soak          1      0.0568      0.3312        0.0294        0.8639
+
+
+           Odds Ratio Estimates
+                     
+             Point          95% Wald
+Effect    Estimate      Confidence Limits
+
+Heat         1.085       1.036       1.137
+Soak         1.058       0.553       2.026
+
+
+Association of Predicted Probabilities and Observed Responses
+
+Percent Concordant     73.0    Somers' D    0.537
+Percent Discordant     19.3    Gamma        0.581
+Percent Tied            7.6    Tau-a        0.032
+Pairs                  4500    c            0.769
+
+The LOGISTIC Procedure
+
+              Model Information
+
+Data Set                      WORK.INGOTS     
+Response Variable             NotReady        
+Number of Response Levels     2               
+Frequency Variable            Freq            
+Model                         binary logit    
+Optimization Technique        Fisher's scoring
+
+
+Number of Observations Read          25
+Number of Observations Used          25
+Sum of Frequencies Read             387
+Sum of Frequencies Used             387
+
+
+          Response Profile
+ 
+ Ordered                      Total
+   Value     NotReady     Frequency
+
+       1            0           375
+       2            1            12
+
+Probability modeled is NotReady=1.
+
+
+                    Model Convergence Status
+
+         Convergence criterion (GCONV=1E-8) satisfied.          
+
+
+         Model Fit Statistics
+ 
+                             Intercept
+              Intercept            and
+Criterion          Only     Covariates
+
+AIC             108.988        101.346
+SC              112.947        113.221
+-2 Log L        106.988         95.346
+
+
+        Testing Global Null Hypothesis: BETA=0
+ 
+Test                 Chi-Square       DF     Pr > ChiSq
+
+Likelihood Ratio        11.6428        2         0.0030
+Score                   15.1091        2         0.0005
+Wald                    13.0315        2         0.0015
+
+
+             Analysis of Maximum Likelihood Estimates
+ 
+                               Standard          Wald
+Parameter    DF    Estimate       Error    Chi-Square    Pr > ChiSq
+
+Intercept     1     -5.5592      1.1197       24.6503        <.0001
+Heat          1      0.0820      0.0237       11.9454        0.0005
+Soak          1      0.0568      0.3312        0.0294        0.8639
+
+
+           Odds Ratio Estimates
+                     
+             Point          95% Wald
+Effect    Estimate      Confidence Limits
+
+Heat         1.085       1.036       1.137
+Soak         1.058       0.553       2.026
+
+
+Association of Predicted Probabilities and Observed Responses
+
+Percent Concordant     73.0    Somers' D    0.537
+Percent Discordant     19.3    Gamma        0.581
+Percent Tied            7.6    Tau-a        0.032
+Pairs                  4500    c            0.769

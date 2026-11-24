@@ -1,0 +1,48 @@
+
+The FACTOR Procedure
+
+Input Data Type                 Raw Data
+Number of Records Read                90
+Number of Records Used                90
+N for Significance Tests              90
+
+The FACTOR Procedure
+Initial Factor Method: Principal Components
+
+Prior Communality Estimates: ONE    
+
+
+
+Eigenvalues of the Correlation Matrix: Total = 3  Average = 1
+ 
+        Eigenvalue    Difference    Proportion    Cumulative
+
+   1    2.17811668    1.53354423        0.7260        0.7260
+   2    0.64457245    0.46726159        0.2149        0.9409
+   3    0.17731086                      0.0591        1.0000
+
+1 factor will be retained by the NFACTOR criterion.
+
+
+
+  Factor Pattern
+ 
+           Factor1
+
+x          0.92128
+y          0.90715
+y2         0.71165
+
+
+Variance Explained by Each Factor
+ 
+   Factor1
+
+ 2.1781167
+
+
+Final Communality Estimates: Total = 2.178117
+ 
+         x               y              y2
+
+0.84875883      0.82291599      0.50644186

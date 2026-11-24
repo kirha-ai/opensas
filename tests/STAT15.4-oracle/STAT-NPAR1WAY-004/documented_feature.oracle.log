@@ -1,0 +1,49 @@
+The SAS System
+
+591        
+592        /* STAT-NPAR1WAY-004: NPAR1WAY — Scores for Linear Rank and One-Way ANOVA Tests / Stratified Analysis / Hodges-Lehmann Estimation of Location Shift
+593         * Source: S154 / Chapter 90 / `Scores for Linear Rank and One-Way ANOVA Tests` (PDF pp. 7239–7241); S154 / Chapter 90 / `Stratified Analysis` (PDF
+593      !  pp. 7241–7242); S154 / Chapter 90 / `Hodges-Lehmann Estimation of Location Shift` (PDF pp. 7242–7244).
+594         * Discriminates: Example 90.4: Hodges-Lehmann Estimation
+595         */
+596        options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+596      ! validmemname=compatible locale=en_US;
+597        %let syscc=0;
+598        title; footnote;
+599        ods _all_ close;
+600        ods listing gpath="%sysfunc(pathname(work))";
+601        ods graphics off;
+602        proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REACT (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+602      !                                         quit;
+
+
+603        ods path work.templat(update) sashelp.tmplmst(read);
+604        
+605        data React;
+606        input Stim Time @@;
+607        datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.REACT has 19 observations and 2 variables.
+
+611        ;
+612        run;
+613        proc npar1way hl alpha=.02 data=React;
+614        class Stim;
+615        var Time;
+616        exact hl;
+617        ods select WilcoxonScores HodgesLehmann;
+618        run;
+
+NOTE: The PROCEDURE NPAR1WAY printed page 70.
+
+619        
+620        
+621        
+622        
+The SAS System
+
+623        

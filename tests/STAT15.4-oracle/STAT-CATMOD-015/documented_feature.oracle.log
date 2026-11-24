@@ -1,0 +1,68 @@
+The SAS System
+
+12845      
+12846      /* STAT-CATMOD-015: CATMOD — Official examples and feature integration regression
+12847       * Source: S154 / Chapter 36 / `Examples: CATMOD Procedure` (PDF pp. 2257–2299).
+12848       * Discriminates: Example 36.3: Logistic Regression, Standard Response Function
+12849       */
+12850      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+12850    ! validmemname=compatible locale=en_US;
+12851      %let syscc=0;
+12852      title; footnote;
+12853      ods _all_ close;
+12854      ods listing gpath="%sysfunc(pathname(work))";
+12855      ods graphics off;
+
+NOTE: There were 18 observations read from the data set WORK.SCHOOL.
+NOTE: The PROCEDURE CATMOD printed pages 1777-1778.
+
+12856      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.COLDS (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SCHOOL (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+12856    !                                         quit;
+
+
+12857      ods path work.templat(update) sashelp.tmplmst(read);
+12858      
+12859      data ingots;
+12860      input Heat Soak nready ntotal @@;
+12861      Count=nready;
+12862      Y=1;
+12863      output;
+12864      Count=ntotal-nready;
+12865      Y=0;
+12866      output;
+12867      drop nready ntotal;
+12868      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.INGOTS has 38 observations and 4 variables.
+
+12874      ;
+12875      title 'Maximum Likelihood Logistic Regression';
+12876      proc catmod data=ingots;
+12877      weight Count;
+12878      direct Heat Soak;
+12879      model Y=Heat Soak / freq covb corrb itprint design;
+12880      quit;
+
+NOTE: The default estimation method for this model is maximum-likelihood.
+NOTE: Maximum likelihood computations converged.
+NOTE: There were 38 observations read from the data set WORK.INGOTS.
+NOTE: The PROCEDURE CATMOD printed page 1779.
+
+12881      
+12882      
+12883      
+12884      
+The SAS System
+
+12885      

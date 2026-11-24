@@ -1,0 +1,111 @@
+The SAS System
+
+887        
+888        /* STAT-GLM-017: GLM — STORE
+889         * Source: S154 / Chapter 53 / `STORE Statement` (PDF pp. 4104–4105).
+890         * Discriminates: Save the fitted item store and inspect it through PROC PLM SHOW ALL.
+891         */
+892        options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+892      ! validmemname=compatible locale=en_US;
+893        %let syscc=0;
+894        title; footnote;
+895        ods _all_ close;
+896        ods listing gpath="%sysfunc(pathname(work))";
+897        ods graphics off;
+898        proc datasets library=work kill nolist;
+NOTE: Deleting WORK.EXP (memtype=DATA).
+NOTE: Deleting WORK.IRON (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK._NAMEDAT (memtype=DATA).
+NOTE: Deleting WORK._ORACLE_SCORED (memtype=DATA).
+898      !                                         quit;
+
+
+899        ods path work.templat(update) sashelp.tmplmst(read);
+900        
+901        title 'Analysis of Unbalanced 2-by-2 Factorial';
+902        data exp;
+903        input A $ B $ Y @@;
+904        datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.EXP has 7 observations and 3 variables.
+
+907        ;
+908        proc glm data=exp;
+909        class A B;
+910        model Y=A B A*B;
+911        
+912        store out=work._oracle_store;
+913        run;
+
+914        ods graphics on;
+
+NOTE: The GLM procedure generated the model item store WORK._ORACLE_STORE.
+NOTE: The PROCEDURE GLM printed pages 36-37.
+
+915        proc glm data=exp;
+916        class A B;
+917        model Y=A B A*B;
+918        run;
+
+919        ods graphics off;
+920        title 'Regression in PROC GLM';
+
+NOTE: The PROCEDURE GLM printed pages 38-39.
+
+921        data iron;
+922        input fe loss @@;
+923        datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.IRON has 13 observations and 2 variables.
+
+928        ;
+929        proc sgscatter data=iron;
+930        plot loss*fe;
+931        run;
+
+NOTE: Listing image output written to /saswork/SAS_work7EA200001C34_odaws01-euw1.oda.sas.com/SAS_work29EF00001C34_odaws01-euw1.oda.sas.com/SGScatter1.png.
+NOTE: There were 13 observations read from the data set WORK.IRON.
+
+932        ods graphics off;
+933        proc glm data=iron;
+934        model loss=fe fe*fe;
+935        run;
+
+936        ods graphics on;
+
+NOTE: The PROCEDURE GLM printed pages 40-41.
+
+937        proc glm data=iron;
+938        model loss=fe fe*fe;
+939        run;
+
+940        ods graphics off;
+
+NOTE: The PROCEDURE GLM printed pages 42-43.
+
+941        proc glm data=iron;
+942        model loss=fe;
+943        run;
+
+944        
+
+NOTE: The PROCEDURE GLM printed pages 44-45.
+
+945        proc plm restore=work._oracle_store; show all; run;
+
+NOTE: The PROCEDURE PLM printed page 46.
+
+946        
+947        
+948        
+949        
+The SAS System
+
+950        

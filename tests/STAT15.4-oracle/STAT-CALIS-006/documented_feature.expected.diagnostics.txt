@@ -1,0 +1,7 @@
+WARNING: There are 3 active boundary or linear inequality constraints at the solution. The standard errors and chi-square test statistic assume that the 
+WARNING: Although all predicted variances for the observed variables are positive, the corresponding predicted covariance matrix is not positive definite. It 
+WARNING: The estimated variance of variable 6 is essentially zero in the central matrix P of term 1 of the COSAN model.
+WARNING: The central matrix P of term 1 of the COSAN model is not positive definite. It has one zero eigenvalue.
+WARNING: The estimated variance of obs5 is essentially zero in the central matrix U of term 2 of the COSAN model.
+WARNING: The estimated variance of obs9 is essentially zero in the central matrix U of term 2 of the COSAN model.
+WARNING: The central matrix U of term 2 of the COSAN model is not positive definite. It has 3 negative eigenvalues.

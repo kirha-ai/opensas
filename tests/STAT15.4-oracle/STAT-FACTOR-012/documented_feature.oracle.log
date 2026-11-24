@@ -1,0 +1,64 @@
+The SAS System
+
+839        
+840        /* STAT-FACTOR-012: FACTOR — Heywood Cases and Other Anomalies about Communality Estimates / Cautions
+841         * Source: S154 / Chapter 44 / `Heywood Cases and Other Anomalies about Communality Estimates` (PDF pp. 2833–2834); S154 / Chapter 44 / `Cautions`
+841      ! (PDF p. 2835).
+842         * Discriminates: Example 44.4: Maximum Likelihood Factor Analysis
+843         */
+844        options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+844      ! validmemname=compatible locale=en_US;
+845        %let syscc=0;
+846        title; footnote;
+847        ods _all_ close;
+848        ods listing gpath="%sysfunc(pathname(work))";
+849        ods graphics off;
+850        proc datasets library=work kill nolist;
+NOTE: Deleting WORK.DATA1 (memtype=DATA).
+NOTE: Deleting WORK.DATA2 (memtype=DATA).
+NOTE: Deleting WORK.DISTDCORR (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.STOCK (memtype=DATA).
+850      !                                         quit;
+
+
+851        ods path work.templat(update) sashelp.tmplmst(read);
+852        
+853        data SocioEconomics;
+854        input Population School Employment Services HouseValue;
+855        datalines;
+
+NOTE: The data set WORK.SOCIOECONOMICS has 12 observations and 5 variables.
+
+868        ;
+869        run;
+870        title3 'Maximum Likelihood Factor Analysis with One Factor';
+871        proc factor data=SocioEconomics method=ml heywood n=1;
+872        run;
+
+NOTE: 1 factor will be retained by the NFACTOR criterion.
+NOTE: Convergence criterion satisfied.
+NOTE: The PROCEDURE FACTOR printed pages 111-112.
+
+873        title3 'Maximum Likelihood Factor Analysis with Two Factors';
+874        proc factor data=SocioEconomics method=ml heywood n=2;
+875        run;
+
+NOTE: 2 factors will be retained by the NFACTOR criterion.
+NOTE: Convergence criterion satisfied.
+NOTE: The PROCEDURE FACTOR printed pages 113-114.
+
+876        quit;
+877        
+878        
+879        
+880        
+The SAS System
+
+881        

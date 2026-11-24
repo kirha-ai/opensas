@@ -1,0 +1,128 @@
+
+The SEQDESIGN Procedure
+Design: OneSidedPeto
+
+                    Design Information
+
+Statistic Distribution                               Normal
+Boundary Scale                               Standardized Z
+Alternative Hypothesis                                Upper
+Early Stop                                      Reject Null
+Method                                       Haybittle-Peto
+Boundary Key                                           Both
+Alternative Reference                                  0.25
+Number of Stages                                          3
+Alpha                                                  0.05
+Beta                                                    0.1
+Power                                                   0.9
+Max Information (Percent of Fixed Sample)          100.2466
+Max Information                                    137.3592
+Null Ref ASN (Percent of Fixed Sample)             100.1192
+Alt Ref ASN (Percent of Fixed Sample)                 87.35
+
+
+                             Method Information
+ 
+                                                      Alternative
+Boundary      Method              Alpha       Beta      Reference       Drift
+
+Upper Alpha   Haybittle-Peto    0.05000    0.10000           0.25    2.930009
+
+
+                Expected Cumulative Stopping Probabilities
+                    Reference = CRef * (Alt Reference)
+ 
+                  Expected                   ----Stopping Probabilities---
+    CRef    Stopping Stage    Source         Stage_1    Stage_2    Stage_3
+
+  0.0000             2.996    Reject Null    0.00135    0.00246    0.05000
+  0.5000             2.941    Reject Null    0.01561    0.04372    0.42762
+  1.0000             2.614    Reject Null    0.09538    0.29057    0.90000
+  1.5000             1.944    Reject Null    0.32185    0.73442    0.99698
+
+
+              Boundary Information (Standardized Z Scale)
+                           Null Reference = 0
+ 
+                                     -Alternative-    -Boundary Values-
+           ---Information Level--    --Reference--    ------Upper------
+_Stage_    Proportion      Actual            Upper                Alpha
+
+      1        0.3333     45.7864          1.69164              3.00000
+      2        0.6667    91.57281          2.39234              3.00000
+      3        1.0000    137.3592          2.93001              1.65042
+
+
+                  Error Spending Information
+ 
+                                  -Cumulative Error Spending-
+           -Information Level-    -----------Upper-----------
+_Stage_             Proportion       Beta               Alpha
+
+      1                 0.3333    0.00000             0.00135
+      2                 0.6667    0.00000             0.00246
+      3                 1.0000    0.10000             0.05000
+
+The SEQDESIGN Procedure
+Design: OneSidedPeto
+
+                    Design Information
+
+Statistic Distribution                               Normal
+Boundary Scale                               Standardized Z
+Alternative Hypothesis                                Upper
+Early Stop                                      Reject Null
+Method                                       Haybittle-Peto
+Boundary Key                                           None
+Alternative Reference                                  0.25
+Number of Stages                                          3
+Alpha                                               0.02532
+Beta                                                0.06035
+Power                                               0.93965
+Max Information (Percent of Fixed Sample)          101.6769
+Max Information                                         200
+Null Ref ASN (Percent of Fixed Sample)             101.3933
+Alt Ref ASN (Percent of Fixed Sample)              73.74031
+
+
+                             Method Information
+ 
+                                                      Alternative
+Boundary      Method              Alpha       Beta      Reference       Drift
+
+Upper Alpha   Haybittle-Peto    0.02532    0.06035           0.25    3.535534
+
+
+                Expected Cumulative Stopping Probabilities
+                    Reference = CRef * (Alt Reference)
+ 
+                  Expected                   ----Stopping Probabilities---
+    CRef    Stopping Stage    Source         Stage_1    Stage_2    Stage_3
+
+  0.0000             2.992    Reject Null    0.00135    0.00702    0.02532
+  0.5000             2.826    Reject Null    0.02389    0.15030    0.41775
+  1.0000             2.176    Reject Null    0.16884    0.65544    0.93965
+  1.5000             1.508    Reject Null    0.52466    0.96708    0.99954
+
+
+              Boundary Information (Standardized Z Scale)
+                           Null Reference = 0
+ 
+                                     -Alternative-    -Boundary Values-
+           ---Information Level--    --Reference--    ------Upper------
+_Stage_    Proportion      Actual            Upper                Alpha
+
+      1        0.3333    66.66667          2.04124              3.00000
+      2        0.6667    133.3333          2.88675              2.50000
+      3        1.0000         200          3.53553              2.00000
+
+
+                  Error Spending Information
+ 
+                                  -Cumulative Error Spending-
+           -Information Level-    -----------Upper-----------
+_Stage_             Proportion       Beta               Alpha
+
+      1                 0.3333    0.00000             0.00135
+      2                 0.6667    0.00000             0.00702
+      3                 1.0000    0.06035             0.02532

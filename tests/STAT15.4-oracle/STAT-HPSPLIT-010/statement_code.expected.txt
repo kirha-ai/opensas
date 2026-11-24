@@ -1,0 +1,76 @@
+
+The HPSPLIT Procedure
+
+      Performance Information
+
+Execution Mode       Single-Machine
+Number of Threads    2             
+
+
+             Data Access Information
+ 
+Data                Engine    Role      Path
+
+SASHELP.BASEBALL    V9        Input     On Client
+WORK.HPSPLOUT       V9        Output    On Client
+
+
+                   Model Information
+
+Split Criterion Used                           Variance
+Pruning Method                          Cost-Complexity
+Subtree Evaluation Criterion            Cost-Complexity
+Number of Branches                                    2
+Maximum Tree Depth Requested                         10
+Maximum Tree Depth Achieved                          10
+Tree Depth                                            5
+Number of Leaves Before Pruning                     168
+Number of Leaves After Pruning                        8
+
+
+Number of Observations Read                    322
+Number of Observations Used                    263
+
+The HPSPLIT Procedure
+
+Model-Based Fit Statistics for Selected Tree
+ 
+      N
+ Leaves           ASE           RSS
+
+      8        0.1443       37.9587
+
+
+                         Variable Importance
+ 
+            Variable                       Training
+Variable    Label                   Relative    Importance      Count
+
+CrAtBat     Career Times at Bat       1.0000       11.2539          1
+nBB         Walks in 1986             0.3546        3.9905          2
+CrRbi       Career RBIs               0.3414        3.8415          2
+nAtBat      Times at Bat in 1986      0.2168        2.4397          1
+CrRuns      Career Runs               0.2161        2.4316          1
+
+                                                                                                                                           P
+                                                                                                                                           _
+                                                                                                                            l              l
+                                                                                             D   P                          o              o
+                                                       Y   C                                 i   o                          g              g
+                                   n                   r   r    C   C   C             L      v   s       n   n    S         S     _ _ _    S
+                                   A   n   n  n        M   A    r   r   r   C         e      i   i   n   A   E    a         a     N L W    a
+            N              T       t   H   H  R  n     a   t    H   H   R   r   C     a      s   t   O   s   r    l         l     o e A    l
+ O          a              e       B   i   o  u  R  n  j   B    i   o   u   R   r     g      i   i   u   s   r    a   D     a     d a R    a
+ b          m              a       a   t   m  n  B  B  o   a    t   m   n   b   B     u      o   o   t   t   o    r   i     r     e f N    r
+ s          e              m       t   s   e  s  I  B  r   t    s   e   s   i   B     e      n   n   s   s   r    y   v     y     _ _ _    y
+
+  1 Allanson, Andy    Cleveland   293  66  1 30 29 14  1  293   66   1  30  29  14 American East C  446  33 20     .  AE  .       3 0   4.56042
+  2 Ashby, Alan       Houston     315  81  7 24 38 39 14 3449  835  69 321 414 375 National West C  632  43 10  475.0 NW 6.16331 11 5   6.08107
+  3 Davis, Alan       Seattle     479 130 18 66 72 76  3 1624  457  63 224 266 263 American West 1B 880  82 14  480.0 AW 6.17379  9 3   6.41796
+  4 Dawson, Andre     Montreal    496 141 20 65 78 37 11 5628 1575 225 828 838 354 National East RF 200  11  3  500.0 NE 6.21461 13 6   6.60314
+  5 Galarraga, Andres Montreal    321  87 10 39 42 30  2  396  101  12  48  46  33 National East 1B 805  40  4   91.5 NE 4.51634  3 0   4.56042
+  6 Griffin, Alfredo  Oakland     594 169  4 74 51 35 11 4408 1133  19 501 336 194 American West SS 282 421 25  750.0 AW 6.62007 13 6   6.60314
+  7 Newman, Al        Montreal    185  37  1 23  8 21  2  214   42   1  30   9  24 National East 2B  76 127  7   70.0 NE 4.24850  3 0   4.56042
+  8 Salazar, Argenis  Kansas City 298  73  0 24 24  7  3  509  108   0  41  37  12 American West SS 121 283  9  100.0 AW 4.60517  3 0   4.56042
+  9 Thomas, Andres    Atlanta     323  81  6 26 32  8  2  341   86   6  32  34   8 National West SS 143 290 19   75.0 NW 4.31749  3 0   4.56042
+ 10 Thornton, Andre   Cleveland   401  92 17 49 66 65 13 5206 1332 253 784 890 866 American East DH   0   0  0 1100.0 AE 7.00307 10 4   7.02886

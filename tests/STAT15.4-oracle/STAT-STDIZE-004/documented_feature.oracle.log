@@ -1,0 +1,124 @@
+The SAS System
+
+18186      
+18187      /* STAT-STDIZE-004: STDIZE — Computation of the Statistics / Computing Quantiles / Constant Data
+18188       * Source: S154 / Chapter 115 / `Computation of the Statistics` (PDF pp. 9466–9467); S154 / Chapter 115 / `Computing Quantiles` (PDF pp.
+18188    ! 9467–9468); S154 / Chapter 115 / `Constant Data` (PDF pp. 9468–9469).
+18189       * Discriminates: Getting Started: STDIZE Procedure
+18190       */
+18191      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+18191    ! validmemname=compatible locale=en_US;
+18192      %let syscc=0;
+18193      title; footnote;
+18194      ods _all_ close;
+18195      ods listing gpath="%sysfunc(pathname(work))";
+18196      ods graphics off;
+18197      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.DATA1 (memtype=DATA).
+NOTE: Deleting WORK.DATA2 (memtype=DATA).
+NOTE: Deleting WORK.DATA3 (memtype=DATA).
+NOTE: Deleting WORK.DATA4 (memtype=DATA).
+NOTE: Deleting WORK.DATA5 (memtype=DATA).
+NOTE: Deleting WORK.NOOUTLIER (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TOTALSCORES (memtype=DATA).
+18197    !                                         quit;
+
+
+18198      ods path work.templat(update) sashelp.tmplmst(read);
+18199      
+18200      data TotalScores;
+18201      title 'High School Scores Data';
+18202      input id Type $ total @@;
+18203      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.TOTALSCORES has 40 observations and 3 variables.
+
+18212      ;
+18213      ods graphics on;
+18214      proc boxplot data=TotalScores;
+18215      plot total*Type / boxstyle=schematic noserifs;
+18216      run;
+
+NOTE: Processing beginning for PLOT statement number 1.
+NOTE: There were 40 observations read from the data set WORK.TOTALSCORES.
+
+18217      proc univariate data=TotalScores;
+18218      var total;
+18219      by Type;
+18220      run;
+
+NOTE: The PROCEDURE UNIVARIATE printed pages 1252-1253.
+
+18221      proc stdize data=totalscores method=std pstat;
+18222      title2 'METHOD=STD';
+18223      var total;
+18224      by Type;
+18225      run;
+
+NOTE: There were 40 observations read from the data set WORK.TOTALSCORES.
+NOTE: The data set WORK.DATA6 has 40 observations and 3 variables.
+NOTE: The PROCEDURE STDIZE printed pages 1254-1255.
+
+18226      proc stdize data=totalscores method=mad pstat;
+18227      title2 'METHOD=MAD';
+18228      var total;
+18229      by Type;
+18230      run;
+
+NOTE: There were 40 observations read from the data set WORK.TOTALSCORES.
+NOTE: The data set WORK.DATA7 has 40 observations and 3 variables.
+NOTE: The PROCEDURE STDIZE printed pages 1256-1257.
+
+18231      proc stdize data=totalscores method=iqr pstat;
+18232      title2 'METHOD=IQR';
+18233      var total;
+18234      by Type;
+18235      run;
+
+NOTE: There were 40 observations read from the data set WORK.TOTALSCORES.
+NOTE: The data set WORK.DATA8 has 40 observations and 3 variables.
+NOTE: The PROCEDURE STDIZE printed pages 1258-1259.
+
+18236      proc stdize data=totalscores method=abw(4) pstat;
+18237      title2 'METHOD=ABW(4)';
+18238      var total;
+18239      by Type;
+18240      run;
+
+NOTE: There were 40 observations read from the data set WORK.TOTALSCORES.
+NOTE: The data set WORK.DATA9 has 40 observations and 3 variables.
+NOTE: The PROCEDURE STDIZE printed pages 1260-1261.
+
+18241      data NoOutlier;
+18242      set totalscores;
+18243      if (total = 64) then delete;
+18244      run;
+
+NOTE: There were 40 observations read from the data set WORK.TOTALSCORES.
+NOTE: The data set WORK.NOOUTLIER has 39 observations and 3 variables.
+
+18245      proc stdize data=NoOutlier method=std pstat;
+18246      title2 'After Removing Outlier, METHOD=STD';
+18247      var total;
+18248      by Type;
+18249      run;
+
+NOTE: There were 39 observations read from the data set WORK.NOOUTLIER.
+NOTE: The data set WORK.DATA10 has 39 observations and 3 variables.
+NOTE: The PROCEDURE STDIZE printed pages 1262-1263.
+
+18250      
+18251      
+18252      
+18253      
+The SAS System
+
+18254      

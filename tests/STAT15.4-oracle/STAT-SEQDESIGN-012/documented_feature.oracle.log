@@ -1,0 +1,99 @@
+The SAS System
+
+16119      
+16120      /* STAT-SEQDESIGN-012: SEQDESIGN — Table Output / ODS Table Names
+16121       * Source: S154 / Chapter 110 / `Table Output` (PDF pp. 9023–9027); S154 / Chapter 110 / `ODS Table Names` (PDF p. 9027).
+16122       * Discriminates: Getting Started: SEQDESIGN Procedure
+16123       */
+16124      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+16124    ! validmemname=compatible locale=en_US;
+16125      %let syscc=0;
+16126      title; footnote;
+16127      ods _all_ close;
+16128      ods listing gpath="%sysfunc(pathname(work))";
+16129      ods graphics off;
+16130      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.BND_LDL (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+16130    !                                         quit;
+
+
+16131      ods path work.templat(update) sashelp.tmplmst(read);
+16132      
+16133      ods trace on;
+16134      ods graphics on;
+16135      proc seqdesign altref=-10
+16136      plots=boundary(hscale=samplesize)
+16137      ;
+16138      TwoSidedOBrienFleming: design nstages=4
+16139      method=obf
+16140      ;
+16141      samplesize model=twosamplemean(stddev=20);
+16142      ods output Boundary=Bnd_LDL;
+16143      run;
+
+
+Output Added:
+-------------
+Name:       Design
+Label:      Design Information
+Template:   Stat.SeqDesign.Design
+Path:       Seqdesign.TwoSidedOBrienFleming.Design
+-------------
+
+Output Added:
+-------------
+Name:       Method
+Label:      Method Information
+Template:   Stat.SeqDesign.Method
+Path:       Seqdesign.TwoSidedOBrienFleming.Method
+-------------
+
+Output Added:
+-------------
+Name:       Boundary
+Label:      Boundary Information
+Template:   Stat.SeqDesign.Boundary
+Path:       Seqdesign.TwoSidedOBrienFleming.Boundary
+-------------
+
+Output Added:
+-------------
+Name:       BoundaryPlot
+Label:      Boundary Plot
+Template:   Stat.SeqDesign.Graphics.BoundaryPlot
+Path:       Seqdesign.TwoSidedOBrienFleming.BoundaryPlot
+-------------
+
+Output Added:
+-------------
+Name:       SampleSizeSummary
+Label:      Sample Size Summary
+Template:   Stat.SeqDesign.SampleSizeSummary
+Path:       Seqdesign.TwoSidedOBrienFleming.SampleSizeSummary
+-------------
+
+Output Added:
+-------------
+Name:       SampleSize
+Label:      Sample Size Information
+Template:   Stat.SeqDesign.SampleSize
+Path:       Seqdesign.TwoSidedOBrienFleming.SampleSize
+-------------
+NOTE: The data set WORK.BND_LDL has 4 observations and 13 variables.
+NOTE: The PROCEDURE SEQDESIGN printed page 1158.
+
+16144      ods trace off;
+16145      
+16146      
+16147      
+16148      
+The SAS System
+
+16149      

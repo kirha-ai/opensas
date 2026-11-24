@@ -1,0 +1,57 @@
+The SAS System
+
+13304      
+13305      /* STAT-RMSTREG-001: RMSTREG — Data input, variable roles, and basic options
+13306       * Source: S154 / Chapter 106 / `PROC RMSTREG Statement` (PDF pp. 8735–8737); S154 / Chapter 106 / `BY Statement` (PDF p. 8737); S154 / Chapter 106
+13306    !  / `FREQ Statement` (PDF p. 8742); S154 / Chapter 106 / `Missing Values` (PDF p. 8757).
+13307       * Discriminates: Verified default procedure context
+13308       */
+13309      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+13309    ! validmemname=compatible locale=en_US;
+13310      %let syscc=0;
+13311      title; footnote;
+13312      ods _all_ close;
+13313      ods listing gpath="%sysfunc(pathname(work))";
+13314      ods graphics off;
+13315      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.INSURANCE (memtype=DATA).
+NOTE: Deleting WORK.OUT (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+13315    !                                         quit;
+
+
+13316      ods path work.templat(update) sashelp.tmplmst(read);
+13317      
+13318      data survival;
+13319      call streaminit(218);
+13320      do id=1 to 100;
+13321      age=25+mod(id*7,40);
+13322      x=mod(id,2);
+13323      time=exp(0.5+0.15*x+0.01*age+rand('normal')*0.7);
+13324      status=(mod(id,4) ne 0);
+13325      output;
+13326      end;
+13327      run;
+
+NOTE: The data set WORK.SURVIVAL has 100 observations and 5 variables.
+
+13328      proc rmstreg data=survival tau=5;
+13329      model time*status(0)=age x / link=linear method=pv;
+13330      run;
+
+NOTE: Algorithm converged.
+NOTE: The PROCEDURE RMSTREG printed page 1034.
+
+13331      
+13332      
+13333      
+13334      
+The SAS System
+
+13335      

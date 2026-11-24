@@ -1,0 +1,64 @@
+The SAS System
+
+12255      
+12256      /* STAT-CATMOD-004: CATMOD — MODEL / RESPONSE / Specification of Effects
+12257       * Source: S154 / Chapter 36 / `MODEL Statement` (PDF pp. 2201–2208); S154 / Chapter 36 / `RESPONSE Statement` (PDF pp. 2212–2219); S154 /
+12257    ! Chapter 36 / `Specification of Effects` (PDF pp. 2224–2226).
+12258       * Discriminates: Example 36.1: Linear Response Function, r=2 Responses; explicit statements: MODEL, RESPONSE
+12259       */
+12260      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+12260    ! validmemname=compatible locale=en_US;
+12261      %let syscc=0;
+12262      title; footnote;
+12263      ods _all_ close;
+12264      ods listing gpath="%sysfunc(pathname(work))";
+12265      ods graphics off;
+12266      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.FBEING (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+12266    !                                         quit;
+
+
+12267      ods path work.templat(update) sashelp.tmplmst(read);
+12268      
+12269      data detergent;
+12270      input Softness $ Brand $ Previous $ Temperature $ Count @@;
+12271      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.DETERGENT has 24 observations and 5 variables.
+
+12284      ;
+12285      title 'Detergent Preference Study';
+12286      proc catmod data=detergent;
+12287      response 1 0;
+12288      weight Count;
+12289      model Brand=Softness|Previous|Temperature / freq prob;
+12290      title2 'Saturated Model';
+12291      run;
+
+12292      model Brand=Softness Previous Temperature
+NOTE: Prior MODEL statement(s) deleted.
+12293      / clparm noprofile design;
+12294      title2 'Main-Effects Model';
+12295      run;
+
+12296      quit;
+
+NOTE: There were 24 observations read from the data set WORK.DETERGENT.
+NOTE: The PROCEDURE CATMOD printed pages 1738-1739.
+
+12297      
+12298      
+12299      
+12300      
+The SAS System
+
+12301      

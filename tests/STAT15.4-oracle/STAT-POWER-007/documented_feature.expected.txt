@@ -1,0 +1,28 @@
+
+The POWER Procedure
+Log-Rank Test for Two Survival Curves
+
+                  Fixed Scenario Elements
+
+Method                          Lakatos normal approximation
+Accrual Time                                               2
+Follow-up Time                                             3
+Group 1 Survival Curve                              Standard
+Form of Survival Curve 1                         Exponential
+Group 2 Survival Curve                              Proposed
+Form of Survival Curve 2                    Piecewise Linear
+Group 1 Median Loss Time                                  10
+Nominal Power                                            0.8
+Number of Sides                                            2
+Number of Time Sub-Intervals                              12
+Alpha                                                   0.05
+
+
+         Computed N per Group
+ 
+            Median
+              Loss    Actual    N per
+   Index    Time 2     Power    Group
+
+       1        20     0.800      228
+       2         5     0.801      234

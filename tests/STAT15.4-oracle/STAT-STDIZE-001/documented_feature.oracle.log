@@ -1,0 +1,66 @@
+The SAS System
+
+18026      
+18027      /* STAT-STDIZE-001: STDIZE — Data input, variable roles, and basic options
+18028       * Source: S154 / Chapter 115 / `PROC STDIZE Statement` (PDF pp. 9455–9461); S154 / Chapter 115 / `BY Statement` (PDF pp. 9461–9462); S154 /
+18028    ! Chapter 115 / `FREQ Statement` (PDF p. 9462); S154 / Chapter 115 / `VAR Statement` (PDF pp. 9462–9463); S154 / Chapter 115 / `WEIGHT Statement`
+18028    ! (PDF pp. 9463–9464); S154 / Chapter 115 / `Missing Values` (PDF p. 9469).
+18029       * Discriminates: Verified default procedure context; explicit statements: BY, FREQ, VAR, WEIGHT
+18030       */
+18031      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+18031    ! validmemname=compatible locale=en_US;
+18032      %let syscc=0;
+18033      title; footnote;
+18034      ods _all_ close;
+18035      ods listing gpath="%sysfunc(pathname(work))";
+18036      ods graphics off;
+18037      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+18037    !                                         quit;
+
+
+18038      ods path work.templat(update) sashelp.tmplmst(read);
+18039      
+18040      data sample;
+18041      input x z y group $ weight freq;
+18042      datalines;
+
+NOTE: The data set WORK.SAMPLE has 12 observations and 6 variables.
+
+18055      ;
+18056      run;
+18057      proc sort data=sample;
+18058      by group;
+18059      run;
+
+NOTE: There were 12 observations read from the data set WORK.SAMPLE.
+NOTE: The data set WORK.SAMPLE has 12 observations and 6 variables.
+
+18060      proc stdize data=sample out=standardized method=std pstat;
+18061      by group;
+18062      var x z y;
+18063      run;
+
+NOTE: There were 12 observations read from the data set WORK.SAMPLE.
+NOTE: The data set WORK.STANDARDIZED has 12 observations and 6 variables.
+NOTE: The PROCEDURE STDIZE printed pages 1234-1235.
+
+18064      proc print data=standardized noobs;
+18065      format _numeric_ best32.;
+18066      run;
+
+NOTE: There were 12 observations read from the data set WORK.STANDARDIZED.
+NOTE: The PROCEDURE PRINT printed page 1236.
+
+18067      
+18068      
+18069      
+18070      
+The SAS System
+
+18071      

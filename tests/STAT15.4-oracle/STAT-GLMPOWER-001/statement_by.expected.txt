@@ -1,0 +1,91 @@
+
+_oracle_by=1
+
+The GLMPOWER Procedure
+
+        Fixed Scenario Elements
+
+Dependent Variable                Height
+Error Standard Deviation               5
+Total Sample Size                     60
+Alpha                               0.05
+Error Degrees of Freedom              54
+
+
+                Computed Power
+ 
+                                Test
+   Index         Source           DF    Power
+
+       1    Variety                1    0.718
+       2    Exposure               2    0.957
+       3    Variety*Exposure       2    0.191
+
+_oracle_by=2
+
+The GLMPOWER Procedure
+
+        Fixed Scenario Elements
+
+Dependent Variable                Height
+Error Standard Deviation               5
+Total Sample Size                     60
+Alpha                               0.05
+Error Degrees of Freedom              54
+
+
+                Computed Power
+ 
+                                Test
+   Index         Source           DF    Power
+
+       1    Variety                1    0.718
+       2    Exposure               2    0.957
+       3    Variety*Exposure       2    0.191
+
+The GLMPOWER Procedure
+
+        Fixed Scenario Elements
+
+Dependent Variable                Height
+Total Sample Size                     60
+Alpha                               0.05
+Error Degrees of Freedom              54
+
+
+                    Computed Power
+ 
+                                 Std    Test
+   Index         Source          Dev      DF    Power
+
+       1    Variety              4.0       1    0.887
+       2    Variety              6.5       1    0.496
+       3    Exposure             4.0       2    0.996
+       4    Exposure             6.5       2    0.793
+       5    Variety*Exposure     4.0       2    0.280
+       6    Variety*Exposure     6.5       2    0.130
+
+The GLMPOWER Procedure
+
+        Fixed Scenario Elements
+
+Weight Variable                   Weight
+Error Standard Deviation               5
+Total Sample Size                     60
+Alpha                               0.05
+Error Degrees of Freedom              54
+
+
+                                 Computed Power
+ 
+                                                                  Test
+   Index    Dependent       Type               Source               DF    Power
+
+       1    HeightOrig    Effect      Variety                        1    0.672
+       2    HeightOrig    Effect      Exposure                       2    0.911
+       3    HeightOrig    Effect      Variety*Exposure               2    0.217
+       4    HeightOrig    Contrast    Exposure=1 vs Exposure=3       1    0.951
+       5    HeightNew     Effect      Variety                        1    0.754
+       6    HeightNew     Effect      Exposure                       2    0.633
+       7    HeightNew     Effect      Variety*Exposure               2    0.137
+       8    HeightNew     Contrast    Exposure=1 vs Exposure=3       1    0.705

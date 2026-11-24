@@ -1,0 +1,92 @@
+The SAS System
+
+10637      
+10638      /* STAT-KRIGE2D-012: KRIGE2D — Displayed Output / ODS Table Names
+10639       * Source: S154 / Chapter 74 / `Displayed Output` (PDF pp. 5487–5488); S154 / Chapter 74 / `ODS Table Names` (PDF pp. 5488–5489).
+10640       * Discriminates: Getting Started: KRIGE2D Procedure
+10641       */
+10642      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+10642    ! validmemname=compatible locale=en_US;
+10643      %let syscc=0;
+10644      title; footnote;
+10645      ods _all_ close;
+10646      ods listing gpath="%sysfunc(pathname(work))";
+10647      ods graphics off;
+10648      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.DATA11 (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.THICK (memtype=DATA).
+10648    !                                         quit;
+
+
+10649      ods path work.templat(update) sashelp.tmplmst(read);
+10650      
+10651      ods trace on;
+10652      title 'Spatial Prediction With Kriging';
+10653      data thick;
+10654      input East North Thick @@;
+10655      label Thick='Coal Seam Thickness';
+10656      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.THICK has 75 observations and 3 variables.
+
+10682      ;
+10683      ods graphics on;
+10684      proc krige2d data=thick;
+10685      coordinates xc=East yc=North;
+10686      predict var=Thick radius=60;
+10687      model scale=7.4599 range=30.1111 form=gauss;
+10688      grid x=0 to 100 by 2.5 y=0 to 100 by 2.5;
+10689      run;
+
+
+Output Added:
+-------------
+Name:       NObs
+Label:      Number of Observations
+Template:   Stat.Krige2d.NObs
+Path:       Krige2d.Thick.NObs
+-------------
+
+Output Added:
+-------------
+Name:       KrigInfo
+Label:      Kriging Information
+Template:   Stat.Krige2d.KrigInfo
+Path:       Krige2d.Thick.KrigInfo
+-------------
+
+Output Added:
+-------------
+Name:       ModelInfo
+Label:      Model Information
+Template:   Stat.Krige2d.ModelInfo
+Path:       Krige2d.Thick.KrigingPlots.ModelInfo
+-------------
+
+Output Added:
+-------------
+Name:       PredictionPlot
+Label:      Prediction Plot
+Template:   Stat.Krige2d.Graphics.Prediction
+Path:       Krige2d.Thick.KrigingPlots.PredictionPlot
+-------------
+NOTE: The data set WORK.DATA12 has 1681 observations and 7 variables.
+NOTE: The PROCEDURE KRIGE2D printed pages 751-752.
+
+10690      ods graphics off;
+10691      run;
+10692      quit;
+10693      ods trace off;
+10694      
+10695      
+10696      
+10697      
+The SAS System
+
+10698      

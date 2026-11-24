@@ -1,0 +1,41 @@
+
+The TTEST Procedure
+ 
+Variable:  x
+
+group         Method            N        Mean     Std Dev     Std Err     Minimum     Maximum
+
+A                               6     85.8333     23.8782      9.7482     43.0000       116.0
+B                               6     93.6667     16.4398      6.7115     71.0000       121.0
+Diff (1-2)    Pooled                  -7.8333     20.4992     11.8352                        
+Diff (1-2)    Satterthwaite           -7.8333                 11.8352                        
+
+group         Method               Mean       95% CL Mean        Std Dev      95% CL Std Dev
+
+A                               85.8333     60.7747    110.9     23.8782     14.9049  58.5639
+B                               93.6667     76.4142    110.9     16.4398     10.2618  40.3205
+Diff (1-2)    Pooled            -7.8333    -34.2038  18.5372     20.4992     14.3231  35.9747
+Diff (1-2)    Satterthwaite     -7.8333    -34.6661  18.9995                                 
+
+TOST Level 0.05 Equivalence Analysis
+
+                                            Lower                        Upper
+group         Method               Mean     Bound      90% CL Mean       Bound Assessment
+
+Diff (1-2)    Pooled            -7.8333       -20 > -29.2842  13.6175 <     20 Not equivalent
+Diff (1-2)    Satterthwaite     -7.8333       -20 > -29.5647  13.8981 <     20 Not equivalent
+
+Method           Variances    Test         Null        DF    t Value    P-Value
+
+Pooled           Equal        Upper         -20        10       1.03     0.1641
+Pooled           Equal        Lower          20        10      -2.35     0.0203
+Pooled           Equal        Overall                                    0.1641
+Satterthwaite    Unequal      Upper         -20    8.8705       1.03     0.1656
+Satterthwaite    Unequal      Lower          20    8.8705      -2.35     0.0218
+Satterthwaite    Unequal      Overall                                    0.1656
+
+              Equality of Variances
+ 
+Method      Num DF    Den DF    F Value    Pr > F
+
+Folded F         5         5       2.11    0.4320

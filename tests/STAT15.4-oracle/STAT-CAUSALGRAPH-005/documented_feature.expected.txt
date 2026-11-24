@@ -1,0 +1,52 @@
+
+The CAUSALGRAPH Procedure
+
+                                     Variables in Model
+ 
+                       N    Variables
+
+Measured               9    Age Alcohol BMI Duration Education Employment Parity PFAS Smoking
+Unmeasured             2    HealthBehavior PrevBF                                            
+
+
+                                    Graphical Model Summary
+ 
+Model                      Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+Timm17HealthBehavior          11          22             1           1           9             2
+
+The CAUSALGRAPH Procedure
+
+                          Instrumental Variables for Timm17HealthBehavior
+                                 Causal Effect of PFAS on Duration
+ 
+                              ----------------------------Conditionals-----------------------------
+            Instrument        Age    Alcohol    BMI    Education    Employment    Parity    Smoking
+
+       1    Age                         *        *         *            *           *              
+
+The CAUSALGRAPH Procedure
+
+                                     Variables in Model
+ 
+                       N    Variables
+
+Measured               9    Age Alcohol BMI Duration Education Employment Parity PFAS Smoking
+Unmeasured             2    HealthBehavior PrevBF                                            
+
+
+                                    Graphical Model Summary
+ 
+Model                      Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+Timm17HealthBehavior          11          22             1           1           9             2
+
+The CAUSALGRAPH Procedure
+
+                                          Instrumental Variable Test: Minimal CIV
+                                             Causal Effect of PFAS on Duration
+ 
+                                                      ----------------------------Conditionals-----------------------------
+Model                   Instrument        Valid       Age    Alcohol    BMI    Education    Employment    Parity    Smoking
+
+Timm17HealthBehavior    Age               Yes                                      *                        *              

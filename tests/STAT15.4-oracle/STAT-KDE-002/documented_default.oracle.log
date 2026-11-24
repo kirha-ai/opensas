@@ -1,0 +1,60 @@
+The SAS System
+
+9460       
+9461       /* STAT-KDE-002: KDE — Univariate and bivariate kernel density estimation
+9462        * Source: S154 / Chapter 73 / `Getting Started: KDE Procedure` (PDF pp. 5390–5393); S154 / Chapter 73 / `Overview: KDE Procedure` (PDF p. 5390).
+9463        * Discriminates: Getting Started: KDE Procedure
+9464        */
+9465       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+9465     ! validmemname=compatible locale=en_US;
+9466       %let syscc=0;
+9467       title; footnote;
+9468       ods _all_ close;
+9469       ods listing gpath="%sysfunc(pathname(work))";
+9470       ods graphics off;
+9471       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.BIVNORMAL (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK._ORACLE_INPUT (memtype=DATA).
+9471     !                                         quit;
+
+
+9472       ods path work.templat(update) sashelp.tmplmst(read);
+9473       
+9474       data bivnormal;
+9475       seed = 1283470;
+9476       do i = 1 to 1000;
+9477       z1 = rannor(seed);
+9478       z2 = rannor(seed);
+9479       z3 = rannor(seed);
+9480       x = 3*z1+z2;
+9481       y = 3*z1+z3;
+9482       output;
+9483       end;
+9484       drop seed;
+9485       run;
+
+NOTE: The data set WORK.BIVNORMAL has 1000 observations and 6 variables.
+
+9486       ods graphics on;
+9487       proc kde data=bivnormal;
+9488       bivar x y / plots=(contour surface);
+9489       run;
+
+NOTE: Processing BIVAR statement number 1.
+NOTE: The PROCEDURE KDE printed page 702.
+
+9490       ods graphics off;
+9491       
+9492       run; quit;
+9493       
+9494       
+9495       
+9496       
+The SAS System
+
+9497       

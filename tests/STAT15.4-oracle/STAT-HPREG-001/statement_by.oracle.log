@@ -1,0 +1,83 @@
+The SAS System
+
+5446       
+5447       /* STAT-HPREG-001: HPREG — Data input, variable roles, and basic options
+5448        * Source: S154 / Chapter 67 / `PROC HPREG Statement` (PDF pp. 5028–5029); S154 / Chapter 67 / `BY Statement` (PDF pp. 5029–5030); S154 / Chapter
+5448     !  67 / `FREQ Statement` (PDF p. 5031); S154 / Chapter 67 / `ID Statement` (PDF p. 5031); S154 / Chapter 67 / `WEIGHT Statement` (PDF p. 5038).
+5449        * Discriminates: Two explicit BY groups contain identical inputs, exposing group boundaries and per-group results.
+5450        */
+5451       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+5451     ! validmemname=compatible locale=en_US;
+5452       %let syscc=0;
+5453       title; footnote;
+5454       ods _all_ close;
+5455       ods listing gpath="%sysfunc(pathname(work))";
+5456       ods graphics off;
+5457       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.BASEBALLOUT (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+5457     !                                         quit;
+
+
+5458       ods path work.templat(update) sashelp.tmplmst(read);
+5459       
+5460       proc contents varnum data=sashelp.baseball;
+5461       ods select position;
+5462       run;
+
+NOTE: The PROCEDURE CONTENTS printed page 224.
+
+5463       data _oracle_input; set sashelp.baseball; do _oracle_by=1 to 2; output; end; run;
+
+NOTE: There were 322 observations read from the data set SASHELP.BASEBALL.
+NOTE: The data set WORK._ORACLE_INPUT has 644 observations and 25 variables.
+
+5464       proc sort data=_oracle_input; by _oracle_by; run;
+
+NOTE: There were 644 observations read from the data set WORK._ORACLE_INPUT.
+NOTE: The data set WORK._ORACLE_INPUT has 644 observations and 25 variables.
+
+5465       proc hpreg data=_oracle_input;
+5466       by _oracle_by;
+5467       class league division;
+5468       model logSalary = nAtBat nHits nHome nRuns nRBI nBB
+5469       yrMajor crAtBat crHits crHome crRuns crRbi
+5470       crBB league division nOuts nAssts nError;
+5471       selection method=stepwise;
+5472       run;
+
+NOTE: The HPREG procedure is executing in single-machine mode.
+NOTE: There were 644 observations read from the data set WORK._ORACLE_INPUT.
+NOTE: The PROCEDURE HPREG printed pages 225-231.
+
+5473       proc hpreg data=sashelp.baseball;
+5474       id name;
+5475       class league division;
+5476       model logSalary = nAtBat nHits nHome nRuns nRBI nBB
+5477       yrMajor crAtBat crHits crHome crRuns crRbi
+5478       crBB league division nOuts nAssts nError / vif clb;
+5479       selection method=stepwise;
+5480       output out=baseballOut p=predictedLogSalary r h cookd rstudent;
+5481       run;
+
+NOTE: The HPREG procedure is executing in single-machine mode.
+NOTE: There were 322 observations read from the data set SASHELP.BASEBALL.
+NOTE: The data set WORK.BASEBALLOUT has 322 observations and 6 variables.
+NOTE: The PROCEDURE HPREG printed pages 232-234.
+
+5482       proc print data=baseballOut(obs=5);
+5483       run;
+
+NOTE: There were 5 observations read from the data set WORK.BASEBALLOUT.
+NOTE: The PROCEDURE PRINT printed page 235.
+
+5484       
+5485       
+5486       
+5487       
+The SAS System
+
+5488       

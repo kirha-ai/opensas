@@ -1,0 +1,67 @@
+
+The GLMSELECT Procedure
+
+Data Set              WORK.SAMPLE
+Dependent Variable              y
+Selection Method             None
+
+
+Number of Observations Read          12
+Number of Observations Used          12
+
+
+       Dimensions
+
+Number of Effects       6
+Number of Parameters    6
+
+The GLMSELECT Procedure
+
+            Least Squares Summary
+ 
+         Effect         Number
+ Step    Entered    Effects In           SBC 
+
+    0    Intercept           1       49.5271 
+---------------------------------------------
+    1    x                   2        7.4662*
+    2    z                   3        7.5513 
+    3    x^2                 4        9.7634 
+    4    x*z                 5       12.1889 
+    5    z^2                 6       14.4752 
+
+         * Optimal Value of Criterion
+
+The GLMSELECT Procedure
+Least Squares Model (No Selection)
+
+                            Analysis of Variance
+ 
+                                  Sum of           Mean
+Source                 DF        Squares         Square    F Value    Pr > F
+
+Model                   5      593.34317      118.66863      61.52    <.0001
+Error                   6       11.57350        1.92892                     
+Corrected Total        11      604.91667                                    
+
+
+Root MSE              1.38885
+Dependent Mean       14.91667
+R-Square               0.9809
+Adj R-Sq               0.9649
+AIC                  25.56573
+AICC                 53.56573
+SBC                  14.47517
+
+
+                          Parameter Estimates
+ 
+                                        Standard
+Parameter     DF        Estimate           Error    t Value    Pr > |t|
+
+Intercept      1        0.560727        1.867224       0.30      0.7741
+x              1        1.925791        0.692376       2.78      0.0319
+z              1        1.183815        1.999259       0.59      0.5754
+x^2            1       -0.053552        0.176515      -0.30      0.7718
+x*z            1        0.211437        0.814571       0.26      0.8039
+z^2            1       -0.337244        1.065733      -0.32      0.7624

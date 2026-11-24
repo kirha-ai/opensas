@@ -1,0 +1,46 @@
+The SAS System
+
+28952      
+28953      /* STAT-TTEST-007: TTEST — Two-Independent-Sample Design
+28954       * Source: S154 / Chapter 128 / `Two-Independent-Sample Design` (PDF pp. 10624–10629).
+28955       * Discriminates: Pooled, Satterthwaite and Cochran two-sample paths and equality-of-variance output
+28956       */
+28957      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+28957    ! validmemname=compatible locale=en_US;
+28958      %let syscc=0;
+28959      title; footnote;
+28960      ods _all_ close;
+28961      ods listing gpath="%sysfunc(pathname(work))";
+28962      ods graphics off;
+28963      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SAMPLE (memtype=DATA).
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+28963    !                                         quit;
+
+
+28964      ods path work.templat(update) sashelp.tmplmst(read);
+28965      
+28966      data sample;
+28967       input x y group $ freq weight;
+28968       datalines;
+
+NOTE: The data set WORK.SAMPLE has 12 observations and 5 variables.
+
+28981      ;
+28982      run;
+28983      proc ttest data=sample cochran; class group; var x; run;
+
+NOTE: The PROCEDURE TTEST printed page 1774.
+
+28984      
+28985      
+28986      
+28987      
+The SAS System
+
+28988      

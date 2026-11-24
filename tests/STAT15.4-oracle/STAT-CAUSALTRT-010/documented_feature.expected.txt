@@ -1,0 +1,122 @@
+
+The CAUSALTRT Procedure
+
+       Model Information
+
+Data Set              WORK.DRUGS
+Distribution            Binomial
+Estimation Method           IPWR
+Treatment Variable          Drug
+Outcome Variable       Diabetes2
+
+
+Number of Observations Read         200
+Number of Observations Used         200
+
+
+  Class Level Information
+ 
+Class       Levels    Values
+
+Gender           2    F M   
+
+
+         Response Profile
+ 
+ Ordered                     Total
+   Value    Diabetes2    Frequency
+
+       1    Yes                 63
+       2    No                 137
+
+PROC CAUSALTRT is modeling the probability that Diabetes2='Yes'.
+
+
+       Treatment Profile
+ 
+ Ordered                  Total
+   Value    Drug      Frequency
+
+       1    Drug_B           97
+       2    Drug_A          103
+
+PROC CAUSALTRT is modeling the probability that Drug='Drug_B'.
+
+The CAUSALTRT Procedure
+
+                                  Analysis of Causal Effect
+ 
+             Treatment                  Robust          Wald 95% 
+Parameter    Level        Estimate     Std Err      Confidence Limits           Z    Pr > |Z|
+
+POM          Drug_B         0.3503      0.0485      0.2553      0.4453       7.23      <.0001
+POM          Drug_A         0.2812      0.0435      0.1959      0.3665       6.46      <.0001
+ATE                        0.06904      0.0650    -0.05827      0.1964       1.06      0.2878
+
+The CAUSALTRT Procedure
+
+                              Propensity Score Model Estimates
+ 
+                              Standard          Wald 95%                Wald
+Parameter         Estimate       Error      Confidence Limits     Chi-Square      Pr > ChiSq
+
+Intercept          -0.2141      1.1461     -2.4604      2.0321        0.0349          0.8518
+Age                0.00688      0.0109     -0.0145      0.0283        0.3979          0.5282
+Gender       F      0.0476      0.2859     -0.5128      0.6080        0.0277          0.8678
+Gender       M           0       .               .           .         .               .    
+BMI               -0.00624      0.0418     -0.0882      0.0758        0.0222          0.8815
+
+The CAUSALTRT Procedure
+
+       Model Information
+
+Data Set              WORK.DRUGS
+Distribution            Binomial
+Link Function              Logit
+Estimation Method           AIPW
+Treatment Variable          Drug
+Outcome Variable       Diabetes2
+
+
+Number of Observations Read         200
+Number of Observations Used         200
+
+
+  Class Level Information
+ 
+Class       Levels    Values
+
+Gender           2    F M   
+
+
+         Response Profile
+ 
+ Ordered                     Total
+   Value    Diabetes2    Frequency
+
+       1    Yes                 63
+       2    No                 137
+
+PROC CAUSALTRT is modeling the probability that Diabetes2='Yes'.
+
+
+       Treatment Profile
+ 
+ Ordered                  Total
+   Value    Drug      Frequency
+
+       1    Drug_B           97
+       2    Drug_A          103
+
+PROC CAUSALTRT is modeling the probability that Drug='Drug_B'.
+
+The CAUSALTRT Procedure
+
+                                  Analysis of Causal Effect
+ 
+             Treatment                  Robust          Wald 95% 
+Parameter    Level        Estimate     Std Err      Confidence Limits           Z    Pr > |Z|
+
+POM          Drug_B         0.3503      0.0485      0.2553      0.4453       7.23      <.0001
+POM          Drug_A         0.2802      0.0436      0.1947      0.3656       6.43      <.0001
+ATE                        0.07014      0.0649    -0.05714      0.1974       1.08      0.2801

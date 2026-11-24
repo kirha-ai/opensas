@@ -1,0 +1,907 @@
+The SAS System
+
+3699       
+3700       /* STAT-FMM-011: FMM — Default Output / ODS Table Names
+3701        * Source: S154 / Chapter 46 / `Default Output` (PDF pp. 3031–3035); S154 / Chapter 46 / `ODS Table Names` (PDF pp. 3035–3037).
+3702        * Discriminates: Getting Started: FMM Procedure
+3703        */
+3704       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+3704     ! validmemname=compatible locale=en_US;
+3705       %let syscc=0;
+3706       title; footnote;
+3707       ods _all_ close;
+3708       ods listing gpath="%sysfunc(pathname(work))";
+3709       ods graphics off;
+3710       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.CATCH (memtype=DATA).
+NOTE: Deleting WORK.FMMOUT (memtype=DATA).
+NOTE: Deleting WORK.GALAXIES (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.YEAST (memtype=DATA).
+3710     !                                         quit;
+
+
+3711       ods path work.templat(update) sashelp.tmplmst(read);
+3712       
+3713       ods trace on;
+3714       data yeast;
+3715       input count f;
+3716       n = 5;
+3717       datalines;
+
+NOTE: The data set WORK.YEAST has 6 observations and 3 variables.
+
+3724       ;
+3725       proc fmm data=yeast seed=314159;
+3726       model count/n = / k=2;
+3727       freq f;
+3728       run;
+
+
+Output Added:
+-------------
+Name:       ModelInfo
+Label:      Model Information
+Template:   Stat.FMM.ModelInfo
+Path:       FMM.ModelInfo
+-------------
+
+Output Added:
+-------------
+Name:       NObs
+Label:      Number of Observations
+Template:   Stat.FMM.Nobs
+Path:       FMM.NObs
+-------------
+
+Output Added:
+-------------
+Name:       OptInfo
+Label:      Optimization Information
+Template:   Stat.FMM.OptInfo
+Path:       FMM.OptInfo
+-------------
+
+Output Added:
+-------------
+Name:       IterHistory
+Label:      Iteration History
+Template:   Stat.FMM.IterHistory
+Path:       FMM.IterHistory
+-------------
+
+Output Added:
+-------------
+Name:       ConvergenceStatus
+Label:      Convergence Status
+Template:   Stat.FMM.ConvergenceStatus
+Path:       FMM.ConvergenceStatus
+-------------
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+
+Output Added:
+-------------
+Name:       FitStatistics
+Label:      Fit Statistics
+Template:   Stat.FMM.FitStatistics
+Path:       FMM.FitStatistics
+-------------
+
+Output Added:
+-------------
+Name:       ParameterEstimates
+Label:      Parameter Estimates for Binomial Model
+Template:   Stat.Fmm.ParameterEstimates
+Path:       FMM.ParameterEstimates
+-------------
+
+Output Added:
+-------------
+Name:       MixingProbs
+Label:      Parameter Estimates for Mixing Probabilities
+Template:   Stat.Fmm.MixingProbs
+Path:       FMM.MixingProbs
+-------------
+NOTE: The PROCEDURE FMM printed page 227.
+
+3729       proc fmm data=yeast seed=314159;
+3730       model count/n = / k=2;
+3731       freq f;
+3732       output out=fmmout pred(components) posterior;
+3733       run;
+
+
+Output Added:
+-------------
+Name:       ModelInfo
+Label:      Model Information
+Template:   Stat.FMM.ModelInfo
+Path:       FMM.ModelInfo
+-------------
+
+Output Added:
+-------------
+Name:       NObs
+Label:      Number of Observations
+Template:   Stat.FMM.Nobs
+Path:       FMM.NObs
+-------------
+
+Output Added:
+-------------
+Name:       OptInfo
+Label:      Optimization Information
+Template:   Stat.FMM.OptInfo
+Path:       FMM.OptInfo
+-------------
+
+Output Added:
+-------------
+Name:       IterHistory
+Label:      Iteration History
+Template:   Stat.FMM.IterHistory
+Path:       FMM.IterHistory
+-------------
+
+Output Added:
+-------------
+Name:       ConvergenceStatus
+Label:      Convergence Status
+Template:   Stat.FMM.ConvergenceStatus
+Path:       FMM.ConvergenceStatus
+-------------
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+
+Output Added:
+-------------
+Name:       FitStatistics
+Label:      Fit Statistics
+Template:   Stat.FMM.FitStatistics
+Path:       FMM.FitStatistics
+-------------
+
+Output Added:
+-------------
+Name:       ParameterEstimates
+Label:      Parameter Estimates for Binomial Model
+Template:   Stat.Fmm.ParameterEstimates
+Path:       FMM.ParameterEstimates
+-------------
+
+Output Added:
+-------------
+Name:       MixingProbs
+Label:      Parameter Estimates for Mixing Probabilities
+Template:   Stat.Fmm.MixingProbs
+Path:       FMM.MixingProbs
+-------------
+NOTE: The data set WORK.FMMOUT has 6 observations and 7 variables.
+NOTE: The PROCEDURE FMM printed page 228.
+
+3734       data fmmout;
+3735       set fmmout;
+3736       PredCount_1 = post_1 * f;
+3737       PredCount_2 = post_2 * f;
+3738       run;
+
+NOTE: There were 6 observations read from the data set WORK.FMMOUT.
+NOTE: The data set WORK.FMMOUT has 6 observations and 9 variables.
+
+3739       proc print data=fmmout;
+3740       run;
+
+
+Output Added:
+-------------
+Name:       Print
+Label:      Data Set WORK.FMMOUT
+Data Name:  ProcPrintTable
+Path:       Print.Print
+-------------
+NOTE: There were 6 observations read from the data set WORK.FMMOUT.
+NOTE: The PROCEDURE PRINT printed page 229.
+
+3741       ods graphics on;
+3742       proc fmm data=yeast seed=12345;
+3743       model count/n = / k=2;
+3744       freq f;
+3745       performance cpucount=2;
+3746       bayes nmc=1000 nbi=200;
+3747       run;
+
+
+Output Added:
+-------------
+Name:       ModelInfo
+Label:      Model Information
+Template:   Stat.FMM.ModelInfo
+Path:       FMM.ModelInfo
+-------------
+
+Output Added:
+-------------
+Name:       NObs
+Label:      Number of Observations
+Template:   Stat.FMM.Nobs
+Path:       FMM.NObs
+-------------
+
+Output Added:
+-------------
+Name:       BayesInfo
+Label:      Bayes Information
+Template:   Stat.FMM.OptInfo
+Path:       FMM.BayesInfo
+-------------
+NOTE: Bayesian results for this model (no regressor variables, non-identity link) are displayed on the data scale, not the linked scale. You can obtain results 
+      on the linked (=linear) scale by requesting a Metropolis sampling algorithm.
+
+Output Added:
+-------------
+Name:       PriorInfo
+Label:      Prior Distributions
+Template:   Stat.Fmm.PriorInfo
+Path:       FMM.PriorInfo
+-------------
+
+Output Added:
+-------------
+Name:       FitStatistics
+Label:      Bayesian Fit Statistics
+Template:   Stat.FMM.FitStatistics
+Path:       FMM.FitStatistics
+-------------
+
+Output Added:
+-------------
+Name:       PostSummaries
+Label:      Posterior Summary Statistics
+Template:   Stat.Fmm.PostSummaries
+Path:       FMM.PostSummaries
+-------------
+
+Output Added:
+-------------
+Name:       PostIntervals
+Label:      Posterior Interval Statistics
+Template:   Stat.Fmm.PostIntervals
+Path:       FMM.PostIntervals
+-------------
+
+Output Added:
+-------------
+Name:       AutoCorr
+Label:      Posterior Autocorrelations
+Template:   Stat.Fmm.AutoCorr
+Path:       FMM.AutoCorr
+-------------
+
+Output Added:
+-------------
+Name:       ESS
+Label:      Effective Sample Sizes
+Template:   Stat.Fmm.ESS
+Path:       FMM.ESS
+-------------
+
+Output Added:
+-------------
+Name:       TADPanel
+Label:      Success Probability, Component 1
+Template:   Stat.FMM.Graphics.TADPanel
+Path:       FMM.TracePlots.TADPanel
+-------------
+
+Output Added:
+-------------
+Name:       TADPanel
+Label:      Success Probability, Component 2
+Template:   Stat.FMM.Graphics.TADPanel
+Path:       FMM.TracePlots.TADPanel
+-------------
+
+Output Added:
+-------------
+Name:       TADPanel
+Label:      Probability, Component 1
+Template:   Stat.FMM.Graphics.TADPanel
+Path:       FMM.TracePlots.TADPanel
+-------------
+
+Output Added:
+-------------
+Name:       DensityPlot
+Label:      Density Plot
+Template:   Stat.FMM.Graphics.DensityPlot2
+Path:       FMM.DensityPlot
+-------------
+NOTE: The PROCEDURE FMM printed page 230.
+
+3748       ods graphics off;
+3749       data catch;
+3750       input gender $ age count @@;
+3751       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.CATCH has 52 observations and 3 variables.
+
+3765       ;
+3766       proc fmm data=catch seed=314159;
+3767       class gender;
+3768       model count = gender*age / dist=Poisson;
+3769       run;
+
+
+Output Added:
+-------------
+Name:       ModelInfo
+Label:      Model Information
+Template:   Stat.FMM.ModelInfo
+Path:       FMM.ModelInfo
+-------------
+
+Output Added:
+-------------
+Name:       ClassLevels
+Label:      Class Level Information
+Template:   Stat.FMM.ClassLevels
+Path:       FMM.ClassLevels
+-------------
+
+Output Added:
+-------------
+Name:       NObs
+Label:      Number of Observations
+Template:   Stat.FMM.Nobs
+Path:       FMM.NObs
+-------------
+
+Output Added:
+-------------
+Name:       OptInfo
+Label:      Optimization Information
+Template:   Stat.FMM.OptInfo
+Path:       FMM.OptInfo
+-------------
+
+Output Added:
+-------------
+Name:       IterHistory
+Label:      Iteration History
+Template:   Stat.FMM.IterHistory
+Path:       FMM.IterHistory
+-------------
+
+Output Added:
+-------------
+Name:       ConvergenceStatus
+Label:      Convergence Status
+Template:   Stat.FMM.ConvergenceStatus
+Path:       FMM.ConvergenceStatus
+-------------
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+
+Output Added:
+-------------
+Name:       FitStatistics
+Label:      Fit Statistics
+Template:   Stat.FMM.FitStatistics
+Path:       FMM.FitStatistics
+-------------
+
+Output Added:
+-------------
+Name:       ParameterEstimates
+Label:      Parameter Estimates for Poisson Model
+Template:   Stat.Fmm.ParameterEstimates
+Path:       FMM.ParameterEstimates
+-------------
+NOTE: The PROCEDURE FMM printed page 231.
+
+3770       proc fmm data=catch seed=314159;
+3771       class gender;
+3772       model count = gender*age / dist=Poisson ;
+3773       model + / dist=Constant;
+3774       run;
+
+
+Output Added:
+-------------
+Name:       ModelInfo
+Label:      Model Information
+Template:   Stat.FMM.ModelInfo
+Path:       FMM.ModelInfo
+-------------
+
+Output Added:
+-------------
+Name:       ClassLevels
+Label:      Class Level Information
+Template:   Stat.FMM.ClassLevels
+Path:       FMM.ClassLevels
+-------------
+
+Output Added:
+-------------
+Name:       NObs
+Label:      Number of Observations
+Template:   Stat.FMM.Nobs
+Path:       FMM.NObs
+-------------
+
+Output Added:
+-------------
+Name:       OptInfo
+Label:      Optimization Information
+Template:   Stat.FMM.OptInfo
+Path:       FMM.OptInfo
+-------------
+
+Output Added:
+-------------
+Name:       IterHistory
+Label:      Iteration History
+Template:   Stat.FMM.IterHistory
+Path:       FMM.IterHistory
+-------------
+
+Output Added:
+-------------
+Name:       ConvergenceStatus
+Label:      Convergence Status
+Template:   Stat.FMM.ConvergenceStatus
+Path:       FMM.ConvergenceStatus
+-------------
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+
+Output Added:
+-------------
+Name:       FitStatistics
+Label:      Fit Statistics
+Template:   Stat.FMM.FitStatistics
+Path:       FMM.FitStatistics
+-------------
+
+Output Added:
+-------------
+Name:       ParameterEstimates
+Label:      Parameter Estimates for Poisson Model
+Template:   Stat.Fmm.ParameterEstimates
+Path:       FMM.ParameterEstimates
+-------------
+
+Output Added:
+-------------
+Name:       MixingProbs
+Label:      Parameter Estimates for Mixing Probabilities
+Template:   Stat.Fmm.MixingProbs
+Path:       FMM.MixingProbs
+-------------
+NOTE: The PROCEDURE FMM printed page 232.
+
+3775       proc fmm data=catch seed=12345;
+3776       class gender;
+3777       model count = gender*age / dist=Poisson;
+3778       model + / dist=constant;
+3779       performance cpucount=2;
+3780       bayes nmc=1000 nbi=200;
+3781       run;
+
+
+Output Added:
+-------------
+Name:       ModelInfo
+Label:      Model Information
+Template:   Stat.FMM.ModelInfo
+Path:       FMM.ModelInfo
+-------------
+
+Output Added:
+-------------
+Name:       ClassLevels
+Label:      Class Level Information
+Template:   Stat.FMM.ClassLevels
+Path:       FMM.ClassLevels
+-------------
+
+Output Added:
+-------------
+Name:       NObs
+Label:      Number of Observations
+Template:   Stat.FMM.Nobs
+Path:       FMM.NObs
+-------------
+
+Output Added:
+-------------
+Name:       BayesInfo
+Label:      Bayes Information
+Template:   Stat.FMM.OptInfo
+Path:       FMM.BayesInfo
+-------------
+
+Output Added:
+-------------
+Name:       PriorInfo
+Label:      Prior Distributions
+Template:   Stat.Fmm.PriorInfo
+Path:       FMM.PriorInfo
+-------------
+
+Output Added:
+-------------
+Name:       FitStatistics
+Label:      Bayesian Fit Statistics
+Template:   Stat.FMM.FitStatistics
+Path:       FMM.FitStatistics
+-------------
+
+Output Added:
+-------------
+Name:       PostSummaries
+Label:      Posterior Summary Statistics
+Template:   Stat.Fmm.PostSummaries
+Path:       FMM.PostSummaries
+-------------
+
+Output Added:
+-------------
+Name:       PostIntervals
+Label:      Posterior Interval Statistics
+Template:   Stat.Fmm.PostIntervals
+Path:       FMM.PostIntervals
+-------------
+
+Output Added:
+-------------
+Name:       AutoCorr
+Label:      Posterior Autocorrelations
+Template:   Stat.Fmm.AutoCorr
+Path:       FMM.AutoCorr
+-------------
+
+Output Added:
+-------------
+Name:       ESS
+Label:      Effective Sample Sizes
+Template:   Stat.Fmm.ESS
+Path:       FMM.ESS
+-------------
+NOTE: The PROCEDURE FMM printed page 233.
+
+3782       ods graphics on;
+3783       ods select TADPanel;
+3784       proc fmm data=catch seed=12345;
+3785       class gender;
+3786       model count = gender*age / dist=Poisson;
+3787       model + / dist=constant;
+3788       performance cpucount=2;
+3789       bayes nmc=1000 nbi=200;
+3790       run;
+
+
+Output Added:
+-------------
+Name:       TADPanel
+Label:      Intercept, Component 1
+Template:   Stat.FMM.Graphics.TADPanel
+Path:       FMM.TracePlots.TADPanel
+-------------
+
+Output Added:
+-------------
+Name:       TADPanel
+Label:      age*gender F, Component 1
+Template:   Stat.FMM.Graphics.TADPanel
+Path:       FMM.TracePlots.TADPanel
+-------------
+
+Output Added:
+-------------
+Name:       TADPanel
+Label:      age*gender M, Component 1
+Template:   Stat.FMM.Graphics.TADPanel
+Path:       FMM.TracePlots.TADPanel
+-------------
+
+Output Added:
+-------------
+Name:       TADPanel
+Label:      Probability, Component 1
+Template:   Stat.FMM.Graphics.TADPanel
+Path:       FMM.TracePlots.TADPanel
+-------------
+
+3791       ods graphics off;
+3792       title "FMM Analysis of Galaxies Data";
+3793       data galaxies;
+3794       input velocity @@;
+3795       v = velocity / 1000;
+3796       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.GALAXIES has 82 observations and 2 variables.
+
+3806       ;
+3807       title2 "Three to Seven Components, Unequal Variances";
+3808       ods graphics on;
+3809       proc fmm data=galaxies criterion=AIC seed=314159;
+3810       model v = / kmin=3 kmax=7;
+3811       run;
+
+
+Output Added:
+-------------
+Name:       ModelInfo
+Label:      Model Information
+Template:   Stat.FMM.ModelInfo
+Path:       FMM.ModelInfo
+-------------
+
+Output Added:
+-------------
+Name:       NObs
+Label:      Number of Observations
+Template:   Stat.FMM.Nobs
+Path:       FMM.NObs
+-------------
+
+Output Added:
+-------------
+Name:       CompDescription
+Label:      Component Description for Mixture Models
+Template:   Stat.FMM.CompDescription
+Path:       FMM.CompDescription
+-------------
+
+Output Added:
+-------------
+Name:       CompEvaluation
+Label:      Component Evaluation for Mixture Models
+Template:   Stat.FMM.CompEvaluation
+Path:       FMM.CompEvaluation
+-------------
+NOTE: The model with 3 components (ID=1) was selected as 'best' based on the AIC statistic.
+
+Output Added:
+-------------
+Name:       ConvergenceStatus
+Label:      Convergence Status
+Template:   Stat.FMM.ConvergenceStatus
+Path:       FMM.ConvergenceStatus
+-------------
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+
+Output Added:
+-------------
+Name:       FitStatistics
+Label:      Fit Statistics
+Template:   Stat.FMM.FitStatistics
+Path:       FMM.FitStatistics
+-------------
+
+Output Added:
+-------------
+Name:       ParameterEstimates
+Label:      Parameter Estimates for Normal Model
+Template:   Stat.Fmm.ParameterEstimates
+Path:       FMM.ParameterEstimates
+-------------
+
+Output Added:
+-------------
+Name:       MixingProbs
+Label:      Parameter Estimates for Mixing Probabilities
+Template:   Stat.Fmm.MixingProbs
+Path:       FMM.MixingProbs
+-------------
+
+Output Added:
+-------------
+Name:       DensityPlot
+Label:      Density Plot
+Template:   Stat.FMM.Graphics.DensityPlot2
+Path:       FMM.DensityPlot
+-------------
+
+Output Added:
+-------------
+Name:       CriterionPanel
+Label:      Criterion Panel
+Template:   Stat.FMM.Graphics.CriterionPanel
+Path:       FMM.CriterionPanel
+-------------
+NOTE: The PROCEDURE FMM printed page 234.
+
+3812       title2 "Three to Seven Components, Equal Variances";
+3813       proc fmm data=galaxies criterion=AIC gconv=0 seed=314159;
+3814       model v = / kmin=3 kmax=7 equate=scale;
+3815       run;
+
+
+Output Added:
+-------------
+Name:       ModelInfo
+Label:      Model Information
+Template:   Stat.FMM.ModelInfo
+Path:       FMM.ModelInfo
+-------------
+
+Output Added:
+-------------
+Name:       NObs
+Label:      Number of Observations
+Template:   Stat.FMM.Nobs
+Path:       FMM.NObs
+-------------
+
+Output Added:
+-------------
+Name:       CompDescription
+Label:      Component Description for Mixture Models
+Template:   Stat.FMM.CompDescription
+Path:       FMM.CompDescription
+-------------
+
+Output Added:
+-------------
+Name:       CompEvaluation
+Label:      Component Evaluation for Mixture Models
+Template:   Stat.FMM.CompEvaluation
+Path:       FMM.CompEvaluation
+-------------
+NOTE: The model with 4 components (ID=2) was selected as 'best' based on the AIC statistic.
+
+Output Added:
+-------------
+Name:       ConvergenceStatus
+Label:      Convergence Status
+Template:   Stat.FMM.ConvergenceStatus
+Path:       FMM.ConvergenceStatus
+-------------
+NOTE: Convergence criterion (ABSGCONV=0.00001) satisfied.
+
+Output Added:
+-------------
+Name:       FitStatistics
+Label:      Fit Statistics
+Template:   Stat.FMM.FitStatistics
+Path:       FMM.FitStatistics
+-------------
+
+Output Added:
+-------------
+Name:       ParameterEstimates
+Label:      Parameter Estimates for Normal Model
+Template:   Stat.Fmm.ParameterEstimates
+Path:       FMM.ParameterEstimates
+-------------
+
+Output Added:
+-------------
+Name:       MixingProbs
+Label:      Parameter Estimates for Mixing Probabilities
+Template:   Stat.Fmm.MixingProbs
+Path:       FMM.MixingProbs
+-------------
+
+Output Added:
+-------------
+Name:       DensityPlot
+Label:      Density Plot
+Template:   Stat.FMM.Graphics.DensityPlot2
+Path:       FMM.DensityPlot
+-------------
+
+Output Added:
+-------------
+Name:       CriterionPanel
+Label:      Criterion Panel
+Template:   Stat.FMM.Graphics.CriterionPanel
+Path:       FMM.CriterionPanel
+-------------
+NOTE: The PROCEDURE FMM printed page 235.
+
+3816       title2 "Five Components, Equal Variances = 0.9025";
+3817       proc fmm data=galaxies seed=314159;
+3818       model v = / K=5 equate=scale;
+3819       restrict int 0 (scale 1) = 0.9025;
+3820       run;
+
+
+Output Added:
+-------------
+Name:       ModelInfo
+Label:      Model Information
+Template:   Stat.FMM.ModelInfo
+Path:       FMM.ModelInfo
+-------------
+
+Output Added:
+-------------
+Name:       NObs
+Label:      Number of Observations
+Template:   Stat.FMM.Nobs
+Path:       FMM.NObs
+-------------
+
+Output Added:
+-------------
+Name:       OptInfo
+Label:      Optimization Information
+Template:   Stat.FMM.OptInfo
+Path:       FMM.OptInfo
+-------------
+
+Output Added:
+-------------
+Name:       IterHistory
+Label:      Iteration History
+Template:   Stat.FMM.IterHistory
+Path:       FMM.IterHistory
+-------------
+
+Output Added:
+-------------
+Name:       ConvergenceStatus
+Label:      Convergence Status
+Template:   Stat.FMM.ConvergenceStatus
+Path:       FMM.ConvergenceStatus
+-------------
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+
+Output Added:
+-------------
+Name:       FitStatistics
+Label:      Fit Statistics
+Template:   Stat.FMM.FitStatistics
+Path:       FMM.FitStatistics
+-------------
+
+Output Added:
+-------------
+Name:       Constraints
+Label:      Linear Constraints at Solution
+Template:   Stat.FMM.Constraints
+Path:       FMM.Constraints
+-------------
+
+Output Added:
+-------------
+Name:       ParameterEstimates
+Label:      Parameter Estimates for Normal Model
+Template:   Stat.Fmm.ParameterEstimates
+Path:       FMM.ParameterEstimates
+-------------
+
+Output Added:
+-------------
+Name:       MixingProbs
+Label:      Parameter Estimates for Mixing Probabilities
+Template:   Stat.Fmm.MixingProbs
+Path:       FMM.MixingProbs
+-------------
+
+Output Added:
+-------------
+Name:       DensityPlot
+Label:      Density Plot
+Template:   Stat.FMM.Graphics.DensityPlot2
+Path:       FMM.DensityPlot
+-------------
+NOTE: The PROCEDURE FMM printed page 236.
+
+3821       ods trace off;
+3822       
+3823       
+3824       
+3825       
+The SAS System
+
+3826       

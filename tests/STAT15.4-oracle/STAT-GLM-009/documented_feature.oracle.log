@@ -1,0 +1,67 @@
+The SAS System
+
+25750      
+25751      /* STAT-GLM-009: GLM — RANDOM
+25752       * Source: S154 / Chapter 53 / `RANDOM Statement` (PDF pp. 4099–4100).
+25753       * Discriminates: Example 53.8: Mixed Model Analysis of Variance with the RANDOM Statement; explicit statements: RANDOM
+25754       */
+25755      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+25755    ! validmemname=compatible locale=en_US;
+25756      %let syscc=0;
+25757      title; footnote;
+25758      ods _all_ close;
+25759      ods listing gpath="%sysfunc(pathname(work))";
+25760      ods graphics off;
+
+NOTE: The PROCEDURE GLM printed pages 2525-2526.
+
+25761      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.EXP (memtype=DATA).
+NOTE: Deleting WORK.IRON (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+25761    !                                         quit;
+
+
+25762      ods path work.templat(update) sashelp.tmplmst(read);
+25763      
+25764      data machine;
+25765      input machine person rating @@;
+25766      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.MACHINE has 44 observations and 3 variables.
+
+25774      ;
+25775      proc glm data=machine;
+25776      class machine person;
+25777      model rating=machine person machine*person;
+25778      random person machine*person / test;
+25779      run;
+
+NOTE: TYPE I EMS not available without the E1 option.
+
+NOTE: The PROCEDURE GLM printed pages 2527-2530.
+
+25780      proc mixed data=machine method=type3;
+25781      class machine person;
+25782      model rating = machine;
+25783      random person machine*person;
+25784      run;
+
+NOTE: The PROCEDURE MIXED printed page 2531.
+
+25785      
+25786      
+25787      
+25788      
+The SAS System
+
+25789      

@@ -1,0 +1,74 @@
+The SAS System
+
+11806      
+11807      /* STAT-LIFEREG-010: LIFEREG — Predicted Values
+11808       * Source: S154 / Chapter 76 / `Predicted Values` (PDF pp. 5572–5574).
+11809       * Discriminates: Example 76.2: Computing Predicted Values for a Tobit Model
+11810       */
+11811      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+11811    ! validmemname=compatible locale=en_US;
+11812      %let syscc=0;
+11813      title; footnote;
+11814      ods _all_ close;
+11815      ods listing gpath="%sysfunc(pathname(work))";
+11816      ods graphics off;
+11817      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.FAN (memtype=DATA).
+NOTE: Deleting WORK.HEADACHE (memtype=DATA).
+NOTE: Deleting WORK.NEW (memtype=DATA).
+NOTE: Deleting WORK.POST (memtype=DATA).
+NOTE: Deleting WORK.PROB (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+11817    !                                         quit;
+
+
+11818      ods path work.templat(update) sashelp.tmplmst(read);
+11819      
+11820      data subset;
+11821      input Hours Yrs_Ed Yrs_Exp @@;
+11822      if Hours eq 0
+11823      then Lower=.;
+11824      else Lower=Hours;
+11825      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.SUBSET has 17 observations and 4 variables.
+
+11830      ;
+11831      proc lifereg data=subset outest=OUTEST(keep=_scale_);
+11832      model (lower, hours) = yrs_ed yrs_exp / d=normal;
+11833      output out=OUT xbeta=Xbeta;
+11834      run;
+
+NOTE: Algorithm converged.
+NOTE: The data set WORK.OUTEST has 1 observations and 1 variables.
+NOTE: The data set WORK.OUT has 17 observations and 6 variables.
+NOTE: The PROCEDURE LIFEREG printed page 821.
+
+11835      data predict;
+11836      drop lambda _scale_ _prob_;
+11837      set out;
+11838      if _n_ eq 1 then set outest;
+11839      lambda = pdf('NORMAL',Xbeta/_scale_)
+11840      / cdf('NORMAL',Xbeta/_scale_);
+11841      Predict = cdf('NORMAL', Xbeta/_scale_)
+11842      * (Xbeta + _scale_*lambda);
+11843      label Xbeta='MEAN OF UNCENSORED VARIABLE'
+11844      Predict = 'MEAN OF CENSORED VARIABLE';
+11845      run;
+
+NOTE: There were 17 observations read from the data set WORK.OUT.
+NOTE: There were 1 observations read from the data set WORK.OUTEST.
+NOTE: The data set WORK.PREDICT has 17 observations and 6 variables.
+
+11846      
+11847      
+11848      
+11849      
+The SAS System
+
+11850      

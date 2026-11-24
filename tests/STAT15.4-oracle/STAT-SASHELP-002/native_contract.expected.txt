@@ -1,0 +1,92 @@
+
+NAME    TYPE    LENGTH    VARNUM    LABEL
+
+Age       1        8         1           
+BMI       1        8         2           
+
+Age     BMI
+
+2.0    18.6
+2.0    17.1
+2.0    19.0
+2.0    16.8
+2.1    19.0
+
+Observations
+------------
+        3264
+
+NAME            TYPE    LENGTH    VARNUM    LABEL
+
+ID                1        8         1           
+X                 1        8         2           
+Y                 1        8         3           
+Z                 1        8         4           
+Status            1        8         5           
+Watershed         1        8         6           
+BurrowCount       1        8         7           
+Elevation         1        8         8           
+Aspect            1        8         9           
+Slope             1        8        10           
+Dew               1        8        11           
+PercentRock       1        8        12           
+PercentShrub      1        8        13           
+Burrow            1        8        14           
+
+                                                                   Burrow                                           Percent    Percent
+ ID        X             Y           Z      Status    Watershed     Count    Elevation    Aspect    Slope    Dew      Rock      Shrub     Burrow
+
+448    128324.66    1031421.00    531.75       1          5           .          .           .        .       .        .          .          1  
+679    128344.23    1031391.63    530.79       0          5           .          .           .        .       .        .          .          1  
+680    128344.77    1031391.31    530.86       1          5           .          .           .        .       .        .          .          1  
+683    128343.09    1031402.81    531.24       0          5           .          .           .        .       .        .          .          1  
+686    128343.84    1031415.25    532.11      -1          5           .          .           .        .       .        .          .          1  
+
+Observations
+------------
+       24591
+
+NAME      TYPE    LENGTH    VARNUM    LABEL
+
+Group       2       13         1      Disease Group                     
+T           1        8         2      Disease-Free Survival Time        
+Status      1        8         3      Event Indictor: 1=Event 0=Censored
+
+Group      T     Status
+
+ ALL     2081       0  
+ ALL     1602       0  
+ ALL     1496       0  
+ ALL     1462       0  
+ ALL     1433       0  
+
+Observations
+------------
+         137
+
+NAME          TYPE    LENGTH    VARNUM    LABEL
+
+Weight          1        8         1      Infant Birth Weight           
+Black           1        8         2      Black Mother                  
+Married         1        8         3      Married Mother                
+Boy             1        8         4      Baby Boy                      
+MomAge          1        8         5      Mother's Age                  
+MomSmoke        1        8         6      Smoking Mother                
+CigsPerDay      1        8         7      Cigarettes Per Day            
+MomWtGain       1        8         8      Mother's Pregnancy Weight Gain
+Visit           1        8         9      Prenatal Visit                
+MomEdLevel      1        8        10      Mother's Education Level      
+
+                                                                Mom               Mom
+                                     Mom     Mom      Cigs       Wt                Ed
+Weight    Black    Married    Boy    Age    Smoke    PerDay     Gain    Visit    Level
+
+ 4111       0         1        1      -3      0         0       -16       1        0  
+ 3997       0         1        0       1      0         0         2       3        2  
+ 3572       0         1        1       0      0         0        -3       3        0  
+ 1956       0         1        1      -1      0         0        -5       3        2  
+ 3515       0         1        1      -6      0         0       -20       3        0  
+
+Observations
+------------
+       50000

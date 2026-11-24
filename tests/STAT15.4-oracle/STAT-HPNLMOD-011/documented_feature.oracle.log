@@ -1,0 +1,70 @@
+The SAS System
+
+5933       
+5934       /* STAT-HPNLMOD-011: HPNLMOD — Official examples and feature integration regression
+5935        * Source: S154 / Chapter 63 / `Examples: HPNLMOD Procedure` (PDF pp. 4900–4903).
+5936        * Discriminates: Example 63.1: Segmented Model
+5937        */
+5938       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+5938     ! validmemname=compatible locale=en_US;
+5939       %let syscc=0;
+5940       title; footnote;
+5941       ods _all_ close;
+5942       ods listing gpath="%sysfunc(pathname(work))";
+5943       ods graphics off;
+5944       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.ENZYME (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.REMISS (memtype=DATA).
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+5944     !                                         quit;
+
+
+5945       ods path work.templat(update) sashelp.tmplmst(read);
+5946       
+5947       data a;
+5948       input y x @@;
+5949       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.A has 16 observations and 2 variables.
+
+5953       ;
+5954       proc hpnlmod data=a out=b;
+5955       parms alpha=.45 beta=.05 gamma=-.0025;
+5956       x0 = -.5*beta / gamma;
+5957       if (x < x0) then
+5958       yp = alpha + beta*x + gamma *x*x;
+5959       else
+5960       yp = alpha + beta*x0 + gamma*x0*x0;
+5961       model y ~ residual(yp);
+5962       estimate 'join point' -beta/2/gamma;
+5963       estimate 'plateau value c' alpha - beta**2/(4*gamma);
+5964       predict 'predicted' yp pred=yp;
+5965       predict 'response' y pred=y;
+5966       predict 'x' x pred=x;
+5967       run;
+
+
+NOTE: The HPNLMOD procedure is executing in single-machine mode.
+NOTE: The predicted value of the expression labeled 'predicted' is mapped to yp in the OUT= data set.
+NOTE: The predicted value of the expression labeled 'response' is mapped to y in the OUT= data set.
+NOTE: The predicted value of the expression labeled 'x' is mapped to x in the OUT= data set.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: There were 16 observations read from the data set WORK.A.
+NOTE: The data set WORK.B has 16 observations and 3 variables.
+NOTE: The PROCEDURE HPNLMOD printed page 235.
+
+5968       
+5969       
+5970       
+5971       
+The SAS System
+
+5972       

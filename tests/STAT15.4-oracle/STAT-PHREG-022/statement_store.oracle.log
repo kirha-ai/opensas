@@ -1,0 +1,102 @@
+The SAS System
+
+3809       
+3810       /* STAT-PHREG-022: PHREG — STORE
+3811        * Source: S154 / Chapter 92 / `STORE Statement` (PDF p. 7389).
+3812        * Discriminates: Save the fitted item store and inspect it through PROC PLM SHOW ALL.
+3813        */
+3814       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+3814     ! validmemname=compatible locale=en_US;
+3815       %let syscc=0;
+3816       title; footnote;
+3817       ods _all_ close;
+3818       ods listing gpath="%sysfunc(pathname(work))";
+3819       ods graphics off;
+3820       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.NEW (memtype=DATA).
+NOTE: Deleting WORK.POST (memtype=DATA).
+NOTE: Deleting WORK.RATS (memtype=DATA).
+NOTE: Deleting WORK.REGIMES (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+3820     !                                         quit;
+
+
+3821       ods path work.templat(update) sashelp.tmplmst(read);
+3822       
+3823       data Rats;
+3824       label Days ='Days from Exposure to Death';
+3825       input Days Status Group @@;
+3826       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.RATS has 40 observations and 3 variables.
+
+3837       ;
+3838       data Regimes;
+3839       Group=0;
+3840       output;
+3841       Group=1;
+3842       output;
+3843       run;
+
+NOTE: The data set WORK.REGIMES has 2 observations and 1 variables.
+
+3844       ods graphics on;
+3845       proc phreg data=Rats plot(overlay)=survival;
+3846       model Days*Status(0)=Group;
+3847       baseline covariates=regimes out=_null_;
+3848       
+3849       store out=work._oracle_store;
+3850       run;
+
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The PHREG procedure generated the model item store WORK._ORACLE_STORE.
+NOTE: The PROCEDURE PHREG printed page 289.
+
+3851       proc phreg data=Rats;
+3852       model Days*Status(0)=Group X;
+3853       X=Group*(log(Days) - 5.4);
+3854       run;
+
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The PROCEDURE PHREG printed page 290.
+
+3855       ods graphics on;
+3856       proc phreg data=Rats;
+3857       model Days*Status(0)=Group;
+3858       bayes seed=1 outpost=Post nmc=1000 nbi=200;
+3859       run;
+
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The data set WORK.POST has 1000 observations and 4 variables.
+NOTE: The PROCEDURE PHREG printed pages 291-293.
+
+3860       data New;
+3861       set Post;
+3862       Indicator=(Group < 0);
+3863       label Indicator='Group < 0';
+3864       run;
+
+NOTE: There were 1000 observations read from the data set WORK.POST.
+NOTE: The data set WORK.NEW has 1000 observations and 5 variables.
+
+3865       proc means data=New(keep=Indicator) n mean;
+3866       run;
+
+NOTE: There were 1000 observations read from the data set WORK.NEW.
+NOTE: The PROCEDURE MEANS printed page 294.
+
+3867       
+3868       proc plm restore=work._oracle_store; show all; run;
+
+NOTE: The PROCEDURE PLM printed page 295.
+
+3869       
+3870       
+3871       
+3872       
+The SAS System
+
+3873       

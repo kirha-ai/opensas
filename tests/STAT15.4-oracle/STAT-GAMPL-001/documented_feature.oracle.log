@@ -1,0 +1,84 @@
+The SAS System
+
+20567      
+20568      /* STAT-GAMPL-001: GAMPL — Data input, variable roles, and basic options
+20569       * Source: S154 / Chapter 49 / `PROC GAMPL Statement` (PDF pp. 3356–3362); S154 / Chapter 49 / `FREQ Statement` (PDF p. 3363); S154 / Chapter 49 /
+20569    ! `ID Statement` (PDF p. 3363); S154 / Chapter 49 / `WEIGHT Statement` (PDF p. 3374); S154 / Chapter 49 / `Missing Values` (PDF p. 3374).
+20570       * Discriminates: Verified default procedure context; explicit statements: ID
+20571       */
+20572      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+20572    ! validmemname=compatible locale=en_US;
+20573      %let syscc=0;
+20574      title; footnote;
+20575      ods _all_ close;
+20576      ods listing gpath="%sysfunc(pathname(work))";
+20577      ods graphics off;
+20578      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.EQUIP (memtype=DATA).
+NOTE: Deleting WORK.EST (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+20578    !                                         quit;
+
+
+20579      ods path work.templat(update) sashelp.tmplmst(read);
+20580      
+20581      %let off0 = offsetmin=0 offsetmax=0
+20582      linearopts=(thresholdmin=0 thresholdmax=0);
+20583      proc template;
+20584      define statgraph surface;
+20585      dynamic _title _z;
+20586      begingraph / designwidth=defaultDesignHeight;
+20587      entrytitle _title;
+20588      layout overlay / xaxisopts=(&off0) yaxisopts=(&off0);
+20589      contourplotparm z=_z y=Latitude x=Longitude / gridded=FALSE;
+20590      endlayout;
+20591      endgraph;
+20592      end;
+NOTE: Overwriting existing template/link: Surface
+NOTE: STATGRAPH 'Surface' has been saved to: WORK.TEMPLAT
+20593      run;
+
+20594      proc sgrender data=sashelp.Vote1980 template=surface;
+20595      dynamic _title = 'US County Vote Proportion in the 1980 Election'
+20596      _z = 'LogVoteRate';
+20597      run;
+
+NOTE: Listing image output written to /saswork/SAS_work5D120001108E_odaws02-euw1.oda.sas.com/SAS_workCCDC0001108E_odaws02-euw1.oda.sas.com/SGRender34.png.
+NOTE: There were 3107 observations read from the data set SASHELP.VOTE1980.
+
+20598      ods graphics on;
+20599      proc gampl data=sashelp.Vote1980 plots seed=12345;
+20600      model LogVoteRate = spline(Pop ) spline(Edu) spline(Houses)
+20601      spline(Income) spline(Longitude Latitude);
+20602      id Longitude Latitude;
+20603      output out=VotePred;
+20604      run;
+
+NOTE: The GAMPL procedure is executing in single-machine mode.
+NOTE: Convergence criterion (FCONV=2.1073424E-8) satisfied.
+NOTE: The data set WORK.VOTEPRED has 3107 observations and 3 variables.
+NOTE: The PROCEDURE GAMPL printed page 2346.
+
+20605      proc sgrender data=VotePred template=surface;
+20606      dynamic _title='Predicted US County Vote Proportion in the 1980 Election'
+20607      _z ='Pred';
+20608      run;
+
+NOTE: Listing image output written to /saswork/SAS_work5D120001108E_odaws02-euw1.oda.sas.com/SAS_workCCDC0001108E_odaws02-euw1.oda.sas.com/SGRender35.png.
+NOTE: There were 3107 observations read from the data set WORK.VOTEPRED.
+
+20609      
+20610      
+20611      
+20612      
+The SAS System
+
+20613      

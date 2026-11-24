@@ -1,0 +1,98 @@
+The SAS System
+
+6146       
+6147       /* STAT-HPREG-012: HPREG — PERFORMANCE
+6148        * Source: S154 / Chapter 67 / `PERFORMANCE Statement` (PDF pp. 5035–5036).
+6149        * Discriminates: Example 67.3: Forward Selection with Screening; explicit statements: PERFORMANCE
+6150        */
+6151       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+6151     ! validmemname=compatible locale=en_US;
+6152       %let syscc=0;
+6153       title; footnote;
+6154       ods _all_ close;
+6155       ods listing gpath="%sysfunc(pathname(work))";
+6156       ods graphics off;
+6157       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.BASEBALLOUT (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+6157     !                                         quit;
+
+
+6158       ods path work.templat(update) sashelp.tmplmst(read);
+6159       
+6160       %let nObs = 50000;
+6161       %let nContIn = 25;
+6162       %let nContOut = 500;
+6163       %let nClassIn = 5;
+6164       %let nClassOut = 500;
+6165       %let maxLevs = 5;
+6166       %let noiseScale= 1;
+6167       data ex4Data;
+6168       array xIn{&nContIn};
+6169       array xOut{&nContOut};
+6170       array cIn{&nClassIn};
+6171       array cOut{&nClassOut};
+6172       drop i j sign nLevs xBeta;
+6173       do i=1 to &nObs;
+6174       sign = -1;
+6175       xBeta = 0;
+6176       do j=1 to dim(xIn);
+6177       xIn{j} = ranuni(1);
+6178       xBeta = xBeta + j *sign*xIn{j};
+6179       sign = -sign;
+6180       end;
+6181       do j=1 to dim(xOut);
+6182       xOut{j} = ranuni(1);
+6183       end;
+6184       xWeakIn1 = ranuni(1);
+6185       xWeakin2 = ranuni(1);
+6186       xBeta = xBeta + 0.1 *xWeakIn1+ 0.1*xWeakIn2;
+6187       do j=1 to dim(cIn);
+6188       nLevs = 2 + mod(j,&maxlevs-1);
+6189       cIn{j} = 1+int(ranuni(1)*nLevs);
+6190       xBeta = xBeta + j *sign*(cIn{j}-nLevs/2);
+6191       sign = -sign;
+6192       end;
+6193       do j=1 to dim(cOut);
+6194       nLevs = 2 + mod(j,&maxlevs-1);
+6195       cOut{j} = 1+int(ranuni(1)*nLevs);
+6196       end;
+6197       y = xBeta + &noiseScale*rannor(1);
+6198       output;
+6199       end;
+6200       run;
+
+NOTE: The data set WORK.EX4DATA has 50000 observations and 1033 variables.
+
+6201       proc hpreg data=ex4Data;
+6202       class c: ;
+6203       model y = x: c: ;
+6204       selection method=forward screen(details=all)=100 20;
+6205       performance details;
+6206       run;
+
+NOTE: The HPREG procedure is executing in single-machine mode.
+NOTE: There were 50000 observations read from the data set WORK.EX4DATA.
+NOTE: The PROCEDURE HPREG printed pages 436-445.
+
+6207       proc hpreg data=ex4Data;
+6208       class c: ;
+6209       model y = x: c: ;
+6210       selection method=forward;
+6211       performance details;
+6212       run;
+
+NOTE: The HPREG procedure is executing in single-machine mode.
+NOTE: There were 50000 observations read from the data set WORK.EX4DATA.
+NOTE: The PROCEDURE HPREG printed pages 446-448.
+
+6213       
+6214       
+6215       
+6216       
+The SAS System
+
+6217       

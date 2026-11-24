@@ -1,0 +1,145 @@
+The SAS System
+
+16602      
+16603      /* STAT-MCMC-015: MCMC — Initial Values of the Markov Chains / Matrix Functions in PROC MCMC / Autocall Macros for Postprocessing
+16604       * Source: S154 / Chapter 80 / `Initial Values of the Markov Chains` (PDF pp. 6156–6157); S154 / Chapter 80 / `Matrix Functions in PROC MCMC` (PDF
+16604    ! pp. 6182–6186); S154 / Chapter 80 / `Autocall Macros for Postprocessing` (PDF pp. 6212–6215).
+16605       * Discriminates: Getting Started: MCMC Procedure
+16606       */
+16607      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+16607    ! validmemname=compatible locale=en_US;
+16608      %let syscc=0;
+16609      title; footnote;
+16610      ods _all_ close;
+16611      ods listing gpath="%sysfunc(pathname(work))";
+16612      ods graphics off;
+16613      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.MCMCOUT (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.VASO (memtype=DATA).
+16613    !                                         quit;
+
+
+16614      ods path work.templat(update) sashelp.tmplmst(read);
+16615      
+16616      ods graphics on;
+16617      proc mcmc data=sashelp.class outpost=classout nmc=1000 thin=2 seed=246810 nbi=200;
+16618      parms beta0 0 beta1 0;
+16619      parms sigma2 1;
+16620      prior beta0 beta1 ~ normal(mean = 0, var = 1e6);
+16621      prior sigma2 ~ igamma(shape = 3/10, scale = 10/3);
+16622      mu = beta0 + beta1*height;
+16623      model weight ~ n(mu, var = sigma2);
+16624      run;
+
+NOTE: Starting optimization.
+NOTE: Tuning the proposal distribution.
+NOTE: Generating the burn-in samples.
+NOTE: Beginning sample generation.
+NOTE: Generating diagnostic plots.
+NOTE: The data set WORK.CLASSOUT has 500 observations and 7 variables.
+NOTE: The PROCEDURE MCMC printed pages 1312-1314.
+
+16625      ods graphics off;
+16626      title 'The Behrens-Fisher Problem';
+16627      data behrens;
+16628      input y ind @@;
+16629      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.BEHRENS has 33 observations and 2 variables.
+
+16635      ;
+16636      proc mcmc data=behrens outpost=postout seed=123
+16637      nmc=1000 monitor=(_parms_ mudif)
+16638      statistics(alpha=0.01) nbi=200;
+16639      ods select PostSumInt;
+16640      parm mu1 0 mu2 0;
+16641      parm sig21 1;
+16642      parm sig22 1;
+16643      prior mu: ~ general(0);
+16644      prior sig21 ~ general(-log(sig21), lower=0);
+16645      prior sig22 ~ general(-log(sig22), lower=0);
+16646      mudif = mu1 - mu2;
+16647      if ind = 1 then do;
+16648      mu = mu1;
+16649      s2 = sig21;
+16650      end;
+16651      else do;
+16652      mu = mu2;
+16653      s2 = sig22;
+16654      end;
+16655      model y ~ normal(mu, var=s2);
+16656      run;
+
+NOTE: Tuning the proposal distribution.
+NOTE: Generating the burn-in samples.
+NOTE: Beginning sample generation.
+NOTE: The data set WORK.POSTOUT has 1000 observations and 9 variables.
+NOTE: The PROCEDURE MCMC printed page 1315.
+
+16657      proc format;
+16658      value diffmt low-0 = 'mu1 - mu2 <= 0' 0<-high = 'mu1 - mu2 > 0';
+NOTE: Format DIFFMT has been output.
+16659      run;
+
+
+16660      proc freq data = postout;
+16661      tables mudif /nocum;
+16662      format mudif diffmt.;
+16663      run;
+
+NOTE: There were 1000 observations read from the data set WORK.POSTOUT.
+NOTE: The PROCEDURE FREQ printed page 1316.
+
+16664      title 'Random-Effects Model';
+16665      data heights;
+16666      input Family G$ Height @@;
+16667      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.HEIGHTS has 18 observations and 3 variables.
+
+16671      ;
+16672      data input;
+16673      set heights;
+16674      if g eq 'F' then gf = 1;
+16675      else gf = 0;
+16676      drop g;
+16677      run;
+
+NOTE: There were 18 observations read from the data set WORK.HEIGHTS.
+NOTE: The data set WORK.INPUT has 18 observations and 3 variables.
+
+16678      ods graphics on;
+16679      proc mcmc data=input outpost=postout nmc=1000 seed=7893 plots=trace nbi=200;
+16680      ods select Parameters REparameters PostSumInt tracepanel;
+16681      parms b0 0 b1 0 s2 1 s2g 1;
+16682      prior b: ~ normal(0, var = 10000);
+16683      prior s: ~ igamma(0.01, scale = 0.01);
+16684      random gamma ~ normal(0, var = s2g) subject=family monitor=(gamma);
+16685      mu = b0 + b1 * gf + gamma;
+16686      model height ~ normal(mu, var = s2);
+16687      run;
+
+NOTE: Starting optimization.
+NOTE: Tuning the proposal distribution.
+NOTE: Generating the burn-in samples.
+NOTE: Beginning sample generation.
+NOTE: Generating diagnostic plots.
+NOTE: The data set WORK.POSTOUT has 1000 observations and 13 variables.
+NOTE: The PROCEDURE MCMC printed pages 1317-1318.
+
+16688      ods graphics off;
+16689      run;
+16690      quit;
+16691      
+16692      
+16693      
+16694      
+The SAS System
+
+16695      

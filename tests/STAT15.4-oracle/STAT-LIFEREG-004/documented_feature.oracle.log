@@ -1,0 +1,62 @@
+The SAS System
+
+11385      
+11386      /* STAT-LIFEREG-004: LIFEREG — PROBPLOT / Model Specification / Computational Method
+11387       * Source: S154 / Chapter 76 / `PROBPLOT Statement` (PDF pp. 5561–5565); S154 / Chapter 76 / `Model Specification` (PDF pp. 5566–5567); S154 /
+11387    ! Chapter 76 / `Computational Method` (PDF pp. 5567–5569).
+11388       * Discriminates: Example 76.6: Probability Plotting—Arbitrary Censoring; explicit statements: PROBPLOT
+11389       */
+11390      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+11390    ! validmemname=compatible locale=en_US;
+11391      %let syscc=0;
+11392      title; footnote;
+11393      ods _all_ close;
+11394      ods listing gpath="%sysfunc(pathname(work))";
+11395      ods graphics off;
+11396      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.FAN (memtype=DATA).
+NOTE: Deleting WORK.HEADACHE (memtype=DATA).
+NOTE: Deleting WORK.NEW (memtype=DATA).
+NOTE: Deleting WORK.POST (memtype=DATA).
+NOTE: Deleting WORK.PROB (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+11396    !                                         quit;
+
+
+11397      ods path work.templat(update) sashelp.tmplmst(read);
+11398      
+11399      data Micro;
+11400      input t1 t2 f;
+11401      datalines;
+
+NOTE: The data set WORK.MICRO has 14 observations and 3 variables.
+
+11416      ;
+11417      ods graphics on;
+11418      proc lifereg data=Micro;
+11419      model ( t1 t2 ) = / d=lognormal intercept=25 scale=5;
+11420      weight f;
+11421      probplot
+11422      pupper = 10
+11423      itprintem
+11424      printprobs
+11425      maxitem = (1000,25)
+11426      ppout;
+11427      inset;
+11428      run;
+
+NOTE: Algorithm converged.
+NOTE: Turnbull algorithm converged.
+NOTE: The PROCEDURE LIFEREG printed page 790.
+
+11429      
+11430      
+11431      
+11432      
+The SAS System
+
+11433      

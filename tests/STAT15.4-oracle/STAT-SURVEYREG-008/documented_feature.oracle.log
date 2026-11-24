@@ -1,0 +1,105 @@
+The SAS System
+
+24316      
+24317      /* STAT-SURVEYREG-008: SURVEYREG — Taylor Series (Linearization) / Balanced Repeated Replication (BRR) Method / Fay's BRR Method
+24318       * Source: S154 / Chapter 123 / `Taylor Series (Linearization)` (PDF pp. 10148–10149); S154 / Chapter 123 / `Balanced Repeated Replication (BRR)
+24318    ! Method` (PDF pp. 10151–10152); S154 / Chapter 123 / `Fay's BRR Method` (PDF pp. 10152–10153).
+24319       * Discriminates: Getting Started: SURVEYREG Procedure
+24320       */
+24321      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+24321    ! validmemname=compatible locale=en_US;
+24322      %let syscc=0;
+24323      title; footnote;
+24324      ods _all_ close;
+24325      ods listing gpath="%sysfunc(pathname(work))";
+24326      ods graphics off;
+24327      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.ICECREAM (memtype=DATA).
+NOTE: Deleting WORK.MYPARMEST (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.STUDENTTOTALS (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+24327    !                                         quit;
+
+
+24328      ods path work.templat(update) sashelp.tmplmst(read);
+24329      
+24330      data IceCream;
+24331      input Grade Spending Income Kids @@;
+24332      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.ICECREAM has 40 observations and 4 variables.
+
+24347      ;
+24348      title1 'Ice Cream Spending Analysis';
+24349      title2 'Simple Random Sample Design';
+24350      proc surveyreg data=IceCream total=4000;
+24351      class Kids;
+24352      model Spending = Income Kids / solution;
+24353      run;
+
+NOTE: The PROCEDURE SURVEYREG printed page 1544.
+
+24354      data StudentTotals;
+24355      input Grade _TOTAL_;
+24356      datalines;
+
+NOTE: The data set WORK.STUDENTTOTALS has 3 observations and 2 variables.
+
+24360      ;
+24361      data IceCream;
+24362      set IceCream;
+24363      if Grade=7 then Prob=20/1824;
+24364      if Grade=8 then Prob=9/1025;
+24365      if Grade=9 then Prob=11/1151;
+24366      Weight=1/Prob;
+24367      run;
+
+NOTE: There were 40 observations read from the data set WORK.ICECREAM.
+NOTE: The data set WORK.ICECREAM has 40 observations and 6 variables.
+
+24368      ods graphics on;
+24369      title1 'Ice Cream Spending Analysis';
+24370      title2 'Stratified Sample Design';
+24371      proc surveyreg data=IceCream total=StudentTotals;
+24372      strata Grade /list;
+24373      model Spending = Income;
+24374      weight Weight;
+24375      run;
+
+NOTE: The PROCEDURE SURVEYREG printed page 1545.
+
+24376      title1 'Ice Cream Spending Analysis';
+24377      title2 'Stratified Sample Design';
+24378      proc surveyreg data=IceCream total=StudentTotals;
+24379      strata Grade /list;
+24380      model Spending = Income;
+24381      weight Weight;
+24382      ods output ParameterEstimates = MyParmEst;
+24383      run;
+
+NOTE: The data set WORK.MYPARMEST has 2 observations and 6 variables.
+NOTE: The PROCEDURE SURVEYREG printed page 1546.
+
+24384      ods output ParameterEstimates = MyParmEst;
+24385      proc print data=MyParmEst;
+24386      run;
+
+WARNING: Output 'ParameterEstimates' was not created.  Make sure that the output object name, label, or path is spelled correctly.  Also, verify that the 
+         appropriate procedure options are used to produce the requested output object.  For example, verify that the NOPRINT option is not used.
+NOTE: There were 2 observations read from the data set WORK.MYPARMEST.
+NOTE: The PROCEDURE PRINT printed page 1547.
+
+24387      
+24388      
+24389      
+24390      
+The SAS System
+
+24391      

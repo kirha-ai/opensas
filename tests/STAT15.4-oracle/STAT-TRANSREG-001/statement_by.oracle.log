@@ -1,0 +1,141 @@
+The SAS System
+
+26968      
+26969      /* STAT-TRANSREG-001: TRANSREG — Data input, variable roles, and basic options
+26970       * Source: S154 / Chapter 126 / `PROC TRANSREG Statement` (PDF pp. 10363–10370); S154 / Chapter 126 / `BY Statement` (PDF p. 10370); S154 / Chapter
+26970    !  126 / `FREQ Statement` (PDF pp. 10370–10371); S154 / Chapter 126 / `ID Statement` (PDF p. 10371); S154 / Chapter 126 / `WEIGHT Statement` (PDF p.
+26970    ! 10409); S154 / Chapter 126 / `Missing Values` (PDF pp. 10474–10475); S154 / Chapter 126 / `Missing Values, UNTIE, and Hypothesis Tests` (PDF pp.
+26970    ! 10475–10476).
+26971       * Discriminates: Two explicit BY groups contain identical inputs, exposing group boundaries and per-group results.
+26972       */
+26973      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+26973    ! validmemname=compatible locale=en_US;
+26974      %let syscc=0;
+26975      title; footnote;
+26976      ods _all_ close;
+26977      ods listing gpath="%sysfunc(pathname(work))";
+26978      ods graphics off;
+26979      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.A (memtype=DATA).
+NOTE: Deleting WORK.DATA26 (memtype=DATA).
+NOTE: Deleting WORK.GAS (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+26979    !                                         quit;
+
+
+26980      ods path work.templat(update) sashelp.tmplmst(read);
+26981      
+26982      title 'Gasoline and Emissions Data';
+26983      data gas;
+26984      set sashelp.gas;
+26985      if fuel in ('Ethanol', '82rongas', 'Gasohol');
+26986      run;
+
+NOTE: There were 171 observations read from the data set SASHELP.GAS.
+NOTE: The data set WORK.GAS has 112 observations and 4 variables.
+
+26987      ods graphics on;
+26988      * Request a Spline Transformation of Equivalence Ratio;
+26989      data _oracle_input; set Gas; do _oracle_by=1 to 2; output; end; run;
+
+NOTE: There were 112 observations read from the data set WORK.GAS.
+NOTE: The data set WORK._ORACLE_INPUT has 224 observations and 5 variables.
+
+26990      proc sort data=_oracle_input; by _oracle_by; run;
+
+NOTE: There were 224 observations read from the data set WORK._ORACLE_INPUT.
+NOTE: The data set WORK._ORACLE_INPUT has 224 observations and 5 variables.
+
+26991      proc transreg data=_oracle_input solve ss2 plots=(transformation obp residuals);
+26992      by _oracle_by;
+26993      model identity(nox) = spline(EqRatio / nknots=4);
+26994      run;
+
+NOTE: 2 observations were deleted from the analysis due to missing values.
+NOTE: Algorithm converged.
+NOTE: The above message was for the following BY group:
+      _oracle_by=1
+NOTE: 2 observations were deleted from the analysis due to missing values.
+NOTE: Algorithm converged.
+NOTE: The above message was for the following BY group:
+      _oracle_by=2
+NOTE: There were 224 observations read from the data set WORK._ORACLE_INPUT.
+NOTE: The PROCEDURE TRANSREG printed pages 1650-1651.
+
+26995      * Separate Curves and Intercepts;
+26996      proc transreg data=Gas solve ss2 additive plots=(transformation obp);
+26997      model identity(nox) = class(Fuel / zero=none) |
+26998      spline(EqRatio / nknots=4 after);
+26999      run;
+
+NOTE: Since the model contains SMOOTH, BSPLINE, PBSPLINE, or a CLASS expansion with ZERO=NONE, a model with an implicit intercept is fit.
+NOTE: All statistics are mean corrected.
+NOTE: 2 observations were deleted from the analysis due to missing values.
+NOTE: Algorithm converged.
+NOTE: There were 112 observations read from the data set WORK.GAS.
+NOTE: The PROCEDURE TRANSREG printed page 1652.
+
+27000      * Separate Intercepts;
+27001      proc transreg data=Gas solve ss2 additive;
+27002      model identity(nox) = class(Fuel / zero=none)
+27003      spline(EqRatio / nknots=4);
+27004      run;
+
+NOTE: Since the model contains SMOOTH, BSPLINE, PBSPLINE, or a CLASS expansion with ZERO=NONE, a model with an implicit intercept is fit.
+NOTE: All statistics are mean corrected.
+NOTE: 2 observations were deleted from the analysis due to missing values.
+NOTE: Algorithm converged.
+NOTE: There were 112 observations read from the data set WORK.GAS.
+NOTE: The PROCEDURE TRANSREG printed page 1653.
+
+27005      * Separate Curves and Intercepts with Penalized B-Splines;
+27006      proc transreg data=Gas ss2 plots=transformation lprefix=0;
+27007      model identity(nox) = class(Fuel / zero=none) * pbspline(EqRatio);
+27008      run;
+
+NOTE: AFTER is assumed when PBSPLINE is crossed with a CLASS variable.
+NOTE: Since the model contains SMOOTH, BSPLINE, PBSPLINE, or a CLASS expansion with ZERO=NONE, a model with an implicit intercept is fit.
+NOTE: All statistics are mean corrected.
+NOTE: 2 observations were deleted from the analysis due to missing values.
+NOTE: Algorithm converged.
+NOTE: There were 112 observations read from the data set WORK.GAS.
+NOTE: The PROCEDURE TRANSREG printed page 1654.
+
+27009      title 'Introductory Main-Effects ANOVA Example';
+27010      data a;
+27011      input y x1 $ x2 $;
+27012      datalines;
+
+NOTE: The data set WORK.A has 12 observations and 3 variables.
+
+27025      ;
+27026      * Fit a main-effects ANOVA model with 1, 0, -1 coding;
+27027      proc transreg ss2;
+27028      model identity(y) = class(x1 x2 / effects);
+27029      output coefficients replace;
+27030      run;
+
+NOTE: The data set WORK.DATA27 has 14 observations and 9 variables.
+NOTE: The PROCEDURE TRANSREG printed page 1655.
+
+27031      * Display TRANSREG output data set;
+27032      proc print label;
+27033      format intercept -- x2a 5.2;
+27034      run;
+
+NOTE: There were 14 observations read from the data set WORK.DATA27.
+NOTE: The PROCEDURE PRINT printed page 1656.
+
+27035      
+27036      
+27037      
+27038      
+The SAS System
+
+27039      

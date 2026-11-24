@@ -1,0 +1,77 @@
+The SAS System
+
+271        
+272        /* STAT-GENMOD-001: GENMOD — Data input, variable roles, and basic options
+273         * Source: S154 / Chapter 51 / `PROC GENMOD Statement` (PDF pp. 3509–3514); S154 / Chapter 51 / `BY Statement` (PDF pp. 3525–3526); S154 /
+273      ! Chapter 51 / `FREQ Statement` (PDF p. 3541); S154 / Chapter 51 / `STRATA Statement` (PDF pp. 3565–3567); S154 / Chapter 51 / `WEIGHT Statement`
+273      ! (PDF p. 3567); S154 / Chapter 51 / `Missing Values` (PDF p. 3616).
+274         * Discriminates: Two explicit BY groups contain identical inputs, exposing group boundaries and per-group results.
+275         */
+276        options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+276      ! validmemname=compatible locale=en_US;
+277        %let syscc=0;
+278        title; footnote;
+279        ods _all_ close;
+280        ods listing gpath="%sysfunc(pathname(work))";
+281        ods graphics off;
+282        proc datasets library=work kill nolist;
+NOTE: Deleting WORK.CHILDREN (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK._ORACLE_STORE (memtype=ITEMSTOR).
+282      !                                         quit;
+
+
+283        ods path work.templat(update) sashelp.tmplmst(read);
+284        
+285        data nor;
+286        input x y;
+287        datalines;
+
+NOTE: The data set WORK.NOR has 16 observations and 2 variables.
+
+304        ;
+305        data _oracle_input; set nor; do _oracle_by=1 to 2; output; end; run;
+
+NOTE: There were 16 observations read from the data set WORK.NOR.
+NOTE: The data set WORK._ORACLE_INPUT has 32 observations and 3 variables.
+
+306        proc sort data=_oracle_input; by _oracle_by; run;
+
+NOTE: There were 32 observations read from the data set WORK._ORACLE_INPUT.
+NOTE: The data set WORK._ORACLE_INPUT has 32 observations and 3 variables.
+
+307        proc genmod data=_oracle_input;
+308        by _oracle_by;
+309        model y = x / dist = normal
+310        link = log;
+311        output out = Residuals
+312        pred = Pred
+313        resraw = Resraw
+314        reschi = Reschi
+315        resdev = Resdev
+316        stdreschi = Stdreschi
+317        stdresdev = Stdresdev
+318        reslik = Reslik;
+319        run;
+
+NOTE: Algorithm converged.
+NOTE: The scale parameter was estimated by maximum likelihood.
+NOTE: The above message was for the following BY group:
+      _oracle_by=1
+NOTE: Algorithm converged.
+NOTE: The scale parameter was estimated by maximum likelihood.
+NOTE: The above message was for the following BY group:
+      _oracle_by=2
+NOTE: The data set WORK.RESIDUALS has 32 observations and 10 variables.
+NOTE: The PROCEDURE GENMOD printed pages 10-11.
+
+320        
+321        
+322        
+323        
+The SAS System
+
+324        

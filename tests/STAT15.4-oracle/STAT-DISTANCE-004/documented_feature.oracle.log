@@ -1,0 +1,57 @@
+The SAS System
+
+15351      
+15352      /* STAT-DISTANCE-004: DISTANCE — Output Data Sets
+15353       * Source: S154 / Chapter 43 / `Output Data Sets` (PDF pp. 2769–2770).
+15354       * Discriminates: Verified default procedure context
+15355       */
+15356      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+15356    ! validmemname=compatible locale=en_US;
+15357      %let syscc=0;
+15358      title; footnote;
+15359      ods _all_ close;
+15360      ods listing gpath="%sysfunc(pathname(work))";
+15361      ods graphics off;
+15362      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.DIST (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SAMPLE (memtype=DATA).
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+15362    !                                         quit;
+
+
+15363      ods path work.templat(update) sashelp.tmplmst(read);
+15364      
+15365      data sample;
+15366      input x z y group $ weight freq;
+15367      datalines;
+
+NOTE: The data set WORK.SAMPLE has 12 observations and 6 variables.
+
+15380      ;
+15381      run;
+15382      proc distance data=sample method=euclid out=dist;
+15383      var interval(x z /std=std);
+15384      run;
+
+NOTE: The data set WORK.DIST has 12 observations and 12 variables.
+
+15385      proc print data=dist noobs;
+15386      run;
+
+NOTE: There were 12 observations read from the data set WORK.DIST.
+NOTE: The PROCEDURE PRINT printed page 2045.
+
+15387      
+15388      
+15389      
+15390      
+The SAS System
+
+15391      

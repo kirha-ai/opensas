@@ -1,0 +1,55 @@
+The SAS System
+
+13497      
+13498      /* STAT-RMSTREG-007: RMSTREG — ESTIMATE / TEST / Type 3 Tests and Joint Tests
+13499       * Source: S154 / Chapter 106 / `ESTIMATE Statement` (PDF pp. 8741–8742); S154 / Chapter 106 / `TEST Statement` (PDF p. 8748); S154 / Chapter 106 /
+13499    !  `Type 3 Tests and Joint Tests` (PDF pp. 8751–8752).
+13500       * Discriminates: Verified default procedure context
+13501       */
+13502      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+13502    ! validmemname=compatible locale=en_US;
+13503      %let syscc=0;
+13504      title; footnote;
+13505      ods _all_ close;
+13506      ods listing gpath="%sysfunc(pathname(work))";
+13507      ods graphics off;
+13508      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SURVIVAL (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+13508    !                                         quit;
+
+
+13509      ods path work.templat(update) sashelp.tmplmst(read);
+13510      
+13511      data survival;
+13512      call streaminit(218);
+13513      do id=1 to 100;
+13514      age=25+mod(id*7,40);
+13515      x=mod(id,2);
+13516      time=exp(0.5+0.15*x+0.01*age+rand('normal')*0.7);
+13517      status=(mod(id,4) ne 0);
+13518      output;
+13519      end;
+13520      run;
+
+NOTE: The data set WORK.SURVIVAL has 100 observations and 5 variables.
+
+13521      proc rmstreg data=survival tau=5;
+13522      model time*status(0)=age x / link=linear method=pv;
+13523      run;
+
+NOTE: Algorithm converged.
+NOTE: The PROCEDURE RMSTREG printed page 1040.
+
+13524      
+13525      
+13526      
+13527      
+The SAS System
+
+13528      

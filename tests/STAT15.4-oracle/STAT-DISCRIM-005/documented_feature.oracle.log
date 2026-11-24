@@ -1,0 +1,76 @@
+The SAS System
+
+15067      
+15068      /* STAT-DISCRIM-005: DISCRIM — TESTCLASS / TESTFREQ / TESTID
+15069       * Source: S154 / Chapter 42 / `TESTCLASS Statement` (PDF p. 2663); S154 / Chapter 42 / `TESTFREQ Statement` (PDF p. 2663); S154 / Chapter 42 /
+15069    ! `TESTID Statement` (PDF p. 2663).
+15070       * Discriminates: Getting Started: DISCRIM Procedure
+15071       */
+15072      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+15072    ! validmemname=compatible locale=en_US;
+15073      %let syscc=0;
+15074      title; footnote;
+15075      ods _all_ close;
+15076      ods listing gpath="%sysfunc(pathname(work))";
+15077      ods graphics off;
+15078      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.CONTOUR (memtype=DATA).
+NOTE: Deleting WORK.PLOTD (memtype=DATA).
+NOTE: Deleting WORK.PLOTDATA (memtype=DATA).
+NOTE: Deleting WORK.PLOTP (memtype=DATA).
+NOTE: Deleting WORK.POSTERIOR (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK._DOCTMP000000000000000000018 (memtype=DATA).
+NOTE: Deleting WORK._DOCTMP000000000000000000019 (memtype=DATA).
+NOTE: Deleting WORK._DOCTMP000000000000000000020 (memtype=DATA).
+NOTE: Deleting WORK._DOCTMP000000000000000000021 (memtype=DATA).
+NOTE: Deleting WORK._DOCTMP000000000000000000022 (memtype=DATA).
+NOTE: Deleting WORK._DOCTMP000000000000000000023 (memtype=DATA).
+NOTE: Deleting WORK._DOCTMP000000000000000000024 (memtype=DATA).
+NOTE: Deleting WORK._DOCTMP000000000000000000025 (memtype=DATA).
+NOTE: Deleting WORK._DOCTMP000000000000000000026 (memtype=DATA).
+NOTE: Deleting WORK._DOCTMP000000000000000000027 (memtype=DATA).
+NOTE: Deleting WORK._DOCTMP000000000000000000028 (memtype=DATA).
+NOTE: Deleting WORK._DOCTMP000000000000000000029 (memtype=DATA).
+NOTE: Deleting WORK._DOCTMP000000000000000000030 (memtype=DATA).
+NOTE: Deleting WORK._DOCTMP000000000000000000031 (memtype=DATA).
+NOTE: Deleting WORK._DOCTMP000000000000000000032 (memtype=DATA).
+NOTE: Deleting WORK._DOCTMP000000000000000000033 (memtype=DATA).
+NOTE: Deleting WORK._DOCTMP000000000000000000034 (memtype=DATA).
+NOTE: Deleting WORK._DOCTMP000000000000000000035 (memtype=DATA).
+NOTE: Deleting WORK._DOCTMP000000000000000000036 (memtype=DATA).
+NOTE: Deleting WORK._DOCTMP000000000000000000037 (memtype=DATA).
+NOTE: Deleting WORK._DOCTMP000000000000000000038 (memtype=DATA).
+NOTE: Deleting WORK._DOCTMP000000000000000000039 (memtype=DATA).
+NOTE: Deleting WORK._DOCTMP000000000000000000040 (memtype=DATA).
+NOTE: Deleting WORK._DOCTMP000000000000000000041 (memtype=DATA).
+15078    !                                         quit;
+
+
+15079      ods path work.templat(update) sashelp.tmplmst(read);
+15080      
+15081      title 'Fish Measurement Data';
+15082      proc discrim data=sashelp.fish;
+15083      class Species;
+15084      run;
+
+WARNING: 1 observations in DATA= data set or BY group will not be included in the analysis due to missing values.
+WARNING: A total of 1 of the 159 observations in the DATA= data set were excluded (frequency sum = 158).
+NOTE: There were 159 observations read from the data set SASHELP.FISH.
+NOTE: The PROCEDURE DISCRIM printed pages 2016-2018.
+
+15085      
+15086      
+15087      
+15088      
+The SAS System
+
+15089      

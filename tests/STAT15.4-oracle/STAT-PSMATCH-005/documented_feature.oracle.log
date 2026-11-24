@@ -1,0 +1,67 @@
+The SAS System
+
+9748       
+9749       /* STAT-PSMATCH-005: PSMATCH — Output Table Enhancements / Observational Studies Contrasted with Randomized Trials / Propensity Score Analysis
+9750        * Source: S154 / Chapter 101 / `Output Table Enhancements` (PDF pp. 8235–8236); S154 / Chapter 101 / `Observational Studies Contrasted with
+9750     ! Randomized Trials` (PDF pp. 8236–8237); S154 / Chapter 101 / `Propensity Score Analysis` (PDF pp. 8237–8239).
+9751        * Discriminates: Verified default procedure context
+9752        */
+9753       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+9753     ! validmemname=compatible locale=en_US;
+9754       %let syscc=0;
+9755       title; footnote;
+9756       ods _all_ close;
+9757       ods listing gpath="%sysfunc(pathname(work))";
+9758       ods graphics off;
+9759       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.MATCHED (memtype=DATA).
+NOTE: Deleting WORK.PATIENTS (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+9759     !                                         quit;
+
+
+9760       ods path work.templat(update) sashelp.tmplmst(read);
+9761       
+9762       data patients;
+9763       call streaminit(419);
+9764       do patientid=1 to 100;
+9765       gender=mod(patientid,2);
+9766       age=30+mod(patientid*7,45);
+9767       bmi=20+mod(patientid,12);
+9768       drug=rand('bernoulli',0.5);
+9769       output;
+9770       end;
+9771       run;
+
+NOTE: The data set WORK.PATIENTS has 100 observations and 5 variables.
+
+9772       proc psmatch data=patients region=cs;
+9773       class drug gender;
+9774       psmodel drug(treated='1')=gender age bmi;
+9775       match method=greedy(k=1) distance=lps caliper=0.5;
+9776       assess lps var=(age bmi);
+9777       output out(obs=match)=matched matchid=matchid;
+9778       run;
+
+WARNING: Some treated units do not have matched controls because there are not enough available controls for these treated units.
+NOTE: The data set WORK.MATCHED has 94 observations and 8 variables.
+NOTE: The PROCEDURE PSMATCH printed pages 638-639.
+
+9779       proc print data=matched(obs=10) noobs;
+9780       run;
+
+NOTE: There were 10 observations read from the data set WORK.MATCHED.
+NOTE: The PROCEDURE PRINT printed page 640.
+
+9781       
+9782       
+9783       
+9784       
+The SAS System
+
+9785       

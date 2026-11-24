@@ -1,0 +1,45 @@
+The SAS System
+
+18988      
+18989      /* STAT-STEPDISC-002: STEPDISC — Stepwise selection of discriminant variables
+18990       * Source: S154 / Chapter 117 / `Getting Started: STEPDISC Procedure` (PDF pp. 9555–9559); S154 / Chapter 117 / `Overview: STEPDISC Procedure` (PDF
+18990    !  pp. 9553–9555).
+18991       * Discriminates: Getting Started: STEPDISC Procedure
+18992       */
+18993      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+18993    ! validmemname=compatible locale=en_US;
+18994      %let syscc=0;
+18995      title; footnote;
+18996      ods _all_ close;
+18997      ods listing gpath="%sysfunc(pathname(work))";
+18998      ods graphics off;
+18999      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK._ORACLE_INPUT (memtype=DATA).
+18999    !                                         quit;
+
+
+19000      ods path work.templat(update) sashelp.tmplmst(read);
+19001      
+19002      title 'Fish Measurement Data';
+19003      proc stepdisc data=sashelp.fish;
+19004      class Species;
+19005      run;
+
+WARNING: 1 observations in DATA= data set or BY group will not be included in the analysis due to missing values.
+WARNING: A total of 1 of the 159 observations in the DATA= data set were excluded (frequency sum = 158).
+NOTE: There were 159 observations read from the data set SASHELP.FISH.
+NOTE: The PROCEDURE STEPDISC printed pages 1341-1349.
+
+19006      
+19007      
+19008      
+19009      
+The SAS System
+
+19010      

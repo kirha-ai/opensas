@@ -1,0 +1,216 @@
+
+Fisher (1936) Iris Data
+
+The HPCANDISC Procedure
+
+      Performance Information
+
+Execution Mode       Single-Machine
+Number of Threads    2             
+
+
+           Data Access Information
+ 
+Data            Engine    Role      Path
+
+SASHELP.IRIS    V9        Input     On Client
+WORK.OUTCAN     V9        Output    On Client
+
+
+Total Sample Size         150    DF Total                   149
+Variables                   4    DF Within Classes          147
+Class Levels                3    DF Between Classes           2
+
+
+Number of Observations Read            150
+Number of Observations Used            150
+
+
+               Class Level Information
+ 
+Species       Frequency         Weight     Proportion
+
+Setosa               50       50.00000        0.33333
+Versicolor           50       50.00000        0.33333
+Virginica            50       50.00000        0.33333
+
+Fisher (1936) Iris Data
+
+The HPCANDISC Procedure
+
+                              Pooled Within-Class SSCP Matrix
+ 
+Variable       Label                SepalLength     SepalWidth    PetalLength     PetalWidth
+
+SepalLength    Sepal Length (mm)     3895.62000     1363.00000     2462.46000      564.50000
+SepalWidth     Sepal Width (mm)      1363.00000     1696.20000      812.08000      480.84000
+PetalLength    Petal Length (mm)     2462.46000      812.08000     2722.26000      627.18000
+PetalWidth     Petal Width (mm)       564.50000      480.84000      627.18000      615.66000
+
+Fisher (1936) Iris Data
+
+The HPCANDISC Procedure
+
+Pairwise Squared Distances Between Groups
+
+ 2         _   _       -1  _   _  
+D (i|j) = (X - X )' COV   (X - X )
+            i   j           i   j 
+
+
+              Squared Distance to Species
+ 
+      From
+   Species         Setosa     Versicolor      Virginica
+
+Setosa                  0       89.86419      179.38471
+Versicolor       89.86419              0       17.20107
+Virginica       179.38471       17.20107              0
+
+
+         F Statistics,   Num DF=4,  Den DF=144
+            for Squared Distance to Species
+ 
+      From
+   Species         Setosa     Versicolor      Virginica
+
+Setosa                  0      550.18889     1098.27375
+Versicolor      550.18889              0      105.31265
+Virginica      1098.27375      105.31265              0
+
+
+           Prob > Mahalanobis Distance for
+             Squared Distance to Species
+ 
+      From
+   Species        Setosa    Versicolor     Virginica
+
+Setosa            1.0000        <.0001        <.0001
+Versicolor        <.0001        1.0000        <.0001
+Virginica         <.0001        <.0001        1.0000
+
+Fisher (1936) Iris Data
+
+The HPCANDISC Procedure
+
+                                                Univariate Test Statistics
+ 
+                                          F Statistics,    Num DF=2,  Den DF=147
+ 
+                                          Total         Pooled        Between
+                                       Standard       Standard       Standard                 R-Square
+Variable       Label                  Deviation      Deviation      Deviation    R-Square    / (1-Rsq)    F Value    Pr > F
+
+SepalLength    Sepal Length (mm)        8.28066        5.14789        7.95061      0.6187       1.6226     119.26    <.0001
+SepalWidth     Sepal Width (mm)         4.35866        3.39688        3.36822      0.4008       0.6688      49.16    <.0001
+PetalLength    Petal Length (mm)       17.65298        4.30334       20.90700      0.9414      16.0566    1180.16    <.0001
+PetalWidth     Petal Width (mm)         7.62238        2.04650        8.96735      0.9289      13.0613     960.01    <.0001
+
+
+        Average R-Square
+
+Unweighted              0.7224358
+Weighted by Variance    0.8689444
+
+
+                 Multivariate Statistics and F Approximations
+ 
+                               S=2  M=0.5  N=71
+ 
+Statistic                        Value    F Value    Num DF    Den DF    Pr > F
+
+Wilks' Lambda                 0.023439     199.15         8       288    <.0001
+Pillai's Trace                1.191899      53.47         8       290    <.0001
+Hotelling-Lawley Trace       32.477320     582.20         8     203.4    <.0001
+Roy's Greatest Root          32.191929    1166.96         4       145    <.0001
+
+         NOTE: F Statistic for Roy's Greatest Root is an upper bound.
+                 NOTE: F Statistic for Wilks' Lambda is exact.
+
+Fisher (1936) Iris Data
+
+The HPCANDISC Procedure
+
+                                                                                                                 Test of H0: The canonical correlations in the
+                                                                          Eigenvalues of Inv(E)*H                  current row and all that follow are zero
+                          Adjusted  Approximate      Squared                = CanRsq/(1-CanRsq)
+            Canonical    Canonical     Standard    Canonical                                                  Likelihood  Approximate
+          Correlation  Correlation        Error  Correlation  Eigenvalue  Difference  Proportion  Cumulative       Ratio      F Value  Num DF  Den DF  Pr > F
+
+       1     0.984821     0.984508     0.002468     0.969872     32.1919     31.9065      0.9912      0.9912  0.02343863       199.15       8     288  <.0001
+       2     0.471197     0.461445     0.063734     0.222027      0.2854                  0.0088      1.0000  0.77797337        13.79       3     145  <.0001
+
+Fisher (1936) Iris Data
+
+The HPCANDISC Procedure
+
+                  Total Canonical Structure
+ 
+Variable       Label                       Can1           Can2
+
+SepalLength    Sepal Length (mm)        0.79189        0.21759
+SepalWidth     Sepal Width (mm)        -0.53076        0.75799
+PetalLength    Petal Length (mm)        0.98495        0.04604
+PetalWidth     Petal Width (mm)         0.97281        0.22290
+
+
+                 Between Canonical Structure
+ 
+Variable       Label                       Can1           Can2
+
+SepalLength    Sepal Length (mm)        0.99147        0.13035
+SepalWidth     Sepal Width (mm)        -0.82566        0.56417
+PetalLength    Petal Length (mm)        0.99975        0.02236
+PetalWidth     Petal Width (mm)         0.99404        0.10898
+
+
+              Pooled Within Canonical Structure
+ 
+Variable       Label                       Can1           Can2
+
+SepalLength    Sepal Length (mm)        0.22260        0.31081
+SepalWidth     Sepal Width (mm)        -0.11901        0.86368
+PetalLength    Petal Length (mm)        0.70607        0.16770
+PetalWidth     Petal Width (mm)         0.63318        0.73724
+
+Fisher (1936) Iris Data
+
+The HPCANDISC Procedure
+
+       Total-Sample Standardized Canonical Coefficients
+ 
+Variable       Label                       Can1           Can2
+
+SepalLength    Sepal Length (mm)       -0.68678        0.01996
+SepalWidth     Sepal Width (mm)        -0.66883        0.94344
+PetalLength    Petal Length (mm)        3.88580       -1.64512
+PetalWidth     Petal Width (mm)         2.14224        2.16414
+
+
+   Pooled Within-Class Standardized Canonical Coefficients
+ 
+Variable       Label                       Can1           Can2
+
+SepalLength    Sepal Length (mm)       -0.42695        0.01241
+SepalWidth     Sepal Width (mm)        -0.52124        0.73526
+PetalLength    Petal Length (mm)        0.94726       -0.40104
+PetalWidth     Petal Width (mm)         0.57516        0.58104
+
+
+                  Raw Canonical Coefficients
+ 
+Variable       Label                       Can1           Can2
+
+SepalLength    Sepal Length (mm)       -0.08294        0.00241
+SepalWidth     Sepal Width (mm)        -0.15345        0.21645
+PetalLength    Petal Length (mm)        0.22012       -0.09319
+PetalWidth     Petal Width (mm)         0.28105        0.28392
+
+
+   Class Means on Canonical Variables
+ 
+Species              Can1           Can2
+
+Setosa           -7.60760        0.21513
+Versicolor        1.82505       -0.72790
+Virginica         5.78255        0.51277

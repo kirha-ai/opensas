@@ -1,0 +1,107 @@
+The SAS System
+
+16519      
+16520      /* STAT-MCMC-014: MCMC — PRIOR/HYPERPRIOR / How PROC MCMC Works / Sampling Methods
+16521       * Source: S154 / Chapter 80 / `PRIOR/HYPERPRIOR Statement` (PDF pp. 6134–6135); S154 / Chapter 80 / `How PROC MCMC Works` (PDF pp. 6146–6149);
+16521    ! S154 / Chapter 80 / `Sampling Methods` (PDF pp. 6151–6152).
+16522       * Discriminates: Example 80.4: Logistic Regression Model with Jeffreys' Prior
+16523       */
+16524      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+16524    ! validmemname=compatible locale=en_US;
+16525      %let syscc=0;
+16526      title; footnote;
+16527      ods _all_ close;
+16528      ods listing gpath="%sysfunc(pathname(work))";
+16529      ods graphics off;
+16530      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.POSTOUT (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SEEDS (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+16530    !                                         quit;
+
+
+16531      ods path work.templat(update) sashelp.tmplmst(read);
+16532      
+16533      title 'Logistic Regression Model with Jeffreys Prior';
+16534      data vaso;
+16535      input vol rate resp @@;
+16536      lvol = log(vol);
+16537      lrate = log(rate);
+16538      ind = _n_;
+16539      cnst = 1;
+16540      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.VASO has 39 observations and 7 variables.
+
+16551      ;
+16552      %let n = 39;
+16553      proc mcmc data=vaso nmc=1000 outpost=mcmcout seed=17 nbi=200;
+16554      ods select PostSumInt;
+16555      array beta[3] beta0 beta1 beta2;
+16556      array m[&n, &n];
+16557      array x[1] / nosymbols;
+16558      array xt[3, &n];
+16559      array xtm[3, &n];
+16560      array xmx[3, 3];
+16561      array p[&n];
+16562      parms beta0 1 beta1 1 beta2 1;
+16563      begincnst;
+16564      if (ind eq 1) then do;
+16565      rc = read_array("vaso", x, "cnst", "lvol", "lrate");
+16566      call transpose(x, xt);
+16567      call zeromatrix(m);
+16568      end;
+16569      endcnst;
+16570      beginnodata;
+16571      call mult(x, beta, p);
+16572      /* p = x * beta */
+16573      do i = 1 to &n;
+16574      p[i] = 1 / (1 + exp(-p[i]));
+16575      /* p[i] = 1/(1+exp(-x*beta)) */
+16576      m[i,i] = p[i] * (1-p[i]);
+16577      end;
+16578      call mult (xt, m, xtm);
+16579      /* xtm = xt * m */
+16580      call mult (xtm, x, xmx);
+16581      /* xmx = xtm * x */
+16582      call det (xmx, lp);
+16583      /* lp = det(xmx) */
+16584      lp = 0.5 * log(lp);
+16585      /* lp = -0.5 * log(lp) */
+16586      prior beta: ~ general(lp);
+16587      endnodata;
+16588      model resp ~ bern(p[ind]);
+16589      run;
+
+NOTE: The input data set variable ind appears in the distributional specification for beta0. This might lead to incorrect results.
+NOTE: Tuning the proposal distribution.
+NOTE: Generating the burn-in samples.
+NOTE: Beginning sample generation.
+NOTE: The data set WORK.MCMCOUT has 1000 observations and 7 variables.
+NOTE: The PROCEDURE MCMC printed page 1310.
+
+16590      proc genmod data=vaso descending;
+16591      ods select PostSummaries PostIntervals;
+16592      model resp = lvol lrate / d=bin link=logit;
+16593      bayes seed=17 coeffprior=jeffreys nmc=1000 thin=2 nbi=200;
+16594      run;
+
+NOTE: The default sampling algorithm is the Gamerman algorithm, which is different from the default in SAS/STAT 9.3 and earlier releases. To revert to the 
+      previous behavior, specify the SAMPLING=ARMS option in the BAYES statement.
+NOTE: PROC GENMOD is modeling the probability that resp='1'.
+NOTE: Algorithm converged.
+NOTE: The scale parameter was held fixed.
+NOTE: Algorithm converged.
+NOTE: The PROCEDURE GENMOD printed page 1311.
+
+16595      
+16596      
+16597      
+16598      
+The SAS System
+
+16599      

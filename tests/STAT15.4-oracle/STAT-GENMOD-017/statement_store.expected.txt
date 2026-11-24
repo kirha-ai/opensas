@@ -1,0 +1,85 @@
+
+The GENMOD Procedure
+
+      Model Information
+
+Data Set              WORK.NOR
+Distribution            Normal
+Link Function              Log
+Dependent Variable           y
+
+
+Number of Observations Read          16
+Number of Observations Used          16
+
+
+             Criteria For Assessing Goodness Of Fit
+ 
+Criterion                     DF           Value        Value/DF
+
+Deviance                      14         52.3000          3.7357
+Scaled Deviance               14         16.0000          1.1429
+Pearson Chi-Square            14         52.3000          3.7357
+Scaled Pearson X2             14         16.0000          1.1429
+Log Likelihood                          -32.1783                
+Full Log Likelihood                     -32.1783                
+AIC (smaller is better)                  70.3566                
+AICC (smaller is better)                 72.3566                
+BIC (smaller is better)                  72.6743                
+
+
+Algorithm converged.                                                       
+
+
+                    Analysis Of Maximum Likelihood Parameter Estimates
+ 
+                               Standard     Wald 95% Confidence          Wald
+Parameter    DF    Estimate       Error           Limits           Chi-Square    Pr > ChiSq
+
+Intercept     1      1.7214      0.0894      1.5461      1.8966        370.76        <.0001
+x             1      0.3496      0.0206      0.3091      0.3901        286.64        <.0001
+Scale         1      1.8080      0.3196      1.2786      2.5566                            
+
+NOTE: The scale parameter was estimated by maximum likelihood.
+
+The PLM Procedure
+
+             Store Information
+
+Item Store               WORK._ORACLE_STORE
+Data Set Created From    WORK.NOR          
+Created By               PROC Genmod       
+Date Created             24NOV26:12:51:36  
+Response Variable        y                 
+Link Function            Log               
+Distribution             Normal            
+Model Effects            Intercept x       
+
+
+       Fit Statistics
+
+Observations Read          16
+Observations Used          16
+Error df                   14
+Log likelihood       -32.1783
+AIC                  70.35655
+BIC                  72.67432
+Pearson Statistic    52.29999
+Deviance             52.29999
+
+
+       Parameter Estimates
+ 
+                         Standard
+Parameter    Estimate       Error
+
+Intercept      1.7214     0.08940
+x              0.3496     0.02065
+
+
+Covariance Matrix of Parameter Estimates
+ 
+Parameter     Row        Col1        Col2
+
+Intercept       1    0.007992    -0.00177
+x               2    -0.00177    0.000426

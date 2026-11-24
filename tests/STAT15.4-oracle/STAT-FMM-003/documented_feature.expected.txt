@@ -1,0 +1,172 @@
+
+The FMM Procedure
+
+                 Model Information
+
+Data Set              WORK.HOUSING                  
+Response Variable     us                            
+Response Variable     s                             
+Response Variable     vs                            
+Type of Model         Homogeneous Regression Mixture
+Distribution          Multinomial                   
+Components            1                             
+Link Function         Logit                         
+Estimation Method     Maximum Likelihood            
+Random Number Seed    314159                        
+
+
+    Class Level Information
+ 
+Class    Levels    Values
+
+type          2    rural urban 
+
+
+Number of Observations Read          35
+Number of Observations Used          35
+
+
+           Optimization Information
+
+Optimization Technique        Dual Quasi-Newton
+Parameters in Optimization    4                
+Mean Function Parameters      4                
+Scale Parameters              0                
+Number of Threads             2                
+
+
+                          Iteration History
+ 
+                               Objective                         Max
+Iteration    Evaluations        Function          Change    Gradient
+
+        0              5     133.3711745                    25.72142
+        1              4     108.0767203     25.29445428    19.32923
+        2              3     98.28962316      9.78709711    4.484342
+        3              3     97.96761340      0.32200976    4.169588
+        4              4     97.22466088      0.74295252    1.353584
+        5              2     97.04778828      0.17687260    0.356993
+        6              3     97.04071134      0.00707694    0.063753
+        7              3     97.04065052      0.00006083    0.006907
+        8              3     97.04064933      0.00000118    0.000203
+        9              3     97.04064933      0.00000000    3.385E-7
+
+         Convergence criterion (GCONV=1E-8) satisfied.          
+
+
+           Fit Statistics
+
+-2 Log Likelihood              194.1
+AIC  (Smaller is Better)       202.1
+AICC (Smaller is Better)       203.4
+BIC  (Smaller is Better)       208.3
+Pearson Statistic              107.3
+
+
+                      Parameter Estimates for Multinomial Model
+ 
+                                                     Standard
+    Response    Effect       type        Estimate       Error    z Value    Pr > |z|
+
+           1    Intercept                  0.9163      0.3416       2.68      0.0073
+           1    type         rural         1.3244      0.5813       2.28      0.0227
+           1    type         urban              0           .        .         .    
+           2    Intercept                  1.2763      0.3265       3.91      <.0001
+           2    type         rural         0.7519      0.5770       1.30      0.1925
+           2    type         urban              0           .        .         .    
+
+type      Pred_1     Pred_2     Pred_3
+
+rural    0.52222    0.42222    0.05556
+urban    0.35294    0.50588    0.14118
+
+The FMM Procedure
+
+            Model Information
+
+Data Set              WORK.HOUSING       
+Response Variable     us                 
+Response Variable     s                  
+Response Variable     vs                 
+Type of Model         Multinomial Cluster
+Distribution          Multinomial Cluster
+Components            3                  
+Link Function         Logit              
+Estimation Method     Maximum Likelihood 
+Random Number Seed    314159             
+
+
+    Class Level Information
+ 
+Class    Levels    Values
+
+type          2    rural urban 
+
+
+Number of Observations Read          35
+Number of Observations Used          35
+
+
+           Optimization Information
+
+Optimization Technique        Dual Quasi-Newton
+Parameters in Optimization    6                
+Mean Function Parameters      2                
+Scale Parameters              0                
+Mixing Prob Parameters        4                
+Number of Threads             2                
+
+
+                          Iteration History
+ 
+                               Objective                         Max
+Iteration    Evaluations        Function          Change    Gradient
+
+        0              5     97.23249473                    8.978329
+        1              2     95.19963170      2.03286303    8.371833
+        2              2     92.29017725      2.90945445    4.610088
+        3              3     91.92991704      0.36026021    4.277546
+        4              3     91.79760849      0.13230855    2.196943
+        5              2     91.56595601      0.23165248    1.219960
+        6              3     91.49744714      0.06850887    0.636748
+        7              3     91.47426663      0.02318051    0.337101
+        8              3     91.46788063      0.00638600    0.060367
+        9              3     91.46774959      0.00013104    0.005070
+       10              3     91.46774728      0.00000230    0.000550
+       11              3     91.46774720      0.00000008    0.000092
+
+         Convergence criterion (GCONV=1E-8) satisfied.          
+
+
+           Fit Statistics
+
+-2 Log Likelihood              182.9
+AIC  (Smaller is Better)       194.9
+AICC (Smaller is Better)       197.9
+BIC  (Smaller is Better)       204.3
+Pearson Statistic            61.9809
+Effective Parameters               6
+Effective Components               3
+
+
+                  Parameter Estimates for Multinomial Cluster Model
+ 
+                                                     Standard
+   Component    Effect       type        Estimate       Error    z Value    Pr > |z|
+
+           1    Intercept                 -0.3696      0.4385      -0.84      0.3992
+           1    type         rural        0.09401      0.6312       0.15      0.8816
+           1    type         urban              0           .        .         .    
+
+
+                   Parameter Estimates for Mixing Probabilities
+ 
+                                                  Standard
+Component    Effect       type        Estimate       Error    z Value    Pr > |z|
+
+        1    Intercept                  0.6383      0.4106       1.55      0.1201
+        1    type         rural         1.4138      0.6781       2.08      0.0371
+        1    type         urban              0           .        .         .    
+        2    Intercept                  1.1077      0.3741       2.96      0.0031
+        2    type         rural         0.7900      0.6527       1.21      0.2262
+        2    type         urban              0           .        .         .    

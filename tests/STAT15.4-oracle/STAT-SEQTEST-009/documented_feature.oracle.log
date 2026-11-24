@@ -1,0 +1,61 @@
+The SAS System
+
+16498      
+16499      /* STAT-SEQTEST-009: SEQTEST — Official examples and feature integration regression
+16500       * Source: S154 / Chapter 111 / `Examples: SEQTEST Procedure` (PDF pp. 9191–9301).
+16501       * Discriminates: Verified default procedure context
+16502       */
+16503      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+16503    ! validmemname=compatible locale=en_US;
+16504      %let syscc=0;
+16505      title; footnote;
+16506      ods _all_ close;
+16507      ods listing gpath="%sysfunc(pathname(work))";
+16508      ods graphics off;
+16509      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.BOUNDARIES (memtype=DATA).
+NOTE: Deleting WORK.ESTIMATES (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+16509    !                                         quit;
+
+
+16510      ods path work.templat(update) sashelp.tmplmst(read);
+16511      
+16512      proc seqdesign altref=-10;
+16513      TwoSided: design nstages=4 method=obf;
+16514      samplesize model=twosamplemean(stddev=20);
+16515      ods output Boundary=boundaries;
+16516      run;
+
+NOTE: The data set WORK.BOUNDARIES has 4 observations and 13 variables.
+NOTE: The PROCEDURE SEQDESIGN printed page 1179.
+
+16517      data estimates;
+16518      length Variable $8 _Scale_ $8;
+16519      Variable='Trt';
+16520      _Scale_='MLE';
+16521      _Stage_=1;
+16522      Estimate=-7;
+16523      StdErr=4.5;
+16524      run;
+
+NOTE: The data set WORK.ESTIMATES has 1 observations and 5 variables.
+
+16525      proc seqtest boundary=boundaries parms(testvar=Trt)=estimates infoadj=prop;
+16526      run;
+
+NOTE: The PROCEDURE SEQTEST printed page 1180.
+
+16527      
+16528      
+16529      
+16530      
+The SAS System
+
+16531      

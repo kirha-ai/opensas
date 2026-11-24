@@ -1,0 +1,111 @@
+The SAS System
+
+14878      
+14879      /* STAT-LOGISTIC-018: LOGISTIC — CODE / SCORE / Linear Predictor, Predicted Probability, and Confidence Limits
+14880       * Source: S154 / Chapter 79 / `CODE Statement` (PDF p. 5855); S154 / Chapter 79 / `SCORE Statement` (PDF pp. 5898–5900); S154 / Chapter 79 /
+14880    ! `Linear Predictor, Predicted Probability, and Confidence Limits` (PDF pp. 5925–5926).
+14881       * Discriminates: Generate DATA step scoring code, execute it against the input rows, and print the scored data.
+14882       */
+14883      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+14883    ! validmemname=compatible locale=en_US;
+14884      %let syscc=0;
+14885      title; footnote;
+14886      ods _all_ close;
+14887      ods listing gpath="%sysfunc(pathname(work))";
+14888      ods graphics off;
+14889      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.CROPMODEL (memtype=DATA).
+NOTE: Deleting WORK.CROPMODEL2 (memtype=ITEMSTOR).
+NOTE: Deleting WORK.CROPS (memtype=DATA).
+NOTE: Deleting WORK.INTO (memtype=DATA).
+NOTE: Deleting WORK.PRIOR (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.SCORE1 (memtype=DATA).
+NOTE: Deleting WORK.SCORE2 (memtype=DATA).
+NOTE: Deleting WORK.SCORE3 (memtype=DATA).
+NOTE: Deleting WORK.SCORE4 (memtype=DATA).
+NOTE: Deleting WORK.SCORE5 (memtype=DATA).
+NOTE: Deleting WORK.SCOREDTEST (memtype=DATA).
+NOTE: Deleting WORK.SCOREPLM (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEST (memtype=DATA).
+14889    !                                         quit;
+
+
+14890      ods path work.templat(update) sashelp.tmplmst(read);
+14891      
+14892      filename _orcode "%sysfunc(pathname(work))/_oracle_score.sas";
+14893      
+14894      
+14895      data ingots;
+14896      input Heat Soak r n @@;
+14897      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.INGOTS has 19 observations and 4 variables.
+
+14903      ;
+14904      ods graphics on;
+14905      proc logistic data=ingots;
+14906      model r/n = Heat | Soak;
+14907      oddsratio Heat / at(Soak=1 2 3 4);
+14908      
+14909      code file="%sysfunc(pathname(work))/_oracle_score.sas";
+14910      run;
+
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: External file /saswork/SAS_work7EA200001C34_odaws01-euw1.oda.sas.com/SAS_work29EF00001C34_odaws01-euw1.oda.sas.com/_oracle_score.sas opened.
+NOTE: The LOGISTIC procedure wrote the DATA step code to external file 
+      /saswork/SAS_work7EA200001C34_odaws01-euw1.oda.sas.com/SAS_work29EF00001C34_odaws01-euw1.oda.sas.com/_oracle_score.sas.
+NOTE: There were 19 observations read from the data set WORK.INGOTS.
+NOTE: The PROCEDURE LOGISTIC printed page 1233.
+
+14911      proc logistic data=ingots;
+14912      model r/n = Heat Soak;
+14913      run;
+
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: There were 19 observations read from the data set WORK.INGOTS.
+NOTE: The PROCEDURE LOGISTIC printed page 1234.
+
+14914      data ingots;
+14915      input Heat Soak NotReady Freq @@;
+14916      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.INGOTS has 25 observations and 4 variables.
+
+14922      ;
+14923      proc logistic data=ingots;
+14924      model NotReady(event='1') = Heat Soak;
+14925      freq Freq;
+14926      run;
+
+NOTE: PROC LOGISTIC is modeling the probability that NotReady=1.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: There were 25 observations read from the data set WORK.INGOTS.
+NOTE: The PROCEDURE LOGISTIC printed page 1235.
+
+14927      
+14928      data _oracle_scored; set ingots;
+14929      %include _orcode;
+14974      run;
+
+NOTE: There were 25 observations read from the data set WORK.INGOTS.
+NOTE: The data set WORK._ORACLE_SCORED has 25 observations and 6 variables.
+
+14975      proc print data=_oracle_scored(obs=10); run;
+
+NOTE: There were 10 observations read from the data set WORK._ORACLE_SCORED.
+NOTE: The PROCEDURE PRINT printed page 1236.
+
+14976      
+14977      
+14978      
+14979      
+The SAS System
+
+14980      

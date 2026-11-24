@@ -1,0 +1,48 @@
+
+The REG Procedure
+Model: MODEL1
+Dependent Variable: y 
+
+Number of Observations Read          12
+Number of Observations Used          12
+
+
+Weight: weight 
+
+                             Analysis of Variance
+ 
+                                    Sum of           Mean
+Source                   DF        Squares         Square    F Value    Pr > F
+
+Model                     2      791.66081      395.83041     252.85    <.0001
+Error                     9       14.08919        1.56547                     
+Corrected Total          11      805.75000                                    
+
+
+Root MSE              1.25119    R-Square     0.9825
+Dependent Mean       15.12500    Adj R-Sq     0.9786
+Coeff Var             8.27230                       
+
+
+                        Parameter Estimates
+ 
+                     Parameter       Standard
+Variable     DF       Estimate          Error    t Value    Pr > |t|
+
+Intercept     1        1.45608        0.71532       2.04      0.0723
+x             1        1.81959        0.18326       9.93      <.0001
+z             1        0.64054        0.44593       1.44      0.1847
+
+_MODEL_    _TYPE_    _NAME_       _DEPVAR_                              _RMSE_                           Intercept
+
+MODEL1     PARMS                     y                        1.25118562390457                    1.45608108108108
+MODEL1     COV       Intercept       y                        1.25118562390457                    0.51168508035062
+MODEL1     COV       x               y                        1.25118562390457                   -0.01454402037172
+MODEL1     COV       z               y                        1.25118562390457                   -0.11106342829315
+
+                               x                                   z                                   y
+
+                1.81959459459459                    0.64054054054054                                  -1
+               -0.01454402037172                   -0.11106342829315                                   .
+                0.03358346522197                   -0.07086904472039                                   .
+               -0.07086904472039                    0.19885642399156                                   .

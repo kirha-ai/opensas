@@ -1,0 +1,66 @@
+The SAS System
+
+4330       
+4331       /* STAT-MIXED-015: MIXED — STORE
+4332        * Source: S154 / Chapter 84 / `STORE Statement` (PDF p. 6694).
+4333        * Discriminates: Save the fitted item store and inspect it through PROC PLM SHOW ALL.
+4334        */
+4335       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+4335     ! validmemname=compatible locale=en_US;
+4336       %let syscc=0;
+4337       title; footnote;
+4338       ods _all_ close;
+4339       ods listing gpath="%sysfunc(pathname(work))";
+4340       ods graphics off;
+4341       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.HEIGHTS (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+4341     !                                         quit;
+
+
+4342       ods path work.templat(update) sashelp.tmplmst(read);
+4343       
+4344       data heights;
+4345       input Family Gender$ Height @@;
+4346       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.HEIGHTS has 18 observations and 3 variables.
+
+4350       ;
+4351       proc mixed data=heights;
+4352       class Family Gender;
+4353       model Height = Gender Family Family*Gender;
+4354       
+4355       store out=work._oracle_store;
+4356       run;
+
+NOTE: The MIXED procedure generated the model item store WORK._ORACLE_STORE.
+NOTE: The PROCEDURE MIXED printed page 322.
+
+4357       proc mixed;
+4358       class Family Gender;
+4359       model Height = Gender;
+4360       random Family Family*Gender;
+4361       run;
+
+NOTE: Convergence criteria met.
+NOTE: The PROCEDURE MIXED printed page 323.
+
+4362       
+4363       proc plm restore=work._oracle_store; show all; run;
+
+NOTE: The PROCEDURE PLM printed page 324.
+
+4364       
+4365       
+4366       
+4367       
+The SAS System
+
+4368       

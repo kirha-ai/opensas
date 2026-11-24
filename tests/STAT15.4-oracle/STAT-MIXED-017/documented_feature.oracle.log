@@ -1,0 +1,192 @@
+The SAS System
+
+4410       
+4411       /* STAT-MIXED-017: MIXED — ODS Graphics
+4412        * Source: S154 / Chapter 84 / `ODS Graphics` (PDF pp. 6729–6734).
+4413        * Discriminates: Getting Started: MIXED Procedure
+4414        */
+4415       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+4415     ! validmemname=compatible locale=en_US;
+4416       %let syscc=0;
+4417       title; footnote;
+4418       ods _all_ close;
+4419       ods listing gpath="%sysfunc(pathname(work))";
+4420       ods graphics off;
+4421       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.HEIGHTS (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+4421     !                                         quit;
+
+
+4422       ods path work.templat(update) sashelp.tmplmst(read);
+4423       
+4424       ods graphics on;
+4425       ods trace on;
+4426       ods trace on;
+4427       data heights;
+4428       input Family Gender$ Height @@;
+4429       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.HEIGHTS has 18 observations and 3 variables.
+
+4433       ;
+4434       proc mixed data=heights;
+4435       class Family Gender;
+4436       model Height = Gender Family Family*Gender;
+4437       run;
+
+
+Output Added:
+-------------
+Name:       ModelInfo
+Label:      Model Information
+Template:   Stat.Mixed.ModelInfo
+Path:       Mixed.ModelInfo
+-------------
+
+Output Added:
+-------------
+Name:       ClassLevels
+Label:      Class Level Information
+Template:   Stat.Mixed.ClassLevels
+Path:       Mixed.ClassLevels
+-------------
+
+Output Added:
+-------------
+Name:       Dimensions
+Label:      Dimensions
+Template:   Stat.Mixed.Dimensions
+Path:       Mixed.Dimensions
+-------------
+
+Output Added:
+-------------
+Name:       NObs
+Label:      Number of Observations
+Template:   Stat.Mixed.NObs
+Path:       Mixed.NObs
+-------------
+
+Output Added:
+-------------
+Name:       CovParms
+Label:      Covariance Parameter Estimates
+Template:   Stat.Mixed.CovParms
+Path:       Mixed.CovParms
+-------------
+
+Output Added:
+-------------
+Name:       FitStatistics
+Label:      Fit Statistics
+Template:   Stat.Mixed.FitStatistics
+Path:       Mixed.FitStatistics
+-------------
+
+Output Added:
+-------------
+Name:       Tests3
+Label:      Type 3 Tests of Fixed Effects
+Template:   Stat.Mixed.Tests3
+Path:       Mixed.Tests3
+-------------
+NOTE: The PROCEDURE MIXED printed page 327.
+
+4438       proc mixed;
+4439       class Family Gender;
+4440       model Height = Gender;
+4441       random Family Family*Gender;
+4442       run;
+
+
+Output Added:
+-------------
+Name:       ModelInfo
+Label:      Model Information
+Template:   Stat.Mixed.ModelInfo
+Path:       Mixed.ModelInfo
+-------------
+
+Output Added:
+-------------
+Name:       ClassLevels
+Label:      Class Level Information
+Template:   Stat.Mixed.ClassLevels
+Path:       Mixed.ClassLevels
+-------------
+
+Output Added:
+-------------
+Name:       Dimensions
+Label:      Dimensions
+Template:   Stat.Mixed.Dimensions
+Path:       Mixed.Dimensions
+-------------
+
+Output Added:
+-------------
+Name:       NObs
+Label:      Number of Observations
+Template:   Stat.Mixed.NObs
+Path:       Mixed.NObs
+-------------
+
+Output Added:
+-------------
+Name:       IterHistory
+Label:      Iteration History
+Template:   Stat.Mixed.IterHistory
+Path:       Mixed.IterHistory
+-------------
+
+Output Added:
+-------------
+Name:       ConvergenceStatus
+Label:      Convergence Status
+Template:   Stat.Mixed.ConvergenceStatus
+Path:       Mixed.ConvergenceStatus
+-------------
+NOTE: Convergence criteria met.
+
+Output Added:
+-------------
+Name:       CovParms
+Label:      Covariance Parameter Estimates
+Template:   Stat.Mixed.CovParms
+Path:       Mixed.CovParms
+-------------
+
+Output Added:
+-------------
+Name:       FitStatistics
+Label:      Fit Statistics
+Template:   Stat.Mixed.FitStatistics
+Path:       Mixed.FitStatistics
+-------------
+
+Output Added:
+-------------
+Name:       Tests3
+Label:      Type 3 Tests of Fixed Effects
+Template:   Stat.Mixed.Tests3
+Path:       Mixed.Tests3
+-------------
+NOTE: The PROCEDURE MIXED printed page 328.
+
+4443       ods trace off;
+4444       ods trace off;
+4445       ods graphics off;
+4446       
+4447       
+4448       
+4449       
+The SAS System
+
+4450       

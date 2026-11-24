@@ -1,0 +1,180 @@
+The SAS System
+
+2110       
+2111       /* STAT-GLIMMIX-020: GLIMMIX — CONTRAST / COVTEST / ESTIMATE
+2112        * Source: S154 / Chapter 52 / `CONTRAST Statement` (PDF pp. 3732–3736); S154 / Chapter 52 / `COVTEST Statement` (PDF pp. 3736–3744); S154 /
+2112     ! Chapter 52 / `ESTIMATE Statement` (PDF pp. 3744–3750).
+2113        * Discriminates: Example 52.13: Response Surface Comparisons with Multiplicity Adjustments; explicit statements: CONTRAST, COVTEST, ESTIMATE
+2114        */
+2115       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+2115     ! validmemname=compatible locale=en_US;
+2116       %let syscc=0;
+2117       title; footnote;
+2118       ods _all_ close;
+2119       ods listing gpath="%sysfunc(pathname(work))";
+2120       ods graphics off;
+2121       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.RESP (memtype=DATA).
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+2121     !                                         quit;
+
+
+2122       ods path work.templat(update) sashelp.tmplmst(read);
+2123       
+2124       data Clinical;
+2125       do Center = 1, 2;
+2126       do Gender = 'F','M';
+2127       do Drug = 'A','P';
+2128       input nPatient @@;
+2129       do iPatient = 1 to nPatient;
+2130       input ID Age (t0-t4) (1.) @@;
+2131       output;
+2132       end;
+2133       end;
+2134       end;
+2135       end;
+2136       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.CLINICAL has 111 observations and 12 variables.
+
+2167       ;
+2168       %macro Contrast(from,to,byA,byT);
+2169       %let nCmp=0;
+2170       %do age=&from %to &to %by &byA;
+2171       %do t0=0 %to 4 %by &byT;
+2172       %let nCmp=%eval(&nCmp+1);
+2173       %end; %end;
+2174       %let iCmp=0;
+2175       %do age=&from %to &to %by &byA;
+2176       %do t0=0 %to 4 %by &byT;
+2177       %let iCmp=%eval(&iCmp+1);
+2178       "&age &t0" drug 1 -1 drug*age &age -&age drug*t0 &t0 -&t0
+2179       %if &iCmp < &nCmp %then %do; , %end;
+2180       %end; %end;
+2181       %mend;
+2182       
+2183       proc glimmix data=clinical;
+2184       t = (t3+t4)/2;
+2185       class drug;
+2186       model t = drug t0 age drug*age drug*t0;
+2187       estimate %contrast(20,60,20,2)
+2188       / adjust=simulate(seed=1)
+2189       stepdown(type=logical);
+2190       ods output Estimates=EstStepDown;
+2191       run;
+
+
+
+
+NOTE: No optimization performed.
+NOTE: The data set WORK.ESTSTEPDOWN has 9 observations and 9 variables.
+NOTE: The PROCEDURE GLIMMIX printed page 154.
+
+2192       proc sort data=EstStepDown;
+2193       by Probt;
+2194       run;
+
+NOTE: There were 9 observations read from the data set WORK.ESTSTEPDOWN.
+NOTE: The data set WORK.ESTSTEPDOWN has 9 observations and 9 variables.
+
+2195       proc print data=EstStepDown(obs=20);
+2196       var Label Estimate StdErr Probt AdjP;
+2197       run;
+
+NOTE: There were 9 observations read from the data set WORK.ESTSTEPDOWN.
+NOTE: The PROCEDURE PRINT printed page 155.
+
+2198       ods output Estimates=EstAdjust;
+2199       proc glimmix data=clinical;
+2200       t = (t3+t4)/2;
+2201       class drug;
+2202       model t = drug t0 age drug*age drug*t0;
+2203       estimate %contrast(20,60,20,2)
+2204       / adjust=simulate(seed=1);
+2205       ods output Estimates=EstAdjust;
+WARNING: Duplicate data set name on ODS OUTPUT statement. Entry will be ignored.
+2206       run;
+
+
+
+
+NOTE: No optimization performed.
+NOTE: The data set WORK.ESTADJUST has 9 observations and 9 variables.
+NOTE: The PROCEDURE GLIMMIX printed page 156.
+
+2207       proc glimmix data=clinical;
+2208       t = (t3+t4)/2;
+2209       class drug;
+2210       model t = drug t0 age drug*age drug*t0;
+2211       estimate %contrast(20,60,20,2);
+2212       ods output Estimates=EstUnAdjust;
+2213       run;
+
+
+
+
+NOTE: No optimization performed.
+NOTE: The data set WORK.ESTUNADJUST has 9 observations and 7 variables.
+NOTE: The PROCEDURE GLIMMIX printed page 157.
+
+2214       data clinical_uv;
+2215       set clinical;
+2216       array time{2} t3-t4;
+2217       do i=1 to 2;
+2218       rating = time{i};
+2219       output;
+2220       end;
+2221       run;
+
+NOTE: There were 111 observations read from the data set WORK.CLINICAL.
+NOTE: The data set WORK.CLINICAL_UV has 222 observations and 14 variables.
+
+2222       proc glimmix data=clinical_uv method=laplace;
+2223       class center id drug;
+2224       model rating = drug t0 age drug*age drug*t0 /
+2225       dist=multinomial link=cumlogit;
+2226       random intercept / subject=id(center);
+2227       covtest 0;
+2228       estimate %contrast(20,60,20,2)
+2229       / adjust=simulate(seed=1)
+2230       stepdown(type=logical);
+2231       ods output Estimates=EstStepDownMulti;
+2232       run;
+
+
+
+NOTE: The GLIMMIX procedure is modeling the probabilities of levels of rating having lower Ordered Values in the Response Profile table.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: At least one element of the (projected) gradient is greater than 1e-3.
+NOTE: The data set WORK.ESTSTEPDOWNMULTI has 9 observations and 9 variables.
+NOTE: The PROCEDURE GLIMMIX printed page 158.
+
+2233       proc sort data=EstStepDownMulti;
+2234       by Probt;
+2235       run;
+
+NOTE: There were 9 observations read from the data set WORK.ESTSTEPDOWNMULTI.
+NOTE: The data set WORK.ESTSTEPDOWNMULTI has 9 observations and 9 variables.
+
+2236       proc print data=EstStepDownMulti(obs=20);
+2237       var Label Estimate StdErr Probt AdjP;
+2238       run;
+
+NOTE: There were 9 observations read from the data set WORK.ESTSTEPDOWNMULTI.
+NOTE: The PROCEDURE PRINT printed page 159.
+
+2239       
+2240       
+2241       
+2242       
+The SAS System
+
+2243       

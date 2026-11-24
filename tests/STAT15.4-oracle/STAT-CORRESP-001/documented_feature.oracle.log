@@ -1,0 +1,67 @@
+The SAS System
+
+14390      
+14391      /* STAT-CORRESP-001: CORRESP — Data input, variable roles, and basic options
+14392       * Source: S154 / Chapter 41 / `PROC CORRESP Statement` (PDF pp. 2579–2589); S154 / Chapter 41 / `BY Statement` (PDF pp. 2589–2590); S154 /
+14392    ! Chapter 41 / `ID Statement` (PDF p. 2590); S154 / Chapter 41 / `VAR Statement` (PDF p. 2591); S154 / Chapter 41 / `WEIGHT Statement` (PDF pp.
+14392    ! 2591–2592); S154 / Chapter 41 / `Input Data Set` (PDF p. 2592); S154 / Chapter 41 / `Missing and Invalid Data` (PDF p. 2601).
+14393       * Discriminates: Verified default procedure context; explicit statements: ID, VAR
+14394       */
+14395      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+14395    ! validmemname=compatible locale=en_US;
+14396      %let syscc=0;
+14397      title; footnote;
+14398      ods _all_ close;
+14399      ods listing gpath="%sysfunc(pathname(work))";
+14400      ods graphics off;
+14401      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.DATA55 (memtype=DATA).
+NOTE: Deleting WORK.DATA56 (memtype=DATA).
+NOTE: Deleting WORK.DATA57 (memtype=DATA).
+NOTE: Deleting WORK.DATA58 (memtype=DATA).
+NOTE: Deleting WORK.DATA59 (memtype=DATA).
+NOTE: Deleting WORK.DATA60 (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+14401    !                                         quit;
+
+
+14402      ods path work.templat(update) sashelp.tmplmst(read);
+14403      
+14404      title "Number of Ph.D.'s Awarded from 1973 to 1978";
+14405      data PhD;
+14406      input Science $ 1-19 y1973-y1978;
+14407      label y1973 = '1973'
+14408      y1974 = '1974'
+14409      y1975 = '1975'
+14410      y1976 = '1976'
+14411      y1977 = '1977'
+14412      y1978 = '1978';
+14413      datalines;
+
+NOTE: The data set WORK.PHD has 6 observations and 7 variables.
+
+14420      ;
+14421      ods graphics on;
+14422      proc corresp data=PhD out=Results short chi2p;
+14423      var y1973-y1978;
+14424      id Science;
+14425      run;
+
+NOTE: The data set WORK.RESULTS has 13 observations and 14 variables.
+NOTE: The PROCEDURE CORRESP printed page 1979.
+
+14426      
+14427      
+14428      
+14429      
+The SAS System
+
+14430      

@@ -1,0 +1,56 @@
+The SAS System
+
+18715      
+18716      /* STAT-STDRATE-006: STDRATE — Applicable Confidence Limits for Rate and Risk Statistics
+18717       * Source: S154 / Chapter 116 / `Applicable Confidence Limits for Rate and Risk Statistics` (PDF pp. 9519–9520).
+18718       * Discriminates: Example 116.2: Computing Mantel-Haenszel Risk Estimation
+18719       */
+18720      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+18720    ! validmemname=compatible locale=en_US;
+18721      %let syscc=0;
+18722      title; footnote;
+18723      ods _all_ close;
+18724      ods listing gpath="%sysfunc(pathname(work))";
+18725      ods graphics off;
+18726      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.FACTORY (memtype=DATA).
+NOTE: Deleting WORK.FACTORY1 (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+18726    !                                         quit;
+
+
+18727      ods path work.templat(update) sashelp.tmplmst(read);
+18728      
+18729      data School;
+18730      input Smoking $ Pet $ Grade $ Case Student;
+18731      datalines;
+
+NOTE: The data set WORK.SCHOOL has 12 observations and 5 variables.
+
+18744      ;
+18745      ods graphics on;
+18746      proc stdrate data=School
+18747      method=mh
+18748      stat=risk
+18749      effect=diff
+18750      plots=all
+18751      ;
+18752      population group=Smoking event=Case total=Student;
+18753      strata Pet Grade / order=data stats(cl=none) effect;
+18754      run;
+
+NOTE: The PROCEDURE STDRATE printed pages 1310-1311.
+
+18755      
+18756      
+18757      
+18758      
+The SAS System
+
+18759      

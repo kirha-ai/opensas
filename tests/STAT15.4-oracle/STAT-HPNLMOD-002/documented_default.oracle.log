@@ -1,0 +1,54 @@
+The SAS System
+
+5347       
+5348       /* STAT-HPNLMOD-002: HPNLMOD — High-performance nonlinear model objectives and estimation
+5349        * Source: S154 / Chapter 63 / `Getting Started: HPNLMOD Procedure` (PDF pp. 4873–4875); S154 / Chapter 63 / `Overview: HPNLMOD Procedure` (PDF pp.
+5349     !  4872–4873).
+5350        * Discriminates: Documented default analysis with explicit complete public or synthetic inputs
+5351        */
+5352       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+5352     ! validmemname=compatible locale=en_US;
+5353       %let syscc=0;
+5354       title; footnote;
+5355       ods _all_ close;
+5356       ods listing gpath="%sysfunc(pathname(work))";
+5357       ods graphics off;
+5358       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.ENZYME (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+5358     !                                         quit;
+
+
+5359       ods path work.templat(update) sashelp.tmplmst(read);
+5360       
+5361       data enzyme; input conc rate @@; datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.ENZYME has 14 observations and 2 variables.
+
+5363       ;
+5364       run;
+5365       proc hpnlmod data=enzyme; parms theta1=160 theta2=0.1; model rate ~ residual(theta1*conc/(theta2+conc)); run;
+
+
+
+NOTE: The HPNLMOD procedure is executing in single-machine mode.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: An intercept was not specified for this model.
+NOTE: There were 14 observations read from the data set WORK.ENZYME.
+NOTE: The PROCEDURE HPNLMOD printed page 226.
+
+5366       
+5367       
+5368       
+5369       
+The SAS System
+
+5370       

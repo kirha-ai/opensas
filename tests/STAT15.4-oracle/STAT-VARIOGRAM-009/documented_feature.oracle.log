@@ -1,0 +1,82 @@
+The SAS System
+
+30568      
+30569      /* STAT-VARIOGRAM-009: VARIOGRAM — Parameter Estimates / Quality of Fit / Fitting with Matérn Forms
+30570       * Source: S154 / Chapter 131 / `Parameter Estimates` (PDF p. 10823); S154 / Chapter 131 / `Quality of Fit` (PDF pp. 10823–10826); S154 / Chapter
+30570    ! 131 / `Fitting with Matérn Forms` (PDF pp. 10826–10827).
+30571       * Discriminates: Example 131.1: Aspects of Semivariogram Model Fitting
+30572       */
+30573      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+30573    ! validmemname=compatible locale=en_US;
+30574      %let syscc=0;
+30575      title; footnote;
+30576      ods _all_ close;
+30577      ods listing gpath="%sysfunc(pathname(work))";
+30578      ods graphics off;
+30579      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.DEFVROIS (memtype=ITEMSTOR).
+NOTE: Deleting WORK.GMOUT (memtype=DATA).
+NOTE: Deleting WORK.OZONESET (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+30579    !                                         quit;
+
+
+30580      ods path work.templat(update) sashelp.tmplmst(read);
+30581      
+30582      title 'Semivariogram Model Fitting of Log-Arsenic Concentration';
+30583      data logAsData;
+30584      input East North logAs @@;
+30585      label logAs='log(As) Concentration';
+30586      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.LOGASDATA has 138 observations and 3 variables.
+
+30633      ;
+30634      ods graphics on;
+30635      proc variogram data=logAsData plots=pairs(mid);
+30636      compute novariogram nhc=50;
+30637      coord xc=East yc=North;
+30638      var logAs;
+30639      run;
+
+NOTE: The PROCEDURE VARIOGRAM printed page 1897.
+
+30640      proc variogram data=logAsData plots(only)=semivar;
+30641      compute lagd=5 maxlag=40;
+30642      coord xc=East yc=North;
+30643      var logAs;
+30644      run;
+
+NOTE: No DIRECTIONS statement and no NDIRECTIONS=, or NDIRECTIONS=0 specified: Computing omnidirectional semivariogram.
+NOTE: The PROCEDURE VARIOGRAM printed pages 1898-1899.
+
+30645      proc variogram data=logAsData plots(only)=fit;
+30646      store out=SemivAsStore / label='LogAs Concentration Models';
+30647      compute lagd=5 maxlag=40;
+30648      coord xc=East yc=North;
+30649      model form=auto(mlist=(exp,gau,mat) nest=1 to 2);
+30650      var logAs;
+30651      run;
+
+NOTE: No DIRECTIONS statement and no NDIRECTIONS=, or NDIRECTIONS=0 specified: Computing omnidirectional semivariogram.
+NOTE: Matern form replaced with Gaussian form in one or more models because the smoothing parameter exceeded the MTOGTOL= option threshold. This action 
+      resulted in 1 duplicate model(s) whose re-fitting was skipped.
+NOTE: The PROCEDURE VARIOGRAM printed pages 1900-1902.
+
+30652      ods graphics off;
+30653      run;
+30654      quit;
+30655      
+30656      
+30657      
+30658      
+The SAS System
+
+30659      

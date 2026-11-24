@@ -1,0 +1,71 @@
+The SAS System
+
+9417       
+9418       /* STAT-KDE-001: KDE — Data input, variable roles, and basic options
+9419        * Source: S154 / Chapter 73 / `PROC KDE Statement` (PDF pp. 5393–5394); S154 / Chapter 73 / `BY Statement` (PDF p. 5398); S154 / Chapter 73 /
+9419     ! `FREQ Statement` (PDF pp. 5398–5399); S154 / Chapter 73 / `WEIGHT Statement` (PDF p. 5405).
+9420        * Discriminates: Two explicit BY groups contain identical inputs, exposing group boundaries and per-group results.
+9421        */
+9422       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+9422     ! validmemname=compatible locale=en_US;
+9423       %let syscc=0;
+9424       title; footnote;
+9425       ods _all_ close;
+9426       ods listing gpath="%sysfunc(pathname(work))";
+9427       ods graphics off;
+9428       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.BIVNORMAL (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+9428     !                                         quit;
+
+
+9429       ods path work.templat(update) sashelp.tmplmst(read);
+9430       
+9431       data bivnormal;
+9432       seed = 1283470;
+9433       do i = 1 to 1000;
+9434       z1 = rannor(seed);
+9435       z2 = rannor(seed);
+9436       z3 = rannor(seed);
+9437       x = 3*z1+z2;
+9438       y = 3*z1+z3;
+9439       output;
+9440       end;
+9441       drop seed;
+9442       run;
+
+NOTE: The data set WORK.BIVNORMAL has 1000 observations and 6 variables.
+
+9443       ods graphics on;
+9444       data _oracle_input; set bivnormal; do _oracle_by=1 to 2; output; end; run;
+
+NOTE: There were 1000 observations read from the data set WORK.BIVNORMAL.
+NOTE: The data set WORK._ORACLE_INPUT has 2000 observations and 7 variables.
+
+9445       proc sort data=_oracle_input; by _oracle_by; run;
+
+NOTE: There were 2000 observations read from the data set WORK._ORACLE_INPUT.
+NOTE: The data set WORK._ORACLE_INPUT has 2000 observations and 7 variables.
+
+9446       proc kde data=_oracle_input;
+9447       by _oracle_by;
+9448       bivar x y / plots=(contour surface);
+9449       run;
+
+NOTE: Processing BIVAR statement number 1.
+NOTE: The PROCEDURE KDE printed pages 700-701.
+
+9450       ods graphics off;
+9451       
+9452       run; quit;
+9453       
+9454       
+9455       
+9456       
+The SAS System
+
+9457       

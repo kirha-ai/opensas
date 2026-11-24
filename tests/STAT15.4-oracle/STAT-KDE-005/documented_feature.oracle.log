@@ -1,0 +1,59 @@
+The SAS System
+
+9581       
+9582       /* STAT-KDE-005: KDE — Convolutions / Fast Fourier Transform
+9583        * Source: S154 / Chapter 73 / `Convolutions` (PDF pp. 5411–5413); S154 / Chapter 73 / `Fast Fourier Transform` (PDF pp. 5413–5414).
+9584        * Discriminates: Getting Started: KDE Procedure
+9585        */
+9586       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+9586     ! validmemname=compatible locale=en_US;
+9587       %let syscc=0;
+9588       title; footnote;
+9589       ods _all_ close;
+9590       ods listing gpath="%sysfunc(pathname(work))";
+9591       ods graphics off;
+9592       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.BIVNORMAL (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+9592     !                                         quit;
+
+
+9593       ods path work.templat(update) sashelp.tmplmst(read);
+9594       
+9595       data bivnormal;
+9596       seed = 1283470;
+9597       do i = 1 to 1000;
+9598       z1 = rannor(seed);
+9599       z2 = rannor(seed);
+9600       z3 = rannor(seed);
+9601       x = 3*z1+z2;
+9602       y = 3*z1+z3;
+9603       output;
+9604       end;
+9605       drop seed;
+9606       run;
+
+NOTE: The data set WORK.BIVNORMAL has 1000 observations and 6 variables.
+
+9607       ods graphics on;
+9608       proc kde data=bivnormal;
+9609       bivar x y / plots=(contour surface);
+9610       run;
+
+NOTE: Processing BIVAR statement number 1.
+NOTE: The PROCEDURE KDE printed page 707.
+
+9611       ods graphics off;
+9612       run;
+9613       quit;
+9614       
+9615       
+9616       
+9617       
+The SAS System
+
+9618       

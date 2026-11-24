@@ -1,0 +1,51 @@
+The SAS System
+
+16265      
+16266      /* STAT-FASTCLUS-007: FASTCLUS — Official examples and feature integration regression
+16267       * Source: S154 / Chapter 45 / `Examples: FASTCLUS Procedure` (PDF pp. 2923–2940).
+16268       * Discriminates: Verified default procedure context
+16269       */
+16270      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+16270    ! validmemname=compatible locale=en_US;
+16271      %let syscc=0;
+16272      title; footnote;
+16273      ods _all_ close;
+16274      ods listing gpath="%sysfunc(pathname(work))";
+16275      ods graphics off;
+16276      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.CLUSTERS (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+16276    !                                         quit;
+
+
+16277      ods path work.templat(update) sashelp.tmplmst(read);
+16278      
+16279      proc fastclus data=sashelp.iris maxclusters=3 maxiter=50 out=clusters;
+16280      var SepalLength SepalWidth PetalLength PetalWidth;
+16281      run;
+
+NOTE: Convergence criterion is satisfied.
+NOTE: The data set WORK.CLUSTERS has 150 observations and 7 variables.
+NOTE: The PROCEDURE FASTCLUS printed page 2144.
+
+16282      proc freq data=clusters;
+16283      tables Species*Cluster;
+16284      run;
+
+NOTE: There were 150 observations read from the data set WORK.CLUSTERS.
+NOTE: The PROCEDURE FREQ printed page 2145.
+
+16285      
+16286      
+16287      
+16288      
+The SAS System
+
+16289      

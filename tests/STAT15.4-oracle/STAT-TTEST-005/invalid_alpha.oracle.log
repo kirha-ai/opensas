@@ -1,0 +1,45 @@
+The SAS System
+
+28885      
+28886      /* STAT-TTEST-005: TTEST — One-Sample Design
+28887       * Source: S154 / Chapter 128 / `One-Sample Design` (PDF pp. 10620–10623).
+28888       * Discriminates: Documented invalid ALPHA boundary
+28889       */
+28890      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+28890    ! validmemname=compatible locale=en_US;
+28891      %let syscc=0;
+28892      title; footnote;
+28893      ods _all_ close;
+28894      ods listing gpath="%sysfunc(pathname(work))";
+28895      ods graphics off;
+28896      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TIME (memtype=DATA).
+28896    !                                         quit;
+
+
+28897      ods path work.templat(update) sashelp.tmplmst(read);
+28898      
+28899      data time; input time @@; datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.TIME has 20 observations and 1 variables.
+
+28902      ;
+28903      run;
+28904      proc ttest data=time alpha=1; var time; run;
+
+ERROR: ALPHA equals 0 or 1.  Must be between these values.
+NOTE: The SAS System stopped processing this step because of errors.
+28905      
+28906      
+28907      
+28908      
+The SAS System
+
+28909      

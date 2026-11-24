@@ -1,0 +1,96 @@
+The SAS System
+
+10349      
+10350      /* STAT-QUANTLIFE-008: QUANTLIFE — ODS Table Names
+10351       * Source: S154 / Chapter 102 / `ODS Table Names` (PDF p. 8344).
+10352       * Discriminates: Verified default procedure context
+10353       */
+10354      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+10354    ! validmemname=compatible locale=en_US;
+10355      %let syscc=0;
+10356      title; footnote;
+10357      ods _all_ close;
+10358      ods listing gpath="%sysfunc(pathname(work))";
+10359      ods graphics off;
+10360      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SURVIVAL (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+10360    !                                         quit;
+
+
+10361      ods path work.templat(update) sashelp.tmplmst(read);
+10362      
+10363      ods trace on;
+10364      data survival;
+10365      call streaminit(518);
+10366      do id=1 to 80;
+10367      drug=mod(id,2);
+10368      age=25+mod(id*7,40);
+10369      time=exp(2+0.25*drug+0.008*age+rand('normal')*0.4);
+10370      status=(mod(id,5) ne 0);
+10371      output;
+10372      end;
+10373      run;
+
+NOTE: The data set WORK.SURVIVAL has 80 observations and 5 variables.
+
+10374      proc quantlife data=survival seed=1268;
+10375      class drug;
+10376      model time*status(0)=drug age / quantile=0.5;
+10377      run;
+
+
+Output Added:
+-------------
+Name:       ModelInfo
+Label:      Model Information
+Template:   Stat.Quantlife.ModelInfo
+Path:       Quantlife.ModelInfo
+-------------
+
+Output Added:
+-------------
+Name:       NObs
+Label:      Number of Observations
+Template:   Stat.Quantlife.NObs
+Path:       Quantlife.NObs
+-------------
+
+Output Added:
+-------------
+Name:       ClassLevels
+Label:      Class Level Information
+Template:   Stat.Quantlife.Classlevels
+Path:       Quantlife.ClassLevels
+-------------
+
+Output Added:
+-------------
+Name:       CensoredSummary
+Label:      Summary
+Template:   Stat.Quantlife.CensoredSummary
+Path:       Quantlife.CensoredSummary
+-------------
+
+Output Added:
+-------------
+Name:       ParameterEstimates
+Label:      Parameter Estimates
+Template:   Stat.Quantlife.ParameterEstimates
+Path:       Quantlife.ParameterEstimates
+-------------
+NOTE: The PROCEDURE QUANTLIFE printed page 672.
+
+10378      ods trace off;
+10379      
+10380      
+10381      
+10382      
+The SAS System
+
+10383      

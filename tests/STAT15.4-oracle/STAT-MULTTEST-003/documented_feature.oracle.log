@@ -1,0 +1,57 @@
+The SAS System
+
+4903       
+4904       /* STAT-MULTTEST-003: MULTTEST — Statistical Tests / p-Value Adjustments
+4905        * Source: S154 / Chapter 86 / `Statistical Tests` (PDF pp. 6914–6922); S154 / Chapter 86 / `p-Value Adjustments` (PDF pp. 6922–6930).
+4906        * Discriminates: Getting Started: MULTTEST Procedure
+4907        */
+4908       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+4908     ! validmemname=compatible locale=en_US;
+4909       %let syscc=0;
+4910       title; footnote;
+4911       ods _all_ close;
+4912       ods listing gpath="%sysfunc(pathname(work))";
+4913       ods graphics off;
+4914       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.DRUG (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+4914     !                                         quit;
+
+
+4915       ods path work.templat(update) sashelp.tmplmst(read);
+4916       
+4917       data Drug;
+4918       input Dose$ SideEff1-SideEff10;
+4919       datalines;
+
+NOTE: The data set WORK.DRUG has 15 observations and 11 variables.
+
+4935       ;
+4936       ods graphics on;
+4937       proc multtest bootstrap nsample=499 seed=41287 notables
+4938       plots=PByTest(vref=0.05 0.1);
+4939       class Dose;
+4940       test ca(SideEff1-SideEff10);
+4941       contrast 'Trend' 0 1 2;
+4942       run;
+
+NOTE: No input data set is specified.  The data set WORK.DRUG is used.
+NOTE: There were 15 observations read from the data set WORK.DRUG.
+NOTE: The PROCEDURE MULTTEST printed page 361.
+
+4943       ods graphics off;
+4944       run;
+4945       quit;
+4946       
+4947       
+4948       
+4949       
+The SAS System
+
+4950       

@@ -1,0 +1,51 @@
+The SAS System
+
+197        
+198        /* STAT-COMMON-005: Shared interfaces for tests, tail probabilities, and confidence intervals
+199         * Source: S154 / Chapter 4 / `Hypothesis Testing and Power` (PDF p. 58); S154 / Chapter 5 / `Testing Linear Hypotheses` (PDF p. 112); S154 / Chapter
+199      !  5 / `Parameter Estimates and Associated Statistics` (PDF pp. 106–110).
+200         * Discriminates: Two-sided and directed one-sided probabilities and intervals
+201         */
+202        options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+202      ! validmemname=compatible locale=en_US;
+203        %let syscc=0;
+204        title; footnote;
+205        ods _all_ close;
+206        ods listing gpath="%sysfunc(pathname(work))";
+207        ods graphics off;
+208        proc datasets library=work kill nolist;
+NOTE: Deleting WORK.EST (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SAMPLE (memtype=DATA).
+208      !                                         quit;
+
+
+209        ods path work.templat(update) sashelp.tmplmst(read);
+210        
+211        data time; input time @@; datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.TIME has 20 observations and 1 variables.
+
+214        ;
+215        run;
+216        proc ttest data=time h0=80 sides=2; var time; run;
+
+NOTE: The PROCEDURE TTEST printed page 7.
+
+217        proc ttest data=time h0=80 sides=u; var time; run;
+
+NOTE: The PROCEDURE TTEST printed page 8.
+
+218        proc ttest data=time h0=80 sides=l; var time; run;
+
+NOTE: The PROCEDURE TTEST printed page 9.
+
+219        
+220        
+221        
+222        
+The SAS System
+
+223        

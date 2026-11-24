@@ -1,0 +1,112 @@
+The SAS System
+
+999        
+1000       /* STAT-GLMPOWER-001: GLMPOWER — Data input, variable roles, and basic options
+1001        * Source: S154 / Chapter 55 / `PROC GLMPOWER Statement` (PDF pp. 4260–4261); S154 / Chapter 55 / `BY Statement` (PDF pp. 4261–4262); S154 /
+1001     ! Chapter 55 / `WEIGHT Statement` (PDF pp. 4280–4281).
+1002        * Discriminates: Two explicit BY groups contain identical inputs, exposing group boundaries and per-group results.
+1003        */
+1004       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+1004     ! validmemname=compatible locale=en_US;
+1005       %let syscc=0;
+1006       title; footnote;
+1007       ods _all_ close;
+1008       ods listing gpath="%sysfunc(pathname(work))";
+1009       ods graphics off;
+
+NOTE: The PROCEDURE REG printed page 53.
+
+1010       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.CLOVER (memtype=DATA).
+NOTE: Deleting WORK.CLOVERDESIGN (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK._ORACLE_INPUT (memtype=DATA).
+1010     !                                         quit;
+
+
+1011       ods path work.templat(update) sashelp.tmplmst(read);
+1012       
+1013       data Exemplary;
+1014       do Variety = 1 to 2;
+1015       do Exposure = 1 to 3;
+1016       input Height @@;
+1017       output;
+1018       end;
+1019       end;
+1020       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.EXEMPLARY has 6 observations and 3 variables.
+
+1023       ;
+1024       data _oracle_input; set Exemplary; do _oracle_by=1 to 2; output; end; run;
+
+NOTE: There were 6 observations read from the data set WORK.EXEMPLARY.
+NOTE: The data set WORK._ORACLE_INPUT has 12 observations and 4 variables.
+
+1025       proc sort data=_oracle_input; by _oracle_by; run;
+
+NOTE: There were 12 observations read from the data set WORK._ORACLE_INPUT.
+NOTE: The data set WORK._ORACLE_INPUT has 12 observations and 4 variables.
+
+1026       proc glmpower data=_oracle_input;
+1027       by _oracle_by;
+1028       class Variety Exposure;
+1029       model Height = Variety | Exposure;
+1030       power
+1031       stddev = 5
+1032       ntotal = 60
+1033       power = .;
+1034       run;
+
+NOTE: There were 12 observations read from the data set WORK._ORACLE_INPUT.
+NOTE: The PROCEDURE GLMPOWER printed pages 54-55.
+
+1035       ods graphics on;
+1036       proc glmpower data=Exemplary;
+1037       class Variety Exposure;
+1038       model Height = Variety | Exposure;
+1039       power
+1040       stddev = 4 6.5
+1041       ntotal = 60
+1042       power = .;
+1043       plot x=n min=30 max=90;
+1044       run;
+
+NOTE: The input sample size is adjusted in 60 scenarios in the plot.
+NOTE: Plotting computed Power on the y-axis, versus N Total on the x-axis with 21 points per curve between 30 and 90.
+NOTE: There were 6 observations read from the data set WORK.EXEMPLARY.
+NOTE: The PROCEDURE GLMPOWER printed page 56.
+
+1045       ods graphics off;
+1046       data Exemplary;
+1047       input Variety $ Exposure $ HeightOrig HeightNew Weight;
+1048       datalines;
+
+NOTE: The data set WORK.EXEMPLARY has 6 observations and 5 variables.
+
+1055       ;
+1056       proc glmpower data=Exemplary;
+1057       class Variety Exposure;
+1058       model HeightOrig HeightNew = Variety | Exposure;
+1059       weight Weight;
+1060       contrast 'Exposure=1 vs Exposure=3' Exposure 1 0 -1;
+1061       power
+1062       stddev = 5
+1063       ntotal = 60
+1064       power = .;
+1065       run;
+
+NOTE: There were 6 observations read from the data set WORK.EXEMPLARY.
+NOTE: The PROCEDURE GLMPOWER printed page 57.
+
+1066       
+1067       
+1068       
+1069       
+The SAS System
+
+1070       

@@ -1,0 +1,21 @@
+
+The CAUSALGRAPH Procedure
+
+                                     Variables in Model
+ 
+                       N    Variables
+
+Measured               9    Age Alcohol BMI Duration Education Employment Parity PFAS Smoking
+Unmeasured             2    HealthBehavior PrevBF                                            
+
+
+                                    Graphical Model Summary
+ 
+Model                      Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+Timm17HealthBehavior          11          22             1           1           9             2
+
+The CAUSALGRAPH Procedure
+
+NOTE: There are no adjustment sets satisfying the specified criteria for Timm17HealthBehavior.
+

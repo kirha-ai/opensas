@@ -1,0 +1,56 @@
+The SAS System
+
+548        
+549        /* STAT-COMMON-014: MCMC sampling and convergence diagnostic foundations
+550         * Source: S154 / Chapter 8 / `Markov Chain Monte Carlo Method` (PDF pp. 157–164); S154 / Chapter 8 / `Assessing Markov Chain Convergence` (PDF pp.
+550      !  164–177).
+551         * Discriminates: Normal posterior sampling, fixed seed, retained sample count and posterior/chain summaries
+552         */
+553        options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+553      ! validmemname=compatible locale=en_US;
+554        %let syscc=0;
+555        title; footnote;
+556        ods _all_ close;
+557        ods listing gpath="%sysfunc(pathname(work))";
+558        ods graphics off;
+559        proc datasets library=work kill nolist;
+NOTE: Deleting WORK.POSTERIOR (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SAMPLE (memtype=DATA).
+559      !                                         quit;
+
+
+560        ods path work.templat(update) sashelp.tmplmst(read);
+561        
+562        data sample;
+563         input x y group $ freq weight;
+564         datalines;
+
+NOTE: The data set WORK.SAMPLE has 12 observations and 5 variables.
+
+577        ;
+578        run;
+579        proc mcmc data=sample seed=271828 nbi=100 nmc=1000 thin=1 diag=all outpost=posterior;
+580         parms mu 90; prior mu ~ normal(0, var=10000); model x ~ normal(mu, var=100); run;
+
+
+NOTE: Generating the burn-in samples.
+NOTE: Beginning sample generation.
+WARNING: The Markov chain sample size of 1000 is not enough to perform a Raftery-Lewis diagnostic test.  The minimum sample size needed is 3746. Consider 
+         increasing the value of the NMC= option.
+NOTE: The data set WORK.POSTERIOR has 1000 observations and 5 variables.
+NOTE: The PROCEDURE MCMC printed pages 30-32.
+
+581        proc means data=posterior n mean std; var mu; run;
+
+NOTE: There were 1000 observations read from the data set WORK.POSTERIOR.
+NOTE: The PROCEDURE MEANS printed page 33.
+
+582        
+583        
+584        
+585        
+The SAS System
+
+586        

@@ -1,0 +1,55 @@
+The SAS System
+
+13429      
+13430      /* STAT-RMSTREG-005: RMSTREG — Concepts and Basic Estimators / Supported Models / Pseudovalue Regression
+13431       * Source: S154 / Chapter 106 / `Concepts and Basic Estimators` (PDF pp. 8748–8749); S154 / Chapter 106 / `Supported Models` (PDF pp. 8749–8750);
+13431    !  S154 / Chapter 106 / `Pseudovalue Regression` (PDF pp. 8753–8754).
+13432       * Discriminates: Verified default procedure context
+13433       */
+13434      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+13434    ! validmemname=compatible locale=en_US;
+13435      %let syscc=0;
+13436      title; footnote;
+13437      ods _all_ close;
+13438      ods listing gpath="%sysfunc(pathname(work))";
+13439      ods graphics off;
+13440      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SURVIVAL (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+13440    !                                         quit;
+
+
+13441      ods path work.templat(update) sashelp.tmplmst(read);
+13442      
+13443      data survival;
+13444      call streaminit(218);
+13445      do id=1 to 100;
+13446      age=25+mod(id*7,40);
+13447      x=mod(id,2);
+13448      time=exp(0.5+0.15*x+0.01*age+rand('normal')*0.7);
+13449      status=(mod(id,4) ne 0);
+13450      output;
+13451      end;
+13452      run;
+
+NOTE: The data set WORK.SURVIVAL has 100 observations and 5 variables.
+
+13453      proc rmstreg data=survival tau=5;
+13454      model time*status(0)=age x / link=linear method=pv;
+13455      run;
+
+NOTE: Algorithm converged.
+NOTE: The PROCEDURE RMSTREG printed page 1038.
+
+13456      
+13457      
+13458      
+13459      
+The SAS System
+
+13460      

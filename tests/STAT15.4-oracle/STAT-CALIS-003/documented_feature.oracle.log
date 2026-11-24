@@ -1,0 +1,89 @@
+The SAS System
+
+7404       
+7405       /* STAT-CALIS-003: CALIS — Classes of Statements in PROC CALIS / Single-Group Analysis Syntax / Multiple-Group Multiple-Model Analysis Syntax /
+7405     ! GROUP
+7406        * Source: S154 / Chapter 33 / `Classes of Statements in PROC CALIS` (PDF pp. 1484–1487); S154 / Chapter 33 / `Single-Group Analysis Syntax` (PDF
+7406     ! p. 1487); S154 / Chapter 33 / `Multiple-Group Multiple-Model Analysis Syntax` (PDF pp. 1487–1488); S154 / Chapter 33 / `GROUP Statement` (PDF pp.
+7406     ! 1565–1568).
+7407        * Discriminates: Example 33.21: Testing Equality of Two Covariance Matrices Using a Multiple-Group Analysis; explicit statements: GROUP
+7408        */
+7409       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+7409     ! validmemname=compatible locale=en_US;
+7410       %let syscc=0;
+7411       title; footnote;
+7412       ods _all_ close;
+7413       ods listing gpath="%sysfunc(pathname(work))";
+7414       ods graphics off;
+7415       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SAMPLE (memtype=DATA).
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+7415     !                                         quit;
+
+
+7416       ods path work.templat(update) sashelp.tmplmst(read);
+7417       
+7418       data expert(type=cov);
+7419       length _name_ $32 _type_ $8;
+7420       infile datalines truncover;
+7421       
+7422       input _type_ $ _name_ $ high medium low;
+7423       datalines;
+
+NOTE: The data set WORK.EXPERT has 3 observations and 5 variables.
+
+7427       ;
+7428       data novice(type=cov);
+7429       input _type_ $ _name_ $ high medium low;
+7430       datalines;
+
+NOTE: The data set WORK.NOVICE has 3 observations and 5 variables.
+
+7434       ;
+7435       proc calis;
+7436       group 1 / data=expert nobs=20 label="Expert";
+7437       group 2 / data=novice nobs=18 label="Novice";
+7438       model 1 / groups=1,2;
+7439       mstruct
+7440       var=high medium low;
+7441       fitindex NoIndexType On(only)=[chisq df probchi]
+7442       chicorrect=eqcovmat;
+7443       ods select ModelingInfo MSTRUCTVariables MSTRUCTCovInit Fit;
+7444       run;
+
+NOTE: Model 1. All lower triangular elements in the _COV_ matrix are parameters.
+NOTE: The means of one or more variables in the input data set WORK.EXPERT are missing and are assumed to be 0.
+NOTE: The means of one or more variables in the input data set WORK.NOVICE are missing and are assumed to be 0.
+NOTE: Convergence criterion (ABSGCONV=0.00001) satisfied.
+NOTE: The PROCEDURE CALIS printed pages 498-499.
+
+7445       proc calis covpattern=eqcovmat;
+7446       var high medium low;
+7447       group 1 / data=expert nobs=20 label="Expert";
+7448       group 2 / data=novice nobs=18 label="Novice";
+7449       fitindex NoIndexType On(only)=[chisq df probchi];
+7450       run;
+
+NOTE: Group 1 is fitted by Model 1, which is defined with the COVPATTERN= or MEANPATTERN= option.
+NOTE: Group 2 is fitted by Model 2, which is defined with the COVPATTERN= or MEANPATTERN= option.
+NOTE: The means of one or more variables in the input data set WORK.EXPERT are missing and are assumed to be 0.
+NOTE: The means of one or more variables in the input data set WORK.NOVICE are missing and are assumed to be 0.
+NOTE: Convergence criterion (ABSGCONV=0.00001) satisfied.
+NOTE: The chi-square correction due to Box for testing equality of covariance matrices was applied. Use the CHICORRECT=0 option if this correction is not 
+      desirable.
+NOTE: The PROCEDURE CALIS printed pages 500-507.
+
+7451       
+7452       
+7453       
+7454       
+The SAS System
+
+7455       

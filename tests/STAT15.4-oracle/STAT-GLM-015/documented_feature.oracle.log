@@ -1,0 +1,75 @@
+The SAS System
+
+26052      
+26053      /* STAT-GLM-015: GLM — Construction of Least Squares Means
+26054       * Source: S154 / Chapter 53 / `Construction of Least Squares Means` (PDF pp. 4144–4147).
+26055       * Discriminates: Example 53.1: Randomized Complete Blocks with Means Comparisons and Contrasts
+26056       */
+26057      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+26057    ! validmemname=compatible locale=en_US;
+26058      %let syscc=0;
+26059      title; footnote;
+26060      ods _all_ close;
+26061      ods listing gpath="%sysfunc(pathname(work))";
+26062      ods graphics off;
+
+NOTE: The PROCEDURE GLM printed pages 2558-2561.
+
+26063      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.PLANTS (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+26063    !                                         quit;
+
+
+26064      ods path work.templat(update) sashelp.tmplmst(read);
+26065      
+26066      title 'Balanced Data from Randomized Complete Block';
+26067      data plants;
+26068      input Type $ @;
+26069      do Block = 1 to 3;
+26070      input StemLength @;
+26071      output;
+26072      end;
+26073      datalines;
+
+NOTE: The data set WORK.PLANTS has 21 observations and 3 variables.
+
+26081      ;
+26082      proc glm;
+26083      class Block Type;
+26084      model StemLength = Block Type;
+26085      run;
+
+
+NOTE: The PROCEDURE GLM printed pages 2562-2563.
+
+26086      proc glm order=data;
+26087      class Block Type;
+26088      model StemLength = Block Type / solution;
+26089      /*----------------------------------clrn-cltn-knox-onel-cpst-wbsh-wstr */
+26090      contrast 'Compost vs. others' Type -1 -1 -1 -1 6 -1 -1;
+26091      contrast 'River soils vs. non' Type -1 -1 -1 -1 0 5 -1,
+26092      Type -1 4 -1 -1 0 0 -1;
+26093      contrast 'Glacial vs. drift' Type -1 0 1 1 0 0 -1;
+26094      contrast 'Clarion vs. Webster' Type -1 0 0 0 0 0 1;
+26095      contrast "Knox vs. O'Neill" Type 0 0 1 -1 0 0 0;
+26096      run;
+
+26097      means Type / waller regwq;
+26098      run;
+
+NOTE: Means from the MEANS statement are not adjusted for other terms in the model.  For adjusted means, use the LSMEANS statement.
+26099      
+26100      
+26101      
+26102      
+The SAS System
+
+26103      

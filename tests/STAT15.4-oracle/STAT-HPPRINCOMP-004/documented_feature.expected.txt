@@ -1,0 +1,84 @@
+
+Crime Rates per 100,000 Population by State
+
+The HPPRINCOMP Procedure
+
+      Performance Information
+
+Execution Mode       Single-Machine
+Number of Threads    2             
+
+
+         Data Access Information
+ 
+Data          Engine    Role     Path
+
+WORK.CRIME    V9        Input    On Client
+
+
+                   Model Information
+
+Data Source                    WORK.CRIME              
+Component Extraction Method    Eigenvalue Decomposition
+
+
+Number of Observations Read             50
+Number of Observations Used             48
+
+
+Number of Variables                    7
+Number of Principal Components         7
+
+
+           Simple Statistics
+ 
+                                Standard
+Variable             Mean      Deviation
+
+Murder            7.51667        3.93059
+Rape             26.07500       10.81304
+Robbery         127.55625       88.49374
+Assault         214.58750      100.64360
+Burglary       1316.37917      423.31261
+Larceny        2696.88542      714.75023
+Auto_Theft      383.97917      194.37033
+
+
+                                   Correlation Matrix
+ 
+                                                                                   Auto_
+Variable       Murder       Rape    Robbery    Assault    Burglary    Larceny      Theft
+
+Murder         1.0000     0.6000     0.4768     0.6485      0.3778     0.0925     0.0555
+Rape           0.6000     1.0000     0.5817     0.7316      0.7038     0.6009     0.3282
+Robbery        0.4768     0.5817     1.0000     0.5452      0.6200     0.4371     0.5787
+Assault        0.6485     0.7316     0.5452     1.0000      0.6082     0.3791     0.2520
+Burglary       0.3778     0.7038     0.6200     0.6082      1.0000     0.7932     0.5390
+Larceny        0.0925     0.6009     0.4371     0.3791      0.7932     1.0000     0.4246
+Auto_Theft     0.0555     0.3282     0.5787     0.2520      0.5390     0.4246     1.0000
+
+
+              Eigenvalues of the Correlation Matrix
+ 
+          Eigenvalue      Difference    Proportion    Cumulative
+
+   1        4.045824        2.781795        0.5780        0.5780
+   2        1.264030        0.516529        0.1806        0.7586
+   3        0.747500        0.421175        0.1068        0.8653
+   4        0.326325        0.061119        0.0466        0.9120
+   5        0.265207        0.036843        0.0379        0.9498
+   6        0.228364        0.105613        0.0326        0.9825
+   7        0.122750                        0.0175        1.0000
+
+
+                                                   Eigenvectors
+ 
+Variable            Prin1          Prin2          Prin3          Prin4          Prin5          Prin6          Prin7
+
+Murder            0.30289       -0.61893        0.17353       -0.23308        0.54896        0.26371        0.26428
+Rape              0.43410       -0.17053       -0.23539        0.06540        0.18075       -0.78232       -0.27946
+Robbery           0.39705        0.04713        0.49208       -0.57470       -0.50808       -0.09452       -0.02497
+Assault           0.39622       -0.35142       -0.05343        0.61743       -0.51525        0.17395        0.19921
+Burglary          0.44164        0.20861       -0.22454       -0.02750        0.11273        0.52340       -0.65085
+Larceny           0.35634        0.40570       -0.53681       -0.23231        0.02172        0.04085        0.60346
+Auto_Theft        0.28834        0.50400        0.57524        0.41853        0.35939       -0.06024        0.15487

@@ -1,0 +1,51 @@
+The SAS System
+
+2816       
+2817       /* STAT-PHREG-012: PHREG — ASSESS / Effect Selection Methods
+2818        * Source: S154 / Chapter 92 / `ASSESS Statement` (PDF pp. 7333–7334); S154 / Chapter 92 / `Effect Selection Methods` (PDF pp. 7449–7450).
+2819        * Discriminates: Example 92.2: Best Subset Selection
+2820        */
+2821       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+2821     ! validmemname=compatible locale=en_US;
+2822       %let syscc=0;
+2823       title; footnote;
+2824       ods _all_ close;
+2825       ods listing gpath="%sysfunc(pathname(work))";
+2826       ods graphics off;
+2827       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.BLADDER (memtype=DATA).
+NOTE: Deleting WORK.BLADDER2 (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+2827     !                                         quit;
+
+
+2828       ods path work.templat(update) sashelp.tmplmst(read);
+2829       
+2830       data Myeloma;
+2831       input Time VStatus LogBUN HGB Platelet Age LogWBC Frac
+2832       LogPBM Protein SCalc;
+2833       label Time='Survival Time'
+2834       VStatus='0=Alive 1=Dead';
+2835       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.MYELOMA has 65 observations and 11 variables.
+
+2902       ;
+2903       run;
+2904       proc phreg data=Myeloma;
+2905       model Time*VStatus(0)=LogBUN HGB Platelet Age LogWBC
+2906       Frac LogPBM Protein SCalc
+2907       / selection=score best=3;
+2908       run;
+
+NOTE: The PROCEDURE PHREG printed pages 243-244.
+
+2909       
+2910       
+2911       
+2912       
+The SAS System
+
+2913       

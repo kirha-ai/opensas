@@ -1,0 +1,69 @@
+The SAS System
+
+27372      
+27373      /* STAT-TRANSREG-007: TRANSREG — Controlling the Number of Iterations / Using the REITERATE Algorithm Option / Avoiding Constant Transformations
+27374       * Source: S154 / Chapter 126 / `Controlling the Number of Iterations` (PDF pp. 10476–10477); S154 / Chapter 126 / `Using the REITERATE Algorithm
+27374    ! Option` (PDF pp. 10477–10478); S154 / Chapter 126 / `Avoiding Constant Transformations` (PDF pp. 10478–10479).
+27375       * Discriminates: Example 126.2: Box-Cox Transformations
+27376       */
+27377      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+27377    ! validmemname=compatible locale=en_US;
+27378      %let syscc=0;
+27379      title; footnote;
+27380      ods _all_ close;
+27381      ods listing gpath="%sysfunc(pathname(work))";
+27382      ods graphics off;
+27383      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.A (memtype=DATA).
+NOTE: Deleting WORK.DATA31 (memtype=DATA).
+NOTE: Deleting WORK.GAS (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+27383    !                                         quit;
+
+
+27384      ods path work.templat(update) sashelp.tmplmst(read);
+27385      
+27386      title 'Yarn Strength';
+27387      proc format;
+27388      value a -1 = 8 0 = 9 1 = 10;
+NOTE: Format A has been output.
+27389      value l -1 = 250 0 = 300 1 = 350;
+NOTE: Format L has been output.
+27390      value o -1 = 40 0 = 45 1 = 50;
+NOTE: Format O has been output.
+27391      run;
+
+
+27392      data yarn;
+27393      input Fail Amplitude Length Load @@;
+27394      format amplitude a. length l. load o.;
+27395      label fail = 'Time in Cycles until Failure';
+27396      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.YARN has 27 observations and 4 variables.
+
+27404      ;
+27405      ods graphics on;
+27406      proc transreg details data=yarn ss2
+27407      plots=(transformation(dependent) obp);
+27408      model BoxCox(fail / convenient lambda=-2 to 2 by 0.05) =
+27409      qpoint(length amplitude load);
+27410      run;
+
+NOTE: There were 27 observations read from the data set WORK.YARN.
+NOTE: The PROCEDURE TRANSREG printed page 1682.
+
+27411      
+27412      
+27413      
+27414      
+The SAS System
+
+27415      

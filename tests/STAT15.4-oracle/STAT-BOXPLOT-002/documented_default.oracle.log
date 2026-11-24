@@ -1,0 +1,56 @@
+The SAS System
+
+6850       
+6851       /* STAT-BOXPLOT-002: BOXPLOT — Grouped box plot summary statistics and default graph data
+6852        * Source: S154 / Chapter 32 / `Getting Started: BOXPLOT Procedure` (PDF pp. 1368–1376); S154 / Chapter 32 / `Overview: BOXPLOT Procedure` (PDF pp.
+6852     !  1366–1368).
+6853        * Discriminates: Grouped box plot request and the corresponding explicit distribution summaries
+6854        */
+6855       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+6855     ! validmemname=compatible locale=en_US;
+6856       %let syscc=0;
+6857       title; footnote;
+6858       ods _all_ close;
+6859       ods listing gpath="%sysfunc(pathname(work))";
+6860       ods graphics off;
+6861       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.CARS (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+6861     !                                         quit;
+
+
+6862       ods path work.templat(update) sashelp.tmplmst(read);
+6863       
+6864       filename _grfile temp; goptions device=svg gsfname=_grfile;
+6865       proc sort data=sashelp.cars out=cars; by Origin; run;
+
+NOTE: There were 428 observations read from the data set SASHELP.CARS.
+NOTE: The data set WORK.CARS has 428 observations and 15 variables.
+
+6866       ods graphics on;
+6867       proc boxplot data=cars; plot MPG_City*Origin; run;
+
+NOTE: Processing beginning for PLOT statement number 1.
+NOTE: There were 428 observations read from the data set WORK.CARS.
+
+6868       ods graphics off;
+6869       proc means data=cars n mean std min q1 median q3 max; class Origin; var MPG_City; run;
+
+NOTE: There were 428 observations read from the data set WORK.CARS.
+NOTE: The PROCEDURE MEANS printed page 483.
+
+6870       
+6871       
+6872       
+6873       
+The SAS System
+
+6874       

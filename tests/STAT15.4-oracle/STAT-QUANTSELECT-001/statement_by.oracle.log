@@ -1,0 +1,85 @@
+The SAS System
+
+11167      
+11168      /* STAT-QUANTSELECT-001: QUANTSELECT — Data input, variable roles, and basic options
+11169       * Source: S154 / Chapter 104 / `PROC QUANTSELECT Statement` (PDF pp. 8467–8476); S154 / Chapter 104 / `BY Statement` (PDF p. 8476); S154 / Chapter
+11169    !  104 / `WEIGHT Statement` (PDF p. 8491).
+11170       * Discriminates: Two explicit BY groups contain identical inputs, exposing group boundaries and per-group results.
+11171       */
+11172      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+11172    ! validmemname=compatible locale=en_US;
+11173      %let syscc=0;
+11174      title; footnote;
+11175      ods _all_ close;
+11176      ods listing gpath="%sysfunc(pathname(work))";
+11177      ods graphics off;
+11178      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+11178    !                                         quit;
+
+
+11179      ods path work.templat(update) sashelp.tmplmst(read);
+11180      
+11181      proc contents varnum data=sashelp.baseball;
+11182      ods select position;
+11183      run;
+
+NOTE: The PROCEDURE CONTENTS printed page 691.
+
+11184      data _oracle_input; set sashelp.baseball; do _oracle_by=1 to 2; output; end; run;
+
+NOTE: There were 322 observations read from the data set SASHELP.BASEBALL.
+NOTE: The data set WORK._ORACLE_INPUT has 644 observations and 25 variables.
+
+11185      proc sort data=_oracle_input; by _oracle_by; run;
+
+NOTE: There were 644 observations read from the data set WORK._ORACLE_INPUT.
+NOTE: The data set WORK._ORACLE_INPUT has 644 observations and 25 variables.
+
+11186      proc quantselect data=_oracle_input;
+11187      by _oracle_by;
+11188      class Div;
+11189      model Salary = nAtBat nHits nHome nRuns nRBI nBB yrMajor crAtBat
+11190      crHits crHome crRuns crRbi crBB nAssts nError nOuts
+11191      Div
+11192      / selection=lasso(adaptive stop=aic choose=sbc sh=7);
+11193      run;
+
+NOTE: The PROCEDURE QUANTSELECT printed pages 692-698.
+
+11194      proc quantselect data=sashelp.baseball;
+11195      class Div;
+11196      model Salary = nAtBat nHits nHome nRuns nRBI nBB yrMajor crAtBat
+11197      crHits crHome crRuns crRbi crBB nAssts nError nOuts
+11198      Div
+11199      / quantiles=0.1 0.9 selection=lasso(adaptive stop=aic choose=sbc sh=7);
+11200      run;
+
+NOTE: The PROCEDURE QUANTSELECT printed pages 699-703.
+
+11201      ods graphics on;
+11202      proc quantselect data=sashelp.baseball plots=all;
+11203      class Div;
+11204      model Salary = nAtBat nHits nHome nRuns nRBI nBB yrMajor crAtBat
+11205      crHits crHome crRuns crRbi crBB nAssts nError nOuts
+11206      Div
+11207      / quantiles=0.1 selection=lasso(adaptive stop=aic choose=sbc sh=7);
+11208      run;
+
+NOTE: Data label collision avoidance has been disabled because the threshold has been reached. You can set LABELMAX=500 in the ODS GRAPHICS statement to 
+      restore collision avoidance.
+NOTE: The PROCEDURE QUANTSELECT printed pages 704-706.
+
+11209      
+11210      
+11211      
+11212      
+The SAS System
+
+11213      

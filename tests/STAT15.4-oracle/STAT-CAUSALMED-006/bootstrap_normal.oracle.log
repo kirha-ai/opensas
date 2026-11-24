@@ -1,0 +1,53 @@
+The SAS System
+
+867        
+868        /* STAT-CAUSALMED-006: CAUSALMED — BOOTSTRAP / Bootstrap Methods
+869         * Source: S154 / Chapter 38 / `BOOTSTRAP Statement` (PDF pp. 2379–2381); S154 / Chapter 38 / `Bootstrap Methods` (PDF pp. 2406–2407).
+870         * Discriminates: Seeded 50-replicate bootstrap with normal confidence intervals.
+871         */
+872        options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+872      ! validmemname=compatible locale=en_US;
+873        %let syscc=0;
+874        title; footnote;
+875        ods _all_ close;
+876        ods listing gpath="%sysfunc(pathname(work))";
+877        ods graphics off;
+878        proc datasets library=work kill nolist;
+NOTE: Deleting WORK.COLDS (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK._ORACLE_INPUT (memtype=DATA).
+878      !                                         quit;
+
+
+879        ods path work.templat(update) sashelp.tmplmst(read);
+880        
+881        proc causalmed data=sashelp.birthwgt decomp;
+882        class LowBirthWgt Smoking Death AgeGroup Married Race
+883        Drinking SomeCollege /descending;
+884        mediator LowBirthWgt = Smoking;
+885        model Death = LowBirthWgt | Smoking;
+886        covar AgeGroup Married Race Drinking SomeCollege;
+887        evaluate 'Low Birth-Weight' LowBirthWgt='Yes' / nodecomp;
+888        evaluate 'Normal Birth-Weight' LowBirthWgt='No' / nodecomp;
+889        bootstrap nboot=50 seed=314159 bootci(normal);
+890        run;
+
+NOTE: PROC CAUSALMED is modeling the probability that Death='Yes' in the outcome model.
+NOTE: PROC CAUSALMED is modeling the probability that LowBirthWgt='Yes' in the mediator model.
+NOTE: Resampling for bootstrap replicates 1 to 50.
+NOTE: All 50 bootstrap samples are used to compute standard errors and confidence intervals.
+NOTE: The PROCEDURE CAUSALMED printed pages 69-75.
+
+891        quit;
+892        
+893        
+894        
+895        
+The SAS System
+
+896        

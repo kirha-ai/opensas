@@ -1,0 +1,271 @@
+The SAS System
+
+4115       
+4116       /* STAT-ACECLUS-005: ACECLUS — ODS Graphics
+4117        * Source: S154 / Chapter 27 / `ODS Graphics` (PDF pp. 1038–1039).
+4118        * Discriminates: Verified default procedure context
+4119        */
+4120       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+4120     ! validmemname=compatible locale=en_US;
+4121       %let syscc=0;
+4122       title; footnote;
+4123       ods _all_ close;
+4124       ods listing gpath="%sysfunc(pathname(work))";
+4125       ods graphics off;
+4126       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.ACE (memtype=DATA).
+NOTE: Deleting WORK.CLUS (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.SCORE (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+4126     !                                         quit;
+
+
+4127       ods path work.templat(update) sashelp.tmplmst(read);
+4128       
+4129       ods graphics on;
+4130       ods trace on;
+4131       ods trace on;
+4132       
+4133       
+4134       title 'Fisher (1936) Iris Data';
+4135       proc aceclus data=sashelp.iris out=ace p=.02 outstat=score;
+4136       var SepalLength SepalWidth PetalLength PetalWidth ;
+4137       run;
+
+
+Output Added:
+-------------
+Name:       DataOptionInfo
+Label:      Data and Option Information
+Template:   stat.aceclus.Factoid
+Path:       Aceclus.DataOptionInfo
+-------------
+
+Output Added:
+-------------
+Name:       SimpleStatistics
+Label:      Simple Statistics
+Template:   stat.aceclus.SimpleStatistics
+Path:       Aceclus.SimpleStatistics
+-------------
+
+Output Added:
+-------------
+Name:       TotSampleCov
+Label:      COV: Total Sample Covariances
+Template:   stat.aceclus.TotSampleCov
+Path:       Aceclus.TotSampleCov
+-------------
+
+Output Added:
+-------------
+Name:       Threshold
+Label:      Threshold Factoid
+Template:   stat.aceclus.Factoid
+Path:       Aceclus.Threshold
+-------------
+
+Output Added:
+-------------
+Name:       IterHistory
+Label:      Iteration History
+Template:   stat.aceclus.IterHistory
+Path:       Aceclus.IterHistory
+-------------
+
+Output Added:
+-------------
+Name:       ConvergenceStatus
+Label:      Convergence Status
+Template:   stat.aceclus.ConvergenceStatus
+Path:       Aceclus.ConvergenceStatus
+-------------
+NOTE: Algorithm converged.
+
+Output Added:
+-------------
+Name:       Within
+Label:      ACE: Approximate Covariance Estimate Within Clusters
+Template:   stat.aceclus.Within
+Path:       Aceclus.Within
+-------------
+
+Output Added:
+-------------
+Name:       Eigenvalues
+Label:      Eigenvalues of Inv(ACE)*(COV-ACE)
+Template:   stat.aceclus.Eigenvalues
+Path:       Aceclus.Eigenvalues
+-------------
+
+Output Added:
+-------------
+Name:       Eigenvectors
+Label:      Eigenvectors (Raw Canonical Coefficients)
+Template:   stat.aceclus.Eigenvectors
+Path:       Aceclus.Eigenvectors
+-------------
+
+Output Added:
+-------------
+Name:       StdCanCoef
+Label:      Standardized Canonical Coefficients
+Template:   stat.aceclus.StdCanCoef
+Path:       Aceclus.StdCanCoef
+-------------
+NOTE: The data set WORK.ACE has 150 observations and 9 variables.
+NOTE: The data set WORK.SCORE has 20 observations and 6 variables.
+NOTE: The PROCEDURE ACECLUS printed page 315.
+
+4138       proc sgplot data=ace;
+4139       scatter y=can2 x=can1 / group=Species;
+4140       keylegend / title="Species";
+4141       run;
+
+
+Output Added:
+-------------
+Name:       SGPlot
+Label:      The SGPlot Procedure
+Data Label: SGPlot
+Path:       SGPlot.SGPlot
+-------------
+NOTE: Listing image output written to /saswork/SAS_work5D120001108E_odaws02-euw1.oda.sas.com/SAS_workCCDC0001108E_odaws02-euw1.oda.sas.com/SGPlot4.png.
+NOTE: There were 150 observations read from the data set WORK.ACE.
+
+4142       proc fastclus data=ace maxc=3 maxiter=10 conv=0 out=clus;
+4143       var can:;
+4144       run;
+
+
+Output Added:
+-------------
+Name:       InitialSeeds
+Label:      Initial Seeds
+Template:   stat.fastclus.InitialSeeds
+Path:       Fastclus.InitialSeeds
+-------------
+
+Output Added:
+-------------
+Name:       MinDist
+Label:      Minimum Distance
+Template:   stat.fastclus.MinDist
+Path:       Fastclus.MinDist
+-------------
+
+Output Added:
+-------------
+Name:       IterHistory
+Label:      Iteration History
+Template:   stat.fastclus.IterHistory
+Path:       Fastclus.IterHistory
+-------------
+NOTE: Convergence criterion is satisfied.
+
+Output Added:
+-------------
+Name:       ConvergenceStatus
+Label:      Convergence Status
+Template:   stat.fastclus.ConvergenceStatus
+Path:       Fastclus.ConvergenceStatus
+-------------
+
+Output Added:
+-------------
+Name:       Criterion
+Label:      Criterion
+Template:   stat.fastclus.Criterion
+Path:       Fastclus.Criterion
+-------------
+
+Output Added:
+-------------
+Name:       ClusterSum
+Label:      Cluster Summary
+Template:   stat.fastclus.ClusterSum
+Path:       Fastclus.ClusterSum
+-------------
+
+Output Added:
+-------------
+Name:       VariableStat
+Label:      Statistics for Variables
+Template:   stat.fastclus.VariableStat
+Path:       Fastclus.VariableStat
+-------------
+
+Output Added:
+-------------
+Name:       PseudoFStat
+Label:      Pseudo F Statistic
+Template:   stat.fastclus.PseudoFStat
+Path:       Fastclus.PseudoFStat
+-------------
+
+Output Added:
+-------------
+Name:       ApproxExpOverAllRSq
+Label:      Approximate Expected Over-All R-Squared
+Template:   stat.fastclus.ApproxExpOverAllRSq
+Path:       Fastclus.ApproxExpOverAllRSq
+-------------
+
+Output Added:
+-------------
+Name:       CCC
+Label:      Cubic Clustering Criterion
+Template:   stat.fastclus.CCC
+Path:       Fastclus.CCC
+-------------
+
+Output Added:
+-------------
+Name:       ClusterCenters
+Label:      Cluster Means
+Template:   stat.fastclus.ClusterCenters
+Path:       Fastclus.ClusterCenters
+-------------
+
+Output Added:
+-------------
+Name:       ClusterDispersion
+Label:      Cluster Standard Deviations
+Template:   stat.fastclus.ClusterDispersion
+Path:       Fastclus.ClusterDispersion
+-------------
+NOTE: The data set WORK.CLUS has 150 observations and 11 variables.
+NOTE: The PROCEDURE FASTCLUS printed page 316.
+
+4145       proc freq;
+4146       tables cluster*Species;
+4147       run;
+
+
+Output Added:
+-------------
+Name:       CrossTabFreqs
+Label:      Cross-Tabular Freq Table
+Template:   Base.Freq.CrossTabFreqs
+Path:       Freq.Table1.CrossTabFreqs
+-------------
+NOTE: There were 150 observations read from the data set WORK.CLUS.
+NOTE: The PROCEDURE FREQ printed page 317.
+
+4148       
+4149       ods trace off;
+4150       
+4151       ods trace off; ods graphics off;
+4152       
+4153       
+4154       
+4155       
+The SAS System
+
+4156       

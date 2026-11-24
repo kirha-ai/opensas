@@ -1,0 +1,419 @@
+
+The CALIS Procedure
+Mean and Covariance Structures: Model and Initial Values
+
+          Modeling Information
+      Maximum Likelihood Estimation
+
+Data Set            WORK.GROWTH          
+N Records Read      16                   
+N Records Used      16                   
+N Obs               16                   
+Model Type          LINEQS               
+Analysis            Means and Covariances
+
+
+            Variables in the Model
+
+Endogenous    Manifest     y1  y2  y3  y4  y5
+              Latent                         
+Exogenous     Manifest                       
+              Latent       f_alpha  f_beta   
+              Error        e1  e2  e3  e4  e5
+
+      Number of Endogenous Variables = 5
+      Number of Exogenous Variables  = 7
+
+
+      Initial Estimates for Linear Equations
+
+y1 =   0 Intercept  + 1 f_alpha  + 1 e1            
+y2 =   0 Intercept  + 1 f_alpha  + 1 f_beta  + 1 e2
+y3 =   0 Intercept  + 1 f_alpha  + 2 f_beta  + 1 e3
+y4 =   0 Intercept  + 1 f_alpha  + 3 f_beta  + 1 e4
+y5 =   0 Intercept  + 1 f_alpha  + 4 f_beta  + 1 e5
+
+
+Initial Estimates for Variances of Exogenous Variables
+ 
+Variable
+Type           Variable    Parameter      Estimate
+
+Latent         f_alpha     _Parm1                .
+               f_beta      _Parm2                .
+Error          e1          evar                  .
+               e2          evar                  .
+               e3          evar                  .
+               e4          evar                  .
+               e5          evar                  .
+
+
+Initial Estimates for Covariances Among Exogenous Variables
+ 
+Var1       Var2      Parameter      Estimate
+
+f_alpha    f_beta    _Parm3                .
+
+
+     Initial Estimates for Mean Parameters
+ 
+Variable
+Type        Variable    Parameter      Estimate
+
+Latent      f_alpha     _Parm4                .
+            f_beta      _Parm5                .
+
+The CALIS Procedure
+Mean and Covariance Structures: Descriptive Statistics
+
+         Simple Statistics
+ 
+Variable          Mean       Std Dev
+
+y1            14.66875       3.56459
+y2            17.91250       4.08736
+y3            21.80625       4.60036
+y4            26.04375       4.73863
+y5            30.84375       5.41701
+
+The CALIS Procedure
+Mean and Covariance Structures: Optimization
+
+        Initial Estimation Method
+
+       1    McDonald Method              
+
+
+              Optimization Start
+              Parameter Estimates
+ 
+    N    Parameter      Estimate      Gradient
+
+    1    _Parm1          1.00000      -0.53673
+    2    _Parm2          0.16000      -2.11276
+    3    evar            8.90637       0.03882
+    4    _Parm3          0.39696      -1.80466
+    5    _Parm4         14.66875      -0.24330
+    6    _Parm5          3.24375      -1.85178
+
+  Value of Objective Function = 5.0202276451
+
+The CALIS Procedure
+Mean and Covariance Structures: Optimization
+
+Levenberg-Marquardt Optimization
+
+Scaling Update of More (1978)
+
+Parameter Estimates                    6
+Functions (Observations)              20
+
+                                             Optimization Start
+
+Active Constraints                                  0  Objective Function                       5.0202276451
+Max Abs Gradient Element                  2.112760299  Radius                                   4.4325016224
+
+
+                                                                                                         Ratio
+                                                                                                       Between
+                                                                                                        Actual
+                                                                 Objective     Max Abs                     and
+                     Function         Active        Objective     Function    Gradient               Predicted
+Iter     Restarts       Calls    Constraints         Function       Change     Element     Lambda       Change
+
+   1            0           4              0          2.18357       2.8367      0.2091          0        0.611
+   2            0           6              0          2.09540       0.0882    5.55E-16          0        1.336
+
+                                            Optimization Results
+
+Iterations                                          2  Function Calls                                      9
+Jacobian Calls                                      4  Active Constraints                                  0
+Objective Function                       2.0953982656  Max Abs Gradient Element                 5.551115E-16
+Lambda                                              0  Actual Over Pred Change                  1.3358651229
+Radius                                    1.874565331                                                       
+
+Convergence criterion (ABSGCONV=0.00001) satisfied.                                               
+
+The CALIS Procedure
+Mean and Covariance Structures: Maximum Likelihood Estimation
+
+         Fit Summary
+
+Chi-Square            31.4310
+Chi-Square DF              14
+Pr > Chi-Square        0.0048
+
+The CALIS Procedure
+Mean and Covariance Structures: Maximum Likelihood Estimation
+
+                               Linear Equations
+
+y1 =          0 Intercept  +   1.0000 f_alpha  +   1.0000 e1                   
+y2 =          0 Intercept  +   1.0000 f_alpha  +   1.0000 f_beta  +   1.0000 e2
+y3 =          0 Intercept  +   1.0000 f_alpha  +   2.0000 f_beta  +   1.0000 e3
+y4 =          0 Intercept  +   1.0000 f_alpha  +   3.0000 f_beta  +   1.0000 e4
+y5 =          0 Intercept  +   1.0000 f_alpha  +   4.0000 f_beta  +   1.0000 e5
+
+
+              Estimates for Variances of Exogenous Variables
+ 
+Variable                                   Standard
+Type           Variable      Estimate         Error     t Value    Pr > |t|
+
+Latent         f_alpha       13.89140       5.81540      2.3887      0.0169
+               f_beta         0.80742       0.42198      1.9134      0.0557
+Error          e1             3.32185       0.70031      4.7434      <.0001
+               e2             3.32185       0.70031      4.7434      <.0001
+               e3             3.32185       0.70031      4.7434      <.0001
+               e4             3.32185       0.70031      4.7434      <.0001
+               e5             3.32185       0.70031      4.7434      <.0001
+
+
+                Covariances Among Exogenous Variables
+ 
+                                     Standard
+Var1       Var2        Estimate         Error     t Value    Pr > |t|
+
+f_alpha    f_beta      -0.35281       1.13815     -0.3100      0.7566
+
+
+                            Mean Parameters
+ 
+Variable                                Standard
+Type        Variable      Estimate         Error     t Value    Pr > |t|
+
+Latent      f_alpha       14.15875       1.02906     13.7589      <.0001
+            f_beta         4.04813       0.27563     14.6867      <.0001
+
+
+         Squared Multiple Correlations
+ 
+                 Error         Total
+Variable      Variance      Variance    R-Square
+
+y1             3.32185      17.21324      0.8070
+y2             3.32185      17.31505      0.8082
+y3             3.32185      19.03169      0.8255
+y4             3.32185      22.36317      0.8515
+y5             3.32185      27.30948      0.8784
+
+The CALIS Procedure
+Mean and Covariance Structures: Model and Initial Values
+
+          Modeling Information
+      Maximum Likelihood Estimation
+
+Data Set            WORK.GROWTH          
+N Records Read      16                   
+N Records Used      16                   
+N Obs               16                   
+Model Type          LINEQS               
+Analysis            Means and Covariances
+
+
+            Variables in the Model
+
+Endogenous    Manifest     y1  y2  y3  y4  y5
+              Latent                         
+Exogenous     Manifest                       
+              Latent       f_alpha  f_beta   
+              Error        e1  e2  e3  e4  e5
+
+      Number of Endogenous Variables = 5
+      Number of Exogenous Variables  = 7
+
+
+      Initial Estimates for Linear Equations
+
+y1 =   0 Intercept  + 1 f_alpha  + 1 e1            
+y2 =   0 Intercept  + 1 f_alpha  + 1 f_beta  + 1 e2
+y3 =   0 Intercept  + 1 f_alpha  + 2 f_beta  + 1 e3
+y4 =   0 Intercept  + 1 f_alpha  + 3 f_beta  + 1 e4
+y5 =   0 Intercept  + 1 f_alpha  + 4 f_beta  + 1 e5
+
+
+Initial Estimates for Variances of Exogenous Variables
+ 
+Variable
+Type           Variable    Parameter      Estimate
+
+Latent         f_alpha     _Parm01               .
+               f_beta      _Parm02               .
+Error          e1          _Parm03               .
+               e2          _Parm04               .
+               e3          _Parm05               .
+               e4          _Parm06               .
+               e5          _Parm07               .
+
+
+Initial Estimates for Covariances Among Exogenous Variables
+ 
+Var1       Var2      Parameter      Estimate
+
+f_alpha    f_beta    _Parm08               .
+
+
+     Initial Estimates for Mean Parameters
+ 
+Variable
+Type        Variable    Parameter      Estimate
+
+Latent      f_alpha     _Parm09               .
+            f_beta      _Parm10               .
+
+The CALIS Procedure
+Mean and Covariance Structures: Descriptive Statistics
+
+         Simple Statistics
+ 
+Variable          Mean       Std Dev
+
+y1            14.66875       3.56459
+y2            17.91250       4.08736
+y3            21.80625       4.60036
+y4            26.04375       4.73863
+y5            30.84375       5.41701
+
+The CALIS Procedure
+Mean and Covariance Structures: Optimization
+
+        Initial Estimation Method
+
+       1    McDonald Method              
+
+
+              Optimization Start
+              Parameter Estimates
+ 
+    N    Parameter      Estimate      Gradient
+
+    1    _Parm01         1.00000      -0.62301
+    2    _Parm02         0.16000      -1.67397
+    3    _Parm03         7.34556       0.01532
+    4    _Parm04         7.71844       0.02609
+    5    _Parm05         8.62259       0.02985
+    6    _Parm06         7.33632       0.03170
+    7    _Parm07        13.50893      -0.02060
+    8    _Parm08         0.39696      -1.84682
+    9    _Parm09        14.66875      -0.20748
+   10    _Parm10         3.24375      -1.61343
+
+  Value of Objective Function = 4.7033365159
+
+The CALIS Procedure
+Mean and Covariance Structures: Optimization
+
+Levenberg-Marquardt Optimization
+
+Scaling Update of More (1978)
+
+Parameter Estimates                   10
+Functions (Observations)              20
+
+                                             Optimization Start
+
+Active Constraints                                  0  Objective Function                       4.7033365159
+Max Abs Gradient Element                 1.8468174408  Radius                                   3.6685038656
+
+
+                                                                                                         Ratio
+                                                                                                       Between
+                                                                                                        Actual
+                                                                 Objective     Max Abs                     and
+                     Function         Active        Objective     Function    Gradient               Predicted
+Iter     Restarts       Calls    Constraints         Function       Change     Element     Lambda       Change
+
+   1            0           4              0          1.29116       3.4122      0.1840     0.0657        0.673
+   2            0           6              0          0.86576       0.4254      0.2011          0        1.646
+   3            0           8              0          0.81099       0.0548      0.0568          0        1.357
+   4            0          10              0          0.78834       0.0227      0.0776          0        1.428
+   5            0          12              0          0.77988      0.00846      0.0296          0        1.431
+   6            0          14              0          0.77682      0.00306      0.0284          0        1.457
+   7            0          16              0          0.77571      0.00111      0.0111          0        1.477
+   8            0          18              0          0.77529     0.000422      0.0108          0        1.510
+   9            0          20              0          0.77512     0.000168     0.00428          0        1.539
+  10            0          22              0          0.77505     0.000069     0.00434          0        1.567
+  11            0          24              0          0.77502     0.000029     0.00198          0        1.588
+  12            0          26              0          0.77501     0.000012     0.00178          0        1.605
+  13            0          28              0          0.77501     5.265E-6    0.000895          0        1.618
+  14            0          30              0          0.77500     2.262E-6    0.000745          0        1.627
+  15            0          32              0          0.77500     9.735E-7    0.000400          0        1.635
+  16            0          34              0          0.77500     4.196E-7    0.000314          0        1.640
+  17            0          36              0          0.77500      1.81E-7    0.000177          0        1.645
+  18            0          38              0          0.77500     7.815E-8    0.000133          0        1.648
+  19            0          40              0          0.77500     3.374E-8    0.000078          0        1.650
+  20            0          42              0          0.77500     1.457E-8    0.000057          0        1.652
+  21            0          44              0          0.77500     6.295E-9    0.000034          0        1.653
+
+                                            Optimization Results
+
+Iterations                                         21  Function Calls                                     47
+Jacobian Calls                                     23  Active Constraints                                  0
+Objective Function                       0.7750024882  Max Abs Gradient Element                 0.0000341443
+Lambda                                              0  Actual Over Pred Change                  1.6532647862
+Radius                                   0.0003232923                                                       
+
+Convergence criterion (GCONV=1E-8) satisfied.                                                     
+
+The CALIS Procedure
+Mean and Covariance Structures: Maximum Likelihood Estimation
+
+         Fit Summary
+
+Chi-Square            11.6250
+Chi-Square DF              10
+Pr > Chi-Square        0.3109
+
+The CALIS Procedure
+Mean and Covariance Structures: Maximum Likelihood Estimation
+
+                               Linear Equations
+
+y1 =          0 Intercept  +   1.0000 f_alpha  +   1.0000 e1                   
+y2 =          0 Intercept  +   1.0000 f_alpha  +   1.0000 f_beta  +   1.0000 e2
+y3 =          0 Intercept  +   1.0000 f_alpha  +   2.0000 f_beta  +   1.0000 e3
+y4 =          0 Intercept  +   1.0000 f_alpha  +   3.0000 f_beta  +   1.0000 e4
+y5 =          0 Intercept  +   1.0000 f_alpha  +   4.0000 f_beta  +   1.0000 e5
+
+
+              Estimates for Variances of Exogenous Variables
+ 
+Variable                                   Standard
+Type           Variable      Estimate         Error     t Value    Pr > |t|
+
+Latent         f_alpha       14.70066       5.66942      2.5930      0.0095
+               f_beta         0.45059       0.29867      1.5087      0.1314
+Error          e1             2.81709       1.35331      2.0816      0.0374
+               e2             0.32214       0.46118      0.6985      0.4849
+               e3             1.94428       0.86824      2.2393      0.0251
+               e4             1.88569       1.21307      1.5545      0.1201
+               e5            14.65202       5.99357      2.4446      0.0145
+
+
+                Covariances Among Exogenous Variables
+ 
+                                     Standard
+Var1       Var2        Estimate         Error     t Value    Pr > |t|
+
+f_alpha    f_beta       0.35292       0.90366      0.3906      0.6961
+
+
+                            Mean Parameters
+ 
+Variable                                Standard
+Type        Variable      Estimate         Error     t Value    Pr > |t|
+
+Latent      f_alpha       14.03047       1.01534     13.8185      <.0001
+            f_beta         3.96793       0.22612     17.5478      <.0001
+
+
+         Squared Multiple Correlations
+ 
+                 Error         Total
+Variable      Variance      Variance    R-Square
+
+y1             2.81709      17.51774      0.8392
+y2             0.32214      16.17923      0.9801
+y3             1.94428      19.85899      0.9021
+y4             1.88569      22.75918      0.9171
+y5            14.65202      39.38547      0.6280

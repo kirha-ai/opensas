@@ -563,7 +563,6 @@ fn expired(_: ?*const anyopaque) bool {
 }
 
 // Oracle: /tmp/opensas-stat-batch2/FEAT-freq-exact/primitives-v2.sas
-// sasrun <absolute probe> -f text -o <output.txt> -l <output.log>.
 // Fisher POINT=0.0027 includes both tied tables, not just observed mass 0.0013.
 // reference-sets.sas: 2x3 Fisher p=0.6000, POINT=0.6000, mid-p=0.3000.
 test "Freeman-Halton probabilities separate neighboring integer weights on wide margins" {

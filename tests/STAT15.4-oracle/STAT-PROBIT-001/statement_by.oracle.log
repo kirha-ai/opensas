@@ -1,0 +1,72 @@
+The SAS System
+
+9049       
+9050       /* STAT-PROBIT-001: PROBIT — Data input, variable roles, and basic options
+9051        * Source: S154 / Chapter 100 / `PROC PROBIT Statement` (PDF pp. 8100–8105); S154 / Chapter 100 / `BY Statement` (PDF pp. 8105–8106); S154 /
+9051     ! Chapter 100 / `WEIGHT Statement` (PDF p. 8120); S154 / Chapter 100 / `Missing Values` (PDF p. 8120).
+9052        * Discriminates: Two explicit BY groups contain identical inputs, exposing group boundaries and per-group results.
+9053        */
+9054       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+9054     ! validmemname=compatible locale=en_US;
+9055       %let syscc=0;
+9056       title; footnote;
+9057       ods _all_ close;
+9058       ods listing gpath="%sysfunc(pathname(work))";
+9059       ods graphics off;
+9060       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.NEW (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.STUDY (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+9060     !                                         quit;
+
+
+9061       ods path work.templat(update) sashelp.tmplmst(read);
+9062       
+9063       data study;
+9064       input Dose Respond @@;
+9065       Number = 15;
+9066       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.STUDY has 12 observations and 3 variables.
+
+9069       ;
+9070       ods graphics on;
+9071       data _oracle_input; set study; do _oracle_by=1 to 2; output; end; run;
+
+NOTE: There were 12 observations read from the data set WORK.STUDY.
+NOTE: The data set WORK._ORACLE_INPUT has 24 observations and 4 variables.
+
+9072       proc sort data=_oracle_input; by _oracle_by; run;
+
+NOTE: There were 24 observations read from the data set WORK._ORACLE_INPUT.
+NOTE: The data set WORK._ORACLE_INPUT has 24 observations and 4 variables.
+
+9073       proc probit data=_oracle_input log10 optc plots=(predpplot ippplot);
+9074       by _oracle_by;
+9075       model respond/number=dose;
+9076       output out=new p=p_hat;
+9077       run;
+
+NOTE: Algorithm converged.
+NOTE: The confidence limits displayed on the plots are conditioned on the estimated threshold. The variation in estimating the threshold is ignored.
+NOTE: The above message was for the following BY group:
+      _oracle_by=1
+NOTE: Algorithm converged.
+NOTE: The confidence limits displayed on the plots are conditioned on the estimated threshold. The variation in estimating the threshold is ignored.
+NOTE: The above message was for the following BY group:
+      _oracle_by=2
+NOTE: The data set WORK.NEW has 24 observations and 5 variables.
+NOTE: The PROCEDURE PROBIT printed pages 608-609.
+
+9078       
+9079       
+9080       
+9081       
+The SAS System
+
+9082       

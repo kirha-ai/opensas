@@ -1,0 +1,46 @@
+The SAS System
+
+28858      
+28859      /* STAT-TTEST-005: TTEST — One-Sample Design
+28860       * Source: S154 / Chapter 128 / `One-Sample Design` (PDF pp. 10620–10623).
+28861       * Discriminates: Upper one-sided p-value and one-sided 90% interval
+28862       */
+28863      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+28863    ! validmemname=compatible locale=en_US;
+28864      %let syscc=0;
+28865      title; footnote;
+28866      ods _all_ close;
+28867      ods listing gpath="%sysfunc(pathname(work))";
+28868      ods graphics off;
+28869      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.DRAWS (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SAMPLE (memtype=DATA).
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+28869    !                                         quit;
+
+
+28870      ods path work.templat(update) sashelp.tmplmst(read);
+28871      
+28872      data time; input time @@; datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.TIME has 20 observations and 1 variables.
+
+28875      ;
+28876      run;
+28877      proc ttest data=time h0=80 sides=u alpha=0.1; var time; run;
+
+NOTE: The PROCEDURE TTEST printed page 1771.
+
+28878      
+28879      
+28880      
+28881      
+The SAS System
+
+28882      

@@ -1,0 +1,59 @@
+
+The MI Procedure
+
+                     Model Information
+
+Data Set                             WORK.FITNESS1          
+Method                               MCMC                   
+Multiple Imputation Chain            Single Chain           
+Initial Estimates for MCMC           EM Posterior Mode      
+Start                                Starting Value         
+Prior                                Jeffreys               
+Number of Imputations                5                      
+Number of Burn-in Iterations         200                    
+Number of Iterations                 100                    
+Seed for random number generator     501213                 
+
+
+                                          Missing Data Patterns
+ 
+                   Run     Run                              -----------------Group Means----------------
+Group    Oxygen    Time    Pulse        Freq     Percent          Oxygen         RunTime        RunPulse
+
+    1    X         X       X              21       67.74       46.353810       10.809524      171.666667
+    2    X         X       .               4       12.90       47.109500       10.137500               .
+    3    X         .       .               3        9.68       52.461667               .               .
+    4    .         X       X               1        3.23               .       11.950000      176.000000
+    5    .         X       .               2        6.45               .        9.885000               .
+
+
+                  EM (Posterior Mode) Estimates
+ 
+_TYPE_    _NAME_            Oxygen         RunTime        RunPulse
+
+MEAN                     47.103766       10.554320      171.382196
+COV       Oxygen         24.549967       -5.726112      -15.926036
+COV       RunTime        -5.726112        1.781407        3.124798
+COV       RunPulse      -15.926036        3.124798       83.164045
+
+The MI Procedure
+
+                                    Variance Information (5 Imputations)
+ 
+                                                                      Relative       Fraction
+            -----------------Variance-----------------                Increase        Missing       Relative
+Variable         Between         Within          Total       DF    in Variance    Information     Efficiency
+
+Oxygen          0.056930       0.954041       1.022356   25.549       0.071606       0.068898       0.986408
+RunTime         0.000811       0.064496       0.065469   27.721       0.015084       0.014968       0.997015
+RunPulse        0.922032       3.269089       4.375528   15.753       0.338455       0.275664       0.947748
+
+
+                                                     Parameter Estimates (5 Imputations)
+ 
+                                                                                                                          t for H0:
+Variable            Mean      Std Error    95% Confidence Limits        DF        Minimum        Maximum            Mu0    Mean=Mu0   Pr > |t|
+
+Oxygen         47.094040       1.011116      45.0139      49.1742   25.549      46.783898      47.395550      50.000000       -2.87     0.0081
+RunTime        10.572073       0.255870      10.0477      11.0964   27.721      10.526392      10.599616      10.000000        2.24     0.0336
+RunPulse      171.787793       2.091776     167.3478     176.2278   15.753     170.774818     173.122002     180.000000       -3.93     0.0012

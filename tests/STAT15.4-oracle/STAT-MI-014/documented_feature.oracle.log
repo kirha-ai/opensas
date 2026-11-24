@@ -1,0 +1,111 @@
+The SAS System
+
+2857       
+2858       /* STAT-MI-014: MI — ODS Table Names
+2859        * Source: S154 / Chapter 82 / `ODS Table Names` (PDF pp. 6498–6499).
+2860        * Discriminates: Verified default procedure context
+2861        */
+2862       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+2862     ! validmemname=compatible locale=en_US;
+2863       %let syscc=0;
+2864       title; footnote;
+2865       ods _all_ close;
+2866       ods listing gpath="%sysfunc(pathname(work))";
+2867       ods graphics off;
+2868       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.FITNESS1 (memtype=DATA).
+NOTE: Deleting WORK.OUTEM (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+2868     !                                         quit;
+
+
+2869       ods path work.templat(update) sashelp.tmplmst(read);
+2870       
+2871       ods trace on;
+2872       data Fitness1;
+2873       input Oxygen RunTime RunPulse @@;
+2874       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.FITNESS1 has 31 observations and 3 variables.
+
+2891       ;
+2892       run;
+2893       proc mi data=Fitness1 seed=1518971 simple nimpute=0;
+2894       em itprint outem=outem;
+2895       var Oxygen RunTime RunPulse;
+2896       run;
+
+
+Output Added:
+-------------
+Name:       ModelInfo
+Label:      Model Information
+Template:   stat.mi.ModelInfo
+Path:       MI.ModelInfo
+-------------
+
+Output Added:
+-------------
+Name:       MissPattern
+Label:      Missing Data Patterns
+Template:   stat.mi.MissPattern
+Path:       MI.MissPattern
+-------------
+
+Output Added:
+-------------
+Name:       Univariate
+Label:      Univariate Statistics
+Template:   stat.mi.Univariate
+Path:       MI.Univariate
+-------------
+
+Output Added:
+-------------
+Name:       Corr
+Label:      Pairwise Correlations
+Template:   stat.mi.Matrix
+Path:       MI.Corr
+-------------
+
+Output Added:
+-------------
+Name:       EMInitEstimates
+Label:      Initial Parameters for EM Algorithm
+Template:   stat.mi.EMInitEstimates
+Path:       MI.EMInitEstimates
+-------------
+
+Output Added:
+-------------
+Name:       EMIterHistory
+Label:      EM (MLE) Iteration History
+Template:   stat.mi.EMIterHistory
+Path:       MI.EMIterHistory
+-------------
+NOTE: The EM algorithm (MLE) converges in 12 iterations.
+
+Output Added:
+-------------
+Name:       EMEstimates
+Label:      EM (MLE) Parameter Estimates
+Template:   stat.mi.EMEstimates
+Path:       MI.EMEstimates
+-------------
+NOTE: The data set WORK.OUTEM has 4 observations and 5 variables.
+NOTE: The PROCEDURE MI printed page 262.
+
+2897       ods trace off;
+2898       
+2899       
+2900       
+2901       
+The SAS System
+
+2902       

@@ -1,0 +1,145 @@
+The SAS System
+
+6121       
+6122       /* STAT-NLIN-014: NLIN — ODS Graphics
+6123        * Source: S154 / Chapter 88 / `ODS Graphics` (PDF pp. 7040–7042).
+6124        * Discriminates: Example 88.6: ODS Graphics and Diagnostics
+6125        */
+6126       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+6126     ! validmemname=compatible locale=en_US;
+6127       %let syscc=0;
+6128       title; footnote;
+6129       ods _all_ close;
+6130       ods listing gpath="%sysfunc(pathname(work))";
+6131       ods graphics off;
+6132       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.CONTRIVED (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+6132     !                                         quit;
+
+
+6133       ods path work.templat(update) sashelp.tmplmst(read);
+6134       
+6135       ods graphics on;
+6136       ods trace on;
+6137       ods trace on;
+6138       data contrived;
+6139       input x1 x2 y;
+6140       datalines;
+
+NOTE: The data set WORK.CONTRIVED has 13 observations and 3 variables.
+
+6154       ;
+6155       ods graphics on;
+6156       proc nlin data=contrived bias hougaard
+6157       NLINMEASURES plots(stats=all)=(diagnostics);
+6158       parms alpha=2.0
+6159       gamma=0.0;
+6160       model y = alpha*x1 + exp(gamma*x2);
+6161       run;
+
+NOTE: DER.alpha not initialized or missing. It will be computed automatically.
+NOTE: DER.gamma not initialized or missing. It will be computed automatically.
+
+Output Added:
+-------------
+Name:       IterHistory
+Label:      Iterative Phase
+Template:   stat.nlin.IterHistory
+Path:       Nlin.IterHistory
+-------------
+NOTE: Convergence criterion met.
+
+Output Added:
+-------------
+Name:       ConvergenceStatus
+Label:      Convergence Status
+Template:   Stat.nlin.ConvergenceStatus
+Path:       Nlin.ConvergenceStatus
+-------------
+NOTE: Convergence could not be attained for maximum parameter-effects curvature.
+
+Output Added:
+-------------
+Name:       FitDiagnosticsPanel
+Label:      Fit Diagnostics
+Template:   stat.nlin.Graphics.FitDiagnosticsPanel
+Path:       Nlin.FitDiagnosticsPlots.FitDiagnosticsPanel
+-------------
+
+Output Added:
+-------------
+Name:       LeveragePlot
+Label:      Leverage
+Template:   stat.nlin.Graphics.LeveragePlot
+Path:       Nlin.LeverageInfluencePlots.LeveragePlot
+-------------
+
+Output Added:
+-------------
+Name:       LocalInfluencePlot
+Label:      Local Influence
+Template:   stat.nlin.Graphics.LocalInfluencePlot
+Path:       Nlin.LeverageInfluencePlots.LocalInfluencePlot
+-------------
+
+Output Added:
+-------------
+Name:       EstSummary
+Label:      Estimation Summary
+Template:   stat.nlin.EstSummary
+Path:       Nlin.EstSummary
+-------------
+
+Output Added:
+-------------
+Name:       ANOVA
+Label:      Summary Statistics : Dependent Variable y
+Template:   stat.nlin.ANOVA
+Path:       Nlin.ANOVA
+-------------
+
+Output Added:
+-------------
+Name:       ParameterEstimates
+Label:      Parameter Summary
+Template:   stat.nlin.ParameterEstimates
+Path:       Nlin.ParameterEstimates
+-------------
+
+Output Added:
+-------------
+Name:       CorrB
+Label:      Approximate Correlation Matrix
+Template:   stat.nlin.CorrB
+Path:       Nlin.CorrB
+-------------
+
+Output Added:
+-------------
+Name:       NonlinearityMeasures
+Label:      Global Nonlinearity Measures
+Template:   stat.nlin.NonlinearityMeasures
+Path:       Nlin.NonlinearityMeasures
+-------------
+NOTE: The PROCEDURE NLIN printed page 401.
+
+6162       ods graphics off;
+6163       run;
+6164       quit;
+6165       ods trace off;
+6166       ods trace off;
+6167       ods graphics off;
+6168       
+6169       
+6170       
+6171       
+The SAS System
+
+6172       

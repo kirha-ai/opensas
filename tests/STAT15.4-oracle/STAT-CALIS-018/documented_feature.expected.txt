@@ -1,0 +1,357 @@
+
+Data Matrix of Kinzer & Kinzer, see GUTTMAN (1957)
+
+The CALIS Procedure
+Covariance Structure Analysis: Model and Initial Values
+
+     Modeling Information
+ Maximum Likelihood Estimation
+
+Data Set            WORK.KINZER
+N Obs               326        
+Model Type          COSAN      
+Analysis            Covariances
+
+
+Observed Variables (N = 6) in the Model 
+
+var1  var2  var3  var4  var5  var6
+
+
+       COSAN Model Structures
+
+Sigma =    D*B*B`*D` + D*Psi*D`     
+
+
+           Summary of Model Matrices
+ 
+Matrix     N Row     N Col    Matrix Type
+
+B              6         2    GEN: Rectangular 
+D              6         6    DIA: Diagonal    
+Psi            6         6    DIA: Diagonal    
+
+Data Matrix of Kinzer & Kinzer, see GUTTMAN (1957)
+
+The CALIS Procedure
+Covariance Structure Analysis: Model and Initial Values
+
+       Initial Model Matrix B
+ (6 x 2 General Rectangular Matrix)
+ 
+             factor1         factor2
+
+var1               .               0
+               [b11]                
+
+var2               .               .
+               [b21]           [b22]
+
+var3               .               .
+               [b31]           [b32]
+
+var4               .               .
+               [b41]           [b42]
+
+var5               .               .
+               [b51]           [b52]
+
+var6               .               .
+               [b61]           [b62]
+
+Data Matrix of Kinzer & Kinzer, see GUTTMAN (1957)
+
+The CALIS Procedure
+Covariance Structure Analysis: Model and Initial Values
+
+                                       Initial Model Matrix D
+                                      (6 x 6 Diagonal Matrix)
+ 
+                var1            var2            var3            var4            var5            var6
+
+var1               .               0               0               0               0               0
+                [d1]                                                                                
+
+var2               0               .               0               0               0               0
+                                [d2]                                                                
+
+var3               0               0               .               0               0               0
+                                                [d3]                                                
+
+var4               0               0               0               .               0               0
+                                                                [d4]                                
+
+var5               0               0               0               0               .               0
+                                                                                [d5]                
+
+var6               0               0               0               0               0               .
+                                                                                                [d6]
+
+Data Matrix of Kinzer & Kinzer, see GUTTMAN (1957)
+
+The CALIS Procedure
+Covariance Structure Analysis: Model and Initial Values
+
+                                      Initial Model Matrix Psi
+                                      (6 x 6 Diagonal Matrix)
+ 
+                var1            var2            var3            var4            var5            var6
+
+var1               .               0               0               0               0               0
+              [psi1]                                                                                
+
+var2               0               .               0               0               0               0
+                              [psi2]                                                                
+
+var3               0               0               .               0               0               0
+                                              [psi3]                                                
+
+var4               0               0               0               .               0               0
+                                                              [psi4]                                
+
+var5               0               0               0               0               .               0
+                                                                              [psi5]                
+
+var6               0               0               0               0               0               .
+                                                                                              [psi6]
+
+Data Matrix of Kinzer & Kinzer, see GUTTMAN (1957)
+
+The CALIS Procedure
+Covariance Structure Analysis: Descriptive Statistics
+
+         Simple Statistics
+ 
+Variable          Mean       Std Dev
+
+var1                 0       1.00000
+var2                 0       1.00000
+var3                 0       1.00000
+var4                 0       1.00000
+var5                 0       1.00000
+var6                 0       1.00000
+
+Data Matrix of Kinzer & Kinzer, see GUTTMAN (1957)
+
+The CALIS Procedure
+Covariance Structure Analysis: Optimization
+
+        Initial Estimation Method
+
+       1    Default Initial Values       
+
+
+              Optimization Start
+              Parameter Estimates
+ 
+    N    Parameter      Estimate      Gradient
+
+    1    d1              0.50000     -10.64558
+    2    d2              0.50000     -12.86326
+    3    d3              0.50000     -11.63535
+    4    d4              0.50000     -11.53116
+    5    d5              0.50000     -11.72465
+    6    d6              0.50000     -12.55814
+    7    b11             0.50000      -0.31836
+    8    b21             0.50000       5.06540
+    9    b31             0.50000       3.53982
+   10    b41             0.50000       3.39098
+   11    b51             0.50000       3.94168
+   12    b61             0.50000       5.45237
+   13    b22             0.50000       5.95660
+   14    b32             0.50000       3.79846
+   15    b42             0.50000       3.63474
+   16    b52             0.50000       3.66451
+   17    b62             0.50000       4.65428
+
+  Value of Objective Function = 9.7389187091
+
+
+The Number of Dependent Parameters is 6
+ 
+    N    Parameter      Estimate
+
+   18    psi1            0.75000
+   19    psi2            0.50000
+   20    psi3            0.50000
+   21    psi4            0.50000
+   22    psi5            0.50000
+   23    psi6            0.50000
+
+Data Matrix of Kinzer & Kinzer, see GUTTMAN (1957)
+
+The CALIS Procedure
+Covariance Structure Analysis: Optimization
+
+Levenberg-Marquardt Optimization
+
+Scaling Update of More (1978)
+
+Parameter Estimates                   17
+Functions (Observations)              21
+Linear Constraints                    10
+
+                                             Optimization Start
+
+Active Constraints (+)                              8  Objective Function                       9.7389187091
+Max Abs Gradient Element                 12.863255814  Radius                                   141.11330018
+
+
+                                                                                                         Ratio
+                                                                                                       Between
+                                                                                                        Actual
+                                                                 Objective     Max Abs                     and
+                     Function         Active        Objective     Function    Gradient               Predicted
+Iter     Restarts       Calls    Constraints         Function       Change     Element     Lambda       Change
+
+   1            0           4              7'         0.69319       9.0457      1.2575          0        0.341
+   2*           0           6              6'         0.41640       0.2768      0.9846      3.125        1.140
+   3*           0           8              5'         0.19472       0.2217      0.4044      3.125        1.145
+   4*           0          10              4'         0.09376       0.1010      0.2374      0.781        1.131
+   5*           0          12              3'         0.05669       0.0371      0.1837      0.195        1.175
+   6            0          14              3'         0.04520       0.0115      0.1991          0        0.515
+   7            0          16              2'         0.02731       0.0179      0.0733          0        1.078
+   8            0          18              2          0.02611      0.00120     0.00666          0        1.014
+   9            0          20              2          0.02610     0.000015    0.000871          0        1.040
+  10            0          22              2          0.02610     2.772E-7    0.000108          0        1.102
+  11            0          24              2          0.02610     6.891E-9    0.000017          0        1.139
+  12            0          26              2          0.02610     1.89E-10     2.47E-6          0        1.157
+
+                                            Optimization Results
+
+Iterations                                         12  Function Calls                                     29
+Jacobian Calls                                     14  Active Constraints                                  2
+Objective Function                       0.0260990149  Max Abs Gradient Element                 2.7626747E-6
+Lambda                                              0  Actual Over Pred Change                  1.1572127503
+Radius                                   0.0000851592                                                       
+
+Convergence criterion (ABSGCONV=0.00001) satisfied.                                               
+
+Data Matrix of Kinzer & Kinzer, see GUTTMAN (1957)
+
+The CALIS Procedure
+Covariance Structure Analysis: Maximum Likelihood Estimation
+
+                            Fit Summary
+
+Modeling Info        Number of Observations                     326
+                     Number of Variables                          6
+                     Number of Moments                           21
+                     Number of Parameters                        17
+                     Number of Active Constraints                 2
+                     Baseline Model Function Value           2.1011
+                     Baseline Model Chi-Square             682.8664
+                     Baseline Model Chi-Square DF                15
+                     Pr > Baseline Model Chi-Square          <.0001
+Absolute Index       Fit Function                            0.0261
+                     Chi-Square                              8.4822
+                     Chi-Square DF                                6
+                     Pr > Chi-Square                         0.2049
+                     Z-Test of Wilson & Hilferty             0.8281
+                     Hoelter Critical N                         483
+                     Root Mean Square Residual (RMR)         0.0169
+                     Standardized RMR (SRMR)                 0.0169
+                     Goodness of Fit Index (GFI)             0.9914
+Parsimony Index      Adjusted GFI (AGFI)                     0.9699
+                     Parsimonious GFI                        0.3966
+                     RMSEA Estimate                          0.0357
+                     RMSEA Lower 90% Confidence Limit        0.0000
+                     RMSEA Upper 90% Confidence Limit        0.0860
+                     Probability of Close Fit                0.6154
+                     ECVI Estimate                           0.1204
+                     ECVI Lower 90% Confidence Limit         0.1132
+                     ECVI Upper 90% Confidence Limit         0.1576
+                     Akaike Information Criterion           38.4822
+                     Bozdogan CAIC                         110.2856
+                     Schwarz Bayesian Criterion             95.2856
+                     McDonald Centrality                     0.9962
+Incremental Index    Bentler Comparative Fit Index           0.9963
+                     Bentler-Bonett NFI                      0.9876
+                     Bentler-Bonett Non-normed Index         0.9907
+                     Bollen Normed Index Rho1                0.9689
+                     Bollen Non-normed Index Delta2          0.9963
+                     James et al. Parsimonious NFI           0.3950
+
+Data Matrix of Kinzer & Kinzer, see GUTTMAN (1957)
+
+The CALIS Procedure
+Covariance Structure Analysis: Maximum Likelihood Estimation
+
+           Model Matrix B
+ (6 x 2 General Rectangular Matrix)
+ 
+             factor1         factor2
+
+var1          0.7100               0
+               [b11]                
+
+var2          0.7100          0.0393
+               [b21]           [b22]
+
+var3          0.6799          0.2463
+               [b31]           [b32]
+
+var4          0.6561          0.3295
+               [b41]           [b42]
+
+var5          0.5541          0.5432
+               [b51]           [b52]
+
+var6          0.4733          0.5432
+               [b61]           [b62]
+
+Data Matrix of Kinzer & Kinzer, see GUTTMAN (1957)
+
+The CALIS Procedure
+Covariance Structure Analysis: Maximum Likelihood Estimation
+
+                                           Model Matrix D
+                                      (6 x 6 Diagonal Matrix)
+ 
+                var1            var2            var3            var4            var5            var6
+
+var1          1.0022               0               0               0               0               0
+                [d1]                                                                                
+
+var2               0          0.9985               0               0               0               0
+                                [d2]                                                                
+
+var3               0               0          1.0004               0               0               0
+                                                [d3]                                                
+
+var4               0               0               0          1.0004               0               0
+                                                                [d4]                                
+
+var5               0               0               0               0          0.9990               0
+                                                                                [d5]                
+
+var6               0               0               0               0               0          1.0021
+                                                                                                [d6]
+
+Data Matrix of Kinzer & Kinzer, see GUTTMAN (1957)
+
+The CALIS Procedure
+Covariance Structure Analysis: Maximum Likelihood Estimation
+
+                                          Model Matrix Psi
+                                      (6 x 6 Diagonal Matrix)
+ 
+                var1            var2            var3            var4            var5            var6
+
+var1          0.4959               0               0               0               0               0
+              [psi1]                                                                                
+
+var2               0          0.4944               0               0               0               0
+                              [psi2]                                                                
+
+var3               0               0          0.4771               0               0               0
+                                              [psi3]                                                
+
+var4               0               0               0          0.4610               0               0
+                                                              [psi4]                                
+
+var5               0               0               0               0          0.3979               0
+                                                                              [psi5]                
+
+var6               0               0               0               0               0          0.4809
+                                                                                              [psi6]

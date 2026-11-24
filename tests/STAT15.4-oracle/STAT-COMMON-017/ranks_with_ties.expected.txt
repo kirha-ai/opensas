@@ -1,0 +1,30 @@
+
+The NPAR1WAY Procedure
+
+             Wilcoxon Scores (Rank Sums) for Variable x
+                    Classified by Variable group
+ 
+                     Sum of      Expected       Std Dev          Mean
+group       N        Scores      Under H0      Under H0         Score
+
+A           6          37.0          39.0           6.0      6.166667
+B           6          41.0          39.0           6.0      6.833333
+
+                 Average scores were used for ties.
+
+
+                                    Wilcoxon Two-Sample Test
+ 
+                                                    t Approximation    ----------Exact----------
+Statistic (S)           Z    Pr < Z    Pr > |Z|    Pr < Z  Pr > |Z|    Pr <= S    Pr >= |S-Mean|
+
+      37.0000     -0.2500    0.4013      0.8026    0.4036    0.8072     0.4004            0.8009
+
+                           Z includes a continuity correction of 0.5.
+
+
+        Kruskal-Wallis Test
+ 
+Chi-Square        DF    Pr > ChiSq
+
+    0.1111         1        0.7389

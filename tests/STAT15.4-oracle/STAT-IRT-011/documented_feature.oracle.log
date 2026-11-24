@@ -1,0 +1,56 @@
+The SAS System
+
+9189       
+9190       /* STAT-IRT-011: IRT — Output Data Sets
+9191        * Source: S154 / Chapter 72 / `Output Data Sets` (PDF pp. 5351–5353).
+9192        * Discriminates: Verified default procedure context
+9193        */
+9194       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+9194     ! validmemname=compatible locale=en_US;
+9195       %let syscc=0;
+9196       title; footnote;
+9197       ods _all_ close;
+9198       ods listing gpath="%sysfunc(pathname(work))";
+9199       ods graphics off;
+9200       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.RESPONSES (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+9200     !                                         quit;
+
+
+9201       ods path work.templat(update) sashelp.tmplmst(read);
+9202       
+9203       data responses;
+9204       call streaminit(329);
+9205       array item[5] item1-item5;
+9206       do subject=1 to 150;
+9207       theta=rand('normal');
+9208       do k=1 to 5;
+9209       item[k]=rand('bernoulli',1/(1+exp(-(theta-(k-3)/2))));
+9210       end;
+9211       output;
+9212       end;
+9213       keep item1-item5;
+9214       run;
+
+NOTE: The data set WORK.RESPONSES has 150 observations and 5 variables.
+
+9215       proc irt data=responses;
+9216       var item1-item5;
+9217       run;
+
+NOTE: The observed frequency is zero for some response patterns. As a result, the Pearson chi-square model fit statistic is not calculated.
+WARNING: Over 20 percent of the response patterns have expected frequency less than 5. The chi-square distribution might not provide valid statistical 
+         inferences about the model fit when you use the Pearson chi-square and the likelihood ratio chi-square.
+NOTE: The PROCEDURE IRT printed pages 674-678.
+
+9218       
+9219       
+9220       
+9221       
+The SAS System
+
+9222       

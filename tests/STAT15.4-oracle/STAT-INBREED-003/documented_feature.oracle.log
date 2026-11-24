@@ -1,0 +1,53 @@
+The SAS System
+
+8638       
+8639       /* STAT-INBREED-003: INBREED — GENDER / MATINGS / DATA= Data Set
+8640        * Source: S154 / Chapter 71 / `GENDER Statement` (PDF p. 5277); S154 / Chapter 71 / `MATINGS Statement` (PDF pp. 5277–5278); S154 / Chapter 71 /
+8640     ! `DATA= Data Set` (PDF pp. 5279–5280).
+8641        * Discriminates: Example 71.2: Pedigree Analysis; explicit statements: GENDER, MATINGS
+8642        */
+8643       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+8643     ! validmemname=compatible locale=en_US;
+8644       %let syscc=0;
+8645       title; footnote;
+8646       ods _all_ close;
+8647       ods listing gpath="%sysfunc(pathname(work))";
+8648       ods graphics off;
+8649       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.PEDIGREE (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+8649     !                                         quit;
+
+
+8650       ods path work.templat(update) sashelp.tmplmst(read);
+8651       
+8652       data Swine;
+8653       input Swine_Number $ Sire $ Dam $ Sex $;
+8654       datalines;
+
+NOTE: The data set WORK.SWINE has 8 observations and 4 variables.
+
+8663       ;
+8664       title 'Least Related Matings';
+8665       proc inbreed data=Swine ind average;
+8666       var Swine_Number Sire Dam;
+8667       matings 2501 / 3501 3504 ,
+8668       3712 / 3121;
+8669       gender Sex;
+8670       run;
+
+WARNING: Individual Swine_Number=2501 has been previously defined.  Observation 4 corresponding to this individual will not be processed.
+WARNING: The gender of the second parent Dam=3501 has been incorrectly specified as 'M'.  This contradiction arose at observation 8.  The previous gender 
+         specification will remain in effect.  Beware of possible problems.
+NOTE: The PROCEDURE INBREED printed pages 601-602.
+
+8671       
+8672       
+8673       
+8674       
+The SAS System
+
+8675       

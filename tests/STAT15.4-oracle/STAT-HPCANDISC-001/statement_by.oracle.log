@@ -1,0 +1,91 @@
+The SAS System
+
+1223       
+1224       /* STAT-HPCANDISC-001: HPCANDISC — Data input, variable roles, and basic options
+1225        * Source: S154 / Chapter 57 / `PROC HPCANDISC Statement` (PDF pp. 4483–4487); S154 / Chapter 57 / `BY Statement` (PDF p. 4487); S154 / Chapter 57
+1225     ! / `CLASS Statement` (PDF p. 4487); S154 / Chapter 57 / `FREQ Statement` (PDF pp. 4487–4488); S154 / Chapter 57 / `ID Statement` (PDF p. 4488); S154
+1225     !  / Chapter 57 / `VAR Statement` (PDF p. 4488); S154 / Chapter 57 / `WEIGHT Statement` (PDF pp. 4488–4489); S154 / Chapter 57 / `Missing Values`
+1225     ! (PDF p. 4489).
+1226        * Discriminates: Two explicit BY groups contain identical inputs, exposing group boundaries and per-group results.
+1227        */
+1228       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+1228     ! validmemname=compatible locale=en_US;
+1229       %let syscc=0;
+1230       title; footnote;
+1231       ods _all_ close;
+1232       ods listing gpath="%sysfunc(pathname(work))";
+1233       ods graphics off;
+1234       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK._ORACLE_STORE (memtype=ITEMSTOR).
+1234     !                                         quit;
+
+
+1235       ods path work.templat(update) sashelp.tmplmst(read);
+1236       
+1237       title 'Fish Measurement Data';
+1238       data _oracle_input; set sashelp.fish; do _oracle_by=1 to 2; output; end; run;
+
+NOTE: There were 159 observations read from the data set SASHELP.FISH.
+NOTE: The data set WORK._ORACLE_INPUT has 318 observations and 8 variables.
+
+1239       proc sort data=_oracle_input; by _oracle_by; run;
+
+NOTE: There were 318 observations read from the data set WORK._ORACLE_INPUT.
+NOTE: The data set WORK._ORACLE_INPUT has 318 observations and 8 variables.
+
+1240       proc hpcandisc data=_oracle_input ncan=3 out=outcan;
+1241       by _oracle_by;
+1242       ods exclude tstruc bstruc pstruc tcoef pcoef;
+1243       id Species;
+1244       class Species;
+1245       var Weight Length1 Length2 Length3 Height Width;
+1246       run;
+
+NOTE: The HPCANDISC procedure is executing in single-machine mode.
+WARNING: 1 observations in DATA= data set or BY group will not be included in the analysis due to missing values.
+WARNING: A total of 1 of the 159 observations in the DATA= data set were excluded (frequency sum = 158).
+NOTE: The above message was for the following BY group:
+      _oracle_by=1
+WARNING: 1 observations in DATA= data set or BY group will not be included in the analysis due to missing values.
+WARNING: A total of 1 of the 159 observations in the DATA= data set were excluded (frequency sum = 158).
+NOTE: The above message was for the following BY group:
+      _oracle_by=2
+NOTE: There were 318 observations read from the data set WORK._ORACLE_INPUT.
+NOTE: The data set WORK.OUTCAN has 318 observations and 4 variables.
+NOTE: The PROCEDURE HPCANDISC printed pages 100-107.
+
+1247       proc template;
+1248       define statgraph scatter;
+1249       begingraph;
+1250       entrytitle 'Fish Measurement Data';
+1251       layout overlayequated / equatetype=fit
+1252       xaxisopts=(label='Canonical Variable 1')
+1253       yaxisopts=(label='Canonical Variable 2');
+1254       scatterplot x=Can1 y=Can2 / group=species name='fish';
+1255       layout gridded / autoalign=(topright);
+1256       discretelegend 'fish' / border=false opaque=false;
+1257       endlayout;
+1258       endlayout;
+1259       endgraph;
+1260       end;
+NOTE: STATGRAPH 'Scatter' has been saved to: WORK.TEMPLAT
+1261       run;
+
+1262       proc sgrender data=outcan template=scatter;
+1263       run;
+
+NOTE: Listing image output written to /saswork/SAS_work7EA200001C34_odaws01-euw1.oda.sas.com/SAS_work29EF00001C34_odaws01-euw1.oda.sas.com/SGRender2.png.
+NOTE: There were 318 observations read from the data set WORK.OUTCAN.
+
+1264       
+1265       
+1266       
+1267       
+The SAS System
+
+1268       

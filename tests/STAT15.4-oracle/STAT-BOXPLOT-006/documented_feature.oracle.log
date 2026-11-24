@@ -1,0 +1,158 @@
+The SAS System
+
+246        
+247        /* STAT-BOXPLOT-006: BOXPLOT — Styles of Box Plots / Positioning Insets / Clipping Extreme Values / ODS Graphics
+248         * Source: S154 / Chapter 32 / `Styles of Box Plots` (PDF pp. 1414–1415); S154 / Chapter 32 / `Positioning Insets` (PDF pp. 1418–1423); S154 /
+248      ! Chapter 32 / `Clipping Extreme Values` (PDF pp. 1425–1429); S154 / Chapter 32 / `ODS Graphics` (PDF p. 1429).
+249         * Discriminates: Example 32.3: Creating Various Styles of Box-and-Whiskers Plots
+250         */
+251        options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+251      ! validmemname=compatible locale=en_US;
+252        %let syscc=0;
+253        title; footnote;
+254        ods _all_ close;
+255        ods listing gpath="%sysfunc(pathname(work))";
+256        ods graphics off;
+257        proc datasets library=work kill nolist;
+NOTE: Deleting WORK.PR (memtype=DATA).
+NOTE: Deleting WORK.PROB (memtype=DATA).
+NOTE: Deleting WORK.PR_OUT (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+257      !                                         quit;
+
+
+258        ods path work.templat(update) sashelp.tmplmst(read);
+259        
+260        ods graphics on;
+261        ods trace on;
+262        ods trace on;
+263        data Times;
+264        informat Day date7. ;
+265        format Day date7. ;
+266        input Day @ ;
+267        do Flight=1 to 25;
+268        input Delay @ ;
+269        output;
+270        end;
+271        datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.TIMES has 275 observations and 3 variables.
+
+305        ;
+306        run;
+307        data Times; set Times; length Reason $16; if Delay>30 then Reason='Long delay'; else Reason='Routine'; run;
+
+NOTE: There were 275 observations read from the data set WORK.TIMES.
+NOTE: The data set WORK.TIMES has 275 observations and 4 variables.
+
+308        ods graphics on;
+309        title 'Analysis of Airline Departure Delays';
+310        title2 'BOXSTYLE=SKELETAL';
+311        proc boxplot data=Times;
+312        plot Delay*Day /
+313        boxstyle = skeletal
+314        odstitle = title
+315        nohlabel;
+316        label Delay = 'Delay in Minutes';
+317        run;
+
+NOTE: Processing beginning for PLOT statement number 1.
+NOTE: Since the format DATE is associated with the group variable Day, it is assumed that the natural interval between group positions is one DAY.
+NOTE: The REPEAT option is assumed when a DATE format is used with a group variable.
+
+Output Added:
+-------------
+Name:       Boxplot
+Label:      Panel 1
+Template:   Stat.Boxplot.Graphics.BoxPlot
+Path:       Boxplot.Delay.Boxplot
+-------------
+NOTE: There were 275 observations read from the data set WORK.TIMES.
+
+318        title 'Analysis of Airline Departure Delays';
+319        title2 'BOXSTYLE=SCHEMATIC';
+320        proc boxplot data=Times;
+321        plot Delay*Day /
+322        boxstyle = schematic
+323        odstitle = title
+324        nohlabel;
+325        label Delay = 'Delay in Minutes';
+326        run;
+
+NOTE: Processing beginning for PLOT statement number 1.
+NOTE: Since the format DATE is associated with the group variable Day, it is assumed that the natural interval between group positions is one DAY.
+NOTE: The REPEAT option is assumed when a DATE format is used with a group variable.
+
+Output Added:
+-------------
+Name:       Boxplot
+Label:      Panel 1
+Template:   Stat.Boxplot.Graphics.BoxPlot
+Path:       Boxplot.Delay.Boxplot
+-------------
+NOTE: There were 275 observations read from the data set WORK.TIMES.
+
+327        title 'Analysis of Airline Departure Delays';
+328        title2 'BOXSTYLE=SCHEMATICID';
+329        proc boxplot data=Times;
+330        plot Delay*Day /
+331        boxstyle = schematicid
+332        odstitle = title
+333        odstitle2 = title2
+334        nohlabel;
+335        id Reason;
+336        label Delay = 'Delay in Minutes';
+337        run;
+
+NOTE: Processing beginning for PLOT statement number 1.
+NOTE: Since the format DATE is associated with the group variable Day, it is assumed that the natural interval between group positions is one DAY.
+NOTE: The REPEAT option is assumed when a DATE format is used with a group variable.
+
+Output Added:
+-------------
+Name:       Boxplot
+Label:      Panel 1
+Template:   Stat.Boxplot.Graphics.BoxPlot
+Path:       Boxplot.Delay.Boxplot
+-------------
+NOTE: There were 275 observations read from the data set WORK.TIMES.
+
+338        title 'Analysis of Airline Departure Delays';
+339        title2 'BOXSTYLE=SCHEMATICIDFAR';
+340        proc boxplot data=Times;
+341        plot Delay*Day /
+342        boxstyle = schematicidfar
+343        odstitle = title
+344        odstitle2 = title2
+345        nohlabel;
+346        id Reason;
+347        label Delay = 'Delay in Minutes';
+348        run;
+
+NOTE: Processing beginning for PLOT statement number 1.
+NOTE: Since the format DATE is associated with the group variable Day, it is assumed that the natural interval between group positions is one DAY.
+NOTE: The REPEAT option is assumed when a DATE format is used with a group variable.
+
+Output Added:
+-------------
+Name:       Boxplot
+Label:      Panel 1
+Template:   Stat.Boxplot.Graphics.BoxPlot
+Path:       Boxplot.Delay.Boxplot
+-------------
+NOTE: There were 275 observations read from the data set WORK.TIMES.
+
+349        ods trace off;
+350        ods trace off;
+351        ods graphics off;
+352        
+353        
+354        
+355        
+The SAS System
+
+356        

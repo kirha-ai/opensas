@@ -1,0 +1,59 @@
+The SAS System
+
+17739      
+17740      /* STAT-SPP-007: SPP — Fit Statistics / Fitted Model Validation That Uses Goodness-of-Fit Tests / Negative Binomial Modeling
+17741       * Source: S154 / Chapter 114 / `Fit Statistics` (PDF p. 9421); S154 / Chapter 114 / `Fitted Model Validation That Uses Goodness-of-Fit Tests` (PDF
+17741    ! p. 9421); S154 / Chapter 114 / `Negative Binomial Modeling` (PDF p. 9423).
+17742       * Discriminates: Getting Started: SPP Procedure
+17743       */
+17744      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+17744    ! validmemname=compatible locale=en_US;
+17745      %let syscc=0;
+17746      title; footnote;
+17747      ods _all_ close;
+17748      ods listing gpath="%sysfunc(pathname(work))";
+17749      ods graphics off;
+17750      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK._DOCTMP000000000000000000051 (memtype=DATA).
+NOTE: Deleting WORK._DOCTMP000000000000000000052 (memtype=DATA).
+NOTE: Deleting WORK._DOCTMP000000000000000000053 (memtype=DATA).
+NOTE: Deleting WORK._DOCTMP000000000000000000054 (memtype=DATA).
+NOTE: Deleting WORK._DOCTMP000000000000000000055 (memtype=DATA).
+17750    !                                         quit;
+
+
+17751      ods path work.templat(update) sashelp.tmplmst(read);
+17752      
+17753      ods graphics on;
+17754      proc spp data=sashelp.bei plots(equate)=(trends observations);
+17755      process trees = (x, y /area=(0,0,1000,500) Event=Trees);
+17756      trend grad = field(x,y, gradient);
+17757      trend elev = field(x,y, elevation);
+17758      run;
+
+NOTE: The PROCEDURE SPP printed page 1219.
+
+17759      proc spp data=sashelp.bei plots(equate)=(residual intensity);
+17760      process trees = (x,y /area=(0,0,1000,500) event=Trees);
+17761      trend elev = field(x,y,elevation);
+17762      trend grad = field(x,y,gradient);
+17763      model trees = elev grad / grid(64,64) residual(B=70) ;
+17764      run;
+
+NOTE: Convergence criterion (Absolute gradient, ABSGCONV=0.00001) satisfied.
+NOTE: The PROCEDURE SPP printed page 1220.
+
+17765      
+17766      
+17767      
+17768      
+The SAS System
+
+17769      

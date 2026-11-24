@@ -1,0 +1,162 @@
+
+_oracle_by=1
+
+The SPP Procedure
+
+Observations Read                 24205
+Observations Used                 23905
+Event Observations Read            3604
+Event Observations Used            3604
+Gradient Observations Read        20301
+Gradient Observations Used        20301
+Elevation Observations Read       20301
+Elevation Observations Used       20301
+
+
+          Summary of Point Pattern
+
+Data Type                 Point Pattern      
+Pattern Name              trees              
+Region Type               User Defined Window
+Region X Range            [0,1000] Units     
+Region Y Range            [0,500] Units      
+Region X Size             1000 Units         
+Region Y Size             500 Units          
+Region Area               500000 Square Units
+Observations in Window    3604               
+Average Intensity         0.007208           
+Grid Nodes in X           50                 
+Grid Nodes in Y           50                 
+Grid Nodes in Window      2500               
+Quadrat Dimension in X    10                 
+Quadrat Dimension in Y    10                 
+
+
+             Pearson Chi-Square Test for CSR
+ 
+Expected              Dispersion                    Pr >
+Frequency       DF         Index    Chi-Square     ChiSq
+
+    36.04       99        33.222       3288.95    <.0001
+
+_oracle_by=2
+
+The SPP Procedure
+
+Observations Read                 24205
+Observations Used                 23905
+Event Observations Read            3604
+Event Observations Used            3604
+Gradient Observations Read        20301
+Gradient Observations Used        20301
+Elevation Observations Read       20301
+Elevation Observations Used       20301
+
+
+          Summary of Point Pattern
+
+Data Type                 Point Pattern      
+Pattern Name              trees              
+Region Type               User Defined Window
+Region X Range            [0,1000] Units     
+Region Y Range            [0,500] Units      
+Region X Size             1000 Units         
+Region Y Size             500 Units          
+Region Area               500000 Square Units
+Observations in Window    3604               
+Average Intensity         0.007208           
+Grid Nodes in X           50                 
+Grid Nodes in Y           50                 
+Grid Nodes in Window      2500               
+Quadrat Dimension in X    10                 
+Quadrat Dimension in Y    10                 
+
+
+             Pearson Chi-Square Test for CSR
+ 
+Expected              Dispersion                    Pr >
+Frequency       DF         Index    Chi-Square     ChiSq
+
+    36.04       99        33.222       3288.95    <.0001
+
+The SPP Procedure
+
+Observations Read                 24205
+Observations Used                 23905
+Event Observations Read            3604
+Event Observations Used            3604
+Elevation Observations Read       20301
+Elevation Observations Used       20301
+Gradient Observations Read        20301
+Gradient Observations Used        20301
+
+
+          Summary of Point Pattern
+
+Data Type                 Point Pattern      
+Pattern Name              trees              
+Region Type               User Defined Window
+Region X Range            [0,1000] Units     
+Region Y Range            [0,500] Units      
+Region X Size             1000 Units         
+Region Y Size             500 Units          
+Region Area               500000 Square Units
+Observations in Window    3604               
+Average Intensity         0.007208           
+Grid Nodes in X           64                 
+Grid Nodes in Y           64                 
+Grid Nodes in Window      4096               
+Quadrat Dimension in X    10                 
+Quadrat Dimension in Y    10                 
+
+
+             Pearson Chi-Square Test for CSR
+ 
+Expected              Dispersion                    Pr >
+Frequency       DF         Index    Chi-Square     ChiSq
+
+    36.04       99        33.222       3288.95    <.0001
+
+
+    Poisson Model
+     Information
+ 
+              Initial
+Parameter       Value
+
+Intercept      0.5000
+Elevation           0
+Gradient            0
+
+
+                Optimization Information
+
+Optimization Technique        Newton-Raphson with Ridging
+Parameters in Optimization    3                          
+Fixed Parameters              0                          
+Starting Values From          PROC                       
+Model Type                    Poisson                    
+
+                       Convergence Status
+
+  Convergence criterion (Absolute gradient, ABSGCONV=0.00001)   
+                           satisfied.                           
+
+
+               Poisson Parameter Estimates
+ 
+                         Standard                  Approx
+Parameter    Estimate        Error    z Value    Pr > |z|
+
+Intercept     -8.5672       0.3415     -25.08      <.0001
+Elevation     0.02146     0.002291       9.37      <.0001
+Gradient       5.8616       0.2567      22.83      <.0001
+
+
+           Fit Statistics
+ 
+Criterion                       Value
+
+-2 Log Likelihood             42290.0
+AIC (smaller is better)       42296.0
+BIC (smaller is better)       42316.8

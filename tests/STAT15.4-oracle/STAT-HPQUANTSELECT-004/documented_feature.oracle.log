@@ -1,0 +1,57 @@
+The SAS System
+
+4804       
+4805       /* STAT-HPQUANTSELECT-004: HPQUANTSELECT — Linear Model with iid Errors / Linear-in-Parameter Model with Non-iid Settings / More Statistics for
+4805     ! Parameter Estimates
+4806        * Source: S154 / Chapter 66 / `Linear Model with iid Errors` (PDF pp. 4996–4997); S154 / Chapter 66 / `Linear-in-Parameter Model with Non-iid
+4806     ! Settings` (PDF pp. 4997–4998); S154 / Chapter 66 / `More Statistics for Parameter Estimates` (PDF p. 4998).
+4807        * Discriminates: Seeded synthetic quantile-regression fixture: Linear Model with iid Errors / Linear-in-Parameter Model with Non-iid Settings / More
+4807     !  Statistics for Parameter Estimates
+4808        */
+4809       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+4809     ! validmemname=compatible locale=en_US;
+4810       %let syscc=0;
+4811       title; footnote;
+4812       ods _all_ close;
+4813       ods listing gpath="%sysfunc(pathname(work))";
+4814       ods graphics off;
+4815       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SAMPLE (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+4815     !                                         quit;
+
+
+4816       ods path work.templat(update) sashelp.tmplmst(read);
+4817       
+4818       data sample;
+4819       call streaminit(314159);
+4820       do id=1 to 120;
+4821        x=rand('normal'); z=rand('normal'); w=rand('normal'); group=1+mod(id,3);
+4822        y=2+1.5*x-0.6*z+0.4*group+rand('normal');
+4823        role=mod(id,4); output;
+4824       end;
+4825       run;
+
+NOTE: The data set WORK.SAMPLE has 120 observations and 7 variables.
+
+4826       
+4827       proc hpquantselect data=sample;
+4828       class group;
+4829       model y=x z w group / quantile=0.5 clb sparsity(iid);
+4830       
+4831       performance nthreads=1;
+4832       run;
+
+NOTE: The HPQUANTSELECT procedure is executing in single-machine mode.
+NOTE: The PROCEDURE HPQUANTSELECT printed pages 179-180.
+
+4833       
+4834       
+4835       
+4836       
+The SAS System
+
+4837       

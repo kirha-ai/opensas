@@ -1,0 +1,73 @@
+The SAS System
+
+402        
+403        /* STAT-CAUSALMED-001: CAUSALMED — Data input, variable roles, and basic options
+404         * Source: S154 / Chapter 38 / `PROC CAUSALMED Statement` (PDF pp. 2373–2379); S154 / Chapter 38 / `BY Statement` (PDF pp. 2381–2382); S154 /
+404      ! Chapter 38 / `FREQ Statement` (PDF p. 2388); S154 / Chapter 38 / `WEIGHT Statement` (PDF pp. 2391–2392).
+405         * Discriminates: Two explicit BY groups contain identical inputs, exposing group boundaries and per-group results.
+406         */
+407        options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+407      ! validmemname=compatible locale=en_US;
+408        %let syscc=0;
+409        title; footnote;
+410        ods _all_ close;
+411        ods listing gpath="%sysfunc(pathname(work))";
+412        ods graphics off;
+
+NOTE: There were 18 observations read from the data set WORK.SCHOOL.
+NOTE: The PROCEDURE CATMOD printed pages 39-40.
+
+413        proc datasets library=work kill nolist;
+NOTE: Deleting WORK.COLDS (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SCHOOL (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK._ORACLE_INPUT (memtype=DATA).
+413      !                                         quit;
+
+
+414        ods path work.templat(update) sashelp.tmplmst(read);
+415        
+416        data _oracle_input; set sashelp.birthwgt; do _oracle_by=1 to 2; output; end; run;
+
+NOTE: There were 100000 observations read from the data set SASHELP.BIRTHWGT.
+NOTE: The data set WORK._ORACLE_INPUT has 200000 observations and 9 variables.
+
+417        proc sort data=_oracle_input; by _oracle_by; run;
+
+NOTE: There were 200000 observations read from the data set WORK._ORACLE_INPUT.
+NOTE: The data set WORK._ORACLE_INPUT has 200000 observations and 9 variables.
+
+418        
+419        
+420        proc causalmed data=_oracle_input decomp;
+421        by _oracle_by;
+422        class LowBirthWgt Smoking Death AgeGroup Married Race
+423        Drinking SomeCollege /descending;
+424        mediator LowBirthWgt = Smoking;
+425        model Death = LowBirthWgt | Smoking;
+426        covar AgeGroup Married Race Drinking SomeCollege;
+427        evaluate 'Low Birth-Weight' LowBirthWgt='Yes' / nodecomp;
+428        evaluate 'Normal Birth-Weight' LowBirthWgt='No' / nodecomp;
+429        run;
+
+NOTE: PROC CAUSALMED is modeling the probability that Death='Yes' in the outcome model.
+NOTE: PROC CAUSALMED is modeling the probability that LowBirthWgt='Yes' in the mediator model.
+NOTE: The above message was for the following BY group:
+      _oracle_by=1
+NOTE: PROC CAUSALMED is modeling the probability that Death='Yes' in the outcome model.
+NOTE: PROC CAUSALMED is modeling the probability that LowBirthWgt='Yes' in the mediator model.
+NOTE: The above message was for the following BY group:
+      _oracle_by=2
+NOTE: The PROCEDURE CAUSALMED printed pages 41-52.
+
+430        quit;
+431        
+432        
+433        
+434        
+The SAS System
+
+435        

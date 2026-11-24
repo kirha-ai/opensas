@@ -1,0 +1,57 @@
+The SAS System
+
+21694      
+21695      /* STAT-GEE-010: GEE — OUTPUT
+21696       * Source: S154 / Chapter 50 / `OUTPUT Statement` (PDF pp. 3438–3439).
+21697       * Discriminates: Getting Started; explicit statements: OUTPUT
+21698       */
+21699      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+21699    ! validmemname=compatible locale=en_US;
+21700      %let syscc=0;
+21701      title; footnote;
+21702      ods _all_ close;
+21703      ods listing gpath="%sysfunc(pathname(work))";
+21704      ods graphics off;
+21705      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.CHILDREN (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+21705    !                                         quit;
+
+
+21706      ods path work.templat(update) sashelp.tmplmst(read);
+21707      
+21708      data Children;
+21709      input ID City$ @@;
+21710      do i=1 to 4;
+21711      input Age Smoke Symptom @@;
+21712      output;
+21713      end;
+21714      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.CHILDREN has 100 observations and 6 variables.
+
+21740      ;
+21741      proc gee data=Children descending;
+21742      class ID City;
+21743      model Symptom = City Age Smoke / dist=bin link=logit;
+21744      repeated subject=ID / type=exch covb corrw;
+21745      run;
+
+NOTE: PROC GEE is modeling the probability that Symptom='1'.
+NOTE: The PROCEDURE GEE printed page 2367.
+
+21746      
+21747      
+21748      
+21749      
+The SAS System
+
+21750      

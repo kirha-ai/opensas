@@ -1,0 +1,51 @@
+The SAS System
+
+16182      
+16183      /* STAT-FASTCLUS-004: FASTCLUS — Output Data Sets
+16184       * Source: S154 / Chapter 45 / `Output Data Sets` (PDF pp. 2913–2917).
+16185       * Discriminates: Verified default procedure context
+16186       */
+16187      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+16187    ! validmemname=compatible locale=en_US;
+16188      %let syscc=0;
+16189      title; footnote;
+16190      ods _all_ close;
+16191      ods listing gpath="%sysfunc(pathname(work))";
+16192      ods graphics off;
+16193      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.CLUSTERS (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+16193    !                                         quit;
+
+
+16194      ods path work.templat(update) sashelp.tmplmst(read);
+16195      
+16196      proc fastclus data=sashelp.iris maxclusters=3 maxiter=50 out=clusters;
+16197      var SepalLength SepalWidth PetalLength PetalWidth;
+16198      run;
+
+NOTE: Convergence criterion is satisfied.
+NOTE: The data set WORK.CLUSTERS has 150 observations and 7 variables.
+NOTE: The PROCEDURE FASTCLUS printed page 2138.
+
+16199      proc freq data=clusters;
+16200      tables Species*Cluster;
+16201      run;
+
+NOTE: There were 150 observations read from the data set WORK.CLUSTERS.
+NOTE: The PROCEDURE FREQ printed page 2139.
+
+16202      
+16203      
+16204      
+16205      
+The SAS System
+
+16206      

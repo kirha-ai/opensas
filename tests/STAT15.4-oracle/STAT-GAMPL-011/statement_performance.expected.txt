@@ -1,0 +1,79 @@
+
+The GAMPL Procedure
+
+      Performance Information
+
+Execution Mode       Single-Machine
+Number of Threads    1             
+
+
+             Data Access Information
+ 
+Data                Engine    Role      Path
+
+SASHELP.VOTE1980    V9        Input     On Client
+WORK.VOTEPRED       V9        Output    On Client
+
+
+                      Model Information
+
+Data Source                             SASHELP.VOTE1980     
+Response Variable                       LogVoteRate          
+Distribution                            Normal               
+Link Function                           Identity             
+Fitting Method                          Performance Iteration
+Fitting Criterion                       GCV                  
+Optimization Technique for Smoothing    Newton-Raphson       
+Random Number Seed                      12345                
+
+
+Number of Observations Read            3107
+Number of Observations Used            3107
+
+       The performance iteration converged after 3 steps.       
+
+
+                   Fit Statistics
+
+Penalized Log Likelihood                   2729.51482
+Roughness Penalty                             0.25787
+Effective Degrees of Freedom                 48.70944
+Effective Degrees of Freedom for Error     3055.44725
+AIC (smaller is better)                   -5361.86863
+AICC (smaller is better)                  -5360.28467
+BIC (smaller is better)                   -5067.59479
+GCV (smaller is better)                       0.01042
+
+
+                            Parameter Estimates
+ 
+                                        Standard
+Parameter     DF        Estimate           Error    Chi-Square    Pr > ChiSq
+
+Intercept      1       -0.576234        0.001803    102119.645        <.0001
+Dispersion     1        0.010103        0.014287                            
+
+
+                                   Estimates for Smoothing Components
+ 
+                                                                                     Rank of
+                                Effective    Smoothing    Roughness     Number of    Penalty    Number of
+Component                              DF    Parameter      Penalty    Parameters     Matrix        Knots
+
+Spline(Pop)                       7.80559       0.0398       0.0114             9         10         2000
+Spline(Edu)                       7.12453       0.2729       0.0303             9         10         2000
+Spline(Houses)                    7.20940       0.1771       0.0370             9         10         2000
+Spline(Income)                    5.92854       0.7498       0.0488             9         10         2000
+Spline(Longitude Latitude)       18.64138     0.000359       0.1304            19         20         2000
+
+
+                       Tests for Smoothing Components
+ 
+                                Effective      Effective
+Component                              DF    DF for Test    F Value    Pr > F
+
+Spline(Pop)                       7.80559              8    1443.64    <.0001
+Spline(Edu)                       7.12453              8     153.94    <.0001
+Spline(Houses)                    7.20940              8    1213.94    <.0001
+Spline(Income)                    5.92854              7      43.17    <.0001
+Spline(Longitude Latitude)       18.64138             19    1619.15    <.0001

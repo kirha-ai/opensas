@@ -1,0 +1,81 @@
+
+NAME        TYPE    LENGTH    VARNUM    LABEL
+
+Month         1        8         1           
+Year          1        8         2           
+Pressure      1        8         3           
+
+Month      Year     Pressure
+
+  1      0.08333      12.9  
+  2      0.16667      11.3  
+  3      0.25000      10.6  
+  4      0.33333      11.2  
+  5      0.41667      10.9  
+
+Observations
+------------
+         168
+
+ NAME      TYPE    LENGTH    VARNUM    LABEL
+
+Species      2        9         1           
+Weight       1        8         2           
+Length1      1        8         3           
+Length2      1        8         4           
+Length3      1        8         5           
+Height       1        8         6           
+Width        1        8         7           
+
+Species    Weight    Length1    Length2    Length3     Height     Width
+
+ Bream       242       23.2       25.4       30.0     11.5200    4.0200
+ Bream       290       24.0       26.3       31.2     12.4800    4.3056
+ Bream       340       23.9       26.5       31.1     12.3778    4.6961
+ Bream       363       26.3       29.0       33.5     12.7300    4.4555
+ Bream       430       26.5       29.0       34.0     12.4440    5.1340
+
+Observations
+------------
+         159
+
+NAME       TYPE    LENGTH    VARNUM          LABEL
+
+Fuel         2        8         1                       
+CpRatio      1        8         2      Compression Ratio
+EqRatio      1        8         3      Equivalence Ratio
+NOx          1        8         4      Nitrogen Oxide   
+
+             Cp       Eq
+ Fuel      Ratio    Ratio     NOx
+
+Ethanol      12     0.907    3.741
+Ethanol      12     0.761    2.295
+Ethanol      12     1.108    1.498
+Ethanol      12     1.016    2.881
+Ethanol      12     1.189    0.760
+
+Observations
+------------
+         171
+
+NAME           TYPE    LENGTH    VARNUM          LABEL
+
+Species          2       10         1      Iris Species     
+SepalLength      1        8         2      Sepal Length (mm)
+SepalWidth       1        8         3      Sepal Width (mm) 
+PetalLength      1        8         4      Petal Length (mm)
+PetalWidth       1        8         5      Petal Width (mm) 
+
+            Sepal    Sepal     Petal    Petal
+Species    Length    Width    Length    Width
+
+Setosa       50        33       14        2  
+Setosa       46        34       14        3  
+Setosa       46        36       10        2  
+Setosa       51        33       17        5  
+Setosa       55        35       13        2  
+
+Observations
+------------
+         150

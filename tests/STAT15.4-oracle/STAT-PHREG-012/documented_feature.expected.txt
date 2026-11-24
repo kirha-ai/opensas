@@ -1,0 +1,63 @@
+
+The PHREG Procedure
+
+                   Model Information
+
+Data Set                 WORK.MYELOMA                   
+Dependent Variable       Time             Survival Time 
+Censoring Variable       VStatus          0=Alive 1=Dead
+Censoring Value(s)       0                              
+Ties Handling            BRESLOW                        
+
+
+Number of Observations Read          65
+Number of Observations Used          65
+
+
+Summary of the Number of Event and Censored Values
+ 
+                                     Percent
+   Total       Event    Censored    Censored
+
+      65          48          17       26.15
+
+The PHREG Procedure
+
+                                                         Regression Models Selected by Score Criterion
+ 
+Number of       Score
+Variables  Chi-Square  Variables Included in Model
+
+        1      8.5164  LogBUN                                                                                                                                  
+        1      5.0664  HGB                                                                                                                                     
+        1      3.1816  Platelet                                                                                                                                
+
+        2     12.7252  LogBUN HGB                                                                                                                              
+        2     11.1842  LogBUN Platelet                                                                                                                         
+        2      9.9962  LogBUN SCalc                                                                                                                            
+
+        3     15.3053  LogBUN HGB SCalc                                                                                                                        
+        3     13.9911  LogBUN HGB Age                                                                                                                          
+        3     13.5788  LogBUN HGB Frac                                                                                                                         
+
+        4     16.9873  LogBUN HGB Age SCalc                                                                                                                    
+        4     16.0457  LogBUN HGB Frac SCalc                                                                                                                   
+        4     15.7619  LogBUN HGB LogPBM SCalc                                                                                                                 
+
+        5     17.6291  LogBUN HGB Age Frac SCalc                                                                                                               
+        5     17.3519  LogBUN HGB Age LogPBM SCalc                                                                                                             
+        5     17.1922  LogBUN HGB Age LogWBC SCalc                                                                                                             
+
+        6     17.9120  LogBUN HGB Age Frac LogPBM SCalc                                                                                                        
+        6     17.7947  LogBUN HGB Age LogWBC Frac SCalc                                                                                                        
+        6     17.7744  LogBUN HGB Platelet Age Frac SCalc                                                                                                      
+
+        7     18.1517  LogBUN HGB Platelet Age Frac LogPBM SCalc                                                                                               
+        7     18.0568  LogBUN HGB Age LogWBC Frac LogPBM SCalc                                                                                                 
+        7     18.0223  LogBUN HGB Platelet Age LogWBC Frac SCalc                                                                                               
+
+        8     18.3925  LogBUN HGB Platelet Age LogWBC Frac LogPBM SCalc                                                                                        
+        8     18.1636  LogBUN HGB Platelet Age Frac LogPBM Protein SCalc                                                                                       
+        8     18.1309  LogBUN HGB Platelet Age LogWBC Frac Protein SCalc                                                                                       
+
+        9     18.4550  LogBUN HGB Platelet Age LogWBC Frac LogPBM Protein SCalc                                                                                

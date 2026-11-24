@@ -1,0 +1,48 @@
+The SAS System
+
+558        
+559        /* STAT-NPAR1WAY-003: NPAR1WAY — Tied Values / Simple Linear Rank Tests for Two-Sample Data / One-Way ANOVA Tests
+560         * Source: S154 / Chapter 90 / `Tied Values` (PDF p. 7236); S154 / Chapter 90 / `Simple Linear Rank Tests for Two-Sample Data` (PDF pp. 7236–7238);
+560      !  S154 / Chapter 90 / `One-Way ANOVA Tests` (PDF pp. 7238–7239).
+561         * Discriminates: Example 90.3: Exact Wilcoxon Two-Sample Test
+562         */
+563        options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+563      ! validmemname=compatible locale=en_US;
+564        %let syscc=0;
+565        title; footnote;
+566        ods _all_ close;
+567        ods listing gpath="%sysfunc(pathname(work))";
+568        ods graphics off;
+569        proc datasets library=work kill nolist;
+NOTE: Deleting WORK.GOSSYPOL (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+569      !                                         quit;
+
+
+570        ods path work.templat(update) sashelp.tmplmst(read);
+571        
+572        data React;
+573        input Stim Time @@;
+574        datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.REACT has 19 observations and 2 variables.
+
+578        ;
+579        proc npar1way wilcoxon correct=no data=React;
+580        class Stim;
+581        var Time;
+582        exact wilcoxon;
+583        run;
+
+NOTE: The PROCEDURE NPAR1WAY printed page 69.
+
+584        
+585        
+586        
+587        
+The SAS System
+
+588        

@@ -1,0 +1,37 @@
+
+The GLM Procedure
+
+   Class Level Information
+ 
+Class         Levels    Values
+
+group              2    A B   
+
+
+Number of Observations Read          12
+Number of Observations Used          12
+
+The GLM Procedure
+ 
+Dependent Variable: y   
+
+                                        Sum of
+Source                      DF         Squares     Mean Square    F Value    Pr > F
+
+Model                        3     595.9765918     198.6588639     177.77    <.0001
+
+Error                        8       8.9400749       1.1175094                     
+
+Corrected Total             11     604.9166667                                     
+
+
+R-Square     Coeff Var      Root MSE        y Mean
+
+0.985221      7.086859      1.057123      14.91667
+
+
+Source                      DF      Type II SS     Mean Square    F Value    Pr > F
+
+group                        1      3.15687425      3.15687425       2.82    0.1313
+x                            1     75.16598570     75.16598570      67.26    <.0001
+z                            1      0.74325843      0.74325843       0.67    0.4384

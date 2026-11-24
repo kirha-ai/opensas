@@ -1,0 +1,78 @@
+The SAS System
+
+12463      
+12464      /* STAT-REG-008: REG — Model-Selection Methods / Criteria Used in Model-Selection Methods / Limitations in Model-Selection Methods
+12465       * Source: S154 / Chapter 105 / `Model-Selection Methods` (PDF pp. 8613–8616); S154 / Chapter 105 / `Criteria Used in Model-Selection Methods` (PDF
+12465    !  pp. 8616–8617); S154 / Chapter 105 / `Limitations in Model-Selection Methods` (PDF p. 8617).
+12466       * Discriminates: Getting Started: REG Procedure
+12467       */
+12468      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+12468    ! validmemname=compatible locale=en_US;
+12469      %let syscc=0;
+12470      title; footnote;
+12471      ods _all_ close;
+12472      ods listing gpath="%sysfunc(pathname(work))";
+12473      ods graphics off;
+12474      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SAMPLE (memtype=DATA).
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+12474    !                                         quit;
+
+
+12475      ods path work.templat(update) sashelp.tmplmst(read);
+12476      
+12477      proc reg data=sashelp.class;
+12478      model Weight = Height;
+12479      run;
+
+
+NOTE: The PROCEDURE REG printed page 948.
+
+12480      data USPopulation;
+12481      input Population @@;
+12482      retain Year 1780;
+12483      Year = Year+10;
+12484      YearSq = Year *Year;
+12485      Population = Population/1000;
+12486      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.USPOPULATION has 22 observations and 3 variables.
+
+12490      ;
+12491      proc reg data=USPopulation plots=ResidualByPredicted;
+12492      var YearSq;
+12493      model Population=Year / r clm cli;
+12494      run;
+
+WARNING: You must enable ODS graphics before requesting plots with the PLOTS option in the PROC REG statement.
+12495      add YearSq;
+12496      print;
+12497      run;
+
+NOTE: Variable YearSq is added.
+NOTE: Due to an ADD statement, the model label is now MODEL1.1.
+
+NOTE: The PROCEDURE REG printed pages 949-952.
+
+12498      proc reg data=USPopulation plots=predictions(X=Year);
+12499      model Population=Year Yearsq;
+12500      quit;
+
+WARNING: You must enable ODS graphics before requesting plots with the PLOTS option in the PROC REG statement.
+NOTE: The PROCEDURE REG printed page 953.
+
+12501      ods graphics off;
+12502      quit;
+12503      
+12504      
+12505      
+12506      
+The SAS System
+
+12507      

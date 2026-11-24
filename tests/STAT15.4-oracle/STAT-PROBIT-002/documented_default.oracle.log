@@ -1,0 +1,56 @@
+The SAS System
+
+9085       
+9086       /* STAT-PROBIT-002: PROBIT — Probit and related discrete response model estimation
+9087        * Source: S154 / Chapter 100 / `Getting Started: PROBIT Procedure` (PDF pp. 8095–8099); S154 / Chapter 100 / `Overview: PROBIT Procedure` (PDF pp.
+9087     !  8094–8095).
+9088        * Discriminates: Getting Started: PROBIT Procedure
+9089        */
+9090       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+9090     ! validmemname=compatible locale=en_US;
+9091       %let syscc=0;
+9092       title; footnote;
+9093       ods _all_ close;
+9094       ods listing gpath="%sysfunc(pathname(work))";
+9095       ods graphics off;
+9096       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.NEW (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.STUDY (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK._ORACLE_INPUT (memtype=DATA).
+9096     !                                         quit;
+
+
+9097       ods path work.templat(update) sashelp.tmplmst(read);
+9098       
+9099       data study;
+9100       input Dose Respond @@;
+9101       Number = 15;
+9102       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.STUDY has 12 observations and 3 variables.
+
+9105       ;
+9106       ods graphics on;
+9107       proc probit data=study log10 optc plots=(predpplot ippplot);
+9108       model respond/number=dose;
+9109       output out=new p=p_hat;
+9110       run;
+
+NOTE: Algorithm converged.
+NOTE: The confidence limits displayed on the plots are conditioned on the estimated threshold. The variation in estimating the threshold is ignored.
+NOTE: The data set WORK.NEW has 12 observations and 4 variables.
+NOTE: The PROCEDURE PROBIT printed page 610.
+
+9111       
+9112       
+9113       
+9114       
+The SAS System
+
+9115       

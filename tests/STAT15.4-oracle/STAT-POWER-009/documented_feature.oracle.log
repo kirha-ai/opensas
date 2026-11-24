@@ -1,0 +1,79 @@
+The SAS System
+
+6795       
+6796       /* STAT-POWER-009: POWER — Grouped-Number-Lists / Name-Lists / Grouped-Name-Lists
+6797        * Source: S154 / Chapter 96 / `Grouped-Number-Lists` (PDF pp. 7850–7852); S154 / Chapter 96 / `Name-Lists` (PDF p. 7852); S154 / Chapter 96 /
+6797     ! `Grouped-Name-Lists` (PDF pp. 7852–7853).
+6798        * Discriminates: Getting Started: POWER Procedure
+6799        */
+6800       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+6800     ! validmemname=compatible locale=en_US;
+6801       %let syscc=0;
+6802       title; footnote;
+6803       ods _all_ close;
+6804       ods listing gpath="%sysfunc(pathname(work))";
+6805       ods graphics off;
+6806       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.PLOTDATA (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+6806     !                                         quit;
+
+
+6807       ods path work.templat(update) sashelp.tmplmst(read);
+6808       
+6809       proc power;
+6810       onesamplemeans
+6811       mean = 8
+6812       ntotal = 150
+6813       stddev = 40
+6814       power = .;
+6815       run;
+
+NOTE: The PROCEDURE POWER printed page 540.
+
+6816       ods graphics on;
+6817       proc power;
+6818       onesamplemeans
+6819       mean = 5 10
+6820       ntotal = 150
+6821       stddev = 30 50
+6822       power = .;
+6823       plot x=n min=100 max=200;
+6824       run;
+
+NOTE: Plotting computed Power on the y-axis, versus N Total on the x-axis with 21 points per curve between 100 and 200.
+NOTE: The PROCEDURE POWER printed page 541.
+
+6825       ods graphics off;
+6826       proc power;
+6827       twosamplemeans
+6828       groupmeans = (13 14) (13 14.5) (13 15)
+6829       stddev = 1.2 1.7
+6830       groupweights = 1 | 1 2 3
+6831       power = 0.9
+6832       ntotal = .;
+6833       run;
+
+NOTE: The PROCEDURE POWER printed page 542.
+
+6834       proc power;
+6835       twosamplemeans
+6836       nfractional
+6837       meandiff = 1 to 2 by 0.5
+6838       stddev = 1.2 1.7
+6839       groupweights = (1 1) (1 2) (1 3)
+6840       power = 0.9
+6841       ntotal = .;
+6842       run;
+
+NOTE: The PROCEDURE POWER printed page 543.
+
+6843       
+6844       
+6845       
+6846       
+The SAS System
+
+6847       

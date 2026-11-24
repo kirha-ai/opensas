@@ -1,0 +1,48 @@
+The SAS System
+
+16088      
+16089      /* STAT-SEQDESIGN-011: SEQDESIGN — Type I and Type II Errors
+16090       * Source: S154 / Chapter 110 / `Type I and Type II Errors` (PDF pp. 8978–8980).
+16091       * Discriminates: Getting Started: SEQDESIGN Procedure
+16092       */
+16093      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+16093    ! validmemname=compatible locale=en_US;
+16094      %let syscc=0;
+16095      title; footnote;
+16096      ods _all_ close;
+16097      ods listing gpath="%sysfunc(pathname(work))";
+16098      ods graphics off;
+16099      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+16099    !                                         quit;
+
+
+16100      ods path work.templat(update) sashelp.tmplmst(read);
+16101      
+16102      ods graphics on;
+16103      proc seqdesign altref=-10
+16104      plots=boundary(hscale=samplesize)
+16105      ;
+16106      TwoSidedOBrienFleming: design nstages=4
+16107      method=obf
+16108      ;
+16109      samplesize model=twosamplemean(stddev=20);
+16110      ods output Boundary=Bnd_LDL;
+16111      run;
+
+NOTE: The data set WORK.BND_LDL has 4 observations and 13 variables.
+NOTE: The PROCEDURE SEQDESIGN printed page 1157.
+
+16112      
+16113      
+16114      
+16115      
+The SAS System
+
+16116      

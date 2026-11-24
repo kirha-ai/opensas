@@ -1,0 +1,44 @@
+The SAS System
+
+1929       
+1930       /* STAT-MDS-002: MDS — Default multidimensional scaling fit
+1931        * Source: S154 / Chapter 81 / `Getting Started: MDS Procedure` (PDF pp. 6379–6382); S154 / Chapter 81 / `Overview: MDS Procedure` (PDF pp.
+1931     ! 6378–6379).
+1932        * Discriminates: Getting Started: MDS Procedure
+1933        */
+1934       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+1934     ! validmemname=compatible locale=en_US;
+1935       %let syscc=0;
+1936       title; footnote;
+1937       ods _all_ close;
+1938       ods listing gpath="%sysfunc(pathname(work))";
+1939       ods graphics off;
+1940       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK._ORACLE_INPUT (memtype=DATA).
+1940     !                                         quit;
+
+
+1941       ods path work.templat(update) sashelp.tmplmst(read);
+1942       
+1943       title 'Analysis of Flying Mileages between Ten U.S. Cities';
+1944       ods graphics on;
+1945       proc mds data=sashelp.mileages level=absolute;
+1946       id city;
+1947       run;
+
+NOTE: The PROCEDURE MDS printed page 150.
+
+1948       
+1949       
+1950       
+1951       
+The SAS System
+
+1952       

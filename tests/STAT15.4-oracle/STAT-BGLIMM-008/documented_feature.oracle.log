@@ -1,0 +1,84 @@
+The SAS System
+
+1591       
+1592       /* STAT-BGLIMM-008: BGLIMM — Gamerman Algorithm / Prior for the Fixed-Effects Coefficients / Prior for the Random-Effects Coefficients
+1593        * Source: S154 / Chapter 31 / `Gamerman Algorithm` (PDF pp. 1316–1317); S154 / Chapter 31 / `Prior for the Fixed-Effects Coefficients` (PDF pp.
+1593     ! 1318–1319); S154 / Chapter 31 / `Prior for the Random-Effects Coefficients` (PDF p. 1319).
+1594        * Discriminates: Getting Started: BGLIMM Procedure
+1595        */
+1596       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+1596     ! validmemname=compatible locale=en_US;
+1597       %let syscc=0;
+1598       title; footnote;
+1599       ods _all_ close;
+1600       ods listing gpath="%sysfunc(pathname(work))";
+1601       ods graphics off;
+1602       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.PR (memtype=DATA).
+NOTE: Deleting WORK.PROB (memtype=DATA).
+NOTE: Deleting WORK.PR_OUT (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+1602     !                                         quit;
+
+
+1603       ods path work.templat(update) sashelp.tmplmst(read);
+1604       
+1605       data MultiCenter;
+1606       input Center Group$ N SideEffect @@;
+1607       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.MULTICENTER has 30 observations and 4 variables.
+
+1623       ;
+1624       ods graphics on;
+1625       proc bglimm data=MultiCenter nmc=1000 thin=2 seed=976352
+1626       plots=all nbi=200;
+1627       class Center Group;
+1628       model SideEffect/N = Group / noint;
+1629       random int / subject = Center;
+1630       run;
+
+NOTE: Generating the burn-in samples.
+NOTE: Beginning sample generation.
+NOTE: Beginning calculation of summary and diagnostics statistics.
+NOTE: Generating diagnostic plots.
+NOTE: The PROCEDURE BGLIMM printed page 72.
+
+1631       proc bglimm data=MultiCenter nmc=1000 thin=2 seed=976352
+1632       outpost=CenterOut nbi=200;
+1633       class Center Group;
+1634       model SideEffect/N = Group / noint;
+1635       random int / subject=Center monitor;
+1636       estimate "log OR" group 1 -1;
+1637       run;
+
+NOTE: Generating the burn-in samples.
+NOTE: Beginning sample generation.
+NOTE: Beginning calculation of summary and diagnostics statistics.
+NOTE: The data set WORK.CENTEROUT has 500 observations and 20 variables.
+NOTE: The PROCEDURE BGLIMM printed page 73.
+
+1638       data prob;
+1639       set CenterOut;
+1640       pDiff = logistic(group_a) - logistic(group_b);
+1641       run;
+
+NOTE: There were 500 observations read from the data set WORK.CENTEROUT.
+NOTE: The data set WORK.PROB has 500 observations and 21 variables.
+
+1642       %sumint(data=prob, var=pDiff)
+1643       proc sgplot data=prob noautolegend;
+1644       run;
+
+NOTE: The SAS System stopped processing this step because of errors.
+1645       
+1646       
+1647       
+1648       
+The SAS System
+
+1649       

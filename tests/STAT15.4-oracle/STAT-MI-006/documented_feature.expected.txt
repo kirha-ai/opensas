@@ -1,0 +1,100 @@
+
+Fish Measurement Data
+
+The MI Procedure
+
+                     Model Information
+
+Data Set                             WORK.FISH2             
+Method                               Monotone               
+Number of Imputations                15                     
+Seed for random number generator     1305417                
+
+
+  Monotone Model Specification
+ 
+                       Imputed
+Method                 Variables
+
+Regression             Width    
+Logistic Regression    Species  
+
+
+                                   Missing Data Patterns
+ 
+                                                               ---------Group Means--------
+Group    Length    Width    Species        Freq     Percent          Length           Width
+
+    1    X         X        X                49       73.13       28.595918        4.482518
+    2    X         X        .                 9       13.43       27.533333        4.444844
+    3    X         .        .                 9       13.43       28.633333               .
+
+
+                                                            Regression Models for Monotone Method
+ 
+Imputed                          ---------------------------------------------------------Imputation---------------------------------------------------------
+Variable  Effect       Obs-Data             1             2             3             4             5             6             7             8             9
+
+Width     Intercept     0.00284     -0.029987      0.049363     -0.015273     -0.064915      0.059375      0.018049     -0.028171     -0.016050     -0.012890
+Width     Length        0.96212      0.981287      0.906104      0.962814      0.978103      0.952034      0.920482      0.908541      0.962650      0.949542
+
+                                      Regression Models for Monotone Method
+ 
+Imputed              -----------------------------------------Imputation-----------------------------------------
+Variable  Effect               10              11              12              13              14              15
+
+Width     Intercept     -0.056099       -0.013302        0.031642        0.051256       -0.032029        0.030396
+Width     Length         0.962843        0.921873        0.947360        1.003013        0.950239        0.955749
+
+
+                                                              Logistic Models for Monotone Method
+ 
+Imputed                             ---------------------------------------------------------Imputation---------------------------------------------------------
+Variable  Effect          Obs-Data             1             2             3             4             5             6             7             8             9
+
+Species   Intercept       -3.93577     -5.016163     -3.422209     -4.706398     -2.049090     -4.568278     -4.336259     -4.250352     -2.843154     -1.055153
+Species   Length          10.41940     16.262215      6.082966      9.832246      4.992717     11.886805      5.789312      7.662947      5.757570      0.572346
+Species   Width          -14.56630    -21.856472     -8.653119    -15.534802     -7.401465    -15.621272    -12.855797    -14.816308     -8.792538     -1.775130
+Species   Length*Width    -0.48936     -0.208880      0.795883     -0.011135     -0.461227      0.080406     -2.586760     -2.604478     -0.317211      0.027353
+
+                                        Logistic Models for Monotone Method
+ 
+Imputed                 -----------------------------------------Imputation-----------------------------------------
+Variable  Effect                  10              11              12              13              14              15
+
+Species   Intercept        -3.501466       -2.140199       -3.629155       -4.020008       -2.615227       -4.964532
+Species   Length           10.900700       10.743223       10.504352       12.346335        5.432583       11.926760
+Species   Width           -15.547003      -12.353169      -14.555215      -16.481415      -11.694606      -18.401905
+Species   Length*Width     -0.809353       -0.060720       -0.544245       -0.507705       -2.484002       -2.094407
+
+
+                                   Variance Information (15 Imputations)
+ 
+                                                                      Relative       Fraction
+            -----------------Variance-----------------                Increase        Missing       Relative
+Variable         Between         Within          Total       DF    in Variance    Information     Efficiency
+
+Width           0.000572       0.044180       0.044791    63.16       0.013819       0.013656       0.999090
+
+
+                                                     Parameter Estimates (15 Imputations)
+ 
+                                                                                                                          t for H0:
+Variable            Mean      Std Error    95% Confidence Limits        DF        Minimum        Maximum            Mu0    Mean=Mu0   Pr > |t|
+
+Width           4.484918       0.211638     4.062014     4.907821    63.16       4.442838       4.530846              0       21.19     <.0001
+
+First 10 Observations of the Imputed Data Set
+
+ Obs    _Imputation_    Species    Length     Width
+
+   1          1         Parkki      16.5     2.32650
+   2          1         Parkki      17.4     2.31420
+   3          1         Parkki      19.8     2.20482
+   4          1         Parkki      21.3     2.91810
+   5          1         Parkki      22.4     3.29280
+   6          1         Perch       23.2     3.29440
+   7          1         Parkki      23.2     3.41040
+   8          1         Parkki      24.1     3.15710
+   9          1         Perch       25.8     3.66360
+  10          1         Parkki      28.0     4.14400

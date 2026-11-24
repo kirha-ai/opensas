@@ -1,0 +1,174 @@
+The SAS System
+
+3187       
+3188       /* STAT-FMM-007: FMM — Latent Variables via Data Augmentation
+3189        * Source: S154 / Chapter 46 / `Latent Variables via Data Augmentation` (PDF p. 3028).
+3190        * Discriminates: Getting Started: FMM Procedure
+3191        */
+3192       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+3192     ! validmemname=compatible locale=en_US;
+3193       %let syscc=0;
+3194       title; footnote;
+3195       ods _all_ close;
+3196       ods listing gpath="%sysfunc(pathname(work))";
+3197       ods graphics off;
+3198       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.HOUSING (memtype=DATA).
+NOTE: Deleting WORK.PRED (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+3198     !                                         quit;
+
+
+3199       ods path work.templat(update) sashelp.tmplmst(read);
+3200       
+3201       data yeast;
+3202       input count f;
+3203       n = 5;
+3204       datalines;
+
+NOTE: The data set WORK.YEAST has 6 observations and 3 variables.
+
+3211       ;
+3212       proc fmm data=yeast seed=314159;
+3213       model count/n = / k=2;
+3214       freq f;
+3215       run;
+
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The PROCEDURE FMM printed page 187.
+
+3216       proc fmm data=yeast seed=314159;
+3217       model count/n = / k=2;
+3218       freq f;
+3219       output out=fmmout pred(components) posterior;
+3220       run;
+
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The data set WORK.FMMOUT has 6 observations and 7 variables.
+NOTE: The PROCEDURE FMM printed page 188.
+
+3221       data fmmout;
+3222       set fmmout;
+3223       PredCount_1 = post_1 * f;
+3224       PredCount_2 = post_2 * f;
+3225       run;
+
+NOTE: There were 6 observations read from the data set WORK.FMMOUT.
+NOTE: The data set WORK.FMMOUT has 6 observations and 9 variables.
+
+3226       proc print data=fmmout;
+3227       run;
+
+NOTE: There were 6 observations read from the data set WORK.FMMOUT.
+NOTE: The PROCEDURE PRINT printed page 189.
+
+3228       ods graphics on;
+3229       proc fmm data=yeast seed=12345;
+3230       model count/n = / k=2;
+3231       freq f;
+3232       performance cpucount=2;
+3233       bayes nmc=1000 nbi=200;
+3234       run;
+
+NOTE: Bayesian results for this model (no regressor variables, non-identity link) are displayed on the data scale, not the linked scale. You can obtain results 
+      on the linked (=linear) scale by requesting a Metropolis sampling algorithm.
+NOTE: The PROCEDURE FMM printed page 190.
+
+3235       ods graphics off;
+3236       data catch;
+3237       input gender $ age count @@;
+3238       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.CATCH has 52 observations and 3 variables.
+
+3252       ;
+3253       proc fmm data=catch seed=314159;
+3254       class gender;
+3255       model count = gender*age / dist=Poisson;
+3256       run;
+
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The PROCEDURE FMM printed page 191.
+
+3257       proc fmm data=catch seed=314159;
+3258       class gender;
+3259       model count = gender*age / dist=Poisson ;
+3260       model + / dist=Constant;
+3261       run;
+
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The PROCEDURE FMM printed page 192.
+
+3262       proc fmm data=catch seed=12345;
+3263       class gender;
+3264       model count = gender*age / dist=Poisson;
+3265       model + / dist=constant;
+3266       performance cpucount=2;
+3267       bayes nmc=1000 nbi=200;
+3268       run;
+
+NOTE: The PROCEDURE FMM printed page 193.
+
+3269       ods graphics on;
+3270       ods select TADPanel;
+3271       proc fmm data=catch seed=12345;
+3272       class gender;
+3273       model count = gender*age / dist=Poisson;
+3274       model + / dist=constant;
+3275       performance cpucount=2;
+3276       bayes nmc=1000 nbi=200;
+3277       run;
+
+
+3278       ods graphics off;
+3279       title "FMM Analysis of Galaxies Data";
+3280       data galaxies;
+3281       input velocity @@;
+3282       v = velocity / 1000;
+3283       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.GALAXIES has 82 observations and 2 variables.
+
+3293       ;
+3294       title2 "Three to Seven Components, Unequal Variances";
+3295       ods graphics on;
+3296       proc fmm data=galaxies criterion=AIC seed=314159;
+3297       model v = / kmin=3 kmax=7;
+3298       run;
+
+NOTE: The model with 3 components (ID=1) was selected as 'best' based on the AIC statistic.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The PROCEDURE FMM printed page 194.
+
+3299       title2 "Three to Seven Components, Equal Variances";
+3300       proc fmm data=galaxies criterion=AIC gconv=0 seed=314159;
+3301       model v = / kmin=3 kmax=7 equate=scale;
+3302       run;
+
+NOTE: The model with 4 components (ID=2) was selected as 'best' based on the AIC statistic.
+NOTE: Convergence criterion (ABSGCONV=0.00001) satisfied.
+NOTE: The PROCEDURE FMM printed page 195.
+
+3303       title2 "Five Components, Equal Variances = 0.9025";
+3304       proc fmm data=galaxies seed=314159;
+3305       model v = / K=5 equate=scale;
+3306       restrict int 0 (scale 1) = 0.9025;
+3307       run;
+
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The PROCEDURE FMM printed page 196.
+
+3308       
+3309       
+3310       
+3311       
+The SAS System
+
+3312       

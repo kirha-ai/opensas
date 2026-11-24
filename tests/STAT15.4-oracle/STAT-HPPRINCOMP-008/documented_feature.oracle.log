@@ -1,0 +1,49 @@
+The SAS System
+
+4453       
+4454       /* STAT-HPPRINCOMP-008: HPPRINCOMP — PERFORMANCE
+4455        * Source: S154 / Chapter 65 / `PERFORMANCE Statement` (PDF p. 4958).
+4456        * Discriminates: Getting Started: HPPRINCOMP Procedure
+4457        */
+4458       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+4458     ! validmemname=compatible locale=en_US;
+4459       %let syscc=0;
+4460       title; footnote;
+4461       ods _all_ close;
+4462       ods listing gpath="%sysfunc(pathname(work))";
+4463       ods graphics off;
+4464       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.CRIME (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+4464     !                                         quit;
+
+
+4465       ods path work.templat(update) sashelp.tmplmst(read);
+4466       
+4467       title 'Crime Rates per 100,000 Population by State';
+4468       data Crime;
+4469       length State $15;
+4470       input State :$15. Murder Rape Robbery Assault
+4471       Burglary Larceny Auto_Theft;
+4472       datalines;
+
+NOTE: The data set WORK.CRIME has 50 observations and 8 variables.
+
+4523       ;
+4524       proc hpprincomp data=Crime;
+4525       run;
+
+NOTE: The HPPRINCOMP procedure is executing in single-machine mode.
+WARNING: 2 observations omitted due to missing values.
+NOTE: The PROCEDURE HPPRINCOMP printed page 170.
+
+4526       
+4527       
+4528       
+4529       
+The SAS System
+
+4530       

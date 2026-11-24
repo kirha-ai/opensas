@@ -1,0 +1,60 @@
+The SAS System
+
+4287       
+4288       /* STAT-HPPRINCOMP-006: HPPRINCOMP — OUTPUT / Output Data Sets
+4289        * Source: S154 / Chapter 65 / `OUTPUT Statement` (PDF pp. 4956–4957); S154 / Chapter 65 / `Output Data Sets` (PDF pp. 4960–4962).
+4290        * Discriminates: Create and print the procedure output data set using default statistic names.
+4291        */
+4292       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+4292     ! validmemname=compatible locale=en_US;
+4293       %let syscc=0;
+4294       title; footnote;
+4295       ods _all_ close;
+4296       ods listing gpath="%sysfunc(pathname(work))";
+4297       ods graphics off;
+4298       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.CRIME (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+4298     !                                         quit;
+
+
+4299       ods path work.templat(update) sashelp.tmplmst(read);
+4300       
+4301       title 'Crime Rates per 100,000 Population by State';
+4302       data Crime;
+4303       length State $15;
+4304       input State :$15. Murder Rape Robbery Assault
+4305       Burglary Larceny Auto_Theft;
+4306       datalines;
+
+NOTE: The data set WORK.CRIME has 50 observations and 8 variables.
+
+4357       ;
+4358       proc hpprincomp data=Crime;
+4359       output out=work._oracle_output;
+4360       
+4361       run;
+
+NOTE: When METHOD=EIG, RESIDUAL (if the PARTIAL statement is specified) and SCORE are the only valid keywords in the OUTPUT statement. Other keywords are 
+      ignored.
+NOTE: The HPPRINCOMP procedure is executing in single-machine mode.
+WARNING: 2 observations omitted due to missing values.
+NOTE: The data set WORK._ORACLE_OUTPUT has 50 observations and 7 variables.
+NOTE: The PROCEDURE HPPRINCOMP printed page 167.
+
+4362       
+4363       proc print data=work._oracle_output(obs=10); run;
+
+NOTE: There were 10 observations read from the data set WORK._ORACLE_OUTPUT.
+NOTE: The PROCEDURE PRINT printed page 168.
+
+4364       
+4365       
+4366       
+4367       
+The SAS System
+
+4368       

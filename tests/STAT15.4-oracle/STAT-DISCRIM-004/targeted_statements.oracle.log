@@ -1,0 +1,57 @@
+The SAS System
+
+923        
+924        /* STAT-DISCRIM-004: DISCRIM — PRIORS / Posterior Probability Error-Rate Estimates
+925         * Source: S154 / Chapter 42 / `PRIORS Statement` (PDF pp. 2662–2663); S154 / Chapter 42 / `Posterior Probability Error-Rate Estimates` (PDF pp.
+925      ! 2672–2674).
+926         * Discriminates: Explicit PRIORS statement behavior on seeded synthetic inputs.
+927         */
+928        options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+928      ! validmemname=compatible locale=en_US;
+929        %let syscc=0;
+930        title; footnote;
+931        ods _all_ close;
+932        ods listing gpath="%sysfunc(pathname(work))";
+933        ods graphics off;
+934        proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TRIAL (memtype=DATA).
+934      !                                         quit;
+
+
+935        ods path work.templat(update) sashelp.tmplmst(read);
+936        
+937        data sample;
+938        call streaminit(314159);
+939        do id=1 to 90;
+940         x=rand('normal'); z=rand('normal'); w=rand('normal');
+941         group=1+mod(id,3); block=1+mod(id,5);
+942         y=5+1.5*x-0.6*z+0.4*group+rand('normal');
+943         y2=2+0.5*x+0.8*z+rand('normal'); output;
+944        end;
+945        run;
+
+NOTE: The data set WORK.SAMPLE has 90 observations and 8 variables.
+
+946        proc discrim data=sample; class group; var x y; priors equal; run;
+
+NOTE: There were 90 observations read from the data set WORK.SAMPLE.
+NOTE: The PROCEDURE DISCRIM printed pages 78-80.
+
+946      !                                                                    proc discrim data=sample; class group; var x y; priors proportional; run;
+
+NOTE: There were 90 observations read from the data set WORK.SAMPLE.
+NOTE: The PROCEDURE DISCRIM printed pages 81-83.
+
+947        
+948        
+949        
+950        
+The SAS System
+
+951        

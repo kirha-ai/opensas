@@ -1,0 +1,67 @@
+The SAS System
+
+11408      
+11409      /* STAT-CALIS-034: CALIS — Official examples and feature integration regression
+11410       * Source: S154 / Chapter 33 / `Examples: CALIS Procedure` (PDF pp. 1838–2111).
+11411       * Discriminates: Example 33.6: Linear Regression Model
+11412       */
+11413      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+11413    ! validmemname=compatible locale=en_US;
+11414      %let syscc=0;
+11415      title; footnote;
+11416      ods _all_ close;
+11417      ods listing gpath="%sysfunc(pathname(work))";
+11418      ods graphics off;
+11419      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.WHEATON (memtype=DATA).
+11419    !                                         quit;
+
+
+11420      ods path work.templat(update) sashelp.tmplmst(read);
+11421      
+11422      data sales;
+11423      input q1 q2 q3 q4;
+11424      datalines;
+
+NOTE: The data set WORK.SALES has 14 observations and 4 variables.
+
+11439      ;
+11440      
+11441      run;
+11442      
+11443      proc calis data=sales;
+11444      path q1 ===> q4;
+11445      run;
+
+NOTE: Convergence criterion (ABSGCONV=0.00001) satisfied.
+NOTE: The PROCEDURE CALIS printed pages 1649-1655.
+
+11446      proc reg data=sales;
+11447      model q4 = q1;
+11448      run;
+
+
+NOTE: The PROCEDURE REG printed page 1656.
+
+11449      proc calis data=sales meanstr;
+11450      path q1 ===> q4;
+11451      run;
+
+NOTE: Convergence criterion (ABSGCONV=0.00001) satisfied.
+NOTE: The PROCEDURE CALIS printed pages 1657-1663.
+
+11452      
+11453      
+11454      
+11455      
+The SAS System
+
+11456      

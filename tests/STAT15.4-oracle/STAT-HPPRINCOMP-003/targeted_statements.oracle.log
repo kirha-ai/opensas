@@ -1,0 +1,60 @@
+The SAS System
+
+1139       
+1140       /* STAT-HPPRINCOMP-003: HPPRINCOMP — PARTIAL / Eigenvalue Decomposition / NIPALS
+1141        * Source: S154 / Chapter 65 / `PARTIAL Statement` (PDF pp. 4957–4958); S154 / Chapter 65 / `Eigenvalue Decomposition` (PDF p. 4959); S154 /
+1141     ! Chapter 65 / `NIPALS` (PDF p. 4959).
+1142        * Discriminates: Explicit PARTIAL statement behavior on seeded synthetic inputs.
+1143        */
+1144       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+1144     ! validmemname=compatible locale=en_US;
+1145       %let syscc=0;
+1146       title; footnote;
+1147       ods _all_ close;
+1148       ods listing gpath="%sysfunc(pathname(work))";
+1149       ods graphics off;
+1150       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SAMPLE (memtype=DATA).
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+1150     !                                         quit;
+
+
+1151       ods path work.templat(update) sashelp.tmplmst(read);
+1152       
+1153       data sample;
+1154       call streaminit(314159);
+1155       do id=1 to 90;
+1156        x=rand('normal'); z=rand('normal'); w=rand('normal');
+1157        group=1+mod(id,3); block=1+mod(id,5);
+1158        y=5+1.5*x-0.6*z+0.4*group+rand('normal');
+1159        y2=2+0.5*x+0.8*z+rand('normal'); output;
+1160       end;
+1161       run;
+
+NOTE: The data set WORK.SAMPLE has 90 observations and 8 variables.
+
+1162       proc hpprincomp data=sample; var x y y2; partial z; output out=scores; performance nthreads=1; run;
+
+NOTE: When METHOD=EIG, RESIDUAL (if the PARTIAL statement is specified) and SCORE are the only valid keywords in the OUTPUT statement. Other keywords are 
+      ignored.
+NOTE: The HPPRINCOMP procedure is executing in single-machine mode.
+NOTE: The data set WORK.SCORES has 90 observations and 3 variables.
+NOTE: The PROCEDURE HPPRINCOMP printed page 95.
+
+1162     !                                                                                                     proc print data=scores(obs=8); run;
+
+NOTE: There were 8 observations read from the data set WORK.SCORES.
+NOTE: The PROCEDURE PRINT printed page 96.
+
+1163       
+1164       
+1165       
+1166       
+The SAS System
+
+1167       

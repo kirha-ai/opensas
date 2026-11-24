@@ -1,0 +1,61 @@
+The SAS System
+
+1226       
+1227       /* STAT-HPSPLIT-008: HPSPLIT — GROW / PARTITION / PRUNE
+1228        * Source: S154 / Chapter 68 / `GROW Statement` (PDF pp. 5090–5092); S154 / Chapter 68 / `PARTITION Statement` (PDF pp. 5093–5095); S154 /
+1228     ! Chapter 68 / `PRUNE Statement` (PDF pp. 5095–5096).
+1229        * Discriminates: Example 68.5: Assessing Variable Importance; explicit statements: PRUNE
+1230        */
+1231       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+1231     ! validmemname=compatible locale=en_US;
+1232       %let syscc=0;
+1233       title; footnote;
+1234       ods _all_ close;
+1235       ods listing gpath="%sysfunc(pathname(work))";
+1236       ods graphics off;
+1237       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.MBE_DATA (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+1237     !                                         quit;
+
+
+1238       ods path work.templat(update) sashelp.tmplmst(read);
+1239       
+1240       data MBE_Data;
+1241       label gTemp = 'Growth Temperature of Substrate';
+1242       label aTemp = 'Anneal Temperature';
+1243       label Rot = 'Rotation Speed';
+1244       label Dopant = 'Dopant Atom';
+1245       label Usable = 'Experiment Could Be Performed';
+1246       length Dopant $2 Usable $8;
+1247       input gTemp aTemp Rot Dopant $ Usable $;
+1248       datalines;
+
+NOTE: The data set WORK.MBE_DATA has 20 observations and 5 variables.
+
+1269       ;
+1270       proc hpsplit data=MBE_Data maxdepth=6 seed=314159;
+1271       class Usable Dopant;
+1272       model Usable = gTemp aTemp Rot Dopant;
+1273       prune none;
+1274       run;
+
+NOTE: The ASSIGNMISSING= option has not been specified.  Because of this, all observations with missing values in the explanatory variables will be excluded 
+      from tree construction.
+NOTE: The HPSPLIT procedure is executing in single-machine mode.
+NOTE: PROC HPSPLIT is modeling the event Usable='Unusable' for sensitivity, specificity, AUC, and ROC curve calculations.
+NOTE: There were 20 observations read from the data set WORK.MBE_DATA.
+NOTE: The PROCEDURE HPSPLIT printed pages 99-100.
+
+1275       
+1276       
+1277       
+1278       
+The SAS System
+
+1279       

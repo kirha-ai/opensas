@@ -1,0 +1,184 @@
+
+                                                             Fam
+HouseID    Set    Choice    Brand    LogPrice     LogInc    Size
+
+2100016     1        1      PPk      -0.41552    3.48124      2 
+                     0      PBB      -0.40048    3.48124      2 
+                     0      PFl       0.08618    3.48124      2 
+                     0      PHse     -0.56212    3.48124      2 
+                     0      PGen     -1.02165    3.48124      2 
+                     0      PSS      -0.16252    3.48124      2 
+
+
+2100016     2        1      PPk      -0.46204    3.48124      2 
+                     0      PBB      -0.40048    3.48124      2 
+                     0      PFl      -0.01005    3.48124      2 
+                     0      PHse     -0.56212    3.48124      2 
+                     0      PGen     -1.02165    3.48124      2 
+                     0      PSS      -0.16252    3.48124      2 
+
+
+2100016     3        1      PPk      -1.23787    3.48124      2 
+                     0      PBB      -0.69315    3.48124      2 
+                     0      PFl      -0.01005    3.48124      2 
+                     0      PHse     -0.56212    3.48124      2 
+                     0      PGen     -1.02165    3.48124      2 
+                     0      PSS      -0.23572    3.48124      2 
+
+
+2100016     4        1      PPk      -0.47804    3.48124      2 
+                     0      PBB      -0.49430    3.48124      2 
+                     0      PFl      -0.01005    3.48124      2 
+                     0      PHse     -0.56212    3.48124      2 
+                     0      PGen     -1.02165    3.48124      2 
+                     0      PSS      -0.16252    3.48124      2 
+
+The BCHOICE Procedure
+
+                  Model Information
+
+Data Set                     SASHELP.MARGARIN         
+Response Variable            Choice                   
+Type of Model                Logit                    
+Type of Choice Response      Binary                   
+Fixed Effects Included       No                       
+Random Effects Included      Yes                      
+Sampling Algorithm           Gamerman Metropolis      
+Burn-In Size                 200                      
+Simulation Size              1000                     
+Thinning                     2                        
+Random Number Seed           123                      
+Number of Threads            4                        
+
+
+           Class Level Information
+ 
+Class    Levels    Values
+
+Brand         6    PBB PFl PGen PHse PPk PSS 
+
+
+                     Choice Sets Summary
+ 
+           Choice           Total          Chosen         Not
+Pattern      Sets    Alternatives    Alternatives      Chosen
+
+      1      3405               6               1           5
+
+
+        Number of Observations
+
+Number of Observations Read       20430
+Number of Observations Used       20430
+
+
+  Priors for Covariance Parameters of Random Effects
+ 
+               Prior
+Parameter      Distribution             DF       Scale
+
+RECov          Inverse Wishart           9           9
+
+
+                                     Posterior Summaries and Intervals
+ 
+                                                                            Standard
+Parameter                       Subject                   N        Mean    Deviation      95% HPD Interval
+
+REMean Brand PBB                                        500     -1.2694       0.6078     -2.4216     -0.0117
+REMean Brand PFl                                        500     -4.3810       2.4546     -8.8745      0.5008
+REMean Brand PGen                                       500     -4.6878       1.1614     -6.7463     -2.4022
+REMean Brand PHse                                       500     -3.1856       0.9715     -5.0293     -1.3691
+REMean Brand PSS                                        500      0.0902       1.2615     -2.6564      2.3597
+REMean LogPrice                                         500     -3.1750       0.7560     -4.6242     -1.7758
+REMean Brand PBB LogInc                                 500      0.0736       0.1850     -0.3353      0.3955
+REMean Brand PFl LogInc                                 500      0.8977       0.7111     -0.6493      2.1169
+REMean Brand PGen LogInc                                500     -0.5318       0.3777     -1.1711      0.2461
+REMean Brand PHse LogInc                                500     0.00836       0.3140     -0.5948      0.5943
+REMean Brand PSS LogInc                                 500     -0.7160       0.4437     -1.5991      0.1463
+REMean LogPrice LogInc                                  500     -0.3291       0.2651     -0.8221      0.1956
+REMean Brand PBB FamSize                                500     -0.0232       0.0948     -0.2113      0.1567
+REMean Brand PFl FamSize                                500     -0.8111       0.3493     -1.4366     -0.0720
+REMean Brand PGen FamSize                               500      0.5579       0.1584      0.2441      0.8528
+REMean Brand PHse FamSize                               500      0.2397       0.1325     0.00275      0.5128
+REMean Brand PSS FamSize                                500      0.0758       0.2174     -0.3319      0.5565
+REMean LogPrice FamSize                                 500      0.1000       0.1375     -0.1875      0.3208
+RECov Brand PBB, Brand PBB                              500      2.0655       0.3155      1.4353      2.6815
+RECov Brand PFl, Brand PBB                              500      1.8298       0.8889      0.2449      3.5726
+RECov Brand PFl, Brand PFl                              500     18.2883       7.3597      6.2404     30.2326
+RECov Brand PGen, Brand PBB                             500      1.9472       0.4605      1.1285      2.8266
+RECov Brand PGen, Brand PFl                             500      1.6663       1.9144     -2.3089      5.0308
+RECov Brand PGen, Brand PGen                            500      7.1442       0.9477      5.6494      9.3842
+RECov Brand PHse, Brand PBB                             500      1.4476       0.3735      0.7853      2.2005
+RECov Brand PHse, Brand PFl                             500      2.8711       1.5817     -0.1167      6.0683
+RECov Brand PHse, Brand PGen                            500      5.2247       0.7206      3.9340      6.7068
+RECov Brand PHse, Brand PHse                            500      5.4232       0.7364      4.0913      6.8450
+RECov Brand PSS, Brand PBB                              500      1.3311       0.6204      0.2564      2.5695
+RECov Brand PSS, Brand PFl                              500      1.0070       2.1608     -3.5001      4.7920
+RECov Brand PSS, Brand PGen                             500      4.8516       1.0905      2.7834      6.9450
+RECov Brand PSS, Brand PHse                             500      3.6197       1.0063      1.8523      5.6220
+RECov Brand PSS, Brand PSS                              500      9.8945       2.1819      6.1242     14.0800
+RECov LogPrice, Brand PBB                               500     -0.3515       0.2880     -0.8835      0.1548
+RECov LogPrice, Brand PFl                               500      2.0560       1.1382      0.0161      4.7333
+RECov LogPrice, Brand PGen                              500     -1.0740       0.3834     -1.9133     -0.4165
+RECov LogPrice, Brand PHse                              500     -0.5742       0.3445     -1.2081      0.0478
+RECov LogPrice, Brand PSS                               500     -0.0950       0.5259     -1.1492      0.8943
+RECov LogPrice, LogPrice                                500      1.9771       0.4083      1.2516      2.7673
+Brand PBB                       HouseID 2100016         500     -2.2416       0.9503     -4.3653     -0.7108
+Brand PFl                       HouseID 2100016         500     -4.6211       3.3332    -10.5636      0.9796
+Brand PGen                      HouseID 2100016         500     -6.4511       1.4479     -9.0425     -3.7157
+Brand PHse                      HouseID 2100016         500     -3.0947       1.2753     -5.5601     -1.1009
+Brand PSS                       HouseID 2100016         500     -3.7882       2.1070     -7.9653     -0.2020
+LogPrice                        HouseID 2100016         500     -4.6083       1.2075     -6.9759     -2.3444
+
+
+                                   Effective Sample Sizes
+ 
+                                                               Autocorrelation
+Parameter                       Subject                 ESS               Time    Efficiency
+
+REMean Brand PBB                                      161.7             3.0925        0.3234
+REMean Brand PFl                                       19.2            26.1072        0.0383
+REMean Brand PGen                                      87.1             5.7435        0.1741
+REMean Brand PHse                                     129.8             3.8523        0.2596
+REMean Brand PSS                                      167.7             2.9810        0.3355
+REMean LogPrice                                        38.9            12.8616        0.0778
+REMean Brand PBB LogInc                               223.3             2.2387        0.4467
+REMean Brand PFl LogInc                                85.4             5.8549        0.1708
+REMean Brand PGen LogInc                               87.2             5.7309        0.1745
+REMean Brand PHse LogInc                              124.6             4.0140        0.2491
+REMean Brand PSS LogInc                                74.7             6.6897        0.1495
+REMean LogPrice LogInc                                 30.8            16.2268        0.0616
+REMean Brand PBB FamSize                              122.3             4.0881        0.2446
+REMean Brand PFl FamSize                               76.8             6.5115        0.1536
+REMean Brand PGen FamSize                              64.2             7.7911        0.1284
+REMean Brand PHse FamSize                             122.6             4.0795        0.2451
+REMean Brand PSS FamSize                               87.3             5.7283        0.1746
+REMean LogPrice FamSize                                43.0            11.6410        0.0859
+RECov Brand PBB, Brand PBB                             24.9            20.0618        0.0498
+RECov Brand PFl, Brand PBB                             19.4            25.7731        0.0388
+RECov Brand PFl, Brand PFl                              7.1            70.8171        0.0141
+RECov Brand PGen, Brand PBB                            54.7             9.1355        0.1095
+RECov Brand PGen, Brand PFl                            12.3            40.6946        0.0246
+RECov Brand PGen, Brand PGen                           35.5            14.1032        0.0709
+RECov Brand PHse, Brand PBB                            77.5             6.4501        0.1550
+RECov Brand PHse, Brand PFl                            12.1            41.2363        0.0243
+RECov Brand PHse, Brand PGen                           96.7             5.1702        0.1934
+RECov Brand PHse, Brand PHse                           65.0             7.6906        0.1300
+RECov Brand PSS, Brand PBB                             13.1            38.1174        0.0262
+RECov Brand PSS, Brand PFl                             11.8            42.4724        0.0235
+RECov Brand PSS, Brand PGen                            40.1            12.4655        0.0802
+RECov Brand PSS, Brand PHse                            35.5            14.0993        0.0709
+RECov Brand PSS, Brand PSS                             15.5            32.1643        0.0311
+RECov LogPrice, Brand PBB                              22.2            22.5063        0.0444
+RECov LogPrice, Brand PFl                               8.9            56.4054        0.0177
+RECov LogPrice, Brand PGen                             48.1            10.3977        0.0962
+RECov LogPrice, Brand PHse                             23.9            20.9203        0.0478
+RECov LogPrice, Brand PSS                              25.1            19.8866        0.0503
+RECov LogPrice, LogPrice                               26.9            18.5702        0.0538
+Brand PBB                       HouseID 2100016       142.8             3.5012        0.2856
+Brand PFl                       HouseID 2100016        43.6            11.4577        0.0873
+Brand PGen                      HouseID 2100016       121.7             4.1070        0.2435
+Brand PHse                      HouseID 2100016        92.3             5.4187        0.1845
+Brand PSS                       HouseID 2100016        99.9             5.0034        0.1999
+LogPrice                        HouseID 2100016        85.9             5.8219        0.1718

@@ -1,0 +1,44 @@
+The SAS System
+
+1442       
+1443       /* STAT-HP-004: HP model selection methods and SELECTION
+1444        * Source: S154 / Chapter 22 / `SELECTION Statement` (PDF pp. 564–570); S154 / Chapter 22 / `Model Selection` (PDF pp. 570–577).
+1445        * Discriminates: HP CLASS/variable role integration, single-thread PERFORMANCE information and stepwise selection
+1446        */
+1447       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+1447     ! validmemname=compatible locale=en_US;
+1448       %let syscc=0;
+1449       title; footnote;
+1450       ods _all_ close;
+1451       ods listing gpath="%sysfunc(pathname(work))";
+1452       ods graphics off;
+1453       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SAMPLE (memtype=DATA).
+1453     !                                         quit;
+
+
+1454       ods path work.templat(update) sashelp.tmplmst(read);
+1455       
+1456       data sample;
+1457        input x z y group $ weight freq;
+1458        datalines;
+
+NOTE: The data set WORK.SAMPLE has 12 observations and 6 variables.
+
+1471       ;
+1472       run;
+1473       proc hpreg data=sample; class group; model y=x z group; selection method=stepwise; performance nthreads=1 details; run;
+
+NOTE: The HPREG procedure is executing in single-machine mode.
+NOTE: There were 12 observations read from the data set WORK.SAMPLE.
+NOTE: The PROCEDURE HPREG printed pages 73-75.
+
+1474       
+1475       
+1476       
+1477       
+The SAS System
+
+1478       

@@ -1,0 +1,132 @@
+The SAS System
+
+7930       
+7931       /* STAT-PRINCOMP-005: PRINCOMP — Displayed Output / ODS Table Names
+7932        * Source: S154 / Chapter 98 / `Displayed Output` (PDF pp. 8010–8011); S154 / Chapter 98 / `ODS Table Names` (PDF p. 8011).
+7933        * Discriminates: Getting Started: PRINCOMP Procedure
+7934        */
+7935       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+7935     ! validmemname=compatible locale=en_US;
+7936       %let syscc=0;
+7937       title; footnote;
+7938       ods _all_ close;
+7939       ods listing gpath="%sysfunc(pathname(work))";
+7940       ods graphics off;
+7941       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.CRIME (memtype=DATA).
+NOTE: Deleting WORK.CRIME_COMPONENTS (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+7941     !                                         quit;
+
+
+7942       ods path work.templat(update) sashelp.tmplmst(read);
+7943       
+7944       ods trace on;
+7945       title 'Crime Rates per 100,000 Population by State';
+7946       data Crime;
+7947       input State $1-15 Murder Rape Robbery Assault
+7948       Burglary Larceny Auto_Theft;
+7949       datalines;
+
+NOTE: The data set WORK.CRIME has 50 observations and 8 variables.
+
+8000       ;
+8001       ods graphics on;
+8002       proc princomp out=Crime_Components plots= score(ellipse ncomp=3);
+8003       id State;
+8004       run;
+
+
+Output Added:
+-------------
+Name:       NObsNVar
+Label:      Number of Observations
+Template:   Stat.PrinComp.NObsNVar
+Path:       Princomp.NObsNVar
+-------------
+
+Output Added:
+-------------
+Name:       SimpleStatistics
+Label:      Simple Statistics
+Template:   Stat.PrinComp.SimpleStatistics
+Path:       Princomp.SimpleStatistics
+-------------
+
+Output Added:
+-------------
+Name:       Corr
+Label:      Correlation Matrix
+Template:   Stat.PrinComp.Corr
+Path:       Princomp.Corr
+-------------
+
+Output Added:
+-------------
+Name:       Eigenvalues
+Label:      Eigenvalues
+Template:   Stat.PrinComp.Eigenvalues
+Data Label: Eigenvalues
+Path:       Princomp.Eigenvalues
+-------------
+
+Output Added:
+-------------
+Name:       Eigenvectors
+Label:      Eigenvectors
+Template:   Stat.Princomp.Eigenvectors
+Path:       Princomp.Eigenvectors
+-------------
+
+Output Added:
+-------------
+Name:       ScreePlot
+Label:      Scree and Variance Plots
+Template:   Stat.Princomp.Graphics.ScreePlot2
+Path:       Princomp.ScreePlot
+-------------
+
+Output Added:
+-------------
+Name:       ScorePlot
+Label:      2 by 1
+Template:   Stat.Princomp.Graphics.ScorePlot
+Path:       Princomp.CompScore.ScorePlot
+-------------
+
+Output Added:
+-------------
+Name:       ScorePlot
+Label:      3 by 1
+Template:   Stat.Princomp.Graphics.ScorePlot
+Path:       Princomp.CompScore.ScorePlot
+-------------
+
+Output Added:
+-------------
+Name:       ScorePlot
+Label:      3 by 2
+Template:   Stat.Princomp.Graphics.ScorePlot
+Path:       Princomp.CompScore.ScorePlot
+-------------
+
+Output Added:
+-------------
+Name:       PaintedScorePlot
+Label:      3 by 2, Painted by 1
+Template:   Stat.Princomp.Graphics.PaintedScorePlot
+Path:       Princomp.CompScore.PaintedScorePlot
+-------------
+NOTE: The data set WORK.CRIME_COMPONENTS has 50 observations and 15 variables.
+NOTE: The PROCEDURE PRINCOMP printed page 582.
+
+8005       ods trace off;
+8006       
+8007       
+8008       
+8009       
+The SAS System
+
+8010       

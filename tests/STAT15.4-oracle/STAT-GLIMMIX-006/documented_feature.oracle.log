@@ -1,0 +1,120 @@
+The SAS System
+
+23464      
+23465      /* STAT-GLIMMIX-006: GLIMMIX — Maximum Likelihood Estimation Based on Laplace Approximation
+23466       * Source: S154 / Chapter 52 / `Maximum Likelihood Estimation Based on Laplace Approximation` (PDF pp. 3835–3838).
+23467       * Discriminates: Example 52.11: Maximum Likelihood in Proportional Odds Model with Random Effects
+23468       */
+23469      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+23469    ! validmemname=compatible locale=en_US;
+23470      %let syscc=0;
+23471      title; footnote;
+23472      ods _all_ close;
+23473      ods listing gpath="%sysfunc(pathname(work))";
+23474      ods graphics off;
+23475      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.MULTICENTER (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+23475    !                                         quit;
+
+
+23476      ods path work.templat(update) sashelp.tmplmst(read);
+23477      
+23478      data foot_mv;
+23479      input yr b1 b2 b3 k1 k2 k3;
+23480      sire = _n_;
+23481      datalines;
+
+NOTE: The data set WORK.FOOT_MV has 34 observations and 8 variables.
+
+23516      ;
+23517      data footshape;
+23518      set foot_mv;
+23519      array k{3};
+23520      do Shape = 1 to 3;
+23521      count = k{Shape};
+23522      output;
+23523      end;
+23524      drop k:;
+23525      run;
+
+NOTE: There were 34 observations read from the data set WORK.FOOT_MV.
+NOTE: The data set WORK.FOOTSHAPE has 102 observations and 7 variables.
+
+23526      proc glimmix data=footshape method=quad;
+23527      class sire;
+23528      model Shape = yr b1 b2 b3 / s link=cumprobit dist=multinomial;
+23529      random int / sub=sire s cl;
+23530      ods output Solutionr=solr;
+23531      freq count;
+23532      run;
+
+
+
+NOTE: Some observations are not used in the analysis because of: zero or negative frequency (n=6).
+NOTE: The GLIMMIX procedure is modeling the probabilities of levels of Shape having lower Ordered Values in the Response Profile table.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: At least one element of the (projected) gradient is greater than 1e-3.
+NOTE: The data set WORK.SOLR has 34 observations and 10 variables.
+NOTE: The PROCEDURE GLIMMIX printed page 2405.
+
+23533      ods select FitStatistics CovParms Covtests;
+23534      proc glimmix data=footshape method=quad;
+23535      class sire;
+23536      model Shape = yr b1 b2 b3 / link=cumprobit dist=multinomial;
+23537      random int / sub=sire;
+23538      covtest GLM;
+23539      freq count;
+23540      run;
+
+
+
+NOTE: Some observations are not used in the analysis because of: zero or negative frequency (n=6).
+NOTE: The GLIMMIX procedure is modeling the probabilities of levels of Shape having lower Ordered Values in the Response Profile table.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: At least one element of the (projected) gradient is greater than 1e-3.
+NOTE: The PROCEDURE GLIMMIX printed page 2406.
+
+23541      proc sort data=solr;
+23542      by Estimate;
+23543      run;
+
+NOTE: There were 34 observations read from the data set WORK.SOLR.
+NOTE: The data set WORK.SOLR has 34 observations and 10 variables.
+
+23544      data solr;
+23545      set solr;
+23546      length sire $2;
+23547      obs = _n_;
+23548      sire = left(substr(Subject,6,2));
+23549      run;
+
+NOTE: There were 34 observations read from the data set WORK.SOLR.
+NOTE: The data set WORK.SOLR has 34 observations and 12 variables.
+
+23550      proc sgplot data=solr;
+23551      scatter x=obs y=estimate /
+23552      markerchar = sire
+23553      yerrorupper = upper
+23554      yerrorlower = lower;
+23555      xaxis grid label='Sire Rank' values=(1 5 10 15 20 25 30);
+23556      yaxis grid label='Predicted Sire Effect';
+23557      run;
+
+NOTE: Listing image output written to /saswork/SAS_work5D120001108E_odaws02-euw1.oda.sas.com/SAS_workCCDC0001108E_odaws02-euw1.oda.sas.com/SGPlot10.png.
+NOTE: There were 34 observations read from the data set WORK.SOLR.
+
+23558      
+23559      
+23560      
+23561      
+The SAS System
+
+23562      

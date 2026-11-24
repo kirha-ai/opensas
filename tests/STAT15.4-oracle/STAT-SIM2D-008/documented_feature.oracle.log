@@ -1,0 +1,148 @@
+The SAS System
+
+3408       
+3409       /* STAT-SIM2D-008: SIM2D — ODS Graphics
+3410        * Source: S154 / Chapter 112 / `ODS Graphics` (PDF pp. 9344–9345).
+3411        * Discriminates: Getting Started: SIM2D Procedure
+3412        */
+3413       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+3413     ! validmemname=compatible locale=en_US;
+3414       %let syscc=0;
+3415       title; footnote;
+3416       ods _all_ close;
+3417       ods listing gpath="%sysfunc(pathname(work))";
+3418       ods graphics off;
+3419       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.SELECTED (memtype=DATA).
+NOTE: Deleting WORK.SIM (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.THICK (memtype=DATA).
+3419     !                                         quit;
+
+
+3420       ods path work.templat(update) sashelp.tmplmst(read);
+3421       
+3422       ods graphics on;
+3423       ods trace on;
+3424       ods trace on;
+3425       
+3426       title 'Using PROC SIM2D for Spatial Simulation';
+3427       data thick;
+3428       input East North Thick @@;
+3429       label Thick='Coal Seam Thickness';
+3430       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.THICK has 75 observations and 3 variables.
+
+3456       ;
+3457       ods graphics on;
+3458       proc sim2d data=thick outsim=sim plot=(observ sim);
+3459       coordinates xc=East yc=North;
+3460       simulate var=Thick numreal=100 seed=79931
+3461       scale=7.4599 range=30.1111 nugget=1e-8 form=gauss;
+3462       mean 40.1173;
+3463       grid x=0 to 100 by 25 y=0 to 100 by 25;
+3464       run;
+
+
+Output Added:
+-------------
+Name:       NObs
+Label:      Number of Observations
+Template:   Stat.Sim2d.NObs
+Path:       Sim2d.SIM1.NObs
+-------------
+
+Output Added:
+-------------
+Name:       ObservationsPlot
+Label:      Spatial Distribution Plot
+Template:   Stat.Sim2d.Graphics.Observations
+Path:       Sim2d.SIM1.ObservationsPlot
+-------------
+
+Output Added:
+-------------
+Name:       SimuInfo
+Label:      Simulation Information
+Template:   Stat.Sim2d.SimuInfo
+Path:       Sim2d.SIM1.SimuInfo
+-------------
+
+Output Added:
+-------------
+Name:       ModelInfo
+Label:      Model Information
+Template:   Stat.Sim2d.ModelInfo
+Path:       Sim2d.SIM1.ModelInfo
+-------------
+
+Output Added:
+-------------
+Name:       SimulationPlot
+Label:      Simulation Plot
+Template:   Stat.Sim2d.Graphics.Sim
+Path:       Sim2d.SIM1.SimulationPlot
+-------------
+NOTE: The data set WORK.SIM has 2500 observations and 6 variables.
+NOTE: The PROCEDURE SIM2D printed page 225.
+
+3465       data selected;
+3466       set sim(where=((gxc=0 and gyc=0) or (gxc=75 and gyc=75)));
+3467       label gxc = "X-coord";
+3468       label gyc = "Y-coord";
+3469       run;
+
+NOTE: There were 200 observations read from the data set WORK.SIM.
+      WHERE ((gxc=0) and (gyc=0)) or ((gxc=75) and (gyc=75));
+NOTE: The data set WORK.SELECTED has 200 observations and 6 variables.
+
+3470       proc sort data=selected;
+3471       by gxc gyc;
+3472       run;
+
+NOTE: There were 200 observations read from the data set WORK.SELECTED.
+NOTE: The data set WORK.SELECTED has 200 observations and 6 variables.
+
+3473       proc means data=selected Mean Std Max;
+3474       class gxc gyc;
+3475       ways 2;
+3476       where ( ((gxc = 0) & (gyc = 0))
+3477       | ((gxc = 75) & (gyc = 75)));
+3478       var SValue;
+3479       run;
+
+
+Output Added:
+-------------
+Name:       Summary
+Label:      Summary statistics
+Template:   base.summary
+Path:       Means.Summary
+-------------
+NOTE: There were 200 observations read from the data set WORK.SELECTED.
+      WHERE ((gxc=0) and (gyc=0)) or ((gxc=75) and (gyc=75));
+NOTE: The PROCEDURE MEANS printed page 226.
+
+3480       ods graphics off;
+3481       run;
+3482       quit;
+3483       ods trace off;
+3484       ods trace off;
+3485       ods graphics off;
+3486       
+3487       
+3488       
+3489       
+The SAS System
+
+3490       

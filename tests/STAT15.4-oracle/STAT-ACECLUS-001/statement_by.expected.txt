@@ -1,0 +1,313 @@
+
+Fisher (1936) Iris Data
+
+_oracle_by=1
+
+The ACECLUS Procedure
+ 
+Approximate Covariance Estimation for Cluster Analysis
+
+Observations         150    Proportion      0.0200
+Variables              4    Converge       0.00100
+
+
+              Means and Standard Deviations
+                            Standard
+Variable           Mean    Deviation    Label
+
+SepalLength     58.4333       8.2807    Sepal Length (mm)
+SepalWidth      30.5733       4.3587    Sepal Width (mm) 
+PetalLength     37.5800      17.6530    Petal Length (mm)
+PetalWidth      11.9933       7.6224    Petal Width (mm) 
+
+
+                           COV: Total Sample Covariances
+ 
+                  SepalLength        SepalWidth       PetalLength        PetalWidth
+
+SepalLength        68.5693512        -4.2434004       127.4315436        51.6270694
+SepalWidth         -4.2434004        18.9979418       -32.9656376       -12.1639374
+PetalLength       127.4315436       -32.9656376       311.6277852       129.5609396
+PetalWidth         51.6270694       -12.1639374       129.5609396        58.1006264
+
+Initial Within-Cluster Covariance Estimate = Full Covariance Matrix
+
+
+Threshold =    0.334211
+
+
+                      Iteration History
+ 
+                                        Pairs
+               RMS       Distance      Within    Convergence
+Iteration    Distance     Cutoff       Cutoff      Measure
+------------------------------------------------------------
+        1       2.828       0.945       408.0     0.465775  
+        2      11.905       3.979       559.0     0.013487  
+        3      13.152       4.396       940.0     0.029499  
+        4      13.439       4.491      1506.0     0.046846  
+        5      13.271       4.435      2036.0     0.046859  
+        6      12.591       4.208      2285.0     0.025027  
+        7      12.199       4.077      2366.0     0.009559  
+        8      12.121       4.051      2402.0     0.003895  
+        9      12.064       4.032      2417.0     0.002051  
+       10      12.047       4.026      2429.0     0.000971  
+
+
+Algorithm converged.                                            
+
+
+               ACE: Approximate Covariance Estimate Within Clusters
+ 
+                  SepalLength        SepalWidth       PetalLength        PetalWidth
+
+SepalLength       11.73342939        5.47550432        4.95389049        2.02902429
+SepalWidth         5.47550432        6.91992590        2.42177851        1.74125154
+PetalLength        4.95389049        2.42177851        6.53746398        2.35302594
+PetalWidth         2.02902429        1.74125154        2.35302594        2.05166735
+
+
+                Eigenvalues of Inv(ACE)*(COV-ACE)
+ 
+            Eigenvalue    Difference    Proportion    Cumulative
+
+       1       63.7716       61.1593        0.9367        0.9367
+       2        2.6123        1.5561        0.0384        0.9751
+       3        1.0562        0.4167        0.0155        0.9906
+       4        0.6395                     0.00939        1.0000
+
+
+                        Eigenvectors (Raw Canonical Coefficients)
+ 
+                                            Can1          Can2          Can3          Can4
+
+SepalLength      Sepal Length (mm)      -.012009      -.098074      -.059852      0.402352
+SepalWidth       Sepal Width (mm)       -.211068      -.000072      0.402391      -.225993
+PetalLength      Petal Length (mm)      0.324705      -.328583      0.110383      -.321069
+PetalWidth       Petal Width (mm)       0.266239      0.870434      -.085215      0.320286
+
+
+                           Standardized Canonical Coefficients
+ 
+                                            Can1          Can2          Can3          Can4
+
+SepalLength      Sepal Length (mm)      -0.09944      -0.81211      -0.49562       3.33174
+SepalWidth       Sepal Width (mm)       -0.91998      -0.00031       1.75389      -0.98503
+PetalLength      Petal Length (mm)       5.73200      -5.80047       1.94859      -5.66782
+PetalWidth       Petal Width (mm)        2.02937       6.63478      -0.64954       2.44134
+
+Fisher (1936) Iris Data
+
+_oracle_by=2
+
+The ACECLUS Procedure
+ 
+Approximate Covariance Estimation for Cluster Analysis
+
+Observations         150    Proportion      0.0200
+Variables              4    Converge       0.00100
+
+
+              Means and Standard Deviations
+                            Standard
+Variable           Mean    Deviation    Label
+
+SepalLength     58.4333       8.2807    Sepal Length (mm)
+SepalWidth      30.5733       4.3587    Sepal Width (mm) 
+PetalLength     37.5800      17.6530    Petal Length (mm)
+PetalWidth      11.9933       7.6224    Petal Width (mm) 
+
+
+                           COV: Total Sample Covariances
+ 
+                  SepalLength        SepalWidth       PetalLength        PetalWidth
+
+SepalLength        68.5693512        -4.2434004       127.4315436        51.6270694
+SepalWidth         -4.2434004        18.9979418       -32.9656376       -12.1639374
+PetalLength       127.4315436       -32.9656376       311.6277852       129.5609396
+PetalWidth         51.6270694       -12.1639374       129.5609396        58.1006264
+
+Initial Within-Cluster Covariance Estimate = Full Covariance Matrix
+
+
+Threshold =    0.334211
+
+
+                      Iteration History
+ 
+                                        Pairs
+               RMS       Distance      Within    Convergence
+Iteration    Distance     Cutoff       Cutoff      Measure
+------------------------------------------------------------
+        1       2.828       0.945       408.0     0.465775  
+        2      11.905       3.979       559.0     0.013487  
+        3      13.152       4.396       940.0     0.029499  
+        4      13.439       4.491      1506.0     0.046846  
+        5      13.271       4.435      2036.0     0.046859  
+        6      12.591       4.208      2285.0     0.025027  
+        7      12.199       4.077      2366.0     0.009559  
+        8      12.121       4.051      2402.0     0.003895  
+        9      12.064       4.032      2417.0     0.002051  
+       10      12.047       4.026      2429.0     0.000971  
+
+
+Algorithm converged.                                            
+
+
+               ACE: Approximate Covariance Estimate Within Clusters
+ 
+                  SepalLength        SepalWidth       PetalLength        PetalWidth
+
+SepalLength       11.73342939        5.47550432        4.95389049        2.02902429
+SepalWidth         5.47550432        6.91992590        2.42177851        1.74125154
+PetalLength        4.95389049        2.42177851        6.53746398        2.35302594
+PetalWidth         2.02902429        1.74125154        2.35302594        2.05166735
+
+
+                Eigenvalues of Inv(ACE)*(COV-ACE)
+ 
+            Eigenvalue    Difference    Proportion    Cumulative
+
+       1       63.7716       61.1593        0.9367        0.9367
+       2        2.6123        1.5561        0.0384        0.9751
+       3        1.0562        0.4167        0.0155        0.9906
+       4        0.6395                     0.00939        1.0000
+
+
+                        Eigenvectors (Raw Canonical Coefficients)
+ 
+                                            Can1          Can2          Can3          Can4
+
+SepalLength      Sepal Length (mm)      -.012009      -.098074      -.059852      0.402352
+SepalWidth       Sepal Width (mm)       -.211068      -.000072      0.402391      -.225993
+PetalLength      Petal Length (mm)      0.324705      -.328583      0.110383      -.321069
+PetalWidth       Petal Width (mm)       0.266239      0.870434      -.085215      0.320286
+
+
+                           Standardized Canonical Coefficients
+ 
+                                            Can1          Can2          Can3          Can4
+
+SepalLength      Sepal Length (mm)      -0.09944      -0.81211      -0.49562       3.33174
+SepalWidth       Sepal Width (mm)       -0.91998      -0.00031       1.75389      -0.98503
+PetalLength      Petal Length (mm)       5.73200      -5.80047       1.94859      -5.66782
+PetalWidth       Petal Width (mm)        2.02937       6.63478      -0.64954       2.44134
+
+Fisher (1936) Iris Data
+
+The FASTCLUS Procedure
+Replace=FULL  Radius=0  Maxclusters=3 Maxiter=10  Converge=0
+
+                                 Initial Seeds
+ 
+Cluster              Can1              Can2              Can3              Can4
+-------------------------------------------------------------------------------
+   1           0.96452813       -0.05947374       -3.86478264       -0.81374690
+   2          13.87494673       -2.56407854       -0.42123329        1.94116834
+   3         -12.38216695       -1.51937217        3.02500063       -1.21609158
+
+
+Minimum Distance Between Initial Seeds = 13.87082
+
+                     Iteration History
+ 
+                          Relative Change in Cluster Seeds
+Iteration    Criterion           1           2           3
+----------------------------------------------------------
+        1       2.7302      0.3064      0.4099      0.2772
+        2       1.5429      0.0512      0.0651           0
+        3       1.4967      0.0197      0.0199           0
+        4       1.4920      0.0132      0.0147           0
+        5       1.4889     0.00486     0.00486           0
+        6       1.4886     0.00491     0.00509           0
+        7       1.4881     0.00472     0.00463           0
+        8       1.4879           0           0           0
+
+
+Convergence criterion is satisfied.                             
+
+
+Criterion Based on Final Seeds =   1.4879
+
+
+                                         Cluster Summary
+ 
+                                      Maximum Distance
+                           RMS Std           from Seed     Radius     Nearest     Distance Between
+Cluster     Frequency    Deviation      to Observation    Exceeded    Cluster    Cluster Centroids
+--------------------------------------------------------------------------------------------------
+   1              100       1.4067              5.3152                      2               5.8580
+   2              100       1.8784              6.8298                      1               5.8580
+   3              100       1.0960              5.2768                      1              13.2845
+
+
+                     Statistics for Variables
+ 
+Variable     Total STD    Within STD      R-Square     RSQ/(1-RSQ)
+------------------------------------------------------------------
+Can1           8.03461       1.47785      0.966394       28.756658
+Can2           1.89743       1.84706      0.058725        0.062389
+Can3           1.43155       1.31847      0.157417        0.186826
+Can4           1.27830       1.26904      0.021025        0.021477
+OVER-ALL       4.23788       1.49537      0.876324        7.085666
+
+
+Pseudo F Statistic =  1052.22
+
+
+Approximate Expected Over-All R-Squared =   0.80133
+
+
+Cubic Clustering Criterion =    7.561
+
+WARNING: The two values above are invalid for correlated variables.
+
+
+                                 Cluster Means
+ 
+Cluster              Can1              Can2              Can3              Can4
+-------------------------------------------------------------------------------
+   1           2.54528754       -0.59273569       -0.78905317       -0.26079612
+   2           8.12988211        0.52566663        0.51836499        0.14915404
+   3         -10.67516964        0.06706906        0.27068819        0.11164209
+
+
+                          Cluster Standard Deviations
+ 
+Cluster              Can1              Can2              Can3              Can4
+-------------------------------------------------------------------------------
+   1          1.564405183       1.386509789       1.296812254       1.365103184
+   2          1.790049825       2.729976457       1.263911979       1.363583773
+   3          0.948931824       0.927224839       1.391375225       1.052859529
+
+Fisher (1936) Iris Data
+
+The FREQ Procedure
+
+Table of CLUSTER by Species
+
+CLUSTER(Cluster)     Species(Iris Species)
+
+Frequency|
+Percent  |
+Row Pct  |
+Col Pct  |Setosa  |Versicol|Virginic|  Total
+         |        |or      |a       |
+---------+--------+--------+--------+
+       1 |      0 |     96 |      4 |    100
+         |   0.00 |  32.00 |   1.33 |  33.33
+         |   0.00 |  96.00 |   4.00 |
+         |   0.00 |  96.00 |   4.00 |
+---------+--------+--------+--------+
+       2 |      0 |      4 |     96 |    100
+         |   0.00 |   1.33 |  32.00 |  33.33
+         |   0.00 |   4.00 |  96.00 |
+         |   0.00 |   4.00 |  96.00 |
+---------+--------+--------+--------+
+       3 |    100 |      0 |      0 |    100
+         |  33.33 |   0.00 |   0.00 |  33.33
+         | 100.00 |   0.00 |   0.00 |
+         | 100.00 |   0.00 |   0.00 |
+---------+--------+--------+--------+
+Total         100      100      100      300
+            33.33    33.33    33.33   100.00

@@ -1,0 +1,62 @@
+The SAS System
+
+28435      
+28436      /* STAT-TREE-001: TREE — Data input, variable roles, and basic options
+28437       * Source: S154 / Chapter 127 / `PROC TREE Statement` (PDF pp. 10575–10581); S154 / Chapter 127 / `BY Statement` (PDF p. 10581); S154 / Chapter 127
+28437    !  / `COPY Statement` (PDF p. 10581); S154 / Chapter 127 / `FREQ Statement` (PDF pp. 10581–10582); S154 / Chapter 127 / `ID Statement` (PDF p. 10582)
+28437    ! ; S154 / Chapter 127 / `Missing Values` (PDF p. 10583).
+28438       * Discriminates: Two explicit BY groups contain identical inputs, exposing group boundaries and per-group results.
+28439       */
+28440      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+28440    ! validmemname=compatible locale=en_US;
+28441      %let syscc=0;
+28442      title; footnote;
+28443      ods _all_ close;
+28444      ods listing gpath="%sysfunc(pathname(work))";
+28445      ods graphics off;
+28446      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.MEMBERS (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TREE (memtype=DATA).
+28446    !                                         quit;
+
+
+28447      ods path work.templat(update) sashelp.tmplmst(read);
+28448      
+28449      proc cluster data=sashelp.iris method=ward outtree=tree noprint; var SepalLength SepalWidth PetalLength PetalWidth; run;
+
+WARNING: Ties for minimum distance between clusters have been detected at 48 level(s) in the cluster history.
+NOTE: The data set WORK.TREE has 299 observations and 20 variables.
+
+28450      data _oracle_input; set tree; do _oracle_by=1 to 2; output; end; run;
+
+NOTE: There were 299 observations read from the data set WORK.TREE.
+NOTE: The data set WORK._ORACLE_INPUT has 598 observations and 21 variables.
+
+28451      proc sort data=_oracle_input; by _oracle_by; run;
+
+NOTE: There were 598 observations read from the data set WORK._ORACLE_INPUT.
+NOTE: The data set WORK._ORACLE_INPUT has 598 observations and 21 variables.
+
+28452      proc tree data=_oracle_input nclusters=3 out=members noprint;
+28453      by _oracle_by; run;
+
+NOTE: The data set WORK.MEMBERS has 300 observations and 4 variables.
+
+28454      proc print data=members(obs=12) noobs; run;
+
+NOTE: There were 12 observations read from the data set WORK.MEMBERS.
+NOTE: The PROCEDURE PRINT printed page 1760.
+
+28455      
+28456      
+28457      
+28458      
+The SAS System
+
+28459      

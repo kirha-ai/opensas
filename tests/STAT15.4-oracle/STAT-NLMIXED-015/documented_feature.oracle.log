@@ -1,0 +1,62 @@
+The SAS System
+
+261        
+262        /* STAT-NLMIXED-015: NLMIXED — Computational Resources
+263         * Source: S154 / Chapter 89 / `Computational Resources` (PDF pp. 7162–7163).
+264         * Discriminates: Verified default procedure context
+265         */
+266        options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+266      ! validmemname=compatible locale=en_US;
+267        %let syscc=0;
+268        title; footnote;
+269        ods _all_ close;
+270        ods listing gpath="%sysfunc(pathname(work))";
+271        ods graphics off;
+272        proc datasets library=work kill nolist;
+NOTE: Deleting WORK.NESTED (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+272      !                                         quit;
+
+
+273        ods path work.templat(update) sashelp.tmplmst(read);
+274        
+275        %let na = 100;
+276        %let nb = 5;
+277        %let nr = 2;
+278        data nested;
+279        do A = 1 to &na;
+280        err1 = 3*rannor(339205);
+281        do B = 1 to &nb;
+282        err2 = 2*rannor(314159);
+283        do rep = 1 to &nr;
+284        err3 = 1*rannor(314159);
+285        resp = 10 + err1 + err2 + err3;
+286        output;
+287        end;
+288        end;
+289        end;
+290        run;
+
+NOTE: The data set WORK.NESTED has 1000 observations and 7 variables.
+
+291        proc nlmixed data = nested;
+292        bounds vara >=0, varb_a >=0;
+293        mean = intercept + aeffect + beffect;
+294        model resp ~ normal (mean, s2);
+295        random aeffect ~ normal(0,vara) subject = A;
+296        random beffect ~ normal(0,varb_a) subject = B(A);
+297        run;
+
+NOTE: To assign starting values to parameters, use the PARMS statement. The default starting value of 1.0 is in effect for all parameters.
+NOTE: Convergence criterion (GCONV=1E-6) satisfied.
+NOTE: At least one element of the gradient is greater than 1e-3.
+NOTE: The PROCEDURE NLMIXED printed page 6.
+
+298        
+299        
+300        
+301        
+The SAS System
+
+302        

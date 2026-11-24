@@ -1,0 +1,49 @@
+The SAS System
+
+7737       
+7738       /* STAT-PRINCOMP-003: PRINCOMP — PARTIAL
+7739        * Source: S154 / Chapter 98 / `PARTIAL Statement` (PDF p. 8006).
+7740        * Discriminates: Getting Started: PRINCOMP Procedure
+7741        */
+7742       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+7742     ! validmemname=compatible locale=en_US;
+7743       %let syscc=0;
+7744       title; footnote;
+7745       ods _all_ close;
+7746       ods listing gpath="%sysfunc(pathname(work))";
+7747       ods graphics off;
+7748       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.CRIME (memtype=DATA).
+NOTE: Deleting WORK.CRIME_COMPONENTS (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+7748     !                                         quit;
+
+
+7749       ods path work.templat(update) sashelp.tmplmst(read);
+7750       
+7751       title 'Crime Rates per 100,000 Population by State';
+7752       data Crime;
+7753       input State $1-15 Murder Rape Robbery Assault
+7754       Burglary Larceny Auto_Theft;
+7755       datalines;
+
+NOTE: The data set WORK.CRIME has 50 observations and 8 variables.
+
+7806       ;
+7807       ods graphics on;
+7808       proc princomp out=Crime_Components plots= score(ellipse ncomp=3);
+7809       id State;
+7810       run;
+
+NOTE: The data set WORK.CRIME_COMPONENTS has 50 observations and 15 variables.
+NOTE: The PROCEDURE PRINCOMP printed page 578.
+
+7811       
+7812       
+7813       
+7814       
+The SAS System
+
+7815       

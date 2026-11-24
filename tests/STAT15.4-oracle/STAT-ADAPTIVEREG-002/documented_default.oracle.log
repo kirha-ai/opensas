@@ -1,0 +1,86 @@
+The SAS System
+
+214        
+215        /* STAT-ADAPTIVEREG-002: ADAPTIVEREG — Default adaptive regression spline fitting and prediction
+216         * Source: S154 / Chapter 28 / `Getting Started: ADAPTIVEREG Procedure` (PDF pp. 1047–1054); S154 / Chapter 28 / `Overview: ADAPTIVEREG Procedure`
+216      ! (PDF pp. 1046–1047).
+217         * Discriminates: Example 28.2: Fitting Data with Mixture Structures
+218         */
+219        options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+219      ! validmemname=compatible locale=en_US;
+220        %let syscc=0;
+221        title; footnote;
+222        ods _all_ close;
+223        ods listing gpath="%sysfunc(pathname(work))";
+224        ods graphics off;
+225        proc datasets library=work kill nolist;
+NOTE: Deleting WORK.MIXTURE (memtype=DATA).
+NOTE: Deleting WORK.NEW (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+225      !                                         quit;
+
+
+226        ods path work.templat(update) sashelp.tmplmst(read);
+227        
+228        data Mixture;
+229        drop i;
+230        do i=1 to 1000;
+231        X1 = ranuni(1);
+232        C1 = int(3*ranuni(1));
+233        if C1=0 then Y=exp(5*(X1-0.3)**2)+rannor(1);
+234        else if C1=1 then Y=log(X1*(1-X1))+rannor(1);
+235        else Y=7*X1+rannor(1);
+236        output;
+237        end;
+238        run;
+
+NOTE: The data set WORK.MIXTURE has 1000 observations and 3 variables.
+
+239        ods graphics on;
+240        proc adaptivereg data=Mixture plots=fit;
+241        class c1;
+242        model y=c1 x1;
+243        run;
+
+NOTE: The PROCEDURE ADAPTIVEREG printed page 12.
+
+244        proc adaptivereg data=Mixture details=bases;
+245        class c1;
+246        model y=c1 x1;
+247        run;
+
+NOTE: The PROCEDURE ADAPTIVEREG printed page 13.
+
+248        data New;
+249        set Mixture;
+250        basis1 = (c1=1 OR c1=0);
+251        basis3 = (c1=1);
+252        basis5 = NOT(c1=1) *MAX(x1-0.7665019053,0);
+253        basis7 = NOT(c1=1 OR c1=0) *MAX(x1-0.7665019053,0);
+254        basis8 = NOT(c1=1 OR c1=0) *MAX(0.7665019053-x1,0);
+255        basis9 = (c1=1) *MAX(x1-0.5530566455,0);
+256        basis10 = (c1=1)*MAX(0.5530566455-x1,0);
+257        basis11 = (c1=1)*MAX(x1-0.045800759,0);
+258        basis13 = (c1=1)*MAX(x1-0.9526330293,0);
+259        basis15 = (c1=1 OR c1=0)*MAX(x1-0.9499325226,0);
+260        basis17 = (c1=1 OR c1=0)*MAX(x1-0.5142821095,0);
+261        basis19 = (c1=1 OR c1=0)*MAX(x1-0.9889635476,0);
+262        pred = 5.3829 - 4.3871 *basis1 + 32.7761*basis3 +
+263        20.2859*basis5 - 11.4183*basis7 - 7.0758*basis8 +
+264        58.4911*basis9 - 71.6388*basis10 - 69.0764*basis11 -
+265        119.71*basis13 + 66.5733*basis15 + 6.6681*basis17 -
+266        185.21*basis19;
+267        run;
+
+NOTE: There were 1000 observations read from the data set WORK.MIXTURE.
+NOTE: The data set WORK.NEW has 1000 observations and 16 variables.
+
+268        
+269        
+270        
+271        
+The SAS System
+
+272        

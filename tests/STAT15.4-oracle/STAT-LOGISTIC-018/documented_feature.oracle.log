@@ -1,0 +1,170 @@
+The SAS System
+
+14766      
+14767      /* STAT-LOGISTIC-018: LOGISTIC — CODE / SCORE / Linear Predictor, Predicted Probability, and Confidence Limits
+14768       * Source: S154 / Chapter 79 / `CODE Statement` (PDF p. 5855); S154 / Chapter 79 / `SCORE Statement` (PDF pp. 5898–5900); S154 / Chapter 79 /
+14768    ! `Linear Predictor, Predicted Probability, and Confidence Limits` (PDF pp. 5925–5926).
+14769       * Discriminates: Example 79.16: Scoring Data Sets; explicit statements: SCORE
+14770       */
+14771      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+14771    ! validmemname=compatible locale=en_US;
+14772      %let syscc=0;
+14773      title; footnote;
+14774      ods _all_ close;
+14775      ods listing gpath="%sysfunc(pathname(work))";
+14776      ods graphics off;
+14777      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.DATA1 (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.VASO (memtype=DATA).
+14777    !                                         quit;
+
+
+14778      ods path work.templat(update) sashelp.tmplmst(read);
+14779      
+14780      data Crops;
+14781      length Crop $ 10;
+14782      infile datalines truncover;
+14783      input Crop $ @@;
+14784      do i=1 to 3;
+14785      input x1-x4 @@;
+14786      if (x1 ^= .) then output;
+14787      end;
+14788      input;
+14789      datalines;
+
+NOTE: The data set WORK.CROPS has 36 observations and 6 variables.
+
+14803      ;
+14804      ods graphics on;
+14805      proc logistic data=Crops;
+14806      model Crop=x1-x4 / link=glogit;
+14807      score out=Score1;
+14808      effectplot slicefit(x=x3);
+14809      run;
+
+NOTE: PROC LOGISTIC is fitting the generalized logit model. The logits modeled contrast each response level against the reference level (Crop='Sugarbeets'). 
+      Use the response variable option REF= if you want to change the reference level.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: There were 36 observations read from the data set WORK.CROPS.
+NOTE: The data set WORK.SCORE1 has 36 observations and 13 variables.
+NOTE: The PROCEDURE LOGISTIC printed page 1227.
+
+14810      proc logistic data=Crops outmodel=work.CropModel;
+14811      model Crop=x1-x4 / link=glogit;
+14812      score data=Crops out=Score2;
+14813      store CropModel2;
+14814      run;
+
+NOTE: PROC LOGISTIC is fitting the generalized logit model. The logits modeled contrast each response level against the reference level (Crop='Sugarbeets'). 
+      Use the response variable option REF= if you want to change the reference level.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The LOGISTIC procedure generated the model item store WORK.CROPMODEL2.
+NOTE: There were 36 observations read from the data set WORK.CROPS.
+NOTE: The data set WORK.CROPMODEL has 252 observations and 6 variables.
+NOTE: The data set WORK.SCORE2 has 36 observations and 13 variables.
+NOTE: The PROCEDURE LOGISTIC printed page 1228.
+
+14815      proc logistic inmodel=work.CropModel;
+14816      score data=Crops out=Score3;
+14817      run;
+
+NOTE: The data set WORK.SCORE3 has 36 observations and 13 variables.
+
+14818      proc plm source=CropModel2;
+14819      score data=Crops out=ScorePLM predicted=p / ilink;
+14820      run;
+
+NOTE: The data set WORK.SCOREPLM has 180 observations and 8 variables.
+NOTE: The PROCEDURE PLM printed page 1229.
+
+14821      proc transpose data=ScorePLM out=Score4 prefix=P_ let;
+14822      id _LEVEL_;
+14823      var p;
+14824      by x1-x4 notsorted;
+14825      run;
+
+NOTE: There were 180 observations read from the data set WORK.SCOREPLM.
+NOTE: The data set WORK.SCORE4 has 36 observations and 11 variables.
+
+14826      data Score4(drop=_NAME_ _LABEL_);
+14827      merge Score4 Crops(keep=Crop x1-x4);
+14828      F_Crop=Crop;
+14829      run;
+
+NOTE: There were 36 observations read from the data set WORK.SCORE4.
+NOTE: There were 36 observations read from the data set WORK.CROPS.
+NOTE: The data set WORK.SCORE4 has 36 observations and 11 variables.
+
+14830      proc summary data=ScorePLM nway;
+14831      by x1-x4 notsorted;
+14832      var p;
+14833      output out=into maxid(p(_LEVEL_))=I_Crop;
+14834      run;
+
+NOTE: There were 180 observations read from the data set WORK.SCOREPLM.
+NOTE: The data set WORK.INTO has 36 observations and 7 variables.
+
+14835      data Score4;
+14836      merge Score4 into(keep=I_Crop);
+14837      run;
+
+NOTE: There were 36 observations read from the data set WORK.SCORE4.
+NOTE: There were 36 observations read from the data set WORK.INTO.
+NOTE: The data set WORK.SCORE4 has 36 observations and 12 variables.
+
+14838      data Prior;
+14839      length Crop $10.;
+14840      input Crop _PRIOR_;
+14841      datalines;
+
+NOTE: The data set WORK.PRIOR has 5 observations and 2 variables.
+
+14847      ;
+14848      proc logistic inmodel=work.CropModel;
+14849      score data=Crops prior=prior out=Score5 fitstat;
+14850      run;
+
+NOTE: The data set WORK.SCORE5 has 36 observations and 13 variables.
+NOTE: The PROCEDURE LOGISTIC printed page 1230.
+
+14851      proc freq data=Score1;
+14852      table F_Crop*I_Crop / nocol nocum nopercent;
+14853      run;
+
+NOTE: There were 36 observations read from the data set WORK.SCORE1.
+NOTE: The PROCEDURE FREQ printed page 1231.
+
+14854      data Test;
+14855      input Crop $ 1-10 x1-x4;
+14856      datalines;
+
+NOTE: The data set WORK.TEST has 5 observations and 5 variables.
+
+14862      ;
+14863      proc logistic noprint inmodel=work.CropModel;
+14864      score data=Test out=ScoredTest;
+14865      run;
+
+NOTE: The data set WORK.SCOREDTEST has 5 observations and 12 variables.
+
+14866      proc print data=ScoredTest label noobs;
+14867      var F_Crop I_Crop P_Clover P_Corn P_Cotton P_Soybeans P_Sugarbeets;
+14868      run;
+
+NOTE: There were 5 observations read from the data set WORK.SCOREDTEST.
+NOTE: The PROCEDURE PRINT printed page 1232.
+
+14869      run;
+14870      quit;
+14871      
+14872      
+14873      
+14874      
+The SAS System
+
+14875      

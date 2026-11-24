@@ -1,0 +1,51 @@
+The SAS System
+
+4490       
+4491       /* STAT-MIXED-019: MIXED — Official examples and feature integration regression
+4492        * Source: S154 / Chapter 84 / `Examples: MIXED Procedure` (PDF pp. 6738–6802).
+4493        * Discriminates: Example 84.9: Examining Individual Test Components
+4494        */
+4495       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+4495     ! validmemname=compatible locale=en_US;
+4496       %let syscc=0;
+4497       title; footnote;
+4498       ods _all_ close;
+4499       ods listing gpath="%sysfunc(pathname(work))";
+4500       ods graphics off;
+4501       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.HEIGHTS (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+4501     !                                         quit;
+
+
+4502       ods path work.templat(update) sashelp.tmplmst(read);
+4503       
+4504       data polynomial;
+4505       do x=1 to 20;
+4506       input y@@;
+4507       output;
+4508       end;
+4509       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.POLYNOMIAL has 20 observations and 2 variables.
+
+4514       ;
+4515       proc mixed data=polynomial;
+4516       model y = x x*x x*x*x / s lcomponents htype=1,3;
+4517       run;
+
+NOTE: The PROCEDURE MIXED printed page 331.
+
+4518       
+4519       
+4520       
+4521       
+The SAS System
+
+4522       

@@ -1,0 +1,126 @@
+The SAS System
+
+2983       
+2984       /* STAT-HPPLS-001: HPPLS — Data input, variable roles, and basic options
+2985        * Source: S154 / Chapter 64 / `PROC HPPLS Statement` (PDF pp. 4916–4919); S154 / Chapter 64 / `BY Statement` (PDF pp. 4919–4920); S154 / Chapter
+2985     !  64 / `ID Statement` (PDF p. 4920); S154 / Chapter 64 / `Missing Values` (PDF p. 4931).
+2986        * Discriminates: Two explicit BY groups contain identical inputs, exposing group boundaries and per-group results.
+2987        */
+2988       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+2988     ! validmemname=compatible locale=en_US;
+2989       %let syscc=0;
+2990       title; footnote;
+2991       ods _all_ close;
+2992       ods listing gpath="%sysfunc(pathname(work))";
+2993       ods graphics off;
+2994       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.ENZYME (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.REMISS (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+2994     !                                         quit;
+
+
+2995       ods path work.templat(update) sashelp.tmplmst(read);
+2996       
+2997       data Sample;
+2998       input obsnam $ v1-v27 ls ha dt Role $5. @@;
+2999       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.SAMPLE has 16 observations and 32 variables.
+
+3048       ;
+3049       data _oracle_input; set sample; do _oracle_by=1 to 2; output; end; run;
+
+NOTE: There were 16 observations read from the data set WORK.SAMPLE.
+NOTE: The data set WORK._ORACLE_INPUT has 32 observations and 33 variables.
+
+3050       proc sort data=_oracle_input; by _oracle_by; run;
+
+NOTE: There were 32 observations read from the data set WORK._ORACLE_INPUT.
+NOTE: The data set WORK._ORACLE_INPUT has 32 observations and 33 variables.
+
+3051       proc hppls data=_oracle_input;
+3052       by _oracle_by;
+3053       model ls ha dt = v1-v27;
+3054       run;
+
+NOTE: The HPPLS procedure is executing in single-machine mode.
+NOTE: Maximum number of factors to extract set to 15. This may be too high; you should consider using either NFAC= to set the number of factors or PARTITION 
+      statement to select the number of factors by test set validation.
+NOTE: The above message was for the following BY group:
+      _oracle_by=1
+NOTE: Maximum number of factors to extract set to 15. This may be too high; you should consider using either NFAC= to set the number of factors or PARTITION 
+      statement to select the number of factors by test set validation.
+NOTE: The above message was for the following BY group:
+      _oracle_by=2
+NOTE: There were 32 observations read from the data set WORK._ORACLE_INPUT.
+NOTE: The PROCEDURE HPPLS printed pages 141-143.
+
+3055       proc hppls data=sample;
+3056       model ls ha dt = v1-v27;
+3057       partition roleVar = Role(train='TRAIN' test='TEST');
+3058       run;
+
+NOTE: The HPPLS procedure is executing in single-machine mode.
+NOTE: Maximum number of factors to extract set to 9.
+NOTE: There were 16 observations read from the data set WORK.SAMPLE.
+NOTE: The PROCEDURE HPPLS printed pages 144-145.
+
+3059       proc hppls data=sample cvtest(pval=0.15 seed=12345);
+3060       model ls ha dt = v1-v27;
+3061       partition roleVar = Role(train='TRAIN' test='TEST');
+3062       run;
+
+NOTE: The HPPLS procedure is executing in single-machine mode.
+NOTE: Maximum number of factors to extract set to 9.
+NOTE: There were 16 observations read from the data set WORK.SAMPLE.
+NOTE: The PROCEDURE HPPLS printed pages 146-147.
+
+3063       data newobs;
+3064       input obsnam $ v1-v27 @@;
+3065       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.NEWOBS has 2 observations and 28 variables.
+
+3072       ;
+3073       data all;
+3074       set sample newobs;
+3075       run;
+
+NOTE: There were 16 observations read from the data set WORK.SAMPLE.
+NOTE: There were 2 observations read from the data set WORK.NEWOBS.
+NOTE: The data set WORK.ALL has 18 observations and 32 variables.
+
+3076       proc hppls data=all nfac=2;
+3077       model ls ha dt = v1-v27;
+3078       partition roleVar = Role(train='TRAIN' test='TEST');
+3079       output out=result pred=p;
+3080       id obsnam;
+3081       run;
+
+NOTE: The HPPLS procedure is executing in single-machine mode.
+NOTE: There were 18 observations read from the data set WORK.ALL.
+NOTE: The data set WORK.RESULT has 18 observations and 4 variables.
+NOTE: The PROCEDURE HPPLS printed pages 148-149.
+
+3082       proc print data=result;
+3083       where (obsnam in ('EM17','EM25'));
+3084       var obsnam p_ls p_ha p_dt;
+3085       run;
+
+NOTE: There were 2 observations read from the data set WORK.RESULT.
+      WHERE obsnam in ('EM17', 'EM25');
+NOTE: The PROCEDURE PRINT printed page 150.
+
+3086       
+3087       
+3088       
+3089       
+The SAS System
+
+3090       

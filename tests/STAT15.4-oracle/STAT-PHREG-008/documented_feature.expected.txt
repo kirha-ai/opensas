@@ -1,0 +1,160 @@
+
+The PHREG Procedure
+
+                    Model Information
+
+Data Set                 WORK.MYELOMA2                   
+Dependent Variable       Time              Survival Time 
+Censoring Variable       VStatus           0=Alive 1=Dead
+Censoring Value(s)       0                               
+Ties Handling            BRESLOW                         
+
+
+Number of Observations Read          65
+Number of Observations Used          65
+
+
+Summary of the Number of Event and Censored Values
+ 
+                                     Percent
+   Total       Event    Censored    Censored
+
+      65          48          17       26.15
+
+
+                          Maximum Likelihood Iteration History
+ 
+Iter        Ridge      Log Likelihood           LogBUN              HGB        Contrived
+
+   0            0     -154.8579914384     0.0000000000      0.000000000      0.000000000
+   1            0     -140.6934052686     1.9948819671     -0.084318519      1.466331269
+   2            0     -137.7841629416     1.6794678962     -0.109067888      2.778361123
+   3            0     -136.9711897754     1.7140611684     -0.111564202      3.938095086
+   4            0     -136.7078932606     1.7181735043     -0.112273248      5.003053568
+   5            0     -136.6164264879     1.7187547532     -0.112369756      6.027435769
+   6            0     -136.5835200895     1.7188294108     -0.112382079      7.036444978
+   7            0     -136.5715152788     1.7188392687     -0.112383700      8.039763533
+   8            0     -136.5671126045     1.7188405904     -0.112383917      9.040984886
+   9            0     -136.5654947987     1.7188407687     -0.112383947     10.041434266
+  10            0     -136.5648998913     1.7188407928     -0.112383950     11.041599592
+  11            0     -136.5646810709     1.7188407960     -0.112383951     12.041660414
+  12            0     -136.5646005760     1.7188407965     -0.112383951     13.041682789
+  13            0     -136.5645709642     1.7188407965     -0.112383951     14.041691020
+  14            0     -136.5645600707     1.7188407965     -0.112383951     15.041694049
+  15            0     -136.5645560632     1.7188407965     -0.112383951     16.041695163
+  16            0     -136.5645545889     1.7188407965     -0.112383951     17.041695572
+
+
+         Last Evaluation of the Gradient
+ 
+      LogBUN               HGB         Contrived
+
+-5.999665E-8        4.63314E-7      8.5798933E-7
+
+
+         Convergence criterion (GCONV=1E-8) satisfied.          
+
+
+         Model Fit Statistics
+ 
+                 Without           With
+Criterion     Covariates     Covariates
+
+-2 LOG L         309.716        273.129
+AIC              309.716        279.129
+SBC              309.716        284.743
+
+
+        Testing Global Null Hypothesis: BETA=0
+ 
+Test                 Chi-Square       DF     Pr > ChiSq
+
+Likelihood Ratio        36.5869        3         <.0001
+Score                   25.9308        3         <.0001
+Wald                    11.5165        3         0.0092
+
+
+                     Analysis of Maximum Likelihood Estimates
+ 
+                    Parameter      Standard                                  Hazard
+Parameter    DF      Estimate         Error    Chi-Square    Pr > ChiSq       Ratio
+
+LogBUN        1       1.71884       0.58376        8.6697        0.0032       5.578
+HGB           1      -0.11238       0.06090        3.4053        0.0650       0.894
+Contrived     1      17.04170          1080        0.0002        0.9874    25183399
+
+The PHREG Procedure
+
+                         Model Information
+
+Data Set                 WORK.MYELOMA2                             
+Dependent Variable       Time                        Survival Time 
+Censoring Variable       VStatus                     0=Alive 1=Dead
+Censoring Value(s)       0                                         
+Ties Handling            BRESLOW                                   
+Likelihood Penalty       Firth's bias correction                   
+
+
+Number of Observations Read          65
+Number of Observations Used          65
+
+
+Summary of the Number of Event and Censored Values
+ 
+                                     Percent
+   Total       Event    Censored    Censored
+
+      65          48          17       26.15
+
+
+                          Maximum Likelihood Iteration History
+ 
+Iter        Ridge      Log Likelihood           LogBUN              HGB        Contrived
+
+   0            0     -150.7361197494     0.0000000000      0.000000000     0.0000000000
+   1            0     -136.9933949142     2.0262484120     -0.086519138     1.4338859318
+   2            0     -134.5796594364     1.6770836974     -0.109172604     2.6221444778
+   3            0     -134.1572923217     1.7163408994     -0.111166227     3.4458043289
+   4            0     -134.1229607193     1.7209210332     -0.112007726     3.7923555412
+   5            0     -134.1228364805     1.7219588214     -0.112178328     3.8174197804
+   6            0     -134.1228355256     1.7220081673     -0.112187764     3.8151642206
+
+
+         Last Evaluation of the Gradient
+ 
+      LogBUN               HGB         Contrived
+
+-0.000022515        0.00027466      0.0000987315
+
+
+         Convergence criterion (GCONV=1E-8) satisfied.          
+
+
+         Model Fit Statistics
+ 
+                 Without           With
+Criterion     Covariates     Covariates
+
+-2 LOG L         309.716        268.246
+AIC              309.716        274.246
+SBC              309.716        279.859
+
+
+        Testing Global Null Hypothesis: BETA=0
+ 
+Test                 Chi-Square       DF     Pr > ChiSq
+
+Likelihood Ratio        41.4703        3         <.0001
+Score                   25.7495        3         <.0001
+Wald                    17.1660        3         0.0007
+
+
+                                 Analysis of Maximum Likelihood Estimates
+ 
+                                                                                         95% Hazard Ratio
+                    Parameter      Standard                                  Hazard     Profile Likelihood
+Parameter    DF      Estimate         Error    Chi-Square    Pr > ChiSq       Ratio      Confidence Limits
+
+LogBUN        1       1.72201       0.58379        8.7008        0.0032       5.596       1.761      17.231
+HGB           1      -0.11219       0.06059        3.4279        0.0641       0.894       0.794       1.007
+Contrived     1       3.81516       1.55812        5.9955        0.0143      45.384       5.406    6005.404

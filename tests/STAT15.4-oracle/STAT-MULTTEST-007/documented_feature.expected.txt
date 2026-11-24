@@ -1,0 +1,171 @@
+
+The Multtest Procedure
+
+     P-Value Adjustment Information
+
+P-Value Adjustment     Adaptive Holm    
+P-Value Adjustment     Adaptive Hochberg
+P-Value Adjustment     Adaptive FDR     
+P-Value Adjustment     pFDR Q-Value     
+Lambda                 0.4              
+Seed                   518498000        
+
+
+                         Lambda Values
+ 
+                                     NTrueNull        NTrueNull
+      Lambda              MSE         Observed           Spline
+
+           0         0.657880       121.000000        67.318707
+    0.050000         0.030212        43.157895        59.812885
+    0.100000         0.024897        41.111111        52.636271
+    0.150000         0.014904        36.470588        46.033846
+    0.200000         0.008580        32.500000        40.172642
+    0.250000         0.006476        30.666667        35.157768
+    0.300000         0.002719        25.714286        31.046105
+    0.350000         0.002471        24.615385        27.861153
+    0.400000         0.002378        23.333333        25.595089
+    0.450000         0.003285        25.454545        24.217908
+    0.500000         0.003036        24.000000        23.687690
+    0.550000         0.003567        24.444444        23.965745
+    0.600000         0.005813        27.500000        25.016579
+    0.650000         0.004118        22.857143        26.809774
+    0.700000         0.006647        26.666667        29.321876
+    0.750000         0.006260        24.000000        32.512203
+    0.800000         0.013242        30.000000        36.315191
+    0.850000         0.037624        40.000000        40.618909
+    0.900000         0.046906        40.000000        45.274355
+    0.950000         0.332183        80.000000        50.117369
+
+
+            Estimated Number of True Null Hypotheses
+ 
+P-Value
+Adjustment            Method              Estimate     Proportion
+
+Adaptive Holm         Decreased Slope           26        0.21488
+Adaptive Hochberg     Decreased Slope           26        0.21488
+Adaptive FDR          Lowest Slope              43        0.35537
+Positive FDR          Bootstrap            23.3333        0.19284
+
+The NLMIXED Procedure
+
+                         Specifications
+
+Data Set                                    WORK.TEST           
+Dependent Variable                          Probt               
+Distribution for Dependent Variable         General             
+Optimization Technique                      Dual Quasi-Newton   
+Integration Method                          None                
+
+
+               Dimensions
+
+Observations Used                    121
+Observations Not Used                  0
+Total Observations                   121
+Parameters                             3
+
+
+              Initial Parameters
+ 
+                                      Negative
+                                           Log
+     pi0           a           b    Likelihood
+
+     0.5         0.1         0.1    -236.39278
+
+
+                          Iteration History
+ 
+                      Negative
+                           Log                   Maximum
+Iteration Calls     Likelihood    Difference    Gradient       Slope
+
+       1      5      -251.6695      15.27674     187.746    -2352.86
+       2      8      -263.4319      11.76234     273.136    -883.149
+       3     13      -293.1430       29.7111     222.140    -144.824
+       4     16      -303.0351      9.892099     251.804    -168.887
+       5     20      -310.1356       7.10054     53.2147    -3.33512
+       6     23      -314.0548       3.91918     126.588    -7.55953
+       7     25      -318.3331      4.278266     54.0466    -2.93491
+       8     28      -319.0582      0.725185     39.5568    -1.25251
+       9     31      -319.3227      0.264413     1.37252    -0.37386
+      10     34      -319.3414      0.018779     1.69266    -0.02479
+      11     37      -319.3420      0.000567    0.012059    -0.00112
+      12     40      -319.3420      2.625E-7    0.000340    -5.16E-7
+
+
+          NOTE: GCONV convergence criterion satisfied.          
+
+
+             Fit Statistics
+
+-2 Log Likelihood                 -638.7
+AIC (smaller is better)           -632.7
+AICC (smaller is better)          -632.5
+BIC (smaller is better)           -624.3
+
+
+                                                Parameter Estimates
+ 
+                         Standard                                      95% Confidence
+Parameter    Estimate       Error      DF    t Value    Pr > |t|           Limits           Gradient    Active BC
+
+pi0                 0           .     121        .         .               .           .     24.7549      Lower BC  
+a              0.1853     0.01842     121      10.06      <.0001      0.1489      0.2218    0.000340                
+b              0.9341      0.1529     121       6.11      <.0001      0.6313      1.2368    -0.00002                
+
+
+Covariance Matrix of Parameter Estimates
+ 
+            pi0           a           b
+
+pi0           .           .           .
+a             .    0.000339    0.001127
+b             .    0.001127     0.02338
+
+
+Correlation Matrix of Parameter Estimates
+ 
+           pi0          a          b
+
+pi0     1.0000      .          .    
+a        .         1.0000     0.4001
+b        .         0.4001     1.0000
+
+The Multtest Procedure
+
+  P-Value Adjustment Information
+
+P-Value Adjustment     Adaptive FDR
+
+
+        Estimated Number of True Null Hypotheses
+ 
+P-Value
+Adjustment       Method           Estimate     Proportion
+
+Adaptive FDR     Lowest Slope           43        0.35537
+
+The Multtest Procedure
+
+     P-Value Adjustment Information
+
+P-Value Adjustment     Adaptive Holm    
+P-Value Adjustment     Adaptive Hochberg
+P-Value Adjustment     Adaptive FDR     
+P-Value Adjustment     pFDR Q-Value     
+Lambda                 0.4              
+Seed                   438601875        
+
+
+            Estimated Number of True Null Hypotheses
+ 
+P-Value
+Adjustment            Method              Estimate     Proportion
+
+Adaptive Holm         Decreased Slope           26        0.21488
+Adaptive Hochberg     Decreased Slope           26        0.21488
+Adaptive FDR          Lowest Slope              43        0.35537
+Positive FDR          Bootstrap            23.3333        0.19284

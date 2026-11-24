@@ -1,0 +1,56 @@
+The SAS System
+
+24114      
+24115      /* STAT-SURVEYREG-005: SURVEYREG — Notation / Regression Coefficients / Design Effect
+24116       * Source: S154 / Chapter 123 / `Notation` (PDF pp. 10144–10145); S154 / Chapter 123 / `Regression Coefficients` (PDF p. 10145); S154 / Chapter 123
+24116    !  / `Design Effect` (PDF pp. 10145–10146).
+24117       * Discriminates: Example 123.3: Regression Estimator for Simple Random Sample
+24118       */
+24119      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+24119    ! validmemname=compatible locale=en_US;
+24120      %let syscc=0;
+24121      title; footnote;
+24122      ods _all_ close;
+24123      ods listing gpath="%sysfunc(pathname(work))";
+24124      ods graphics off;
+24125      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.ICECREAMDATADOMAIN (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.STUDENTTOTALS (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+24125    !                                         quit;
+
+
+24126      ods path work.templat(update) sashelp.tmplmst(read);
+24127      
+24128      data Municipalities;
+24129      input Municipality Cluster Population85 Population75;
+24130      datalines;
+
+NOTE: The data set WORK.MUNICIPALITIES has 32 observations and 4 variables.
+
+24163      ;
+24164      run;
+24165      title1 'Regression Analysis for Swedish Municipalities';
+24166      title2 'Estimate Total Population';
+24167      proc surveyreg data=Municipalities total=50;
+24168      cluster Cluster;
+24169      model Population85=Population75;
+24170      estimate '1985 population' Intercept 284 Population75 8200;
+24171      run;
+
+NOTE: The structure of the Estimates table has changed from an earlier release of SAS.
+NOTE: The PROCEDURE SURVEYREG printed page 1537.
+
+24172      
+24173      
+24174      
+24175      
+The SAS System
+
+24176      

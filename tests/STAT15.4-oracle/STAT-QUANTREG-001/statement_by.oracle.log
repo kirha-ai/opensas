@@ -1,0 +1,83 @@
+The SAS System
+
+2295       
+2296       /* STAT-QUANTREG-001: QUANTREG — Data input, variable roles, and basic options
+2297        * Source: S154 / Chapter 103 / `proc quantreg Statement` (PDF pp. 8372–8378); S154 / Chapter 103 / `BY Statement` (PDF p. 8378); S154 / Chapter
+2297     ! 103 / `ID Statement` (PDF pp. 8385–8386); S154 / Chapter 103 / `WEIGHT Statement` (PDF p. 8393).
+2298        * Discriminates: Two explicit BY groups contain identical inputs, exposing group boundaries and per-group results.
+2299        */
+2300       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+2300     ! validmemname=compatible locale=en_US;
+2301       %let syscc=0;
+2302       title; footnote;
+2303       ods _all_ close;
+2304       ods listing gpath="%sysfunc(pathname(work))";
+2305       ods graphics off;
+2306       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.A (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+2306     !                                         quit;
+
+
+2307       ods path work.templat(update) sashelp.tmplmst(read);
+2308       
+2309       data a (drop=i);
+2310       do i=1 to 1000;
+2311       x1=rannor(1234);
+2312       x2=rannor(1234);
+2313       e=rannor(1234);
+2314       if i > 950 then y=100 + 10*e;
+2315       else y=10 + 5*x1 + 3*x2 + 0.5 * e;
+2316       output;
+2317       end;
+2318       run;
+
+NOTE: The data set WORK.A has 1000 observations and 4 variables.
+
+2319       data _oracle_input; set a; do _oracle_by=1 to 2; output; end; run;
+
+NOTE: There were 1000 observations read from the data set WORK.A.
+NOTE: The data set WORK._ORACLE_INPUT has 2000 observations and 5 variables.
+
+2320       proc sort data=_oracle_input; by _oracle_by; run;
+
+NOTE: There were 2000 observations read from the data set WORK._ORACLE_INPUT.
+NOTE: The data set WORK._ORACLE_INPUT has 2000 observations and 5 variables.
+
+2321       proc quantreg data=_oracle_input;
+2322       by _oracle_by;
+2323       model y = x1 x2 / seed=314159;
+2324       run;
+
+NOTE: No valid quantiles are specified. PROC QUANTREG computes median regression.
+NOTE: The PROCEDURE QUANTREG printed pages 76-77.
+
+2325       proc quantreg algorithm=interior(tolerance=1e-6)
+2326       ci=none data=a;
+2327       model y = x1 x2 / itprint nosummary seed=314159;
+2328       run;
+
+NOTE: No valid quantiles are specified. PROC QUANTREG computes median regression.
+NOTE: The PROCEDURE QUANTREG printed pages 78-79.
+
+2329       proc quantreg algorithm=smooth(rratio=.5) ci=none data=a;
+2330       model y = x1 x2 / itprint nosummary seed=314159;
+2331       run;
+
+NOTE: No valid quantiles are specified. PROC QUANTREG computes median regression.
+NOTE: The PROCEDURE QUANTREG printed pages 80-81.
+
+2332       
+2333       
+2334       
+2335       
+The SAS System
+
+2336       

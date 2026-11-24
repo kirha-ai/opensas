@@ -1,0 +1,170 @@
+The SAS System
+
+454        
+455        /* STAT-CALIS-025: CALIS — SIMTESTS / TESTFUNC / Gradient, Hessian, Information Matrix, and Approximate Standard Errors
+456         * Source: S154 / Chapter 33 / `SIMTESTS Statement` (PDF pp. 1652–1653); S154 / Chapter 33 / `TESTFUNC Statement` (PDF pp. 1653–1654); S154 /
+456      ! Chapter 33 / `Gradient, Hessian, Information Matrix, and Approximate Standard Errors` (PDF pp. 1770–1774).
+457         * Discriminates: Example 33.28: Multiple-Group Model for Purchasing Behavior; explicit statements: SIMTESTS
+458         */
+459        options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+459      ! validmemname=compatible locale=en_US;
+460        %let syscc=0;
+461        title; footnote;
+462        ods _all_ close;
+463        ods listing gpath="%sysfunc(pathname(work))";
+464        ods graphics off;
+465        proc datasets library=work kill nolist;
+NOTE: Deleting WORK.MEASURES (memtype=DATA).
+NOTE: Deleting WORK.MULTIPLE (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+465      !                                         quit;
+
+
+466        ods path work.templat(update) sashelp.tmplmst(read);
+467        
+468        data Wheaton(TYPE=COV);
+469        length _name_ $32 _type_ $8;
+470        infile datalines truncover;
+471        
+472        _type_ = 'cov';
+473        input _name_ :$32. Anomie67 Powerless67 Anomie71 Powerless71
+474        Education SEI;
+475        label Anomie67='Anomie (1967)' Powerless67='Powerlessness (1967)'
+476        Anomie71='Anomie (1971)' Powerless71='Powerlessness (1971)'
+477        Education='Education' SEI='Occupational Status Index';
+478        datalines;
+
+NOTE: The data set WORK.WHEATON has 6 observations and 8 variables.
+
+485        ;
+486        run;
+487        data region1(type=cov);
+488        input _type_ :$8. _name_ :$32. Spend02 Spend03 Courtesy Responsive
+489        Helpful Delivery Pricing Availability Quality;
+490        datalines;
+
+NOTE: The data set WORK.REGION1 has 10 observations and 11 variables.
+
+501        ;
+502        data region2(type=cov);
+503        input _type_ :$8. _name_ :$32. Spend02 Spend03 Courtesy Responsive
+504        Helpful Delivery Pricing Availability Quality;
+505        datalines;
+
+NOTE: The data set WORK.REGION2 has 10 observations and 11 variables.
+
+516        ;
+517        proc calis meanstr;
+518        group 1 / data=region1 label="Region 1" nobs=378;
+519        group 2 / data=region2 label="Region 2" nobs=423;
+520        model 1 / group=1,2;
+521        path
+522        Service ===> Spend02 Spend03 ,
+523        Product ===> Spend02 Spend03 ,
+524        Spend02 ===> Spend03 ,
+525        Service ===> Courtesy Responsive
+526        Helpful Delivery ,
+527        Product ===> Pricing Availability
+528        Quality ;
+529        pvar
+530        Courtesy Responsive Helpful Delivery Pricing
+531        Availability Quality Spend02 Spend03,
+532        Service Product = 2 * 1.;
+533        pcov
+534        Service Product;
+535        run;
+
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+WARNING: Model 1. The estimated error variance for variable Spend02 is negative.
+WARNING: Model 1. Although all predicted variances for the observed variables and latent factors are positive, the corresponding predicted covariance matrix is 
+         not positive definite. It has one negative eigenvalue.
+NOTE: The PROCEDURE CALIS printed pages 41-49.
+
+536        proc calis meanstr;
+537        group 1 / data=region1 label="Region 1" nobs=378;
+538        group 2 / data=region2 label="Region 2" nobs=423;
+539        model 1 / group=1;
+540        path
+541        Service ===> Spend02 Spend03 ,
+542        Product ===> Spend02 Spend03 ,
+543        Spend02 ===> Spend03 ,
+544        Service ===> Courtesy Responsive Helpful Delivery ,
+545        Product ===> Pricing Availability Quality ;
+546        pvar
+547        Courtesy Responsive Helpful Delivery Pricing
+548        Availability Quality Spend02 Spend03,
+549        Service Product = 2 * 1.;
+550        pcov
+551        Service Product;
+552        model 2 / group=2;
+553        refmodel 1/ allnewparms;
+554        run;
+
+NOTE: Convergence criterion (ABSGCONV=0.00001) satisfied.
+NOTE: The PROCEDURE CALIS printed pages 50-58.
+
+555        proc calis meanstr modification;
+556        group 1 / data=region1 label="Region 1" nobs=378;
+557        group 2 / data=region2 label="Region 2" nobs=423;
+558        model 3 / label="Model for References Only";
+559        path
+560        Service ===> Spend02 Spend03 ,
+561        Product ===> Spend02 Spend03 ,
+562        Spend02 ===> Spend03 ,
+563        Service ===> Courtesy Responsive
+564        Helpful Delivery ,
+565        Product ===> Pricing Availability
+566        Quality ;
+567        pvar
+568        Courtesy Responsive Helpful Delivery Pricing
+569        Availability Quality Spend02 Spend03,
+570        Service Product = 2 * 1.;
+571        pcov
+572        Service Product;
+573        model 1 / groups=1;
+574        refmodel 3;
+575        mean
+576        Spend02 Spend03 = G1_InterSpend02 G1_InterSpend03,
+577        Courtesy Responsive Helpful
+578        Delivery Pricing Availability
+579        Quality = G1_intercept01-G1_intercept07;
+580        model 2 / groups=2;
+581        refmodel 3;
+582        mean
+583        Spend02 Spend03 = G2_InterSpend02 G2_InterSpend03,
+584        Courtesy Responsive Helpful
+585        Delivery Pricing Availability
+586        Quality = G2_intercept01-G2_intercept07;
+587        simtests
+588        SpendDiff = (Spend02Diff Spend03Diff)
+589        MeasurementDiff = (CourtesyDiff ResponsiveDiff
+590        HelpfulDiff DeliveryDiff
+591        PricingDiff AvailabilityDiff
+592        QualityDiff);
+593        Spend02Diff = G2_InterSpend02 - G1_InterSpend02;
+594        Spend03Diff = G2_InterSpend03 - G1_InterSpend03;
+595        CourtesyDiff = G2_intercept01 - G1_intercept01;
+596        ResponsiveDiff = G2_intercept02 - G1_intercept02;
+597        HelpfulDiff = G2_intercept03 - G1_intercept03;
+598        DeliveryDiff = G2_intercept04 - G1_intercept04;
+599        PricingDiff = G2_intercept05 - G1_intercept05;
+600        AvailabilityDiff = G2_intercept06 - G1_intercept06;
+601        QualityDiff = G2_intercept07 - G1_intercept07;
+602        run;
+
+NOTE: Your code contains 9 program statements.
+NOTE: Convergence criterion (ABSGCONV=0.00001) satisfied.
+NOTE: The PROCEDURE CALIS printed pages 59-71.
+
+603        
+604        
+605        
+606        
+The SAS System
+
+607        

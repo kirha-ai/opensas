@@ -1,0 +1,50 @@
+The SAS System
+
+226        
+227        /* STAT-COMMON-006: CLASS level formation and ordering
+228         * Source: S154 / Chapter 20 / `Levelization of Classification Variables` (PDF pp. 411–413).
+229         * Discriminates: CLASS level order and effect column interpretation
+230         */
+231        options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+231      ! validmemname=compatible locale=en_US;
+232        %let syscc=0;
+233        title; footnote;
+234        ods _all_ close;
+235        ods listing gpath="%sysfunc(pathname(work))";
+236        ods graphics off;
+237        proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TIME (memtype=DATA).
+237      !                                         quit;
+
+
+238        ods path work.templat(update) sashelp.tmplmst(read);
+239        
+240        data sample;
+241         input x z y group $ weight freq;
+242         datalines;
+
+NOTE: The data set WORK.SAMPLE has 12 observations and 6 variables.
+
+255        ;
+256        run;
+257        proc glm data=sample order=data; class group; model y=group x; run;
+
+257      !                                                                     quit;
+
+NOTE: The PROCEDURE GLM printed pages 10-11.
+
+258        proc glm data=sample order=internal; class group; model y=group x; run;
+
+258      !                                                                         quit;
+
+NOTE: The PROCEDURE GLM printed pages 12-13.
+
+259        
+260        
+261        
+262        
+The SAS System
+
+263        

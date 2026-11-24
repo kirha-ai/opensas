@@ -1,0 +1,225 @@
+
+_oracle_by=1
+
+The GLIMMIX Procedure
+
+               Model Information
+
+Data Set                      WORK._ORACLE_INPUT
+Response Variable (Events)    sideeffect        
+Response Variable (Trials)    n                 
+Response Distribution         Binomial          
+Link Function                 Logit             
+Variance Function             Default           
+Variance Matrix Blocked By    center            
+Estimation Technique          Residual PL       
+Degrees of Freedom Method     Containment       
+
+
+                Class Level Information
+ 
+Class     Levels    Values
+
+center        15    1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 
+group          2    A B                                 
+
+
+Number of Observations Read          30
+Number of Observations Used          30
+Number of Events                    155
+Number of Trials                    503
+
+
+            Dimensions
+
+G-side Cov. Parameters           1
+Columns in X                     3
+Columns in Z per Subject         1
+Subjects (Blocks in V)          15
+Max Obs per Subject              2
+
+
+           Optimization Information
+
+Optimization Technique        Dual Quasi-Newton
+Parameters in Optimization    1                
+Lower Boundaries              1                
+Upper Boundaries              0                
+Fixed Effects                 Profiled         
+Starting From                 Data             
+
+
+                                 Iteration History
+ 
+                                             Objective                         Max
+Iteration    Restarts    Subiterations        Function          Change    Gradient
+
+        0           0                5    79.688580269      0.11807224    7.851E-7
+        1           0                3    81.294622554      0.02558021    8.209E-7
+        2           0                2    81.438701534      0.00166079    4.061E-8
+        3           0                1    81.444083567      0.00006263    2.273E-8
+        4           0                1    81.444265216      0.00000421    0.000025
+        5           0                1    81.444277364      0.00000383    0.000023
+        6           0                1    81.444266322      0.00000348    0.000021
+        7           0                1     81.44427636      0.00000316    0.000019
+        8           0                1    81.444267235      0.00000287    0.000017
+        9           0                1     81.44427553      0.00000261    0.000016
+       10           0                1     81.44426799      0.00000237    0.000014
+       11           0                1    81.444274844      0.00000216    0.000013
+       12           0                1    81.444268614      0.00000196    0.000012
+       13           0                1    81.444274277      0.00000178    0.000011
+       14           0                1    81.444269129      0.00000162    9.772E-6
+       15           0                0    81.444273808      0.00000000    9.102E-6
+
+      Convergence criterion (PCONV=1.11022E-8) satisfied.       
+
+
+             Fit Statistics
+
+-2 Res Log Pseudo-Likelihood       81.44
+Generalized Chi-Square             30.69
+Gener. Chi-Square / DF              1.10
+
+
+       Covariance Parameter Estimates
+ 
+                                    Standard
+Cov Parm     Subject    Estimate       Error
+
+Intercept    center       0.6176      0.3181
+
+
+                       Solutions for Fixed Effects
+ 
+                                  Standard
+Effect       group    Estimate       Error       DF    t Value    Pr > |t|
+
+Intercept              -0.8071      0.2514       14      -3.21      0.0063
+group        A         -0.4896      0.2034       14      -2.41      0.0305
+group        B               0           .        .        .         .    
+
+
+        Type III Tests of Fixed Effects
+ 
+              Num      Den
+Effect         DF       DF    F Value    Pr > F
+
+group           1       14       5.79    0.0305
+
+_oracle_by=2
+
+The GLIMMIX Procedure
+
+               Model Information
+
+Data Set                      WORK._ORACLE_INPUT
+Response Variable (Events)    sideeffect        
+Response Variable (Trials)    n                 
+Response Distribution         Binomial          
+Link Function                 Logit             
+Variance Function             Default           
+Variance Matrix Blocked By    center            
+Estimation Technique          Residual PL       
+Degrees of Freedom Method     Containment       
+
+
+                Class Level Information
+ 
+Class     Levels    Values
+
+center        15    1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 
+group          2    A B                                 
+
+
+Number of Observations Read          30
+Number of Observations Used          30
+Number of Events                    155
+Number of Trials                    503
+
+
+            Dimensions
+
+G-side Cov. Parameters           1
+Columns in X                     3
+Columns in Z per Subject         1
+Subjects (Blocks in V)          15
+Max Obs per Subject              2
+
+
+           Optimization Information
+
+Optimization Technique        Dual Quasi-Newton
+Parameters in Optimization    1                
+Lower Boundaries              1                
+Upper Boundaries              0                
+Fixed Effects                 Profiled         
+Starting From                 Data             
+
+
+                                 Iteration History
+ 
+                                             Objective                         Max
+Iteration    Restarts    Subiterations        Function          Change    Gradient
+
+        0           0                5    79.688580269      0.11807224    7.851E-7
+        1           0                3    81.294622554      0.02558021    8.209E-7
+        2           0                2    81.438701534      0.00166079    4.061E-8
+        3           0                1    81.444083567      0.00006263    2.273E-8
+        4           0                1    81.444265216      0.00000421    0.000025
+        5           0                1    81.444277364      0.00000383    0.000023
+        6           0                1    81.444266322      0.00000348    0.000021
+        7           0                1     81.44427636      0.00000316    0.000019
+        8           0                1    81.444267235      0.00000287    0.000017
+        9           0                1     81.44427553      0.00000261    0.000016
+       10           0                1     81.44426799      0.00000237    0.000014
+       11           0                1    81.444274844      0.00000216    0.000013
+       12           0                1    81.444268614      0.00000196    0.000012
+       13           0                1    81.444274277      0.00000178    0.000011
+       14           0                1    81.444269129      0.00000162    9.772E-6
+       15           0                0    81.444273808      0.00000000    9.102E-6
+
+      Convergence criterion (PCONV=1.11022E-8) satisfied.       
+
+
+             Fit Statistics
+
+-2 Res Log Pseudo-Likelihood       81.44
+Generalized Chi-Square             30.69
+Gener. Chi-Square / DF              1.10
+
+
+       Covariance Parameter Estimates
+ 
+                                    Standard
+Cov Parm     Subject    Estimate       Error
+
+Intercept    center       0.6176      0.3181
+
+
+                       Solutions for Fixed Effects
+ 
+                                  Standard
+Effect       group    Estimate       Error       DF    t Value    Pr > |t|
+
+Intercept              -0.8071      0.2514       14      -3.21      0.0063
+group        A         -0.4896      0.2034       14      -2.41      0.0305
+group        B               0           .        .        .         .    
+
+
+        Type III Tests of Fixed Effects
+ 
+              Num      Den
+Effect         DF       DF    F Value    Pr > F
+
+group           1       14       5.79    0.0305
+
+The GLIMMIX Procedure
+
+                                                           group Least Squares Means
+ 
+                                                                                                               Standard
+                     Standard                                                                                     Error       Lower       Upper
+group    Estimate       Error       DF    t Value    Pr > |t|     Alpha       Lower       Upper        Mean        Mean        Mean        Mean
+
+A         -1.2966      0.2601       14      -4.99      0.0002      0.05     -1.8544     -0.7388      0.2147     0.04385      0.1354      0.3233
+B         -0.8071      0.2514       14      -3.21      0.0063      0.05     -1.3462     -0.2679      0.3085     0.05363      0.2065      0.4334

@@ -1,0 +1,107 @@
+The SAS System
+
+22894      
+22895      /* STAT-GENMOD-020: GENMOD — EFFECTPLOT / ODS Graphics
+22896       * Source: S154 / Chapter 51 / `EFFECTPLOT Statement` (PDF pp. 3533–3534); S154 / Chapter 51 / `ODS Graphics` (PDF pp. 3631–3633).
+22897       * Discriminates: Verified default procedure context
+22898       */
+22899      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+22899    ! validmemname=compatible locale=en_US;
+22900      %let syscc=0;
+22901      title; footnote;
+22902      ods _all_ close;
+22903      ods listing gpath="%sysfunc(pathname(work))";
+22904      ods graphics off;
+22905      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.INGOTS (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+22905    !                                         quit;
+
+
+22906      ods path work.templat(update) sashelp.tmplmst(read);
+22907      
+22908      ods graphics on;
+22909      ods trace on;
+22910      ods trace on;
+22911      data nor;
+22912      input x y;
+22913      datalines;
+
+NOTE: The data set WORK.NOR has 16 observations and 2 variables.
+
+22930      ;
+22931      proc genmod data=nor;
+22932      model y = x / dist = normal
+22933      link = log;
+22934      output out = Residuals
+22935      pred = Pred
+22936      resraw = Resraw
+22937      reschi = Reschi
+22938      resdev = Resdev
+22939      stdreschi = Stdreschi
+22940      stdresdev = Stdresdev
+22941      reslik = Reslik;
+22942      run;
+
+
+Output Added:
+-------------
+Name:       ModelInfo
+Label:      Model Information
+Template:   Stat.Genmod.ModelInfo
+Path:       Genmod.ModelInfo
+-------------
+
+Output Added:
+-------------
+Name:       NObs
+Label:      Number of Observations
+Template:   Stat.Genmod.NObs
+Path:       Genmod.NObs
+-------------
+
+Output Added:
+-------------
+Name:       ModelFit
+Label:      Criteria For Assessing Goodness Of Fit
+Template:   stat.genmod.ModelFit
+Path:       Genmod.ModelFit
+-------------
+
+Output Added:
+-------------
+Name:       ConvergenceStatus
+Label:      Convergence Status
+Template:   Stat.Genmod.ConvergenceStatus
+Path:       Genmod.ConvergenceStatus
+-------------
+NOTE: Algorithm converged.
+
+Output Added:
+-------------
+Name:       ParameterEstimates
+Label:      Analysis Of Parameter Estimates
+Template:   stat.genmod.parameterestimates
+Path:       Genmod.ParameterEstimates
+-------------
+NOTE: The scale parameter was estimated by maximum likelihood.
+NOTE: The data set WORK.RESIDUALS has 16 observations and 9 variables.
+NOTE: The PROCEDURE GENMOD printed page 2392.
+
+22943      ods trace off;
+22944      ods trace off;
+22945      ods graphics off;
+22946      
+22947      
+22948      
+22949      
+The SAS System
+
+22950      

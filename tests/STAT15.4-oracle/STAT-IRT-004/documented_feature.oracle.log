@@ -1,0 +1,57 @@
+The SAS System
+
+8937       
+8938       /* STAT-IRT-004: IRT — COV / EQUALITY / FACTOR
+8939        * Source: S154 / Chapter 72 / `COV Statement` (PDF pp. 5314–5318); S154 / Chapter 72 / `EQUALITY Statement` (PDF pp. 5318–5324); S154 / Chapter
+8939     ! 72 / `FACTOR Statement` (PDF pp. 5324–5327).
+8940        * Discriminates: Verified default procedure context
+8941        */
+8942       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+8942     ! validmemname=compatible locale=en_US;
+8943       %let syscc=0;
+8944       title; footnote;
+8945       ods _all_ close;
+8946       ods listing gpath="%sysfunc(pathname(work))";
+8947       ods graphics off;
+8948       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.RESPONSES (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+8948     !                                         quit;
+
+
+8949       ods path work.templat(update) sashelp.tmplmst(read);
+8950       
+8951       data responses;
+8952       call streaminit(329);
+8953       array item[5] item1-item5;
+8954       do subject=1 to 150;
+8955       theta=rand('normal');
+8956       do k=1 to 5;
+8957       item[k]=rand('bernoulli',1/(1+exp(-(theta-(k-3)/2))));
+8958       end;
+8959       output;
+8960       end;
+8961       keep item1-item5;
+8962       run;
+
+NOTE: The data set WORK.RESPONSES has 150 observations and 5 variables.
+
+8963       proc irt data=responses;
+8964       var item1-item5;
+8965       run;
+
+NOTE: The observed frequency is zero for some response patterns. As a result, the Pearson chi-square model fit statistic is not calculated.
+WARNING: Over 20 percent of the response patterns have expected frequency less than 5. The chi-square distribution might not provide valid statistical 
+         inferences about the model fit when you use the Pearson chi-square and the likelihood ratio chi-square.
+NOTE: The PROCEDURE IRT printed pages 639-643.
+
+8966       
+8967       
+8968       
+8969       
+The SAS System
+
+8970       

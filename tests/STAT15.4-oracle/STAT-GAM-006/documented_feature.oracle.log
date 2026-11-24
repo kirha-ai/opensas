@@ -1,0 +1,59 @@
+The SAS System
+
+19488      
+19489      /* STAT-GAM-006: GAM — Distribution Family and Canonical Link / Dispersion Parameter
+19490       * Source: S154 / Chapter 48 / `Distribution Family and Canonical Link` (PDF pp. 3317–3319); S154 / Chapter 48 / `Dispersion Parameter` (PDF p.
+19490    ! 3319).
+19491       * Discriminates: Getting Started: GAM Procedure
+19492       */
+19493      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+19493    ! validmemname=compatible locale=en_US;
+19494      %let syscc=0;
+19495      title; footnote;
+19496      ods _all_ close;
+19497      ods listing gpath="%sysfunc(pathname(work))";
+19498      ods graphics off;
+19499      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.EXPERIMENTA (memtype=DATA).
+NOTE: Deleting WORK.EXPERIMENTB (memtype=DATA).
+NOTE: Deleting WORK.PREDGAM (memtype=DATA).
+NOTE: Deleting WORK.PREDGAMB (memtype=DATA).
+NOTE: Deleting WORK.PREDLOESS (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+19499    !                                         quit;
+
+
+19500      ods path work.templat(update) sashelp.tmplmst(read);
+19501      
+19502      title 'Patterns of Diabetes';
+19503      data diabetes;
+19504      input Age BaseDeficit CPeptide @@;
+19505      logCP = log(CPeptide);
+19506      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.DIABETES has 43 observations and 4 variables.
+
+19522      ;
+19523      ods graphics on;
+19524      proc gam data=diabetes;
+19525      model logCP = spline(Age) spline(BaseDeficit);
+19526      run;
+
+NOTE: The PROCEDURE GAM printed page 2325.
+
+19527      
+19528      
+19529      
+19530      
+The SAS System
+
+19531      

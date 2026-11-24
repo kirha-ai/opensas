@@ -1,0 +1,90 @@
+The SAS System
+
+12789      
+12790      /* STAT-CATMOD-014: CATMOD — Cautions
+12791       * Source: S154 / Chapter 36 / `Cautions` (PDF pp. 2244–2247).
+12792       * Discriminates: Getting Started: CATMOD Procedure
+12793       */
+12794      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+12794    ! validmemname=compatible locale=en_US;
+12795      %let syscc=0;
+12796      title; footnote;
+12797      ods _all_ close;
+12798      ods listing gpath="%sysfunc(pathname(work))";
+12799      ods graphics off;
+
+NOTE: There were 18 observations read from the data set WORK.SCHOOL.
+NOTE: The PROCEDURE CATMOD printed pages 1772-1773.
+
+12800      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.COLDS (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SCHOOL (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+12800    !                                         quit;
+
+
+12801      ods path work.templat(update) sashelp.tmplmst(read);
+12802      
+12803      data colds;
+12804      input sex $ residence $ periods count @@;
+12805      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.COLDS has 12 observations and 4 variables.
+
+12810      ;
+12811      proc catmod data=colds;
+12812      weight count;
+12813      response means;
+12814      model periods = sex residence sex*residence / design;
+12815      run;
+
+12816      model periods = sex residence / design;
+NOTE: Prior MODEL statement(s) deleted.
+12817      run;
+
+12818      population sex residence;
+12819      model periods = sex;
+NOTE: Prior MODEL statement(s) deleted.
+12820      run;
+
+
+NOTE: There were 12 observations read from the data set WORK.COLDS.
+NOTE: The PROCEDURE CATMOD printed pages 1774-1776.
+
+12821      data school;
+12822      length Program $ 9;
+12823      input School Program $ Style $ Count @@;
+12824      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.SCHOOL has 18 observations and 4 variables.
+
+12831      ;
+12832      proc catmod order=data;
+12833      weight Count;
+12834      model Style=School Program School*Program;
+12835      run;
+
+NOTE: The default estimation method for this model is maximum-likelihood.
+NOTE: Maximum likelihood computations converged.
+12836      model Style=School Program;
+NOTE: Prior MODEL statement(s) deleted.
+12837      run;
+
+NOTE: The default estimation method for this model is maximum-likelihood.
+NOTE: Maximum likelihood computations converged.
+12838      
+12839      
+12840      
+12841      
+The SAS System
+
+12842      

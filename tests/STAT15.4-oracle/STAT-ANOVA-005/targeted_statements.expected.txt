@@ -1,0 +1,167 @@
+
+The ANOVA Procedure
+
+   Class Level Information
+ 
+Class         Levels    Values
+
+group              2    1 2   
+
+
+Number of Observations Read          40
+Number of Observations Used          40
+
+The ANOVA Procedure
+ 
+Dependent Variable: y1   
+
+                                        Sum of
+Source                      DF         Squares     Mean Square    F Value    Pr > F
+
+Model                        1      52.2918026      52.2918026      15.62    0.0003
+
+Error                       38     127.1854733       3.3469861                     
+
+Corrected Total             39     179.4772759                                     
+
+
+R-Square     Coeff Var      Root MSE       y1 Mean
+
+0.291356      11.82962      1.829477      15.46522
+
+
+Source                      DF        Anova SS     Mean Square    F Value    Pr > F
+
+group                        1     52.29180255     52.29180255      15.62    0.0003
+
+The ANOVA Procedure
+ 
+Dependent Variable: y2   
+
+                                        Sum of
+Source                      DF         Squares     Mean Square    F Value    Pr > F
+
+Model                        1      22.5252392      22.5252392       5.99    0.0192
+
+Error                       38     142.9861981       3.7627947                     
+
+Corrected Total             39     165.5114374                                     
+
+
+R-Square     Coeff Var      Root MSE       y2 Mean
+
+0.136095      11.67768      1.939792      16.61111
+
+
+Source                      DF        Anova SS     Mean Square    F Value    Pr > F
+
+group                        1     22.52523923     22.52523923       5.99    0.0192
+
+The ANOVA Procedure
+ 
+Dependent Variable: y3   
+
+                                        Sum of
+Source                      DF         Squares     Mean Square    F Value    Pr > F
+
+Model                        1      48.3031249      48.3031249      15.66    0.0003
+
+Error                       38     117.1826608       3.0837542                     
+
+Corrected Total             39     165.4857857                                     
+
+
+R-Square     Coeff Var      Root MSE       y3 Mean
+
+0.291887      10.06661      1.756062      17.44443
+
+
+Source                      DF        Anova SS     Mean Square    F Value    Pr > F
+
+group                        1     48.30312490     48.30312490      15.66    0.0003
+
+The ANOVA Procedure
+Repeated Measures Analysis of Variance
+
+       Repeated Measures Level Information
+ 
+Dependent Variable          y1       y2       y3
+
+     Level of time           0        1        2
+
+
+MANOVA Test Criteria and Exact F Statistics for the Hypothesis of no time Effect
+                         H = Anova SSCP Matrix for time
+                             E = Error SSCP Matrix
+                                        
+                              S=1    M=0    N=17.5
+ 
+Statistic                        Value    F Value    Num DF    Den DF    Pr > F
+
+Wilks' Lambda               0.22958187      62.08         2        37    <.0001
+Pillai's Trace              0.77041813      62.08         2        37    <.0001
+Hotelling-Lawley Trace      3.35574467      62.08         2        37    <.0001
+Roy's Greatest Root         3.35574467      62.08         2        37    <.0001
+
+
+MANOVA Test Criteria and Exact F Statistics for the Hypothesis of no time*group Effect
+                         H = Anova SSCP Matrix for time*group
+                                E = Error SSCP Matrix
+                                           
+                                 S=1    M=0    N=17.5
+ 
+Statistic                        Value    F Value    Num DF    Den DF    Pr > F
+
+Wilks' Lambda               0.85939489       3.03         2        37    0.0606
+Pillai's Trace              0.14060511       3.03         2        37    0.0606
+Hotelling-Lawley Trace      0.16360943       3.03         2        37    0.0606
+Roy's Greatest Root         0.16360943       3.03         2        37    0.0606
+
+The ANOVA Procedure
+Repeated Measures Analysis of Variance
+Tests of Hypotheses for Between Subjects Effects
+
+Source                      DF        Anova SS     Mean Square    F Value    Pr > F
+
+group                        1     119.4158469     119.4158469      13.41    0.0008
+Error                       38     338.3775427       8.9046722                     
+
+The ANOVA Procedure
+Repeated Measures Analysis of Variance
+Univariate Tests of Hypotheses for Within Subject Effects
+
+                                                                                          Adj Pr > F
+Source                      DF        Anova SS     Mean Square    F Value    Pr > F     G - G     H-F-L
+
+time                         2     78.99648973     39.49824486      61.29    <.0001    <.0001    <.0001
+time*group                   2      3.70431981      1.85215991       2.87    0.0626    0.0642    0.0626
+Error(time)                 76     48.97678964      0.64443144                                         
+
+
+Greenhouse-Geisser Epsilon      0.9733
+Huynh-Feldt-Lecoutre Epsilon    1.0251
+
+The ANOVA Procedure
+Repeated Measures Analysis of Variance
+Analysis of Variance of Contrast Variables
+ 
+time_N represents the nth degree polynomial contrast for time
+
+Contrast Variable: time_1
+
+
+Source                      DF        Anova SS     Mean Square    F Value    Pr > F
+
+Mean                         1     78.34519438     78.34519438     119.38    <.0001
+group                        1      0.03955420      0.03955420       0.06    0.8074
+Error                       38     24.93917799      0.65629416                     
+
+
+Contrast Variable: time_2
+
+
+Source                      DF        Anova SS     Mean Square    F Value    Pr > F
+
+Mean                         1      0.65129535      0.65129535       1.03    0.3167
+group                        1      3.66476561      3.66476561       5.79    0.0211
+Error                       38     24.03761164      0.63256873                     

@@ -1,0 +1,52 @@
+The SAS System
+
+12337      
+12338      /* STAT-LIFETEST-001: LIFETEST — Data input, variable roles, and basic options
+12339       * Source: S154 / Chapter 77 / `PROC LIFETEST Statement` (PDF pp. 5650–5662); S154 / Chapter 77 / `BY Statement` (PDF pp. 5662–5663); S154 /
+12339    ! Chapter 77 / `FREQ Statement` (PDF p. 5663); S154 / Chapter 77 / `ID Statement` (PDF p. 5663); S154 / Chapter 77 / `STRATA Statement` (PDF pp.
+12339    ! 5663–5668); S154 / Chapter 77 / `WEIGHT Statement` (PDF p. 5670); S154 / Chapter 77 / `Missing Values` (PDF pp. 5670–5671).
+12340       * Discriminates: Verified default procedure context; explicit statements: STRATA
+12341       */
+12342      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+12342    ! validmemname=compatible locale=en_US;
+12343      %let syscc=0;
+12344      title; footnote;
+12345      ods _all_ close;
+12346      ods listing gpath="%sysfunc(pathname(work))";
+12347      ods graphics off;
+12348      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.MICRO (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+12348    !                                         quit;
+
+
+12349      ods path work.templat(update) sashelp.tmplmst(read);
+12350      
+12351      data survival;
+12352      input time status group $;
+12353      datalines;
+
+NOTE: The data set WORK.SURVIVAL has 10 observations and 3 variables.
+
+12364      ;
+12365      run;
+12366      proc lifetest data=survival;
+12367      time time*status(0);
+12368      strata group;
+12369      run;
+
+NOTE: The LOGLOG transform is used to compute the confidence limits for the quartiles of the survivor distribution. To suppress using this transform, specify 
+      CONFTYPE=LINEAR in the PROC LIFETEST statement.
+NOTE: The PROCEDURE LIFETEST printed pages 855-857.
+
+12370      
+12371      
+12372      
+12373      
+The SAS System
+
+12374      

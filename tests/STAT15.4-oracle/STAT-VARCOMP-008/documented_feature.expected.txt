@@ -1,0 +1,55 @@
+
+Analyzing the Cure Rate of Rubber
+
+Variance Components Estimation Procedure
+
+      Class Level Information
+ 
+Class         Levels    Values
+
+Temp               3    145 155 165 
+
+Lab                3    1 2 3       
+
+Batch              3    A B C       
+
+
+Number of Observations Read         108
+Number of Observations Used         108
+
+
+Dependent Variable:    Cure
+
+
+                                             REML Iterations
+ 
+                                                                      Var(Batch(Temp*
+Iteration          Objective           Var(Lab)      Var(Temp*Lab)              Lab))         Var(Error)
+
+        0      13.4500060254       0.5094464340                  0       2.4004888633       0.5787185225
+        1      13.0898262160       0.3194348317                  0       2.0869636935       0.6016005334
+        2      13.0893125570       0.3176048001                  0       2.0738906134       0.6026217204
+        3      13.0893125555       0.3176017115                  0       2.0738685461       0.6026234568
+
+
+Convergence criteria met.                                       
+
+
+          REML Estimates
+ 
+Variance Component        Estimate
+
+Var(Lab)                   0.31760
+Var(Temp*Lab)                    0
+Var(Batch(Temp*Lab))       2.07387
+Var(Error)                 0.60262
+
+
+                                         Asymptotic Covariance Matrix of Estimates
+ 
+                                      Var(Lab)             Var(Temp*Lab)      Var(Batch(Temp*Lab))                Var(Error)
+
+Var(Lab)                               0.32452                         0                  -0.04998                1.0258E-12
+Var(Temp*Lab)                                0                         0                         0                         0
+Var(Batch(Temp*Lab))                  -0.04998                         0                   0.45042                -0.0022417
+Var(Error)                          1.0258E-12                         0                -0.0022417                 0.0089668

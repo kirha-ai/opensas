@@ -1,0 +1,38 @@
+
+Using PROC SIM2D for Spatial Simulation
+
+The SIM2D Procedure
+Simulation: SIM1, Dependent Variable: Thick
+
+Number of Observations Read          75
+Number of Observations Used          75
+
+
+       Simulation Information
+
+Simulation Grid Points             25
+Type                      Conditional
+Number of Realizations            100
+
+
+Covariance Model Information
+
+Type                Gaussian
+Sill                  7.4599
+Range                30.1111
+Effective Range    52.153955
+Nugget Effect           1E-8
+
+Using PROC SIM2D for Spatial Simulation
+
+The MEANS Procedure
+
+              Analysis Variable : SVALUE Simulated Value at Grid Point
+ 
+                                  N
+     X-coord         Y-coord    Obs            Mean         Std Dev         Maximum
+-----------------------------------------------------------------------------------
+           0               0    100      40.6268569       0.5017187      41.7791959
+
+          75              75    100      40.1087879       0.0022770      40.1150259
+-----------------------------------------------------------------------------------

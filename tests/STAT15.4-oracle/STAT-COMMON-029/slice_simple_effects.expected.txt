@@ -1,0 +1,96 @@
+
+The Mixed Procedure
+
+                  Model Information
+
+Data Set                     WORK.FACTORIAL           
+Dependent Variable           y                        
+Covariance Structure         Diagonal                 
+Estimation Method            REML                     
+Residual Variance Method     Profile                  
+Fixed Effects SE Method      Model-Based              
+Degrees of Freedom Method    Residual                 
+
+
+             Class Level Information
+ 
+Class    Levels    Values
+
+group         2    A B                           
+h             2    0 1                           
+
+
+            Dimensions
+
+Covariance Parameters             1
+Columns in X                      9
+Columns in Z                      0
+Subjects                          1
+Max Obs per Subject              12
+
+
+          Number of Observations
+
+Number of Observations Read              12
+Number of Observations Used              12
+Number of Observations Not Used           0
+
+
+Covariance Parameter
+      Estimates
+ 
+Cov Parm     Estimate
+
+Residual      13.3333
+
+
+           Fit Statistics
+
+-2 Res Log Likelihood            47.8
+AIC (Smaller is Better)          49.8
+AICC (Smaller is Better)         50.5
+BIC (Smaller is Better)          49.9
+
+
+        Type 3 Tests of Fixed Effects
+ 
+              Num     Den
+Effect         DF      DF    F Value    Pr > F
+
+group           1       8      37.06    0.0003
+h               1       8       0.31    0.5951
+group*h         1       8       0.01    0.9389
+
+
+         F Test for group*h Least
+            Squares Means Slice
+ 
+          Num      Den
+Slice      DF       DF    F Value    Pr > F
+
+h 0         1        8      19.01    0.0024
+
+
+               Simple Differences of group*h Least Squares Means
+ 
+                                        Standard
+Slice    group    _group    Estimate       Error       DF    t Value    Pr > |t|
+
+h 0      A        B         -13.0000      2.9814        8      -4.36      0.0024
+
+
+         F Test for group*h Least
+            Squares Means Slice
+ 
+          Num      Den
+Slice      DF       DF    F Value    Pr > F
+
+h 1         1        8      18.05    0.0028
+
+
+               Simple Differences of group*h Least Squares Means
+ 
+                                        Standard
+Slice    group    _group    Estimate       Error       DF    t Value    Pr > |t|
+
+h 1      A        B         -12.6667      2.9814        8      -4.25      0.0028
