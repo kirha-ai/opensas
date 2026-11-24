@@ -1,0 +1,64 @@
+The SAS System
+
+731        
+732        /* STAT-GAM-001: GAM — Data input, variable roles, and basic options
+733         * Source: S154 / Chapter 48 / `PROC GAM Statement` (PDF pp. 3296–3298); S154 / Chapter 48 / `BY Statement` (PDF pp. 3298–3299); S154 / Chapter
+733      ! 48 / `FREQ Statement` (PDF p. 3300); S154 / Chapter 48 / `Missing Values` (PDF p. 3307).
+734         * Discriminates: Two explicit BY groups contain identical inputs, exposing group boundaries and per-group results.
+735         */
+736        options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+736      ! validmemname=compatible locale=en_US;
+737        %let syscc=0;
+738        title; footnote;
+739        ods _all_ close;
+740        ods listing gpath="%sysfunc(pathname(work))";
+741        ods graphics off;
+742        proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.SKINCONDITION (memtype=DATA).
+NOTE: Deleting WORK.SUMMERSCHOOL (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK._ORACLE_INPUT (memtype=DATA).
+742      !                                         quit;
+
+
+743        ods path work.templat(update) sashelp.tmplmst(read);
+744        
+745        title 'Patterns of Diabetes';
+746        data diabetes;
+747        input Age BaseDeficit CPeptide @@;
+748        logCP = log(CPeptide);
+749        datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.DIABETES has 43 observations and 4 variables.
+
+765        ;
+766        ods graphics on;
+767        data _oracle_input; set diabetes; do _oracle_by=1 to 2; output; end; run;
+
+NOTE: There were 43 observations read from the data set WORK.DIABETES.
+NOTE: The data set WORK._ORACLE_INPUT has 86 observations and 5 variables.
+
+768        proc sort data=_oracle_input; by _oracle_by; run;
+
+NOTE: There were 86 observations read from the data set WORK._ORACLE_INPUT.
+NOTE: The data set WORK._ORACLE_INPUT has 86 observations and 5 variables.
+
+769        proc gam data=_oracle_input;
+770        by _oracle_by;
+771        model logCP = spline(Age) spline(BaseDeficit);
+772        run;
+
+NOTE: The PROCEDURE GAM printed pages 88-89.
+
+773        
+774        
+775        
+776        
+The SAS System
+
+777        

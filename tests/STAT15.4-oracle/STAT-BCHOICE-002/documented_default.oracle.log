@@ -1,0 +1,51 @@
+The SAS System
+
+742        
+743        /* STAT-BCHOICE-002: BCHOICE — Bayesian estimation of discrete choice models
+744         * Source: S154 / Chapter 30 / `Getting Started: BCHOICE Procedure` (PDF pp. 1166–1177); S154 / Chapter 30 / `Overview: BCHOICE Procedure` (PDF pp.
+744      !  1164–1166).
+745         * Discriminates: Example 30.5: Heterogeneity Affected by Individual Characteristics
+746         */
+747        options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+747      ! validmemname=compatible locale=en_US;
+748        %let syscc=0;
+749        title; footnote;
+750        ods _all_ close;
+751        ods listing gpath="%sysfunc(pathname(work))";
+752        ods graphics off;
+753        proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+753      !                                         quit;
+
+
+754        ods path work.templat(update) sashelp.tmplmst(read);
+755        
+756        proc print data=Sashelp.Margarin (obs=24);
+757        by HouseID Set;
+758        id HouseID Set;
+759        run;
+
+NOTE: There were 24 observations read from the data set SASHELP.MARGARIN.
+NOTE: The PROCEDURE PRINT printed page 30.
+
+760        proc bchoice data=Sashelp.Margarin seed=123 nmc=1000 thin=2
+761        nthreads=4 plots=none nbi=200;
+762        class Brand(ref='PPk') HouseID Set;
+763        model Choice = / choiceset=(HouseID Set);
+764        random Brand LogPrice / subject=HouseID remean=(LogInc FamSize)
+765        type=un monitor=(1);
+766        run;
+
+NOTE: Generating the burn-in samples.
+NOTE: Beginning sample generation.
+NOTE: Beginning calculation of summary and diagnostics statistics.
+NOTE: The PROCEDURE BCHOICE printed page 31.
+
+767        
+768        
+769        
+770        
+The SAS System
+
+771        

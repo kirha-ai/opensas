@@ -1,0 +1,62 @@
+The SAS System
+
+23139      
+23140      /* STAT-SURVEYPHREG-009: SURVEYPHREG — Variance Adjustment Factors / Variance Ratios and Standard Error Ratios / Domain Analysis
+23141       * Source: S154 / Chapter 122 / `Variance Adjustment Factors` (PDF pp. 10066–10067); S154 / Chapter 122 / `Variance Ratios and Standard Error
+23141    ! Ratios` (PDF pp. 10067–10068); S154 / Chapter 122 / `Domain Analysis` (PDF pp. 10068–10069).
+23142       * Discriminates: Verified default procedure context
+23143       */
+23144      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+23144    ! validmemname=compatible locale=en_US;
+23145      %let syscc=0;
+23146      title; footnote;
+23147      ods _all_ close;
+23148      ods listing gpath="%sysfunc(pathname(work))";
+23149      ods graphics off;
+23150      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SURVEY (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+23150    !                                         quit;
+
+
+23151      ods path work.templat(update) sashelp.tmplmst(read);
+23152      
+23153      data survey;
+23154      call streaminit(722);
+23155      do stratum=1 to 2;
+23156      do cluster=1 to 4;
+23157      do id=1 to 12;
+23158      age=20+mod(id*7+cluster,45);
+23159      time=1+rand('exponential')*10;
+23160      status=(mod(id,4) ne 0);
+23161      weight=2+stratum+cluster/10;
+23162      output;
+23163      end;
+23164      end;
+23165      end;
+23166      run;
+
+NOTE: The data set WORK.SURVEY has 96 observations and 7 variables.
+
+23167      proc surveyphreg data=survey;
+23168      strata stratum;
+23169      cluster cluster;
+23170      weight weight;
+23171      model time*status(0)=age;
+23172      run;
+
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The PROCEDURE SURVEYPHREG printed page 1502.
+
+23173      
+23174      
+23175      
+23176      
+The SAS System
+
+23177      

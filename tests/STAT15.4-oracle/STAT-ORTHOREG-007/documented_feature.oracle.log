@@ -1,0 +1,72 @@
+The SAS System
+
+1424       
+1425       /* STAT-ORTHOREG-007: ORTHOREG — Output Data Set
+1426        * Source: S154 / Chapter 91 / `Output Data Set` (PDF p. 7298).
+1427        * Discriminates: Getting Started: ORTHOREG Procedure
+1428        */
+1429       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+1429     ! validmemname=compatible locale=en_US;
+1430       %let syscc=0;
+1431       title; footnote;
+1432       ods _all_ close;
+1433       ods listing gpath="%sysfunc(pathname(work))";
+1434       ods graphics off;
+
+NOTE: The GLM procedure generated the model item store WORK.GSTORE.
+NOTE: The PROCEDURE GLM printed pages 181-182.
+
+1435       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.GSTORE (memtype=ITEMSTOR).
+NOTE: Deleting WORK.OSTORE (memtype=ITEMSTOR).
+NOTE: Deleting WORK.OZEROS (memtype=DATA).
+NOTE: Deleting WORK.POLYNOMIAL (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.ZEROS (memtype=DATA).
+1435     !                                         quit;
+
+
+1436       ods path work.templat(update) sashelp.tmplmst(read);
+1437       
+1438       title 'PROC ORTHOREG used with Longley data';
+1439       data Longley;
+1440       input Employment Prices GNP Jobless Military PopSize Year;
+1441       datalines;
+
+NOTE: The data set WORK.LONGLEY has 16 observations and 7 variables.
+
+1458       ;
+1459       proc orthoreg data=Longley;
+1460       model Employment = Prices Prices *Prices
+1461       GNP GNP *GNP
+1462       Jobless Jobless *Jobless
+1463       Military Military*Military
+1464       PopSize PopSize *PopSize
+1465       Year Year *Year;
+1466       run;
+
+NOTE: There were 16 observations read from the data set WORK.LONGLEY.
+NOTE: The PROCEDURE ORTHOREG printed page 183.
+
+1467       proc glm data=Longley;
+1468       model Employment = Prices Prices *Prices
+1469       GNP GNP *GNP
+1470       Jobless Jobless *Jobless
+1471       Military Military*Military
+1472       PopSize PopSize *PopSize
+1473       Year Year *Year;
+1474       ods select OverallANOVA
+1475       FitStatistics
+1476       ParameterEstimates
+1477       Notes;
+1478       run;
+
+1479       
+1480       
+1481       
+1482       
+The SAS System
+
+1483       

@@ -1,0 +1,61 @@
+The SAS System
+
+3482       
+3483       /* STAT-MIXED-001: MIXED — Data input, variable roles, and basic options
+3484        * Source: S154 / Chapter 84 / `PROC MIXED Statement` (PDF pp. 6626–6638); S154 / Chapter 84 / `BY Statement` (PDF pp. 6638–6639); S154 / Chapter
+3484     !  84 / `ID Statement` (PDF pp. 6645–6646); S154 / Chapter 84 / `WEIGHT Statement` (PDF pp. 6694–6695).
+3485        * Discriminates: Verified default procedure context
+3486        */
+3487       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+3487     ! validmemname=compatible locale=en_US;
+3488       %let syscc=0;
+3489       title; footnote;
+3490       ods _all_ close;
+3491       ods listing gpath="%sysfunc(pathname(work))";
+3492       ods graphics off;
+3493       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.FITNESS1 (memtype=DATA).
+NOTE: Deleting WORK.OUTMI (memtype=DATA).
+NOTE: Deleting WORK.OUTREG (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+3493     !                                         quit;
+
+
+3494       ods path work.templat(update) sashelp.tmplmst(read);
+3495       
+3496       data heights;
+3497       input Family Gender$ Height @@;
+3498       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.HEIGHTS has 18 observations and 3 variables.
+
+3502       ;
+3503       proc mixed data=heights;
+3504       class Family Gender;
+3505       model Height = Gender Family Family*Gender;
+3506       run;
+
+NOTE: The PROCEDURE MIXED printed page 282.
+
+3507       proc mixed;
+3508       class Family Gender;
+3509       model Height = Gender;
+3510       random Family Family*Gender;
+3511       run;
+
+NOTE: Convergence criteria met.
+NOTE: The PROCEDURE MIXED printed page 283.
+
+3512       
+3513       
+3514       
+3515       
+The SAS System
+
+3516       

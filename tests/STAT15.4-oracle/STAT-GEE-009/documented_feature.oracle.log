@@ -1,0 +1,57 @@
+The SAS System
+
+21635      
+21636      /* STAT-GEE-009: GEE — STORE
+21637       * Source: S154 / Chapter 50 / `STORE Statement` (PDF pp. 3443–3444).
+21638       * Discriminates: Verified default procedure context
+21639       */
+21640      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+21640    ! validmemname=compatible locale=en_US;
+21641      %let syscc=0;
+21642      title; footnote;
+21643      ods _all_ close;
+21644      ods listing gpath="%sysfunc(pathname(work))";
+21645      ods graphics off;
+21646      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.CHILDREN (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+21646    !                                         quit;
+
+
+21647      ods path work.templat(update) sashelp.tmplmst(read);
+21648      
+21649      data Children;
+21650      input ID City$ @@;
+21651      do i=1 to 4;
+21652      input Age Smoke Symptom @@;
+21653      output;
+21654      end;
+21655      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.CHILDREN has 100 observations and 6 variables.
+
+21681      ;
+21682      proc gee data=Children descending;
+21683      class ID City;
+21684      model Symptom = City Age Smoke / dist=bin link=logit;
+21685      repeated subject=ID / type=exch covb corrw;
+21686      run;
+
+NOTE: PROC GEE is modeling the probability that Symptom='1'.
+NOTE: The PROCEDURE GEE printed page 2366.
+
+21687      
+21688      
+21689      
+21690      
+The SAS System
+
+21691      

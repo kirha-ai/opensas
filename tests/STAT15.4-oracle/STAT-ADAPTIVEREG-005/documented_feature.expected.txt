@@ -1,0 +1,152 @@
+
+The ADAPTIVEREG Procedure
+
+        Model Information
+
+Data Set             WORK.MIXTURE
+Response Variable    y           
+Class Variable       c1          
+Distribution         Normal      
+Link Function        Identity    
+
+
+             Fit Controls
+
+Maximum Number of Bases         21     
+Maximum Order of Interaction    2      
+Degrees of Freedom per Knot     2      
+Knot Separation Parameter       0.05   
+Variable Parsimony Parameter    0      
+Missing Value Handling          Include
+
+
+ Class Level Information
+ 
+Class    Levels    Values
+
+c1            3    0 1 2 
+
+
+Number of Observations Read         120
+Number of Observations Used         120
+
+
+              Fit Statistics
+
+GCV                                 0.04328
+GCV R-Square                        0.98970
+Effective Degrees of Freedom              9
+R-Square                            0.99104
+Adjusted R-Square                   0.99073
+Mean Square Error                   0.03865
+Average Square Error                0.03703
+
+
+                              Forward Selection Summary
+ 
+              Basis                                             Lack of
+      Step    Entered  Parent    Variable    Knot/Levels            Fit           GCV
+
+         0    0                                                495.8730        4.2020
+         1    1 2      Basis0    x1          0.678364946       315.6681        2.8643
+         2    3 4      Basis0    c1          0 1                87.5049        0.8223
+         3    5 6      Basis0    c1          0                   4.7440        0.0462
+         4    7 8      Basis0    x1          0.627420549         4.4132        0.0446
+         5    9 10     Basis0    x1          0.1041659995        4.1998        0.0440
+         6    11 12    Basis3    x1          0.2784039069        4.1115        0.0465
+         7    13 14    Basis4    x1          0.4511896032        3.9998        0.0471
+         8    15 16    Basis5    x1          0.8506216223        3.8819        0.0495
+         9    17 18    Basis5    x1          0.5284871201        3.7925        0.0504
+        10    19 20    Basis5    x1          0.9108198455        3.6639        0.0508
+
+
+                  Backward Selection Summary
+ 
+              Basis     Number of
+      Step    Removed    Bases In          RSS            GCV 
+
+         0                     14        3.6639        0.0508 
+         1    Basis16          13        3.6826        0.0490 
+         2    Basis12          12        3.7069        0.0473 
+         3    Basis19          11        3.8270        0.0469 
+         4    Basis17          10        3.9579        0.0466 
+         5    Basis15           9        4.0194        0.0455 
+         6    Basis13           8        4.1337        0.0450 
+         7    Basis11           7        4.1998        0.0440 
+         8    Basis1            6        4.3613        0.0440 
+         9    Basis9            5        4.4442        0.0433*
+        10    Basis7            4       30.7452        0.2889 
+        11    Basis3            3       92.1925        0.8365 
+        12    Basis2            2      238.0651        2.0869 
+        13    Basis5            1      495.8730        4.2020 
+
+* Optimal Value of Criterion
+
+
+            Basis Information
+ 
+Name       Transformation
+
+Basis0     1                              
+Basis1     Basis0*MAX(x1 -  0.678364946,0)
+Basis2     Basis0*MAX( 0.678364946 - x1,0)
+Basis3     Basis0*(c1 = 0 OR c1 = 1)      
+Basis4     Basis0*NOT(c1 = 0 OR c1 = 1)   
+Basis5     Basis0*(c1 = 0)                
+Basis6     Basis0*NOT(c1 = 0)             
+Basis7     Basis0*MAX(x1 -  0.627420549,0)
+Basis8     Basis0*MAX( 0.627420549 - x1,0)
+Basis9     Basis0*MAX(x1 - 0.1041659995,0)
+Basis10    Basis0*MAX(0.1041659995 - x1,0)
+Basis11    Basis3*MAX(x1 - 0.2784039069,0)
+Basis12    Basis3*MAX(0.2784039069 - x1,0)
+Basis13    Basis4*MAX(x1 - 0.4511896032,0)
+Basis14    Basis4*MAX(0.4511896032 - x1,0)
+Basis15    Basis5*MAX(x1 - 0.8506216223,0)
+Basis16    Basis5*MAX(0.8506216223 - x1,0)
+Basis17    Basis5*MAX(x1 - 0.5284871201,0)
+Basis18    Basis5*MAX(0.5284871201 - x1,0)
+Basis19    Basis5*MAX(x1 - 0.9108198455,0)
+Basis20    Basis5*MAX(0.9108198455 - x1,0)
+
+
+         Regression Spline Model after Backward Selection
+ 
+Name      Coefficient    Parent    Variable         Knot    Levels
+
+Basis0         6.7423              Intercept                      
+Basis2        -4.2057    Basis0    x1             0.6784          
+Basis3        -1.9085    Basis0    c1                       0 1   
+Basis5        -2.0628    Basis0    c1                       0     
+Basis7         5.7482    Basis0    x1             0.6274          
+
+
+                    ANOVA Decomposition
+ 
+Functional    Number of             ---Change If Omitted---
+Component         Bases       DF    Lack of Fit         GCV
+
+x1                    2        4         209.69      1.8997
+c1                    2        4         313.07      2.8377
+
+
+        Variable Importance
+ 
+            Number of
+Variable        Bases    Importance
+
+c1                  2        100.00
+x1                  2         79.63
+
+ i       x1      c1       y         Pred
+
+ 1    0.02692     1    1.82571    2.09403
+ 2    0.53331     2    6.16110    6.13225
+ 3    0.05700     0    0.12790    0.15776
+ 4    0.05967     1    1.99558    2.23177
+ 5    0.43513     2    5.63207    5.71936
+ 6    0.62742     0    2.65598    2.55679
+ 7    0.13088     1    2.76558    2.53124
+ 8    0.40904     2    5.56404    5.60960
+ 9    0.40112     0    1.52361    1.60502
+10    0.59775     1    4.36908    4.49477

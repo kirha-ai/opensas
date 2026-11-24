@@ -1,0 +1,62 @@
+The SAS System
+
+14422      
+14423      /* STAT-LOGISTIC-013: LOGISTIC — ODDSRATIO / UNITS / Odds Ratio Estimation
+14424       * Source: S154 / Chapter 79 / `ODDSRATIO Statement` (PDF pp. 5889–5891); S154 / Chapter 79 / `UNITS Statement` (PDF pp. 5903–5904); S154 /
+14424    ! Chapter 79 / `Odds Ratio Estimation` (PDF pp. 5922–5925).
+14425       * Discriminates: Example 79.7: ROC Curve, Customized Odds Ratios, Goodness-of-Fit Statistics, R-Square, and Confidence Limits; explicit statements:
+14425    ! UNITS
+14426       */
+14427      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+14427    ! validmemname=compatible locale=en_US;
+14428      %let syscc=0;
+14429      title; footnote;
+14430      ods _all_ close;
+14431      ods listing gpath="%sysfunc(pathname(work))";
+14432      ods graphics off;
+14433      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.ROC (memtype=DATA).
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+14433    !                                         quit;
+
+
+14434      ods path work.templat(update) sashelp.tmplmst(read);
+14435      
+14436      data Data1;
+14437      input disease n age id $;
+14438      datalines;
+
+NOTE: The data set WORK.DATA1 has 6 observations and 4 variables.
+
+14445      ;
+14446      ods graphics on;
+14447      %let _ROC_XAXISOPTS_LABEL=False Positive Fraction;
+14448      %let _ROC_YAXISOPTS_LABEL=True Positive Fraction;
+14449      proc logistic data=Data1 plots(only)=roc(id=id);
+14450      model disease/n=age / scale=none
+14451      clparm=wald
+14452      clodds=pl
+14453      rsquare;
+14454      units age=10;
+14455      id id;
+14456      effectplot;
+14457      run;
+
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: There were 6 observations read from the data set WORK.DATA1.
+NOTE: The PROCEDURE LOGISTIC printed page 1211.
+
+14458      %symdel _ROC_XAXISOPTS_LABEL _ROC_YAXISOPTS_LABEL;
+14459      run;
+14460      quit;
+14461      
+14462      
+14463      
+14464      
+The SAS System
+
+14465      

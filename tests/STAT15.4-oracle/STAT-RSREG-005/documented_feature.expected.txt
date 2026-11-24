@@ -1,0 +1,165 @@
+
+The RSREG Procedure
+
+Coding Coefficients for the Independent Variables
+ 
+Factor      Subtracted off      Divided by
+
+Time                     0        1.633000
+Temp                     0        1.633000
+Pressure                 0        1.633000
+
+
+  Response Surface for Variable Yield
+
+Response Mean                  77.524000
+Root MSE                       30.667784
+R-Square                          0.3233
+Coefficient of Variation         39.5591
+
+
+                            Type I Sum
+Regression          DF      of Squares    R-Square    F Value    Pr > F
+
+Linear               3     1880.842426      0.1353       0.67    0.5915
+Quadratic            3     2370.438681      0.1706       0.84    0.5023
+Crossproduct         3      241.873250      0.0174       0.09    0.9663
+Total Model          9     4493.154356      0.3233       0.53    0.8226
+
+
+                               Sum of
+Residual           DF         Squares     Mean Square
+
+Total Error        10     9405.129724      940.512972
+
+
+                                                                                     Parameter
+                                                                                      Estimate
+                                               Standard                             from Coded
+Parameter            DF        Estimate           Error    t Value    Pr > |t|            Data
+
+Intercept             1       90.538952       12.471830       7.26      <.0001       90.538952
+Time                  1        2.928706        8.398704       0.35      0.7345        4.782578
+Temp                  1       -7.697884        8.398704      -0.92      0.3809      -12.570645
+Pressure              1        8.557334        8.398704       1.02      0.3323       13.974127
+Time*Time             1      -12.144282        8.438948      -1.44      0.1807      -32.385023
+Temp*Time             1        3.462500       10.842699       0.32      0.7560        9.233411
+Temp*Temp             1       -6.498704        8.438948      -0.77      0.4591      -17.330023
+Pressure*Time         1       -1.485000       10.842699      -0.14      0.8938       -3.960033
+Pressure*Temp         1       -4.005000       10.842699      -0.37      0.7196      -10.680089
+Pressure*Pressure     1       -0.879376        8.438948      -0.10      0.9191       -2.345023
+
+
+                         Sum of
+Factor       DF         Squares     Mean Square    F Value    Pr > F
+
+Time          4     2175.661415      543.915354       0.58    0.6852
+Temp          4     1572.085722      393.021430       0.42    0.7923
+Pressure      4     1132.550787      283.137697       0.30    0.8707
+
+The RSREG Procedure
+Canonical Analysis of Response Surface Based on Coded Data
+
+                   Critical Value
+Factor             Coded         Uncoded
+
+Time           -2.922873       -4.773052
+Temp           -9.452846      -15.436497
+Pressure       26.973306       44.047409
+
+Predicted value at stationary point: 331.427900
+
+
+                                Eigenvectors
+ Eigenvalues            Time            Temp        Pressure
+
+   -0.290730       -0.104504       -0.323089        0.940581
+  -18.074329        0.245984        0.907977        0.339220
+  -33.695009        0.963624       -0.266818        0.015412
+
+               Stationary point is a maximum.
+
+The RSREG Procedure
+
+Coding Coefficients for the Independent Variables
+ 
+Factor      Subtracted off      Divided by
+
+Time                     0        1.633000
+Temp                     0        1.633000
+Pressure                 0        1.633000
+
+
+  Response Surface for Variable Yield
+
+Response Mean                  77.524000
+Root MSE                        0.120012
+R-Square                          1.0000
+Coefficient of Variation          0.1548
+
+
+                            Type I Sum
+Regression          DF      of Squares    R-Square    F Value    Pr > F
+
+Covariates           3           13695      0.9854     316957    <.0001
+Linear               3      156.524497      0.0113    3622.53    <.0001
+Quadratic            3       22.989775      0.0017     532.06    <.0001
+Crossproduct         3       23.403614      0.0017     541.64    <.0001
+Total Model         12           13898      1.0000    80413.2    <.0001
+
+
+                               Sum of
+Residual           DF         Squares     Mean Square
+
+Total Error         7        0.100820        0.014403
+
+
+                                                                                     Parameter
+                                                                                      Estimate
+                                               Standard                             from Coded
+Parameter            DF        Estimate           Error    t Value    Pr > |t|            Data
+
+Intercept             1     -618.906416        1.343618    -460.63      <.0001     -618.906416
+Time                  1        1.976590        0.032915      60.05      <.0001        3.227772
+Temp                  1        2.003020        0.037566      53.32      <.0001        3.270932
+Pressure              1        1.988786        0.035100      56.66      <.0001        3.247688
+Time*Time             1        1.016828        0.041230      24.66      <.0001        2.711565
+Temp*Time             1        0.955604        0.042690      22.38      <.0001        2.548298
+Temp*Temp             1        1.021936        0.035910      28.46      <.0001        2.725187
+Pressure*Time         1        1.021896        0.042690      23.94      <.0001        2.725080
+Pressure*Temp         1        1.008793        0.043460      23.21      <.0001        2.690136
+Pressure*Pressure     1        1.000795        0.033212      30.13      <.0001        2.668809
+d1                    1      -19.980415        0.067710    -295.09      <.0001      -19.980415
+d2                    1      -10.123171        0.074547    -135.80      <.0001      -10.123171
+d3                    0               0               .        .         .                   0
+Grade                 1       10.027585        0.018807     533.19      <.0001       10.027585
+
+
+                         Sum of
+Factor       DF         Squares     Mean Square    F Value    Pr > F
+
+Time          4       77.803611       19.450903    1350.49    <.0001
+Temp          4       59.759786       14.939947    1037.29    <.0001
+Pressure      4       80.888137       20.222034    1404.03    <.0001
+
+The RSREG Procedure
+Canonical Analysis of Response Surface Based on Coded Data
+
+                   Critical Value
+Factor             Coded         Uncoded
+
+Time           -0.297938       -0.486533
+Temp           -0.313605       -0.512117
+Pressure       -0.298287       -0.487103
+
+Predicted value at stationary point: 74.019520
+
+
+                                Eigenvectors
+ Eigenvalues            Time            Temp        Pressure
+
+    5.356408        0.576210        0.575624        0.580206
+    1.445622       -0.662724        0.744526       -0.080486
+    1.303530        0.478308        0.338140       -0.810483
+
+               Stationary point is a minimum.

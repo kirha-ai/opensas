@@ -1,0 +1,61 @@
+The SAS System
+
+29149      
+29150      /* STAT-TTEST-012: TTEST — Official examples and feature integration regression
+29151       * Source: S154 / Chapter 128 / `Examples: TTEST Procedure` (PDF pp. 10650–10689).
+29152       * Discriminates: Summary-statistics input, PROC MEANS handoff and two-group TTEST integration
+29153       */
+29154      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+29154    ! validmemname=compatible locale=en_US;
+29155      %let syscc=0;
+29156      title; footnote;
+29157      ods _all_ close;
+29158      ods listing gpath="%sysfunc(pathname(work))";
+29159      ods graphics off;
+29160      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SAMPLE (memtype=DATA).
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+29160    !                                         quit;
+
+
+29161      ods path work.templat(update) sashelp.tmplmst(read);
+29162      
+29163      data asthma; input drug1 $ drug2 $ pef1 pef2 @@; datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.ASTHMA has 13 observations and 4 variables.
+
+29169      ;
+29170      run;
+29171      proc sort data=asthma; by drug1; run;
+
+NOTE: There were 13 observations read from the data set WORK.ASTHMA.
+NOTE: The data set WORK.ASTHMA has 13 observations and 4 variables.
+
+29172      proc means data=asthma noprint; var pef1; by drug1; output out=summary; run;
+
+NOTE: There were 13 observations read from the data set WORK.ASTHMA.
+NOTE: The data set WORK.SUMMARY has 10 observations and 5 variables.
+
+29173      proc print data=summary noobs; run;
+
+NOTE: There were 10 observations read from the data set WORK.SUMMARY.
+NOTE: The PROCEDURE PRINT printed page 1783.
+
+29174      proc ttest data=summary; class drug1; var pef1; run;
+
+NOTE: The PROCEDURE TTEST printed page 1784.
+
+29175      
+29176      
+29177      
+29178      
+The SAS System
+
+29179      

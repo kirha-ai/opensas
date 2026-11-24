@@ -1,0 +1,108 @@
+The SAS System
+
+1946       
+1947       /* STAT-GRAPHICS-004: ODS graphics — Syntax
+1948        * Source: S154 / Chapter 24 / `Syntax` (PDF pp. 683–689).
+1949        * Discriminates: ODS graphics enablement, explicit SVG format/size, graph identity and generated image file names
+1950        */
+1951       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+1951     ! validmemname=compatible locale=en_US;
+1952       %let syscc=0;
+1953       title; footnote;
+1954       ods _all_ close;
+1955       ods listing gpath="%sysfunc(pathname(work))";
+1956       ods graphics off;
+1957       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.GRAPH_FILES (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SAMPLE (memtype=DATA).
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+1957     !                                         quit;
+
+
+1958       ods path work.templat(update) sashelp.tmplmst(read);
+1959       
+1960       options dlcreatedir; libname _gpath "%sysfunc(pathname(work))/stat_graphics_004"; libname _gpath clear;
+NOTE: Library _GPATH was created.
+NOTE: Libref _GPATH was successfully assigned as follows: 
+      Engine:        V9 
+      Physical Name: /saswork/SAS_work5D120001108E_odaws02-euw1.oda.sas.com/SAS_workCCDC0001108E_odaws02-euw1.oda.sas.com/stat_graphics_004
+NOTE: Libref _GPATH has been deassigned.
+1961       ods listing gpath="%sysfunc(pathname(work))/stat_graphics_004";
+1962       ods graphics on / reset=all imagename="oracle" imagefmt=svg width=5in height=3in;
+1963       ods trace on;
+1964       data sample;
+1965        input x z y group $ weight freq;
+1966        datalines;
+
+NOTE: The data set WORK.SAMPLE has 12 observations and 6 variables.
+
+1979       ;
+1980       run;
+1981       proc reg data=sample plots(only)=fitplot; model y=x; run;
+
+
+Output Added:
+-------------
+Name:       NObs
+Label:      Number of Observations
+Template:   Stat.Reg.NObs
+Path:       Reg.MODEL1.Fit.y.NObs
+-------------
+
+Output Added:
+-------------
+Name:       ANOVA
+Label:      Analysis of Variance
+Template:   Stat.REG.ANOVA
+Path:       Reg.MODEL1.Fit.y.ANOVA
+-------------
+
+Output Added:
+-------------
+Name:       FitStatistics
+Label:      Fit Statistics
+Template:   Stat.REG.FitStatistics
+Path:       Reg.MODEL1.Fit.y.FitStatistics
+-------------
+
+Output Added:
+-------------
+Name:       ParameterEstimates
+Label:      Parameter Estimates
+Template:   Stat.REG.ParameterEstimates
+Path:       Reg.MODEL1.Fit.y.ParameterEstimates
+-------------
+
+Output Added:
+-------------
+Name:       FitPlot
+Label:      Fit Plot
+Template:   Stat.REG.Graphics.Fit
+Path:       Reg.MODEL1.ObswiseStats.y.FitPlot
+-------------
+1981     !                                                           quit;
+
+NOTE: The PROCEDURE REG printed page 93.
+
+1982       ods trace off; ods graphics off;
+1983       data graph_files; length name $128; rc=filename('_gdir',"%sysfunc(pathname(work))/stat_graphics_004"); did=dopen('_gdir'); if did then do; do i=1 to
+1983     ! dnum(did); name=dread(did,i); if lowcase(scan(name,-1,'.')) in ('svg','png') then output; end; rc=dclose(did); end; keep name; run;
+
+NOTE: The data set WORK.GRAPH_FILES has 1 observations and 1 variables.
+
+1984       proc print data=graph_files noobs; run;
+
+NOTE: There were 1 observations read from the data set WORK.GRAPH_FILES.
+NOTE: The PROCEDURE PRINT printed page 94.
+
+1985       
+1986       
+1987       
+1988       
+The SAS System
+
+1989       

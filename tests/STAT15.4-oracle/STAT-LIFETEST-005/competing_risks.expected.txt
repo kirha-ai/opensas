@@ -1,0 +1,47 @@
+
+The LIFETEST Procedure
+ 
+Failed Event: status=1
+
+                     Summary of Failure Outcomes
+ 
+                          Failed    Competing
+ Stratum    group         Events       Events    Censored       Total
+
+       1    A                  3            1           2           6
+       2    B                  2            2           2           6
+   Total                       5            3           4          12
+
+
+                Cumulative Incidence Function Estimates
+ 
+                         Stratum 1: group = A
+ 
+                        Cumulative    Standard
+Timelist        time     Incidence       Error    95% Confidence Interval
+
+       1           1        0.1667      0.1667     0.00475      0.5488
+       2           1        0.1667      0.1667     0.00475      0.5488
+       4           4        0.3750      0.2527      0.0230      0.7748
+       6           4        0.3750      0.2527      0.0230      0.7748
+
+
+                Cumulative Incidence Function Estimates
+ 
+                         Stratum 2: group = B
+ 
+                        Cumulative    Standard
+Timelist        time     Incidence       Error    95% Confidence Interval
+
+       1           0             0           0           .           .
+       2           2        0.1667      0.1700     0.00422      0.5559
+       4           2        0.1667      0.1700     0.00422      0.5559
+       6           6        0.3889      0.2831      0.0139      0.8118
+
+
+Gray's Test for Equality of Cumulative Incidence Functions
+ 
+                         Pr >
+Chi-Square      DF    Chi-Square
+
+    0.6674       1      0.4140  

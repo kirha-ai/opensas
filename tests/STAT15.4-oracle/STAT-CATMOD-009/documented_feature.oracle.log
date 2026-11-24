@@ -1,0 +1,68 @@
+The SAS System
+
+12507      
+12508      /* STAT-CATMOD-009: CATMOD — REPEATED / Repeated Measures Analysis
+12509       * Source: S154 / Chapter 36 / `REPEATED Statement` (PDF pp. 2211–2212); S154 / Chapter 36 / `Repeated Measures Analysis` (PDF pp. 2232–2234).
+12510       * Discriminates: Example 36.6: Repeated Measures, 2 Response Levels, 3 Populations; explicit statements: REPEATED
+12511       */
+12512      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+12512    ! validmemname=compatible locale=en_US;
+12513      %let syscc=0;
+12514      title; footnote;
+12515      ods _all_ close;
+12516      ods listing gpath="%sysfunc(pathname(work))";
+12517      ods graphics off;
+
+NOTE: There were 18 observations read from the data set WORK.SCHOOL.
+NOTE: The PROCEDURE CATMOD printed pages 1754-1755.
+
+12518      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.COLDS (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SCHOOL (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+12518    !                                         quit;
+
+
+12519      ods path work.templat(update) sashelp.tmplmst(read);
+12520      
+12521      data group;
+12522      input a b c d Group wt @@;
+12523      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.GROUP has 23 observations and 6 variables.
+
+12530      ;
+12531      title 'Multiple-Population Repeated Measures';
+12532      proc catmod data=group;
+12533      weight wt;
+12534      response marginals;
+12535      model a*b*c*d=Group _response_ Group*_response_
+12536      / freq;
+12537      repeated Trial 4;
+12538      title2 'Saturated Model';
+12539      run;
+
+12540      model a*b*c*d=Group _response_(Group=3)
+NOTE: Prior MODEL statement(s) deleted.
+12541      / noprofile noparm design;
+12542      title2 'Trial Nested within Group 3';
+12543      quit;
+
+NOTE: There were 23 observations read from the data set WORK.GROUP.
+NOTE: The PROCEDURE CATMOD printed pages 1756-1757.
+
+12544      
+12545      
+12546      
+12547      
+The SAS System
+
+12548      

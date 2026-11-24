@@ -1,0 +1,149 @@
+The SAS System
+
+8764       
+8765       /* STAT-INBREED-006: INBREED — Displayed Output / ODS Table Names
+8766        * Source: S154 / Chapter 71 / `Displayed Output` (PDF p. 5287); S154 / Chapter 71 / `ODS Table Names` (PDF pp. 5287–5288).
+8767        * Discriminates: Getting Started: INBREED Procedure
+8768        */
+8769       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+8769     ! validmemname=compatible locale=en_US;
+8770       %let syscc=0;
+8771       title; footnote;
+8772       ods _all_ close;
+8773       ods listing gpath="%sysfunc(pathname(work))";
+8774       ods graphics off;
+8775       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.POPULATION (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+8775     !                                         quit;
+
+
+8776       ods path work.templat(update) sashelp.tmplmst(read);
+8777       
+8778       ods trace on;
+8779       data Population;
+8780       input Individual $ Parent1 $ Parent2 $
+8781       Covariance Sex $ Generation;
+8782       datalines;
+
+NOTE: The data set WORK.POPULATION has 8 observations and 6 variables.
+
+8791       ;
+8792       proc inbreed data=Population covar matrix init=0.25;
+8793       run;
+
+WARNING: The VAR statement was not specified.  All the variables in the WORK.POPULATION data set will be used instead.
+WARNING: Variable Individual has a missing value at observation 4.  It will be skipped.
+WARNING: Individual Individual=Mark has been previously defined.  Observation 8 corresponding to this individual will not be processed.
+
+Output Added:
+-------------
+Name:       CovarianceCoefficient
+Label:      Covariance Coefficients
+Template:   Stat.Inbreed.CovarianceCoefficient
+Path:       Inbreed.CovarianceCoefficient
+-------------
+
+Output Added:
+-------------
+Name:       NumberOfObservations
+Label:      Number of Observations
+Template:   Stat.Inbreed.NumberOfObservations
+Path:       Inbreed.NumberOfObservations
+-------------
+NOTE: The PROCEDURE INBREED printed page 613.
+
+8794       proc inbreed data=Population covar matrix init=0.25;
+8795       class Generation;
+8796       run;
+
+WARNING: The VAR statement was not specified.  All the variables in the WORK.POPULATION data set will be used instead.
+
+Output Added:
+-------------
+Name:       CovarianceCoefficient
+Label:      Covariance Coefficients
+Template:   Stat.Inbreed.CovarianceCoefficient
+Path:       Inbreed.GenerationGroup.CovarianceCoefficient
+-------------
+
+Output Added:
+-------------
+Name:       NumberOfObservations
+Label:      Number of Observations
+Template:   Stat.Inbreed.NumberOfObservations
+Path:       Inbreed.GenerationGroup.NumberOfObservations
+-------------
+WARNING: A covariance value was specified between individuals Parent1=Mark and Parent2=Kelly, but Individual=Jim is nonmissing at observation 7. Covariance 
+         specification will be ignored.
+
+Output Added:
+-------------
+Name:       CovarianceCoefficient
+Label:      Covariance Coefficients
+Template:   Stat.Inbreed.CovarianceCoefficient
+Path:       Inbreed.GenerationGroup.CovarianceCoefficient
+-------------
+
+Output Added:
+-------------
+Name:       NumberOfObservations
+Label:      Number of Observations
+Template:   Stat.Inbreed.NumberOfObservations
+Path:       Inbreed.GenerationGroup.NumberOfObservations
+-------------
+NOTE: The PROCEDURE INBREED printed pages 614-615.
+
+8797       proc inbreed data=Population covar average init=0.25;
+8798       class Generation;
+8799       gender Sex;
+8800       run;
+
+WARNING: The VAR statement was not specified.  All the variables in the WORK.POPULATION data set will be used instead.
+
+Output Added:
+-------------
+Name:       AvgCovCoef
+Label:      Averages of Covariance Coefficient Matrix
+Template:   Stat.Inbreed.AvgCovCoef
+Path:       Inbreed.GenerationGroup.AvgCovCoef
+-------------
+
+Output Added:
+-------------
+Name:       NumberOfObservations
+Label:      Number of Observations
+Template:   Stat.Inbreed.NumberOfObservations
+Path:       Inbreed.GenerationGroup.NumberOfObservations
+-------------
+WARNING: A covariance value was specified between individuals Parent1=Mark and Parent2=Kelly, but Individual=Jim is nonmissing at observation 7. Covariance 
+         specification will be ignored.
+
+Output Added:
+-------------
+Name:       AvgCovCoef
+Label:      Averages of Covariance Coefficient Matrix
+Template:   Stat.Inbreed.AvgCovCoef
+Path:       Inbreed.GenerationGroup.AvgCovCoef
+-------------
+
+Output Added:
+-------------
+Name:       NumberOfObservations
+Label:      Number of Observations
+Template:   Stat.Inbreed.NumberOfObservations
+Path:       Inbreed.GenerationGroup.NumberOfObservations
+-------------
+NOTE: The PROCEDURE INBREED printed pages 616-617.
+
+8801       ods trace off;
+8802       
+8803       
+8804       
+8805       
+The SAS System
+
+8806       

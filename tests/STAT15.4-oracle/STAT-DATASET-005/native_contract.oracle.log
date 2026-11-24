@@ -1,0 +1,90 @@
+The SAS System
+
+237        
+238        /* STAT-DATASET-005: Statistical data sets — TYPE=EST Data Sets / TYPE=FACTOR Data Sets / TYPE=LINEAR Data Sets
+239         * Source: S154 / Special SAS Data Sets / `TYPE=EST Data Sets` (PDF pp. 10889–10890); S154 / Special SAS Data Sets / `TYPE=FACTOR Data Sets` (PDF
+239      ! p. 10890); S154 / Special SAS Data Sets / `TYPE=LINEAR Data Sets` (PDF pp. 10890–10891); S154 / Special SAS Data Sets / `Definitional Formulas`
+239      ! (PDF pp. 10893–10894).
+240         * Discriminates: Native TYPE=EST coefficients, covariance rows and descriptor
+241         */
+242        options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+242      ! validmemname=compatible locale=en_US;
+243        %let syscc=0;
+244        title; footnote;
+245        ods _all_ close;
+246        ods listing gpath="%sysfunc(pathname(work))";
+247        ods graphics off;
+248        proc datasets library=work kill nolist;
+NOTE: Deleting WORK.PEARSON (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SAMPLE (memtype=DATA).
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SSCP (memtype=DATA).
+NOTE: Deleting WORK._ORACLE_DESCRIPTOR (memtype=DATA).
+NOTE: Deleting WORK._ORACLE_MEMBER (memtype=DATA).
+248      !                                         quit;
+
+
+249        ods path work.templat(update) sashelp.tmplmst(read);
+250        
+251        %macro _oracle_descriptor(ds);
+252        proc contents data=&ds out=_oracle_descriptor(keep=name type length varnum label format informat) noprint; run;
+253        proc sort data=_oracle_descriptor; by varnum; run;
+254        proc print data=_oracle_descriptor noobs; run;
+255        data _oracle_member;
+256        length Dataset $64 DatasetType $16;
+257        Dataset="&ds"; _handle=open("&ds");
+258        DatasetType=attrc(_handle,'TYPE'); NObs=attrn(_handle,'NOBS'); NVars=attrn(_handle,'NVARS');
+259        _close=close(_handle); drop _handle _close;
+260        run;
+261        proc print data=_oracle_member noobs; run;
+262        %mend;
+263        
+264        
+265        data sample;
+266         input x z y group $ weight freq;
+267         datalines;
+
+NOTE: The data set WORK.SAMPLE has 12 observations and 6 variables.
+
+280        ;
+281        run;
+282        proc reg data=sample outest=est covout; model y=x z; run;
+
+282      !                                                           quit;
+
+NOTE: The data set WORK.EST has 4 observations and 9 variables.
+NOTE: The PROCEDURE REG printed page 20.
+
+283        %_oracle_descriptor(est); proc print data=est noobs; format _numeric_ best32.; run;
+
+NOTE: The data set WORK._ORACLE_DESCRIPTOR has 9 observations and 7 variables.
+
+
+NOTE: There were 9 observations read from the data set WORK._ORACLE_DESCRIPTOR.
+NOTE: The data set WORK._ORACLE_DESCRIPTOR has 9 observations and 7 variables.
+
+
+NOTE: There were 9 observations read from the data set WORK._ORACLE_DESCRIPTOR.
+NOTE: The PROCEDURE PRINT printed page 21.
+
+
+NOTE: The data set WORK._ORACLE_MEMBER has 1 observations and 4 variables.
+
+
+NOTE: There were 1 observations read from the data set WORK._ORACLE_MEMBER.
+NOTE: The PROCEDURE PRINT printed page 22.
+
+
+NOTE: There were 4 observations read from the data set WORK.EST.
+NOTE: The PROCEDURE PRINT printed page 23.
+
+284        
+285        
+286        
+287        
+The SAS System
+
+288        

@@ -1,0 +1,6 @@
+WARNING: The Correlation Matrix is not positive definite.
+WARNING: Failed to converge, however criterion change is less than 0.0001.
+WARNING: Data set WORK.RESULTS has _TYPE_ and _NAME_ variables but is not TYPE=ACE, CORR, COV, EST, FACTOR, SSCP, UCORR, or UCOV.
+WARNING: The Correlation Matrix is not positive definite.
+WARNING: Failed to converge, however criterion change is less than 0.0001.
+WARNING: Failed to converge, however criterion change is less than 0.0001.

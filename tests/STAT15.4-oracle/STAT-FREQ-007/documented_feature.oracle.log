@@ -1,0 +1,60 @@
+The SAS System
+
+18027      
+18028      /* STAT-FREQ-007: FREQ — Binomial Proportion
+18029       * Source: S154 / Chapter 47 / `Binomial Proportion` (PDF pp. 3180–3188).
+18030       * Discriminates: Example 47.4: Binomial Proportions
+18031       */
+18032      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+18032    ! validmemname=compatible locale=en_US;
+18033      %let syscc=0;
+18034      title; footnote;
+18035      ods _all_ close;
+18036      ods listing gpath="%sysfunc(pathname(work))";
+18037      ods graphics off;
+18038      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.SKINCONDITION (memtype=DATA).
+NOTE: Deleting WORK.SUMMERSCHOOL (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+18038    !                                         quit;
+
+
+18039      ods path work.templat(update) sashelp.tmplmst(read);
+18040      
+18041      data Color;
+18042      input Region Eyes $ Hair $ Count @@;
+18043      label Eyes ='Eye Color'
+18044      Hair ='Hair Color'
+18045      Region='Geographic Region';
+18046      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.COLOR has 27 observations and 4 variables.
+
+18056      ;
+18057      run;
+18058      proc freq data=Color order=freq;
+18059      tables Eyes / binomial(ac wilson exact) alpha=.1;
+18060      tables Hair / binomial(equiv p=.28 margin=.1);
+18061      weight Count;
+18062      title 'Hair and Eye Color of European Children';
+18063      run;
+
+NOTE: There were 27 observations read from the data set WORK.COLOR.
+NOTE: The PROCEDURE FREQ printed page 2262.
+
+18064      
+18065      
+18066      
+18067      
+The SAS System
+
+18068      

@@ -1,0 +1,55 @@
+The SAS System
+
+3384       
+3385       /* STAT-HPLOGISTIC-002: HPLOGISTIC — High-performance logistic model estimation
+3386        * Source: S154 / Chapter 61 / `Getting Started: HPLOGISTIC Procedure` (PDF pp. 4739–4745); S154 / Chapter 61 / `Overview: HPLOGISTIC Procedure`
+3386     ! (PDF pp. 4738–4739).
+3387        * Discriminates: Getting Started: HPLOGISTIC Procedure
+3388        */
+3389       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+3389     ! validmemname=compatible locale=en_US;
+3390       %let syscc=0;
+3391       title; footnote;
+3392       ods _all_ close;
+3393       ods listing gpath="%sysfunc(pathname(work))";
+3394       ods graphics off;
+3395       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.GETSTARTED (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+3395     !                                         quit;
+
+
+3396       ods path work.templat(update) sashelp.tmplmst(read);
+3397       
+3398       data getStarted;
+3399       input C$ y x1-x10;
+3400       datalines;
+
+NOTE: The data set WORK.GETSTARTED has 100 observations and 12 variables.
+
+3501       ;
+3502       proc hplogistic data=getStarted;
+3503       class C;
+3504       model y = C x1-x10;
+3505       run;
+
+NOTE: The HPLOGISTIC procedure is executing in single-machine mode.
+NOTE: You are modeling the probability that y='0'.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: There were 100 observations read from the data set WORK.GETSTARTED.
+NOTE: The PROCEDURE HPLOGISTIC printed page 189.
+
+3506       
+3507       
+3508       
+3509       
+The SAS System
+
+3510       

@@ -1,0 +1,72 @@
+The SAS System
+
+4678       
+4679       /* STAT-HPMIXED-001: HPMIXED — Data input, variable roles, and basic options
+4680        * Source: S154 / Chapter 62 / `PROC HPMIXED Statement` (PDF pp. 4812–4817); S154 / Chapter 62 / `BY Statement` (PDF p. 4817); S154 / Chapter 62 /
+4680     ! `ID Statement` (PDF pp. 4824–4825); S154 / Chapter 62 / `WEIGHT Statement` (PDF pp. 4842–4843).
+4681        * Discriminates: Verified default procedure context
+4682        */
+4683       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+4683     ! validmemname=compatible locale=en_US;
+4684       %let syscc=0;
+4685       title; footnote;
+4686       ods _all_ close;
+4687       ods listing gpath="%sysfunc(pathname(work))";
+4688       ods graphics off;
+4689       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.CHEESE (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+4689     !                                         quit;
+
+
+4690       ods path work.templat(update) sashelp.tmplmst(read);
+4691       
+4692       data Sim;
+4693       keep Species Farm Animal Yield;
+4694       array AnimalEffect{3000};
+4695       array AnimalFarm{3000};
+4696       array AnimalSpecies{3000};
+4697       do i = 1 to dim(AnimalEffect);
+4698       AnimalEffect{i} = sqrt(4.0) *rannor(12345);
+4699       AnimalFarm{i} = 1 + int(100 *ranuni(12345));
+4700       AnimalSpecies{i} = 1 + int(5*ranuni(12345));
+4701       end;
+4702       do i = 1 to 40000;
+4703       Animal = 1 + int(3000 *ranuni(12345));
+4704       Species = AnimalSpecies{Animal};
+4705       Farm = AnimalFarm{Animal};
+4706       Yield = 1 + Species + Farm/10 + AnimalEffect{Animal}
+4707       + sqrt(8.0)*rannor(12345);
+4708       output;
+4709       end;
+4710       run;
+
+NOTE: The data set WORK.SIM has 40000 observations and 4 variables.
+
+4711       proc hpmixed data=Sim;
+4712       class Species Farm Animal;
+4713       model Yield = Species Species*Farm;
+4714       random Animal;
+4715       test Species*Farm;
+4716       contrast 'Species1 = Species2 = Species3'
+4717       Species 1 0 -1,
+4718       Species 0 1 -1;
+4719       run;
+
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The PROCEDURE HPMIXED printed page 203.
+
+4720       
+4721       
+4722       
+4723       
+The SAS System
+
+4724       

@@ -1,0 +1,490 @@
+The SAS System
+
+15903      
+15904      /* STAT-FACTOR-010: FACTOR — PATHDIAGRAM / ODS Graphics
+15905       * Source: S154 / Chapter 44 / `PATHDIAGRAM Statement` (PDF pp. 2817–2823); S154 / Chapter 44 / `ODS Graphics` (PDF pp. 2842–2843).
+15906       * Discriminates: Example 44.2: Principal Factor Analysis
+15907       */
+15908      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+15908    ! validmemname=compatible locale=en_US;
+15909      %let syscc=0;
+15910      title; footnote;
+15911      ods _all_ close;
+15912      ods listing gpath="%sysfunc(pathname(work))";
+15913      ods graphics off;
+15914      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.FACT2 (memtype=DATA).
+NOTE: Deleting WORK.FACT_ALL (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.SOCIOECONOMICS (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+15914    !                                         quit;
+
+
+15915      ods path work.templat(update) sashelp.tmplmst(read);
+15916      
+15917      ods graphics on;
+15918      ods trace on;
+15919      ods trace on;
+15920      data SocioEconomics;
+15921      input Population School Employment Services HouseValue;
+15922      datalines;
+
+NOTE: The data set WORK.SOCIOECONOMICS has 12 observations and 5 variables.
+
+15935      ;
+15936      run;
+15937      ods graphics on;
+15938      proc factor data=SocioEconomics
+15939      priors=smc msa residual
+15940      rotate=promax reorder
+15941      outstat=fact_all
+15942      plots=(scree initloadings preloadings loadings);
+15943      run;
+
+
+Output Added:
+-------------
+Name:       NObs
+Label:      N of Observations
+Template:   Stat.Factor.NObs
+Path:       Factor.NObs
+-------------
+
+Output Added:
+-------------
+Name:       ParCorrControlVar
+Label:      Partial Correlations
+Template:   Stat.Factor.ParCorrControlVar
+Path:       Factor.InitialSolution.ParCorrControlVar
+-------------
+
+Output Added:
+-------------
+Name:       SamplingAdequacy
+Label:      Sampling Adequacy
+Template:   Stat.Factor.SamplingAdequacy
+Path:       Factor.InitialSolution.SamplingAdequacy
+-------------
+
+Output Added:
+-------------
+Name:       PriorCommunalEst
+Label:      Prior Communalities
+Template:   Stat.Factor.PriorCommunalEst
+Path:       Factor.InitialSolution.PriorCommunalEst
+-------------
+
+Output Added:
+-------------
+Name:       Eigenvalues
+Label:      Eigenvalues
+Template:   Stat.Factor.Eigenvalues
+Path:       Factor.InitialSolution.Eigenvalues
+-------------
+NOTE: 2 factors will be retained by the PROPORTION criterion.
+
+Output Added:
+-------------
+Name:       ScreePlot
+Label:      Scree and Variance Plots
+Template:   Stat.Factor.Graphics.ScreePlot2
+Path:       Factor.InitialSolution.ScreePlot
+-------------
+
+Output Added:
+-------------
+Name:       FactorPattern
+Label:      Factor Pattern
+Template:   Stat.Factor.FactorPattern
+Path:       Factor.InitialSolution.FactorPattern
+-------------
+
+Output Added:
+-------------
+Name:       VarExplain
+Label:      Variance Explained
+Template:   Stat.Factor.VarExplain
+Path:       Factor.InitialSolution.VarExplain
+-------------
+
+Output Added:
+-------------
+Name:       FinalCommun
+Label:      Final Communalities
+Template:   Stat.Factor.FinalCommun
+Path:       Factor.InitialSolution.FinalCommun
+-------------
+
+Output Added:
+-------------
+Name:       ResCorrUniqueDiag
+Label:      Residual Correlations
+Template:   Stat.Factor.ResCorrUniqueDiag
+Path:       Factor.InitialSolution.ResCorrUniqueDiag
+-------------
+
+Output Added:
+-------------
+Name:       RMSOffDiagResids
+Label:      RMS Off-diagonal Residuals
+Template:   Stat.Factor.RMSOffDiagResids
+Path:       Factor.InitialSolution.RMSOffDiagResids
+-------------
+
+Output Added:
+-------------
+Name:       ParCorrControlFactor
+Label:      Partial Correlations
+Template:   Stat.Factor.ParCorrControlFactor
+Path:       Factor.InitialSolution.ParCorrControlFactor
+-------------
+
+Output Added:
+-------------
+Name:       RMSOffDiagPartials
+Label:      RMS Off-diagonal Partials
+Template:   Stat.Factor.RMSOffDiagPartials
+Path:       Factor.InitialSolution.RMSOffDiagPartials
+-------------
+
+Output Added:
+-------------
+Name:       InitPatternPlot
+Label:      2 by 1
+Template:   Stat.Factor.Graphics.InitPatternPlot
+Path:       Factor.InitialSolution.InitPatternPlot.InitPatternPlot
+-------------
+NOTE: Rotation converged.  Criterion changed from 1.786655 to 10.398338 in 2 cycles.
+
+Output Added:
+-------------
+Name:       OrthTrans
+Label:      Orthogonal Transformation
+Template:   Stat.Factor.OrthTrans
+Path:       Factor.PrerotatedSolution.OrthTrans
+-------------
+
+Output Added:
+-------------
+Name:       OrthRotFactPat
+Label:      Factor Pattern
+Template:   Stat.Factor.OrthRotFactPat
+Path:       Factor.PrerotatedSolution.OrthRotFactPat
+-------------
+
+Output Added:
+-------------
+Name:       VarExplain
+Label:      Variance Explained
+Template:   Stat.Factor.VarExplain
+Path:       Factor.PrerotatedSolution.VarExplain
+-------------
+
+Output Added:
+-------------
+Name:       FinalCommun
+Label:      Final Communalities
+Template:   Stat.Factor.FinalCommun
+Path:       Factor.PrerotatedSolution.FinalCommun
+-------------
+
+Output Added:
+-------------
+Name:       PrePatternPlot
+Label:      2 by 1
+Template:   Stat.Factor.Graphics.PrePatternPlot
+Path:       Factor.PrerotatedSolution.PrePatternPlot.PrePatternPlot
+-------------
+
+Output Added:
+-------------
+Name:       ProcrustesTarget
+Label:      Procrustean Target
+Template:   Stat.Factor.ProcrustesTarget
+Path:       Factor.RotatedSolution.ProcrustesTarget
+-------------
+
+Output Added:
+-------------
+Name:       ProcrustesTrans
+Label:      Procrustean Transformation
+Template:   Stat.Factor.ProcrustesTrans
+Path:       Factor.RotatedSolution.ProcrustesTrans
+-------------
+
+Output Added:
+-------------
+Name:       NormObliqueTrans
+Label:      Normalized Transformation
+Template:   Stat.Factor.NormObliqueTrans
+Path:       Factor.RotatedSolution.NormObliqueTrans
+-------------
+
+Output Added:
+-------------
+Name:       InterFactorCorr
+Label:      Factor Correlations
+Template:   Stat.Factor.InterFactorCorr
+Path:       Factor.RotatedSolution.InterFactorCorr
+-------------
+
+Output Added:
+-------------
+Name:       ObliqueRotFactPat
+Label:      Factor Pattern
+Template:   Stat.Factor.ObliqueRotFactPat
+Path:       Factor.RotatedSolution.ObliqueRotFactPat
+-------------
+
+Output Added:
+-------------
+Name:       ReferenceAxisCorr
+Label:      Reference Axis Correlations
+Template:   Stat.Factor.ReferenceAxisCorr
+Path:       Factor.RotatedSolution.ReferenceAxisCorr
+-------------
+
+Output Added:
+-------------
+Name:       ReferenceStructure
+Label:      Reference Structure
+Template:   Stat.Factor.ReferenceStructure
+Path:       Factor.RotatedSolution.ReferenceStructure
+-------------
+
+Output Added:
+-------------
+Name:       VarExplain
+Label:      Variance Explained
+Template:   Stat.Factor.VarExplain
+Path:       Factor.RotatedSolution.VarExplain
+-------------
+
+Output Added:
+-------------
+Name:       FactorStructure
+Label:      Factor Structure
+Template:   Stat.Factor.FactorStructure
+Path:       Factor.RotatedSolution.FactorStructure
+-------------
+
+Output Added:
+-------------
+Name:       VarExplain
+Label:      Variance Explained
+Template:   Stat.Factor.VarExplain
+Path:       Factor.RotatedSolution.VarExplain
+-------------
+
+Output Added:
+-------------
+Name:       FinalCommun
+Label:      Final Communalities
+Template:   Stat.Factor.FinalCommun
+Path:       Factor.RotatedSolution.FinalCommun
+-------------
+
+Output Added:
+-------------
+Name:       PatternPlot
+Label:      2 by 1
+Template:   Stat.Factor.Graphics.PatternPlot
+Path:       Factor.RotatedSolution.PatternPlot.PatternPlot
+-------------
+NOTE: The data set WORK.FACT_ALL has 34 observations and 7 variables.
+NOTE: The PROCEDURE FACTOR printed pages 2110-2114.
+
+15944      ods graphics off;
+15945      proc print data=fact_all;
+15946      run;
+
+
+Output Added:
+-------------
+Name:       Print
+Label:      Data Set WORK.FACT_ALL
+Data Name:  ProcPrintTable
+Path:       Print.Print
+-------------
+NOTE: There were 34 observations read from the data set WORK.FACT_ALL.
+NOTE: The PROCEDURE PRINT printed page 2115.
+
+15947      data fact2(type=factor);
+15948      set fact_all;
+15949      if _TYPE_ in('PATTERN' 'FCORR') then delete;
+15950      if _TYPE_='UNROTATE' then _TYPE_='PATTERN';
+15951      run;
+
+NOTE: There were 34 observations read from the data set WORK.FACT_ALL.
+NOTE: The data set WORK.FACT2 has 30 observations and 7 variables.
+
+15952      proc factor data=fact2 rotate=quartimax reorder;
+15953      run;
+
+
+Output Added:
+-------------
+Name:       NObs
+Label:      N of Observations
+Template:   Stat.Factor.NObs
+Path:       Factor.NObs
+-------------
+NOTE: Rotation converged.  Criterion changed from 3.020617 to 4.620182 in 2 cycles.
+
+Output Added:
+-------------
+Name:       OrthTrans
+Label:      Orthogonal Transformation
+Template:   Stat.Factor.OrthTrans
+Path:       Factor.RotatedSolution.OrthTrans
+-------------
+
+Output Added:
+-------------
+Name:       OrthRotFactPat
+Label:      Factor Pattern
+Template:   Stat.Factor.OrthRotFactPat
+Path:       Factor.RotatedSolution.OrthRotFactPat
+-------------
+
+Output Added:
+-------------
+Name:       VarExplain
+Label:      Variance Explained
+Template:   Stat.Factor.VarExplain
+Path:       Factor.RotatedSolution.VarExplain
+-------------
+
+Output Added:
+-------------
+Name:       FinalCommun
+Label:      Final Communalities
+Template:   Stat.Factor.FinalCommun
+Path:       Factor.RotatedSolution.FinalCommun
+-------------
+NOTE: The PROCEDURE FACTOR printed pages 2116-2117.
+
+15954      ods graphics on;
+15955      proc factor data=fact2 rotate=hk norm=weight reorder plots=loadings;
+15956      run;
+
+
+Output Added:
+-------------
+Name:       NObs
+Label:      N of Observations
+Template:   Stat.Factor.NObs
+Path:       Factor.NObs
+-------------
+
+Output Added:
+-------------
+Name:       VarWeightRotate
+Label:      Variable Weights
+Template:   Stat.Factor.VarWeightRotate
+Path:       Factor.RotatedSolution.VarWeightRotate
+-------------
+NOTE: Rotation converged.  Criterion changed from 0.571964 to 2.953620 in 2 cycles.
+
+Output Added:
+-------------
+Name:       ObliqueTrans
+Label:      Oblique Transformation
+Template:   Stat.Factor.ObliqueTrans
+Path:       Factor.RotatedSolution.ObliqueTrans
+-------------
+
+Output Added:
+-------------
+Name:       InterFactorCorr
+Label:      Factor Correlations
+Template:   Stat.Factor.InterFactorCorr
+Path:       Factor.RotatedSolution.InterFactorCorr
+-------------
+
+Output Added:
+-------------
+Name:       ObliqueRotFactPat
+Label:      Factor Pattern
+Template:   Stat.Factor.ObliqueRotFactPat
+Path:       Factor.RotatedSolution.ObliqueRotFactPat
+-------------
+
+Output Added:
+-------------
+Name:       ReferenceAxisCorr
+Label:      Reference Axis Correlations
+Template:   Stat.Factor.ReferenceAxisCorr
+Path:       Factor.RotatedSolution.ReferenceAxisCorr
+-------------
+
+Output Added:
+-------------
+Name:       ReferenceStructure
+Label:      Reference Structure
+Template:   Stat.Factor.ReferenceStructure
+Path:       Factor.RotatedSolution.ReferenceStructure
+-------------
+
+Output Added:
+-------------
+Name:       VarExplain
+Label:      Variance Explained
+Template:   Stat.Factor.VarExplain
+Path:       Factor.RotatedSolution.VarExplain
+-------------
+
+Output Added:
+-------------
+Name:       FactorStructure
+Label:      Factor Structure
+Template:   Stat.Factor.FactorStructure
+Path:       Factor.RotatedSolution.FactorStructure
+-------------
+
+Output Added:
+-------------
+Name:       VarExplain
+Label:      Variance Explained
+Template:   Stat.Factor.VarExplain
+Path:       Factor.RotatedSolution.VarExplain
+-------------
+
+Output Added:
+-------------
+Name:       FinalCommun
+Label:      Final Communalities
+Template:   Stat.Factor.FinalCommun
+Path:       Factor.RotatedSolution.FinalCommun
+-------------
+
+Output Added:
+-------------
+Name:       PatternPlot
+Label:      2 by 1
+Template:   Stat.Factor.Graphics.PatternPlot
+Path:       Factor.RotatedSolution.PatternPlot.PatternPlot
+-------------
+NOTE: The PROCEDURE FACTOR printed pages 2118-2119.
+
+15957      ods graphics off;
+15958      run;
+15959      quit;
+15960      ods trace off;
+15961      ods trace off;
+15962      ods graphics off;
+15963      
+15964      
+15965      
+15966      
+The SAS System
+
+15967      

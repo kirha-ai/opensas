@@ -1,0 +1,111 @@
+
+The GEE Procedure
+
+         Model Information
+
+Data Set              WORK.CHILDREN
+Distribution               Binomial
+Link Function                 Logit
+Dependent Variable          Symptom
+
+
+Number of Observations Read         100
+Number of Observations Used         100
+Number of Events                     42
+Number of Trials                    100
+
+
+                        Class Level Information
+ 
+Class      Levels    Values
+
+ID             25    1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20
+                     21 22 23 24 25                                    
+City            2    greenhil steelcit                                 
+
+
+        Response Profile
+ 
+ Ordered                   Total
+   Value    Symptom    Frequency
+
+       1          1           42
+       2          0           58
+
+PROC GEE is modeling the probability that Symptom='1'.
+
+
+        Parameter Information
+ 
+Parameter       Effect       City
+
+Prm1            Intercept            
+Prm2            City         greenhil
+Prm3            City         steelcit
+Prm4            Age                  
+Prm5            Smoke                
+
+
+            GEE Model Information
+
+Correlation Structure             Exchangeable
+Subject Effect                  ID (25 levels)
+Number of Clusters                          25
+Correlation Matrix Dimension                 4
+Maximum Cluster Size                         4
+Minimum Cluster Size                         4
+
+
+                Covariance Matrix (Model-Based)
+ 
+               Prm1           Prm2           Prm4           Prm5
+
+Prm1        3.26069       -0.16313       -0.32274       -0.12257
+Prm2       -0.16313        0.24015       0.002520        0.03422
+Prm4       -0.32274       0.002520        0.03379       0.004471
+Prm5       -0.12257        0.03422       0.004471        0.09533
+
+
+                 Covariance Matrix (Empirical)
+ 
+               Prm1           Prm2           Prm4           Prm5
+
+Prm1        4.09770       -0.55261       -0.37280       -0.29397
+Prm2       -0.55261        0.29538        0.03719        0.09143
+Prm4       -0.37280        0.03719        0.03550        0.02064
+Prm5       -0.29397        0.09143        0.02064        0.07957
+
+
+               Working Correlation Matrix
+ 
+             Obs 1        Obs 2        Obs 3        Obs 4
+
+Obs 1       1.0000       0.0883       0.0883       0.0883
+Obs 2       0.0883       1.0000       0.0883       0.0883
+Obs 3       0.0883       0.0883       1.0000       0.0883
+Obs 4       0.0883       0.0883       0.0883       1.0000
+
+
+ Exchangeable Working
+     Correlation
+
+Correlation     0.0883
+
+
+  GEE Fit Criteria
+
+QIC          137.1373
+QICu         136.2173
+
+
+                           Parameter Estimates for Response Model
+                          with Empirical Standard Error Estimates
+ 
+                                     Standard       95% Confidence
+Parameter                Estimate       Error           Limits                 Z    Pr > |Z|
+
+Intercept                  2.2615      2.0243     -1.7060      6.2290       1.12      0.2639
+City         greenhil      0.0418      0.5435     -1.0234      1.1070       0.08      0.9387
+City         steelcit      0.0000      0.0000      0.0000      0.0000        .         .    
+Age                       -0.3201      0.1884     -0.6894      0.0492      -1.70      0.0893
+Smoke                      0.6506      0.2821      0.0978      1.2035       2.31      0.0211

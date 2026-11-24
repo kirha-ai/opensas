@@ -1,0 +1,50 @@
+The SAS System
+
+902        
+903        /* STAT-BCHOICE-007: BCHOICE — RANDOM / Random Effects
+904         * Source: S154 / Chapter 30 / `RANDOM Statement` (PDF pp. 1196–1199); S154 / Chapter 30 / `Random Effects` (PDF pp. 1208–1211).
+905         * Discriminates: Example 30.5: Heterogeneity Affected by Individual Characteristics; explicit statements: RANDOM
+906         */
+907        options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+907      ! validmemname=compatible locale=en_US;
+908        %let syscc=0;
+909        title; footnote;
+910        ods _all_ close;
+911        ods listing gpath="%sysfunc(pathname(work))";
+912        ods graphics off;
+913        proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+913      !                                         quit;
+
+
+914        ods path work.templat(update) sashelp.tmplmst(read);
+915        
+916        proc print data=Sashelp.Margarin (obs=24);
+917        by HouseID Set;
+918        id HouseID Set;
+919        run;
+
+NOTE: There were 24 observations read from the data set SASHELP.MARGARIN.
+NOTE: The PROCEDURE PRINT printed page 40.
+
+920        proc bchoice data=Sashelp.Margarin seed=123 nmc=1000 thin=2
+921        nthreads=4 plots=none nbi=200;
+922        class Brand(ref='PPk') HouseID Set;
+923        model Choice = / choiceset=(HouseID Set);
+924        random Brand LogPrice / subject=HouseID remean=(LogInc FamSize)
+925        type=un monitor=(1);
+926        run;
+
+NOTE: Generating the burn-in samples.
+NOTE: Beginning sample generation.
+NOTE: Beginning calculation of summary and diagnostics statistics.
+NOTE: The PROCEDURE BCHOICE printed page 41.
+
+927        
+928        
+929        
+930        
+The SAS System
+
+931        

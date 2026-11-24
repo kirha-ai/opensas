@@ -1,0 +1,50 @@
+The SAS System
+
+350        
+351        /* STAT-COMMON-009: Estimability and nonestimable result representation
+352         * Source: S154 / Chapter 16 / `Estimability` (PDF pp. 278–284).
+353         * Discriminates: Estimability with an empty interaction cell
+354         */
+355        options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+355      ! validmemname=compatible locale=en_US;
+356        %let syscc=0;
+357        title; footnote;
+358        ods _all_ close;
+359        ods listing gpath="%sysfunc(pathname(work))";
+360        ods graphics off;
+361        proc datasets library=work kill nolist;
+NOTE: Deleting WORK.BINARY (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SAMPLE (memtype=DATA).
+361      !                                         quit;
+
+
+362        ods path work.templat(update) sashelp.tmplmst(read);
+363        
+364        data sample;
+365         input x z y group $ weight freq;
+366         datalines;
+
+NOTE: The data set WORK.SAMPLE has 12 observations and 6 variables.
+
+379        ;
+380        run;
+381        data empty_cell; set sample; h=mod(_n_,2); if group='B' and h=1 then delete; run;
+
+NOTE: There were 12 observations read from the data set WORK.SAMPLE.
+NOTE: The data set WORK.EMPTY_CELL has 9 observations and 7 variables.
+
+382        proc glm data=empty_cell; class group h; model y=group|h; lsmeans group*h / e; run;
+
+382      !                                                                                     quit;
+
+NOTE: The PROCEDURE GLM printed pages 18-20.
+
+383        
+384        
+385        
+386        
+The SAS System
+
+387        

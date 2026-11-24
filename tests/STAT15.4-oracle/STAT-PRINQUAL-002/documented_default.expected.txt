@@ -1,0 +1,19 @@
+
+The PRINQUAL Procedure
+
+                  PRINQUAL MTV Algorithm Iteration History
+ 
+Iteration    Average    Maximum     Proportion    Criterion
+   Number     Change     Change    of Variance       Change    Note
+----------------------------------------------------------------------------
+        1    0.00000    0.00000        0.96325                 Converged    
+
+Algorithm converged.                                                      
+
+_TYPE_    _NAME_    Height    Weight    Age    THeight    TWeight    TAge
+
+SCORE      ROW1      69.0      112.5     14      69.0      112.5      14 
+SCORE      ROW2      56.5       84.0     13      56.5       84.0      13 
+SCORE      ROW3      65.3       98.0     13      65.3       98.0      13 
+SCORE      ROW4      62.8      102.5     14      62.8      102.5      14 
+SCORE      ROW5      63.5      102.5     14      63.5      102.5      14 

@@ -1,0 +1,78 @@
+The SAS System
+
+6277       
+6278       /* STAT-POWER-001: POWER — Data input, variable roles, and basic options
+6279        * Source: S154 / Chapter 96 / `PROC POWER Statement` (PDF pp. 7745–7746).
+6280        * Discriminates: Verified default procedure context
+6281        */
+6282       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+6282     ! validmemname=compatible locale=en_US;
+6283       %let syscc=0;
+6284       title; footnote;
+6285       ods _all_ close;
+6286       ods listing gpath="%sysfunc(pathname(work))";
+6287       ods graphics off;
+6288       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.PENTATRAIN (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+6288     !                                         quit;
+
+
+6289       ods path work.templat(update) sashelp.tmplmst(read);
+6290       
+6291       proc power;
+6292       onesamplemeans
+6293       mean = 8
+6294       ntotal = 150
+6295       stddev = 40
+6296       power = .;
+6297       run;
+
+NOTE: The PROCEDURE POWER printed page 510.
+
+6298       ods graphics on;
+6299       proc power;
+6300       onesamplemeans
+6301       mean = 5 10
+6302       ntotal = 150
+6303       stddev = 30 50
+6304       power = .;
+6305       plot x=n min=100 max=200;
+6306       run;
+
+NOTE: Plotting computed Power on the y-axis, versus N Total on the x-axis with 21 points per curve between 100 and 200.
+NOTE: The PROCEDURE POWER printed page 511.
+
+6307       ods graphics off;
+6308       proc power;
+6309       twosamplemeans
+6310       groupmeans = (13 14) (13 14.5) (13 15)
+6311       stddev = 1.2 1.7
+6312       groupweights = 1 | 1 2 3
+6313       power = 0.9
+6314       ntotal = .;
+6315       run;
+
+NOTE: The PROCEDURE POWER printed page 512.
+
+6316       proc power;
+6317       twosamplemeans
+6318       nfractional
+6319       meandiff = 1 to 2 by 0.5
+6320       stddev = 1.2 1.7
+6321       groupweights = (1 1) (1 2) (1 3)
+6322       power = 0.9
+6323       ntotal = .;
+6324       run;
+
+NOTE: The PROCEDURE POWER printed page 513.
+
+6325       
+6326       
+6327       
+6328       
+The SAS System
+
+6329       

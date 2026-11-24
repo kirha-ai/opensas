@@ -1,0 +1,64 @@
+The SAS System
+
+12360      
+12361      /* STAT-CATMOD-006: CATMOD — Logistic Analysis / Log-Linear Model Analysis / Computational Method
+12362       * Source: S154 / Chapter 36 / `Logistic Analysis` (PDF pp. 2227–2229); S154 / Chapter 36 / `Log-Linear Model Analysis` (PDF pp. 2229–2232); S154
+12362    !  / Chapter 36 / `Computational Method` (PDF pp. 2247–2248).
+12363       * Discriminates: Example 36.4: Log-Linear Model, Three Dependent Variables
+12364       */
+12365      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+12365    ! validmemname=compatible locale=en_US;
+12366      %let syscc=0;
+12367      title; footnote;
+12368      ods _all_ close;
+12369      ods listing gpath="%sysfunc(pathname(work))";
+12370      ods graphics off;
+
+NOTE: There were 18 observations read from the data set WORK.SCHOOL.
+NOTE: The PROCEDURE CATMOD printed pages 1743-1744.
+
+12371      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.COLDS (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SCHOOL (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+12371    !                                         quit;
+
+
+12372      ods path work.templat(update) sashelp.tmplmst(read);
+12373      
+12374      data bartlett;
+12375      input Length Time Status wt @@;
+12376      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.BARTLETT has 8 observations and 4 variables.
+
+12379      ;
+12380      title 'Bartlett''s Data';
+12381      proc catmod data=bartlett;
+12382      weight wt;
+12383      model Length*Time*Status=_response_
+12384      / noparm pred=freq;
+12385      loglin Length|Time|Status @ 2;
+12386      title2 'Model with No 3-Variable Interaction';
+12387      quit;
+
+NOTE: The default estimation method for this model is maximum-likelihood.
+NOTE: Maximum likelihood computations converged.
+NOTE: There were 8 observations read from the data set WORK.BARTLETT.
+NOTE: The PROCEDURE CATMOD printed page 1745.
+
+12388      
+12389      
+12390      
+12391      
+The SAS System
+
+12392      

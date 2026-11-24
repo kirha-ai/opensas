@@ -1,0 +1,57 @@
+The SAS System
+
+6104       
+6105       /* STAT-GLMSELECT-013: GLMSELECT — CODE / SCORE
+6106        * Source: S154 / Chapter 56 / `CODE Statement` (PDF p. 4336); S154 / Chapter 56 / `SCORE Statement` (PDF pp. 4355–4356).
+6107        * Discriminates: Getting Started: GLMSELECT Procedure
+6108        */
+6109       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+6109     ! validmemname=compatible locale=en_US;
+6110       %let syscc=0;
+6111       title; footnote;
+6112       ods _all_ close;
+6113       ods listing gpath="%sysfunc(pathname(work))";
+6114       ods graphics off;
+6115       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+6115     !                                         quit;
+
+
+6116       ods path work.templat(update) sashelp.tmplmst(read);
+6117       
+6118       proc contents varnum data=sashelp.baseball;
+6119       ods select position;
+6120       run;
+
+NOTE: The PROCEDURE CONTENTS printed page 423.
+
+6121       ods graphics on;
+6122       proc glmselect data=sashelp.baseball plots=all seed=314159;
+6123       class league division;
+6124       model logSalary = nAtBat nHits nHome nRuns nRBI nBB
+6125       yrMajor crAtBat crHits crHome crRuns crRbi
+6126       crBB league division nOuts nAssts nError
+6127       / details=all stats=all;
+6128       run;
+
+NOTE: There were 322 observations read from the data set SASHELP.BASEBALL.
+NOTE: The PROCEDURE GLMSELECT printed pages 424-432.
+
+6129       ods graphics off;
+6130       run;
+6131       quit;
+6132       
+6133       
+6134       
+6135       
+The SAS System
+
+6136       

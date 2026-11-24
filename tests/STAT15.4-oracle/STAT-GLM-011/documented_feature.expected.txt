@@ -1,0 +1,308 @@
+
+Romano-British Pottery
+
+The GLM Procedure
+
+                          Class Level Information
+ 
+Class         Levels    Values
+
+Site               4    AshleyRails Caldicot 11. IslandThorns Llanederyn 1 
+
+
+Number of Observations Read          26
+Number of Observations Used          26
+
+Romano-British Pottery
+
+The GLM Procedure
+ 
+Dependent Variable: Al   
+
+                                        Sum of
+Source                      DF         Squares     Mean Square    F Value    Pr > F
+
+Model                        3     1353.656473      451.218824     197.48    <.0001
+
+Error                       22       50.268143        2.284916                     
+
+Corrected Total             25     1403.924615                                     
+
+
+R-Square     Coeff Var      Root MSE       Al Mean
+
+0.964195      17.28295      1.511594      8.746154
+
+
+Source                      DF       Type I SS     Mean Square    F Value    Pr > F
+
+Site                         3     1353.656473      451.218824     197.48    <.0001
+
+
+Source                      DF     Type III SS     Mean Square    F Value    Pr > F
+
+Site                         3     1353.656473      451.218824     197.48    <.0001
+
+
+Contrast                       DF     Contrast SS     Mean Square    F Value    Pr > F
+
+Llanederyn vs. the rest         1     785.2555886     785.2555886     343.67    <.0001
+
+Romano-British Pottery
+
+The GLM Procedure
+ 
+Dependent Variable: Fe   
+
+                                        Sum of
+Source                      DF         Squares     Mean Square    F Value    Pr > F
+
+Model                        3     134.2216158      44.7405386      89.88    <.0001
+
+Error                       22      10.9508457       0.4977657                     
+
+Corrected Total             25     145.1724615                                     
+
+
+R-Square     Coeff Var      Root MSE       Fe Mean
+
+0.924567      15.79171      0.705525      4.467692
+
+
+Source                      DF       Type I SS     Mean Square    F Value    Pr > F
+
+Site                         3     134.2216158      44.7405386      89.88    <.0001
+
+
+Source                      DF     Type III SS     Mean Square    F Value    Pr > F
+
+Site                         3     134.2216158      44.7405386      89.88    <.0001
+
+
+Contrast                       DF     Contrast SS     Mean Square    F Value    Pr > F
+
+Llanederyn vs. the rest         1     71.15144132     71.15144132     142.94    <.0001
+
+Romano-British Pottery
+
+The GLM Procedure
+ 
+Dependent Variable: Mg   
+
+                                        Sum of
+Source                      DF         Squares     Mean Square    F Value    Pr > F
+
+Model                        3     103.3505270      34.4501757      49.12    <.0001
+
+Error                       22      15.4296114       0.7013460                     
+
+Corrected Total             25     118.7801385                                     
+
+
+R-Square     Coeff Var      Root MSE       Mg Mean
+
+0.870099      26.65777      0.837464      3.141538
+
+
+Source                      DF       Type I SS     Mean Square    F Value    Pr > F
+
+Site                         3     103.3505270      34.4501757      49.12    <.0001
+
+
+Source                      DF     Type III SS     Mean Square    F Value    Pr > F
+
+Site                         3     103.3505270      34.4501757      49.12    <.0001
+
+
+Contrast                       DF     Contrast SS     Mean Square    F Value    Pr > F
+
+Llanederyn vs. the rest         1     56.59349339     56.59349339      80.69    <.0001
+
+Romano-British Pottery
+
+The GLM Procedure
+ 
+Dependent Variable: Ca   
+
+                                        Sum of
+Source                      DF         Squares     Mean Square    F Value    Pr > F
+
+Model                        3      0.20470275      0.06823425      29.16    <.0001
+
+Error                       22      0.05148571      0.00234026                     
+
+Corrected Total             25      0.25618846                                     
+
+
+R-Square     Coeff Var      Root MSE       Ca Mean
+
+0.799032      33.01265      0.048376      0.146538
+
+
+Source                      DF       Type I SS     Mean Square    F Value    Pr > F
+
+Site                         3      0.20470275      0.06823425      29.16    <.0001
+
+
+Source                      DF     Type III SS     Mean Square    F Value    Pr > F
+
+Site                         3      0.20470275      0.06823425      29.16    <.0001
+
+
+Contrast                       DF     Contrast SS     Mean Square    F Value    Pr > F
+
+Llanederyn vs. the rest         1      0.03531688      0.03531688      15.09    0.0008
+
+Romano-British Pottery
+
+The GLM Procedure
+ 
+Dependent Variable: Na   
+
+                                        Sum of
+Source                      DF         Squares     Mean Square    F Value    Pr > F
+
+Model                        3      0.25824560      0.08608187       9.50    0.0003
+
+Error                       22      0.19929286      0.00905877                     
+
+Corrected Total             25      0.45753846                                     
+
+
+R-Square     Coeff Var      Root MSE       Na Mean
+
+0.564424      60.06350      0.095178      0.158462
+
+
+Source                      DF       Type I SS     Mean Square    F Value    Pr > F
+
+Site                         3      0.25824560      0.08608187       9.50    0.0003
+
+
+Source                      DF     Type III SS     Mean Square    F Value    Pr > F
+
+Site                         3      0.25824560      0.08608187       9.50    0.0003
+
+
+Contrast                       DF     Contrast SS     Mean Square    F Value    Pr > F
+
+Llanederyn vs. the rest         1      0.23344446      0.23344446      25.77    <.0001
+
+Romano-British Pottery
+
+The GLM Procedure
+Multivariate Analysis of Variance
+
+                                   E = Error SSCP Matrix
+ 
+                  Al                Fe                Mg                Ca                Na
+
+Al      50.268142857      7.1250714286      0.7610142857      0.1154714286      0.5709571429
+Fe      7.1250714286      10.950845714      0.5270571429      -0.155194286      0.0667585714
+Mg      0.7610142857      0.5270571429      15.429611429      0.4353771429      0.0276157143
+Ca      0.1154714286      -0.155194286      0.4353771429      0.0514857143      0.0100785714
+Na      0.5709571429      0.0667585714      0.0276157143      0.0100785714      0.1992928571
+
+
+     Partial Correlation Coefficients from the Error SSCP Matrix / Prob > |r|
+                                         
+DF = 22             Al             Fe             Mg             Ca             Na
+
+Al            1.000000       0.303682       0.027326       0.071777       0.180389
+                               0.1589         0.9015         0.7448         0.4101
+
+Fe            0.303682       1.000000       0.040547      -0.206685       0.045189
+                0.1589                        0.8543         0.3440         0.8378
+
+Mg            0.027326       0.040547       1.000000       0.488478       0.015748
+                0.9015         0.8543                        0.0180         0.9431
+
+Ca            0.071777      -0.206685       0.488478       1.000000       0.099497
+                0.7448         0.3440         0.0180                        0.6515
+
+Na            0.180389       0.045189       0.015748       0.099497       1.000000
+                0.4101         0.8378         0.9431         0.6515               
+
+Romano-British Pottery
+
+The GLM Procedure
+Multivariate Analysis of Variance
+
+                             H = Type III SSCP Matrix for Site
+ 
+                  Al                Fe                Mg                Ca                Na
+
+Al      1353.6564725      -424.8233022      -373.4008604      -15.06931758      -17.26811099
+Fe      -424.8233022      134.22161582      117.74503516      4.8217865934      5.3259491209
+Mg      -373.4008604      117.74503516      103.35052703      4.2091613187      4.7105458242
+Ca      -15.06931758      4.8217865934      4.2091613187      0.2047027473       0.154782967
+Na      -17.26811099      5.3259491209      4.7105458242       0.154782967      0.2582456044
+
+
+                        Characteristic Roots and Vectors of: E Inverse * H, where
+                                    H = Type III SSCP Matrix for Site
+                                          E = Error SSCP Matrix
+ 
+Characteristic               Characteristic Vector  V'EV=1
+          Root    Percent              Al              Fe              Mg              Ca              Na
+
+    72.0059912      98.21      0.12759609     -0.22522140     -0.03135200     -1.55932807     -0.47977875
+     1.2692975       1.73      0.02029934      0.06917944     -0.13834858      4.62051039     -1.24180579
+     0.0421555       0.06      0.06787309      0.17914109      0.11309240     -1.14487116     -0.54351301
+     0.0000000       0.00      0.02113106     -0.14253898      0.22156737      0.22294157      0.17749784
+     0.0000000       0.00      0.03632602      0.04892958     -0.07784370      1.78306287      1.77111932
+
+
+MANOVA Test Criteria and F Approximations for the Hypothesis of No Overall Site Effect
+                          H = Type III SSCP Matrix for Site
+                                E = Error SSCP Matrix
+                                           
+                                 S=3    M=0.5    N=8
+ 
+Statistic                        Value    F Value    Num DF    Den DF    Pr > F
+
+Wilks' Lambda               0.00579185      18.24        15    50.091    <.0001
+Pillai's Trace              1.58608776       4.49        15        60    <.0001
+Hotelling-Lawley Trace     73.31744424      83.97        15     29.13    <.0001
+Roy's Greatest Root        72.00599123     288.02         5        20    <.0001
+
+         NOTE: F Statistic for Roy's Greatest Root is an upper bound.
+
+
+                    H = Contrast SSCP Matrix for Llanederyn vs. the rest
+ 
+                  Al                Fe                Mg                Ca                Na
+
+Al      785.25558862      -236.3727288      -210.8088161      -5.266191799      -13.53933399
+Fe      -236.3727288      71.151441323      63.456352116      1.5851961376      4.0755256878
+Mg      -210.8088161      63.456352116      56.593493386      1.4137558201      3.6347541005
+Ca      -5.266191799      1.5851961376      1.4137558201      0.0353168783      0.0907993915
+Na      -13.53933399      4.0755256878      3.6347541005      0.0907993915      0.2334444577
+
+
+                        Characteristic Roots and Vectors of: E Inverse * H, where
+                           H = Contrast SSCP Matrix for Llanederyn vs. the rest
+                                          E = Error SSCP Matrix
+ 
+Characteristic               Characteristic Vector  V'EV=1
+          Root    Percent              Al              Fe              Mg              Ca              Na
+
+    39.4625761     100.00      0.12930553     -0.21472183     -0.04748933     -0.99385166     -0.62761013
+     0.0000000       0.00      0.00476707      0.04905823     -0.16605256      5.16548884     -0.00367596
+     0.0000000       0.00      0.01179002     -0.06745692     -0.00162739     -0.80644303      2.20048558
+     0.0000000       0.00      0.04008332     -0.08205667      0.24131633      0.00000000      0.00000000
+     0.0000000       0.00      0.06765619      0.22476113      0.00000000      0.00000000      0.00000000
+
+
+MANOVA Test Criteria and Exact F Statistics for the Hypothesis of No Overall Llanederyn vs. the rest Effect
+                           H = Contrast SSCP Matrix for Llanederyn vs. the rest
+                                           E = Error SSCP Matrix
+                                                      
+                                            S=1    M=1.5    N=8
+ 
+Statistic                        Value    F Value    Num DF    Den DF    Pr > F
+
+Wilks' Lambda               0.02471420     142.07         5        18    <.0001
+Pillai's Trace              0.97528580     142.07         5        18    <.0001
+Hotelling-Lawley Trace     39.46257613     142.07         5        18    <.0001
+Roy's Greatest Root        39.46257613     142.07         5        18    <.0001

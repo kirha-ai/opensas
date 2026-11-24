@@ -1,0 +1,65 @@
+The SAS System
+
+14843      
+14844      /* STAT-ROBUSTREG-012: ROBUSTREG — Official examples and feature integration regression
+14845       * Source: S154 / Chapter 107 / `Examples: ROBUSTREG Procedure` (PDF pp. 8830–8861).
+14846       * Discriminates: Example 107.2: Robust ANOVA
+14847       */
+14848      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+14848    ! validmemname=compatible locale=en_US;
+14849      %let syscc=0;
+14850      title; footnote;
+14851      ods _all_ close;
+14852      ods listing gpath="%sysfunc(pathname(work))";
+14853      ods graphics off;
+14854      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.HBK (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.STACK (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+14854    !                                         quit;
+
+
+14855      ods path work.templat(update) sashelp.tmplmst(read);
+14856      
+14857      data recover;
+14858      input T1 $ T2 $ time @@;
+14859      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.RECOVER has 16 observations and 3 variables.
+
+14864      ;
+14865      proc glm data=recover;
+14866      class T1 T2;
+14867      model time = T1 T2 T1*T2;
+14868      run;
+
+
+NOTE: The PROCEDURE GLM printed pages 1097-1098.
+
+14869      proc robustreg data=recover;
+14870      class T1 T2;
+14871      model time = T1 T2 T1*T2 / diagnostics;
+14872      T1_T2: test T1*T2;
+14873      output out=robout r=resid sr=stdres;
+14874      run;
+
+NOTE: Algorithm converged for the M estimates.
+NOTE: Algorithm converged for the location-scale M estimates.
+NOTE: Test T1_T2: Algorithm converged for the M estimates in the reduced model.
+NOTE: The data set WORK.ROBOUT has 16 observations and 5 variables.
+NOTE: The PROCEDURE ROBUSTREG printed page 1099.
+
+14875      
+14876      
+14877      
+14878      
+The SAS System
+
+14879      

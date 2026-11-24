@@ -1,0 +1,58 @@
+The SAS System
+
+5727       
+5728       /* STAT-GLMSELECT-005: GLMSELECT — Backward Elimination (BACKWARD) / Least Angle Regression (LAR) / Macro Variables Containing Selected Models
+5729        * Source: S154 / Chapter 56 / `Backward Elimination (BACKWARD)` (PDF pp. 4360–4361); S154 / Chapter 56 / `Least Angle Regression (LAR)` (PDF pp.
+5729     ! 4362–4363); S154 / Chapter 56 / `Macro Variables Containing Selected Models` (PDF pp. 4372–4374).
+5730        * Discriminates: Getting Started: GLMSELECT Procedure
+5731        */
+5732       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+5732     ! validmemname=compatible locale=en_US;
+5733       %let syscc=0;
+5734       title; footnote;
+5735       ods _all_ close;
+5736       ods listing gpath="%sysfunc(pathname(work))";
+5737       ods graphics off;
+5738       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+5738     !                                         quit;
+
+
+5739       ods path work.templat(update) sashelp.tmplmst(read);
+5740       
+5741       proc contents varnum data=sashelp.baseball;
+5742       ods select position;
+5743       run;
+
+NOTE: The PROCEDURE CONTENTS printed page 326.
+
+5744       ods graphics on;
+5745       proc glmselect data=sashelp.baseball plots=all seed=314159;
+5746       class league division;
+5747       model logSalary = nAtBat nHits nHome nRuns nRBI nBB
+5748       yrMajor crAtBat crHits crHome crRuns crRbi
+5749       crBB league division nOuts nAssts nError
+5750       / details=all stats=all;
+5751       run;
+
+NOTE: There were 322 observations read from the data set SASHELP.BASEBALL.
+NOTE: The PROCEDURE GLMSELECT printed pages 327-335.
+
+5752       ods graphics off;
+5753       run;
+5754       quit;
+5755       
+5756       
+5757       
+5758       
+The SAS System
+
+5759       

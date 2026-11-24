@@ -1,0 +1,193 @@
+The SAS System
+
+2698       
+2699       /* STAT-QUANTREG-010: QUANTREG — ODS Table Names
+2700        * Source: S154 / Chapter 103 / `ODS Table Names` (PDF pp. 8415–8416).
+2701        * Discriminates: Verified default procedure context
+2702        */
+2703       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+2703     ! validmemname=compatible locale=en_US;
+2704       %let syscc=0;
+2705       title; footnote;
+2706       ods _all_ close;
+2707       ods listing gpath="%sysfunc(pathname(work))";
+2708       ods graphics off;
+2709       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.A (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+2709     !                                         quit;
+
+
+2710       ods path work.templat(update) sashelp.tmplmst(read);
+2711       
+2712       ods trace on;
+2713       data a (drop=i);
+2714       do i=1 to 1000;
+2715       x1=rannor(1234);
+2716       x2=rannor(1234);
+2717       e=rannor(1234);
+2718       if i > 950 then y=100 + 10*e;
+2719       else y=10 + 5*x1 + 3*x2 + 0.5 * e;
+2720       output;
+2721       end;
+2722       run;
+
+NOTE: The data set WORK.A has 1000 observations and 4 variables.
+
+2723       proc quantreg data=a;
+2724       model y = x1 x2 / seed=314159;
+2725       run;
+
+NOTE: No valid quantiles are specified. PROC QUANTREG computes median regression.
+
+Output Added:
+-------------
+Name:       ModelInfo
+Label:      Model Information
+Template:   Stat.Quantreg.ModelInfo
+Path:       Quantreg.ModelInfo
+-------------
+
+Output Added:
+-------------
+Name:       NObs
+Label:      Number of Observations
+Template:   Stat.Quantreg.NObs
+Path:       Quantreg.NObs
+-------------
+
+Output Added:
+-------------
+Name:       SummaryStatistics
+Label:      Summary Statistics
+Template:   stat.Quantreg.summarystatistics
+Path:       Quantreg.SummaryStatistics
+-------------
+
+Output Added:
+-------------
+Name:       ObjFunction
+Label:      Quantile Level and Objective Function
+Template:   Stat.Quantreg.ObjFunction
+Path:       Quantreg.ObjFunction
+-------------
+
+Output Added:
+-------------
+Name:       ParameterEstimates
+Label:      Parameter Estimates
+Template:   stat.Quantreg.parameterestimates
+Path:       Quantreg.ParameterEstimates
+-------------
+NOTE: The PROCEDURE QUANTREG printed page 154.
+
+2726       proc quantreg algorithm=interior(tolerance=1e-6)
+2727       ci=none data=a;
+2728       model y = x1 x2 / itprint nosummary seed=314159;
+2729       run;
+
+NOTE: No valid quantiles are specified. PROC QUANTREG computes median regression.
+
+Output Added:
+-------------
+Name:       ModelInfo
+Label:      Model Information
+Template:   Stat.Quantreg.ModelInfo
+Path:       Quantreg.ModelInfo
+-------------
+
+Output Added:
+-------------
+Name:       NObs
+Label:      Number of Observations
+Template:   Stat.Quantreg.NObs
+Path:       Quantreg.NObs
+-------------
+
+Output Added:
+-------------
+Name:       IPIterHistory
+Label:      Iteration History of Interior Point Algorithm
+Template:   stat.Quantreg.IPIterHistory
+Path:       Quantreg.ITERHISTORY.ESTIMATE.Quantile1.IPIterHistory
+-------------
+
+Output Added:
+-------------
+Name:       ObjFunction
+Label:      Quantile Level and Objective Function
+Template:   Stat.Quantreg.ObjFunction
+Path:       Quantreg.ITERHISTORY.ObjFunction
+-------------
+
+Output Added:
+-------------
+Name:       ParameterEstimates
+Label:      Parameter Estimates
+Template:   stat.Quantreg.parameterestimates
+Path:       Quantreg.ITERHISTORY.ParameterEstimates
+-------------
+NOTE: The PROCEDURE QUANTREG printed pages 155-156.
+
+2730       proc quantreg algorithm=smooth(rratio=.5) ci=none data=a;
+2731       model y = x1 x2 / itprint nosummary seed=314159;
+2732       run;
+
+NOTE: No valid quantiles are specified. PROC QUANTREG computes median regression.
+
+Output Added:
+-------------
+Name:       ModelInfo
+Label:      Model Information
+Template:   Stat.Quantreg.ModelInfo
+Path:       Quantreg.ModelInfo
+-------------
+
+Output Added:
+-------------
+Name:       NObs
+Label:      Number of Observations
+Template:   Stat.Quantreg.NObs
+Path:       Quantreg.NObs
+-------------
+
+Output Added:
+-------------
+Name:       SMIterHistory
+Label:      Iteration History of Smoothing Algorithm
+Template:   stat.Quantreg.SMIterHistory
+Path:       Quantreg.ITERHISTORY.ESTIMATE.Quantile1.SMIterHistory
+-------------
+
+Output Added:
+-------------
+Name:       ObjFunction
+Label:      Quantile Level and Objective Function
+Template:   Stat.Quantreg.ObjFunction
+Path:       Quantreg.ITERHISTORY.ObjFunction
+-------------
+
+Output Added:
+-------------
+Name:       ParameterEstimates
+Label:      Parameter Estimates
+Template:   stat.Quantreg.parameterestimates
+Path:       Quantreg.ITERHISTORY.ParameterEstimates
+-------------
+NOTE: The PROCEDURE QUANTREG printed pages 157-158.
+
+2733       ods trace off;
+2734       
+2735       
+2736       
+2737       
+The SAS System
+
+2738       

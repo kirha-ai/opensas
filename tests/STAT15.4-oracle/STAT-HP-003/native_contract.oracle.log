@@ -1,0 +1,45 @@
+The SAS System
+
+1403       
+1404       /* STAT-HP-003: Shared HP CLASS and variable role syntax
+1405        * Source: S154 / Chapter 22 / `CLASS Statement` (PDF pp. 560–564); S154 / Chapter 22 / `FREQ Statement` (PDF p. 564); S154 / Chapter 22 / `ID
+1405     ! Statement` (PDF p. 564); S154 / Chapter 22 / `VAR Statement` (PDF p. 570); S154 / Chapter 22 / `WEIGHT Statement` (PDF p. 570).
+1406        * Discriminates: HP CLASS/variable role integration, single-thread PERFORMANCE information
+1407        */
+1408       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+1408     ! validmemname=compatible locale=en_US;
+1409       %let syscc=0;
+1410       title; footnote;
+1411       ods _all_ close;
+1412       ods listing gpath="%sysfunc(pathname(work))";
+1413       ods graphics off;
+1414       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SAMPLE (memtype=DATA).
+1414     !                                         quit;
+
+
+1415       ods path work.templat(update) sashelp.tmplmst(read);
+1416       
+1417       data sample;
+1418        input x z y group $ weight freq;
+1419        datalines;
+
+NOTE: The data set WORK.SAMPLE has 12 observations and 6 variables.
+
+1432       ;
+1433       run;
+1434       proc hpreg data=sample; class group; model y=x z group;  performance nthreads=1 details; run;
+
+NOTE: The HPREG procedure is executing in single-machine mode.
+NOTE: There were 12 observations read from the data set WORK.SAMPLE.
+NOTE: The PROCEDURE HPREG printed page 72.
+
+1435       
+1436       
+1437       
+1438       
+The SAS System
+
+1439       

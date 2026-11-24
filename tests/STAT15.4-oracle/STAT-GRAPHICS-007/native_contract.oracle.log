@@ -1,0 +1,109 @@
+The SAS System
+
+2084       
+2085       /* STAT-GRAPHICS-007: ODS graphics — Image File Types / Scalable Vector Graphics / Naming Graphic Image Files
+2086        * Source: S154 / Chapter 24 / `Image File Types` (PDF pp. 695–696); S154 / Chapter 24 / `Scalable Vector Graphics` (PDF pp. 696–697); S154 /
+2086     ! Chapter 24 / `Naming Graphic Image Files` (PDF pp. 697–699).
+2087        * Discriminates: ODS graphics enablement, explicit SVG format/size, graph identity and generated image file names
+2088        */
+2089       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+2089     ! validmemname=compatible locale=en_US;
+2090       %let syscc=0;
+2091       title; footnote;
+2092       ods _all_ close;
+2093       ods listing gpath="%sysfunc(pathname(work))";
+2094       ods graphics off;
+2095       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.GRAPH_FILES (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SAMPLE (memtype=DATA).
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+2095     !                                         quit;
+
+
+2096       ods path work.templat(update) sashelp.tmplmst(read);
+2097       
+2098       options dlcreatedir; libname _gpath "%sysfunc(pathname(work))/stat_graphics_007"; libname _gpath clear;
+NOTE: Library _GPATH was created.
+NOTE: Libref _GPATH was successfully assigned as follows: 
+      Engine:        V9 
+      Physical Name: /saswork/SAS_work5D120001108E_odaws02-euw1.oda.sas.com/SAS_workCCDC0001108E_odaws02-euw1.oda.sas.com/stat_graphics_007
+NOTE: Libref _GPATH has been deassigned.
+2099       ods listing gpath="%sysfunc(pathname(work))/stat_graphics_007";
+2100       ods graphics on / reset=all imagename="oracle" imagefmt=svg width=5in height=3in;
+2101       ods trace on;
+2102       data sample;
+2103        input x z y group $ weight freq;
+2104        datalines;
+
+NOTE: The data set WORK.SAMPLE has 12 observations and 6 variables.
+
+2117       ;
+2118       run;
+2119       proc reg data=sample plots(only)=fitplot; model y=x; run;
+
+
+Output Added:
+-------------
+Name:       NObs
+Label:      Number of Observations
+Template:   Stat.Reg.NObs
+Path:       Reg.MODEL1.Fit.y.NObs
+-------------
+
+Output Added:
+-------------
+Name:       ANOVA
+Label:      Analysis of Variance
+Template:   Stat.REG.ANOVA
+Path:       Reg.MODEL1.Fit.y.ANOVA
+-------------
+
+Output Added:
+-------------
+Name:       FitStatistics
+Label:      Fit Statistics
+Template:   Stat.REG.FitStatistics
+Path:       Reg.MODEL1.Fit.y.FitStatistics
+-------------
+
+Output Added:
+-------------
+Name:       ParameterEstimates
+Label:      Parameter Estimates
+Template:   Stat.REG.ParameterEstimates
+Path:       Reg.MODEL1.Fit.y.ParameterEstimates
+-------------
+
+Output Added:
+-------------
+Name:       FitPlot
+Label:      Fit Plot
+Template:   Stat.REG.Graphics.Fit
+Path:       Reg.MODEL1.ObswiseStats.y.FitPlot
+-------------
+2119     !                                                           quit;
+
+NOTE: The PROCEDURE REG printed page 98.
+
+2120       ods trace off; ods graphics off;
+2121       data graph_files; length name $128; rc=filename('_gdir',"%sysfunc(pathname(work))/stat_graphics_007"); did=dopen('_gdir'); if did then do; do i=1 to
+2121     ! dnum(did); name=dread(did,i); if lowcase(scan(name,-1,'.')) in ('svg','png') then output; end; rc=dclose(did); end; keep name; run;
+
+NOTE: The data set WORK.GRAPH_FILES has 1 observations and 1 variables.
+
+2122       proc print data=graph_files noobs; run;
+
+NOTE: There were 1 observations read from the data set WORK.GRAPH_FILES.
+NOTE: The PROCEDURE PRINT printed page 99.
+
+2123       
+2124       
+2125       
+2126       
+The SAS System
+
+2127       

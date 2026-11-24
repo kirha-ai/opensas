@@ -1,0 +1,115 @@
+The SAS System
+
+2969       
+2970       /* STAT-HPLMIXED-008: HPLMIXED — REPEATED
+2971        * Source: S154 / Chapter 60 / `REPEATED Statement` (PDF pp. 4717–4718).
+2972        * Discriminates: Example 60.1: Computing BLUPs for a Large Number of Subjects; explicit statements: REPEATED
+2973        */
+2974       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+2974     ! validmemname=compatible locale=en_US;
+2975       %let syscc=0;
+2976       title; footnote;
+2977       ods _all_ close;
+2978       ods listing gpath="%sysfunc(pathname(work))";
+2979       ods graphics off;
+2980       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SCHOOLSAMPLE (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+2980     !                                         quit;
+
+
+2981       ods path work.templat(update) sashelp.tmplmst(read);
+2982       
+2983       %let NCenter = 100;
+2984       %let NPatient = %eval(&NCenter*50);
+2985       %let NTime = 3;
+2986       %let SigmaC = 2.0;
+2987       %let SigmaP = 4.0;
+2988       %let SigmaE = 8.0;
+2989       %let Seed = 12345;
+2990       data WeekSim;
+2991       keep Gender Center Patient Time Measurement;
+2992       array PGender{&NPatient};
+2993       array PCenter{&NPatient};
+2994       array PEffect{&NPatient};
+2995       array CEffect{&NCenter};
+2996       array GEffect{2};
+2997       do Center = 1 to &NCenter;
+2998       CEffect{Center} = sqrt(&SigmaC)*rannor(&Seed);
+2999       end;
+3000       GEffect{1} = 10*ranuni(&Seed);
+3001       GEffect{2} = 10*ranuni(&Seed);
+3002       do Patient = 1 to &NPatient;
+3003       PGender{Patient} = 1 + int(2 *ranuni(&Seed));
+3004       PCenter{Patient} = 1 + int(&NCenter*ranuni(&Seed));
+3005       PEffect{Patient} = sqrt(&SigmaP)*rannor(&Seed);
+3006       end;
+3007       do Patient = 1 to &NPatient;
+3008       Gender = PGender{Patient};
+3009       Center = PCenter{Patient};
+3010       Mean = 1 + GEffect{Gender} + CEffect{Center} + PEffect{Patient};
+3011       do Time = 1 to &nTime;
+3012       Measurement = Mean + sqrt(&SigmaE)*rannor(&Seed);
+3013       output;
+3014       end;
+3015       end;
+3016       run;
+
+NOTE: The data set WORK.WEEKSIM has 15000 observations and 5 variables.
+
+3017       ods exclude all;
+3018       proc hplmixed data=WeekSim blup;
+3019       class Gender Center Patient Time;
+3020       model Measurement = Gender;
+3021       random Center / s;
+3022       repeated Time / sub=Patient type=un;
+3023       parms 1.7564
+3024       11.4555
+3025       3.6883 11.2071
+3026       4.5951 3.6311 12.1050;
+3027       ods output SolutionR=BLUPs;
+3028       run;
+
+NOTE: The HPLMIXED procedure is executing in single-machine mode.
+NOTE: Convergence criterion (TOL=1.0536712E-8) satisfied.
+NOTE: The data set WORK.BLUPS has 100 observations and 3 variables.
+
+3029       ods exclude none;
+3030       proc sort data=BLUPs;
+3031       by Estimate;
+3032       run;
+
+NOTE: There were 100 observations read from the data set WORK.BLUPS.
+NOTE: The data set WORK.BLUPS has 100 observations and 3 variables.
+
+3033       data BLUPs;
+3034       set BLUPs;
+3035       Rank = _N_;
+3036       run;
+
+NOTE: There were 100 observations read from the data set WORK.BLUPS.
+NOTE: The data set WORK.BLUPS has 100 observations and 4 variables.
+
+3037       proc print data=BLUPs;
+3038       where ((Rank <= 5) | (Rank >= 96));
+3039       var Center Estimate;
+3040       run;
+
+NOTE: There were 10 observations read from the data set WORK.BLUPS.
+      WHERE  not (Rank>5 and Rank<96);
+NOTE: The PROCEDURE PRINT printed page 183.
+
+3041       
+3042       
+3043       
+3044       
+The SAS System
+
+3045       

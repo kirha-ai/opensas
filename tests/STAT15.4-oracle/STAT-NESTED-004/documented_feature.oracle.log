@@ -1,0 +1,57 @@
+The SAS System
+
+5420       
+5421       /* STAT-NESTED-004: NESTED — Error Terms in F Tests / Computational Method
+5422        * Source: S154 / Chapter 87 / `Error Terms in F Tests` (PDF pp. 6972–6973); S154 / Chapter 87 / `Computational Method` (PDF p. 6973).
+5423        * Discriminates: Getting Started: NESTED Procedure
+5424        */
+5425       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+5425     ! validmemname=compatible locale=en_US;
+5426       %let syscc=0;
+5427       title; footnote;
+5428       ods _all_ close;
+5429       ods listing gpath="%sysfunc(pathname(work))";
+5430       ods graphics off;
+5431       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.AUTO (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+5431     !                                         quit;
+
+
+5432       ods path work.templat(update) sashelp.tmplmst(read);
+5433       
+5434       data auto;
+5435       input Make $ Model Score @@;
+5436       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.AUTO has 36 observations and 3 variables.
+
+5449       ;
+5450       proc sort data=auto;
+5451       by Make Model;
+5452       run;
+
+NOTE: There were 36 observations read from the data set WORK.AUTO.
+NOTE: The data set WORK.AUTO has 36 observations and 3 variables.
+
+5453       title1 'Reliability of Automobile Models';
+5454       proc nested data=auto;
+5455       class Make Model;
+5456       var Score;
+5457       run;
+
+NOTE: The PROCEDURE NESTED printed page 374.
+
+5458       
+5459       
+5460       
+5461       
+The SAS System
+
+5462       

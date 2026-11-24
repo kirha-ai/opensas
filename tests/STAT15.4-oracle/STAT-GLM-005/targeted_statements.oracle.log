@@ -1,0 +1,52 @@
+The SAS System
+
+1109       
+1110       /* STAT-GLM-005: GLM — ABSORB / Statistical Assumptions for Using PROC GLM / Using PROC GLM Interactively
+1111        * Source: S154 / Chapter 53 / `ABSORB Statement` (PDF p. 4065); S154 / Chapter 53 / `Statistical Assumptions for Using PROC GLM` (PDF pp.
+1111     ! 4106–4107); S154 / Chapter 53 / `Using PROC GLM Interactively` (PDF p. 4110).
+1112        * Discriminates: Explicit ABSORB statement behavior on seeded synthetic inputs.
+1113        */
+1114       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+1114     ! validmemname=compatible locale=en_US;
+1115       %let syscc=0;
+1116       title; footnote;
+1117       ods _all_ close;
+1118       ods listing gpath="%sysfunc(pathname(work))";
+1119       ods graphics off;
+1120       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SAMPLE (memtype=DATA).
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+1120     !                                         quit;
+
+
+1121       ods path work.templat(update) sashelp.tmplmst(read);
+1122       
+1123       data sample;
+1124       call streaminit(314159);
+1125       do block=1 to 4; do group=1 to 2; do replicate=1 to 5;
+1126       y=10+block+2*group+rand('normal');
+1127       y1=y+rand('normal'); y2=y+1+rand('normal'); y3=y+2+rand('normal');
+1128       output;
+1129       end; end; end;
+1130       run;
+
+NOTE: The data set WORK.SAMPLE has 40 observations and 7 variables.
+
+1131       proc glm data=sample; absorb block; class group; model y=group; run;
+
+1131     !                                                                      quit;
+
+NOTE: The PROCEDURE GLM printed pages 93-94.
+
+1132       
+1133       
+1134       
+1135       
+The SAS System
+
+1136       

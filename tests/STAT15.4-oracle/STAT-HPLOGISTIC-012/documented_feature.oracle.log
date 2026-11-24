@@ -1,0 +1,54 @@
+The SAS System
+
+4508       
+4509       /* STAT-HPLOGISTIC-012: HPLOGISTIC — Existence of Maximum Likelihood Estimates
+4510        * Source: S154 / Chapter 61 / `Existence of Maximum Likelihood Estimates` (PDF pp. 4767–4768).
+4511        * Discriminates: Getting Started: HPLOGISTIC Procedure
+4512        */
+4513       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+4513     ! validmemname=compatible locale=en_US;
+4514       %let syscc=0;
+4515       title; footnote;
+4516       ods _all_ close;
+4517       ods listing gpath="%sysfunc(pathname(work))";
+4518       ods graphics off;
+4519       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.GETSTARTED (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+4519     !                                         quit;
+
+
+4520       ods path work.templat(update) sashelp.tmplmst(read);
+4521       
+4522       data getStarted;
+4523       input C$ y x1-x10;
+4524       datalines;
+
+NOTE: The data set WORK.GETSTARTED has 100 observations and 12 variables.
+
+4625       ;
+4626       proc hplogistic data=getStarted;
+4627       class C;
+4628       model y = C x1-x10;
+4629       run;
+
+NOTE: The HPLOGISTIC procedure is executing in single-machine mode.
+NOTE: You are modeling the probability that y='0'.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: There were 100 observations read from the data set WORK.GETSTARTED.
+NOTE: The PROCEDURE HPLOGISTIC printed page 201.
+
+4630       
+4631       
+4632       
+4633       
+The SAS System
+
+4634       

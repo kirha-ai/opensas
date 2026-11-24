@@ -1,0 +1,373 @@
+The SAS System
+
+19013      
+19014      /* STAT-STEPDISC-003: STEPDISC — Displayed Output / ODS Table Names
+19015       * Source: S154 / Chapter 117 / `Displayed Output` (PDF pp. 9567–9569); S154 / Chapter 117 / `ODS Table Names` (PDF pp. 9569–9570).
+19016       * Discriminates: Getting Started: STEPDISC Procedure
+19017       */
+19018      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+19018    ! validmemname=compatible locale=en_US;
+19019      %let syscc=0;
+19020      title; footnote;
+19021      ods _all_ close;
+19022      ods listing gpath="%sysfunc(pathname(work))";
+19023      ods graphics off;
+19024      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+19024    !                                         quit;
+
+
+19025      ods path work.templat(update) sashelp.tmplmst(read);
+19026      
+19027      ods trace on;
+19028      title 'Fish Measurement Data';
+19029      proc stepdisc data=sashelp.fish;
+19030      class Species;
+19031      run;
+
+WARNING: 1 observations in DATA= data set or BY group will not be included in the analysis due to missing values.
+WARNING: A total of 1 of the 159 observations in the DATA= data set were excluded (frequency sum = 158).
+
+Output Added:
+-------------
+Name:       Counts
+Label:      Counts
+Template:   Stat.Discrim.StepdiscCounts
+Path:       Stepdisc.Counts
+-------------
+
+Output Added:
+-------------
+Name:       NObs
+Label:      n Obs
+Template:   Stat.Discrim.NObs
+Path:       Stepdisc.NObs
+-------------
+
+Output Added:
+-------------
+Name:       Levels
+Label:      Class Levels
+Template:   Stat.Discrim.Levels
+Path:       Stepdisc.Levels
+-------------
+
+Output Added:
+-------------
+Name:       Steps
+Label:      Entry Statistics
+Template:   Stat.Discrim.Steps
+Path:       Stepdisc.Step1.Steps
+-------------
+
+Output Added:
+-------------
+Name:       Messages
+Label:      Messages
+Template:   Stat.Discrim.Messages
+Path:       Stepdisc.Step1.Messages
+-------------
+
+Output Added:
+-------------
+Name:       Variables
+Label:      Variables Entered
+Template:   Stat.Discrim.Variables
+Path:       Stepdisc.Step1.Variables
+-------------
+
+Output Added:
+-------------
+Name:       Multivariate
+Label:      Multivariate Statistics
+Template:   Stat.Discrim.Multivariate
+Path:       Stepdisc.Step1.Multivariate
+-------------
+
+Output Added:
+-------------
+Name:       Steps
+Label:      Removal Statistics
+Template:   Stat.Discrim.Steps
+Path:       Stepdisc.Step2.Steps
+-------------
+
+Output Added:
+-------------
+Name:       Messages
+Label:      Messages
+Template:   Stat.Discrim.Messages
+Path:       Stepdisc.Step2.Messages
+-------------
+
+Output Added:
+-------------
+Name:       Steps
+Label:      Entry Statistics
+Template:   Stat.Discrim.Steps
+Path:       Stepdisc.Step2.Steps
+-------------
+
+Output Added:
+-------------
+Name:       Messages
+Label:      Messages
+Template:   Stat.Discrim.Messages
+Path:       Stepdisc.Step2.Messages
+-------------
+
+Output Added:
+-------------
+Name:       Variables
+Label:      Variables Entered
+Template:   Stat.Discrim.Variables
+Path:       Stepdisc.Step2.Variables
+-------------
+
+Output Added:
+-------------
+Name:       Multivariate
+Label:      Multivariate Statistics
+Template:   Stat.Discrim.Multivariate
+Path:       Stepdisc.Step2.Multivariate
+-------------
+
+Output Added:
+-------------
+Name:       Steps
+Label:      Removal Statistics
+Template:   Stat.Discrim.Steps
+Path:       Stepdisc.Step3.Steps
+-------------
+
+Output Added:
+-------------
+Name:       Messages
+Label:      Messages
+Template:   Stat.Discrim.Messages
+Path:       Stepdisc.Step3.Messages
+-------------
+
+Output Added:
+-------------
+Name:       Steps
+Label:      Entry Statistics
+Template:   Stat.Discrim.Steps
+Path:       Stepdisc.Step3.Steps
+-------------
+
+Output Added:
+-------------
+Name:       Messages
+Label:      Messages
+Template:   Stat.Discrim.Messages
+Path:       Stepdisc.Step3.Messages
+-------------
+
+Output Added:
+-------------
+Name:       Variables
+Label:      Variables Entered
+Template:   Stat.Discrim.Variables
+Path:       Stepdisc.Step3.Variables
+-------------
+
+Output Added:
+-------------
+Name:       Multivariate
+Label:      Multivariate Statistics
+Template:   Stat.Discrim.Multivariate
+Path:       Stepdisc.Step3.Multivariate
+-------------
+
+Output Added:
+-------------
+Name:       Steps
+Label:      Removal Statistics
+Template:   Stat.Discrim.Steps
+Path:       Stepdisc.Step4.Steps
+-------------
+
+Output Added:
+-------------
+Name:       Messages
+Label:      Messages
+Template:   Stat.Discrim.Messages
+Path:       Stepdisc.Step4.Messages
+-------------
+
+Output Added:
+-------------
+Name:       Steps
+Label:      Entry Statistics
+Template:   Stat.Discrim.Steps
+Path:       Stepdisc.Step4.Steps
+-------------
+
+Output Added:
+-------------
+Name:       Messages
+Label:      Messages
+Template:   Stat.Discrim.Messages
+Path:       Stepdisc.Step4.Messages
+-------------
+
+Output Added:
+-------------
+Name:       Variables
+Label:      Variables Entered
+Template:   Stat.Discrim.Variables
+Path:       Stepdisc.Step4.Variables
+-------------
+
+Output Added:
+-------------
+Name:       Multivariate
+Label:      Multivariate Statistics
+Template:   Stat.Discrim.Multivariate
+Path:       Stepdisc.Step4.Multivariate
+-------------
+
+Output Added:
+-------------
+Name:       Steps
+Label:      Removal Statistics
+Template:   Stat.Discrim.Steps
+Path:       Stepdisc.Step5.Steps
+-------------
+
+Output Added:
+-------------
+Name:       Messages
+Label:      Messages
+Template:   Stat.Discrim.Messages
+Path:       Stepdisc.Step5.Messages
+-------------
+
+Output Added:
+-------------
+Name:       Steps
+Label:      Entry Statistics
+Template:   Stat.Discrim.Steps
+Path:       Stepdisc.Step5.Steps
+-------------
+
+Output Added:
+-------------
+Name:       Messages
+Label:      Messages
+Template:   Stat.Discrim.Messages
+Path:       Stepdisc.Step5.Messages
+-------------
+
+Output Added:
+-------------
+Name:       Variables
+Label:      Variables Entered
+Template:   Stat.Discrim.Variables
+Path:       Stepdisc.Step5.Variables
+-------------
+
+Output Added:
+-------------
+Name:       Multivariate
+Label:      Multivariate Statistics
+Template:   Stat.Discrim.Multivariate
+Path:       Stepdisc.Step5.Multivariate
+-------------
+
+Output Added:
+-------------
+Name:       Steps
+Label:      Removal Statistics
+Template:   Stat.Discrim.Steps
+Path:       Stepdisc.Step6.Steps
+-------------
+
+Output Added:
+-------------
+Name:       Messages
+Label:      Messages
+Template:   Stat.Discrim.Messages
+Path:       Stepdisc.Step6.Messages
+-------------
+
+Output Added:
+-------------
+Name:       Steps
+Label:      Entry Statistics
+Template:   Stat.Discrim.Steps
+Path:       Stepdisc.Step6.Steps
+-------------
+
+Output Added:
+-------------
+Name:       Messages
+Label:      Messages
+Template:   Stat.Discrim.Messages
+Path:       Stepdisc.Step6.Messages
+-------------
+
+Output Added:
+-------------
+Name:       Messages
+Label:      Messages
+Template:   Stat.Discrim.Messages
+Path:       Stepdisc.Step6.Messages
+-------------
+
+Output Added:
+-------------
+Name:       Multivariate
+Label:      Multivariate Statistics
+Template:   Stat.Discrim.Multivariate
+Path:       Stepdisc.Step6.Multivariate
+-------------
+
+Output Added:
+-------------
+Name:       Steps
+Label:      Removal Statistics
+Template:   Stat.Discrim.Steps
+Path:       Stepdisc.Step7.Steps
+-------------
+
+Output Added:
+-------------
+Name:       Messages
+Label:      Messages
+Template:   Stat.Discrim.Messages
+Path:       Stepdisc.Step7.Messages
+-------------
+
+Output Added:
+-------------
+Name:       Messages
+Label:      Messages
+Template:   Stat.Discrim.Messages
+Path:       Stepdisc.Messages
+-------------
+
+Output Added:
+-------------
+Name:       Summary
+Label:      Summary
+Template:   Stat.Discrim.Summary
+Path:       Stepdisc.Summary
+-------------
+NOTE: There were 159 observations read from the data set SASHELP.FISH.
+NOTE: The PROCEDURE STEPDISC printed pages 1350-1358.
+
+19032      ods trace off;
+19033      
+19034      
+19035      
+19036      
+The SAS System
+
+19037      

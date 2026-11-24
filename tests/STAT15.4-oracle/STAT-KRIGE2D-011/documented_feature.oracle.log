@@ -1,0 +1,58 @@
+The SAS System
+
+10575      
+10576      /* STAT-KRIGE2D-011: KRIGE2D — Output Data Sets
+10577       * Source: S154 / Chapter 74 / `Output Data Sets` (PDF pp. 5486–5487).
+10578       * Discriminates: Getting Started: KRIGE2D Procedure
+10579       */
+10580      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+10580    ! validmemname=compatible locale=en_US;
+10581      %let syscc=0;
+10582      title; footnote;
+10583      ods _all_ close;
+10584      ods listing gpath="%sysfunc(pathname(work))";
+10585      ods graphics off;
+10586      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.DATA10 (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.THICK (memtype=DATA).
+10586    !                                         quit;
+
+
+10587      ods path work.templat(update) sashelp.tmplmst(read);
+10588      
+10589      title 'Spatial Prediction With Kriging';
+10590      data thick;
+10591      input East North Thick @@;
+10592      label Thick='Coal Seam Thickness';
+10593      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.THICK has 75 observations and 3 variables.
+
+10619      ;
+10620      ods graphics on;
+10621      proc krige2d data=thick;
+10622      coordinates xc=East yc=North;
+10623      predict var=Thick radius=60;
+10624      model scale=7.4599 range=30.1111 form=gauss;
+10625      grid x=0 to 100 by 2.5 y=0 to 100 by 2.5;
+10626      run;
+
+NOTE: The data set WORK.DATA11 has 1681 observations and 7 variables.
+NOTE: The PROCEDURE KRIGE2D printed pages 749-750.
+
+10627      ods graphics off;
+10628      run;
+10629      quit;
+10630      
+10631      
+10632      
+10633      
+The SAS System
+
+10634      

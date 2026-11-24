@@ -1,0 +1,107 @@
+The SAS System
+
+19150      
+19151      /* STAT-GAM-004: GAM — Nonparametric Regression / Additive Models and Generalized Additive Models / Forms of Additive Models
+19152       * Source: S154 / Chapter 48 / `Nonparametric Regression` (PDF pp. 3307–3308); S154 / Chapter 48 / `Additive Models and Generalized Additive
+19152    ! Models` (PDF pp. 3308–3309); S154 / Chapter 48 / `Forms of Additive Models` (PDF pp. 3309–3310).
+19153       * Discriminates: Example 48.1: Generalized Additive Model with Binary Data
+19154       */
+19155      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+19155    ! validmemname=compatible locale=en_US;
+19156      %let syscc=0;
+19157      title; footnote;
+19158      ods _all_ close;
+19159      ods listing gpath="%sysfunc(pathname(work))";
+19160      ods graphics off;
+19161      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.EQUIP (memtype=DATA).
+NOTE: Deleting WORK.EST (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+19161    !                                         quit;
+
+
+19162      ods path work.templat(update) sashelp.tmplmst(read);
+19163      
+19164      title 'Comparing PROC GAM with PROC GENMOD';
+19165      data kyphosis;
+19166      input Age StartVert NumVert Kyphosis @@;
+19167      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.KYPHOSIS has 83 observations and 4 variables.
+
+19196      ;
+19197      proc genmod data=kyphosis descending;
+19198      model Kyphosis = Age StartVert NumVert/link=logit dist=binomial;
+19199      run;
+
+NOTE: PROC GENMOD is modeling the probability that Kyphosis='1'.
+NOTE: The Pearson chi-square and deviance are not computed since the AGGREGATE option is not specified.
+NOTE: Algorithm converged.
+NOTE: The scale parameter was held fixed.
+NOTE: The PROCEDURE GENMOD printed page 2316.
+
+19200      title 'Comparing PROC GAM with PROC GENMOD';
+19201      proc gam data=kyphosis;
+19202      model Kyphosis (event='1') = spline(Age ,df=3)
+19203      spline(StartVert,df=3)
+19204      spline(NumVert ,df=3) / dist=binomial;
+19205      run;
+
+NOTE: PROC GAM is modeling the probability that Kyphosis=1. One way to change this to model the probability that Kyphosis=0 is to specify the response variable 
+      option EVENT='0'.
+NOTE: The PROCEDURE GAM printed page 2317.
+
+19206      title 'PROC GAM with Approximate Analysis of Deviance';
+19207      proc gam data=kyphosis;
+19208      model Kyphosis (event='1') = spline(Age ,df=3)
+19209      spline(StartVert,df=3)
+19210      spline(NumVert ,df=3) /
+19211      dist=binomial anodev=norefit;
+19212      run;
+
+NOTE: PROC GAM is modeling the probability that Kyphosis=1. One way to change this to model the probability that Kyphosis=0 is to specify the response variable 
+      option EVENT='0'.
+NOTE: The PROCEDURE GAM printed page 2318.
+
+19213      ods graphics on;
+19214      proc gam data=kyphosis plots=components(clm commonaxes);
+19215      model Kyphosis (event='1') = spline(Age ,df=3)
+19216      spline(StartVert,df=3)
+19217      spline(NumVert ,df=3) / dist=binomial;
+19218      run;
+
+NOTE: PROC GAM is modeling the probability that Kyphosis=1. One way to change this to model the probability that Kyphosis=0 is to specify the response variable 
+      option EVENT='0'.
+NOTE: The PROCEDURE GAM printed page 2319.
+
+19219      ods graphics off;
+19220      title 'Comparing PROC GAM with PROC GENMOD';
+19221      proc genmod data=kyphosis descending;
+19222      model kyphosis = Age Age *Age
+19223      StartVert StartVert*StartVert
+19224      NumVert NumVert *NumVert /
+19225      link=logit dist=binomial;
+19226      run;
+
+NOTE: PROC GENMOD is modeling the probability that Kyphosis='1'.
+NOTE: The Pearson chi-square and deviance are not computed since the AGGREGATE option is not specified.
+NOTE: Algorithm converged.
+NOTE: The scale parameter was held fixed.
+NOTE: The PROCEDURE GENMOD printed page 2320.
+
+19227      
+19228      
+19229      
+19230      
+The SAS System
+
+19231      

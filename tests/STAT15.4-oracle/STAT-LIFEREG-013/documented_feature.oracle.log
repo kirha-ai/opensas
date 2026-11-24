@@ -1,0 +1,315 @@
+The SAS System
+
+12079      
+12080      /* STAT-LIFEREG-013: LIFEREG — Displayed Output for Classical Analysis / Displayed Output for Bayesian Analysis / ODS Table Names
+12081       * Source: S154 / Chapter 76 / `Displayed Output for Classical Analysis` (PDF pp. 5587–5588); S154 / Chapter 76 / `Displayed Output for Bayesian
+12081    ! Analysis` (PDF pp. 5588–5590); S154 / Chapter 76 / `ODS Table Names` (PDF pp. 5599–5601).
+12082       * Discriminates: Getting Started: LIFEREG Procedure
+12083       */
+12084      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+12084    ! validmemname=compatible locale=en_US;
+12085      %let syscc=0;
+12086      title; footnote;
+12087      ods _all_ close;
+12088      ods listing gpath="%sysfunc(pathname(work))";
+12089      ods graphics off;
+12090      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.FAN (memtype=DATA).
+NOTE: Deleting WORK.HEADACHE (memtype=DATA).
+NOTE: Deleting WORK.NEW (memtype=DATA).
+NOTE: Deleting WORK.POST (memtype=DATA).
+NOTE: Deleting WORK.PROB (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+12090    !                                         quit;
+
+
+12091      ods path work.templat(update) sashelp.tmplmst(read);
+12092      
+12093      ods trace on;
+12094      data Headache;
+12095      input Minutes Group Censor @@;
+12096      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.HEADACHE has 38 observations and 3 variables.
+
+12107      ;
+12108      proc lifereg data=Headache;
+12109      class Group;
+12110      model Minutes*Censor(1)=Group;
+12111      output out=New cdf=Prob;
+12112      run;
+
+
+Output Added:
+-------------
+Name:       ModelInfo
+Label:      Model Information
+Template:   Stat.Lifereg.ModelInfo
+Path:       Lifereg.ModelInfo
+-------------
+
+Output Added:
+-------------
+Name:       NObs
+Label:      Observations Summary
+Template:   Stat.Lifereg.NObs
+Path:       Lifereg.NObs
+-------------
+
+Output Added:
+-------------
+Name:       ClassLevels
+Label:      Class Level Information
+Template:   Stat.Lifereg.Classlevels
+Path:       Lifereg.ClassLevels
+-------------
+
+Output Added:
+-------------
+Name:       FitStatistics
+Label:      Model Fit Statistics
+Template:   Stat.Lifereg.FitStatistics
+Path:       Lifereg.FitStatistics
+-------------
+
+Output Added:
+-------------
+Name:       FitStatisticsUL
+Label:      Model Fit Statistics (Unlogged Response)
+Template:   Stat.Lifereg.FitStatisticsUL
+Path:       Lifereg.FitStatisticsUL
+-------------
+NOTE: Algorithm converged.
+
+Output Added:
+-------------
+Name:       ConvergenceStatus
+Label:      Convergence Status
+Template:   Stat.Lifereg.ConvergenceStatus
+Path:       Lifereg.ConvergenceStatus
+-------------
+
+Output Added:
+-------------
+Name:       Type3Analysis
+Label:      Type 3 Analysis
+Template:   Stat.Lifereg.Type3Analysis
+Path:       Lifereg.Type3Analysis
+-------------
+
+Output Added:
+-------------
+Name:       ParameterEstimates
+Label:      Analysis of Parameter Estimates
+Template:   stat.lifereg.parameterestimates
+Path:       Lifereg.ParameterEstimates
+-------------
+NOTE: The data set WORK.NEW has 38 observations and 5 variables.
+NOTE: The PROCEDURE LIFEREG printed page 841.
+
+12113      proc sgplot data=New;
+12114      scatter x=Minutes y=Prob / group=Group;
+12115      discretelegend;
+12116      run;
+
+
+Output Added:
+-------------
+Name:       SGPlot
+Label:      The SGPlot Procedure
+Data Label: SGPlot
+Path:       SGPlot.SGPlot
+-------------
+NOTE: Listing image output written to /saswork/SAS_work7EA200001C34_odaws01-euw1.oda.sas.com/SAS_work29EF00001C34_odaws01-euw1.oda.sas.com/SGPlot12.png.
+NOTE: There were 38 observations read from the data set WORK.NEW.
+
+12117      data Fan;
+12118      input Lifetime Censor@@;
+12119      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.FAN has 70 observations and 2 variables.
+
+12134      ;
+12135      ods graphics on;
+12136      proc lifereg data=Fan;
+12137      model Lifetime*Censor( 1 )= / dist=lognormal;
+12138      bayes seed=1 outpost=Post nmc=1000 nbi=200;
+12139      run;
+
+
+Output Added:
+-------------
+Name:       ModelInfo
+Label:      Model Information
+Template:   Stat.Lifereg.ModelInfo
+Path:       Lifereg.ModelInfo
+-------------
+
+Output Added:
+-------------
+Name:       NObs
+Label:      Observations Summary
+Template:   Stat.Lifereg.NObs
+Path:       Lifereg.NObs
+-------------
+NOTE: Algorithm converged.
+
+Output Added:
+-------------
+Name:       ConvergenceStatus
+Label:      Convergence Status
+Template:   Stat.Lifereg.ConvergenceStatus
+Path:       Lifereg.ConvergenceStatus
+-------------
+
+Output Added:
+-------------
+Name:       ParameterEstimates
+Label:      Maximum likelihood Estimates and 95% Confidence Limits
+Template:   stat.lifereg.parameterestimates
+Path:       Lifereg.ParameterEstimates
+-------------
+
+Output Added:
+-------------
+Name:       CoeffPrior
+Label:      Uniform Prior for Regression Coefficients
+Template:   Stat.Lifereg.IndepUniformPrior
+Path:       Lifereg.CoeffPrior
+-------------
+
+Output Added:
+-------------
+Name:       ParmPrior
+Label:      Independent Prior Distributions for Model Parameters
+Template:   Stat.Lifereg.OtherParameterPrior
+Path:       Lifereg.ParmPrior
+-------------
+
+Output Added:
+-------------
+Name:       PosteriorSample
+Label:      Posterior Sample
+Template:   Stat.Lifereg.PosteriorSample
+Path:       Lifereg.PosteriorSample
+-------------
+
+Output Added:
+-------------
+Name:       InitialValues
+Label:      Initial Values and Seeds
+Template:   Stat.Lifereg.InitialValues
+Path:       Lifereg.InitialValues
+-------------
+
+Output Added:
+-------------
+Name:       FitStatistics
+Label:      Model Fit Statistics
+Template:   Stat.Lifereg.BayesFitStatistics
+Path:       Lifereg.FitStatistics
+-------------
+
+Output Added:
+-------------
+Name:       PostSummaries
+Label:      Summary Statistics
+Template:   Stat.Lifereg.PostSummaries
+Path:       Lifereg.Stats.PostSummaries
+-------------
+
+Output Added:
+-------------
+Name:       PostIntervals
+Label:      Interval Statistics
+Template:   Stat.Lifereg.PostIntervals
+Path:       Lifereg.Stats.PostIntervals
+-------------
+
+Output Added:
+-------------
+Name:       Corr
+Label:      Correlation Matrix
+Template:   Stat.Lifereg.PostCorr
+Path:       Lifereg.Stats.Corr
+-------------
+
+Output Added:
+-------------
+Name:       AutoCorr
+Label:      Autocorrelations
+Template:   Stat.Lifereg.AutoCorr
+Path:       Lifereg.PostDiagnostic.AutoCorr
+-------------
+
+Output Added:
+-------------
+Name:       Geweke
+Label:      Geweke Diagnostics
+Template:   Stat.Lifereg.Geweke
+Path:       Lifereg.PostDiagnostic.Geweke
+-------------
+
+Output Added:
+-------------
+Name:       ESS
+Label:      Effective Sample Sizes
+Template:   Stat.Lifereg.ESS
+Path:       Lifereg.PostDiagnostic.ESS
+-------------
+
+Output Added:
+-------------
+Name:       TADPanel
+Label:      Intercept
+Template:   Stat.Lifereg.Graphics.TraceAutocorrDensity
+Path:       Lifereg.TADPanel.TADPanel
+-------------
+
+Output Added:
+-------------
+Name:       TADPanel
+Label:      Scale
+Template:   Stat.Lifereg.Graphics.TraceAutocorrDensity
+Path:       Lifereg.TADPanel.TADPanel
+-------------
+NOTE: The data set WORK.POST has 1000 observations and 5 variables.
+NOTE: The PROCEDURE LIFEREG printed pages 842-845.
+
+12140      data Prob;
+12141      set Post;
+12142      Frac = ProbNorm(( log(8000) - Intercept ) / Scale );
+12143      label Frac= 'Fraction Failing in 8000 Hours';
+12144      run;
+
+NOTE: There were 1000 observations read from the data set WORK.POST.
+NOTE: The data set WORK.PROB has 1000 observations and 6 variables.
+
+12145      proc means data = Prob(keep=Frac) n mean p10 p25 p50 p75 p90;
+12146      run;
+
+
+Output Added:
+-------------
+Name:       Summary
+Label:      Summary statistics
+Template:   base.summary
+Path:       Means.Summary
+-------------
+NOTE: There were 1000 observations read from the data set WORK.PROB.
+NOTE: The PROCEDURE MEANS printed page 846.
+
+12147      ods trace off;
+12148      
+12149      
+12150      
+12151      
+The SAS System
+
+12152      

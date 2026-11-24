@@ -1,0 +1,160 @@
+
+Analysis of Ice Cream Spending
+Simple Random Sample Design
+
+_oracle_by=1
+
+The SURVEYMEANS Procedure
+
+            Data Summary
+
+Number of Observations            40
+
+
+      Class Level Information
+ 
+Variable      Levels    Values
+
+Group              2    less more  
+
+
+                                        Statistics
+ 
+                                                        Std Error
+Variable    Level               N            Mean         of Mean       95% CL for Mean
+------------------------------------------------------------------------------------------
+Spending                       40        8.750000        0.845139    7.04054539 10.4594546
+Group       less               23        0.575000        0.078761    0.41568994  0.7343101
+            more               17        0.425000        0.078761    0.26568994  0.5843101
+------------------------------------------------------------------------------------------
+
+Analysis of Ice Cream Spending
+Simple Random Sample Design
+
+_oracle_by=2
+
+The SURVEYMEANS Procedure
+
+            Data Summary
+
+Number of Observations            40
+
+
+      Class Level Information
+ 
+Variable      Levels    Values
+
+Group              2    less more  
+
+
+                                        Statistics
+ 
+                                                        Std Error
+Variable    Level               N            Mean         of Mean       95% CL for Mean
+------------------------------------------------------------------------------------------
+Spending                       40        8.750000        0.845139    7.04054539 10.4594546
+Group       less               23        0.575000        0.078761    0.41568994  0.7343101
+            more               17        0.425000        0.078761    0.26568994  0.5843101
+------------------------------------------------------------------------------------------
+
+Analysis of Ice Cream Spending
+Stratified Sample Design
+
+The SURVEYMEANS Procedure
+
+            Data Summary
+
+Number of Strata                   3
+Number of Observations            40
+Sum of Weights                  4000
+
+
+      Class Level Information
+ 
+Variable      Levels    Values
+
+Group              2    less more  
+
+
+                                    Stratum Information
+ 
+Stratum                         Pop.       Samp
+ Index         Grade           Total       Rate       N Obs    Variable    Level           N
+--------------------------------------------------------------------------------------------
+   1               7            1824      1.10%          20    Spending                   20
+                                                               Group       less           17
+                                                                           more            3
+   2               8            1025      0.88%           9    Spending                    9
+                                                               Group       less            0
+                                                                           more            9
+   3               9            1151      0.96%          11    Spending                   11
+                                                               Group       less            6
+                                                                           more            5
+--------------------------------------------------------------------------------------------
+
+
+                                        Statistics
+ 
+                                                        Std Error
+Variable    Level               N            Mean         of Mean       95% CL for Mean
+------------------------------------------------------------------------------------------
+Spending                       40        9.141298        0.531799    8.06377052 10.2188254
+Group       less               23        0.544555        0.058424    0.42617678  0.6629323
+            more               17        0.455445        0.058424    0.33706769  0.5738232
+------------------------------------------------------------------------------------------
+
+Analysis of Ice Cream Spending
+Stratified Sample Design
+
+The SURVEYMEANS Procedure
+
+            Data Summary
+
+Number of Strata                   3
+Number of Observations            40
+Sum of Weights                  4000
+
+
+      Class Level Information
+ 
+Variable      Levels    Values
+
+Group              2    less more  
+
+
+                                    Stratum Information
+ 
+Stratum                         Pop.       Samp
+ Index         Grade           Total       Rate       N Obs    Variable    Level           N
+--------------------------------------------------------------------------------------------
+   1               7            1824      1.10%          20    Spending                   20
+                                                               Group       less           17
+                                                                           more            3
+   2               8            1025      0.88%           9    Spending                    9
+                                                               Group       less            0
+                                                                           more            9
+   3               9            1151      0.96%          11    Spending                   11
+                                                               Group       less            6
+                                                                           more            5
+--------------------------------------------------------------------------------------------
+
+
+                                        Statistics
+ 
+                                                        Std Error
+Variable    Level               N            Mean         of Mean       95% CL for Mean
+------------------------------------------------------------------------------------------
+Spending                       40        9.141298        0.531799    8.06377052 10.2188254
+Group       less               23        0.544555        0.058424    0.42617678  0.6629323
+            more               17        0.455445        0.058424    0.33706769  0.5738232
+------------------------------------------------------------------------------------------
+
+Analysis of Ice Cream Spending
+Stratified Sample Design
+
+                    Var                                                          Lower         Upper
+Obs    VarName     Level               N            Mean          StdErr        CLMean        CLMean
+
+ 1     Spending                       40        9.141298        0.531799    8.06377052    10.2188254
+ 2     Group       less               23        0.544555        0.058424    0.42617678     0.6629323
+ 3     Group       more               17        0.455445        0.058424    0.33706769     0.5738232

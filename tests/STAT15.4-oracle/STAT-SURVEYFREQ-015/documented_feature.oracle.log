@@ -1,0 +1,60 @@
+The SAS System
+
+19620      
+19621      /* STAT-SURVEYFREQ-015: SURVEYFREQ — Rao-Scott Chi-Square Test / Rao-Scott Likelihood Ratio Chi-Square Test
+19622       * Source: S154 / Chapter 118 / `Rao-Scott Chi-Square Test` (PDF pp. 9661–9667); S154 / Chapter 118 / `Rao-Scott Likelihood Ratio Chi-Square Test`
+19622    ! (PDF pp. 9667–9668).
+19623       * Discriminates: Verified default procedure context
+19624       */
+19625      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+19625    ! validmemname=compatible locale=en_US;
+19626      %let syscc=0;
+19627      title; footnote;
+19628      ods _all_ close;
+19629      ods listing gpath="%sysfunc(pathname(work))";
+19630      ods graphics off;
+19631      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SURVEY (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+19631    !                                         quit;
+
+
+19632      ods path work.templat(update) sashelp.tmplmst(read);
+19633      
+19634      data survey;
+19635      do state=1 to 2;
+19636      do school=1 to 4;
+19637      do id=1 to 6;
+19638      response=1+mod(id+school,3);
+19639      schooltype=1+mod(school,2);
+19640      samplingweight=2+state+school/10;
+19641      output;
+19642      end;
+19643      end;
+19644      end;
+19645      run;
+
+NOTE: The data set WORK.SURVEY has 48 observations and 6 variables.
+
+19646      proc surveyfreq data=survey;
+19647      strata state;
+19648      cluster school;
+19649      weight samplingweight;
+19650      tables schooltype*response / row chisq;
+19651      run;
+
+NOTE: The Rao-Scott chi-square test cannot be computed for the table of schooltype by response because the design correction is not positive.
+NOTE: The PROCEDURE SURVEYFREQ printed page 1391.
+
+19652      
+19653      
+19654      
+19655      
+The SAS System
+
+19656      

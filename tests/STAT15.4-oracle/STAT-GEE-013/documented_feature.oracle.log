@@ -1,0 +1,57 @@
+The SAS System
+
+21879      
+21880      /* STAT-GEE-013: GEE — Official examples and feature integration regression
+21881       * Source: S154 / Chapter 50 / `Examples: GEE Procedure` (PDF pp. 3458–3478).
+21882       * Discriminates: Verified default procedure context
+21883       */
+21884      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+21884    ! validmemname=compatible locale=en_US;
+21885      %let syscc=0;
+21886      title; footnote;
+21887      ods _all_ close;
+21888      ods listing gpath="%sysfunc(pathname(work))";
+21889      ods graphics off;
+21890      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.CHILDREN (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+21890    !                                         quit;
+
+
+21891      ods path work.templat(update) sashelp.tmplmst(read);
+21892      
+21893      data Children;
+21894      input ID City$ @@;
+21895      do i=1 to 4;
+21896      input Age Smoke Symptom @@;
+21897      output;
+21898      end;
+21899      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.CHILDREN has 100 observations and 6 variables.
+
+21925      ;
+21926      proc gee data=Children descending;
+21927      class ID City;
+21928      model Symptom = City Age Smoke / dist=bin link=logit;
+21929      repeated subject=ID / type=exch covb corrw;
+21930      run;
+
+NOTE: PROC GEE is modeling the probability that Symptom='1'.
+NOTE: The PROCEDURE GEE printed page 2370.
+
+21931      
+21932      
+21933      
+21934      
+The SAS System
+
+21935      

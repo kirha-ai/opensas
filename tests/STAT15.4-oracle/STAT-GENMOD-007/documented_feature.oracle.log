@@ -1,0 +1,92 @@
+The SAS System
+
+2054       
+2055       /* STAT-GENMOD-007: GENMOD — REPEATED / Generalized Estimating Equations
+2056        * Source: S154 / Chapter 51 / `REPEATED Statement` (PDF pp. 3560–3565); S154 / Chapter 51 / `Generalized Estimating Equations` (PDF pp.
+2056     ! 3591–3600).
+2057        * Discriminates: Example 51.5: GEE for Binary Data with Logit Link Function; explicit statements: REPEATED
+2058        */
+2059       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+2059     ! validmemname=compatible locale=en_US;
+2060       %let syscc=0;
+2061       title; footnote;
+2062       ods _all_ close;
+2063       ods listing gpath="%sysfunc(pathname(work))";
+2064       ods graphics off;
+2065       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.EXPERIMENTA (memtype=DATA).
+NOTE: Deleting WORK.EXPERIMENTB (memtype=DATA).
+NOTE: Deleting WORK.PREDGAM (memtype=DATA).
+NOTE: Deleting WORK.PREDGAMB (memtype=DATA).
+NOTE: Deleting WORK.PREDLOESS (memtype=DATA).
+NOTE: Deleting WORK.PREDLOESSB (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+2065     !                                         quit;
+
+
+2066       ods path work.templat(update) sashelp.tmplmst(read);
+2067       
+2068       /* Seeded synthetic repeated binary outcomes, not the abbreviated source data. */
+2069       data Resp;
+2070       call streaminit(314159);
+2071       length treatment sex $1;
+2072       array v{4} Visit1-Visit4;
+2073       do id=1 to 80;
+2074        center=1+mod(id,2); if mod(id,3)=0 then treatment='P'; else treatment='A';
+2075        if mod(id,4)<2 then sex='M'; else sex='F';
+2076        age=25+mod(id*7,40); baseline=rand('bernoulli',0.4); u=0.6*rand('normal');
+2077        do j=1 to 4; v{j}=rand('bernoulli',1/(1+exp(-(-0.5+0.3*(treatment='A')+0.2*baseline+u+0.1*j)))); end;
+2078        output;
+2079       end;
+2080       drop j u;
+2081       run;
+
+NOTE: The data set WORK.RESP has 80 observations and 10 variables.
+
+2082       data Resp;
+2083       set Resp;
+2084       Visit=1;
+2085       Outcome=Visit1;
+2086       output;
+2087       Visit=2;
+2088       Outcome=Visit2;
+2089       output;
+2090       Visit=3;
+2091       Outcome=Visit3;
+2092       output;
+2093       Visit=4;
+2094       Outcome=Visit4;
+2095       output;
+2096       run;
+
+NOTE: There were 80 observations read from the data set WORK.RESP.
+NOTE: The data set WORK.RESP has 320 observations and 12 variables.
+
+2097       proc genmod data=resp;
+2098       class id treatment(ref="P") center(ref="1") sex(ref="M")
+2099       baseline(ref="0");
+2100       model outcome(event='1')=treatment center sex age baseline / dist=bin;
+2101       repeated subject=id(center) / corr=unstr corrw;
+2102       run;
+
+NOTE: PROC GENMOD is modeling the probability that Outcome='1'. One way to change this to model the probability that Outcome='0' is to specify the DESCENDING 
+      option in the PROC statement.
+NOTE: Algorithm converged.
+NOTE: Algorithm converged.
+NOTE: The PROCEDURE GENMOD printed page 153.
+
+2103       
+2104       
+2105       
+2106       
+The SAS System
+
+2107       

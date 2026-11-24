@@ -1,0 +1,56 @@
+The SAS System
+
+8809       
+8810       /* STAT-INBREED-007: INBREED — Official examples and feature integration regression
+8811        * Source: S154 / Chapter 71 / `Examples: INBREED Procedure` (PDF pp. 5288–5292).
+8812        * Discriminates: Example 71.1: Monoecious Population Analysis
+8813        */
+8814       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+8814     ! validmemname=compatible locale=en_US;
+8815       %let syscc=0;
+8816       title; footnote;
+8817       ods _all_ close;
+8818       ods listing gpath="%sysfunc(pathname(work))";
+8819       ods graphics off;
+8820       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.POPULATION (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+8820     !                                         quit;
+
+
+8821       ods path work.templat(update) sashelp.tmplmst(read);
+8822       
+8823       data Monoecious;
+8824       input Generation Individual Parent1 Parent2 Covariance @@;
+8825       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.MONOECIOUS has 12 observations and 5 variables.
+
+8830       ;
+8831       title 'Inbreeding within Nonoverlapping Generations';
+8832       proc inbreed ind covar matrix data=Monoecious;
+8833       class Generation;
+8834       run;
+
+WARNING: The VAR statement was not specified.  All the variables in the WORK.MONOECIOUS data set will be used instead.
+NOTE: First parent Parent1 of individual Individual=1 is missing at observation 1.
+NOTE: Second parent Parent2 of individual Individual=1 is missing at observation 1.
+NOTE: First parent Parent1 of individual Individual=2 is missing at observation 2.
+NOTE: Second parent Parent2 of individual Individual=2 is missing at observation 2.
+NOTE: First parent Parent1 of individual Individual=3 is missing at observation 3.
+NOTE: Second parent Parent2 of individual Individual=3 is missing at observation 3.
+WARNING: A covariance value of 0.5 has been previously assigned between individuals Parent1=4 and Parent2=3.  The new specification, 1.135, at observation 12 
+         will override the old value.
+NOTE: The PROCEDURE INBREED printed pages 618-623.
+
+8835       
+8836       
+8837       
+8838       
+The SAS System
+
+8839       

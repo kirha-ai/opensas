@@ -1,0 +1,51 @@
+The SAS System
+
+7512       
+7513       /* STAT-ICLIFETEST-008: ICLIFETEST — Official examples and feature integration regression
+7514        * Source: S154 / Chapter 69 / `Examples: ICLIFETEST Procedure` (PDF pp. 5190–5196).
+7515        * Discriminates: Example 69.1: Analyzing Data with Observations below a Limit of Detection
+7516        */
+7517       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+7517     ! validmemname=compatible locale=en_US;
+7518       %let syscc=0;
+7519       title; footnote;
+7520       ods _all_ close;
+7521       ods listing gpath="%sysfunc(pathname(work))";
+7522       ods graphics off;
+7523       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.BCS (memtype=DATA).
+NOTE: Deleting WORK.RCT (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.RT (memtype=DATA).
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+7523     !                                         quit;
+
+
+7524       ods path work.templat(update) sashelp.tmplmst(read);
+7525       
+7526       data temp;
+7527       input C1 C2;
+7528       datalines;
+
+NOTE: The data set WORK.TEMP has 6 observations and 2 variables.
+
+7535       ;
+7536       proc iclifetest data=temp method=turnbull plots=survival(failure)
+7537       impute(seed=1234);
+7538       time (c1,c2);
+7539       run;
+
+NOTE: Algorithm converges in 3 steps.
+NOTE: Algorithm finds a maximum likelihood estimate.
+NOTE: The PROCEDURE ICLIFETEST printed pages 556-557.
+
+7540       
+7541       
+7542       
+7543       
+The SAS System
+
+7544       

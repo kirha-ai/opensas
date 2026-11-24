@@ -1,0 +1,181 @@
+
+The BGLIMM Procedure
+
+                  Model Information
+
+Data Set                     WORK.MULTICENTER         
+Response Variable            SideEffect               
+Distribution                 Binomial                 
+Link Function                Logit                    
+Fixed Effects Included       Yes                      
+Random Effects Included      Yes                      
+Sampling Algorithm           Gamerman, Conjugate      
+Burn-In Size                 200                      
+Simulation Size              1000                     
+Thinning                     2                        
+Random Number Seed           976352                   
+Number of Threads            1                        
+
+
+                Class Level Information
+ 
+Class     Levels    Values
+
+Center        15    1 2 3 4 5 6 7 8 9 10 11 12 13 14 15
+Group          2    A B                                
+
+
+        Number of Observations
+
+Number of Observations Read          30
+Number of Observations Used          30
+Number of Events                    155
+Number of Trials                    503
+
+
+Priors for Fixed Effects
+ 
+Parameter    Prior
+
+Group A      Constant
+Group B      Constant
+
+
+  Priors for Scale and Covariance Parameters
+ 
+Parameter     Prior
+
+Random Var    Inverse Gamma (Shape=2, Scale=2)
+
+
+                   Posterior Summaries and Intervals
+ 
+                                       Standard
+Parameter            N        Mean    Deviation      95% HPD Interval
+
+Group A            500     -1.3993       0.3287     -1.9908     -0.6841
+Group B            500     -0.8884       0.3073     -1.4702     -0.2999
+Random Var         500      0.9438       0.4093      0.3179      1.7060
+
+
+                Effective Sample Sizes
+ 
+                          Autocorrelation
+Parameter          ESS               Time    Efficiency
+
+Group A           65.2             7.6676        0.1304
+Group B           66.6             7.5126        0.1331
+Random Var       282.4             1.7703        0.5649
+
+The BGLIMM Procedure
+
+                  Model Information
+
+Data Set                     WORK.MULTICENTER         
+Response Variable            SideEffect               
+Distribution                 Binomial                 
+Link Function                Logit                    
+Fixed Effects Included       Yes                      
+Random Effects Included      Yes                      
+Sampling Algorithm           Gamerman, Conjugate      
+Burn-In Size                 200                      
+Simulation Size              1000                     
+Thinning                     2                        
+Random Number Seed           976352                   
+Number of Threads            1                        
+
+
+                Class Level Information
+ 
+Class     Levels    Values
+
+Center        15    1 2 3 4 5 6 7 8 9 10 11 12 13 14 15
+Group          2    A B                                
+
+
+        Number of Observations
+
+Number of Observations Read          30
+Number of Observations Used          30
+Number of Events                    155
+Number of Trials                    503
+
+
+Priors for Fixed Effects
+ 
+Parameter    Prior
+
+Group A      Constant
+Group B      Constant
+
+
+  Priors for Scale and Covariance Parameters
+ 
+Parameter     Prior
+
+Random Var    Inverse Gamma (Shape=2, Scale=2)
+
+
+                         Posterior Summaries and Intervals
+ 
+                                                    Standard
+Parameter     Subject             N        Mean    Deviation      95% HPD Interval
+
+Group A                         500     -1.3993       0.3287     -1.9908     -0.6841
+Group B                         500     -0.8884       0.3073     -1.4702     -0.2999
+Random Var                      500      0.9438       0.4093      0.3179      1.7060
+Intercept     Center 1          500      1.0344       0.3655      0.3995      1.8493
+Intercept     Center 2          500     -0.2199       0.4100     -1.0580      0.5501
+Intercept     Center 3          500      0.9913       0.4080      0.2046      1.7632
+Intercept     Center 4          500      0.5972       0.4048     -0.2710      1.3475
+Intercept     Center 5          500      0.8059       0.4167     -0.0710      1.5280
+Intercept     Center 6          500     -0.8427       0.4783     -1.7757      0.0891
+Intercept     Center 7          500     -0.0801       0.4498     -0.9459      0.7739
+Intercept     Center 8          500      1.0539       0.4450      0.2656      1.9148
+Intercept     Center 9          500     -0.1702       0.5332     -1.1536      0.8549
+Intercept     Center 10         500     -0.4641       0.5112     -1.4428      0.5735
+Intercept     Center 11         500     -0.6457       0.5563     -1.7450      0.3462
+Intercept     Center 12         500     -1.0715       0.6775     -2.3571      0.1747
+Intercept     Center 13         500      0.7161       0.5057     -0.2617      1.7075
+Intercept     Center 14         500     -0.6485       0.6467     -2.0342      0.4669
+Intercept     Center 15         500     -0.8868       0.6540     -2.0860      0.3188
+
+
+                       Effective Sample Sizes
+ 
+                                       Autocorrelation
+Parameter     Subject           ESS               Time    Efficiency
+
+Group A                        65.2             7.6676        0.1304
+Group B                        66.6             7.5126        0.1331
+Random Var                    282.4             1.7703        0.5649
+Intercept     Center 1        101.1             4.9444        0.2022
+Intercept     Center 2        127.5             3.9209        0.2550
+Intercept     Center 3        156.6             3.1933        0.3132
+Intercept     Center 4        112.4             4.4465        0.2249
+Intercept     Center 5        103.7             4.8218        0.2074
+Intercept     Center 6        184.0             2.7170        0.3680
+Intercept     Center 7        126.9             3.9404        0.2538
+Intercept     Center 8        116.4             4.2937        0.2329
+Intercept     Center 9        113.9             4.3902        0.2278
+Intercept     Center 10       163.6             3.0556        0.3273
+Intercept     Center 11       159.8             3.1295        0.3195
+Intercept     Center 12       211.8             2.3609        0.4236
+Intercept     Center 13       167.0             2.9944        0.3340
+Intercept     Center 14       169.1             2.9576        0.3381
+Intercept     Center 15       267.7             1.8681        0.5353
+
+
+            Results from ESTIMATE Statements
+ 
+                        Standard
+Label          Mean    Deviation      95% HPD Interval
+
+log OR      -0.5109       0.2044     -0.9255     -0.1248
+
+                  Posterior Summaries and Intervals
+ 
+                                      Standard
+Parameter           N        Mean    Deviation      95% HPD Interval
+
+pDiff             500     -0.0923       0.0384     -0.1715     -0.0203

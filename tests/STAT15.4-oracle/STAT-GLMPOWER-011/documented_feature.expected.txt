@@ -1,0 +1,26 @@
+
+The GLMPOWER Procedure
+F Test for Multivariate Model
+
+           Fixed Scenario Elements
+
+Wilks/HLT/PT Method             O'Brien-Shieh
+F Test                 Hotelling-Lawley Trace
+Alpha                                    0.01
+Correlation Matrix                   PainCorr
+Nominal Power                             0.9
+
+
+                                           Computed N Total
+ 
+                                             Std                      Num      Den    Actual        N
+   Index    Transformation     Source        Dev        Effect         DF       DF     Power    Total
+
+       1      Time            Intercept     0.92    Time                3      176     0.900      180
+       2      Time            Intercept     1.04    Time                3      226     0.903      230
+       3      Time            Treatment     0.92    Time*Treatment      3      346     0.901      350
+       4      Time            Treatment     1.04    Time*Treatment      3      442     0.901      446
+       5      Mean(Dep)       Intercept     0.92    Intercept           1        4     0.960        6
+       6      Mean(Dep)       Intercept     1.04    Intercept           1        4     0.907        6
+       7      Mean(Dep)       Treatment     0.92    Treatment           1      950     0.900      952
+       8      Mean(Dep)       Treatment     1.04    Treatment           1     1214     0.900     1216

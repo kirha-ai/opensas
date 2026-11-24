@@ -1,0 +1,76 @@
+The SAS System
+
+15530      
+15531      /* STAT-SCORE-003: SCORE — Regression Parameter Estimates from PROC REG
+15532       * Source: S154 / Chapter 109 / `Regression Parameter Estimates from PROC REG` (PDF p. 8911).
+15533       * Discriminates: Verified default procedure context
+15534       */
+15535      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+15535    ! validmemname=compatible locale=en_US;
+15536      %let syscc=0;
+15537      title; footnote;
+15538      ods _all_ close;
+15539      ods listing gpath="%sysfunc(pathname(work))";
+15540      ods graphics off;
+15541      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.A (memtype=DATA).
+NOTE: Deleting WORK.B (memtype=DATA).
+NOTE: Deleting WORK.FITNESS (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+15541    !                                         quit;
+
+
+15542      ods path work.templat(update) sashelp.tmplmst(read);
+15543      
+15544      data Fitness;
+15545      input Age Weight Oxygen RunTime RestPulse RunPulse @@;
+15546      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.FITNESS has 12 observations and 6 variables.
+
+15553      ;
+15554      run;
+15555      data A;
+15556      input _type_ $ _name_ $
+15557      Age Weight RunTime RunPulse RestPulse;
+15558      datalines;
+
+NOTE: The data set WORK.A has 3 observations and 7 variables.
+
+15562      ;
+15563      proc print data=A;
+15564      title 'Constructed Scoring Example';
+15565      title2 'Scoring Coefficients';
+15566      run;
+
+NOTE: There were 3 observations read from the data set WORK.A.
+NOTE: The PROCEDURE PRINT printed page 1132.
+
+15567      proc score data=Fitness score=A out=B;
+15568      var Age Weight RunTime RunPulse RestPulse;
+15569      run;
+
+NOTE: There were 12 observations read from the data set WORK.FITNESS.
+NOTE: There were 3 observations read from the data set WORK.A.
+NOTE: The data set WORK.B has 12 observations and 9 variables.
+
+15570      proc print data=B;
+15571      title2 'Scored Data';
+15572      run;
+
+NOTE: There were 12 observations read from the data set WORK.B.
+NOTE: The PROCEDURE PRINT printed page 1133.
+
+15573      
+15574      
+15575      
+15576      
+The SAS System
+
+15577      

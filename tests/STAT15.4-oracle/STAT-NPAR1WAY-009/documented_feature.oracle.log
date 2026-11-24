@@ -1,0 +1,461 @@
+The SAS System
+
+821        
+822        /* STAT-NPAR1WAY-009: NPAR1WAY — Displayed Output / ODS Table Names
+823         * Source: S154 / Chapter 90 / `Displayed Output` (PDF pp. 7259–7267); S154 / Chapter 90 / `ODS Table Names` (PDF pp. 7267–7269).
+824         * Discriminates: Getting Started: NPAR1WAY Procedure
+825         */
+826        options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+826      ! validmemname=compatible locale=en_US;
+827        %let syscc=0;
+828        title; footnote;
+829        ods _all_ close;
+830        ods listing gpath="%sysfunc(pathname(work))";
+831        ods graphics off;
+832        proc datasets library=work kill nolist;
+NOTE: Deleting WORK.GOSSYPOL (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+832      !                                         quit;
+
+
+833        ods path work.templat(update) sashelp.tmplmst(read);
+834        
+835        ods trace on;
+836        data Gossypol;
+837        input Dose n;
+838        do i=1 to n;
+839        input Gain @@;
+840        output;
+841        end;
+842        datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.GOSSYPOL has 67 observations and 4 variables.
+
+853        ;
+854        proc npar1way data=Gossypol;
+855        class Dose;
+856        var Gain;
+857        run;
+
+
+Output Added:
+-------------
+Name:       ClassMeans
+Label:      Class Means
+Template:   Stat.Npar1way.ClassMeans
+Path:       Npar1way.Gain.ANOVA.ClassMeans
+-------------
+
+Output Added:
+-------------
+Name:       ANOVA
+Label:      ANOVA
+Template:   Stat.Npar1way.ANOVA
+Path:       Npar1way.Gain.ANOVA.ANOVA
+-------------
+
+Output Added:
+-------------
+Name:       WilcoxonScores
+Label:      Scores
+Template:   Stat.Npar1way.ClassScores
+Path:       Npar1way.Gain.Wilcoxon.WilcoxonScores
+-------------
+
+Output Added:
+-------------
+Name:       KruskalWallisTest
+Label:      Kruskal-Wallis Test
+Template:   Stat.Npar1way.OneWayAnalysis
+Path:       Npar1way.Gain.Wilcoxon.KruskalWallisTest
+-------------
+
+Output Added:
+-------------
+Name:       MedianScores
+Label:      Scores
+Template:   Stat.Npar1way.ClassScores
+Path:       Npar1way.Gain.Median.MedianScores
+-------------
+
+Output Added:
+-------------
+Name:       MedianAnalysis
+Label:      One-Way Analysis
+Template:   Stat.Npar1way.OneWayAnalysis
+Path:       Npar1way.Gain.Median.MedianAnalysis
+-------------
+
+Output Added:
+-------------
+Name:       VWScores
+Label:      Scores
+Template:   Stat.Npar1way.ClassScores
+Path:       Npar1way.Gain.VW.VWScores
+-------------
+
+Output Added:
+-------------
+Name:       VWAnalysis
+Label:      One-Way Analysis
+Template:   Stat.Npar1way.OneWayAnalysis
+Path:       Npar1way.Gain.VW.VWAnalysis
+-------------
+
+Output Added:
+-------------
+Name:       SavageScores
+Label:      Scores
+Template:   Stat.Npar1way.ClassScores
+Path:       Npar1way.Gain.Savage.SavageScores
+-------------
+
+Output Added:
+-------------
+Name:       SavageAnalysis
+Label:      One-Way Analysis
+Template:   Stat.Npar1way.OneWayAnalysis
+Path:       Npar1way.Gain.Savage.SavageAnalysis
+-------------
+
+Output Added:
+-------------
+Name:       KSTest
+Label:      Kolmogorov-Smirnov Test
+Template:   Stat.Npar1way.EDF
+Path:       Npar1way.Gain.EDF.KSTest
+-------------
+
+Output Added:
+-------------
+Name:       KSStats
+Label:      Kolmogorov-Smirnov Statistics
+Template:   Stat.Npar1way.EdfFactoid
+Path:       Npar1way.Gain.EDF.KSStats
+-------------
+
+Output Added:
+-------------
+Name:       CVMTest
+Label:      Cramer-von Mises Test
+Template:   Stat.Npar1way.EDF
+Path:       Npar1way.Gain.EDF.CVMTest
+-------------
+
+Output Added:
+-------------
+Name:       CVMStats
+Label:      Cramer-von Mises Statistics
+Template:   Stat.Npar1way.EdfFactoid
+Path:       Npar1way.Gain.EDF.CVMStats
+-------------
+NOTE: The PROCEDURE NPAR1WAY printed pages 126-131.
+
+858        ods graphics on;
+859        proc npar1way data=Gossypol plots(only)=wilcoxonboxplot;
+860        class Dose;
+861        var Gain;
+862        run;
+
+
+Output Added:
+-------------
+Name:       ClassMeans
+Label:      Class Means
+Template:   Stat.Npar1way.ClassMeans
+Path:       Npar1way.Gain.ANOVA.ClassMeans
+-------------
+
+Output Added:
+-------------
+Name:       ANOVA
+Label:      ANOVA
+Template:   Stat.Npar1way.ANOVA
+Path:       Npar1way.Gain.ANOVA.ANOVA
+-------------
+
+Output Added:
+-------------
+Name:       WilcoxonScores
+Label:      Scores
+Template:   Stat.Npar1way.ClassScores
+Path:       Npar1way.Gain.Wilcoxon.WilcoxonScores
+-------------
+
+Output Added:
+-------------
+Name:       KruskalWallisTest
+Label:      Kruskal-Wallis Test
+Template:   Stat.Npar1way.OneWayAnalysis
+Path:       Npar1way.Gain.Wilcoxon.KruskalWallisTest
+-------------
+
+Output Added:
+-------------
+Name:       WilcoxonBoxPlot
+Label:      Box Plot
+Template:   Stat.NPAR1WAY.Graphics.BoxPlot
+Path:       Npar1way.Gain.Wilcoxon.WilcoxonBoxPlot
+-------------
+
+Output Added:
+-------------
+Name:       MedianScores
+Label:      Scores
+Template:   Stat.Npar1way.ClassScores
+Path:       Npar1way.Gain.Median.MedianScores
+-------------
+
+Output Added:
+-------------
+Name:       MedianAnalysis
+Label:      One-Way Analysis
+Template:   Stat.Npar1way.OneWayAnalysis
+Path:       Npar1way.Gain.Median.MedianAnalysis
+-------------
+
+Output Added:
+-------------
+Name:       VWScores
+Label:      Scores
+Template:   Stat.Npar1way.ClassScores
+Path:       Npar1way.Gain.VW.VWScores
+-------------
+
+Output Added:
+-------------
+Name:       VWAnalysis
+Label:      One-Way Analysis
+Template:   Stat.Npar1way.OneWayAnalysis
+Path:       Npar1way.Gain.VW.VWAnalysis
+-------------
+
+Output Added:
+-------------
+Name:       SavageScores
+Label:      Scores
+Template:   Stat.Npar1way.ClassScores
+Path:       Npar1way.Gain.Savage.SavageScores
+-------------
+
+Output Added:
+-------------
+Name:       SavageAnalysis
+Label:      One-Way Analysis
+Template:   Stat.Npar1way.OneWayAnalysis
+Path:       Npar1way.Gain.Savage.SavageAnalysis
+-------------
+
+Output Added:
+-------------
+Name:       KSTest
+Label:      Kolmogorov-Smirnov Test
+Template:   Stat.Npar1way.EDF
+Path:       Npar1way.Gain.EDF.KSTest
+-------------
+
+Output Added:
+-------------
+Name:       KSStats
+Label:      Kolmogorov-Smirnov Statistics
+Template:   Stat.Npar1way.EdfFactoid
+Path:       Npar1way.Gain.EDF.KSStats
+-------------
+
+Output Added:
+-------------
+Name:       CVMTest
+Label:      Cramer-von Mises Test
+Template:   Stat.Npar1way.EDF
+Path:       Npar1way.Gain.EDF.CVMTest
+-------------
+
+Output Added:
+-------------
+Name:       CVMStats
+Label:      Cramer-von Mises Statistics
+Template:   Stat.Npar1way.EdfFactoid
+Path:       Npar1way.Gain.EDF.CVMStats
+-------------
+NOTE: The PROCEDURE NPAR1WAY printed pages 132-137.
+
+863        ods graphics off;
+864        proc npar1way data=Gossypol;
+865        where Dose <= .04;
+866        class Dose;
+867        var Gain;
+868        run;
+
+
+Output Added:
+-------------
+Name:       ClassMeans
+Label:      Class Means
+Template:   Stat.Npar1way.ClassMeans
+Path:       Npar1way.Gain.ANOVA.ClassMeans
+-------------
+
+Output Added:
+-------------
+Name:       ANOVA
+Label:      ANOVA
+Template:   Stat.Npar1way.ANOVA
+Path:       Npar1way.Gain.ANOVA.ANOVA
+-------------
+
+Output Added:
+-------------
+Name:       WilcoxonScores
+Label:      Scores
+Template:   Stat.Npar1way.ClassScores
+Path:       Npar1way.Gain.Wilcoxon.WilcoxonScores
+-------------
+
+Output Added:
+-------------
+Name:       WilcoxonTest
+Label:      Two-Sample Test
+Template:   Stat.Npar1way.TwoSampleTest
+Path:       Npar1way.Gain.Wilcoxon.WilcoxonTest
+-------------
+
+Output Added:
+-------------
+Name:       KruskalWallisTest
+Label:      Kruskal-Wallis Test
+Template:   Stat.Npar1way.OneWayAnalysis
+Path:       Npar1way.Gain.Wilcoxon.KruskalWallisTest
+-------------
+
+Output Added:
+-------------
+Name:       MedianScores
+Label:      Scores
+Template:   Stat.Npar1way.ClassScores
+Path:       Npar1way.Gain.Median.MedianScores
+-------------
+
+Output Added:
+-------------
+Name:       MedianTest
+Label:      Two-Sample Test
+Template:   Stat.Npar1way.TwoSampleTest
+Path:       Npar1way.Gain.Median.MedianTest
+-------------
+
+Output Added:
+-------------
+Name:       MedianAnalysis
+Label:      One-Way Analysis
+Template:   Stat.Npar1way.OneWayAnalysis
+Path:       Npar1way.Gain.Median.MedianAnalysis
+-------------
+
+Output Added:
+-------------
+Name:       VWScores
+Label:      Scores
+Template:   Stat.Npar1way.ClassScores
+Path:       Npar1way.Gain.VW.VWScores
+-------------
+
+Output Added:
+-------------
+Name:       VWTest
+Label:      Two-Sample Test
+Template:   Stat.Npar1way.TwoSampleTest
+Path:       Npar1way.Gain.VW.VWTest
+-------------
+
+Output Added:
+-------------
+Name:       VWAnalysis
+Label:      One-Way Analysis
+Template:   Stat.Npar1way.OneWayAnalysis
+Path:       Npar1way.Gain.VW.VWAnalysis
+-------------
+
+Output Added:
+-------------
+Name:       SavageScores
+Label:      Scores
+Template:   Stat.Npar1way.ClassScores
+Path:       Npar1way.Gain.Savage.SavageScores
+-------------
+
+Output Added:
+-------------
+Name:       SavageTest
+Label:      Two-Sample Test
+Template:   Stat.Npar1way.TwoSampleTest
+Path:       Npar1way.Gain.Savage.SavageTest
+-------------
+
+Output Added:
+-------------
+Name:       SavageAnalysis
+Label:      One-Way Analysis
+Template:   Stat.Npar1way.OneWayAnalysis
+Path:       Npar1way.Gain.Savage.SavageAnalysis
+-------------
+
+Output Added:
+-------------
+Name:       KSTest
+Label:      Kolmogorov-Smirnov Test
+Template:   Stat.Npar1way.EDF
+Path:       Npar1way.Gain.EDF.KSTest
+-------------
+
+Output Added:
+-------------
+Name:       KS2Stats
+Label:      Kolmogorov-Smirnov Two-Sample Statistics
+Template:   Stat.Npar1way.EdfFactoid
+Path:       Npar1way.Gain.EDF.KS2Stats
+-------------
+
+Output Added:
+-------------
+Name:       CVMTest
+Label:      Cramer-von Mises Test
+Template:   Stat.Npar1way.EDF
+Path:       Npar1way.Gain.EDF.CVMTest
+-------------
+
+Output Added:
+-------------
+Name:       CVMStats
+Label:      Cramer-von Mises Statistics
+Template:   Stat.Npar1way.EdfFactoid
+Path:       Npar1way.Gain.EDF.CVMStats
+-------------
+
+Output Added:
+-------------
+Name:       KuiperTest
+Label:      Kuiper Test
+Template:   Stat.Npar1way.EDF
+Path:       Npar1way.Gain.EDF.KuiperTest
+-------------
+
+Output Added:
+-------------
+Name:       KuiperStats
+Label:      Kuiper Two-Sample Statistics
+Template:   Stat.Npar1way.EdfFactoid
+Path:       Npar1way.Gain.EDF.KuiperStats
+-------------
+NOTE: The PROCEDURE NPAR1WAY printed pages 138-143.
+
+869        ods trace off;
+870        
+871        
+872        
+873        
+The SAS System
+
+874        

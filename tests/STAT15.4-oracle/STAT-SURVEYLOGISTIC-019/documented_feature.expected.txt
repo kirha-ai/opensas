@@ -1,0 +1,254 @@
+
+The SURVEYLOGISTIC Procedure
+
+                   Model Information
+
+Data Set                         WORK.WEBSURVEY         
+Response Variable                Rating                 
+Number of Response Levels        5                      
+Frequency Variable               Count                  
+Stratum Variable                 Class                  
+Number of Strata                 4                      
+Weight Variable                  Weight                 
+Model                            Cumulative Logit       
+Optimization Technique           Fisher's Scoring       
+Variance Adjustment              Degrees of Freedom (DF)
+Finite Population Correction     Used                   
+
+
+                  Variance Estimation
+
+Method                                    Taylor Series
+Variance Adjustment             Degrees of Freedom (DF)
+Finite Population Correction                       Used
+
+
+Number of Observations Read          60
+Number of Observations Used          60
+Sum of Frequencies Read            1200
+Sum of Frequencies Used            1200
+Sum of Weights Read               15398
+Sum of Weights Used               15398
+
+
+                       Response Profile
+ 
+ Ordered                               Total            Total
+   Value     Rating                Frequency           Weight
+
+       1     dislike very much           116        1489.0733
+       2     dislike                     227        2933.0433
+       3     neutral                     338        4363.3767
+       4     like                        283        3606.8067
+       5     like very much              236        3005.7000
+
+Probabilities modeled are cumulated over the lower Ordered Values.
+
+
+   Class Level Information
+ 
+                       Design
+Class      Value     Variables
+
+Design     A          1      0
+           B          0      1
+           C         -1     -1
+
+
+                    Model Convergence Status
+
+         Convergence criterion (GCONV=1E-8) satisfied.          
+
+
+         Model Fit Statistics
+ 
+                             Intercept
+              Intercept            and
+Criterion          Only     Covariates
+
+AIC           47987.621      47981.611
+SC            48018.189      48027.463
+-2 Log L      47979.621      47969.611
+
+
+             Testing Global Null Hypothesis: BETA=0
+ 
+Test                 F Value       Num DF       Den DF     Pr > F
+
+Likelihood Ratio        0.43       1.9993      2391.14     0.6514
+Score                   0.46            2         1195     0.6345
+Wald                    0.44            2         1195     0.6463
+
+         NOTE: Second-order Rao-Scott design correction
+          0.0004 applied to the Likelihood Ratio test.
+
+
+          Type 3 Analysis of Effects
+ 
+Effect    F Value    Num DF    Den DF    Pr > F
+
+Design       0.44         2      1195    0.6463
+
+
+                 Analysis of Maximum Likelihood Estimates
+ 
+                                           Standard
+Parameter                      Estimate       Error    t Value    Pr > |t|
+
+Intercept dislike very much     -2.2350      0.0942     -23.72      <.0001
+Intercept dislike               -0.9097      0.0616     -14.76      <.0001
+Intercept neutral                0.2842      0.0559       5.08      <.0001
+Intercept like                   1.4174      0.0699      20.28      <.0001
+Design    A                     -0.0396      0.0689      -0.57      0.5656
+Design    B                     -0.0236      0.0709      -0.33      0.7389
+
+          NOTE: The degrees of freedom for the t tests is 1196.
+
+
+              Odds Ratio Estimates
+                        
+                    Point       95% Confidence
+Effect           Estimate           Limits
+
+Design A vs C       0.902       0.716       1.137
+Design B vs C       0.917       0.723       1.163
+
+    NOTE: The degrees of freedom in computing
+         the confidence limits is 1196.
+
+
+Association of Predicted Probabilities and Observed Responses
+
+Percent Concordant      34.4    Somers' D    0.020
+Percent Discordant      32.3    Gamma        0.031
+Percent Tied            33.3    Tau-a        0.016
+Pairs                 562493    c            0.510
+
+The SURVEYLOGISTIC Procedure
+
+                   Model Information
+
+Data Set                         WORK.WEBSURVEY         
+Response Variable                Rating                 
+Number of Response Levels        5                      
+Frequency Variable               Count                  
+Stratum Variable                 Class                  
+Number of Strata                 4                      
+Weight Variable                  Weight                 
+Model                            Generalized Logit      
+Optimization Technique           Newton-Raphson         
+Variance Adjustment              Degrees of Freedom (DF)
+Finite Population Correction     Used                   
+
+
+                  Variance Estimation
+
+Method                                    Taylor Series
+Variance Adjustment             Degrees of Freedom (DF)
+Finite Population Correction                       Used
+
+
+Number of Observations Read          60
+Number of Observations Used          60
+Sum of Frequencies Read            1200
+Sum of Frequencies Used            1200
+Sum of Weights Read               15398
+Sum of Weights Used               15398
+
+
+                       Response Profile
+ 
+ Ordered                               Total            Total
+   Value     Rating                Frequency           Weight
+
+       1     dislike                     227        2933.0433
+       2     dislike very much           116        1489.0733
+       3     like                        283        3606.8067
+       4     like very much              236        3005.7000
+       5     neutral                     338        4363.3767
+
+Logits modeled use Rating='neutral' as the reference category.
+
+
+   Class Level Information
+ 
+                       Design
+Class      Value     Variables
+
+Design     A          1      0
+           B          0      1
+           C         -1     -1
+
+
+                    Model Convergence Status
+
+         Convergence criterion (GCONV=1E-8) satisfied.          
+
+
+         Model Fit Statistics
+ 
+                             Intercept
+              Intercept            and
+Criterion          Only     Covariates
+
+AIC           47987.621      47896.109
+SC            48018.189      47987.813
+-2 Log L      47979.621      47872.109
+
+
+             Testing Global Null Hypothesis: BETA=0
+ 
+Test                 F Value       Num DF       Den DF     Pr > F
+
+Likelihood Ratio        1.14       7.9981      9565.69     0.3299
+Score                   1.13            8         1189     0.3379
+Wald                    1.10            8         1189     0.3573
+
+         NOTE: Second-order Rao-Scott design correction
+          0.0002 applied to the Likelihood Ratio test.
+
+
+          Type 3 Analysis of Effects
+ 
+Effect    F Value    Num DF    Den DF    Pr > F
+
+Design       1.10         8      1189    0.3573
+
+
+                   Analysis of Maximum Likelihood Estimates
+ 
+                                                Standard
+Parameter      Rating               Estimate       Error    t Value    Pr > |t|
+
+Intercept      dislike               -0.3964      0.0832      -4.77      <.0001
+Intercept      dislike very much     -1.0826      0.1045     -10.36      <.0001
+Intercept      like                  -0.1892      0.0780      -2.43      0.0154
+Intercept      like very much        -0.3767      0.0824      -4.57      <.0001
+Design    A    dislike               -0.0942      0.1166      -0.81      0.4196
+Design    A    dislike very much     -0.0647      0.1469      -0.44      0.6597
+Design    A    like                  -0.1370      0.1104      -1.24      0.2149
+Design    A    like very much         0.0446      0.1130       0.39      0.6934
+Design    B    dislike                0.0391      0.1201       0.33      0.7451
+Design    B    dislike very much      0.2721      0.1448       1.88      0.0605
+Design    B    like                   0.1669      0.1102       1.52      0.1300
+Design    B    like very much         0.1420      0.1174       1.21      0.2265
+
+             NOTE: The degrees of freedom for the t tests is 1196.
+
+
+                         Odds Ratio Estimates
+                                   
+                                         Point       95% Confidence
+Effect           Rating               Estimate           Limits
+
+Design A vs C    dislike                 0.861       0.583       1.272
+Design A vs C    dislike very much       1.153       0.691       1.924
+Design A vs C    like                    0.899       0.618       1.306
+Design A vs C    like very much          1.260       0.851       1.866
+Design B vs C    dislike                 0.984       0.658       1.471
+Design B vs C    dislike very much       1.615       0.975       2.677
+Design B vs C    like                    1.218       0.838       1.769
+Design B vs C    like very much          1.389       0.924       2.087
+
+              NOTE: The degrees of freedom in computing
+                    the confidence limits is 1196.

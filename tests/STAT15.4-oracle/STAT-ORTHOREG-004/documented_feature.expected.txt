@@ -1,0 +1,76 @@
+
+PROC ORTHOREG used with Longley data
+
+The ORTHOREG Procedure
+ 
+Dependent Variable: Employment   
+
+                                   Sum of
+Source                 DF         Squares     Mean Square    F Value    Pr > F
+
+Model                  12     184864508.5     15405375.71     320.24    0.0003
+Error                   3     144317.4957     48105.83189                     
+Corrected Total        15     185008826.0                                     
+
+
+Root MSE    219.33041717
+R-Square    0.9992199426
+
+
+                                               Standard
+Parameter      DF    Parameter Estimate           Error    t Value    Pr > |t|
+
+Intercept       1       186931078.64012     154201839.7       1.21      0.3122
+Prices          1     1324.506793624790     916.1745583       1.45      0.2440
+Prices**2       1       -6.619239228454     4.789144565      -1.38      0.2609
+GNP             1       -0.127686421562    0.0738897784      -1.73      0.1824
+GNP**2          1    3.1369569286211E-8    8.7167753E-8       0.36      0.7428
+Jobless         1       -4.355076535587     1.385179240      -3.14      0.0515
+Jobless**2      1        0.000221329441    0.0001763541       1.26      0.2983
+Military        1        4.911620145609     1.826715856       2.69      0.0745
+Military**2     1       -0.001137071467    0.0003539971      -3.21      0.0489
+PopSize         1       -0.030399723432     5.927253824      -0.01      0.9962
+PopSize**2      1    -0.000001212511415    0.0000237262      -0.05      0.9625
+Year            1         -194907.13904     157739.2876      -1.24      0.3045
+Year**2         1       50.806760353824     40.27987894       1.26      0.2963
+
+PROC ORTHOREG used with Longley data
+
+The GLM Procedure
+ 
+Dependent Variable: Employment   
+
+                                        Sum of
+Source                      DF         Squares     Mean Square    F Value    Pr > F
+
+Model                       11     184791061.6      16799187.4     308.58    <.0001
+
+Error                        4        217764.4         54441.1                     
+
+Corrected Total             15     185008826.0                                     
+
+
+R-Square     Coeff Var      Root MSE    Employment Mean
+
+0.998823      0.357221      233.3262           65317.00
+
+
+                                            Standard
+Parameter                 Estimate             Error    t Value    Pr > |t|
+
+Intercept             -3598851.832 B     1327335.647      -2.71      0.0535
+Prices                     523.802           688.979       0.76      0.4894
+Prices*Prices               -2.326             3.507      -0.66      0.5434
+GNP                         -0.138             0.078      -1.76      0.1526
+GNP*GNP                      0.000             0.000       0.24      0.8218
+Jobless                     -4.599             1.459      -3.15      0.0344
+Jobless*Jobless              0.000             0.000       1.14      0.3183
+Military                     4.994             1.942       2.57      0.0619
+Military*Military           -0.001             0.000      -3.15      0.0346
+PopSize                     -4.246             5.156      -0.82      0.4565
+PopSize*PopSize              0.000 B           0.000       0.81      0.4655
+Year                         0.000 B            .           .         .    
+Year*Year                    1.038             0.419       2.48      0.0683
+
+NOTE: The X'X matrix has been found to be singular, and a generalized inverse was used to solve the normal equations.  Terms whose estimates are followed by 
+      the letter 'B' are not uniquely estimable.

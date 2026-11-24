@@ -1,0 +1,61 @@
+The SAS System
+
+23508      
+23509      /* STAT-SURVEYPHREG-018: SURVEYPHREG — OUTPUT / Output Data Sets
+23510       * Source: S154 / Chapter 122 / `OUTPUT Statement` (PDF pp. 10035–10036); S154 / Chapter 122 / `Output Data Sets` (PDF pp. 10077–10078).
+23511       * Discriminates: Verified default procedure context; explicit statements: OUTPUT
+23512       */
+23513      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+23513    ! validmemname=compatible locale=en_US;
+23514      %let syscc=0;
+23515      title; footnote;
+23516      ods _all_ close;
+23517      ods listing gpath="%sysfunc(pathname(work))";
+23518      ods graphics off;
+23519      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SURVEY (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+23519    !                                         quit;
+
+
+23520      ods path work.templat(update) sashelp.tmplmst(read);
+23521      
+23522      data survey;
+23523      call streaminit(722);
+23524      do stratum=1 to 2;
+23525      do cluster=1 to 4;
+23526      do id=1 to 12;
+23527      age=20+mod(id*7+cluster,45);
+23528      time=1+rand('exponential')*10;
+23529      status=(mod(id,4) ne 0);
+23530      weight=2+stratum+cluster/10;
+23531      output;
+23532      end;
+23533      end;
+23534      end;
+23535      run;
+
+NOTE: The data set WORK.SURVEY has 96 observations and 7 variables.
+
+23536      proc surveyphreg data=survey;
+23537      strata stratum;
+23538      cluster cluster;
+23539      weight weight;
+23540      model time*status(0)=age;
+23541      run;
+
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The PROCEDURE SURVEYPHREG printed page 1511.
+
+23542      
+23543      
+23544      
+23545      
+The SAS System
+
+23546      

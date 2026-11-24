@@ -1,0 +1,121 @@
+
+Modeclus Analysis with the JOIN= option
+A Normal Cluster Surrounded by a Ring Cluster
+
+The MODECLUS Procedure
+
+                       Cluster Summary
+           Number of                            Frequency of
+            Clusters    Maximum    Number of    Unclassified
+      R       Joined    P-value     Clusters         Objects
+------------------------------------------------------------
+      1           36     0.9339            1             301
+   1.25           20     0.7131            1             301
+    1.5           10     0.3296            1             300
+   1.75            5     0.1990            2               0
+      2            5     0.0683            2               0
+   2.25            3     0.0504            2               0
+    2.5            4     0.0301            2               0
+   2.75            3     0.0585            2               0
+      3            5     0.0003            1               0
+   3.25            4     0.1923            2               0
+    3.5            4     0.0000            1               0
+
+Modeclus Analysis with the JOIN= option
+A Normal Cluster Surrounded by a Ring Cluster
+
+The MODECLUS Procedure
+  R=2.5  METHOD=1
+
+                      Cluster Statistics
+                            Maximum                   Estimated    -------------Saddle Test: Version 92.7------------
+                          Estimated      Boundary        Saddle      Mode    Saddle    Overlap                 Approx
+Cluster     Frequency       Density     Frequency       Density     Count     Count      Count           Z    P-value
+---------------------------------------------------------------------------------------------------------------------
+1                 103    0.00617328            22    0.00308664        39        19          0       2.495     0.5055
+2                  71    0.00571029            20     0.0043213        36        27          9       1.193      0.999
+3                  53    0.00509296            18    0.00401263        32        25         10       0.986     0.9999
+4                  45    0.00478429            19    0.00354964        30        22         14       1.429     0.9924
+5                  30    0.00462996             0             .        29         0          .       3.611     0.0301
+6                  28    0.00370397            17    0.00354964        23        22          9       0.000          1
+
+Cluster 6 with P-value 1.0000 will be joined to cluster 4.
+
+
+                      Cluster Statistics
+                            Maximum                   Estimated    -------------Saddle Test: Version 92.7------------
+                          Estimated      Boundary        Saddle      Mode    Saddle    Overlap                 Approx
+Cluster     Frequency       Density     Frequency       Density     Count     Count      Count           Z    P-value
+---------------------------------------------------------------------------------------------------------------------
+1                 103    0.00617328            22    0.00308664        39        19          0       2.495     0.5055
+2                  71    0.00571029            20     0.0043213        36        27          9       1.193      0.999
+3                  53    0.00509296            18    0.00401263        32        25         10       0.986     0.9999
+4                  73    0.00478429            13    0.00293231        30        18          0       1.588     0.9778
+5                  30    0.00462996             0             .        29         0          .       3.611     0.0301
+
+Cluster 3 with P-value 0.9999 will be joined to cluster 1.
+
+
+                      Cluster Statistics
+                            Maximum                   Estimated    -------------Saddle Test: Version 92.7------------
+                          Estimated      Boundary        Saddle      Mode    Saddle    Overlap                 Approx
+Cluster     Frequency       Density     Frequency       Density     Count     Count      Count           Z    P-value
+---------------------------------------------------------------------------------------------------------------------
+1                 156    0.00617328            17    0.00246931        39        15          0       3.130     0.1318
+2                  71    0.00571029            20     0.0043213        36        27          9       1.193      0.999
+3                  73    0.00478429            13    0.00293231        30        18          0       1.588     0.9778
+4                  30    0.00462996             0             .        29         0          .       3.611     0.0301
+
+Cluster 2 with P-value 0.9990 will be joined to cluster 3.
+
+
+                      Cluster Statistics
+                            Maximum                   Estimated    -------------Saddle Test: Version 92.7------------
+                          Estimated      Boundary        Saddle      Mode    Saddle    Overlap                 Approx
+Cluster     Frequency       Density     Frequency       Density     Count     Count      Count           Z    P-value
+---------------------------------------------------------------------------------------------------------------------
+1                 156    0.00617328            17    0.00246931        39        15          0       3.130     0.1318
+2                 144    0.00571029            14    0.00293231        36        18          0       2.313     0.6447
+3                  30    0.00462996             0             .        29         0          .       3.611     0.0301
+
+Cluster 2 with P-value 0.6447 will be joined to cluster 1.
+
+
+                      Cluster Statistics
+                            Maximum                   Estimated    -------------Saddle Test: Version 92.7------------
+                          Estimated      Boundary        Saddle      Mode    Saddle    Overlap                 Approx
+Cluster     Frequency       Density     Frequency       Density     Count     Count      Count           Z    P-value
+---------------------------------------------------------------------------------------------------------------------
+1                 300    0.00617328             0             .        39         0          .       4.246     0.0026
+2                  30    0.00462996             0             .        29         0          .       3.611     0.0301
+
+Cluster 2 with P-value 0.0301 will be dissolved.
+
+
+                      Cluster Statistics
+                            Maximum                   Estimated    -------------Saddle Test: Version 92.7------------
+                          Estimated      Boundary        Saddle      Mode    Saddle    Overlap                 Approx
+Cluster     Frequency       Density     Frequency       Density     Count     Count      Count           Z    P-value
+---------------------------------------------------------------------------------------------------------------------
+1                 300    0.00617328             0             .        39         0          .       4.246     0.0026
+
+30 observations were unassigned.
+
+Cluster 1 with P-value 0.0026 will be dissolved.
+
+Modeclus Analysis with the JOIN= option
+A Normal Cluster Surrounded by a Ring Cluster
+
+The MODECLUS Procedure
+
+                       Cluster Summary
+           Number of                            Frequency of
+            Clusters    Maximum    Number of    Unclassified
+      R       Joined    P-value     Clusters         Objects
+------------------------------------------------------------
+    2.5            0     1.0000            6               0
+    2.5            1     0.9999            5               0
+    2.5            2     0.9990            4               0
+    2.5            3     0.6447            3               0
+    2.5            4     0.0301            2               0
+    2.5            5     0.0026            1              30

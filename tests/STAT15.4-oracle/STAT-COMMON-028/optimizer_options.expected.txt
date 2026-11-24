@@ -1,0 +1,77 @@
+
+The GLIMMIX Procedure
+
+                    Model Information
+
+Data Set                     WORK.SAMPLE                  
+Response Variable            y                            
+Response Distribution        Gaussian                     
+Link Function                Identity                     
+Variance Function            Default                      
+Variance Matrix              Diagonal                     
+Estimation Technique         Restricted Maximum Likelihood
+Degrees of Freedom Method    Residual                     
+
+
+Number of Observations Read          12
+Number of Observations Used          12
+
+
+           Dimensions
+
+Covariance Parameters          1
+Columns in X                   3
+Columns in Z                   0
+Subjects (Blocks in V)         1
+Max Obs per Subject           12
+
+
+           Optimization Information
+
+Optimization Technique        Dual Quasi-Newton
+Parameters in Optimization    4                
+Lower Boundaries              1                
+Upper Boundaries              0                
+Fixed Effects                 Not Profiled     
+
+
+                                Iteration History
+ 
+                                           Objective                         Max
+Iteration    Restarts    Evaluations        Function          Change    Gradient
+
+        0           0              4    18.789153387       .             1.9E-14
+
+      Convergence criterion (ABSGCONV=0.00001) satisfied.       
+
+
+           Fit Statistics
+
+-2 Res Log Likelihood          37.58
+AIC  (smaller is better)       45.58
+AICC (smaller is better)       55.58
+BIC  (smaller is better)       46.37
+CAIC (smaller is better)       50.37
+HQIC (smaller is better)       43.88
+Pearson Chi-Square             12.10
+Pearson Chi-Square / DF         1.34
+
+
+                       Parameter Estimates
+ 
+                         Standard
+Effect       Estimate       Error       DF    t Value    Pr > |t|
+
+Intercept      1.3339      0.7622        9       1.75      0.1140
+x              1.8176      0.1799        9      10.11      <.0001
+z              0.6241      0.4421        9       1.41      0.1917
+Scale          1.3441      0.6336        .        .         .    
+
+
+        Type III Tests of Fixed Effects
+ 
+              Num      Den
+Effect         DF       DF    F Value    Pr > F
+
+x               1        9     102.13    <.0001
+z               1        9       1.99    0.1917

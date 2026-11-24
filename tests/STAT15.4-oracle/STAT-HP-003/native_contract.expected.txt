@@ -1,0 +1,80 @@
+
+The HPREG Procedure
+
+      Performance Information
+
+Execution Mode       Single-Machine
+Number of Threads    1             
+
+
+          Data Access Information
+ 
+Data           Engine    Role     Path
+
+WORK.SAMPLE    V9        Input    On Client
+
+
+          Model Information
+
+Data Source               WORK.SAMPLE
+Dependent Variable        y          
+Class Parameterization    GLM        
+
+
+Number of Observations Read              12
+Number of Observations Used              12
+
+
+ Class Level Information
+ 
+Class    Levels    Values
+
+group         2    A B   
+
+
+           Dimensions
+
+Number of Effects              4
+Number of Parameters           5
+
+
+                            Analysis of Variance
+ 
+                                  Sum of           Mean
+Source                 DF        Squares         Square    F Value    Pr > F
+
+Model                   3      595.97659      198.65886     177.77    <.0001
+Error                   8        8.94007        1.11751                     
+Corrected Total        11      604.91667                                    
+
+
+Root MSE        1.05712
+R-Square        0.98522
+Adj R-Sq        0.97968
+AIC            18.46765
+AICC           28.46765
+SBC             6.40727
+ASE             0.74501
+
+
+                         Parameter Estimates
+ 
+                                       Standard
+Parameter    DF        Estimate           Error    t Value    Pr > |t|
+
+Intercept     1        4.440075        1.974444       2.25      0.0547
+x             1        1.629213        0.198652       8.20      <.0001
+z             1        0.353933        0.433986       0.82      0.4384
+group A       1       -2.232210        1.328104      -1.68      0.1313
+group B       0               0               .        .         .    
+
+
+                  Procedure Task Timing
+ 
+Task                                 Seconds      Percent
+
+Reading and Levelizing Data             0.00      27.82% 
+Loading Design Matrix                   0.00       1.59% 
+Computing Moments                       0.00       0.79% 
+Computing Cross Products Matrix         0.00       0.69% 
+Performing Model Selection              0.00      69.11% 

@@ -1,0 +1,100 @@
+The SAS System
+
+74         
+75         /* STAT-ADAPTIVEREG-001: ADAPTIVEREG — Data input, variable roles, and basic options
+76          * Source: S154 / Chapter 28 / `PROC ADAPTIVEREG Statement` (PDF pp. 1055–1062); S154 / Chapter 28 / `BY Statement` (PDF pp. 1062–1063); S154 /
+76       ! Chapter 28 / `FREQ Statement` (PDF p. 1064); S154 / Chapter 28 / `WEIGHT Statement` (PDF p. 1074); S154 / Chapter 28 / `Missing Values` (PDF pp.
+76       ! 1079–1080).
+77          * Discriminates: Two explicit BY groups contain identical inputs, exposing group boundaries and per-group results.
+78          */
+79         options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+79       ! validmemname=compatible locale=en_US;
+80         %let syscc=0;
+81         title; footnote;
+82         ods _all_ close;
+83         ods listing gpath="%sysfunc(pathname(work))";
+84         ods graphics off;
+85         proc datasets library=work kill nolist;
+NOTE: Deleting WORK.ACE (memtype=DATA).
+NOTE: Deleting WORK.CLUS (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.SCORE (memtype=DATA).
+NOTE: Deleting WORK._ORACLE_INPUT (memtype=DATA).
+85       !                                         quit;
+
+
+86         ods path work.templat(update) sashelp.tmplmst(read);
+87         
+88         data Mixture;
+89         drop i;
+90         do i=1 to 1000;
+91         X1 = ranuni(1);
+92         C1 = int(3*ranuni(1));
+93         if C1=0 then Y=exp(5*(X1-0.3)**2)+rannor(1);
+94         else if C1=1 then Y=log(X1*(1-X1))+rannor(1);
+95         else Y=7*X1+rannor(1);
+96         output;
+97         end;
+98         run;
+
+NOTE: The data set WORK.MIXTURE has 1000 observations and 3 variables.
+
+99         ods graphics on;
+100        data _oracle_input; set Mixture; do _oracle_by=1 to 2; output; end; run;
+
+NOTE: There were 1000 observations read from the data set WORK.MIXTURE.
+NOTE: The data set WORK._ORACLE_INPUT has 2000 observations and 4 variables.
+
+101        proc sort data=_oracle_input; by _oracle_by; run;
+
+NOTE: There were 2000 observations read from the data set WORK._ORACLE_INPUT.
+NOTE: The data set WORK._ORACLE_INPUT has 2000 observations and 4 variables.
+
+102        proc adaptivereg data=_oracle_input plots=fit;
+103        by _oracle_by;
+104        class c1;
+105        model y=c1 x1;
+106        run;
+
+NOTE: The PROCEDURE ADAPTIVEREG printed pages 5-7.
+
+107        proc adaptivereg data=Mixture details=bases;
+108        class c1;
+109        model y=c1 x1;
+110        run;
+
+NOTE: The PROCEDURE ADAPTIVEREG printed page 8.
+
+111        data New;
+112        set Mixture;
+113        basis1 = (c1=1 OR c1=0);
+114        basis3 = (c1=1);
+115        basis5 = NOT(c1=1) *MAX(x1-0.7665019053,0);
+116        basis7 = NOT(c1=1 OR c1=0) *MAX(x1-0.7665019053,0);
+117        basis8 = NOT(c1=1 OR c1=0) *MAX(0.7665019053-x1,0);
+118        basis9 = (c1=1) *MAX(x1-0.5530566455,0);
+119        basis10 = (c1=1)*MAX(0.5530566455-x1,0);
+120        basis11 = (c1=1)*MAX(x1-0.045800759,0);
+121        basis13 = (c1=1)*MAX(x1-0.9526330293,0);
+122        basis15 = (c1=1 OR c1=0)*MAX(x1-0.9499325226,0);
+123        basis17 = (c1=1 OR c1=0)*MAX(x1-0.5142821095,0);
+124        basis19 = (c1=1 OR c1=0)*MAX(x1-0.9889635476,0);
+125        pred = 5.3829 - 4.3871 *basis1 + 32.7761*basis3 +
+126        20.2859*basis5 - 11.4183*basis7 - 7.0758*basis8 +
+127        58.4911*basis9 - 71.6388*basis10 - 69.0764*basis11 -
+128        119.71*basis13 + 66.5733*basis15 + 6.6681*basis17 -
+129        185.21*basis19;
+130        run;
+
+NOTE: There were 1000 observations read from the data set WORK.MIXTURE.
+NOTE: The data set WORK.NEW has 1000 observations and 16 variables.
+
+131        
+132        
+133        
+134        
+The SAS System
+
+135        

@@ -1,0 +1,46 @@
+The SAS System
+
+969        
+970        /* STAT-COMMON-025: ESTIMATE Statement
+971         * Source: S154 / Chapter 20 / `ESTIMATE Statement` (PDF pp. 472–489).
+972         * Discriminates: ESTIMATE coefficient mapping, estimability and standard errors
+973         */
+974        options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+974      ! validmemname=compatible locale=en_US;
+975        %let syscc=0;
+976        title; footnote;
+977        ods _all_ close;
+978        ods listing gpath="%sysfunc(pathname(work))";
+979        ods graphics off;
+980        proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SAMPLE (memtype=DATA).
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+980      !                                         quit;
+
+
+981        ods path work.templat(update) sashelp.tmplmst(read);
+982        
+983        data sample;
+984         input x z y group $ weight freq;
+985         datalines;
+
+NOTE: The data set WORK.SAMPLE has 12 observations and 6 variables.
+
+998        ;
+999        run;
+1000       proc glm data=sample; class group; model y=group x;
+1001        estimate 'B minus A' group -1 1 / e; run;
+
+1001     !                                            quit;
+
+NOTE: The PROCEDURE GLM printed pages 53-55.
+
+1002       
+1003       
+1004       
+1005       
+The SAS System
+
+1006       

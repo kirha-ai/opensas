@@ -1,0 +1,80 @@
+The SAS System
+
+2087       
+2088       /* STAT-MDS-008: MDS — ODS Graphics
+2089        * Source: S154 / Chapter 81 / `ODS Graphics` (PDF pp. 6403–6404).
+2090        * Discriminates: Getting Started: MDS Procedure
+2091        */
+2092       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+2092     ! validmemname=compatible locale=en_US;
+2093       %let syscc=0;
+2094       title; footnote;
+2095       ods _all_ close;
+2096       ods listing gpath="%sysfunc(pathname(work))";
+2097       ods graphics off;
+2098       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+2098     !                                         quit;
+
+
+2099       ods path work.templat(update) sashelp.tmplmst(read);
+2100       
+2101       ods graphics on;
+2102       ods trace on;
+2103       ods trace on;
+2104       title 'Analysis of Flying Mileages between Ten U.S. Cities';
+2105       ods graphics on;
+2106       proc mds data=sashelp.mileages level=absolute;
+2107       id city;
+2108       run;
+
+
+Output Added:
+-------------
+Name:       IterHistory
+Label:      Iteration History
+Template:   Stat.MDS.IterHistory
+Path:       MDS.Dim2.IterHistory
+-------------
+
+Output Added:
+-------------
+Name:       ConvergenceStatus
+Label:      Convergence Status
+Template:   Stat.MDS.ConvergenceStatus
+Path:       MDS.Dim2.ConvergenceStatus
+-------------
+
+Output Added:
+-------------
+Name:       ConfigPlot
+Label:      2 by 1
+Template:   Stat.MDS.Graphics.Configuration
+Path:       MDS.Dim2.Configuration.ConfigPlot
+-------------
+
+Output Added:
+-------------
+Name:       FitPlot
+Label:      Fit Plot
+Template:   Stat.MDS.Graphics.Fit
+Path:       MDS.Dim2.FitPlot
+-------------
+NOTE: The PROCEDURE MDS printed page 156.
+
+2109       ods trace off;
+2110       ods trace off;
+2111       ods graphics off;
+2112       
+2113       
+2114       
+2115       
+The SAS System
+
+2116       

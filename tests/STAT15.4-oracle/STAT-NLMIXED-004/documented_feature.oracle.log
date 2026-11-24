@@ -1,0 +1,165 @@
+The SAS System
+
+6439       
+6440       /* STAT-NLMIXED-004: NLMIXED — ARRAY / CMPTMODEL / PREDICT
+6441        * Source: S154 / Chapter 89 / `ARRAY Statement` (PDF p. 7116); S154 / Chapter 89 / `CMPTMODEL Statement` (PDF pp. 7117–7121); S154 / Chapter 89 /
+6441     ! `PREDICT Statement` (PDF pp. 7123–7124).
+6442        * Discriminates: Example 89.5: Failure Time and Frailty Model; explicit statements: ARRAY, PREDICT
+6443        */
+6444       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+6444     ! validmemname=compatible locale=en_US;
+6445       %let syscc=0;
+6446       title; footnote;
+6447       ods _all_ close;
+6448       ods listing gpath="%sysfunc(pathname(work))";
+6449       ods graphics off;
+6450       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.NESTED (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+6450     !                                         quit;
+
+
+6451       ods path work.templat(update) sashelp.tmplmst(read);
+6452       
+6453       data headache;
+6454       input minutes group censor @@;
+6455       patient = _n_;
+6456       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.HEADACHE has 38 observations and 4 variables.
+
+6467       ;
+6468       proc nlmixed data=headache;
+6469       bounds gamma > 0;
+6470       linp = b0 - b1 *(group-2);
+6471       alpha = exp(-linp);
+6472       G_t = exp(-(alpha *minutes)**gamma);
+6473       g = gamma *alpha*((alpha*minutes)**(gamma-1))*G_t;
+6474       ll = (censor=0) *log(g) + (censor=1)*log(G_t);
+6475       model minutes ~ general(ll);
+6476       predict 1-G_t out=cdf;
+6477       run;
+
+NOTE: To assign starting values to parameters, use the PARMS statement. The default starting value of 1.0 is in effect for all parameters.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The data set WORK.CDF has 38 observations and 12 variables.
+NOTE: The PROCEDURE NLMIXED printed page 413.
+
+6478       proc lifereg data=headache;
+6479       class group;
+6480       model minutes*censor(1) = group / dist=weibull;
+6481       output out=new cdf=prob;
+6482       run;
+
+NOTE: Algorithm converged.
+NOTE: The data set WORK.NEW has 38 observations and 6 variables.
+NOTE: The PROCEDURE LIFEREG printed page 414.
+
+6483       proc print data=cdf;
+6484       var group censor patient minutes pred;
+6485       run;
+
+NOTE: There were 38 observations read from the data set WORK.CDF.
+NOTE: The PROCEDURE PRINT printed page 415.
+
+6486       ods output ParameterEstimates=est;
+6487       proc nlmixed data=headache;
+6488       bounds gamma > 0;
+6489       linp = b0 - b1 *(group-2) + z;
+6490       alpha = exp(-linp);
+6491       G_t = exp(-(alpha *minutes)**gamma);
+6492       g = gamma *alpha*((alpha*minutes)**(gamma-1))*G_t;
+6493       ll = (censor=0)*log(g) + (censor=1)*log(G_t);
+6494       model minutes ~ general(ll);
+6495       random z ~ normal(0,exp(2*logsig)) subject=patient out=EB;
+6496       predict 1-G_t out=cdf;
+6497       run;
+
+NOTE: To assign starting values to parameters, use the PARMS statement. The default starting value of 1.0 is in effect for all parameters.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The data set WORK.EST has 4 observations and 10 variables.
+NOTE: The data set WORK.EB has 38 observations and 10 variables.
+NOTE: The data set WORK.CDF has 38 observations and 12 variables.
+NOTE: The PROCEDURE NLMIXED printed page 416.
+
+6498       proc print data=eb;
+6499       var Patient Effect Estimate StdErrPred;
+6500       run;
+
+NOTE: There were 38 observations read from the data set WORK.EB.
+NOTE: The PROCEDURE PRINT printed page 417.
+
+6501       proc transpose data=est(keep=estimate)
+6502       out=trest(rename=(col1=gamma col2=b0 col3=b1));
+6503       run;
+
+NOTE: There were 4 observations read from the data set WORK.EST.
+NOTE: The data set WORK.TREST has 1 observations and 5 variables.
+
+6504       data pred;
+6505       merge eb(keep=estimate) headache(keep=patient group);
+6506       array pp{2} pred1-pred2;
+6507       if _n_ = 1 then set trest(keep=gamma b0 b1);
+6508       do time=11 to 32;
+6509       linp = b0 - b1 *(group-2) + estimate;
+6510       pp{group} = 1-exp(- (exp(-linp)*time)**gamma);
+6511       symbolid = patient+1;
+6512       output;
+6513       end;
+6514       keep pred1 pred2 time patient;
+6515       run;
+
+NOTE: There were 38 observations read from the data set WORK.EB.
+NOTE: There were 38 observations read from the data set WORK.HEADACHE.
+NOTE: There were 1 observations read from the data set WORK.TREST.
+NOTE: The data set WORK.PRED has 836 observations and 4 variables.
+
+6516       data pred;
+6517       merge pred
+6518       cdf(where = (group=1)
+6519       rename = (pred=pcdf1 minutes=minutes1)
+6520       keep = pred minutes group)
+6521       cdf(where = (group=2)
+6522       rename = (pred=pcdf2 minutes=minutes2)
+6523       keep = pred minutes group);
+6524       drop group;
+6525       run;
+
+NOTE: There were 836 observations read from the data set WORK.PRED.
+NOTE: There were 19 observations read from the data set WORK.CDF.
+      WHERE group=1;
+NOTE: There were 19 observations read from the data set WORK.CDF.
+      WHERE group=2;
+NOTE: The data set WORK.PRED has 836 observations and 8 variables.
+
+6526       proc sgplot data=pred noautolegend;
+6527       label minutes1='Minutes to Headache Relief'
+6528       pcdf1 ='Estimated Patient-specific CDF';
+6529       series x=time y=pred1 /
+6530       group=patient
+6531       lineattrs=(pattern=solid color=black);
+6532       series x=time y=pred2 /
+6533       group=patient
+6534       lineattrs=(pattern=dash color=black);
+6535       scatter x=minutes1 y=pcdf1 /
+6536       markerattrs=(symbol=CircleFilled size=9);
+6537       scatter x=minutes2 y=pcdf2 /
+6538       markerattrs=(symbol=Circle size=9);
+6539       run;
+
+NOTE: Listing image output written to /saswork/SAS_work0B6E00009FAA_odaws02-euw1.oda.sas.com/SAS_work530800009FAA_odaws02-euw1.oda.sas.com/SGPlot34.png.
+NOTE: There were 836 observations read from the data set WORK.PRED.
+
+6540       
+6541       
+6542       
+6543       
+The SAS System
+
+6544       

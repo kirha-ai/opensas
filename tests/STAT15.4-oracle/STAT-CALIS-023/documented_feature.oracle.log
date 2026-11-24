@@ -1,0 +1,87 @@
+The SAS System
+
+9847       
+9848       /* STAT-CALIS-023: CALIS — Counting the Degrees of Freedom / FITINDEX / Assessment of Fit
+9849        * Source: S154 / Chapter 33 / `Counting the Degrees of Freedom` (PDF pp. 1774–1776); S154 / Chapter 33 / `FITINDEX Statement` (PDF pp.
+9849     ! 1561–1565); S154 / Chapter 33 / `Assessment of Fit` (PDF pp. 1776–1789).
+9850        * Discriminates: Example 33.21: Testing Equality of Two Covariance Matrices Using a Multiple-Group Analysis; explicit statements: FITINDEX
+9851        */
+9852       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+9852     ! validmemname=compatible locale=en_US;
+9853       %let syscc=0;
+9854       title; footnote;
+9855       ods _all_ close;
+9856       ods listing gpath="%sysfunc(pathname(work))";
+9857       ods graphics off;
+9858       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.WHEATON (memtype=DATA).
+9858     !                                         quit;
+
+
+9859       ods path work.templat(update) sashelp.tmplmst(read);
+9860       
+9861       data expert(type=cov);
+9862       length _name_ $32 _type_ $8;
+9863       infile datalines truncover;
+9864       
+9865       input _type_ $ _name_ $ high medium low;
+9866       datalines;
+
+NOTE: The data set WORK.EXPERT has 3 observations and 5 variables.
+
+9870       ;
+9871       data novice(type=cov);
+9872       input _type_ $ _name_ $ high medium low;
+9873       datalines;
+
+NOTE: The data set WORK.NOVICE has 3 observations and 5 variables.
+
+9877       ;
+9878       proc calis;
+9879       group 1 / data=expert nobs=20 label="Expert";
+9880       group 2 / data=novice nobs=18 label="Novice";
+9881       model 1 / groups=1,2;
+9882       mstruct
+9883       var=high medium low;
+9884       fitindex NoIndexType On(only)=[chisq df probchi]
+9885       chicorrect=eqcovmat;
+9886       ods select ModelingInfo MSTRUCTVariables MSTRUCTCovInit Fit;
+9887       run;
+
+NOTE: Model 1. All lower triangular elements in the _COV_ matrix are parameters.
+NOTE: The means of one or more variables in the input data set WORK.EXPERT are missing and are assumed to be 0.
+NOTE: The means of one or more variables in the input data set WORK.NOVICE are missing and are assumed to be 0.
+NOTE: Convergence criterion (ABSGCONV=0.00001) satisfied.
+NOTE: The PROCEDURE CALIS printed pages 1264-1265.
+
+9888       proc calis covpattern=eqcovmat;
+9889       var high medium low;
+9890       group 1 / data=expert nobs=20 label="Expert";
+9891       group 2 / data=novice nobs=18 label="Novice";
+9892       fitindex NoIndexType On(only)=[chisq df probchi];
+9893       run;
+
+NOTE: Group 1 is fitted by Model 1, which is defined with the COVPATTERN= or MEANPATTERN= option.
+NOTE: Group 2 is fitted by Model 2, which is defined with the COVPATTERN= or MEANPATTERN= option.
+NOTE: The means of one or more variables in the input data set WORK.EXPERT are missing and are assumed to be 0.
+NOTE: The means of one or more variables in the input data set WORK.NOVICE are missing and are assumed to be 0.
+NOTE: Convergence criterion (ABSGCONV=0.00001) satisfied.
+NOTE: The chi-square correction due to Box for testing equality of covariance matrices was applied. Use the CHICORRECT=0 option if this correction is not 
+      desirable.
+NOTE: The PROCEDURE CALIS printed pages 1266-1273.
+
+9894       
+9895       
+9896       
+9897       
+The SAS System
+
+9898       

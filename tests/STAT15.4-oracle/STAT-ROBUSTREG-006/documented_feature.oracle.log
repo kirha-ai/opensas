@@ -1,0 +1,100 @@
+The SAS System
+
+14212      
+14213      /* STAT-ROBUSTREG-006: ROBUSTREG — TEST
+14214       * Source: S154 / Chapter 107 / `TEST Statement` (PDF p. 8799).
+14215       * Discriminates: Getting Started: ROBUSTREG Procedure; explicit statements: TEST
+14216       */
+14217      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+14217    ! validmemname=compatible locale=en_US;
+14218      %let syscc=0;
+14219      title; footnote;
+14220      ods _all_ close;
+14221      ods listing gpath="%sysfunc(pathname(work))";
+14222      ods graphics off;
+14223      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.RECOVER (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.ROBOUT (memtype=DATA).
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+14223    !                                         quit;
+
+
+14224      ods path work.templat(update) sashelp.tmplmst(read);
+14225      
+14226      data Stack;
+14227      input x1 x2 x3 y exp $ @@;
+14228      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.STACK has 21 observations and 5 variables.
+
+14240      ;
+14241      proc robustreg data=stack;
+14242      model y = x1 x2 x3 / diagnostics leverage;
+14243      id exp;
+14244      test x3;
+14245      run;
+
+NOTE: Algorithm converged for the M estimates.
+NOTE: The MCD estimators for covariates have been successfully computed.
+WARNING: The data set contains one or more high leverage points, for which M estimation is not robust. It is recommended that you use METHOD=LTS or METHOD=MM 
+         for this data set.
+NOTE: Algorithm converged for the location-scale M estimates.
+NOTE: Test: Algorithm converged for the M estimates in the reduced model.
+NOTE: The PROCEDURE ROBUSTREG printed page 1070.
+
+14246      ods graphics on;
+14247      proc robustreg data=stack plots=(rdplot ddplot histogram qqplot);
+14248      model y = x1 x2 x3;
+14249      run;
+
+NOTE: Algorithm converged for the M estimates.
+NOTE: The MCD estimators for covariates have been successfully computed.
+WARNING: The data set contains one or more high leverage points, for which M estimation is not robust. It is recommended that you use METHOD=LTS or METHOD=MM 
+         for this data set.
+NOTE: Algorithm converged for the location-scale M estimates.
+NOTE: The PROCEDURE ROBUSTREG printed page 1071.
+
+14250      ods graphics off;
+14251      proc robustreg method=m(wf=bisquare(c=3.5)) data=stack;
+14252      model y = x1 x2 x3 / diagnostics leverage;
+14253      id exp;
+14254      test x3;
+14255      run;
+
+NOTE: Algorithm converged for the M estimates.
+NOTE: The MCD estimators for covariates have been successfully computed.
+WARNING: The data set contains one or more high leverage points, for which M estimation is not robust. It is recommended that you use METHOD=LTS or METHOD=MM 
+         for this data set.
+NOTE: Algorithm converged for the location-scale M estimates.
+NOTE: Test: Algorithm converged for the M estimates in the reduced model.
+NOTE: The PROCEDURE ROBUSTREG printed page 1072.
+
+14256      data hbk;
+14257      input index $ x1 x2 x3 y @@;
+14258      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.HBK has 75 observations and 5 variables.
+
+14297      ;
+14298      proc robustreg data=hbk fwls method=lts;
+14299      model y = x1 x2 x3 / diagnostics leverage;
+14300      id index;
+14301      run;
+
+NOTE: The MCD estimators for covariates have been successfully computed.
+NOTE: The PROCEDURE ROBUSTREG printed page 1073.
+
+14302      
+14303      
+14304      
+14305      
+The SAS System
+
+14306      

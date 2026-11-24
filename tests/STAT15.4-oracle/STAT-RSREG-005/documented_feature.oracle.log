@@ -1,0 +1,68 @@
+The SAS System
+
+15117      
+15118      /* STAT-RSREG-005: RSREG — Searching for Multiple Response Conditions / Handling Covariates / Computational Method
+15119       * Source: S154 / Chapter 108 / `Searching for Multiple Response Conditions` (PDF pp. 8882–8884); S154 / Chapter 108 / `Handling Covariates` (PDF
+15119    ! pp. 8884–8885); S154 / Chapter 108 / `Computational Method` (PDF pp. 8885–8886).
+15120       * Discriminates: Example 108.2: Response Surface Analysis with Covariates
+15121       */
+15122      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+15122    ! validmemname=compatible locale=en_US;
+15123      %let syscc=0;
+15124      title; footnote;
+15125      ods _all_ close;
+15126      ods listing gpath="%sysfunc(pathname(work))";
+15127      ods graphics off;
+15128      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.D (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+15128    !                                         quit;
+
+
+15129      ods path work.templat(update) sashelp.tmplmst(read);
+15130      
+15131      data Experiment;
+15132      input Day Grade Time Temp Pressure Yield;
+15133      datalines;
+
+NOTE: The data set WORK.EXPERIMENT has 20 observations and 6 variables.
+
+15154      ;
+15155      proc rsreg data=Experiment;
+15156      model Yield = Time Temp Pressure;
+15157      run;
+
+NOTE: The PROCEDURE RSREG printed pages 1113-1114.
+
+15158      data Experiment;
+15159      set Experiment;
+15160      d1 = (Day = 1);
+15161      d2 = (Day = 2);
+15162      d3 = (Day = 3);
+15163      ods graphics on;
+
+NOTE: There were 20 observations read from the data set WORK.EXPERIMENT.
+NOTE: The data set WORK.EXPERIMENT has 20 observations and 9 variables.
+
+15164      proc rsreg data=Experiment plots=all;
+15165      model Yield = d1-d3 Grade Time Temp Pressure / covar=4;
+15166      run;
+
+NOTE: The PROCEDURE RSREG printed pages 1115-1116.
+
+15167      ods graphics off;
+15168      run;
+15169      quit;
+15170      
+15171      
+15172      
+15173      
+The SAS System
+
+15174      

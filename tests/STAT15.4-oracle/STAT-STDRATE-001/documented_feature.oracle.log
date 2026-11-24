@@ -1,0 +1,65 @@
+The SAS System
+
+18472      
+18473      /* STAT-STDRATE-001: STDRATE — Data input, variable roles, and basic options
+18474       * Source: S154 / Chapter 116 / `PROC STDRATE Statement` (PDF pp. 9493–9497); S154 / Chapter 116 / `BY Statement` (PDF p. 9497); S154 / Chapter 116
+18474    !  / `POPULATION Statement` (PDF pp. 9497–9499); S154 / Chapter 116 / `STRATA Statement` (PDF pp. 9500–9502).
+18475       * Discriminates: Verified default procedure context; explicit statements: POPULATION, STRATA
+18476       */
+18477      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+18477    ! validmemname=compatible locale=en_US;
+18478      %let syscc=0;
+18479      title; footnote;
+18480      ods _all_ close;
+18481      ods listing gpath="%sysfunc(pathname(work))";
+18482      ods graphics off;
+18483      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.DATA21 (memtype=DATA).
+NOTE: Deleting WORK.DATA22 (memtype=DATA).
+NOTE: Deleting WORK.DATA23 (memtype=DATA).
+NOTE: Deleting WORK.DATA24 (memtype=DATA).
+NOTE: Deleting WORK.DATA25 (memtype=DATA).
+NOTE: Deleting WORK.NOOUTLIER (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TOTALSCORES (memtype=DATA).
+18483    !                                         quit;
+
+
+18484      ods path work.templat(update) sashelp.tmplmst(read);
+18485      
+18486      data study;
+18487      input age $ event total;
+18488      datalines;
+
+NOTE: The data set WORK.STUDY has 2 observations and 3 variables.
+
+18491      ;
+18492      data reference;
+18493      input age $ total;
+18494      datalines;
+
+NOTE: The data set WORK.REFERENCE has 2 observations and 2 variables.
+
+18497      ;
+18498      run;
+18499      proc stdrate data=study refdata=reference method=direct stat=rate;
+18500      population event=event total=total;
+18501      reference total=total;
+18502      strata age;
+18503      run;
+
+NOTE: The PROCEDURE STDRATE printed pages 1300-1301.
+
+18504      
+18505      
+18506      
+18507      
+The SAS System
+
+18508      

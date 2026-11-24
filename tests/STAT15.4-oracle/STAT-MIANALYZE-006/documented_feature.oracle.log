@@ -1,0 +1,119 @@
+The SAS System
+
+3350       
+3351       /* STAT-MIANALYZE-006: MIANALYZE — ODS Table Names
+3352        * Source: S154 / Chapter 83 / `ODS Table Names` (PDF pp. 6576–6577).
+3353        * Discriminates: Getting Started: MIANALYZE Procedure
+3354        */
+3355       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+3355     ! validmemname=compatible locale=en_US;
+3356       %let syscc=0;
+3357       title; footnote;
+3358       ods _all_ close;
+3359       ods listing gpath="%sysfunc(pathname(work))";
+3360       ods graphics off;
+3361       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.FITNESS1 (memtype=DATA).
+NOTE: Deleting WORK.OUTMI (memtype=DATA).
+NOTE: Deleting WORK.OUTREG (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+3361     !                                         quit;
+
+
+3362       ods path work.templat(update) sashelp.tmplmst(read);
+3363       
+3364       ods trace on;
+3365       *----------------- Data on Physical Fitness -----------------*
+3366       | These measurements were made on men involved in a physical |
+3367       | fitness course at N.C. State University. |
+3368       | Only selected variables of |
+3369       | Oxygen (oxygen intake, ml per kg body weight per minute), |
+3370       | Runtime (time to run 1.5 miles in minutes), and |
+3371       | RunPulse (heart rate while running) are used. |
+3372       | Certain values were changed to missing for the analysis. |
+3373       *------------------------------------------------------------*;
+3374       data Fitness1;
+3375       input Oxygen RunTime RunPulse @@;
+3376       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.FITNESS1 has 31 observations and 3 variables.
+
+3393       ;
+3394       proc mi data=Fitness1 seed=3237851 noprint out=outmi;
+3395       var Oxygen RunTime RunPulse;
+3396       run;
+
+WARNING: The default number of imputations has been changed from 5 to 25.
+NOTE: The EM algorithm (MLE) converges in 12 iterations.
+NOTE: The EM algorithm (posterior mode) converges in 7 iterations.
+NOTE: The data set WORK.OUTMI has 775 observations and 4 variables.
+
+3397       proc reg data=outmi outest=outreg covout noprint;
+3398       model Oxygen= RunTime RunPulse;
+3399       by _Imputation_;
+3400       run;
+
+NOTE: Interactivity disabled with BY processing.
+NOTE: The data set WORK.OUTREG has 100 observations and 10 variables.
+
+3401       proc print data=outreg(obs=8);
+3402       var _Imputation_ _Type_ _Name_
+3403       Intercept RunTime RunPulse;
+3404       title 'Parameter Estimates from Imputed Data Sets';
+3405       run;
+
+
+Output Added:
+-------------
+Name:       Print
+Label:      Data Set WORK.OUTREG
+Data Name:  ProcPrintTable
+Path:       Print.Print
+-------------
+NOTE: There were 8 observations read from the data set WORK.OUTREG.
+NOTE: The PROCEDURE PRINT printed page 278.
+
+3406       proc mianalyze data=outreg;
+3407       modeleffects Intercept RunTime RunPulse;
+3408       run;
+
+
+Output Added:
+-------------
+Name:       ModelInfo
+Label:      Model Information
+Template:   stat.mianalyze.ModelInfo
+Path:       MIAnalyze.ModelInfo
+-------------
+
+Output Added:
+-------------
+Name:       VarianceInfo
+Label:      Variance Information
+Template:   stat.mianalyze.VarianceInfo
+Path:       MIAnalyze.VarianceInfo
+-------------
+
+Output Added:
+-------------
+Name:       ParameterEstimates
+Label:      Parameter Estimates
+Template:   stat.mianalyze.ParameterEstimates
+Path:       MIAnalyze.ParameterEstimates
+-------------
+NOTE: The PROCEDURE MIANALYZE printed page 279.
+
+3409       ods trace off;
+3410       
+3411       
+3412       
+3413       
+The SAS System
+
+3414       

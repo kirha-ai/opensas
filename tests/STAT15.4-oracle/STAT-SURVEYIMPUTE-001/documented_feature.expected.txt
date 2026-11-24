@@ -1,0 +1,164 @@
+
+The SURVEYIMPUTE Procedure
+
+           Imputation Information
+
+Data Set                 WORK.SIS_SURVEY_SUB
+Weight Variable          SamplingWeight     
+Stratum Variables        State              
+                         NewUser            
+Cluster Variable         School             
+Imputation Method        FEFI               
+Replication Method       JACKKNIFE          
+Number of Replicates     47                 
+
+
+Number of Observations Read              235
+Number of Observations Used              235
+Sum of Weights Read                     6468
+Sum of Weights Used                     6468
+
+
+      Class Level Information
+ 
+Class           Levels    Values
+
+Department           2    0 1       
+Response             5    1 2 3 4 5 
+
+
+         Design Summary
+
+Number of Strata               6
+Number of Clusters            47
+
+
+                               Missing Data Patterns
+ 
+                                                   Sum of    Unweighted    Weighted
+Group    Department    Response        Freq       Weights       Percent     Percent
+
+    1        X            X             157          4272         66.81       66.05
+    2        X            .              52          1480         22.13       22.88
+    3        .            X              21           586          8.94        9.06
+    4        .            .               5           130          2.13        2.01
+
+                                                Missing Data Patterns
+ 
+         -------------------------------------------------Group Means------------------------------------------------
+Group    Department 0    Department 1      Response 1      Response 2      Response 3      Response 4      Response 5
+
+    1        0.440309        0.559691        0.184457        0.206695        0.265684        0.209738        0.133427
+    2        0.641892        0.358108               .               .               .               .               .
+    3               .               .        0.261092        0.235495        0.230375        0.085324        0.187713
+    4               .               .               .               .               .               .               .
+
+
+        Donor Cell Counts
+ 
+                           Total
+  Donors       Units        Rows
+
+       0         157         157
+       2          21          42
+       5          52         260
+      10           5          50
+
+
+          Iteration History
+ 
+                Maximum       Maximum
+Iteration      Absolute      Relative
+   Number    Difference    Difference
+
+        1      2.288442       0.15521
+        2      0.317648       0.02188
+        3       0.07555       0.00752
+        4       0.02541       0.00270
+        5      0.009657       0.00096
+
+                     EM algorithm converged                     
+
+
+                Imputation Summary
+ 
+                           Number of        Sum of
+Observation Status      Observations       Weights
+
+Nonmissing                       157          4272
+Missing                           78          2196
+
+Missing, Imputed                  78          2196
+Missing, Not Imputed               0             0
+
+The SURVEYFREQ Procedure
+
+            Data Summary
+
+Number of Observations           509
+Sum of Weights                  6468
+
+
+           Variance Estimation
+
+Method                           Jackknife
+Replicate Weights       SIS_SURVEY_IMPUTED
+Number of Replicates                    47
+
+
+                              Table of Department
+ 
+                              Weighted    Std Err of                Std Err of
+Department     Frequency     Frequency      Wgt Freq     Percent       Percent
+------------------------------------------------------------------------------
+         0           278          3200     429.52229     49.4729        6.6407
+         1           231          3268     429.52229     50.5271        6.6407
+
+     Total           509          6468             0    100.0000              
+------------------------------------------------------------------------------
+
+
+                              Table of Response
+ 
+                            Weighted    Std Err of                Std Err of
+Response     Frequency     Frequency      Wgt Freq     Percent       Percent
+----------------------------------------------------------------------------
+       1           100          1256     291.92305     19.4153        4.5133
+       2           103          1371     361.02585     21.1976        5.5817
+       3           112          1710     305.26968     26.4371        4.7197
+       4           100          1213     283.69298     18.7598        4.3861
+       5            94     917.82544     243.87967     14.1903        3.7706
+
+   Total           509          6468             0    100.0000              
+----------------------------------------------------------------------------
+
+
+                              Table of Department by Response
+ 
+                                          Weighted    Std Err of                Std Err of
+Department    Response     Frequency     Frequency      Wgt Freq     Percent       Percent
+------------------------------------------------------------------------------------------
+         0           1            57     637.83724     246.18741      9.8614        3.8062
+                     2            55     743.50947     334.28335     11.4952        5.1683
+                     3            64     951.95811     258.23015     14.7180        3.9924
+                     4            49     342.84458     150.44168      5.3006        2.3259
+                     5            53     523.75680     200.99126      8.0977        3.1075
+
+                 Total           278          3200     429.52229     49.4729        6.6407
+------------------------------------------------------------------------------------------
+         1           1            43     617.94159     209.04386      9.5538        3.2320
+                     2            48     627.55128     185.53346      9.7024        2.8685
+                     3            48     757.99401     237.82609     11.7191        3.6770
+                     4            51     870.53830     262.37514     13.4592        4.0565
+                     5            41     394.06863     156.95381      6.0926        2.4266
+
+                 Total           231          3268     429.52229     50.5271        6.6407
+------------------------------------------------------------------------------------------
+     Total           1           100          1256     291.92305     19.4153        4.5133
+                     2           103          1371     361.02585     21.1976        5.5817
+                     3           112          1710     305.26968     26.4371        4.7197
+                     4           100          1213     283.69298     18.7598        4.3861
+                     5            94     917.82544     243.87967     14.1903        3.7706
+
+                 Total           509          6468             0    100.0000              
+------------------------------------------------------------------------------------------

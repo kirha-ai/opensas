@@ -1,0 +1,194 @@
+The SAS System
+
+6905       
+6906       /* STAT-POWER-011: POWER — Analyses in the COXREG / Analyses in the CUSTOM / Analyses in the LOGISTIC
+6907        * Source: S154 / Chapter 96 / `Analyses in the COXREG Statement` (PDF pp. 7858–7859); S154 / Chapter 96 / `Analyses in the CUSTOM Statement` (PDF
+6907     ! pp. 7859–7862); S154 / Chapter 96 / `Analyses in the LOGISTIC Statement` (PDF pp. 7862–7865).
+6908        * Discriminates: Example 96.11: Logistic Regression Using the CUSTOM Statement
+6909        */
+6910       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+6910     ! validmemname=compatible locale=en_US;
+6911       %let syscc=0;
+6912       title; footnote;
+6913       ods _all_ close;
+6914       ods listing gpath="%sysfunc(pathname(work))";
+6915       ods graphics off;
+6916       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+6916     !                                         quit;
+
+
+6917       ods path work.templat(update) sashelp.tmplmst(read);
+6918       
+6919       * Compute P(Yj|Xi) values from conjectured betas;
+6920       data Exemplary;
+6921       _B0 = 0;
+6922       _B1 = -1.5;
+6923       _B2 = 0.5;
+6924       _B3 = 2;
+6925       do X1 = 0 to 1;
+6926       do X2 = 0 to 1;
+6927       _pi = logistic(_B0 + _B1*X1 + _B2*X2 + _B3*X1*X2);
+6928       do Y = 0 to 1;
+6929       PY = _pi**Y * (1-_pi)**(1-Y);
+6930       output;
+6931       end;
+6932       end;
+6933       end;
+6934       keep X1 X2 Y PY;
+6935       run;
+
+NOTE: The data set WORK.EXEMPLARY has 8 observations and 4 variables.
+
+6936       proc print data=Exemplary;
+6937       run;
+
+NOTE: There were 8 observations read from the data set WORK.EXEMPLARY.
+NOTE: The PROCEDURE PRINT printed page 548.
+
+6938       * Expand according to relative allocations of design profiles;
+6939       data Exemplary;
+6940       set Exemplary;
+6941       if (X1 = 0 and X2 = 0) then _alloc=4;
+6942       else if (X1 = 0 and X2 = 1) then _alloc=5;
+6943       else if (X1 = 1 and X2 = 0) then _alloc=5;
+6944       else _alloc=6;
+6945       do _i = 1 to _alloc;
+6946       output;
+6947       end;
+6948       keep X1 X2 Y PY;
+6949       run;
+
+NOTE: There were 8 observations read from the data set WORK.EXEMPLARY.
+NOTE: The data set WORK.EXEMPLARY has 40 observations and 4 variables.
+
+6950       proc print data=Exemplary;
+6951       run;
+
+NOTE: There were 40 observations read from the data set WORK.EXEMPLARY.
+NOTE: The PROCEDURE PRINT printed page 549.
+
+6952       * Run full model;
+6953       proc logistic data=Exemplary;
+6954       ods output parameterestimates=fitFull fitstatistics=statsFull;
+6955       weight PY;
+6956       model Y(event='1') = X1 X2 X1*X2;
+6957       run;
+
+NOTE: PROC LOGISTIC is modeling the probability that Y=1.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The data set WORK.STATSFULL has 3 observations and 4 variables.
+NOTE: The data set WORK.FITFULL has 4 observations and 7 variables.
+NOTE: There were 40 observations read from the data set WORK.EXEMPLARY.
+NOTE: The PROCEDURE LOGISTIC printed page 550.
+
+6958       * Fetch Wald chi-square statistic for test of X1*X2;
+6959       data fitFull;
+6960       set fitFull;
+6961       where Variable = "X1*X2";
+6962       keep DF WaldChiSq;
+6963       run;
+
+NOTE: There were 1 observations read from the data set WORK.FITFULL.
+      WHERE Variable='X1*X2';
+NOTE: The data set WORK.FITFULL has 1 observations and 2 variables.
+
+6964       * Fetch -2LogL for full model;
+6965       data statsFull;
+6966       set statsFull;
+6967       where Criterion = "-2 Log L";
+6968       Neg2LogLFull = InterceptAndCovariates;
+6969       keep Neg2LogLFull;
+6970       run;
+
+NOTE: There were 1 observations read from the data set WORK.STATSFULL.
+      WHERE Criterion='-2 Log L';
+NOTE: The data set WORK.STATSFULL has 1 observations and 1 variables.
+
+6971       * Run reduced model;
+6972       proc logistic data=Exemplary;
+6973       ods output fitstatistics=statsRed;
+6974       weight PY;
+6975       model Y = X1 X2;
+6976       run;
+
+NOTE: PROC LOGISTIC is modeling the probability that Y=0. One way to change this to model the probability that Y=1 is to specify the response variable option 
+      EVENT='1'.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The data set WORK.STATSRED has 3 observations and 4 variables.
+NOTE: There were 40 observations read from the data set WORK.EXEMPLARY.
+NOTE: The PROCEDURE LOGISTIC printed page 551.
+
+6977       * Fetch -2LogL for reduced model;
+6978       data statsRed;
+6979       set statsRed;
+6980       where Criterion = "-2 Log L";
+6981       Neg2LogLRed = InterceptAndCovariates;
+6982       keep Neg2LogLRed;
+6983       run;
+
+NOTE: There were 1 observations read from the data set WORK.STATSRED.
+      WHERE Criterion='-2 Log L';
+NOTE: The data set WORK.STATSRED has 1 observations and 1 variables.
+
+6984       * Compute primary noncentralities for Wald and LR tests;
+6985       data PrimNC;
+6986       merge fitFull statsFull statsRed;
+6987       WaldPrimNC = WaldChiSq / 20;
+6988       LRPrimNC = -(Neg2LogLFull-Neg2LogLRed) / 20;
+6989       keep DF WaldPrimNC LRPrimNC;
+6990       call symput ("DF", DF);
+6991       call symput ("WaldPrimNC", WaldPrimNC);
+6992       call symput ("LRPrimNC", LRPrimNC);
+6993       run;
+
+NOTE: Numeric values have been converted to character values at the places given by: (Line):(Column).
+      6990:20   6991:28   6992:26   
+NOTE: There were 1 observations read from the data set WORK.FITFULL.
+NOTE: There were 1 observations read from the data set WORK.STATSFULL.
+NOTE: There were 1 observations read from the data set WORK.STATSRED.
+NOTE: The data set WORK.PRIMNC has 1 observations and 3 variables.
+
+6994       proc print data=PrimNC;
+6995       run;
+
+NOTE: There were 1 observations read from the data set WORK.PRIMNC.
+NOTE: The PROCEDURE PRINT printed page 552.
+
+6996       proc power;
+6997       custom
+6998       dist = chisquare
+6999       primnc = &WaldPrimNC &LRPrimNC
+7000       testdf = &DF
+7001       ntotal = 100
+7002       power = .;
+7003       run;
+
+NOTE: The PROCEDURE POWER printed page 553.
+
+7004       data Power;
+7005       set PrimNC;
+7006       Crit = quantile("chisq", 1-0.05, DF);
+7007       WaldPower = sdf("chisq", Crit, DF, 100 * WaldPrimNC);
+7008       LRPower = sdf("chisq", Crit, DF, 100 * LRPrimNC);
+7009       keep WaldPower LRPower;
+7010       run;
+
+NOTE: There were 1 observations read from the data set WORK.PRIMNC.
+NOTE: The data set WORK.POWER has 1 observations and 2 variables.
+
+7011       proc print data=Power;
+7012       run;
+
+NOTE: There were 1 observations read from the data set WORK.POWER.
+NOTE: The PROCEDURE PRINT printed page 554.
+
+7013       
+7014       
+7015       
+7016       
+The SAS System
+
+7017       

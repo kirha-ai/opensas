@@ -1,0 +1,52 @@
+The SAS System
+
+12557      
+12558      /* STAT-REG-009: REG — Multivariate Tests / MTEST
+12559       * Source: S154 / Chapter 105 / `Multivariate Tests` (PDF pp. 8644–8647); S154 / Chapter 105 / `MTEST Statement` (PDF pp. 8588–8590).
+12560       * Discriminates: Explicit MTEST statement behavior on seeded synthetic inputs.
+12561       */
+12562      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+12562    ! validmemname=compatible locale=en_US;
+12563      %let syscc=0;
+12564      title; footnote;
+12565      ods _all_ close;
+12566      ods listing gpath="%sysfunc(pathname(work))";
+12567      ods graphics off;
+12568      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.USPOPULATION (memtype=DATA).
+12568    !                                         quit;
+
+
+12569      ods path work.templat(update) sashelp.tmplmst(read);
+12570      
+12571      data sample;
+12572      call streaminit(314159);
+12573      do id=1 to 90;
+12574       x=rand('normal'); z=rand('normal'); w=rand('normal');
+12575       group=1+mod(id,3); block=1+mod(id,5);
+12576       y=5+1.5*x-0.6*z+0.4*group+rand('normal');
+12577       y2=2+0.5*x+0.8*z+rand('normal'); output;
+12578      end;
+12579      run;
+
+NOTE: The data set WORK.SAMPLE has 90 observations and 8 variables.
+
+12580      proc reg data=sample; model y y2=x z; mtest x=0,z=0 / print; run;
+
+12580    !                                                                   quit;
+
+NOTE: The PROCEDURE REG printed pages 960-962.
+
+12581      
+12582      
+12583      
+12584      
+The SAS System
+
+12585      

@@ -1,0 +1,56 @@
+The SAS System
+
+2241       
+2242       /* STAT-MI-002: MI — Multiple imputation of missing data
+2243        * Source: S154 / Chapter 82 / `Getting Started: MI Procedure` (PDF pp. 6421–6424); S154 / Chapter 82 / `Overview: MI Procedure` (PDF pp.
+2243     ! 6419–6421).
+2244        * Discriminates: Example 82.1: EM Algorithm for MLE
+2245        */
+2246       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+2246     ! validmemname=compatible locale=en_US;
+2247       %let syscc=0;
+2248       title; footnote;
+2249       ods _all_ close;
+2250       ods listing gpath="%sysfunc(pathname(work))";
+2251       ods graphics off;
+2252       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.FITNESS1 (memtype=DATA).
+NOTE: Deleting WORK.OUTEM (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK._ORACLE_INPUT (memtype=DATA).
+2252     !                                         quit;
+
+
+2253       ods path work.templat(update) sashelp.tmplmst(read);
+2254       
+2255       data Fitness1;
+2256       input Oxygen RunTime RunPulse @@;
+2257       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.FITNESS1 has 31 observations and 3 variables.
+
+2274       ;
+2275       
+2276       run;
+2277       proc mi data=Fitness1 seed=1518971 simple nimpute=0;
+2278       em itprint outem=outem;
+2279       var Oxygen RunTime RunPulse;
+2280       run;
+
+NOTE: The EM algorithm (MLE) converges in 12 iterations.
+NOTE: The data set WORK.OUTEM has 4 observations and 5 variables.
+NOTE: The PROCEDURE MI printed page 161.
+
+2281       
+2282       
+2283       
+2284       
+The SAS System
+
+2285       

@@ -1,0 +1,102 @@
+
+The HPQUANTSELECT Procedure
+
+      Performance Information
+
+Execution Mode       Single-Machine
+Number of Threads    1             
+
+
+          Data Access Information
+ 
+Data           Engine    Role     Path
+
+WORK.SAMPLE    V9        Input    On Client
+
+
+          Model Information
+
+Data Source               WORK.SAMPLE
+Dependent Variable        y          
+Class Parameterization    GLM        
+Optimization Algorithm    Interior   
+
+
+           Selection Information
+
+Selection Method             Forward       
+Select Criterion             Validation ACL
+Stop Criterion               Validation ACL
+Choose Criterion             Validation ACL
+Effect Hierarchy Enforced    None          
+Stop Horizon                 3             
+
+
+Number of Observations Read                            120
+Number of Observations Used                            120
+Number of Observations Used for Training                90
+Number of Observations Used for Validation              30
+
+
+ Class Level Information
+ 
+Class    Levels    Values
+
+group         3    1 2 3 
+
+
+           Dimensions
+
+Number of Effects              5
+Number of Parameters           7
+
+The HPQUANTSELECT Procedure
+Quantile Level = 0.5
+
+                 Selection Summary
+ 
+              Effect         Number    Validation 
+      Step    Entered    Effects In           ACL 
+
+         0    Intercept           1        0.7715 
+--------------------------------------------------
+         1    x                   2        0.4641 
+         2    z                   3        0.4466*
+         3    group               4        0.4519 
+         4    w                   5        0.4512 
+
+* Optimal Value of Criterion
+
+
+Selection stopped because all effects are in the model.
+
+
+ The model at step 2 is selected where Validation ACL is 0.446588.
+
+The HPQUANTSELECT Procedure
+Quantile Level = 0.5
+Selected Model
+
+Selected Effects: Intercept x z
+
+
+         Fit Statistics
+
+Objective Function       30.52084
+R1                        0.48738
+Adj R1                    0.47559
+AIC                    -188.65201
+AICC                   -188.37294
+SBC                    -181.15258
+ACL (Train)               0.33912
+ACL (Validate)            0.44659
+
+
+                                     Parameter Estimates
+ 
+                                   Standard
+Parameter    DF      Estimate         Error      95% Confidence Limits     t Value    Pr > |t|
+
+Intercept     1       2.59091       0.13371       2.32514       2.85668      19.38      <.0001
+x             1       1.37642       0.11526       1.14732       1.60552      11.94      <.0001
+z             1      -0.59403       0.14560      -0.88343      -0.30463      -4.08      <.0001

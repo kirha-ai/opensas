@@ -1,0 +1,54 @@
+
+Split Plot Design
+
+The ANOVA Procedure
+
+    Class Level Information
+ 
+Class         Levels    Values
+
+Block              2    1 2     
+
+A                  4    1 2 3 4 
+
+B                  2    1 2     
+
+
+Number of Observations Read          16
+Number of Observations Used          16
+
+Split Plot Design
+
+The ANOVA Procedure
+ 
+Dependent Variable: Response   
+
+                                        Sum of
+Source                      DF         Squares     Mean Square    F Value    Pr > F
+
+Model                       11     182.0200000      16.5472727       7.85    0.0306
+
+Error                        4       8.4300000       2.1075000                     
+
+Corrected Total             15     190.4500000                                     
+
+
+R-Square     Coeff Var      Root MSE    Response Mean
+
+0.955736      3.609007      1.451723         40.22500
+
+
+Source                      DF        Anova SS     Mean Square    F Value    Pr > F
+
+Block                        1     131.1025000     131.1025000      62.21    0.0014
+A                            3      40.1900000      13.3966667       6.36    0.0530
+Block*A                      3       6.9275000       2.3091667       1.10    0.4476
+B                            1       2.2500000       2.2500000       1.07    0.3599
+A*B                          3       1.5500000       0.5166667       0.25    0.8612
+
+
+        Tests of Hypotheses Using the Anova MS for Block*A as an Error Term
+ 
+Source                      DF        Anova SS     Mean Square    F Value    Pr > F
+
+A                            3     40.19000000     13.39666667       5.80    0.0914

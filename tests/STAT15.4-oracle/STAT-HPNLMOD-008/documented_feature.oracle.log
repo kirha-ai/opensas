@@ -1,0 +1,257 @@
+The SAS System
+
+2744       
+2745       /* STAT-HPNLMOD-008: HPNLMOD — Displayed Output / ODS Table Names
+2746        * Source: S154 / Chapter 63 / `Displayed Output` (PDF pp. 4896–4899); S154 / Chapter 63 / `ODS Table Names` (PDF pp. 4899–4900).
+2747        * Discriminates: Getting Started: HPNLMOD Procedure
+2748        */
+2749       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+2749     ! validmemname=compatible locale=en_US;
+2750       %let syscc=0;
+2751       title; footnote;
+2752       ods _all_ close;
+2753       ods listing gpath="%sysfunc(pathname(work))";
+2754       ods graphics off;
+2755       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.ENZYME (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.REMISS (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+2755     !                                         quit;
+
+
+2756       ods path work.templat(update) sashelp.tmplmst(read);
+2757       
+2758       ods trace on;
+2759       data Enzyme;
+2760       input conc rate @@;
+2761       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.ENZYME has 14 observations and 2 variables.
+
+2769       ;
+2770       run;
+2771       data remiss;
+2772       input remiss cell smear infil li blast temp;
+2773       label remiss = 'complete remission';
+2774       like = 0;
+2775       label like = 'dummy variable for nlin';
+2776       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.REMISS has 27 observations and 8 variables.
+
+2805       ;
+2806       run;
+2807       proc hpnlmod data=enzyme;
+2808       parms theta1=160 theta2=0.1;
+2809       model rate ~ residual(theta1*conc / (theta2 + conc));
+2810       run;
+
+
+NOTE: The HPNLMOD procedure is executing in single-machine mode.
+
+Output Added:
+-------------
+Name:       PerformanceInfo
+Label:      Performance Information
+Template:   HPA.Common.PerfInfo
+Path:       Hpnlmod.PerformanceInfo
+-------------
+
+Output Added:
+-------------
+Name:       DataAccessInfo
+Label:      Data Access Information
+Template:   HPA.Common.DataAccessInfo
+Path:       Hpnlmod.DataAccessInfo
+-------------
+
+Output Added:
+-------------
+Name:       Specifications
+Label:      Specifications
+Template:   HPSTAT.HPNLIN.Specifications
+Path:       Hpnlmod.Specifications
+-------------
+
+Output Added:
+-------------
+Name:       NObs
+Label:      Number of Observations
+Template:   HPA.Common.NObs
+Path:       Hpnlmod.NObs
+-------------
+
+Output Added:
+-------------
+Name:       Dimensions
+Label:      Dimensions
+Template:   HPSTAT.HPNLIN.Dimensions
+Path:       Hpnlmod.Dimensions
+-------------
+
+Output Added:
+-------------
+Name:       Parameters
+Label:      Initial Parameter
+Template:   HPSTAT.HPNLIN.Parameters
+Path:       Hpnlmod.Parameters
+-------------
+
+Output Added:
+-------------
+Name:       IterHistory
+Label:      Iteration History
+Template:   HPA.Common.IterHistory
+Path:       Hpnlmod.IterHistory
+-------------
+
+Output Added:
+-------------
+Name:       ConvergenceStatus
+Label:      Convergence Status
+Template:   HPA.Common.ConvergenceStatus
+Path:       Hpnlmod.ConvergenceStatus
+-------------
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+
+Output Added:
+-------------
+Name:       FitStatistics
+Label:      Fit Statistics
+Template:   HPSTAT.HPNLIN.FitStatistics
+Path:       Hpnlmod.FitStatistics
+-------------
+
+Output Added:
+-------------
+Name:       ANOVA
+Label:      Analysis of Variance
+Template:   HPSTAT.HPNLIN.ANOVA
+Path:       Hpnlmod.ANOVA
+-------------
+NOTE: An intercept was not specified for this model.
+
+Output Added:
+-------------
+Name:       ParameterEstimates
+Label:      Parameter Estimates
+Template:   HPSTAT.HPNLIN.ParameterEstimates
+Path:       Hpnlmod.ParameterEstimates
+-------------
+NOTE: There were 14 observations read from the data set WORK.ENZYME.
+NOTE: The PROCEDURE HPNLMOD printed page 135.
+
+2811       proc hpnlmod data=remiss corr;
+2812       parms int=-10 a=-2 b=-1 c=6;
+2813       linp = int + a*cell + b*li + c*temp;
+2814       p = probnorm(linp);
+2815       model remiss ~ binary(1-p);
+2816       run;
+
+
+NOTE: The HPNLMOD procedure is executing in single-machine mode.
+
+Output Added:
+-------------
+Name:       PerformanceInfo
+Label:      Performance Information
+Template:   HPA.Common.PerfInfo
+Path:       Hpnlmod.PerformanceInfo
+-------------
+
+Output Added:
+-------------
+Name:       DataAccessInfo
+Label:      Data Access Information
+Template:   HPA.Common.DataAccessInfo
+Path:       Hpnlmod.DataAccessInfo
+-------------
+
+Output Added:
+-------------
+Name:       Specifications
+Label:      Specifications
+Template:   HPSTAT.HPNLIN.Specifications
+Path:       Hpnlmod.Specifications
+-------------
+
+Output Added:
+-------------
+Name:       NObs
+Label:      Number of Observations
+Template:   HPA.Common.NObs
+Path:       Hpnlmod.NObs
+-------------
+
+Output Added:
+-------------
+Name:       Dimensions
+Label:      Dimensions
+Template:   HPSTAT.HPNLIN.Dimensions
+Path:       Hpnlmod.Dimensions
+-------------
+
+Output Added:
+-------------
+Name:       Parameters
+Label:      Initial Parameter
+Template:   HPSTAT.HPNLIN.Parameters
+Path:       Hpnlmod.Parameters
+-------------
+
+Output Added:
+-------------
+Name:       IterHistory
+Label:      Iteration History
+Template:   HPA.Common.IterHistory
+Path:       Hpnlmod.IterHistory
+-------------
+
+Output Added:
+-------------
+Name:       ConvergenceStatus
+Label:      Convergence Status
+Template:   HPA.Common.ConvergenceStatus
+Path:       Hpnlmod.ConvergenceStatus
+-------------
+NOTE: Convergence criterion (ABSGCONV=1E-7) satisfied.
+
+Output Added:
+-------------
+Name:       FitStatistics
+Label:      Fit Statistics
+Template:   HPSTAT.HPNLIN.FitStatistics
+Path:       Hpnlmod.FitStatistics
+-------------
+
+Output Added:
+-------------
+Name:       ParameterEstimates
+Label:      Parameter Estimates
+Template:   HPSTAT.HPNLIN.ParameterEstimates
+Path:       Hpnlmod.ParameterEstimates
+-------------
+
+Output Added:
+-------------
+Name:       CorrB
+Label:      Correlation of Parameter Estimates
+Template:   HPSTAT.HPNLIN.CorrB
+Path:       Hpnlmod.CorrB
+-------------
+NOTE: There were 27 observations read from the data set WORK.REMISS.
+NOTE: The PROCEDURE HPNLMOD printed page 136.
+
+2817       ods trace off;
+2818       
+2819       
+2820       
+2821       
+The SAS System
+
+2822       

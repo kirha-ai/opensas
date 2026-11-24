@@ -1,0 +1,220 @@
+
+Maximum Likelihood Factor Analysis with One Factor
+
+The FACTOR Procedure
+
+Input Data Type                 Raw Data
+Number of Records Read                12
+Number of Records Used                12
+N for Significance Tests              12
+
+Maximum Likelihood Factor Analysis with One Factor
+
+The FACTOR Procedure
+Initial Factor Method: Maximum Likelihood
+
+                   Prior Communality Estimates: SMC    
+ 
+Population          School      Employment        Services      HouseValue
+
+0.96859160      0.82228514      0.96918082      0.78572440      0.84701921
+
+
+Preliminary Eigenvalues: Total = 76.1165859  Average = 15.2233172
+ 
+        Eigenvalue    Difference    Proportion    Cumulative
+
+   1    63.7010086    50.6462895        0.8369        0.8369
+   2    13.0547191    12.7270798        0.1715        1.0084
+   3     0.3276393     0.6749199        0.0043        1.0127
+   4    -0.3472805     0.2722202       -0.0046        1.0081
+   5    -0.6195007                     -0.0081        1.0000
+
+1 factor will be retained by the NFACTOR criterion.
+
+
+
+Iteration     Criterion     Ridge    Change                       Communalities
+
+    1         6.5429218    0.0000    0.1033    0.93828    0.72227    1.00000    0.71940    0.74371
+    2         3.1232699    0.0000    0.7288    0.94566    0.02380    1.00000    0.26493    0.01487
+
+
+Convergence criterion satisfied.                                
+
+
+          Significance Tests Based on 12 Observations
+ 
+                                                           Pr > 
+             Test                     DF    Chi-Square     ChiSq
+
+H0: No common factors                 10       54.2517    <.0001
+HA: At least one common factor                                  
+H0: 1 Factor is sufficient             5       24.4656    0.0002
+HA: More factors are needed                                     
+
+
+Chi-Square without Bartlett's Correction       34.355969
+Akaike's Information Criterion                 24.355969
+Schwarz's Bayesian Criterion                   21.931436
+Tucker and Lewis's Reliability Coefficient      0.120231
+
+
+Squared Canonical Correlations
+ 
+   Factor1
+
+ 1.0000000
+
+
+Eigenvalues of the Weighted Reduced Correlation Matrix: Total = 0  Average = 0
+ 
+        Eigenvalue    Difference
+
+   1         Infty         Infty
+   2    1.92716032    2.15547340
+   3    -.22831308    0.56464322
+   4    -.79295630    0.11293464
+   5    -.90589094              
+
+
+      Factor Pattern
+ 
+                   Factor1
+
+Population         0.97245
+School             0.15428
+Employment         1.00000
+Services           0.51472
+HouseValue         0.12193
+
+
+ Variance Explained by Each Factor
+ 
+Factor        Weighted    Unweighted
+
+Factor1     17.8010629    2.24926004
+
+
+Final Communality Estimates and Variable Weights
+Total Communality: Weighted = 17.801063   Unweighted = 2.249260
+ 
+Variable      Communality        Weight
+
+Population     0.94565561    18.4011648
+School         0.02380349     1.0243839
+Employment     1.00000000         Infty
+Services       0.26493499     1.3604239
+HouseValue     0.01486595     1.0150903
+
+Maximum Likelihood Factor Analysis with Two Factors
+
+The FACTOR Procedure
+
+Input Data Type                 Raw Data
+Number of Records Read                12
+Number of Records Used                12
+N for Significance Tests              12
+
+Maximum Likelihood Factor Analysis with Two Factors
+
+The FACTOR Procedure
+Initial Factor Method: Maximum Likelihood
+
+                   Prior Communality Estimates: SMC    
+ 
+Population          School      Employment        Services      HouseValue
+
+0.96859160      0.82228514      0.96918082      0.78572440      0.84701921
+
+
+Preliminary Eigenvalues: Total = 76.1165859  Average = 15.2233172
+ 
+        Eigenvalue    Difference    Proportion    Cumulative
+
+   1    63.7010086    50.6462895        0.8369        0.8369
+   2    13.0547191    12.7270798        0.1715        1.0084
+   3     0.3276393     0.6749199        0.0043        1.0127
+   4    -0.3472805     0.2722202       -0.0046        1.0081
+   5    -0.6195007                     -0.0081        1.0000
+
+2 factors will be retained by the NFACTOR criterion.
+
+
+
+Iteration     Criterion     Ridge    Change                       Communalities
+
+    1         0.3431221    0.0000    0.0471    1.00000    0.80672    0.95058    0.79348    0.89412
+    2         0.3072178    0.0000    0.0307    1.00000    0.80821    0.96023    0.81048    0.92480
+    3         0.3067860    0.0000    0.0063    1.00000    0.81149    0.95948    0.81677    0.92023
+    4         0.3067373    0.0000    0.0022    1.00000    0.80985    0.95963    0.81498    0.92241
+    5         0.3067321    0.0000    0.0007    1.00000    0.81019    0.95955    0.81569    0.92187
+
+
+Convergence criterion satisfied.                                
+
+
+          Significance Tests Based on 12 Observations
+ 
+                                                           Pr > 
+             Test                     DF    Chi-Square     ChiSq
+
+H0: No common factors                 10       54.2517    <.0001
+HA: At least one common factor                                  
+H0: 2 Factors are sufficient           1        2.1982    0.1382
+HA: More factors are needed                                     
+
+
+Chi-Square without Bartlett's Correction       3.3740530
+Akaike's Information Criterion                 1.3740530
+Schwarz's Bayesian Criterion                   0.8891463
+Tucker and Lewis's Reliability Coefficient     0.7292200
+
+
+Squared Canonical Correlations
+ 
+   Factor1         Factor2
+
+ 1.0000000       0.9518891
+
+
+Eigenvalues of the Weighted Reduced Correlation Matrix: Total = 19.7853157  Average = 4.94632893
+ 
+        Eigenvalue    Difference    Proportion    Cumulative
+
+   1         Infty         Infty                            
+   2    19.7853143    19.2421292        1.0000        1.0000
+   3     0.5431851     0.5829564        0.0275        1.0275
+   4    -0.0397713     0.4636411       -0.0020        1.0254
+   5    -0.5034124                     -0.0254        1.0000
+
+
+              Factor Pattern
+ 
+                   Factor1         Factor2
+
+Population         1.00000         0.00000
+School             0.00975         0.90003
+Employment         0.97245         0.11797
+Services           0.43887         0.78930
+HouseValue         0.02241         0.95989
+
+
+ Variance Explained by Each Factor
+ 
+Factor        Weighted    Unweighted
+
+Factor1     24.4329707    2.13886057
+Factor2     19.7853143    2.36835294
+
+
+Final Communality Estimates and Variable Weights
+Total Communality: Weighted = 44.218285   Unweighted = 4.507214
+ 
+Variable      Communality        Weight
+
+Population     1.00000000         Infty
+School         0.81014489     5.2682940
+Employment     0.95957142    24.7246669
+Services       0.81560348     5.4256462
+HouseValue     0.92189372    12.7996793

@@ -1,0 +1,86 @@
+
+Yarn Strength
+
+The TRANSREG Procedure
+
+Dependent Variable BoxCox(Fail)
+Time in Cycles until Failure
+
+
+Number of Observations Read             27
+Number of Observations Used             27
+
+
+                               Model Statement Specification Details
+ 
+Type     DF    Variable                  Description        Value
+
+Dep       1    BoxCox(Fail)              Lambda Used        0                                       
+                                         Lambda             -0.2                                    
+                                         Log Likelihood     -125.9                                  
+                                         Conv. Lambda       0                                       
+                                         Conv. Lambda LL    -126.7                                  
+                                         CI Limit           -127.8                                  
+                                         Alpha              0.05                                    
+                                         Options            Convenient Lambda Used                  
+                                         Label              Time in Cycles until Failure            
+
+Ind       1    Qpoint.Length             DF                 1                                       
+
+Ind       1    Qpoint.Amplitude          DF                 1                                       
+
+Ind       1    Qpoint.Load               DF                 1                                       
+
+Ind       1    Qpoint.Length_2           DF                 1                                       
+
+Ind       1    Qpoint.Amplitude_2        DF                 1                                       
+
+Ind       1    Qpoint.Load_2             DF                 1                                       
+
+Ind       1    Qpoint.LengthAmplitude    DF                 1                                       
+
+Ind       1    Qpoint.LengthLoad         DF                 1                                       
+
+Ind       1    Qpoint.AmplitudeLoad      DF                 1                                       
+
+
+The TRANSREG Procedure Hypothesis Tests for BoxCox(Fail)
+Time in Cycles until Failure
+
+
+     Univariate ANOVA Table Based on the Usual Degrees of Freedom
+ 
+                             Sum of        Mean
+Source               DF     Squares      Square    F Value    Liberal p
+
+Model                 9    22.56498    2.507220      66.73    >= <.0001
+Error                17     0.63871    0.037571                        
+Corrected Total      26    23.20369                                    
+
+The above statistics are not adjusted for the fact that the dependent
+variable was transformed and so are generally liberal.
+
+
+Root MSE           0.19383    R-Square    0.9725
+Dependent Mean     6.33466    Adj R-Sq    0.9579
+Coeff Var          3.05987    Lambda      0.0000
+
+
+                            Univariate Regression Table Based on the Usual Degrees of Freedom
+ 
+                                                Type II
+                                                 Sum of       Mean
+Variable                   DF    Coefficient    Squares     Square    F Value    Liberal p    Label
+
+Intercept                   1      6.4206207    159.008    159.008    4232.19    >= <.0001    Intercept                   
+Qpoint.Length               1      0.8323842     12.472     12.472     331.94    >= <.0001    Length                      
+Qpoint.Amplitude            1     -0.6309916      7.167      7.167     190.75    >= <.0001    Amplitude                   
+Qpoint.Load                 1     -0.3924940      2.773      2.773      73.80    >= <.0001    Load                        
+Qpoint.Length_2             1     -0.0856974      0.044      0.044       1.17    >= 0.2939    Length_2                    
+Qpoint.Amplitude_2          1      0.0242183      0.004      0.004       0.09    >= 0.7633    Amplitude_2                 
+Qpoint.Load_2               1     -0.0674555      0.027      0.027       0.73    >= 0.4058    Load_2                      
+Qpoint.LengthAmplitude      1     -0.0382414      0.018      0.018       0.47    >= 0.5035    LengthAmplitude             
+Qpoint.LengthLoad           1     -0.0684146      0.056      0.056       1.49    >= 0.2381    LengthLoad                  
+Qpoint.AmplitudeLoad        1     -0.0208340      0.005      0.005       0.14    >= 0.7142    AmplitudeLoad               
+
+The above statistics are not adjusted for the fact that the dependent variable was transformed and so are generally liberal.        

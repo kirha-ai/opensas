@@ -1,0 +1,109 @@
+The SAS System
+
+2454       
+2455       /* STAT-GRAPHICS-015: ODS graphics — The SGPLOT Procedure / The SGSCATTER Procedure / The SGPANEL Procedure
+2456        * Source: S154 / Chapter 24 / `The SGPLOT Procedure` (PDF pp. 763–764); S154 / Chapter 24 / `The SGSCATTER Procedure` (PDF pp. 764–766); S154 /
+2456     ! Chapter 24 / `The SGPANEL Procedure` (PDF pp. 766–768).
+2457        * Discriminates: SGPLOT, SGSCATTER and SGPANEL object generation
+2458        */
+2459       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+2459     ! validmemname=compatible locale=en_US;
+2460       %let syscc=0;
+2461       title; footnote;
+2462       ods _all_ close;
+2463       ods listing gpath="%sysfunc(pathname(work))";
+2464       ods graphics off;
+2465       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.GRAPH_FILES (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SAMPLE (memtype=DATA).
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+2465     !                                         quit;
+
+
+2466       ods path work.templat(update) sashelp.tmplmst(read);
+2467       
+2468       options dlcreatedir; libname _gpath "%sysfunc(pathname(work))/stat_graphics_015"; libname _gpath clear;
+NOTE: Library _GPATH was created.
+NOTE: Libref _GPATH was successfully assigned as follows: 
+      Engine:        V9 
+      Physical Name: /saswork/SAS_work5D120001108E_odaws02-euw1.oda.sas.com/SAS_workCCDC0001108E_odaws02-euw1.oda.sas.com/stat_graphics_015
+NOTE: Libref _GPATH has been deassigned.
+2469       ods listing gpath="%sysfunc(pathname(work))/stat_graphics_015";
+2470       ods graphics on / reset=all imagename="oracle" imagefmt=svg width=5in height=3in;
+2471       ods trace on;
+2472       data sample;
+2473        input x z y group $ weight freq;
+2474        datalines;
+
+NOTE: The data set WORK.SAMPLE has 12 observations and 6 variables.
+
+2487       ;
+2488       run;
+2489       proc sgplot data=sample; scatter x=x y=y /group=group; run;
+
+
+Output Added:
+-------------
+Name:       SGPlot
+Label:      The SGPlot Procedure
+Data Label: SGPlot
+Path:       SGPlot.SGPlot
+-------------
+NOTE: Listing image output written to 
+      /saswork/SAS_work5D120001108E_odaws02-euw1.oda.sas.com/SAS_workCCDC0001108E_odaws02-euw1.oda.sas.com/stat_graphics_015/oracle.svg.
+NOTE: There were 12 observations read from the data set WORK.SAMPLE.
+
+2490       proc sgscatter data=sample; matrix x z y /group=group; run;
+
+
+Output Added:
+-------------
+Name:       SGScatter
+Label:      The SGScatter Procedure
+Data Label: SGScatter
+Path:       SGScatter.SGScatter
+-------------
+NOTE: Some of the tick values have been thinned.
+NOTE: Some of the tick values have been thinned.
+NOTE: Some of the tick values have been thinned.
+NOTE: Listing image output written to 
+      /saswork/SAS_work5D120001108E_odaws02-euw1.oda.sas.com/SAS_workCCDC0001108E_odaws02-euw1.oda.sas.com/stat_graphics_015/oracle1.svg.
+NOTE: There were 12 observations read from the data set WORK.SAMPLE.
+
+2491       proc sgpanel data=sample; panelby group; scatter x=x y=y; run;
+
+
+Output Added:
+-------------
+Name:       SGPanel
+Label:      The SGPanel Procedure
+Path:       SGPanel.SGPanel
+-------------
+NOTE: Listing image output written to 
+      /saswork/SAS_work5D120001108E_odaws02-euw1.oda.sas.com/SAS_workCCDC0001108E_odaws02-euw1.oda.sas.com/stat_graphics_015/oracle2.svg.
+NOTE: There were 12 observations read from the data set WORK.SAMPLE.
+
+2492       ods trace off; ods graphics off;
+2493       data graph_files; length name $128; rc=filename('_gdir',"%sysfunc(pathname(work))/stat_graphics_015"); did=dopen('_gdir'); if did then do; do i=1 to
+2493     ! dnum(did); name=dread(did,i); if lowcase(scan(name,-1,'.')) in ('svg','png') then output; end; rc=dclose(did); end; keep name; run;
+
+NOTE: The data set WORK.GRAPH_FILES has 3 observations and 1 variables.
+
+2494       proc print data=graph_files noobs; run;
+
+NOTE: There were 3 observations read from the data set WORK.GRAPH_FILES.
+NOTE: The PROCEDURE PRINT printed page 113.
+
+2495       
+2496       
+2497       
+2498       
+The SAS System
+
+2499       

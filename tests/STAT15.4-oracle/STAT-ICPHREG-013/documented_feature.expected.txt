@@ -1,0 +1,64 @@
+
+The ICPHREG Procedure
+
+       Model Information
+
+Data Set              WORK.HYPER
+Left Boundary               left
+Right Boundary             right
+Strata Variable      nephrectomy
+Baseline Hazard    Cubic Splines
+
+
+Number of Observations Read          36
+Number of Observations Used          36
+Noncensored Observations             32
+Right Censored Observations           4
+
+
+     Class Level Information
+ 
+Name             Levels    Values
+
+age                   3    3 2 1 
+nephrectomy           2    0 1   
+
+
+      Cubic Spline Parameters
+ 
+Strata      Coefficient        Knot
+
+0           Coef1                 6
+0           Coef2                21
+1           Coef3                 5
+1           Coef4               115
+
+
+          Optimization Information
+
+Optimization Technique        Newton-Raphson
+Parameters in Optimization    6             
+
+      Convergence criterion (ABSGCONV=0.00001) satisfied.       
+
+
+                 Fit Statistics
+
+-2 Log Likelihood                        279.422
+AIC (Smaller is Better)                  291.422
+AICC (Smaller is Better)                 294.319
+BIC (Smaller is Better)                  300.923
+
+
+                      Analysis of Maximum Likelihood Parameter Estimates
+ 
+                                      Standard       95% Confidence          Chi-
+Effect       age    DF    Estimate       Error           Limits            Square    Pr > ChiSq
+
+Coef1                1     -9.2750      2.8327    -14.8269     -3.7231                         
+Coef2                1      3.3252      0.9918      1.3814      5.2690                         
+Coef3                1     -5.2408      0.8785     -6.9627     -3.5188                         
+Coef4                1      1.2861      0.2013      0.8915      1.6806                         
+age          3       1      1.8005      0.5966      0.6312      2.9697       9.11        0.0025
+age          2       1      0.1272      0.4017     -0.6602      0.9146       0.10        0.7515
+age          1       0      0.0000                                                             

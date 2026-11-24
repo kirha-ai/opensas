@@ -1,0 +1,63 @@
+The SAS System
+
+10172      
+10173      /* STAT-KRIGE2D-006: KRIGE2D — The Matérn Semivariogram Model / The Spherical Semivariogram Model / The Cubic Semivariogram Model
+10174       * Source: S154 / Chapter 74 / `The Matérn Semivariogram Model` (PDF pp. 5467–5468); S154 / Chapter 74 / `The Spherical Semivariogram Model` (PDF
+10174    ! p. 5468); S154 / Chapter 74 / `The Cubic Semivariogram Model` (PDF pp. 5468–5469).
+10175       * Discriminates: Getting Started: KRIGE2D Procedure
+10176       */
+10177      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+10177    ! validmemname=compatible locale=en_US;
+10178      %let syscc=0;
+10179      title; footnote;
+10180      ods _all_ close;
+10181      ods listing gpath="%sysfunc(pathname(work))";
+10182      ods graphics off;
+10183      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.COMPARE (memtype=DATA).
+NOTE: Deleting WORK.PRED1 (memtype=DATA).
+NOTE: Deleting WORK.PRED2 (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.SEMIVSTOREGAU (memtype=ITEMSTOR).
+NOTE: Deleting WORK.SEMIVSTORESPH (memtype=ITEMSTOR).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.THICK (memtype=DATA).
+10183    !                                         quit;
+
+
+10184      ods path work.templat(update) sashelp.tmplmst(read);
+10185      
+10186      title 'Spatial Prediction With Kriging';
+10187      data thick;
+10188      input East North Thick @@;
+10189      label Thick='Coal Seam Thickness';
+10190      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.THICK has 75 observations and 3 variables.
+
+10216      ;
+10217      ods graphics on;
+10218      proc krige2d data=thick;
+10219      coordinates xc=East yc=North;
+10220      predict var=Thick radius=60;
+10221      model scale=7.4599 range=30.1111 form=gauss;
+10222      grid x=0 to 100 by 2.5 y=0 to 100 by 2.5;
+10223      run;
+
+NOTE: The data set WORK.DATA9 has 1681 observations and 7 variables.
+NOTE: The PROCEDURE KRIGE2D printed pages 730-731.
+
+10224      ods graphics off;
+10225      run;
+10226      quit;
+10227      
+10228      
+10229      
+10230      
+The SAS System
+
+10231      

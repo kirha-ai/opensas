@@ -1,0 +1,43 @@
+The SAS System
+
+1981       
+1982       /* STAT-MDS-004: MDS — OUT= Data Set / Normalization of the Estimates / Comparison with Earlier Procedures
+1983        * Source: S154 / Chapter 81 / `OUT= Data Set` (PDF pp. 6397–6398); S154 / Chapter 81 / `Normalization of the Estimates` (PDF pp. 6400–6401);
+1983     ! S154 / Chapter 81 / `Comparison with Earlier Procedures` (PDF p. 6401).
+1984        * Discriminates: Getting Started: MDS Procedure
+1985        */
+1986       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+1986     ! validmemname=compatible locale=en_US;
+1987       %let syscc=0;
+1988       title; footnote;
+1989       ods _all_ close;
+1990       ods listing gpath="%sysfunc(pathname(work))";
+1991       ods graphics off;
+1992       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+1992     !                                         quit;
+
+
+1993       ods path work.templat(update) sashelp.tmplmst(read);
+1994       
+1995       title 'Analysis of Flying Mileages between Ten U.S. Cities';
+1996       ods graphics on;
+1997       proc mds data=sashelp.mileages level=absolute;
+1998       id city;
+1999       run;
+
+NOTE: The PROCEDURE MDS printed page 152.
+
+2000       
+2001       
+2002       
+2003       
+The SAS System
+
+2004       

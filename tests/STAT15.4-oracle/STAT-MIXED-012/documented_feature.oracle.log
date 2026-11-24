@@ -1,0 +1,58 @@
+The SAS System
+
+4041       
+4042       /* STAT-MIXED-012: MIXED — SLICE
+4043        * Source: S154 / Chapter 84 / `SLICE Statement` (PDF p. 6694).
+4044        * Discriminates: Getting Started: MIXED Procedure
+4045        */
+4046       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+4046     ! validmemname=compatible locale=en_US;
+4047       %let syscc=0;
+4048       title; footnote;
+4049       ods _all_ close;
+4050       ods listing gpath="%sysfunc(pathname(work))";
+4051       ods graphics off;
+4052       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.FERRITECORES (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+4052     !                                         quit;
+
+
+4053       ods path work.templat(update) sashelp.tmplmst(read);
+4054       
+4055       data heights;
+4056       input Family Gender$ Height @@;
+4057       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.HEIGHTS has 18 observations and 3 variables.
+
+4061       ;
+4062       proc mixed data=heights;
+4063       class Family Gender;
+4064       model Height = Gender Family Family*Gender;
+4065       run;
+
+NOTE: The PROCEDURE MIXED printed page 309.
+
+4066       proc mixed;
+4067       class Family Gender;
+4068       model Height = Gender;
+4069       random Family Family*Gender;
+4070       run;
+
+NOTE: Convergence criteria met.
+NOTE: The PROCEDURE MIXED printed page 310.
+
+4071       
+4072       
+4073       
+4074       
+The SAS System
+
+4075       

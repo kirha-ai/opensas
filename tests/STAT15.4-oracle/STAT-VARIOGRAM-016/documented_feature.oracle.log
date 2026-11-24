@@ -1,0 +1,298 @@
+The SAS System
+
+31036      
+31037      /* STAT-VARIOGRAM-016: VARIOGRAM — The Moran Scatter Plot / ODS Graphics
+31038       * Source: S154 / Chapter 131 / `The Moran Scatter Plot` (PDF pp. 10830–10832); S154 / Chapter 131 / `ODS Graphics` (PDF pp. 10838–10839).
+31039       * Discriminates: Getting Started: VARIOGRAM Procedure
+31040       */
+31041      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+31041    ! validmemname=compatible locale=en_US;
+31042      %let syscc=0;
+31043      title; footnote;
+31044      ods _all_ close;
+31045      ods listing gpath="%sysfunc(pathname(work))";
+31046      ods graphics off;
+31047      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.OUTV (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.SEMIVSTOREGAU (memtype=ITEMSTOR).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+31047    !                                         quit;
+
+
+31048      ods path work.templat(update) sashelp.tmplmst(read);
+31049      
+31050      ods graphics on;
+31051      ods trace on;
+31052      ods trace on;
+31053      title 'Spatial Correlation Analysis with PROC VARIOGRAM';
+31054      ods graphics on;
+31055      proc variogram data=sashelp.thick plots=pairs(thr=30);
+31056      compute novariogram nhc=20;
+31057      coordinates xc=East yc=North;
+31058      var Thick;
+31059      run;
+
+
+Output Added:
+-------------
+Name:       NObs
+Label:      Number of Observations
+Template:   Stat.Variogram.NObs
+Path:       Variogram.Thick.NObs
+-------------
+
+Output Added:
+-------------
+Name:       ObservationsPlot
+Label:      Spatial Distribution Plot
+Template:   Stat.Variogram.Graphics.Observations
+Path:       Variogram.Thick.ObservationsPlot
+-------------
+
+Output Added:
+-------------
+Name:       PairsInformation
+Label:      Pairs Information
+Template:   Stat.Variogram.PairsInformation
+Path:       Variogram.Thick.PairsInformation
+-------------
+
+Output Added:
+-------------
+Name:       DistanceIntervals
+Label:      Pairwise Distance Intervals
+Template:   Stat.Variogram.PairDist
+Path:       Variogram.Thick.DistanceIntervals
+-------------
+
+Output Added:
+-------------
+Name:       PairDistPlot
+Label:      Pairwise Distance Distribution Plot
+Template:   Stat.Variogram.Graphics.PairDistHist
+Path:       Variogram.Thick.PairDistPlot
+-------------
+NOTE: The PROCEDURE VARIOGRAM printed page 1960.
+
+31060      proc variogram data=sashelp.thick outv=outv;
+31061      compute lagd=7 maxlag=10 cl robust;
+31062      coordinates xc=East yc=North;
+31063      var Thick;
+31064      run;
+
+NOTE: No DIRECTIONS statement and no NDIRECTIONS=, or NDIRECTIONS=0 specified: Computing omnidirectional semivariogram.
+
+Output Added:
+-------------
+Name:       NObs
+Label:      Number of Observations
+Template:   Stat.Variogram.NObs
+Path:       Variogram.Thick.NObs
+-------------
+
+Output Added:
+-------------
+Name:       ObservationsPlot
+Label:      Spatial Distribution Plot
+Template:   Stat.Variogram.Graphics.Observations
+Path:       Variogram.Thick.ObservationsPlot
+-------------
+
+Output Added:
+-------------
+Name:       SemivariogramTable
+Label:      Omnidirectional
+Template:   Stat.Variogram.SemivariogramTable
+Path:       Variogram.Thick.SemivarAngles.SemivariogramTable
+-------------
+
+Output Added:
+-------------
+Name:       Semivariogram
+Label:      Omnidirectional
+Template:   Stat.Variogram.Graphics.Semivariogram
+Path:       Variogram.Thick.SemivarPlots.Semivariogram
+-------------
+NOTE: The data set WORK.OUTV has 12 observations and 9 variables.
+NOTE: The PROCEDURE VARIOGRAM printed pages 1961-1962.
+
+31065      proc variogram data=sashelp.thick outv=outv plots(only)=moran;
+31066      compute lagd=7 maxlag=10 autocorr(assum=random);
+31067      coordinates xc=East yc=North;
+31068      var Thick;
+31069      run;
+
+NOTE: No DIRECTIONS statement and no NDIRECTIONS=, or NDIRECTIONS=0 specified: Computing omnidirectional semivariogram.
+
+Output Added:
+-------------
+Name:       NObs
+Label:      Number of Observations
+Template:   Stat.Variogram.NObs
+Path:       Variogram.Thick.NObs
+-------------
+
+Output Added:
+-------------
+Name:       AutoCorrStats
+Label:      Autocorrelation Statistics
+Template:   Stat.Variogram.AutocorrStats
+Path:       Variogram.Thick.AutoCorrStats
+-------------
+NOTE: The autocorrelation statistics exclude 33 observation(s) that have no neighbors within the specified LAGDISTANCE= distance.
+NOTE: The Moran scatter plot excludes 33 observation(s) because they have no neighbors within the specified LAGDISTANCE= distance.
+
+Output Added:
+-------------
+Name:       MoranPlot
+Label:      Moran Scatter Plot
+Template:   Stat.Variogram.Graphics.Moran
+Path:       Variogram.Thick.MoranPlot
+-------------
+
+Output Added:
+-------------
+Name:       SemivariogramTable
+Label:      Omnidirectional
+Template:   Stat.Variogram.SemivariogramTable
+Path:       Variogram.Thick.SemivarAngles.SemivariogramTable
+-------------
+NOTE: The data set WORK.OUTV has 12 observations and 8 variables.
+NOTE: The PROCEDURE VARIOGRAM printed pages 1963-1964.
+
+31070      proc variogram data=sashelp.thick outv=outv;
+31071      store out=SemivStoreGau / label='Thickness Gaussian WLS Fit';
+31072      compute lagd=7 maxlag=10;
+31073      coordinates xc=East yc=North;
+31074      model form=gau cl / covb;
+31075      var Thick;
+31076      run;
+
+NOTE: No DIRECTIONS statement and no NDIRECTIONS=, or NDIRECTIONS=0 specified: Computing omnidirectional semivariogram.
+
+Output Added:
+-------------
+Name:       NObs
+Label:      Number of Observations
+Template:   Stat.Variogram.NObs
+Path:       Variogram.Thick.NObs
+-------------
+
+Output Added:
+-------------
+Name:       ObservationsPlot
+Label:      Spatial Distribution Plot
+Template:   Stat.Variogram.Graphics.Observations
+Path:       Variogram.Thick.ObservationsPlot
+-------------
+
+Output Added:
+-------------
+Name:       SemivariogramTable
+Label:      Omnidirectional
+Template:   Stat.Variogram.SemivariogramTable
+Path:       Variogram.Thick.SemivarAngles.SemivariogramTable
+-------------
+
+Output Added:
+-------------
+Name:       Semivariogram
+Label:      Omnidirectional
+Template:   Stat.Variogram.Graphics.Semivariogram
+Path:       Variogram.Thick.SemivarPlots.Semivariogram
+-------------
+
+Output Added:
+-------------
+Name:       FitGenInfo
+Label:      Semivariogram Model Fitting
+Template:   Stat.Variogram.FitGenInfo
+Path:       Variogram.Thick.Model.Angle1.SemivModel1.FitGenInfo
+-------------
+
+Output Added:
+-------------
+Name:       ModelInfo
+Label:      Model Information
+Template:   Stat.Variogram.ModelInfo
+Path:       Variogram.Thick.Model.Angle1.SemivModel1.ModelInfo
+-------------
+
+Output Added:
+-------------
+Name:       OptInfo
+Label:      Optimization Information
+Template:   Stat.Variogram.OptInfo
+Path:       Variogram.Thick.Model.Angle1.SemivModel1.OptInfo
+-------------
+
+Output Added:
+-------------
+Name:       IterStop
+Label:      Optimization Results
+Template:   Stat.Variogram.IterStop
+Path:       Variogram.Thick.Model.Angle1.SemivModel1.IterStop
+-------------
+
+Output Added:
+-------------
+Name:       ConvergenceStatus
+Label:      Convergence Status
+Template:   Stat.Variogram.ConvergenceStatus
+Path:       Variogram.Thick.Model.Angle1.SemivModel1.ConvergenceStatus
+-------------
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+
+Output Added:
+-------------
+Name:       ParameterEstimates
+Label:      Parameter Estimates
+Template:   Stat.Variogram.ParameterEstimates
+Path:       Variogram.Thick.Model.Angle1.SemivModel1.ParameterEstimates
+-------------
+
+Output Added:
+-------------
+Name:       CovB
+Label:      Approximate Covariance Matrix
+Template:   Stat.Variogram.CovB
+Path:       Variogram.Thick.Model.Angle1.SemivModel1.CovB
+-------------
+
+Output Added:
+-------------
+Name:       FitSummary
+Label:      Fit Summary
+Template:   Stat.Variogram.FitSummary
+Path:       Variogram.Thick.Model.Angle1.FitSummary
+-------------
+
+Output Added:
+-------------
+Name:       FitPlot
+Label:      Omnidirectional
+Template:   Stat.Variogram.Graphics.Fit
+Path:       Variogram.Thick.FitPlots.FitPlot
+-------------
+NOTE: The data set WORK.OUTV has 12 observations and 8 variables.
+NOTE: The PROCEDURE VARIOGRAM printed pages 1965-1968.
+
+31077      ods graphics off;
+31078      run;
+31079      quit;
+31080      ods trace off;
+31081      ods trace off;
+31082      ods graphics off;
+31083      
+31084      
+31085      
+31086      
+The SAS System
+
+31087      

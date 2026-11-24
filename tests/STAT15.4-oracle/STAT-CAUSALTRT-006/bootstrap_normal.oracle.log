@@ -1,0 +1,48 @@
+The SAS System
+
+899        
+900        /* STAT-CAUSALTRT-006: CAUSALTRT — BOOTSTRAP
+901         * Source: S154 / Chapter 39 / `BOOTSTRAP Statement` (PDF pp. 2445–2448).
+902         * Discriminates: Seeded 50-replicate bootstrap with normal confidence intervals.
+903         */
+904        options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+904      ! validmemname=compatible locale=en_US;
+905        %let syscc=0;
+906        title; footnote;
+907        ods _all_ close;
+908        ods listing gpath="%sysfunc(pathname(work))";
+909        ods graphics off;
+910        proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+910      !                                         quit;
+
+
+911        ods path work.templat(update) sashelp.tmplmst(read);
+912        
+913        data trial; call streaminit(193); do id=1 to 200; age=20+mod(id*7,45); bmi=20+mod(id,12); gender=mod(id,2);
+913      ! drug=rand('bernoulli',1/(1+exp(-(-2+age*.03+gender*.3)))); outcome=rand('bernoulli',1/(1+exp(-(-1+drug*.6+age*.01)))); output; end; run;
+
+NOTE: The data set WORK.TRIAL has 200 observations and 6 variables.
+
+914        proc causaltrt data=trial method=ipwr; class gender; psmodel drug(ref='0')=age bmi gender; model outcome(ref='0') /dist=bin; bootstrap nboot=50
+914      ! seed=314159 bootci(normal);
+915        run;
+
+NOTE: PROC CAUSALTRT is modeling the probability that outcome='1'.
+NOTE: PROC CAUSALTRT is modeling the probability that drug='1'.
+NOTE: Resampling for bootstrap replicates 1 to 50.
+NOTE: Bootstrap resampling performed using 2 threads.
+NOTE: The PROCEDURE CAUSALTRT printed pages 76-77.
+
+916        
+917        
+918        
+919        
+The SAS System
+
+920        

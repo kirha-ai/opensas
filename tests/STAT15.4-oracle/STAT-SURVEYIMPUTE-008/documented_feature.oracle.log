@@ -1,0 +1,180 @@
+The SAS System
+
+20421      
+20422      /* STAT-SURVEYIMPUTE-008: SURVEYIMPUTE — Displayed Output / ODS Table Names
+20423       * Source: S154 / Chapter 119 / `Displayed Output` (PDF pp. 9763–9766); S154 / Chapter 119 / `ODS Table Names` (PDF pp. 9766–9767).
+20424       * Discriminates: Getting Started: SURVEYIMPUTE Procedure
+20425       */
+20426      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+20426    ! validmemname=compatible locale=en_US;
+20427      %let syscc=0;
+20428      title; footnote;
+20429      ods _all_ close;
+20430      ods listing gpath="%sysfunc(pathname(work))";
+20431      ods graphics off;
+20432      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SIS_JKCOEFS (memtype=DATA).
+NOTE: Deleting WORK.SIS_SURVEY_IMPUTED (memtype=DATA).
+NOTE: Deleting WORK.SIS_SURVEY_SUB (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+20432    !                                         quit;
+
+
+20433      ods path work.templat(update) sashelp.tmplmst(read);
+20434      
+20435      ods trace on;
+20436      data SIS_Survey_Sub;
+20437      input State $ NewUser School SamplingWeight Department Response @@;
+20438      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.SIS_SURVEY_SUB has 235 observations and 6 variables.
+
+20486      ;
+20487      proc surveyimpute data=SIS_Survey_Sub method=fefi varmethod=jackknife;
+20488      class Department Response;
+20489      var Department Response;
+20490      strata State NewUser;
+20491      cluster School;
+20492      weight SamplingWeight;
+20493      output out=SIS_Survey_Imputed outjkcoefs=SIS_JKCoefs;
+20494      run;
+
+
+Output Added:
+-------------
+Name:       ImputationInfo
+Label:      Imputation Information
+Template:   Stat.SURVEYIMPUTE.ImputationInfo
+Path:       Surveyimpute.ImputationInfo
+-------------
+
+Output Added:
+-------------
+Name:       NObs
+Label:      Number of Observations
+Template:   Stat.SURVEYIMPUTE.NObs
+Path:       Surveyimpute.NObs
+-------------
+
+Output Added:
+-------------
+Name:       ClassLevelInfo
+Label:      Class Level Information
+Template:   Stat.SURVEYIMPUTE.ClassLevelInfo
+Path:       Surveyimpute.ClassLevelInfo
+-------------
+
+Output Added:
+-------------
+Name:       DesignSummary
+Label:      Design Summary
+Template:   Stat.SURVEYIMPUTE.DesignSummary
+Path:       Surveyimpute.DesignSummary
+-------------
+
+Output Added:
+-------------
+Name:       MissPattern
+Label:      Missing Data Patterns
+Template:   Stat.SURVEYIMPUTE.MissPattern
+Path:       Surveyimpute.MissPattern
+-------------
+
+Output Added:
+-------------
+Name:       DonorCount
+Label:      Donor Cell Counts
+Template:   Stat.SURVEYIMPUTE.DonorCount
+Path:       Surveyimpute.DonorCount
+-------------
+
+Output Added:
+-------------
+Name:       IterationHistory
+Label:      Iteration History
+Template:   Stat.SURVEYIMPUTE.IterationHistory
+Path:       Surveyimpute.IterationHistory
+-------------
+
+Output Added:
+-------------
+Name:       ConvergenceStatus
+Label:      Convergence Status
+Template:   Stat.SURVEYIMPUTE.ConvergenceStatusLine
+Path:       Surveyimpute.ConvergenceStatus
+-------------
+
+Output Added:
+-------------
+Name:       ImputationSummary
+Label:      Imputation Summary
+Template:   Stat.SURVEYIMPUTE.ImputationSummary
+Path:       Surveyimpute.ImputationSummary
+-------------
+NOTE: Convergence achieved; maximum relative difference less than 0.001 for fractional weights for the EM algorithm.
+NOTE: The data set WORK.SIS_SURVEY_IMPUTED has 509 observations and 56 variables.
+NOTE: The data set WORK.SIS_JKCOEFS has 47 observations and 3 variables.
+NOTE: The PROCEDURE SURVEYIMPUTE printed page 1406.
+
+20495      proc surveyfreq data=SIS_Survey_Imputed varmethod=jackknife;
+20496      table department response department *response;
+20497      weight ImpWt;
+20498      repweights ImpRepWt: / jkcoefs=SIS_JKCoefs;
+20499      run;
+
+
+Output Added:
+-------------
+Name:       Summary
+Label:      Data Summary
+Template:   Stat.SurveyFreq.Summary
+Path:       Surveyfreq.Summary
+-------------
+
+Output Added:
+-------------
+Name:       VarianceEstimation
+Label:      Variance Estimation
+Template:   Stat.SurveyFreq.VarianceEstimation
+Path:       Surveyfreq.VarianceEstimation
+-------------
+
+Output Added:
+-------------
+Name:       OneWay
+Label:      One-Way Distribution
+Template:   Stat.SurveyFreq.OneWayFreqs
+Path:       Surveyfreq.Table1.OneWay
+-------------
+
+Output Added:
+-------------
+Name:       OneWay
+Label:      One-Way Distribution
+Template:   Stat.SurveyFreq.OneWayFreqs
+Path:       Surveyfreq.Table2.OneWay
+-------------
+
+Output Added:
+-------------
+Name:       CrossTabs
+Label:      CrossTabulation Table
+Template:   Stat.SurveyFreq.CrossTabFreqs
+Path:       Surveyfreq.Table3.CrossTabs
+-------------
+NOTE: The PROCEDURE SURVEYFREQ printed page 1407.
+
+20500      ods trace off;
+20501      
+20502      
+20503      
+20504      
+The SAS System
+
+20505      

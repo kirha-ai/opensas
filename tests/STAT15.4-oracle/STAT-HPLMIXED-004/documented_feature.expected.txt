@@ -1,0 +1,100 @@
+
+The HPLMIXED Procedure
+
+      Performance Information
+
+Execution Mode       Single-Machine
+Number of Threads    2             
+
+
+             Data Access Information
+ 
+Data                 Engine    Role     Path
+
+WORK.SCHOOLSAMPLE    V9        Input    On Client
+
+
+                    Model Information
+
+Data Set                     WORK.SCHOOLSAMPLE            
+Dependent Variable           Math                         
+Covariance Structure         Unstructured                 
+Subject Effect               Neighborho(SchoolID)         
+Estimation Method            Restricted Maximum Likelihood
+Residual Variance Method     Profile                      
+Fixed Effects SE Method      Model-Based                  
+Degrees of Freedom Method    Residual                     
+
+
+                        Class Level Information
+ 
+Class           Levels    Values
+
+Neighborhood      1520    1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 
+                          19 20 ...                                    
+SchoolID           300    1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 
+                          19 20 ...                                    
+
+
+             Dimensions
+
+Covariance Parameters              7
+Columns in X                       3
+Columns in Z per Subject           3
+Subjects                        7500
+Max Obs per Subject                8
+
+
+Number of Observations Read               60000
+Number of Observations Used               60000
+Number of Observations Not Used               0
+
+
+                Optimization Information
+
+Optimization Technique        Newton-Raphson with Ridging
+Parameters in Optimization    6                          
+Lower Boundaries              3                          
+Upper Boundaries              0                          
+Starting Values From          Data                       
+
+
+                          Iteration History
+ 
+                               Objective                         Max
+Iteration    Evaluations        Function          Change    Gradient
+
+        0              2    225641.67142                    7.972E-7
+
+      Convergence criterion (ABSGCONV=0.00001) satisfied.       
+
+
+       Covariance Parameter Estimates
+ 
+Cov Parm    Subject                 Estimate
+
+UN(1,1)     Neighborho(SchoolID)      2.0902
+UN(2,1)     Neighborho(SchoolID)    0.000349
+UN(2,2)     Neighborho(SchoolID)      2.0517
+UN(3,1)     Neighborho(SchoolID)     0.01448
+UN(3,2)     Neighborho(SchoolID)     0.01599
+UN(3,3)     Neighborho(SchoolID)     0.08047
+Residual                              1.0083
+
+
+            Fit Statistics
+
+-2 Res Log Likelihood            225642
+AIC (Smaller is Better)          225656
+AICC (Smaller is Better)         225656
+BIC (Smaller is Better)          225704
+
+
+                   Solution for Fixed Effects
+ 
+                         Standard
+Effect       Estimate       Error      DF    t Value    Pr > |t|
+
+Intercept      2.5070     0.02828     6E4      88.66      <.0001
+Time           2.5124     0.02659     6E4      94.48      <.0001
+Time*Time      0.5010    0.005247     6E4      95.48      <.0001

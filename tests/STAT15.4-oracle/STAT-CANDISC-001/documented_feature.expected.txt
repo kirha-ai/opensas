@@ -1,0 +1,88 @@
+
+Fish Measurement Data
+
+The CANDISC Procedure
+
+Total Sample Size                  158          DF Total                           157
+Variables                            6          DF Within Classes                  151
+Classes                              7          DF Between Classes                   6
+
+
+Number of Observations Read            159
+Number of Observations Used            158
+
+
+                   Class Level Information
+ 
+             Variable
+Species      Name         Frequency       Weight    Proportion
+
+Bream        Bream               34      34.0000      0.215190
+Parkki       Parkki              11      11.0000      0.069620
+Perch        Perch               56      56.0000      0.354430
+Pike         Pike                17      17.0000      0.107595
+Roach        Roach               20      20.0000      0.126582
+Smelt        Smelt               14      14.0000      0.088608
+Whitefish    Whitefish            6       6.0000      0.037975
+
+Fish Measurement Data
+
+The CANDISC Procedure
+
+                 Multivariate Statistics and F Approximations
+ 
+                             S=6    M=-0.5    N=72
+ 
+Statistic                        Value    F Value    Num DF    Den DF    Pr > F
+
+Wilks' Lambda               0.00036325      90.71        36    643.89    <.0001
+Pillai's Trace              3.10465132      26.99        36       906    <.0001
+Hotelling-Lawley Trace     52.05799676     209.24        36    413.64    <.0001
+Roy's Greatest Root        39.13499776     984.90         6       151    <.0001
+
+         NOTE: F Statistic for Roy's Greatest Root is an upper bound.
+
+Fish Measurement Data
+
+The CANDISC Procedure
+
+                                                                                                                 Test of H0: The canonical correlations in the
+                                                                          Eigenvalues of Inv(E)*H                  current row and all that follow are zero
+                          Adjusted  Approximate      Squared                = CanRsq/(1-CanRsq)
+            Canonical    Canonical     Standard    Canonical                                                  Likelihood  Approximate
+          Correlation  Correlation        Error  Correlation  Eigenvalue  Difference  Proportion  Cumulative       Ratio      F Value  Num DF  Den DF  Pr > F
+
+       1     0.987463     0.986671     0.001989     0.975084     39.1350     29.3859      0.7518      0.7518  0.00036325        90.71      36  643.89  <.0001
+       2     0.952349     0.950095     0.007425     0.906969      9.7491      7.3786      0.1873      0.9390  0.01457896        46.46      25  547.58  <.0001
+       3     0.838637     0.832518     0.023678     0.703313      2.3706      1.7016      0.0455      0.9846  0.15671134        23.61      16  452.79  <.0001
+       4     0.633094     0.623649     0.047821     0.400809      0.6689      0.5346      0.0128      0.9974  0.52820347        12.09       9  362.78  <.0001
+       5     0.344157     0.334170     0.070356     0.118444      0.1344      0.1343      0.0026      1.0000  0.88152702         4.88       4     300  0.0008
+       6     0.005701      .           0.079806     0.000033      0.0000                  0.0000      1.0000  0.99996749         0.00       1     151  0.9442
+
+Fish Measurement Data
+
+The CANDISC Procedure
+
+                  Raw Canonical Coefficients
+ 
+Variable              Can1              Can2              Can3
+
+Weight        -0.000648508      -0.005231659      -0.005596192
+Length1       -0.329435762      -0.626598051      -2.934324102
+Length2       -2.486133674      -0.690253987       4.045038893
+Length3        2.595648437       1.803175454      -1.139264914
+Height         1.121983854      -0.714749340       0.283202557
+Width         -1.446386704      -0.907025481       0.741486686
+
+
+              Class Means on Canonical Variables
+ 
+Species                Can1              Can2              Can3
+
+Bream           10.94142464        0.52078394        0.23496708
+Parkki           2.58903743       -2.54722416       -0.49326158
+Perch           -4.47181389       -1.70822715        1.29281314
+Pike            -4.89689441        8.22140791       -0.16469132
+Roach           -0.35837149        0.08733611       -1.10056438
+Smelt           -4.09136653       -2.35805841       -4.03836098
+Whitefish       -0.39541755       -0.42071778        1.06459242

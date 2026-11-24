@@ -1,0 +1,72 @@
+The SAS System
+
+1993       
+1994       /* STAT-HPLOGISTIC-008: HPLOGISTIC — CODE
+1995        * Source: S154 / Chapter 61 / `CODE Statement` (PDF pp. 4752–4753).
+1996        * Discriminates: Generate DATA step scoring code, execute it against the input rows, and print the scored data.
+1997        */
+1998       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+1998     ! validmemname=compatible locale=en_US;
+1999       %let syscc=0;
+2000       title; footnote;
+2001       ods _all_ close;
+2002       ods listing gpath="%sysfunc(pathname(work))";
+2003       ods graphics off;
+2004       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.GETSTARTED (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK._ORACLE_INPUT (memtype=DATA).
+2004     !                                         quit;
+
+
+2005       ods path work.templat(update) sashelp.tmplmst(read);
+2006       
+2007       filename _orcode "%sysfunc(pathname(work))/_oracle_score.sas";
+2008       
+2009       
+2010       data getStarted;
+2011       input C$ y x1-x10;
+2012       datalines;
+
+NOTE: The data set WORK.GETSTARTED has 100 observations and 12 variables.
+
+2113       ;
+2114       proc hplogistic data=getStarted;
+2115       class C;
+2116       model y = C x1-x10;
+2117       
+2118       code file="%sysfunc(pathname(work))/_oracle_score.sas";
+2119       run;
+
+NOTE: The HPLOGISTIC procedure is executing in single-machine mode.
+NOTE: You are modeling the probability that y='0'.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: External file /saswork/SAS_work7EA200001C34_odaws01-euw1.oda.sas.com/SAS_work29EF00001C34_odaws01-euw1.oda.sas.com/_oracle_score.sas opened.
+NOTE: The HPLOGISTIC procedure wrote the DATA step code to external file 
+      /saswork/SAS_work7EA200001C34_odaws01-euw1.oda.sas.com/SAS_work29EF00001C34_odaws01-euw1.oda.sas.com/_oracle_score.sas.
+NOTE: There were 100 observations read from the data set WORK.GETSTARTED.
+NOTE: The PROCEDURE HPLOGISTIC printed page 124.
+
+2120       
+2121       data _oracle_scored; set getStarted;
+2122       %include _orcode;
+2315       run;
+
+NOTE: There were 100 observations read from the data set WORK.GETSTARTED.
+NOTE: The data set WORK._ORACLE_SCORED has 100 observations and 16 variables.
+
+2316       proc print data=_oracle_scored(obs=10); run;
+
+NOTE: There were 10 observations read from the data set WORK._ORACLE_SCORED.
+NOTE: The PROCEDURE PRINT printed page 125.
+
+2317       
+2318       
+2319       
+2320       
+The SAS System
+
+2321       

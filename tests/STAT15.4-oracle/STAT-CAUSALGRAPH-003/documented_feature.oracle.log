@@ -1,0 +1,53 @@
+The SAS System
+
+12956      
+12957      /* STAT-CAUSALGRAPH-003: CAUSALGRAPH — MODEL / UNMEASURED / Arrow or Edge Specification
+12958       * Source: S154 / Chapter 37 / `MODEL Statement` (PDF pp. 2316–2319); S154 / Chapter 37 / `UNMEASURED Statement` (PDF p. 2321); S154 / Chapter 37 /
+12958    !  `Arrow or Edge Specification` (PDF pp. 2328–2329).
+12959       * Discriminates: Getting Started: CAUSALGRAPH Procedure; explicit statements: MODEL, UNMEASURED
+12960       */
+12961      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+12961    ! validmemname=compatible locale=en_US;
+12962      %let syscc=0;
+12963      title; footnote;
+12964      ods _all_ close;
+12965      ods listing gpath="%sysfunc(pathname(work))";
+12966      ods graphics off;
+12967      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+12967    !                                         quit;
+
+
+12968      ods path work.templat(update) sashelp.tmplmst(read);
+12969      
+12970      proc causalgraph;
+12971      model "Timm17TwoLatent"
+12972      Age ==> Parity PFAS Education,
+12973      Parity ==> PrevBF Duration PFAS,
+12974      PrevBF ==> PFAS Duration,
+12975      PFAS ==> Duration,
+12976      Education ==> Duration Employment PFAS BMI Alcohol Smoking,
+12977      Employment ==> Duration PFAS BMI Alcohol Smoking,
+12978      BMI Alcohol Smoking ==> Duration;
+12979      identify PFAS ==> Duration;
+12980      unmeasured Alcohol Smoking;
+12981      run;
+
+NOTE: The PROCEDURE CAUSALGRAPH printed pages 1784-1785.
+
+12982      
+12983      run; quit;
+12984      
+12985      
+12986      
+12987      
+The SAS System
+
+12988      

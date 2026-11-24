@@ -1,0 +1,95 @@
+
+The Probit Procedure
+
+                   Iteration History for Parameter Estimates
+ 
+Iter    Ridge    Loglikelihood       Intercept       sexFemale             age
+
+   0        0       -27.725887               0               0               0
+   1        0       -20.142659    -3.634567629    -1.648455751    0.1051634384
+   2        0        -19.52245    -5.254865196    -2.234724956    0.1506493473
+   3        0       -19.490439    -5.728485385    -2.409827238    0.1639621828
+   4        0       -19.490303     -5.76187293    -2.422349862    0.1649007124
+   5        0       -19.490303      -5.7620267    -2.422407743    0.1649050312
+   6        0       -19.490303      -5.7620267    -2.422407743    0.1649050312
+
+
+          Model Information
+
+Data Set                     WORK.NEWS
+Dependent Variable                subs
+Number of Observations              40
+Name of Distribution          Logistic
+Log Likelihood            -19.49030281
+
+
+Number of Observations Read          40
+Number of Observations Used          40
+
+
+     Class Level Information
+ 
+Name      Levels    Values
+
+sex            2    Female Male   
+subs           2    accept reject 
+
+
+     Parameter Information
+ 
+Parameter    Effect       sex
+
+Intercept    Intercept          
+sexFemale    sex          Female
+sexMale      sex          Male  
+age          age                
+
+
+       Response Profile
+ 
+Ordered                  Total
+  Value    subs      Frequency
+
+      1    accept           20
+      2    reject           20
+
+PROC PROBIT is modeling the probabilities of levels of subs having LOWER Ordered Values in the response profile table.
+
+
+Last Evaluation of the Negative of the Gradient
+ 
+   Intercept     sexFemale           age
+
+-5.95479E-12  8.768325E-10  -1.636698E-8
+
+
+  Last Evaluation of the Negative of the Hessian
+ 
+              Intercept     sexFemale           age
+
+Intercept  6.4597397447  4.6042218284  292.04051848
+sexFemale  4.6042218284  4.6042218284  216.20829515
+age        292.04051848  216.20829515  13487.329973
+
+
+Algorithm converged.                                                       
+
+
+         Type III Analysis of Effects
+ 
+                             Wald
+Effect           DF    Chi-Square    Pr > ChiSq
+
+sex               1        6.4220        0.0113
+age               1        6.3992        0.0114
+
+
+            Analysis of Maximum Likelihood Parameter Estimates
+ 
+                              Standard   95% Confidence     Chi-
+Parameter         DF Estimate    Error       Limits       Square Pr > ChiSq
+
+Intercept          1  -5.7620   2.7635 -11.1783  -0.3458    4.35     0.0371
+sex        Female  1  -2.4224   0.9559  -4.2959  -0.5489    6.42     0.0113
+sex        Male    0   0.0000    .        .        .         .        .    
+age                1   0.1649   0.0652   0.0371   0.2927    6.40     0.0114

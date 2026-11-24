@@ -1,0 +1,72 @@
+The SAS System
+
+1214       
+1215       /* STAT-ORTHOREG-004: ORTHOREG — ESTIMATE / TEST
+1216        * Source: S154 / Chapter 91 / `ESTIMATE Statement` (PDF pp. 7292–7293); S154 / Chapter 91 / `TEST Statement` (PDF p. 7297).
+1217        * Discriminates: Getting Started: ORTHOREG Procedure
+1218        */
+1219       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+1219     ! validmemname=compatible locale=en_US;
+1220       %let syscc=0;
+1221       title; footnote;
+1222       ods _all_ close;
+1223       ods listing gpath="%sysfunc(pathname(work))";
+1224       ods graphics off;
+
+NOTE: The GLM procedure generated the model item store WORK.GSTORE.
+NOTE: The PROCEDURE GLM printed pages 172-173.
+
+1225       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.GSTORE (memtype=ITEMSTOR).
+NOTE: Deleting WORK.OSTORE (memtype=ITEMSTOR).
+NOTE: Deleting WORK.OZEROS (memtype=DATA).
+NOTE: Deleting WORK.POLYNOMIAL (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.ZEROS (memtype=DATA).
+1225     !                                         quit;
+
+
+1226       ods path work.templat(update) sashelp.tmplmst(read);
+1227       
+1228       title 'PROC ORTHOREG used with Longley data';
+1229       data Longley;
+1230       input Employment Prices GNP Jobless Military PopSize Year;
+1231       datalines;
+
+NOTE: The data set WORK.LONGLEY has 16 observations and 7 variables.
+
+1248       ;
+1249       proc orthoreg data=Longley;
+1250       model Employment = Prices Prices *Prices
+1251       GNP GNP *GNP
+1252       Jobless Jobless *Jobless
+1253       Military Military*Military
+1254       PopSize PopSize *PopSize
+1255       Year Year *Year;
+1256       run;
+
+NOTE: There were 16 observations read from the data set WORK.LONGLEY.
+NOTE: The PROCEDURE ORTHOREG printed page 174.
+
+1257       proc glm data=Longley;
+1258       model Employment = Prices Prices *Prices
+1259       GNP GNP *GNP
+1260       Jobless Jobless *Jobless
+1261       Military Military*Military
+1262       PopSize PopSize *PopSize
+1263       Year Year *Year;
+1264       ods select OverallANOVA
+1265       FitStatistics
+1266       ParameterEstimates
+1267       Notes;
+1268       run;
+
+1269       
+1270       
+1271       
+1272       
+The SAS System
+
+1273       

@@ -1,0 +1,470 @@
+
+The HPLOGISTIC Procedure
+
+      Performance Information
+
+Execution Mode       Single-Machine
+Number of Threads    2             
+
+
+            Data Access Information
+ 
+Data                Engine    Role     Path
+
+SASHELP.JUNKMAIL    V9        Input    On Client
+
+
+                  Model Information
+
+Data Source               SASHELP.JUNKMAIL           
+Response Variable         Class                      
+Distribution              Binary                     
+Link Function             Logit                      
+Optimization Technique    Newton-Raphson with Ridging
+
+
+                    Number of Observations
+ 
+Description                       Total    Training     Testing
+
+Number of Observations Read        4601        3065        1536
+Number of Observations Used        4601        3065        1536
+
+
+                     Response Profile
+ 
+                0 -
+                Not
+                Junk,
+     Ordered    1 -          Total
+       Value    Junk     Frequency    Training     Testing
+
+           1    0             2788        1847         941
+           2    1             1813        1218         595
+
+You are modeling the probability that Class='1'.
+
+
+               Selection Information
+
+Selection Method                  Forward           
+Select Criterion                  Significance Level
+Stop Criterion                    Significance Level
+Effect Hierarchy Enforced         None              
+Entry Significance Level (SLE)    0.05              
+Stop Horizon                      1                 
+
+
+               Selection Summary
+ 
+              Effect           Number         p
+      Step    Entered      Effects In     Value
+
+         0    Intercept             1     .    
+-----------------------------------------------
+         1    Your                  2    <.0001
+         2    Free                  3    <.0001
+         3    _000                  4    <.0001
+         4    Remove                5    <.0001
+         5    Dollar                6    <.0001
+         6    HP                    7    <.0001
+         7    Business              8    <.0001
+         8    CapLong               9    <.0001
+         9    Money                10    <.0001
+        10    Exclamation          11    <.0001
+        11    Our                  12    <.0001
+        12    RE                   13    <.0001
+        13    Internet             14    <.0001
+        14    You                  15    <.0001
+        15    Font                 16    <.0001
+        16    CapAvg               17    <.0001
+        17    Edu                  18    <.0001
+        18    George               19    <.0001
+        19    Over                 20    <.0001
+        20    Meeting              21    0.0001
+        21    Order                22    0.0014
+        22    Parts                23    0.0016
+        23    Semicolon            24    0.0018
+        24    Will                 25    0.0047
+        25    PM                   26    0.0203
+        26    All                  27    0.0497
+        27    Technology           28    0.0398
+        28    Project              29    0.0443
+        29    Lab                  30    0.0492
+
+
+Selection stopped because no candidate for entry is significant at the 0.05 level.
+
+
+The model at step 29 is selected.
+
+
+Selected Effects: Intercept All Our Over Remove Internet Order Will Free Business You Your Font _000 Money HP George Lab Technology Parts PM Meeting Project RE 
+                  Edu Semicolon Exclamation Dollar CapAvg CapLong                                                                                               
+
+         Convergence criterion (GCONV=1E-8) satisfied.          
+
+
+               Dimensions
+
+Columns in X                          30
+Number of Effects                     30
+Max Effect Columns                     1
+Rank of Cross-product Matrix          30
+Parameters in Optimization            30
+
+
+                    Fit Statistics
+ 
+Description                       Training     Testing
+
+-2 Log Likelihood                  1202.18      813.03
+AIC (smaller is better)            1262.18      873.03
+AICC (smaller is better)           1262.80      874.27
+BIC (smaller is better)            1443.02     1033.14
+
+
+           Partition Fit Statistics
+ 
+Statistic                  Training     Testing
+
+Area under the ROCC          0.9769      0.9653
+Average Square Error        0.05467     0.06351
+Hosmer-Lemeshow Test       3.74E-49           0
+Misclassification Error     0.07145     0.07878
+R-Square                     0.6139      0.5533
+Max-rescaled R-Square        0.8305      0.7508
+McFadden's R-Square          0.7081      0.6035
+Mean Difference              0.7596      0.7393
+Somers' D                    0.9538      0.9307
+True Negative Fraction       0.9556      0.9416
+True Positive Fraction       0.8875      0.8891
+
+
+        Testing Global Null Hypothesis: BETA=0
+ 
+Test                 Chi-Square       DF     Pr > ChiSq
+
+Likelihood Ratio      2916.8048       29         <.0001
+
+
+                        Parameter Estimates
+ 
+                           Standard
+Parameter      Estimate       Error       DF    t Value    Pr > |t|
+
+Intercept       -1.9534      0.1551    Infty     -12.60      <.0001
+All              0.3034      0.1509    Infty       2.01      0.0443
+Our              0.4397      0.1092    Infty       4.03      <.0001
+Over             1.0506      0.3330    Infty       3.15      0.0016
+Remove           2.4248      0.4066    Infty       5.96      <.0001
+Internet         0.7586      0.2105    Infty       3.60      0.0003
+Order            1.2715      0.3982    Infty       3.19      0.0014
+Will            -0.2171     0.09328    Infty      -2.33      0.0199
+Free             1.3250      0.1906    Infty       6.95      <.0001
+Business         1.5295      0.3019    Infty       5.07      <.0001
+You              0.1865     0.04139    Infty       4.51      <.0001
+Your             0.1893     0.05944    Infty       3.18      0.0014
+Font             0.5028      0.2105    Infty       2.39      0.0169
+_000             2.1374      0.5837    Infty       3.66      0.0003
+Money            0.5320      0.2322    Infty       2.29      0.0220
+HP              -2.3325      0.3283    Infty      -7.10      <.0001
+George         -21.4496      3.1807    Infty      -6.74      <.0001
+Lab             -2.8339      1.8164    Infty      -1.56      0.1187
+Technology       0.9008      0.3849    Infty       2.34      0.0193
+Parts           -0.7888      0.5633    Infty      -1.40      0.1614
+PM              -1.3177      0.5158    Infty      -2.55      0.0106
+Meeting         -2.4870      0.9661    Infty      -2.57      0.0100
+Project         -1.8407      0.8387    Infty      -2.19      0.0282
+RE              -0.9615      0.1983    Infty      -4.85      <.0001
+Edu             -2.1777      0.4828    Infty      -4.51      <.0001
+Semicolon       -1.5046      0.5958    Infty      -2.53      0.0116
+Exclamation      0.2536     0.07050    Infty       3.60      0.0003
+Dollar           7.2240      0.9907    Infty       7.29      <.0001
+CapAvg          0.04001     0.02680    Infty       1.49      0.1355
+CapLong         0.01398    0.002841    Infty       4.92      <.0001
+
+The HPLOGISTIC Procedure
+
+      Performance Information
+
+Execution Mode       Single-Machine
+Number of Threads    2             
+
+
+            Data Access Information
+ 
+Data                Engine    Role     Path
+
+SASHELP.JUNKMAIL    V9        Input    On Client
+
+
+                  Model Information
+
+Data Source               SASHELP.JUNKMAIL           
+Response Variable         Class                      
+Distribution              Binary                     
+Link Function             Logit                      
+Optimization Technique    Newton-Raphson with Ridging
+Seed                      662510611                  
+
+
+              Number of Observations
+ 
+Description                       Total    Training
+
+Number of Observations Read        4601        4601
+Number of Observations Used        4601        4601
+
+
+               Response Profile
+ 
+                0 -
+                Not
+                Junk,
+     Ordered    1 -          Total
+       Value    Junk     Frequency    Training
+
+           1    0             2788        2788
+           2    1             1813        1813
+
+You are modeling the probability that Class='1'.
+
+
+                          Iteration History
+ 
+                               Objective                         Max
+Iteration    Evaluations        Function          Change    Gradient
+
+        0              4     0.332357358       .            5.234503
+        1              2    0.2756750914      0.05668227    1.966021
+        2              2    0.2465484862      0.02912661      0.6656
+        3              2    0.2331020193      0.01344647    0.129366
+        4              2    0.2290887884      0.00401323    0.003458
+        5              2    0.2254126429      0.00367615    0.015871
+        6              2    0.2230192339      0.00239341    0.032238
+        7              2    0.2214065877      0.00161265    0.003195
+        8              2    0.2209117043      0.00049488    0.082733
+        9              2    0.2207783125      0.00013339    0.005425
+       10              2    0.2207607437      0.00001757    0.000035
+       11              2    0.2207607362      0.00000001    1.543E-7
+       12              2    0.2207607362      0.00000000    5.81E-14
+
+         Convergence criterion (GCONV=1E-8) satisfied.          
+
+
+               Dimensions
+
+Columns in X                          25
+Number of Effects                     25
+Max Effect Columns                     1
+Rank of Cross-product Matrix          25
+Parameters in Optimization            25
+
+
+              Fit Statistics
+ 
+Description                       Training
+
+-2 Log Likelihood                  2031.44
+AIC (smaller is better)            2081.44
+AICC (smaller is better)           2081.72
+BIC (smaller is better)            2242.29
+
+
+     Partition Fit Statistics
+ 
+Statistic                  Training
+
+Area under the ROCC          0.9724
+Average Square Error        0.05910
+Hosmer-Lemeshow Test       854E-220
+Misclassification Error     0.07324
+R-Square                     0.5932
+Max-rescaled R-Square        0.8034
+McFadden's R-Square          0.6708
+Mean Difference              0.7325
+Somers' D                    0.9448
+True Negative Fraction       0.9570
+True Positive Fraction       0.8803
+
+
+        Testing Global Null Hypothesis: BETA=0
+ 
+Test                 Chi-Square       DF     Pr > ChiSq
+
+Likelihood Ratio      4138.7125       24         <.0001
+
+
+                        Parameter Estimates
+ 
+                           Standard
+Parameter      Estimate       Error       DF    t Value    Pr > |t|
+
+Intercept       -1.7592      0.1134    Infty     -15.52      <.0001
+Our              0.5763     0.09646    Infty       5.97      <.0001
+Over             0.8366      0.2398    Infty       3.49      0.0005
+Remove           2.5231      0.3312    Infty       7.62      <.0001
+Internet         0.6307      0.1542    Infty       4.09      <.0001
+Order            0.8941      0.2768    Infty       3.23      0.0012
+Will            -0.2151     0.07376    Infty      -2.92      0.0035
+Free             1.0645      0.1356    Infty       7.85      <.0001
+Business         1.1760      0.2192    Infty       5.37      <.0001
+You              0.1132     0.03292    Infty       3.44      0.0006
+Your             0.2002     0.04469    Infty       4.48      <.0001
+Font             0.4475      0.1468    Infty       3.05      0.0023
+_000             2.3952      0.4912    Infty       4.88      <.0001
+Money            0.6081      0.2052    Infty       2.96      0.0030
+HP              -2.3560      0.2732    Infty      -8.62      <.0001
+George         -13.7727      2.2389    Infty      -6.15      <.0001
+Parts           -0.5615      0.3797    Infty      -1.48      0.1392
+Meeting         -2.6973      0.8240    Infty      -3.27      0.0011
+RE              -0.8155      0.1513    Infty      -5.39      <.0001
+Edu             -1.7070      0.2742    Infty      -6.23      <.0001
+Semicolon       -1.4211      0.4316    Infty      -3.29      0.0010
+Exclamation      0.4263     0.09047    Infty       4.71      <.0001
+Dollar           6.3561      0.7286    Infty       8.72      <.0001
+CapAvg         -0.00149     0.01804    Infty      -0.08      0.9343
+CapLong         0.01484    0.002058    Infty       7.21      <.0001
+
+The HPLOGISTIC Procedure
+
+      Performance Information
+
+Execution Mode       Single-Machine
+Number of Threads    2             
+
+
+           Data Access Information
+ 
+Data             Engine    Role     Path
+
+WORK.JUNKMAIL    V9        Input    On Client
+
+
+                  Model Information
+
+Data Source               WORK.JUNKMAIL              
+Response Variable         Class                      
+Distribution              Binary                     
+Link Function             Logit                      
+Optimization Technique    Newton-Raphson with Ridging
+
+
+              Number of Observations
+ 
+Description                       Total    Training
+
+Number of Observations Read        4601        4601
+Number of Observations Used        4601        4601
+
+
+               Response Profile
+ 
+                0 -
+                Not
+                Junk,
+     Ordered    1 -          Total
+       Value    Junk     Frequency    Training
+
+           1    0             2788        2788
+           2    1             1813        1813
+
+You are modeling the probability that Class='1'.
+
+
+                          Iteration History
+ 
+                               Objective                         Max
+Iteration    Evaluations        Function          Change    Gradient
+
+        0              4     0.332357358       .            5.234503
+        1              2    0.2756750914      0.05668227    1.966021
+        2              2    0.2465484862      0.02912661      0.6656
+        3              2    0.2331020193      0.01344647    0.129366
+        4              2    0.2290887884      0.00401323    0.003458
+        5              2    0.2254126429      0.00367615    0.015871
+        6              2    0.2230192339      0.00239341    0.032238
+        7              2    0.2214065877      0.00161265    0.003195
+        8              2    0.2209117043      0.00049488    0.082733
+        9              2    0.2207783125      0.00013339    0.005425
+       10              2    0.2207607437      0.00001757    0.000035
+       11              2    0.2207607362      0.00000001    1.543E-7
+       12              2    0.2207607362      0.00000000    5.81E-14
+
+         Convergence criterion (GCONV=1E-8) satisfied.          
+
+
+               Dimensions
+
+Columns in X                          25
+Number of Effects                     25
+Max Effect Columns                     1
+Rank of Cross-product Matrix          25
+Parameters in Optimization            25
+
+
+              Fit Statistics
+ 
+Description                       Training
+
+-2 Log Likelihood                  2031.44
+AIC (smaller is better)            2081.44
+AICC (smaller is better)           2081.72
+BIC (smaller is better)            2242.29
+
+
+     Partition Fit Statistics
+ 
+Statistic                  Training
+
+Area under the ROCC          0.9724
+Average Square Error        0.05910
+Hosmer-Lemeshow Test       854E-220
+Misclassification Error     0.07324
+R-Square                     0.5932
+Max-rescaled R-Square        0.8034
+McFadden's R-Square          0.6708
+Mean Difference              0.7325
+Somers' D                    0.9448
+True Negative Fraction       0.9570
+True Positive Fraction       0.8803
+
+
+        Testing Global Null Hypothesis: BETA=0
+ 
+Test                 Chi-Square       DF     Pr > ChiSq
+
+Likelihood Ratio      4138.7125       24         <.0001
+
+
+                        Parameter Estimates
+ 
+                           Standard
+Parameter      Estimate       Error       DF    t Value    Pr > |t|
+
+Intercept       -1.7592      0.1134    Infty     -15.52      <.0001
+Our              0.5763     0.09646    Infty       5.97      <.0001
+Over             0.8366      0.2398    Infty       3.49      0.0005
+Remove           2.5231      0.3312    Infty       7.62      <.0001
+Internet         0.6307      0.1542    Infty       4.09      <.0001
+Order            0.8941      0.2768    Infty       3.23      0.0012
+Will            -0.2151     0.07376    Infty      -2.92      0.0035
+Free             1.0645      0.1356    Infty       7.85      <.0001
+Business         1.1760      0.2192    Infty       5.37      <.0001
+You              0.1132     0.03292    Infty       3.44      0.0006
+Your             0.2002     0.04469    Infty       4.48      <.0001
+Font             0.4475      0.1468    Infty       3.05      0.0023
+_000             2.3952      0.4912    Infty       4.88      <.0001
+Money            0.6081      0.2052    Infty       2.96      0.0030
+HP              -2.3560      0.2732    Infty      -8.62      <.0001
+George         -13.7727      2.2389    Infty      -6.15      <.0001
+Parts           -0.5615      0.3797    Infty      -1.48      0.1392
+Meeting         -2.6973      0.8240    Infty      -3.27      0.0011
+RE              -0.8155      0.1513    Infty      -5.39      <.0001
+Edu             -1.7070      0.2742    Infty      -6.23      <.0001
+Semicolon       -1.4211      0.4316    Infty      -3.29      0.0010
+Exclamation      0.4263     0.09047    Infty       4.71      <.0001
+Dollar           6.3561      0.7286    Infty       8.72      <.0001
+CapAvg         -0.00149     0.01804    Infty      -0.08      0.9343
+CapLong         0.01484    0.002058    Infty       7.21      <.0001

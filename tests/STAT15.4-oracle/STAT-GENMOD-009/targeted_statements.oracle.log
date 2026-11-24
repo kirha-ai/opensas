@@ -1,0 +1,54 @@
+The SAS System
+
+1016       
+1017       /* STAT-GENMOD-009: GENMOD — BAYES / Bayesian Analysis
+1018        * Source: S154 / Chapter 51 / `BAYES Statement` (PDF pp. 3515–3525); S154 / Chapter 51 / `Bayesian Analysis` (PDF pp. 3607–3612).
+1019        * Discriminates: Explicit BAYES statement behavior on seeded synthetic inputs.
+1020        */
+1021       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+1021     ! validmemname=compatible locale=en_US;
+1022       %let syscc=0;
+1023       title; footnote;
+1024       ods _all_ close;
+1025       ods listing gpath="%sysfunc(pathname(work))";
+1026       ods graphics off;
+1027       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SAMPLE (memtype=DATA).
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+1027     !                                         quit;
+
+
+1028       ods path work.templat(update) sashelp.tmplmst(read);
+1029       
+1030       data sample;
+1031       call streaminit(314159);
+1032       do id=1 to 90;
+1033        x=rand('normal'); z=rand('normal'); w=rand('normal');
+1034        group=1+mod(id,3); block=1+mod(id,5);
+1035        y=5+1.5*x-0.6*z+0.4*group+rand('normal');
+1036        y2=2+0.5*x+0.8*z+rand('normal'); output;
+1037       end;
+1038       run;
+
+NOTE: The data set WORK.SAMPLE has 90 observations and 8 variables.
+
+1039       proc genmod data=sample; model y=x z / dist=normal; bayes seed=314159 nbi=200 nmc=1000; run;
+
+
+NOTE: Algorithm converged.
+NOTE: The scale parameter was estimated by maximum likelihood.
+NOTE: Algorithm converged.
+NOTE: The PROCEDURE GENMOD printed pages 87-90.
+
+1040       
+1041       
+1042       
+1043       
+The SAS System
+
+1044       

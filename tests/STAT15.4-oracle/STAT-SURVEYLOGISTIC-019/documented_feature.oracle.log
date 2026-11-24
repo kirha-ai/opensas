@@ -1,0 +1,118 @@
+The SAS System
+
+4281       
+4282       /* STAT-SURVEYLOGISTIC-019: SURVEYLOGISTIC — OUTPUT / Output Data Sets
+4283        * Source: S154 / Chapter 120 / `OUTPUT Statement` (PDF pp. 9831–9834); S154 / Chapter 120 / `Output Data Sets` (PDF pp. 9874–9876).
+4284        * Discriminates: Example 120.1: Stratified Sampling; explicit statements: OUTPUT
+4285        */
+4286       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+4286     ! validmemname=compatible locale=en_US;
+4287       %let syscc=0;
+4288       title; footnote;
+4289       ods _all_ close;
+4290       ods listing gpath="%sysfunc(pathname(work))";
+4291       ods graphics off;
+4292       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.ENROLLMENT (memtype=DATA).
+NOTE: Deleting WORK.FORMATS (memtype=CATALOG).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.WEBSURVEY (memtype=DATA).
+4292     !                                         quit;
+
+
+4293       ods path work.templat(update) sashelp.tmplmst(read);
+4294       
+4295       proc format;
+4295     !              value Class 1='Freshman' 2='Sophomore' 3='Junior' 4='Senior';
+NOTE: Format CLASS has been output.
+4295     !                                                                            run;
+
+
+4296       data Enrollment;
+4297       format Class Class.;
+4298       input Class _TOTAL_;
+4299       datalines;
+
+NOTE: The data set WORK.ENROLLMENT has 4 observations and 2 variables.
+
+4304       ;
+4305       proc format;
+4306       value Design 1='A' 2='B' 3='C';
+NOTE: Format DESIGN has been output.
+4307       value Rating
+4308       1='dislike very much'
+4309       2='dislike'
+4310       3='neutral'
+4311       4='like'
+4312       5='like very much';
+NOTE: Format RATING has been output.
+4313       run;
+
+
+4314       data WebSurvey;
+4315       format Class Class. Design Design. Rating Rating.;
+4316       do Class=1 to 4;
+4317       do Design=1 to 3;
+4318       do Rating=1 to 5;
+4319       input Count @@;
+4320       output;
+4321       end;
+4322       end;
+4323       end;
+4324       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.WEBSURVEY has 60 observations and 4 variables.
+
+4329       ;
+4330       data WebSurvey;
+4331       set WebSurvey;
+4332       if Class=1 then Weight=3734/300;
+4333       if Class=2 then Weight=3565/300;
+4334       if Class=3 then Weight=3903/300;
+4335       if Class=4 then Weight=4196/300;
+4336       run;
+
+NOTE: There were 60 observations read from the data set WORK.WEBSURVEY.
+NOTE: The data set WORK.WEBSURVEY has 60 observations and 5 variables.
+
+4337       proc surveylogistic data=WebSurvey total=Enrollment;
+4338       stratum Class;
+4339       freq Count;
+4340       class Design;
+4341       model Rating (order=internal) = design;
+4342       weight Weight;
+4343       run;
+
+NOTE: PROC SURVEYLOGISTIC is fitting the cumulative logit model. The probabilities modeled are summed over the responses having the lower Ordered Values in the 
+      Response Profile table.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The PROCEDURE SURVEYLOGISTIC printed page 249.
+
+4344       proc surveylogistic data=WebSurvey total=Enrollment;
+4345       stratum Class;
+4346       freq Count;
+4347       class Design;
+4348       model Rating (ref='neutral') = Design /link=glogit;
+4349       weight Weight;
+4350       run;
+
+NOTE: PROC SURVEYLOGISTIC is fitting the generalized logit model. The logits modeled contrast each response category against the reference category 
+      (Rating='neutral').
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The PROCEDURE SURVEYLOGISTIC printed page 250.
+
+4351       
+4352       
+4353       
+4354       
+The SAS System
+
+4355       

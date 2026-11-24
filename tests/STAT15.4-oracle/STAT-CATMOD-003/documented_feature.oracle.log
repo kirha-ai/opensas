@@ -1,0 +1,95 @@
+The SAS System
+
+12171      
+12172      /* STAT-CATMOD-003: CATMOD — DIRECT / FACTORS / LOGLIN
+12173       * Source: S154 / Chapter 36 / `DIRECT Statement` (PDF pp. 2196–2197); S154 / Chapter 36 / `FACTORS Statement` (PDF pp. 2197–2200); S154 /
+12173    ! Chapter 36 / `LOGLIN Statement` (PDF pp. 2200–2201).
+12174       * Discriminates: Example 36.10: Direct Input of Response Functions and Covariance Matrix; explicit statements: FACTORS
+12175       */
+12176      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+12176    ! validmemname=compatible locale=en_US;
+12177      %let syscc=0;
+12178      title; footnote;
+12179      ods _all_ close;
+12180      ods listing gpath="%sysfunc(pathname(work))";
+12181      ods graphics off;
+
+NOTE: There were 18 observations read from the data set WORK.SCHOOL.
+NOTE: The PROCEDURE CATMOD printed pages 1734-1735.
+
+12182      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.COLDS (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SCHOOL (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+12182    !                                         quit;
+
+
+12183      ods path work.templat(update) sashelp.tmplmst(read);
+12184      
+12185      data fbeing(type=est);
+12186      input b1-b5 _type_ $ _name_ $ b6-b10 #2;
+12187      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.FBEING has 11 observations and 12 variables.
+
+12210      ;
+12211      proc catmod data=fbeing;
+12212      title 'Complex Sample Survey Analysis';
+12213      response read b1-b10;
+12214      factors sex $ 2, age $ 5 / _response_=sex age
+12215      profile=(male '25-34',
+12216      male '35-44',
+12217      male '45-54',
+12218      male '55-64',
+12219      male '65-74',
+12220      female '25-34',
+12221      female '35-44',
+12222      female '45-54',
+12223      female '55-64',
+12224      female '65-74');
+12225      model _f_=_response_
+12226      / design title='Main Effects for Sex and Age';
+12227      run;
+
+12228      contrast 'No Age Effect for Age<65' all_parms 0 0 1 0 0 -1,
+12229      all_parms 0 0 0 1 0 -1,
+12230      all_parms 0 0 0 0 1 -1;
+12231      run;
+
+12232      model _f_=(1 1 1,
+NOTE: Prior MODEL statement(s) deleted.
+12233      1 1 1,
+12234      1 1 1,
+12235      1 1 1,
+12236      1 1 -1,
+12237      1 -1 1,
+12238      1 -1 1,
+12239      1 -1 1,
+12240      1 -1 1,
+12241      1 -1 -1)
+12242      (1='Intercept' ,
+12243      2='Sex' ,
+12244      3='Age (25-64 vs. 65-74)')
+12245      / design title='Binary Age Effect (25-64 vs. 65-74)' ;
+12246      run;
+
+12247      quit;
+
+NOTE: There were 11 observations read from the data set WORK.FBEING.
+NOTE: The PROCEDURE CATMOD printed pages 1736-1737.
+
+12248      
+12249      
+12250      
+12251      
+The SAS System
+
+12252      

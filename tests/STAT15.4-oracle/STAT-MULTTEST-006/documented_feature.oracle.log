@@ -1,0 +1,91 @@
+The SAS System
+
+5053       
+5054       /* STAT-MULTTEST-006: MULTTEST — Displayed Output / ODS Table Names
+5055        * Source: S154 / Chapter 86 / `Displayed Output` (PDF pp. 6933–6934); S154 / Chapter 86 / `ODS Table Names` (PDF pp. 6934–6935).
+5056        * Discriminates: Getting Started: MULTTEST Procedure
+5057        */
+5058       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+5058     ! validmemname=compatible locale=en_US;
+5059       %let syscc=0;
+5060       title; footnote;
+5061       ods _all_ close;
+5062       ods listing gpath="%sysfunc(pathname(work))";
+5063       ods graphics off;
+5064       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.DRUG (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+5064     !                                         quit;
+
+
+5065       ods path work.templat(update) sashelp.tmplmst(read);
+5066       
+5067       ods trace on;
+5068       data Drug;
+5069       input Dose$ SideEff1-SideEff10;
+5070       datalines;
+
+NOTE: The data set WORK.DRUG has 15 observations and 11 variables.
+
+5086       ;
+5087       ods graphics on;
+5088       proc multtest bootstrap nsample=499 seed=41287 notables
+5089       plots=PByTest(vref=0.05 0.1);
+5090       class Dose;
+5091       test ca(SideEff1-SideEff10);
+5092       contrast 'Trend' 0 1 2;
+5093       run;
+
+NOTE: No input data set is specified.  The data set WORK.DRUG is used.
+
+Output Added:
+-------------
+Name:       ModelInfo
+Label:      Model Information
+Template:   Stat.Multtest.ModelInfo
+Path:       Multtest.ModelInfo
+-------------
+
+Output Added:
+-------------
+Name:       Contrasts
+Label:      Contrast Coefficients
+Template:   Stat.Multtest.Contrasts
+Path:       Multtest.Contrasts
+-------------
+
+Output Added:
+-------------
+Name:       pValues
+Label:      P-Values
+Template:   Stat.Multtest.pValues
+Path:       Multtest.pValues
+-------------
+
+Output Added:
+-------------
+Name:       PByTest
+Label:      Raw and Adjusted P-Values
+Template:   Stat.Multtest.Graphics.PByTest
+Path:       Multtest.PByTest
+-------------
+NOTE: There were 15 observations read from the data set WORK.DRUG.
+NOTE: The PROCEDURE MULTTEST printed page 364.
+
+5094       ods graphics off;
+5095       run;
+5096       quit;
+5097       ods trace off;
+5098       
+5099       
+5100       
+5101       
+The SAS System
+
+5102       

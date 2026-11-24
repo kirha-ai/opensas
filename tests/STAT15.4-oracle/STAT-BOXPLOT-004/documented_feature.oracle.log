@@ -1,0 +1,121 @@
+The SAS System
+
+310        
+311        /* STAT-BOXPLOT-004: BOXPLOT — Output Data Sets
+312         * Source: S154 / Chapter 32 / `Output Data Sets` (PDF pp. 1409–1411).
+313         * Discriminates: Getting Started: BOXPLOT Procedure
+314         */
+315        options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+315      ! validmemname=compatible locale=en_US;
+316        %let syscc=0;
+317        title; footnote;
+318        ods _all_ close;
+319        ods listing gpath="%sysfunc(pathname(work))";
+320        ods graphics off;
+321        proc datasets library=work kill nolist;
+NOTE: Deleting WORK.GSEG (memtype=CATALOG).
+NOTE: Deleting WORK.OILSCHEMATIC (memtype=DATA).
+NOTE: Deleting WORK.OILSUM (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TURBINE (memtype=DATA).
+321      !                                         quit;
+
+
+322        ods path work.templat(update) sashelp.tmplmst(read);
+323        filename _grfile temp; goptions device=svg gsfname=_grfile;
+324        
+325        data Turbine;
+326        informat Day date7.;
+327        format Day date5.;
+328        label KWatts='Average Power Output';
+329        input Day @;
+330        do i=1 to 10;
+331        input KWatts @;
+332        output;
+333        end;
+334        drop i;
+335        datalines;
+
+NOTE: The data set WORK.TURBINE has 200 observations and 2 variables.
+
+356        ;
+357        ods graphics off;
+358        title 'Box Plot for Power Output';
+359        proc boxplot data=Turbine;
+360        plot KWatts*Day;
+361        run;
+
+NOTE: Processing beginning for PLOT statement number 1.
+NOTE: Since the format DATE is associated with the group variable Day, it is assumed that the natural interval between group positions is one DAY.
+NOTE: The REPEAT option is assumed when a DATE format is used with a group variable.
+NOTE: 33494 bytes written to /saswork/SAS_workFCBA00018F54_odaws02-euw1.oda.sas.com/#LN00094.
+NOTE: There were 200 observations read from the data set WORK.TURBINE.
+
+362        data Oilsum;
+363        input Day KWattsL KWatts1 KWattsX KWattsM
+364        KWatts3 KWattsH KWattsS KWattsN;
+365        informat Day date7. ;
+366        format Day date5. ;
+367        label Day ='Date of Measurement'
+368        KWattsL='Minimum Power Output'
+369        KWatts1='25th Percentile'
+370        KWattsX='Average Power Output'
+371        KWattsM='Median Power Output'
+372        KWatts3='75th Percentile'
+373        KWattsH='Maximum Power Output'
+374        KWattsS='Standard Deviation of Power Output'
+375        KWattsN='Group Sample Size';
+376        datalines;
+
+NOTE: The data set WORK.OILSUM has 10 observations and 9 variables.
+
+387        ;
+388        options nogstyle;
+389        title 'Box Plot for Power Output';
+390        proc boxplot history=Oilsum;
+391        plot KWatts*Day / cframe = vligb
+392        cboxes = dagr
+393        cboxfill = ywh;
+394        run;
+
+NOTE: Processing beginning for PLOT statement number 1.
+NOTE: Since the format DATE is associated with the group variable Day, it is assumed that the natural interval between group positions is one DAY.
+NOTE: The REPEAT option is assumed when a DATE format is used with a group variable.
+NOTE: 33184 bytes written to /saswork/SAS_workFCBA00018F54_odaws02-euw1.oda.sas.com/#LN00094.
+NOTE: There were 10 observations read from the data set WORK.OILSUM.
+
+395        options gstyle;
+396        goptions reset=symbol;
+397        title 'Schematic Box Plot for Power Output';
+398        ods graphics on;
+399        proc boxplot data=Turbine;
+400        plot KWatts*Day / boxstyle = schematic
+401        outbox = OilSchematic;
+402        run;
+
+NOTE: Processing beginning for PLOT statement number 1.
+NOTE: Since the format DATE is associated with the group variable Day, it is assumed that the natural interval between group positions is one DAY.
+NOTE: The REPEAT option is assumed when a DATE format is used with a group variable.
+NOTE: There were 200 observations read from the data set WORK.TURBINE.
+NOTE: The data set WORK.OILSCHEMATIC has 91 observations and 4 variables.
+
+403        
+404        /* Numerical companion to the graph: native OUTBOX rows. */
+405        proc print data=OilSchematic noobs; format _numeric_ best16.; run;
+
+NOTE: There were 91 observations read from the data set WORK.OILSCHEMATIC.
+NOTE: The PROCEDURE PRINT printed page 17.
+
+406        
+407        
+408        
+409        
+The SAS System
+
+410        

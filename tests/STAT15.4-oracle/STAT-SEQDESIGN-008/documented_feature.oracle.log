@@ -1,0 +1,58 @@
+The SAS System
+
+15988      
+15989      /* STAT-SEQDESIGN-008: SEQDESIGN — Specified and Derived Parameters / Applicable Boundary Keys / Sample Size Computation
+15990       * Source: S154 / Chapter 110 / `Specified and Derived Parameters` (PDF pp. 8995–8996); S154 / Chapter 110 / `Applicable Boundary Keys` (PDF pp.
+15990    ! 8996–8997); S154 / Chapter 110 / `Sample Size Computation` (PDF pp. 8997–9005).
+15991       * Discriminates: Example 110.14: Computing Sample Size for Survival Data That Have Uniform Accrual
+15992       */
+15993      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+15993    ! validmemname=compatible locale=en_US;
+15994      %let syscc=0;
+15995      title; footnote;
+15996      ods _all_ close;
+15997      ods listing gpath="%sysfunc(pathname(work))";
+15998      ods graphics off;
+
+
+15999      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+15999    !                                         quit;
+
+
+16000      ods path work.templat(update) sashelp.tmplmst(read);
+16001      
+16002      proc seqdesign;
+16003      ErrorSpend: design nstages=4 method=errfuncobf
+16004      ;
+16005      samplesize model=twosamplesurvival
+16006      ( nullhazard=0.03466 hazard=0.01733
+16007      accrual=uniform accrate=15);
+16008      run;
+
+NOTE: The PROCEDURE SEQDESIGN printed page 1151.
+
+16009      proc seqdesign;
+16010      ErrorSpend: design nstages=4 method=errfuncobf
+16011      ;
+16012      samplesize model(ceiladjdesign=include)=twosamplesurvival
+16013      ( nullhazard=0.03466 hazard=0.01733
+16014      accrual=uniform accrate=15 acctime=18
+16015      ceiling=time);
+16016      run;
+
+NOTE: The PROCEDURE SEQDESIGN printed page 1152.
+
+16017      
+16018      
+16019      
+16020      
+The SAS System
+
+16021      

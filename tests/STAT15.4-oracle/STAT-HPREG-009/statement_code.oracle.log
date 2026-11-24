@@ -1,0 +1,92 @@
+The SAS System
+
+5974       
+5975       /* STAT-HPREG-009: HPREG — CODE
+5976        * Source: S154 / Chapter 67 / `CODE Statement` (PDF pp. 5030–5031).
+5977        * Discriminates: Generate DATA step scoring code, execute it against the input rows, and print the scored data.
+5978        */
+5979       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+5979     ! validmemname=compatible locale=en_US;
+5980       %let syscc=0;
+5981       title; footnote;
+5982       ods _all_ close;
+5983       ods listing gpath="%sysfunc(pathname(work))";
+5984       ods graphics off;
+5985       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.BASEBALLOUT (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+5985     !                                         quit;
+
+
+5986       ods path work.templat(update) sashelp.tmplmst(read);
+5987       
+5988       filename _orcode "%sysfunc(pathname(work))/_oracle_score.sas";
+5989       
+5990       
+5991       proc contents varnum data=sashelp.baseball;
+5992       ods select position;
+5993       run;
+
+NOTE: The PROCEDURE CONTENTS printed page 411.
+
+5994       proc hpreg data=sashelp.baseball;
+5995       class league division;
+5996       model logSalary = nAtBat nHits nHome nRuns nRBI nBB
+5997       yrMajor crAtBat crHits crHome crRuns crRbi
+5998       crBB league division nOuts nAssts nError;
+5999       selection method=stepwise;
+6000       
+6001       code file="%sysfunc(pathname(work))/_oracle_score.sas";
+6002       run;
+
+NOTE: The HPREG procedure is executing in single-machine mode.
+NOTE: External file /saswork/SAS_work7EA200001C34_odaws01-euw1.oda.sas.com/SAS_work29EF00001C34_odaws01-euw1.oda.sas.com/_oracle_score.sas opened.
+NOTE: The HPREG procedure wrote the DATA step code to external file 
+      /saswork/SAS_work7EA200001C34_odaws01-euw1.oda.sas.com/SAS_work29EF00001C34_odaws01-euw1.oda.sas.com/_oracle_score.sas.
+NOTE: There were 322 observations read from the data set SASHELP.BASEBALL.
+NOTE: The PROCEDURE HPREG printed pages 412-414.
+
+6003       proc hpreg data=sashelp.baseball;
+6004       id name;
+6005       class league division;
+6006       model logSalary = nAtBat nHits nHome nRuns nRBI nBB
+6007       yrMajor crAtBat crHits crHome crRuns crRbi
+6008       crBB league division nOuts nAssts nError / vif clb;
+6009       selection method=stepwise;
+6010       output out=baseballOut p=predictedLogSalary r h cookd rstudent;
+6011       run;
+
+NOTE: The HPREG procedure is executing in single-machine mode.
+NOTE: There were 322 observations read from the data set SASHELP.BASEBALL.
+NOTE: The data set WORK.BASEBALLOUT has 322 observations and 6 variables.
+NOTE: The PROCEDURE HPREG printed pages 415-417.
+
+6012       proc print data=baseballOut(obs=5);
+6013       run;
+
+NOTE: There were 5 observations read from the data set WORK.BASEBALLOUT.
+NOTE: The PROCEDURE PRINT printed page 418.
+
+6014       
+6015       data _oracle_scored; set sashelp.baseball;
+6016       %include _orcode;
+6051       run;
+
+NOTE: There were 322 observations read from the data set SASHELP.BASEBALL.
+NOTE: The data set WORK._ORACLE_SCORED has 322 observations and 25 variables.
+
+6052       proc print data=_oracle_scored(obs=10); run;
+
+NOTE: There were 10 observations read from the data set WORK._ORACLE_SCORED.
+NOTE: The PROCEDURE PRINT printed page 419.
+
+6053       
+6054       
+6055       
+6056       
+The SAS System
+
+6057       

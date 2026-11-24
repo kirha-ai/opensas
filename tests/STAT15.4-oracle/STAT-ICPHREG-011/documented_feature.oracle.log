@@ -1,0 +1,305 @@
+The SAS System
+
+8351       
+8352       /* STAT-ICPHREG-011: ICPHREG — Displayed Output / ODS Table Names
+8353        * Source: S154 / Chapter 70 / `Displayed Output` (PDF pp. 5246–5248); S154 / Chapter 70 / `ODS Table Names` (PDF pp. 5248–5249).
+8354        * Discriminates: Getting Started: ICPHREG Procedure
+8355        */
+8356       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+8356     ! validmemname=compatible locale=en_US;
+8357       %let syscc=0;
+8358       title; footnote;
+8359       ods _all_ close;
+8360       ods listing gpath="%sysfunc(pathname(work))";
+8361       ods graphics off;
+8362       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.COV (memtype=DATA).
+NOTE: Deleting WORK.DATA3 (memtype=DATA).
+NOTE: Deleting WORK.DATA4 (memtype=DATA).
+NOTE: Deleting WORK.HIV (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+8362     !                                         quit;
+
+
+8363       ods path work.templat(update) sashelp.tmplmst(read);
+8364       
+8365       ods trace on;
+8366       data hiv;
+8367       input Left Right Stage Dose CdLow CdHigh;
+8368       if (Left=0) then Left=.;
+8369       if (Right>=26) then Right=.;
+8370       datalines;
+
+NOTE: The data set WORK.HIV has 31 observations and 6 variables.
+
+8402       ;
+8403       proc icphreg data=hiv;
+8404       class Stage Dose / desc;
+8405       model (Left, Right) = Stage Dose;
+8406       run;
+
+NOTE: The option BASEHAZ of the MODEL statement was not specified. Fitting the model with a constant baseline hazard with 5 segments.
+
+Output Added:
+-------------
+Name:       ModelInfo
+Label:      Model Information
+Template:   Stat.ICPHREG.ModelInfo
+Path:       ICPHReg.ModelInfo
+-------------
+
+Output Added:
+-------------
+Name:       NObs
+Label:      Observations Summary
+Template:   Stat.ICPHREG.NObs
+Path:       ICPHReg.NObs
+-------------
+NOTE: Convergence criterion (ABSGCONV=0.00001) satisfied.
+
+Output Added:
+-------------
+Name:       ClassLevels
+Label:      Class Level Information
+Template:   Stat.ICPHREG.Classlevels
+Path:       ICPHReg.ParmInfo.ClassLevels
+-------------
+
+Output Added:
+-------------
+Name:       HazardParms
+Label:      Hazard Parameters
+Template:   Stat.ICPHREG.HazardParms
+Path:       ICPHReg.ParmInfo.HazardParms
+-------------
+
+Output Added:
+-------------
+Name:       OptInfo
+Label:      Optimization Information
+Template:   Stat.ICPHREG.OptInfo
+Path:       ICPHReg.IterInfo.OptInfo
+-------------
+
+Output Added:
+-------------
+Name:       ConvergenceStatus
+Label:      Convergence Status
+Template:   Stat.ICPHREG.ConvergenceStatus
+Path:       ICPHReg.IterInfo.ConvergenceStatus
+-------------
+
+Output Added:
+-------------
+Name:       FitStatistics
+Label:      Model Fit Statistics
+Template:   Stat.ICPHREG.FitStatistics
+Path:       ICPHReg.FittedInfo.FitStatistics
+-------------
+
+Output Added:
+-------------
+Name:       ParameterEstimates
+Label:      Parameter Estimates
+Template:   Stat.ICPHREG.Parameterestimates
+Path:       ICPHReg.FittedInfo.ParameterEstimates
+-------------
+NOTE: The PROCEDURE ICPHREG printed page 592.
+
+8407       proc icphreg data=hiv ithistory;
+8408       class Stage Dose / desc;
+8409       model (Left, Right) = Stage Dose / basehaz=pch(intervals=(10));
+8410       run;
+
+
+Output Added:
+-------------
+Name:       ModelInfo
+Label:      Model Information
+Template:   Stat.ICPHREG.ModelInfo
+Path:       ICPHReg.ModelInfo
+-------------
+
+Output Added:
+-------------
+Name:       NObs
+Label:      Observations Summary
+Template:   Stat.ICPHREG.NObs
+Path:       ICPHReg.NObs
+-------------
+NOTE: Convergence criterion (ABSGCONV=0.00001) satisfied.
+
+Output Added:
+-------------
+Name:       ClassLevels
+Label:      Class Level Information
+Template:   Stat.ICPHREG.Classlevels
+Path:       ICPHReg.ParmInfo.ClassLevels
+-------------
+
+Output Added:
+-------------
+Name:       HazardParms
+Label:      Hazard Parameters
+Template:   Stat.ICPHREG.HazardParms
+Path:       ICPHReg.ParmInfo.HazardParms
+-------------
+
+Output Added:
+-------------
+Name:       ParmInfo
+Label:      Parameter Names
+Template:   Stat.ICPHREG.Parminfo
+Path:       ICPHReg.ParmInfo.ParmInfo
+-------------
+
+Output Added:
+-------------
+Name:       OptInfo
+Label:      Optimization Information
+Template:   Stat.ICPHREG.OptInfo
+Path:       ICPHReg.IterInfo.OptInfo
+-------------
+
+Output Added:
+-------------
+Name:       LikelihoodHist
+Label:      Iteration History
+Template:   Stat.ICPHREG.IterHist
+Path:       ICPHReg.IterInfo.LikelihoodHist
+-------------
+
+Output Added:
+-------------
+Name:       ConvergenceStatus
+Label:      Convergence Status
+Template:   Stat.ICPHREG.ConvergenceStatus
+Path:       ICPHReg.IterInfo.ConvergenceStatus
+-------------
+
+Output Added:
+-------------
+Name:       LastGrad
+Label:      Last Negative Gradient
+Template:   Stat.ICPHREG.LastGrad
+Path:       ICPHReg.IterInfo.LastGrad
+-------------
+
+Output Added:
+-------------
+Name:       LastHess
+Label:      Last Negative Hessian
+Template:   Stat.ICPHREG.LastHess
+Path:       ICPHReg.IterInfo.LastHess
+-------------
+
+Output Added:
+-------------
+Name:       FitStatistics
+Label:      Model Fit Statistics
+Template:   Stat.ICPHREG.FitStatistics
+Path:       ICPHReg.FittedInfo.FitStatistics
+-------------
+
+Output Added:
+-------------
+Name:       ParameterEstimates
+Label:      Parameter Estimates
+Template:   Stat.ICPHREG.Parameterestimates
+Path:       ICPHReg.FittedInfo.ParameterEstimates
+-------------
+NOTE: The PROCEDURE ICPHREG printed page 593.
+
+8411       proc icphreg data=hiv;
+8412       class Stage / desc;
+8413       model (Left, Right) = Stage / basehaz=pch(intervals=(10));
+8414       hazardratio Stage;
+8415       run;
+
+
+Output Added:
+-------------
+Name:       ModelInfo
+Label:      Model Information
+Template:   Stat.ICPHREG.ModelInfo
+Path:       ICPHReg.ModelInfo
+-------------
+
+Output Added:
+-------------
+Name:       NObs
+Label:      Observations Summary
+Template:   Stat.ICPHREG.NObs
+Path:       ICPHReg.NObs
+-------------
+NOTE: Convergence criterion (ABSGCONV=0.00001) satisfied.
+
+Output Added:
+-------------
+Name:       ClassLevels
+Label:      Class Level Information
+Template:   Stat.ICPHREG.Classlevels
+Path:       ICPHReg.ParmInfo.ClassLevels
+-------------
+
+Output Added:
+-------------
+Name:       HazardParms
+Label:      Hazard Parameters
+Template:   Stat.ICPHREG.HazardParms
+Path:       ICPHReg.ParmInfo.HazardParms
+-------------
+
+Output Added:
+-------------
+Name:       OptInfo
+Label:      Optimization Information
+Template:   Stat.ICPHREG.OptInfo
+Path:       ICPHReg.IterInfo.OptInfo
+-------------
+
+Output Added:
+-------------
+Name:       ConvergenceStatus
+Label:      Convergence Status
+Template:   Stat.ICPHREG.ConvergenceStatus
+Path:       ICPHReg.IterInfo.ConvergenceStatus
+-------------
+
+Output Added:
+-------------
+Name:       FitStatistics
+Label:      Model Fit Statistics
+Template:   Stat.ICPHREG.FitStatistics
+Path:       ICPHReg.FittedInfo.FitStatistics
+-------------
+
+Output Added:
+-------------
+Name:       ParameterEstimates
+Label:      Parameter Estimates
+Template:   Stat.ICPHREG.Parameterestimates
+Path:       ICPHReg.FittedInfo.ParameterEstimates
+-------------
+
+Output Added:
+-------------
+Name:       HazardRatios
+Label:      Hazard Ratios
+Template:   Stat.ICPHREG.HazardRatios
+Path:       ICPHReg.HazardRatios
+-------------
+NOTE: The PROCEDURE ICPHREG printed page 594.
+
+8416       ods trace off;
+8417       
+8418       
+8419       
+8420       
+The SAS System
+
+8421       

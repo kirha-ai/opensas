@@ -1,0 +1,61 @@
+The SAS System
+
+21017      
+21018      /* STAT-SURVEYLOGISTIC-011: SURVEYLOGISTIC — Degrees of Freedom / Odds Ratio Estimation
+21019       * Source: S154 / Chapter 120 / `Degrees of Freedom` (PDF pp. 9863–9865); S154 / Chapter 120 / `Odds Ratio Estimation` (PDF pp. 9869–9872).
+21020       * Discriminates: Verified default procedure context
+21021       */
+21022      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+21022    ! validmemname=compatible locale=en_US;
+21023      %let syscc=0;
+21024      title; footnote;
+21025      ods _all_ close;
+21026      ods listing gpath="%sysfunc(pathname(work))";
+21027      ods graphics off;
+21028      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SURVEY (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+21028    !                                         quit;
+
+
+21029      ods path work.templat(update) sashelp.tmplmst(read);
+21030      
+21031      data survey;
+21032      call streaminit(722);
+21033      do stratum=1 to 2;
+21034      do cluster=1 to 4;
+21035      do id=1 to 12;
+21036      age=20+mod(id*7+cluster,45);
+21037      event=rand('bernoulli',0.3);
+21038      weight=2+stratum+cluster/10;
+21039      output;
+21040      end;
+21041      end;
+21042      end;
+21043      run;
+
+NOTE: The data set WORK.SURVEY has 96 observations and 6 variables.
+
+21044      proc surveylogistic data=survey;
+21045      strata stratum;
+21046      cluster cluster;
+21047      weight weight;
+21048      model event(event='1')=age;
+21049      run;
+
+NOTE: PROC SURVEYLOGISTIC is modeling the probability that event=1.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The PROCEDURE SURVEYLOGISTIC printed page 1416.
+
+21050      
+21051      
+21052      
+21053      
+The SAS System
+
+21054      

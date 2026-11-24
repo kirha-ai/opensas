@@ -1,0 +1,164 @@
+
+The HPGENSELECT Procedure
+
+      Performance Information
+
+Execution Mode       Single-Machine
+Number of Threads    2             
+
+
+             Data Access Information
+ 
+Data                  Engine    Role     Path
+
+WORK._ORACLE_INPUT    V9        Input    On Client
+
+_oracle_by=1
+
+The HPGENSELECT Procedure
+
+                  Model Information
+
+Data Source               WORK._ORACLE_INPUT         
+Response Variable         Y                          
+Class Parameterization    GLM                        
+Distribution              Poisson                    
+Link Function             Log                        
+Optimization Technique    Newton-Raphson with Ridging
+
+
+Number of Observations Read             100
+Number of Observations Used             100
+
+
+  Class Level Information
+ 
+Class    Levels    Values
+
+C1            4    0 1 2 3 
+C2            4    0 1 2 3 
+C3            4    0 1 2 3 
+C4            4    0 1 2 3 
+C5            4    0 1 2 3 
+
+
+           Dimensions
+
+Number of Effects              6
+Number of Parameters          16
+Columns in X                  21
+
+
+              Fit Statistics
+
+-2 Log Likelihood                   290.16
+AIC (smaller is better)             322.16
+AICC (smaller is better)            328.72
+BIC (smaller is better)             363.84
+Pearson Chi-Square                 77.7694
+Pearson Chi-Square/DF               0.9258
+
+
+                            Parameter Estimates
+ 
+                                       Standard
+Parameter    DF        Estimate           Error    Chi-Square    Pr > ChiSq
+
+Intercept     1        0.881903        0.382730        5.3095        0.0212
+C1 0          1       -0.196002        0.211482        0.8590        0.3540
+C1 1          1       -0.605161        0.263508        5.2742        0.0216
+C1 2          1       -0.068458        0.210776        0.1055        0.7453
+C1 3          0               0               .         .             .    
+C2 0          1        0.961117        0.255485       14.1521        0.0002
+C2 1          1        0.708188        0.246768        8.2360        0.0041
+C2 2          1        0.161741        0.266365        0.3687        0.5437
+C2 3          0               0               .         .             .    
+C3 0          1       -0.227016        0.252561        0.8079        0.3687
+C3 1          1       -0.094775        0.229519        0.1705        0.6797
+C3 2          1        0.044801        0.238127        0.0354        0.8508
+C3 3          0               0               .         .             .    
+C4 0          1       -0.280476        0.263589        1.1322        0.2873
+C4 1          1        0.028157        0.249652        0.0127        0.9102
+C4 2          1        0.047803        0.240378        0.0395        0.8424
+C4 3          0               0               .         .             .    
+C5 0          1       -0.817936        0.219901       13.8351        0.0002
+C5 1          1       -0.710596        0.206265       11.8684        0.0006
+C5 2          1       -0.602080        0.217724        7.6471        0.0057
+C5 3          0               0               .         .             .    
+
+         Convergence criterion (GCONV=1E-8) satisfied.          
+
+_oracle_by=2
+
+The HPGENSELECT Procedure
+
+                  Model Information
+
+Data Source               WORK._ORACLE_INPUT         
+Response Variable         Y                          
+Class Parameterization    GLM                        
+Distribution              Poisson                    
+Link Function             Log                        
+Optimization Technique    Newton-Raphson with Ridging
+
+
+Number of Observations Read             100
+Number of Observations Used             100
+
+
+  Class Level Information
+ 
+Class    Levels    Values
+
+C1            4    0 1 2 3 
+C2            4    0 1 2 3 
+C3            4    0 1 2 3 
+C4            4    0 1 2 3 
+C5            4    0 1 2 3 
+
+
+           Dimensions
+
+Number of Effects              6
+Number of Parameters          16
+Columns in X                  21
+
+
+              Fit Statistics
+
+-2 Log Likelihood                   290.16
+AIC (smaller is better)             322.16
+AICC (smaller is better)            328.72
+BIC (smaller is better)             363.84
+Pearson Chi-Square                 77.7694
+Pearson Chi-Square/DF               0.9258
+
+
+                            Parameter Estimates
+ 
+                                       Standard
+Parameter    DF        Estimate           Error    Chi-Square    Pr > ChiSq
+
+Intercept     1        0.881903        0.382730        5.3095        0.0212
+C1 0          1       -0.196002        0.211482        0.8590        0.3540
+C1 1          1       -0.605161        0.263508        5.2742        0.0216
+C1 2          1       -0.068458        0.210776        0.1055        0.7453
+C1 3          0               0               .         .             .    
+C2 0          1        0.961117        0.255485       14.1521        0.0002
+C2 1          1        0.708188        0.246768        8.2360        0.0041
+C2 2          1        0.161741        0.266365        0.3687        0.5437
+C2 3          0               0               .         .             .    
+C3 0          1       -0.227016        0.252561        0.8079        0.3687
+C3 1          1       -0.094775        0.229519        0.1705        0.6797
+C3 2          1        0.044801        0.238127        0.0354        0.8508
+C3 3          0               0               .         .             .    
+C4 0          1       -0.280476        0.263589        1.1322        0.2873
+C4 1          1        0.028157        0.249652        0.0127        0.9102
+C4 2          1        0.047803        0.240378        0.0395        0.8424
+C4 3          0               0               .         .             .    
+C5 0          1       -0.817936        0.219901       13.8351        0.0002
+C5 1          1       -0.710596        0.206265       11.8684        0.0006
+C5 2          1       -0.602080        0.217724        7.6471        0.0057
+C5 3          0               0               .         .             .    
+
+         Convergence criterion (GCONV=1E-8) satisfied.          

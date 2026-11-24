@@ -1,0 +1,419 @@
+
+The CALIS Procedure
+Covariance Structure Analysis: Model and Initial Values
+
+     Modeling Information
+ Maximum Likelihood Estimation
+
+Data Set            WORK.SALES 
+N Records Read      14         
+N Records Used      14         
+N Obs               14         
+Model Type          PATH       
+Analysis            Covariances
+
+
+        Variables in the Model
+
+Endogenous    Manifest     q4         
+              Latent                  
+Exogenous     Manifest     q1         
+              Latent                  
+
+  Number of Endogenous Variables = 1
+  Number of Exogenous Variables  = 1
+
+
+        Initial Estimates for PATH List
+ 
+--------Path--------    Parameter      Estimate
+
+q1      ===>    q4      _Parm1                .
+
+
+   Initial Estimates for Variance Parameters
+ 
+Variance
+Type         Variable    Parameter      Estimate
+
+Exogenous    q1          _Add1                 .
+Error        q4          _Add2                 .
+
+NOTE: Parameters with prefix '_Add' are added by PROC CALIS.
+
+The CALIS Procedure
+Covariance Structure Analysis: Descriptive Statistics
+
+         Simple Statistics
+ 
+Variable          Mean       Std Dev
+
+q1             1.36714       0.58163
+q4             3.65500       1.63264
+
+The CALIS Procedure
+Covariance Structure Analysis: Optimization
+
+        Initial Estimation Methods
+
+       1    Observed Moments of Variables
+       2    McDonald Method              
+       3    Two-Stage Least Squares      
+
+
+              Optimization Start
+              Parameter Estimates
+ 
+    N    Parameter      Estimate      Gradient
+
+    1    _Parm1          0.65436    5.0844E-17
+    2    _Add1           0.33830     -4.85E-16
+    3    _Add2           2.52066    -9.458E-18
+
+        Value of Objective Function = 0
+
+The CALIS Procedure
+Covariance Structure Analysis: Optimization
+
+Levenberg-Marquardt Optimization
+
+Scaling Update of More (1978)
+
+Parameter Estimates                    3
+Functions (Observations)               3
+
+                                             Optimization Start
+
+Active Constraints                                  0  Objective Function                                  0
+Max Abs Gradient Element                 4.850417E-16  Radius                                              1
+
+                                            Optimization Results
+
+Iterations                                          0  Function Calls                                      4
+Jacobian Calls                                      1  Active Constraints                                  0
+Objective Function                                  0  Max Abs Gradient Element                 4.850417E-16
+Lambda                                              0  Actual Over Pred Change                             0
+Radius                                              1                                                       
+
+Convergence criterion (ABSGCONV=0.00001) satisfied.                                               
+
+The CALIS Procedure
+Covariance Structure Analysis: Maximum Likelihood Estimation
+
+                           Fit Summary
+
+Modeling Info        Number of Observations                     14
+                     Number of Variables                         2
+                     Number of Moments                           3
+                     Number of Parameters                        3
+                     Number of Active Constraints                0
+                     Baseline Model Function Value          0.0559
+                     Baseline Model Chi-Square              0.7264
+                     Baseline Model Chi-Square DF                1
+                     Pr > Baseline Model Chi-Square         0.3941
+Absolute Index       Fit Function                           0.0000
+                     Chi-Square                             0.0000
+                     Chi-Square DF                               0
+                     Pr > Chi-Square                             .
+                     Z-Test of Wilson & Hilferty                 .
+                     Hoelter Critical N                          .
+                     Root Mean Square Residual (RMR)        0.0000
+                     Standardized RMR (SRMR)                0.0000
+                     Goodness of Fit Index (GFI)            1.0000
+Parsimony Index      Adjusted GFI (AGFI)                         .
+                     Parsimonious GFI                       0.0000
+                     RMSEA Estimate                              .
+                     Probability of Close Fit                    .
+                     ECVI Estimate                          0.6000
+                     ECVI Lower 90% Confidence Limit             .
+                     ECVI Upper 90% Confidence Limit             .
+                     Akaike Information Criterion           6.0000
+                     Bozdogan CAIC                         10.9172
+                     Schwarz Bayesian Criterion             7.9172
+                     McDonald Centrality                    1.0000
+Incremental Index    Bentler Comparative Fit Index               .
+                     Bentler-Bonett NFI                     1.0000
+                     Bentler-Bonett Non-normed Index             .
+                     Bollen Normed Index Rho1                    .
+                     Bollen Non-normed Index Delta2         1.0000
+                     James et al. Parsimonious NFI          0.0000
+
+The CALIS Procedure
+Covariance Structure Analysis: Maximum Likelihood Estimation
+
+                                      PATH List
+ 
+                                                     Standard
+--------Path--------    Parameter      Estimate         Error     t Value    Pr > |t|
+
+q1      ===>    q4      _Parm1          0.65436       0.75707      0.8643      0.3874
+
+
+                                 Variance Parameters
+ 
+Variance                                              Standard
+Type         Variable    Parameter      Estimate         Error     t Value    Pr > |t|
+
+Exogenous    q1          _Add1           0.33830       0.13269      2.5495      0.0108
+Error        q4          _Add2           2.52066       0.98869      2.5495      0.0108
+
+
+         Squared Multiple Correlations
+ 
+                 Error         Total
+Variable      Variance      Variance    R-Square
+
+q4             2.52066       2.66552      0.0543
+
+The CALIS Procedure
+Covariance Structure Analysis: Maximum Likelihood Estimation
+
+                         Standardized Results for PATH List
+ 
+                                                     Standard
+--------Path--------    Parameter      Estimate         Error     t Value    Pr > |t|
+
+q1      ===>    q4      _Parm1          0.23312       0.26228      0.8888      0.3741
+
+
+                     Standardized Results for Variance Parameters
+ 
+Variance                                              Standard
+Type         Variable    Parameter      Estimate         Error     t Value    Pr > |t|
+
+Exogenous    q1          _Add1           1.00000                                      
+Error        q4          _Add2           0.94566       0.12228      7.7333      <.0001
+
+The REG Procedure
+Model: MODEL1
+Dependent Variable: q4 
+
+Number of Observations Read          14
+Number of Observations Used          14
+
+
+                             Analysis of Variance
+ 
+                                    Sum of           Mean
+Source                   DF        Squares         Square    F Value    Pr > F
+
+Model                     1        1.88312        1.88312       0.69    0.4225
+Error                    12       32.76863        2.73072                     
+Corrected Total          13       34.65175                                    
+
+
+Root MSE              1.65249    R-Square     0.0543
+Dependent Mean        3.65500    Adj R-Sq    -0.0245
+Coeff Var            45.21173                       
+
+
+                        Parameter Estimates
+ 
+                     Parameter       Standard
+Variable     DF       Estimate          Error    t Value    Pr > |t|
+
+Intercept     1        2.76040        1.16430       2.37      0.0353
+q1            1        0.65436        0.78798       0.83      0.4225
+
+The CALIS Procedure
+Mean and Covariance Structures: Model and Initial Values
+
+          Modeling Information
+      Maximum Likelihood Estimation
+
+Data Set            WORK.SALES           
+N Records Read      14                   
+N Records Used      14                   
+N Obs               14                   
+Model Type          PATH                 
+Analysis            Means and Covariances
+
+
+        Variables in the Model
+
+Endogenous    Manifest     q4         
+              Latent                  
+Exogenous     Manifest     q1         
+              Latent                  
+
+  Number of Endogenous Variables = 1
+  Number of Exogenous Variables  = 1
+
+
+        Initial Estimates for PATH List
+ 
+--------Path--------    Parameter      Estimate
+
+q1      ===>    q4      _Parm1                .
+
+
+   Initial Estimates for Variance Parameters
+ 
+Variance
+Type         Variable    Parameter      Estimate
+
+Exogenous    q1          _Add1                 .
+Error        q4          _Add2                 .
+
+NOTE: Parameters with prefix '_Add' are added by PROC CALIS.
+
+
+   Initial Estimates for Means and Intercepts
+ 
+Type         Variable    Parameter      Estimate
+
+Intercept    q4          _Add3                 .
+Mean         q1          _Add4                 .
+
+NOTE: Parameters with prefix '_Add' are added by PROC CALIS.
+
+The CALIS Procedure
+Mean and Covariance Structures: Descriptive Statistics
+
+         Simple Statistics
+ 
+Variable          Mean       Std Dev
+
+q1             1.36714       0.58163
+q4             3.65500       1.63264
+
+The CALIS Procedure
+Mean and Covariance Structures: Optimization
+
+        Initial Estimation Methods
+
+       1    Observed Moments of Variables
+       2    McDonald Method              
+       3    Two-Stage Least Squares      
+
+
+              Optimization Start
+              Parameter Estimates
+ 
+    N    Parameter      Estimate      Gradient
+
+    1    _Parm1          0.65436    5.0844E-17
+    2    _Add3           2.76040             0
+    3    _Add4           1.36714             0
+    4    _Add1           0.33830     -4.85E-16
+    5    _Add2           2.52066    -9.458E-18
+
+        Value of Objective Function = 0
+
+The CALIS Procedure
+Mean and Covariance Structures: Optimization
+
+Levenberg-Marquardt Optimization
+
+Scaling Update of More (1978)
+
+Parameter Estimates                    5
+Functions (Observations)               5
+
+                                             Optimization Start
+
+Active Constraints                                  0  Objective Function                                  0
+Max Abs Gradient Element                 4.850417E-16  Radius                                              1
+
+                                            Optimization Results
+
+Iterations                                          0  Function Calls                                      4
+Jacobian Calls                                      1  Active Constraints                                  0
+Objective Function                                  0  Max Abs Gradient Element                 4.850417E-16
+Lambda                                              0  Actual Over Pred Change                             0
+Radius                                              1                                                       
+
+Convergence criterion (ABSGCONV=0.00001) satisfied.                                               
+
+The CALIS Procedure
+Mean and Covariance Structures: Maximum Likelihood Estimation
+
+                           Fit Summary
+
+Modeling Info        Number of Observations                     14
+                     Number of Variables                         2
+                     Number of Moments                           5
+                     Number of Parameters                        5
+                     Number of Active Constraints                0
+                     Baseline Model Function Value          0.0559
+                     Baseline Model Chi-Square              0.7264
+                     Baseline Model Chi-Square DF                1
+                     Pr > Baseline Model Chi-Square         0.3941
+Absolute Index       Fit Function                           0.0000
+                     Chi-Square                             0.0000
+                     Chi-Square DF                               0
+                     Pr > Chi-Square                             .
+                     Z-Test of Wilson & Hilferty                 .
+                     Hoelter Critical N                          .
+                     Root Mean Square Residual (RMR)        0.0000
+                     Standardized RMR (SRMR)                0.0000
+                     Goodness of Fit Index (GFI)            1.0000
+Parsimony Index      Adjusted GFI (AGFI)                         .
+                     Parsimonious GFI                       0.0000
+                     RMSEA Estimate                              .
+                     Probability of Close Fit                    .
+                     Akaike Information Criterion          10.0000
+                     Bozdogan CAIC                         18.1953
+                     Schwarz Bayesian Criterion            13.1953
+                     McDonald Centrality                    1.0000
+Incremental Index    Bentler Comparative Fit Index               .
+                     Bentler-Bonett NFI                     1.0000
+                     Bentler-Bonett Non-normed Index             .
+                     Bollen Normed Index Rho1                    .
+                     Bollen Non-normed Index Delta2         1.0000
+                     James et al. Parsimonious NFI          0.0000
+
+The CALIS Procedure
+Mean and Covariance Structures: Maximum Likelihood Estimation
+
+                                      PATH List
+ 
+                                                     Standard
+--------Path--------    Parameter      Estimate         Error     t Value    Pr > |t|
+
+q1      ===>    q4      _Parm1          0.65436       0.75707      0.8643      0.3874
+
+
+                                 Variance Parameters
+ 
+Variance                                              Standard
+Type         Variable    Parameter      Estimate         Error     t Value    Pr > |t|
+
+Exogenous    q1          _Add1           0.33830       0.13269      2.5495      0.0108
+Error        q4          _Add2           2.52066       0.98869      2.5495      0.0108
+
+
+                                 Means and Intercepts
+ 
+                                                      Standard
+Type         Variable    Parameter      Estimate         Error     t Value    Pr > |t|
+
+Intercept    q4          _Add3           2.76040       1.12480      2.4541      0.0141
+Mean         q1          _Add4           1.36714       0.16132      8.4749      <.0001
+
+
+         Squared Multiple Correlations
+ 
+                 Error         Total
+Variable      Variance      Variance    R-Square
+
+q4             2.52066       2.66552      0.0543
+
+The CALIS Procedure
+Mean and Covariance Structures: Maximum Likelihood Estimation
+
+                         Standardized Results for PATH List
+ 
+                                                     Standard
+--------Path--------    Parameter      Estimate         Error     t Value    Pr > |t|
+
+q1      ===>    q4      _Parm1          0.23312       0.26228      0.8888      0.3741
+
+
+                     Standardized Results for Variance Parameters
+ 
+Variance                                              Standard
+Type         Variable    Parameter      Estimate         Error     t Value    Pr > |t|
+
+Exogenous    q1          _Add1           1.00000                                      
+Error        q4          _Add2           0.94566       0.12228      7.7333      <.0001

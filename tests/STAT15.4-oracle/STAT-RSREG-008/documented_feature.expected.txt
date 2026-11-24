@@ -1,0 +1,94 @@
+
+The RSREG Procedure
+
+Coding Coefficients for the Independent Variables
+ 
+Factor    Subtracted off      Divided by
+
+Time           12.000000        8.000000
+Temp          250.000000       30.000000
+
+
+Response Surface for Variable MBT: Percent Yield Mercaptobenzothiazole
+
+Response Mean                  79.916667
+Root MSE                        4.615964
+R-Square                          0.8003
+Coefficient of Variation          5.7760
+
+
+                            Type I Sum
+Regression          DF      of Squares    R-Square    F Value    Pr > F
+
+Linear               2      313.585803      0.4899       7.36    0.0243
+Quadratic            2      146.768144      0.2293       3.44    0.1009
+Crossproduct         1       51.840000      0.0810       2.43    0.1698
+Total Model          5      512.193947      0.8003       4.81    0.0410
+
+
+                               Sum of
+Residual           DF         Squares     Mean Square    F Value    Pr > F
+
+Lack of Fit         3      124.696053       41.565351      39.63    0.0065
+Pure Error          3        3.146667        1.048889                     
+Total Error         6      127.842720       21.307120                     
+
+
+                                                                             Parameter
+                                                                              Estimate
+                                       Standard                             from Coded
+Parameter    DF        Estimate           Error    t Value    Pr > |t|            Data
+
+Intercept     1     -545.867976      277.145373      -1.97      0.0964       82.173110
+Time          1        6.872863        5.004928       1.37      0.2188       -1.014287
+Temp          1        4.989743        2.165839       2.30      0.0608       -8.676768
+Time*Time     1        0.021631        0.056784       0.38      0.7164        1.384394
+Temp*Time     1       -0.030075        0.019281      -1.56      0.1698       -7.218045
+Temp*Temp     1       -0.009836        0.004304      -2.29      0.0623       -8.852519
+
+
+                       Sum of
+Factor     DF         Squares     Mean Square    F Value    Pr > F    Label
+
+Time        3       61.290957       20.430319       0.96    0.4704    Reaction Time (Hours)           
+Temp        3      461.250925      153.750308       7.22    0.0205    Temperature (Degrees Centigrade)
+
+The RSREG Procedure
+Canonical Analysis of Response Surface Based on Coded Data
+
+                 Critical Value
+Factor           Coded         Uncoded    Label
+
+Time         -0.441758        8.465935    Reaction Time (Hours)           
+Temp         -0.309976      240.700718    Temperature (Degrees Centigrade)
+
+              Predicted value at stationary point: 83.741940
+
+
+                        Eigenvectors
+ Eigenvalues            Time            Temp
+
+    2.528816        0.953223       -0.302267
+   -9.996940        0.302267        0.953223
+
+     Stationary point is a saddle point.
+
+The RSREG Procedure
+
+Estimated Ridge of Maximum Response for Variable MBT: Percent Yield Mercaptobenzothiazole
+ 
+ 
+ Coded       Estimated        Standard        Uncoded Factor Values
+Radius        Response           Error            Time            Temp
+
+   0.0       82.173110        2.665023       12.000000      250.000000
+   0.1       82.952909        2.648671       11.964493      247.002956
+   0.2       83.558260        2.602270       12.142790      244.023941
+   0.3       84.037098        2.533296       12.704153      241.396084
+   0.4       84.470454        2.457836       13.517555      239.435227
+   0.5       84.914099        2.404616       14.370977      237.919138
+   0.6       85.390012        2.410981       15.212247      236.624811
+   0.7       85.906767        2.516619       16.037822      235.449230
+   0.8       86.468277        2.752355       16.850813      234.344204
+   0.9       87.076587        3.130961       17.654321      233.284652
+   1.0       87.732874        3.648568       18.450682      232.256238

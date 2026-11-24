@@ -1,0 +1,64 @@
+
+The Behrens-Fisher Problem
+
+The MCMC Procedure
+
+                  Posterior Summaries and Intervals
+ 
+                                      Standard
+Parameter           N        Mean    Deviation      99% HPD Interval
+
+mu1              1000       134.0       6.4309       117.1       148.6
+mu2              1000       121.5       1.9534       115.7       127.1
+sig21            1000       695.1        249.3       303.0      1586.3
+sig22            1000     52.5390      23.2167     14.3899       132.4
+mudif            1000     12.4444       6.7784     -4.4205     29.6483
+
+The Behrens-Fisher Problem
+
+The FREQ Procedure
+
+         mudif    Frequency     Percent
+---------------------------------------
+mu1 - mu2 <= 0          42        4.20 
+mu1 - mu2 > 0          958       95.80 
+
+Random-Effects Model
+
+The MCMC Procedure
+
+                                     Parameters
+ 
+                       Sampling         Initial
+Block    Parameter     Method             Value    Prior Distribution
+
+    1    s2            Conjugate         1.0000    igamma(0.01, scale = 0.01)      
+    2    s2g           Conjugate         1.0000    igamma(0.01, scale = 0.01)      
+    3    b0            N-Metropolis           0    normal(0, var = 10000)          
+         b1                                   0    normal(0, var = 10000)          
+
+
+                                        Random Effect Parameters
+ 
+             Sampling                    Number of   Subject                     Prior
+Parameter    Method           Subject     Subjects   Values                      Distribution
+
+gamma        N-Metropolis      Family            4   1 2 3 4                     normal(0, var = s2g)    
+
+Random-Effects Model
+
+The MCMC Procedure
+
+                  Posterior Summaries and Intervals
+ 
+                                      Standard
+Parameter           N        Mean    Deviation      95% HPD Interval
+
+b0               1000     68.5363       1.0241     66.4138     70.4441
+b1               1000     -3.4593       1.1106     -5.5167     -1.2047
+s2               1000      4.3275       2.0480      1.2736      8.1721
+s2g              1000      2.7642       5.6271     0.00748      9.9362
+gamma_1          1000      0.8242       1.0046     -0.8167      2.9534
+gamma_2          1000     -0.0445       0.9170     -1.7736      1.9357
+gamma_3          1000     -1.2187       1.2775     -4.2764      0.3806
+gamma_4          1000      0.0990       0.9440     -1.5031      2.0136

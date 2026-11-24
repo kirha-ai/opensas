@@ -1,0 +1,60 @@
+The SAS System
+
+9500       
+9501       /* STAT-KDE-003: KDE — BIVAR / UNIVAR / Computational Overview
+9502        * Source: S154 / Chapter 73 / `BIVAR Statement` (PDF pp. 5394–5398); S154 / Chapter 73 / `UNIVAR Statement` (PDF pp. 5401–5405); S154 / Chapter
+9502     ! 73 / `Computational Overview` (PDF pp. 5405–5406).
+9503        * Discriminates: Getting Started: KDE Procedure; explicit statements: BIVAR
+9504        */
+9505       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+9505     ! validmemname=compatible locale=en_US;
+9506       %let syscc=0;
+9507       title; footnote;
+9508       ods _all_ close;
+9509       ods listing gpath="%sysfunc(pathname(work))";
+9510       ods graphics off;
+9511       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.BIVNORMAL (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+9511     !                                         quit;
+
+
+9512       ods path work.templat(update) sashelp.tmplmst(read);
+9513       
+9514       data bivnormal;
+9515       seed = 1283470;
+9516       do i = 1 to 1000;
+9517       z1 = rannor(seed);
+9518       z2 = rannor(seed);
+9519       z3 = rannor(seed);
+9520       x = 3*z1+z2;
+9521       y = 3*z1+z3;
+9522       output;
+9523       end;
+9524       drop seed;
+9525       run;
+
+NOTE: The data set WORK.BIVNORMAL has 1000 observations and 6 variables.
+
+9526       ods graphics on;
+9527       proc kde data=bivnormal;
+9528       bivar x y / plots=(contour surface);
+9529       run;
+
+NOTE: Processing BIVAR statement number 1.
+NOTE: The PROCEDURE KDE printed page 703.
+
+9530       ods graphics off;
+9531       run;
+9532       quit;
+9533       
+9534       
+9535       
+9536       
+The SAS System
+
+9537       

@@ -1,0 +1,74 @@
+The SAS System
+
+11262      
+11263      /* STAT-QUANTSELECT-003: QUANTSELECT — CLASS / EFFECT / MODEL
+11264       * Source: S154 / Chapter 104 / `CLASS Statement` (PDF pp. 8476–8480); S154 / Chapter 104 / `EFFECT Statement` (PDF pp. 8480–8481); S154 /
+11264    ! Chapter 104 / `MODEL Statement` (PDF pp. 8481–8489).
+11265       * Discriminates: Getting Started: QUANTSELECT Procedure; explicit statements: CLASS, MODEL
+11266       */
+11267      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+11267    ! validmemname=compatible locale=en_US;
+11268      %let syscc=0;
+11269      title; footnote;
+11270      ods _all_ close;
+11271      ods listing gpath="%sysfunc(pathname(work))";
+11272      ods graphics off;
+11273      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+11273    !                                         quit;
+
+
+11274      ods path work.templat(update) sashelp.tmplmst(read);
+11275      
+11276      proc contents varnum data=sashelp.baseball;
+11277      ods select position;
+11278      run;
+
+NOTE: The PROCEDURE CONTENTS printed page 719.
+
+11279      proc quantselect data=sashelp.baseball;
+11280      class Div;
+11281      model Salary = nAtBat nHits nHome nRuns nRBI nBB yrMajor crAtBat
+11282      crHits crHome crRuns crRbi crBB nAssts nError nOuts
+11283      Div
+11284      / selection=lasso(adaptive stop=aic choose=sbc sh=7);
+11285      run;
+
+NOTE: The PROCEDURE QUANTSELECT printed pages 720-722.
+
+11286      proc quantselect data=sashelp.baseball;
+11287      class Div;
+11288      model Salary = nAtBat nHits nHome nRuns nRBI nBB yrMajor crAtBat
+11289      crHits crHome crRuns crRbi crBB nAssts nError nOuts
+11290      Div
+11291      / quantiles=0.1 0.9 selection=lasso(adaptive stop=aic choose=sbc sh=7);
+11292      run;
+
+NOTE: The PROCEDURE QUANTSELECT printed pages 723-727.
+
+11293      ods graphics on;
+11294      proc quantselect data=sashelp.baseball plots=all;
+11295      class Div;
+11296      model Salary = nAtBat nHits nHome nRuns nRBI nBB yrMajor crAtBat
+11297      crHits crHome crRuns crRbi crBB nAssts nError nOuts
+11298      Div
+11299      / quantiles=0.1 selection=lasso(adaptive stop=aic choose=sbc sh=7);
+11300      run;
+
+NOTE: Data label collision avoidance has been disabled because the threshold has been reached. You can set LABELMAX=500 in the ODS GRAPHICS statement to 
+      restore collision avoidance.
+NOTE: The PROCEDURE QUANTSELECT printed pages 728-730.
+
+11301      
+11302      
+11303      
+11304      
+The SAS System
+
+11305      

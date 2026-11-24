@@ -1,0 +1,53 @@
+The SAS System
+
+2811       
+2812       /* STAT-MI-013: MI — Output Data Sets
+2813        * Source: S154 / Chapter 82 / `Output Data Sets` (PDF pp. 6477–6479).
+2814        * Discriminates: Verified default procedure context
+2815        */
+2816       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+2816     ! validmemname=compatible locale=en_US;
+2817       %let syscc=0;
+2818       title; footnote;
+2819       ods _all_ close;
+2820       ods listing gpath="%sysfunc(pathname(work))";
+2821       ods graphics off;
+2822       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.FITNESS1 (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+2822     !                                         quit;
+
+
+2823       ods path work.templat(update) sashelp.tmplmst(read);
+2824       
+2825       data Fitness1;
+2826       input Oxygen RunTime RunPulse @@;
+2827       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.FITNESS1 has 31 observations and 3 variables.
+
+2844       ;
+2845       run;
+2846       proc mi data=Fitness1 seed=1518971 simple nimpute=0;
+2847       em itprint outem=outem;
+2848       var Oxygen RunTime RunPulse;
+2849       run;
+
+NOTE: The EM algorithm (MLE) converges in 12 iterations.
+NOTE: The data set WORK.OUTEM has 4 observations and 5 variables.
+NOTE: The PROCEDURE MI printed page 261.
+
+2850       
+2851       
+2852       
+2853       
+The SAS System
+
+2854       

@@ -1,0 +1,233 @@
+
+The GLIMMIX Procedure
+
+                    Model Information
+
+Data Set                     WORK.SPLINE                  
+Response Variable            y                            
+Response Distribution        Gaussian                     
+Link Function                Identity                     
+Variance Function            Default                      
+Variance Matrix              Diagonal                     
+Estimation Technique         Restricted Maximum Likelihood
+Degrees of Freedom Method    Residual                     
+
+
+ Class Level Information
+ 
+Class    Levels    Values
+
+group         2    1 2   
+
+
+Number of Observations Read         100
+Number of Observations Used         100
+
+
+           Dimensions
+
+Covariance Parameters          1
+Columns in X                  16
+Columns in Z                   0
+Subjects (Blocks in V)         1
+Max Obs per Subject          100
+
+
+       Optimization Information
+
+Optimization Technique    None        
+Parameters                15          
+Lower Boundaries          1           
+Upper Boundaries          0           
+Fixed Effects             Not Profiled
+
+
+           Fit Statistics
+
+-2 Res Log Likelihood          11.65
+AIC  (smaller is better)       41.65
+AICC (smaller is better)       48.51
+BIC  (smaller is better)       78.47
+CAIC (smaller is better)       93.47
+HQIC (smaller is better)       56.47
+Pearson Chi-Square              6.32
+Pearson Chi-Square / DF         0.07
+
+
+                               Parameter Estimates
+ 
+                                         Standard
+Effect       spl    group    Estimate       Error       DF    t Value    Pr > |t|
+
+group               1          9.7027      3.1342       86       3.10      0.0026
+group               2          6.3062      2.6299       86       2.40      0.0187
+spl*group    1      1        -11.1786      3.7008       86      -3.02      0.0033
+spl*group    1      2        -20.1946      3.9765       86      -5.08      <.0001
+spl*group    2      1         -9.5327      3.2576       86      -2.93      0.0044
+spl*group    2      2         -5.8565      2.7906       86      -2.10      0.0388
+spl*group    3      1         -8.9612      3.0718       86      -2.92      0.0045
+spl*group    3      2         -5.5567      2.5717       86      -2.16      0.0335
+spl*group    4      1         -7.2615      3.2437       86      -2.24      0.0278
+spl*group    4      2         -4.3678      2.7247       86      -1.60      0.1126
+spl*group    5      1         -6.4462      2.9617       86      -2.18      0.0323
+spl*group    5      2         -4.0380      2.4589       86      -1.64      0.1042
+spl*group    6      1         -4.6382      3.7095       86      -1.25      0.2146
+spl*group    6      2         -4.3029      3.0479       86      -1.41      0.1616
+spl*group    7      1               0           .        .        .         .    
+spl*group    7      2               0           .        .        .         .    
+Scale                         0.07352     0.01121        .        .         .    
+
+
+        Type III Tests of Fixed Effects
+ 
+              Num      Den
+Effect         DF       DF    F Value    Pr > F
+
+group           2       86      14.95    <.0001
+spl*group      12       86     156.62    <.0001
+
+The GLIMMIX Procedure
+
+                    Model Information
+
+Data Set                     WORK.SPLINE                  
+Response Variable            y                            
+Response Distribution        Gaussian                     
+Link Function                Identity                     
+Variance Function            Default                      
+Variance Matrix              Diagonal                     
+Estimation Technique         Restricted Maximum Likelihood
+Degrees of Freedom Method    Residual                     
+
+
+ Class Level Information
+ 
+Class    Levels    Values
+
+group         2    1 2   
+
+
+Number of Observations Read         100
+Number of Observations Used         100
+
+
+           Dimensions
+
+Covariance Parameters          1
+Columns in X                  16
+Columns in Z                   0
+Subjects (Blocks in V)         1
+Max Obs per Subject          100
+
+
+       Optimization Information
+
+Optimization Technique    None        
+Parameters                15          
+Lower Boundaries          1           
+Upper Boundaries          0           
+Fixed Effects             Not Profiled
+
+
+           Fit Statistics
+
+-2 Res Log Likelihood          11.65
+AIC  (smaller is better)       41.65
+AICC (smaller is better)       48.51
+BIC  (smaller is better)       78.47
+CAIC (smaller is better)       93.47
+HQIC (smaller is better)       56.47
+Pearson Chi-Square              6.32
+Pearson Chi-Square / DF         0.07
+
+
+                               Parameter Estimates
+ 
+                                         Standard
+Effect       spl    group    Estimate       Error       DF    t Value    Pr > |t|
+
+group               1          9.7027      3.1342       86       3.10      0.0026
+group               2          6.3062      2.6299       86       2.40      0.0187
+spl*group    1      1        -11.1786      3.7008       86      -3.02      0.0033
+spl*group    1      2        -20.1946      3.9765       86      -5.08      <.0001
+spl*group    2      1         -9.5327      3.2576       86      -2.93      0.0044
+spl*group    2      2         -5.8565      2.7906       86      -2.10      0.0388
+spl*group    3      1         -8.9612      3.0718       86      -2.92      0.0045
+spl*group    3      2         -5.5567      2.5717       86      -2.16      0.0335
+spl*group    4      1         -7.2615      3.2437       86      -2.24      0.0278
+spl*group    4      2         -4.3678      2.7247       86      -1.60      0.1126
+spl*group    5      1         -6.4462      2.9617       86      -2.18      0.0323
+spl*group    5      2         -4.0380      2.4589       86      -1.64      0.1042
+spl*group    6      1         -4.6382      3.7095       86      -1.25      0.2146
+spl*group    6      2         -4.3029      3.0479       86      -1.41      0.1616
+spl*group    7      1               0           .        .        .         .    
+spl*group    7      2               0           .        .        .         .    
+Scale                         0.07352     0.01121        .        .         .    
+
+
+        Type III Tests of Fixed Effects
+ 
+              Num      Den
+Effect         DF       DF    F Value    Pr > F
+
+group           2       86      14.95    <.0001
+spl*group      12       86     156.62    <.0001
+
+
+     Coefficients for Estimate
+           Group 1, x=20
+ 
+Effect       spl    group      Row1
+
+group               1             1
+group               2              
+spl*group    1      1        0.0021
+spl*group    1      2              
+spl*group    2      1        0.3035
+spl*group    2      2              
+spl*group    3      1         0.619
+spl*group    3      2              
+spl*group    4      1        0.0754
+spl*group    4      2              
+spl*group    5      1              
+spl*group    5      2              
+spl*group    6      1              
+spl*group    6      2              
+spl*group    7      1              
+spl*group    7      2              
+
+
+                              Estimates
+ 
+                             Standard
+Label            Estimate       Error       DF    t Value    Pr > |t|
+
+Group 1, x=20      0.6915     0.09546       86       7.24      <.0001
+Group 2, x=20      0.7175     0.07953       86       9.02      <.0001
+Diff at x=20     -0.02602      0.1243       86      -0.21      0.8346
+
+The GLIMMIX Procedure
+
+                                  Estimates
+                 Adjustment for Multiplicity: Holm-Simulated
+ 
+                            Standard
+Label           Estimate       Error       DF    t Value    Pr > |t|     Adj P
+
+Diff at x= 0      1.8809      0.3640       86       5.17      <.0001    <.0001
+Diff at x= 5      1.0376      0.1759       86       5.90      <.0001    <.0001
+Diff at x=10      0.3778      0.1540       86       2.45      0.0162    0.0551
+Diff at x=15     0.05822      0.1481       86       0.39      0.6952    0.9102
+Diff at x=20    -0.02602      0.1243       86      -0.21      0.8346    0.9557
+Diff at x=25     0.02014      0.1312       86       0.15      0.8783    0.9557
+Diff at x=30      0.1023      0.1378       86       0.74      0.4600    0.7426
+Diff at x=35      0.1924      0.1236       86       1.56      0.1231    0.2965
+Diff at x=40      0.2883      0.1114       86       2.59      0.0113    0.0453
+Diff at x=45      0.3877      0.1195       86       3.24      0.0017    0.0085
+Diff at x=50      0.4885      0.1308       86       3.74      0.0003    0.0025
+Diff at x=55      0.5903      0.1231       86       4.79      <.0001    <.0001
+Diff at x=60      0.7031      0.1125       86       6.25      <.0001    <.0001
+Diff at x=65      0.8401      0.1203       86       6.99      <.0001    <.0001
+Diff at x=70      1.0147      0.1348       86       7.52      <.0001    <.0001
+Diff at x=75      1.2400      0.1326       86       9.35      <.0001    <.0001
+Diff at x=80      1.5237      0.1281       86      11.89      <.0001    <.0001

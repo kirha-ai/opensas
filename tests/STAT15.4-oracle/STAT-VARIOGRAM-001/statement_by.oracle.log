@@ -1,0 +1,96 @@
+The SAS System
+
+30051      
+30052      /* STAT-VARIOGRAM-001: VARIOGRAM — Data input, variable roles, and basic options
+30053       * Source: S154 / Chapter 131 / `PROC VARIOGRAM Statement` (PDF pp. 10768–10775); S154 / Chapter 131 / `BY Statement` (PDF pp. 10775–10776); S154
+30053    !  / Chapter 131 / `ID Statement` (PDF p. 10782); S154 / Chapter 131 / `VAR Statement` (PDF pp. 10799–10800).
+30054       * Discriminates: Two explicit BY groups contain identical inputs, exposing group boundaries and per-group results.
+30055       */
+30056      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+30056    ! validmemname=compatible locale=en_US;
+30057      %let syscc=0;
+30058      title; footnote;
+30059      ods _all_ close;
+30060      ods listing gpath="%sysfunc(pathname(work))";
+30061      ods graphics off;
+30062      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.OUTV (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.SEMIVSTOREGAU (memtype=ITEMSTOR).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+30062    !                                         quit;
+
+
+30063      ods path work.templat(update) sashelp.tmplmst(read);
+30064      
+30065      title 'Spatial Correlation Analysis with PROC VARIOGRAM';
+30066      ods graphics on;
+30067      data _oracle_input; set sashelp.thick; do _oracle_by=1 to 2; output; end; run;
+
+NOTE: There were 75 observations read from the data set SASHELP.THICK.
+NOTE: The data set WORK._ORACLE_INPUT has 150 observations and 4 variables.
+
+30068      proc sort data=_oracle_input; by _oracle_by; run;
+
+NOTE: There were 150 observations read from the data set WORK._ORACLE_INPUT.
+NOTE: The data set WORK._ORACLE_INPUT has 150 observations and 4 variables.
+
+30069      proc variogram data=_oracle_input plots=pairs(thr=30);
+30070      by _oracle_by;
+30071      compute novariogram nhc=20;
+30072      coordinates xc=East yc=North;
+30073      var Thick;
+30074      run;
+
+NOTE: The PROCEDURE VARIOGRAM printed pages 1824-1825.
+
+30075      proc variogram data=sashelp.thick outv=outv;
+30076      compute lagd=7 maxlag=10 cl robust;
+30077      coordinates xc=East yc=North;
+30078      var Thick;
+30079      run;
+
+NOTE: No DIRECTIONS statement and no NDIRECTIONS=, or NDIRECTIONS=0 specified: Computing omnidirectional semivariogram.
+NOTE: The data set WORK.OUTV has 12 observations and 9 variables.
+NOTE: The PROCEDURE VARIOGRAM printed pages 1826-1827.
+
+30080      proc variogram data=sashelp.thick outv=outv plots(only)=moran;
+30081      compute lagd=7 maxlag=10 autocorr(assum=random);
+30082      coordinates xc=East yc=North;
+30083      var Thick;
+30084      run;
+
+NOTE: No DIRECTIONS statement and no NDIRECTIONS=, or NDIRECTIONS=0 specified: Computing omnidirectional semivariogram.
+NOTE: The autocorrelation statistics exclude 33 observation(s) that have no neighbors within the specified LAGDISTANCE= distance.
+NOTE: The Moran scatter plot excludes 33 observation(s) because they have no neighbors within the specified LAGDISTANCE= distance.
+NOTE: The data set WORK.OUTV has 12 observations and 8 variables.
+NOTE: The PROCEDURE VARIOGRAM printed pages 1828-1829.
+
+30085      proc variogram data=sashelp.thick outv=outv;
+30086      store out=SemivStoreGau / label='Thickness Gaussian WLS Fit';
+30087      compute lagd=7 maxlag=10;
+30088      coordinates xc=East yc=North;
+30089      model form=gau cl / covb;
+30090      var Thick;
+30091      run;
+
+NOTE: No DIRECTIONS statement and no NDIRECTIONS=, or NDIRECTIONS=0 specified: Computing omnidirectional semivariogram.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The data set WORK.OUTV has 12 observations and 8 variables.
+NOTE: The PROCEDURE VARIOGRAM printed pages 1830-1833.
+
+30092      ods graphics off;
+30093      
+30094      run; quit;
+30095      
+30096      
+30097      
+30098      
+The SAS System
+
+30099      

@@ -1,0 +1,85 @@
+The SAS System
+
+10311      
+10312      /* STAT-CALIS-027: CALIS — Latent Variable Scores
+10313       * Source: S154 / Chapter 33 / `Latent Variable Scores` (PDF pp. 1793–1796).
+10314       * Discriminates: Example 33.25: Fitting a Latent Growth Curve Model
+10315       */
+10316      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+10316    ! validmemname=compatible locale=en_US;
+10317      %let syscc=0;
+10318      title; footnote;
+10319      ods _all_ close;
+10320      ods listing gpath="%sysfunc(pathname(work))";
+10321      ods graphics off;
+
+
+10322      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.MARDIA (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+10322    !                                         quit;
+
+
+10323      ods path work.templat(update) sashelp.tmplmst(read);
+10324      
+10325      data growth;
+10326      input y1 y2 y3 y4 y5;
+10327      datalines;
+
+NOTE: The data set WORK.GROWTH has 16 observations and 5 variables.
+
+10344      ;
+10345      proc calis method=ml data=growth nostand noparmname;
+10346      lineqs
+10347      y1 = 0. * Intercept + f_alpha + e1,
+10348      y2 = 0. * Intercept + f_alpha + 1 * f_beta + e2,
+10349      y3 = 0. * Intercept + f_alpha + 2 * f_beta + e3,
+10350      y4 = 0. * Intercept + f_alpha + 3 * f_beta + e4,
+10351      y5 = 0. * Intercept + f_alpha + 4 * f_beta + e5;
+10352      variance
+10353      f_alpha f_beta,
+10354      e1-e5 = 5 * evar;
+10355      mean
+10356      f_alpha f_beta;
+10357      cov
+10358      f_alpha f_beta;
+10359      fitindex on(only)=[chisq df probchi];
+10360      run;
+
+NOTE: Convergence criterion (ABSGCONV=0.00001) satisfied.
+NOTE: The PROCEDURE CALIS printed pages 1363-1368.
+
+10361      proc calis method=ml data=growth nostand noparmname;
+10362      lineqs
+10363      y1 = 0. * Intercept + f_alpha + e1,
+10364      y2 = 0. * Intercept + f_alpha + 1 * f_beta + e2,
+10365      y3 = 0. * Intercept + f_alpha + 2 * f_beta + e3,
+10366      y4 = 0. * Intercept + f_alpha + 3 * f_beta + e4,
+10367      y5 = 0. * Intercept + f_alpha + 4 * f_beta + e5;
+10368      variance
+10369      f_alpha f_beta,
+10370      e1-e5;
+10371      mean
+10372      f_alpha f_beta;
+10373      cov
+10374      f_alpha f_beta;
+10375      fitindex on(only)=[chisq df probchi];
+10376      run;
+
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The PROCEDURE CALIS printed pages 1369-1374.
+
+10377      
+10378      
+10379      
+10380      
+The SAS System
+
+10381      

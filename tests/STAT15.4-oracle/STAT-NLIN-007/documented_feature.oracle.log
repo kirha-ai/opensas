@@ -1,0 +1,53 @@
+The SAS System
+
+5792       
+5793       /* STAT-NLIN-007: NLIN — Incompatibilities with SAS 6.11 and Earlier Versions of PROC NLIN
+5794        * Source: S154 / Chapter 88 / `Incompatibilities with SAS 6.11 and Earlier Versions of PROC NLIN` (PDF pp. 7038–7039).
+5795        * Discriminates: Getting Started: NLIN Procedure
+5796        */
+5797       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+5797     ! validmemname=compatible locale=en_US;
+5798       %let syscc=0;
+5799       title; footnote;
+5800       ods _all_ close;
+5801       ods listing gpath="%sysfunc(pathname(work))";
+5802       ods graphics off;
+5803       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.ENZYME (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+5803     !                                         quit;
+
+
+5804       ods path work.templat(update) sashelp.tmplmst(read);
+5805       
+5806       data Enzyme;
+5807       input Concentration Velocity @@;
+5808       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.ENZYME has 14 observations and 2 variables.
+
+5816       ;
+5817       proc nlin data=Enzyme method=marquardt hougaard;
+5818       parms theta1=155
+5819       theta2=0 to 0.07 by 0.01;
+5820       model Velocity = theta1*Concentration / (theta2 + Concentration);
+5821       run;
+
+NOTE: DER.theta1 not initialized or missing. It will be computed automatically.
+NOTE: DER.theta2 not initialized or missing. It will be computed automatically.
+NOTE: Convergence criterion met.
+NOTE: The PROCEDURE NLIN printed pages 388-389.
+
+5822       
+5823       
+5824       
+5825       
+The SAS System
+
+5826       

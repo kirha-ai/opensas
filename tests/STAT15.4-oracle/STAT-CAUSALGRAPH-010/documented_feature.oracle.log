@@ -1,0 +1,53 @@
+The SAS System
+
+13217      
+13218      /* STAT-CAUSALGRAPH-010: CAUSALGRAPH — Official examples and feature integration regression
+13219       * Source: S154 / Chapter 37 / `Examples: CAUSALGRAPH Procedure` (PDF pp. 2332–2359).
+13220       * Discriminates: Example 37.2: Searching Efficiently for an Adjustment Set
+13221       */
+13222      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+13222    ! validmemname=compatible locale=en_US;
+13223      %let syscc=0;
+13224      title; footnote;
+13225      ods _all_ close;
+13226      ods listing gpath="%sysfunc(pathname(work))";
+13227      ods graphics off;
+13228      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+13228    !                                         quit;
+
+
+13229      ods path work.templat(update) sashelp.tmplmst(read);
+13230      
+13231      proc causalgraph method=adjustment maxlist=1 nosort;
+13232      model "Timm17HealthBehavior"
+13233      Age ==> Parity PFAS Education,
+13234      Parity ==> PrevBF Duration PFAS,
+13235      PrevBF ==> PFAS Duration,
+13236      PFAS ==> Duration,
+13237      Education ==> Duration HealthBehavior Employment,
+13238      HealthBehavior ==> PFAS Duration BMI Alcohol Smoking,
+13239      Employment ==> HealthBehavior Duration,
+13240      BMI Alcohol Smoking ==> Duration;
+13241      identify PFAS ==> Duration;
+13242      unmeasured PrevBF HealthBehavior;
+13243      run;
+
+NOTE: The PROCEDURE CAUSALGRAPH printed pages 1800-1801.
+
+13244      
+13245      run; quit;
+13246      
+13247      
+13248      
+13249      
+The SAS System
+
+13250      

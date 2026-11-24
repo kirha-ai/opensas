@@ -1,0 +1,422 @@
+
+The FMM Procedure
+
+               Model Information
+
+Data Set                      WORK.OSSI         
+Response Variable (Events)    y                 
+Response Variable (Trials)    m                 
+Type of Model                 Binomial Cluster  
+Distribution                  Binomial Cluster  
+Components                    2                 
+Link Function                 Logit             
+Estimation Method             Maximum Likelihood
+Random Number Seed            314159            
+
+
+ Class Level Information
+ 
+Class    Levels    Values
+
+pht           2    0 60  
+tcpo          2    0 100 
+
+
+Number of Observations Read          81
+Number of Observations Used          81
+Number of Events                    287
+Number of Trials                    585
+
+
+           Optimization Information
+
+Optimization Technique        Dual Quasi-Newton
+Parameters in Optimization    5                
+Mean Function Parameters      1                
+Scale Parameters              0                
+Mixing Prob Parameters        4                
+Number of Threads             2                
+
+
+                          Iteration History
+ 
+                               Objective                         Max
+Iteration    Evaluations        Function          Change    Gradient
+
+        0              5     174.9272389                    43.78769
+        1              2     154.1318074     20.79543149    11.23460
+        2              3     153.2669361      0.86487133    6.888215
+        3              2     152.8497428      0.41719329    3.541977
+        4              3     152.6175603      0.23218248    2.783556
+        5              3     152.5479530      0.06960730    1.146807
+        6              3     152.5268493      0.02110374    0.034367
+        7              3     152.5267121      0.00013715    0.011511
+        8              3     152.5267080      0.00000415    0.000202
+        9              3     152.5267080      0.00000000    4.001E-6
+
+         Convergence criterion (GCONV=1E-8) satisfied.          
+
+
+           Fit Statistics
+
+-2 Log Likelihood              305.1
+AIC  (Smaller is Better)       315.1
+AICC (Smaller is Better)       315.9
+BIC  (Smaller is Better)       327.0
+Pearson Statistic            89.2077
+Effective Parameters               5
+Effective Components               2
+
+
+                   Parameter Estimates for Binomial Cluster Model
+ 
+                                                                             Inverse
+                                         Standard                             Linked
+   Component    Effect       Estimate       Error    z Value    Pr > |z|    Estimate
+
+           1    Intercept      0.3356      0.1714       1.96      0.0503      0.5831
+
+
+                    Parameter Estimates for Mixing Probabilities
+ 
+                                                     Standard
+Component    Effect       pht    tcpo    Estimate       Error    z Value    Pr > |z|
+
+        1    Intercept                    -1.2194      0.4690      -2.60      0.0093
+        1    pht           0               0.9129      0.5608       1.63      0.1036
+        1    pht          60                    0           .        .         .    
+        1    tcpo                  0       0.3295      0.5534       0.60      0.5516
+        1    tcpo                100            0           .        .         .    
+        1    pht*tcpo      0       0       0.6162      0.6678       0.92      0.3561
+        1    pht*tcpo      0     100            0           .        .         .    
+        1    pht*tcpo     60       0            0           .        .         .    
+        1    pht*tcpo     60     100            0           .        .         .    
+
+The FMM Procedure
+
+               Model Information
+
+Data Set                      WORK.OSSI         
+Response Variable (Events)    y                 
+Response Variable (Trials)    m                 
+Type of Model                 Binomial Cluster  
+Distribution                  Binomial Cluster  
+Components                    2                 
+Link Function                 Logit             
+Estimation Method             Maximum Likelihood
+Random Number Seed            314159            
+
+
+ Class Level Information
+ 
+Class    Levels    Values
+
+pht           2    0 60  
+tcpo          2    0 100 
+
+
+Number of Observations Read          81
+Number of Observations Used          81
+Number of Events                    287
+Number of Trials                    585
+
+
+           Optimization Information
+
+Optimization Technique        Dual Quasi-Newton
+Parameters in Optimization    8                
+Mean Function Parameters      4                
+Scale Parameters              0                
+Mixing Prob Parameters        4                
+Number of Threads             2                
+
+
+                          Iteration History
+ 
+                               Objective                         Max
+Iteration    Evaluations        Function          Change    Gradient
+
+        0              5     187.5827358                    57.58128
+        1              2     156.6900003     30.89273549    12.24552
+        2              3     153.4045067      3.28549358    9.171750
+        3              2     152.0337594      1.37074731    14.37536
+        4              4     148.2193119      3.81444748    9.054566
+        5              3     145.6556803      2.56363160    5.812120
+        6              3     145.0079398      0.64774049    4.209341
+        7              2     144.3206298      0.68730999    2.752344
+        8              3     144.0233250      0.29730483    1.374278
+        9              3     143.9296060      0.09371901    0.656500
+       10              3     143.9089972      0.02060881    0.216635
+       11              3     143.9084211      0.00057606    0.030935
+       12              3     143.9083976      0.00002354    0.010353
+       13              3     143.9083857      0.00001187    0.001570
+       14              3     143.9083855      0.00000017    0.000076
+
+         Convergence criterion (GCONV=1E-8) satisfied.          
+
+
+           Fit Statistics
+
+-2 Log Likelihood              287.8
+AIC  (Smaller is Better)       303.8
+AICC (Smaller is Better)       305.8
+BIC  (Smaller is Better)       323.0
+Pearson Statistic            85.5998
+Effective Parameters               8
+Effective Components               2
+
+
+                     Parameter Estimates for Binomial Cluster Model
+ 
+                                                        Standard
+   Component    Effect       pht    tcpo    Estimate       Error    z Value    Pr > |z|
+
+           1    Intercept                     1.8213      0.5889       3.09      0.0020
+           1    pht           0              -1.4962      0.6630      -2.26      0.0240
+           1    pht          60                    0           .        .         .    
+           1    tcpo                  0      -3.1828      1.1261      -2.83      0.0047
+           1    tcpo                100            0           .        .         .    
+           1    pht*tcpo      0       0       3.3736      1.1953       2.82      0.0048
+           1    pht*tcpo      0     100            0           .        .         .    
+           1    pht*tcpo     60       0            0           .        .         .    
+           1    pht*tcpo     60     100            0           .        .         .    
+
+
+                    Parameter Estimates for Mixing Probabilities
+ 
+                                                     Standard
+Component    Effect       pht    tcpo    Estimate       Error    z Value    Pr > |z|
+
+        1    Intercept                    -0.7394      0.5395      -1.37      0.1705
+        1    pht           0               0.4351      0.6203       0.70      0.4830
+        1    pht          60                    0           .        .         .    
+        1    tcpo                  0      -0.5342      0.5893      -0.91      0.3646
+        1    tcpo                100            0           .        .         .    
+        1    pht*tcpo      0       0       1.4055      0.7080       1.99      0.0471
+        1    pht*tcpo      0     100            0           .        .         .    
+        1    pht*tcpo     60       0            0           .        .         .    
+        1    pht*tcpo     60     100            0           .        .         .    
+
+The FMM Procedure
+
+               Model Information
+
+Data Set                      WORK.OSSI         
+Response Variable (Events)    y                 
+Response Variable (Trials)    m                 
+Type of Model                 Binomial Cluster  
+Distribution                  Binomial Cluster  
+Components                    2                 
+Link Function                 Logit             
+Estimation Method             Maximum Likelihood
+Random Number Seed            314159            
+
+
+Number of Observations Read          81
+Number of Observations Used          81
+Number of Events                    287
+Number of Trials                    585
+
+
+           Optimization Information
+
+Optimization Technique        Dual Quasi-Newton
+Parameters in Optimization    8                
+Mean Function Parameters      4                
+Scale Parameters              0                
+Mixing Prob Parameters        4                
+Number of Threads             2                
+
+
+                          Iteration History
+ 
+                               Objective                         Max
+Iteration    Evaluations        Function          Change    Gradient
+
+        0              5     187.5827358                    57.58128
+        1              2     156.9841625     30.59857331    16.05703
+        2              3     146.8948461     10.08931639    10.51326
+        3              3     145.2399706      1.65487553    5.564191
+        4              3     144.2816767      0.95829383    3.007815
+        5              3     144.0980577      0.18361902    1.735230
+        6              3     144.0096788      0.08837894    1.213845
+        7              3     143.9737568      0.03592194    1.094145
+        8              2     143.9188789      0.05487794    0.337237
+        9              3     143.9094686      0.00941032    0.145882
+       10              3     143.9084097      0.00105891    0.011272
+       11              3     143.9083861      0.00002353    0.004596
+       12              3     143.9083856      0.00000056    0.000635
+
+         Convergence criterion (GCONV=1E-8) satisfied.          
+
+
+           Fit Statistics
+
+-2 Log Likelihood              287.8
+AIC  (Smaller is Better)       303.8
+AICC (Smaller is Better)       305.8
+BIC  (Smaller is Better)       323.0
+Pearson Statistic            85.5999
+Effective Parameters               8
+Effective Components               2
+
+
+             Parameter Estimates for Binomial Cluster Model
+ 
+                                         Standard
+   Component    Effect       Estimate       Error    z Value    Pr > |z|
+
+           1    Intercept      0.5159      0.2603       1.98      0.0475
+           1    x1            -0.1908      0.4006      -0.48      0.6339
+           1    x2            -1.8774      0.9946      -1.89      0.0591
+           1    x3             3.3736      1.1953       2.82      0.0048
+
+
+             Parameter Estimates for Mixing Probabilities
+ 
+                                      Standard
+Component    Effect       Estimate       Error    z Value    Pr > |z|
+
+        1    Intercept      0.5669      0.2455       2.31      0.0209
+        1    x1            -0.8712      0.3924      -2.22      0.0264
+        1    x2            -1.8405      0.3413      -5.39      <.0001
+        1    x3             1.4055      0.7080       1.99      0.0471
+
+The FMM Procedure
+
+                  Model Information
+
+Data Set                      WORK.OSSI               
+Response Variable (Events)    y                       
+Response Variable (Trials)    m                       
+Type of Model                 Generalized Linear (GLM)
+Distribution                  Binomial                
+Components                    1                       
+Link Function                 Logit                   
+Estimation Method             Maximum Likelihood      
+Random Number Seed            314159                  
+
+
+Number of Observations Read          81
+Number of Observations Used          81
+Number of Events                    287
+Number of Trials                    585
+
+
+           Optimization Information
+
+Optimization Technique        Dual Quasi-Newton
+Parameters in Optimization    4                
+Mean Function Parameters      4                
+Scale Parameters              0                
+Number of Threads             2                
+
+
+                          Iteration History
+ 
+                               Objective                         Max
+Iteration    Evaluations        Function          Change    Gradient
+
+        0              5     202.2299290                    11.41134
+        1              3     201.5239650      0.70596399    5.877473
+        2              3     200.9289507      0.59501439    1.890430
+        3              4     200.8932248      0.03572585    0.562294
+        4              4     200.8927861      0.00043869    0.450500
+        5              4     200.8913940      0.00139210    0.002927
+        6              3     200.8913938      0.00000020    0.000077
+
+         Convergence criterion (GCONV=1E-8) satisfied.          
+
+
+           Fit Statistics
+
+-2 Log Likelihood              401.8
+AIC  (Smaller is Better)       409.8
+AICC (Smaller is Better)       410.3
+BIC  (Smaller is Better)       419.4
+Pearson Statistic              252.1
+
+
+         Parameter Estimates for Binomial Model
+ 
+                         Standard
+Effect       Estimate       Error    z Value    Pr > |z|
+
+Intercept      0.8323      0.1365       6.10      <.0001
+x1            -0.8481      0.2239      -3.79      0.0002
+x2            -2.1094      0.2505      -8.42      <.0001
+x3             1.0453      0.4107       2.55      0.0109
+
+The FMM Procedure
+
+                     Model Information
+
+Data Set                      WORK.OSSI                     
+Response Variable (Events)    y                             
+Response Variable (Trials)    m                             
+Type of Model                 Homogeneous Regression Mixture
+Distribution                  Beta-Binomial                 
+Components                    1                             
+Link Function                 Logit                         
+Estimation Method             Maximum Likelihood            
+Random Number Seed            314159                        
+
+
+Number of Observations Read          81
+Number of Observations Used          81
+Number of Events                    287
+Number of Trials                    585
+
+
+           Optimization Information
+
+Optimization Technique        Dual Quasi-Newton
+Parameters in Optimization    5                
+Mean Function Parameters      4                
+Scale Parameters              1                
+Lower Boundaries              1                
+Upper Boundaries              0                
+Number of Threads             2                
+
+
+                          Iteration History
+ 
+                               Objective                         Max
+Iteration    Evaluations        Function          Change    Gradient
+
+        0              5     167.4708254                    4.854194
+        1              3     167.0079173      0.46290810    4.065708
+        2              3     166.6086495      0.39926779    2.838076
+        3              3     166.4421021      0.16654735    1.934994
+        4              4     164.5510384      1.89106373    11.00152
+        5             13     155.9172086      8.63382979    8.631319
+        6              3     155.0456812      0.87152740    5.158239
+        7              2     153.5357337      1.50994747    1.380980
+        8              6     153.2931572      0.24257651    0.536137
+        9              3     153.2880426      0.00511458    0.084527
+       10              3     153.2875665      0.00047618    0.013780
+       11              3     153.2875596      0.00000685    0.001117
+       12              3     153.2875596      0.00000003    0.000192
+
+         Convergence criterion (GCONV=1E-8) satisfied.          
+
+
+           Fit Statistics
+
+-2 Log Likelihood              306.6
+AIC  (Smaller is Better)       316.6
+AICC (Smaller is Better)       317.4
+BIC  (Smaller is Better)       328.5
+Pearson Statistic            87.5379
+
+
+         Parameter Estimates for Beta-Binomial Model
+ 
+                               Standard
+Effect             Estimate       Error    z Value    Pr > |z|
+
+Intercept            0.7043      0.2341       3.01      0.0026
+x1                  -0.7822      0.4017      -1.95      0.0515
+x2                  -1.6917      0.4018      -4.21      <.0001
+x3                   0.6770      0.6902       0.98      0.3267
+Scale Parameter      1.9642      0.4758                       

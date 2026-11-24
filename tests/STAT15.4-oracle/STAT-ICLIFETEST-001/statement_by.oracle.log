@@ -1,0 +1,113 @@
+The SAS System
+
+6976       
+6977       /* STAT-ICLIFETEST-001: ICLIFETEST — Data input, variable roles, and basic options
+6978        * Source: S154 / Chapter 69 / `PROC ICLIFETEST Statement` (PDF pp. 5157–5164); S154 / Chapter 69 / `BY Statement` (PDF pp. 5164–5165); S154 /
+6978     ! Chapter 69 / `FREQ Statement` (PDF p. 5165); S154 / Chapter 69 / `STRATA Statement` (PDF pp. 5165–5166); S154 / Chapter 69 / `Missing Values` (PDF
+6978     ! p. 5184).
+6979        * Discriminates: Two explicit BY groups contain identical inputs, exposing group boundaries and per-group results.
+6980        */
+6981       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+6981     ! validmemname=compatible locale=en_US;
+6982       %let syscc=0;
+6983       title; footnote;
+6984       ods _all_ close;
+6985       ods listing gpath="%sysfunc(pathname(work))";
+6986       ods graphics off;
+6987       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.BCS (memtype=DATA).
+NOTE: Deleting WORK.RCT (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.RT (memtype=DATA).
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+6987     !                                         quit;
+
+
+6988       ods path work.templat(update) sashelp.tmplmst(read);
+6989       
+6990       data RT;
+6991       input lTime rTime @@;
+6992       trt = ' RT';
+6993       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.RT has 46 observations and 3 variables.
+
+7010       ;
+7011       data RCT;
+7012       input lTime rTime @@;
+7013       trt = 'RCT';
+7014       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.RCT has 48 observations and 3 variables.
+
+7031       ;
+7032       data BCS;
+7033       set RT RCT;
+7034       run;
+
+NOTE: There were 46 observations read from the data set WORK.RT.
+NOTE: There were 48 observations read from the data set WORK.RCT.
+NOTE: The data set WORK.BCS has 94 observations and 3 variables.
+
+7035       ods graphics on;
+7036       data _oracle_input; set BCS; do _oracle_by=1 to 2; output; end; run;
+
+NOTE: There were 94 observations read from the data set WORK.BCS.
+NOTE: The data set WORK._ORACLE_INPUT has 188 observations and 4 variables.
+
+7037       proc sort data=_oracle_input; by _oracle_by; run;
+
+NOTE: There were 188 observations read from the data set WORK._ORACLE_INPUT.
+NOTE: The data set WORK._ORACLE_INPUT has 188 observations and 4 variables.
+
+7038       proc iclifetest plots=(survival logsurv) data=_oracle_input impute(seed=1234);
+7039       by _oracle_by;
+7040       strata trt;
+7041       time (lTime, rTime);
+7042       run;
+
+NOTE: Start processing Stratum 1: trt = RT.
+NOTE: Algorithm converges in 21 steps.
+NOTE: Algorithm finds a maximum likelihood estimate.
+NOTE: Start processing Stratum 2: trt = RCT.
+NOTE: Algorithm converges in 27 steps.
+NOTE: Algorithm finds a maximum likelihood estimate.
+NOTE: The above message was for the following BY group:
+      _oracle_by=1
+NOTE: Start processing Stratum 1: trt = RT.
+NOTE: Algorithm converges in 21 steps.
+NOTE: Algorithm finds a maximum likelihood estimate.
+NOTE: Start processing Stratum 2: trt = RCT.
+NOTE: Algorithm converges in 27 steps.
+NOTE: Algorithm finds a maximum likelihood estimate.
+NOTE: The above message was for the following BY group:
+      _oracle_by=2
+NOTE: The PROCEDURE ICLIFETEST printed pages 504-509.
+
+7043       proc iclifetest data=BCS impute(seed=1234);
+7044       time (lTime, rTime);
+7045       test trt;
+7046       run;
+
+NOTE: Start processing Group 1: trt = RT.
+NOTE: Algorithm converges in 21 steps.
+NOTE: Algorithm finds a maximum likelihood estimate.
+NOTE: Start processing Group 2: trt = RCT.
+NOTE: Algorithm converges in 27 steps.
+NOTE: Algorithm finds a maximum likelihood estimate.
+NOTE: Algorithm converges in 25 steps.
+NOTE: Algorithm finds a maximum likelihood estimate.
+NOTE: The PROCEDURE ICLIFETEST printed pages 510-513.
+
+7047       
+7048       
+7049       
+7050       
+The SAS System
+
+7051       

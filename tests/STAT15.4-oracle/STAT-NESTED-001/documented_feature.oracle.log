@@ -1,0 +1,59 @@
+The SAS System
+
+5283       
+5284       /* STAT-NESTED-001: NESTED — Data input, variable roles, and basic options
+5285        * Source: S154 / Chapter 87 / `PROC NESTED Statement` (PDF pp. 6969–6970); S154 / Chapter 87 / `BY Statement` (PDF p. 6970); S154 / Chapter 87 /
+5285     ! `CLASS Statement` (PDF pp. 6970–6971); S154 / Chapter 87 / `VAR Statement` (PDF p. 6971); S154 / Chapter 87 / `Missing Values` (PDF p. 6971).
+5286        * Discriminates: Verified default procedure context; explicit statements: BY, CLASS, VAR
+5287        */
+5288       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+5288     ! validmemname=compatible locale=en_US;
+5289       %let syscc=0;
+5290       title; footnote;
+5291       ods _all_ close;
+5292       ods listing gpath="%sysfunc(pathname(work))";
+5293       ods graphics off;
+5294       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.A (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+5294     !                                         quit;
+
+
+5295       ods path work.templat(update) sashelp.tmplmst(read);
+5296       
+5297       data auto;
+5298       input Make $ Model Score @@;
+5299       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.AUTO has 36 observations and 3 variables.
+
+5312       ;
+5313       proc sort data=auto;
+5314       by Make Model;
+5315       run;
+
+NOTE: There were 36 observations read from the data set WORK.AUTO.
+NOTE: The data set WORK.AUTO has 36 observations and 3 variables.
+
+5316       title1 'Reliability of Automobile Models';
+5317       proc nested data=auto;
+5318       class Make Model;
+5319       var Score;
+5320       run;
+
+NOTE: The PROCEDURE NESTED printed page 371.
+
+5321       quit;
+5322       
+5323       
+5324       
+5325       
+The SAS System
+
+5326       

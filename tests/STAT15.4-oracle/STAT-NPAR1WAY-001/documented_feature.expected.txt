@@ -1,0 +1,481 @@
+
+The NPAR1WAY Procedure
+
+Analysis of Variance for Variable Gain
+     Classified by Variable Dose
+ 
+Dose             N                Mean
+
+   0            16          222.187500
+0.04            11          217.363636
+0.07            12          175.000000
+ 0.1            17          120.176471
+0.13            11          118.363636
+
+
+Source    DF    Sum of Squares    Mean Square     F Value    Pr > F
+
+Among      4     140082.986077    35020.74652     55.8143    <.0001
+Within    62      38901.998997      627.45160                      
+
+                Average scores were used for ties.
+
+The NPAR1WAY Procedure
+
+           Wilcoxon Scores (Rank Sums) for Variable Gain
+                    Classified by Variable Dose
+ 
+                    Sum of      Expected       Std Dev          Mean
+Dose       N        Scores      Under H0      Under H0         Score
+
+   0      16        890.50         544.0     67.978966     55.656250
+0.04      11        555.00         374.0     59.063588     50.454545
+0.07      12        395.50         408.0     61.136622     32.958333
+ 0.1      17        275.50         578.0     69.380741     16.205882
+0.13      11        161.50         374.0     59.063588     14.681818
+
+                 Average scores were used for ties.
+
+
+        Kruskal-Wallis Test
+ 
+Chi-Square        DF    Pr > ChiSq
+
+   52.6656         4        <.0001
+
+The NPAR1WAY Procedure
+
+  Median Scores (Number of Points Above Median) for Variable Gain
+                    Classified by Variable Dose
+ 
+                    Sum of      Expected       Std Dev          Mean
+Dose       N        Scores      Under H0      Under H0         Score
+
+   0      16          16.0      7.880597      1.757902          1.00
+0.04      11          11.0      5.417910      1.527355          1.00
+0.07      12           6.0      5.910448      1.580963          0.50
+ 0.1      17           0.0      8.373134      1.794152          0.00
+0.13      11           0.0      5.417910      1.527355          0.00
+
+                 Average scores were used for ties.
+
+
+      Median One-Way Analysis
+ 
+Chi-Square        DF    Pr > ChiSq
+
+   54.1765         4        <.0001
+
+The NPAR1WAY Procedure
+
+         Van der Waerden Scores (Normal) for Variable Gain
+                    Classified by Variable Dose
+ 
+                    Sum of      Expected       Std Dev          Mean
+Dose       N        Scores      Under H0      Under H0         Score
+
+   0      16     16.116474           0.0      3.325957      1.007280
+0.04      11      8.340899           0.0      2.889761      0.758264
+0.07      12     -0.576674           0.0      2.991186     -0.048056
+ 0.1      17    -14.688921           0.0      3.394540     -0.864054
+0.13      11     -9.191777           0.0      2.889761     -0.835616
+
+                 Average scores were used for ties.
+
+
+ Van der Waerden One-Way Analysis
+ 
+Chi-Square        DF    Pr > ChiSq
+
+   47.2972         4        <.0001
+
+The NPAR1WAY Procedure
+
+           Savage Scores (Exponential) for Variable Gain
+                    Classified by Variable Dose
+ 
+                    Sum of      Expected       Std Dev          Mean
+Dose       N        Scores      Under H0      Under H0         Score
+
+   0      16     16.074391           0.0      3.385275      1.004649
+0.04      11      7.693099           0.0      2.941300      0.699373
+0.07      12     -3.584958           0.0      3.044534     -0.298746
+ 0.1      17    -11.979488           0.0      3.455082     -0.704676
+0.13      11     -8.203044           0.0      2.941300     -0.745731
+
+                 Average scores were used for ties.
+
+
+      Savage One-Way Analysis
+ 
+Chi-Square        DF    Pr > ChiSq
+
+   39.4908         4        <.0001
+
+The NPAR1WAY Procedure
+
+    Kolmogorov-Smirnov Test for Variable Gain
+           Classified by Variable Dose
+ 
+                     EDF at    Deviation from Mean
+Dose        N       Maximum        at Maximum
+
+   0       16      0.000000         -1.910448     
+0.04       11      0.000000         -1.584060     
+0.07       12      0.333333         -0.499796     
+ 0.1       17      1.000000          2.153861     
+0.13       11      1.000000          1.732565     
+Total      67      0.477612                       
+
+   Maximum Deviation Occurred at Observation 36
+         Value of Gain at Maximum = 178.0
+
+Kolmogorov-Smirnov Statistics (Asymptotic)
+
+KS  0.457928    KSa  3.748300
+
+
+Cramer-von Mises Test for Variable Gain
+      Classified by Variable Dose
+ 
+                        Summed Deviation
+Dose           N            from Mean
+
+   0          16             2.165210   
+0.04          11             0.918280   
+0.07          12             0.348227   
+ 0.1          17             1.497542   
+0.13          11             1.335745   
+
+Cramer-von Mises Statistics (Asymptotic)
+
+CM  0.093508    CMa  6.265003
+
+The NPAR1WAY Procedure
+
+Analysis of Variance for Variable Gain
+     Classified by Variable Dose
+ 
+Dose             N                Mean
+
+   0            16          222.187500
+0.04            11          217.363636
+0.07            12          175.000000
+ 0.1            17          120.176471
+0.13            11          118.363636
+
+
+Source    DF    Sum of Squares    Mean Square     F Value    Pr > F
+
+Among      4     140082.986077    35020.74652     55.8143    <.0001
+Within    62      38901.998997      627.45160                      
+
+                Average scores were used for ties.
+
+The NPAR1WAY Procedure
+
+           Wilcoxon Scores (Rank Sums) for Variable Gain
+                    Classified by Variable Dose
+ 
+                    Sum of      Expected       Std Dev          Mean
+Dose       N        Scores      Under H0      Under H0         Score
+
+   0      16        890.50         544.0     67.978966     55.656250
+0.04      11        555.00         374.0     59.063588     50.454545
+0.07      12        395.50         408.0     61.136622     32.958333
+ 0.1      17        275.50         578.0     69.380741     16.205882
+0.13      11        161.50         374.0     59.063588     14.681818
+
+                 Average scores were used for ties.
+
+
+        Kruskal-Wallis Test
+ 
+Chi-Square        DF    Pr > ChiSq
+
+   52.6656         4        <.0001
+
+The NPAR1WAY Procedure
+
+  Median Scores (Number of Points Above Median) for Variable Gain
+                    Classified by Variable Dose
+ 
+                    Sum of      Expected       Std Dev          Mean
+Dose       N        Scores      Under H0      Under H0         Score
+
+   0      16          16.0      7.880597      1.757902          1.00
+0.04      11          11.0      5.417910      1.527355          1.00
+0.07      12           6.0      5.910448      1.580963          0.50
+ 0.1      17           0.0      8.373134      1.794152          0.00
+0.13      11           0.0      5.417910      1.527355          0.00
+
+                 Average scores were used for ties.
+
+
+      Median One-Way Analysis
+ 
+Chi-Square        DF    Pr > ChiSq
+
+   54.1765         4        <.0001
+
+The NPAR1WAY Procedure
+
+         Van der Waerden Scores (Normal) for Variable Gain
+                    Classified by Variable Dose
+ 
+                    Sum of      Expected       Std Dev          Mean
+Dose       N        Scores      Under H0      Under H0         Score
+
+   0      16     16.116474           0.0      3.325957      1.007280
+0.04      11      8.340899           0.0      2.889761      0.758264
+0.07      12     -0.576674           0.0      2.991186     -0.048056
+ 0.1      17    -14.688921           0.0      3.394540     -0.864054
+0.13      11     -9.191777           0.0      2.889761     -0.835616
+
+                 Average scores were used for ties.
+
+
+ Van der Waerden One-Way Analysis
+ 
+Chi-Square        DF    Pr > ChiSq
+
+   47.2972         4        <.0001
+
+The NPAR1WAY Procedure
+
+           Savage Scores (Exponential) for Variable Gain
+                    Classified by Variable Dose
+ 
+                    Sum of      Expected       Std Dev          Mean
+Dose       N        Scores      Under H0      Under H0         Score
+
+   0      16     16.074391           0.0      3.385275      1.004649
+0.04      11      7.693099           0.0      2.941300      0.699373
+0.07      12     -3.584958           0.0      3.044534     -0.298746
+ 0.1      17    -11.979488           0.0      3.455082     -0.704676
+0.13      11     -8.203044           0.0      2.941300     -0.745731
+
+                 Average scores were used for ties.
+
+
+      Savage One-Way Analysis
+ 
+Chi-Square        DF    Pr > ChiSq
+
+   39.4908         4        <.0001
+
+The NPAR1WAY Procedure
+
+    Kolmogorov-Smirnov Test for Variable Gain
+           Classified by Variable Dose
+ 
+                     EDF at    Deviation from Mean
+Dose        N       Maximum        at Maximum
+
+   0       16      0.000000         -1.910448     
+0.04       11      0.000000         -1.584060     
+0.07       12      0.333333         -0.499796     
+ 0.1       17      1.000000          2.153861     
+0.13       11      1.000000          1.732565     
+Total      67      0.477612                       
+
+   Maximum Deviation Occurred at Observation 36
+         Value of Gain at Maximum = 178.0
+
+Kolmogorov-Smirnov Statistics (Asymptotic)
+
+KS  0.457928    KSa  3.748300
+
+
+Cramer-von Mises Test for Variable Gain
+      Classified by Variable Dose
+ 
+                        Summed Deviation
+Dose           N            from Mean
+
+   0          16             2.165210   
+0.04          11             0.918280   
+0.07          12             0.348227   
+ 0.1          17             1.497542   
+0.13          11             1.335745   
+
+Cramer-von Mises Statistics (Asymptotic)
+
+CM  0.093508    CMa  6.265003
+
+The NPAR1WAY Procedure
+
+Analysis of Variance for Variable Gain
+     Classified by Variable Dose
+ 
+Dose             N                Mean
+
+   0            16          222.187500
+0.04            11          217.363636
+
+
+Source    DF    Sum of Squares    Mean Square     F Value    Pr > F
+
+Among      1        151.683712     151.683712      0.5587    0.4617
+Within    25       6786.982955     271.479318                      
+
+                Average scores were used for ties.
+
+The NPAR1WAY Procedure
+
+           Wilcoxon Scores (Rank Sums) for Variable Gain
+                    Classified by Variable Dose
+ 
+                    Sum of      Expected       Std Dev          Mean
+Dose       N        Scores      Under H0      Under H0         Score
+
+   0      16        253.50         224.0     20.221565     15.843750
+0.04      11        124.50         154.0     20.221565     11.318182
+
+                 Average scores were used for ties.
+
+
+                    Wilcoxon Two-Sample Test
+ 
+                                                t Approximation
+Statistic           Z    Pr < Z    Pr > |Z|    Pr < Z  Pr > |Z|
+
+ 124.5000     -1.4341    0.0758      0.1515    0.0817    0.1635
+
+           Z includes a continuity correction of 0.5.
+
+
+        Kruskal-Wallis Test
+ 
+Chi-Square        DF    Pr > ChiSq
+
+    2.1282         1        0.1446
+
+The NPAR1WAY Procedure
+
+  Median Scores (Number of Points Above Median) for Variable Gain
+                    Classified by Variable Dose
+ 
+                    Sum of      Expected       Std Dev          Mean
+Dose       N        Scores      Under H0      Under H0         Score
+
+   0      16           9.0      7.703704      1.299995      0.562500
+0.04      11           4.0      5.296296      1.299995      0.363636
+
+                 Average scores were used for ties.
+
+
+           Median Two-Sample Test
+ 
+Statistic           Z    Pr < Z    Pr > |Z|
+
+   4.0000     -0.9972    0.1593      0.3187
+
+
+      Median One-Way Analysis
+ 
+Chi-Square        DF    Pr > ChiSq
+
+    0.9943         1        0.3187
+
+The NPAR1WAY Procedure
+
+         Van der Waerden Scores (Normal) for Variable Gain
+                    Classified by Variable Dose
+ 
+                    Sum of      Expected       Std Dev          Mean
+Dose       N        Scores      Under H0      Under H0         Score
+
+   0      16      3.346520           0.0      2.320336      0.209157
+0.04      11     -3.346520           0.0      2.320336     -0.304229
+
+                 Average scores were used for ties.
+
+
+      Van der Waerden Two-Sample Test
+ 
+Statistic           Z    Pr < Z    Pr > |Z|
+
+  -3.3465     -1.4423    0.0746      0.1492
+
+
+ Van der Waerden One-Way Analysis
+ 
+Chi-Square        DF    Pr > ChiSq
+
+    2.0801         1        0.1492
+
+The NPAR1WAY Procedure
+
+           Savage Scores (Exponential) for Variable Gain
+                    Classified by Variable Dose
+ 
+                    Sum of      Expected       Std Dev          Mean
+Dose       N        Scores      Under H0      Under H0         Score
+
+   0      16      1.834554           0.0      2.401839      0.114660
+0.04      11     -1.834554           0.0      2.401839     -0.166778
+
+                 Average scores were used for ties.
+
+
+           Savage Two-Sample Test
+ 
+Statistic           Z    Pr < Z    Pr > |Z|
+
+  -1.8346     -0.7638    0.2225      0.4450
+
+
+      Savage One-Way Analysis
+ 
+Chi-Square        DF    Pr > ChiSq
+
+    0.5834         1        0.4450
+
+The NPAR1WAY Procedure
+
+    Kolmogorov-Smirnov Test for Variable Gain
+           Classified by Variable Dose
+ 
+                     EDF at    Deviation from Mean
+Dose        N       Maximum        at Maximum
+
+   0       16      0.250000         -0.481481     
+0.04       11      0.545455          0.580689     
+Total      27      0.370370                       
+
+   Maximum Deviation Occurred at Observation 4
+         Value of Gain at Maximum = 216.0
+
+Kolmogorov-Smirnov Two-Sample Test (Asymptotic)
+
+KS   0.145172    D         0.295455
+KSa  0.754337    Pr > KSa  0.6199  
+
+
+Cramer-von Mises Test for Variable Gain
+      Classified by Variable Dose
+ 
+                        Summed Deviation
+Dose           N            from Mean
+
+   0          16             0.098638   
+0.04          11             0.143474   
+
+Cramer-von Mises Statistics (Asymptotic)
+
+CM  0.008967    CMa  0.242112
+
+
+Kuiper Test for Variable Gain
+ Classified by Variable Dose
+ 
+                     Deviation
+Dose         N       from Mean
+
+   0        16        0.090909
+0.04        11        0.295455
+
+     Kuiper Two-Sample Test (Asymptotic)
+
+K  0.386364    Ka  0.986440    Pr > Ka  0.8383

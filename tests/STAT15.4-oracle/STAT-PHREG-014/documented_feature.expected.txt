@@ -1,0 +1,197 @@
+
+The PHREG Procedure
+ 
+Bayesian Analysis
+
+                      Model Information
+
+Data Set                 WORK.VALUNG                          
+Dependent Variable       Time            time to death in days
+Censoring Variable       Status                               
+Censoring Value(s)       0                                    
+Model                    Cox                                  
+Ties Handling            BRESLOW                              
+Sampling Algorithm       ARMS                                 
+Burn-In Size             200                                  
+MC Sample Size           1000                                 
+Thinning                 1                                    
+
+
+Number of Observations Read         137
+Number of Observations Used         137
+
+
+         Class Level Information
+ 
+Class       Value        Design Variables
+
+Prior       no            0              
+            yes           1              
+
+Cell        adeno         1      0      0
+            large         0      0      0
+            small         0      1      0
+            squamous      0      0      1
+
+Therapy     standard      0              
+            test          1              
+
+
+Summary of the Number of Event and Censored Values
+ 
+                                     Percent
+   Total       Event    Censored    Censored
+
+     137         128           9        6.57
+
+
+            Regression Parameter Information
+ 
+Parameter       Effect      Prior    Cell        Therapy
+
+Kps             Kps                                      
+Duration        Duration                                 
+Age             Age                                      
+Prioryes        Prior       yes                          
+Celladeno       Cell                 adeno               
+Cellsmall       Cell                 small               
+Cellsquamous    Cell                 squamous            
+Therapytest     Therapy                          test    
+
+
+                   Maximum Likelihood Estimates
+ 
+                                  Standard
+Parameter       DF    Estimate       Error    95% Confidence Limits
+
+Kps              1     -0.0326     0.00551     -0.0434     -0.0218
+Duration         1    -0.00009     0.00913     -0.0180      0.0178
+Age              1    -0.00855     0.00930     -0.0268     0.00969
+Prioryes         1      0.0723      0.2321     -0.3826      0.5273
+Celladeno        1      0.7887      0.3027      0.1955      1.3819
+Cellsmall        1      0.4569      0.2663     -0.0650      0.9787
+Cellsquamous     1     -0.3996      0.2827     -0.9536      0.1544
+Therapytest      1      0.2899      0.2072     -0.1162      0.6961
+
+
+Independent Normal Prior for Regression Coefficients
+ 
+Parameter           Mean    Precision
+
+Kps               -0.032     2857.143
+Duration               0         1E-6
+Age                    0         1E-6
+Prioryes               0         1E-6
+Celladeno              0         1E-6
+Cellsmall              0         1E-6
+Cellsquamous           0         1E-6
+Therapytest            0         1E-6
+
+
+                                                 Initial Values of the Chain
+ 
+Chain          Seed         Kps    Duration         Age    Prioryes    Celladeno    Cellsmall    Cellsquamous    Therapytest
+
+    1             1     -0.0326    -0.00009    -0.00855      0.0723       0.7887       0.4569         -0.3996         0.2899
+
+
+                 Fit Statistics
+
+DIC (smaller is better)                  965.614
+pD (Effective Number of Parameters)        7.608
+
+The PHREG Procedure
+ 
+Bayesian Analysis
+
+                                 Posterior Summaries
+ 
+                                         Standard               Percentiles
+Parameter              N        Mean    Deviation         25%         50%         75%
+
+Kps                 1000     -0.0327      0.00508     -0.0363     -0.0328     -0.0292
+Duration            1000    -0.00116      0.00929    -0.00677    -0.00045     0.00538
+Age                 1000    -0.00790      0.00902     -0.0141    -0.00767    -0.00177
+Prioryes            1000      0.0658       0.2208     -0.0802      0.0660      0.2162
+Celladeno           1000      0.7877       0.2884      0.5823      0.7948      0.9850
+Cellsmall           1000      0.4482       0.2630      0.2615      0.4498      0.6272
+Cellsquamous        1000     -0.4108       0.2854     -0.5954     -0.4069     -0.2206
+Therapytest         1000      0.2784       0.2066      0.1435      0.2803      0.4215
+
+
+                         Posterior Intervals
+ 
+Parameter       Alpha     Equal-Tail Interval        HPD Interval
+
+Kps             0.050     -0.0424     -0.0229     -0.0431     -0.0239
+Duration        0.050     -0.0210      0.0152     -0.0199      0.0154
+Age             0.050     -0.0250      0.0101     -0.0243      0.0104
+Prioryes        0.050     -0.3823      0.4893     -0.3917      0.4641
+Celladeno       0.050      0.2279      1.3566      0.2726      1.3922
+Cellsmall       0.050     -0.0450      1.0047     -0.0956      0.9335
+Cellsquamous    0.050     -1.0129      0.1395     -1.0309      0.1025
+Therapytest     0.050     -0.1481      0.6732     -0.1158      0.6841
+
+The PHREG Procedure
+ 
+Bayesian Analysis
+
+               Posterior Autocorrelations
+ 
+Parameter         Lag 1      Lag 5     Lag 10     Lag 50
+
+Kps              0.0743     0.0192    -0.0307    -0.0152
+Duration         0.2182     0.0104    -0.0363     0.0105
+Age              0.1151     0.0792    -0.0427     0.0026
+Prioryes         0.2051    -0.0085     0.0112     0.0116
+Celladeno        0.3971    -0.0340     0.0370    -0.0372
+Cellsmall        0.5024     0.0175     0.0037    -0.0129
+Cellsquamous     0.3704    -0.0134     0.0124    -0.0427
+Therapytest      0.1628     0.0215    -0.0253     0.0244
+
+
+                 Effective Sample Sizes
+ 
+                            Autocorrelation
+Parameter            ESS               Time    Efficiency
+
+Kps                818.9             1.2212        0.8189
+Duration           614.7             1.6269        0.6147
+Age                700.8             1.4270        0.7008
+Prioryes           641.1             1.5598        0.6411
+Celladeno          390.9             2.5583        0.3909
+Cellsmall          366.0             2.7322        0.3660
+Cellsquamous       380.5             2.6281        0.3805
+Therapytest        753.4             1.3273        0.7534
+
+The PHREG Procedure
+ 
+Bayesian Analysis
+
+                                            Hazard Ratio Statement 1: Hazard Ratios for type of treatment
+ 
+                                                         Standard                Quantiles                  95% Equal-Tail
+Description                            N        Mean    Deviation         25%         50%         75%          Interval            95% HPD Interval
+
+Therapy standard vs test            1000      0.7734       0.1634      0.6560      0.7556      0.8663      0.5101      1.1596      0.4797      1.0872
+
+
+                                      Hazard Ratio Statement 2: Hazard Ratios for age in years
+ 
+                                        Standard                Quantiles                  95% Equal-Tail
+Description           N        Mean    Deviation         25%         50%         75%          Interval            95% HPD Interval
+
+Age Unit=10        1000      0.9278       0.0836      0.8687      0.9261      0.9824      0.7786      1.1064      0.7656      1.0842
+
+
+                                              Hazard Ratio Statement 3: Hazard Ratios for cell type
+ 
+                                                      Standard                Quantiles                  95% Equal-Tail
+Description                         N        Mean    Deviation         25%         50%         75%          Interval            95% HPD Interval
+
+Cell adeno vs large              1000      2.2913       0.6695      1.7902      2.2139      2.6779      1.2560      3.8830      1.1772      3.7020
+Cell adeno vs small              1000      1.4540       0.3875      1.1677      1.4077      1.6743      0.8409      2.3910      0.7560      2.2380
+Cell adeno vs squamous           1000      3.4613       1.0449      2.7175      3.2915      4.0316      1.8763      6.0293      1.5775      5.4051
+Cell large vs small              1000      0.6611       0.1752      0.5341      0.6378      0.7699      0.3662      1.0460      0.3471      0.9923
+Cell large vs squamous           1000      1.5712       0.4635      1.2468      1.5021      1.8138      0.8698      2.7535      0.7600      2.4972
+Cell small vs squamous           1000      2.4495       0.6864      1.9499      2.3514      2.8244      1.4249      4.1044      1.2645      3.7651

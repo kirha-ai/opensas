@@ -1,0 +1,52 @@
+The SAS System
+
+29182      
+29183      /* STAT-VARCLUS-001: VARCLUS — Data input, variable roles, and basic options
+29184       * Source: S154 / Chapter 129 / `PROC VARCLUS Statement` (PDF pp. 10700–10707); S154 / Chapter 129 / `BY Statement` (PDF pp. 10707–10708); S154 /
+29184    !  Chapter 129 / `FREQ Statement` (PDF p. 10708); S154 / Chapter 129 / `VAR Statement` (PDF pp. 10708–10709); S154 / Chapter 129 / `WEIGHT Statement`
+29184    !  (PDF p. 10709); S154 / Chapter 129 / `Missing Values` (PDF p. 10709).
+29185       * Discriminates: Verified default procedure context; explicit statements: VAR
+29186       */
+29187      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+29187    ! validmemname=compatible locale=en_US;
+29188      %let syscc=0;
+29189      title; footnote;
+29190      ods _all_ close;
+29191      ods listing gpath="%sysfunc(pathname(work))";
+29192      ods graphics off;
+29193      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.ASTHMA (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SUMMARY (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+29193    !                                         quit;
+
+
+29194      ods path work.templat(update) sashelp.tmplmst(read);
+29195      
+29196      proc varclus data=sashelp.iris maxclusters=2 outstat=structure;
+29197      var SepalLength SepalWidth PetalLength PetalWidth;
+29198      run;
+
+NOTE: Clustering algorithm converged.
+NOTE: Clustering algorithm converged.
+NOTE: The data set WORK.STRUCTURE has 26 observations and 7 variables.
+NOTE: The PROCEDURE VARCLUS printed page 1785.
+
+29199      proc print data=structure(obs=15) noobs;
+29200      run;
+
+NOTE: There were 15 observations read from the data set WORK.STRUCTURE.
+NOTE: The PROCEDURE PRINT printed page 1786.
+
+29201      
+29202      
+29203      
+29204      
+The SAS System
+
+29205      

@@ -1,0 +1,78 @@
+The SAS System
+
+26230      
+26231      /* STAT-GLM-018: GLM — OUTPUT / Output Data Sets
+26232       * Source: S154 / Chapter 53 / `OUTPUT Statement` (PDF pp. 4096–4099); S154 / Chapter 53 / `Output Data Sets` (PDF pp. 4164–4166).
+26233       * Discriminates: Example 53.3: Unbalanced ANOVA for Two-Way Design with Interaction; explicit statements: OUTPUT
+26234       */
+26235      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+26235    ! validmemname=compatible locale=en_US;
+26236      %let syscc=0;
+26237      title; footnote;
+26238      ods _all_ close;
+26239      ods listing gpath="%sysfunc(pathname(work))";
+26240      ods graphics off;
+
+NOTE: The PROCEDURE GLM printed pages 2586-2587.
+
+26241      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.EXP (memtype=DATA).
+NOTE: Deleting WORK.IRON (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+26241    !                                         quit;
+
+
+26242      ods path work.templat(update) sashelp.tmplmst(read);
+26243      
+26244      title 'Unbalanced Two-Way Analysis of Variance';
+26245      data a;
+26246      input drug disease @;
+26247      do i=1 to 6;
+26248      input y @;
+26249      output;
+26250      end;
+26251      datalines;
+
+NOTE: The data set WORK.A has 72 observations and 4 variables.
+
+26264      ;
+26265      proc glm;
+26266      class drug disease;
+26267      model y=drug disease drug*disease / ss1 ss2 ss3 ss4;
+26268      run;
+
+26269      lsmeans drug / pdiff=all adjust=tukey;
+26270      run;
+
+26271      ods graphics on;
+
+NOTE: The PROCEDURE GLM printed pages 2588-2590.
+
+26272      proc glm plot=meanplot(cl);
+26273      class drug disease;
+26274      model y=drug disease drug*disease;
+26275      lsmeans drug / pdiff=all adjust=tukey;
+26276      run;
+
+26277      ods graphics off;
+26278      run;
+
+26279      quit;
+
+NOTE: The PROCEDURE GLM printed pages 2591-2593.
+
+26280      
+26281      
+26282      
+26283      
+The SAS System
+
+26284      

@@ -1,0 +1,24 @@
+
+The NPAR1WAY Procedure
+
+           Wilcoxon Scores (Rank Sums) for Variable Time
+                    Classified by Variable Stim
+ 
+                    Sum of      Expected       Std Dev          Mean
+Stim       N        Scores      Under H0      Under H0         Score
+
+1         13        110.50         130.0     11.004784         8.500
+2          6         79.50          60.0     11.004784        13.250
+
+                 Average scores were used for ties.
+
+
+                        Hodges-Lehmann Estimation
+ 
+                     Location Shift (2 - 1)    0.3500
+ 
+                                                Interval        Asymptotic
+Type                 98% Confidence Limits      Midpoint    Standard Error
+
+Asymptotic (Moses)      0.0000      0.8200        0.4100            0.1762
+Exact                   0.0000      1.3300        0.6650                  

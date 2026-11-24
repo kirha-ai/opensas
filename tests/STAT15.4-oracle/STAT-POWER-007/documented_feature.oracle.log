@@ -1,0 +1,45 @@
+The SAS System
+
+6663       
+6664       /* STAT-POWER-007: POWER — TWOSAMPLESURVIVAL / TWOSAMPLEWILCOXON / Overview of Power Concepts
+6665        * Source: S154 / Chapter 96 / `TWOSAMPLESURVIVAL Statement` (PDF pp. 7830–7842); S154 / Chapter 96 / `TWOSAMPLEWILCOXON Statement` (PDF pp.
+6665     ! 7842–7847); S154 / Chapter 96 / `Overview of Power Concepts` (PDF pp. 7847–7848).
+6666        * Discriminates: Example 96.6: Comparing Two Survival Curves; explicit statements: TWOSAMPLESURVIVAL
+6667        */
+6668       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+6668     ! validmemname=compatible locale=en_US;
+6669       %let syscc=0;
+6670       title; footnote;
+6671       ods _all_ close;
+6672       ods listing gpath="%sysfunc(pathname(work))";
+6673       ods graphics off;
+6674       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+6674     !                                         quit;
+
+
+6675       ods path work.templat(update) sashelp.tmplmst(read);
+6676       
+6677       proc power;
+6678       twosamplesurvival test=logrank
+6679       curve("Standard") = 5 : 0.5
+6680       curve("Proposed") = (1 to 5 by 1):(0.95 0.9 0.75 0.7 0.6)
+6681       groupsurvival = "Standard" | "Proposed"
+6682       accrualtime = 2
+6683       followuptime = 3
+6684       groupmedlosstimes = 10 | 20 5
+6685       power = 0.8
+6686       npergroup = .;
+6687       run;
+
+NOTE: The PROCEDURE POWER printed page 536.
+
+6688       
+6689       
+6690       
+6691       
+The SAS System
+
+6692       

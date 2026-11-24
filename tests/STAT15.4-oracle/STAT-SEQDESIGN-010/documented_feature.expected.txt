@@ -1,0 +1,86 @@
+
+The SEQDESIGN Procedure
+Design: TwoSidedPocock
+
+                    Design Information
+
+Statistic Distribution                               Normal
+Boundary Scale                               Standardized Z
+Alternative Hypothesis                            Two-Sided
+Early Stop                                      Reject Null
+Method                                               Pocock
+Boundary Key                                           Both
+Alternative Reference                                   0.4
+Number of Stages                                          4
+Alpha                                                  0.05
+Beta                                                    0.1
+Power                                                   0.9
+Max Information (Percent of Fixed Sample)          118.3143
+Max Information                                    77.69844
+Null Ref ASN (Percent of Fixed Sample)             115.6074
+Alt Ref ASN (Percent of Fixed Sample)              69.74805
+
+
+                                              Method Information
+ 
+                                                      --------Unified Family-------    Alternative
+Boundary      Method              Alpha       Beta        Rho        Tau          C      Reference       Drift
+
+Upper Alpha   Pocock            0.02500    0.10000          0          0    2.36129            0.4    3.525869
+Lower Alpha   Pocock            0.02500    0.10000          0          0    2.36129           -0.4    -3.52587
+
+
+                       Boundary Information (Standardized Z Scale)
+                                    Null Reference = 0
+ 
+                                     -------Alternative------    -----Boundary Values----
+           ---Information Level--    --------Reference-------    ---Lower--    ---Upper--
+_Stage_    Proportion      Actual         Lower         Upper         Alpha         Alpha
+
+      1        0.2500    19.42461      -1.76293       1.76293      -2.36129       2.36129
+      2        0.5000    38.84922      -2.49317       2.49317      -2.36129       2.36129
+      3        0.7500    58.27383      -3.05349       3.05349      -2.36129       2.36129
+      4        1.0000    77.69844      -3.52587       3.52587      -2.36129       2.36129
+
+The SEQDESIGN Procedure
+Design: TwoSidedOBrienFleming
+
+                     Design Information
+
+Statistic Distribution                                Normal
+Boundary Scale                                Standardized Z
+Alternative Hypothesis                             Two-Sided
+Early Stop                                       Reject Null
+Method                                       O'Brien-Fleming
+Boundary Key                                            Both
+Alternative Reference                                    0.4
+Number of Stages                                           4
+Alpha                                                   0.05
+Beta                                                     0.1
+Power                                                    0.9
+Max Information (Percent of Fixed Sample)           102.2163
+Max Information                                     67.12682
+Null Ref ASN (Percent of Fixed Sample)              101.5728
+Alt Ref ASN (Percent of Fixed Sample)                76.7397
+
+
+                                              Method Information
+ 
+                                                      --------Unified Family-------    Alternative
+Boundary      Method              Alpha       Beta        Rho        Tau          C      Reference       Drift
+
+Upper Alpha   O'Brien-Fleming   0.02500    0.10000        0.5          0    2.02429            0.4    3.277238
+Lower Alpha   O'Brien-Fleming   0.02500    0.10000        0.5          0    2.02429           -0.4    -3.27724
+
+
+                       Boundary Information (Standardized Z Scale)
+                                    Null Reference = 0
+ 
+                                     -------Alternative------    -----Boundary Values----
+           ---Information Level--    --------Reference-------    ---Lower--    ---Upper--
+_Stage_    Proportion      Actual         Lower         Upper         Alpha         Alpha
+
+      1        0.2500     16.7817      -1.63862       1.63862      -4.04859       4.04859
+      2        0.5000    33.56341      -2.31736       2.31736      -2.86278       2.86278
+      3        0.7500    50.34511      -2.83817       2.83817      -2.33745       2.33745
+      4        1.0000    67.12682      -3.27724       3.27724      -2.02429       2.02429

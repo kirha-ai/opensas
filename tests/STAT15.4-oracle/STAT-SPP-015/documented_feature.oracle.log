@@ -1,0 +1,48 @@
+The SAS System
+
+17999      
+18000      /* STAT-SPP-015: SPP — Official examples and feature integration regression
+18001       * Source: S154 / Chapter 114 / `Examples: SPP Procedure` (PDF pp. 9431–9444).
+18002       * Discriminates: Example 114.2: Testing Covariate Dependence of a Point Pattern
+18003       */
+18004      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+18004    ! validmemname=compatible locale=en_US;
+18005      %let syscc=0;
+18006      title; footnote;
+18007      ods _all_ close;
+18008      ods listing gpath="%sysfunc(pathname(work))";
+18009      ods graphics off;
+18010      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK._DOCTMP000000000000000000081 (memtype=DATA).
+NOTE: Deleting WORK._DOCTMP000000000000000000082 (memtype=DATA).
+NOTE: Deleting WORK._DOCTMP000000000000000000083 (memtype=DATA).
+NOTE: Deleting WORK._DOCTMP000000000000000000084 (memtype=DATA).
+NOTE: Deleting WORK._DOCTMP000000000000000000085 (memtype=DATA).
+18010    !                                         quit;
+
+
+18011      ods path work.templat(update) sashelp.tmplmst(read);
+18012      
+18013      proc spp data=sashelp.bei;
+18014      process trees = (x,y /area=(0,0,1000,500) event=Trees);
+18015      trend grad = field(x,y,Gradient);
+18016      trend elev = field(x,y,Elevation);
+18017      covtest trees = grad elev;
+18018      run;
+
+NOTE: The PROCEDURE SPP printed page 1233.
+
+18019      
+18020      
+18021      
+18022      
+The SAS System
+
+18023      

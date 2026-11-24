@@ -1,0 +1,57 @@
+The SAS System
+
+5762       
+5763       /* STAT-GLMSELECT-006: GLMSELECT — Building the SSCP Matrix
+5764        * Source: S154 / Chapter 56 / `Building the SSCP Matrix` (PDF pp. 4375–4376).
+5765        * Discriminates: Getting Started: GLMSELECT Procedure
+5766        */
+5767       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+5767     ! validmemname=compatible locale=en_US;
+5768       %let syscc=0;
+5769       title; footnote;
+5770       ods _all_ close;
+5771       ods listing gpath="%sysfunc(pathname(work))";
+5772       ods graphics off;
+5773       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+5773     !                                         quit;
+
+
+5774       ods path work.templat(update) sashelp.tmplmst(read);
+5775       
+5776       proc contents varnum data=sashelp.baseball;
+5777       ods select position;
+5778       run;
+
+NOTE: The PROCEDURE CONTENTS printed page 336.
+
+5779       ods graphics on;
+5780       proc glmselect data=sashelp.baseball plots=all seed=314159;
+5781       class league division;
+5782       model logSalary = nAtBat nHits nHome nRuns nRBI nBB
+5783       yrMajor crAtBat crHits crHome crRuns crRbi
+5784       crBB league division nOuts nAssts nError
+5785       / details=all stats=all;
+5786       run;
+
+NOTE: There were 322 observations read from the data set SASHELP.BASEBALL.
+NOTE: The PROCEDURE GLMSELECT printed pages 337-345.
+
+5787       ods graphics off;
+5788       run;
+5789       quit;
+5790       
+5791       
+5792       
+5793       
+The SAS System
+
+5794       

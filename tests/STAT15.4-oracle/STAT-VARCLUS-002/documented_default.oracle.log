@@ -1,0 +1,47 @@
+The SAS System
+
+29208      
+29209      /* STAT-VARCLUS-002: VARCLUS — Variable clustering and component representation
+29210       * Source: S154 / Chapter 129 / `Getting Started: VARCLUS Procedure` (PDF pp. 10696–10699); S154 / Chapter 129 / `Overview: VARCLUS Procedure` (PDF
+29210    !  pp. 10694–10696).
+29211       * Discriminates: Documented default analysis with explicit complete public or synthetic inputs
+29212       */
+29213      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+29213    ! validmemname=compatible locale=en_US;
+29214      %let syscc=0;
+29215      title; footnote;
+29216      ods _all_ close;
+29217      ods listing gpath="%sysfunc(pathname(work))";
+29218      ods graphics off;
+29219      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.STRUCTURE (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+29219    !                                         quit;
+
+
+29220      ods path work.templat(update) sashelp.tmplmst(read);
+29221      
+29222      proc varclus data=sashelp.iris maxclusters=2 outstat=structure; var SepalLength SepalWidth PetalLength PetalWidth; run;
+
+NOTE: Clustering algorithm converged.
+NOTE: Clustering algorithm converged.
+NOTE: The data set WORK.STRUCTURE has 26 observations and 7 variables.
+NOTE: The PROCEDURE VARCLUS printed page 1787.
+
+29223      proc print data=structure(obs=15) noobs; run;
+
+NOTE: There were 15 observations read from the data set WORK.STRUCTURE.
+NOTE: The PROCEDURE PRINT printed page 1788.
+
+29224      
+29225      
+29226      
+29227      
+The SAS System
+
+29228      

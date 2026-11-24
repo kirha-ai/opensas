@@ -1,0 +1,170 @@
+
+Variance Components Estimation Procedure
+
+   Class Level Information
+ 
+Class         Levels    Values
+
+a                  3    1 2 3 
+
+b                  2    1 2   
+
+
+Number of Observations Read          16
+Number of Observations Used          16
+
+
+Dependent Variable:    y
+
+
+                                        Type 1 Analysis of Variance
+ 
+                                   Sum of
+Source                 DF         Squares     Mean Square    Expected Mean Square
+
+a                       2           11736     5868.218750    Var(Error) + 2.725 Var(a*b) + 0.1 Var(b) + Q(a)
+b                       1           11448           11448    Var(Error) + 2.6308 Var(a*b) + 7.8 Var(b)      
+a*b                     2      299.041026      149.520513    Var(Error) + 2.5846 Var(a*b)                   
+Error                  10      786.333333       78.633333    Var(Error)                                     
+Corrected Total        15           24270                                                                   
+
+
+         Type 1 Estimates
+ 
+Variance Component        Estimate
+
+Var(b)                      1448.4
+Var(a*b)                  27.42659
+Var(Error)                78.63333
+
+Variance Components Estimation Procedure
+
+   Class Level Information
+ 
+Class         Levels    Values
+
+a                  3    1 2 3 
+
+b                  2    1 2   
+
+
+Number of Observations Read          16
+Number of Observations Used          16
+
+
+                                     MIVQUE(0) SSQ Matrix
+ 
+Source                     b                   a*b                 Error                     y
+
+b                   60.84000              20.52000               7.80000               89295.4
+a*b                 20.52000              20.52000               7.80000               30181.3
+Error                7.80000               7.80000              13.00000               12533.5
+
+
+      MIVQUE(0) Estimates
+ 
+Variance Component             y
+
+Var(b)                    1466.1
+Var(a*b)               -35.49170
+Var(Error)             105.73660
+
+Variance Components Estimation Procedure
+
+   Class Level Information
+ 
+Class         Levels    Values
+
+a                  3    1 2 3 
+
+b                  2    1 2   
+
+
+Number of Observations Read          16
+Number of Observations Used          16
+
+
+Dependent Variable:    y
+
+
+                            Maximum Likelihood Iterations
+ 
+Iteration          Objective             Var(b)           Var(a*b)         Var(Error)
+
+        0      78.3850371200         1031.49070                  0      74.3909717935
+        1      78.2637043807     732.3606453636                  0      77.4011688154
+        2      78.2635471161     723.6867470850                  0      77.5301774839
+        3      78.2635471152     723.6658365289                  0      77.5304926877
+
+
+Convergence criteria met.                                       
+
+
+   Maximum Likelihood
+       Estimates
+ 
+Variance
+Component       Estimate
+
+Var(b)         723.66584
+Var(a*b)               0
+Var(Error)      77.53049
+
+
+        Asymptotic Covariance Matrix of Estimates
+ 
+                    Var(b)        Var(a*b)      Var(Error)
+
+Var(b)            537826.1               0      -107.33905
+Var(a*b)                 0               0               0
+Var(Error)      -107.33905               0       858.71104
+
+Variance Components Estimation Procedure
+
+   Class Level Information
+ 
+Class         Levels    Values
+
+a                  3    1 2 3 
+
+b                  2    1 2   
+
+
+Number of Observations Read          16
+Number of Observations Used          16
+
+
+Dependent Variable:    y
+
+
+                                   REML Iterations
+ 
+Iteration          Objective             Var(b)           Var(a*b)         Var(Error)
+
+        0      63.4134144942         1269.52701                  0      91.5581191305
+        1      63.0446869787         1601.84199      32.7632417174      76.9355562461
+        2      63.0311530508         1468.82932      27.2258186561      78.7548276319
+        3      63.0311265148         1464.33646      26.9564053003      78.8431476502
+        4      63.0311265127         1464.36727      26.9588525177      78.8423898761
+
+
+Convergence criteria met.                                       
+
+
+     REML Estimates
+ 
+Variance
+Component       Estimate
+
+Var(b)            1464.4
+Var(a*b)        26.95885
+Var(Error)      78.84239
+
+
+        Asymptotic Covariance Matrix of Estimates
+ 
+                    Var(b)        Var(a*b)      Var(Error)
+
+Var(b)           4401703.8         1.29359      -273.39651
+Var(a*b)           1.29359          3559.1      -502.85157
+Var(Error)      -273.39651      -502.85157          1249.7

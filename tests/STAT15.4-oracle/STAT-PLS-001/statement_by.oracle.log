@@ -1,0 +1,135 @@
+The SAS System
+
+5304       
+5305       /* STAT-PLS-001: PLS — Data input, variable roles, and basic options
+5306        * Source: S154 / Chapter 95 / `PROC PLS Statement` (PDF pp. 7686–7693); S154 / Chapter 95 / `BY Statement` (PDF p. 7693); S154 / Chapter 95 / `ID
+5306     ! Statement` (PDF p. 7696); S154 / Chapter 95 / `Missing Values` (PDF p. 7704).
+5307        * Discriminates: Two explicit BY groups contain identical inputs, exposing group boundaries and per-group results.
+5308        */
+5309       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+5309     ! validmemname=compatible locale=en_US;
+5310       %let syscc=0;
+5311       title; footnote;
+5312       ods _all_ close;
+5313       ods listing gpath="%sysfunc(pathname(work))";
+5314       ods graphics off;
+5315       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.ALL (memtype=DATA).
+NOTE: Deleting WORK.NEWOBS (memtype=DATA).
+NOTE: Deleting WORK.PRED (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SAMPLE (memtype=DATA).
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+5315     !                                         quit;
+
+
+5316       ods path work.templat(update) sashelp.tmplmst(read);
+5317       
+5318       data Sample;
+5319       input obsnam $ v1-v27 ls ha dt @@;
+5320       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.SAMPLE has 16 observations and 31 variables.
+
+5369       ;
+5370       data _oracle_input; set sample; do _oracle_by=1 to 2; output; end; run;
+
+NOTE: There were 16 observations read from the data set WORK.SAMPLE.
+NOTE: The data set WORK._ORACLE_INPUT has 32 observations and 32 variables.
+
+5371       proc sort data=_oracle_input; by _oracle_by; run;
+
+NOTE: There were 32 observations read from the data set WORK._ORACLE_INPUT.
+NOTE: The data set WORK._ORACLE_INPUT has 32 observations and 32 variables.
+
+5372       proc pls data=_oracle_input;
+5373       by _oracle_by;
+5374       model ls ha dt = v1-v27;
+5375       run;
+
+NOTE: Maximum number of factors to extract set to 15.  This may be too high; you should consider using either the NFAC= option or the CV= option to set the 
+      number of factors.
+NOTE: The above message was for the following BY group:
+      _oracle_by=1
+NOTE: Maximum number of factors to extract set to 15.  This may be too high; you should consider using either the NFAC= option or the CV= option to set the 
+      number of factors.
+NOTE: The above message was for the following BY group:
+      _oracle_by=2
+NOTE: There were 32 observations read from the data set WORK._ORACLE_INPUT.
+NOTE: The PROCEDURE PLS printed pages 402-405.
+
+5376       proc pls data=sample cv=split;
+5377       model ls ha dt = v1-v27;
+5378       run;
+
+NOTE: Maximum number of factors to extract set to 15.
+NOTE: There were 16 observations read from the data set WORK.SAMPLE.
+NOTE: The PROCEDURE PLS printed pages 406-407.
+
+5379       proc pls data=sample cv=split cvtest(seed=12345);
+5380       model ls ha dt = v1-v27;
+5381       run;
+
+NOTE: Maximum number of factors to extract set to 15.
+NOTE: There were 16 observations read from the data set WORK.SAMPLE.
+NOTE: The PROCEDURE PLS printed pages 408-409.
+
+5382       data newobs;
+5383       input obsnam $ v1-v27 @@;
+5384       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.NEWOBS has 2 observations and 28 variables.
+
+5391       ;
+5392       data all;
+5393       set sample newobs;
+5394       run;
+
+NOTE: There were 16 observations read from the data set WORK.SAMPLE.
+NOTE: There were 2 observations read from the data set WORK.NEWOBS.
+NOTE: The data set WORK.ALL has 18 observations and 31 variables.
+
+5395       proc pls data=all nfac=3;
+5396       model ls ha dt = v1-v27;
+5397       output out=pred p=p_ls p_ha p_dt;
+5398       run;
+
+NOTE: There were 18 observations read from the data set WORK.ALL.
+NOTE: The data set WORK.PRED has 18 observations and 34 variables.
+NOTE: The PROCEDURE PLS printed pages 410-411.
+
+5399       proc print data=pred;
+5400       where (obsnam in ('EM17','EM25'));
+5401       var obsnam p_ls p_ha p_dt;
+5402       run;
+
+NOTE: There were 2 observations read from the data set WORK.PRED.
+      WHERE obsnam in ('EM17', 'EM25');
+NOTE: The PROCEDURE PRINT printed page 412.
+
+5403       ods graphics on;
+5404       proc pls data=sample cv=split cvtest(seed=12345);
+5405       model ls ha dt = v1-v27;
+5406       run;
+
+NOTE: Maximum number of factors to extract set to 15.
+NOTE: There were 16 observations read from the data set WORK.SAMPLE.
+NOTE: The PROCEDURE PLS printed pages 413-414.
+
+5407       proc pls data=sample nfac=3 plot=corrload(nfac=3);
+5408       model ls ha dt = v1-v27;
+5409       run;
+
+NOTE: There were 16 observations read from the data set WORK.SAMPLE.
+NOTE: The PROCEDURE PLS printed pages 415-416.
+
+5410       
+5411       
+5412       
+5413       
+The SAS System
+
+5414       

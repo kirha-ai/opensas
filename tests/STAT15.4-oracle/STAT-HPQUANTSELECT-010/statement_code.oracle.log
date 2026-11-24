@@ -1,0 +1,68 @@
+The SAS System
+
+5123       
+5124       /* STAT-HPQUANTSELECT-010: HPQUANTSELECT — CODE
+5125        * Source: S154 / Chapter 66 / `CODE Statement` (PDF p. 4988).
+5126        * Discriminates: Generate DATA step scoring code, execute it against the input rows, and print the scored data.
+5127        */
+5128       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+5128     ! validmemname=compatible locale=en_US;
+5129       %let syscc=0;
+5130       title; footnote;
+5131       ods _all_ close;
+5132       ods listing gpath="%sysfunc(pathname(work))";
+5133       ods graphics off;
+5134       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SAMPLE (memtype=DATA).
+NOTE: Deleting WORK.SCORED (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK._NAMEDAT (memtype=DATA).
+5134     !                                         quit;
+
+
+5135       ods path work.templat(update) sashelp.tmplmst(read);
+5136       
+5137       data sample;
+5138       call streaminit(314159);
+5139       do id=1 to 120;
+5140        x=rand('normal'); z=rand('normal'); w=rand('normal'); group=1+mod(id,3);
+5141        y=2+1.5*x-0.6*z+0.4*group+rand('normal');
+5142        role=mod(id,4); output;
+5143       end;
+5144       run;
+
+NOTE: The data set WORK.SAMPLE has 120 observations and 7 variables.
+
+5145       filename _orcode "%sysfunc(pathname(work))/_oracle_score.sas";
+5146       proc hpquantselect data=sample;
+5147       class group;
+5148       model y=x z w group / quantile=0.5 clb;
+5149       code file="%sysfunc(pathname(work))/_oracle_score.sas";
+5150       performance nthreads=1;
+5151       run;
+
+NOTE: The HPQUANTSELECT procedure is executing in single-machine mode.
+NOTE: External file /saswork/SAS_work7EA200001C34_odaws01-euw1.oda.sas.com/SAS_work29EF00001C34_odaws01-euw1.oda.sas.com/_oracle_score.sas opened.
+NOTE: The HPQUANTSELECT procedure wrote the DATA step code to external file 
+      /saswork/SAS_work7EA200001C34_odaws01-euw1.oda.sas.com/SAS_work29EF00001C34_odaws01-euw1.oda.sas.com/_oracle_score.sas.
+NOTE: The PROCEDURE HPQUANTSELECT printed pages 199-200.
+
+5152       data scored; set sample; %include _orcode; run; proc print data=scored(obs=10); run;
+
+NOTE: There were 120 observations read from the data set WORK.SAMPLE.
+NOTE: The data set WORK.SCORED has 120 observations and 8 variables.
+
+
+NOTE: There were 10 observations read from the data set WORK.SCORED.
+NOTE: The PROCEDURE PRINT printed page 201.
+
+5214       
+5215       
+5216       
+5217       
+The SAS System
+
+5218       

@@ -1,0 +1,78 @@
+The SAS System
+
+934        
+935        /* STAT-BCHOICE-008: BCHOICE — Gamerman Algorithm / Tuning the Random Walk Metropolis in Logit Models / Autocall Macros for Postprocessing
+936         * Source: S154 / Chapter 30 / `Gamerman Algorithm` (PDF pp. 1216–1218); S154 / Chapter 30 / `Tuning the Random Walk Metropolis in Logit Models`
+936      ! (PDF pp. 1218–1220); S154 / Chapter 30 / `Autocall Macros for Postprocessing` (PDF pp. 1220–1222).
+937         * Discriminates: Example 30.2: Nested Logit Modeling
+938         */
+939        options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+939      ! validmemname=compatible locale=en_US;
+940        %let syscc=0;
+941        title; footnote;
+942        ods _all_ close;
+943        ods listing gpath="%sysfunc(pathname(work))";
+944        ods graphics off;
+945        proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+945      !                                         quit;
+
+
+946        ods path work.templat(update) sashelp.tmplmst(read);
+947        
+948        data Travel;
+949        input AutoTime PlanTime TranTime Age Chosen $;
+950        AgeCtr=Age-34;
+951        datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.TRAVEL has 21 observations and 6 variables.
+
+974        ;
+975        
+976        run;
+977        
+978        data Travel2(keep=Subject Mode TravTime Age AgeCtr Choice);
+979        array Times[3] AutoTime PlanTime TranTime;
+980        array Allmodes[3] $ _temporary_ ('Auto' 'Plane' 'Transit');
+981        set Travel;
+982        Subject = _n_;
+983        do i = 1 to 3;
+984        Mode = Allmodes[i];
+985        TravTime = Times[i];
+986        Choice = (Chosen eq Mode);
+987        output;
+988        end;
+989        run;
+
+NOTE: There were 21 observations read from the data set WORK.TRAVEL.
+NOTE: The data set WORK.TRAVEL2 has 63 observations and 6 variables.
+
+990        proc bchoice data=Travel2 seed=124 nmc=1000 nthin=2 dic nbi=200;
+991        class Mode Subject / param=ref order=data;
+992        model Choice = Mode TravTime / choiceset=(Subject) type=nlogit nest=(1 2 1);
+993        run;
+
+NOTE: The ALTERIDX= option in the MODEL statement should be specified to make sure the alternatives appear in the same order in all choice sets for a nested 
+      logit or probit model. When the ALTERIDX= option is not specified, PROC BCHOICE assumes the alternatives are in the same order.
+NOTE: Beginning calculation of summary and diagnostics statistics.
+NOTE: The PROCEDURE BCHOICE printed page 42.
+
+994        proc bchoice data=Travel2 seed=124 nmc=1000 nthin=2 dic nbi=200;
+995        class Mode Subject / param=ref order=data;
+996        model Choice = Mode TravTime / choiceset=(Subject);
+997        run;
+
+NOTE: Generating the burn-in samples.
+NOTE: Beginning sample generation.
+NOTE: Beginning calculation of summary and diagnostics statistics.
+NOTE: The PROCEDURE BCHOICE printed page 43.
+
+998        
+999        
+1000       
+1001       
+The SAS System
+
+1002       

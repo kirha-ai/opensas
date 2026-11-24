@@ -1,0 +1,14 @@
+
+The MEANS Procedure
+
+      Analysis Variable : y 
+ 
+ N            Mean         Std Dev
+----------------------------------
+12      14.9166667       7.4156877
+----------------------------------
+
+                      has_
+lines    has_html    table
+
+ 1668        1         1  

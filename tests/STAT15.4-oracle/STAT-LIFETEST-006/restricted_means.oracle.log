@@ -1,0 +1,56 @@
+The SAS System
+
+565        
+566        /* STAT-LIFETEST-006: LIFETEST — Restricted Mean Analysis
+567         * Source: S154 / Chapter 77 / `Restricted Mean Analysis` (PDF pp. 5690–5692).
+568         * Discriminates: Restricted mean survival time and restricted mean time lost at an explicit tau of 6.
+569         */
+570        options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+570      ! validmemname=compatible locale=en_US;
+571        %let syscc=0;
+572        title; footnote;
+573        ods _all_ close;
+574        ods listing gpath="%sysfunc(pathname(work))";
+575        ods graphics off;
+576        proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SURVIVAL (memtype=DATA).
+576      !                                         quit;
+
+
+577        ods path work.templat(update) sashelp.tmplmst(read);
+578        
+579        data survival;
+580        input time status group $;
+581        datalines;
+
+NOTE: The data set WORK.SURVIVAL has 12 observations and 3 variables.
+
+594        ;
+595        run;
+596        data survival; set survival; if status=2 then status=1; run;
+
+NOTE: There were 12 observations read from the data set WORK.SURVIVAL.
+NOTE: The data set WORK.SURVIVAL has 12 observations and 3 variables.
+
+597        proc lifetest data=survival rmst(tau=6) rmtl(tau=6);
+598        time time*status(0);
+599        strata group;
+600        run;
+
+NOTE: The LOGLOG transform is used to compute the confidence limits for the quartiles of the survivor distribution. To suppress using this transform, specify 
+      CONFTYPE=LINEAR in the PROC LIFETEST statement.
+NOTE: The PROCEDURE LIFETEST printed pages 22-24.
+
+601        
+602        
+603        
+604        
+The SAS System
+
+605        

@@ -1,0 +1,72 @@
+The SAS System
+
+678        
+679        /* STAT-GLIMMIX-023: GLIMMIX — STORE
+680         * Source: S154 / Chapter 52 / `STORE Statement` (PDF p. 3817).
+681         * Discriminates: Save the fitted item store and inspect it through PROC PLM SHOW ALL.
+682         */
+683        options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+683      ! validmemname=compatible locale=en_US;
+684        %let syscc=0;
+685        title; footnote;
+686        ods _all_ close;
+687        ods listing gpath="%sysfunc(pathname(work))";
+688        ods graphics off;
+689        proc datasets library=work kill nolist;
+NOTE: Deleting WORK.MULTICENTER (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK._ORACLE_SCORED (memtype=DATA).
+689      !                                         quit;
+
+
+690        ods path work.templat(update) sashelp.tmplmst(read);
+691        
+692        data multicenter;
+693        input center group$ n sideeffect;
+694        datalines;
+
+NOTE: The data set WORK.MULTICENTER has 30 observations and 4 variables.
+
+725        ;
+726        proc glimmix data=multicenter;
+727        class center group;
+728        model sideeffect/n = group / solution;
+729        random intercept / subject=center;
+730        
+731        store out=work._oracle_store;
+732        run;
+
+
+
+NOTE: Convergence criterion (PCONV=1.11022E-8) satisfied.
+NOTE: The GLIMMIX procedure generated the model item store WORK._ORACLE_STORE.
+NOTE: The PROCEDURE GLIMMIX printed page 22.
+
+733        ods select lsmeans;
+734        proc glimmix data=multicenter;
+735        class center group;
+736        model sideeffect/n = group / solution;
+737        random intercept / subject=center;
+738        lsmeans group / cl ilink;
+739        run;
+
+
+
+NOTE: Convergence criterion (PCONV=1.11022E-8) satisfied.
+NOTE: The PROCEDURE GLIMMIX printed page 23.
+
+740        
+741        proc plm restore=work._oracle_store; show all; run;
+
+NOTE: The PROCEDURE PLM printed page 24.
+
+742        
+743        
+744        
+745        
+The SAS System
+
+746        

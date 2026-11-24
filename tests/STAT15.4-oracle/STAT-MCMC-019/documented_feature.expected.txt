@@ -1,0 +1,45 @@
+
+The MCMC Procedure
+
+Number of Observations Read          12
+Number of Observations Used          12
+
+
+                                   Parameters
+ 
+                       Sampling      Initial
+Block    Parameter     Method          Value    Prior Distribution
+
+    1    mu            Conjugate     80.0000    normal(0,var=10000)             
+    2    sigma2        Conjugate       200.0    igamma(shape=3,scale=300)       
+
+The MCMC Procedure
+
+                  Posterior Summaries and Intervals
+ 
+                                      Standard
+Parameter           N        Mean    Deviation      95% HPD Interval
+
+mu               1500     89.8084       5.1707     79.8824       100.4
+sigma2           1500       333.0        128.6       144.5       585.6
+
+The MCMC Procedure
+
+                Effective Sample Sizes
+ 
+                         Autocorrelation
+Parameter         ESS               Time    Efficiency
+
+mu             1583.7             0.9471        1.0558
+sigma2         1435.1             1.0453        0.9567
+
+ Obs    Iteration          mu      sigma2    LogPrior     LogLike     LogPost
+
+   1         301      78.2515       491.8    -14.8142    -54.2881    -69.1023
+   2         302      84.5022       242.2    -12.6610    -53.7026    -66.3636
+   3         303      92.9946       201.2    -12.2459    -54.0685    -66.3145
+   4         304      90.4040       431.8    -14.4813    -52.5201    -67.0014
+   5         305      90.4289       195.3    -12.1485    -53.9193    -66.0678
+   6         306      91.4687       301.1    -13.3507    -52.6143    -65.9651
+   7         307      87.2799       344.6    -13.7271    -52.5520    -66.2791
+   8         308      88.8303       249.2    -12.7773    -52.9579    -65.7352

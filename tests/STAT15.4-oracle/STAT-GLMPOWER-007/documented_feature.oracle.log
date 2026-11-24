@@ -1,0 +1,68 @@
+The SAS System
+
+27207      
+27208      /* STAT-GLMPOWER-007: GLMPOWER — REPEATED
+27209       * Source: S154 / Chapter 55 / `REPEATED Statement` (PDF pp. 4277–4280).
+27210       * Discriminates: Example 55.3: Repeated Measures ANOVA; explicit statements: REPEATED
+27211       */
+27212      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+27212    ! validmemname=compatible locale=en_US;
+27213      %let syscc=0;
+27214      title; footnote;
+27215      ods _all_ close;
+27216      ods listing gpath="%sysfunc(pathname(work))";
+27217      ods graphics off;
+27218      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.EXEMPLARY (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+27218    !                                         quit;
+
+
+27219      ods path work.templat(update) sashelp.tmplmst(read);
+27220      
+27221      data Pain;
+27222      input Treatment $ PainMem0 PainMem1Wk PainMem6Mo PainMem12Mo;
+27223      datalines;
+
+NOTE: The data set WORK.PAIN has 2 observations and 5 variables.
+
+27226      ;
+27227      ods graphics on;
+27228      proc glmpower data=Pain;
+27229      class Treatment;
+27230      model PainMem0 PainMem1Wk PainMem6Mo PainMem12Mo = Treatment;
+27231      repeated Time contrast;
+27232      power
+27233      mtest = hlt
+27234      alpha = 0.01
+27235      power = .9
+27236      ntotal = .
+27237      stddev = 0.92 1.04
+27238      matrix ("PainCorr") = lear(0.6, 0.8, 4, 0 1 26 52)
+27239      corrmat = "PainCorr";
+27240      plot y=power min=0.05 max=0.99 yopts=(ref=0.9)
+27241      vary (linestyle by stddev, symbol by dependent source);
+27242      run;
+
+NOTE: Plotting Power on the y-axis, with 20 points per curve between 0.05 and 0.99, versus computed N Total on the x-axis.
+NOTE: There were 2 observations read from the data set WORK.PAIN.
+NOTE: The PROCEDURE GLMPOWER printed page 2670.
+
+27243      ods graphics off;
+27244      run;
+27245      quit;
+27246      
+27247      
+27248      
+27249      
+The SAS System
+
+27250      

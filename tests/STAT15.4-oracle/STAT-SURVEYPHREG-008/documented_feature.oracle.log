@@ -1,0 +1,62 @@
+The SAS System
+
+23098      
+23099      /* STAT-SURVEYPHREG-008: SURVEYPHREG — Jackknife Method / Replicate Weights Method / Degrees of Freedom
+23100       * Source: S154 / Chapter 122 / `Jackknife Method` (PDF pp. 10062–10063); S154 / Chapter 122 / `Replicate Weights Method` (PDF pp. 10063–10065);
+23100    ! S154 / Chapter 122 / `Degrees of Freedom` (PDF pp. 10065–10066).
+23101       * Discriminates: Verified default procedure context
+23102       */
+23103      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+23103    ! validmemname=compatible locale=en_US;
+23104      %let syscc=0;
+23105      title; footnote;
+23106      ods _all_ close;
+23107      ods listing gpath="%sysfunc(pathname(work))";
+23108      ods graphics off;
+23109      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SURVEY (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+23109    !                                         quit;
+
+
+23110      ods path work.templat(update) sashelp.tmplmst(read);
+23111      
+23112      data survey;
+23113      call streaminit(722);
+23114      do stratum=1 to 2;
+23115      do cluster=1 to 4;
+23116      do id=1 to 12;
+23117      age=20+mod(id*7+cluster,45);
+23118      time=1+rand('exponential')*10;
+23119      status=(mod(id,4) ne 0);
+23120      weight=2+stratum+cluster/10;
+23121      output;
+23122      end;
+23123      end;
+23124      end;
+23125      run;
+
+NOTE: The data set WORK.SURVEY has 96 observations and 7 variables.
+
+23126      proc surveyphreg data=survey;
+23127      strata stratum;
+23128      cluster cluster;
+23129      weight weight;
+23130      model time*status(0)=age;
+23131      run;
+
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The PROCEDURE SURVEYPHREG printed page 1501.
+
+23132      
+23133      
+23134      
+23135      
+The SAS System
+
+23136      

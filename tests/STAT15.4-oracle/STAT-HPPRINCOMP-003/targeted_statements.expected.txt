@@ -1,0 +1,108 @@
+
+The HPPRINCOMP Procedure
+
+      Performance Information
+
+Execution Mode       Single-Machine
+Number of Threads    1             
+
+
+          Data Access Information
+ 
+Data           Engine    Role      Path
+
+WORK.SAMPLE    V9        Input     On Client
+WORK.SCORES    V9        Output    On Client
+
+
+                   Model Information
+
+Data Source                    WORK.SAMPLE             
+Component Extraction Method    Eigenvalue Decomposition
+
+
+Number of Observations Read             90
+Number of Observations Used             90
+
+
+Number of Variables                    3
+Number of Partial Variables            1
+Number of Principal Components         3
+
+
+          Simple Statistics
+ 
+                              Standard
+Variable           Mean      Deviation
+
+x              -0.14903        0.90396
+y               5.66685        1.66176
+y2              1.83860        1.40678
+z              -0.06367        0.99773
+
+
+                 Correlation Matrix
+ 
+Variable          x          y         y2          z
+
+x            1.0000     0.7565     0.3663    -0.0248
+y            0.7565     1.0000     0.0659    -0.4173
+y2           0.3663     0.0659     1.0000     0.6035
+z           -0.0248    -0.4173     0.6035     1.0000
+
+
+        Regression Statistics
+ 
+Variable       R-Square           RMSE
+
+x            0.00061270        0.90881
+y               0.17413        1.51872
+y2              0.36423        1.12806
+
+
+Standardized Regression
+     Coefficients
+ 
+Variable              z
+
+x              -0.02475
+y              -0.41729
+y2              0.60351
+
+
+       Partial Correlation Matrix
+ 
+Variable          x          y         y2
+
+x            1.0000     0.8213     0.4782
+y            0.8213     1.0000     0.4385
+y2           0.4782     0.4385     1.0000
+
+
+          Eigenvalues of the Partial Correlation Matrix
+ 
+          Eigenvalue      Difference    Proportion    Cumulative
+
+   1        2.178117        1.533544        0.7260        0.7260
+   2        0.644572        0.467262        0.2149        0.9409
+   3        0.177311                        0.0591        1.0000
+
+
+                    Eigenvectors
+ 
+Variable          Prin1          Prin2          Prin3
+
+x               0.62424       -0.30344       -0.71989
+y               0.61466       -0.37800        0.69232
+y2              0.48220        0.87467        0.04945
+
+Obs     Score1      Score2      Score3
+
+  1    -0.86985    -0.07183    -0.79140
+  2    -0.26703     0.38973     0.20035
+  3     1.71922    -0.37144    -0.97899
+  4    -0.83233     0.83028     0.42628
+  5     0.09962    -0.48612     0.39541
+  6    -1.40680    -0.43767     0.11627
+  7    -3.15747     0.20955     0.13999
+  8    -0.93308    -0.28164    -0.32954

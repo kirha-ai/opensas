@@ -1,0 +1,131 @@
+
+The ACECLUS Procedure
+ 
+Approximate Covariance Estimation for Cluster Analysis
+
+Observations         150    Proportion      0.1000
+Variables              4    Converge       0.00100
+
+
+              Means and Standard Deviations
+                            Standard
+Variable           Mean    Deviation    Label
+
+SepalLength     58.4333       8.2807    Sepal Length (mm)
+SepalWidth      30.5733       4.3587    Sepal Width (mm) 
+PetalLength     37.5800      17.6530    Petal Length (mm)
+PetalWidth      11.9933       7.6224    Petal Width (mm) 
+
+
+                           COV: Total Sample Covariances
+ 
+                  SepalLength        SepalWidth       PetalLength        PetalWidth
+
+SepalLength        68.5693512        -4.2434004       127.4315436        51.6270694
+SepalWidth         -4.2434004        18.9979418       -32.9656376       -12.1639374
+PetalLength       127.4315436       -32.9656376       311.6277852       129.5609396
+PetalWidth         51.6270694       -12.1639374       129.5609396        58.1006264
+
+Initial Within-Cluster Covariance Estimate = Full Covariance Matrix
+
+
+Threshold =     0.52177
+
+
+                      Iteration History
+ 
+                                        Pairs
+               RMS       Distance      Within    Convergence
+Iteration    Distance     Cutoff       Cutoff      Measure
+------------------------------------------------------------
+        1       2.828       1.476      1264.0     0.424152  
+        2       8.212       4.285      1882.0     0.041341  
+        3       8.660       4.519      2735.0     0.058980  
+        4       8.357       4.360      3245.0     0.042708  
+        5       8.121       4.238      3502.0     0.023879  
+        6       7.958       4.152      3594.0     0.009237  
+        7       7.881       4.112      3615.0     0.002399  
+        8       7.851       4.096      3618.0     0.001239  
+        9       7.838       4.090      3622.0     0.001219  
+       10       7.829       4.085      3631.0     0.001102  
+
+
+WARNING: Iteration limit exceeded.                              
+
+
+               ACE: Approximate Covariance Estimate Within Clusters
+ 
+                  SepalLength        SepalWidth       PetalLength        PetalWidth
+
+SepalLength       15.29082897        5.87317543        9.99036078        4.40911595
+SepalWidth         5.87317543        7.25543927        3.98168549        2.57050399
+PetalLength        9.99036078        3.98168549       16.92522721        8.12530983
+PetalWidth         4.40911595        2.57050399        8.12530983        5.68727623
+
+
+                Eigenvalues of Inv(ACE)*(COV-ACE)
+ 
+            Eigenvalue    Difference    Proportion    Cumulative
+
+       1       23.9389       22.5297        0.9031        0.9031
+       2        1.4092        0.6022        0.0532        0.9563
+       3        0.8071        0.4562        0.0304        0.9868
+       4        0.3509                      0.0132        1.0000
+
+
+                        Eigenvectors (Raw Canonical Coefficients)
+ 
+                                            Can1          Can2          Can3          Can4
+
+SepalLength      Sepal Length (mm)      0.002498      -.054516      0.029905      0.370140
+SepalWidth       Sepal Width (mm)       0.200457      -.125811      0.292017      -.273107
+PetalLength      Petal Length (mm)      -.285844      -.288930      -.038877      -.288361
+PetalWidth       Petal Width (mm)       0.065131      0.714074      0.168726      0.258244
+
+
+                           Standardized Canonical Coefficients
+ 
+                                            Can1          Can2          Can3          Can4
+
+SepalLength      Sepal Length (mm)       0.02068      -0.45143       0.24763       3.06501
+SepalWidth       Sepal Width (mm)        0.87372      -0.54837       1.27280      -1.19038
+PetalLength      Petal Length (mm)      -5.04599      -5.10048      -0.68630      -5.09043
+PetalWidth       Petal Width (mm)        0.49646       5.44294       1.28609       1.96843
+
+NAME           TYPE    LENGTH    VARNUM           LABEL           FORMAT    INFORMAT
+
+_TYPE_           2        8         1      Type of Observation                      
+_NAME_           2       16         2      Name of Component                        
+SepalLength      1        8         3      Sepal Length (mm)                        
+SepalWidth       1        8         4      Sepal Width (mm)                         
+PetalLength      1        8         5      Petal Length (mm)                        
+PetalWidth       1        8         6      Petal Width (mm)                         
+
+             Dataset
+ Dataset      Type      NObs    NVars
+
+structure      ACE       20       6  
+
+                              Sepal       Sepal       Petal       Petal
+_TYPE_      _NAME_           Length       Width      Length       Width
+
+MEAN                         58.433      30.573      37.580      11.993
+STD                           8.281       4.359      17.653       7.622
+N                           150.000     150.000     150.000     150.000
+COV         SepalLength      68.569      -4.243     127.432      51.627
+COV         SepalWidth       -4.243      18.998     -32.966     -12.164
+COV         PetalLength     127.432     -32.966     311.628     129.561
+COV         PetalWidth       51.627     -12.164     129.561      58.101
+ACE         SepalLength      15.291       5.873       9.990       4.409
+ACE         SepalWidth        5.873       7.255       3.982       2.571
+ACE         PetalLength       9.990       3.982      16.925       8.125
+ACE         PetalWidth        4.409       2.571       8.125       5.687
+EIGENVAL                     23.939       1.409       0.807       0.351
+RAWSCORE    Can1              0.002       0.200      -0.286       0.065
+RAWSCORE    Can2             -0.055      -0.126      -0.289       0.714
+RAWSCORE    Can3              0.030       0.292      -0.039       0.169
+RAWSCORE    Can4              0.370      -0.273      -0.288       0.258
+SCORE       Can1              0.021       0.874      -5.046       0.496
+SCORE       Can2             -0.451      -0.548      -5.100       5.443
+SCORE       Can3              0.248       1.273      -0.686       1.286
+SCORE       Can4              3.065      -1.190      -5.090       1.968

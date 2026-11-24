@@ -1,0 +1,43 @@
+The SAS System
+
+19040      
+19041      /* STAT-STEPDISC-004: STEPDISC — Computational Resources
+19042       * Source: S154 / Chapter 117 / `Computational Resources` (PDF pp. 9566–9567).
+19043       * Discriminates: Getting Started: STEPDISC Procedure
+19044       */
+19045      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+19045    ! validmemname=compatible locale=en_US;
+19046      %let syscc=0;
+19047      title; footnote;
+19048      ods _all_ close;
+19049      ods listing gpath="%sysfunc(pathname(work))";
+19050      ods graphics off;
+19051      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+19051    !                                         quit;
+
+
+19052      ods path work.templat(update) sashelp.tmplmst(read);
+19053      
+19054      title 'Fish Measurement Data';
+19055      proc stepdisc data=sashelp.fish;
+19056      class Species;
+19057      run;
+
+WARNING: 1 observations in DATA= data set or BY group will not be included in the analysis due to missing values.
+WARNING: A total of 1 of the 159 observations in the DATA= data set were excluded (frequency sum = 158).
+NOTE: There were 159 observations read from the data set SASHELP.FISH.
+NOTE: The PROCEDURE STEPDISC printed pages 1359-1367.
+
+19058      
+19059      
+19060      
+19061      
+The SAS System
+
+19062      

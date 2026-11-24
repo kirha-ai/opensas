@@ -1,0 +1,787 @@
+
+The MI Procedure
+
+                     Model Information
+
+Data Set                             WORK.FITNESS1          
+Method                               Monotone-data MCMC     
+Multiple Imputation Chain            Single Chain           
+Initial Estimates for MCMC           EM Posterior Mode      
+Start                                Starting Value         
+Prior                                Jeffreys               
+Number of Imputations                25                     
+Number of Burn-in Iterations         200                    
+Number of Iterations                 100                    
+Seed for random number generator     17655417               
+
+
+                                          Missing Data Patterns
+ 
+                   Run     Run                              -----------------Group Means----------------
+Group    Oxygen    Time    Pulse        Freq     Percent          Oxygen         RunTime        RunPulse
+
+    1    X         X       X              21       67.74       46.353810       10.809524      171.666667
+    2    X         X       O               4       12.90       47.109500       10.137500               .
+    3    X         O       O               3        9.68       52.461667               .               .
+    4    .         X       X               1        3.23               .       11.950000      176.000000
+    5    .         X       O               2        6.45               .        9.885000               .
+
+
+                  EM (Posterior Mode) Estimates
+ 
+_TYPE_    _NAME_            Oxygen         RunTime        RunPulse
+
+MEAN                     47.103766       10.554320      171.382196
+COV       Oxygen         24.549967       -5.726112      -15.926036
+COV       RunTime        -5.726112        1.781407        3.124798
+COV       RunPulse      -15.926036        3.124798       83.164045
+
+The MI Procedure
+
+                     Model Information
+
+Data Set                             WORK.OUTEX10           
+Method                               MCMC                   
+Multiple Imputation Chain            Single Chain           
+Initial Estimates for MCMC           EM Posterior Mode      
+Start                                Starting Value         
+Prior                                Jeffreys               
+Number of Imputations                0                      
+Number of Burn-in Iterations         200                    
+Number of Iterations                 100                    
+Seed for random number generator     15541                  
+
+
+                                          Missing Data Patterns
+ 
+                   Run     Run                              -----------------Group Means----------------
+Group    Oxygen    Time    Pulse        Freq     Percent          Oxygen         RunTime        RunPulse
+
+    1    X         X       X             550       70.97       46.179104       10.861364      171.863636
+    2    X         X       .             150       19.35       47.774669       10.053333               .
+    3    X         .       .              75        9.68       52.461667               .               .
+
+Imputation Number=1
+
+The MI Procedure
+
+                     Model Information
+
+Data Set                             WORK.OUTEX10           
+Method                               Monotone               
+Number of Imputations                1                      
+Seed for random number generator     51343672               
+
+
+ Monotone Model Specification
+ 
+              Imputed
+Method        Variables
+
+Regression    RunTime RunPulse
+
+
+                                          Missing Data Patterns
+ 
+                   Run     Run                              -----------------Group Means----------------
+Group    Oxygen    Time    Pulse        Freq     Percent          Oxygen         RunTime        RunPulse
+
+    1    X         X       X              22       70.97       46.057479       10.861364      171.863636
+    2    X         X       .               6       19.35       46.745227       10.053333               .
+    3    X         .       .               3        9.68       52.461667               .               .
+
+Imputation Number=2
+
+The MI Procedure
+
+                     Model Information
+
+Data Set                             WORK.OUTEX10           
+Method                               Monotone               
+Number of Imputations                1                      
+Seed for random number generator     1365870832             
+
+
+ Monotone Model Specification
+ 
+              Imputed
+Method        Variables
+
+Regression    RunTime RunPulse
+
+
+                                          Missing Data Patterns
+ 
+                   Run     Run                              -----------------Group Means----------------
+Group    Oxygen    Time    Pulse        Freq     Percent          Oxygen         RunTime        RunPulse
+
+    1    X         X       X              22       70.97       46.177240       10.861364      171.863636
+    2    X         X       .               6       19.35       48.459544       10.053333               .
+    3    X         .       .               3        9.68       52.461667               .               .
+
+Imputation Number=3
+
+The MI Procedure
+
+                     Model Information
+
+Data Set                             WORK.OUTEX10           
+Method                               Monotone               
+Number of Imputations                1                      
+Seed for random number generator     341517471              
+
+
+ Monotone Model Specification
+ 
+              Imputed
+Method        Variables
+
+Regression    RunTime RunPulse
+
+
+                                          Missing Data Patterns
+ 
+                   Run     Run                              -----------------Group Means----------------
+Group    Oxygen    Time    Pulse        Freq     Percent          Oxygen         RunTime        RunPulse
+
+    1    X         X       X              22       70.97       46.196606       10.861364      171.863636
+    2    X         X       .               6       19.35       47.797139       10.053333               .
+    3    X         .       .               3        9.68       52.461667               .               .
+
+Imputation Number=4
+
+The MI Procedure
+
+                     Model Information
+
+Data Set                             WORK.OUTEX10           
+Method                               Monotone               
+Number of Imputations                1                      
+Seed for random number generator     607359960              
+
+
+ Monotone Model Specification
+ 
+              Imputed
+Method        Variables
+
+Regression    RunTime RunPulse
+
+
+                                          Missing Data Patterns
+ 
+                   Run     Run                              -----------------Group Means----------------
+Group    Oxygen    Time    Pulse        Freq     Percent          Oxygen         RunTime        RunPulse
+
+    1    X         X       X              22       70.97       45.955325       10.861364      171.863636
+    2    X         X       .               6       19.35       47.627588       10.053333               .
+    3    X         .       .               3        9.68       52.461667               .               .
+
+Imputation Number=5
+
+The MI Procedure
+
+                     Model Information
+
+Data Set                             WORK.OUTEX10           
+Method                               Monotone               
+Number of Imputations                1                      
+Seed for random number generator     285881902              
+
+
+ Monotone Model Specification
+ 
+              Imputed
+Method        Variables
+
+Regression    RunTime RunPulse
+
+
+                                          Missing Data Patterns
+ 
+                   Run     Run                              -----------------Group Means----------------
+Group    Oxygen    Time    Pulse        Freq     Percent          Oxygen         RunTime        RunPulse
+
+    1    X         X       X              22       70.97       46.375490       10.861364      171.863636
+    2    X         X       .               6       19.35       48.350690       10.053333               .
+    3    X         .       .               3        9.68       52.461667               .               .
+
+Imputation Number=6
+
+The MI Procedure
+
+                     Model Information
+
+Data Set                             WORK.OUTEX10           
+Method                               Monotone               
+Number of Imputations                1                      
+Seed for random number generator     612578661              
+
+
+ Monotone Model Specification
+ 
+              Imputed
+Method        Variables
+
+Regression    RunTime RunPulse
+
+
+                                          Missing Data Patterns
+ 
+                   Run     Run                              -----------------Group Means----------------
+Group    Oxygen    Time    Pulse        Freq     Percent          Oxygen         RunTime        RunPulse
+
+    1    X         X       X              22       70.97       46.262916       10.861364      171.863636
+    2    X         X       .               6       19.35       47.402022       10.053333               .
+    3    X         .       .               3        9.68       52.461667               .               .
+
+Imputation Number=7
+
+The MI Procedure
+
+                     Model Information
+
+Data Set                             WORK.OUTEX10           
+Method                               Monotone               
+Number of Imputations                1                      
+Seed for random number generator     1752096012             
+
+
+ Monotone Model Specification
+ 
+              Imputed
+Method        Variables
+
+Regression    RunTime RunPulse
+
+
+                                          Missing Data Patterns
+ 
+                   Run     Run                              -----------------Group Means----------------
+Group    Oxygen    Time    Pulse        Freq     Percent          Oxygen         RunTime        RunPulse
+
+    1    X         X       X              22       70.97       46.067358       10.861364      171.863636
+    2    X         X       .               6       19.35       46.146515       10.053333               .
+    3    X         .       .               3        9.68       52.461667               .               .
+
+Imputation Number=8
+
+The MI Procedure
+
+                     Model Information
+
+Data Set                             WORK.OUTEX10           
+Method                               Monotone               
+Number of Imputations                1                      
+Seed for random number generator     926473757              
+
+
+ Monotone Model Specification
+ 
+              Imputed
+Method        Variables
+
+Regression    RunTime RunPulse
+
+
+                                          Missing Data Patterns
+ 
+                   Run     Run                              -----------------Group Means----------------
+Group    Oxygen    Time    Pulse        Freq     Percent          Oxygen         RunTime        RunPulse
+
+    1    X         X       X              22       70.97       46.225549       10.861364      171.863636
+    2    X         X       .               6       19.35       48.279872       10.053333               .
+    3    X         .       .               3        9.68       52.461667               .               .
+
+Imputation Number=9
+
+The MI Procedure
+
+                     Model Information
+
+Data Set                             WORK.OUTEX10           
+Method                               Monotone               
+Number of Imputations                1                      
+Seed for random number generator     534540502              
+
+
+ Monotone Model Specification
+ 
+              Imputed
+Method        Variables
+
+Regression    RunTime RunPulse
+
+
+                                          Missing Data Patterns
+ 
+                   Run     Run                              -----------------Group Means----------------
+Group    Oxygen    Time    Pulse        Freq     Percent          Oxygen         RunTime        RunPulse
+
+    1    X         X       X              22       70.97       46.062037       10.861364      171.863636
+    2    X         X       .               6       19.35       48.564207       10.053333               .
+    3    X         .       .               3        9.68       52.461667               .               .
+
+Imputation Number=10
+
+The MI Procedure
+
+                     Model Information
+
+Data Set                             WORK.OUTEX10           
+Method                               Monotone               
+Number of Imputations                1                      
+Seed for random number generator     1488122742             
+
+
+ Monotone Model Specification
+ 
+              Imputed
+Method        Variables
+
+Regression    RunTime RunPulse
+
+
+                                          Missing Data Patterns
+ 
+                   Run     Run                              -----------------Group Means----------------
+Group    Oxygen    Time    Pulse        Freq     Percent          Oxygen         RunTime        RunPulse
+
+    1    X         X       X              22       70.97       46.086944       10.861364      171.863636
+    2    X         X       .               6       19.35       46.456676       10.053333               .
+    3    X         .       .               3        9.68       52.461667               .               .
+
+Imputation Number=11
+
+The MI Procedure
+
+                     Model Information
+
+Data Set                             WORK.OUTEX10           
+Method                               Monotone               
+Number of Imputations                1                      
+Seed for random number generator     467621118              
+
+
+ Monotone Model Specification
+ 
+              Imputed
+Method        Variables
+
+Regression    RunTime RunPulse
+
+
+                                          Missing Data Patterns
+ 
+                   Run     Run                              -----------------Group Means----------------
+Group    Oxygen    Time    Pulse        Freq     Percent          Oxygen         RunTime        RunPulse
+
+    1    X         X       X              22       70.97       46.150346       10.861364      171.863636
+    2    X         X       .               6       19.35       48.383584       10.053333               .
+    3    X         .       .               3        9.68       52.461667               .               .
+
+Imputation Number=12
+
+The MI Procedure
+
+                     Model Information
+
+Data Set                             WORK.OUTEX10           
+Method                               Monotone               
+Number of Imputations                1                      
+Seed for random number generator     595160849              
+
+
+ Monotone Model Specification
+ 
+              Imputed
+Method        Variables
+
+Regression    RunTime RunPulse
+
+
+                                          Missing Data Patterns
+ 
+                   Run     Run                              -----------------Group Means----------------
+Group    Oxygen    Time    Pulse        Freq     Percent          Oxygen         RunTime        RunPulse
+
+    1    X         X       X              22       70.97       46.063483       10.861364      171.863636
+    2    X         X       .               6       19.35       48.249030       10.053333               .
+    3    X         .       .               3        9.68       52.461667               .               .
+
+Imputation Number=13
+
+The MI Procedure
+
+                     Model Information
+
+Data Set                             WORK.OUTEX10           
+Method                               Monotone               
+Number of Imputations                1                      
+Seed for random number generator     540515918              
+
+
+ Monotone Model Specification
+ 
+              Imputed
+Method        Variables
+
+Regression    RunTime RunPulse
+
+
+                                          Missing Data Patterns
+ 
+                   Run     Run                              -----------------Group Means----------------
+Group    Oxygen    Time    Pulse        Freq     Percent          Oxygen         RunTime        RunPulse
+
+    1    X         X       X              22       70.97       46.203585       10.861364      171.863636
+    2    X         X       .               6       19.35       48.144475       10.053333               .
+    3    X         .       .               3        9.68       52.461667               .               .
+
+Imputation Number=14
+
+The MI Procedure
+
+                     Model Information
+
+Data Set                             WORK.OUTEX10           
+Method                               Monotone               
+Number of Imputations                1                      
+Seed for random number generator     1176393439             
+
+
+ Monotone Model Specification
+ 
+              Imputed
+Method        Variables
+
+Regression    RunTime RunPulse
+
+
+                                          Missing Data Patterns
+ 
+                   Run     Run                              -----------------Group Means----------------
+Group    Oxygen    Time    Pulse        Freq     Percent          Oxygen         RunTime        RunPulse
+
+    1    X         X       X              22       70.97       46.177684       10.861364      171.863636
+    2    X         X       .               6       19.35       46.639502       10.053333               .
+    3    X         .       .               3        9.68       52.461667               .               .
+
+Imputation Number=15
+
+The MI Procedure
+
+                     Model Information
+
+Data Set                             WORK.OUTEX10           
+Method                               Monotone               
+Number of Imputations                1                      
+Seed for random number generator     1258995277             
+
+
+ Monotone Model Specification
+ 
+              Imputed
+Method        Variables
+
+Regression    RunTime RunPulse
+
+
+                                          Missing Data Patterns
+ 
+                   Run     Run                              -----------------Group Means----------------
+Group    Oxygen    Time    Pulse        Freq     Percent          Oxygen         RunTime        RunPulse
+
+    1    X         X       X              22       70.97       46.181982       10.861364      171.863636
+    2    X         X       .               6       19.35       48.820531       10.053333               .
+    3    X         .       .               3        9.68       52.461667               .               .
+
+Imputation Number=16
+
+The MI Procedure
+
+                     Model Information
+
+Data Set                             WORK.OUTEX10           
+Method                               Monotone               
+Number of Imputations                1                      
+Seed for random number generator     1754346633             
+
+
+ Monotone Model Specification
+ 
+              Imputed
+Method        Variables
+
+Regression    RunTime RunPulse
+
+
+                                          Missing Data Patterns
+ 
+                   Run     Run                              -----------------Group Means----------------
+Group    Oxygen    Time    Pulse        Freq     Percent          Oxygen         RunTime        RunPulse
+
+    1    X         X       X              22       70.97       46.385814       10.861364      171.863636
+    2    X         X       .               6       19.35       47.367761       10.053333               .
+    3    X         .       .               3        9.68       52.461667               .               .
+
+Imputation Number=17
+
+The MI Procedure
+
+                     Model Information
+
+Data Set                             WORK.OUTEX10           
+Method                               Monotone               
+Number of Imputations                1                      
+Seed for random number generator     1228439206             
+
+
+ Monotone Model Specification
+ 
+              Imputed
+Method        Variables
+
+Regression    RunTime RunPulse
+
+
+                                          Missing Data Patterns
+ 
+                   Run     Run                              -----------------Group Means----------------
+Group    Oxygen    Time    Pulse        Freq     Percent          Oxygen         RunTime        RunPulse
+
+    1    X         X       X              22       70.97       46.239959       10.861364      171.863636
+    2    X         X       .               6       19.35       46.940266       10.053333               .
+    3    X         .       .               3        9.68       52.461667               .               .
+
+Imputation Number=18
+
+The MI Procedure
+
+                     Model Information
+
+Data Set                             WORK.OUTEX10           
+Method                               Monotone               
+Number of Imputations                1                      
+Seed for random number generator     825390287              
+
+
+ Monotone Model Specification
+ 
+              Imputed
+Method        Variables
+
+Regression    RunTime RunPulse
+
+
+                                          Missing Data Patterns
+ 
+                   Run     Run                              -----------------Group Means----------------
+Group    Oxygen    Time    Pulse        Freq     Percent          Oxygen         RunTime        RunPulse
+
+    1    X         X       X              22       70.97       46.182566       10.861364      171.863636
+    2    X         X       .               6       19.35       47.484344       10.053333               .
+    3    X         .       .               3        9.68       52.461667               .               .
+
+Imputation Number=19
+
+The MI Procedure
+
+                     Model Information
+
+Data Set                             WORK.OUTEX10           
+Method                               Monotone               
+Number of Imputations                1                      
+Seed for random number generator     1822053179             
+
+
+ Monotone Model Specification
+ 
+              Imputed
+Method        Variables
+
+Regression    RunTime RunPulse
+
+
+                                          Missing Data Patterns
+ 
+                   Run     Run                              -----------------Group Means----------------
+Group    Oxygen    Time    Pulse        Freq     Percent          Oxygen         RunTime        RunPulse
+
+    1    X         X       X              22       70.97       46.138177       10.861364      171.863636
+    2    X         X       .               6       19.35       47.239010       10.053333               .
+    3    X         .       .               3        9.68       52.461667               .               .
+
+Imputation Number=20
+
+The MI Procedure
+
+                     Model Information
+
+Data Set                             WORK.OUTEX10           
+Method                               Monotone               
+Number of Imputations                1                      
+Seed for random number generator     584786957              
+
+
+ Monotone Model Specification
+ 
+              Imputed
+Method        Variables
+
+Regression    RunTime RunPulse
+
+
+                                          Missing Data Patterns
+ 
+                   Run     Run                              -----------------Group Means----------------
+Group    Oxygen    Time    Pulse        Freq     Percent          Oxygen         RunTime        RunPulse
+
+    1    X         X       X              22       70.97       46.003805       10.861364      171.863636
+    2    X         X       .               6       19.35       48.209896       10.053333               .
+    3    X         .       .               3        9.68       52.461667               .               .
+
+Imputation Number=21
+
+The MI Procedure
+
+                     Model Information
+
+Data Set                             WORK.OUTEX10           
+Method                               Monotone               
+Number of Imputations                1                      
+Seed for random number generator     13342313               
+
+
+ Monotone Model Specification
+ 
+              Imputed
+Method        Variables
+
+Regression    RunTime RunPulse
+
+
+                                          Missing Data Patterns
+ 
+                   Run     Run                              -----------------Group Means----------------
+Group    Oxygen    Time    Pulse        Freq     Percent          Oxygen         RunTime        RunPulse
+
+    1    X         X       X              22       70.97       46.147368       10.861364      171.863636
+    2    X         X       .               6       19.35       48.227638       10.053333               .
+    3    X         .       .               3        9.68       52.461667               .               .
+
+Imputation Number=22
+
+The MI Procedure
+
+                     Model Information
+
+Data Set                             WORK.OUTEX10           
+Method                               Monotone               
+Number of Imputations                1                      
+Seed for random number generator     116218749              
+
+
+ Monotone Model Specification
+ 
+              Imputed
+Method        Variables
+
+Regression    RunTime RunPulse
+
+
+                                          Missing Data Patterns
+ 
+                   Run     Run                              -----------------Group Means----------------
+Group    Oxygen    Time    Pulse        Freq     Percent          Oxygen         RunTime        RunPulse
+
+    1    X         X       X              22       70.97       46.265714       10.861364      171.863636
+    2    X         X       .               6       19.35       49.530817       10.053333               .
+    3    X         .       .               3        9.68       52.461667               .               .
+
+Imputation Number=23
+
+The MI Procedure
+
+                     Model Information
+
+Data Set                             WORK.OUTEX10           
+Method                               Monotone               
+Number of Imputations                1                      
+Seed for random number generator     1677476652             
+
+
+ Monotone Model Specification
+ 
+              Imputed
+Method        Variables
+
+Regression    RunTime RunPulse
+
+
+                                          Missing Data Patterns
+ 
+                   Run     Run                              -----------------Group Means----------------
+Group    Oxygen    Time    Pulse        Freq     Percent          Oxygen         RunTime        RunPulse
+
+    1    X         X       X              22       70.97       46.335105       10.861364      171.863636
+    2    X         X       .               6       19.35       47.450483       10.053333               .
+    3    X         .       .               3        9.68       52.461667               .               .
+
+Imputation Number=24
+
+The MI Procedure
+
+                     Model Information
+
+Data Set                             WORK.OUTEX10           
+Method                               Monotone               
+Number of Imputations                1                      
+Seed for random number generator     1757987291             
+
+
+ Monotone Model Specification
+ 
+              Imputed
+Method        Variables
+
+Regression    RunTime RunPulse
+
+
+                                          Missing Data Patterns
+ 
+                   Run     Run                              -----------------Group Means----------------
+Group    Oxygen    Time    Pulse        Freq     Percent          Oxygen         RunTime        RunPulse
+
+    1    X         X       X              22       70.97       46.394128       10.861364      171.863636
+    2    X         X       .               6       19.35       48.593532       10.053333               .
+    3    X         .       .               3        9.68       52.461667               .               .
+
+Imputation Number=25
+
+The MI Procedure
+
+                     Model Information
+
+Data Set                             WORK.OUTEX10           
+Method                               Monotone               
+Number of Imputations                1                      
+Seed for random number generator     1352215897             
+
+
+ Monotone Model Specification
+ 
+              Imputed
+Method        Variables
+
+Regression    RunTime RunPulse
+
+
+                                          Missing Data Patterns
+ 
+                   Run     Run                              -----------------Group Means----------------
+Group    Oxygen    Time    Pulse        Freq     Percent          Oxygen         RunTime        RunPulse
+
+    1    X         X       X              22       70.97       46.140938       10.861364      171.863636
+    2    X         X       .               6       19.35       47.256365       10.053333               .
+    3    X         .       .               3        9.68       52.461667               .               .

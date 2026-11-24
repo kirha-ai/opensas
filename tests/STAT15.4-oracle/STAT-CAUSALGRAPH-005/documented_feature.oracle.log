@@ -1,0 +1,68 @@
+The SAS System
+
+13026      
+13027      /* STAT-CAUSALGRAPH-005: CAUSALGRAPH — TESTID
+13028       * Source: S154 / Chapter 37 / `TESTID Statement` (PDF pp. 2319–2321).
+13029       * Discriminates: Example 37.5: Identifying a Causal Effect by Using Instrumental Variables; explicit statements: TESTID
+13030       */
+13031      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+13031    ! validmemname=compatible locale=en_US;
+13032      %let syscc=0;
+13033      title; footnote;
+13034      ods _all_ close;
+13035      ods listing gpath="%sysfunc(pathname(work))";
+13036      ods graphics off;
+13037      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+13037    !                                         quit;
+
+
+13038      ods path work.templat(update) sashelp.tmplmst(read);
+13039      
+13040      proc causalgraph method=iv;
+13041      model "Timm17HealthBehavior"
+13042      Age ==> Parity PFAS Education,
+13043      Parity ==> PrevBF Duration PFAS,
+13044      PrevBF ==> PFAS Duration,
+13045      PFAS ==> Duration,
+13046      Education ==> Duration HealthBehavior Employment,
+13047      HealthBehavior ==> PFAS Duration BMI Alcohol Smoking,
+13048      Employment ==> HealthBehavior Duration,
+13049      BMI Alcohol Smoking ==> Duration;
+13050      identify PFAS ==> Duration;
+13051      unmeasured PrevBF HealthBehavior;
+13052      run;
+
+NOTE: The PROCEDURE CAUSALGRAPH printed pages 1788-1789.
+
+13053      proc causalgraph method=iv;
+13054      model "Timm17HealthBehavior"
+13055      Age ==> Parity PFAS Education,
+13056      Parity ==> PrevBF Duration PFAS,
+13057      PrevBF ==> PFAS Duration,
+13058      PFAS ==> Duration,
+13059      Education ==> Duration HealthBehavior Employment,
+13060      HealthBehavior ==> PFAS Duration BMI Alcohol Smoking,
+13061      Employment ==> HealthBehavior Duration,
+13062      BMI Alcohol Smoking ==> Duration;
+13063      identify PFAS ==> Duration;
+13064      unmeasured PrevBF HealthBehavior;
+13065      testid "Minimal CIV" Age / conditional = (Education Parity);
+13066      run;
+
+NOTE: The PROCEDURE CAUSALGRAPH printed pages 1790-1791.
+
+13067      
+13068      
+13069      
+13070      
+The SAS System
+
+13071      

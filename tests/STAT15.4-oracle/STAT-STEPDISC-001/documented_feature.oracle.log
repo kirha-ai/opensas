@@ -1,0 +1,48 @@
+The SAS System
+
+18935      
+18936      /* STAT-STEPDISC-001: STEPDISC — Data input, variable roles, and basic options
+18937       * Source: S154 / Chapter 117 / `PROC STEPDISC Statement` (PDF pp. 9559–9563); S154 / Chapter 117 / `BY Statement` (PDF pp. 9563–9564); S154 /
+18937    ! Chapter 117 / `CLASS Statement` (PDF p. 9564); S154 / Chapter 117 / `FREQ Statement` (PDF p. 9564); S154 / Chapter 117 / `VAR Statement` (PDF p.
+18937    ! 9564); S154 / Chapter 117 / `WEIGHT Statement` (PDF pp. 9564–9565); S154 / Chapter 117 / `Missing Values` (PDF p. 9565); S154 / Chapter 117 /
+18937    ! `Input Data Sets` (PDF pp. 9565–9566).
+18938       * Discriminates: Verified default procedure context; explicit statements: CLASS
+18939       */
+18940      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+18940    ! validmemname=compatible locale=en_US;
+18941      %let syscc=0;
+18942      title; footnote;
+18943      ods _all_ close;
+18944      ods listing gpath="%sysfunc(pathname(work))";
+18945      ods graphics off;
+18946      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.SCHOOL (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+18946    !                                         quit;
+
+
+18947      ods path work.templat(update) sashelp.tmplmst(read);
+18948      
+18949      title 'Fish Measurement Data';
+18950      proc stepdisc data=sashelp.fish;
+18951      class Species;
+18952      run;
+
+WARNING: 1 observations in DATA= data set or BY group will not be included in the analysis due to missing values.
+WARNING: A total of 1 of the 159 observations in the DATA= data set were excluded (frequency sum = 158).
+NOTE: There were 159 observations read from the data set SASHELP.FISH.
+NOTE: The PROCEDURE STEPDISC printed pages 1314-1322.
+
+18953      
+18954      
+18955      
+18956      
+The SAS System
+
+18957      

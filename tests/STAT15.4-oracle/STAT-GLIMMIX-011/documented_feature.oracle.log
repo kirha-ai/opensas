@@ -1,0 +1,97 @@
+The SAS System
+
+23905      
+23906      /* STAT-GLIMMIX-011: GLIMMIX — Maximum Likelihood / Scale and Dispersion Parameters / Quasi-likelihood for Independent Data
+23907       * Source: S154 / Chapter 52 / `Maximum Likelihood` (PDF pp. 3823–3826); S154 / Chapter 52 / `Scale and Dispersion Parameters` (PDF pp.
+23907    ! 3826–3827); S154 / Chapter 52 / `Quasi-likelihood for Independent Data` (PDF pp. 3827–3828).
+23908       * Discriminates: Example 52.4: Quasi-likelihood Estimation for Proportions with Unknown Distribution
+23909       */
+23910      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+23910    ! validmemname=compatible locale=en_US;
+23911      %let syscc=0;
+23912      title; footnote;
+23913      ods _all_ close;
+23914      ods listing gpath="%sysfunc(pathname(work))";
+23915      ods graphics off;
+23916      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.GMXOUT (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.SPLINE (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.X (memtype=DATA).
+23916    !                                         quit;
+
+
+23917      ods path work.templat(update) sashelp.tmplmst(read);
+23918      
+23919      data blotch;
+23920      array p{9} pct1-pct9;
+23921      input variety pct1-pct9;
+23922      do site = 1 to 9;
+23923      prop = p{site}/100;
+23924      output;
+23925      end;
+23926      drop pct1-pct9;
+23927      datalines;
+
+NOTE: The data set WORK.BLOTCH has 90 observations and 3 variables.
+
+23938      ;
+23939      proc glimmix data=blotch;
+23940      class site variety;
+23941      model prop = site variety / link=logit dist=binomial;
+23942      random _residual_;
+23943      lsmeans variety / diff=control('1');
+23944      run;
+
+
+
+
+NOTE: Convergence criterion (ABSGCONV=0.00001) satisfied.
+NOTE: The PROCEDURE GLIMMIX printed page 2416.
+
+23945      ods graphics on;
+23946      ods select PearsonPanel;
+23947      proc glimmix data=blotch plots=pearsonpanel;
+23948      class site variety;
+23949      model prop = site variety / link=logit dist=binomial;
+23950      random _residual_;
+23951      run;
+
+
+
+
+NOTE: Convergence criterion (ABSGCONV=0.00001) satisfied.
+
+23952      ods graphics off;
+23953      ods graphics on;
+23954      ods select ModelInfo FitStatistics LSMeans Diffs PearsonPanel;
+23955      proc glimmix data=blotch plots=pearsonpanel;
+23956      class site variety;
+23957      _variance_ = _mu_**2 * (1-_mu_)**2;
+23958      model prop = site variety / link=logit;
+23959      lsmeans variety / diff=control('1');
+23960      run;
+
+
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: Scoring did not stop.
+NOTE: The PROCEDURE GLIMMIX printed page 2417.
+
+23961      ods graphics off;
+23962      run;
+23963      quit;
+23964      
+23965      
+23966      
+23967      
+The SAS System
+
+23968      

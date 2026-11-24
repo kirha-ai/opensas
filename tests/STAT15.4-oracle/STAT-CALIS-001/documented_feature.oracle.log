@@ -1,0 +1,54 @@
+The SAS System
+
+7326       
+7327       /* STAT-CALIS-001: CALIS — Data input, variable roles, and basic options
+7328        * Source: S154 / Chapter 33 / `PROC CALIS Statement` (PDF pp. 1488–1532); S154 / Chapter 33 / `BY Statement` (PDF p. 1534); S154 / Chapter 33 /
+7328     ! `FREQ Statement` (PDF p. 1565); S154 / Chapter 33 / `VAR Statement` (PDF pp. 1654–1657); S154 / Chapter 33 / `WEIGHT Statement` (PDF p. 1662); S154
+7328     !  / Chapter 33 / `Input Data Sets` (PDF pp. 1662–1666); S154 / Chapter 33 / `Missing Values and the Analysis of Missing Patterns` (PDF pp.
+7328     ! 1802–1803).
+7329        * Discriminates: Verified default procedure context; explicit statements: FREQ, WEIGHT
+7330        */
+7331       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+7331     ! validmemname=compatible locale=en_US;
+7332       %let syscc=0;
+7333       title; footnote;
+7334       ods _all_ close;
+7335       ods listing gpath="%sysfunc(pathname(work))";
+7336       ods graphics off;
+7337       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.GSEG (memtype=CATALOG).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TIMES2 (memtype=DATA).
+7337     !                                         quit;
+
+
+7338       ods path work.templat(update) sashelp.tmplmst(read);
+7339       
+7340       data sample;
+7341        input x z y group $ weight freq;
+7342        datalines;
+
+NOTE: The data set WORK.SAMPLE has 12 observations and 6 variables.
+
+7355       ;
+7356       run;
+7357       proc calis data=sample; path y <=== x z; run;
+
+
+NOTE: Convergence criterion (ABSGCONV=0.00001) satisfied.
+NOTE: The PROCEDURE CALIS printed pages 484-490.
+
+7358       
+7359       
+7360       
+7361       
+The SAS System
+
+7362       

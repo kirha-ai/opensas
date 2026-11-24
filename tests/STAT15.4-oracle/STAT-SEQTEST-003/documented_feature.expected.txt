@@ -1,0 +1,97 @@
+
+The SEQDESIGN Procedure
+Design: TwoSided
+
+                     Design Information
+
+Statistic Distribution                                Normal
+Boundary Scale                                Standardized Z
+Alternative Hypothesis                             Two-Sided
+Early Stop                                       Reject Null
+Method                                       O'Brien-Fleming
+Boundary Key                                            Both
+Alternative Reference                                    -10
+Number of Stages                                           4
+Alpha                                                   0.05
+Beta                                                     0.1
+Power                                                    0.9
+Max Information (Percent of Fixed Sample)           102.2163
+Max Information                                     0.107403
+Null Ref ASN (Percent of Fixed Sample)              101.5728
+Alt Ref ASN (Percent of Fixed Sample)                76.7397
+
+
+                                              Method Information
+ 
+                                                      --------Unified Family-------    Alternative
+Boundary      Method              Alpha       Beta        Rho        Tau          C      Reference       Drift
+
+Upper Alpha   O'Brien-Fleming   0.02500    0.10000        0.5          0    2.02429             10    3.277238
+Lower Alpha   O'Brien-Fleming   0.02500    0.10000        0.5          0    2.02429            -10    -3.27724
+
+
+                             Boundary Information (Standardized Z Scale)
+                                          Null Reference = 0
+ 
+                                                 -------Alternative------    -----Boundary Values----
+           ---------Information Level--------    --------Reference-------    ---Lower--    ---Upper--
+_Stage_    Proportion      Actual           N         Lower         Upper         Alpha         Alpha
+
+      1        0.2500    0.026851    42.96116      -1.63862       1.63862      -4.04859       4.04859
+      2        0.5000    0.053701    85.92233      -2.31736       2.31736      -2.86278       2.86278
+      3        0.7500    0.080552    128.8835      -2.83817       2.83817      -2.33745       2.33745
+      4        1.0000    0.107403    171.8447      -3.27724       3.27724      -2.02429       2.02429
+
+
+                Sample Size Summary
+
+Test                               Two-Sample Means
+Mean Difference                                 -10
+Standard Deviation                               20
+Max Sample Size                            171.8447
+Expected Sample Size (Null Ref)            170.7627
+Expected Sample Size (Alt Ref)             129.0137
+
+
+                                               Sample Sizes (N)
+                                    Two-Sample Z Test for Mean Difference
+ 
+           ------------------Fractional N-----------------    -------------------Ceiling N-------------------
+_Stage_           N    N(Grp 1)    N(Grp 2)    Information           N    N(Grp 1)    N(Grp 2)    Information
+
+      1       42.96       21.48       21.48         0.0269          44          22          22         0.0275
+      2       85.92       42.96       42.96         0.0537          86          43          43         0.0538
+      3      128.88       64.44       64.44         0.0806         130          65          65         0.0812
+      4      171.84       85.92       85.92         0.1074         172          86          86         0.1075
+
+The SEQTEST Procedure
+
+                       Design Information
+
+BOUNDARY Data Set                                 WORK.BOUNDARIES
+Data Set                                           WORK.ESTIMATES
+Statistic Distribution                                     Normal
+Boundary Scale                                     Standardized Z
+Alternative Hypothesis                                  Two-Sided
+Early Stop                                            Reject Null
+Number of Stages                                                4
+Alpha                                                        0.05
+Beta                                                      0.10327
+Power                                                     0.89673
+Max Information (Percent of Fixed Sample)                103.3888
+Max Information                                        0.10740291
+Null Ref ASN (Percent of Fixed Sample)                   102.5295
+Alt Ref ASN (Percent of Fixed Sample)                    74.16539
+
+
+                                        Test Information (Standardized Z Scale)
+                                                  Null Reference = 0
+ 
+                                     -------Alternative------    -----Boundary Values----    -----------Test----------
+           ---Information Level--    --------Reference-------    ---Lower--    ---Upper--    -----------Trt-----------
+_Stage_    Proportion      Actual         Lower         Upper         Alpha         Alpha      Estimate    Action
+
+      1        0.4598    0.049383      -2.22222       2.22222      -2.91559       2.91559      -1.55556    Continue   
+      2        0.6399    0.068723      -2.62150       2.62150      -2.50406       2.50406             .               
+      3        0.8199    0.088063      -2.96754       2.96754      -2.25750       2.25750             .               
+      4        1.0000    0.107403      -3.27724       3.27724      -2.06144       2.06144             .               

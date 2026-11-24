@@ -1,0 +1,57 @@
+The SAS System
+
+11459      
+11460      /* STAT-CANCORR-001: CANCORR — Data input, variable roles, and basic options
+11461       * Source: S154 / Chapter 34 / `PROC CANCORR Statement` (PDF pp. 2126–2132); S154 / Chapter 34 / `BY Statement` (PDF p. 2132); S154 / Chapter 34 /
+11461    ! `FREQ Statement` (PDF pp. 2132–2133); S154 / Chapter 34 / `VAR Statement` (PDF p. 2133); S154 / Chapter 34 / `WEIGHT Statement` (PDF p. 2133); S154
+11461    !  / Chapter 34 / `Missing Values` (PDF p. 2134).
+11462       * Discriminates: Verified default procedure context; explicit statements: VAR
+11463       */
+11464      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+11464    ! validmemname=compatible locale=en_US;
+11465      %let syscc=0;
+11466      title; footnote;
+11467      ods _all_ close;
+11468      ods listing gpath="%sysfunc(pathname(work))";
+11469      ods graphics off;
+11470      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SALES (memtype=DATA).
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+11470    !                                         quit;
+
+
+11471      ods path work.templat(update) sashelp.tmplmst(read);
+11472      
+11473      data Jobs;
+11474      input Career Supervisor Finance Variety Feedback Autonomy;
+11475      label Career ='Career Satisfaction' Variety ='Task Variety'
+11476      Supervisor='Supervisor Satisfaction' Feedback='Amount of Feedback'
+11477      Finance ='Financial Satisfaction' Autonomy='Degree of Autonomy';
+11478      datalines;
+
+NOTE: The data set WORK.JOBS has 14 observations and 6 variables.
+
+11493      ;
+11494      proc cancorr data=Jobs
+11495      vprefix=Satisfaction wprefix=Characteristics
+11496      vname='Satisfaction Areas' wname='Job Characteristics';
+11497      var Career Supervisor Finance;
+11498      with Variety Feedback Autonomy;
+11499      run;
+
+NOTE: The PROCEDURE CANCORR printed pages 1664-1667.
+
+11500      
+11501      
+11502      
+11503      
+The SAS System
+
+11504      

@@ -1,0 +1,295 @@
+The SAS System
+
+16890      
+16891      /* STAT-MCMC-018: MCMC — Displayed Output / ODS Table Names
+16892       * Source: S154 / Chapter 80 / `Displayed Output` (PDF pp. 6238–6242); S154 / Chapter 80 / `ODS Table Names` (PDF pp. 6242–6244).
+16893       * Discriminates: Getting Started: MCMC Procedure
+16894       */
+16895      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+16895    ! validmemname=compatible locale=en_US;
+16896      %let syscc=0;
+16897      title; footnote;
+16898      ods _all_ close;
+16899      ods listing gpath="%sysfunc(pathname(work))";
+16900      ods graphics off;
+16901      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.BEHRENS (memtype=DATA).
+NOTE: Deleting WORK.CLASSOUT (memtype=DATA).
+NOTE: Deleting WORK.FORMATS (memtype=CATALOG).
+NOTE: Deleting WORK.HEIGHTS (memtype=DATA).
+NOTE: Deleting WORK.INPUT (memtype=DATA).
+NOTE: Deleting WORK.POSTOUT (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+16901    !                                         quit;
+
+
+16902      ods path work.templat(update) sashelp.tmplmst(read);
+16903      
+16904      ods trace on;
+16905      ods graphics on;
+16906      proc mcmc data=sashelp.class outpost=classout nmc=1000 thin=2 seed=246810 nbi=200;
+16907      parms beta0 0 beta1 0;
+16908      parms sigma2 1;
+16909      prior beta0 beta1 ~ normal(mean = 0, var = 1e6);
+16910      prior sigma2 ~ igamma(shape = 3/10, scale = 10/3);
+16911      mu = beta0 + beta1*height;
+16912      model weight ~ n(mu, var = sigma2);
+16913      run;
+
+
+Output Added:
+-------------
+Name:       NObs
+Label:      Number of Observations
+Template:   Stat.MCMC.NObs
+Path:       MCMC.NObs
+-------------
+
+Output Added:
+-------------
+Name:       Parameters
+Label:      Parameters
+Template:   Stat.MCMC.Parameters
+Path:       MCMC.Parameters
+-------------
+NOTE: Starting optimization.
+NOTE: Tuning the proposal distribution.
+NOTE: Generating the burn-in samples.
+NOTE: Beginning sample generation.
+
+Output Added:
+-------------
+Name:       PosteriorSample
+Label:      Posterior Samples
+Template:   Stat.MCMC.PosteriorSample
+Path:       MCMC.PosteriorSample
+-------------
+
+Output Added:
+-------------
+Name:       PostSumInt
+Label:      Summary and Interval Statistics
+Template:   Stat.MCMC.PostSumInt
+Path:       MCMC.Summary.PostSumInt
+-------------
+
+Output Added:
+-------------
+Name:       ESS
+Label:      Effective Sample Sizes
+Template:   Stat.MCMC.ESS
+Path:       MCMC.Diagnostics.ESS
+-------------
+NOTE: Generating diagnostic plots.
+
+Output Added:
+-------------
+Name:       TADPanel
+Label:      beta0
+Template:   Stat.MCMC.Graphics.TraceAutocorrDensity
+Path:       MCMC.TADPanel.TADPanel
+-------------
+
+Output Added:
+-------------
+Name:       TADPanel
+Label:      beta1
+Template:   Stat.MCMC.Graphics.TraceAutocorrDensity
+Path:       MCMC.TADPanel.TADPanel
+-------------
+
+Output Added:
+-------------
+Name:       TADPanel
+Label:      sigma2
+Template:   Stat.MCMC.Graphics.TraceAutocorrDensity
+Path:       MCMC.TADPanel.TADPanel
+-------------
+NOTE: The data set WORK.CLASSOUT has 500 observations and 7 variables.
+NOTE: The PROCEDURE MCMC printed pages 1333-1335.
+
+16914      ods graphics off;
+16915      title 'The Behrens-Fisher Problem';
+16916      data behrens;
+16917      input y ind @@;
+16918      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.BEHRENS has 33 observations and 2 variables.
+
+16924      ;
+16925      proc mcmc data=behrens outpost=postout seed=123
+16926      nmc=1000 monitor=(_parms_ mudif)
+16927      statistics(alpha=0.01) nbi=200;
+16928      ods select PostSumInt;
+16929      parm mu1 0 mu2 0;
+16930      parm sig21 1;
+16931      parm sig22 1;
+16932      prior mu: ~ general(0);
+16933      prior sig21 ~ general(-log(sig21), lower=0);
+16934      prior sig22 ~ general(-log(sig22), lower=0);
+16935      mudif = mu1 - mu2;
+16936      if ind = 1 then do;
+16937      mu = mu1;
+16938      s2 = sig21;
+16939      end;
+16940      else do;
+16941      mu = mu2;
+16942      s2 = sig22;
+16943      end;
+16944      model y ~ normal(mu, var=s2);
+16945      run;
+
+NOTE: Tuning the proposal distribution.
+NOTE: Generating the burn-in samples.
+NOTE: Beginning sample generation.
+
+Output Added:
+-------------
+Name:       PosteriorSample
+Label:      Posterior Samples
+Template:   Stat.MCMC.PosteriorSample
+Path:       MCMC.PosteriorSample
+-------------
+
+Output Added:
+-------------
+Name:       PostSumInt
+Label:      Summary and Interval Statistics
+Template:   Stat.MCMC.PostSumInt
+Path:       MCMC.Summary.PostSumInt
+-------------
+NOTE: The data set WORK.POSTOUT has 1000 observations and 9 variables.
+NOTE: The PROCEDURE MCMC printed page 1336.
+
+16946      proc format;
+16947      value diffmt low-0 = 'mu1 - mu2 <= 0' 0<-high = 'mu1 - mu2 > 0';
+NOTE: Format DIFFMT has been output.
+16948      run;
+
+
+16949      proc freq data = postout;
+16950      tables mudif /nocum;
+16951      format mudif diffmt.;
+16952      run;
+
+
+Output Added:
+-------------
+Name:       OneWayFreqs
+Label:      One-Way Frequencies
+Template:   Base.Freq.OneWayFreqs
+Path:       Freq.Table1.OneWayFreqs
+-------------
+NOTE: There were 1000 observations read from the data set WORK.POSTOUT.
+NOTE: The PROCEDURE FREQ printed page 1337.
+
+16953      title 'Random-Effects Model';
+16954      data heights;
+16955      input Family G$ Height @@;
+16956      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.HEIGHTS has 18 observations and 3 variables.
+
+16960      ;
+16961      data input;
+16962      set heights;
+16963      if g eq 'F' then gf = 1;
+16964      else gf = 0;
+16965      drop g;
+16966      run;
+
+NOTE: There were 18 observations read from the data set WORK.HEIGHTS.
+NOTE: The data set WORK.INPUT has 18 observations and 3 variables.
+
+16967      ods graphics on;
+16968      proc mcmc data=input outpost=postout nmc=1000 seed=7893 plots=trace nbi=200;
+16969      ods select Parameters REparameters PostSumInt tracepanel;
+16970      parms b0 0 b1 0 s2 1 s2g 1;
+16971      prior b: ~ normal(0, var = 10000);
+16972      prior s: ~ igamma(0.01, scale = 0.01);
+16973      random gamma ~ normal(0, var = s2g) subject=family monitor=(gamma);
+16974      mu = b0 + b1 * gf + gamma;
+16975      model height ~ normal(mu, var = s2);
+16976      run;
+
+
+Output Added:
+-------------
+Name:       Parameters
+Label:      Parameters
+Template:   Stat.MCMC.Parameters
+Path:       MCMC.Parameters
+-------------
+
+Output Added:
+-------------
+Name:       REParameters
+Label:      Random-Effects Parameters
+Template:   Stat.MCMC.REParameters
+Path:       MCMC.REParameters
+-------------
+NOTE: Starting optimization.
+NOTE: Tuning the proposal distribution.
+NOTE: Generating the burn-in samples.
+NOTE: Beginning sample generation.
+
+Output Added:
+-------------
+Name:       PosteriorSample
+Label:      Posterior Samples
+Template:   Stat.MCMC.PosteriorSample
+Path:       MCMC.PosteriorSample
+-------------
+
+Output Added:
+-------------
+Name:       PostSumInt
+Label:      Summary and Interval Statistics
+Template:   Stat.MCMC.PostSumInt
+Path:       MCMC.Summary.PostSumInt
+-------------
+NOTE: Generating diagnostic plots.
+
+Output Added:
+-------------
+Name:       TracePanel
+Label:      Panel 1
+Template:   Stat.MCMC.Graphics.TracePanel
+Path:       MCMC.TracePanel.TracePanel
+-------------
+
+Output Added:
+-------------
+Name:       TracePanel
+Label:      Panel 2
+Template:   Stat.MCMC.Graphics.TracePanel
+Path:       MCMC.TracePanel.TracePanel
+-------------
+
+Output Added:
+-------------
+Name:       TracePanel
+Label:      Panel 3
+Template:   Stat.MCMC.Graphics.TracePanel
+Path:       MCMC.TracePanel.TracePanel
+-------------
+NOTE: The data set WORK.POSTOUT has 1000 observations and 13 variables.
+NOTE: The PROCEDURE MCMC printed pages 1338-1339.
+
+16977      ods graphics off;
+16978      run;
+16979      quit;
+16980      ods trace off;
+16981      
+16982      
+16983      
+16984      
+The SAS System
+
+16985      

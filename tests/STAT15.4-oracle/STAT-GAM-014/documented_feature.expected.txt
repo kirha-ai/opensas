@@ -1,0 +1,244 @@
+
+Analysis of Component Reliability
+Two-way model
+
+The GENMOD Procedure
+
+       Model Information
+
+Data Set              WORK.EQUIP
+Distribution             Poisson
+Link Function                Log
+Dependent Variable      removals
+
+
+Number of Observations Read          48
+Number of Observations Used          48
+
+
+            Class Level Information
+ 
+Class      Levels    Values
+
+year            4    1987 1988 1989 1990        
+month          12    1 2 3 4 5 6 7 8 9 10 11 12 
+
+
+             Criteria For Assessing Goodness Of Fit
+ 
+Criterion                     DF           Value        Value/DF
+
+Deviance                      33         43.1440          1.3074
+Scaled Deviance               33         43.1440          1.3074
+Pearson Chi-Square            33         40.2071          1.2184
+Scaled Pearson X2             33         40.2071          1.2184
+Log Likelihood                          114.7756                
+Full Log Likelihood                     -97.9347                
+AIC (smaller is better)                 225.8694                
+AICC (smaller is better)                240.8694                
+BIC (smaller is better)                 253.9374                
+
+
+Algorithm converged.                                                       
+
+
+                        Analysis Of Maximum Likelihood Parameter Estimates
+ 
+                                       Standard     Wald 95% Confidence          Wald
+Parameter            DF    Estimate       Error           Limits           Chi-Square    Pr > ChiSq
+
+Intercept             1      2.1051      0.2155      1.6827      2.5274         95.43        <.0001
+year         1987     1     -0.0513      0.1850     -0.4138      0.3112          0.08        0.7815
+year         1988     1     -0.1823      0.1915     -0.5576      0.1930          0.91        0.3410
+year         1989     1     -0.2877      0.1972     -0.6742      0.0988          2.13        0.1446
+year         1990     0      0.0000      0.0000      0.0000      0.0000           .           .    
+month        1        1     -0.9694      0.3541     -1.6634     -0.2754          7.49        0.0062
+month        2        1     -0.1892      0.2760     -0.7301      0.3516          0.47        0.4929
+month        3        1     -0.3716      0.2907     -0.9412      0.1981          1.63        0.2011
+month        4        1     -0.4229      0.2952     -1.0013      0.1556          2.05        0.1519
+month        5        1     -0.7282      0.3254     -1.3661     -0.0904          5.01        0.0252
+month        6        1     -0.4229      0.2952     -1.0013      0.1556          2.05        0.1519
+month        7        1     -0.9694      0.3541     -1.6634     -0.2754          7.49        0.0062
+month        8        1     -0.6592      0.3180     -1.2826     -0.0359          4.30        0.0382
+month        9        1     -1.0647      0.3667     -1.7835     -0.3460          8.43        0.0037
+month        10       1     -0.2318      0.2792     -0.7791      0.3154          0.69        0.4064
+month        11       1     -0.5341      0.3055     -1.1328      0.0646          3.06        0.0804
+month        12       0      0.0000      0.0000      0.0000      0.0000           .           .    
+Scale                 0      1.0000      0.0000      1.0000      1.0000                            
+
+NOTE: The scale parameter was held fixed.
+
+
+     LR Statistics For Type 3 Analysis
+ 
+                          Chi-
+Source           DF     Square    Pr > ChiSq
+
+year              3       2.63        0.4527
+month            11      21.12        0.0321
+
+Analysis of Component Reliability
+One-way model
+
+The GAM Procedure
+Dependent Variable: removals
+Regression Model Component(s): month  
+
+        Summary of Input Data Set
+
+Number of Observations                 48
+Number of Missing Observations          0
+Distribution                      Poisson
+Link Function                         Log
+
+
+                  Class Level Information
+ 
+Class      Levels    Values
+
+month          12    1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12  
+
+
+           Iteration Summary and Fit Statistics
+
+Number of local scoring iterations                        4
+Local scoring convergence criterion            6.794404E-10
+Final Number of Backfitting Iterations                    1
+Final Backfitting Criterion                    2.6262487E-9
+The Deviance of the Final Estimate             45.771360388
+
+
+The local scoring algorithm converged.                          
+
+
+                  Regression Model Analysis
+                     Parameter Estimates
+ 
+               Parameter       Standard
+Parameter       Estimate          Error    t Value    Pr > |t|
+
+Intercept        1.98100        0.18569      10.67      <.0001
+month 1         -0.96940        0.35411      -2.74      0.0096
+month 2         -0.18924        0.27595      -0.69      0.4972
+month 3         -0.37156        0.29063      -1.28      0.2093
+month 4         -0.42286        0.29515      -1.43      0.1606
+month 5         -0.72824        0.32544      -2.24      0.0315
+month 6         -0.42286        0.29515      -1.43      0.1606
+month 7         -0.96940        0.35411      -2.74      0.0096
+month 8         -0.65925        0.31804      -2.07      0.0454
+month 9         -1.06471        0.36670      -2.90      0.0063
+month 10        -0.23180        0.27921      -0.83      0.4119
+month 11        -0.53408        0.30546      -1.75      0.0889
+month 12               0              .        .         .    
+
+
+
+Analysis of Component Reliability
+Spline model
+
+The GAM Procedure
+Dependent Variable: removals
+Smoothing Model Component(s): spline(month) 
+
+        Summary of Input Data Set
+
+Number of Observations                 48
+Number of Missing Observations          0
+Distribution                      Poisson
+Link Function                         Log
+
+
+           Iteration Summary and Fit Statistics
+
+Number of local scoring iterations                        5
+Local scoring convergence criterion            7.241527E-12
+Final Number of Backfitting Iterations                    1
+Final Backfitting Criterion                    1.710339E-11
+The Deviance of the Final Estimate             56.901543546
+
+
+The local scoring algorithm converged.                          
+
+
+                    Regression Model Analysis
+                       Parameter Estimates
+ 
+                   Parameter       Standard
+Parameter           Estimate          Error    t Value    Pr > |t|
+
+Intercept            1.34594        0.14509       9.28      <.0001
+Linear(month)        0.02274        0.01893       1.20      0.2362
+
+
+                        Smoothing Model Analysis
+                  Fit Summary for Smoothing Components
+ 
+                                                                      Num
+                    Smoothing                                      Unique
+Component           Parameter              DF             GCV         Obs
+
+Spline(month)        0.901512        1.879980        0.115848          12
+
+
+                        Smoothing Model Analysis
+                          Analysis of Deviance
+ 
+                                      Sum of
+Source                    DF         Squares    Chi-Square    Pr > ChiSq
+
+Spline(month)        1.87998        8.877764        8.8778        0.0103
+
+Analysis of Component Reliability
+Spline model
+
+The GAM Procedure
+Dependent Variable: removals
+Smoothing Model Component(s): spline(month) 
+
+        Summary of Input Data Set
+
+Number of Observations                 48
+Number of Missing Observations          0
+Distribution                      Poisson
+Link Function                         Log
+
+
+           Iteration Summary and Fit Statistics
+
+Number of local scoring iterations                        5
+Local scoring convergence criterion            7.241527E-12
+Final Number of Backfitting Iterations                    1
+Final Backfitting Criterion                    1.710339E-11
+The Deviance of the Final Estimate             56.901543546
+
+
+The local scoring algorithm converged.                          
+
+
+                    Regression Model Analysis
+                       Parameter Estimates
+ 
+                   Parameter       Standard
+Parameter           Estimate          Error    t Value    Pr > |t|
+
+Intercept            1.34594        0.14509       9.28      <.0001
+Linear(month)        0.02274        0.01893       1.20      0.2362
+
+
+                        Smoothing Model Analysis
+                  Fit Summary for Smoothing Components
+ 
+                                                                      Num
+                    Smoothing                                      Unique
+Component           Parameter              DF             GCV         Obs
+
+Spline(month)        0.901512        1.879980        0.115848          12
+
+
+                        Smoothing Model Analysis
+                          Analysis of Deviance
+ 
+                                      Sum of
+Source                    DF         Squares    Chi-Square    Pr > ChiSq
+
+Spline(month)        1.87998        8.877764        8.8778        0.0103

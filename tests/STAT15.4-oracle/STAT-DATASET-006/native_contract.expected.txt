@@ -1,0 +1,76 @@
+
+The Mixed Procedure
+
+                  Model Information
+
+Data Set                     WORK.SAMPLE              
+Dependent Variable           y                        
+Covariance Structure         Variance Components      
+Estimation Method            REML                     
+Residual Variance Method     Profile                  
+Fixed Effects SE Method      Model-Based              
+Degrees of Freedom Method    Containment              
+
+
+             Class Level Information
+ 
+Class    Levels    Values
+
+group         2    A B                           
+
+
+            Dimensions
+
+Covariance Parameters             2
+Columns in X                      2
+Columns in Z                      2
+Subjects                          1
+Max Obs per Subject              12
+
+
+          Number of Observations
+
+Number of Observations Read              12
+Number of Observations Used              12
+Number of Observations Not Used           0
+
+
+                     Iteration History
+ 
+Iteration    Evaluations    -2 Res Log Like       Criterion
+
+        0              1        39.73007609                
+        1              1        38.11277316      0.00000000
+
+
+                   Convergence criteria met.                    
+
+
+Covariance Parameter
+      Estimates
+ 
+Cov Parm     Estimate
+
+group          2.7346
+Residual       1.0759
+
+
+           Fit Statistics
+
+-2 Res Log Likelihood            38.1
+AIC (Smaller is Better)          42.1
+AICC (Smaller is Better)         43.8
+BIC (Smaller is Better)          39.5
+
+
+        Type 3 Tests of Fixed Effects
+ 
+              Num     Den
+Effect         DF      DF    F Value    Pr > F
+
+x               1       9     121.27    <.0001
+
+CovParm     Estimate
+
+group         2.7346
+Residual      1.0759

@@ -1,0 +1,139 @@
+
+The SEQDESIGN Procedure
+Design: OneSidedFixedSample
+
+                    Design Information
+
+Statistic Distribution                               Normal
+Boundary Scale                               Standardized Z
+Alternative Hypothesis                                Upper
+Alternative Reference                                  0.25
+Number of Stages                                          1
+Alpha                                                 0.025
+Beta                                                    0.1
+Power                                                   0.9
+Max Information (Percent of Fixed Sample)               100
+Max Information                                    168.1188
+Null Ref ASN (Percent of Fixed Sample)                  100
+Alt Ref ASN (Percent of Fixed Sample)                   100
+
+
+                    Method Information
+ 
+                                    Alternative
+Boundary        Alpha       Beta      Reference       Drift
+
+Upper Alpha   0.02500    0.10000           0.25    3.241516
+
+
+  Powers and Expected Sample Sizes
+ Reference = CRef * (Alt Reference)
+ 
+                       -Sample Size-
+                             Percent
+    CRef      Power     Fixed-Sample
+
+  0.0000    0.02500         100.0000
+  0.5000    0.36723         100.0000
+  1.0000    0.90000         100.0000
+  1.5000    0.99815         100.0000
+
+
+                    Boundary Information (Standardized Z Scale)
+                                 Null Reference = 0
+ 
+                                                 -Alternative-    -Boundary Values-
+           ---------Information Level--------    --Reference--    ------Upper------
+_Stage_    Proportion      Actual           N            Upper                Alpha
+
+      1        1.0000    168.1188    168.1188          3.24152              1.95996
+
+
+               Sample Size Summary
+
+Test                               One-Sample Mean
+Mean                                          0.25
+Standard Deviation                               1
+Max Sample Size                           168.1188
+Expected Sample Size (Null Ref)           168.1188
+Expected Sample Size (Alt Ref)            168.1188
+
+
+                       Sample Sizes (N)
+                  One-Sample Z Test for Mean
+ 
+           ------Fractional N-----    -------Ceiling N-------
+_Stage_           N    Information           N    Information
+
+      1      168.12          168.1         169          169.0
+
+The SEQDESIGN Procedure
+Design: TwoSidedFixedSample
+
+                    Design Information
+
+Statistic Distribution                               Normal
+Boundary Scale                               Standardized Z
+Alternative Hypothesis                            Two-Sided
+Alternative Reference                                   1.2
+Number of Stages                                          1
+Alpha                                                  0.05
+Beta                                                    0.1
+Power                                                   0.9
+Max Information (Percent of Fixed Sample)               100
+Max Information                                    7.296822
+Null Ref ASN (Percent of Fixed Sample)                  100
+Alt Ref ASN (Percent of Fixed Sample)                   100
+
+
+                    Method Information
+ 
+                                    Alternative
+Boundary        Alpha       Beta      Reference       Drift
+
+Upper Alpha   0.02500    0.10000            1.2    3.241516
+Lower Alpha   0.02500    0.10000           -1.2    -3.24152
+
+
+  Powers and Expected Sample Sizes
+ Reference = CRef * (Alt Reference)
+ 
+                       -Sample Size-
+                             Percent
+    CRef      Power     Fixed-Sample
+
+  0.0000    0.02500         100.0000
+  0.5000    0.36723         100.0000
+  1.0000    0.90000         100.0000
+  1.5000    0.99815         100.0000
+
+
+                             Boundary Information (Standardized Z Scale)
+                                          Null Reference = 0
+ 
+                                                 -------Alternative------    -----Boundary Values----
+           ---------Information Level--------    --------Reference-------    ---Lower--    ---Upper--
+_Stage_    Proportion      Actual           N         Lower         Upper         Alpha         Alpha
+
+      1        1.0000    7.296822    131.3428      -3.24152       3.24152      -1.95996       1.95996
+
+
+                Sample Size Summary
+
+Test                               Two-Sample Means
+Mean Difference                                 1.2
+Standard Deviation                                2
+Max Sample Size                            131.3428
+Expected Sample Size (Null Ref)            131.3428
+Expected Sample Size (Alt Ref)             131.3428
+Weight (Group A)                                  2
+Weight (Group B)                                  1
+
+
+                                               Sample Sizes (N)
+                                    Two-Sample Z Test for Mean Difference
+ 
+           ------------------Fractional N-----------------    -------------------Ceiling N-------------------
+_Stage_           N    N(Grp 1)    N(Grp 2)    Information           N    N(Grp 1)    N(Grp 2)    Information
+
+      1      131.34       87.56       43.78         7.2968         132          88          44         7.3333

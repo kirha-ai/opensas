@@ -1,0 +1,101 @@
+The SAS System
+
+3744       
+3745       /* STAT-MIXED-007: MIXED — REPEATED
+3746        * Source: S154 / Chapter 84 / `REPEATED Statement` (PDF pp. 6680–6694).
+3747        * Discriminates: Example 84.8: Influence Analysis for Repeated Measures Data; explicit statements: REPEATED
+3748        */
+3749       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+3749     ! validmemname=compatible locale=en_US;
+3750       %let syscc=0;
+3751       title; footnote;
+3752       ods _all_ close;
+3753       ods listing gpath="%sysfunc(pathname(work))";
+3754       ods graphics off;
+3755       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.HEIGHTS (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+3755     !                                         quit;
+
+
+3756       ods path work.templat(update) sashelp.tmplmst(read);
+3757       
+3758       data pr;
+3759       input Person Gender $ y1 y2 y3 y4;
+3760       y=y1;
+3761       Age=8;
+3762       output;
+3763       y=y2;
+3764       Age=10;
+3765       output;
+3766       y=y3;
+3767       Age=12;
+3768       output;
+3769       y=y4;
+3770       Age=14;
+3771       output;
+3772       drop y1-y4;
+3773       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.PR has 108 observations and 4 variables.
+
+3802       ;
+3803       run;
+3804       proc mixed data=pr method=ml;
+3805       class person gender;
+3806       model y = gender age gender*age /
+3807       influence(effect=person);
+3808       repeated / type=un subject=person;
+3809       ods select influence;
+3810       run;
+
+NOTE: Convergence criteria met.
+NOTE: The residual variance is fitted implicitly. Influence diagnostics reflect changes in fixed effects only.
+NOTE: The PROCEDURE MIXED printed page 297.
+
+3811       ods graphics on;
+3812       proc mixed data=pr method=ml;
+3813       class person gender;
+3814       model y = gender age gender*age /
+3815       influence(effect=person iter=5);
+3816       repeated / type=un subject=person;
+3817       run;
+
+NOTE: Convergence criteria met.
+NOTE: The PROCEDURE MIXED printed page 298.
+
+3818       proc mixed data=pr method=ml
+3819       plots(only)=InfluenceEstPlot;
+3820       class person gender;
+3821       model y = gender age gender*age /
+3822       influence(iter=5 effect=person est);
+3823       random intercept age / type=un subject=person;
+3824       run;
+
+NOTE: Convergence criteria met.
+NOTE: The PROCEDURE MIXED printed page 299.
+
+3825       ods graphics on;
+3826       proc mixed data=pr method=ml
+3827       plot=boxplot(observed marginal conditional subject);
+3828       class person gender;
+3829       model y = gender age gender*age;
+3830       random intercept age / type=un subject=person;
+3831       run;
+
+NOTE: Convergence criteria met.
+NOTE: The PROCEDURE MIXED printed page 300.
+
+3832       
+3833       
+3834       
+3835       
+The SAS System
+
+3836       

@@ -1,0 +1,113 @@
+The SAS System
+
+1729       
+1730       /* STAT-PHREG-001: PHREG — Data input, variable roles, and basic options
+1731        * Source: S154 / Chapter 92 / `PROC PHREG Statement` (PDF pp. 7324–7333); S154 / Chapter 92 / `BY Statement` (PDF p. 7355); S154 / Chapter 92 /
+1731     ! `FREQ Statement` (PDF p. 7364); S154 / Chapter 92 / `ID Statement` (PDF p. 7367); S154 / Chapter 92 / `STRATA Statement` (PDF pp. 7388–7389); S154
+1731     ! / Chapter 92 / `WEIGHT Statement` (PDF p. 7391).
+1732        * Discriminates: Two explicit BY groups contain identical inputs, exposing group boundaries and per-group results.
+1733        */
+1734       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+1734     ! validmemname=compatible locale=en_US;
+1735       %let syscc=0;
+1736       title; footnote;
+1737       ods _all_ close;
+1738       ods listing gpath="%sysfunc(pathname(work))";
+1739       ods graphics off;
+1740       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.NEW (memtype=DATA).
+NOTE: Deleting WORK.POST (memtype=DATA).
+NOTE: Deleting WORK.RATS (memtype=DATA).
+NOTE: Deleting WORK.REGIMES (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+1740     !                                         quit;
+
+
+1741       ods path work.templat(update) sashelp.tmplmst(read);
+1742       
+1743       data Rats;
+1744       label Days ='Days from Exposure to Death';
+1745       input Days Status Group @@;
+1746       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.RATS has 40 observations and 3 variables.
+
+1757       ;
+1758       data Regimes;
+1759       Group=0;
+1760       output;
+1761       Group=1;
+1762       output;
+1763       run;
+
+NOTE: The data set WORK.REGIMES has 2 observations and 1 variables.
+
+1764       ods graphics on;
+1765       data _oracle_input; set Rats; do _oracle_by=1 to 2; output; end; run;
+
+NOTE: There were 40 observations read from the data set WORK.RATS.
+NOTE: The data set WORK._ORACLE_INPUT has 80 observations and 4 variables.
+
+1766       proc sort data=_oracle_input; by _oracle_by; run;
+
+NOTE: There were 80 observations read from the data set WORK._ORACLE_INPUT.
+NOTE: The data set WORK._ORACLE_INPUT has 80 observations and 4 variables.
+
+1767       proc phreg data=_oracle_input plot(overlay)=survival;
+1768       by _oracle_by;
+1769       model Days*Status(0)=Group;
+1770       baseline covariates=regimes out=_null_;
+1771       run;
+
+NOTE: No BY variables in the COVARIATES= data set. The entire COVARIATES= data set is used for every BY group.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The above message was for the following BY group:
+      _oracle_by=1
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The above message was for the following BY group:
+      _oracle_by=2
+NOTE: The PROCEDURE PHREG printed pages 201-202.
+
+1772       proc phreg data=Rats;
+1773       model Days*Status(0)=Group X;
+1774       X=Group*(log(Days) - 5.4);
+1775       run;
+
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The PROCEDURE PHREG printed page 203.
+
+1776       ods graphics on;
+1777       proc phreg data=Rats;
+1778       model Days*Status(0)=Group;
+1779       bayes seed=1 outpost=Post nmc=1000 nbi=200;
+1780       run;
+
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The data set WORK.POST has 1000 observations and 4 variables.
+NOTE: The PROCEDURE PHREG printed pages 204-206.
+
+1781       data New;
+1782       set Post;
+1783       Indicator=(Group < 0);
+1784       label Indicator='Group < 0';
+1785       run;
+
+NOTE: There were 1000 observations read from the data set WORK.POST.
+NOTE: The data set WORK.NEW has 1000 observations and 5 variables.
+
+1786       proc means data=New(keep=Indicator) n mean;
+1787       run;
+
+NOTE: There were 1000 observations read from the data set WORK.NEW.
+NOTE: The PROCEDURE MEANS printed page 207.
+
+1788       
+1789       
+1790       
+1791       
+The SAS System
+
+1792       

@@ -1,0 +1,49 @@
+The SAS System
+
+4469       
+4470       /* STAT-ADAPTIVEREG-005: ADAPTIVEREG — PARTITION
+4471        * Source: S154 / Chapter 28 / `PARTITION Statement` (PDF pp. 1072–1073).
+4472        * Discriminates: Example 28.3: Predicting E-Mail Spam; explicit statements: PARTITION
+4473        */
+4474       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+4474     ! validmemname=compatible locale=en_US;
+4475       %let syscc=0;
+4476       title; footnote;
+4477       ods _all_ close;
+4478       ods listing gpath="%sysfunc(pathname(work))";
+4479       ods graphics off;
+4480       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.MIXTURE (memtype=DATA).
+NOTE: Deleting WORK.NEW (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+4480     !                                         quit;
+
+
+4481       ods path work.templat(update) sashelp.tmplmst(read);
+4482       data mixture; call streaminit(731); do i=1 to 120; x1=rand('uniform'); c1=mod(i,3); y=2*c1+4*x1+2*max(x1-0.5,0)+rand('normal')*0.2; output; end; run;
+
+NOTE: The data set WORK.MIXTURE has 120 observations and 4 variables.
+
+4483       proc adaptivereg data=mixture details=(bases fwdsummary bwdsummary); class c1; model y=c1 x1; output out=predicted; run;
+
+NOTE: The data set WORK.PREDICTED has 120 observations and 5 variables.
+NOTE: The PROCEDURE ADAPTIVEREG printed page 332.
+
+4484       proc print data=predicted(obs=10) noobs; run;
+
+NOTE: There were 10 observations read from the data set WORK.PREDICTED.
+NOTE: The PROCEDURE PRINT printed page 333.
+
+4485       
+4486       
+4487       
+4488       
+The SAS System
+
+4489       

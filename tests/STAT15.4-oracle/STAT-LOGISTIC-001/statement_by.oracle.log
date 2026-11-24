@@ -1,0 +1,95 @@
+The SAS System
+
+13815      
+13816      /* STAT-LOGISTIC-001: LOGISTIC — Data input, variable roles, and basic options
+13817       * Source: S154 / Chapter 79 / `PROC LOGISTIC Statement` (PDF pp. 5836–5851); S154 / Chapter 79 / `BY Statement` (PDF p. 5851); S154 / Chapter 79 /
+13817    !  `FREQ Statement` (PDF p. 5867); S154 / Chapter 79 / `ID Statement` (PDF p. 5867); S154 / Chapter 79 / `STRATA Statement` (PDF pp. 5901–5902); S154
+13817    !  / Chapter 79 / `WEIGHT Statement` (PDF pp. 5904–5905); S154 / Chapter 79 / `Missing Values` (PDF p. 5905).
+13818       * Discriminates: Two explicit BY groups contain identical inputs, exposing group boundaries and per-group results.
+13819       */
+13820      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+13820    ! validmemname=compatible locale=en_US;
+13821      %let syscc=0;
+13822      title; footnote;
+13823      ods _all_ close;
+13824      ods listing gpath="%sysfunc(pathname(work))";
+13825      ods graphics off;
+13826      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.INGOTS (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+13826    !                                         quit;
+
+
+13827      ods path work.templat(update) sashelp.tmplmst(read);
+13828      
+13829      data ingots;
+13830      input Heat Soak r n @@;
+13831      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.INGOTS has 19 observations and 4 variables.
+
+13837      ;
+13838      ods graphics on;
+13839      data _oracle_input; set ingots; do _oracle_by=1 to 2; output; end; run;
+
+NOTE: There were 19 observations read from the data set WORK.INGOTS.
+NOTE: The data set WORK._ORACLE_INPUT has 38 observations and 5 variables.
+
+13840      proc sort data=_oracle_input; by _oracle_by; run;
+
+NOTE: There were 38 observations read from the data set WORK._ORACLE_INPUT.
+NOTE: The data set WORK._ORACLE_INPUT has 38 observations and 5 variables.
+
+13841      proc logistic data=_oracle_input;
+13842      by _oracle_by;
+13843      model r/n = Heat | Soak;
+13844      oddsratio Heat / at(Soak=1 2 3 4);
+13845      run;
+
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The above message was for the following BY group:
+      _oracle_by=1
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The above message was for the following BY group:
+      _oracle_by=2
+NOTE: There were 38 observations read from the data set WORK._ORACLE_INPUT.
+NOTE: The PROCEDURE LOGISTIC printed pages 1185-1186.
+
+13846      proc logistic data=ingots;
+13847      model r/n = Heat Soak;
+13848      run;
+
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: There were 19 observations read from the data set WORK.INGOTS.
+NOTE: The PROCEDURE LOGISTIC printed page 1187.
+
+13849      data ingots;
+13850      input Heat Soak NotReady Freq @@;
+13851      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.INGOTS has 25 observations and 4 variables.
+
+13857      ;
+13858      proc logistic data=ingots;
+13859      model NotReady(event='1') = Heat Soak;
+13860      freq Freq;
+13861      run;
+
+NOTE: PROC LOGISTIC is modeling the probability that NotReady=1.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: There were 25 observations read from the data set WORK.INGOTS.
+NOTE: The PROCEDURE LOGISTIC printed page 1188.
+
+13862      
+13863      
+13864      
+13865      
+The SAS System
+
+13866      

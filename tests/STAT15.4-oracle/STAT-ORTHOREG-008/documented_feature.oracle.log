@@ -1,0 +1,116 @@
+The SAS System
+
+1486       
+1487       /* STAT-ORTHOREG-008: ORTHOREG — Displayed Output / ODS Table Names
+1488        * Source: S154 / Chapter 91 / `Displayed Output` (PDF pp. 7298–7299); S154 / Chapter 91 / `ODS Table Names` (PDF p. 7299).
+1489        * Discriminates: Getting Started: ORTHOREG Procedure
+1490        */
+1491       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+1491     ! validmemname=compatible locale=en_US;
+1492       %let syscc=0;
+1493       title; footnote;
+1494       ods _all_ close;
+1495       ods listing gpath="%sysfunc(pathname(work))";
+1496       ods graphics off;
+
+NOTE: The PROCEDURE GLM printed page 184.
+
+1497       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.LONGLEY (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+1497     !                                         quit;
+
+
+1498       ods path work.templat(update) sashelp.tmplmst(read);
+1499       
+1500       ods trace on;
+1501       title 'PROC ORTHOREG used with Longley data';
+1502       data Longley;
+1503       input Employment Prices GNP Jobless Military PopSize Year;
+1504       datalines;
+
+NOTE: The data set WORK.LONGLEY has 16 observations and 7 variables.
+
+1521       ;
+1522       proc orthoreg data=Longley;
+1523       model Employment = Prices Prices *Prices
+1524       GNP GNP *GNP
+1525       Jobless Jobless *Jobless
+1526       Military Military*Military
+1527       PopSize PopSize *PopSize
+1528       Year Year *Year;
+1529       run;
+
+
+Output Added:
+-------------
+Name:       ANOVA
+Label:      Overall ANOVA
+Template:   stat.ORTHOREG.ANOVA
+Path:       Orthoreg.ANOVA
+-------------
+
+Output Added:
+-------------
+Name:       FitStatistics
+Label:      Fit Statistics
+Template:   Stat.ORTHOREG.FitStatistics
+Path:       Orthoreg.FitStatistics
+-------------
+
+Output Added:
+-------------
+Name:       ParameterEstimates
+Label:      Parameter Estimates
+Template:   Stat.ORTHOREG.ParameterEstimates
+Path:       Orthoreg.ParameterEstimates
+-------------
+NOTE: There were 16 observations read from the data set WORK.LONGLEY.
+NOTE: The PROCEDURE ORTHOREG printed page 185.
+
+1530       proc glm data=Longley;
+1531       model Employment = Prices Prices *Prices
+1532       GNP GNP *GNP
+1533       Jobless Jobless *Jobless
+1534       Military Military*Military
+1535       PopSize PopSize *PopSize
+1536       Year Year *Year;
+1537       ods select OverallANOVA
+1538       FitStatistics
+1539       ParameterEstimates
+1540       Notes;
+1541       run;
+
+
+Output Added:
+-------------
+Name:       OverallANOVA
+Label:      Overall ANOVA
+Template:   stat.GLM.OverallANOVA
+Path:       GLM.ANOVA.Employment.OverallANOVA
+-------------
+
+Output Added:
+-------------
+Name:       FitStatistics
+Label:      Fit Statistics
+Template:   stat.GLM.FitStatistics
+Path:       GLM.ANOVA.Employment.FitStatistics
+-------------
+
+Output Added:
+-------------
+Name:       ParameterEstimates
+Label:      Solution
+Template:   stat.GLM.Estimates
+Path:       GLM.ANOVA.Employment.ParameterEstimates
+-------------
+1542       ods trace off;
+1543       
+1544       
+1545       
+1546       
+The SAS System
+
+1547       

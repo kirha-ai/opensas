@@ -1,0 +1,109 @@
+The SAS System
+
+29900      
+29901      /* STAT-VARCOMP-008: VARCOMP — Displayed Output / ODS Table Names
+29902       * Source: S154 / Chapter 130 / `Displayed Output` (PDF pp. 10740–10741); S154 / Chapter 130 / `ODS Table Names` (PDF p. 10741).
+29903       * Discriminates: Getting Started: VARCOMP Procedure
+29904       */
+29905      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+29905    ! validmemname=compatible locale=en_US;
+29906      %let syscc=0;
+29907      title; footnote;
+29908      ods _all_ close;
+29909      ods listing gpath="%sysfunc(pathname(work))";
+29910      ods graphics off;
+29911      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.CURE (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+29911    !                                         quit;
+
+
+29912      ods path work.templat(update) sashelp.tmplmst(read);
+29913      
+29914      ods trace on;
+29915      data Cure;
+29916      input Lab Temp Batch $ Cure @@;
+29917      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.CURE has 108 observations and 4 variables.
+
+29945      ;
+29946      title 'Analyzing the Cure Rate of Rubber';
+29947      proc varcomp method=reml data=cure;
+29948      class temp lab batch;
+29949      model cure=temp|lab batch(lab temp) / fixed=1;
+29950      run;
+
+
+Output Added:
+-------------
+Name:       ClassLevels
+Label:      Class Levels
+Template:   STAT.GLM.ClassLevels
+Path:       Varcomp.ClassLevels
+-------------
+
+Output Added:
+-------------
+Name:       NObs
+Label:      Number of Observations
+Template:   STAT.GLM.NObsNotitle
+Path:       Varcomp.NObs
+-------------
+
+Output Added:
+-------------
+Name:       DepVar
+Label:      Dependent Variable
+Template:   Stat.Varcomp.Factoid
+Path:       Varcomp.Cure.DepVar
+-------------
+
+Output Added:
+-------------
+Name:       IterHistory
+Label:      REML Iterations
+Template:   Stat.Varcomp.IterHistory
+Path:       Varcomp.Cure.IterHistory
+-------------
+
+Output Added:
+-------------
+Name:       ConvergenceStatus
+Label:      Convergence Status
+Template:   Stat.Varcomp.ConvergenceStatus
+Path:       Varcomp.Cure.ConvergenceStatus
+-------------
+
+Output Added:
+-------------
+Name:       Estimates
+Label:      REML Estimates
+Template:   Stat.Varcomp.ML
+Path:       Varcomp.Cure.Estimates
+-------------
+
+Output Added:
+-------------
+Name:       AsyCov
+Label:      Asymptotic Covariance Matrix of Estimates
+Template:   Stat.Varcomp.AsyCov
+Path:       Varcomp.Cure.AsyCov
+-------------
+NOTE: There were 108 observations read from the data set WORK.CURE.
+NOTE: The PROCEDURE VARCOMP printed page 1810.
+
+29951      ods trace off;
+29952      
+29953      
+29954      
+29955      
+The SAS System
+
+29956      

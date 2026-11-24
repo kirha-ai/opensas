@@ -1,0 +1,52 @@
+The SAS System
+
+954        
+955        /* STAT-FACTOR-003: FACTOR — PARTIAL / Variable Weights and Variance Explained / Simplicity Functions for Rotations
+956         * Source: S154 / Chapter 44 / `PARTIAL Statement` (PDF p. 2817); S154 / Chapter 44 / `Variable Weights and Variance Explained` (PDF pp. 2829–2830)
+956      ! ; S154 / Chapter 44 / `Simplicity Functions for Rotations` (PDF pp. 2830–2831).
+957         * Discriminates: Explicit PARTIAL statement behavior on seeded synthetic inputs.
+958         */
+959        options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+959      ! validmemname=compatible locale=en_US;
+960        %let syscc=0;
+961        title; footnote;
+962        ods _all_ close;
+963        ods listing gpath="%sysfunc(pathname(work))";
+964        ods graphics off;
+965        proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SAMPLE (memtype=DATA).
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+965      !                                         quit;
+
+
+966        ods path work.templat(update) sashelp.tmplmst(read);
+967        
+968        data sample;
+969        call streaminit(314159);
+970        do id=1 to 90;
+971         x=rand('normal'); z=rand('normal'); w=rand('normal');
+972         group=1+mod(id,3); block=1+mod(id,5);
+973         y=5+1.5*x-0.6*z+0.4*group+rand('normal');
+974         y2=2+0.5*x+0.8*z+rand('normal'); output;
+975        end;
+976        run;
+
+NOTE: The data set WORK.SAMPLE has 90 observations and 8 variables.
+
+977        proc factor data=sample nfactors=1; var x y y2; partial z; run;
+
+NOTE: 1 factor will be retained by the NFACTOR criterion.
+NOTE: The PROCEDURE FACTOR printed pages 84-85.
+
+978        
+979        
+980        
+981        
+The SAS System
+
+982        

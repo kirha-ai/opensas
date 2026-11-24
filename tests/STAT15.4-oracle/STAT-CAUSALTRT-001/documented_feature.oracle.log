@@ -1,0 +1,47 @@
+The SAS System
+
+13541      
+13542      /* STAT-CAUSALTRT-001: CAUSALTRT — Data input, variable roles, and basic options
+13543       * Source: S154 / Chapter 39 / `PROC CAUSALTRT Statement` (PDF pp. 2437–2445); S154 / Chapter 39 / `BY Statement` (PDF p. 2448); S154 / Chapter 39
+13543    ! / `FREQ Statement` (PDF p. 2450); S154 / Chapter 39 / `Missing Values` (PDF p. 2473).
+13544       * Discriminates: Verified default procedure context
+13545       */
+13546      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+13546    ! validmemname=compatible locale=en_US;
+13547      %let syscc=0;
+13548      title; footnote;
+13549      ods _all_ close;
+13550      ods listing gpath="%sysfunc(pathname(work))";
+13551      ods graphics off;
+13552      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+13552    !                                         quit;
+
+
+13553      ods path work.templat(update) sashelp.tmplmst(read);
+13554      
+13555      data trial; call streaminit(193); do id=1 to 200; age=20+mod(id*7,45); bmi=20+mod(id,12); gender=mod(id,2);
+13555    ! drug=rand('bernoulli',1/(1+exp(-(-2+age*.03+gender*.3)))); outcome=rand('bernoulli',1/(1+exp(-(-1+drug*.6+age*.01)))); output; end; run;
+
+NOTE: The data set WORK.TRIAL has 200 observations and 6 variables.
+
+13556      proc causaltrt data=trial method=ipwr; class gender; psmodel drug(ref='0')=age bmi gender; model outcome(ref='0') /dist=bin; run;
+
+NOTE: PROC CAUSALTRT is modeling the probability that outcome='1'.
+NOTE: PROC CAUSALTRT is modeling the probability that drug='1'.
+NOTE: The PROCEDURE CAUSALTRT printed pages 1860-1861.
+
+13557      
+13558      
+13559      
+13560      
+The SAS System
+
+13561      

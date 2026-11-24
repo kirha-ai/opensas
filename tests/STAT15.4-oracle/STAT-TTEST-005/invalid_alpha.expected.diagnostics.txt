@@ -1,0 +1,1 @@
+ERROR: ALPHA equals 0 or 1.  Must be between these values.

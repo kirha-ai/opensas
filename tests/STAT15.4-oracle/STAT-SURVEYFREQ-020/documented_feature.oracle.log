@@ -1,0 +1,59 @@
+The SAS System
+
+19823      
+19824      /* STAT-SURVEYFREQ-020: SURVEYFREQ — Official examples and feature integration regression
+19825       * Source: S154 / Chapter 118 / `Examples: SURVEYFREQ Procedure` (PDF pp. 9682–9688).
+19826       * Discriminates: Verified default procedure context
+19827       */
+19828      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+19828    ! validmemname=compatible locale=en_US;
+19829      %let syscc=0;
+19830      title; footnote;
+19831      ods _all_ close;
+19832      ods listing gpath="%sysfunc(pathname(work))";
+19833      ods graphics off;
+19834      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SURVEY (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+19834    !                                         quit;
+
+
+19835      ods path work.templat(update) sashelp.tmplmst(read);
+19836      
+19837      data survey;
+19838      do state=1 to 2;
+19839      do school=1 to 4;
+19840      do id=1 to 6;
+19841      response=1+mod(id+school,3);
+19842      schooltype=1+mod(school,2);
+19843      samplingweight=2+state+school/10;
+19844      output;
+19845      end;
+19846      end;
+19847      end;
+19848      run;
+
+NOTE: The data set WORK.SURVEY has 48 observations and 6 variables.
+
+19849      proc surveyfreq data=survey;
+19850      strata state;
+19851      cluster school;
+19852      weight samplingweight;
+19853      tables schooltype*response / row chisq;
+19854      run;
+
+NOTE: The Rao-Scott chi-square test cannot be computed for the table of schooltype by response because the design correction is not positive.
+NOTE: The PROCEDURE SURVEYFREQ printed page 1396.
+
+19855      
+19856      
+19857      
+19858      
+The SAS System
+
+19859      

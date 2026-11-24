@@ -1,0 +1,121 @@
+The SAS System
+
+749        
+750        /* STAT-GLM-016: GLM — CODE
+751         * Source: S154 / Chapter 53 / `CODE Statement` (PDF pp. 4067–4068).
+752         * Discriminates: Generate DATA step scoring code, execute it against the input rows, and print the scored data.
+753         */
+754        options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+754      ! validmemname=compatible locale=en_US;
+755        %let syscc=0;
+756        title; footnote;
+757        ods _all_ close;
+758        ods listing gpath="%sysfunc(pathname(work))";
+759        ods graphics off;
+760        proc datasets library=work kill nolist;
+NOTE: Deleting WORK.MULTICENTER (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK._ORACLE_STORE (memtype=ITEMSTOR).
+760      !                                         quit;
+
+
+761        ods path work.templat(update) sashelp.tmplmst(read);
+762        
+763        filename _orcode "%sysfunc(pathname(work))/_oracle_score.sas";
+764        
+765        
+766        title 'Analysis of Unbalanced 2-by-2 Factorial';
+767        data exp;
+768        input A $ B $ Y @@;
+769        datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.EXP has 7 observations and 3 variables.
+
+772        ;
+773        proc glm data=exp;
+774        class A B;
+775        model Y=A B A*B;
+776        
+777        code file="%sysfunc(pathname(work))/_oracle_score.sas";
+778        run;
+
+NOTE: External file /saswork/SAS_work7EA200001C34_odaws01-euw1.oda.sas.com/SAS_work29EF00001C34_odaws01-euw1.oda.sas.com/_oracle_score.sas opened.
+779        ods graphics on;
+
+NOTE: The GLM procedure wrote the DATA step code to external file 
+      /saswork/SAS_work7EA200001C34_odaws01-euw1.oda.sas.com/SAS_work29EF00001C34_odaws01-euw1.oda.sas.com/_oracle_score.sas.
+NOTE: The PROCEDURE GLM printed pages 25-26.
+
+780        proc glm data=exp;
+781        class A B;
+782        model Y=A B A*B;
+783        run;
+
+784        ods graphics off;
+785        title 'Regression in PROC GLM';
+
+NOTE: The PROCEDURE GLM printed pages 27-28.
+
+786        data iron;
+787        input fe loss @@;
+788        datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.IRON has 13 observations and 2 variables.
+
+793        ;
+794        proc sgscatter data=iron;
+795        plot loss*fe;
+796        run;
+
+NOTE: Listing image output written to /saswork/SAS_work7EA200001C34_odaws01-euw1.oda.sas.com/SAS_work29EF00001C34_odaws01-euw1.oda.sas.com/SGScatter.png.
+NOTE: There were 13 observations read from the data set WORK.IRON.
+
+797        ods graphics off;
+798        proc glm data=iron;
+799        model loss=fe fe*fe;
+800        run;
+
+801        ods graphics on;
+
+NOTE: The PROCEDURE GLM printed pages 29-30.
+
+802        proc glm data=iron;
+803        model loss=fe fe*fe;
+804        run;
+
+805        ods graphics off;
+
+NOTE: The PROCEDURE GLM printed pages 31-32.
+
+806        proc glm data=iron;
+807        model loss=fe;
+808        run;
+
+809        
+
+NOTE: The PROCEDURE GLM printed pages 33-34.
+
+810        data _oracle_scored; set exp;
+811        %include _orcode;
+878        run;
+
+NOTE: There were 7 observations read from the data set WORK.EXP.
+NOTE: The data set WORK._ORACLE_SCORED has 7 observations and 4 variables.
+
+879        proc print data=_oracle_scored(obs=10); run;
+
+NOTE: There were 7 observations read from the data set WORK._ORACLE_SCORED.
+NOTE: The PROCEDURE PRINT printed page 35.
+
+880        
+881        
+882        
+883        
+The SAS System
+
+884        

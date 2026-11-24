@@ -1,0 +1,72 @@
+The SAS System
+
+2788       
+2789       /* STAT-QUANTREG-012: QUANTREG — PERFORMANCE / Computational Resources
+2790        * Source: S154 / Chapter 103 / `PERFORMANCE Statement` (PDF pp. 8391–8392); S154 / Chapter 103 / `Computational Resources` (PDF p. 8415).
+2791        * Discriminates: Verified default procedure context
+2792        */
+2793       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+2793     ! validmemname=compatible locale=en_US;
+2794       %let syscc=0;
+2795       title; footnote;
+2796       ods _all_ close;
+2797       ods listing gpath="%sysfunc(pathname(work))";
+2798       ods graphics off;
+2799       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.FORMATS (memtype=CATALOG).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+2799     !                                         quit;
+
+
+2800       ods path work.templat(update) sashelp.tmplmst(read);
+2801       
+2802       data a (drop=i);
+2803       do i=1 to 1000;
+2804       x1=rannor(1234);
+2805       x2=rannor(1234);
+2806       e=rannor(1234);
+2807       if i > 950 then y=100 + 10*e;
+2808       else y=10 + 5*x1 + 3*x2 + 0.5 * e;
+2809       output;
+2810       end;
+2811       run;
+
+NOTE: The data set WORK.A has 1000 observations and 4 variables.
+
+2812       proc quantreg data=a;
+2813       model y = x1 x2 / seed=314159;
+2814       run;
+
+NOTE: No valid quantiles are specified. PROC QUANTREG computes median regression.
+NOTE: The PROCEDURE QUANTREG printed page 180.
+
+2815       proc quantreg algorithm=interior(tolerance=1e-6)
+2816       ci=none data=a;
+2817       model y = x1 x2 / itprint nosummary seed=314159;
+2818       run;
+
+NOTE: No valid quantiles are specified. PROC QUANTREG computes median regression.
+NOTE: The PROCEDURE QUANTREG printed pages 181-182.
+
+2819       proc quantreg algorithm=smooth(rratio=.5) ci=none data=a;
+2820       model y = x1 x2 / itprint nosummary seed=314159;
+2821       run;
+
+NOTE: No valid quantiles are specified. PROC QUANTREG computes median regression.
+NOTE: The PROCEDURE QUANTREG printed pages 183-184.
+
+2822       
+2823       
+2824       
+2825       
+The SAS System
+
+2826       

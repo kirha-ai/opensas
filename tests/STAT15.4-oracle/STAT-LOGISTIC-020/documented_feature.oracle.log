@@ -1,0 +1,180 @@
+The SAS System
+
+15095      
+15096      /* STAT-LOGISTIC-020: LOGISTIC — STORE
+15097       * Source: S154 / Chapter 79 / `STORE Statement` (PDF p. 5901).
+15098       * Discriminates: Example 79.16: Scoring Data Sets; explicit statements: STORE
+15099       */
+15100      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+15100    ! validmemname=compatible locale=en_US;
+15101      %let syscc=0;
+15102      title; footnote;
+15103      ods _all_ close;
+15104      ods listing gpath="%sysfunc(pathname(work))";
+15105      ods graphics off;
+15106      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.CROPMODEL (memtype=DATA).
+NOTE: Deleting WORK.CROPMODEL2 (memtype=ITEMSTOR).
+NOTE: Deleting WORK.CROPS (memtype=DATA).
+NOTE: Deleting WORK.INTO (memtype=DATA).
+NOTE: Deleting WORK.PRIOR (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.SCORE1 (memtype=DATA).
+NOTE: Deleting WORK.SCORE2 (memtype=DATA).
+NOTE: Deleting WORK.SCORE3 (memtype=DATA).
+NOTE: Deleting WORK.SCORE4 (memtype=DATA).
+NOTE: Deleting WORK.SCORE5 (memtype=DATA).
+NOTE: Deleting WORK.SCOREDTEST (memtype=DATA).
+NOTE: Deleting WORK.SCOREPLM (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEST (memtype=DATA).
+15106    !                                         quit;
+
+
+15107      ods path work.templat(update) sashelp.tmplmst(read);
+15108      
+15109      data Crops;
+15110      length Crop $ 10;
+15111      infile datalines truncover;
+15112      input Crop $ @@;
+15113      do i=1 to 3;
+15114      input x1-x4 @@;
+15115      if (x1 ^= .) then output;
+15116      end;
+15117      input;
+15118      datalines;
+
+NOTE: The data set WORK.CROPS has 36 observations and 6 variables.
+
+15132      ;
+15133      ods graphics on;
+15134      proc logistic data=Crops;
+15135      model Crop=x1-x4 / link=glogit;
+15136      score out=Score1;
+15137      effectplot slicefit(x=x3);
+15138      run;
+
+NOTE: PROC LOGISTIC is fitting the generalized logit model. The logits modeled contrast each response level against the reference level (Crop='Sugarbeets'). 
+      Use the response variable option REF= if you want to change the reference level.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: There were 36 observations read from the data set WORK.CROPS.
+NOTE: The data set WORK.SCORE1 has 36 observations and 13 variables.
+NOTE: The PROCEDURE LOGISTIC printed page 1243.
+
+15139      proc logistic data=Crops outmodel=work.CropModel;
+15140      model Crop=x1-x4 / link=glogit;
+15141      score data=Crops out=Score2;
+15142      store CropModel2;
+15143      run;
+
+NOTE: PROC LOGISTIC is fitting the generalized logit model. The logits modeled contrast each response level against the reference level (Crop='Sugarbeets'). 
+      Use the response variable option REF= if you want to change the reference level.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The LOGISTIC procedure generated the model item store WORK.CROPMODEL2.
+NOTE: There were 36 observations read from the data set WORK.CROPS.
+NOTE: The data set WORK.CROPMODEL has 252 observations and 6 variables.
+NOTE: The data set WORK.SCORE2 has 36 observations and 13 variables.
+NOTE: The PROCEDURE LOGISTIC printed page 1244.
+
+15144      proc logistic inmodel=work.CropModel;
+15145      score data=Crops out=Score3;
+15146      run;
+
+NOTE: The data set WORK.SCORE3 has 36 observations and 13 variables.
+
+15147      proc plm source=CropModel2;
+15148      score data=Crops out=ScorePLM predicted=p / ilink;
+15149      run;
+
+NOTE: The data set WORK.SCOREPLM has 180 observations and 8 variables.
+NOTE: The PROCEDURE PLM printed page 1245.
+
+15150      proc transpose data=ScorePLM out=Score4 prefix=P_ let;
+15151      id _LEVEL_;
+15152      var p;
+15153      by x1-x4 notsorted;
+15154      run;
+
+NOTE: There were 180 observations read from the data set WORK.SCOREPLM.
+NOTE: The data set WORK.SCORE4 has 36 observations and 11 variables.
+
+15155      data Score4(drop=_NAME_ _LABEL_);
+15156      merge Score4 Crops(keep=Crop x1-x4);
+15157      F_Crop=Crop;
+15158      run;
+
+NOTE: There were 36 observations read from the data set WORK.SCORE4.
+NOTE: There were 36 observations read from the data set WORK.CROPS.
+NOTE: The data set WORK.SCORE4 has 36 observations and 11 variables.
+
+15159      proc summary data=ScorePLM nway;
+15160      by x1-x4 notsorted;
+15161      var p;
+15162      output out=into maxid(p(_LEVEL_))=I_Crop;
+15163      run;
+
+NOTE: There were 180 observations read from the data set WORK.SCOREPLM.
+NOTE: The data set WORK.INTO has 36 observations and 7 variables.
+
+15164      data Score4;
+15165      merge Score4 into(keep=I_Crop);
+15166      run;
+
+NOTE: There were 36 observations read from the data set WORK.SCORE4.
+NOTE: There were 36 observations read from the data set WORK.INTO.
+NOTE: The data set WORK.SCORE4 has 36 observations and 12 variables.
+
+15167      data Prior;
+15168      length Crop $10.;
+15169      input Crop _PRIOR_;
+15170      datalines;
+
+NOTE: The data set WORK.PRIOR has 5 observations and 2 variables.
+
+15176      ;
+15177      proc logistic inmodel=work.CropModel;
+15178      score data=Crops prior=prior out=Score5 fitstat;
+15179      run;
+
+NOTE: The data set WORK.SCORE5 has 36 observations and 13 variables.
+NOTE: The PROCEDURE LOGISTIC printed page 1246.
+
+15180      proc freq data=Score1;
+15181      table F_Crop*I_Crop / nocol nocum nopercent;
+15182      run;
+
+NOTE: There were 36 observations read from the data set WORK.SCORE1.
+NOTE: The PROCEDURE FREQ printed page 1247.
+
+15183      data Test;
+15184      input Crop $ 1-10 x1-x4;
+15185      datalines;
+
+NOTE: The data set WORK.TEST has 5 observations and 5 variables.
+
+15191      ;
+15192      proc logistic noprint inmodel=work.CropModel;
+15193      score data=Test out=ScoredTest;
+15194      run;
+
+NOTE: The data set WORK.SCOREDTEST has 5 observations and 12 variables.
+
+15195      proc print data=ScoredTest label noobs;
+15196      var F_Crop I_Crop P_Clover P_Corn P_Cotton P_Soybeans P_Sugarbeets;
+15197      run;
+
+NOTE: There were 5 observations read from the data set WORK.SCOREDTEST.
+NOTE: The PROCEDURE PRINT printed page 1248.
+
+15198      run;
+15199      quit;
+15200      
+15201      
+15202      
+15203      
+The SAS System
+
+15204      

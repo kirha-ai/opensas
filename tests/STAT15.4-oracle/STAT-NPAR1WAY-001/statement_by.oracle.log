@@ -1,0 +1,80 @@
+The SAS System
+
+447        
+448        /* STAT-NPAR1WAY-001: NPAR1WAY — Data input, variable roles, and basic options
+449         * Source: S154 / Chapter 90 / `PROC NPAR1WAY Statement` (PDF pp. 7215–7224); S154 / Chapter 90 / `BY Statement` (PDF p. 7224); S154 / Chapter 90 /
+449      !  `CLASS Statement` (PDF pp. 7224–7225); S154 / Chapter 90 / `FREQ Statement` (PDF pp. 7229–7230); S154 / Chapter 90 / `STRATA Statement` (PDF pp.
+449      !  7233–7235); S154 / Chapter 90 / `VAR Statement` (PDF p. 7235); S154 / Chapter 90 / `Missing Values` (PDF pp. 7235–7236).
+450         * Discriminates: Two explicit BY groups contain identical inputs, exposing group boundaries and per-group results.
+451         */
+452        options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+452      ! validmemname=compatible locale=en_US;
+453        %let syscc=0;
+454        title; footnote;
+455        ods _all_ close;
+456        ods listing gpath="%sysfunc(pathname(work))";
+457        ods graphics off;
+458        proc datasets library=work kill nolist;
+NOTE: Deleting WORK.GOSSYPOL (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+458      !                                         quit;
+
+
+459        ods path work.templat(update) sashelp.tmplmst(read);
+460        
+461        data Gossypol;
+462        input Dose n;
+463        do i=1 to n;
+464        input Gain @@;
+465        output;
+466        end;
+467        datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.GOSSYPOL has 67 observations and 4 variables.
+
+478        ;
+479        data _oracle_input; set Gossypol; do _oracle_by=1 to 2; output; end; run;
+
+NOTE: There were 67 observations read from the data set WORK.GOSSYPOL.
+NOTE: The data set WORK._ORACLE_INPUT has 134 observations and 5 variables.
+
+480        proc sort data=_oracle_input; by _oracle_by; run;
+
+NOTE: There were 134 observations read from the data set WORK._ORACLE_INPUT.
+NOTE: The data set WORK._ORACLE_INPUT has 134 observations and 5 variables.
+
+481        proc npar1way data=_oracle_input;
+482        by _oracle_by;
+483        class Dose;
+484        var Gain;
+485        run;
+
+NOTE: The PROCEDURE NPAR1WAY printed pages 27-38.
+
+486        ods graphics on;
+487        proc npar1way data=Gossypol plots(only)=wilcoxonboxplot;
+488        class Dose;
+489        var Gain;
+490        run;
+
+NOTE: The PROCEDURE NPAR1WAY printed pages 39-44.
+
+491        ods graphics off;
+492        proc npar1way data=Gossypol;
+493        where Dose <= .04;
+494        class Dose;
+495        var Gain;
+496        run;
+
+NOTE: The PROCEDURE NPAR1WAY printed pages 45-50.
+
+497        
+498        
+499        
+500        
+The SAS System
+
+501        

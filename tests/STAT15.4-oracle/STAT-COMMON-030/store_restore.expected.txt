@@ -1,0 +1,93 @@
+
+The GLM Procedure
+
+   Class Level Information
+ 
+Class         Levels    Values
+
+group              2    A B   
+
+
+Number of Observations Read          12
+Number of Observations Used          12
+
+The GLM Procedure
+ 
+Dependent Variable: y   
+
+                                        Sum of
+Source                      DF         Squares     Mean Square    F Value    Pr > F
+
+Model                        2     595.2333333     297.6166667     276.61    <.0001
+
+Error                        9       9.6833333       1.0759259                     
+
+Corrected Total             11     604.9166667                                     
+
+
+R-Square     Coeff Var      Root MSE        y Mean
+
+0.983992      6.953755      1.037268      14.91667
+
+
+Source                      DF       Type I SS     Mean Square    F Value    Pr > F
+
+group                        1     494.0833333     494.0833333     459.22    <.0001
+x                            1     101.1500000     101.1500000      94.01    <.0001
+
+
+Source                      DF     Type III SS     Mean Square    F Value    Pr > F
+
+group                        1       5.0917249       5.0917249       4.73    0.0576
+x                            1     101.1500000     101.1500000      94.01    <.0001
+
+The PLM Procedure
+
+             Store Information
+
+Item Store               WORK.FITTED       
+Data Set Created From    WORK.SAMPLE       
+Created By               PROC GLM          
+Date Created             24NOV26:12:32:32  
+Response Variable        y                 
+Class Variable           group             
+Model Effects            Intercept group x 
+
+
+ Class Level Information
+ 
+Class    Levels    Values
+
+group         2    A B   
+
+
+                                   group Least Squares Means
+ 
+                     Standard
+group    Estimate       Error       DF    t Value    Pr > |t|     Alpha       Lower       Upper
+
+A         13.6000      0.6753        9      20.14      <.0001      0.05     12.0724     15.1276
+B         16.2333      0.6753        9      24.04      <.0001      0.05     14.7058     17.7609
+
+
+                                Differences of group Least Squares Means
+ 
+                               Standard
+group    _group    Estimate       Error       DF    t Value    Pr > |t|     Alpha       Lower       Upper
+
+A        B          -2.6333      1.2105        9      -2.18      0.0576      0.05     -5.3717      0.1050
+
+ x    z     y    group    weight    freq    Predicted
+
+ 1    1     4      A         1        1       4.2500 
+ 2    1     6      A         2        1       5.9500 
+ 3    2     7      A         1        2       7.6500 
+ 4    1     9      A         1        1       9.3500 
+ 5    3    13      A         2        1      11.0500 
+ 6    2    12      A         1        1      12.7500 
+ 7    4    17      B         1        1      17.0833 
+ 8    3    19      B         2        2      18.7833 
+ 9    5    20      B         1        1      20.4833 
+10    3    23      B         1        1      22.1833 
+11    5    25      B         2        1      23.8833 
+12    4    24      B         1        1      25.5833 

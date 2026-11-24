@@ -1,0 +1,85 @@
+The SAS System
+
+7618       
+7619       /* STAT-ICPHREG-001: ICPHREG — Data input, variable roles, and basic options
+7620        * Source: S154 / Chapter 70 / `PROC ICPHREG Statement` (PDF pp. 5207–5214); S154 / Chapter 70 / `BY Statement` (PDF pp. 5217–5218); S154 /
+7620     ! Chapter 70 / `FREQ Statement` (PDF p. 5221); S154 / Chapter 70 / `ID Statement` (PDF pp. 5223–5224); S154 / Chapter 70 / `STRATA Statement` (PDF
+7620     ! pp. 5228–5229); S154 / Chapter 70 / `Missing Values` (PDF p. 5246).
+7621        * Discriminates: Two explicit BY groups contain identical inputs, exposing group boundaries and per-group results.
+7622        */
+7623       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+7623     ! validmemname=compatible locale=en_US;
+7624       %let syscc=0;
+7625       title; footnote;
+7626       ods _all_ close;
+7627       ods listing gpath="%sysfunc(pathname(work))";
+7628       ods graphics off;
+7629       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.HIV (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+7629     !                                         quit;
+
+
+7630       ods path work.templat(update) sashelp.tmplmst(read);
+7631       
+7632       data hiv;
+7633       input Left Right Stage Dose CdLow CdHigh;
+7634       if (Left=0) then Left=.;
+7635       if (Right>=26) then Right=.;
+7636       datalines;
+
+NOTE: The data set WORK.HIV has 31 observations and 6 variables.
+
+7668       ;
+7669       data _oracle_input; set hiv; do _oracle_by=1 to 2; output; end; run;
+
+NOTE: There were 31 observations read from the data set WORK.HIV.
+NOTE: The data set WORK._ORACLE_INPUT has 62 observations and 7 variables.
+
+7670       proc sort data=_oracle_input; by _oracle_by; run;
+
+NOTE: There were 62 observations read from the data set WORK._ORACLE_INPUT.
+NOTE: The data set WORK._ORACLE_INPUT has 62 observations and 7 variables.
+
+7671       proc icphreg data=_oracle_input;
+7672       by _oracle_by;
+7673       class Stage Dose / desc;
+7674       model (Left, Right) = Stage Dose;
+7675       run;
+
+NOTE: The option BASEHAZ of the MODEL statement was not specified. Fitting the model with a constant baseline hazard with 5 segments.
+NOTE: Convergence criterion (ABSGCONV=0.00001) satisfied.
+NOTE: The above message was for the following BY group:
+      _oracle_by=1
+NOTE: Convergence criterion (ABSGCONV=0.00001) satisfied.
+NOTE: The above message was for the following BY group:
+      _oracle_by=2
+NOTE: The PROCEDURE ICPHREG printed pages 561-562.
+
+7676       proc icphreg data=hiv ithistory;
+7677       class Stage Dose / desc;
+7678       model (Left, Right) = Stage Dose / basehaz=pch(intervals=(10));
+7679       run;
+
+NOTE: Convergence criterion (ABSGCONV=0.00001) satisfied.
+NOTE: The PROCEDURE ICPHREG printed page 563.
+
+7680       proc icphreg data=hiv;
+7681       class Stage / desc;
+7682       model (Left, Right) = Stage / basehaz=pch(intervals=(10));
+7683       hazardratio Stage;
+7684       run;
+
+NOTE: Convergence criterion (ABSGCONV=0.00001) satisfied.
+NOTE: The PROCEDURE ICPHREG printed page 564.
+
+7685       
+7686       
+7687       
+7688       
+The SAS System
+
+7689       

@@ -1,0 +1,79 @@
+The SAS System
+
+13920      
+13921      /* STAT-LOGISTIC-003: LOGISTIC — CLASS / EFFECT / MODEL
+13922       * Source: S154 / Chapter 79 / `CLASS Statement` (PDF pp. 5851–5855); S154 / Chapter 79 / `EFFECT Statement` (PDF pp. 5858–5859); S154 / Chapter
+13922    ! 79 / `MODEL Statement` (PDF pp. 5870–5889).
+13923       * Discriminates: Example 79.3: Ordinal Logistic Regression; explicit statements: CLASS, EFFECT, MODEL
+13924       */
+13925      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+13925    ! validmemname=compatible locale=en_US;
+13926      %let syscc=0;
+13927      title; footnote;
+13928      ods _all_ close;
+13929      ods listing gpath="%sysfunc(pathname(work))";
+13930      ods graphics off;
+13931      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.INGOTS (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+13931    !                                         quit;
+
+
+13932      ods path work.templat(update) sashelp.tmplmst(read);
+13933      
+13934      data Cheese;
+13935      do Additive = 1 to 4;
+13936      do y = 1 to 9;
+13937      input freq @@;
+13938      output;
+13939      end;
+13940      end;
+13941      label y='Taste Rating';
+13942      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.CHEESE has 36 observations and 3 variables.
+
+13947      ;
+13948      ods graphics on;
+13949      proc logistic data=Cheese plots(only)=oddsratio(range=clip);
+13950      freq freq;
+13951      class Additive (param=ref ref='4');
+13952      model y=Additive / covb nooddsratio;
+13953      oddsratio Additive;
+13954      effectplot / polybar;
+13955      title 'Multiple Response Cheese Tasting Experiment';
+13956      run;
+
+NOTE: PROC LOGISTIC is fitting the cumulative logit model. The probabilities modeled are summed over the responses having the lower Ordered Values in the 
+      Response Profile table. Use the response variable option DESCENDING if you want to reverse the assignment of Ordered Values to the response levels.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: There were 36 observations read from the data set WORK.CHEESE.
+NOTE: The PROCEDURE LOGISTIC printed page 1192.
+
+13957      proc logistic data=Cheese
+13958      plots(only)=effect(x=y sliceby=additive connect yrange=(0,0.4));
+13959      freq freq;
+13960      class Additive (param=ref ref='4');
+13961      model y=Additive / nooddsratio link=alogit;
+13962      oddsratio Additive;
+13963      title 'Multiple Response Cheese Tasting Experiment';
+13964      run;
+
+NOTE: PROC LOGISTIC is fitting the adjacent-category logit model. The logits modeled contrast each response level against the next higher Ordered Value. Use 
+      the response variable option DESCENDING if you want to contrast higher Ordered Values against lower Ordered Values.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: There were 36 observations read from the data set WORK.CHEESE.
+NOTE: The PROCEDURE LOGISTIC printed page 1193.
+
+13965      
+13966      
+13967      
+13968      
+The SAS System
+
+13969      

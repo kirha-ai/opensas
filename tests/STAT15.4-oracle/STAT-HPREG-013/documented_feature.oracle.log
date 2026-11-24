@@ -1,0 +1,58 @@
+The SAS System
+
+6220       
+6221       /* STAT-HPREG-013: HPREG — Official examples and feature integration regression
+6222        * Source: S154 / Chapter 67 / `Examples: HPREG Procedure` (PDF pp. 5052–5067).
+6223        * Discriminates: Example 67.2: Forward-Swap Selection
+6224        */
+6225       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+6225     ! validmemname=compatible locale=en_US;
+6226       %let syscc=0;
+6227       title; footnote;
+6228       ods _all_ close;
+6229       ods listing gpath="%sysfunc(pathname(work))";
+6230       ods graphics off;
+6231       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.EX4DATA (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+6231     !                                         quit;
+
+
+6232       ods path work.templat(update) sashelp.tmplmst(read);
+6233       
+6234       data ex3Data;
+6235       array x{20};
+6236       do i=1 to 10000;
+6237       do j=1 to 20;
+6238       x{j} = ranuni(1);
+6239       end;
+6240       y = 3*x1 + 7*x2 -5*x3 + 5*x1*x3 +
+6241       4*x2*x13 + x7 + x11 -x13 + x1 *x4 + rannor(1);
+6242       output;
+6243       end;
+6244       run;
+
+NOTE: The data set WORK.EX3DATA has 10000 observations and 23 variables.
+
+6245       proc hpreg data=ex3Data;
+6246       model y = x1|x2|x3|x4|x5|x6|x7|x8|x9|x10|X11|
+6247       x12|x13|x14|x5|x16|x7|x18|x19|x20@2 /
+6248       include=(x1 x2 x3) start=(x1*x2 x1*x3 x2*x3);
+6249       selection method=forwardswap(select=rsquare maxef=15 choose=sbc)
+6250       details=all;
+6251       run;
+
+NOTE: The HPREG procedure is executing in single-machine mode.
+NOTE: There were 10000 observations read from the data set WORK.EX3DATA.
+NOTE: The PROCEDURE HPREG printed pages 449-465.
+
+6252       
+6253       
+6254       
+6255       
+The SAS System
+
+6256       

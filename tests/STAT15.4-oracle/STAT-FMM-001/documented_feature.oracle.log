@@ -1,0 +1,52 @@
+The SAS System
+
+2785       
+2786       /* STAT-FMM-001: FMM — Data input, variable roles, and basic options
+2787        * Source: S154 / Chapter 46 / `PROC FMM Statement` (PDF pp. 2972–2986); S154 / Chapter 46 / `BY Statement` (PDF pp. 2995–2996); S154 / Chapter
+2787     ! 46 / `FREQ Statement` (PDF pp. 2996–2997); S154 / Chapter 46 / `ID Statement` (PDF p. 2997); S154 / Chapter 46 / `WEIGHT Statement` (PDF p. 3015).
+2788        * Discriminates: Verified default procedure context; explicit statements: FREQ
+2789        */
+2790       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+2790     ! validmemname=compatible locale=en_US;
+2791       %let syscc=0;
+2792       title; footnote;
+2793       ods _all_ close;
+2794       ods listing gpath="%sysfunc(pathname(work))";
+2795       ods graphics off;
+2796       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SOCIOECONOMICS (memtype=DATA).
+2796     !                                         quit;
+
+
+2797       ods path work.templat(update) sashelp.tmplmst(read);
+2798       
+2799       data yeast;
+2800       input count f;
+2801       n = 5;
+2802       datalines;
+
+NOTE: The data set WORK.YEAST has 6 observations and 3 variables.
+
+2809       ;
+2810       proc fmm data=yeast seed=314159;
+2811       model count/n = / k=2;
+2812       freq f;
+2813       run;
+
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The PROCEDURE FMM printed page 164.
+
+2814       quit;
+2815       
+2816       
+2817       
+2818       
+The SAS System
+
+2819       

@@ -1,0 +1,71 @@
+The SAS System
+
+24179      
+24180      /* STAT-SURVEYREG-006: SURVEYREG — Stratum Collapse / Sampling Rate of the Pooled Stratum from Collapse / Analysis of Variance (ANOVA)
+24181       * Source: S154 / Chapter 123 / `Stratum Collapse` (PDF p. 10146); S154 / Chapter 123 / `Sampling Rate of the Pooled Stratum from Collapse` (PDF p.
+24181    ! 10146); S154 / Chapter 123 / `Analysis of Variance (ANOVA)` (PDF pp. 10146–10147).
+24182       * Discriminates: Example 123.6: Stratum Collapse
+24183       */
+24184      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+24184    ! validmemname=compatible locale=en_US;
+24185      %let syscc=0;
+24186      title; footnote;
+24187      ods _all_ close;
+24188      ods listing gpath="%sysfunc(pathname(work))";
+24189      ods graphics off;
+24190      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.MUNICIPALITIES (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+24190    !                                         quit;
+
+
+24191      ods path work.templat(update) sashelp.tmplmst(read);
+24192      
+24193      data Sample;
+24194      input Stratum X Y W;
+24195      datalines;
+
+NOTE: The data set WORK.SAMPLE has 8 observations and 4 variables.
+
+24204      ;
+24205      data StratumTotals;
+24206      input Stratum _TOTAL_;
+24207      datalines;
+
+NOTE: The data set WORK.STRATUMTOTALS has 8 observations and 2 variables.
+
+24216      ;
+24217      title1 'Stratified Sample with Single Sampling Unit in Strata';
+24218      title2 'With Stratum Collapse';
+24219      proc surveyreg data=Sample total=StratumTotals;
+24220      strata Stratum/list;
+24221      model Y=X;
+24222      weight W;
+24223      run;
+
+NOTE: Strata with only one observation are collapsed. Use the NOCOLLAPSE option in the STRATA statement if you do not want to collapse these strata.
+NOTE: The PROCEDURE SURVEYREG printed page 1538.
+
+24224      title1 'Stratified Sample with Single Sampling Unit in Strata';
+24225      title2 'Without Stratum Collapse';
+24226      proc surveyreg data=Sample total=StratumTotals;
+24227      strata Stratum/list nocollapse;
+24228      model Y = X;
+24229      weight W;
+24230      run;
+
+NOTE: Strata with only one observation are not collapsed because you used the NOCOLLAPSE option in the STRATA statement.
+NOTE: The PROCEDURE SURVEYREG printed page 1539.
+
+24231      
+24232      
+24233      
+24234      
+The SAS System
+
+24235      

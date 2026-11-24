@@ -1,0 +1,44 @@
+The SAS System
+
+36         
+37         /* STAT-COMMON-021: EFFECT — Collection Effects / Lag Effects
+38          * Source: S154 / Chapter 20 / `Collection Effects` (PDF p. 426); S154 / Chapter 20 / `Lag Effects` (PDF pp.
+38       ! 426–429).
+39          * Discriminates: Collection effect expansion and selected model columns
+40          */
+41         options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+41       ! validmemname=compatible locale=en_US;
+42         %let syscc=0;
+43         title; footnote;
+44         ods _all_ close;
+45         ods listing gpath="%sysfunc(pathname(work))";
+46         ods graphics off;
+47         proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+47       !                                         quit;
+
+
+48         ods path work.templat(update) sashelp.tmplmst(read);
+49         
+50         data sample;
+51          input x z y group $ weight freq;
+52          datalines;
+
+NOTE: The data set WORK.SAMPLE has 12 observations and 6 variables.
+
+65         ;
+66         run;
+67         proc glmselect data=sample seed=314159; effect both=collection(x z); model y=both / selection=none; run;
+
+NOTE: There were 12 observations read from the data set WORK.SAMPLE.
+NOTE: The PROCEDURE GLMSELECT printed pages 1-3.
+
+68         
+69         
+70         
+71         
+The SAS System
+
+72         

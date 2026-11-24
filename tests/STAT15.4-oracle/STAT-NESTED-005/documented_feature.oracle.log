@@ -1,0 +1,83 @@
+The SAS System
+
+5465       
+5466       /* STAT-NESTED-005: NESTED — Displayed Output / ODS Table Names
+5467        * Source: S154 / Chapter 87 / `Displayed Output` (PDF pp. 6973–6975); S154 / Chapter 87 / `ODS Table Names` (PDF p. 6975).
+5468        * Discriminates: Getting Started: NESTED Procedure
+5469        */
+5470       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+5470     ! validmemname=compatible locale=en_US;
+5471       %let syscc=0;
+5472       title; footnote;
+5473       ods _all_ close;
+5474       ods listing gpath="%sysfunc(pathname(work))";
+5475       ods graphics off;
+5476       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.AUTO (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+5476     !                                         quit;
+
+
+5477       ods path work.templat(update) sashelp.tmplmst(read);
+5478       
+5479       ods trace on;
+5480       data auto;
+5481       input Make $ Model Score @@;
+5482       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.AUTO has 36 observations and 3 variables.
+
+5495       ;
+5496       proc sort data=auto;
+5497       by Make Model;
+5498       run;
+
+NOTE: There were 36 observations read from the data set WORK.AUTO.
+NOTE: The data set WORK.AUTO has 36 observations and 3 variables.
+
+5499       title1 'Reliability of Automobile Models';
+5500       proc nested data=auto;
+5501       class Make Model;
+5502       var Score;
+5503       run;
+
+
+Output Added:
+-------------
+Name:       EMSCoef
+Label:      EMS Coefficients
+Template:   Stat.NESTED.EMSCoef
+Path:       Nested.EMSCoef
+-------------
+
+Output Added:
+-------------
+Name:       ANOVA
+Label:      ANOVA
+Template:   STAT.Nested.ANOVA
+Path:       Nested.Score.ANOVA
+-------------
+
+Output Added:
+-------------
+Name:       Statistics
+Label:      Statistics
+Template:   Stat.Nested.Statistics
+Path:       Nested.Score.Statistics
+-------------
+NOTE: The PROCEDURE NESTED printed page 375.
+
+5504       ods trace off;
+5505       
+5506       
+5507       
+5508       
+The SAS System
+
+5509       

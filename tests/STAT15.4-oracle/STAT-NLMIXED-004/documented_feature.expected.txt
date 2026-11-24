@@ -1,0 +1,302 @@
+
+The NLMIXED Procedure
+
+                         Specifications
+
+Data Set                                    WORK.HEADACHE       
+Dependent Variable                          minutes             
+Distribution for Dependent Variable         General             
+Optimization Technique                      Dual Quasi-Newton   
+Integration Method                          None                
+
+
+               Dimensions
+
+Observations Used                     38
+Observations Not Used                  0
+Total Observations                    38
+Parameters                             3
+
+
+              Initial Parameters
+ 
+                                      Negative
+                                           Log
+   gamma          b0          b1    Likelihood
+
+       1           1           1    263.990327
+
+
+                          Iteration History
+ 
+                      Negative
+                           Log                   Maximum
+Iteration Calls     Likelihood    Difference    Gradient       Slope
+
+       1      4       169.2443      94.74602     22.5599    -2230.83
+       2      8       142.8735       26.3708     14.8863    -3.64643
+       3     11       140.6337      2.239814     11.2523    -9.49454
+       4     15       122.8907      17.74304     19.4496    -2.50807
+       5     17       121.3970      1.493699     13.8558    -4.55427
+       6     20       120.6238      0.773116     13.6706    -1.38064
+       7     22       119.2782      1.345647     15.7801    -1.69072
+       8     26       116.2713      3.006871     26.9403    -3.25290
+       9     30       109.4274      6.843925     19.8838    -6.92890
+      10     35       103.2981      6.129298     12.1565    -4.96054
+      11     40       101.6862      1.611863     14.2487    -4.34059
+      12     42       100.0279      1.658364     11.6985    -13.2049
+      13     46     99.9189048      0.108971     3.60255    -0.55176
+      14     49     99.8738836      0.045021     0.17071    -0.16645
+      15     52     99.8736392      0.000244    0.050822    -0.00041
+      16     55     99.8736351      4.071E-6    0.000705     -6.9E-6
+      17     58     99.8736351       6.1E-10    4.768E-6    -1.23E-9
+
+
+          NOTE: GCONV convergence criterion satisfied.          
+
+
+             Fit Statistics
+
+-2 Log Likelihood                  199.7
+AIC (smaller is better)            205.7
+AICC (smaller is better)           206.5
+BIC (smaller is better)            210.7
+
+
+                                        Parameter Estimates
+ 
+                         Standard                                      95% Confidence
+Parameter    Estimate       Error      DF    t Value    Pr > |t|           Limits           Gradient
+
+gamma          4.7128      0.6742      38       6.99      <.0001      3.3479      6.0777    5.327E-8
+b0             3.3091     0.05885      38      56.23      <.0001      3.1900      3.4283    -4.77E-6
+b1            -0.1933     0.07856      38      -2.46      0.0185     -0.3523    -0.03426    -1.22E-6
+
+The LIFEREG Procedure
+
+            Model Information
+
+Data Set                    WORK.HEADACHE
+Dependent Variable           Log(minutes)
+Censoring Variable                 censor
+Censoring Value(s)                      1
+Number of Observations                 38
+Noncensored Values                     30
+Right Censored Values                   8
+Left Censored Values                    0
+Interval Censored Values                0
+Number of Parameters                    3
+Name of Distribution              Weibull
+Log Likelihood                -9.37930239
+
+
+Number of Observations Read          38
+Number of Observations Used          38
+
+
+  Class Level Information
+ 
+Name       Levels    Values
+
+group           2    1 2   
+
+
+           Fit Statistics
+
+-2 Log Likelihood              18.759
+AIC (smaller is better)        24.759
+AICC (smaller is better)       25.464
+BIC (smaller is better)        29.671
+
+
+     Fit Statistics (Unlogged Response)
+
+-2 Log Likelihood                     199.747
+Weibull AIC (smaller is better)       205.747
+Weibull AICC (smaller is better)      206.453
+Weibull BIC (smaller is better)       210.660
+
+
+Algorithm converged.                                                       
+
+
+         Type III Analysis of Effects
+ 
+                             Wald
+Effect           DF    Chi-Square    Pr > ChiSq
+
+group             1        6.0540        0.0139
+
+
+           Analysis of Maximum Likelihood Parameter Estimates
+ 
+                            Standard   95% Confidence     Chi-
+Parameter       DF Estimate    Error       Limits       Square Pr > ChiSq
+
+Intercept        1   3.3091   0.0589   3.1938   3.4245 3161.70     <.0001
+group         1  1  -0.1933   0.0786  -0.3473  -0.0393    6.05     0.0139
+group         2  0   0.0000    .        .        .         .        .    
+Scale            1   0.2122   0.0304   0.1603   0.2809                   
+Weibull Shape    1   4.7128   0.6742   3.5604   6.2381                   
+
+Obs    group    censor    patient    minutes      Pred
+
+  1      1         0          1         11      0.03336
+  2      1         0          2         12      0.04985
+  3      1         0          3         19      0.35975
+  4      1         0          4         19      0.35975
+  5      1         0          5         19      0.35975
+  6      1         0          6         19      0.35975
+  7      1         0          7         21      0.51063
+  8      1         0          8         20      0.43325
+  9      1         0          9         21      0.51063
+ 10      1         0         10         21      0.51063
+ 11      1         0         11         20      0.43325
+ 12      1         0         12         21      0.51063
+ 13      1         0         13         20      0.43325
+ 14      1         0         14         21      0.51063
+ 15      1         0         15         25      0.80315
+ 16      1         0         16         27      0.90328
+ 17      1         0         17         30      0.97846
+ 18      1         1         18         21      0.51063
+ 19      1         1         19         24      0.73838
+ 20      2         0         20         14      0.04163
+ 21      2         0         21         16      0.07667
+ 22      2         0         22         16      0.07667
+ 23      2         0         23         21      0.24976
+ 24      2         0         24         21      0.24976
+ 25      2         0         25         23      0.35674
+ 26      2         0         26         23      0.35674
+ 27      2         0         27         23      0.35674
+ 28      2         0         28         23      0.35674
+ 29      2         1         29         25      0.47982
+ 30      2         0         30         23      0.35674
+ 31      2         0         31         24      0.41678
+ 32      2         0         32         24      0.41678
+ 33      2         1         33         26      0.54446
+ 34      2         1         34         32      0.87656
+ 35      2         1         35         30      0.78633
+ 36      2         0         36         30      0.78633
+ 37      2         1         37         32      0.87656
+ 38      2         1         38         20      0.20414
+
+The NLMIXED Procedure
+
+                         Specifications
+
+Data Set                                    WORK.HEADACHE       
+Dependent Variable                          minutes             
+Distribution for Dependent Variable         General             
+Random Effects                              z                   
+Distribution for Random Effects             Normal              
+Subject Variable                            patient             
+Optimization Technique                      Dual Quasi-Newton   
+Integration Method                          Adaptive Gaussian   
+                                            Quadrature          
+
+
+               Dimensions
+
+Observations Used                     38
+Observations Not Used                  0
+Total Observations                    38
+Subjects                              38
+Max Obs per Subject                    1
+Parameters                             4
+Quadrature Points                      9
+
+
+                    Initial Parameters
+ 
+                                                  Negative
+                                                       Log
+   gamma          b0          b1      logsig    Likelihood
+
+       1           1           1           1     170.94366
+
+
+                          Iteration History
+ 
+                      Negative
+                           Log                   Maximum
+Iteration Calls     Likelihood    Difference    Gradient       Slope
+
+       1      9       142.1214      28.82225     12.1448    -88.8664
+       2     12       136.4404      5.681042     25.9310    -65.7217
+       3     16       122.9720      13.46833     46.5655    -146.887
+       4     19       120.9048      2.067216     23.7794    -94.2862
+       5     23       109.2241      11.68068     57.6549    -92.4075
+       6     26       105.0647      4.159411     4.82465    -19.5879
+       7     28       101.9022      3.162526     14.1287    -6.33767
+       8     31     99.6907395      2.211468     7.67682    -3.42364
+       9     34     99.3654033      0.325336     5.68920    -0.93978
+      10     37     99.2602178      0.105185     0.31764    -0.23408
+      11     40     99.2544340      0.005784     1.17351    -0.00556
+      12     42     99.2456973      0.008737     0.24741    -0.00871
+      13     45     99.2445445      0.001153     0.10494    -0.00218
+      14     48     99.2444958      0.000049    0.005646    -0.00010
+      15     51     99.2444957      9.147E-8    0.000271    -1.84E-7
+
+
+          NOTE: GCONV convergence criterion satisfied.          
+
+
+             Fit Statistics
+
+-2 Log Likelihood                  198.5
+AIC (smaller is better)            206.5
+AICC (smaller is better)           207.7
+BIC (smaller is better)            213.0
+
+
+                                        Parameter Estimates
+ 
+                         Standard                                      95% Confidence
+Parameter    Estimate       Error      DF    t Value    Pr > |t|           Limits           Gradient
+
+gamma          6.2867      2.1334      37       2.95      0.0055      1.9640     10.6093    -1.89E-7
+b0             3.2786     0.06576      37      49.86      <.0001      3.1453      3.4118    0.000271
+b1            -0.1761     0.08264      37      -2.13      0.0398     -0.3436    -0.00867    0.000111
+logsig        -1.9027      0.5273      37      -3.61      0.0009     -2.9710     -0.8343    0.000027
+
+                                         StdErr
+Obs    patient    Effect    Estimate      Pred
+
+  1        1        z       -0.13597    0.23249
+  2        2        z       -0.13323    0.22793
+  3        3        z       -0.06294    0.13813
+  4        4        z       -0.06294    0.13813
+  5        5        z       -0.06294    0.13813
+  6        6        z       -0.06294    0.13813
+  7        7        z       -0.02568    0.11759
+  8        8        z       -0.04499    0.12618
+  9        9        z       -0.02568    0.11759
+ 10       10        z       -0.02568    0.11759
+ 11       11        z       -0.04499    0.12618
+ 12       12        z       -0.02568    0.11759
+ 13       13        z       -0.04499    0.12618
+ 14       14        z       -0.02568    0.11759
+ 15       15        z        0.05980    0.11618
+ 16       16        z        0.10458    0.12684
+ 17       17        z        0.17147    0.14550
+ 18       18        z        0.06471    0.13807
+ 19       19        z        0.11157    0.14604
+ 20       20        z       -0.13406    0.22899
+ 21       21        z       -0.12698    0.21666
+ 22       22        z       -0.12698    0.21666
+ 23       23        z       -0.08506    0.15701
+ 24       24        z       -0.08506    0.15701
+ 25       25        z       -0.05797    0.13294
+ 26       26        z       -0.05797    0.13294
+ 27       27        z       -0.05797    0.13294
+ 28       28        z       -0.05797    0.13294
+ 29       29        z        0.06420    0.13956
+ 30       30        z       -0.05797    0.13294
+ 31       31        z       -0.04266    0.12390
+ 32       32        z       -0.04266    0.12390
+ 33       33        z        0.07618    0.14132
+ 34       34        z        0.16292    0.16459
+ 35       35        z        0.13193    0.15528
+ 36       36        z        0.06327    0.12124
+ 37       37        z        0.16292    0.16459
+ 38       38        z        0.02074    0.14160

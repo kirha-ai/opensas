@@ -1,0 +1,54 @@
+The SAS System
+
+36         
+37         /* STAT-COMMON-001: Statistical procedure execution and the 15.4 option contract
+38          * Source: S154 / Chapter 3 / `Introduction` (PDF pp. 27–36); S154 / Chapter 2 / `What's New in SAS/STAT
+38       ! 15.4` (PDF pp. 25–26); S154 / Chapter 1 / `Procedures by Category` (PDF pp. 13–24).
+39          * Discriminates: Runtime version, PROC dispatch, RUN/QUIT and default result objects
+40          */
+41         options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+41       ! validmemname=compatible locale=en_US;
+42         %let syscc=0;
+43         title; footnote;
+44         ods _all_ close;
+45         ods listing gpath="%sysfunc(pathname(work))";
+46         ods graphics off;
+47         proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+47       !                                         quit;
+
+
+48         ods path work.templat(update) sashelp.tmplmst(read);
+49         
+50         data sample;
+51          input x z y group $ weight freq;
+52          datalines;
+
+NOTE: The data set WORK.SAMPLE has 12 observations and 6 variables.
+
+65         ;
+66         run;
+67         data runtime; length version $64; version=symget('sysvlong4'); run;
+
+NOTE: The data set WORK.RUNTIME has 1 observations and 1 variables.
+
+68         proc print data=runtime noobs; run;
+
+NOTE: There were 1 observations read from the data set WORK.RUNTIME.
+NOTE: The PROCEDURE PRINT printed page 1.
+
+69         proc reg data=sample; model y=x z; run;
+
+69       !                                         quit;
+
+NOTE: The PROCEDURE REG printed page 2.
+
+70         
+71         
+72         
+73         
+The SAS System
+
+74         

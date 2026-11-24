@@ -1,0 +1,55 @@
+The SAS System
+
+4950       
+4951       /* STAT-HPQUANTSELECT-008: HPQUANTSELECT — PARTITION / SELECTION
+4952        * Source: S154 / Chapter 66 / `PARTITION Statement` (PDF p. 4993); S154 / Chapter 66 / `SELECTION Statement` (PDF pp. 4994–4995).
+4953        * Discriminates: Seeded synthetic quantile-regression fixture: PARTITION / SELECTION
+4954        */
+4955       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+4955     ! validmemname=compatible locale=en_US;
+4956       %let syscc=0;
+4957       title; footnote;
+4958       ods _all_ close;
+4959       ods listing gpath="%sysfunc(pathname(work))";
+4960       ods graphics off;
+4961       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SAMPLE (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+4961     !                                         quit;
+
+
+4962       ods path work.templat(update) sashelp.tmplmst(read);
+4963       
+4964       data sample;
+4965       call streaminit(314159);
+4966       do id=1 to 120;
+4967        x=rand('normal'); z=rand('normal'); w=rand('normal'); group=1+mod(id,3);
+4968        y=2+1.5*x-0.6*z+0.4*group+rand('normal');
+4969        role=mod(id,4); output;
+4970       end;
+4971       run;
+
+NOTE: The data set WORK.SAMPLE has 120 observations and 7 variables.
+
+4972       
+4973       proc hpquantselect data=sample;
+4974       class group;
+4975       model y=x z w group / quantile=0.5 clb;
+4976       partition rolevar=role(validate="0");
+4977       selection method=forward(select=validate choose=validate);
+4978       performance nthreads=1;
+4979       run;
+
+NOTE: The HPQUANTSELECT procedure is executing in single-machine mode.
+NOTE: The PROCEDURE HPQUANTSELECT printed pages 190-192.
+
+4980       
+4981       
+4982       
+4983       
+The SAS System
+
+4984       

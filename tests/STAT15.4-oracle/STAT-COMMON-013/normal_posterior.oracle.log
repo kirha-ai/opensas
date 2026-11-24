@@ -1,0 +1,53 @@
+The SAS System
+
+507        
+508        /* STAT-COMMON-013: Bayesian priors and posterior summary contracts
+509         * Source: S154 / Chapter 8 / `Prior Distributions` (PDF pp. 152–154); S154 / Chapter 8 / `Bayesian Inference` (PDF pp. 154–156); S154 / Chapter
+509      ! 8 / `Summary Statistics` (PDF pp. 177–180); S154 / Chapter 7 / `Introduction to Mixed Modeling Procedures` (PDF pp. 135–148).
+510         * Discriminates: Normal posterior sampling, fixed seed, retained sample count and posterior/chain summaries
+511         */
+512        options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+512      ! validmemname=compatible locale=en_US;
+513        %let syscc=0;
+514        title; footnote;
+515        ods _all_ close;
+516        ods listing gpath="%sysfunc(pathname(work))";
+517        ods graphics off;
+518        proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SAMPLE (memtype=DATA).
+518      !                                         quit;
+
+
+519        ods path work.templat(update) sashelp.tmplmst(read);
+520        
+521        data sample;
+522         input x y group $ freq weight;
+523         datalines;
+
+NOTE: The data set WORK.SAMPLE has 12 observations and 5 variables.
+
+536        ;
+537        run;
+538        proc mcmc data=sample seed=271828 nbi=100 nmc=1000 thin=1 diag=none outpost=posterior;
+539         parms mu 90; prior mu ~ normal(0, var=10000); model x ~ normal(mu, var=100); run;
+
+
+NOTE: Generating the burn-in samples.
+NOTE: Beginning sample generation.
+NOTE: The data set WORK.POSTERIOR has 1000 observations and 5 variables.
+NOTE: The PROCEDURE MCMC printed pages 27-28.
+
+540        proc means data=posterior n mean std; var mu; run;
+
+NOTE: There were 1000 observations read from the data set WORK.POSTERIOR.
+NOTE: The PROCEDURE MEANS printed page 29.
+
+541        
+542        
+543        
+544        
+The SAS System
+
+545        

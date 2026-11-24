@@ -1,0 +1,57 @@
+The SAS System
+
+21340      
+21341      /* STAT-GEE-004: GEE — MISSMODEL
+21342       * Source: S154 / Chapter 50 / `MISSMODEL Statement` (PDF pp. 3434–3435).
+21343       * Discriminates: Verified default procedure context
+21344       */
+21345      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+21345    ! validmemname=compatible locale=en_US;
+21346      %let syscc=0;
+21347      title; footnote;
+21348      ods _all_ close;
+21349      ods listing gpath="%sysfunc(pathname(work))";
+21350      ods graphics off;
+21351      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.CHILDREN (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+21351    !                                         quit;
+
+
+21352      ods path work.templat(update) sashelp.tmplmst(read);
+21353      
+21354      data Children;
+21355      input ID City$ @@;
+21356      do i=1 to 4;
+21357      input Age Smoke Symptom @@;
+21358      output;
+21359      end;
+21360      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.CHILDREN has 100 observations and 6 variables.
+
+21386      ;
+21387      proc gee data=Children descending;
+21388      class ID City;
+21389      model Symptom = City Age Smoke / dist=bin link=logit;
+21390      repeated subject=ID / type=exch covb corrw;
+21391      run;
+
+NOTE: PROC GEE is modeling the probability that Symptom='1'.
+NOTE: The PROCEDURE GEE printed page 2361.
+
+21392      
+21393      
+21394      
+21395      
+The SAS System
+
+21396      

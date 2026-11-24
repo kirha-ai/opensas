@@ -1,0 +1,60 @@
+The SAS System
+
+4293       
+4294       /* STAT-MIXED-015: MIXED — STORE
+4295        * Source: S154 / Chapter 84 / `STORE Statement` (PDF p. 6694).
+4296        * Discriminates: Getting Started: MIXED Procedure
+4297        */
+4298       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+4298     ! validmemname=compatible locale=en_US;
+4299       %let syscc=0;
+4300       title; footnote;
+4301       ods _all_ close;
+4302       ods listing gpath="%sysfunc(pathname(work))";
+4303       ods graphics off;
+4304       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.HEIGHTS (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK._NAMEDAT (memtype=DATA).
+NOTE: Deleting WORK._ORACLE_SCORED (memtype=DATA).
+4304     !                                         quit;
+
+
+4305       ods path work.templat(update) sashelp.tmplmst(read);
+4306       
+4307       data heights;
+4308       input Family Gender$ Height @@;
+4309       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.HEIGHTS has 18 observations and 3 variables.
+
+4313       ;
+4314       proc mixed data=heights;
+4315       class Family Gender;
+4316       model Height = Gender Family Family*Gender;
+4317       run;
+
+NOTE: The PROCEDURE MIXED printed page 320.
+
+4318       proc mixed;
+4319       class Family Gender;
+4320       model Height = Gender;
+4321       random Family Family*Gender;
+4322       run;
+
+NOTE: Convergence criteria met.
+NOTE: The PROCEDURE MIXED printed page 321.
+
+4323       
+4324       
+4325       
+4326       
+The SAS System
+
+4327       

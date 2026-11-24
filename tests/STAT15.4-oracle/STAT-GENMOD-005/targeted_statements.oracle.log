@@ -1,0 +1,54 @@
+The SAS System
+
+985        
+986        /* STAT-GENMOD-005: GENMOD — DEVIANCE / Generalized Linear Models Theory / Multinomial Models
+987         * Source: S154 / Chapter 51 / `DEVIANCE Statement` (PDF pp. 3532–3533); S154 / Chapter 51 / `Generalized Linear Models Theory` (PDF pp.
+987      ! 3568–3579); S154 / Chapter 51 / `Multinomial Models` (PDF pp. 3587–3588).
+988         * Discriminates: Explicit DEVIANCE, VARIANCE statement behavior on seeded synthetic inputs.
+989         */
+990        options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+990      ! validmemname=compatible locale=en_US;
+991        %let syscc=0;
+992        title; footnote;
+993        ods _all_ close;
+994        ods listing gpath="%sysfunc(pathname(work))";
+995        ods graphics off;
+996        proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SAMPLE (memtype=DATA).
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+996      !                                         quit;
+
+
+997        ods path work.templat(update) sashelp.tmplmst(read);
+998        
+999        data sample;
+1000       call streaminit(314159);
+1001       do id=1 to 90;
+1002        x=rand('normal'); z=rand('normal'); w=rand('normal');
+1003        group=1+mod(id,3); block=1+mod(id,5);
+1004        y=5+1.5*x-0.6*z+0.4*group+rand('normal');
+1005        y2=2+0.5*x+0.8*z+rand('normal'); output;
+1006       end;
+1007       run;
+
+NOTE: The data set WORK.SAMPLE has 90 observations and 8 variables.
+
+1008       proc genmod data=sample; model y=x z; variance v=1; deviance d=(_resp_-_mean_)**2; run;
+
+
+NOTE: Algorithm converged.
+NOTE: The scale parameter was held fixed.
+NOTE: The PROCEDURE GENMOD printed page 86.
+
+1009       
+1010       
+1011       
+1012       
+The SAS System
+
+1013       

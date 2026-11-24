@@ -1,0 +1,13 @@
+
+The REG Procedure
+Model: MODEL1
+Dependent Variable: y 
+
+                        Parameter Estimates
+ 
+                     Parameter       Standard
+Variable     DF       Estimate          Error    t Value    Pr > |t|
+
+Intercept     1        1.33390        0.76219       1.75      0.1140
+x             1        1.81763        0.17986      10.11      <.0001
+z             1        0.62407        0.44211       1.41      0.1917

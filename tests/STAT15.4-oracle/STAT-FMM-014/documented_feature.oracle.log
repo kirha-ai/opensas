@@ -1,0 +1,93 @@
+The SAS System
+
+4091       
+4092       /* STAT-FMM-014: FMM — Official examples and feature integration regression
+4093        * Source: S154 / Chapter 46 / `Examples: FMM Procedure` (PDF pp. 3038–3065).
+4094        * Discriminates: Example 46.3: Enforcing Homogeneity Constraints: Count and Dispersion—It Is All Over!
+4095        */
+4096       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+4096     ! validmemname=compatible locale=en_US;
+4097       %let syscc=0;
+4098       title; footnote;
+4099       ods _all_ close;
+4100       ods listing gpath="%sysfunc(pathname(work))";
+4101       ods graphics off;
+4102       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.CATCH (memtype=DATA).
+NOTE: Deleting WORK.FMMOUT (memtype=DATA).
+NOTE: Deleting WORK.GALAXIES (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.YEAST (memtype=DATA).
+4102     !                                         quit;
+
+
+4103       ods path work.templat(update) sashelp.tmplmst(read);
+4104       
+4105       data assay;
+4106       label dose = 'Dose of quinoline (microg/plate)'
+4107       num = 'Observed number of colonies';
+4108       input dose @;
+4109       logd = log(dose+10);
+4110       do i=1 to 3;
+4111       input num@;
+4112       output;
+4113       end;
+4114       datalines;
+
+NOTE: The data set WORK.ASSAY has 18 observations and 4 variables.
+
+4121       ;
+4122       proc fmm data=assay seed=314159;
+4123       model num = dose logd / dist=Poisson;
+4124       run;
+
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The PROCEDURE FMM printed page 257.
+
+4125       proc fmm data=assay seed=314159;
+4126       model num = dose logd / dist=Poisson k=2
+4127       equate=effects(dose logd);
+4128       run;
+
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The PROCEDURE FMM printed page 258.
+
+4129       proc fmm data=assay seed=314159;
+4130       model num = dose logd / dist=Poisson k=2;
+4131       restrict 'common dose' dose 1, dose -1;
+4132       restrict 'common logd' logd 1, logd -1;
+4133       run;
+
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The PROCEDURE FMM printed page 259.
+
+4134       proc fmm data=assay(where=(num ne 60)) seed=314159;
+4135       model num = dose logd / dist=Poisson k=2
+4136       equate=effects(dose logd);
+4137       run;
+
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: At least one element of the (projected) gradient is greater than 1e-3. The GCONV= option modifies the relative gradient convergence criterion and 
+      lowering its value might help to reduce the (projected) gradient.
+NOTE: The PROCEDURE FMM printed page 260.
+
+4138       proc fmm data=assay(where=(num ne 60)) seed=314159;
+4139       model num = dose logd / dist=Poisson;
+4140       run;
+
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The PROCEDURE FMM printed page 261.
+
+4141       
+4142       
+4143       
+4144       
+The SAS System
+
+4145       

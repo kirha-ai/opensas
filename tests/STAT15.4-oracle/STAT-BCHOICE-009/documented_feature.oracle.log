@@ -1,0 +1,52 @@
+The SAS System
+
+1005       
+1006       /* STAT-BCHOICE-009: BCHOICE — PREDDIST
+1007        * Source: S154 / Chapter 30 / `PREDDIST Statement` (PDF pp. 1195–1196).
+1008        * Discriminates: Verified default procedure context
+1009        */
+1010       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+1010     ! validmemname=compatible locale=en_US;
+1011       %let syscc=0;
+1012       title; footnote;
+1013       ods _all_ close;
+1014       ods listing gpath="%sysfunc(pathname(work))";
+1015       ods graphics off;
+1016       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TRAVEL (memtype=DATA).
+NOTE: Deleting WORK.TRAVEL2 (memtype=DATA).
+1016     !                                         quit;
+
+
+1017       ods path work.templat(update) sashelp.tmplmst(read);
+1018       
+1019       proc print data=Sashelp.Margarin (obs=24);
+1020       by HouseID Set;
+1021       id HouseID Set;
+1022       run;
+
+NOTE: There were 24 observations read from the data set SASHELP.MARGARIN.
+NOTE: The PROCEDURE PRINT printed page 44.
+
+1023       proc bchoice data=Sashelp.Margarin seed=123 nmc=1000 thin=2
+1024       nthreads=4 plots=none nbi=200;
+1025       class Brand(ref='PPk') HouseID Set;
+1026       model Choice = / choiceset=(HouseID Set);
+1027       random Brand LogPrice / subject=HouseID remean=(LogInc FamSize)
+1028       type=un monitor=(1);
+1029       run;
+
+NOTE: Generating the burn-in samples.
+NOTE: Beginning sample generation.
+NOTE: Beginning calculation of summary and diagnostics statistics.
+NOTE: The PROCEDURE BCHOICE printed page 45.
+
+1030       
+1031       
+1032       
+1033       
+The SAS System
+
+1034       

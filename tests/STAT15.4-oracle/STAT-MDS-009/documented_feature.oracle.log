@@ -1,0 +1,43 @@
+The SAS System
+
+2119       
+2120       /* STAT-MDS-009: MDS — Official examples and feature integration regression
+2121        * Source: S154 / Chapter 81 / `Getting Started: MDS Procedure` (PDF pp. 6379–6382); S154 / Chapter 81 / `Overview: MDS Procedure` (PDF pp.
+2121     ! 6378–6379).
+2122        * Discriminates: Getting Started: MDS Procedure
+2123        */
+2124       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+2124     ! validmemname=compatible locale=en_US;
+2125       %let syscc=0;
+2126       title; footnote;
+2127       ods _all_ close;
+2128       ods listing gpath="%sysfunc(pathname(work))";
+2129       ods graphics off;
+2130       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+2130     !                                         quit;
+
+
+2131       ods path work.templat(update) sashelp.tmplmst(read);
+2132       
+2133       title 'Analysis of Flying Mileages between Ten U.S. Cities';
+2134       ods graphics on;
+2135       proc mds data=sashelp.mileages level=absolute;
+2136       id city;
+2137       run;
+
+NOTE: The PROCEDURE MDS printed page 157.
+
+2138       
+2139       
+2140       
+2141       
+The SAS System
+
+2142       

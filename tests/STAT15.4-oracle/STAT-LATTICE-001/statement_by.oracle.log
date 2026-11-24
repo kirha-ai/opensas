@@ -1,0 +1,66 @@
+The SAS System
+
+10933      
+10934      /* STAT-LATTICE-001: LATTICE — Data input, variable roles, and basic options
+10935       * Source: S154 / Chapter 75 / `PROC LATTICE Statement` (PDF p. 5514); S154 / Chapter 75 / `BY Statement` (PDF pp. 5514–5515); S154 / Chapter 75 /
+10935    ! `VAR Statement` (PDF p. 5515); S154 / Chapter 75 / `Input Data Set` (PDF pp. 5515–5516); S154 / Chapter 75 / `Missing Values` (PDF p. 5516).
+10936       * Discriminates: Two explicit BY groups contain identical inputs, exposing group boundaries and per-group results.
+10937       */
+10938      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+10938    ! validmemname=compatible locale=en_US;
+10939      %let syscc=0;
+10940      title; footnote;
+10941      ods _all_ close;
+10942      ods listing gpath="%sysfunc(pathname(work))";
+10943      ods graphics off;
+10944      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.PIGS (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+10944    !                                         quit;
+
+
+10945      ods path work.templat(update) sashelp.tmplmst(read);
+10946      
+10947      title 'Examining the Growth Rate of Pigs';
+10948      data Pigs;
+10949      input Group Block Treatment Weight @@;
+10950      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.PIGS has 36 observations and 4 variables.
+
+10959      ;
+10960      data _oracle_input; set Pigs; do _oracle_by=1 to 2; output; end; run;
+
+NOTE: There were 36 observations read from the data set WORK.PIGS.
+NOTE: The data set WORK._ORACLE_INPUT has 72 observations and 5 variables.
+
+10961      proc sort data=_oracle_input; by _oracle_by; run;
+
+NOTE: There were 72 observations read from the data set WORK._ORACLE_INPUT.
+NOTE: The data set WORK._ORACLE_INPUT has 72 observations and 5 variables.
+
+10962      proc lattice data=_oracle_input;
+10963      by _oracle_by;
+10964      var Weight;
+10965      run;
+
+NOTE: The design specified is a balanced square lattice. With this design only one variance term, Variance of Means in Same Block, is appropriate.
+NOTE: The above message was for the following BY group:
+      _oracle_by=1
+NOTE: The design specified is a balanced square lattice. With this design only one variance term, Variance of Means in Same Block, is appropriate.
+NOTE: The above message was for the following BY group:
+      _oracle_by=2
+NOTE: There were 72 observations read from the data set WORK._ORACLE_INPUT.
+NOTE: The PROCEDURE LATTICE printed pages 760-761.
+
+10966      
+10967      
+10968      
+10969      
+The SAS System
+
+10970      

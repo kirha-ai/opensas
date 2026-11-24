@@ -1,0 +1,61 @@
+The SAS System
+
+22893      
+22894      /* STAT-SURVEYPHREG-003: SURVEYPHREG — CLASS / MODEL
+22895       * Source: S154 / Chapter 122 / `CLASS Statement` (PDF pp. 10019–10021); S154 / Chapter 122 / `MODEL Statement` (PDF pp. 10029–10034).
+22896       * Discriminates: Verified default procedure context; explicit statements: MODEL
+22897       */
+22898      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+22898    ! validmemname=compatible locale=en_US;
+22899      %let syscc=0;
+22900      title; footnote;
+22901      ods _all_ close;
+22902      ods listing gpath="%sysfunc(pathname(work))";
+22903      ods graphics off;
+22904      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SURVEY (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+22904    !                                         quit;
+
+
+22905      ods path work.templat(update) sashelp.tmplmst(read);
+22906      
+22907      data survey;
+22908      call streaminit(722);
+22909      do stratum=1 to 2;
+22910      do cluster=1 to 4;
+22911      do id=1 to 12;
+22912      age=20+mod(id*7+cluster,45);
+22913      time=1+rand('exponential')*10;
+22914      status=(mod(id,4) ne 0);
+22915      weight=2+stratum+cluster/10;
+22916      output;
+22917      end;
+22918      end;
+22919      end;
+22920      run;
+
+NOTE: The data set WORK.SURVEY has 96 observations and 7 variables.
+
+22921      proc surveyphreg data=survey;
+22922      strata stratum;
+22923      cluster cluster;
+22924      weight weight;
+22925      model time*status(0)=age;
+22926      run;
+
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The PROCEDURE SURVEYPHREG printed page 1496.
+
+22927      
+22928      
+22929      
+22930      
+The SAS System
+
+22931      

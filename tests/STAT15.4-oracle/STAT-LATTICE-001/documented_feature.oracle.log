@@ -1,0 +1,52 @@
+The SAS System
+
+10896      
+10897      /* STAT-LATTICE-001: LATTICE — Data input, variable roles, and basic options
+10898       * Source: S154 / Chapter 75 / `PROC LATTICE Statement` (PDF p. 5514); S154 / Chapter 75 / `BY Statement` (PDF pp. 5514–5515); S154 / Chapter 75 /
+10898    ! `VAR Statement` (PDF p. 5515); S154 / Chapter 75 / `Input Data Set` (PDF pp. 5515–5516); S154 / Chapter 75 / `Missing Values` (PDF p. 5516).
+10899       * Discriminates: Verified default procedure context; explicit statements: VAR
+10900       */
+10901      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+10901    ! validmemname=compatible locale=en_US;
+10902      %let syscc=0;
+10903      title; footnote;
+10904      ods _all_ close;
+10905      ods listing gpath="%sysfunc(pathname(work))";
+10906      ods graphics off;
+10907      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.PREDICTIONS (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.THICK (memtype=DATA).
+10907    !                                         quit;
+
+
+10908      ods path work.templat(update) sashelp.tmplmst(read);
+10909      
+10910      title 'Examining the Growth Rate of Pigs';
+10911      data Pigs;
+10912      input Group Block Treatment Weight @@;
+10913      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.PIGS has 36 observations and 4 variables.
+
+10922      ;
+10923      proc lattice data=Pigs;
+10924      var Weight;
+10925      run;
+
+NOTE: The design specified is a balanced square lattice. With this design only one variance term, Variance of Means in Same Block, is appropriate.
+NOTE: There were 36 observations read from the data set WORK.PIGS.
+NOTE: The PROCEDURE LATTICE printed page 759.
+
+10926      
+10927      
+10928      
+10929      
+The SAS System
+
+10930      

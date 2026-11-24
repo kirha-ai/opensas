@@ -1,0 +1,799 @@
+
+The LOGISTIC Procedure
+
+              Model Information
+
+Data Set                      WORK.SIMUDATA   
+Response Variable             y               
+Number of Response Levels     2               
+Model                         binary logit    
+Optimization Technique        Fisher's scoring
+
+
+Number of Observations Read        5000
+Number of Observations Used        5000
+
+
+          Response Profile
+ 
+ Ordered                      Total
+   Value            y     Frequency
+
+       1            0          3569
+       2            1          1431
+
+Probability modeled is y=0.
+
+
+Stepwise Selection Procedure
+
+
+Step  0. Intercept entered:
+
+
+                    Model Convergence Status
+
+         Convergence criterion (GCONV=1E-8) satisfied.          
+
+-2 Log L = 5987.141 
+
+
+     Residual Chi-Square Test
+ 
+Chi-Square       DF     Pr > ChiSq
+
+ 3228.3825      600         <.0001
+
+
+Step  1. Effect splines_x3 entered:
+
+
+                    Model Convergence Status
+
+         Convergence criterion (GCONV=1E-8) satisfied.          
+
+
+         Model Fit Statistics
+ 
+                             Intercept
+              Intercept            and
+Criterion          Only     Covariates
+
+AIC            5989.141       4238.530
+SC             5995.658       4284.150
+-2 Log L       5987.141       4224.530
+
+
+        Testing Global Null Hypothesis: BETA=0
+ 
+Test                 Chi-Square       DF     Pr > ChiSq
+
+Likelihood Ratio      1762.6106        6         <.0001
+Score                 1755.9399        6         <.0001
+Wald                   723.1202        6         <.0001
+
+
+     Residual Chi-Square Test
+ 
+Chi-Square       DF     Pr > ChiSq
+
+ 2271.1943      594         <.0001
+
+
+NOTE: No effects for the model in Step 1 are removed.
+
+
+Step  2. Effect splines_x4 entered:
+
+
+                    Model Convergence Status
+
+         Convergence criterion (GCONV=1E-8) satisfied.          
+
+
+         Model Fit Statistics
+ 
+                             Intercept
+              Intercept            and
+Criterion          Only     Covariates
+
+AIC            5989.141       3628.156
+SC             5995.658       3712.879
+-2 Log L       5987.141       3602.156
+
+
+        Testing Global Null Hypothesis: BETA=0
+ 
+Test                 Chi-Square       DF     Pr > ChiSq
+
+Likelihood Ratio      2384.9849       12         <.0001
+Score                 2116.5272       12         <.0001
+Wald                   835.4136       12         <.0001
+
+
+     Residual Chi-Square Test
+ 
+Chi-Square       DF     Pr > ChiSq
+
+ 1913.1342      588         <.0001
+
+
+NOTE: No effects for the model in Step 2 are removed.
+
+
+Step  3. Effect splines_x7 entered:
+
+
+                    Model Convergence Status
+
+         Convergence criterion (GCONV=1E-8) satisfied.          
+
+
+         Model Fit Statistics
+ 
+                             Intercept
+              Intercept            and
+Criterion          Only     Covariates
+
+AIC            5989.141       3032.804
+SC             5995.658       3156.630
+-2 Log L       5987.141       2994.804
+
+
+        Testing Global Null Hypothesis: BETA=0
+ 
+Test                 Chi-Square       DF     Pr > ChiSq
+
+Likelihood Ratio      2992.3369       18         <.0001
+Score                 2386.0791       18         <.0001
+Wald                   847.4704       18         <.0001
+
+
+     Residual Chi-Square Test
+ 
+Chi-Square       DF     Pr > ChiSq
+
+ 1665.3941      582         <.0001
+
+
+NOTE: No effects for the model in Step 3 are removed.
+
+
+Step  4. Effect splines_x1 entered:
+
+
+                    Model Convergence Status
+
+         Convergence criterion (GCONV=1E-8) satisfied.          
+
+
+         Model Fit Statistics
+ 
+                             Intercept
+              Intercept            and
+Criterion          Only     Covariates
+
+AIC            5989.141       2460.477
+SC             5995.658       2623.407
+-2 Log L       5987.141       2410.477
+
+
+        Testing Global Null Hypothesis: BETA=0
+ 
+Test                 Chi-Square       DF     Pr > ChiSq
+
+Likelihood Ratio      3576.6640       24         <.0001
+Score                 2639.1124       24         <.0001
+Wald                   884.6467       24         <.0001
+
+
+     Residual Chi-Square Test
+ 
+Chi-Square       DF     Pr > ChiSq
+
+ 1378.4408      576         <.0001
+
+
+NOTE: No effects for the model in Step 4 are removed.
+
+
+Step  5. Effect splines_x2 entered:
+
+
+                    Model Convergence Status
+
+         Convergence criterion (GCONV=1E-8) satisfied.          
+
+
+         Model Fit Statistics
+ 
+                             Intercept
+              Intercept            and
+Criterion          Only     Covariates
+
+AIC            5989.141       2093.334
+SC             5995.658       2295.367
+-2 Log L       5987.141       2031.334
+
+
+        Testing Global Null Hypothesis: BETA=0
+ 
+Test                 Chi-Square       DF     Pr > ChiSq
+
+Likelihood Ratio      3955.8069       30         <.0001
+Score                 2765.8751       30         <.0001
+Wald                   815.3419       30         <.0001
+
+
+     Residual Chi-Square Test
+ 
+Chi-Square       DF     Pr > ChiSq
+
+ 1143.5287      570         <.0001
+
+
+NOTE: No effects for the model in Step 5 are removed.
+
+
+Step  6. Effect splines_x5 entered:
+
+
+                    Model Convergence Status
+
+         Convergence criterion (GCONV=1E-8) satisfied.          
+
+
+         Model Fit Statistics
+ 
+                             Intercept
+              Intercept            and
+Criterion          Only     Covariates
+
+AIC            5989.141       1683.143
+SC             5995.658       1924.279
+-2 Log L       5987.141       1609.143
+
+
+        Testing Global Null Hypothesis: BETA=0
+ 
+Test                 Chi-Square       DF     Pr > ChiSq
+
+Likelihood Ratio      4377.9979       36         <.0001
+Score                 2880.6299       36         <.0001
+Wald                   706.3078       36         <.0001
+
+
+     Residual Chi-Square Test
+ 
+Chi-Square       DF     Pr > ChiSq
+
+  885.8825      564         <.0001
+
+
+NOTE: No effects for the model in Step 6 are removed.
+
+
+Step  7. Effect splines_x6 entered:
+
+
+                    Model Convergence Status
+
+         Convergence criterion (GCONV=1E-8) satisfied.          
+
+
+         Model Fit Statistics
+ 
+                             Intercept
+              Intercept            and
+Criterion          Only     Covariates
+
+AIC            5989.141       1389.368
+SC             5995.658       1669.607
+-2 Log L       5987.141       1303.368
+
+
+        Testing Global Null Hypothesis: BETA=0
+ 
+Test                 Chi-Square       DF     Pr > ChiSq
+
+Likelihood Ratio      4683.7730       42         <.0001
+Score                 2944.4650       42         <.0001
+Wald                   585.4422       42         <.0001
+
+
+     Residual Chi-Square Test
+ 
+Chi-Square       DF     Pr > ChiSq
+
+  736.6301      558         <.0001
+
+
+NOTE: No effects for the model in Step 7 are removed.
+
+
+Step  8. Effect splines_x8 entered:
+
+
+                    Model Convergence Status
+
+         Convergence criterion (GCONV=1E-8) satisfied.          
+
+
+         Model Fit Statistics
+ 
+                             Intercept
+              Intercept            and
+Criterion          Only     Covariates
+
+AIC            5989.141       1191.917
+SC             5995.658       1511.259
+-2 Log L       5987.141       1093.917
+
+
+        Testing Global Null Hypothesis: BETA=0
+ 
+Test                 Chi-Square       DF     Pr > ChiSq
+
+Likelihood Ratio      4893.2238       48         <.0001
+Score                 2988.2944       48         <.0001
+Wald                   506.0333       48         <.0001
+
+
+     Residual Chi-Square Test
+ 
+Chi-Square       DF     Pr > ChiSq
+
+  600.8514      552         0.0737
+
+
+NOTE: No effects for the model in Step 8 are removed.
+
+
+Step  9. Effect splines_x9 entered:
+
+
+                    Model Convergence Status
+
+         Convergence criterion (GCONV=1E-8) satisfied.          
+
+
+         Model Fit Statistics
+ 
+                             Intercept
+              Intercept            and
+Criterion          Only     Covariates
+
+AIC            5989.141       1123.863
+SC             5995.658       1482.309
+-2 Log L       5987.141       1013.863
+
+
+        Testing Global Null Hypothesis: BETA=0
+ 
+Test                 Chi-Square       DF     Pr > ChiSq
+
+Likelihood Ratio      4973.2774       54         <.0001
+Score                 3003.4150       54         <.0001
+Wald                   472.6815       54         <.0001
+
+
+     Residual Chi-Square Test
+ 
+Chi-Square       DF     Pr > ChiSq
+
+  572.7801      546         0.2068
+
+
+NOTE: No effects for the model in Step 9 are removed.
+
+
+Step 10. Effect splines_x10 entered:
+
+
+                    Model Convergence Status
+
+         Convergence criterion (GCONV=1E-8) satisfied.          
+
+
+         Model Fit Statistics
+ 
+                             Intercept
+              Intercept            and
+Criterion          Only     Covariates
+
+AIC            5989.141       1057.514
+SC             5995.658       1455.063
+-2 Log L       5987.141        935.514
+
+
+        Testing Global Null Hypothesis: BETA=0
+ 
+Test                 Chi-Square       DF     Pr > ChiSq
+
+Likelihood Ratio      5051.6266       60         <.0001
+Score                 3015.7154       60         <.0001
+Wald                   444.3384       60         <.0001
+
+
+     Residual Chi-Square Test
+ 
+Chi-Square       DF     Pr > ChiSq
+
+  538.6627      540         0.5082
+
+
+NOTE: No effects for the model in Step 10 are removed.
+
+
+Step 11. Effect splines_x16 entered:
+
+
+                    Model Convergence Status
+
+         Convergence criterion (GCONV=1E-8) satisfied.          
+
+
+         Model Fit Statistics
+ 
+                             Intercept
+              Intercept            and
+Criterion          Only     Covariates
+
+AIC            5989.141       1050.362
+SC             5995.658       1487.014
+-2 Log L       5987.141        916.362
+
+
+        Testing Global Null Hypothesis: BETA=0
+ 
+Test                 Chi-Square       DF     Pr > ChiSq
+
+Likelihood Ratio      5070.7783       66         <.0001
+Score                 3020.9677       66         <.0001
+Wald                   432.6800       66         <.0001
+
+
+     Residual Chi-Square Test
+ 
+Chi-Square       DF     Pr > ChiSq
+
+  535.3433      534         0.4755
+
+
+NOTE: No effects for the model in Step 11 are removed.
+
+
+Step 12. Effect splines_x54 entered:
+
+
+                    Model Convergence Status
+
+         Convergence criterion (GCONV=1E-8) satisfied.          
+
+
+         Model Fit Statistics
+ 
+                             Intercept
+              Intercept            and
+Criterion          Only     Covariates
+
+AIC            5989.141       1049.310
+SC             5995.658       1525.065
+-2 Log L       5987.141        903.310
+
+
+        Testing Global Null Hypothesis: BETA=0
+ 
+Test                 Chi-Square       DF     Pr > ChiSq
+
+Likelihood Ratio      5083.8304       72         <.0001
+Score                 3023.3764       72         <.0001
+Wald                   423.9818       72         <.0001
+
+
+     Residual Chi-Square Test
+ 
+Chi-Square       DF     Pr > ChiSq
+
+  533.6524      528         0.4232
+
+
+NOTE: No effects for the model in Step 12 are removed.
+
+
+Step 13. Effect splines_x57 entered:
+
+
+                    Model Convergence Status
+
+         Convergence criterion (GCONV=1E-8) satisfied.          
+
+
+         Model Fit Statistics
+ 
+                             Intercept
+              Intercept            and
+Criterion          Only     Covariates
+
+AIC            5989.141       1047.937
+SC             5995.658       1562.795
+-2 Log L       5987.141        889.937
+
+
+        Testing Global Null Hypothesis: BETA=0
+ 
+Test                 Chi-Square       DF     Pr > ChiSq
+
+Likelihood Ratio      5097.2040       78         <.0001
+Score                 3026.7867       78         <.0001
+Wald                   412.2221       78         <.0001
+
+
+     Residual Chi-Square Test
+ 
+Chi-Square       DF     Pr > ChiSq
+
+  527.9117      522         0.4196
+
+
+NOTE: No effects for the model in Step 13 are removed.
+
+
+Step 14. Effect splines_x69 entered:
+
+
+                    Model Convergence Status
+
+         Convergence criterion (GCONV=1E-8) satisfied.          
+
+
+         Model Fit Statistics
+ 
+                             Intercept
+              Intercept            and
+Criterion          Only     Covariates
+
+AIC            5989.141       1047.023
+SC             5995.658       1600.985
+-2 Log L       5987.141        877.023
+
+
+        Testing Global Null Hypothesis: BETA=0
+ 
+Test                 Chi-Square       DF     Pr > ChiSq
+
+Likelihood Ratio      5110.1174       84         <.0001
+Score                 3030.7876       84         <.0001
+Wald                   403.2648       84         <.0001
+
+
+     Residual Chi-Square Test
+ 
+Chi-Square       DF     Pr > ChiSq
+
+  530.3677      516         0.3214
+
+
+Step 15. Effect splines_x69 is removed:
+
+
+                    Model Convergence Status
+
+         Convergence criterion (GCONV=1E-8) satisfied.          
+
+
+         Model Fit Statistics
+ 
+                             Intercept
+              Intercept            and
+Criterion          Only     Covariates
+
+AIC            5989.141       1047.937
+SC             5995.658       1562.795
+-2 Log L       5987.141        889.937
+
+
+        Testing Global Null Hypothesis: BETA=0
+ 
+Test                 Chi-Square       DF     Pr > ChiSq
+
+Likelihood Ratio      5097.2040       78         <.0001
+Score                 3026.7867       78         <.0001
+Wald                   412.2221       78         <.0001
+
+
+     Residual Chi-Square Test
+ 
+Chi-Square       DF     Pr > ChiSq
+
+  527.9117      522         0.4196
+
+
+NOTE: No effects for the model in Step 15 are removed.
+
+
+NOTE: Model building terminates because the last effect entered is removed by the Wald statistic criterion.
+
+
+                                     Summary of Stepwise Selection
+ 
+                       Effect                         Number         Score          Wald
+    Step    Entered         Removed           DF          In    Chi-Square    Chi-Square    Pr > ChiSq
+
+       1    splines_x3                         6           1     1755.9399                      <.0001
+       2    splines_x4                         6           2      561.0859                      <.0001
+       3    splines_x7                         6           3      485.9043                      <.0001
+       4    splines_x1                         6           4      542.5125                      <.0001
+       5    splines_x2                         6           5      364.2493                      <.0001
+       6    splines_x5                         6           6      389.5400                      <.0001
+       7    splines_x6                         6           7      270.5121                      <.0001
+       8    splines_x8                         6           8      197.2289                      <.0001
+       9    splines_x9                         6           9       77.2045                      <.0001
+      10    splines_x10                        6          10       76.1253                      <.0001
+      11    splines_x16                        6          11       18.9267                      0.0043
+      12    splines_x54                        6          12       13.0425                      0.0424
+      13    splines_x57                        6          13       13.3066                      0.0384
+      14    splines_x69                        6          14       12.7595                      0.0470
+      15                    splines_x69        6          13                     12.5537        0.0507
+
+
+           Type 3 Analysis of Effects
+ 
+                              Wald
+Effect            DF    Chi-Square    Pr > ChiSq
+
+splines_x1         6      329.5799        <.0001
+splines_x2         6      294.9488        <.0001
+splines_x3         6      384.2253        <.0001
+splines_x4         6      350.0976        <.0001
+splines_x5         6      280.0448        <.0001
+splines_x6         6      229.6403        <.0001
+splines_x7         6      335.6965        <.0001
+splines_x8         6      171.3681        <.0001
+splines_x9         6       80.2556        <.0001
+splines_x10        6       76.9962        <.0001
+splines_x16        6       21.0820        0.0018
+splines_x54        6       14.4193        0.0253
+splines_x57        6       13.0900        0.0416
+
+
+NOTE: The following parameters have been set to 0, since the variables are a linear combination of other variables as shown.
+
+
+ splines_x17 =  1 * Intercept - 1 * splines_x11 - 1 * splines_x12 - 1 * splines_x13 - 1 * splines_x14 - 1 * splines_x15 - 1 * splines_x16      
+ splines_x27 =  1 * Intercept - 1 * splines_x21 - 1 * splines_x22 - 1 * splines_x23 - 1 * splines_x24 - 1 * splines_x25 - 1 * splines_x26      
+ splines_x37 =  1 * Intercept - 1 * splines_x31 - 1 * splines_x32 - 1 * splines_x33 - 1 * splines_x34 - 1 * splines_x35 - 1 * splines_x36      
+ splines_x47 =  1 * Intercept - 1 * splines_x41 - 1 * splines_x42 - 1 * splines_x43 - 1 * splines_x44 - 1 * splines_x45 - 1 * splines_x46      
+ splines_x57 =  1 * Intercept - 1 * splines_x51 - 1 * splines_x52 - 1 * splines_x53 - 1 * splines_x54 - 1 * splines_x55 - 1 * splines_x56      
+ splines_x67 =  1 * Intercept - 1 * splines_x61 - 1 * splines_x62 - 1 * splines_x63 - 1 * splines_x64 - 1 * splines_x65 - 1 * splines_x66      
+ splines_x77 =  1 * Intercept - 1 * splines_x71 - 1 * splines_x72 - 1 * splines_x73 - 1 * splines_x74 - 1 * splines_x75 - 1 * splines_x76      
+ splines_x87 =  1 * Intercept - 1 * splines_x81 - 1 * splines_x82 - 1 * splines_x83 - 1 * splines_x84 - 1 * splines_x85 - 1 * splines_x86      
+ splines_x97 =  1 * Intercept - 1 * splines_x91 - 1 * splines_x92 - 1 * splines_x93 - 1 * splines_x94 - 1 * splines_x95 - 1 * splines_x96      
+splines_x107 =  1 * Intercept - 1 * splines_x101 - 1 * splines_x102 - 1 * splines_x103 - 1 * splines_x104 - 1 * splines_x105 - 1 * splines_x106
+splines_x167 =  1 * Intercept - 1 * splines_x161 - 1 * splines_x162 - 1 * splines_x163 - 1 * splines_x164 - 1 * splines_x165 - 1 * splines_x166
+splines_x547 =  1 * Intercept - 1 * splines_x541 - 1 * splines_x542 - 1 * splines_x543 - 1 * splines_x544 - 1 * splines_x545 - 1 * splines_x546
+splines_x577 =  1 * Intercept - 1 * splines_x571 - 1 * splines_x572 - 1 * splines_x573 - 1 * splines_x574 - 1 * splines_x575 - 1 * splines_x576
+
+
+               Analysis of Maximum Likelihood Estimates
+ 
+                                   Standard          Wald
+Parameter        DF    Estimate       Error    Chi-Square    Pr > ChiSq
+
+Intercept         1      6.3767     26.4342        0.0582        0.8094
+splines_x1  1     1     16.0985      9.8705        2.6600        0.1029
+splines_x1  2     1     16.7573      6.2710        7.1406        0.0075
+splines_x1  3     1     13.8607      5.6677        5.9809        0.0145
+splines_x1  4     1     10.3546      6.0540        2.9253        0.0872
+splines_x1  5     1      7.0568      5.4430        1.6809        0.1948
+splines_x1  6     1      3.4321      6.7427        0.2591        0.6107
+splines_x1  7     0           0           .         .             .    
+splines_x2  1     1    -39.6849      9.0596       19.1883        <.0001
+splines_x2  2     1    -17.9559      7.5200        5.7014        0.0170
+splines_x2  3     1    -14.7125      7.0638        4.3380        0.0373
+splines_x2  4     1    -14.7656      7.4083        3.9725        0.0462
+splines_x2  5     1    -10.1339      6.7864        2.2298        0.1354
+splines_x2  6     1    -11.1789      8.2810        1.8223        0.1770
+splines_x2  7     0           0           .         .             .    
+splines_x3  1     1      -240.8     20.4197      139.1089        <.0001
+splines_x3  2     1    -12.0045      8.3166        2.0835        0.1489
+splines_x3  3     1      1.5595      7.7000        0.0410        0.8395
+splines_x3  4     1      5.0796      8.1030        0.3930        0.5307
+splines_x3  5     1      5.7678      7.4672        0.5966        0.4399
+splines_x3  6     1      8.0695      9.0381        0.7972        0.3719
+splines_x3  7     0           0           .         .             .    
+splines_x4  1     1    -27.4454     13.2476        4.2921        0.0383
+splines_x4  2     1    -32.3515     13.0231        6.1711        0.0130
+splines_x4  3     1    -28.0922     12.6764        4.9111        0.0267
+splines_x4  4     1    -25.7573     12.9785        3.9387        0.0472
+splines_x4  5     1    -19.9803     12.3483        2.6181        0.1056
+splines_x4  6     1    -15.5806     14.2056        1.2030        0.2727
+splines_x4  7     0           0           .         .             .    
+splines_x5  1     1     23.9897      9.4765        6.4085        0.0114
+splines_x5  2     1     26.6750      6.8095       15.3453        <.0001
+splines_x5  3     1     24.4828      6.3248       14.9841        0.0001
+splines_x5  4     1     24.1597      6.6793       13.0835        0.0003
+splines_x5  5     1     19.6691      6.0408       10.6018        0.0011
+splines_x5  6     1     19.7633      7.4321        7.0713        0.0078
+splines_x5  7     0           0           .         .             .    
+splines_x6  1     1    -10.7158      8.7249        1.5084        0.2194
+splines_x6  2     1      0.1773      6.9599        0.0006        0.9797
+splines_x6  3     1     -0.5134      6.4825        0.0063        0.9369
+splines_x6  4     1      1.3126      6.8715        0.0365        0.8485
+splines_x6  5     1      2.9844      6.2380        0.2289        0.6324
+splines_x6  6     1      7.2222      7.7676        0.8645        0.3525
+splines_x6  7     0           0           .         .             .    
+splines_x7  1     1     99.8602     14.1299       49.9469        <.0001
+splines_x7  2     1     24.6209      6.2087       15.7254        <.0001
+splines_x7  3     1     18.2087      5.4258       11.2624        0.0008
+splines_x7  4     1     13.9705      5.8093        5.7832        0.0162
+splines_x7  5     1     11.1791      5.2081        4.6075        0.0318
+splines_x7  6     1     12.4405      6.5031        3.6596        0.0557
+splines_x7  7     0           0           .         .             .    
+splines_x8  1     1      9.1685      8.1254        1.2733        0.2592
+splines_x8  2     1      5.7624      6.3812        0.8154        0.3665
+splines_x8  3     1     10.6895      5.9296        3.2499        0.0714
+splines_x8  4     1     11.7473      6.3077        3.4685        0.0625
+splines_x8  5     1     10.7838      5.6858        3.5972        0.0579
+splines_x8  6     1      7.0157      7.0733        0.9838        0.3213
+splines_x8  7     0           0           .         .             .    
+splines_x9  1     1     -0.8812      8.7402        0.0102        0.9197
+splines_x9  2     1     -1.3754      6.8523        0.0403        0.8409
+splines_x9  3     1     -1.0066      6.3917        0.0248        0.8749
+splines_x9  4     1     -2.8694      6.7324        0.1817        0.6700
+splines_x9  5     1     -2.2315      6.1791        0.1304        0.7180
+splines_x9  6     1     -5.3711      7.5274        0.5091        0.4755
+splines_x9  7     0           0           .         .             .    
+splines_x10 1     1      7.8987      8.5565        0.8522        0.3559
+splines_x10 2     1     -5.3275      7.2872        0.5345        0.4647
+splines_x10 3     1     -2.0071      6.8632        0.0855        0.7699
+splines_x10 4     1     -1.4949      7.2158        0.0429        0.8359
+splines_x10 5     1     -1.6264      6.6099        0.0605        0.8056
+splines_x10 6     1     -0.1568      8.1058        0.0004        0.9846
+splines_x10 7     0           0           .         .             .    
+splines_x16 1     1     21.0557      8.8445        5.6675        0.0173
+splines_x16 2     1      2.6416      7.1234        0.1375        0.7108
+splines_x16 3     1      6.5163      6.6789        0.9519        0.3292
+splines_x16 4     1      3.4634      7.0456        0.2416        0.6230
+splines_x16 5     1      5.1649      6.4226        0.6467        0.4213
+splines_x16 6     1      4.7030      7.8965        0.3547        0.5515
+splines_x16 7     0           0           .         .             .    
+splines_x54 1     1    -13.0582      8.8115        2.1962        0.1384
+splines_x54 2     1    -19.1094      6.8598        7.7602        0.0053
+splines_x54 3     1    -16.4070      6.3199        6.7397        0.0094
+splines_x54 4     1    -19.1461      6.7204        8.1165        0.0044
+splines_x54 5     1    -16.1925      6.0980        7.0511        0.0079
+splines_x54 6     1    -21.5636      7.5036        8.2586        0.0041
+splines_x54 7     0           0           .         .             .    
+splines_x57 1     1     -7.6611      8.5842        0.7965        0.3721
+splines_x57 2     1     -5.7667      6.7143        0.7377        0.3904
+splines_x57 3     1     -7.1945      6.2584        1.3215        0.2503
+splines_x57 4     1     -7.4779      6.6396        1.2685        0.2601
+splines_x57 5     1     -6.2451      6.0041        1.0819        0.2983
+splines_x57 6     1     -7.3300      7.4413        0.9703        0.3246
+splines_x57 7     0           0           .         .             .    
+
+
+Association of Predicted Probabilities and Observed Responses
+
+Percent Concordant       99.4    Somers' D    0.988
+Percent Discordant        0.6    Gamma        0.988
+Percent Tied              0.0    Tau-a        0.404
+Pairs                 5107239    c            0.994
+
+The PLM Procedure
+
+                        Store Information
+
+Item Store               WORK.SIMUMODEL                           
+Data Set Created From    WORK.SIMUDATA                            
+Created By               PROC LOGISTIC                            
+Date Created             24NOV26:13:06:06                         
+Response Variable        y                                        
+Link Function            Logit                                    
+Distribution             Binary                                   
+Class Variable           y                                        
+Constructed Effect       splines                                  
+Model Effects            Intercept splines_x1 splines_x2          
+                         splines_x3 splines_x4 splines_x5         
+                         splines_x6 splines_x7 splines_x8 ..      

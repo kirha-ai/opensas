@@ -1,0 +1,12 @@
+
+Normal Regression with Interval Censoring
+
+The MCMC Procedure
+
+                  Posterior Summaries and Intervals
+ 
+                                      Standard
+Parameter           N        Mean    Deviation      95% HPD Interval
+
+mu               1000     41.9310       5.7268     32.3841     54.4444
+sigma            1000     30.3101       5.6988     19.8763     42.0171

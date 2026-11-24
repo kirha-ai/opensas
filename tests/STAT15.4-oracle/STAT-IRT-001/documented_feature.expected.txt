@@ -1,0 +1,97 @@
+
+The IRT Procedure
+
+                   Modeling Information
+
+Data Set                       WORK.RESPONSES             
+Link Function                  Logit                      
+Response Model                 Two Parameter Model        
+Number of Items                5                          
+Number of Factors              1                          
+Number of Observations Read    150                        
+Number of Observations Used    150                        
+Estimation Method              Marginal Maximum Likelihood
+
+
+    Item Information
+ 
+Item     Levels    Values
+
+item1         2    0 1   
+item2         2    0 1   
+item3         2    0 1   
+item4         2    0 1   
+item5         2    0 1   
+
+The IRT Procedure
+
+      Eigenvalues of the Polychoric Correlation Matrix
+ 
+        Eigenvalue    Difference    Proportion    Cumulative
+
+   1    1.97376205    0.86208144        0.3948        0.3948
+   2    1.11168061    0.23268968        0.2223        0.6171
+   3    0.87899093    0.28418014        0.1758        0.7929
+   4    0.59481079    0.15405517        0.1190        0.9118
+   5    0.44075562                      0.0882        1.0000
+
+The IRT Procedure
+
+                    Optimization Information
+
+Optimization Technique         Quasi-Newton                     
+Likelihood Approximation       Adaptive Gauss-Hermite Quadrature
+Number of Quadrature Points    21                               
+Number of Free Parameters      10                               
+
+
+                               Iteration History
+ 
+                                         Objective        Function     Max Abs
+Cycles    Iteration    Evaluations        Function          Change    Gradient
+
+     0            0              2      3.18798662                    0.065167
+     0            1              4      3.15645760     -0.03152902    0.030854
+     0            2              7      3.14193354     -0.01452406    0.014981
+     0            3             10      3.13972115     -0.00221238    0.009161
+     0            4             13      3.13898546     -0.00073570    0.005811
+     0            5             16      3.13878953     -0.00019593    0.004058
+     0            6             18      3.13855160     -0.00023793    0.002341
+     0            7             21      3.13846064     -0.00009096     0.00133
+     0            8             24      3.13844105     -0.00001960    0.000901
+     0            9             26      3.13841351     -0.00002753    0.000437
+     0           10             29      3.13841103     -0.00000248    0.000343
+     0           11             33      3.13840529     -0.00000574    0.000263
+     0           12             36      3.13840444     -0.00000086    0.000047
+     0           13             39      3.13840442     -0.00000002    1.756E-6
+     1            0              2      3.13840442                    1.749E-6
+
+Convergence criterion (ABSGCONV=.000010000) satisfied.                    
+
+The IRT Procedure
+
+         Model Fit Statistics
+
+Log Likelihood             -470.7606627
+AIC (Smaller is Better)    961.52132534
+BIC (Smaller is Better)    991.62767828
+LR Chi-Square              30.278796211
+LR Chi-Square DF                     21
+
+The IRT Procedure
+
+                 Item Parameter Estimates
+ 
+                                       Standard
+Item     Parameter       Estimate         Error    Pr > |t|
+
+item1    Difficulty      -0.89812       0.29584      0.0012
+         Slope            1.65678       0.94154      0.0392
+item2    Difficulty      -0.51566       0.22101      0.0098
+         Slope            1.24509       0.54540      0.0112
+item3    Difficulty      -0.25969       0.33993      0.2224
+         Slope            0.55366       0.30531      0.0349
+item4    Difficulty       0.44344       0.35897      0.1084
+         Slope            0.58518       0.29073      0.0221
+item5    Difficulty       0.97625       0.37055      0.0042
+         Slope            1.05977       0.48653      0.0147

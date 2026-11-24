@@ -1,0 +1,72 @@
+The SAS System
+
+735        
+736        /* STAT-NLMIXED-006: NLMIXED — Built-In Log-Likelihood Functions / Compartment Models / Hierarchical Model Specification
+737         * Source: S154 / Chapter 89 / `Built-In Log-Likelihood Functions` (PDF pp. 7131–7134); S154 / Chapter 89 / `Compartment Models` (PDF pp.
+737      ! 7134–7144); S154 / Chapter 89 / `Hierarchical Model Specification` (PDF pp. 7144–7146).
+738         * Discriminates: Normal likelihood with nested cluster/person random effects and predictions.
+739         */
+740        options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+740      ! validmemname=compatible locale=en_US;
+741        %let syscc=0;
+742        title; footnote;
+743        ods _all_ close;
+744        ods listing gpath="%sysfunc(pathname(work))";
+745        ods graphics off;
+746        proc datasets library=work kill nolist;
+NOTE: Deleting WORK.HEIGHTS (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK._NAMEDAT (memtype=DATA).
+NOTE: Deleting WORK._ORACLE_SCORED (memtype=DATA).
+746      !                                         quit;
+
+
+747        ods path work.templat(update) sashelp.tmplmst(read);
+748        
+749        data repeated;
+750        call streaminit(314159);
+751        do cluster=1 to 8;
+752         u0=0.5*rand('normal');
+753         do j=1 to 4;
+754         person=cluster*10+j; v0=0.3*rand('normal');
+755         do visit=1 to 3;
+756         x=visit/3; y=2+1.2*x+u0+v0+0.4*rand('normal'); output;
+757         end; end;
+758        end;
+759        drop u0 v0 j;
+760        run;
+
+NOTE: The data set WORK.REPEATED has 96 observations and 5 variables.
+
+761        proc nlmixed data=repeated qpoints=3 maxiter=100;
+762        parms b0=2 b1=1 s1=0.25 s2=0.09 se=0.16;
+763        bounds s1 s2 se > 0;
+764        mu=b0+b1*x+u+v;
+765        model y ~ normal(mu,se);
+766        random u ~ normal(0,s1) subject=cluster;
+767        random v ~ normal(0,s2) subject=person(cluster);
+768        predict mu out=predicted;
+769        run;
+
+NOTE: Convergence criterion (GCONV=1E-6) satisfied.
+NOTE: At least one element of the gradient is greater than 1e-3.
+NOTE: The data set WORK.PREDICTED has 96 observations and 13 variables.
+NOTE: The PROCEDURE NLMIXED printed page 28.
+
+770        proc print data=predicted(obs=10); run;
+
+NOTE: There were 10 observations read from the data set WORK.PREDICTED.
+NOTE: The PROCEDURE PRINT printed page 29.
+
+771        
+772        
+773        
+774        
+The SAS System
+
+775        

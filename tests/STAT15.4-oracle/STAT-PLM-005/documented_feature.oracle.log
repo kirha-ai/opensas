@@ -1,0 +1,76 @@
+The SAS System
+
+4790       
+4791       /* STAT-PLM-005: PLM — Analysis Based on Posterior Estimates
+4792        * Source: S154 / Chapter 94 / `Analysis Based on Posterior Estimates` (PDF pp. 7646–7648).
+4793        * Discriminates: Example 94.7: Linear Inference with Arbitrary Estimates
+4794        */
+4795       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+4795     ! validmemname=compatible locale=en_US;
+4796       %let syscc=0;
+4797       title; footnote;
+4798       ods _all_ close;
+4799       ods listing gpath="%sysfunc(pathname(work))";
+4800       ods graphics off;
+4801       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SIMUDATA (memtype=DATA).
+NOTE: Deleting WORK.SIMUMODEL (memtype=ITEMSTOR).
+NOTE: Deleting WORK.TEST (memtype=DATA).
+NOTE: Deleting WORK.TESTOUT (memtype=DATA).
+4801     !                                         quit;
+
+
+4802       ods path work.templat(update) sashelp.tmplmst(read);
+4803       
+4804       data parms;
+4805       length name $6;
+4806       input Name$ Value;
+4807       datalines;
+
+NOTE: The data set WORK.PARMS has 6 observations and 2 variables.
+
+4814       ;
+4815       data cov;
+4816       input Parm row col1-col6;
+4817       datalines;
+
+NOTE: The data set WORK.COV has 6 observations and 8 variables.
+
+4824       ;
+4825       proc glimmix data=parms order=data;
+4826       class Name;
+4827       model Value = Name / noint ddfm=none s;
+4828       random _residual_ / type=lin(1) ldata=cov v;
+4829       parms (1) / noiter;
+4830       store ArtificialModel;
+4831       title 'Linear Inference';
+4832       run;
+
+NOTE: Correlated R-side effects apply to all observations unless the SUBJECT= option is used.
+
+
+NOTE: The model does not contain an intercept. Columns of X are scaled only and not centered.
+NOTE: No optimization performed.
+NOTE: The covariance matrix is the zero matrix.
+NOTE: The GLIMMIX procedure generated the model item store WORK.ARTIFICIALMODEL.
+NOTE: The PROCEDURE GLIMMIX printed page 363.
+
+4833       proc plm restore=ArtificialModel;
+4834       estimate
+4835       'alpha1 = alpha2' Name 1 0 0 -1 0 0,
+4836       'beta1 = beta2 ' Name 0 1 0 0 -1 0,
+4837       'gamma1 = gamma2' Name 0 0 1 0 0 -1 /
+4838       adjust=bon stepdown ftest(label='Homogeneity');
+4839       run;
+
+NOTE: The PROCEDURE PLM printed page 364.
+
+4840       
+4841       
+4842       
+4843       
+The SAS System
+
+4844       

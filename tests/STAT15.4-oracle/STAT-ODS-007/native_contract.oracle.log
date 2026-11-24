@@ -1,0 +1,52 @@
+The SAS System
+
+1725       
+1726       /* STAT-ODS-007: ODS table metadata, TRACE, and OUTPUT data set contracts
+1727        * Source: S154 / Chapter 23 / `Paths and Selection` (PDF pp. 588–592); S154 / Chapter 23 / `Output Objects and ODS Destinations` (PDF pp.
+1727     ! 586–587); S154 / Special SAS Data Sets / `Special SAS Data Sets` (PDF pp. 10879–10894).
+1728        * Discriminates: ODS object paths, TRACE names and table selection
+1729        */
+1730       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+1730     ! validmemname=compatible locale=en_US;
+1731       %let syscc=0;
+1732       title; footnote;
+1733       ods _all_ close;
+1734       ods listing gpath="%sysfunc(pathname(work))";
+1735       ods graphics off;
+1736       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SAMPLE (memtype=DATA).
+NOTE: Deleting WORK.SUMMARY (memtype=DATA).
+1736     !                                         quit;
+
+
+1737       ods path work.templat(update) sashelp.tmplmst(read);
+1738       
+1739       data sample;
+1740        input x z y group $ weight freq;
+1741        datalines;
+
+NOTE: The data set WORK.SAMPLE has 12 observations and 6 variables.
+
+1754       ;
+1755       run;
+1756       ods trace on; ods select ParameterEstimates; proc reg data=sample; model y=x z; run; quit; ods select all; ods trace off;
+
+
+Output Added:
+-------------
+Name:       ParameterEstimates
+Label:      Parameter Estimates
+Template:   Stat.REG.ParameterEstimates
+Path:       Reg.MODEL1.Fit.y.ParameterEstimates
+-------------
+NOTE: The PROCEDURE REG printed page 84.
+
+1757       
+1758       
+1759       
+1760       
+The SAS System
+
+1761       

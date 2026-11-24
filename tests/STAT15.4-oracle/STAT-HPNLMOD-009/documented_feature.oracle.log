@@ -1,0 +1,79 @@
+The SAS System
+
+2825       
+2826       /* STAT-HPNLMOD-009: HPNLMOD — Programming Statements
+2827        * Source: S154 / Chapter 63 / `Programming Statements` (PDF pp. 4887–4889).
+2828        * Discriminates: Getting Started: HPNLMOD Procedure
+2829        */
+2830       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+2830     ! validmemname=compatible locale=en_US;
+2831       %let syscc=0;
+2832       title; footnote;
+2833       ods _all_ close;
+2834       ods listing gpath="%sysfunc(pathname(work))";
+2835       ods graphics off;
+2836       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.ENZYME (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.REMISS (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+2836     !                                         quit;
+
+
+2837       ods path work.templat(update) sashelp.tmplmst(read);
+2838       
+2839       data Enzyme;
+2840       input conc rate @@;
+2841       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.ENZYME has 14 observations and 2 variables.
+
+2849       ;
+2850       run;
+2851       data remiss;
+2852       input remiss cell smear infil li blast temp;
+2853       label remiss = 'complete remission';
+2854       like = 0;
+2855       label like = 'dummy variable for nlin';
+2856       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.REMISS has 27 observations and 8 variables.
+
+2885       ;
+2886       run;
+2887       proc hpnlmod data=enzyme;
+2888       parms theta1=160 theta2=0.1;
+2889       model rate ~ residual(theta1*conc / (theta2 + conc));
+2890       run;
+
+
+NOTE: The HPNLMOD procedure is executing in single-machine mode.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: An intercept was not specified for this model.
+NOTE: There were 14 observations read from the data set WORK.ENZYME.
+NOTE: The PROCEDURE HPNLMOD printed page 137.
+
+2891       proc hpnlmod data=remiss corr;
+2892       parms int=-10 a=-2 b=-1 c=6;
+2893       linp = int + a*cell + b*li + c*temp;
+2894       p = probnorm(linp);
+2895       model remiss ~ binary(1-p);
+2896       run;
+
+
+NOTE: The HPNLMOD procedure is executing in single-machine mode.
+NOTE: Convergence criterion (ABSGCONV=1E-7) satisfied.
+NOTE: There were 27 observations read from the data set WORK.REMISS.
+NOTE: The PROCEDURE HPNLMOD printed page 138.
+
+2897       
+2898       
+2899       
+2900       
+The SAS System
+
+2901       

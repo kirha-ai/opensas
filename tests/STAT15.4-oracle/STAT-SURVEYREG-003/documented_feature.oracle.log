@@ -1,0 +1,105 @@
+The SAS System
+
+23958      
+23959      /* STAT-SURVEYREG-003: SURVEYREG — CLASS / EFFECT / MODEL
+23960       * Source: S154 / Chapter 123 / `CLASS Statement` (PDF pp. 10125–10126); S154 / Chapter 123 / `EFFECT Statement` (PDF p. 10130); S154 / Chapter 123
+23960    !  / `MODEL Statement` (PDF pp. 10134–10136).
+23961       * Discriminates: Getting Started: SURVEYREG Procedure; explicit statements: CLASS, MODEL
+23962       */
+23963      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+23963    ! validmemname=compatible locale=en_US;
+23964      %let syscc=0;
+23965      title; footnote;
+23966      ods _all_ close;
+23967      ods listing gpath="%sysfunc(pathname(work))";
+23968      ods graphics off;
+23969      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.ICECREAM (memtype=DATA).
+NOTE: Deleting WORK.MYPARMEST (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.STUDENTTOTALS (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+23969    !                                         quit;
+
+
+23970      ods path work.templat(update) sashelp.tmplmst(read);
+23971      
+23972      data IceCream;
+23973      input Grade Spending Income Kids @@;
+23974      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.ICECREAM has 40 observations and 4 variables.
+
+23989      ;
+23990      title1 'Ice Cream Spending Analysis';
+23991      title2 'Simple Random Sample Design';
+23992      proc surveyreg data=IceCream total=4000;
+23993      class Kids;
+23994      model Spending = Income Kids / solution;
+23995      run;
+
+NOTE: The PROCEDURE SURVEYREG printed page 1529.
+
+23996      data StudentTotals;
+23997      input Grade _TOTAL_;
+23998      datalines;
+
+NOTE: The data set WORK.STUDENTTOTALS has 3 observations and 2 variables.
+
+24002      ;
+24003      data IceCream;
+24004      set IceCream;
+24005      if Grade=7 then Prob=20/1824;
+24006      if Grade=8 then Prob=9/1025;
+24007      if Grade=9 then Prob=11/1151;
+24008      Weight=1/Prob;
+24009      run;
+
+NOTE: There were 40 observations read from the data set WORK.ICECREAM.
+NOTE: The data set WORK.ICECREAM has 40 observations and 6 variables.
+
+24010      ods graphics on;
+24011      title1 'Ice Cream Spending Analysis';
+24012      title2 'Stratified Sample Design';
+24013      proc surveyreg data=IceCream total=StudentTotals;
+24014      strata Grade /list;
+24015      model Spending = Income;
+24016      weight Weight;
+24017      run;
+
+NOTE: The PROCEDURE SURVEYREG printed page 1530.
+
+24018      title1 'Ice Cream Spending Analysis';
+24019      title2 'Stratified Sample Design';
+24020      proc surveyreg data=IceCream total=StudentTotals;
+24021      strata Grade /list;
+24022      model Spending = Income;
+24023      weight Weight;
+24024      ods output ParameterEstimates = MyParmEst;
+24025      run;
+
+NOTE: The data set WORK.MYPARMEST has 2 observations and 6 variables.
+NOTE: The PROCEDURE SURVEYREG printed page 1531.
+
+24026      ods output ParameterEstimates = MyParmEst;
+24027      proc print data=MyParmEst;
+24028      run;
+
+WARNING: Output 'ParameterEstimates' was not created.  Make sure that the output object name, label, or path is spelled correctly.  Also, verify that the 
+         appropriate procedure options are used to produce the requested output object.  For example, verify that the NOPRINT option is not used.
+NOTE: There were 2 observations read from the data set WORK.MYPARMEST.
+NOTE: The PROCEDURE PRINT printed page 1532.
+
+24029      
+24030      
+24031      
+24032      
+The SAS System
+
+24033      

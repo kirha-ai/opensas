@@ -1,0 +1,182 @@
+
+_oracle_by=1
+
+The HPMIXED Procedure
+
+                        Model Information
+
+Data Set                     WORK._ORACLE_INPUT                  
+Response Variable            Yield                               
+Estimation Method            Restricted Maximum Likelihood (REML)
+Degrees of Freedom Method    Residual                            
+
+
+                     Class Level Information
+ 
+Class      Levels    Values
+
+Species         5    1 2 3 4 5                                    
+Farm          100    1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 
+                     19 20 ...                                    
+Animal       3000    1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 
+                     19 20 ...                                    
+
+
+Number of Observations Read       40000
+Number of Observations Used       40000
+
+
+             Dimensions
+
+G-side Cov. Parameters             1
+R-side Cov. Parameters             1
+Columns in X                     506
+Columns in Z                    3000
+Subjects (Blocks in V)             1
+
+
+           Optimization Information
+
+Optimization Technique        Dual Quasi-Newton
+Parameters in Optimization    1                
+Lower Boundaries              1                
+Upper Boundaries              0                
+Residual Variance             Profiled         
+
+
+                          Iteration History
+ 
+                               Objective                         Max
+Iteration    Evaluations        Function          Change    Gradient
+
+        0              4    201184.75288       .            0.695097
+        1              6    201184.75284      0.00003476    0.000541
+        2             19    201184.75284      0.00000000    0.000541
+
+                          Convergence criterion (GCONV=1E-8) satisfied.                           
+
+
+Covariance Parameter
+     Estimates
+ 
+Cov Parm    Estimate
+
+Animal        3.9889
+Residual      7.9623
+
+
+            Fit Statistics
+
+-2 Res Log Likelihood            201185
+AIC  (Smaller is Better)         201189
+AICC (Smaller is Better)         201189
+BIC  (Smaller is Better)         201201
+CAIC (Smaller is Better)         201203
+HQIC (Smaller is Better)         201193
+
+
+         Type III Tests of Fixed Effects
+ 
+                 Num      Den
+Effect            DF       DF    F Value    Pr > F
+
+Species*Farm     495    39500      11.72    <.0001
+
+
+                             Contrasts
+ 
+                                   Num      Den
+Label                               DF       DF    F Value    Pr > F
+
+Species1 = Species2 = Species3       2    39500      92.93    <.0001
+
+_oracle_by=2
+
+The HPMIXED Procedure
+
+                        Model Information
+
+Data Set                     WORK._ORACLE_INPUT                  
+Response Variable            Yield                               
+Estimation Method            Restricted Maximum Likelihood (REML)
+Degrees of Freedom Method    Residual                            
+
+
+                     Class Level Information
+ 
+Class      Levels    Values
+
+Species         5    1 2 3 4 5                                    
+Farm          100    1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 
+                     19 20 ...                                    
+Animal       3000    1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 
+                     19 20 ...                                    
+
+
+Number of Observations Read       40000
+Number of Observations Used       40000
+
+
+             Dimensions
+
+G-side Cov. Parameters             1
+R-side Cov. Parameters             1
+Columns in X                     506
+Columns in Z                    3000
+Subjects (Blocks in V)             1
+
+
+           Optimization Information
+
+Optimization Technique        Dual Quasi-Newton
+Parameters in Optimization    1                
+Lower Boundaries              1                
+Upper Boundaries              0                
+Residual Variance             Profiled         
+
+
+                          Iteration History
+ 
+                               Objective                         Max
+Iteration    Evaluations        Function          Change    Gradient
+
+        0              4    201184.75288       .            0.695097
+        1              6    201184.75284      0.00003476    0.000541
+        2             19    201184.75284      0.00000000    0.000541
+
+                          Convergence criterion (GCONV=1E-8) satisfied.                           
+
+
+Covariance Parameter
+     Estimates
+ 
+Cov Parm    Estimate
+
+Animal        3.9889
+Residual      7.9623
+
+
+            Fit Statistics
+
+-2 Res Log Likelihood            201185
+AIC  (Smaller is Better)         201189
+AICC (Smaller is Better)         201189
+BIC  (Smaller is Better)         201201
+CAIC (Smaller is Better)         201203
+HQIC (Smaller is Better)         201193
+
+
+         Type III Tests of Fixed Effects
+ 
+                 Num      Den
+Effect            DF       DF    F Value    Pr > F
+
+Species*Farm     495    39500      11.72    <.0001
+
+
+                             Contrasts
+ 
+                                   Num      Den
+Label                               DF       DF    F Value    Pr > F
+
+Species1 = Species2 = Species3       2    39500      92.93    <.0001

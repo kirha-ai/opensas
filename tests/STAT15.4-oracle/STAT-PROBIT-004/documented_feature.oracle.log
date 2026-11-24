@@ -1,0 +1,56 @@
+The SAS System
+
+9200       
+9201       /* STAT-PROBIT-004: PROBIT — Computational Method / Distributions / INEST= SAS-data-set
+9202        * Source: S154 / Chapter 100 / `Computational Method` (PDF pp. 8122–8123); S154 / Chapter 100 / `Distributions` (PDF pp. 8123–8124); S154 /
+9202     ! Chapter 100 / `INEST= SAS-data-set` (PDF p. 8124).
+9203        * Discriminates: Getting Started: PROBIT Procedure
+9204        */
+9205       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+9205     ! validmemname=compatible locale=en_US;
+9206       %let syscc=0;
+9207       title; footnote;
+9208       ods _all_ close;
+9209       ods listing gpath="%sysfunc(pathname(work))";
+9210       ods graphics off;
+9211       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.MULTI (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.XROW (memtype=DATA).
+9211     !                                         quit;
+
+
+9212       ods path work.templat(update) sashelp.tmplmst(read);
+9213       
+9214       data study;
+9215       input Dose Respond @@;
+9216       Number = 15;
+9217       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.STUDY has 12 observations and 3 variables.
+
+9220       ;
+9221       ods graphics on;
+9222       proc probit data=study log10 optc plots=(predpplot ippplot);
+9223       model respond/number=dose;
+9224       output out=new p=p_hat;
+9225       run;
+
+NOTE: Algorithm converged.
+NOTE: The confidence limits displayed on the plots are conditioned on the estimated threshold. The variation in estimating the threshold is ignored.
+NOTE: The data set WORK.NEW has 12 observations and 4 variables.
+NOTE: The PROCEDURE PROBIT printed page 615.
+
+9226       
+9227       
+9228       
+9229       
+The SAS System
+
+9230       

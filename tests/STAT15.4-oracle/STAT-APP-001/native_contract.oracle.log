@@ -1,0 +1,84 @@
+The SAS System
+
+3947       
+3948       /* STAT-APP-001: Power and Sample Size Application product scope and launch contract
+3949        * Source: S154 / Chapter 97 / `The Power and Sample Size Application` (PDF pp. 7989–7990).
+3950        * Discriminates: Installed SAS/STAT product availability and the POWER computation behind the application
+3951        */
+3952       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+3952     ! validmemname=compatible locale=en_US;
+3953       %let syscc=0;
+3954       title; footnote;
+3955       ods _all_ close;
+3956       ods listing gpath="%sysfunc(pathname(work))";
+3957       ods graphics off;
+3958       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK._DESCRIPTOR (memtype=DATA).
+3958     !                                         quit;
+
+
+3959       ods path work.templat(update) sashelp.tmplmst(read);
+3960       
+3961       proc product_status; run;
+
+For Base SAS Software ...
+   Custom version information: 9.4_M9
+   Image version information: 9.04.01M9P060425
+For SAS/STAT ...
+   Custom version information: 15.4
+For SAS/GRAPH ...
+   Custom version information: 9.4_M9
+For SAS/ETS ...
+   Custom version information: 15.4
+For SAS/OR ...
+   Custom version information: 15.4
+For SAS/IML ...
+   Custom version information: 15.4
+For SAS/QC ...
+   Custom version information: 15.4
+For SAS/CONNECT ...
+   Custom version information: 9.4_M9
+For SAS Enterprise Miner ...
+   Custom version information: 15.4
+For SAS Time Series Workspace Macros ...
+   Custom version information: 15.4
+For SAS/ACCESS to Postgres ...
+   Custom version information: 9.4_M9
+For SAS Integration Technologies ...
+   Custom version information: 9.4_M9
+For SAS Network Algorithms ...
+   Custom version information: 15.4
+For SAS/Secure 168-bit ...
+   Custom version information: 9.4_M8
+For SAS Credit Scoring ...
+   Custom version information: 15.4
+For SAS Text Miner ...
+   Custom version information: 15.4
+For SAS High-Performance Forecasting ...
+   Custom version information: 15.4
+For High Performance Suite ...
+   Custom version information: 2.2_M10
+For SAS Forecast Server Mid-Tier ...
+   Custom version information: 15.4
+For SAS/ACCESS Interface to PC Files ...
+   Custom version information: 9.4_M9
+For SAS/ACCESS Interface to MySQL ...
+   Custom version information: 9.41_M3
+
+3962       proc power; onesamplemeans mean=8 stddev=40 ntotal=150 power=.; run;
+
+NOTE: The PROCEDURE POWER printed page 302.
+
+3963       
+3964       
+3965       
+3966       
+The SAS System
+
+3967       

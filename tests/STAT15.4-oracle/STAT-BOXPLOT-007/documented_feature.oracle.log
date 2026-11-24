@@ -1,0 +1,80 @@
+The SAS System
+
+413        
+414        /* STAT-BOXPLOT-007: BOXPLOT — Official examples and feature integration regression
+415         * Source: S154 / Chapter 32 / `Examples: BOXPLOT Procedure` (PDF pp. 1429–1442).
+416         * Discriminates: Example 32.5: Creating Box-and-Whiskers Plots with Varying Widths
+417         */
+418        options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+418      ! validmemname=compatible locale=en_US;
+419        %let syscc=0;
+420        title; footnote;
+421        ods _all_ close;
+422        ods listing gpath="%sysfunc(pathname(work))";
+423        ods graphics off;
+424        proc datasets library=work kill nolist;
+NOTE: Deleting WORK.GSEG (memtype=CATALOG).
+NOTE: Deleting WORK.OILSCHEMATIC (memtype=DATA).
+NOTE: Deleting WORK.OILSUM (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TURBINE (memtype=DATA).
+424      !                                         quit;
+
+
+425        ods path work.templat(update) sashelp.tmplmst(read);
+426        
+427        data Times2;
+428        label Delay = 'Delay in Minutes';
+429        informat Day date7. ;
+430        format Day date7. ;
+431        input Day @ ;
+432        do Flight=1 to 25;
+433        input Delay @ ;
+434        output;
+435        end;
+436        datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.TIMES2 has 200 observations and 3 variables.
+
+461        ;
+462        title 'Analysis of Airline Departure Delays';
+463        title2 'Using the BOXWIDTHSCALE= Option';
+464        proc boxplot data=Times2;
+465        plot Delay*Day /
+466        boxstyle = schematic
+467        odstitle = title
+468        odstitle2 = title2
+469        outbox = DelaySummary
+470        boxwidthscale = 1
+471        nohlabel
+472        bwslegend;
+473        run;
+
+NOTE: Processing beginning for PLOT statement number 1.
+NOTE: Since the format DATE is associated with the group variable Day, it is assumed that the natural interval between group positions is one DAY.
+NOTE: The REPEAT option is assumed when a DATE format is used with a group variable.
+NOTE: 36862 bytes written to /saswork/SAS_workFCBA00018F54_odaws02-euw1.oda.sas.com/#LN00094.
+NOTE: There were 200 observations read from the data set WORK.TIMES2.
+NOTE: The data set WORK.DELAYSUMMARY has 72 observations and 4 variables.
+
+474        
+475        /* Numerical companion to the graph: native OUTBOX rows. */
+476        proc print data=DelaySummary noobs; format _numeric_ best16.; run;
+
+NOTE: There were 72 observations read from the data set WORK.DELAYSUMMARY.
+NOTE: The PROCEDURE PRINT printed page 18.
+
+477        
+478        
+479        
+480        
+The SAS System
+
+481        

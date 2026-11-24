@@ -1,0 +1,103 @@
+The SAS System
+
+26106      
+26107      /* STAT-GLM-016: GLM — CODE
+26108       * Source: S154 / Chapter 53 / `CODE Statement` (PDF pp. 4067–4068).
+26109       * Discriminates: Getting Started: GLM Procedure
+26110       */
+26111      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+26111    ! validmemname=compatible locale=en_US;
+26112      %let syscc=0;
+26113      title; footnote;
+26114      ods _all_ close;
+26115      ods listing gpath="%sysfunc(pathname(work))";
+26116      ods graphics off;
+
+NOTE: The PROCEDURE GLM printed pages 2564-2567.
+
+26117      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.PLANTS (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+26117    !                                         quit;
+
+
+26118      ods path work.templat(update) sashelp.tmplmst(read);
+26119      
+26120      title 'Analysis of Unbalanced 2-by-2 Factorial';
+26121      data exp;
+26122      input A $ B $ Y @@;
+26123      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.EXP has 7 observations and 3 variables.
+
+26126      ;
+26127      proc glm data=exp;
+26128      class A B;
+26129      model Y=A B A*B;
+26130      run;
+
+26131      ods graphics on;
+
+NOTE: The PROCEDURE GLM printed pages 2568-2569.
+
+26132      proc glm data=exp;
+26133      class A B;
+26134      model Y=A B A*B;
+26135      run;
+
+26136      ods graphics off;
+26137      title 'Regression in PROC GLM';
+
+NOTE: The PROCEDURE GLM printed pages 2570-2571.
+
+26138      data iron;
+26139      input fe loss @@;
+26140      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.IRON has 13 observations and 2 variables.
+
+26145      ;
+26146      proc sgscatter data=iron;
+26147      plot loss*fe;
+26148      run;
+
+NOTE: Listing image output written to /saswork/SAS_work5D120001108E_odaws02-euw1.oda.sas.com/SAS_workCCDC0001108E_odaws02-euw1.oda.sas.com/SGScatter7.png.
+NOTE: There were 13 observations read from the data set WORK.IRON.
+
+26149      ods graphics off;
+26150      proc glm data=iron;
+26151      model loss=fe fe*fe;
+26152      run;
+
+26153      ods graphics on;
+
+NOTE: The PROCEDURE GLM printed pages 2572-2573.
+
+26154      proc glm data=iron;
+26155      model loss=fe fe*fe;
+26156      run;
+
+26157      ods graphics off;
+
+NOTE: The PROCEDURE GLM printed pages 2574-2575.
+
+26158      proc glm data=iron;
+26159      model loss=fe;
+26160      run;
+
+26161      
+26162      
+26163      
+26164      
+The SAS System
+
+26165      

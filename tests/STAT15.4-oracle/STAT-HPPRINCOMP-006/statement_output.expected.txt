@@ -1,0 +1,100 @@
+
+Crime Rates per 100,000 Population by State
+
+The HPPRINCOMP Procedure
+
+      Performance Information
+
+Execution Mode       Single-Machine
+Number of Threads    2             
+
+
+              Data Access Information
+ 
+Data                   Engine    Role      Path
+
+WORK.CRIME             V9        Input     On Client
+WORK._ORACLE_OUTPUT    V9        Output    On Client
+
+
+                   Model Information
+
+Data Source                    WORK.CRIME              
+Component Extraction Method    Eigenvalue Decomposition
+
+
+Number of Observations Read             50
+Number of Observations Used             48
+
+
+Number of Variables                    7
+Number of Principal Components         7
+
+
+           Simple Statistics
+ 
+                                Standard
+Variable             Mean      Deviation
+
+Murder            7.51667        3.93059
+Rape             26.07500       10.81304
+Robbery         127.55625       88.49374
+Assault         214.58750      100.64360
+Burglary       1316.37917      423.31261
+Larceny        2696.88542      714.75023
+Auto_Theft      383.97917      194.37033
+
+
+                                   Correlation Matrix
+ 
+                                                                                   Auto_
+Variable       Murder       Rape    Robbery    Assault    Burglary    Larceny      Theft
+
+Murder         1.0000     0.6000     0.4768     0.6485      0.3778     0.0925     0.0555
+Rape           0.6000     1.0000     0.5817     0.7316      0.7038     0.6009     0.3282
+Robbery        0.4768     0.5817     1.0000     0.5452      0.6200     0.4371     0.5787
+Assault        0.6485     0.7316     0.5452     1.0000      0.6082     0.3791     0.2520
+Burglary       0.3778     0.7038     0.6200     0.6082      1.0000     0.7932     0.5390
+Larceny        0.0925     0.6009     0.4371     0.3791      0.7932     1.0000     0.4246
+Auto_Theft     0.0555     0.3282     0.5787     0.2520      0.5390     0.4246     1.0000
+
+
+              Eigenvalues of the Correlation Matrix
+ 
+          Eigenvalue      Difference    Proportion    Cumulative
+
+   1        4.045824        2.781795        0.5780        0.5780
+   2        1.264030        0.516529        0.1806        0.7586
+   3        0.747500        0.421175        0.1068        0.8653
+   4        0.326325        0.061119        0.0466        0.9120
+   5        0.265207        0.036843        0.0379        0.9498
+   6        0.228364        0.105613        0.0326        0.9825
+   7        0.122750                        0.0175        1.0000
+
+
+                                                   Eigenvectors
+ 
+Variable            Prin1          Prin2          Prin3          Prin4          Prin5          Prin6          Prin7
+
+Murder            0.30289       -0.61893        0.17353       -0.23308        0.54896        0.26371        0.26428
+Rape              0.43410       -0.17053       -0.23539        0.06540        0.18075       -0.78232       -0.27946
+Robbery           0.39705        0.04713        0.49208       -0.57470       -0.50808       -0.09452       -0.02497
+Assault           0.39622       -0.35142       -0.05343        0.61743       -0.51525        0.17395        0.19921
+Burglary          0.44164        0.20861       -0.22454       -0.02750        0.11273        0.52340       -0.65085
+Larceny           0.35634        0.40570       -0.53681       -0.23231        0.02172        0.04085        0.60346
+Auto_Theft        0.28834        0.50400        0.57524        0.41853        0.35939       -0.06024        0.15487
+
+Crime Rates per 100,000 Population by State
+
+Obs     Score1      Score2      Score3      Score4      Score5      Score6      Score7
+
+  1    -0.15552    -2.09697     0.51164     0.24325     0.50530     0.41646     0.11450
+  2     2.31236     0.16885    -0.03908     1.16079     1.41385    -1.53069     0.54599
+  3     2.95083     0.88041    -1.79363    -0.06093     0.28214     1.05989     0.06962
+  4    -1.15535    -1.37404    -0.00154     0.01431     0.02888    -0.40679    -0.29880
+  5     4.19697     0.17519     0.26621     0.03666     0.05699    -0.36588    -0.46092
+  6     2.43263     0.92110    -1.16071     0.13695    -0.17873    -0.33932    -0.20932
+  7    -0.64185     1.47250     0.77094     0.09341     0.18684     0.27079    -0.09088
+  8     0.88237     1.29708    -0.55255    -0.39750    -0.01528     0.39974     0.21149
+  9     3.03263    -0.59006    -1.20855     0.49234    -0.82696     0.28985     0.38194
+ 10     0.39313    -1.38247     0.24742    -0.06103     0.21345     0.01523    -0.33593

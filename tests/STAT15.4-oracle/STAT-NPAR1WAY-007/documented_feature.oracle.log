@@ -1,0 +1,66 @@
+The SAS System
+
+713        
+714        /* STAT-NPAR1WAY-007: NPAR1WAY — Multiple Comparisons Based on Pairwise Rankings
+715         * Source: S154 / Chapter 90 / `Multiple Comparisons Based on Pairwise Rankings` (PDF p. 7247).
+716         * Discriminates: Getting Started: NPAR1WAY Procedure
+717         */
+718        options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+718      ! validmemname=compatible locale=en_US;
+719        %let syscc=0;
+720        title; footnote;
+721        ods _all_ close;
+722        ods listing gpath="%sysfunc(pathname(work))";
+723        ods graphics off;
+724        proc datasets library=work kill nolist;
+NOTE: Deleting WORK.MICE (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+724      !                                         quit;
+
+
+725        ods path work.templat(update) sashelp.tmplmst(read);
+726        
+727        data Gossypol;
+728        input Dose n;
+729        do i=1 to n;
+730        input Gain @@;
+731        output;
+732        end;
+733        datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.GOSSYPOL has 67 observations and 4 variables.
+
+744        ;
+745        proc npar1way data=Gossypol;
+746        class Dose;
+747        var Gain;
+748        run;
+
+NOTE: The PROCEDURE NPAR1WAY printed pages 90-95.
+
+749        ods graphics on;
+750        proc npar1way data=Gossypol plots(only)=wilcoxonboxplot;
+751        class Dose;
+752        var Gain;
+753        run;
+
+NOTE: The PROCEDURE NPAR1WAY printed pages 96-101.
+
+754        ods graphics off;
+755        proc npar1way data=Gossypol;
+756        where Dose <= .04;
+757        class Dose;
+758        var Gain;
+759        run;
+
+NOTE: The PROCEDURE NPAR1WAY printed pages 102-107.
+
+760        
+761        
+762        
+763        
+The SAS System
+
+764        

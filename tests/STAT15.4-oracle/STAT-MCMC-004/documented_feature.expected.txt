@@ -1,0 +1,37 @@
+
+Logistic Regression Model with Jeffreys Prior
+
+The MCMC Procedure
+
+                  Posterior Summaries and Intervals
+ 
+                                      Standard
+Parameter           N        Mean    Deviation      95% HPD Interval
+
+beta0            1000     -2.9916       1.4904     -6.6733     -0.7234
+beta1            1000      5.3373       2.0272      1.3821      9.4824
+beta2            1000      4.5467       2.0209      0.4115      8.3100
+
+Logistic Regression Model with Jeffreys Prior
+
+The GENMOD Procedure
+ 
+Bayesian Analysis
+
+                               Posterior Summaries
+ 
+                                      Standard               Percentiles
+Parameter           N        Mean    Deviation         25%         50%         75%
+
+Intercept         500     -2.8276       1.3036     -3.5276     -2.7068     -1.8578
+lvol              500      5.0703       2.0083      3.6735      4.7880      5.9474
+lrate             500      4.4834       1.8265      3.1133      4.2739      5.4982
+
+
+                       Posterior Intervals
+ 
+Parameter    Alpha     Equal-Tail Interval        HPD Interval
+
+Intercept    0.050     -6.2964     -0.7819     -5.7723     -0.7148
+lvol         0.050      2.1740     11.0865      1.9261      9.0380
+lrate        0.050      1.4966      8.7939      1.3919      8.4643

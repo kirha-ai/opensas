@@ -1,0 +1,52 @@
+The SAS System
+
+12635      
+12636      /* STAT-REG-010: REG — TEST
+12637       * Source: S154 / Chapter 105 / `TEST Statement` (PDF pp. 8598–8599).
+12638       * Discriminates: Explicit TEST statement behavior on seeded synthetic inputs.
+12639       */
+12640      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+12640    ! validmemname=compatible locale=en_US;
+12641      %let syscc=0;
+12642      title; footnote;
+12643      ods _all_ close;
+12644      ods listing gpath="%sysfunc(pathname(work))";
+12645      ods graphics off;
+12646      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.USPOPULATION (memtype=DATA).
+12646    !                                         quit;
+
+
+12647      ods path work.templat(update) sashelp.tmplmst(read);
+12648      
+12649      data sample;
+12650      call streaminit(314159);
+12651      do id=1 to 90;
+12652       x=rand('normal'); z=rand('normal'); w=rand('normal');
+12653       group=1+mod(id,3); block=1+mod(id,5);
+12654       y=5+1.5*x-0.6*z+0.4*group+rand('normal');
+12655       y2=2+0.5*x+0.8*z+rand('normal'); output;
+12656      end;
+12657      run;
+
+NOTE: The data set WORK.SAMPLE has 90 observations and 8 variables.
+
+12658      proc reg data=sample; model y=x z; test x=0,z=0; run;
+
+12658    !                                                       quit;
+
+NOTE: The PROCEDURE REG printed pages 969-970.
+
+12659      
+12660      
+12661      
+12662      
+The SAS System
+
+12663      

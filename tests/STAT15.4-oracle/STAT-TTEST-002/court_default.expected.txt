@@ -1,0 +1,16 @@
+
+The TTEST Procedure
+ 
+Variable:  time
+
+  N        Mean     Std Dev     Std Err     Minimum     Maximum
+
+ 20     89.8500     19.1456      4.2811     43.0000       121.0
+
+    Mean       95% CL Mean        Std Dev      95% CL Std Dev
+
+ 89.8500     80.8896  98.8104     19.1456     14.5601  27.9636
+
+    DF    t Value    Pr > |t|
+
+    19      20.99      <.0001

@@ -1,0 +1,143 @@
+The SAS System
+
+13473      
+13474      /* STAT-CAUSALMED-008: CAUSALMED — ODS Table Names
+13475       * Source: S154 / Chapter 38 / `ODS Table Names` (PDF pp. 2407–2409).
+13476       * Discriminates: Verified default procedure context
+13477       */
+13478      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+13478    ! validmemname=compatible locale=en_US;
+13479      %let syscc=0;
+13480      title; footnote;
+13481      ods _all_ close;
+13482      ods listing gpath="%sysfunc(pathname(work))";
+13483      ods graphics off;
+13484      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+13484    !                                         quit;
+
+
+13485      ods path work.templat(update) sashelp.tmplmst(read);
+13486      
+13487      ods trace on;
+13488      
+13489      
+13490      proc causalmed data=sashelp.birthwgt decomp;
+13491      class LowBirthWgt Smoking Death AgeGroup Married Race
+13492      Drinking SomeCollege /descending;
+13493      mediator LowBirthWgt = Smoking;
+13494      model Death = LowBirthWgt | Smoking;
+13495      covar AgeGroup Married Race Drinking SomeCollege;
+13496      evaluate 'Low Birth-Weight' LowBirthWgt='Yes' / nodecomp;
+13497      evaluate 'Normal Birth-Weight' LowBirthWgt='No' / nodecomp;
+13498      run;
+
+
+Output Added:
+-------------
+Name:       ModelInfo
+Label:      Model Information
+Template:   Stat.CausalMed.ModelInfo
+Path:       Causalmed.ModelSpecification.ModelInfo
+-------------
+
+Output Added:
+-------------
+Name:       NObs
+Label:      Number of Observations
+Template:   Stat.CausalMed.NObs
+Path:       Causalmed.ModelSpecification.NObs
+-------------
+
+Output Added:
+-------------
+Name:       ClassLevels
+Label:      Class Levels
+Template:   Stat.CausalMed.Classlevels
+Path:       Causalmed.ModelSpecification.ClassLevels
+-------------
+
+Output Added:
+-------------
+Name:       ResponseProfile
+Label:      Response Profile
+Template:   Stat.CausalMed.ResponseProfile
+Path:       Causalmed.ModelSpecification.ResponseProfile
+-------------
+NOTE: PROC CAUSALMED is modeling the probability that Death='Yes' in the outcome model.
+
+Output Added:
+-------------
+Name:       MediatorProfile
+Label:      Mediator Profile
+Template:   Stat.CausalMed.MediatorProfile
+Path:       Causalmed.ModelSpecification.MediatorProfile
+-------------
+NOTE: PROC CAUSALMED is modeling the probability that LowBirthWgt='Yes' in the mediator model.
+
+Output Added:
+-------------
+Name:       TreatmentProfile
+Label:      Treatment Profile
+Template:   Stat.CausalMed.TreatmentProfile
+Path:       Causalmed.ModelSpecification.TreatmentProfile
+-------------
+
+Output Added:
+-------------
+Name:       EffectSummary
+Label:      Summary
+Template:   Stat.CausalMed.EffectSummary
+Path:       Causalmed.Effects.EffectSummary
+-------------
+
+Output Added:
+-------------
+Name:       EffectDecomp
+Label:      Effect Decompositions
+Template:   Stat.CausalMed.EffectDecomp
+Path:       Causalmed.Effects.EffectDecomp
+-------------
+
+Output Added:
+-------------
+Name:       PercentDecomp
+Label:      Percentage Decompositions
+Template:   Stat.CausalMed.PercentDecomp
+Path:       Causalmed.Effects.PercentDecomp
+-------------
+
+Output Added:
+-------------
+Name:       EffectSummary
+Label:      Summary
+Template:   Stat.CausalMed.EffectSummary
+Path:       Causalmed.SpecifiedEffects.EffectSummary
+-------------
+
+Output Added:
+-------------
+Name:       EffectSummary
+Label:      Summary
+Template:   Stat.CausalMed.EffectSummary
+Path:       Causalmed.SpecifiedEffects.EffectSummary
+-------------
+NOTE: The PROCEDURE CAUSALMED printed pages 1847-1852.
+
+13499      quit;
+13500      
+13501      ods trace off;
+13502      
+13503      
+13504      
+13505      
+The SAS System
+
+13506      

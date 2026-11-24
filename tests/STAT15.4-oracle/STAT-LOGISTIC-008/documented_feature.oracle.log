@@ -1,0 +1,71 @@
+The SAS System
+
+14180      
+14181      /* STAT-LOGISTIC-008: LOGISTIC — Classification Table / Goodness-of-Fit Tests / Overdispersion
+14182       * Source: S154 / Chapter 79 / `Classification Table` (PDF pp. 5926–5929); S154 / Chapter 79 / `Goodness-of-Fit Tests` (PDF pp. 5929–5932); S154
+14182    ! / Chapter 79 / `Overdispersion` (PDF pp. 5932–5934).
+14183       * Discriminates: Example 79.9: Goodness-of-Fit Tests and Subpopulations
+14184       */
+14185      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+14185    ! validmemname=compatible locale=en_US;
+14186      %let syscc=0;
+14187      title; footnote;
+14188      ods _all_ close;
+14189      ods listing gpath="%sysfunc(pathname(work))";
+14190      ods graphics off;
+14191      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.CHEESE (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+14191    !                                         quit;
+
+
+14192      ods path work.templat(update) sashelp.tmplmst(read);
+14193      
+14194      data One;
+14195      do A=0,1;
+14196      do B=0,1;
+14197      do Y=1,2;
+14198      input F @@;
+14199      output;
+14200      end;
+14201      end;
+14202      end;
+14203      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.ONE has 8 observations and 4 variables.
+
+14205      ;
+14206      proc logistic data=One;
+14207      freq F;
+14208      model Y=A B A*B;
+14209      run;
+
+NOTE: PROC LOGISTIC is modeling the probability that Y=1. One way to change this to model the probability that Y=2 is to specify the response variable option 
+      EVENT='2'.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: There were 8 observations read from the data set WORK.ONE.
+NOTE: The PROCEDURE LOGISTIC printed page 1202.
+
+14210      proc logistic data=One;
+14211      freq F;
+14212      model Y=A / scale=none aggregate=(A B);
+14213      run;
+
+NOTE: PROC LOGISTIC is modeling the probability that Y=1. One way to change this to model the probability that Y=2 is to specify the response variable option 
+      EVENT='2'.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: There were 8 observations read from the data set WORK.ONE.
+NOTE: The PROCEDURE LOGISTIC printed page 1203.
+
+14214      
+14215      
+14216      
+14217      
+The SAS System
+
+14218      

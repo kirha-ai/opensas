@@ -1,0 +1,197 @@
+
+The HPMIXED Procedure
+
+                        Model Information
+
+Data Set                     WORK.PR                             
+Response Variable            y                                   
+Estimation Method            Restricted Maximum Likelihood (REML)
+Degrees of Freedom Method    Residual                            
+
+
+                     Class Level Information
+ 
+Class     Levels    Values
+
+Person        27    1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 
+                    19 20 ...                                    
+Gender         2    F M                                          
+Time           4    1 2 3 4                                      
+
+
+Number of Observations Read         108
+Number of Observations Used         108
+
+
+              Dimensions
+
+G-side Cov. Parameters               0
+R-side Cov. Parameters              10
+Columns in X                         6
+Columns in Z per Subject             0
+Subjects (Blocks in V)              27
+
+
+           Optimization Information
+
+Optimization Technique        Dual Quasi-Newton
+Parameters in Optimization    10               
+Lower Boundaries              4                
+Upper Boundaries              0                
+
+
+                          Iteration History
+ 
+                               Objective                         Max
+Iteration    Evaluations        Function          Change    Gradient
+
+        0              4    483.55903028       .            18.65974
+        1              4     446.6618154     36.89721488    14.63195
+        2              5     430.2967104     16.36510500    10.93182
+        3              5    427.86149052      2.43521988    12.34361
+        4              2    426.16528163      1.69620890    8.094057
+        5              3    425.56874743      0.59653420    3.517822
+        6              2    424.91919206      0.64955537    2.492626
+        7              3      424.731766      0.18742606    2.110784
+        8              3    424.66856966      0.06319634    1.417574
+        9              2    424.63858357      0.02998609    1.468348
+       10              2    424.60787324      0.03071033    1.174872
+       11              2     424.5593949      0.04847834    0.601039
+       12              3    424.55305379      0.00634111    0.316659
+       13              2    424.54886941      0.00418438    0.170275
+       14              3    424.54696194      0.00190747    0.072622
+       15              3     424.5468178      0.00014413    0.019582
+       16              3    424.54680027      0.00001753    0.001888
+       17              3     424.5468002      0.00000007    0.000235
+
+                          Convergence criterion (GCONV=1E-8) satisfied.                           
+
+
+           Estimated R Matrix for Person 1
+ 
+ Row        Col1        Col2        Col3        Col4
+
+   1      5.4252      2.7092      3.8411      2.7151
+   2      2.7092      4.1906      2.9745      3.3137
+   3      3.8411      2.9745      6.2632      4.1332
+   4      2.7151      3.3137      4.1332      4.9862
+
+
+ Covariance Parameter Estimates
+ 
+Cov Parm    Subject      Estimate
+
+UN(1,1)     Person         5.4252
+UN(2,1)     Person         2.7092
+UN(2,2)     Person         4.1906
+UN(3,1)     Person         3.8411
+UN(3,2)     Person         2.9745
+UN(3,3)     Person         6.2632
+UN(4,1)     Person         2.7151
+UN(4,2)     Person         3.3137
+UN(4,3)     Person         4.1332
+UN(4,4)     Person         4.9862
+
+
+            Fit Statistics
+
+-2 Res Log Likelihood         424.54680
+AIC  (Smaller is Better)      444.54680
+AICC (Smaller is Better)      446.91239
+BIC  (Smaller is Better)      457.50517
+CAIC (Smaller is Better)      467.50517
+HQIC (Smaller is Better)      448.40000
+
+
+        Type III Tests of Fixed Effects
+ 
+               Num      Den
+Effect          DF       DF    F Value    Pr > F
+
+Gender           1      104       1.08    0.3011
+Age              1      104     102.35    <.0001
+Age*Gender       1      104       7.40    0.0076
+
+The HPMIXED Procedure
+
+                        Model Information
+
+Data Set                     WORK.PR                             
+Response Variable            y                                   
+Estimation Method            Restricted Maximum Likelihood (REML)
+Degrees of Freedom Method    Residual                            
+
+
+                     Class Level Information
+ 
+Class     Levels    Values
+
+Person        27    1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 
+                    19 20 ...                                    
+Gender         2    F M                                          
+Time           4    1 2 3 4                                      
+
+
+Number of Observations Read         108
+Number of Observations Used         108
+
+
+              Dimensions
+
+G-side Cov. Parameters               0
+R-side Cov. Parameters               2
+Columns in X                         6
+Columns in Z per Subject             0
+Subjects (Blocks in V)              27
+
+
+           Optimization Information
+
+Optimization Technique        Dual Quasi-Newton
+Parameters in Optimization    1                
+Lower Boundaries              1                
+Upper Boundaries              1                
+Residual Variance             Profiled         
+
+
+                          Iteration History
+ 
+                               Objective                         Max
+Iteration    Evaluations        Function          Change    Gradient
+
+        0              4    483.55911746       .            99.37254
+        1              2    446.86395019     36.69516727    34.42981
+        2              3    444.61529288      2.24865730    4.250357
+        3              2    444.58866404      0.02662884    0.903898
+        4              2    444.58744917      0.00121487    0.019993
+        5              2    444.58744858      0.00000060    0.000092
+
+                          Convergence criterion (GCONV=1E-8) satisfied.                           
+
+
+           Estimated R Matrix for Person 1
+ 
+ Row        Col1        Col2        Col3        Col4
+
+   1      5.2144      3.2563      2.0335      1.2699
+   2      3.2563      5.2144      3.2563      2.0335
+   3      2.0335      3.2563      5.2144      3.2563
+   4      1.2699      2.0335      3.2563      5.2144
+
+
+ Covariance Parameter Estimates
+ 
+Cov Parm    Subject      Estimate
+
+AR(1)       Person         0.6245
+Residual                   5.2144
+
+
+            Fit Statistics
+
+-2 Res Log Likelihood         444.58745
+AIC  (Smaller is Better)      448.58745
+AICC (Smaller is Better)      448.70626
+BIC  (Smaller is Better)      451.17912
+CAIC (Smaller is Better)      453.17912
+HQIC (Smaller is Better)      449.35809

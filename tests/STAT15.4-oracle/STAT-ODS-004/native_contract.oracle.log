@@ -1,0 +1,50 @@
+The SAS System
+
+1608       
+1609       /* STAT-ODS-004: ODS — The SAS Results Window / The ODS PATH Statement
+1610        * Source: S154 / Chapter 23 / `The SAS Results Window` (PDF pp. 592–594); S154 / Chapter 23 / `The ODS PATH Statement` (PDF p. 594).
+1611        * Discriminates: ODS object paths, TRACE names and table selection
+1612        */
+1613       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+1613     ! validmemname=compatible locale=en_US;
+1614       %let syscc=0;
+1615       title; footnote;
+1616       ods _all_ close;
+1617       ods listing gpath="%sysfunc(pathname(work))";
+1618       ods graphics off;
+1619       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SAMPLE (memtype=DATA).
+1619     !                                         quit;
+
+
+1620       ods path work.templat(update) sashelp.tmplmst(read);
+1621       
+1622       data sample;
+1623        input x z y group $ weight freq;
+1624        datalines;
+
+NOTE: The data set WORK.SAMPLE has 12 observations and 6 variables.
+
+1637       ;
+1638       run;
+1639       ods trace on; ods select ParameterEstimates; proc reg data=sample; model y=x z; run; quit; ods select all; ods trace off;
+
+
+Output Added:
+-------------
+Name:       ParameterEstimates
+Label:      Parameter Estimates
+Template:   Stat.REG.ParameterEstimates
+Path:       Reg.MODEL1.Fit.y.ParameterEstimates
+-------------
+NOTE: The PROCEDURE REG printed page 81.
+
+1640       
+1641       
+1642       
+1643       
+The SAS System
+
+1644       

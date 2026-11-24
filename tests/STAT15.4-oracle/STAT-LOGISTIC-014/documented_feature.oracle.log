@@ -1,0 +1,91 @@
+The SAS System
+
+14468      
+14469      /* STAT-LOGISTIC-014: LOGISTIC — CONTRAST / ESTIMATE / TEST
+14470       * Source: S154 / Chapter 79 / `CONTRAST Statement` (PDF pp. 5855–5858); S154 / Chapter 79 / `ESTIMATE Statement` (PDF pp. 5860–5861); S154 /
+14470    ! Chapter 79 / `TEST Statement` (PDF pp. 5902–5903).
+14471       * Discriminates: Example 79.2: Logistic Modeling with Categorical Predictors; explicit statements: CONTRAST, ESTIMATE
+14472       */
+14473      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+14473    ! validmemname=compatible locale=en_US;
+14474      %let syscc=0;
+14475      title; footnote;
+14476      ods _all_ close;
+14477      ods listing gpath="%sysfunc(pathname(work))";
+14478      ods graphics off;
+14479      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.DATA1 (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+14479    !                                         quit;
+
+
+14480      ods path work.templat(update) sashelp.tmplmst(read);
+14481      
+14482      data Neuralgia;
+14483      input Treatment $ Sex $ Age Duration Pain $ @@;
+14484      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.NEURALGIA has 60 observations and 5 variables.
+
+14505      ;
+14506      proc logistic data=Neuralgia;
+14507      class Treatment Sex;
+14508      model Pain= Treatment Sex Treatment*Sex Age Duration / expb;
+14509      run;
+
+NOTE: PROC LOGISTIC is modeling the probability that Pain='No'. One way to change this to model the probability that Pain='Yes' is to specify the response 
+      variable option EVENT='Yes'.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: Under full-rank parameterizations, Type 3 effect tests are replaced by joint tests. The joint test for an effect is a test that all the parameters 
+      associated with that effect are zero. Such joint tests might not be equivalent to Type 3 effect tests under GLM parameterization.
+NOTE: There were 60 observations read from the data set WORK.NEURALGIA.
+NOTE: The PROCEDURE LOGISTIC printed page 1212.
+
+14510      proc logistic data=Neuralgia;
+14511      class Treatment Sex;
+14512      model Pain=Treatment|Sex@2 Age Duration
+14513      /selection=forward expb;
+14514      run;
+
+NOTE: PROC LOGISTIC is modeling the probability that Pain='No'. One way to change this to model the probability that Pain='Yes' is to specify the response 
+      variable option EVENT='Yes'.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied in Step 0.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied in Step 1.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied in Step 2.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied in Step 3.
+NOTE: There were 60 observations read from the data set WORK.NEURALGIA.
+NOTE: The PROCEDURE LOGISTIC printed page 1213.
+
+14515      ods graphics on;
+14516      proc logistic data=Neuralgia plots(only)=(oddsratio(range=clip));
+14517      class Treatment Sex /param=ref;
+14518      model Pain= Treatment Sex Age / noor;
+14519      oddsratio Treatment;
+14520      oddsratio Sex;
+14521      oddsratio Age;
+14522      contrast 'Pairwise A vs P' Treatment 1 0 / estimate=exp;
+14523      contrast 'Pairwise B vs P' Treatment 0 1 / estimate=exp;
+14524      contrast 'Pairwise A vs B' Treatment 1 -1 / estimate=exp;
+14525      contrast 'Female vs Male' Sex 1 / estimate=exp;
+14526      effectplot / at(Sex=all) noobs;
+14527      effectplot slicefit(sliceby=Sex plotby=Treatment) / noobs;
+14528      run;
+
+NOTE: PROC LOGISTIC is modeling the probability that Pain='No'. One way to change this to model the probability that Pain='Yes' is to specify the response 
+      variable option EVENT='Yes'.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: There were 60 observations read from the data set WORK.NEURALGIA.
+NOTE: The PROCEDURE LOGISTIC printed page 1214.
+
+14529      
+14530      
+14531      
+14532      
+The SAS System
+
+14533      

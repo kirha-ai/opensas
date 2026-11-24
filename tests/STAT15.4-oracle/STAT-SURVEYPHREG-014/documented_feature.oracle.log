@@ -1,0 +1,62 @@
+The SAS System
+
+23344      
+23345      /* STAT-SURVEYPHREG-014: SURVEYPHREG — Testing the Global Null Hypothesis / Confidence Intervals
+23346       * Source: S154 / Chapter 122 / `Testing the Global Null Hypothesis` (PDF pp. 10069–10070); S154 / Chapter 122 / `Confidence Intervals` (PDF p.
+23346    ! 10071).
+23347       * Discriminates: Verified default procedure context
+23348       */
+23349      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+23349    ! validmemname=compatible locale=en_US;
+23350      %let syscc=0;
+23351      title; footnote;
+23352      ods _all_ close;
+23353      ods listing gpath="%sysfunc(pathname(work))";
+23354      ods graphics off;
+23355      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SURVEY (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+23355    !                                         quit;
+
+
+23356      ods path work.templat(update) sashelp.tmplmst(read);
+23357      
+23358      data survey;
+23359      call streaminit(722);
+23360      do stratum=1 to 2;
+23361      do cluster=1 to 4;
+23362      do id=1 to 12;
+23363      age=20+mod(id*7+cluster,45);
+23364      time=1+rand('exponential')*10;
+23365      status=(mod(id,4) ne 0);
+23366      weight=2+stratum+cluster/10;
+23367      output;
+23368      end;
+23369      end;
+23370      end;
+23371      run;
+
+NOTE: The data set WORK.SURVEY has 96 observations and 7 variables.
+
+23372      proc surveyphreg data=survey;
+23373      strata stratum;
+23374      cluster cluster;
+23375      weight weight;
+23376      model time*status(0)=age;
+23377      run;
+
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The PROCEDURE SURVEYPHREG printed page 1507.
+
+23378      
+23379      
+23380      
+23381      
+The SAS System
+
+23382      

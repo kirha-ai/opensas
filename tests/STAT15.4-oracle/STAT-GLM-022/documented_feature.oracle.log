@@ -1,0 +1,62 @@
+The SAS System
+
+26481      
+26482      /* STAT-GLM-022: GLM — Official examples and feature integration regression
+26483       * Source: S154 / Chapter 53 / `Examples: GLM Procedure` (PDF pp. 4172–4224).
+26484       * Discriminates: Example 53.2: Regression with Mileage Data
+26485       */
+26486      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+26486    ! validmemname=compatible locale=en_US;
+26487      %let syscc=0;
+26488      title; footnote;
+26489      ods _all_ close;
+26490      ods listing gpath="%sysfunc(pathname(work))";
+26491      ods graphics off;
+
+NOTE: The PROCEDURE GLM printed pages 2622-2623.
+
+26492      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.EXP (memtype=DATA).
+NOTE: Deleting WORK.IRON (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+26492    !                                         quit;
+
+
+26493      ods path work.templat(update) sashelp.tmplmst(read);
+26494      
+26495      title 'Gasoline Mileage Experiment';
+26496      data mileage;
+26497      input mph mpg @@;
+26498      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.MILEAGE has 8 observations and 2 variables.
+
+26505      ;
+26506      ods graphics on;
+26507      proc glm;
+26508      model mpg=mph mph*mph / p clm;
+26509      run;
+
+26510      ods graphics off;
+26511      run;
+
+26512      quit;
+
+NOTE: The PROCEDURE GLM printed pages 2624-2626.
+
+26513      
+26514      
+26515      
+26516      
+The SAS System
+
+26517      

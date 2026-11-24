@@ -1,0 +1,53 @@
+
+The HPSPLIT Procedure
+
+      Performance Information
+
+Execution Mode       Single-Machine
+Number of Threads    2             
+
+
+             Data Access Information
+ 
+Data                Engine    Role      Path
+
+SASHELP.BASEBALL    V9        Input     On Client
+WORK.HPSPLOUT       V9        Output    On Client
+
+
+                   Model Information
+
+Split Criterion Used                           Variance
+Pruning Method                          Cost-Complexity
+Subtree Evaluation Criterion            Cost-Complexity
+Number of Branches                                    2
+Maximum Tree Depth Requested                         10
+Maximum Tree Depth Achieved                          10
+Tree Depth                                            5
+Number of Leaves Before Pruning                     168
+Number of Leaves After Pruning                        8
+
+
+Number of Observations Read                    322
+Number of Observations Used                    263
+
+The HPSPLIT Procedure
+
+Model-Based Fit Statistics for Selected Tree
+ 
+      N
+ Leaves           ASE           RSS
+
+      8        0.1443       37.9587
+
+
+                         Variable Importance
+ 
+            Variable                       Training
+Variable    Label                   Relative    Importance      Count
+
+CrAtBat     Career Times at Bat       1.0000       11.2539          1
+nBB         Walks in 1986             0.3546        3.9905          2
+CrRbi       Career RBIs               0.3414        3.8415          2
+nAtBat      Times at Bat in 1986      0.2168        2.4397          1
+CrRuns      Career Runs               0.2161        2.4316          1

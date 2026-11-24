@@ -1,0 +1,58 @@
+The SAS System
+
+5512       
+5513       /* STAT-NESTED-006: NESTED — Official examples and feature integration regression
+5514        * Source: S154 / Chapter 87 / `Getting Started: NESTED Procedure` (PDF pp. 6967–6969); S154 / Chapter 87 / `Overview: NESTED Procedure` (PDF pp.
+5514     ! 6966–6967).
+5515        * Discriminates: Getting Started: NESTED Procedure
+5516        */
+5517       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+5517     ! validmemname=compatible locale=en_US;
+5518       %let syscc=0;
+5519       title; footnote;
+5520       ods _all_ close;
+5521       ods listing gpath="%sysfunc(pathname(work))";
+5522       ods graphics off;
+5523       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.AUTO (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+5523     !                                         quit;
+
+
+5524       ods path work.templat(update) sashelp.tmplmst(read);
+5525       
+5526       data auto;
+5527       input Make $ Model Score @@;
+5528       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.AUTO has 36 observations and 3 variables.
+
+5541       ;
+5542       proc sort data=auto;
+5543       by Make Model;
+5544       run;
+
+NOTE: There were 36 observations read from the data set WORK.AUTO.
+NOTE: The data set WORK.AUTO has 36 observations and 3 variables.
+
+5545       title1 'Reliability of Automobile Models';
+5546       proc nested data=auto;
+5547       class Make Model;
+5548       var Score;
+5549       run;
+
+NOTE: The PROCEDURE NESTED printed page 376.
+
+5550       
+5551       
+5552       
+5553       
+The SAS System
+
+5554       

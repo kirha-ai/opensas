@@ -1,0 +1,65 @@
+The SAS System
+
+1073       
+1074       /* STAT-GLMSELECT-001: GLMSELECT — Data input, variable roles, and basic options
+1075        * Source: S154 / Chapter 56 / `PROC GLMSELECT Statement` (PDF pp. 4324–4332); S154 / Chapter 56 / `BY Statement` (PDF p. 4332); S154 / Chapter 56
+1075     ! / `FREQ Statement` (PDF p. 4337); S154 / Chapter 56 / `WEIGHT Statement` (PDF pp. 4356–4357).
+1076        * Discriminates: Two explicit BY groups contain identical inputs, exposing group boundaries and per-group results.
+1077        */
+1078       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+1078     ! validmemname=compatible locale=en_US;
+1079       %let syscc=0;
+1080       title; footnote;
+1081       ods _all_ close;
+1082       ods listing gpath="%sysfunc(pathname(work))";
+1083       ods graphics off;
+1084       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.EXEMPLARY (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK._ORACLE_INPUT (memtype=DATA).
+1084     !                                         quit;
+
+
+1085       ods path work.templat(update) sashelp.tmplmst(read);
+1086       
+1087       proc contents varnum data=sashelp.baseball;
+1088       ods select position;
+1089       run;
+
+NOTE: The PROCEDURE CONTENTS printed page 58.
+
+1090       ods graphics on;
+1091       data _oracle_input; set sashelp.baseball; do _oracle_by=1 to 2; output; end; run;
+
+NOTE: There were 322 observations read from the data set SASHELP.BASEBALL.
+NOTE: The data set WORK._ORACLE_INPUT has 644 observations and 25 variables.
+
+1092       proc sort data=_oracle_input; by _oracle_by; run;
+
+NOTE: There were 644 observations read from the data set WORK._ORACLE_INPUT.
+NOTE: The data set WORK._ORACLE_INPUT has 644 observations and 25 variables.
+
+1093       proc glmselect data=_oracle_input plots=all seed=314159;
+1094       by _oracle_by;
+1095       class league division;
+1096       model logSalary = nAtBat nHits nHome nRuns nRBI nBB
+1097       yrMajor crAtBat crHits crHome crRuns crRbi
+1098       crBB league division nOuts nAssts nError
+1099       / details=all stats=all;
+1100       run;
+
+NOTE: There were 644 observations read from the data set WORK._ORACLE_INPUT.
+NOTE: The PROCEDURE GLMSELECT printed pages 59-77.
+
+1101       quit;
+1102       
+1103       
+1104       
+1105       
+The SAS System
+
+1106       

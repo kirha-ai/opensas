@@ -1,0 +1,154 @@
+The SAS System
+
+24167      
+24168      /* STAT-GLIMMIX-015: GLIMMIX — NLOPTIONS / PARMS
+24169       * Source: S154 / Chapter 52 / `NLOPTIONS Statement` (PDF pp. 3786–3787); S154 / Chapter 52 / `PARMS Statement` (PDF pp. 3791–3796).
+24170       * Discriminates: Example 52.10: Multiple Trends Correspond to Multiple Extrema in Profile Likelihoods; explicit statements: PARMS
+24171       */
+24172      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+24172    ! validmemname=compatible locale=en_US;
+24173      %let syscc=0;
+24174      title; footnote;
+24175      ods _all_ close;
+24176      ods listing gpath="%sysfunc(pathname(work))";
+24177      ods graphics off;
+24178      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.MULTICENTER (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+24178    !                                         quit;
+
+
+24179      ods path work.templat(update) sashelp.tmplmst(read);
+24180      
+24181      proc print data=Sashelp.enso(obs=10);
+24182      run;
+
+NOTE: There were 10 observations read from the data set SASHELP.ENSO.
+NOTE: The PROCEDURE PRINT printed page 2424.
+
+24183      data tdata;
+24184      do covp1=0,0.0005,0.05,0.1,0.2,0.5,
+24185      1,2,3,4,5,6,8,10,15,20,50,
+24186      75,100,125,140,150,160,175,
+24187      200,225,250,275,300,350;
+24188      output;
+24189      end;
+24190      run;
+
+NOTE: The data set WORK.TDATA has 30 observations and 1 variables.
+
+24191      ods select FitStatistics CovParms CovTests;
+24192      proc glimmix data=sashelp.enso noprofile;
+24193      model pressure = year;
+24194      random year / type=rsmooth knotmethod=equal(50);
+24195      parms (2) (10);
+24196      covtest tdata=tdata / parms;
+24197      ods output covtests=ct;
+24198      run;
+
+
+
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The data set WORK.CT has 30 observations and 8 variables.
+NOTE: The PROCEDURE GLIMMIX printed page 2425.
+
+24199      proc sgplot data=ct;
+24200      series y=objective x=covp1;
+24201      run;
+
+NOTE: Listing image output written to /saswork/SAS_work5D120001108E_odaws02-euw1.oda.sas.com/SAS_workCCDC0001108E_odaws02-euw1.oda.sas.com/SGPlot14.png.
+NOTE: There were 30 observations read from the data set WORK.CT.
+
+24202      proc glimmix data=sashelp.enso;
+24203      model pressure = year;
+24204      random year / type=rsmooth knotmethod=equal(50);
+24205      parms (0) (10);
+24206      output out=gmxout1 pred=pred1;
+24207      run;
+
+
+
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: At least one element of the gradient is greater than 1e-3.
+NOTE: The data set WORK.GMXOUT1 has 168 observations and 4 variables.
+NOTE: The PROCEDURE GLIMMIX printed page 2426.
+
+24208      proc glimmix data=sashelp.enso;
+24209      model pressure = year;
+24210      random year / type=rsmooth knotmethod=equal(50);
+24211      output out=gmxout2 pred=pred2;
+24212      parms (2) (10);
+24213      run;
+
+
+
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The data set WORK.GMXOUT2 has 168 observations and 4 variables.
+NOTE: The PROCEDURE GLIMMIX printed page 2427.
+
+24214      proc glimmix data=sashelp.enso;
+24215      model pressure = year;
+24216      random year / type=rsmooth knotmethod=equal(50);
+24217      output out=gmxout3 pred=pred3;
+24218      parms (200) (10);
+24219      run;
+
+
+
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The data set WORK.GMXOUT3 has 168 observations and 4 variables.
+NOTE: The PROCEDURE GLIMMIX printed page 2428.
+
+24220      data plotthis;
+24221      merge gmxout1 gmxout2 gmxout3;
+24222      run;
+
+NOTE: There were 168 observations read from the data set WORK.GMXOUT1.
+NOTE: There were 168 observations read from the data set WORK.GMXOUT2.
+NOTE: There were 168 observations read from the data set WORK.GMXOUT3.
+NOTE: The data set WORK.PLOTTHIS has 168 observations and 6 variables.
+
+24223      proc sgplot data=plotthis;
+24224      scatter x=year y=Pressure;
+24225      series x=year y=pred1 /
+24226      lineattrs = (pattern=solid thickness=2)
+24227      legendlabel = "Var[RSmooth] = 0.0005"
+24228      name = "pred1";
+24229      series x=year y=pred2 /
+24230      lineattrs = (pattern=dot thickness=2)
+24231      legendlabel = "Var[RSmooth] = 3.5719"
+24232      name = "pred2";
+24233      series x=year y=pred3 /
+24234      lineattrs = (pattern=dash thickness=2)
+24235      legendlabel = "Var[RSmooth] = 186.71"
+24236      name = "pred3";
+24237      keylegend "pred1" "pred2" "pred3" / across=2;
+24238      run;
+
+NOTE: Listing image output written to /saswork/SAS_work5D120001108E_odaws02-euw1.oda.sas.com/SAS_workCCDC0001108E_odaws02-euw1.oda.sas.com/SGPlot15.png.
+NOTE: There were 168 observations read from the data set WORK.PLOTTHIS.
+
+24239      data foot_mv;
+24240      input yr b1 b2 b3 k1 k2 k3;
+24241      sire = _n_;
+24242      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.FOOT_MV has 30 observations and 8 variables.
+
+24274      run;
+24275      quit;
+24276      
+24277      
+24278      
+24279      
+The SAS System
+
+24280      

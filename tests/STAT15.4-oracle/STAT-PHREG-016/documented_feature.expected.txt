@@ -1,0 +1,494 @@
+
+The PHREG Procedure
+
+                      Model Information
+
+Data Set                 WORK.VALUNG                          
+Dependent Variable       Time            time to death in days
+Censoring Variable       Status                               
+Censoring Value(s)       0                                    
+Ties Handling            BRESLOW                              
+
+
+Number of Observations Read         137
+Number of Observations Used         137
+
+
+         Class Level Information
+ 
+Class       Value        Design Variables
+
+Prior       no            0              
+            yes           1              
+
+Cell        adeno         1      0      0
+            large         0      0      0
+            small         0      1      0
+            squamous      0      0      1
+
+Therapy     standard      0              
+            test          1              
+
+
+Summary of the Number of Event and Censored Values
+ 
+                                     Percent
+   Total       Event    Censored    Censored
+
+     137         128           9        6.57
+
+
+                       Convergence Status
+
+         Convergence criterion (GCONV=1E-8) satisfied.          
+
+
+         Model Fit Statistics
+ 
+                 Without           With
+Criterion     Covariates     Covariates
+
+-2 LOG L        1011.768        946.136
+AIC             1011.768        964.136
+SBC             1011.768        989.804
+
+
+        Testing Global Null Hypothesis: BETA=0
+ 
+Test                 Chi-Square       DF     Pr > ChiSq
+
+Likelihood Ratio        65.6323        9         <.0001
+Score                   69.4702        9         <.0001
+Wald                    64.4258        9         <.0001
+
+
+                   Joint Tests
+ 
+                               Wald
+Effect             DF    Chi-Square    Pr > ChiSq
+
+Kps                 1       35.5051        <.0001
+Duration            1        0.1159        0.7335
+Age                 1        1.9772        0.1597
+Cell                3       18.5339        0.0003
+Prior               1        2.5296        0.1117
+Therapy             1        5.2349        0.0221
+Prior*Therapy       1        4.1528        0.0416
+
+NOTE: Under full-rank parameterizations, Type 3 effect tests are replaced by joint tests.  The joint test for an effect is a test that all of the parameters 
+      associated with that effect are zero.  Such joint tests might not be equivalent to Type 3 effect tests under GLM parameterization.
+
+
+                                                       Analysis of Maximum Likelihood Estimates
+ 
+                                          Parameter      Standard                                  Hazard
+Parameter                          DF      Estimate         Error    Chi-Square    Pr > ChiSq       Ratio    Label
+
+Kps                                 1      -0.03300       0.00554       35.5051        <.0001       0.968    Karnofsky performance scale               
+Duration                            1       0.00323       0.00949        0.1159        0.7335       1.003    months from diagnosis to randomization    
+Age                                 1      -0.01353       0.00962        1.9772        0.1597       0.987    age in years                              
+Cell          adeno                 1       0.78356       0.30382        6.6512        0.0099       2.189    cell type adeno                           
+Cell          small                 1       0.48230       0.26537        3.3032        0.0691       1.620    cell type small                           
+Cell          squamous              1      -0.40770       0.28363        2.0663        0.1506       0.665    cell type squamous                        
+Prior         yes                   1       0.45914       0.28868        2.5296        0.1117        .       prior therapy yes                         
+Therapy       test                  1       0.56662       0.24765        5.2349        0.0221        .       type of treatment test                    
+Prior*Therapy yes      test         1      -0.87579       0.42976        4.1528        0.0416        .       prior therapy yes * type of treatment test
+
+The PHREG Procedure
+
+                      Model Information
+
+Data Set                 WORK.VALUNG                          
+Dependent Variable       Time            time to death in days
+Censoring Variable       Status                               
+Censoring Value(s)       0                                    
+Ties Handling            BRESLOW                              
+
+
+Number of Observations Read         137
+Number of Observations Used         137
+
+
+         Class Level Information
+ 
+Class       Value        Design Variables
+
+Prior       no            0              
+            yes           1              
+
+Cell        adeno         1      0      0
+            large         0      0      0
+            small         0      1      0
+            squamous      0      0      1
+
+Therapy     standard      0              
+            test          1              
+
+
+Summary of the Number of Event and Censored Values
+ 
+                                     Percent
+   Total       Event    Censored    Censored
+
+     137         128           9        6.57
+
+Step 0. The model contains the following effects:
+
+         Kps  Duration  Age  Cell  Prior  Therapy  Prior*Therapy  
+
+
+                       Convergence Status
+
+         Convergence criterion (GCONV=1E-8) satisfied.          
+
+
+         Model Fit Statistics
+ 
+                 Without           With
+Criterion     Covariates     Covariates
+
+-2 LOG L        1011.768        946.136
+AIC             1011.768        964.136
+SBC             1011.768        989.804
+
+
+        Testing Global Null Hypothesis: BETA=0
+ 
+Test                 Chi-Square       DF     Pr > ChiSq
+
+Likelihood Ratio        65.6323        9         <.0001
+Score                   69.4702        9         <.0001
+Wald                    64.4258        9         <.0001
+
+
+Step 1. Effect Duration is removed. The model contains the following effects:
+
+         Kps  Age  Cell  Prior  Therapy  Prior*Therapy  
+
+
+                       Convergence Status
+
+         Convergence criterion (GCONV=1E-8) satisfied.          
+
+
+         Model Fit Statistics
+ 
+                 Without           With
+Criterion     Covariates     Covariates
+
+-2 LOG L        1011.768        946.247
+AIC             1011.768        962.247
+SBC             1011.768        985.064
+
+
+        Testing Global Null Hypothesis: BETA=0
+ 
+Test                 Chi-Square       DF     Pr > ChiSq
+
+Likelihood Ratio        65.5205        8         <.0001
+Score                   69.0631        8         <.0001
+Wald                    64.3246        8         <.0001
+
+
+Step 2. Effect Age is removed. The model contains the following effects:
+
+         Kps  Cell  Prior  Therapy  Prior*Therapy  
+
+
+                       Convergence Status
+
+         Convergence criterion (GCONV=1E-8) satisfied.          
+
+
+         Model Fit Statistics
+ 
+                 Without           With
+Criterion     Covariates     Covariates
+
+-2 LOG L        1011.768        948.240
+AIC             1011.768        962.240
+SBC             1011.768        982.205
+
+
+        Testing Global Null Hypothesis: BETA=0
+ 
+Test                 Chi-Square       DF     Pr > ChiSq
+
+Likelihood Ratio        63.5276        7         <.0001
+Score                   68.7007        7         <.0001
+Wald                    65.5297        7         <.0001
+
+
+NOTE: No (additional) effects met the 0.1 level for removal from the model.
+
+
+                   Joint Tests
+ 
+                               Wald
+Effect             DF    Chi-Square    Pr > ChiSq
+
+Kps                 1       35.9218        <.0001
+Cell                3       17.4134        0.0006
+Prior               1        2.3113        0.1284
+Therapy             1        3.8030        0.0512
+Prior*Therapy       1        2.9269        0.0871
+
+NOTE: Under full-rank parameterizations, Type 3 effect tests are replaced by joint tests.  The joint test for an effect is a test that all of the parameters 
+      associated with that effect are zero.  Such joint tests might not be equivalent to Type 3 effect tests under GLM parameterization.
+
+
+                                                       Analysis of Maximum Likelihood Estimates
+ 
+                                          Parameter      Standard                                  Hazard
+Parameter                          DF      Estimate         Error    Chi-Square    Pr > ChiSq       Ratio    Label
+
+Kps                                 1      -0.03111       0.00519       35.9218        <.0001       0.969    Karnofsky performance scale               
+Cell          adeno                 1       0.74907       0.30465        6.0457        0.0139       2.115    cell type adeno                           
+Cell          small                 1       0.44265       0.26168        2.8614        0.0907       1.557    cell type small                           
+Cell          squamous              1      -0.41145       0.28309        2.1125        0.1461       0.663    cell type squamous                        
+Prior         yes                   1       0.41755       0.27465        2.3113        0.1284        .       prior therapy yes                         
+Therapy       test                  1       0.45670       0.23419        3.8030        0.0512        .       type of treatment test                    
+Prior*Therapy yes      test         1      -0.69443       0.40590        2.9269        0.0871        .       prior therapy yes * type of treatment test
+
+
+                                       Summary of Backward Elimination
+ 
+        Effect                   Number          Wald                  Effect
+Step    Removed            DF        In    Chi-Square    Pr > ChiSq    Label 
+
+   1    Duration            1         6        0.1159        0.7335    months from diagnosis to randomization
+   2    Age                 1         5        2.0458        0.1526    age in years                          
+
+The PHREG Procedure
+
+                      Model Information
+
+Data Set                 WORK.VALUNG                          
+Dependent Variable       Time            time to death in days
+Censoring Variable       Status                               
+Censoring Value(s)       0                                    
+Ties Handling            BRESLOW                              
+
+
+Number of Observations Read         137
+Number of Observations Used         137
+
+
+         Class Level Information
+ 
+Class       Value        Design Variables
+
+Prior       no            0              
+            yes           1              
+
+Cell        adeno         1      0      0
+            large         0      0      0
+            small         0      1      0
+            squamous      0      0      1
+
+Therapy     standard      0              
+            test          1              
+
+
+Summary of the Number of Event and Censored Values
+ 
+                                     Percent
+   Total       Event    Censored    Censored
+
+     137         128           9        6.57
+
+
+                       Convergence Status
+
+         Convergence criterion (GCONV=1E-8) satisfied.          
+
+
+         Model Fit Statistics
+ 
+                 Without           With
+Criterion     Covariates     Covariates
+
+-2 LOG L        1011.768        948.240
+AIC             1011.768        962.240
+SBC             1011.768        982.205
+
+
+        Testing Global Null Hypothesis: BETA=0
+ 
+Test                 Chi-Square       DF     Pr > ChiSq
+
+Likelihood Ratio        63.5276        7         <.0001
+Score                   68.7007        7         <.0001
+Wald                    65.5297        7         <.0001
+
+
+                   Joint Tests
+ 
+                               Wald
+Effect             DF    Chi-Square    Pr > ChiSq
+
+Kps                 1       35.9218        <.0001
+Cell                3       17.4134        0.0006
+Prior               1        2.3113        0.1284
+Therapy             1        3.8030        0.0512
+Prior*Therapy       1        2.9269        0.0871
+
+NOTE: Under full-rank parameterizations, Type 3 effect tests are replaced by joint tests.  The joint test for an effect is a test that all of the parameters 
+      associated with that effect are zero.  Such joint tests might not be equivalent to Type 3 effect tests under GLM parameterization.
+
+
+                                                       Analysis of Maximum Likelihood Estimates
+ 
+                                          Parameter      Standard                                  Hazard
+Parameter                          DF      Estimate         Error    Chi-Square    Pr > ChiSq       Ratio    Label
+
+Kps                                 1      -0.03111       0.00519       35.9218        <.0001       0.969    Karnofsky performance scale               
+Cell          adeno                 1       0.74907       0.30465        6.0457        0.0139       2.115    cell type adeno                           
+Cell          small                 1       0.44265       0.26168        2.8614        0.0907       1.557    cell type small                           
+Cell          squamous              1      -0.41145       0.28309        2.1125        0.1461       0.663    cell type squamous                        
+Prior         yes                   1       0.41755       0.27465        2.3113        0.1284        .       prior therapy yes                         
+Therapy       test                  1       0.45670       0.23419        3.8030        0.0512        .       type of treatment test                    
+Prior*Therapy yes      test         1      -0.69443       0.40590        2.9269        0.0871        .       prior therapy yes * type of treatment test
+
+
+           H1: Hazard Ratios for Karnofsky performance scale
+ 
+                                                        95% Profile
+                  Point     95% Wald Confidence         Likelihood
+Description    Estimate           Limits             Confidence Limits
+
+Kps Unit=10       0.733       0.662       0.811       0.662       0.811
+
+
+                           H2: Hazard Ratios for cell type
+ 
+                                                                      95% Profile
+                                Point     95% Wald Confidence         Likelihood
+Description                  Estimate           Limits             Confidence Limits
+
+Cell adeno vs large             2.115       1.164       3.843       1.162       3.855
+Cell adeno vs small             1.359       0.798       2.312       0.791       2.301
+Cell adeno vs squamous          3.192       1.773       5.746       1.770       5.768
+Cell large vs small             0.642       0.385       1.073       0.380       1.065
+Cell large vs squamous          1.509       0.866       2.628       0.863       2.634
+Cell small vs squamous          2.349       1.387       3.980       1.399       4.030
+
+
+                               H3: Hazard Ratios for type of treatment
+ 
+                                                                                      95% Profile
+                                                Point     95% Wald Confidence         Likelihood
+Description                                  Estimate           Limits             Confidence Limits
+
+Therapy test vs standard At Prior=no            1.579       0.998       2.499       0.998       2.506
+Therapy test vs standard At Prior=yes           0.788       0.396       1.568       0.390       1.560
+
+
+           Contrast Test Results
+ 
+                          Wald
+Contrast      DF    Chi-Square    Pr > ChiSq
+
+C1             1       35.9218        <.0001
+C2             3       17.4134        0.0006
+C3             2        4.5024        0.1053
+
+
+                                  Contrast Estimation and Testing Results by Row
+ 
+                                            Standard                                            Wald
+Contrast    Type         Row    Estimate       Error     Alpha      Confidence Limits     Chi-Square    Pr > ChiSq
+
+C1          EXP            1      0.7326      0.0380      0.05      0.6618      0.8111       35.9218        <.0001
+C2          EXP            1      2.1150      0.6443      0.05      1.1641      3.8427        6.0457        0.0139
+C2          EXP            2      1.3586      0.3686      0.05      0.7982      2.3122        1.2755        0.2587
+C2          EXP            3      3.1916      0.9575      0.05      1.7727      5.7462       14.9629        0.0001
+C2          EXP            4      0.6423      0.1681      0.05      0.3846      1.0728        2.8614        0.0907
+C2          EXP            5      1.5090      0.4272      0.05      0.8664      2.6282        2.1125        0.1461
+C2          EXP            6      2.3493      0.6318      0.05      1.3868      3.9797       10.0858        0.0015
+C3          EXP            1      1.5789      0.3698      0.05      0.9977      2.4985        3.8030        0.0512
+C3          EXP            2      0.7884      0.2766      0.05      0.3964      1.5680        0.4593        0.4980
+
+The PHREG Procedure
+
+                    Model Information
+
+Data Set                 WORK.MYELOMA2                   
+Dependent Variable       Time              Survival Time 
+Censoring Variable       VStatus           0=Alive 1=Dead
+Censoring Value(s)       0                               
+Ties Handling            BRESLOW                         
+
+
+Number of Observations Read          65
+Number of Observations Used          65
+
+
+Summary of the Number of Event and Censored Values
+ 
+                                     Percent
+   Total       Event    Censored    Censored
+
+      65          48          17       26.15
+
+
+                          Maximum Likelihood Iteration History
+ 
+Iter        Ridge      Log Likelihood           LogBUN              HGB        Contrived
+
+   0            0     -154.8579914384     0.0000000000      0.000000000      0.000000000
+   1            0     -140.6934052686     1.9948819671     -0.084318519      1.466331269
+   2            0     -137.7841629416     1.6794678962     -0.109067888      2.778361123
+   3            0     -136.9711897754     1.7140611684     -0.111564202      3.938095086
+   4            0     -136.7078932606     1.7181735043     -0.112273248      5.003053568
+   5            0     -136.6164264879     1.7187547532     -0.112369756      6.027435769
+   6            0     -136.5835200895     1.7188294108     -0.112382079      7.036444978
+   7            0     -136.5715152788     1.7188392687     -0.112383700      8.039763533
+   8            0     -136.5671126045     1.7188405904     -0.112383917      9.040984886
+   9            0     -136.5654947987     1.7188407687     -0.112383947     10.041434266
+  10            0     -136.5648998913     1.7188407928     -0.112383950     11.041599592
+  11            0     -136.5646810709     1.7188407960     -0.112383951     12.041660414
+  12            0     -136.5646005760     1.7188407965     -0.112383951     13.041682789
+  13            0     -136.5645709642     1.7188407965     -0.112383951     14.041691020
+  14            0     -136.5645600707     1.7188407965     -0.112383951     15.041694049
+  15            0     -136.5645560632     1.7188407965     -0.112383951     16.041695163
+  16            0     -136.5645545889     1.7188407965     -0.112383951     17.041695572
+
+
+         Last Evaluation of the Gradient
+ 
+      LogBUN               HGB         Contrived
+
+-5.999665E-8        4.63314E-7      8.5798933E-7
+
+
+         Convergence criterion (GCONV=1E-8) satisfied.          
+
+
+         Model Fit Statistics
+ 
+                 Without           With
+Criterion     Covariates     Covariates
+
+-2 LOG L         309.716        273.129
+AIC              309.716        279.129
+SBC              309.716        284.743
+
+
+        Testing Global Null Hypothesis: BETA=0
+ 
+Test                 Chi-Square       DF     Pr > ChiSq
+
+Likelihood Ratio        36.5869        3         <.0001
+Score                   25.9308        3         <.0001
+Wald                    11.5165        3         0.0092
+
+
+                     Analysis of Maximum Likelihood Estimates
+ 
+                    Parameter      Standard                                  Hazard
+Parameter    DF      Estimate         Error    Chi-Square    Pr > ChiSq       Ratio
+
+LogBUN        1       1.71884       0.58376        8.6697        0.0032       5.578
+HGB           1      -0.11238       0.06090        3.4053        0.0650       0.894
+Contrived     1      17.04170          1080        0.0002        0.9874    25183399

@@ -1,0 +1,126 @@
+
+The Probit Procedure
+
+           Model Information
+
+Data Set                  WORK.EPIDEMIC
+Events Variable                       r
+Trials Variable                       n
+Number of Observations               10
+Number of Events                   1011
+Number of Trials                   1204
+Name of Distribution             Normal
+Log Likelihood              -388.504465
+
+
+Number of Observations Read          10
+Number of Observations Used          10
+Number of Events                   1011
+Number of Trials                   1204
+
+
+  Class Level Information
+ 
+Name       Levels    Values
+
+treat           2    A B   
+sex             2    0 1   
+
+
+Algorithm converged.                                                       
+
+
+         Type III Analysis of Effects
+ 
+                             Wald
+Effect           DF    Chi-Square    Pr > ChiSq
+
+dose              1      120.1758        <.0001
+treat             1       18.0106        <.0001
+sex               1        1.5505        0.2131
+treat*sex         1       17.1968        <.0001
+
+
+          Analysis of Maximum Likelihood Parameter Estimates
+ 
+                          Standard   95% Confidence     Chi-
+Parameter     DF Estimate    Error       Limits       Square Pr > ChiSq
+
+Intercept      1  -0.2780   0.1557  -0.5832   0.0271    3.19     0.0741
+dose           1   1.3016   0.1187   1.0689   1.5343  120.18     <.0001
+treat     A    1  -0.9003   0.1307  -1.1566  -0.6441   47.43     <.0001
+treat     B    0   0.0000    .        .        .         .        .    
+sex       0    1  -0.2956   0.1816  -0.6515   0.0603    2.65     0.1035
+sex       1    0   0.0000    .        .        .         .        .    
+treat*sex A 0  1   0.8913   0.2149   0.4701   1.3126   17.20     <.0001
+treat*sex A 1  0   0.0000    .        .        .         .        .    
+treat*sex B 0  0   0.0000    .        .        .         .        .    
+treat*sex B 1  0   0.0000    .        .        .         .        .    
+
+
+        Chi-Square Test for treat*sex
+          Least Squares Means Slice
+ 
+            Num
+Slice        DF    Chi-Square      Pr > ChiSq
+
+treat A       1         18.52          <.0001
+
+
+         Simple Differences of treat*sex Least Squares Means
+ 
+                                      Standard
+Slice      sex    _sex    Estimate       Error    z Value    Pr > |z|
+
+treat A    0      1         0.5957      0.1384       4.30      <.0001
+
+
+        Chi-Square Test for treat*sex
+          Least Squares Means Slice
+ 
+            Num
+Slice        DF    Chi-Square      Pr > ChiSq
+
+treat B       1          2.65          0.1035
+
+
+         Simple Differences of treat*sex Least Squares Means
+ 
+                                      Standard
+Slice      sex    _sex    Estimate       Error    z Value    Pr > |z|
+
+treat B    0      1        -0.2956      0.1816      -1.63      0.1035
+
+
+       Chi-Square Test for treat*sex
+         Least Squares Means Slice
+ 
+          Num
+Slice      DF    Chi-Square      Pr > ChiSq
+
+sex 0       1          0.00          0.9579
+
+
+          Simple Differences of treat*sex Least Squares Means
+ 
+                                        Standard
+Slice    treat    _treat    Estimate       Error    z Value    Pr > |z|
+
+sex 0    A        B         -0.00899      0.1702      -0.05      0.9579
+
+
+       Chi-Square Test for treat*sex
+         Least Squares Means Slice
+ 
+          Num
+Slice      DF    Chi-Square      Pr > ChiSq
+
+sex 1       1         47.43          <.0001
+
+
+          Simple Differences of treat*sex Least Squares Means
+ 
+                                        Standard
+Slice    treat    _treat    Estimate       Error    z Value    Pr > |z|
+
+sex 1    A        B          -0.9003      0.1307      -6.89      <.0001

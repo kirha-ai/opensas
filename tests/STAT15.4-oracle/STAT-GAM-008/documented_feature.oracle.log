@@ -1,0 +1,58 @@
+The SAS System
+
+19788      
+19789      /* STAT-GAM-008: GAM — Confidence Intervals for Smoothers
+19790       * Source: S154 / Chapter 48 / `Confidence Intervals for Smoothers` (PDF pp. 3316–3317).
+19791       * Discriminates: Getting Started: GAM Procedure
+19792       */
+19793      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+19793    ! validmemname=compatible locale=en_US;
+19794      %let syscc=0;
+19795      title; footnote;
+19796      ods _all_ close;
+19797      ods listing gpath="%sysfunc(pathname(work))";
+19798      ods graphics off;
+19799      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.EXPERIMENTA (memtype=DATA).
+NOTE: Deleting WORK.EXPERIMENTB (memtype=DATA).
+NOTE: Deleting WORK.PREDGAM (memtype=DATA).
+NOTE: Deleting WORK.PREDGAMB (memtype=DATA).
+NOTE: Deleting WORK.PREDLOESS (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+19799    !                                         quit;
+
+
+19800      ods path work.templat(update) sashelp.tmplmst(read);
+19801      
+19802      title 'Patterns of Diabetes';
+19803      data diabetes;
+19804      input Age BaseDeficit CPeptide @@;
+19805      logCP = log(CPeptide);
+19806      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.DIABETES has 43 observations and 4 variables.
+
+19822      ;
+19823      ods graphics on;
+19824      proc gam data=diabetes;
+19825      model logCP = spline(Age) spline(BaseDeficit);
+19826      run;
+
+NOTE: The PROCEDURE GAM printed page 2330.
+
+19827      
+19828      
+19829      
+19830      
+The SAS System
+
+19831      

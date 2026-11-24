@@ -1,0 +1,106 @@
+The SAS System
+
+22022      
+22023      /* STAT-SURVEYMEANS-006: SURVEYMEANS — Degrees of Freedom / Coefficient of Variation / Proportions
+22024       * Source: S154 / Chapter 121 / `Degrees of Freedom` (PDF pp. 9940–9941); S154 / Chapter 121 / `Coefficient of Variation` (PDF p. 9942); S154 /
+22024    ! Chapter 121 / `Proportions` (PDF p. 9942).
+22025       * Discriminates: Getting Started: SURVEYMEANS Procedure
+22026       */
+22027      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+22027    ! validmemname=compatible locale=en_US;
+22028      %let syscc=0;
+22029      title; footnote;
+22030      ods _all_ close;
+22031      ods listing gpath="%sysfunc(pathname(work))";
+22032      ods graphics off;
+22033      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.ICECREAM (memtype=DATA).
+NOTE: Deleting WORK.MYSTAT (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.STUDENTTOTALS (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+22033    !                                         quit;
+
+
+22034      ods path work.templat(update) sashelp.tmplmst(read);
+22035      
+22036      data IceCream;
+22037      input Grade Spending @@;
+22038      if (Spending < 10) then Group='less';
+22039      else Group='more';
+22040      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.ICECREAM has 40 observations and 3 variables.
+
+22045      ;
+22046      ods graphics on;
+22047      title1 'Analysis of Ice Cream Spending';
+22048      title2 'Simple Random Sample Design';
+22049      proc surveymeans data=IceCream total=4000;
+22050      var Spending Group;
+22051      run;
+
+NOTE: The PROCEDURE SURVEYMEANS printed page 1450.
+
+22052      data StudentTotals;
+22053      input Grade _total_;
+22054      datalines;
+
+NOTE: The data set WORK.STUDENTTOTALS has 3 observations and 2 variables.
+
+22058      ;
+22059      data IceCream;
+22060      set IceCream;
+22061      if Grade=7 then Prob=20/1824;
+22062      if Grade=8 then Prob=9/1025;
+22063      if Grade=9 then Prob=11/1151;
+22064      Weight=1/Prob;
+22065      run;
+
+NOTE: There were 40 observations read from the data set WORK.ICECREAM.
+NOTE: The data set WORK.ICECREAM has 40 observations and 5 variables.
+
+22066      title1 'Analysis of Ice Cream Spending';
+22067      title2 'Stratified Sample Design';
+22068      proc surveymeans data=IceCream total=StudentTotals;
+22069      stratum Grade / list;
+22070      var Spending Group;
+22071      weight Weight;
+22072      run;
+
+NOTE: The PROCEDURE SURVEYMEANS printed page 1451.
+
+22073      title1 'Analysis of Ice Cream Spending';
+22074      title2 'Stratified Sample Design';
+22075      proc surveymeans data=IceCream total=StudentTotals;
+22076      stratum Grade / list;
+22077      var Spending Group;
+22078      weight Weight;
+22079      ods output Statistics=MyStat;
+22080      run;
+
+NOTE: The data set WORK.MYSTAT has 3 observations and 7 variables.
+NOTE: The PROCEDURE SURVEYMEANS printed page 1452.
+
+22081      ods output Statistics=MyStat;
+22082      proc print data=MyStat;
+22083      run;
+
+WARNING: Output 'Statistics' was not created.  Make sure that the output object name, label, or path is spelled correctly.  Also, verify that the appropriate 
+         procedure options are used to produce the requested output object.  For example, verify that the NOPRINT option is not used.
+NOTE: There were 3 observations read from the data set WORK.MYSTAT.
+NOTE: The PROCEDURE PRINT printed page 1453.
+
+22084      
+22085      
+22086      
+22087      
+The SAS System
+
+22088      

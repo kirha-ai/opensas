@@ -1,0 +1,55 @@
+The SAS System
+
+3771       
+3772       /* STAT-HPLOGISTIC-005: HPLOGISTIC — First- or Second-Order Algorithms / Algorithm Descriptions
+3773        * Source: S154 / Chapter 61 / `First- or Second-Order Algorithms` (PDF pp. 4775–4777); S154 / Chapter 61 / `Algorithm Descriptions` (PDF pp.
+3773     ! 4777–4779).
+3774        * Discriminates: Getting Started: HPLOGISTIC Procedure
+3775        */
+3776       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+3776     ! validmemname=compatible locale=en_US;
+3777       %let syscc=0;
+3778       title; footnote;
+3779       ods _all_ close;
+3780       ods listing gpath="%sysfunc(pathname(work))";
+3781       ods graphics off;
+3782       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.GETSTARTED (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+3782     !                                         quit;
+
+
+3783       ods path work.templat(update) sashelp.tmplmst(read);
+3784       
+3785       data getStarted;
+3786       input C$ y x1-x10;
+3787       datalines;
+
+NOTE: The data set WORK.GETSTARTED has 100 observations and 12 variables.
+
+3888       ;
+3889       proc hplogistic data=getStarted;
+3890       class C;
+3891       model y = C x1-x10;
+3892       run;
+
+NOTE: The HPLOGISTIC procedure is executing in single-machine mode.
+NOTE: You are modeling the probability that y='0'.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: There were 100 observations read from the data set WORK.GETSTARTED.
+NOTE: The PROCEDURE HPLOGISTIC printed page 192.
+
+3893       
+3894       
+3895       
+3896       
+The SAS System
+
+3897       

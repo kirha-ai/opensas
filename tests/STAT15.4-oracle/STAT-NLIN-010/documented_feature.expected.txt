@@ -1,0 +1,70 @@
+
+The NLIN Procedure
+Dependent Variable Velocity
+
+           Grid Search
+                          Sum of
+  theta1      theta2     Squares
+
+   155.0           0      3075.4
+   155.0      0.0100      2074.1
+   155.0      0.0200      1310.3
+   155.0      0.0300       752.0
+   155.0      0.0400       371.9
+   155.0      0.0500       147.2
+   155.0      0.0600     58.1130
+   155.0      0.0700     87.9662
+
+The NLIN Procedure
+Dependent Variable Velocity
+Method: Marquardt
+
+             Iterative Phase
+                                   Sum of
+ Iter      theta1      theta2     Squares
+
+    0       155.0      0.0600     58.1130
+    1       158.0      0.0736     19.7017
+    2       158.1      0.0741     19.6606
+    3       158.1      0.0741     19.6606
+
+
+NOTE: Convergence criterion met.                                
+
+
+       Estimation Summary
+
+Method                  Marquardt
+Iterations                      3
+R                        5.861E-6
+PPC(theta2)              8.569E-7
+RPC(theta2)              0.000078
+Object                   2.902E-7
+Objective                19.66059
+Observations Read              14
+Observations Used              14
+Observations Missing            0
+
+
+NOTE: An intercept was not specified for this model.
+
+                                  Sum of        Mean               Approx
+Source                    DF     Squares      Square    F Value    Pr > F
+
+Model                      2      290116      145058    88537.2    <.0001
+Error                     12     19.6606      1.6384                     
+Uncorrected Total         14      290135                                 
+
+
+                              Approx       Approximate 95%
+Parameter      Estimate    Std Error      Confidence Limits     Skewness
+
+theta1            158.1       0.6737       156.6       159.6      0.0152
+theta2           0.0741      0.00313      0.0673      0.0809      0.0362
+
+
+    Approximate Correlation Matrix
+                theta1          theta2
+
+theta1       1.0000000       0.8300538
+theta2       0.8300538       1.0000000

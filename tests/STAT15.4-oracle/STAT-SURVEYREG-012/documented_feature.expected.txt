@@ -1,0 +1,68 @@
+
+Ice Cream Spending Analysis
+Use the Jackknife Method to Estimate the Variance
+
+The SURVEYREG Procedure
+ 
+Regression Analysis for Dependent Variable Spending
+
+             Data Summary
+
+Number of Observations               40
+Sum of Weights                   4000.0
+Weighted Mean of Spending       9.14130
+Weighted Sum of Spending        36565.2
+
+
+        Design Summary
+
+Number of Strata             3
+
+
+      Fit Statistics
+
+R-Square            0.8219
+Root MSE            2.4185
+Denominator DF          37
+
+
+       Variance Estimation
+
+Method                   Jackknife
+Number of Replicates            40
+
+
+    Class Level Information
+ 
+CLASS
+Variable      Levels    Values
+
+Kids               4    1 2 3 4 
+
+
+         Tests of Model Effects
+ 
+Effect       Num DF    F Value    Pr > F
+
+Model             4     110.48    <.0001
+Intercept         1     133.30    <.0001
+Income            1     289.16    <.0001
+Kids              3       0.90    0.4525
+
+NOTE: The denominator degrees of freedom for the F tests is 37.
+
+
+             Estimated Regression Coefficients
+ 
+                             Standard
+Parameter      Estimate         Error    t Value    Pr > |t|
+
+Intercept    -26.086882    2.58771182     -10.08      <.0001
+Income         0.776699    0.04567521      17.00      <.0001
+Kids 1         0.888631    1.12799263       0.79      0.4358
+Kids 2         1.545726    1.25598146       1.23      0.2262
+Kids 3        -0.526817    1.42555453      -0.37      0.7138
+Kids 4         0.000000    0.00000000        .         .    
+
+NOTE: The degrees of freedom for the t tests is 37.
+      Matrix X'WX is singular and a generalized inverse was used to solve the normal equations.  Estimates are not unique.

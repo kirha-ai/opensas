@@ -1,0 +1,68 @@
+
+The Mixed Procedure
+
+                  Model Information
+
+Data Set                     WORK.SAMPLE              
+Dependent Variable           y                        
+Covariance Structure         Diagonal                 
+Estimation Method            REML                     
+Residual Variance Method     Profile                  
+Fixed Effects SE Method      Model-Based              
+Degrees of Freedom Method    Residual                 
+
+
+             Class Level Information
+ 
+Class    Levels    Values
+
+group         2    A B                           
+
+
+            Dimensions
+
+Covariance Parameters             1
+Columns in X                      4
+Columns in Z                      0
+Subjects                          1
+Max Obs per Subject              12
+
+
+          Number of Observations
+
+Number of Observations Read              12
+Number of Observations Used              12
+Number of Observations Not Used           0
+
+
+Covariance Parameter
+      Estimates
+ 
+Cov Parm     Estimate
+
+Residual       1.0759
+
+
+           Fit Statistics
+
+-2 Res Log Likelihood            33.3
+AIC (Smaller is Better)          35.3
+AICC (Smaller is Better)         35.9
+BIC (Smaller is Better)          35.5
+
+
+        Type 3 Tests of Fixed Effects
+ 
+              Num     Den
+Effect         DF      DF    F Value    Pr > F
+
+group           1       9       4.73    0.0576
+x               1       9      94.01    <.0001
+
+
+                                        Least Squares Means Estimate
+ 
+                                   Standard
+Effect    Label        Estimate       Error       DF    t Value    Pr > |t|     Alpha       Lower       Upper
+
+group     B minus A      2.6333      1.2105        9       2.18      0.0576      0.05     -0.1050      5.3717

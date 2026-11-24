@@ -1,0 +1,2 @@
+WARNING: Convergence was not attained in 1 iterations. You may want to increase the maximum number of iterations (MAXITER= option) or change the convergence 
+WARNING: The LOGISTIC procedure continues in spite of the above warning. Results shown are based on the last maximum likelihood iteration. Validity of the 

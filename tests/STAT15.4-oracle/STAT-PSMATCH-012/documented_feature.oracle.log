@@ -1,0 +1,120 @@
+The SAS System
+
+10030      
+10031      /* STAT-PSMATCH-012: PSMATCH — Graphics Output / ODS Graphics
+10032       * Source: S154 / Chapter 101 / `Graphics Output` (PDF pp. 8258–8260); S154 / Chapter 101 / `ODS Graphics` (PDF pp. 8260–8261).
+10033       * Discriminates: Verified default procedure context
+10034       */
+10035      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+10035    ! validmemname=compatible locale=en_US;
+10036      %let syscc=0;
+10037      title; footnote;
+10038      ods _all_ close;
+10039      ods listing gpath="%sysfunc(pathname(work))";
+10040      ods graphics off;
+10041      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.MATCHED (memtype=DATA).
+NOTE: Deleting WORK.PATIENTS (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+10041    !                                         quit;
+
+
+10042      ods path work.templat(update) sashelp.tmplmst(read);
+10043      
+10044      ods graphics on;
+10045      ods trace on;
+10046      ods trace on;
+10047      data patients;
+10048      call streaminit(419);
+10049      do patientid=1 to 100;
+10050      gender=mod(patientid,2);
+10051      age=30+mod(patientid*7,45);
+10052      bmi=20+mod(patientid,12);
+10053      drug=rand('bernoulli',0.5);
+10054      output;
+10055      end;
+10056      run;
+
+NOTE: The data set WORK.PATIENTS has 100 observations and 5 variables.
+
+10057      proc psmatch data=patients region=cs;
+10058      class drug gender;
+10059      psmodel drug(treated='1')=gender age bmi;
+10060      match method=greedy(k=1) distance=lps caliper=0.5;
+10061      assess lps var=(age bmi);
+10062      output out(obs=match)=matched matchid=matchid;
+10063      run;
+
+WARNING: Some treated units do not have matched controls because there are not enough available controls for these treated units.
+
+Output Added:
+-------------
+Name:       DataInfo
+Label:      Data Information
+Template:   Stat.PSMatch.DataInfo
+Path:       PSMatch.DataInfo
+-------------
+
+Output Added:
+-------------
+Name:       PSInfo
+Label:      Propensity Score Information
+Template:   Stat.PSMatch.PSInfo
+Path:       PSMatch.PSInfo
+-------------
+
+Output Added:
+-------------
+Name:       MatchInfo
+Label:      Matching Information
+Template:   Stat.PSMatch.MatchInfo
+Path:       PSMatch.MatchInfo
+-------------
+
+Output Added:
+-------------
+Name:       StdDiff
+Label:      Standardized Differences
+Template:   Stat.PSMatch.StdDiff
+Path:       PSMatch.VarBalance.StdDiff
+-------------
+
+Output Added:
+-------------
+Name:       StdDiffPlot
+Label:      Standardized Difference Plot
+Template:   Stat.PSMatch.Graphics.StdDiffPlot
+Path:       PSMatch.VarBalance.StdDiffPlot
+-------------
+NOTE: The data set WORK.MATCHED has 94 observations and 8 variables.
+NOTE: The PROCEDURE PSMATCH printed pages 659-660.
+
+10064      proc print data=matched(obs=10) noobs;
+10065      run;
+
+
+Output Added:
+-------------
+Name:       Print
+Label:      Data Set WORK.MATCHED
+Data Name:  ProcPrintTable
+Path:       Print.Print
+-------------
+NOTE: There were 10 observations read from the data set WORK.MATCHED.
+NOTE: The PROCEDURE PRINT printed page 661.
+
+10066      ods trace off;
+10067      ods trace off;
+10068      ods graphics off;
+10069      
+10070      
+10071      
+10072      
+The SAS System
+
+10073      

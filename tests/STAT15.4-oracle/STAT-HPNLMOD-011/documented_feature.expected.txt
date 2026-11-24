@@ -1,0 +1,91 @@
+
+The HPNLMOD Procedure
+
+      Performance Information
+
+Execution Mode       Single-Machine
+Number of Threads    2             
+
+
+        Data Access Information
+ 
+Data      Engine    Role      Path
+
+WORK.A    V9        Input     On Client
+WORK.B    V9        Output    On Client
+
+
+                         Specifications
+
+Data Source                                 A                   
+Dependent Variable                          y                   
+Distribution                                None (Nonlinear     
+                                            Least Squares)      
+Optimization Technique                      Levenberg-Marquardt 
+
+
+Number of Observations Read              16
+Number of Observations Used              16
+
+
+               Dimensions
+
+Parameters                             3
+
+
+           Initial Parameter Values
+ 
+   alpha        beta       gamma     Objective
+
+    0.45        0.05     -0.0025    0.00351445
+
+
+                          Iteration History
+ 
+                               Objective                         Max
+Iteration    Evaluations        Function          Change    Gradient
+
+        0              5    0.0035144531                    7.184063
+        1              2    0.0007352716      0.00277918    2.145337
+        2              2    0.0006292751      0.00010600    0.032551
+        3              2    0.0006291261      0.00000015    0.002952
+        4              2    0.0006291244      0.00000000    0.000238
+        5              2    0.0006291244      0.00000000    0.000023
+        6              2    0.0006291244      0.00000000    2.313E-6
+
+         Convergence criterion (GCONV=1E-8) satisfied.          
+
+
+              Fit Statistics
+
+SS(Error)                          0.01007
+Error Variance                    0.000774
+
+
+                          Analysis of Variance
+ 
+                                  Sum of        Mean               Approx
+Source                    DF     Squares      Square    F Value    Pr > F
+
+Model                      2      0.1769      0.0884     114.22    <.0001
+Error                     13      0.0101    0.000774                     
+Corrected Total           15      0.1869                                 
+
+
+                                  Parameter Estimates
+ 
+                         Standard                         Approx
+Parameter    Estimate       Error      DF    t Value    Pr > |t|    Approximate 95% Confidence Limits
+
+alpha          0.3921      0.0267       1      14.70      <.0001      0.3345      0.4497
+beta           0.0605     0.00842       1       7.18      <.0001      0.0423      0.0787
+gamma        -0.00237    0.000551       1      -4.30      0.0009    -0.00356    -0.00118
+
+
+                                          Additional Estimates
+ 
+                               Standard                         Approx
+Label              Estimate       Error      DF    t Value    Pr > |t|     Alpha    Approximate Confidence Limits
+
+join point          12.7477      1.2781       1       9.97      <.0001      0.05      9.9864     15.5089
+plateau value c      0.7775      0.0123       1      63.11      <.0001      0.05      0.7509      0.8041

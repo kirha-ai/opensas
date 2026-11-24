@@ -1,0 +1,69 @@
+The SAS System
+
+13724      
+13725      /* STAT-LOESS-013: LOESS — Official examples and feature integration regression
+13726       * Source: S154 / Chapter 78 / `Examples: LOESS Procedure` (PDF pp. 5796–5821).
+13727       * Discriminates: Example 78.4: El Niño Southern Oscillation
+13728       */
+13729      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+13729    ! validmemname=compatible locale=en_US;
+13730      %let syscc=0;
+13731      title; footnote;
+13732      ods _all_ close;
+13733      ods listing gpath="%sysfunc(pathname(work))";
+13734      ods graphics off;
+13735      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.MELANOMA (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.RESULTS (memtype=DATA).
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+13735    !                                         quit;
+
+
+13736      ods path work.templat(update) sashelp.tmplmst(read);
+13737      
+13738      proc sgplot data=sashelp.ENSO;
+13739      scatter y=Pressure x=Month;
+13740      run;
+
+NOTE: Listing image output written to /saswork/SAS_work7EA200001C34_odaws01-euw1.oda.sas.com/SAS_work29EF00001C34_odaws01-euw1.oda.sas.com/SGPlot27.png.
+NOTE: There were 168 observations read from the data set SASHELP.ENSO.
+
+13741      ods graphics on;
+13742      proc loess data=sashelp.ENSO plots=residuals(smooth);
+13743      model Pressure=Month;
+13744      run;
+
+NOTE: The PROCEDURE LOESS printed pages 1170-1172.
+
+13745      proc loess data=sashelp.ENSO;
+13746      model Pressure=Month/select=AICC(global);
+13747      run;
+
+NOTE: The PROCEDURE LOESS printed pages 1173-1175.
+
+13748      proc loess data=sashelp.ENSO;
+13749      model Pressure=Month/select=AICC(range(0.03,0.2));
+13750      run;
+
+NOTE: The PROCEDURE LOESS printed pages 1176-1178.
+
+13751      proc loess data=sashelp.ENSO plots=residuals(smooth);
+13752      model Pressure=Month/select=AICC(presearch);
+13753      run;
+
+NOTE: The PROCEDURE LOESS printed pages 1179-1181.
+
+13754      ods graphics off;
+13755      run;
+13756      quit;
+13757      
+13758      
+13759      
+13760      
+The SAS System
+
+13761      

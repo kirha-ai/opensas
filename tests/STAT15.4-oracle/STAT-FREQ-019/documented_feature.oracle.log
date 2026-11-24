@@ -1,0 +1,236 @@
+The SAS System
+
+18797      
+18798      /* STAT-FREQ-019: FREQ — ODS Graphics
+18799       * Source: S154 / Chapter 47 / `ODS Graphics` (PDF pp. 3256–3257).
+18800       * Discriminates: Getting Started: FREQ Procedure
+18801       */
+18802      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+18802    ! validmemname=compatible locale=en_US;
+18803      %let syscc=0;
+18804      title; footnote;
+18805      ods _all_ close;
+18806      ods listing gpath="%sysfunc(pathname(work))";
+18807      ods graphics off;
+18808      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.SKINCONDITION (memtype=DATA).
+NOTE: Deleting WORK.SUMMERSCHOOL (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+18808    !                                         quit;
+
+
+18809      ods path work.templat(update) sashelp.tmplmst(read);
+18810      
+18811      ods graphics on;
+18812      ods trace on;
+18813      ods trace on;
+18814      data SummerSchool;
+18815      input Gender $ Internship $ Enrollment $ Count @@;
+18816      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.SUMMERSCHOOL has 8 observations and 4 variables.
+
+18821      ;
+18822      proc freq data=SummerSchool order=data;
+18823      tables Internship*Enrollment / chisq;
+18824      weight Count;
+18825      run;
+
+
+Output Added:
+-------------
+Name:       CrossTabFreqs
+Label:      Cross-Tabular Freq Table
+Template:   Base.Freq.CrossTabFreqs
+Path:       Freq.Table1.CrossTabFreqs
+-------------
+
+Output Added:
+-------------
+Name:       ChiSq
+Label:      Chi-Square Tests
+Template:   Base.Freq.ChiSq
+Path:       Freq.Table1.ChiSq
+-------------
+
+Output Added:
+-------------
+Name:       FishersExact
+Label:      Fisher's Exact Test
+Template:   Base.Freq.ChisqExactFactoid
+Path:       Freq.Table1.FishersExact
+-------------
+NOTE: There were 8 observations read from the data set WORK.SUMMERSCHOOL.
+NOTE: The PROCEDURE FREQ printed page 2302.
+
+18826      ods graphics on;
+18827      proc freq data=SummerSchool;
+18828      tables Gender*Internship*Enrollment /
+18829      chisq cmh plots(only)=freqplot(twoway=cluster);
+18830      weight Count;
+18831      run;
+
+
+Output Added:
+-------------
+Name:       CrossTabFreqs
+Label:      Cross-Tabular Freq Table
+Template:   Base.Freq.CrossTabFreqs
+Path:       Freq.Table1of1.CrossTabFreqs
+-------------
+
+Output Added:
+-------------
+Name:       FreqPlot
+Label:      Frequency Plot
+Template:   Base.Freq.Graphics.StackedFreqChart
+Path:       Freq.Table1of1.FreqPlot
+-------------
+
+Output Added:
+-------------
+Name:       ChiSq
+Label:      Chi-Square Tests
+Template:   Base.Freq.ChiSq
+Path:       Freq.Table1of1.ChiSq
+-------------
+
+Output Added:
+-------------
+Name:       FishersExact
+Label:      Fisher's Exact Test
+Template:   Base.Freq.ChisqExactFactoid
+Path:       Freq.Table1of1.FishersExact
+-------------
+
+Output Added:
+-------------
+Name:       CrossTabFreqs
+Label:      Cross-Tabular Freq Table
+Template:   Base.Freq.CrossTabFreqs
+Path:       Freq.Table2of1.CrossTabFreqs
+-------------
+
+Output Added:
+-------------
+Name:       FreqPlot
+Label:      Frequency Plot
+Template:   Base.Freq.Graphics.StackedFreqChart
+Path:       Freq.Table2of1.FreqPlot
+-------------
+
+Output Added:
+-------------
+Name:       ChiSq
+Label:      Chi-Square Tests
+Template:   Base.Freq.ChiSq
+Path:       Freq.Table2of1.ChiSq
+-------------
+
+Output Added:
+-------------
+Name:       FishersExact
+Label:      Fisher's Exact Test
+Template:   Base.Freq.ChisqExactFactoid
+Path:       Freq.Table2of1.FishersExact
+-------------
+
+Output Added:
+-------------
+Name:       CMH
+Label:      Cochran-Mantel-Haenszel Statistics
+Template:   Base.Freq.CMH
+Path:       Freq.Table1.CMH
+-------------
+
+Output Added:
+-------------
+Name:       CommonRelRisks
+Label:      Common Relative Risk Estimates
+Template:   Base.Freq.CommonRelRisks
+Path:       Freq.Table1.CommonRelRisks
+-------------
+
+Output Added:
+-------------
+Name:       BreslowDayTest
+Label:      Breslow-Day Test
+Template:   Base.Freq.StatFactoid
+Path:       Freq.Table1.BreslowDayTest
+-------------
+NOTE: There were 8 observations read from the data set WORK.SUMMERSCHOOL.
+NOTE: The PROCEDURE FREQ printed pages 2303-2304.
+
+18832      ods graphics off;
+18833      data SkinCondition;
+18834      input Derm1 $ Derm2 $ Count;
+18835      datalines;
+
+NOTE: The data set WORK.SKINCONDITION has 16 observations and 3 variables.
+
+18852      ;
+18853      ods graphics on;
+18854      proc freq data=SkinCondition order=data;
+18855      tables Derm1*Derm2 /
+18856      agree noprint plots=agreeplot;
+18857      test kappa;
+18858      weight Count;
+18859      run;
+
+
+Output Added:
+-------------
+Name:       SymmetryTest
+Label:      Symmetry Test
+Template:   Base.Freq.AgreeTests
+Path:       Freq.Table1.SymmetryTest
+-------------
+
+Output Added:
+-------------
+Name:       KappaStatistics
+Label:      Kappa Statistics
+Template:   Base.Freq.Agree
+Path:       Freq.Table1.KappaStatistics
+-------------
+
+Output Added:
+-------------
+Name:       KappaTest
+Label:      Simple Kappa Test
+Template:   Base.Freq.KappaTest
+Path:       Freq.Table1.KappaTest
+-------------
+
+Output Added:
+-------------
+Name:       AgreePlot
+Label:      Agreement Plot
+Template:   Base.Freq.Graphics.AgreePlot
+Path:       Freq.Table1.AgreePlot
+-------------
+NOTE: There were 16 observations read from the data set WORK.SKINCONDITION.
+NOTE: The PROCEDURE FREQ printed page 2305.
+
+18860      ods graphics off;
+18861      run;
+18862      quit;
+18863      ods trace off;
+18864      ods trace off;
+18865      ods graphics off;
+18866      
+18867      
+18868      
+18869      
+The SAS System
+
+18870      

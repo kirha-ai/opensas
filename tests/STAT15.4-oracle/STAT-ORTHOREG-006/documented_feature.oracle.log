@@ -1,0 +1,86 @@
+The SAS System
+
+1369       
+1370       /* STAT-ORTHOREG-006: ORTHOREG — STORE
+1371        * Source: S154 / Chapter 91 / `STORE Statement` (PDF pp. 7296–7297).
+1372        * Discriminates: Example 91.3: Fitting Polynomials; explicit statements: STORE
+1373        */
+1374       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+1374     ! validmemname=compatible locale=en_US;
+1375       %let syscc=0;
+1376       title; footnote;
+1377       ods _all_ close;
+1378       ods listing gpath="%sysfunc(pathname(work))";
+1379       ods graphics off;
+
+NOTE: The PROCEDURE GLM printed page 178.
+
+1380       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.LONGLEY (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+1380     !                                         quit;
+
+
+1381       ods path work.templat(update) sashelp.tmplmst(read);
+1382       
+1383       title 'Polynomial Data';
+1384       data Polynomial;
+1385       do i = 1 to 101;
+1386       x = (i-1)/(101-1);
+1387       y = 10**(9/2);
+1388       do j = 0 to 8;
+1389       y = y * (x - j/8);
+1390       end;
+1391       output;
+1392       end;
+1393       run;
+
+NOTE: The data set WORK.POLYNOMIAL has 101 observations and 4 variables.
+
+1394       ods graphics on;
+1395       proc orthoreg data=Polynomial;
+1396       effect xMod = polynomial(x / degree=9);
+1397       model y = xMod;
+1398       effectplot fit / obs;
+1399       store OStore;
+1400       run;
+
+NOTE: The ORTHOREG procedure generated the model item store WORK.OSTORE.
+NOTE: There were 101 observations read from the data set WORK.POLYNOMIAL.
+NOTE: The PROCEDURE ORTHOREG printed page 179.
+
+1401       ods graphics off;
+1402       data Zeros(keep=x);
+1403       do j = 0 to 8;
+1404       x = j/8;
+1405       output;
+1406       end;
+1407       run;
+
+NOTE: The data set WORK.ZEROS has 9 observations and 1 variables.
+
+1408       proc plm restore=OStore noprint;
+1409       score data=Zeros out=OZeros pred=OPred;
+1410       run;
+
+NOTE: The data set WORK.OZEROS has 9 observations and 2 variables.
+
+1411       proc print noobs;
+1412       run;
+
+NOTE: There were 9 observations read from the data set WORK.OZEROS.
+NOTE: The PROCEDURE PRINT printed page 180.
+
+1413       proc glm data=Polynomial;
+1414       model y = x|x|x|x|x|x|x|x|x;
+1415       store GStore;
+1416       run;
+
+1417       
+1418       
+1419       
+1420       
+The SAS System
+
+1421       

@@ -1,0 +1,74 @@
+The SAS System
+
+23971      
+23972      /* STAT-GLIMMIX-012: GLIMMIX — Effects of Adding Overdispersion / Model or Integral Approximation / Notes on Bias of Estimators
+23973       * Source: S154 / Chapter 52 / `Effects of Adding Overdispersion` (PDF p. 3828); S154 / Chapter 52 / `Model or Integral Approximation` (PDF pp.
+23973    ! 3828–3830); S154 / Chapter 52 / `Notes on Bias of Estimators` (PDF pp. 3843–3844).
+23974       * Discriminates: Example 52.16: Diallel Experiment with Multimember Random Effects
+23975       */
+23976      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+23976    ! validmemname=compatible locale=en_US;
+23977      %let syscc=0;
+23978      title; footnote;
+23979      ods _all_ close;
+23980      ods listing gpath="%sysfunc(pathname(work))";
+23981      ods graphics off;
+23982      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.BLOTCH (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+23982    !                                         quit;
+
+
+23983      ods path work.templat(update) sashelp.tmplmst(read);
+23984      
+23985      data diallel;
+23986      label time = 'Flowering time in days';
+23987      do p = 1 to 8;
+23988      do m = 1 to 8;
+23989      if (m ne p) then do;
+23990      sym = trim(left(min(m,p))) || ',' || trim(left(max(m,p)));
+23991      do block = 1 to 2;
+23992      input time @@;
+23993      output;
+23994      end;
+23995      end;
+23996      end;
+23997      end;
+23998      datalines;
+
+NOTE: Numeric values have been converted to character values at the places given by: (Line):(Column).
+      23990:17   23990:48   
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.DIALLEL has 112 observations and 5 variables.
+
+24007      ;
+24008      proc glimmix data=diallel outdesign(z)=zmat;
+24009      class block sym p m;
+24010      effect line = mm(p m);
+24011      model time = block;
+24012      random line sym p m p*m;
+24013      run;
+
+NOTE: When neither METHOD=QUADRATURE nor METHOD=LAPLACE is specified, the default degrees-of-freedom method in models with random effects and constructed 
+      effects is DDFM=KENWARDROGER. Without constructed effects this model would have DDFM=CONTAIN as the default.
+
+
+NOTE: Convergence criterion (ABSGCONV=0.00001) satisfied.
+NOTE: The data set WORK.ZMAT has 112 observations and 113 variables.
+NOTE: The PROCEDURE GLIMMIX printed page 2418.
+
+24014      
+24015      
+24016      
+24017      
+The SAS System
+
+24018      

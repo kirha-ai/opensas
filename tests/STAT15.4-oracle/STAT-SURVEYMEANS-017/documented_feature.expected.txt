@@ -1,0 +1,25 @@
+
+Analysis of Ice Cream Spending
+
+The SURVEYMEANS Procedure
+
+            Data Summary
+
+Number of Strata                   3
+Number of Observations            40
+Sum of Weights                  4000
+
+
+      Variance Estimation
+
+Method            Taylor Series
+Missing Values           NOMCAR
+
+
+                               Statistics
+ 
+                               Std Error                       Std Error
+Variable            Mean         of Mean             Sum          of Sum
+------------------------------------------------------------------------
+Spending        9.770542        0.652347           32139     3515.126876
+------------------------------------------------------------------------

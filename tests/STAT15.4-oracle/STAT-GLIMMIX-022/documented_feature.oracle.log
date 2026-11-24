@@ -1,0 +1,71 @@
+The SAS System
+
+24841      
+24842      /* STAT-GLIMMIX-022: GLIMMIX — CODE
+24843       * Source: S154 / Chapter 52 / `CODE Statement` (PDF p. 3732).
+24844       * Discriminates: Getting Started: GLIMMIX Procedure
+24845       */
+24846      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+24846    ! validmemname=compatible locale=en_US;
+24847      %let syscc=0;
+24848      title; footnote;
+24849      ods _all_ close;
+24850      ods listing gpath="%sysfunc(pathname(work))";
+24851      ods graphics off;
+24852      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.COV (memtype=DATA).
+NOTE: Deleting WORK.COVB (memtype=DATA).
+NOTE: Deleting WORK.ESTS (memtype=DATA).
+NOTE: Deleting WORK.PDATA (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.THEOP (memtype=DATA).
+24852    !                                         quit;
+
+
+24853      ods path work.templat(update) sashelp.tmplmst(read);
+24854      
+24855      data multicenter;
+24856      input center group$ n sideeffect;
+24857      datalines;
+
+NOTE: The data set WORK.MULTICENTER has 30 observations and 4 variables.
+
+24888      ;
+24889      proc glimmix data=multicenter;
+24890      class center group;
+24891      model sideeffect/n = group / solution;
+24892      random intercept / subject=center;
+24893      run;
+
+
+
+NOTE: Convergence criterion (PCONV=1.11022E-8) satisfied.
+NOTE: The PROCEDURE GLIMMIX printed page 2440.
+
+24894      ods select lsmeans;
+24895      proc glimmix data=multicenter;
+24896      class center group;
+24897      model sideeffect/n = group / solution;
+24898      random intercept / subject=center;
+24899      lsmeans group / cl ilink;
+24900      run;
+
+
+
+NOTE: Convergence criterion (PCONV=1.11022E-8) satisfied.
+NOTE: The PROCEDURE GLIMMIX printed page 2441.
+
+24901      
+24902      
+24903      
+24904      
+The SAS System
+
+24905      

@@ -1,0 +1,91 @@
+The SAS System
+
+9701       
+9702       /* STAT-KDE-008: KDE — ODS Table Names
+9703        * Source: S154 / Chapter 73 / `ODS Table Names` (PDF pp. 5415–5416).
+9704        * Discriminates: Getting Started: KDE Procedure
+9705        */
+9706       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+9706     ! validmemname=compatible locale=en_US;
+9707       %let syscc=0;
+9708       title; footnote;
+9709       ods _all_ close;
+9710       ods listing gpath="%sysfunc(pathname(work))";
+9711       ods graphics off;
+9712       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.BIVNORMAL (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+9712     !                                         quit;
+
+
+9713       ods path work.templat(update) sashelp.tmplmst(read);
+9714       
+9715       ods trace on;
+9716       data bivnormal;
+9717       seed = 1283470;
+9718       do i = 1 to 1000;
+9719       z1 = rannor(seed);
+9720       z2 = rannor(seed);
+9721       z3 = rannor(seed);
+9722       x = 3*z1+z2;
+9723       y = 3*z1+z3;
+9724       output;
+9725       end;
+9726       drop seed;
+9727       run;
+
+NOTE: The data set WORK.BIVNORMAL has 1000 observations and 6 variables.
+
+9728       ods graphics on;
+9729       proc kde data=bivnormal;
+9730       bivar x y / plots=(contour surface);
+9731       run;
+
+NOTE: Processing BIVAR statement number 1.
+
+Output Added:
+-------------
+Name:       Inputs
+Template:   Stat.KDE.Inputs
+Path:       KDE.Bivar1.x_y.Inputs
+-------------
+
+Output Added:
+-------------
+Name:       Controls
+Template:   Stat.KDE.Controls
+Path:       KDE.Bivar1.x_y.Controls
+-------------
+
+Output Added:
+-------------
+Name:       ContourPlot
+Label:      Contour Plot
+Template:   Stat.KDE.Graphics.Contour
+Path:       KDE.Bivar1.x_y.ContourPlot
+-------------
+
+Output Added:
+-------------
+Name:       SurfacePlot
+Label:      Density Surface
+Template:   Stat.KDE.Graphics.Surface
+Path:       KDE.Bivar1.x_y.SurfacePlot
+-------------
+NOTE: The PROCEDURE KDE printed page 710.
+
+9732       ods graphics off;
+9733       run;
+9734       quit;
+9735       ods trace off;
+9736       
+9737       
+9738       
+9739       
+The SAS System
+
+9740       

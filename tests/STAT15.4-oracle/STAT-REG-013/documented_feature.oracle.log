@@ -1,0 +1,78 @@
+The SAS System
+
+12791      
+12792      /* STAT-REG-013: REG — Testing for Heteroscedasticity / Testing for Lack of Fit / Autocorrelation in Time Series Data
+12793       * Source: S154 / Chapter 105 / `Testing for Heteroscedasticity` (PDF pp. 8642–8643); S154 / Chapter 105 / `Testing for Lack of Fit` (PDF pp.
+12793    ! 8643–8644); S154 / Chapter 105 / `Autocorrelation in Time Series Data` (PDF pp. 8647–8648).
+12794       * Discriminates: Getting Started: REG Procedure
+12795       */
+12796      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+12796    ! validmemname=compatible locale=en_US;
+12797      %let syscc=0;
+12798      title; footnote;
+12799      ods _all_ close;
+12800      ods listing gpath="%sysfunc(pathname(work))";
+12801      ods graphics off;
+12802      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.USPOPULATION (memtype=DATA).
+12802    !                                         quit;
+
+
+12803      ods path work.templat(update) sashelp.tmplmst(read);
+12804      
+12805      proc reg data=sashelp.class;
+12806      model Weight = Height;
+12807      run;
+
+
+NOTE: The PROCEDURE REG printed page 984.
+
+12808      data USPopulation;
+12809      input Population @@;
+12810      retain Year 1780;
+12811      Year = Year+10;
+12812      YearSq = Year *Year;
+12813      Population = Population/1000;
+12814      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.USPOPULATION has 22 observations and 3 variables.
+
+12818      ;
+12819      proc reg data=USPopulation plots=ResidualByPredicted;
+12820      var YearSq;
+12821      model Population=Year / r clm cli;
+12822      run;
+
+WARNING: You must enable ODS graphics before requesting plots with the PLOTS option in the PROC REG statement.
+12823      add YearSq;
+12824      print;
+12825      run;
+
+NOTE: Variable YearSq is added.
+NOTE: Due to an ADD statement, the model label is now MODEL1.1.
+
+NOTE: The PROCEDURE REG printed pages 985-988.
+
+12826      proc reg data=USPopulation plots=predictions(X=Year);
+12827      model Population=Year Yearsq;
+12828      quit;
+
+WARNING: You must enable ODS graphics before requesting plots with the PLOTS option in the PROC REG statement.
+NOTE: The PROCEDURE REG printed page 989.
+
+12829      ods graphics off;
+12830      quit;
+12831      
+12832      
+12833      
+12834      
+The SAS System
+
+12835      

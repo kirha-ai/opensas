@@ -1,0 +1,108 @@
+The SAS System
+
+5866       
+5867       /* STAT-GLMSELECT-008: GLMSELECT — Stepwise Selection (STEPWISE) / Lasso Selection (LASSO) / Adaptive LASSO Selection
+5868        * Source: S154 / Chapter 56 / `Stepwise Selection (STEPWISE)` (PDF pp. 4361–4362); S154 / Chapter 56 / `Lasso Selection (LASSO)` (PDF pp.
+5868     ! 4363–4364); S154 / Chapter 56 / `Adaptive LASSO Selection` (PDF p. 4364).
+5869        * Discriminates: Example 56.7: LASSO with Screening
+5870        */
+5871       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+5871     ! validmemname=compatible locale=en_US;
+5872       %let syscc=0;
+5873       title; footnote;
+5874       ods _all_ close;
+5875       ods listing gpath="%sysfunc(pathname(work))";
+5876       ods graphics off;
+5877       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+5877     !                                         quit;
+
+
+5878       ods path work.templat(update) sashelp.tmplmst(read);
+5879       
+5880       %let nObs = 5000;
+5881       %let nContIn = 5;
+5882       %let nContOut = 1000;
+5883       %let nClassIn = 2;
+5884       %let nClassOut = 1000;
+5885       %let maxLevs = 5;
+5886       %let noiseScale= 1;
+5887       data ex7Data;
+5888       array xIn{&nContIn};
+5889       array xOut{&nContOut};
+5890       array cIn{&nClassIn};
+5891       array cOut{&nClassOut};
+5892       drop i j sign nLevs xBeta;
+5893       do i=1 to &nObs;
+5894       sign = -1;
+5895       xBeta = 0;
+5896       do j=1 to dim(xIn);
+5897       xIn{j} = ranuni(1);
+5898       xBeta = xBeta + sqrt(j) *sign*xIn{j};
+5899       sign = -sign;
+5900       end;
+5901       do j=1 to dim(xOut);
+5902       xOut{j} = ranuni(1);
+5903       end;
+5904       do j=1 to dim(cIn);
+5905       nLevs = 2 + mod(j,&maxlevs-1);
+5906       cIn{j} = 1+int(ranuni(1)*nLevs);
+5907       xBeta = xBeta + j *sign*(cIn{j}-nLevs/2);
+5908       sign = -sign;
+5909       end;
+5910       do j=1 to dim(cOut);
+5911       nLevs = 2 + mod(j,&maxlevs-1);
+5912       cOut{j} = 1+int(ranuni(1)*nLevs);
+5913       end;
+5914       y = xBeta + &noiseScale*rannor(1);
+5915       output;
+5916       end;
+5917       run;
+
+NOTE: The data set WORK.EX7DATA has 5000 observations and 2008 variables.
+
+5918       proc glmselect data=ex7Data seed=314159;
+5919       class c:;
+5920       model y = x: c:/
+5921       selection=lasso;
+5922       run;
+
+NOTE: All classification variables are split with LAR, LASSO and ELASTICNET selection.
+NOTE: There were 5000 observations read from the data set WORK.EX7DATA.
+NOTE: The PROCEDURE GLMSELECT printed pages 364-366.
+
+5923       proc glmselect data=ex7Data seed=314159;
+5924       class c:;
+5925       model y = x: c:/
+5926       selection=lasso(screen=sasvi);
+5927       run;
+
+NOTE: All classification variables are split with LAR, LASSO and ELASTICNET selection.
+NOTE: There were 5000 observations read from the data set WORK.EX7DATA.
+NOTE: The PROCEDURE GLMSELECT printed pages 367-369.
+
+5928       proc glmselect data=ex7Data seed=314159;
+5929       class c:;
+5930       model y = x: c:/
+5931       selection=lasso(screen=sis(keepnum=15));
+5932       run;
+
+NOTE: All classification variables are split with LAR, LASSO and ELASTICNET selection.
+NOTE: There were 5000 observations read from the data set WORK.EX7DATA.
+NOTE: The PROCEDURE GLMSELECT printed pages 370-372.
+
+5933       
+5934       
+5935       
+5936       
+The SAS System
+
+5937       

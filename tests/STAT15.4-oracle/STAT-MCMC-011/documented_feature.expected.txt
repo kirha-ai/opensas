@@ -1,0 +1,37 @@
+
+Change Point Model
+
+The MCMC Procedure
+
+                  Posterior Summaries and Intervals
+ 
+                                      Standard
+Parameter           N        Mean    Deviation      95% HPD Interval
+
+alpha            1000      0.5391       0.0263      0.4983      0.5951
+cp               1000      0.0233       0.0326     -0.0465      0.0758
+beta1            1000     -0.4164       0.0147     -0.4453     -0.3864
+beta2            1000     -1.0132       0.0153     -1.0439     -0.9827
+s2               1000    0.000475     0.000174    0.000200    0.000804
+
+Change Point Model
+
+The KDE Procedure
+
+                      Inputs
+
+Data Set                          WORK.POSTOUT     
+Number of Observations Used       1000             
+Variable                          cp               
+Bandwidth Method                  Sheather-Jones   
+                                  Plug In          
+
+
+             Controls
+ 
+                                 cp
+
+Grid Points                     401
+Lower Grid Limit             -0.073
+Upper Grid Limit              0.144
+Bandwidth Multiplier              1

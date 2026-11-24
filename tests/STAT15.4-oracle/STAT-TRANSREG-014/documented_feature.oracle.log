@@ -1,0 +1,121 @@
+The SAS System
+
+27819      
+27820      /* STAT-TRANSREG-014: TRANSREG — Hypothesis Tests with Monotonicity Constraints
+27821       * Source: S154 / Chapter 126 / `Hypothesis Tests with Monotonicity Constraints` (PDF pp. 10508–10509).
+27822       * Discriminates: Getting Started: TRANSREG Procedure
+27823       */
+27824      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+27824    ! validmemname=compatible locale=en_US;
+27825      %let syscc=0;
+27826      title; footnote;
+27827      ods _all_ close;
+27828      ods listing gpath="%sysfunc(pathname(work))";
+27829      ods graphics off;
+27830      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.A (memtype=DATA).
+NOTE: Deleting WORK.DATA36 (memtype=DATA).
+NOTE: Deleting WORK.GAS (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+27830    !                                         quit;
+
+
+27831      ods path work.templat(update) sashelp.tmplmst(read);
+27832      
+27833      title 'Gasoline and Emissions Data';
+27834      data gas;
+27835      set sashelp.gas;
+27836      if fuel in ('Ethanol', '82rongas', 'Gasohol');
+27837      run;
+
+NOTE: There were 171 observations read from the data set SASHELP.GAS.
+NOTE: The data set WORK.GAS has 112 observations and 4 variables.
+
+27838      ods graphics on;
+27839      * Request a Spline Transformation of Equivalence Ratio;
+27840      proc transreg data=Gas solve ss2 plots=(transformation obp residuals);
+27841      model identity(nox) = spline(EqRatio / nknots=4);
+27842      run;
+
+NOTE: 2 observations were deleted from the analysis due to missing values.
+NOTE: Algorithm converged.
+NOTE: There were 112 observations read from the data set WORK.GAS.
+NOTE: The PROCEDURE TRANSREG printed page 1714.
+
+27843      * Separate Curves and Intercepts;
+27844      proc transreg data=Gas solve ss2 additive plots=(transformation obp);
+27845      model identity(nox) = class(Fuel / zero=none) |
+27846      spline(EqRatio / nknots=4 after);
+27847      run;
+
+NOTE: Since the model contains SMOOTH, BSPLINE, PBSPLINE, or a CLASS expansion with ZERO=NONE, a model with an implicit intercept is fit.
+NOTE: All statistics are mean corrected.
+NOTE: 2 observations were deleted from the analysis due to missing values.
+NOTE: Algorithm converged.
+NOTE: There were 112 observations read from the data set WORK.GAS.
+NOTE: The PROCEDURE TRANSREG printed page 1715.
+
+27848      * Separate Intercepts;
+27849      proc transreg data=Gas solve ss2 additive;
+27850      model identity(nox) = class(Fuel / zero=none)
+27851      spline(EqRatio / nknots=4);
+27852      run;
+
+NOTE: Since the model contains SMOOTH, BSPLINE, PBSPLINE, or a CLASS expansion with ZERO=NONE, a model with an implicit intercept is fit.
+NOTE: All statistics are mean corrected.
+NOTE: 2 observations were deleted from the analysis due to missing values.
+NOTE: Algorithm converged.
+NOTE: There were 112 observations read from the data set WORK.GAS.
+NOTE: The PROCEDURE TRANSREG printed page 1716.
+
+27853      * Separate Curves and Intercepts with Penalized B-Splines;
+27854      proc transreg data=Gas ss2 plots=transformation lprefix=0;
+27855      model identity(nox) = class(Fuel / zero=none) * pbspline(EqRatio);
+27856      run;
+
+NOTE: AFTER is assumed when PBSPLINE is crossed with a CLASS variable.
+NOTE: Since the model contains SMOOTH, BSPLINE, PBSPLINE, or a CLASS expansion with ZERO=NONE, a model with an implicit intercept is fit.
+NOTE: All statistics are mean corrected.
+NOTE: 2 observations were deleted from the analysis due to missing values.
+NOTE: Algorithm converged.
+NOTE: There were 112 observations read from the data set WORK.GAS.
+NOTE: The PROCEDURE TRANSREG printed page 1717.
+
+27857      title 'Introductory Main-Effects ANOVA Example';
+27858      data a;
+27859      input y x1 $ x2 $;
+27860      datalines;
+
+NOTE: The data set WORK.A has 12 observations and 3 variables.
+
+27873      ;
+27874      * Fit a main-effects ANOVA model with 1, 0, -1 coding;
+27875      proc transreg ss2;
+27876      model identity(y) = class(x1 x2 / effects);
+27877      output coefficients replace;
+27878      run;
+
+NOTE: The data set WORK.DATA37 has 14 observations and 9 variables.
+NOTE: The PROCEDURE TRANSREG printed page 1718.
+
+27879      * Display TRANSREG output data set;
+27880      proc print label;
+27881      format intercept -- x2a 5.2;
+27882      run;
+
+NOTE: There were 14 observations read from the data set WORK.DATA37.
+NOTE: The PROCEDURE PRINT printed page 1719.
+
+27883      
+27884      
+27885      
+27886      
+The SAS System
+
+27887      

@@ -1,0 +1,101 @@
+The SAS System
+
+13282      
+13283      /* STAT-LOESS-006: LOESS — Smoothing Matrix / Model Degrees of Freedom / Statistical Inference and Lookup Degrees of Freedom
+13284       * Source: S154 / Chapter 78 / `Smoothing Matrix` (PDF p. 5789); S154 / Chapter 78 / `Model Degrees of Freedom` (PDF pp. 5789–5790); S154 / Chapter
+13284    !  78 / `Statistical Inference and Lookup Degrees of Freedom` (PDF pp. 5790–5791).
+13285       * Discriminates: Getting Started: LOESS Procedure
+13286       */
+13287      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+13287    ! validmemname=compatible locale=en_US;
+13288      %let syscc=0;
+13289      title; footnote;
+13290      ods _all_ close;
+13291      ods listing gpath="%sysfunc(pathname(work))";
+13292      ods graphics off;
+13293      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.MELANOMA (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.RESULTS (memtype=DATA).
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+13293    !                                         quit;
+
+
+13294      ods path work.templat(update) sashelp.tmplmst(read);
+13295      
+13296      data Melanoma;
+13297      input Year Incidences @@;
+13298      format Year d4.0;
+13299      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.MELANOMA has 37 observations and 2 variables.
+
+13310      ;
+13311      proc sgplot data=Melanoma;
+13312      scatter y=Incidences x=Year;
+13313      run;
+
+NOTE: Listing image output written to /saswork/SAS_work7EA200001C34_odaws01-euw1.oda.sas.com/SAS_work29EF00001C34_odaws01-euw1.oda.sas.com/SGPlot20.png.
+NOTE: There were 37 observations read from the data set WORK.MELANOMA.
+
+13314      ods graphics on;
+13315      proc loess data=Melanoma;
+13316      model Incidences=Year;
+13317      run;
+
+NOTE: The PROCEDURE LOESS printed pages 1023-1025.
+
+13318      proc loess data=Melanoma;
+13319      model Incidences=Year / details(ModelSummary OutputStatistics);
+13320      run;
+
+NOTE: The PROCEDURE LOESS printed pages 1026-1029.
+
+13321      proc loess data=Melanoma;
+13322      model Incidences=Year/smooth=0.1 0.25 0.4 0.6 residual;
+13323      ods output OutputStatistics=Results;
+13324      run;
+
+WARNING: At smoothing parameter 0.1, the local SSCP matrix for 35 fit point(s) is numerically singular. The fitted value and standard errors at those points 
+         are not uniquely defined.
+WARNING: There is insufficient variation in the data to create a density plot.
+NOTE: The data set WORK.RESULTS has 148 observations and 6 variables.
+NOTE: The PROCEDURE LOESS printed pages 1030-1034.
+
+13325      proc print data=Results(obs=5);
+13326      id obs;
+13327      run;
+
+NOTE: There were 5 observations read from the data set WORK.RESULTS.
+NOTE: The PROCEDURE PRINT printed page 1035.
+
+13328      proc loess data=Melanoma plots=ResidualsBySmooth(smooth);
+13329      model Incidences=Year/smooth=0.1 0.25 0.4 0.6;
+13330      run;
+
+WARNING: At smoothing parameter 0.1, the local SSCP matrix for 35 fit point(s) is numerically singular. The fitted value and standard errors at those points 
+         are not uniquely defined.
+WARNING: There is insufficient variation in the data to create a density plot.
+NOTE: The PROCEDURE LOESS printed pages 1036-1040.
+
+13331      proc loess data=Melanoma;
+13332      model Incidences=Year/clm alpha=0.1;
+13333      run;
+
+NOTE: The DFMETHOD=EXACT option is implicitly selected when the STD, CLM, or T option is used.
+NOTE: The PROCEDURE LOESS printed pages 1041-1043.
+
+13334      ods graphics off;
+13335      run;
+13336      quit;
+13337      
+13338      
+13339      
+13340      
+The SAS System
+
+13341      

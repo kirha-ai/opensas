@@ -1,0 +1,53 @@
+The SAS System
+
+16105      
+16106      /* STAT-FASTCLUS-001: FASTCLUS — Data input, variable roles, and basic options
+16107       * Source: S154 / Chapter 45 / `PROC FASTCLUS Statement` (PDF pp. 2903–2910); S154 / Chapter 45 / `BY Statement` (PDF pp. 2910–2911); S154 /
+16107    ! Chapter 45 / `FREQ Statement` (PDF pp. 2911–2912); S154 / Chapter 45 / `ID Statement` (PDF p. 2912); S154 / Chapter 45 / `VAR Statement` (PDF p.
+16107    ! 2912); S154 / Chapter 45 / `WEIGHT Statement` (PDF p. 2912); S154 / Chapter 45 / `Missing Values` (PDF p. 2913).
+16108       * Discriminates: Verified default procedure context; explicit statements: FREQ, VAR
+16109       */
+16110      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+16110    ! validmemname=compatible locale=en_US;
+16111      %let syscc=0;
+16112      title; footnote;
+16113      ods _all_ close;
+16114      ods listing gpath="%sysfunc(pathname(work))";
+16115      ods graphics off;
+16116      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEST (memtype=DATA).
+16116    !                                         quit;
+
+
+16117      ods path work.templat(update) sashelp.tmplmst(read);
+16118      
+16119      proc fastclus data=sashelp.iris maxclusters=3 maxiter=50 out=clusters;
+16120      var SepalLength SepalWidth PetalLength PetalWidth;
+16121      run;
+
+NOTE: Convergence criterion is satisfied.
+NOTE: The data set WORK.CLUSTERS has 150 observations and 7 variables.
+NOTE: The PROCEDURE FASTCLUS printed page 2132.
+
+16122      proc freq data=clusters;
+16123      tables Species*Cluster;
+16124      run;
+
+NOTE: There were 150 observations read from the data set WORK.CLUSTERS.
+NOTE: The PROCEDURE FREQ printed page 2133.
+
+16125      
+16126      
+16127      
+16128      
+The SAS System
+
+16129      

@@ -1,0 +1,73 @@
+The SAS System
+
+6614       
+6615       /* STAT-HPCANDISC-004: HPCANDISC — Output Data Sets
+6616        * Source: S154 / Chapter 57 / `Output Data Sets` (PDF pp. 4491–4493).
+6617        * Discriminates: Example 57.1: Analyzing Iris Data with PROC HPCANDISC
+6618        */
+6619       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+6619     ! validmemname=compatible locale=en_US;
+6620       %let syscc=0;
+6621       title; footnote;
+6622       ods _all_ close;
+6623       ods listing gpath="%sysfunc(pathname(work))";
+6624       ods graphics off;
+6625       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.OUTCAN (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+6625     !                                         quit;
+
+
+6626       ods path work.templat(update) sashelp.tmplmst(read);
+6627       
+6628       title 'Fisher (1936) Iris Data';
+6629       proc hpcandisc data=sashelp.iris out=outcan distance anova;
+6630       id Species;
+6631       class Species;
+6632       var SepalLength SepalWidth PetalLength PetalWidth;
+6633       run;
+
+NOTE: The HPCANDISC procedure is executing in single-machine mode.
+NOTE: There were 150 observations read from the data set SASHELP.IRIS.
+NOTE: The data set WORK.OUTCAN has 150 observations and 5 variables.
+NOTE: The PROCEDURE HPCANDISC printed pages 516-522.
+
+6634       proc template;
+6635       define statgraph scatter;
+6636       begingraph;
+6637       entrytitle 'Fisher (1936) Iris Data';
+6638       layout overlayequated / equatetype=fit
+6639       xaxisopts=(label='Canonical Variable 1')
+6640       yaxisopts=(label='Canonical Variable 2');
+6641       scatterplot x=Can1 y=Can2 / group=species name='iris';
+6642       layout gridded / autoalign=(topleft);
+6643       discretelegend 'iris' / border=false opaque=false;
+6644       endlayout;
+6645       endlayout;
+6646       endgraph;
+6647       end;
+NOTE: Overwriting existing template/link: Scatter
+NOTE: STATGRAPH 'Scatter' has been saved to: WORK.TEMPLAT
+6648       run;
+
+6649       proc sgrender data=outcan template=scatter;
+6650       run;
+
+NOTE: Listing image output written to /saswork/SAS_workB3110001D02A_odaws02-euw1.oda.sas.com/SAS_work0A040001D02A_odaws02-euw1.oda.sas.com/SGRender19.png.
+NOTE: There were 150 observations read from the data set WORK.OUTCAN.
+
+6651       
+6652       
+6653       
+6654       
+The SAS System
+
+6655       

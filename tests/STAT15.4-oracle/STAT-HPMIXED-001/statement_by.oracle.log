@@ -1,0 +1,84 @@
+The SAS System
+
+2455       
+2456       /* STAT-HPMIXED-001: HPMIXED — Data input, variable roles, and basic options
+2457        * Source: S154 / Chapter 62 / `PROC HPMIXED Statement` (PDF pp. 4812–4817); S154 / Chapter 62 / `BY Statement` (PDF p. 4817); S154 / Chapter 62 /
+2457     ! `ID Statement` (PDF pp. 4824–4825); S154 / Chapter 62 / `WEIGHT Statement` (PDF pp. 4842–4843).
+2458        * Discriminates: Two explicit BY groups contain identical inputs, exposing group boundaries and per-group results.
+2459        */
+2460       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+2460     ! validmemname=compatible locale=en_US;
+2461       %let syscc=0;
+2462       title; footnote;
+2463       ods _all_ close;
+2464       ods listing gpath="%sysfunc(pathname(work))";
+2465       ods graphics off;
+2466       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.GETSTARTED (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+2466     !                                         quit;
+
+
+2467       ods path work.templat(update) sashelp.tmplmst(read);
+2468       
+2469       data Sim;
+2470       keep Species Farm Animal Yield;
+2471       array AnimalEffect{3000};
+2472       array AnimalFarm{3000};
+2473       array AnimalSpecies{3000};
+2474       do i = 1 to dim(AnimalEffect);
+2475       AnimalEffect{i} = sqrt(4.0) *rannor(12345);
+2476       AnimalFarm{i} = 1 + int(100 *ranuni(12345));
+2477       AnimalSpecies{i} = 1 + int(5*ranuni(12345));
+2478       end;
+2479       do i = 1 to 40000;
+2480       Animal = 1 + int(3000 *ranuni(12345));
+2481       Species = AnimalSpecies{Animal};
+2482       Farm = AnimalFarm{Animal};
+2483       Yield = 1 + Species + Farm/10 + AnimalEffect{Animal}
+2484       + sqrt(8.0)*rannor(12345);
+2485       output;
+2486       end;
+2487       run;
+
+NOTE: The data set WORK.SIM has 40000 observations and 4 variables.
+
+2488       data _oracle_input; set Sim; do _oracle_by=1 to 2; output; end; run;
+
+NOTE: There were 40000 observations read from the data set WORK.SIM.
+NOTE: The data set WORK._ORACLE_INPUT has 80000 observations and 5 variables.
+
+2489       proc sort data=_oracle_input; by _oracle_by; run;
+
+NOTE: There were 80000 observations read from the data set WORK._ORACLE_INPUT.
+NOTE: The data set WORK._ORACLE_INPUT has 80000 observations and 5 variables.
+
+2490       proc hpmixed data=_oracle_input;
+2491       by _oracle_by;
+2492       class Species Farm Animal;
+2493       model Yield = Species Species*Farm;
+2494       random Animal;
+2495       test Species*Farm;
+2496       contrast 'Species1 = Species2 = Species3'
+2497       Species 1 0 -1,
+2498       Species 0 1 -1;
+2499       run;
+
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The above message was for the following BY group:
+      _oracle_by=1
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The above message was for the following BY group:
+      _oracle_by=2
+NOTE: The PROCEDURE HPMIXED printed pages 127-128.
+
+2500       
+2501       
+2502       
+2503       
+The SAS System
+
+2504       

@@ -1,0 +1,51 @@
+
+The LIFEREG Procedure
+
+           Model Information
+
+Data Set                     WORK.SUBSET
+Dependent Variable                 Lower
+Dependent Variable                 Hours
+Number of Observations                17
+Noncensored Values                     8
+Right Censored Values                  0
+Left Censored Values                   9
+Interval Censored Values               0
+Number of Parameters                   4
+Name of Distribution              Normal
+Log Likelihood               -74.9369977
+
+
+Number of Observations Read          17
+Number of Observations Used          17
+
+
+           Fit Statistics
+
+-2 Log Likelihood             149.874
+AIC (smaller is better)       157.874
+AICC (smaller is better)      161.207
+BIC (smaller is better)       161.207
+
+
+Algorithm converged.                                                       
+
+
+         Type III Analysis of Effects
+ 
+                             Wald
+Effect           DF    Chi-Square    Pr > ChiSq
+
+Yrs_Ed            1        3.7815        0.0518
+Yrs_Exp           1        2.7258        0.0987
+
+
+        Analysis of Maximum Likelihood Parameter Estimates
+ 
+                      Standard   95% Confidence     Chi-
+Parameter DF Estimate    Error       Limits       Square Pr > ChiSq
+
+Intercept  1 -5598.64 2850.248 -11185.0 -12.2553    3.86     0.0495
+Yrs_Ed     1 373.1477 191.8872  -2.9442 749.2397    3.78     0.0518
+Yrs_Exp    1  63.3371  38.3632 -11.8533 138.5276    2.73     0.0987
+Scale      1 1582.870 442.6732 914.9433 2738.397                   

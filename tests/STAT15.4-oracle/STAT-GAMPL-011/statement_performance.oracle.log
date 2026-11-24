@@ -1,0 +1,83 @@
+The SAS System
+
+95         
+96         /* STAT-GAMPL-011: GAMPL — PERFORMANCE / Computational Method: Multithreading
+97          * Source: S154 / Chapter 49 / `PERFORMANCE Statement` (PDF p. 3374); S154 / Chapter 49 / `Computational Method: Multithreading` (PDF pp.
+97       ! 3384–3385).
+98          * Discriminates: Explicit single-thread performance settings with the documented baseline computation.
+99          */
+100        options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+100      ! validmemname=compatible locale=en_US;
+101        %let syscc=0;
+102        title; footnote;
+103        ods _all_ close;
+104        ods listing gpath="%sysfunc(pathname(work))";
+105        ods graphics off;
+
+NOTE: There were 18 observations read from the data set WORK.SCHOOL.
+NOTE: The PROCEDURE CATMOD printed pages 3-4.
+
+106        proc datasets library=work kill nolist;
+NOTE: Deleting WORK.COLDS (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SCHOOL (memtype=DATA).
+NOTE: Deleting WORK._ORACLE_INPUT (memtype=DATA).
+106      !                                         quit;
+
+
+107        ods path work.templat(update) sashelp.tmplmst(read);
+108        
+109        %let off0 = offsetmin=0 offsetmax=0
+110        linearopts=(thresholdmin=0 thresholdmax=0);
+111        proc template;
+112        define statgraph surface;
+113        dynamic _title _z;
+114        begingraph / designwidth=defaultDesignHeight;
+115        entrytitle _title;
+116        layout overlay / xaxisopts=(&off0) yaxisopts=(&off0);
+117        contourplotparm z=_z y=Latitude x=Longitude / gridded=FALSE;
+118        endlayout;
+119        endgraph;
+120        end;
+NOTE: STATGRAPH 'Surface' has been saved to: WORK.TEMPLAT
+121        run;
+
+122        proc sgrender data=sashelp.Vote1980 template=surface;
+123        dynamic _title = 'US County Vote Proportion in the 1980 Election'
+124        _z = 'LogVoteRate';
+125        run;
+
+NOTE: Listing image output written to /saswork/SAS_work7EA200001C34_odaws01-euw1.oda.sas.com/SAS_work29EF00001C34_odaws01-euw1.oda.sas.com/SGRender.png.
+NOTE: There were 3107 observations read from the data set SASHELP.VOTE1980.
+
+126        ods graphics on;
+127        proc gampl data=sashelp.Vote1980 plots seed=12345;
+128        model LogVoteRate = spline(Pop ) spline(Edu) spline(Houses)
+129        spline(Income) spline(Longitude Latitude);
+130        id Longitude Latitude;
+131        output out=VotePred;
+132        
+133        performance nthreads=1;
+134        run;
+
+NOTE: The GAMPL procedure is executing in single-machine mode.
+NOTE: Convergence criterion (FCONV=2.1073424E-8) satisfied.
+NOTE: The data set WORK.VOTEPRED has 3107 observations and 3 variables.
+NOTE: The PROCEDURE GAMPL printed page 5.
+
+135        proc sgrender data=VotePred template=surface;
+136        dynamic _title='Predicted US County Vote Proportion in the 1980 Election'
+137        _z ='Pred';
+138        run;
+
+NOTE: Listing image output written to /saswork/SAS_work7EA200001C34_odaws01-euw1.oda.sas.com/SAS_work29EF00001C34_odaws01-euw1.oda.sas.com/SGRender1.png.
+NOTE: There were 3107 observations read from the data set WORK.VOTEPRED.
+
+139        
+140        
+141        
+142        
+The SAS System
+
+143        

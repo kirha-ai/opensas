@@ -1,0 +1,147 @@
+The SAS System
+
+21413      
+21414      /* STAT-SURVEYLOGISTIC-020: SURVEYLOGISTIC — Displayed Output / ODS Table Names
+21415       * Source: S154 / Chapter 120 / `Displayed Output` (PDF pp. 9876–9881); S154 / Chapter 120 / `ODS Table Names` (PDF pp. 9881–9882).
+21416       * Discriminates: Verified default procedure context
+21417       */
+21418      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+21418    ! validmemname=compatible locale=en_US;
+21419      %let syscc=0;
+21420      title; footnote;
+21421      ods _all_ close;
+21422      ods listing gpath="%sysfunc(pathname(work))";
+21423      ods graphics off;
+
+
+21424      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.ENROLLMENT (memtype=DATA).
+NOTE: Deleting WORK.FORMATS (memtype=CATALOG).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.WEBSURVEY (memtype=DATA).
+21424    !                                         quit;
+
+
+21425      ods path work.templat(update) sashelp.tmplmst(read);
+21426      
+21427      ods trace on;
+21428      data survey;
+21429      call streaminit(722);
+21430      do stratum=1 to 2;
+21431      do cluster=1 to 4;
+21432      do id=1 to 12;
+21433      age=20+mod(id*7+cluster,45);
+21434      event=rand('bernoulli',0.3);
+21435      weight=2+stratum+cluster/10;
+21436      output;
+21437      end;
+21438      end;
+21439      end;
+21440      run;
+
+NOTE: The data set WORK.SURVEY has 96 observations and 6 variables.
+
+21441      proc surveylogistic data=survey;
+21442      strata stratum;
+21443      cluster cluster;
+21444      weight weight;
+21445      model event(event='1')=age;
+21446      run;
+
+
+Output Added:
+-------------
+Name:       ModelInfo
+Label:      Model Information
+Template:   Stat.SurveyLogistic.ModelInfo
+Path:       Surveylogistic.ModelInfo
+-------------
+
+Output Added:
+-------------
+Name:       VarianceEstimation
+Label:      Variance Estimation
+Template:   Stat.SurveyLogistic.Factoid
+Path:       Surveylogistic.VarianceEstimation
+-------------
+
+Output Added:
+-------------
+Name:       NObs
+Label:      Observations Summary
+Template:   Stat.Surveylogistic.NObs
+Path:       Surveylogistic.NObs
+-------------
+
+Output Added:
+-------------
+Name:       ResponseProfile
+Label:      Response Profile
+Template:   Stat.Surveylogistic.ResponseProfile
+Path:       Surveylogistic.ResponseProfile
+-------------
+NOTE: PROC SURVEYLOGISTIC is modeling the probability that event=1.
+
+Output Added:
+-------------
+Name:       ConvergenceStatus
+Label:      Convergence Status
+Template:   Stat.Logistic.MConvergenceStatus
+Path:       Surveylogistic.ConvergenceStatus
+-------------
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+
+Output Added:
+-------------
+Name:       FitStatistics
+Label:      Fit Statistics
+Template:   Stat.Surveylogistic.FitStatistics
+Path:       Surveylogistic.FitStatistics
+-------------
+
+Output Added:
+-------------
+Name:       GlobalTests
+Label:      Global Tests
+Template:   Stat.Surveylogistic.GlobalTests
+Path:       Surveylogistic.GlobalTests
+-------------
+
+Output Added:
+-------------
+Name:       ParameterEstimates
+Label:      Parameter Estimates
+Template:   Stat.Surveylogistic.ParameterEstimates
+Path:       Surveylogistic.ParameterEstimates
+-------------
+
+Output Added:
+-------------
+Name:       OddsRatios
+Label:      Odds Ratios
+Template:   Stat.Surveylogistic.OddsRatios
+Path:       Surveylogistic.OddsRatios
+-------------
+
+Output Added:
+-------------
+Name:       Association
+Label:      Association Statistics
+Template:   Stat.Surveylogistic.Association
+Path:       Surveylogistic.Association
+-------------
+NOTE: The PROCEDURE SURVEYLOGISTIC printed page 1424.
+
+21447      ods trace off;
+21448      
+21449      
+21450      
+21451      
+The SAS System
+
+21452      

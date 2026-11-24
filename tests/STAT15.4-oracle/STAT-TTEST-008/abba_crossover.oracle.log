@@ -1,0 +1,45 @@
+The SAS System
+
+28991      
+28992      /* STAT-TTEST-008: TTEST — AB/BA Crossover Design
+28993       * Source: S154 / Chapter 128 / `AB/BA Crossover Design` (PDF pp. 10629–10630).
+28994       * Discriminates: AB/BA treatment and period effects using Example 128.4 input
+28995       */
+28996      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+28996    ! validmemname=compatible locale=en_US;
+28997      %let syscc=0;
+28998      title; footnote;
+28999      ods _all_ close;
+29000      ods listing gpath="%sysfunc(pathname(work))";
+29001      ods graphics off;
+29002      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SAMPLE (memtype=DATA).
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+29002    !                                         quit;
+
+
+29003      ods path work.templat(update) sashelp.tmplmst(read);
+29004      
+29005      data asthma; input drug1 $ drug2 $ pef1 pef2 @@; datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.ASTHMA has 13 observations and 4 variables.
+
+29011      ;
+29012      run;
+29013      proc ttest data=asthma; var pef1 pef2 / crossover=(drug1 drug2); run;
+
+NOTE: The PROCEDURE TTEST printed page 1775.
+
+29014      
+29015      
+29016      
+29017      
+The SAS System
+
+29018      

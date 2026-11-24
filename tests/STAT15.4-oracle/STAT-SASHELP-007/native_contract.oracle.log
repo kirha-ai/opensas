@@ -1,0 +1,108 @@
+The SAS System
+
+3911       
+3912       /* STAT-SASHELP-007: SASHELP example data — Hot-Spring Locations in the United States / Coal Seam Thickness Data / 1980 US Presidential Election
+3912     ! Data
+3913        * Source: S154 / Sashelp Data Sets / `Hot-Spring Locations in the United States` (PDF pp. 10922–10923); S154 / Sashelp Data Sets / `Coal Seam
+3913     ! Thickness Data` (PDF pp. 10923–10924); S154 / Sashelp Data Sets / `1980 US Presidential Election Data` (PDF p. 10924).
+3914        * Discriminates: Published SASHELP data availability, row counts, first observations and descriptors: springs, thick, vote1980
+3915        */
+3916       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+3916     ! validmemname=compatible locale=en_US;
+3917       %let syscc=0;
+3918       title; footnote;
+3919       ods _all_ close;
+3920       ods listing gpath="%sysfunc(pathname(work))";
+3921       ods graphics off;
+3922       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK._DESCRIPTOR (memtype=DATA).
+3922     !                                         quit;
+
+
+3923       ods path work.templat(update) sashelp.tmplmst(read);
+3924       
+3925       proc contents data=sashelp.springs out=_descriptor(keep=name type length varnum label) noprint; run;
+
+NOTE: The data set WORK._DESCRIPTOR has 7 observations and 5 variables.
+
+3926       proc sort data=_descriptor; by varnum; run;
+
+NOTE: There were 7 observations read from the data set WORK._DESCRIPTOR.
+NOTE: The data set WORK._DESCRIPTOR has 7 observations and 5 variables.
+
+3927       proc print data=_descriptor noobs; run;
+
+NOTE: There were 7 observations read from the data set WORK._DESCRIPTOR.
+NOTE: The PROCEDURE PRINT printed page 293.
+
+3928       proc print data=sashelp.springs(obs=5) noobs; run;
+
+NOTE: There were 5 observations read from the data set SASHELP.SPRINGS.
+NOTE: The PROCEDURE PRINT printed page 294.
+
+3929       proc sql;
+3929     !           select count(*) as Observations from sashelp.springs;
+3929     !                                                                 quit;
+NOTE: The PROCEDURE SQL printed page 295.
+
+3930       proc contents data=sashelp.thick out=_descriptor(keep=name type length varnum label) noprint; run;
+
+NOTE: The data set WORK._DESCRIPTOR has 3 observations and 5 variables.
+
+3931       proc sort data=_descriptor; by varnum; run;
+
+NOTE: There were 3 observations read from the data set WORK._DESCRIPTOR.
+NOTE: The data set WORK._DESCRIPTOR has 3 observations and 5 variables.
+
+3932       proc print data=_descriptor noobs; run;
+
+NOTE: There were 3 observations read from the data set WORK._DESCRIPTOR.
+NOTE: The PROCEDURE PRINT printed page 296.
+
+3933       proc print data=sashelp.thick(obs=5) noobs; run;
+
+NOTE: There were 5 observations read from the data set SASHELP.THICK.
+NOTE: The PROCEDURE PRINT printed page 297.
+
+3934       proc sql;
+3934     !           select count(*) as Observations from sashelp.thick;
+3934     !                                                               quit;
+NOTE: The PROCEDURE SQL printed page 298.
+
+3935       proc contents data=sashelp.vote1980 out=_descriptor(keep=name type length varnum label) noprint; run;
+
+NOTE: The data set WORK._DESCRIPTOR has 7 observations and 5 variables.
+
+3936       proc sort data=_descriptor; by varnum; run;
+
+NOTE: There were 7 observations read from the data set WORK._DESCRIPTOR.
+NOTE: The data set WORK._DESCRIPTOR has 7 observations and 5 variables.
+
+3937       proc print data=_descriptor noobs; run;
+
+NOTE: There were 7 observations read from the data set WORK._DESCRIPTOR.
+NOTE: The PROCEDURE PRINT printed page 299.
+
+3938       proc print data=sashelp.vote1980(obs=5) noobs; run;
+
+NOTE: There were 5 observations read from the data set SASHELP.VOTE1980.
+NOTE: The PROCEDURE PRINT printed page 300.
+
+3939       proc sql;
+3939     !           select count(*) as Observations from sashelp.vote1980;
+3939     !                                                                  quit;
+NOTE: The PROCEDURE SQL printed page 301.
+
+3940       
+3941       
+3942       
+3943       
+The SAS System
+
+3944       

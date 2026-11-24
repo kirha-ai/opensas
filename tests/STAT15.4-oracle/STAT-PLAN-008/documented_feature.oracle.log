@@ -1,0 +1,41 @@
+The SAS System
+
+4532       
+4533       /* STAT-PLAN-008: PLAN — Official examples and feature integration regression
+4534        * Source: S154 / Chapter 93 / `Examples: PLAN Procedure` (PDF pp. 7600–7616).
+4535        * Discriminates: Example 93.1: A Split-Plot Design
+4536        */
+4537       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+4537     ! validmemname=compatible locale=en_US;
+4538       %let syscc=0;
+4539       title; footnote;
+4540       ods _all_ close;
+4541       ods listing gpath="%sysfunc(pathname(work))";
+4542       ods graphics off;
+
+NOTE: At the  end  of processing, random number seed=1846928552.
+NOTE: The PROCEDURE PLAN printed page 341.
+
+4543       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.RANDOMIZED (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.UNRANDOMIZED (memtype=DATA).
+4543     !                                         quit;
+
+
+4544       ods path work.templat(update) sashelp.tmplmst(read);
+4545       
+4546       title 'Split Plot Design';
+4547       proc plan seed=37277;
+NOTE: At the start of processing, random number seed=37277.
+4548       factors Block=3 ordered a=4 b=2;
+4549       run;
+
+4550       
+4551       
+4552       
+4553       
+The SAS System
+
+4554       

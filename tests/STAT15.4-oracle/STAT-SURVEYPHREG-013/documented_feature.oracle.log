@@ -1,0 +1,62 @@
+The SAS System
+
+23303      
+23304      /* STAT-SURVEYPHREG-013: SURVEYPHREG — ESTIMATE / HAZARDRATIO / TEST
+23305       * Source: S154 / Chapter 122 / `ESTIMATE Statement` (PDF pp. 10023–10024); S154 / Chapter 122 / `HAZARDRATIO Statement` (PDF pp. 10025–10027);
+23305    ! S154 / Chapter 122 / `TEST Statement` (PDF p. 10041).
+23306       * Discriminates: Verified default procedure context
+23307       */
+23308      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+23308    ! validmemname=compatible locale=en_US;
+23309      %let syscc=0;
+23310      title; footnote;
+23311      ods _all_ close;
+23312      ods listing gpath="%sysfunc(pathname(work))";
+23313      ods graphics off;
+23314      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SURVEY (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+23314    !                                         quit;
+
+
+23315      ods path work.templat(update) sashelp.tmplmst(read);
+23316      
+23317      data survey;
+23318      call streaminit(722);
+23319      do stratum=1 to 2;
+23320      do cluster=1 to 4;
+23321      do id=1 to 12;
+23322      age=20+mod(id*7+cluster,45);
+23323      time=1+rand('exponential')*10;
+23324      status=(mod(id,4) ne 0);
+23325      weight=2+stratum+cluster/10;
+23326      output;
+23327      end;
+23328      end;
+23329      end;
+23330      run;
+
+NOTE: The data set WORK.SURVEY has 96 observations and 7 variables.
+
+23331      proc surveyphreg data=survey;
+23332      strata stratum;
+23333      cluster cluster;
+23334      weight weight;
+23335      model time*status(0)=age;
+23336      run;
+
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The PROCEDURE SURVEYPHREG printed page 1506.
+
+23337      
+23338      
+23339      
+23340      
+The SAS System
+
+23341      

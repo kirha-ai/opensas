@@ -1,0 +1,434 @@
+
+The GLIMMIX Procedure
+
+                    Model Information
+
+Data Set                     WORK.CLINICAL                
+Response Variable            t = (t3+t4)/2;               
+Response Distribution        Gaussian                     
+Link Function                Identity                     
+Variance Function            Default                      
+Variance Matrix              Diagonal                     
+Estimation Technique         Restricted Maximum Likelihood
+Degrees of Freedom Method    Residual                     
+
+
+ Class Level Information
+ 
+Class    Levels    Values
+
+Drug          2    A P   
+
+
+Number of Observations Read         111
+Number of Observations Used         111
+
+
+           Dimensions
+
+Covariance Parameters          1
+Columns in X                   9
+Columns in Z                   0
+Subjects (Blocks in V)         1
+Max Obs per Subject          111
+
+
+       Optimization Information
+
+Optimization Technique    None        
+Parameters                7           
+Lower Boundaries          1           
+Upper Boundaries          0           
+Fixed Effects             Not Profiled
+
+
+           Fit Statistics
+
+-2 Res Log Likelihood         359.20
+AIC  (smaller is better)      373.20
+AICC (smaller is better)      374.36
+BIC  (smaller is better)      391.78
+CAIC (smaller is better)      398.78
+HQIC (smaller is better)      380.73
+Pearson Chi-Square            135.32
+Pearson Chi-Square / DF         1.29
+
+
+        Type III Tests of Fixed Effects
+ 
+              Num      Den
+Effect         DF       DF    F Value    Pr > F
+
+Drug            1      105       0.30    0.5867
+t0              1      105      20.23    <.0001
+Age             1      105       1.22    0.2716
+Age*Drug        1      105       1.08    0.3015
+t0*Drug         1      105       0.24    0.6231
+
+
+                               Estimates
+            Adjustment for Multiplicity: Shaffer-Simulated
+ 
+                     Standard
+Label    Estimate       Error       DF    t Value    Pr > |t|     Adj P
+
+20 0       0.7574      0.5958      105       1.27      0.2064    0.2064
+20 2       0.5458      0.3150      105       1.73      0.0861    0.1952
+20 4       0.3342      0.4604      105       0.73      0.4695    0.4695
+40 0       1.0929      0.5656      105       1.93      0.0560    0.1065
+40 2       0.8813      0.2553      105       3.45      0.0008    0.0053
+40 4       0.6697      0.4230      105       1.58      0.1164    0.1952
+60 0       1.4283      0.7026      105       2.03      0.0446    0.0866
+60 2       1.2167      0.4897      105       2.48      0.0146    0.0355
+60 4       1.0051      0.5955      105       1.69      0.0944    0.1952
+
+Obs    Label    Estimate      StdErr     Probt      Adjp
+
+ 1     40 2       0.8813      0.2553    0.0008    0.0053
+ 2     60 2       1.2167      0.4897    0.0146    0.0355
+ 3     60 0       1.4283      0.7026    0.0446    0.0866
+ 4     40 0       1.0929      0.5656    0.0560    0.1065
+ 5     20 2       0.5458      0.3150    0.0861    0.1952
+ 6     60 4       1.0051      0.5955    0.0944    0.1952
+ 7     40 4       0.6697      0.4230    0.1164    0.1952
+ 8     20 0       0.7574      0.5958    0.2064    0.2064
+ 9     20 4       0.3342      0.4604    0.4695    0.4695
+
+The GLIMMIX Procedure
+
+                    Model Information
+
+Data Set                     WORK.CLINICAL                
+Response Variable            t = (t3+t4)/2;               
+Response Distribution        Gaussian                     
+Link Function                Identity                     
+Variance Function            Default                      
+Variance Matrix              Diagonal                     
+Estimation Technique         Restricted Maximum Likelihood
+Degrees of Freedom Method    Residual                     
+
+
+ Class Level Information
+ 
+Class    Levels    Values
+
+Drug          2    A P   
+
+
+Number of Observations Read         111
+Number of Observations Used         111
+
+
+           Dimensions
+
+Covariance Parameters          1
+Columns in X                   9
+Columns in Z                   0
+Subjects (Blocks in V)         1
+Max Obs per Subject          111
+
+
+       Optimization Information
+
+Optimization Technique    None        
+Parameters                7           
+Lower Boundaries          1           
+Upper Boundaries          0           
+Fixed Effects             Not Profiled
+
+
+           Fit Statistics
+
+-2 Res Log Likelihood         359.20
+AIC  (smaller is better)      373.20
+AICC (smaller is better)      374.36
+BIC  (smaller is better)      391.78
+CAIC (smaller is better)      398.78
+HQIC (smaller is better)      380.73
+Pearson Chi-Square            135.32
+Pearson Chi-Square / DF         1.29
+
+
+        Type III Tests of Fixed Effects
+ 
+              Num      Den
+Effect         DF       DF    F Value    Pr > F
+
+Drug            1      105       0.30    0.5867
+t0              1      105      20.23    <.0001
+Age             1      105       1.22    0.2716
+Age*Drug        1      105       1.08    0.3015
+t0*Drug         1      105       0.24    0.6231
+
+
+                               Estimates
+                Adjustment for Multiplicity: Simulated
+ 
+                     Standard
+Label    Estimate       Error       DF    t Value    Pr > |t|     Adj P
+
+20 0       0.7574      0.5958      105       1.27      0.2064    0.5883
+20 2       0.5458      0.3150      105       1.73      0.0861    0.3237
+20 4       0.3342      0.4604      105       0.73      0.4695    0.8873
+40 0       1.0929      0.5656      105       1.93      0.0560    0.2353
+40 2       0.8813      0.2553      105       3.45      0.0008    0.0049
+40 4       0.6697      0.4230      105       1.58      0.1164    0.4049
+60 0       1.4283      0.7026      105       2.03      0.0446    0.1952
+60 2       1.2167      0.4897      105       2.48      0.0146    0.0748
+60 4       1.0051      0.5955      105       1.69      0.0944    0.3485
+
+The GLIMMIX Procedure
+
+                    Model Information
+
+Data Set                     WORK.CLINICAL                
+Response Variable            t = (t3+t4)/2;               
+Response Distribution        Gaussian                     
+Link Function                Identity                     
+Variance Function            Default                      
+Variance Matrix              Diagonal                     
+Estimation Technique         Restricted Maximum Likelihood
+Degrees of Freedom Method    Residual                     
+
+
+ Class Level Information
+ 
+Class    Levels    Values
+
+Drug          2    A P   
+
+
+Number of Observations Read         111
+Number of Observations Used         111
+
+
+           Dimensions
+
+Covariance Parameters          1
+Columns in X                   9
+Columns in Z                   0
+Subjects (Blocks in V)         1
+Max Obs per Subject          111
+
+
+       Optimization Information
+
+Optimization Technique    None        
+Parameters                7           
+Lower Boundaries          1           
+Upper Boundaries          0           
+Fixed Effects             Not Profiled
+
+
+           Fit Statistics
+
+-2 Res Log Likelihood         359.20
+AIC  (smaller is better)      373.20
+AICC (smaller is better)      374.36
+BIC  (smaller is better)      391.78
+CAIC (smaller is better)      398.78
+HQIC (smaller is better)      380.73
+Pearson Chi-Square            135.32
+Pearson Chi-Square / DF         1.29
+
+
+        Type III Tests of Fixed Effects
+ 
+              Num      Den
+Effect         DF       DF    F Value    Pr > F
+
+Drug            1      105       0.30    0.5867
+t0              1      105      20.23    <.0001
+Age             1      105       1.22    0.2716
+Age*Drug        1      105       1.08    0.3015
+t0*Drug         1      105       0.24    0.6231
+
+
+                          Estimates
+ 
+                     Standard
+Label    Estimate       Error       DF    t Value    Pr > |t|
+
+20 0       0.7574      0.5958      105       1.27      0.2064
+20 2       0.5458      0.3150      105       1.73      0.0861
+20 4       0.3342      0.4604      105       0.73      0.4695
+40 0       1.0929      0.5656      105       1.93      0.0560
+40 2       0.8813      0.2553      105       3.45      0.0008
+40 4       0.6697      0.4230      105       1.58      0.1164
+60 0       1.4283      0.7026      105       2.03      0.0446
+60 2       1.2167      0.4897      105       2.48      0.0146
+60 4       1.0051      0.5955      105       1.69      0.0944
+
+The GLIMMIX Procedure
+
+                 Model Information
+
+Data Set                      WORK.CLINICAL_UV     
+Response Variable             rating               
+Response Distribution         Multinomial (ordered)
+Link Function                 Cumulative Logit     
+Variance Function             Default              
+Variance Matrix Blocked By    ID(Center)           
+Estimation Technique          Maximum Likelihood   
+Likelihood Approximation      Laplace              
+Degrees of Freedom Method     Containment          
+
+
+                     Class Level Information
+ 
+Class     Levels    Values
+
+Center         2    1 2                                          
+ID            56    1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 
+                    19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 
+                    34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 
+                    49 50 51 52 53 54 55 56                      
+Drug           2    A P                                          
+
+
+Number of Observations Read         222
+Number of Observations Used         222
+
+
+           Response Profile
+ 
+ Ordered                        Total
+   Value    rating          Frequency
+
+       1    0                      26
+       2    1                      20
+       3    2                      53
+       4    3                      43
+       5    4                      80
+
+The GLIMMIX procedure is modeling the probabilities of levels of rating having lower Ordered Values in the Response Profile table.
+
+
+            Dimensions
+
+G-side Cov. Parameters           1
+Columns in X                    12
+Columns in Z per Subject         1
+Subjects (Blocks in V)         111
+Max Obs per Subject              2
+
+
+           Optimization Information
+
+Optimization Technique        Dual Quasi-Newton
+Parameters in Optimization    10               
+Lower Boundaries              1                
+Upper Boundaries              0                
+Fixed Effects                 Not Profiled     
+Starting From                 GLM estimates    
+
+
+                                Iteration History
+ 
+                                           Objective                         Max
+Iteration    Restarts    Evaluations        Function          Change    Gradient
+
+        0           0              4    587.21842258       .            234.8015
+        1           0              4    586.61402661      0.60439597    186.3475
+        2           0              4    586.03745315      0.57657347    87.79249
+        3           0              4    568.79108978     17.24636337    31.90146
+        4           0              2    565.77867532      3.01241445    67.23329
+        5           0              2    560.99929461      4.77938072    11.45643
+        6           0              3    559.69670483      1.30258978    10.02809
+        7           0              2    557.61605663      2.08064820    9.753178
+        8           0              4    550.60627965      7.00977698    11.28367
+        9           0              3    548.09605055      2.51022910    10.15341
+       10           0              3    547.50592049      0.59013007    2.250204
+       11           0              3    547.29873251      0.20718798    3.673684
+       12           0              3    547.17850136      0.12023115    0.564574
+       13           0              3    547.16529726      0.01320410    0.970486
+       14           0              2    547.15519509      0.01010216    1.374767
+       15           0              3    547.15233038      0.00286471    0.304865
+       16           0              2    547.14898469      0.00334570    0.925586
+       17           0              4    547.13084925      0.01813544    4.503827
+       18           0              2    547.11397037      0.01687888    3.047878
+       19           0              3    547.10897076      0.00499961    1.522143
+       20           0              3    547.10615188      0.00281889    1.350017
+       21           0              4    547.08308751      0.02306437    13.96047
+       22           0              3    547.06991757      0.01316994    4.858354
+       23           0              3    547.06360371      0.00631386     0.48819
+       24           0              3    547.06247695      0.00112676     0.32158
+       25           0              3    547.06246825      0.00000870    0.114477
+       26           0              3    547.06246763      0.00000062    0.012746
+
+         Convergence criterion (GCONV=1E-8) satisfied.          
+
+
+           Fit Statistics
+
+-2 Log Likelihood             547.06
+AIC  (smaller is better)      567.06
+AICC (smaller is better)      568.11
+BIC  (smaller is better)      594.16
+CAIC (smaller is better)      604.16
+HQIC (smaller is better)      578.05
+
+
+     Fit Statistics for Conditional
+              Distribution
+
+-2 log L(rating | r. effects)      286.95
+
+
+        Covariance Parameter Estimates
+ 
+                                       Standard
+Cov Parm     Subject       Estimate       Error
+
+Intercept    ID(Center)     10.3483      3.2599
+
+
+        Type III Tests of Fixed Effects
+ 
+              Num      Den
+Effect         DF       DF    F Value    Pr > F
+
+Drug            1      108       0.23    0.6298
+t0              1      108      17.00    <.0001
+Age             1      108       1.13    0.2908
+Age*Drug        1      108       1.02    0.3143
+t0*Drug         1      108       0.13    0.7188
+
+
+                               Estimates
+            Adjustment for Multiplicity: Shaffer-Simulated
+ 
+                     Standard
+Label    Estimate       Error       DF    t Value    Pr > |t|     Adj P
+
+20 0      -2.3155      1.9585      108      -1.18      0.2397    0.2397
+20 2      -1.7967      1.0528      108      -1.71      0.0907    0.2054
+20 4      -1.2780      1.5843      108      -0.81      0.4216    0.4216
+40 0      -3.4045      1.8850      108      -1.81      0.0737    0.1392
+40 2      -2.8857      0.8842      108      -3.26      0.0015    0.0095
+40 4      -2.3669      1.4626      108      -1.62      0.1085    0.2054
+60 0      -4.4935      2.3646      108      -1.90      0.0601    0.1166
+60 2      -3.9747      1.6660      108      -2.39      0.0188    0.0438
+60 4      -3.4559      2.0221      108      -1.71      0.0903    0.1807
+
+
+                    Tests of Covariance Parameters
+                       Based on the Likelihood
+ 
+Label               DF    -2 Log Like      ChiSq    Pr > ChiSq    Note
+
+Parameter list       1         604.70      57.64        <.0001    MI  
+
+MI: P-value based on a mixture of chi-squares.
+
+Obs    Label    Estimate      StdErr     Probt      Adjp
+
+ 1     40 2      -2.8857      0.8842    0.0015    0.0095
+ 2     60 2      -3.9747      1.6660    0.0188    0.0438
+ 3     60 0      -4.4935      2.3646    0.0601    0.1166
+ 4     40 0      -3.4045      1.8850    0.0737    0.1392
+ 5     60 4      -3.4559      2.0221    0.0903    0.1807
+ 6     20 2      -1.7967      1.0528    0.0907    0.2054
+ 7     40 4      -2.3669      1.4626    0.1085    0.2054
+ 8     20 0      -2.3155      1.9585    0.2397    0.2397
+ 9     20 4      -1.2780      1.5843    0.4216    0.4216

@@ -1,0 +1,62 @@
+The SAS System
+
+36         
+37         /* STAT-NLMIXED-010: NLMIXED — RANDOM
+38          * Source: S154 / Chapter 89 / `RANDOM Statement` (PDF pp. 7124–7125).
+39          * Discriminates: Example 89.6: Simulated Nested Linear Random-Effects Model; explicit statements: RANDOM
+40          */
+41         options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+41       ! validmemname=compatible locale=en_US;
+42         %let syscc=0;
+43         title; footnote;
+44         ods _all_ close;
+45         ods listing gpath="%sysfunc(pathname(work))";
+46         ods graphics off;
+47         proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+47       !                                         quit;
+
+
+48         ods path work.templat(update) sashelp.tmplmst(read);
+49         
+50         %let na = 100;
+51         %let nb = 5;
+52         %let nr = 2;
+53         data nested;
+54         do A = 1 to &na;
+55         err1 = 3*rannor(339205);
+56         do B = 1 to &nb;
+57         err2 = 2*rannor(314159);
+58         do rep = 1 to &nr;
+59         err3 = 1*rannor(314159);
+60         resp = 10 + err1 + err2 + err3;
+61         output;
+62         end;
+63         end;
+64         end;
+65         run;
+
+NOTE: The data set WORK.NESTED has 1000 observations and 7 variables.
+
+66         proc nlmixed data = nested;
+67         bounds vara >=0, varb_a >=0;
+68         mean = intercept + aeffect + beffect;
+69         model resp ~ normal (mean, s2);
+70         random aeffect ~ normal(0,vara) subject = A;
+71         random beffect ~ normal(0,varb_a) subject = B(A);
+72         run;
+
+NOTE: To assign starting values to parameters, use the PARMS statement. The default starting value of 1.0 is in effect for all parameters.
+NOTE: Convergence criterion (GCONV=1E-6) satisfied.
+NOTE: At least one element of the gradient is greater than 1e-3.
+NOTE: The PROCEDURE NLMIXED printed page 1.
+
+73         
+74         
+75         
+76         
+The SAS System
+
+77         

@@ -1,0 +1,59 @@
+
+The QUANTREG Procedure
+
+              Model Information
+
+Data Set                           WORK.SAMPLE
+Dependent Variable                           y
+Number of Independent Variables              2
+Number of Observations                      90
+Optimization Algorithm                 Simplex
+Method for Confidence Limits          Inv_Rank
+
+
+Number of Observations Read          90
+Number of Observations Used          90
+
+
+                                Summary Statistics
+ 
+                                                              Standard
+Variable           Q1      Median          Q3        Mean    Deviation         MAD
+
+x             -0.8135     -0.1411      0.4442     -0.1490       0.9040      0.9428
+z             -0.6952     -0.1264      0.5527     -0.0637       0.9977      0.9425
+y              4.5707      5.7370      6.8066      5.6669       1.6618      1.6736
+
+
+ Quantile Level and Objective Function
+
+Quantile Level                      0.5
+Objective Function              29.8733
+Predicted Value at Mean          5.6947
+
+
+           Parameter Estimates
+ 
+                         95% Confidence
+Parameter DF Estimate        Limits
+
+Intercept  1   5.8704    5.6775    6.0619
+x          1   1.4291    1.1587    1.5521
+z          1  -0.5868   -0.9098   -0.3820
+
+
+                  Test Results
+ 
+                       Test       Chi-
+Test              Statistic DF  Square Pr > ChiSq
+
+Wald               198.7592  2  198.76     <.0001
+
+
+                              Estimate
+                        Quantile Level = 0.5
+ 
+                             Standard
+Label            Estimate       Error       DF    t Value    Pr > |t|
+
+x coefficient      1.4291      0.1124       87      12.71      <.0001

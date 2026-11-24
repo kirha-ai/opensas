@@ -1,0 +1,75 @@
+The SAS System
+
+15597      
+15598      /* STAT-FACTOR-004: FACTOR — Number of Factors to Retain
+15599       * Source: S154 / Chapter 44 / `Number of Factors to Retain` (PDF pp. 2828–2829).
+15600       * Discriminates: Example 44.3: Determining the Number of Factors to Retain
+15601       */
+15602      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+15602    ! validmemname=compatible locale=en_US;
+15603      %let syscc=0;
+15604      title; footnote;
+15605      ods _all_ close;
+15606      ods listing gpath="%sysfunc(pathname(work))";
+15607      ods graphics off;
+15608      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEST (memtype=DATA).
+15608    !                                         quit;
+
+
+15609      ods path work.templat(update) sashelp.tmplmst(read);
+15610      
+15611      data SocioEconomics;
+15612      input Population School Employment Services HouseValue;
+15613      datalines;
+
+NOTE: The data set WORK.SOCIOECONOMICS has 12 observations and 5 variables.
+
+15626      ;
+15627      run;
+15628      proc factor data=Socioeconomics
+15629      simple corr;
+15630      run;
+
+NOTE: 2 factors will be retained by the MINEIGEN criterion.
+NOTE: The PROCEDURE FACTOR printed pages 2070-2071.
+
+15631      ods graphics on;
+15632      proc factor data=SocioEconomics
+15633      parallel(alpha=0.01 nsims=10000 seed=20170229) map
+15634      plots=(parallel map);
+15635      run;
+
+NOTE: 2 factors will be retained by the MINEIGEN criterion.
+NOTE: The PROCEDURE FACTOR printed pages 2072-2074.
+
+15636      ods graphics off;
+15637      proc factor data=SocioEconomics
+15638      nfactors=parallel(alpha=0.01 nsims=10000 seed=20170229);
+15639      run;
+
+NOTE: 2 factors will be retained by the method of parallel analysis (with alpha=0.01).
+NOTE: The PROCEDURE FACTOR printed pages 2075-2077.
+
+15640      proc factor data=SocioEconomics
+15641      nfactors=map2;
+15642      run;
+
+NOTE: 2 factors will be retained by the method of minimum average squared partial correlation (MAP2).
+NOTE: The PROCEDURE FACTOR printed pages 2078-2080.
+
+15643      
+15644      
+15645      
+15646      
+The SAS System
+
+15647      

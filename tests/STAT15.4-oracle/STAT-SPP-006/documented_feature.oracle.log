@@ -1,0 +1,53 @@
+The SAS System
+
+17706      
+17707      /* STAT-SPP-006: SPP — Ripley-Rasson Window Estimator / EDF Goodness-of-Fit Tests / Nonparametric Intensity Estimation
+17708       * Source: S154 / Chapter 114 / `Ripley-Rasson Window Estimator` (PDF pp. 9416–9417); S154 / Chapter 114 / `EDF Goodness-of-Fit Tests` (PDF pp.
+17708    ! 9417–9418); S154 / Chapter 114 / `Nonparametric Intensity Estimation` (PDF pp. 9418–9420).
+17709       * Discriminates: Getting Started: SPP Procedure
+17710       */
+17711      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+17711    ! validmemname=compatible locale=en_US;
+17712      %let syscc=0;
+17713      title; footnote;
+17714      ods _all_ close;
+17715      ods listing gpath="%sysfunc(pathname(work))";
+17716      ods graphics off;
+17717      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+17717    !                                         quit;
+
+
+17718      ods path work.templat(update) sashelp.tmplmst(read);
+17719      
+17720      ods graphics on;
+17721      proc spp data=sashelp.bei plots(equate)=(trends observations);
+17722      process trees = (x, y /area=(0,0,1000,500) Event=Trees);
+17723      trend grad = field(x,y, gradient);
+17724      trend elev = field(x,y, elevation);
+17725      run;
+
+NOTE: The PROCEDURE SPP printed page 1217.
+
+17726      proc spp data=sashelp.bei plots(equate)=(residual intensity);
+17727      process trees = (x,y /area=(0,0,1000,500) event=Trees);
+17728      trend elev = field(x,y,elevation);
+17729      trend grad = field(x,y,gradient);
+17730      model trees = elev grad / grid(64,64) residual(B=70) ;
+17731      run;
+
+NOTE: Convergence criterion (Absolute gradient, ABSGCONV=0.00001) satisfied.
+NOTE: The PROCEDURE SPP printed page 1218.
+
+17732      
+17733      
+17734      
+17735      
+The SAS System
+
+17736      

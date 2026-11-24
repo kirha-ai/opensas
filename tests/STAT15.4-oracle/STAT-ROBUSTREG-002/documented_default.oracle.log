@@ -1,0 +1,103 @@
+The SAS System
+
+13940      
+13941      /* STAT-ROBUSTREG-002: ROBUSTREG — Default robust regression estimation
+13942       * Source: S154 / Chapter 107 / `Getting Started: ROBUSTREG Procedure` (PDF pp. 8773–8783); S154 / Chapter 107 / `Overview: ROBUSTREG Procedure`
+13942    ! (PDF pp. 8772–8773).
+13943       * Discriminates: Getting Started: ROBUSTREG Procedure
+13944       */
+13945      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+13945    ! validmemname=compatible locale=en_US;
+13946      %let syscc=0;
+13947      title; footnote;
+13948      ods _all_ close;
+13949      ods listing gpath="%sysfunc(pathname(work))";
+13950      ods graphics off;
+13951      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.HBK (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.STACK (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK._ORACLE_INPUT (memtype=DATA).
+13951    !                                         quit;
+
+
+13952      ods path work.templat(update) sashelp.tmplmst(read);
+13953      
+13954      data Stack;
+13955      input x1 x2 x3 y exp $ @@;
+13956      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.STACK has 21 observations and 5 variables.
+
+13968      ;
+13969      proc robustreg data=stack;
+13970      model y = x1 x2 x3 / diagnostics leverage;
+13971      id exp;
+13972      test x3;
+13973      run;
+
+NOTE: Algorithm converged for the M estimates.
+NOTE: The MCD estimators for covariates have been successfully computed.
+WARNING: The data set contains one or more high leverage points, for which M estimation is not robust. It is recommended that you use METHOD=LTS or METHOD=MM 
+         for this data set.
+NOTE: Algorithm converged for the location-scale M estimates.
+NOTE: Test: Algorithm converged for the M estimates in the reduced model.
+NOTE: The PROCEDURE ROBUSTREG printed page 1056.
+
+13974      ods graphics on;
+13975      proc robustreg data=stack plots=(rdplot ddplot histogram qqplot);
+13976      model y = x1 x2 x3;
+13977      run;
+
+NOTE: Algorithm converged for the M estimates.
+NOTE: The MCD estimators for covariates have been successfully computed.
+WARNING: The data set contains one or more high leverage points, for which M estimation is not robust. It is recommended that you use METHOD=LTS or METHOD=MM 
+         for this data set.
+NOTE: Algorithm converged for the location-scale M estimates.
+NOTE: The PROCEDURE ROBUSTREG printed page 1057.
+
+13978      ods graphics off;
+13979      proc robustreg method=m(wf=bisquare(c=3.5)) data=stack;
+13980      model y = x1 x2 x3 / diagnostics leverage;
+13981      id exp;
+13982      test x3;
+13983      run;
+
+NOTE: Algorithm converged for the M estimates.
+NOTE: The MCD estimators for covariates have been successfully computed.
+WARNING: The data set contains one or more high leverage points, for which M estimation is not robust. It is recommended that you use METHOD=LTS or METHOD=MM 
+         for this data set.
+NOTE: Algorithm converged for the location-scale M estimates.
+NOTE: Test: Algorithm converged for the M estimates in the reduced model.
+NOTE: The PROCEDURE ROBUSTREG printed page 1058.
+
+13984      data hbk;
+13985      input index $ x1 x2 x3 y @@;
+13986      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.HBK has 75 observations and 5 variables.
+
+14025      ;
+14026      proc robustreg data=hbk fwls method=lts;
+14027      model y = x1 x2 x3 / diagnostics leverage;
+14028      id index;
+14029      run;
+
+NOTE: The MCD estimators for covariates have been successfully computed.
+NOTE: The PROCEDURE ROBUSTREG printed page 1059.
+
+14030      
+14031      
+14032      
+14033      
+The SAS System
+
+14034      

@@ -1,0 +1,105 @@
+The SAS System
+
+22714      
+22715      /* STAT-SURVEYMEANS-016: SURVEYMEANS — Computational Resources
+22716       * Source: S154 / Chapter 121 / `Computational Resources` (PDF pp. 9971–9973).
+22717       * Discriminates: Getting Started: SURVEYMEANS Procedure
+22718       */
+22719      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+22719    ! validmemname=compatible locale=en_US;
+22720      %let syscc=0;
+22721      title; footnote;
+22722      ods _all_ close;
+22723      ods listing gpath="%sysfunc(pathname(work))";
+22724      ods graphics off;
+22725      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.ICECREAM (memtype=DATA).
+NOTE: Deleting WORK.MYSTAT (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.STUDENTTOTALS (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+22725    !                                         quit;
+
+
+22726      ods path work.templat(update) sashelp.tmplmst(read);
+22727      
+22728      data IceCream;
+22729      input Grade Spending @@;
+22730      if (Spending < 10) then Group='less';
+22731      else Group='more';
+22732      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.ICECREAM has 40 observations and 3 variables.
+
+22737      ;
+22738      ods graphics on;
+22739      title1 'Analysis of Ice Cream Spending';
+22740      title2 'Simple Random Sample Design';
+22741      proc surveymeans data=IceCream total=4000;
+22742      var Spending Group;
+22743      run;
+
+NOTE: The PROCEDURE SURVEYMEANS printed page 1489.
+
+22744      data StudentTotals;
+22745      input Grade _total_;
+22746      datalines;
+
+NOTE: The data set WORK.STUDENTTOTALS has 3 observations and 2 variables.
+
+22750      ;
+22751      data IceCream;
+22752      set IceCream;
+22753      if Grade=7 then Prob=20/1824;
+22754      if Grade=8 then Prob=9/1025;
+22755      if Grade=9 then Prob=11/1151;
+22756      Weight=1/Prob;
+22757      run;
+
+NOTE: There were 40 observations read from the data set WORK.ICECREAM.
+NOTE: The data set WORK.ICECREAM has 40 observations and 5 variables.
+
+22758      title1 'Analysis of Ice Cream Spending';
+22759      title2 'Stratified Sample Design';
+22760      proc surveymeans data=IceCream total=StudentTotals;
+22761      stratum Grade / list;
+22762      var Spending Group;
+22763      weight Weight;
+22764      run;
+
+NOTE: The PROCEDURE SURVEYMEANS printed page 1490.
+
+22765      title1 'Analysis of Ice Cream Spending';
+22766      title2 'Stratified Sample Design';
+22767      proc surveymeans data=IceCream total=StudentTotals;
+22768      stratum Grade / list;
+22769      var Spending Group;
+22770      weight Weight;
+22771      ods output Statistics=MyStat;
+22772      run;
+
+NOTE: The data set WORK.MYSTAT has 3 observations and 7 variables.
+NOTE: The PROCEDURE SURVEYMEANS printed page 1491.
+
+22773      ods output Statistics=MyStat;
+22774      proc print data=MyStat;
+22775      run;
+
+WARNING: Output 'Statistics' was not created.  Make sure that the output object name, label, or path is spelled correctly.  Also, verify that the appropriate 
+         procedure options are used to produce the requested output object.  For example, verify that the NOPRINT option is not used.
+NOTE: There were 3 observations read from the data set WORK.MYSTAT.
+NOTE: The PROCEDURE PRINT printed page 1492.
+
+22776      
+22777      
+22778      
+22779      
+The SAS System
+
+22780      

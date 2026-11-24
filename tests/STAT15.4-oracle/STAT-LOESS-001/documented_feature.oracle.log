@@ -1,0 +1,100 @@
+The SAS System
+
+12907      
+12908      /* STAT-LOESS-001: LOESS — Data input, variable roles, and basic options
+12909       * Source: S154 / Chapter 78 / `PROC LOESS Statement` (PDF pp. 5770–5775); S154 / Chapter 78 / `BY Statement` (PDF pp. 5775–5776); S154 / Chapter
+12909    !  78 / `ID Statement` (PDF p. 5776); S154 / Chapter 78 / `WEIGHT Statement` (PDF p. 5784); S154 / Chapter 78 / `Missing Values` (PDF pp. 5784–5785).
+12910       * Discriminates: Verified default procedure context; explicit statements: ID
+12911       */
+12912      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+12912    ! validmemname=compatible locale=en_US;
+12913      %let syscc=0;
+12914      title; footnote;
+12915      ods _all_ close;
+12916      ods listing gpath="%sysfunc(pathname(work))";
+12917      ods graphics off;
+12918      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.MALES (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+12918    !                                         quit;
+
+
+12919      ods path work.templat(update) sashelp.tmplmst(read);
+12920      
+12921      data Melanoma;
+12922      input Year Incidences @@;
+12923      format Year d4.0;
+12924      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.MELANOMA has 37 observations and 2 variables.
+
+12935      ;
+12936      proc sgplot data=Melanoma;
+12937      scatter y=Incidences x=Year;
+12938      run;
+
+NOTE: Listing image output written to /saswork/SAS_work7EA200001C34_odaws01-euw1.oda.sas.com/SAS_work29EF00001C34_odaws01-euw1.oda.sas.com/SGPlot14.png.
+NOTE: There were 37 observations read from the data set WORK.MELANOMA.
+
+12939      ods graphics on;
+12940      proc loess data=Melanoma;
+12941      model Incidences=Year;
+12942      run;
+
+NOTE: The PROCEDURE LOESS printed pages 894-896.
+
+12943      proc loess data=Melanoma;
+12944      model Incidences=Year / details(ModelSummary OutputStatistics);
+12945      run;
+
+NOTE: The PROCEDURE LOESS printed pages 897-900.
+
+12946      proc loess data=Melanoma;
+12947      model Incidences=Year/smooth=0.1 0.25 0.4 0.6 residual;
+12948      ods output OutputStatistics=Results;
+12949      run;
+
+WARNING: At smoothing parameter 0.1, the local SSCP matrix for 35 fit point(s) is numerically singular. The fitted value and standard errors at those points 
+         are not uniquely defined.
+WARNING: There is insufficient variation in the data to create a density plot.
+NOTE: The data set WORK.RESULTS has 148 observations and 6 variables.
+NOTE: The PROCEDURE LOESS printed pages 901-905.
+
+12950      proc print data=Results(obs=5);
+12951      id obs;
+12952      run;
+
+NOTE: There were 5 observations read from the data set WORK.RESULTS.
+NOTE: The PROCEDURE PRINT printed page 906.
+
+12953      proc loess data=Melanoma plots=ResidualsBySmooth(smooth);
+12954      model Incidences=Year/smooth=0.1 0.25 0.4 0.6;
+12955      run;
+
+WARNING: At smoothing parameter 0.1, the local SSCP matrix for 35 fit point(s) is numerically singular. The fitted value and standard errors at those points 
+         are not uniquely defined.
+WARNING: There is insufficient variation in the data to create a density plot.
+NOTE: The PROCEDURE LOESS printed pages 907-911.
+
+12956      proc loess data=Melanoma;
+12957      model Incidences=Year/clm alpha=0.1;
+12958      run;
+
+NOTE: The DFMETHOD=EXACT option is implicitly selected when the STD, CLM, or T option is used.
+NOTE: The PROCEDURE LOESS printed pages 912-914.
+
+12959      ods graphics off;
+12960      run;
+12961      quit;
+12962      
+12963      
+12964      
+12965      
+The SAS System
+
+12966      

@@ -1,0 +1,153 @@
+The SAS System
+
+1074       
+1075       /* STAT-BCHOICE-011: BCHOICE — Regenerating Diagnostics Plots / ODS Graphics
+1076        * Source: S154 / Chapter 30 / `Regenerating Diagnostics Plots` (PDF p. 1222); S154 / Chapter 30 / `ODS Graphics` (PDF p. 1227).
+1077        * Discriminates: Example 30.5: Heterogeneity Affected by Individual Characteristics
+1078        */
+1079       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+1079     ! validmemname=compatible locale=en_US;
+1080       %let syscc=0;
+1081       title; footnote;
+1082       ods _all_ close;
+1083       ods listing gpath="%sysfunc(pathname(work))";
+1084       ods graphics off;
+1085       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+1085     !                                         quit;
+
+
+1086       ods path work.templat(update) sashelp.tmplmst(read);
+1087       
+1088       ods graphics on;
+1089       ods trace on;
+1090       ods trace on;
+1091       proc print data=Sashelp.Margarin (obs=24);
+1092       by HouseID Set;
+1093       id HouseID Set;
+1094       run;
+
+
+Output Added:
+-------------
+Name:       Print
+Label:      Data Set SASHELP.MARGARIN
+Data Name:  ProcPrintTable
+Path:       Print.ByGroup1.Print
+-------------
+NOTE: The above message was for the following BY group:
+      HouseID=2100016 Set=1
+
+Output Added:
+-------------
+Name:       Print
+Label:      Data Set SASHELP.MARGARIN
+Data Name:  ProcPrintTable
+Path:       Print.ByGroup2.Print
+-------------
+NOTE: The above message was for the following BY group:
+      HouseID=2100016 Set=2
+
+Output Added:
+-------------
+Name:       Print
+Label:      Data Set SASHELP.MARGARIN
+Data Name:  ProcPrintTable
+Path:       Print.ByGroup3.Print
+-------------
+NOTE: The above message was for the following BY group:
+      HouseID=2100016 Set=3
+
+Output Added:
+-------------
+Name:       Print
+Label:      Data Set SASHELP.MARGARIN
+Data Name:  ProcPrintTable
+Path:       Print.ByGroup4.Print
+-------------
+NOTE: The above message was for the following BY group:
+      HouseID=2100016 Set=4
+NOTE: There were 24 observations read from the data set SASHELP.MARGARIN.
+NOTE: The PROCEDURE PRINT printed page 48.
+
+1095       proc bchoice data=Sashelp.Margarin seed=123 nmc=1000 thin=2
+1096       nthreads=4 plots=none nbi=200;
+1097       class Brand(ref='PPk') HouseID Set;
+1098       model Choice = / choiceset=(HouseID Set);
+1099       random Brand LogPrice / subject=HouseID remean=(LogInc FamSize)
+1100       type=un monitor=(1);
+1101       run;
+
+
+Output Added:
+-------------
+Name:       ModelInfo
+Label:      Model Information
+Template:   Stat.Bchoice.ModelInfo
+Path:       BChoice.ModelInfo
+-------------
+
+Output Added:
+-------------
+Name:       ClassLevels
+Label:      Class Level Information
+Template:   Stat.Bchoice.ClassLevels
+Path:       BChoice.ClassLevels
+-------------
+
+Output Added:
+-------------
+Name:       ChoiceSummary
+Label:      Summary of Choice Sets
+Template:   Stat.Bchoice.ChoiceSummary
+Path:       BChoice.ChoiceSummary
+-------------
+
+Output Added:
+-------------
+Name:       NObs
+Label:      Number of Observations
+Template:   Stat.Bchoice.NObs
+Path:       BChoice.NObs
+-------------
+
+Output Added:
+-------------
+Name:       RandCovPrior
+Label:      Prior for Covariance Parameters of Random Effects
+Template:   Stat.Bchoice.RandCovPrior
+Path:       BChoice.RandCovPrior
+-------------
+NOTE: Generating the burn-in samples.
+NOTE: Beginning sample generation.
+NOTE: Beginning calculation of summary and diagnostics statistics.
+
+Output Added:
+-------------
+Name:       PostSumInt
+Label:      Posterior Summary and Interval Statistics
+Template:   Stat.Bchoice.PostSumInt
+Path:       BChoice.PostSumInt
+-------------
+
+Output Added:
+-------------
+Name:       ESS
+Label:      Effective Sample Sizes
+Template:   Stat.Bchoice.ESS
+Path:       BChoice.ESS
+-------------
+NOTE: The PROCEDURE BCHOICE printed page 49.
+
+1102       
+1103       ods trace off;
+1104       
+1105       ods trace off; ods graphics off;
+1106       
+1107       
+1108       
+1109       
+The SAS System
+
+1110       

@@ -1,0 +1,279 @@
+
+The Mixed Procedure
+
+                  Model Information
+
+Data Set                     WORK.HEIGHTS             
+Dependent Variable           Height                   
+Covariance Structure         Diagonal                 
+Estimation Method            REML                     
+Residual Variance Method     Profile                  
+Fixed Effects SE Method      Model-Based              
+Degrees of Freedom Method    Residual                 
+
+
+             Class Level Information
+ 
+Class     Levels    Values
+
+Family         4    1 2 3 4                       
+Gender         2    F M                           
+
+
+            Dimensions
+
+Covariance Parameters             1
+Columns in X                     15
+Columns in Z                      0
+Subjects                          1
+Max Obs per Subject              18
+
+
+          Number of Observations
+
+Number of Observations Read              18
+Number of Observations Used              18
+Number of Observations Not Used           0
+
+
+Covariance Parameter
+      Estimates
+ 
+Cov Parm     Estimate
+
+Residual       2.1000
+
+
+           Fit Statistics
+
+-2 Res Log Likelihood            41.6
+AIC (Smaller is Better)          43.6
+AICC (Smaller is Better)         44.1
+BIC (Smaller is Better)          43.9
+
+
+          Type 3 Tests of Fixed Effects
+ 
+                  Num     Den
+Effect             DF      DF    F Value    Pr > F
+
+Gender              1      10      17.63    0.0018
+Family              3      10       5.90    0.0139
+Family*Gender       3      10       2.89    0.0889
+
+The Mixed Procedure
+
+                  Model Information
+
+Data Set                     WORK.HEIGHTS             
+Dependent Variable           Height                   
+Covariance Structure         Variance Components      
+Estimation Method            REML                     
+Residual Variance Method     Profile                  
+Fixed Effects SE Method      Model-Based              
+Degrees of Freedom Method    Containment              
+
+
+             Class Level Information
+ 
+Class     Levels    Values
+
+Family         4    1 2 3 4                       
+Gender         2    F M                           
+
+
+            Dimensions
+
+Covariance Parameters             3
+Columns in X                      3
+Columns in Z                     12
+Subjects                          1
+Max Obs per Subject              18
+
+
+          Number of Observations
+
+Number of Observations Read              18
+Number of Observations Used              18
+Number of Observations Not Used           0
+
+
+                     Iteration History
+ 
+Iteration    Evaluations    -2 Res Log Like       Criterion
+
+        0              1        74.11074833                
+        1              2        71.51614003      0.01441208
+        2              1        71.13845990      0.00412226
+        3              1        71.03613556      0.00058188
+        4              1        71.02281757      0.00001689
+        5              1        71.02245904      0.00000002
+        6              1        71.02245869      0.00000000
+
+
+                   Convergence criteria met.                    
+
+
+   Covariance Parameter
+        Estimates
+ 
+Cov Parm          Estimate
+
+Family              2.4010
+Family*Gender       1.7657
+Residual            2.1668
+
+
+           Fit Statistics
+
+-2 Res Log Likelihood            71.0
+AIC (Smaller is Better)          77.0
+AICC (Smaller is Better)         79.0
+BIC (Smaller is Better)          75.2
+
+
+        Type 3 Tests of Fixed Effects
+ 
+              Num     Den
+Effect         DF      DF    F Value    Pr > F
+
+Gender          1       3       7.95    0.0667
+
+The PLM Procedure
+
+                       Store Information
+
+Item Store               WORK._ORACLE_STORE                    
+Data Set Created From    WORK.HEIGHTS                          
+Created By               PROC MIXED                            
+Date Created             24NOV26:13:00:29                      
+Response Variable        Height                                
+Distribution             Normal                                
+Class Variables          Family Gender                         
+Model Effects            Intercept Gender Family Family*Gender 
+
+
+                  SAS Program Information
+
+proc mixed data=heights;                                    
+   class Family Gender;                                     
+   model Height = Gender Family Family*Gender;              
+   store out=work._oracle_store;                            
+run;                                                        
+
+
+  Class Level Information
+ 
+Class     Levels    Values
+
+Family         4    1 2 3 4 
+Gender         2    F M     
+
+
+   Fit Statistics
+
+Error df          10
+
+
+                   Parameter Estimates
+ 
+                                                 Standard
+Effect           Gender    Family    Estimate       Error
+
+Intercept                             67.6667      0.8367
+Gender           F                    -1.1667      1.3229
+Gender           M                          0           .
+Family                     1           3.8333      1.3229
+Family                     2           1.3333      1.1832
+Family                     3          -3.6667      1.6733
+Family                     4                0           .
+Family*Gender    F         1          -4.6667      1.8708
+Family*Gender    M         1                0           .
+Family*Gender    F         2          -3.5000      1.7748
+Family*Gender    M         2                0           .
+Family*Gender    F         3           0.1667      2.4393
+Family*Gender    M         3                0           .
+Family*Gender    F         4                0           .
+Family*Gender    M         4                0           .
+
+
+                                                         Covariance Matrix of Parameter Estimates
+ 
+Effect         Gender  Family   Row      Col1      Col2      Col3      Col4      Col5      Col6      Col7      Col8      Col9     Col10     Col11     Col12
+
+Intercept                         1    0.7000   -0.7000             -0.7000   -0.7000   -0.7000              0.7000              0.7000              0.7000
+Gender         F                  2   -0.7000    1.7500              0.7000    0.7000    0.7000             -1.7500             -1.7500             -1.7500
+Gender         M                  3                                                                                                                        
+Family                 1          4   -0.7000    0.7000              1.7500    0.7000    0.7000             -1.7500             -0.7000             -0.7000
+Family                 2          5   -0.7000    0.7000              0.7000    1.4000    0.7000             -0.7000             -1.4000             -0.7000
+Family                 3          6   -0.7000    0.7000              0.7000    0.7000    2.8000             -0.7000             -0.7000             -2.8000
+Family                 4          7                                                                                                                        
+Family*Gender  F       1          8    0.7000   -1.7500             -1.7500   -0.7000   -0.7000              3.5000              1.7500              1.7500
+Family*Gender  M       1          9                                                                                                                        
+Family*Gender  F       2         10    0.7000   -1.7500             -0.7000   -1.4000   -0.7000              1.7500              3.1500              1.7500
+Family*Gender  M       2         11                                                                                                                        
+Family*Gender  F       3         12    0.7000   -1.7500             -0.7000   -0.7000   -2.8000              1.7500              1.7500              5.9500
+Family*Gender  M       3         13                                                                                                                        
+Family*Gender  F       4         14                                                                                                                        
+Family*Gender  M       4         15                                                                                                                        
+
+              Covariance Matrix of Parameter Estimates
+ 
+Effect         Gender  Family   Row     Col13       Col14       Col15
+
+Intercept                         1                                  
+Gender         F                  2                                  
+Gender         M                  3                                  
+Family                 1          4                                  
+Family                 2          5                                  
+Family                 3          6                                  
+Family                 4          7                                  
+Family*Gender  F       1          8                                  
+Family*Gender  M       1          9                                  
+Family*Gender  F       2         10                                  
+Family*Gender  M       2         11                                  
+Family*Gender  F       3         12                                  
+Family*Gender  M       3         13                                  
+Family*Gender  F       4         14                                  
+Family*Gender  M       4         15                                  
+
+
+                                                                   Cross-product Matrix
+ 
+Effect         Gender  Family   Row      Col1      Col2      Col3      Col4      Col5      Col6      Col7      Col8      Col9     Col10     Col11     Col12
+
+Intercept                         1   18.0000    9.0000    9.0000    5.0000    6.0000    2.0000    5.0000    3.0000    2.0000    3.0000    3.0000    1.0000
+Gender         F                  2    9.0000    9.0000              3.0000    3.0000    1.0000    2.0000    3.0000              3.0000              1.0000
+Gender         M                  3    9.0000              9.0000    2.0000    3.0000    1.0000    3.0000              2.0000              3.0000          
+Family                 1          4    5.0000    3.0000    2.0000    5.0000                                  3.0000    2.0000                              
+Family                 2          5    6.0000    3.0000    3.0000              6.0000                                            3.0000    3.0000          
+Family                 3          6    2.0000    1.0000    1.0000                        2.0000                                                      1.0000
+Family                 4          7    5.0000    2.0000    3.0000                                  5.0000                                                  
+Family*Gender  F       1          8    3.0000    3.0000              3.0000                                  3.0000                                        
+Family*Gender  M       1          9    2.0000              2.0000    2.0000                                            2.0000                              
+Family*Gender  F       2         10    3.0000    3.0000                        3.0000                                            3.0000                    
+Family*Gender  M       2         11    3.0000              3.0000              3.0000                                                      3.0000          
+Family*Gender  F       3         12    1.0000    1.0000                                  1.0000                                                      1.0000
+Family*Gender  M       3         13    1.0000              1.0000                        1.0000                                                            
+Family*Gender  F       4         14    2.0000    2.0000                                            2.0000                                                  
+Family*Gender  M       4         15    3.0000              3.0000                                  3.0000                                                  
+
+                        Cross-product Matrix
+ 
+Effect         Gender  Family   Row     Col13       Col14       Col15
+
+Intercept                         1    1.0000      2.0000      3.0000
+Gender         F                  2                2.0000            
+Gender         M                  3    1.0000                  3.0000
+Family                 1          4                                  
+Family                 2          5                                  
+Family                 3          6    1.0000                        
+Family                 4          7                2.0000      3.0000
+Family*Gender  F       1          8                                  
+Family*Gender  M       1          9                                  
+Family*Gender  F       2         10                                  
+Family*Gender  M       2         11                                  
+Family*Gender  F       3         12                                  
+Family*Gender  M       3         13    1.0000                        
+Family*Gender  F       4         14                2.0000            
+Family*Gender  M       4         15                            3.0000

@@ -1,0 +1,119 @@
+{
+  "audited_at": "2026-11-24T13:20:33.905295+00:00",
+  "runtime": {
+    "sas": "9.04.01M9P06052025",
+    "sas_stat": "15.4"
+  },
+  "scope": "Eight selected cases in three fresh sequential sasrun sessions; not an isolated replay of the entire archive. Listings and diagnostic lines are compared exactly; full logs contain volatile counters and paths.",
+  "sessions": [
+    {
+      "session": 1,
+      "standalone_single_program": true,
+      "cases": [
+        {
+          "ticket": "STAT-BGLIMM-007",
+          "case": "documented_feature",
+          "source_sha256": "6512b534a440add0f8262aa8b811d9d06e805da1b4ba941985dacb2fcbf2435e",
+          "expected_listing_sha256": "99ff684b491a92adc638a57ad0e5b0b77f95b1da82e2a90c55ada0c009af0b4e",
+          "replayed_listing_sha256": "99ff684b491a92adc638a57ad0e5b0b77f95b1da82e2a90c55ada0c009af0b4e",
+          "listing_equal": true,
+          "sas_status_equal": true,
+          "diagnostics_equal": true,
+          "runner_error": null
+        }
+      ],
+      "cli_exit_status": 0
+    },
+    {
+      "session": 2,
+      "standalone_single_program": true,
+      "cases": [
+        {
+          "ticket": "STAT-BOXPLOT-003",
+          "case": "documented_feature",
+          "source_sha256": "9f090680aa2283f9adc2f5d23e6e813c24848e16437e09e0a28e8d27eadd2cd4",
+          "expected_listing_sha256": "c06c271871b29f4b8f5a6c2923e6e24cdb0eceabe8fe0a04a4715f48dd7ac810",
+          "replayed_listing_sha256": "c06c271871b29f4b8f5a6c2923e6e24cdb0eceabe8fe0a04a4715f48dd7ac810",
+          "listing_equal": true,
+          "sas_status_equal": true,
+          "diagnostics_equal": true,
+          "runner_error": null
+        }
+      ],
+      "cli_exit_status": 0
+    },
+    {
+      "session": 3,
+      "standalone_single_program": false,
+      "cases": [
+        {
+          "ticket": "STAT-DATASET-003",
+          "case": "native_contract",
+          "source_sha256": "90f049c5000e094f987257ffb17283fc1017dd231bc9e43edbd43b3c71732c49",
+          "expected_listing_sha256": "c40134b4e9cbbb391d973b710261e44b3dc6330019032a7d37e8736d73fd4638",
+          "replayed_listing_sha256": "c40134b4e9cbbb391d973b710261e44b3dc6330019032a7d37e8736d73fd4638",
+          "listing_equal": true,
+          "sas_status_equal": true,
+          "diagnostics_equal": true,
+          "runner_error": null
+        },
+        {
+          "ticket": "STAT-GENMOD-016",
+          "case": "statement_code",
+          "source_sha256": "38d262c8eb919b56a132222040241e3dac46823a697993814d83039f2641bcfc",
+          "expected_listing_sha256": "57fcd4e3676dbdee87c349c86872cfd8c74de92c1f78b7905b8d83fcbef01ced",
+          "replayed_listing_sha256": "57fcd4e3676dbdee87c349c86872cfd8c74de92c1f78b7905b8d83fcbef01ced",
+          "listing_equal": true,
+          "sas_status_equal": true,
+          "diagnostics_equal": true,
+          "runner_error": null
+        },
+        {
+          "ticket": "STAT-SIM2D-004",
+          "case": "documented_feature",
+          "source_sha256": "68fb5c2706bd993eabc31f39f03da5993aa5631e0ce32ef71461b43a613af0e7",
+          "expected_listing_sha256": "a60c45063640d5a2171eb91e6b78e439e6457115855b7226595353b045bace97",
+          "replayed_listing_sha256": "a60c45063640d5a2171eb91e6b78e439e6457115855b7226595353b045bace97",
+          "listing_equal": true,
+          "sas_status_equal": true,
+          "diagnostics_equal": true,
+          "runner_error": null
+        },
+        {
+          "ticket": "STAT-TPSPLINE-003",
+          "case": "documented_feature",
+          "source_sha256": "a7d53bb22a6466983178b5391abf5e448aa96f17d1eda6381b1d6fa4471e7044",
+          "expected_listing_sha256": "adc92e3bb050b4cb970456e16f18e43901d7d328f386ccdd8856e3cbcfb2d0cd",
+          "replayed_listing_sha256": "adc92e3bb050b4cb970456e16f18e43901d7d328f386ccdd8856e3cbcfb2d0cd",
+          "listing_equal": true,
+          "sas_status_equal": true,
+          "diagnostics_equal": true,
+          "runner_error": null
+        },
+        {
+          "ticket": "STAT-PHREG-003",
+          "case": "documented_feature",
+          "source_sha256": "bedbe09880b05c66838b173fa69cc5d36c86dcdeacbce6bdfb88497f53ea6454",
+          "expected_listing_sha256": "c758ed6af8d75df2e4224fd4fc250bf12641c8ab00f2ebeb59773beb49744fda",
+          "replayed_listing_sha256": "c758ed6af8d75df2e4224fd4fc250bf12641c8ab00f2ebeb59773beb49744fda",
+          "listing_equal": true,
+          "sas_status_equal": true,
+          "diagnostics_equal": true,
+          "runner_error": null
+        },
+        {
+          "ticket": "STAT-TTEST-005",
+          "case": "invalid_alpha",
+          "source_sha256": "6c49a2db8603e3f6bb721e21272b8b6eea7622172ff8cd886ddd03cf0cc85db9",
+          "expected_listing_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "replayed_listing_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "listing_equal": true,
+          "sas_status_equal": true,
+          "diagnostics_equal": true,
+          "runner_error": null
+        }
+      ],
+      "cli_exit_status": 2
+    }
+  ]
+}

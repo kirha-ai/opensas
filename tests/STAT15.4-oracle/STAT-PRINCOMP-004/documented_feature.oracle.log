@@ -1,0 +1,48 @@
+The SAS System
+
+7849       
+7850       /* STAT-PRINCOMP-004: PRINCOMP — Output Data Sets
+7851        * Source: S154 / Chapter 98 / `Output Data Sets` (PDF pp. 8007–8009).
+7852        * Discriminates: Getting Started: PRINCOMP Procedure
+7853        */
+7854       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+7854     ! validmemname=compatible locale=en_US;
+7855       %let syscc=0;
+7856       title; footnote;
+7857       ods _all_ close;
+7858       ods listing gpath="%sysfunc(pathname(work))";
+7859       ods graphics off;
+7860       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SAMPLE (memtype=DATA).
+NOTE: Deleting WORK.SCORES (memtype=DATA).
+7860     !                                         quit;
+
+
+7861       ods path work.templat(update) sashelp.tmplmst(read);
+7862       
+7863       title 'Crime Rates per 100,000 Population by State';
+7864       data Crime;
+7865       input State $1-15 Murder Rape Robbery Assault
+7866       Burglary Larceny Auto_Theft;
+7867       datalines;
+
+NOTE: The data set WORK.CRIME has 50 observations and 8 variables.
+
+7918       ;
+7919       ods graphics on;
+7920       proc princomp out=Crime_Components plots= score(ellipse ncomp=3);
+7921       id State;
+7922       run;
+
+NOTE: The data set WORK.CRIME_COMPONENTS has 50 observations and 15 variables.
+NOTE: The PROCEDURE PRINCOMP printed page 581.
+
+7923       
+7924       
+7925       
+7926       
+The SAS System
+
+7927       

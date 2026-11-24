@@ -1,0 +1,55 @@
+The SAS System
+
+28711      
+28712      /* STAT-TTEST-001: TTEST — Data input, variable roles, and basic options
+28713       * Source: S154 / Chapter 128 / `PROC TTEST Statement` (PDF pp. 10604–10613); S154 / Chapter 128 / `BY Statement` (PDF pp. 10615–10616); S154 /
+28713    ! Chapter 128 / `CLASS Statement` (PDF p. 10616); S154 / Chapter 128 / `FREQ Statement` (PDF pp. 10616–10617); S154 / Chapter 128 / `VAR Statement`
+28713    ! (PDF pp. 10617–10618); S154 / Chapter 128 / `WEIGHT Statement` (PDF p. 10618); S154 / Chapter 128 / `Input Data Set of Statistics` (PDF pp.
+28713    ! 10618–10619); S154 / Chapter 128 / `Missing Values` (PDF p. 10619).
+28714       * Discriminates: BY boundaries, multiple VAR roles, frequency versus analysis weights, and explicit input data
+28715       */
+28716      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+28716    ! validmemname=compatible locale=en_US;
+28717      %let syscc=0;
+28718      title; footnote;
+28719      ods _all_ close;
+28720      ods listing gpath="%sysfunc(pathname(work))";
+28721      ods graphics off;
+28722      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TREE (memtype=DATA).
+28722    !                                         quit;
+
+
+28723      ods path work.templat(update) sashelp.tmplmst(read);
+28724      
+28725      data sample;
+28726       input x y group $ freq weight;
+28727       datalines;
+
+NOTE: The data set WORK.SAMPLE has 12 observations and 5 variables.
+
+28740      ;
+28741      run;
+28742      proc sort data=sample; by group; run;
+
+NOTE: There were 12 observations read from the data set WORK.SAMPLE.
+NOTE: The data set WORK.SAMPLE has 12 observations and 5 variables.
+
+28743      proc ttest data=sample order=data; by group; var x y; freq freq; weight weight; run;
+
+NOTE: The PROCEDURE TTEST printed pages 1764-1765.
+
+28744      
+28745      
+28746      
+28747      
+The SAS System
+
+28748      

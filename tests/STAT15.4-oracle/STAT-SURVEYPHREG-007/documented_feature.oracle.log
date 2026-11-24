@@ -1,0 +1,62 @@
+The SAS System
+
+23057      
+23058      /* STAT-SURVEYPHREG-007: SURVEYPHREG — Specifying the Sample Design / Taylor Series Linearization / Balanced Repeated Replication (BRR) Method
+23059       * Source: S154 / Chapter 122 / `Specifying the Sample Design` (PDF pp. 10052–10054); S154 / Chapter 122 / `Taylor Series Linearization` (PDF pp.
+23059    ! 10057–10058); S154 / Chapter 122 / `Balanced Repeated Replication (BRR) Method` (PDF pp. 10058–10061).
+23060       * Discriminates: Verified default procedure context
+23061       */
+23062      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+23062    ! validmemname=compatible locale=en_US;
+23063      %let syscc=0;
+23064      title; footnote;
+23065      ods _all_ close;
+23066      ods listing gpath="%sysfunc(pathname(work))";
+23067      ods graphics off;
+23068      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SURVEY (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+23068    !                                         quit;
+
+
+23069      ods path work.templat(update) sashelp.tmplmst(read);
+23070      
+23071      data survey;
+23072      call streaminit(722);
+23073      do stratum=1 to 2;
+23074      do cluster=1 to 4;
+23075      do id=1 to 12;
+23076      age=20+mod(id*7+cluster,45);
+23077      time=1+rand('exponential')*10;
+23078      status=(mod(id,4) ne 0);
+23079      weight=2+stratum+cluster/10;
+23080      output;
+23081      end;
+23082      end;
+23083      end;
+23084      run;
+
+NOTE: The data set WORK.SURVEY has 96 observations and 7 variables.
+
+23085      proc surveyphreg data=survey;
+23086      strata stratum;
+23087      cluster cluster;
+23088      weight weight;
+23089      model time*status(0)=age;
+23090      run;
+
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The PROCEDURE SURVEYPHREG printed page 1500.
+
+23091      
+23092      
+23093      
+23094      
+The SAS System
+
+23095      

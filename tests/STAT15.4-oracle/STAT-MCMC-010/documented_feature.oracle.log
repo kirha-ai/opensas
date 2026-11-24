@@ -1,0 +1,80 @@
+The SAS System
+
+16234      
+16235      /* STAT-MCMC-010: MCMC — CALL ODE and CALL QUAD Subroutines / Gamma and Inverse Gamma Distributions / Functions of Random-Effects Parameters
+16236       * Source: S154 / Chapter 80 / `CALL ODE and CALL QUAD Subroutines` (PDF pp. 6202–6208); S154 / Chapter 80 / `Gamma and Inverse Gamma
+16236    ! Distributions` (PDF pp. 6215–6217); S154 / Chapter 80 / `Functions of Random-Effects Parameters` (PDF pp. 6224–6230).
+16237       * Discriminates: Example 80.9: Multivariate Normal Random-Effects Model
+16238       */
+16239      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+16239    ! validmemname=compatible locale=en_US;
+16240      %let syscc=0;
+16241      title; footnote;
+16242      ods _all_ close;
+16243      ods listing gpath="%sysfunc(pathname(work))";
+16244      ods graphics off;
+16245      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.BEHRENS (memtype=DATA).
+NOTE: Deleting WORK.CLASSOUT (memtype=DATA).
+NOTE: Deleting WORK.FORMATS (memtype=CATALOG).
+NOTE: Deleting WORK.HEIGHTS (memtype=DATA).
+NOTE: Deleting WORK.INPUT (memtype=DATA).
+NOTE: Deleting WORK.POSTOUT (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+16245    !                                         quit;
+
+
+16246      ods path work.templat(update) sashelp.tmplmst(read);
+16247      
+16248      title 'Multivariate Normal Random-Effects Model';
+16249      data rats;
+16250      array days[5] (8 15 22 29 36);
+16251      input weight @@;
+16252      subject = ceil(_n_/5);
+16253      index = mod(_n_-1, 5) + 1;
+16254      age = days[index];
+16255      drop index days:;
+16256      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.RATS has 150 observations and 3 variables.
+
+16272      ;
+16273      proc mcmc data=rats nmc=1000 outpost=postout
+16274      seed=17 init=random nbi=200;
+16275      ods select Parameters REParameters PostSumInt;
+16276      array theta[2] alpha beta;
+16277      array theta_c[2];
+16278      array Sig_c[2,2];
+16279      array mu0[2] (0 0);
+16280      array Sig0[2,2] (1000 0 0 1000);
+16281      array S[2,2] (0.02 0 0 20);
+16282      parms theta_c Sig_c {121 0 0 0.26} var_y;
+16283      prior theta_c ~ mvn(mu0, Sig0);
+16284      prior Sig_c ~ iwish(2, S);
+16285      prior var_y ~ igamma(0.01, scale=0.01);
+16286      random theta ~ mvn(theta_c, Sig_c) subject=subject
+16287      monitor=(alpha_9 beta_9 alpha_25 beta_25);
+16288      mu = alpha + beta * age;
+16289      model weight ~ normal(mu, var=var_y);
+16290      run;
+
+NOTE: Tuning the proposal distribution.
+NOTE: Generating the burn-in samples.
+NOTE: Beginning sample generation.
+NOTE: The data set WORK.POSTOUT has 1000 observations and 72 variables.
+NOTE: The PROCEDURE MCMC printed pages 1298-1299.
+
+16291      run;
+16292      quit;
+16293      
+16294      
+16295      
+16296      
+The SAS System
+
+16297      

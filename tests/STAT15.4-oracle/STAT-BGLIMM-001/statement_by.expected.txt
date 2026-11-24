@@ -1,0 +1,140 @@
+
+_oracle_by=1
+
+The BGLIMM Procedure
+
+                  Model Information
+
+Data Set                     WORK._ORACLE_INPUT       
+Response Variable            SideEffect               
+Distribution                 Binomial                 
+Link Function                Logit                    
+Fixed Effects Included       Yes                      
+Random Effects Included      Yes                      
+Sampling Algorithm           Gamerman, Conjugate      
+Burn-In Size                 200                      
+Simulation Size              1000                     
+Thinning                     2                        
+Random Number Seed           976352                   
+Number of Threads            1                        
+
+
+                Class Level Information
+ 
+Class     Levels    Values
+
+Center        15    1 2 3 4 5 6 7 8 9 10 11 12 13 14 15
+Group          2    A B                                
+
+
+        Number of Observations
+
+Number of Observations Read          30
+Number of Observations Used          30
+Number of Events                    155
+Number of Trials                    503
+
+
+Priors for Fixed Effects
+ 
+Parameter    Prior
+
+Group A      Constant
+Group B      Constant
+
+
+  Priors for Scale and Covariance Parameters
+ 
+Parameter     Prior
+
+Random Var    Inverse Gamma (Shape=2, Scale=2)
+
+
+                   Posterior Summaries and Intervals
+ 
+                                       Standard
+Parameter            N        Mean    Deviation      95% HPD Interval
+
+Group A            500     -1.3993       0.3287     -1.9908     -0.6841
+Group B            500     -0.8884       0.3073     -1.4702     -0.2999
+Random Var         500      0.9438       0.4093      0.3179      1.7060
+
+
+                Effective Sample Sizes
+ 
+                          Autocorrelation
+Parameter          ESS               Time    Efficiency
+
+Group A           65.2             7.6676        0.1304
+Group B           66.6             7.5126        0.1331
+Random Var       282.4             1.7703        0.5649
+
+_oracle_by=2
+
+The BGLIMM Procedure
+
+                  Model Information
+
+Data Set                     WORK._ORACLE_INPUT       
+Response Variable            SideEffect               
+Distribution                 Binomial                 
+Link Function                Logit                    
+Fixed Effects Included       Yes                      
+Random Effects Included      Yes                      
+Sampling Algorithm           Gamerman, Conjugate      
+Burn-In Size                 200                      
+Simulation Size              1000                     
+Thinning                     2                        
+Random Number Seed           1234740652               
+Number of Threads            1                        
+
+
+                Class Level Information
+ 
+Class     Levels    Values
+
+Center        15    1 2 3 4 5 6 7 8 9 10 11 12 13 14 15
+Group          2    A B                                
+
+
+        Number of Observations
+
+Number of Observations Read          30
+Number of Observations Used          30
+Number of Events                    155
+Number of Trials                    503
+
+
+Priors for Fixed Effects
+ 
+Parameter    Prior
+
+Group A      Constant
+Group B      Constant
+
+
+  Priors for Scale and Covariance Parameters
+ 
+Parameter     Prior
+
+Random Var    Inverse Gamma (Shape=2, Scale=2)
+
+
+                   Posterior Summaries and Intervals
+ 
+                                       Standard
+Parameter            N        Mean    Deviation      95% HPD Interval
+
+Group A            500     -1.3286       0.3095     -1.9416     -0.7198
+Group B            500     -0.8303       0.2954     -1.4049     -0.2885
+Random Var         500      0.9628       0.4349      0.3086      1.8067
+
+
+                Effective Sample Sizes
+ 
+                          Autocorrelation
+Parameter          ESS               Time    Efficiency
+
+Group A           96.9             5.1594        0.1938
+Group B           74.2             6.7380        0.1484
+Random Var       326.7             1.5305        0.6534

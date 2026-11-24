@@ -1,0 +1,77 @@
+The SAS System
+
+12510      
+12511      /* STAT-REG-009: REG — Multivariate Tests / MTEST
+12512       * Source: S154 / Chapter 105 / `Multivariate Tests` (PDF pp. 8644–8647); S154 / Chapter 105 / `MTEST Statement` (PDF pp. 8588–8590).
+12513       * Discriminates: Getting Started: REG Procedure
+12514       */
+12515      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+12515    ! validmemname=compatible locale=en_US;
+12516      %let syscc=0;
+12517      title; footnote;
+12518      ods _all_ close;
+12519      ods listing gpath="%sysfunc(pathname(work))";
+12520      ods graphics off;
+12521      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.USPOPULATION (memtype=DATA).
+12521    !                                         quit;
+
+
+12522      ods path work.templat(update) sashelp.tmplmst(read);
+12523      
+12524      proc reg data=sashelp.class;
+12525      model Weight = Height;
+12526      run;
+
+
+NOTE: The PROCEDURE REG printed page 954.
+
+12527      data USPopulation;
+12528      input Population @@;
+12529      retain Year 1780;
+12530      Year = Year+10;
+12531      YearSq = Year *Year;
+12532      Population = Population/1000;
+12533      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.USPOPULATION has 22 observations and 3 variables.
+
+12537      ;
+12538      proc reg data=USPopulation plots=ResidualByPredicted;
+12539      var YearSq;
+12540      model Population=Year / r clm cli;
+12541      run;
+
+WARNING: You must enable ODS graphics before requesting plots with the PLOTS option in the PROC REG statement.
+12542      add YearSq;
+12543      print;
+12544      run;
+
+NOTE: Variable YearSq is added.
+NOTE: Due to an ADD statement, the model label is now MODEL1.1.
+
+NOTE: The PROCEDURE REG printed pages 955-958.
+
+12545      proc reg data=USPopulation plots=predictions(X=Year);
+12546      model Population=Year Yearsq;
+12547      quit;
+
+WARNING: You must enable ODS graphics before requesting plots with the PLOTS option in the PROC REG statement.
+NOTE: The PROCEDURE REG printed page 959.
+
+12548      ods graphics off;
+12549      quit;
+12550      
+12551      
+12552      
+12553      
+The SAS System
+
+12554      

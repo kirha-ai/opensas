@@ -1,0 +1,48 @@
+The SAS System
+
+15604      
+15605      /* STAT-MCMC-002: MCMC — MCMC sampling for user-defined probability models
+15606       * Source: S154 / Chapter 80 / `Getting Started: MCMC Procedure` (PDF pp. 6084–6098); S154 / Chapter 80 / `Overview: MCMC Procedure` (PDF pp.
+15606    ! 6083–6084).
+15607       * Discriminates: Documented default analysis with explicit complete public or synthetic inputs
+15608       */
+15609      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+15609    ! validmemname=compatible locale=en_US;
+15610      %let syscc=0;
+15611      title; footnote;
+15612      ods _all_ close;
+15613      ods listing gpath="%sysfunc(pathname(work))";
+15614      ods graphics off;
+15615      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SAMPLE (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+15615    !                                         quit;
+
+
+15616      ods path work.templat(update) sashelp.tmplmst(read);
+15617      
+15618      data sample;
+15619       input x y group $ freq weight;
+15620       datalines;
+
+NOTE: The data set WORK.SAMPLE has 12 observations and 5 variables.
+
+15633      ;
+15634      run;
+15635      proc mcmc data=sample seed=271828 nbi=100 nmc=1000 diag=none; parms mu 90; prior mu ~ normal(0,var=10000); model x ~ normal(mu,var=100); run;
+
+
+NOTE: Generating the burn-in samples.
+NOTE: Beginning sample generation.
+NOTE: The PROCEDURE MCMC printed pages 1266-1267.
+
+15636      
+15637      
+15638      
+15639      
+The SAS System
+
+15640      

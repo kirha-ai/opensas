@@ -1,0 +1,52 @@
+The SAS System
+
+12432      
+12433      /* STAT-REG-007: REG — RESTRICT
+12434       * Source: S154 / Chapter 105 / `RESTRICT Statement` (PDF pp. 8593–8595).
+12435       * Discriminates: Explicit RESTRICT statement behavior on seeded synthetic inputs.
+12436       */
+12437      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+12437    ! validmemname=compatible locale=en_US;
+12438      %let syscc=0;
+12439      title; footnote;
+12440      ods _all_ close;
+12441      ods listing gpath="%sysfunc(pathname(work))";
+12442      ods graphics off;
+12443      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.USPOPULATION (memtype=DATA).
+12443    !                                         quit;
+
+
+12444      ods path work.templat(update) sashelp.tmplmst(read);
+12445      
+12446      data sample;
+12447      call streaminit(314159);
+12448      do id=1 to 90;
+12449       x=rand('normal'); z=rand('normal'); w=rand('normal');
+12450       group=1+mod(id,3); block=1+mod(id,5);
+12451       y=5+1.5*x-0.6*z+0.4*group+rand('normal');
+12452       y2=2+0.5*x+0.8*z+rand('normal'); output;
+12453      end;
+12454      run;
+
+NOTE: The data set WORK.SAMPLE has 90 observations and 8 variables.
+
+12455      proc reg data=sample; model y=x z; restrict z=0; run;
+
+12455    !                                                       quit;
+
+NOTE: The PROCEDURE REG printed page 947.
+
+12456      
+12457      
+12458      
+12459      
+The SAS System
+
+12460      

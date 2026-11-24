@@ -1,0 +1,165 @@
+
+The HPNLMOD Procedure
+
+      Performance Information
+
+Execution Mode       Single-Machine
+Number of Threads    2             
+
+
+          Data Access Information
+ 
+Data           Engine    Role     Path
+
+WORK.ENZYME    V9        Input    On Client
+
+
+                         Specifications
+
+Data Source                                 ENZYME              
+Dependent Variable                          rate                
+Distribution                                None (Nonlinear     
+                                            Least Squares)      
+Optimization Technique                      Levenberg-Marquardt 
+
+
+Number of Observations Read              14
+Number of Observations Used              14
+
+
+               Dimensions
+
+Parameters                             2
+
+
+     Initial Parameter Values
+ 
+  theta1      theta2     Objective
+
+     160         0.1    13.9401055
+
+
+                          Iteration History
+ 
+                               Objective                         Max
+Iteration    Evaluations        Function          Change    Gradient
+
+        0              5    13.940105522                    1214.657
+        1              2    1.4437568364     12.49634869    74.98021
+        2              2    1.4043329995      0.03942384    0.593933
+        3              2    1.4043280406      0.00000496    0.005261
+        4              2    1.4043280401      0.00000000    0.000057
+
+         Convergence criterion (GCONV=1E-8) satisfied.          
+
+
+              Fit Statistics
+
+SS(Error)                          19.6606
+Error Variance                      1.6384
+
+
+                          Analysis of Variance
+ 
+                                  Sum of        Mean               Approx
+Source                    DF     Squares      Square    F Value    Pr > F
+
+Model                      2      290116      145058    88537.2    <.0001
+Error                     12     19.6606      1.6384                     
+Uncorrected Total         14      290135                                 
+
+An intercept was not specified for this model.
+
+
+                                  Parameter Estimates
+ 
+                         Standard                         Approx
+Parameter    Estimate       Error      DF    t Value    Pr > |t|    Approximate 95% Confidence Limits
+
+theta1          158.1      0.6737       1     234.67      <.0001       156.6       159.6
+theta2         0.0741     0.00313       1      23.69      <.0001      0.0673      0.0809
+
+The HPNLMOD Procedure
+
+      Performance Information
+
+Execution Mode       Single-Machine
+Number of Threads    2             
+
+
+          Data Access Information
+ 
+Data           Engine    Role     Path
+
+WORK.REMISS    V9        Input    On Client
+
+
+                         Specifications
+
+Data Source                                 REMISS              
+Dependent Variable                          remiss              
+Distribution                                Binary              
+Optimization Technique                      Newton-Raphson      
+                                            with Ridging        
+
+
+Number of Observations Read              27
+Number of Observations Used              27
+
+
+               Dimensions
+
+Parameters                             4
+
+
+                 Initial Parameter Values
+ 
+     int           a           b           c     Objective
+
+     -10          -2          -1           6    16.2184918
+
+
+                          Iteration History
+ 
+                               Objective                         Max
+Iteration    Evaluations        Function          Change    Gradient
+
+        0              5    16.218491791                    4.449991
+        1              2     1.182693658     15.03579813    0.665597
+        2              2    0.4482298745      0.73446378    0.068514
+        3              2    0.4177518573      0.03047802    0.019942
+        4              2    0.4075542318      0.01019763    0.006817
+        5              2    0.4055928301      0.00196140    0.001154
+        6              2    0.4055583934      0.00003444    0.000022
+        7              2    0.4055583849      0.00000001    5.621E-9
+
+        Convergence criterion (ABSGCONV=1E-7) satisfied.        
+
+
+              Fit Statistics
+
+-2 Log Likelihood                  21.9002
+AIC (smaller is better)            29.9002
+AICC (smaller is better)           31.7183
+BIC (smaller is better)            35.0835
+
+
+                                  Parameter Estimates
+ 
+                         Standard                         Approx
+Parameter    Estimate       Error      DF    t Value    Pr > |t|    Approximate 95% Confidence Limits
+
+int          -36.7548     32.3607       1      -1.14      0.2660      -103.2     29.6439
+a             -5.6298      4.6376       1      -1.21      0.2353    -15.1454      3.8858
+b             -2.2513      0.9790       1      -2.30      0.0294     -4.2599     -0.2426
+c             45.1815     34.9095       1       1.29      0.2065    -26.4469       116.8
+
+
+      Correlation of Parameter Estimates
+ 
+           int          a          b          c
+
+int     1.0000     0.3075     0.5690    -0.9911
+a       0.3075     1.0000     0.4496    -0.4290
+b       0.5690     0.4496     1.0000    -0.6215
+c      -0.9911    -0.4290    -0.6215     1.0000

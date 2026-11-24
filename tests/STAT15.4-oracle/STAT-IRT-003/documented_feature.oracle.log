@@ -1,0 +1,56 @@
+The SAS System
+
+8901       
+8902       /* STAT-IRT-003: IRT — MODEL
+8903        * Source: S154 / Chapter 72 / `MODEL Statement` (PDF pp. 5334–5336).
+8904        * Discriminates: Verified default procedure context
+8905        */
+8906       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+8906     ! validmemname=compatible locale=en_US;
+8907       %let syscc=0;
+8908       title; footnote;
+8909       ods _all_ close;
+8910       ods listing gpath="%sysfunc(pathname(work))";
+8911       ods graphics off;
+8912       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.RESPONSES (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+8912     !                                         quit;
+
+
+8913       ods path work.templat(update) sashelp.tmplmst(read);
+8914       
+8915       data responses;
+8916       call streaminit(329);
+8917       array item[5] item1-item5;
+8918       do subject=1 to 150;
+8919       theta=rand('normal');
+8920       do k=1 to 5;
+8921       item[k]=rand('bernoulli',1/(1+exp(-(theta-(k-3)/2))));
+8922       end;
+8923       output;
+8924       end;
+8925       keep item1-item5;
+8926       run;
+
+NOTE: The data set WORK.RESPONSES has 150 observations and 5 variables.
+
+8927       proc irt data=responses;
+8928       var item1-item5;
+8929       run;
+
+NOTE: The observed frequency is zero for some response patterns. As a result, the Pearson chi-square model fit statistic is not calculated.
+WARNING: Over 20 percent of the response patterns have expected frequency less than 5. The chi-square distribution might not provide valid statistical 
+         inferences about the model fit when you use the Pearson chi-square and the likelihood ratio chi-square.
+NOTE: The PROCEDURE IRT printed pages 634-638.
+
+8930       
+8931       
+8932       
+8933       
+The SAS System
+
+8934       

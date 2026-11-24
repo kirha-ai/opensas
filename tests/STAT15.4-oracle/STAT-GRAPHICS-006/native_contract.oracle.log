@@ -1,0 +1,73 @@
+The SAS System
+
+2038       
+2039       /* STAT-GRAPHICS-006: ODS graphics — Selecting and Excluding Graphs
+2040        * Source: S154 / Chapter 24 / `Selecting and Excluding Graphs` (PDF pp. 694–695).
+2041        * Discriminates: Graph selection by the DiagnosticsPanel ODS name
+2042        */
+2043       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+2043     ! validmemname=compatible locale=en_US;
+2044       %let syscc=0;
+2045       title; footnote;
+2046       ods _all_ close;
+2047       ods listing gpath="%sysfunc(pathname(work))";
+2048       ods graphics off;
+2049       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.GRAPH_FILES (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SAMPLE (memtype=DATA).
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+2049     !                                         quit;
+
+
+2050       ods path work.templat(update) sashelp.tmplmst(read);
+2051       
+2052       options dlcreatedir; libname _gpath "%sysfunc(pathname(work))/stat_graphics_006"; libname _gpath clear;
+NOTE: Library _GPATH was created.
+NOTE: Libref _GPATH was successfully assigned as follows: 
+      Engine:        V9 
+      Physical Name: /saswork/SAS_work5D120001108E_odaws02-euw1.oda.sas.com/SAS_workCCDC0001108E_odaws02-euw1.oda.sas.com/stat_graphics_006
+NOTE: Libref _GPATH has been deassigned.
+2053       ods listing gpath="%sysfunc(pathname(work))/stat_graphics_006";
+2054       ods graphics on / reset=all imagename="oracle" imagefmt=svg width=5in height=3in;
+2055       ods trace on;
+2056       data sample;
+2057        input x z y group $ weight freq;
+2058        datalines;
+
+NOTE: The data set WORK.SAMPLE has 12 observations and 6 variables.
+
+2071       ;
+2072       run;
+2073       ods select DiagnosticsPanel; proc reg data=sample plots(only)=diagnostics; model y=x z; run; quit; ods select all;
+
+
+Output Added:
+-------------
+Name:       DiagnosticsPanel
+Label:      Fit Diagnostics
+Template:   Stat.REG.Graphics.DiagnosticsPanel
+Path:       Reg.MODEL1.ObswiseStats.y.DiagnosticPlots.DiagnosticsPanel
+-------------
+
+2074       ods trace off; ods graphics off;
+2075       data graph_files; length name $128; rc=filename('_gdir',"%sysfunc(pathname(work))/stat_graphics_006"); did=dopen('_gdir'); if did then do; do i=1 to
+2075     ! dnum(did); name=dread(did,i); if lowcase(scan(name,-1,'.')) in ('svg','png') then output; end; rc=dclose(did); end; keep name; run;
+
+NOTE: The data set WORK.GRAPH_FILES has 1 observations and 1 variables.
+
+2076       proc print data=graph_files noobs; run;
+
+NOTE: There were 1 observations read from the data set WORK.GRAPH_FILES.
+NOTE: The PROCEDURE PRINT printed page 97.
+
+2077       
+2078       
+2079       
+2080       
+The SAS System
+
+2081       

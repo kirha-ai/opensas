@@ -1,0 +1,52 @@
+The SAS System
+
+12922      
+12923      /* STAT-CAUSALGRAPH-002: CAUSALGRAPH — Causal graph parsing and identification analysis
+12924       * Source: S154 / Chapter 37 / `Getting Started: CAUSALGRAPH Procedure` (PDF pp. 2307–2310); S154 / Chapter 37 / `Overview: CAUSALGRAPH Procedure`
+12924    ! (PDF pp. 2304–2307).
+12925       * Discriminates: Documented default analysis with explicit complete public or synthetic inputs
+12926       */
+12927      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+12927    ! validmemname=compatible locale=en_US;
+12928      %let syscc=0;
+12929      title; footnote;
+12930      ods _all_ close;
+12931      ods listing gpath="%sysfunc(pathname(work))";
+12932      ods graphics off;
+12933      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+12933    !                                         quit;
+
+
+12934      ods path work.templat(update) sashelp.tmplmst(read);
+12935      
+12936      proc causalgraph;
+12937      model "Timm17TwoLatent"
+12938      Age ==> Parity PFAS Education,
+12939      Parity ==> PrevBF Duration PFAS,
+12940      PrevBF ==> PFAS Duration,
+12941      PFAS ==> Duration,
+12942      Education ==> Duration Employment PFAS BMI Alcohol Smoking,
+12943      Employment ==> Duration PFAS BMI Alcohol Smoking,
+12944      BMI Alcohol Smoking ==> Duration;
+12945      identify PFAS ==> Duration;
+12946      unmeasured Alcohol Smoking;
+12947      run;
+
+NOTE: The PROCEDURE CAUSALGRAPH printed pages 1782-1783.
+
+12948      quit;
+12949      
+12950      
+12951      
+12952      
+The SAS System
+
+12953      

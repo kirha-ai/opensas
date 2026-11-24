@@ -1,0 +1,57 @@
+The SAS System
+
+22044      
+22045      /* STAT-GENMOD-003: GENMOD — CLASS / MODEL / ZEROMODEL
+22046       * Source: S154 / Chapter 51 / `CLASS Statement` (PDF pp. 3526–3529); S154 / Chapter 51 / `MODEL Statement` (PDF pp. 3544–3555); S154 / Chapter
+22046    ! 51 / `ZEROMODEL Statement` (PDF pp. 3567–3568).
+22047       * Discriminates: Example 51.1: Logistic Regression; explicit statements: CLASS, MODEL
+22048       */
+22049      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+22049    ! validmemname=compatible locale=en_US;
+22050      %let syscc=0;
+22051      title; footnote;
+22052      ods _all_ close;
+22053      ods listing gpath="%sysfunc(pathname(work))";
+22054      ods graphics off;
+22055      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.NOR (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.RESIDUALS (memtype=DATA).
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+22055    !                                         quit;
+
+
+22056      ods path work.templat(update) sashelp.tmplmst(read);
+22057      
+22058      data drug;
+22059      input drug$ x r n @@;
+22060      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.DRUG has 18 observations and 4 variables.
+
+22066      ;
+22067      proc genmod data=drug;
+22068      class drug;
+22069      model r/n = x drug / dist = bin
+22070      link = logit
+22071      lrci;
+22072      run;
+
+NOTE: Algorithm converged.
+NOTE: The scale parameter was held fixed.
+NOTE: The PROCEDURE GENMOD printed page 2373.
+
+22073      
+22074      
+22075      
+22076      
+The SAS System
+
+22077      

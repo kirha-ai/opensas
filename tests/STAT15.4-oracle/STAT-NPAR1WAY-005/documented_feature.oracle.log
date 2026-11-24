@@ -1,0 +1,67 @@
+The SAS System
+
+626        
+627        /* STAT-NPAR1WAY-005: NPAR1WAY — Fligner-Policello Test / Empirical Distribution Function Tests
+628         * Source: S154 / Chapter 90 / `Fligner-Policello Test` (PDF pp. 7244–7246); S154 / Chapter 90 / `Empirical Distribution Function Tests` (PDF pp.
+628      ! 7247–7249).
+629         * Discriminates: Getting Started: NPAR1WAY Procedure
+630         */
+631        options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+631      ! validmemname=compatible locale=en_US;
+632        %let syscc=0;
+633        title; footnote;
+634        ods _all_ close;
+635        ods listing gpath="%sysfunc(pathname(work))";
+636        ods graphics off;
+637        proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REACT (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+637      !                                         quit;
+
+
+638        ods path work.templat(update) sashelp.tmplmst(read);
+639        
+640        data Gossypol;
+641        input Dose n;
+642        do i=1 to n;
+643        input Gain @@;
+644        output;
+645        end;
+646        datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.GOSSYPOL has 67 observations and 4 variables.
+
+657        ;
+658        proc npar1way data=Gossypol;
+659        class Dose;
+660        var Gain;
+661        run;
+
+NOTE: The PROCEDURE NPAR1WAY printed pages 71-76.
+
+662        ods graphics on;
+663        proc npar1way data=Gossypol plots(only)=wilcoxonboxplot;
+664        class Dose;
+665        var Gain;
+666        run;
+
+NOTE: The PROCEDURE NPAR1WAY printed pages 77-82.
+
+667        ods graphics off;
+668        proc npar1way data=Gossypol;
+669        where Dose <= .04;
+670        class Dose;
+671        var Gain;
+672        run;
+
+NOTE: The PROCEDURE NPAR1WAY printed pages 83-88.
+
+673        
+674        
+675        
+676        
+The SAS System
+
+677        

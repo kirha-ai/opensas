@@ -1,0 +1,98 @@
+The SAS System
+
+4960       
+4961       /* STAT-PLM-008: PLM — CODE / SCORE / Scoring Data Sets for Zero-Inflated Models
+4962        * Source: S154 / Chapter 94 / `CODE Statement` (PDF pp. 7632–7633); S154 / Chapter 94 / `SCORE Statement` (PDF pp. 7639–7641); S154 / Chapter 94
+4962     !  / `Scoring Data Sets for Zero-Inflated Models` (PDF p. 7648).
+4963        * Discriminates: Example 94.1: Scoring with PROC PLM; explicit statements: SCORE
+4964        */
+4965       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+4965     ! validmemname=compatible locale=en_US;
+4966       %let syscc=0;
+4967       title; footnote;
+4968       ods _all_ close;
+4969       ods listing gpath="%sysfunc(pathname(work))";
+4970       ods graphics off;
+4971       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.BLOCKANALYSIS (memtype=ITEMSTOR).
+NOTE: Deleting WORK.BLOCKDESIGN (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+4971     !                                         quit;
+
+
+4972       ods path work.templat(update) sashelp.tmplmst(read);
+4973       
+4974       %let nObs = 5000;
+4975       %let nVars = 100;
+4976       data SimuData;
+4977       array x{&nVars};
+4978       do obsNum=1 to &nObs;
+4979       do j=1 to &nVars;
+4980       x{j}=ranuni(1);
+4981       end;
+4982       linp = 10 + 11 *x1 - 10*sqrt(x2) + 2/x3 - 8*exp(x4) + 7*x5*x5
+4983       - 6*x6**1.5 + 5*log(x7) - 4*sin(3.14*x8) + 3*x9 - 2*x10;
+4984       TrueProb = 1/(1+exp(-linp));
+4985       if ranuni(1) < TrueProb then y=1;
+4986       else y=0;
+4987       output;
+4988       end;
+4989       run;
+
+NOTE: The data set WORK.SIMUDATA has 5000 observations and 105 variables.
+
+4990       proc logistic data=SimuData;
+4991       effect splines = spline(x1-x&nVars/separate);
+4992       model y = splines/selection=stepwise;
+4993       store work.SimuModel;
+4994       run;
+
+NOTE: PROC LOGISTIC is modeling the probability that y=0. One way to change this to model the probability that y=1 is to specify the response variable option 
+      EVENT='1'.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied in Step 0.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied in Step 1.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied in Step 2.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied in Step 3.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied in Step 4.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied in Step 5.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied in Step 6.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied in Step 7.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied in Step 8.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied in Step 9.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied in Step 10.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied in Step 11.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied in Step 12.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied in Step 13.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied in Step 14.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied in Step 15.
+NOTE: The LOGISTIC procedure generated the model item store WORK.SIMUMODEL.
+NOTE: There were 5000 observations read from the data set WORK.SIMUDATA.
+NOTE: The PROCEDURE LOGISTIC printed page 373.
+
+4995       data test;
+4996       array x{&nVars};
+4997       do j=1 to &nVars;
+4998       x{j}=0.15;
+4999       end;
+5000       drop j;
+5001       output;
+5002       run;
+
+NOTE: The data set WORK.TEST has 1 observations and 100 variables.
+
+5003       proc plm restore=work.SimuModel;
+5004       score data=test out=testout predicted / ilink;
+5005       run;
+
+NOTE: The data set WORK.TESTOUT has 1 observations and 101 variables.
+NOTE: The PROCEDURE PLM printed page 374.
+
+5006       
+5007       
+5008       
+5009       
+The SAS System
+
+5010       

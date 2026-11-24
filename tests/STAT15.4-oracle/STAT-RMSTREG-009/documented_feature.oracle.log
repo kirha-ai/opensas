@@ -1,0 +1,54 @@
+The SAS System
+
+13565      
+13566      /* STAT-RMSTREG-009: RMSTREG — Confidence Intervals and Predicted Values
+13567       * Source: S154 / Chapter 106 / `Confidence Intervals and Predicted Values` (PDF pp. 8752–8753).
+13568       * Discriminates: Verified default procedure context
+13569       */
+13570      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+13570    ! validmemname=compatible locale=en_US;
+13571      %let syscc=0;
+13572      title; footnote;
+13573      ods _all_ close;
+13574      ods listing gpath="%sysfunc(pathname(work))";
+13575      ods graphics off;
+13576      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SURVIVAL (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+13576    !                                         quit;
+
+
+13577      ods path work.templat(update) sashelp.tmplmst(read);
+13578      
+13579      data survival;
+13580      call streaminit(218);
+13581      do id=1 to 100;
+13582      age=25+mod(id*7,40);
+13583      x=mod(id,2);
+13584      time=exp(0.5+0.15*x+0.01*age+rand('normal')*0.7);
+13585      status=(mod(id,4) ne 0);
+13586      output;
+13587      end;
+13588      run;
+
+NOTE: The data set WORK.SURVIVAL has 100 observations and 5 variables.
+
+13589      proc rmstreg data=survival tau=5;
+13590      model time*status(0)=age x / link=linear method=pv;
+13591      run;
+
+NOTE: Algorithm converged.
+NOTE: The PROCEDURE RMSTREG printed page 1042.
+
+13592      
+13593      
+13594      
+13595      
+The SAS System
+
+13596      

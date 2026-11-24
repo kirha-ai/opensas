@@ -1,0 +1,68 @@
+The SAS System
+
+27474      
+27475      /* STAT-GLMPOWER-011: GLMPOWER — Official examples and feature integration regression
+27476       * Source: S154 / Chapter 55 / `Examples: GLMPOWER Procedure` (PDF pp. 4296–4311).
+27477       * Discriminates: Example 55.3: Repeated Measures ANOVA
+27478       */
+27479      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+27479    ! validmemname=compatible locale=en_US;
+27480      %let syscc=0;
+27481      title; footnote;
+27482      ods _all_ close;
+27483      ods listing gpath="%sysfunc(pathname(work))";
+27484      ods graphics off;
+27485      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.EXEMPLARY (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+27485    !                                         quit;
+
+
+27486      ods path work.templat(update) sashelp.tmplmst(read);
+27487      
+27488      data Pain;
+27489      input Treatment $ PainMem0 PainMem1Wk PainMem6Mo PainMem12Mo;
+27490      datalines;
+
+NOTE: The data set WORK.PAIN has 2 observations and 5 variables.
+
+27493      ;
+27494      ods graphics on;
+27495      proc glmpower data=Pain;
+27496      class Treatment;
+27497      model PainMem0 PainMem1Wk PainMem6Mo PainMem12Mo = Treatment;
+27498      repeated Time contrast;
+27499      power
+27500      mtest = hlt
+27501      alpha = 0.01
+27502      power = .9
+27503      ntotal = .
+27504      stddev = 0.92 1.04
+27505      matrix ("PainCorr") = lear(0.6, 0.8, 4, 0 1 26 52)
+27506      corrmat = "PainCorr";
+27507      plot y=power min=0.05 max=0.99 yopts=(ref=0.9)
+27508      vary (linestyle by stddev, symbol by dependent source);
+27509      run;
+
+NOTE: Plotting Power on the y-axis, with 20 points per curve between 0.05 and 0.99, versus computed N Total on the x-axis.
+NOTE: There were 2 observations read from the data set WORK.PAIN.
+NOTE: The PROCEDURE GLMPOWER printed page 2680.
+
+27510      ods graphics off;
+27511      run;
+27512      quit;
+27513      
+27514      
+27515      
+27516      
+The SAS System
+
+27517      

@@ -1,0 +1,50 @@
+The SAS System
+
+17326      
+17327      /* STAT-SIMNORMAL-002: SIMNORMAL — Multivariate normal simulation from supplied moments
+17328       * Source: S154 / Chapter 113 / `Getting Started: SIMNORMAL Procedure` (PDF pp. 9366–9367); S154 / Chapter 113 / `Overview: SIMNORMAL Procedure`
+17328    ! (PDF pp. 9365–9366).
+17329       * Discriminates: Small synthetic/public-input default model adapted to the documented Getting Started procedure
+17330       */
+17331      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+17331    ! validmemname=compatible locale=en_US;
+17332      %let syscc=0;
+17333      title; footnote;
+17334      ods _all_ close;
+17335      ods listing gpath="%sysfunc(pathname(work))";
+17336      ods graphics off;
+17337      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.DRAWS (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SCOV (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+17337    !                                         quit;
+
+
+17338      ods path work.templat(update) sashelp.tmplmst(read);
+17339      
+17340      data scov(type=cov); length _TYPE_ $8 _NAME_ $8; input _TYPE_ $ _NAME_ $ s1 s2; datalines;
+
+NOTE: The data set WORK.SCOV has 3 observations and 4 variables.
+
+17344      ;
+17345      run;
+17346      proc simnorm data=scov outsim=draws numreal=500 seed=54321; var s1 s2; run;
+
+NOTE: The data set WORK.DRAWS has 500 observations and 3 variables.
+
+17347      proc corr data=draws cov; var s1 s2; run;
+
+NOTE: The PROCEDURE CORR printed page 1200.
+
+17348      
+17349      
+17350      
+17351      
+The SAS System
+
+17352      

@@ -1,0 +1,15 @@
+
+Logistic Regression Random-Effects Model
+
+The MCMC Procedure
+
+                  Posterior Summaries and Intervals
+ 
+                                      Standard
+Parameter           N        Mean    Deviation      95% HPD Interval
+
+beta0            1000     -0.6083       0.2188     -1.0555     -0.1995
+beta1            1000      0.1511       0.4101     -0.6702      0.9514
+beta2            1000      1.5149       0.2524      0.9977      1.9794
+beta3            1000     -1.0136       0.4466     -1.9549     -0.0889
+s2               1000      0.1446       0.1244      0.0100      0.4034

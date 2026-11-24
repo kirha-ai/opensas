@@ -1,0 +1,55 @@
+The SAS System
+
+1193       
+1194       /* STAT-BGLIMM-002: BGLIMM — Bayesian estimation of generalized linear mixed models
+1195        * Source: S154 / Chapter 31 / `Getting Started: BGLIMM Procedure` (PDF pp. 1266–1274); S154 / Chapter 31 / `Overview: BGLIMM Procedure` (PDF pp.
+1195     ! 1262–1266).
+1196        * Discriminates: Documented default analysis with explicit complete public or synthetic inputs
+1197        */
+1198       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+1198     ! validmemname=compatible locale=en_US;
+1199       %let syscc=0;
+1200       title; footnote;
+1201       ods _all_ close;
+1202       ods listing gpath="%sysfunc(pathname(work))";
+1203       ods graphics off;
+1204       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.MULTICENTER (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+1204     !                                         quit;
+
+
+1205       ods path work.templat(update) sashelp.tmplmst(read);
+1206       
+1207       data MultiCenter;
+1208       input Center Group$ N SideEffect @@;
+1209       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.MULTICENTER has 30 observations and 4 variables.
+
+1225       ;
+1226       ods graphics on;
+1227       proc bglimm data=MultiCenter nmc=1000 thin=2 seed=976352
+1228       plots=all nbi=200;
+1229       class Center Group;
+1230       model SideEffect/N = Group / noint;
+1231       random int / subject = Center;
+1232       run;
+
+NOTE: Generating the burn-in samples.
+NOTE: Beginning sample generation.
+NOTE: Beginning calculation of summary and diagnostics statistics.
+NOTE: Generating diagnostic plots.
+NOTE: The PROCEDURE BGLIMM printed page 53.
+
+1233       quit;
+1234       
+1235       
+1236       
+1237       
+The SAS System
+
+1238       

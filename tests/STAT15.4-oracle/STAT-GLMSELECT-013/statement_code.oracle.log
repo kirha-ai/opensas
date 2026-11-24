@@ -1,0 +1,73 @@
+The SAS System
+
+1109       
+1110       /* STAT-GLMSELECT-013: GLMSELECT — CODE / SCORE
+1111        * Source: S154 / Chapter 56 / `CODE Statement` (PDF p. 4336); S154 / Chapter 56 / `SCORE Statement` (PDF pp. 4355–4356).
+1112        * Discriminates: Generate DATA step scoring code, execute it against the input rows, and print the scored data.
+1113        */
+1114       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+1114     ! validmemname=compatible locale=en_US;
+1115       %let syscc=0;
+1116       title; footnote;
+1117       ods _all_ close;
+1118       ods listing gpath="%sysfunc(pathname(work))";
+1119       ods graphics off;
+1120       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK._ORACLE_INPUT (memtype=DATA).
+1120     !                                         quit;
+
+
+1121       ods path work.templat(update) sashelp.tmplmst(read);
+1122       
+1123       filename _orcode "%sysfunc(pathname(work))/_oracle_score.sas";
+1124       
+1125       
+1126       proc contents varnum data=sashelp.baseball;
+1127       ods select position;
+1128       run;
+
+NOTE: The PROCEDURE CONTENTS printed page 78.
+
+1129       ods graphics on;
+1130       proc glmselect data=sashelp.baseball plots=all seed=314159;
+1131       class league division;
+1132       model logSalary = nAtBat nHits nHome nRuns nRBI nBB
+1133       yrMajor crAtBat crHits crHome crRuns crRbi
+1134       crBB league division nOuts nAssts nError
+1135       / details=all stats=all;
+1136       
+1137       code file="%sysfunc(pathname(work))/_oracle_score.sas";
+1138       run;
+
+NOTE: External file /saswork/SAS_work7EA200001C34_odaws01-euw1.oda.sas.com/SAS_work29EF00001C34_odaws01-euw1.oda.sas.com/_oracle_score.sas opened.
+NOTE: The GLMSELECT procedure wrote the DATA step code to external file 
+      /saswork/SAS_work7EA200001C34_odaws01-euw1.oda.sas.com/SAS_work29EF00001C34_odaws01-euw1.oda.sas.com/_oracle_score.sas.
+NOTE: There were 322 observations read from the data set SASHELP.BASEBALL.
+NOTE: The PROCEDURE GLMSELECT printed pages 79-87.
+
+1139       quit;
+1140       
+1141       data _oracle_scored; set sashelp.baseball;
+1142       %include _orcode;
+1177       run;
+
+NOTE: There were 322 observations read from the data set SASHELP.BASEBALL.
+NOTE: The data set WORK._ORACLE_SCORED has 322 observations and 25 variables.
+
+1178       proc print data=_oracle_scored(obs=10); run;
+
+NOTE: There were 10 observations read from the data set WORK._ORACLE_SCORED.
+NOTE: The PROCEDURE PRINT printed page 88.
+
+1179       
+1180       
+1181       
+1182       
+The SAS System
+
+1183       

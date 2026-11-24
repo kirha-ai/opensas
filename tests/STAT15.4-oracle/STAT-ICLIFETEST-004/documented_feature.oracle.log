@@ -1,0 +1,90 @@
+The SAS System
+
+7204       
+7205       /* STAT-ICLIFETEST-004: ICLIFETEST — TEST
+7206        * Source: S154 / Chapter 69 / `TEST Statement` (PDF pp. 5166–5169).
+7207        * Discriminates: Getting Started: ICLIFETEST Procedure; explicit statements: TEST
+7208        */
+7209       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+7209     ! validmemname=compatible locale=en_US;
+7210       %let syscc=0;
+7211       title; footnote;
+7212       ods _all_ close;
+7213       ods listing gpath="%sysfunc(pathname(work))";
+7214       ods graphics off;
+7215       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.BCS (memtype=DATA).
+NOTE: Deleting WORK.RCT (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.RT (memtype=DATA).
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+7215     !                                         quit;
+
+
+7216       ods path work.templat(update) sashelp.tmplmst(read);
+7217       
+7218       data RT;
+7219       input lTime rTime @@;
+7220       trt = ' RT';
+7221       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.RT has 46 observations and 3 variables.
+
+7238       ;
+7239       data RCT;
+7240       input lTime rTime @@;
+7241       trt = 'RCT';
+7242       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.RCT has 48 observations and 3 variables.
+
+7259       ;
+7260       data BCS;
+7261       set RT RCT;
+7262       run;
+
+NOTE: There were 46 observations read from the data set WORK.RT.
+NOTE: There were 48 observations read from the data set WORK.RCT.
+NOTE: The data set WORK.BCS has 94 observations and 3 variables.
+
+7263       ods graphics on;
+7264       proc iclifetest plots=(survival logsurv) data=BCS impute(seed=1234);
+7265       strata trt;
+7266       time (lTime, rTime);
+7267       run;
+
+NOTE: Start processing Stratum 1: trt = RT.
+NOTE: Algorithm converges in 21 steps.
+NOTE: Algorithm finds a maximum likelihood estimate.
+NOTE: Start processing Stratum 2: trt = RCT.
+NOTE: Algorithm converges in 27 steps.
+NOTE: Algorithm finds a maximum likelihood estimate.
+NOTE: The PROCEDURE ICLIFETEST printed pages 528-530.
+
+7268       proc iclifetest data=BCS impute(seed=1234);
+7269       time (lTime, rTime);
+7270       test trt;
+7271       run;
+
+NOTE: Start processing Group 1: trt = RT.
+NOTE: Algorithm converges in 21 steps.
+NOTE: Algorithm finds a maximum likelihood estimate.
+NOTE: Start processing Group 2: trt = RCT.
+NOTE: Algorithm converges in 27 steps.
+NOTE: Algorithm finds a maximum likelihood estimate.
+NOTE: Algorithm converges in 25 steps.
+NOTE: Algorithm finds a maximum likelihood estimate.
+NOTE: The PROCEDURE ICLIFETEST printed pages 531-534.
+
+7272       
+7273       
+7274       
+7275       
+The SAS System
+
+7276       

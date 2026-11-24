@@ -1,0 +1,58 @@
+The SAS System
+
+21399      
+21400      /* STAT-GEE-005: GEE — REPEATED / Generalized Estimating Equations / Alternating Logistic Regression
+21401       * Source: S154 / Chapter 50 / `REPEATED Statement` (PDF pp. 3439–3443); S154 / Chapter 50 / `Generalized Estimating Equations` (PDF pp.
+21401    ! 3444–3448); S154 / Chapter 50 / `Alternating Logistic Regression` (PDF pp. 3448–3452).
+21402       * Discriminates: Getting Started; explicit statements: REPEATED
+21403       */
+21404      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+21404    ! validmemname=compatible locale=en_US;
+21405      %let syscc=0;
+21406      title; footnote;
+21407      ods _all_ close;
+21408      ods listing gpath="%sysfunc(pathname(work))";
+21409      ods graphics off;
+21410      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.CHILDREN (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+21410    !                                         quit;
+
+
+21411      ods path work.templat(update) sashelp.tmplmst(read);
+21412      
+21413      data Children;
+21414      input ID City$ @@;
+21415      do i=1 to 4;
+21416      input Age Smoke Symptom @@;
+21417      output;
+21418      end;
+21419      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.CHILDREN has 100 observations and 6 variables.
+
+21445      ;
+21446      proc gee data=Children descending;
+21447      class ID City;
+21448      model Symptom = City Age Smoke / dist=bin link=logit;
+21449      repeated subject=ID / type=exch covb corrw;
+21450      run;
+
+NOTE: PROC GEE is modeling the probability that Symptom='1'.
+NOTE: The PROCEDURE GEE printed page 2362.
+
+21451      
+21452      
+21453      
+21454      
+The SAS System
+
+21455      

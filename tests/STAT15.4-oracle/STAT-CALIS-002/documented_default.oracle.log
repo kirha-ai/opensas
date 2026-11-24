@@ -1,0 +1,51 @@
+The SAS System
+
+7365       
+7366       /* STAT-CALIS-002: CALIS — Default covariance structure and structural equation model estimation
+7367        * Source: S154 / Chapter 33 / `Getting Started: CALIS Procedure` (PDF pp. 1472–1482); S154 / Chapter 33 / `Overview: CALIS Procedure` (PDF pp.
+7367     ! 1446–1472); S154 / Chapter 18 / `Introduction to Structural Equation Modeling with Latent Variables` (PDF pp. 303–390).
+7368        * Discriminates: Documented default analysis with explicit complete public or synthetic inputs
+7369        */
+7370       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+7370     ! validmemname=compatible locale=en_US;
+7371       %let syscc=0;
+7372       title; footnote;
+7373       ods _all_ close;
+7374       ods listing gpath="%sysfunc(pathname(work))";
+7375       ods graphics off;
+7376       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SAMPLE (memtype=DATA).
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+7376     !                                         quit;
+
+
+7377       ods path work.templat(update) sashelp.tmplmst(read);
+7378       
+7379       data sample;
+7380        input x z y group $ weight freq;
+7381        datalines;
+
+NOTE: The data set WORK.SAMPLE has 12 observations and 6 variables.
+
+7394       ;
+7395       run;
+7396       proc calis data=sample; path y <=== x z; run;
+
+
+NOTE: Convergence criterion (ABSGCONV=0.00001) satisfied.
+NOTE: The PROCEDURE CALIS printed pages 491-497.
+
+7397       
+7398       
+7399       
+7400       
+The SAS System
+
+7401       

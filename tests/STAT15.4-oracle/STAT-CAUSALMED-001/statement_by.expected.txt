@@ -1,0 +1,368 @@
+
+_oracle_by=1
+
+The CAUSALMED Procedure
+
+             Model Information
+
+Data Set                  WORK._ORACLE_INPUT
+Outcome Variable                       Death
+Treatment Variable                   Smoking
+Mediator Variable                LowBirthWgt
+Outcome Distribution                Binomial
+Outcome Link Function                  Logit
+Mediator Distribution               Binomial
+Mediator Link Function                 Logit
+
+
+Number of Observations Read      100000
+Number of Observations Used       93292
+
+
+                   Class Level Information
+ 
+Class            Levels    Values
+
+LowBirthWgt           2    Yes No                            
+Smoking               2    Yes No                            
+Death                 2    Yes No                            
+AgeGroup              3    3 2 1                             
+Married               2    Yes No                            
+Race                  5    White Native Hispanic Black Asian 
+Drinking              2    Yes No                            
+SomeCollege           2    Yes No                            
+
+
+       Response Profile
+ 
+ Ordered                 Total
+   Value    Death    Frequency
+
+       1    Yes            527
+       2    No           92765
+
+Outcome probability modeled is Death='Yes'.
+
+
+       Mediator Profile
+ 
+            Low
+ Ordered    Birth        Total
+   Value    Wgt      Frequency
+
+       1    Yes           7562
+       2    No           85730
+
+Mediator probability modeled is LowBirthWgt='Yes'.
+
+
+        Treatment Profile
+ 
+ Ordered                   Total
+   Value    Smoking    Frequency
+
+       1    Yes            20984
+       2    No             72308
+
+_oracle_by=1
+
+The CAUSALMED Procedure
+
+                                               Summary of Effects
+ 
+                                                         Standard          Wald 95% 
+                                             Estimate       Error      Confidence Limits           Z    Pr > |Z|
+
+Odds Ratio Total Effect                        1.7071      0.2215      1.2729      2.1412       3.19      0.0014
+Odds Ratio Controlled Direct Effect (CDE)      1.8940      0.3540      1.2002      2.5879       2.53      0.0116
+Odds Ratio Natural Direct Effect (NDE)         1.3626      0.1768      1.0160      1.7092       2.05      0.0403
+Odds Ratio Natural Indirect Effect (NIE)       1.2528     0.03432      1.1855      1.3201       7.37      <.0001
+Total Excess Relative Risk                     0.7071      0.2215      0.2729      1.1412       3.19      0.0014
+Excess Relative Risk Due to CDE                0.3246      0.1207     0.08810      0.5611       2.69      0.0071
+Excess Relative Risk Due to NDE                0.3626      0.1768     0.01604      0.7092       2.05      0.0403
+Excess Relative Risk Due to NIE                0.3445     0.06119      0.2245      0.4644       5.63      <.0001
+Percentage Mediated                           48.7165      9.8917     29.3291     68.1040       4.92      <.0001
+Percentage Due to Interaction                  8.1202     19.8380    -30.7615     47.0020       0.41      0.6823
+Percentage Eliminated                         54.0930     11.6647     31.2306     76.9554       4.64      <.0001
+
+_oracle_by=1
+
+The CAUSALMED Procedure
+
+                                   Decompositions of Total Excess Relative Risk
+                                                           Standard          Wald 95% 
+Decomposition    Excess Relative Risk          Estimate       Error      Confidence Limits           Z    Pr > |Z|
+
+NDE+NIE          Natural Direct                  0.3626      0.1768     0.01604      0.7092       2.05      0.0403
+                 Natural Indirect                0.3445     0.06119      0.2245      0.4644       5.63      <.0001
+CDE+PE           Controlled Direct               0.3246      0.1207     0.08810      0.5611       2.69      0.0071
+                 Portion Eliminated              0.3825      0.1556     0.07752      0.6874       2.46      0.0140
+TDE+PIE          Total Direct                    0.3820      0.2188    -0.04688      0.8109       1.75      0.0809
+                 Pure Indirect                   0.3251     0.03534      0.2558      0.3943       9.20      <.0001
+NDE+PIE+IMD      Natural Direct                  0.3626      0.1768     0.01604      0.7092       2.05      0.0403
+                 Pure Indirect                   0.3251     0.03534      0.2558      0.3943       9.20      <.0001
+                 Mediated Interaction           0.01940     0.05229    -0.08309      0.1219       0.37      0.7106
+CDE+PIE+PAI      Controlled Direct               0.3246      0.1207     0.08810      0.5611       2.69      0.0071
+                 Pure Indirect                   0.3251     0.03534      0.2558      0.3943       9.20      <.0001
+                 Portion Due to Interaction     0.05742      0.1547     -0.2457      0.3606       0.37      0.7105
+Four-Way         Controlled Direct               0.3246      0.1207     0.08810      0.5611       2.69      0.0071
+                 Reference Interaction          0.03801      0.1024     -0.1627      0.2387       0.37      0.7105
+                 Mediated Interaction           0.01940     0.05229    -0.08309      0.1219       0.37      0.7106
+                 Pure Indirect                   0.3251     0.03534      0.2558      0.3943       9.20      <.0001
+Total            Excess Relative Risk            0.7071      0.2215      0.2729      1.1412       3.19      0.0014
+
+                      Note: NDE=CDE+IRF, NIE=PIE+IMD, PAI=IRF+IMD, PE=PAI+PIE, TDE=CDE+PAI.
+
+_oracle_by=1
+
+The CAUSALMED Procedure
+
+                            Percentage Decompositions of Total Excess Relative Risk
+ 
+                                                          Standard         Wald 95% 
+Decomposition    Excess Relative Risk          Percent       Error     Confidence Limits          Z    Pr > |Z|
+
+NDE+NIE          Natural Direct                  51.28        9.89      31.90      70.67       5.18      <.0001
+                 Natural Indirect                48.72        9.89      29.33      68.10       4.92      <.0001
+CDE+PE           Controlled Direct               45.91       11.66      23.04      68.77       3.94      <.0001
+                 Portion Eliminated              54.09       11.66      31.23      76.96       4.64      <.0001
+TDE+PIE          Total Direct                    54.03       14.49      25.62      82.43       3.73      0.0002
+                 Pure Indirect                   45.97       14.49      17.57      74.38       3.17      0.0015
+NDE+PIE+IMD      Natural Direct                  51.28        9.89      31.90      70.67       5.18      <.0001
+                 Pure Indirect                   45.97       14.49      17.57      74.38       3.17      0.0015
+                 Mediated Interaction             2.74        6.70     -10.40      15.88       0.41      0.6823
+CDE+PIE+PAI      Controlled Direct               45.91       11.66      23.04      68.77       3.94      <.0001
+                 Pure Indirect                   45.97       14.49      17.57      74.38       3.17      0.0015
+                 Portion Due to Interaction       8.12       19.84     -30.76      47.00       0.41      0.6823
+Four-Way         Controlled Direct               45.91       11.66      23.04      68.77       3.94      <.0001
+                 Reference Interaction            5.38       13.14     -20.37      31.13       0.41      0.6824
+                 Mediated Interaction             2.74        6.70     -10.40      15.88       0.41      0.6823
+                 Pure Indirect                   45.97       14.49      17.57      74.38       3.17      0.0015
+
+                     Note: NDE=CDE+IRF, NIE=PIE+IMD, PAI=IRF+IMD, PE=PAI+PIE, TDE=CDE+PAI.
+
+_oracle_by=1
+
+The CAUSALMED Procedure
+
+                                      Summary of Effects: Low Birth-Weight
+ 
+                                                         Standard          Wald 95% 
+                                             Estimate       Error      Confidence Limits           Z    Pr > |Z|
+
+Odds Ratio Total Effect                        1.7071      0.2215      1.2729      2.1412       3.19      0.0014
+Odds Ratio Controlled Direct Effect (CDE)      1.0917      0.1591      0.7799      1.4036       0.58      0.5643
+Odds Ratio Natural Direct Effect (NDE)         1.3626      0.1768      1.0160      1.7092       2.05      0.0403
+Odds Ratio Natural Indirect Effect (NIE)       1.2528     0.03432      1.1855      1.3201       7.37      <.0001
+Total Excess Relative Risk                     0.7071      0.2215      0.2729      1.1412       3.19      0.0014
+Excess Relative Risk Due to CDE                0.8669      1.4959     -2.0649      3.7988       0.58      0.5622
+Excess Relative Risk Due to NDE                0.3626      0.1768     0.01604      0.7092       2.05      0.0403
+Excess Relative Risk Due to NIE                0.3445     0.06119      0.2245      0.4644       5.63      <.0001
+Percentage Mediated                           48.7165      9.8917     29.3291     68.1040       4.92      <.0001
+Percentage Due to Interaction                -68.5853      167.58     -397.04      259.87      -0.41      0.6823
+Percentage Eliminated                        -22.6126      179.59     -374.60      329.38      -0.13      0.8998
+
+_oracle_by=1
+
+The CAUSALMED Procedure
+
+                                    Summary of Effects: Normal Birth-Weight
+ 
+                                                         Standard          Wald 95% 
+                                             Estimate       Error      Confidence Limits           Z    Pr > |Z|
+
+Odds Ratio Total Effect                        1.7071      0.2215      1.2729      2.1412       3.19      0.0014
+Odds Ratio Controlled Direct Effect (CDE)      1.8940      0.3540      1.2002      2.5879       2.53      0.0116
+Odds Ratio Natural Direct Effect (NDE)         1.3626      0.1768      1.0160      1.7092       2.05      0.0403
+Odds Ratio Natural Indirect Effect (NIE)       1.2528     0.03432      1.1855      1.3201       7.37      <.0001
+Total Excess Relative Risk                     0.7071      0.2215      0.2729      1.1412       3.19      0.0014
+Excess Relative Risk Due to CDE                0.3246      0.1207     0.08810      0.5611       2.69      0.0071
+Excess Relative Risk Due to NDE                0.3626      0.1768     0.01604      0.7092       2.05      0.0403
+Excess Relative Risk Due to NIE                0.3445     0.06119      0.2245      0.4644       5.63      <.0001
+Percentage Mediated                           48.7165      9.8917     29.3291     68.1040       4.92      <.0001
+Percentage Due to Interaction                  8.1202     19.8380    -30.7615     47.0020       0.41      0.6823
+Percentage Eliminated                         54.0930     11.6647     31.2306     76.9554       4.64      <.0001
+
+_oracle_by=2
+
+The CAUSALMED Procedure
+
+             Model Information
+
+Data Set                  WORK._ORACLE_INPUT
+Outcome Variable                       Death
+Treatment Variable                   Smoking
+Mediator Variable                LowBirthWgt
+Outcome Distribution                Binomial
+Outcome Link Function                  Logit
+Mediator Distribution               Binomial
+Mediator Link Function                 Logit
+
+
+Number of Observations Read      100000
+Number of Observations Used       93292
+
+
+                   Class Level Information
+ 
+Class            Levels    Values
+
+LowBirthWgt           2    Yes No                            
+Smoking               2    Yes No                            
+Death                 2    Yes No                            
+AgeGroup              3    3 2 1                             
+Married               2    Yes No                            
+Race                  5    White Native Hispanic Black Asian 
+Drinking              2    Yes No                            
+SomeCollege           2    Yes No                            
+
+
+       Response Profile
+ 
+ Ordered                 Total
+   Value    Death    Frequency
+
+       1    Yes            527
+       2    No           92765
+
+Outcome probability modeled is Death='Yes'.
+
+
+       Mediator Profile
+ 
+            Low
+ Ordered    Birth        Total
+   Value    Wgt      Frequency
+
+       1    Yes           7562
+       2    No           85730
+
+Mediator probability modeled is LowBirthWgt='Yes'.
+
+
+        Treatment Profile
+ 
+ Ordered                   Total
+   Value    Smoking    Frequency
+
+       1    Yes            20984
+       2    No             72308
+
+_oracle_by=2
+
+The CAUSALMED Procedure
+
+                                               Summary of Effects
+ 
+                                                         Standard          Wald 95% 
+                                             Estimate       Error      Confidence Limits           Z    Pr > |Z|
+
+Odds Ratio Total Effect                        1.7071      0.2215      1.2729      2.1412       3.19      0.0014
+Odds Ratio Controlled Direct Effect (CDE)      1.8940      0.3540      1.2002      2.5879       2.53      0.0116
+Odds Ratio Natural Direct Effect (NDE)         1.3626      0.1768      1.0160      1.7092       2.05      0.0403
+Odds Ratio Natural Indirect Effect (NIE)       1.2528     0.03432      1.1855      1.3201       7.37      <.0001
+Total Excess Relative Risk                     0.7071      0.2215      0.2729      1.1412       3.19      0.0014
+Excess Relative Risk Due to CDE                0.3246      0.1207     0.08810      0.5611       2.69      0.0071
+Excess Relative Risk Due to NDE                0.3626      0.1768     0.01604      0.7092       2.05      0.0403
+Excess Relative Risk Due to NIE                0.3445     0.06119      0.2245      0.4644       5.63      <.0001
+Percentage Mediated                           48.7165      9.8917     29.3291     68.1040       4.92      <.0001
+Percentage Due to Interaction                  8.1202     19.8380    -30.7615     47.0020       0.41      0.6823
+Percentage Eliminated                         54.0930     11.6647     31.2306     76.9554       4.64      <.0001
+
+_oracle_by=2
+
+The CAUSALMED Procedure
+
+                                   Decompositions of Total Excess Relative Risk
+                                                           Standard          Wald 95% 
+Decomposition    Excess Relative Risk          Estimate       Error      Confidence Limits           Z    Pr > |Z|
+
+NDE+NIE          Natural Direct                  0.3626      0.1768     0.01604      0.7092       2.05      0.0403
+                 Natural Indirect                0.3445     0.06119      0.2245      0.4644       5.63      <.0001
+CDE+PE           Controlled Direct               0.3246      0.1207     0.08810      0.5611       2.69      0.0071
+                 Portion Eliminated              0.3825      0.1556     0.07752      0.6874       2.46      0.0140
+TDE+PIE          Total Direct                    0.3820      0.2188    -0.04688      0.8109       1.75      0.0809
+                 Pure Indirect                   0.3251     0.03534      0.2558      0.3943       9.20      <.0001
+NDE+PIE+IMD      Natural Direct                  0.3626      0.1768     0.01604      0.7092       2.05      0.0403
+                 Pure Indirect                   0.3251     0.03534      0.2558      0.3943       9.20      <.0001
+                 Mediated Interaction           0.01940     0.05229    -0.08309      0.1219       0.37      0.7106
+CDE+PIE+PAI      Controlled Direct               0.3246      0.1207     0.08810      0.5611       2.69      0.0071
+                 Pure Indirect                   0.3251     0.03534      0.2558      0.3943       9.20      <.0001
+                 Portion Due to Interaction     0.05742      0.1547     -0.2457      0.3606       0.37      0.7105
+Four-Way         Controlled Direct               0.3246      0.1207     0.08810      0.5611       2.69      0.0071
+                 Reference Interaction          0.03801      0.1024     -0.1627      0.2387       0.37      0.7105
+                 Mediated Interaction           0.01940     0.05229    -0.08309      0.1219       0.37      0.7106
+                 Pure Indirect                   0.3251     0.03534      0.2558      0.3943       9.20      <.0001
+Total            Excess Relative Risk            0.7071      0.2215      0.2729      1.1412       3.19      0.0014
+
+                      Note: NDE=CDE+IRF, NIE=PIE+IMD, PAI=IRF+IMD, PE=PAI+PIE, TDE=CDE+PAI.
+
+_oracle_by=2
+
+The CAUSALMED Procedure
+
+                            Percentage Decompositions of Total Excess Relative Risk
+ 
+                                                          Standard         Wald 95% 
+Decomposition    Excess Relative Risk          Percent       Error     Confidence Limits          Z    Pr > |Z|
+
+NDE+NIE          Natural Direct                  51.28        9.89      31.90      70.67       5.18      <.0001
+                 Natural Indirect                48.72        9.89      29.33      68.10       4.92      <.0001
+CDE+PE           Controlled Direct               45.91       11.66      23.04      68.77       3.94      <.0001
+                 Portion Eliminated              54.09       11.66      31.23      76.96       4.64      <.0001
+TDE+PIE          Total Direct                    54.03       14.49      25.62      82.43       3.73      0.0002
+                 Pure Indirect                   45.97       14.49      17.57      74.38       3.17      0.0015
+NDE+PIE+IMD      Natural Direct                  51.28        9.89      31.90      70.67       5.18      <.0001
+                 Pure Indirect                   45.97       14.49      17.57      74.38       3.17      0.0015
+                 Mediated Interaction             2.74        6.70     -10.40      15.88       0.41      0.6823
+CDE+PIE+PAI      Controlled Direct               45.91       11.66      23.04      68.77       3.94      <.0001
+                 Pure Indirect                   45.97       14.49      17.57      74.38       3.17      0.0015
+                 Portion Due to Interaction       8.12       19.84     -30.76      47.00       0.41      0.6823
+Four-Way         Controlled Direct               45.91       11.66      23.04      68.77       3.94      <.0001
+                 Reference Interaction            5.38       13.14     -20.37      31.13       0.41      0.6824
+                 Mediated Interaction             2.74        6.70     -10.40      15.88       0.41      0.6823
+                 Pure Indirect                   45.97       14.49      17.57      74.38       3.17      0.0015
+
+                     Note: NDE=CDE+IRF, NIE=PIE+IMD, PAI=IRF+IMD, PE=PAI+PIE, TDE=CDE+PAI.
+
+_oracle_by=2
+
+The CAUSALMED Procedure
+
+                                      Summary of Effects: Low Birth-Weight
+ 
+                                                         Standard          Wald 95% 
+                                             Estimate       Error      Confidence Limits           Z    Pr > |Z|
+
+Odds Ratio Total Effect                        1.7071      0.2215      1.2729      2.1412       3.19      0.0014
+Odds Ratio Controlled Direct Effect (CDE)      1.0917      0.1591      0.7799      1.4036       0.58      0.5643
+Odds Ratio Natural Direct Effect (NDE)         1.3626      0.1768      1.0160      1.7092       2.05      0.0403
+Odds Ratio Natural Indirect Effect (NIE)       1.2528     0.03432      1.1855      1.3201       7.37      <.0001
+Total Excess Relative Risk                     0.7071      0.2215      0.2729      1.1412       3.19      0.0014
+Excess Relative Risk Due to CDE                0.8669      1.4959     -2.0649      3.7988       0.58      0.5622
+Excess Relative Risk Due to NDE                0.3626      0.1768     0.01604      0.7092       2.05      0.0403
+Excess Relative Risk Due to NIE                0.3445     0.06119      0.2245      0.4644       5.63      <.0001
+Percentage Mediated                           48.7165      9.8917     29.3291     68.1040       4.92      <.0001
+Percentage Due to Interaction                -68.5853      167.58     -397.04      259.87      -0.41      0.6823
+Percentage Eliminated                        -22.6126      179.59     -374.60      329.38      -0.13      0.8998
+
+_oracle_by=2
+
+The CAUSALMED Procedure
+
+                                    Summary of Effects: Normal Birth-Weight
+ 
+                                                         Standard          Wald 95% 
+                                             Estimate       Error      Confidence Limits           Z    Pr > |Z|
+
+Odds Ratio Total Effect                        1.7071      0.2215      1.2729      2.1412       3.19      0.0014
+Odds Ratio Controlled Direct Effect (CDE)      1.8940      0.3540      1.2002      2.5879       2.53      0.0116
+Odds Ratio Natural Direct Effect (NDE)         1.3626      0.1768      1.0160      1.7092       2.05      0.0403
+Odds Ratio Natural Indirect Effect (NIE)       1.2528     0.03432      1.1855      1.3201       7.37      <.0001
+Total Excess Relative Risk                     0.7071      0.2215      0.2729      1.1412       3.19      0.0014
+Excess Relative Risk Due to CDE                0.3246      0.1207     0.08810      0.5611       2.69      0.0071
+Excess Relative Risk Due to NDE                0.3626      0.1768     0.01604      0.7092       2.05      0.0403
+Excess Relative Risk Due to NIE                0.3445     0.06119      0.2245      0.4644       5.63      <.0001
+Percentage Mediated                           48.7165      9.8917     29.3291     68.1040       4.92      <.0001
+Percentage Due to Interaction                  8.1202     19.8380    -30.7615     47.0020       0.41      0.6823
+Percentage Eliminated                         54.0930     11.6647     31.2306     76.9554       4.64      <.0001

@@ -1,0 +1,280 @@
+
+The CALIS Procedure
+Covariance Structure Analysis: Model and Initial Values
+
+                             Modeling Information
+                        Maximum Likelihood Estimation
+ 
+Group    Label     Data Set        N Obs    Model      Type       Analysis
+
+    1    Expert    WORK.EXPERT        20    Model 1    MSTRUCT    Covariances
+    2    Novice    WORK.NOVICE        18    Model 1    MSTRUCT    Covariances
+
+
+Model 1. Variables in the Model
+
+high  medium  low      
+
+Number of Variables = 3
+
+
+        Model 1. Initial MSTRUCT _COV_ Matrix
+ 
+                  high          medium             low
+
+high                 .               .               .
+               [_Add1]         [_Add2]         [_Add4]
+
+medium               .               .               .
+               [_Add2]         [_Add3]         [_Add5]
+
+low                  .               .               .
+               [_Add4]         [_Add5]         [_Add6]
+
+The CALIS Procedure
+Covariance Structure Analysis: Maximum Likelihood Estimation
+
+         Fit Summary
+
+Chi-Square             2.4924
+Chi-Square DF               6
+Pr > Chi-Square        0.8693
+
+The CALIS Procedure
+Covariance Structure Analysis: Models and Initial Values
+
+                             Modeling Information
+                        Maximum Likelihood Estimation
+ 
+Group    Label     Data Set        N Obs    Model      Type       Analysis
+
+    1    Expert    WORK.EXPERT        20    Model 1    MSTRUCT    Covariances
+    2    Novice    WORK.NOVICE        18    Model 2    MSTRUCT    Covariances
+
+
+Model 1. Variables in the Model
+
+high  medium  low      
+
+Number of Variables = 3
+
+
+        Model 1. Initial MSTRUCT _COV_ Matrix
+ 
+                  high          medium             low
+
+high                 .               .               .
+            [_cov_1_1]      [_cov_2_1]      [_cov_3_1]
+
+medium               .               .               .
+            [_cov_2_1]      [_cov_2_2]      [_cov_3_2]
+
+low                  .               .               .
+            [_cov_3_1]      [_cov_3_2]      [_cov_3_3]
+
+
+Model 2. Variables in the Model
+
+high  medium  low      
+
+Number of Variables = 3
+
+
+        Model 2. Initial MSTRUCT _COV_ Matrix
+ 
+                  high          medium             low
+
+high                 .               .               .
+            [_cov_1_1]      [_cov_2_1]      [_cov_3_1]
+
+medium               .               .               .
+            [_cov_2_1]      [_cov_2_2]      [_cov_3_2]
+
+low                  .               .               .
+            [_cov_3_1]      [_cov_3_2]      [_cov_3_3]
+
+The CALIS Procedure
+Covariance Structure Analysis: Descriptive Statistics
+
+          Group 1. Expert
+         Simple Statistics
+ 
+Variable          Mean       Std Dev
+
+high                 0       2.42487
+medium               0       2.67582
+low                  0       2.85307
+
+The CALIS Procedure
+Covariance Structure Analysis: Descriptive Statistics
+
+          Group 2. Novice
+         Simple Statistics
+ 
+Variable          Mean       Std Dev
+
+high                 0       2.53377
+medium               0       2.87228
+low                  0       2.82666
+
+The CALIS Procedure
+Covariance Structure Analysis: Optimization
+
+        Initial Estimation Method
+
+       1    Observed Moments of Variables
+
+
+              Optimization Start
+              Parameter Estimates
+ 
+    N    Parameter      Estimate      Gradient
+
+    1    _cov_1_1        5.88000      -0.01570
+    2    _cov_2_1        2.88000       0.11510
+    3    _cov_2_2        7.16000      -0.08842
+    4    _cov_3_1        3.12000      -0.09296
+    5    _cov_3_2        4.44000       0.10221
+    6    _cov_3_3        8.14000      -0.01451
+
+  Value of Objective Function = 0.1802264392
+
+The CALIS Procedure
+Covariance Structure Analysis: Optimization
+
+Levenberg-Marquardt Optimization
+
+Scaling Update of More (1978)
+
+Parameter Estimates                    6
+Functions (Observations)              12
+
+                                             Optimization Start
+
+Active Constraints                                  0  Objective Function                       0.1802264392
+Max Abs Gradient Element                 0.1151048892  Radius                                              1
+
+
+                                                                                                         Ratio
+                                                                                                       Between
+                                                                                                        Actual
+                                                                 Objective     Max Abs                     and
+                     Function         Active        Objective     Function    Gradient               Predicted
+Iter     Restarts       Calls    Constraints         Function       Change     Element     Lambda       Change
+
+   1            0           4              0          0.07613       0.1041    5.68E-17          0        0.773
+
+                                            Optimization Results
+
+Iterations                                          1  Function Calls                                      7
+Jacobian Calls                                      3  Active Constraints                                  0
+Objective Function                        0.076134699  Max Abs Gradient Element                  5.68158E-17
+Lambda                                              0  Actual Over Pred Change                   0.773219431
+Radius                                   0.8504053852                                                       
+
+Convergence criterion (ABSGCONV=0.00001) satisfied.                                               
+
+The CALIS Procedure
+Covariance Structure Analysis: Maximum Likelihood Estimation
+
+         Fit Summary
+
+Chi-Square             2.4924
+Chi-Square DF               6
+Pr > Chi-Square        0.8693
+
+The CALIS Procedure
+Covariance Structure Analysis: Maximum Likelihood Estimation
+
+Model 1. MSTRUCT _COV_ Matrix: Estimate/StdErr/t-value/p-value
+ 
+                  high          medium             low
+
+high            6.1350          2.1056          3.6583
+                1.4460          1.1963          1.3217
+                4.2426          1.7601          2.7679
+                <.0001          0.0784        0.005642
+            [_cov_1_1]      [_cov_2_1]      [_cov_3_1]
+
+medium          2.1056          7.6747          3.6419
+                1.1963          1.8089          1.4452
+                1.7601          4.2426          2.5200
+                0.0784          <.0001          0.0117
+            [_cov_2_1]      [_cov_2_2]      [_cov_3_2]
+
+low             3.6583          3.6419          8.0692
+                1.3217          1.4452          1.9019
+                2.7679          2.5200          4.2426
+              0.005642          0.0117          <.0001
+            [_cov_3_1]      [_cov_3_2]      [_cov_3_3]
+
+
+Model 2. MSTRUCT _COV_ Matrix: Estimate/StdErr/t-value/p-value
+ 
+                  high          medium             low
+
+high            6.1350          2.1056          3.6583
+                1.4460          1.1963          1.3217
+                4.2426          1.7601          2.7679
+                <.0001          0.0784        0.005642
+            [_cov_1_1]      [_cov_2_1]      [_cov_3_1]
+
+medium          2.1056          7.6747          3.6419
+                1.1963          1.8089          1.4452
+                1.7601          4.2426          2.5200
+                0.0784          <.0001          0.0117
+            [_cov_2_1]      [_cov_2_2]      [_cov_3_2]
+
+low             3.6583          3.6419          8.0692
+                1.3217          1.4452          1.9019
+                2.7679          2.5200          4.2426
+              0.005642          0.0117          <.0001
+            [_cov_3_1]      [_cov_3_2]      [_cov_3_3]
+
+The CALIS Procedure
+Covariance Structure Analysis: Maximum Likelihood Estimation
+
+Model 1. Standardized MSTRUCT _COV_ Matrix: Estimate/StdErr/t-value/p-value
+ 
+                  high          medium             low
+
+high            1.0000          0.3069          0.5200
+                                0.1510          0.1216
+                                2.0325          4.2756
+                                0.0421          <.0001
+            [_cov_1_1]      [_cov_2_1]      [_cov_3_1]
+
+medium          0.3069          1.0000          0.4628
+                0.1510                          0.1310
+                2.0325                          3.5336
+                0.0421                        0.000410
+            [_cov_2_1]      [_cov_2_2]      [_cov_3_2]
+
+low             0.5200          0.4628          1.0000
+                0.1216          0.1310                
+                4.2756          3.5336                
+                <.0001        0.000410                
+            [_cov_3_1]      [_cov_3_2]      [_cov_3_3]
+
+
+Model 2. Standardized MSTRUCT _COV_ Matrix: Estimate/StdErr/t-value/p-value
+ 
+                  high          medium             low
+
+high            1.0000          0.3069          0.5200
+                                0.1510          0.1216
+                                2.0325          4.2756
+                                0.0421          <.0001
+            [_cov_1_1]      [_cov_2_1]      [_cov_3_1]
+
+medium          0.3069          1.0000          0.4628
+                0.1510                          0.1310
+                2.0325                          3.5336
+                0.0421                        0.000410
+            [_cov_2_1]      [_cov_2_2]      [_cov_3_2]
+
+low             0.5200          0.4628          1.0000
+                0.1216          0.1310                
+                4.2756          3.5336                
+                <.0001        0.000410                
+            [_cov_3_1]      [_cov_3_2]      [_cov_3_3]

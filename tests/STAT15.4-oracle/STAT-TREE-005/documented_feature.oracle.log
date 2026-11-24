@@ -1,0 +1,277 @@
+The SAS System
+
+5348       
+5349       /* STAT-TREE-005: TREE — Displayed Output / ODS Table Names
+5350        * Source: S154 / Chapter 127 / `Displayed Output` (PDF p. 10584); S154 / Chapter 127 / `ODS Table Names` (PDF pp. 10584–10585).
+5351        * Discriminates: Getting Started: TREE Procedure
+5352        */
+5353       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+5353     ! validmemname=compatible locale=en_US;
+5354       %let syscc=0;
+5355       title; footnote;
+5356       ods _all_ close;
+5357       ods listing gpath="%sysfunc(pathname(work))";
+5358       ods graphics off;
+5359       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.GSEG (memtype=CATALOG).
+NOTE: Deleting WORK.PROTEIN (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TREE (memtype=DATA).
+5359     !                                         quit;
+
+
+5360       ods path work.templat(update) sashelp.tmplmst(read);
+5361       
+5362       ods trace on;
+5363       data Protein;
+5364       input Country :$15. RedMeat WhiteMeat Eggs Milk
+5365       Fish Cereal Starch Nuts FruVeg;
+5366       datalines;
+
+NOTE: The data set WORK.PROTEIN has 25 observations and 10 variables.
+
+5392       ;
+5393       filename _grfile temp; goptions device=svg gsfname=_grfile;
+5394       ods graphics on;
+5395       proc varclus data=Protein outtree=Tree centroid maxclusters=4
+5396       plots=dendrogram(vertical height=ncl);
+5397       var RedMeat--FruVeg;
+5398       run;
+
+
+Output Added:
+-------------
+Name:       DataOptSummary
+Label:      Data and Options Summary
+Template:   Stat.Varclus.DataOptSummary
+Path:       Varclus.DataOptSummary
+-------------
+NOTE: Clustering algorithm converged.
+
+Output Added:
+-------------
+Name:       ConvergenceStatus
+Label:      Convergence Status
+Template:   Stat.Varclus.ConvergenceStatus
+Path:       Varclus.GROUP.ConvergenceStatus
+-------------
+
+Output Added:
+-------------
+Name:       ClusterSummary
+Label:      Cluster Summary
+Template:   Stat.Varclus.ClusterSummary
+Path:       Varclus.GROUP.ClusterSummary
+-------------
+NOTE: Clustering algorithm converged.
+
+Output Added:
+-------------
+Name:       ConvergenceStatus
+Label:      Convergence Status
+Template:   Stat.Varclus.ConvergenceStatus
+Path:       Varclus.GROUP.ConvergenceStatus
+-------------
+
+Output Added:
+-------------
+Name:       ClusterSummary
+Label:      Cluster Summary
+Template:   Stat.Varclus.ClusterSummary
+Path:       Varclus.GROUP.ClusterSummary
+-------------
+
+Output Added:
+-------------
+Name:       RSquare
+Label:      R-squared
+Template:   Stat.Varclus.RSquare
+Path:       Varclus.GROUP.RSquare
+-------------
+
+Output Added:
+-------------
+Name:       StdScoreCoef
+Label:      Standardized Scoring Coefficients
+Template:   Stat.Varclus.StdScoreCoef
+Path:       Varclus.GROUP.StdScoreCoef
+-------------
+
+Output Added:
+-------------
+Name:       ClusterStructure
+Label:      Cluster Structure
+Template:   Stat.Varclus.ClusterStructure
+Path:       Varclus.GROUP.ClusterStructure
+-------------
+
+Output Added:
+-------------
+Name:       InterClusterCorr
+Label:      Inter-Cluster Correlations
+Template:   Stat.Varclus.InterClusterCorr
+Path:       Varclus.GROUP.InterClusterCorr
+-------------
+NOTE: Clustering algorithm converged.
+
+Output Added:
+-------------
+Name:       ConvergenceStatus
+Label:      Convergence Status
+Template:   Stat.Varclus.ConvergenceStatus
+Path:       Varclus.GROUP.ConvergenceStatus
+-------------
+
+Output Added:
+-------------
+Name:       ClusterSummary
+Label:      Cluster Summary
+Template:   Stat.Varclus.ClusterSummary
+Path:       Varclus.GROUP.ClusterSummary
+-------------
+
+Output Added:
+-------------
+Name:       RSquare
+Label:      R-squared
+Template:   Stat.Varclus.RSquare
+Path:       Varclus.GROUP.RSquare
+-------------
+
+Output Added:
+-------------
+Name:       StdScoreCoef
+Label:      Standardized Scoring Coefficients
+Template:   Stat.Varclus.StdScoreCoef
+Path:       Varclus.GROUP.StdScoreCoef
+-------------
+
+Output Added:
+-------------
+Name:       ClusterStructure
+Label:      Cluster Structure
+Template:   Stat.Varclus.ClusterStructure
+Path:       Varclus.GROUP.ClusterStructure
+-------------
+
+Output Added:
+-------------
+Name:       InterClusterCorr
+Label:      Inter-Cluster Correlations
+Template:   Stat.Varclus.InterClusterCorr
+Path:       Varclus.GROUP.InterClusterCorr
+-------------
+NOTE: Clustering algorithm converged.
+
+Output Added:
+-------------
+Name:       ConvergenceStatus
+Label:      Convergence Status
+Template:   Stat.Varclus.ConvergenceStatus
+Path:       Varclus.GROUP.ConvergenceStatus
+-------------
+
+Output Added:
+-------------
+Name:       ClusterSummary
+Label:      Cluster Summary
+Template:   Stat.Varclus.ClusterSummary
+Path:       Varclus.GROUP.ClusterSummary
+-------------
+
+Output Added:
+-------------
+Name:       RSquare
+Label:      R-squared
+Template:   Stat.Varclus.RSquare
+Path:       Varclus.GROUP.RSquare
+-------------
+
+Output Added:
+-------------
+Name:       StdScoreCoef
+Label:      Standardized Scoring Coefficients
+Template:   Stat.Varclus.StdScoreCoef
+Path:       Varclus.GROUP.StdScoreCoef
+-------------
+
+Output Added:
+-------------
+Name:       ClusterStructure
+Label:      Cluster Structure
+Template:   Stat.Varclus.ClusterStructure
+Path:       Varclus.GROUP.ClusterStructure
+-------------
+
+Output Added:
+-------------
+Name:       InterClusterCorr
+Label:      Inter-Cluster Correlations
+Template:   Stat.Varclus.InterClusterCorr
+Path:       Varclus.GROUP.InterClusterCorr
+-------------
+
+Output Added:
+-------------
+Name:       ClusterQuality
+Label:      Cluster Quality
+Template:   Stat.Varclus.ClusterQuality
+Path:       Varclus.ClusterQuality
+-------------
+
+Output Added:
+-------------
+Name:       Dendrogram
+Label:      Dendrogram
+Template:   Stat.Varclus.Graphics.Dendrogram
+Path:       Varclus.Dendrogram
+-------------
+NOTE: The data set WORK.TREE has 15 observations and 8 variables.
+NOTE: The PROCEDURE VARCLUS printed page 277.
+
+5399       proc tree data=tree vaxis=axis1;
+5400       axis1 label=(angle=90);
+5401       run;
+
+
+Output Added:
+-------------
+Name:       TREE
+Label:      
+Data Name:  GRSEG
+Path:       Tree.TREE
+-------------
+NOTE: 26048 bytes written to /saswork/SAS_workFCBA00018F54_odaws02-euw1.oda.sas.com/#LN02277.
+
+5402       proc tree data=Tree horizontal haxis=axis1;
+5403       axis1 order=(0 to 1 by 0.2);
+5404       height _PROPOR_;
+5405       label _name_ = 'Variable';
+5406       run;
+
+
+Output Added:
+-------------
+Name:       TREE1
+Label:      
+Data Name:  GRSEG
+Path:       Tree.TREE1
+-------------
+NOTE: 26576 bytes written to /saswork/SAS_workFCBA00018F54_odaws02-euw1.oda.sas.com/#LN02277.
+
+5407       ods trace off;
+5408       
+5409       
+5410       
+5411       
+The SAS System
+
+5412       

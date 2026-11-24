@@ -1,0 +1,49 @@
+The SAS System
+
+29257      
+29258      /* STAT-VARCLUS-004: VARCLUS — Interpreting VARCLUS Procedure Output
+29259       * Source: S154 / Chapter 129 / `Interpreting VARCLUS Procedure Output` (PDF p. 10713).
+29260       * Discriminates: Verified default procedure context
+29261       */
+29262      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+29262    ! validmemname=compatible locale=en_US;
+29263      %let syscc=0;
+29264      title; footnote;
+29265      ods _all_ close;
+29266      ods listing gpath="%sysfunc(pathname(work))";
+29267      ods graphics off;
+29268      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.STRUCTURE (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+29268    !                                         quit;
+
+
+29269      ods path work.templat(update) sashelp.tmplmst(read);
+29270      
+29271      proc varclus data=sashelp.iris maxclusters=2 outstat=structure;
+29272      var SepalLength SepalWidth PetalLength PetalWidth;
+29273      run;
+
+NOTE: Clustering algorithm converged.
+NOTE: Clustering algorithm converged.
+NOTE: The data set WORK.STRUCTURE has 26 observations and 7 variables.
+NOTE: The PROCEDURE VARCLUS printed page 1791.
+
+29274      proc print data=structure(obs=15) noobs;
+29275      run;
+
+NOTE: There were 15 observations read from the data set WORK.STRUCTURE.
+NOTE: The PROCEDURE PRINT printed page 1792.
+
+29276      
+29277      
+29278      
+29279      
+The SAS System
+
+29280      

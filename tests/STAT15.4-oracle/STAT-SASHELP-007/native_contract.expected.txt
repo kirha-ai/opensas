@@ -1,0 +1,63 @@
+
+NAME         TYPE    LENGTH    VARNUM    LABEL
+
+Latitude       1        8         1           
+Longitude      1        8         2           
+Name           2       34         3           
+Area           2       14         4           
+Type           2        9         5           
+Farenheit      1        8         6           
+Celsius        1        8         7           
+
+Latitude    Longitude    Name                                 Area            Type       Farenheit    Celsius
+
+ 51.925      -177.160    Fumaroles on Kanaga Island           Adak          Hotspring       219         104  
+ 65.858      -164.710    Serpentine Hot Springs               Bendeleben    Hotspring       171          77  
+ 53.851      -166.918    Hot Springs Near Makushin Volcano    Unalaska      Hotspring         H           H  
+ 53.877      -166.448    Hot Springs Near Summer Bay          Unalaska      Hotspring         H           H  
+ 52.270      -174.042    Hot Springs on Atka Island           Atka          Hotspring         H           H  
+
+Observations
+------------
+        1587
+
+NAME     TYPE    LENGTH    VARNUM           LABEL
+
+East       1        8         1                         
+North      1        8         2                         
+Thick      1        8         3      Coal Seam Thickness
+
+East    North    Thick
+
+ 0.7     59.6     34.1
+ 2.1     82.7     42.2
+ 4.7     75.1     39.5
+ 4.8     52.8     34.3
+ 5.9     67.1     37.0
+
+Observations
+------------
+          75
+
+NAME           TYPE    LENGTH    VARNUM    LABEL
+
+LogVoteRate      1        8         1      Log Votes Cast per County            
+Pop              1        8         2      Population of 18 Years and Older     
+Edu              1        8         3      Population with 12th Grade and Higher
+Houses           1        8         4      Number of Owned Housing Units        
+Income           1        8         5      Aggregate Income                     
+Longitude        1        8         6      Scaled Longitude                     
+Latitude         1        8         7      Scaled Latitude                      
+
+ LogVote
+  Rate        Pop        Edu       Houses     Income    Longitude    Latitude
+
+-0.66156     9.9729     9.2463    9.00405    12.1349     -0.86641     0.32542
+-0.65086    10.9033    10.2212    9.96576    13.0566     -0.87755     0.30655
+-0.61711     9.7222     8.7535    8.70765    11.6306     -0.85389     0.31863
+-0.63907     9.2737     8.1831    8.27741    11.2437     -0.87127     0.32997
+-0.70027    10.1515     9.2077    9.24068    12.1551     -0.86566     0.33980
+
+Observations
+------------
+        3107

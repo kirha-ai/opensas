@@ -1,0 +1,2 @@
+WARNING: Ties for minimum distance between clusters have been detected at 31 level(s) in the cluster history.
+WARNING: The DENDROGRAM will not be drawn because multiple roots were found.

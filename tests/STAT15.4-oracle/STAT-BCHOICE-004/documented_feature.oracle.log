@@ -1,0 +1,51 @@
+The SAS System
+
+806        
+807        /* STAT-BCHOICE-004: BCHOICE — Discrete Choice Models / Types of Choice Models / Other Types of Choice Response
+808         * Source: S154 / Chapter 30 / `Discrete Choice Models` (PDF pp. 1202–1203); S154 / Chapter 30 / `Types of Choice Models` (PDF pp. 1203–1208);
+808      ! S154 / Chapter 30 / `Other Types of Choice Response` (PDF pp. 1211–1212).
+809         * Discriminates: Example 30.5: Heterogeneity Affected by Individual Characteristics
+810         */
+811        options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+811      ! validmemname=compatible locale=en_US;
+812        %let syscc=0;
+813        title; footnote;
+814        ods _all_ close;
+815        ods listing gpath="%sysfunc(pathname(work))";
+816        ods graphics off;
+817        proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+817      !                                         quit;
+
+
+818        ods path work.templat(update) sashelp.tmplmst(read);
+819        
+820        proc print data=Sashelp.Margarin (obs=24);
+821        by HouseID Set;
+822        id HouseID Set;
+823        run;
+
+NOTE: There were 24 observations read from the data set SASHELP.MARGARIN.
+NOTE: The PROCEDURE PRINT printed page 34.
+
+824        proc bchoice data=Sashelp.Margarin seed=123 nmc=1000 thin=2
+825        nthreads=4 plots=none nbi=200;
+826        class Brand(ref='PPk') HouseID Set;
+827        model Choice = / choiceset=(HouseID Set);
+828        random Brand LogPrice / subject=HouseID remean=(LogInc FamSize)
+829        type=un monitor=(1);
+830        run;
+
+NOTE: Generating the burn-in samples.
+NOTE: Beginning sample generation.
+NOTE: Beginning calculation of summary and diagnostics statistics.
+NOTE: The PROCEDURE BCHOICE printed page 35.
+
+831        
+832        
+833        
+834        
+The SAS System
+
+835        

@@ -1,0 +1,90 @@
+The SAS System
+
+6901       
+6902       /* STAT-ICLIFETEST-001: ICLIFETEST — Data input, variable roles, and basic options
+6903        * Source: S154 / Chapter 69 / `PROC ICLIFETEST Statement` (PDF pp. 5157–5164); S154 / Chapter 69 / `BY Statement` (PDF pp. 5164–5165); S154 /
+6903     ! Chapter 69 / `FREQ Statement` (PDF p. 5165); S154 / Chapter 69 / `STRATA Statement` (PDF pp. 5165–5166); S154 / Chapter 69 / `Missing Values` (PDF
+6903     ! p. 5184).
+6904        * Discriminates: Verified default procedure context; explicit statements: STRATA
+6905        */
+6906       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+6906     ! validmemname=compatible locale=en_US;
+6907       %let syscc=0;
+6908       title; footnote;
+6909       ods _all_ close;
+6910       ods listing gpath="%sysfunc(pathname(work))";
+6911       ods graphics off;
+6912       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.HPSPLOUT (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+6912     !                                         quit;
+
+
+6913       ods path work.templat(update) sashelp.tmplmst(read);
+6914       
+6915       data RT;
+6916       input lTime rTime @@;
+6917       trt = ' RT';
+6918       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.RT has 46 observations and 3 variables.
+
+6935       ;
+6936       data RCT;
+6937       input lTime rTime @@;
+6938       trt = 'RCT';
+6939       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.RCT has 48 observations and 3 variables.
+
+6956       ;
+6957       data BCS;
+6958       set RT RCT;
+6959       run;
+
+NOTE: There were 46 observations read from the data set WORK.RT.
+NOTE: There were 48 observations read from the data set WORK.RCT.
+NOTE: The data set WORK.BCS has 94 observations and 3 variables.
+
+6960       ods graphics on;
+6961       proc iclifetest plots=(survival logsurv) data=BCS impute(seed=1234);
+6962       strata trt;
+6963       time (lTime, rTime);
+6964       run;
+
+NOTE: Start processing Stratum 1: trt = RT.
+NOTE: Algorithm converges in 21 steps.
+NOTE: Algorithm finds a maximum likelihood estimate.
+NOTE: Start processing Stratum 2: trt = RCT.
+NOTE: Algorithm converges in 27 steps.
+NOTE: Algorithm finds a maximum likelihood estimate.
+NOTE: The PROCEDURE ICLIFETEST printed pages 497-499.
+
+6965       proc iclifetest data=BCS impute(seed=1234);
+6966       time (lTime, rTime);
+6967       test trt;
+6968       run;
+
+NOTE: Start processing Group 1: trt = RT.
+NOTE: Algorithm converges in 21 steps.
+NOTE: Algorithm finds a maximum likelihood estimate.
+NOTE: Start processing Group 2: trt = RCT.
+NOTE: Algorithm converges in 27 steps.
+NOTE: Algorithm finds a maximum likelihood estimate.
+NOTE: Algorithm converges in 25 steps.
+NOTE: Algorithm finds a maximum likelihood estimate.
+NOTE: The PROCEDURE ICLIFETEST printed pages 500-503.
+
+6969       
+6970       
+6971       
+6972       
+The SAS System
+
+6973       

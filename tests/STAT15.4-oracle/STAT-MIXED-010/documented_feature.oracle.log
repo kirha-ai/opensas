@@ -1,0 +1,70 @@
+The SAS System
+
+3937       
+3938       /* STAT-MIXED-010: MIXED — LSMEANS
+3939        * Source: S154 / Chapter 84 / `LSMEANS Statement` (PDF pp. 6646–6652).
+3940        * Discriminates: Example 84.6: Line-Source Sprinkler Irrigation; explicit statements: LSMEANS
+3941        */
+3942       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+3942     ! validmemname=compatible locale=en_US;
+3943       %let syscc=0;
+3944       title; footnote;
+3945       ods _all_ close;
+3946       ods listing gpath="%sysfunc(pathname(work))";
+3947       ods graphics off;
+3948       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SP (memtype=DATA).
+3948     !                                         quit;
+
+
+3949       ods path work.templat(update) sashelp.tmplmst(read);
+3950       
+3951       data line;
+3952       length Cult$ 8;
+3953       input Block Cult$ @;
+3954       row = _n_;
+3955       do Sbplt=1 to 12;
+3956       if Sbplt le 6 then do;
+3957       Irrig = Sbplt;
+3958       Dir = 'North';
+3959       end;
+3960       else do;
+3961       Irrig = 13 - Sbplt;
+3962       Dir = 'South';
+3963       end;
+3964       input Y @;
+3965       output;
+3966       end;
+3967       datalines;
+
+NOTE: The data set WORK.LINE has 108 observations and 7 variables.
+
+3977       ;
+3978       proc mixed;
+3979       class Block Cult Dir Irrig;
+3980       model Y = Cult|Dir|Irrig@2;
+3981       random Block Block*Dir Block*Irrig;
+3982       repeated / type=toep(4) sub=Block*Cult r;
+3983       lsmeans Cult|Irrig;
+3984       estimate 'Bridger vs Luke' Cult 1 -1 0;
+3985       estimate 'Linear Irrig' Irrig -5 -3 -1 1 3 5;
+3986       estimate 'B vs L x Linear Irrig' Cult*Irrig
+3987       -5 -3 -1 1 3 5 5 3 1 -1 -3 -5;
+3988       run;
+
+NOTE: Convergence criteria met.
+NOTE: The PROCEDURE MIXED printed page 307.
+
+3989       
+3990       
+3991       
+3992       
+The SAS System
+
+3993       

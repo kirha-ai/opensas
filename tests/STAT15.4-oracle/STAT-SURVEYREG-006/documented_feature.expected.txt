@@ -1,0 +1,125 @@
+
+Stratified Sample with Single Sampling Unit in Strata
+With Stratum Collapse
+
+The SURVEYREG Procedure
+ 
+Regression Analysis for Dependent Variable Y
+
+            Data Summary
+
+Number of Observations             8
+Sum of Weights             157.00000
+Weighted Mean of Y           4.31210
+Weighted Sum of Y          677.00000
+
+
+             Design Summary
+
+Number of Strata                       5
+Number of Strata Collapsed             2
+
+
+      Fit Statistics
+
+R-Square            0.9564
+Root MSE            0.5111
+Denominator DF           4
+
+
+                          Stratum Information
+ 
+Stratum                                           Population    Sampling
+ Index     Collapsed     Stratum       N Obs           Total        Rate
+
+   1                          10           2              10      20.0% 
+   2                          11           2              20      10.0% 
+   3                          12           2              32      6.25% 
+   4        Yes               14           1              50      2.00% 
+   5        Yes               33           1              40      2.50% 
+
+   0        Pooled                         2              90      2.22% 
+
+NOTE: Strata with only one observation are collapsed into the stratum with Stratum Index "0".
+
+
+         Tests of Model Effects
+ 
+Effect       Num DF    F Value    Pr > F
+
+Model             1     173.01    0.0002
+Intercept         1       0.00    0.9961
+X                 1     173.01    0.0002
+
+NOTE: The denominator degrees of freedom for the F tests is 4.
+
+
+             Estimated Regression Coefficients
+ 
+                             Standard
+Parameter      Estimate         Error    t Value    Pr > |t|
+
+Intercept    0.00179469    0.34306373       0.01      0.9961
+X            1.12598708    0.08560466      13.15      0.0002
+
+NOTE: The degrees of freedom for the t tests is 4.
+
+Stratified Sample with Single Sampling Unit in Strata
+Without Stratum Collapse
+
+The SURVEYREG Procedure
+ 
+Regression Analysis for Dependent Variable Y
+
+            Data Summary
+
+Number of Observations             8
+Sum of Weights             157.00000
+Weighted Mean of Y           4.31210
+Weighted Sum of Y          677.00000
+
+
+        Design Summary
+
+Number of Strata             5
+
+
+      Fit Statistics
+
+R-Square            0.9564
+Root MSE            0.5111
+Denominator DF           3
+
+
+                    Stratum Information
+ 
+Stratum                              Population    Sampling
+ Index      Stratum       N Obs           Total        Rate
+
+   1             10           2              10      20.0% 
+   2             11           2              20      10.0% 
+   3             12           2              32      6.25% 
+   4             14           1              50      2.00% 
+   5             33           1              40      2.50% 
+
+
+         Tests of Model Effects
+ 
+Effect       Num DF    F Value    Pr > F
+
+Model             1     347.27    0.0003
+Intercept         1       0.00    0.9962
+X                 1     347.27    0.0003
+
+NOTE: The denominator degrees of freedom for the F tests is 3.
+
+
+             Estimated Regression Coefficients
+ 
+                             Standard
+Parameter      Estimate         Error    t Value    Pr > |t|
+
+Intercept    0.00179469    0.34302581       0.01      0.9962
+X            1.12598708    0.06042241      18.64      0.0003
+
+NOTE: The degrees of freedom for the t tests is 3.

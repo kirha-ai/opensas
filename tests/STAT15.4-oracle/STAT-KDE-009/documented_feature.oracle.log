@@ -1,0 +1,141 @@
+The SAS System
+
+9743       
+9744       /* STAT-KDE-009: KDE — ODS Graphics
+9745        * Source: S154 / Chapter 73 / `ODS Graphics` (PDF pp. 5416–5418).
+9746        * Discriminates: Example 73.5: Univariate KDE Graphics
+9747        */
+9748       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+9748     ! validmemname=compatible locale=en_US;
+9749       %let syscc=0;
+9750       title; footnote;
+9751       ods _all_ close;
+9752       ods listing gpath="%sysfunc(pathname(work))";
+9753       ods graphics off;
+9754       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.BIVNORMAL (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+9754     !                                         quit;
+
+
+9755       ods path work.templat(update) sashelp.tmplmst(read);
+9756       
+9757       ods graphics on;
+9758       ods trace on;
+9759       ods trace on;
+9760       data bivnormal;
+9761       seed = 1283470;
+9762       do i = 1 to 1000;
+9763       z1 = rannor(seed);
+9764       z2 = rannor(seed);
+9765       z3 = rannor(seed);
+9766       x = 3*z1+z2;
+9767       y = 3*z1+z3;
+9768       output;
+9769       end;
+9770       drop seed;
+9771       run;
+
+NOTE: The data set WORK.BIVNORMAL has 1000 observations and 6 variables.
+
+9772       ods graphics on;
+9773       proc kde data=bivnormal;
+9774       univar x / plots=(density histogram histdensity);
+9775       univar x y / plots=densityoverlay;
+9776       run;
+
+NOTE: Processing UNIVAR statement number 1.
+
+Output Added:
+-------------
+Name:       Inputs
+Template:   Stat.KDE.Inputs
+Path:       KDE.Univar1.x.Inputs
+-------------
+
+Output Added:
+-------------
+Name:       Controls
+Template:   Stat.KDE.Controls
+Path:       KDE.Univar1.x.Controls
+-------------
+
+Output Added:
+-------------
+Name:       Histogram
+Label:      Histogram
+Template:   Stat.KDE.Graphics.Histogram
+Path:       KDE.Univar1.x.Histogram
+-------------
+
+Output Added:
+-------------
+Name:       DensityPlot
+Label:      Density Estimate
+Template:   Stat.KDE.Graphics.Density
+Path:       KDE.Univar1.x.DensityPlot
+-------------
+
+Output Added:
+-------------
+Name:       HistogramDensity
+Label:      Histogram with Density Estimate
+Template:   Stat.KDE.Graphics.HistogramDensity
+Path:       KDE.Univar1.x.HistogramDensity
+-------------
+NOTE: Processing UNIVAR statement number 2.
+
+Output Added:
+-------------
+Name:       Inputs
+Template:   Stat.KDE.Inputs
+Path:       KDE.Univar2.x.Inputs
+-------------
+
+Output Added:
+-------------
+Name:       Controls
+Template:   Stat.KDE.Controls
+Path:       KDE.Univar2.x.Controls
+-------------
+
+Output Added:
+-------------
+Name:       Inputs
+Template:   Stat.KDE.Inputs
+Path:       KDE.Univar2.y.Inputs
+-------------
+
+Output Added:
+-------------
+Name:       Controls
+Template:   Stat.KDE.Controls
+Path:       KDE.Univar2.y.Controls
+-------------
+
+Output Added:
+-------------
+Name:       DensityOverlayPlot
+Label:      Density Estimates
+Template:   Stat.KDE.Graphics.DensityOverlay
+Path:       KDE.Univar2.DensityOverlayPlot
+-------------
+NOTE: The PROCEDURE KDE printed pages 711-713.
+
+9777       ods graphics off;
+9778       run;
+9779       quit;
+9780       ods trace off;
+9781       ods trace off;
+9782       ods graphics off;
+9783       
+9784       
+9785       
+9786       
+The SAS System
+
+9787       

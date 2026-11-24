@@ -1,0 +1,117 @@
+
+Polynomial Data
+
+The ORTHOREG Procedure
+ 
+Dependent Variable: y   
+
+                                   Sum of
+Source                 DF         Squares     Mean Square    F Value    Pr > F
+
+Model                   9     15.52718006     1.725242228    4.14E22    <.0001
+Error                  91    3.788943E-21    4.163673E-23                     
+Corrected Total       100     15.52718006                                     
+
+
+Root MSE    6.452653E-12
+R-Square               1
+
+
+                                             Standard
+Parameter    DF    Parameter Estimate           Error    t Value    Pr > |t|
+
+Intercept     1    -5.46580558591E-11    5.125258E-12     -10.66      <.0001
+x             1       75.997731243698    3.094014E-10    2.46E11      <.0001
+x^2           1    -1652.407813609130     6.002412E-9     -275E9      <.0001
+x^3           1           14249.45398    5.2496523E-8    2.71E11      <.0001
+x^4           1          -64932.46157    2.4632391E-7     -264E9      <.0001
+x^5           1          173315.35936    6.7372187E-7    2.57E11      <.0001
+x^6           1         -280158.03646    1.1068403E-6     -253E9      <.0001
+x^7           1          269781.81288    1.0751352E-6    2.51E11      <.0001
+x^8           1         -142302.49471    5.6865866E-7     -25E10      <.0001
+x^9           1           31622.77660    1.2617109E-7    2.51E11      <.0001
+
+Polynomial Data
+
+  x         OPred
+
+0.000    -5.4658E-11
+0.125    -2.8932E-11
+0.250    -3.4226E-12
+0.375    2.05178E-11
+0.500    5.07114E-11
+0.625    9.11768E-11
+0.750    1.56888E-10
+0.875    2.89219E-10
+1.000    4.69299E-10
+
+Polynomial Data
+
+The GLM Procedure
+
+Number of Observations Read         101
+Number of Observations Used         101
+
+Polynomial Data
+
+The GLM Procedure
+ 
+Dependent Variable: y   
+
+                                        Sum of
+Source                      DF         Squares     Mean Square    F Value    Pr > F
+
+Model                        8     12.91166714      1.61395839      56.77    <.0001
+
+Error                       92      2.61551291      0.02842949                     
+
+Corrected Total            100     15.52718006                                     
+
+
+R-Square     Coeff Var      Root MSE        y Mean
+
+0.831553    -6.6691E17      0.168610     -0.000000
+
+
+Source                      DF       Type I SS     Mean Square    F Value    Pr > F
+
+x                            1      5.22807535      5.22807535     183.90    <.0001
+x*x                          1      0.00000000      0.00000000       0.00    1.0000
+x*x*x                        1      4.46928156      4.46928156     157.21    <.0001
+x*x*x*x                      1      0.00000000      0.00000000       0.00    1.0000
+x*x*x*x*x                    1      0.03711946      0.03711946       1.31    0.2561
+x*x*x*x*x*x                  1      0.00000000      0.00000000       0.00    1.0000
+x*x*x*x*x*x*x                1      3.17719077      3.17719077     111.76    <.0001
+x*x*x*x*x*x*x*x              1      0.00000000      0.00000000       0.00    1.0000
+x*x*x*x*x*x*x*x*x            0      0.00000000       .                .       .    
+
+
+Source                      DF     Type III SS     Mean Square    F Value    Pr > F
+
+x                            1      0.46968533      0.46968533      16.52    0.0001
+x*x                          1      0.64185922      0.64185922      22.58    <.0001
+x*x*x                        0      0.00000000       .                .       .    
+x*x*x*x                      0      0.00000000       .                .       .    
+x*x*x*x*x                    0      0.00000000       .                .       .    
+x*x*x*x*x*x                  0      0.00000000       .                .       .    
+x*x*x*x*x*x*x                0      0.00000000       .                .       .    
+x*x*x*x*x*x*x*x              0      0.00000000       .                .       .    
+x*x*x*x*x*x*x*x*x            0      0.00000000       .                .       .    
+
+
+                                            Standard
+Parameter                 Estimate             Error    t Value    Pr > |t|
+
+Intercept                  0.44896          0.125479       3.58      0.0006
+x                         24.61062          6.054853       4.06      0.0001
+x*x                     -443.74034         93.388530      -4.75      <.0001
+x*x*x                   2626.90810 B      642.972896       4.09      <.0001
+x*x*x*x                -7371.23694 B     2327.023084      -3.17      0.0021
+x*x*x*x*x              10697.73183 B     4741.600414       2.26      0.0264
+x*x*x*x*x*x            -7749.24950 B     5468.103739      -1.42      0.1598
+x*x*x*x*x*x*x           2214.08449 B     3328.356770       0.67      0.5076
+x*x*x*x*x*x*x*x           -0.00618 B      830.440177      -0.00      1.0000
+x*x*x*x*x*x*x*x*x          0.00000 B         .              .         .    
+
+NOTE: The X'X matrix has been found to be singular, and a generalized inverse was used to solve the normal equations.  Terms whose estimates are followed by 
+      the letter 'B' are not uniquely estimable.

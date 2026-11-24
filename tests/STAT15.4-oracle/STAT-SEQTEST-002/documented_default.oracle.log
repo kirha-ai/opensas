@@ -1,0 +1,48 @@
+The SAS System
+
+16250      
+16251      /* STAT-SEQTEST-002: SEQTEST — Stage updates and inference for group sequential tests
+16252       * Source: S154 / Chapter 111 / `Getting Started: SEQTEST Procedure` (PDF pp. 9143–9156); S154 / Chapter 111 / `Overview: SEQTEST Procedure` (PDF
+16252    ! pp. 9138–9143).
+16253       * Discriminates: Small synthetic/public-input default model adapted to the documented Getting Started procedure
+16254       */
+16255      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+16255    ! validmemname=compatible locale=en_US;
+16256      %let syscc=0;
+16257      title; footnote;
+16258      ods _all_ close;
+16259      ods listing gpath="%sysfunc(pathname(work))";
+16260      ods graphics off;
+16261      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.BOUNDARIES (memtype=DATA).
+NOTE: Deleting WORK.ESTIMATES (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+16261    !                                         quit;
+
+
+16262      ods path work.templat(update) sashelp.tmplmst(read);
+16263      
+16264      proc seqdesign altref=-10; TwoSided: design nstages=4 method=obf; samplesize model=twosamplemean(stddev=20); ods output Boundary=boundaries; run;
+NOTE: The data set WORK.BOUNDARIES has 4 observations and 13 variables.
+NOTE: The PROCEDURE SEQDESIGN printed page 1165.
+
+16265      data estimates; length Variable $8 _Scale_ $8; Variable='Trt'; _Scale_='MLE'; _Stage_=1; Estimate=-7; StdErr=4.5; run;
+
+NOTE: The data set WORK.ESTIMATES has 1 observations and 5 variables.
+
+16266      proc seqtest boundary=boundaries parms(testvar=Trt)=estimates infoadj=prop; run;
+
+NOTE: The PROCEDURE SEQTEST printed page 1166.
+
+16267      
+16268      
+16269      
+16270      
+The SAS System
+
+16271      

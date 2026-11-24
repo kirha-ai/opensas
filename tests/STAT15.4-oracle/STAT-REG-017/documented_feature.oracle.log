@@ -1,0 +1,241 @@
+The SAS System
+
+13114      
+13115      /* STAT-REG-017: REG — Displayed Output / ODS Table Names
+13116       * Source: S154 / Chapter 105 / `Displayed Output` (PDF pp. 8650–8652); S154 / Chapter 105 / `ODS Table Names` (PDF pp. 8668–8670).
+13117       * Discriminates: Getting Started: REG Procedure
+13118       */
+13119      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+13119    ! validmemname=compatible locale=en_US;
+13120      %let syscc=0;
+13121      title; footnote;
+13122      ods _all_ close;
+13123      ods listing gpath="%sysfunc(pathname(work))";
+13124      ods graphics off;
+13125      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.INSURANCE (memtype=DATA).
+NOTE: Deleting WORK.OUT (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+13125    !                                         quit;
+
+
+13126      ods path work.templat(update) sashelp.tmplmst(read);
+13127      
+13128      ods trace on;
+13129      proc reg data=sashelp.class;
+13130      model Weight = Height;
+13131      run;
+
+
+Output Added:
+-------------
+Name:       NObs
+Label:      Number of Observations
+Template:   Stat.Reg.NObs
+Path:       Reg.MODEL1.Fit.Weight.NObs
+-------------
+
+Output Added:
+-------------
+Name:       ANOVA
+Label:      Analysis of Variance
+Template:   Stat.REG.ANOVA
+Path:       Reg.MODEL1.Fit.Weight.ANOVA
+-------------
+
+Output Added:
+-------------
+Name:       FitStatistics
+Label:      Fit Statistics
+Template:   Stat.REG.FitStatistics
+Path:       Reg.MODEL1.Fit.Weight.FitStatistics
+-------------
+
+Output Added:
+-------------
+Name:       ParameterEstimates
+Label:      Parameter Estimates
+Template:   Stat.REG.ParameterEstimates
+Path:       Reg.MODEL1.Fit.Weight.ParameterEstimates
+-------------
+
+NOTE: The PROCEDURE REG printed page 1018.
+
+13132      data USPopulation;
+13133      input Population @@;
+13134      retain Year 1780;
+13135      Year = Year+10;
+13136      YearSq = Year *Year;
+13137      Population = Population/1000;
+13138      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.USPOPULATION has 22 observations and 3 variables.
+
+13142      ;
+13143      proc reg data=USPopulation plots=ResidualByPredicted;
+13144      var YearSq;
+13145      model Population=Year / r clm cli;
+13146      run;
+
+WARNING: You must enable ODS graphics before requesting plots with the PLOTS option in the PROC REG statement.
+
+Output Added:
+-------------
+Name:       NObs
+Label:      Number of Observations
+Template:   Stat.Reg.NObs
+Path:       Reg.MODEL1.Fit.Population.NObs
+-------------
+
+Output Added:
+-------------
+Name:       ANOVA
+Label:      Analysis of Variance
+Template:   Stat.REG.ANOVA
+Path:       Reg.MODEL1.Fit.Population.ANOVA
+-------------
+
+Output Added:
+-------------
+Name:       FitStatistics
+Label:      Fit Statistics
+Template:   Stat.REG.FitStatistics
+Path:       Reg.MODEL1.Fit.Population.FitStatistics
+-------------
+
+Output Added:
+-------------
+Name:       ParameterEstimates
+Label:      Parameter Estimates
+Template:   Stat.REG.ParameterEstimates
+Path:       Reg.MODEL1.Fit.Population.ParameterEstimates
+-------------
+
+Output Added:
+-------------
+Name:       OutputStatistics
+Label:      Output Statistics
+Template:   Stat.Reg.OutputStatistics
+Path:       Reg.MODEL1.ObswiseStats.Population.OutputStatistics
+-------------
+
+Output Added:
+-------------
+Name:       ResidualStatistics
+Label:      Residual Statistics
+Template:   Stat.Reg.ResidualStatistics
+Path:       Reg.MODEL1.ObswiseStats.Population.ResidualStatistics
+-------------
+13147      add YearSq;
+13148      print;
+13149      run;
+
+NOTE: Variable YearSq is added.
+NOTE: Due to an ADD statement, the model label is now MODEL1.1.
+
+Output Added:
+-------------
+Name:       NObs
+Label:      Number of Observations
+Template:   Stat.Reg.NObs
+Path:       Reg.MODEL1_1.Fit.Population.NObs
+-------------
+
+Output Added:
+-------------
+Name:       ANOVA
+Label:      Analysis of Variance
+Template:   Stat.REG.ANOVA
+Path:       Reg.MODEL1_1.Fit.Population.ANOVA
+-------------
+
+Output Added:
+-------------
+Name:       FitStatistics
+Label:      Fit Statistics
+Template:   Stat.REG.FitStatistics
+Path:       Reg.MODEL1_1.Fit.Population.FitStatistics
+-------------
+
+Output Added:
+-------------
+Name:       ParameterEstimates
+Label:      Parameter Estimates
+Template:   Stat.REG.ParameterEstimates
+Path:       Reg.MODEL1_1.Fit.Population.ParameterEstimates
+-------------
+
+Output Added:
+-------------
+Name:       OutputStatistics
+Label:      Output Statistics
+Template:   Stat.Reg.OutputStatistics
+Path:       Reg.MODEL1_1.ObswiseStats.Population.OutputStatistics
+-------------
+
+Output Added:
+-------------
+Name:       ResidualStatistics
+Label:      Residual Statistics
+Template:   Stat.Reg.ResidualStatistics
+Path:       Reg.MODEL1_1.ObswiseStats.Population.ResidualStatistics
+-------------
+
+NOTE: The PROCEDURE REG printed pages 1019-1022.
+
+13150      proc reg data=USPopulation plots=predictions(X=Year);
+13151      model Population=Year Yearsq;
+13152      quit;
+
+WARNING: You must enable ODS graphics before requesting plots with the PLOTS option in the PROC REG statement.
+
+Output Added:
+-------------
+Name:       NObs
+Label:      Number of Observations
+Template:   Stat.Reg.NObs
+Path:       Reg.MODEL1.Fit.Population.NObs
+-------------
+
+Output Added:
+-------------
+Name:       ANOVA
+Label:      Analysis of Variance
+Template:   Stat.REG.ANOVA
+Path:       Reg.MODEL1.Fit.Population.ANOVA
+-------------
+
+Output Added:
+-------------
+Name:       FitStatistics
+Label:      Fit Statistics
+Template:   Stat.REG.FitStatistics
+Path:       Reg.MODEL1.Fit.Population.FitStatistics
+-------------
+
+Output Added:
+-------------
+Name:       ParameterEstimates
+Label:      Parameter Estimates
+Template:   Stat.REG.ParameterEstimates
+Path:       Reg.MODEL1.Fit.Population.ParameterEstimates
+-------------
+NOTE: The PROCEDURE REG printed page 1023.
+
+13153      ods graphics off;
+13154      quit;
+13155      ods trace off;
+13156      
+13157      
+13158      
+13159      
+The SAS System
+
+13160      

@@ -1,0 +1,78 @@
+The SAS System
+
+1032       
+1033       /* STAT-ORTHOREG-001: ORTHOREG — Data input, variable roles, and basic options
+1034        * Source: S154 / Chapter 91 / `PROC ORTHOREG Statement` (PDF pp. 7288–7289); S154 / Chapter 91 / `BY Statement` (PDF pp. 7289–7290); S154 /
+1034     ! Chapter 91 / `WEIGHT Statement` (PDF pp. 7297–7298); S154 / Chapter 91 / `Missing Values` (PDF p. 7298).
+1035        * Discriminates: Two explicit BY groups contain identical inputs, exposing group boundaries and per-group results.
+1036        */
+1037       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+1037     ! validmemname=compatible locale=en_US;
+1038       %let syscc=0;
+1039       title; footnote;
+1040       ods _all_ close;
+1041       ods listing gpath="%sysfunc(pathname(work))";
+1042       ods graphics off;
+
+NOTE: The PROCEDURE GLM printed page 164.
+
+1043       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.LONGLEY (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+1043     !                                         quit;
+
+
+1044       ods path work.templat(update) sashelp.tmplmst(read);
+1045       
+1046       title 'PROC ORTHOREG used with Longley data';
+1047       data Longley;
+1048       input Employment Prices GNP Jobless Military PopSize Year;
+1049       datalines;
+
+NOTE: The data set WORK.LONGLEY has 16 observations and 7 variables.
+
+1066       ;
+1067       data _oracle_input; set Longley; do _oracle_by=1 to 2; output; end; run;
+
+NOTE: There were 16 observations read from the data set WORK.LONGLEY.
+NOTE: The data set WORK._ORACLE_INPUT has 32 observations and 8 variables.
+
+1068       proc sort data=_oracle_input; by _oracle_by; run;
+
+NOTE: There were 32 observations read from the data set WORK._ORACLE_INPUT.
+NOTE: The data set WORK._ORACLE_INPUT has 32 observations and 8 variables.
+
+1069       proc orthoreg data=_oracle_input;
+1070       by _oracle_by;
+1071       model Employment = Prices Prices *Prices
+1072       GNP GNP *GNP
+1073       Jobless Jobless *Jobless
+1074       Military Military*Military
+1075       PopSize PopSize *PopSize
+1076       Year Year *Year;
+1077       run;
+
+NOTE: There were 32 observations read from the data set WORK._ORACLE_INPUT.
+NOTE: The PROCEDURE ORTHOREG printed pages 165-166.
+
+1078       proc glm data=Longley;
+1079       model Employment = Prices Prices *Prices
+1080       GNP GNP *GNP
+1081       Jobless Jobless *Jobless
+1082       Military Military*Military
+1083       PopSize PopSize *PopSize
+1084       Year Year *Year;
+1085       ods select OverallANOVA
+1086       FitStatistics
+1087       ParameterEstimates
+1088       Notes;
+1089       run;
+
+1090       
+1091       
+1092       
+1093       
+The SAS System
+
+1094       

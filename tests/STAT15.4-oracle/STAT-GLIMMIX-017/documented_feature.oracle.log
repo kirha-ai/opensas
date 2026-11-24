@@ -1,0 +1,70 @@
+The SAS System
+
+24350      
+24351      /* STAT-GLIMMIX-017: GLIMMIX — Between-Within Degrees of Freedom Approximation / Containment Degrees of Freedom Approximation / Satterthwaite
+24351    ! Degrees of Freedom Approximation / Kenward-Roger Degrees of Freedom Approximation
+24352       * Source: S154 / Chapter 52 / `Between-Within Degrees of Freedom Approximation` (PDF p. 3855); S154 / Chapter 52 / `Containment Degrees of Freedom
+24352    ! Approximation` (PDF p. 3855); S154 / Chapter 52 / `Satterthwaite Degrees of Freedom Approximation` (PDF pp. 3855–3857); S154 / Chapter 52 /
+24352    ! `Kenward-Roger Degrees of Freedom Approximation` (PDF pp. 3857–3858).
+24353       * Discriminates: Getting Started: GLIMMIX Procedure
+24354       */
+24355      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+24355    ! validmemname=compatible locale=en_US;
+24356      %let syscc=0;
+24357      title; footnote;
+24358      ods _all_ close;
+24359      ods listing gpath="%sysfunc(pathname(work))";
+24360      ods graphics off;
+24361      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.MULTICENTER (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+24361    !                                         quit;
+
+
+24362      ods path work.templat(update) sashelp.tmplmst(read);
+24363      
+24364      data multicenter;
+24365      input center group$ n sideeffect;
+24366      datalines;
+
+NOTE: The data set WORK.MULTICENTER has 30 observations and 4 variables.
+
+24397      ;
+24398      proc glimmix data=multicenter;
+24399      class center group;
+24400      model sideeffect/n = group / solution;
+24401      random intercept / subject=center;
+24402      run;
+
+
+
+NOTE: Convergence criterion (PCONV=1.11022E-8) satisfied.
+NOTE: The PROCEDURE GLIMMIX printed page 2431.
+
+24403      ods select lsmeans;
+24404      proc glimmix data=multicenter;
+24405      class center group;
+24406      model sideeffect/n = group / solution;
+24407      random intercept / subject=center;
+24408      lsmeans group / cl ilink;
+24409      run;
+
+
+
+NOTE: Convergence criterion (PCONV=1.11022E-8) satisfied.
+NOTE: The PROCEDURE GLIMMIX printed page 2432.
+
+24410      
+24411      
+24412      
+24413      
+The SAS System
+
+24414      

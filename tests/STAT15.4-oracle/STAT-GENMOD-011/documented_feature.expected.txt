@@ -1,0 +1,103 @@
+
+The GENMOD Procedure
+
+              Model Information
+
+Data Set                        WORK.ICECREAM
+Distribution                      Multinomial
+Link Function                Cumulative Logit
+Dependent Variable                      taste
+Frequency Weight Variable               count
+
+
+Number of Observations Read          15
+Number of Observations Used          15
+Sum of Frequencies Read            1045
+Sum of Frequencies Used            1045
+
+
+      Class Level Information
+ 
+Class      Levels    Values
+
+brand           3    ice1 ice2 ice3 
+
+
+       Response Profile
+ 
+ Ordered                 Total
+   Value    taste    Frequency
+
+       1    vg             140
+       2    g              162
+       3    m              421
+       4    b              156
+       5    vb             166
+
+PROC GENMOD is modeling the probabilities of levels of taste having LOWER Ordered Values in the response profile table.
+
+
+     Parameter Information
+ 
+Parameter       Effect    brand
+
+Prm1            brand     ice1 
+Prm2            brand     ice2 
+Prm3            brand     ice3 
+
+
+             Criteria For Assessing Goodness Of Fit
+ 
+Criterion                     DF           Value        Value/DF
+
+Deviance                       6          9.8654          1.6442
+Scaled Deviance                6          9.8654          1.6442
+Pearson Chi-Square             6          9.6730          1.6122
+Scaled Pearson X2              6          9.6730          1.6122
+Log Likelihood                        -1540.2193                
+Full Log Likelihood                     -37.9459                
+AIC (smaller is better)                  87.8918                
+AICC (smaller is better)                 87.9728                
+BIC (smaller is better)                 117.6025                
+
+
+Algorithm converged.                                                       
+
+
+                         Analysis Of Maximum Likelihood Parameter Estimates
+ 
+                                        Standard     Wald 95% Confidence          Wald
+Parameter             DF    Estimate       Error           Limits           Chi-Square    Pr > ChiSq
+
+Intercept1             1     -1.8578      0.1219     -2.0967     -1.6189        232.35        <.0001
+Intercept2             1     -0.8646      0.1056     -1.0716     -0.6576         67.02        <.0001
+Intercept3             1      0.9231      0.1060      0.7154      1.1308         75.87        <.0001
+Intercept4             1      1.8078      0.1191      1.5743      2.0413        230.32        <.0001
+brand         ice1     1      0.3847      0.1370      0.1162      0.6532          7.89        0.0050
+brand         ice2     1     -0.6457      0.1397     -0.9196     -0.3719         21.36        <.0001
+brand         ice3     0      0.0000      0.0000      0.0000      0.0000           .           .    
+Scale                  0      1.0000      0.0000      1.0000      1.0000                            
+
+NOTE: The scale parameter was held fixed.
+
+
+             LR Statistics For Type 1 Analysis
+ 
+                                          Chi-
+Source           Deviance        DF     Square    Pr > ChiSq
+
+Intercepts        65.9576                                   
+brand              9.8654         2      56.09        <.0001
+
+
+                                                    Contrast Estimate Results
+ 
+                    Mean            Mean              L'Beta    Standard                     L'Beta             Chi-
+Label           Estimate      Confidence Limits     Estimate       Error     Alpha      Confidence Limits     Square    Pr > ChiSq
+
+LogOR12           0.7370      0.6805      0.7867      1.0305      0.1401      0.05      0.7559      1.3050     54.11        <.0001
+Exp(LogOR12)                                          2.8024      0.3926      0.05      2.1295      3.6878                        
+LogOR13           0.5950      0.5290      0.6577      0.3847      0.1370      0.05      0.1162      0.6532      7.89        0.0050
+Exp(LogOR13)                                          1.4692      0.2013      0.05      1.1233      1.9217                        
+LogOR23           0.3439      0.2850      0.4081     -0.6457      0.1397      0.05     -0.9196     -0.3719     21.36        <.0001
+Exp(LogOR23)                                          0.5243      0.0733      0.05      0.3987      0.6894                        

@@ -1,0 +1,16 @@
+
+_oracle_
+   by       _NAME_    CLUSTER    CLUSNAME
+
+    1       OB107        1         CL3   
+    1       OB129        1         CL3   
+    1       OB32         2         CL5   
+    1       OB36         2         CL5   
+    1       OB30         2         CL5   
+    1       OB38         2         CL5   
+    1       OB22         2         CL5   
+    1       OB41         2         CL5   
+    1       OB39         2         CL5   
+    1       OB50         2         CL5   
+    1       OB101        3         CL4   
+    1       OB125        3         CL4   

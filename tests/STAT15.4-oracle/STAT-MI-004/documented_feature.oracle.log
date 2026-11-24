@@ -1,0 +1,71 @@
+The SAS System
+
+2334       
+2335       /* STAT-MI-004: MI — MONOTONE / TRANSFORM / Descriptive Statistics
+2336        * Source: S154 / Chapter 82 / `MONOTONE Statement` (PDF pp. 6443–6447); S154 / Chapter 82 / `TRANSFORM Statement` (PDF pp. 6447–6448); S154 /
+2336     ! Chapter 82 / `Descriptive Statistics` (PDF pp. 6449–6450).
+2337        * Discriminates: Example 82.10: Producing Monotone Missingness with MCMC; explicit statements: MONOTONE
+2338        */
+2339       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+2339     ! validmemname=compatible locale=en_US;
+2340       %let syscc=0;
+2341       title; footnote;
+2342       ods _all_ close;
+2343       ods listing gpath="%sysfunc(pathname(work))";
+2344       ods graphics off;
+2345       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.FITNESS1 (memtype=DATA).
+NOTE: Deleting WORK.OUTEM (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+2345     !                                         quit;
+
+
+2346       ods path work.templat(update) sashelp.tmplmst(read);
+2347       
+2348       data Fitness1;
+2349       input Oxygen RunTime RunPulse @@;
+2350       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.FITNESS1 has 31 observations and 3 variables.
+
+2367       ;
+2368       run;
+2369       proc mi data=Fitness1 seed=17655417 out=outex10;
+2370       mcmc impute=monotone;
+2371       var Oxygen RunTime RunPulse;
+2372       run;
+
+WARNING: The default number of imputations has been changed from 5 to 25.
+NOTE: The EM algorithm (MLE) converges in 12 iterations.
+NOTE: The EM algorithm (posterior mode) converges in 7 iterations.
+NOTE: The data set WORK.OUTEX10 has 775 observations and 4 variables.
+NOTE: The PROCEDURE MI printed page 163.
+
+2373       proc mi data=outex10 seed=15541 nimpute=0;
+2374       var Oxygen RunTime RunPulse;
+2375       run;
+
+NOTE: The PROCEDURE MI printed page 164.
+
+2376       proc mi data=outex10 nimpute=1 seed=51343672 out=outex10a;
+2377       monotone method=reg;
+2378       var Oxygen RunTime RunPulse;
+2379       by _Imputation_;
+2380       run;
+
+NOTE: The data set WORK.OUTEX10A has 775 observations and 4 variables.
+NOTE: The PROCEDURE MI printed pages 165-189.
+
+2381       
+2382       
+2383       
+2384       
+The SAS System
+
+2385       

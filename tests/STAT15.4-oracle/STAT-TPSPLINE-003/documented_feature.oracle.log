@@ -1,0 +1,139 @@
+The SAS System
+
+4535       
+4536       /* STAT-TPSPLINE-003: TPSPLINE — MODEL
+4537        * Source: S154 / Chapter 125 / `MODEL Statement` (PDF pp. 10303–10306).
+4538        * Discriminates: Getting Started: TPSPLINE Procedure; explicit statements: MODEL
+4539        */
+4540       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+4540     ! validmemname=compatible locale=en_US;
+4541       %let syscc=0;
+4542       title; footnote;
+4543       ods _all_ close;
+4544       ods listing gpath="%sysfunc(pathname(work))";
+4545       ods graphics off;
+4546       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.ICECREAM (memtype=DATA).
+NOTE: Deleting WORK.JKWEIGHTS (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+4546     !                                         quit;
+
+
+4547       ods path work.templat(update) sashelp.tmplmst(read);
+4548       
+4549       data Measure;
+4550       input x1 x2 y @@;
+4551       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.MEASURE has 50 observations and 3 variables.
+
+4577       ;
+4578       data Measure1;
+4579       set Measure;
+4580       run;
+
+NOTE: There were 50 observations read from the data set WORK.MEASURE.
+NOTE: The data set WORK.MEASURE1 has 50 observations and 3 variables.
+
+4581       proc sort data=Measure1;
+4582       by x2 x1;
+4583       run;
+
+NOTE: There were 50 observations read from the data set WORK.MEASURE1.
+NOTE: The data set WORK.MEASURE1 has 50 observations and 3 variables.
+
+4584       data Measure1;
+4585       set Measure1;
+4586       if mod(_N_, 2) = 0 then x1=x1+0.001;
+4587       run;
+
+NOTE: There were 50 observations read from the data set WORK.MEASURE1.
+NOTE: The data set WORK.MEASURE1 has 50 observations and 3 variables.
+
+4588       filename _grfile temp; goptions device=svg gsfname=_grfile;
+4589       proc g3d data=Measure1;
+4590       scatter x2*x1=y /size=.5
+4591       zmin=9 zmax=21
+4592       zticknum=4;
+4593       title "Raw Data";
+4594       run;
+
+NOTE: 31260 bytes written to /saswork/SAS_workFCBA00018F54_odaws02-euw1.oda.sas.com/#LN00653.
+
+4595       ods graphics on;
+4596       proc tpspline data=Measure;
+4597       model y=(x1 x2) /lognlambda=(-4 to -2.5 by 0.1);
+4598       output out=estimate pred uclm lclm;
+4599       run;
+
+NOTE: The graph in the LISTING destination will be rendered as an image due to the use of a gradient contour.
+NOTE: The graph in the LISTING destination will be rendered as an image due to the use of a gradient contour.
+NOTE: The graph in the LISTING destination will be rendered as an image due to the use of a gradient contour.
+NOTE: The graph in the LISTING destination will be rendered as an image due to the use of a gradient contour.
+NOTE: The graph in the LISTING destination will be rendered as an image due to the use of a gradient contour.
+NOTE: The data set WORK.ESTIMATE has 50 observations and 6 variables.
+NOTE: The PROCEDURE TPSPLINE printed page 255.
+
+4600       proc print data=estimate;
+4601       run;
+
+NOTE: There were 50 observations read from the data set WORK.ESTIMATE.
+NOTE: The PROCEDURE PRINT printed page 256.
+
+4602       data pred;
+4603       do x1=-1 to 1 by 0.1;
+4604       do x2=-1 to 1 by 0.1;
+4605       output;
+4606       end;
+4607       end;
+4608       run;
+
+NOTE: The data set WORK.PRED has 441 observations and 2 variables.
+
+4609       proc tpspline data=measure;
+4610       model y=(x1 x2)/lognlambda0=-3.4762;
+4611       score data=pred out=predy;
+4612       run;
+
+NOTE: The graph in the LISTING destination will be rendered as an image due to the use of a gradient contour.
+NOTE: The data set WORK.PREDY has 441 observations and 3 variables.
+NOTE: The PROCEDURE TPSPLINE printed page 257.
+
+4613       proc template;
+4614       define statgraph surface;
+4615       dynamic _X _Y _Z _T;
+4616       begingraph /designheight=360;
+4617       entrytitle _T;
+4618       layout overlay3d/rotate=120 cube=false xaxisopts=(label="x1")
+4619       yaxisopts=(label="x2") zaxisopts=(label="P_y");
+4620       surfaceplotparm x=_X y=_Y z=_Z;
+4621       endlayout;
+4622       endgraph;
+4623       end;
+NOTE: STATGRAPH 'Surface' has been saved to: WORK.TEMPLAT
+4624       run;
+
+4625       proc sgrender data=predy template=surface;
+4626       dynamic _X='x1' _Y='x2' _Z='P_y'
+4627       _T='Plot of Fitted Surface on a Fine Grid';
+4628       run;
+
+NOTE: The graph in the LISTING destination will be rendered as an image due to the use of a surface plot.
+NOTE: Listing image output written to /saswork/SAS_workFCBA00018F54_odaws02-euw1.oda.sas.com/SAS_workA81400018F54_odaws02-euw1.oda.sas.com/SGRender.png.
+NOTE: There were 441 observations read from the data set WORK.PREDY.
+
+4629       
+4630       
+4631       
+4632       
+The SAS System
+
+4633       

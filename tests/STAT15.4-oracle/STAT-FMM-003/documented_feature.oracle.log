@@ -1,0 +1,92 @@
+The SAS System
+
+2859       
+2860       /* STAT-FMM-003: FMM — CLASS / MODEL / PROBMODEL
+2861        * Source: S154 / Chapter 46 / `CLASS Statement` (PDF p. 2996); S154 / Chapter 46 / `MODEL Statement` (PDF pp. 2997–3005); S154 / Chapter 46 /
+2861     ! `PROBMODEL Statement` (PDF pp. 3009–3011).
+2862        * Discriminates: Example 46.4: Modeling Multinomial Overdispersion: Town and Country; explicit statements: CLASS, MODEL, PROBMODEL
+2863        */
+2864       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+2864     ! validmemname=compatible locale=en_US;
+2865       %let syscc=0;
+2866       title; footnote;
+2867       ods _all_ close;
+2868       ods listing gpath="%sysfunc(pathname(work))";
+2869       ods graphics off;
+2870       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.YEAST (memtype=DATA).
+2870     !                                         quit;
+
+
+2871       ods path work.templat(update) sashelp.tmplmst(read);
+2872       
+2873       data housing;
+2874       label us = 'Unsatisfied'
+2875       s = 'Satisfied'
+2876       vs = 'Very Satisfied';
+2877       input type $ us s vs @@;
+2878       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.HOUSING has 35 observations and 4 variables.
+
+2887       ;
+2888       proc fmm data=housing seed=314159;
+2889       class type;
+2890       model us s vs = Type / dist=multinomial;
+2891       output out=Pred pred;
+2892       run;
+
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The data set WORK.PRED has 35 observations and 7 variables.
+NOTE: The PROCEDURE FMM printed page 166.
+
+2893       data Pred;
+2894       set Pred;
+2895       Pred_1 = Pred_1 / (us + s + vs);
+2896       Pred_2 = Pred_2 / (us + s + vs);
+2897       Pred_3 = Pred_3 / (us + s + vs);
+2898       run;
+
+NOTE: There were 35 observations read from the data set WORK.PRED.
+NOTE: The data set WORK.PRED has 35 observations and 7 variables.
+
+2899       proc sort data=Pred nodupkey;
+2900       by type;
+
+NOTE: There were 35 observations read from the data set WORK.PRED.
+NOTE: 33 observations with duplicate key values were deleted.
+NOTE: The data set WORK.PRED has 2 observations and 7 variables.
+
+2901       proc print data=pred noobs;
+2902       var type pred:;
+2903       run;
+
+NOTE: There were 2 observations read from the data set WORK.PRED.
+NOTE: The PROCEDURE PRINT printed page 167.
+
+2904       proc fmm data=housing seed=314159;
+2905       class type;
+2906       model us s vs = Type / dist=multinomcluster;
+2907       output out=Pred pred;
+2908       probmodel Type;
+2909       run;
+
+NOTE: The multinomial cluster distribution implies a multi-component model. The K parameter of this model is set to 3.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The data set WORK.PRED has 35 observations and 7 variables.
+NOTE: The PROCEDURE FMM printed page 168.
+
+2910       
+2911       
+2912       
+2913       
+The SAS System
+
+2914       

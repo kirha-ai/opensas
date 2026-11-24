@@ -1,0 +1,329 @@
+The SAS System
+
+10764      
+10765      /* STAT-CALIS-030: CALIS — PATHDIAGRAM / Path Diagrams: Layout Algorithms, Default Settings, and Customization
+10766       * Source: S154 / Chapter 33 / `PATHDIAGRAM Statement` (PDF pp. 1626–1638); S154 / Chapter 33 / `Path Diagrams: Layout Algorithms, Default
+10766    ! Settings, and Customization` (PDF pp. 1735–1757).
+10767       * Discriminates: Example 33.17: Path Analysis: Stability of Alienation; explicit statements: PATHDIAGRAM
+10768       */
+10769      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+10769    ! validmemname=compatible locale=en_US;
+10770      %let syscc=0;
+10771      title; footnote;
+10772      ods _all_ close;
+10773      ods listing gpath="%sysfunc(pathname(work))";
+10774      ods graphics off;
+10775      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.WHEATON (memtype=DATA).
+10775    !                                         quit;
+
+
+10776      ods path work.templat(update) sashelp.tmplmst(read);
+10777      
+10778      ods graphics on;
+10779      ods trace on;
+10780      title "Stability of Alienation";
+10781      title2 "Data Matrix of WHEATON, MUTHEN, ALWIN & SUMMERS (1977)";
+10782      data Wheaton(TYPE=COV);
+10783      length _name_ $32 _type_ $8;
+10784      infile datalines truncover;
+10785      
+10786      _type_ = 'cov';
+10787      input _name_ :$32. Anomie67 Powerless67 Anomie71 Powerless71
+10788      Education SEI;
+10789      label Anomie67='Anomie (1967)' Powerless67='Powerlessness (1967)'
+10790      Anomie71='Anomie (1971)' Powerless71='Powerlessness (1971)'
+10791      Education='Education' SEI='Occupational Status Index';
+10792      datalines;
+
+NOTE: The data set WORK.WHEATON has 6 observations and 8 variables.
+
+10799      ;
+10800      ods graphics on;
+10801      proc calis nobs=932 data=Wheaton plots=residuals;
+10802      path
+10803      Anomie67 Powerless67 <=== Alien67 = 1.0 0.833,
+10804      Anomie71 Powerless71 <=== Alien71 = 1.0 0.833,
+10805      Education SEI <=== SES = 1.0 lambda,
+10806      Alien67 Alien71 <=== SES = gamma1 gamma2,
+10807      Alien71 <=== Alien67 = beta;
+10808      pvar
+10809      Anomie67 = theta1,
+10810      Powerless67 = theta2,
+10811      Anomie71 = theta1,
+10812      Powerless71 = theta2,
+10813      Education = theta3,
+10814      SEI = theta4,
+10815      Alien67 = psi1,
+10816      Alien71 = psi2,
+10817      SES = phi;
+10818      pcov
+10819      Anomie67 Anomie71 = theta5,
+10820      Powerless67 Powerless71 = theta5;
+10821      pathdiagram title='Stability of Alienation';
+10822      run;
+
+NOTE: The means of one or more variables in the input data set WORK.WHEATON are missing and are assumed to be 0.
+
+Output Added:
+-------------
+Name:       ModelingInfo
+Label:      Modeling Info
+Template:   Stat.Calis.ModelingInfo
+Path:       Calis.ModelSpec.ModelingInfo
+-------------
+
+Output Added:
+-------------
+Name:       PATHVariables
+Label:      Variables
+Template:   Stat.Calis.PATHVariables
+Path:       Calis.ModelSpec.PATHVariables
+-------------
+
+Output Added:
+-------------
+Name:       PATHListInit
+Label:      PATH List
+Template:   Stat.Calis.PATHListInit
+Path:       Calis.ModelSpec.PATHListInit
+-------------
+
+Output Added:
+-------------
+Name:       PATHVarParmsInit
+Label:      Variance Parms
+Template:   Stat.Calis.PATHVarParmsInit
+Path:       Calis.ModelSpec.PATHVarParmsInit
+-------------
+
+Output Added:
+-------------
+Name:       PATHCovErrorsInit
+Label:      Error Covariances
+Template:   Stat.Calis.PATHCovErrorsInit
+Path:       Calis.ModelSpec.PATHCovErrorsInit
+-------------
+
+Output Added:
+-------------
+Name:       SimpleStatistics
+Label:      Simple Statistics
+Template:   Stat.Calis.SimpleStatistics
+Path:       Calis.DescriptiveStat.SimpleStatistics
+-------------
+
+Output Added:
+-------------
+Name:       InitEstMethods
+Label:      Init Est Methods
+Template:   Stat.Calis.InitEstMethods
+Path:       Calis.Optimization.InitEstMethods
+-------------
+
+Output Added:
+-------------
+Name:       ParameterEstimatesStart
+Label:      Initial Estimates
+Template:   Stat.Calis.ParameterEstimatesStart
+Path:       Calis.Optimization.ParameterEstimatesStart
+-------------
+
+Output Added:
+-------------
+Name:       ProblemDescription
+Label:      Optimization Problem
+Template:   Stat.Calis.ProblemDescription
+Path:       Calis.Optimization.ProblemDescription
+-------------
+
+Output Added:
+-------------
+Name:       IterStart
+Label:      Iteration Start
+Template:   Stat.Calis.IterStart
+Path:       Calis.Optimization.IterStart
+-------------
+
+Output Added:
+-------------
+Name:       IterHist
+Label:      Iteration History
+Template:   Stat.Calis.IterHist
+Path:       Calis.Optimization.IterHist
+-------------
+
+Output Added:
+-------------
+Name:       IterStop
+Label:      Iteration Stop
+Template:   Stat.Calis.IterStop
+Path:       Calis.Optimization.IterStop
+-------------
+
+Output Added:
+-------------
+Name:       ConvergenceStatus
+Label:      Convergence Status
+Template:   Stat.Calis.ConvergenceStatus
+Path:       Calis.Optimization.ConvergenceStatus
+-------------
+NOTE: Convergence criterion (ABSGCONV=0.00001) satisfied.
+
+Output Added:
+-------------
+Name:       Fit
+Label:      Fit Summary
+Template:   Stat.Calis.Fit
+Path:       Calis.Fit.Fit
+-------------
+
+Output Added:
+-------------
+Name:       RawRes
+Label:      Matrix
+Template:   Stat.Calis.RawRes
+Path:       Calis.Residuals.Raw.RawRes
+-------------
+
+Output Added:
+-------------
+Name:       AveRawRes
+Label:      Average Absolute Residuals
+Template:   Stat.Calis.AveRawRes
+Path:       Calis.Residuals.Raw.AveRawRes
+-------------
+
+Output Added:
+-------------
+Name:       RankRawRes
+Label:      Rank Order
+Template:   Stat.Calis.RankRawRes
+Path:       Calis.Residuals.Raw.RankRawRes
+-------------
+
+Output Added:
+-------------
+Name:       RawResidualHistogram
+Label:      Histogram
+Template:   Stat.Calis.Graphics.RawResidualHistogram
+Path:       Calis.Residuals.Raw.RawResidualHistogram
+-------------
+
+Output Added:
+-------------
+Name:       AsymStdRes
+Label:      Matrix
+Template:   Stat.Calis.AsymStdRes
+Path:       Calis.Residuals.AsymptoticallyStandardized.AsymStdRes
+-------------
+
+Output Added:
+-------------
+Name:       AveAsymStdRes
+Label:      Average Absolute Asymptotically Standardized Residuals
+Template:   Stat.Calis.AveAsymStdRes
+Path:       Calis.Residuals.AsymptoticallyStandardized.AveAsymStdRes
+-------------
+
+Output Added:
+-------------
+Name:       RankAsymStdRes
+Label:      Rank Order
+Template:   Stat.Calis.RankAsymStdRes
+Path:       Calis.Residuals.AsymptoticallyStandardized.RankAsymStdRes
+-------------
+
+Output Added:
+-------------
+Name:       AsymStdResidualHistogram
+Label:      Histogram
+Template:   Stat.Calis.Graphics.AsymStdResidualHistogram
+Path:       Calis.Residuals.AsymptoticallyStandardized.AsymStdResidualHistogram
+-------------
+
+Output Added:
+-------------
+Name:       PATHList
+Label:      PATH List
+Template:   Stat.Calis.PATHList
+Path:       Calis.ML.PATHList
+-------------
+
+Output Added:
+-------------
+Name:       PATHVarParms
+Label:      Variance Parms
+Template:   Stat.Calis.PATHVarParms
+Path:       Calis.ML.PATHVarParms
+-------------
+
+Output Added:
+-------------
+Name:       PATHCovErrors
+Label:      Error Covariances
+Template:   Stat.Calis.PATHCovErrors
+Path:       Calis.ML.PATHCovErrors
+-------------
+
+Output Added:
+-------------
+Name:       SqMultCorr
+Label:      Sq. Mult. Correlations
+Template:   Stat.Calis.SqMultCorr
+Path:       Calis.ML.SqMultCorr
+-------------
+
+Output Added:
+-------------
+Name:       PATHListStd
+Label:      PATH List
+Template:   Stat.Calis.PATHListStd
+Path:       Calis.StandardizedResults.PATHListStd
+-------------
+
+Output Added:
+-------------
+Name:       PATHVarParmsStd
+Label:      Variance Parms
+Template:   Stat.Calis.PATHVarParmsStd
+Path:       Calis.StandardizedResults.PATHVarParmsStd
+-------------
+
+Output Added:
+-------------
+Name:       PATHCovErrorsStd
+Label:      Error Covariances
+Template:   Stat.Calis.PATHCovErrorsStd
+Path:       Calis.StandardizedResults.PATHCovErrorsStd
+-------------
+
+Output Added:
+-------------
+Name:       PathDiagram
+Label:      Stability of Alienation
+Template:   Stat.Calis.Graphics.PathDiagram
+Path:       Calis.PathDiagram.PathDiagram
+-------------
+NOTE: The PROCEDURE CALIS printed pages 1481-1489.
+
+10823      ods graphics off;
+10824      run;
+10825      quit;
+10826      ods trace off;
+10827      ods graphics off;
+10828      
+10829      
+10830      
+10831      
+The SAS System
+
+10832      

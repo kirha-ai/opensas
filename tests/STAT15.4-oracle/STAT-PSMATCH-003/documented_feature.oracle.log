@@ -1,0 +1,66 @@
+The SAS System
+
+9668       
+9669       /* STAT-PSMATCH-003: PSMATCH — PSMODEL
+9670        * Source: S154 / Chapter 101 / `PSMODEL Statement` (PDF pp. 8232–8233).
+9671        * Discriminates: Verified default procedure context; explicit statements: PSMODEL
+9672        */
+9673       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+9673     ! validmemname=compatible locale=en_US;
+9674       %let syscc=0;
+9675       title; footnote;
+9676       ods _all_ close;
+9677       ods listing gpath="%sysfunc(pathname(work))";
+9678       ods graphics off;
+9679       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.MATCHED (memtype=DATA).
+NOTE: Deleting WORK.PATIENTS (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+9679     !                                         quit;
+
+
+9680       ods path work.templat(update) sashelp.tmplmst(read);
+9681       
+9682       data patients;
+9683       call streaminit(419);
+9684       do patientid=1 to 100;
+9685       gender=mod(patientid,2);
+9686       age=30+mod(patientid*7,45);
+9687       bmi=20+mod(patientid,12);
+9688       drug=rand('bernoulli',0.5);
+9689       output;
+9690       end;
+9691       run;
+
+NOTE: The data set WORK.PATIENTS has 100 observations and 5 variables.
+
+9692       proc psmatch data=patients region=cs;
+9693       class drug gender;
+9694       psmodel drug(treated='1')=gender age bmi;
+9695       match method=greedy(k=1) distance=lps caliper=0.5;
+9696       assess lps var=(age bmi);
+9697       output out(obs=match)=matched matchid=matchid;
+9698       run;
+
+WARNING: Some treated units do not have matched controls because there are not enough available controls for these treated units.
+NOTE: The data set WORK.MATCHED has 94 observations and 8 variables.
+NOTE: The PROCEDURE PSMATCH printed pages 632-633.
+
+9699       proc print data=matched(obs=10) noobs;
+9700       run;
+
+NOTE: There were 10 observations read from the data set WORK.MATCHED.
+NOTE: The PROCEDURE PRINT printed page 634.
+
+9701       
+9702       
+9703       
+9704       
+The SAS System
+
+9705       

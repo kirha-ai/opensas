@@ -1,0 +1,699 @@
+
+Swaminathan's Longitudinal Factor Model, Data: McDONALD(1980)
+Constructed Singular Correlation Matrix, GLS & ML not possible
+
+The CALIS Procedure
+Correlation Structure Analysis: Model and Initial Values
+
+      Modeling Information
+    Least-Squares Estimation
+
+Data Set            WORK.MCDON  
+N Obs               100         
+Model Type          COSAN       
+Analysis            Correlations
+
+
+      Observed Variables (N = 9) in the Model 
+
+obs1  obs2  obs3  obs4  obs5  obs6  obs7  obs8  obs9
+
+
+                          COSAN Model Structures
+
+Sigma =    F1*F2*F3*L*inv(F3)*inv(F2)*P*(inv(F2))`*(inv(F3))`*L`*F3`*F2`*  
+           F1` + U                                                         
+
+
+           Summary of Model Matrices
+ 
+Matrix     N Row     N Col    Matrix Type
+
+F1             9         6    GEN: Rectangular 
+F2             6         6    DIA: Diagonal    
+F3             6         6    DIA: Diagonal    
+L              6         6    LOW: L Triangular
+P              6         6    DIA: Diagonal    
+U              9         9    SYM: Symmetric   
+
+Swaminathan's Longitudinal Factor Model, Data: McDONALD(1980)
+Constructed Singular Correlation Matrix, GLS & ML not possible
+
+The CALIS Procedure
+Correlation Structure Analysis: Model and Initial Values
+
+                                      Initial Model Matrix F1
+                                 (9 x 6 General Rectangular Matrix)
+ 
+                Col1            Col2            Col3            Col4            Col5            Col6
+
+obs1               .               0               0               0               0               0
+                [x1]                                                                                
+
+obs2               .               .               0               0               0               0
+                [x2]            [x4]                                                                
+
+obs3               .               .               0               0               0               0
+                [x3]            [x5]                                                                
+
+obs4               0               0               .               0               0               0
+                                                [x6]                                                
+
+obs5               0               0               .               .               0               0
+                                                [x7]            [x9]                                
+
+obs6               0               0               .               .               0               0
+                                                [x8]           [x10]                                
+
+obs7               0               0               0               0               .               0
+                                                                               [x11]                
+
+obs8               0               0               0               0               .               .
+                                                                               [x12]           [x14]
+
+obs9               0               0               0               0               .               .
+                                                                               [x13]           [x15]
+
+Swaminathan's Longitudinal Factor Model, Data: McDONALD(1980)
+Constructed Singular Correlation Matrix, GLS & ML not possible
+
+The CALIS Procedure
+Correlation Structure Analysis: Model and Initial Values
+
+                                      Initial Model Matrix F2
+                                      (6 x 6 Diagonal Matrix)
+ 
+                Col1            Col2            Col3            Col4            Col5            Col6
+
+Row1          1.0000               0               0               0               0               0
+                                                                                                    
+
+Row2               0          1.0000               0               0               0               0
+                                                                                                    
+
+Row3               0               0               .               0               0               0
+                                               [x16]                                                
+
+Row4               0               0               0               .               0               0
+                                                               [x17]                                
+
+Row5               0               0               0               0               .               0
+                                                                               [x16]                
+
+Row6               0               0               0               0               0               .
+                                                                                               [x17]
+
+Swaminathan's Longitudinal Factor Model, Data: McDONALD(1980)
+Constructed Singular Correlation Matrix, GLS & ML not possible
+
+The CALIS Procedure
+Correlation Structure Analysis: Model and Initial Values
+
+                                      Initial Model Matrix F3
+                                      (6 x 6 Diagonal Matrix)
+ 
+                Col1            Col2            Col3            Col4            Col5            Col6
+
+Row1          1.0000               0               0               0               0               0
+                                                                                                    
+
+Row2               0          1.0000               0               0               0               0
+                                                                                                    
+
+Row3               0               0          1.0000               0               0               0
+                                                                                                    
+
+Row4               0               0               0          1.0000               0               0
+                                                                                                    
+
+Row5               0               0               0               0               .               0
+                                                                               [x18]                
+
+Row6               0               0               0               0               0               .
+                                                                                               [x19]
+
+Swaminathan's Longitudinal Factor Model, Data: McDONALD(1980)
+Constructed Singular Correlation Matrix, GLS & ML not possible
+
+The CALIS Procedure
+Correlation Structure Analysis: Model and Initial Values
+
+                                       Initial Model Matrix L
+                                  (6 x 6 Lower Triangular Matrix)
+ 
+                Col1            Col2            Col3            Col4            Col5            Col6
+
+Row1          1.0000               0               0               0               0               0
+Row2               0          1.0000               0               0               0               0
+Row3          1.0000               0          1.0000               0               0               0
+Row4               0          1.0000               0          1.0000               0               0
+Row5          1.0000               0          1.0000               0          1.0000               0
+Row6               0          1.0000               0          1.0000               0          1.0000
+
+Swaminathan's Longitudinal Factor Model, Data: McDONALD(1980)
+Constructed Singular Correlation Matrix, GLS & ML not possible
+
+The CALIS Procedure
+Correlation Structure Analysis: Model and Initial Values
+
+                                       Initial Model Matrix P
+                                      (6 x 6 Diagonal Matrix)
+ 
+                Col1            Col2            Col3            Col4            Col5            Col6
+
+Row1          1.0000               0               0               0               0               0
+                                                                                                    
+
+Row2               0          1.0000               0               0               0               0
+                                                                                                    
+
+Row3               0               0               .               0               0               0
+                                               [x20]                                                
+
+Row4               0               0               0               .               0               0
+                                                               [x21]                                
+
+Row5               0               0               0               0               .               0
+                                                                               [x22]                
+
+Row6               0               0               0               0               0               .
+                                                                                               [x23]
+
+Swaminathan's Longitudinal Factor Model, Data: McDONALD(1980)
+Constructed Singular Correlation Matrix, GLS & ML not possible
+
+The CALIS Procedure
+Correlation Structure Analysis: Model and Initial Values
+
+                                                               Initial Model Matrix U
+                                                              (9 x 9 Symmetric Matrix)
+ 
+                obs1            obs2            obs3            obs4            obs5            obs6            obs7            obs8            obs9
+
+obs1               .               0               0               .               0               0               .               0               0
+               [x24]                                           [x33]                                           [x39]                                
+
+obs2               0               .               0               0               .               0               0               .               0
+                               [x25]                                           [x34]                                           [x40]                
+
+obs3               0               0               .               0               0               .               0               0               .
+                                               [x26]                                           [x35]                                           [x41]
+
+obs4               .               0               0               .               0               0               .               0               0
+               [x33]                                           [x27]                                           [x36]                                
+
+obs5               0               .               0               0               .               0               0               .               0
+                               [x34]                                           [x28]                                           [x37]                
+
+obs6               0               0               .               0               0               .               0               0               .
+                                               [x35]                                           [x29]                                           [x38]
+
+obs7               .               0               0               .               0               0               .               0               0
+               [x39]                                           [x36]                                           [x30]                                
+
+obs8               0               .               0               0               .               0               0               .               0
+                               [x40]                                           [x37]                                           [x31]                
+
+obs9               0               0               .               0               0               .               0               0               .
+                                               [x41]                                           [x38]                                           [x32]
+
+Swaminathan's Longitudinal Factor Model, Data: McDONALD(1980)
+Constructed Singular Correlation Matrix, GLS & ML not possible
+
+The CALIS Procedure
+Correlation Structure Analysis: Descriptive Statistics
+
+         Simple Statistics
+ 
+Variable          Mean       Std Dev
+
+obs1                 0       1.00000
+obs2                 0       1.00000
+obs3                 0       1.00000
+obs4                 0       1.00000
+obs5                 0       1.00000
+obs6                 0       1.00000
+obs7                 0       1.00000
+obs8                 0       1.00000
+obs9                 0       1.00000
+
+Swaminathan's Longitudinal Factor Model, Data: McDONALD(1980)
+Constructed Singular Correlation Matrix, GLS & ML not possible
+
+The CALIS Procedure
+Correlation Structure Analysis: Optimization
+
+        Initial Estimation Method
+
+       1    Default Initial Values       
+
+
+                              Optimization Start
+                              Parameter Estimates
+ 
+    N    Parameter      Estimate      Gradient     Lower Bound     Upper Bound
+
+    1    x1              0.50000       4.21013               .               .
+    2    x2              0.50000       4.69613               .               .
+    3    x3              0.50000       4.38037               .               .
+    4    x4              0.50000       4.53550               .               .
+    5    x5              0.50000       4.47100               .               .
+    6    x6              0.50000       3.97300               .               .
+    7    x7              0.50000       4.47450               .               .
+    8    x8              0.50000       4.18650               .               .
+    9    x9              0.50000       4.39200               .               .
+   10    x10             0.50000       4.39650               .               .
+   11    x11             0.50000       4.09963               .               .
+   12    x12             0.50000       4.43062               .               .
+   13    x13             0.50000       4.13637               .               .
+   14    x14             0.50000       4.40150               .               .
+   15    x15             0.50000       4.33150               .               .
+   16    x16             0.50000      -0.46338       -1.000000        1.000000
+   17    x17             0.50000      -0.19350       -1.000000        1.000000
+   18    x18             0.50000      -0.32338       -1.000000        1.000000
+   19    x19             0.50000      -0.10700       -1.000000        1.000000
+   20    x24             5.00000       4.25000               0               .
+   21    x25             5.00000       4.50000               0               .
+   22    x26             5.00000       4.50000               0               .
+   23    x27             5.00000       4.25000               0               .
+   24    x28             5.00000       4.50000               0               .
+   25    x29             5.00000       4.50000               0               .
+   26    x30             5.00000       4.25000               0               .
+   27    x31             5.00000       4.50000               0               .
+   28    x32             5.00000       4.50000               0               .
+   29    x33             0.50000      -0.19000               .               .
+   30    x34             0.50000       0.02000               .               .
+   31    x35             0.50000      -0.10000               .               .
+   32    x36             0.50000      -0.21000               .               .
+   33    x37             0.50000       0.10000               .               .
+   34    x38             0.50000      -0.02000               .               .
+   35    x39             0.50000      -0.17500               .               .
+   36    x40             0.50000      -0.13000               .               .
+   37    x41             0.50000      -0.17000               .               .
+
+                   Value of Objective Function = 88.08423725
+
+
+The Number of Dependent Parameters is 4
+ 
+    N    Parameter      Estimate
+
+   38    x20             0.75000
+   39    x21             0.75000
+   40    x22             0.75000
+   41    x23             0.75000
+
+Swaminathan's Longitudinal Factor Model, Data: McDONALD(1980)
+Constructed Singular Correlation Matrix, GLS & ML not possible
+
+The CALIS Procedure
+Correlation Structure Analysis: Optimization
+
+Levenberg-Marquardt Optimization
+
+Scaling Update of More (1978)
+
+Parameter Estimates                   37
+Functions (Observations)              45
+Lower Bounds                          13
+Upper Bounds                           4
+
+                                             Optimization Start
+
+Active Constraints                                  0  Objective Function                        88.08423725
+Max Abs Gradient Element                     4.696125  Radius                                   28.679715866
+
+
+                                                                                                         Ratio
+                                                                                                       Between
+                                                                                                        Actual
+                                                                 Objective     Max Abs                     and
+                     Function         Active        Objective     Function    Gradient               Predicted
+Iter     Restarts       Calls    Constraints         Function       Change     Element     Lambda       Change
+
+   1*           0           4              0         45.53813      42.5461      3.1663      3.125        0.932
+   2*           0           6              0         26.29585      19.2423      2.3331      3.125        0.971
+   3*           0           8              1'         2.86194      23.4339      2.3738      0.195        0.950
+   4*           0          12              0'         2.03938       0.8226      5.1034      0.231        0.249
+   5*           0          14              0          0.19949       1.8399      0.7372      3.125        0.765
+   6*           0          17              0          0.02869       0.1708      0.1770     0.0303        0.763
+   7*           0          19              1          0.00497       0.0237      0.1267     0.0488        0.928
+   8*           0          22              1          0.00342      0.00156      0.0889    0.00828        0.391
+   9*           0          24              1          0.00112      0.00229      0.0225     0.0122        0.764
+  10*           0          27              1        0.0007039     0.000418     0.00386     0.0326        1.024
+  11*           0          31              2        0.0005271     0.000177      0.0166     0.0117        0.696
+  12            0          35              2        0.0003504     0.000177     0.00688    0.00360        0.941
+  13            0          38              2        0.0002982     0.000052    0.000917    0.00482        0.999
+  14            0          40              2        0.0002772     0.000021     0.00256    0.00199        0.596
+  15            0          42              2        0.0002524     0.000025     0.00234    0.00146        0.696
+  16            0          44              2        0.0002342     0.000018     0.00234    0.00109        0.685
+  17            0          46              2        0.0002205     0.000014     0.00245    0.00082        0.682
+  18            0          49              2        0.0002121     8.338E-6    0.000198    0.00216        0.992
+  19            0          51              2        0.0002072     4.891E-6    0.000836    0.00101        0.852
+  20            0          53              2        0.0002053     1.977E-6     0.00365    0.00043        0.192
+  21            0          55              2        0.0001964     8.883E-6     0.00358    0.00033        0.599
+  22            0          57              2        0.0001899     6.509E-6     0.00348    0.00026        0.579
+  23            0          59              2        0.0001847     5.201E-6     0.00339    0.00021        0.576
+  24            0          61              2        0.0001804     4.236E-6     0.00329    0.00017        0.572
+  25            0          64              2        0.0001766      3.87E-6    0.000251    0.00048        0.992
+  26            0          67              2        0.0001764     2.056E-7    0.000016    0.00231        0.997
+  27            0          69              2        0.0001760     3.681E-7    0.000031    0.00115        0.991
+  28            0          72              2        0.0001759     9.289E-8    0.000018    0.00443        0.998
+  29            0          74              2        0.0001757     1.832E-7    0.000015    0.00220        0.996
+  30            0          76              3        0.0001756     1.096E-7     0.00126    0.00109        0.301
+  31            0          78              3        0.0001753     3.378E-7    0.000046          0        0.994
+  32            0          80              3        0.0001753     6.38E-10    8.347E-7          0        0.970
+
+                                            Optimization Results
+
+Iterations                                         32  Function Calls                                     83
+Jacobian Calls                                     34  Active Constraints                                  3
+Objective Function                       0.0001752722  Max Abs Gradient Element                 8.3469994E-7
+Lambda                                              0  Actual Over Pred Change                  0.9696954643
+Radius                                   0.0004519122                                                       
+
+Convergence criterion (ABSGCONV=0.00001) satisfied.                                               
+
+Swaminathan's Longitudinal Factor Model, Data: McDONALD(1980)
+Constructed Singular Correlation Matrix, GLS & ML not possible
+
+The CALIS Procedure
+Correlation Structure Analysis: Optimization
+
+                                    Optimization Results
+                                     Parameter Estimates
+ 
+    N    Parameter      Estimate      Gradient     Lower Bound     Upper Bound    Active BC
+
+    1    x1              0.35152    -1.4382E-8               .               .              
+    2    x2              0.28706    3.8552E-10               .               .              
+    3    x3              0.71014    -8.3661E-8               .               .              
+    4    x4              0.95284    1.11632E-8               .               .              
+    5    x5              0.20585    3.65298E-7               .               .              
+    6    x6              0.42040    7.15782E-8               .               .              
+    7    x7              0.43026      -3.55E-8               .               .              
+    8    x8              0.85914    1.15674E-8               .               .              
+    9    x9              0.90273     5.1462E-8               .               .              
+   10    x10             0.17719    -3.9987E-8               .               .              
+   11    x11             0.34865    -1.3161E-8               .               .              
+   12    x12             0.59239    -1.4018E-8               .               .              
+   13    x13             0.99875    5.93306E-8               .               .              
+   14    x14            -0.19709    2.71566E-7               .               .              
+   15    x15             0.08713     -8.347E-7               .               .              
+   16    x16             0.89388    -8.1811E-8       -1.000000        1.000000              
+   17    x17             0.58062    1.40465E-7       -1.000000        1.000000              
+   18    x18             0.59630    -1.2656E-7       -1.000000        1.000000              
+   19    x19             1.00000    -0.0004568       -1.000000        1.000000     Upper BC 
+   20    x24             0.87643    5.3523E-11               0               .              
+   21    x25             0.00968    2.91108E-9               0               .              
+   22    x26             0.45332    7.4188E-10               0               .              
+   23    x27             0.82326    3.3414E-11               0               .              
+   24    x28                   0     0.0000474               0               .     Lower BC 
+   25    x29             0.23048     1.831E-10               0               .              
+   26    x30             0.87844    5.7614E-12               0               .              
+   27    x31             0.61023    4.54117E-9               0               .              
+   28    x32                   0       0.00509               0               .     Lower BC 
+   29    x33             0.58790     -3.94E-11               .               .              
+   30    x34             0.13017    -5.2465E-9               .               .              
+   31    x35             0.23345    1.60607E-9               .               .              
+   32    x36             0.64260     3.385E-11               .               .              
+   33    x37             0.72593    2.8162E-10               .               .              
+   34    x38             0.23290    -1.363E-10               .               .              
+   35    x39             0.58467    -1.739E-11               .               .              
+   36    x40             0.70840    4.01079E-9               .               .              
+   37    x41             0.32154    6.3826E-11               .               .              
+
+                         Value of Objective Function = 0.0001752722
+
+
+The Number of Dependent Parameters is 4
+ 
+    N    Parameter      Estimate
+
+   38    x20             0.20097
+   39    x21             0.66288
+   40    x22             0.64443
+   41    x23                   0
+
+Swaminathan's Longitudinal Factor Model, Data: McDONALD(1980)
+Constructed Singular Correlation Matrix, GLS & ML not possible
+
+The CALIS Procedure
+Correlation Structure Analysis: Least-Squares Estimation
+
+                           Fit Summary
+
+Modeling Info        Number of Observations                    100
+                     Number of Variables                         9
+                     Number of Moments                          45
+                     Number of Parameters                       37
+                     Number of Active Constraints                3
+                     Baseline Model Function Value          6.7625
+                     Baseline Model DF                          36
+Fit Index            Fit Function                           0.0002
+                     Model DF                                   11
+                     Root Mean Square Residual (RMR)        0.0020
+                     Standardized RMR (SRMR)                0.0020
+                     Goodness of Fit Index (GFI)            1.0000
+                     Adjusted GFI (AGFI)                    0.9999
+                     Parsimonious GFI                       0.3056
+                     Bentler-Bonett NFI                     1.0000
+
+Swaminathan's Longitudinal Factor Model, Data: McDONALD(1980)
+Constructed Singular Correlation Matrix, GLS & ML not possible
+
+The CALIS Procedure
+Correlation Structure Analysis: Least-Squares Estimation
+
+                                 Raw Residual Matrix
+ 
+         obs1     obs2     obs3     obs4     obs5     obs6     obs7     obs8     obs9
+
+obs1   0.0000  -0.0009   0.0004   0.0000  -0.0002   0.0000   0.0000  -0.0030   0.0019
+obs2  -0.0009   0.0000   0.0000   0.0001   0.0000  -0.0005   0.0007   0.0000   0.0010
+obs3   0.0004   0.0000   0.0000   0.0031  -0.0010   0.0000   0.0030  -0.0047   0.0000
+obs4   0.0000   0.0001   0.0031   0.0000  -0.0009  -0.0012   0.0000  -0.0045   0.0016
+obs5  -0.0002   0.0000  -0.0010  -0.0009  -0.0000   0.0004   0.0005   0.0000   0.0011
+obs6   0.0000  -0.0005   0.0000  -0.0012   0.0004   0.0000   0.0014   0.0004   0.0000
+obs7   0.0000   0.0007   0.0030   0.0000   0.0005   0.0014   0.0000  -0.0065   0.0018
+obs8  -0.0030   0.0000  -0.0047  -0.0045   0.0000   0.0004  -0.0065   0.0000   0.0055
+obs9   0.0019   0.0010   0.0000   0.0016   0.0011   0.0000   0.0018   0.0055  -0.0051
+
+Average Absolute Residual                         0.001145
+Average Off-diagonal Absolute Residual            0.001288
+
+
+Rank Order of the 10 Largest Raw Residuals
+ 
+Var1    Var2      Residual
+
+obs8    obs7      -0.00654
+obs9    obs8       0.00552
+obs9    obs9      -0.00509
+obs8    obs3      -0.00468
+obs8    obs4      -0.00450
+obs4    obs3       0.00313
+obs7    obs3       0.00303
+obs8    obs1      -0.00300
+obs9    obs1       0.00186
+obs9    obs7       0.00178
+
+Swaminathan's Longitudinal Factor Model, Data: McDONALD(1980)
+Constructed Singular Correlation Matrix, GLS & ML not possible
+
+The CALIS Procedure
+Correlation Structure Analysis: Least-Squares Estimation
+
+                      Distribution of Raw Residuals
+                      Each * Represents 2 Residuals
+ 
+----------Range---------    Freq    Percent
+
+  -0.00804      -0.00603       1       2.22                              
+  -0.00603      -0.00402       3       6.67    *                         
+  -0.00402      -0.00201       1       2.22                              
+  -0.00201             0       7      15.56    ***                       
+         0       0.00201      30      66.67    ***************           
+   0.00201       0.00402       2       4.44    *                         
+   0.00402       0.00603       1       2.22                              
+
+Swaminathan's Longitudinal Factor Model, Data: McDONALD(1980)
+Constructed Singular Correlation Matrix, GLS & ML not possible
+
+The CALIS Procedure
+Correlation Structure Analysis: Least-Squares Estimation
+
+                                          Model Matrix F1
+                                 (9 x 6 General Rectangular Matrix)
+ 
+                Col1            Col2            Col3            Col4            Col5            Col6
+
+obs1          0.3515               0               0               0               0               0
+                [x1]                                                                                
+
+obs2          0.2871          0.9528               0               0               0               0
+                [x2]            [x4]                                                                
+
+obs3          0.7101          0.2059               0               0               0               0
+                [x3]            [x5]                                                                
+
+obs4               0               0          0.4204               0               0               0
+                                                [x6]                                                
+
+obs5               0               0          0.4303          0.9027               0               0
+                                                [x7]            [x9]                                
+
+obs6               0               0          0.8591          0.1772               0               0
+                                                [x8]           [x10]                                
+
+obs7               0               0               0               0          0.3487               0
+                                                                               [x11]                
+
+obs8               0               0               0               0          0.5924         -0.1971
+                                                                               [x12]           [x14]
+
+obs9               0               0               0               0          0.9987          0.0871
+                                                                               [x13]           [x15]
+
+Swaminathan's Longitudinal Factor Model, Data: McDONALD(1980)
+Constructed Singular Correlation Matrix, GLS & ML not possible
+
+The CALIS Procedure
+Correlation Structure Analysis: Least-Squares Estimation
+
+                                          Model Matrix F2
+                                      (6 x 6 Diagonal Matrix)
+ 
+                Col1            Col2            Col3            Col4            Col5            Col6
+
+Row1          1.0000               0               0               0               0               0
+                                                                                                    
+
+Row2               0          1.0000               0               0               0               0
+                                                                                                    
+
+Row3               0               0          0.8939               0               0               0
+                                               [x16]                                                
+
+Row4               0               0               0          0.5806               0               0
+                                                               [x17]                                
+
+Row5               0               0               0               0          0.8939               0
+                                                                               [x16]                
+
+Row6               0               0               0               0               0          0.5806
+                                                                                               [x17]
+
+Swaminathan's Longitudinal Factor Model, Data: McDONALD(1980)
+Constructed Singular Correlation Matrix, GLS & ML not possible
+
+The CALIS Procedure
+Correlation Structure Analysis: Least-Squares Estimation
+
+                                          Model Matrix F3
+                                      (6 x 6 Diagonal Matrix)
+ 
+                Col1            Col2            Col3            Col4            Col5            Col6
+
+Row1          1.0000               0               0               0               0               0
+                                                                                                    
+
+Row2               0          1.0000               0               0               0               0
+                                                                                                    
+
+Row3               0               0          1.0000               0               0               0
+                                                                                                    
+
+Row4               0               0               0          1.0000               0               0
+                                                                                                    
+
+Row5               0               0               0               0          0.5963               0
+                                                                               [x18]                
+
+Row6               0               0               0               0               0          1.0000
+                                                                                               [x19]
+
+Swaminathan's Longitudinal Factor Model, Data: McDONALD(1980)
+Constructed Singular Correlation Matrix, GLS & ML not possible
+
+The CALIS Procedure
+Correlation Structure Analysis: Least-Squares Estimation
+
+                                           Model Matrix L
+                                  (6 x 6 Lower Triangular Matrix)
+ 
+                Col1            Col2            Col3            Col4            Col5            Col6
+
+Row1          1.0000               0               0               0               0               0
+Row2               0          1.0000               0               0               0               0
+Row3          1.0000               0          1.0000               0               0               0
+Row4               0          1.0000               0          1.0000               0               0
+Row5          1.0000               0          1.0000               0          1.0000               0
+Row6               0          1.0000               0          1.0000               0          1.0000
+
+Swaminathan's Longitudinal Factor Model, Data: McDONALD(1980)
+Constructed Singular Correlation Matrix, GLS & ML not possible
+
+The CALIS Procedure
+Correlation Structure Analysis: Least-Squares Estimation
+
+                                           Model Matrix P
+                                      (6 x 6 Diagonal Matrix)
+ 
+                Col1            Col2            Col3            Col4            Col5            Col6
+
+Row1          1.0000               0               0               0               0               0
+                                                                                                    
+
+Row2               0          1.0000               0               0               0               0
+                                                                                                    
+
+Row3               0               0          0.2010               0               0               0
+                                               [x20]                                                
+
+Row4               0               0               0          0.6629               0               0
+                                                               [x21]                                
+
+Row5               0               0               0               0          0.6444               0
+                                                                               [x22]                
+
+Row6               0               0               0               0               0               0
+                                                                                               [x23]
+
+Swaminathan's Longitudinal Factor Model, Data: McDONALD(1980)
+Constructed Singular Correlation Matrix, GLS & ML not possible
+
+The CALIS Procedure
+Correlation Structure Analysis: Least-Squares Estimation
+
+                                                                   Model Matrix U
+                                                              (9 x 9 Symmetric Matrix)
+ 
+                obs1            obs2            obs3            obs4            obs5            obs6            obs7            obs8            obs9
+
+obs1          0.8764               0               0          0.5879               0               0          0.5847               0               0
+               [x24]                                           [x33]                                           [x39]                                
+
+obs2               0        0.009683               0               0          0.1302               0               0          0.7084               0
+                               [x25]                                           [x34]                                           [x40]                
+
+obs3               0               0          0.4533               0               0          0.2335               0               0          0.3215
+                                               [x26]                                           [x35]                                           [x41]
+
+obs4          0.5879               0               0          0.8233               0               0          0.6426               0               0
+               [x33]                                           [x27]                                           [x36]                                
+
+obs5               0          0.1302               0               0               0               0               0          0.7259               0
+                               [x34]                                           [x28]                                           [x37]                
+
+obs6               0               0          0.2335               0               0          0.2305               0               0          0.2329
+                                               [x35]                                           [x29]                                           [x38]
+
+obs7          0.5847               0               0          0.6426               0               0          0.8784               0               0
+               [x39]                                           [x36]                                           [x30]                                
+
+obs8               0          0.7084               0               0          0.7259               0               0          0.6102               0
+                               [x40]                                           [x37]                                           [x31]                
+
+obs9               0               0          0.3215               0               0          0.2329               0               0               0
+                                               [x41]                                           [x38]                                           [x32]

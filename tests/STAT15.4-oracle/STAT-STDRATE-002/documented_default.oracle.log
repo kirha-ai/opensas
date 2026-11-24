@@ -1,0 +1,51 @@
+The SAS System
+
+18511      
+18512      /* STAT-STDRATE-002: STDRATE — Rate and risk standardization and comparison
+18513       * Source: S154 / Chapter 116 / `Getting Started: STDRATE Procedure` (PDF pp. 9486–9493); S154 / Chapter 116 / `Overview: STDRATE Procedure` (PDF
+18513    ! pp. 9484–9486).
+18514       * Discriminates: Documented default analysis with explicit complete public or synthetic inputs
+18515       */
+18516      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+18516    ! validmemname=compatible locale=en_US;
+18517      %let syscc=0;
+18518      title; footnote;
+18519      ods _all_ close;
+18520      ods listing gpath="%sysfunc(pathname(work))";
+18521      ods graphics off;
+18522      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REFERENCE (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.STUDY (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+18522    !                                         quit;
+
+
+18523      ods path work.templat(update) sashelp.tmplmst(read);
+18524      
+18525      data study; input age $ event total; datalines;
+
+NOTE: The data set WORK.STUDY has 2 observations and 3 variables.
+
+18528      ;
+18529      data reference; input age $ total; datalines;
+
+NOTE: The data set WORK.REFERENCE has 2 observations and 2 variables.
+
+18532      ;
+18533      run;
+18534      proc stdrate data=study refdata=reference method=direct stat=rate; population event=event total=total; reference total=total; strata age; run;
+
+NOTE: The PROCEDURE STDRATE printed pages 1302-1303.
+
+18535      
+18536      
+18537      
+18538      
+The SAS System
+
+18539      

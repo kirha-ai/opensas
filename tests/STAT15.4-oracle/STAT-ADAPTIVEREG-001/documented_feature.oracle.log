@@ -1,0 +1,85 @@
+The SAS System
+
+153        
+154        /* STAT-ADAPTIVEREG-001: ADAPTIVEREG — Data input, variable roles, and basic options
+155         * Source: S154 / Chapter 28 / `PROC ADAPTIVEREG Statement` (PDF pp. 1055–1062); S154 / Chapter 28 / `BY Statement` (PDF pp. 1062–1063); S154 /
+155      ! Chapter 28 / `FREQ Statement` (PDF p. 1064); S154 / Chapter 28 / `WEIGHT Statement` (PDF p. 1074); S154 / Chapter 28 / `Missing Values` (PDF pp.
+155      ! 1079–1080).
+156         * Discriminates: Verified default procedure context
+157         */
+158        options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+158      ! validmemname=compatible locale=en_US;
+159        %let syscc=0;
+160        title; footnote;
+161        ods _all_ close;
+162        ods listing gpath="%sysfunc(pathname(work))";
+163        ods graphics off;
+164        proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SAMPLE (memtype=DATA).
+164      !                                         quit;
+
+
+165        ods path work.templat(update) sashelp.tmplmst(read);
+166        
+167        data Mixture;
+168        drop i;
+169        do i=1 to 1000;
+170        X1 = ranuni(1);
+171        C1 = int(3*ranuni(1));
+172        if C1=0 then Y=exp(5*(X1-0.3)**2)+rannor(1);
+173        else if C1=1 then Y=log(X1*(1-X1))+rannor(1);
+174        else Y=7*X1+rannor(1);
+175        output;
+176        end;
+177        run;
+
+NOTE: The data set WORK.MIXTURE has 1000 observations and 3 variables.
+
+178        ods graphics on;
+179        proc adaptivereg data=Mixture plots=fit;
+180        class c1;
+181        model y=c1 x1;
+182        run;
+
+NOTE: The PROCEDURE ADAPTIVEREG printed page 10.
+
+183        proc adaptivereg data=Mixture details=bases;
+184        class c1;
+185        model y=c1 x1;
+186        run;
+
+NOTE: The PROCEDURE ADAPTIVEREG printed page 11.
+
+187        data New;
+188        set Mixture;
+189        basis1 = (c1=1 OR c1=0);
+190        basis3 = (c1=1);
+191        basis5 = NOT(c1=1) *MAX(x1-0.7665019053,0);
+192        basis7 = NOT(c1=1 OR c1=0) *MAX(x1-0.7665019053,0);
+193        basis8 = NOT(c1=1 OR c1=0) *MAX(0.7665019053-x1,0);
+194        basis9 = (c1=1) *MAX(x1-0.5530566455,0);
+195        basis10 = (c1=1)*MAX(0.5530566455-x1,0);
+196        basis11 = (c1=1)*MAX(x1-0.045800759,0);
+197        basis13 = (c1=1)*MAX(x1-0.9526330293,0);
+198        basis15 = (c1=1 OR c1=0)*MAX(x1-0.9499325226,0);
+199        basis17 = (c1=1 OR c1=0)*MAX(x1-0.5142821095,0);
+200        basis19 = (c1=1 OR c1=0)*MAX(x1-0.9889635476,0);
+201        pred = 5.3829 - 4.3871 *basis1 + 32.7761*basis3 +
+202        20.2859*basis5 - 11.4183*basis7 - 7.0758*basis8 +
+203        58.4911*basis9 - 71.6388*basis10 - 69.0764*basis11 -
+204        119.71*basis13 + 66.5733*basis15 + 6.6681*basis17 -
+205        185.21*basis19;
+206        run;
+
+NOTE: There were 1000 observations read from the data set WORK.MIXTURE.
+NOTE: The data set WORK.NEW has 1000 observations and 16 variables.
+
+207        
+208        
+209        
+210        
+The SAS System
+
+211        

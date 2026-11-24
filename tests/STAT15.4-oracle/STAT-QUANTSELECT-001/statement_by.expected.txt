@@ -1,0 +1,510 @@
+
+The CONTENTS Procedure
+
+                 Variables in Creation Order
+ 
+ #    Variable     Type    Len    Label
+
+ 1    Name         Char     18    Player's Name              
+ 2    Team         Char     14    Team at the End of 1986    
+ 3    nAtBat       Num       8    Times at Bat in 1986       
+ 4    nHits        Num       8    Hits in 1986               
+ 5    nHome        Num       8    Home Runs in 1986          
+ 6    nRuns        Num       8    Runs in 1986               
+ 7    nRBI         Num       8    RBIs in 1986               
+ 8    nBB          Num       8    Walks in 1986              
+ 9    YrMajor      Num       8    Years in the Major Leagues 
+10    CrAtBat      Num       8    Career Times at Bat        
+11    CrHits       Num       8    Career Hits                
+12    CrHome       Num       8    Career Home Runs           
+13    CrRuns       Num       8    Career Runs                
+14    CrRbi        Num       8    Career RBIs                
+15    CrBB         Num       8    Career Walks               
+16    League       Char      8    League at the End of 1986  
+17    Division     Char      8    Division at the End of 1986
+18    Position     Char      8    Position(s) in 1986        
+19    nOuts        Num       8    Put Outs in 1986           
+20    nAssts       Num       8    Assists in 1986            
+21    nError       Num       8    Errors in 1986             
+22    Salary       Num       8    1987 Salary in $ Thousands 
+23    Div          Char     16    League and Division        
+24    logSalary    Num       8    Log Salary                 
+
+The QUANTSELECT Procedure
+
+           Model Information
+
+Data Set              WORK._ORACLE_INPUT
+Dependent Variable                Salary
+Selection Method          Adaptive LASSO
+Quantile Type               Single Level
+Stop Criterion                       AIC
+Choose Criterion                     SBC
+
+_oracle_by=1
+
+The QUANTSELECT Procedure
+
+Number of Observations Read                      322
+Number of Observations Used                      263
+Number of Observations Used for Training         263
+
+
+     Class Level Information
+ 
+Class      Levels    Values
+
+Div             4    AE AW NE NW 
+
+
+        Dimensions
+
+Number of Effects       18
+Number of Parameters    21
+
+_oracle_by=1
+
+The QUANTSELECT Procedure
+Quantile Level = 0.5
+
+                         Selection Summary
+ 
+                              Number
+         Effect     Effect   Effects
+ Step    Entered    Removed       In           AIC            SBC 
+
+    0    Intercept                 1     2691.6511      2695.2232 
+------------------------------------------------------------------
+    1    CrRuns                    2     2510.7297      2517.8740 
+    2    nHits                     3     2470.4807      2481.1971 
+    3    CrHome                    4     2463.5953      2477.8839 
+    4    nBB                       5     2463.7806      2481.6414 
+    5    nOuts                     6     2455.6212      2477.0541 
+    6    Div AW                    7     2451.4609      2476.4660 
+    7    nAtBat                    8     2445.0446      2473.6218*
+    8    CrBB                      9     2445.5432      2477.6926 
+    9    nHome                    10     2443.4818      2479.2033 
+   10    nRuns                    11     2442.6036*     2481.8973 
+   11    Div NE                   12     2444.2409      2487.1067 
+   12    CrAtBat                  13     2444.5049      2490.9429 
+   13               Div NE        12     2442.8387      2485.7046 
+   14    YrMajor                  13     2443.5374      2489.9754 
+   15    nError                   14     2445.2085      2495.2187 
+   16    Div NE                   15     2446.4042      2499.9865 
+
+                   * Optimal Value Of Criterion
+
+
+Selection stopped at a local minimum of the AIC criterion.
+
+
+ The model at step 7 is selected where SBC is 2473.622.
+
+_oracle_by=1
+
+The QUANTSELECT Procedure
+Quantile Level = 0.5
+
+          Fit Statistics
+
+Objective Function           26638
+R1                         0.39070
+Adj R1                     0.37398
+AIC                     2445.04459
+AICC                    2445.61152
+SBC                     2473.62182
+ACL                      101.28674
+
+
+Selected Effects: Intercept nAtBat nHits nBB CrHome CrRuns nOuts Div AW
+
+
+              Parameter Estimates
+ 
+                                   Standardized
+Parameter    DF        Estimate        Estimate
+
+Intercept     1      -18.187539               0
+nAtBat        1       -1.582714       -0.500417
+nHits         1        7.044354        0.686968
+nBB           1        2.053726        0.097911
+CrHome        1        1.429926        0.272726
+CrRuns        1        0.425955        0.316167
+nOuts         1        0.282803        0.175489
+Div AW        1      -57.671778       -0.056862
+
+_oracle_by=2
+
+The QUANTSELECT Procedure
+Quantile Level = 0.5
+
+Number of Observations Read                      322
+Number of Observations Used                      263
+Number of Observations Used for Training         263
+
+
+     Class Level Information
+ 
+Class      Levels    Values
+
+Div             4    AE AW NE NW 
+
+
+        Dimensions
+
+Number of Effects       18
+Number of Parameters    21
+
+_oracle_by=2
+
+The QUANTSELECT Procedure
+Quantile Level = 0.5
+
+                         Selection Summary
+ 
+                              Number
+         Effect     Effect   Effects
+ Step    Entered    Removed       In           AIC            SBC 
+
+    0    Intercept                 1     2691.6511      2695.2232 
+------------------------------------------------------------------
+    1    CrRuns                    2     2510.7297      2517.8740 
+    2    nHits                     3     2470.4807      2481.1971 
+    3    CrHome                    4     2463.5953      2477.8839 
+    4    nBB                       5     2463.7806      2481.6414 
+    5    nOuts                     6     2455.6212      2477.0541 
+    6    Div AW                    7     2451.4609      2476.4660 
+    7    nAtBat                    8     2445.0446      2473.6218*
+    8    CrBB                      9     2445.5432      2477.6926 
+    9    nHome                    10     2443.4818      2479.2033 
+   10    nRuns                    11     2442.6036*     2481.8973 
+   11    Div NE                   12     2444.2409      2487.1067 
+   12    CrAtBat                  13     2444.5049      2490.9429 
+   13               Div NE        12     2442.8387      2485.7046 
+   14    YrMajor                  13     2443.5374      2489.9754 
+   15    nError                   14     2445.2085      2495.2187 
+   16    Div NE                   15     2446.4042      2499.9865 
+
+                   * Optimal Value Of Criterion
+
+
+Selection stopped at a local minimum of the AIC criterion.
+
+
+ The model at step 7 is selected where SBC is 2473.622.
+
+_oracle_by=2
+
+The QUANTSELECT Procedure
+Quantile Level = 0.5
+
+          Fit Statistics
+
+Objective Function           26638
+R1                         0.39070
+Adj R1                     0.37398
+AIC                     2445.04459
+AICC                    2445.61152
+SBC                     2473.62182
+ACL                      101.28674
+
+
+Selected Effects: Intercept nAtBat nHits nBB CrHome CrRuns nOuts Div AW
+
+
+              Parameter Estimates
+ 
+                                   Standardized
+Parameter    DF        Estimate        Estimate
+
+Intercept     1      -18.187539               0
+nAtBat        1       -1.582714       -0.500417
+nHits         1        7.044354        0.686968
+nBB           1        2.053726        0.097911
+CrHome        1        1.429926        0.272726
+CrRuns        1        0.425955        0.316167
+nOuts         1        0.282803        0.175489
+Div AW        1      -57.671778       -0.056862
+
+The QUANTSELECT Procedure
+
+          Model Information
+
+Data Set              SASHELP.BASEBALL
+Dependent Variable              Salary
+Selection Method        Adaptive LASSO
+Quantile Type             Single Level
+Stop Criterion                     AIC
+Choose Criterion                   SBC
+
+
+Number of Observations Read                      322
+Number of Observations Used                      263
+Number of Observations Used for Training         263
+
+
+     Class Level Information
+ 
+Class      Levels    Values
+
+Div             4    AE AW NE NW 
+
+
+        Dimensions
+
+Number of Effects       18
+Number of Parameters    21
+
+The QUANTSELECT Procedure
+Quantile Level = 0.1
+
+                         Selection Summary
+ 
+                              Number
+         Effect     Effect   Effects
+ Step    Entered    Removed       In           AIC            SBC 
+
+    0    Intercept                 1     2008.3489      2011.9211 
+------------------------------------------------------------------
+    1    CrRuns                    2     1918.7675      1925.9118 
+    2    nHits                     3     1897.2425      1907.9590*
+    3    YrMajor                   4     1897.2476      1911.5362 
+    4    CrBB                      5     1896.1765      1914.0373 
+    5    nBB                       6     1894.1257      1915.5587 
+    6    CrHome                    7     1895.6765      1920.6816 
+    7    nAtBat                    8     1890.4051      1918.9824 
+    8    nHome                     9     1891.3527      1923.5020 
+    9    Div NE                   10     1891.7566      1927.4781 
+   10    nRBI                     11     1893.7319      1933.0256 
+   11    CrAtBat                  12     1893.9432      1936.8090 
+   12               nRBI          11     1891.9716      1931.2653 
+   13    nAssts                   12     1888.6870      1931.5529 
+   14    nRBI                     13     1890.5300      1936.9680 
+   15    Div AE                   14     1889.4234      1939.4336 
+   16               nRBI          13     1887.6644*     1934.1024 
+   17    CrRbi                    14     1888.0966      1938.1068 
+   18    Div AW                   15     1890.0322      1943.6145 
+   19    nError                   16     1891.7949      1948.9494 
+   20    nRuns                    17     1893.2801      1954.0067 
+   21    nRBI                     18     1894.7805      1959.0793 
+   22    CrHits                   19     1896.6868      1964.5578 
+
+                   * Optimal Value Of Criterion
+
+
+Selection stopped at a local minimum of the AIC criterion.
+
+
+ The model at step 2 is selected where SBC is 1907.959.
+
+The QUANTSELECT Procedure
+Quantile Level = 0.1
+
+          Fit Statistics
+
+Objective Function      9582.29199
+R1                         0.19654
+Adj R1                     0.19036
+AIC                     1897.24250
+AICC                    1897.33516
+SBC                     1907.95896
+ACL                       36.43457
+
+
+Selected Effects: Intercept nHits CrRuns
+
+
+              Parameter Estimates
+ 
+                                   Standardized
+Parameter    DF        Estimate        Estimate
+
+Intercept     1       -4.397043               0
+nHits         1        0.878564        0.085678
+CrRuns        1        0.327350        0.242977
+
+The QUANTSELECT Procedure
+Quantile Level = 0.9
+
+                         Selection Summary
+ 
+                              Number
+         Effect     Effect   Effects
+ Step    Entered    Removed       In           AIC            SBC 
+
+    0    Intercept                 1     2436.7289      2440.3011 
+------------------------------------------------------------------
+    1    CrHits                    2     2197.4349      2204.5792 
+    2    CrRbi                     3     2183.6148      2194.3313 
+    3    nHits                     4     2113.2757      2127.5643 
+    4               CrRbi          3     2127.8632      2138.5797 
+    5    CrRbi                     4     2113.2757      2127.5643 
+    6               CrRbi          3     2127.8632      2138.5797 
+    7    CrRbi                     4     2113.2757      2127.5643 
+    8    CrHome                    5     2099.2203      2117.0811 
+    9               CrRbi          4     2099.3891      2113.6777 
+   10    CrRbi                     5     2099.2203      2117.0811 
+   11               CrRbi          4     2099.3891      2113.6777 
+   12    nOuts                     5     2067.1926      2085.0533 
+   13    Div AW                    6     2048.2393      2069.6723 
+   14    CrRuns                    7     2028.8040      2053.8090 
+   15    nAtBat                    8     2012.8195      2041.3968 
+   16               CrHits         7     2017.0290      2042.0341 
+   17    CrRbi                     8     2009.3551      2037.9324 
+   18    CrAtBat                   9     2011.2415      2043.3908 
+   19               CrRbi          8     2011.4053      2039.9825 
+   20    CrRbi                     9     2011.2415      2043.3908 
+   21               CrAtBat        8     2009.3551      2037.9324 
+   22    CrAtBat                   9     2011.2415      2043.3908 
+   23    nBB                      10     2004.5033      2040.2249 
+   24               CrAtBat        9     2003.1023      2035.2517 
+   25    CrAtBat                  10     2004.5033      2040.2249 
+   26               CrAtBat        9     2003.1023      2035.2517*
+   27    CrAtBat                  10     2004.5033      2040.2249 
+   28    nError                   11     2004.2230      2043.5167 
+   29    CrHits                   12     2003.0544      2045.9203 
+   30    Div NE                   13     2001.9603      2048.3983 
+   31    Div AE                   14     2001.8349*     2051.8451 
+   32    nRuns                    15     2003.5961      2057.1784 
+   33    nHome                    16     2004.2721      2061.4266 
+   34    nRBI                     17     2006.0023      2066.7289 
+   35    YrMajor                  18     2007.9975      2072.2963 
+   36    CrBB                     19     2009.9514      2077.8223 
+   37    nAssts                   20     2011.9095      2083.3525 
+
+                   * Optimal Value Of Criterion
+
+
+Selection stopped because no suitable update candidate could be found.
+
+
+ The model at step 26 is selected where SBC is 2035.252.
+
+The QUANTSELECT Procedure
+Quantile Level = 0.9
+
+          Fit Statistics
+
+Objective Function           11454
+R1                         0.57463
+Adj R1                     0.56124
+AIC                     2003.10235
+AICC                    2003.81381
+SBC                     2035.25174
+ACL                       43.55214
+
+
+Selected Effects: Intercept nAtBat nHits nBB CrHome CrRuns CrRbi nOuts Div AW
+
+
+              Parameter Estimates
+ 
+                                   Standardized
+Parameter    DF        Estimate        Estimate
+
+Intercept     1       92.893875               0
+nAtBat        1       -1.858170       -0.587509
+nHits         1        8.155573        0.795335
+nBB           1        3.392794        0.161751
+CrHome        1        3.191472        0.608700
+CrRuns        1        1.394317        1.034939
+CrRbi         1       -0.913371       -0.664951
+nOuts         1        0.437241        0.271323
+Div AW        1     -167.110005       -0.164764
+
+The QUANTSELECT Procedure
+
+          Model Information
+
+Data Set              SASHELP.BASEBALL
+Dependent Variable              Salary
+Selection Method        Adaptive LASSO
+Quantile Type             Single Level
+Stop Criterion                     AIC
+Choose Criterion                   SBC
+
+
+Number of Observations Read                      322
+Number of Observations Used                      263
+Number of Observations Used for Training         263
+
+
+     Class Level Information
+ 
+Class      Levels    Values
+
+Div             4    AE AW NE NW 
+
+
+        Dimensions
+
+Number of Effects       18
+Number of Parameters    21
+
+The QUANTSELECT Procedure
+Quantile Level = 0.1
+
+                                      Selection Summary
+ 
+                              Number
+         Effect     Effect   Effects                                                 Adjusted
+ Step    Entered    Removed       In           AIC           AICC            SBC          R1 
+
+    0    Intercept                 1     2008.3489      2008.3642      2011.9211      0.0000 
+---------------------------------------------------------------------------------------------
+    1    CrRuns                    2     1918.7675      1918.8137      1925.9118      0.1566 
+    2    nHits                     3     1897.2425      1897.3352      1907.9590*     0.1904 
+    3    YrMajor                   4     1897.2476      1897.4027      1911.5362      0.1903 
+    4    CrBB                      5     1896.1765      1896.4100      1914.0373      0.1919 
+    5    nBB                       6     1894.1257      1894.4539      1915.5587      0.1950 
+    6    CrHome                    7     1895.6765      1896.1158      1920.6816      0.1925 
+    7    nAtBat                    8     1890.4051      1890.9721      1918.9824      0.2005 
+    8    nHome                     9     1891.3527      1892.0641      1923.5020      0.1990 
+    9    Div NE                   10     1891.7566      1892.6296      1927.4781      0.1982 
+   10    nRBI                     11     1893.7319      1894.7837      1933.0256      0.1951 
+   11    CrAtBat                  12     1893.9432      1895.1912      1936.8090      0.1946 
+   12               nRBI          11     1891.9716      1893.0234      1931.2653      0.1978 
+   13    nAssts                   12     1888.6870      1889.9350      1931.5529      0.2026 
+   14    nRBI                     13     1890.5300      1891.9919      1936.9680      0.1997 
+   15    Div AE                   14     1889.4234      1891.1170      1939.4336      0.2012 
+   16               nRBI          13     1887.6644*     1889.1263*     1934.1024      0.2040*
+   17    CrRbi                    14     1888.0966      1889.7902      1938.1068      0.2032 
+   18    Div AW                   15     1890.0322      1891.9755      1943.6145      0.2001 
+   19    nError                   16     1891.7949      1894.0063      1948.9494      0.1972 
+   20    nRuns                    17     1893.2801      1895.7781      1954.0067      0.1947 
+   21    nRBI                     18     1894.7805      1897.5838      1959.0793      0.1922 
+   22    CrHits                   19     1896.6868      1899.8144      1964.5578      0.1891 
+
+                                 * Optimal Value Of Criterion
+
+
+Selection stopped at a local minimum of the AIC criterion.
+
+
+ The model at step 2 is selected where SBC is 1907.959.
+
+The QUANTSELECT Procedure
+Quantile Level = 0.1
+
+          Fit Statistics
+
+Objective Function      9582.29199
+R1                         0.19654
+Adj R1                     0.19036
+AIC                     1897.24250
+AICC                    1897.33516
+SBC                     1907.95896
+ACL                       36.43457
+
+
+Selected Effects: Intercept nHits CrRuns
+
+
+              Parameter Estimates
+ 
+                                   Standardized
+Parameter    DF        Estimate        Estimate
+
+Intercept     1       -4.397043               0
+nHits         1        0.878564        0.085678
+CrRuns        1        0.327350        0.242977

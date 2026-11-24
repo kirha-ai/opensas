@@ -1,0 +1,180 @@
+
+The ICPHREG Procedure
+
+       Model Information
+
+Data Set                WORK.HIV
+Left Boundary               Left
+Right Boundary             Right
+Baseline Hazard    Cubic Splines
+
+
+Number of Observations Read             31
+Number of Observations Used             31
+Right Censored Observations             13
+Interval Censored Observations           5
+Left Censored Observations              13
+
+
+  Class Level Information
+ 
+Name       Levels    Values
+
+Stage           2    1 0   
+
+
+Cubic Spline Parameters
+ 
+Coefficient        Knot
+
+Coef1                 1
+Coef2                11
+Coef3                25
+
+
+          Optimization Information
+
+Optimization Technique        Newton-Raphson
+Parameters in Optimization    4             
+
+      Convergence criterion (ABSGCONV=0.00001) satisfied.       
+
+
+                 Fit Statistics
+
+-2 Log Likelihood                         29.827
+AIC (Smaller is Better)                   37.827
+AICC (Smaller is Better)                  39.366
+BIC (Smaller is Better)                   43.563
+
+
+                       Analysis of Maximum Likelihood Parameter Estimates
+ 
+                                        Standard       95% Confidence          Chi-
+Effect       Stage    DF    Estimate       Error           Limits            Square    Pr > ChiSq
+
+Coef1                  1     -6.0630      3.2263    -12.3865      0.2605                         
+Coef2                  1      1.4921      2.2568     -2.9311      5.9152                         
+Coef3                  1     -0.3086      0.6708     -1.6233      1.0060                         
+Stage        1         1      1.9016      0.6662      0.5959      3.2072       8.15        0.0043
+Stage        0         0      0.0000                                                             
+
+The ICPHREG Procedure
+
+       Model Information
+
+Data Set                WORK.HIV
+Left Boundary               Left
+Right Boundary             Right
+Baseline Hazard    Cubic Splines
+
+
+Number of Observations Read             31
+Number of Observations Used             31
+Right Censored Observations             13
+Interval Censored Observations           5
+Left Censored Observations              13
+
+
+  Class Level Information
+ 
+Name       Levels    Values
+
+Stage           2    1 0   
+
+
+Cubic Spline Parameters
+ 
+Coefficient        Knot
+
+Coef1                 1
+Coef2                11
+Coef3                25
+
+
+          Optimization Information
+
+Optimization Technique        Newton-Raphson
+Parameters in Optimization    4             
+
+      Convergence criterion (ABSGCONV=0.00001) satisfied.       
+
+
+                 Fit Statistics
+
+-2 Log Likelihood                         29.827
+AIC (Smaller is Better)                   37.827
+AICC (Smaller is Better)                  39.366
+BIC (Smaller is Better)                   43.563
+
+
+                       Analysis of Maximum Likelihood Parameter Estimates
+ 
+                                        Standard       95% Confidence          Chi-
+Effect       Stage    DF    Estimate       Error           Limits            Square    Pr > ChiSq
+
+Coef1                  1     -6.0630      3.2263    -12.3865      0.2605                         
+Coef2                  1      1.4921      2.2568     -2.9311      5.9152                         
+Coef3                  1     -0.3086      0.6708     -1.6233      1.0060                         
+Stage        1         1      1.9016      0.6662      0.5959      3.2072       8.15        0.0043
+Stage        0         0      0.0000                                                             
+
+The ICPHREG Procedure
+
+       Model Information
+
+Data Set                WORK.HIV
+Left Boundary               Left
+Right Boundary             Right
+Baseline Hazard    Cubic Splines
+
+
+Number of Observations Read             31
+Number of Observations Used             31
+Right Censored Observations             13
+Interval Censored Observations           5
+Left Censored Observations              13
+
+
+  Class Level Information
+ 
+Name       Levels    Values
+
+Stage           2    1 0   
+
+
+Cubic Spline Parameters
+ 
+Coefficient        Knot
+
+Coef1                 1
+Coef2                11
+Coef3                25
+
+
+          Optimization Information
+
+Optimization Technique        Newton-Raphson
+Parameters in Optimization    4             
+
+      Convergence criterion (ABSGCONV=0.00001) satisfied.       
+
+
+                 Fit Statistics
+
+-2 Log Likelihood                         29.827
+AIC (Smaller is Better)                   37.827
+AICC (Smaller is Better)                  39.366
+BIC (Smaller is Better)                   43.563
+
+
+                       Analysis of Maximum Likelihood Parameter Estimates
+ 
+                                        Standard       95% Confidence          Chi-
+Effect       Stage    DF    Estimate       Error           Limits            Square    Pr > ChiSq
+
+Coef1                  1     -6.0630      3.2263    -12.3865      0.2605                         
+Coef2                  1      1.4921      2.2568     -2.9311      5.9152                         
+Coef3                  1     -0.3086      0.6708     -1.6233      1.0060                         
+Stage        1         1      1.9016      0.6662      0.5959      3.2072       8.15        0.0043
+Stage        0         0      0.0000                                                             

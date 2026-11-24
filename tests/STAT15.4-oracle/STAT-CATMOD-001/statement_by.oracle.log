@@ -1,0 +1,70 @@
+The SAS System
+
+484        
+485        /* STAT-CATMOD-001: CATMOD — Data input, variable roles, and basic options
+486         * Source: S154 / Chapter 36 / `PROC CATMOD Statement` (PDF pp. 2191–2192); S154 / Chapter 36 / `BY Statement` (PDF pp. 2192–2193); S154 /
+486      ! Chapter 36 / `POPULATION Statement` (PDF pp. 2208–2211); S154 / Chapter 36 / `WEIGHT Statement` (PDF p. 2220); S154 / Chapter 36 / `Missing Values`
+486      !  (PDF p. 2220); S154 / Chapter 36 / `Input Data Sets` (PDF pp. 2220–2223); S154 / Chapter 36 / `Ordering of Populations and Responses` (PDF pp.
+486      ! 2223–2224).
+487         * Discriminates: Two BY groups with identical weighted cold-frequency populations.
+488         */
+489        options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+489      ! validmemname=compatible locale=en_US;
+490        %let syscc=0;
+491        title; footnote;
+492        ods _all_ close;
+493        ods listing gpath="%sysfunc(pathname(work))";
+494        ods graphics off;
+495        proc datasets library=work kill nolist;
+NOTE: Deleting WORK.DELAYSUMMARY (memtype=DATA).
+NOTE: Deleting WORK.GSEG (memtype=CATALOG).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TIMES2 (memtype=DATA).
+495      !                                         quit;
+
+
+496        ods path work.templat(update) sashelp.tmplmst(read);
+497        
+498        data colds;
+499        input sex $ residence $ periods count @@;
+500        datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.COLDS has 12 observations and 4 variables.
+
+505        ;
+506        run;
+507        data grouped; set colds; do cohort=1 to 2; output; end; run;
+
+NOTE: There were 12 observations read from the data set WORK.COLDS.
+NOTE: The data set WORK.GROUPED has 24 observations and 5 variables.
+
+508        proc sort data=grouped; by cohort; run;
+
+NOTE: There were 24 observations read from the data set WORK.GROUPED.
+NOTE: The data set WORK.GROUPED has 24 observations and 5 variables.
+
+509        proc catmod data=grouped;
+510        by cohort;
+511        weight count;
+512        response means;
+513        model periods=sex residence sex*residence / design;
+514        run;
+
+NOTE: Interactivity disabled with BY processing.
+NOTE: There were 24 observations read from the data set WORK.GROUPED.
+NOTE: The PROCEDURE CATMOD printed pages 19-20.
+
+515        quit;
+516        
+517        
+518        
+519        
+The SAS System
+
+520        

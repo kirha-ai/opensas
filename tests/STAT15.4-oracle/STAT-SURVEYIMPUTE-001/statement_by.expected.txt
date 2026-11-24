@@ -1,0 +1,260 @@
+
+_oracle_by=1
+
+The SURVEYIMPUTE Procedure
+
+          Imputation Information
+
+Data Set                 WORK._ORACLE_INPUT
+Weight Variable          SamplingWeight    
+Stratum Variables        State             
+                         NewUser           
+Cluster Variable         School            
+Imputation Method        FEFI              
+Replication Method       JACKKNIFE         
+Number of Replicates     47                
+
+
+Number of Observations Read              235
+Number of Observations Used              235
+Sum of Weights Read                     6468
+Sum of Weights Used                     6468
+
+
+      Class Level Information
+ 
+Class           Levels    Values
+
+Department           2    0 1       
+Response             5    1 2 3 4 5 
+
+
+         Design Summary
+
+Number of Strata               6
+Number of Clusters            47
+
+
+                               Missing Data Patterns
+ 
+                                                   Sum of    Unweighted    Weighted
+Group    Department    Response        Freq       Weights       Percent     Percent
+
+    1        X            X             157          4272         66.81       66.05
+    2        X            .              52          1480         22.13       22.88
+    3        .            X              21           586          8.94        9.06
+    4        .            .               5           130          2.13        2.01
+
+                                                Missing Data Patterns
+ 
+         -------------------------------------------------Group Means------------------------------------------------
+Group    Department 0    Department 1      Response 1      Response 2      Response 3      Response 4      Response 5
+
+    1        0.440309        0.559691        0.184457        0.206695        0.265684        0.209738        0.133427
+    2        0.641892        0.358108               .               .               .               .               .
+    3               .               .        0.261092        0.235495        0.230375        0.085324        0.187713
+    4               .               .               .               .               .               .               .
+
+
+        Donor Cell Counts
+ 
+                           Total
+  Donors       Units        Rows
+
+       0         157         157
+       2          21          42
+       5          52         260
+      10           5          50
+
+
+          Iteration History
+ 
+                Maximum       Maximum
+Iteration      Absolute      Relative
+   Number    Difference    Difference
+
+        1      2.288442       0.15521
+        2      0.317648       0.02188
+        3       0.07555       0.00752
+        4       0.02541       0.00270
+        5      0.009657       0.00096
+
+                     EM algorithm converged                     
+
+
+                Imputation Summary
+ 
+                           Number of        Sum of
+Observation Status      Observations       Weights
+
+Nonmissing                       157          4272
+Missing                           78          2196
+
+Missing, Imputed                  78          2196
+Missing, Not Imputed               0             0
+
+_oracle_by=2
+
+The SURVEYIMPUTE Procedure
+
+          Imputation Information
+
+Data Set                 WORK._ORACLE_INPUT
+Weight Variable          SamplingWeight    
+Stratum Variables        State             
+                         NewUser           
+Cluster Variable         School            
+Imputation Method        FEFI              
+Replication Method       JACKKNIFE         
+Number of Replicates     47                
+
+
+Number of Observations Read              235
+Number of Observations Used              235
+Sum of Weights Read                     6468
+Sum of Weights Used                     6468
+
+
+      Class Level Information
+ 
+Class           Levels    Values
+
+Department           2    0 1       
+Response             5    1 2 3 4 5 
+
+
+         Design Summary
+
+Number of Strata               6
+Number of Clusters            47
+
+
+                               Missing Data Patterns
+ 
+                                                   Sum of    Unweighted    Weighted
+Group    Department    Response        Freq       Weights       Percent     Percent
+
+    1        X            X             157          4272         66.81       66.05
+    2        X            .              52          1480         22.13       22.88
+    3        .            X              21           586          8.94        9.06
+    4        .            .               5           130          2.13        2.01
+
+                                                Missing Data Patterns
+ 
+         -------------------------------------------------Group Means------------------------------------------------
+Group    Department 0    Department 1      Response 1      Response 2      Response 3      Response 4      Response 5
+
+    1        0.440309        0.559691        0.184457        0.206695        0.265684        0.209738        0.133427
+    2        0.641892        0.358108               .               .               .               .               .
+    3               .               .        0.261092        0.235495        0.230375        0.085324        0.187713
+    4               .               .               .               .               .               .               .
+
+
+        Donor Cell Counts
+ 
+                           Total
+  Donors       Units        Rows
+
+       0         157         157
+       2          21          42
+       5          52         260
+      10           5          50
+
+
+          Iteration History
+ 
+                Maximum       Maximum
+Iteration      Absolute      Relative
+   Number    Difference    Difference
+
+        1      2.288442       0.15521
+        2      0.317648       0.02188
+        3       0.07555       0.00752
+        4       0.02541       0.00270
+        5      0.009657       0.00096
+
+                     EM algorithm converged                     
+
+
+                Imputation Summary
+ 
+                           Number of        Sum of
+Observation Status      Observations       Weights
+
+Nonmissing                       157          4272
+Missing                           78          2196
+
+Missing, Imputed                  78          2196
+Missing, Not Imputed               0             0
+
+The SURVEYFREQ Procedure
+
+            Data Summary
+
+Number of Observations          1018
+Sum of Weights                 12936
+
+
+           Variance Estimation
+
+Method                           Jackknife
+Replicate Weights       SIS_SURVEY_IMPUTED
+Number of Replicates                    47
+
+
+                              Table of Department
+ 
+                              Weighted    Std Err of                Std Err of
+Department     Frequency     Frequency      Wgt Freq     Percent       Percent
+------------------------------------------------------------------------------
+         0           556          6400     859.04458     49.4729        6.6407
+         1           462          6536     859.04458     50.5271        6.6407
+
+     Total          1018         12936             0    100.0000              
+------------------------------------------------------------------------------
+
+
+                              Table of Response
+ 
+                            Weighted    Std Err of                Std Err of
+Response     Frequency     Frequency      Wgt Freq     Percent       Percent
+----------------------------------------------------------------------------
+       1           200          2512     583.84610     19.4153        4.5133
+       2           206          2742     722.05170     21.1976        5.5817
+       3           224          3420     610.53936     26.4371        4.7197
+       4           200          2427     567.38597     18.7598        4.3861
+       5           188          1836     487.75934     14.1903        3.7706
+
+   Total          1018         12936             0    100.0000              
+----------------------------------------------------------------------------
+
+
+                              Table of Department by Response
+ 
+                                          Weighted    Std Err of                Std Err of
+Department    Response     Frequency     Frequency      Wgt Freq     Percent       Percent
+------------------------------------------------------------------------------------------
+         0           1           114          1276     492.37481      9.8614        3.8062
+                     2           110          1487     668.56671     11.4952        5.1683
+                     3           128          1904     516.46029     14.7180        3.9924
+                     4            98     685.68916     300.88335      5.3006        2.3259
+                     5           106          1048     401.98252      8.0977        3.1075
+
+                 Total           556          6400     859.04458     49.4729        6.6407
+------------------------------------------------------------------------------------------
+         1           1            86          1236     418.08772      9.5538        3.2320
+                     2            96          1255     371.06692      9.7024        2.8685
+                     3            96          1516     475.65218     11.7191        3.6770
+                     4           102          1741     524.75027     13.4592        4.0565
+                     5            82     788.13726     313.90761      6.0926        2.4266
+
+                 Total           462          6536     859.04458     50.5271        6.6407
+------------------------------------------------------------------------------------------
+     Total           1           200          2512     583.84610     19.4153        4.5133
+                     2           206          2742     722.05170     21.1976        5.5817
+                     3           224          3420     610.53936     26.4371        4.7197
+                     4           200          2427     567.38597     18.7598        4.3861
+                     5           188          1836     487.75934     14.1903        3.7706
+
+                 Total          1018         12936             0    100.0000              
+------------------------------------------------------------------------------------------

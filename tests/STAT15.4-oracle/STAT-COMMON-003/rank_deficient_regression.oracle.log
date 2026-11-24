@@ -1,0 +1,49 @@
+The SAS System
+
+117        
+118        /* STAT-COMMON-003: Rank-deficient linear algebra and generalized inverses
+119         * Source: S154 / Chapter 4 / `Important Linear Algebra Concepts` (PDF pp. 58–65).
+120         * Discriminates: Exact linear dependence, generalized inverse solution and singularity diagnostics
+121         */
+122        options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+122      ! validmemname=compatible locale=en_US;
+123        %let syscc=0;
+124        title; footnote;
+125        ods _all_ close;
+126        ods listing gpath="%sysfunc(pathname(work))";
+127        ods graphics off;
+128        proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SAMPLE (memtype=DATA).
+128      !                                         quit;
+
+
+129        ods path work.templat(update) sashelp.tmplmst(read);
+130        
+131        data sample;
+132         input x z y group $ weight freq;
+133         datalines;
+
+NOTE: The data set WORK.SAMPLE has 12 observations and 6 variables.
+
+146        ;
+147        run;
+148        data singular; set sample; twice=2*x; run;
+
+NOTE: There were 12 observations read from the data set WORK.SAMPLE.
+NOTE: The data set WORK.SINGULAR has 12 observations and 7 variables.
+
+149        proc reg data=singular; model y=x twice z / tol vif; run;
+
+149      !                                                           quit;
+
+NOTE: The PROCEDURE REG printed page 4.
+
+150        
+151        
+152        
+153        
+The SAS System
+
+154        

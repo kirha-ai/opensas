@@ -1,0 +1,63 @@
+The SAS System
+
+21938      
+21939      /* STAT-GENMOD-001: GENMOD — Data input, variable roles, and basic options
+21940       * Source: S154 / Chapter 51 / `PROC GENMOD Statement` (PDF pp. 3509–3514); S154 / Chapter 51 / `BY Statement` (PDF pp. 3525–3526); S154 /
+21940    ! Chapter 51 / `FREQ Statement` (PDF p. 3541); S154 / Chapter 51 / `STRATA Statement` (PDF pp. 3565–3567); S154 / Chapter 51 / `WEIGHT Statement`
+21940    ! (PDF p. 3567); S154 / Chapter 51 / `Missing Values` (PDF p. 3616).
+21941       * Discriminates: Verified default procedure context
+21942       */
+21943      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+21943    ! validmemname=compatible locale=en_US;
+21944      %let syscc=0;
+21945      title; footnote;
+21946      ods _all_ close;
+21947      ods listing gpath="%sysfunc(pathname(work))";
+21948      ods graphics off;
+21949      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.CHILDREN (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+21949    !                                         quit;
+
+
+21950      ods path work.templat(update) sashelp.tmplmst(read);
+21951      
+21952      data nor;
+21953      input x y;
+21954      datalines;
+
+NOTE: The data set WORK.NOR has 16 observations and 2 variables.
+
+21971      ;
+21972      proc genmod data=nor;
+21973      model y = x / dist = normal
+21974      link = log;
+21975      output out = Residuals
+21976      pred = Pred
+21977      resraw = Resraw
+21978      reschi = Reschi
+21979      resdev = Resdev
+21980      stdreschi = Stdreschi
+21981      stdresdev = Stdresdev
+21982      reslik = Reslik;
+21983      run;
+
+NOTE: Algorithm converged.
+NOTE: The scale parameter was estimated by maximum likelihood.
+NOTE: The data set WORK.RESIDUALS has 16 observations and 9 variables.
+NOTE: The PROCEDURE GENMOD printed page 2371.
+
+21984      
+21985      
+21986      
+21987      
+The SAS System
+
+21988      

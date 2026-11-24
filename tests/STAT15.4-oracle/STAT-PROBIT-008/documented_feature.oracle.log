@@ -1,0 +1,60 @@
+The SAS System
+
+9350       
+9351       /* STAT-PROBIT-008: PROBIT — LSMEANS / LSMESTIMATE / SLICE
+9352        * Source: S154 / Chapter 100 / `LSMEANS Statement` (PDF pp. 8110–8111); S154 / Chapter 100 / `LSMESTIMATE Statement` (PDF pp. 8111–8112); S154 /
+9352     !  Chapter 100 / `SLICE Statement` (PDF p. 8119).
+9353        * Discriminates: Example 100.5: Model Postfitting Analysis; explicit statements: SLICE
+9354        */
+9355       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+9355     ! validmemname=compatible locale=en_US;
+9356       %let syscc=0;
+9357       title; footnote;
+9358       ods _all_ close;
+9359       ods listing gpath="%sysfunc(pathname(work))";
+9360       ods graphics off;
+9361       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.EPIDEMIC (memtype=DATA).
+NOTE: Deleting WORK.OUT1 (memtype=DATA).
+NOTE: Deleting WORK.OUT2 (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEST (memtype=DATA).
+NOTE: Deleting WORK.XVAL (memtype=DATA).
+9361     !                                         quit;
+
+
+9362       ods path work.templat(update) sashelp.tmplmst(read);
+9363       
+9364       data epidemic;
+9365       input treat$ dose n r sex @@;
+9366       label dose = Dose;
+9367       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.EPIDEMIC has 10 observations and 5 variables.
+
+9371       ;
+9372       run;
+9373       proc probit data=epidemic;
+9374       class treat sex;
+9375       model r/n = dose treat sex treat*sex;
+9376       slice treat*sex / diff;
+9377       effectplot;
+9378       run;
+
+NOTE: Algorithm converged.
+WARNING: You must enable ODS graphics before requesting plots.
+NOTE: The PROCEDURE PROBIT printed page 620.
+
+9379       
+9380       
+9381       
+9382       
+The SAS System
+
+9383       

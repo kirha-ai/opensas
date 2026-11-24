@@ -1,0 +1,15 @@
+
+_NAME_    CLUSTER    CLUSNAME
+
+OB107        1         CL3   
+OB129        1         CL3   
+OB32         2         CL5   
+OB36         2         CL5   
+OB30         2         CL5   
+OB38         2         CL5   
+OB22         2         CL5   
+OB41         2         CL5   
+OB39         2         CL5   
+OB50         2         CL5   
+OB101        3         CL4   
+OB125        3         CL4   

@@ -1,0 +1,139 @@
+The SAS System
+
+15223      
+15224      /* STAT-RSREG-007: RSREG — Displayed Output / ODS Table Names
+15225       * Source: S154 / Chapter 108 / `Displayed Output` (PDF pp. 8887–8889); S154 / Chapter 108 / `ODS Table Names` (PDF pp. 8889–8890).
+15226       * Discriminates: Getting Started: RSREG Procedure
+15227       */
+15228      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+15228    ! validmemname=compatible locale=en_US;
+15229      %let syscc=0;
+15230      title; footnote;
+15231      ods _all_ close;
+15232      ods listing gpath="%sysfunc(pathname(work))";
+15233      ods graphics off;
+15234      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.SMELL (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+15234    !                                         quit;
+
+
+15235      ods path work.templat(update) sashelp.tmplmst(read);
+15236      
+15237      ods trace on;
+15238      title 'Response Surface with a Simple Optimum';
+15239      data smell;
+15240      input Odor T R H @@;
+15241      label
+15242      T = "Temperature"
+15243      R = "Gas-Liquid Ratio"
+15244      H = "Packing Height";
+15245      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.SMELL has 15 observations and 4 variables.
+
+15250      ;
+15251      proc rsreg data=smell;
+15252      model Odor = T R H / lackfit;
+15253      run;
+
+
+Output Added:
+-------------
+Name:       Coding
+Label:      Coding
+Template:   Stat.RSREG.Coding
+Path:       RSReg.Coding
+-------------
+
+Output Added:
+-------------
+Name:       FitStatistics
+Label:      Fit Statistics
+Template:   Stat.RSREG.FitStatistics
+Path:       RSReg.Odor.ANOVA.FitStatistics
+-------------
+
+Output Added:
+-------------
+Name:       ModelANOVA
+Label:      Model
+Template:   Stat.RSREG.ModelANOVA
+Path:       RSReg.Odor.ANOVA.ModelANOVA
+-------------
+
+Output Added:
+-------------
+Name:       ErrorANOVA
+Label:      Error
+Template:   Stat.RSREG.ErrorANOVA
+Path:       RSReg.Odor.ANOVA.ErrorANOVA
+-------------
+
+Output Added:
+-------------
+Name:       ParameterEstimates
+Label:      Parameter Estimates
+Template:   Stat.RSREG.ParameterEstimates
+Path:       RSReg.Odor.ANOVA.ParameterEstimates
+-------------
+
+Output Added:
+-------------
+Name:       FactorANOVA
+Label:      Factor Tests
+Template:   Stat.RSREG.FactorANOVA
+Path:       RSReg.Odor.ANOVA.FactorANOVA
+-------------
+
+Output Added:
+-------------
+Name:       StationaryPoint
+Label:      Stationary Point
+Template:   stat.rsreg.StationaryCoded
+Path:       RSReg.Odor.Canonical.StationaryPoint
+-------------
+
+Output Added:
+-------------
+Name:       Spectral
+Label:      Spectral Analysis
+Template:   stat.rsreg.spectral
+Path:       RSReg.Odor.Canonical.Spectral
+-------------
+NOTE: The PROCEDURE RSREG printed pages 1119-1120.
+
+15254      ods graphics on;
+15255      proc rsreg data=smell
+15256      plots(unpack)=surface(3d at(H=7.541050));
+15257      model Odor = T R H;
+15258      ods select 'T * R = Pred';
+15259      run;
+
+
+Output Added:
+-------------
+Name:       Surface
+Label:      T * R = Pred
+Template:   Stat.Rsreg.Graphics.Surface
+Path:       RSReg.Surfaces.Surface
+-------------
+
+15260      ods graphics off;
+15261      run;
+15262      quit;
+15263      ods trace off;
+15264      
+15265      
+15266      
+15267      
+The SAS System
+
+15268      

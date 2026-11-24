@@ -1,0 +1,110 @@
+The SAS System
+
+1099       
+1100       /* STAT-PHREG-006: PHREG — Analysis of Competing-Risks Data
+1101        * Source: S154 / Chapter 92 / `Analysis of Competing-Risks Data` (PDF pp. 7402–7409).
+1102        * Discriminates: Example 92.15: Analysis of Competing-Risks Data
+1103        */
+1104       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+1104     ! validmemname=compatible locale=en_US;
+1105       %let syscc=0;
+1106       title; footnote;
+1107       ods _all_ close;
+1108       ods listing gpath="%sysfunc(pathname(work))";
+1109       ods graphics off;
+1110       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.BMT (memtype=DATA).
+NOTE: Deleting WORK.FORMATS (memtype=CATALOG).
+NOTE: Deleting WORK.OUT1 (memtype=DATA).
+NOTE: Deleting WORK.OUT2 (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.RISK (memtype=DATA).
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+1110     !                                         quit;
+
+
+1111       ods path work.templat(update) sashelp.tmplmst(read);
+1112       
+1113       proc format;
+1113     !              value DiseaseGroup 1='ALL' 2='AML-Low Risk' 3='AML-High Risk';
+NOTE: Format DISEASEGROUP has been output.
+1113     !                                                                             run;
+
+
+1114       data Bmt;
+1115       input Disease T Status @@;
+1116       label T='Disease-Free Survival in Days';
+1117       format Disease DiseaseGroup.;
+1118       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.BMT has 137 observations and 3 variables.
+
+1147       ;
+1148       data Risk;
+1149       Disease=1;
+1150       output;
+1151       Disease=2;
+1152       output;
+1153       Disease=3;
+1154       output;
+1155       format Disease DiseaseGroup.;
+1156       run;
+
+NOTE: The data set WORK.RISK has 3 observations and 1 variables.
+
+1157       ods graphics on;
+1158       proc phreg data=Bmt plots(overlay=stratum)=cif;
+1159       class Disease (order=internal ref=first);
+1160       model T*Status(0)=Disease / eventcode=1;
+1161       Hazardratio 'Pairwise' Disease / diff=pairwise;
+1162       baseline covariates=Risk out=out1 cif=_all_ / seed=191;
+1163       run;
+
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The data set WORK.OUT1 has 126 observations and 6 variables.
+NOTE: The PROCEDURE PHREG printed page 38.
+
+1164       proc print data=Out1(where=(Disease=1));
+1165       title 'CIFs Estimates and 95% Confidence limits for the ALL Group';
+1166       run;
+
+NOTE: There were 42 observations read from the data set WORK.OUT1.
+      WHERE Disease=1;
+NOTE: The PROCEDURE PRINT printed page 39.
+
+1167       ods graphics on;
+1168       title 'Cause-specific Analysis';
+1169       proc phreg data=Bmt plots(overlay)=cif;
+1170       class Disease (order=internal ref=first);
+1171       model T*Status(0)=Disease / eventcode(cox)=1;
+1172       baseline covariates=Risk out=out2 cif=_all_;
+1173       run;
+
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The above message was for Status=1.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The above message was for Status=2.
+NOTE: The data set WORK.OUT2 has 126 observations and 6 variables.
+NOTE: The PROCEDURE PHREG printed page 40.
+
+1174       proc print data=Out2(where=(Disease=1));
+1175       title 'CIF Estimates and 95% Confidence limits for the ALL Group';
+1176       run;
+
+NOTE: There were 42 observations read from the data set WORK.OUT2.
+      WHERE Disease=1;
+NOTE: The PROCEDURE PRINT printed page 41.
+
+1177       
+1178       
+1179       
+1180       
+The SAS System
+
+1181       

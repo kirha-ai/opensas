@@ -1,0 +1,53 @@
+The SAS System
+
+8962       
+8963       /* STAT-HPGENSELECT-006: HPGENSELECT — RESTRICT
+8964        * Source: S154 / Chapter 59 / `RESTRICT Statement` (PDF pp. 4648–4650).
+8965        * Discriminates: Getting Started: HPGENSELECT Procedure
+8966        */
+8967       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+8967     ! validmemname=compatible locale=en_US;
+8968       %let syscc=0;
+8969       title; footnote;
+8970       ods _all_ close;
+8971       ods listing gpath="%sysfunc(pathname(work))";
+8972       ods graphics off;
+8973       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.GETSTARTED (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+8973     !                                         quit;
+
+
+8974       ods path work.templat(update) sashelp.tmplmst(read);
+8975       
+8976       data getStarted;
+8977       input C1-C5 Y Total;
+8978       datalines;
+
+NOTE: The data set WORK.GETSTARTED has 100 observations and 7 variables.
+
+9079       ;
+9080       proc hpgenselect data=getStarted;
+9081       class C1-C5;
+9082       model Y = C1-C5 / Distribution=Poisson Link=Log;
+9083       run;
+
+NOTE: The HPGENSELECT procedure is executing in single-machine mode.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: There were 100 observations read from the data set WORK.GETSTARTED.
+NOTE: The PROCEDURE HPGENSELECT printed page 653.
+
+9084       
+9085       
+9086       
+9087       
+The SAS System
+
+9088       

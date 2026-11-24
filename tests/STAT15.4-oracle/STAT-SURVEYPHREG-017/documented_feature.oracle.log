@@ -1,0 +1,61 @@
+The SAS System
+
+23467      
+23468      /* STAT-SURVEYPHREG-017: SURVEYPHREG — STORE
+23469       * Source: S154 / Chapter 122 / `STORE Statement` (PDF p. 10040).
+23470       * Discriminates: Verified default procedure context
+23471       */
+23472      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+23472    ! validmemname=compatible locale=en_US;
+23473      %let syscc=0;
+23474      title; footnote;
+23475      ods _all_ close;
+23476      ods listing gpath="%sysfunc(pathname(work))";
+23477      ods graphics off;
+23478      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SURVEY (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+23478    !                                         quit;
+
+
+23479      ods path work.templat(update) sashelp.tmplmst(read);
+23480      
+23481      data survey;
+23482      call streaminit(722);
+23483      do stratum=1 to 2;
+23484      do cluster=1 to 4;
+23485      do id=1 to 12;
+23486      age=20+mod(id*7+cluster,45);
+23487      time=1+rand('exponential')*10;
+23488      status=(mod(id,4) ne 0);
+23489      weight=2+stratum+cluster/10;
+23490      output;
+23491      end;
+23492      end;
+23493      end;
+23494      run;
+
+NOTE: The data set WORK.SURVEY has 96 observations and 7 variables.
+
+23495      proc surveyphreg data=survey;
+23496      strata stratum;
+23497      cluster cluster;
+23498      weight weight;
+23499      model time*status(0)=age;
+23500      run;
+
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The PROCEDURE SURVEYPHREG printed page 1510.
+
+23501      
+23502      
+23503      
+23504      
+The SAS System
+
+23505      

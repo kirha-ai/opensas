@@ -1,0 +1,67 @@
+The SAS System
+
+14325      
+14326      /* STAT-LOGISTIC-011: LOGISTIC — EXACT / EXACTOPTIONS / Exact Conditional Logistic Regression
+14327       * Source: S154 / Chapter 79 / `EXACT Statement` (PDF pp. 5861–5863); S154 / Chapter 79 / `EXACTOPTIONS Statement` (PDF pp. 5863–5867); S154 /
+14327    ! Chapter 79 / `Exact Conditional Logistic Regression` (PDF pp. 5949–5954).
+14328       * Discriminates: Example 79.11: Conditional Logistic Regression for Matched Pairs Data; explicit statements: EXACT
+14329       */
+14330      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+14330    ! validmemname=compatible locale=en_US;
+14331      %let syscc=0;
+14332      title; footnote;
+14333      ods _all_ close;
+14334      ods listing gpath="%sysfunc(pathname(work))";
+14335      ods graphics off;
+14336      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.CHEESE (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+14336    !                                         quit;
+
+
+14337      ods path work.templat(update) sashelp.tmplmst(read);
+14338      
+14339      data Data1;
+14340      do ID=1 to 63;
+14341      do Outcome = 1 to 0 by -1;
+14342      input Gall Hyper @@;
+14343      output;
+14344      end;
+14345      end;
+14346      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.DATA1 has 126 observations and 4 variables.
+
+14360      ;
+14361      proc logistic data=Data1;
+14362      strata ID;
+14363      model outcome(event='1')=Gall;
+14364      run;
+
+NOTE: PROC LOGISTIC is modeling the probability that Outcome=1.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: There were 126 observations read from the data set WORK.DATA1.
+NOTE: The PROCEDURE LOGISTIC printed page 1208.
+
+14365      proc logistic data=Data1 exactonly;
+14366      strata ID;
+14367      model outcome(event='1')=Gall;
+14368      exact Gall / estimate=both;
+14369      run;
+
+NOTE: PROC LOGISTIC is modeling the probability that Outcome=1.
+NOTE: There were 126 observations read from the data set WORK.DATA1.
+NOTE: The PROCEDURE LOGISTIC printed page 1209.
+
+14370      
+14371      
+14372      
+14373      
+The SAS System
+
+14374      

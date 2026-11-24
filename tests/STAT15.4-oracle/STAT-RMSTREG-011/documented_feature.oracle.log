@@ -1,0 +1,104 @@
+The SAS System
+
+13633      
+13634      /* STAT-RMSTREG-011: RMSTREG — Displayed Output / ODS Table Names
+13635       * Source: S154 / Chapter 106 / `Displayed Output` (PDF pp. 8757–8759); S154 / Chapter 106 / `ODS Table Names` (PDF p. 8759).
+13636       * Discriminates: Verified default procedure context
+13637       */
+13638      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+13638    ! validmemname=compatible locale=en_US;
+13639      %let syscc=0;
+13640      title; footnote;
+13641      ods _all_ close;
+13642      ods listing gpath="%sysfunc(pathname(work))";
+13643      ods graphics off;
+13644      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SURVIVAL (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+13644    !                                         quit;
+
+
+13645      ods path work.templat(update) sashelp.tmplmst(read);
+13646      
+13647      ods trace on;
+13648      data survival;
+13649      call streaminit(218);
+13650      do id=1 to 100;
+13651      age=25+mod(id*7,40);
+13652      x=mod(id,2);
+13653      time=exp(0.5+0.15*x+0.01*age+rand('normal')*0.7);
+13654      status=(mod(id,4) ne 0);
+13655      output;
+13656      end;
+13657      run;
+
+NOTE: The data set WORK.SURVIVAL has 100 observations and 5 variables.
+
+13658      proc rmstreg data=survival tau=5;
+13659      model time*status(0)=age x / link=linear method=pv;
+13660      run;
+
+
+Output Added:
+-------------
+Name:       ModelInfo
+Label:      Model Information
+Template:   Stat.RMSTReg.ModelInfo
+Path:       RMSTReg.ModelInfo
+-------------
+
+Output Added:
+-------------
+Name:       NObs
+Label:      Number of Observations
+Template:   Stat.RMSTReg.NObs
+Path:       RMSTReg.NObs
+-------------
+
+Output Added:
+-------------
+Name:       CensoredSummary
+Label:      Summary of Event and Censored Observations
+Template:   Stat.RMSTReg.CensoredSummary
+Path:       RMSTReg.CensoredSummary
+-------------
+NOTE: Algorithm converged.
+
+Output Added:
+-------------
+Name:       ConvergenceStatus
+Label:      Convergence Status
+Template:   Stat.RMSTReg.ConvergenceStatus
+Path:       RMSTReg.ConvergenceStatus
+-------------
+
+Output Added:
+-------------
+Name:       Type3Test
+Label:      Type 3 Tests
+Template:   Stat.RMSTReg.Type3Test
+Path:       RMSTReg.Type3Test
+-------------
+
+Output Added:
+-------------
+Name:       ParameterEstimates
+Label:      Analysis of Parameter Estimates
+Template:   Stat.RMSTReg.ParameterEstimates
+Path:       RMSTReg.ParameterEstimates
+-------------
+NOTE: The PROCEDURE RMSTREG printed page 1044.
+
+13661      ods trace off;
+13662      
+13663      
+13664      
+13665      
+The SAS System
+
+13666      

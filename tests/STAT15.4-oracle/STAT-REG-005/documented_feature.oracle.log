@@ -1,0 +1,79 @@
+The SAS System
+
+12285      
+12286      /* STAT-REG-005: REG — Computations for Ridge Regression and IPC Analysis
+12287       * Source: S154 / Chapter 105 / `Computations for Ridge Regression and IPC Analysis` (PDF pp. 8648–8649).
+12288       * Discriminates: Example 105.5: Ridge Regression for Acetylene Data
+12289       */
+12290      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+12290    ! validmemname=compatible locale=en_US;
+12291      %let syscc=0;
+12292      title; footnote;
+12293      ods _all_ close;
+12294      ods listing gpath="%sysfunc(pathname(work))";
+12295      ods graphics off;
+12296      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.USPOPULATION (memtype=DATA).
+12296    !                                         quit;
+
+
+12297      ods path work.templat(update) sashelp.tmplmst(read);
+12298      
+12299      data acetyl;
+12300      input x1-x4 @@;
+12301      x1x2 = x1 * x2;
+12302      x1x1 = x1 * x1;
+12303      label x1 = 'reactor temperature(celsius)'
+12304      x2 = 'h2 to n-heptone ratio'
+12305      x3 = 'contact time(sec)'
+12306      x4 = 'conversion percentage'
+12307      x1x2= 'temperature-ratio interaction'
+12308      x1x1= 'squared temperature';
+12309      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.ACETYL has 16 observations and 6 variables.
+
+12316      ;
+12317      ods graphics on;
+12318      proc reg data=acetyl outvif
+12319      outest=b ridge=0 to 0.02 by .002;
+12320      model x4=x1 x2 x3 x1x2 x1x1;
+12321      run;
+
+
+NOTE: The data set WORK.B has 23 observations and 13 variables.
+NOTE: The PROCEDURE REG printed page 932.
+
+12322      proc print data=b;
+12323      run;
+
+NOTE: There were 23 observations read from the data set WORK.B.
+NOTE: The PROCEDURE PRINT printed page 933.
+
+12324      proc reg data=acetyl plots(only)=ridge(unpack VIFaxis=log)
+12325      outest=b ridge=0 to 0.02 by .002;
+12326      model x4=x1 x2 x3 x1x2 x1x1;
+12327      run;
+
+12328      ods graphics off;
+12329      run;
+
+12330      quit;
+
+NOTE: The data set WORK.B has 12 observations and 13 variables.
+NOTE: The PROCEDURE REG printed page 934.
+
+12331      
+12332      
+12333      
+12334      
+The SAS System
+
+12335      

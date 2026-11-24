@@ -1,0 +1,167 @@
+The SAS System
+
+2784       
+2785       /* STAT-KM-002: KM survival plot customization — Displaying the Patients-at-Risk Table inside the Plot / Displaying the Patients-at-Risk Table
+2785     ! outside the Plot / Modifying At-Risk Table Times / Reordering the Groups
+2786        * Source: S154 / Chapter 26 / `Displaying the Patients-at-Risk Table inside the Plot` (PDF pp. 931–933); S154 / Chapter 26 / `Displaying the
+2786     ! Patients-at-Risk Table outside the Plot` (PDF pp. 933–934); S154 / Chapter 26 / `Modifying At-Risk Table Times` (PDF pp. 934–937); S154 / Chapter
+2786     !  26 / `Reordering the Groups` (PDF pp. 937–939).
+2787        * Discriminates: Kaplan–Meier estimates with explicit at-risk table times
+2788        */
+2789       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+2789     ! validmemname=compatible locale=en_US;
+2790       %let syscc=0;
+2791       title; footnote;
+2792       ods _all_ close;
+2793       ods listing gpath="%sysfunc(pathname(work))";
+2794       ods graphics off;
+2795       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.GRAPH_FILES (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.SURVIVAL (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+2795     !                                         quit;
+
+
+2796       ods path work.templat(update) sashelp.tmplmst(read);
+2797       
+2798       options dlcreatedir; libname _gpath "%sysfunc(pathname(work))/stat_km_002"; libname _gpath clear;
+NOTE: Library _GPATH was created.
+NOTE: Libref _GPATH was successfully assigned as follows: 
+      Engine:        V9 
+      Physical Name: /saswork/SAS_work5D120001108E_odaws02-euw1.oda.sas.com/SAS_workCCDC0001108E_odaws02-euw1.oda.sas.com/stat_km_002
+NOTE: Libref _GPATH has been deassigned.
+2799       ods listing gpath="%sysfunc(pathname(work))/stat_km_002";
+2800       ods graphics on / reset=all imagename="oracle" imagefmt=svg width=5in height=3in;
+2801       ods trace on;
+2802       data survival; input time status group $; datalines;
+
+NOTE: The data set WORK.SURVIVAL has 10 observations and 3 variables.
+
+2813       ;
+2814       run;
+2815       proc lifetest data=survival plots=survival(atrisk=0 to 7 by 1); time time*status(0); strata group; run;
+
+NOTE: The LOGLOG transform is used to compute the confidence limits for the quartiles of the survivor distribution. To suppress using this transform, specify 
+      CONFTYPE=LINEAR in the PROC LIFETEST statement.
+
+Output Added:
+-------------
+Name:       ProductLimitEstimates
+Label:      Product-Limit Estimates
+Template:   Stat.Lifetest.ProductLimitEstimates
+Path:       Lifetest.Stratum1.ProductLimitEstimates
+-------------
+
+Output Added:
+-------------
+Name:       Quartiles
+Label:      Quartiles of the Survival Distribution
+Template:   Stat.Lifetest.Quartiles
+Path:       Lifetest.Stratum1.TimeSummary.Quartiles
+-------------
+
+Output Added:
+-------------
+Name:       Means
+Label:      Mean
+Template:   Stat.Lifetest.Means
+Path:       Lifetest.Stratum1.TimeSummary.Means
+-------------
+
+Output Added:
+-------------
+Name:       ProductLimitEstimates
+Label:      Product-Limit Estimates
+Template:   Stat.Lifetest.ProductLimitEstimates
+Path:       Lifetest.Stratum2.ProductLimitEstimates
+-------------
+
+Output Added:
+-------------
+Name:       Quartiles
+Label:      Quartiles of the Survival Distribution
+Template:   Stat.Lifetest.Quartiles
+Path:       Lifetest.Stratum2.TimeSummary.Quartiles
+-------------
+
+Output Added:
+-------------
+Name:       Means
+Label:      Mean
+Template:   Stat.Lifetest.Means
+Path:       Lifetest.Stratum2.TimeSummary.Means
+-------------
+
+Output Added:
+-------------
+Name:       CensoredSummary
+Label:      Censored Summary
+Template:   Stat.Lifetest.CensoredSummary
+Path:       Lifetest.CensoredSummary
+-------------
+
+Output Added:
+-------------
+Name:       HomStats
+Label:      Rank Statistics
+Template:   Stat.Lifetest.HomStats
+Path:       Lifetest.StrataHomogeneity.HomStats
+-------------
+
+Output Added:
+-------------
+Name:       LogrankHomCov
+Label:      Log-Rank Covariance
+Template:   Stat.Lifetest.HomCov
+Path:       Lifetest.StrataHomogeneity.LogrankHomCov
+-------------
+
+Output Added:
+-------------
+Name:       WilcoxonHomCov
+Label:      Wilcoxon Covariance
+Template:   Stat.Lifetest.HomCov
+Path:       Lifetest.StrataHomogeneity.WilcoxonHomCov
+-------------
+
+Output Added:
+-------------
+Name:       HomTests
+Label:      Homogeneity Tests
+Template:   Stat.Lifetest.HomTests
+Path:       Lifetest.StrataHomogeneity.HomTests
+-------------
+
+Output Added:
+-------------
+Name:       SurvivalPlot
+Label:      Survival Curves
+Template:   Stat.Lifetest.Graphics.ProductLimitSurvival
+Path:       Lifetest.SurvivalPlot
+-------------
+NOTE: The PROCEDURE LIFETEST printed pages 123-125.
+
+2816       ods trace off; ods graphics off;
+2817       data graph_files; length name $128; rc=filename('_gdir',"%sysfunc(pathname(work))/stat_km_002"); did=dopen('_gdir'); if did then do; do i=1 to
+2817     ! dnum(did); name=dread(did,i); if lowcase(scan(name,-1,'.')) in ('svg','png') then output; end; rc=dclose(did); end; keep name; run;
+
+NOTE: The data set WORK.GRAPH_FILES has 1 observations and 1 variables.
+
+2818       proc print data=graph_files noobs; run;
+
+NOTE: There were 1 observations read from the data set WORK.GRAPH_FILES.
+NOTE: The PROCEDURE PRINT printed page 126.
+
+2819       
+2820       
+2821       
+2822       
+The SAS System
+
+2823       

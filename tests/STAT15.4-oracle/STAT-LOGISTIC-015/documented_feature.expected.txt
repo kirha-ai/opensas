@@ -1,0 +1,585 @@
+
+Stepwise Regression on Cancer Remission Data
+
+The LOGISTIC Procedure
+
+                          Model Information
+
+Data Set                      WORK.REMISSION                         
+Response Variable             remiss               Complete Remission
+Number of Response Levels     2                                      
+Model                         binary logit                           
+Optimization Technique        Fisher's scoring                       
+
+
+Number of Observations Read          27
+Number of Observations Used          27
+
+
+          Response Profile
+ 
+ Ordered                      Total
+   Value       remiss     Frequency
+
+       1            0            18
+       2            1             9
+
+Probability modeled is remiss=1.
+
+
+Stepwise Selection Procedure
+
+
+Step  0. Intercept entered:
+
+
+                    Model Convergence Status
+
+         Convergence criterion (GCONV=1E-8) satisfied.          
+
+-2 Log L = 34.372   
+
+
+             Analysis of Maximum Likelihood Estimates
+ 
+                               Standard          Wald
+Parameter    DF    Estimate       Error    Chi-Square    Pr > ChiSq
+
+Intercept     1     -0.6931      0.4082        2.8827        0.0895
+
+
+     Residual Chi-Square Test
+ 
+Chi-Square       DF     Pr > ChiSq
+
+    9.4609        6         0.1493
+
+
+  Analysis of Effects Eligible for Entry
+ 
+                       Score
+Effect      DF    Chi-Square    Pr > ChiSq
+
+cell         1        1.8893        0.1693
+smear        1        1.0745        0.2999
+infil        1        1.8817        0.1701
+li           1        7.9311        0.0049
+blast        1        3.5258        0.0604
+temp         1        0.6591        0.4169
+
+
+Step  1. Effect li entered:
+
+
+                    Model Convergence Status
+
+         Convergence criterion (GCONV=1E-8) satisfied.          
+
+
+         Model Fit Statistics
+ 
+                             Intercept
+              Intercept            and
+Criterion          Only     Covariates
+
+AIC              36.372         30.073
+SC               37.668         32.665
+-2 Log L         34.372         26.073
+
+
+        Testing Global Null Hypothesis: BETA=0
+ 
+Test                 Chi-Square       DF     Pr > ChiSq
+
+Likelihood Ratio         8.2988        1         0.0040
+Score                    7.9311        1         0.0049
+Wald                     5.9594        1         0.0146
+
+
+             Analysis of Maximum Likelihood Estimates
+ 
+                               Standard          Wald
+Parameter    DF    Estimate       Error    Chi-Square    Pr > ChiSq
+
+Intercept     1     -3.7771      1.3786        7.5064        0.0061
+li            1      2.8973      1.1868        5.9594        0.0146
+
+
+           Odds Ratio Estimates
+                     
+             Point          95% Wald
+Effect    Estimate      Confidence Limits
+
+li          18.124       1.770     185.563
+
+
+Association of Predicted Probabilities and Observed Responses
+
+Percent Concordant     84.0    Somers' D    0.710
+Percent Discordant     13.0    Gamma        0.732
+Percent Tied            3.1    Tau-a        0.328
+Pairs                   162    c            0.855
+
+
+     Residual Chi-Square Test
+ 
+Chi-Square       DF     Pr > ChiSq
+
+    3.1174        5         0.6819
+
+
+ Analysis of Effects Eligible for Removal
+ 
+                        Wald
+Effect      DF    Chi-Square    Pr > ChiSq
+
+li           1        5.9594        0.0146
+
+
+NOTE: No effects for the model in Step 1 are removed.
+
+
+  Analysis of Effects Eligible for Entry
+ 
+                       Score
+Effect      DF    Chi-Square    Pr > ChiSq
+
+cell         1        1.1183        0.2903
+smear        1        0.1369        0.7114
+infil        1        0.5715        0.4497
+blast        1        0.0932        0.7601
+temp         1        1.2591        0.2618
+
+
+Step  2. Effect temp entered:
+
+
+                    Model Convergence Status
+
+         Convergence criterion (GCONV=1E-8) satisfied.          
+
+
+         Model Fit Statistics
+ 
+                             Intercept
+              Intercept            and
+Criterion          Only     Covariates
+
+AIC              36.372         30.648
+SC               37.668         34.535
+-2 Log L         34.372         24.648
+
+
+        Testing Global Null Hypothesis: BETA=0
+ 
+Test                 Chi-Square       DF     Pr > ChiSq
+
+Likelihood Ratio         9.7239        2         0.0077
+Score                    8.3648        2         0.0153
+Wald                     5.9052        2         0.0522
+
+
+             Analysis of Maximum Likelihood Estimates
+ 
+                               Standard          Wald
+Parameter    DF    Estimate       Error    Chi-Square    Pr > ChiSq
+
+Intercept     1     47.8448     46.4381        1.0615        0.3029
+li            1      3.3017      1.3593        5.9002        0.0151
+temp          1    -52.4214     47.4897        1.2185        0.2697
+
+
+           Odds Ratio Estimates
+                     
+             Point          95% Wald
+Effect    Estimate      Confidence Limits
+
+li          27.158       1.892     389.856
+temp        <0.001      <0.001    >999.999
+
+
+Association of Predicted Probabilities and Observed Responses
+
+Percent Concordant     87.0    Somers' D    0.747
+Percent Discordant     12.3    Gamma        0.752
+Percent Tied            0.6    Tau-a        0.345
+Pairs                   162    c            0.873
+
+
+     Residual Chi-Square Test
+ 
+Chi-Square       DF     Pr > ChiSq
+
+    2.1429        4         0.7095
+
+
+ Analysis of Effects Eligible for Removal
+ 
+                        Wald
+Effect      DF    Chi-Square    Pr > ChiSq
+
+li           1        5.9002        0.0151
+temp         1        1.2185        0.2697
+
+
+NOTE: No effects for the model in Step 2 are removed.
+
+
+  Analysis of Effects Eligible for Entry
+ 
+                       Score
+Effect      DF    Chi-Square    Pr > ChiSq
+
+cell         1        1.4700        0.2254
+smear        1        0.1730        0.6775
+infil        1        0.8274        0.3630
+blast        1        1.1013        0.2940
+
+
+Step  3. Effect cell entered:
+
+
+                    Model Convergence Status
+
+         Convergence criterion (GCONV=1E-8) satisfied.          
+
+
+         Model Fit Statistics
+ 
+                             Intercept
+              Intercept            and
+Criterion          Only     Covariates
+
+AIC              36.372         29.953
+SC               37.668         35.137
+-2 Log L         34.372         21.953
+
+
+        Testing Global Null Hypothesis: BETA=0
+ 
+Test                 Chi-Square       DF     Pr > ChiSq
+
+Likelihood Ratio        12.4184        3         0.0061
+Score                    9.2502        3         0.0261
+Wald                     4.8281        3         0.1848
+
+
+             Analysis of Maximum Likelihood Estimates
+ 
+                               Standard          Wald
+Parameter    DF    Estimate       Error    Chi-Square    Pr > ChiSq
+
+Intercept     1     67.6339     56.8875        1.4135        0.2345
+cell          1      9.6521      7.7511        1.5507        0.2130
+li            1      3.8671      1.7783        4.7290        0.0297
+temp          1    -82.0737     61.7124        1.7687        0.1835
+
+
+           Odds Ratio Estimates
+                     
+             Point          95% Wald
+Effect    Estimate      Confidence Limits
+
+cell      >999.999       0.004    >999.999
+li          47.804       1.465    >999.999
+temp        <0.001      <0.001    >999.999
+
+
+Association of Predicted Probabilities and Observed Responses
+
+Percent Concordant     88.9    Somers' D    0.778
+Percent Discordant     11.1    Gamma        0.778
+Percent Tied            0.0    Tau-a        0.359
+Pairs                   162    c            0.889
+
+
+     Residual Chi-Square Test
+ 
+Chi-Square       DF     Pr > ChiSq
+
+    0.1831        3         0.9803
+
+
+ Analysis of Effects Eligible for Removal
+ 
+                        Wald
+Effect      DF    Chi-Square    Pr > ChiSq
+
+cell         1        1.5507        0.2130
+li           1        4.7290        0.0297
+temp         1        1.7687        0.1835
+
+
+NOTE: No effects for the model in Step 3 are removed.
+
+
+  Analysis of Effects Eligible for Entry
+ 
+                       Score
+Effect      DF    Chi-Square    Pr > ChiSq
+
+smear        1        0.0956        0.7572
+infil        1        0.0844        0.7714
+blast        1        0.0208        0.8852
+
+
+NOTE: No (additional) effects met the 0.3 significance level for entry into the model.
+
+
+                                Summary of Stepwise Selection
+ 
+                  Effect                    Number         Score          Wald
+    Step    Entered    Removed      DF          In    Chi-Square    Chi-Square    Pr > ChiSq
+
+       1    li                       1           1        7.9311                      0.0049
+       2    temp                     1           2        1.2591                      0.2618
+       3    cell                     1           3        1.4700                      0.2254
+
+
+             Partition for the Hosmer and Lemeshow Test
+ 
+                             remiss = 1              remiss = 0
+   Group       Total    Observed    Expected    Observed    Expected
+
+       1           3           0        0.00           3        3.00
+       2           3           0        0.01           3        2.99
+       3           3           0        0.19           3        2.81
+       4           3           0        0.56           3        2.44
+       5           4           1        1.09           3        2.91
+       6           3           2        1.35           1        1.65
+       7           3           2        1.84           1        1.16
+       8           3           3        2.15           0        0.85
+       9           2           1        1.80           1        0.20
+
+
+Hosmer and Lemeshow Goodness-of-Fit Test
+ 
+Chi-Square       DF     Pr > ChiSq
+
+    6.2983        7         0.5054
+
+Stepwise Regression on Cancer Remission Data
+Parameter Estimates and Covariance Matrix
+
+Obs    _LINK_    _TYPE_     _STATUS_      _NAME_       Intercept        cell    smear    infil       li       blast        temp    _LNLIKE_    _ESTTYPE_
+
+ 1     LOGIT     PARMS     0 Converged    remiss           67.63       9.652      .        .        3.8671      .        -82.07    -10.9767       MLE   
+ 2     LOGIT     COV       0 Converged    Intercept      3236.19     157.097      .        .       64.5726      .      -3483.23    -10.9767       MLE   
+ 3     LOGIT     COV       0 Converged    cell            157.10      60.079      .        .        6.9454      .       -223.67    -10.9767       MLE   
+ 4     LOGIT     COV       0 Converged    smear              .          .         .        .         .          .           .      -10.9767       MLE   
+ 5     LOGIT     COV       0 Converged    infil              .          .         .        .         .          .           .      -10.9767       MLE   
+ 6     LOGIT     COV       0 Converged    li               64.57       6.945      .        .        3.1623      .        -75.35    -10.9767       MLE   
+ 7     LOGIT     COV       0 Converged    blast              .          .         .        .         .          .           .      -10.9767       MLE   
+ 8     LOGIT     COV       0 Converged    temp          -3483.23    -223.669      .        .      -75.3513      .       3808.42    -10.9767       MLE   
+
+Stepwise Regression on Cancer Remission Data
+Predicted Probabilities and 95% Confidence Limits
+
+Obs   remiss   cell   smear   infil    li   blast    temp   _FROM_   _INTO_     IP_0      IP_1      XP_0      XP_1    _LEVEL_     phat      lcl       ucl
+
+  1      1     0.80    0.83    0.66   1.9   1.100   0.996     1        1      0.27735   0.72265   0.43873   0.56127      1      0.72265   0.16892   0.97093
+  2      1     0.90    0.36    0.32   1.4   0.740   0.992     1        1      0.42126   0.57874   0.47461   0.52539      1      0.57874   0.26788   0.83762
+  3      0     0.80    0.88    0.70   0.8   0.176   0.982     0        0      0.89540   0.10460   0.87060   0.12940      1      0.10460   0.00781   0.63419
+  4      0     1.00    0.87    0.87   0.7   1.053   0.986     0        0      0.71742   0.28258   0.67259   0.32741      1      0.28258   0.07498   0.65683
+  5      1     0.90    0.75    0.68   1.3   0.519   0.980     1        1      0.28582   0.71418   0.36901   0.63099      1      0.71418   0.25218   0.94876
+  6      0     1.00    0.65    0.65   0.6   0.519   0.982     0        0      0.72911   0.27089   0.67269   0.32731      1      0.27089   0.05852   0.68951
+  7      1     0.95    0.97    0.92   1.0   1.230   0.992     1        0      0.67844   0.32156   0.72923   0.27077      1      0.32156   0.13255   0.59516
+  8      0     0.95    0.87    0.83   1.9   1.354   1.020     0        1      0.39277   0.60723   0.09906   0.90094      1      0.60723   0.10572   0.95287
+  9      0     1.00    0.45    0.45   0.8   0.322   0.999     0        0      0.83368   0.16632   0.80864   0.19136      1      0.16632   0.03018   0.56123
+ 10      0     0.95    0.36    0.34   0.5   0.000   1.038     0        0      0.99843   0.00157   0.99840   0.00160      1      0.00157   0.00000   0.68962
+ 11      0     0.85    0.39    0.33   0.7   0.279   0.988     0        0      0.92715   0.07285   0.91723   0.08277      1      0.07285   0.00614   0.49982
+ 12      0     0.70    0.76    0.53   1.2   0.146   0.982     0        0      0.82714   0.17286   0.63838   0.36162      1      0.17286   0.00637   0.87206
+ 13      0     0.80    0.46    0.37   0.4   0.380   1.006     0        0      0.99654   0.00346   0.99644   0.00356      1      0.00346   0.00001   0.46530
+ 14      0     0.20    0.39    0.08   0.8   0.114   0.990     0        0      0.99982   0.00018   0.99981   0.00019      1      0.00018   0.00000   0.96482
+ 15      0     1.00    0.90    0.90   1.1   1.037   0.990     0        1      0.42878   0.57122   0.35354   0.64646      1      0.57122   0.25303   0.83973
+ 16      1     1.00    0.84    0.84   1.9   2.064   1.020     1        1      0.28530   0.71470   0.47213   0.52787      1      0.71470   0.15362   0.97189
+ 17      0     0.65    0.42    0.27   0.5   0.114   1.014     0        0      0.99938   0.00062   0.99937   0.00063      1      0.00062   0.00000   0.62665
+ 18      0     1.00    0.75    0.75   1.0   1.322   1.004     0        0      0.77711   0.22289   0.73612   0.26388      1      0.22289   0.04483   0.63670
+ 19      0     0.50    0.44    0.22   0.6   0.114   0.990     0        0      0.99846   0.00154   0.99842   0.00158      1      0.00154   0.00000   0.79644
+ 20      1     1.00    0.63    0.63   1.1   1.072   0.986     1        1      0.35089   0.64911   0.42053   0.57947      1      0.64911   0.26305   0.90555
+ 21      0     1.00    0.33    0.33   0.4   0.176   1.010     0        0      0.98307   0.01693   0.98170   0.01830      1      0.01693   0.00029   0.50475
+ 22      0     0.90    0.93    0.84   0.6   1.591   1.020     0        0      0.99378   0.00622   0.99348   0.00652      1      0.00622   0.00003   0.56062
+ 23      1     1.00    0.58    0.58   1.0   0.531   1.002     1        0      0.74739   0.25261   0.84423   0.15577      1      0.25261   0.06137   0.63597
+ 24      0     0.95    0.32    0.30   1.6   0.886   0.988     0        1      0.12989   0.87011   0.03637   0.96363      1      0.87011   0.40910   0.98481
+ 25      1     1.00    0.60    0.60   1.7   0.964   0.990     1        1      0.06868   0.93132   0.08017   0.91983      1      0.93132   0.44114   0.99573
+ 26      1     1.00    0.69    0.69   0.9   0.398   0.986     1        0      0.53949   0.46051   0.62312   0.37688      1      0.46051   0.16612   0.78529
+ 27      0     1.00    0.73    0.73   0.7   0.398   0.986     0        0      0.71742   0.28258   0.67259   0.32741      1      0.28258   0.07498   0.65683
+
+Obs    Step    Statistic           Value
+
+ 1       1         c            0.854938
+ 2       2         c            0.873457
+ 3       3         c            0.888889
+
+Backward Elimination on Cancer Remission Data
+
+The LOGISTIC Procedure
+
+                          Model Information
+
+Data Set                      WORK.REMISSION                         
+Response Variable             remiss               Complete Remission
+Number of Response Levels     2                                      
+Model                         binary logit                           
+Optimization Technique        Fisher's scoring                       
+
+
+Number of Observations Read          27
+Number of Observations Used          27
+
+
+          Response Profile
+ 
+ Ordered                      Total
+   Value       remiss     Frequency
+
+       1            0            18
+       2            1             9
+
+Probability modeled is remiss=1.
+
+
+Backward Elimination Procedure
+
+Step  0. The following effects were entered:
+
+Intercept  temp  cell  li  smear  blast  
+
+
+                    Model Convergence Status
+
+         Convergence criterion (GCONV=1E-8) satisfied.          
+
+
+         Model Fit Statistics
+ 
+                             Intercept
+              Intercept            and
+Criterion          Only     Covariates
+
+AIC              36.372         33.857
+SC               37.668         41.632
+-2 Log L         34.372         21.857
+
+
+        Testing Global Null Hypothesis: BETA=0
+ 
+Test                 Chi-Square       DF     Pr > ChiSq
+
+Likelihood Ratio        12.5146        5         0.0284
+Score                    9.3295        5         0.0966
+Wald                     4.7284        5         0.4499
+
+
+
+Step  1. Fast Backward Elimination:
+
+
+             Analysis of Effects Removed by Fast Backward Elimination
+ 
+                                                                               Pr >
+Effect                                               Residual              Residual
+Removed     Chi-Square       DF     Pr > ChiSq     Chi-Square       DF        ChiSq
+
+blast           0.0008        1         0.9768         0.0008        1       0.9768
+smear           0.0951        1         0.7578         0.0959        2       0.9532
+cell            1.5134        1         0.2186         1.6094        3       0.6573
+temp            0.6535        1         0.4189         2.2628        4       0.6875
+
+
+
+                    Model Convergence Status
+
+         Convergence criterion (GCONV=1E-8) satisfied.          
+
+
+         Model Fit Statistics
+ 
+                             Intercept
+              Intercept            and
+Criterion          Only     Covariates
+
+AIC              36.372         30.073
+SC               37.668         32.665
+-2 Log L         34.372         26.073
+
+
+        Testing Global Null Hypothesis: BETA=0
+ 
+Test                 Chi-Square       DF     Pr > ChiSq
+
+Likelihood Ratio         8.2988        1         0.0040
+Score                    7.9311        1         0.0049
+Wald                     5.9594        1         0.0146
+
+
+     Residual Chi-Square Test
+ 
+Chi-Square       DF     Pr > ChiSq
+
+    2.8530        4         0.5827
+
+
+                  Summary of Backward Elimination
+ 
+            Effect               Number          Wald
+    Step    Removed      DF          In    Chi-Square    Pr > ChiSq
+
+       1    blast         1           4        0.0008        0.9768
+       1    smear         1           3        0.0951        0.7578
+       1    cell          1           2        1.5134        0.2186
+       1    temp          1           1        0.6535        0.4189
+
+
+             Analysis of Maximum Likelihood Estimates
+ 
+                               Standard          Wald
+Parameter    DF    Estimate       Error    Chi-Square    Pr > ChiSq
+
+Intercept     1     -3.7771      1.3786        7.5064        0.0061
+li            1      2.8973      1.1868        5.9594        0.0146
+
+
+           Odds Ratio Estimates
+                     
+             Point          95% Wald
+Effect    Estimate      Confidence Limits
+
+li          18.124       1.770     185.563
+
+
+Association of Predicted Probabilities and Observed Responses
+
+Percent Concordant     84.0    Somers' D    0.710
+Percent Discordant     13.0    Gamma        0.732
+Percent Tied            3.1    Tau-a        0.328
+Pairs                   162    c            0.855
+
+
+                          Classification Table
+ 
+          Correct      Incorrect                Percentages
+ Prob          Non-          Non-           Sensi-  Speci-    Pos    Neg
+Level  Event  Event  Event  Event  Correct  tivity  ficity   Pred   Pred
+
+0.000      9      0     18      0     33.3   100.0     0.0   33.3     . 
+0.050      9      0     18      0     33.3   100.0     0.0   33.3     . 
+0.100      9      4     14      0     48.1   100.0    22.2   39.1  100.0
+0.150      9      7     11      0     59.3   100.0    38.9   45.0  100.0
+0.200      8     13      5      1     77.8    88.9    72.2   61.5   92.9
+0.250      8     13      5      1     77.8    88.9    72.2   61.5   92.9
+0.300      6     13      5      3     70.4    66.7    72.2   54.5   81.3
+0.350      5     14      4      4     70.4    55.6    77.8   55.6   77.8
+0.400      5     15      3      4     74.1    55.6    83.3   62.5   78.9
+0.450      5     15      3      4     74.1    55.6    83.3   62.5   78.9
+0.500      4     16      2      5     74.1    44.4    88.9   66.7   76.2
+0.550      3     16      2      6     70.4    33.3    88.9   60.0   72.7
+0.600      3     16      2      6     70.4    33.3    88.9   60.0   72.7
+0.650      3     16      2      6     70.4    33.3    88.9   60.0   72.7
+0.700      3     16      2      6     70.4    33.3    88.9   60.0   72.7
+0.750      2     16      2      7     66.7    22.2    88.9   50.0   69.6
+0.800      2     17      1      7     70.4    22.2    94.4   66.7   70.8
+0.850      0     17      1      9     63.0     0.0    94.4    0.0   65.4
+0.900      0     17      1      9     63.0     0.0    94.4    0.0   65.4
+0.950      0     18      0      9     66.7     0.0   100.0     .    66.7
+1.000      0     18      0      9     66.7     0.0   100.0     .    66.7

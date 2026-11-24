@@ -1,0 +1,56 @@
+The SAS System
+
+10244      
+10245      /* STAT-QUANTLIFE-005: QUANTLIFE — Nelson-Aalen-Type Estimator for Censored Quantile Regression / Relationship of Quantile Function and Survival
+10245    ! Function
+10246       * Source: S154 / Chapter 102 / `Nelson-Aalen-Type Estimator for Censored Quantile Regression` (PDF pp. 8340–8341); S154 / Chapter 102 /
+10246    ! `Relationship of Quantile Function and Survival Function` (PDF pp. 8341–8342).
+10247       * Discriminates: Verified default procedure context
+10248       */
+10249      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+10249    ! validmemname=compatible locale=en_US;
+10250      %let syscc=0;
+10251      title; footnote;
+10252      ods _all_ close;
+10253      ods listing gpath="%sysfunc(pathname(work))";
+10254      ods graphics off;
+10255      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SURVIVAL (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+10255    !                                         quit;
+
+
+10256      ods path work.templat(update) sashelp.tmplmst(read);
+10257      
+10258      data survival;
+10259      call streaminit(518);
+10260      do id=1 to 80;
+10261      drug=mod(id,2);
+10262      age=25+mod(id*7,40);
+10263      time=exp(2+0.25*drug+0.008*age+rand('normal')*0.4);
+10264      status=(mod(id,5) ne 0);
+10265      output;
+10266      end;
+10267      run;
+
+NOTE: The data set WORK.SURVIVAL has 80 observations and 5 variables.
+
+10268      proc quantlife data=survival seed=1268;
+10269      class drug;
+10270      model time*status(0)=drug age / quantile=0.5;
+10271      run;
+
+NOTE: The PROCEDURE QUANTLIFE printed page 669.
+
+10272      
+10273      
+10274      
+10275      
+The SAS System
+
+10276      

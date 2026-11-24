@@ -1,0 +1,231 @@
+The SAS System
+
+22639      
+22640      /* STAT-SURVEYMEANS-015: SURVEYMEANS — ODS Graphics
+22641       * Source: S154 / Chapter 121 / `ODS Graphics` (PDF pp. 9983–9984).
+22642       * Discriminates: Getting Started: SURVEYMEANS Procedure
+22643       */
+22644      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+22644    ! validmemname=compatible locale=en_US;
+22645      %let syscc=0;
+22646      title; footnote;
+22647      ods _all_ close;
+22648      ods listing gpath="%sysfunc(pathname(work))";
+22649      ods graphics off;
+22650      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.ICECREAM (memtype=DATA).
+NOTE: Deleting WORK.MYSTAT (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.STUDENTTOTALS (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+22650    !                                         quit;
+
+
+22651      ods path work.templat(update) sashelp.tmplmst(read);
+22652      
+22653      ods graphics on;
+22654      ods trace on;
+22655      ods trace on;
+22656      data IceCream;
+22657      input Grade Spending @@;
+22658      if (Spending < 10) then Group='less';
+22659      else Group='more';
+22660      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.ICECREAM has 40 observations and 3 variables.
+
+22665      ;
+22666      ods graphics on;
+22667      title1 'Analysis of Ice Cream Spending';
+22668      title2 'Simple Random Sample Design';
+22669      proc surveymeans data=IceCream total=4000;
+22670      var Spending Group;
+22671      run;
+
+
+Output Added:
+-------------
+Name:       Summary
+Label:      Data Summary
+Template:   Stat.SurveyMeans.Factoid
+Path:       Surveymeans.Summary
+-------------
+
+Output Added:
+-------------
+Name:       ClassVarInfo
+Label:      Class Levels
+Template:   Stat.SurveyMeans.ClassVarInfo
+Path:       Surveymeans.ClassVarInfo
+-------------
+
+Output Added:
+-------------
+Name:       Statistics
+Label:      Statistics
+Template:   Stat.SurveyMeans.Statistics
+Path:       Surveymeans.Statistics
+-------------
+
+Output Added:
+-------------
+Name:       SummaryPanel
+Label:      Summary Panel
+Template:   Stat.SurveyMeans.Graphics.Summary
+Path:       Surveymeans.Spending.SummaryPanel
+-------------
+NOTE: The PROCEDURE SURVEYMEANS printed page 1485.
+
+22672      data StudentTotals;
+22673      input Grade _total_;
+22674      datalines;
+
+NOTE: The data set WORK.STUDENTTOTALS has 3 observations and 2 variables.
+
+22678      ;
+22679      data IceCream;
+22680      set IceCream;
+22681      if Grade=7 then Prob=20/1824;
+22682      if Grade=8 then Prob=9/1025;
+22683      if Grade=9 then Prob=11/1151;
+22684      Weight=1/Prob;
+22685      run;
+
+NOTE: There were 40 observations read from the data set WORK.ICECREAM.
+NOTE: The data set WORK.ICECREAM has 40 observations and 5 variables.
+
+22686      title1 'Analysis of Ice Cream Spending';
+22687      title2 'Stratified Sample Design';
+22688      proc surveymeans data=IceCream total=StudentTotals;
+22689      stratum Grade / list;
+22690      var Spending Group;
+22691      weight Weight;
+22692      run;
+
+
+Output Added:
+-------------
+Name:       Summary
+Label:      Data Summary
+Template:   Stat.SurveyMeans.Factoid
+Path:       Surveymeans.Summary
+-------------
+
+Output Added:
+-------------
+Name:       ClassVarInfo
+Label:      Class Levels
+Template:   Stat.SurveyMeans.ClassVarInfo
+Path:       Surveymeans.ClassVarInfo
+-------------
+
+Output Added:
+-------------
+Name:       StrataInfo
+Label:      Stratum Information
+Template:   Stat.SurveyMeans.StrataInfo
+Path:       Surveymeans.StrataInfo
+-------------
+
+Output Added:
+-------------
+Name:       Statistics
+Label:      Statistics
+Template:   Stat.SurveyMeans.Statistics
+Path:       Surveymeans.Statistics
+-------------
+
+Output Added:
+-------------
+Name:       SummaryPanel
+Label:      Summary Panel
+Template:   Stat.SurveyMeans.Graphics.Summary
+Path:       Surveymeans.Spending.SummaryPanel
+-------------
+NOTE: The PROCEDURE SURVEYMEANS printed page 1486.
+
+22693      title1 'Analysis of Ice Cream Spending';
+22694      title2 'Stratified Sample Design';
+22695      proc surveymeans data=IceCream total=StudentTotals;
+22696      stratum Grade / list;
+22697      var Spending Group;
+22698      weight Weight;
+22699      ods output Statistics=MyStat;
+22700      run;
+
+
+Output Added:
+-------------
+Name:       Summary
+Label:      Data Summary
+Template:   Stat.SurveyMeans.Factoid
+Path:       Surveymeans.Summary
+-------------
+
+Output Added:
+-------------
+Name:       ClassVarInfo
+Label:      Class Levels
+Template:   Stat.SurveyMeans.ClassVarInfo
+Path:       Surveymeans.ClassVarInfo
+-------------
+
+Output Added:
+-------------
+Name:       StrataInfo
+Label:      Stratum Information
+Template:   Stat.SurveyMeans.StrataInfo
+Path:       Surveymeans.StrataInfo
+-------------
+
+Output Added:
+-------------
+Name:       Statistics
+Label:      Statistics
+Template:   Stat.SurveyMeans.Statistics
+Path:       Surveymeans.Statistics
+-------------
+
+Output Added:
+-------------
+Name:       SummaryPanel
+Label:      Summary Panel
+Template:   Stat.SurveyMeans.Graphics.Summary
+Path:       Surveymeans.Spending.SummaryPanel
+-------------
+NOTE: The data set WORK.MYSTAT has 3 observations and 7 variables.
+NOTE: The PROCEDURE SURVEYMEANS printed page 1487.
+
+22701      ods output Statistics=MyStat;
+22702      proc print data=MyStat;
+22703      run;
+
+
+Output Added:
+-------------
+Name:       Print
+Label:      Data Set WORK.MYSTAT
+Data Name:  ProcPrintTable
+Path:       Print.Print
+-------------
+WARNING: Output 'Statistics' was not created.  Make sure that the output object name, label, or path is spelled correctly.  Also, verify that the appropriate 
+         procedure options are used to produce the requested output object.  For example, verify that the NOPRINT option is not used.
+NOTE: There were 3 observations read from the data set WORK.MYSTAT.
+NOTE: The PROCEDURE PRINT printed page 1488.
+
+22704      ods trace off;
+22705      ods trace off;
+22706      ods graphics off;
+22707      
+22708      
+22709      
+22710      
+The SAS System
+
+22711      

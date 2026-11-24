@@ -1,0 +1,68 @@
+The SAS System
+
+15177      
+15178      /* STAT-RSREG-006: RSREG — Output Data Sets
+15179       * Source: S154 / Chapter 108 / `Output Data Sets` (PDF pp. 8886–8887).
+15180       * Discriminates: Getting Started: RSREG Procedure
+15181       */
+15182      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+15182    ! validmemname=compatible locale=en_US;
+15183      %let syscc=0;
+15184      title; footnote;
+15185      ods _all_ close;
+15186      ods listing gpath="%sysfunc(pathname(work))";
+15187      ods graphics off;
+15188      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.EXPERIMENT (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK._DOCTMP000000000000000000021 (memtype=DATA).
+NOTE: Deleting WORK._DOCTMP000000000000000000022 (memtype=DATA).
+NOTE: Deleting WORK._DOCTMP000000000000000000023 (memtype=DATA).
+15188    !                                         quit;
+
+
+15189      ods path work.templat(update) sashelp.tmplmst(read);
+15190      
+15191      title 'Response Surface with a Simple Optimum';
+15192      data smell;
+15193      input Odor T R H @@;
+15194      label
+15195      T = "Temperature"
+15196      R = "Gas-Liquid Ratio"
+15197      H = "Packing Height";
+15198      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.SMELL has 15 observations and 4 variables.
+
+15203      ;
+15204      proc rsreg data=smell;
+15205      model Odor = T R H / lackfit;
+15206      run;
+
+NOTE: The PROCEDURE RSREG printed pages 1117-1118.
+
+15207      ods graphics on;
+15208      proc rsreg data=smell
+15209      plots(unpack)=surface(3d at(H=7.541050));
+15210      model Odor = T R H;
+15211      ods select 'T * R = Pred';
+15212      run;
+
+
+15213      ods graphics off;
+15214      run;
+15215      quit;
+15216      
+15217      
+15218      
+15219      
+The SAS System
+
+15220      

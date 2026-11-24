@@ -1,0 +1,120 @@
+The SAS System
+
+171        
+172        /* STAT-NLMIXED-013: NLMIXED — Displayed Output / ODS Table Names
+173         * Source: S154 / Chapter 89 / `Displayed Output` (PDF pp. 7163–7165); S154 / Chapter 89 / `ODS Table Names` (PDF pp. 7165–7166).
+174         * Discriminates: Verified default procedure context
+175         */
+176        options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+176      ! validmemname=compatible locale=en_US;
+177        %let syscc=0;
+178        title; footnote;
+179        ods _all_ close;
+180        ods listing gpath="%sysfunc(pathname(work))";
+181        ods graphics off;
+182        proc datasets library=work kill nolist;
+NOTE: Deleting WORK.NESTED (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+182      !                                         quit;
+
+
+183        ods path work.templat(update) sashelp.tmplmst(read);
+184        
+185        ods trace on;
+186        %let na = 100;
+187        %let nb = 5;
+188        %let nr = 2;
+189        data nested;
+190        do A = 1 to &na;
+191        err1 = 3*rannor(339205);
+192        do B = 1 to &nb;
+193        err2 = 2*rannor(314159);
+194        do rep = 1 to &nr;
+195        err3 = 1*rannor(314159);
+196        resp = 10 + err1 + err2 + err3;
+197        output;
+198        end;
+199        end;
+200        end;
+201        run;
+
+NOTE: The data set WORK.NESTED has 1000 observations and 7 variables.
+
+202        proc nlmixed data = nested;
+203        bounds vara >=0, varb_a >=0;
+204        mean = intercept + aeffect + beffect;
+205        model resp ~ normal (mean, s2);
+206        random aeffect ~ normal(0,vara) subject = A;
+207        random beffect ~ normal(0,varb_a) subject = B(A);
+208        run;
+
+NOTE: To assign starting values to parameters, use the PARMS statement. The default starting value of 1.0 is in effect for all parameters.
+
+Output Added:
+-------------
+Name:       Specifications
+Label:      Specifications
+Template:   Stat.NLM.Specifications
+Path:       Nlmixed.Specifications
+-------------
+
+Output Added:
+-------------
+Name:       Dimensions
+Label:      Dimensions
+Template:   Stat.NLM.Dimensions
+Path:       Nlmixed.Dimensions
+-------------
+
+Output Added:
+-------------
+Name:       Parameters
+Label:      Initial Parameters
+Template:   Stat.NLM.Parameters
+Path:       Nlmixed.Parameters
+-------------
+
+Output Added:
+-------------
+Name:       IterHistory
+Label:      Iteration History
+Template:   Stat.NLM.IterHistory
+Path:       Nlmixed.IterHistory
+-------------
+
+Output Added:
+-------------
+Name:       ConvergenceStatus
+Label:      Convergence Status
+Template:   Stat.NLM.ConvergenceStatus
+Path:       Nlmixed.ConvergenceStatus
+-------------
+NOTE: Convergence criterion (GCONV=1E-6) satisfied.
+NOTE: At least one element of the gradient is greater than 1e-3.
+
+Output Added:
+-------------
+Name:       FitStatistics
+Label:      Fit Statistics
+Template:   Stat.NLM.FitStatistics
+Path:       Nlmixed.FitStatistics
+-------------
+
+Output Added:
+-------------
+Name:       ParameterEstimates
+Label:      Parameter Estimates
+Template:   Stat.NLM.ParameterEstimates
+Path:       Nlmixed.ParameterEstimates
+-------------
+NOTE: The PROCEDURE NLMIXED printed page 4.
+
+209        ods trace off;
+210        
+211        
+212        
+213        
+The SAS System
+
+214        

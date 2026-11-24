@@ -1,0 +1,67 @@
+
+The REG Procedure
+Model: MODEL1
+Dependent Variable: y 
+
+Number of Observations Read          12
+Number of Observations Used          12
+
+
+                             Analysis of Variance
+ 
+                                    Sum of           Mean
+Source                   DF        Squares         Square    F Value    Pr > F
+
+Model                     2      592.81972      296.40986     220.53    <.0001
+Error                     9       12.09695        1.34411                     
+Corrected Total          11      604.91667                                    
+
+
+Root MSE              1.15936    R-Square     0.9800
+Dependent Mean       14.91667    Adj R-Sq     0.9756
+Coeff Var             7.77222                       
+
+
+                        Parameter Estimates
+ 
+                     Parameter       Standard
+Variable     DF       Estimate          Error    t Value    Pr > |t|
+
+Intercept     1        1.33390        0.76219       1.75      0.1140
+x             1        1.81763        0.17986      10.11      <.0001
+z             1        0.62407        0.44211       1.41      0.1917
+
+line
+
+*****************************************;      
+** SAS Scoring Code for PROC REG;               
+*****************************************;      
+                                                
+label P_y = 'Predicted: y' ;                    
+drop _LMR_BAD;                                  
+_LMR_BAD=0;                                     
+                                                
+*** Check interval variables for missing values;
+if nmiss(x,z) then do;                          
+   _LMR_BAD=1;                                  
+   goto _SKIP_000;                              
+end;                                            
+                                                
+*** Compute Linear Predictors;                  
+drop _LP0;                                      
+_LP0 = 0;                                       
+                                                
+*** Effect: x;                                  
+_LP0 = _LP0 + (1.81762711864406) * x;           
+*** Effect: z;                                  
+_LP0 = _LP0 + (0.62406779661016) * z;           
+                                                
+*** Predicted values;                           
+_LP0 = _LP0 +     1.33389830508474;             
+_SKIP_000:                                      
+if _LMR_BAD=1 then do;                          
+   P_y = .;                                     
+end;                                            
+else do;                                        
+   P_y = _LP0;                                  
+end;                                            

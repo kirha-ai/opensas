@@ -1,0 +1,117 @@
+The SAS System
+
+24021      
+24022      /* STAT-GLIMMIX-013: GLIMMIX — Pseudo-likelihood Estimation for Weighted Multilevel Models / GLM Mode or GLMM Mode / Exploring and Comparing
+24022    ! Covariance Matrices
+24023       * Source: S154 / Chapter 52 / `Pseudo-likelihood Estimation for Weighted Multilevel Models` (PDF pp. 3844–3847); S154 / Chapter 52 / `GLM Mode or
+24023    ! GLMM Mode` (PDF pp. 3847–3848); S154 / Chapter 52 / `Exploring and Comparing Covariance Matrices` (PDF pp. 3861–3862).
+24024       * Discriminates: Example 52.9: Testing Equality of Covariance and Correlation Matrices
+24025       */
+24026      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+24026    ! validmemname=compatible locale=en_US;
+24027      %let syscc=0;
+24028      title; footnote;
+24029      ods _all_ close;
+24030      ods listing gpath="%sysfunc(pathname(work))";
+24031      ods graphics off;
+24032      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.DIALLEL (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.ZMAT (memtype=DATA).
+24032    !                                         quit;
+
+
+24033      ods path work.templat(update) sashelp.tmplmst(read);
+24034      
+24035      proc print data=Sashelp.iris(obs=10);
+24036      run;
+
+NOTE: There were 10 observations read from the data set SASHELP.IRIS.
+NOTE: The PROCEDURE PRINT printed page 2419.
+
+24037      data iris_univ;
+24038      set sashelp.iris;
+24039      retain id 0;
+24040      array y (4) SepalLength SepalWidth PetalLength PetalWidth;
+24041      id+1;
+24042      do var=1 to 4;
+24043      response = y{var};
+24044      output;
+24045      end;
+24046      drop SepalLength SepalWidth PetalLength PetalWidth:;
+24047      run;
+
+NOTE: There were 150 observations read from the data set SASHELP.IRIS.
+NOTE: The data set WORK.IRIS_UNIV has 600 observations and 4 variables.
+
+24048      ods select FitStatistics CovParms CovTests;
+24049      proc glimmix data=iris_univ;
+24050      class species var id;
+24051      model response = species*var;
+24052      random _residual_ / type=un group=species subject=id;
+24053      covtest homogeneity;
+24054      run;
+
+
+
+NOTE: Convergence criterion (ABSGCONV=0.00001) satisfied.
+NOTE: The PROCEDURE GLIMMIX printed page 2420.
+
+24055      ods select FitStatistics CovParms CovTests;
+24056      proc glimmix data=iris_univ;
+24057      class species var id;
+24058      model response = species*var;
+24059      random _residual_ / type=unr group=species subject=id;
+24060      covtest 'Equal Covariance Matrices' homogeneity;
+24061      covtest 'Equal Correlation Matrices' general
+24062      0 0 0 0 1 0 0 0 0 0
+24063      0 0 0 0 -1 0 0 0 0 0,
+24064      0 0 0 0 1 0 0 0 0 0
+24065      0 0 0 0 0 0 0 0 0 0
+24066      0 0 0 0 -1 0 0 0 0 0,
+24067      0 0 0 0 0 1 0 0 0 0
+24068      0 0 0 0 0 -1 0 0 0 0,
+24069      0 0 0 0 0 1 0 0 0 0
+24070      0 0 0 0 0 0 0 0 0 0
+24071      0 0 0 0 0 -1 0 0 0 0,
+24072      0 0 0 0 0 0 1 0 0 0
+24073      0 0 0 0 0 0 -1 0 0 0,
+24074      0 0 0 0 0 0 1 0 0 0
+24075      0 0 0 0 0 0 0 0 0 0
+24076      0 0 0 0 0 0 -1 0 0 0,
+24077      0 0 0 0 0 0 0 1 0 0
+24078      0 0 0 0 0 0 0 -1 0 0,
+24079      0 0 0 0 0 0 0 1 0 0
+24080      0 0 0 0 0 0 0 0 0 0
+24081      0 0 0 0 0 0 0 -1 0 0,
+24082      0 0 0 0 0 0 0 0 1 0
+24083      0 0 0 0 0 0 0 0 -1 0,
+24084      0 0 0 0 0 0 0 0 1 0
+24085      0 0 0 0 0 0 0 0 0 0
+24086      0 0 0 0 0 0 0 0 -1 0,
+24087      0 0 0 0 0 0 0 0 0 1
+24088      0 0 0 0 0 0 0 0 0 -1,
+24089      0 0 0 0 0 0 0 0 0 1
+24090      0 0 0 0 0 0 0 0 0 0
+24091      0 0 0 0 0 0 0 0 0 -1 / estimates;
+24092      run;
+
+
+
+NOTE: Convergence criterion (ABSGCONV=0.00001) satisfied.
+NOTE: The PROCEDURE GLIMMIX printed page 2421.
+
+24093      
+24094      
+24095      
+24096      
+The SAS System
+
+24097      

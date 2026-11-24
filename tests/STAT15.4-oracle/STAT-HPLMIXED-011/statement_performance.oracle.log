@@ -1,0 +1,65 @@
+The SAS System
+
+1817       
+1818       /* STAT-HPLMIXED-011: HPLMIXED — PERFORMANCE
+1819        * Source: S154 / Chapter 60 / `PERFORMANCE Statement` (PDF p. 4711).
+1820        * Discriminates: Explicit single-thread performance settings with the documented baseline computation.
+1821        */
+1822       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+1822     ! validmemname=compatible locale=en_US;
+1823       %let syscc=0;
+1824       title; footnote;
+1825       ods _all_ close;
+1826       ods listing gpath="%sysfunc(pathname(work))";
+1827       ods graphics off;
+1828       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.GETSTARTED (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK._NAMEDAT (memtype=DATA).
+NOTE: Deleting WORK._ORACLE_SCORED (memtype=DATA).
+1828     !                                         quit;
+
+
+1829       ods path work.templat(update) sashelp.tmplmst(read);
+1830       
+1831       data SchoolSample;
+1832       do SchoolID = 1 to 300;
+1833       do nID = 1 to 25;
+1834       Neighborhood = (SchoolID-1)*5 + nId;
+1835       bInt = 5 *ranuni(1);
+1836       bTime = 5 *ranuni(1);
+1837       bTime2 = ranuni(1);
+1838       do sID = 1 to 2;
+1839       do Time = 1 to 4;
+1840       Math = bInt + bTime*Time + bTime2*Time*Time + rannor(2);
+1841       output;
+1842       end;
+1843       end;
+1844       end;
+1845       end;
+1846       run;
+
+NOTE: The data set WORK.SCHOOLSAMPLE has 60000 observations and 9 variables.
+
+1847       proc hplmixed data=SchoolSample;
+1848       class Neighborhood SchoolID;
+1849       model Math = Time Time*Time / solution;
+1850       random int Time Time *Time / sub=Neighborhood(SchoolID) type=un;
+1851       
+1852       performance nthreads=1;
+1853       run;
+
+NOTE: The HPLMIXED procedure is executing in single-machine mode.
+NOTE: Convergence criterion (ABSGCONV=0.00001) satisfied.
+NOTE: The PROCEDURE HPLMIXED printed page 120.
+
+1854       
+1855       
+1856       
+1857       
+The SAS System
+
+1858       

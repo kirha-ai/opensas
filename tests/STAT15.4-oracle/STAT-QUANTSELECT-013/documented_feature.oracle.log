@@ -1,0 +1,396 @@
+The SAS System
+
+11899      
+11900      /* STAT-QUANTSELECT-013: QUANTSELECT — Displayed Output / ODS Table Names
+11901       * Source: S154 / Chapter 104 / `Displayed Output` (PDF pp. 8504–8508); S154 / Chapter 104 / `ODS Table Names` (PDF pp. 8508–8509).
+11902       * Discriminates: Getting Started: QUANTSELECT Procedure
+11903       */
+11904      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+11904    ! validmemname=compatible locale=en_US;
+11905      %let syscc=0;
+11906      title; footnote;
+11907      ods _all_ close;
+11908      ods listing gpath="%sysfunc(pathname(work))";
+11909      ods graphics off;
+11910      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK._ORACLE_OUTPUT (memtype=DATA).
+11910    !                                         quit;
+
+
+11911      ods path work.templat(update) sashelp.tmplmst(read);
+11912      
+11913      ods trace on;
+11914      proc contents varnum data=sashelp.baseball;
+11915      ods select position;
+11916      run;
+
+
+Output Added:
+-------------
+Name:       Position
+Label:      Varnum
+Template:   Base.Contents.Position
+Path:       Contents.DataSet.Position
+-------------
+NOTE: The PROCEDURE CONTENTS printed page 865.
+
+11917      proc quantselect data=sashelp.baseball;
+11918      class Div;
+11919      model Salary = nAtBat nHits nHome nRuns nRBI nBB yrMajor crAtBat
+11920      crHits crHome crRuns crRbi crBB nAssts nError nOuts
+11921      Div
+11922      / selection=lasso(adaptive stop=aic choose=sbc sh=7);
+11923      run;
+
+
+Output Added:
+-------------
+Name:       ModelInfo
+Label:      Model Information
+Template:   Stat.QUANTSELECT.ModelInfo
+Path:       Quantselect.ModelInfo
+-------------
+
+Output Added:
+-------------
+Name:       NObs
+Label:      Number of Observations
+Template:   Stat.QUANTSELECT.NObs
+Path:       Quantselect.NObs
+-------------
+
+Output Added:
+-------------
+Name:       ClassLevelInfo
+Label:      Class Level Information
+Template:   Stat.QUANTSELECT.ClassLevelInfo
+Path:       Quantselect.ClassLevelInfo
+-------------
+
+Output Added:
+-------------
+Name:       Dimensions
+Label:      Dimensions
+Template:   Stat.QUANTSELECT.Dimensions
+Path:       Quantselect.Dimensions
+-------------
+
+Output Added:
+-------------
+Name:       SelectionSummary
+Label:      LASSO Selection Summary
+Template:   Stat.QUANTSELECT.SelectionSummary
+Path:       Quantselect.Summary.SelectionSummary
+-------------
+
+Output Added:
+-------------
+Name:       StopReason
+Label:      Stop Reason
+Template:   Stat.QUANTSELECT.StopReason
+Path:       Quantselect.Summary.StopReason
+-------------
+
+Output Added:
+-------------
+Name:       SelectionReason
+Label:      Selection Reason
+Template:   Stat.QUANTSELECT.SelectionReason
+Path:       Quantselect.Summary.SelectionReason
+-------------
+
+Output Added:
+-------------
+Name:       FitStatistics
+Label:      Fit Statistics
+Template:   stat.QUANTSELECT.FitStatistics
+Path:       Quantselect.SelectedModel.FitStatistics
+-------------
+
+Output Added:
+-------------
+Name:       SelectedEffects
+Label:      Selected Effects
+Template:   Stat.QUANTSELECT.SelectedEffects
+Path:       Quantselect.SelectedModel.SelectedEffects
+-------------
+
+Output Added:
+-------------
+Name:       ParameterEstimates
+Label:      Parameter Estimates
+Template:   stat.QUANTSELECT.ParameterEstimates
+Path:       Quantselect.SelectedModel.ParameterEstimates
+-------------
+NOTE: The PROCEDURE QUANTSELECT printed pages 866-868.
+
+11924      proc quantselect data=sashelp.baseball;
+11925      class Div;
+11926      model Salary = nAtBat nHits nHome nRuns nRBI nBB yrMajor crAtBat
+11927      crHits crHome crRuns crRbi crBB nAssts nError nOuts
+11928      Div
+11929      / quantiles=0.1 0.9 selection=lasso(adaptive stop=aic choose=sbc sh=7);
+11930      run;
+
+
+Output Added:
+-------------
+Name:       ModelInfo
+Label:      Model Information
+Template:   Stat.QUANTSELECT.ModelInfo
+Path:       Quantselect.ModelInfo
+-------------
+
+Output Added:
+-------------
+Name:       NObs
+Label:      Number of Observations
+Template:   Stat.QUANTSELECT.NObs
+Path:       Quantselect.NObs
+-------------
+
+Output Added:
+-------------
+Name:       ClassLevelInfo
+Label:      Class Level Information
+Template:   Stat.QUANTSELECT.ClassLevelInfo
+Path:       Quantselect.ClassLevelInfo
+-------------
+
+Output Added:
+-------------
+Name:       Dimensions
+Label:      Dimensions
+Template:   Stat.QUANTSELECT.Dimensions
+Path:       Quantselect.Dimensions
+-------------
+
+Output Added:
+-------------
+Name:       SelectionSummary
+Label:      LASSO Selection Summary
+Template:   Stat.QUANTSELECT.SelectionSummary
+Path:       Quantselect.Quantile1.Summary.SelectionSummary
+-------------
+
+Output Added:
+-------------
+Name:       StopReason
+Label:      Stop Reason
+Template:   Stat.QUANTSELECT.StopReason
+Path:       Quantselect.Quantile1.Summary.StopReason
+-------------
+
+Output Added:
+-------------
+Name:       SelectionReason
+Label:      Selection Reason
+Template:   Stat.QUANTSELECT.SelectionReason
+Path:       Quantselect.Quantile1.Summary.SelectionReason
+-------------
+
+Output Added:
+-------------
+Name:       FitStatistics
+Label:      Fit Statistics
+Template:   stat.QUANTSELECT.FitStatistics
+Path:       Quantselect.Quantile1.SelectedModel.FitStatistics
+-------------
+
+Output Added:
+-------------
+Name:       SelectedEffects
+Label:      Selected Effects
+Template:   Stat.QUANTSELECT.SelectedEffects
+Path:       Quantselect.Quantile1.SelectedModel.SelectedEffects
+-------------
+
+Output Added:
+-------------
+Name:       ParameterEstimates
+Label:      Parameter Estimates
+Template:   stat.QUANTSELECT.ParameterEstimates
+Path:       Quantselect.Quantile1.SelectedModel.ParameterEstimates
+-------------
+
+Output Added:
+-------------
+Name:       SelectionSummary
+Label:      LASSO Selection Summary
+Template:   Stat.QUANTSELECT.SelectionSummary
+Path:       Quantselect.Quantile2.Summary.SelectionSummary
+-------------
+
+Output Added:
+-------------
+Name:       StopReason
+Label:      Stop Reason
+Template:   Stat.QUANTSELECT.StopReason
+Path:       Quantselect.Quantile2.Summary.StopReason
+-------------
+
+Output Added:
+-------------
+Name:       SelectionReason
+Label:      Selection Reason
+Template:   Stat.QUANTSELECT.SelectionReason
+Path:       Quantselect.Quantile2.Summary.SelectionReason
+-------------
+
+Output Added:
+-------------
+Name:       FitStatistics
+Label:      Fit Statistics
+Template:   stat.QUANTSELECT.FitStatistics
+Path:       Quantselect.Quantile2.SelectedModel.FitStatistics
+-------------
+
+Output Added:
+-------------
+Name:       SelectedEffects
+Label:      Selected Effects
+Template:   Stat.QUANTSELECT.SelectedEffects
+Path:       Quantselect.Quantile2.SelectedModel.SelectedEffects
+-------------
+
+Output Added:
+-------------
+Name:       ParameterEstimates
+Label:      Parameter Estimates
+Template:   stat.QUANTSELECT.ParameterEstimates
+Path:       Quantselect.Quantile2.SelectedModel.ParameterEstimates
+-------------
+NOTE: The PROCEDURE QUANTSELECT printed pages 869-873.
+
+11931      ods graphics on;
+11932      proc quantselect data=sashelp.baseball plots=all;
+11933      class Div;
+11934      model Salary = nAtBat nHits nHome nRuns nRBI nBB yrMajor crAtBat
+11935      crHits crHome crRuns crRbi crBB nAssts nError nOuts
+11936      Div
+11937      / quantiles=0.1 selection=lasso(adaptive stop=aic choose=sbc sh=7);
+11938      run;
+
+
+Output Added:
+-------------
+Name:       ModelInfo
+Label:      Model Information
+Template:   Stat.QUANTSELECT.ModelInfo
+Path:       Quantselect.ModelInfo
+-------------
+
+Output Added:
+-------------
+Name:       NObs
+Label:      Number of Observations
+Template:   Stat.QUANTSELECT.NObs
+Path:       Quantselect.NObs
+-------------
+
+Output Added:
+-------------
+Name:       ClassLevelInfo
+Label:      Class Level Information
+Template:   Stat.QUANTSELECT.ClassLevelInfo
+Path:       Quantselect.ClassLevelInfo
+-------------
+
+Output Added:
+-------------
+Name:       Dimensions
+Label:      Dimensions
+Template:   Stat.QUANTSELECT.Dimensions
+Path:       Quantselect.Dimensions
+-------------
+
+Output Added:
+-------------
+Name:       SelectionSummary
+Label:      LASSO Selection Summary
+Template:   Stat.QUANTSELECT.SelectionSummary
+Path:       Quantselect.Summary.SelectionSummary
+-------------
+
+Output Added:
+-------------
+Name:       StopReason
+Label:      Stop Reason
+Template:   Stat.QUANTSELECT.StopReason
+Path:       Quantselect.Summary.StopReason
+-------------
+
+Output Added:
+-------------
+Name:       SelectionReason
+Label:      Selection Reason
+Template:   Stat.QUANTSELECT.SelectionReason
+Path:       Quantselect.Summary.SelectionReason
+-------------
+
+Output Added:
+-------------
+Name:       CoefficientPanel
+Label:      Coefficient Panel
+Template:   Stat.QUANTSELECT.Graphics.CoefficientPanel
+Path:       Quantselect.Summary.CoefficientPanel
+-------------
+NOTE: Data label collision avoidance has been disabled because the threshold has been reached. You can set LABELMAX=500 in the ODS GRAPHICS statement to 
+      restore collision avoidance.
+
+Output Added:
+-------------
+Name:       CriterionPanel
+Label:      Criterion Panel
+Template:   Stat.QUANTSELECT.Graphics.CriterionPanel
+Path:       Quantselect.Summary.CriterionPanel
+-------------
+
+Output Added:
+-------------
+Name:       ACLPlot
+Label:      ACL Plot
+Template:   Stat.QUANTSELECT.Graphics.ACLPlot
+Path:       Quantselect.Summary.ACLPlot
+-------------
+
+Output Added:
+-------------
+Name:       FitStatistics
+Label:      Fit Statistics
+Template:   stat.QUANTSELECT.FitStatistics
+Path:       Quantselect.SelectedModel.FitStatistics
+-------------
+
+Output Added:
+-------------
+Name:       SelectedEffects
+Label:      Selected Effects
+Template:   Stat.QUANTSELECT.SelectedEffects
+Path:       Quantselect.SelectedModel.SelectedEffects
+-------------
+
+Output Added:
+-------------
+Name:       ParameterEstimates
+Label:      Parameter Estimates
+Template:   stat.QUANTSELECT.ParameterEstimates
+Path:       Quantselect.SelectedModel.ParameterEstimates
+-------------
+NOTE: The PROCEDURE QUANTSELECT printed pages 874-876.
+
+11939      ods trace off;
+11940      
+11941      
+11942      
+11943      
+The SAS System
+
+11944      

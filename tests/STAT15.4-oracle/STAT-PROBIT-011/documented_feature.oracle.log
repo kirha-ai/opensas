@@ -1,0 +1,130 @@
+The SAS System
+
+9473       
+9474       /* STAT-PROBIT-011: PROBIT — Displayed Output / ODS Table Names
+9475        * Source: S154 / Chapter 100 / `Displayed Output` (PDF pp. 8165–8167); S154 / Chapter 100 / `ODS Table Names` (PDF p. 8167).
+9476        * Discriminates: Getting Started: PROBIT Procedure
+9477        */
+9478       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+9478     ! validmemname=compatible locale=en_US;
+9479       %let syscc=0;
+9480       title; footnote;
+9481       ods _all_ close;
+9482       ods listing gpath="%sysfunc(pathname(work))";
+9483       ods graphics off;
+9484       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.NEW (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.STUDY (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+9484     !                                         quit;
+
+
+9485       ods path work.templat(update) sashelp.tmplmst(read);
+9486       
+9487       ods trace on;
+9488       data study;
+9489       input Dose Respond @@;
+9490       Number = 15;
+9491       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.STUDY has 12 observations and 3 variables.
+
+9494       ;
+9495       ods graphics on;
+9496       proc probit data=study log10 optc plots=(predpplot ippplot);
+9497       model respond/number=dose;
+9498       output out=new p=p_hat;
+9499       run;
+
+
+Output Added:
+-------------
+Name:       ModelInfo
+Label:      Model Information
+Template:   Stat.Lifereg.ModelInfo
+Path:       Probit.ModelInfo
+-------------
+
+Output Added:
+-------------
+Name:       NObs
+Label:      Observations Summary
+Template:   Stat.Lifereg.NObs
+Path:       Probit.NObs
+-------------
+NOTE: Algorithm converged.
+
+Output Added:
+-------------
+Name:       ConvergenceStatus
+Label:      Convergence Status
+Template:   Stat.Lifereg.ConvergenceStatus
+Path:       Probit.ConvergenceStatus
+-------------
+
+Output Added:
+-------------
+Name:       Type3Analysis
+Label:      Type 3 Analysis
+Template:   Stat.Lifereg.Type3Analysis
+Path:       Probit.Type3Analysis
+-------------
+
+Output Added:
+-------------
+Name:       ParameterEstimates
+Label:      Analysis of Parameter Estimates
+Template:   stat.lifereg.parameterestimates
+Path:       Probit.ParameterEstimates
+-------------
+
+Output Added:
+-------------
+Name:       MuSigma
+Label:      Tolerance Parameters
+Template:   stat.probit.musigma
+Path:       Probit.MuSigma
+-------------
+
+Output Added:
+-------------
+Name:       CovTolerance
+Label:      Estimated Covariance Matrix for Tolerance Parameters
+Template:   Stat.Probit.CovTolerance
+Path:       Probit.CovTolerance
+-------------
+
+Output Added:
+-------------
+Name:       PredPPlot
+Label:      Predicted Probability Plot
+Template:   Stat.Probit.Graphics.PredPPlot
+Path:       Probit.PredPPlot
+-------------
+NOTE: The confidence limits displayed on the plots are conditioned on the estimated threshold. The variation in estimating the threshold is ignored.
+
+Output Added:
+-------------
+Name:       IPPPlot
+Label:      Inverse Predicted Probability Plot
+Template:   Stat.Probit.Graphics.IPPPlot
+Path:       Probit.IPPPlot
+-------------
+NOTE: The data set WORK.NEW has 12 observations and 4 variables.
+NOTE: The PROCEDURE PROBIT printed page 623.
+
+9500       ods trace off;
+9501       
+9502       
+9503       
+9504       
+The SAS System
+
+9505       

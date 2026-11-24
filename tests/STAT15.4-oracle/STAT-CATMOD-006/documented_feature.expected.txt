@@ -1,0 +1,83 @@
+
+Bartlett's Data
+Model with No 3-Variable Interaction
+
+The CATMOD Procedure
+
+                         Data Summary
+
+Response           Length*Time*Status     Response Levels    8
+Weight Variable    wt                     Populations        1
+Data Set           BARTLETT               Total Frequency  960
+Frequency Missing  0                      Observations       8
+
+
+ Population Profiles
+ 
+Sample    Sample Size
+---------------------
+    1             960
+
+
+         Response Profiles
+ 
+Response    Length    Time    Status
+------------------------------------
+    1       1         1       1     
+    2       1         1       2     
+    3       1         2       1     
+    4       1         2       2     
+    5       2         1       1     
+    6       2         1       2     
+    7       2         2       1     
+    8       2         2       2     
+
+
+                   Maximum Likelihood Analysis
+
+           Maximum likelihood computations converged.           
+
+
+     Maximum Likelihood Analysis of Variance
+ 
+Source               DF   Chi-Square    Pr > ChiSq
+--------------------------------------------------
+Length                1         2.64        0.1041
+Time                  1         5.25        0.0220
+Length*Time           1         5.25        0.0220
+Status                1        48.94        <.0001
+Length*Status         1        48.94        <.0001
+Time*Status           1        95.01        <.0001
+
+Likelihood Ratio      1         2.29        0.1299
+
+
+     Maximum Likelihood Predicted Values for Response Functions
+ 
+            ------Observed------    ------Predicted-----
+Function                Standard                Standard
+ Number     Function       Error    Function       Error    Residual
+--------------------------------------------------------------------
+   1        -0.29248    0.105806    -0.23565    0.098486    -0.05683
+   2        -0.91152    0.129188    -0.94942    0.129948    0.037901
+   3        -0.91152    0.129188    -0.94942    0.129948    0.037901
+   4        -0.29248    0.105806    -0.23565    0.098486    -0.05683
+   5        -0.66951    0.118872    -0.69362    0.120172    0.024113
+   6        -0.45199    0.110921     -0.3897    0.102267    -0.06229
+   7        -1.90835    0.192465    -1.73146    0.142969    -0.17688
+
+
+                 Maximum Likelihood Predicted Values for Frequencies
+ 
+                            -------Observed------    ------Predicted------
+                                         Standard                 Standard
+Length    Time    Status    Frequency       Error    Frequency       Error    Residual
+--------------------------------------------------------------------------------------
+1         1       1               156    11.43022     161.0961    11.07379    -5.09614
+1         1       2                84    8.754999     78.90386    7.808613    5.096139
+1         2       1                84    8.754999     78.90386    7.808613    5.096139
+1         2       2               156    11.43022     161.0961    11.07379    -5.09614
+2         1       1               107    9.750588     101.9039    8.924304    5.096139
+2         1       2               133    10.70392     138.0961    10.33434    -5.09614
+2         2       1                31     5.47713     36.09614    4.826315    -5.09614
+2         2       2               209    12.78667     203.9039    12.21285     5.09614

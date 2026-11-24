@@ -1,0 +1,50 @@
+The SAS System
+
+870        
+871        /* STAT-BCHOICE-006: BCHOICE — RESTRICT
+872         * Source: S154 / Chapter 30 / `RESTRICT Statement` (PDF pp. 1199–1202).
+873         * Discriminates: Verified default procedure context
+874         */
+875        options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+875      ! validmemname=compatible locale=en_US;
+876        %let syscc=0;
+877        title; footnote;
+878        ods _all_ close;
+879        ods listing gpath="%sysfunc(pathname(work))";
+880        ods graphics off;
+881        proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+881      !                                         quit;
+
+
+882        ods path work.templat(update) sashelp.tmplmst(read);
+883        
+884        proc print data=Sashelp.Margarin (obs=24);
+885        by HouseID Set;
+886        id HouseID Set;
+887        run;
+
+NOTE: There were 24 observations read from the data set SASHELP.MARGARIN.
+NOTE: The PROCEDURE PRINT printed page 38.
+
+888        proc bchoice data=Sashelp.Margarin seed=123 nmc=1000 thin=2
+889        nthreads=4 plots=none nbi=200;
+890        class Brand(ref='PPk') HouseID Set;
+891        model Choice = / choiceset=(HouseID Set);
+892        random Brand LogPrice / subject=HouseID remean=(LogInc FamSize)
+893        type=un monitor=(1);
+894        run;
+
+NOTE: Generating the burn-in samples.
+NOTE: Beginning sample generation.
+NOTE: Beginning calculation of summary and diagnostics statistics.
+NOTE: The PROCEDURE BCHOICE printed page 39.
+
+895        
+896        
+897        
+898        
+The SAS System
+
+899        

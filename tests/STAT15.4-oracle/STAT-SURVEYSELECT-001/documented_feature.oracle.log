@@ -1,0 +1,74 @@
+The SAS System
+
+25349      
+25350      /* STAT-SURVEYSELECT-001: SURVEYSELECT — Data input, variable roles, and basic options
+25351       * Source: S154 / Chapter 124 / `PROC SURVEYSELECT Statement` (PDF pp. 10212–10235); S154 / Chapter 124 / `FREQ Statement` (PDF pp. 10235–10236);
+25351    !  S154 / Chapter 124 / `ID Statement` (PDF p. 10236); S154 / Chapter 124 / `SIZE Statement` (PDF pp. 10237–10238); S154 / Chapter 124 / `STRATA
+25351    ! Statement` (PDF pp. 10238–10243); S154 / Chapter 124 / `Missing Values` (PDF pp. 10243–10244); S154 / Chapter 124 / `Secondary Input Data Set`
+25351    ! (PDF pp. 10260–10261).
+25352       * Discriminates: Verified default procedure context; explicit statements: ID, SIZE, STRATA
+25353       */
+25354      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+25354    ! validmemname=compatible locale=en_US;
+25355      %let syscc=0;
+25356      title; footnote;
+25357      ods _all_ close;
+25358      ods listing gpath="%sysfunc(pathname(work))";
+25359      ods graphics off;
+25360      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.MUNICIPALITIES (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+25360    !                                         quit;
+
+
+25361      ods path work.templat(update) sashelp.tmplmst(read);
+25362      
+25363      data TravelExpense;
+25364      input ID$ Amount @@;
+25365      if (Amount < 500) then Level='1_Low ';
+25366      else if (Amount > 1500) then Level='3_High';
+25367      else Level='2_Avg ';
+25368      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.TRAVELEXPENSE has 41 observations and 3 variables.
+
+25383      ;
+25384      proc sort data=TravelExpense;
+25385      by Level;
+25386      run;
+
+NOTE: There were 41 observations read from the data set WORK.TRAVELEXPENSE.
+NOTE: The data set WORK.TRAVELEXPENSE has 41 observations and 3 variables.
+
+25387      title1 'Travel Expense Audit';
+25388      title2 'Stratified PPS (Dollar-Unit) Sampling';
+25389      proc surveyselect data=TravelExpense method=pps n=(6 10 4)
+25390      seed=47279 out=AuditSample;
+25391      size Amount;
+25392      strata Level;
+25393      run;
+
+NOTE: The data set WORK.AUDITSAMPLE has 20 observations and 5 variables.
+NOTE: The PROCEDURE SURVEYSELECT printed page 1592.
+
+25394      title1 'Travel Expense Audit';
+25395      title2 'Sample Selected by Stratified PPS Design';
+25396      proc print data=AuditSample;
+25397      run;
+
+NOTE: There were 20 observations read from the data set WORK.AUDITSAMPLE.
+NOTE: The PROCEDURE PRINT printed page 1593.
+
+25398      
+25399      
+25400      
+25401      
+The SAS System
+
+25402      

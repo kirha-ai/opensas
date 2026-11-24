@@ -1,0 +1,147 @@
+The SAS System
+
+21455      
+21456      /* STAT-SURVEYLOGISTIC-021: SURVEYLOGISTIC — ODS Graphics
+21457       * Source: S154 / Chapter 120 / `ODS Graphics` (PDF pp. 9882–9883).
+21458       * Discriminates: Verified default procedure context
+21459       */
+21460      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+21460    ! validmemname=compatible locale=en_US;
+21461      %let syscc=0;
+21462      title; footnote;
+21463      ods _all_ close;
+21464      ods listing gpath="%sysfunc(pathname(work))";
+21465      ods graphics off;
+21466      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SURVEY (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+21466    !                                         quit;
+
+
+21467      ods path work.templat(update) sashelp.tmplmst(read);
+21468      
+21469      ods graphics on;
+21470      ods trace on;
+21471      ods trace on;
+21472      data survey;
+21473      call streaminit(722);
+21474      do stratum=1 to 2;
+21475      do cluster=1 to 4;
+21476      do id=1 to 12;
+21477      age=20+mod(id*7+cluster,45);
+21478      event=rand('bernoulli',0.3);
+21479      weight=2+stratum+cluster/10;
+21480      output;
+21481      end;
+21482      end;
+21483      end;
+21484      run;
+
+NOTE: The data set WORK.SURVEY has 96 observations and 6 variables.
+
+21485      proc surveylogistic data=survey;
+21486      strata stratum;
+21487      cluster cluster;
+21488      weight weight;
+21489      model event(event='1')=age;
+21490      run;
+
+
+Output Added:
+-------------
+Name:       ModelInfo
+Label:      Model Information
+Template:   Stat.SurveyLogistic.ModelInfo
+Path:       Surveylogistic.ModelInfo
+-------------
+
+Output Added:
+-------------
+Name:       VarianceEstimation
+Label:      Variance Estimation
+Template:   Stat.SurveyLogistic.Factoid
+Path:       Surveylogistic.VarianceEstimation
+-------------
+
+Output Added:
+-------------
+Name:       NObs
+Label:      Observations Summary
+Template:   Stat.Surveylogistic.NObs
+Path:       Surveylogistic.NObs
+-------------
+
+Output Added:
+-------------
+Name:       ResponseProfile
+Label:      Response Profile
+Template:   Stat.Surveylogistic.ResponseProfile
+Path:       Surveylogistic.ResponseProfile
+-------------
+NOTE: PROC SURVEYLOGISTIC is modeling the probability that event=1.
+
+Output Added:
+-------------
+Name:       ConvergenceStatus
+Label:      Convergence Status
+Template:   Stat.Logistic.MConvergenceStatus
+Path:       Surveylogistic.ConvergenceStatus
+-------------
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+
+Output Added:
+-------------
+Name:       FitStatistics
+Label:      Fit Statistics
+Template:   Stat.Surveylogistic.FitStatistics
+Path:       Surveylogistic.FitStatistics
+-------------
+
+Output Added:
+-------------
+Name:       GlobalTests
+Label:      Global Tests
+Template:   Stat.Surveylogistic.GlobalTests
+Path:       Surveylogistic.GlobalTests
+-------------
+
+Output Added:
+-------------
+Name:       ParameterEstimates
+Label:      Parameter Estimates
+Template:   Stat.Surveylogistic.ParameterEstimates
+Path:       Surveylogistic.ParameterEstimates
+-------------
+
+Output Added:
+-------------
+Name:       OddsRatios
+Label:      Odds Ratios
+Template:   Stat.Surveylogistic.OddsRatios
+Path:       Surveylogistic.OddsRatios
+-------------
+
+Output Added:
+-------------
+Name:       Association
+Label:      Association Statistics
+Template:   Stat.Surveylogistic.Association
+Path:       Surveylogistic.Association
+-------------
+NOTE: The PROCEDURE SURVEYLOGISTIC printed page 1425.
+
+21491      ods trace off;
+21492      ods trace off;
+21493      ods graphics off;
+21494      
+21495      
+21496      
+21497      
+The SAS System
+
+21498      

@@ -1,0 +1,180 @@
+
+The SEQDESIGN Procedure
+Design: ErrorSpend
+
+                    Design Information
+
+Statistic Distribution                               Normal
+Boundary Scale                               Standardized Z
+Alternative Hypothesis                            Two-Sided
+Early Stop                                      Reject Null
+Method                                       Error Spending
+Boundary Key                                           Both
+Alternative Reference                              0.693147
+Number of Stages                                          4
+Alpha                                                  0.05
+Beta                                                    0.1
+Power                                                   0.9
+Max Information (Percent of Fixed Sample)          101.8279
+Max Information                                    22.26962
+Null Ref ASN (Percent of Fixed Sample)             101.2586
+Alt Ref ASN (Percent of Fixed Sample)              77.73131
+
+
+                                          Method Information
+ 
+                                                      ----Error Spending----   Alternative
+Boundary      Method              Alpha       Beta    Function                   Reference       Drift
+
+Upper Alpha   Error Spending    0.02500    0.10000    Approx O'Brien-Fleming      0.693147     3.27101
+Lower Alpha   Error Spending    0.02500    0.10000    Approx O'Brien-Fleming      -0.69315    -3.27101
+
+
+                             Boundary Information (Standardized Z Scale)
+                                          Null Reference = 0
+ 
+                                                 -------Alternative------    -----Boundary Values----
+           ---------Information Level--------    --------Reference-------    ---Lower--    ---Upper--
+_Stage_    Proportion      Actual      Events         Lower         Upper         Alpha         Alpha
+
+      1        0.2500    5.567405    22.26962      -1.63550       1.63550      -4.33263       4.33263
+      2        0.5000    11.13481    44.53924      -2.31295       2.31295      -2.96333       2.96333
+      3        0.7500    16.70221    66.80886      -2.83278       2.83278      -2.35902       2.35902
+      4        1.0000    22.26962    89.07847      -3.27101       3.27101      -2.01409       2.01409
+
+
+            Sample Size Summary
+
+Test                     Two-Sample Survival
+Null Hazard Rate                     0.03466
+Hazard Rate (Group A)                0.01733
+Hazard Rate (Group B)                0.03466
+Hazard Ratio                             0.5
+log(Hazard Ratio)                   -0.69315
+Reference Hazards                    Alt Ref
+Accrual                              Uniform
+Accrual Rate                              15
+Min Accrual Time                    5.938565
+Min Sample Size                     89.07847
+Max Accrual Time                    23.78469
+Max Sample Size                     356.7704
+Max Number of Events                89.07847
+
+
+       Numbers of Events (D)
+     Two-Sample Log-Rank Test
+ 
+_Stage_           D    Information
+
+      1       22.27         5.5674
+      2       44.54        11.1348
+      3       66.81        16.7022
+      4       89.08        22.2696
+
+The SEQDESIGN Procedure
+Design: ErrorSpend
+
+                          Design Information
+
+Statistic Distribution                                          Normal
+Boundary Scale                                          Standardized Z
+Alternative Hypothesis                                       Two-Sided
+Early Stop                                                 Reject Null
+Method                                                  Error Spending
+Boundary Key                                                      Both
+Alternative Reference                                         0.693147
+Number of Stages                                                     4
+Alpha                                                             0.05
+Beta                                                               0.1
+Power                                                              0.9
+Max Information (Percent of Fixed Sample)                     101.8279
+Max Information                                               22.26962
+Null Ref ASN (Percent of Fixed Sample)                        101.2586
+Alt Ref ASN (Percent of Fixed Sample)                         77.73131
+Adj Design Alpha                                                  0.05
+Adj Design Beta                                                0.08832
+Adj Design Power                                               0.91168
+Adj Design Max Information (Percent of Fixed Sample)          101.8064
+Adj Design Max Information                                    23.23194
+Adj Design Null Ref ASN (Percent of Fixed Sample)             101.2299
+Adj Design Alt Ref ASN (Percent of Fixed Sample)              76.32612
+
+
+                                          Method Information
+ 
+                                                      ----Error Spending----   Alternative
+Boundary      Method              Alpha       Beta    Function                   Reference       Drift
+
+Upper Alpha   Error Spending    0.02500    0.10000    Approx O'Brien-Fleming      0.693147     3.27101
+Lower Alpha   Error Spending    0.02500    0.10000    Approx O'Brien-Fleming      -0.69315    -3.27101
+
+
+                             Boundary Information (Standardized Z Scale)
+                                          Null Reference = 0
+ 
+                                                 -------Alternative------    -----Boundary Values----
+           ---------Information Level--------    --------Reference-------    ---Lower--    ---Upper--
+_Stage_    Proportion      Actual      Events         Lower         Upper         Alpha         Alpha
+
+      1        0.2500    5.567405    22.26962      -1.63550       1.63550      -4.33263       4.33263
+      2        0.5000    11.13481    44.53924      -2.31295       2.31295      -2.96333       2.96333
+      3        0.7500    16.70221    66.80886      -2.83278       2.83278      -2.35902       2.35902
+      4        1.0000    22.26962    89.07847      -3.27101       3.27101      -2.01409       2.01409
+
+
+                 Sample Size Summary
+
+Test                               Two-Sample Survival
+Null Hazard Rate                               0.03466
+Hazard Rate (Group A)                          0.01733
+Hazard Rate (Group B)                          0.03466
+Hazard Ratio                                       0.5
+log(Hazard Ratio)                             -0.69315
+Reference Hazards                              Alt Ref
+Accrual                                        Uniform
+Accrual Rate                                        15
+Accrual Time                                        18
+Follow-up Time                                7.133226
+Total Time                                    25.13323
+Max Number of Events                          89.07847
+Max Sample Size                                    270
+Expected Sample Size (Null Ref)               269.9206
+Expected Sample Size (Alt Ref)                263.1141
+Follow-up Time (Ceiling Time)                        8
+Total Time (Ceiling Time)                           26
+
+
+                                Numbers of Events (D) and Sample Sizes (N)
+                                         Two-Sample Log-Rank Test
+ 
+           ----------------------------------------Fractional Time----------------------------------------
+_Stage_           D    D(Grp 1)    D(Grp 2)        Time           N    N(Grp 1)    N(Grp 2)    Information
+
+      1       22.27        7.73       14.54     11.2631      168.95       84.47       84.47         5.5674
+      2       44.54       15.73       28.81     16.2875      244.31      122.16      122.16        11.1348
+      3       66.81       23.93       42.88     20.4926      270.00      135.00      135.00        16.7022
+      4       89.08       32.51       56.57     25.1332      270.00      135.00      135.00        22.2696
+
+                                Numbers of Events (D) and Sample Sizes (N)
+                                         Two-Sample Log-Rank Test
+ 
+           ------------------------------------------Ceiling Time-----------------------------------------
+_Stage_           D    D(Grp 1)    D(Grp 2)        Time           N    N(Grp 1)    N(Grp 2)    Information
+
+      1       25.11        8.74       16.37          12      180.00       90.00       90.00         6.2781
+      2       48.22       17.07       31.16          17      255.00      127.50      127.50        12.0552
+      3       69.39       24.90       44.48          21      270.00      135.00      135.00        17.3468
+      4       92.93       34.04       58.89          26      270.00      135.00      135.00        23.2319
+
+
+                 Ceiling-Adjusted Design Boundary Information (Standardized Z Scale)
+                                          Null Reference = 0
+ 
+                                                 -------Alternative------    -----Boundary Values----
+           ---------Information Level--------    --------Reference-------    ---Lower--    ---Upper--
+_Stage_    Proportion      Actual      Events         Lower         Upper         Alpha         Alpha
+
+      1        0.2702    6.278064    25.11225      -1.73675       1.73675      -4.15591       4.15591
+      2        0.5189    12.05517    48.22068      -2.40665       2.40665      -2.90189       2.90189
+      3        0.7467    17.34678    69.38712      -2.88692       2.88692      -2.36973       2.36973
+      4        1.0000    23.23194    92.92776      -3.34094       3.34094      -2.01362       2.01362

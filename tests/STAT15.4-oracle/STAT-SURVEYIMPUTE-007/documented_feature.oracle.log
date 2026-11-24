@@ -1,0 +1,66 @@
+The SAS System
+
+20336      
+20337      /* STAT-SURVEYIMPUTE-007: SURVEYIMPUTE — OUTPUT / Output Data Sets
+20338       * Source: S154 / Chapter 119 / `OUTPUT Statement` (PDF pp. 9716–9718); S154 / Chapter 119 / `Output Data Sets` (PDF p. 9763).
+20339       * Discriminates: Getting Started: SURVEYIMPUTE Procedure; explicit statements: OUTPUT
+20340       */
+20341      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+20341    ! validmemname=compatible locale=en_US;
+20342      %let syscc=0;
+20343      title; footnote;
+20344      ods _all_ close;
+20345      ods listing gpath="%sysfunc(pathname(work))";
+20346      ods graphics off;
+
+
+20347      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SMOKE (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+20347    !                                         quit;
+
+
+20348      ods path work.templat(update) sashelp.tmplmst(read);
+20349      
+20350      data SIS_Survey_Sub;
+20351      input State $ NewUser School SamplingWeight Department Response @@;
+20352      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.SIS_SURVEY_SUB has 235 observations and 6 variables.
+
+20400      ;
+20401      proc surveyimpute data=SIS_Survey_Sub method=fefi varmethod=jackknife;
+20402      class Department Response;
+20403      var Department Response;
+20404      strata State NewUser;
+20405      cluster School;
+20406      weight SamplingWeight;
+20407      output out=SIS_Survey_Imputed outjkcoefs=SIS_JKCoefs;
+20408      run;
+
+NOTE: Convergence achieved; maximum relative difference less than 0.001 for fractional weights for the EM algorithm.
+NOTE: The data set WORK.SIS_SURVEY_IMPUTED has 509 observations and 56 variables.
+NOTE: The data set WORK.SIS_JKCOEFS has 47 observations and 3 variables.
+NOTE: The PROCEDURE SURVEYIMPUTE printed page 1404.
+
+20409      proc surveyfreq data=SIS_Survey_Imputed varmethod=jackknife;
+20410      table department response department *response;
+20411      weight ImpWt;
+20412      repweights ImpRepWt: / jkcoefs=SIS_JKCoefs;
+20413      run;
+
+NOTE: The PROCEDURE SURVEYFREQ printed page 1405.
+
+20414      
+20415      
+20416      
+20417      
+The SAS System
+
+20418      

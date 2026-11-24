@@ -1,0 +1,97 @@
+The SAS System
+
+5141       
+5142       /* STAT-PLM-011: PLM — Official examples and feature integration regression
+5143        * Source: S154 / Chapter 94 / `Examples: PLM Procedure` (PDF pp. 7651–7674).
+5144        * Discriminates: Example 94.1: Scoring with PROC PLM
+5145        */
+5146       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+5146     ! validmemname=compatible locale=en_US;
+5147       %let syscc=0;
+5148       title; footnote;
+5149       ods _all_ close;
+5150       ods listing gpath="%sysfunc(pathname(work))";
+5151       ods graphics off;
+5152       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.BLOCKANALYSIS (memtype=ITEMSTOR).
+NOTE: Deleting WORK.BLOCKDESIGN (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+5152     !                                         quit;
+
+
+5153       ods path work.templat(update) sashelp.tmplmst(read);
+5154       
+5155       %let nObs = 5000;
+5156       %let nVars = 100;
+5157       data SimuData;
+5158       array x{&nVars};
+5159       do obsNum=1 to &nObs;
+5160       do j=1 to &nVars;
+5161       x{j}=ranuni(1);
+5162       end;
+5163       linp = 10 + 11 *x1 - 10*sqrt(x2) + 2/x3 - 8*exp(x4) + 7*x5*x5
+5164       - 6*x6**1.5 + 5*log(x7) - 4*sin(3.14*x8) + 3*x9 - 2*x10;
+5165       TrueProb = 1/(1+exp(-linp));
+5166       if ranuni(1) < TrueProb then y=1;
+5167       else y=0;
+5168       output;
+5169       end;
+5170       run;
+
+NOTE: The data set WORK.SIMUDATA has 5000 observations and 105 variables.
+
+5171       proc logistic data=SimuData;
+5172       effect splines = spline(x1-x&nVars/separate);
+5173       model y = splines/selection=stepwise;
+5174       store work.SimuModel;
+5175       run;
+
+NOTE: PROC LOGISTIC is modeling the probability that y=0. One way to change this to model the probability that y=1 is to specify the response variable option 
+      EVENT='1'.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied in Step 0.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied in Step 1.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied in Step 2.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied in Step 3.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied in Step 4.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied in Step 5.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied in Step 6.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied in Step 7.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied in Step 8.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied in Step 9.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied in Step 10.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied in Step 11.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied in Step 12.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied in Step 13.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied in Step 14.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied in Step 15.
+NOTE: The LOGISTIC procedure generated the model item store WORK.SIMUMODEL.
+NOTE: There were 5000 observations read from the data set WORK.SIMUDATA.
+NOTE: The PROCEDURE LOGISTIC printed page 387.
+
+5176       data test;
+5177       array x{&nVars};
+5178       do j=1 to &nVars;
+5179       x{j}=0.15;
+5180       end;
+5181       drop j;
+5182       output;
+5183       run;
+
+NOTE: The data set WORK.TEST has 1 observations and 100 variables.
+
+5184       proc plm restore=work.SimuModel;
+5185       score data=test out=testout predicted / ilink;
+5186       run;
+
+NOTE: The data set WORK.TESTOUT has 1 observations and 101 variables.
+NOTE: The PROCEDURE PLM printed page 388.
+
+5187       
+5188       
+5189       
+5190       
+The SAS System
+
+5191       

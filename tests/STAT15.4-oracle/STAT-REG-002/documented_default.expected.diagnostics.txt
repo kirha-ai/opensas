@@ -1,0 +1,2 @@
+WARNING: You must enable ODS graphics before requesting plots with the PLOTS option in the PROC REG statement.
+WARNING: You must enable ODS graphics before requesting plots with the PLOTS option in the PROC REG statement.

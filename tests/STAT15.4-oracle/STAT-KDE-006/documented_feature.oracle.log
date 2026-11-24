@@ -1,0 +1,59 @@
+The SAS System
+
+9621       
+9622       /* STAT-KDE-006: KDE — Bandwidth Selection
+9623        * Source: S154 / Chapter 73 / `Bandwidth Selection` (PDF pp. 5414–5415).
+9624        * Discriminates: Getting Started: KDE Procedure
+9625        */
+9626       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+9626     ! validmemname=compatible locale=en_US;
+9627       %let syscc=0;
+9628       title; footnote;
+9629       ods _all_ close;
+9630       ods listing gpath="%sysfunc(pathname(work))";
+9631       ods graphics off;
+9632       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.BIVNORMAL (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+9632     !                                         quit;
+
+
+9633       ods path work.templat(update) sashelp.tmplmst(read);
+9634       
+9635       data bivnormal;
+9636       seed = 1283470;
+9637       do i = 1 to 1000;
+9638       z1 = rannor(seed);
+9639       z2 = rannor(seed);
+9640       z3 = rannor(seed);
+9641       x = 3*z1+z2;
+9642       y = 3*z1+z3;
+9643       output;
+9644       end;
+9645       drop seed;
+9646       run;
+
+NOTE: The data set WORK.BIVNORMAL has 1000 observations and 6 variables.
+
+9647       ods graphics on;
+9648       proc kde data=bivnormal;
+9649       bivar x y / plots=(contour surface);
+9650       run;
+
+NOTE: Processing BIVAR statement number 1.
+NOTE: The PROCEDURE KDE printed page 708.
+
+9651       ods graphics off;
+9652       run;
+9653       quit;
+9654       
+9655       
+9656       
+9657       
+The SAS System
+
+9658       

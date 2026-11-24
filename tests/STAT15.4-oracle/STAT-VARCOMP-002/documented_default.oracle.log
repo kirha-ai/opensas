@@ -1,0 +1,53 @@
+The SAS System
+
+29558      
+29559      /* STAT-VARCOMP-002: VARCOMP — Variance component estimation
+29560       * Source: S154 / Chapter 130 / `Getting Started: VARCOMP Procedure` (PDF pp. 10727–10729); S154 / Chapter 130 / `Overview: VARCOMP Procedure` (PDF
+29560    !  pp. 10726–10727).
+29561       * Discriminates: Getting Started: VARCOMP Procedure
+29562       */
+29563      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+29563    ! validmemname=compatible locale=en_US;
+29564      %let syscc=0;
+29565      title; footnote;
+29566      ods _all_ close;
+29567      ods listing gpath="%sysfunc(pathname(work))";
+29568      ods graphics off;
+29569      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.CURE (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK._ORACLE_INPUT (memtype=DATA).
+29569    !                                         quit;
+
+
+29570      ods path work.templat(update) sashelp.tmplmst(read);
+29571      
+29572      data Cure;
+29573      input Lab Temp Batch $ Cure @@;
+29574      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.CURE has 108 observations and 4 variables.
+
+29602      ;
+29603      title 'Analyzing the Cure Rate of Rubber';
+29604      proc varcomp method=reml data=cure;
+29605      class temp lab batch;
+29606      model cure=temp|lab batch(lab temp) / fixed=1;
+29607      run;
+
+NOTE: There were 108 observations read from the data set WORK.CURE.
+NOTE: The PROCEDURE VARCOMP printed page 1804.
+
+29608      
+29609      
+29610      
+29611      
+The SAS System
+
+29612      

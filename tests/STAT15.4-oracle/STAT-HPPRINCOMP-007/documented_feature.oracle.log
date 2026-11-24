@@ -1,0 +1,124 @@
+The SAS System
+
+4371       
+4372       /* STAT-HPPRINCOMP-007: HPPRINCOMP — Displayed Output / ODS Table Names
+4373        * Source: S154 / Chapter 65 / `Displayed Output` (PDF pp. 4963–4965); S154 / Chapter 65 / `ODS Table Names` (PDF pp. 4965–4966).
+4374        * Discriminates: Getting Started: HPPRINCOMP Procedure
+4375        */
+4376       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+4376     ! validmemname=compatible locale=en_US;
+4377       %let syscc=0;
+4378       title; footnote;
+4379       ods _all_ close;
+4380       ods listing gpath="%sysfunc(pathname(work))";
+4381       ods graphics off;
+4382       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.CRIME (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK._ORACLE_OUTPUT (memtype=DATA).
+4382     !                                         quit;
+
+
+4383       ods path work.templat(update) sashelp.tmplmst(read);
+4384       
+4385       ods trace on;
+4386       title 'Crime Rates per 100,000 Population by State';
+4387       data Crime;
+4388       length State $15;
+4389       input State :$15. Murder Rape Robbery Assault
+4390       Burglary Larceny Auto_Theft;
+4391       datalines;
+
+NOTE: The data set WORK.CRIME has 50 observations and 8 variables.
+
+4442       ;
+4443       proc hpprincomp data=Crime;
+4444       run;
+
+NOTE: The HPPRINCOMP procedure is executing in single-machine mode.
+
+Output Added:
+-------------
+Name:       PerformanceInfo
+Label:      Performance Information
+Template:   HPA.Common.PerfInfo
+Path:       HPPrincomp.PerformanceInfo
+-------------
+
+Output Added:
+-------------
+Name:       DataAccessInfo
+Label:      Data Access Information
+Template:   HPA.Common.DataAccessInfo
+Path:       HPPrincomp.DataAccessInfo
+-------------
+
+Output Added:
+-------------
+Name:       ModelInfo
+Label:      Model Information
+Template:   HPSTAT.HPPRINCOMP.ModelInfo
+Path:       HPPrincomp.ModelInfo
+-------------
+
+Output Added:
+-------------
+Name:       NObs
+Label:      Number of Observations
+Template:   HPSTAT.HPPRINCOMP.NObs
+Path:       HPPrincomp.NObs
+-------------
+
+Output Added:
+-------------
+Name:       NVars
+Label:      Number of Variables
+Template:   HPSTAT.HPPRINCOMP.NVars
+Path:       HPPrincomp.NVars
+-------------
+WARNING: 2 observations omitted due to missing values.
+
+Output Added:
+-------------
+Name:       SimpleStatistics
+Label:      Simple Statistics
+Template:   HPSTAT.HPPRINCOMP.SimpleStatistics
+Path:       HPPrincomp.SimpleStatistics
+-------------
+
+Output Added:
+-------------
+Name:       Corr
+Label:      Correlation Matrix
+Template:   HPSTAT.HPPRINCOMP.Corr
+Path:       HPPrincomp.Corr
+-------------
+
+Output Added:
+-------------
+Name:       Eigenvalues
+Label:      Eigenvalues
+Template:   HPSTAT.HPPRINCOMP.Eigenvalues
+Path:       HPPrincomp.Eigenvalues
+-------------
+
+Output Added:
+-------------
+Name:       Eigenvectors
+Label:      Eigenvectors
+Template:   HPSTAT.HPPRINCOMP.Eigenvectors
+Path:       HPPrincomp.Eigenvectors
+-------------
+NOTE: The PROCEDURE HPPRINCOMP printed page 169.
+
+4445       ods trace off;
+4446       
+4447       
+4448       
+4449       
+The SAS System
+
+4450       

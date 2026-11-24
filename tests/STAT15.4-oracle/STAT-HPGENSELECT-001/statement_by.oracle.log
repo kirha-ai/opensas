@@ -1,0 +1,68 @@
+The SAS System
+
+1358       
+1359       /* STAT-HPGENSELECT-001: HPGENSELECT — Data input, variable roles, and basic options
+1360        * Source: S154 / Chapter 59 / `PROC HPGENSELECT Statement` (PDF pp. 4629–4636); S154 / Chapter 59 / `BY Statement` (PDF p. 4636); S154 / Chapter
+1360     ! 59 / `FREQ Statement` (PDF pp. 4637–4638); S154 / Chapter 59 / `ID Statement` (PDF p. 4638); S154 / Chapter 59 / `WEIGHT Statement` (PDF p. 4652);
+1360     ! S154 / Chapter 59 / `Missing Values` (PDF pp. 4653–4654).
+1361        * Discriminates: Two explicit BY groups contain identical inputs, exposing group boundaries and per-group results.
+1362        */
+1363       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+1363     ! validmemname=compatible locale=en_US;
+1364       %let syscc=0;
+1365       title; footnote;
+1366       ods _all_ close;
+1367       ods listing gpath="%sysfunc(pathname(work))";
+1368       ods graphics off;
+1369       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.YEAST (memtype=DATA).
+NOTE: Deleting WORK._ORACLE_INPUT (memtype=DATA).
+1369     !                                         quit;
+
+
+1370       ods path work.templat(update) sashelp.tmplmst(read);
+1371       
+1372       data getStarted;
+1373       input C1-C5 Y Total;
+1374       datalines;
+
+NOTE: The data set WORK.GETSTARTED has 100 observations and 7 variables.
+
+1475       ;
+1476       data _oracle_input; set getStarted; do _oracle_by=1 to 2; output; end; run;
+
+NOTE: There were 100 observations read from the data set WORK.GETSTARTED.
+NOTE: The data set WORK._ORACLE_INPUT has 200 observations and 8 variables.
+
+1477       proc sort data=_oracle_input; by _oracle_by; run;
+
+NOTE: There were 200 observations read from the data set WORK._ORACLE_INPUT.
+NOTE: The data set WORK._ORACLE_INPUT has 200 observations and 8 variables.
+
+1478       proc hpgenselect data=_oracle_input;
+1479       by _oracle_by;
+1480       class C1-C5;
+1481       model Y = C1-C5 / Distribution=Poisson Link=Log;
+1482       run;
+
+NOTE: The HPGENSELECT procedure is executing in single-machine mode.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The above message was for the following BY group:
+      _oracle_by=1
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The above message was for the following BY group:
+      _oracle_by=2
+NOTE: There were 200 observations read from the data set WORK._ORACLE_INPUT.
+NOTE: The PROCEDURE HPGENSELECT printed pages 115-117.
+
+1483       
+1484       
+1485       
+1486       
+The SAS System
+
+1487       

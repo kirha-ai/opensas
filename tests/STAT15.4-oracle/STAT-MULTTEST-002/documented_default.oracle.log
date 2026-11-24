@@ -1,0 +1,56 @@
+The SAS System
+
+4855       
+4856       /* STAT-MULTTEST-002: MULTTEST — Multiple testing statistics and adjusted probabilities
+4857        * Source: S154 / Chapter 86 / `Getting Started: MULTTEST Procedure` (PDF pp. 6893–6897); S154 / Chapter 86 / `Overview: MULTTEST Procedure` (PDF
+4857     ! pp. 6892–6893).
+4858        * Discriminates: Documented default analysis with explicit complete public or synthetic inputs
+4859        */
+4860       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+4860     ! validmemname=compatible locale=en_US;
+4861       %let syscc=0;
+4862       title; footnote;
+4863       ods _all_ close;
+4864       ods listing gpath="%sysfunc(pathname(work))";
+4865       ods graphics off;
+4866       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.DRUG (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+4866     !                                         quit;
+
+
+4867       ods path work.templat(update) sashelp.tmplmst(read);
+4868       
+4869       data Drug;
+4870       input Dose$ SideEff1-SideEff10;
+4871       datalines;
+
+NOTE: The data set WORK.DRUG has 15 observations and 11 variables.
+
+4887       ;
+4888       ods graphics on;
+4889       proc multtest bootstrap nsample=199 seed=41287 notables
+4890       plots=PByTest(vref=0.05 0.1);
+4891       class Dose;
+4892       test ca(SideEff1-SideEff10);
+4893       contrast 'Trend' 0 1 2;
+4894       run;
+
+NOTE: No input data set is specified.  The data set WORK.DRUG is used.
+NOTE: There were 15 observations read from the data set WORK.DRUG.
+NOTE: The PROCEDURE MULTTEST printed page 360.
+
+4895       quit;
+4896       
+4897       
+4898       
+4899       
+The SAS System
+
+4900       

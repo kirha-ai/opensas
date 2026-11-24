@@ -1,0 +1,46 @@
+The SAS System
+
+11914      
+11915      /* STAT-CANDISC-004: CANDISC — Output Data Sets
+11916       * Source: S154 / Chapter 35 / `Output Data Sets` (PDF pp. 2163–2165).
+11917       * Discriminates: Example 35.1: Analyzing Iris Data by Using PROC CANDISC
+11918       */
+11919      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+11919    ! validmemname=compatible locale=en_US;
+11920      %let syscc=0;
+11921      title; footnote;
+11922      ods _all_ close;
+11923      ods listing gpath="%sysfunc(pathname(work))";
+11924      ods graphics off;
+11925      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.OUTCAN (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+11925    !                                         quit;
+
+
+11926      ods path work.templat(update) sashelp.tmplmst(read);
+11927      
+11928      title 'Fisher (1936) Iris Data';
+11929      proc candisc data=sashelp.iris out=outcan distance anova;
+11930      class Species;
+11931      var SepalLength SepalWidth PetalLength PetalWidth;
+11932      run;
+
+NOTE: There were 150 observations read from the data set SASHELP.IRIS.
+NOTE: The data set WORK.OUTCAN has 150 observations and 9 variables.
+NOTE: The PROCEDURE CANDISC printed pages 1706-1711.
+
+11933      
+11934      
+11935      
+11936      
+The SAS System
+
+11937      

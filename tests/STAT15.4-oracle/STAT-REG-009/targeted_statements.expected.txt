@@ -1,0 +1,94 @@
+
+The REG Procedure
+Model: MODEL1
+Dependent Variable: y 
+
+Number of Observations Read          90
+Number of Observations Used          90
+
+
+                             Analysis of Variance
+ 
+                                    Sum of           Mean
+Source                   DF        Squares         Square    F Value    Pr > F
+
+Model                     2      179.70813       89.85406     118.33    <.0001
+Error                    87       66.06162        0.75933                     
+Corrected Total          89      245.76974                                    
+
+
+Root MSE              0.87139    R-Square     0.7312
+Dependent Mean        5.66685    Adj R-Sq     0.7250
+Coeff Var            15.37706                       
+
+
+                        Parameter Estimates
+ 
+                     Parameter       Standard
+Variable     DF       Estimate          Error    t Value    Pr > |t|
+
+Intercept     1        5.82910        0.09332      62.46      <.0001
+x             1        1.37249        0.10221      13.43      <.0001
+z             1       -0.66423        0.09261      -7.17      <.0001
+
+The REG Procedure
+Model: MODEL1
+Dependent Variable: y2 
+
+Number of Observations Read          90
+Number of Observations Used          90
+
+
+                             Analysis of Variance
+ 
+                                    Sum of           Mean
+Source                   DF        Squares         Square    F Value    Pr > F
+
+Model                     2       89.76437       44.88218      45.21    <.0001
+Error                    87       86.36963        0.99275                     
+Corrected Total          89      176.13399                                    
+
+
+Root MSE              0.99637    R-Square     0.5096
+Dependent Mean        1.83860    Adj R-Sq     0.4984
+Coeff Var            54.19182                       
+
+
+                        Parameter Estimates
+ 
+                     Parameter       Standard
+Variable     DF       Estimate          Error    t Value    Pr > |t|
+
+Intercept     1        1.98210        0.10670      18.58      <.0001
+x             1        0.59361        0.11687       5.08      <.0001
+z             1        0.86425        0.10589       8.16      <.0001
+
+The REG Procedure
+Model: MODEL1
+Multivariate Test 1
+
+       Error Matrix (E)
+
+66.061616933      6.8976621431
+6.8976621431      86.369626486
+
+
+     Hypothesis Matrix (H)
+
+179.70812587      6.8188162852
+6.8188162852      89.764367715
+
+
+                 Multivariate Statistics and F Approximations
+ 
+                             S=2    M=-0.5    N=42
+ 
+Statistic                        Value    F Value    Num DF    Den DF    Pr > F
+
+Wilks' Lambda               0.13127853      75.68         4       172    <.0001
+Pillai's Trace              1.24191848      71.26         4       174    <.0001
+Hotelling-Lawley Trace      3.77460390      80.85         4    102.17    <.0001
+Roy's Greatest Root         2.73531186     118.99         2        87    <.0001
+
+         NOTE: F Statistic for Roy's Greatest Root is an upper bound.
+                 NOTE: F Statistic for Wilks' Lambda is exact.

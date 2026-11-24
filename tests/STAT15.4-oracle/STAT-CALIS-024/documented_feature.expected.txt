@@ -1,0 +1,2560 @@
+
+The CALIS Procedure
+Covariance Structure Analysis: Model and Initial Values
+
+      Modeling Information
+ Maximum Likelihood Estimation
+
+Data Set            WORK.WHEATON
+N Obs               932         
+Model Type          PATH        
+Analysis            Covariances 
+
+
+                        Variables in the Model
+
+Endogenous    Manifest     Anomie67  Anomie71  Education  Powerless67
+                           Powerless71  SEI                          
+              Latent       Alien67  Alien71                          
+Exogenous     Manifest                                               
+              Latent       SES                                       
+
+                  Number of Endogenous Variables = 8
+                  Number of Exogenous Variables  = 1
+
+
+             Initial Estimates for PATH List
+ 
+-------------Path-------------    Parameter      Estimate
+
+Anomie67       <===    Alien67                    1.00000
+Powerless67    <===    Alien67                    0.83300
+Anomie71       <===    Alien71                    1.00000
+Powerless71    <===    Alien71                    0.83300
+Education      <===    SES                        1.00000
+SEI            <===    SES        lambda                .
+Alien67        <===    SES        gamma1                .
+Alien71        <===    SES        gamma2                .
+Alien71        <===    Alien67    beta                  .
+
+
+     Initial Estimates for Variance Parameters
+ 
+Variance
+Type         Variable       Parameter      Estimate
+
+Error        Anomie67       theta1                .
+             Powerless67    theta2                .
+             Anomie71       theta1                .
+             Powerless71    theta2                .
+             Education      theta3                .
+             SEI            theta4                .
+             Alien67        psi1                  .
+             Alien71        psi2                  .
+Exogenous    SES            phi                   .
+
+
+   Initial Estimates for Covariances Among Errors
+ 
+Error of       Error of       Parameter      Estimate
+
+Anomie67       Anomie71       theta5                .
+Powerless67    Powerless71    theta5                .
+
+The CALIS Procedure
+Covariance Structure Analysis: Descriptive Statistics
+
+                         Simple Statistics
+ 
+                Variable                          Mean       Std Dev
+
+Anomie67       Anomie (1967)                         0       3.44006
+Powerless67    Powerlessness (1967)                  0       3.06007
+Anomie71       Anomie (1971)                         0       3.54006
+Powerless71    Powerlessness (1971)                  0       3.16006
+Education      Education                             0       3.10000
+SEI            Occupational Status Index             0      21.21999
+
+The CALIS Procedure
+Covariance Structure Analysis: Optimization
+
+        Initial Estimation Methods
+
+       1    Instrumental Variables Method
+       2    McDonald Method              
+       3    Two-Stage Least Squares      
+
+
+              Optimization Start
+              Parameter Estimates
+ 
+    N    Parameter      Estimate      Gradient
+
+    1    lambda          4.99508      -0.00206
+    2    gamma1         -0.62322      -0.04069
+    3    gamma2         -0.20437      -0.03816
+    4    beta            0.66589       0.03789
+    5    theta1          3.51433      -0.00409
+    6    theta2          3.65991       0.01182
+    7    theta3          2.49860      -0.00578
+    8    theta4        272.85274     0.0000194
+    9    psi1            5.57764      -0.00217
+   10    psi2            3.79636      -0.00935
+   11    phi             7.11140       0.00108
+   12    theta5          0.45298      -0.06463
+
+  Value of Objective Function = 0.0365979443
+
+The CALIS Procedure
+Covariance Structure Analysis: Optimization
+
+Levenberg-Marquardt Optimization
+
+Scaling Update of More (1978)
+
+Parameter Estimates                   12
+Functions (Observations)              21
+
+                                             Optimization Start
+
+Active Constraints                                  0  Objective Function                       0.0365979443
+Max Abs Gradient Element                 0.0646338767  Radius                                              1
+
+
+                                                                                                         Ratio
+                                                                                                       Between
+                                                                                                        Actual
+                                                                 Objective     Max Abs                     and
+                     Function         Active        Objective     Function    Gradient               Predicted
+Iter     Restarts       Calls    Constraints         Function       Change     Element     Lambda       Change
+
+   1            0           4              0          0.01453       0.0221     0.00142          0        1.013
+   2            0           6              0          0.01448     0.000046    0.000249          0        1.001
+   3            0           8              0          0.01448     1.007E-7    4.717E-6          0        1.006
+
+                                            Optimization Results
+
+Iterations                                          3  Function Calls                                     11
+Jacobian Calls                                      5  Active Constraints                                  0
+Objective Function                       0.0144844814  Max Abs Gradient Element                 4.7172823E-6
+Lambda                                              0  Actual Over Pred Change                  1.0060912036
+Radius                                    0.001390392                                                       
+
+Convergence criterion (ABSGCONV=0.00001) satisfied.                                               
+
+The CALIS Procedure
+Covariance Structure Analysis: Maximum Likelihood Estimation
+
+                            Fit Summary
+
+Modeling Info        Number of Observations                     932
+                     Number of Variables                          6
+                     Number of Moments                           21
+                     Number of Parameters                        12
+                     Number of Active Constraints                 0
+                     Baseline Model Function Value           2.2894
+                     Baseline Model Chi-Square            2131.4327
+                     Baseline Model Chi-Square DF                15
+                     Pr > Baseline Model Chi-Square          <.0001
+Absolute Index       Fit Function                            0.0145
+                     Chi-Square                             13.4851
+                     Chi-Square DF                                9
+                     Pr > Chi-Square                         0.1419
+                     Z-Test of Wilson & Hilferty             1.0754
+                     Hoelter Critical N                        1169
+                     Root Mean Square Residual (RMR)         0.2281
+                     Standardized RMR (SRMR)                 0.0150
+                     Goodness of Fit Index (GFI)             0.9953
+Parsimony Index      Adjusted GFI (AGFI)                     0.9890
+                     Parsimonious GFI                        0.5972
+                     RMSEA Estimate                          0.0231
+                     RMSEA Lower 90% Confidence Limit        0.0000
+                     RMSEA Upper 90% Confidence Limit        0.0470
+                     Probability of Close Fit                0.9705
+                     ECVI Estimate                           0.0405
+                     ECVI Lower 90% Confidence Limit         0.0357
+                     ECVI Upper 90% Confidence Limit         0.0556
+                     Akaike Information Criterion           37.4851
+                     Bozdogan CAIC                         107.5330
+                     Schwarz Bayesian Criterion             95.5330
+                     McDonald Centrality                     0.9976
+Incremental Index    Bentler Comparative Fit Index           0.9979
+                     Bentler-Bonett NFI                      0.9937
+                     Bentler-Bonett Non-normed Index         0.9965
+                     Bollen Normed Index Rho1                0.9895
+                     Bollen Non-normed Index Delta2          0.9979
+                     James et al. Parsimonious NFI           0.5962
+
+The CALIS Procedure
+Covariance Structure Analysis: Maximum Likelihood Estimation
+
+                                           PATH List
+ 
+                                                               Standard
+-------------Path-------------    Parameter      Estimate         Error     t Value    Pr > |t|
+
+Anomie67       <===    Alien67                    1.00000                                      
+Powerless67    <===    Alien67                    0.83300                                      
+Anomie71       <===    Alien71                    1.00000                                      
+Powerless71    <===    Alien71                    0.83300                                      
+Education      <===    SES                        1.00000                                      
+SEI            <===    SES        lambda          5.36883       0.43371     12.3788      <.0001
+Alien67        <===    SES        gamma1         -0.62994       0.05634    -11.1809      <.0001
+Alien71        <===    SES        gamma2         -0.24086       0.05489     -4.3884      <.0001
+Alien71        <===    Alien67    beta            0.59312       0.04678     12.6788      <.0001
+
+
+                                   Variance Parameters
+ 
+Variance                                                 Standard
+Type         Variable       Parameter      Estimate         Error     t Value    Pr > |t|
+
+Error        Anomie67       theta1          3.60796       0.20092     17.9572      <.0001
+             Powerless67    theta2          3.59488       0.16448     21.8556      <.0001
+             Anomie71       theta1          3.60796       0.20092     17.9572      <.0001
+             Powerless71    theta2          3.59488       0.16448     21.8556      <.0001
+             Education      theta3          2.99366       0.49861      6.0040      <.0001
+             SEI            theta4        259.57639      18.31151     14.1756      <.0001
+             Alien67        psi1            5.67046       0.42301     13.4050      <.0001
+             Alien71        psi2            4.51479       0.33532     13.4639      <.0001
+Exogenous    SES            phi             6.61634       0.63914     10.3519      <.0001
+
+
+                                 Covariances Among Errors
+ 
+                                                           Standard
+Error of       Error of       Parameter      Estimate         Error     t Value    Pr > |t|
+
+Anomie67       Anomie71       theta5          0.90580       0.12167      7.4447      <.0001
+Powerless67    Powerless71    theta5          0.90580       0.12167      7.4447      <.0001
+
+
+           Squared Multiple Correlations
+ 
+                    Error         Total
+Variable         Variance      Variance    R-Square
+
+Anomie67          3.60796      11.90397      0.6969
+Anomie71          3.60796      12.61581      0.7140
+Education         2.99366       9.61000      0.6885
+Powerless67       3.59488       9.35139      0.6156
+Powerless71       3.59488       9.84533      0.6349
+SEI             259.57639     450.28798      0.4235
+Alien67           5.67046       8.29601      0.3165
+Alien71           4.51479       9.00786      0.4988
+
+The CALIS Procedure
+Covariance Structure Analysis: Maximum Likelihood Estimation
+
+                              Standardized Results for PATH List
+ 
+                                                               Standard
+-------------Path-------------    Parameter      Estimate         Error     t Value    Pr > |t|
+
+Anomie67       <===    Alien67                    0.83481       0.01093     76.3531      <.0001
+Powerless67    <===    Alien67                    0.78459       0.01163     67.4776      <.0001
+Anomie71       <===    Alien71                    0.84499       0.01031     81.9796      <.0001
+Powerless71    <===    Alien71                    0.79678       0.01107     71.9626      <.0001
+Education      <===    SES                        0.82975       0.03172     26.1599      <.0001
+SEI            <===    SES        lambda          0.65079       0.03019     21.5533      <.0001
+Alien67        <===    SES        gamma1         -0.56257       0.03456    -16.2796      <.0001
+Alien71        <===    SES        gamma2         -0.20642       0.04483     -4.6043      <.0001
+Alien71        <===    Alien67    beta            0.56920       0.04066     14.0000      <.0001
+
+
+                      Standardized Results for Variance Parameters
+ 
+Variance                                                 Standard
+Type         Variable       Parameter      Estimate         Error     t Value    Pr > |t|
+
+Error        Anomie67       theta1          0.30309       0.01825     16.6031      <.0001
+             Powerless67    theta2          0.38442       0.01825     21.0695      <.0001
+             Anomie71       theta1          0.28599       0.01742     16.4178      <.0001
+             Powerless71    theta2          0.36514       0.01764     20.6942      <.0001
+             Education      theta3          0.31152       0.05264      5.9182      <.0001
+             SEI            theta4          0.57647       0.03930     14.6680      <.0001
+             Alien67        psi1            0.68352       0.03888     17.5797      <.0001
+             Alien71        psi2            0.50121       0.03321     15.0897      <.0001
+Exogenous    SES            phi             1.00000                                      
+
+
+                     Standardized Results for Covariances Among Errors
+ 
+                                                           Standard
+Error of       Error of       Parameter      Estimate         Error     t Value    Pr > |t|
+
+Anomie67       Anomie71       theta5          0.07391       0.01013      7.2957      <.0001
+Powerless67    Powerless71    theta5          0.09440       0.01274      7.4092      <.0001
+
+The CALIS Procedure
+Covariance Structure Analysis: Model and Initial Values
+
+      Modeling Information
+ Maximum Likelihood Estimation
+
+Data Set            WORK.WHEATON
+N Obs               932         
+Model Type          RAM         
+Analysis            Covariances 
+
+
+                        Variables in the Model
+
+Endogenous    Manifest     Anomie67  Anomie71  Education  Powerless67
+                           Powerless71  SEI                          
+              Latent       Alien67  Alien71                          
+Exogenous     Manifest                                               
+              Latent       SES                                       
+
+                  Number of Endogenous Variables = 8
+                  Number of Exogenous Variables  = 1
+
+
+                    Initial Estimates for RAM Pattern
+ 
+Matrix     ------Row-------    -----Column-----    Parameter      Estimate
+
+_A_ (1)    Anomie67       1    Alien67        7                    1.00000
+           Powerless67    2    Alien67        7                    0.83300
+           Anomie71       3    Alien71        8                    1.00000
+           Powerless71    4    Alien71        8                    0.83300
+           Education      5    SES            9                    1.00000
+           SEI            6    SES            9    lambda                .
+           Alien67        7    SES            9    gamma1                .
+           Alien71        8    SES            9    gamma2                .
+           Alien71        8    Alien67        7    beta                  .
+_P_ (2)    Anomie67       1    Anomie67       1    theta1                .
+           Powerless67    2    Powerless67    2    theta2                .
+           Anomie71       3    Anomie71       3    theta1                .
+           Powerless71    4    Powerless71    4    theta2                .
+           Education      5    Education      5    theta3                .
+           SEI            6    SEI            6    theta4                .
+           Alien67        7    Alien67        7    psi1                  .
+           Alien71        8    Alien71        8    psi2                  .
+           SES            9    SES            9    phi                   .
+           Anomie67       1    Anomie71       3    theta5                .
+           Powerless67    2    Powerless71    4    theta5                .
+
+The CALIS Procedure
+Covariance Structure Analysis: Descriptive Statistics
+
+                         Simple Statistics
+ 
+                Variable                          Mean       Std Dev
+
+Anomie67       Anomie (1967)                         0       3.44006
+Powerless67    Powerlessness (1967)                  0       3.06007
+Anomie71       Anomie (1971)                         0       3.54006
+Powerless71    Powerlessness (1971)                  0       3.16006
+Education      Education                             0       3.10000
+SEI            Occupational Status Index             0      21.21999
+
+The CALIS Procedure
+Covariance Structure Analysis: Optimization
+
+        Initial Estimation Methods
+
+       1    Instrumental Variables Method
+       2    McDonald Method              
+       3    Two-Stage Least Squares      
+
+
+              Optimization Start
+              Parameter Estimates
+ 
+    N    Parameter      Estimate      Gradient
+
+    1    lambda          4.99508      -0.00206
+    2    gamma1         -0.62322      -0.04069
+    3    gamma2         -0.20437      -0.03816
+    4    beta            0.66589       0.03789
+    5    theta1          3.51433      -0.00409
+    6    theta2          3.65991       0.01182
+    7    theta3          2.49860      -0.00578
+    8    theta4        272.85274     0.0000194
+    9    psi1            5.57764      -0.00217
+   10    psi2            3.79636      -0.00935
+   11    phi             7.11140       0.00108
+   12    theta5          0.45298      -0.06463
+
+  Value of Objective Function = 0.0365979443
+
+The CALIS Procedure
+Covariance Structure Analysis: Optimization
+
+Levenberg-Marquardt Optimization
+
+Scaling Update of More (1978)
+
+Parameter Estimates                   12
+Functions (Observations)              21
+
+                                             Optimization Start
+
+Active Constraints                                  0  Objective Function                       0.0365979443
+Max Abs Gradient Element                 0.0646338767  Radius                                              1
+
+
+                                                                                                         Ratio
+                                                                                                       Between
+                                                                                                        Actual
+                                                                 Objective     Max Abs                     and
+                     Function         Active        Objective     Function    Gradient               Predicted
+Iter     Restarts       Calls    Constraints         Function       Change     Element     Lambda       Change
+
+   1            0           4              0          0.01453       0.0221     0.00142          0        1.013
+   2            0           6              0          0.01448     0.000046    0.000249          0        1.001
+   3            0           8              0          0.01448     1.007E-7    4.717E-6          0        1.006
+
+                                            Optimization Results
+
+Iterations                                          3  Function Calls                                     11
+Jacobian Calls                                      5  Active Constraints                                  0
+Objective Function                       0.0144844814  Max Abs Gradient Element                 4.7172823E-6
+Lambda                                              0  Actual Over Pred Change                  1.0060912036
+Radius                                    0.001390392                                                       
+
+Convergence criterion (ABSGCONV=0.00001) satisfied.                                               
+
+The CALIS Procedure
+Covariance Structure Analysis: Maximum Likelihood Estimation
+
+                            Fit Summary
+
+Modeling Info        Number of Observations                     932
+                     Number of Variables                          6
+                     Number of Moments                           21
+                     Number of Parameters                        12
+                     Number of Active Constraints                 0
+                     Baseline Model Function Value           2.2894
+                     Baseline Model Chi-Square            2131.4327
+                     Baseline Model Chi-Square DF                15
+                     Pr > Baseline Model Chi-Square          <.0001
+Absolute Index       Fit Function                            0.0145
+                     Chi-Square                             13.4851
+                     Chi-Square DF                                9
+                     Pr > Chi-Square                         0.1419
+                     Z-Test of Wilson & Hilferty             1.0754
+                     Hoelter Critical N                        1169
+                     Root Mean Square Residual (RMR)         0.2281
+                     Standardized RMR (SRMR)                 0.0150
+                     Goodness of Fit Index (GFI)             0.9953
+Parsimony Index      Adjusted GFI (AGFI)                     0.9890
+                     Parsimonious GFI                        0.5972
+                     RMSEA Estimate                          0.0231
+                     RMSEA Lower 90% Confidence Limit        0.0000
+                     RMSEA Upper 90% Confidence Limit        0.0470
+                     Probability of Close Fit                0.9705
+                     ECVI Estimate                           0.0405
+                     ECVI Lower 90% Confidence Limit         0.0357
+                     ECVI Upper 90% Confidence Limit         0.0556
+                     Akaike Information Criterion           37.4851
+                     Bozdogan CAIC                         107.5330
+                     Schwarz Bayesian Criterion             95.5330
+                     McDonald Centrality                     0.9976
+Incremental Index    Bentler Comparative Fit Index           0.9979
+                     Bentler-Bonett NFI                      0.9937
+                     Bentler-Bonett Non-normed Index         0.9965
+                     Bollen Normed Index Rho1                0.9895
+                     Bollen Non-normed Index Delta2          0.9979
+                     James et al. Parsimonious NFI           0.5962
+
+The CALIS Procedure
+Covariance Structure Analysis: Maximum Likelihood Estimation
+
+                                           RAM Pattern and Estimates
+ 
+                                                                                Standard
+Matrix     ------Row-------    -----Column-----    Parameter      Estimate         Error     t Value    Pr > |t|
+
+_A_ (1)    Anomie67       1    Alien67        7                    1.00000                                      
+           Powerless67    2    Alien67        7                    0.83300                                      
+           Anomie71       3    Alien71        8                    1.00000                                      
+           Powerless71    4    Alien71        8                    0.83300                                      
+           Education      5    SES            9                    1.00000                                      
+           SEI            6    SES            9    lambda          5.36883       0.43371     12.3788      <.0001
+           Alien67        7    SES            9    gamma1         -0.62994       0.05634    -11.1809      <.0001
+           Alien71        8    SES            9    gamma2         -0.24086       0.05489     -4.3884      <.0001
+           Alien71        8    Alien67        7    beta            0.59312       0.04678     12.6788      <.0001
+_P_ (2)    Anomie67       1    Anomie67       1    theta1          3.60796       0.20092     17.9572      <.0001
+           Powerless67    2    Powerless67    2    theta2          3.59488       0.16448     21.8556      <.0001
+           Anomie71       3    Anomie71       3    theta1          3.60796       0.20092     17.9572      <.0001
+           Powerless71    4    Powerless71    4    theta2          3.59488       0.16448     21.8556      <.0001
+           Education      5    Education      5    theta3          2.99366       0.49861      6.0040      <.0001
+           SEI            6    SEI            6    theta4        259.57639      18.31151     14.1756      <.0001
+           Alien67        7    Alien67        7    psi1            5.67046       0.42301     13.4050      <.0001
+           Alien71        8    Alien71        8    psi2            4.51479       0.33532     13.4639      <.0001
+           SES            9    SES            9    phi             6.61634       0.63914     10.3519      <.0001
+           Anomie67       1    Anomie71       3    theta5          0.90580       0.12167      7.4447      <.0001
+           Powerless67    2    Powerless71    4    theta5          0.90580       0.12167      7.4447      <.0001
+
+
+           Squared Multiple Correlations
+ 
+                    Error         Total
+Variable         Variance      Variance    R-Square
+
+Anomie67          3.60796      11.90397      0.6969
+Anomie71          3.60796      12.61581      0.7140
+Education         2.99366       9.61000      0.6885
+Powerless67       3.59488       9.35139      0.6156
+Powerless71       3.59488       9.84533      0.6349
+SEI             259.57639     450.28798      0.4235
+Alien67           5.67046       8.29601      0.3165
+Alien71           4.51479       9.00786      0.4988
+
+The CALIS Procedure
+Covariance Structure Analysis: Maximum Likelihood Estimation
+
+                                      Standardized Results for RAM Pattern
+ 
+                                                                                Standard
+Matrix     ------Row-------    -----Column-----    Parameter      Estimate         Error     t Value    Pr > |t|
+
+_A_ (1)    Anomie67       1    Alien67        7                    0.83481       0.01093     76.3531      <.0001
+           Powerless67    2    Alien67        7                    0.78459       0.01163     67.4776      <.0001
+           Anomie71       3    Alien71        8                    0.84499       0.01031     81.9796      <.0001
+           Powerless71    4    Alien71        8                    0.79678       0.01107     71.9626      <.0001
+           Education      5    SES            9                    0.82975       0.03172     26.1599      <.0001
+           SEI            6    SES            9    lambda          0.65079       0.03019     21.5533      <.0001
+           Alien67        7    SES            9    gamma1         -0.56257       0.03456    -16.2796      <.0001
+           Alien71        8    SES            9    gamma2         -0.20642       0.04483     -4.6043      <.0001
+           Alien71        8    Alien67        7    beta            0.56920       0.04066     14.0000      <.0001
+_P_ (2)    Anomie67       1    Anomie67       1    theta1          0.30309       0.01825     16.6031      <.0001
+           Powerless67    2    Powerless67    2    theta2          0.38442       0.01825     21.0695      <.0001
+           Anomie71       3    Anomie71       3    theta1          0.28599       0.01742     16.4178      <.0001
+           Powerless71    4    Powerless71    4    theta2          0.36514       0.01764     20.6942      <.0001
+           Education      5    Education      5    theta3          0.31152       0.05264      5.9182      <.0001
+           SEI            6    SEI            6    theta4          0.57647       0.03930     14.6680      <.0001
+           Alien67        7    Alien67        7    psi1            0.68352       0.03888     17.5797      <.0001
+           Alien71        8    Alien71        8    psi2            0.50121       0.03321     15.0897      <.0001
+           SES            9    SES            9    phi             1.00000                                      
+           Anomie67       1    Anomie71       3    theta5          0.07391       0.01013      7.2957      <.0001
+           Powerless67    2    Powerless71    4    theta5          0.09440       0.01274      7.4092      <.0001
+
+The CALIS Procedure
+Covariance Structure Analysis: Model and Initial Values
+
+      Modeling Information
+ Maximum Likelihood Estimation
+
+Data Set            WORK.WHEATON
+N Obs               932         
+Model Type          LINEQS      
+Analysis            Covariances 
+
+
+                        Variables in the Model
+
+Endogenous    Manifest     Anomie67  Anomie71  Education  Powerless67
+                           Powerless71  SEI                          
+              Latent       f_Alien67  f_Alien71                      
+Exogenous     Manifest                                               
+              Latent       f_SES                                     
+              Error        E1  E3  E5  E2  E4  E6  D1  D2            
+
+                  Number of Endogenous Variables = 8
+                  Number of Exogenous Variables  = 9
+
+
+              Initial Estimates for Linear Equations
+
+Anomie67    =         1     f_Alien67  +     1   E1                
+Powerless67 =         0.833 f_Alien67  +     1   E2                
+Anomie71    =         1     f_Alien71  +     1   E3                
+Powerless71 =         0.833 f_Alien71  +     1   E4                
+Education   =         1     f_SES      +     1   E5                
+SEI         =   lambda(.)   f_SES      +     1   E6                
+f_Alien67   =   gamma1(.)   f_SES      +     1   D1                
+f_Alien71   =   gamma2(.)   f_SES      + beta(.) f_Alien67  +  1 D2
+
+
+Initial Estimates for Variances of Exogenous Variables
+ 
+Variable
+Type           Variable    Parameter      Estimate
+
+Error          E1          theta1                .
+               E2          theta2                .
+               E3          theta1                .
+               E4          theta2                .
+               E5          theta3                .
+               E6          theta4                .
+Disturbance    D1          psi1                  .
+               D2          psi2                  .
+Latent         f_SES       phi                   .
+
+
+Initial Estimates for Covariances Among Exogenous Variables
+ 
+Var1    Var2    Parameter      Estimate
+
+E1      E3      theta5                .
+E2      E4      theta5                .
+
+The CALIS Procedure
+Covariance Structure Analysis: Descriptive Statistics
+
+                         Simple Statistics
+ 
+                Variable                          Mean       Std Dev
+
+Anomie67       Anomie (1967)                         0       3.44006
+Powerless67    Powerlessness (1967)                  0       3.06007
+Anomie71       Anomie (1971)                         0       3.54006
+Powerless71    Powerlessness (1971)                  0       3.16006
+Education      Education                             0       3.10000
+SEI            Occupational Status Index             0      21.21999
+
+The CALIS Procedure
+Covariance Structure Analysis: Optimization
+
+        Initial Estimation Methods
+
+       1    Instrumental Variables Method
+       2    McDonald Method              
+       3    Two-Stage Least Squares      
+
+
+              Optimization Start
+              Parameter Estimates
+ 
+    N    Parameter      Estimate      Gradient
+
+    1    lambda          4.99508      -0.00206
+    2    gamma1         -0.62322      -0.04069
+    3    gamma2         -0.20437      -0.03816
+    4    beta            0.66589       0.03789
+    5    theta1          3.51433      -0.00409
+    6    theta2          3.65991       0.01182
+    7    theta3          2.49860      -0.00578
+    8    theta4        272.85274     0.0000194
+    9    psi1            5.57764      -0.00217
+   10    psi2            3.79636      -0.00935
+   11    phi             7.11140       0.00108
+   12    theta5          0.45298      -0.06463
+
+  Value of Objective Function = 0.0365979443
+
+The CALIS Procedure
+Covariance Structure Analysis: Optimization
+
+Levenberg-Marquardt Optimization
+
+Scaling Update of More (1978)
+
+Parameter Estimates                   12
+Functions (Observations)              21
+
+                                             Optimization Start
+
+Active Constraints                                  0  Objective Function                       0.0365979443
+Max Abs Gradient Element                 0.0646338767  Radius                                              1
+
+
+                                                                                                         Ratio
+                                                                                                       Between
+                                                                                                        Actual
+                                                                 Objective     Max Abs                     and
+                     Function         Active        Objective     Function    Gradient               Predicted
+Iter     Restarts       Calls    Constraints         Function       Change     Element     Lambda       Change
+
+   1            0           4              0          0.01453       0.0221     0.00142          0        1.013
+   2            0           6              0          0.01448     0.000046    0.000249          0        1.001
+   3            0           8              0          0.01448     1.007E-7    4.717E-6          0        1.006
+
+                                            Optimization Results
+
+Iterations                                          3  Function Calls                                     11
+Jacobian Calls                                      5  Active Constraints                                  0
+Objective Function                       0.0144844814  Max Abs Gradient Element                 4.7172823E-6
+Lambda                                              0  Actual Over Pred Change                  1.0060912391
+Radius                                    0.001390392                                                       
+
+Convergence criterion (ABSGCONV=0.00001) satisfied.                                               
+
+The CALIS Procedure
+Covariance Structure Analysis: Maximum Likelihood Estimation
+
+                            Fit Summary
+
+Modeling Info        Number of Observations                     932
+                     Number of Variables                          6
+                     Number of Moments                           21
+                     Number of Parameters                        12
+                     Number of Active Constraints                 0
+                     Baseline Model Function Value           2.2894
+                     Baseline Model Chi-Square            2131.4327
+                     Baseline Model Chi-Square DF                15
+                     Pr > Baseline Model Chi-Square          <.0001
+Absolute Index       Fit Function                            0.0145
+                     Chi-Square                             13.4851
+                     Chi-Square DF                                9
+                     Pr > Chi-Square                         0.1419
+                     Z-Test of Wilson & Hilferty             1.0754
+                     Hoelter Critical N                        1169
+                     Root Mean Square Residual (RMR)         0.2281
+                     Standardized RMR (SRMR)                 0.0150
+                     Goodness of Fit Index (GFI)             0.9953
+Parsimony Index      Adjusted GFI (AGFI)                     0.9890
+                     Parsimonious GFI                        0.5972
+                     RMSEA Estimate                          0.0231
+                     RMSEA Lower 90% Confidence Limit        0.0000
+                     RMSEA Upper 90% Confidence Limit        0.0470
+                     Probability of Close Fit                0.9705
+                     ECVI Estimate                           0.0405
+                     ECVI Lower 90% Confidence Limit         0.0357
+                     ECVI Upper 90% Confidence Limit         0.0556
+                     Akaike Information Criterion           37.4851
+                     Bozdogan CAIC                         107.5330
+                     Schwarz Bayesian Criterion             95.5330
+                     McDonald Centrality                     0.9976
+Incremental Index    Bentler Comparative Fit Index           0.9979
+                     Bentler-Bonett NFI                      0.9937
+                     Bentler-Bonett Non-normed Index         0.9965
+                     Bollen Normed Index Rho1                0.9895
+                     Bollen Non-normed Index Delta2          0.9979
+                     James et al. Parsimonious NFI           0.5962
+
+The CALIS Procedure
+Covariance Structure Analysis: Maximum Likelihood Estimation
+
+                               Linear Equations
+
+Anomie67    =     1.0000     f_Alien67  +   1.0000     E1                      
+Powerless67 =     0.8330     f_Alien67  +   1.0000     E2                      
+Anomie71    =     1.0000     f_Alien71  +   1.0000     E3                      
+Powerless71 =     0.8330     f_Alien71  +   1.0000     E4                      
+Education   =     1.0000     f_SES      +   1.0000     E5                      
+SEI         =     5.3688(**) f_SES      +   1.0000     E6                      
+f_Alien67   =    -0.6299(**) f_SES      +   1.0000     D1                      
+f_Alien71   =    -0.2409(**) f_SES      +   0.5931(**) f_Alien67  +   1.0000 D2
+
+
+                                Effects in Linear Equations
+ 
+                                                           Standard
+Variable       Predictor     Parameter       Estimate         Error     t Value    Pr > |t|
+
+Anomie67       f_Alien67                      1.00000                                      
+Powerless67    f_Alien67                      0.83300                                      
+Anomie71       f_Alien71                      1.00000                                      
+Powerless71    f_Alien71                      0.83300                                      
+Education      f_SES                          1.00000                                      
+SEI            f_SES         lambda           5.36883       0.43371     12.3788      <.0001
+f_Alien67      f_SES         gamma1          -0.62994       0.05634    -11.1809      <.0001
+f_Alien71      f_SES         gamma2          -0.24086       0.05489     -4.3884      <.0001
+f_Alien71      f_Alien67     beta             0.59312       0.04678     12.6788      <.0001
+
+
+                     Estimates for Variances of Exogenous Variables
+ 
+Variable                                                Standard
+Type           Variable    Parameter      Estimate         Error     t Value    Pr > |t|
+
+Error          E1          theta1          3.60796       0.20092     17.9572      <.0001
+               E2          theta2          3.59488       0.16448     21.8556      <.0001
+               E3          theta1          3.60796       0.20092     17.9572      <.0001
+               E4          theta2          3.59488       0.16448     21.8556      <.0001
+               E5          theta3          2.99366       0.49861      6.0040      <.0001
+               E6          theta4        259.57639      18.31151     14.1756      <.0001
+Disturbance    D1          psi1            5.67046       0.42301     13.4050      <.0001
+               D2          psi2            4.51479       0.33532     13.4639      <.0001
+Latent         f_SES       phi             6.61634       0.63914     10.3519      <.0001
+
+
+                    Covariances Among Exogenous Variables
+ 
+                                             Standard
+Var1    Var2    Parameter      Estimate         Error     t Value    Pr > |t|
+
+E1      E3      theta5          0.90580       0.12167      7.4447      <.0001
+E2      E4      theta5          0.90580       0.12167      7.4447      <.0001
+
+
+           Squared Multiple Correlations
+ 
+                    Error         Total
+Variable         Variance      Variance    R-Square
+
+Anomie67          3.60796      11.90397      0.6969
+Powerless67       3.59488       9.35139      0.6156
+Anomie71          3.60796      12.61581      0.7140
+Powerless71       3.59488       9.84533      0.6349
+Education         2.99366       9.61000      0.6885
+SEI             259.57639     450.28798      0.4235
+f_Alien67         5.67046       8.29601      0.3165
+f_Alien71         4.51479       9.00786      0.4988
+
+The CALIS Procedure
+Covariance Structure Analysis: Maximum Likelihood Estimation
+
+                   Standardized Results for Linear Equations
+
+Anomie67    =     0.8348(**) f_Alien67  +   1.0000     E1                      
+Powerless67 =     0.7846(**) f_Alien67  +   1.0000     E2                      
+Anomie71    =     0.8450(**) f_Alien71  +   1.0000     E3                      
+Powerless71 =     0.7968(**) f_Alien71  +   1.0000     E4                      
+Education   =     0.8297(**) f_SES      +   1.0000     E5                      
+SEI         =     0.6508(**) f_SES      +   1.0000     E6                      
+f_Alien67   =    -0.5626(**) f_SES      +   1.0000     D1                      
+f_Alien71   =    -0.2064(**) f_SES      +   0.5692(**) f_Alien67  +   1.0000 D2
+
+
+                         Standardized Effects in Linear Equations
+ 
+                                                           Standard
+Variable       Predictor     Parameter       Estimate         Error     t Value    Pr > |t|
+
+Anomie67       f_Alien67                      0.83481       0.01093     76.3531      <.0001
+Powerless67    f_Alien67                      0.78459       0.01163     67.4776      <.0001
+Anomie71       f_Alien71                      0.84499       0.01031     81.9796      <.0001
+Powerless71    f_Alien71                      0.79678       0.01107     71.9626      <.0001
+Education      f_SES                          0.82975       0.03172     26.1599      <.0001
+SEI            f_SES         lambda           0.65079       0.03019     21.5533      <.0001
+f_Alien67      f_SES         gamma1          -0.56257       0.03456    -16.2796      <.0001
+f_Alien71      f_SES         gamma2          -0.20642       0.04483     -4.6043      <.0001
+f_Alien71      f_Alien67     beta             0.56920       0.04066     14.0000      <.0001
+
+
+               Standardized Results for Variances of Exogenous Variables
+ 
+Variable                                                Standard
+Type           Variable    Parameter      Estimate         Error     t Value    Pr > |t|
+
+Error          E1          theta1          0.30309       0.01825     16.6031      <.0001
+               E2          theta2          0.38442       0.01825     21.0695      <.0001
+               E3          theta1          0.28599       0.01742     16.4178      <.0001
+               E4          theta2          0.36514       0.01764     20.6942      <.0001
+               E5          theta3          0.31152       0.05264      5.9182      <.0001
+               E6          theta4          0.57647       0.03930     14.6680      <.0001
+Disturbance    D1          psi1            0.68352       0.03888     17.5797      <.0001
+               D2          psi2            0.50121       0.03321     15.0897      <.0001
+Latent         f_SES       phi             1.00000                                      
+
+
+       Standardized Results for Covariances Among Exogenous Variables
+ 
+                                             Standard
+Var1    Var2    Parameter      Estimate         Error     t Value    Pr > |t|
+
+E1      E3      theta5          0.07391       0.01013      7.2957      <.0001
+E2      E4      theta5          0.09440       0.01274      7.4092      <.0001
+
+The CALIS Procedure
+Covariance Structure Analysis: Model and Initial Values
+
+      Modeling Information
+ Maximum Likelihood Estimation
+
+Data Set            WORK.WHEATON
+N Obs               932         
+Model Type          LISMOD      
+Analysis            Covariances 
+
+
+                   Variables in the Model
+
+Y-variables      Anomie67  Powerless67  Anomie71  Powerless71
+X-variables      Education  SEI                              
+Eta-variables    Alien67  Alien71                            
+Xi-variables     SES                                         
+
+    N Y-var = 4, N X-var = 2, N Eta-var = 2, N Xi-var = 1
+
+
+         Initial _LAMBDAY_ Matrix
+ 
+                    Alien67         Alien71
+
+Anomie67             1.0000               0
+Powerless67          0.8330               0
+Anomie71                  0          1.0000
+Powerless71               0          0.8330
+
+
+                            Initial _THETAY_ Matrix
+ 
+                    Anomie67      Powerless67         Anomie71      Powerless71
+
+Anomie67                   .                0                .                0
+                    [theta1]                          [theta5]                 
+
+Powerless67                0                .                0                .
+                                     [theta2]                          [theta5]
+
+Anomie71                   .                0                .                0
+                    [theta5]                          [theta1]                 
+
+Powerless71                0                .                0                .
+                                     [theta5]                          [theta2]
+
+
+Initial _LAMBDAX_ Matrix
+ 
+                      SES
+
+Education          1.0000
+                         
+
+SEI                     .
+                 [lambda]
+
+
+         Initial _THETAX_ Matrix
+ 
+                Education             SEI
+
+Education               .               0
+                 [theta3]                
+
+SEI                     0               .
+                                 [theta4]
+
+
+         Initial _BETA_ Matrix
+ 
+                Alien67         Alien71
+
+Alien67               0               0
+                                       
+
+Alien71               .               0
+                 [beta]                
+
+
+Initial _GAMMA_ Matrix
+ 
+                    SES
+
+Alien67               .
+               [gamma1]
+
+Alien71               .
+               [gamma2]
+
+
+         Initial _PSI_ Matrix
+ 
+                Alien67         Alien71
+
+Alien67               .               0
+                 [psi1]                
+
+Alien71               0               .
+                                 [psi2]
+
+
+Initial _PHI_ Matrix
+ 
+                SES
+
+SES               .
+              [phi]
+
+The CALIS Procedure
+Covariance Structure Analysis: Descriptive Statistics
+
+                         Simple Statistics
+ 
+                Variable                          Mean       Std Dev
+
+Anomie67       Anomie (1967)                         0       3.44006
+Powerless67    Powerlessness (1967)                  0       3.06007
+Anomie71       Anomie (1971)                         0       3.54006
+Powerless71    Powerlessness (1971)                  0       3.16006
+Education      Education                             0       3.10000
+SEI            Occupational Status Index             0      21.21999
+
+The CALIS Procedure
+Covariance Structure Analysis: Optimization
+
+        Initial Estimation Methods
+
+       1    Instrumental Variables Method
+       2    McDonald Method              
+       3    Two-Stage Least Squares      
+
+
+              Optimization Start
+              Parameter Estimates
+ 
+    N    Parameter      Estimate      Gradient
+
+    1    lambda          4.99508      -0.00206
+    2    gamma1         -0.62322      -0.04069
+    3    gamma2         -0.20437      -0.03816
+    4    beta            0.66589       0.03789
+    5    theta3          2.49860      -0.00578
+    6    theta4        272.85274     0.0000194
+    7    theta1          3.51433      -0.00409
+    8    theta2          3.65991       0.01182
+    9    theta5          0.45298      -0.06463
+   10    psi1            5.57764      -0.00217
+   11    psi2            3.79636      -0.00935
+   12    phi             7.11140       0.00108
+
+  Value of Objective Function = 0.0365979443
+
+The CALIS Procedure
+Covariance Structure Analysis: Optimization
+
+Levenberg-Marquardt Optimization
+
+Scaling Update of More (1978)
+
+Parameter Estimates                   12
+Functions (Observations)              21
+
+                                             Optimization Start
+
+Active Constraints                                  0  Objective Function                       0.0365979443
+Max Abs Gradient Element                 0.0646338767  Radius                                              1
+
+
+                                                                                                         Ratio
+                                                                                                       Between
+                                                                                                        Actual
+                                                                 Objective     Max Abs                     and
+                     Function         Active        Objective     Function    Gradient               Predicted
+Iter     Restarts       Calls    Constraints         Function       Change     Element     Lambda       Change
+
+   1            0           4              0          0.01453       0.0221     0.00142          0        1.013
+   2            0           6              0          0.01448     0.000046    0.000249          0        1.001
+   3            0           8              0          0.01448     1.007E-7    4.717E-6          0        1.006
+
+                                            Optimization Results
+
+Iterations                                          3  Function Calls                                     11
+Jacobian Calls                                      5  Active Constraints                                  0
+Objective Function                       0.0144844814  Max Abs Gradient Element                 4.7172823E-6
+Lambda                                              0  Actual Over Pred Change                  1.0060912391
+Radius                                    0.001390392                                                       
+
+Convergence criterion (ABSGCONV=0.00001) satisfied.                                               
+
+The CALIS Procedure
+Covariance Structure Analysis: Maximum Likelihood Estimation
+
+                            Fit Summary
+
+Modeling Info        Number of Observations                     932
+                     Number of Variables                          6
+                     Number of Moments                           21
+                     Number of Parameters                        12
+                     Number of Active Constraints                 0
+                     Baseline Model Function Value           2.2894
+                     Baseline Model Chi-Square            2131.4327
+                     Baseline Model Chi-Square DF                15
+                     Pr > Baseline Model Chi-Square          <.0001
+Absolute Index       Fit Function                            0.0145
+                     Chi-Square                             13.4851
+                     Chi-Square DF                                9
+                     Pr > Chi-Square                         0.1419
+                     Z-Test of Wilson & Hilferty             1.0754
+                     Hoelter Critical N                        1169
+                     Root Mean Square Residual (RMR)         0.2281
+                     Standardized RMR (SRMR)                 0.0150
+                     Goodness of Fit Index (GFI)             0.9953
+Parsimony Index      Adjusted GFI (AGFI)                     0.9890
+                     Parsimonious GFI                        0.5972
+                     RMSEA Estimate                          0.0231
+                     RMSEA Lower 90% Confidence Limit        0.0000
+                     RMSEA Upper 90% Confidence Limit        0.0470
+                     Probability of Close Fit                0.9705
+                     ECVI Estimate                           0.0405
+                     ECVI Lower 90% Confidence Limit         0.0357
+                     ECVI Upper 90% Confidence Limit         0.0556
+                     Akaike Information Criterion           37.4851
+                     Bozdogan CAIC                         107.5330
+                     Schwarz Bayesian Criterion             95.5330
+                     McDonald Centrality                     0.9976
+Incremental Index    Bentler Comparative Fit Index           0.9979
+                     Bentler-Bonett NFI                      0.9937
+                     Bentler-Bonett Non-normed Index         0.9965
+                     Bollen Normed Index Rho1                0.9895
+                     Bollen Non-normed Index Delta2          0.9979
+                     James et al. Parsimonious NFI           0.5962
+
+The CALIS Procedure
+Covariance Structure Analysis: Maximum Likelihood Estimation
+
+_LAMBDAY_ Matrix: Estimate/StdErr/t-value/p-value
+ 
+                    Alien67         Alien71
+
+Anomie67             1.0000               0
+                                           
+                                           
+                                           
+
+Powerless67          0.8330               0
+                                           
+                                           
+                                           
+
+Anomie71                  0          1.0000
+                                           
+                                           
+                                           
+
+Powerless71               0          0.8330
+                                           
+                                           
+                                           
+
+
+               _THETAY_ Matrix: Estimate/StdErr/t-value/p-value
+ 
+                    Anomie67      Powerless67         Anomie71      Powerless71
+
+Anomie67              3.6080                0           0.9058                0
+                      0.2009                            0.1217                 
+                     17.9572                            7.4447                 
+                      <.0001                            <.0001                 
+                    [theta1]                          [theta5]                 
+
+Powerless67                0           3.5949                0           0.9058
+                                       0.1645                            0.1217
+                                      21.8556                            7.4447
+                                       <.0001                            <.0001
+                                     [theta2]                          [theta5]
+
+Anomie71              0.9058                0           3.6080                0
+                      0.1217                            0.2009                 
+                      7.4447                           17.9572                 
+                      <.0001                            <.0001                 
+                    [theta5]                          [theta1]                 
+
+Powerless71                0           0.9058                0           3.5949
+                                       0.1217                            0.1645
+                                       7.4447                           21.8556
+                                       <.0001                            <.0001
+                                     [theta5]                          [theta2]
+
+
+_LAMBDAX_ Matrix: Estimate/StdErr/t-value/p-value
+ 
+                      SES
+
+Education          1.0000
+                         
+                         
+                         
+                         
+
+SEI                5.3688
+                   0.4337
+                  12.3788
+                   <.0001
+                 [lambda]
+
+
+_THETAX_ Matrix: Estimate/StdErr/t-value/p-value
+ 
+                Education             SEI
+
+Education          2.9937               0
+                   0.4986                
+                   6.0040                
+                   <.0001                
+                 [theta3]                
+
+SEI                     0        259.5764
+                                  18.3115
+                                  14.1756
+                                   <.0001
+                                 [theta4]
+
+
+_BETA_ Matrix: Estimate/StdErr/t-value/p-value
+ 
+                Alien67         Alien71
+
+Alien67               0               0
+                                       
+                                       
+                                       
+                                       
+
+Alien71          0.5931               0
+                 0.0468                
+                12.6788                
+                 <.0001                
+                 [beta]                
+
+
+_GAMMA_ Matrix: Estimate/StdErr/t-value/p-value
+ 
+                    SES
+
+Alien67         -0.6299
+                 0.0563
+               -11.1809
+                 <.0001
+               [gamma1]
+
+Alien71         -0.2409
+                 0.0549
+                -4.3884
+                 <.0001
+               [gamma2]
+
+
+_PSI_ Matrix: Estimate/StdErr/t-value/p-value
+ 
+                Alien67         Alien71
+
+Alien67          5.6705               0
+                 0.4230                
+                13.4050                
+                 <.0001                
+                 [psi1]                
+
+Alien71               0          4.5148
+                                 0.3353
+                                13.4639
+                                 <.0001
+                                 [psi2]
+
+
+_PHI_ Matrix: Estimate/StdErr/t-value/p-value
+ 
+                SES
+
+SES          6.6163
+             0.6391
+            10.3519
+             <.0001
+              [phi]
+
+
+           Squared Multiple Correlations
+ 
+                    Error         Total
+Variable         Variance      Variance    R-Square
+
+Anomie67          3.60796      11.90397      0.6969
+Powerless67       3.59488       9.35139      0.6156
+Anomie71          3.60796      12.61581      0.7140
+Powerless71       3.59488       9.84533      0.6349
+Education         2.99366       9.61000      0.6885
+SEI             259.57639     450.28798      0.4235
+Alien67           5.67046       8.29601      0.3165
+Alien71           4.51479       9.00786      0.4988
+
+The CALIS Procedure
+Covariance Structure Analysis: Maximum Likelihood Estimation
+
+Standardized _LAMBDAY_ Matrix: Estimate/StdErr/t-value/p-value
+ 
+                    Alien67         Alien71
+
+Anomie67             0.8348               0
+                     0.0109                
+                    76.3531                
+                     <.0001                
+
+Powerless67          0.7846               0
+                     0.0116                
+                    67.4776                
+                     <.0001                
+
+Anomie71                  0          0.8450
+                                     0.0103
+                                    81.9796
+                                     <.0001
+
+Powerless71               0          0.7968
+                                     0.0111
+                                    71.9626
+                                     <.0001
+
+
+   Standardized Results for _THETAY_ Matrix: Estimate/StdErr/t-value/p-value
+ 
+                    Anomie67      Powerless67         Anomie71      Powerless71
+
+Anomie67              0.3031                0           0.0739                0
+                      0.0183                            0.0101                 
+                     16.6031                            7.2957                 
+                      <.0001                            <.0001                 
+                    [theta1]                          [theta5]                 
+
+Powerless67                0           0.3844                0           0.0944
+                                       0.0182                            0.0127
+                                      21.0695                            7.4092
+                                       <.0001                            <.0001
+                                     [theta2]                          [theta5]
+
+Anomie71              0.0739                0           0.2860                0
+                      0.0101                            0.0174                 
+                      7.2957                           16.4178                 
+                      <.0001                            <.0001                 
+                    [theta5]                          [theta1]                 
+
+Powerless71                0           0.0944                0           0.3651
+                                       0.0127                            0.0176
+                                       7.4092                           20.6942
+                                       <.0001                            <.0001
+                                     [theta5]                          [theta2]
+
+
+Standardized _LAMBDAX_ Matrix: Estimate/StdErr/t-value/p-value
+ 
+                      SES
+
+Education          0.8297
+                   0.0317
+                  26.1599
+                   <.0001
+                         
+
+SEI                0.6508
+                   0.0302
+                  21.5533
+                   <.0001
+                 [lambda]
+
+
+Standardized Results for _THETAX_ Matrix: Estimate/StdErr/t-value/p-value
+ 
+                Education             SEI
+
+Education          0.3115               0
+                   0.0526                
+                   5.9182                
+                   <.0001                
+                 [theta3]                
+
+SEI                     0          0.5765
+                                   0.0393
+                                  14.6680
+                                   <.0001
+                                 [theta4]
+
+
+Standardized _BETA_ Matrix: Estimate/StdErr/t-value/p-value
+ 
+                Alien67         Alien71
+
+Alien67               0               0
+                                       
+                                       
+                                       
+                                       
+
+Alien71          0.5692               0
+                 0.0407                
+                14.0000                
+                 <.0001                
+                 [beta]                
+
+
+Standardized _GAMMA_ Matrix: Estimate/StdErr/t-value/p-value
+ 
+                    SES
+
+Alien67         -0.5626
+                 0.0346
+               -16.2796
+                 <.0001
+               [gamma1]
+
+Alien71         -0.2064
+                 0.0448
+                -4.6043
+                 <.0001
+               [gamma2]
+
+
+Standardized Results for _PSI_ Matrix: Estimate/StdErr/t-value/p-value
+ 
+                Alien67         Alien71
+
+Alien67          0.6835               0
+                 0.0389                
+                17.5797                
+                 <.0001                
+                 [psi1]                
+
+Alien71               0          0.5012
+                                 0.0332
+                                15.0897
+                                 <.0001
+                                 [psi2]
+
+
+Standardized _PHI_ Matrix: Estimate/StdErr/t-value/p-value
+ 
+                SES
+
+SES          1.0000
+                   
+                   
+                   
+              [phi]
+
+The CALIS Procedure
+Correlation Structure Analysis: Model and Initial Values
+
+      Modeling Information
+ Maximum Likelihood Estimation
+
+Data Set            WORK.WHEATON
+N Obs               932         
+Model Type          FACTOR      
+Analysis            Correlations
+
+
+                      Variables in the Model
+
+Variables    Anomie67  Powerless67  Anomie71  Powerless71         
+             Education  SEI                                       
+Factors      Factor1  Factor2                                     
+
+                     Number of Variables = 6
+                     Number of Factors   = 2
+
+
+       Initial Factor Loading Matrix
+ 
+                    Factor1         Factor2
+
+Anomie67                  .               0
+                  [_F_1_1_]                
+
+Powerless67               .               .
+                  [_F_2_1_]       [_F_2_2_]
+
+Anomie71                  .               .
+                  [_F_3_1_]       [_F_3_2_]
+
+Powerless71               .               .
+                  [_F_4_1_]       [_F_4_2_]
+
+Education                 .               .
+                  [_F_5_1_]       [_F_5_2_]
+
+SEI                       .               .
+                  [_F_6_1_]       [_F_6_2_]
+
+
+   Initial Factor Covariance Matrix
+ 
+                Factor1         Factor2
+
+Factor1          1.0000               0
+Factor2               0          1.0000
+
+
+       Initial Error Variances
+ 
+Variable       Parameter      Estimate
+
+Anomie67       _U_1_1_               .
+Powerless67    _U_2_2_               .
+Anomie71       _U_3_3_               .
+Powerless71    _U_4_4_               .
+Education      _U_5_5_               .
+SEI            _U_6_6_               .
+
+The CALIS Procedure
+Correlation Structure Analysis: Descriptive Statistics
+
+                         Simple Statistics
+ 
+                Variable                          Mean       Std Dev
+
+Anomie67       Anomie (1967)                         0       3.44006
+Powerless67    Powerlessness (1967)                  0       3.06007
+Anomie71       Anomie (1971)                         0       3.54006
+Powerless71    Powerlessness (1971)                  0       3.16006
+Education      Education                             0       3.10000
+SEI            Occupational Status Index             0      21.21999
+
+The CALIS Procedure
+Correlation Structure Analysis: Optimization
+
+        Initial Estimation Method
+
+       1    Approximate Factor Analysis  
+
+
+              Optimization Start
+              Parameter Estimates
+ 
+    N    Parameter      Estimate      Gradient
+
+    1    _F_1_1_        -0.74815       0.00325
+    2    _F_2_1_        -0.74469      -0.00303
+    3    _F_2_2_         0.03929      -0.02455
+    4    _F_3_1_        -0.77143      -0.00200
+    5    _F_3_2_        -0.07082       0.01672
+    6    _F_4_1_        -0.74345       0.00173
+    7    _F_4_2_        -0.03925       0.01569
+    8    _F_5_1_         0.50497    -0.0003426
+    9    _F_5_2_        -0.52572      -0.00956
+   10    _F_6_1_         0.40209     0.0002302
+   11    _F_6_2_        -0.55020       0.00443
+   12    _U_1_1_         0.39687      -0.26938
+   13    _U_2_2_         0.40191      -0.26314
+   14    _U_3_3_         0.38330      -0.11382
+   15    _U_4_4_         0.40558      -0.23946
+   16    _U_5_5_         0.51870       0.17688
+   17    _U_6_6_         0.57641       0.12700
+
+  Value of Objective Function = 0.2799811074
+
+The CALIS Procedure
+Correlation Structure Analysis: Optimization
+
+Levenberg-Marquardt Optimization
+
+Scaling Update of More (1978)
+
+Parameter Estimates                   17
+Functions (Observations)              21
+
+                                             Optimization Start
+
+Active Constraints                                  0  Objective Function                       0.2799811074
+Max Abs Gradient Element                  0.269380147  Radius                                              1
+
+
+                                                                                                         Ratio
+                                                                                                       Between
+                                                                                                        Actual
+                                                                 Objective     Max Abs                     and
+                     Function         Active        Objective     Function    Gradient               Predicted
+Iter     Restarts       Calls    Constraints         Function       Change     Element     Lambda       Change
+
+   1            0           4              0          0.26144       0.0185      0.1915          0        0.456
+   2            0           7              0          0.25247      0.00898      0.1645    0.00122        0.420
+   3            0           9              0          0.24696      0.00550      0.1240          0        0.382
+   4            0          12              0          0.24209      0.00487      0.0949    0.00407        0.503
+   5            0          14              0          0.23994      0.00215      0.0514          0        0.464
+   6            0          17              0          0.23947     0.000471      0.0541    0.00195        0.179
+   7            0          19              0          0.23901     0.000462      0.0323          0        0.229
+   8            0          22              0          0.23810     0.000908      0.0135     0.0131        0.666
+   9            0          24              0          0.23805     0.000051     0.00666          0        0.296
+  10            0          28              0          0.23800     0.000056     0.00194     0.0174        0.589
+  11            0          30              0          0.23799     1.926E-6    0.000829          0        0.265
+  12            0          32              0          0.23799     3.681E-7     0.00172          0       0.0640
+  13            0          34              0          0.23799     1.355E-6    0.000907    0.00311        0.248
+  14            0          36              0          0.23799     1.215E-7     0.00126          0       0.0371
+  15            0          38              0          0.23799     1.511E-6    0.000427     0.0142        0.546
+  16            0          40              0          0.23799     8.409E-8    0.000407          0        0.201
+  17            0          42              0          0.23799     4.186E-8    0.000307          0        0.111
+  18            0          44              0          0.23799     2.816E-8    0.000444          0       0.0785
+  19            0          46              0          0.23799     9.708E-8    0.000232    0.00345        0.284
+  20            0          48              0          0.23799     1.548E-8    0.000331          0       0.0786
+  21            0          50              0          0.23799     9.206E-8    0.000104     0.0125        0.545
+  22            0          52              0          0.23799     8.691E-9    0.000136          0        0.261
+  23            0          54              0          0.23799     5.358E-9    0.000081          0        0.176
+  24            0          56              0          0.23799      3.94E-9    0.000138          0        0.135
+  25            0          58              0          0.23799     3.063E-9    0.000084          0        0.109
+  26            0          60              0          0.23799      2.37E-9    0.000131          0       0.0873
+  27            0          62              0          0.23799     1.894E-9    0.000087          0       0.0718
+  28            0          64              0          0.23799     1.131E-8    0.000056     0.0145        0.540
+  29            0          66              0          0.23799     1.627E-9    0.000018          0        0.607
+  30            0          68              0          0.23799     9.94E-10    0.000045          0        0.449
+  31            0          70              0          0.23799     7.33E-10    0.000016          0        0.361
+  32            0          72              0          0.23799     5.57E-10    0.000039          0        0.293
+  33            0          74              0          0.23799     4.29E-10    0.000016          0        0.239
+  34            0          76              0          0.23799      3.3E-10    0.000036          0        0.193
+  35            0          78              0          0.23799     2.56E-10    0.000018          0        0.156
+  36            0          80              0          0.23799     1.99E-10    0.000033          0        0.126
+  37            0          82              0          0.23799     1.56E-10    0.000020          0        0.102
+  38            0          84              0          0.23799     1.22E-10    0.000031          0       0.0829
+  39            0          86              0          0.23799     9.68E-11    0.000021          0       0.0677
+  40            0          88              0          0.23799     5.54E-10    0.000017    0.00925        0.448
+  41            0          90              0          0.23799     7.51E-11    5.721E-6          0        0.256
+
+                                            Optimization Results
+
+Iterations                                         41  Function Calls                                     93
+Jacobian Calls                                     43  Active Constraints                                  0
+Objective Function                       0.2379894687  Max Abs Gradient Element                 5.7209434E-6
+Lambda                                              0  Actual Over Pred Change                   0.255608682
+Radius                                   0.0002316747                                                       
+
+Convergence criterion (GCONV=1E-8) satisfied.                                                     
+
+The CALIS Procedure
+Correlation Structure Analysis: Maximum Likelihood Estimation
+
+                            Fit Summary
+
+Modeling Info        Number of Observations                     932
+                     Number of Variables                          6
+                     Number of Moments                           21
+                     Number of Parameters                        17
+                     Number of Active Constraints                 0
+                     Baseline Model Function Value           2.2894
+                     Baseline Model Chi-Square            2131.4327
+                     Baseline Model Chi-Square DF                15
+                     Pr > Baseline Model Chi-Square          <.0001
+Absolute Index       Fit Function                            0.2380
+                     Chi-Square                            221.5682
+                     Chi-Square DF                                4
+                     Pr > Chi-Square                         <.0001
+                     Z-Test of Wilson & Hilferty            12.1659
+                     Hoelter Critical N                          40
+                     Root Mean Square Residual (RMR)         0.0471
+                     Standardized RMR (SRMR)                 0.0471
+                     Goodness of Fit Index (GFI)             0.9312
+Parsimony Index      Adjusted GFI (AGFI)                     0.6387
+                     Parsimonious GFI                        0.2483
+                     RMSEA Estimate                          0.2417
+                     RMSEA Lower 90% Confidence Limit        0.2152
+                     RMSEA Upper 90% Confidence Limit        0.2693
+                     Probability of Close Fit                <.0001
+                     ECVI Estimate                           0.2748
+                     ECVI Lower 90% Confidence Limit         0.2262
+                     ECVI Upper 90% Confidence Limit         0.3314
+                     Akaike Information Criterion          255.5682
+                     Bozdogan CAIC                         354.8029
+                     Schwarz Bayesian Criterion            337.8029
+                     McDonald Centrality                     0.8898
+Incremental Index    Bentler Comparative Fit Index           0.8972
+                     Bentler-Bonett NFI                      0.8960
+                     Bentler-Bonett Non-normed Index         0.6145
+                     Bollen Normed Index Rho1                0.6102
+                     Bollen Non-normed Index Delta2          0.8977
+                     James et al. Parsimonious NFI           0.2389
+
+The CALIS Procedure
+Correlation Structure Analysis: Maximum Likelihood Estimation
+
+                                                Raw Residual Matrix
+ 
+                                           Anomie67  Powerless67     Anomie71  Powerless71    Education          SEI
+
+Anomie67     Anomie (1967)                   0.0000       0.1527      -0.0083      -0.1003       0.0145      -0.0082
+Powerless67  Powerlessness (1967)            0.1527       0.0000      -0.0850      -0.0106       0.0012       0.0269
+Anomie71     Anomie (1971)                  -0.0083      -0.0850       0.0000       0.0678      -0.0029      -0.0133
+Powerless71  Powerlessness (1971)           -0.1003      -0.0106       0.0678       0.0000      -0.0087       0.0044
+Education    Education                       0.0145       0.0012      -0.0029      -0.0087       0.0000       0.0024
+SEI          Occupational Status Index      -0.0082       0.0269      -0.0133       0.0044       0.0024       0.0000
+
+Average Absolute Residual                         0.024146
+Average Off-diagonal Absolute Residual            0.033805
+
+
+Rank Order of the 10 Largest Raw Residuals
+ 
+Var1           Var2             Residual
+
+Powerless67    Anomie67          0.15274
+Powerless71    Anomie67         -0.10035
+Anomie71       Powerless67      -0.08502
+Powerless71    Anomie71          0.06775
+SEI            Powerless67       0.02686
+Education      Anomie67          0.01452
+SEI            Anomie71         -0.01327
+Powerless71    Powerless67      -0.01057
+Education      Powerless71      -0.00870
+Anomie71       Anomie67         -0.00826
+
+The CALIS Procedure
+Correlation Structure Analysis: Maximum Likelihood Estimation
+
+                      Distribution of Raw Residuals
+                      Each * Represents 1 Residuals
+ 
+----------Range---------    Freq    Percent
+
+  -0.12655      -0.08436       2       9.52    **                        
+  -0.08436      -0.04218       0       0.00                              
+  -0.04218             0       6      28.57    ******                    
+         0       0.04218      11      52.38    ***********               
+   0.04218       0.08436       1       4.76    *                         
+   0.08436       0.12655       0       0.00                              
+   0.12655       0.16873       1       4.76    *                         
+
+The CALIS Procedure
+Correlation Structure Analysis: Maximum Likelihood Estimation
+
+Factor Loading Matrix: Estimate/StdErr/t-value/p-value
+ 
+                    Factor1         Factor2
+
+Anomie67            -0.7168               0
+                     0.0307                
+                   -23.3668                
+                     <.0001                
+
+Powerless67         -0.7076          0.0606
+                     0.0308          0.0409
+                   -22.9807          1.4823
+                     <.0001          0.1383
+
+Anomie71            -0.7927         -0.0980
+                     0.0302          0.0435
+                   -26.2533         -2.2511
+                     <.0001          0.0244
+
+Powerless71         -0.7538         -0.0475
+                     0.0304          0.0414
+                   -24.8021         -1.1497
+                     <.0001          0.2503
+
+Education            0.5225         -0.6843
+                     0.0412          0.1226
+                    12.6939         -5.5820
+                     <.0001          <.0001
+
+SEI                  0.4071         -0.4747
+                     0.0385          0.0854
+                    10.5649         -5.5607
+                     <.0001          <.0001
+
+
+Factor Covariance Matrix: Estimate/StdErr/t-value/p-value
+ 
+                Factor1         Factor2
+
+Factor1          1.0000               0
+                                       
+                                       
+                                       
+
+Factor2               0          1.0000
+                                       
+                                       
+                                       
+
+
+                        Error Variances
+ 
+                               Standard
+Variable         Estimate         Error     t Value    Pr > |t|
+
+Anomie67          0.48623       0.02831     17.1769      <.0001
+Powerless67       0.49563       0.02790     17.7625      <.0001
+Anomie71          0.36201       0.02849     12.7067      <.0001
+Powerless71       0.42947       0.02790     15.3916      <.0001
+Education         0.25871       0.16449      1.5728      0.1158
+SEI               0.60889       0.08448      7.2077      <.0001
+
+
+       Rotated Factor Loading Matrix
+             Varimax Rotation
+ 
+                    Factor1         Factor2
+
+Anomie67             0.6705         -0.2534
+Powerless67          0.6405         -0.3068
+Anomie71             0.7762         -0.1886
+Powerless71          0.7220         -0.2220
+Education           -0.2468          0.8248
+SEI                 -0.2130          0.5880
+
+
+        Varimax Rotation Matrix
+ 
+                Factor1         Factor2
+
+Factor1         -0.9354          0.3535
+Factor2         -0.3535         -0.9354
+
+
+   Rotated Factor Covariance Matrix
+           Varimax Rotation
+ 
+                Factor1         Factor2
+
+Factor1          1.0000               0
+Factor2               0          1.0000
+
+
+                        Error Variances
+                       Varimax Rotation
+ 
+                               Standard
+Variable         Estimate         Error     t Value    Pr > |t|
+
+Anomie67          0.48623       0.02831     17.1769      <.0001
+Powerless67       0.49563       0.02790     17.7625      <.0001
+Anomie71          0.36201       0.02849     12.7067      <.0001
+Powerless71       0.42947       0.02790     15.3916      <.0001
+Education         0.25871       0.16449      1.5728      0.1158
+SEI               0.60889       0.08448      7.2077      <.0001
+
+
+           Squared Multiple Correlations
+ 
+                    Error         Total
+Variable         Variance      Variance    R-Square
+
+Anomie67          0.48623       1.00000      0.5138
+Powerless67       0.49563       1.00000      0.5044
+Anomie71          0.36201       1.00000      0.6380
+Powerless71       0.42947       1.00000      0.5705
+Education         0.25871       1.00000      0.7413
+SEI               0.60889       1.00000      0.3911
+
+
+  Factor Scores Regression Coefficients
+ 
+                   Factor1        Factor2
+
+Anomie67            0.2394         0.0172
+Powerless67         0.2093        -0.0196
+Anomie71            0.4057         0.1056
+Powerless71         0.3055         0.0532
+Education           0.1610         0.7593
+SEI                 0.0355         0.2229
+
+The FACTOR Procedure
+
+Input Data Type                 Covariances
+NOBS= Set in PROC Statement             932
+N for Significance Tests                932
+
+The FACTOR Procedure
+Initial Factor Method: Maximum Likelihood
+
+                            Prior Communality Estimates: SMC    
+ 
+  Anomie67      Powerless67        Anomie71      Powerless71       Education             SEI
+
+0.52375122       0.51771003      0.54004048       0.51330371      0.37755609      0.30830899
+
+
+Preliminary Eigenvalues: Total = 5.45426086  Average = 0.90904348
+ 
+        Eigenvalue    Difference    Proportion    Cumulative
+
+   1    5.31745973    4.66959664        0.9749        0.9749
+   2    0.64786309    0.24881477        0.1188        1.0937
+   3    0.39904832    0.50349563        0.0732        1.1669
+   4    -.10444732    0.22293942       -0.0191        1.1477
+   5    -.32738673    0.15088949       -0.0600        1.0877
+   6    -.47827622                     -0.0877        1.0000
+
+2 factors will be retained by the NFACTOR criterion.
+
+
+
+Iteration     Criterion     Ridge    Change                             Communalities
+
+    1         0.2418551    0.0000    0.3311    0.53509    0.53289    0.61903    0.54467    0.70865    0.35070
+    2         0.2383082    0.0000    0.0949    0.53173    0.51729    0.61691    0.55914    0.80355    0.35971
+    3         0.2381335    0.0000    0.0350    0.52582    0.51612    0.62436    0.55730    0.83859    0.35250
+    4         0.2381051    0.0000    0.0033    0.52584    0.51296    0.62396    0.56062    0.84054    0.35281
+    5         0.2380897    0.0000    0.0093    0.52404    0.51276    0.62621    0.56047    0.83120    0.35598
+    6         0.2380754    0.0000    0.0116    0.52341    0.51166    0.62684    0.56186    0.81960    0.35999
+    7         0.2380612    0.0000    0.0118    0.52224    0.51112    0.62823    0.56248    0.80784    0.36421
+    8         0.2380476    0.0000    0.0107    0.52135    0.51032    0.62923    0.56350    0.79717    0.36818
+    9         0.2380353    0.0000    0.0095    0.52035    0.50966    0.63039    0.56431    0.78766    0.37183
+   10         0.2380245    0.0000    0.0082    0.51947    0.50896    0.63139    0.56517    0.77950    0.37505
+   11         0.2380156    0.0000    0.0069    0.51863    0.50833    0.63237    0.56593    0.77256    0.37785
+   12         0.2380086    0.0000    0.0058    0.51788    0.50773    0.63323    0.56664    0.76677    0.38022
+   13         0.2380031    0.0000    0.0048    0.51722    0.50721    0.63400    0.56726    0.76197    0.38222
+   14         0.2379991    0.0000    0.0039    0.51664    0.50674    0.63467    0.56781    0.75803    0.38388
+   15         0.2379961    0.0000    0.0032    0.51614    0.50634    0.63525    0.56828    0.75481    0.38525
+   16         0.2379940    0.0000    0.0026    0.51572    0.50599    0.63573    0.56868    0.75220    0.38637
+   17         0.2379925    0.0000    0.0021    0.51537    0.50570    0.63614    0.56901    0.75007    0.38728
+   18         0.2379915    0.0000    0.0017    0.51507    0.50546    0.63648    0.56929    0.74835    0.38803
+   19         0.2379908    0.0000    0.0014    0.51483    0.50526    0.63677    0.56952    0.74696    0.38863
+   20         0.2379904    0.0000    0.0011    0.51463    0.50509    0.63700    0.56971    0.74584    0.38912
+   21         0.2379901    0.0000    0.0009    0.51446    0.50495    0.63719    0.56987    0.74493    0.38951
+
+
+Convergence criterion satisfied.                                
+
+
+          Significance Tests Based on 932 Observations
+ 
+                                                           Pr > 
+             Test                     DF    Chi-Square     ChiSq
+
+H0: No common factors                 15     2124.9460    <.0001
+HA: At least one common factor                                  
+H0: 2 Factors are sufficient           4      220.5771    <.0001
+HA: More factors are needed                                     
+
+
+Chi-Square without Bartlett's Correction       221.56876
+Akaike's Information Criterion                 213.56876
+Schwarz's Bayesian Criterion                   194.21943
+Tucker and Lewis's Reliability Coefficient       0.61508
+
+
+Squared Canonical Correlations
+ 
+   Factor1         Factor2
+
+0.87423433      0.63872933
+
+
+Eigenvalues of the Weighted Reduced Correlation Matrix: Total = 8.71930158  Average = 1.45321693
+ 
+        Eigenvalue    Difference    Proportion    Cumulative
+
+   1    6.95129521    5.18328749        0.7972        0.7972
+   2    1.76800772    1.27933953        0.2028        1.0000
+   3    0.48866819    0.45413837        0.0560        1.0560
+   4    0.03452983    0.11327845        0.0040        1.0600
+   5    -.07874862    0.36570214       -0.0090        1.0510
+   6    -.44445076                     -0.0510        1.0000
+
+
+                              Factor Pattern
+ 
+                                                   Factor1         Factor2
+
+Anomie67         Anomie (1967)                     0.68241         0.22070
+Powerless67      Powerlessness (1967)              0.69230         0.16000
+Anomie71         Anomie (1971)                     0.72434         0.33553
+Powerless71      Powerlessness (1971)              0.70283         0.27563
+Education        Education                        -0.70797         0.49366
+SEI              Occupational Status Index        -0.53245         0.32556
+
+
+ Variance Explained by Each Factor
+ 
+Factor        Weighted    Unweighted
+
+Factor1     6.95129521    2.74834455
+Factor2     1.76800772    0.61254975
+
+
+Final Communality Estimates and Variable Weights
+Total Communality: Weighted = 8.719303   Unweighted = 3.360894
+ 
+Variable       Communality        Weight
+
+Anomie67        0.51439594    2.05958167
+Powerless67     0.50488064    2.02000243
+Anomie71        0.63724231    2.75625450
+Powerless71     0.56994698    2.32487850
+Education       0.74492880    3.92054572
+SEI             0.38949963    1.63803875
+
+The FACTOR Procedure
+Rotation Method: Varimax
+
+    Orthogonal Transformation Matrix
+ 
+                       1               2
+
+       1         0.78219        -0.62305
+       2         0.62305         0.78219
+
+
+                          Rotated Factor Pattern
+ 
+                                                   Factor1         Factor2
+
+Anomie67         Anomie (1967)                     0.67128        -0.25255
+Powerless67      Powerlessness (1967)              0.64119        -0.30619
+Anomie71         Anomie (1971)                     0.77561        -0.18885
+Powerless71      Powerlessness (1971)              0.72148        -0.22230
+Education        Education                        -0.24619         0.82723
+SEI              Occupational Status Index        -0.21364         0.58639
+
+
+ Variance Explained by Each Factor
+ 
+Factor        Weighted    Unweighted
+
+Factor1     4.93921643    2.09010188
+Factor2     3.78008650    1.27079241
+
+
+Final Communality Estimates and Variable Weights
+Total Communality: Weighted = 8.719303   Unweighted = 3.360894
+ 
+Variable       Communality        Weight
+
+Anomie67        0.51439594    2.05958167
+Powerless67     0.50488064    2.02000243
+Anomie71        0.63724231    2.75625450
+Powerless71     0.56994698    2.32487850
+Education       0.74492880    3.92054572
+SEI             0.38949963    1.63803875
+
+The CALIS Procedure
+Covariance Structure Analysis: Model and Initial Values
+
+      Modeling Information
+ Maximum Likelihood Estimation
+
+Data Set            WORK.WHEATON
+N Obs               932         
+Model Type          FACTOR      
+Analysis            Covariances 
+
+
+                      Variables in the Model
+
+Variables    Anomie67  Powerless67  Anomie71  Powerless71         
+             Education  SEI                                       
+Factors      Alien67  Alien71  SES                                
+
+                     Number of Variables = 6
+                     Number of Factors   = 3
+
+
+               Initial Factor Loading Matrix
+ 
+                    Alien67         Alien71             SES
+
+Anomie67             1.0000               0               0
+                                                           
+
+Powerless67               .               0               0
+                    [load1]                                
+
+Anomie71                  0          1.0000               0
+                                                           
+
+Powerless71               0               .               0
+                                    [load2]                
+
+Education                 0               0          1.0000
+                                                           
+
+SEI                       0               0               .
+                                                    [load3]
+
+
+           Initial Factor Covariance Matrix
+ 
+                Alien67         Alien71             SES
+
+Alien67               .               .               .
+                [phi11]         [phi21]         [phi31]
+
+Alien71               .               .               .
+                [phi21]         [phi22]         [phi32]
+
+SES                   .               .               .
+                [phi31]         [phi32]         [phi33]
+
+
+       Initial Error Variances
+ 
+Variable       Parameter      Estimate
+
+Anomie67       theta1                .
+Powerless67    theta2                .
+Anomie71       theta3                .
+Powerless71    theta4                .
+Education      theta5                .
+SEI            theta6                .
+
+The CALIS Procedure
+Covariance Structure Analysis: Descriptive Statistics
+
+                         Simple Statistics
+ 
+                Variable                          Mean       Std Dev
+
+Anomie67       Anomie (1967)                         0       3.44006
+Powerless67    Powerlessness (1967)                  0       3.06007
+Anomie71       Anomie (1971)                         0       3.54006
+Powerless71    Powerlessness (1971)                  0       3.16006
+Education      Education                             0       3.10000
+SEI            Occupational Status Index             0      21.21999
+
+The CALIS Procedure
+Covariance Structure Analysis: Optimization
+
+        Initial Estimation Methods
+
+       1    Instrumental Variables Method
+       2    McDonald Method              
+
+
+              Optimization Start
+              Parameter Estimates
+ 
+    N    Parameter      Estimate      Gradient
+
+    1    load1           1.00233       0.00594
+    2    load2           0.95912       0.01005
+    3    load3           4.99508      -0.00155
+    4    phi11           6.93082      -0.00858
+    5    phi22           7.81445      -0.00886
+    6    phi33           7.11140      -0.00465
+    7    theta1          4.90318       0.00402
+    8    theta2          2.40078      -0.01395
+    9    theta3          4.71755       0.00394
+   10    theta4          2.79739      -0.01251
+   11    theta5          2.49860      -0.00488
+   12    theta6        272.85274     0.0000100
+   13    phi21           5.54539       0.01409
+   14    phi31          -4.06371      -0.00335
+   15    phi32          -4.13260      -0.00849
+
+  Value of Objective Function = 0.0952355463
+
+The CALIS Procedure
+Covariance Structure Analysis: Optimization
+
+Levenberg-Marquardt Optimization
+
+Scaling Update of More (1978)
+
+Parameter Estimates                   15
+Functions (Observations)              21
+
+                                             Optimization Start
+
+Active Constraints                                  0  Objective Function                       0.0952355463
+Max Abs Gradient Element                  0.014086005  Radius                                              1
+
+
+                                                                                                         Ratio
+                                                                                                       Between
+                                                                                                        Actual
+                                                                 Objective     Max Abs                     and
+                     Function         Active        Objective     Function    Gradient               Predicted
+Iter     Restarts       Calls    Constraints         Function       Change     Element     Lambda       Change
+
+   1            0           4              0          0.07896       0.0163     0.00327          0        1.225
+   2            0           6              0          0.07704      0.00192     0.00267          0        1.355
+   3            0           8              0          0.07680     0.000238     0.00122          0        1.359
+   4            0          10              0          0.07677     0.000030    0.000479          0        1.359
+   5            0          12              0          0.07677     3.912E-6    0.000172          0        1.359
+   6            0          14              0          0.07677     5.041E-7    0.000064          0        1.359
+   7            0          16              0          0.07677     6.499E-8    0.000022          0        1.359
+   8            0          18              0          0.07677     8.379E-9    8.222E-6          0        1.359
+
+                                            Optimization Results
+
+Iterations                                          8  Function Calls                                     21
+Jacobian Calls                                     10  Active Constraints                                  0
+Objective Function                       0.0767666314  Max Abs Gradient Element                 8.2219804E-6
+Lambda                                              0  Actual Over Pred Change                  1.3585240728
+Radius                                   0.0005554219                                                       
+
+Convergence criterion (ABSGCONV=0.00001) satisfied.                                               
+
+The CALIS Procedure
+Covariance Structure Analysis: Maximum Likelihood Estimation
+
+                            Fit Summary
+
+Modeling Info        Number of Observations                     932
+                     Number of Variables                          6
+                     Number of Moments                           21
+                     Number of Parameters                        15
+                     Number of Active Constraints                 0
+                     Baseline Model Function Value           2.2894
+                     Baseline Model Chi-Square            2131.4327
+                     Baseline Model Chi-Square DF                15
+                     Pr > Baseline Model Chi-Square          <.0001
+Absolute Index       Fit Function                            0.0768
+                     Chi-Square                             71.4697
+                     Chi-Square DF                                6
+                     Pr > Chi-Square                         <.0001
+                     Z-Test of Wilson & Hilferty             6.8632
+                     Hoelter Critical N                         165
+                     Root Mean Square Residual (RMR)         0.2836
+                     Standardized RMR (SRMR)                 0.0212
+                     Goodness of Fit Index (GFI)             0.9752
+Parsimony Index      Adjusted GFI (AGFI)                     0.9131
+                     Parsimonious GFI                        0.3901
+                     RMSEA Estimate                          0.1083
+                     RMSEA Lower 90% Confidence Limit        0.0866
+                     RMSEA Upper 90% Confidence Limit        0.1314
+                     Probability of Close Fit                <.0001
+                     ECVI Estimate                           0.1092
+                     ECVI Lower 90% Confidence Limit         0.0838
+                     ECVI Upper 90% Confidence Limit         0.1427
+                     Akaike Information Criterion          101.4697
+                     Bozdogan CAIC                         189.0297
+                     Schwarz Bayesian Criterion            174.0297
+                     McDonald Centrality                     0.9655
+Incremental Index    Bentler Comparative Fit Index           0.9691
+                     Bentler-Bonett NFI                      0.9665
+                     Bentler-Bonett Non-normed Index         0.9227
+                     Bollen Normed Index Rho1                0.9162
+                     Bollen Non-normed Index Delta2          0.9692
+                     James et al. Parsimonious NFI           0.3866
+
+The CALIS Procedure
+Covariance Structure Analysis: Maximum Likelihood Estimation
+
+  Factor Loading Matrix: Estimate/StdErr/t-value/p-value
+ 
+                    Alien67         Alien71             SES
+
+Anomie67             1.0000               0               0
+                                                           
+                                                           
+                                                           
+                                                           
+
+Powerless67          0.8886               0               0
+                     0.0415                                
+                    21.4103                                
+                     <.0001                                
+                    [load1]                                
+
+Anomie71                  0          1.0000               0
+                                                           
+                                                           
+                                                           
+                                                           
+
+Powerless71               0          0.8488               0
+                                     0.0400                
+                                    21.2409                
+                                     <.0001                
+                                    [load2]                
+
+Education                 0               0          1.0000
+                                                           
+                                                           
+                                                           
+                                                           
+
+SEI                       0               0          5.3289
+                                                     0.4298
+                                                    12.3996
+                                                     <.0001
+                                                    [load3]
+
+
+Factor Covariance Matrix: Estimate/StdErr/t-value/p-value
+ 
+                Alien67         Alien71             SES
+
+Alien67          7.8182          6.2223         -4.0916
+                 0.5910          0.4402          0.3569
+                13.2282         14.1355        -11.4627
+                 <.0001          <.0001          <.0001
+                [phi11]         [phi21]         [phi31]
+
+Alien71          6.2223          8.8306         -4.0445
+                 0.4402          0.6465          0.3676
+                14.1355         13.6592        -11.0037
+                 <.0001          <.0001          <.0001
+                [phi21]         [phi22]         [phi32]
+
+SES             -4.0916         -4.0445          6.6659
+                 0.3569          0.3676          0.6411
+               -11.4627        -11.0037         10.3983
+                 <.0001          <.0001          <.0001
+                [phi31]         [phi32]         [phi33]
+
+
+                              Error Variances
+ 
+                                            Standard
+Variable       Parameter      Estimate         Error     t Value    Pr > |t|
+
+Anomie67       theta1          4.01578       0.34316     11.7025      <.0001
+Powerless67    theta2          3.19113       0.27145     11.7557      <.0001
+Anomie71       theta3          3.70137       0.37342      9.9122      <.0001
+Powerless71    theta4          3.62462       0.29208     12.4096      <.0001
+Education      theta5          2.94405       0.49980      5.8904      <.0001
+SEI            theta6        260.99575      18.24163     14.3077      <.0001
+
+
+           Squared Multiple Correlations
+ 
+                    Error         Total
+Variable         Variance      Variance    R-Square
+
+Anomie67          4.01578      11.83400      0.6607
+Powerless67       3.19113       9.36400      0.6592
+Anomie71          3.70137      12.53200      0.7046
+Powerless71       3.62462       9.98600      0.6370
+Education         2.94405       9.61000      0.6936
+SEI             260.99575     450.28800      0.4204
+
+
+         Factor Scores Regression Coefficients
+ 
+                   Alien67        Alien71            SES
+
+Anomie67            0.3293         0.0872        -0.0463
+Powerless67         0.3683         0.0975        -0.0517
+Anomie71            0.0946         0.3936        -0.0386
+Powerless71         0.0820         0.3412        -0.0335
+Education          -0.0631        -0.0485         0.5123
+SEI              -0.003793      -0.002918         0.0308
+
+The CALIS Procedure
+Covariance Structure Analysis: Maximum Likelihood Estimation
+
+Standardized Factor Loading Matrix: Estimate/StdErr/t-value/p-value
+ 
+                    Alien67         Alien71             SES
+
+Anomie67             0.8128               0               0
+                     0.0187                                
+                    43.5544                                
+                     <.0001                                
+                                                           
+
+Powerless67          0.8119               0               0
+                     0.0187                                
+                    43.4716                                
+                     <.0001                                
+                    [load1]                                
+
+Anomie71                  0          0.8394               0
+                                     0.0185                
+                                    45.3770                
+                                     <.0001                
+                                                           
+
+Powerless71               0          0.7981               0
+                                     0.0191                
+                                    41.7092                
+                                     <.0001                
+                                    [load2]                
+
+Education                 0               0          0.8329
+                                                     0.0317
+                                                    26.2974
+                                                     <.0001
+                                                           
+
+SEI                       0               0          0.6484
+                                                     0.0301
+                                                    21.5211
+                                                     <.0001
+                                                    [load3]
+
+
+Factor Correlation Matrix: Estimate/StdErr/t-value/p-value
+ 
+                Alien67         Alien71             SES
+
+Alien67          1.0000          0.7489         -0.5668
+                                 0.0243          0.0345
+                                30.8511        -16.4202
+                                 <.0001          <.0001
+                [phi11]         [phi21]         [phi31]
+
+Alien71          0.7489          1.0000         -0.5272
+                 0.0243                          0.0352
+                30.8511                        -14.9553
+                 <.0001                          <.0001
+                [phi21]         [phi22]         [phi32]
+
+SES             -0.5668         -0.5272          1.0000
+                 0.0345          0.0352                
+               -16.4202        -14.9553                
+                 <.0001          <.0001                
+                [phi31]         [phi32]         [phi33]
+
+
+                  Standardized Results for Error Variances
+ 
+                                            Standard
+Variable       Parameter      Estimate         Error     t Value    Pr > |t|
+
+Anomie67       theta1          0.33934       0.03034     11.1857      <.0001
+Powerless67    theta2          0.34079       0.03033     11.2366      <.0001
+Anomie71       theta3          0.29535       0.03106      9.5099      <.0001
+Powerless71    theta4          0.36297       0.03055     11.8826      <.0001
+Education      theta5          0.30635       0.05275      5.8072      <.0001
+SEI            theta6          0.57962       0.03907     14.8366      <.0001
+
+The CALIS Procedure
+Covariance Structure Analysis: Model and Initial Values
+
+      Modeling Information
+ Maximum Likelihood Estimation
+
+Data Set            WORK.WHEATON
+N Obs               932         
+Model Type          MSTRUCT     
+Analysis            Covariances 
+
+
+           Variables in the Model
+
+Anomie67  Powerless67  Anomie71  Powerless71
+
+          Number of Variables = 4
+
+
+                         Initial MSTRUCT _COV_ Matrix
+ 
+                    Anomie67      Powerless67         Anomie71      Powerless71
+
+Anomie67                   .                .                .                .
+                      [phi1]         [theta1]         [theta2]         [theta1]
+
+Powerless67                .                .                .                .
+                    [theta1]           [phi2]         [theta1]         [theta3]
+
+Anomie71                   .                .                .                .
+                    [theta2]         [theta1]           [phi1]         [theta1]
+
+Powerless71                .                .                .                .
+                    [theta1]         [theta3]         [theta1]           [phi2]
+
+The CALIS Procedure
+Covariance Structure Analysis: Descriptive Statistics
+
+                       Simple Statistics
+ 
+             Variable                        Mean       Std Dev
+
+Anomie67       Anomie (1967)                    0       3.44006
+Powerless67    Powerlessness (1967)             0       3.06007
+Anomie71       Anomie (1971)                    0       3.54006
+Powerless71    Powerlessness (1971)             0       3.16006
+
+The CALIS Procedure
+Covariance Structure Analysis: Optimization
+
+        Initial Estimation Method
+
+       1    Observed Moments of Variables
+
+
+              Optimization Start
+              Parameter Estimates
+ 
+    N    Parameter      Estimate      Gradient
+
+    1    phi1           12.18300    -7.312E-17
+    2    phi2            9.67500    -4.077E-17
+    3    theta1          6.07900    1.5266E-16
+    4    theta2          6.81900    -6.066E-18
+    5    theta3          5.02800    -4.593E-17
+
+  Value of Objective Function = 0.2380019693
+
+The CALIS Procedure
+Covariance Structure Analysis: Optimization
+
+Levenberg-Marquardt Optimization
+
+Scaling Update of More (1978)
+
+Parameter Estimates                    5
+Functions (Observations)              10
+
+                                             Optimization Start
+
+Active Constraints                                  0  Objective Function                       0.2380019693
+Max Abs Gradient Element                 1.526557E-16  Radius                                              1
+
+                                            Optimization Results
+
+Iterations                                          0  Function Calls                                      4
+Jacobian Calls                                      1  Active Constraints                                  0
+Objective Function                       0.2380019693  Max Abs Gradient Element                 1.526557E-16
+Lambda                                              0  Actual Over Pred Change                             0
+Radius                                              1                                                       
+
+Convergence criterion (ABSGCONV=0.00001) satisfied.                                               
+
+The CALIS Procedure
+Covariance Structure Analysis: Maximum Likelihood Estimation
+
+                            Fit Summary
+
+Modeling Info        Number of Observations                     932
+                     Number of Variables                          4
+                     Number of Moments                           10
+                     Number of Parameters                         5
+                     Number of Active Constraints                 0
+                     Baseline Model Function Value           1.6799
+                     Baseline Model Chi-Square            1563.9442
+                     Baseline Model Chi-Square DF                 6
+                     Pr > Baseline Model Chi-Square          <.0001
+Absolute Index       Fit Function                            0.2380
+                     Chi-Square                            221.5798
+                     Chi-Square DF                                5
+                     Pr > Chi-Square                         <.0001
+                     Z-Test of Wilson & Hilferty            12.2533
+                     Hoelter Critical N                          47
+                     Root Mean Square Residual (RMR)         0.7649
+                     Standardized RMR (SRMR)                 0.0701
+                     Goodness of Fit Index (GFI)             0.9036
+Parsimony Index      Adjusted GFI (AGFI)                     0.8071
+                     Parsimonious GFI                        0.7530
+                     RMSEA Estimate                          0.2157
+                     RMSEA Lower 90% Confidence Limit        0.1920
+                     RMSEA Upper 90% Confidence Limit        0.2404
+                     Probability of Close Fit                <.0001
+                     ECVI Estimate                           0.2488
+                     ECVI Lower 90% Confidence Limit         0.2003
+                     ECVI Upper 90% Confidence Limit         0.3053
+                     Akaike Information Criterion          231.5798
+                     Bozdogan CAIC                         260.7665
+                     Schwarz Bayesian Criterion            255.7665
+                     McDonald Centrality                     0.8903
+Incremental Index    Bentler Comparative Fit Index           0.8610
+                     Bentler-Bonett NFI                      0.8583
+                     Bentler-Bonett Non-normed Index         0.8332
+                     Bollen Normed Index Rho1                0.8300
+                     Bollen Non-normed Index Delta2          0.8611
+                     James et al. Parsimonious NFI           0.7153
+
+The CALIS Procedure
+Covariance Structure Analysis: Maximum Likelihood Estimation
+
+             MSTRUCT _COV_ Matrix: Estimate/StdErr/t-value/p-value
+ 
+                    Anomie67      Powerless67         Anomie71      Powerless71
+
+Anomie67             12.1830           6.0790           6.8190           6.0790
+                      0.4576           0.3387           0.4576           0.3387
+                     26.6254          17.9481          14.9026          17.9481
+                      <.0001           <.0001           <.0001           <.0001
+                      [phi1]         [theta1]         [theta2]         [theta1]
+
+Powerless67           6.0790           9.6750           6.0790           5.0280
+                      0.3387           0.3573           0.3387           0.3573
+                     17.9481          27.0745          17.9481          14.0703
+                      <.0001           <.0001           <.0001           <.0001
+                    [theta1]           [phi2]         [theta1]         [theta3]
+
+Anomie71              6.8190           6.0790          12.1830           6.0790
+                      0.4576           0.3387           0.4576           0.3387
+                     14.9026          17.9481          26.6254          17.9481
+                      <.0001           <.0001           <.0001           <.0001
+                    [theta2]         [theta1]           [phi1]         [theta1]
+
+Powerless71           6.0790           5.0280           6.0790           9.6750
+                      0.3387           0.3573           0.3387           0.3573
+                     17.9481          14.0703          17.9481          27.0745
+                      <.0001           <.0001           <.0001           <.0001
+                    [theta1]         [theta3]         [theta1]           [phi2]
+
+The CALIS Procedure
+Covariance Structure Analysis: Maximum Likelihood Estimation
+
+      Standardized MSTRUCT _COV_ Matrix: Estimate/StdErr/t-value/p-value
+ 
+                    Anomie67      Powerless67         Anomie71      Powerless71
+
+Anomie67              1.0000           0.5599           0.5597           0.5599
+                                       0.0161           0.0225           0.0161
+                                      34.7712          24.8692          34.7712
+                                       <.0001           <.0001           <.0001
+                      [phi1]         [theta1]         [theta2]         [theta1]
+
+Powerless67           0.5599           1.0000           0.5599           0.5197
+                      0.0161                            0.0161           0.0239
+                     34.7712                           34.7712          21.7241
+                      <.0001                            <.0001           <.0001
+                    [theta1]           [phi2]         [theta1]         [theta3]
+
+Anomie71              0.5597           0.5599           1.0000           0.5599
+                      0.0225           0.0161                            0.0161
+                     24.8692          34.7712                           34.7712
+                      <.0001           <.0001                            <.0001
+                    [theta2]         [theta1]           [phi1]         [theta1]
+
+Powerless71           0.5599           0.5197           0.5599           1.0000
+                      0.0161           0.0239           0.0161                 
+                     34.7712          21.7241          34.7712                 
+                      <.0001           <.0001           <.0001                 
+                    [theta1]         [theta3]         [theta1]           [phi2]

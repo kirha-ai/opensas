@@ -1,0 +1,271 @@
+
+The PLS Procedure
+
+Data Set                                    WORK.SAMPLE
+Factor Extraction Method          Partial Least Squares
+PLS Algorithm                                    NIPALS
+Number of Response Variables                          3
+Number of Predictor Parameters                       27
+Missing Value Handling                          Exclude
+Number of Factors                                    15
+
+Number of Observations Read             16
+Number of Observations Used             16
+
+The PLS Procedure
+
+             Percent Variation Accounted for
+             by Partial Least Squares Factors
+ 
+Number of
+Extracted        Model Effects        Dependent Variables
+  Factors     Current       Total     Current       Total
+
+        1     97.4607     97.4607     41.9155     41.9155
+        2      2.1830     99.6436     24.2435     66.1590
+        3      0.1781     99.8217     24.5339     90.6929
+        4      0.1197     99.9414      3.7898     94.4827
+        5      0.0415     99.9829      1.0045     95.4873
+        6      0.0106     99.9935      2.2808     97.7681
+        7      0.0017     99.9952      1.1693     98.9374
+        8      0.0010     99.9961      0.5041     99.4415
+        9      0.0014     99.9975      0.1229     99.5645
+       10      0.0010     99.9985      0.1103     99.6747
+       11      0.0003     99.9988      0.1523     99.8270
+       12      0.0003     99.9991      0.1291     99.9561
+       13      0.0002     99.9994      0.0312     99.9873
+       14      0.0004     99.9998      0.0065     99.9938
+       15      0.0002    100.0000      0.0062    100.0000
+
+The PLS Procedure
+
+Data Set                                             WORK.SAMPLE
+Factor Extraction Method                   Partial Least Squares
+PLS Algorithm                                             NIPALS
+Number of Response Variables                                   3
+Number of Predictor Parameters                                27
+Missing Value Handling                                   Exclude
+Maximum Number of Factors                                     15
+Validation Method                 7-fold Split-sample Validation
+
+Number of Observations Read             16
+Number of Observations Used             16
+
+
+Split-sample Validation for the Number of Extracted Factors
+ 
+Number of        Root
+Extracted        Mean
+  Factors       PRESS
+
+        0    1.107747
+        1    0.957983
+        2    0.931314
+        3    0.520222
+        4    0.530501
+        5    0.586786
+        6    0.475047
+        7    0.477595
+        8    0.483138
+        9    0.485739
+       10     0.48946
+       11    0.521445
+       12    0.525653
+       13    0.531049
+       14    0.531049
+       15    0.531049
+
+
+Minimum root mean PRESS           0.4750
+Minimizing number of factors           6
+
+The PLS Procedure
+
+             Percent Variation Accounted for
+             by Partial Least Squares Factors
+ 
+Number of
+Extracted        Model Effects        Dependent Variables
+  Factors     Current       Total     Current       Total
+
+        1     97.4607     97.4607     41.9155     41.9155
+        2      2.1830     99.6436     24.2435     66.1590
+        3      0.1781     99.8217     24.5339     90.6929
+        4      0.1197     99.9414      3.7898     94.4827
+        5      0.0415     99.9829      1.0045     95.4873
+        6      0.0106     99.9935      2.2808     97.7681
+
+The PLS Procedure
+
+Data Set                                             WORK.SAMPLE
+Factor Extraction Method                   Partial Least Squares
+PLS Algorithm                                             NIPALS
+Number of Response Variables                                   3
+Number of Predictor Parameters                                27
+Missing Value Handling                                   Exclude
+Maximum Number of Factors                                     15
+Validation Method                 7-fold Split-sample Validation
+Validation Testing Criterion                     Prob T**2 > 0.1
+Number of Random Permutations                               1000
+Random Permutation Seed                                    12345
+
+Number of Observations Read             16
+Number of Observations Used             16
+
+
+Split-sample Validation for the Number of Extracted Factors
+ 
+Number of        Root
+Extracted        Mean                Prob >
+  Factors       PRESS        T**2      T**2
+
+        0    1.107747    9.272858    0.0010
+        1    0.957983    10.62305    <.0001
+        2    0.931314    8.950878    0.0010
+        3    0.520222    5.133259    0.1440
+        4    0.530501    5.168427    0.1340
+        5    0.586786    6.437266    0.0150
+        6    0.475047           0    1.0000
+        7    0.477595    2.809763    0.4750
+        8    0.483138    7.189526    0.0110
+        9    0.485739    7.931726    0.0060
+       10     0.48946    6.612597    0.0150
+       11    0.521445    6.666235    0.0130
+       12    0.525653    7.092861    0.0080
+       13    0.531049    7.538298    0.0030
+       14    0.531049    7.538298    0.0030
+       15    0.531049    7.538298    0.0030
+
+
+Minimum root mean PRESS                      0.4750
+Minimizing number of factors                      6
+Smallest number of factors with p > 0.1           3
+
+The PLS Procedure
+
+             Percent Variation Accounted for
+             by Partial Least Squares Factors
+ 
+Number of
+Extracted        Model Effects        Dependent Variables
+  Factors     Current       Total     Current       Total
+
+        1     97.4607     97.4607     41.9155     41.9155
+        2      2.1830     99.6436     24.2435     66.1590
+        3      0.1781     99.8217     24.5339     90.6929
+
+The PLS Procedure
+
+Data Set                                       WORK.ALL
+Factor Extraction Method          Partial Least Squares
+PLS Algorithm                                    NIPALS
+Number of Response Variables                          3
+Number of Predictor Parameters                       27
+Missing Value Handling                          Exclude
+Number of Factors                                     3
+
+Number of Observations Read             18
+Number of Observations Used             16
+
+The PLS Procedure
+
+             Percent Variation Accounted for
+             by Partial Least Squares Factors
+ 
+Number of
+Extracted        Model Effects        Dependent Variables
+  Factors     Current       Total     Current       Total
+
+        1     97.4607     97.4607     41.9155     41.9155
+        2      2.1830     99.6436     24.2435     66.1590
+        3      0.1781     99.8217     24.5339     90.6929
+
+Obs    obsnam      p_ls        p_ha       p_dt
+
+ 17     EM17      2.54261    0.31877    81.4174
+ 18     EM25     -0.24716    1.37892    46.3212
+
+The PLS Procedure
+
+Data Set                                             WORK.SAMPLE
+Factor Extraction Method                   Partial Least Squares
+PLS Algorithm                                             NIPALS
+Number of Response Variables                                   3
+Number of Predictor Parameters                                27
+Missing Value Handling                                   Exclude
+Maximum Number of Factors                                     15
+Validation Method                 7-fold Split-sample Validation
+Validation Testing Criterion                     Prob T**2 > 0.1
+Number of Random Permutations                               1000
+Random Permutation Seed                                    12345
+
+Number of Observations Read             16
+Number of Observations Used             16
+
+
+Split-sample Validation for the Number of Extracted Factors
+ 
+Number of        Root
+Extracted        Mean                Prob >
+  Factors       PRESS        T**2      T**2
+
+        0    1.107747    9.272858    0.0010
+        1    0.957983    10.62305    <.0001
+        2    0.931314    8.950878    0.0010
+        3    0.520222    5.133259    0.1440
+        4    0.530501    5.168427    0.1340
+        5    0.586786    6.437266    0.0150
+        6    0.475047           0    1.0000
+        7    0.477595    2.809763    0.4750
+        8    0.483138    7.189526    0.0110
+        9    0.485739    7.931726    0.0060
+       10     0.48946    6.612597    0.0150
+       11    0.521445    6.666235    0.0130
+       12    0.525653    7.092861    0.0080
+       13    0.531049    7.538298    0.0030
+       14    0.531049    7.538298    0.0030
+       15    0.531049    7.538298    0.0030
+
+
+Minimum root mean PRESS                      0.4750
+Minimizing number of factors                      6
+Smallest number of factors with p > 0.1           3
+
+The PLS Procedure
+
+             Percent Variation Accounted for
+             by Partial Least Squares Factors
+ 
+Number of
+Extracted        Model Effects        Dependent Variables
+  Factors     Current       Total     Current       Total
+
+        1     97.4607     97.4607     41.9155     41.9155
+        2      2.1830     99.6436     24.2435     66.1590
+        3      0.1781     99.8217     24.5339     90.6929
+
+The PLS Procedure
+
+Data Set                                    WORK.SAMPLE
+Factor Extraction Method          Partial Least Squares
+PLS Algorithm                                    NIPALS
+Number of Response Variables                          3
+Number of Predictor Parameters                       27
+Missing Value Handling                          Exclude
+Number of Factors                                     3
+
+Number of Observations Read             16
+Number of Observations Used             16
+
+The PLS Procedure
+
+             Percent Variation Accounted for
+             by Partial Least Squares Factors
+ 
+Number of
+Extracted        Model Effects        Dependent Variables
+  Factors     Current       Total     Current       Total
+
+        1     97.4607     97.4607     41.9155     41.9155
+        2      2.1830     99.6436     24.2435     66.1590
+        3      0.1781     99.8217     24.5339     90.6929

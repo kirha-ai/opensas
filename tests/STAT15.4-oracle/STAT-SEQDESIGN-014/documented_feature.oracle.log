@@ -1,0 +1,44 @@
+The SAS System
+
+16186      
+16187      /* STAT-SEQDESIGN-014: SEQDESIGN — Official examples and feature integration regression
+16188       * Source: S154 / Chapter 110 / `Examples: SEQDESIGN Procedure` (PDF pp. 9029–9132).
+16189       * Discriminates: Example 110.4: Generating Graphics Display for Sequential Designs
+16190       */
+16191      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+16191    ! validmemname=compatible locale=en_US;
+16192      %let syscc=0;
+16193      title; footnote;
+16194      ods _all_ close;
+16195      ods listing gpath="%sysfunc(pathname(work))";
+16196      ods graphics off;
+16197      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+16197    !                                         quit;
+
+
+16198      ods path work.templat(update) sashelp.tmplmst(read);
+16199      
+16200      ods graphics on;
+16201      proc seqdesign altref=0.4
+16202      plots=all
+16203      ;
+16204      TwoSidedPocock: design nstages=4 method=poc;
+16205      TwoSidedOBrienFleming: design nstages=4 method=obf;
+16206      run;
+
+NOTE: The PROCEDURE SEQDESIGN printed pages 1161-1162.
+
+16207      
+16208      
+16209      
+16210      
+The SAS System
+
+16211      

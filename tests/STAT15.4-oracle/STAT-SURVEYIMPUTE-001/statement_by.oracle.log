@@ -1,0 +1,86 @@
+The SAS System
+
+19947      
+19948      /* STAT-SURVEYIMPUTE-001: SURVEYIMPUTE — Data input, variable roles, and basic options
+19949       * Source: S154 / Chapter 119 / `PROC SURVEYIMPUTE Statement` (PDF pp. 9704–9713); S154 / Chapter 119 / `BY Statement` (PDF pp. 9713–9714); S154
+19949    ! / Chapter 119 / `CLASS Statement` (PDF pp. 9714–9715); S154 / Chapter 119 / `CLUSTER Statement` (PDF p. 9715); S154 / Chapter 119 / `ID Statement`
+19949    ! (PDF pp. 9715–9716); S154 / Chapter 119 / `REPWEIGHTS Statement` (PDF pp. 9718–9719); S154 / Chapter 119 / `STRATA Statement` (PDF p. 9719); S154
+19949    !  / Chapter 119 / `VAR Statement` (PDF pp. 9719–9720); S154 / Chapter 119 / `WEIGHT Statement` (PDF p. 9720); S154 / Chapter 119 / `Missing Values`
+19949    ! (PDF pp. 9723–9725); S154 / Chapter 119 / `Missing Data Patterns` (PDF p. 9725).
+19950       * Discriminates: Two explicit BY groups contain identical inputs, exposing group boundaries and per-group results.
+19951       */
+19952      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+19952    ! validmemname=compatible locale=en_US;
+19953      %let syscc=0;
+19954      title; footnote;
+19955      ods _all_ close;
+19956      ods listing gpath="%sysfunc(pathname(work))";
+19957      ods graphics off;
+19958      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SIS_JKCOEFS (memtype=DATA).
+NOTE: Deleting WORK.SIS_SURVEY_IMPUTED (memtype=DATA).
+NOTE: Deleting WORK.SIS_SURVEY_SUB (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+19958    !                                         quit;
+
+
+19959      ods path work.templat(update) sashelp.tmplmst(read);
+19960      
+19961      data SIS_Survey_Sub;
+19962      input State $ NewUser School SamplingWeight Department Response @@;
+19963      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.SIS_SURVEY_SUB has 235 observations and 6 variables.
+
+20011      ;
+20012      data _oracle_input; set SIS_Survey_Sub; do _oracle_by=1 to 2; output; end; run;
+
+NOTE: There were 235 observations read from the data set WORK.SIS_SURVEY_SUB.
+NOTE: The data set WORK._ORACLE_INPUT has 470 observations and 7 variables.
+
+20013      proc sort data=_oracle_input; by _oracle_by; run;
+
+NOTE: There were 470 observations read from the data set WORK._ORACLE_INPUT.
+NOTE: The data set WORK._ORACLE_INPUT has 470 observations and 7 variables.
+
+20014      proc surveyimpute data=_oracle_input method=fefi varmethod=jackknife;
+20015      by _oracle_by;
+20016      class Department Response;
+20017      var Department Response;
+20018      strata State NewUser;
+20019      cluster School;
+20020      weight SamplingWeight;
+20021      output out=SIS_Survey_Imputed outjkcoefs=SIS_JKCoefs;
+20022      run;
+
+NOTE: Convergence achieved; maximum relative difference less than 0.001 for fractional weights for the EM algorithm.
+NOTE: The above message was for the following BY group:
+      _oracle_by=1
+NOTE: Convergence achieved; maximum relative difference less than 0.001 for fractional weights for the EM algorithm.
+NOTE: The above message was for the following BY group:
+      _oracle_by=2
+NOTE: The data set WORK.SIS_SURVEY_IMPUTED has 1018 observations and 57 variables.
+NOTE: The data set WORK.SIS_JKCOEFS has 94 observations and 4 variables.
+NOTE: The PROCEDURE SURVEYIMPUTE printed pages 1399-1400.
+
+20023      proc surveyfreq data=SIS_Survey_Imputed varmethod=jackknife;
+20024      table department response department *response;
+20025      weight ImpWt;
+20026      repweights ImpRepWt: / jkcoefs=SIS_JKCoefs;
+20027      run;
+
+NOTE: The PROCEDURE SURVEYFREQ printed page 1401.
+
+20028      
+20029      
+20030      
+20031      
+The SAS System
+
+20032      

@@ -1,0 +1,57 @@
+The SAS System
+
+4136       
+4137       /* STAT-PHREG-027: PHREG — Official examples and feature integration regression
+4138        * Source: S154 / Chapter 92 / `Examples: PHREG Procedure` (PDF pp. 7483–7576).
+4139        * Discriminates: Example 92.1: Stepwise Regression
+4140        */
+4141       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+4141     ! validmemname=compatible locale=en_US;
+4142       %let syscc=0;
+4143       title; footnote;
+4144       ods _all_ close;
+4145       ods listing gpath="%sysfunc(pathname(work))";
+4146       ods graphics off;
+4147       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.NEW (memtype=DATA).
+NOTE: Deleting WORK.POST (memtype=DATA).
+NOTE: Deleting WORK.RATS (memtype=DATA).
+NOTE: Deleting WORK.REGIMES (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+4147     !                                         quit;
+
+
+4148       ods path work.templat(update) sashelp.tmplmst(read);
+4149       
+4150       data Myeloma;
+4151       input Time VStatus LogBUN HGB Platelet Age LogWBC Frac
+4152       LogPBM Protein SCalc;
+4153       label Time='Survival Time'
+4154       VStatus='0=Alive 1=Dead';
+4155       datalines;
+
+NOTE: The data set WORK.MYELOMA has 65 observations and 11 variables.
+
+4221       ;
+4222       proc phreg data=Myeloma;
+4223       model Time*VStatus(0)=LogBUN HGB Platelet Age LogWBC
+4224       Frac LogPBM Protein SCalc
+4225       / selection=stepwise slentry=0.25
+4226       slstay=0.15 details;
+4227       run;
+
+NOTE: Convergence criterion (GCONV=1E-8) satisfied for the model in Step 1.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied for the model in Step 2.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied for the model in Step 3.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied for the model in Step 4.
+NOTE: The PROCEDURE PHREG printed page 320.
+
+4228       
+4229       
+4230       
+4231       
+The SAS System
+
+4232       

@@ -1,0 +1,50 @@
+The SAS System
+
+6572       
+6573       /* STAT-HPSPLIT-010: HPSPLIT — CODE / Scoring
+6574        * Source: S154 / Chapter 68 / `CODE Statement` (PDF pp. 5089–5090); S154 / Chapter 68 / `Scoring` (PDF pp. 5110–5111).
+6575        * Discriminates: Verified default procedure context
+6576        */
+6577       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+6577     ! validmemname=compatible locale=en_US;
+6578       %let syscc=0;
+6579       title; footnote;
+6580       ods _all_ close;
+6581       ods listing gpath="%sysfunc(pathname(work))";
+6582       ods graphics off;
+6583       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.HPSPLOUT (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+6583     !                                         quit;
+
+
+6584       ods path work.templat(update) sashelp.tmplmst(read);
+6585       
+6586       ods graphics on;
+6587       proc hpsplit data=sashelp.baseball seed=123;
+6588       class league division;
+6589       model logSalary = nAtBat nHits nHome nRuns nRBI nBB
+6590       yrMajor crAtBat crHits crHome crRuns crRbi
+6591       crBB league division nOuts nAssts nError;
+6592       output out=hpsplout;
+6593       run;
+
+NOTE: The ASSIGNMISSING= option has not been specified.  Because of this, all observations with missing values in the explanatory variables will be excluded 
+      from tree construction.
+NOTE: The HPSPLIT procedure is executing in single-machine mode.
+NOTE: Cross-validating using 10 folds.
+NOTE: There were 322 observations read from the data set SASHELP.BASEBALL.
+NOTE: The data set WORK.HPSPLOUT has 322 observations and 4 variables.
+NOTE: The PROCEDURE HPSPLIT printed pages 480-481.
+
+6594       
+6595       
+6596       
+6597       
+The SAS System
+
+6598       

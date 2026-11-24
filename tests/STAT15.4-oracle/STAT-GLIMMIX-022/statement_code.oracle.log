@@ -1,0 +1,85 @@
+The SAS System
+
+548        
+549        /* STAT-GLIMMIX-022: GLIMMIX — CODE
+550         * Source: S154 / Chapter 52 / `CODE Statement` (PDF p. 3732).
+551         * Discriminates: Generate DATA step scoring code, execute it against the input rows, and print the scored data.
+552         */
+553        options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+553      ! validmemname=compatible locale=en_US;
+554        %let syscc=0;
+555        title; footnote;
+556        ods _all_ close;
+557        ods listing gpath="%sysfunc(pathname(work))";
+558        ods graphics off;
+559        proc datasets library=work kill nolist;
+NOTE: Deleting WORK.MULTICENTER (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK._ORACLE_INPUT (memtype=DATA).
+559      !                                         quit;
+
+
+560        ods path work.templat(update) sashelp.tmplmst(read);
+561        
+562        filename _orcode "%sysfunc(pathname(work))/_oracle_score.sas";
+563        
+564        
+565        data multicenter;
+566        input center group$ n sideeffect;
+567        datalines;
+
+NOTE: The data set WORK.MULTICENTER has 30 observations and 4 variables.
+
+598        ;
+599        proc glimmix data=multicenter;
+600        class center group;
+601        model sideeffect/n = group / solution;
+602        random intercept / subject=center;
+603        
+604        code file="%sysfunc(pathname(work))/_oracle_score.sas";
+605        run;
+
+
+
+NOTE: Convergence criterion (PCONV=1.11022E-8) satisfied.
+NOTE: External file /saswork/SAS_work7EA200001C34_odaws01-euw1.oda.sas.com/SAS_work29EF00001C34_odaws01-euw1.oda.sas.com/_oracle_score.sas opened.
+NOTE: The GLIMMIX procedure wrote the DATA step code to external file 
+      /saswork/SAS_work7EA200001C34_odaws01-euw1.oda.sas.com/SAS_work29EF00001C34_odaws01-euw1.oda.sas.com/_oracle_score.sas.
+NOTE: The PROCEDURE GLIMMIX printed page 19.
+
+606        ods select lsmeans;
+607        proc glimmix data=multicenter;
+608        class center group;
+609        model sideeffect/n = group / solution;
+610        random intercept / subject=center;
+611        lsmeans group / cl ilink;
+612        run;
+
+
+
+NOTE: Convergence criterion (PCONV=1.11022E-8) satisfied.
+NOTE: The PROCEDURE GLIMMIX printed page 20.
+
+613        
+614        data _oracle_scored; set multicenter;
+615        %include _orcode;
+669        run;
+
+NOTE: There were 30 observations read from the data set WORK.MULTICENTER.
+NOTE: The data set WORK._ORACLE_SCORED has 30 observations and 6 variables.
+
+670        proc print data=_oracle_scored(obs=10); run;
+
+NOTE: There were 10 observations read from the data set WORK._ORACLE_SCORED.
+NOTE: The PROCEDURE PRINT printed page 21.
+
+671        
+672        
+673        
+674        
+The SAS System
+
+675        

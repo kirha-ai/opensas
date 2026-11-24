@@ -1,0 +1,115 @@
+The SAS System
+
+14536      
+14537      /* STAT-LOGISTIC-015: LOGISTIC — Confidence Intervals for Parameters / Testing Linear Hypotheses about the Regression Coefficients / Joint Tests
+14537    ! and Type 3 Tests
+14538       * Source: S154 / Chapter 79 / `Confidence Intervals for Parameters` (PDF pp. 5920–5922); S154 / Chapter 79 / `Testing Linear Hypotheses about the
+14538    ! Regression Coefficients` (PDF p. 5937); S154 / Chapter 79 / `Joint Tests and Type 3 Tests` (PDF pp. 5937–5938).
+14539       * Discriminates: Example 79.1: Stepwise Logistic Regression and Predicted Values
+14540       */
+14541      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+14541    ! validmemname=compatible locale=en_US;
+14542      %let syscc=0;
+14543      title; footnote;
+14544      ods _all_ close;
+14545      ods listing gpath="%sysfunc(pathname(work))";
+14546      ods graphics off;
+14547      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.NEURALGIA (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+14547    !                                         quit;
+
+
+14548      ods path work.templat(update) sashelp.tmplmst(read);
+14549      
+14550      data Remission;
+14551      input remiss cell smear infil li blast temp;
+14552      label remiss='Complete Remission';
+14553      datalines;
+
+NOTE: The data set WORK.REMISSION has 27 observations and 7 variables.
+
+14581      ;
+14582      title 'Stepwise Regression on Cancer Remission Data';
+14583      proc logistic data=Remission outest=betas covout;
+14584      model remiss(event='1')=cell smear infil li blast temp
+14585      / selection=stepwise
+14586      slentry=0.3
+14587      slstay=0.35
+14588      details
+14589      lackfit;
+14590      output out=pred p=phat lower=lcl upper=ucl
+14591      predprob=(individual crossvalidate);
+14592      ods output Association=Association;
+14593      run;
+
+NOTE: PROC LOGISTIC is modeling the probability that remiss=1.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied in Step 0.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied in Step 1.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied in Step 2.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied in Step 3.
+NOTE: The data set WORK.ASSOCIATION has 12 observations and 7 variables.
+NOTE: There were 27 observations read from the data set WORK.REMISSION.
+NOTE: The data set WORK.BETAS has 8 observations and 13 variables.
+NOTE: The data set WORK.PRED has 27 observations and 17 variables.
+NOTE: The PROCEDURE LOGISTIC printed page 1215.
+
+14594      proc print data=betas;
+14595      title2 'Parameter Estimates and Covariance Matrix';
+14596      run;
+
+NOTE: There were 8 observations read from the data set WORK.BETAS.
+NOTE: The PROCEDURE PRINT printed page 1216.
+
+14597      proc print data=pred;
+14598      title2 'Predicted Probabilities and 95% Confidence Limits';
+14599      run;
+
+NOTE: There were 27 observations read from the data set WORK.PRED.
+NOTE: The PROCEDURE PRINT printed page 1217.
+
+14600      data Association(rename=(Label2=Statistic nValue2=Value));
+14601      set Association;
+14602      if (Label2='c');
+14603      keep Step Label2 nValue2;
+
+NOTE: There were 12 observations read from the data set WORK.ASSOCIATION.
+NOTE: The data set WORK.ASSOCIATION has 3 observations and 3 variables.
+
+14604      proc sort data=Association;
+14605      by Value;
+14606      title;
+
+NOTE: There were 3 observations read from the data set WORK.ASSOCIATION.
+NOTE: The data set WORK.ASSOCIATION has 3 observations and 3 variables.
+
+14607      proc print data=Association;
+14608      run;
+
+NOTE: There were 3 observations read from the data set WORK.ASSOCIATION.
+NOTE: The PROCEDURE PRINT printed page 1218.
+
+14609      title 'Backward Elimination on Cancer Remission Data';
+14610      proc logistic data=Remission;
+14611      model remiss(event='1')=temp cell li smear blast
+14612      / selection=backward fast slstay=0.2
+14613      ctable pprob=(0 to 1 by 0.05);
+14614      run;
+
+NOTE: PROC LOGISTIC is modeling the probability that remiss=1.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied in Step 0.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied in Step 1.
+NOTE: There were 27 observations read from the data set WORK.REMISSION.
+NOTE: The PROCEDURE LOGISTIC printed page 1219.
+
+14615      
+14616      
+14617      
+14618      
+The SAS System
+
+14619      

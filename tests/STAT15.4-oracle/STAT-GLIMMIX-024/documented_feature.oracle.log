@@ -1,0 +1,67 @@
+The SAS System
+
+24975      
+24976      /* STAT-GLIMMIX-024: GLIMMIX — OUTPUT
+24977       * Source: S154 / Chapter 52 / `OUTPUT Statement` (PDF pp. 3787–3791).
+24978       * Discriminates: Example 52.7: Isotonic Contrasts for Ordered Alternatives; explicit statements: OUTPUT
+24979       */
+24980      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+24980    ! validmemname=compatible locale=en_US;
+24981      %let syscc=0;
+24982      title; footnote;
+24983      ods _all_ close;
+24984      ods listing gpath="%sysfunc(pathname(work))";
+24985      ods graphics off;
+24986      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.MULTICENTER (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+24986    !                                         quit;
+
+
+24987      ods path work.templat(update) sashelp.tmplmst(read);
+24988      
+24989      data FerriteCores;
+24990      do Temp = 1 to 4;
+24991      do rep = 1 to 5;
+24992      drop rep;
+24993      input MagneticForce @@;
+24994      output;
+24995      end;
+24996      end;
+24997      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.FERRITECORES has 20 observations and 2 variables.
+
+25002      ;
+25003      proc glimmix data=FerriteCores;
+25004      class Temp;
+25005      model MagneticForce = Temp;
+25006      lsmestimate Temp
+25007      'avg(1:1)<avg(2:4)' -3 1 1 1 divisor=3,
+25008      'avg(1:2)<avg(3:4)' -1 -1 1 1 divisor=2,
+25009      'avg(1:3)<avg(4:4)' -1 -1 -1 3 divisor=3
+25010      / adjust=simulate(seed=1) cl upper;
+25011      ods select LSMestimates;
+25012      run;
+
+
+
+
+NOTE: No optimization performed.
+NOTE: The PROCEDURE GLIMMIX printed page 2444.
+
+25013      
+25014      
+25015      
+25016      
+The SAS System
+
+25017      

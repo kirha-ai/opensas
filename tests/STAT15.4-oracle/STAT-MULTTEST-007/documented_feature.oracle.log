@@ -1,0 +1,287 @@
+The SAS System
+
+5105       
+5106       /* STAT-MULTTEST-007: MULTTEST — ODS Graphics
+5107        * Source: S154 / Chapter 86 / `ODS Graphics` (PDF pp. 6935–6936).
+5108        * Discriminates: Example 86.6: Adaptive Adjustments and ODS Graphics
+5109        */
+5110       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+5110     ! validmemname=compatible locale=en_US;
+5111       %let syscc=0;
+5112       title; footnote;
+5113       ods _all_ close;
+5114       ods listing gpath="%sysfunc(pathname(work))";
+5115       ods graphics off;
+5116       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.DRUG (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+5116     !                                         quit;
+
+
+5117       ods path work.templat(update) sashelp.tmplmst(read);
+5118       
+5119       ods graphics on;
+5120       ods trace on;
+5121       ods trace on;
+5122       data test;
+5123       length Probe_Set_ID $9.;
+5124       input Probe_Set_ID $ Probt @@;
+5125       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.TEST has 121 observations and 2 variables.
+
+5157       run;
+5158       ods graphics on;
+5159       proc multtest inpvalues(Probt)=test plots=all seed=518498000
+5160       aholm ahoc afdr pfdr(positive) nopvalue;
+5161       id Probe_Set_ID;
+5162       run;
+
+NOTE: The DF converged to 3.0000013492.
+NOTE: The spline method estimates the number of true nulls with a large positive slope.  Switching to the bootstrap method.
+
+Output Added:
+-------------
+Name:       pValueInfo
+Label:      P-Value Adjustment Information
+Template:   Stat.Multtest.pValueInfo
+Path:       Multtest.pValueInfo
+-------------
+
+Output Added:
+-------------
+Name:       LambdaValues
+Label:      Lambda Values
+Template:   Stat.Multtest.LambdaValues
+Path:       Multtest.LambdaValues
+-------------
+
+Output Added:
+-------------
+Name:       LambdaPlot
+Label:      Lambda Plots
+Template:   Stat.Multtest.Graphics.LambdaPlot
+Path:       Multtest.LambdaPlot
+-------------
+
+Output Added:
+-------------
+Name:       NumTrueNull
+Label:      Estimated Number of True Nulls
+Template:   Stat.Multtest.NumTrueNull
+Path:       Multtest.NumTrueNull
+-------------
+
+Output Added:
+-------------
+Name:       RawUniformPlot
+Label:      Uniform Probability Plots
+Template:   Stat.Multtest.Graphics.RawProb
+Path:       Multtest.RawUniformPlot
+-------------
+
+Output Added:
+-------------
+Name:       PByTest
+Label:      Raw and Adjusted P-Values
+Template:   Stat.Multtest.Graphics.PByTest
+Path:       Multtest.PByTest
+-------------
+
+Output Added:
+-------------
+Name:       ManhattanPlots
+Label:      Manhattan Plots
+Template:   Stat.Multtest.Graphics.ManhattanPanel
+Path:       Multtest.ManhattanPlots
+-------------
+
+Output Added:
+-------------
+Name:       AdjPlots
+Label:      Adjusted P-Value Plots
+Template:   Stat.Multtest.Graphics.AdjPanel
+Path:       Multtest.AdjPlots
+-------------
+NOTE: There were 121 observations read from the data set WORK.TEST.
+NOTE: The PROCEDURE MULTTEST printed page 365.
+
+5163       ods graphics off;
+5164       proc nlmixed data=test;
+5165       parameters pi0=0.5 a=.1 b=.1;
+5166       pi1= 1-pi0;
+5167       bounds 0 <= pi0 <= 1;
+5168       loglikelihood= log(pi0+pi1*pdf('beta',Probt,a,b));
+5169       model Probt ~ general(loglikelihood);
+5170       run;
+
+
+Output Added:
+-------------
+Name:       Specifications
+Label:      Specifications
+Template:   Stat.NLM.Specifications
+Path:       Nlmixed.Specifications
+-------------
+
+Output Added:
+-------------
+Name:       Dimensions
+Label:      Dimensions
+Template:   Stat.NLM.Dimensions
+Path:       Nlmixed.Dimensions
+-------------
+
+Output Added:
+-------------
+Name:       Parameters
+Label:      Initial Parameters
+Template:   Stat.NLM.Parameters
+Path:       Nlmixed.Parameters
+-------------
+
+Output Added:
+-------------
+Name:       IterHistory
+Label:      Iteration History
+Template:   Stat.NLM.IterHistory
+Path:       Nlmixed.IterHistory
+-------------
+
+Output Added:
+-------------
+Name:       ConvergenceStatus
+Label:      Convergence Status
+Template:   Stat.NLM.ConvergenceStatus
+Path:       Nlmixed.ConvergenceStatus
+-------------
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+
+Output Added:
+-------------
+Name:       FitStatistics
+Label:      Fit Statistics
+Template:   Stat.NLM.FitStatistics
+Path:       Nlmixed.FitStatistics
+-------------
+
+Output Added:
+-------------
+Name:       ParameterEstimates
+Label:      Parameter Estimates
+Template:   Stat.NLM.ParameterEstimates
+Path:       Nlmixed.ParameterEstimates
+-------------
+
+Output Added:
+-------------
+Name:       CovMatParmEst
+Label:      Cov Matrix of Parm Estimates
+Template:   Stat.NLM.CovMatParmEst
+Path:       Nlmixed.CovMatParmEst
+-------------
+
+Output Added:
+-------------
+Name:       CorrMatParmEst
+Label:      Corr Matrix of Parm Estimates
+Template:   Stat.NLM.CorrMatParmEst
+Path:       Nlmixed.CorrMatParmEst
+-------------
+NOTE: The PROCEDURE NLMIXED printed page 366.
+
+5171       proc multtest inpvalues(Probt)=test ptruenull=0.10
+5172       aholm ahoc afdr pfdr(positive) nopvalue;
+5173       id Probe_Set_ID;
+5174       run;
+
+NOTE: There were 121 observations read from the data set WORK.TEST.
+
+5175       ods graphics on / labelmax=1000;
+5176       proc multtest inpvalues(Probt)=test afdr nopvalue
+5177       plots=Manhattan(label=obs vref=0.0001);
+5178       id Probe_Set_ID;
+5179       run;
+
+
+Output Added:
+-------------
+Name:       pValueInfo
+Label:      P-Value Adjustment Information
+Template:   Stat.Multtest.pValueInfo
+Path:       Multtest.pValueInfo
+-------------
+
+Output Added:
+-------------
+Name:       NumTrueNull
+Label:      Estimated Number of True Nulls
+Template:   Stat.Multtest.NumTrueNull
+Path:       Multtest.NumTrueNull
+-------------
+
+Output Added:
+-------------
+Name:       ManhattanPlots
+Label:      Manhattan Plot
+Template:   Stat.Multtest.Graphics.Manhattan
+Path:       Multtest.ManhattanPlots
+-------------
+NOTE: There were 121 observations read from the data set WORK.TEST.
+NOTE: The PROCEDURE MULTTEST printed page 367.
+
+5180       ods graphics off;
+5181       ods graphics on;
+5182       proc multtest inpvalues(Probt)=test plots(sigonly=0.001)=PByTest
+5183       aholm ahoc afdr pfdr(positive) nopvalue;
+5184       run;
+
+NOTE: The DF converged to 3.0000013492.
+NOTE: The spline method estimates the number of true nulls with a large positive slope.  Switching to the bootstrap method.
+
+Output Added:
+-------------
+Name:       pValueInfo
+Label:      P-Value Adjustment Information
+Template:   Stat.Multtest.pValueInfo
+Path:       Multtest.pValueInfo
+-------------
+
+Output Added:
+-------------
+Name:       NumTrueNull
+Label:      Estimated Number of True Nulls
+Template:   Stat.Multtest.NumTrueNull
+Path:       Multtest.NumTrueNull
+-------------
+
+Output Added:
+-------------
+Name:       PByTest
+Label:      Raw and Adjusted P-Values
+Template:   Stat.Multtest.Graphics.PByTest
+Path:       Multtest.PByTest
+-------------
+NOTE: There were 121 observations read from the data set WORK.TEST.
+NOTE: The PROCEDURE MULTTEST printed page 368.
+
+5185       ods graphics off;
+5186       run;
+5187       quit;
+5188       ods trace off;
+5189       ods trace off;
+5190       ods graphics off;
+5191       
+5192       
+5193       
+5194       
+The SAS System
+
+5195       

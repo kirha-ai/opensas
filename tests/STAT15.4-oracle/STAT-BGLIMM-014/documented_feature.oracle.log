@@ -1,0 +1,245 @@
+The SAS System
+
+1959       
+1960       /* STAT-BGLIMM-014: BGLIMM — Regenerating Diagnostics Plots / ODS Graphics
+1961        * Source: S154 / Chapter 31 / `Regenerating Diagnostics Plots` (PDF pp. 1325–1326); S154 / Chapter 31 / `ODS Graphics` (PDF pp. 1331–1332).
+1962        * Discriminates: Getting Started: BGLIMM Procedure
+1963        */
+1964       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+1964     ! validmemname=compatible locale=en_US;
+1965       %let syscc=0;
+1966       title; footnote;
+1967       ods _all_ close;
+1968       ods listing gpath="%sysfunc(pathname(work))";
+1969       ods graphics off;
+
+
+1970       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.CENTEROUT (memtype=DATA).
+NOTE: Deleting WORK.MULTICENTER (memtype=DATA).
+NOTE: Deleting WORK.PROB (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+1970     !                                         quit;
+
+
+1971       ods path work.templat(update) sashelp.tmplmst(read);
+1972       
+1973       ods graphics on;
+1974       ods trace on;
+1975       ods trace on;
+1976       data MultiCenter;
+1977       input Center Group$ N SideEffect @@;
+1978       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.MULTICENTER has 30 observations and 4 variables.
+
+1994       ;
+1995       ods graphics on;
+1996       proc bglimm data=MultiCenter nmc=1000 thin=2 seed=976352
+1997       plots=all nbi=200;
+1998       class Center Group;
+1999       model SideEffect/N = Group / noint;
+2000       random int / subject = Center;
+2001       run;
+
+
+Output Added:
+-------------
+Name:       ModelInfo
+Label:      Model Information
+Template:   Stat.Bglimm.ModelInfo
+Path:       Bglimm.ModelInfo
+-------------
+
+Output Added:
+-------------
+Name:       ClassLevels
+Label:      Class Level Information
+Template:   Stat.Bglimm.ClassLevels
+Path:       Bglimm.ClassLevels
+-------------
+
+Output Added:
+-------------
+Name:       NObs
+Label:      Number of Observations
+Template:   Stat.Bglimm.NObs
+Path:       Bglimm.NObs
+-------------
+
+Output Added:
+-------------
+Name:       CoeffPrior
+Label:      Uniform Prior for Fixed Effects
+Template:   Stat.Bglimm.ConstantCoeffPrior
+Path:       Bglimm.CoeffPrior
+-------------
+
+Output Added:
+-------------
+Name:       ScaleCovPrior
+Label:      Prior for Covariance Parameters
+Template:   Stat.Bglimm.ScaleCovPrior
+Path:       Bglimm.ScaleCovPrior
+-------------
+NOTE: Generating the burn-in samples.
+NOTE: Beginning sample generation.
+NOTE: Beginning calculation of summary and diagnostics statistics.
+
+Output Added:
+-------------
+Name:       PostSumInt
+Label:      Posterior Summary and Interval Statistics
+Template:   Stat.Bglimm.PostSumInt
+Path:       Bglimm.PostSumInt
+-------------
+
+Output Added:
+-------------
+Name:       ESS
+Label:      Effective Sample Sizes
+Template:   Stat.Bglimm.ESS
+Path:       Bglimm.ESS
+-------------
+NOTE: Generating diagnostic plots.
+
+Output Added:
+-------------
+Name:       TADPanel
+Label:      Group A
+Template:   Stat.Bayes.Graphics.TAD
+Path:       Bglimm.TADPanel.TADPanel
+-------------
+
+Output Added:
+-------------
+Name:       TADPanel
+Label:      Group B
+Template:   Stat.Bayes.Graphics.TAD
+Path:       Bglimm.TADPanel.TADPanel
+-------------
+
+Output Added:
+-------------
+Name:       TADPanel
+Label:      Random Var
+Template:   Stat.Bayes.Graphics.TAD
+Path:       Bglimm.TADPanel.TADPanel
+-------------
+NOTE: The PROCEDURE BGLIMM printed page 90.
+
+2002       proc bglimm data=MultiCenter nmc=1000 thin=2 seed=976352
+2003       outpost=CenterOut nbi=200;
+2004       class Center Group;
+2005       model SideEffect/N = Group / noint;
+2006       random int / subject=Center monitor;
+2007       estimate "log OR" group 1 -1;
+2008       run;
+
+
+Output Added:
+-------------
+Name:       ModelInfo
+Label:      Model Information
+Template:   Stat.Bglimm.ModelInfo
+Path:       Bglimm.ModelInfo
+-------------
+
+Output Added:
+-------------
+Name:       ClassLevels
+Label:      Class Level Information
+Template:   Stat.Bglimm.ClassLevels
+Path:       Bglimm.ClassLevels
+-------------
+
+Output Added:
+-------------
+Name:       NObs
+Label:      Number of Observations
+Template:   Stat.Bglimm.NObs
+Path:       Bglimm.NObs
+-------------
+
+Output Added:
+-------------
+Name:       CoeffPrior
+Label:      Uniform Prior for Fixed Effects
+Template:   Stat.Bglimm.ConstantCoeffPrior
+Path:       Bglimm.CoeffPrior
+-------------
+
+Output Added:
+-------------
+Name:       ScaleCovPrior
+Label:      Prior for Covariance Parameters
+Template:   Stat.Bglimm.ScaleCovPrior
+Path:       Bglimm.ScaleCovPrior
+-------------
+NOTE: Generating the burn-in samples.
+NOTE: Beginning sample generation.
+NOTE: Beginning calculation of summary and diagnostics statistics.
+
+Output Added:
+-------------
+Name:       PostSumInt
+Label:      Posterior Summary and Interval Statistics
+Template:   Stat.Bglimm.PostSumInt
+Path:       Bglimm.PostSumInt
+-------------
+
+Output Added:
+-------------
+Name:       ESS
+Label:      Effective Sample Sizes
+Template:   Stat.Bglimm.ESS
+Path:       Bglimm.ESS
+-------------
+
+Output Added:
+-------------
+Name:       Estimates
+Label:      Results from ESTIMATE statements
+Template:   Stat.Bglimm.Estimates
+Path:       Bglimm.Estimates
+-------------
+NOTE: The data set WORK.CENTEROUT has 500 observations and 20 variables.
+NOTE: The PROCEDURE BGLIMM printed page 91.
+
+2009       data prob;
+2010       set CenterOut;
+2011       pDiff = logistic(group_a) - logistic(group_b);
+2012       run;
+
+NOTE: There were 500 observations read from the data set WORK.CENTEROUT.
+NOTE: The data set WORK.PROB has 500 observations and 21 variables.
+
+2013       %sumint(data=prob, var=pDiff)
+
+Output Added:
+-------------
+Name:       SGRender
+Label:      The SGRender Procedure
+Template:   Stat.MCMC.PostSumInt
+Data Name:  WORK__OUT
+Path:       SGRender.SGRender
+-------------
+2014       proc sgplot data=prob noautolegend;
+2015       run;
+
+NOTE: The SAS System stopped processing this step because of errors.
+2016       ods trace off;
+2017       ods trace off;
+2018       ods graphics off;
+2019       
+2020       
+2021       
+2022       
+The SAS System
+
+2023       

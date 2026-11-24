@@ -1,0 +1,63 @@
+The SAS System
+
+2977       
+2978       /* STAT-MI-016: MI — Official examples and feature integration regression
+2979        * Source: S154 / Chapter 82 / `Examples: MI Procedure` (PDF pp. 6500–6551).
+2980        * Discriminates: Example 82.3: Monotone Regression Method
+2981        */
+2982       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+2982     ! validmemname=compatible locale=en_US;
+2983       %let syscc=0;
+2984       title; footnote;
+2985       ods _all_ close;
+2986       ods listing gpath="%sysfunc(pathname(work))";
+2987       ods graphics off;
+2988       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.FISH3 (memtype=DATA).
+NOTE: Deleting WORK.OUTEX8 (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+2988     !                                         quit;
+
+
+2989       ods path work.templat(update) sashelp.tmplmst(read);
+2990       
+2991       data Fish1;
+2992       title 'Fish Measurement Data';
+2993       input Length1 Length2 Length3 @@;
+2994       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.FISH1 has 35 observations and 3 variables.
+
+3007       ;
+3008       run;
+3009       proc mi data=Fish1 round=.1 mu0= 0 35 45
+3010       seed=13951639 nimpute=8 out=outex3;
+3011       monotone reg(Length2/ details)
+3012       regpmm(Length3= Length1 Length2 Length1*Length2/ details);
+3013       var Length1 Length2 Length3;
+3014       run;
+
+NOTE: The data set WORK.OUTEX3 has 280 observations and 4 variables.
+NOTE: The PROCEDURE MI printed page 266.
+
+3015       proc print data=outex3(obs=10);
+3016       title 'First 10 Observations of the Imputed Data Set';
+3017       run;
+
+NOTE: There were 10 observations read from the data set WORK.OUTEX3.
+NOTE: The PROCEDURE PRINT printed page 267.
+
+3018       
+3019       
+3020       
+3021       
+The SAS System
+
+3022       

@@ -1,0 +1,15 @@
+
+The INBREED Procedure
+
+                                  Covariance Coefficients
+ 
+animal      sire        dam                A           B           C           D           E
+
+A                                     1.0000       .          0.5000      0.5000      0.5000
+B                                      .          1.0000      0.5000      0.5000      0.5000
+C           A           B             0.5000      0.5000      1.0000      0.5000      0.7500
+D           A           B             0.5000      0.5000      0.5000      1.0000      0.7500
+E           C           D             0.5000      0.5000      0.7500      0.7500      1.2500
+
+
+Number of Individuals    5

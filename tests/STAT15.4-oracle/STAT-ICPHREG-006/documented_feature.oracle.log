@@ -1,0 +1,72 @@
+The SAS System
+
+7986       
+7987       /* STAT-ICPHREG-006: ICPHREG — Hazard Ratios / Left-Truncation of Failure Times / EM Algorithm and Extensions
+7988        * Source: S154 / Chapter 70 / `Hazard Ratios` (PDF pp. 5236–5239); S154 / Chapter 70 / `Left-Truncation of Failure Times` (PDF pp. 5239–5240);
+7988     ! S154 / Chapter 70 / `EM Algorithm and Extensions` (PDF pp. 5241–5246).
+7989        * Discriminates: Getting Started: ICPHREG Procedure
+7990        */
+7991       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+7991     ! validmemname=compatible locale=en_US;
+7992       %let syscc=0;
+7993       title; footnote;
+7994       ods _all_ close;
+7995       ods listing gpath="%sysfunc(pathname(work))";
+7996       ods graphics off;
+7997       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.COV (memtype=DATA).
+NOTE: Deleting WORK.DATA1 (memtype=DATA).
+NOTE: Deleting WORK.DATA2 (memtype=DATA).
+NOTE: Deleting WORK.HIV (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+7997     !                                         quit;
+
+
+7998       ods path work.templat(update) sashelp.tmplmst(read);
+7999       
+8000       data hiv;
+8001       input Left Right Stage Dose CdLow CdHigh;
+8002       if (Left=0) then Left=.;
+8003       if (Right>=26) then Right=.;
+8004       datalines;
+
+NOTE: The data set WORK.HIV has 31 observations and 6 variables.
+
+8036       ;
+8037       proc icphreg data=hiv;
+8038       class Stage Dose / desc;
+8039       model (Left, Right) = Stage Dose;
+8040       run;
+
+NOTE: The option BASEHAZ of the MODEL statement was not specified. Fitting the model with a constant baseline hazard with 5 segments.
+NOTE: Convergence criterion (ABSGCONV=0.00001) satisfied.
+NOTE: The PROCEDURE ICPHREG printed page 577.
+
+8041       proc icphreg data=hiv ithistory;
+8042       class Stage Dose / desc;
+8043       model (Left, Right) = Stage Dose / basehaz=pch(intervals=(10));
+8044       run;
+
+NOTE: Convergence criterion (ABSGCONV=0.00001) satisfied.
+NOTE: The PROCEDURE ICPHREG printed page 578.
+
+8045       proc icphreg data=hiv;
+8046       class Stage / desc;
+8047       model (Left, Right) = Stage / basehaz=pch(intervals=(10));
+8048       hazardratio Stage;
+8049       run;
+
+NOTE: Convergence criterion (ABSGCONV=0.00001) satisfied.
+NOTE: The PROCEDURE ICPHREG printed page 579.
+
+8050       
+8051       
+8052       
+8053       
+The SAS System
+
+8054       

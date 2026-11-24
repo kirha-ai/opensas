@@ -1,0 +1,164 @@
+
+The LOESS Procedure
+
+      Independent Variable Scaling
+ 
+          Scaling applied: None
+ 
+Statistic                           Month
+
+Minimum Value                     1.00000
+Maximum Value                   168.00000
+
+The LOESS Procedure
+Dependent Variable: Pressure
+
+     Optimal Smoothing
+         Criterion
+ 
+                 Smoothing
+       AICC      Parameter
+
+    3.41105        0.22321
+
+The LOESS Procedure
+Selected Smoothing Parameter: 0.223
+Dependent Variable: Pressure
+
+                Fit Summary
+
+Fit Method                          kd Tree
+Blending                             Linear
+Number of Observations                  168
+Number of Fitting Points                 33
+kd Tree Bucket Size                       7
+Degree of Local Polynomials               1
+Smoothing Parameter                 0.22321
+Points in Local Neighborhood             37
+Residual Sum of Squares          1654.27725
+Trace[L]                            8.74180
+GCV                                 0.06522
+AICC                                3.41105
+
+The LOESS Procedure
+
+      Independent Variable Scaling
+ 
+          Scaling applied: None
+ 
+Statistic                           Month
+
+Minimum Value                     1.00000
+Maximum Value                   168.00000
+
+The LOESS Procedure
+Dependent Variable: Pressure
+
+     Optimal Smoothing
+         Criterion
+ 
+                 Smoothing
+       AICC      Parameter
+
+    2.86660        0.05655
+
+The LOESS Procedure
+Selected Smoothing Parameter: 0.057
+Dependent Variable: Pressure
+
+                Fit Summary
+
+Fit Method                          kd Tree
+Blending                             Linear
+Number of Observations                  168
+Number of Fitting Points                168
+kd Tree Bucket Size                       1
+Degree of Local Polynomials               1
+Smoothing Parameter                 0.05655
+Points in Local Neighborhood              9
+Residual Sum of Squares           604.00712
+Trace[L]                           36.89173
+GCV                                 0.03514
+AICC                                2.86660
+
+The LOESS Procedure
+
+      Independent Variable Scaling
+ 
+          Scaling applied: None
+ 
+Statistic                           Month
+
+Minimum Value                     1.00000
+Maximum Value                   168.00000
+
+The LOESS Procedure
+Dependent Variable: Pressure
+
+     Optimal Smoothing
+         Criterion
+ 
+                 Smoothing
+       AICC      Parameter
+
+    2.86660        0.05655
+
+The LOESS Procedure
+Selected Smoothing Parameter: 0.057
+Dependent Variable: Pressure
+
+                Fit Summary
+
+Fit Method                          kd Tree
+Blending                             Linear
+Number of Observations                  168
+Number of Fitting Points                168
+kd Tree Bucket Size                       1
+Degree of Local Polynomials               1
+Smoothing Parameter                 0.05655
+Points in Local Neighborhood              9
+Residual Sum of Squares           604.00712
+Trace[L]                           36.89173
+GCV                                 0.03514
+AICC                                2.86660
+
+The LOESS Procedure
+
+      Independent Variable Scaling
+ 
+          Scaling applied: None
+ 
+Statistic                           Month
+
+Minimum Value                     1.00000
+Maximum Value                   168.00000
+
+The LOESS Procedure
+Dependent Variable: Pressure
+
+     Optimal Smoothing
+         Criterion
+ 
+                 Smoothing
+       AICC      Parameter
+
+    2.86660        0.05655
+
+The LOESS Procedure
+Selected Smoothing Parameter: 0.057
+Dependent Variable: Pressure
+
+                Fit Summary
+
+Fit Method                          kd Tree
+Blending                             Linear
+Number of Observations                  168
+Number of Fitting Points                168
+kd Tree Bucket Size                       1
+Degree of Local Polynomials               1
+Smoothing Parameter                 0.05655
+Points in Local Neighborhood              9
+Residual Sum of Squares           604.00712
+Trace[L]                           36.89173
+GCV                                 0.03514
+AICC                                2.86660

@@ -1,0 +1,257 @@
+The SAS System
+
+1845       
+1846       /* STAT-PRINQUAL-005: PRINQUAL — Using the MAC Method / Avoiding Constant Transformations / Constant Variables
+1847        * Source: S154 / Chapter 99 / `Using the MAC Method` (PDF pp. 8064–8065); S154 / Chapter 99 / `Avoiding Constant Transformations` (PDF p. 8068);
+1847     ! S154 / Chapter 99 / `Constant Variables` (PDF p. 8068).
+1848        * Discriminates: Example 99.1: Multidimensional Preference Analysis of Automobile Data
+1849        */
+1850       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+1850     ! validmemname=compatible locale=en_US;
+1851       %let syscc=0;
+1852       title; footnote;
+1853       ods _all_ close;
+1854       ods listing gpath="%sysfunc(pathname(work))";
+1855       ods graphics off;
+1856       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.BBALL (memtype=DATA).
+NOTE: Deleting WORK.BBALLM (memtype=DATA).
+NOTE: Deleting WORK.MAXRANK (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TBBALL (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+1856     !                                         quit;
+
+
+1857       ods path work.templat(update) sashelp.tmplmst(read);
+1858       
+1859       title 'Preference Ratings for Automobiles Manufactured in 1980';
+1860       options validvarname=any;
+1861       data CarPref;
+1862       input Make $ 1-10 Model $ 12-22 @25 ('1'n-'25'n) (1.);
+1863       datalines;
+
+NOTE: The data set WORK.CARPREF has 17 observations and 27 variables.
+
+1881       ;
+1882       ods graphics on;
+1883       * Principal Component Analysis of the Original Data;
+1884       proc princomp data=CarPref;
+1885       ods select ScreePlot;
+1886       var '1'n-'25'n;
+1887       run;
+
+WARNING: The Correlation Matrix is not positive definite.
+
+Output Added:
+-------------
+Name:       ScreePlot
+Label:      Scree and Variance Plots
+Template:   Stat.Princomp.Graphics.ScreePlot2
+Path:       Princomp.ScreePlot
+-------------
+
+1888       * Transform the Data to Better Fit a Two Component Model;
+1889       proc prinqual data=CarPref out=Results n=2 replace mdpref;
+1890       title2 'Multidimensional Preference (MDPREF) Analysis';
+1891       title3 'Optimal Monotonic Transformation of Preference Data';
+1892       id model;
+1893       transform monotone('1'n-'25'n);
+1894       run;
+
+
+Output Added:
+-------------
+Name:       MTV
+Label:      Iteration History
+Template:   Stat.Transreg.MTV
+Path:       Prinqual.MTV
+-------------
+
+Output Added:
+-------------
+Name:       ConvergenceStatus
+Label:      Convergence Status
+Template:   Stat.Transreg.ConvergenceStatus
+Path:       Prinqual.ConvergenceStatus
+-------------
+WARNING: Failed to converge, however criterion change is less than 0.0001.
+
+Output Added:
+-------------
+Name:       MDPrefPlot
+Label:      2 by 1
+Template:   Stat.Prinqual.Graphics.MDPref
+Path:       Prinqual.MDPREF.MDPrefPlot
+-------------
+NOTE: The data set WORK.RESULTS has 42 observations and 30 variables.
+NOTE: The PROCEDURE PRINQUAL printed page 60.
+
+1895       * Final Principal Component Analysis;
+1896       proc princomp data=Results;
+1897       ods select ScreePlot;
+1898       var '1'n-'25'n;
+1899       where _TYPE_='SCORE';
+1900       run;
+
+WARNING: Data set WORK.RESULTS has _TYPE_ and _NAME_ variables but is not TYPE=ACE, CORR, COV, EST, FACTOR, SSCP, UCORR, or UCOV.
+WARNING: The Correlation Matrix is not positive definite.
+
+Output Added:
+-------------
+Name:       ScreePlot
+Label:      Scree and Variance Plots
+Template:   Stat.Princomp.Graphics.ScreePlot2
+Path:       Princomp.ScreePlot
+-------------
+
+1901       ods trace on;
+1902       proc prinqual data=CarPref out=Results n=2 replace mdpref;
+1903       title2 'Multidimensional Preference (MDPREF) Analysis';
+1904       title3 'Optimal Monotonic Transformation of Preference Data';
+1905       id model;
+1906       transform monotone('1'n-'25'n);
+1907       run;
+
+
+Output Added:
+-------------
+Name:       MTV
+Label:      Iteration History
+Template:   Stat.Transreg.MTV
+Path:       Prinqual.MTV
+-------------
+
+Output Added:
+-------------
+Name:       ConvergenceStatus
+Label:      Convergence Status
+Template:   Stat.Transreg.ConvergenceStatus
+Path:       Prinqual.ConvergenceStatus
+-------------
+WARNING: Failed to converge, however criterion change is less than 0.0001.
+
+Output Added:
+-------------
+Name:       MDPrefPlot
+Label:      2 by 1
+Template:   Stat.Prinqual.Graphics.MDPref
+Path:       Prinqual.MDPREF.MDPrefPlot
+-------------
+NOTE: The data set WORK.RESULTS has 42 observations and 30 variables.
+NOTE: The PROCEDURE PRINQUAL printed page 61.
+
+1908       proc template;
+1909       source Stat.Prinqual.Graphics.MDPref;
+define statgraph Stat.Prinqual.Graphics.MDPref;
+   notes "Multidimensional Preference Analysis Plot";
+   dynamic xVar yVar xVec yVec ylab xlab yshortlab xshortlab xOri yOri stretch;
+   begingraph;
+      entrytitle "Multidimensional Preference Analysis";
+      layout overlayequated / equatetype=fit xaxisopts=(label=XLAB shortlabel=XSHORTLAB offsetmin=0.1 offsetmax=0.1) yaxisopts=(label=YLAB shortlabel=YSHORTLAB
+         offsetmin=0.1 offsetmax=0.1);
+         scatterplot y=YVAR x=XVAR / datalabel=IDLAB1 rolename=(_tip1=OBSNUMVAR _id2=IDLAB2 _id3=IDLAB3 _id4=IDLAB4 _id5=IDLAB5 _id6=IDLAB6 _id7=IDLAB7 _id8=
+            IDLAB8 _id9=IDLAB9 _id10=IDLAB10 _id11=IDLAB11 _id12=IDLAB12 _id13=IDLAB13 _id14=IDLAB14 _id15=IDLAB15 _id16=IDLAB16 _id17=IDLAB17 _id18=IDLAB18
+            _id19=IDLAB19 _id20=IDLAB20) tip=(y x datalabel _tip1 _id2 _id3 _id4 _id5 _id6 _id7 _id8 _id9 _id10 _id11 _id12 _id13 _id14 _id15 _id16 _id17 _id18
+            _id19 _id20) group=IDLAB2 name='s';
+         vectorplot y=YVEC x=XVEC xorigin=0 yorigin=0 / datalabel=LABEL2VAR shaftprotected=false rolename=(_tip1=VNAME _tip2=VLABEL _tip3=YORI _tip4=XORI _tip5
+            =LENGTH _tip6=LENGTH2) tip=(y x datalabel _tip1 _tip2 _tip3 _tip4 _tip5 _tip6) datalabelattrs=GRAPHVALUETEXT (color=GraphData2:ContrastColor)
+            lineattrs=GRAPHDATA2 (pattern=solid) primary=true;
+         discretelegend 's';
+         if (0)
+            entry "Vector Stretch = " STRETCH / autoalign=(topright topleft bottomright bottomleft right left top bottom);
+         endif;
+      endlayout;
+   endgraph;
+end;
+NOTE: Path 'Stat.Prinqual.Graphics.MDPref' is in: WORK.TEMPLAT.
+1910       run;
+
+1911       proc template;
+1912       define statgraph Stat.Prinqual.Graphics.MDPref;
+1913       notes "Multidimensional Preference Analysis Plot";
+1914       dynamic xVar yVar xVec yVec ylab xlab yshortlab xshortlab xOri yOri
+1915       stretch;
+1916       begingraph;
+1917       entrytitle "Multidimensional Preference Analysis";
+1918       layout overlayequated / equatetype=fit xaxisopts=(label=XLAB shortlabel
+1919       =XSHORTLAB offsetmin=0.1 offsetmax=0.1) yaxisopts=(label=YLAB
+1920       shortlabel=YSHORTLAB offsetmin=0.1 offsetmax=0.1);
+1921       scatterplot y=YVAR x=XVAR / datalabel=IDLAB1 rolename=(_tip1=
+1922       OBSNUMVAR _id2=IDLAB2 _id3=IDLAB3 _id4=IDLAB4 _id5=IDLAB5 _id6=
+1923       IDLAB6 _id7=IDLAB7 _id8=IDLAB8 _id9=IDLAB9 _id10=IDLAB10 _id11=
+1924       IDLAB11 _id12=IDLAB12 _id13=IDLAB13 _id14=IDLAB14 _id15=IDLAB15
+1925       _id16=IDLAB16 _id17=IDLAB17 _id18=IDLAB18 _id19=IDLAB19 _id20=
+1926       IDLAB20) tip=(y x datalabel _tip1 _id2 _id3 _id4 _id5 _id6 _id7
+1927       _id8 _id9 _id10 _id11 _id12 _id13 _id14 _id15 _id16 _id17 _id18
+1928       _id19 _id20)
+1929       group=idlab2 name='s';
+1930       *<==== add the group variable ====<<<<;
+1931       vectorplot y=YVEC x=XVEC xorigin=0 yorigin=0 / datalabel=LABEL2VAR
+1932       shaftprotected=false rolename=(_tip1=VNAME _tip2=VLABEL _tip3=
+1933       YORI _tip4=XORI _tip5=LENGTH _tip6=LENGTH2) tip=(y x datalabel
+1934       _tip1 _tip2 _tip3 _tip4 _tip5 _tip6) datalabelattrs=
+1935       GRAPHVALUETEXT (color=GraphData2:ContrastColor) lineattrs=
+1936       GRAPHDATA2 (pattern=solid) primary=true;
+1937       discretelegend 's';
+1938       *<==== add a legend ====<<<<;
+1939       if (0)
+1940       entry "Vector Stretch = " STRETCH / autoalign=(topright topleft
+1941       bottomright bottomleft right left top bottom);
+1942       endif;
+1943       endlayout;
+1944       endgraph;
+1945       end;
+NOTE: Overwriting existing template/link: Stat.Prinqual.Graphics.MDPref
+NOTE: STATGRAPH 'Stat.Prinqual.Graphics.MDPref' has been saved to: WORK.TEMPLAT
+1946       run;
+
+1947       proc prinqual data=CarPref out=Results n=2 replace mdpref;
+1948       title2 'Multidimensional Preference (MDPREF) Analysis';
+1949       title3 'Optimal Monotonic Transformation of Preference Data';
+1950       id model make;
+1951       transform monotone('1'n-'25'n);
+1952       run;
+
+
+Output Added:
+-------------
+Name:       MTV
+Label:      Iteration History
+Template:   Stat.Transreg.MTV
+Path:       Prinqual.MTV
+-------------
+
+Output Added:
+-------------
+Name:       ConvergenceStatus
+Label:      Convergence Status
+Template:   Stat.Transreg.ConvergenceStatus
+Path:       Prinqual.ConvergenceStatus
+-------------
+WARNING: Failed to converge, however criterion change is less than 0.0001.
+
+Output Added:
+-------------
+Name:       MDPrefPlot
+Label:      2 by 1
+Template:   Stat.Prinqual.Graphics.MDPref
+Path:       Prinqual.MDPREF.MDPrefPlot
+-------------
+NOTE: The data set WORK.RESULTS has 42 observations and 31 variables.
+NOTE: The PROCEDURE PRINQUAL printed page 62.
+
+1953       
+1954       
+1955       
+1956       
+The SAS System
+
+1957       

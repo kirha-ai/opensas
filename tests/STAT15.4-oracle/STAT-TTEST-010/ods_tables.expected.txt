@@ -1,0 +1,167 @@
+
+The TTEST Procedure
+ 
+Variable:  x
+
+group         Method            N        Mean     Std Dev     Std Err     Minimum     Maximum
+
+A                               6     85.8333     23.8782      9.7482     43.0000       116.0
+B                               6     93.6667     16.4398      6.7115     71.0000       121.0
+Diff (1-2)    Pooled                  -7.8333     20.4992     11.8352                        
+Diff (1-2)    Satterthwaite           -7.8333                 11.8352                        
+
+group         Method               Mean       95% CL Mean        Std Dev      95% CL Std Dev
+
+A                               85.8333     60.7747    110.9     23.8782     14.9049  58.5639
+B                               93.6667     76.4142    110.9     16.4398     10.2618  40.3205
+Diff (1-2)    Pooled            -7.8333    -34.2038  18.5372     20.4992     14.3231  35.9747
+Diff (1-2)    Satterthwaite     -7.8333    -34.6661  18.9995                                 
+
+Method           Variances        DF    t Value    Pr > |t|
+
+Pooled           Equal            10      -0.66      0.5230
+Satterthwaite    Unequal      8.8705      -0.66      0.5249
+
+              Equality of Variances
+ 
+Method      Num DF    Den DF    F Value    Pr > F
+
+Folded F         5         5       2.11    0.4320
+
+ 
+ 
+ 
+ 
+ 
+ 
+                                                                                                             L                                U
+                                                                                                             o                                p
+                                                                                                             w                                p
+V                                                                                                            e                                e
+a                                                                                                            r                                r
+r                  M                                                                                         C                                C
+i     C            e                                                                                         L                                L
+a     l            t                                                        M                                M                                M
+b     a            h                                                        e                                e                                e
+l     s            o                                                        a                                a                                a
+e     s            d                       N                                n                                n                                n
+
+x A                                                       6                 85.8333333333333                 60.7747381007815                 110.891928565885
+x B                                                       6                 93.6666666666666                 76.4141660403827                  110.91916729295
+x Diff (1-2) Pooled                                       _                -7.83333333333333                -34.2038270481825                 18.5371603815158
+x Diff (1-2) Satterthwaite                                _                -7.83333333333333                -34.6661493251826                 18.9994826585159
+
+                                                                                                                            U
+                                                                                                                            M
+                                                                                                                            P
+                                                                                                                            U
+                                                    L                                   U                                   L
+                                                    o                                   p                                   o
+                                                    w                                   p                                   w
+                                                    e                                   e                                   e
+                                                    r                                   r                                   r
+                                                    C                                   C                                   C
+                                                    L                                   L                                   L
+                S                                   S                                   S                                   S
+                t                                   t                                   t                                   t
+                d                                   d                                   d                                   d
+                D                                   D                                   D                                   D
+                e                                   e                                   e                                   e
+                v                                   v                                   v                                   v
+
+                23.8781629667499                    14.9049404030893                    58.5639165130867                    14.0857023639117
+                16.4397891308455                     10.261847930924                    40.3204567910959                    9.69781372817558
+                20.4991869757477                    14.3231313314478                    35.9747109184386                       13.9064983424
+                               _                                   _                                   _                                   _
+
+                U
+                M
+                P
+                U
+                U
+                p
+                p
+                e
+                r
+                C
+                L                                                                       M                                   M
+                S                                   S                                   i                                   a
+                t                                   t                                   n                                   x
+                d                                   d                                   i                                   i
+                D                                   E                                   m                                   m
+                e                                   r                                   u                                   u
+                v                                   r                                   m                                   m
+
+                53.6828847100597                    9.74821921059317                                  43                                 116
+                36.9599330483586                    6.71151580825408                                  71                                 121
+                 34.570233918857                    11.8352111186164                                   _                                   _
+                               _                    11.8352111186164                                   _                                   _
+
+Variable    Class         Method           Variances                                Mean                         LowerCLMean
+
+   x        A                                                           85.8333333333333                    60.7747381007815
+   x        B                                                           93.6666666666666                    76.4141660403827
+   x        Diff (1-2)    Pooled            Equal                      -7.83333333333333                   -34.2038270481825
+   x        Diff (1-2)    Satterthwaite     Unequal                    -7.83333333333333                   -34.6661493251826
+
+                     UpperCLMean                              StdDev                       LowerCLStdDev                       UpperCLStdDev
+
+                110.891928565885                    23.8781629667499                    14.9049404030893                    58.5639165130867
+                 110.91916729295                    16.4397891308455                     10.261847930924                    40.3204567910959
+                18.5371603815158                    20.4991869757477                    14.3231313314478                    35.9747109184386
+                18.9994826585159                                   _                                   _                                   _
+
+               UMPULowerCLStdDev                   UMPUUpperCLStdDev
+
+                14.0857023639117                    53.6828847100597
+                9.69781372817558                    36.9599330483586
+                   13.9064983424                     34.570233918857
+                               _                                   _
+
+Variable    Method           Variances                              tValue                                  DF                               Probt
+
+   x        Pooled            Equal                      -0.66186680193745                                  10                    0.52301513079419
+   x        Satterthwaite     Unequal                    -0.66186680193745                    8.87048094786399                    0.52487559026747
+
+The CONTENTS Procedure
+
+Data Set Name        WORK.TESTS                                               Observations          2 
+Member Type          DATA                                                     Variables             6 
+Engine               V9                                                       Indexes               0 
+Created              11/24/2026 13:17:18                                      Observation Length    48
+Last Modified        11/24/2026 13:17:18                                      Deleted Observations  0 
+Protection                                                                    Compressed            NO
+Data Set Type                                                                 Sorted                NO
+Label                T-Tests                                                                          
+Data Representation  SOLARIS_X86_64, LINUX_X86_64, ALPHA_TRU64, LINUX_IA64                            
+Encoding             utf-8  Unicode (UTF-8)                                                           
+
+
+                                                       Engine/Host Dependent Information
+
+Data Set Page Size          131072                                                                                                             
+Number of Data Set Pages    1                                                                                                                  
+First Data Page             1                                                                                                                  
+Max Obs per Page            2722                                                                                                               
+Obs in First Data Page      2                                                                                                                  
+Number of Data Set Repairs  0                                                                                                                  
+Filename                    /saswork/SAS_work35F80001D7BA_odaws01-euw1.oda.sas.com/SAS_workC7D80001D7BA_odaws01-euw1.oda.sas.com/tests.sas7bdat
+Release Created             9.0401M9                                                                                                           
+Host Created                Linux                                                                                                              
+Inode Number                537210006                                                                                                          
+Access Permission           rw-r--r--                                                                                                          
+Owner Name                  u64592586                                                                                                          
+File Size                   256KB                                                                                                              
+File Size (bytes)           262144                                                                                                             
+
+
+              Variables in Creation Order
+ 
+#    Variable     Type    Len    Format       Label
+
+1    Variable     Char      1                         
+2    Method       Char     13                         
+3    Variances    Char      7                         
+4    tValue       Num       8    7.2          t Value 
+5    DF           Num       8    BEST6.               
+6    Probt        Num       8    PVALUE6.4    Pr > |t|

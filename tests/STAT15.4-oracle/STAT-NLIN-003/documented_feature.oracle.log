@@ -1,0 +1,53 @@
+The SAS System
+
+5631       
+5632       /* STAT-NLIN-003: NLIN — MODEL
+5633        * Source: S154 / Chapter 88 / `MODEL Statement` (PDF pp. 7003–7004).
+5634        * Discriminates: Getting Started: NLIN Procedure; explicit statements: MODEL
+5635        */
+5636       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+5636     ! validmemname=compatible locale=en_US;
+5637       %let syscc=0;
+5638       title; footnote;
+5639       ods _all_ close;
+5640       ods listing gpath="%sysfunc(pathname(work))";
+5641       ods graphics off;
+5642       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.ENZYME (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+5642     !                                         quit;
+
+
+5643       ods path work.templat(update) sashelp.tmplmst(read);
+5644       
+5645       data Enzyme;
+5646       input Concentration Velocity @@;
+5647       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.ENZYME has 14 observations and 2 variables.
+
+5655       ;
+5656       proc nlin data=Enzyme method=marquardt hougaard;
+5657       parms theta1=155
+5658       theta2=0 to 0.07 by 0.01;
+5659       model Velocity = theta1*Concentration / (theta2 + Concentration);
+5660       run;
+
+NOTE: DER.theta1 not initialized or missing. It will be computed automatically.
+NOTE: DER.theta2 not initialized or missing. It will be computed automatically.
+NOTE: Convergence criterion met.
+NOTE: The PROCEDURE NLIN printed pages 381-382.
+
+5661       
+5662       
+5663       
+5664       
+The SAS System
+
+5665       

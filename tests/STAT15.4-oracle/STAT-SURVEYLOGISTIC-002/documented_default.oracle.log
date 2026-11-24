@@ -1,0 +1,46 @@
+The SAS System
+
+20602      
+20603      /* STAT-SURVEYLOGISTIC-002: SURVEYLOGISTIC — Logistic regression for complex survey data
+20604       * Source: S154 / Chapter 120 / `Getting Started: SURVEYLOGISTIC Procedure` (PDF pp. 9798–9802); S154 / Chapter 120 / `Overview: SURVEYLOGISTIC
+20604    ! Procedure` (PDF pp. 9796–9798).
+20605       * Discriminates: Documented default analysis with explicit complete public or synthetic inputs
+20606       */
+20607      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+20607    ! validmemname=compatible locale=en_US;
+20608      %let syscc=0;
+20609      title; footnote;
+20610      ods _all_ close;
+20611      ods listing gpath="%sysfunc(pathname(work))";
+20612      ods graphics off;
+20613      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SURVEY (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+20613    !                                         quit;
+
+
+20614      ods path work.templat(update) sashelp.tmplmst(read);
+20615      
+20616      data survey; call streaminit(722); do stratum=1 to 2; do cluster=1 to 4; do id=1 to 12; age=20+mod(id*7+cluster,45); event=rand('bernoulli',0.3);
+20616    ! weight=2+stratum+cluster/10; output; end; end; end; run;
+
+NOTE: The data set WORK.SURVEY has 96 observations and 6 variables.
+
+20617      proc surveylogistic data=survey; strata stratum; cluster cluster; weight weight; model event(event='1')=age; run;
+
+NOTE: PROC SURVEYLOGISTIC is modeling the probability that event=1.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The PROCEDURE SURVEYLOGISTIC printed page 1409.
+
+20618      
+20619      
+20620      
+20621      
+The SAS System
+
+20622      

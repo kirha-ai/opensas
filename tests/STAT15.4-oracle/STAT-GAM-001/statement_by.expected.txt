@@ -1,0 +1,114 @@
+
+Patterns of Diabetes
+
+_oracle_by=1
+
+The GAM Procedure
+Dependent Variable: logCP
+Smoothing Model Component(s): spline(Age) spline(BaseDeficit) 
+
+        Summary of Input Data Set
+
+Number of Observations                  43
+Number of Missing Observations           0
+Distribution                      Gaussian
+Link Function                     Identity
+
+
+           Iteration Summary and Fit Statistics
+
+Final Number of Backfitting Iterations                    5
+Final Backfitting Criterion                    5.542745E-10
+The Deviance of the Final Estimate             0.4180791724
+
+
+The backfitting algorithm converged.                            
+
+
+                       Regression Model Analysis
+                          Parameter Estimates
+ 
+                         Parameter       Standard
+Parameter                 Estimate          Error    t Value    Pr > |t|
+
+Intercept                  1.48141        0.05120      28.93      <.0001
+Linear(Age)                0.01437        0.00437       3.28      0.0024
+Linear(BaseDeficit)        0.00807        0.00247       3.27      0.0025
+
+
+                           Smoothing Model Analysis
+                     Fit Summary for Smoothing Components
+ 
+                                                                            Num
+                          Smoothing                                      Unique
+Component                 Parameter              DF             GCV         Obs
+
+Spline(Age)                0.995582        3.000000        0.011675          37
+Spline(BaseDeficit)        0.995299        3.000000        0.012437          39
+
+
+                           Smoothing Model Analysis
+                             Analysis of Deviance
+ 
+                                            Sum of
+Source                          DF         Squares    Chi-Square    Pr > ChiSq
+
+Spline(Age)                3.00000        0.150761       12.2605        0.0065
+Spline(BaseDeficit)        3.00000        0.081273        6.6095        0.0854
+
+Patterns of Diabetes
+
+_oracle_by=2
+
+The GAM Procedure
+Dependent Variable: logCP
+Smoothing Model Component(s): spline(Age) spline(BaseDeficit) 
+
+        Summary of Input Data Set
+
+Number of Observations                  43
+Number of Missing Observations           0
+Distribution                      Gaussian
+Link Function                     Identity
+
+
+           Iteration Summary and Fit Statistics
+
+Final Number of Backfitting Iterations                    5
+Final Backfitting Criterion                    5.542745E-10
+The Deviance of the Final Estimate             0.4180791724
+
+
+The backfitting algorithm converged.                            
+
+
+                       Regression Model Analysis
+                          Parameter Estimates
+ 
+                         Parameter       Standard
+Parameter                 Estimate          Error    t Value    Pr > |t|
+
+Intercept                  1.48141        0.05120      28.93      <.0001
+Linear(Age)                0.01437        0.00437       3.28      0.0024
+Linear(BaseDeficit)        0.00807        0.00247       3.27      0.0025
+
+
+                           Smoothing Model Analysis
+                     Fit Summary for Smoothing Components
+ 
+                                                                            Num
+                          Smoothing                                      Unique
+Component                 Parameter              DF             GCV         Obs
+
+Spline(Age)                0.995582        3.000000        0.011675          37
+Spline(BaseDeficit)        0.995299        3.000000        0.012437          39
+
+
+                           Smoothing Model Analysis
+                             Analysis of Deviance
+ 
+                                            Sum of
+Source                          DF         Squares    Chi-Square    Pr > ChiSq
+
+Spline(Age)                3.00000        0.150761       12.2605        0.0065
+Spline(BaseDeficit)        3.00000        0.081273        6.6095        0.0854

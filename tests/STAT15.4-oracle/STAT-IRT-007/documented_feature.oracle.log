@@ -1,0 +1,57 @@
+The SAS System
+
+9045       
+9046       /* STAT-IRT-007: IRT — Response Models / Marginal Likelihood / Approximating the Marginal Likelihood
+9047        * Source: S154 / Chapter 72 / `Response Models` (PDF pp. 5343–5344); S154 / Chapter 72 / `Marginal Likelihood` (PDF p. 5344); S154 / Chapter 72 /
+9047     ! `Approximating the Marginal Likelihood` (PDF pp. 5344–5345).
+9048        * Discriminates: Verified default procedure context
+9049        */
+9050       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+9050     ! validmemname=compatible locale=en_US;
+9051       %let syscc=0;
+9052       title; footnote;
+9053       ods _all_ close;
+9054       ods listing gpath="%sysfunc(pathname(work))";
+9055       ods graphics off;
+9056       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.RESPONSES (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+9056     !                                         quit;
+
+
+9057       ods path work.templat(update) sashelp.tmplmst(read);
+9058       
+9059       data responses;
+9060       call streaminit(329);
+9061       array item[5] item1-item5;
+9062       do subject=1 to 150;
+9063       theta=rand('normal');
+9064       do k=1 to 5;
+9065       item[k]=rand('bernoulli',1/(1+exp(-(theta-(k-3)/2))));
+9066       end;
+9067       output;
+9068       end;
+9069       keep item1-item5;
+9070       run;
+
+NOTE: The data set WORK.RESPONSES has 150 observations and 5 variables.
+
+9071       proc irt data=responses;
+9072       var item1-item5;
+9073       run;
+
+NOTE: The observed frequency is zero for some response patterns. As a result, the Pearson chi-square model fit statistic is not calculated.
+WARNING: Over 20 percent of the response patterns have expected frequency less than 5. The chi-square distribution might not provide valid statistical 
+         inferences about the model fit when you use the Pearson chi-square and the likelihood ratio chi-square.
+NOTE: The PROCEDURE IRT printed pages 654-658.
+
+9074       
+9075       
+9076       
+9077       
+The SAS System
+
+9078       

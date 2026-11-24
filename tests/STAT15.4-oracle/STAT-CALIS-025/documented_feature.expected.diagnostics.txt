@@ -1,0 +1,2 @@
+WARNING: Model 1. The estimated error variance for variable Spend02 is negative.
+WARNING: Model 1. Although all predicted variances for the observed variables and latent factors are positive, the corresponding predicted covariance matrix is 

@@ -1,0 +1,46 @@
+The SAS System
+
+28751      
+28752      /* STAT-TTEST-002: TTEST — Default one-sample and group mean tests
+28753       * Source: S154 / Chapter 128 / `Getting Started: TTEST Procedure` (PDF pp. 10597–10603); S154 / Chapter 128 / `Overview: TTEST Procedure` (PDF pp.
+28753    !  10596–10597).
+28754       * Discriminates: Default one-sample t test from the Getting Started input
+28755       */
+28756      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+28756    ! validmemname=compatible locale=en_US;
+28757      %let syscc=0;
+28758      title; footnote;
+28759      ods _all_ close;
+28760      ods listing gpath="%sysfunc(pathname(work))";
+28761      ods graphics off;
+28762      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SAMPLE (memtype=DATA).
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+28762    !                                         quit;
+
+
+28763      ods path work.templat(update) sashelp.tmplmst(read);
+28764      
+28765      data time; input time @@; datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.TIME has 20 observations and 1 variables.
+
+28768      ;
+28769      run;
+28770      proc ttest data=time; var time; run;
+
+NOTE: The PROCEDURE TTEST printed page 1766.
+
+28771      
+28772      
+28773      
+28774      
+The SAS System
+
+28775      

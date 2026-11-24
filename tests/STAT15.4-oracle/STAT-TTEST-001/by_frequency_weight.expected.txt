@@ -1,0 +1,78 @@
+
+group=A
+
+The TTEST Procedure
+ 
+Variable:  x
+
+Frequency: freq
+Weight: weight
+
+ N        Mean     Std Dev     Std Err     Minimum     Maximum
+
+ 7     87.1111     22.1393      7.3798     43.0000       116.0
+
+    Mean       95% CL Mean        Std Dev      95% CL Std Dev
+
+ 87.1111     69.0535    105.2     22.1393     14.2664  48.7522
+
+    DF    t Value    Pr > |t|
+
+     6      11.80      <.0001
+
+
+Variable:  y
+
+Frequency: freq
+Weight: weight
+
+ N        Mean     Std Dev     Std Err     Minimum     Maximum
+
+ 7     84.0000     21.4398      7.1466     40.0000       110.0
+
+    Mean       95% CL Mean        Std Dev      95% CL Std Dev
+
+ 84.0000     66.5129    101.5     21.4398     13.8157  47.2119
+
+    DF    t Value    Pr > |t|
+
+     6      11.75      <.0001
+
+group=B
+
+The TTEST Procedure
+ 
+Variable:  x
+
+Frequency: freq
+Weight: weight
+
+ N        Mean     Std Dev     Std Err     Minimum     Maximum
+
+ 7     91.6667     17.5973      5.8658     71.0000       121.0
+
+    Mean       95% CL Mean        Std Dev      95% CL Std Dev
+
+ 91.6667     77.3136    106.0     17.5973     11.3396  38.7505
+
+    DF    t Value    Pr > |t|
+
+     6      15.63      <.0001
+
+
+Variable:  y
+
+Frequency: freq
+Weight: weight
+
+ N        Mean     Std Dev     Std Err     Minimum     Maximum
+
+ 7     89.4444     16.6244      5.5415     72.0000       115.0
+
+    Mean       95% CL Mean        Std Dev      95% CL Std Dev
+
+ 89.4444     75.8850    103.0     16.6244     10.7126  36.6080
+
+    DF    t Value    Pr > |t|
+
+     6      16.14      <.0001

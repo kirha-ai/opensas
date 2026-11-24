@@ -1,0 +1,133 @@
+The SAS System
+
+141        
+142        /* STAT-BGLIMM-015: BGLIMM — Official examples and feature integration regression
+143         * Source: S154 / Chapter 31 / `Examples: BGLIMM Procedure` (PDF pp. 1332–1362).
+144         * Discriminates: Example 31.4: Repeated Growth Measurements with Group Difference
+145         */
+146        options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+146      ! validmemname=compatible locale=en_US;
+147        %let syscc=0;
+148        title; footnote;
+149        ods _all_ close;
+150        ods listing gpath="%sysfunc(pathname(work))";
+151        ods graphics off;
+152        proc datasets library=work kill nolist;
+NOTE: Deleting WORK.PR (memtype=DATA).
+NOTE: Deleting WORK.PROB (memtype=DATA).
+NOTE: Deleting WORK.PR_OUT (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+152      !                                         quit;
+
+
+153        ods path work.templat(update) sashelp.tmplmst(read);
+154        
+155        data pr;
+156        input Person Gender $ y1 y2 y3 y4;
+157        Distance=y1;
+158        Age=8;
+159        Time=1;
+160        output;
+161        Distance=y2;
+162        Age=10;
+163        Time=2;
+164        output;
+165        Distance=y3;
+166        Age=12;
+167        Time=3;
+168        output;
+169        Distance=y4;
+170        Age=14;
+171        Time=4;
+172        output;
+173        drop y1-y4;
+174        datalines;
+
+NOTE: The data set WORK.PR has 108 observations and 5 variables.
+
+202        ;
+203        proc bglimm data=pr seed=475193 outpost=pr_out nmc=1000 nbi=200;
+204        by Gender;
+205        class Person Time;
+206        model Distance = Age;
+207        repeated Time / subject=Person type=un r;
+208        run;
+
+NOTE: Generating the burn-in samples.
+NOTE: Beginning sample generation.
+NOTE: Beginning calculation of summary and diagnostics statistics.
+NOTE: The above message was for the following BY group:
+      Gender=F
+NOTE: Generating the burn-in samples.
+NOTE: Beginning sample generation.
+NOTE: Beginning calculation of summary and diagnostics statistics.
+NOTE: The above message was for the following BY group:
+      Gender=M
+NOTE: The data set WORK.PR_OUT has 2000 observations and 14 variables.
+NOTE: The PROCEDURE BGLIMM printed pages 7-8.
+
+209        proc bglimm data=pr seed=475193 outpost=pr_out nmc=1000 nbi=200;
+210        class Person Gender Time;
+211        model Distance = Age|Gender;
+212        repeated Time / type=un subject=Person group=Gender r;
+213        run;
+
+NOTE: Generating the burn-in samples.
+NOTE: Beginning sample generation.
+NOTE: Beginning calculation of summary and diagnostics statistics.
+NOTE: The data set WORK.PR_OUT has 1000 observations and 25 variables.
+NOTE: The PROCEDURE BGLIMM printed page 9.
+
+214        proc bglimm data=pr seed=475193 outpost=pr_out nmc=1000 nbi=200;
+215        class Person Gender Time;
+216        model Distance = Age|Gender;
+217        repeated Time / type=un subject=Person group=Gender r;
+218        estimate 'Girls Intercept' Int 1 Gender 1 0;
+219        estimate 'Boys Intercept' Int 1 Gender 0 1;
+220        estimate 'Girls Slope' Age 1 Age*Gender 1 0;
+221        estimate 'Boys Slope' Age 1 Age*Gender 0 1;
+222        run;
+
+NOTE: Generating the burn-in samples.
+NOTE: Beginning sample generation.
+NOTE: Beginning calculation of summary and diagnostics statistics.
+NOTE: The data set WORK.PR_OUT has 1000 observations and 29 variables.
+NOTE: The PROCEDURE BGLIMM printed page 10.
+
+223        data prob;
+224        set pr_out;
+225        pDiff = boys_slope - girls_slope;
+226        prob = (pDiff > 0);
+227        keep pDiff prob;
+228        run;
+
+NOTE: There were 1000 observations read from the data set WORK.PR_OUT.
+NOTE: The data set WORK.PROB has 1000 observations and 2 variables.
+
+229        %sumint(data=prob, var=pDiff prob)
+230        proc bglimm data=pr seed=475193 outpost=pr_out nmc=1000 nbi=200;
+231        class Person Gender Time;
+232        model Distance = Gender Age*Gender / noint;
+233        repeated Time / type=un subject=Person group=Gender;
+234        estimate 'Intercept Difference' Gender 1 -1;
+235        estimate 'Slope Difference' Gender*Age 1 -1;
+236        estimate 'Girl at Age 11' Gender 1 0 Gender*Age 11 0;
+237        estimate 'Boy at Age 11' Gender 0 1 Gender *Age 0 11;
+238        run;
+
+NOTE: Generating the burn-in samples.
+NOTE: Beginning sample generation.
+NOTE: Beginning calculation of summary and diagnostics statistics.
+NOTE: The data set WORK.PR_OUT has 1000 observations and 29 variables.
+NOTE: The PROCEDURE BGLIMM printed page 12.
+
+239        
+240        
+241        
+242        
+The SAS System
+
+243        

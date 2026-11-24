@@ -1,0 +1,66 @@
+The SAS System
+
+20897      
+20898      /* STAT-SURVEYLOGISTIC-008: SURVEYLOGISTIC — Notation / Logistic Regression Models / Likelihood Function
+20899       * Source: S154 / Chapter 120 / `Notation` (PDF pp. 9851–9852); S154 / Chapter 120 / `Logistic Regression Models` (PDF pp. 9852–9854); S154 /
+20899    ! Chapter 120 / `Likelihood Function` (PDF pp. 9854–9855).
+20900       * Discriminates: Verified default procedure context
+20901       */
+20902      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+20902    ! validmemname=compatible locale=en_US;
+20903      %let syscc=0;
+20904      title; footnote;
+20905      ods _all_ close;
+20906      ods listing gpath="%sysfunc(pathname(work))";
+20907      ods graphics off;
+
+
+20908      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.ENROLLMENT (memtype=DATA).
+NOTE: Deleting WORK.FORMATS (memtype=CATALOG).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.WEBSURVEY (memtype=DATA).
+20908    !                                         quit;
+
+
+20909      ods path work.templat(update) sashelp.tmplmst(read);
+20910      
+20911      data survey;
+20912      call streaminit(722);
+20913      do stratum=1 to 2;
+20914      do cluster=1 to 4;
+20915      do id=1 to 12;
+20916      age=20+mod(id*7+cluster,45);
+20917      event=rand('bernoulli',0.3);
+20918      weight=2+stratum+cluster/10;
+20919      output;
+20920      end;
+20921      end;
+20922      end;
+20923      run;
+
+NOTE: The data set WORK.SURVEY has 96 observations and 6 variables.
+
+20924      proc surveylogistic data=survey;
+20925      strata stratum;
+20926      cluster cluster;
+20927      weight weight;
+20928      model event(event='1')=age;
+20929      run;
+
+NOTE: PROC SURVEYLOGISTIC is modeling the probability that event=1.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The PROCEDURE SURVEYLOGISTIC printed page 1413.
+
+20930      
+20931      
+20932      
+20933      
+The SAS System
+
+20934      

@@ -1,0 +1,57 @@
+The SAS System
+
+15308      
+15309      /* STAT-DISTANCE-003: DISTANCE — Proximity Measures
+15310       * Source: S154 / Chapter 43 / `Proximity Measures` (PDF pp. 2761–2768).
+15311       * Discriminates: Verified default procedure context
+15312       */
+15313      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+15313    ! validmemname=compatible locale=en_US;
+15314      %let syscc=0;
+15315      title; footnote;
+15316      ods _all_ close;
+15317      ods listing gpath="%sysfunc(pathname(work))";
+15318      ods graphics off;
+15319      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.DIST (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SAMPLE (memtype=DATA).
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+15319    !                                         quit;
+
+
+15320      ods path work.templat(update) sashelp.tmplmst(read);
+15321      
+15322      data sample;
+15323      input x z y group $ weight freq;
+15324      datalines;
+
+NOTE: The data set WORK.SAMPLE has 12 observations and 6 variables.
+
+15337      ;
+15338      run;
+15339      proc distance data=sample method=euclid out=dist;
+15340      var interval(x z /std=std);
+15341      run;
+
+NOTE: The data set WORK.DIST has 12 observations and 12 variables.
+
+15342      proc print data=dist noobs;
+15343      run;
+
+NOTE: There were 12 observations read from the data set WORK.DIST.
+NOTE: The PROCEDURE PRINT printed page 2044.
+
+15344      
+15345      
+15346      
+15347      
+The SAS System
+
+15348      

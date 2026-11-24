@@ -1,0 +1,102 @@
+The SAS System
+
+29106      
+29107      /* STAT-TTEST-011: TTEST — ODS Graphics
+29108       * Source: S154 / Chapter 128 / `ODS Graphics` (PDF pp. 10644–10650).
+29109       * Discriminates: Interval and QQ graph creation and ODS TRACE names; text listing is paired with the graph trace
+29110       */
+29111      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+29111    ! validmemname=compatible locale=en_US;
+29112      %let syscc=0;
+29113      title; footnote;
+29114      ods _all_ close;
+29115      ods listing gpath="%sysfunc(pathname(work))";
+29116      ods graphics off;
+29117      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.LIMITS (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SAMPLE (memtype=DATA).
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.STATS (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TESTS (memtype=DATA).
+NOTE: Deleting WORK.VARIANCE (memtype=DATA).
+29117    !                                         quit;
+
+
+29118      ods path work.templat(update) sashelp.tmplmst(read);
+29119      
+29120      data sample;
+29121       input x y group $ freq weight;
+29122       datalines;
+
+NOTE: The data set WORK.SAMPLE has 12 observations and 5 variables.
+
+29135      ;
+29136      run;
+29137      ods trace on;
+29138      ods graphics on;
+29139      proc ttest data=sample plots(only)=(interval qq); class group; var x; run;
+
+
+Output Added:
+-------------
+Name:       Statistics
+Label:      Statistics
+Template:   Stat.TTest.Statistics
+Path:       Ttest.x.Statistics
+-------------
+
+Output Added:
+-------------
+Name:       ConfLimits
+Label:      Confidence Limits
+Template:   Stat.TTest.ConfLimits
+Path:       Ttest.x.ConfLimits
+-------------
+
+Output Added:
+-------------
+Name:       TTests
+Label:      T-Tests
+Template:   Stat.TTest.TTests
+Path:       Ttest.x.TTests
+-------------
+
+Output Added:
+-------------
+Name:       Equality
+Label:      Equality of Variances
+Template:   Stat.TTest.Equality
+Path:       Ttest.x.Equality
+-------------
+
+Output Added:
+-------------
+Name:       Interval
+Label:      Difference Interval Plot
+Template:   Stat.TTest.Graphics.Interval
+Path:       Ttest.x.Interval
+-------------
+
+Output Added:
+-------------
+Name:       QQPlot
+Label:      Q-Q Plots
+Template:   Stat.TTest.Graphics.QQ2
+Path:       Ttest.x.QQPlot
+-------------
+NOTE: The PROCEDURE TTEST printed page 1782.
+
+29140      ods graphics off;
+29141      ods trace off;
+29142      
+29143      
+29144      
+29145      
+The SAS System
+
+29146      

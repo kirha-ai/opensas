@@ -1,0 +1,66 @@
+The SAS System
+
+4435       
+4436       /* STAT-SURVEYREG-009: SURVEYREG — Jackknife Method / Hadamard Matrix / Degrees of Freedom
+4437        * Source: S154 / Chapter 123 / `Jackknife Method` (PDF pp. 10153–10155); S154 / Chapter 123 / `Hadamard Matrix` (PDF p. 10155); S154 / Chapter 123
+4437     !  / `Degrees of Freedom` (PDF pp. 10155–10156).
+4438        * Discriminates: Example 123.9: Variance Estimate Using the Jackknife Method
+4439        */
+4440       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+4440     ! validmemname=compatible locale=en_US;
+4441       %let syscc=0;
+4442       title; footnote;
+4443       ods _all_ close;
+4444       ods listing gpath="%sysfunc(pathname(work))";
+4445       ods graphics off;
+4446       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.ENROLLMENT (memtype=DATA).
+NOTE: Deleting WORK.FORMATS (memtype=CATALOG).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.WEBSURVEY (memtype=DATA).
+4446     !                                         quit;
+
+
+4447       ods path work.templat(update) sashelp.tmplmst(read);
+4448       
+4449       data IceCream;
+4450       input Grade Spending Income Kids @@;
+4451       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.ICECREAM has 40 observations and 4 variables.
+
+4466       ;
+4467       run;
+4468       data IceCream; set IceCream; if Grade=7 then Weight=1824/20; if Grade=8 then Weight=1025/9; if Grade=9 then Weight=1151/11; run;
+
+NOTE: There were 40 observations read from the data set WORK.ICECREAM.
+NOTE: The data set WORK.ICECREAM has 40 observations and 5 variables.
+
+4469       title1 'Ice Cream Spending Analysis';
+4470       title2 'Use the Jackknife Method to Estimate the Variance';
+4471       proc surveyreg data=IceCream
+4472       varmethod=JACKKNIFE(outweights=JKWeights);
+4473       strata Grade;
+4474       class Kids;
+4475       model Spending = Income Kids / solution;
+4476       weight Weight;
+4477       run;
+
+NOTE: The data set WORK.JKWEIGHTS has 40 observations and 45 variables.
+NOTE: The PROCEDURE SURVEYREG printed page 253.
+
+4478       
+4479       
+4480       
+4481       
+The SAS System
+
+4482       

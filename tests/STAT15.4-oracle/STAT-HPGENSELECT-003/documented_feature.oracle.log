@@ -1,0 +1,54 @@
+The SAS System
+
+8575       
+8576       /* STAT-HPGENSELECT-003: HPGENSELECT — CLASS / MODEL / ZEROMODEL
+8577        * Source: S154 / Chapter 59 / `CLASS Statement` (PDF pp. 4636–4637); S154 / Chapter 59 / `MODEL Statement` (PDF pp. 4638–4644); S154 / Chapter
+8577     ! 59 / `ZEROMODEL Statement` (PDF pp. 4652–4653).
+8578        * Discriminates: Getting Started: HPGENSELECT Procedure; explicit statements: CLASS, MODEL
+8579        */
+8580       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+8580     ! validmemname=compatible locale=en_US;
+8581       %let syscc=0;
+8582       title; footnote;
+8583       ods _all_ close;
+8584       ods listing gpath="%sysfunc(pathname(work))";
+8585       ods graphics off;
+8586       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.GETSTARTED (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+8586     !                                         quit;
+
+
+8587       ods path work.templat(update) sashelp.tmplmst(read);
+8588       
+8589       data getStarted;
+8590       input C1-C5 Y Total;
+8591       datalines;
+
+NOTE: The data set WORK.GETSTARTED has 100 observations and 7 variables.
+
+8692       ;
+8693       proc hpgenselect data=getStarted;
+8694       class C1-C5;
+8695       model Y = C1-C5 / Distribution=Poisson Link=Log;
+8696       run;
+
+NOTE: The HPGENSELECT procedure is executing in single-machine mode.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: There were 100 observations read from the data set WORK.GETSTARTED.
+NOTE: The PROCEDURE HPGENSELECT printed page 650.
+
+8697       
+8698       
+8699       
+8700       
+The SAS System
+
+8701       

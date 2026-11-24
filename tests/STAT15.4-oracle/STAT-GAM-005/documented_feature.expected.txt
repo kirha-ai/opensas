@@ -1,0 +1,192 @@
+
+The LOESS Procedure
+
+            Independent Variable Scaling
+ 
+   Scaling applied: 10% trimmed standard deviation
+ 
+Statistic                     Temperature    Catalyst
+
+Minimum Value                          80       0.005
+Maximum Value                         140       0.080
+Trimmed Mean                          110       0.043
+Trimmed Standard Deviation             17       0.019
+
+The LOESS Procedure
+Dependent Variable: Yield
+
+     Optimal Smoothing
+         Criterion
+ 
+                 Smoothing
+        GCV      Parameter
+
+    0.00841        0.50446
+
+The LOESS Procedure
+Selected Smoothing Parameter: 0.504
+Dependent Variable: Yield
+
+                Fit Summary
+
+Fit Method                          kd Tree
+Blending                             Linear
+Number of Observations                  112
+Number of Fitting Points                 29
+kd Tree Bucket Size                      11
+Degree of Local Polynomials               2
+Smoothing Parameter                 0.50446
+Points in Local Neighborhood             56
+Residual Sum of Squares            81.18675
+Trace[L]                           13.75122
+GCV                                 0.00841
+AICC                                0.98478
+
+The GAM Procedure
+Dependent Variable: Yield
+Smoothing Model Component(s): loess(Temperature) loess(Catalyst) 
+
+        Summary of Input Data Set
+
+Number of Observations                 112
+Number of Missing Observations           0
+Distribution                      Gaussian
+Link Function                     Identity
+
+
+           Iteration Summary and Fit Statistics
+
+Final Number of Backfitting Iterations                    2
+Final Backfitting Criterion                    9.739672E-32
+The Deviance of the Final Estimate             60.645213989
+
+
+The backfitting algorithm converged.                            
+
+
+                       Regression Model Analysis
+                          Parameter Estimates
+ 
+                         Parameter       Standard
+Parameter                 Estimate          Error    t Value    Pr > |t|
+
+Intercept                  3.77618        0.43369       8.71      <.0001
+Linear(Temperature)        0.01765        0.00368       4.79      <.0001
+Linear(Catalyst)           9.95092        3.19654       3.11      0.0024
+
+
+                           Smoothing Model Analysis
+                     Fit Summary for Smoothing Components
+ 
+                                                                           Num
+                         Smoothing                                      Unique
+Component                Parameter              DF             GCV         Obs
+
+Loess(Temperature)        0.281250        5.000000        0.005501         112
+Loess(Catalyst)           0.299107        4.248546        0.005539         112
+
+
+                          Smoothing Model Analysis
+                            Analysis of Deviance
+ 
+                                           Sum of
+Source                         DF         Squares    Chi-Square    Pr > ChiSq
+
+Loess(Temperature)        5.00000       55.796152       91.7755        <.0001
+Loess(Catalyst)           4.24855       30.444606       50.0764        <.0001
+
+The LOESS Procedure
+
+            Independent Variable Scaling
+ 
+   Scaling applied: 10% trimmed standard deviation
+ 
+Statistic                     Temperature    Catalyst
+
+Minimum Value                          80       0.005
+Maximum Value                         140       0.080
+Trimmed Mean                          110       0.043
+Trimmed Standard Deviation             17       0.019
+
+The LOESS Procedure
+Dependent Variable: Yield
+
+     Optimal Smoothing
+         Criterion
+ 
+                 Smoothing
+        GCV      Parameter
+
+    0.01179        0.28125
+
+The LOESS Procedure
+Selected Smoothing Parameter: 0.281
+Dependent Variable: Yield
+
+                Fit Summary
+
+Fit Method                          kd Tree
+Blending                             Linear
+Number of Observations                  112
+Number of Fitting Points                 56
+kd Tree Bucket Size                       6
+Degree of Local Polynomials               2
+Smoothing Parameter                 0.28125
+Points in Local Neighborhood             31
+Residual Sum of Squares            91.51616
+Trace[L]                           23.91279
+GCV                                 0.01179
+AICC                                1.37680
+
+The GAM Procedure
+Dependent Variable: Yield
+Smoothing Model Component(s): loess(Temperature) loess(Catalyst) 
+
+        Summary of Input Data Set
+
+Number of Observations                 112
+Number of Missing Observations           0
+Distribution                      Gaussian
+Link Function                     Identity
+
+
+           Iteration Summary and Fit Statistics
+
+Final Number of Backfitting Iterations                    2
+Final Backfitting Criterion                    9.534717E-32
+The Deviance of the Final Estimate             542.64924177
+
+
+The backfitting algorithm converged.                            
+
+
+                       Regression Model Analysis
+                          Parameter Estimates
+ 
+                         Parameter       Standard
+Parameter                 Estimate          Error    t Value    Pr > |t|
+
+Intercept                  6.42322        1.24511       5.16      <.0001
+Linear(Temperature)       -0.00302        0.01058      -0.29      0.7760
+Linear(Catalyst)          -0.79382        9.17711      -0.09      0.9312
+
+
+                           Smoothing Model Analysis
+                     Fit Summary for Smoothing Components
+ 
+                                                                           Num
+                         Smoothing                                      Unique
+Component                Parameter              DF             GCV         Obs
+
+Loess(Temperature)        0.977679        0.390224        0.045358         112
+Loess(Catalyst)           0.977679        0.319354        0.045296         112
+
+
+                          Smoothing Model Analysis
+                            Analysis of Deviance
+ 
+                                           Sum of
+Source                         DF         Squares    Chi-Square    Pr > ChiSq
+
+Loess(Temperature)        0.39022        5.330069        1.0637         .    
+Loess(Catalyst)           0.31935        3.823207        0.7630         .    

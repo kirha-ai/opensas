@@ -1,0 +1,52 @@
+The SAS System
+
+12991      
+12992      /* STAT-CAUSALGRAPH-004: CAUSALGRAPH — IDENTIFY / Statistical and Causal Concepts
+12993       * Source: S154 / Chapter 37 / `IDENTIFY Statement` (PDF pp. 2314–2316); S154 / Chapter 37 / `Statistical and Causal Concepts` (PDF p. 2322).
+12994       * Discriminates: Getting Started: CAUSALGRAPH Procedure; explicit statements: IDENTIFY
+12995       */
+12996      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+12996    ! validmemname=compatible locale=en_US;
+12997      %let syscc=0;
+12998      title; footnote;
+12999      ods _all_ close;
+13000      ods listing gpath="%sysfunc(pathname(work))";
+13001      ods graphics off;
+13002      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+13002    !                                         quit;
+
+
+13003      ods path work.templat(update) sashelp.tmplmst(read);
+13004      
+13005      proc causalgraph;
+13006      model "Timm17TwoLatent"
+13007      Age ==> Parity PFAS Education,
+13008      Parity ==> PrevBF Duration PFAS,
+13009      PrevBF ==> PFAS Duration,
+13010      PFAS ==> Duration,
+13011      Education ==> Duration Employment PFAS BMI Alcohol Smoking,
+13012      Employment ==> Duration PFAS BMI Alcohol Smoking,
+13013      BMI Alcohol Smoking ==> Duration;
+13014      identify PFAS ==> Duration;
+13015      unmeasured Alcohol Smoking;
+13016      run;
+
+NOTE: The PROCEDURE CAUSALGRAPH printed pages 1786-1787.
+
+13017      
+13018      run; quit;
+13019      
+13020      
+13021      
+13022      
+The SAS System
+
+13023      

@@ -1,0 +1,78 @@
+The SAS System
+
+3876       
+3877       /* STAT-MIXED-009: MIXED — CONTRAST / ESTIMATE
+3878        * Source: S154 / Chapter 84 / `CONTRAST Statement` (PDF pp. 6640–6643); S154 / Chapter 84 / `ESTIMATE Statement` (PDF pp. 6643–6645).
+3879        * Discriminates: Example 84.1: Split-Plot Design; explicit statements: ESTIMATE
+3880        */
+3881       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+3881     ! validmemname=compatible locale=en_US;
+3882       %let syscc=0;
+3883       title; footnote;
+3884       ods _all_ close;
+3885       ods listing gpath="%sysfunc(pathname(work))";
+3886       ods graphics off;
+3887       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.HEIGHTS (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+3887     !                                         quit;
+
+
+3888       ods path work.templat(update) sashelp.tmplmst(read);
+3889       
+3890       data sp;
+3891       input Block A B Y @@;
+3892       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.SP has 24 observations and 4 variables.
+
+3905       ;
+3906       proc mixed;
+3907       class A B Block;
+3908       model Y = A B A*B;
+3909       random Block A*Block;
+3910       run;
+
+NOTE: Convergence criteria met.
+NOTE: The PROCEDURE MIXED printed page 303.
+
+3911       proc glm data=sp;
+3912       class A B Block;
+3913       model Y = A B A*B Block A*Block;
+3914       test h=A e=A*Block;
+3915       run;
+
+
+NOTE: The PROCEDURE GLM printed pages 304-305.
+
+3916       proc mixed data=sp;
+3917       class A B Block;
+3918       model Y = A B A*B;
+3919       random Block A*Block;
+3920       estimate 'a1 mean narrow'
+3921       intercept 1 A 1 B .5 .5 A*B .5 .5 |
+3922       Block .25 .25 .25 .25
+3923       A*Block .25 .25 .25 .25 0 0 0 0 0 0 0 0;
+3924       estimate 'a1 mean intermed'
+3925       intercept 1 A 1 B .5 .5 A*B .5 .5 |
+3926       Block .25 .25 .25 .25;
+3927       estimate 'a1 mean broad'
+3928       intercept 1 a 1 b .5 .5 A*B .5 .5;
+3929       run;
+
+NOTE: Convergence criteria met.
+NOTE: The PROCEDURE MIXED printed page 306.
+
+3930       
+3931       
+3932       
+3933       
+The SAS System
+
+3934       

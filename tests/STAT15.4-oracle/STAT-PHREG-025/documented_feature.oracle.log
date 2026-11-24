@@ -1,0 +1,316 @@
+The SAS System
+
+4004       
+4005       /* STAT-PHREG-025: PHREG — ODS Graphics
+4006        * Source: S154 / Chapter 92 / `ODS Graphics` (PDF pp. 7481–7483).
+4007        * Discriminates: Getting Started: PHREG Procedure
+4008        */
+4009       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+4009     ! validmemname=compatible locale=en_US;
+4010       %let syscc=0;
+4011       title; footnote;
+4012       ods _all_ close;
+4013       ods listing gpath="%sysfunc(pathname(work))";
+4014       ods graphics off;
+4015       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.NEW (memtype=DATA).
+NOTE: Deleting WORK.POST (memtype=DATA).
+NOTE: Deleting WORK.RATS (memtype=DATA).
+NOTE: Deleting WORK.REGIMES (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+4015     !                                         quit;
+
+
+4016       ods path work.templat(update) sashelp.tmplmst(read);
+4017       
+4018       ods graphics on;
+4019       ods trace on;
+4020       ods trace on;
+4021       data Rats;
+4022       label Days ='Days from Exposure to Death';
+4023       input Days Status Group @@;
+4024       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.RATS has 40 observations and 3 variables.
+
+4035       ;
+4036       data Regimes;
+4037       Group=0;
+4038       output;
+4039       Group=1;
+4040       output;
+4041       run;
+
+NOTE: The data set WORK.REGIMES has 2 observations and 1 variables.
+
+4042       ods graphics on;
+4043       proc phreg data=Rats plot(overlay)=survival;
+4044       model Days*Status(0)=Group;
+4045       baseline covariates=regimes out=_null_;
+4046       run;
+
+
+Output Added:
+-------------
+Name:       ModelInfo
+Label:      Model Information
+Template:   Stat.Phreg.ModelInfo
+Path:       PHReg.ModelInfo
+-------------
+
+Output Added:
+-------------
+Name:       NObs
+Label:      Number of Observations
+Template:   Stat.Phreg.NObs
+Path:       PHReg.NObs
+-------------
+
+Output Added:
+-------------
+Name:       CensoredSummary
+Label:      Summary of Event and Censored Observations
+Template:   Stat.Phreg.CensoredSummary
+Path:       PHReg.CensoredSummary
+-------------
+
+Output Added:
+-------------
+Name:       ConvergenceStatus
+Label:      Convergence Status
+Template:   Stat.Phreg.ConvergenceStatus
+Path:       PHReg.ConvergenceStatus
+-------------
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+
+Output Added:
+-------------
+Name:       FitStatistics
+Label:      Model Fit Statistics
+Template:   Stat.Phreg.FitStatistics
+Path:       PHReg.FitStatistics
+-------------
+
+Output Added:
+-------------
+Name:       GlobalTests
+Label:      Test of Global Null Hypothesis
+Template:   Stat.Phreg.GlobalTests
+Path:       PHReg.GlobalTests
+-------------
+
+Output Added:
+-------------
+Name:       ParameterEstimates
+Label:      Maximum Likelihood Estimates of Model Parameters
+Template:   Stat.Phreg.ParameterEstimates
+Path:       PHReg.ParameterEstimates
+-------------
+
+Output Added:
+-------------
+Name:       SurvivalPlot
+Label:      Survivorship
+Template:   Stat.Phreg.Graphics.Survival
+Path:       PHReg.SurvivalPlot
+-------------
+NOTE: The PROCEDURE PHREG printed page 308.
+
+4047       proc phreg data=Rats;
+4048       model Days*Status(0)=Group X;
+4049       X=Group*(log(Days) - 5.4);
+4050       run;
+
+
+Output Added:
+-------------
+Name:       ModelInfo
+Label:      Model Information
+Template:   Stat.Phreg.ModelInfo
+Path:       PHReg.ModelInfo
+-------------
+
+Output Added:
+-------------
+Name:       NObs
+Label:      Number of Observations
+Template:   Stat.Phreg.NObs
+Path:       PHReg.NObs
+-------------
+
+Output Added:
+-------------
+Name:       CensoredSummary
+Label:      Summary of Event and Censored Observations
+Template:   Stat.Phreg.CensoredSummary
+Path:       PHReg.CensoredSummary
+-------------
+
+Output Added:
+-------------
+Name:       ConvergenceStatus
+Label:      Convergence Status
+Template:   Stat.Phreg.ConvergenceStatus
+Path:       PHReg.ConvergenceStatus
+-------------
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+
+Output Added:
+-------------
+Name:       FitStatistics
+Label:      Model Fit Statistics
+Template:   Stat.Phreg.FitStatistics
+Path:       PHReg.FitStatistics
+-------------
+
+Output Added:
+-------------
+Name:       GlobalTests
+Label:      Test of Global Null Hypothesis
+Template:   Stat.Phreg.GlobalTests
+Path:       PHReg.GlobalTests
+-------------
+
+Output Added:
+-------------
+Name:       ParameterEstimates
+Label:      Maximum Likelihood Estimates of Model Parameters
+Template:   Stat.Phreg.ParameterEstimates
+Path:       PHReg.ParameterEstimates
+-------------
+NOTE: The PROCEDURE PHREG printed page 309.
+
+4051       ods graphics on;
+4052       proc phreg data=Rats;
+4053       model Days*Status(0)=Group;
+4054       bayes seed=1 outpost=Post nmc=1000 nbi=200;
+4055       run;
+
+
+Output Added:
+-------------
+Name:       ModelInfo
+Label:      Model Information
+Template:   Stat.Phreg.ModelInfo
+Path:       PHReg.ModelInfo
+-------------
+
+Output Added:
+-------------
+Name:       NObs
+Label:      Number of Observations
+Template:   Stat.Phreg.NObs
+Path:       PHReg.NObs
+-------------
+
+Output Added:
+-------------
+Name:       CensoredSummary
+Label:      Summary of Event and Censored Observations
+Template:   Stat.Phreg.CensoredSummary
+Path:       PHReg.CensoredSummary
+-------------
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+
+Output Added:
+-------------
+Name:       ParameterEstimates
+Label:      Maximum Likelihood Estimates and 95% Confidence Limits
+Template:   Stat.Phreg.Mle
+Path:       PHReg.ParameterEstimates
+-------------
+
+Output Added:
+-------------
+Name:       CoeffPrior
+Label:      Uniform Prior for Regression Coefficients
+Template:   Stat.Phreg.UniformCoeffPrior
+Path:       PHReg.CoeffPrior
+-------------
+
+Output Added:
+-------------
+Name:       PosteriorSample
+Label:      Posterior Samples
+Template:   Stat.Phreg.PosteriorSample
+Path:       PHReg.PosteriorSample
+-------------
+
+Output Added:
+-------------
+Name:       InitialValues
+Label:      Initial Values
+Template:   Stat.Phreg.InitialValues
+Path:       PHReg.InitialValues
+-------------
+
+Output Added:
+-------------
+Name:       FitStatistics
+Label:      Model Fit Statistics
+Template:   Stat.Phreg.BayesFitStatistics
+Path:       PHReg.FitStatistics
+-------------
+
+Output Added:
+-------------
+Name:       PostSumInt
+Label:      Summary and Interval Statistics
+Template:   Stat.Phreg.PostSumInt
+Path:       PHReg.Stats.PostSumInt
+-------------
+
+Output Added:
+-------------
+Name:       ESS
+Label:      Effective Sample Sizes
+Template:   Stat.Phreg.ESS
+Path:       PHReg.Diagnostics.ESS
+-------------
+
+Output Added:
+-------------
+Name:       TADPanel
+Label:      Group
+Template:   Stat.Phreg.Graphics.TraceAutocorrDensity
+Path:       PHReg.TADPanel.TADPanel
+-------------
+NOTE: The data set WORK.POST has 1000 observations and 4 variables.
+NOTE: The PROCEDURE PHREG printed pages 310-312.
+
+4056       data New;
+4057       set Post;
+4058       Indicator=(Group < 0);
+4059       label Indicator='Group < 0';
+4060       run;
+
+NOTE: There were 1000 observations read from the data set WORK.POST.
+NOTE: The data set WORK.NEW has 1000 observations and 5 variables.
+
+4061       proc means data=New(keep=Indicator) n mean;
+4062       run;
+
+
+Output Added:
+-------------
+Name:       Summary
+Label:      Summary statistics
+Template:   base.summary
+Path:       Means.Summary
+-------------
+NOTE: There were 1000 observations read from the data set WORK.NEW.
+NOTE: The PROCEDURE MEANS printed page 313.
+
+4063       ods trace off;
+4064       ods trace off;
+4065       ods graphics off;
+4066       
+4067       
+4068       
+4069       
+The SAS System
+
+4070       

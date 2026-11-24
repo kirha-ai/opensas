@@ -1,0 +1,1 @@
+WARNING: Failed to converge, however criterion change is less than 0.0001.

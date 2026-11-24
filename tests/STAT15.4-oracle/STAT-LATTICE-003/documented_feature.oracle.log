@@ -1,0 +1,75 @@
+The SAS System
+
+11010      
+11011      /* STAT-LATTICE-003: LATTICE — Displayed Output / ODS Table Names
+11012       * Source: S154 / Chapter 75 / `Displayed Output` (PDF pp. 5516–5517); S154 / Chapter 75 / `ODS Table Names` (PDF p. 5517).
+11013       * Discriminates: Getting Started: LATTICE Procedure
+11014       */
+11015      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+11015    ! validmemname=compatible locale=en_US;
+11016      %let syscc=0;
+11017      title; footnote;
+11018      ods _all_ close;
+11019      ods listing gpath="%sysfunc(pathname(work))";
+11020      ods graphics off;
+11021      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.PIGS (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+11021    !                                         quit;
+
+
+11022      ods path work.templat(update) sashelp.tmplmst(read);
+11023      
+11024      ods trace on;
+11025      title 'Examining the Growth Rate of Pigs';
+11026      data Pigs;
+11027      input Group Block Treatment Weight @@;
+11028      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.PIGS has 36 observations and 4 variables.
+
+11037      ;
+11038      proc lattice data=Pigs;
+11039      var Weight;
+11040      run;
+
+
+Output Added:
+-------------
+Name:       ANOVA
+Label:      Analysis of Variance for Weight
+Template:   Stat.Lattice.ANOVA
+Path:       Lattice.ANOVA
+-------------
+
+Output Added:
+-------------
+Name:       Statistics
+Label:      Additional Statistics for Weight
+Template:   Stat.Lattice.Statistics
+Path:       Lattice.Statistics
+-------------
+NOTE: The design specified is a balanced square lattice. With this design only one variance term, Variance of Means in Same Block, is appropriate.
+
+Output Added:
+-------------
+Name:       AdjTreatmentMeans
+Label:      Adjusted Treatment Means for Weight
+Template:   Stat.Lattice.Means
+Path:       Lattice.AdjTreatmentMeans
+-------------
+NOTE: There were 36 observations read from the data set WORK.PIGS.
+NOTE: The PROCEDURE LATTICE printed page 763.
+
+11041      ods trace off;
+11042      
+11043      
+11044      
+11045      
+The SAS System
+
+11046      

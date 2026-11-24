@@ -1,0 +1,170 @@
+The SAS System
+
+8425       
+8426       /* STAT-CALIS-013: CALIS — RAM / The RAM Model
+8427        * Source: S154 / Chapter 33 / `RAM Statement` (PDF pp. 1643–1649); S154 / Chapter 33 / `The RAM Model` (PDF pp. 1720–1728).
+8428        * Discriminates: Example 33.29: Fitting the RAM and EQS Models by the COSAN Modeling Language; explicit statements: RAM
+8429        */
+8430       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+8430     ! validmemname=compatible locale=en_US;
+8431       %let syscc=0;
+8432       title; footnote;
+8433       ods _all_ close;
+8434       ods listing gpath="%sysfunc(pathname(work))";
+8435       ods graphics off;
+8436       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.WHEATON (memtype=DATA).
+8436     !                                         quit;
+
+
+8437       ods path work.templat(update) sashelp.tmplmst(read);
+8438       
+8439       data Wheaton(TYPE=COV);
+8440       length _name_ $32 _type_ $8;
+8441       infile datalines truncover;
+8442       
+8443       _type_ = 'cov';
+8444       input _name_ :$32. Anomie67 Powerless67 Anomie71 Powerless71
+8445       Education SEI;
+8446       label Anomie67='Anomie (1967)' Powerless67='Powerlessness (1967)'
+8447       Anomie71='Anomie (1971)' Powerless71='Powerlessness (1971)'
+8448       Education='Education' SEI='Occupational Status Index';
+8449       datalines;
+
+NOTE: The data set WORK.WHEATON has 6 observations and 8 variables.
+
+8456       ;
+8457       run;
+8458       proc calis nobs=932 data=Wheaton primat nose;
+8459       ram
+8460       var = Anomie67 /* 1 */
+8461       Powerless67 /* 2 */
+8462       Anomie71 /* 3 */
+8463       Powerless71 /* 4 */
+8464       Education /* 5 */
+8465       SEI /* 6 */
+8466       Alien67 /* 7 */
+8467       Alien71 /* 8 */
+8468       SES, /* 9 */
+8469       _A_ 1 7 1.0,
+8470       _A_ 2 7 0.833,
+8471       _A_ 3 8 1.0,
+8472       _A_ 4 8 0.833,
+8473       _A_ 5 9 1.0,
+8474       _A_ 6 9 lambda,
+8475       _A_ 7 9 gamma1,
+8476       _A_ 8 9 gamma2,
+8477       _A_ 8 7 beta,
+8478       _P_ 1 1 theta1,
+8479       _P_ 2 2 theta2,
+8480       _P_ 3 3 theta1,
+8481       _P_ 4 4 theta2,
+8482       _P_ 5 5 theta3,
+8483       _P_ 6 6 theta4,
+8484       _P_ 7 7 psi1,
+8485       _P_ 8 8 psi2,
+8486       _P_ 9 9 phi,
+8487       _P_ 1 3 theta5,
+8488       _P_ 2 4 theta5;
+8489       run;
+
+NOTE: The means of one or more variables in the input data set WORK.WHEATON are missing and are assumed to be 0.
+NOTE: Convergence criterion (ABSGCONV=0.00001) satisfied.
+NOTE: The PROCEDURE CALIS printed pages 795-801.
+
+8490       proc calis data=Wheaton nobs=932 nose;
+8491       cosan
+8492       var= Anomie67 Powerless67 Anomie71 Powerless71 Education SEI,
+8493       J(9, IDE) * A(9, GEN, IMI) * P(9, SYM);
+8494       matrix A
+8495       [1 2 8 , 7] = 1.0 0.833 beta,
+8496       [3 4 , 8] = 1.0 0.833 ,
+8497       [5 6 7 8 , 9] = 1. lambda gamma1 gamma2;
+8498       matrix P
+8499       [1,1] = theta1-theta2 theta1-theta4 ,
+8500       [7,7] = psi1 psi2 phi,
+8501       [3,1] = theta5 ,
+8502       [4,2] = theta5 ;
+8503       vnames
+8504       J = [Anomie67 Powerless67 Anomie71 Powerless71
+8505       Education SEI Alien67 Alien71 SES],
+8506       A = J,
+8507       P = A;
+8508       run;
+
+NOTE: The means of one or more variables in the input data set WORK.WHEATON are missing and are assumed to be 0.
+NOTE: Convergence criterion (ABSGCONV=0.00001) satisfied.
+NOTE: The PROCEDURE CALIS printed pages 802-812.
+
+8509       proc calis nobs=932 data=Wheaton primat nose;
+8510       lineqs
+8511       Anomie67 = 1.0 * f_Alien67 + e1,
+8512       Powerless67 = 0.833 * f_Alien67 + e2,
+8513       Anomie71 = 1.0 * f_Alien71 + e3,
+8514       Powerless71 = 0.833 * f_Alien71 + e4,
+8515       Education = 1.0 * f_SES + e5,
+8516       SEI = lambda * f_SES + e6,
+8517       f_Alien67 = gamma1 * f_SES + d1,
+8518       f_Alien71 = gamma2 * f_SES + beta * f_Alien67 + d2;
+8519       variance
+8520       E1 = theta1,
+8521       E2 = theta2,
+8522       E3 = theta1,
+8523       E4 = theta2,
+8524       E5 = theta3,
+8525       E6 = theta4,
+8526       D1 = psi1,
+8527       D2 = psi2,
+8528       f_SES = phi;
+8529       cov
+8530       E1 E3 = theta5,
+8531       E2 E4 = theta5;
+8532       run;
+
+NOTE: The means of one or more variables in the input data set WORK.WHEATON are missing and are assumed to be 0.
+NOTE: Convergence criterion (ABSGCONV=0.00001) satisfied.
+NOTE: The PROCEDURE CALIS printed pages 813-819.
+
+8533       proc calis cov data=Wheaton nobs=932 nose;
+8534       cosan
+8535       var = Anomie67 Anomie71 Education Powerless67 Powerless71 SEI,
+8536       J(8, IDE) * Beta(8, GEN, IMI) * Gamma(9, GEN) * Phi(9, SYM);
+8537       matrix Beta
+8538       [1 4 8 , 7] = 1.0 0.833 beta,
+8539       [2 5 , 8] = 1.0 0.833 ;
+8540       matrix Gamma
+8541       [3 6 7 8 , 1] = 1.0 lambda gamma1 gamma2,
+8542       [1,2] = 8 * 1.0;
+8543       matrix Phi
+8544       [1,1] = phi 2*theta1 theta3 2*theta2 theta4 psi1 psi2,
+8545       [3,2] = theta5 ,
+8546       [6,5] = theta5 ;
+8547       vnames J = [Anomie67 Anomie71 Education Powerless67 Powerless71 SEI
+8548       f_Alien67 f_Alien71],
+8549       Beta = J,
+8550       Gamma = [f_SES e1 e3 e5 e2 e4 e6 d1 d2],
+8551       Phi = Gamma;
+8552       run;
+
+NOTE: The means of one or more variables in the input data set WORK.WHEATON are missing and are assumed to be 0.
+NOTE: Convergence criterion (ABSGCONV=0.00001) satisfied.
+NOTE: The PROCEDURE CALIS printed pages 820-832.
+
+8553       run;
+8554       quit;
+8555       
+8556       
+8557       
+8558       
+The SAS System
+
+8559       

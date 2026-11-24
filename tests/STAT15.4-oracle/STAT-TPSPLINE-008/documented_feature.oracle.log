@@ -1,0 +1,391 @@
+The SAS System
+
+5042       
+5043       /* STAT-TPSPLINE-008: TPSPLINE — ODS Graphics
+5044        * Source: S154 / Chapter 125 / `ODS Graphics` (PDF pp. 10312–10313).
+5045        * Discriminates: Getting Started: TPSPLINE Procedure
+5046        */
+5047       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+5047     ! validmemname=compatible locale=en_US;
+5048       %let syscc=0;
+5049       title; footnote;
+5050       ods _all_ close;
+5051       ods listing gpath="%sysfunc(pathname(work))";
+5052       ods graphics off;
+5053       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.ESTIMATE (memtype=DATA).
+NOTE: Deleting WORK.GSEG (memtype=CATALOG).
+NOTE: Deleting WORK.MEASURE (memtype=DATA).
+NOTE: Deleting WORK.MEASURE1 (memtype=DATA).
+NOTE: Deleting WORK.PRED (memtype=DATA).
+NOTE: Deleting WORK.PREDY (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK._DOCTMP000000000000000000034 (memtype=DATA).
+NOTE: Deleting WORK._DOCTMP000000000000000000035 (memtype=DATA).
+NOTE: Deleting WORK._DOCTMP000000000000000000036 (memtype=DATA).
+NOTE: Deleting WORK._DOCTMP000000000000000000037 (memtype=DATA).
+NOTE: Deleting WORK._DOCTMP000000000000000000038 (memtype=DATA).
+NOTE: Deleting WORK._DOCTMP000000000000000000039 (memtype=DATA).
+NOTE: Deleting WORK._DOCTMP000000000000000000040 (memtype=DATA).
+NOTE: Deleting WORK._DOCTMP000000000000000000041 (memtype=DATA).
+5053     !                                         quit;
+
+
+5054       ods path work.templat(update) sashelp.tmplmst(read);
+5055       
+5056       ods graphics on;
+5057       ods trace on;
+5058       ods trace on;
+5059       data Measure;
+5060       input x1 x2 y @@;
+5061       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.MEASURE has 50 observations and 3 variables.
+
+5087       ;
+5088       data Measure1;
+5089       set Measure;
+5090       run;
+
+NOTE: There were 50 observations read from the data set WORK.MEASURE.
+NOTE: The data set WORK.MEASURE1 has 50 observations and 3 variables.
+
+5091       proc sort data=Measure1;
+5092       by x2 x1;
+5093       run;
+
+NOTE: There were 50 observations read from the data set WORK.MEASURE1.
+NOTE: The data set WORK.MEASURE1 has 50 observations and 3 variables.
+
+5094       data Measure1;
+5095       set Measure1;
+5096       if mod(_N_, 2) = 0 then x1=x1+0.001;
+5097       run;
+
+NOTE: There were 50 observations read from the data set WORK.MEASURE1.
+NOTE: The data set WORK.MEASURE1 has 50 observations and 3 variables.
+
+5098       filename _grfile temp; goptions device=svg gsfname=_grfile;
+5099       proc g3d data=Measure1;
+5100       scatter x2*x1=y /size=.5
+5101       zmin=9 zmax=21
+5102       zticknum=4;
+5103       title "Raw Data";
+5104       run;
+
+
+Output Added:
+-------------
+Name:       G3D
+Label:      3-D scatter plot of y by x2 and x1
+Data Name:  GRSEG
+Path:       G3d.G3D
+-------------
+NOTE: 31260 bytes written to /saswork/SAS_workFCBA00018F54_odaws02-euw1.oda.sas.com/#LN01898.
+
+5105       ods graphics on;
+5106       proc tpspline data=Measure;
+5107       model y=(x1 x2) /lognlambda=(-4 to -2.5 by 0.1);
+5108       output out=estimate pred uclm lclm;
+5109       run;
+
+
+Output Added:
+-------------
+Name:       DataSummary
+Label:      Data
+Template:   Stat.Tpspline.DataSummary
+Path:       TPSpline.y.DataSummary
+-------------
+
+Output Added:
+-------------
+Name:       FitSummary
+Label:      Fit
+Template:   Stat.Tpspline.FitSummary
+Path:       TPSpline.y.FitSummary
+-------------
+
+Output Added:
+-------------
+Name:       GCVFunction
+Label:      GCV Function
+Template:   Stat.Tpspline.GCVFunction
+Path:       TPSpline.y.GCVFunction
+-------------
+
+Output Added:
+-------------
+Name:       FitStatistics
+Label:      Fit Statistics
+Template:   Stat.Tpspline.FitStatistics
+Path:       TPSpline.y.FitStatistics
+-------------
+
+Output Added:
+-------------
+Name:       CriterionPlot
+Label:      Criterion Plot
+Template:   Stat.Tpspline.Graphics.CriterionPlot
+Path:       TPSpline.y.CriterionPlot
+-------------
+
+Output Added:
+-------------
+Name:       Contour
+Label:      Contour Fit Plot
+Template:   Stat.Tpspline.Graphics.Contour
+Path:       TPSpline.y.Contour
+-------------
+NOTE: The graph in the LISTING destination will be rendered as an image due to the use of a gradient contour.
+
+Output Added:
+-------------
+Name:       ContourByLambdaPanel
+Label:      Panel 1
+Template:   Stat.Tpspline.Graphics.ContourByLambdaPanel
+Path:       TPSpline.y.ContourPanel.ContourByLambdaPanel
+-------------
+NOTE: The graph in the LISTING destination will be rendered as an image due to the use of a gradient contour.
+
+Output Added:
+-------------
+Name:       ContourByLambdaPanel
+Label:      Panel 2
+Template:   Stat.Tpspline.Graphics.ContourByLambdaPanel
+Path:       TPSpline.y.ContourPanel.ContourByLambdaPanel
+-------------
+NOTE: The graph in the LISTING destination will be rendered as an image due to the use of a gradient contour.
+
+Output Added:
+-------------
+Name:       ContourByLambdaPanel
+Label:      Panel 3
+Template:   Stat.Tpspline.Graphics.ContourByLambdaPanel
+Path:       TPSpline.y.ContourPanel.ContourByLambdaPanel
+-------------
+NOTE: The graph in the LISTING destination will be rendered as an image due to the use of a gradient contour.
+
+Output Added:
+-------------
+Name:       ContourByLambdaPanel
+Label:      Panel 4
+Template:   Stat.Tpspline.Graphics.ContourByLambdaPanel
+Path:       TPSpline.y.ContourPanel.ContourByLambdaPanel
+-------------
+NOTE: The graph in the LISTING destination will be rendered as an image due to the use of a gradient contour.
+
+Output Added:
+-------------
+Name:       ResidByLambdaPanel
+Label:      Panel 1
+Template:   Stat.Tpspline.Graphics.ResidByLambdaPanel
+Path:       TPSpline.y.ResidSmtPanel.ResidSmtPanelVar.ResidByLambdaPanel
+-------------
+
+Output Added:
+-------------
+Name:       ResidByLambdaPanel
+Label:      Panel 2
+Template:   Stat.Tpspline.Graphics.ResidByLambdaPanel
+Path:       TPSpline.y.ResidSmtPanel.ResidSmtPanelVar.ResidByLambdaPanel
+-------------
+
+Output Added:
+-------------
+Name:       ResidByLambdaPanel
+Label:      Panel 3
+Template:   Stat.Tpspline.Graphics.ResidByLambdaPanel
+Path:       TPSpline.y.ResidSmtPanel.ResidSmtPanelVar.ResidByLambdaPanel
+-------------
+
+Output Added:
+-------------
+Name:       ResidByLambdaPanel
+Label:      Panel 4
+Template:   Stat.Tpspline.Graphics.ResidByLambdaPanel
+Path:       TPSpline.y.ResidSmtPanel.ResidSmtPanelVar.ResidByLambdaPanel
+-------------
+
+Output Added:
+-------------
+Name:       ResidByLambdaPanel
+Label:      Panel 1
+Template:   Stat.Tpspline.Graphics.ResidByLambdaPanel
+Path:       TPSpline.y.ResidSmtPanel.ResidSmtPanelVar.ResidByLambdaPanel
+-------------
+
+Output Added:
+-------------
+Name:       ResidByLambdaPanel
+Label:      Panel 2
+Template:   Stat.Tpspline.Graphics.ResidByLambdaPanel
+Path:       TPSpline.y.ResidSmtPanel.ResidSmtPanelVar.ResidByLambdaPanel
+-------------
+
+Output Added:
+-------------
+Name:       ResidByLambdaPanel
+Label:      Panel 3
+Template:   Stat.Tpspline.Graphics.ResidByLambdaPanel
+Path:       TPSpline.y.ResidSmtPanel.ResidSmtPanelVar.ResidByLambdaPanel
+-------------
+
+Output Added:
+-------------
+Name:       ResidByLambdaPanel
+Label:      Panel 4
+Template:   Stat.Tpspline.Graphics.ResidByLambdaPanel
+Path:       TPSpline.y.ResidSmtPanel.ResidSmtPanelVar.ResidByLambdaPanel
+-------------
+
+Output Added:
+-------------
+Name:       ResidPanel
+Label:      Panel 1
+Template:   Stat.Tpspline.Graphics.ResidPanel
+Path:       TPSpline.y.ResidPanel.ResidPanel
+-------------
+
+Output Added:
+-------------
+Name:       DiagnosticsPanel
+Label:      Fit Diagnostics
+Template:   Stat.Tpspline.Graphics.DiagnosticsPanel
+Path:       TPSpline.y.DiagnosticPlots.DiagnosticsPanel
+-------------
+NOTE: The data set WORK.ESTIMATE has 50 observations and 6 variables.
+NOTE: The PROCEDURE TPSPLINE printed page 270.
+
+5110       proc print data=estimate;
+5111       run;
+
+
+Output Added:
+-------------
+Name:       Print
+Label:      Data Set WORK.ESTIMATE
+Data Name:  ProcPrintTable
+Path:       Print.Print
+-------------
+NOTE: There were 50 observations read from the data set WORK.ESTIMATE.
+NOTE: The PROCEDURE PRINT printed page 271.
+
+5112       data pred;
+5113       do x1=-1 to 1 by 0.1;
+5114       do x2=-1 to 1 by 0.1;
+5115       output;
+5116       end;
+5117       end;
+5118       run;
+
+NOTE: The data set WORK.PRED has 441 observations and 2 variables.
+
+5119       proc tpspline data=measure;
+5120       model y=(x1 x2)/lognlambda0=-3.4762;
+5121       score data=pred out=predy;
+5122       run;
+
+
+Output Added:
+-------------
+Name:       DataSummary
+Label:      Data
+Template:   Stat.Tpspline.DataSummary
+Path:       TPSpline.y.DataSummary
+-------------
+
+Output Added:
+-------------
+Name:       FitSummary
+Label:      Fit
+Template:   Stat.Tpspline.FitSummary
+Path:       TPSpline.y.FitSummary
+-------------
+
+Output Added:
+-------------
+Name:       FitStatistics
+Label:      Fit Statistics
+Template:   Stat.Tpspline.FitStatistics
+Path:       TPSpline.y.FitStatistics
+-------------
+
+Output Added:
+-------------
+Name:       Contour
+Label:      Contour Fit Plot
+Template:   Stat.Tpspline.Graphics.Contour
+Path:       TPSpline.y.Contour
+-------------
+NOTE: The graph in the LISTING destination will be rendered as an image due to the use of a gradient contour.
+
+Output Added:
+-------------
+Name:       ResidPanel
+Label:      Panel 1
+Template:   Stat.Tpspline.Graphics.ResidPanel
+Path:       TPSpline.y.ResidPanel.ResidPanel
+-------------
+
+Output Added:
+-------------
+Name:       DiagnosticsPanel
+Label:      Fit Diagnostics
+Template:   Stat.Tpspline.Graphics.DiagnosticsPanel
+Path:       TPSpline.y.DiagnosticPlots.DiagnosticsPanel
+-------------
+NOTE: The data set WORK.PREDY has 441 observations and 3 variables.
+NOTE: The PROCEDURE TPSPLINE printed page 272.
+
+5123       proc template;
+5124       define statgraph surface;
+5125       dynamic _X _Y _Z _T;
+5126       begingraph /designheight=360;
+5127       entrytitle _T;
+5128       layout overlay3d/rotate=120 cube=false xaxisopts=(label="x1")
+5129       yaxisopts=(label="x2") zaxisopts=(label="P_y");
+5130       surfaceplotparm x=_X y=_Y z=_Z;
+5131       endlayout;
+5132       endgraph;
+5133       end;
+NOTE: Overwriting existing template/link: Surface
+NOTE: STATGRAPH 'Surface' has been saved to: WORK.TEMPLAT
+5134       run;
+
+5135       proc sgrender data=predy template=surface;
+5136       dynamic _X='x1' _Y='x2' _Z='P_y'
+5137       _T='Plot of Fitted Surface on a Fine Grid';
+5138       run;
+
+
+Output Added:
+-------------
+Name:       SGRender
+Label:      The SGRender Procedure
+Template:   surface
+Path:       SGRender.SGRender
+-------------
+NOTE: The graph in the LISTING destination will be rendered as an image due to the use of a surface plot.
+NOTE: Listing image output written to /saswork/SAS_workFCBA00018F54_odaws02-euw1.oda.sas.com/SAS_workA81400018F54_odaws02-euw1.oda.sas.com/SGRender5.png.
+NOTE: There were 441 observations read from the data set WORK.PREDY.
+
+5139       ods trace off;
+5140       ods trace off;
+5141       ods graphics off;
+5142       
+5143       
+5144       
+5145       
+The SAS System
+
+5146       

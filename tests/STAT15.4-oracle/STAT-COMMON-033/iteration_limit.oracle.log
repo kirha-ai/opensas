@@ -1,0 +1,53 @@
+The SAS System
+
+1285       
+1286       /* STAT-COMMON-033: Convergence Status
+1287        * Source: S154 / Chapter 20 / `Convergence Status` (PDF pp. 549–551).
+1288        * Discriminates: Iteration-limit diagnostic and convergence status rather than false success
+1289        */
+1290       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+1290     ! validmemname=compatible locale=en_US;
+1291       %let syscc=0;
+1292       title; footnote;
+1293       ods _all_ close;
+1294       ods listing gpath="%sysfunc(pathname(work))";
+1295       ods graphics off;
+1296       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SAMPLE (memtype=DATA).
+1296     !                                         quit;
+
+
+1297       ods path work.templat(update) sashelp.tmplmst(read);
+1298       
+1299       data sample;
+1300        input x z y group $ weight freq;
+1301        datalines;
+
+NOTE: The data set WORK.SAMPLE has 12 observations and 6 variables.
+
+1314       ;
+1315       run;
+1316       data binary; set sample; event=(mod(_n_,3)=0); run;
+
+NOTE: There were 12 observations read from the data set WORK.SAMPLE.
+NOTE: The data set WORK.BINARY has 12 observations and 7 variables.
+
+1317       proc logistic data=binary; model event(event='1')=x z / maxiter=1; run;
+
+NOTE: PROC LOGISTIC is modeling the probability that event=1.
+WARNING: Convergence was not attained in 1 iterations. You may want to increase the maximum number of iterations (MAXITER= option) or change the convergence 
+         criteria (ABSFCONV=, FCONV=, GCONV=, XCONV= options) in the MODEL statement.
+WARNING: The LOGISTIC procedure continues in spite of the above warning. Results shown are based on the last maximum likelihood iteration. Validity of the 
+         model fit is questionable.
+NOTE: There were 12 observations read from the data set WORK.BINARY.
+NOTE: The PROCEDURE LOGISTIC printed page 69.
+
+1318       
+1319       
+1320       
+1321       
+The SAS System
+
+1322       

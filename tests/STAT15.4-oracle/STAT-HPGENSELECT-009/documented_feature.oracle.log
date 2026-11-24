@@ -1,0 +1,47 @@
+The SAS System
+
+165        
+166        /* STAT-HPGENSELECT-009: HPGENSELECT — CODE
+167         * Source: S154 / Chapter 59 / `CODE Statement` (PDF p. 4637).
+168         * Discriminates: Getting Started: HPGENSELECT Procedure
+169         */
+170        options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+170      ! validmemname=compatible locale=en_US;
+171        %let syscc=0;
+172        title; footnote;
+173        ods _all_ close;
+174        ods listing gpath="%sysfunc(pathname(work))";
+175        ods graphics off;
+176        proc datasets library=work kill nolist;
+NOTE: Deleting WORK.GETSTARTED (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+176      !                                         quit;
+
+
+177        ods path work.templat(update) sashelp.tmplmst(read);
+178        
+179        data getStarted;
+180        input C1-C5 Y Total;
+181        datalines;
+
+NOTE: The data set WORK.GETSTARTED has 100 observations and 7 variables.
+
+282        ;
+283        proc hpgenselect data=getStarted;
+284        class C1-C5;
+285        model Y = C1-C5 / Distribution=Poisson Link=Log;
+286        run;
+
+NOTE: The HPGENSELECT procedure is executing in single-machine mode.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: There were 100 observations read from the data set WORK.GETSTARTED.
+NOTE: The PROCEDURE HPGENSELECT printed page 2.
+
+287        
+288        
+289        
+290        
+The SAS System
+
+291        

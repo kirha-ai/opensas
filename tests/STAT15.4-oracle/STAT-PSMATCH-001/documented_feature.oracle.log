@@ -1,0 +1,70 @@
+The SAS System
+
+9604       
+9605       /* STAT-PSMATCH-001: PSMATCH — Data input, variable roles, and basic options
+9606        * Source: S154 / Chapter 101 / `PROC PSMATCH Statement` (PDF pp. 8214–8217); S154 / Chapter 101 / `BY Statement` (PDF pp. 8222–8223); S154 /
+9606     ! Chapter 101 / `CLASS Statement` (PDF p. 8223); S154 / Chapter 101 / `FREQ Statement` (PDF p. 8223); S154 / Chapter 101 / `ID Statement` (PDF p. 8223)
+9606     ! ; S154 / Chapter 101 / `STRATA Statement` (PDF pp. 8234–8235); S154 / Chapter 101 / `Weighting after Stratification` (PDF pp. 8243–8244); S154 /
+9606     ! Chapter 101 / `Weighting after Matching` (PDF pp. 8248–8250).
+9607        * Discriminates: Verified default procedure context; explicit statements: CLASS
+9608        */
+9609       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+9609     ! validmemname=compatible locale=en_US;
+9610       %let syscc=0;
+9611       title; footnote;
+9612       ods _all_ close;
+9613       ods listing gpath="%sysfunc(pathname(work))";
+9614       ods graphics off;
+9615       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.FORMATS (memtype=CATALOG).
+NOTE: Deleting WORK.LOGITMODEL (memtype=ITEMSTOR).
+NOTE: Deleting WORK.NEWS (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+9615     !                                         quit;
+
+
+9616       ods path work.templat(update) sashelp.tmplmst(read);
+9617       
+9618       data patients;
+9619       call streaminit(419);
+9620       do patientid=1 to 100;
+9621       gender=mod(patientid,2);
+9622       age=30+mod(patientid*7,45);
+9623       bmi=20+mod(patientid,12);
+9624       drug=rand('bernoulli',0.5);
+9625       output;
+9626       end;
+9627       run;
+
+NOTE: The data set WORK.PATIENTS has 100 observations and 5 variables.
+
+9628       proc psmatch data=patients region=cs;
+9629       class drug gender;
+9630       psmodel drug(treated='1')=gender age bmi;
+9631       match method=greedy(k=1) distance=lps caliper=0.5;
+9632       assess lps var=(age bmi);
+9633       output out(obs=match)=matched matchid=matchid;
+9634       run;
+
+WARNING: Some treated units do not have matched controls because there are not enough available controls for these treated units.
+NOTE: The data set WORK.MATCHED has 94 observations and 8 variables.
+NOTE: The PROCEDURE PSMATCH printed pages 626-627.
+
+9635       proc print data=matched(obs=10) noobs;
+9636       run;
+
+NOTE: There were 10 observations read from the data set WORK.MATCHED.
+NOTE: The PROCEDURE PRINT printed page 628.
+
+9637       
+9638       
+9639       
+9640       
+The SAS System
+
+9641       

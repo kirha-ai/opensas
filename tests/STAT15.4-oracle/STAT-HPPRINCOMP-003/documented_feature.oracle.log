@@ -1,0 +1,50 @@
+The SAS System
+
+3362       
+3363       /* STAT-HPPRINCOMP-003: HPPRINCOMP — PARTIAL / Eigenvalue Decomposition / NIPALS
+3364        * Source: S154 / Chapter 65 / `PARTIAL Statement` (PDF pp. 4957–4958); S154 / Chapter 65 / `Eigenvalue Decomposition` (PDF p. 4959); S154 /
+3364     ! Chapter 65 / `NIPALS` (PDF p. 4959).
+3365        * Discriminates: Getting Started: HPPRINCOMP Procedure
+3366        */
+3367       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+3367     ! validmemname=compatible locale=en_US;
+3368       %let syscc=0;
+3369       title; footnote;
+3370       ods _all_ close;
+3371       ods listing gpath="%sysfunc(pathname(work))";
+3372       ods graphics off;
+3373       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.CRIME (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+3373     !                                         quit;
+
+
+3374       ods path work.templat(update) sashelp.tmplmst(read);
+3375       
+3376       title 'Crime Rates per 100,000 Population by State';
+3377       data Crime;
+3378       length State $15;
+3379       input State :$15. Murder Rape Robbery Assault
+3380       Burglary Larceny Auto_Theft;
+3381       datalines;
+
+NOTE: The data set WORK.CRIME has 50 observations and 8 variables.
+
+3432       ;
+3433       proc hpprincomp data=Crime;
+3434       run;
+
+NOTE: The HPPRINCOMP procedure is executing in single-machine mode.
+WARNING: 2 observations omitted due to missing values.
+NOTE: The PROCEDURE HPPRINCOMP printed page 161.
+
+3435       
+3436       
+3437       
+3438       
+The SAS System
+
+3439       

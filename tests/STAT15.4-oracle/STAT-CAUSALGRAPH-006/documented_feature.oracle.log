@@ -1,0 +1,79 @@
+The SAS System
+
+13074      
+13075      /* STAT-CAUSALGRAPH-006: CAUSALGRAPH — ODS Table Names
+13076       * Source: S154 / Chapter 37 / `ODS Table Names` (PDF pp. 2331–2332).
+13077       * Discriminates: Getting Started: CAUSALGRAPH Procedure
+13078       */
+13079      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+13079    ! validmemname=compatible locale=en_US;
+13080      %let syscc=0;
+13081      title; footnote;
+13082      ods _all_ close;
+13083      ods listing gpath="%sysfunc(pathname(work))";
+13084      ods graphics off;
+13085      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+13085    !                                         quit;
+
+
+13086      ods path work.templat(update) sashelp.tmplmst(read);
+13087      
+13088      ods trace on;
+13089      proc causalgraph;
+13090      model "Timm17TwoLatent"
+13091      Age ==> Parity PFAS Education,
+13092      Parity ==> PrevBF Duration PFAS,
+13093      PrevBF ==> PFAS Duration,
+13094      PFAS ==> Duration,
+13095      Education ==> Duration Employment PFAS BMI Alcohol Smoking,
+13096      Employment ==> Duration PFAS BMI Alcohol Smoking,
+13097      BMI Alcohol Smoking ==> Duration;
+13098      identify PFAS ==> Duration;
+13099      unmeasured Alcohol Smoking;
+13100      run;
+
+
+Output Added:
+-------------
+Name:       VariableInfo
+Label:      Variables in Model
+Template:   Stat.CausalGraph.VariableInfo
+Path:       Causalgraph.VariableInfo
+-------------
+
+Output Added:
+-------------
+Name:       GraphicalModelSummary
+Label:      Graphical Model Summary
+Template:   Stat.CausalGraph.GraphicalModelSummary
+Path:       Causalgraph.GraphicalModelSummary
+-------------
+
+Output Added:
+-------------
+Name:       AdjustList
+Label:      Timm17TwoLatent
+Template:   Stat.CausalGraph.AdjustList
+Path:       Causalgraph.AdjustListGroup.AdjustList
+-------------
+NOTE: The PROCEDURE CAUSALGRAPH printed pages 1792-1793.
+
+13101      
+13102      run; quit;
+13103      
+13104      ods trace off;
+13105      
+13106      
+13107      
+13108      
+The SAS System
+
+13109      

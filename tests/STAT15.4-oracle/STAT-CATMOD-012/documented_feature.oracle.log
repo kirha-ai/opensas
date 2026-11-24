@@ -1,0 +1,325 @@
+The SAS System
+
+12674      
+12675      /* STAT-CATMOD-012: CATMOD — Displayed Output / ODS Table Names
+12676       * Source: S154 / Chapter 36 / `Displayed Output` (PDF pp. 2253–2256); S154 / Chapter 36 / `ODS Table Names` (PDF pp. 2256–2257).
+12677       * Discriminates: Getting Started: CATMOD Procedure
+12678       */
+12679      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+12679    ! validmemname=compatible locale=en_US;
+12680      %let syscc=0;
+12681      title; footnote;
+12682      ods _all_ close;
+12683      ods listing gpath="%sysfunc(pathname(work))";
+12684      ods graphics off;
+
+NOTE: There were 18 observations read from the data set WORK.SCHOOL.
+NOTE: The PROCEDURE CATMOD printed pages 1762-1763.
+
+12685      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.COLDS (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SCHOOL (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+12685    !                                         quit;
+
+
+12686      ods path work.templat(update) sashelp.tmplmst(read);
+12687      
+12688      ods trace on;
+12689      data colds;
+12690      input sex $ residence $ periods count @@;
+12691      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.COLDS has 12 observations and 4 variables.
+
+12696      ;
+12697      proc catmod data=colds;
+12698      weight count;
+12699      response means;
+12700      model periods = sex residence sex*residence / design;
+12701      run;
+
+
+Output Added:
+-------------
+Name:       DataSummary
+Label:      Data Summary
+Template:   Stat.Catmod.Factoid
+Path:       Catmod.Model1.DataSummary
+-------------
+
+Output Added:
+-------------
+Name:       PopProfiles
+Label:      Population Profiles
+Template:   Stat.Catmod.PopProfiles
+Path:       Catmod.Model1.PopProfiles
+-------------
+
+Output Added:
+-------------
+Name:       ResponseProfiles
+Label:      Response Profiles
+Template:   Stat.Catmod.RespProfiles
+Path:       Catmod.Model1.ResponseProfiles
+-------------
+
+Output Added:
+-------------
+Name:       ResponseDesign
+Label:      Response Functions, Design Matrix
+Template:   Stat.Catmod.ResponseDesign
+Path:       Catmod.Model1.ResponseDesign
+-------------
+
+Output Added:
+-------------
+Name:       ANOVA
+Label:      Analysis of Variance
+Template:   Stat.Catmod.ANOVA
+Path:       Catmod.Model1.ANOVA
+-------------
+
+Output Added:
+-------------
+Name:       Estimates
+Label:      WLS Estimates
+Template:   Stat.Catmod.Estimates
+Path:       Catmod.Model1.Estimates
+-------------
+12702      model periods = sex residence / design;
+NOTE: Prior MODEL statement(s) deleted.
+12703      run;
+
+
+Output Added:
+-------------
+Name:       DataSummary
+Label:      Data Summary
+Template:   Stat.Catmod.Factoid
+Path:       Catmod.Model2.DataSummary
+-------------
+
+Output Added:
+-------------
+Name:       PopProfiles
+Label:      Population Profiles
+Template:   Stat.Catmod.PopProfiles
+Path:       Catmod.Model2.PopProfiles
+-------------
+
+Output Added:
+-------------
+Name:       ResponseProfiles
+Label:      Response Profiles
+Template:   Stat.Catmod.RespProfiles
+Path:       Catmod.Model2.ResponseProfiles
+-------------
+
+Output Added:
+-------------
+Name:       ResponseDesign
+Label:      Response Functions, Design Matrix
+Template:   Stat.Catmod.ResponseDesign
+Path:       Catmod.Model2.ResponseDesign
+-------------
+
+Output Added:
+-------------
+Name:       ANOVA
+Label:      Analysis of Variance
+Template:   Stat.Catmod.ANOVA
+Path:       Catmod.Model2.ANOVA
+-------------
+
+Output Added:
+-------------
+Name:       Estimates
+Label:      WLS Estimates
+Template:   Stat.Catmod.Estimates
+Path:       Catmod.Model2.Estimates
+-------------
+12704      population sex residence;
+12705      model periods = sex;
+NOTE: Prior MODEL statement(s) deleted.
+12706      run;
+
+
+Output Added:
+-------------
+Name:       DataSummary
+Label:      Data Summary
+Template:   Stat.Catmod.Factoid
+Path:       Catmod.Model3.DataSummary
+-------------
+
+Output Added:
+-------------
+Name:       PopProfiles
+Label:      Population Profiles
+Template:   Stat.Catmod.PopProfiles
+Path:       Catmod.Model3.PopProfiles
+-------------
+
+Output Added:
+-------------
+Name:       ResponseProfiles
+Label:      Response Profiles
+Template:   Stat.Catmod.RespProfiles
+Path:       Catmod.Model3.ResponseProfiles
+-------------
+
+Output Added:
+-------------
+Name:       ANOVA
+Label:      Analysis of Variance
+Template:   Stat.Catmod.ANOVA
+Path:       Catmod.Model3.ANOVA
+-------------
+
+Output Added:
+-------------
+Name:       Estimates
+Label:      WLS Estimates
+Template:   Stat.Catmod.Estimates
+Path:       Catmod.Model3.Estimates
+-------------
+
+NOTE: There were 12 observations read from the data set WORK.COLDS.
+NOTE: The PROCEDURE CATMOD printed pages 1764-1766.
+
+12707      data school;
+12708      length Program $ 9;
+12709      input School Program $ Style $ Count @@;
+12710      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.SCHOOL has 18 observations and 4 variables.
+
+12717      ;
+12718      proc catmod order=data;
+12719      weight Count;
+12720      model Style=School Program School*Program;
+12721      run;
+
+
+Output Added:
+-------------
+Name:       DataSummary
+Label:      Data Summary
+Template:   Stat.Catmod.Factoid
+Path:       Catmod.Model1.DataSummary
+-------------
+
+Output Added:
+-------------
+Name:       PopProfiles
+Label:      Population Profiles
+Template:   Stat.Catmod.PopProfiles
+Path:       Catmod.Model1.PopProfiles
+-------------
+
+Output Added:
+-------------
+Name:       ResponseProfiles
+Label:      Response Profiles
+Template:   Stat.Catmod.RespProfiles
+Path:       Catmod.Model1.ResponseProfiles
+-------------
+NOTE: The default estimation method for this model is maximum-likelihood.
+
+Output Added:
+-------------
+Name:       ConvergenceStatus
+Label:      Convergence Status
+Template:   Stat.Catmod.ConvergenceStatus
+Path:       Catmod.Model1.ConvergenceStatus
+-------------
+NOTE: Maximum likelihood computations converged.
+
+Output Added:
+-------------
+Name:       ANOVA
+Label:      Analysis of Variance
+Template:   Stat.Catmod.ANOVA
+Path:       Catmod.Model1.ANOVA
+-------------
+
+Output Added:
+-------------
+Name:       Estimates
+Label:      ML Estimates
+Template:   Stat.Catmod.Estimates
+Path:       Catmod.Model1.Estimates
+-------------
+12722      model Style=School Program;
+NOTE: Prior MODEL statement(s) deleted.
+12723      run;
+
+
+Output Added:
+-------------
+Name:       DataSummary
+Label:      Data Summary
+Template:   Stat.Catmod.Factoid
+Path:       Catmod.Model2.DataSummary
+-------------
+
+Output Added:
+-------------
+Name:       PopProfiles
+Label:      Population Profiles
+Template:   Stat.Catmod.PopProfiles
+Path:       Catmod.Model2.PopProfiles
+-------------
+
+Output Added:
+-------------
+Name:       ResponseProfiles
+Label:      Response Profiles
+Template:   Stat.Catmod.RespProfiles
+Path:       Catmod.Model2.ResponseProfiles
+-------------
+NOTE: The default estimation method for this model is maximum-likelihood.
+
+Output Added:
+-------------
+Name:       ConvergenceStatus
+Label:      Convergence Status
+Template:   Stat.Catmod.ConvergenceStatus
+Path:       Catmod.Model2.ConvergenceStatus
+-------------
+NOTE: Maximum likelihood computations converged.
+
+Output Added:
+-------------
+Name:       ANOVA
+Label:      Analysis of Variance
+Template:   Stat.Catmod.ANOVA
+Path:       Catmod.Model2.ANOVA
+-------------
+
+Output Added:
+-------------
+Name:       Estimates
+Label:      ML Estimates
+Template:   Stat.Catmod.Estimates
+Path:       Catmod.Model2.Estimates
+-------------
+12724      
+12725      ods trace off;
+12726      
+12727      
+12728      
+12729      
+The SAS System
+
+12730      

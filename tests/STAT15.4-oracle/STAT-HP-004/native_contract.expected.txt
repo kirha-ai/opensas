@@ -1,0 +1,113 @@
+
+The HPREG Procedure
+
+      Performance Information
+
+Execution Mode       Single-Machine
+Number of Threads    1             
+
+
+          Data Access Information
+ 
+Data           Engine    Role     Path
+
+WORK.SAMPLE    V9        Input    On Client
+
+
+          Model Information
+
+Data Source               WORK.SAMPLE
+Dependent Variable        y          
+Class Parameterization    GLM        
+
+
+        Selection Information
+
+Selection Method             Stepwise
+Select Criterion             SBC     
+Stop Criterion               SBC     
+Effect Hierarchy Enforced    None    
+Stop Horizon                 3       
+
+
+Number of Observations Read              12
+Number of Observations Used              12
+
+
+ Class Level Information
+ 
+Class    Levels    Values
+
+group         2    A B   
+
+
+           Dimensions
+
+Number of Effects              4
+Number of Parameters           5
+
+The HPREG Procedure
+
+                 Selection Summary
+ 
+              Effect         Number
+      Step    Entered    Effects In           SBC 
+
+         0    Intercept           1       49.5271 
+--------------------------------------------------
+         1    x                   2        7.4662 
+         2    group               3        4.8807*
+
+* Optimal Value of Criterion
+
+
+Stepwise selection stopped because adding or removing an effect does not improve the SBC criterion.
+
+
+The model at step 2 is selected.
+
+The HPREG Procedure
+Selected Model
+
+Selected Effects: Intercept x group
+
+
+                            Analysis of Variance
+ 
+                                  Sum of           Mean
+Source                 DF        Squares         Square    F Value    Pr > F
+
+Model                   2      595.23333      297.61667     276.61    <.0001
+Error                   9        9.68333        1.07593                     
+Corrected Total        11      604.91667                                    
+
+
+Root MSE        1.03727
+R-Square        0.98399
+Adj R-Sq        0.98044
+AIC            17.42599
+AICC           23.14028
+SBC             4.88071
+ASE             0.80694
+
+
+                         Parameter Estimates
+ 
+                                       Standard
+Parameter    DF        Estimate           Error    t Value    Pr > |t|
+
+Intercept     1        5.183333        1.718625       3.02      0.0146
+x             1        1.700000        0.175330       9.70      <.0001
+group A       1       -2.633333        1.210499      -2.18      0.0576
+group B       0               0               .        .         .    
+
+
+                  Procedure Task Timing
+ 
+Task                                 Seconds      Percent
+
+Reading and Levelizing Data             0.00      19.63% 
+Loading Design Matrix                   0.00       1.16% 
+Computing Moments                       0.00       0.89% 
+Computing Cross Products Matrix         0.00       0.48% 
+Performing Model Selection              0.00      77.84% 

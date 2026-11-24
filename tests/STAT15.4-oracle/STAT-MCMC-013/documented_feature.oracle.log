@@ -1,0 +1,65 @@
+The SAS System
+
+16476      
+16477      /* STAT-MCMC-013: MCMC — RANDOM
+16478       * Source: S154 / Chapter 80 / `RANDOM Statement` (PDF pp. 6137–6145).
+16479       * Discriminates: Example 80.7: Logistic Regression Random-Effects Model; explicit statements: RANDOM
+16480       */
+16481      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+16481    ! validmemname=compatible locale=en_US;
+16482      %let syscc=0;
+16483      title; footnote;
+16484      ods _all_ close;
+16485      ods listing gpath="%sysfunc(pathname(work))";
+16486      ods graphics off;
+16487      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.BEHRENS (memtype=DATA).
+NOTE: Deleting WORK.CLASSOUT (memtype=DATA).
+NOTE: Deleting WORK.FORMATS (memtype=CATALOG).
+NOTE: Deleting WORK.HEIGHTS (memtype=DATA).
+NOTE: Deleting WORK.INPUT (memtype=DATA).
+NOTE: Deleting WORK.POSTOUT (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+16487    !                                         quit;
+
+
+16488      ods path work.templat(update) sashelp.tmplmst(read);
+16489      
+16490      title 'Logistic Regression Random-Effects Model';
+16491      data seeds;
+16492      input r n seed extract @@;
+16493      ind = _N_;
+16494      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.SEEDS has 21 observations and 5 variables.
+
+16501      ;
+16502      proc mcmc data=seeds outpost=postout seed=332786 nmc=1000 nbi=200;
+16503      ods select PostSumInt;
+16504      parms beta0 0 beta1 0 beta2 0 beta3 0 s2 1;
+16505      prior s2 ~ igamma(0.01, s=0.01);
+16506      prior beta: ~ general(0);
+16507      w = beta0 + beta1*seed + beta2*extract + beta3*seed*extract;
+16508      random delta ~ normal(w, var=s2) subject=ind;
+16509      pi = logistic(delta);
+16510      model r ~ binomial(n = n, p = pi);
+16511      run;
+
+NOTE: Tuning the proposal distribution.
+NOTE: Generating the burn-in samples.
+NOTE: Beginning sample generation.
+NOTE: The data set WORK.POSTOUT has 1000 observations and 31 variables.
+NOTE: The PROCEDURE MCMC printed page 1309.
+
+16512      
+16513      
+16514      
+16515      
+The SAS System
+
+16516      

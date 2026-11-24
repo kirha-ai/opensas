@@ -1,0 +1,65 @@
+The SAS System
+
+22829      
+22830      /* STAT-SURVEYPHREG-001: SURVEYPHREG — Data input, variable roles, and basic options
+22831       * Source: S154 / Chapter 122 / `PROC SURVEYPHREG Statement` (PDF pp. 10010–10018); S154 / Chapter 122 / `BY Statement` (PDF pp. 10018–10019);
+22831    ! S154 / Chapter 122 / `CLUSTER Statement` (PDF pp. 10021–10022); S154 / Chapter 122 / `FREQ Statement` (PDF pp. 10024–10025); S154 / Chapter 122 /
+22831    !  `REPWEIGHTS Statement` (PDF pp. 10038–10040); S154 / Chapter 122 / `STRATA Statement` (PDF pp. 10040–10041); S154 / Chapter 122 / `WEIGHT
+22831    ! Statement` (PDF pp. 10041–10042); S154 / Chapter 122 / `Missing Values` (PDF pp. 10054–10057).
+22832       * Discriminates: Verified default procedure context; explicit statements: CLUSTER, STRATA, WEIGHT
+22833       */
+22834      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+22834    ! validmemname=compatible locale=en_US;
+22835      %let syscc=0;
+22836      title; footnote;
+22837      ods _all_ close;
+22838      ods listing gpath="%sysfunc(pathname(work))";
+22839      ods graphics off;
+22840      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.ICECREAM (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.STUDENTTOTALS (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+22840    !                                         quit;
+
+
+22841      ods path work.templat(update) sashelp.tmplmst(read);
+22842      
+22843      data survey;
+22844      call streaminit(722);
+22845      do stratum=1 to 2;
+22846      do cluster=1 to 4;
+22847      do id=1 to 12;
+22848      age=20+mod(id*7+cluster,45);
+22849      time=1+rand('exponential')*10;
+22850      status=(mod(id,4) ne 0);
+22851      weight=2+stratum+cluster/10;
+22852      output;
+22853      end;
+22854      end;
+22855      end;
+22856      run;
+
+NOTE: The data set WORK.SURVEY has 96 observations and 7 variables.
+
+22857      proc surveyphreg data=survey;
+22858      strata stratum;
+22859      cluster cluster;
+22860      weight weight;
+22861      model time*status(0)=age;
+22862      run;
+
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The PROCEDURE SURVEYPHREG printed page 1494.
+
+22863      
+22864      
+22865      
+22866      
+The SAS System
+
+22867      

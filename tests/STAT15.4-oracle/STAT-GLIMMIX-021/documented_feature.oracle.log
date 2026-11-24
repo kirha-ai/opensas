@@ -1,0 +1,134 @@
+The SAS System
+
+2246       
+2247       /* STAT-GLIMMIX-021: GLIMMIX — LSMEANS / LSMESTIMATE / SLICE
+2248        * Source: S154 / Chapter 52 / `LSMEANS Statement` (PDF pp. 3751–3764); S154 / Chapter 52 / `LSMESTIMATE Statement` (PDF pp. 3764–3772); S154 /
+2248     ! Chapter 52 / `SLICE Statement` (PDF p. 3817).
+2249        * Discriminates: Example 52.17: Linear Inference Based on Summary Data; explicit statements: LSMEANS, LSMESTIMATE
+2250        */
+2251       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+2251     ! validmemname=compatible locale=en_US;
+2252       %let syscc=0;
+2253       title; footnote;
+2254       ods _all_ close;
+2255       ods listing gpath="%sysfunc(pathname(work))";
+2256       ods graphics off;
+2257       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.CLINICAL (memtype=DATA).
+NOTE: Deleting WORK.CLINICAL_UV (memtype=DATA).
+NOTE: Deleting WORK.ESTADJUST (memtype=DATA).
+NOTE: Deleting WORK.ESTSTEPDOWN (memtype=DATA).
+NOTE: Deleting WORK.ESTSTEPDOWNMULTI (memtype=DATA).
+NOTE: Deleting WORK.ESTUNADJUST (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+2257     !                                         quit;
+
+
+2258       ods path work.templat(update) sashelp.tmplmst(read);
+2259       
+2260       data theop;
+2261       input time dose conc @@;
+2262       if (dose = 4) then group=1;
+2263       else group=2;
+2264       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.THEOP has 98 observations and 4 variables.
+
+2314       ;
+2315       proc nlin data=theop outest=cov;
+2316       parms beta1_1=-3.22 beta2_1=0.47 beta3_1=-2.45
+2317       beta1_2=-3.22 beta2_2=0.47 beta3_2=-2.45;
+2318       if (group=1) then do;
+2319       cl = exp(beta1_1);
+2320       ka = exp(beta2_1);
+2321       ke = exp(beta3_1);
+2322       end;
+2323       else do;
+2324       cl = exp(beta1_2);
+2325       ka = exp(beta2_2);
+2326       ke = exp(beta3_2);
+2327       end;
+2328       mean = dose*ke*ka*(exp(-ke*time)-exp(-ka*time))/cl/(ka-ke);
+2329       model conc = mean;
+2330       ods output ParameterEstimates=ests;
+2331       run;
+
+NOTE: DER.beta1_1 not initialized or missing. It will be computed automatically.
+NOTE: DER.beta2_1 not initialized or missing. It will be computed automatically.
+NOTE: DER.beta3_1 not initialized or missing. It will be computed automatically.
+NOTE: DER.beta1_2 not initialized or missing. It will be computed automatically.
+NOTE: DER.beta2_2 not initialized or missing. It will be computed automatically.
+NOTE: DER.beta3_2 not initialized or missing. It will be computed automatically.
+NOTE: Convergence criterion met.
+NOTE: The data set WORK.ESTS has 6 observations and 8 variables.
+NOTE: The data set WORK.COV has 12 observations and 11 variables.
+NOTE: The PROCEDURE NLIN printed page 160.
+
+2332       data covb;
+2333       set cov(where=(_type_='COVB'));
+2334       rename beta1_1=col1 beta2_1=col2 beta3_1=col3
+2335       beta1_2=col4 beta2_2=col5 beta3_2=col6;
+2336       row = _n_;
+2337       Parm = 1;
+2338       keep parm row beta:;
+2339       run;
+
+NOTE: There were 6 observations read from the data set WORK.COV.
+      WHERE _type_='COVB';
+NOTE: The data set WORK.COVB has 6 observations and 8 variables.
+
+2340       proc print data=covb;
+2341       run;
+
+NOTE: There were 6 observations read from the data set WORK.COVB.
+NOTE: The PROCEDURE PRINT printed page 161.
+
+2342       proc glimmix data=ests order=data;
+2343       class Parameter;
+2344       model Estimate = Parameter / noint df=92 s;
+2345       random _residual_ / type=lin(1) ldata=covb v;
+2346       parms (1) / noiter;
+2347       lsmeans parameter / cl;
+2348       lsmestimate Parameter
+2349       'beta1 eq. across groups' 1 0 0 -1,
+2350       'beta2 eq. across groups' 0 1 0 0 -1,
+2351       'beta3 eq. across groups' 0 0 1 0 0 -1 /
+2352       adjust=bon stepdown ftest(label='Homogeneity');
+2353       run;
+
+NOTE: Correlated R-side effects apply to all observations unless the SUBJECT= option is used.
+
+
+NOTE: The model does not contain an intercept. Columns of X are scaled only and not centered.
+NOTE: No optimization performed.
+NOTE: The covariance matrix is the zero matrix.
+NOTE: The PROCEDURE GLIMMIX printed page 162.
+
+2354       data pdata;
+2355       set covb;
+2356       array col{6};
+2357       do i=1 to _n_;
+2358       estimate=col{i}; output;
+2359       end;
+2360       keep estimate;
+2361       run;
+
+NOTE: There were 6 observations read from the data set WORK.COVB.
+NOTE: The data set WORK.PDATA has 21 observations and 1 variables.
+
+2362       quit;
+2363       
+2364       
+2365       
+2366       
+The SAS System
+
+2367       

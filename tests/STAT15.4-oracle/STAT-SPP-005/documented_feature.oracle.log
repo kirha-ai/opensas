@@ -1,0 +1,50 @@
+The SAS System
+
+17679      
+17680      /* STAT-SPP-005: SPP — Statistics Based on Second-Order Characteristics / Distance Functions for Multitype Point Patterns / Border Edge Correction
+17680    ! for Distance Functions
+17681       * Source: S154 / Chapter 114 / `Statistics Based on Second-Order Characteristics` (PDF pp. 9412–9414); S154 / Chapter 114 / `Distance Functions
+17681    ! for Multitype Point Patterns` (PDF pp. 9414–9415); S154 / Chapter 114 / `Border Edge Correction for Distance Functions` (PDF pp. 9415–9416).
+17682       * Discriminates: Example 114.2: Testing Covariate Dependence of a Point Pattern
+17683       */
+17684      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+17684    ! validmemname=compatible locale=en_US;
+17685      %let syscc=0;
+17686      title; footnote;
+17687      ods _all_ close;
+17688      ods listing gpath="%sysfunc(pathname(work))";
+17689      ods graphics off;
+17690      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK._DOCTMP000000000000000000046 (memtype=DATA).
+NOTE: Deleting WORK._DOCTMP000000000000000000047 (memtype=DATA).
+NOTE: Deleting WORK._DOCTMP000000000000000000048 (memtype=DATA).
+NOTE: Deleting WORK._DOCTMP000000000000000000049 (memtype=DATA).
+NOTE: Deleting WORK._DOCTMP000000000000000000050 (memtype=DATA).
+17690    !                                         quit;
+
+
+17691      ods path work.templat(update) sashelp.tmplmst(read);
+17692      
+17693      proc spp data=sashelp.bei;
+17694      process trees = (x,y /area=(0,0,1000,500) event=Trees);
+17695      trend grad = field(x,y,Gradient);
+17696      trend elev = field(x,y,Elevation);
+17697      covtest trees = grad elev;
+17698      run;
+
+NOTE: The PROCEDURE SPP printed page 1216.
+
+17699      
+17700      
+17701      
+17702      
+The SAS System
+
+17703      

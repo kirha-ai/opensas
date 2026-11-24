@@ -1,0 +1,66 @@
+
+The HPQUANTSELECT Procedure
+
+      Performance Information
+
+Execution Mode       Single-Machine
+Number of Threads    1             
+
+
+          Data Access Information
+ 
+Data           Engine    Role     Path
+
+WORK.SAMPLE    V9        Input    On Client
+
+
+          Model Information
+
+Data Source               WORK.SAMPLE
+Dependent Variable        y          
+Class Parameterization    GLM        
+Optimization Algorithm    Interior   
+
+
+Number of Observations Read             120
+Number of Observations Used             120
+
+
+ Class Level Information
+ 
+Class    Levels    Values
+
+group         3    1 2 3 
+
+
+           Dimensions
+
+Number of Effects              5
+Number of Parameters           7
+
+The HPQUANTSELECT Procedure
+Quantile Level = 0.5
+
+         Fit Statistics
+
+Objective Function       40.63427
+R1                        0.50627
+Adj R1                    0.48462
+AIC                    -247.89120
+AICC                   -247.14784
+SBC                    -231.16625
+ACL                       0.33862
+
+
+                                     Parameter Estimates
+ 
+                                   Standard
+Parameter    DF      Estimate         Error      95% Confidence Limits     t Value    Pr > |t|
+
+Intercept     1       3.04637       0.17737       2.69501       3.39773      17.18      <.0001
+x             1       1.46502       0.10823       1.25061       1.67943      13.54      <.0001
+z             1      -0.71385       0.11683      -0.94528      -0.48241      -6.11      <.0001
+w             1      -0.05645       0.10141      -0.25734       0.14444      -0.56      0.5789
+group 1       1      -0.84073       0.25381      -1.34353      -0.33792      -3.31      0.0012
+group 2       1      -0.34400       0.24938      -0.83802       0.15002      -1.38      0.1705
+group 3       0             0             .             .             .        .         .    

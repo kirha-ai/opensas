@@ -1,0 +1,85 @@
+The SAS System
+
+15503      
+15504      /* STAT-FACTOR-002: FACTOR — Factor extraction, communalities, and the default factor solution
+15505       * Source: S154 / Chapter 44 / `Getting Started: FACTOR Procedure` (PDF pp. 2792–2797); S154 / Chapter 44 / `Overview: FACTOR Procedure` (PDF pp.
+15505    ! 2784–2792).
+15506       * Discriminates: Example 44.1: Principal Component Analysis
+15507       */
+15508      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+15508    ! validmemname=compatible locale=en_US;
+15509      %let syscc=0;
+15510      title; footnote;
+15511      ods _all_ close;
+15512      ods listing gpath="%sysfunc(pathname(work))";
+15513      ods graphics off;
+15514      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.COEF (memtype=DATA).
+NOTE: Deleting WORK.EIGENVECTORS (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SOCIOECONOMICS (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+15514    !                                         quit;
+
+
+15515      ods path work.templat(update) sashelp.tmplmst(read);
+15516      
+15517      data SocioEconomics;
+15518      input Population School Employment Services HouseValue;
+15519      datalines;
+
+NOTE: The data set WORK.SOCIOECONOMICS has 12 observations and 5 variables.
+
+15532      ;
+15533      proc factor data=SocioEconomics simple corr;
+15534      run;
+
+NOTE: 2 factors will be retained by the MINEIGEN criterion.
+NOTE: The PROCEDURE FACTOR printed pages 2057-2058.
+
+15535      proc factor data=SocioEconomics n=5 score;
+15536      run;
+
+NOTE: 5 factors will be retained by the NFACTOR criterion.
+NOTE: The PROCEDURE FACTOR printed pages 2059-2061.
+
+15537      proc princomp data=SocioEconomics;
+15538      run;
+
+NOTE: The PROCEDURE PRINCOMP printed page 2062.
+
+15539      proc factor data=SocioEconomics n=5 score;
+15540      ods output StdScoreCoef=Coef;
+15541      run;
+
+NOTE: 5 factors will be retained by the NFACTOR criterion.
+NOTE: The data set WORK.COEF has 5 observations and 6 variables.
+NOTE: The PROCEDURE FACTOR printed pages 2063-2065.
+
+15542      proc stdize method=ustd mult=.44721 data=Coef out=eigenvectors;
+15543      var Factor1-Factor5;
+15544      run;
+
+NOTE: VARDEF= DF is equivalent to VARDEF= N when USTD is used for standardization or for the initial estimates for the A estimates.
+NOTE: There were 5 observations read from the data set WORK.COEF.
+NOTE: The data set WORK.EIGENVECTORS has 5 observations and 6 variables.
+
+15545      proc print data=eigenvectors;
+15546      run;
+
+NOTE: There were 5 observations read from the data set WORK.EIGENVECTORS.
+NOTE: The PROCEDURE PRINT printed page 2066.
+
+15547      
+15548      
+15549      
+15550      
+The SAS System
+
+15551      

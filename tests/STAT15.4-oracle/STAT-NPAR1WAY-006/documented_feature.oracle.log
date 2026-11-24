@@ -1,0 +1,48 @@
+The SAS System
+
+680        
+681        /* STAT-NPAR1WAY-006: NPAR1WAY — EXACT / Ratio Mean Deviations (RMD) Exact Test / Exact Tests
+682         * Source: S154 / Chapter 90 / `EXACT Statement` (PDF pp. 7225–7229); S154 / Chapter 90 / `Ratio Mean Deviations (RMD) Exact Test` (PDF pp.
+682      ! 7246–7247); S154 / Chapter 90 / `Exact Tests` (PDF pp. 7249–7253).
+683         * Discriminates: Example 90.5: Exact Savage Multisample Test; explicit statements: EXACT
+684         */
+685        options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+685      ! validmemname=compatible locale=en_US;
+686        %let syscc=0;
+687        title; footnote;
+688        ods _all_ close;
+689        ods listing gpath="%sysfunc(pathname(work))";
+690        ods graphics off;
+691        proc datasets library=work kill nolist;
+NOTE: Deleting WORK.GOSSYPOL (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+691      !                                         quit;
+
+
+692        ods path work.templat(update) sashelp.tmplmst(read);
+693        
+694        data Mice;
+695        input Treatment $ Days @@;
+696        datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.MICE has 15 observations and 2 variables.
+
+700        ;
+701        proc npar1way savage data=Mice;
+702        class Treatment;
+703        var Days;
+704        exact savage;
+705        run;
+
+NOTE: The PROCEDURE NPAR1WAY printed page 89.
+
+706        
+707        
+708        
+709        
+The SAS System
+
+710        

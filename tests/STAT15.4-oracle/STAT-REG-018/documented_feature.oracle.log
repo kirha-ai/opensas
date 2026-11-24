@@ -1,0 +1,362 @@
+The SAS System
+
+13163      
+13164      /* STAT-REG-018: REG — Construction of Q-Q and P-P Plots / Plot Options Superseded by ODS Graphics / ODS Graphics
+13165       * Source: S154 / Chapter 105 / `Construction of Q-Q and P-P Plots` (PDF p. 8649); S154 / Chapter 105 / `Plot Options Superseded by ODS Graphics`
+13165    ! (PDF pp. 8652–8668); S154 / Chapter 105 / `ODS Graphics` (PDF pp. 8670–8676).
+13166       * Discriminates: Getting Started: REG Procedure
+13167       */
+13168      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+13168    ! validmemname=compatible locale=en_US;
+13169      %let syscc=0;
+13170      title; footnote;
+13171      ods _all_ close;
+13172      ods listing gpath="%sysfunc(pathname(work))";
+13173      ods graphics off;
+13174      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.USPOPULATION (memtype=DATA).
+13174    !                                         quit;
+
+
+13175      ods path work.templat(update) sashelp.tmplmst(read);
+13176      
+13177      ods graphics on;
+13178      ods trace on;
+13179      ods trace on;
+13180      proc reg data=sashelp.class;
+13181      model Weight = Height;
+13182      run;
+
+
+Output Added:
+-------------
+Name:       NObs
+Label:      Number of Observations
+Template:   Stat.Reg.NObs
+Path:       Reg.MODEL1.Fit.Weight.NObs
+-------------
+
+Output Added:
+-------------
+Name:       ANOVA
+Label:      Analysis of Variance
+Template:   Stat.REG.ANOVA
+Path:       Reg.MODEL1.Fit.Weight.ANOVA
+-------------
+
+Output Added:
+-------------
+Name:       FitStatistics
+Label:      Fit Statistics
+Template:   Stat.REG.FitStatistics
+Path:       Reg.MODEL1.Fit.Weight.FitStatistics
+-------------
+
+Output Added:
+-------------
+Name:       ParameterEstimates
+Label:      Parameter Estimates
+Template:   Stat.REG.ParameterEstimates
+Path:       Reg.MODEL1.Fit.Weight.ParameterEstimates
+-------------
+
+Output Added:
+-------------
+Name:       DiagnosticsPanel
+Label:      Fit Diagnostics
+Template:   Stat.REG.Graphics.DiagnosticsPanel
+Path:       Reg.MODEL1.ObswiseStats.Weight.DiagnosticPlots.DiagnosticsPanel
+-------------
+
+Output Added:
+-------------
+Name:       ResidualPlot
+Label:      Height
+Template:   Stat.REG.Graphics.ResidualPlot
+Path:       Reg.MODEL1.ObswiseStats.Weight.ResidualPlots.ResidualPlot
+-------------
+
+Output Added:
+-------------
+Name:       FitPlot
+Label:      Fit Plot
+Template:   Stat.REG.Graphics.Fit
+Path:       Reg.MODEL1.ObswiseStats.Weight.FitPlot
+-------------
+
+NOTE: The PROCEDURE REG printed page 1024.
+
+13183      data USPopulation;
+13184      input Population @@;
+13185      retain Year 1780;
+13186      Year = Year+10;
+13187      YearSq = Year *Year;
+13188      Population = Population/1000;
+13189      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.USPOPULATION has 22 observations and 3 variables.
+
+13193      ;
+13194      proc reg data=USPopulation plots=ResidualByPredicted;
+13195      var YearSq;
+13196      model Population=Year / r clm cli;
+13197      run;
+
+
+Output Added:
+-------------
+Name:       NObs
+Label:      Number of Observations
+Template:   Stat.Reg.NObs
+Path:       Reg.MODEL1.Fit.Population.NObs
+-------------
+
+Output Added:
+-------------
+Name:       ANOVA
+Label:      Analysis of Variance
+Template:   Stat.REG.ANOVA
+Path:       Reg.MODEL1.Fit.Population.ANOVA
+-------------
+
+Output Added:
+-------------
+Name:       FitStatistics
+Label:      Fit Statistics
+Template:   Stat.REG.FitStatistics
+Path:       Reg.MODEL1.Fit.Population.FitStatistics
+-------------
+
+Output Added:
+-------------
+Name:       ParameterEstimates
+Label:      Parameter Estimates
+Template:   Stat.REG.ParameterEstimates
+Path:       Reg.MODEL1.Fit.Population.ParameterEstimates
+-------------
+
+Output Added:
+-------------
+Name:       OutputStatistics
+Label:      Output Statistics
+Template:   Stat.Reg.OutputStatistics
+Path:       Reg.MODEL1.ObswiseStats.Population.OutputStatistics
+-------------
+
+Output Added:
+-------------
+Name:       StudResCooksDChart
+Label:      Residual Charts
+Template:   Stat.REG.Graphics.StudResCooksDChart
+Path:       Reg.MODEL1.ObswiseStats.Population.StudResCooksDChart
+-------------
+
+Output Added:
+-------------
+Name:       ResidualStatistics
+Label:      Residual Statistics
+Template:   Stat.Reg.ResidualStatistics
+Path:       Reg.MODEL1.ObswiseStats.Population.ResidualStatistics
+-------------
+
+Output Added:
+-------------
+Name:       ResidualByPredicted
+Label:      Residual by Predicted
+Template:   Stat.REG.Graphics.ResidualByPredicted
+Path:       Reg.MODEL1.ObswiseStats.Population.DiagnosticPlots.ResidualByPredicted
+-------------
+
+Output Added:
+-------------
+Name:       DiagnosticsPanel
+Label:      Fit Diagnostics
+Template:   Stat.REG.Graphics.DiagnosticsPanel
+Path:       Reg.MODEL1.ObswiseStats.Population.DiagnosticPlots.DiagnosticsPanel
+-------------
+
+Output Added:
+-------------
+Name:       ResidualPlot
+Label:      Year
+Template:   Stat.REG.Graphics.ResidualPlot
+Path:       Reg.MODEL1.ObswiseStats.Population.ResidualPlots.ResidualPlot
+-------------
+
+Output Added:
+-------------
+Name:       FitPlot
+Label:      Fit Plot
+Template:   Stat.REG.Graphics.Fit
+Path:       Reg.MODEL1.ObswiseStats.Population.FitPlot
+-------------
+13198      add YearSq;
+13199      print;
+13200      run;
+
+NOTE: Variable YearSq is added.
+NOTE: Due to an ADD statement, the model label is now MODEL1.1.
+
+Output Added:
+-------------
+Name:       NObs
+Label:      Number of Observations
+Template:   Stat.Reg.NObs
+Path:       Reg.MODEL1_1.Fit.Population.NObs
+-------------
+
+Output Added:
+-------------
+Name:       ANOVA
+Label:      Analysis of Variance
+Template:   Stat.REG.ANOVA
+Path:       Reg.MODEL1_1.Fit.Population.ANOVA
+-------------
+
+Output Added:
+-------------
+Name:       FitStatistics
+Label:      Fit Statistics
+Template:   Stat.REG.FitStatistics
+Path:       Reg.MODEL1_1.Fit.Population.FitStatistics
+-------------
+
+Output Added:
+-------------
+Name:       ParameterEstimates
+Label:      Parameter Estimates
+Template:   Stat.REG.ParameterEstimates
+Path:       Reg.MODEL1_1.Fit.Population.ParameterEstimates
+-------------
+
+Output Added:
+-------------
+Name:       OutputStatistics
+Label:      Output Statistics
+Template:   Stat.Reg.OutputStatistics
+Path:       Reg.MODEL1_1.ObswiseStats.Population.OutputStatistics
+-------------
+
+Output Added:
+-------------
+Name:       StudResCooksDChart
+Label:      Residual Charts
+Template:   Stat.REG.Graphics.StudResCooksDChart
+Path:       Reg.MODEL1_1.ObswiseStats.Population.StudResCooksDChart
+-------------
+
+Output Added:
+-------------
+Name:       ResidualStatistics
+Label:      Residual Statistics
+Template:   Stat.Reg.ResidualStatistics
+Path:       Reg.MODEL1_1.ObswiseStats.Population.ResidualStatistics
+-------------
+
+Output Added:
+-------------
+Name:       ResidualByPredicted
+Label:      Residual by Predicted
+Template:   Stat.REG.Graphics.ResidualByPredicted
+Path:       Reg.MODEL1_1.ObswiseStats.Population.DiagnosticPlots.ResidualByPredicted
+-------------
+
+Output Added:
+-------------
+Name:       DiagnosticsPanel
+Label:      Fit Diagnostics
+Template:   Stat.REG.Graphics.DiagnosticsPanel
+Path:       Reg.MODEL1_1.ObswiseStats.Population.DiagnosticPlots.DiagnosticsPanel
+-------------
+
+Output Added:
+-------------
+Name:       ResidualPlot
+Label:      Panel 1
+Template:   Stat.REG.Graphics.ResidualPanel
+Path:       Reg.MODEL1_1.ObswiseStats.Population.ResidualPlots.ResidualPlot
+-------------
+
+NOTE: The PROCEDURE REG printed pages 1025-1028.
+
+13201      proc reg data=USPopulation plots=predictions(X=Year);
+13202      model Population=Year Yearsq;
+13203      quit;
+
+
+Output Added:
+-------------
+Name:       NObs
+Label:      Number of Observations
+Template:   Stat.Reg.NObs
+Path:       Reg.MODEL1.Fit.Population.NObs
+-------------
+
+Output Added:
+-------------
+Name:       ANOVA
+Label:      Analysis of Variance
+Template:   Stat.REG.ANOVA
+Path:       Reg.MODEL1.Fit.Population.ANOVA
+-------------
+
+Output Added:
+-------------
+Name:       FitStatistics
+Label:      Fit Statistics
+Template:   Stat.REG.FitStatistics
+Path:       Reg.MODEL1.Fit.Population.FitStatistics
+-------------
+
+Output Added:
+-------------
+Name:       ParameterEstimates
+Label:      Parameter Estimates
+Template:   Stat.REG.ParameterEstimates
+Path:       Reg.MODEL1.Fit.Population.ParameterEstimates
+-------------
+
+Output Added:
+-------------
+Name:       DiagnosticsPanel
+Label:      Fit Diagnostics
+Template:   Stat.REG.Graphics.DiagnosticsPanel
+Path:       Reg.MODEL1.ObswiseStats.Population.DiagnosticPlots.DiagnosticsPanel
+-------------
+
+Output Added:
+-------------
+Name:       ResidualPlot
+Label:      Panel 1
+Template:   Stat.REG.Graphics.ResidualPanel
+Path:       Reg.MODEL1.ObswiseStats.Population.ResidualPlots.ResidualPlot
+-------------
+
+Output Added:
+-------------
+Name:       PredictionPanel
+Label:      Predictions by Year
+Template:   Stat.REG.Graphics.PredictionPanel
+Path:       Reg.MODEL1.ObswiseStats.Population.PredictionPanel
+-------------
+NOTE: The PROCEDURE REG printed page 1029.
+
+13204      ods graphics off;
+13205      quit;
+13206      ods trace off;
+13207      ods trace off;
+13208      ods graphics off;
+13209      
+13210      
+13211      
+13212      
+The SAS System
+
+13213      

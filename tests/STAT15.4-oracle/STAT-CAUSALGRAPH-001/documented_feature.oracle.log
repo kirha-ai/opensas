@@ -1,0 +1,52 @@
+The SAS System
+
+12888      
+12889      /* STAT-CAUSALGRAPH-001: CAUSALGRAPH — Data input, variable roles, and basic options
+12890       * Source: S154 / Chapter 37 / `PROC CAUSALGRAPH Statement` (PDF pp. 2310–2314).
+12891       * Discriminates: Verified default procedure context
+12892       */
+12893      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+12893    ! validmemname=compatible locale=en_US;
+12894      %let syscc=0;
+12895      title; footnote;
+12896      ods _all_ close;
+12897      ods listing gpath="%sysfunc(pathname(work))";
+12898      ods graphics off;
+12899      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.INGOTS (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+12899    !                                         quit;
+
+
+12900      ods path work.templat(update) sashelp.tmplmst(read);
+12901      
+12902      proc causalgraph;
+12903      model "Timm17TwoLatent"
+12904      Age ==> Parity PFAS Education,
+12905      Parity ==> PrevBF Duration PFAS,
+12906      PrevBF ==> PFAS Duration,
+12907      PFAS ==> Duration,
+12908      Education ==> Duration Employment PFAS BMI Alcohol Smoking,
+12909      Employment ==> Duration PFAS BMI Alcohol Smoking,
+12910      BMI Alcohol Smoking ==> Duration;
+12911      identify PFAS ==> Duration;
+12912      unmeasured Alcohol Smoking;
+12913      run;
+
+NOTE: The PROCEDURE CAUSALGRAPH printed pages 1780-1781.
+
+12914      quit;
+12915      
+12916      
+12917      
+12918      
+The SAS System
+
+12919      

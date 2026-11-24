@@ -1,0 +1,126 @@
+The SAS System
+
+16300      
+16301      /* STAT-MCMC-011: MCMC — Spatial Prior / Floating Point Errors and Overflows / Handling Error Messages
+16302       * Source: S154 / Chapter 80 / `Spatial Prior` (PDF pp. 6230–6232); S154 / Chapter 80 / `Floating Point Errors and Overflows` (PDF pp. 6232–6235)
+16302    ! ; S154 / Chapter 80 / `Handling Error Messages` (PDF pp. 6235–6237).
+16303       * Discriminates: Example 80.12: Change Point Models
+16304       */
+16305      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+16305    ! validmemname=compatible locale=en_US;
+16306      %let syscc=0;
+16307      title; footnote;
+16308      ods _all_ close;
+16309      ods listing gpath="%sysfunc(pathname(work))";
+16310      ods graphics off;
+16311      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.POSTOUT (memtype=DATA).
+NOTE: Deleting WORK.RATS (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+16311    !                                         quit;
+
+
+16312      ods path work.templat(update) sashelp.tmplmst(read);
+16313      
+16314      title 'Change Point Model';
+16315      data stagnant;
+16316      input y x @@;
+16317      ind = _n_;
+16318      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.STAGNANT has 29 observations and 3 variables.
+
+16327      ;
+16328      proc sgplot data=stagnant;
+16329      scatter x=x y=y;
+16330      run;
+
+NOTE: Listing image output written to /saswork/SAS_work7EA200001C34_odaws01-euw1.oda.sas.com/SAS_work29EF00001C34_odaws01-euw1.oda.sas.com/SGPlot28.png.
+NOTE: There were 29 observations read from the data set WORK.STAGNANT.
+
+16331      proc mcmc data=stagnant outpost=postout seed=24860 ntu=1000
+16332      nmc=1000 nbi=200;
+16333      ods select PostSumInt;
+16334      ods output PostSumInt=ds;
+16335      array beta[2];
+16336      parms alpha cp beta1 beta2;
+16337      parms s2;
+16338      prior cp ~ unif(-1.3, 1.1);
+16339      prior s2 ~ uniform(0, 5);
+16340      prior alpha beta: ~ normal(0, v = 1e6);
+16341      j = 1 + (x >= cp);
+16342      mu = alpha + beta[j] * (x - cp);
+16343      model y ~ normal(mu, var=s2);
+16344      run;
+
+NOTE: Tuning the proposal distribution.
+NOTE: Generating the burn-in samples.
+NOTE: Beginning sample generation.
+NOTE: The data set WORK.DS has 5 observations and 6 variables.
+NOTE: The data set WORK.POSTOUT has 1000 observations and 9 variables.
+NOTE: The PROCEDURE MCMC printed page 1300.
+
+16345      data _null_;
+16346      set ds;
+16347      call symputx(parameter, mean);
+16348      run;
+
+NOTE: There were 5 observations read from the data set WORK.DS.
+
+16349      data b;
+16350      missing A;
+16351      input x1 @@;
+16352      if x1 eq .A then x1 = &cp;
+16353      if _n_ <= 2 then y1 = &alpha + &beta1 * (x1 - &cp);
+16354      else y1 = &alpha + &beta2 * (x1 - &cp);
+16355      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.B has 3 observations and 2 variables.
+
+16357      ;
+16358      proc kde data=postout;
+16359      univar cp / out=m1 (drop=count);
+16360      run;
+
+NOTE: Processing UNIVAR statement number 1.
+NOTE: The data set WORK.M1 has 401 observations and 3 variables.
+NOTE: The PROCEDURE KDE printed page 1301.
+
+16361      data m1;
+16362      set m1;
+16363      density = (density / 25) - 0.653;
+16364      run;
+
+NOTE: There were 401 observations read from the data set WORK.M1.
+NOTE: The data set WORK.M1 has 401 observations and 3 variables.
+
+16365      data all;
+16366      set stagnant b m1;
+16367      run;
+
+NOTE: There were 29 observations read from the data set WORK.STAGNANT.
+NOTE: There were 3 observations read from the data set WORK.B.
+NOTE: There were 401 observations read from the data set WORK.M1.
+NOTE: The data set WORK.ALL has 433 observations and 8 variables.
+
+16368      proc sgplot data=all noautolegend;
+16369      scatter x=x y=y;
+16370      series x=x1 y=y1 / lineattrs = graphdata2;
+16371      series x=value y=density / lineattrs = graphdata1;
+16372      run;
+
+NOTE: Listing image output written to /saswork/SAS_work7EA200001C34_odaws01-euw1.oda.sas.com/SAS_work29EF00001C34_odaws01-euw1.oda.sas.com/SGPlot29.png.
+NOTE: There were 433 observations read from the data set WORK.ALL.
+
+16373      
+16374      
+16375      
+16376      
+The SAS System
+
+16377      

@@ -1,0 +1,95 @@
+
+The Mixed Procedure
+
+                  Model Information
+
+Data Set                     WORK.POLYNOMIAL          
+Dependent Variable           y                        
+Covariance Structure         Diagonal                 
+Estimation Method            REML                     
+Residual Variance Method     Profile                  
+Fixed Effects SE Method      Model-Based              
+Degrees of Freedom Method    Residual                 
+
+
+            Dimensions
+
+Covariance Parameters             1
+Columns in X                      4
+Columns in Z                      0
+Subjects                          1
+Max Obs per Subject              20
+
+
+          Number of Observations
+
+Number of Observations Read              20
+Number of Observations Used              20
+Number of Observations Not Used           0
+
+
+Covariance Parameter
+      Estimates
+ 
+Cov Parm     Estimate
+
+Residual       0.1053
+
+
+           Fit Statistics
+
+-2 Res Log Likelihood            41.7
+AIC (Smaller is Better)          43.7
+AICC (Smaller is Better)         43.9
+BIC (Smaller is Better)          44.4
+
+
+                   Solution for Fixed Effects
+ 
+                         Standard
+Effect       Estimate       Error      DF    t Value    Pr > |t|
+
+Intercept      0.7837      0.3545      16       2.21      0.0420
+x              0.3726      0.1426      16       2.61      0.0189
+x*x           0.04756     0.01558      16       3.05      0.0076
+x*x*x        -0.00306    0.000489      16      -6.27      <.0001
+
+
+        Type 1 Tests of Fixed Effects
+ 
+              Num     Den
+Effect         DF      DF    F Value    Pr > F
+
+x               1      16     196.22    <.0001
+x*x             1      16     397.91    <.0001
+x*x*x           1      16      39.25    <.0001
+
+
+        Type 3 Tests of Fixed Effects
+ 
+              Num     Den
+Effect         DF      DF    F Value    Pr > F
+
+x               1      16       6.82    0.0189
+x*x             1      16       9.31    0.0076
+x*x*x           1      16      39.25    <.0001
+
+
+              L Components of Type 1 Tests of Fixed Effects
+ 
+                 L                Standard
+Effect       Index    Estimate       Error      DF    t Value    Pr > |t|
+
+x                1      0.1763     0.01259      16      14.01      <.0001
+x*x              1    -0.04886    0.002449      16     -19.95      <.0001
+x*x*x            1    -0.00306    0.000489      16      -6.27      <.0001
+
+
+              L Components of Type 3 Tests of Fixed Effects
+ 
+                 L                Standard
+Effect       Index    Estimate       Error      DF    t Value    Pr > |t|
+
+x                1      0.3726      0.1426      16       2.61      0.0189
+x*x              1     0.04756     0.01558      16       3.05      0.0076
+x*x*x            1    -0.00306    0.000489      16      -6.27      <.0001

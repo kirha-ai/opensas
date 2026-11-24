@@ -1,0 +1,51 @@
+The SAS System
+
+6459       
+6460       /* STAT-HPSPLIT-007: HPSPLIT — SAS Enterprise Miner Syntax and Notes
+6461        * Source: S154 / Chapter 68 / `SAS Enterprise Miner Syntax and Notes` (PDF pp. 5117–5119).
+6462        * Discriminates: Verified default procedure context
+6463        */
+6464       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+6464     ! validmemname=compatible locale=en_US;
+6465       %let syscc=0;
+6466       title; footnote;
+6467       ods _all_ close;
+6468       ods listing gpath="%sysfunc(pathname(work))";
+6469       ods graphics off;
+
+
+6470       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.MBE_DATA (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+6470     !                                         quit;
+
+
+6471       ods path work.templat(update) sashelp.tmplmst(read);
+6472       
+6473       ods graphics on;
+6474       proc hpsplit data=sashelp.baseball seed=123;
+6475       class league division;
+6476       model logSalary = nAtBat nHits nHome nRuns nRBI nBB
+6477       yrMajor crAtBat crHits crHome crRuns crRbi
+6478       crBB league division nOuts nAssts nError;
+6479       output out=hpsplout;
+6480       run;
+
+NOTE: The ASSIGNMISSING= option has not been specified.  Because of this, all observations with missing values in the explanatory variables will be excluded 
+      from tree construction.
+NOTE: The HPSPLIT procedure is executing in single-machine mode.
+NOTE: Cross-validating using 10 folds.
+NOTE: There were 322 observations read from the data set SASHELP.BASEBALL.
+NOTE: The data set WORK.HPSPLOUT has 322 observations and 4 variables.
+NOTE: The PROCEDURE HPSPLIT printed pages 476-477.
+
+6481       
+6482       
+6483       
+6484       
+The SAS System
+
+6485       

@@ -1,0 +1,65 @@
+The SAS System
+
+28370      
+28371      /* STAT-TRANSREG-022: TRANSREG — Official examples and feature integration regression
+28372       * Source: S154 / Chapter 126 / `Examples: TRANSREG Procedure` (PDF pp. 10528–10566).
+28373       * Discriminates: Example 126.1: Transformation Regression of Exhaust Emissions Data
+28374       */
+28375      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+28375    ! validmemname=compatible locale=en_US;
+28376      %let syscc=0;
+28377      title; footnote;
+28378      ods _all_ close;
+28379      ods listing gpath="%sysfunc(pathname(work))";
+28380      ods graphics off;
+28381      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.A (memtype=DATA).
+NOTE: Deleting WORK.DATA43 (memtype=DATA).
+NOTE: Deleting WORK.GAS (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+28381    !                                         quit;
+
+
+28382      ods path work.templat(update) sashelp.tmplmst(read);
+28383      
+28384      ods graphics on;
+28385      title 'Gasoline Example';
+28386      title2 'Iteratively Estimate NOx, CpRatio, EqRatio, and Fuel';
+28387      * Fit the Nonparametric Model;
+28388      proc transreg data=sashelp.Gas solve test nomiss plots=all;
+28389      ods exclude where=(_path_ ? 'MV');
+28390      model mspline(NOx / nknots=9) = spline(EqRatio / nknots=9)
+28391      monotone(CpRatio) opscore(Fuel);
+28392      run;
+
+NOTE: 2 observations were deleted from the analysis due to missing values.
+WARNING: Failed to converge, however criterion change is less than 0.0001.
+NOTE: There were 171 observations read from the data set SASHELP.GAS.
+NOTE: The PROCEDURE TRANSREG printed page 1757.
+
+28393      title2 'Now fit log(NOx) = b0 + b1*EqRatio + b2*EqRatio**2 +';
+28394      title3 'b3*CpRatio + Sum b(j)*Fuel(j) + Error';
+28395      *-Fit the Parametric Model Suggested by the Nonparametric Analysis-;
+28396      proc transreg data=sashelp.Gas solve ss2 short nomiss plots=all;
+28397      model log(NOx) = pspline(EqRatio / deg=2) identity(CpRatio)
+28398      opscore(Fuel);
+28399      run;
+
+NOTE: 2 observations were deleted from the analysis due to missing values.
+NOTE: Algorithm converged.
+NOTE: There were 171 observations read from the data set SASHELP.GAS.
+NOTE: The PROCEDURE TRANSREG printed page 1758.
+
+28400      
+28401      
+28402      
+28403      
+The SAS System
+
+28404      

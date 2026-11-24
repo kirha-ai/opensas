@@ -1,0 +1,54 @@
+The SAS System
+
+1078       
+1079       /* STAT-GENMOD-022: GENMOD — VARIANCE
+1080        * Source: S154 / Chapter 51 / `VARIANCE Statement` (PDF p. 3567).
+1081        * Discriminates: Explicit VARIANCE, DEVIANCE statement behavior on seeded synthetic inputs.
+1082        */
+1083       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+1083     ! validmemname=compatible locale=en_US;
+1084       %let syscc=0;
+1085       title; footnote;
+1086       ods _all_ close;
+1087       ods listing gpath="%sysfunc(pathname(work))";
+1088       ods graphics off;
+1089       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.POSITIVE (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SAMPLE (memtype=DATA).
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+1089     !                                         quit;
+
+
+1090       ods path work.templat(update) sashelp.tmplmst(read);
+1091       
+1092       data sample;
+1093       call streaminit(314159);
+1094       do id=1 to 90;
+1095        x=rand('normal'); z=rand('normal'); w=rand('normal');
+1096        group=1+mod(id,3); block=1+mod(id,5);
+1097        y=5+1.5*x-0.6*z+0.4*group+rand('normal');
+1098        y2=2+0.5*x+0.8*z+rand('normal'); output;
+1099       end;
+1100       run;
+
+NOTE: The data set WORK.SAMPLE has 90 observations and 8 variables.
+
+1101       proc genmod data=sample; model y=x z; variance v=1; deviance d=(_resp_-_mean_)**2; run;
+
+
+NOTE: Algorithm converged.
+NOTE: The scale parameter was held fixed.
+NOTE: The PROCEDURE GENMOD printed page 92.
+
+1102       
+1103       
+1104       
+1105       
+The SAS System
+
+1106       

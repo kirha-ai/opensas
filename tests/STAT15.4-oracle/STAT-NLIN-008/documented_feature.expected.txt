@@ -1,0 +1,209 @@
+
+The NLIN Procedure
+Dependent Variable y
+Method: Gauss-Newton
+
+                   Iterative Phase
+                                               Sum of
+ Iter       alpha        beta       gamma     Squares
+
+    0       100.0      3.0000       300.0       386.4
+    1       100.4      2.8011       162.8       129.1
+    2       100.8      2.6184       101.4     69.2710
+    3       101.3      2.4266     69.7579     68.2167
+    4       101.7      2.3790     69.0358     60.8223
+    5       101.8      2.3621     67.3709     60.7516
+    6       101.8      2.3582     67.0044     60.7477
+    7       101.8      2.3573     66.9150     60.7475
+    8       101.8      2.3571     66.8948     60.7475
+    9       101.8      2.3570     66.8902     60.7475
+   10       101.8      2.3570     66.8892     60.7475
+
+
+NOTE: Convergence criterion met.                                
+
+
+         Estimation Summary
+
+Method                   Gauss-Newton
+Iterations                         10
+Subiterations                       3
+Average Subiterations             0.3
+R                            4.065E-6
+PPC(gamma)                   3.422E-6
+RPC(gamma)                   0.000015
+Object                       4.03E-10
+Objective                    60.74749
+Observations Read                   7
+Observations Used                   7
+Observations Missing                0
+
+
+NOTE: An intercept was not specified for this model.
+
+                                  Sum of        Mean               Approx
+Source                    DF     Squares      Square    F Value    Pr > F
+
+Model                      3     33965.4     11321.8     745.50    <.0001
+Error                      4     60.7475     15.1869                     
+Uncorrected Total          7     34026.1                                 
+
+
+                              Approx       Approximate 95%                              Percent
+Parameter      Estimate    Std Error      Confidence Limits     Skewness        Bias       Bias
+
+alpha             101.8       3.0034     93.4751       110.2      0.1415      0.1512       0.15
+beta             2.3570       0.2928      1.5440      3.1699      0.4987      0.0303       1.29
+gamma           66.8892      31.6146    -20.8870       154.7      1.9200     10.9230       16.3
+
+
+           Approximate Correlation Matrix
+                alpha            beta           gamma
+
+alpha       1.0000000      -0.5282107      -0.4054724
+beta       -0.5282107       1.0000000       0.9715844
+gamma      -0.4054724       0.9715844       1.0000000
+
+
+       Global Nonlinearity Measures
+
+Max Intrinsic Curvature              0.2397
+RMS Intrinsic Curvature              0.1154
+Max Parameter-Effects Curvature      4.0842
+RMS Parameter-Effects Curvature      1.8198
+Curvature Critical Value             0.3895
+Raw Residual Variance                15.187
+Projected Residual Variance           5.922
+
+The NLIN Procedure
+Dependent Variable y
+Method: Gauss-Newton
+
+                   Iterative Phase
+                                               Sum of
+ Iter       alpha        beta        LD50     Squares
+
+    0       100.0      3.0000      0.1500       372.2
+    1       101.7      2.2123      0.1654     67.2778
+    2       102.0      2.3221      0.1675     60.9218
+    3       101.9      2.3492      0.1679     60.7563
+    4       101.8      2.3552      0.1681     60.7479
+    5       101.8      2.3566      0.1681     60.7475
+    6       101.8      2.3569      0.1681     60.7475
+    7       101.8      2.3570      0.1681     60.7475
+    8       101.8      2.3570      0.1681     60.7475
+
+
+NOTE: Convergence criterion met.                                
+
+
+         Estimation Summary
+
+Method                  Gauss-Newton
+Iterations                         8
+R                           6.044E-6
+PPC(beta)                   1.461E-6
+RPC(beta)                   6.518E-6
+Object                       8.9E-10
+Objective                   60.74749
+Observations Read                  7
+Observations Used                  7
+Observations Missing               0
+
+
+NOTE: An intercept was not specified for this model.
+
+                                  Sum of        Mean               Approx
+Source                    DF     Squares      Square    F Value    Pr > F
+
+Model                      3     33965.4     11321.8     745.50    <.0001
+Error                      4     60.7475     15.1869                     
+Uncorrected Total          7     34026.1                                 
+
+
+                              Approx       Approximate 95%                              Percent
+Parameter      Estimate    Std Error      Confidence Limits     Skewness        Bias       Bias
+
+alpha             101.8       3.0034     93.4752       110.2      0.1415      0.1512       0.15
+beta             2.3570       0.2928      1.5440      3.1699      0.4987      0.0303       1.29
+LD50             0.1681      0.00915      0.1427      0.1935     -0.0605    -0.00013      -0.08
+
+
+           Approximate Correlation Matrix
+                alpha            beta            LD50
+
+alpha       1.0000000      -0.5282118      -0.6556378
+beta       -0.5282118       1.0000000       0.4902091
+LD50       -0.6556378       0.4902091       1.0000000
+
+The NLIN Procedure
+Dependent Variable y
+Method: Gauss-Newton
+
+                   Iterative Phase
+                                               Sum of
+ Iter       alpha      mustar        LD50     Squares
+
+    0       100.0     20.0000      0.1500       227.5
+    1       102.2     21.5662      0.1670     62.5493
+    2       102.0     20.8335      0.1676     60.8184
+    3       101.8     20.7366      0.1680     60.7510
+    4       101.8     20.7138      0.1681     60.7477
+    5       101.8     20.7088      0.1681     60.7475
+    6       101.8     20.7076      0.1681     60.7475
+    7       101.8     20.7074      0.1681     60.7475
+    8       101.8     20.7073      0.1681     60.7475
+
+
+NOTE: Convergence criterion met.                                
+
+
+         Estimation Summary
+
+Method                  Gauss-Newton
+Iterations                         8
+R                           3.812E-6
+PPC(mustar)                 6.127E-7
+RPC(mustar)                 2.733E-6
+Object                      3.54E-10
+Objective                   60.74749
+Observations Read                  7
+Observations Used                  7
+Observations Missing               0
+
+
+NOTE: An intercept was not specified for this model.
+
+                                  Sum of        Mean               Approx
+Source                    DF     Squares      Square    F Value    Pr > F
+
+Model                      3     33965.4     11321.8     745.50    <.0001
+Error                      4     60.7475     15.1869                     
+Uncorrected Total          7     34026.1                                 
+
+
+                              Approx       Approximate 95%                              Percent
+Parameter      Estimate    Std Error      Confidence Limits     Skewness        Bias       Bias
+
+alpha             101.8       3.0034     93.4752       110.2      0.1415      0.1512       0.15
+mustar          20.7073       2.6430     13.3693     28.0454     -0.0572     -0.0983      -0.47
+LD50             0.1681      0.00915      0.1427      0.1935     -0.0605    -0.00013      -0.08
+
+
+            Approximate Correlation Matrix
+                 alpha          mustar            LD50
+
+alpha        1.0000000       0.2650421      -0.6556375
+mustar       0.2650421       1.0000000       0.1306395
+LD50        -0.6556375       0.1306395       1.0000000
+
+
+       Global Nonlinearity Measures
+
+Max Intrinsic Curvature              0.2397
+RMS Intrinsic Curvature              0.1154
+Max Parameter-Effects Curvature      0.2925
+RMS Parameter-Effects Curvature      0.1500
+Curvature Critical Value             0.3895
+Raw Residual Variance                15.187
+Projected Residual Variance          5.9219

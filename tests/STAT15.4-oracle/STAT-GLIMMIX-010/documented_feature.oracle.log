@@ -1,0 +1,126 @@
+The SAS System
+
+23807      
+23808      /* STAT-GLIMMIX-010: GLIMMIX — From Penalized Splines to Mixed Models / Knot Selection
+23809       * Source: S154 / Chapter 52 / `From Penalized Splines to Mixed Models` (PDF pp. 3865–3866); S154 / Chapter 52 / `Knot Selection` (PDF pp.
+23809    ! 3866–3870).
+23810       * Discriminates: Example 52.15: Comparing Multiple B-Splines
+23811       */
+23812      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+23812    ! validmemname=compatible locale=en_US;
+23813      %let syscc=0;
+23814      title; footnote;
+23815      ods _all_ close;
+23816      ods listing gpath="%sysfunc(pathname(work))";
+23817      ods graphics off;
+23818      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.PR (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+23818    !                                         quit;
+
+
+23819      ods path work.templat(update) sashelp.tmplmst(read);
+23820      
+23821      data spline;
+23822      input group y @@;
+23823      x = _n_;
+23824      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.SPLINE has 100 observations and 3 variables.
+
+23850      ;
+23851      proc sgplot data=spline;
+23852      scatter y=y x=x / group=group name="data";
+23853      keylegend "data" / title="Group";
+23854      run;
+
+NOTE: Listing image output written to /saswork/SAS_work5D120001108E_odaws02-euw1.oda.sas.com/SAS_workCCDC0001108E_odaws02-euw1.oda.sas.com/SGPlot12.png.
+NOTE: There were 100 observations read from the data set WORK.SPLINE.
+
+23855      proc glimmix data=spline outdesign=x;
+23856      class group;
+23857      effect spl = spline(x);
+23858      model y = group spl*group / s noint;
+23859      output out=gmxout pred=p;
+23860      run;
+
+
+
+
+NOTE: The model does not contain an intercept. Columns of X are scaled only and not centered.
+NOTE: No optimization performed.
+NOTE: The data set WORK.X has 100 observations and 19 variables.
+NOTE: The data set WORK.GMXOUT has 100 observations and 4 variables.
+NOTE: The PROCEDURE GLIMMIX printed page 2413.
+
+23861      proc sgplot data=gmxout;
+23862      series y=p x=x / group=group name="fit";
+23863      scatter y=y x=x / group=group;
+23864      keylegend "fit" / title="Group";
+23865      run;
+
+NOTE: Listing image output written to /saswork/SAS_work5D120001108E_odaws02-euw1.oda.sas.com/SAS_workCCDC0001108E_odaws02-euw1.oda.sas.com/SGPlot13.png.
+NOTE: There were 100 observations read from the data set WORK.GMXOUT.
+
+23866      proc glimmix data=spline;
+23867      class group;
+23868      effect spl = spline(x);
+23869      model y = group spl*group / s noint;
+23870      estimate 'Group 1, x=20' group 1 group *spl [1,1 20] / e;
+23871      estimate 'Group 2, x=20' group 0 1 group *spl [1,2 20];
+23872      estimate 'Diff at x=20 ' group 1 -1 group*spl [1,1 20] [-1,2 20];
+23873      run;
+
+
+
+
+NOTE: The model does not contain an intercept. Columns of X are scaled only and not centered.
+NOTE: No optimization performed.
+NOTE: The PROCEDURE GLIMMIX printed page 2414.
+
+23874      ods select Estimates;
+23875      proc glimmix data=spline;
+23876      class group;
+23877      effect spl = spline(x);
+23878      model y = group spl*group / s;
+23879      estimate 'Diff at x= 0' group 1 -1 group*spl [1,1 0] [-1,2 0],
+23880      'Diff at x= 5' group 1 -1 group*spl [1,1 5] [-1,2 5],
+23881      'Diff at x=10' group 1 -1 group*spl [1,1 10] [-1,2 10],
+23882      'Diff at x=15' group 1 -1 group*spl [1,1 15] [-1,2 15],
+23883      'Diff at x=20' group 1 -1 group*spl [1,1 20] [-1,2 20],
+23884      'Diff at x=25' group 1 -1 group*spl [1,1 25] [-1,2 25],
+23885      'Diff at x=30' group 1 -1 group*spl [1,1 30] [-1,2 30],
+23886      'Diff at x=35' group 1 -1 group*spl [1,1 35] [-1,2 35],
+23887      'Diff at x=40' group 1 -1 group*spl [1,1 40] [-1,2 40],
+23888      'Diff at x=45' group 1 -1 group*spl [1,1 45] [-1,2 45],
+23889      'Diff at x=50' group 1 -1 group*spl [1,1 50] [-1,2 50],
+23890      'Diff at x=55' group 1 -1 group*spl [1,1 55] [-1,2 55],
+23891      'Diff at x=60' group 1 -1 group*spl [1,1 60] [-1,2 60],
+23892      'Diff at x=65' group 1 -1 group*spl [1,1 65] [-1,2 65],
+23893      'Diff at x=70' group 1 -1 group*spl [1,1 70] [-1,2 70],
+23894      'Diff at x=75' group 1 -1 group*spl [1,1 75] [-1,2 75],
+23895      'Diff at x=80' group 1 -1 group*spl [1,1 80] [-1,2 80] /
+23896      adjust=sim(seed=1) stepdown;
+23897      run;
+
+
+
+
+NOTE: No optimization performed.
+NOTE: The PROCEDURE GLIMMIX printed page 2415.
+
+23898      
+23899      
+23900      
+23901      
+The SAS System
+
+23902      

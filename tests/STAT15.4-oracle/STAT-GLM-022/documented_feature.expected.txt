@@ -1,0 +1,74 @@
+
+Gasoline Mileage Experiment
+
+The GLM Procedure
+
+Number of Observations Read           8
+Number of Observations Used           7
+
+Gasoline Mileage Experiment
+
+The GLM Procedure
+ 
+Dependent Variable: mpg   
+
+                                        Sum of
+Source                      DF         Squares     Mean Square    F Value    Pr > F
+
+Model                        2     111.8086183      55.9043091      77.96    0.0006
+
+Error                        4       2.8685246       0.7171311                     
+
+Corrected Total              6     114.6771429                                     
+
+
+R-Square     Coeff Var      Root MSE      mpg Mean
+
+0.974986      3.564553      0.846836      23.75714
+
+
+Source                      DF       Type I SS     Mean Square    F Value    Pr > F
+
+mph                          1     85.64464286     85.64464286     119.43    0.0004
+mph*mph                      1     26.16397541     26.16397541      36.48    0.0038
+
+
+Source                      DF     Type III SS     Mean Square    F Value    Pr > F
+
+mph                          1     41.01171219     41.01171219      57.19    0.0016
+mph*mph                      1     26.16397541     26.16397541      36.48    0.0038
+
+
+                                  Standard
+Parameter         Estimate           Error    t Value    Pr > |t|
+
+Intercept     -5.985245902      3.18522249      -1.88      0.1334
+mph            1.305245902      0.17259876       7.56      0.0016
+mph*mph       -0.013098361      0.00216852      -6.04      0.0038
+
+Gasoline Mileage Experiment
+
+The GLM Procedure
+
+                                                                             95% Confidence Limits for
+Observation             Observed          Predicted           Residual          Mean Predicted Value
+
+          1          15.40000000        14.88032787         0.51967213        12.69701317     17.06364257
+          2          20.20000000        21.38360656        -1.18360656        20.01727192     22.74994119
+          3          25.70000000        25.26721311         0.43278689        23.87460041     26.65982582
+          4          26.20000000        26.53114754        -0.33114754        25.44573423     27.61656085
+          5          26.60000000        26.53114754         0.06885246        25.44573423     27.61656085
+          6          27.40000000        26.53114754         0.86885246        25.44573423     27.61656085
+          7 *          .                26.18073770          .                24.88679308     27.47468233
+          8          24.80000000        25.17540984        -0.37540984        23.05954977     27.29126990
+
+
+* Observation was not used in this analysis
+
+
+Sum of Residuals                         0.00000000
+Sum of Squared Residuals                 2.86852459
+Sum of Squared Residuals - Error SS     -0.00000000
+PRESS Statistic                         23.18107335
+First Order Autocorrelation             -0.54376613
+Durbin-Watson D                          2.94425592

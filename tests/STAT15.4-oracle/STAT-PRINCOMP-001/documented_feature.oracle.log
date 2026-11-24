@@ -1,0 +1,48 @@
+The SAS System
+
+7575       
+7576       /* STAT-PRINCOMP-001: PRINCOMP — Data input, variable roles, and basic options
+7577        * Source: S154 / Chapter 98 / `PROC PRINCOMP Statement` (PDF pp. 7999–8005); S154 / Chapter 98 / `BY Statement` (PDF p. 8005); S154 / Chapter 98 /
+7577     !  `FREQ Statement` (PDF pp. 8005–8006); S154 / Chapter 98 / `ID Statement` (PDF p. 8006); S154 / Chapter 98 / `VAR Statement` (PDF p. 8006); S154 /
+7577     ! Chapter 98 / `WEIGHT Statement` (PDF pp. 8006–8007); S154 / Chapter 98 / `Missing Values` (PDF p. 8007).
+7578        * Discriminates: Verified default procedure context; explicit statements: BY, ID
+7579        */
+7580       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+7580     ! validmemname=compatible locale=en_US;
+7581       %let syscc=0;
+7582       title; footnote;
+7583       ods _all_ close;
+7584       ods listing gpath="%sysfunc(pathname(work))";
+7585       ods graphics off;
+7586       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+7586     !                                         quit;
+
+
+7587       ods path work.templat(update) sashelp.tmplmst(read);
+7588       
+7589       title 'Crime Rates per 100,000 Population by State';
+7590       data Crime;
+7591       input State $1-15 Murder Rape Robbery Assault
+7592       Burglary Larceny Auto_Theft;
+7593       datalines;
+
+NOTE: The data set WORK.CRIME has 50 observations and 8 variables.
+
+7644       ;
+7645       ods graphics on;
+7646       proc princomp out=Crime_Components plots= score(ellipse ncomp=3);
+7647       id State;
+7648       run;
+
+NOTE: The data set WORK.CRIME_COMPONENTS has 50 observations and 15 variables.
+NOTE: The PROCEDURE PRINCOMP printed page 576.
+
+7649       
+7650       
+7651       
+7652       
+The SAS System
+
+7653       

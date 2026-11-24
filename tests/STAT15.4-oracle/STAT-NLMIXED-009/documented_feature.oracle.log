@@ -1,0 +1,62 @@
+The SAS System
+
+778        
+779        /* STAT-NLMIXED-009: NLMIXED — BOUNDS / PARMS / Restricting the Step Length
+780         * Source: S154 / Chapter 89 / `BOUNDS Statement` (PDF pp. 7116–7117); S154 / Chapter 89 / `PARMS Statement` (PDF pp. 7122–7123); S154 / Chapter
+780      ! 89 / `Restricting the Step Length` (PDF pp. 7156–7157).
+781         * Discriminates: Explicit PARMS starting values and lower BOUNDS on positive variance parameters.
+782         */
+783        options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+783      ! validmemname=compatible locale=en_US;
+784        %let syscc=0;
+785        title; footnote;
+786        ods _all_ close;
+787        ods listing gpath="%sysfunc(pathname(work))";
+788        ods graphics off;
+789        proc datasets library=work kill nolist;
+NOTE: Deleting WORK.PREDICTED (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.REPEATED (memtype=DATA).
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+789      !                                         quit;
+
+
+790        ods path work.templat(update) sashelp.tmplmst(read);
+791        
+792        data repeated;
+793        call streaminit(314159);
+794        do cluster=1 to 8;
+795         u0=0.5*rand('normal');
+796         do j=1 to 4;
+797         person=cluster*10+j; v0=0.3*rand('normal');
+798         do visit=1 to 3;
+799         x=visit/3; y=2+1.2*x+u0+v0+0.4*rand('normal'); output;
+800         end; end;
+801        end;
+802        drop u0 v0 j;
+803        run;
+
+NOTE: The data set WORK.REPEATED has 96 observations and 5 variables.
+
+804        proc nlmixed data=repeated qpoints=5 maxiter=100;
+805        parms b0=2 b1=1 s1=0.25 se=0.25;
+806        bounds s1 >= 0.001, se >= 0.001;
+807        mu=b0+b1*x+u;
+808        model y ~ normal(mu,se);
+809        random u ~ normal(0,s1) subject=cluster;
+810        run;
+
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The PROCEDURE NLMIXED printed page 30.
+
+811        
+812        
+813        
+814        
+The SAS System
+
+815        

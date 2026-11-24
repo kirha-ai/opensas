@@ -1,0 +1,79 @@
+The SAS System
+
+4948       
+4949       /* STAT-HPMIXED-007: HPMIXED — REPEATED
+4950        * Source: S154 / Chapter 62 / `REPEATED Statement` (PDF pp. 4839–4842).
+4951        * Discriminates: Example 62.5: Repeated Measures; explicit statements: REPEATED
+4952        */
+4953       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+4953     ! validmemname=compatible locale=en_US;
+4954       %let syscc=0;
+4955       title; footnote;
+4956       ods _all_ close;
+4957       ods listing gpath="%sysfunc(pathname(work))";
+4958       ods graphics off;
+4959       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.HEIGHTS (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+4959     !                                         quit;
+
+
+4960       ods path work.templat(update) sashelp.tmplmst(read);
+4961       
+4962       data pr;
+4963       input Person Gender $ y1 y2 y3 y4;
+4964       y=y1;
+4965       Time=1;
+4966       Age=8;
+4967       output;
+4968       y=y2;
+4969       Time=2;
+4970       Age=10;
+4971       output;
+4972       y=y3;
+4973       Time=3;
+4974       Age=12;
+4975       output;
+4976       y=y4;
+4977       Time=4;
+4978       Age=14;
+4979       output;
+4980       drop y1-y4;
+4981       datalines;
+
+NOTE: The data set WORK.PR has 108 observations and 5 variables.
+
+5009       ;
+5010       proc hpmixed data=pr;
+5011       class Person Gender Time;
+5012       model y = Gender Age Gender*Age;
+5013       test Gender Age Gender*Age;
+5014       repeated Time / type=un subject=Person r;
+5015       run;
+
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The PROCEDURE HPMIXED printed page 213.
+
+5016       proc hpmixed data=pr;
+5017       class Person Gender Time;
+5018       model y = Gender Age Gender*Age;
+5019       repeated Time / type=ar(1) sub=Person r;
+5020       run;
+
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The PROCEDURE HPMIXED printed page 214.
+
+5021       
+5022       
+5023       
+5024       
+The SAS System
+
+5025       

@@ -1,0 +1,241 @@
+The SAS System
+
+5355       
+5356       /* STAT-ANOVA-010: ANOVA — ODS Graphics
+5357        * Source: S154 / Chapter 29 / `ODS Graphics` (PDF pp. 1143–1144).
+5358        * Discriminates: Getting Started: ANOVA Procedure
+5359        */
+5360       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+5360     ! validmemname=compatible locale=en_US;
+5361       %let syscc=0;
+5362       title; footnote;
+5363       ods _all_ close;
+5364       ods listing gpath="%sysfunc(pathname(work))";
+5365       ods graphics off;
+
+NOTE: The PROCEDURE ANOVA printed pages 401-404.
+
+5366       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.CLOVER (memtype=DATA).
+NOTE: Deleting WORK.RCB (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+5366     !                                         quit;
+
+
+5367       ods path work.templat(update) sashelp.tmplmst(read);
+5368       
+5369       ods graphics on;
+5370       ods trace on;
+5371       ods trace on;
+5372       title1 'Nitrogen Content of Red Clover Plants';
+5373       data Clover;
+5374       input Strain $ Nitrogen @@;
+5375       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.CLOVER has 30 observations and 2 variables.
+
+5382       ;
+5383       ods graphics on;
+5384       proc anova data = Clover;
+5385       class Strain;
+5386       model Nitrogen = Strain;
+5387       means Strain / tukey;
+5388       run;
+
+
+Output Added:
+-------------
+Name:       ClassLevels
+Label:      Class Levels
+Template:   STAT.GLM.ClassLevels
+Path:       ANOVA.Data.ClassLevels
+-------------
+
+Output Added:
+-------------
+Name:       NObs
+Label:      Number of Observations
+Template:   STAT.GLM.NObsNotitle
+Path:       ANOVA.Data.NObs
+-------------
+
+Output Added:
+-------------
+Name:       OverallANOVA
+Label:      Overall ANOVA
+Template:   stat.GLM.OverallANOVA
+Path:       ANOVA.ANOVA.Nitrogen.OverallANOVA
+-------------
+
+Output Added:
+-------------
+Name:       FitStatistics
+Label:      Fit Statistics
+Template:   stat.GLM.FitStatistics
+Path:       ANOVA.ANOVA.Nitrogen.FitStatistics
+-------------
+
+Output Added:
+-------------
+Name:       ModelANOVA
+Label:      Anova Model ANOVA
+Template:   stat.GLM.Tests
+Path:       ANOVA.ANOVA.Nitrogen.ModelANOVA
+-------------
+
+Output Added:
+-------------
+Name:       BoxPlot
+Label:      Box Plot
+Template:   Stat.GLM.Graphics.BoxPlot
+Path:       ANOVA.ANOVA.Nitrogen.BoxPlot
+-------------
+
+Output Added:
+-------------
+Name:       BoxPlot
+Label:      Distribution of Nitrogen by Strain
+Template:   Stat.GLM.Graphics.MeansBoxPlot
+Path:       ANOVA.Means.Strain.Nitrogen.BoxPlot
+-------------
+
+Output Added:
+-------------
+Name:       MCLinesInfo
+Label:      Information
+Template:   stat.GLM.SquashFact
+Path:       ANOVA.Means.Strain.Nitrogen.MCLines.Tukey.MCLinesInfo
+-------------
+
+Output Added:
+-------------
+Name:       LinesPlot
+Template:   Stat.GLM.Graphics.MeanLinesPlot
+Path:       ANOVA.Means.Strain.Nitrogen.MCLines.Tukey.LinesPlot
+-------------
+5389       title1 'Randomized Complete Block';
+
+NOTE: The PROCEDURE ANOVA printed pages 405-407.
+
+5390       data RCB;
+5391       input Block Treatment $ Yield Worth @@;
+5392       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.RCB has 9 observations and 4 variables.
+
+5396       ;
+5397       proc anova data=RCB;
+5398       class Block Treatment;
+5399       model Yield Worth=Block Treatment;
+5400       run;
+
+
+Output Added:
+-------------
+Name:       ClassLevels
+Label:      Class Levels
+Template:   STAT.GLM.ClassLevels
+Path:       ANOVA.Data.ClassLevels
+-------------
+
+Output Added:
+-------------
+Name:       NObs
+Label:      Number of Observations
+Template:   STAT.GLM.NObsNotitle
+Path:       ANOVA.Data.NObs
+-------------
+
+Output Added:
+-------------
+Name:       OverallANOVA
+Label:      Overall ANOVA
+Template:   stat.GLM.OverallANOVA
+Path:       ANOVA.ANOVA.Yield.OverallANOVA
+-------------
+
+Output Added:
+-------------
+Name:       FitStatistics
+Label:      Fit Statistics
+Template:   stat.GLM.FitStatistics
+Path:       ANOVA.ANOVA.Yield.FitStatistics
+-------------
+
+Output Added:
+-------------
+Name:       ModelANOVA
+Label:      Anova Model ANOVA
+Template:   stat.GLM.Tests
+Path:       ANOVA.ANOVA.Yield.ModelANOVA
+-------------
+
+Output Added:
+-------------
+Name:       OverallANOVA
+Label:      Overall ANOVA
+Template:   stat.GLM.OverallANOVA
+Path:       ANOVA.ANOVA.Worth.OverallANOVA
+-------------
+
+Output Added:
+-------------
+Name:       FitStatistics
+Label:      Fit Statistics
+Template:   stat.GLM.FitStatistics
+Path:       ANOVA.ANOVA.Worth.FitStatistics
+-------------
+
+Output Added:
+-------------
+Name:       ModelANOVA
+Label:      Anova Model ANOVA
+Template:   stat.GLM.Tests
+Path:       ANOVA.ANOVA.Worth.ModelANOVA
+-------------
+5401       means Treatment;
+5402       run;
+
+
+Output Added:
+-------------
+Name:       BoxPlot
+Label:      Distribution of Yield by Treatment
+Template:   Stat.GLM.Graphics.MeansBoxPlot
+Path:       ANOVA.Means.Treatment.Yield.BoxPlot
+-------------
+
+Output Added:
+-------------
+Name:       BoxPlot
+Label:      Distribution of Worth by Treatment
+Template:   Stat.GLM.Graphics.MeansBoxPlot
+Path:       ANOVA.Means.Treatment.Worth.BoxPlot
+-------------
+
+Output Added:
+-------------
+Name:       Means
+Label:      Means
+Template:   stat.GLM.Means
+Path:       ANOVA.Means.Treatment.Means
+-------------
+5403       
+5404       ods trace off;
+5405       
+5406       ods trace off; ods graphics off;
+5407       
+5408       
+5409       
+5410       
+The SAS System
+
+5411       

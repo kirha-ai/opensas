@@ -1,0 +1,168 @@
+
+Unbalanced Two-Way Analysis of Variance
+
+The GLM Procedure
+
+    Class Level Information
+ 
+Class         Levels    Values
+
+drug               4    1 2 3 4 
+
+disease            3    1 2 3   
+
+
+Number of Observations Read          72
+Number of Observations Used          58
+
+Unbalanced Two-Way Analysis of Variance
+
+The GLM Procedure
+ 
+Dependent Variable: y   
+
+                                        Sum of
+Source                      DF         Squares     Mean Square    F Value    Pr > F
+
+Model                       11     4259.338506      387.212591       3.51    0.0013
+
+Error                       46     5080.816667      110.452536                     
+
+Corrected Total             57     9340.155172                                     
+
+
+R-Square     Coeff Var      Root MSE        y Mean
+
+0.456024      55.66750      10.50964      18.87931
+
+
+Source                      DF       Type I SS     Mean Square    F Value    Pr > F
+
+drug                         3     3133.238506     1044.412835       9.46    <.0001
+disease                      2      418.833741      209.416870       1.90    0.1617
+drug*disease                 6      707.266259      117.877710       1.07    0.3958
+
+
+Source                      DF      Type II SS     Mean Square    F Value    Pr > F
+
+drug                         3     3063.432863     1021.144288       9.25    <.0001
+disease                      2      418.833741      209.416870       1.90    0.1617
+drug*disease                 6      707.266259      117.877710       1.07    0.3958
+
+
+Source                      DF     Type III SS     Mean Square    F Value    Pr > F
+
+drug                         3     2997.471860      999.157287       9.05    <.0001
+disease                      2      415.873046      207.936523       1.88    0.1637
+drug*disease                 6      707.266259      117.877710       1.07    0.3958
+
+
+Source                      DF      Type IV SS     Mean Square    F Value    Pr > F
+
+drug                         3     2997.471860      999.157287       9.05    <.0001
+disease                      2      415.873046      207.936523       1.88    0.1637
+drug*disease                 6      707.266259      117.877710       1.07    0.3958
+
+Unbalanced Two-Way Analysis of Variance
+
+The GLM Procedure
+Least Squares Means
+Adjustment for Multiple Comparisons: Tukey-Kramer
+
+                          LSMEAN
+drug        y LSMEAN      Number
+
+1         25.9944444           1
+2         26.5555556           2
+3          9.7444444           3
+4         13.5444444           4
+
+
+            Least Squares Means for effect drug
+            Pr > |t| for H0: LSMean(i)=LSMean(j)
+                              
+                   Dependent Variable: y
+ 
+i/j              1             2             3             4
+
+   1                      0.9989        0.0016        0.0107
+   2        0.9989                      0.0011        0.0071
+   3        0.0016        0.0011                      0.7870
+   4        0.0107        0.0071        0.7870              
+
+Unbalanced Two-Way Analysis of Variance
+
+The GLM Procedure
+
+    Class Level Information
+ 
+Class         Levels    Values
+
+drug               4    1 2 3 4 
+
+disease            3    1 2 3   
+
+
+Number of Observations Read          72
+Number of Observations Used          58
+
+Unbalanced Two-Way Analysis of Variance
+
+The GLM Procedure
+ 
+Dependent Variable: y   
+
+                                        Sum of
+Source                      DF         Squares     Mean Square    F Value    Pr > F
+
+Model                       11     4259.338506      387.212591       3.51    0.0013
+
+Error                       46     5080.816667      110.452536                     
+
+Corrected Total             57     9340.155172                                     
+
+
+R-Square     Coeff Var      Root MSE        y Mean
+
+0.456024      55.66750      10.50964      18.87931
+
+
+Source                      DF       Type I SS     Mean Square    F Value    Pr > F
+
+drug                         3     3133.238506     1044.412835       9.46    <.0001
+disease                      2      418.833741      209.416870       1.90    0.1617
+drug*disease                 6      707.266259      117.877710       1.07    0.3958
+
+
+Source                      DF     Type III SS     Mean Square    F Value    Pr > F
+
+drug                         3     2997.471860      999.157287       9.05    <.0001
+disease                      2      415.873046      207.936523       1.88    0.1637
+drug*disease                 6      707.266259      117.877710       1.07    0.3958
+
+Unbalanced Two-Way Analysis of Variance
+
+The GLM Procedure
+Least Squares Means
+Adjustment for Multiple Comparisons: Tukey-Kramer
+
+                          LSMEAN
+drug        y LSMEAN      Number
+
+1         25.9944444           1
+2         26.5555556           2
+3          9.7444444           3
+4         13.5444444           4
+
+
+            Least Squares Means for effect drug
+            Pr > |t| for H0: LSMean(i)=LSMean(j)
+                              
+                   Dependent Variable: y
+ 
+i/j              1             2             3             4
+
+   1                      0.9989        0.0016        0.0107
+   2        0.9989                      0.0011        0.0071
+   3        0.0016        0.0011                      0.7870
+   4        0.0107        0.0071        0.7870              

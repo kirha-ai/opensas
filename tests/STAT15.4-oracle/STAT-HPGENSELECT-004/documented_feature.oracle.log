@@ -1,0 +1,54 @@
+The SAS System
+
+8704       
+8705       /* STAT-HPGENSELECT-004: HPGENSELECT — Exponential Family Distributions / Response Distributions / Response Probability Distribution Functions
+8706        * Source: S154 / Chapter 59 / `Exponential Family Distributions` (PDF p. 4654); S154 / Chapter 59 / `Response Distributions` (PDF pp. 4654–4656);
+8706     ! S154 / Chapter 59 / `Response Probability Distribution Functions` (PDF pp. 4656–4659).
+8707        * Discriminates: Getting Started: HPGENSELECT Procedure
+8708        */
+8709       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+8709     ! validmemname=compatible locale=en_US;
+8710       %let syscc=0;
+8711       title; footnote;
+8712       ods _all_ close;
+8713       ods listing gpath="%sysfunc(pathname(work))";
+8714       ods graphics off;
+8715       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.GETSTARTED (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+8715     !                                         quit;
+
+
+8716       ods path work.templat(update) sashelp.tmplmst(read);
+8717       
+8718       data getStarted;
+8719       input C1-C5 Y Total;
+8720       datalines;
+
+NOTE: The data set WORK.GETSTARTED has 100 observations and 7 variables.
+
+8821       ;
+8822       proc hpgenselect data=getStarted;
+8823       class C1-C5;
+8824       model Y = C1-C5 / Distribution=Poisson Link=Log;
+8825       run;
+
+NOTE: The HPGENSELECT procedure is executing in single-machine mode.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: There were 100 observations read from the data set WORK.GETSTARTED.
+NOTE: The PROCEDURE HPGENSELECT printed page 651.
+
+8826       
+8827       
+8828       
+8829       
+The SAS System
+
+8830       

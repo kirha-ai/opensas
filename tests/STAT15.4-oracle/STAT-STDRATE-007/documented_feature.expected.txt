@@ -1,0 +1,68 @@
+
+The STDRATE Procedure
+
+           Standardization Information
+
+Data Set                         WORK.FLORIDA_C43
+Reference Data Set                    WORK.US_C43
+Method                   Indirect Standardization
+Statistic                                    Rate
+Number of Strata                               10
+Rate Multiplier                            100000
+
+The STDRATE Procedure
+
+                                               Indirectly Standardized Strata Statistics 
+                                                        Rate Multiplier = 100000
+ 
+                    ----------------------------Study Population----------------------------  ------Reference Population------
+Stratum             Observed  ----Population-Time---     Crude  Standard      95% Normal      ----Population-Time---     Crude  Expected
+  Index    Age        Events       Value  Proportion      Rate     Error   Confidence Limits       Value  Proportion      Rate    Events
+
+      1    00-04           0      953785      0.0609    0.0000   0.00000    0.0000    0.0000    19175798      0.0681    0.0000     0.000
+      2    05-14           0     1997935      0.1276    0.0000   0.00000    0.0000    0.0000    41077577      0.1460    0.0024     0.049
+      3    15-24           4     1885014      0.1204    0.2122   0.10610    0.0042    0.4202    39183891      0.1392    0.1046     1.972
+      4    25-34          14     1957573      0.1250    0.7152   0.19114    0.3405    1.0898    39892024      0.1418    0.4663     9.127
+      5    35-44          43     2356649      0.1505    1.8246   0.27825    1.2793    2.3700    45148527      0.1604    1.3865    32.676
+      6    45-54          72     2088000      0.1333    3.4483   0.40638    2.6518    4.2448    37677952      0.1339    3.1822    66.445
+      7    55-64          70     1548371      0.0989    4.5209   0.54035    3.4618    5.5799    24274684      0.0863    5.3677    83.112
+      8    65-74         126     1447432      0.0924    8.7051   0.77551    7.1851   10.2250    18390986      0.0654    8.9011   128.837
+      9    75-84         136     1087524      0.0695   12.5055   1.07234   10.4037   14.6072    12361180      0.0439   13.1379   142.878
+     10    85+            73      335944      0.0215   21.7298   2.54328   16.7451   26.7146     4239587      0.0151   18.9405    63.630
+
+
+                                         Strata SMR Estimates 
+                                       Rate Multiplier = 100000
+ 
+                    ---Study Population--  Reference
+Stratum             Observed  Population-      Crude  Expected            Standard      95% Normal
+  Index    Age        Events         Time       Rate    Events       SMR     Error   Confidence Limits
+
+      1    00-04           0       953785     0.0000     0.000     .         .         .         .    
+      2    05-14           0      1997935     0.0024     0.049    0.0000     .         .         .    
+      3    15-24           4      1885014     0.1046     1.972    2.0280    1.0140    0.0406    4.0154
+      4    25-34          14      1957573     0.4663     9.127    1.5339    0.4099    0.7304    2.3373
+      5    35-44          43      2356649     1.3865    32.676    1.3160    0.2007    0.9226    1.7093
+      6    45-54          72      2088000     3.1822    66.445    1.0836    0.1277    0.8333    1.3339
+      7    55-64          70      1548371     5.3677    83.112    0.8422    0.1007    0.6449    1.0395
+      8    65-74         126      1447432     8.9011   128.837    0.9780    0.0871    0.8072    1.1487
+      9    75-84         136      1087524    13.1379   142.878    0.9519    0.0816    0.7919    1.1118
+     10    85+            73       335944    18.9405    63.630    1.1473    0.1343    0.8841    1.4104
+
+
+                        Standardized Morbidity/Mortality Ratio
+ 
+Observed  Expected            Standard         95% Normal
+  Events    Events       SMR     Error      Confidence Limits           Z    Pr > |Z|
+
+     538   528.726    1.0175    0.0439      0.9316      1.1035       0.40      0.6893
+
+
+                                Indirectly Standardized Rate Estimates 
+                                       Rate Multiplier = 100000
+ 
+--------Study Population-------  Reference                      -----------Standardized Rate----------
+Observed  Population-     Crude      Crude  Expected                      Standard      95% Normal
+  Events         Time      Rate       Rate    Events       SMR  Estimate     Error   Confidence Limits
+
+     538     15658227    3.4359     2.6366   528.726    1.0175    2.6829    0.1157    2.4562    2.9096

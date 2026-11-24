@@ -1,0 +1,50 @@
+The SAS System
+
+6872       
+6873       /* STAT-HPSPLIT-015: HPSPLIT — Official examples and feature integration regression
+6874        * Source: S154 / Chapter 68 / `Examples: HPSPLIT Procedure` (PDF pp. 5119–5147).
+6875        * Discriminates: Example 68.3: Creating a Regression Tree
+6876        */
+6877       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+6877     ! validmemname=compatible locale=en_US;
+6878       %let syscc=0;
+6879       title; footnote;
+6880       ods _all_ close;
+6881       ods listing gpath="%sysfunc(pathname(work))";
+6882       ods graphics off;
+6883       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.HPSPLOUT (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+6883     !                                         quit;
+
+
+6884       ods path work.templat(update) sashelp.tmplmst(read);
+6885       
+6886       ods graphics on;
+6887       proc hpsplit data=sashelp.baseball seed=123;
+6888       class league division;
+6889       model logSalary = nAtBat nHits nHome nRuns nRBI nBB
+6890       yrMajor crAtBat crHits crHome crRuns crRbi
+6891       crBB league division nOuts nAssts nError;
+6892       output out=hpsplout;
+6893       run;
+
+NOTE: The ASSIGNMISSING= option has not been specified.  Because of this, all observations with missing values in the explanatory variables will be excluded 
+      from tree construction.
+NOTE: The HPSPLIT procedure is executing in single-machine mode.
+NOTE: Cross-validating using 10 folds.
+NOTE: There were 322 observations read from the data set SASHELP.BASEBALL.
+NOTE: The data set WORK.HPSPLOUT has 322 observations and 4 variables.
+NOTE: The PROCEDURE HPSPLIT printed pages 495-496.
+
+6894       
+6895       
+6896       
+6897       
+The SAS System
+
+6898       

@@ -1,0 +1,81 @@
+The SAS System
+
+6023       
+6024       /* STAT-NLIN-012: NLIN — OUTPUT / Output Data Sets
+6025        * Source: S154 / Chapter 88 / `OUTPUT Statement` (PDF pp. 7004–7008); S154 / Chapter 88 / `Output Data Sets` (PDF pp. 7033–7034).
+6026        * Discriminates: Example 88.2: Iteratively Reweighted Least Squares; explicit statements: OUTPUT
+6027        */
+6028       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+6028     ! validmemname=compatible locale=en_US;
+6029       %let syscc=0;
+6030       title; footnote;
+6031       ods _all_ close;
+6032       ods listing gpath="%sysfunc(pathname(work))";
+6033       ods graphics off;
+6034       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.CONTRIVED (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+6034     !                                         quit;
+
+
+6035       ods path work.templat(update) sashelp.tmplmst(read);
+6036       
+6037       data uspop;
+6038       input pop :6.3 @@;
+6039       retain year 1780;
+6040       year = year+10;
+6041       yearsq = year*year;
+6042       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.USPOP has 21 observations and 3 variables.
+
+6046       ;
+6047       title 'Beaton/Tukey Biweight Robust Regression using IRLS';
+6048       proc nlin data=uspop nohalve;
+6049       parms b0=20450.43 b1=-22.7806 b2=.0063456;
+6050       model pop=b0+b1*year+b2*year*year;
+6051       resid = pop-model.pop;
+6052       sigma = 2;
+6053       k = 4.685;
+6054       if abs(resid/sigma)<=k then _weight_=(1-(resid / (sigma*k))**2)**2;
+6055       else _weight_=0;
+6056       output out=c r=rbi;
+6057       run;
+
+NOTE: DER.b0 not initialized or missing. It will be computed automatically.
+NOTE: DER.b1 not initialized or missing. It will be computed automatically.
+NOTE: DER.b2 not initialized or missing. It will be computed automatically.
+NOTE: Convergence criterion met.
+NOTE: The data set WORK.C has 21 observations and 4 variables.
+NOTE: The PROCEDURE NLIN printed page 397.
+
+6058       proc robustreg data=uspop method=m(scale=2);
+6059       model pop = year year*year;
+6060       output out=weights weight=w;
+6061       run;
+
+NOTE: Algorithm converged for the M estimates.
+NOTE: Algorithm converged for the location-scale M estimates.
+NOTE: The data set WORK.WEIGHTS has 21 observations and 4 variables.
+NOTE: The PROCEDURE ROBUSTREG printed page 398.
+
+6062       proc print data=weights;
+6063       run;
+
+NOTE: There were 21 observations read from the data set WORK.WEIGHTS.
+NOTE: The PROCEDURE PRINT printed page 399.
+
+6064       
+6065       
+6066       
+6067       
+The SAS System
+
+6068       

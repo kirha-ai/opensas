@@ -1,0 +1,65 @@
+The SAS System
+
+536        
+537        /* STAT-DISCRIM-001: DISCRIM — Data input, variable roles, and basic options
+538         * Source: S154 / Chapter 42 / `PROC DISCRIM Statement` (PDF pp. 2652–2660); S154 / Chapter 42 / `BY Statement` (PDF pp. 2660–2661); S154 /
+538      ! Chapter 42 / `CLASS Statement` (PDF p. 2661); S154 / Chapter 42 / `FREQ Statement` (PDF pp. 2661–2662); S154 / Chapter 42 / `ID Statement` (PDF p.
+538      ! 2662); S154 / Chapter 42 / `VAR Statement` (PDF pp. 2663–2664); S154 / Chapter 42 / `WEIGHT Statement` (PDF p. 2664); S154 / Chapter 42 / `Missing
+538      ! Values` (PDF p. 2664); S154 / Chapter 42 / `Input Data Sets` (PDF pp. 2675–2676).
+539         * Discriminates: Two explicit BY groups contain identical inputs, exposing group boundaries and per-group results.
+540         */
+541        options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+541      ! validmemname=compatible locale=en_US;
+542        %let syscc=0;
+543        title; footnote;
+544        ods _all_ close;
+545        ods listing gpath="%sysfunc(pathname(work))";
+546        ods graphics off;
+547        proc datasets library=work kill nolist;
+NOTE: Deleting WORK.PHD (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.RESULTS (memtype=DATA).
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK._ORACLE_INPUT (memtype=DATA).
+547      !                                         quit;
+
+
+548        ods path work.templat(update) sashelp.tmplmst(read);
+549        
+550        title 'Fish Measurement Data';
+551        data _oracle_input; set sashelp.fish; do _oracle_by=1 to 2; output; end; run;
+
+NOTE: There were 159 observations read from the data set SASHELP.FISH.
+NOTE: The data set WORK._ORACLE_INPUT has 318 observations and 8 variables.
+
+552        proc sort data=_oracle_input; by _oracle_by; run;
+
+NOTE: There were 318 observations read from the data set WORK._ORACLE_INPUT.
+NOTE: The data set WORK._ORACLE_INPUT has 318 observations and 8 variables.
+
+553        proc discrim data=_oracle_input;
+554        by _oracle_by;
+555        class Species;
+556        run;
+
+WARNING: 1 observations in DATA= data set or BY group will not be included in the analysis due to missing values.
+WARNING: A total of 1 of the 159 observations in the DATA= data set were excluded (frequency sum = 158).
+NOTE: The above message was for the following BY group:
+      _oracle_by=1
+WARNING: 1 observations in DATA= data set or BY group will not be included in the analysis due to missing values.
+WARNING: A total of 1 of the 159 observations in the DATA= data set were excluded (frequency sum = 158).
+NOTE: The above message was for the following BY group:
+      _oracle_by=2
+NOTE: There were 318 observations read from the data set WORK._ORACLE_INPUT.
+NOTE: The PROCEDURE DISCRIM printed pages 63-68.
+
+557        
+558        
+559        
+560        
+The SAS System
+
+561        

@@ -1,0 +1,63 @@
+The SAS System
+
+29498      
+29499      /* STAT-VARCOMP-001: VARCOMP — Data input, variable roles, and basic options
+29500       * Source: S154 / Chapter 130 / `PROC VARCOMP Statement` (PDF pp. 10730–10731); S154 / Chapter 130 / `BY Statement` (PDF p. 10731); S154 / Chapter
+29500    ! 130 / `Missing Values` (PDF p. 10733).
+29501       * Discriminates: Two explicit BY groups contain identical inputs, exposing group boundaries and per-group results.
+29502       */
+29503      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+29503    ! validmemname=compatible locale=en_US;
+29504      %let syscc=0;
+29505      title; footnote;
+29506      ods _all_ close;
+29507      ods listing gpath="%sysfunc(pathname(work))";
+29508      ods graphics off;
+29509      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.CURE (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+29509    !                                         quit;
+
+
+29510      ods path work.templat(update) sashelp.tmplmst(read);
+29511      
+29512      data Cure;
+29513      input Lab Temp Batch $ Cure @@;
+29514      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.CURE has 108 observations and 4 variables.
+
+29542      ;
+29543      title 'Analyzing the Cure Rate of Rubber';
+29544      data _oracle_input; set cure; do _oracle_by=1 to 2; output; end; run;
+
+NOTE: There were 108 observations read from the data set WORK.CURE.
+NOTE: The data set WORK._ORACLE_INPUT has 216 observations and 5 variables.
+
+29545      proc sort data=_oracle_input; by _oracle_by; run;
+
+NOTE: There were 216 observations read from the data set WORK._ORACLE_INPUT.
+NOTE: The data set WORK._ORACLE_INPUT has 216 observations and 5 variables.
+
+29546      proc varcomp method=reml data=_oracle_input;
+29547      by _oracle_by;
+29548      class temp lab batch;
+29549      model cure=temp|lab batch(lab temp) / fixed=1;
+29550      run;
+
+NOTE: There were 216 observations read from the data set WORK._ORACLE_INPUT.
+NOTE: The PROCEDURE VARCOMP printed pages 1802-1803.
+
+29551      
+29552      
+29553      
+29554      
+The SAS System
+
+29555      

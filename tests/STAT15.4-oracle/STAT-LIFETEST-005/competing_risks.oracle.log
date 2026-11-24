@@ -1,0 +1,50 @@
+The SAS System
+
+523        
+524        /* STAT-LIFETEST-005: LIFETEST — Analysis of Competing-Risks Data
+525         * Source: S154 / Chapter 77 / `Analysis of Competing-Risks Data` (PDF pp. 5687–5690).
+526         * Discriminates: Cumulative incidence with a censoring code, two failure causes, and two strata.
+527         */
+528        options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+528      ! validmemname=compatible locale=en_US;
+529        %let syscc=0;
+530        title; footnote;
+531        ods _all_ close;
+532        ods listing gpath="%sysfunc(pathname(work))";
+533        ods graphics off;
+534        proc datasets library=work kill nolist;
+NOTE: Deleting WORK.COLDS (memtype=DATA).
+NOTE: Deleting WORK.GROUPED (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+534      !                                         quit;
+
+
+535        ods path work.templat(update) sashelp.tmplmst(read);
+536        
+537        data survival;
+538        input time status group $;
+539        datalines;
+
+NOTE: The data set WORK.SURVIVAL has 12 observations and 3 variables.
+
+552        ;
+553        run;
+554        proc lifetest data=survival timelist=1 2 4 6;
+555        time time*status(0) / eventcode=1;
+556        strata group;
+557        run;
+
+NOTE: The PROCEDURE LIFETEST printed page 21.
+
+558        
+559        
+560        
+561        
+The SAS System
+
+562        

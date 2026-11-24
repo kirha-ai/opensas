@@ -1,0 +1,68 @@
+The SAS System
+
+393        
+394        /* STAT-NPAR1WAY-001: NPAR1WAY — Data input, variable roles, and basic options
+395         * Source: S154 / Chapter 90 / `PROC NPAR1WAY Statement` (PDF pp. 7215–7224); S154 / Chapter 90 / `BY Statement` (PDF p. 7224); S154 / Chapter 90 /
+395      !  `CLASS Statement` (PDF pp. 7224–7225); S154 / Chapter 90 / `FREQ Statement` (PDF pp. 7229–7230); S154 / Chapter 90 / `STRATA Statement` (PDF pp.
+395      !  7233–7235); S154 / Chapter 90 / `VAR Statement` (PDF p. 7235); S154 / Chapter 90 / `Missing Values` (PDF pp. 7235–7236).
+396         * Discriminates: Verified default procedure context; explicit statements: CLASS, VAR
+397         */
+398        options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+398      ! validmemname=compatible locale=en_US;
+399        %let syscc=0;
+400        title; footnote;
+401        ods _all_ close;
+402        ods listing gpath="%sysfunc(pathname(work))";
+403        ods graphics off;
+404        proc datasets library=work kill nolist;
+NOTE: Deleting WORK.NESTED (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+404      !                                         quit;
+
+
+405        ods path work.templat(update) sashelp.tmplmst(read);
+406        
+407        data Gossypol;
+408        input Dose n;
+409        do i=1 to n;
+410        input Gain @@;
+411        output;
+412        end;
+413        datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.GOSSYPOL has 67 observations and 4 variables.
+
+424        ;
+425        proc npar1way data=Gossypol;
+426        class Dose;
+427        var Gain;
+428        run;
+
+NOTE: The PROCEDURE NPAR1WAY printed pages 9-14.
+
+429        ods graphics on;
+430        proc npar1way data=Gossypol plots(only)=wilcoxonboxplot;
+431        class Dose;
+432        var Gain;
+433        run;
+
+NOTE: The PROCEDURE NPAR1WAY printed pages 15-20.
+
+434        ods graphics off;
+435        proc npar1way data=Gossypol;
+436        where Dose <= .04;
+437        class Dose;
+438        var Gain;
+439        run;
+
+NOTE: The PROCEDURE NPAR1WAY printed pages 21-26.
+
+440        
+441        
+442        
+443        
+The SAS System
+
+444        

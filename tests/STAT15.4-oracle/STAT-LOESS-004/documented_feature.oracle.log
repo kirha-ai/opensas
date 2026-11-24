@@ -1,0 +1,101 @@
+The SAS System
+
+13158      
+13159      /* STAT-LOESS-004: LOESS — Data Scaling / Direct versus Interpolated Fitting / k-d Trees and Blending
+13160       * Source: S154 / Chapter 78 / `Data Scaling` (PDF pp. 5786–5787); S154 / Chapter 78 / `Direct versus Interpolated Fitting` (PDF p. 5787); S154 /
+13160    ! Chapter 78 / `k-d Trees and Blending` (PDF pp. 5787–5788).
+13161       * Discriminates: Getting Started: LOESS Procedure
+13162       */
+13163      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+13163    ! validmemname=compatible locale=en_US;
+13164      %let syscc=0;
+13165      title; footnote;
+13166      ods _all_ close;
+13167      ods listing gpath="%sysfunc(pathname(work))";
+13168      ods graphics off;
+13169      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.MELANOMA (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.RESULTS (memtype=DATA).
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+13169    !                                         quit;
+
+
+13170      ods path work.templat(update) sashelp.tmplmst(read);
+13171      
+13172      data Melanoma;
+13173      input Year Incidences @@;
+13174      format Year d4.0;
+13175      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.MELANOMA has 37 observations and 2 variables.
+
+13186      ;
+13187      proc sgplot data=Melanoma;
+13188      scatter y=Incidences x=Year;
+13189      run;
+
+NOTE: Listing image output written to /saswork/SAS_work7EA200001C34_odaws01-euw1.oda.sas.com/SAS_work29EF00001C34_odaws01-euw1.oda.sas.com/SGPlot18.png.
+NOTE: There were 37 observations read from the data set WORK.MELANOMA.
+
+13190      ods graphics on;
+13191      proc loess data=Melanoma;
+13192      model Incidences=Year;
+13193      run;
+
+NOTE: The PROCEDURE LOESS printed pages 981-983.
+
+13194      proc loess data=Melanoma;
+13195      model Incidences=Year / details(ModelSummary OutputStatistics);
+13196      run;
+
+NOTE: The PROCEDURE LOESS printed pages 984-987.
+
+13197      proc loess data=Melanoma;
+13198      model Incidences=Year/smooth=0.1 0.25 0.4 0.6 residual;
+13199      ods output OutputStatistics=Results;
+13200      run;
+
+WARNING: At smoothing parameter 0.1, the local SSCP matrix for 35 fit point(s) is numerically singular. The fitted value and standard errors at those points 
+         are not uniquely defined.
+WARNING: There is insufficient variation in the data to create a density plot.
+NOTE: The data set WORK.RESULTS has 148 observations and 6 variables.
+NOTE: The PROCEDURE LOESS printed pages 988-992.
+
+13201      proc print data=Results(obs=5);
+13202      id obs;
+13203      run;
+
+NOTE: There were 5 observations read from the data set WORK.RESULTS.
+NOTE: The PROCEDURE PRINT printed page 993.
+
+13204      proc loess data=Melanoma plots=ResidualsBySmooth(smooth);
+13205      model Incidences=Year/smooth=0.1 0.25 0.4 0.6;
+13206      run;
+
+WARNING: At smoothing parameter 0.1, the local SSCP matrix for 35 fit point(s) is numerically singular. The fitted value and standard errors at those points 
+         are not uniquely defined.
+WARNING: There is insufficient variation in the data to create a density plot.
+NOTE: The PROCEDURE LOESS printed pages 994-998.
+
+13207      proc loess data=Melanoma;
+13208      model Incidences=Year/clm alpha=0.1;
+13209      run;
+
+NOTE: The DFMETHOD=EXACT option is implicitly selected when the STD, CLM, or T option is used.
+NOTE: The PROCEDURE LOESS printed pages 999-1001.
+
+13210      ods graphics off;
+13211      run;
+13212      quit;
+13213      
+13214      
+13215      
+13216      
+The SAS System
+
+13217      

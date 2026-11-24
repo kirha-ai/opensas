@@ -1,0 +1,97 @@
+The SAS System
+
+30436      
+30437      /* STAT-VARIOGRAM-008: VARIOGRAM — Computation of the Distribution Distance Classes / Semivariance Computation / Empirical Semivariograms and
+30437    ! Surface Trends
+30438       * Source: S154 / Chapter 131 / `Computation of the Distribution Distance Classes` (PDF pp. 10813–10817); S154 / Chapter 131 / `Semivariance
+30438    ! Computation` (PDF pp. 10817–10818); S154 / Chapter 131 / `Empirical Semivariograms and Surface Trends` (PDF pp. 10818–10819).
+30439       * Discriminates: Example 131.2: An Anisotropic Case Study with Surface Trend in the Data
+30440       */
+30441      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+30441    ! validmemname=compatible locale=en_US;
+30442      %let syscc=0;
+30443      title; footnote;
+30444      ods _all_ close;
+30445      ods listing gpath="%sysfunc(pathname(work))";
+30446      ods graphics off;
+30447      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.OUTV (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.SEMIVSTOREGAU (memtype=ITEMSTOR).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+30447    !                                         quit;
+
+
+30448      ods path work.templat(update) sashelp.tmplmst(read);
+30449      
+30450      title 'Semivariogram Analysis in Anisotropic Case With Trend Removal';
+30451      data ozoneSet;
+30452      input East North Ozone @@;
+30453      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.OZONESET has 300 observations and 3 variables.
+
+30529      ;
+30530      ods graphics on;
+30531      proc variogram data=ozoneSet;
+30532      compute novariogram nhc=35;
+30533      coord xc=East yc=North;
+30534      var Ozone;
+30535      run;
+
+NOTE: The PROCEDURE VARIOGRAM printed page 1885.
+
+30536      proc glm data=ozoneSet plots=none;
+30537      model ozone = East East*East North North*North;
+30538      output out=gmout predicted=pred residual=ResidualOzone;
+30539      run;
+
+
+NOTE: The data set WORK.GMOUT has 300 observations and 5 variables.
+NOTE: The PROCEDURE GLM printed pages 1886-1887.
+
+30540      proc variogram data=gmout plots(only)=observ;
+30541      compute novariogram nhc=35;
+30542      coord xc=East yc=North;
+30543      var ResidualOzone;
+30544      run;
+
+NOTE: The PROCEDURE VARIOGRAM printed page 1888.
+
+30545      proc variogram data=gmout plot(only)=semivar;
+30546      compute lagd=4 maxlag=16 ndir=12 atol=22.5 bandw=20;
+30547      coord xc=East yc=North;
+30548      var ResidualOzone;
+30549      run;
+
+NOTE: The PROCEDURE VARIOGRAM printed pages 1889-1890.
+
+30550      proc variogram data=gmout plot(only)=fit;
+30551      compute lagd=4 maxlag=16;
+30552      directions 0(22.5,10) 90(22.5,10);
+30553      coord xc=East yc=North;
+30554      model form=exp;
+30555      parms (0.) (2 to 3 by 0.5) (5 to 25 by 10) / hold=(1);
+30556      var ResidualOzone;
+30557      run;
+
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The PROCEDURE VARIOGRAM printed pages 1891-1896.
+
+30558      ods graphics off;
+30559      run;
+30560      quit;
+30561      
+30562      
+30563      
+30564      
+The SAS System
+
+30565      

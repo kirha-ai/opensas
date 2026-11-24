@@ -1,0 +1,51 @@
+The SAS System
+
+6543       
+6544       /* STAT-HPSPLIT-009: HPSPLIT — Measures of Model Fit
+6545        * Source: S154 / Chapter 68 / `Measures of Model Fit` (PDF pp. 5111–5115).
+6546        * Discriminates: Verified default procedure context
+6547        */
+6548       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+6548     ! validmemname=compatible locale=en_US;
+6549       %let syscc=0;
+6550       title; footnote;
+6551       ods _all_ close;
+6552       ods listing gpath="%sysfunc(pathname(work))";
+6553       ods graphics off;
+
+
+6554       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.MBE_DATA (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+6554     !                                         quit;
+
+
+6555       ods path work.templat(update) sashelp.tmplmst(read);
+6556       
+6557       ods graphics on;
+6558       proc hpsplit data=sashelp.baseball seed=123;
+6559       class league division;
+6560       model logSalary = nAtBat nHits nHome nRuns nRBI nBB
+6561       yrMajor crAtBat crHits crHome crRuns crRbi
+6562       crBB league division nOuts nAssts nError;
+6563       output out=hpsplout;
+6564       run;
+
+NOTE: The ASSIGNMISSING= option has not been specified.  Because of this, all observations with missing values in the explanatory variables will be excluded 
+      from tree construction.
+NOTE: The HPSPLIT procedure is executing in single-machine mode.
+NOTE: Cross-validating using 10 folds.
+NOTE: There were 322 observations read from the data set SASHELP.BASEBALL.
+NOTE: The data set WORK.HPSPLOUT has 322 observations and 4 variables.
+NOTE: The PROCEDURE HPSPLIT printed pages 478-479.
+
+6565       
+6566       
+6567       
+6568       
+The SAS System
+
+6569       

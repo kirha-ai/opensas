@@ -1,0 +1,80 @@
+The SAS System
+
+327        
+328        /* STAT-GENMOD-016: GENMOD — CODE / Predicted Values of the Mean
+329         * Source: S154 / Chapter 51 / `CODE Statement` (PDF pp. 3529–3530); S154 / Chapter 51 / `Predicted Values of the Mean` (PDF pp. 3585–3586).
+330         * Discriminates: Generate DATA step scoring code, execute it against the input rows, and print the scored data.
+331         */
+332        options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+332      ! validmemname=compatible locale=en_US;
+333        %let syscc=0;
+334        title; footnote;
+335        ods _all_ close;
+336        ods listing gpath="%sysfunc(pathname(work))";
+337        ods graphics off;
+338        proc datasets library=work kill nolist;
+NOTE: Deleting WORK.NOR (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.RESIDUALS (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK._ORACLE_INPUT (memtype=DATA).
+338      !                                         quit;
+
+
+339        ods path work.templat(update) sashelp.tmplmst(read);
+340        
+341        filename _orcode "%sysfunc(pathname(work))/_oracle_score.sas";
+342        
+343        
+344        data nor;
+345        input x y;
+346        datalines;
+
+NOTE: The data set WORK.NOR has 16 observations and 2 variables.
+
+363        ;
+364        proc genmod data=nor;
+365        model y = x / dist = normal
+366        link = log;
+367        output out = Residuals
+368        pred = Pred
+369        resraw = Resraw
+370        reschi = Reschi
+371        resdev = Resdev
+372        stdreschi = Stdreschi
+373        stdresdev = Stdresdev
+374        reslik = Reslik;
+375        
+376        code file="%sysfunc(pathname(work))/_oracle_score.sas";
+377        run;
+
+NOTE: Algorithm converged.
+NOTE: The scale parameter was estimated by maximum likelihood.
+NOTE: External file /saswork/SAS_work7EA200001C34_odaws01-euw1.oda.sas.com/SAS_work29EF00001C34_odaws01-euw1.oda.sas.com/_oracle_score.sas opened.
+NOTE: The GENMOD procedure wrote the DATA step code to external file 
+      /saswork/SAS_work7EA200001C34_odaws01-euw1.oda.sas.com/SAS_work29EF00001C34_odaws01-euw1.oda.sas.com/_oracle_score.sas.
+NOTE: The data set WORK.RESIDUALS has 16 observations and 9 variables.
+NOTE: The PROCEDURE GENMOD printed page 12.
+
+378        
+379        data _oracle_scored; set nor;
+380        %include _orcode;
+412        run;
+
+NOTE: There were 16 observations read from the data set WORK.NOR.
+NOTE: The data set WORK._ORACLE_SCORED has 16 observations and 3 variables.
+
+413        proc print data=_oracle_scored(obs=10); run;
+
+NOTE: There were 10 observations read from the data set WORK._ORACLE_SCORED.
+NOTE: The PROCEDURE PRINT printed page 13.
+
+414        
+415        
+416        
+417        
+The SAS System
+
+418        

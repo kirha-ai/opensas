@@ -1,0 +1,203 @@
+The SAS System
+
+7321       
+7322       /* STAT-HPFMM-007: HPFMM — Computational Method / First- or Second-Order Algorithms / Algorithm Descriptions
+7323        * Source: S154 / Chapter 58 / `Computational Method` (PDF pp. 4584–4585); S154 / Chapter 58 / `First- or Second-Order Algorithms` (PDF pp.
+7323     ! 4585–4586); S154 / Chapter 58 / `Algorithm Descriptions` (PDF pp. 4586–4588).
+7324        * Discriminates: Getting Started: HPFMM Procedure
+7325        */
+7326       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+7326     ! validmemname=compatible locale=en_US;
+7327       %let syscc=0;
+7328       title; footnote;
+7329       ods _all_ close;
+7330       ods listing gpath="%sysfunc(pathname(work))";
+7331       ods graphics off;
+7332       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.CATCH (memtype=DATA).
+NOTE: Deleting WORK.GALAXIES (memtype=DATA).
+NOTE: Deleting WORK.HPFMMOUT (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.YEAST (memtype=DATA).
+7332     !                                         quit;
+
+
+7333       ods path work.templat(update) sashelp.tmplmst(read);
+7334       
+7335       data yeast;
+7336       input count f;
+7337       n = 5;
+7338       datalines;
+
+NOTE: The data set WORK.YEAST has 6 observations and 3 variables.
+
+7345       ;
+7346       proc hpfmm data=yeast seed=314159;
+7347       model count/n = / k=2;
+7348       freq f;
+7349       run;
+
+NOTE: The HPFMM procedure is executing in single-machine mode.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: There were 6 observations read from the data set WORK.YEAST.
+NOTE: The PROCEDURE HPFMM printed page 573.
+
+7350       proc hpfmm data=yeast seed=314159;
+7351       model count/n = / k=2;
+7352       freq f;
+7353       id f n;
+7354       output out=hpfmmout pred(components) posterior;
+7355       run;
+
+NOTE: The HPFMM procedure is executing in single-machine mode.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: There were 6 observations read from the data set WORK.YEAST.
+NOTE: The data set WORK.HPFMMOUT has 6 observations and 6 variables.
+NOTE: The PROCEDURE HPFMM printed page 574.
+
+7356       data hpfmmout;
+7357       set hpfmmout;
+7358       PredCount_1 = post_1 * f;
+7359       PredCount_2 = post_2 * f;
+7360       run;
+
+NOTE: There were 6 observations read from the data set WORK.HPFMMOUT.
+NOTE: The data set WORK.HPFMMOUT has 6 observations and 8 variables.
+
+7361       proc print data=hpfmmout;
+7362       run;
+
+NOTE: There were 6 observations read from the data set WORK.HPFMMOUT.
+NOTE: The PROCEDURE PRINT printed page 575.
+
+7363       ods graphics on;
+7364       proc hpfmm data=yeast seed=12345;
+7365       model count/n = / k=2;
+7366       freq f;
+7367       performance nthreads=2;
+7368       bayes nmc=1000 nbi=200;
+7369       run;
+
+NOTE: The HPFMM procedure is executing in single-machine mode.
+NOTE: Bayesian results for this model (no regressor variables, non-identity link) are displayed on the data scale, not the linked scale. You can obtain results 
+      on the linked (=linear) scale by requesting a Metropolis sampling algorithm.
+NOTE: There were 6 observations read from the data set WORK.YEAST.
+NOTE: The PROCEDURE HPFMM printed page 576.
+
+7370       ods graphics off;
+7371       data catch;
+7372       input gender $ age count @@;
+7373       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.CATCH has 52 observations and 3 variables.
+
+7387       ;
+7388       proc hpfmm data=catch seed=314159;
+7389       class gender;
+7390       model count = gender*age / dist=Poisson;
+7391       run;
+
+NOTE: The HPFMM procedure is executing in single-machine mode.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: There were 52 observations read from the data set WORK.CATCH.
+NOTE: The PROCEDURE HPFMM printed page 577.
+
+7392       proc hpfmm data=catch seed=314159;
+7393       class gender;
+7394       model count = gender*age / dist=Poisson ;
+7395       model + / dist=Constant;
+7396       run;
+
+NOTE: The HPFMM procedure is executing in single-machine mode.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: There were 52 observations read from the data set WORK.CATCH.
+NOTE: The PROCEDURE HPFMM printed page 578.
+
+7397       proc hpfmm data=catch seed=12345;
+7398       class gender;
+7399       model count = gender*age / dist=Poisson;
+7400       model + / dist=constant;
+7401       performance nthreads=2;
+7402       bayes nmc=1000 nbi=200;
+7403       run;
+
+NOTE: The HPFMM procedure is executing in single-machine mode.
+NOTE: There were 52 observations read from the data set WORK.CATCH.
+NOTE: The PROCEDURE HPFMM printed page 579.
+
+7404       ods graphics on;
+7405       ods select TADPanel;
+7406       proc hpfmm data=catch seed=12345;
+7407       class gender;
+7408       model count = gender*age / dist=Poisson;
+7409       model + / dist=constant;
+7410       performance nthreads=2;
+7411       bayes nmc=1000 nbi=200;
+7412       run;
+
+NOTE: The HPFMM procedure is executing in single-machine mode.
+NOTE: There were 52 observations read from the data set WORK.CATCH.
+
+7413       ods graphics off;
+7414       title "HPFMM Analysis of Galaxies Data";
+7415       data galaxies;
+7416       input velocity @@;
+7417       v = velocity / 1000;
+7418       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.GALAXIES has 82 observations and 2 variables.
+
+7428       ;
+7429       title2 "Three to Seven Components, Unequal Variances";
+7430       ods graphics on;
+7431       proc hpfmm data=galaxies criterion=AIC seed=314159;
+7432       model v = / kmin=3 kmax=7;
+7433       ods exclude IterHistory OptInfo ComponentInfo;
+7434       run;
+
+NOTE: The HPFMM procedure is executing in single-machine mode.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: There were 82 observations read from the data set WORK.GALAXIES.
+NOTE: The PROCEDURE HPFMM printed page 580.
+
+7435       title2 "Three to Seven Components, Equal Variances";
+7436       proc hpfmm data=galaxies criterion=AIC gconv=0 seed=314159;
+7437       model v = / kmin=3 kmax=7 equate=scale;
+7438       run;
+
+NOTE: The HPFMM procedure is executing in single-machine mode.
+NOTE: Convergence criterion (ABSGCONV=0.00001) satisfied.
+NOTE: There were 82 observations read from the data set WORK.GALAXIES.
+NOTE: The PROCEDURE HPFMM printed page 581.
+
+7439       title2 "Five Components, Equal Variances = 0.9025";
+7440       proc hpfmm data=galaxies seed=314159;
+7441       model v = / K=5 equate=scale;
+7442       restrict int 0 (scale 1) = 0.9025;
+7443       run;
+
+NOTE: The HPFMM procedure is executing in single-machine mode.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: There were 82 observations read from the data set WORK.GALAXIES.
+NOTE: The PROCEDURE HPFMM printed page 582.
+
+7444       ods graphics off;
+7445       run;
+7446       quit;
+7447       
+7448       
+7449       
+7450       
+The SAS System
+
+7451       

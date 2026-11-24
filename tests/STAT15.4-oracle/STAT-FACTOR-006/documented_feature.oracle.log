@@ -1,0 +1,63 @@
+The SAS System
+
+15711      
+15712      /* STAT-FACTOR-006: FACTOR — Confidence Intervals and the Salience of Factor Loadings
+15713       * Source: S154 / Chapter 44 / `Confidence Intervals and the Salience of Factor Loadings` (PDF pp. 2831–2832).
+15714       * Discriminates: Example 44.5: Using Confidence Intervals to Locate Salient Factor Loadings
+15715       */
+15716      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+15716    ! validmemname=compatible locale=en_US;
+15717      %let syscc=0;
+15718      title; footnote;
+15719      ods _all_ close;
+15720      ods listing gpath="%sysfunc(pathname(work))";
+15721      ods graphics off;
+15722      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.FACT2 (memtype=DATA).
+NOTE: Deleting WORK.FACT_ALL (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.SOCIOECONOMICS (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+15722    !                                         quit;
+
+
+15723      ods path work.templat(update) sashelp.tmplmst(read);
+15724      
+15725      data test(type=corr);
+15726      length _name_ $32 _type_ $8;
+15727      infile datalines truncover;
+15728      
+15729      title 'Quartimin-Rotated Factor Solution with Standard Errors';
+15730      input _name_ $ test1-test9;
+15731      _type_ = 'corr';
+15732      datalines;
+
+NOTE: The data set WORK.TEST has 9 observations and 11 variables.
+
+15742      ;
+15743      title2 'A nine-variable-three-factor example';
+15744      proc factor data=test method=ml reorder rotate=quartimin
+15745      nobs=200 n=3 se cover=.45 alpha=.1;
+15746      run;
+
+NOTE: The means of one or more variables in the input data set WORK.TEST are missing and are assumed to be 0.
+NOTE: The standard deviations of one or more variables in the input data set WORK.TEST are missing and are assumed to be 1.
+NOTE: 3 factors will be retained by the NFACTOR criterion.
+NOTE: Convergence criterion satisfied.
+NOTE: Rotation converged.  Criterion changed from 3.724270 to 0.928968 in 11 cycles.
+NOTE: The PROCEDURE FACTOR printed pages 2091-2093.
+
+15747      
+15748      
+15749      
+15750      
+The SAS System
+
+15751      

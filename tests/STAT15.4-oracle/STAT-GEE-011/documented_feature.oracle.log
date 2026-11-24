@@ -1,0 +1,155 @@
+The SAS System
+
+21753      
+21754      /* STAT-GEE-011: GEE — ODS Table Names
+21755       * Source: S154 / Chapter 50 / `ODS Table Names` (PDF pp. 3456–3458).
+21756       * Discriminates: Verified default procedure context
+21757       */
+21758      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+21758    ! validmemname=compatible locale=en_US;
+21759      %let syscc=0;
+21760      title; footnote;
+21761      ods _all_ close;
+21762      ods listing gpath="%sysfunc(pathname(work))";
+21763      ods graphics off;
+21764      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.CHILDREN (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+21764    !                                         quit;
+
+
+21765      ods path work.templat(update) sashelp.tmplmst(read);
+21766      
+21767      ods trace on;
+21768      data Children;
+21769      input ID City$ @@;
+21770      do i=1 to 4;
+21771      input Age Smoke Symptom @@;
+21772      output;
+21773      end;
+21774      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.CHILDREN has 100 observations and 6 variables.
+
+21800      ;
+21801      proc gee data=Children descending;
+21802      class ID City;
+21803      model Symptom = City Age Smoke / dist=bin link=logit;
+21804      repeated subject=ID / type=exch covb corrw;
+21805      run;
+
+
+Output Added:
+-------------
+Name:       ModelInfo
+Label:      Model Information
+Template:   Stat.Gee.ModelInfo
+Path:       GEE.ModelInfo
+-------------
+
+Output Added:
+-------------
+Name:       NObs
+Label:      Number of Observations
+Template:   Stat.Gee.NObs
+Path:       GEE.NObs
+-------------
+
+Output Added:
+-------------
+Name:       ClassLevels
+Label:      Class Level Information
+Template:   Stat.Gee.Classlevels
+Path:       GEE.ClassLevels
+-------------
+
+Output Added:
+-------------
+Name:       ResponseProfile
+Label:      Response Profile
+Template:   Stat.Gee.ResponseProfile
+Path:       GEE.ResponseProfile
+-------------
+NOTE: PROC GEE is modeling the probability that Symptom='1'.
+
+Output Added:
+-------------
+Name:       ParmInfo
+Label:      Parameter Information
+Template:   Stat.GEE.Parminfo
+Path:       GEE.ParmInfo
+-------------
+
+Output Added:
+-------------
+Name:       GEEModInfo
+Label:      GEE Model Information
+Template:   Stat.Gee.GEEModInfo
+Path:       GEE.GEEModInfo
+-------------
+
+Output Added:
+-------------
+Name:       GEENCov
+Label:      Covariance Matrix (Model-Based)
+Template:   Stat.Gee.GEENCov
+Path:       GEE.GEENCov
+-------------
+
+Output Added:
+-------------
+Name:       GEERCov
+Label:      Covariance Matrix (Empirical)
+Template:   Stat.Gee.GEERCov
+Path:       GEE.GEERCov
+-------------
+
+Output Added:
+-------------
+Name:       GEEWCorr
+Label:      Working Correlation Matrix
+Template:   Stat.Gee.GEEWCorr
+Path:       GEE.GEEWCorr
+-------------
+
+Output Added:
+-------------
+Name:       GEEExchCorr
+Label:      Working Correlation
+Template:   Stat.Gee.GEEExchCorr
+Path:       GEE.GEEExchCorr
+-------------
+
+Output Added:
+-------------
+Name:       GEEFitCriteria
+Label:      Fit Criteria
+Template:   Stat.Gee.GEEFitCriteria
+Path:       GEE.GEEFitCriteria
+-------------
+
+Output Added:
+-------------
+Name:       GEEEmpPEst
+Label:      Parameter Estimates for Response Model - Empirical Std Errors
+Template:   Stat.Gee.GEEEst
+Path:       GEE.GEEEmpPEst
+-------------
+NOTE: The PROCEDURE GEE printed page 2368.
+
+21806      ods trace off;
+21807      
+21808      
+21809      
+21810      
+The SAS System
+
+21811      

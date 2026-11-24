@@ -1,0 +1,56 @@
+The SAS System
+
+10209      
+10210      /* STAT-QUANTLIFE-004: QUANTLIFE — BASELINE / Notation for Censored Quantile Regression / Kaplan-Meier-Type Estimator for Censored Quantile
+10210    ! Regression
+10211       * Source: S154 / Chapter 102 / `BASELINE Statement` (PDF p. 8335); S154 / Chapter 102 / `Notation for Censored Quantile Regression` (PDF pp.
+10211    ! 8339–8340); S154 / Chapter 102 / `Kaplan-Meier-Type Estimator for Censored Quantile Regression` (PDF p. 8340).
+10212       * Discriminates: Verified default procedure context
+10213       */
+10214      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+10214    ! validmemname=compatible locale=en_US;
+10215      %let syscc=0;
+10216      title; footnote;
+10217      ods _all_ close;
+10218      ods listing gpath="%sysfunc(pathname(work))";
+10219      ods graphics off;
+10220      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SURVIVAL (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+10220    !                                         quit;
+
+
+10221      ods path work.templat(update) sashelp.tmplmst(read);
+10222      
+10223      data survival;
+10224      call streaminit(518);
+10225      do id=1 to 80;
+10226      drug=mod(id,2);
+10227      age=25+mod(id*7,40);
+10228      time=exp(2+0.25*drug+0.008*age+rand('normal')*0.4);
+10229      status=(mod(id,5) ne 0);
+10230      output;
+10231      end;
+10232      run;
+
+NOTE: The data set WORK.SURVIVAL has 80 observations and 5 variables.
+
+10233      proc quantlife data=survival seed=1268;
+10234      class drug;
+10235      model time*status(0)=drug age / quantile=0.5;
+10236      run;
+
+NOTE: The PROCEDURE QUANTLIFE printed page 668.
+
+10237      
+10238      
+10239      
+10240      
+The SAS System
+
+10241      

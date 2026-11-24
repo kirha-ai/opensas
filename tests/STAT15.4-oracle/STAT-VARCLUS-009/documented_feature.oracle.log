@@ -1,0 +1,67 @@
+The SAS System
+
+5415       
+5416       /* STAT-VARCLUS-009: VARCLUS — Official examples and feature integration regression
+5417        * Source: S154 / Chapter 129 / `Getting Started: VARCLUS Procedure` (PDF pp. 10696–10699); S154 / Chapter 129 / `Overview: VARCLUS Procedure` (PDF
+5417     !  pp. 10694–10696).
+5418        * Discriminates: Example 129.1: Correlations among Physical Variables
+5419        */
+5420       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+5420     ! validmemname=compatible locale=en_US;
+5421       %let syscc=0;
+5422       title; footnote;
+5423       ods _all_ close;
+5424       ods listing gpath="%sysfunc(pathname(work))";
+5425       ods graphics off;
+5426       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.GSEG (memtype=CATALOG).
+NOTE: Deleting WORK.PROTEIN (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TREE (memtype=DATA).
+5426     !                                         quit;
+
+
+5427       ods path work.templat(update) sashelp.tmplmst(read);
+5428       
+5429       data phys8(type=corr);
+5430       length _name_ $32 _type_ $8;
+5431       infile datalines truncover;
+5432       
+5433       title 'Eight Physical Measurements on 305 School Girls';
+5434       title2 'Harman: Modern Factor Analysis, 3rd Ed, p22';
+5435       label ArmSpan='Arm Span' Forearm='Length of Forearm'
+5436       LowerLeg='Length of Lower Leg' BitDiam='Bitrochanteric Diameter'
+5437       Girth='Chest Girth' Width='Chest Width';
+5438       input _Name_ :$32. Height ArmSpan Forearm LowerLeg Weight BitDiam Girth Width;
+5439       _Type_='corr';
+5440       datalines;
+
+NOTE: The data set WORK.PHYS8 has 8 observations and 10 variables.
+
+5449       ;
+5450       proc varclus data=phys8;
+5451       run;
+
+NOTE: The means of one or more variables in the input data set WORK.PHYS8 are missing and are assumed to be 0.
+NOTE: The standard deviations of one or more variables in the input data set WORK.PHYS8 are missing and are assumed to be 1.
+WARNING: The data set WORK.PHYS8 does not indicate how many observations were used to compute the CORR matrix. The number of observations has been set to 
+         10000. Statistics that depend on the number of observations (such as p-values) are not interpretable.
+NOTE: Clustering algorithm converged.
+NOTE: Clustering algorithm converged.
+NOTE: The PROCEDURE VARCLUS printed page 278.
+
+5452       
+5453       
+5454       
+5455       
+The SAS System
+
+5456       

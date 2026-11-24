@@ -1,0 +1,156 @@
+
+The NLMIXED Procedure
+
+                         Specifications
+
+Data Set                                    WORK._ORACLE_INPUT  
+Dependent Variable                          resp                
+Distribution for Dependent Variable         Normal              
+Random Effects                              aeffect, beffect    
+Distribution for Random Effects             Normal, Normal      
+Subject Variables                           A, B                
+Optimization Technique                      Dual Quasi-Newton   
+Integration Method                          Adaptive Gaussian   
+                                            Quadrature          
+
+_oracle_by=1
+
+The NLMIXED Procedure
+
+               Dimensions
+
+Observations Used                   1000
+Observations Not Used                  0
+Total Observations                  1000
+Subjects [A]                         100
+Max Obs per Subject                   10
+Subjects [B]                         500
+Max Obs per Subject                    2
+Parameters                             4
+Quadrature Points                      1
+
+
+                     Initial Parameters
+ 
+                                                   Negative
+                                                        Log
+    vara      varb_a    intercept          s2    Likelihood
+
+       1           1            1           1    5677.61203
+
+
+                          Iteration History
+ 
+                      Negative
+                           Log                   Maximum
+Iteration Calls     Likelihood    Difference    Gradient       Slope
+
+       1     12      2982.0141      2695.598     215.363    -87641.4
+       2     37      2462.0899      519.9243     518.335    -346.648
+       3     43      2144.0047      318.0852     60.9954    -2483.38
+       4     49      2108.7720      35.23265     56.3198    -64.4603
+       5     61      2098.5627      10.20936     43.0728    -7.79282
+       6     67      2094.2091      4.353503     34.1536    -20.0831
+       7     73      2090.2802      3.928938     26.4378    -5.86557
+       8     80      2089.3443       0.93594     15.0337    -2.41721
+       9     86      2088.1106      1.233621     20.3763    -0.59126
+      10     98      2072.7699      15.34077     5.02632    -1.53249
+      11    105      2068.5425      4.227401     28.6085    -2.25953
+      12    112      2066.4439      2.098605     9.01350    -2.53322
+      13    119      2065.8127      0.631184     3.73626    -0.50717
+      14    126      2065.7590      0.053645     1.02923    -0.07232
+      15    133      2065.7550       0.00406     0.36112    -0.00578
+      16    139      2065.7502      0.004798     0.27899    -0.00171
+
+
+          NOTE: GCONV convergence criterion satisfied.          
+
+
+             Fit Statistics
+
+-2 Log Likelihood                 4131.5
+AIC (smaller is better)           4139.5
+AICC (smaller is better)          4139.5
+BIC (smaller is better)           4149.9
+
+
+                                        Parameter Estimates
+ 
+                         Standard                                      95% Confidence
+Parameter    Estimate       Error      DF    t Value    Pr > |t|           Limits           Gradient
+
+vara           9.2198      1.4299     498       6.45      <.0001      6.4104     12.0291    0.022609
+varb_a         3.6997      0.2973     498      12.44      <.0001      3.1156      4.2839    0.008435
+intercept     10.1546      0.3171     498      32.02      <.0001      9.5315     10.7776    -0.04078
+s2             0.9661     0.06102     498      15.83      <.0001      0.8462      1.0860    -0.31591
+
+_oracle_by=2
+
+The NLMIXED Procedure
+
+               Dimensions
+
+Observations Used                   1000
+Observations Not Used                  0
+Total Observations                  1000
+Subjects [A]                         100
+Max Obs per Subject                   10
+Subjects [B]                         500
+Max Obs per Subject                    2
+Parameters                             4
+Quadrature Points                      1
+
+
+                     Initial Parameters
+ 
+                                                   Negative
+                                                        Log
+    vara      varb_a    intercept          s2    Likelihood
+
+       1           1            1           1    5677.61203
+
+
+                          Iteration History
+ 
+                      Negative
+                           Log                   Maximum
+Iteration Calls     Likelihood    Difference    Gradient       Slope
+
+       1     12      2982.0141      2695.598     215.363    -87641.4
+       2     37      2462.0899      519.9243     518.335    -346.648
+       3     43      2144.0047      318.0852     60.9954    -2483.38
+       4     49      2108.7720      35.23265     56.3198    -64.4603
+       5     61      2098.5627      10.20936     43.0728    -7.79282
+       6     67      2094.2091      4.353503     34.1536    -20.0831
+       7     73      2090.2802      3.928938     26.4378    -5.86557
+       8     80      2089.3443       0.93594     15.0337    -2.41721
+       9     86      2088.1106      1.233621     20.3763    -0.59126
+      10     98      2072.7699      15.34077     5.02632    -1.53249
+      11    105      2068.5425      4.227401     28.6085    -2.25953
+      12    112      2066.4439      2.098605     9.01350    -2.53322
+      13    119      2065.8127      0.631184     3.73626    -0.50717
+      14    126      2065.7590      0.053645     1.02923    -0.07232
+      15    133      2065.7550       0.00406     0.36112    -0.00578
+      16    139      2065.7502      0.004798     0.27899    -0.00171
+
+
+          NOTE: GCONV convergence criterion satisfied.          
+
+
+             Fit Statistics
+
+-2 Log Likelihood                 4131.5
+AIC (smaller is better)           4139.5
+AICC (smaller is better)          4139.5
+BIC (smaller is better)           4149.9
+
+
+                                        Parameter Estimates
+ 
+                         Standard                                      95% Confidence
+Parameter    Estimate       Error      DF    t Value    Pr > |t|           Limits           Gradient
+
+vara           9.2198      1.4299     498       6.45      <.0001      6.4104     12.0291    0.022609
+varb_a         3.6997      0.2973     498      12.44      <.0001      3.1156      4.2839    0.008435
+intercept     10.1546      0.3171     498      32.02      <.0001      9.5315     10.7776    -0.04078
+s2             0.9661     0.06102     498      15.83      <.0001      0.8462      1.0860    -0.31591

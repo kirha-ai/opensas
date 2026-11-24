@@ -1,0 +1,90 @@
+
+The NLMIXED Procedure
+
+                         Specifications
+
+Data Set                                    WORK.REPEATED       
+Dependent Variable                          y                   
+Distribution for Dependent Variable         Normal              
+Random Effects                              u, v                
+Distribution for Random Effects             Normal, Normal      
+Subject Variables                           cluster, person     
+Optimization Technique                      Dual Quasi-Newton   
+Integration Method                          Adaptive Gaussian   
+                                            Quadrature          
+
+
+               Dimensions
+
+Observations Used                     96
+Observations Not Used                  0
+Total Observations                    96
+Subjects [cluster]                     8
+Max Obs per Subject                   12
+Subjects [person]                     32
+Max Obs per Subject                    3
+Parameters                             5
+Quadrature Points                      3
+
+
+                          Initial Parameters
+ 
+                                                              Negative
+                                                                   Log
+      b0          b1          s1          s2          se    Likelihood
+
+       2           1        0.25        0.09        0.16    65.7979486
+
+
+                          Iteration History
+ 
+                      Negative
+                           Log                   Maximum
+Iteration Calls     Likelihood    Difference    Gradient       Slope
+
+       1     22     64.1277526      1.670196     17.0977    -297.767
+       2     31     63.7792809      0.348472     9.26398    -47.8694
+       3     38     63.2954652      0.483816     2.62184    -7.16524
+       4     53     63.2402393      0.055226     3.52675    -1.11104
+       5     60     63.2255013      0.014738     2.16355    -0.34795
+       6     74     63.1948723      0.030629     1.12317    -0.07299
+       7     82     63.1925277      0.002345     0.26811    -0.00457
+       8     90     63.1924613      0.000066     0.27209    -0.00020
+       9     98     63.1924526      8.702E-6    0.039236    -0.00004
+
+
+          NOTE: GCONV convergence criterion satisfied.          
+
+
+             Fit Statistics
+
+-2 Log Likelihood                  126.4
+AIC (smaller is better)            136.4
+AICC (smaller is better)           137.1
+BIC (smaller is better)            136.8
+
+
+                                        Parameter Estimates
+ 
+                         Standard                                      95% Confidence
+Parameter    Estimate       Error      DF    t Value    Pr > |t|           Limits           Gradient
+
+b0             1.9321      0.1748      30      11.05      <.0001      1.5752      2.2891    -0.01049
+b1             1.1125      0.1271      30       8.75      <.0001      0.8529      1.3720    -0.01203
+s1             0.1406     0.09428      30       1.49      0.1464    -0.05198      0.3331    -0.01737
+s2             0.1472     0.05388      30       2.73      0.0104     0.03717      0.2572    -0.03011
+se             0.1149     0.02028      30       5.67      <.0001     0.07347      0.1563    -0.23473
+
+                                                                       StdErr
+Obs    cluster    person    visit       x          y         Pred       Pred     DF     tValue       Probt      Alpha     Lower      Upper
+
+  1       1         11        1      0.33333    2.56869    2.30343    0.18368    30    12.5403    1.8418E-13     0.05    1.92830    2.67856
+  2       1         11        2      0.66667    2.32077    2.67425    0.17873    30    14.9627    1.8733E-15     0.05    2.30924    3.03926
+  3       1         11        3      1.00000    3.15375    3.04507    0.18368    30    16.5780    1.1932E-16     0.05    2.66995    3.42020
+  4       1         12        1      0.33333    2.54591    2.27025    0.18366    30    12.3611    2.6505E-13     0.05    1.89516    2.64533
+  5       1         12        2      0.66667    2.43769    2.64107    0.17871    30    14.7787     2.601E-15     0.05    2.27610    3.00604
+  6       1         12        3      1.00000    2.93416    3.01189    0.18366    30    16.3991    1.6015E-16     0.05    2.63680    3.38698
+  7       1         13        1      0.33333    3.12148    2.54302    0.18520    30    13.7312     1.792E-14     0.05    2.16479    2.92125
+  8       1         13        2      0.66667    2.19496    2.91384    0.18028    30    16.1630    2.3706E-16     0.05    2.54566    3.28202
+  9       1         13        3      1.00000    3.63252    3.28466    0.18518    30    17.7375    1.8836E-17     0.05    2.90647    3.66285
+ 10       1         14        1      0.33333    1.77343    1.96526    0.18562    30    10.5878      1.19E-11     0.05    1.58618    2.34434

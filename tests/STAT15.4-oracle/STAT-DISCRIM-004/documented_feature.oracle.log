@@ -1,0 +1,275 @@
+The SAS System
+
+14935      
+14936      /* STAT-DISCRIM-004: DISCRIM — PRIORS / Posterior Probability Error-Rate Estimates
+14937       * Source: S154 / Chapter 42 / `PRIORS Statement` (PDF pp. 2662–2663); S154 / Chapter 42 / `Posterior Probability Error-Rate Estimates` (PDF pp.
+14937    ! 2672–2674).
+14938       * Discriminates: Example 42.2: Bivariate Density Estimates and Posterior Probabilities
+14939       */
+14940      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+14940    ! validmemname=compatible locale=en_US;
+14941      %let syscc=0;
+14942      title; footnote;
+14943      ods _all_ close;
+14944      ods listing gpath="%sysfunc(pathname(work))";
+14945      ods graphics off;
+14946      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+14946    !                                         quit;
+
+
+14947      ods path work.templat(update) sashelp.tmplmst(read);
+14948      
+14949      title 'Discriminant Analysis of Fisher (1936) Iris Data';
+14950      proc template;
+14951      define statgraph scatter;
+14952      begingraph;
+14953      entrytitle 'Fisher (1936) Iris Data';
+14954      layout overlayequated / equatetype=fit;
+14955      scatterplot x=petallength y=petalwidth /
+14956      group=species name='iris';
+14957      layout gridded / autoalign=(topleft);
+14958      discretelegend 'iris' / border=false opaque=false;
+14959      endlayout;
+14960      endlayout;
+14961      endgraph;
+14962      end;
+NOTE: Overwriting existing template/link: Scatter
+NOTE: STATGRAPH 'Scatter' has been saved to: WORK.TEMPLAT
+14963      run;
+
+14964      proc sgrender data=sashelp.iris template=scatter;
+14965      run;
+
+NOTE: Listing image output written to /saswork/SAS_work5D120001108E_odaws02-euw1.oda.sas.com/SAS_workCCDC0001108E_odaws02-euw1.oda.sas.com/SGRender5.png.
+NOTE: There were 150 observations read from the data set SASHELP.IRIS.
+
+14966      data plotdata;
+14967      do PetalLength = -2 to 72 by 0.5;
+14968      do PetalWidth= - 5 to 32 by 0.5;
+14969      output;
+14970      end;
+14971      end;
+14972      run;
+
+NOTE: The data set WORK.PLOTDATA has 11175 observations and 2 variables.
+
+14973      %let close = thresholdmin=0 thresholdmax=0 offsetmin=0 offsetmax=0;
+14974      %let close = xaxisopts=(&close) yaxisopts=(&close);
+14975      proc template;
+14976      define statgraph contour;
+14977      begingraph;
+14978      layout overlayequated / equatetype=equate &close;
+14979      contourplotparm x=petallength y=petalwidth z=z /
+14980      contourtype=fill nhint=30;
+14981      scatterplot x=pl y=pw / group=species name='iris'
+14982      includemissinggroup=false primary=true;
+14983      layout gridded / autoalign=(topleft);
+14984      discretelegend 'iris' / border=false opaque=false;
+14985      endlayout;
+14986      endlayout;
+14987      endgraph;
+14988      end;
+NOTE: STATGRAPH 'Contour' has been saved to: WORK.TEMPLAT
+14989      run;
+
+14990      %macro contden;
+14991      data contour(keep=PetalWidth PetalLength species z pl pw);
+14992      merge plotd(in=d) sashelp.iris(keep=PetalWidth PetalLength species
+14993      rename=(PetalWidth=pw PetalLength=pl));
+14994      if d then z = max(setosa,versicolor,virginica);
+14995      run;
+14996      title3 'Plot of Estimated Densities';
+14997      proc sgrender data=contour template=contour;
+14998      run;
+14999      %mend;
+15000      %macro contprob;
+15001      data posterior(keep=PetalWidth PetalLength species z pl pw into);
+15002      merge plotp(in=d) sashelp.iris(keep=PetalWidth PetalLength species
+15003      rename=(PetalWidth=pw PetalLength=pl));
+15004      if d then z = max(setosa,versicolor,virginica);
+15005      into = 1 * (_into_ =: 'Set') + 2 * (_into_ =: 'Ver') +
+15006      3 * (_into_ =: 'Vir');
+15007      run;
+15008      title3 'Plot of Posterior Probabilities ';
+15009      proc sgrender data=posterior template=contour;
+15010      run;
+15011      %mend;
+15012      %macro contclass;
+15013      title3 'Plot of Classification Results';
+15014      proc sgrender data=posterior(drop=z rename=(into=z)) template=contour;
+15015      run;
+15016      %mend;
+15017      title2 'Using Normal Density Estimates with Equal Variance';
+15018      proc discrim data=sashelp.iris method=normal pool=yes
+15019      testdata=plotdata testout=plotp testoutd=plotd
+15020      short noclassify crosslisterr;
+15021      class Species;
+15022      var Petal:;
+15023      run;
+
+NOTE: There were 150 observations read from the data set SASHELP.IRIS.
+NOTE: There were 11175 observations read from the data set WORK.PLOTDATA.
+NOTE: The data set WORK.PLOTP has 11175 observations and 6 variables.
+NOTE: The data set WORK.PLOTD has 11175 observations and 5 variables.
+NOTE: The PROCEDURE DISCRIM printed pages 2000-2003.
+
+15024      %contden
+
+NOTE: There were 11175 observations read from the data set WORK.PLOTD.
+NOTE: There were 150 observations read from the data set SASHELP.IRIS.
+NOTE: The data set WORK.CONTOUR has 11175 observations and 6 variables.
+
+
+NOTE: Listing image output written to /saswork/SAS_work5D120001108E_odaws02-euw1.oda.sas.com/SAS_workCCDC0001108E_odaws02-euw1.oda.sas.com/SGRender6.png.
+NOTE: There were 11175 observations read from the data set WORK.CONTOUR.
+
+15025      %contprob
+
+NOTE: There were 11175 observations read from the data set WORK.PLOTP.
+NOTE: There were 150 observations read from the data set SASHELP.IRIS.
+NOTE: The data set WORK.POSTERIOR has 11175 observations and 7 variables.
+
+
+NOTE: Listing image output written to /saswork/SAS_work5D120001108E_odaws02-euw1.oda.sas.com/SAS_workCCDC0001108E_odaws02-euw1.oda.sas.com/SGRender7.png.
+NOTE: There were 11175 observations read from the data set WORK.POSTERIOR.
+
+15026      %contclass
+
+NOTE: Listing image output written to /saswork/SAS_work5D120001108E_odaws02-euw1.oda.sas.com/SAS_workCCDC0001108E_odaws02-euw1.oda.sas.com/SGRender8.png.
+NOTE: There were 11175 observations read from the data set WORK.POSTERIOR.
+
+15027      title2 'Using Normal Density Estimates with Unequal Variance';
+15028      proc discrim data=sashelp.iris method=normal pool=no
+15029      testdata=plotdata testout=plotp testoutd=plotd
+15030      short noclassify crosslisterr;
+15031      class Species;
+15032      var Petal:;
+15033      run;
+
+NOTE: There were 150 observations read from the data set SASHELP.IRIS.
+NOTE: There were 11175 observations read from the data set WORK.PLOTDATA.
+NOTE: The data set WORK.PLOTP has 11175 observations and 6 variables.
+NOTE: The data set WORK.PLOTD has 11175 observations and 5 variables.
+NOTE: The PROCEDURE DISCRIM printed pages 2004-2007.
+
+15034      %contden
+
+NOTE: There were 11175 observations read from the data set WORK.PLOTD.
+NOTE: There were 150 observations read from the data set SASHELP.IRIS.
+NOTE: The data set WORK.CONTOUR has 11175 observations and 6 variables.
+
+
+NOTE: Listing image output written to /saswork/SAS_work5D120001108E_odaws02-euw1.oda.sas.com/SAS_workCCDC0001108E_odaws02-euw1.oda.sas.com/SGRender9.png.
+NOTE: There were 11175 observations read from the data set WORK.CONTOUR.
+
+15035      %contprob
+
+NOTE: There were 11175 observations read from the data set WORK.PLOTP.
+NOTE: There were 150 observations read from the data set SASHELP.IRIS.
+NOTE: The data set WORK.POSTERIOR has 11175 observations and 7 variables.
+
+
+NOTE: Listing image output written to /saswork/SAS_work5D120001108E_odaws02-euw1.oda.sas.com/SAS_workCCDC0001108E_odaws02-euw1.oda.sas.com/SGRender10.png.
+NOTE: There were 11175 observations read from the data set WORK.POSTERIOR.
+
+15036      %contclass
+
+NOTE: Listing image output written to /saswork/SAS_work5D120001108E_odaws02-euw1.oda.sas.com/SAS_workCCDC0001108E_odaws02-euw1.oda.sas.com/SGRender11.png.
+NOTE: There were 11175 observations read from the data set WORK.POSTERIOR.
+
+15037      title2 'Using Kernel Density Estimates with Equal Bandwidth';
+15038      proc discrim data=sashelp.iris method=npar kernel=normal
+15039      r=.5 pool=yes testoutd=plotd testdata=plotdata testout=plotp
+15040      short noclassify crosslisterr;
+15041      class Species;
+15042      var Petal:;
+15043      run;
+
+NOTE: There were 150 observations read from the data set SASHELP.IRIS.
+NOTE: There were 11175 observations read from the data set WORK.PLOTDATA.
+NOTE: The data set WORK.PLOTD has 11175 observations and 5 variables.
+NOTE: The data set WORK.PLOTP has 11175 observations and 6 variables.
+NOTE: The PROCEDURE DISCRIM printed pages 2008-2011.
+
+15044      %contden
+
+NOTE: There were 11175 observations read from the data set WORK.PLOTD.
+NOTE: There were 150 observations read from the data set SASHELP.IRIS.
+NOTE: The data set WORK.CONTOUR has 11175 observations and 6 variables.
+
+
+NOTE: Listing image output written to /saswork/SAS_work5D120001108E_odaws02-euw1.oda.sas.com/SAS_workCCDC0001108E_odaws02-euw1.oda.sas.com/SGRender12.png.
+NOTE: There were 11175 observations read from the data set WORK.CONTOUR.
+
+15045      %contprob
+
+NOTE: There were 11175 observations read from the data set WORK.PLOTP.
+NOTE: There were 150 observations read from the data set SASHELP.IRIS.
+NOTE: The data set WORK.POSTERIOR has 11175 observations and 7 variables.
+
+
+NOTE: Listing image output written to /saswork/SAS_work5D120001108E_odaws02-euw1.oda.sas.com/SAS_workCCDC0001108E_odaws02-euw1.oda.sas.com/SGRender13.png.
+NOTE: There were 11175 observations read from the data set WORK.POSTERIOR.
+
+15046      %contclass
+
+NOTE: Listing image output written to /saswork/SAS_work5D120001108E_odaws02-euw1.oda.sas.com/SAS_workCCDC0001108E_odaws02-euw1.oda.sas.com/SGRender14.png.
+NOTE: There were 11175 observations read from the data set WORK.POSTERIOR.
+
+15047      title2 'Using Kernel Density Estimates with Unequal Bandwidth';
+15048      proc discrim data=sashelp.iris method=npar kernel=normal
+15049      r=.5 pool=no testoutd=plotd testdata=plotdata testout=plotp
+15050      short noclassify crosslisterr;
+15051      class Species;
+15052      var Petal:;
+15053      run;
+
+NOTE: There were 150 observations read from the data set SASHELP.IRIS.
+NOTE: There were 11175 observations read from the data set WORK.PLOTDATA.
+NOTE: The data set WORK.PLOTD has 11175 observations and 5 variables.
+NOTE: The data set WORK.PLOTP has 11175 observations and 6 variables.
+NOTE: The PROCEDURE DISCRIM printed pages 2012-2015.
+
+15054      %contden
+
+NOTE: There were 11175 observations read from the data set WORK.PLOTD.
+NOTE: There were 150 observations read from the data set SASHELP.IRIS.
+NOTE: The data set WORK.CONTOUR has 11175 observations and 6 variables.
+
+
+NOTE: Listing image output written to /saswork/SAS_work5D120001108E_odaws02-euw1.oda.sas.com/SAS_workCCDC0001108E_odaws02-euw1.oda.sas.com/SGRender15.png.
+NOTE: There were 11175 observations read from the data set WORK.CONTOUR.
+
+15055      %contprob
+
+NOTE: There were 11175 observations read from the data set WORK.PLOTP.
+NOTE: There were 150 observations read from the data set SASHELP.IRIS.
+NOTE: The data set WORK.POSTERIOR has 11175 observations and 7 variables.
+
+
+NOTE: Listing image output written to /saswork/SAS_work5D120001108E_odaws02-euw1.oda.sas.com/SAS_workCCDC0001108E_odaws02-euw1.oda.sas.com/SGRender16.png.
+NOTE: There were 11175 observations read from the data set WORK.POSTERIOR.
+
+15056      %contclass
+
+NOTE: Listing image output written to /saswork/SAS_work5D120001108E_odaws02-euw1.oda.sas.com/SAS_workCCDC0001108E_odaws02-euw1.oda.sas.com/SGRender17.png.
+NOTE: There were 11175 observations read from the data set WORK.POSTERIOR.
+
+15057      
+15058      run;
+15059      quit;
+15060      
+15061      
+15062      
+15063      
+The SAS System
+
+15064      

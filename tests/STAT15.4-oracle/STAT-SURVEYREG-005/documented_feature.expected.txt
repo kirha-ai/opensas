@@ -1,0 +1,55 @@
+
+Regression Analysis for Swedish Municipalities
+Estimate Total Population
+
+The SURVEYREG Procedure
+ 
+Regression Analysis for Dependent Variable Population85
+
+            Data Summary
+
+Number of Observations            32
+Mean of Population85        27.50000
+Sum of Population85        880.00000
+
+
+         Design Summary
+
+Number of Clusters             5
+
+
+      Fit Statistics
+
+R-Square            0.9860
+Root MSE            3.0488
+Denominator DF           4
+
+
+          Tests of Model Effects
+ 
+Effect          Num DF    F Value    Pr > F
+
+Model                1     416.51    <.0001
+Intercept            1       0.00    0.9839
+Population75         1     416.51    <.0001
+
+NOTE: The denominator degrees of freedom for the F tests is 4.
+
+
+               Estimated Regression Coefficients
+ 
+                                Standard
+Parameter         Estimate         Error    t Value    Pr > |t|
+
+Intercept       -0.0191292    0.89204053      -0.02      0.9839
+Population75     1.0546253    0.05167565      20.41      <.0001
+
+NOTE: The degrees of freedom for the t tests is 4.
+
+
+                               Estimate
+ 
+                               Standard
+Label              Estimate       Error       DF    t Value    Pr > |t|
+
+1985 population     8642.49      258.56        4      33.43      <.0001

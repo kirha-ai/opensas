@@ -1,0 +1,57 @@
+The SAS System
+
+18888      
+18889      /* STAT-STDRATE-009: STDRATE — Official examples and feature integration regression
+18890       * Source: S154 / Chapter 116 / `Examples: STDRATE Procedure` (PDF pp. 9527–9551).
+18891       * Discriminates: Example 116.2: Computing Mantel-Haenszel Risk Estimation
+18892       */
+18893      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+18893    ! validmemname=compatible locale=en_US;
+18894      %let syscc=0;
+18895      title; footnote;
+18896      ods _all_ close;
+18897      ods listing gpath="%sysfunc(pathname(work))";
+18898      ods graphics off;
+
+
+18899      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.FLORIDA_C43 (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.US_C43 (memtype=DATA).
+18899    !                                         quit;
+
+
+18900      ods path work.templat(update) sashelp.tmplmst(read);
+18901      
+18902      data School;
+18903      input Smoking $ Pet $ Grade $ Case Student;
+18904      datalines;
+
+NOTE: The data set WORK.SCHOOL has 12 observations and 5 variables.
+
+18917      ;
+18918      ods graphics on;
+18919      proc stdrate data=School
+18920      method=mh
+18921      stat=risk
+18922      effect=diff
+18923      plots=all
+18924      ;
+18925      population group=Smoking event=Case total=Student;
+18926      strata Pet Grade / order=data stats(cl=none) effect;
+18927      run;
+
+NOTE: The PROCEDURE STDRATE printed pages 1312-1313.
+
+18928      
+18929      
+18930      
+18931      
+The SAS System
+
+18932      

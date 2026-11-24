@@ -1,0 +1,89 @@
+The SAS System
+
+849        
+850        /* STAT-PHREG-003: PHREG — Time and CLASS Variables Usage / Counting Process Style of Input / Left-Truncation of Failure Times / Caution about
+850      ! Using Survival Data with Left Truncation
+851         * Source: S154 / Chapter 92 / `Time and CLASS Variables Usage` (PDF pp. 7392–7396); S154 / Chapter 92 / `Counting Process Style of Input` (PDF pp.
+851      !  7397–7398); S154 / Chapter 92 / `Left-Truncation of Failure Times` (PDF pp. 7398–7399); S154 / Chapter 92 / `Caution about Using Survival Data
+851      ! with Left Truncation` (PDF pp. 7446–7449).
+852         * Discriminates: Example 92.6: Model Using Time-Dependent Explanatory Variables
+853         */
+854        options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+854      ! validmemname=compatible locale=en_US;
+855        %let syscc=0;
+856        title; footnote;
+857        ods _all_ close;
+858        ods listing gpath="%sysfunc(pathname(work))";
+859        ods graphics off;
+860        proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SAMPLE (memtype=DATA).
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+860      !                                         quit;
+
+
+861        ods path work.templat(update) sashelp.tmplmst(read);
+862        
+863        options yearcutoff=1900;
+864        data Heart;
+865        infile datalines truncover;
+866        input ID Bir_Date :mmddyy8. Acc_Date :mmddyy8. Xpl_Date :mmddyy8. Ter_Date :mmddyy8. Status PrevSurg NMismatch Antigen Mismatch Reject NotTyped $;
+867        label Bir_Date ='Date of birth'
+868        Acc_Date ='Date of acceptance'
+869        Xpl_Date ='Date of transplant'
+870        Ter_Date ='Date last seen'
+871        Status = 'Dead=1 Alive=0'
+872        PrevSurg ='Previous surgery'
+873        NMismatch= 'No of mismatches'
+874        Antigen = 'HLA-A2 antigen'
+875        Mismatch ='Mismatch score'
+876        NotTyped = 'y=not tissue-typed';
+877        Time= Ter_Date - Acc_Date;
+878        Acc_Age=int( (Acc_Date - Bir_Date)/365 );
+879        if ( Xpl_Date ne .) then do;
+880        WaitTime= Xpl_Date - Acc_Date;
+881        Xpl_Age= int( (Xpl_Date - Bir_Date)/365 );
+882        end;
+883        datalines;
+
+NOTE: The data set WORK.HEART has 103 observations and 16 variables.
+
+987        ;
+988        proc phreg data= Heart;
+989        model Time*Status(0)= XStatus Acc_Age;
+990        if (WaitTime = . or Time < WaitTime) then XStatus = 0;
+991        else XStatus = 1;
+992        run;
+
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The PROCEDURE PHREG printed page 32.
+
+993        proc phreg data= Heart;
+994        model Time*Status(0)= XStatus XAge XScore;
+995        where NotTyped ^= 'y';
+996        if (WaitTime = . or Time < WaitTime) then do;
+997        XStatus = 0;
+998        XAge = 0;
+999        XScore = 0;
+1000       end;
+1001       else do;
+1002       XStatus = 1;
+1003       XAge = Xpl_Age;
+1004       XScore = Mismatch;
+1005       end;
+1006       run;
+
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The PROCEDURE PHREG printed page 33.
+
+1007       
+1008       
+1009       
+1010       
+The SAS System
+
+1011       

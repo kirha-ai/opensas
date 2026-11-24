@@ -1,0 +1,54 @@
+The SAS System
+
+29441      
+29442      /* STAT-VARCOMP-001: VARCOMP — Data input, variable roles, and basic options
+29443       * Source: S154 / Chapter 130 / `PROC VARCOMP Statement` (PDF pp. 10730–10731); S154 / Chapter 130 / `BY Statement` (PDF p. 10731); S154 / Chapter
+29443    ! 130 / `Missing Values` (PDF p. 10733).
+29444       * Discriminates: Verified default procedure context
+29445       */
+29446      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+29446    ! validmemname=compatible locale=en_US;
+29447      %let syscc=0;
+29448      title; footnote;
+29449      ods _all_ close;
+29450      ods listing gpath="%sysfunc(pathname(work))";
+29451      ods graphics off;
+
+
+29452      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.PHYS8 (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+29452    !                                         quit;
+
+
+29453      ods path work.templat(update) sashelp.tmplmst(read);
+29454      
+29455      data Cure;
+29456      input Lab Temp Batch $ Cure @@;
+29457      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.CURE has 108 observations and 4 variables.
+
+29485      ;
+29486      title 'Analyzing the Cure Rate of Rubber';
+29487      proc varcomp method=reml data=cure;
+29488      class temp lab batch;
+29489      model cure=temp|lab batch(lab temp) / fixed=1;
+29490      run;
+
+NOTE: There were 108 observations read from the data set WORK.CURE.
+NOTE: The PROCEDURE VARCOMP printed page 1801.
+
+29491      
+29492      
+29493      
+29494      
+The SAS System
+
+29495      

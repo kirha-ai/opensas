@@ -1,0 +1,83 @@
+
+The MCMC Procedure
+
+Number of Observations Read          12
+Number of Observations Used          12
+
+
+                                   Parameters
+ 
+                       Sampling      Initial
+Block    Parameter     Method          Value    Prior Distribution
+
+    1    mu            Conjugate     90.0000    normal(0, var=10000)            
+
+The MCMC Procedure
+
+                  Posterior Summaries and Intervals
+ 
+                                      Standard
+Parameter           N        Mean    Deviation      95% HPD Interval
+
+mu               1000     89.6811       2.9942     83.6713     95.2243
+
+The MCMC Procedure
+
+         Monte Carlo Standard Errors
+ 
+                          Standard
+Parameter        MCSE    Deviation     MCSE/SD
+
+mu             0.0925       2.9942      0.0309
+
+
+             Posterior Autocorrelations
+ 
+Parameter      Lag 1      Lag 5     Lag 10     Lag 50
+
+mu           -0.0227    -0.0395    -0.0235    -0.0213
+
+
+       Geweke Diagnostics
+ 
+Parameter           z    Pr > |z|
+
+mu            -0.2011      0.8406
+
+
+                 Raftery-Lewis Diagnostics
+Quantile=0.025 Accuracy=+/-0.005 Probability=0.95 Epsilon=0.001
+ 
+                     Number of Samples           Dependence
+Parameter     Burn-In       Total     Minimum        Factor
+
+mu                  .           .        3746         .    
+
+NOTE: The minimum required sample size of 3746 is larger
+than the available chain length of 1000.
+
+
+                                        Heidelberger-Welch Diagnostics
+ 
+                            Stationarity Test                                   Half-Width Test
+             Cramer-von               Test        Iterations       Half-                  Relative    Test
+Parameter    Mises Stat    p-Value    Outcome      Discarded       Width        Mean    Half-Width    Outcome
+
+mu               0.0567     0.8349    Passed               0      0.1565     89.6811       0.00174    Passed  
+
+
+                Effective Sample Sizes
+ 
+                         Autocorrelation
+Parameter         ESS               Time    Efficiency
+
+mu             1047.6             0.9546        1.0476
+
+The MEANS Procedure
+
+       Analysis Variable : mu 
+ 
+   N            Mean         Std Dev
+------------------------------------
+1000      89.6811035       2.9942480
+------------------------------------

@@ -1,0 +1,44 @@
+The SAS System
+
+16060      
+16061      /* STAT-SEQDESIGN-010: SEQDESIGN — Aspects of Group Sequential Designs / Summary of Methods in Group Sequential Designs
+16062       * Source: S154 / Chapter 110 / `Aspects of Group Sequential Designs` (PDF pp. 9018–9021); S154 / Chapter 110 / `Summary of Methods in Group
+16062    ! Sequential Designs` (PDF pp. 9021–9023).
+16063       * Discriminates: Example 110.4: Generating Graphics Display for Sequential Designs
+16064       */
+16065      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+16065    ! validmemname=compatible locale=en_US;
+16066      %let syscc=0;
+16067      title; footnote;
+16068      ods _all_ close;
+16069      ods listing gpath="%sysfunc(pathname(work))";
+16070      ods graphics off;
+16071      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+16071    !                                         quit;
+
+
+16072      ods path work.templat(update) sashelp.tmplmst(read);
+16073      
+16074      ods graphics on;
+16075      proc seqdesign altref=0.4
+16076      plots=all
+16077      ;
+16078      TwoSidedPocock: design nstages=4 method=poc;
+16079      TwoSidedOBrienFleming: design nstages=4 method=obf;
+16080      run;
+
+NOTE: The PROCEDURE SEQDESIGN printed pages 1155-1156.
+
+16081      
+16082      
+16083      
+16084      
+The SAS System
+
+16085      

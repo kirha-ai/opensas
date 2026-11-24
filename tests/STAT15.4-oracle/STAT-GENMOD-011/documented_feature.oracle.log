@@ -1,0 +1,61 @@
+The SAS System
+
+22433      
+22434      /* STAT-GENMOD-011: GENMOD — CONTRAST / ESTIMATE / Type 1 Analysis
+22435       * Source: S154 / Chapter 51 / `CONTRAST Statement` (PDF pp. 3530–3532); S154 / Chapter 51 / `ESTIMATE Statement` (PDF pp. 3534–3535); S154 /
+22435    ! Chapter 51 / `Type 1 Analysis` (PDF pp. 3581–3582).
+22436       * Discriminates: Example 51.4: Ordinal Model for Multinomial Data; explicit statements: ESTIMATE
+22437       */
+22438      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+22438    ! validmemname=compatible locale=en_US;
+22439      %let syscc=0;
+22440      title; footnote;
+22441      ods _all_ close;
+22442      ods listing gpath="%sysfunc(pathname(work))";
+22443      ods graphics off;
+22444      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.INGOTS (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+22444    !                                         quit;
+
+
+22445      ods path work.templat(update) sashelp.tmplmst(read);
+22446      
+22447      data Icecream;
+22448      input count brand$ taste$;
+22449      datalines;
+
+NOTE: The data set WORK.ICECREAM has 15 observations and 3 variables.
+
+22465      ;
+22466      proc genmod data=Icecream rorder=data;
+22467      freq count;
+22468      class brand;
+22469      model taste = brand / dist=multinomial
+22470      link=cumlogit
+22471      aggregate=brand
+22472      type1;
+22473      estimate 'LogOR12' brand 1 -1 / exp;
+22474      estimate 'LogOR13' brand 1 0 -1 / exp;
+22475      estimate 'LogOR23' brand 0 1 -1 / exp;
+22476      run;
+
+NOTE: PROC GENMOD is modeling the probabilities of levels of taste having LOWER Ordered Values in the response profile table.
+NOTE: Algorithm converged.
+NOTE: The scale parameter was held fixed.
+NOTE: The PROCEDURE GENMOD printed page 2382.
+
+22477      
+22478      
+22479      
+22480      
+The SAS System
+
+22481      

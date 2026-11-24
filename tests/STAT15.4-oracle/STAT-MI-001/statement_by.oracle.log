@@ -1,0 +1,74 @@
+The SAS System
+
+2191       
+2192       /* STAT-MI-001: MI — Data input, variable roles, and basic options
+2193        * Source: S154 / Chapter 82 / `PROC MI Statement` (PDF pp. 6425–6429); S154 / Chapter 82 / `BY Statement` (PDF p. 6429); S154 / Chapter 82 /
+2193     ! `CLASS Statement` (PDF pp. 6429–6430); S154 / Chapter 82 / `FREQ Statement` (PDF p. 6436); S154 / Chapter 82 / `VAR Statement` (PDF pp.
+2193     ! 6448–6449); S154 / Chapter 82 / `EM Algorithm for Data with Missing Values` (PDF pp. 6450–6451); S154 / Chapter 82 / `Missing Data Patterns` (PDF
+2193     !  pp. 6452–6453); S154 / Chapter 82 / `Monotone Methods for Data Sets with Monotone Missing Patterns` (PDF pp. 6455–6456); S154 / Chapter 82 /
+2193     ! `FCS Methods for Data Sets with Arbitrary Missing Patterns` (PDF pp. 6464–6466); S154 / Chapter 82 / `Input Data Sets` (PDF pp. 6476–6477).
+2194        * Discriminates: Two explicit BY groups contain identical inputs, exposing group boundaries and per-group results.
+2195        */
+2196       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+2196     ! validmemname=compatible locale=en_US;
+2197       %let syscc=0;
+2198       title; footnote;
+2199       ods _all_ close;
+2200       ods listing gpath="%sysfunc(pathname(work))";
+2201       ods graphics off;
+2202       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.FITNESS1 (memtype=DATA).
+NOTE: Deleting WORK.OUTEM (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+2202     !                                         quit;
+
+
+2203       ods path work.templat(update) sashelp.tmplmst(read);
+2204       
+2205       data Fitness1;
+2206       input Oxygen RunTime RunPulse @@;
+2207       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.FITNESS1 has 31 observations and 3 variables.
+
+2224       ;
+2225       
+2226       run;
+2227       data _oracle_input; set Fitness1; do _oracle_by=1 to 2; output; end; run;
+
+NOTE: There were 31 observations read from the data set WORK.FITNESS1.
+NOTE: The data set WORK._ORACLE_INPUT has 62 observations and 4 variables.
+
+2228       proc sort data=_oracle_input; by _oracle_by; run;
+
+NOTE: There were 62 observations read from the data set WORK._ORACLE_INPUT.
+NOTE: The data set WORK._ORACLE_INPUT has 62 observations and 4 variables.
+
+2229       proc mi data=_oracle_input seed=1518971 simple nimpute=0;
+2230       by _oracle_by;
+2231       em itprint outem=outem;
+2232       var Oxygen RunTime RunPulse;
+2233       run;
+
+NOTE: The EM algorithm (MLE) converges in 12 iterations.
+NOTE: The above message was for the following BY group:
+      _oracle_by=1
+NOTE: The EM algorithm (MLE) converges in 12 iterations.
+NOTE: The above message was for the following BY group:
+      _oracle_by=2
+NOTE: The data set WORK.OUTEM has 8 observations and 6 variables.
+NOTE: The PROCEDURE MI printed pages 159-160.
+
+2234       
+2235       
+2236       
+2237       
+The SAS System
+
+2238       

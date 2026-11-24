@@ -1,0 +1,63 @@
+The SAS System
+
+23016      
+23017      /* STAT-SURVEYPHREG-006: SURVEYPHREG — Left-Truncation of Failure Times / The Multiplicative Hazards Model / Firth's Modification for Maximum
+23017    ! Likelihood Estimation
+23018       * Source: S154 / Chapter 122 / `Left-Truncation of Failure Times` (PDF p. 10049); S154 / Chapter 122 / `The Multiplicative Hazards Model` (PDF pp.
+23018    ! 10049–10050); S154 / Chapter 122 / `Firth's Modification for Maximum Likelihood Estimation` (PDF pp. 10050–10052).
+23019       * Discriminates: Verified default procedure context
+23020       */
+23021      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+23021    ! validmemname=compatible locale=en_US;
+23022      %let syscc=0;
+23023      title; footnote;
+23024      ods _all_ close;
+23025      ods listing gpath="%sysfunc(pathname(work))";
+23026      ods graphics off;
+23027      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SURVEY (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+23027    !                                         quit;
+
+
+23028      ods path work.templat(update) sashelp.tmplmst(read);
+23029      
+23030      data survey;
+23031      call streaminit(722);
+23032      do stratum=1 to 2;
+23033      do cluster=1 to 4;
+23034      do id=1 to 12;
+23035      age=20+mod(id*7+cluster,45);
+23036      time=1+rand('exponential')*10;
+23037      status=(mod(id,4) ne 0);
+23038      weight=2+stratum+cluster/10;
+23039      output;
+23040      end;
+23041      end;
+23042      end;
+23043      run;
+
+NOTE: The data set WORK.SURVEY has 96 observations and 7 variables.
+
+23044      proc surveyphreg data=survey;
+23045      strata stratum;
+23046      cluster cluster;
+23047      weight weight;
+23048      model time*status(0)=age;
+23049      run;
+
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The PROCEDURE SURVEYPHREG printed page 1499.
+
+23050      
+23051      
+23052      
+23053      
+The SAS System
+
+23054      

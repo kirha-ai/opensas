@@ -1,0 +1,142 @@
+The SAS System
+
+2905       
+2906       /* STAT-MI-015: MI — Plot Options Superseded by ODS Graphics / ODS Graphics
+2907        * Source: S154 / Chapter 82 / `Plot Options Superseded by ODS Graphics` (PDF pp. 6493–6498); S154 / Chapter 82 / `ODS Graphics` (PDF pp.
+2907     ! 6499–6500).
+2908        * Discriminates: Example 82.8: FCS Method with Trace Plot
+2909        */
+2910       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+2910     ! validmemname=compatible locale=en_US;
+2911       %let syscc=0;
+2912       title; footnote;
+2913       ods _all_ close;
+2914       ods listing gpath="%sysfunc(pathname(work))";
+2915       ods graphics off;
+2916       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.FITNESS1 (memtype=DATA).
+NOTE: Deleting WORK.OUTEM (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+2916     !                                         quit;
+
+
+2917       ods path work.templat(update) sashelp.tmplmst(read);
+2918       
+2919       ods graphics on;
+2920       ods trace on;
+2921       ods trace on;
+2922       data Fish3;
+2923       title 'Fish Measurement Data';
+2924       input Species $ Length Width @@;
+2925       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.FISH3 has 87 observations and 3 variables.
+
+2955       ;
+2956       run;
+2957       ods graphics on;
+2958       proc mi data=Fish3 seed=1305417 nimpute=5 out=outex8;
+2959       class Species;
+2960       fcs plots=trace
+2961       logistic(Species= Length Width Length*Width /details link=glogit);
+2962       var Species Length Width;
+2963       run;
+
+
+Output Added:
+-------------
+Name:       ModelInfo
+Label:      Model Information
+Template:   stat.mi.ModelInfo
+Path:       MI.ModelInfo
+-------------
+
+Output Added:
+-------------
+Name:       FcsModel
+Label:      FCS Model Specification
+Template:   stat.mi.FcsModel
+Path:       MI.FcsModel
+-------------
+
+Output Added:
+-------------
+Name:       MissPattern
+Label:      Missing Data Patterns
+Template:   stat.mi.MissPattern
+Path:       MI.MissPattern
+-------------
+
+Output Added:
+-------------
+Name:       FcsLogistic
+Label:      Logistic Models for FCS Method
+Template:   stat.mi.FcsLogistic
+Path:       MI.FcsLogistic
+-------------
+
+Output Added:
+-------------
+Name:       TracePlot
+Label:      Trace Plot
+Template:   Stat.MI.Graphics.TracePlot
+Path:       MI.Length.TracePlot
+-------------
+
+Output Added:
+-------------
+Name:       TracePlot
+Label:      Trace Plot
+Template:   Stat.MI.Graphics.TracePlot
+Path:       MI.Width.TracePlot
+-------------
+
+Output Added:
+-------------
+Name:       VarianceInfo
+Label:      Variance Information
+Template:   stat.mi.VarianceInfo
+Path:       MI.VarianceInfo
+-------------
+
+Output Added:
+-------------
+Name:       ParameterEstimates
+Label:      Parameter Estimates
+Template:   stat.mi.ParameterEstimates
+Path:       MI.ParameterEstimates
+-------------
+NOTE: The data set WORK.OUTEX8 has 435 observations and 4 variables.
+NOTE: The PROCEDURE MI printed pages 263-264.
+
+2964       proc print data=outex8(obs=10);
+2965       title 'First 10 Observations of the Imputed Data Set';
+2966       run;
+
+
+Output Added:
+-------------
+Name:       Print
+Label:      Data Set WORK.OUTEX8
+Data Name:  ProcPrintTable
+Path:       Print.Print
+-------------
+NOTE: There were 10 observations read from the data set WORK.OUTEX8.
+NOTE: The PROCEDURE PRINT printed page 265.
+
+2967       ods trace off;
+2968       ods trace off;
+2969       ods graphics off;
+2970       
+2971       
+2972       
+2973       
+The SAS System
+
+2974       

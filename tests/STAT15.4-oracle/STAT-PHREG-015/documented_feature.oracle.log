@@ -1,0 +1,154 @@
+The SAS System
+
+3072       
+3073       /* STAT-PHREG-015: PHREG — ROC / Schemper-Henderson Predictive Measure / Concordance Statistics / Time-Dependent ROC Curves
+3074        * Source: S154 / Chapter 92 / `ROC Statement` (PDF p. 7388); S154 / Chapter 92 / `Schemper-Henderson Predictive Measure` (PDF pp. 7429–7430); S154
+3074     !  / Chapter 92 / `Concordance Statistics` (PDF pp. 7434–7437); S154 / Chapter 92 / `Time-Dependent ROC Curves` (PDF pp. 7437–7441).
+3075        * Discriminates: Example 92.7: Time-Dependent Repeated Measurements of a Covariate
+3076        */
+3077       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+3077     ! validmemname=compatible locale=en_US;
+3078       %let syscc=0;
+3079       title; footnote;
+3080       ods _all_ close;
+3081       ods listing gpath="%sysfunc(pathname(work))";
+3082       ods graphics off;
+
+
+3083       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.PRIOR (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.VALUNG (memtype=DATA).
+3083     !                                         quit;
+
+
+3084       ods path work.templat(update) sashelp.tmplmst(read);
+3085       
+3086       data Tumor;
+3087       infile datalines missover;
+3088       input ID Time Dead Dose P1-P15;
+3089       label ID='Subject ID';
+3090       datalines;
+
+NOTE: The data set WORK.TUMOR has 45 observations and 19 variables.
+
+3136       ;
+3137       proc phreg data=Tumor;
+3138       model Time*Dead(0)=Dose NPap;
+3139       array pp{*} P1-P14;
+3140       array tt{*} t1-t15;
+3141       t1=27;
+3142       t2=34;
+3143       t3=37;
+3144       t4=41;
+3145       t5=43;
+3146       t6=45;
+3147       t7=46;
+3148       t8=47;
+3149       t9=49;
+3150       t10=50;
+3151       t11=51;
+3152       t12=53;
+3153       t13=65;
+3154       t14=67;
+3155       t15=71;
+3156       if Time < tt[1] then NPap=0;
+3157       else if time >= tt[15] then NPap=P15;
+3158       else do i=1 to dim(pp);
+3159       if tt[i] <= Time < tt[i+1] then NPap= pp[i];
+3160       end;
+3161       run;
+
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The PROCEDURE PHREG printed page 251.
+
+3162       data Tumor1(keep=ID Time Dead Dose T1 T2 NPap Status);
+3163       array pp{*} P1-P14;
+3164       array qq{*} P2-P15;
+3165       array tt{1:15} _temporary_
+3166       (27 34 37 41 43 45 46 47 49 50 51 53 65 67 71);
+3167       set Tumor;
+3168       T1 = 0;
+3169       T2 = 0;
+3170       Status = 0;
+3171       if ( Time = tt[1] ) then do;
+3172       T2 = tt[1];
+3173       NPap = p1;
+3174       Status = Dead;
+3175       output;
+3176       end;
+3177       else do _i_=1 to dim(pp);
+3178       if ( tt[_i_] = Time ) then do;
+3179       T2= Time;
+3180       NPap = pp[_i_];
+3181       Status = Dead;
+3182       output;
+3183       end;
+3184       else if (tt[_i_] < Time ) then do;
+3185       if (pp[_i_] ^= qq[_i_] ) then do;
+3186       if qq[_i_] = . then T2= Time;
+3187       else T2= tt[_i_];
+3188       NPap= pp[_i_];
+3189       Status= 0;
+3190       output;
+3191       T1 = T2;
+3192       end;
+3193       end;
+3194       end;
+3195       if ( Time >= tt[15] ) then do;
+3196       T2 = Time;
+3197       NPap = P15;
+3198       Status = Dead;
+3199       output;
+3200       end;
+3201       run;
+
+NOTE: There were 45 observations read from the data set WORK.TUMOR.
+NOTE: The data set WORK.TUMOR1 has 102 observations and 8 variables.
+
+3202       proc phreg data=Tumor1 noprint;
+3203       model (T1,T2)*Status(0)=Dose NPap;
+3204       output out=Out1 resmart=Mart dfbeta=db1-db2;
+3205       id ID Time Dead;
+3206       run;
+
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The data set WORK.OUT1 has 102 observations and 11 variables.
+
+3207       proc means data=Out1 noprint;
+3208       by ID Time Dead;
+3209       var Mart db1-db2;
+3210       output out=Out2 sum=Mart db_Dose db_NPap;
+3211       run;
+
+NOTE: There were 102 observations read from the data set WORK.OUT1.
+NOTE: The data set WORK.OUT2 has 45 observations and 8 variables.
+
+3212       title 'DfBetas for Dose';
+3213       proc sgplot data=Out2;
+3214       yaxis label="DfBeta" grid;
+3215       refline 0 / axis=y;
+3216       scatter y=db_Dose x=ID;
+3217       run;
+
+NOTE: Listing image output written to /saswork/SAS_work35F80001D7BA_odaws01-euw1.oda.sas.com/SAS_workC7D80001D7BA_odaws01-euw1.oda.sas.com/SGPlot.png.
+NOTE: There were 45 observations read from the data set WORK.OUT2.
+
+3218       title 'DfBetas for NPap';
+3219       proc sgplot data=Out2;
+3220       yaxis label="DfBeta" grid;
+3221       refline 0 / axis=y;
+3222       scatter y=db_NPap x=ID;
+3223       run;
+
+NOTE: Listing image output written to /saswork/SAS_work35F80001D7BA_odaws01-euw1.oda.sas.com/SAS_workC7D80001D7BA_odaws01-euw1.oda.sas.com/SGPlot1.png.
+NOTE: There were 45 observations read from the data set WORK.OUT2.
+
+3224       
+3225       
+3226       
+3227       
+The SAS System
+
+3228       

@@ -1,0 +1,200 @@
+
+The GLM Procedure
+
+           Class Level Information
+ 
+Class         Levels    Values
+
+Drug               2    Morphine Trimethaphan 
+
+Depleted           2    N Y                   
+
+
+Number of Observations Read          16
+Number of Observations Used          15
+
+The GLM Procedure
+Repeated Measures Analysis of Variance
+
+               Repeated Measures Level Information
+ 
+                             Log        Log        Log        Log
+Dependent Variable    Histamine0 Histamine1 Histamine3 Histamine5
+
+     Level of Time             0          1          3          5
+
+
+        Partial Correlation Coefficients from the Error SSCP Matrix / Prob > |r|
+                                            
+DF = 11            LogHistamine0      LogHistamine1      LogHistamine3      LogHistamine5
+
+LogHistamine0           1.000000           0.746052           0.871486           0.878702
+                                             0.0053             0.0002             0.0002
+
+LogHistamine1           0.746052           1.000000           0.945997           0.907472
+                          0.0053                                <.0001             <.0001
+
+LogHistamine3           0.871486           0.945997           1.000000           0.990270
+                          0.0002             <.0001                                <.0001
+
+LogHistamine5           0.878702           0.907472           0.990270           1.000000
+                          0.0002             <.0001             <.0001                   
+
+
+                    E = Error SSCP Matrix
+                              
+Time_N represents the nth degree polynomial contrast for Time
+ 
+              Time_1        Time_2        Time_3
+
+Time_1       0.63171      -0.47343       0.11385
+Time_2      -0.47343       1.04119      -0.70528
+Time_3       0.11385      -0.70528       0.80949
+
+
+Partial Correlation Coefficients from the Error SSCP Matrix of the Variables Defined by the Specified Transformation / Prob > |r|
+                                                                
+DF = 11         Time_1         Time_2         Time_3
+
+Time_1        1.000000      -0.583759       0.159214
+                               0.0463         0.6211
+
+Time_2       -0.583759       1.000000      -0.768231
+                0.0463                        0.0035
+
+Time_3        0.159214      -0.768231       1.000000
+                0.6211         0.0035               
+
+
+                            Sphericity Tests
+ 
+                                   Mauchly's
+Variables                    DF    Criterion    Chi-Square    Pr > ChiSq
+
+Transformed Variates          5    0.1752641     16.930873        0.0046
+Orthogonal Components         5    0.1752641     16.930873        0.0046
+
+
+MANOVA Test Criteria and Exact F Statistics for the Hypothesis of no Time Effect
+                       H = Type III SSCP Matrix for Time
+                             E = Error SSCP Matrix
+                                        
+                             S=1    M=0.5    N=3.5
+ 
+Statistic                        Value    F Value    Num DF    Den DF    Pr > F
+
+Wilks' Lambda               0.11097706      24.03         3         9    0.0001
+Pillai's Trace              0.88902294      24.03         3         9    0.0001
+Hotelling-Lawley Trace      8.01087137      24.03         3         9    0.0001
+Roy's Greatest Root         8.01087137      24.03         3         9    0.0001
+
+
+MANOVA Test Criteria and Exact F Statistics for the Hypothesis of no Time*Drug Effect
+                       H = Type III SSCP Matrix for Time*Drug
+                                E = Error SSCP Matrix
+                                           
+                                S=1    M=0.5    N=3.5
+ 
+Statistic                        Value    F Value    Num DF    Den DF    Pr > F
+
+Wilks' Lambda               0.34155984       5.78         3         9    0.0175
+Pillai's Trace              0.65844016       5.78         3         9    0.0175
+Hotelling-Lawley Trace      1.92774470       5.78         3         9    0.0175
+Roy's Greatest Root         1.92774470       5.78         3         9    0.0175
+
+
+MANOVA Test Criteria and Exact F Statistics for the Hypothesis of no Time*Depleted Effect
+                       H = Type III SSCP Matrix for Time*Depleted
+                                  E = Error SSCP Matrix
+                                             
+                                  S=1    M=0.5    N=3.5
+ 
+Statistic                        Value    F Value    Num DF    Den DF    Pr > F
+
+Wilks' Lambda               0.12339988      21.31         3         9    0.0002
+Pillai's Trace              0.87660012      21.31         3         9    0.0002
+Hotelling-Lawley Trace      7.10373567      21.31         3         9    0.0002
+Roy's Greatest Root         7.10373567      21.31         3         9    0.0002
+
+
+MANOVA Test Criteria and Exact F Statistics for the Hypothesis of no Time*Drug*Depleted Effect
+                       H = Type III SSCP Matrix for Time*Drug*Depleted
+                                    E = Error SSCP Matrix
+                                               
+                                    S=1    M=0.5    N=3.5
+ 
+Statistic                        Value    F Value    Num DF    Den DF    Pr > F
+
+Wilks' Lambda               0.19383010      12.48         3         9    0.0015
+Pillai's Trace              0.80616990      12.48         3         9    0.0015
+Hotelling-Lawley Trace      4.15915732      12.48         3         9    0.0015
+Roy's Greatest Root         4.15915732      12.48         3         9    0.0015
+
+The GLM Procedure
+Repeated Measures Analysis of Variance
+Tests of Hypotheses for Between Subjects Effects
+
+Source                      DF     Type III SS     Mean Square    F Value    Pr > F
+
+Drug                         1      5.99336243      5.99336243       2.71    0.1281
+Depleted                     1     15.44840703     15.44840703       6.98    0.0229
+Drug*Depleted                1      4.69087508      4.69087508       2.12    0.1734
+Error                       11     24.34683348      2.21334850                     
+
+The GLM Procedure
+Repeated Measures Analysis of Variance
+Univariate Tests of Hypotheses for Within Subject Effects
+
+                                                                                          Adj Pr > F
+Source                      DF     Type III SS     Mean Square    F Value    Pr > F     G - G     H-F-L
+
+Time                         3     12.05898677      4.01966226      53.44    <.0001    <.0001    <.0001
+Time*Drug                    3      1.84429514      0.61476505       8.17    0.0003    0.0039    0.0023
+Time*Depleted                3     12.08978557      4.02992852      53.57    <.0001    <.0001    <.0001
+Time*Drug*Depleted           3      2.93077939      0.97692646      12.99    <.0001    0.0005    0.0002
+Error(Time)                 33      2.48238887      0.07522391                                         
+
+
+Greenhouse-Geisser Epsilon      0.5694
+Huynh-Feldt-Lecoutre Epsilon    0.6636
+
+The GLM Procedure
+Repeated Measures Analysis of Variance
+Analysis of Variance of Contrast Variables
+ 
+Time_N represents the nth degree polynomial contrast for Time
+
+Contrast Variable: Time_1
+
+
+Source                      DF     Type III SS     Mean Square    F Value    Pr > F
+
+Mean                         1      2.00963483      2.00963483      34.99    0.0001
+Drug                         1      1.18069076      1.18069076      20.56    0.0009
+Depleted                     1      1.36172504      1.36172504      23.71    0.0005
+Drug*Depleted                1      2.04346848      2.04346848      35.58    <.0001
+Error                       11      0.63171161      0.05742833                     
+
+
+Contrast Variable: Time_2
+
+
+Source                      DF     Type III SS     Mean Square    F Value    Pr > F
+
+Mean                         1      5.40988418      5.40988418      57.15    <.0001
+Drug                         1      0.59173192      0.59173192       6.25    0.0295
+Depleted                     1      5.94945506      5.94945506      62.86    <.0001
+Drug*Depleted                1      0.67031587      0.67031587       7.08    0.0221
+Error                       11      1.04118707      0.09465337                     
+
+
+Contrast Variable: Time_3
+
+
+Source                      DF     Type III SS     Mean Square    F Value    Pr > F
+
+Mean                         1      4.63946776      4.63946776      63.04    <.0001
+Drug                         1      0.07187246      0.07187246       0.98    0.3443
+Depleted                     1      4.77860547      4.77860547      64.94    <.0001
+Drug*Depleted                1      0.21699504      0.21699504       2.95    0.1139
+Error                       11      0.80949018      0.07359002                     

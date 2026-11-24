@@ -1,0 +1,67 @@
+The SAS System
+
+767        
+768        /* STAT-NPAR1WAY-008: NPAR1WAY — OUTPUT / Contents of the Output Data Set
+769         * Source: S154 / Chapter 90 / `OUTPUT Statement` (PDF pp. 7230–7233); S154 / Chapter 90 / `Contents of the Output Data Set` (PDF pp. 7253–7259).
+770         * Discriminates: Getting Started: NPAR1WAY Procedure; explicit statements: OUTPUT
+771         */
+772        options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+772      ! validmemname=compatible locale=en_US;
+773        %let syscc=0;
+774        title; footnote;
+775        ods _all_ close;
+776        ods listing gpath="%sysfunc(pathname(work))";
+777        ods graphics off;
+778        proc datasets library=work kill nolist;
+NOTE: Deleting WORK.GOSSYPOL (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+778      !                                         quit;
+
+
+779        ods path work.templat(update) sashelp.tmplmst(read);
+780        
+781        data Gossypol;
+782        input Dose n;
+783        do i=1 to n;
+784        input Gain @@;
+785        output;
+786        end;
+787        datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.GOSSYPOL has 67 observations and 4 variables.
+
+798        ;
+799        proc npar1way data=Gossypol;
+800        class Dose;
+801        var Gain;
+802        run;
+
+NOTE: The PROCEDURE NPAR1WAY printed pages 108-113.
+
+803        ods graphics on;
+804        proc npar1way data=Gossypol plots(only)=wilcoxonboxplot;
+805        class Dose;
+806        var Gain;
+807        run;
+
+NOTE: The PROCEDURE NPAR1WAY printed pages 114-119.
+
+808        ods graphics off;
+809        proc npar1way data=Gossypol;
+810        where Dose <= .04;
+811        class Dose;
+812        var Gain;
+813        run;
+
+NOTE: The PROCEDURE NPAR1WAY printed pages 120-125.
+
+814        
+815        
+816        
+817        
+The SAS System
+
+818        

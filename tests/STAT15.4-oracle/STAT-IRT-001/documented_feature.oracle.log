@@ -1,0 +1,58 @@
+The SAS System
+
+8842       
+8843       /* STAT-IRT-001: IRT — Data input, variable roles, and basic options
+8844        * Source: S154 / Chapter 72 / `PROC IRT Statement` (PDF pp. 5302–5313); S154 / Chapter 72 / `BY Statement` (PDF pp. 5313–5314); S154 / Chapter
+8844     ! 72 / `FREQ Statement` (PDF p. 5332); S154 / Chapter 72 / `VAR Statement` (PDF pp. 5336–5337); S154 / Chapter 72 / `WEIGHT Statement` (PDF pp.
+8844     ! 5339–5340); S154 / Chapter 72 / `Missing Values` (PDF p. 5351).
+8845        * Discriminates: Verified default procedure context; explicit statements: VAR
+8846        */
+8847       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+8847     ! validmemname=compatible locale=en_US;
+8848       %let syscc=0;
+8849       title; footnote;
+8850       ods _all_ close;
+8851       ods listing gpath="%sysfunc(pathname(work))";
+8852       ods graphics off;
+8853       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.MONOECIOUS (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+8853     !                                         quit;
+
+
+8854       ods path work.templat(update) sashelp.tmplmst(read);
+8855       
+8856       data responses;
+8857       call streaminit(329);
+8858       array item[5] item1-item5;
+8859       do subject=1 to 150;
+8860       theta=rand('normal');
+8861       do k=1 to 5;
+8862       item[k]=rand('bernoulli',1/(1+exp(-(theta-(k-3)/2))));
+8863       end;
+8864       output;
+8865       end;
+8866       keep item1-item5;
+8867       run;
+
+NOTE: The data set WORK.RESPONSES has 150 observations and 5 variables.
+
+8868       proc irt data=responses;
+8869       var item1-item5;
+8870       run;
+
+NOTE: The observed frequency is zero for some response patterns. As a result, the Pearson chi-square model fit statistic is not calculated.
+WARNING: Over 20 percent of the response patterns have expected frequency less than 5. The chi-square distribution might not provide valid statistical 
+         inferences about the model fit when you use the Pearson chi-square and the likelihood ratio chi-square.
+NOTE: The PROCEDURE IRT printed pages 624-628.
+
+8871       
+8872       
+8873       
+8874       
+The SAS System
+
+8875       

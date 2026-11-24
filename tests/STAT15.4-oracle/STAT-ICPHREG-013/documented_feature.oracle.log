@@ -1,0 +1,60 @@
+The SAS System
+
+8501       
+8502       /* STAT-ICPHREG-013: ICPHREG — Official examples and feature integration regression
+8503        * Source: S154 / Chapter 70 / `Examples: ICPHREG Procedure` (PDF pp. 5250–5267).
+8504        * Discriminates: Example 70.3: Fitting Stratified Weibull Models
+8505        */
+8506       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+8506     ! validmemname=compatible locale=en_US;
+8507       %let syscc=0;
+8508       title; footnote;
+8509       ods _all_ close;
+8510       ods listing gpath="%sysfunc(pathname(work))";
+8511       ods graphics off;
+8512       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.HIV (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+8512     !                                         quit;
+
+
+8513       ods path work.templat(update) sashelp.tmplmst(read);
+8514       
+8515       data hyper;
+8516       input nephrectomy age time status @@;
+8517       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.HYPER has 36 observations and 4 variables.
+
+8554       ;
+8555       data hyper;
+8556       set hyper;
+8557       left = time;
+8558       if status = 0 then right = .;
+8559       else right = time;
+8560       run;
+
+NOTE: There were 36 observations read from the data set WORK.HYPER.
+NOTE: The data set WORK.HYPER has 36 observations and 6 variables.
+
+8561       ods graphics on;
+8562       proc icphreg data=hyper plot(timerange=(0,125))=surv;
+8563       class Age(desc);
+8564       strata Nephrectomy;
+8565       model (Left, Right) = Age / basehaz=splines(df=1);
+8566       run;
+
+NOTE: Convergence criterion (ABSGCONV=0.00001) satisfied.
+NOTE: The PROCEDURE ICPHREG printed page 598.
+
+8567       
+8568       
+8569       
+8570       
+The SAS System
+
+8571       

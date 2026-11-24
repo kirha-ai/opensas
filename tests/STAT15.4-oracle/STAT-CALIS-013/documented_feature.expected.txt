@@ -1,0 +1,1484 @@
+
+The CALIS Procedure
+Covariance Structure Analysis: Model and Initial Values
+
+      Modeling Information
+ Maximum Likelihood Estimation
+
+Data Set            WORK.WHEATON
+N Obs               932         
+Model Type          RAM         
+Analysis            Covariances 
+
+
+                        Variables in the Model
+
+Endogenous    Manifest     Anomie67  Anomie71  Education  Powerless67
+                           Powerless71  SEI                          
+              Latent       Alien67  Alien71                          
+Exogenous     Manifest                                               
+              Latent       SES                                       
+
+                  Number of Endogenous Variables = 8
+                  Number of Exogenous Variables  = 1
+
+
+                                                                  Initial RAM _A_ Matrix
+ 
+                   Anomie67     Powerless67        Anomie71     Powerless71       Education             SEI         Alien67         Alien71             SES
+
+Anomie67                  0               0               0               0               0               0          1.0000               0               0
+                                                                                                                                                           
+
+Powerless67               0               0               0               0               0               0          0.8330               0               0
+                                                                                                                                                           
+
+Anomie71                  0               0               0               0               0               0               0          1.0000               0
+                                                                                                                                                           
+
+Powerless71               0               0               0               0               0               0               0          0.8330               0
+                                                                                                                                                           
+
+Education                 0               0               0               0               0               0               0               0          1.0000
+                                                                                                                                                           
+
+SEI                       0               0               0               0               0               0               0               0               .
+                                                                                                                                                   [lambda]
+
+Alien67                   0               0               0               0               0               0               0               0               .
+                                                                                                                                                   [gamma1]
+
+Alien71                   0               0               0               0               0               0               .               0               .
+                                                                                                                     [beta]                        [gamma2]
+
+SES                       0               0               0               0               0               0               0               0               0
+                                                                                                                                                           
+
+
+                                                                  Initial RAM _P_ Matrix
+ 
+                   Anomie67     Powerless67        Anomie71     Powerless71       Education             SEI         Alien67         Alien71             SES
+
+Anomie67                  .               0               .               0               0               0               0               0               0
+                   [theta1]                        [theta5]                                                                                                
+
+Powerless67               0               .               0               .               0               0               0               0               0
+                                   [theta2]                        [theta5]                                                                                
+
+Anomie71                  .               0               .               0               0               0               0               0               0
+                   [theta5]                        [theta1]                                                                                                
+
+Powerless71               0               .               0               .               0               0               0               0               0
+                                   [theta5]                        [theta2]                                                                                
+
+Education                 0               0               0               0               .               0               0               0               0
+                                                                                   [theta3]                                                                
+
+SEI                       0               0               0               0               0               .               0               0               0
+                                                                                                   [theta4]                                                
+
+Alien67                   0               0               0               0               0               0               .               0               0
+                                                                                                                     [psi1]                                
+
+Alien71                   0               0               0               0               0               0               0               .               0
+                                                                                                                                     [psi2]                
+
+SES                       0               0               0               0               0               0               0               0               .
+                                                                                                                                                      [phi]
+
+The CALIS Procedure
+Covariance Structure Analysis: Descriptive Statistics
+
+                         Simple Statistics
+ 
+                Variable                          Mean       Std Dev
+
+Anomie67       Anomie (1967)                         0       3.44006
+Powerless67    Powerlessness (1967)                  0       3.06007
+Anomie71       Anomie (1971)                         0       3.54006
+Powerless71    Powerlessness (1971)                  0       3.16006
+Education      Education                             0       3.10000
+SEI            Occupational Status Index             0      21.21999
+
+The CALIS Procedure
+Covariance Structure Analysis: Optimization
+
+        Initial Estimation Methods
+
+       1    Instrumental Variables Method
+       2    McDonald Method              
+       3    Two-Stage Least Squares      
+
+
+              Optimization Start
+              Parameter Estimates
+ 
+    N    Parameter      Estimate      Gradient
+
+    1    lambda          4.99508      -0.00206
+    2    gamma1         -0.62322      -0.04069
+    3    gamma2         -0.20437      -0.03816
+    4    beta            0.66589       0.03789
+    5    theta1          3.51433      -0.00409
+    6    theta2          3.65991       0.01182
+    7    theta3          2.49860      -0.00578
+    8    theta4        272.85274     0.0000194
+    9    psi1            5.57764      -0.00217
+   10    psi2            3.79636      -0.00935
+   11    phi             7.11140       0.00108
+   12    theta5          0.45298      -0.06463
+
+  Value of Objective Function = 0.0365979443
+
+The CALIS Procedure
+Covariance Structure Analysis: Optimization
+
+Levenberg-Marquardt Optimization
+
+Scaling Update of More (1978)
+
+Parameter Estimates                   12
+Functions (Observations)              21
+
+                                             Optimization Start
+
+Active Constraints                                  0  Objective Function                       0.0365979443
+Max Abs Gradient Element                 0.0646338767  Radius                                              1
+
+
+                                                                                                         Ratio
+                                                                                                       Between
+                                                                                                        Actual
+                                                                 Objective     Max Abs                     and
+                     Function         Active        Objective     Function    Gradient               Predicted
+Iter     Restarts       Calls    Constraints         Function       Change     Element     Lambda       Change
+
+   1            0           4              0          0.01453       0.0221     0.00142          0        1.013
+   2            0           6              0          0.01448     0.000046    0.000249          0        1.001
+   3            0           8              0          0.01448     1.007E-7    4.717E-6          0        1.006
+
+                                            Optimization Results
+
+Iterations                                          3  Function Calls                                     11
+Jacobian Calls                                      5  Active Constraints                                  0
+Objective Function                       0.0144844814  Max Abs Gradient Element                 4.7172823E-6
+Lambda                                              0  Actual Over Pred Change                  1.0060912036
+Radius                                    0.001390392                                                       
+
+Convergence criterion (ABSGCONV=0.00001) satisfied.                                               
+
+The CALIS Procedure
+Covariance Structure Analysis: Maximum Likelihood Estimation
+
+                            Fit Summary
+
+Modeling Info        Number of Observations                     932
+                     Number of Variables                          6
+                     Number of Moments                           21
+                     Number of Parameters                        12
+                     Number of Active Constraints                 0
+                     Baseline Model Function Value           2.2894
+                     Baseline Model Chi-Square            2131.4327
+                     Baseline Model Chi-Square DF                15
+                     Pr > Baseline Model Chi-Square          <.0001
+Absolute Index       Fit Function                            0.0145
+                     Chi-Square                             13.4851
+                     Chi-Square DF                                9
+                     Pr > Chi-Square                         0.1419
+                     Z-Test of Wilson & Hilferty             1.0754
+                     Hoelter Critical N                        1169
+                     Root Mean Square Residual (RMR)         0.2281
+                     Standardized RMR (SRMR)                 0.0150
+                     Goodness of Fit Index (GFI)             0.9953
+Parsimony Index      Adjusted GFI (AGFI)                     0.9890
+                     Parsimonious GFI                        0.5972
+                     RMSEA Estimate                          0.0231
+                     RMSEA Lower 90% Confidence Limit        0.0000
+                     RMSEA Upper 90% Confidence Limit        0.0470
+                     Probability of Close Fit                0.9705
+                     ECVI Estimate                           0.0405
+                     ECVI Lower 90% Confidence Limit         0.0357
+                     ECVI Upper 90% Confidence Limit         0.0556
+                     Akaike Information Criterion           37.4851
+                     Bozdogan CAIC                         107.5330
+                     Schwarz Bayesian Criterion             95.5330
+                     McDonald Centrality                     0.9976
+Incremental Index    Bentler Comparative Fit Index           0.9979
+                     Bentler-Bonett NFI                      0.9937
+                     Bentler-Bonett Non-normed Index         0.9965
+                     Bollen Normed Index Rho1                0.9895
+                     Bollen Non-normed Index Delta2          0.9979
+                     James et al. Parsimonious NFI           0.5962
+
+The CALIS Procedure
+Covariance Structure Analysis: Maximum Likelihood Estimation
+
+                                                                      RAM _A_ Matrix
+ 
+                   Anomie67     Powerless67        Anomie71     Powerless71       Education             SEI         Alien67         Alien71             SES
+
+Anomie67                  0               0               0               0               0               0          1.0000               0               0
+                                                                                                                                                           
+
+Powerless67               0               0               0               0               0               0          0.8330               0               0
+                                                                                                                                                           
+
+Anomie71                  0               0               0               0               0               0               0          1.0000               0
+                                                                                                                                                           
+
+Powerless71               0               0               0               0               0               0               0          0.8330               0
+                                                                                                                                                           
+
+Education                 0               0               0               0               0               0               0               0          1.0000
+                                                                                                                                                           
+
+SEI                       0               0               0               0               0               0               0               0          5.3688
+                                                                                                                                                   [lambda]
+
+Alien67                   0               0               0               0               0               0               0               0         -0.6299
+                                                                                                                                                   [gamma1]
+
+Alien71                   0               0               0               0               0               0          0.5931               0         -0.2409
+                                                                                                                     [beta]                        [gamma2]
+
+SES                       0               0               0               0               0               0               0               0               0
+                                                                                                                                                           
+
+
+                                                                      RAM _P_ Matrix
+ 
+                   Anomie67     Powerless67        Anomie71     Powerless71       Education             SEI         Alien67         Alien71             SES
+
+Anomie67             3.6080               0          0.9058               0               0               0               0               0               0
+                   [theta1]                        [theta5]                                                                                                
+
+Powerless67               0          3.5949               0          0.9058               0               0               0               0               0
+                                   [theta2]                        [theta5]                                                                                
+
+Anomie71             0.9058               0          3.6080               0               0               0               0               0               0
+                   [theta5]                        [theta1]                                                                                                
+
+Powerless71               0          0.9058               0          3.5949               0               0               0               0               0
+                                   [theta5]                        [theta2]                                                                                
+
+Education                 0               0               0               0          2.9937               0               0               0               0
+                                                                                   [theta3]                                                                
+
+SEI                       0               0               0               0               0        259.5764               0               0               0
+                                                                                                   [theta4]                                                
+
+Alien67                   0               0               0               0               0               0          5.6705               0               0
+                                                                                                                     [psi1]                                
+
+Alien71                   0               0               0               0               0               0               0          4.5148               0
+                                                                                                                                     [psi2]                
+
+SES                       0               0               0               0               0               0               0               0          6.6163
+                                                                                                                                                      [phi]
+
+
+           Squared Multiple Correlations
+ 
+                    Error         Total
+Variable         Variance      Variance    R-Square
+
+Anomie67          3.60796      11.90397      0.6969
+Anomie71          3.60796      12.61581      0.7140
+Education         2.99366       9.61000      0.6885
+Powerless67       3.59488       9.35139      0.6156
+Powerless71       3.59488       9.84533      0.6349
+SEI             259.57639     450.28798      0.4235
+Alien67           5.67046       8.29601      0.3165
+Alien71           4.51479       9.00786      0.4988
+
+The CALIS Procedure
+Covariance Structure Analysis: Maximum Likelihood Estimation
+
+                                                                Standardized RAM _A_ Matrix
+ 
+                   Anomie67     Powerless67        Anomie71     Powerless71       Education             SEI         Alien67         Alien71             SES
+
+Anomie67                  0               0               0               0               0               0          0.8348               0               0
+                                                                                                                                                           
+
+Powerless67               0               0               0               0               0               0          0.7846               0               0
+                                                                                                                                                           
+
+Anomie71                  0               0               0               0               0               0               0          0.8450               0
+                                                                                                                                                           
+
+Powerless71               0               0               0               0               0               0               0          0.7968               0
+                                                                                                                                                           
+
+Education                 0               0               0               0               0               0               0               0          0.8297
+                                                                                                                                                           
+
+SEI                       0               0               0               0               0               0               0               0          0.6508
+                                                                                                                                                   [lambda]
+
+Alien67                   0               0               0               0               0               0               0               0         -0.5626
+                                                                                                                                                   [gamma1]
+
+Alien71                   0               0               0               0               0               0          0.5692               0         -0.2064
+                                                                                                                     [beta]                        [gamma2]
+
+SES                       0               0               0               0               0               0               0               0               0
+                                                                                                                                                           
+
+
+                                                                Standardized RAM _P_ Matrix
+ 
+                   Anomie67     Powerless67        Anomie71     Powerless71       Education             SEI         Alien67         Alien71             SES
+
+Anomie67             0.3031               0          0.0739               0               0               0               0               0               0
+                   [theta1]                        [theta5]                                                                                                
+
+Powerless67               0          0.3844               0          0.0944               0               0               0               0               0
+                                   [theta2]                        [theta5]                                                                                
+
+Anomie71             0.0739               0          0.2860               0               0               0               0               0               0
+                   [theta5]                        [theta1]                                                                                                
+
+Powerless71               0          0.0944               0          0.3651               0               0               0               0               0
+                                   [theta5]                        [theta2]                                                                                
+
+Education                 0               0               0               0          0.3115               0               0               0               0
+                                                                                   [theta3]                                                                
+
+SEI                       0               0               0               0               0          0.5765               0               0               0
+                                                                                                   [theta4]                                                
+
+Alien67                   0               0               0               0               0               0          0.6835               0               0
+                                                                                                                     [psi1]                                
+
+Alien71                   0               0               0               0               0               0               0          0.5012               0
+                                                                                                                                     [psi2]                
+
+SES                       0               0               0               0               0               0               0               0          1.0000
+                                                                                                                                                      [phi]
+
+The CALIS Procedure
+Covariance Structure Analysis: Model and Initial Values
+
+      Modeling Information
+ Maximum Likelihood Estimation
+
+Data Set            WORK.WHEATON
+N Obs               932         
+Model Type          COSAN       
+Analysis            Covariances 
+
+
+          Observed Variables (N = 6) in the Model 
+
+Anomie67  Powerless67  Anomie71  Powerless71  Education  SEI
+
+
+          COSAN Model Structures
+
+Sigma =    J*inv(_I_-A)*P*(inv(_I_-A))`*J`
+
+
+           Summary of Model Matrices
+ 
+Matrix     N Row     N Col    Matrix Type
+
+A              9         9    GEN: Square      
+J              6         9    IDE: (I || 0)    
+P              9         9    SYM: Symmetric   
+
+The CALIS Procedure
+Covariance Structure Analysis: Model and Initial Values
+
+                                                                  Initial Model Matrix A
+                                                               (9 x 9 General Square Matrix)
+ 
+                   Anomie67     Powerless67        Anomie71     Powerless71       Education             SEI         Alien67         Alien71             SES
+
+Anomie67                  0               0               0               0               0               0          1.0000               0               0
+                                                                                                                                                           
+
+Powerless67               0               0               0               0               0               0          0.8330               0               0
+                                                                                                                                                           
+
+Anomie71                  0               0               0               0               0               0               0          1.0000               0
+                                                                                                                                                           
+
+Powerless71               0               0               0               0               0               0               0          0.8330               0
+                                                                                                                                                           
+
+Education                 0               0               0               0               0               0               0               0          1.0000
+                                                                                                                                                           
+
+SEI                       0               0               0               0               0               0               0               0               .
+                                                                                                                                                   [lambda]
+
+Alien67                   0               0               0               0               0               0               0               0               .
+                                                                                                                                                   [gamma1]
+
+Alien71                   0               0               0               0               0               0               .               0               .
+                                                                                                                     [beta]                        [gamma2]
+
+SES                       0               0               0               0               0               0               0               0               0
+                                                                                                                                                           
+
+The CALIS Procedure
+Covariance Structure Analysis: Model and Initial Values
+
+Initial Model Matrix J
+(6 x 9 Fixed Matrix: [Identity || Zero])
+*** The Fixed Matrix is Not Shown ***
+
+
+The CALIS Procedure
+Covariance Structure Analysis: Model and Initial Values
+
+                                                                  Initial Model Matrix P
+                                                                 (9 x 9 Symmetric Matrix)
+ 
+                   Anomie67     Powerless67        Anomie71     Powerless71       Education             SEI         Alien67         Alien71             SES
+
+Anomie67                  .               0               .               0               0               0               0               0               0
+                   [theta1]                        [theta5]                                                                                                
+
+Powerless67               0               .               0               .               0               0               0               0               0
+                                   [theta2]                        [theta5]                                                                                
+
+Anomie71                  .               0               .               0               0               0               0               0               0
+                   [theta5]                        [theta1]                                                                                                
+
+Powerless71               0               .               0               .               0               0               0               0               0
+                                   [theta5]                        [theta2]                                                                                
+
+Education                 0               0               0               0               .               0               0               0               0
+                                                                                   [theta3]                                                                
+
+SEI                       0               0               0               0               0               .               0               0               0
+                                                                                                   [theta4]                                                
+
+Alien67                   0               0               0               0               0               0               .               0               0
+                                                                                                                     [psi1]                                
+
+Alien71                   0               0               0               0               0               0               0               .               0
+                                                                                                                                     [psi2]                
+
+SES                       0               0               0               0               0               0               0               0               .
+                                                                                                                                                      [phi]
+
+The CALIS Procedure
+Covariance Structure Analysis: Descriptive Statistics
+
+                         Simple Statistics
+ 
+                Variable                          Mean       Std Dev
+
+Anomie67       Anomie (1967)                         0       3.44006
+Powerless67    Powerlessness (1967)                  0       3.06007
+Anomie71       Anomie (1971)                         0       3.54006
+Powerless71    Powerlessness (1971)                  0       3.16006
+Education      Education                             0       3.10000
+SEI            Occupational Status Index             0      21.21999
+
+The CALIS Procedure
+Covariance Structure Analysis: Optimization
+
+        Initial Estimation Method
+
+       1    Default Initial Values       
+
+
+              Optimization Start
+              Parameter Estimates
+ 
+    N    Parameter      Estimate      Gradient
+
+    1    beta            0.50000       0.18386
+    2    lambda          0.50000      -2.99711
+    3    gamma1          0.50000       0.72261
+    4    gamma2          0.50000       0.62296
+    5    theta1         50.00000       0.02213
+    6    theta2         50.00000       0.02662
+    7    theta3         50.00000       0.00779
+    8    theta4         50.00000      -0.12613
+    9    psi1           50.00000       0.00794
+   10    psi2           50.00000       0.00837
+   11    phi            50.00000       0.00395
+   12    theta5          0.50000      -0.00751
+
+   Value of Objective Function = 13.31968536
+
+The CALIS Procedure
+Covariance Structure Analysis: Optimization
+
+Levenberg-Marquardt Optimization
+
+Scaling Update of More (1978)
+
+Parameter Estimates                   12
+Functions (Observations)              21
+
+                                             Optimization Start
+
+Active Constraints                                  0  Objective Function                        13.31968536
+Max Abs Gradient Element                  2.997106141  Radius                                   3.3774727206
+
+
+                                                                                                         Ratio
+                                                                                                       Between
+                                                                                                        Actual
+                                                                 Objective     Max Abs                     and
+                     Function         Active        Objective     Function    Gradient               Predicted
+Iter     Restarts       Calls    Constraints         Function       Change     Element     Lambda       Change
+
+   1            0           4              0          5.66110       7.6586      0.3054      1.119        0.390
+   2            0           6              0          0.37291       5.2882      1.9025     0.0144        2.575
+   3            0           9              0          0.10768       0.2652      0.3052    0.00187        0.924
+   4            0          12              0          0.07940       0.0283      0.0318     0.0177        1.008
+   5            0          16              0          0.06339       0.0160      0.1433    0.00881        0.895
+   6            0          18              0          0.06192      0.00147      0.1504    0.00273       0.0413
+   7            0          21              0          0.01603       0.0459      0.0182          0        0.994
+   8            0          23              0          0.01449      0.00154     0.00210          0        1.028
+   9            0          25              0          0.01448     0.000010    0.000032          0        1.015
+  10            0          27              0          0.01448     1.238E-8    5.095E-6          0        1.050
+
+                                            Optimization Results
+
+Iterations                                         10  Function Calls                                     30
+Jacobian Calls                                     12  Active Constraints                                  0
+Objective Function                       0.0144844811  Max Abs Gradient Element                 5.0946647E-6
+Lambda                                              0  Actual Over Pred Change                  1.0495409153
+Radius                                   0.0012612631                                                       
+
+Convergence criterion (ABSGCONV=0.00001) satisfied.                                               
+
+The CALIS Procedure
+Covariance Structure Analysis: Maximum Likelihood Estimation
+
+                            Fit Summary
+
+Modeling Info        Number of Observations                     932
+                     Number of Variables                          6
+                     Number of Moments                           21
+                     Number of Parameters                        12
+                     Number of Active Constraints                 0
+                     Baseline Model Function Value           2.2894
+                     Baseline Model Chi-Square            2131.4327
+                     Baseline Model Chi-Square DF                15
+                     Pr > Baseline Model Chi-Square          <.0001
+Absolute Index       Fit Function                            0.0145
+                     Chi-Square                             13.4851
+                     Chi-Square DF                                9
+                     Pr > Chi-Square                         0.1419
+                     Z-Test of Wilson & Hilferty             1.0754
+                     Hoelter Critical N                        1169
+                     Root Mean Square Residual (RMR)         0.2281
+                     Standardized RMR (SRMR)                 0.0150
+                     Goodness of Fit Index (GFI)             0.9953
+Parsimony Index      Adjusted GFI (AGFI)                     0.9890
+                     Parsimonious GFI                        0.5972
+                     RMSEA Estimate                          0.0231
+                     RMSEA Lower 90% Confidence Limit        0.0000
+                     RMSEA Upper 90% Confidence Limit        0.0470
+                     Probability of Close Fit                0.9705
+                     ECVI Estimate                           0.0405
+                     ECVI Lower 90% Confidence Limit         0.0357
+                     ECVI Upper 90% Confidence Limit         0.0556
+                     Akaike Information Criterion           37.4851
+                     Bozdogan CAIC                         107.5330
+                     Schwarz Bayesian Criterion             95.5330
+                     McDonald Centrality                     0.9976
+Incremental Index    Bentler Comparative Fit Index           0.9979
+                     Bentler-Bonett NFI                      0.9937
+                     Bentler-Bonett Non-normed Index         0.9965
+                     Bollen Normed Index Rho1                0.9895
+                     Bollen Non-normed Index Delta2          0.9979
+                     James et al. Parsimonious NFI           0.5962
+
+The CALIS Procedure
+Covariance Structure Analysis: Maximum Likelihood Estimation
+
+                                                                      Model Matrix A
+                                                               (9 x 9 General Square Matrix)
+ 
+                   Anomie67     Powerless67        Anomie71     Powerless71       Education             SEI         Alien67         Alien71             SES
+
+Anomie67                  0               0               0               0               0               0          1.0000               0               0
+                                                                                                                                                           
+
+Powerless67               0               0               0               0               0               0          0.8330               0               0
+                                                                                                                                                           
+
+Anomie71                  0               0               0               0               0               0               0          1.0000               0
+                                                                                                                                                           
+
+Powerless71               0               0               0               0               0               0               0          0.8330               0
+                                                                                                                                                           
+
+Education                 0               0               0               0               0               0               0               0          1.0000
+                                                                                                                                                           
+
+SEI                       0               0               0               0               0               0               0               0          5.3689
+                                                                                                                                                   [lambda]
+
+Alien67                   0               0               0               0               0               0               0               0         -0.6299
+                                                                                                                                                   [gamma1]
+
+Alien71                   0               0               0               0               0               0          0.5931               0         -0.2409
+                                                                                                                     [beta]                        [gamma2]
+
+SES                       0               0               0               0               0               0               0               0               0
+                                                                                                                                                           
+
+The CALIS Procedure
+Covariance Structure Analysis: Maximum Likelihood Estimation
+
+Model Matrix J
+(6 x 9 Fixed Matrix: [Identity || Zero])
+*** The Fixed Matrix is Not Shown ***
+
+
+The CALIS Procedure
+Covariance Structure Analysis: Maximum Likelihood Estimation
+
+                                                                      Model Matrix P
+                                                                 (9 x 9 Symmetric Matrix)
+ 
+                   Anomie67     Powerless67        Anomie71     Powerless71       Education             SEI         Alien67         Alien71             SES
+
+Anomie67             3.6078               0          0.9058               0               0               0               0               0               0
+                   [theta1]                        [theta5]                                                                                                
+
+Powerless67               0          3.5950               0          0.9058               0               0               0               0               0
+                                   [theta2]                        [theta5]                                                                                
+
+Anomie71             0.9058               0          3.6078               0               0               0               0               0               0
+                   [theta5]                        [theta1]                                                                                                
+
+Powerless71               0          0.9058               0          3.5950               0               0               0               0               0
+                                   [theta5]                        [theta2]                                                                                
+
+Education                 0               0               0               0          2.9938               0               0               0               0
+                                                                                   [theta3]                                                                
+
+SEI                       0               0               0               0               0        259.5738               0               0               0
+                                                                                                   [theta4]                                                
+
+Alien67                   0               0               0               0               0               0          5.6705               0               0
+                                                                                                                     [psi1]                                
+
+Alien71                   0               0               0               0               0               0               0          4.5148               0
+                                                                                                                                     [psi2]                
+
+SES                       0               0               0               0               0               0               0               0          6.6162
+                                                                                                                                                      [phi]
+
+The CALIS Procedure
+Covariance Structure Analysis: Model and Initial Values
+
+      Modeling Information
+ Maximum Likelihood Estimation
+
+Data Set            WORK.WHEATON
+N Obs               932         
+Model Type          LINEQS      
+Analysis            Covariances 
+
+
+                        Variables in the Model
+
+Endogenous    Manifest     Anomie67  Anomie71  Education  Powerless67
+                           Powerless71  SEI                          
+              Latent       f_Alien67  f_Alien71                      
+Exogenous     Manifest                                               
+              Latent       f_SES                                     
+              Error        e1  e3  e5  e2  e4  e6  d1  d2            
+
+                  Number of Endogenous Variables = 8
+                  Number of Exogenous Variables  = 9
+
+
+                                                             Initial _EQSBETA_ Matrix
+ 
+                    Anomie67         Anomie71        Education      Powerless67      Powerless71              SEI        f_Alien67        f_Alien71
+
+Anomie67                   0                0                0                0                0                0           1.0000                0
+                                                                                                                                                   
+
+Anomie71                   0                0                0                0                0                0                0           1.0000
+                                                                                                                                                   
+
+Education                  0                0                0                0                0                0                0                0
+                                                                                                                                                   
+
+Powerless67                0                0                0                0                0                0           0.8330                0
+                                                                                                                                                   
+
+Powerless71                0                0                0                0                0                0                0           0.8330
+                                                                                                                                                   
+
+SEI                        0                0                0                0                0                0                0                0
+                                                                                                                                                   
+
+f_Alien67                  0                0                0                0                0                0                0                0
+                                                                                                                                                   
+
+f_Alien71                  0                0                0                0                0                0                .                0
+                                                                                                                            [beta]                 
+
+
+                                                                 Initial _EQSGAMMA_ Matrix
+ 
+                      f_SES              e1              e3              e5              e2              e4              e6              d1              d2
+
+Anomie67                  0          1.0000               0               0               0               0               0               0               0
+                                                                                                                                                           
+
+Anomie71                  0               0          1.0000               0               0               0               0               0               0
+                                                                                                                                                           
+
+Education            1.0000               0               0          1.0000               0               0               0               0               0
+                                                                                                                                                           
+
+Powerless67               0               0               0               0          1.0000               0               0               0               0
+                                                                                                                                                           
+
+Powerless71               0               0               0               0               0          1.0000               0               0               0
+                                                                                                                                                           
+
+SEI                       .               0               0               0               0               0          1.0000               0               0
+                   [lambda]                                                                                                                                
+
+f_Alien67                 .               0               0               0               0               0               0          1.0000               0
+                   [gamma1]                                                                                                                                
+
+f_Alien71                 .               0               0               0               0               0               0               0          1.0000
+                   [gamma2]                                                                                                                                
+
+
+                                                               Initial _EQSPHI_ Matrix
+ 
+                f_SES              e1              e3              e5              e2              e4              e6              d1              d2
+
+f_SES               .               0               0               0               0               0               0               0               0
+                [phi]                                                                                                                                
+
+e1                  0               .               .               0               0               0               0               0               0
+                             [theta1]        [theta5]                                                                                                
+
+e3                  0               .               .               0               0               0               0               0               0
+                             [theta5]        [theta1]                                                                                                
+
+e5                  0               0               0               .               0               0               0               0               0
+                                                             [theta3]                                                                                
+
+e2                  0               0               0               0               .               .               0               0               0
+                                                                             [theta2]        [theta5]                                                
+
+e4                  0               0               0               0               .               .               0               0               0
+                                                                             [theta5]        [theta2]                                                
+
+e6                  0               0               0               0               0               0               .               0               0
+                                                                                                             [theta4]                                
+
+d1                  0               0               0               0               0               0               0               .               0
+                                                                                                                               [psi1]                
+
+d2                  0               0               0               0               0               0               0               0               .
+                                                                                                                                               [psi2]
+
+The CALIS Procedure
+Covariance Structure Analysis: Descriptive Statistics
+
+                         Simple Statistics
+ 
+                Variable                          Mean       Std Dev
+
+Anomie67       Anomie (1967)                         0       3.44006
+Powerless67    Powerlessness (1967)                  0       3.06007
+Anomie71       Anomie (1971)                         0       3.54006
+Powerless71    Powerlessness (1971)                  0       3.16006
+Education      Education                             0       3.10000
+SEI            Occupational Status Index             0      21.21999
+
+The CALIS Procedure
+Covariance Structure Analysis: Optimization
+
+        Initial Estimation Methods
+
+       1    Instrumental Variables Method
+       2    McDonald Method              
+       3    Two-Stage Least Squares      
+
+
+              Optimization Start
+              Parameter Estimates
+ 
+    N    Parameter      Estimate      Gradient
+
+    1    lambda          4.99508      -0.00206
+    2    gamma1         -0.62322      -0.04069
+    3    gamma2         -0.20437      -0.03816
+    4    beta            0.66589       0.03789
+    5    theta1          3.51433      -0.00409
+    6    theta2          3.65991       0.01182
+    7    theta3          2.49860      -0.00578
+    8    theta4        272.85274     0.0000194
+    9    psi1            5.57764      -0.00217
+   10    psi2            3.79636      -0.00935
+   11    phi             7.11140       0.00108
+   12    theta5          0.45298      -0.06463
+
+  Value of Objective Function = 0.0365979443
+
+The CALIS Procedure
+Covariance Structure Analysis: Optimization
+
+Levenberg-Marquardt Optimization
+
+Scaling Update of More (1978)
+
+Parameter Estimates                   12
+Functions (Observations)              21
+
+                                             Optimization Start
+
+Active Constraints                                  0  Objective Function                       0.0365979443
+Max Abs Gradient Element                 0.0646338767  Radius                                              1
+
+
+                                                                                                         Ratio
+                                                                                                       Between
+                                                                                                        Actual
+                                                                 Objective     Max Abs                     and
+                     Function         Active        Objective     Function    Gradient               Predicted
+Iter     Restarts       Calls    Constraints         Function       Change     Element     Lambda       Change
+
+   1            0           4              0          0.01453       0.0221     0.00142          0        1.013
+   2            0           6              0          0.01448     0.000046    0.000249          0        1.001
+   3            0           8              0          0.01448     1.007E-7    4.717E-6          0        1.006
+
+                                            Optimization Results
+
+Iterations                                          3  Function Calls                                     11
+Jacobian Calls                                      5  Active Constraints                                  0
+Objective Function                       0.0144844814  Max Abs Gradient Element                 4.7172823E-6
+Lambda                                              0  Actual Over Pred Change                  1.0060912391
+Radius                                    0.001390392                                                       
+
+Convergence criterion (ABSGCONV=0.00001) satisfied.                                               
+
+The CALIS Procedure
+Covariance Structure Analysis: Maximum Likelihood Estimation
+
+                            Fit Summary
+
+Modeling Info        Number of Observations                     932
+                     Number of Variables                          6
+                     Number of Moments                           21
+                     Number of Parameters                        12
+                     Number of Active Constraints                 0
+                     Baseline Model Function Value           2.2894
+                     Baseline Model Chi-Square            2131.4327
+                     Baseline Model Chi-Square DF                15
+                     Pr > Baseline Model Chi-Square          <.0001
+Absolute Index       Fit Function                            0.0145
+                     Chi-Square                             13.4851
+                     Chi-Square DF                                9
+                     Pr > Chi-Square                         0.1419
+                     Z-Test of Wilson & Hilferty             1.0754
+                     Hoelter Critical N                        1169
+                     Root Mean Square Residual (RMR)         0.2281
+                     Standardized RMR (SRMR)                 0.0150
+                     Goodness of Fit Index (GFI)             0.9953
+Parsimony Index      Adjusted GFI (AGFI)                     0.9890
+                     Parsimonious GFI                        0.5972
+                     RMSEA Estimate                          0.0231
+                     RMSEA Lower 90% Confidence Limit        0.0000
+                     RMSEA Upper 90% Confidence Limit        0.0470
+                     Probability of Close Fit                0.9705
+                     ECVI Estimate                           0.0405
+                     ECVI Lower 90% Confidence Limit         0.0357
+                     ECVI Upper 90% Confidence Limit         0.0556
+                     Akaike Information Criterion           37.4851
+                     Bozdogan CAIC                         107.5330
+                     Schwarz Bayesian Criterion             95.5330
+                     McDonald Centrality                     0.9976
+Incremental Index    Bentler Comparative Fit Index           0.9979
+                     Bentler-Bonett NFI                      0.9937
+                     Bentler-Bonett Non-normed Index         0.9965
+                     Bollen Normed Index Rho1                0.9895
+                     Bollen Non-normed Index Delta2          0.9979
+                     James et al. Parsimonious NFI           0.5962
+
+The CALIS Procedure
+Covariance Structure Analysis: Maximum Likelihood Estimation
+
+                                                                 _EQSBETA_ Matrix
+ 
+                    Anomie67         Anomie71        Education      Powerless67      Powerless71              SEI        f_Alien67        f_Alien71
+
+Anomie67                   0                0                0                0                0                0           1.0000                0
+                                                                                                                                                   
+
+Anomie71                   0                0                0                0                0                0                0           1.0000
+                                                                                                                                                   
+
+Education                  0                0                0                0                0                0                0                0
+                                                                                                                                                   
+
+Powerless67                0                0                0                0                0                0           0.8330                0
+                                                                                                                                                   
+
+Powerless71                0                0                0                0                0                0                0           0.8330
+                                                                                                                                                   
+
+SEI                        0                0                0                0                0                0                0                0
+                                                                                                                                                   
+
+f_Alien67                  0                0                0                0                0                0                0                0
+                                                                                                                                                   
+
+f_Alien71                  0                0                0                0                0                0           0.5931                0
+                                                                                                                            [beta]                 
+
+
+                                                                     _EQSGAMMA_ Matrix
+ 
+                      f_SES              e1              e3              e5              e2              e4              e6              d1              d2
+
+Anomie67                  0          1.0000               0               0               0               0               0               0               0
+                                                                                                                                                           
+
+Anomie71                  0               0          1.0000               0               0               0               0               0               0
+                                                                                                                                                           
+
+Education            1.0000               0               0          1.0000               0               0               0               0               0
+                                                                                                                                                           
+
+Powerless67               0               0               0               0          1.0000               0               0               0               0
+                                                                                                                                                           
+
+Powerless71               0               0               0               0               0          1.0000               0               0               0
+                                                                                                                                                           
+
+SEI                  5.3688               0               0               0               0               0          1.0000               0               0
+                   [lambda]                                                                                                                                
+
+f_Alien67           -0.6299               0               0               0               0               0               0          1.0000               0
+                   [gamma1]                                                                                                                                
+
+f_Alien71           -0.2409               0               0               0               0               0               0               0          1.0000
+                   [gamma2]                                                                                                                                
+
+
+                                                                   _EQSPHI_ Matrix
+ 
+                f_SES              e1              e3              e5              e2              e4              e6              d1              d2
+
+f_SES          6.6163               0               0               0               0               0               0               0               0
+                [phi]                                                                                                                                
+
+e1                  0          3.6080          0.9058               0               0               0               0               0               0
+                             [theta1]        [theta5]                                                                                                
+
+e3                  0          0.9058          3.6080               0               0               0               0               0               0
+                             [theta5]        [theta1]                                                                                                
+
+e5                  0               0               0          2.9937               0               0               0               0               0
+                                                             [theta3]                                                                                
+
+e2                  0               0               0               0          3.5949          0.9058               0               0               0
+                                                                             [theta2]        [theta5]                                                
+
+e4                  0               0               0               0          0.9058          3.5949               0               0               0
+                                                                             [theta5]        [theta2]                                                
+
+e6                  0               0               0               0               0               0        259.5764               0               0
+                                                                                                             [theta4]                                
+
+d1                  0               0               0               0               0               0               0          5.6705               0
+                                                                                                                               [psi1]                
+
+d2                  0               0               0               0               0               0               0               0          4.5148
+                                                                                                                                               [psi2]
+
+
+           Squared Multiple Correlations
+ 
+                    Error         Total
+Variable         Variance      Variance    R-Square
+
+Anomie67          3.60796      11.90397      0.6969
+Powerless67       3.59488       9.35139      0.6156
+Anomie71          3.60796      12.61581      0.7140
+Powerless71       3.59488       9.84533      0.6349
+Education         2.99366       9.61000      0.6885
+SEI             259.57639     450.28798      0.4235
+f_Alien67         5.67046       8.29601      0.3165
+f_Alien71         4.51479       9.00786      0.4988
+
+The CALIS Procedure
+Covariance Structure Analysis: Maximum Likelihood Estimation
+
+                                                           Standardized _EQSBETA_ Matrix
+ 
+                    Anomie67         Anomie71        Education      Powerless67      Powerless71              SEI        f_Alien67        f_Alien71
+
+Anomie67                   0                0                0                0                0                0           0.8348                0
+                                                                                                                                                   
+
+Anomie71                   0                0                0                0                0                0                0           0.8450
+                                                                                                                                                   
+
+Education                  0                0                0                0                0                0                0                0
+                                                                                                                                                   
+
+Powerless67                0                0                0                0                0                0           0.7846                0
+                                                                                                                                                   
+
+Powerless71                0                0                0                0                0                0                0           0.7968
+                                                                                                                                                   
+
+SEI                        0                0                0                0                0                0                0                0
+                                                                                                                                                   
+
+f_Alien67                  0                0                0                0                0                0                0                0
+                                                                                                                                                   
+
+f_Alien71                  0                0                0                0                0                0           0.5692                0
+                                                                                                                            [beta]                 
+
+
+                                                              Standardized _EQSGAMMA_ Matrix
+ 
+                      f_SES              e1              e3              e5              e2              e4              e6              d1              d2
+
+Anomie67                  0          1.0000               0               0               0               0               0               0               0
+                                                                                                                                                           
+
+Anomie71                  0               0          1.0000               0               0               0               0               0               0
+                                                                                                                                                           
+
+Education            0.8297               0               0          1.0000               0               0               0               0               0
+                                                                                                                                                           
+
+Powerless67               0               0               0               0          1.0000               0               0               0               0
+                                                                                                                                                           
+
+Powerless71               0               0               0               0               0          1.0000               0               0               0
+                                                                                                                                                           
+
+SEI                  0.6508               0               0               0               0               0          1.0000               0               0
+                   [lambda]                                                                                                                                
+
+f_Alien67           -0.5626               0               0               0               0               0               0          1.0000               0
+                   [gamma1]                                                                                                                                
+
+f_Alien71           -0.2064               0               0               0               0               0               0               0          1.0000
+                   [gamma2]                                                                                                                                
+
+
+                                                            Standardized _EQSPHI_ Matrix
+ 
+                f_SES              e1              e3              e5              e2              e4              e6              d1              d2
+
+f_SES          1.0000               0               0               0               0               0               0               0               0
+                [phi]                                                                                                                                
+
+e1                  0          0.3031          0.0739               0               0               0               0               0               0
+                             [theta1]        [theta5]                                                                                                
+
+e3                  0          0.0739          0.2860               0               0               0               0               0               0
+                             [theta5]        [theta1]                                                                                                
+
+e5                  0               0               0          0.3115               0               0               0               0               0
+                                                             [theta3]                                                                                
+
+e2                  0               0               0               0          0.3844          0.0944               0               0               0
+                                                                             [theta2]        [theta5]                                                
+
+e4                  0               0               0               0          0.0944          0.3651               0               0               0
+                                                                             [theta5]        [theta2]                                                
+
+e6                  0               0               0               0               0               0          0.5765               0               0
+                                                                                                             [theta4]                                
+
+d1                  0               0               0               0               0               0               0          0.6835               0
+                                                                                                                               [psi1]                
+
+d2                  0               0               0               0               0               0               0               0          0.5012
+                                                                                                                                               [psi2]
+
+The CALIS Procedure
+Covariance Structure Analysis: Model and Initial Values
+
+      Modeling Information
+ Maximum Likelihood Estimation
+
+Data Set            WORK.WHEATON
+N Obs               932         
+Model Type          COSAN       
+Analysis            Covariances 
+
+
+          Observed Variables (N = 6) in the Model 
+
+Anomie67  Anomie71  Education  Powerless67  Powerless71  SEI
+
+
+                    COSAN Model Structures
+
+Sigma =    J*inv(_I_-Beta)*Gamma*Phi*Gamma`*(inv(_I_-Beta))`*J`
+
+
+           Summary of Model Matrices
+ 
+Matrix     N Row     N Col    Matrix Type
+
+Beta           8         8    GEN: Square      
+Gamma          8         9    GEN: Rectangular 
+J              6         8    IDE: (I || 0)    
+Phi            9         9    SYM: Symmetric   
+
+The CALIS Procedure
+Covariance Structure Analysis: Model and Initial Values
+
+                                                             Initial Model Matrix Beta
+                                                           (8 x 8 General Square Matrix)
+ 
+                    Anomie67         Anomie71        Education      Powerless67      Powerless71              SEI        f_Alien67        f_Alien71
+
+Anomie67                   0                0                0                0                0                0           1.0000                0
+                                                                                                                                                   
+
+Anomie71                   0                0                0                0                0                0                0           1.0000
+                                                                                                                                                   
+
+Education                  0                0                0                0                0                0                0                0
+                                                                                                                                                   
+
+Powerless67                0                0                0                0                0                0           0.8330                0
+                                                                                                                                                   
+
+Powerless71                0                0                0                0                0                0                0           0.8330
+                                                                                                                                                   
+
+SEI                        0                0                0                0                0                0                0                0
+                                                                                                                                                   
+
+f_Alien67                  0                0                0                0                0                0                0                0
+                                                                                                                                                   
+
+f_Alien71                  0                0                0                0                0                0                .                0
+                                                                                                                            [beta]                 
+
+The CALIS Procedure
+Covariance Structure Analysis: Model and Initial Values
+
+                                                                Initial Model Matrix Gamma
+                                                            (8 x 9 General Rectangular Matrix)
+ 
+                      f_SES              e1              e3              e5              e2              e4              e6              d1              d2
+
+Anomie67                  0          1.0000               0               0               0               0               0               0               0
+                                                                                                                                                           
+
+Anomie71                  0               0          1.0000               0               0               0               0               0               0
+                                                                                                                                                           
+
+Education            1.0000               0               0          1.0000               0               0               0               0               0
+                                                                                                                                                           
+
+Powerless67               0               0               0               0          1.0000               0               0               0               0
+                                                                                                                                                           
+
+Powerless71               0               0               0               0               0          1.0000               0               0               0
+                                                                                                                                                           
+
+SEI                       .               0               0               0               0               0          1.0000               0               0
+                   [lambda]                                                                                                                                
+
+f_Alien67                 .               0               0               0               0               0               0          1.0000               0
+                   [gamma1]                                                                                                                                
+
+f_Alien71                 .               0               0               0               0               0               0               0          1.0000
+                   [gamma2]                                                                                                                                
+
+The CALIS Procedure
+Covariance Structure Analysis: Model and Initial Values
+
+Initial Model Matrix J
+(6 x 8 Fixed Matrix: [Identity || Zero])
+*** The Fixed Matrix is Not Shown ***
+
+
+The CALIS Procedure
+Covariance Structure Analysis: Model and Initial Values
+
+                                                              Initial Model Matrix Phi
+                                                              (9 x 9 Symmetric Matrix)
+ 
+                f_SES              e1              e3              e5              e2              e4              e6              d1              d2
+
+f_SES               .               0               0               0               0               0               0               0               0
+                [phi]                                                                                                                                
+
+e1                  0               .               .               0               0               0               0               0               0
+                             [theta1]        [theta5]                                                                                                
+
+e3                  0               .               .               0               0               0               0               0               0
+                             [theta5]        [theta1]                                                                                                
+
+e5                  0               0               0               .               0               0               0               0               0
+                                                             [theta3]                                                                                
+
+e2                  0               0               0               0               .               .               0               0               0
+                                                                             [theta2]        [theta5]                                                
+
+e4                  0               0               0               0               .               .               0               0               0
+                                                                             [theta5]        [theta2]                                                
+
+e6                  0               0               0               0               0               0               .               0               0
+                                                                                                             [theta4]                                
+
+d1                  0               0               0               0               0               0               0               .               0
+                                                                                                                               [psi1]                
+
+d2                  0               0               0               0               0               0               0               0               .
+                                                                                                                                               [psi2]
+
+The CALIS Procedure
+Covariance Structure Analysis: Descriptive Statistics
+
+                         Simple Statistics
+ 
+                Variable                          Mean       Std Dev
+
+Anomie67       Anomie (1967)                         0       3.44006
+Powerless67    Powerlessness (1967)                  0       3.06007
+Anomie71       Anomie (1971)                         0       3.54006
+Powerless71    Powerlessness (1971)                  0       3.16006
+Education      Education                             0       3.10000
+SEI            Occupational Status Index             0      21.21999
+
+The CALIS Procedure
+Covariance Structure Analysis: Optimization
+
+        Initial Estimation Method
+
+       1    Default Initial Values       
+
+
+              Optimization Start
+              Parameter Estimates
+ 
+    N    Parameter      Estimate      Gradient
+
+    1    beta            0.50000       0.18386
+    2    lambda          0.50000      -2.99711
+    3    gamma1          0.50000       0.72261
+    4    gamma2          0.50000       0.62296
+    5    phi            50.00000       0.00395
+    6    theta1         50.00000       0.02213
+    7    theta3         50.00000       0.00779
+    8    theta2         50.00000       0.02662
+    9    theta4         50.00000      -0.12613
+   10    psi1           50.00000       0.00794
+   11    psi2           50.00000       0.00837
+   12    theta5          0.50000      -0.00751
+
+   Value of Objective Function = 13.31968536
+
+The CALIS Procedure
+Covariance Structure Analysis: Optimization
+
+Levenberg-Marquardt Optimization
+
+Scaling Update of More (1978)
+
+Parameter Estimates                   12
+Functions (Observations)              21
+
+                                             Optimization Start
+
+Active Constraints                                  0  Objective Function                        13.31968536
+Max Abs Gradient Element                  2.997106141  Radius                                   3.3774727206
+
+
+                                                                                                         Ratio
+                                                                                                       Between
+                                                                                                        Actual
+                                                                 Objective     Max Abs                     and
+                     Function         Active        Objective     Function    Gradient               Predicted
+Iter     Restarts       Calls    Constraints         Function       Change     Element     Lambda       Change
+
+   1            0           4              0          5.66110       7.6586      0.3054      1.119        0.390
+   2            0           6              0          0.37291       5.2882      1.9025     0.0144        2.575
+   3            0           9              0          0.10768       0.2652      0.3052    0.00187        0.924
+   4            0          12              0          0.07940       0.0283      0.0318     0.0177        1.008
+   5            0          16              0          0.06339       0.0160      0.1433    0.00881        0.895
+   6            0          18              0          0.06192      0.00147      0.1504    0.00273       0.0413
+   7            0          21              0          0.01603       0.0459      0.0182          0        0.994
+   8            0          23              0          0.01449      0.00154     0.00210          0        1.028
+   9            0          25              0          0.01448     0.000010    0.000032          0        1.015
+  10            0          27              0          0.01448     1.238E-8    5.095E-6          0        1.050
+
+                                            Optimization Results
+
+Iterations                                         10  Function Calls                                     30
+Jacobian Calls                                     12  Active Constraints                                  0
+Objective Function                       0.0144844811  Max Abs Gradient Element                 5.0946647E-6
+Lambda                                              0  Actual Over Pred Change                  1.0495409153
+Radius                                   0.0012612631                                                       
+
+Convergence criterion (ABSGCONV=0.00001) satisfied.                                               
+
+The CALIS Procedure
+Covariance Structure Analysis: Maximum Likelihood Estimation
+
+                            Fit Summary
+
+Modeling Info        Number of Observations                     932
+                     Number of Variables                          6
+                     Number of Moments                           21
+                     Number of Parameters                        12
+                     Number of Active Constraints                 0
+                     Baseline Model Function Value           2.2894
+                     Baseline Model Chi-Square            2131.4327
+                     Baseline Model Chi-Square DF                15
+                     Pr > Baseline Model Chi-Square          <.0001
+Absolute Index       Fit Function                            0.0145
+                     Chi-Square                             13.4851
+                     Chi-Square DF                                9
+                     Pr > Chi-Square                         0.1419
+                     Z-Test of Wilson & Hilferty             1.0754
+                     Hoelter Critical N                        1169
+                     Root Mean Square Residual (RMR)         0.2281
+                     Standardized RMR (SRMR)                 0.0150
+                     Goodness of Fit Index (GFI)             0.9953
+Parsimony Index      Adjusted GFI (AGFI)                     0.9890
+                     Parsimonious GFI                        0.5972
+                     RMSEA Estimate                          0.0231
+                     RMSEA Lower 90% Confidence Limit        0.0000
+                     RMSEA Upper 90% Confidence Limit        0.0470
+                     Probability of Close Fit                0.9705
+                     ECVI Estimate                           0.0405
+                     ECVI Lower 90% Confidence Limit         0.0357
+                     ECVI Upper 90% Confidence Limit         0.0556
+                     Akaike Information Criterion           37.4851
+                     Bozdogan CAIC                         107.5330
+                     Schwarz Bayesian Criterion             95.5330
+                     McDonald Centrality                     0.9976
+Incremental Index    Bentler Comparative Fit Index           0.9979
+                     Bentler-Bonett NFI                      0.9937
+                     Bentler-Bonett Non-normed Index         0.9965
+                     Bollen Normed Index Rho1                0.9895
+                     Bollen Non-normed Index Delta2          0.9979
+                     James et al. Parsimonious NFI           0.5962
+
+The CALIS Procedure
+Covariance Structure Analysis: Maximum Likelihood Estimation
+
+                                                                 Model Matrix Beta
+                                                           (8 x 8 General Square Matrix)
+ 
+                    Anomie67         Anomie71        Education      Powerless67      Powerless71              SEI        f_Alien67        f_Alien71
+
+Anomie67                   0                0                0                0                0                0           1.0000                0
+                                                                                                                                                   
+
+Anomie71                   0                0                0                0                0                0                0           1.0000
+                                                                                                                                                   
+
+Education                  0                0                0                0                0                0                0                0
+                                                                                                                                                   
+
+Powerless67                0                0                0                0                0                0           0.8330                0
+                                                                                                                                                   
+
+Powerless71                0                0                0                0                0                0                0           0.8330
+                                                                                                                                                   
+
+SEI                        0                0                0                0                0                0                0                0
+                                                                                                                                                   
+
+f_Alien67                  0                0                0                0                0                0                0                0
+                                                                                                                                                   
+
+f_Alien71                  0                0                0                0                0                0           0.5931                0
+                                                                                                                            [beta]                 
+
+The CALIS Procedure
+Covariance Structure Analysis: Maximum Likelihood Estimation
+
+                                                                    Model Matrix Gamma
+                                                            (8 x 9 General Rectangular Matrix)
+ 
+                      f_SES              e1              e3              e5              e2              e4              e6              d1              d2
+
+Anomie67                  0          1.0000               0               0               0               0               0               0               0
+                                                                                                                                                           
+
+Anomie71                  0               0          1.0000               0               0               0               0               0               0
+                                                                                                                                                           
+
+Education            1.0000               0               0          1.0000               0               0               0               0               0
+                                                                                                                                                           
+
+Powerless67               0               0               0               0          1.0000               0               0               0               0
+                                                                                                                                                           
+
+Powerless71               0               0               0               0               0          1.0000               0               0               0
+                                                                                                                                                           
+
+SEI                  5.3689               0               0               0               0               0          1.0000               0               0
+                   [lambda]                                                                                                                                
+
+f_Alien67           -0.6299               0               0               0               0               0               0          1.0000               0
+                   [gamma1]                                                                                                                                
+
+f_Alien71           -0.2409               0               0               0               0               0               0               0          1.0000
+                   [gamma2]                                                                                                                                
+
+The CALIS Procedure
+Covariance Structure Analysis: Maximum Likelihood Estimation
+
+Model Matrix J
+(6 x 8 Fixed Matrix: [Identity || Zero])
+*** The Fixed Matrix is Not Shown ***
+
+
+The CALIS Procedure
+Covariance Structure Analysis: Maximum Likelihood Estimation
+
+                                                                  Model Matrix Phi
+                                                              (9 x 9 Symmetric Matrix)
+ 
+                f_SES              e1              e3              e5              e2              e4              e6              d1              d2
+
+f_SES          6.6162               0               0               0               0               0               0               0               0
+                [phi]                                                                                                                                
+
+e1                  0          3.6078          0.9058               0               0               0               0               0               0
+                             [theta1]        [theta5]                                                                                                
+
+e3                  0          0.9058          3.6078               0               0               0               0               0               0
+                             [theta5]        [theta1]                                                                                                
+
+e5                  0               0               0          2.9938               0               0               0               0               0
+                                                             [theta3]                                                                                
+
+e2                  0               0               0               0          3.5950          0.9058               0               0               0
+                                                                             [theta2]        [theta5]                                                
+
+e4                  0               0               0               0          0.9058          3.5950               0               0               0
+                                                                             [theta5]        [theta2]                                                
+
+e6                  0               0               0               0               0               0        259.5738               0               0
+                                                                                                             [theta4]                                
+
+d1                  0               0               0               0               0               0               0          5.6705               0
+                                                                                                                               [psi1]                
+
+d2                  0               0               0               0               0               0               0               0          4.5148
+                                                                                                                                               [psi2]

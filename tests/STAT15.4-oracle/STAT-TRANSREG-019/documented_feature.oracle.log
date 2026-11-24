@@ -1,0 +1,539 @@
+The SAS System
+
+28149      
+28150      /* STAT-TRANSREG-019: TRANSREG — Displayed Output / ODS Table Names
+28151       * Source: S154 / Chapter 126 / `Displayed Output` (PDF p. 10521); S154 / Chapter 126 / `ODS Table Names` (PDF pp. 10521–10523).
+28152       * Discriminates: Getting Started: TRANSREG Procedure
+28153       */
+28154      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+28154    ! validmemname=compatible locale=en_US;
+28155      %let syscc=0;
+28156      title; footnote;
+28157      ods _all_ close;
+28158      ods listing gpath="%sysfunc(pathname(work))";
+28159      ods graphics off;
+28160      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.A (memtype=DATA).
+NOTE: Deleting WORK.DATA40 (memtype=DATA).
+NOTE: Deleting WORK.GAS (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+28160    !                                         quit;
+
+
+28161      ods path work.templat(update) sashelp.tmplmst(read);
+28162      
+28163      ods trace on;
+28164      title 'Gasoline and Emissions Data';
+28165      data gas;
+28166      set sashelp.gas;
+28167      if fuel in ('Ethanol', '82rongas', 'Gasohol');
+28168      run;
+
+NOTE: There were 171 observations read from the data set SASHELP.GAS.
+NOTE: The data set WORK.GAS has 112 observations and 4 variables.
+
+28169      ods graphics on;
+28170      * Request a Spline Transformation of Equivalence Ratio;
+28171      proc transreg data=Gas solve ss2 plots=(transformation obp residuals);
+28172      model identity(nox) = spline(EqRatio / nknots=4);
+28173      run;
+
+NOTE: 2 observations were deleted from the analysis due to missing values.
+
+Output Added:
+-------------
+Name:       NObs
+Label:      Number of Observations
+Template:   Stat.Transreg.NObs
+Path:       Transreg.Identity_NOx_.NObs
+-------------
+
+Output Added:
+-------------
+Name:       MORALS
+Label:      Iteration History
+Template:   Stat.Transreg.MORALS
+Path:       Transreg.Identity_NOx_.MORALS
+-------------
+
+Output Added:
+-------------
+Name:       ConvergenceStatus
+Label:      Convergence Status
+Template:   Stat.Transreg.ConvergenceStatus
+Path:       Transreg.Identity_NOx_.ConvergenceStatus
+-------------
+NOTE: Algorithm converged.
+
+Output Added:
+-------------
+Name:       ANOVA
+Label:      ANOVA
+Template:   Stat.Transreg.ANOVA
+Path:       Transreg.Identity_NOx_.ANOVA
+-------------
+
+Output Added:
+-------------
+Name:       FitStatistics
+Label:      ANOVA Fit Statistics
+Template:   Stat.Transreg.FitStatistics
+Path:       Transreg.Identity_NOx_.FitStatistics
+-------------
+
+Output Added:
+-------------
+Name:       Coef
+Label:      Coefficients
+Template:   Stat.Transreg.Coef
+Path:       Transreg.Identity_NOx_.Coef
+-------------
+
+Output Added:
+-------------
+Name:       TransformationPlot
+Label:      Panel 1
+Template:   Stat.Transreg.Graphics.Transformation
+Path:       Transreg.Identity_NOx_.Transformations.TransformationPlot
+-------------
+
+Output Added:
+-------------
+Name:       ResidualPlot
+Label:      EqRatio
+Template:   Stat.Transreg.Graphics.Residuals
+Path:       Transreg.Identity_NOx_.Residuals.ResidualPlot
+-------------
+
+Output Added:
+-------------
+Name:       FitPlot
+Label:      Fit Plot
+Template:   Stat.Transreg.Graphics.Fit
+Path:       Transreg.Identity_NOx_.FitPlot
+-------------
+
+Output Added:
+-------------
+Name:       ObservedByPredicted
+Label:      Observed By Predicted
+Template:   Stat.Transreg.Graphics.ObsByPred
+Path:       Transreg.Identity_NOx_.ObservedByPredicted
+-------------
+NOTE: There were 112 observations read from the data set WORK.GAS.
+NOTE: The PROCEDURE TRANSREG printed page 1739.
+
+28174      * Separate Curves and Intercepts;
+28175      proc transreg data=Gas solve ss2 additive plots=(transformation obp);
+28176      model identity(nox) = class(Fuel / zero=none) |
+28177      spline(EqRatio / nknots=4 after);
+28178      run;
+
+NOTE: Since the model contains SMOOTH, BSPLINE, PBSPLINE, or a CLASS expansion with ZERO=NONE, a model with an implicit intercept is fit.
+NOTE: All statistics are mean corrected.
+NOTE: 2 observations were deleted from the analysis due to missing values.
+
+Output Added:
+-------------
+Name:       ClassLevels
+Label:      Class Levels
+Template:   Stat.Transreg.ClassLevels
+Path:       Transreg.Identity_NOx_.ClassLevels
+-------------
+
+Output Added:
+-------------
+Name:       NObs
+Label:      Number of Observations
+Template:   Stat.Transreg.NObs
+Path:       Transreg.Identity_NOx_.NObs
+-------------
+
+Output Added:
+-------------
+Name:       MORALS
+Label:      Iteration History
+Template:   Stat.Transreg.MORALS
+Path:       Transreg.Identity_NOx_.MORALS
+-------------
+
+Output Added:
+-------------
+Name:       ConvergenceStatus
+Label:      Convergence Status
+Template:   Stat.Transreg.ConvergenceStatus
+Path:       Transreg.Identity_NOx_.ConvergenceStatus
+-------------
+NOTE: Algorithm converged.
+
+Output Added:
+-------------
+Name:       TestIterations
+Label:      Spline(Fuel82rongasEqRatio)
+Template:   Stat.Transreg.TestIterations
+Path:       Transreg.Identity_NOx_.Iterations.TestIterations
+-------------
+
+Output Added:
+-------------
+Name:       ConvergenceStatus
+Label:      Convergence Status
+Template:   Stat.Transreg.ConvergenceStatus
+Path:       Transreg.Identity_NOx_.Iterations.ConvergenceStatus
+-------------
+
+Output Added:
+-------------
+Name:       TestIterations
+Label:      Spline(FuelEthanolEqRatio)
+Template:   Stat.Transreg.TestIterations
+Path:       Transreg.Identity_NOx_.Iterations.TestIterations
+-------------
+
+Output Added:
+-------------
+Name:       ConvergenceStatus
+Label:      Convergence Status
+Template:   Stat.Transreg.ConvergenceStatus
+Path:       Transreg.Identity_NOx_.Iterations.ConvergenceStatus
+-------------
+
+Output Added:
+-------------
+Name:       TestIterations
+Label:      Spline(FuelGasoholEqRatio)
+Template:   Stat.Transreg.TestIterations
+Path:       Transreg.Identity_NOx_.Iterations.TestIterations
+-------------
+
+Output Added:
+-------------
+Name:       ConvergenceStatus
+Label:      Convergence Status
+Template:   Stat.Transreg.ConvergenceStatus
+Path:       Transreg.Identity_NOx_.Iterations.ConvergenceStatus
+-------------
+
+Output Added:
+-------------
+Name:       ANOVA
+Label:      ANOVA
+Template:   Stat.Transreg.ANOVA
+Path:       Transreg.Identity_NOx_.ANOVA
+-------------
+
+Output Added:
+-------------
+Name:       FitStatistics
+Label:      ANOVA Fit Statistics
+Template:   Stat.Transreg.FitStatistics
+Path:       Transreg.Identity_NOx_.FitStatistics
+-------------
+
+Output Added:
+-------------
+Name:       Coef
+Label:      Coefficients
+Template:   Stat.Transreg.Coef
+Path:       Transreg.Identity_NOx_.Coef
+-------------
+
+Output Added:
+-------------
+Name:       TransformationPlot
+Label:      Panel 1
+Template:   Stat.Transreg.Graphics.Transformation
+Path:       Transreg.Identity_NOx_.Transformations.TransformationPlot
+-------------
+
+Output Added:
+-------------
+Name:       FitPlot
+Label:      Fit Plot
+Template:   Stat.Transreg.Graphics.GroupFit
+Path:       Transreg.Identity_NOx_.FitPlot
+-------------
+
+Output Added:
+-------------
+Name:       ObservedByPredicted
+Label:      Observed By Predicted
+Template:   Stat.Transreg.Graphics.GroupObsByPred
+Path:       Transreg.Identity_NOx_.ObservedByPredicted
+-------------
+NOTE: There were 112 observations read from the data set WORK.GAS.
+NOTE: The PROCEDURE TRANSREG printed page 1740.
+
+28179      * Separate Intercepts;
+28180      proc transreg data=Gas solve ss2 additive;
+28181      model identity(nox) = class(Fuel / zero=none)
+28182      spline(EqRatio / nknots=4);
+28183      run;
+
+NOTE: Since the model contains SMOOTH, BSPLINE, PBSPLINE, or a CLASS expansion with ZERO=NONE, a model with an implicit intercept is fit.
+NOTE: All statistics are mean corrected.
+NOTE: 2 observations were deleted from the analysis due to missing values.
+
+Output Added:
+-------------
+Name:       ClassLevels
+Label:      Class Levels
+Template:   Stat.Transreg.ClassLevels
+Path:       Transreg.Identity_NOx_.ClassLevels
+-------------
+
+Output Added:
+-------------
+Name:       NObs
+Label:      Number of Observations
+Template:   Stat.Transreg.NObs
+Path:       Transreg.Identity_NOx_.NObs
+-------------
+
+Output Added:
+-------------
+Name:       MORALS
+Label:      Iteration History
+Template:   Stat.Transreg.MORALS
+Path:       Transreg.Identity_NOx_.MORALS
+-------------
+
+Output Added:
+-------------
+Name:       ConvergenceStatus
+Label:      Convergence Status
+Template:   Stat.Transreg.ConvergenceStatus
+Path:       Transreg.Identity_NOx_.ConvergenceStatus
+-------------
+NOTE: Algorithm converged.
+
+Output Added:
+-------------
+Name:       TestIterations
+Label:      Spline(EqRatio)
+Template:   Stat.Transreg.TestIterations
+Path:       Transreg.Identity_NOx_.Iterations.TestIterations
+-------------
+
+Output Added:
+-------------
+Name:       ConvergenceStatus
+Label:      Convergence Status
+Template:   Stat.Transreg.ConvergenceStatus
+Path:       Transreg.Identity_NOx_.Iterations.ConvergenceStatus
+-------------
+
+Output Added:
+-------------
+Name:       ANOVA
+Label:      ANOVA
+Template:   Stat.Transreg.ANOVA
+Path:       Transreg.Identity_NOx_.ANOVA
+-------------
+
+Output Added:
+-------------
+Name:       FitStatistics
+Label:      ANOVA Fit Statistics
+Template:   Stat.Transreg.FitStatistics
+Path:       Transreg.Identity_NOx_.FitStatistics
+-------------
+
+Output Added:
+-------------
+Name:       Coef
+Label:      Coefficients
+Template:   Stat.Transreg.Coef
+Path:       Transreg.Identity_NOx_.Coef
+-------------
+
+Output Added:
+-------------
+Name:       FitPlot
+Label:      Fit Plot
+Template:   Stat.Transreg.Graphics.GroupFit
+Path:       Transreg.Identity_NOx_.FitPlot
+-------------
+NOTE: There were 112 observations read from the data set WORK.GAS.
+NOTE: The PROCEDURE TRANSREG printed page 1741.
+
+28184      * Separate Curves and Intercepts with Penalized B-Splines;
+28185      proc transreg data=Gas ss2 plots=transformation lprefix=0;
+28186      model identity(nox) = class(Fuel / zero=none) * pbspline(EqRatio);
+28187      run;
+
+NOTE: AFTER is assumed when PBSPLINE is crossed with a CLASS variable.
+NOTE: Since the model contains SMOOTH, BSPLINE, PBSPLINE, or a CLASS expansion with ZERO=NONE, a model with an implicit intercept is fit.
+NOTE: All statistics are mean corrected.
+NOTE: 2 observations were deleted from the analysis due to missing values.
+
+Output Added:
+-------------
+Name:       PBSplineCritPlot
+Label:      Panel 1
+Template:   Stat.Transreg.Graphics.PBSplineCriterion
+Path:       Transreg.Identity_NOx_.Criteria.PBSplineCritPlot
+-------------
+
+Output Added:
+-------------
+Name:       ClassLevels
+Label:      Class Levels
+Template:   Stat.Transreg.ClassLevels
+Path:       Transreg.Identity_NOx_.ClassLevels
+-------------
+
+Output Added:
+-------------
+Name:       NObs
+Label:      Number of Observations
+Template:   Stat.Transreg.NObs
+Path:       Transreg.Identity_NOx_.NObs
+-------------
+
+Output Added:
+-------------
+Name:       Univariate
+Label:      Iteration History
+Template:   Stat.Transreg.UNIVARIATE
+Path:       Transreg.Identity_NOx_.Univariate
+-------------
+
+Output Added:
+-------------
+Name:       ConvergenceStatus
+Label:      Convergence Status
+Template:   Stat.Transreg.ConvergenceStatus
+Path:       Transreg.Identity_NOx_.ConvergenceStatus
+-------------
+NOTE: Algorithm converged.
+
+Output Added:
+-------------
+Name:       ANOVA
+Label:      ANOVA
+Template:   Stat.Transreg.ANOVA
+Path:       Transreg.Identity_NOx_.ANOVA
+-------------
+
+Output Added:
+-------------
+Name:       FitStatistics
+Label:      ANOVA Fit Statistics
+Template:   Stat.Transreg.FitStatistics
+Path:       Transreg.Identity_NOx_.FitStatistics
+-------------
+
+Output Added:
+-------------
+Name:       Coef
+Label:      Coefficients
+Template:   Stat.Transreg.PBSpline
+Path:       Transreg.Identity_NOx_.Coef
+-------------
+
+Output Added:
+-------------
+Name:       TransformationPlot
+Label:      Panel 1
+Template:   Stat.Transreg.Graphics.Transformation
+Path:       Transreg.Identity_NOx_.Transformations.TransformationPlot
+-------------
+
+Output Added:
+-------------
+Name:       FitPlot
+Label:      Fit Plot
+Template:   Stat.Transreg.Graphics.GroupFit
+Path:       Transreg.Identity_NOx_.FitPlot
+-------------
+NOTE: There were 112 observations read from the data set WORK.GAS.
+NOTE: The PROCEDURE TRANSREG printed page 1742.
+
+28188      title 'Introductory Main-Effects ANOVA Example';
+28189      data a;
+28190      input y x1 $ x2 $;
+28191      datalines;
+
+NOTE: The data set WORK.A has 12 observations and 3 variables.
+
+28204      ;
+28205      * Fit a main-effects ANOVA model with 1, 0, -1 coding;
+28206      proc transreg ss2;
+28207      model identity(y) = class(x1 x2 / effects);
+28208      output coefficients replace;
+28209      run;
+
+
+Output Added:
+-------------
+Name:       ClassLevels
+Label:      Class Levels
+Template:   Stat.Transreg.ClassLevels
+Path:       Transreg.Identity_y_.ClassLevels
+-------------
+
+Output Added:
+-------------
+Name:       NObs
+Label:      Number of Observations
+Template:   Stat.Transreg.NObs
+Path:       Transreg.Identity_y_.NObs
+-------------
+
+Output Added:
+-------------
+Name:       ANOVA
+Label:      ANOVA
+Template:   Stat.Transreg.ANOVA
+Path:       Transreg.Identity_y_.ANOVA
+-------------
+
+Output Added:
+-------------
+Name:       FitStatistics
+Label:      ANOVA Fit Statistics
+Template:   Stat.Transreg.FitStatistics
+Path:       Transreg.Identity_y_.FitStatistics
+-------------
+
+Output Added:
+-------------
+Name:       Coef
+Label:      Coefficients
+Template:   Stat.Transreg.Coef
+Path:       Transreg.Identity_y_.Coef
+-------------
+NOTE: The data set WORK.DATA41 has 14 observations and 9 variables.
+NOTE: The PROCEDURE TRANSREG printed page 1743.
+
+28210      * Display TRANSREG output data set;
+28211      proc print label;
+28212      format intercept -- x2a 5.2;
+28213      run;
+
+
+Output Added:
+-------------
+Name:       Print
+Label:      Data Set WORK.DATA41
+Data Name:  ProcPrintTable
+Path:       Print.Print
+-------------
+NOTE: There were 14 observations read from the data set WORK.DATA41.
+NOTE: The PROCEDURE PRINT printed page 1744.
+
+28214      ods trace off;
+28215      
+28216      
+28217      
+28218      
+The SAS System
+
+28219      

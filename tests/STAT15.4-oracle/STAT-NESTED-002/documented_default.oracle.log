@@ -1,0 +1,59 @@
+The SAS System
+
+5329       
+5330       /* STAT-NESTED-002: NESTED — Variance component estimation for nested random-effect designs
+5331        * Source: S154 / Chapter 87 / `Getting Started: NESTED Procedure` (PDF pp. 6967–6969); S154 / Chapter 87 / `Overview: NESTED Procedure` (PDF pp.
+5331     ! 6966–6967).
+5332        * Discriminates: Documented default analysis with explicit complete public or synthetic inputs
+5333        */
+5334       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+5334     ! validmemname=compatible locale=en_US;
+5335       %let syscc=0;
+5336       title; footnote;
+5337       ods _all_ close;
+5338       ods listing gpath="%sysfunc(pathname(work))";
+5339       ods graphics off;
+5340       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.AUTO (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+5340     !                                         quit;
+
+
+5341       ods path work.templat(update) sashelp.tmplmst(read);
+5342       
+5343       data auto;
+5344       input Make $ Model Score @@;
+5345       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.AUTO has 36 observations and 3 variables.
+
+5358       ;
+5359       proc sort data=auto;
+5360       by Make Model;
+5361       run;
+
+NOTE: There were 36 observations read from the data set WORK.AUTO.
+NOTE: The data set WORK.AUTO has 36 observations and 3 variables.
+
+5362       title1 'Reliability of Automobile Models';
+5363       proc nested data=auto;
+5364       class Make Model;
+5365       var Score;
+5366       run;
+
+NOTE: The PROCEDURE NESTED printed page 372.
+
+5367       quit;
+5368       
+5369       
+5370       
+5371       
+The SAS System
+
+5372       

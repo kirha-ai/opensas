@@ -1,0 +1,32 @@
+
+The TTEST Procedure
+ 
+Difference:  x - y
+
+  N        Mean     Std Dev     Std Err     Minimum     Maximum
+
+ 12      3.5000      3.8494      1.1112     -4.0000      7.0000
+
+    Mean       95% CL Mean        Std Dev      95% CL Std Dev
+
+  3.5000      1.0542   5.9458      3.8494      2.7269   6.5359
+
+    DF    t Value    Pr > |t|
+
+    11       3.15      0.0092
+
+The TTEST Procedure
+ 
+Difference:  y - x
+
+  N        Mean     Std Dev     Std Err     Minimum     Maximum
+
+ 12     -3.5000      3.8494      1.1112     -7.0000      4.0000
+
+    Mean       95% CL Mean        Std Dev      95% CL Std Dev
+
+ -3.5000     -5.4957  Infty        3.8494      2.7269   6.5359
+
+    DF    t Value    Pr > t
+
+    11      -3.15    0.9954

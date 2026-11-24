@@ -1,0 +1,39 @@
+The SAS System
+
+704        
+705        /* STAT-COMMON-018: Power and sample size inversion interface
+706         * Source: S154 / Chapter 19 / `Computing Power and Sample Size` (PDF pp. 395–396); S154 / Chapter 19 / `Hypothesis Testing, Power, and Confidence
+706      ! Interval Precision` (PDF pp. 394–395).
+707         * Discriminates: Forward power versus sample size inversion and executable sample size rounding
+708         */
+709        options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+709      ! validmemname=compatible locale=en_US;
+710        %let syscc=0;
+711        title; footnote;
+712        ods _all_ close;
+713        ods listing gpath="%sysfunc(pathname(work))";
+714        ods graphics off;
+715        proc datasets library=work kill nolist;
+NOTE: Deleting WORK.RANKS (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SAMPLE (memtype=DATA).
+715      !                                         quit;
+
+
+716        ods path work.templat(update) sashelp.tmplmst(read);
+717        
+718        proc power;
+719         twosamplemeans test=diff meandiff=2 stddev=3 alpha=0.05 power=0.8 ntotal=.;
+720         twosamplemeans test=diff meandiff=2 stddev=3 alpha=0.05 power=. ntotal=100;
+721        run;
+
+NOTE: The PROCEDURE POWER printed pages 38-39.
+
+722        
+723        
+724        
+725        
+The SAS System
+
+726        

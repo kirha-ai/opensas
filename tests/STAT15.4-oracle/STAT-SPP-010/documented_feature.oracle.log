@@ -1,0 +1,42 @@
+The SAS System
+
+17832      
+17833      /* STAT-SPP-010: SPP — Testing Covariate Dependency with EDF Tests
+17834       * Source: S154 / Chapter 114 / `Testing Covariate Dependency with EDF Tests` (PDF p. 9418).
+17835       * Discriminates: Example 114.2: Testing Covariate Dependence of a Point Pattern
+17836       */
+17837      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+17837    ! validmemname=compatible locale=en_US;
+17838      %let syscc=0;
+17839      title; footnote;
+17840      ods _all_ close;
+17841      ods listing gpath="%sysfunc(pathname(work))";
+17842      ods graphics off;
+17843      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+17843    !                                         quit;
+
+
+17844      ods path work.templat(update) sashelp.tmplmst(read);
+17845      
+17846      proc spp data=sashelp.bei;
+17847      process trees = (x,y /area=(0,0,1000,500) event=Trees);
+17848      trend grad = field(x,y,Gradient);
+17849      trend elev = field(x,y,Elevation);
+17850      covtest trees = grad elev;
+17851      run;
+
+NOTE: The PROCEDURE SPP printed page 1224.
+
+17852      
+17853      
+17854      
+17855      
+The SAS System
+
+17856      

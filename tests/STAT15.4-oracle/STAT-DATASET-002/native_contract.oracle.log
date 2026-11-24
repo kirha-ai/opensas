@@ -1,0 +1,81 @@
+The SAS System
+
+89         
+90         /* STAT-DATASET-002: Statistical data sets — TYPE=ACE Data Sets / TYPE=BOXPLOT Data Sets / TYPE=CALISFIT Data Sets
+91          * Source: S154 / Special SAS Data Sets / `TYPE=ACE Data Sets` (PDF p. 10883); S154 / Special SAS Data Sets / `TYPE=BOXPLOT Data Sets` (PDF p. 10883)
+91       ! ; S154 / Special SAS Data Sets / `TYPE=CALISFIT Data Sets` (PDF pp. 10883–10884); S154 / Special SAS Data Sets / `Definitional Formulas` (PDF pp.
+91       ! 10893–10894).
+92          * Discriminates: Native TYPE=ACE output and its descriptor
+93          */
+94         options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+94       ! validmemname=compatible locale=en_US;
+95         %let syscc=0;
+96         title; footnote;
+97         ods _all_ close;
+98         ods listing gpath="%sysfunc(pathname(work))";
+99         ods graphics off;
+100        proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SAMPLE (memtype=DATA).
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.STRUCTURE (memtype=DATA).
+NOTE: Deleting WORK._ORACLE_DESCRIPTOR (memtype=DATA).
+NOTE: Deleting WORK._ORACLE_MEMBER (memtype=DATA).
+100      !                                         quit;
+
+
+101        ods path work.templat(update) sashelp.tmplmst(read);
+102        
+103        %macro _oracle_descriptor(ds);
+104        proc contents data=&ds out=_oracle_descriptor(keep=name type length varnum label format informat) noprint; run;
+105        proc sort data=_oracle_descriptor; by varnum; run;
+106        proc print data=_oracle_descriptor noobs; run;
+107        data _oracle_member;
+108        length Dataset $64 DatasetType $16;
+109        Dataset="&ds"; _handle=open("&ds");
+110        DatasetType=attrc(_handle,'TYPE'); NObs=attrn(_handle,'NOBS'); NVars=attrn(_handle,'NVARS');
+111        _close=close(_handle); drop _handle _close;
+112        run;
+113        proc print data=_oracle_member noobs; run;
+114        %mend;
+115        
+116        
+117        proc aceclus data=sashelp.iris outstat=structure p=0.1; var SepalLength SepalWidth PetalLength PetalWidth; run;
+
+WARNING: Iteration limit exceeded.
+NOTE: The data set WORK.STRUCTURE has 20 observations and 6 variables.
+NOTE: The PROCEDURE ACECLUS printed page 6.
+
+117      !                                                                                                                 %_oracle_descriptor(structure); proc
+117      ! print data=structure noobs; run;
+
+NOTE: The data set WORK._ORACLE_DESCRIPTOR has 6 observations and 7 variables.
+
+
+NOTE: There were 6 observations read from the data set WORK._ORACLE_DESCRIPTOR.
+NOTE: The data set WORK._ORACLE_DESCRIPTOR has 6 observations and 7 variables.
+
+
+NOTE: There were 6 observations read from the data set WORK._ORACLE_DESCRIPTOR.
+NOTE: The PROCEDURE PRINT printed page 7.
+
+
+NOTE: The data set WORK._ORACLE_MEMBER has 1 observations and 4 variables.
+
+
+NOTE: There were 1 observations read from the data set WORK._ORACLE_MEMBER.
+NOTE: The PROCEDURE PRINT printed page 8.
+
+
+NOTE: There were 20 observations read from the data set WORK.STRUCTURE.
+NOTE: The PROCEDURE PRINT printed page 9.
+
+118        
+119        
+120        
+121        
+The SAS System
+
+122        

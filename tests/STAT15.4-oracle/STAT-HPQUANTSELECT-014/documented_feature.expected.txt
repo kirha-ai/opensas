@@ -1,0 +1,153 @@
+
+The HPQUANTSELECT Procedure
+
+      Performance Information
+
+Execution Mode       Single-Machine
+Number of Threads    1             
+
+
+          Data Access Information
+ 
+Data           Engine    Role     Path
+
+WORK.SAMPLE    V9        Input    On Client
+
+
+          Model Information
+
+Data Source               WORK.SAMPLE
+Dependent Variable        y          
+Class Parameterization    GLM        
+Optimization Algorithm    Interior   
+
+
+        Selection Information
+
+Selection Method             Backward
+Select Criterion             SBC     
+Stop Criterion               SBC     
+Choose Criterion             SBC     
+Effect Hierarchy Enforced    Single  
+Stop Horizon                 3       
+
+
+Number of Observations Read             120
+Number of Observations Used             120
+
+
+ Class Level Information
+ 
+Class    Levels    Values
+
+group         3    1 2 3 
+
+
+           Dimensions
+
+Number of Effects              5
+Number of Parameters           7
+
+The HPQUANTSELECT Procedure
+Quantile Level = 0.25
+
+                Selection Summary
+ 
+              Effect       Number
+      Step    Removed  Effects In           SBC 
+
+         0                      5     -282.8429 
+------------------------------------------------
+         1    w                 4     -287.3084*
+         2    group             3     -286.6334 
+         3    z                 2     -253.5688 
+
+* Optimal Value of Criterion
+
+
+Selection stopped at a local minimum of the STOP criterion.
+
+
+ The model at step 1 is selected where SBC is -287.308.
+
+The HPQUANTSELECT Procedure
+Quantile Level = 0.25
+Selected Model
+
+Selected Effects: Intercept x z group
+
+
+         Fit Statistics
+
+Objective Function       32.80674
+R1                        0.49633
+Adj R1                    0.47881
+AIC                    -301.24589
+AICC                   -300.71958
+SBC                    -287.30844
+ACL                       0.27339
+
+
+                                     Parameter Estimates
+ 
+                                   Standard
+Parameter    DF      Estimate         Error      95% Confidence Limits     t Value    Pr > |t|
+
+Intercept     1       2.36857       0.30598       1.76248       2.97466       7.74      <.0001
+x             1       1.48133       0.12087       1.24191       1.72075      12.26      <.0001
+z             1      -0.76095       0.13898      -1.03625      -0.48566      -5.48      <.0001
+group 1       1      -0.53663       0.35838      -1.24652       0.17326      -1.50      0.1370
+group 2       1      -0.07515       0.36667      -0.80146       0.65116      -0.20      0.8380
+group 3       0             0             .             .             .        .         .    
+
+The HPQUANTSELECT Procedure
+Quantile Level = 0.75
+
+                Selection Summary
+ 
+              Effect       Number
+      Step    Removed  Effects In           SBC 
+
+         0                      5     -304.1970 
+------------------------------------------------
+         1    w                 4     -308.5087*
+         2    group             3     -280.5260 
+         3    z                 2     -263.1486 
+
+* Optimal Value of Criterion
+
+
+Selection stopped at a local minimum of the STOP criterion.
+
+
+ The model at step 1 is selected where SBC is -308.509.
+
+The HPQUANTSELECT Procedure
+Quantile Level = 0.75
+Selected Model
+
+Selected Effects: Intercept x z group
+
+
+         Fit Statistics
+
+Objective Function       30.03308
+R1                        0.53410
+Adj R1                    0.51789
+AIC                    -322.44619
+AICC                   -321.91987
+SBC                    -308.50873
+ACL                       0.25028
+
+
+                                     Parameter Estimates
+ 
+                                   Standard
+Parameter    DF      Estimate         Error      95% Confidence Limits     t Value    Pr > |t|
+
+Intercept     1       3.80067       0.19089       3.42255       4.17879      19.91      <.0001
+x             1       1.42911       0.09237       1.24615       1.61207      15.47      <.0001
+z             1      -0.48127       0.10448      -0.68823      -0.27431      -4.61      <.0001
+group 1       1      -1.05162       0.22528      -1.49786      -0.60538      -4.67      <.0001
+group 2       1      -0.41079       0.24930      -0.90461       0.08303      -1.65      0.1021
+group 3       0             0             .             .             .        .         .    

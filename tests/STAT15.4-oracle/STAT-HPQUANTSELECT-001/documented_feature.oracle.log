@@ -1,0 +1,60 @@
+The SAS System
+
+4695       
+4696       /* STAT-HPQUANTSELECT-001: HPQUANTSELECT — Data input, variable roles, and basic options
+4697        * Source: S154 / Chapter 66 / `PROC HPQUANTSELECT Statement` (PDF pp. 4985–4987); S154 / Chapter 66 / `BY Statement` (PDF p. 4987); S154 / Chapter
+4697     !  66 / `ID Statement` (PDF pp. 4988–4989); S154 / Chapter 66 / `WEIGHT Statement` (PDF p. 4995).
+4698        * Discriminates: Seeded synthetic quantile-regression fixture: Data input, variable roles, and basic options
+4699        */
+4700       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+4700     ! validmemname=compatible locale=en_US;
+4701       %let syscc=0;
+4702       title; footnote;
+4703       ods _all_ close;
+4704       ods listing gpath="%sysfunc(pathname(work))";
+4705       ods graphics off;
+4706       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.CRIME (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+4706     !                                         quit;
+
+
+4707       ods path work.templat(update) sashelp.tmplmst(read);
+4708       
+4709       data sample;
+4710       call streaminit(314159);
+4711       do id=1 to 120;
+4712        x=rand('normal'); z=rand('normal'); w=rand('normal'); group=1+mod(id,3);
+4713        y=2+1.5*x-0.6*z+0.4*group+rand('normal');
+4714        role=mod(id,4); output;
+4715       end;
+4716       run;
+
+NOTE: The data set WORK.SAMPLE has 120 observations and 7 variables.
+
+4717       data sample; set sample; _weight=1+mod(id,2); run;
+
+NOTE: There were 120 observations read from the data set WORK.SAMPLE.
+NOTE: The data set WORK.SAMPLE has 120 observations and 8 variables.
+
+4718       proc hpquantselect data=sample;
+4719       class group;
+4720       model y=x z w group / quantile=0.5 clb;
+4721       id id;
+4722       weight _weight;
+4723       performance nthreads=1;
+4724       run;
+
+NOTE: The HPQUANTSELECT procedure is executing in single-machine mode.
+NOTE: The PROCEDURE HPQUANTSELECT printed pages 173-174.
+
+4725       
+4726       
+4727       
+4728       
+The SAS System
+
+4729       

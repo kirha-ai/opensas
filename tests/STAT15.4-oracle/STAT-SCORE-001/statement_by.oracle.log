@@ -1,0 +1,102 @@
+The SAS System
+
+2913       
+2914       /* STAT-SCORE-001: SCORE — Data input, variable roles, and basic options
+2915        * Source: S154 / Chapter 109 / `PROC SCORE Statement` (PDF pp. 8908–8909); S154 / Chapter 109 / `BY Statement` (PDF pp. 8909–8910); S154 /
+2915     ! Chapter 109 / `ID Statement` (PDF p. 8910); S154 / Chapter 109 / `VAR Statement` (PDF pp. 8910–8911); S154 / Chapter 109 / `Missing Values` (PDF p.
+2915     !  8911).
+2916        * Discriminates: Two explicit BY groups contain identical inputs, exposing group boundaries and per-group results.
+2917        */
+2918       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+2918     ! validmemname=compatible locale=en_US;
+2919       %let syscc=0;
+2920       title; footnote;
+2921       ods _all_ close;
+2922       ods listing gpath="%sysfunc(pathname(work))";
+2923       ods graphics off;
+2924       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.FORMATS (memtype=CATALOG).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+2924     !                                         quit;
+
+
+2925       ods path work.templat(update) sashelp.tmplmst(read);
+2926       
+2927       data Fitness;
+2928       input Age Weight Oxygen RunTime RestPulse RunPulse @@;
+2929       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.FITNESS has 12 observations and 6 variables.
+
+2936       ;
+2937       
+2938       run;
+2939       
+2940       data A;
+2941       input _type_ $ _name_ $
+2942       Age Weight RunTime RunPulse RestPulse;
+2943       datalines;
+
+NOTE: The data set WORK.A has 3 observations and 7 variables.
+
+2947       ;
+2948       proc print data=A;
+2949       title 'Constructed Scoring Example';
+2950       title2 'Scoring Coefficients';
+2951       run;
+
+NOTE: There were 3 observations read from the data set WORK.A.
+NOTE: The PROCEDURE PRINT printed page 211.
+
+2952       data A; set A; do _oracle_by=1 to 2; output; end; run;
+
+NOTE: There were 3 observations read from the data set WORK.A.
+NOTE: The data set WORK.A has 6 observations and 8 variables.
+
+2953       proc sort data=A; by _oracle_by; run;
+
+NOTE: There were 6 observations read from the data set WORK.A.
+NOTE: The data set WORK.A has 6 observations and 8 variables.
+
+2954       data _oracle_input; set Fitness; do _oracle_by=1 to 2; output; end; run;
+
+NOTE: There were 12 observations read from the data set WORK.FITNESS.
+NOTE: The data set WORK._ORACLE_INPUT has 24 observations and 7 variables.
+
+2955       proc sort data=_oracle_input; by _oracle_by; run;
+
+NOTE: There were 24 observations read from the data set WORK._ORACLE_INPUT.
+NOTE: The data set WORK._ORACLE_INPUT has 24 observations and 7 variables.
+
+2956       proc score data=_oracle_input score=A out=B;
+2957       by _oracle_by;
+2958       var Age Weight RunTime RunPulse RestPulse;
+2959       run;
+
+NOTE: There were 24 observations read from the data set WORK._ORACLE_INPUT.
+NOTE: There were 6 observations read from the data set WORK.A.
+NOTE: The data set WORK.B has 24 observations and 10 variables.
+
+2960       proc print data=B;
+2961       title2 'Scored Data';
+2962       run;
+
+NOTE: There were 24 observations read from the data set WORK.B.
+NOTE: The PROCEDURE PRINT printed page 212.
+
+2963       
+2964       
+2965       
+2966       
+The SAS System
+
+2967       

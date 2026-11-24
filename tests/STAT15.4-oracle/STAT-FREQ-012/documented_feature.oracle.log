@@ -1,0 +1,71 @@
+The SAS System
+
+18351      
+18352      /* STAT-FREQ-012: FREQ — Cochran-Armitage Test for Trend
+18353       * Source: S154 / Chapter 47 / `Cochran-Armitage Test for Trend` (PDF pp. 3213–3214).
+18354       * Discriminates: Example 47.8: Cochran-Armitage Trend Test
+18355       */
+18356      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+18356    ! validmemname=compatible locale=en_US;
+18357      %let syscc=0;
+18358      title; footnote;
+18359      ods _all_ close;
+18360      ods listing gpath="%sysfunc(pathname(work))";
+18361      ods graphics off;
+18362      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.SKINCONDITION (memtype=DATA).
+NOTE: Deleting WORK.SUMMERSCHOOL (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+18362    !                                         quit;
+
+
+18363      ods path work.templat(update) sashelp.tmplmst(read);
+18364      
+18365      data pain;
+18366      input Dose Adverse $ Count @@;
+18367      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.PAIN has 10 observations and 3 variables.
+
+18373      ;
+18374      ods graphics on;
+18375      proc freq data=Pain;
+18376      tables Adverse*Dose / trend measures cl
+18377      plots=mosaicplot;
+18378      test smdrc;
+18379      exact trend / maxtime=60;
+18380      weight Count;
+18381      title 'Clinical Trial for Treatment of Pain';
+18382      run;
+
+NOTE: There were 10 observations read from the data set WORK.PAIN.
+NOTE: The PROCEDURE FREQ printed page 2279.
+
+18383      ods graphics off;
+18384      data Hypnosis;
+18385      length Emotion $ 10;
+18386      input Subject Emotion $ SkinResponse @@;
+18387      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.HYPNOSIS has 32 observations and 3 variables.
+
+18396      ;
+18397      run;
+18398      quit;
+18399      
+18400      
+18401      
+18402      
+The SAS System
+
+18403      

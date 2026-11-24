@@ -1,0 +1,352 @@
+
+The LOESS Procedure
+
+   Independent Variable Scaling
+ 
+      Scaling applied: None
+ 
+Statistic                     Year
+
+Minimum Value                 1936
+Maximum Value                 1972
+
+The LOESS Procedure
+Dependent Variable: Incidences
+
+     Optimal Smoothing
+         Criterion
+ 
+                 Smoothing
+       AICC      Parameter
+
+   -1.17277        0.25676
+
+The LOESS Procedure
+Selected Smoothing Parameter: 0.257
+Dependent Variable: Incidences
+
+                Fit Summary
+
+Fit Method                          kd Tree
+Blending                             Linear
+Number of Observations                   37
+Number of Fitting Points                 37
+kd Tree Bucket Size                       1
+Degree of Local Polynomials               1
+Smoothing Parameter                 0.25676
+Points in Local Neighborhood              9
+Residual Sum of Squares             2.03105
+Trace[L]                            8.62243
+GCV                                 0.00252
+AICC                               -1.17277
+
+The LOESS Procedure
+
+   Independent Variable Scaling
+ 
+      Scaling applied: None
+ 
+Statistic                     Year
+
+Minimum Value                 1936
+Maximum Value                 1972
+
+The LOESS Procedure
+Dependent Variable: Incidences
+
+                            Model Summary
+ 
+  Smoothing       Local
+  Parameter      Points    Residual SS            GCV           AICC
+
+    0.41892          15        3.42229        0.00339       -0.96252
+    0.68919          25        4.05838        0.00359       -0.93459
+    0.31081          11        2.51054        0.00279       -1.12034
+    0.20270           7        1.58513        0.00239       -1.12221
+    0.17568           6        1.56896        0.00241       -1.09706
+    0.28378          10        2.50487        0.00282       -1.10402
+    0.20270           7        1.58513        0.00239       -1.12221
+    0.25676           9        2.03105        0.00252       -1.17277
+    0.22973           8        2.02965        0.00256       -1.15145
+    0.25676           9        2.03105        0.00252       -1.17277
+
+
+     Optimal Smoothing
+         Criterion
+ 
+                 Smoothing
+       AICC      Parameter
+
+   -1.17277        0.25676
+
+The LOESS Procedure
+Selected Smoothing Parameter: 0.257
+Dependent Variable: Incidences
+
+                      Output Statistics
+ 
+                                     Predicted
+     Obs    Year     Incidences     Incidences       Residual
+
+       1    1936        0.90000        0.76235        0.13765
+       2    1937        0.80000        0.88992       -0.08992
+       3    1938        0.80000        1.01764       -0.21764
+       4    1939        1.30000        1.14303        0.15697
+       5    1940        1.40000        1.28654        0.11346
+       6    1941        1.20000        1.44528       -0.24528
+       7    1942        1.70000        1.53482        0.16518
+       8    1943        1.80000        1.57895        0.22105
+       9    1944        1.60000        1.62058       -0.02058
+      10    1945        1.50000        1.68627       -0.18627
+      11    1946        1.50000        1.82449       -0.32449
+      12    1947        2.00000        2.04976       -0.04976
+      13    1948        2.50000        2.30981        0.19019
+      14    1949        2.70000        2.53653        0.16347
+      15    1950        2.90000        2.68921        0.21079
+      16    1951        2.50000        2.70779       -0.20779
+      17    1952        3.10000        2.64837        0.45163
+      18    1953        2.40000        2.61468       -0.21468
+      19    1954        2.20000        2.58792       -0.38792
+      20    1955        2.90000        2.57877        0.32123
+      21    1956        2.50000        2.71078       -0.21078
+      22    1957        2.60000        2.96981       -0.36981
+      23    1958        3.20000        3.26005       -0.06005
+      24    1959        3.80000        3.54143        0.25857
+      25    1960        4.20000        3.73482        0.46518
+      26    1961        3.90000        3.78186        0.11814
+      27    1962        3.70000        3.74362       -0.04362
+      28    1963        3.30000        3.70904       -0.40904
+      29    1964        3.70000        3.72917       -0.02917
+      30    1965        3.90000        3.82382        0.07618
+      31    1966        4.10000        4.00515        0.09485
+      32    1967        3.80000        4.18573       -0.38573
+      33    1968        4.70000        4.35152        0.34848
+      34    1969        4.40000        4.50284       -0.10284
+      35    1970        4.80000        4.64413        0.15587
+      36    1971        4.80000        4.78291        0.01709
+      37    1972        4.80000        4.91602       -0.11602
+
+The LOESS Procedure
+Selected Smoothing Parameter: 0.257
+Dependent Variable: Incidences
+
+                Fit Summary
+
+Fit Method                          kd Tree
+Blending                             Linear
+Number of Observations                   37
+Number of Fitting Points                 37
+kd Tree Bucket Size                       1
+Degree of Local Polynomials               1
+Smoothing Parameter                 0.25676
+Points in Local Neighborhood              9
+Residual Sum of Squares             2.03105
+Trace[L]                            8.62243
+GCV                                 0.00252
+AICC                               -1.17277
+
+The LOESS Procedure
+
+   Independent Variable Scaling
+ 
+      Scaling applied: None
+ 
+Statistic                     Year
+
+Minimum Value                 1936
+Maximum Value                 1972
+
+The LOESS Procedure
+Smoothing Parameter: 0.1
+Dependent Variable: Incidences
+
+                Fit Summary
+
+Fit Method                          kd Tree
+Blending                             Linear
+Number of Observations                   37
+Number of Fitting Points                 37
+kd Tree Bucket Size                       1
+Degree of Local Polynomials               1
+Smoothing Parameter                 0.10000
+Points in Local Neighborhood              3
+Residual Sum of Squares                   0
+
+The LOESS Procedure
+Smoothing Parameter: 0.25
+Dependent Variable: Incidences
+
+                Fit Summary
+
+Fit Method                          kd Tree
+Blending                             Linear
+Number of Observations                   37
+Number of Fitting Points                 37
+kd Tree Bucket Size                       1
+Degree of Local Polynomials               1
+Smoothing Parameter                 0.25000
+Points in Local Neighborhood              9
+Residual Sum of Squares             2.03105
+
+The LOESS Procedure
+Smoothing Parameter: 0.4
+Dependent Variable: Incidences
+
+                Fit Summary
+
+Fit Method                          kd Tree
+Blending                             Linear
+Number of Observations                   37
+Number of Fitting Points                 22
+kd Tree Bucket Size                       2
+Degree of Local Polynomials               1
+Smoothing Parameter                 0.40000
+Points in Local Neighborhood             14
+Residual Sum of Squares             3.38741
+
+The LOESS Procedure
+Smoothing Parameter: 0.6
+Dependent Variable: Incidences
+
+                Fit Summary
+
+Fit Method                          kd Tree
+Blending                             Linear
+Number of Observations                   37
+Number of Fitting Points                 14
+kd Tree Bucket Size                       4
+Degree of Local Polynomials               1
+Smoothing Parameter                 0.60000
+Points in Local Neighborhood             22
+Residual Sum of Squares             4.09821
+
+            Smoothing            Dep
+     Obs    Parameter    Year    Var           Pred       Residual
+
+       1       0.1       1936    0.9        0.90000              0
+       2       0.1       1937    0.8        0.80000              0
+       3       0.1       1938    0.8        0.80000              0
+       4       0.1       1939    1.3        1.30000              0
+       5       0.1       1940    1.4        1.40000              0
+
+The LOESS Procedure
+
+   Independent Variable Scaling
+ 
+      Scaling applied: None
+ 
+Statistic                     Year
+
+Minimum Value                 1936
+Maximum Value                 1972
+
+The LOESS Procedure
+Smoothing Parameter: 0.1
+Dependent Variable: Incidences
+
+                Fit Summary
+
+Fit Method                          kd Tree
+Blending                             Linear
+Number of Observations                   37
+Number of Fitting Points                 37
+kd Tree Bucket Size                       1
+Degree of Local Polynomials               1
+Smoothing Parameter                 0.10000
+Points in Local Neighborhood              3
+Residual Sum of Squares                   0
+
+The LOESS Procedure
+Smoothing Parameter: 0.25
+Dependent Variable: Incidences
+
+                Fit Summary
+
+Fit Method                          kd Tree
+Blending                             Linear
+Number of Observations                   37
+Number of Fitting Points                 37
+kd Tree Bucket Size                       1
+Degree of Local Polynomials               1
+Smoothing Parameter                 0.25000
+Points in Local Neighborhood              9
+Residual Sum of Squares             2.03105
+
+The LOESS Procedure
+Smoothing Parameter: 0.4
+Dependent Variable: Incidences
+
+                Fit Summary
+
+Fit Method                          kd Tree
+Blending                             Linear
+Number of Observations                   37
+Number of Fitting Points                 22
+kd Tree Bucket Size                       2
+Degree of Local Polynomials               1
+Smoothing Parameter                 0.40000
+Points in Local Neighborhood             14
+Residual Sum of Squares             3.38741
+
+The LOESS Procedure
+Smoothing Parameter: 0.6
+Dependent Variable: Incidences
+
+                Fit Summary
+
+Fit Method                          kd Tree
+Blending                             Linear
+Number of Observations                   37
+Number of Fitting Points                 14
+kd Tree Bucket Size                       4
+Degree of Local Polynomials               1
+Smoothing Parameter                 0.60000
+Points in Local Neighborhood             22
+Residual Sum of Squares             4.09821
+
+The LOESS Procedure
+
+   Independent Variable Scaling
+ 
+      Scaling applied: None
+ 
+Statistic                     Year
+
+Minimum Value                 1936
+Maximum Value                 1972
+
+The LOESS Procedure
+Dependent Variable: Incidences
+
+     Optimal Smoothing
+         Criterion
+ 
+                 Smoothing
+       AICC      Parameter
+
+   -1.17277        0.25676
+
+The LOESS Procedure
+Selected Smoothing Parameter: 0.257
+Dependent Variable: Incidences
+
+                 Fit Summary
+
+Fit Method                             kd Tree
+Blending                                Linear
+Number of Observations                      37
+Number of Fitting Points                    37
+kd Tree Bucket Size                          1
+Degree of Local Polynomials                  1
+Smoothing Parameter                    0.25676
+Points in Local Neighborhood                 9
+Residual Sum of Squares                2.03105
+Trace[L]                               8.62243
+GCV                                    0.00252
+AICC                                  -1.17277
+AICC1                                -42.03789
+Delta1                                27.06596
+Delta2                                26.76564
+Equivalent Number of Parameters        7.31083
+Lookup Degrees of Freedom             27.36964
+Residual Standard Error                0.27394

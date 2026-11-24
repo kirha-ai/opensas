@@ -1,0 +1,64 @@
+The SAS System
+
+1307       
+1308       /* STAT-ORTHOREG-005: ORTHOREG — LSMEANS / LSMESTIMATE / SLICE
+1309        * Source: S154 / Chapter 91 / `LSMEANS Statement` (PDF pp. 7293–7295); S154 / Chapter 91 / `LSMESTIMATE Statement` (PDF pp. 7295–7296); S154 /
+1309     ! Chapter 91 / `SLICE Statement` (PDF p. 7296).
+1310        * Discriminates: Getting Started: ORTHOREG Procedure
+1311        */
+1312       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+1312     ! validmemname=compatible locale=en_US;
+1313       %let syscc=0;
+1314       title; footnote;
+1315       ods _all_ close;
+1316       ods listing gpath="%sysfunc(pathname(work))";
+1317       ods graphics off;
+1318       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SAMPLE (memtype=DATA).
+1318     !                                         quit;
+
+
+1319       ods path work.templat(update) sashelp.tmplmst(read);
+1320       
+1321       title 'PROC ORTHOREG used with Longley data';
+1322       data Longley;
+1323       input Employment Prices GNP Jobless Military PopSize Year;
+1324       datalines;
+
+NOTE: The data set WORK.LONGLEY has 16 observations and 7 variables.
+
+1341       ;
+1342       proc orthoreg data=Longley;
+1343       model Employment = Prices Prices *Prices
+1344       GNP GNP *GNP
+1345       Jobless Jobless *Jobless
+1346       Military Military*Military
+1347       PopSize PopSize *PopSize
+1348       Year Year *Year;
+1349       run;
+
+NOTE: There were 16 observations read from the data set WORK.LONGLEY.
+NOTE: The PROCEDURE ORTHOREG printed page 177.
+
+1350       proc glm data=Longley;
+1351       model Employment = Prices Prices *Prices
+1352       GNP GNP *GNP
+1353       Jobless Jobless *Jobless
+1354       Military Military*Military
+1355       PopSize PopSize *PopSize
+1356       Year Year *Year;
+1357       ods select OverallANOVA
+1358       FitStatistics
+1359       ParameterEstimates
+1360       Notes;
+1361       run;
+
+1362       
+1363       
+1364       
+1365       
+The SAS System
+
+1366       

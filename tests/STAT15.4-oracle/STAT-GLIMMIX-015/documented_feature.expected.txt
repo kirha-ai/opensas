@@ -1,0 +1,349 @@
+
+Obs    Month      Year     Pressure
+
+  1       1     0.08333      12.9  
+  2       2     0.16667      11.3  
+  3       3     0.25000      10.6  
+  4       4     0.33333      11.2  
+  5       5     0.41667      10.9  
+  6       6     0.50000       7.5  
+  7       7     0.58333       7.7  
+  8       8     0.66667      11.7  
+  9       9     0.75000      12.9  
+ 10      10     0.83333      14.3  
+
+The GLIMMIX Procedure
+
+           Fit Statistics
+
+-2 Res Log Likelihood         897.76
+AIC  (smaller is better)      901.76
+AICC (smaller is better)      901.83
+BIC  (smaller is better)      897.76
+CAIC (smaller is better)      899.76
+HQIC (smaller is better)      897.76
+Generalized Chi-Square       1554.38
+Gener. Chi-Square / DF          9.36
+Radial Smoother df(res)       153.52
+
+
+      Covariance Parameter Estimates
+ 
+                                  Standard
+Cov Parm              Estimate       Error
+
+Var[RSmooth(Year)]      3.5719      3.7672
+Residual                9.3638      1.3014
+
+
+                                Tests of Covariance Parameters
+                              Based on the Restricted Likelihood
+ 
+                                                                   --Input Parameters--
+Label            DF    -2 Res Log Like      ChiSq    Pr > ChiSq    CovP1       CovP2       Note
+
+WORK.TDATA        1             893.01        .          1.0000           0      9.3638    MI  
+WORK.TDATA        1             892.76        .          1.0000    0.000500      9.3638    DF  
+WORK.TDATA        1             897.34        .          1.0000     0.05000      9.3638    DF  
+WORK.TDATA        1             898.53       0.77        0.3816      0.1000      9.3638    DF  
+WORK.TDATA        1             899.38       1.62        0.2038      0.2000      9.3638    DF  
+WORK.TDATA        1             899.49       1.73        0.1888      0.5000      9.3638    DF  
+WORK.TDATA        1             898.83       1.07        0.3016      1.0000      9.3638    DF  
+WORK.TDATA        1             898.04       0.28        0.5967      2.0000      9.3638    DF  
+WORK.TDATA        1             897.79       0.03        0.8693      3.0000      9.3638    DF  
+WORK.TDATA        1             897.77       0.01        0.9145      4.0000      9.3638    DF  
+WORK.TDATA        1             897.86       0.10        0.7517      5.0000      9.3638    DF  
+WORK.TDATA        1             897.99       0.23        0.6311      6.0000      9.3638    DF  
+WORK.TDATA        1             898.27       0.51        0.4761      8.0000      9.3638    DF  
+WORK.TDATA        1             898.49       0.73        0.3919     10.0000      9.3638    DF  
+WORK.TDATA        1             898.70       0.94        0.3318     15.0000      9.3638    DF  
+WORK.TDATA        1             898.45       0.69        0.4068     20.0000      9.3638    DF  
+WORK.TDATA        1             892.63        .          1.0000     50.0000      9.3638    DF  
+WORK.TDATA        1             887.44        .          1.0000     75.0000      9.3638    DF  
+WORK.TDATA        1             883.79        .          1.0000      100.00      9.3638    DF  
+WORK.TDATA        1             881.55        .          1.0000      125.00      9.3638    DF  
+WORK.TDATA        1             880.72        .          1.0000      140.00      9.3638    DF  
+WORK.TDATA        1             880.34        .          1.0000      150.00      9.3638    DF  
+WORK.TDATA        1             880.07        .          1.0000      160.00      9.3638    DF  
+WORK.TDATA        1             879.85        .          1.0000      175.00      9.3638    DF  
+WORK.TDATA        1             879.86        .          1.0000      200.00      9.3638    DF  
+WORK.TDATA        1             880.21        .          1.0000      225.00      9.3638    DF  
+WORK.TDATA        1             880.80        .          1.0000      250.00      9.3638    DF  
+WORK.TDATA        1             881.56        .          1.0000      275.00      9.3638    DF  
+WORK.TDATA        1             882.44        .          1.0000      300.00      9.3638    DF  
+WORK.TDATA        1             884.41        .          1.0000      350.00      9.3638    DF  
+
+DF: P-value based on a chi-square with DF degrees of freedom.
+MI: P-value based on a mixture of chi-squares.
+
+The GLIMMIX Procedure
+
+                    Model Information
+
+Data Set                     SASHELP.ENSO                 
+Response Variable            Pressure                     
+Response Distribution        Gaussian                     
+Link Function                Identity                     
+Variance Function            Default                      
+Variance Matrix              Not blocked                  
+Estimation Technique         Restricted Maximum Likelihood
+Degrees of Freedom Method    Containment                  
+
+
+Number of Observations Read         168
+Number of Observations Used         168
+
+
+           Dimensions
+
+G-side Cov. Parameters         1
+R-side Cov. Parameters         1
+Columns in X                   2
+Columns in Z                  50
+Subjects (Blocks in V)         1
+Max Obs per Subject          168
+
+
+          Parameter Search
+ 
+                           Objective
+   CovP1       CovP2        Function
+
+       0     10.0000     893.0075522
+
+
+           Optimization Information
+
+Optimization Technique        Dual Quasi-Newton
+Parameters in Optimization    1                
+Lower Boundaries              1                
+Upper Boundaries              0                
+Fixed Effects                 Profiled         
+Residual Variance             Profiled         
+Starting From                 Data             
+
+
+                                Iteration History
+ 
+                                           Objective                         Max
+Iteration    Restarts    Evaluations        Function          Change    Gradient
+
+        0           0              4     893.0075522       .            17766.44
+        1           0             19    892.83762126      0.16993094    2840.051
+        2           0              7    892.75970262      0.07791864     255.639
+        3           0              3    892.75944881      0.00025381    4.374263
+        4           0              2    892.75944874      0.00000007    0.178248
+
+         Convergence criterion (GCONV=1E-8) satisfied.          
+
+
+           Fit Statistics
+
+-2 Res Log Likelihood         892.76
+AIC  (smaller is better)      896.76
+AICC (smaller is better)      896.83
+BIC  (smaller is better)      892.76
+CAIC (smaller is better)      894.76
+HQIC (smaller is better)      892.76
+Generalized Chi-Square       1937.41
+Gener. Chi-Square / DF         11.67
+Radial Smoother df(res)       165.40
+
+
+      Covariance Parameter Estimates
+ 
+                                  Standard
+Cov Parm              Estimate       Error
+
+Var[RSmooth(Year)]    0.000487    0.001413
+Residual               11.6712      1.2869
+
+
+        Type III Tests of Fixed Effects
+ 
+              Num      Den
+Effect         DF       DF    F Value    Pr > F
+
+Year            1    165.4       0.42    0.5184
+
+The GLIMMIX Procedure
+
+                    Model Information
+
+Data Set                     SASHELP.ENSO                 
+Response Variable            Pressure                     
+Response Distribution        Gaussian                     
+Link Function                Identity                     
+Variance Function            Default                      
+Variance Matrix              Not blocked                  
+Estimation Technique         Restricted Maximum Likelihood
+Degrees of Freedom Method    Containment                  
+
+
+Number of Observations Read         168
+Number of Observations Used         168
+
+
+           Dimensions
+
+G-side Cov. Parameters         1
+R-side Cov. Parameters         1
+Columns in X                   2
+Columns in Z                  50
+Subjects (Blocks in V)         1
+Max Obs per Subject          168
+
+
+          Parameter Search
+ 
+                           Objective
+   CovP1       CovP2        Function
+
+  2.0000     10.0000    898.06076681
+
+
+           Optimization Information
+
+Optimization Technique        Dual Quasi-Newton
+Parameters in Optimization    1                
+Lower Boundaries              1                
+Upper Boundaries              0                
+Fixed Effects                 Profiled         
+Residual Variance             Profiled         
+Starting From                 Data             
+
+
+                                Iteration History
+ 
+                                           Objective                         Max
+Iteration    Restarts    Evaluations        Function          Change    Gradient
+
+        0           0              4    898.06076681       .            4.324212
+        1           0              3    897.78401731      0.27674951    0.590336
+        2           0              4     897.7611726      0.02284471    0.107952
+        3           0              2    897.76070066      0.00047194    0.031266
+        4           0              2    897.76065428      0.00004638    0.001182
+        5           0              2    897.76065421      0.00000007    0.000014
+
+         Convergence criterion (GCONV=1E-8) satisfied.          
+
+
+           Fit Statistics
+
+-2 Res Log Likelihood         897.76
+AIC  (smaller is better)      901.76
+AICC (smaller is better)      901.83
+BIC  (smaller is better)      897.76
+CAIC (smaller is better)      899.76
+HQIC (smaller is better)      897.76
+Generalized Chi-Square       1554.39
+Gener. Chi-Square / DF          9.36
+Radial Smoother df(res)       153.52
+
+
+      Covariance Parameter Estimates
+ 
+                                  Standard
+Cov Parm              Estimate       Error
+
+Var[RSmooth(Year)]      3.5718      3.7669
+Residual                9.3638      1.3014
+
+
+        Type III Tests of Fixed Effects
+ 
+              Num      Den
+Effect         DF       DF    F Value    Pr > F
+
+Year            1    153.5       0.01    0.9286
+
+The GLIMMIX Procedure
+
+                    Model Information
+
+Data Set                     SASHELP.ENSO                 
+Response Variable            Pressure                     
+Response Distribution        Gaussian                     
+Link Function                Identity                     
+Variance Function            Default                      
+Variance Matrix              Not blocked                  
+Estimation Technique         Restricted Maximum Likelihood
+Degrees of Freedom Method    Containment                  
+
+
+Number of Observations Read         168
+Number of Observations Used         168
+
+
+           Dimensions
+
+G-side Cov. Parameters         1
+R-side Cov. Parameters         1
+Columns in X                   2
+Columns in Z                  50
+Subjects (Blocks in V)         1
+Max Obs per Subject          168
+
+
+          Parameter Search
+ 
+                           Objective
+   CovP1       CovP2        Function
+
+  200.00     10.0000    883.72775727
+
+
+           Optimization Information
+
+Optimization Technique        Dual Quasi-Newton
+Parameters in Optimization    1                
+Lower Boundaries              1                
+Upper Boundaries              0                
+Fixed Effects                 Profiled         
+Residual Variance             Profiled         
+Starting From                 Data             
+
+
+                                Iteration History
+ 
+                                           Objective                         Max
+Iteration    Restarts    Evaluations        Function          Change    Gradient
+
+        0           0              4    883.72775727       .            0.447029
+        1           0              6    880.12914143      3.59861584    0.088427
+        2           0              4    879.80665957      0.32248186    0.004307
+        3           0              2    879.80566748      0.00099209    0.000907
+        4           0              2     879.8056207      0.00004678    0.000012
+        5           0              2    879.80562069      0.00000001    3.753E-8
+
+         Convergence criterion (GCONV=1E-8) satisfied.          
+
+
+           Fit Statistics
+
+-2 Res Log Likelihood         879.81
+AIC  (smaller is better)      883.81
+AICC (smaller is better)      883.88
+BIC  (smaller is better)      879.81
+CAIC (smaller is better)      881.81
+HQIC (smaller is better)      879.81
+Generalized Chi-Square        720.14
+Gener. Chi-Square / DF          4.34
+Radial Smoother df(res)       129.56
+
+
+      Covariance Parameter Estimates
+ 
+                                  Standard
+Cov Parm              Estimate       Error
+
+Var[RSmooth(Year)]      186.71     55.1002
+Residual                4.3382      0.5818
+
+
+        Type III Tests of Fixed Effects
+ 
+              Num      Den
+Effect         DF       DF    F Value    Pr > F
+
+Year            1    129.6       0.00    0.9919

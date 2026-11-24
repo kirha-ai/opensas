@@ -1,0 +1,151 @@
+
+Beaton/Tukey Biweight Robust Regression using IRLS
+
+The NLIN Procedure
+Dependent Variable pop
+Method: Gauss-Newton
+
+                   Iterative Phase
+                                             Weighted
+ Iter          b0          b1          b2          SS
+
+    0     20450.4    -22.7806     0.00635     74.3093
+    1     20841.7    -23.2092     0.00646     30.4209
+    2     20838.4    -23.2096     0.00646     22.1730
+    3     20830.5    -23.2021     0.00646     20.9230
+    4     20829.0    -23.2007     0.00646     20.7126
+    5     20828.8    -23.2004     0.00646     20.6752
+    6     20828.7    -23.2004     0.00646     20.6684
+    7     20828.7    -23.2004     0.00646     20.6672
+    8     20828.7    -23.2004     0.00646     20.6670
+
+
+NOTE: Convergence criterion met.                                
+
+
+         Estimation Summary
+
+Method                  Gauss-Newton
+Iterations                         8
+R                           2.649E-6
+PPC(b0)                     1.189E-8
+RPC(b0)                     6.601E-8
+Object                      0.000011
+Objective                     20.667
+Observations Read                 21
+Observations Used                 21
+Observations Missing               0
+
+
+                                  Sum of        Mean               Approx
+Source                    DF     Squares      Square    F Value    Pr > F
+
+Model                      2      113564     56782.0    49454.5    <.0001
+Error                     18     20.6670      1.1482                     
+Corrected Total           20      113585                                 
+
+
+                              Approx
+Parameter      Estimate    Std Error    Approximate 95% Confidence Limits
+
+b0              20828.7        259.4     20283.8     21373.6
+b1             -23.2004       0.2746    -23.7773    -22.6235
+b2              0.00646     0.000073     0.00631     0.00661
+
+
+          Approximate Correlation Matrix
+                b0              b1              b2
+
+b0       1.0000000      -0.9998903       0.9995603
+b1      -0.9998903       1.0000000      -0.9998896
+b2       0.9995603      -0.9998896       1.0000000
+
+Beaton/Tukey Biweight Robust Regression using IRLS
+
+The ROBUSTREG Procedure
+
+                Model Information
+
+Data Set                               WORK.USPOP
+Dependent Variable                            pop
+Number of Independent Variables                 1
+Number of Observations                         21
+Method                               M Estimation
+
+
+Number of Observations Read          21
+Number of Observations Used          21
+
+
+Parameter Information
+ 
+Parameter    Effect
+
+Intercept    Intercept
+year         year     
+yearyear     year*year
+
+
+                                Summary Statistics
+ 
+                                                              Standard
+Variable           Q1      Median          Q3        Mean    Deviation         MAD
+
+year           1835.0      1890.0      1945.0      1890.0      62.0484     74.1301
+year*year     3367250     3572100     3783050     3575767       234567      283918
+pop           14.9675     62.9470       141.5     85.7540      78.4712     79.0360
+
+
+                        Parameter Estimates
+ 
+                      Standard   95% Confidence     Chi-
+Parameter DF Estimate    Error       Limits       Square Pr > ChiSq
+
+Intercept  1 20828.74 287.8291 20264.60 21392.87 5236.69     <.0001
+year       1 -23.2004   0.3048 -23.7978 -22.6030 5793.74     <.0001
+year*year  1   0.0065   0.0001   0.0063   0.0066 6423.49     <.0001
+Scale      0   2.0000                                              
+
+
+         Diagnostics Summary
+ 
+Observation
+Type           Proportion      Cutoff
+
+Outlier            0.0952      3.0000
+
+
+   Goodness-of-Fit
+ 
+Statistic       Value
+
+R-Square       0.8731
+AICR          19.9457
+BICR          27.7064
+Deviance      74.2912
+
+Beaton/Tukey Biweight Robust Regression using IRLS
+
+Obs      pop      year     yearsq       w
+
+  1      3.929    1790    3204100    0.98010
+  2      5.308    1800    3240000    0.99517
+  3      7.239    1810    3276100    0.97170
+  4      9.638    1820    3312400    0.97947
+  5     12.866    1830    3348900    0.99765
+  6     17.069    1840    3385600    0.99109
+  7     23.191    1850    3422500    0.97968
+  8     31.443    1860    3459600    0.99579
+  9     39.818    1870    3496900    0.97346
+ 10     50.155    1880    3534400    0.97427
+ 11     62.947    1890    3572100    0.99971
+ 12     75.994    1900    3610000    0.99851
+ 13     91.972    1910    3648100    0.90779
+ 14    105.710    1920    3686400    0.99816
+ 15    122.775    1930    3724900    0.99268
+ 16    131.669    1940    3763600    0.02403
+ 17    151.325    1950    3802500    0.04443
+ 18    179.323    1960    3841600    0.97800
+ 19    203.211    1970    3880900    0.97951
+ 20    226.542    1980    3920400    0.97562
+ 21    248.710    1990    3960100    0.96007

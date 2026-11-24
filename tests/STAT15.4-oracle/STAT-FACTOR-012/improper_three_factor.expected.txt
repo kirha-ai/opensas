@@ -1,0 +1,113 @@
+
+The FACTOR Procedure
+
+Input Data Type                 Raw Data
+Number of Records Read                12
+Number of Records Used                12
+N for Significance Tests              12
+
+The FACTOR Procedure
+Initial Factor Method: Maximum Likelihood
+
+                   Prior Communality Estimates: SMC    
+ 
+Population          School      Employment        Services      HouseValue
+
+0.96859160      0.82228514      0.96918082      0.78572440      0.84701921
+
+
+Preliminary Eigenvalues: Total = 76.1165859  Average = 15.2233172
+ 
+        Eigenvalue    Difference    Proportion    Cumulative
+
+   1    63.7010086    50.6462895        0.8369        0.8369
+   2    13.0547191    12.7270798        0.1715        1.0084
+   3     0.3276393     0.6749199        0.0043        1.0127
+   4    -0.3472805     0.2722202       -0.0046        1.0081
+   5    -0.6195007                     -0.0081        1.0000
+
+3 factors will be retained by the NFACTOR criterion.
+
+
+WARNING: Too many factors for a unique solution.
+
+
+
+Iteration     Criterion     Ridge    Change                       Communalities
+
+    1         0.1798029    0.0313    0.0501    0.96081    0.84184    1.00000    0.80175    0.89716
+    2         0.0016405    0.0313    0.0678    0.98081    0.88713    1.00000    0.79559    0.96500
+    3         0.0000041    0.0313    0.0094    0.98195    0.88603    1.00000    0.80498    0.96751
+    4         0.0000000    0.0313    0.0006    0.98202    0.88585    1.00000    0.80561    0.96735
+
+
+ERROR: Converged, but not to a proper optimum.                  
+Try a different 'PRIORS' statement.
+
+
+
+          Significance Tests Based on 12 Observations
+ 
+                                                           Pr > 
+             Test                     DF    Chi-Square     ChiSq
+
+H0: No common factors                 10       54.2517    <.0001
+HA: At least one common factor                                  
+H0: 3 Factors are sufficient          -2        0.0000     .    
+HA: More factors are needed                                     
+
+
+Chi-Square without Bartlett's Correction       0.0000003
+Akaike's Information Criterion                 4.0000003
+Schwarz's Bayesian Criterion                   4.9698136
+Tucker and Lewis's Reliability Coefficient     0.0000000
+
+
+      Squared Canonical Correlations
+ 
+   Factor1         Factor2         Factor3
+
+ 1.0000000       0.9751895       0.6894465
+
+
+Eigenvalues of the Weighted Reduced Correlation Matrix: Total = 41.5254193  Average = 10.3813548
+ 
+        Eigenvalue    Difference    Proportion    Cumulative
+
+   1         Infty         Infty                            
+   2    39.3054826    37.0854258        0.9465        0.9465
+   3     2.2200568     2.2199693        0.0535        1.0000
+   4     0.0000875     0.0002949        0.0000        1.0000
+   5    -0.0002075                     -0.0000        1.0000
+
+
+                      Factor Pattern
+ 
+                   Factor1         Factor2         Factor3
+
+Population         0.97245        -0.11233        -0.15409
+School             0.15428         0.89108         0.26083
+Employment         1.00000        -0.00000        -0.00000
+Services           0.51472         0.72416        -0.12766
+HouseValue         0.12193         0.97227        -0.08473
+
+
+ Variance Explained by Each Factor
+ 
+Factor        Weighted    Unweighted
+
+Factor1     54.6115241    2.24926004
+Factor2     39.3054826    2.27634375
+Factor3      2.2200568    0.11525433
+
+
+Final Communality Estimates and Variable Weights
+Total Communality: Weighted = 96.137063   Unweighted = 4.640858
+ 
+Variable      Communality        Weight
+
+Population     0.98201660    55.6066901
+School         0.88585165     8.7607194
+Employment     1.00000000         Infty
+Services       0.80564301     5.1444261
+HouseValue     0.96734687    30.6251078

@@ -1,0 +1,65 @@
+The SAS System
+
+5277       
+5278       /* STAT-HPMIXED-013: HPMIXED — Official examples and feature integration regression
+5279        * Source: S154 / Chapter 62 / `Examples: HPMIXED Procedure` (PDF pp. 4850–4869).
+5280        * Discriminates: Example 62.2: Comparing Results from PROC HPMIXED and PROC MIXED
+5281        */
+5282       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+5282     ! validmemname=compatible locale=en_US;
+5283       %let syscc=0;
+5284       title; footnote;
+5285       ods _all_ close;
+5286       ods listing gpath="%sysfunc(pathname(work))";
+5287       ods graphics off;
+5288       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.HPMESTIMATE (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.SIM (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+5288     !                                         quit;
+
+
+5289       ods path work.templat(update) sashelp.tmplmst(read);
+5290       
+5291       data heights;
+5292       input Family Gender$ Height @@;
+5293       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.HEIGHTS has 18 observations and 3 variables.
+
+5297       ;
+5298       proc mixed;
+5299       class Family Gender;
+5300       model Height = Gender / s;
+5301       random Family Family*Gender / s;
+5302       run;
+
+NOTE: Convergence criteria met.
+NOTE: The PROCEDURE MIXED printed page 223.
+
+5303       proc hpmixed;
+5304       class Family Gender;
+5305       model Height = Gender / s;
+5306       random Family Family*Gender / s;
+5307       test gender;
+5308       run;
+
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The PROCEDURE HPMIXED printed page 224.
+
+5309       
+5310       
+5311       
+5312       
+The SAS System
+
+5313       

@@ -1,0 +1,111 @@
+The SAS System
+
+15142      
+15143      /* STAT-DISCRIM-008: DISCRIM — Displayed Output / ODS Table Names
+15144       * Source: S154 / Chapter 42 / `Displayed Output` (PDF pp. 2681–2685); S154 / Chapter 42 / `ODS Table Names` (PDF pp. 2685–2687).
+15145       * Discriminates: Getting Started: DISCRIM Procedure
+15146       */
+15147      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+15147    ! validmemname=compatible locale=en_US;
+15148      %let syscc=0;
+15149      title; footnote;
+15150      ods _all_ close;
+15151      ods listing gpath="%sysfunc(pathname(work))";
+15152      ods graphics off;
+15153      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+15153    !                                         quit;
+
+
+15154      ods path work.templat(update) sashelp.tmplmst(read);
+15155      
+15156      ods trace on;
+15157      title 'Fish Measurement Data';
+15158      proc discrim data=sashelp.fish;
+15159      class Species;
+15160      run;
+
+WARNING: 1 observations in DATA= data set or BY group will not be included in the analysis due to missing values.
+WARNING: A total of 1 of the 159 observations in the DATA= data set were excluded (frequency sum = 158).
+
+Output Added:
+-------------
+Name:       Counts
+Label:      Counts
+Template:   Stat.Discrim.Counts
+Path:       Discrim.Counts
+-------------
+
+Output Added:
+-------------
+Name:       NObs
+Label:      n Obs
+Template:   Stat.Discrim.NObs
+Path:       Discrim.NObs
+-------------
+
+Output Added:
+-------------
+Name:       Levels
+Label:      Class Levels
+Template:   Stat.Discrim.Levels
+Path:       Discrim.Levels
+-------------
+
+Output Added:
+-------------
+Name:       LogDet
+Label:      Determinant
+Template:   Stat.Discrim.LogDet
+Path:       Discrim.LogDet
+-------------
+
+Output Added:
+-------------
+Name:       DistGeneralized
+Label:      Generalized
+Template:   Stat.Discrim.DistGeneralized
+Path:       Discrim.SquaredDistances.DistGeneralized
+-------------
+
+Output Added:
+-------------
+Name:       LinearDiscFunc
+Label:      Linear Discriminant Function
+Template:   Stat.Discrim.LinearDiscFunc
+Path:       Discrim.LinearDiscFunc
+-------------
+
+Output Added:
+-------------
+Name:       ClassifiedResub
+Label:      Number Classified
+Template:   Stat.Discrim.Classified
+Path:       Discrim.Resubstitution.ClassifiedResub
+-------------
+
+Output Added:
+-------------
+Name:       ErrorResub
+Label:      Error Counts
+Template:   Stat.Discrim.ErrorCounts
+Path:       Discrim.Resubstitution.ErrorResub
+-------------
+NOTE: There were 159 observations read from the data set SASHELP.FISH.
+NOTE: The PROCEDURE DISCRIM printed pages 2025-2027.
+
+15161      ods trace off;
+15162      
+15163      
+15164      
+15165      
+The SAS System
+
+15166      

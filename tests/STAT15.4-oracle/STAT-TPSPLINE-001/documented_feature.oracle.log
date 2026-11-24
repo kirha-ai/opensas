@@ -1,0 +1,64 @@
+The SAS System
+
+26191      
+26192      /* STAT-TPSPLINE-001: TPSPLINE — Data input, variable roles, and basic options
+26193       * Source: S154 / Chapter 125 / `PROC TPSPLINE Statement` (PDF pp. 10298–10302); S154 / Chapter 125 / `BY Statement` (PDF pp. 10302–10303); S154
+26193    ! / Chapter 125 / `FREQ Statement` (PDF p. 10303); S154 / Chapter 125 / `ID Statement` (PDF p. 10303).
+26194       * Discriminates: Verified default procedure context; explicit statements: BY
+26195       */
+26196      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+26196    ! validmemname=compatible locale=en_US;
+26197      %let syscc=0;
+26198      title; footnote;
+26199      ods _all_ close;
+26200      ods listing gpath="%sysfunc(pathname(work))";
+26201      ods graphics off;
+26202      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.AUDITSAMPLE (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPSORTSIZE (memtype=DATA).
+NOTE: Deleting WORK.TRAVELEXPENSE (memtype=DATA).
+26202    !                                         quit;
+
+
+26203      ods path work.templat(update) sashelp.tmplmst(read);
+26204      
+26205      data surface;
+26206      do x1=-1 to 1 by 0.5;
+26207      do x2=-1 to 1 by 0.5;
+26208      do rep=1 to 2;
+26209      y=3+x1-2*x2+0.5*x1*x2+0.1*cos(rep+x1+x2);
+26210      output;
+26211      end;
+26212      end;
+26213      end;
+26214      run;
+
+NOTE: The data set WORK.SURFACE has 50 observations and 4 variables.
+
+26215      proc tpspline data=surface;
+26216      model y=(x1 x2) / lognlambda=(-4 to -2.5 by 0.5);
+26217      output out=predicted pred uclm lclm;
+26218      run;
+
+NOTE: The data set WORK.PREDICTED has 50 observations and 7 variables.
+NOTE: The PROCEDURE TPSPLINE printed page 1622.
+
+26219      proc print data=predicted(obs=12) noobs;
+26220      run;
+
+NOTE: There were 12 observations read from the data set WORK.PREDICTED.
+NOTE: The PROCEDURE PRINT printed page 1623.
+
+26221      
+26222      
+26223      
+26224      
+The SAS System
+
+26225      

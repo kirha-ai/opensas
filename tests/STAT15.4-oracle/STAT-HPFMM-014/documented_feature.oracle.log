@@ -1,0 +1,107 @@
+The SAS System
+
+8260       
+8261       /* STAT-HPFMM-014: HPFMM — Official examples and feature integration regression
+8262        * Source: S154 / Chapter 58 / `Examples: HPFMM Procedure` (PDF pp. 4596–4618).
+8263        * Discriminates: Example 58.3: Enforcing Homogeneity Constraints: Count and Dispersion—It Is All Over!
+8264        */
+8265       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+8265     ! validmemname=compatible locale=en_US;
+8266       %let syscc=0;
+8267       title; footnote;
+8268       ods _all_ close;
+8269       ods listing gpath="%sysfunc(pathname(work))";
+8270       ods graphics off;
+8271       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.CATCH (memtype=DATA).
+NOTE: Deleting WORK.GALAXIES (memtype=DATA).
+NOTE: Deleting WORK.HPFMMOUT (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.YEAST (memtype=DATA).
+8271     !                                         quit;
+
+
+8272       ods path work.templat(update) sashelp.tmplmst(read);
+8273       
+8274       data assay;
+8275       label dose = 'Dose of quinoline (microg/plate)'
+8276       num = 'Observed number of colonies';
+8277       input dose @;
+8278       logd = log(dose+10);
+8279       do i=1 to 3;
+8280       input num@;
+8281       output;
+8282       end;
+8283       datalines;
+
+NOTE: The data set WORK.ASSAY has 18 observations and 4 variables.
+
+8290       ;
+8291       proc hpfmm data=assay seed=314159;
+8292       model num = dose logd / dist=Poisson;
+8293       run;
+
+NOTE: The HPFMM procedure is executing in single-machine mode.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: There were 18 observations read from the data set WORK.ASSAY.
+NOTE: The PROCEDURE HPFMM printed page 643.
+
+8294       proc hpfmm data=assay seed=314159;
+8295       model num = dose logd / dist=Poisson k=2
+8296       equate=effects(dose logd);
+8297       run;
+
+NOTE: The HPFMM procedure is executing in single-machine mode.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: There were 18 observations read from the data set WORK.ASSAY.
+NOTE: The PROCEDURE HPFMM printed page 644.
+
+8298       proc hpfmm data=assay seed=314159;
+8299       model num = dose logd / dist=Poisson k=2;
+8300       restrict 'common dose' dose 1, dose -1;
+8301       restrict 'common logd' logd 1, logd -1;
+8302       run;
+
+NOTE: The HPFMM procedure is executing in single-machine mode.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: There were 18 observations read from the data set WORK.ASSAY.
+NOTE: The PROCEDURE HPFMM printed page 645.
+
+8303       proc hpfmm data=assay(where=(num ne 60)) seed=314159;
+8304       model num = dose logd / dist=Poisson k=2
+8305       equate=effects(dose logd);
+8306       run;
+
+NOTE: The HPFMM procedure is executing in single-machine mode.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: At least one element of the (projected) gradient is greater than 1e-3. The GCONV= option modifies the relative gradient convergence criterion and 
+      lowering its value might help to reduce the (projected) gradient.
+NOTE: There were 17 observations read from the data set WORK.ASSAY.
+      WHERE num not = 60;
+NOTE: The PROCEDURE HPFMM printed page 646.
+
+8307       proc hpfmm data=assay(where=(num ne 60)) seed=314159;
+8308       model num = dose logd / dist=Poisson;
+8309       run;
+
+NOTE: The HPFMM procedure is executing in single-machine mode.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: There were 17 observations read from the data set WORK.ASSAY.
+      WHERE num not = 60;
+NOTE: The PROCEDURE HPFMM printed page 647.
+
+8310       
+8311       
+8312       
+8313       
+The SAS System
+
+8314       

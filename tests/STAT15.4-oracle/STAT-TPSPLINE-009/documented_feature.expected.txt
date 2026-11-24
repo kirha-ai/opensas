@@ -1,0 +1,42 @@
+
+The TPSPLINE Procedure
+Dependent Variable:  y    
+
+       Summary of Input Data Set
+
+Number of Non-Missing Observations    50
+Number of Missing Observations         0
+Unique Smoothing Design Points         5
+
+
+        Summary of Final Model
+
+Number of Regression Variables        2
+Number of Smoothing Variables         1
+Order of Derivative in the Penalty    2
+Dimension of Polynomial Space         4
+
+
+        Summary Statistics
+       of Final Estimation
+
+log10(n*Lambda)            -2.2374
+Smoothing Penalty         205.3461
+Residual SS                 8.5821
+Tr(I-A)                    43.1534
+Model DF                    6.8466
+Standard Deviation          0.4460
+GCV                         0.2304
+
+Obs    x1     x2     x1sq      P_y
+
+  1    -1    -1.0      1     15.2392
+  2    -1    -0.9      1     14.3118
+  3    -1    -0.8      1     13.4166
+  4    -1    -0.7      1     12.5858
+  5    -1    -0.6      1     11.8516
+  6    -1    -0.5      1     11.2461
+  7    -1    -0.4      1     10.7927
+  8    -1    -0.3      1     10.4790
+  9    -1    -0.2      1     10.2838
+ 10    -1    -0.1      1     10.1859

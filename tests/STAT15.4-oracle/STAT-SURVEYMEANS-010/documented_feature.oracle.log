@@ -1,0 +1,105 @@
+The SAS System
+
+22292      
+22293      /* STAT-SURVEYMEANS-010: SURVEYMEANS — Fay's BRR Method / Jackknife Method
+22294       * Source: S154 / Chapter 121 / `Fay's BRR Method` (PDF pp. 9968–9969); S154 / Chapter 121 / `Jackknife Method` (PDF pp. 9969–9971).
+22295       * Discriminates: Getting Started: SURVEYMEANS Procedure
+22296       */
+22297      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+22297    ! validmemname=compatible locale=en_US;
+22298      %let syscc=0;
+22299      title; footnote;
+22300      ods _all_ close;
+22301      ods listing gpath="%sysfunc(pathname(work))";
+22302      ods graphics off;
+22303      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.ICECREAM (memtype=DATA).
+NOTE: Deleting WORK.MYSTAT (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.STUDENTTOTALS (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+22303    !                                         quit;
+
+
+22304      ods path work.templat(update) sashelp.tmplmst(read);
+22305      
+22306      data IceCream;
+22307      input Grade Spending @@;
+22308      if (Spending < 10) then Group='less';
+22309      else Group='more';
+22310      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.ICECREAM has 40 observations and 3 variables.
+
+22315      ;
+22316      ods graphics on;
+22317      title1 'Analysis of Ice Cream Spending';
+22318      title2 'Simple Random Sample Design';
+22319      proc surveymeans data=IceCream total=4000;
+22320      var Spending Group;
+22321      run;
+
+NOTE: The PROCEDURE SURVEYMEANS printed page 1465.
+
+22322      data StudentTotals;
+22323      input Grade _total_;
+22324      datalines;
+
+NOTE: The data set WORK.STUDENTTOTALS has 3 observations and 2 variables.
+
+22328      ;
+22329      data IceCream;
+22330      set IceCream;
+22331      if Grade=7 then Prob=20/1824;
+22332      if Grade=8 then Prob=9/1025;
+22333      if Grade=9 then Prob=11/1151;
+22334      Weight=1/Prob;
+22335      run;
+
+NOTE: There were 40 observations read from the data set WORK.ICECREAM.
+NOTE: The data set WORK.ICECREAM has 40 observations and 5 variables.
+
+22336      title1 'Analysis of Ice Cream Spending';
+22337      title2 'Stratified Sample Design';
+22338      proc surveymeans data=IceCream total=StudentTotals;
+22339      stratum Grade / list;
+22340      var Spending Group;
+22341      weight Weight;
+22342      run;
+
+NOTE: The PROCEDURE SURVEYMEANS printed page 1466.
+
+22343      title1 'Analysis of Ice Cream Spending';
+22344      title2 'Stratified Sample Design';
+22345      proc surveymeans data=IceCream total=StudentTotals;
+22346      stratum Grade / list;
+22347      var Spending Group;
+22348      weight Weight;
+22349      ods output Statistics=MyStat;
+22350      run;
+
+NOTE: The data set WORK.MYSTAT has 3 observations and 7 variables.
+NOTE: The PROCEDURE SURVEYMEANS printed page 1467.
+
+22351      ods output Statistics=MyStat;
+22352      proc print data=MyStat;
+22353      run;
+
+WARNING: Output 'Statistics' was not created.  Make sure that the output object name, label, or path is spelled correctly.  Also, verify that the appropriate 
+         procedure options are used to produce the requested output object.  For example, verify that the NOPRINT option is not used.
+NOTE: There were 3 observations read from the data set WORK.MYSTAT.
+NOTE: The PROCEDURE PRINT printed page 1468.
+
+22354      
+22355      
+22356      
+22357      
+The SAS System
+
+22358      

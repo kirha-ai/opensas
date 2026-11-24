@@ -1,0 +1,154 @@
+The SAS System
+
+6326       
+6327       /* STAT-GLMSELECT-018: GLMSELECT — PERFORMANCE
+6328        * Source: S154 / Chapter 56 / `PERFORMANCE Statement` (PDF p. 4355).
+6329        * Discriminates: Example 56.2: Using Validation and Cross Validation; explicit statements: PERFORMANCE
+6330        */
+6331       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+6331     ! validmemname=compatible locale=en_US;
+6332       %let syscc=0;
+6333       title; footnote;
+6334       ods _all_ close;
+6335       ods listing gpath="%sysfunc(pathname(work))";
+6336       ods graphics off;
+6337       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+6337     !                                         quit;
+
+
+6338       ods path work.templat(update) sashelp.tmplmst(read);
+6339       
+6340       data analysisData testData;
+6341       drop i j c3Num;
+6342       length c3 $ 7;
+6343       array x{20} x1-x20;
+6344       do i=1 to 1500;
+6345       do j=1 to 20;
+6346       x{j} = ranuni(1);
+6347       end;
+6348       c1 = 1 + mod(i,8);
+6349       c2 = ranbin(1,3,.6);
+6350       if i < 50 then do;
+6351       c3 = 'tiny';
+6352       c3Num=1;
+6353       end;
+6354       else if i < 250 then do;
+6355       c3 = 'small';
+6356       c3Num=1;
+6357       end;
+6358       else if i < 600 then do;
+6359       c3 = 'average';
+6360       c3Num=2;
+6361       end;
+6362       else if i < 1200 then do;
+6363       c3 = 'big';
+6364       c3Num=3;
+6365       end;
+6366       else do;
+6367       c3 = 'huge';
+6368       c3Num=5;
+6369       end;
+6370       y = 10 + x1 + 2*x5 + 3*x10 + 4*x20 + 3 *x1*x7 + 8*x6*x7
+6371       + 5*(c1=3)*c3Num + 8*(c1=7) + 5 *rannor(1);
+6372       if ranuni(1) < 2/3 then output analysisData;
+6373       else output testData;
+6374       end;
+6375       run;
+
+NOTE: The data set WORK.ANALYSISDATA has 1010 observations and 24 variables.
+NOTE: The data set WORK.TESTDATA has 490 observations and 24 variables.
+
+6376       ods graphics on;
+6377       proc glmselect data=analysisData testdata=testData
+6378       seed=1 plots(stepAxis=number)=(criterionPanel ASEPlot);
+6379       partition fraction(validate=0.5);
+6380       class c1 c2 c3(order=data);
+6381       model y = c1|c2|c3|x1|x2|x3|x4|x5|x5|x6|x7|x8|x9|x10
+6382       |x11|x12|x13|x14|x15|x16|x17|x18|x19|x20 @2
+6383       / selection=stepwise(choose = validate
+6384       select = sl)
+6385       hierarchy=single stb;
+6386       run;
+
+NOTE: There were 1010 observations read from the data set WORK.ANALYSISDATA.
+NOTE: The PROCEDURE GLMSELECT printed pages 472-474.
+
+6387       proc glmselect data=analysisData testdata=testData
+6388       seed=1 plots(stepAxis=number)=all;
+6389       partition fraction(validate=0.5);
+6390       class c1(split) c2 c3(order=data);
+6391       model y = c1|c2|c3|x1|x2|x3|x4|x5|x5|x6|x7|x8|x9|x10
+6392       |x11|x12|x13|x14|x15|x16|x17|x18|x19|x20 @2
+6393       / selection=stepwise(stop = validate
+6394       select = sl)
+6395       hierarchy=single;
+6396       output out=outData;
+6397       run;
+
+NOTE: Data label collision avoidance has been disabled because the threshold has been reached. You can set LABELMAX=300 in the ODS GRAPHICS statement to 
+      restore collision avoidance.
+NOTE: There were 1010 observations read from the data set WORK.ANALYSISDATA.
+NOTE: The data set WORK.OUTDATA has 1010 observations and 26 variables.
+NOTE: The PROCEDURE GLMSELECT printed pages 475-477.
+
+6398       proc print data=outData(obs=5);
+6399       run;
+
+NOTE: There were 5 observations read from the data set WORK.OUTDATA.
+NOTE: The PROCEDURE PRINT printed page 478.
+
+6400       proc glmselect data=analysisData testdata=testData
+6401       plots(stepAxis=number)=(criterionPanel ASEPlot) seed=314159;
+6402       class c1(split) c2 c3(order=data);
+6403       model y = c1|c2|c3|x1|x2|x3|x4|x5|x5|x6|x7|x8|x9|x10
+6404       |x11|x12|x13|x14|x15|x16|x17|x18|x19|x20 @2
+6405       / selection = stepwise(choose = cv
+6406       select = sl)
+6407       stats = press
+6408       cvMethod = split(5)
+6409       cvDetails = all
+6410       hierarchy = single;
+6411       output out=outData;
+6412       run;
+
+NOTE: There were 1010 observations read from the data set WORK.ANALYSISDATA.
+NOTE: The data set WORK.OUTDATA has 1010 observations and 26 variables.
+NOTE: The PROCEDURE GLMSELECT printed pages 479-481.
+
+6413       proc print data=outData(obs=8);
+6414       run;
+
+NOTE: There were 8 observations read from the data set WORK.OUTDATA.
+NOTE: The PROCEDURE PRINT printed page 482.
+
+6415       proc glmselect data=analysisData testdata=testData plots=ASEPlot seed=314159;
+6416       class c1 c2 c3(order=data);
+6417       model y = c1|c2|c3|x1|x2|x3|x4|x5|x5|x6|x7|x8|x9|x10
+6418       |x11|x12|x13|x14|x15|x16|x17|x18|x19|x20 @2
+6419       / selection=forward(stop=none)
+6420       hierarchy=single;
+6421       performance buildSSCP = full;
+6422       run;
+
+NOTE: There were 1010 observations read from the data set WORK.ANALYSISDATA.
+NOTE: The PROCEDURE GLMSELECT printed pages 483-485.
+
+6423       ods graphics off;
+6424       run;
+6425       quit;
+6426       
+6427       
+6428       
+6429       
+The SAS System
+
+6430       

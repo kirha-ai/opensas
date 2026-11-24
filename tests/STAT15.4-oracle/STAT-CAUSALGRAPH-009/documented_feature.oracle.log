@@ -1,0 +1,52 @@
+The SAS System
+
+13182      
+13183      /* STAT-CAUSALGRAPH-009: CAUSALGRAPH — Limitations of the CAUSALGRAPH Procedure
+13184       * Source: S154 / Chapter 37 / `Limitations of the CAUSALGRAPH Procedure` (PDF pp. 2329–2330).
+13185       * Discriminates: Getting Started: CAUSALGRAPH Procedure
+13186       */
+13187      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+13187    ! validmemname=compatible locale=en_US;
+13188      %let syscc=0;
+13189      title; footnote;
+13190      ods _all_ close;
+13191      ods listing gpath="%sysfunc(pathname(work))";
+13192      ods graphics off;
+13193      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+13193    !                                         quit;
+
+
+13194      ods path work.templat(update) sashelp.tmplmst(read);
+13195      
+13196      proc causalgraph;
+13197      model "Timm17TwoLatent"
+13198      Age ==> Parity PFAS Education,
+13199      Parity ==> PrevBF Duration PFAS,
+13200      PrevBF ==> PFAS Duration,
+13201      PFAS ==> Duration,
+13202      Education ==> Duration Employment PFAS BMI Alcohol Smoking,
+13203      Employment ==> Duration PFAS BMI Alcohol Smoking,
+13204      BMI Alcohol Smoking ==> Duration;
+13205      identify PFAS ==> Duration;
+13206      unmeasured Alcohol Smoking;
+13207      run;
+
+NOTE: The PROCEDURE CAUSALGRAPH printed pages 1798-1799.
+
+13208      
+13209      run; quit;
+13210      
+13211      
+13212      
+13213      
+The SAS System
+
+13214      

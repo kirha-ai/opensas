@@ -1,0 +1,1 @@
+WARNING: The VAR= variable Thick, found in one or more PREDICT statements, contains 3 missing value(s).

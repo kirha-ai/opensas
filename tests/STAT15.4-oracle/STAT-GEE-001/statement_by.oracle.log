@@ -1,0 +1,71 @@
+The SAS System
+
+146        
+147        /* STAT-GEE-001: GEE — Data input, variable roles, and basic options
+148         * Source: S154 / Chapter 50 / `PROC GEE Statement` (PDF pp. 3426–3428); S154 / Chapter 50 / `BY Statement` (PDF p. 3428); S154 / Chapter 50 /
+148      ! `FREQ Statement` (PDF pp. 3431–3432); S154 / Chapter 50 / `WEIGHT Statement` (PDF p. 3444).
+149         * Discriminates: Two explicit BY groups contain identical inputs, exposing group boundaries and per-group results.
+150         */
+151        options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+151      ! validmemname=compatible locale=en_US;
+152        %let syscc=0;
+153        title; footnote;
+154        ods _all_ close;
+155        ods listing gpath="%sysfunc(pathname(work))";
+156        ods graphics off;
+157        proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.VOTEPRED (memtype=DATA).
+157      !                                         quit;
+
+
+158        ods path work.templat(update) sashelp.tmplmst(read);
+159        
+160        data Children;
+161        input ID City$ @@;
+162        do i=1 to 4;
+163        input Age Smoke Symptom @@;
+164        output;
+165        end;
+166        datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.CHILDREN has 100 observations and 6 variables.
+
+192        ;
+193        data _oracle_input; set Children; do _oracle_by=1 to 2; output; end; run;
+
+NOTE: There were 100 observations read from the data set WORK.CHILDREN.
+NOTE: The data set WORK._ORACLE_INPUT has 200 observations and 7 variables.
+
+194        proc sort data=_oracle_input; by _oracle_by; run;
+
+NOTE: There were 200 observations read from the data set WORK._ORACLE_INPUT.
+NOTE: The data set WORK._ORACLE_INPUT has 200 observations and 7 variables.
+
+195        proc gee data=_oracle_input descending;
+196        by _oracle_by;
+197        class ID City;
+198        model Symptom = City Age Smoke / dist=bin link=logit;
+199        repeated subject=ID / type=exch covb corrw;
+200        run;
+
+NOTE: PROC GEE is modeling the probability that Symptom='1'.
+NOTE: The above message was for the following BY group:
+      _oracle_by=1
+NOTE: PROC GEE is modeling the probability that Symptom='1'.
+NOTE: The above message was for the following BY group:
+      _oracle_by=2
+NOTE: The PROCEDURE GEE printed pages 6-7.
+
+201        
+202        
+203        
+204        
+The SAS System
+
+205        

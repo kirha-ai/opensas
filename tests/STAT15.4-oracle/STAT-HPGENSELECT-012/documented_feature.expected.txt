@@ -1,0 +1,115 @@
+
+The HPGENSELECT Procedure
+
+      Performance Information
+
+Execution Mode       Single-Machine
+Number of Threads    2             
+
+
+          Data Access Information
+ 
+Data            Engine    Role     Path
+
+WORK.EX4DATA    V9        Input    On Client
+
+
+          Model Information
+
+Data Source               WORK.EX4DATA
+Response Variable         yPoisson    
+Distribution              Poisson     
+Link Function             Log         
+Optimization Technique    Nesterov    
+
+
+      Selection Information
+
+Selection Method             LASSO
+Stop Criterion               None 
+Choose Criterion             SBC  
+Effect Hierarchy Enforced    None 
+
+
+Number of Observations Read            1500
+Number of Observations Used            1500
+
+
+                                    Selection Details
+ 
+                            Effects
+Step    Description        In Model    Lambda           AIC          AICC            BIC
+
+   0    Initial Model             1         1      3903.905      3903.908      3909.219*
+   1    xIn5 entered              2       0.8      3903.161      3903.169      3913.787 
+   2    xIn2 entered              4      0.64      3903.513      3903.540      3924.766 
+        xOut1 entered             4      0.64      3903.513      3903.540      3924.766 
+   3    xIn3 entered              6     0.512      3903.332      3903.388      3935.211 
+        xOut7 entered             6     0.512      3903.332      3903.388      3935.211 
+   4    xIn4 entered              8    0.4096      3902.928      3903.025      3945.434 
+        xOut3 entered             8    0.4096      3902.928      3903.025      3945.434 
+   5    xTiny entered             9    0.3277      3901.500      3901.621      3949.319 
+   6    xOut4 entered            12    0.2621      3904.557      3904.766      3968.315 
+        xOut8 entered            12    0.2621      3904.557      3904.766      3968.315 
+        xOut10 entered           12    0.2621      3904.557      3904.766      3968.315 
+   7    xIn1 entered             15    0.2097      3907.988      3908.312      3987.687 
+        xOut2 entered            15    0.2097      3907.988      3908.312      3987.687 
+        xOut5 entered            15    0.2097      3907.988      3908.312      3987.687 
+   8    xSubtle entered          16    0.1678      3908.118      3908.485      3993.130 
+   9                             16    0.1342      3906.910      3907.277      3991.921 
+  10                             16    0.1074      3906.137      3906.504      3991.148 
+  11    xOut6 entered            18    0.0859      3909.600      3910.062      4005.238 
+        xOut9 entered            18    0.0859      3909.600      3910.062      4005.238 
+  12                             18    0.0687      3909.251      3909.713      4004.889 
+  13                             18     0.055      3909.028      3909.489      4004.665 
+  14                             18     0.044      3908.885      3909.346      4004.523 
+  15                             18    0.0352      3908.793      3909.255      4004.431 
+  16                             18    0.0281      3908.735      3909.196      4004.373 
+  17                             18    0.0225      3908.697      3909.159      4004.335 
+  18                             18     0.018      3908.673      3909.135      4004.311 
+  19                             18    0.0144      3908.658      3909.120      4004.296 
+  20                             18    0.0115      3908.648      3909.110      4004.286 
+
+* Optimal Value of Criterion
+
+
+Maximum Regularization Parameter     0.02042
+Chosen Regularization Parameter      0.02042
+
+The HPGENSELECT Procedure
+Selected Model
+
+Selected Effects: Intercept
+
+
+           Dimensions
+
+Number of Effects              1
+Number of Parameters           1
+Columns in X                   1
+
+
+              Fit Statistics
+
+-2 Log Likelihood                  3901.91
+AIC (smaller is better)            3903.91
+AICC (smaller is better)           3903.91
+BIC (smaller is better)            3909.22
+Pearson Chi-Square                 1524.09
+Pearson Chi-Square/DF               1.0167
+
+
+      Parameter Estimates
+ 
+Parameter    DF        Estimate
+
+Intercept     1       -0.010050
+
+
+                Procedure Task Timing
+ 
+Task                             Seconds      Percent
+
+Reading and Levelizing Data         0.00       0.18% 
+Candidate model fit                 0.00       0.21% 
+Performing Model Selection          0.61      99.60% 

@@ -1,0 +1,116 @@
+
+Multiple Response Cheese Tasting Experiment
+
+The HPLOGISTIC Procedure
+
+      Performance Information
+
+Execution Mode       Single-Machine
+Number of Threads    2             
+
+
+          Data Access Information
+ 
+Data           Engine    Role     Path
+
+WORK.CHEESE    V9        Input    On Client
+
+
+                  Model Information
+
+Data Source               WORK.CHEESE                
+Response Variable         y                          
+Frequency Variable        freq                       
+Class Parameterization    Reference                  
+Distribution              Multinomial                
+Link Function             Cumulative Logit           
+Optimization Technique    Newton-Raphson with Ridging
+
+
+          Class Level Information
+ 
+                      Reference
+Class       Levels    Value        Values
+
+Additive         4    4            1 2 3 4 
+
+
+Number of Observations Read              36
+Number of Observations Used              28
+Sum of Frequencies Read                 208
+Sum of Frequencies Used                 208
+
+
+       Response Profile
+ 
+     Ordered             Total
+       Value    y    Frequency
+
+           1    1            7
+           2    2           10
+           3    3           19
+           4    4           27
+           5    5           41
+           6    6           28
+           7    7           39
+           8    8           25
+           9    9           12
+
+You are modeling the probabilities of levels of y having lower Ordered Values in the Response Profile Table.
+
+
+                          Iteration History
+ 
+                               Objective                         Max
+Iteration    Evaluations        Function          Change    Gradient
+
+        0              4    2.0668312595       .            0.137412
+        1              2    1.7319560317      0.33487523    0.062757
+        2              2    1.7105150048      0.02144103    0.008919
+        3              2    1.7099716191      0.00054339     0.00035
+        4              2    1.7099709251      0.00000069    6.981E-7
+        5              2    1.7099709251      0.00000000    2.98E-12
+
+         Convergence criterion (GCONV=1E-8) satisfied.          
+
+
+               Dimensions
+
+Columns in X                          11
+Number of Effects                      2
+Max Effect Columns                     8
+Rank of Cross-product Matrix          11
+Parameters in Optimization            11
+
+
+              Fit Statistics
+
+-2 Log Likelihood                   711.35
+AIC (smaller is better)             733.35
+AICC (smaller is better)            734.69
+BIC (smaller is better)             770.06
+
+
+        Testing Global Null Hypothesis: BETA=0
+ 
+Test                 Chi-Square       DF     Pr > ChiSq
+
+Likelihood Ratio       148.4539        3         <.0001
+
+
+                            Parameter Estimates
+ 
+              Taste                 Standard
+Parameter     Rating    Estimate       Error       DF    t Value    Pr > |t|
+
+Intercept     1          -7.0802      0.5640    Infty     -12.55      <.0001
+Intercept     2          -6.0250      0.4764    Infty     -12.65      <.0001
+Intercept     3          -4.9254      0.4257    Infty     -11.57      <.0001
+Intercept     4          -3.8568      0.3880    Infty      -9.94      <.0001
+Intercept     5          -2.5206      0.3453    Infty      -7.30      <.0001
+Intercept     6          -1.5685      0.3122    Infty      -5.02      <.0001
+Intercept     7         -0.06688      0.2738    Infty      -0.24      0.8071
+Intercept     8           1.4930      0.3357    Infty       4.45      <.0001
+Additive 1                1.6128      0.3805    Infty       4.24      <.0001
+Additive 2                4.9646      0.4767    Infty      10.41      <.0001
+Additive 3                3.3227      0.4218    Infty       7.88      <.0001

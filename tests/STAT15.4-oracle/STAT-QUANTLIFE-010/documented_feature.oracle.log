@@ -1,0 +1,54 @@
+The SAS System
+
+10427      
+10428      /* STAT-QUANTLIFE-010: QUANTLIFE — Official examples and feature integration regression
+10429       * Source: S154 / Chapter 102 / `Examples: QUANTLIFE Procedure` (PDF pp. 8345–8354).
+10430       * Discriminates: Verified default procedure context
+10431       */
+10432      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+10432    ! validmemname=compatible locale=en_US;
+10433      %let syscc=0;
+10434      title; footnote;
+10435      ods _all_ close;
+10436      ods listing gpath="%sysfunc(pathname(work))";
+10437      ods graphics off;
+10438      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SURVIVAL (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+10438    !                                         quit;
+
+
+10439      ods path work.templat(update) sashelp.tmplmst(read);
+10440      
+10441      data survival;
+10442      call streaminit(518);
+10443      do id=1 to 80;
+10444      drug=mod(id,2);
+10445      age=25+mod(id*7,40);
+10446      time=exp(2+0.25*drug+0.008*age+rand('normal')*0.4);
+10447      status=(mod(id,5) ne 0);
+10448      output;
+10449      end;
+10450      run;
+
+NOTE: The data set WORK.SURVIVAL has 80 observations and 5 variables.
+
+10451      proc quantlife data=survival seed=1268;
+10452      class drug;
+10453      model time*status(0)=drug age / quantile=0.5;
+10454      run;
+
+NOTE: The PROCEDURE QUANTLIFE printed page 674.
+
+10455      
+10456      
+10457      
+10458      
+The SAS System
+
+10459      

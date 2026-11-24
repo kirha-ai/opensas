@@ -1,0 +1,48 @@
+
+Least Related Matings
+
+The INBREED Procedure
+
+     Inbreeding Coefficients of Individuals
+ 
+Swine_
+Number      Sire        Dam          Coefficient
+
+2200                                       .    
+2501                                       .    
+3504        2200        2501               .    
+2521                                       .    
+3112                                       .    
+3514        2521        3112               .    
+3519        2521        2501               .    
+2789        3504        3514               .    
+3501        2521        3514              0.2500
+3712        3504        3514               .    
+3121        2200        3501               .    
+
+Least Related Matings
+
+The INBREED Procedure
+
+ Inbreeding Coefficients of Matings
+ 
+Sire        Dam          Coefficient
+
+2501        3501               .    
+2501        3504              0.2500
+3712        3121              0.1563
+
+
+     Averages of Inbreeding Coefficient Matrix
+ 
+                       Inbreeding        Coancestry
+
+Male X Male                0.0625            0.1042
+Male X Female               .                0.1362
+Female X Female            0.0000            0.1324
+Over Sex                   0.0227            0.1313
+
+
+Number of Males           4
+Number of Females         7
+Number of Individuals    11

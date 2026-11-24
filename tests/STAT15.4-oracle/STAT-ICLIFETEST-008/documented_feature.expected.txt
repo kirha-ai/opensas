@@ -1,0 +1,47 @@
+
+The ICLIFETEST Procedure
+
+             Data and Methods Information
+
+Data Set                                     WORK.TEMP
+Left Boundary                                       C1
+Right Boundary                                      C2
+Estimation Method                                   EM
+Number of Observations Read                          6
+Number of Observations Used                          6
+Number of Imputations for Standard Errors         1000
+Imputation Seed                                   1234
+
+The ICLIFETEST Procedure
+
+                  Nonparametric Survival Estimates
+                        Probability        Imputation
+                          Estimate           Standard      Lagrange
+  Time Interval     Failure    Survival         Error    Multiplier
+
+     3         4     0.2083      0.7917        0.1811        0.0000
+     4         6     0.4167      0.5833        0.2179        0.0000
+     6         8     0.6250      0.3750        0.2099        0.0000
+     8        12     0.8333      0.1667        0.1521        0.0000
+    12       Inf     1.0000      0.0000        0.0000        0.0000
+
+
+NOTE: The estimation algorithm converged.                       
+NOTE: Algorithm finds a maximum likelihood estimate.            
+
+                   Quartile Estimates
+ 
+                 Point       95% Confidence Interval
+Percentile    Estimate    Transform    [Lower    Upper)
+
+        75           8    LOGLOG            3        12
+        50           6    LOGLOG            3        12
+        25           4    LOGLOG            3         6
+
+
+                        Number of Censored and Uncensored Values
+ 
+                               Type of Censoring
+   Total    Left                Interval            Right               Uncensored
+
+       6    2 (33.3%)           0 (0.0%)            0 (0.0%)            4 (66.7%)       

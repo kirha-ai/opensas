@@ -1,0 +1,49 @@
+The SAS System
+
+17805      
+17806      /* STAT-SPP-009: SPP — COVTEST / Testing for Complete Spatial Randomness / Confidence Intervals for Summary Statistics
+17807       * Source: S154 / Chapter 114 / `COVTEST Statement` (PDF pp. 9398–9399); S154 / Chapter 114 / `Testing for Complete Spatial Randomness` (PDF p.
+17807    ! 9410); S154 / Chapter 114 / `Confidence Intervals for Summary Statistics` (PDF p. 9416).
+17808       * Discriminates: Example 114.2: Testing Covariate Dependence of a Point Pattern; explicit statements: COVTEST
+17809       */
+17810      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+17810    ! validmemname=compatible locale=en_US;
+17811      %let syscc=0;
+17812      title; footnote;
+17813      ods _all_ close;
+17814      ods listing gpath="%sysfunc(pathname(work))";
+17815      ods graphics off;
+17816      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK._DOCTMP000000000000000000061 (memtype=DATA).
+NOTE: Deleting WORK._DOCTMP000000000000000000062 (memtype=DATA).
+NOTE: Deleting WORK._DOCTMP000000000000000000063 (memtype=DATA).
+NOTE: Deleting WORK._DOCTMP000000000000000000064 (memtype=DATA).
+NOTE: Deleting WORK._DOCTMP000000000000000000065 (memtype=DATA).
+17816    !                                         quit;
+
+
+17817      ods path work.templat(update) sashelp.tmplmst(read);
+17818      
+17819      proc spp data=sashelp.bei;
+17820      process trees = (x,y /area=(0,0,1000,500) event=Trees);
+17821      trend grad = field(x,y,Gradient);
+17822      trend elev = field(x,y,Elevation);
+17823      covtest trees = grad elev;
+17824      run;
+
+NOTE: The PROCEDURE SPP printed page 1223.
+
+17825      
+17826      
+17827      
+17828      
+The SAS System
+
+17829      

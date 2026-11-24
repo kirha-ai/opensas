@@ -1,0 +1,19 @@
+
+Analysis of Flying Mileages between Ten U.S. Cities
+
+Multidimensional Scaling:  Data=SASHELP.MILEAGES.DATA
+Shape=TRIANGLE Condition=MATRIX Level=ABSOLUTE
+Coef=IDENTITY Dimension=2 Formula=1 Fit=1
+
+ Gconverge=0.01 Maxiter=100 Over=1 Ridge=0.0001
+
+
+                          Badness-
+                            of-Fit    Change in    Convergence
+Iteration    Type        Criterion    Criterion        Measure
+--------------------------------------------------------------
+      0      Initial      0.003273            .         0.8562
+      1      Lev-Mar      0.001689     0.001584       0.005128
+
+
+Convergence criterion is satisfied.                             

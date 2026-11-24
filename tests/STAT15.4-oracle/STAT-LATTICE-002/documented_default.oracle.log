@@ -1,0 +1,51 @@
+The SAS System
+
+10973      
+10974      /* STAT-LATTICE-002: LATTICE — Analysis of variance for lattice designs
+10975       * Source: S154 / Chapter 75 / `Getting Started: LATTICE Procedure` (PDF pp. 5512–5514); S154 / Chapter 75 / `Overview: LATTICE Procedure` (PDF pp.
+10975    !  5511–5512).
+10976       * Discriminates: Getting Started: LATTICE Procedure
+10977       */
+10978      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+10978    ! validmemname=compatible locale=en_US;
+10979      %let syscc=0;
+10980      title; footnote;
+10981      ods _all_ close;
+10982      ods listing gpath="%sysfunc(pathname(work))";
+10983      ods graphics off;
+10984      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.PIGS (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK._ORACLE_INPUT (memtype=DATA).
+10984    !                                         quit;
+
+
+10985      ods path work.templat(update) sashelp.tmplmst(read);
+10986      
+10987      title 'Examining the Growth Rate of Pigs';
+10988      data Pigs;
+10989      input Group Block Treatment Weight @@;
+10990      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.PIGS has 36 observations and 4 variables.
+
+10999      ;
+11000      proc lattice data=Pigs;
+11001      var Weight;
+11002      run;
+
+NOTE: The design specified is a balanced square lattice. With this design only one variance term, Variance of Means in Same Block, is appropriate.
+NOTE: There were 36 observations read from the data set WORK.PIGS.
+NOTE: The PROCEDURE LATTICE printed page 762.
+
+11003      
+11004      
+11005      
+11006      
+The SAS System
+
+11007      

@@ -1,0 +1,45 @@
+The SAS System
+
+19129      
+19130      /* STAT-SURVEYFREQ-002: SURVEYFREQ — Weighted frequency and proportion inference for complex surveys
+19131       * Source: S154 / Chapter 118 / `Getting Started: SURVEYFREQ Procedure` (PDF pp. 9579–9587); S154 / Chapter 118 / `Overview: SURVEYFREQ Procedure`
+19131    ! (PDF pp. 9578–9579).
+19132       * Discriminates: Small synthetic/public-input default model adapted to the documented Getting Started procedure
+19133       */
+19134      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+19134    ! validmemname=compatible locale=en_US;
+19135      %let syscc=0;
+19136      title; footnote;
+19137      ods _all_ close;
+19138      ods listing gpath="%sysfunc(pathname(work))";
+19139      ods graphics off;
+19140      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SURVEY (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+19140    !                                         quit;
+
+
+19141      ods path work.templat(update) sashelp.tmplmst(read);
+19142      
+19143      data survey; do state=1 to 2; do school=1 to 4; do id=1 to 6; response=1+mod(id+school,3); schooltype=1+mod(school,2);
+19143    ! samplingweight=2+state+school/10; output; end; end; end; run;
+
+NOTE: The data set WORK.SURVEY has 48 observations and 6 variables.
+
+19144      proc surveyfreq data=survey; strata state; cluster school; weight samplingweight; tables schooltype*response / row chisq; run;
+
+NOTE: The Rao-Scott chi-square test cannot be computed for the table of schooltype by response because the design correction is not positive.
+NOTE: The PROCEDURE SURVEYFREQ printed page 1378.
+
+19145      
+19146      
+19147      
+19148      
+The SAS System
+
+19149      

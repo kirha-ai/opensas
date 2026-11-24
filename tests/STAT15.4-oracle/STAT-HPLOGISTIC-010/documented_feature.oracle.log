@@ -1,0 +1,152 @@
+The SAS System
+
+4248       
+4249       /* STAT-HPLOGISTIC-010: HPLOGISTIC — Displayed Output / ODS Table Names
+4250        * Source: S154 / Chapter 61 / `Displayed Output` (PDF pp. 4779–4783); S154 / Chapter 61 / `ODS Table Names` (PDF pp. 4783–4785).
+4251        * Discriminates: Getting Started: HPLOGISTIC Procedure
+4252        */
+4253       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+4253     ! validmemname=compatible locale=en_US;
+4254       %let syscc=0;
+4255       title; footnote;
+4256       ods _all_ close;
+4257       ods listing gpath="%sysfunc(pathname(work))";
+4258       ods graphics off;
+4259       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.CHEESE (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+4259     !                                         quit;
+
+
+4260       ods path work.templat(update) sashelp.tmplmst(read);
+4261       
+4262       ods trace on;
+4263       data getStarted;
+4264       input C$ y x1-x10;
+4265       datalines;
+
+NOTE: The data set WORK.GETSTARTED has 100 observations and 12 variables.
+
+4366       ;
+4367       proc hplogistic data=getStarted;
+4368       class C;
+4369       model y = C x1-x10;
+4370       run;
+
+NOTE: The HPLOGISTIC procedure is executing in single-machine mode.
+
+Output Added:
+-------------
+Name:       PerformanceInfo
+Label:      Performance Information
+Template:   HPA.Common.PerfInfo
+Path:       HPLogistic.PerformanceInfo
+-------------
+
+Output Added:
+-------------
+Name:       DataAccessInfo
+Label:      Data Access Information
+Template:   HPA.Common.DataAccessInfo
+Path:       HPLogistic.DataAccessInfo
+-------------
+
+Output Added:
+-------------
+Name:       ModelInfo
+Label:      Model Information
+Template:   HPA.Common.ModelInfo
+Path:       HPLogistic.ModelInfo
+-------------
+
+Output Added:
+-------------
+Name:       ClassLevels
+Label:      Class Level Information
+Template:   HPA.Common.ClassLevels
+Path:       HPLogistic.ClassLevels
+-------------
+
+Output Added:
+-------------
+Name:       NObs
+Label:      Number of Observations
+Template:   HPA.Common.NObs
+Path:       HPLogistic.NObs
+-------------
+
+Output Added:
+-------------
+Name:       ResponseProfile
+Label:      Response Profile
+Template:   HPA.Common.ResponseProfile
+Path:       HPLogistic.ResponseProfile
+-------------
+NOTE: You are modeling the probability that y='0'.
+
+Output Added:
+-------------
+Name:       IterHistory
+Label:      Iteration History
+Template:   HPSTAT.HPLogistic.IterHistory
+Path:       HPLogistic.IterHistory
+-------------
+
+Output Added:
+-------------
+Name:       ConvergenceStatus
+Label:      Convergence Status
+Template:   HPSTAT.HPLogistic.ConvergenceStatus
+Path:       HPLogistic.ConvergenceStatus
+-------------
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+
+Output Added:
+-------------
+Name:       Dimensions
+Label:      Dimensions
+Template:   HPSTAT.HPLogistic.Dimensions
+Path:       HPLogistic.Dimensions
+-------------
+
+Output Added:
+-------------
+Name:       FitStatistics
+Label:      Fit Statistics
+Template:   HPSTAT.HPLogistic.FitStatistics
+Path:       HPLogistic.FitStatistics
+-------------
+
+Output Added:
+-------------
+Name:       GlobalTests
+Label:      Global Tests
+Template:   HPSTAT.HPLogistic.GlobalTests
+Path:       HPLogistic.GlobalTests
+-------------
+
+Output Added:
+-------------
+Name:       ParameterEstimates
+Label:      Parameter Estimates
+Template:   HPSTAT.HPLogistic.ParameterEstimates
+Path:       HPLogistic.ParameterEstimates
+-------------
+NOTE: There were 100 observations read from the data set WORK.GETSTARTED.
+NOTE: The PROCEDURE HPLOGISTIC printed page 199.
+
+4371       ods trace off;
+4372       
+4373       
+4374       
+4375       
+The SAS System
+
+4376       

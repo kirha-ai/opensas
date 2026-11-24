@@ -1,0 +1,192 @@
+
+                                             Los                New       San                  Washington
+Atlanta    Chicago    Denver    Houston    Angeles    Miami    York    Francisco    Seattle        DC        City
+
+     0          .         .          .          .         .       .          .           .          .        Atlanta        
+   587          0         .          .          .         .       .          .           .          .        Chicago        
+  1212        920         0          .          .         .       .          .           .          .        Denver         
+   701        940       879          0          .         .       .          .           .          .        Houston        
+  1936       1745       831       1374          0         .       .          .           .          .        Los Angeles    
+   604       1188      1726        968       2339         0       .          .           .          .        Miami          
+   748        713      1631       1420       2451      1092       0          .           .          .        New York       
+  2139       1858       949       1645        347      2594    2571          0           .          .        San Francisco  
+  2182       1737      1021       1891        959      2734    2408        678           0          .        Seattle        
+   543        597      1494       1220       2300       923     205       2442        2329          0        Washington D.C.
+
+Cluster Analysis of Flying Mileages Between 10 American Cities
+Using METHOD=AVERAGE
+
+_oracle_by=1
+
+The CLUSTER Procedure
+Average Linkage Cluster Analysis
+
+Root-Mean-Square Distance Between Observations    1580.242
+
+
+                                             Cluster History
+  Number
+      of                                                        Pseudo F       Pseudo    Norm RMS
+Clusters    ---------Clusters Joined----------         Freq    Statistic    t-Squared    Distance    Tie
+
+       9    New York           Washington D.C.            2         66.7           .       0.1297       
+       8    Los Angeles        San Francisco              2         39.2           .       0.2196       
+       7    Atlanta            Chicago                    2         21.7           .       0.3715       
+       6    CL7                CL9                        4         14.5          3.4      0.4149       
+       5    CL8                Seattle                    3         12.4          7.3      0.5255       
+       4    Denver             Houston                    2         13.9           .       0.5562       
+       3    CL6                Miami                      5         15.5          3.8      0.6185       
+       2    CL3                CL4                        7         16.0          5.3      0.8005       
+       1    CL2                CL5                       10           .          16.0      1.2967       
+
+Cluster Analysis of Flying Mileages Between 10 American Cities
+Using METHOD=AVERAGE
+
+_oracle_by=2
+
+The CLUSTER Procedure
+Average Linkage Cluster Analysis
+
+Root-Mean-Square Distance Between Observations    1580.242
+
+
+                                             Cluster History
+  Number
+      of                                                        Pseudo F       Pseudo    Norm RMS
+Clusters    ---------Clusters Joined----------         Freq    Statistic    t-Squared    Distance    Tie
+
+       9    New York           Washington D.C.            2         66.7           .       0.1297       
+       8    Los Angeles        San Francisco              2         39.2           .       0.2196       
+       7    Atlanta            Chicago                    2         21.7           .       0.3715       
+       6    CL7                CL9                        4         14.5          3.4      0.4149       
+       5    CL8                Seattle                    3         12.4          7.3      0.5255       
+       4    Denver             Houston                    2         13.9           .       0.5562       
+       3    CL6                Miami                      5         15.5          3.8      0.6185       
+       2    CL3                CL4                        7         16.0          5.3      0.8005       
+       1    CL2                CL5                       10           .          16.0      1.2967       
+
+Cluster Analysis of Flying Mileages Between 10 American Cities
+Using METHOD=CENTROID
+
+The CLUSTER Procedure
+Centroid Hierarchical Cluster Analysis
+
+Root-Mean-Square Distance Between Observations    1580.242
+
+
+                                             Cluster History
+  Number                                                                                     Norm
+      of                                                        Pseudo F       Pseudo    Centroid
+Clusters    ---------Clusters Joined----------         Freq    Statistic    t-Squared    Distance    Tie
+
+       9    New York           Washington D.C.            2         66.7           .       0.1297       
+       8    Los Angeles        San Francisco              2         39.2           .       0.2196       
+       7    Atlanta            Chicago                    2         21.7           .       0.3715       
+       6    CL7                CL9                        4         14.5          3.4      0.3652       
+       5    CL8                Seattle                    3         12.4          7.3      0.5139       
+       4    Denver             CL5                        4         12.4          2.1      0.5337       
+       3    CL6                Miami                      5         14.2          3.8      0.5743       
+       2    CL3                Houston                    6         22.1          2.6      0.6091       
+       1    CL2                CL4                       10           .          22.1       1.173       
+
+Cluster Analysis of Flying Mileages Between 10 American Cities
+Using METHOD=DENSITY K=3
+
+The CLUSTER Procedure
+Density Linkage Cluster Analysis
+
+K = 3
+
+
+                                               Cluster History
+                                                                                     Maximum Density
+  Number                                                       Normalized            in Each Cluster
+      of                                                           Fusion                   
+Clusters    ---------Clusters Joined----------         Freq       Density           Lesser     Greater    Tie
+
+       9    Atlanta            Washington D.C.            2        96.106          92.5043       100.0       
+       8    CL9                Chicago                    3        95.263          90.9548       100.0       
+       7    CL8                New York                   4        86.465          76.1571       100.0       
+       6    CL7                Houston                    5        74.079          61.7747       100.0    T  
+       5    CL6                Miami                      6        74.079          58.8299       100.0       
+       4    Los Angeles        San Francisco              2        71.968          65.3430     80.0885       
+       3    CL4                Seattle                    3        66.341          56.6215     80.0885       
+       2    CL3                Denver                     4        63.509          61.7747     80.0885       
+       1    CL5                CL2                       10        61.775    *     80.0885       100.0       
+
+* indicates fusion of two modal or multimodal clusters
+2 modal clusters have been formed.
+
+Cluster Analysis of Flying Mileages Between 10 American Cities
+Using METHOD=SINGLE
+
+The CLUSTER Procedure
+Single Linkage Cluster Analysis
+
+Mean Distance Between Observations    1417.133
+
+
+                                Cluster History
+  Number                                                           Norm
+      of                                                        Minimum
+Clusters    ---------Clusters Joined----------         Freq    Distance    Tie
+
+       9    New York           Washington D.C.            2      0.1447       
+       8    Los Angeles        San Francisco              2      0.2449       
+       7    Atlanta            CL9                        3      0.3832       
+       6    CL7                Chicago                    4      0.4142       
+       5    CL6                Miami                      5      0.4262       
+       4    CL8                Seattle                    3      0.4784       
+       3    CL5                Houston                    6      0.4947       
+       2    Denver             CL4                        4      0.5864       
+       1    CL3                CL2                       10      0.6203       
+
+Cluster Analysis of Flying Mileages Between 10 American Cities
+Using METHOD=TWOSTAGE K=3
+
+The CLUSTER Procedure
+Two-Stage Density Linkage Clustering
+
+K = 3
+
+
+                                             Cluster History
+                                                                                Maximum Density
+  Number                                                       Normalized       in Each Cluster
+      of                                                           Fusion              
+Clusters    ---------Clusters Joined----------         Freq       Density      Lesser     Greater    Tie
+
+       9    Atlanta            Washington D.C.            2        96.106     92.5043       100.0       
+       8    CL9                Chicago                    3        95.263     90.9548       100.0       
+       7    CL8                New York                   4        86.465     76.1571       100.0       
+       6    CL7                Houston                    5        74.079     61.7747       100.0    T  
+       5    CL6                Miami                      6        74.079     58.8299       100.0       
+       4    Los Angeles        San Francisco              2        71.968     65.3430     80.0885       
+       3    CL4                Seattle                    3        66.341     56.6215     80.0885       
+       2    CL3                Denver                     4        63.509     61.7747     80.0885       
+       1    CL5                CL2                       10        61.775     80.0885       100.0       
+2 modal clusters have been formed.
+
+Cluster Analysis of Flying Mileages Between 10 American Cities
+Using METHOD=WARD
+
+The CLUSTER Procedure
+Ward's Minimum Variance Cluster Analysis
+
+Root-Mean-Square Distance Between Observations    1580.242
+
+
+                                                    Cluster History
+  Number
+      of                                                       Semipartial                 Pseudo F       Pseudo
+Clusters    ---------Clusters Joined----------         Freq       R-Square    R-Square    Statistic    t-Squared    Tie
+
+       9    New York           Washington D.C.            2         0.0019        .998         66.7           .        
+       8    Los Angeles        San Francisco              2         0.0054        .993         39.2           .        
+       7    Atlanta            Chicago                    2         0.0153        .977         21.7           .        
+       6    CL7                CL9                        4         0.0296        .948         14.5          3.4       
+       5    Denver             Houston                    2         0.0344        .913         13.2           .        
+       4    CL8                Seattle                    3         0.0391        .874         13.9          7.3       
+       3    CL6                Miami                      5         0.0586        .816         15.5          3.8       
+       2    CL3                CL5                        7         0.1488        .667         16.0          5.3       
+       1    CL2                CL4                       10         0.6669        .000           .          16.0       

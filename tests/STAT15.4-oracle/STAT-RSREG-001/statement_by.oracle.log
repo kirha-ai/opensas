@@ -1,0 +1,78 @@
+The SAS System
+
+14928      
+14929      /* STAT-RSREG-001: RSREG — Data input, variable roles, and basic options
+14930       * Source: S154 / Chapter 108 / `PROC RSREG Statement` (PDF pp. 8870–8874); S154 / Chapter 108 / `BY Statement` (PDF p. 8874); S154 / Chapter 108 /
+14930    !  `ID Statement` (PDF p. 8874); S154 / Chapter 108 / `WEIGHT Statement` (PDF pp. 8878–8879); S154 / Chapter 108 / `Missing Values` (PDF pp.
+14930    ! 8881–8882).
+14931       * Discriminates: Two explicit BY groups contain identical inputs, exposing group boundaries and per-group results.
+14932       */
+14933      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+14933    ! validmemname=compatible locale=en_US;
+14934      %let syscc=0;
+14935      title; footnote;
+14936      ods _all_ close;
+14937      ods listing gpath="%sysfunc(pathname(work))";
+14938      ods graphics off;
+14939      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.SMELL (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+14939    !                                         quit;
+
+
+14940      ods path work.templat(update) sashelp.tmplmst(read);
+14941      
+14942      title 'Response Surface with a Simple Optimum';
+14943      data smell;
+14944      input Odor T R H @@;
+14945      label
+14946      T = "Temperature"
+14947      R = "Gas-Liquid Ratio"
+14948      H = "Packing Height";
+14949      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.SMELL has 15 observations and 4 variables.
+
+14954      ;
+14955      data _oracle_input; set smell; do _oracle_by=1 to 2; output; end; run;
+
+NOTE: There were 15 observations read from the data set WORK.SMELL.
+NOTE: The data set WORK._ORACLE_INPUT has 30 observations and 5 variables.
+
+14956      proc sort data=_oracle_input; by _oracle_by; run;
+
+NOTE: There were 30 observations read from the data set WORK._ORACLE_INPUT.
+NOTE: The data set WORK._ORACLE_INPUT has 30 observations and 5 variables.
+
+14957      proc rsreg data=_oracle_input;
+14958      by _oracle_by;
+14959      model Odor = T R H / lackfit;
+14960      run;
+
+NOTE: The PROCEDURE RSREG printed pages 1102-1105.
+
+14961      ods graphics on;
+14962      proc rsreg data=smell
+14963      plots(unpack)=surface(3d at(H=7.541050));
+14964      model Odor = T R H;
+14965      ods select 'T * R = Pred';
+14966      run;
+
+
+14967      ods graphics off;
+14968      
+14969      run; quit;
+14970      
+14971      
+14972      
+14973      
+The SAS System
+
+14974      

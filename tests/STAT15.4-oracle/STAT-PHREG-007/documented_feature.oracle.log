@@ -1,0 +1,100 @@
+The SAS System
+
+1184       
+1185       /* STAT-PHREG-007: PHREG — Failure Time Distribution / Partial Likelihood Function for the Cox Model / The Multiplicative Hazards Model
+1186        * Source: S154 / Chapter 92 / `Failure Time Distribution` (PDF pp. 7391–7392); S154 / Chapter 92 / `Partial Likelihood Function for the Cox Model`
+1186     !  (PDF pp. 7396–7397); S154 / Chapter 92 / `The Multiplicative Hazards Model` (PDF pp. 7399–7400).
+1187        * Discriminates: Example 92.13: Bayesian Analysis of the Cox Model
+1188        */
+1189       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+1189     ! validmemname=compatible locale=en_US;
+1190       %let syscc=0;
+1191       title; footnote;
+1192       ods _all_ close;
+1193       ods listing gpath="%sysfunc(pathname(work))";
+1194       ods graphics off;
+1195       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.BMT (memtype=DATA).
+NOTE: Deleting WORK.FORMATS (memtype=CATALOG).
+NOTE: Deleting WORK.OUT1 (memtype=DATA).
+NOTE: Deleting WORK.OUT2 (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.RISK (memtype=DATA).
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+1195     !                                         quit;
+
+
+1196       ods path work.templat(update) sashelp.tmplmst(read);
+1197       
+1198       proc format;
+1198     !              value yesno 0='no' 10='yes';
+NOTE: Format YESNO has been output.
+1198     !                                           run;
+
+
+1199       data VALung;
+1200       drop check m;
+1201       retain Therapy Cell;
+1202       infile cards column=column;
+1203       length Check $ 1;
+1204       label Time='time to death in days'
+1205       Kps='Karnofsky performance scale'
+1206       Duration='months from diagnosis to randomization'
+1207       Age='age in years'
+1208       Prior='prior therapy'
+1209       Cell='cell type'
+1210       Therapy='type of treatment';
+1211       format Prior yesno.;
+1212       M=Column;
+1213       input Check $ @@;
+1214       if M>Column then M=1;
+1215       if Check='s'|Check='t' then do;
+1216       input @M Therapy $ Cell $;
+1217       delete;
+1218       end;
+1219       else do;
+1220       input @M Time Kps Duration Age Prior @@;
+1221       Status=(Time>0);
+1222       Time=abs(Time);
+1223       end;
+1224       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.VALUNG has 137 observations and 8 variables.
+
+1270       ;
+1271       data Prior;
+1272       input _TYPE_ $ Kps Duration Age Prioryes Celladeno Cellsmall
+1273       Cellsquamous Therapytest;
+1274       datalines;
+
+NOTE: The data set WORK.PRIOR has 2 observations and 9 variables.
+
+1277       ;
+1278       run;
+1279       ods graphics on;
+1280       proc phreg data=VALung;
+1281       class Prior(ref='no') Cell(ref='large') Therapy(ref='standard');
+1282       model Time*Status(0) = Kps Duration Age Prior Cell Therapy;
+1283       bayes seed=1 coeffprior=normal(input=Prior) statistics=(summary interval)
+1284       diagnostics=(autocorr ess) plots=trace nmc=1000 nbi=200;
+1285       hazardratio 'Hazard Ratio Statement 1' Therapy;
+1286       hazardratio 'Hazard Ratio Statement 2' Age / unit=10;
+1287       hazardratio 'Hazard Ratio Statement 3' Cell;
+1288       run;
+
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The PROCEDURE PHREG printed pages 42-45.
+
+1289       
+1290       
+1291       
+1292       
+The SAS System
+
+1293       

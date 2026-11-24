@@ -1,0 +1,85 @@
+The SAS System
+
+4078       
+4079       /* STAT-MIXED-013: MIXED — Residuals and Influence Diagnostics
+4080        * Source: S154 / Chapter 84 / `Residuals and Influence Diagnostics` (PDF pp. 6712–6720).
+4081        * Discriminates: Example 84.7: Influence in Heterogeneous Variance Model
+4082        */
+4083       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+4083     ! validmemname=compatible locale=en_US;
+4084       %let syscc=0;
+4085       title; footnote;
+4086       ods _all_ close;
+4087       ods listing gpath="%sysfunc(pathname(work))";
+4088       ods graphics off;
+4089       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.HEIGHTS (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+4089     !                                         quit;
+
+
+4090       ods path work.templat(update) sashelp.tmplmst(read);
+4091       
+4092       data absorb;
+4093       input FatType Absorbed @@;
+4094       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.ABSORB has 24 observations and 2 variables.
+
+4099       ;
+4100       ods graphics on;
+4101       proc mixed data=absorb asycov;
+4102       class FatType;
+4103       model Absorbed = FatType / s
+4104       influence(iter=10 estimates);
+4105       repeated / group=FatType;
+4106       ods output Influence=inf;
+4107       run;
+
+NOTE: Convergence criteria met.
+NOTE: The data set WORK.INF has 24 observations and 25 variables.
+NOTE: The PROCEDURE MIXED printed page 311.
+
+4108       ods graphics off;
+4109       proc print data=inf label;
+4110       var parm1-parm5 covp1-covp4;
+4111       run;
+
+NOTE: There were 24 observations read from the data set WORK.INF.
+NOTE: The PROCEDURE PRINT printed page 312.
+
+4112       proc print data=inf label;
+4113       var observed predicted residual pressres
+4114       student Rstudent;
+4115       run;
+
+NOTE: There were 24 observations read from the data set WORK.INF.
+NOTE: The PROCEDURE PRINT printed page 313.
+
+4116       proc print data=inf label;
+4117       var leverage observed CookD DFFITS CovRatio RLD;
+4118       run;
+
+NOTE: There were 24 observations read from the data set WORK.INF.
+NOTE: The PROCEDURE PRINT printed page 314.
+
+4119       proc print data=inf label;
+4120       var iter CookDCP CovRatioCP;
+4121       run;
+
+NOTE: There were 24 observations read from the data set WORK.INF.
+NOTE: The PROCEDURE PRINT printed page 315.
+
+4122       
+4123       
+4124       
+4125       
+The SAS System
+
+4126       

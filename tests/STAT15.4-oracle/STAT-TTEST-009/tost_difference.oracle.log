@@ -1,0 +1,46 @@
+The SAS System
+
+29021      
+29022      /* STAT-TTEST-009: TTEST — TOST Equivalence Test
+29023       * Source: S154 / Chapter 128 / `TOST Equivalence Test` (PDF pp. 10630–10631).
+29024       * Discriminates: Both one-sided equivalence tests, combined decision and 90% equivalence interval
+29025       */
+29026      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+29026    ! validmemname=compatible locale=en_US;
+29027      %let syscc=0;
+29028      title; footnote;
+29029      ods _all_ close;
+29030      ods listing gpath="%sysfunc(pathname(work))";
+29031      ods graphics off;
+29032      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.ASTHMA (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+29032    !                                         quit;
+
+
+29033      ods path work.templat(update) sashelp.tmplmst(read);
+29034      
+29035      data sample;
+29036       input x y group $ freq weight;
+29037       datalines;
+
+NOTE: The data set WORK.SAMPLE has 12 observations and 5 variables.
+
+29050      ;
+29051      run;
+29052      proc ttest data=sample tost(-20,20) alpha=0.05; class group; var x; run;
+
+NOTE: The PROCEDURE TTEST printed page 1776.
+
+29053      
+29054      
+29055      
+29056      
+The SAS System
+
+29057      

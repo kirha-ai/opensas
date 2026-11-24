@@ -1,0 +1,48 @@
+The SAS System
+
+36         
+37         /* STAT-QUANTREG-007: QUANTREG — ESTIMATE / TEST / Confidence Interval
+38          * Source: S154 / Chapter 103 / `ESTIMATE Statement` (PDF pp. 8384–8385); S154 / Chapter 103 / `TEST
+38       ! Statement` (PDF pp. 8392–8393); S154 / Chapter 103 / `Confidence Interval` (PDF pp. 8402–8405).
+39          * Discriminates: Explicit ESTIMATE, TEST statement behavior on seeded synthetic inputs.
+40          */
+41         options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+41       ! validmemname=compatible locale=en_US;
+42         %let syscc=0;
+43         title; footnote;
+44         ods _all_ close;
+45         ods listing gpath="%sysfunc(pathname(work))";
+46         ods graphics off;
+47         proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+47       !                                         quit;
+
+
+48         ods path work.templat(update) sashelp.tmplmst(read);
+49         
+50         data sample;
+51         call streaminit(314159);
+52         do id=1 to 90;
+53          x=rand('normal'); z=rand('normal'); w=rand('normal');
+54          group=1+mod(id,3); block=1+mod(id,5);
+55          y=5+1.5*x-0.6*z+0.4*group+rand('normal');
+56          y2=2+0.5*x+0.8*z+rand('normal'); output;
+57         end;
+58         run;
+
+NOTE: The data set WORK.SAMPLE has 90 observations and 8 variables.
+
+59         proc quantreg data=sample; model y=x z / quantile=0.5 seed=314159; estimate 'x coefficient' x 1; test x z; run;
+
+
+NOTE: The PROCEDURE QUANTREG printed page 1.
+
+60         
+61         
+62         
+63         
+The SAS System
+
+64         

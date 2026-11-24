@@ -1,0 +1,55 @@
+The SAS System
+
+15194      
+15195      /* STAT-DISCRIM-010: DISCRIM — Official examples and feature integration regression
+15196       * Source: S154 / Chapter 42 / `Examples: DISCRIM Procedure` (PDF pp. 2687–2736).
+15197       * Discriminates: Example 42.3: Normal-Theory Discriminant Analysis of Iris Data
+15198       */
+15199      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+15199    ! validmemname=compatible locale=en_US;
+15200      %let syscc=0;
+15201      title; footnote;
+15202      ods _all_ close;
+15203      ods listing gpath="%sysfunc(pathname(work))";
+15204      ods graphics off;
+15205      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+15205    !                                         quit;
+
+
+15206      ods path work.templat(update) sashelp.tmplmst(read);
+15207      
+15208      title 'Discriminant Analysis of Fisher (1936) Iris Data';
+15209      title2 'Using Quadratic Discriminant Function';
+15210      proc discrim data=sashelp.iris outstat=irisstat
+15211      wcov pcov method=normal pool=test
+15212      distance anova manova listerr crosslisterr;
+15213      class Species;
+15214      var SepalLength SepalWidth PetalLength PetalWidth;
+15215      run;
+
+NOTE: There were 150 observations read from the data set SASHELP.IRIS.
+NOTE: The data set WORK.IRISSTAT has 118 observations and 7 variables.
+NOTE: The PROCEDURE DISCRIM printed pages 2031-2040.
+
+15216      proc print data=irisstat;
+15217      title2 'Output Discriminant Statistics';
+15218      run;
+
+NOTE: There were 118 observations read from the data set WORK.IRISSTAT.
+NOTE: The PROCEDURE PRINT printed page 2041.
+
+15219      
+15220      
+15221      
+15222      
+The SAS System
+
+15223      

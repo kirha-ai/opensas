@@ -1,0 +1,119 @@
+The SAS System
+
+359        
+360        /* STAT-CALIS-004: CALIS — COV / MEAN / PCOV / PVAR / STD / VARIANCE
+361         * Source: S154 / Chapter 33 / `COV Statement` (PDF pp. 1544–1549); S154 / Chapter 33 / `MEAN Statement` (PDF pp. 1602–1605); S154 / Chapter 33 /
+361      !  `PCOV Statement` (PDF pp. 1638–1641); S154 / Chapter 33 / `PVAR Statement` (PDF pp. 1641–1643); S154 / Chapter 33 / `STD Statement` (PDF p.
+361      ! 1653); S154 / Chapter 33 / `VARIANCE Statement` (PDF pp. 1657–1661).
+362         * Discriminates: Example 33.11: Measurement Error Models Specified as Linear Equations; explicit statements: COV, MEAN, PCOV, PVAR, VARIANCE
+363         */
+364        options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+364      ! validmemname=compatible locale=en_US;
+365        %let syscc=0;
+366        title; footnote;
+367        ods _all_ close;
+368        ods listing gpath="%sysfunc(pathname(work))";
+369        ods graphics off;
+370        proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TIMES (memtype=DATA).
+370      !                                         quit;
+
+
+371        ods path work.templat(update) sashelp.tmplmst(read);
+372        
+373        data measures;
+374        input x y @@;
+375        datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.MEASURES has 30 observations and 2 variables.
+
+386        ;
+387        run;
+388        data multiple(type=cov);
+389        length _name_ $32 _type_ $8;
+390        infile datalines truncover;
+391        
+392        input _type_ :$8. _name_ :$32. y x1 x2 x3;
+393        datalines;
+
+NOTE: The data set WORK.MULTIPLE has 5 observations and 6 variables.
+
+399        ;
+400        run;
+401        proc calis data=measures;
+402        path
+403        x <=== Fx = 1.,
+404        Fx ===> Fy ,
+405        Fy ===> y = 1.;
+406        pvar
+407        x = 0.019,
+408        y = 0.022,
+409        Fx Fy;
+410        run;
+
+NOTE: Convergence criterion (ABSGCONV=0.00001) satisfied.
+NOTE: The PROCEDURE CALIS printed pages 13-19.
+
+411        proc calis data=measures;
+412        lineqs
+413        x = 1. * Fx + e1,
+414        y = 1. * Fy + e2,
+415        Fy = * Fx + d;
+416        variance
+417        e1 = 0.019,
+418        e2 = 0.022,
+419        Fx d;
+420        run;
+
+NOTE: Convergence criterion (ABSGCONV=0.00001) satisfied.
+NOTE: The PROCEDURE CALIS printed pages 20-26.
+
+421        proc calis data=multiple nobs=37;
+422        path
+423        Fy <=== F1 F2 F3,
+424        F1 ===> x1 = 1.,
+425        F2 ===> x2 = 1.,
+426        F3 ===> x3 = 1.,
+427        Fy ===> y = 1.;
+428        pvar
+429        x1 x2 x3 y = .02 .03 .15 .02,
+430        Fy;
+431        pcov
+432        x1 x2 = 0.01;
+433        run;
+
+NOTE: Convergence criterion (GCONV2=0) satisfied.
+NOTE: The PROCEDURE CALIS printed pages 27-33.
+
+434        proc calis data=multiple nobs=37;
+435        lineqs
+436        Fy = * F1 + * F2 + * F3 + d,
+437        x1 = 1. * F1 + e1,
+438        x2 = 1. * F2 + e2,
+439        x3 = 1. * F3 + e3,
+440        y = 1. * Fy + ey;
+441        variance
+442        e1-e3 ey = .02 .03 .15 .02,
+443        d;
+444        cov
+445        e1 e2 = 0.01;
+446        run;
+
+NOTE: Convergence criterion (GCONV2=0) satisfied.
+NOTE: The PROCEDURE CALIS printed pages 34-40.
+
+447        
+448        
+449        
+450        
+The SAS System
+
+451        

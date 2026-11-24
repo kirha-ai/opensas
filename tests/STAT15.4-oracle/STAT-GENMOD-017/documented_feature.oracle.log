@@ -1,0 +1,62 @@
+The SAS System
+
+22749      
+22750      /* STAT-GENMOD-017: GENMOD — STORE
+22751       * Source: S154 / Chapter 51 / `STORE Statement` (PDF p. 3565).
+22752       * Discriminates: Verified default procedure context
+22753       */
+22754      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+22754    ! validmemname=compatible locale=en_US;
+22755      %let syscc=0;
+22756      title; footnote;
+22757      ods _all_ close;
+22758      ods listing gpath="%sysfunc(pathname(work))";
+22759      ods graphics off;
+22760      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.NOR (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.RESIDUALS (memtype=DATA).
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+22760    !                                         quit;
+
+
+22761      ods path work.templat(update) sashelp.tmplmst(read);
+22762      
+22763      data nor;
+22764      input x y;
+22765      datalines;
+
+NOTE: The data set WORK.NOR has 16 observations and 2 variables.
+
+22782      ;
+22783      proc genmod data=nor;
+22784      model y = x / dist = normal
+22785      link = log;
+22786      output out = Residuals
+22787      pred = Pred
+22788      resraw = Resraw
+22789      reschi = Reschi
+22790      resdev = Resdev
+22791      stdreschi = Stdreschi
+22792      stdresdev = Stdresdev
+22793      reslik = Reslik;
+22794      run;
+
+NOTE: Algorithm converged.
+NOTE: The scale parameter was estimated by maximum likelihood.
+NOTE: The data set WORK.RESIDUALS has 16 observations and 9 variables.
+NOTE: The PROCEDURE GENMOD printed page 2388.
+
+22795      
+22796      
+22797      
+22798      
+The SAS System
+
+22799      

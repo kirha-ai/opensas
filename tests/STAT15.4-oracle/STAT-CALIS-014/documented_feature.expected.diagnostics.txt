@@ -1,0 +1,1 @@
+WARNING: There are 2 active boundary or linear inequality constraints at the solution. The standard errors and chi-square test statistic assume that the 

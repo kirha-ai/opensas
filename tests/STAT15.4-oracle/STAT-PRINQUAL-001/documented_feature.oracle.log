@@ -1,0 +1,48 @@
+The SAS System
+
+8262       
+8263       /* STAT-PRINQUAL-001: PRINQUAL — Data input, variable roles, and basic options
+8264        * Source: S154 / Chapter 99 / `PROC PRINQUAL Statement` (PDF pp. 8040–8048); S154 / Chapter 99 / `BY Statement` (PDF pp. 8048–8049); S154 /
+8264     ! Chapter 99 / `FREQ Statement` (PDF p. 8049); S154 / Chapter 99 / `ID Statement` (PDF p. 8049); S154 / Chapter 99 / `WEIGHT Statement` (PDF p. 8057);
+8264     ! S154 / Chapter 99 / `Missing Values` (PDF p. 8063).
+8265        * Discriminates: Verified default procedure context; explicit statements: WEIGHT
+8266        */
+8267       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+8267     ! validmemname=compatible locale=en_US;
+8268       %let syscc=0;
+8269       title; footnote;
+8270       ods _all_ close;
+8271       ods listing gpath="%sysfunc(pathname(work))";
+8272       ods graphics off;
+8273       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.CRIME (memtype=DATA).
+NOTE: Deleting WORK.CRIME_COMPONENTS (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+8273     !                                         quit;
+
+
+8274       ods path work.templat(update) sashelp.tmplmst(read);
+8275       
+8276       proc prinqual data=sashelp.class out=scaled;
+8277       transform identity(height weight age);
+8278       run;
+
+NOTE: Algorithm converged.
+NOTE: The data set WORK.SCALED has 19 observations and 8 variables.
+NOTE: The PROCEDURE PRINQUAL printed page 586.
+
+8279       proc print data=scaled(obs=5) noobs;
+8280       run;
+
+NOTE: There were 5 observations read from the data set WORK.SCALED.
+NOTE: The PROCEDURE PRINT printed page 587.
+
+8281       
+8282       
+8283       
+8284       
+The SAS System
+
+8285       

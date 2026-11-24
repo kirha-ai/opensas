@@ -1,0 +1,59 @@
+The SAS System
+
+5591       
+5592       /* STAT-GLMSELECT-001: GLMSELECT — Data input, variable roles, and basic options
+5593        * Source: S154 / Chapter 56 / `PROC GLMSELECT Statement` (PDF pp. 4324–4332); S154 / Chapter 56 / `BY Statement` (PDF p. 4332); S154 / Chapter 56
+5593     ! / `FREQ Statement` (PDF p. 4337); S154 / Chapter 56 / `WEIGHT Statement` (PDF pp. 4356–4357).
+5594        * Discriminates: Verified default procedure context
+5595        */
+5596       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+5596     ! validmemname=compatible locale=en_US;
+5597       %let syscc=0;
+5598       title; footnote;
+5599       ods _all_ close;
+5600       ods listing gpath="%sysfunc(pathname(work))";
+5601       ods graphics off;
+
+NOTE: The PROCEDURE GLM printed pages 281-285.
+
+5602       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.DOGS (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+5602     !                                         quit;
+
+
+5603       ods path work.templat(update) sashelp.tmplmst(read);
+5604       
+5605       proc contents varnum data=sashelp.baseball;
+5606       ods select position;
+5607       run;
+
+NOTE: The PROCEDURE CONTENTS printed page 286.
+
+5608       ods graphics on;
+5609       proc glmselect data=sashelp.baseball plots=all seed=314159;
+5610       class league division;
+5611       model logSalary = nAtBat nHits nHome nRuns nRBI nBB
+5612       yrMajor crAtBat crHits crHome crRuns crRbi
+5613       crBB league division nOuts nAssts nError
+5614       / details=all stats=all;
+5615       run;
+
+NOTE: There were 322 observations read from the data set SASHELP.BASEBALL.
+NOTE: The PROCEDURE GLMSELECT printed pages 287-295.
+
+5616       quit;
+5617       
+5618       
+5619       
+5620       
+The SAS System
+
+5621       

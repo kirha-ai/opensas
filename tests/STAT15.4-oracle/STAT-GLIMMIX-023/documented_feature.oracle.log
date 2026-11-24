@@ -1,0 +1,67 @@
+The SAS System
+
+24908      
+24909      /* STAT-GLIMMIX-023: GLIMMIX — STORE
+24910       * Source: S154 / Chapter 52 / `STORE Statement` (PDF p. 3817).
+24911       * Discriminates: Getting Started: GLIMMIX Procedure
+24912       */
+24913      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+24913    ! validmemname=compatible locale=en_US;
+24914      %let syscc=0;
+24915      title; footnote;
+24916      ods _all_ close;
+24917      ods listing gpath="%sysfunc(pathname(work))";
+24918      ods graphics off;
+24919      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.MULTICENTER (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+24919    !                                         quit;
+
+
+24920      ods path work.templat(update) sashelp.tmplmst(read);
+24921      
+24922      data multicenter;
+24923      input center group$ n sideeffect;
+24924      datalines;
+
+NOTE: The data set WORK.MULTICENTER has 30 observations and 4 variables.
+
+24955      ;
+24956      proc glimmix data=multicenter;
+24957      class center group;
+24958      model sideeffect/n = group / solution;
+24959      random intercept / subject=center;
+24960      run;
+
+
+
+NOTE: Convergence criterion (PCONV=1.11022E-8) satisfied.
+NOTE: The PROCEDURE GLIMMIX printed page 2442.
+
+24961      ods select lsmeans;
+24962      proc glimmix data=multicenter;
+24963      class center group;
+24964      model sideeffect/n = group / solution;
+24965      random intercept / subject=center;
+24966      lsmeans group / cl ilink;
+24967      run;
+
+
+
+NOTE: Convergence criterion (PCONV=1.11022E-8) satisfied.
+NOTE: The PROCEDURE GLIMMIX printed page 2443.
+
+24968      
+24969      
+24970      
+24971      
+The SAS System
+
+24972      

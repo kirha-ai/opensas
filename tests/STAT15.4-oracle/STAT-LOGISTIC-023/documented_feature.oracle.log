@@ -1,0 +1,300 @@
+The SAS System
+
+15313      
+15314      /* STAT-LOGISTIC-023: LOGISTIC — EFFECTPLOT / ODS Graphics
+15315       * Source: S154 / Chapter 79 / `EFFECTPLOT Statement` (PDF pp. 5859–5860); S154 / Chapter 79 / `ODS Graphics` (PDF pp. 5970–5972).
+15316       * Discriminates: Example 79.3: Ordinal Logistic Regression; explicit statements: EFFECTPLOT
+15317       */
+15318      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+15318    ! validmemname=compatible locale=en_US;
+15319      %let syscc=0;
+15320      title; footnote;
+15321      ods _all_ close;
+15322      ods listing gpath="%sysfunc(pathname(work))";
+15323      ods graphics off;
+15324      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.CHEESE (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+15324    !                                         quit;
+
+
+15325      ods path work.templat(update) sashelp.tmplmst(read);
+15326      
+15327      ods graphics on;
+15328      ods trace on;
+15329      ods trace on;
+15330      data Cheese;
+15331      do Additive = 1 to 4;
+15332      do y = 1 to 9;
+15333      input freq @@;
+15334      output;
+15335      end;
+15336      end;
+15337      label y='Taste Rating';
+15338      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.CHEESE has 36 observations and 3 variables.
+
+15343      ;
+15344      ods graphics on;
+15345      proc logistic data=Cheese plots(only)=oddsratio(range=clip);
+15346      freq freq;
+15347      class Additive (param=ref ref='4');
+15348      model y=Additive / covb nooddsratio;
+15349      oddsratio Additive;
+15350      effectplot / polybar;
+15351      title 'Multiple Response Cheese Tasting Experiment';
+15352      run;
+
+
+Output Added:
+-------------
+Name:       ModelInfo
+Label:      Model Information
+Template:   Stat.Logistic.ModelInfo
+Path:       Logistic.ModelInfo
+-------------
+
+Output Added:
+-------------
+Name:       NObs
+Label:      Observations Summary
+Template:   Stat.Logistic.NObs
+Path:       Logistic.NObs
+-------------
+
+Output Added:
+-------------
+Name:       ResponseProfile
+Label:      Response Profile
+Template:   Stat.Logistic.ResponseProfile
+Path:       Logistic.ResponseProfile
+-------------
+NOTE: PROC LOGISTIC is fitting the cumulative logit model. The probabilities modeled are summed over the responses having the lower Ordered Values in the 
+      Response Profile table. Use the response variable option DESCENDING if you want to reverse the assignment of Ordered Values to the response levels.
+
+Output Added:
+-------------
+Name:       ClassLevelInfo
+Label:      Class Level Information
+Template:   Stat.Logistic.ClassLevelInfo
+Path:       Logistic.ClassLevelInfo
+-------------
+
+Output Added:
+-------------
+Name:       ConvergenceStatus
+Label:      Convergence Status
+Template:   Stat.Logistic.MConvergenceStatus
+Path:       Logistic.ConvergenceStatus
+-------------
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+
+Output Added:
+-------------
+Name:       CumulativeModelTest
+Label:      Cumulative Model Test
+Template:   Stat.Logistic.ProportionalOdds
+Path:       Logistic.CumulativeModelTest
+-------------
+
+Output Added:
+-------------
+Name:       FitStatistics
+Label:      Fit Statistics
+Template:   Stat.Logistic.FitStatistics
+Path:       Logistic.FitStatistics
+-------------
+
+Output Added:
+-------------
+Name:       GlobalTests
+Label:      Global Tests
+Template:   Stat.Logistic.GlobalTests
+Path:       Logistic.GlobalTests
+-------------
+
+Output Added:
+-------------
+Name:       ModelANOVA
+Label:      Type 3 Tests
+Template:   Stat.Logistic.Type3Analysis
+Path:       Logistic.ModelANOVA
+-------------
+
+Output Added:
+-------------
+Name:       ParameterEstimates
+Label:      Parameter Estimates
+Template:   Stat.Logistic.ParameterEstimates
+Path:       Logistic.ParameterEstimates
+-------------
+
+Output Added:
+-------------
+Name:       Association
+Label:      Association Statistics
+Template:   Stat.Logistic.Association
+Path:       Logistic.Association
+-------------
+
+Output Added:
+-------------
+Name:       OddsRatiosWald
+Label:      Wald Limits
+Template:   Stat.Logistic.OddsRatiosWald
+Path:       Logistic.ORStmtGroup.OddsRatiosWald
+-------------
+
+Output Added:
+-------------
+Name:       ORPlot
+Label:      Wald Plots
+Template:   Stat.Logistic.Graphics.ORPlot
+Path:       Logistic.ORStmtGroup.ORPlot
+-------------
+
+Output Added:
+-------------
+Name:       CovB
+Label:      Covariance Matrix
+Template:   Stat.Logistic.CovB
+Path:       Logistic.CovB
+-------------
+
+Output Added:
+-------------
+Name:       InteractionPlot
+Label:      Interaction Plot 1
+Template:   Stat.Logistic.Graphics.IntPlot
+Path:       Logistic.EffectPlots.EffectPlots.InteractionPlot
+-------------
+NOTE: There were 36 observations read from the data set WORK.CHEESE.
+NOTE: The PROCEDURE LOGISTIC printed page 1253.
+
+15353      proc logistic data=Cheese
+15354      plots(only)=effect(x=y sliceby=additive connect yrange=(0,0.4));
+15355      freq freq;
+15356      class Additive (param=ref ref='4');
+15357      model y=Additive / nooddsratio link=alogit;
+15358      oddsratio Additive;
+15359      title 'Multiple Response Cheese Tasting Experiment';
+15360      run;
+
+
+Output Added:
+-------------
+Name:       ModelInfo
+Label:      Model Information
+Template:   Stat.Logistic.ModelInfo
+Path:       Logistic.ModelInfo
+-------------
+
+Output Added:
+-------------
+Name:       NObs
+Label:      Observations Summary
+Template:   Stat.Logistic.NObs
+Path:       Logistic.NObs
+-------------
+
+Output Added:
+-------------
+Name:       ResponseProfile
+Label:      Response Profile
+Template:   Stat.Logistic.ResponseProfile
+Path:       Logistic.ResponseProfile
+-------------
+NOTE: PROC LOGISTIC is fitting the adjacent-category logit model. The logits modeled contrast each response level against the next higher Ordered Value. Use 
+      the response variable option DESCENDING if you want to contrast higher Ordered Values against lower Ordered Values.
+
+Output Added:
+-------------
+Name:       ClassLevelInfo
+Label:      Class Level Information
+Template:   Stat.Logistic.ClassLevelInfo
+Path:       Logistic.ClassLevelInfo
+-------------
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+
+Output Added:
+-------------
+Name:       ConvergenceStatus
+Label:      Convergence Status
+Template:   Stat.Logistic.MConvergenceStatus
+Path:       Logistic.ConvergenceStatus
+-------------
+
+Output Added:
+-------------
+Name:       FitStatistics
+Label:      Fit Statistics
+Template:   Stat.Logistic.FitStatistics
+Path:       Logistic.FitStatistics
+-------------
+
+Output Added:
+-------------
+Name:       GlobalTests
+Label:      Global Tests
+Template:   Stat.Logistic.GlobalTests
+Path:       Logistic.GlobalTests
+-------------
+
+Output Added:
+-------------
+Name:       ModelANOVA
+Label:      Type 3 Tests
+Template:   Stat.Logistic.Type3Analysis
+Path:       Logistic.ModelANOVA
+-------------
+
+Output Added:
+-------------
+Name:       ParameterEstimates
+Label:      Parameter Estimates
+Template:   Stat.Logistic.ParameterEstimates
+Path:       Logistic.ParameterEstimates
+-------------
+
+Output Added:
+-------------
+Name:       Association
+Label:      Association Statistics
+Template:   Stat.Logistic.Association
+Path:       Logistic.Association
+-------------
+
+Output Added:
+-------------
+Name:       OddsRatiosWald
+Label:      Wald Limits
+Template:   Stat.Logistic.OddsRatiosWald
+Path:       Logistic.ORStmtGroup.OddsRatiosWald
+-------------
+
+Output Added:
+-------------
+Name:       EffectPlot
+Label:      P * y by Additive
+Template:   Stat.Logistic.Graphics.EffectManyClass
+Path:       Logistic.EffectPlots.EffectPlot
+-------------
+NOTE: There were 36 observations read from the data set WORK.CHEESE.
+NOTE: The PROCEDURE LOGISTIC printed page 1254.
+
+15361      ods trace off;
+15362      ods trace off;
+15363      ods graphics off;
+15364      
+15365      
+15366      
+15367      
+The SAS System
+
+15368      

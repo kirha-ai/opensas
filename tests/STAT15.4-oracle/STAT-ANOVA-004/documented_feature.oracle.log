@@ -1,0 +1,76 @@
+The SAS System
+
+5045       
+5046       /* STAT-ANOVA-004: ANOVA — ABSORB / Using PROC ANOVA Interactively / Computational Method
+5047        * Source: S154 / Chapter 29 / `ABSORB Statement` (PDF p. 1117); S154 / Chapter 29 / `Using PROC ANOVA Interactively` (PDF p. 1138); S154 / Chapter
+5047     ! 29 / `Computational Method` (PDF p. 1140).
+5048        * Discriminates: Getting Started: ANOVA Procedure
+5049        */
+5050       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+5050     ! validmemname=compatible locale=en_US;
+5051       %let syscc=0;
+5052       title; footnote;
+5053       ods _all_ close;
+5054       ods listing gpath="%sysfunc(pathname(work))";
+5055       ods graphics off;
+
+NOTE: The PROCEDURE ANOVA printed pages 364-367.
+
+5056       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.CLOVER (memtype=DATA).
+NOTE: Deleting WORK.RCB (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+5056     !                                         quit;
+
+
+5057       ods path work.templat(update) sashelp.tmplmst(read);
+5058       
+5059       title1 'Nitrogen Content of Red Clover Plants';
+5060       data Clover;
+5061       input Strain $ Nitrogen @@;
+5062       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.CLOVER has 30 observations and 2 variables.
+
+5069       ;
+5070       ods graphics on;
+5071       proc anova data = Clover;
+5072       class Strain;
+5073       model Nitrogen = Strain;
+5074       means Strain / tukey;
+5075       run;
+
+5076       title1 'Randomized Complete Block';
+
+NOTE: The PROCEDURE ANOVA printed pages 368-370.
+
+5077       data RCB;
+5078       input Block Treatment $ Yield Worth @@;
+5079       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.RCB has 9 observations and 4 variables.
+
+5083       ;
+5084       proc anova data=RCB;
+5085       class Block Treatment;
+5086       model Yield Worth=Block Treatment;
+5087       run;
+
+5088       means Treatment;
+5089       run;
+
+5090       
+5091       
+5092       
+5093       
+The SAS System
+
+5094       

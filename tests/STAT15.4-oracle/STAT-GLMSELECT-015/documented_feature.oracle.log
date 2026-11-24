@@ -1,0 +1,107 @@
+The SAS System
+
+6174       
+6175       /* STAT-GLMSELECT-015: GLMSELECT — OUTPUT
+6176        * Source: S154 / Chapter 56 / `OUTPUT Statement` (PDF pp. 4352–4354).
+6177        * Discriminates: Example 56.7: LASSO with Screening; explicit statements: OUTPUT
+6178        */
+6179       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+6179     ! validmemname=compatible locale=en_US;
+6180       %let syscc=0;
+6181       title; footnote;
+6182       ods _all_ close;
+6183       ods listing gpath="%sysfunc(pathname(work))";
+6184       ods graphics off;
+6185       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+6185     !                                         quit;
+
+
+6186       ods path work.templat(update) sashelp.tmplmst(read);
+6187       
+6188       %let nObs = 5000;
+6189       %let nContIn = 5;
+6190       %let nContOut = 1000;
+6191       %let nClassIn = 2;
+6192       %let nClassOut = 1000;
+6193       %let maxLevs = 5;
+6194       %let noiseScale= 1;
+6195       data ex7Data;
+6196       array xIn{&nContIn};
+6197       array xOut{&nContOut};
+6198       array cIn{&nClassIn};
+6199       array cOut{&nClassOut};
+6200       drop i j sign nLevs xBeta;
+6201       do i=1 to &nObs;
+6202       sign = -1;
+6203       xBeta = 0;
+6204       do j=1 to dim(xIn);
+6205       xIn{j} = ranuni(1);
+6206       xBeta = xBeta + sqrt(j) *sign*xIn{j};
+6207       sign = -sign;
+6208       end;
+6209       do j=1 to dim(xOut);
+6210       xOut{j} = ranuni(1);
+6211       end;
+6212       do j=1 to dim(cIn);
+6213       nLevs = 2 + mod(j,&maxlevs-1);
+6214       cIn{j} = 1+int(ranuni(1)*nLevs);
+6215       xBeta = xBeta + j *sign*(cIn{j}-nLevs/2);
+6216       sign = -sign;
+6217       end;
+6218       do j=1 to dim(cOut);
+6219       nLevs = 2 + mod(j,&maxlevs-1);
+6220       cOut{j} = 1+int(ranuni(1)*nLevs);
+6221       end;
+6222       y = xBeta + &noiseScale*rannor(1);
+6223       output;
+6224       end;
+6225       run;
+
+NOTE: The data set WORK.EX7DATA has 5000 observations and 2008 variables.
+
+6226       proc glmselect data=ex7Data seed=314159;
+6227       class c:;
+6228       model y = x: c:/
+6229       selection=lasso;
+6230       run;
+
+NOTE: All classification variables are split with LAR, LASSO and ELASTICNET selection.
+NOTE: There were 5000 observations read from the data set WORK.EX7DATA.
+NOTE: The PROCEDURE GLMSELECT printed pages 443-445.
+
+6231       proc glmselect data=ex7Data seed=314159;
+6232       class c:;
+6233       model y = x: c:/
+6234       selection=lasso(screen=sasvi);
+6235       run;
+
+NOTE: All classification variables are split with LAR, LASSO and ELASTICNET selection.
+NOTE: There were 5000 observations read from the data set WORK.EX7DATA.
+NOTE: The PROCEDURE GLMSELECT printed pages 446-448.
+
+6236       proc glmselect data=ex7Data seed=314159;
+6237       class c:;
+6238       model y = x: c:/
+6239       selection=lasso(screen=sis(keepnum=15));
+6240       run;
+
+NOTE: All classification variables are split with LAR, LASSO and ELASTICNET selection.
+NOTE: There were 5000 observations read from the data set WORK.EX7DATA.
+NOTE: The PROCEDURE GLMSELECT printed pages 449-451.
+
+6241       
+6242       
+6243       
+6244       
+The SAS System
+
+6245       

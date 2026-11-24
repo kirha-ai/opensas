@@ -1,0 +1,1629 @@
+The SAS System
+
+10573      
+10574      /* STAT-CALIS-029: CALIS — Displayed Output / ODS Table Names
+10575       * Source: S154 / Chapter 33 / `Displayed Output` (PDF pp. 1817–1822); S154 / Chapter 33 / `ODS Table Names` (PDF pp. 1822–1836).
+10576       * Discriminates: Getting Started: CALIS Procedure
+10577       */
+10578      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+10578    ! validmemname=compatible locale=en_US;
+10579      %let syscc=0;
+10580      title; footnote;
+10581      ods _all_ close;
+10582      ods listing gpath="%sysfunc(pathname(work))";
+10583      ods graphics off;
+10584      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.WHEATON (memtype=DATA).
+10584    !                                         quit;
+
+
+10585      ods path work.templat(update) sashelp.tmplmst(read);
+10586      
+10587      ods trace on;
+10588      data Wheaton(TYPE=COV);
+10589      length _name_ $32 _type_ $8;
+10590      infile datalines truncover;
+10591      
+10592      _type_ = 'cov';
+10593      input _name_ :$32. Anomie67 Powerless67 Anomie71 Powerless71
+10594      Education SEI;
+10595      label Anomie67='Anomie (1967)' Powerless67='Powerlessness (1967)'
+10596      Anomie71='Anomie (1971)' Powerless71='Powerlessness (1971)'
+10597      Education='Education' SEI='Occupational Status Index';
+10598      datalines;
+
+NOTE: The data set WORK.WHEATON has 6 observations and 8 variables.
+
+10605      ;
+10606      run;
+10607      proc calis nobs=932 data=Wheaton;
+10608      path
+10609      Anomie67 <=== Alien67 = 1.0,
+10610      Powerless67 <=== Alien67 = 0.833,
+10611      Anomie71 <=== Alien71 = 1.0,
+10612      Powerless71 <=== Alien71 = 0.833,
+10613      Education <=== SES = 1.0,
+10614      SEI <=== SES = lambda,
+10615      Alien67 <=== SES = gamma1,
+10616      Alien71 <=== SES = gamma2,
+10617      Alien71 <=== Alien67 = beta;
+10618      pvar
+10619      Anomie67 = theta1,
+10620      Powerless67 = theta2,
+10621      Anomie71 = theta1,
+10622      Powerless71 = theta2,
+10623      Education = theta3,
+10624      SEI = theta4,
+10625      Alien67 = psi1,
+10626      Alien71 = psi2,
+10627      SES = phi;
+10628      pcov
+10629      Anomie67 Anomie71 = theta5,
+10630      Powerless67 Powerless71 = theta5;
+10631      run;
+
+NOTE: The means of one or more variables in the input data set WORK.WHEATON are missing and are assumed to be 0.
+
+Output Added:
+-------------
+Name:       ModelingInfo
+Label:      Modeling Info
+Template:   Stat.Calis.ModelingInfo
+Path:       Calis.ModelSpec.ModelingInfo
+-------------
+
+Output Added:
+-------------
+Name:       PATHVariables
+Label:      Variables
+Template:   Stat.Calis.PATHVariables
+Path:       Calis.ModelSpec.PATHVariables
+-------------
+
+Output Added:
+-------------
+Name:       PATHListInit
+Label:      PATH List
+Template:   Stat.Calis.PATHListInit
+Path:       Calis.ModelSpec.PATHListInit
+-------------
+
+Output Added:
+-------------
+Name:       PATHVarParmsInit
+Label:      Variance Parms
+Template:   Stat.Calis.PATHVarParmsInit
+Path:       Calis.ModelSpec.PATHVarParmsInit
+-------------
+
+Output Added:
+-------------
+Name:       PATHCovErrorsInit
+Label:      Error Covariances
+Template:   Stat.Calis.PATHCovErrorsInit
+Path:       Calis.ModelSpec.PATHCovErrorsInit
+-------------
+
+Output Added:
+-------------
+Name:       SimpleStatistics
+Label:      Simple Statistics
+Template:   Stat.Calis.SimpleStatistics
+Path:       Calis.DescriptiveStat.SimpleStatistics
+-------------
+
+Output Added:
+-------------
+Name:       InitEstMethods
+Label:      Init Est Methods
+Template:   Stat.Calis.InitEstMethods
+Path:       Calis.Optimization.InitEstMethods
+-------------
+
+Output Added:
+-------------
+Name:       ParameterEstimatesStart
+Label:      Initial Estimates
+Template:   Stat.Calis.ParameterEstimatesStart
+Path:       Calis.Optimization.ParameterEstimatesStart
+-------------
+
+Output Added:
+-------------
+Name:       ProblemDescription
+Label:      Optimization Problem
+Template:   Stat.Calis.ProblemDescription
+Path:       Calis.Optimization.ProblemDescription
+-------------
+
+Output Added:
+-------------
+Name:       IterStart
+Label:      Iteration Start
+Template:   Stat.Calis.IterStart
+Path:       Calis.Optimization.IterStart
+-------------
+
+Output Added:
+-------------
+Name:       IterHist
+Label:      Iteration History
+Template:   Stat.Calis.IterHist
+Path:       Calis.Optimization.IterHist
+-------------
+
+Output Added:
+-------------
+Name:       IterStop
+Label:      Iteration Stop
+Template:   Stat.Calis.IterStop
+Path:       Calis.Optimization.IterStop
+-------------
+
+Output Added:
+-------------
+Name:       ConvergenceStatus
+Label:      Convergence Status
+Template:   Stat.Calis.ConvergenceStatus
+Path:       Calis.Optimization.ConvergenceStatus
+-------------
+NOTE: Convergence criterion (ABSGCONV=0.00001) satisfied.
+
+Output Added:
+-------------
+Name:       Fit
+Label:      Fit Summary
+Template:   Stat.Calis.Fit
+Path:       Calis.Fit.Fit
+-------------
+
+Output Added:
+-------------
+Name:       PATHList
+Label:      PATH List
+Template:   Stat.Calis.PATHList
+Path:       Calis.ML.PATHList
+-------------
+
+Output Added:
+-------------
+Name:       PATHVarParms
+Label:      Variance Parms
+Template:   Stat.Calis.PATHVarParms
+Path:       Calis.ML.PATHVarParms
+-------------
+
+Output Added:
+-------------
+Name:       PATHCovErrors
+Label:      Error Covariances
+Template:   Stat.Calis.PATHCovErrors
+Path:       Calis.ML.PATHCovErrors
+-------------
+
+Output Added:
+-------------
+Name:       SqMultCorr
+Label:      Sq. Mult. Correlations
+Template:   Stat.Calis.SqMultCorr
+Path:       Calis.ML.SqMultCorr
+-------------
+
+Output Added:
+-------------
+Name:       PATHListStd
+Label:      PATH List
+Template:   Stat.Calis.PATHListStd
+Path:       Calis.StandardizedResults.PATHListStd
+-------------
+
+Output Added:
+-------------
+Name:       PATHVarParmsStd
+Label:      Variance Parms
+Template:   Stat.Calis.PATHVarParmsStd
+Path:       Calis.StandardizedResults.PATHVarParmsStd
+-------------
+
+Output Added:
+-------------
+Name:       PATHCovErrorsStd
+Label:      Error Covariances
+Template:   Stat.Calis.PATHCovErrorsStd
+Path:       Calis.StandardizedResults.PATHCovErrorsStd
+-------------
+NOTE: The PROCEDURE CALIS printed pages 1428-1434.
+
+10632      proc calis nobs=932 data=Wheaton;
+10633      ram
+10634      var = Anomie67 /* 1 */
+10635      Powerless67 /* 2 */
+10636      Anomie71 /* 3 */
+10637      Powerless71 /* 4 */
+10638      Education /* 5 */
+10639      SEI /* 6 */
+10640      Alien67 /* 7 */
+10641      Alien71 /* 8 */
+10642      SES, /* 9 */
+10643      _A_ 1 7 1.0,
+10644      _A_ 2 7 0.833,
+10645      _A_ 3 8 1.0,
+10646      _A_ 4 8 0.833,
+10647      _A_ 5 9 1.0,
+10648      _A_ 6 9 lambda,
+10649      _A_ 7 9 gamma1,
+10650      _A_ 8 9 gamma2,
+10651      _A_ 8 7 beta,
+10652      _P_ 1 1 theta1,
+10653      _P_ 2 2 theta2,
+10654      _P_ 3 3 theta1,
+10655      _P_ 4 4 theta2,
+10656      _P_ 5 5 theta3,
+10657      _P_ 6 6 theta4,
+10658      _P_ 7 7 psi1,
+10659      _P_ 8 8 psi2,
+10660      _P_ 9 9 phi,
+10661      _P_ 1 3 theta5,
+10662      _P_ 2 4 theta5;
+10663      run;
+
+NOTE: The means of one or more variables in the input data set WORK.WHEATON are missing and are assumed to be 0.
+
+Output Added:
+-------------
+Name:       ModelingInfo
+Label:      Modeling Info
+Template:   Stat.Calis.ModelingInfo
+Path:       Calis.ModelSpec.ModelingInfo
+-------------
+
+Output Added:
+-------------
+Name:       RAMVariables
+Label:      Variables
+Template:   Stat.Calis.RAMVariables
+Path:       Calis.ModelSpec.RAMVariables
+-------------
+
+Output Added:
+-------------
+Name:       RAMListInit
+Label:      RAM List
+Template:   Stat.Calis.RAMListInit
+Path:       Calis.ModelSpec.RAMListInit
+-------------
+
+Output Added:
+-------------
+Name:       SimpleStatistics
+Label:      Simple Statistics
+Template:   Stat.Calis.SimpleStatistics
+Path:       Calis.DescriptiveStat.SimpleStatistics
+-------------
+
+Output Added:
+-------------
+Name:       InitEstMethods
+Label:      Init Est Methods
+Template:   Stat.Calis.InitEstMethods
+Path:       Calis.Optimization.InitEstMethods
+-------------
+
+Output Added:
+-------------
+Name:       ParameterEstimatesStart
+Label:      Initial Estimates
+Template:   Stat.Calis.ParameterEstimatesStart
+Path:       Calis.Optimization.ParameterEstimatesStart
+-------------
+
+Output Added:
+-------------
+Name:       ProblemDescription
+Label:      Optimization Problem
+Template:   Stat.Calis.ProblemDescription
+Path:       Calis.Optimization.ProblemDescription
+-------------
+
+Output Added:
+-------------
+Name:       IterStart
+Label:      Iteration Start
+Template:   Stat.Calis.IterStart
+Path:       Calis.Optimization.IterStart
+-------------
+
+Output Added:
+-------------
+Name:       IterHist
+Label:      Iteration History
+Template:   Stat.Calis.IterHist
+Path:       Calis.Optimization.IterHist
+-------------
+
+Output Added:
+-------------
+Name:       IterStop
+Label:      Iteration Stop
+Template:   Stat.Calis.IterStop
+Path:       Calis.Optimization.IterStop
+-------------
+
+Output Added:
+-------------
+Name:       ConvergenceStatus
+Label:      Convergence Status
+Template:   Stat.Calis.ConvergenceStatus
+Path:       Calis.Optimization.ConvergenceStatus
+-------------
+NOTE: Convergence criterion (ABSGCONV=0.00001) satisfied.
+
+Output Added:
+-------------
+Name:       Fit
+Label:      Fit Summary
+Template:   Stat.Calis.Fit
+Path:       Calis.Fit.Fit
+-------------
+
+Output Added:
+-------------
+Name:       RAMList
+Label:      RAM List
+Template:   Stat.Calis.RAMList
+Path:       Calis.ML.RAMList
+-------------
+
+Output Added:
+-------------
+Name:       SqMultCorr
+Label:      Sq. Mult. Correlations
+Template:   Stat.Calis.SqMultCorr
+Path:       Calis.ML.SqMultCorr
+-------------
+
+Output Added:
+-------------
+Name:       RAMListStd
+Label:      RAM List
+Template:   Stat.Calis.RAMListStd
+Path:       Calis.StandardizedResults.RAMListStd
+-------------
+NOTE: The PROCEDURE CALIS printed pages 1435-1441.
+
+10664      proc calis nobs=932 data=Wheaton;
+10665      lineqs
+10666      Anomie67 = 1.0 * f_Alien67 + E1,
+10667      Powerless67 = 0.833 * f_Alien67 + E2,
+10668      Anomie71 = 1.0 * f_Alien71 + E3,
+10669      Powerless71 = 0.833 * f_Alien71 + E4,
+10670      Education = 1.0 * f_SES + E5,
+10671      SEI = lambda * f_SES + E6,
+10672      f_Alien67 = gamma1 * f_SES + D1,
+10673      f_Alien71 = gamma2 * f_SES + beta * f_Alien67 + D2;
+10674      std
+10675      E1 = theta1,
+10676      E2 = theta2,
+10677      E3 = theta1,
+10678      E4 = theta2,
+10679      E5 = theta3,
+10680      E6 = theta4,
+10681      D1 = psi1,
+10682      D2 = psi2,
+10683      f_SES = phi;
+10684      cov
+10685      E1 E3 = theta5,
+10686      E2 E4 = theta5;
+10687      run;
+
+NOTE: The means of one or more variables in the input data set WORK.WHEATON are missing and are assumed to be 0.
+
+Output Added:
+-------------
+Name:       ModelingInfo
+Label:      Modeling Info
+Template:   Stat.Calis.ModelingInfo
+Path:       Calis.ModelSpec.ModelingInfo
+-------------
+
+Output Added:
+-------------
+Name:       LINEQSVariables
+Label:      Variables
+Template:   Stat.Calis.LINEQSVariables
+Path:       Calis.ModelSpec.LINEQSVariables
+-------------
+
+Output Added:
+-------------
+Name:       LINEQSEqInit
+Label:      Equations
+Template:   Stat.Calis.LINEQSEqInit
+Path:       Calis.ModelSpec.LINEQSEqInit
+-------------
+
+Output Added:
+-------------
+Name:       LINEQSVarExogInit
+Label:      Variance Parms
+Template:   Stat.Calis.LINEQSVarExogInit
+Path:       Calis.ModelSpec.LINEQSVarExogInit
+-------------
+
+Output Added:
+-------------
+Name:       LINEQSCovExogInit
+Label:      Covariance Parms
+Template:   Stat.Calis.LINEQSCovExogInit
+Path:       Calis.ModelSpec.LINEQSCovExogInit
+-------------
+
+Output Added:
+-------------
+Name:       SimpleStatistics
+Label:      Simple Statistics
+Template:   Stat.Calis.SimpleStatistics
+Path:       Calis.DescriptiveStat.SimpleStatistics
+-------------
+
+Output Added:
+-------------
+Name:       InitEstMethods
+Label:      Init Est Methods
+Template:   Stat.Calis.InitEstMethods
+Path:       Calis.Optimization.InitEstMethods
+-------------
+
+Output Added:
+-------------
+Name:       ParameterEstimatesStart
+Label:      Initial Estimates
+Template:   Stat.Calis.ParameterEstimatesStart
+Path:       Calis.Optimization.ParameterEstimatesStart
+-------------
+
+Output Added:
+-------------
+Name:       ProblemDescription
+Label:      Optimization Problem
+Template:   Stat.Calis.ProblemDescription
+Path:       Calis.Optimization.ProblemDescription
+-------------
+
+Output Added:
+-------------
+Name:       IterStart
+Label:      Iteration Start
+Template:   Stat.Calis.IterStart
+Path:       Calis.Optimization.IterStart
+-------------
+
+Output Added:
+-------------
+Name:       IterHist
+Label:      Iteration History
+Template:   Stat.Calis.IterHist
+Path:       Calis.Optimization.IterHist
+-------------
+
+Output Added:
+-------------
+Name:       IterStop
+Label:      Iteration Stop
+Template:   Stat.Calis.IterStop
+Path:       Calis.Optimization.IterStop
+-------------
+
+Output Added:
+-------------
+Name:       ConvergenceStatus
+Label:      Convergence Status
+Template:   Stat.Calis.ConvergenceStatus
+Path:       Calis.Optimization.ConvergenceStatus
+-------------
+NOTE: Convergence criterion (ABSGCONV=0.00001) satisfied.
+
+Output Added:
+-------------
+Name:       Fit
+Label:      Fit Summary
+Template:   Stat.Calis.Fit
+Path:       Calis.Fit.Fit
+-------------
+
+Output Added:
+-------------
+Name:       LINEQSEq
+Label:      Equations
+Template:   Stat.Calis.LINEQSEq
+Path:       Calis.ML.LINEQSEq
+-------------
+
+Output Added:
+-------------
+Name:       LINEQSEffects
+Label:      Linear Effects
+Template:   Stat.Calis.LINEQSEffects
+Path:       Calis.ML.LINEQSEffects
+-------------
+
+Output Added:
+-------------
+Name:       LINEQSVarExog
+Label:      Variance Parms
+Template:   Stat.Calis.LINEQSVarExog
+Path:       Calis.ML.LINEQSVarExog
+-------------
+
+Output Added:
+-------------
+Name:       LINEQSCovExog
+Label:      Covariance Parms
+Template:   Stat.Calis.LINEQSCovExog
+Path:       Calis.ML.LINEQSCovExog
+-------------
+
+Output Added:
+-------------
+Name:       SqMultCorr
+Label:      Sq. Mult. Correlations
+Template:   Stat.Calis.SqMultCorr
+Path:       Calis.ML.SqMultCorr
+-------------
+
+Output Added:
+-------------
+Name:       LINEQSEqStd
+Label:      Equations
+Template:   Stat.Calis.LINEQSEqStd
+Path:       Calis.StandardizedResults.LINEQSEqStd
+-------------
+
+Output Added:
+-------------
+Name:       LINEQSEffectsStd
+Label:      Linear Effects
+Template:   Stat.Calis.LINEQSEffectsStd
+Path:       Calis.StandardizedResults.LINEQSEffectsStd
+-------------
+
+Output Added:
+-------------
+Name:       LINEQSVarExogStd
+Label:      Variance Parms
+Template:   Stat.Calis.LINEQSVarExogStd
+Path:       Calis.StandardizedResults.LINEQSVarExogStd
+-------------
+
+Output Added:
+-------------
+Name:       LINEQSCovExogStd
+Label:      Covariance Parms
+Template:   Stat.Calis.LINEQSCovExogStd
+Path:       Calis.StandardizedResults.LINEQSCovExogStd
+-------------
+NOTE: The PROCEDURE CALIS printed pages 1442-1448.
+
+10688      proc calis nobs=932 data=Wheaton;
+10689      lismod
+10690      yvar = Anomie67 Powerless67 Anomie71 Powerless71,
+10691      xvar = Education SEI,
+10692      etav = Alien67 Alien71,
+10693      xiv = SES;
+10694      matrix _LAMBDAY_ [1,1] = 1.0,
+10695      [2,1] = 0.833,
+10696      [3,2] = 1.0,
+10697      [4,2] = 0.833;
+10698      matrix _LAMBDAX_ [1,1] = 1.0,
+10699      [2,1] = lambda;
+10700      matrix _GAMMA_ [1,1] = gamma1,
+10701      [2,1] = gamma2;
+10702      matrix _BETA_ [2,1] = beta;
+10703      matrix _THETAY_ [1,1] = theta1,
+10704      [2,2] = theta2,
+10705      [3,3] = theta1,
+10706      [4,4] = theta2,
+10707      [3,1] = theta5,
+10708      [4,2] = theta5;
+10709      matrix _THETAX_ [1,1] = theta3,
+10710      [2,2] = theta4;
+10711      matrix _PSI_ [1,1] = psi1,
+10712      [2,2] = psi2;
+10713      matrix _PHI_ [1,1] = phi;
+10714      run;
+
+NOTE: The means of one or more variables in the input data set WORK.WHEATON are missing and are assumed to be 0.
+
+Output Added:
+-------------
+Name:       ModelingInfo
+Label:      Modeling Info
+Template:   Stat.Calis.ModelingInfo
+Path:       Calis.ModelSpec.ModelingInfo
+-------------
+
+Output Added:
+-------------
+Name:       LISMODVariables
+Label:      Variables
+Template:   Stat.Calis.LISMODVariables
+Path:       Calis.ModelSpec.LISMODVariables
+-------------
+
+Output Added:
+-------------
+Name:       LISMODLambdaYInit
+Label:      _LAMBDAY_
+Template:   Stat.Calis.LISMODLambdaYInit
+Path:       Calis.ModelSpec.LISMODLambdaYInit
+-------------
+
+Output Added:
+-------------
+Name:       LISMODThetaYInit
+Label:      _THETAY_
+Template:   Stat.Calis.LISMODThetaYInit
+Path:       Calis.ModelSpec.LISMODThetaYInit
+-------------
+
+Output Added:
+-------------
+Name:       LISMODLambdaXInit
+Label:      _LAMBDAX_
+Template:   Stat.Calis.LISMODLambdaXInit
+Path:       Calis.ModelSpec.LISMODLambdaXInit
+-------------
+
+Output Added:
+-------------
+Name:       LISMODThetaXInit
+Label:      _THETAX_
+Template:   Stat.Calis.LISMODThetaXInit
+Path:       Calis.ModelSpec.LISMODThetaXInit
+-------------
+
+Output Added:
+-------------
+Name:       LISMODBetaInit
+Label:      _BETA_
+Template:   Stat.Calis.LISMODBetaInit
+Path:       Calis.ModelSpec.LISMODBetaInit
+-------------
+
+Output Added:
+-------------
+Name:       LISMODGammaInit
+Label:      _GAMMA_
+Template:   Stat.Calis.LISMODGammaInit
+Path:       Calis.ModelSpec.LISMODGammaInit
+-------------
+
+Output Added:
+-------------
+Name:       LISMODPsiInit
+Label:      _PSI_
+Template:   Stat.Calis.LISMODPsiInit
+Path:       Calis.ModelSpec.LISMODPsiInit
+-------------
+
+Output Added:
+-------------
+Name:       LISMODPhiInit
+Label:      _PHI_
+Template:   Stat.Calis.LISMODPhiInit
+Path:       Calis.ModelSpec.LISMODPhiInit
+-------------
+
+Output Added:
+-------------
+Name:       SimpleStatistics
+Label:      Simple Statistics
+Template:   Stat.Calis.SimpleStatistics
+Path:       Calis.DescriptiveStat.SimpleStatistics
+-------------
+
+Output Added:
+-------------
+Name:       InitEstMethods
+Label:      Init Est Methods
+Template:   Stat.Calis.InitEstMethods
+Path:       Calis.Optimization.InitEstMethods
+-------------
+
+Output Added:
+-------------
+Name:       ParameterEstimatesStart
+Label:      Initial Estimates
+Template:   Stat.Calis.ParameterEstimatesStart
+Path:       Calis.Optimization.ParameterEstimatesStart
+-------------
+
+Output Added:
+-------------
+Name:       ProblemDescription
+Label:      Optimization Problem
+Template:   Stat.Calis.ProblemDescription
+Path:       Calis.Optimization.ProblemDescription
+-------------
+
+Output Added:
+-------------
+Name:       IterStart
+Label:      Iteration Start
+Template:   Stat.Calis.IterStart
+Path:       Calis.Optimization.IterStart
+-------------
+
+Output Added:
+-------------
+Name:       IterHist
+Label:      Iteration History
+Template:   Stat.Calis.IterHist
+Path:       Calis.Optimization.IterHist
+-------------
+
+Output Added:
+-------------
+Name:       IterStop
+Label:      Iteration Stop
+Template:   Stat.Calis.IterStop
+Path:       Calis.Optimization.IterStop
+-------------
+
+Output Added:
+-------------
+Name:       ConvergenceStatus
+Label:      Convergence Status
+Template:   Stat.Calis.ConvergenceStatus
+Path:       Calis.Optimization.ConvergenceStatus
+-------------
+NOTE: Convergence criterion (ABSGCONV=0.00001) satisfied.
+
+Output Added:
+-------------
+Name:       Fit
+Label:      Fit Summary
+Template:   Stat.Calis.Fit
+Path:       Calis.Fit.Fit
+-------------
+
+Output Added:
+-------------
+Name:       LISMODLambdaY
+Label:      _LAMBDAY_
+Template:   Stat.Calis.LISMODLambdaY
+Path:       Calis.ML.LISMODLambdaY
+-------------
+
+Output Added:
+-------------
+Name:       LISMODThetaY
+Label:      _THETAY_
+Template:   Stat.Calis.LISMODThetaY
+Path:       Calis.ML.LISMODThetaY
+-------------
+
+Output Added:
+-------------
+Name:       LISMODLambdaX
+Label:      _LAMBDAX_
+Template:   Stat.Calis.LISMODLambdaX
+Path:       Calis.ML.LISMODLambdaX
+-------------
+
+Output Added:
+-------------
+Name:       LISMODThetaX
+Label:      _THETAX_
+Template:   Stat.Calis.LISMODThetaX
+Path:       Calis.ML.LISMODThetaX
+-------------
+
+Output Added:
+-------------
+Name:       LISMODBeta
+Label:      _BETA_
+Template:   Stat.Calis.LISMODBeta
+Path:       Calis.ML.LISMODBeta
+-------------
+
+Output Added:
+-------------
+Name:       LISMODGamma
+Label:      _GAMMA_
+Template:   Stat.Calis.LISMODGamma
+Path:       Calis.ML.LISMODGamma
+-------------
+
+Output Added:
+-------------
+Name:       LISMODPsi
+Label:      _PSI_
+Template:   Stat.Calis.LISMODPsi
+Path:       Calis.ML.LISMODPsi
+-------------
+
+Output Added:
+-------------
+Name:       LISMODPhi
+Label:      _PHI_
+Template:   Stat.Calis.LISMODPhi
+Path:       Calis.ML.LISMODPhi
+-------------
+
+Output Added:
+-------------
+Name:       SqMultCorr
+Label:      Sq. Mult. Correlations
+Template:   Stat.Calis.SqMultCorr
+Path:       Calis.ML.SqMultCorr
+-------------
+
+Output Added:
+-------------
+Name:       LISMODLambdaYStd
+Label:      _LAMBDAY_
+Template:   Stat.Calis.LISMODLambdaYStd
+Path:       Calis.StandardizedResults.LISMODLambdaYStd
+-------------
+
+Output Added:
+-------------
+Name:       LISMODThetaYStd
+Label:      _THETAY_
+Template:   Stat.Calis.LISMODThetaYStd
+Path:       Calis.StandardizedResults.LISMODThetaYStd
+-------------
+
+Output Added:
+-------------
+Name:       LISMODLambdaXStd
+Label:      _LAMBDAX_
+Template:   Stat.Calis.LISMODLambdaXStd
+Path:       Calis.StandardizedResults.LISMODLambdaXStd
+-------------
+
+Output Added:
+-------------
+Name:       LISMODThetaXStd
+Label:      _THETAX_
+Template:   Stat.Calis.LISMODThetaXStd
+Path:       Calis.StandardizedResults.LISMODThetaXStd
+-------------
+
+Output Added:
+-------------
+Name:       LISMODBetaStd
+Label:      _BETA_
+Template:   Stat.Calis.LISMODBetaStd
+Path:       Calis.StandardizedResults.LISMODBetaStd
+-------------
+
+Output Added:
+-------------
+Name:       LISMODGammaStd
+Label:      _GAMMA_
+Template:   Stat.Calis.LISMODGammaStd
+Path:       Calis.StandardizedResults.LISMODGammaStd
+-------------
+
+Output Added:
+-------------
+Name:       LISMODPsiStd
+Label:      _PSI_
+Template:   Stat.Calis.LISMODPsiStd
+Path:       Calis.StandardizedResults.LISMODPsiStd
+-------------
+
+Output Added:
+-------------
+Name:       LISMODPhiStd
+Label:      _PHI_
+Template:   Stat.Calis.LISMODPhiStd
+Path:       Calis.StandardizedResults.LISMODPhiStd
+-------------
+NOTE: The PROCEDURE CALIS printed pages 1449-1455.
+
+10715      proc calis nobs=932 data=Wheaton corr;
+10716      factor n=2 rotate=varimax;
+10717      run;
+
+NOTE: The means of one or more variables in the input data set WORK.WHEATON are missing and are assumed to be 0.
+
+Output Added:
+-------------
+Name:       ModelingInfo
+Label:      Modeling Info
+Template:   Stat.Calis.ModelingInfo
+Path:       Calis.ModelSpec.ModelingInfo
+-------------
+
+Output Added:
+-------------
+Name:       FACTORVariables
+Label:      Variables
+Template:   Stat.Calis.FACTORVariables
+Path:       Calis.ModelSpec.FACTORVariables
+-------------
+
+Output Added:
+-------------
+Name:       FACTORLoadingsInit
+Label:      Factor Loadings
+Template:   Stat.Calis.FACTORLoadingsInit
+Path:       Calis.ModelSpec.FACTORLoadingsInit
+-------------
+
+Output Added:
+-------------
+Name:       FACTORCovInit
+Label:      Factor Covariances
+Template:   Stat.Calis.FACTORCovInit
+Path:       Calis.ModelSpec.FACTORCovInit
+-------------
+
+Output Added:
+-------------
+Name:       FACTORErrVarInit
+Label:      Error Variances
+Template:   Stat.Calis.FACTORErrVarInit
+Path:       Calis.ModelSpec.FACTORErrVarInit
+-------------
+
+Output Added:
+-------------
+Name:       SimpleStatistics
+Label:      Simple Statistics
+Template:   Stat.Calis.SimpleStatistics
+Path:       Calis.DescriptiveStat.SimpleStatistics
+-------------
+
+Output Added:
+-------------
+Name:       InitEstMethods
+Label:      Init Est Methods
+Template:   Stat.Calis.InitEstMethods
+Path:       Calis.Optimization.InitEstMethods
+-------------
+
+Output Added:
+-------------
+Name:       ParameterEstimatesStart
+Label:      Initial Estimates
+Template:   Stat.Calis.ParameterEstimatesStart
+Path:       Calis.Optimization.ParameterEstimatesStart
+-------------
+
+Output Added:
+-------------
+Name:       ProblemDescription
+Label:      Optimization Problem
+Template:   Stat.Calis.ProblemDescription
+Path:       Calis.Optimization.ProblemDescription
+-------------
+
+Output Added:
+-------------
+Name:       IterStart
+Label:      Iteration Start
+Template:   Stat.Calis.IterStart
+Path:       Calis.Optimization.IterStart
+-------------
+
+Output Added:
+-------------
+Name:       IterHist
+Label:      Iteration History
+Template:   Stat.Calis.IterHist
+Path:       Calis.Optimization.IterHist
+-------------
+
+Output Added:
+-------------
+Name:       IterStop
+Label:      Iteration Stop
+Template:   Stat.Calis.IterStop
+Path:       Calis.Optimization.IterStop
+-------------
+
+Output Added:
+-------------
+Name:       ConvergenceStatus
+Label:      Convergence Status
+Template:   Stat.Calis.ConvergenceStatus
+Path:       Calis.Optimization.ConvergenceStatus
+-------------
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+
+Output Added:
+-------------
+Name:       Fit
+Label:      Fit Summary
+Template:   Stat.Calis.Fit
+Path:       Calis.Fit.Fit
+-------------
+
+Output Added:
+-------------
+Name:       RawRes
+Label:      Matrix
+Template:   Stat.Calis.RawRes
+Path:       Calis.Residuals.Raw.RawRes
+-------------
+
+Output Added:
+-------------
+Name:       AveRawRes
+Label:      Average Absolute Residuals
+Template:   Stat.Calis.AveRawRes
+Path:       Calis.Residuals.Raw.AveRawRes
+-------------
+
+Output Added:
+-------------
+Name:       RankRawRes
+Label:      Rank Order
+Template:   Stat.Calis.RankRawRes
+Path:       Calis.Residuals.Raw.RankRawRes
+-------------
+
+Output Added:
+-------------
+Name:       DistRawRes
+Label:      Distribution
+Template:   Stat.Calis.DistRawRes
+Path:       Calis.Residuals.Raw.DistRawRes
+-------------
+
+Output Added:
+-------------
+Name:       FACTORLoadings
+Label:      Factor Loadings
+Template:   Stat.Calis.FACTORLoadings
+Path:       Calis.ML.FACTORLoadings
+-------------
+
+Output Added:
+-------------
+Name:       FACTORCov
+Label:      Factor Covariances
+Template:   Stat.Calis.FACTORCov
+Path:       Calis.ML.FACTORCov
+-------------
+
+Output Added:
+-------------
+Name:       FACTORErrVar
+Label:      Error Variances
+Template:   Stat.Calis.FACTORErrVar
+Path:       Calis.ML.FACTORErrVar
+-------------
+
+Output Added:
+-------------
+Name:       FACTORRotLoadings
+Label:      Factor Loadings
+Template:   Stat.Calis.FACTORRotLoadings
+Path:       Calis.ML.FACTORRotLoadings
+-------------
+
+Output Added:
+-------------
+Name:       FACTORRotMat
+Label:      Rotation Matrix
+Template:   Stat.Calis.FACTORRotMat
+Path:       Calis.ML.FACTORRotMat
+-------------
+
+Output Added:
+-------------
+Name:       FACTORRotCov
+Label:      Factor Covariances
+Template:   Stat.Calis.FACTORRotCov
+Path:       Calis.ML.FACTORRotCov
+-------------
+
+Output Added:
+-------------
+Name:       FACTORRotErrVar
+Label:      Error Variances
+Template:   Stat.Calis.FACTORRotErrVar
+Path:       Calis.ML.FACTORRotErrVar
+-------------
+
+Output Added:
+-------------
+Name:       SqMultCorr
+Label:      Sq. Mult. Correlations
+Template:   Stat.Calis.SqMultCorr
+Path:       Calis.ML.SqMultCorr
+-------------
+
+Output Added:
+-------------
+Name:       FACTORScoresRegCoef
+Label:      Factor Scores Regression Coefficients
+Template:   Stat.Calis.FACTORScoresRegCoef
+Path:       Calis.ML.FACTORScoresRegCoef
+-------------
+NOTE: The PROCEDURE CALIS printed pages 1456-1463.
+
+10718      proc factor nobs=932 data=Wheaton n=2 rotate=varimax method=ml;
+10719      run;
+
+NOTE: The means of one or more variables in the input data set WORK.WHEATON are missing and are assumed to be 0.
+
+Output Added:
+-------------
+Name:       NObs
+Label:      N of Observations
+Template:   Stat.Factor.NObs
+Path:       Factor.NObs
+-------------
+
+Output Added:
+-------------
+Name:       PriorCommunalEst
+Label:      Prior Communalities
+Template:   Stat.Factor.PriorCommunalEst
+Path:       Factor.InitialSolution.PriorCommunalEst
+-------------
+
+Output Added:
+-------------
+Name:       Eigenvalues
+Label:      Eigenvalues
+Template:   Stat.Factor.Eigenvalues
+Path:       Factor.InitialSolution.Eigenvalues
+-------------
+NOTE: 2 factors will be retained by the NFACTOR criterion.
+
+Output Added:
+-------------
+Name:       IterHistory
+Label:      Iteration History
+Template:   Stat.Factor.IterHistory
+Path:       Factor.InitialSolution.IterHistory
+-------------
+NOTE: Convergence criterion satisfied.
+
+Output Added:
+-------------
+Name:       ConvergenceStatus
+Label:      Convergence Status
+Template:   Stat.Factor.ConvergenceStatus
+Path:       Factor.InitialSolution.ConvergenceStatus
+-------------
+
+Output Added:
+-------------
+Name:       SignifTests
+Label:      Significance Tests
+Template:   Stat.Factor.SignifTests
+Path:       Factor.InitialSolution.SignifTests
+-------------
+
+Output Added:
+-------------
+Name:       FitMeasures
+Label:      Measures of Fit
+Template:   Stat.Factor.FitMeasures
+Path:       Factor.InitialSolution.FitMeasures
+-------------
+
+Output Added:
+-------------
+Name:       CanCorr
+Label:      Squared Canonical Correlations
+Template:   Stat.Factor.CanCorr
+Path:       Factor.InitialSolution.CanCorr
+-------------
+
+Output Added:
+-------------
+Name:       Eigenvalues
+Label:      Eigenvalues
+Template:   Stat.Factor.Eigenvalues
+Path:       Factor.InitialSolution.Eigenvalues
+-------------
+
+Output Added:
+-------------
+Name:       FactorPattern
+Label:      Factor Pattern
+Template:   Stat.Factor.FactorPattern
+Path:       Factor.InitialSolution.FactorPattern
+-------------
+
+Output Added:
+-------------
+Name:       VarExplainWgt
+Label:      Variance Explained
+Template:   Stat.Factor.VarExplainWgt
+Path:       Factor.InitialSolution.VarExplainWgt
+-------------
+
+Output Added:
+-------------
+Name:       FinalCommunWgt
+Label:      Final Communalities
+Template:   Stat.Factor.FinalCommunWgt
+Path:       Factor.InitialSolution.FinalCommunWgt
+-------------
+NOTE: Rotation converged.  Criterion changed from 0.674639 to 10.045888 in 2 cycles.
+
+Output Added:
+-------------
+Name:       OrthTrans
+Label:      Orthogonal Transformation
+Template:   Stat.Factor.OrthTrans
+Path:       Factor.RotatedSolution.OrthTrans
+-------------
+
+Output Added:
+-------------
+Name:       OrthRotFactPat
+Label:      Factor Pattern
+Template:   Stat.Factor.OrthRotFactPat
+Path:       Factor.RotatedSolution.OrthRotFactPat
+-------------
+
+Output Added:
+-------------
+Name:       VarExplainWgt
+Label:      Variance Explained
+Template:   Stat.Factor.VarExplainWgt
+Path:       Factor.RotatedSolution.VarExplainWgt
+-------------
+
+Output Added:
+-------------
+Name:       FinalCommunWgt
+Label:      Final Communalities
+Template:   Stat.Factor.FinalCommunWgt
+Path:       Factor.RotatedSolution.FinalCommunWgt
+-------------
+NOTE: The PROCEDURE FACTOR printed pages 1464-1466.
+
+10720      proc calis nobs=932 data=Wheaton;
+10721      factor
+10722      Alien67 ===> Anomie67 Powerless67 = 1.0 load1,
+10723      Alien71 ===> Anomie71 Powerless71 = 1.0 load2,
+10724      SES ===> Education SEI = 1.0 load3;
+10725      pvar
+10726      Alien67 = phi11,
+10727      Alien71 = phi22,
+10728      SES = phi33,
+10729      Anomie67 = theta1,
+10730      Powerless67 = theta2,
+10731      Anomie71 = theta3,
+10732      Powerless71 = theta4,
+10733      Education = theta5,
+10734      SEI = theta6;
+10735      cov
+10736      Alien71 Alien67 = phi21,
+10737      SES Alien67 = phi31,
+10738      SES Alien71 = phi32;
+10739      run;
+
+NOTE: The means of one or more variables in the input data set WORK.WHEATON are missing and are assumed to be 0.
+
+Output Added:
+-------------
+Name:       ModelingInfo
+Label:      Modeling Info
+Template:   Stat.Calis.ModelingInfo
+Path:       Calis.ModelSpec.ModelingInfo
+-------------
+
+Output Added:
+-------------
+Name:       FACTORVariables
+Label:      Variables
+Template:   Stat.Calis.FACTORVariables
+Path:       Calis.ModelSpec.FACTORVariables
+-------------
+
+Output Added:
+-------------
+Name:       FACTORLoadingsInit
+Label:      Factor Loadings
+Template:   Stat.Calis.FACTORLoadingsInit
+Path:       Calis.ModelSpec.FACTORLoadingsInit
+-------------
+
+Output Added:
+-------------
+Name:       FACTORCovInit
+Label:      Factor Covariances
+Template:   Stat.Calis.FACTORCovInit
+Path:       Calis.ModelSpec.FACTORCovInit
+-------------
+
+Output Added:
+-------------
+Name:       FACTORErrVarInit
+Label:      Error Variances
+Template:   Stat.Calis.FACTORErrVarInit
+Path:       Calis.ModelSpec.FACTORErrVarInit
+-------------
+
+Output Added:
+-------------
+Name:       SimpleStatistics
+Label:      Simple Statistics
+Template:   Stat.Calis.SimpleStatistics
+Path:       Calis.DescriptiveStat.SimpleStatistics
+-------------
+
+Output Added:
+-------------
+Name:       InitEstMethods
+Label:      Init Est Methods
+Template:   Stat.Calis.InitEstMethods
+Path:       Calis.Optimization.InitEstMethods
+-------------
+
+Output Added:
+-------------
+Name:       ParameterEstimatesStart
+Label:      Initial Estimates
+Template:   Stat.Calis.ParameterEstimatesStart
+Path:       Calis.Optimization.ParameterEstimatesStart
+-------------
+
+Output Added:
+-------------
+Name:       ProblemDescription
+Label:      Optimization Problem
+Template:   Stat.Calis.ProblemDescription
+Path:       Calis.Optimization.ProblemDescription
+-------------
+
+Output Added:
+-------------
+Name:       IterStart
+Label:      Iteration Start
+Template:   Stat.Calis.IterStart
+Path:       Calis.Optimization.IterStart
+-------------
+
+Output Added:
+-------------
+Name:       IterHist
+Label:      Iteration History
+Template:   Stat.Calis.IterHist
+Path:       Calis.Optimization.IterHist
+-------------
+
+Output Added:
+-------------
+Name:       IterStop
+Label:      Iteration Stop
+Template:   Stat.Calis.IterStop
+Path:       Calis.Optimization.IterStop
+-------------
+
+Output Added:
+-------------
+Name:       ConvergenceStatus
+Label:      Convergence Status
+Template:   Stat.Calis.ConvergenceStatus
+Path:       Calis.Optimization.ConvergenceStatus
+-------------
+NOTE: Convergence criterion (ABSGCONV=0.00001) satisfied.
+
+Output Added:
+-------------
+Name:       Fit
+Label:      Fit Summary
+Template:   Stat.Calis.Fit
+Path:       Calis.Fit.Fit
+-------------
+
+Output Added:
+-------------
+Name:       FACTORLoadings
+Label:      Factor Loadings
+Template:   Stat.Calis.FACTORLoadings
+Path:       Calis.ML.FACTORLoadings
+-------------
+
+Output Added:
+-------------
+Name:       FACTORCov
+Label:      Factor Covariances
+Template:   Stat.Calis.FACTORCov
+Path:       Calis.ML.FACTORCov
+-------------
+
+Output Added:
+-------------
+Name:       FACTORErrVar
+Label:      Error Variances
+Template:   Stat.Calis.FACTORErrVar
+Path:       Calis.ML.FACTORErrVar
+-------------
+
+Output Added:
+-------------
+Name:       SqMultCorr
+Label:      Sq. Mult. Correlations
+Template:   Stat.Calis.SqMultCorr
+Path:       Calis.ML.SqMultCorr
+-------------
+
+Output Added:
+-------------
+Name:       FACTORScoresRegCoef
+Label:      Factor Scores Regression Coefficients
+Template:   Stat.Calis.FACTORScoresRegCoef
+Path:       Calis.ML.FACTORScoresRegCoef
+-------------
+
+Output Added:
+-------------
+Name:       FACTORLoadingsStd
+Label:      Factor Loadings
+Template:   Stat.Calis.FACTORLoadingsStd
+Path:       Calis.StandardizedResults.FACTORLoadingsStd
+-------------
+
+Output Added:
+-------------
+Name:       FACTORCovStd
+Label:      Factor Covariances
+Template:   Stat.Calis.FACTORCovStd
+Path:       Calis.StandardizedResults.FACTORCovStd
+-------------
+
+Output Added:
+-------------
+Name:       FACTORErrVarStd
+Label:      Error Variances
+Template:   Stat.Calis.FACTORErrVarStd
+Path:       Calis.StandardizedResults.FACTORErrVarStd
+-------------
+NOTE: The PROCEDURE CALIS printed pages 1467-1473.
+
+10740      proc calis nobs=932 data=Wheaton;
+10741      mstruct
+10742      var = Anomie67 Powerless67 Anomie71 Powerless71;
+10743      matrix _COV_ [1,1] = phi1,
+10744      [2,2] = phi2,
+10745      [3,3] = phi1,
+10746      [4,4] = phi2,
+10747      [2,1] = theta1,
+10748      [3,1] = theta2,
+10749      [3,2] = theta1,
+10750      [4,1] = theta1,
+10751      [4,2] = theta3,
+10752      [4,3] = theta1;
+10753      run;
+
+NOTE: The means of one or more variables in the input data set WORK.WHEATON are missing and are assumed to be 0.
+
+Output Added:
+-------------
+Name:       ModelingInfo
+Label:      Modeling Info
+Template:   Stat.Calis.ModelingInfo
+Path:       Calis.ModelSpec.ModelingInfo
+-------------
+
+Output Added:
+-------------
+Name:       MSTRUCTVariables
+Label:      Variables
+Template:   Stat.Calis.MSTRUCTVariables
+Path:       Calis.ModelSpec.MSTRUCTVariables
+-------------
+
+Output Added:
+-------------
+Name:       MSTRUCTCovInit
+Label:      _COV_
+Template:   Stat.Calis.MSTRUCTCovInit
+Path:       Calis.ModelSpec.MSTRUCTCovInit
+-------------
+
+Output Added:
+-------------
+Name:       SimpleStatistics
+Label:      Simple Statistics
+Template:   Stat.Calis.SimpleStatistics
+Path:       Calis.DescriptiveStat.SimpleStatistics
+-------------
+
+Output Added:
+-------------
+Name:       InitEstMethods
+Label:      Init Est Methods
+Template:   Stat.Calis.InitEstMethods
+Path:       Calis.Optimization.InitEstMethods
+-------------
+
+Output Added:
+-------------
+Name:       ParameterEstimatesStart
+Label:      Initial Estimates
+Template:   Stat.Calis.ParameterEstimatesStart
+Path:       Calis.Optimization.ParameterEstimatesStart
+-------------
+
+Output Added:
+-------------
+Name:       ProblemDescription
+Label:      Optimization Problem
+Template:   Stat.Calis.ProblemDescription
+Path:       Calis.Optimization.ProblemDescription
+-------------
+
+Output Added:
+-------------
+Name:       IterStart
+Label:      Iteration Start
+Template:   Stat.Calis.IterStart
+Path:       Calis.Optimization.IterStart
+-------------
+
+Output Added:
+-------------
+Name:       IterStop
+Label:      Iteration Stop
+Template:   Stat.Calis.IterStop
+Path:       Calis.Optimization.IterStop
+-------------
+
+Output Added:
+-------------
+Name:       ConvergenceStatus
+Label:      Convergence Status
+Template:   Stat.Calis.ConvergenceStatus
+Path:       Calis.Optimization.ConvergenceStatus
+-------------
+NOTE: Convergence criterion (ABSGCONV=0.00001) satisfied.
+
+Output Added:
+-------------
+Name:       Fit
+Label:      Fit Summary
+Template:   Stat.Calis.Fit
+Path:       Calis.Fit.Fit
+-------------
+
+Output Added:
+-------------
+Name:       MSTRUCTCov
+Label:      _COV_
+Template:   Stat.Calis.MSTRUCTCov
+Path:       Calis.ML.MSTRUCTCov
+-------------
+
+Output Added:
+-------------
+Name:       MSTRUCTCovStd
+Label:      _COV_
+Template:   Stat.Calis.MSTRUCTCovStd
+Path:       Calis.StandardizedResults.MSTRUCTCovStd
+-------------
+NOTE: The PROCEDURE CALIS printed pages 1474-1480.
+
+10754      run;
+10755      quit;
+10756      ods trace off;
+10757      
+10758      
+10759      
+10760      
+The SAS System
+
+10761      

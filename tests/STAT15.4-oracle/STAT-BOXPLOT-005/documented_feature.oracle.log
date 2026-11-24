@@ -1,0 +1,90 @@
+The SAS System
+
+7075       
+7076       /* STAT-BOXPLOT-005: BOXPLOT — INSET / INSETGROUP / PLOT / Summary Statistics Represented by Box Plots
+7077        * Source: S154 / Chapter 32 / `INSET Statement` (PDF pp. 1378–1381); S154 / Chapter 32 / `INSETGROUP Statement` (PDF pp. 1381–1384); S154 /
+7077     ! Chapter 32 / `PLOT Statement` (PDF pp. 1384–1409); S154 / Chapter 32 / `Summary Statistics Represented by Box Plots` (PDF p. 1409).
+7078        * Discriminates: Example 32.1: Displaying Summary Statistics in a Box Plot; explicit statements: INSET, INSETGROUP, PLOT
+7079        */
+7080       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+7080     ! validmemname=compatible locale=en_US;
+7081       %let syscc=0;
+7082       title; footnote;
+7083       ods _all_ close;
+7084       ods listing gpath="%sysfunc(pathname(work))";
+7085       ods graphics off;
+7086       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.GSEG (memtype=CATALOG).
+NOTE: Deleting WORK.OILSCHEMATIC (memtype=DATA).
+NOTE: Deleting WORK.OILSUM (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TURBINE (memtype=DATA).
+7086     !                                         quit;
+
+
+7087       ods path work.templat(update) sashelp.tmplmst(read);
+7088       
+7089       ods graphics on;
+7090       ods trace on;
+7091       
+7092       
+7093       data Turbine;
+7094       informat Day date7.;
+7095       format Day date5.;
+7096       label KWatts='Average Power Output';
+7097       input Day @;
+7098       do i=1 to 10;
+7099       input KWatts @;
+7100       output;
+7101       end;
+7102       drop i;
+7103       datalines;
+
+NOTE: The data set WORK.TURBINE has 200 observations and 2 variables.
+
+7124       ;
+7125       
+7126       run;
+7127       
+7128       ods graphics off;
+7129       title 'Box Plot for Power Output';
+7130       proc boxplot data=Turbine;
+7131       plot KWatts*Day;
+7132       inset min mean max stddev /
+7133       header = 'Overall Statistics'
+7134       pos = tm;
+7135       insetgroup min max /
+7136       header = 'Extremes by Day';
+7137       run;
+
+NOTE: Processing beginning for PLOT statement number 1.
+NOTE: Since the format DATE is associated with the group variable Day, it is assumed that the natural interval between group positions is one DAY.
+NOTE: The REPEAT option is assumed when a DATE format is used with a group variable.
+
+Output Added:
+-------------
+Name:       BOXPLOT
+Label:      Panel 1
+Data Name:  GRSEG
+Path:       Boxplot.KWatts.BOXPLOT
+-------------
+NOTE: 44204 bytes written to /saswork/SAS_work5D120001108E_odaws02-euw1.oda.sas.com/#LN01170.
+NOTE: There were 200 observations read from the data set WORK.TURBINE.
+
+7138       
+7139       ods trace off; ods graphics off;
+7140       
+7141       
+7142       
+7143       
+The SAS System
+
+7144       

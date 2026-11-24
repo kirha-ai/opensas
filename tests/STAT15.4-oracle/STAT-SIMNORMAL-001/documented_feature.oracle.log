@@ -1,0 +1,64 @@
+The SAS System
+
+17287      
+17288      /* STAT-SIMNORMAL-001: SIMNORMAL — Data input, variable roles, and basic options
+17289       * Source: S154 / Chapter 113 / `PROC SIMNORMAL Statement` (PDF pp. 9367–9369); S154 / Chapter 113 / `BY Statement` (PDF p. 9369); S154 / Chapter
+17289    ! 113 / `VAR Statement` (PDF p. 9370).
+17290       * Discriminates: Verified default procedure context; explicit statements: VAR
+17291       */
+17292      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+17292    ! validmemname=compatible locale=en_US;
+17293      %let syscc=0;
+17294      title; footnote;
+17295      ods _all_ close;
+17296      ods listing gpath="%sysfunc(pathname(work))";
+17297      ods graphics off;
+17298      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.SELECTED (memtype=DATA).
+NOTE: Deleting WORK.SIM (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.THICK (memtype=DATA).
+17298    !                                         quit;
+
+
+17299      ods path work.templat(update) sashelp.tmplmst(read);
+17300      
+17301      data scov(type=cov);
+17302      length _name_ $32 _type_ $8;
+17303      infile datalines truncover;
+17304      
+17305      length _TYPE_ $8 _NAME_ $8;
+WARNING: Length of character variable _name_ has already been set. 
+         Use the LENGTH statement as the very first statement in the DATA STEP to declare the length of a character variable.
+17306      input _TYPE_ $ _NAME_ $ s1 s2;
+17307      datalines;
+
+NOTE: The data set WORK.SCOV has 3 observations and 4 variables.
+
+17311      ;
+17312      run;
+17313      proc simnorm data=scov outsim=draws numreal=500 seed=54321;
+17314      var s1 s2;
+17315      run;
+
+NOTE: The data set WORK.DRAWS has 500 observations and 3 variables.
+
+17316      proc corr data=draws cov;
+17317      var s1 s2;
+17318      run;
+
+NOTE: The PROCEDURE CORR printed page 1199.
+
+17319      
+17320      
+17321      
+17322      
+The SAS System
+
+17323      

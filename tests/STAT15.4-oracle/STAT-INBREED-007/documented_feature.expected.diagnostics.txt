@@ -1,0 +1,2 @@
+WARNING: The VAR statement was not specified.  All the variables in the WORK.MONOECIOUS data set will be used instead.
+WARNING: A covariance value of 0.5 has been previously assigned between individuals Parent1=4 and Parent2=3.  The new specification, 1.135, at observation 12 

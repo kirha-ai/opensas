@@ -1,0 +1,93 @@
+The SAS System
+
+6022       
+6023       /* STAT-GLMSELECT-011: GLMSELECT — Cross Validation / External Cross Validation / Screening
+6024        * Source: S154 / Chapter 56 / `Cross Validation` (PDF pp. 4379–4381); S154 / Chapter 56 / `External Cross Validation` (PDF pp. 4381–4384); S154
+6024     ! / Chapter 56 / `Screening` (PDF pp. 4384–4386).
+6025        * Discriminates: Example 56.6: Elastic Net and External Cross Validation
+6026        */
+6027       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+6027     ! validmemname=compatible locale=en_US;
+6028       %let syscc=0;
+6029       title; footnote;
+6030       ods _all_ close;
+6031       ods listing gpath="%sysfunc(pathname(work))";
+6032       ods graphics off;
+6033       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+6033     !                                         quit;
+
+
+6034       ods path work.templat(update) sashelp.tmplmst(read);
+6035       
+6036       ods graphics on;
+6037       proc glmselect data=sashelp.Leutrain valdata=sashelp.Leutest
+6038       plots=coefficients seed=314159;
+6039       model y = x1-x7129/
+6040       selection=LASSO(steps=120 choose=validate);
+6041       run;
+
+NOTE: Data label collision avoidance has been disabled because the threshold has been reached. You can set LABELMAX=4200 in the ODS GRAPHICS statement to 
+      restore collision avoidance.
+NOTE: There were 38 observations read from the data set SASHELP.LEUTRAIN.
+NOTE: The PROCEDURE GLMSELECT printed pages 398-400.
+
+6042       proc glmselect data=sashelp.Leutrain valdata=sashelp.Leutest
+6043       plots=coefficients seed=314159;
+6044       model y = x1-x7129/
+6045       selection=elasticnet(steps=120 L2=0.001 choose=validate);
+6046       run;
+
+NOTE: Data label collision avoidance has been disabled because the threshold has been reached. You can set LABELMAX=9100 in the ODS GRAPHICS statement to 
+      restore collision avoidance.
+NOTE: There were 38 observations read from the data set SASHELP.LEUTRAIN.
+NOTE: The PROCEDURE GLMSELECT printed pages 401-403.
+
+6047       proc glmselect data=sashelp.Leutrain valdata=sashelp.Leutest
+6048       plots=coefficients seed=314159;
+6049       model y = x1-x7129/
+6050       selection=elasticnet(steps=120 choose=validate);
+6051       run;
+
+NOTE: Data label collision avoidance has been disabled because the threshold has been reached. You can set LABELMAX=7800 in the ODS GRAPHICS statement to 
+      restore collision avoidance.
+NOTE: There were 38 observations read from the data set SASHELP.LEUTRAIN.
+NOTE: The PROCEDURE GLMSELECT printed pages 404-406.
+
+6052       proc glmselect data=sashelp.Leutrain testdata=sashelp.Leutest
+6053       plots=coefficients seed=314159;
+6054       model y = x1-x7129/
+6055       selection=elasticnet(steps=120 choose=cv)cvmethod=split(4);
+6056       run;
+
+NOTE: Data label collision avoidance has been disabled because the threshold has been reached. You can set LABELMAX=7800 in the ODS GRAPHICS statement to 
+      restore collision avoidance.
+NOTE: There were 38 observations read from the data set SASHELP.LEUTRAIN.
+NOTE: The PROCEDURE GLMSELECT printed pages 407-409.
+
+6057       proc glmselect data=sashelp.Leutrain testdata=sashelp.Leutest
+6058       plots=coefficients seed=314159;
+6059       model y = x1-x7129/
+6060       selection=elasticnet(steps=120 choose=cvex)cvmethod=split(4);
+6061       run;
+
+NOTE: Data label collision avoidance has been disabled because the threshold has been reached. You can set LABELMAX=7800 in the ODS GRAPHICS statement to 
+      restore collision avoidance.
+NOTE: There were 38 observations read from the data set SASHELP.LEUTRAIN.
+NOTE: The PROCEDURE GLMSELECT printed pages 410-412.
+
+6062       
+6063       
+6064       
+6065       
+The SAS System
+
+6066       

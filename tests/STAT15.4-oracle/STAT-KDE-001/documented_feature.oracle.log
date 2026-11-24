@@ -1,0 +1,59 @@
+The SAS System
+
+9377       
+9378       /* STAT-KDE-001: KDE — Data input, variable roles, and basic options
+9379        * Source: S154 / Chapter 73 / `PROC KDE Statement` (PDF pp. 5393–5394); S154 / Chapter 73 / `BY Statement` (PDF p. 5398); S154 / Chapter 73 /
+9379     ! `FREQ Statement` (PDF pp. 5398–5399); S154 / Chapter 73 / `WEIGHT Statement` (PDF p. 5405).
+9380        * Discriminates: Verified default procedure context
+9381        */
+9382       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+9382     ! validmemname=compatible locale=en_US;
+9383       %let syscc=0;
+9384       title; footnote;
+9385       ods _all_ close;
+9386       ods listing gpath="%sysfunc(pathname(work))";
+9387       ods graphics off;
+9388       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.RESPONSES (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+9388     !                                         quit;
+
+
+9389       ods path work.templat(update) sashelp.tmplmst(read);
+9390       
+9391       data bivnormal;
+9392       seed = 1283470;
+9393       do i = 1 to 1000;
+9394       z1 = rannor(seed);
+9395       z2 = rannor(seed);
+9396       z3 = rannor(seed);
+9397       x = 3*z1+z2;
+9398       y = 3*z1+z3;
+9399       output;
+9400       end;
+9401       drop seed;
+9402       run;
+
+NOTE: The data set WORK.BIVNORMAL has 1000 observations and 6 variables.
+
+9403       ods graphics on;
+9404       proc kde data=bivnormal;
+9405       bivar x y / plots=(contour surface);
+9406       run;
+
+NOTE: Processing BIVAR statement number 1.
+NOTE: The PROCEDURE KDE printed page 699.
+
+9407       ods graphics off;
+9408       run;
+9409       quit;
+9410       
+9411       
+9412       
+9413       
+The SAS System
+
+9414       

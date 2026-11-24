@@ -1,0 +1,55 @@
+The SAS System
+
+15269      
+15270      /* STAT-DISTANCE-002: DISTANCE — Proximity matrix calculations for variable roles
+15271       * Source: S154 / Chapter 43 / `Getting Started: DISTANCE Procedure` (PDF pp. 2743–2747); S154 / Chapter 43 / `Overview: DISTANCE Procedure` (PDF
+15271    ! pp. 2740–2743).
+15272       * Discriminates: Documented default analysis with explicit complete public or synthetic inputs
+15273       */
+15274      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+15274    ! validmemname=compatible locale=en_US;
+15275      %let syscc=0;
+15276      title; footnote;
+15277      ods _all_ close;
+15278      ods listing gpath="%sysfunc(pathname(work))";
+15279      ods graphics off;
+15280      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.DIST (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SAMPLE (memtype=DATA).
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+15280    !                                         quit;
+
+
+15281      ods path work.templat(update) sashelp.tmplmst(read);
+15282      
+15283      data sample;
+15284       input x z y group $ weight freq;
+15285       datalines;
+
+NOTE: The data set WORK.SAMPLE has 12 observations and 6 variables.
+
+15298      ;
+15299      run;
+15300      proc distance data=sample method=euclid out=dist; var interval(x z /std=std); run;
+
+NOTE: The data set WORK.DIST has 12 observations and 12 variables.
+
+15300    !                                                                                    proc print data=dist noobs; run;
+
+NOTE: There were 12 observations read from the data set WORK.DIST.
+NOTE: The PROCEDURE PRINT printed page 2043.
+
+15301      
+15302      
+15303      
+15304      
+The SAS System
+
+15305      

@@ -1,0 +1,75 @@
+The SAS System
+
+5218       
+5219       /* STAT-TREE-003: TREE — HEIGHT / NAME / PARENT
+5220        * Source: S154 / Chapter 127 / `HEIGHT Statement` (PDF p. 10582); S154 / Chapter 127 / `NAME Statement` (PDF p. 10582); S154 / Chapter 127 / `PARENT
+5220     !  Statement` (PDF pp. 10582–10583).
+5221        * Discriminates: Getting Started: TREE Procedure; explicit statements: HEIGHT
+5222        */
+5223       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+5223     ! validmemname=compatible locale=en_US;
+5224       %let syscc=0;
+5225       title; footnote;
+5226       ods _all_ close;
+5227       ods listing gpath="%sysfunc(pathname(work))";
+5228       ods graphics off;
+5229       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.MEASURE (memtype=DATA).
+NOTE: Deleting WORK.PRED (memtype=DATA).
+NOTE: Deleting WORK.PREDY (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+5229     !                                         quit;
+
+
+5230       ods path work.templat(update) sashelp.tmplmst(read);
+5231       
+5232       data Protein;
+5233       input Country :$15. RedMeat WhiteMeat Eggs Milk
+5234       Fish Cereal Starch Nuts FruVeg;
+5235       datalines;
+
+NOTE: The data set WORK.PROTEIN has 25 observations and 10 variables.
+
+5261       ;
+5262       filename _grfile temp; goptions device=svg gsfname=_grfile;
+5263       ods graphics on;
+5264       proc varclus data=Protein outtree=Tree centroid maxclusters=4
+5265       plots=dendrogram(vertical height=ncl);
+5266       var RedMeat--FruVeg;
+5267       run;
+
+NOTE: Clustering algorithm converged.
+NOTE: Clustering algorithm converged.
+NOTE: Clustering algorithm converged.
+NOTE: Clustering algorithm converged.
+NOTE: The data set WORK.TREE has 15 observations and 8 variables.
+NOTE: The PROCEDURE VARCLUS printed page 275.
+
+5268       proc tree data=tree vaxis=axis1;
+5269       axis1 label=(angle=90);
+5270       run;
+
+NOTE: 26048 bytes written to /saswork/SAS_workFCBA00018F54_odaws02-euw1.oda.sas.com/#LN02147.
+
+5271       proc tree data=Tree horizontal haxis=axis1;
+5272       axis1 order=(0 to 1 by 0.2);
+5273       height _PROPOR_;
+5274       label _name_ = 'Variable';
+5275       run;
+
+NOTE: 26576 bytes written to /saswork/SAS_workFCBA00018F54_odaws02-euw1.oda.sas.com/#LN02147.
+
+5276       
+5277       
+5278       
+5279       
+The SAS System
+
+5280       

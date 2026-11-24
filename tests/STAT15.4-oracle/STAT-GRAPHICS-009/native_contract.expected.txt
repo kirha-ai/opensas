@@ -1,0 +1,35 @@
+
+The REG Procedure
+Model: MODEL1
+Dependent Variable: y 
+
+Number of Observations Read          12
+Number of Observations Used          12
+
+
+                             Analysis of Variance
+ 
+                                    Sum of           Mean
+Source                   DF        Squares         Square    F Value    Pr > F
+
+Model                     1      590.14161      590.14161     399.42    <.0001
+Error                    10       14.77506        1.47751                     
+Corrected Total          11      604.91667                                    
+
+
+Root MSE              1.21553    R-Square     0.9756
+Dependent Mean       14.91667    Adj R-Sq     0.9731
+Coeff Var             8.14878                       
+
+
+                        Parameter Estimates
+ 
+                     Parameter       Standard
+Variable     DF       Estimate          Error    t Value    Pr > |t|
+
+Intercept     1        1.71212        0.74811       2.29      0.0451
+x             1        2.03147        0.10165      19.99      <.0001
+
+   name
+
+oracle.svg

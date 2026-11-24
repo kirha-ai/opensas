@@ -1,0 +1,252 @@
+
+Oblique Centroid Component Cluster Analysis
+
+Observations             25    Proportion          1
+Variables                 9    Maxeigen            0
+
+
+Clustering algorithm converged.                                            
+
+
+               Cluster Summary for 1 Cluster
+ 
+                        Cluster    Variation    Proportion
+Cluster    Members    Variation    Explained     Explained
+----------------------------------------------------------
+      1          9            9     0.840541        0.0934
+
+Total variation explained = 0.840541 Proportion = 0.0934
+
+Cluster 1 will be split because it has the smallest proportion of variation explained, 0.093393, which is less than the PROPORTION=1 value.
+
+
+Clustering algorithm converged.                                            
+
+
+              Cluster Summary for 2 Clusters
+ 
+                        Cluster    Variation    Proportion
+Cluster    Members    Variation    Explained     Explained
+----------------------------------------------------------
+      1          6            6     2.366172        0.3944
+      2          3            3      1.71501        0.5717
+
+Total variation explained = 4.081182 Proportion = 0.4535
+
+
+                             R-squared with
+2 Clusters                 ------------------
+                               Own       Next    1-R**2
+Cluster       Variable     Cluster    Closest     Ratio
+-------------------------------------------------------
+Cluster 1     RedMeat       0.4124     0.1658    0.7044
+              WhiteMeat     0.3192     0.2395    0.8952
+              Eggs          0.7321     0.3375    0.4044
+              Milk          0.4550     0.2840    0.7611
+              Fish          0.1232     0.0319    0.9057
+              Starch        0.4619     0.1656    0.6450
+-------------------------------------------------------
+Cluster 2     Cereal        0.5601     0.6882    1.4107
+              Nuts          0.7978     0.5027    0.4067
+              FruVeg        0.3928     0.0006    0.6076
+
+
+  Standardized Scoring Coefficients
+ 
+Cluster               1             2
+-------------------------------------
+RedMeat        0.265400      0.000000
+WhiteMeat      0.265400      0.000000
+Eggs           0.265400      0.000000
+Milk           0.265400      0.000000
+Fish           0.265400      0.000000
+Cereal         0.000000      0.440865
+Starch         0.265400      0.000000
+Nuts           0.000000      0.440865
+FruVeg         0.000000      0.440865
+
+
+          Cluster Structure
+ 
+Cluster               1             2
+-------------------------------------
+RedMeat        0.642154      -.407160
+WhiteMeat      0.564958      -.489394
+Eggs           0.855605      -.580944
+Milk           0.674566      -.532932
+Fish           0.351005      -.178659
+Cereal         -.829552      0.748389
+Starch         0.679607      -.406991
+Nuts           -.709006      0.893179
+FruVeg         -.024276      0.626698
+
+
+    Inter-Cluster Correlations
+ 
+Cluster             1             2
+
+1             1.00000      -0.68900
+2            -0.68900       1.00000
+
+Cluster 1 will be split because it has the smallest proportion of variation explained, 0.394362, which is less than the PROPORTION=1 value.
+
+
+Clustering algorithm converged.                                            
+
+
+              Cluster Summary for 3 Clusters
+ 
+                        Cluster    Variation    Proportion
+Cluster    Members    Variation    Explained     Explained
+----------------------------------------------------------
+      1          4            4     2.309566        0.5774
+      2          3            3      1.71501        0.5717
+      3          2            2     1.403853        0.7019
+
+Total variation explained = 5.428429 Proportion = 0.6032
+
+
+                             R-squared with
+3 Clusters                 ------------------
+                               Own       Next    1-R**2
+Cluster       Variable     Cluster    Closest     Ratio
+-------------------------------------------------------
+Cluster 1     RedMeat       0.5350     0.1658    0.5574
+              WhiteMeat     0.4544     0.2395    0.7174
+              Eggs          0.7926     0.3375    0.3130
+              Milk          0.5529     0.2840    0.6244
+-------------------------------------------------------
+Cluster 2     Cereal        0.5601     0.4630    0.8192
+              Nuts          0.7978     0.4549    0.3710
+              FruVeg        0.3928     0.0438    0.6350
+-------------------------------------------------------
+Cluster 3     Fish          0.7019     0.0319    0.3079
+              Starch        0.7019     0.1656    0.3572
+
+
+         Standardized Scoring Coefficients
+ 
+Cluster               1             2             3
+---------------------------------------------------
+RedMeat        0.329007      0.000000      0.000000
+WhiteMeat      0.329007      0.000000      0.000000
+Eggs           0.329007      0.000000      0.000000
+Milk           0.329007      0.000000      0.000000
+Fish           0.000000      0.000000      0.596794
+Cereal         0.000000      0.440865      0.000000
+Starch         0.000000      0.000000      0.596794
+Nuts           0.000000      0.440865      0.000000
+FruVeg         0.000000      0.440865      0.000000
+
+
+                 Cluster Structure
+ 
+Cluster               1             2             3
+---------------------------------------------------
+RedMeat        0.731443      -.407160      0.117200
+WhiteMeat      0.674115      -.489394      0.047602
+Eggs           0.890301      -.580944      0.309021
+Milk           0.743592      -.532932      0.168047
+Fish           -.026750      -.178659      0.837810
+Cereal         -.680443      0.748389      -.631105
+Starch         0.380606      -.406991      0.837810
+Nuts           -.674463      0.893179      -.370886
+FruVeg         -.145427      0.626698      0.209205
+
+
+           Inter-Cluster Correlations
+ 
+Cluster             1             2             3
+
+1             1.00000      -0.66144       0.21118
+2            -0.66144       1.00000      -0.34951
+3             0.21118      -0.34951       1.00000
+
+Cluster 2 will be split because it has the smallest proportion of variation explained, 0.57167, which is less than the PROPORTION=1 value.
+
+
+Clustering algorithm converged.                                            
+
+
+              Cluster Summary for 4 Clusters
+ 
+                        Cluster    Variation    Proportion
+Cluster    Members    Variation    Explained     Explained
+----------------------------------------------------------
+      1          4            4     2.309566        0.5774
+      2          2            2     1.650997        0.8255
+      3          2            2     1.403853        0.7019
+      4          1            1            1        1.0000
+
+Total variation explained = 6.364417 Proportion = 0.7072
+
+
+                             R-squared with
+4 Clusters                 ------------------
+                               Own       Next    1-R**2
+Cluster       Variable     Cluster    Closest     Ratio
+-------------------------------------------------------
+Cluster 1     RedMeat       0.5350     0.2185    0.5950
+              WhiteMeat     0.4544     0.3331    0.8181
+              Eggs          0.7926     0.4902    0.4067
+              Milk          0.5529     0.2721    0.6142
+-------------------------------------------------------
+Cluster 2     Cereal        0.8255     0.4630    0.3250
+              Nuts          0.8255     0.4549    0.3201
+-------------------------------------------------------
+Cluster 3     Fish          0.7019     0.1365    0.3452
+              Starch        0.7019     0.3075    0.4304
+-------------------------------------------------------
+Cluster 4     FruVeg        1.0000     0.0538    0.0000
+
+
+                Standardized Scoring Coefficients
+ 
+Cluster               1             2             3             4
+-----------------------------------------------------------------
+RedMeat         0.32901       0.00000       0.00000       0.00000
+WhiteMeat       0.32901       0.00000       0.00000       0.00000
+Eggs            0.32901       0.00000       0.00000       0.00000
+Milk            0.32901       0.00000       0.00000       0.00000
+Fish            0.00000       0.00000       0.59679       0.00000
+Cereal          0.00000       0.55032       0.00000       0.00000
+Starch          0.00000       0.00000       0.59679       0.00000
+Nuts            0.00000       0.55032       0.00000       0.00000
+FruVeg          0.00000       0.00000       0.00000       1.00000
+
+
+                        Cluster Structure
+ 
+Cluster               1             2             3             4
+-----------------------------------------------------------------
+RedMeat         0.73144      -0.46740       0.11720      -0.07422
+WhiteMeat       0.67412      -0.57715       0.04760      -0.06132
+Eggs            0.89030      -0.70012       0.30902      -0.04552
+Milk            0.74359      -0.52163       0.16805      -0.26096
+Fish           -0.02675      -0.36947       0.83781       0.26614
+Cereal         -0.68044       0.90857      -0.63111       0.04655
+Starch          0.38061      -0.55448       0.83781       0.08441
+Nuts           -0.67446       0.90857      -0.37089       0.37497
+FruVeg         -0.14543       0.23197       0.20920       1.00000
+
+
+                  Inter-Cluster Correlations
+ 
+Cluster             1             2             3             4
+
+1             1.00000      -0.74563       0.21118      -0.14543
+2            -0.74563       1.00000      -0.55141       0.23197
+3             0.21118      -0.55141       1.00000       0.20920
+4            -0.14543       0.23197       0.20920       1.00000
+
+
+                 Total     Proportion       Minimum                  Maximum
+             Variation             of    Proportion      Minimum      1-R**2
+  Number     Explained      Variation     Explained    R-squared       Ratio
+      of            by      Explained          by a        for a       for a
+Clusters      Clusters    by Clusters       Cluster     Variable    Variable
+----------------------------------------------------------------------------
+       1      0.840541         0.0934        0.0934       0.0551            
+       2      4.081182         0.4535        0.3944       0.1232      1.4107
+       3      5.428429         0.6032        0.5717       0.3928      0.8192
+       4      6.364417         0.7072        0.5774       0.4544      0.8181

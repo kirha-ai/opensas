@@ -1,0 +1,76 @@
+The SAS System
+
+2654       
+2655       /* STAT-MI-010: MI — Specifying Sets of Observations for Imputation in Pattern-Mixture Models / Adjusting Imputed Values in Pattern-Mixture Models
+2655     ! / Summary of Issues in Multiple Imputation
+2656        * Source: S154 / Chapter 82 / `Specifying Sets of Observations for Imputation in Pattern-Mixture Models` (PDF pp. 6486–6487); S154 / Chapter 82 /
+2656     ! `Adjusting Imputed Values in Pattern-Mixture Models` (PDF pp. 6487–6491); S154 / Chapter 82 / `Summary of Issues in Multiple Imputation` (PDF pp.
+2656     ! 6491–6493).
+2657        * Discriminates: Example 82.14: Multistage Imputation
+2658        */
+2659       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+2659     ! validmemname=compatible locale=en_US;
+2660       %let syscc=0;
+2661       title; footnote;
+2662       ods _all_ close;
+2663       ods listing gpath="%sysfunc(pathname(work))";
+2664       ods graphics off;
+2665       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.FITNESS1 (memtype=DATA).
+NOTE: Deleting WORK.OUTEX14 (memtype=DATA).
+NOTE: Deleting WORK.OUTEX14A (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+2665     !                                         quit;
+
+
+2666       ods path work.templat(update) sashelp.tmplmst(read);
+2667       
+2668       data Fitness1;
+2669       input Oxygen RunTime RunPulse @@;
+2670       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.FITNESS1 has 31 observations and 3 variables.
+
+2687       ;
+2688       run;
+2689       proc mi data=Fitness1 seed=17655417 nimpute=10 out=outex14;
+2690       mcmc impute=monotone;
+2691       var Oxygen RunTime RunPulse;
+2692       run;
+
+NOTE: The EM algorithm (MLE) converges in 12 iterations.
+NOTE: The EM algorithm (posterior mode) converges in 7 iterations.
+NOTE: The data set WORK.OUTEX14 has 310 observations and 4 variables.
+NOTE: The PROCEDURE MI printed page 220.
+
+2693       proc mi data=outex14
+2694       nimpute=1 seed=51343672
+2695       out=outex14a;
+2696       monotone reg;
+2697       var Oxygen RunTime RunPulse;
+2698       by _Imputation_;
+2699       run;
+
+NOTE: The data set WORK.OUTEX14A has 310 observations and 4 variables.
+NOTE: The PROCEDURE MI printed pages 221-230.
+
+2700       proc print data=outex14a(obs=10);
+2701       title 'First 10 Observations of the Imputed Data Set';
+2702       run;
+
+NOTE: There were 10 observations read from the data set WORK.OUTEX14A.
+NOTE: The PROCEDURE PRINT printed page 231.
+
+2703       
+2704       
+2705       
+2706       
+The SAS System
+
+2707       

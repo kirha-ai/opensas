@@ -1,0 +1,44 @@
+The SAS System
+
+1364       
+1365       /* STAT-HP-002: PERFORMANCE options and execution statistics
+1366        * Source: S154 / Chapter 21 / `PERFORMANCE Statement` (PDF pp. 557–558).
+1367        * Discriminates: HP CLASS/variable role integration, single-thread PERFORMANCE information
+1368        */
+1369       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+1369     ! validmemname=compatible locale=en_US;
+1370       %let syscc=0;
+1371       title; footnote;
+1372       ods _all_ close;
+1373       ods listing gpath="%sysfunc(pathname(work))";
+1374       ods graphics off;
+1375       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SAMPLE (memtype=DATA).
+1375     !                                         quit;
+
+
+1376       ods path work.templat(update) sashelp.tmplmst(read);
+1377       
+1378       data sample;
+1379        input x z y group $ weight freq;
+1380        datalines;
+
+NOTE: The data set WORK.SAMPLE has 12 observations and 6 variables.
+
+1393       ;
+1394       run;
+1395       proc hpreg data=sample; class group; model y=x z group;  performance nthreads=1 details; run;
+
+NOTE: The HPREG procedure is executing in single-machine mode.
+NOTE: There were 12 observations read from the data set WORK.SAMPLE.
+NOTE: The PROCEDURE HPREG printed page 71.
+
+1396       
+1397       
+1398       
+1399       
+The SAS System
+
+1400       

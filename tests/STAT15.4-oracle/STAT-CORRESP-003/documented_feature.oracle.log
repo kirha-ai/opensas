@@ -1,0 +1,70 @@
+The SAS System
+
+661        
+662        /* STAT-CORRESP-003: CORRESP — SUPPLEMENTARY / TABLES / Using the TABLES
+663         * Source: S154 / Chapter 41 / `SUPPLEMENTARY Statement` (PDF p. 2590); S154 / Chapter 41 / `TABLES Statement` (PDF pp. 2590–2591); S154 / Chapter
+663      ! 41 / `Using the TABLES Statement` (PDF pp. 2592–2600).
+664         * Discriminates: Example 41.2: Simple Correspondence Analysis of U.S. Population; explicit statements: SUPPLEMENTARY
+665         */
+666        options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+666      ! validmemname=compatible locale=en_US;
+667        %let syscc=0;
+668        title; footnote;
+669        ods _all_ close;
+670        ods listing gpath="%sysfunc(pathname(work))";
+671        ods graphics off;
+672        proc datasets library=work kill nolist;
+NOTE: Deleting WORK.MARDIA (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+672      !                                         quit;
+
+
+673        ods path work.templat(update) sashelp.tmplmst(read);
+674        
+675        title 'United States Population, 1920-1970';
+676        data USPop;
+677        * Regions:
+678        * New England - ME, NH, VT, MA, RI, CT.
+679        * Great Lakes - OH, IN, IL, MI, WI.
+680        * South Atlantic - DE, MD, DC, VA, WV, NC, SC, GA, FL.
+681        * Mountain - MT, ID, WY, CO, NM, AZ, UT, NV.
+682        * Pacific - WA, OR, CA.
+683        *
+684        * Note: Multiply data values by 1000 to get populations.;
+685        length Region $14;
+686        input Region :$14. y1920 y1930 y1940 y1950 y1960 y1970;
+687        label y1920 = '1920' y1930 = '1930' y1940 = '1940'
+688        y1950 = '1950' y1960 = '1960' y1970 = '1970';
+689        if region = 'Hawaii' or region = 'Alaska'
+690        then w = -1000;
+691        /* Flag Supplementary Observations */
+692        else w = 1000;
+693        datalines;
+
+NOTE: The data set WORK.USPOP has 11 observations and 8 variables.
+
+705        ;
+706        ods graphics on;
+707        * Perform Simple Correspondence Analysis;
+708        proc corresp data=uspop print=percent observed cellchi2 rp cp chi2p
+709        short plot(flip);
+710        var y1920 -- y1970;
+711        id Region;
+712        weight w;
+713        run;
+
+NOTE: The PROCEDURE CORRESP printed pages 104-105.
+
+714        
+715        
+716        
+717        
+The SAS System
+
+718        

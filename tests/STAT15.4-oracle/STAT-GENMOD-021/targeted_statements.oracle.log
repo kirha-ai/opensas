@@ -1,0 +1,60 @@
+The SAS System
+
+1047       
+1048       /* STAT-GENMOD-021: GENMOD — FWDLINK / INVLINK / Programming Statements
+1049        * Source: S154 / Chapter 51 / `FWDLINK Statement` (PDF p. 3541); S154 / Chapter 51 / `INVLINK Statement` (PDF pp. 3541–3542); S154 / Chapter 51 /
+1049     ! `Programming Statements` (PDF pp. 3558–3560).
+1050        * Discriminates: Explicit FWDLINK, INVLINK statement behavior on seeded synthetic inputs.
+1051        */
+1052       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+1052     ! validmemname=compatible locale=en_US;
+1053       %let syscc=0;
+1054       title; footnote;
+1055       ods _all_ close;
+1056       ods listing gpath="%sysfunc(pathname(work))";
+1057       ods graphics off;
+1058       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SAMPLE (memtype=DATA).
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+1058     !                                         quit;
+
+
+1059       ods path work.templat(update) sashelp.tmplmst(read);
+1060       
+1061       data sample;
+1062       call streaminit(314159);
+1063       do id=1 to 90;
+1064        x=rand('normal'); z=rand('normal'); w=rand('normal');
+1065        group=1+mod(id,3); block=1+mod(id,5);
+1066        y=5+1.5*x-0.6*z+0.4*group+rand('normal');
+1067        y2=2+0.5*x+0.8*z+rand('normal'); output;
+1068       end;
+1069       run;
+
+NOTE: The data set WORK.SAMPLE has 90 observations and 8 variables.
+
+1070       data positive; set sample; y=exp(0.1*y); run;
+
+NOTE: There were 90 observations read from the data set WORK.SAMPLE.
+NOTE: The data set WORK.POSITIVE has 90 observations and 8 variables.
+
+1070     !                                               proc genmod data=positive; model y=x z / dist=gamma; fwdlink link=log(_mean_); invlink
+1070     ! ilink=exp(_xbeta_); run;
+
+
+NOTE: Algorithm converged.
+NOTE: The scale parameter was estimated by maximum likelihood.
+NOTE: The PROCEDURE GENMOD printed page 91.
+
+1071       
+1072       
+1073       
+1074       
+The SAS System
+
+1075       

@@ -1,0 +1,64 @@
+
+The POWER Procedure
+Type III F Test in Multiple Regression
+
+             Fixed Scenario Elements
+
+Method                                       Exact
+Model                                     Random X
+Number of Predictors in Full Model               7
+Number of Test Predictors                        1
+Partial Correlation                           0.35
+Total Sample Size                              100
+Alpha                                         0.05
+
+
+Computed Power
+ 
+Power
+
+0.939
+
+The POWER Procedure
+Fisher's z Test for Pearson Correlation
+
+                      Fixed Scenario Elements
+
+Distribution                          Fisher's z transformation of r
+Method                                          Normal approximation
+Number of Sides                                                    1
+Null Correlation                                                 0.2
+Number of Variables Partialled Out                                 6
+Correlation                                                     0.35
+Total Sample Size                                                100
+Nominal Alpha                                                   0.05
+
+
+ Computed Power
+ 
+Actual
+ Alpha    Power
+
+  0.05    0.466
+
+The POWER Procedure
+Fisher's z Test for Pearson Correlation
+
+                      Fixed Scenario Elements
+
+Distribution                          Fisher's z transformation of r
+Method                                          Normal approximation
+Number of Sides                                                    1
+Null Correlation                                                 0.2
+Number of Variables Partialled Out                                 6
+Correlation                                                     0.35
+Nominal Alpha                                                   0.05
+
+
+                Computed N Total
+ 
+            Nominal    Actual    Actual        N
+   Index      Power     Alpha     Power    Total
+
+       1       0.85      0.05     0.850      280
+       2       0.95      0.05     0.950      417

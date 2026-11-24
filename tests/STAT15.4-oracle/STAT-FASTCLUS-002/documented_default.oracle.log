@@ -1,0 +1,48 @@
+The SAS System
+
+16132      
+16133      /* STAT-FASTCLUS-002: FASTCLUS — Fast clustering initialization, iteration, and assignment
+16134       * Source: S154 / Chapter 45 / `Getting Started: FASTCLUS Procedure` (PDF pp. 2896–2903); S154 / Chapter 45 / `Overview: FASTCLUS Procedure` (PDF
+16134    ! pp. 2894–2896).
+16135       * Discriminates: Small synthetic/public-input default model adapted to the documented Getting Started procedure
+16136       */
+16137      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+16137    ! validmemname=compatible locale=en_US;
+16138      %let syscc=0;
+16139      title; footnote;
+16140      ods _all_ close;
+16141      ods listing gpath="%sysfunc(pathname(work))";
+16142      ods graphics off;
+16143      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.CLUSTERS (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+16143    !                                         quit;
+
+
+16144      ods path work.templat(update) sashelp.tmplmst(read);
+16145      
+16146      proc fastclus data=sashelp.iris maxclusters=3 maxiter=50 out=clusters; var SepalLength SepalWidth PetalLength PetalWidth; run;
+
+NOTE: Convergence criterion is satisfied.
+NOTE: The data set WORK.CLUSTERS has 150 observations and 7 variables.
+NOTE: The PROCEDURE FASTCLUS printed page 2134.
+
+16147      proc freq data=clusters; tables Species*Cluster; run;
+
+NOTE: There were 150 observations read from the data set WORK.CLUSTERS.
+NOTE: The PROCEDURE FREQ printed page 2135.
+
+16148      
+16149      
+16150      
+16151      
+The SAS System
+
+16152      

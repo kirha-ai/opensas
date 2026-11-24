@@ -1,0 +1,224 @@
+
+The ADAPTIVEREG Procedure
+
+         Model Information
+
+Data Set             WORK.ARTIFICIAL
+Response Variable    Y              
+Distribution         Normal         
+Link Function        Identity       
+
+
+             Fit Controls
+
+Maximum Number of Bases         21     
+Maximum Order of Interaction    2      
+Degrees of Freedom per Knot     2      
+Knot Separation Parameter       0.05   
+Variable Parsimony Parameter    0      
+Missing Value Handling          Include
+
+
+Number of Observations Read         400
+Number of Observations Used         400
+
+
+              Fit Statistics
+
+GCV                                 1.55656
+GCV R-Square                        0.86166
+Effective Degrees of Freedom             27
+R-Square                            0.87910
+Adjusted R-Square                   0.87503
+Mean Square Error                   1.40260
+Average Square Error                1.35351
+
+
+     Regression Spline Model after Backward Selection
+ 
+Name       Coefficient    Parent     Variable         Knot
+
+Basis0         12.3031               Intercept            
+Basis1         13.1804    Basis0     X1            0.05982
+Basis3        -23.4892    Basis0     X2             0.1387
+Basis4         -171.03    Basis0     X2             0.1387
+Basis5        -86.1867    Basis3     X1             0.6333
+Basis7         -436.86    Basis4     X1             0.5488
+Basis8          397.18    Basis4     X1             0.5488
+Basis9         11.4682    Basis1     X2             0.6755
+Basis10       -19.1796    Basis1     X2             0.6755
+Basis13         126.84    Basis11    X1             0.6018
+Basis14        40.8134    Basis11    X1             0.6018
+Basis15        22.2884    Basis0     X1             0.7170
+Basis17       -53.8746    Basis12    X1             0.2269
+Basis19         598.89    Basis4     X1             0.2558
+
+
+                    ANOVA Decomposition
+ 
+Functional    Number of             ---Change If Omitted---
+Component         Bases       DF    Lack of Fit         GCV
+
+X1                    2        4         405.18      1.1075
+X2                    2        4         947.87      2.6348
+X2 X1                 9       18        2583.21      6.6187
+
+
+        Variable Importance
+ 
+            Number of
+Variable        Bases    Importance
+
+X1                 11        100.00
+X2                 11         99.19
+
+The ADAPTIVEREG Procedure
+
+         Model Information
+
+Data Set             WORK.ARTIFICIAL
+Response Variable    Y              
+Distribution         Normal         
+Link Function        Identity       
+
+
+             Fit Controls
+
+Maximum Number of Bases         21     
+Maximum Order of Interaction    2      
+Degrees of Freedom per Knot     2      
+Knot Separation Parameter       0.05   
+Variable Parsimony Parameter    0      
+Missing Value Handling          Include
+
+
+Number of Observations Read         400
+Number of Observations Used         400
+
+
+              Fit Statistics
+
+GCV                                 1.55656
+GCV R-Square                        0.86166
+Effective Degrees of Freedom             27
+R-Square                            0.87910
+Adjusted R-Square                   0.87503
+Mean Square Error                   1.40260
+Average Square Error                1.35351
+
+
+     Regression Spline Model after Backward Selection
+ 
+Name       Coefficient    Parent     Variable         Knot
+
+Basis0         12.3031               Intercept            
+Basis1         13.1804    Basis0     X1            0.05982
+Basis3        -23.4892    Basis0     X2             0.1387
+Basis4         -171.03    Basis0     X2             0.1387
+Basis5        -86.1867    Basis3     X1             0.6333
+Basis7         -436.86    Basis4     X1             0.5488
+Basis8          397.18    Basis4     X1             0.5488
+Basis9         11.4682    Basis1     X2             0.6755
+Basis10       -19.1796    Basis1     X2             0.6755
+Basis13         126.84    Basis11    X1             0.6018
+Basis14        40.8134    Basis11    X1             0.6018
+Basis15        22.2884    Basis0     X1             0.7170
+Basis17       -53.8746    Basis12    X1             0.2269
+Basis19         598.89    Basis4     X1             0.2558
+
+
+                    ANOVA Decomposition
+ 
+Functional    Number of             ---Change If Omitted---
+Component         Bases       DF    Lack of Fit         GCV
+
+X1                    2        4         405.18      1.1075
+X2                    2        4         947.87      2.6348
+X2 X1                 9       18        2583.21      6.6187
+
+
+        Variable Importance
+ 
+            Number of
+Variable        Bases    Importance
+
+X1                 11        100.00
+X2                 11         99.19
+
+The ADAPTIVEREG Procedure
+
+         Model Information
+
+Data Set             WORK.ARTIFICIAL
+Response Variable    y              
+Distribution         Normal         
+Link Function        Identity       
+
+
+             Fit Controls
+
+Maximum Number of Bases         21     
+Maximum Order of Interaction    2      
+Degrees of Freedom per Knot     2      
+Knot Separation Parameter       0.05   
+Variable Parsimony Parameter    0      
+Missing Value Handling          Include
+
+
+Number of Observations Read         400
+Number of Observations Used         400
+
+
+              Fit Statistics
+
+GCV                                 1.19023
+GCV R-Square                        0.87565
+Effective Degrees of Freedom             33
+R-Square                            0.89479
+Adjusted R-Square                   0.89040
+Mean Square Error                   1.04641
+Average Square Error                1.00194
+
+
+     Regression Spline Model after Backward Selection
+ 
+Name       Coefficient    Parent     Variable         Knot
+
+Basis0         12.3776               Intercept            
+Basis1        -16.8360    Basis0     x2             0.3137
+Basis2        -95.1503    Basis0     x2             0.3137
+Basis3         -338.74    Basis2     x1             0.5275
+Basis4          296.54    Basis2     x1             0.5275
+Basis5         24.4158    Basis1     x1             0.6329
+Basis6        -48.8304    Basis1     x1             0.6329
+Basis7        -16.0949    Basis0     x1             0.4484
+Basis8         -3.3662    Basis0     x1             0.4484
+Basis9         69.0602    Basis8     x2             0.4611
+Basis11        11.8539    Basis0     x2             0.5343
+Basis13       -87.7124    Basis12    x1             0.2075
+Basis14        -104.45    Basis12    x1             0.2075
+Basis15         340.77    Basis2     x1             0.2123
+Basis17         107.98    Basis12    x1             0.4961
+Basis19        -2.8456    Basis8     x8            0.06654
+Basis20        -125.35    Basis8     x8            0.06654
+
+
+                    ANOVA Decomposition
+ 
+Functional    Number of             ---Change If Omitted---
+Component         Bases       DF    Lack of Fit         GCV
+
+x2                    3        6         150.21      0.3939
+x1                    2        4         100.58      0.2668
+x2 x1                 9       18        2199.75      5.8276
+x1 x8                 2        4        11.7385    0.008586
+
+
+        Variable Importance
+ 
+            Number of
+Variable        Bases    Importance
+
+x1                 13        100.00
+x2                 12         98.58
+x8                  2          0.22

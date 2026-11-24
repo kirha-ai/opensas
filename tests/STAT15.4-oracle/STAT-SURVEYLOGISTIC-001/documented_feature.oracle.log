@@ -1,0 +1,66 @@
+The SAS System
+
+20562      
+20563      /* STAT-SURVEYLOGISTIC-001: SURVEYLOGISTIC — Data input, variable roles, and basic options
+20564       * Source: S154 / Chapter 120 / `PROC SURVEYLOGISTIC Statement` (PDF pp. 9803–9811); S154 / Chapter 120 / `BY Statement` (PDF pp. 9811–9812);
+20564    ! S154 / Chapter 120 / `CLUSTER Statement` (PDF p. 9814); S154 / Chapter 120 / `FREQ Statement` (PDF p. 9820); S154 / Chapter 120 / `REPWEIGHTS
+20564    ! Statement` (PDF pp. 9834–9836); S154 / Chapter 120 / `STRATA Statement` (PDF p. 9837); S154 / Chapter 120 / `WEIGHT Statement` (PDF p. 9839); S154
+20564    ! / Chapter 120 / `Missing Values` (PDF pp. 9839–9840).
+20565       * Discriminates: Verified default procedure context; explicit statements: CLUSTER, STRATA, WEIGHT
+20566       */
+20567      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+20567    ! validmemname=compatible locale=en_US;
+20568      %let syscc=0;
+20569      title; footnote;
+20570      ods _all_ close;
+20571      ods listing gpath="%sysfunc(pathname(work))";
+20572      ods graphics off;
+
+
+20573      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SMOKE (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+20573    !                                         quit;
+
+
+20574      ods path work.templat(update) sashelp.tmplmst(read);
+20575      
+20576      data survey;
+20577      call streaminit(722);
+20578      do stratum=1 to 2;
+20579      do cluster=1 to 4;
+20580      do id=1 to 12;
+20581      age=20+mod(id*7+cluster,45);
+20582      event=rand('bernoulli',0.3);
+20583      weight=2+stratum+cluster/10;
+20584      output;
+20585      end;
+20586      end;
+20587      end;
+20588      run;
+
+NOTE: The data set WORK.SURVEY has 96 observations and 6 variables.
+
+20589      proc surveylogistic data=survey;
+20590      strata stratum;
+20591      cluster cluster;
+20592      weight weight;
+20593      model event(event='1')=age;
+20594      run;
+
+NOTE: PROC SURVEYLOGISTIC is modeling the probability that event=1.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The PROCEDURE SURVEYLOGISTIC printed page 1408.
+
+20595      
+20596      
+20597      
+20598      
+The SAS System
+
+20599      

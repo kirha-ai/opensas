@@ -1,0 +1,62 @@
+The SAS System
+
+10831      
+10832      /* STAT-KRIGE2D-015: KRIGE2D — Official examples and feature integration regression
+10833       * Source: S154 / Chapter 74 / `Examples: KRIGE2D Procedure` (PDF pp. 5490–5509).
+10834       * Discriminates: Example 74.3: Data Quality and Prediction with Missing Values
+10835       */
+10836      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+10836    ! validmemname=compatible locale=en_US;
+10837      %let syscc=0;
+10838      title; footnote;
+10839      ods _all_ close;
+10840      ods listing gpath="%sysfunc(pathname(work))";
+10841      ods graphics off;
+10842      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.DATA14 (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.THICK (memtype=DATA).
+10842    !                                         quit;
+
+
+10843      ods path work.templat(update) sashelp.tmplmst(read);
+10844      
+10845      title 'Kriging Prediction in the Presence of Missing Values';
+10846      data thick;
+10847      input East North Thick @@;
+10848      label Thick='Coal Seam Thickness';
+10849      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.THICK has 75 observations and 3 variables.
+
+10875      ;
+10876      ods graphics on;
+10877      proc krige2d data=thick outest=predictions
+10878      plots(only)=(observ(showmissing)
+10879      pred(fill=pred line=pred obs=linegrad)
+10880      pred(fill=se line=se obs=linegrad));
+10881      coordinates xc=East yc=North;
+10882      predict var=Thick r=60;
+10883      model scale=7.4599 range=30.1111 form=gauss;
+10884      grid x=0 to 100 by 2.5 y=0 to 100 by 2.5;
+10885      run;
+
+WARNING: The VAR= variable Thick, found in one or more PREDICT statements, contains 3 missing value(s).
+NOTE: The data set WORK.PREDICTIONS has 1681 observations and 7 variables.
+NOTE: The PROCEDURE KRIGE2D printed pages 757-758.
+
+10886      ods graphics off;
+10887      run;
+10888      quit;
+10889      
+10890      
+10891      
+10892      
+The SAS System
+
+10893      

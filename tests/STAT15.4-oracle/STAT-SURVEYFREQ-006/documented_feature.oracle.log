@@ -1,0 +1,59 @@
+The SAS System
+
+19269      
+19270      /* STAT-SURVEYFREQ-006: SURVEYFREQ — Bootstrap Method
+19271       * Source: S154 / Chapter 118 / `Bootstrap Method` (PDF pp. 9633–9635).
+19272       * Discriminates: Verified default procedure context
+19273       */
+19274      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+19274    ! validmemname=compatible locale=en_US;
+19275      %let syscc=0;
+19276      title; footnote;
+19277      ods _all_ close;
+19278      ods listing gpath="%sysfunc(pathname(work))";
+19279      ods graphics off;
+19280      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SURVEY (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+19280    !                                         quit;
+
+
+19281      ods path work.templat(update) sashelp.tmplmst(read);
+19282      
+19283      data survey;
+19284      do state=1 to 2;
+19285      do school=1 to 4;
+19286      do id=1 to 6;
+19287      response=1+mod(id+school,3);
+19288      schooltype=1+mod(school,2);
+19289      samplingweight=2+state+school/10;
+19290      output;
+19291      end;
+19292      end;
+19293      end;
+19294      run;
+
+NOTE: The data set WORK.SURVEY has 48 observations and 6 variables.
+
+19295      proc surveyfreq data=survey;
+19296      strata state;
+19297      cluster school;
+19298      weight samplingweight;
+19299      tables schooltype*response / row chisq;
+19300      run;
+
+NOTE: The Rao-Scott chi-square test cannot be computed for the table of schooltype by response because the design correction is not positive.
+NOTE: The PROCEDURE SURVEYFREQ printed page 1382.
+
+19301      
+19302      
+19303      
+19304      
+The SAS System
+
+19305      

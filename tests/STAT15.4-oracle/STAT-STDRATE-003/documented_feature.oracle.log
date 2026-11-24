@@ -1,0 +1,67 @@
+The SAS System
+
+3572       
+3573       /* STAT-STDRATE-003: STDRATE — REFERENCE / Rate / Risk
+3574        * Source: S154 / Chapter 116 / `REFERENCE Statement` (PDF pp. 9499–9500); S154 / Chapter 116 / `Rate` (PDF pp. 9502–9505); S154 / Chapter 116 /
+3574     ! `Risk` (PDF pp. 9505–9507).
+3575        * Discriminates: Getting Started: STDRATE Procedure; explicit statements: REFERENCE
+3576        */
+3577       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+3577     ! validmemname=compatible locale=en_US;
+3578       %let syscc=0;
+3579       title; footnote;
+3580       ods _all_ close;
+3581       ods listing gpath="%sysfunc(pathname(work))";
+3582       ods graphics off;
+3583       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.SELECTED (memtype=DATA).
+NOTE: Deleting WORK.SIM (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.THICK (memtype=DATA).
+3583     !                                         quit;
+
+
+3584       ods path work.templat(update) sashelp.tmplmst(read);
+3585       
+3586       data Florida_C43;
+3587       input Age :$5. Event PYear:comma9.;
+3588       datalines;
+
+NOTE: The data set WORK.FLORIDA_C43 has 10 observations and 3 variables.
+
+3599       ;
+3600       data US_C43;
+3601       input Age :$5. Event:comma5. PYear:comma10.;
+3602       datalines;
+
+NOTE: The data set WORK.US_C43 has 10 observations and 3 variables.
+
+3613       ;
+3614       ods graphics on;
+3615       proc stdrate data=Florida_C43 refdata=US_C43
+3616       method=indirect
+3617       stat=rate(mult=100000)
+3618       plots=all
+3619       ;
+3620       population event=Event total=PYear;
+3621       reference event=Event total=PYear;
+3622       strata Age / stats smr;
+3623       run;
+
+NOTE: The PROCEDURE STDRATE printed pages 229-230.
+
+3624       
+3625       
+3626       
+3627       
+The SAS System
+
+3628       

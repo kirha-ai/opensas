@@ -1,0 +1,155 @@
+The SAS System
+
+1408       
+1409       /* STAT-PHREG-016: PHREG — CONTRAST / ESTIMATE / TEST
+1410        * Source: S154 / Chapter 92 / `CONTRAST Statement` (PDF pp. 7359–7362); S154 / Chapter 92 / `ESTIMATE Statement` (PDF pp. 7362–7364); S154 /
+1410     ! Chapter 92 / `TEST Statement` (PDF pp. 7389–7391).
+1411        * Discriminates: Example 92.3: Modeling with Categorical Predictors; explicit statements: CONTRAST, ESTIMATE, TEST
+1412        */
+1413       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+1413     ! validmemname=compatible locale=en_US;
+1414       %let syscc=0;
+1415       title; footnote;
+1416       ods _all_ close;
+1417       ods listing gpath="%sysfunc(pathname(work))";
+1418       ods graphics off;
+1419       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.FORMATS (memtype=CATALOG).
+NOTE: Deleting WORK.PRIOR (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.VALUNG (memtype=DATA).
+1419     !                                         quit;
+
+
+1420       ods path work.templat(update) sashelp.tmplmst(read);
+1421       
+1422       data Myeloma;
+1423       input Time VStatus LogBUN HGB Platelet Age LogWBC Frac
+1424       LogPBM Protein SCalc;
+1425       label Time='Survival Time'
+1426       VStatus='0=Alive 1=Dead';
+1427       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.MYELOMA has 65 observations and 11 variables.
+
+1494       ;
+1495       run;
+1496       proc format;
+1496     !              value yesno 0='no' 10='yes';
+NOTE: Format YESNO has been output.
+1496     !                                           run;
+
+
+1497       data VALung;
+1498       drop check m;
+1499       retain Therapy Cell;
+1500       infile cards column=column;
+1501       length Check $ 1;
+1502       label Time='time to death in days'
+1503       Kps='Karnofsky performance scale'
+1504       Duration='months from diagnosis to randomization'
+1505       Age='age in years'
+1506       Prior='prior therapy'
+1507       Cell='cell type'
+1508       Therapy='type of treatment';
+1509       format Prior yesno.;
+1510       M=Column;
+1511       input Check $ @@;
+1512       if M>Column then M=1;
+1513       if Check='s'|Check='t' then do;
+1514       input @M Therapy $ Cell $;
+1515       delete;
+1516       end;
+1517       else do;
+1518       input @M Time Kps Duration Age Prior @@;
+1519       Status=(Time>0);
+1520       Time=abs(Time);
+1521       end;
+1522       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.VALUNG has 137 observations and 8 variables.
+
+1568       ;
+1569       proc phreg data=VALung;
+1570       class Prior(ref='no') Cell(ref='large') Therapy(ref='standard');
+1571       model Time*Status(0) = Kps Duration Age Cell Prior|Therapy;
+1572       run;
+
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: Under full-rank parameterizations, Type 3 effect tests are replaced by joint tests.  The joint test for an effect is a test that all of the parameters 
+      associated with that effect are zero.  Such joint tests might not be equivalent to Type 3 effect tests under GLM parameterization.
+NOTE: Hazard ratios that cannot be conveniently calculated or displayed are set to missing in the ParameterEstimates table. Use the HAZARDRATIO statement to 
+      compute the needed hazard ratios.
+NOTE: The PROCEDURE PHREG printed page 50.
+
+1573       proc phreg data=VALung;
+1574       class Prior(ref='no') Cell(ref='large') Therapy(ref='standard');
+1575       model Time*Status(0) = Kps Duration Age Cell Prior|Therapy
+1576       / selection=backward slstay=0.1;
+1577       run;
+
+NOTE: Convergence criterion (GCONV=1E-8) satisfied for the model in Step 0.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied for the model in Step 1.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied for the model in Step 2.
+NOTE: Under full-rank parameterizations, Type 3 effect tests are replaced by joint tests.  The joint test for an effect is a test that all of the parameters 
+      associated with that effect are zero.  Such joint tests might not be equivalent to Type 3 effect tests under GLM parameterization.
+NOTE: Hazard ratios that cannot be conveniently calculated or displayed are set to missing in the ParameterEstimates table. Use the HAZARDRATIO statement to 
+      compute the needed hazard ratios.
+NOTE: The PROCEDURE PHREG printed page 51.
+
+1578       proc phreg data=VALung;
+1579       class Prior(ref='no') Cell(ref='large') Therapy(ref='standard');
+1580       model Time*Status(0) = Kps Cell Prior|Therapy;
+1581       hazardratio 'H1' Kps / units=10 cl=both;
+1582       hazardratio 'H2' Cell / cl=both;
+1583       hazardratio 'H3' Therapy / diff=ref cl=both;
+1584       contrast 'C1' Kps 10 / estimate=exp;
+1585       contrast 'C2' cell 1 0 0, /* adeno vs large */
+1586       cell 1 -1 0, /* adeno vs small */
+1587       cell 1 0 -1, /* adeno vs squamous */
+1588       cell 0 -1 0, /* large vs small */
+1589       cell 0 0 -1, /* large vs Squamous */
+1590       cell 0 1 -1 /* small vs squamous */
+1591       / estimate=exp;
+1592       contrast 'C3' Prior 0 Therapy 1 Prior *Therapy 0,
+1593       Prior 0 Therapy 1 Prior *Therapy 1 / estimate=exp;
+1594       run;
+
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: Under full-rank parameterizations, Type 3 effect tests are replaced by joint tests.  The joint test for an effect is a test that all of the parameters 
+      associated with that effect are zero.  Such joint tests might not be equivalent to Type 3 effect tests under GLM parameterization.
+NOTE: Hazard ratios that cannot be conveniently calculated or displayed are set to missing in the ParameterEstimates table. Use the HAZARDRATIO statement to 
+      compute the needed hazard ratios.
+WARNING: Some rows of the L matrix for the CONTRAST statement 'C2' are linearly dependent. These rows will be ignored.
+NOTE: The PROCEDURE PHREG printed page 52.
+
+1595       data Myeloma2;
+1596       set Myeloma;
+1597       Contrived= (Time <= 65);
+1598       run;
+
+NOTE: There were 65 observations read from the data set WORK.MYELOMA.
+NOTE: The data set WORK.MYELOMA2 has 65 observations and 12 variables.
+
+1599       proc phreg data=Myeloma2;
+1600       model Time*Vstatus(0)=LOGbun HGB Contrived / itprint;
+1601       run;
+
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The PROCEDURE PHREG printed page 53.
+
+1602       
+1603       
+1604       
+1605       
+The SAS System
+
+1606       

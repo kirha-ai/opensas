@@ -1,0 +1,59 @@
+The SAS System
+
+19698      
+19699      /* STAT-SURVEYFREQ-017: SURVEYFREQ — Output Data Sets
+19700       * Source: S154 / Chapter 118 / `Output Data Sets` (PDF pp. 9671–9672).
+19701       * Discriminates: Verified default procedure context
+19702       */
+19703      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+19703    ! validmemname=compatible locale=en_US;
+19704      %let syscc=0;
+19705      title; footnote;
+19706      ods _all_ close;
+19707      ods listing gpath="%sysfunc(pathname(work))";
+19708      ods graphics off;
+19709      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SURVEY (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+19709    !                                         quit;
+
+
+19710      ods path work.templat(update) sashelp.tmplmst(read);
+19711      
+19712      data survey;
+19713      do state=1 to 2;
+19714      do school=1 to 4;
+19715      do id=1 to 6;
+19716      response=1+mod(id+school,3);
+19717      schooltype=1+mod(school,2);
+19718      samplingweight=2+state+school/10;
+19719      output;
+19720      end;
+19721      end;
+19722      end;
+19723      run;
+
+NOTE: The data set WORK.SURVEY has 48 observations and 6 variables.
+
+19724      proc surveyfreq data=survey;
+19725      strata state;
+19726      cluster school;
+19727      weight samplingweight;
+19728      tables schooltype*response / row chisq;
+19729      run;
+
+NOTE: The Rao-Scott chi-square test cannot be computed for the table of schooltype by response because the design correction is not positive.
+NOTE: The PROCEDURE SURVEYFREQ printed page 1393.
+
+19730      
+19731      
+19732      
+19733      
+The SAS System
+
+19734      

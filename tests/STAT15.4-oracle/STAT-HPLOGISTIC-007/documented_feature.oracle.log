@@ -1,0 +1,54 @@
+The SAS System
+
+3949       
+3950       /* STAT-HPLOGISTIC-007: HPLOGISTIC — Model Fit and Assessment Statistics
+3951        * Source: S154 / Chapter 61 / `Model Fit and Assessment Statistics` (PDF pp. 4770–4774).
+3952        * Discriminates: Getting Started: HPLOGISTIC Procedure
+3953        */
+3954       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+3954     ! validmemname=compatible locale=en_US;
+3955       %let syscc=0;
+3956       title; footnote;
+3957       ods _all_ close;
+3958       ods listing gpath="%sysfunc(pathname(work))";
+3959       ods graphics off;
+3960       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.JUNKMAIL (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+3960     !                                         quit;
+
+
+3961       ods path work.templat(update) sashelp.tmplmst(read);
+3962       
+3963       data getStarted;
+3964       input C$ y x1-x10;
+3965       datalines;
+
+NOTE: The data set WORK.GETSTARTED has 100 observations and 12 variables.
+
+4066       ;
+4067       proc hplogistic data=getStarted;
+4068       class C;
+4069       model y = C x1-x10;
+4070       run;
+
+NOTE: The HPLOGISTIC procedure is executing in single-machine mode.
+NOTE: You are modeling the probability that y='0'.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: There were 100 observations read from the data set WORK.GETSTARTED.
+NOTE: The PROCEDURE HPLOGISTIC printed page 196.
+
+4071       
+4072       
+4073       
+4074       
+The SAS System
+
+4075       

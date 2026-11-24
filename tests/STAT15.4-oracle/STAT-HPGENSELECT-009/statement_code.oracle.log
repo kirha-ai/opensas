@@ -1,0 +1,71 @@
+The SAS System
+
+1490       
+1491       /* STAT-HPGENSELECT-009: HPGENSELECT — CODE
+1492        * Source: S154 / Chapter 59 / `CODE Statement` (PDF p. 4637).
+1493        * Discriminates: Generate DATA step scoring code, execute it against the input rows, and print the scored data.
+1494        */
+1495       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+1495     ! validmemname=compatible locale=en_US;
+1496       %let syscc=0;
+1497       title; footnote;
+1498       ods _all_ close;
+1499       ods listing gpath="%sysfunc(pathname(work))";
+1500       ods graphics off;
+1501       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.GETSTARTED (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK._ORACLE_INPUT (memtype=DATA).
+1501     !                                         quit;
+
+
+1502       ods path work.templat(update) sashelp.tmplmst(read);
+1503       
+1504       filename _orcode "%sysfunc(pathname(work))/_oracle_score.sas";
+1505       
+1506       
+1507       data getStarted;
+1508       input C1-C5 Y Total;
+1509       datalines;
+
+NOTE: The data set WORK.GETSTARTED has 100 observations and 7 variables.
+
+1610       ;
+1611       proc hpgenselect data=getStarted;
+1612       class C1-C5;
+1613       model Y = C1-C5 / Distribution=Poisson Link=Log;
+1614       
+1615       code file="%sysfunc(pathname(work))/_oracle_score.sas";
+1616       run;
+
+NOTE: The HPGENSELECT procedure is executing in single-machine mode.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: External file /saswork/SAS_work7EA200001C34_odaws01-euw1.oda.sas.com/SAS_work29EF00001C34_odaws01-euw1.oda.sas.com/_oracle_score.sas opened.
+NOTE: The HPGENSELECT procedure wrote the DATA step code to external file 
+      /saswork/SAS_work7EA200001C34_odaws01-euw1.oda.sas.com/SAS_work29EF00001C34_odaws01-euw1.oda.sas.com/_oracle_score.sas.
+NOTE: There were 100 observations read from the data set WORK.GETSTARTED.
+NOTE: The PROCEDURE HPGENSELECT printed page 118.
+
+1617       
+1618       data _oracle_scored; set getStarted;
+1619       %include _orcode;
+1808       run;
+
+NOTE: There were 100 observations read from the data set WORK.GETSTARTED.
+NOTE: The data set WORK._ORACLE_SCORED has 100 observations and 8 variables.
+
+1809       proc print data=_oracle_scored(obs=10); run;
+
+NOTE: There were 10 observations read from the data set WORK._ORACLE_SCORED.
+NOTE: The PROCEDURE PRINT printed page 119.
+
+1810       
+1811       
+1812       
+1813       
+The SAS System
+
+1814       

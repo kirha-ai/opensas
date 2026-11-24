@@ -1,0 +1,272 @@
+The SAS System
+
+1002       
+1003       /* STAT-GAM-005: GAM — Estimates from PROC GAM / Backfitting and Local Scoring Algorithms / Smoothers
+1004        * Source: S154 / Chapter 48 / `Estimates from PROC GAM` (PDF p. 3310); S154 / Chapter 48 / `Backfitting and Local Scoring Algorithms` (PDF pp.
+1004     ! 3310–3313); S154 / Chapter 48 / `Smoothers` (PDF pp. 3313–3314).
+1005        * Discriminates: Example 48.3: Comparing PROC GAM with PROC LOESS
+1006        */
+1007       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+1007     ! validmemname=compatible locale=en_US;
+1008       %let syscc=0;
+1009       title; footnote;
+1010       ods _all_ close;
+1011       ods listing gpath="%sysfunc(pathname(work))";
+1012       ods graphics off;
+1013       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.DRUGS (memtype=DATA).
+NOTE: Deleting WORK.FORMATS (memtype=CATALOG).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+1013     !                                         quit;
+
+
+1014       ods path work.templat(update) sashelp.tmplmst(read);
+1015       
+1016       data ExperimentA;
+1017       format Temperature f4.0 Catalyst f6.3 Yield f8.3;
+1018       input Temperature Catalyst Yield @@;
+1019       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.EXPERIMENTA has 112 observations and 3 variables.
+
+1058       ;
+1059       proc sort data=ExperimentA;
+1060       by Temperature Catalyst;
+1061       run;
+
+NOTE: There were 112 observations read from the data set WORK.EXPERIMENTA.
+NOTE: The data set WORK.EXPERIMENTA has 112 observations and 3 variables.
+
+1062       proc template;
+1063       define statgraph surface;
+1064       dynamic _X _Y _Z _T;
+1065       begingraph;
+1066       entrytitle _T;
+1067       layout overlay3d/
+1068       xaxisopts=(linearopts=(tickvaluesequence=
+1069       (start=85 end=135 increment=25)))
+1070       yaxisopts=(linearopts=(tickvaluesequence=
+1071       (start=0 end=0.08 increment=0.04)))
+1072       rotate=30 cube=false;
+1073       surfaceplotparm x=_X y=_Y z=_Z;
+1074       endlayout;
+1075       endgraph;
+1076       end;
+NOTE: STATGRAPH 'Surface' has been saved to: WORK.TEMPLAT
+1077       run;
+
+1078       proc sgrender data=ExperimentA template=surface;
+1079       dynamic _X='Temperature' _Y='Catalyst' _Z='Yield' _T='Raw Data';
+1080       run;
+
+NOTE: Listing image output written to /saswork/SAS_work283500013145_odaws02-euw1.oda.sas.com/SAS_workFEAA00013145_odaws02-euw1.oda.sas.com/SGRender.png.
+NOTE: There were 112 observations read from the data set WORK.EXPERIMENTA.
+
+1081       ods output ScoreResults=PredLOESS;
+1082       proc loess data=ExperimentA;
+1083       model Yield = Temperature Catalyst
+1084       / scale=sd select=gcv degree=2;
+1085       score;
+1086       run;
+
+NOTE: The data set WORK.PREDLOESS has 112 observations and 7 variables.
+NOTE: The PROCEDURE LOESS printed pages 121-123.
+
+1087       proc gam data=PredLoess;
+1088       model Yield = loess(Temperature) loess(Catalyst) / method=gcv;
+1089       output out=PredGAM p=Gam_p_;
+1090       run;
+
+NOTE: The data set WORK.PREDGAM has 112 observations and 10 variables.
+NOTE: The PROCEDURE GAM printed page 124.
+
+1091       proc template;
+1092       define statgraph surface1;
+1093       begingraph;
+1094       entrytitle "Fitted Surface";
+1095       layout lattice/columns=2;
+1096       layout
+1097       overlay3d/xaxisopts=(linearopts=(tickvaluesequence=
+1098       (start=85 end=135 increment=25)))
+1099       yaxisopts=(linearopts=(tickvaluesequence=
+1100       (start=0 end=0.08 increment=0.04)))
+1101       zaxisopts=(label="P_Yield")
+1102       rotate=30 cube=0;
+1103       entry "PROC LOESS"/location=outside valign=top
+1104       textattrs=graphlabeltext;
+1105       surfaceplotparm x=Temperature y=Catalyst z=p_Yield;
+1106       endlayout;
+1107       layout
+1108       overlay3d/xaxisopts=(linearopts=(tickvaluesequence=
+1109       (start=85 end=135 increment=25)))
+1110       yaxisopts=(linearopts=(tickvaluesequence=
+1111       (start=0 end=0.08 increment=0.04)))
+1112       rotate=30 cube=0
+1113       zaxisopts=(label="P_Yield")
+1114       rotate=30 cube=0;
+1115       entry "PROC GAM"/location=outside valign=top
+1116       textattrs=graphlabeltext;
+1117       surfaceplotparm x=Temperature y=Catalyst z=Gam_p_Yield;
+1118       endlayout;
+1119       endlayout;
+1120       endgraph;
+1121       end;
+NOTE: STATGRAPH 'Surface1' has been saved to: WORK.TEMPLAT
+1122       run;
+
+1123       proc sgrender data=PredGAM template=surface1;
+1124       run;
+
+NOTE: Listing image output written to /saswork/SAS_work283500013145_odaws02-euw1.oda.sas.com/SAS_workFEAA00013145_odaws02-euw1.oda.sas.com/SGRender1.png.
+NOTE: There were 112 observations read from the data set WORK.PREDGAM.
+
+1125       proc template;
+1126       define statgraph projection;
+1127       begingraph;
+1128       entrytitle "Cross Sections of Fitted Surfaces";
+1129       layout lattice/rows=2 columndatarange=unionall
+1130       columngutter=10;
+1131       columnAxes;
+1132       columnAxis / display=all griddisplay=auto_on;
+1133       endColumnAxes;
+1134       layout overlay/
+1135       xaxisopts=(display=none)
+1136       yaxisopts=(label="LOESS Prediction"
+1137       linearopts=(viewmin=2 viewmax=10));
+1138       seriesplot x=Catalyst y=p_Yield /
+1139       group=temperature
+1140       name="Temperature";
+1141       endlayout;
+1142       layout overlay/
+1143       xaxisopts=(display=none)
+1144       yaxisopts=(label="GAM Prediction"
+1145       linearopts=(viewmin=2 viewmax=10));
+1146       seriesplot x=Catalyst y=Gam_p_Yield /
+1147       group=temperature
+1148       name="Temperature";
+1149       endlayout;
+1150       columnheaders;
+1151       discreteLegend "Temperature" / title = "Temperature";
+1152       endcolumnheaders;
+1153       endlayout;
+1154       endgraph;
+1155       end;
+NOTE: STATGRAPH 'Projection' has been saved to: WORK.TEMPLAT
+1156       run;
+
+1157       proc sgrender data=PredGAM template=projection;
+1158       run;
+
+NOTE: Listing image output written to /saswork/SAS_work283500013145_odaws02-euw1.oda.sas.com/SAS_workFEAA00013145_odaws02-euw1.oda.sas.com/SGRender2.png.
+NOTE: There were 112 observations read from the data set WORK.PREDGAM.
+
+1159       data ExperimentB;
+1160       format Temperature f4.0 Catalyst f6.3 Yield f8.3;
+1161       input Temperature Catalyst Yield @@;
+1162       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.EXPERIMENTB has 112 observations and 3 variables.
+
+1201       ;
+1202       proc sort data=ExperimentB;
+1203       by Temperature Catalyst;
+1204       run;
+
+NOTE: There were 112 observations read from the data set WORK.EXPERIMENTB.
+NOTE: The data set WORK.EXPERIMENTB has 112 observations and 3 variables.
+
+1205       proc sgrender data=ExperimentB template=surface;
+1206       dynamic _X='Temperature' _Y='Catalyst' _Z='Yield' _T='Raw Data';
+1207       run;
+
+NOTE: Listing image output written to /saswork/SAS_work283500013145_odaws02-euw1.oda.sas.com/SAS_workFEAA00013145_odaws02-euw1.oda.sas.com/SGRender3.png.
+NOTE: There were 112 observations read from the data set WORK.EXPERIMENTB.
+
+1208       ods output ScoreResults=PredLOESSb;
+1209       proc loess data=ExperimentB;
+1210       model Yield=Temperature Catalyst / scale=sd select=gcv degree=2;
+1211       score;
+1212       run;
+
+NOTE: The data set WORK.PREDLOESSB has 112 observations and 7 variables.
+NOTE: The PROCEDURE LOESS printed pages 125-127.
+
+1213       proc gam data=PredLOESSb;
+1214       model Yield=loess(Temperature) loess(Catalyst) / method=gcv;
+1215       output out=PredGAMb p=Gam_p_;
+1216       run;
+
+NOTE: Pr > ChiSq set to missing in analysis of deviance for components with approximate DF < 0.5.
+NOTE: The data set WORK.PREDGAMB has 112 observations and 10 variables.
+NOTE: The PROCEDURE GAM printed page 128.
+
+1217       data PredGAM;
+1218       set PredGAM;
+1219       rename Yield=Yield_a;
+1220       run;
+
+NOTE: There were 112 observations read from the data set WORK.PREDGAM.
+NOTE: The data set WORK.PREDGAM has 112 observations and 10 variables.
+
+1221       data PredGAMb;
+1222       set PredGAMb;
+1223       set PredGAM(keep=Yield_a);
+1224       run;
+
+NOTE: There were 112 observations read from the data set WORK.PREDGAMB.
+NOTE: There were 112 observations read from the data set WORK.PREDGAM.
+NOTE: The data set WORK.PREDGAMB has 112 observations and 11 variables.
+
+1225       proc template;
+1226       define statgraph scatter2;
+1227       dynamic _X _Y1 _Y2;
+1228       begingraph;
+1229       entrytitle "Scatter Plots of Yield by Catalyst";
+1230       layout lattice/rows=2 columndatarange=unionall
+1231       rowdatarange=unionall
+1232       columngutter=15;
+1233       columnAxes;
+1234       columnAxis / display=all griddisplay=auto_on;
+1235       endColumnAxes;
+1236       layout overlay/
+1237       xaxisopts=(display=none)
+1238       yaxisopts=(label="Yield of Experiment A"
+1239       linearopts=(viewmin=2 viewmax=10));
+1240       scatterplot x=_X y=_Y1;
+1241       endlayout;
+1242       layout overlay/
+1243       xaxisopts=(display=none)
+1244       yaxisopts=(label="Yield of Experiment B"
+1245       linearopts=(viewmin=2 viewmax=10));
+1246       scatterplot x=_X y=_Y2;
+1247       endlayout;
+1248       endlayout;
+1249       endgraph;
+1250       end;
+NOTE: STATGRAPH 'Scatter2' has been saved to: WORK.TEMPLAT
+1251       run;
+
+1252       proc sgrender data=PredGAMb template=scatter2;
+1253       dynamic _X='Catalyst' _Y1='Yield_a' _Y2='Yield';
+1254       run;
+
+NOTE: Listing image output written to /saswork/SAS_work283500013145_odaws02-euw1.oda.sas.com/SAS_workFEAA00013145_odaws02-euw1.oda.sas.com/SGRender4.png.
+NOTE: There were 112 observations read from the data set WORK.PREDGAMB.
+
+1255       ods graphics off;
+1256       run;
+1257       quit;
+1258       
+1259       
+1260       
+1261       
+The SAS System
+
+1262       

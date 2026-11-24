@@ -1,0 +1,63 @@
+The SAS System
+
+18960      
+18961      /* STAT-STEPDISC-001: STEPDISC — Data input, variable roles, and basic options
+18962       * Source: S154 / Chapter 117 / `PROC STEPDISC Statement` (PDF pp. 9559–9563); S154 / Chapter 117 / `BY Statement` (PDF pp. 9563–9564); S154 /
+18962    ! Chapter 117 / `CLASS Statement` (PDF p. 9564); S154 / Chapter 117 / `FREQ Statement` (PDF p. 9564); S154 / Chapter 117 / `VAR Statement` (PDF p.
+18962    ! 9564); S154 / Chapter 117 / `WEIGHT Statement` (PDF pp. 9564–9565); S154 / Chapter 117 / `Missing Values` (PDF p. 9565); S154 / Chapter 117 /
+18962    ! `Input Data Sets` (PDF pp. 9565–9566).
+18963       * Discriminates: Two explicit BY groups contain identical inputs, exposing group boundaries and per-group results.
+18964       */
+18965      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+18965    ! validmemname=compatible locale=en_US;
+18966      %let syscc=0;
+18967      title; footnote;
+18968      ods _all_ close;
+18969      ods listing gpath="%sysfunc(pathname(work))";
+18970      ods graphics off;
+18971      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+18971    !                                         quit;
+
+
+18972      ods path work.templat(update) sashelp.tmplmst(read);
+18973      
+18974      title 'Fish Measurement Data';
+18975      data _oracle_input; set sashelp.fish; do _oracle_by=1 to 2; output; end; run;
+
+NOTE: There were 159 observations read from the data set SASHELP.FISH.
+NOTE: The data set WORK._ORACLE_INPUT has 318 observations and 8 variables.
+
+18976      proc sort data=_oracle_input; by _oracle_by; run;
+
+NOTE: There were 318 observations read from the data set WORK._ORACLE_INPUT.
+NOTE: The data set WORK._ORACLE_INPUT has 318 observations and 8 variables.
+
+18977      proc stepdisc data=_oracle_input;
+18978      by _oracle_by;
+18979      class Species;
+18980      run;
+
+WARNING: 1 observations in DATA= data set or BY group will not be included in the analysis due to missing values.
+WARNING: A total of 1 of the 159 observations in the DATA= data set were excluded (frequency sum = 158).
+NOTE: The above message was for the following BY group:
+      _oracle_by=1
+WARNING: 1 observations in DATA= data set or BY group will not be included in the analysis due to missing values.
+WARNING: A total of 1 of the 159 observations in the DATA= data set were excluded (frequency sum = 158).
+NOTE: The above message was for the following BY group:
+      _oracle_by=2
+NOTE: There were 318 observations read from the data set WORK._ORACLE_INPUT.
+NOTE: The PROCEDURE STEPDISC printed pages 1323-1340.
+
+18981      
+18982      
+18983      
+18984      
+The SAS System
+
+18985      

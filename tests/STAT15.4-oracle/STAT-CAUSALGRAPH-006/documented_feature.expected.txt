@@ -1,0 +1,30 @@
+
+The CAUSALGRAPH Procedure
+
+                                 Variables in Model
+ 
+                       N    Variables
+
+Measured               8    Age BMI Duration Education Employment Parity PFAS PrevBF
+Unmeasured             2    Alcohol Smoking                                         
+
+
+                                  Graphical Model Summary
+ 
+Model                 Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+Timm17TwoLatent          10          23             1           1           8             2
+
+The CAUSALGRAPH Procedure
+
+                       Covariate Adjustment Sets for Timm17TwoLatent
+                             Causal Effect of PFAS on Duration
+ 
+                                    ----------------------Covariates-----------------------
+                                                                                       Prev
+                Size    Minimal     Age    BMI    Education    Employment    Parity     BF
+
+       1           4    Yes                           *            *           *        *  
+       2           5    No           *                *            *           *        *  
+       3           5    No                  *         *            *           *        *  
+       4           6    No           *      *         *            *           *        *  

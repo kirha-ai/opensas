@@ -1,0 +1,159 @@
+The SAS System
+
+21814      
+21815      /* STAT-GEE-012: GEE — EFFECTPLOT / ODS Graphics
+21816       * Source: S154 / Chapter 50 / `EFFECTPLOT Statement` (PDF pp. 3429–3430); S154 / Chapter 50 / `ODS Graphics` (PDF p. 3458).
+21817       * Discriminates: Verified default procedure context
+21818       */
+21819      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+21819    ! validmemname=compatible locale=en_US;
+21820      %let syscc=0;
+21821      title; footnote;
+21822      ods _all_ close;
+21823      ods listing gpath="%sysfunc(pathname(work))";
+21824      ods graphics off;
+21825      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.CHILDREN (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+21825    !                                         quit;
+
+
+21826      ods path work.templat(update) sashelp.tmplmst(read);
+21827      
+21828      ods graphics on;
+21829      ods trace on;
+21830      ods trace on;
+21831      data Children;
+21832      input ID City$ @@;
+21833      do i=1 to 4;
+21834      input Age Smoke Symptom @@;
+21835      output;
+21836      end;
+21837      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.CHILDREN has 100 observations and 6 variables.
+
+21863      ;
+21864      proc gee data=Children descending;
+21865      class ID City;
+21866      model Symptom = City Age Smoke / dist=bin link=logit;
+21867      repeated subject=ID / type=exch covb corrw;
+21868      run;
+
+
+Output Added:
+-------------
+Name:       ModelInfo
+Label:      Model Information
+Template:   Stat.Gee.ModelInfo
+Path:       GEE.ModelInfo
+-------------
+
+Output Added:
+-------------
+Name:       NObs
+Label:      Number of Observations
+Template:   Stat.Gee.NObs
+Path:       GEE.NObs
+-------------
+
+Output Added:
+-------------
+Name:       ClassLevels
+Label:      Class Level Information
+Template:   Stat.Gee.Classlevels
+Path:       GEE.ClassLevels
+-------------
+
+Output Added:
+-------------
+Name:       ResponseProfile
+Label:      Response Profile
+Template:   Stat.Gee.ResponseProfile
+Path:       GEE.ResponseProfile
+-------------
+NOTE: PROC GEE is modeling the probability that Symptom='1'.
+
+Output Added:
+-------------
+Name:       ParmInfo
+Label:      Parameter Information
+Template:   Stat.GEE.Parminfo
+Path:       GEE.ParmInfo
+-------------
+
+Output Added:
+-------------
+Name:       GEEModInfo
+Label:      GEE Model Information
+Template:   Stat.Gee.GEEModInfo
+Path:       GEE.GEEModInfo
+-------------
+
+Output Added:
+-------------
+Name:       GEENCov
+Label:      Covariance Matrix (Model-Based)
+Template:   Stat.Gee.GEENCov
+Path:       GEE.GEENCov
+-------------
+
+Output Added:
+-------------
+Name:       GEERCov
+Label:      Covariance Matrix (Empirical)
+Template:   Stat.Gee.GEERCov
+Path:       GEE.GEERCov
+-------------
+
+Output Added:
+-------------
+Name:       GEEWCorr
+Label:      Working Correlation Matrix
+Template:   Stat.Gee.GEEWCorr
+Path:       GEE.GEEWCorr
+-------------
+
+Output Added:
+-------------
+Name:       GEEExchCorr
+Label:      Working Correlation
+Template:   Stat.Gee.GEEExchCorr
+Path:       GEE.GEEExchCorr
+-------------
+
+Output Added:
+-------------
+Name:       GEEFitCriteria
+Label:      Fit Criteria
+Template:   Stat.Gee.GEEFitCriteria
+Path:       GEE.GEEFitCriteria
+-------------
+
+Output Added:
+-------------
+Name:       GEEEmpPEst
+Label:      Parameter Estimates for Response Model - Empirical Std Errors
+Template:   Stat.Gee.GEEEst
+Path:       GEE.GEEEmpPEst
+-------------
+NOTE: The PROCEDURE GEE printed page 2369.
+
+21869      ods trace off;
+21870      ods trace off;
+21871      ods graphics off;
+21872      
+21873      
+21874      
+21875      
+The SAS System
+
+21876      

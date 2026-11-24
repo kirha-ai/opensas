@@ -1,0 +1,59 @@
+The SAS System
+
+19230      
+19231      /* STAT-SURVEYFREQ-005: SURVEYFREQ — Jackknife Method
+19232       * Source: S154 / Chapter 118 / `Jackknife Method` (PDF pp. 9639–9641).
+19233       * Discriminates: Verified default procedure context
+19234       */
+19235      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+19235    ! validmemname=compatible locale=en_US;
+19236      %let syscc=0;
+19237      title; footnote;
+19238      ods _all_ close;
+19239      ods listing gpath="%sysfunc(pathname(work))";
+19240      ods graphics off;
+19241      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SURVEY (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+19241    !                                         quit;
+
+
+19242      ods path work.templat(update) sashelp.tmplmst(read);
+19243      
+19244      data survey;
+19245      do state=1 to 2;
+19246      do school=1 to 4;
+19247      do id=1 to 6;
+19248      response=1+mod(id+school,3);
+19249      schooltype=1+mod(school,2);
+19250      samplingweight=2+state+school/10;
+19251      output;
+19252      end;
+19253      end;
+19254      end;
+19255      run;
+
+NOTE: The data set WORK.SURVEY has 48 observations and 6 variables.
+
+19256      proc surveyfreq data=survey;
+19257      strata state;
+19258      cluster school;
+19259      weight samplingweight;
+19260      tables schooltype*response / row chisq;
+19261      run;
+
+NOTE: The Rao-Scott chi-square test cannot be computed for the table of schooltype by response because the design correction is not positive.
+NOTE: The PROCEDURE SURVEYFREQ printed page 1381.
+
+19262      
+19263      
+19264      
+19265      
+The SAS System
+
+19266      

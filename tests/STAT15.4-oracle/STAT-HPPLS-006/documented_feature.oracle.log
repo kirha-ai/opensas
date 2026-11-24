@@ -1,0 +1,114 @@
+The SAS System
+
+6510       
+6511       /* STAT-HPPLS-006: HPPLS — Centering and Scaling / Computational Method
+6512        * Source: S154 / Chapter 64 / `Centering and Scaling` (PDF pp. 4930–4931); S154 / Chapter 64 / `Computational Method` (PDF pp. 4931–4932).
+6513        * Discriminates: Getting Started: HPPLS Procedure
+6514        */
+6515       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+6515     ! validmemname=compatible locale=en_US;
+6516       %let syscc=0;
+6517       title; footnote;
+6518       ods _all_ close;
+6519       ods listing gpath="%sysfunc(pathname(work))";
+6520       ods graphics off;
+6521       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.ALL (memtype=DATA).
+NOTE: Deleting WORK.NEWOBS (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.RESULT (memtype=DATA).
+NOTE: Deleting WORK.SAMPLE (memtype=DATA).
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+6521     !                                         quit;
+
+
+6522       ods path work.templat(update) sashelp.tmplmst(read);
+6523       
+6524       data Sample;
+6525       input obsnam $ v1-v27 ls ha dt Role $5. @@;
+6526       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.SAMPLE has 16 observations and 32 variables.
+
+6575       ;
+6576       proc hppls data=sample;
+6577       model ls ha dt = v1-v27;
+6578       run;
+
+NOTE: The HPPLS procedure is executing in single-machine mode.
+NOTE: Maximum number of factors to extract set to 15. This may be too high; you should consider using either NFAC= to set the number of factors or PARTITION 
+      statement to select the number of factors by test set validation.
+NOTE: There were 16 observations read from the data set WORK.SAMPLE.
+NOTE: The PROCEDURE HPPLS printed page 276.
+
+6579       proc hppls data=sample;
+6580       model ls ha dt = v1-v27;
+6581       partition roleVar = Role(train='TRAIN' test='TEST');
+6582       run;
+
+NOTE: The HPPLS procedure is executing in single-machine mode.
+NOTE: Maximum number of factors to extract set to 9.
+NOTE: There were 16 observations read from the data set WORK.SAMPLE.
+NOTE: The PROCEDURE HPPLS printed pages 277-278.
+
+6583       proc hppls data=sample cvtest(pval=0.15 seed=12345);
+6584       model ls ha dt = v1-v27;
+6585       partition roleVar = Role(train='TRAIN' test='TEST');
+6586       run;
+
+NOTE: The HPPLS procedure is executing in single-machine mode.
+NOTE: Maximum number of factors to extract set to 9.
+NOTE: There were 16 observations read from the data set WORK.SAMPLE.
+NOTE: The PROCEDURE HPPLS printed pages 279-280.
+
+6587       data newobs;
+6588       input obsnam $ v1-v27 @@;
+6589       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.NEWOBS has 2 observations and 28 variables.
+
+6596       ;
+6597       data all;
+6598       set sample newobs;
+6599       run;
+
+NOTE: There were 16 observations read from the data set WORK.SAMPLE.
+NOTE: There were 2 observations read from the data set WORK.NEWOBS.
+NOTE: The data set WORK.ALL has 18 observations and 32 variables.
+
+6600       proc hppls data=all nfac=2;
+6601       model ls ha dt = v1-v27;
+6602       partition roleVar = Role(train='TRAIN' test='TEST');
+6603       output out=result pred=p;
+6604       id obsnam;
+6605       run;
+
+NOTE: The HPPLS procedure is executing in single-machine mode.
+NOTE: There were 18 observations read from the data set WORK.ALL.
+NOTE: The data set WORK.RESULT has 18 observations and 4 variables.
+NOTE: The PROCEDURE HPPLS printed pages 281-282.
+
+6606       proc print data=result;
+6607       where (obsnam in ('EM17','EM25'));
+6608       var obsnam p_ls p_ha p_dt;
+6609       run;
+
+NOTE: There were 2 observations read from the data set WORK.RESULT.
+      WHERE obsnam in ('EM17', 'EM25');
+NOTE: The PROCEDURE PRINT printed page 283.
+
+6610       
+6611       
+6612       
+6613       
+The SAS System
+
+6614       

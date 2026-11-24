@@ -1,0 +1,45 @@
+The SAS System
+
+13338      
+13339      /* STAT-RMSTREG-002: RMSTREG — Restricted mean survival time regression estimation
+13340       * Source: S154 / Chapter 106 / `Getting Started: RMSTREG Procedure` (PDF pp. 8731–8735); S154 / Chapter 106 / `Overview: RMSTREG Procedure` (PDF
+13340    ! pp. 8730–8731).
+13341       * Discriminates: Small synthetic/public-input default model adapted to the documented Getting Started procedure
+13342       */
+13343      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+13343    ! validmemname=compatible locale=en_US;
+13344      %let syscc=0;
+13345      title; footnote;
+13346      ods _all_ close;
+13347      ods listing gpath="%sysfunc(pathname(work))";
+13348      ods graphics off;
+13349      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SURVIVAL (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+13349    !                                         quit;
+
+
+13350      ods path work.templat(update) sashelp.tmplmst(read);
+13351      
+13352      data survival; call streaminit(218); do id=1 to 100; age=25+mod(id*7,40); x=mod(id,2); time=exp(0.5+0.15*x+0.01*age+rand('normal')*0.7);
+13352    ! status=(mod(id,4) ne 0); output; end; run;
+
+NOTE: The data set WORK.SURVIVAL has 100 observations and 5 variables.
+
+13353      proc rmstreg data=survival tau=5; model time*status(0)=age x / link=linear method=pv; run;
+
+NOTE: Algorithm converged.
+NOTE: The PROCEDURE RMSTREG printed page 1035.
+
+13354      
+13355      
+13356      
+13357      
+The SAS System
+
+13358      

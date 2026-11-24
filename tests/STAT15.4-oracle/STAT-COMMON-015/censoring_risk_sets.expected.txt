@@ -1,0 +1,50 @@
+
+The LIFETEST Procedure
+
+    Summary of the Number of Censored and Uncensored Values
+ 
+                                                        Percent
+Stratum    group          Total  Failed    Censored    Censored
+
+      1    A                  5       3           2       40.00
+      2    B                  5       3           2       40.00
+---------------------------------------------------------------
+  Total                      10       6           4       40.00
+
+The LIFETEST Procedure
+
+Testing Homogeneity of Survival Curves for time over Strata
+
+
+        Rank Statistics
+ 
+group       Log-Rank    Wilcoxon
+
+A            0.86667      8.0000
+B           -0.86667     -8.0000
+
+
+Covariance Matrix for the Log-Rank Statistics
+ 
+group             A             B
+
+A           1.08222      -1.08222
+B          -1.08222       1.08222
+
+
+Covariance Matrix for the Wilcoxon Statistics
+ 
+group             A             B
+
+A           58.0000      -58.0000
+B          -58.0000       58.0000
+
+
+       Test of Equality over Strata
+ 
+                                   Pr >
+Test      Chi-Square      DF    Chi-Square
+
+Log-Rank      0.6940       1      0.4048  
+Wilcoxon      1.1034       1      0.2935  
+-2Log(LR)     0.2449       1      0.6207  

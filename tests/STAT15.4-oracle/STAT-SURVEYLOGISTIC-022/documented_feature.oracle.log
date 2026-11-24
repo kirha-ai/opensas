@@ -1,0 +1,61 @@
+The SAS System
+
+21501      
+21502      /* STAT-SURVEYLOGISTIC-022: SURVEYLOGISTIC — Existence of Maximum Likelihood Estimates
+21503       * Source: S154 / Chapter 120 / `Existence of Maximum Likelihood Estimates` (PDF pp. 9847–9848).
+21504       * Discriminates: Verified default procedure context
+21505       */
+21506      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+21506    ! validmemname=compatible locale=en_US;
+21507      %let syscc=0;
+21508      title; footnote;
+21509      ods _all_ close;
+21510      ods listing gpath="%sysfunc(pathname(work))";
+21511      ods graphics off;
+21512      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SURVEY (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+21512    !                                         quit;
+
+
+21513      ods path work.templat(update) sashelp.tmplmst(read);
+21514      
+21515      data survey;
+21516      call streaminit(722);
+21517      do stratum=1 to 2;
+21518      do cluster=1 to 4;
+21519      do id=1 to 12;
+21520      age=20+mod(id*7+cluster,45);
+21521      event=rand('bernoulli',0.3);
+21522      weight=2+stratum+cluster/10;
+21523      output;
+21524      end;
+21525      end;
+21526      end;
+21527      run;
+
+NOTE: The data set WORK.SURVEY has 96 observations and 6 variables.
+
+21528      proc surveylogistic data=survey;
+21529      strata stratum;
+21530      cluster cluster;
+21531      weight weight;
+21532      model event(event='1')=age;
+21533      run;
+
+NOTE: PROC SURVEYLOGISTIC is modeling the probability that event=1.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The PROCEDURE SURVEYLOGISTIC printed page 1426.
+
+21534      
+21535      
+21536      
+21537      
+The SAS System
+
+21538      

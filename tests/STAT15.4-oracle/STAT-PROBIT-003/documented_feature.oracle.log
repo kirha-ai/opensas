@@ -1,0 +1,103 @@
+The SAS System
+
+9118       
+9119       /* STAT-PROBIT-003: PROBIT — CLASS / MODEL / Response Level Ordering
+9120        * Source: S154 / Chapter 100 / `CLASS Statement` (PDF pp. 8106–8108); S154 / Chapter 100 / `MODEL Statement` (PDF pp. 8112–8118); S154 / Chapter
+9120     !  100 / `Response Level Ordering` (PDF pp. 8120–8122).
+9121        * Discriminates: Example 100.2: Multilevel Response; explicit statements: CLASS, MODEL
+9122        */
+9123       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+9123     ! validmemname=compatible locale=en_US;
+9124       %let syscc=0;
+9125       title; footnote;
+9126       ods _all_ close;
+9127       ods listing gpath="%sysfunc(pathname(work))";
+9128       ods graphics off;
+9129       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.NEW (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.STUDY (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+9129     !                                         quit;
+
+
+9130       ods path work.templat(update) sashelp.tmplmst(read);
+9131       
+9132       data multi;
+9133       input Prep $ Dose Symptoms $ N;
+9134       LDose=log10(Dose);
+9135       if Prep='test' then PrepDose=LDose;
+9136       else PrepDose=0;
+9137       datalines;
+
+NOTE: The data set WORK.MULTI has 24 observations and 6 variables.
+
+9162       ;
+9163       proc probit data=multi;
+9164       class Prep;
+9165       nonpara: model Symptoms(order=data)=Prep LDose PrepDose / lackfit;
+9166       weight N;
+9167       run;
+
+NOTE: PROC PROBIT is modeling the probabilities of levels of Symptoms having LOWER Ordered Values in the response profile table.
+NOTE: Algorithm converged.
+NOTE: The LACKFIT option is ignored since the AGGREGATE (or AGGREGATE=) option was not specified for the multinomial model.
+NOTE: The PROCEDURE PROBIT printed page 611.
+
+9168       proc probit data=multi;
+9169       class Prep;
+9170       parallel: model Symptoms(order=data)=Prep LDose / lackfit;
+9171       weight N;
+9172       run;
+
+NOTE: PROC PROBIT is modeling the probabilities of levels of Symptoms having LOWER Ordered Values in the response profile table.
+NOTE: Algorithm converged.
+NOTE: The LACKFIT option is ignored since the AGGREGATE (or AGGREGATE=) option was not specified for the multinomial model.
+NOTE: The PROCEDURE PROBIT printed page 612.
+
+9173       proc probit data=multi
+9174       plots=(predpplot(level=("None" "Mild" "Severe"))
+9175       cdfplot(level=("None" "Mild" "Severe")));
+9176       class Prep;
+9177       parallel: model Symptoms(order=data)=Prep LDose / lackfit;
+9178       weight N;
+9179       run;
+
+WARNING: You must enable ODS graphics before requesting plots.
+NOTE: PROC PROBIT is modeling the probabilities of levels of Symptoms having LOWER Ordered Values in the response profile table.
+NOTE: Algorithm converged.
+NOTE: The LACKFIT option is ignored since the AGGREGATE (or AGGREGATE=) option was not specified for the multinomial model.
+NOTE: The PROCEDURE PROBIT printed page 613.
+
+9180       data xrow;
+9181       input Prep $ Dose Symptoms $ N;
+9182       LDose=log10(Dose);
+9183       datalines;
+
+NOTE: The data set WORK.XROW has 1 observations and 5 variables.
+
+9185       run;
+9186       proc probit data=multi xdata=xrow
+9187       plots=(predpplot(level=("None" "Mild" "Severe"))
+9188       cdfplot(level=("None" "Mild" "Severe")));
+9189       class Prep;
+9190       parallel: model Symptoms(order=data)=Prep LDose / lackfit;
+9191       weight N;
+9192       run;
+
+WARNING: You must enable ODS graphics before requesting plots.
+NOTE: PROC PROBIT is modeling the probabilities of levels of Symptoms having LOWER Ordered Values in the response profile table.
+NOTE: Algorithm converged.
+NOTE: The LACKFIT option is ignored since the AGGREGATE (or AGGREGATE=) option was not specified for the multinomial model.
+NOTE: The PROCEDURE PROBIT printed page 614.
+
+9193       
+9194       
+9195       
+9196       
+The SAS System
+
+9197       

@@ -1,0 +1,58 @@
+The SAS System
+
+9955       
+9956       /* STAT-KRIGE2D-003: KRIGE2D — MODEL
+9957        * Source: S154 / Chapter 74 / `MODEL Statement` (PDF pp. 5455–5463).
+9958        * Discriminates: Getting Started: KRIGE2D Procedure; explicit statements: MODEL
+9959        */
+9960       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+9960     ! validmemname=compatible locale=en_US;
+9961       %let syscc=0;
+9962       title; footnote;
+9963       ods _all_ close;
+9964       ods listing gpath="%sysfunc(pathname(work))";
+9965       ods graphics off;
+9966       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.DATA6 (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.THICK (memtype=DATA).
+9966     !                                         quit;
+
+
+9967       ods path work.templat(update) sashelp.tmplmst(read);
+9968       
+9969       title 'Spatial Prediction With Kriging';
+9970       data thick;
+9971       input East North Thick @@;
+9972       label Thick='Coal Seam Thickness';
+9973       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.THICK has 75 observations and 3 variables.
+
+9999       ;
+10000      ods graphics on;
+10001      proc krige2d data=thick;
+10002      coordinates xc=East yc=North;
+10003      predict var=Thick radius=60;
+10004      model scale=7.4599 range=30.1111 form=gauss;
+10005      grid x=0 to 100 by 2.5 y=0 to 100 by 2.5;
+10006      run;
+
+NOTE: The data set WORK.DATA7 has 1681 observations and 7 variables.
+NOTE: The PROCEDURE KRIGE2D printed pages 721-722.
+
+10007      ods graphics off;
+10008      run;
+10009      quit;
+10010      
+10011      
+10012      
+10013      
+The SAS System
+
+10014      

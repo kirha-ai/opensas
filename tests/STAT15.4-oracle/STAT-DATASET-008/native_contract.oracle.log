@@ -1,0 +1,89 @@
+The SAS System
+
+347        
+348        /* STAT-DATASET-008: Statistical data sets — TYPE=UCOV Data Sets / TYPE=WEIGHT Data Sets
+349         * Source: S154 / Special SAS Data Sets / `TYPE=UCOV Data Sets` (PDF p. 10893); S154 / Special SAS Data Sets / `TYPE=WEIGHT Data Sets` (PDF p. 10893)
+349      ! ; S154 / Special SAS Data Sets / `Definitional Formulas` (PDF pp. 10893–10894).
+350         * Discriminates: Native factor/correlation structure rows and descriptor
+351         */
+352        options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+352      ! validmemname=compatible locale=en_US;
+353        %let syscc=0;
+354        title; footnote;
+355        ods _all_ close;
+356        ods listing gpath="%sysfunc(pathname(work))";
+357        ods graphics off;
+358        proc datasets library=work kill nolist;
+NOTE: Deleting WORK.PEARSON (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SAMPLE (memtype=DATA).
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SSCP (memtype=DATA).
+NOTE: Deleting WORK._ORACLE_DESCRIPTOR (memtype=DATA).
+NOTE: Deleting WORK._ORACLE_MEMBER (memtype=DATA).
+358      !                                         quit;
+
+
+359        ods path work.templat(update) sashelp.tmplmst(read);
+360        
+361        %macro _oracle_descriptor(ds);
+362        proc contents data=&ds out=_oracle_descriptor(keep=name type length varnum label format informat) noprint; run;
+363        proc sort data=_oracle_descriptor; by varnum; run;
+364        proc print data=_oracle_descriptor noobs; run;
+365        data _oracle_member;
+366        length Dataset $64 DatasetType $16;
+367        Dataset="&ds"; _handle=open("&ds");
+368        DatasetType=attrc(_handle,'TYPE'); NObs=attrn(_handle,'NOBS'); NVars=attrn(_handle,'NVARS');
+369        _close=close(_handle); drop _handle _close;
+370        run;
+371        proc print data=_oracle_member noobs; run;
+372        %mend;
+373        
+374        
+375        data sample;
+376         input x z y group $ weight freq;
+377         datalines;
+
+NOTE: The data set WORK.SAMPLE has 12 observations and 6 variables.
+
+390        ;
+391        run;
+392        proc factor data=sample method=principal nfact=2 outstat=structure; var x z y; run;
+
+NOTE: 2 factors will be retained by the NFACTOR criterion.
+NOTE: The data set WORK.STRUCTURE has 11 observations and 5 variables.
+NOTE: The PROCEDURE FACTOR printed pages 29-30.
+
+392      !                                                                                     %_oracle_descriptor(structure); proc print data=structure noobs;
+392      ! run;
+
+NOTE: The data set WORK._ORACLE_DESCRIPTOR has 5 observations and 7 variables.
+
+
+NOTE: There were 5 observations read from the data set WORK._ORACLE_DESCRIPTOR.
+NOTE: The data set WORK._ORACLE_DESCRIPTOR has 5 observations and 7 variables.
+
+
+NOTE: There were 5 observations read from the data set WORK._ORACLE_DESCRIPTOR.
+NOTE: The PROCEDURE PRINT printed page 31.
+
+
+NOTE: The data set WORK._ORACLE_MEMBER has 1 observations and 4 variables.
+
+
+NOTE: There were 1 observations read from the data set WORK._ORACLE_MEMBER.
+NOTE: The PROCEDURE PRINT printed page 32.
+
+
+NOTE: There were 11 observations read from the data set WORK.STRUCTURE.
+NOTE: The PROCEDURE PRINT printed page 33.
+
+393        
+394        
+395        
+396        
+The SAS System
+
+397        

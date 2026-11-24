@@ -1,0 +1,26 @@
+
+Split Plot Design
+
+The PLAN Procedure
+
+Factor      Select      Levels     Order
+
+Block            3           3    Ordered
+a                4           4    Random 
+b                2           2    Random 
+
+
+   Block        a      -b-
+
+       1        4      2 1
+                3      2 1
+                1      2 1
+                2      2 1
+       2        4      1 2
+                3      1 2
+                1      2 1
+                2      1 2
+       3        4      2 1
+                2      2 1
+                3      2 1
+                1      2 1

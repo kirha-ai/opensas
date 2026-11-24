@@ -1,0 +1,46 @@
+The SAS System
+
+1207       
+1208       /* STAT-COMMON-031: TEST Statement
+1209        * Source: S154 / Chapter 20 / `TEST Statement` (PDF pp. 545–547).
+1210        * Discriminates: Joint linear hypothesis, degrees of freedom, F statistic and probability
+1211        */
+1212       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+1212     ! validmemname=compatible locale=en_US;
+1213       %let syscc=0;
+1214       title; footnote;
+1215       ods _all_ close;
+1216       ods listing gpath="%sysfunc(pathname(work))";
+1217       ods graphics off;
+1218       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.FITTED (memtype=ITEMSTOR).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SAMPLE (memtype=DATA).
+NOTE: Deleting WORK.SCORED (memtype=DATA).
+1218     !                                         quit;
+
+
+1219       ods path work.templat(update) sashelp.tmplmst(read);
+1220       
+1221       data sample;
+1222        input x z y group $ weight freq;
+1223        datalines;
+
+NOTE: The data set WORK.SAMPLE has 12 observations and 6 variables.
+
+1236       ;
+1237       run;
+1238       proc reg data=sample; model y=x z; test x=0,z=0; run;
+
+1238     !                                                       quit;
+
+NOTE: The PROCEDURE REG printed pages 66-67.
+
+1239       
+1240       
+1241       
+1242       
+The SAS System
+
+1243       

@@ -1,0 +1,246 @@
+
+The Probit Procedure
+
+          Model Information
+
+Data Set                    WORK.MULTI
+Dependent Variable            Symptoms
+Weight Variable                      N
+Number of Observations              23
+Name of Distribution            Normal
+Log Likelihood            -345.9401767
+
+
+Number of Observations Read          24
+Number of Observations Used          23
+Sum of Weights                      387
+Missing Values                        1
+
+
+         Class Level Information
+ 
+Name          Levels    Values
+
+Prep               2    stand test       
+Symptoms           3    None Mild Severe 
+
+
+        Response Profile
+ 
+Ordered                    Total
+  Value    Symptoms    Frequency
+
+      1    None              188
+      2    Mild               60
+      3    Severe            139
+
+PROC PROBIT is modeling the probabilities of levels of Symptoms having LOWER Ordered Values in the response profile table.
+
+
+Algorithm converged.                                                       
+
+
+         Type III Analysis of Effects
+ 
+                             Wald
+Effect           DF    Chi-Square    Pr > ChiSq
+
+Prep              1        2.3568        0.1247
+LDose             1       30.2874        <.0001
+PrepDose          1        0.7279        0.3935
+
+
+            Analysis of Maximum Likelihood Parameter Estimates
+ 
+                             Standard   95% Confidence     Chi-
+Parameter        DF Estimate    Error       Limits       Square Pr > ChiSq
+
+Intercept         1   3.8080   0.6252   2.5827   5.0333   37.10     <.0001
+Intercept2        1   0.4684   0.0559   0.3589   0.5780   70.19     <.0001
+Prep       stand  1  -1.2573   0.8190  -2.8624   0.3479    2.36     0.1247
+Prep       test   0   0.0000    .        .        .         .        .    
+LDose             1  -2.1512   0.3909  -2.9173  -1.3851   30.29     <.0001
+PrepDose          1  -0.5072   0.5945  -1.6724   0.6580    0.73     0.3935
+
+The Probit Procedure
+
+          Model Information
+
+Data Set                    WORK.MULTI
+Dependent Variable            Symptoms
+Weight Variable                      N
+Number of Observations              23
+Name of Distribution            Normal
+Log Likelihood             -346.306141
+
+
+Number of Observations Read          24
+Number of Observations Used          23
+Sum of Weights                      387
+Missing Values                        1
+
+
+         Class Level Information
+ 
+Name          Levels    Values
+
+Prep               2    stand test       
+Symptoms           3    None Mild Severe 
+
+
+        Response Profile
+ 
+Ordered                    Total
+  Value    Symptoms    Frequency
+
+      1    None              188
+      2    Mild               60
+      3    Severe            139
+
+PROC PROBIT is modeling the probabilities of levels of Symptoms having LOWER Ordered Values in the response profile table.
+
+
+Algorithm converged.                                                       
+
+
+         Type III Analysis of Effects
+ 
+                             Wald
+Effect           DF    Chi-Square    Pr > ChiSq
+
+Prep              1       20.3304        <.0001
+LDose             1       64.6824        <.0001
+
+
+            Analysis of Maximum Likelihood Parameter Estimates
+ 
+                             Standard   95% Confidence     Chi-
+Parameter        DF Estimate    Error       Limits       Square Pr > ChiSq
+
+Intercept         1   3.4148   0.4126   2.6061   4.2235   68.50     <.0001
+Intercept2        1   0.4678   0.0558   0.3584   0.5772   70.19     <.0001
+Prep       stand  1  -0.5675   0.1259  -0.8142  -0.3208   20.33     <.0001
+Prep       test   0   0.0000    .        .        .         .        .    
+LDose             1  -2.3721   0.2949  -2.9502  -1.7940   64.68     <.0001
+
+The Probit Procedure
+
+          Model Information
+
+Data Set                    WORK.MULTI
+Dependent Variable            Symptoms
+Weight Variable                      N
+Number of Observations              23
+Name of Distribution            Normal
+Log Likelihood             -346.306141
+
+
+Number of Observations Read          24
+Number of Observations Used          23
+Sum of Weights                      387
+Missing Values                        1
+
+
+         Class Level Information
+ 
+Name          Levels    Values
+
+Prep               2    stand test       
+Symptoms           3    None Mild Severe 
+
+
+        Response Profile
+ 
+Ordered                    Total
+  Value    Symptoms    Frequency
+
+      1    None              188
+      2    Mild               60
+      3    Severe            139
+
+PROC PROBIT is modeling the probabilities of levels of Symptoms having LOWER Ordered Values in the response profile table.
+
+
+Algorithm converged.                                                       
+
+
+         Type III Analysis of Effects
+ 
+                             Wald
+Effect           DF    Chi-Square    Pr > ChiSq
+
+Prep              1       20.3304        <.0001
+LDose             1       64.6824        <.0001
+
+
+            Analysis of Maximum Likelihood Parameter Estimates
+ 
+                             Standard   95% Confidence     Chi-
+Parameter        DF Estimate    Error       Limits       Square Pr > ChiSq
+
+Intercept         1   3.4148   0.4126   2.6061   4.2235   68.50     <.0001
+Intercept2        1   0.4678   0.0558   0.3584   0.5772   70.19     <.0001
+Prep       stand  1  -0.5675   0.1259  -0.8142  -0.3208   20.33     <.0001
+Prep       test   0   0.0000    .        .        .         .        .    
+LDose             1  -2.3721   0.2949  -2.9502  -1.7940   64.68     <.0001
+
+The Probit Procedure
+
+          Model Information
+
+Data Set                    WORK.MULTI
+Dependent Variable            Symptoms
+Weight Variable                      N
+Number of Observations              23
+Name of Distribution            Normal
+Log Likelihood             -346.306141
+
+
+Number of Observations Read          24
+Number of Observations Used          23
+Sum of Weights                      387
+Missing Values                        1
+
+
+         Class Level Information
+ 
+Name          Levels    Values
+
+Prep               2    stand test       
+Symptoms           3    None Mild Severe 
+
+
+        Response Profile
+ 
+Ordered                    Total
+  Value    Symptoms    Frequency
+
+      1    None              188
+      2    Mild               60
+      3    Severe            139
+
+PROC PROBIT is modeling the probabilities of levels of Symptoms having LOWER Ordered Values in the response profile table.
+
+
+Algorithm converged.                                                       
+
+
+         Type III Analysis of Effects
+ 
+                             Wald
+Effect           DF    Chi-Square    Pr > ChiSq
+
+Prep              1       20.3304        <.0001
+LDose             1       64.6824        <.0001
+
+
+            Analysis of Maximum Likelihood Parameter Estimates
+ 
+                             Standard   95% Confidence     Chi-
+Parameter        DF Estimate    Error       Limits       Square Pr > ChiSq
+
+Intercept         1   3.4148   0.4126   2.6061   4.2235   68.50     <.0001
+Intercept2        1   0.4678   0.0558   0.3584   0.5772   70.19     <.0001
+Prep       stand  1  -0.5675   0.1259  -0.8142  -0.3208   20.33     <.0001
+Prep       test   0   0.0000    .        .        .         .        .    
+LDose             1  -2.3721   0.2949  -2.9502  -1.7940   64.68     <.0001

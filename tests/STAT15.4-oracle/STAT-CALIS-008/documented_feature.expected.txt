@@ -1,0 +1,1085 @@
+
+The CALIS Procedure
+Covariance Structure Analysis: Model and Initial Values
+
+     Modeling Information
+ Maximum Likelihood Estimation
+
+Data Set            WORK.SCORES
+N Records Read      32         
+N Records Used      32         
+N Obs               32         
+Model Type          FACTOR     
+Analysis            Covariances
+
+
+      Variables in the Model
+
+Variables    x1  x2  x3  y1  y2  y3
+Factors      verbal  math          
+
+      Number of Variables = 6
+      Number of Factors   = 2
+
+
+  Initial Factor Loading Matrix
+ 
+            verbal            math
+
+x1               .               0
+           [load1]                
+
+x2               .               0
+           [load1]                
+
+x3               .               0
+           [load1]                
+
+y1               0               .
+                           [load2]
+
+y2               0               .
+                           [load2]
+
+y3               0               .
+                           [load2]
+
+
+   Initial Factor Covariance Matrix
+ 
+                verbal            math
+
+verbal          1.0000               .
+                               [_Add1]
+
+math                 .          1.0000
+               [_Add1]                
+
+
+      Initial Error Variances
+ 
+Variable    Parameter      Estimate
+
+x1          evar1                 .
+x2          evar1                 .
+x3          evar1                 .
+y1          evar2                 .
+y2          evar2                 .
+y3          evar2                 .
+
+The CALIS Procedure
+Covariance Structure Analysis: Descriptive Statistics
+
+         Simple Statistics
+ 
+Variable          Mean       Std Dev
+
+x1            19.90625       6.75545
+x2            18.81250       6.55713
+x3            18.68750       5.33060
+y1            17.90625       5.35428
+y2            17.84375       4.53025
+y3            17.75000       4.39207
+
+The CALIS Procedure
+Covariance Structure Analysis: Optimization
+
+        Initial Estimation Methods
+
+       1    Instrumental Variables Method
+       2    McDonald Method              
+
+
+              Optimization Start
+              Parameter Estimates
+ 
+    N    Parameter      Estimate      Gradient
+
+    1    load1           5.42629    -0.0005092
+    2    load2           4.41764       0.00159
+    3    evar1           9.57115    -0.0009168
+    4    evar2           3.31176      -0.02824
+    5    _Add1           0.50520       0.00923
+
+  Value of Objective Function = 0.8450158513
+
+The CALIS Procedure
+Covariance Structure Analysis: Optimization
+
+Levenberg-Marquardt Optimization
+
+Scaling Update of More (1978)
+
+Parameter Estimates                    5
+Functions (Observations)              21
+
+                                             Optimization Start
+
+Active Constraints                                  0  Objective Function                       0.8450158513
+Max Abs Gradient Element                 0.0282401628  Radius                                              1
+
+
+                                                                                                         Ratio
+                                                                                                       Between
+                                                                                                        Actual
+                                                                 Objective     Max Abs                     and
+                     Function         Active        Objective     Function    Gradient               Predicted
+Iter     Restarts       Calls    Constraints         Function       Change     Element     Lambda       Change
+
+   1            0           4              0          0.84285      0.00217    0.000027          0        0.970
+   2            0           6              0          0.84285     2.23E-10    2.01E-10          0        1.000
+
+                                            Optimization Results
+
+Iterations                                          2  Function Calls                                      9
+Jacobian Calls                                      4  Active Constraints                                  0
+Objective Function                       0.8428493937  Max Abs Gradient Element                 2.014947E-10
+Lambda                                              0  Actual Over Pred Change                  0.9999893138
+Radius                                   0.0000493907                                                       
+
+Convergence criterion (GCONV=1E-8) satisfied.                                                     
+
+The CALIS Procedure
+Covariance Structure Analysis: Maximum Likelihood Estimation
+
+                            Fit Summary
+
+Modeling Info        Number of Observations                      32
+                     Number of Variables                          6
+                     Number of Moments                           21
+                     Number of Parameters                         5
+                     Number of Active Constraints                 0
+                     Baseline Model Function Value           5.6351
+                     Baseline Model Chi-Square             174.6868
+                     Baseline Model Chi-Square DF                15
+                     Pr > Baseline Model Chi-Square          <.0001
+Absolute Index       Fit Function                            0.8428
+                     Chi-Square                             26.1283
+                     Chi-Square DF                               16
+                     Pr > Chi-Square                         0.0522
+                     Z-Test of Wilson & Hilferty             1.6248
+                     Hoelter Critical N                          32
+                     Root Mean Square Residual (RMR)         4.4361
+                     Standardized RMR (SRMR)                 0.1537
+                     Goodness of Fit Index (GFI)             0.8147
+Parsimony Index      Adjusted GFI (AGFI)                     0.7568
+                     Parsimonious GFI                        0.8691
+                     RMSEA Estimate                          0.1429
+                     RMSEA Lower 90% Confidence Limit        0.0000
+                     RMSEA Upper 90% Confidence Limit        0.2385
+                     Probability of Close Fit                0.0837
+                     ECVI Estimate                           1.2595
+                     ECVI Lower 90% Confidence Limit         1.0833
+                     ECVI Upper 90% Confidence Limit         1.9140
+                     Akaike Information Criterion           36.1283
+                     Bozdogan CAIC                          48.4570
+                     Schwarz Bayesian Criterion             43.4570
+                     McDonald Centrality                     0.8536
+Incremental Index    Bentler Comparative Fit Index           0.9366
+                     Bentler-Bonett NFI                      0.8504
+                     Bentler-Bonett Non-normed Index         0.9405
+                     Bollen Normed Index Rho1                0.8598
+                     Bollen Non-normed Index Delta2          0.9362
+                     James et al. Parsimonious NFI           0.9071
+
+The CALIS Procedure
+Covariance Structure Analysis: Maximum Likelihood Estimation
+
+Factor Loading Matrix: Estimate/StdErr/t-value/p-value
+ 
+            verbal            math
+
+x1          5.4226               0
+            0.7655                
+            7.0833                
+            <.0001                
+           [load1]                
+
+x2          5.4226               0
+            0.7655                
+            7.0833                
+            <.0001                
+           [load1]                
+
+x3          5.4226               0
+            0.7655                
+            7.0833                
+            <.0001                
+           [load1]                
+
+y1               0          4.4001
+                            0.5926
+                            7.4246
+                            <.0001
+                           [load2]
+
+y2               0          4.4001
+                            0.5926
+                            7.4246
+                            <.0001
+                           [load2]
+
+y3               0          4.4001
+                            0.5926
+                            7.4246
+                            <.0001
+                           [load2]
+
+
+Factor Covariance Matrix: Estimate/StdErr/t-value/p-value
+ 
+                verbal            math
+
+verbal          1.0000          0.5024
+                                0.1497
+                                3.3569
+                              0.000788
+                               [_Add1]
+
+math            0.5024          1.0000
+                0.1497                
+                3.3569                
+              0.000788                
+               [_Add1]                
+
+
+                             Error Variances
+ 
+                                         Standard
+Variable    Parameter      Estimate         Error     t Value    Pr > |t|
+
+x1          evar1           9.61122       1.72623      5.5678      <.0001
+x2          evar1           9.61122       1.72623      5.5678      <.0001
+x3          evar1           9.61122       1.72623      5.5678      <.0001
+y1          evar2           3.46673       0.62264      5.5678      <.0001
+y2          evar2           3.46673       0.62264      5.5678      <.0001
+y3          evar2           3.46673       0.62264      5.5678      <.0001
+
+
+         Squared Multiple Correlations
+ 
+                 Error         Total
+Variable      Variance      Variance    R-Square
+
+x1             9.61122      39.01579      0.7537
+x2             9.61122      39.01579      0.7537
+x3             9.61122      39.01579      0.7537
+y1             3.46673      22.82728      0.8481
+y2             3.46673      22.82728      0.8481
+y3             3.46673      22.82728      0.8481
+
+
+Factor Scores Regression Coefficients
+ 
+           verbal           math
+
+x1         0.0538       0.001998
+x2         0.0538       0.001998
+x3         0.0538       0.001998
+y1       0.004494         0.0703
+y2       0.004494         0.0703
+y3       0.004494         0.0703
+
+The CALIS Procedure
+Covariance Structure Analysis: Maximum Likelihood Estimation
+
+Standardized Factor Loading Matrix: Estimate/StdErr/t-value/p-value
+ 
+            verbal            math
+
+x1          0.8681               0
+            0.0369                
+           23.5342                
+            <.0001                
+           [load1]                
+
+x2          0.8681               0
+            0.0369                
+           23.5342                
+            <.0001                
+           [load1]                
+
+x3          0.8681               0
+            0.0369                
+           23.5342                
+            <.0001                
+           [load1]                
+
+y1               0          0.9209
+                            0.0231
+                           39.9490
+                            <.0001
+                           [load2]
+
+y2               0          0.9209
+                            0.0231
+                           39.9490
+                            <.0001
+                           [load2]
+
+y3               0          0.9209
+                            0.0231
+                           39.9490
+                            <.0001
+                           [load2]
+
+
+Factor Correlation Matrix: Estimate/StdErr/t-value/p-value
+ 
+                verbal            math
+
+verbal          1.0000          0.5024
+                                0.1497
+                                3.3569
+                              0.000788
+                               [_Add1]
+
+math            0.5024          1.0000
+                0.1497                
+                3.3569                
+              0.000788                
+               [_Add1]                
+
+
+                Standardized Results for Error Variances
+ 
+                                         Standard
+Variable    Parameter      Estimate         Error     t Value    Pr > |t|
+
+x1          evar1           0.24634       0.06405      3.8462      0.0001
+x2          evar1           0.24634       0.06405      3.8462      0.0001
+x3          evar1           0.24634       0.06405      3.8462      0.0001
+y1          evar2           0.15187       0.04246      3.5767      0.0003
+y2          evar2           0.15187       0.04246      3.5767      0.0003
+y3          evar2           0.15187       0.04246      3.5767      0.0003
+
+The CALIS Procedure
+Covariance Structure Analysis: Model and Initial Values
+
+     Modeling Information
+ Maximum Likelihood Estimation
+
+Data Set            WORK.SCORES
+N Records Read      32         
+N Records Used      32         
+N Obs               32         
+Model Type          FACTOR     
+Analysis            Covariances
+
+
+      Variables in the Model
+
+Variables    x1  x2  x3  y1  y2  y3
+Factors      verbal  math          
+
+      Number of Variables = 6
+      Number of Factors   = 2
+
+
+  Initial Factor Loading Matrix
+ 
+            verbal            math
+
+x1               .               0
+           [load1]                
+
+x2               .               0
+           [load1]                
+
+x3               .               0
+           [load1]                
+
+y1               0               .
+                           [load2]
+
+y2               0               .
+                           [load2]
+
+y3               0               .
+                           [load2]
+
+
+   Initial Factor Covariance Matrix
+ 
+                verbal            math
+
+verbal          1.0000               .
+                               [_Add1]
+
+math                 .          1.0000
+               [_Add1]                
+
+
+      Initial Error Variances
+ 
+Variable    Parameter      Estimate
+
+x1          _Add2                 .
+x2          _Add3                 .
+x3          _Add4                 .
+y1          _Add5                 .
+y2          _Add6                 .
+y3          _Add7                 .
+
+NOTE: Parameters with prefix '_Add' are added by PROC CALIS.
+
+The CALIS Procedure
+Covariance Structure Analysis: Descriptive Statistics
+
+         Simple Statistics
+ 
+Variable          Mean       Std Dev
+
+x1            19.90625       6.75545
+x2            18.81250       6.55713
+x3            18.68750       5.33060
+y1            17.90625       5.35428
+y2            17.84375       4.53025
+y3            17.75000       4.39207
+
+The CALIS Procedure
+Covariance Structure Analysis: Optimization
+
+        Initial Estimation Methods
+
+       1    Instrumental Variables Method
+       2    McDonald Method              
+
+
+              Optimization Start
+              Parameter Estimates
+ 
+    N    Parameter      Estimate      Gradient
+
+    1    load1           5.42629       0.01930
+    2    load2           4.41764      -0.15427
+    3    _Add2          11.46675      -0.02996
+    4    _Add3          15.91368       0.00643
+    5    _Add4           1.33303      -0.09989
+    6    _Add5           0.79207      -0.37729
+    7    _Add6           5.18803       0.05705
+    8    _Add7           3.95517      -0.12261
+    9    _Add1           0.50520       0.54055
+
+  Value of Objective Function = 1.3800681698
+
+The CALIS Procedure
+Covariance Structure Analysis: Optimization
+
+Levenberg-Marquardt Optimization
+
+Scaling Update of More (1978)
+
+Parameter Estimates                    9
+Functions (Observations)              21
+
+                                             Optimization Start
+
+Active Constraints                                  0  Objective Function                       1.3800681698
+Max Abs Gradient Element                 0.5405485555  Radius                                   1.0928040039
+
+
+                                                                                                         Ratio
+                                                                                                       Between
+                                                                                                        Actual
+                                                                 Objective     Max Abs                     and
+                     Function         Active        Objective     Function    Gradient               Predicted
+Iter     Restarts       Calls    Constraints         Function       Change     Element     Lambda       Change
+
+   1            0           4              0          0.74380       0.6363      0.0486      0.327        0.654
+   2            0           6              0          0.71210       0.0317      0.0104          0        1.122
+   3            0           8              0          0.71126     0.000837     0.00695          0        0.974
+   4            0          10              0          0.71120     0.000067    0.000694          0        0.894
+   5            0          12              0          0.71119       7.1E-6    0.000953          0        0.846
+   6            0          14              0          0.71119     8.025E-7    0.000082          0        0.811
+   7            0          16              0          0.71119     9.351E-8    0.000113          0        0.783
+   8            0          18              0          0.71119     1.107E-8    0.000010          0        0.760
+   9            0          20              0          0.71119     1.327E-9    0.000013          0        0.740
+
+                                            Optimization Results
+
+Iterations                                          9  Function Calls                                     23
+Jacobian Calls                                     11  Active Constraints                                  0
+Objective Function                       0.7111874763  Max Abs Gradient Element                 0.0000132422
+Lambda                                              0  Actual Over Pred Change                  0.7398228321
+Radius                                   0.0001838249                                                       
+
+Convergence criterion (GCONV=1E-8) satisfied.                                                     
+
+The CALIS Procedure
+Covariance Structure Analysis: Maximum Likelihood Estimation
+
+                            Fit Summary
+
+Modeling Info        Number of Observations                      32
+                     Number of Variables                          6
+                     Number of Moments                           21
+                     Number of Parameters                         9
+                     Number of Active Constraints                 0
+                     Baseline Model Function Value           5.6351
+                     Baseline Model Chi-Square             174.6868
+                     Baseline Model Chi-Square DF                15
+                     Pr > Baseline Model Chi-Square          <.0001
+Absolute Index       Fit Function                            0.7112
+                     Chi-Square                             22.0468
+                     Chi-Square DF                               12
+                     Pr > Chi-Square                         0.0370
+                     Z-Test of Wilson & Hilferty             1.7878
+                     Hoelter Critical N                          30
+                     Root Mean Square Residual (RMR)         4.0974
+                     Standardized RMR (SRMR)                 0.1398
+                     Goodness of Fit Index (GFI)             0.8281
+Parsimony Index      Adjusted GFI (AGFI)                     0.6992
+                     Parsimonious GFI                        0.6625
+                     RMSEA Estimate                          0.1643
+                     RMSEA Lower 90% Confidence Limit        0.0398
+                     RMSEA Upper 90% Confidence Limit        0.2708
+                     Probability of Close Fit                0.0584
+                     ECVI Estimate                           1.4612
+                     ECVI Lower 90% Confidence Limit         1.2500
+                     ECVI Upper 90% Confidence Limit         2.0907
+                     Akaike Information Criterion           40.0468
+                     Bozdogan CAIC                          62.2384
+                     Schwarz Bayesian Criterion             53.2384
+                     McDonald Centrality                     0.8547
+Incremental Index    Bentler Comparative Fit Index           0.9371
+                     Bentler-Bonett NFI                      0.8738
+                     Bentler-Bonett Non-normed Index         0.9214
+                     Bollen Normed Index Rho1                0.8422
+                     Bollen Non-normed Index Delta2          0.9382
+                     James et al. Parsimonious NFI           0.6990
+
+The CALIS Procedure
+Covariance Structure Analysis: Maximum Likelihood Estimation
+
+Factor Loading Matrix: Estimate/StdErr/t-value/p-value
+ 
+            verbal            math
+
+x1          5.2418               0
+            0.7374                
+            7.1085                
+            <.0001                
+           [load1]                
+
+x2          5.2418               0
+            0.7374                
+            7.1085                
+            <.0001                
+           [load1]                
+
+x3          5.2418               0
+            0.7374                
+            7.1085                
+            <.0001                
+           [load1]                
+
+y1               0          4.4462
+                            0.5932
+                            7.4953
+                            <.0001
+                           [load2]
+
+y2               0          4.4462
+                            0.5932
+                            7.4953
+                            <.0001
+                           [load2]
+
+y3               0          4.4462
+                            0.5932
+                            7.4953
+                            <.0001
+                           [load2]
+
+
+Factor Covariance Matrix: Estimate/StdErr/t-value/p-value
+ 
+                verbal            math
+
+verbal          1.0000          0.4514
+                                0.1569
+                                2.8772
+                              0.004012
+                               [_Add1]
+
+math            0.4514          1.0000
+                0.1569                
+                2.8772                
+              0.004012                
+               [_Add1]                
+
+
+                             Error Variances
+ 
+                                         Standard
+Variable    Parameter      Estimate         Error     t Value    Pr > |t|
+
+x1          _Add2          13.05681       4.19549      3.1121      0.0019
+x2          _Add3          10.80421       3.70322      2.9175      0.0035
+x3          _Add4           5.43527       2.72147      1.9972      0.0458
+y1          _Add5           3.29858       1.24673      2.6458      0.0082
+y2          _Add6           1.90435       1.02393      1.8598      0.0629
+y3          _Add7           5.09724       1.61477      3.1566      0.0016
+
+
+         Squared Multiple Correlations
+ 
+                 Error         Total
+Variable      Variance      Variance    R-Square
+
+x1            13.05681      40.53314      0.6779
+x2            10.80421      38.28054      0.7178
+x3             5.43527      32.91160      0.8349
+y1             3.29858      23.06748      0.8570
+y2             1.90435      21.67325      0.9121
+y3             5.09724      24.86614      0.7950
+
+
+Factor Scores Regression Coefficients
+ 
+           verbal           math
+
+x1         0.0367       0.000967
+x2         0.0443       0.001169
+x3         0.0881       0.002323
+y1       0.003247         0.0628
+y2       0.005624         0.1087
+y3       0.002101         0.0406
+
+The CALIS Procedure
+Covariance Structure Analysis: Maximum Likelihood Estimation
+
+Standardized Factor Loading Matrix: Estimate/StdErr/t-value/p-value
+ 
+            verbal            math
+
+x1          0.8233               0
+            0.0568                
+           14.4896                
+            <.0001                
+           [load1]                
+
+x2          0.8472               0
+            0.0532                
+           15.9128                
+            <.0001                
+           [load1]                
+
+x3          0.9137               0
+            0.0448                
+           20.3800                
+            <.0001                
+           [load1]                
+
+y1               0          0.9257
+                            0.0307
+                           30.1935
+                            <.0001
+                           [load2]
+
+y2               0          0.9551
+                            0.0256
+                           37.3077
+                            <.0001
+                           [load2]
+
+y3               0          0.8916
+                            0.0379
+                           23.5398
+                            <.0001
+                           [load2]
+
+
+Factor Correlation Matrix: Estimate/StdErr/t-value/p-value
+ 
+                verbal            math
+
+verbal          1.0000          0.4514
+                                0.1569
+                                2.8772
+                              0.004012
+                               [_Add1]
+
+math            0.4514          1.0000
+                0.1569                
+                2.8772                
+              0.004012                
+               [_Add1]                
+
+
+                Standardized Results for Error Variances
+ 
+                                         Standard
+Variable    Parameter      Estimate         Error     t Value    Pr > |t|
+
+x1          _Add2           0.32213       0.09357      3.4428      0.0006
+x2          _Add3           0.28224       0.09021      3.1286      0.0018
+x3          _Add4           0.16515       0.08193      2.0157      0.0438
+y1          _Add5           0.14300       0.05677      2.5190      0.0118
+y2          _Add6           0.08787       0.04890      1.7969      0.0723
+y3          _Add7           0.20499       0.06755      3.0348      0.0024
+
+The CALIS Procedure
+Covariance Structure Analysis: Model and Initial Values
+
+     Modeling Information
+ Maximum Likelihood Estimation
+
+Data Set            WORK.SCORES
+N Records Read      32         
+N Records Used      32         
+N Obs               32         
+Model Type          FACTOR     
+Analysis            Covariances
+
+
+      Variables in the Model
+
+Variables    x1  x2  x3  y1  y2  y3
+Factors      verbal  math          
+
+      Number of Variables = 6
+      Number of Factors   = 2
+
+
+  Initial Factor Loading Matrix
+ 
+            verbal            math
+
+x1               .               0
+           [load1]                
+
+x2               .               0
+           [load1]                
+
+x3               .               0
+           [alpha]                
+
+y1               0               .
+                            [beta]
+
+y2               0               .
+                           [load2]
+
+y3               0               .
+                           [load2]
+
+
+   Initial Factor Covariance Matrix
+ 
+                verbal            math
+
+verbal          1.0000               .
+                               [_Add1]
+
+math                 .          1.0000
+               [_Add1]                
+
+
+      Initial Error Variances
+ 
+Variable    Parameter      Estimate
+
+x1          evar1                 .
+x2          evar1                 .
+x3          phi                   .
+y1          theta                 .
+y2          evar2                 .
+y3          evar2                 .
+
+The CALIS Procedure
+Covariance Structure Analysis: Descriptive Statistics
+
+         Simple Statistics
+ 
+Variable          Mean       Std Dev
+
+x1            19.90625       6.75545
+x2            18.81250       6.55713
+x3            18.68750       5.33060
+y1            17.90625       5.35428
+y2            17.84375       4.53025
+y3            17.75000       4.39207
+
+The CALIS Procedure
+Covariance Structure Analysis: Optimization
+
+        Initial Estimation Methods
+
+       1    Instrumental Variables Method
+       2    McDonald Method              
+
+
+              Optimization Start
+              Parameter Estimates
+ 
+    N    Parameter      Estimate      Gradient
+
+    1    load1           5.89979       0.01729
+    2    alpha           4.48250      -0.01873
+    3    beta            5.36393      -0.00425
+    4    load2           3.94449       0.01591
+    5    evar1           9.50855      -0.00755
+    6    phi             8.32253       0.01129
+    7    theta           0.01000      -0.03958
+    8    evar2           4.34774      -0.02093
+    9    _Add1           0.51236      -0.09737
+
+  Value of Objective Function = 0.4363156487
+
+The CALIS Procedure
+Covariance Structure Analysis: Optimization
+
+Levenberg-Marquardt Optimization
+
+Scaling Update of More (1978)
+
+Parameter Estimates                    9
+Functions (Observations)              21
+
+                                             Optimization Start
+
+Active Constraints                                  0  Objective Function                       0.4363156487
+Max Abs Gradient Element                 0.0973729169  Radius                                              1
+
+
+                                                                                                         Ratio
+                                                                                                       Between
+                                                                                                        Actual
+                                                                 Objective     Max Abs                     and
+                     Function         Active        Objective     Function    Gradient               Predicted
+Iter     Restarts       Calls    Constraints         Function       Change     Element     Lambda       Change
+
+   1            0           4              0          0.41078       0.0255      0.1063          0        0.838
+   2            0           6              0          0.40914      0.00163      0.0119          0        0.770
+   3            0           8              0          0.40899     0.000149     0.00829          0        0.757
+   4            0          10              0          0.40898     0.000013     0.00141          0        0.734
+   5            0          12              0          0.40898     1.242E-6    0.000735          0        0.721
+   6            0          14              0          0.40898     1.166E-7    0.000153          0        0.711
+   7            0          16              0          0.40898      1.11E-8    0.000067          0        0.704
+   8            0          18              0          0.40898     1.062E-9    0.000016          0        0.699
+
+                                            Optimization Results
+
+Iterations                                          8  Function Calls                                     21
+Jacobian Calls                                     10  Active Constraints                                  0
+Objective Function                       0.4089799839  Max Abs Gradient Element                 0.0000159988
+Lambda                                              0  Actual Over Pred Change                  0.6987602921
+Radius                                   0.0001348873                                                       
+
+Convergence criterion (GCONV=1E-8) satisfied.                                                     
+
+The CALIS Procedure
+Covariance Structure Analysis: Maximum Likelihood Estimation
+
+                            Fit Summary
+
+Modeling Info        Number of Observations                      32
+                     Number of Variables                          6
+                     Number of Moments                           21
+                     Number of Parameters                         9
+                     Number of Active Constraints                 0
+                     Baseline Model Function Value           5.6351
+                     Baseline Model Chi-Square             174.6868
+                     Baseline Model Chi-Square DF                15
+                     Pr > Baseline Model Chi-Square          <.0001
+Absolute Index       Fit Function                            0.4090
+                     Chi-Square                             12.6784
+                     Chi-Square DF                               12
+                     Pr > Chi-Square                         0.3928
+                     Z-Test of Wilson & Hilferty             0.2720
+                     Hoelter Critical N                          52
+                     Root Mean Square Residual (RMR)         1.5718
+                     Standardized RMR (SRMR)                 0.0585
+                     Goodness of Fit Index (GFI)             0.8905
+Parsimony Index      Adjusted GFI (AGFI)                     0.8084
+                     Parsimonious GFI                        0.7124
+                     RMSEA Estimate                          0.0427
+                     RMSEA Lower 90% Confidence Limit        0.0000
+                     RMSEA Upper 90% Confidence Limit        0.1906
+                     Probability of Close Fit                0.4650
+                     ECVI Estimate                           1.1590
+                     ECVI Lower 90% Confidence Limit         1.2500
+                     ECVI Upper 90% Confidence Limit         1.6183
+                     Akaike Information Criterion           30.6784
+                     Bozdogan CAIC                          52.8700
+                     Schwarz Bayesian Criterion             43.8700
+                     McDonald Centrality                     0.9895
+Incremental Index    Bentler Comparative Fit Index           0.9958
+                     Bentler-Bonett NFI                      0.9274
+                     Bentler-Bonett Non-normed Index         0.9947
+                     Bollen Normed Index Rho1                0.9093
+                     Bollen Non-normed Index Delta2          0.9958
+                     James et al. Parsimonious NFI           0.7419
+
+The CALIS Procedure
+Covariance Structure Analysis: Maximum Likelihood Estimation
+
+Factor Loading Matrix: Estimate/StdErr/t-value/p-value
+ 
+            verbal            math
+
+x1          5.8306               0
+            0.8593                
+            6.7853                
+            <.0001                
+           [load1]                
+
+x2          5.8306               0
+            0.8593                
+            6.7853                
+            <.0001                
+           [load1]                
+
+x3          4.6623               0
+            0.7814                
+            5.9664                
+            <.0001                
+           [alpha]                
+
+y1               0          5.2784
+                            0.7010
+                            7.5294
+                            <.0001
+                            [beta]
+
+y2               0          3.9789
+                            0.5732
+                            6.9419
+                            <.0001
+                           [load2]
+
+y3               0          3.9789
+                            0.5732
+                            6.9419
+                            <.0001
+                           [load2]
+
+
+Factor Covariance Matrix: Estimate/StdErr/t-value/p-value
+ 
+                verbal            math
+
+verbal          1.0000          0.5203
+                                0.1425
+                                3.6497
+                              0.000263
+                               [_Add1]
+
+math            0.5203          1.0000
+                0.1425                
+                3.6497                
+              0.000263                
+               [_Add1]                
+
+
+                             Error Variances
+ 
+                                         Standard
+Variable    Parameter      Estimate         Error     t Value    Pr > |t|
+
+x1          evar1          10.31998       2.57827      4.0027      <.0001
+x2          evar1          10.31998       2.57827      4.0027      <.0001
+x3          phi             6.67832       2.59902      2.5696      0.0102
+y1          theta           0.80714       1.35247      0.5968      0.5506
+y2          evar2           4.07534       1.00371      4.0603      <.0001
+y3          evar2           4.07534       1.00371      4.0603      <.0001
+
+
+         Squared Multiple Correlations
+ 
+                 Error         Total
+Variable      Variance      Variance    R-Square
+
+x1            10.31998      44.31603      0.7671
+x2            10.31998      44.31603      0.7671
+x3             6.67832      28.41532      0.7650
+y1             0.80714      28.66835      0.9718
+y2             4.07534      19.90675      0.7953
+y3             4.07534      19.90675      0.7953
+
+
+Factor Scores Regression Coefficients
+ 
+           verbal           math
+
+x1         0.0504       0.000824
+x2         0.0504       0.000824
+x3         0.0623       0.001018
+y1       0.009538         0.1499
+y2       0.001424         0.0224
+y3       0.001424         0.0224
+
+The CALIS Procedure
+Covariance Structure Analysis: Maximum Likelihood Estimation
+
+Standardized Factor Loading Matrix: Estimate/StdErr/t-value/p-value
+ 
+            verbal            math
+
+x1          0.8759               0
+            0.0418                
+           20.9781                
+            <.0001                
+           [load1]                
+
+x2          0.8759               0
+            0.0418                
+           20.9781                
+            <.0001                
+           [load1]                
+
+x3          0.8746               0
+            0.0579                
+           15.1085                
+            <.0001                
+           [alpha]                
+
+y1               0          0.9858
+                            0.0242
+                           40.7610
+                            <.0001
+                            [beta]
+
+y2               0          0.8918
+                            0.0363
+                           24.5554
+                            <.0001
+                           [load2]
+
+y3               0          0.8918
+                            0.0363
+                           24.5554
+                            <.0001
+                           [load2]
+
+
+Factor Correlation Matrix: Estimate/StdErr/t-value/p-value
+ 
+                verbal            math
+
+verbal          1.0000          0.5203
+                                0.1425
+                                3.6497
+                              0.000263
+                               [_Add1]
+
+math            0.5203          1.0000
+                0.1425                
+                3.6497                
+              0.000263                
+               [_Add1]                
+
+
+                Standardized Results for Error Variances
+ 
+                                         Standard
+Variable    Parameter      Estimate         Error     t Value    Pr > |t|
+
+x1          evar1           0.23287       0.07314      3.1841      0.0015
+x2          evar1           0.23287       0.07314      3.1841      0.0015
+x3          phi             0.23503       0.10126      2.3209      0.0203
+y1          theta           0.02815       0.04769      0.5904      0.5549
+y2          evar2           0.20472       0.06477      3.1605      0.0016
+y3          evar2           0.20472       0.06477      3.1605      0.0016

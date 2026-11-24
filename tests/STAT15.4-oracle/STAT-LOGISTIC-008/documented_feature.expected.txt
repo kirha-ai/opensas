@@ -1,0 +1,160 @@
+
+The LOGISTIC Procedure
+
+              Model Information
+
+Data Set                      WORK.ONE        
+Response Variable             Y               
+Number of Response Levels     2               
+Frequency Variable            F               
+Model                         binary logit    
+Optimization Technique        Fisher's scoring
+
+
+Number of Observations Read           8
+Number of Observations Used           8
+Sum of Frequencies Read             528
+Sum of Frequencies Used             528
+
+
+          Response Profile
+ 
+ Ordered                      Total
+   Value            Y     Frequency
+
+       1            1           191
+       2            2           337
+
+Probability modeled is Y=1.
+
+
+                    Model Convergence Status
+
+         Convergence criterion (GCONV=1E-8) satisfied.          
+
+
+         Model Fit Statistics
+ 
+                             Intercept
+              Intercept            and
+Criterion          Only     Covariates
+
+AIC             693.061        691.914
+SC              697.330        708.990
+-2 Log L        691.061        683.914
+
+
+        Testing Global Null Hypothesis: BETA=0
+ 
+Test                 Chi-Square       DF     Pr > ChiSq
+
+Likelihood Ratio         7.1478        3         0.0673
+Score                    6.9921        3         0.0721
+Wald                     6.9118        3         0.0748
+
+
+             Analysis of Maximum Likelihood Estimates
+ 
+                               Standard          Wald
+Parameter    DF    Estimate       Error    Chi-Square    Pr > ChiSq
+
+Intercept     1     -1.0074      0.2436       17.1015        <.0001
+A             1      0.6069      0.2903        4.3714        0.0365
+B             1      0.1929      0.3254        0.3515        0.5533
+A*B           1     -0.1883      0.3933        0.2293        0.6321
+
+
+Association of Predicted Probabilities and Observed Responses
+
+Percent Concordant     42.2    Somers' D    0.118
+Percent Discordant     30.4    Gamma        0.162
+Percent Tied           27.3    Tau-a        0.054
+Pairs                 64367    c            0.559
+
+The LOGISTIC Procedure
+
+              Model Information
+
+Data Set                      WORK.ONE        
+Response Variable             Y               
+Number of Response Levels     2               
+Frequency Variable            F               
+Model                         binary logit    
+Optimization Technique        Fisher's scoring
+
+
+Number of Observations Read           8
+Number of Observations Used           8
+Sum of Frequencies Read             528
+Sum of Frequencies Used             528
+
+
+          Response Profile
+ 
+ Ordered                      Total
+   Value            Y     Frequency
+
+       1            1           191
+       2            2           337
+
+Probability modeled is Y=1.
+
+
+                    Model Convergence Status
+
+         Convergence criterion (GCONV=1E-8) satisfied.          
+
+
+       Deviance and Pearson Goodness-of-Fit Statistics
+ 
+Criterion          Value       DF     Value/DF     Pr > ChiSq
+
+Deviance          0.3541        2       0.1770         0.8377
+Pearson           0.3531        2       0.1765         0.8382
+
+Number of unique profiles: 4
+
+
+         Model Fit Statistics
+ 
+                             Intercept
+              Intercept            and
+Criterion          Only     Covariates
+
+AIC             693.061        688.268
+SC              697.330        696.806
+-2 Log L        691.061        684.268
+
+
+        Testing Global Null Hypothesis: BETA=0
+ 
+Test                 Chi-Square       DF     Pr > ChiSq
+
+Likelihood Ratio         6.7937        1         0.0091
+Score                    6.6779        1         0.0098
+Wald                     6.6210        1         0.0101
+
+
+             Analysis of Maximum Likelihood Estimates
+ 
+                               Standard          Wald
+Parameter    DF    Estimate       Error    Chi-Square    Pr > ChiSq
+
+Intercept     1     -0.9013      0.1614       31.2001        <.0001
+A             1      0.5032      0.1955        6.6210        0.0101
+
+
+           Odds Ratio Estimates
+                     
+             Point          95% Wald
+Effect    Estimate      Confidence Limits
+
+A            1.654       1.127       2.426
+
+
+Association of Predicted Probabilities and Observed Responses
+
+Percent Concordant     28.3    Somers' D    0.112
+Percent Discordant     17.1    Gamma        0.246
+Percent Tied           54.6    Tau-a        0.052
+Pairs                 64367    c            0.556

@@ -1,0 +1,60 @@
+The SAS System
+
+19581      
+19582      /* STAT-SURVEYFREQ-014: SURVEYFREQ — Discordant Proportion Difference / Kappa Coefficients
+19583       * Source: S154 / Chapter 118 / `Discordant Proportion Difference` (PDF pp. 9657–9658); S154 / Chapter 118 / `Kappa Coefficients` (PDF pp.
+19583    ! 9658–9661).
+19584       * Discriminates: Verified default procedure context
+19585       */
+19586      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+19586    ! validmemname=compatible locale=en_US;
+19587      %let syscc=0;
+19588      title; footnote;
+19589      ods _all_ close;
+19590      ods listing gpath="%sysfunc(pathname(work))";
+19591      ods graphics off;
+19592      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SURVEY (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+19592    !                                         quit;
+
+
+19593      ods path work.templat(update) sashelp.tmplmst(read);
+19594      
+19595      data survey;
+19596      do state=1 to 2;
+19597      do school=1 to 4;
+19598      do id=1 to 6;
+19599      response=1+mod(id+school,3);
+19600      schooltype=1+mod(school,2);
+19601      samplingweight=2+state+school/10;
+19602      output;
+19603      end;
+19604      end;
+19605      end;
+19606      run;
+
+NOTE: The data set WORK.SURVEY has 48 observations and 6 variables.
+
+19607      proc surveyfreq data=survey;
+19608      strata state;
+19609      cluster school;
+19610      weight samplingweight;
+19611      tables schooltype*response / row chisq;
+19612      run;
+
+NOTE: The Rao-Scott chi-square test cannot be computed for the table of schooltype by response because the design correction is not positive.
+NOTE: The PROCEDURE SURVEYFREQ printed page 1390.
+
+19613      
+19614      
+19615      
+19616      
+The SAS System
+
+19617      

@@ -1,0 +1,51 @@
+The SAS System
+
+29843      
+29844      /* STAT-VARCOMP-007: VARCOMP — Confidence Limits
+29845       * Source: S154 / Chapter 130 / `Confidence Limits` (PDF pp. 10737–10740).
+29846       * Discriminates: Getting Started: VARCOMP Procedure
+29847       */
+29848      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+29848    ! validmemname=compatible locale=en_US;
+29849      %let syscc=0;
+29850      title; footnote;
+29851      ods _all_ close;
+29852      ods listing gpath="%sysfunc(pathname(work))";
+29853      ods graphics off;
+29854      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.CURE (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+29854    !                                         quit;
+
+
+29855      ods path work.templat(update) sashelp.tmplmst(read);
+29856      
+29857      data Cure;
+29858      input Lab Temp Batch $ Cure @@;
+29859      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.CURE has 108 observations and 4 variables.
+
+29887      ;
+29888      title 'Analyzing the Cure Rate of Rubber';
+29889      proc varcomp method=reml data=cure;
+29890      class temp lab batch;
+29891      model cure=temp|lab batch(lab temp) / fixed=1;
+29892      run;
+
+NOTE: There were 108 observations read from the data set WORK.CURE.
+NOTE: The PROCEDURE VARCOMP printed page 1809.
+
+29893      
+29894      
+29895      
+29896      
+The SAS System
+
+29897      

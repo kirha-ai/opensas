@@ -1,0 +1,61 @@
+The SAS System
+
+21163      
+21164      /* STAT-GEE-001: GEE — Data input, variable roles, and basic options
+21165       * Source: S154 / Chapter 50 / `PROC GEE Statement` (PDF pp. 3426–3428); S154 / Chapter 50 / `BY Statement` (PDF p. 3428); S154 / Chapter 50 /
+21165    ! `FREQ Statement` (PDF pp. 3431–3432); S154 / Chapter 50 / `WEIGHT Statement` (PDF p. 3444).
+21166       * Discriminates: Verified default procedure context
+21167       */
+21168      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+21168    ! validmemname=compatible locale=en_US;
+21169      %let syscc=0;
+21170      title; footnote;
+21171      ods _all_ close;
+21172      ods listing gpath="%sysfunc(pathname(work))";
+21173      ods graphics off;
+21174      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.VOTEPRED (memtype=DATA).
+NOTE: Deleting WORK._DOCTMP000000000000000000176 (memtype=DATA).
+NOTE: Deleting WORK._DOCTMP000000000000000000177 (memtype=DATA).
+21174    !                                         quit;
+
+
+21175      ods path work.templat(update) sashelp.tmplmst(read);
+21176      
+21177      data Children;
+21178      input ID City$ @@;
+21179      do i=1 to 4;
+21180      input Age Smoke Symptom @@;
+21181      output;
+21182      end;
+21183      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.CHILDREN has 100 observations and 6 variables.
+
+21209      ;
+21210      proc gee data=Children descending;
+21211      class ID City;
+21212      model Symptom = City Age Smoke / dist=bin link=logit;
+21213      repeated subject=ID / type=exch covb corrw;
+21214      run;
+
+NOTE: PROC GEE is modeling the probability that Symptom='1'.
+NOTE: The PROCEDURE GEE printed page 2358.
+
+21215      
+21216      
+21217      
+21218      
+The SAS System
+
+21219      

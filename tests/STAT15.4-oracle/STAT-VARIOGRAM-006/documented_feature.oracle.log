@@ -1,0 +1,85 @@
+The SAS System
+
+30340      
+30341      /* STAT-VARIOGRAM-006: VARIOGRAM — Ergodicity / Anisotropy / Pair Formation
+30342       * Source: S154 / Chapter 131 / `Ergodicity` (PDF pp. 10807–10808); S154 / Chapter 131 / `Anisotropy` (PDF p. 10808); S154 / Chapter 131 / `Pair
+30342    ! Formation` (PDF pp. 10808–10809).
+30343       * Discriminates: Getting Started: VARIOGRAM Procedure
+30344       */
+30345      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+30345    ! validmemname=compatible locale=en_US;
+30346      %let syscc=0;
+30347      title; footnote;
+30348      ods _all_ close;
+30349      ods listing gpath="%sysfunc(pathname(work))";
+30350      ods graphics off;
+30351      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.LOGASDATA (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.SEMIVASSTORE (memtype=ITEMSTOR).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+30351    !                                         quit;
+
+
+30352      ods path work.templat(update) sashelp.tmplmst(read);
+30353      
+30354      title 'Spatial Correlation Analysis with PROC VARIOGRAM';
+30355      ods graphics on;
+30356      proc variogram data=sashelp.thick plots=pairs(thr=30);
+30357      compute novariogram nhc=20;
+30358      coordinates xc=East yc=North;
+30359      var Thick;
+30360      run;
+
+NOTE: The PROCEDURE VARIOGRAM printed page 1867.
+
+30361      proc variogram data=sashelp.thick outv=outv;
+30362      compute lagd=7 maxlag=10 cl robust;
+30363      coordinates xc=East yc=North;
+30364      var Thick;
+30365      run;
+
+NOTE: No DIRECTIONS statement and no NDIRECTIONS=, or NDIRECTIONS=0 specified: Computing omnidirectional semivariogram.
+NOTE: The data set WORK.OUTV has 12 observations and 9 variables.
+NOTE: The PROCEDURE VARIOGRAM printed pages 1868-1869.
+
+30366      proc variogram data=sashelp.thick outv=outv plots(only)=moran;
+30367      compute lagd=7 maxlag=10 autocorr(assum=random);
+30368      coordinates xc=East yc=North;
+30369      var Thick;
+30370      run;
+
+NOTE: No DIRECTIONS statement and no NDIRECTIONS=, or NDIRECTIONS=0 specified: Computing omnidirectional semivariogram.
+NOTE: The autocorrelation statistics exclude 33 observation(s) that have no neighbors within the specified LAGDISTANCE= distance.
+NOTE: The Moran scatter plot excludes 33 observation(s) because they have no neighbors within the specified LAGDISTANCE= distance.
+NOTE: The data set WORK.OUTV has 12 observations and 8 variables.
+NOTE: The PROCEDURE VARIOGRAM printed pages 1870-1871.
+
+30371      proc variogram data=sashelp.thick outv=outv;
+30372      store out=SemivStoreGau / label='Thickness Gaussian WLS Fit';
+30373      compute lagd=7 maxlag=10;
+30374      coordinates xc=East yc=North;
+30375      model form=gau cl / covb;
+30376      var Thick;
+30377      run;
+
+NOTE: No DIRECTIONS statement and no NDIRECTIONS=, or NDIRECTIONS=0 specified: Computing omnidirectional semivariogram.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The data set WORK.OUTV has 12 observations and 8 variables.
+NOTE: The PROCEDURE VARIOGRAM printed pages 1872-1875.
+
+30378      ods graphics off;
+30379      run;
+30380      quit;
+30381      
+30382      
+30383      
+30384      
+The SAS System
+
+30385      

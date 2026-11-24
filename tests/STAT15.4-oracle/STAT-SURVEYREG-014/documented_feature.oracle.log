@@ -1,0 +1,98 @@
+The SAS System
+
+24726      
+24727      /* STAT-SURVEYREG-014: SURVEYREG — LSMEANS / LSMESTIMATE / SLICE
+24728       * Source: S154 / Chapter 123 / `LSMEANS Statement` (PDF pp. 10131–10133); S154 / Chapter 123 / `LSMESTIMATE Statement` (PDF pp. 10133–10134);
+24728    ! S154 / Chapter 123 / `SLICE Statement` (PDF p. 10139).
+24729       * Discriminates: Example 123.8: Comparing Domain Statistics; explicit statements: LSMEANS
+24730       */
+24731      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+24731    ! validmemname=compatible locale=en_US;
+24732      %let syscc=0;
+24733      title; footnote;
+24734      ods _all_ close;
+24735      ods listing gpath="%sysfunc(pathname(work))";
+24736      ods graphics off;
+24737      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.ICECREAM (memtype=DATA).
+NOTE: Deleting WORK.MYPARMEST (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.STUDENTTOTALS (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+24737    !                                         quit;
+
+
+24738      ods path work.templat(update) sashelp.tmplmst(read);
+24739      
+24740      data IceCreamDataDomain;
+24741      input Grade Spending Income Gender$ @@;
+24742      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.ICECREAMDATADOMAIN has 40 observations and 4 variables.
+
+24757      ;
+24758      data IceCreamDataDomain;
+24759      set IceCreamDataDomain;
+24760      if Grade=7 then Prob=20/1824;
+24761      if Grade=8 then Prob=9/1025;
+24762      if Grade=9 then Prob=11/1151;
+24763      Weight=1/Prob;
+24764      run;
+
+NOTE: There were 40 observations read from the data set WORK.ICECREAMDATADOMAIN.
+NOTE: The data set WORK.ICECREAMDATADOMAIN has 40 observations and 6 variables.
+
+24765      data StudentTotals;
+24766      input Grade _TOTAL_;
+24767      datalines;
+
+NOTE: The data set WORK.STUDENTTOTALS has 3 observations and 2 variables.
+
+24771      ;
+24772      proc surveymeans data=IceCreamDataDomain total=StudentTotals;
+24773      strata Grade;
+24774      var spending;
+24775      domain Gender;
+24776      weight Weight;
+24777      run;
+
+NOTE: The PROCEDURE SURVEYMEANS printed pages 1562-1563.
+
+24778      title1 'Ice Cream Spending Analysis';
+24779      title2 'Compare Domain Statistics';
+24780      proc surveyreg data=IceCreamDataDomain total=StudentTotals;
+24781      strata Grade;
+24782      class Gender;
+24783      model Spending = Gender / vadjust=none;
+24784      lsmeans Gender / diff;
+24785      weight Weight;
+24786      run;
+
+NOTE: The PROCEDURE SURVEYREG printed page 1564.
+
+24787      ods graphics on;
+24788      title1 'Ice Cream Spending Analysis';
+24789      title2 'Compare Domain Statistics';
+24790      proc surveyreg data=IceCreamDataDomain total=StudentTotals;
+24791      strata Grade;
+24792      class Grade;
+24793      model Spending = Grade / vadjust=none;
+24794      lsmeans Grade / diff plots=(diff meanplot(cl));
+24795      weight Weight;
+24796      run;
+
+NOTE: The PROCEDURE SURVEYREG printed page 1565.
+
+24797      
+24798      
+24799      
+24800      
+The SAS System
+
+24801      

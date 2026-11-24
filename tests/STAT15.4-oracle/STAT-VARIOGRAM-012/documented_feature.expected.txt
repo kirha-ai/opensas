@@ -1,0 +1,230 @@
+
+Spatial Correlation Analysis with PROC VARIOGRAM
+
+The VARIOGRAM Procedure
+Dependent Variable: Thick
+
+Number of Observations Read          75
+Number of Observations Used          75
+
+
+                Pairs Information
+
+Number of Lags                                  21
+Lag Distance                                  6.97
+Minimum Pairs Threshold                         30
+Highest Lag With Pairs > Threshold              15
+Maximum Data Distance in East                97.50
+Maximum Data Distance in North               99.60
+Maximum Data Distance                       139.38
+
+
+               Pairwise Distance Intervals
+ 
+                                     Number
+  Lag                                    of    Percentage
+Class    ---------Bounds---------     Pairs      of Pairs
+
+    0          0.00          3.48         7        0.25% 
+    1          3.48         10.45        81        2.92% 
+    2         10.45         17.42       138        4.97% 
+    3         17.42         24.39       167        6.02% 
+    4         24.39         31.36       204        7.35% 
+    5         31.36         38.33       210        7.57% 
+    6         38.33         45.30       213        7.68% 
+    7         45.30         52.27       253        9.12% 
+    8         52.27         59.24       237        8.54% 
+    9         59.24         66.20       280       10.09% 
+   10         66.20         73.17       252        9.08% 
+   11         73.17         80.14       230        8.29% 
+   12         80.14         87.11       217        7.82% 
+   13         87.11         94.08       154        5.55% 
+   14         94.08        101.05        71        2.56% 
+   15        101.05        108.02        41        1.48% 
+   16        108.02        114.99        14        0.50% 
+   17        114.99        121.96         5        0.18% 
+   18        121.96        128.93         1        0.04% 
+   19        128.93        135.89         0        0.00% 
+   20        135.89        142.86         0        0.00% 
+
+Spatial Correlation Analysis with PROC VARIOGRAM
+
+The VARIOGRAM Procedure
+Dependent Variable: Thick
+
+Number of Observations Read          75
+Number of Observations Used          75
+
+Spatial Correlation Analysis with PROC VARIOGRAM
+
+The VARIOGRAM Procedure
+Dependent Variable: Thick
+
+                              Empirical Semivariogram
+ 
+                               --------------------Semivariance-------------------
+  Lag      Pair     Average                          Standard      95% Confidence
+Class     Count    Distance      Robust Classical       Error          Limits
+
+    0         7        2.64       0.028     0.034       0.018           0    0.069
+    1        82        7.29       0.210     0.394       0.061       0.273    0.514
+    2       138       14.16       1.008     1.179       0.142       0.901    1.458
+    3       169       21.08       3.018     2.799       0.304       2.202    3.396
+    4       205       27.93       4.811     4.602       0.455       3.711    5.493
+    5       213       35.17       5.990     5.928       0.574       4.802    7.054
+    6       214       42.20       8.104     7.518       0.727       6.094    8.943
+    7       250       48.78       7.533     7.221       0.646       5.955    8.487
+    8       247       56.16       8.066     7.195       0.647       5.926    8.464
+    9       281       62.89       8.279     6.845       0.577       5.713    7.976
+   10       250       69.93       8.144     6.358       0.569       5.243    7.472
+
+Spatial Correlation Analysis with PROC VARIOGRAM
+
+The VARIOGRAM Procedure
+Dependent Variable: Thick
+
+Number of Observations Read          75
+Number of Observations Used          75
+
+
+                            Autocorrelation Statistics
+ 
+                                                           Std
+Assumption       Coefficient    Observed    Expected       Dev        Z    Pr > |Z|
+
+Randomization    Moran's I        0.9240     -0.0244     0.145     6.53      <.0001
+Randomization    Geary's c        0.0162      1.0000     0.175    -5.62      <.0001
+
+Spatial Correlation Analysis with PROC VARIOGRAM
+
+The VARIOGRAM Procedure
+Dependent Variable: Thick
+
+        Empirical Semivariogram
+ 
+  Lag      Pair     Average
+Class     Count    Distance     Semivariance 
+
+    0         7        2.64       0.034
+    1        82        7.29       0.394
+    2       138       14.16       1.179
+    3       169       21.08       2.799
+    4       205       27.93       4.602
+    5       213       35.17       5.928
+    6       214       42.20       7.518
+    7       250       48.78       7.221
+    8       247       56.16       7.195
+    9       281       62.89       6.845
+   10       250       69.93       6.358
+
+Spatial Correlation Analysis with PROC VARIOGRAM
+
+The VARIOGRAM Procedure
+Dependent Variable: Thick
+
+Number of Observations Read          75
+Number of Observations Used          75
+
+Spatial Correlation Analysis with PROC VARIOGRAM
+
+The VARIOGRAM Procedure
+Dependent Variable: Thick
+
+        Empirical Semivariogram
+ 
+  Lag      Pair     Average
+Class     Count    Distance     Semivariance 
+
+    0         7        2.64       0.034
+    1        82        7.29       0.394
+    2       138       14.16       1.179
+    3       169       21.08       2.799
+    4       205       27.93       4.602
+    5       213       35.17       5.928
+    6       214       42.20       7.518
+    7       250       48.78       7.221
+    8       247       56.16       7.195
+    9       281       62.89       6.845
+   10       250       69.93       6.358
+
+Spatial Correlation Analysis with PROC VARIOGRAM
+
+The VARIOGRAM Procedure
+Dependent Variable: Thick
+Angle: Omnidirectional
+Current Model: Gaussian
+
+          Semivariogram Model Fitting
+
+Name                 Gaussian                  
+Label                Gau                       
+Output Item Store    WORK.SEMIVSTOREGAU        
+Item Store Label     Thickness Gaussian WLS Fit
+
+
+  Model Information
+ 
+              Initial
+Parameter       Value
+
+Nugget              0
+Scale          6.7992
+Range         34.9635
+
+
+           Optimization Information
+
+Optimization Technique        Dual Quasi-Newton
+Parameters in Optimization    3                
+Lower Boundaries              3                
+Upper Boundaries              0                
+Starting Values From          PROC             
+
+Spatial Correlation Analysis with PROC VARIOGRAM
+
+The VARIOGRAM Procedure
+Dependent Variable: Thick
+Angle: Omnidirectional
+Current Model: Gaussian
+
+Dual Quasi-Newton Optimization
+
+Dual Broyden - Fletcher - Goldfarb - Shanno Update (DBFGS)
+Hessian Computed by Finite Differences (Using Analytic Gradient)
+
+                                            Optimization Results
+
+Iterations                                         12  Function Calls                                     45
+Gradient Calls                                      0  Active Constraints                                  1
+Objective Function                       11.433894152  Max Abs Gradient Element                 3.0128761E-8
+Slope of Search Direction                -3.986332E-8                                                       
+
+Convergence criterion (GCONV=1E-8) satisfied.                                                     
+
+
+                                  Parameter Estimates
+ 
+                                         Approximate 95%
+                            Approx      Confidence Limits                        Approx
+Parameter    Estimate    Std Error       Lower       Upper    DF    t Value    Pr > |t|
+
+Nugget       5.58E-18            0    5.58E-18    5.58E-18     8        .         .    
+Scale          7.4599       0.2621      6.8555      8.0643     8      28.46      <.0001
+Range         30.1111       1.1443     27.4724     32.7498     8      26.31      <.0001
+
+
+            Approximate Covariance Matrix
+ 
+Parameter         Nugget          Scale          Range
+
+Nugget            0.0000         0.0000         0.0000
+Scale             0.0000         0.0687         0.2326
+Range             0.0000         0.2326         1.3094
+
+
+           Fit Summary
+ 
+           Weighted
+Model           SSE           AIC
+
+Gau        11.43389       6.42556

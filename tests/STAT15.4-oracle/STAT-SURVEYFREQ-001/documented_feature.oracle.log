@@ -1,0 +1,61 @@
+The SAS System
+
+19090      
+19091      /* STAT-SURVEYFREQ-001: SURVEYFREQ — Data input, variable roles, and basic options
+19092       * Source: S154 / Chapter 118 / `PROC SURVEYFREQ Statement` (PDF pp. 9587–9598); S154 / Chapter 118 / `BY Statement` (PDF p. 9598); S154 / Chapter
+19092    ! 118 / `CLUSTER Statement` (PDF pp. 9598–9599); S154 / Chapter 118 / `REPWEIGHTS Statement` (PDF pp. 9599–9601); S154 / Chapter 118 / `STRATA
+19092    ! Statement` (PDF pp. 9601–9602); S154 / Chapter 118 / `WEIGHT Statement` (PDF pp. 9626–9627); S154 / Chapter 118 / `Missing Values` (PDF pp.
+19092    ! 9630–9632).
+19093       * Discriminates: Verified default procedure context; explicit statements: CLUSTER, STRATA, WEIGHT
+19094       */
+19095      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+19095    ! validmemname=compatible locale=en_US;
+19096      %let syscc=0;
+19097      title; footnote;
+19098      ods _all_ close;
+19099      ods listing gpath="%sysfunc(pathname(work))";
+19100      ods graphics off;
+19101      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+19101    !                                         quit;
+
+
+19102      ods path work.templat(update) sashelp.tmplmst(read);
+19103      
+19104      data survey;
+19105      do state=1 to 2;
+19106      do school=1 to 4;
+19107      do id=1 to 6;
+19108      response=1+mod(id+school,3);
+19109      schooltype=1+mod(school,2);
+19110      samplingweight=2+state+school/10;
+19111      output;
+19112      end;
+19113      end;
+19114      end;
+19115      run;
+
+NOTE: The data set WORK.SURVEY has 48 observations and 6 variables.
+
+19116      proc surveyfreq data=survey;
+19117      strata state;
+19118      cluster school;
+19119      weight samplingweight;
+19120      tables schooltype*response / row chisq;
+19121      run;
+
+NOTE: The Rao-Scott chi-square test cannot be computed for the table of schooltype by response because the design correction is not positive.
+NOTE: The PROCEDURE SURVEYFREQ printed page 1377.
+
+19122      
+19123      
+19124      
+19125      
+The SAS System
+
+19126      

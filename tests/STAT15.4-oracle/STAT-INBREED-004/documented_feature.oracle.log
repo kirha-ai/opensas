@@ -1,0 +1,67 @@
+The SAS System
+
+8678       
+8679       /* STAT-INBREED-004: INBREED — Computational Details
+8680        * Source: S154 / Chapter 71 / `Computational Details` (PDF pp. 5280–5285).
+8681        * Discriminates: Getting Started: INBREED Procedure
+8682        */
+8683       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+8683     ! validmemname=compatible locale=en_US;
+8684       %let syscc=0;
+8685       title; footnote;
+8686       ods _all_ close;
+8687       ods listing gpath="%sysfunc(pathname(work))";
+8688       ods graphics off;
+8689       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SWINE (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+8689     !                                         quit;
+
+
+8690       ods path work.templat(update) sashelp.tmplmst(read);
+8691       
+8692       data Population;
+8693       input Individual $ Parent1 $ Parent2 $
+8694       Covariance Sex $ Generation;
+8695       datalines;
+
+NOTE: The data set WORK.POPULATION has 8 observations and 6 variables.
+
+8704       ;
+8705       proc inbreed data=Population covar matrix init=0.25;
+8706       run;
+
+WARNING: The VAR statement was not specified.  All the variables in the WORK.POPULATION data set will be used instead.
+WARNING: Variable Individual has a missing value at observation 4.  It will be skipped.
+WARNING: Individual Individual=Mark has been previously defined.  Observation 8 corresponding to this individual will not be processed.
+NOTE: The PROCEDURE INBREED printed page 603.
+
+8707       proc inbreed data=Population covar matrix init=0.25;
+8708       class Generation;
+8709       run;
+
+WARNING: The VAR statement was not specified.  All the variables in the WORK.POPULATION data set will be used instead.
+WARNING: A covariance value was specified between individuals Parent1=Mark and Parent2=Kelly, but Individual=Jim is nonmissing at observation 7. Covariance 
+         specification will be ignored.
+NOTE: The PROCEDURE INBREED printed pages 604-605.
+
+8710       proc inbreed data=Population covar average init=0.25;
+8711       class Generation;
+8712       gender Sex;
+8713       run;
+
+WARNING: The VAR statement was not specified.  All the variables in the WORK.POPULATION data set will be used instead.
+WARNING: A covariance value was specified between individuals Parent1=Mark and Parent2=Kelly, but Individual=Jim is nonmissing at observation 7. Covariance 
+         specification will be ignored.
+NOTE: The PROCEDURE INBREED printed pages 606-607.
+
+8714       
+8715       
+8716       
+8717       
+The SAS System
+
+8718       

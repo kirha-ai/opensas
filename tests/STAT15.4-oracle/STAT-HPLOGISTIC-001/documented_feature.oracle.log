@@ -1,0 +1,57 @@
+The SAS System
+
+3255       
+3256       /* STAT-HPLOGISTIC-001: HPLOGISTIC — Data input, variable roles, and basic options
+3257        * Source: S154 / Chapter 61 / `PROC HPLOGISTIC Statement` (PDF pp. 4746–4751); S154 / Chapter 61 / `BY Statement` (PDF pp. 4751–4752); S154 /
+3257     ! Chapter 61 / `FREQ Statement` (PDF p. 4753); S154 / Chapter 61 / `ID Statement` (PDF p. 4753); S154 / Chapter 61 / `WEIGHT Statement` (PDF p. 4764);
+3257     ! S154 / Chapter 61 / `Missing Values` (PDF pp. 4764–4765).
+3258        * Discriminates: Verified default procedure context
+3259        */
+3260       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+3260     ! validmemname=compatible locale=en_US;
+3261       %let syscc=0;
+3262       title; footnote;
+3263       ods _all_ close;
+3264       ods listing gpath="%sysfunc(pathname(work))";
+3265       ods graphics off;
+3266       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.BLUPS (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.WEEKSIM (memtype=DATA).
+3266     !                                         quit;
+
+
+3267       ods path work.templat(update) sashelp.tmplmst(read);
+3268       
+3269       data getStarted;
+3270       input C$ y x1-x10;
+3271       datalines;
+
+NOTE: The data set WORK.GETSTARTED has 100 observations and 12 variables.
+
+3372       ;
+3373       proc hplogistic data=getStarted;
+3374       class C;
+3375       model y = C x1-x10;
+3376       run;
+
+NOTE: The HPLOGISTIC procedure is executing in single-machine mode.
+NOTE: You are modeling the probability that y='0'.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: There were 100 observations read from the data set WORK.GETSTARTED.
+NOTE: The PROCEDURE HPLOGISTIC printed page 188.
+
+3377       
+3378       
+3379       
+3380       
+The SAS System
+
+3381       

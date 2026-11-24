@@ -1,0 +1,57 @@
+The SAS System
+
+6195       
+6196       /* STAT-PLS-009: PLS — Official examples and feature integration regression
+6197        * Source: S154 / Chapter 95 / `Examples: PLS Procedure` (PDF pp. 7708–7729).
+6198        * Discriminates: Example 95.2: Examining Outliers
+6199        */
+6200       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+6200     ! validmemname=compatible locale=en_US;
+6201       %let syscc=0;
+6202       title; footnote;
+6203       ods _all_ close;
+6204       ods listing gpath="%sysfunc(pathname(work))";
+6205       ods graphics off;
+6206       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.ALL (memtype=DATA).
+NOTE: Deleting WORK.NEWOBS (memtype=DATA).
+NOTE: Deleting WORK.PRED (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SAMPLE (memtype=DATA).
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+6206     !                                         quit;
+
+
+6207       ods path work.templat(update) sashelp.tmplmst(read);
+6208       
+6209       data pentaTrain;
+6210       input obsnam $ S1 L1 P1 S2 L2 P2
+6211       S3 L3 P3 S4 L4 P4
+6212       S5 L5 P5 log_RAI @@;
+6213       n = _n_;
+6214       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.PENTATRAIN has 15 observations and 18 variables.
+
+6261       ;
+6262       run;
+6263       ods graphics on;
+6264       proc pls data=pentaTrain nfac=2 plot=(diagnostics dmod);
+6265       model log_RAI = S1 P1
+6266       S2
+6267       S3 L3 P3
+6268       S4 L4 ;
+6269       run;
+
+NOTE: There were 15 observations read from the data set WORK.PENTATRAIN.
+NOTE: The PROCEDURE PLS printed pages 508-509.
+
+6270       
+6271       
+6272       
+6273       
+The SAS System
+
+6274       

@@ -1,0 +1,51 @@
+The SAS System
+
+6717       
+6718       /* STAT-HPSPLIT-011: HPSPLIT — OUTPUT
+6719        * Source: S154 / Chapter 68 / `OUTPUT Statement` (PDF p. 5093).
+6720        * Discriminates: Example 68.3: Creating a Regression Tree; explicit statements: OUTPUT
+6721        */
+6722       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+6722     ! validmemname=compatible locale=en_US;
+6723       %let syscc=0;
+6724       title; footnote;
+6725       ods _all_ close;
+6726       ods listing gpath="%sysfunc(pathname(work))";
+6727       ods graphics off;
+6728       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.HPSPLOUT (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK._ORACLE_SCORED (memtype=DATA).
+6728     !                                         quit;
+
+
+6729       ods path work.templat(update) sashelp.tmplmst(read);
+6730       
+6731       ods graphics on;
+6732       proc hpsplit data=sashelp.baseball seed=123;
+6733       class league division;
+6734       model logSalary = nAtBat nHits nHome nRuns nRBI nBB
+6735       yrMajor crAtBat crHits crHome crRuns crRbi
+6736       crBB league division nOuts nAssts nError;
+6737       output out=hpsplout;
+6738       run;
+
+NOTE: The ASSIGNMISSING= option has not been specified.  Because of this, all observations with missing values in the explanatory variables will be excluded 
+      from tree construction.
+NOTE: The HPSPLIT procedure is executing in single-machine mode.
+NOTE: Cross-validating using 10 folds.
+NOTE: There were 322 observations read from the data set SASHELP.BASEBALL.
+NOTE: The data set WORK.HPSPLOUT has 322 observations and 4 variables.
+NOTE: The PROCEDURE HPSPLIT printed pages 485-486.
+
+6739       
+6740       
+6741       
+6742       
+The SAS System
+
+6743       

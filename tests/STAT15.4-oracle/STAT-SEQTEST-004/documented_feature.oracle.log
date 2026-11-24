@@ -1,0 +1,62 @@
+The SAS System
+
+16310      
+16311      /* STAT-SEQTEST-004: SEQTEST — Boundary Adjustments for Minimum Error Spending / Boundary Adjustments for Overlapping Lower and Upper beta
+16311    ! Boundaries / Stochastic Curtailment
+16312       * Source: S154 / Chapter 111 / `Boundary Adjustments for Minimum Error Spending` (PDF p. 9175); S154 / Chapter 111 / `Boundary Adjustments for
+16312    ! Overlapping Lower and Upper beta Boundaries` (PDF pp. 9175–9176); S154 / Chapter 111 / `Stochastic Curtailment` (PDF pp. 9176–9178).
+16313       * Discriminates: Verified default procedure context
+16314       */
+16315      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+16315    ! validmemname=compatible locale=en_US;
+16316      %let syscc=0;
+16317      title; footnote;
+16318      ods _all_ close;
+16319      ods listing gpath="%sysfunc(pathname(work))";
+16320      ods graphics off;
+16321      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.BOUNDARIES (memtype=DATA).
+NOTE: Deleting WORK.ESTIMATES (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+16321    !                                         quit;
+
+
+16322      ods path work.templat(update) sashelp.tmplmst(read);
+16323      
+16324      proc seqdesign altref=-10;
+16325      TwoSided: design nstages=4 method=obf;
+16326      samplesize model=twosamplemean(stddev=20);
+16327      ods output Boundary=boundaries;
+16328      run;
+
+NOTE: The data set WORK.BOUNDARIES has 4 observations and 13 variables.
+NOTE: The PROCEDURE SEQDESIGN printed page 1169.
+
+16329      data estimates;
+16330      length Variable $8 _Scale_ $8;
+16331      Variable='Trt';
+16332      _Scale_='MLE';
+16333      _Stage_=1;
+16334      Estimate=-7;
+16335      StdErr=4.5;
+16336      run;
+
+NOTE: The data set WORK.ESTIMATES has 1 observations and 5 variables.
+
+16337      proc seqtest boundary=boundaries parms(testvar=Trt)=estimates infoadj=prop;
+16338      run;
+
+NOTE: The PROCEDURE SEQTEST printed page 1170.
+
+16339      
+16340      
+16341      
+16342      
+The SAS System
+
+16343      

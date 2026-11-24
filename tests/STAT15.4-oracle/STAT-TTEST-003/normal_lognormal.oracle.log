@@ -1,0 +1,50 @@
+The SAS System
+
+28778      
+28779      /* STAT-TTEST-003: TTEST — Arithmetic and Geometric Means / Coefficient of Variation
+28780       * Source: S154 / Chapter 128 / `Arithmetic and Geometric Means` (PDF p. 10620); S154 / Chapter 128 / `Coefficient of Variation` (PDF p. 10620).
+28781       * Discriminates: Arithmetic versus geometric mean and coefficient-of-variation output
+28782       */
+28783      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+28783    ! validmemname=compatible locale=en_US;
+28784      %let syscc=0;
+28785      title; footnote;
+28786      ods _all_ close;
+28787      ods listing gpath="%sysfunc(pathname(work))";
+28788      ods graphics off;
+28789      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TIME (memtype=DATA).
+28789    !                                         quit;
+
+
+28790      ods path work.templat(update) sashelp.tmplmst(read);
+28791      
+28792      data sample;
+28793       input x y group $ freq weight;
+28794       datalines;
+
+NOTE: The data set WORK.SAMPLE has 12 observations and 5 variables.
+
+28807      ;
+28808      run;
+28809      proc ttest data=sample dist=normal ci=equal; var x; run;
+
+NOTE: The PROCEDURE TTEST printed page 1767.
+
+28810      proc ttest data=sample dist=lognormal ci=equal; var x; run;
+
+NOTE: The PROCEDURE TTEST printed page 1768.
+
+28811      
+28812      
+28813      
+28814      
+The SAS System
+
+28815      

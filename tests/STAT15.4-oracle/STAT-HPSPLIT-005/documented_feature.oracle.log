@@ -1,0 +1,51 @@
+The SAS System
+
+6375       
+6376       /* STAT-HPSPLIT-005: HPSPLIT — Splitting Strategy / Pruning / Memory Considerations
+6377        * Source: S154 / Chapter 68 / `Splitting Strategy` (PDF p. 5103); S154 / Chapter 68 / `Pruning` (PDF pp. 5103–5108); S154 / Chapter 68 / `Memory
+6377     ! Considerations` (PDF p. 5108).
+6378        * Discriminates: Verified default procedure context
+6379        */
+6380       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+6380     ! validmemname=compatible locale=en_US;
+6381       %let syscc=0;
+6382       title; footnote;
+6383       ods _all_ close;
+6384       ods listing gpath="%sysfunc(pathname(work))";
+6385       ods graphics off;
+6386       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.HPSPLOUT (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+6386     !                                         quit;
+
+
+6387       ods path work.templat(update) sashelp.tmplmst(read);
+6388       
+6389       ods graphics on;
+6390       proc hpsplit data=sashelp.baseball seed=123;
+6391       class league division;
+6392       model logSalary = nAtBat nHits nHome nRuns nRBI nBB
+6393       yrMajor crAtBat crHits crHome crRuns crRbi
+6394       crBB league division nOuts nAssts nError;
+6395       output out=hpsplout;
+6396       run;
+
+NOTE: The ASSIGNMISSING= option has not been specified.  Because of this, all observations with missing values in the explanatory variables will be excluded 
+      from tree construction.
+NOTE: The HPSPLIT procedure is executing in single-machine mode.
+NOTE: Cross-validating using 10 folds.
+NOTE: There were 322 observations read from the data set SASHELP.BASEBALL.
+NOTE: The data set WORK.HPSPLOUT has 322 observations and 4 variables.
+NOTE: The PROCEDURE HPSPLIT printed pages 474-475.
+
+6397       
+6398       
+6399       
+6400       
+The SAS System
+
+6401       

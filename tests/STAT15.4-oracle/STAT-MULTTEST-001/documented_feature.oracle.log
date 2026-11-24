@@ -1,0 +1,58 @@
+The SAS System
+
+4807       
+4808       /* STAT-MULTTEST-001: MULTTEST — Data input, variable roles, and basic options
+4809        * Source: S154 / Chapter 86 / `PROC MULTTEST Statement` (PDF pp. 6897–6909); S154 / Chapter 86 / `BY Statement` (PDF p. 6909); S154 / Chapter 86 /
+4809     !  `CLASS Statement` (PDF pp. 6909–6910); S154 / Chapter 86 / `FREQ Statement` (PDF p. 6911); S154 / Chapter 86 / `ID Statement` (PDF pp.
+4809     ! 6911–6912); S154 / Chapter 86 / `STRATA Statement` (PDF p. 6912); S154 / Chapter 86 / `Missing Values` (PDF p. 6930).
+4810        * Discriminates: Verified default procedure context; explicit statements: CLASS
+4811        */
+4812       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+4812     ! validmemname=compatible locale=en_US;
+4813       %let syscc=0;
+4814       title; footnote;
+4815       ods _all_ close;
+4816       ods listing gpath="%sysfunc(pathname(work))";
+4817       ods graphics off;
+4818       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.CIRCLE (memtype=DATA).
+NOTE: Deleting WORK.OUT (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+4818     !                                         quit;
+
+
+4819       ods path work.templat(update) sashelp.tmplmst(read);
+4820       
+4821       data Drug;
+4822       input Dose$ SideEff1-SideEff10;
+4823       datalines;
+
+NOTE: The data set WORK.DRUG has 15 observations and 11 variables.
+
+4839       ;
+4840       ods graphics on;
+4841       proc multtest bootstrap nsample=199 seed=41287 notables
+4842       plots=PByTest(vref=0.05 0.1);
+4843       class Dose;
+4844       test ca(SideEff1-SideEff10);
+4845       contrast 'Trend' 0 1 2;
+4846       run;
+
+NOTE: No input data set is specified.  The data set WORK.DRUG is used.
+NOTE: There were 15 observations read from the data set WORK.DRUG.
+NOTE: The PROCEDURE MULTTEST printed page 359.
+
+4847       quit;
+4848       
+4849       
+4850       
+4851       
+The SAS System
+
+4852       

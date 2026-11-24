@@ -1,0 +1,57 @@
+The SAS System
+
+28680      
+28681      /* STAT-TREE-006: TREE — Official examples and feature integration regression
+28682       * Source: S154 / Chapter 127 / `Examples: TREE Procedure` (PDF pp. 10585–10594).
+28683       * Discriminates: Example 127.2: Iris Data
+28684       */
+28685      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+28685    ! validmemname=compatible locale=en_US;
+28686      %let syscc=0;
+28687      title; footnote;
+28688      ods _all_ close;
+28689      ods listing gpath="%sysfunc(pathname(work))";
+28690      ods graphics off;
+
+
+28691      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.PROTEIN (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TREE (memtype=DATA).
+28691    !                                         quit;
+
+
+28692      ods path work.templat(update) sashelp.tmplmst(read);
+28693      
+28694      title 'Fisher (1936) Iris Data';
+28695      ods graphics on;
+28696      proc cluster data=sashelp.iris method=twostage print=10
+28697      outtree=tree k=8 noeigen;
+28698      var SepalLength SepalWidth PetalLength PetalWidth;
+28699      copy Species;
+28700      run;
+
+NOTE: 3 modal clusters have been formed.
+WARNING: Ties for minimum distance between clusters have been detected at 31 level(s) in the cluster history.
+WARNING: The DENDROGRAM will not be drawn because multiple roots were found.
+NOTE: The data set WORK.TREE has 298 observations and 21 variables.
+NOTE: The PROCEDURE CLUSTER printed page 1762.
+
+28701      proc tree data=tree horizontal lineprinter pages=1 maxh=10;
+28702      id species;
+28703      run;
+
+NOTE: The PROCEDURE TREE printed page 1763.
+
+28704      
+28705      
+28706      
+28707      
+The SAS System
+
+28708      

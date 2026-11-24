@@ -1,0 +1,52 @@
+The SAS System
+
+29672      
+29673      /* STAT-VARCOMP-004: VARCOMP — Negative Variance Component Estimates / Computational Methods / Gauge Repeatability and Reproducibility Analysis
+29674       * Source: S154 / Chapter 130 / `Negative Variance Component Estimates` (PDF p. 10734); S154 / Chapter 130 / `Computational Methods` (PDF pp.
+29674    ! 10734–10736); S154 / Chapter 130 / `Gauge Repeatability and Reproducibility Analysis` (PDF pp. 10736–10737).
+29675       * Discriminates: Getting Started: VARCOMP Procedure
+29676       */
+29677      options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+29677    ! validmemname=compatible locale=en_US;
+29678      %let syscc=0;
+29679      title; footnote;
+29680      ods _all_ close;
+29681      ods listing gpath="%sysfunc(pathname(work))";
+29682      ods graphics off;
+29683      proc datasets library=work kill nolist;
+NOTE: Deleting WORK.CURE (memtype=DATA).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+29683    !                                         quit;
+
+
+29684      ods path work.templat(update) sashelp.tmplmst(read);
+29685      
+29686      data Cure;
+29687      input Lab Temp Batch $ Cure @@;
+29688      datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.CURE has 108 observations and 4 variables.
+
+29716      ;
+29717      title 'Analyzing the Cure Rate of Rubber';
+29718      proc varcomp method=reml data=cure;
+29719      class temp lab batch;
+29720      model cure=temp|lab batch(lab temp) / fixed=1;
+29721      run;
+
+NOTE: There were 108 observations read from the data set WORK.CURE.
+NOTE: The PROCEDURE VARCOMP printed page 1806.
+
+29722      
+29723      
+29724      
+29725      
+The SAS System
+
+29726      

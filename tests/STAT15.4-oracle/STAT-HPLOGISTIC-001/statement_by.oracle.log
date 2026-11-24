@@ -1,0 +1,69 @@
+The SAS System
+
+1861       
+1862       /* STAT-HPLOGISTIC-001: HPLOGISTIC — Data input, variable roles, and basic options
+1863        * Source: S154 / Chapter 61 / `PROC HPLOGISTIC Statement` (PDF pp. 4746–4751); S154 / Chapter 61 / `BY Statement` (PDF pp. 4751–4752); S154 /
+1863     ! Chapter 61 / `FREQ Statement` (PDF p. 4753); S154 / Chapter 61 / `ID Statement` (PDF p. 4753); S154 / Chapter 61 / `WEIGHT Statement` (PDF p. 4764);
+1863     ! S154 / Chapter 61 / `Missing Values` (PDF pp. 4764–4765).
+1864        * Discriminates: Two explicit BY groups contain identical inputs, exposing group boundaries and per-group results.
+1865        */
+1866       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+1866     ! validmemname=compatible locale=en_US;
+1867       %let syscc=0;
+1868       title; footnote;
+1869       ods _all_ close;
+1870       ods listing gpath="%sysfunc(pathname(work))";
+1871       ods graphics off;
+1872       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SCHOOLSAMPLE (memtype=DATA).
+NOTE: Deleting WORK.TEMPLAT (memtype=ITEMSTOR).
+NOTE: File WORK.TEMPLAT (memtype=ITEMSTOR) cannot be deleted because it is in use.
+1872     !                                         quit;
+
+
+1873       ods path work.templat(update) sashelp.tmplmst(read);
+1874       
+1875       data getStarted;
+1876       input C$ y x1-x10;
+1877       datalines;
+
+NOTE: The data set WORK.GETSTARTED has 100 observations and 12 variables.
+
+1978       ;
+1979       data _oracle_input; set getStarted; do _oracle_by=1 to 2; output; end; run;
+
+NOTE: There were 100 observations read from the data set WORK.GETSTARTED.
+NOTE: The data set WORK._ORACLE_INPUT has 200 observations and 13 variables.
+
+1980       proc sort data=_oracle_input; by _oracle_by; run;
+
+NOTE: There were 200 observations read from the data set WORK._ORACLE_INPUT.
+NOTE: The data set WORK._ORACLE_INPUT has 200 observations and 13 variables.
+
+1981       proc hplogistic data=_oracle_input;
+1982       by _oracle_by;
+1983       class C;
+1984       model y = C x1-x10;
+1985       run;
+
+NOTE: The HPLOGISTIC procedure is executing in single-machine mode.
+NOTE: You are modeling the probability that y='0'.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The above message was for the following BY group:
+      _oracle_by=1
+NOTE: You are modeling the probability that y='0'.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The above message was for the following BY group:
+      _oracle_by=2
+NOTE: There were 200 observations read from the data set WORK._ORACLE_INPUT.
+NOTE: The PROCEDURE HPLOGISTIC printed pages 121-123.
+
+1986       
+1987       
+1988       
+1989       
+The SAS System
+
+1990       

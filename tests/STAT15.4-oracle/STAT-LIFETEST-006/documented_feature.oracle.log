@@ -1,0 +1,76 @@
+The SAS System
+
+1343       
+1344       /* STAT-LIFETEST-006: LIFETEST — Restricted Mean Analysis
+1345        * Source: S154 / Chapter 77 / `Restricted Mean Analysis` (PDF pp. 5690–5692).
+1346        * Discriminates: Getting Started: LIFETEST Procedure
+1347        */
+1348       options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7
+1348     ! validmemname=compatible locale=en_US;
+1349       %let syscc=0;
+1350       title; footnote;
+1351       ods _all_ close;
+1352       ods listing gpath="%sysfunc(pathname(work))";
+1353       ods graphics off;
+1354       proc datasets library=work kill nolist;
+NOTE: Deleting WORK.EXPOSED (memtype=DATA).
+NOTE: Deleting WORK.FORMATS (memtype=CATALOG).
+NOTE: Deleting WORK.REGSTRY (memtype=ITEMSTOR).
+NOTE: File WORK.REGSTRY (memtype=ITEMSTOR) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASGOPT (memtype=CATALOG).
+NOTE: File WORK.SASGOPT (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC1 (memtype=CATALOG).
+NOTE: File WORK.SASMAC1 (memtype=CATALOG) cannot be deleted because it is in use.
+NOTE: Deleting WORK.SASMAC2 (memtype=CATALOG).
+1354     !                                         quit;
+
+
+1355       ods path work.templat(update) sashelp.tmplmst(read);
+1356       
+1357       proc format;
+1357     !              value Rx 1='Drug X' 0='Placebo';
+NOTE: Format RX has been output.
+1357     !                                               run;
+
+
+1358       data exposed;
+1359       input Days Status Treatment Sex $ @@;
+1360       format Treatment Rx.;
+1361       datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.EXPOSED has 40 observations and 4 variables.
+
+1382       ;
+1383       ods graphics on;
+1384       proc lifetest data=Exposed plots=(survival(atrisk) logsurv);
+1385       time Days*Status(0);
+1386       strata Treatment;
+1387       run;
+
+NOTE: The LOGLOG transform is used to compute the confidence limits for the quartiles of the survivor distribution. To suppress using this transform, specify 
+      CONFTYPE=LINEAR in the PROC LIFETEST statement.
+NOTE: The PROCEDURE LIFETEST printed pages 107-109.
+
+1388       ods graphics off;
+1389       proc lifetest data=Exposed notable;
+1390       time Days*Status(0);
+1391       strata Sex / group=Treatment;
+1392       run;
+
+NOTE: The PROCEDURE LIFETEST printed pages 110-111.
+
+1393       proc lifetest data=Exposed notable;
+1394       time Days*Status(0);
+1395       test Treatment;
+1396       run;
+
+NOTE: The PROCEDURE LIFETEST printed page 112.
+
+1397       
+1398       
+1399       
+1400       
+The SAS System
+
+1401       
