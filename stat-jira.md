@@ -14659,13 +14659,14 @@ Source: S154, Chapter 128, `The TTEST Procedure`, PDF pp. 10595–10692. Tasks i
 
 <a id="stat-ttest-007"></a>
 
-### [DOING @dev4] STAT-TTEST-007 — TTEST — Two-Independent-Sample Design
+### [DONE] STAT-TTEST-007 — TTEST — Two-Independent-Sample Design
 
 - Source: S154 / Chapter 128 / `Two-Independent-Sample Design` (PDF pp. 10624–10629).
 - Scope: Implement Two-Independent-Sample Design. This ticket owns the feature's options, defaults, computation, and results as an extension of the basic computational path; the chapter's output tickets handle ODS descriptors and file presentation.
 - Dependencies: [STAT-TTEST-001](#stat-ttest-001), [STAT-TTEST-002](#stat-ttest-002), [STAT-COMMON-005](#stat-common-005).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-TTEST-007/](tests/STAT15.4-oracle/STAT-TTEST-007/).
 - Dispatch contract: Implement two-group inference and rendering in a separate module reusing existing TTEST class selection; coordinate its small dispatch hook with dev5, who owns shared TTEST parsing/execution until lognormal integration is complete.
+- DONE (2026-11-25): Landed/pushed `e73376b2`. Original two-sample oracle matches every expected output token, status 0, stderr empty; normal/lognormal and shared tail cases remain green. Verified direct-exit retry gate after disk-cache cleanup: 1661 tests, 2305 corpus, 11 programs passed. Earlier NoSpaceLeft gate is explicitly excluded. Evidence: `tests/STAT15.4-oracle/STAT-TTEST-007/implementation-evidence.md`.
 - Acceptance criteria: For Two-Independent-Sample Design, separately verify the documented equal-variance and unequal-variance paths, degrees-of-freedom approximations, probabilities, and intervals; include very unequal sample sizes; validate numerical values against the source formulas or an independent reference, following this file's precision conventions.
 
 <a id="stat-ttest-008"></a>
@@ -14680,7 +14681,7 @@ Source: S154, Chapter 128, `The TTEST Procedure`, PDF pp. 10595–10692. Tasks i
 
 <a id="stat-ttest-009"></a>
 
-### [TODO] STAT-TTEST-009 — TTEST — TOST Equivalence Test
+### [DOING @dev4] STAT-TTEST-009 — TTEST — TOST Equivalence Test
 
 - Source: S154 / Chapter 128 / `TOST Equivalence Test` (PDF pp. 10630–10631).
 - Scope: Implement TOST Equivalence Test. This ticket owns the feature's options, defaults, computation, and results as an extension of the basic computational path; the chapter's output tickets handle ODS descriptors and file presentation.
