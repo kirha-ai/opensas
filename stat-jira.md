@@ -202,12 +202,13 @@ Complete prerequisite shared contracts first, then each PROC's data input, model
 
 <a id="stat-common-002"></a>
 
-### [TODO] STAT-COMMON-002 — Statistical data selection, missing values, and observation weight interfaces
+### [DOING @dev2] STAT-COMMON-002 — Statistical data selection, missing values, and observation weight interfaces
 
 - Source: S154 / Chapter 13 / `Introduction to Scoring, Standardization, and Ranking Procedures` (PDF pp. 253–254); S154 / Chapter 22 / `FREQ Statement` (PDF p. 564); S154 / Chapter 22 / `ID Statement` (PDF p. 564); S154 / Chapter 22 / `VAR Statement` (PDF p. 570); S154 / Chapter 22 / `WEIGHT Statement` (PDF p. 570).
 - Scope: Provide shared data access interfaces for BY, variable roles, FREQ, WEIGHT, ID, and missing-value filtering; individual procedures determine exclusion granularity, weight meaning, and invalid-value behavior rather than imposing one global policy.
 - Dependencies: [STAT-COMMON-001](#stat-common-001).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-COMMON-002/](tests/STAT15.4-oracle/STAT-COMMON-002/).
+- Dispatch contract: Reuse the existing PROC MEANS entry point while STAT-COMMON-001 is in progress; no new dispatcher or runtime-version contract is required. Own data selection and MEANS weight handling only.
 - Acceptance criteria: Use multiple groups to verify traceability of original row numbers, variable types, and missing indicators; keep frequency and analysis weights separate in the interface; PROC-specific filtering policies must not modify the original data.
 
 <a id="stat-common-003"></a>
