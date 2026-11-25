@@ -360,7 +360,7 @@ test "REG input WHERE and observation options preserve source data" {
     for ([_]f64{ 1, 2, 3, 4 }) |x| try ds.appendRow(&.{ .{ .num = x }, .{ .num = 2 * x } });
     try lib.put("sample", &ds);
     const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &d };
-    const spec = try parse(cx, try @import("../lexer.zig").tokenize(a, "proc reg data=sample(where=(x>1) obs=2); model y=x; run;", &d));
+    const spec = try parse(cx, try @import("../lexer.zig").tokenize(a, "proc reg data=work.sample(where=(x>1) obs=2); model y=x; run;", &d));
     const selected = try select(cx, spec, spec.models[0], spec.ds.rows.items);
     try std.testing.expectEqualSlices(f64, &.{ 1, 2, 1, 3 }, selected.x);
     try std.testing.expectEqual(@as(usize, 4), ds.rows.items.len);
@@ -418,4 +418,19 @@ test "REG default model labels count statements rather than response variables" 
     const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &d };
     const spec = try parse(cx, try @import("../lexer.zig").tokenize(a, "proc reg;model y z=x;model x=y;run;", &d));
     for (spec.models, [_][]const u8{ "MODEL1", "MODEL1", "MODEL2" }) |model, label| try std.testing.expectEqualStrings(label, model.label);
+}
+
+test "REG TYPE column in WHERE is not a summary dataset TYPE option" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var d = diag.Diagnostics.init(a);
+    var lib = @import("../exec.zig").Library.init(a);
+    var ds = @import("../dataset.zig").Dataset.init(a, "sample");
+    for ([_][]const u8{ "x", "y", "type" }) |n| _ = try ds.addColumn(n, .num);
+    try ds.appendRow(&.{ .{ .num = 1 }, .{ .num = 2 }, .{ .num = 1 } });
+    try lib.put("sample", &ds);
+    const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &d };
+    const spec = try parse(cx, try @import("../lexer.zig").tokenize(a, "proc reg data=sample(where=(type=1));model y=x;run;", &d));
+    try std.testing.expectEqual(@as(usize, 1), spec.ds.rows.items.len);
 }
