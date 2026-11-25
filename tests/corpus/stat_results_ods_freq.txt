@@ -1,5 +1,6 @@
 # corpus assertions
-row Table g h _TYPE_ _TABLE_ Frequency Percent RowPercent ColPercent Missing
+row Row Col
+next Table g h _TYPE_ _TABLE_ Frequency Percent Percent Percent Missing
 next Table g * h 0 0 11 1 2 25.00 50.00 50.00 .
 next Table g * h 0 1 11 1 2 25.00 50.00 50.00 .
 next Table g * h 0 . 10 1 4 50.00 . . .
