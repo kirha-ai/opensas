@@ -192,12 +192,13 @@ Complete prerequisite shared contracts first, then each PROC's data input, model
 
 <a id="stat-common-001"></a>
 
-### [DOING @dev1] STAT-COMMON-001 — Statistical procedure execution and the 15.4 option contract
+### [PARK] STAT-COMMON-001 — Statistical procedure execution and the 15.4 option contract
 
 - Source: S154 / Chapter 3 / `Introduction` (PDF pp. 27–36); S154 / Chapter 2 / `What's New in SAS/STAT 15.4` (PDF pp. 25–26); S154 / Chapter 1 / `Procedures by Category` (PDF pp. 13–24).
 - Scope: Establish PROC-level parsing, default-parameter, execution-status, and result-object contracts; distinguish valid input, invalid input, and unsupported capabilities under SAS/STAT 15.4. This ticket owns shared interfaces; PROC tickets own their semantics.
 - Dependencies: None.
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-COMMON-001/](tests/STAT15.4-oracle/STAT-COMMON-001/).
+- PARK (2026-11-25): Unchanged `runtime_contract.sas` built with Zig 0.16.0 exits 2 (expected 0); 0/1 cases match even after whitespace normalization. `PROC reg is not supported`, `validmemname` is unrecognized, runtime version is blank and all REG tables are absent. Full REG computation/rendering exceeds this scoped attempt; the expected proprietary SAS build identifier must not be fabricated. No implementation changes or green gate claimed. Evidence: dev1 `.stat-common-001-evidence/actual.stderr` and `output.diff`; rerun the cited SAS case to reproduce.
 - Acceptance criteria: Provide minimal execution contract tests; define option defaults, explicit overrides, and procedure-specific RUN/QUIT rules; emit locatable diagnostics for unimplemented branches; record the specification version and handle version differences explicitly.
 
 <a id="stat-common-002"></a>
@@ -213,12 +214,13 @@ Complete prerequisite shared contracts first, then each PROC's data input, model
 
 <a id="stat-common-003"></a>
 
-### [TODO] STAT-COMMON-003 — Rank-deficient linear algebra and generalized inverses
+### [DOING @dev1] STAT-COMMON-003 — Rank-deficient linear algebra and generalized inverses
 
 - Source: S154 / Chapter 4 / `Important Linear Algebra Concepts` (PDF pp. 58–65).
 - Scope: Provide interfaces for linear equations, rank determination, projections, and generalized inverses; expose singular and nearly singular states under a consistent precision policy.
 - Dependencies: [STAT-COMMON-001](#stat-common-001).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-COMMON-003/](tests/STAT15.4-oracle/STAT-COMMON-003/).
+- Dispatch contract: Evaluate the linear-algebra oracle through the existing interpreter entry point independently of COMMON-001's runtime-version requirement; do not assume its missing REG capability is implemented.
 - Acceptance criteria: For full-rank, exactly rank-deficient, and nearly collinear matrices, verify decomposition reconstruction, projection identities, and generalized-inverse identities against independent analytic results; explain scale-dependent tolerances and do not return success for numerical failure.
 
 <a id="stat-common-004"></a>
