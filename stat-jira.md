@@ -14654,12 +14654,13 @@ Source: S154, Chapter 128, `The TTEST Procedure`, PDF pp. 10595–10692. Tasks i
 
 <a id="stat-ttest-006"></a>
 
-### [DOING @dev5] STAT-TTEST-006 — TTEST — PAIRED / Paired Design
+### [DONE] STAT-TTEST-006 — TTEST — PAIRED / Paired Design
 
 - Source: S154 / Chapter 128 / `PAIRED Statement` (PDF p. 10617); S154 / Chapter 128 / `Paired Design` (PDF pp. 10623–10624).
 - Scope: Implement PAIRED; Paired Design. This ticket owns the feature's options, defaults, computation, and results as an extension of the basic computational path; the chapter's output tickets handle ODS descriptors and file presentation.
 - Dependencies: [STAT-TTEST-001](#stat-ttest-001), [STAT-TTEST-002](#stat-ttest-002), [STAT-COMMON-005](#stat-common-005).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-TTEST-006/](tests/STAT15.4-oracle/STAT-TTEST-006/).
+- DONE (2026-11-25): Landed/pushed `aa72b172`. Original paired oracle matches all 92 tokens with whitespace-only normalization, status 0. Pairwise missing exclusion, list forms, BY/FREQ/WEIGHT and reversed direction have regression coverage; seven prior original programs remain green. Exact-SHA direct-exit gate: 1669 tests, 2306 corpus, 11 programs passed. Evidence: `tests/STAT15.4-oracle/STAT-TTEST-006/dev5-verification.json`; paired ratios remain a separately reported unsupported path.
 - Acceptance criteria: For PAIRED / Paired Design, verify paired differences, pairwise missing-value exclusion rules, degrees of freedom, and intervals; reversing pair order must correctly change direction and one-sided probabilities; validate numerical values against the source formulas or an independent reference, following this file's precision conventions.
 
 <a id="stat-ttest-007"></a>
@@ -14676,7 +14677,7 @@ Source: S154, Chapter 128, `The TTEST Procedure`, PDF pp. 10595–10692. Tasks i
 
 <a id="stat-ttest-008"></a>
 
-### [TODO] STAT-TTEST-008 — TTEST — AB/BA Crossover Design
+### [DOING @dev5] STAT-TTEST-008 — TTEST — AB/BA Crossover Design
 
 - Source: S154 / Chapter 128 / `AB/BA Crossover Design` (PDF pp. 10629–10630).
 - Scope: Implement AB/BA Crossover Design. This ticket owns the feature's options, defaults, computation, and results as an extension of the basic computational path; the chapter's output tickets handle ODS descriptors and file presentation.
