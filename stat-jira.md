@@ -14638,7 +14638,7 @@ Source: S154, Chapter 128, `The TTEST Procedure`, PDF pp. 10595–10692. Tasks i
 
 <a id="stat-ttest-004"></a>
 
-### [TODO] STAT-TTEST-004 — TTEST — BOOTSTRAP / Bootstrap Methods
+### [DOING @dev5] STAT-TTEST-004 — TTEST — BOOTSTRAP / Bootstrap Methods
 
 - Source: S154 / Chapter 128 / `BOOTSTRAP Statement` (PDF pp. 10613–10615); S154 / Chapter 128 / `Bootstrap Methods` (PDF pp. 10631–10640).
 - Scope: Implement BOOTSTRAP; Bootstrap Methods. This ticket owns the feature's options, defaults, computation, and results as an extension of the basic computational path; the chapter's output tickets handle ODS descriptors and file presentation.
@@ -14682,12 +14682,13 @@ Source: S154, Chapter 128, `The TTEST Procedure`, PDF pp. 10595–10692. Tasks i
 
 <a id="stat-ttest-008"></a>
 
-### [DOING @dev5] STAT-TTEST-008 — TTEST — AB/BA Crossover Design
+### [DONE] STAT-TTEST-008 — TTEST — AB/BA Crossover Design
 
 - Source: S154 / Chapter 128 / `AB/BA Crossover Design` (PDF pp. 10629–10630).
 - Scope: Implement AB/BA Crossover Design. This ticket owns the feature's options, defaults, computation, and results as an extension of the basic computational path; the chapter's output tickets handle ODS descriptors and file presentation.
 - Dependencies: [STAT-TTEST-001](#stat-ttest-001), [STAT-TTEST-002](#stat-ttest-002), [STAT-COMMON-005](#stat-common-005).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-TTEST-008/](tests/STAT15.4-oracle/STAT-TTEST-008/).
+- DONE (2026-11-25): Landed/pushed `1cc21512`. Original normal AB/BA oracle matches all 270 tokens with whitespace-only normalization, status 0. Paired/TOST and seven other original regressions remain green. Direct-exit exact-SHA gate: 1696 tests, 2307 corpus, 11 programs passed. Evidence: `tests/STAT15.4-oracle/STAT-TTEST-008/dev5-verification.json`; IGNOREPERIOD, lognormal/crossover TOST and ORDER=FREQ remain explicit unsupported extensions.
 - Acceptance criteria: For AB/BA Crossover Design, verify sequence, period, treatment contrasts, and the corresponding degrees of freedom; compare each result with the source crossover design example; validate numerical values against the source formulas or an independent reference, following this file's precision conventions.
 
 <a id="stat-ttest-009"></a>
