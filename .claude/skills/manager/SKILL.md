@@ -38,6 +38,10 @@ These user-requested rules override conflicting instructions below for this camp
   completed, retain it as `PARK` with a concrete reason and dispatch the next
   eligible existing ticket. Do not claim dependent work without an explicit
   viable existing/stub contract.
+- Missing in-repository features are dependency work, not by themselves a
+  reason to PARK. Dispatch the existing prerequisite implementation ticket,
+  then revisit blocked oracle checks. Break validation cycles using documented
+  interfaces and keep dependent tickets TODO until they can be verified.
 - Keep the session awake with `caffeinate`. Stop expanding scope when this
   finite board is exhausted; no recurring automation or backlog generation.
 

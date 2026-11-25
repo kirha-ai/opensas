@@ -193,13 +193,13 @@ Complete prerequisite shared contracts first, then each PROC's data input, model
 
 <a id="stat-common-001"></a>
 
-### [PARK] STAT-COMMON-001 — Statistical procedure execution and the 15.4 option contract
+### [TODO] STAT-COMMON-001 — Statistical procedure execution and the 15.4 option contract
 
 - Source: S154 / Chapter 3 / `Introduction` (PDF pp. 27–36); S154 / Chapter 2 / `What's New in SAS/STAT 15.4` (PDF pp. 25–26); S154 / Chapter 1 / `Procedures by Category` (PDF pp. 13–24).
 - Scope: Establish PROC-level parsing, default-parameter, execution-status, and result-object contracts; distinguish valid input, invalid input, and unsupported capabilities under SAS/STAT 15.4. This ticket owns shared interfaces; PROC tickets own their semantics.
 - Dependencies: None.
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-COMMON-001/](tests/STAT15.4-oracle/STAT-COMMON-001/).
-- PARK (2026-11-25): Unchanged `runtime_contract.sas` built with Zig 0.16.0 exits 2 (expected 0); 0/1 cases match even after whitespace normalization. `PROC reg is not supported`, `validmemname` is unrecognized and all REG tables are absent. Full REG computation/rendering exceeds this scoped attempt. The blank version should eventually identify current OpenSAS; the user explicitly exempts version identity from SAS-oracle equality, so version mismatch is not a PARK reason. No implementation changes or green gate claimed. Evidence: dev1 `.stat-common-001-evidence/actual.stderr` and `output.diff`; rerun the cited SAS case to reproduce.
+- Waiting for implementation (2026-11-25): Initial oracle exits 2 (expected 0), with missing REG tables and unrecognized `validmemname`. Implement existing STAT-REG-001/002 prerequisites, then revisit this case; missing REG alone is not grounds for PARK. Version must identify OpenSAS, not match SAS. Evidence: dev1 `.stat-common-001-evidence/actual.stderr` and `output.diff`.
 - Acceptance criteria: Provide minimal execution contract tests; define option defaults, explicit overrides, and procedure-specific RUN/QUIT rules; emit locatable diagnostics for unimplemented branches; record the specification version and handle version differences explicitly.
 
 <a id="stat-common-002"></a>
@@ -215,13 +215,14 @@ Complete prerequisite shared contracts first, then each PROC's data input, model
 
 <a id="stat-common-003"></a>
 
-### [DOING @dev1] STAT-COMMON-003 — Rank-deficient linear algebra and generalized inverses
+### [TODO] STAT-COMMON-003 — Rank-deficient linear algebra and generalized inverses
 
 - Source: S154 / Chapter 4 / `Important Linear Algebra Concepts` (PDF pp. 58–65).
 - Scope: Provide interfaces for linear equations, rank determination, projections, and generalized inverses; expose singular and nearly singular states under a consistent precision policy.
 - Dependencies: [STAT-COMMON-001](#stat-common-001).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-COMMON-003/](tests/STAT15.4-oracle/STAT-COMMON-003/).
 - Dispatch contract: Evaluate the linear-algebra oracle through the existing interpreter entry point independently of COMMON-001's runtime-version requirement; do not assume its missing REG capability is implemented.
+- Waiting for implementation (2026-11-25): Oracle currently exits 2 with no REG/TOL/VIF output. Revisit after existing REG foundation tickets; do not park solely because REG is not implemented.
 - Acceptance criteria: For full-rank, exactly rank-deficient, and nearly collinear matrices, verify decomposition reconstruction, projection identities, and generalized-inverse identities against independent analytic results; explain scale-dependent tolerances and do not return success for numerical failure.
 
 <a id="stat-common-004"></a>
@@ -11467,22 +11468,24 @@ Source: S154, Chapter 105, `The REG Procedure`, PDF pp. 8539–8728. Tasks in th
 
 <a id="stat-reg-001"></a>
 
-### [TODO] STAT-REG-001 — REG — Data input, variable roles, and basic options
+### [DOING @dev1] STAT-REG-001 — REG — Data input, variable roles, and basic options
 
 - Source: S154 / Chapter 105 / `PROC REG Statement` (PDF pp. 8560–8574); S154 / Chapter 105 / `BY Statement` (PDF pp. 8574–8575); S154 / Chapter 105 / `FREQ Statement` (PDF p. 8576); S154 / Chapter 105 / `ID Statement` (PDF p. 8576); S154 / Chapter 105 / `VAR Statement` (PDF pp. 8599–8600); S154 / Chapter 105 / `WEIGHT Statement` (PDF p. 8600); S154 / Chapter 105 / `Missing Values` (PDF p. 8600); S154 / Chapter 105 / `Input Data Sets` (PDF pp. 8600–8603).
 - Scope: Integrate PROC REG declarations, basic options, defaults, and execution boundaries; this ticket establishes parameter objects and result interfaces, while later feature tickets implement model-, algorithm-, and output-specific options. Also implement BY; FREQ; ID; VAR; WEIGHT; Missing Values; Input Data Sets; apply this procedure's rules for missing values, variable roles, and observation selection.
 - Dependencies: [STAT-COMMON-001](#stat-common-001), [STAT-COMMON-002](#stat-common-002).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-REG-001/](tests/STAT15.4-oracle/STAT-REG-001/).
+- Dispatch contract: Break the runtime-oracle validation cycle by implementing REG on existing interpreter/data interfaces. dev1 owns REG parsing, data selection and rendering; dev4 supplies the REG-002 numerical module. Revisit shared runtime and rank-deficiency oracles after integration. Missing REG is the work to implement, not a reason to PARK immediately.
 - Acceptance criteria: Create positive and negative parsing cases for the documented declarations and basic options; verify defaults, explicit settings, documented duplicate/conflicting declarations, and locations; valid but unimplemented features must not silently succeed. For BY / FREQ / ID / VAR / WEIGHT / Missing Values / Input Data Sets, construct valid, missing, empty, and multiple-group inputs; verify included observation counts, variable roles, BY boundaries, level ordering, and the frequency/weight rules relevant to this ticket; assert documented invalid-input behavior.
 
 <a id="stat-reg-002"></a>
 
-### [TODO] STAT-REG-002 — REG — Linear regression coefficients, variance, and basic fit statistics
+### [DOING @dev4] STAT-REG-002 — REG — Linear regression coefficients, variance, and basic fit statistics
 
 - Source: S154 / Chapter 105 / `Getting Started: REG Procedure` (PDF pp. 8542–8558); S154 / Chapter 105 / `Overview: REG Procedure` (PDF pp. 8540–8542).
 - Scope: Implement linear regression coefficients, variance, and basic fit statistics using the documented default path and establish the computational state needed by later extensions; implement specialized models, methods, and diagnostics outside that default example in their corresponding feature tickets.
 - Dependencies: [STAT-REG-001](#stat-reg-001), [STAT-REG-003](#stat-reg-003), [STAT-COMMON-005](#stat-common-005).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-REG-002/](tests/STAT15.4-oracle/STAT-REG-002/).
+- Dispatch contract: Implement numerical fitting in a separate `src/stat/reg_fit.zig` module using existing probability functions, concurrently with REG-001 parsing/rendering. Validate numeric results independently, then require integrated oracle verification before DONE; dependent shared oracle requirements do not prevent implementing their needed foundation.
 - Acceptance criteria: Turn the smallest default analysis in Getting Started into a runnable case and verify its principal estimates, observation counts, and result status; add a smaller case with an independent manual calculation; meet the precision conventions.
 
 <a id="stat-reg-003"></a>
