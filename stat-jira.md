@@ -22,6 +22,7 @@ This file is the sole board for the active SAS/STAT 15.4 campaign. Process only 
 - Validate graph data, object names, and visual output together. Successful execution, file creation alone, or skipped examples do not satisfy acceptance criteria.
 - Follow `CLAUDE.md` and `docs/decisions.md`: under D-029, place new statistical implementations in `src/stat/`, reuse interpreter entry points, and separate computation, parsing, and rendering. Implementation tickets require runnable checks and the repository gate. Complete this file's D-022 design ticket before extending ODS destinations.
 - Read each assigned ticket's oracle README and the cited manual pages, execute the listed cases, and compare with supplied expected outputs and statuses. Retain accepted entries as `DONE` with verification evidence; retain `PARK` entries with reasons. A retained `DONE` entry satisfies dependencies. These campaign rules override D-010's completed-task removal policy.
+- Runtime version fields use the current OpenSAS version and need not match the reference SAS version string (user clarification, 2026-11-25). This exception does not relax statistical results or status checks.
 
 ## Shared task index
 
@@ -198,7 +199,7 @@ Complete prerequisite shared contracts first, then each PROC's data input, model
 - Scope: Establish PROC-level parsing, default-parameter, execution-status, and result-object contracts; distinguish valid input, invalid input, and unsupported capabilities under SAS/STAT 15.4. This ticket owns shared interfaces; PROC tickets own their semantics.
 - Dependencies: None.
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-COMMON-001/](tests/STAT15.4-oracle/STAT-COMMON-001/).
-- PARK (2026-11-25): Unchanged `runtime_contract.sas` built with Zig 0.16.0 exits 2 (expected 0); 0/1 cases match even after whitespace normalization. `PROC reg is not supported`, `validmemname` is unrecognized, runtime version is blank and all REG tables are absent. Full REG computation/rendering exceeds this scoped attempt; the expected proprietary SAS build identifier must not be fabricated. No implementation changes or green gate claimed. Evidence: dev1 `.stat-common-001-evidence/actual.stderr` and `output.diff`; rerun the cited SAS case to reproduce.
+- PARK (2026-11-25): Unchanged `runtime_contract.sas` built with Zig 0.16.0 exits 2 (expected 0); 0/1 cases match even after whitespace normalization. `PROC reg is not supported`, `validmemname` is unrecognized and all REG tables are absent. Full REG computation/rendering exceeds this scoped attempt. The blank version should eventually identify current OpenSAS; the user explicitly exempts version identity from SAS-oracle equality, so version mismatch is not a PARK reason. No implementation changes or green gate claimed. Evidence: dev1 `.stat-common-001-evidence/actual.stderr` and `output.diff`; rerun the cited SAS case to reproduce.
 - Acceptance criteria: Provide minimal execution contract tests; define option defaults, explicit overrides, and procedure-specific RUN/QUIT rules; emit locatable diagnostics for unimplemented branches; record the specification version and handle version differences explicitly.
 
 <a id="stat-common-002"></a>

@@ -29,6 +29,9 @@ These user-requested rules override conflicting instructions below for this camp
 - For every ticket, read its `tests/STAT15.4-oracle/<ID>/README.md`, run the
   listed SAS cases and compare actual results with the supplied expected outputs.
   Consult `docs/SAS-STAT-15.4-Users-Guide.pdf` at the ticket's physical PDF pages.
+- Runtime version fields must identify the current OpenSAS version; they need
+  not equal the SAS version string in the oracle. This exception applies only
+  to product version identity, not statistical results or execution status.
 - Retain accepted tickets as `DONE`; never remove completed entries. Record
   verification evidence. Dependencies are satisfied by DONE entries.
 - Limit each attempt to 30 minutes. If it exceeds that limit or cannot be
