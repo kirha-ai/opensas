@@ -23,6 +23,7 @@ pub const ttest = @import("stat/ttest.zig");
 pub const reg = @import("stat/reg.zig");
 pub const glm = @import("stat/glm.zig");
 pub const glmmod = @import("stat/glmmod.zig");
+pub const logistic = @import("stat/logistic.zig");
 pub const sgscatter = @import("stat/sgscatter.zig");
 pub const proc = @import("proc.zig");
 pub const macro = @import("macro.zig");
@@ -32,6 +33,7 @@ test {
     _ = @import("stat/reg_model_tests.zig");
     _ = @import("stat/glm.zig");
     _ = @import("stat/glmmod.zig");
+    _ = @import("stat/logistic.zig");
     _ = @import("stat/sgscatter.zig");
     _ = @import("stat/ttest.zig");
     _ = @import("sashelp.zig");
