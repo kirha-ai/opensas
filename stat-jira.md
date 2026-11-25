@@ -14648,12 +14648,13 @@ Source: S154, Chapter 128, `The TTEST Procedure`, PDF pp. 10595–10692. Tasks i
 
 <a id="stat-ttest-004"></a>
 
-### [DOING @dev5] STAT-TTEST-004 — TTEST — BOOTSTRAP / Bootstrap Methods
+### [DONE] STAT-TTEST-004 — TTEST — BOOTSTRAP / Bootstrap Methods
 
 - Source: S154 / Chapter 128 / `BOOTSTRAP Statement` (PDF pp. 10613–10615); S154 / Chapter 128 / `Bootstrap Methods` (PDF pp. 10631–10640).
 - Scope: Implement BOOTSTRAP; Bootstrap Methods. This ticket owns the feature's options, defaults, computation, and results as an extension of the basic computational path; the chapter's output tickets handle ODS descriptors and file presentation.
 - Dependencies: [STAT-TTEST-001](#stat-ttest-001), [STAT-TTEST-002](#stat-ttest-002).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-TTEST-004/](tests/STAT15.4-oracle/STAT-TTEST-004/).
+- DONE (2026-11-25): Landed/pushed `daf44731`. Original bootstrap oracle matches all 248 tokens, status 0; independent MT1998 replay checks all 199 resamples, intervals and BOOTDATA. Generic formatted PRINT heading wrap is documented and two existing heading-only goldens were corrected in a separate evidence-bearing commit; original oracle files unchanged. Verified fresh-cache direct-exit gate: 1746 tests, 2310 corpus, 11 programs passed; disk-failed launches excluded. Evidence/RNG replay: `tests/STAT15.4-oracle/STAT-TTEST-004/`.
 - Acceptance criteria: For BOOTSTRAP / Bootstrap Methods, verify resampling units, replicate counts, fixed-seed reproducibility, successful replicate counts, and failed-replicate handling; validate intervals/probabilities against enumerated or error-bounded references.
 
 <a id="stat-ttest-005"></a>
@@ -14714,12 +14715,13 @@ Source: S154, Chapter 128, `The TTEST Procedure`, PDF pp. 10595–10692. Tasks i
 
 <a id="stat-ttest-010"></a>
 
-### [TODO] STAT-TTEST-010 — TTEST — Displayed Output / ODS Table Names
+### [DOING @dev5] STAT-TTEST-010 — TTEST — Displayed Output / ODS Table Names
 
 - Source: S154 / Chapter 128 / `Displayed Output` (PDF pp. 10640–10644); S154 / Chapter 128 / `ODS Table Names` (PDF p. 10644).
 - Scope: Implement Displayed Output; ODS Table Names. Cover all triggering options, content, and naming specified by this section; computational tickets supply numerical values, while other output types are handled separately.
 - Dependencies: [STAT-TTEST-001](#stat-ttest-001), [STAT-TTEST-002](#stat-ttest-002), [STAT-TTEST-003](#stat-ttest-003), [STAT-TTEST-004](#stat-ttest-004), [STAT-TTEST-005](#stat-ttest-005), [STAT-TTEST-006](#stat-ttest-006), [STAT-TTEST-007](#stat-ttest-007), [STAT-TTEST-008](#stat-ttest-008), [STAT-TTEST-009](#stat-ttest-009), [STAT-ODS-007](#stat-ods-007).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-TTEST-010/](tests/STAT15.4-oracle/STAT-TTEST-010/).
+- Dispatch contract: Reuse the existing ODS table registry and capture/TRACE interfaces while the broader ODS-007 integration ticket remains pending. Implement TTEST-specific producers and verify this full original capture case; do not extend inert ODS destinations under D-022.
 - Acceptance criteria: For Displayed Output / ODS Table Names, verify table names, labels, triggering conditions, rows, columns, degrees of freedom, statistics, and missing representations; exercise selection and capture with ODS TRACE/OUTPUT; unrelated options must not create extra tables.
 
 <a id="stat-ttest-011"></a>

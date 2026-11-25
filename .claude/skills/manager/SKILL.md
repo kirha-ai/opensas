@@ -34,6 +34,12 @@ These user-requested rules override conflicting instructions below for this camp
 - Runtime version fields must identify the current OpenSAS version; they need
   not equal the SAS version string in the oracle. This exception applies only
   to product version identity, not statistical results or execution status.
+- Oracle `.expected.rc` encodes reference severity; preserve and compare that
+  severity while independently checking OpenSAS's D-009 process exit contract.
+  Record unequal raw codes/diagnostic wording rather than claiming exact equality.
+- Any numerical acceptance bound must follow the board's per-quantity policy:
+  derive it independently of observed differences, retain all fields/raw values,
+  and disclose strict-text mismatches. Never edit an oracle to force a pass.
 - Retain accepted tickets as `DONE`; never remove completed entries. Record
   verification evidence. Dependencies are satisfied by DONE entries.
 - Limit each ticket attempt to 45 minutes, including currently running attempts
