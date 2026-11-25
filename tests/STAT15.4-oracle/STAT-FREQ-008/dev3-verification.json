@@ -1,0 +1,586 @@
+{
+  "normalization": "whitespace runs/edges only",
+  "runs": {
+    "documented_feature": {
+      "input_sha256": "628ec22f7b62d30bf5de6565c5e5652b35ba10a9cacbe1e291df2a3cb094a0d3",
+      "actual_sha256": "cd137cbb3814f4183cc635464734acac1af667ef9799bf6cccffef0f3d83cff1",
+      "stderr_sha256": "d1c194d2b32b55c1787ff54e70ce82b324a34dc258d41130a2526c33f5b359cd",
+      "status": 0,
+      "diagnostics": [
+        "NOTE: SVG graphic written to /Users/thomas/kirha/opensas-dev3/tests/STAT15.4-oracle/STAT-FREQ-008/dev3-results/graphs/opensas-0001-freqplot.svg.",
+        "NOTE: SVG graphic written to /Users/thomas/kirha/opensas-dev3/tests/STAT15.4-oracle/STAT-FREQ-008/dev3-results/graphs/opensas-0002-freqplot.svg.",
+        "NOTE: SVG graphic written to /Users/thomas/kirha/opensas-dev3/tests/STAT15.4-oracle/STAT-FREQ-008/dev3-results/graphs/opensas-0003-agreeplot.svg."
+      ],
+      "expected_sha256": "ecae1585b399135ce18b64373c6d6ab0ed2cd675df4bd7165d059faab1ae2649",
+      "full_token_match": true,
+      "tokens": 649
+    },
+    "positive_first": {
+      "input_sha256": "6e011f7468f96a6b1d03b51247b6fb3261e8d451e535424f78b636f8d6736acc",
+      "actual_sha256": "6f1b8a595571bb985e0973a1ff5038d1214f73f1319809189a55930d3d198dee",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": 0,
+      "diagnostics": []
+    },
+    "transpose": {
+      "input_sha256": "6ee5051d70cc0193f29a895d88aec1c7c3f458aa78cdc4b209e58f8d696a11fa",
+      "actual_sha256": "73c73f983561a891c260e0c8c07fc05d90b9398d4fc33599fdd215c9c5dbc81d",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": 0,
+      "diagnostics": []
+    },
+    "negative_first_default": {
+      "input_sha256": "44d21818010c832dcafb43e76c615aa9fde34c4ec398764dbc2109201a5b3d47",
+      "actual_sha256": "dba7d6ea53879258b8b20569cdfd1d3fc369de11ea5238974bd42032d01a1256",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": 0,
+      "diagnostics": []
+    },
+    "confidence_90": {
+      "input_sha256": "84e5635f687eab5becd230d1b26693ffda80db7793989f9867000be13bb4f516",
+      "actual_sha256": "63f58de5a757d686ccbae61f2c9e3127e1840fc44c22f7b8087c16b6f6cd620f",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": 0,
+      "diagnostics": []
+    },
+    "perfect": {
+      "input_sha256": "63775473202fbd219a1849a5e16be0e620510afe3c6e568f51575d9b1b8176f7",
+      "actual_sha256": "e9f6a29486ba895a1d34eef585e8ecbd48c4ec541713ea10a778d4d7947caad6",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": 0,
+      "diagnostics": []
+    },
+    "all_incorrect": {
+      "input_sha256": "e5eed26a8e408344b99d864959851debbb21296b7c0939314970c84f226046bc",
+      "actual_sha256": "f31f2a193055690a696077daf5f8742c8a8eb9175adf33c36a833d9510ef3327",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": 0,
+      "diagnostics": []
+    },
+    "freq_risk_twoway_public": {
+      "input_sha256": "5cfd8f9dd63bc715947a5c75fb9328f21cf19143154f779698f08f335030ea46",
+      "actual_sha256": "bb39e20e02d2d90bcb9705c819a8911e1a7a7868115e42919d25d6f63a63fada",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": 0,
+      "diagnostics": [],
+      "expected_sha256": "bb39e20e02d2d90bcb9705c819a8911e1a7a7868115e42919d25d6f63a63fada",
+      "full_token_match": true
+    },
+    "freq_risk_strata_public": {
+      "input_sha256": "a3d8bc5acabd561e78ed31b0f7017b412fde8043c8711544e87e0d04dae7970f",
+      "actual_sha256": "e1048bf8d3aa5e466e4d8ff75b3c4a4606996ce5ade9944f65e66881bb26162a",
+      "stderr_sha256": "f15522ef369fb227c335c7dd3f9163e826f56e02415e10afc7f074277eadf045",
+      "status": 0,
+      "diagnostics": [
+        "NOTE: Processing will terminate because there are no valid requests for displayed output or output data sets."
+      ],
+      "expected_sha256": "e1048bf8d3aa5e466e4d8ff75b3c4a4606996ce5ade9944f65e66881bb26162a",
+      "full_token_match": true
+    }
+  },
+  "formula_checks": {
+    "positive_first": {
+      "ordered_cells": [
+        12,
+        8,
+        5,
+        25
+      ],
+      "alpha": 0.05,
+      "metrics": {
+        "Sensitivity": {
+          "success": 12,
+          "conditional_n": 17,
+          "proportion_exact": "12/17",
+          "variance_exact": "60/4913",
+          "unrounded": [
+            "0.705882352941176470588235294117647058823529411764705882352941",
+            "0.110510169015026380616403080809554421048908994493947589434165",
+            "0.489286401746290617259069888162696250918021662490419432311321",
+            "0.922478304136062323917400700072597866729037161038992332394561"
+          ],
+          "printed": [
+            "0.7059",
+            "0.1105",
+            "0.4893",
+            "0.9225"
+          ]
+        },
+        "Specificity": {
+          "success": 25,
+          "conditional_n": 33,
+          "proportion_exact": "25/33",
+          "variance_exact": "200/35937",
+          "unrounded": [
+            "0.757575757575757575757575757575757575757575757575757575757576",
+            "0.0746009036238380198389337334092382033838769888588182996111256",
+            "0.611360673258891501378262115467709549145957249978750174704682",
+            "0.903790841892623650136889399683805602369194265172764976810470"
+          ],
+          "printed": [
+            "0.7576",
+            "0.0746",
+            "0.6114",
+            "0.9038"
+          ]
+        },
+        "Positive Predictive Value": {
+          "success": 12,
+          "conditional_n": 20,
+          "proportion_exact": "3/5",
+          "variance_exact": "3/250",
+          "unrounded": [
+            "0.6",
+            "0.109544511501033222691393956560160426790548938999596650845379",
+            "0.385296702753941218849944202959380577248688424937690531442909",
+            "0.814703297246058781150055797040619422751311575062309468557091"
+          ],
+          "printed": [
+            "0.6000",
+            "0.1095",
+            "0.3853",
+            "0.8147"
+          ]
+        },
+        "Negative Predictive Value": {
+          "success": 25,
+          "conditional_n": 30,
+          "proportion_exact": "5/6",
+          "variance_exact": "1/216",
+          "unrounded": [
+            "0.833333333333333333333333333333333333333333333333333333333333",
+            "0.0680413817439771693943690020751636497768318744626852813453526",
+            "0.699974675656796992850570197006186398439454037144873534937588",
+            "0.966691991009869673816096469660480268227212629521793131729078"
+          ],
+          "printed": [
+            "0.8333",
+            "0.0680",
+            "0.7000",
+            "0.9667"
+          ]
+        }
+      }
+    },
+    "transpose": {
+      "ordered_cells": [
+        12,
+        5,
+        8,
+        25
+      ],
+      "alpha": 0.05,
+      "metrics": {
+        "Sensitivity": {
+          "success": 12,
+          "conditional_n": 20,
+          "proportion_exact": "3/5",
+          "variance_exact": "3/250",
+          "unrounded": [
+            "0.6",
+            "0.109544511501033222691393956560160426790548938999596650845379",
+            "0.385296702753941218849944202959380577248688424937690531442909",
+            "0.814703297246058781150055797040619422751311575062309468557091"
+          ],
+          "printed": [
+            "0.6000",
+            "0.1095",
+            "0.3853",
+            "0.8147"
+          ]
+        },
+        "Specificity": {
+          "success": 25,
+          "conditional_n": 30,
+          "proportion_exact": "5/6",
+          "variance_exact": "1/216",
+          "unrounded": [
+            "0.833333333333333333333333333333333333333333333333333333333333",
+            "0.0680413817439771693943690020751636497768318744626852813453526",
+            "0.699974675656796992850570197006186398439454037144873534937588",
+            "0.966691991009869673816096469660480268227212629521793131729078"
+          ],
+          "printed": [
+            "0.8333",
+            "0.0680",
+            "0.7000",
+            "0.9667"
+          ]
+        },
+        "Positive Predictive Value": {
+          "success": 12,
+          "conditional_n": 17,
+          "proportion_exact": "12/17",
+          "variance_exact": "60/4913",
+          "unrounded": [
+            "0.705882352941176470588235294117647058823529411764705882352941",
+            "0.110510169015026380616403080809554421048908994493947589434165",
+            "0.489286401746290617259069888162696250918021662490419432311321",
+            "0.922478304136062323917400700072597866729037161038992332394561"
+          ],
+          "printed": [
+            "0.7059",
+            "0.1105",
+            "0.4893",
+            "0.9225"
+          ]
+        },
+        "Negative Predictive Value": {
+          "success": 25,
+          "conditional_n": 33,
+          "proportion_exact": "25/33",
+          "variance_exact": "200/35937",
+          "unrounded": [
+            "0.757575757575757575757575757575757575757575757575757575757576",
+            "0.0746009036238380198389337334092382033838769888588182996111256",
+            "0.611360673258891501378262115467709549145957249978750174704682",
+            "0.903790841892623650136889399683805602369194265172764976810470"
+          ],
+          "printed": [
+            "0.7576",
+            "0.0746",
+            "0.6114",
+            "0.9038"
+          ]
+        }
+      }
+    },
+    "negative_first_default": {
+      "ordered_cells": [
+        25,
+        5,
+        8,
+        12
+      ],
+      "alpha": 0.05,
+      "metrics": {
+        "Sensitivity": {
+          "success": 25,
+          "conditional_n": 33,
+          "proportion_exact": "25/33",
+          "variance_exact": "200/35937",
+          "unrounded": [
+            "0.757575757575757575757575757575757575757575757575757575757576",
+            "0.0746009036238380198389337334092382033838769888588182996111256",
+            "0.611360673258891501378262115467709549145957249978750174704682",
+            "0.903790841892623650136889399683805602369194265172764976810470"
+          ],
+          "printed": [
+            "0.7576",
+            "0.0746",
+            "0.6114",
+            "0.9038"
+          ]
+        },
+        "Specificity": {
+          "success": 12,
+          "conditional_n": 17,
+          "proportion_exact": "12/17",
+          "variance_exact": "60/4913",
+          "unrounded": [
+            "0.705882352941176470588235294117647058823529411764705882352941",
+            "0.110510169015026380616403080809554421048908994493947589434165",
+            "0.489286401746290617259069888162696250918021662490419432311321",
+            "0.922478304136062323917400700072597866729037161038992332394561"
+          ],
+          "printed": [
+            "0.7059",
+            "0.1105",
+            "0.4893",
+            "0.9225"
+          ]
+        },
+        "Positive Predictive Value": {
+          "success": 25,
+          "conditional_n": 30,
+          "proportion_exact": "5/6",
+          "variance_exact": "1/216",
+          "unrounded": [
+            "0.833333333333333333333333333333333333333333333333333333333333",
+            "0.0680413817439771693943690020751636497768318744626852813453526",
+            "0.699974675656796992850570197006186398439454037144873534937588",
+            "0.966691991009869673816096469660480268227212629521793131729078"
+          ],
+          "printed": [
+            "0.8333",
+            "0.0680",
+            "0.7000",
+            "0.9667"
+          ]
+        },
+        "Negative Predictive Value": {
+          "success": 12,
+          "conditional_n": 20,
+          "proportion_exact": "3/5",
+          "variance_exact": "3/250",
+          "unrounded": [
+            "0.6",
+            "0.109544511501033222691393956560160426790548938999596650845379",
+            "0.385296702753941218849944202959380577248688424937690531442909",
+            "0.814703297246058781150055797040619422751311575062309468557091"
+          ],
+          "printed": [
+            "0.6000",
+            "0.1095",
+            "0.3853",
+            "0.8147"
+          ]
+        }
+      }
+    },
+    "confidence_90": {
+      "ordered_cells": [
+        12,
+        8,
+        5,
+        25
+      ],
+      "alpha": 0.1,
+      "metrics": {
+        "Sensitivity": {
+          "success": 12,
+          "conditional_n": 17,
+          "proportion_exact": "12/17",
+          "variance_exact": "60/4913",
+          "unrounded": [
+            "0.705882352941176470588235294117647058823529411764705882352941",
+            "0.110510169015026380616403080809554421048908994493947589434165",
+            "0.524109300621790203667707898665820490014412769500285140463547",
+            "0.887655405260562737508762689569473627632646054029126624242335"
+          ],
+          "printed": [
+            "0.7059",
+            "0.1105",
+            "0.5241",
+            "0.8877"
+          ]
+        },
+        "Specificity": {
+          "success": 25,
+          "conditional_n": 33,
+          "proportion_exact": "25/33",
+          "variance_exact": "200/35937",
+          "unrounded": [
+            "0.757575757575757575757575757575757575757575757575757575757576",
+            "0.0746009036238380198389337334092382033838769888588182996111256",
+            "0.634868190676230435116517073710674737296392235282406179162079",
+            "0.880283324475284716398634441440840414218759279869108972353073"
+          ],
+          "printed": [
+            "0.7576",
+            "0.0746",
+            "0.6349",
+            "0.8803"
+          ]
+        },
+        "Positive Predictive Value": {
+          "success": 12,
+          "conditional_n": 20,
+          "proportion_exact": "3/5",
+          "variance_exact": "3/250",
+          "unrounded": [
+            "0.6",
+            "0.109544511501033222691393956560160426790548938999596650845379",
+            "0.419815312944898320234939839613518989912627353637016851506168",
+            "0.780184687055101679765060160386481010087372646362983148493832"
+          ],
+          "printed": [
+            "0.6000",
+            "0.1095",
+            "0.4198",
+            "0.7802"
+          ]
+        },
+        "Negative Predictive Value": {
+          "success": 25,
+          "conditional_n": 30,
+          "proportion_exact": "5/6",
+          "variance_exact": "1/216",
+          "unrounded": [
+            "0.833333333333333333333333333333333333333333333333333333333333",
+            "0.0680413817439771693943690020751636497768318744626852813453526",
+            "0.721415219788962847043774682958584513496558263232371757772777",
+            "0.945251446877703819622891983708082153170108403434294908893889"
+          ],
+          "printed": [
+            "0.8333",
+            "0.0680",
+            "0.7214",
+            "0.9453"
+          ]
+        }
+      }
+    },
+    "perfect": {
+      "ordered_cells": [
+        5,
+        0,
+        0,
+        7
+      ],
+      "alpha": 0.05,
+      "metrics": {
+        "Sensitivity": {
+          "success": 5,
+          "conditional_n": 5,
+          "proportion_exact": "1",
+          "variance_exact": "0",
+          "unrounded": [
+            "1",
+            "0",
+            "1.0000000000000000",
+            "1"
+          ],
+          "printed": [
+            "1.0000",
+            "0.0000",
+            "1.0000",
+            "1.0000"
+          ]
+        },
+        "Specificity": {
+          "success": 7,
+          "conditional_n": 7,
+          "proportion_exact": "1",
+          "variance_exact": "0",
+          "unrounded": [
+            "1",
+            "0",
+            "1.0000000000000000",
+            "1"
+          ],
+          "printed": [
+            "1.0000",
+            "0.0000",
+            "1.0000",
+            "1.0000"
+          ]
+        },
+        "Positive Predictive Value": {
+          "success": 5,
+          "conditional_n": 5,
+          "proportion_exact": "1",
+          "variance_exact": "0",
+          "unrounded": [
+            "1",
+            "0",
+            "1.0000000000000000",
+            "1"
+          ],
+          "printed": [
+            "1.0000",
+            "0.0000",
+            "1.0000",
+            "1.0000"
+          ]
+        },
+        "Negative Predictive Value": {
+          "success": 7,
+          "conditional_n": 7,
+          "proportion_exact": "1",
+          "variance_exact": "0",
+          "unrounded": [
+            "1",
+            "0",
+            "1.0000000000000000",
+            "1"
+          ],
+          "printed": [
+            "1.0000",
+            "0.0000",
+            "1.0000",
+            "1.0000"
+          ]
+        }
+      }
+    },
+    "all_incorrect": {
+      "ordered_cells": [
+        0,
+        4,
+        6,
+        0
+      ],
+      "alpha": 0.05,
+      "metrics": {
+        "Sensitivity": {
+          "success": 0,
+          "conditional_n": 6,
+          "proportion_exact": "0",
+          "variance_exact": "0",
+          "unrounded": [
+            "0",
+            "0",
+            "0",
+            "0E-16"
+          ],
+          "printed": [
+            "0.0000",
+            "0.0000",
+            "0.0000",
+            "0.0000"
+          ]
+        },
+        "Specificity": {
+          "success": 0,
+          "conditional_n": 4,
+          "proportion_exact": "0",
+          "variance_exact": "0",
+          "unrounded": [
+            "0",
+            "0",
+            "0",
+            "0E-16"
+          ],
+          "printed": [
+            "0.0000",
+            "0.0000",
+            "0.0000",
+            "0.0000"
+          ]
+        },
+        "Positive Predictive Value": {
+          "success": 0,
+          "conditional_n": 4,
+          "proportion_exact": "0",
+          "variance_exact": "0",
+          "unrounded": [
+            "0",
+            "0",
+            "0",
+            "0E-16"
+          ],
+          "printed": [
+            "0.0000",
+            "0.0000",
+            "0.0000",
+            "0.0000"
+          ]
+        },
+        "Negative Predictive Value": {
+          "success": 0,
+          "conditional_n": 6,
+          "proportion_exact": "0",
+          "variance_exact": "0",
+          "unrounded": [
+            "0",
+            "0",
+            "0",
+            "0E-16"
+          ],
+          "printed": [
+            "0.0000",
+            "0.0000",
+            "0.0000",
+            "0.0000"
+          ]
+        }
+      }
+    }
+  },
+  "graphics_sha256": {
+    "opensas-0001-freqplot.svg": "051c6a6e10c67fa491c5764a562293051d6826da8e77d989218212cfd716e1cd",
+    "opensas-0002-freqplot.svg": "78fa262d46d6f6b6ff8c96f108c4a5df8ba1db2dfbf205aa39412d01b34d2af2",
+    "opensas-0003-agreeplot.svg": "e292a7cce97c7626b8279dda0e87695bb59c79d880ad179b7549538e27baec2d"
+  }
+}
