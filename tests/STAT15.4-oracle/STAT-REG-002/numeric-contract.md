@@ -126,3 +126,23 @@ The independent normal-equation identity follows by differentiating
 ||y-X beta||^2 at its minimizer; no oracle tail is needed for the derivation.
 Gamma(k) is obtained by bounding products of k rounding factors (1+delta),
 |delta|<=u; no platform-specific fitted result is assumed.
+
+
+## Separately requested REG-001 review
+
+The manager requested independent reruns of the two parked REG-001 originals.
+The same verifier can select each case without changing the formula, context
+checks, two allowed field slots, or strict comparison of all other tokens:
+
+```sh
+python3 tests/STAT15.4-oracle/STAT-REG-002/verify_numeric_contract.py \
+  --oracle-dir tests/STAT15.4-oracle/STAT-REG-001 --case documented_feature
+python3 tests/STAT15.4-oracle/STAT-REG-002/verify_numeric_contract.py \
+  --oracle-dir tests/STAT15.4-oracle/STAT-REG-001 --case statement_by
+```
+
+Each input independently produces the exact rational intercept identity and the
+same bounds. Separate `*.numeric-verification.json` receipts live beside those
+original cases. They record 1,118 and 1,206 total tokens respectively, with only
+two values using tolerant acceptance in each; rc and the two required warnings
+match. This is evidence for the manager to revisit PARK, not a board/status edit.

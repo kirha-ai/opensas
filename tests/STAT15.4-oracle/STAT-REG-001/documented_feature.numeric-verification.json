@@ -1,0 +1,80 @@
+{
+  "accepted": true,
+  "failures": [],
+  "strict_whitespace_match": false,
+  "all_other_tokens_exact": true,
+  "fields": [
+    {
+      "model": "linear",
+      "expected": "0",
+      "actual": "9.748646E-12",
+      "expected_within_bound": true,
+      "actual_within_bound": true,
+      "absolute_bound": 7.261130843592319e-11,
+      "tolerant_acceptance_used": true
+    },
+    {
+      "model": "quadratic",
+      "expected": "-4.4596E-11",
+      "actual": "-1.21227E-10",
+      "expected_within_bound": true,
+      "actual_within_bound": true,
+      "absolute_bound": 1.7845359484002278e-09,
+      "tolerant_acceptance_used": true
+    }
+  ],
+  "expected_tokens": 1118,
+  "actual_tokens": 1118,
+  "ticket": "STAT-REG-001",
+  "case": "documented_feature",
+  "source_commit": "d5296c4c839899870c638215f6cffd3ac4bace7c",
+  "binary_version": "opensas v0.7.3-582-gd5296c4c",
+  "actual_rc": 1,
+  "expected_rc": 1,
+  "diagnostics_match": true,
+  "stderr": "WARNING: You must enable ODS graphics before requesting plots with the PLOTS option in the PROC REG statement.\nNOTE(expanded L2): Variable YearSq is added.\nNOTE(expanded L2): Due to an ADD statement, the model label is now MODEL1.1.\nWARNING: You must enable ODS graphics before requesting plots with the PLOTS option in the PROC REG statement.\n",
+  "reference": [
+    {
+      "model": "linear",
+      "n": 22,
+      "p": 2,
+      "coefficients": [
+        "-4154509173/1771000",
+        "11404039/8855000"
+      ],
+      "exact_residual_sum": "0",
+      "envelope": 107382.13120496894,
+      "residual_l1": 463.416,
+      "cancellation_amplification": 51.570090903793265,
+      "bound_fraction": "59277475057067721301337319/816366986546977287420429341820147875",
+      "bound": 7.261130843592319e-11
+    },
+    {
+      "model": "quadratic",
+      "n": 22,
+      "p": 3,
+      "coefficients": [
+        "153233246543/7084000",
+        "-136272391/5667200",
+        "9470381/1416800000"
+      ],
+      "exact_residual_sum": "0",
+      "envelope": 2009103.8050512422,
+      "residual_l1": 40.02019424054207,
+      "cancellation_amplification": 964.868779367783,
+      "bound_fraction": "728418117290122892013387709/408183493273488553075272170079053250",
+      "bound": 1.7845359484002278e-09
+    }
+  ],
+  "negative_controls": {
+    "out_of_bound_residual_sum": true,
+    "missing_residual_sum": true,
+    "extra_residual_sum": true,
+    "renamed_parameter": true,
+    "changed_anova_number": true,
+    "missing_table_heading": true,
+    "missing_marker_in_sum": true
+  },
+  "expected_sha256": "1cb39e89bc81094555afb48840bbb5d1bf00147f563245d2e13ade002e978a41",
+  "program_sha256": "4dcc491616be1e13ad47a208086f441c9c4a6bdbe4d28e643eb28232fb8bab68"
+}

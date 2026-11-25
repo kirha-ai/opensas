@@ -155,22 +155,25 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument('--binary', type=Path, default=ROOT / 'zig-out/bin/opensas')
     ap.add_argument('--report', type=Path)
+    ap.add_argument('--oracle-dir', type=Path, default=HERE)
+    ap.add_argument('--case', default='documented_default')
     args = ap.parse_args()
-    program = HERE / 'documented_default.sas'
+    directory = args.oracle_dir.resolve()
+    program = directory / (args.case + '.sas')
     source = program.read_text()
-    expected = (HERE / 'documented_default.expected.txt').read_text()
+    expected = (directory / (args.case + '.expected.txt')).read_text()
     contracts = reference_contract(source)
     run = subprocess.run([str(args.binary.resolve()), str(program)], cwd=ROOT, capture_output=True, text=True)
     result = compare(expected, run.stdout, contracts)
-    expected_diagnostics = (HERE / 'documented_default.expected.diagnostics.txt').read_text().splitlines()
+    expected_diagnostics = (directory / (args.case + '.expected.diagnostics.txt')).read_text().splitlines()
     warning_error = [line for line in run.stderr.splitlines() if line.startswith(('WARNING', 'ERROR'))]
     notes = [re.sub(r'^NOTE(?:\([^)]*\))?: ', '', line) for line in run.stderr.splitlines() if line.startswith('NOTE')]
-    oracle_log = (HERE / 'documented_default.oracle.log').read_text()
+    oracle_log = (directory / (args.case + '.oracle.log')).read_text()
     known_notes = all('NOTE: ' + note in oracle_log for note in notes)
     diagnostics_ok = warning_error == [v for v in expected_diagnostics if v] and known_notes
-    expected_rc = int((HERE / 'documented_default.expected.rc').read_text())
+    expected_rc = int((directory / (args.case + '.expected.rc')).read_text())
     checks = mutation_checks(expected, run.stdout, contracts)
-    result.update({'ticket': 'STAT-REG-002', 'source_commit': subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip(),
+    result.update({'ticket': directory.name, 'case': args.case, 'source_commit': subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip(),
                    'binary_version': subprocess.check_output([str(args.binary.resolve()), '--version'], text=True).strip(),
                    'actual_rc': run.returncode, 'expected_rc': expected_rc, 'diagnostics_match': diagnostics_ok,
                    'stderr': run.stderr, 'reference': contracts, 'negative_controls': checks,
