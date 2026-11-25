@@ -310,23 +310,25 @@ Complete prerequisite shared contracts first, then each PROC's data input, model
 
 <a id="stat-common-011"></a>
 
-### [DOING @dev6] STAT-COMMON-011 — Type II sums of squares and estimable functions
+### [DONE] STAT-COMMON-011 — Type II sums of squares and estimable functions
 
 - Source: S154 / Chapter 16 / `Type II SS and Estimable Functions` (PDF pp. 285–289); S154 / Chapter 6 / `Introduction to Analysis of Variance Procedures` (PDF pp. 123–134).
 - Scope: Implement type II hypothesis construction, degrees of freedom, and sums of squares; preserve differences in definition for unbalanced designs and missing cells.
 - Dependencies: [STAT-COMMON-009](#stat-common-009).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-COMMON-011/](tests/STAT15.4-oracle/STAT-COMMON-011/).
 - Dispatch contract: Extend the integrated GLM hypothesis/rank primitives for Type II; the wider COMMON-009 interface remains separately tracked. Validate hierarchy/containing effects explicitly rather than relabeling Type III output for arbitrary models.
+- DONE (2026-11-25): Landed/pushed `5a03f479`. Original SS2 oracle matches all 96 tokens, status 0, whitespace-only normalization. Type II uses actual effect-containment metadata and full-model error variance; eight independent checks distinguish Type II/III on unbalanced interactions and cover order, rank and empty cells. Parser fixes retained. Exact-SHA direct gate: 1761 tests, 2311 corpus, 11 programs passed; earlier disk-failed gate excluded. Evidence/replay: `tests/STAT15.4-oracle/STAT-COMMON-011/`.
 - Acceptance criteria: For balanced, unbalanced, empty-cell, and reordered-effect designs, verify hypothesis matrices, sums of squares, ranks, and F tests against source examples or independent linear-algebra derivations.
 
 <a id="stat-common-012"></a>
 
-### [TODO] STAT-COMMON-012 — Type III / IV sums of squares and estimable functions
+### [DOING @dev6] STAT-COMMON-012 — Type III / IV sums of squares and estimable functions
 
 - Source: S154 / Chapter 16 / `Type III and IV SS and Estimable Functions` (PDF pp. 289–293); S154 / Chapter 6 / `Introduction to Analysis of Variance Procedures` (PDF pp. 123–134).
 - Scope: Implement type III / IV hypothesis construction, degrees of freedom, and sums of squares; preserve differences in definition for unbalanced designs and missing cells.
 - Dependencies: [STAT-COMMON-009](#stat-common-009).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-COMMON-012/](tests/STAT15.4-oracle/STAT-COMMON-012/).
+- Dispatch contract: Extend the integrated GLM hypothesis and rank primitives while the broader COMMON-009 interface remains separately tracked. Respect differences between Type III and IV for missing cells; do not relabel one as the other without a validated applicable condition.
 - Acceptance criteria: For balanced, unbalanced, empty-cell, and reordered-effect designs, verify hypothesis matrices, sums of squares, ranks, and F tests against source examples or independent linear-algebra derivations.
 
 <a id="stat-common-013"></a>
