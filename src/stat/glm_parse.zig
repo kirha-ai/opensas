@@ -21,7 +21,7 @@ pub const Spec = struct {
     weight: ?usize = null,
     ids: []const usize = &.{},
     alpha: f64 = 0.05,
-    singular: f64 = 1e-7,
+    singular: f64 = 1e-9,
     namelen: usize = 20,
     order: Order = .formatted,
     manova: bool = false,
@@ -141,7 +141,7 @@ pub fn parse(cx: proc.ProcCtx, tokens: []const lex.Token) diag.Error!Spec {
             if (result.classes.len == 0) return cx.diags.fail(error.ParseError, tokens[i].line, "PROC GLM: CLASS requires variables", .{});
             class_seen = true;
         } else if (kw(tokens, i, "model")) {
-            if (model_seen) return proc.failGap(cx.diags, tokens[i].line, "PROC GLM: multiple MODEL statements are not implemented", .{});
+            if (model_seen) return cx.diags.fail(error.ParseError, tokens[i].line, "PROC GLM: only one MODEL statement is allowed", .{});
             model_seen = true;
             var equal = i + 1;
             while (equal < end and !at(tokens, equal, .eq)) equal += 1;

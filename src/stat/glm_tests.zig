@@ -217,3 +217,7 @@ test "GLM001 empty observations and unsupported categorical hypotheses are loud"
     try std.testing.expectError(error.ParseError, design.build(cx, spec, try view(a, spec), spec.responses[0]));
     try std.testing.expect(d.hasErrors());
 }
+
+test {
+    _ = @import("glm_effect_tests.zig");
+}
