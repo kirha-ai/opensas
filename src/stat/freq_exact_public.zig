@@ -246,12 +246,13 @@ pub const Tables = struct {
     fisher: ?renderers.Fisher = null,
     fisher_table_probability: ?f64 = null,
     odds_ratio: ?@import("freq_exact.zig").Interval = null,
+    odds_listing: []const u8 = "",
     simulations: std.ArrayList(@import("ods_freq_mc.zig").Simulation) = .empty,
     barnard: ?exec.Barnard = null,
     relative_risk: [2]?@import("freq_risk.zig").Interval = @splat(null),
     difference: [2]?@import("freq_risk.zig").Interval = @splat(null),
 };
-pub fn render(a: A, d: *diag.Diagnostics, out: *Out, scored: model.ScoredMatrix, one: bool, req: anytype, simulation_seed: *u64) diag.Error!Tables {
+pub fn render(a: A, d: *diag.Diagnostics, out: *Out, scored: model.ScoredMatrix, one: bool, req: anytype, simulation_seed: *u64, asymptotic: @import("freq_tests_execute.zig").Report) diag.Error!Tables {
     var limits: Tables = .{};
     if (req.exact.families.count() == 0) return limits;
     var total: f64 = 0;
@@ -267,7 +268,7 @@ pub fn render(a: A, d: *diag.Diagnostics, out: *Out, scored: model.ScoredMatrix,
         .stutc,   .smdcr, .smdrc, .pcorr,  .scorr, .trend,    .barnard,  .binomial, .oddsratio, .riskdiff,
         .relrisk, .comor, .eqor,  .agree,  .chisq, .measures,
     };
-    const order = if (req.exact.mc) &mc_order else std.enums.values(parse.Family);
+    const order = &mc_order;
     var concordance_seed: ?u64 = null;
     for (order) |requested_family| {
         if (!req.exact.families.contains(requested_family)) continue;
@@ -332,7 +333,19 @@ pub fn render(a: A, d: *diag.Diagnostics, out: *Out, scored: model.ScoredMatrix,
             },
             .exact_test => |p| {
                 limits.exact_tests.set(f, p);
-                try renderers.testResult(a, out, title(f), .{ .complete = .{ .probabilities = p, .directional = parse.directionalSymbol(f) != null, .right_sided = p.right_sided } }, options);
+                const comparison: ?@import("freq_tests.zig").Test = if (asymptotic.goodness_of_fit) |g| switch (f) {
+                    .pchi => g.pearson,
+                    .lrchi => g.likelihood_ratio,
+                    else => null,
+                } else if (asymptotic.chi_square) |g| switch (f) {
+                    .pchi => g.pearson,
+                    .lrchi => g.likelihood_ratio,
+                    .mhchi => g.mantel_haenszel,
+                    else => null,
+                } else null;
+                if (comparison) |test_value| {
+                    try renderers.chiSquare(a, out, title(f), test_value, p, options);
+                } else try renderers.testResult(a, out, title(f), .{ .complete = .{ .probabilities = p, .directional = parse.directionalSymbol(f) != null, .right_sided = p.right_sided } }, options);
             },
             .fisher => |r| {
                 const fisher = renderers.Fisher{ .first_cell = r.first_cell, .table_probability = r.table_probability, .left = if (r.cell_tails) |t| t.left else null, .right = if (r.cell_tails) |t| t.right else null, .p = r.probabilities.two_sided, .point = r.probabilities.point };
@@ -383,7 +396,11 @@ pub fn render(a: A, d: *diag.Diagnostics, out: *Out, scored: model.ScoredMatrix,
             },
             .interval => |ci| {
                 limits.odds_ratio = ci;
-                try interval(a, out, title(f), ci, c.alpha);
+                const risk = @import("freq_risk.zig");
+                const estimate = try risk.ratio(.{ .cells = m.counts[0..4].* }, .first, .odds_ratio, c.alpha, .wald, true);
+                var listing: Out = .empty;
+                try renderers.oddsRatio(a, &listing, estimate, ci, c.alpha);
+                limits.odds_listing = listing.items;
             },
             .risk_intervals => |r| {
                 const columns = if (f == .relrisk) &limits.relative_risk else &limits.difference;
@@ -486,6 +503,37 @@ const Harness = struct {
         return out.items;
     }
 };
+
+test "STAT-FREQ-004 exact comparison tables retain every field and listing order" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var h = try Harness.init(a, &.{ 11, 4, 2, 6 }, 2);
+    var d = diag.Diagnostics.init(a);
+    const out = try h.run("proc freq data=d; weight w; tables r*c / chisq relrisk noprint; exact pchi or; run;", &d);
+    try std.testing.expect(!d.hasErrors());
+    const chi = std.mem.indexOf(u8, out, "Pearson Chi-Square Test").?;
+    const fisher = std.mem.indexOf(u8, out, "Fisher's Exact Test").?;
+    const risks = std.mem.indexOf(u8, out, "Odds Ratio and Relative Risks").?;
+    const odds = std.mem.indexOf(u8, out, "\nOdds Ratio\n").?;
+    const sample = std.mem.indexOf(u8, out, "Sample Size = 23").?;
+    try std.testing.expect(chi < fisher and fisher < risks and risks < odds and odds < sample);
+    try std.testing.expectEqual(@as(usize, 1), std.mem.count(u8, out, "Fisher's Exact Test"));
+    try std.testing.expect(std.mem.indexOf(u8, out, "(Asymptotic) Chi-Square may not be a valid test.") != null);
+    const check = struct {
+        fn tokens(expected: []const u8, actual: []const u8) !void {
+            var want = std.mem.tokenizeAny(u8, expected, " \t\r\n");
+            var got = std.mem.tokenizeAny(u8, actual, " \t\r\n");
+            while (want.next()) |word| try std.testing.expectEqualStrings(word, got.next() orelse return error.TestExpectedEqual);
+            try std.testing.expect(got.next() == null);
+        }
+    }.tokens;
+    try check("Pearson Chi-Square Test ---------------------------------- " ++
+        "Chi-Square 4.9597 DF 1 Asymptotic Pr > ChiSq 0.0259 Exact Pr >= ChiSq 0.0393", out[chi..fisher]);
+    try check("Odds Ratio ----------------------------------- Odds Ratio 8.2500 " ++
+        "Asymptotic Conf Limits 95% Lower Conf Limit 1.1535 95% Upper Conf Limit 59.0029 " ++
+        "Exact Conf Limits 95% Lower Conf Limit 0.8677 95% Upper Conf Limit 105.5488", out[odds..sample]);
+}
 
 test "public Monte Carlo MAXTIME retains raw Fisher mass, missing tail rows and requested sample metadata" {
     const t = std.testing;

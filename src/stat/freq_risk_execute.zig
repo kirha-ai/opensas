@@ -343,6 +343,7 @@ pub fn executeResolved(a: A, d: *diag.Diagnostics, table: Table, options: *p.Opt
             cols[1] = try b.level("Lower CL");
             cols[2] = try b.level("Upper CL");
             try b.add("Odds Ratio and Relative Risks", "", cols, &rows, "");
+            b.sections.items[b.sections.items.len - 1].confidence_label = try b.level("Confidence Limits");
         }
         for ([_]?p.Request{ options.odds_ratio, options.relative_risk }) |maybe| if (maybe) |req| {
             var rows: std.ArrayList(r.Row) = .empty;

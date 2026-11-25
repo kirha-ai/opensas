@@ -1297,7 +1297,8 @@ fn renderGrid(a: std.mem.Allocator, out: *std.ArrayList(u8), sl: table_model.Sli
     const stats = try activeStats(a, req, sl.table.negative, sl.table.dimensions.len > 2, false);
     var labelwidth: usize = 9;
     for (stats) |s| labelwidth = @max(labelwidth, statLabel(s).len);
-    for (rows) |r| labelwidth = @max(labelwidth, (try cellText(a, sl.rows()[r].value)).len + 1);
+    // SAS wraps the row stub at 16 characters rather than widening the grid.
+    for (rows) |r| labelwidth = @max(labelwidth, @min(16, (try cellText(a, sl.rows()[r].value)).len) + 1);
     var colwidth: usize = 9;
     for (cols) |c| colwidth = @max(colwidth, (try cellText(a, sl.cols()[c].value)).len + 2);
     if (req.count_format) |fmt| {
@@ -1316,13 +1317,9 @@ fn renderGrid(a: std.mem.Allocator, out: *std.ArrayList(u8), sl: table_model.Sli
     const cn = if (cd.label) |label| try std.fmt.allocPrint(a, "{s}({s})", .{ cd.name, label }) else cd.name;
     // The variable heading can be wider than its data levels. Keep both names
     // intact without widening the frequency cells (STAT-FREQ-001 oracle).
-    const column_heading = if (rd.label == null and cd.label == null and 15 + rn.len >= sep0 + 1) 15 + rn.len + 5 else sep0 + 1;
+    const column_heading = if (15 + rn.len >= sep0 + 1) 15 + rn.len + 5 else sep0 + 1;
     const labels = try line(a, @max(width, @max(15 + rn.len, column_heading + cn.len)));
     putLeft(labels, 15, rn);
-    if (rd.label != null or cd.label != null) {
-        try flush(a, out, labels);
-        @memset(labels, ' ');
-    }
     putLeft(labels, column_heading, cn);
     try flush(a, out, labels);
     try out.append(a, '\n');
@@ -1349,10 +1346,20 @@ fn renderGrid(a: std.mem.Allocator, out: *std.ArrayList(u8), sl: table_model.Sli
     for (rows) |r| {
         const row_missing = !req.missing and sl.rows()[r].missing;
         if (!row_missing) row_cum += sl.row_totals[r];
-        for (stats, 0..) |s, k| {
+        const row_label = try cellText(a, sl.rows()[r].value);
+        const stub_width = labelwidth - 1;
+        const label_lines = (row_label.len + stub_width - 1) / stub_width;
+        const line_count = if (stats.len == 0) 0 else @max(stats.len, label_lines);
+        for (0..line_count) |k| {
             const b = try line(a, width);
-            if (k == 0) putLeft(b, 15, try cellText(a, sl.rows()[r].value));
+            const label_start = @min(k * stub_width, row_label.len);
+            putLeft(b, 15, row_label[label_start..@min(label_start + stub_width, row_label.len)]);
             for (0..cols.len + 1) |c| b[sep0 - 1 + c * colwidth] = chars[0];
+            if (k >= stats.len) {
+                try flush(a, out, b);
+                continue;
+            }
+            const s = stats[k];
             for (cols, 0..) |c, j| putRight(b, sep0 + j * colwidth + colwidth - 2, try statText(a, statValue(sl, r, c, s), s, req, false));
             const v: f64 = switch (s) {
                 .frequency => if (row_missing) table_model.nan else sl.row_totals[r],
@@ -1799,6 +1806,32 @@ test "STAT-FREQ-001 grid headings preserve long variable names above short level
     }
 }
 
+test "STAT-FREQ-004 long row levels wrap without dropping text or moving cell counts" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var ds = Dataset.init(a, "d");
+    _ = try ds.addColumn("Exposure", .char);
+    _ = try ds.addColumn("Response", .char);
+    _ = try ds.addColumn("Count", .num);
+    ds.columns.items[1].label = "Heart Disease";
+    for ([_]f64{ 11, 4, 2, 6 }, 0..) |count, i| try ds.appendRow(&.{
+        .{ .str = if (i < 2) "High Cholesterol Diet" else "Low Cholesterol Diet" },
+        .{ .str = if (i % 2 == 0) "Yes" else "No" },
+        .{ .num = count },
+    });
+    var tab = try computeTable(a, &ds, &.{ 0, 1 }, 2, false, false, .data, &.{});
+    var out: std.ArrayList(u8) = .empty;
+    try renderTable(a, &out, &tab, .{}, .{});
+    for ([_][]const u8{
+        "Exposure          Response(Heart Disease)",
+        "High Cholesterol |     11 |      4 |     15",
+        " Diet            |  47.83 |  17.39 |  65.22",
+        "Low Cholesterol  |      2 |      6 |      8",
+        "Diet             |   8.70 |  26.09 |  34.78",
+    }) |row| try std.testing.expect(std.mem.indexOf(u8, out.items, row) != null);
+}
+
 test "CROSSLIST numeric columns do not overwrite neighboring counts" {
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
@@ -1937,10 +1970,11 @@ fn analyzeTable(cx: ProcCtx, out: *std.ArrayList(u8), tab: *Table, req: Request,
         const risk_report: risk_render.Report = if (opts.noprint) .{} else try risk_exec.executeResolved(a, cx.diags, try riskTable(a, tab, scored, true, false), &active.risk, req.statistics.alpha);
         if (req.risk.binomial != null and active.risk.binomial == null) active.exact.families.remove(.binomial);
         if (opts.noprint) return;
-        const exact_tables = try exact_public.render(a, cx.diags, &body, scored, true, active, &analysis.simulation_seed);
+        const exact_tables = try exact_public.render(a, cx.diags, &body, scored, true, active, &analysis.simulation_seed, result);
         if (cx.capture) |capture| try @import("ods_freq_mc.zig").publish(a, cx.diags, capture, source, by, by_row, tab, 1, exact_tables.simulations.items, req.exact, req.stratified.agreement.restore);
         if (cx.capture) |capture| try @import("ods_freq_tests.zig").publish(a, cx.diags, capture, source, by, by_row, tab, 0, req, result);
         try risk_render.render(a, &body, risk_report);
+        try body.appendSlice(a, exact_tables.odds_listing);
         if (!req.noprint) try renderOne(a, out, tab, req) else if (body.items.len > 0) try out.appendSlice(a, ONEWAY_TITLE);
         try out.appendSlice(a, body.items);
         const sample_size = if (result.goodness_of_fit) |gof| gof.total else risk_report.sample_size;
@@ -1974,8 +2008,10 @@ fn analyzeTable(cx: ProcCtx, out: *std.ArrayList(u8), tab: *Table, req: Request,
         if (eligible) {
             const scored = (try tab.matrix(a, stratum)).?;
             if (scored.matrix.rows > 0 and scored.matrix.cols > 0) {
+                const defer_fisher = req.exact.families.contains(.pchi) or req.exact.families.contains(.lrchi) or req.exact.families.contains(.mhchi);
                 const result = try stat_exec.execute(a, cx.diags, &body, .{
                     .suppress_fisher = req.exact.families.contains(.fisher),
+                    .defer_fisher = defer_fisher,
                     .warning_location = if (opts.noprint and req.statistics.chisq and req.statistics.warn.log) try warningLocation(a, sl, number) else "",
                     .matrix = inferenceMatrix(scored.matrix),
                     .numeric_table_scores_valid = scored.numeric_table_scores_valid,
@@ -1990,7 +2026,8 @@ fn analyzeTable(cx: ProcCtx, out: *std.ArrayList(u8), tab: *Table, req: Request,
                     };
                 }
                 if (!opts.noprint) {
-                    const limits = try exact_public.render(a, cx.diags, &body, scored, false, req, &analysis.simulation_seed);
+                    const limits = try exact_public.render(a, cx.diags, &body, scored, false, req, &analysis.simulation_seed, result);
+                    if (defer_fisher) if (result.chi_square) |chi| if (chi.fisher) |fisher| try stat_render.fisher(a, &body, fisher, scored.matrix.counts[0]);
                     if (cx.capture) |capture| try @import("ods_freq_tests.zig").publish(a, cx.diags, capture, source, by, by_row, tab, number, req, result);
                     if (cx.capture) |capture| {
                         const table_name = try @import("ods_freq_exact_rows.zig").tableName(a, tab, number);
@@ -1999,6 +2036,7 @@ fn analyzeTable(cx: ProcCtx, out: *std.ArrayList(u8), tab: *Table, req: Request,
                         try @import("ods_freq_mc.zig").publish(a, cx.diags, capture, source, by, by_row, tab, number, limits.simulations.items, req.exact, req.stratified.agreement.restore);
                     }
                     try risk_render.render(a, &body, risk_report);
+                    try body.appendSlice(a, limits.odds_listing);
                     for (stratified.strata) |s| if (s.id == stratum) {
                         if (cx.capture) |capture| {
                             const table_name = try @import("ods_freq_exact_rows.zig").tableName(a, tab, number);

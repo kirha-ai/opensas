@@ -2,7 +2,7 @@
 const std = @import("std");
 const Error = @import("../diag.zig").Error;
 pub const Row = struct { label: []const u8, values: [5]?f64 = .{ null, null, null, null, null }, probability: [5]bool = .{ false, false, false, false, false } };
-pub const Section = struct { title: []const u8, subtitle: []const u8 = "", columns: []const []const u8, rows: []const Row, note: []const u8 = "" };
+pub const Section = struct { title: []const u8, subtitle: []const u8 = "", columns: []const []const u8, rows: []const Row, note: []const u8 = "", confidence_label: ?[]const u8 = null };
 pub const RiskColumn = struct {
     estimates: [4]@import("freq_risk.zig").Estimate,
     binomial_limits: [3]?@import("freq_risk.zig").Interval = @splat(null),
@@ -24,7 +24,12 @@ pub fn render(a: std.mem.Allocator, out: *std.ArrayList(u8), report: Report) Err
         try out.append(a, '\n');
         var label_width: usize = 28;
         for (section.rows) |row| label_width = @max(label_width, row.label.len + 2);
-        if (section.columns.len > 1) {
+        if (section.confidence_label) |label| {
+            try pad(a, out, "Statistic", label_width, false);
+            try pad(a, out, "Value", 12, true);
+            try pad(a, out, label, 28, true);
+            try out.appendSlice(a, "\n------------------------------------------------------------------\n");
+        } else if (section.columns.len > 1) {
             try pad(a, out, "Statistic / Method", label_width, false);
             for (section.columns) |column| try pad(a, out, column, @max(12, column.len + 2), true);
             try out.append(a, '\n');

@@ -55,6 +55,29 @@ fn nLine(a: A, out: *Out, label: []const u8, value: f64) Error!void {
     try line(a, out, label, if (std.math.isFinite(value)) try std.fmt.allocPrint(a, "{d:.4}", .{value}) else if (value == std.math.inf(f64)) "Infinity" else ".");
 }
 
+pub fn chiSquare(a: A, out: *Out, title: []const u8, asymptotic: @import("freq_tests.zig").Test, exact: dist.Probabilities, options: parse.Options) Error!void {
+    try out.appendSlice(a, try std.fmt.allocPrint(a, "\n{s}\n----------------------------------\n", .{title}));
+    try nLine(a, out, "Chi-Square", asymptotic.statistic);
+    try line(a, out, "DF", try std.fmt.allocPrint(a, "{d}", .{asymptotic.df}));
+    // PFORMAT controls exact probabilities, not the asymptotic comparison.
+    try line(a, out, "Asymptotic Pr >  ChiSq", try probability(a, asymptotic.p, .default));
+    try pLine(a, out, "Exact      Pr >= ChiSq", exact.two_sided, options);
+    if (options.point) try pLine(a, out, "Point Pr = ChiSq", exact.point, options);
+    if (options.midp) try pLine(a, out, "Mid p-Value", @max(0, exact.two_sided - exact.point / 2), options);
+}
+
+pub fn oddsRatio(a: A, out: *Out, estimate: @import("freq_risk.zig").Ratio, exact: @import("freq_exact.zig").Interval, alpha: f64) Error!void {
+    const level = try @import("freq_risk_render.zig").confidence(a, alpha);
+    try out.appendSlice(a, "\nOdds Ratio\n-----------------------------------\n");
+    try nLine(a, out, "Odds Ratio", estimate.estimate orelse std.math.nan(f64));
+    try out.appendSlice(a, "\nAsymptotic Conf Limits\n");
+    try nLine(a, out, try std.fmt.allocPrint(a, "{s}% Lower Conf Limit", .{level}), estimate.limits.lower orelse std.math.nan(f64));
+    try nLine(a, out, try std.fmt.allocPrint(a, "{s}% Upper Conf Limit", .{level}), estimate.limits.upper orelse std.math.nan(f64));
+    try out.appendSlice(a, "\nExact Conf Limits\n");
+    try nLine(a, out, try std.fmt.allocPrint(a, "{s}% Lower Conf Limit", .{level}), exact.lower);
+    try nLine(a, out, try std.fmt.allocPrint(a, "{s}% Upper Conf Limit", .{level}), exact.upper);
+}
+
 pub const Test = struct { statistic: ?f64 = null, probabilities: dist.Probabilities, directional: bool = false, right_sided: bool = false, two_doubled: bool = false };
 pub const Result = union(enum) { complete: Test, exhausted, not_defined: ?bool };
 pub fn testResult(a: A, out: *Out, title: []const u8, result: Result, options: parse.Options) Error!void {

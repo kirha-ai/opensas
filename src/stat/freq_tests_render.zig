@@ -32,7 +32,8 @@ pub fn sparseWarning(a: A, percent: ?u8, location: []const u8) Error![]const u8 
 }
 fn warningFootnote(a: A, out: *Out, percent: ?u8) Error!void {
     try text(a, out, "\nWARNING: ");
-    try text(a, out, try sparseWarning(a, percent, ""));
+    const subject = if (percent) |v| try std.fmt.allocPrint(a, "{d}% of the cells", .{v}) else "The table cells";
+    try text(a, out, try std.fmt.allocPrint(a, "{s} have expected counts less than 5.\n         (Asymptotic) Chi-Square may not be a valid test.", .{subject}));
     try out.append(a, '\n');
 }
 
@@ -81,14 +82,15 @@ pub fn contingency(a: A, out: *Out, result: k.ChiSquare, opts: parse.Options, fi
     try coefficient(a, out, "Contingency Coefficient", result.contingency);
     try coefficient(a, out, "Cramer's V", result.cramer_v);
     if (result.sparse and opts.warn.display) try warningFootnote(a, out, result.small_percent);
-    if (result.fisher) |f| {
-        try text(a, out, "\nFisher's Exact Test\n----------------------------------\n");
-        try pair(a, out, "Cell (1,1) Frequency (F)", first_cell, false);
-        try pair(a, out, "Left-sided Pr <= F", f.left, true);
-        try pair(a, out, "Right-sided Pr >= F", f.right, true);
-        try pair(a, out, "Table Probability (P)", f.probability, true);
-        try pair(a, out, "Two-sided Pr <= P", f.two_sided, true);
-    }
+    if (result.fisher) |f| try fisher(a, out, f, first_cell);
+}
+pub fn fisher(a: A, out: *Out, f: k.Fisher, first_cell: f64) Error!void {
+    try text(a, out, "\nFisher's Exact Test\n----------------------------------\n");
+    try pair(a, out, "Cell (1,1) Frequency (F)", first_cell, false);
+    try pair(a, out, "Left-sided Pr <= F", f.left, true);
+    try pair(a, out, "Right-sided Pr >= F", f.right, true);
+    try pair(a, out, "Table Probability (P)", f.probability, true);
+    try pair(a, out, "Two-sided Pr <= P", f.two_sided, true);
 }
 fn measureRow(a: A, out: *Out, label: []const u8, m: k.Measure, cl: bool) Error!void {
     try pad(a, out, label, 36, false);
