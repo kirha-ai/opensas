@@ -178,6 +178,16 @@ test "STAT-COMMON-004 FREQ and precision weights have distinct covariance DF" {
     }
     // Same SSE/crossproducts, but FREQ N=4 gives df=2 rather than WEIGHT df=1.
     try close(@sqrt(0.125), number(replicated, 0, "_RMSE_"));
+    try execute(a, &lib, &d, "proc reg data=sample outest=combined covout noprint; model y=x; freq f; weight w; run;");
+    const combined = lib.find("combined").?;
+    // Precision*frequency=(1,4,1), but N=sum FREQ=4: beta=(4/3,1/2),
+    // SSE=1/3, error df=2, MSE=1/6; inverse X'WX=[[2/3,-1/2],[-1/2,1/2]].
+    try close(4.0 / 3.0, number(combined, 0, "Intercept"));
+    try close(0.5, number(combined, 0, "x"));
+    try close(@sqrt(1.0 / 6.0), number(combined, 0, "_RMSE_"));
+    try close(1.0 / 9.0, number(combined, 1, "Intercept"));
+    try close(-1.0 / 12.0, number(combined, 1, "x"));
+    try close(1.0 / 12.0, number(combined, 2, "x"));
     try std.testing.expect(!d.hasErrors());
 }
 
