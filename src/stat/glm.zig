@@ -52,9 +52,22 @@ pub fn execute(cx: proc.ProcCtx, out: *std.ArrayList(u8), spec: Spec) diag.Error
     if (groups.len == 0) return cx.diags.fail(error.ExecError, 0, "PROC GLM: no observations", .{});
     var graph_order: usize = 0;
     for (groups) |group| {
+        if (spec.absorb.len > 0) try @import("glm_absorb.zig").validate(cx, spec, group);
         if (!spec.noprint and spec.by.len > 0 and group.observations.len > 0) try @import("by_groups.zig").appendLine(cx.arena, out, spec.input.ds, group.observations[0].cells, spec.by);
         for (spec.responses) |response| {
             const d = try design.build(cx, spec, group, response);
+            if (spec.absorb.len > 0) {
+                if (@hasField(Spec, "estimates")) if (spec.estimates.len > 0) return proc.failGap(cx.diags, 0, "PROC GLM: ESTIMATE with ABSORB requires an absorbed estimable-function mapping", .{});
+                if (@hasField(Spec, "lsmeans")) if (spec.lsmeans.len > 0) return cx.diags.fail(error.ParseError, 0, "PROC GLM: LSMEANS is unavailable with ABSORB", .{});
+                if (@hasField(Spec, "ss4")) if (spec.ss4) return proc.failGap(cx.diags, 0, "PROC GLM: ABSORB Type IV tests are not implemented", .{});
+                var absorbed = try @import("glm_absorb.zig").fit(cx, spec, d);
+                defer absorbed.deinit(cx.arena);
+                if (!spec.noprint) try @import("glm_absorb_render.zig").render(cx, out, spec, d, absorbed);
+                if (!spec.noprint and !spec.plots_none) if (cx.graphics) |g| {
+                    if (g.enabled == true) return proc.failGap(cx.diags, 0, "PROC GLM: default graphics with ABSORB are not implemented; use PLOTS=NONE", .{});
+                };
+                continue;
+            }
             var result = try fitDesign(cx, spec, d);
             defer result.deinit(cx.arena);
             if (!spec.noprint) try @import("glm_render.zig").render(cx, out, spec, d, result);
@@ -67,4 +80,56 @@ pub fn execute(cx: proc.ProcCtx, out: *std.ArrayList(u8), spec: Spec) diag.Error
 
 test {
     _ = @import("glm_tests.zig");
+}
+
+/// Minimal retained GLM execution boundary. Initial analyses are not replayed
+/// by later RUN statements. Post-fit analyses not implemented here remain loud.
+pub fn continuationKeyword(name: []const u8) bool {
+    inline for (.{ "run", "quit", "absorb", "by", "freq", "weight", "id", "class", "model", "where", "means", "lsmeans", "contrast", "estimate", "test", "random", "repeated", "manova", "output", "store", "code" }) |keyword| {
+        if (std.ascii.eqlIgnoreCase(name, keyword)) return true;
+    }
+    return false;
+}
+pub const Session = struct {
+    spec: Spec,
+    pub fn continuation(self: *Session, cx: proc.ProcCtx, tokens: []const @import("../lexer.zig").Token) diag.Error!bool {
+        var i: usize = 0;
+        while (i < tokens.len and tokens[i].tag != .eof) {
+            if (tokens[i].tag == .semicolon) {
+                i += 1;
+                continue;
+            }
+            const token = tokens[i];
+            var end = i;
+            while (end < tokens.len and tokens[end].tag != .semicolon and tokens[end].tag != .eof) end += 1;
+            if (end >= tokens.len or tokens[end].tag != .semicolon) return cx.diags.fail(error.ParseError, token.line, "PROC GLM: expected semicolon in continuation", .{});
+            const eq = std.ascii.eqlIgnoreCase;
+            if (eq(token.text, "quit")) {
+                if (end != i + 1) return cx.diags.fail(error.ParseError, token.line, "PROC GLM: invalid QUIT boundary", .{});
+                return false;
+            }
+            if (eq(token.text, "run")) {
+                if (end != i + 1) return cx.diags.fail(error.ParseError, token.line, "PROC GLM: invalid RUN boundary", .{});
+            } else if (eq(token.text, "absorb") or eq(token.text, "by") or eq(token.text, "freq") or eq(token.text, "weight") or eq(token.text, "id")) {
+                // S154 pp.4065–4072/4106: declarations after first RUN are ignored.
+            } else if (eq(token.text, "model") or eq(token.text, "class")) {
+                return cx.diags.fail(error.ParseError, token.line, "PROC GLM: CLASS/MODEL cannot be redeclared after the first RUN", .{});
+            } else if (self.spec.absorb.len > 0 and (eq(token.text, "lsmeans") or eq(token.text, "output"))) {
+                return cx.diags.fail(error.ParseError, token.line, "PROC GLM: {s} is unavailable with ABSORB", .{token.text});
+            } else return proc.failGap(cx.diags, token.line, "PROC GLM: interactive {s} is not implemented", .{token.text});
+            i = end + 1;
+        }
+        return true;
+    }
+};
+pub fn canContinue(cx: proc.ProcCtx, spec: Spec) diag.Error!bool {
+    if (spec.by.len > 0) return false;
+    if (spec.manova or spec.responses.len < 2) return true;
+    const view = try selection.View.init(cx.arena, spec.input, .{ .frequency = spec.freq, .weight = spec.weight });
+    const first = try design.build(cx, spec, view, spec.responses[0]);
+    for (spec.responses[1..]) |response| {
+        const other = try design.build(cx, spec, view, response);
+        if (!std.mem.eql(usize, first.source_rows, other.source_rows)) return false;
+    }
+    return true;
 }

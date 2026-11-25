@@ -21,6 +21,7 @@ pub const Spec = struct {
     freq: ?usize = null,
     weight: ?usize = null,
     ids: []const usize = &.{},
+    absorb: []const usize = &.{},
     alpha: f64 = 0.05,
     singular: f64 = 1e-9,
     namelen: usize = 20,
@@ -140,7 +141,7 @@ pub fn parse(cx: proc.ProcCtx, tokens: []const lex.Token) diag.Error!Spec {
         if (kw(tokens, i, "run") or kw(tokens, i, "quit")) {
             if (end != i + 1) return cx.diags.fail(error.ParseError, tokens[i].line, "PROC GLM: invalid execution boundary", .{});
             ended = true;
-        } else if (ended and (kw(tokens, i, "by") or kw(tokens, i, "freq") or kw(tokens, i, "id") or kw(tokens, i, "weight"))) {
+        } else if (ended and (kw(tokens, i, "by") or kw(tokens, i, "freq") or kw(tokens, i, "id") or kw(tokens, i, "weight") or kw(tokens, i, "absorb"))) {
             // These declarations after the first RUN are explicitly ignored by SAS.
         } else if (ended) return proc.failGap(cx.diags, tokens[i].line, "PROC GLM: interactive continuation is not implemented", .{}) else if (kw(tokens, i, "class")) {
             if (model_seen) return cx.diags.fail(error.ParseError, tokens[i].line, "PROC GLM: CLASS must precede MODEL", .{});
@@ -223,6 +224,10 @@ pub fn parse(cx: proc.ProcCtx, tokens: []const lex.Token) diag.Error!Spec {
         } else if (kw(tokens, i, "lsmeans")) {
             if (!model_seen) return cx.diags.fail(error.ParseError, tokens[i].line, "PROC GLM: LSMEANS must follow MODEL", .{});
             try @import("glm_lsmeans.zig").read(cx, tokens[i..end], result, effects.items, &lsmeans);
+        } else if (kw(tokens, i, "absorb")) {
+            if (result.absorb.len > 0) return proc.failGap(cx.diags, tokens[i].line, "PROC GLM: repeated ABSORB declarations are not implemented", .{});
+            result.absorb = try columns(cx, ds, tokens[i + 1 .. end], false);
+            if (result.absorb.len == 0) return cx.diags.fail(error.ParseError, tokens[i].line, "PROC GLM: ABSORB requires variables", .{});
         } else if (kw(tokens, i, "by")) {
             try bys.read(cx.arena, tokens, &i);
         } else if (kw(tokens, i, "id")) {
@@ -238,6 +243,12 @@ pub fn parse(cx: proc.ProcCtx, tokens: []const lex.Token) diag.Error!Spec {
     if (!model_seen) return cx.diags.fail(error.ParseError, 0, "PROC GLM: MODEL statement required", .{});
     result.effects = effects.items;
     result.lsmeans = lsmeans.items;
+    if (result.absorb.len > 0) {
+        result.intercept = true; // MODEL NOINT is ignored with ABSORB (S154 p.4094).
+        for (result.effects) |effect| for (effect.variables) |ci| {
+            if (std.mem.indexOfScalar(usize, result.absorb, ci) != null) return proc.failGap(cx.diags, 0, "PROC GLM: an ABSORB variable also used in MODEL is not implemented", .{});
+        };
+    }
     const parsed = try bys.resolve(cx.arena, ds, cx.diags);
     const indices = try cx.arena.alloc(usize, parsed.names.len);
     for (parsed.names, 0..) |nm, k| indices[k] = ds.indexOf(nm).?;

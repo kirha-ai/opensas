@@ -44,6 +44,7 @@ pub fn build(cx: proc.ProcCtx, spec: parse.Spec, group: selection.View, response
     const a = cx.arena;
     var required: std.ArrayList(usize) = .empty;
     try appendUnique(a, &required, response);
+    for (spec.absorb) |ci| try appendUnique(a, &required, ci);
     if (spec.manova) for (spec.responses) |ci| try appendUnique(a, &required, ci);
     for (spec.effects) |effect| {
         var categorical = false;

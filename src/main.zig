@@ -310,6 +310,7 @@ const StepCtx = struct {
     // loadLibInputs passes skip the re-read AND the re-report.
     damaged: *std.StringHashMap(void),
     reg_session: ?sas.reg.Session = null,
+    glm_session: ?sas.glm.Session = null,
     ended: bool = false, // ENDSAS seen: stop reading input, exit normally (BUG-endsasexit)
     // NOTE-chunkrelativelineno (QA tick312 F3): the current raw chunk's start
     // line in src, minus 1 — tokenize restarts line numbering per chunk, so a
@@ -401,6 +402,13 @@ fn runExpanded(ctx: *StepCtx, text: []const u8, allow_anon: bool) sas.diag.Error
     // as a literal `lib.ds` token HERE, after runtime expansion — the up-front
     // preload in `interpret` never saw it. Load any still-missing members now.
     if (ctx.io) |iov| try loadLibInputs(a, iov, ctx.lib, ctx.librefs.items, toks, ctx.loaded_ro, ctx.damaged, ctx.diags);
+    if (ctx.glm_session) |*session| {
+        if (toks.len > 0 and toks[0].tag == .name and sas.glm.continuationKeyword(toks[0].text)) {
+            const pcx: sas.proc.ProcCtx = .{ .arena = a, .lib = ctx.lib, .diags = ctx.diags, .capture = &ods_capture, .listing = &ods_listing, .graphics = native_graphics_session };
+            if (!try session.continuation(pcx, toks)) ctx.glm_session = null;
+            return;
+        }
+    }
     if (ctx.reg_session) |*session| {
         if (toks.len > 0 and toks[0].tag == .name and sas.reg.continuationKeyword(toks[0].text)) {
             const pcx: sas.proc.ProcCtx = .{ .arena = a, .lib = ctx.lib, .diags = ctx.diags, .capture = &ods_capture, .listing = &ods_listing, .graphics = native_graphics_session };
@@ -487,12 +495,13 @@ fn runExpanded(ctx: *StepCtx, text: []const u8, allow_anon: bool) sas.diag.Error
             // (the gate above skips instead).
             if (!ctx.diags.syntax_check) ctx.diags.spendStepErrors();
             ctx.reg_session = null; // a new DATA/PROC step terminates REG
+            ctx.glm_session = null; // and retained GLM state
             const step_toks = try sas.macro.bindStepVars(a, toks[seg.start..seg.end], &ctx.lib.macro_vars, ctx.diags);
             // PROC COPY runs here, not in runProc: it needs the CURRENT libref
             // bindings and Io to write through them eagerly (GAP-proccopy).
             if (step_toks.len > 1 and eqi(step_toks[0].text, "proc") and eqi(step_toks[1].text, "copy")) {
                 try runProcCopy(ctx, step_toks);
-            } else try runStep(a, ctx.out, ctx.lib, ctx.diags, step_toks, ctx.globals, ctx.io, &ctx.reg_session);
+            } else try runStep(a, ctx.out, ctx.lib, ctx.diags, step_toks, ctx.globals, ctx.io, &ctx.reg_session, &ctx.glm_session);
             // NOTE parity (GH#3 ISS-steperrhalt): real SAS ends the FAILING step
             // ITSELF with the same NOTE the later skipped steps get (Language
             // Reference: Concepts Ch.8 Examples 8.2/8.4/8.8) — opensas used to
@@ -2301,7 +2310,7 @@ fn dataName(a: std.mem.Allocator, toks: []const Token, pos: *usize) sas.diag.Err
     return name;
 }
 
-fn runStep(a: std.mem.Allocator, out: *std.ArrayList(u8), lib: *sas.exec.Library, diags: *sas.diag.Diagnostics, toks: []const Token, g: *Globals, io: ?Io, reg_session: *?sas.reg.Session) sas.diag.Error!void {
+fn runStep(a: std.mem.Allocator, out: *std.ArrayList(u8), lib: *sas.exec.Library, diags: *sas.diag.Diagnostics, toks: []const Token, g: *Globals, io: ?Io, reg_session: *?sas.reg.Session, glm_session: *?sas.glm.Session) sas.diag.Error!void {
     if (eqi(toks[0].text, "data")) {
         // header: `data [name] ;`  — a name, else an anonymous output dataset.
         var pos: usize = 1;
@@ -2370,7 +2379,7 @@ fn runStep(a: std.mem.Allocator, out: *std.ArrayList(u8), lib: *sas.exec.Library
             };
         }
     } else {
-        try runProc(a, out, lib, diags, toks, g, reg_session);
+        try runProc(a, out, lib, diags, toks, g, reg_session, glm_session);
     }
 }
 
@@ -2893,7 +2902,7 @@ fn sortInPlaceTarget(toks: []const Token) ?[]const u8 {
 
 /// Dispatch a `proc <name> …; … run;` step by name. Each proc hand-parses its
 /// own tokens (parser.zig is A2's) — SORT lives in proc.zig; PRINT is below.
-fn runProc(a: std.mem.Allocator, listing_out: *std.ArrayList(u8), lib: *sas.exec.Library, diags: *sas.diag.Diagnostics, toks: []const Token, g: *Globals, reg_session: *?sas.reg.Session) sas.diag.Error!void {
+fn runProc(a: std.mem.Allocator, listing_out: *std.ArrayList(u8), lib: *sas.exec.Library, diags: *sas.diag.Diagnostics, toks: []const Token, g: *Globals, reg_session: *?sas.reg.Session, glm_session: *?sas.glm.Session) sas.diag.Error!void {
     if (toks.len < 2 or toks[1].tag != .name) {
         failLoud("PROC name missing or unrecognized", .{});
         return;
@@ -2963,7 +2972,11 @@ fn runProc(a: std.mem.Allocator, listing_out: *std.ArrayList(u8), lib: *sas.exec
     } else if (eqi(proc, "glm")) {
         var glm_context = pcx;
         if (@hasField(sas.proc.ProcCtx, "listing_titles")) glm_context.listing_titles = g;
-        try sas.glm.run(glm_context, out, toks);
+        const spec = try sas.glm.parse(glm_context, toks);
+        try sas.glm.execute(glm_context, out, spec);
+        var closes = false;
+        for (toks, 0..) |token, i| if ((i == 0 or toks[i-1].tag == .semicolon) and token.tag == .name and eqi(token.text,"quit")) { closes = true; };
+        if (!closes and try sas.glm.canContinue(glm_context, spec)) glm_session.* = .{ .spec = spec };
         if (!procHasKw(toks, "noprint")) try g.emitFootnotes(a, out);
     } else if (eqi(proc, "reg")) {
         const spec = try sas.reg.parse(pcx, toks);
@@ -7533,4 +7546,15 @@ test "STAT-TTEST-004 PRINT capital headers preserve cells LABEL and explicit SPL
     try std.testing.expect(words.next() == null);
     try std.testing.expectEqual(@as(usize, 12), headerWidth(.{ .name = "LONGHEADINGX", .type = .num, .format = "8.2" }, .{}));
     try std.testing.expectEqualStrings("", try d.render());
+}
+
+
+test "GLM005 retained RUN ignores late declarations and QUIT closes without replay" {
+    try expectRun("ods graphics off; data sample; input x y; datalines;\n0 1\n1 2\n2 2\n;\nrun; proc glm data=sample noprint; model y=x; run; absorb absent; weight absent; freq absent; id absent; by absent; run; quit; data _null_; put 'AFTER'; run;", "AFTER\n");
+    var arena=std.heap.ArenaAllocator.init(std.testing.allocator); defer arena.deinit();
+    const a=arena.allocator(); var out:std.ArrayList(u8)=.empty; var log:[]const u8="";
+    defer resetRcSignals();
+    const status=try rcOf(a,&out,"ods graphics off; data sample; x=1; y=2; run; proc glm data=sample noprint; model y=; run; model y=x; run;",&log);
+    try std.testing.expectEqual(@as(u8,1),status);
+    try std.testing.expect(std.mem.indexOf(u8,log,"cannot be redeclared")!=null);
 }
