@@ -220,4 +220,5 @@ test "GLM001 empty observations and unsupported categorical hypotheses are loud"
 
 test {
     _ = @import("glm_effect_tests.zig");
+    _ = @import("glm_parameterization_tests.zig");
 }
