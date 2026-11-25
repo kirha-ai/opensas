@@ -2950,6 +2950,8 @@ fn runProc(a: std.mem.Allocator, listing_out: *std.ArrayList(u8), lib: *sas.exec
         var scatter_context = pcx;
         scatter_context.graphics = native_graphics_session;
         try sas.sgscatter.run(scatter_context, toks);
+    } else if (eqi(proc, "glmmod")) {
+        try sas.glmmod.run(pcx, toks);
     } else if (eqi(proc, "glm")) {
         var glm_context = pcx;
         if (@hasField(sas.proc.ProcCtx, "listing_titles")) glm_context.listing_titles = g;
