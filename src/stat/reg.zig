@@ -81,10 +81,7 @@ pub fn execute(cx: proc.ProcCtx, out: *std.ArrayList(u8), spec: Spec) diag.Error
                 return cx.diags.fail(error.ExecError, 0, "PROC REG: numerical fit failed", .{});
             };
 
-            fit.n_used = @intFromFloat(count);
-            fit.df_error = fit.n_used - fit.rank;
-            fit.mse = if (fit.df_error > 0) fit.sse / @as(f64, @floatFromInt(fit.df_error)) else std.math.nan(f64);
-            for (fit.se, 0..) |*se, j| se.* = if (fit.aliased[j]) std.math.nan(f64) else @sqrt(fit.mse * fit.covariance_unscaled[j * input.columns + j]);
+            rescaleFrequencyInference(&fit, @intFromFloat(count));
             const stats = fit.modelStats(model.intercept);
             const ts = try cx.arena.alloc(f64, input.columns);
             const ps = try cx.arena.alloc(f64, input.columns);
@@ -268,6 +265,29 @@ test "REG missingness is shared across multiple models and VAR" {
     try std.testing.expectEqualStrings("second", spec.models[1].label);
 }
 
+/// Replication changes residual degrees of freedom, unlike precision weights.
+/// Keep every representation of inference consistent after changing the MSE.
+fn rescaleFrequencyInference(fit: *@import("reg_fit.zig").Fit, count: usize) void {
+    fit.n_used = count;
+    fit.df_error = count - fit.rank;
+    fit.mse = if (fit.df_error > 0) fit.sse / @as(f64, @floatFromInt(fit.df_error)) else std.math.nan(f64);
+    const p = fit.coefficients.len;
+    for (fit.covariance, fit.covariance_unscaled, 0..) |*cov, unscaled, i| {
+        cov.* = if (fit.aliased[i / p] or fit.aliased[i % p]) std.math.nan(f64) else fit.mse * unscaled;
+    }
+    for (fit.se, 0..) |*se, j| se.* = @sqrt(fit.covariance[j * p + j]);
+}
+
+test "REG replication rescales covariance and standard errors together" {
+    var fit = try @import("reg_fit.zig").fit(std.testing.allocator, &.{ 1, 1, 1, 2, 1, 3 }, &.{ 2, 5, 5 }, 3, 2, &.{ 2, 2, 2 });
+    defer fit.deinit(std.testing.allocator);
+    rescaleFrequencyInference(&fit, 6);
+    try std.testing.expectEqual(@as(usize, 4), fit.df_error);
+    try std.testing.expectApproxEqAbs(@as(f64, 0.75), fit.mse, 1e-12);
+    for (fit.covariance, fit.covariance_unscaled) |cov, unscaled| try std.testing.expectApproxEqAbs(0.75 * unscaled, cov, 1e-12);
+    for (fit.se, 0..) |se, j| try std.testing.expectApproxEqAbs(se * se, fit.covariance[j * 2 + j], 1e-12);
+}
+
 fn parameterName(spec: Spec, model: Model, i: usize) []const u8 {
     return if (model.intercept and i == 0) "Intercept" else spec.ds.columns.items[model.regressors[i - @as(usize, if (model.intercept) 1 else 0)]].name;
 }
@@ -327,3 +347,42 @@ pub const Session = struct {
         return !quit;
     }
 };
+
+test "REG input WHERE and observation options preserve source data" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var d = diag.Diagnostics.init(a);
+    var lib = @import("../exec.zig").Library.init(a);
+    var ds = @import("../dataset.zig").Dataset.init(a, "sample");
+    _ = try ds.addColumn("x", .num);
+    _ = try ds.addColumn("y", .num);
+    for ([_]f64{ 1, 2, 3, 4 }) |x| try ds.appendRow(&.{ .{ .num = x }, .{ .num = 2 * x } });
+    try lib.put("sample", &ds);
+    const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &d };
+    const spec = try parse(cx, try @import("../lexer.zig").tokenize(a, "proc reg data=sample(where=(x>1) obs=2); model y=x; run;", &d));
+    const selected = try select(cx, spec, spec.models[0], spec.ds.rows.items);
+    try std.testing.expectEqualSlices(f64, &.{ 1, 2, 1, 3 }, selected.x);
+    try std.testing.expectEqual(@as(usize, 4), ds.rows.items.len);
+    try std.testing.expectEqual(@as(f64, 1), ds.rows.items[0][0].num);
+}
+
+test "REG empty and all-excluded inputs report captured errors" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var d = diag.Diagnostics.init(a);
+    var lib = @import("../exec.zig").Library.init(a);
+    var ds = @import("../dataset.zig").Dataset.init(a, "sample");
+    _ = try ds.addColumn("x", .num);
+    _ = try ds.addColumn("y", .num);
+    try lib.put("sample", &ds);
+    const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &d };
+    var out: std.ArrayList(u8) = .empty;
+    const tokens = try @import("../lexer.zig").tokenize(a, "proc reg; model y=x; run;", &d);
+    try std.testing.expectError(error.ExecError, run(cx, &out, tokens));
+    try ds.appendRow(&.{ Value.missing, .{ .num = 1 } });
+    try std.testing.expectError(error.ExecError, run(cx, &out, tokens));
+    try std.testing.expect(d.hasErrors());
+    try std.testing.expectEqual(@as(usize, 0), out.items.len);
+}
