@@ -233,12 +233,13 @@ Complete prerequisite shared contracts first, then each PROC's data input, model
 
 <a id="stat-common-004"></a>
 
-### [DOING @dev2] STAT-COMMON-004 — Linear model moments and covariance foundations
+### [DONE] STAT-COMMON-004 — Linear model moments and covariance foundations
 
 - Source: S154 / Chapter 4 / `Expectations of Random Variables and Vectors` (PDF pp. 65–68); S154 / Chapter 4 / `Mean Squared Error` (PDF pp. 68–69); S154 / Chapter 4 / `Linear Model Theory` (PDF pp. 69–80); S154 / Chapter 7 / `Introduction to Mixed Modeling Procedures` (PDF pp. 135–148).
 - Scope: Implement shared linear model moments, residual sums of squares, variance, and covariance calculations; preserve the distinction between frequency and analysis weights.
 - Dependencies: [STAT-COMMON-003](#stat-common-003), [STAT-COMMON-002](#stat-common-002).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-COMMON-004/](tests/STAT15.4-oracle/STAT-COMMON-004/).
+- DONE (2026-11-25): Landed/pushed `6b3c3735`. Original weighted oracle exits 0 with empty stderr; REG listing, PRINT panels, nonnumeric fields, missing cells and metadata match. Unrounded BEST32 cells pass independently derived coefficient/variance/covariance bounds against exact Fraction references; maximum raw difference 8.706e-15, not a hidden exact-text claim. Complete actual output and raw diff preserved; expected files unchanged. Gate: 1679 tests, 2306 corpus, 11 programs passed. Evidence/replay: `tests/STAT15.4-oracle/STAT-COMMON-004/evidence.md` and `verify.py`.
 - Acceptance criteria: Use manually calculable intercept-only, weighted, and rank-deficient models to verify coefficients, residuals, degrees of freedom, and covariance; verify scaling relationships.
 
 <a id="stat-common-005"></a>
@@ -4714,7 +4715,7 @@ Source: S154, Chapter 53, `The GLM Procedure`, PDF pp. 4043–4230. Tasks in thi
 
 <a id="stat-glm-001"></a>
 
-### [TODO] STAT-GLM-001 — GLM — Data input, variable roles, and basic options
+### [DOING @dev2] STAT-GLM-001 — GLM — Data input, variable roles, and basic options
 
 - Source: S154 / Chapter 53 / `PROC GLM Statement` (PDF pp. 4058–4065); S154 / Chapter 53 / `BY Statement` (PDF pp. 4065–4066); S154 / Chapter 53 / `FREQ Statement` (PDF pp. 4071–4072); S154 / Chapter 53 / `ID Statement` (PDF p. 4072); S154 / Chapter 53 / `WEIGHT Statement` (PDF p. 4106); S154 / Chapter 53 / `Missing Values` (PDF pp. 4160–4161).
 - Scope: Integrate PROC GLM declarations, basic options, defaults, and execution boundaries; this ticket establishes parameter objects and result interfaces, while later feature tickets implement model-, algorithm-, and output-specific options. Also implement BY; FREQ; ID; WEIGHT; Missing Values; apply this procedure's rules for missing values, variable roles, and observation selection.
