@@ -71,6 +71,7 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
     var alpha: f64 = 0.05;
     var singular: f64 = 1e-9;
     var noprint = false;
+    var plots_none = false;
     while (i < t.len and !at(t, i, .semicolon) and !at(t, i, .eof)) {
         if (kw(t, i, "data")) {
             if (!at(t, i + 1, .eq) or !at(t, i + 2, .name)) return cx.diags.fail(error.ParseError, t[i].line, "PROC REG: DATA= requires a dataset", .{});
@@ -92,9 +93,11 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
             if (!at(t, i + 1, .eq) or !at(t, i + 2, .name)) return cx.diags.fail(error.ParseError, t[i].line, "PROC REG: expected PLOTS=request", .{});
             i += 2;
             if (kw(t, i, "none")) {
+                plots_none = true;
                 i += 1;
                 continue;
             }
+            plots_none = false;
             if (kw(t, i, "residualbypredicted")) {
                 i += 1;
             } else if (kw(t, i, "predictions")) {
@@ -116,6 +119,9 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
         } else return unsupported(cx, t[i], &.{ "all", "corr", "covout", "edf", "outest", "outsscp", "outseb", "outstb", "outvif", "pcomit", "plots", "press", "ridge", "rsquare", "simple", "tableout", "usscp" });
     }
     if (!at(t, i, .semicolon)) return cx.diags.fail(error.ParseError, 0, "PROC REG: expected semicolon", .{});
+    if (!noprint and !plots_none) if (cx.graphics) |g| {
+        if (g.enabled != false) return proc.failGap(cx.diags, 0, "PROC REG: default ODS graphics are not implemented; use ODS GRAPHICS OFF or PLOTS=NONE", .{});
+    };
     const raw = (if (name) |n| cx.lib.find(n) else proc.lastDataset(cx.lib)) orelse return cx.diags.fail(error.ExecError, 0, "File {s} does not exist.", .{name orelse "_LAST_"});
     const ds = try proc.procInput(cx.arena, raw, t, cx.diags);
     var models: std.ArrayList(Model) = .empty;
@@ -126,6 +132,7 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
     var ids: []const usize = &.{};
     i += 1;
     var ended = false;
+    var model_number: usize = 0;
     while (i < t.len and !at(t, i, .eof)) {
         if (at(t, i, .semicolon)) {
             i += 1;
@@ -145,6 +152,7 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
         } else if (ended) {
             return proc.failGap(cx.diags, t[i].line, "PROC REG: interactive continuation is not implemented", .{});
         } else if (kw(t, i, "model")) {
+            model_number += 1;
             var equal = i + 1;
             while (equal < end and !at(t, equal, .eq)) equal += 1;
             if (equal == end) return cx.diags.fail(error.ParseError, t[i].line, "PROC REG MODEL requires =", .{});
@@ -153,7 +161,7 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
             var slash = equal + 1;
             while (slash < end and !at(t, slash, .slash)) slash += 1;
             const regressors = try columns(cx, ds, t[equal + 1 .. slash], true);
-            var model: Model = .{ .label = label orelse try std.fmt.allocPrint(cx.arena, "MODEL{d}", .{models.items.len + 1}), .dependent = dependents[0], .regressors = regressors, .alpha = alpha, .singular = singular };
+            var model: Model = .{ .label = label orelse try std.fmt.allocPrint(cx.arena, "MODEL{d}", .{model_number}), .dependent = dependents[0], .regressors = regressors, .alpha = alpha, .singular = singular };
             var j = slash + 1;
             while (j < end) {
                 if (kw(t, j, "r")) {

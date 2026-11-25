@@ -386,3 +386,36 @@ test "REG empty and all-excluded inputs report captured errors" {
     try std.testing.expect(d.hasErrors());
     try std.testing.expectEqual(@as(usize, 0), out.items.len);
 }
+
+test "REG default enabled graphics fail loudly and PLOTS NONE disables them" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var d = diag.Diagnostics.init(a);
+    var lib = @import("../exec.zig").Library.init(a);
+    var ds = @import("../dataset.zig").Dataset.init(a, "sample");
+    _ = try ds.addColumn("x", .num);
+    _ = try ds.addColumn("y", .num);
+    try lib.put("sample", &ds);
+    var graphics = @import("graphics_svg.zig").Session{ .arena = a, .io = std.testing.io, .diags = &d, .enabled = true };
+    const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &d, .graphics = &graphics };
+    const lex = @import("../lexer.zig");
+    defer diag.resetGap();
+    try std.testing.expectError(error.ParseError, parse(cx, try lex.tokenize(a, "proc reg;model y=x;run;", &d)));
+    try std.testing.expect(std.mem.indexOf(u8, d.list.items[d.list.items.len - 1].message, "default ODS graphics") != null);
+    _ = try parse(cx, try lex.tokenize(a, "proc reg plots=none;model y=x;run;", &d));
+}
+
+test "REG default model labels count statements rather than response variables" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var d = diag.Diagnostics.init(a);
+    var lib = @import("../exec.zig").Library.init(a);
+    var ds = @import("../dataset.zig").Dataset.init(a, "sample");
+    for ([_][]const u8{ "x", "y", "z" }) |n| _ = try ds.addColumn(n, .num);
+    try lib.put("sample", &ds);
+    const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &d };
+    const spec = try parse(cx, try @import("../lexer.zig").tokenize(a, "proc reg;model y z=x;model x=y;run;", &d));
+    for (spec.models, [_][]const u8{ "MODEL1", "MODEL1", "MODEL2" }) |model, label| try std.testing.expectEqualStrings(label, model.label);
+}
