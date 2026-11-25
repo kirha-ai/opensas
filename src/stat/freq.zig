@@ -551,6 +551,7 @@ pub fn runFreq(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) diag.E
     const stats_writer = if (opts.output) |spec| try stat_output.create(cx, spec, opts.requests.items[opts.requests.items.len - 1], input, bc) else null;
     if (input.rows.items.len == 0) try cx.diags.report(.note, 0, "No observations in data set {s}.", .{input.name});
     for (groups, 1..) |group, by_number| {
+        const listing_start = out.items.len;
         const messages = cx.diags.count();
         const noted_newcombe = analysis.noted_newcombe;
         var view = input.*;
@@ -588,7 +589,7 @@ pub fn runFreq(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) diag.E
             break;
         };
         if (negative) try cx.diags.report(.note, 0, "Percentages and other statistics are not computed because there are negative weights. Plots are not produced.", .{});
-        if (any and !opts.noprint) if (group.rep) |row| try by_groups.appendLine(a, out, &view, row, bc);
+        if (any and !opts.noprint) if (group.rep) |row| try appendByHeading(a, out, &view, row, bc);
         if (any and opts.nlevels and !opts.noprint) try renderLevels(cx, out, ds, vars.items, opts.order, analysis_wc, opts.zeros, fl.items, &view, bc, group.rep);
         var rendered = any and opts.nlevels and !opts.noprint;
         for (opts.requests.items, 0..) |req, k| {
@@ -627,7 +628,7 @@ pub fn runFreq(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) diag.E
             if (!any) continue;
             if (!opts.noprint and (cx.graphics != null or req.plots.plots.len != 0)) {
                 var by_text: std.ArrayList(u8) = .empty;
-                if (bc.len > 0) if (group.rep) |row| try by_groups.appendLine(a, &by_text, &view, row, bc);
+                if (bc.len > 0) if (group.rep) |row| try appendByHeading(a, &by_text, &view, row, bc);
                 try graph.execute(cx, &tab, req, std.mem.trim(u8, by_text.items, " \n"), if (bc.len > 0) by_number else null, k + 1);
             }
             const writer = if (k + 1 == opts.requests.items.len) stats_writer else null;
@@ -645,6 +646,23 @@ pub fn runFreq(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) diag.E
                 rendered = true;
             }
         }
+        if (out.items.len > listing_start) if (cx.listing_titles) |titles| {
+            var heading: std.ArrayList(u8) = .empty;
+            if (bc.len > 0 and group.rep != null) {
+                const byvars = try a.alloc(@import("../sql.zig").Titles.ByVar, bc.len);
+                for (bc, 0..) |ci, i| {
+                    const column = view.columns.items[ci];
+                    const value = group.rep.?[ci];
+                    byvars[i] = .{
+                        .name = column.name,
+                        .label = if (column.label) |label| (if (label.len > 0) label else column.name) else column.name,
+                        .value = if (column.format) |spec| std.mem.trim(u8, try format.apply(a, value, spec), " ") else try cellText(a, value),
+                    };
+                }
+                try titles.emitTitlesBy(a, &heading, byvars);
+            } else try titles.emitTitles(a, &heading);
+            try out.insertSlice(a, listing_start, heading.items);
+        };
         if (bc.len > 0 and (cx.diags.errSince(messages) or noted_newcombe != analysis.noted_newcombe)) if (group.rep) |row|
             try by_groups.reportNote(a, cx.diags, &view, row, bc);
     }
@@ -713,6 +731,17 @@ const ColumnLevels = struct {
     levels: []table_model.Level,
     by_value: LevelIndex,
 };
+
+fn appendByHeading(a: std.mem.Allocator, out: *std.ArrayList(u8), ds: *Dataset, row: []const Value, cols: []const usize) !void {
+    // Use labels for display only; grouping, variable lookup and output metadata
+    // retain the original names. Reuse shared BY formatting/NOBYLINE handling.
+    var display = ds.*;
+    display.columns = .{ .items = try a.dupe(@import("../dataset.zig").Column, ds.columns.items), .capacity = ds.columns.items.len };
+    for (cols) |ci| if (display.columns.items[ci].label) |label| {
+        if (label.len > 0) display.columns.items[ci].name = label;
+    };
+    try by_groups.appendLine(a, out, &display, row, cols);
+}
 
 fn needsDefaultLevelFormat(ds: *Dataset, col: usize, order: FreqOrder) bool {
     if (ds.columns.items[col].type != .num) return false;
@@ -2194,9 +2223,9 @@ fn renderOneExpected(a: std.mem.Allocator, out: *std.ArrayList(u8), tab: *Table,
         try rows.append(a, cells);
     }
     const widths = try a.alloc(usize, headers.items.len);
-    for (headers.items, tops.items, 0..) |h, t, i| widths[i] = @max(@max(h.len, t.len) + 2, if (i == 0) @as(usize, 8) else 12);
+    for (headers.items, tops.items, 0..) |h, t, i| widths[i] = @max(@max(h.len, t.len) + (if (i == 0) @as(usize, 1) else 2), if (i == 0) @as(usize, 7) else 12);
     for (rows.items) |row| for (row, 0..) |v, i| {
-        widths[i] = @max(widths[i], v.len + 2);
+        widths[i] = @max(widths[i], v.len + (if (i == 0) @as(usize, 1) else 2));
     };
     try out.appendSlice(a, ONEWAY_TITLE);
     try out.append(a, '\n');
@@ -2207,6 +2236,37 @@ fn renderOneExpected(a: std.mem.Allocator, out: *std.ArrayList(u8), tab: *Table,
     for (rows.items) |row| try expectedRow(a, out, row, widths, false);
     if (truncated) try out.appendSlice(a, try std.fmt.allocPrint(a, "\n      The first {d} nonmissing levels are displayed.\n", .{req.maxlevels.?}));
     if (!req.missing) try appendFreqMissing(a, out, tab.missing);
+}
+
+test "STAT-FREQ-005 labeled BY groups preserve descriptors and goodness-of-fit columns" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const ds = try a.create(Dataset);
+    ds.* = Dataset.init(a, "d");
+    _ = try ds.addColumn("Region", .num);
+    _ = try ds.addColumn("Hair", .char);
+    _ = try ds.addColumn("Count", .num);
+    ds.columns.items[0].label = "Geographic Region";
+    ds.columns.items[1].label = "Hair Color";
+    const names = [_][]const u8{ "fair", "red", "medium", "dark", "black" };
+    const counts = [_][5]f64{ .{ 76, 19, 83, 65, 3 }, .{ 152, 94, 134, 117, 19 } };
+    for (counts, 0..) |group, i| for (group, names) |count, name| try ds.appendRow(&.{
+        .{ .num = @floatFromInt(i + 1) }, .{ .str = name }, .{ .num = count },
+    });
+    var lib = @import("../exec.zig").Library.init(a);
+    try lib.put("d", ds);
+    var d = diag.Diagnostics.init(a);
+    var out: std.ArrayList(u8) = .empty;
+    const source = "proc freq data=d order=data; by Region; weight Count; tables Hair / nocum chisq testp=(30 12 30 25 3); run;";
+    try runFreq(.{ .arena = a, .lib = &lib, .diags = &d }, &out, try @import("../lexer.zig").tokenize(a, source, &d));
+    try std.testing.expect(!d.hasErrors());
+    try std.testing.expectEqual(@as(usize, 2), std.mem.count(u8, out.items, "Geographic Region="));
+    try std.testing.expectEqual(@as(usize, 2), std.mem.count(u8, out.items, "\n              " ++ ("-" ** 43) ++ "\n"));
+    for ([_][]const u8{ "7.7602", "0.1008", "21.3824", "0.0003", "Sample Size = 246", "Sample Size = 516" }) |value|
+        try std.testing.expect(std.mem.indexOf(u8, out.items, value) != null);
+    try std.testing.expectEqualStrings("Region", ds.columns.items[0].name);
+    try std.testing.expectEqualStrings("Geographic Region", ds.columns.items[0].label.?);
 }
 
 test "stratified public hook computes mixed TEST requests and keeps exact gaps" {

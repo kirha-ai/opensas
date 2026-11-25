@@ -2907,7 +2907,7 @@ fn runProc(a: std.mem.Allocator, listing_out: *std.ArrayList(u8), lib: *sas.exec
     const visible = if (routed) ods_listing.open else ods_listing.accepts(proc);
     const out = if (visible) listing_out else &discard;
     const graph_sink = if (native_graphics_session) |graphics| graphics.sink() else null;
-    const pcx: sas.proc.ProcCtx = .{ .arena = a, .lib = lib, .diags = diags, .capture = &ods_capture, .listing = &ods_listing, .univariate_plot_sink = graph_sink, .graphics = if (graph_sink != null) native_graphics_session else null, .graph_title = g.titles[0] };
+    const pcx: sas.proc.ProcCtx = .{ .arena = a, .lib = lib, .diags = diags, .capture = &ods_capture, .listing = &ods_listing, .listing_titles = if (eqi(proc, "freq")) g else null, .univariate_plot_sink = graph_sink, .graphics = if (graph_sink != null) native_graphics_session else null, .graph_title = g.titles[0] };
     if (native_graphics_session) |graphics| graphics.clear();
     // TITLE/FOOTNOTE print with the report procs (a listing), not with SORT or
     // TRANSPOSE (which produce a dataset, no page). Titles atop, footnotes below.
@@ -2955,10 +2955,10 @@ fn runProc(a: std.mem.Allocator, listing_out: *std.ArrayList(u8), lib: *sas.exec
     } else if (eqi(proc, "freq")) {
         // FREQ owns PROC versus TABLES NOPRINT semantics. Stamp only an
         // actual listing, without mistaking option values or variable names.
+        // FREQ emits the title stack per visible group, including BY substitution.
         var body: std.ArrayList(u8) = .empty;
         try sas.proc.runFreq(pcx, &body, toks);
         if (body.items.len > 0) {
-            try g.emitTitles(a, out);
             try out.appendSlice(a, body.items);
             try g.emitFootnotes(a, out);
         }

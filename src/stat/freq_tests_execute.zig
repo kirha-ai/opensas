@@ -177,8 +177,17 @@ test "FEAT-freq-tests execution WARN control and zero margins" {
     d.list.clearRetainingCapacity();
     _ = try execute(a, &d, &out, table, .{ .chisq = true, .warn = .{ .log = false } }, .{}, .equal, true);
     try std.testing.expectEqual(@as(usize, 0), d.list.items.len);
-    _ = try execute(a, &d, &out, .{ .matrix = .{ .rows = 3, .cols = 2, .counts = &.{ 0, 0, 3, 5, 4, 1 } } }, .{ .chisq = true, .measures = true }, .{}, .equal, false);
-    try std.testing.expect(std.mem.indexOf(u8, out.items, "No statistics computed") != null);
+    // STAT-FREQ-005: a zero row and its transpose (zero column) both make
+    // the requested table test undefined; do not silently remove that margin.
+    for ([_]k.CountMatrix{
+        .{ .rows = 3, .cols = 2, .counts = &.{ 0, 0, 3, 5, 4, 1 } },
+        .{ .rows = 2, .cols = 3, .counts = &.{ 0, 3, 4, 0, 5, 1 } },
+    }) |matrix| {
+        out.clearRetainingCapacity();
+        const empty = try execute(a, &d, &out, .{ .matrix = matrix }, .{ .chisq = true, .measures = true }, .{}, .equal, false);
+        try std.testing.expect(empty.chi_square == null);
+        try std.testing.expectEqualStrings("\nRow or column sum zero. No statistics computed for this table.\n", out.items);
+    }
 }
 
 test "FEAT-freq-tests single category executes and renders without error or warning" {
