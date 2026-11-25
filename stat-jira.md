@@ -290,12 +290,13 @@ Complete prerequisite shared contracts first, then each PROC's data input, model
 
 <a id="stat-common-009"></a>
 
-### [TODO] STAT-COMMON-009 — Estimability and nonestimable result representation
+### [DOING @dev7] STAT-COMMON-009 — Estimability and nonestimable result representation
 
 - Source: S154 / Chapter 16 / `Estimability` (PDF pp. 278–284).
 - Scope: Implement estimability checks for linear functions, reduction notation, and nonestimable output contracts for ESTIMATE, LSMEANS, CONTRAST, and related consumers.
 - Dependencies: [STAT-COMMON-007](#stat-common-007), [STAT-COMMON-005](#stat-common-005).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-COMMON-009/](tests/STAT15.4-oracle/STAT-COMMON-009/).
+- Dispatch contract: dev7 implements the estimability/LSMEANS path required by the original empty-cell GLM case, reusing the completed coded-design/rank helpers. Coordinate Type III/IV empty-cell hypotheses with dev6; do not turn nonestimable results into fabricated estimates.
 - Acceptance criteria: Use the source examples to distinguish estimable and nonestimable linear functions; verify status, rank, and diagnostics with missing levels and rank-deficient designs.
 
 <a id="stat-common-010"></a>
@@ -4769,6 +4770,7 @@ Source: S154, Chapter 53, `The GLM Procedure`, PDF pp. 4043–4230. Tasks in thi
 - Dependencies: [STAT-GLM-001](#stat-glm-001), [STAT-COMMON-007](#stat-common-007).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-GLM-004/](tests/STAT15.4-oracle/STAT-GLM-004/).
 - Dispatch contract: Verify the existing GLM model-space implementation against this original case; COMMON-007's full coded-design module is ready and awaiting integration. Coordinate shared parser/rendering changes with dev6's Type II integration rather than duplicating it.
+- Integration queue note (2026-11-25): dev2's implementation/tests/oracle are complete on `ab039538`; final rebase/gate is pending. The completed agent is temporarily closed to free a runtime slot for dev7, with branch/worktree/context preserved. This is intentional queueing, not a dead-worker recovery case.
 - Acceptance criteria: For Parameterization of PROC GLM Models, verify the parsed response/effect/parameter representation against the documented design matrix or model structure; cover applicable reference levels, interactions, missing levels, and invalid models; successful parsing alone is insufficient.
 
 <a id="stat-glm-005"></a>
@@ -11556,11 +11558,12 @@ Source: S154, Chapter 105, `The REG Procedure`, PDF pp. 8539–8728. Tasks in th
 - Dependencies: [STAT-REG-001](#stat-reg-001), [STAT-REG-002](#stat-reg-002).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-REG-005/](tests/STAT15.4-oracle/STAT-REG-005/).
 - PARK (2026-11-25, 45-minute limit): Ridge path/OUTEST/native-graph foundation is preserved on dev1 (`0d6f83e3`, evidence `113f8608`). Original last replay exits 0 with 588 tokens, but SST twice prints 2123.70938 rather than 2123.70937, and two negative small coefficients print 0.000 rather than -0.000. Full independent path verification, final-SHA oracle replay and visual review of all five graphs remain incomplete; only the packed ridge plot was inspected. IPC is an explicit gap. Existing gate passed 1771 tests/2311 corpus/11 programs on the preserved source; not an oracle-completion claim. See `tests/STAT15.4-oracle/STAT-REG-005/implementation-evidence.md` in dev1 until integration.
+- Foundation integration (2026-11-25): Landed/pushed `60aa5bb0`, with exact-SHA gate 1771 tests, 2311 corpus, 11 programs green. The ticket remains PARK for the recorded oracle/visual-verification gaps; durable evidence is now in the main worktree.
 - Acceptance criteria: For Computations for Ridge Regression and IPC Analysis, use an independently calculable small sample and the source examples to verify targets, estimates/statistics, degrees of freedom, and applicable probabilities or intervals; include at least one relevant degenerate or boundary case, asserting documented diagnostics and result status.
 
 <a id="stat-reg-006"></a>
 
-### [TODO] STAT-REG-006 — REG — Parameter Estimates and Associated Statistics / Models of Less Than Full Rank / Computational Methods
+### [DOING @dev1] STAT-REG-006 — REG — Parameter Estimates and Associated Statistics / Models of Less Than Full Rank / Computational Methods
 
 - Source: S154 / Chapter 105 / `Parameter Estimates and Associated Statistics` (PDF pp. 8617–8619); S154 / Chapter 105 / `Models of Less Than Full Rank` (PDF pp. 8623–8624); S154 / Chapter 105 / `Computational Methods` (PDF pp. 8649–8650).
 - Scope: Implement Parameter Estimates and Associated Statistics; Models of Less Than Full Rank; Computational Methods. This ticket owns the feature's options, defaults, computation, and results as an extension of the basic computational path; the chapter's output tickets handle ODS descriptors and file presentation.

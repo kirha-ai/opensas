@@ -26,6 +26,11 @@ description: >-
 These user-requested rules override conflicting instructions below for this campaign:
 - Run up to 7 development agents (user update 2026-11-25), each with its own
   assigned existing ticket and worktree; no extra audit roles.
+- If the live runtime permits fewer open agents, retain the seven-slot pool but
+  respect its actual concurrent limit. Completed agents awaiting integration may
+  be closed and later resumed with their branch/worktree/context preserved.
+  Record intentional queueing on the board; never treat it as dead-worker loss
+  or claim seven agents are simultaneously running when only six are open.
 - Consume only existing `stat-jira.md` tickets. Never read the legacy board,
   grow the backlog, perform GitHub intake, or start QA, perf, doc-finder or audit lanes.
 - For every ticket, read its `tests/STAT15.4-oracle/<ID>/README.md`, run the
