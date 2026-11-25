@@ -241,12 +241,13 @@ Complete prerequisite shared contracts first, then each PROC's data input, model
 
 <a id="stat-common-005"></a>
 
-### [TODO] STAT-COMMON-005 — Shared interfaces for tests, tail probabilities, and confidence intervals
+### [DONE] STAT-COMMON-005 — Shared interfaces for tests, tail probabilities, and confidence intervals
 
 - Source: S154 / Chapter 4 / `Hypothesis Testing and Power` (PDF p. 58); S154 / Chapter 5 / `Testing Linear Hypotheses` (PDF p. 112); S154 / Chapter 5 / `Parameter Estimates and Associated Statistics` (PDF pp. 106–110).
 - Scope: Establish shared result conventions for statistics, degrees of freedom, one-/two-sided tail probabilities, and intervals; callers specify distributions and correction formulas from the relevant guide sections.
 - Dependencies: [STAT-COMMON-004](#stat-common-004).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-COMMON-005/](tests/STAT15.4-oracle/STAT-COMMON-005/).
+- DONE (2026-11-25): TTEST dependency implemented and landed/pushed in `d658cfff`. Read this README and cited manual; unchanged `tails_and_intervals.sas` matches complete output after whitespace-only normalization, actual/expected status 0/0. Uses implemented probability and one-sample inference primitives, independent of the pending general linear-model oracle. Gate: 1611 tests, 2304 corpus, 11 programs passed. Evidence: `tests/STAT15.4-oracle/STAT-COMMON-005/dev5-verification.json`.
 - Acceptance criteria: Use independent reference values for positive/negative statistics, one-/two-sided conversions, degenerate degrees of freedom, and extreme tails; each caller records absolute/relative tolerances and justification rather than masking tail errors with a broad common tolerance.
 
 <a id="stat-common-006"></a>
@@ -14586,36 +14587,38 @@ Source: S154, Chapter 128, `The TTEST Procedure`, PDF pp. 10595–10692. Tasks i
 
 <a id="stat-ttest-001"></a>
 
-### [DOING @dev5] STAT-TTEST-001 — TTEST — Data input, variable roles, and basic options
+### [DONE] STAT-TTEST-001 — TTEST — Data input, variable roles, and basic options
 
 - Source: S154 / Chapter 128 / `PROC TTEST Statement` (PDF pp. 10604–10613); S154 / Chapter 128 / `BY Statement` (PDF pp. 10615–10616); S154 / Chapter 128 / `CLASS Statement` (PDF p. 10616); S154 / Chapter 128 / `FREQ Statement` (PDF pp. 10616–10617); S154 / Chapter 128 / `VAR Statement` (PDF pp. 10617–10618); S154 / Chapter 128 / `WEIGHT Statement` (PDF p. 10618); S154 / Chapter 128 / `Input Data Set of Statistics` (PDF pp. 10618–10619); S154 / Chapter 128 / `Missing Values` (PDF p. 10619).
 - Scope: Integrate PROC TTEST declarations, basic options, defaults, and execution boundaries; this ticket establishes parameter objects and result interfaces, while later feature tickets implement model-, algorithm-, and output-specific options. Also implement BY; CLASS; FREQ; VAR; WEIGHT; Input Data Set of Statistics; Missing Values; apply this procedure's rules for missing values, variable roles, and observation selection.
 - Dependencies: [STAT-COMMON-001](#stat-common-001), [STAT-COMMON-002](#stat-common-002).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-TTEST-001/](tests/STAT15.4-oracle/STAT-TTEST-001/).
 - Dispatch contract: Reuse landed statistical data selection and interpreter interfaces. dev5 owns TTEST parsing, selection and rendering in new TTEST modules; dev4 supplies the independent numerical core. Global dispatch wiring is coordinated with dev1 to avoid concurrent main.zig edits.
+- DONE (2026-11-25): Landed/pushed `d658cfff`. Original BY/FREQ/WEIGHT oracle matches every output token under whitespace-only normalization, status 0/0. Gate: 1611 tests, 2304 corpus, 11 programs passed. Evidence: `tests/STAT15.4-oracle/STAT-TTEST-001/dev5-verification.json`. Two-sample inference is a separate existing ticket and still fails loudly until implemented.
 - Acceptance criteria: Create positive and negative parsing cases for the documented declarations and basic options; verify defaults, explicit settings, documented duplicate/conflicting declarations, and locations; valid but unimplemented features must not silently succeed. For BY / CLASS / FREQ / VAR / WEIGHT / Input Data Set of Statistics / Missing Values, construct valid, missing, empty, and multiple-group inputs; verify included observation counts, variable roles, BY boundaries, level ordering, and the frequency/weight rules relevant to this ticket; assert documented invalid-input behavior.
 
 <a id="stat-ttest-002"></a>
 
-### [TODO] STAT-TTEST-002 — TTEST — Default one-sample and group mean tests
+### [DONE] STAT-TTEST-002 — TTEST — Default one-sample and group mean tests
 
 - Source: S154 / Chapter 128 / `Getting Started: TTEST Procedure` (PDF pp. 10597–10603); S154 / Chapter 128 / `Overview: TTEST Procedure` (PDF pp. 10596–10597).
 - Scope: Implement default one-sample and group mean tests using the documented default path and establish the computational state needed by later extensions; implement specialized models, methods, and diagnostics outside that default example in their corresponding feature tickets.
 - Dependencies: [STAT-TTEST-001](#stat-ttest-001), [STAT-COMMON-005](#stat-common-005).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-TTEST-002/](tests/STAT15.4-oracle/STAT-TTEST-002/).
 - Dispatch contract: Implement the numerical core in a separate TTEST module, reusing existing probability functions, concurrently with TTEST-001. The integrated oracle must pass before DONE. This also supplies the missing TTEST execution dependency of COMMON-005.
-- Progress (2026-11-25): Numerical core landed in `ec0eaeae`; six inline tests passed via explicit harness and existing gate passed. Full TTEST execution/oracle awaits dev5 integration, so this ticket remains TODO rather than claiming numeric-only completion.
+- DONE (2026-11-25): Numerical core `ec0eaeae` integrated and landed/pushed with `d658cfff`. Unchanged `court_default.sas` matches complete output after whitespace-only normalization, status 0/0. Six numerical tests are included through the integrated TTEST module; gate: 1611 tests, 2304 corpus, 11 programs passed. Evidence: `tests/STAT15.4-oracle/STAT-TTEST-002/dev5-verification.json`. Acceptance is for the supplied oracle; two-sample extension remains tracked separately.
 - Acceptance criteria: Turn the smallest default analysis in Getting Started into a runnable case and verify its principal estimates, observation counts, and result status; add a smaller case with an independent manual calculation; meet the precision conventions.
 
 <a id="stat-ttest-003"></a>
 
-### [DOING @dev4] STAT-TTEST-003 — TTEST — Arithmetic and Geometric Means / Coefficient of Variation
+### [DOING @dev5] STAT-TTEST-003 — TTEST — Arithmetic and Geometric Means / Coefficient of Variation
 
 - Source: S154 / Chapter 128 / `Arithmetic and Geometric Means` (PDF p. 10620); S154 / Chapter 128 / `Coefficient of Variation` (PDF p. 10620).
 - Scope: Implement Arithmetic and Geometric Means; Coefficient of Variation. This ticket owns the feature's options, defaults, computation, and results as an extension of the basic computational path; the chapter's output tickets handle ODS descriptors and file presentation.
 - Dependencies: [STAT-TTEST-001](#stat-ttest-001), [STAT-TTEST-002](#stat-ttest-002).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-TTEST-003/](tests/STAT15.4-oracle/STAT-TTEST-003/).
 - Dispatch contract: Extend landed TTEST numeric foundation in a separate lognormal module; dev5 integrates DIST=/CI= parsing and output after the base path. Require the original normal/lognormal oracle, not just a numeric module test, before DONE.
+- Progress (2026-11-25): dev4 numerical/render helper commit `65b999fe` passed standalone tests and existing gate; hand off to dev5 for integrated oracle verification. Original assignment time remains the 45-minute deadline basis.
 - Acceptance criteria: For Arithmetic and Geometric Means / Coefficient of Variation, use an independently calculable small sample and the source examples to verify targets, estimates/statistics, degrees of freedom, and applicable probabilities or intervals; include at least one relevant degenerate or boundary case, asserting documented diagnostics and result status.
 
 <a id="stat-ttest-004"></a>
@@ -14650,12 +14653,13 @@ Source: S154, Chapter 128, `The TTEST Procedure`, PDF pp. 10595–10692. Tasks i
 
 <a id="stat-ttest-007"></a>
 
-### [TODO] STAT-TTEST-007 — TTEST — Two-Independent-Sample Design
+### [DOING @dev4] STAT-TTEST-007 — TTEST — Two-Independent-Sample Design
 
 - Source: S154 / Chapter 128 / `Two-Independent-Sample Design` (PDF pp. 10624–10629).
 - Scope: Implement Two-Independent-Sample Design. This ticket owns the feature's options, defaults, computation, and results as an extension of the basic computational path; the chapter's output tickets handle ODS descriptors and file presentation.
 - Dependencies: [STAT-TTEST-001](#stat-ttest-001), [STAT-TTEST-002](#stat-ttest-002), [STAT-COMMON-005](#stat-common-005).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-TTEST-007/](tests/STAT15.4-oracle/STAT-TTEST-007/).
+- Dispatch contract: Implement two-group inference and rendering in a separate module reusing existing TTEST class selection; coordinate its small dispatch hook with dev5, who owns shared TTEST parsing/execution until lognormal integration is complete.
 - Acceptance criteria: For Two-Independent-Sample Design, separately verify the documented equal-variance and unequal-variance paths, degrees-of-freedom approximations, probabilities, and intervals; include very unequal sample sizes; validate numerical values against the source formulas or an independent reference, following this file's precision conventions.
 
 <a id="stat-ttest-008"></a>
