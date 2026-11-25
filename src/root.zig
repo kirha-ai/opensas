@@ -26,6 +26,7 @@ pub const macro = @import("macro.zig");
 pub const sql = @import("sql.zig");
 
 test {
+    _ = @import("stat/reg_model_tests.zig");
     _ = @import("stat/ttest.zig");
     _ = @import("sashelp.zig");
     _ = @import("stat/reg.zig");
