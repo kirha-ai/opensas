@@ -298,23 +298,25 @@ Complete prerequisite shared contracts first, then each PROC's data input, model
 
 <a id="stat-common-010"></a>
 
-### [DOING @dev6] STAT-COMMON-010 — Type I sums of squares and estimable functions
+### [DONE] STAT-COMMON-010 — Type I sums of squares and estimable functions
 
 - Source: S154 / Chapter 16 / `Type I SS and Estimable Functions` (PDF pp. 284–285); S154 / Chapter 6 / `Introduction to Analysis of Variance Procedures` (PDF pp. 123–134).
 - Scope: Implement type I hypothesis construction, degrees of freedom, and sums of squares; preserve differences in definition for unbalanced designs and missing cells.
 - Dependencies: [STAT-COMMON-009](#stat-common-009).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-COMMON-010/](tests/STAT15.4-oracle/STAT-COMMON-010/).
 - Dispatch contract: Reuse the integrated GLM sequential-model comparisons and tested rank policy for this oracle while the broader COMMON-009 estimable-function interface remains pending. Do not claim unsupported general hypotheses; verify this original SS1 request and independent order/rank checks.
+- DONE (2026-11-25): Landed/pushed `410cc75b`. Original SS1 oracle matches all 96 tokens with whitespace-only normalization, status 0. Independent rational, balanced, reordered-effect, empty-cell and hypothesis-matrix checks pass; default GLM case remains 671-token/three-graph green. Direct gate: 1736 tests, 2309 corpus, 11 programs passed. Evidence/replay in `tests/STAT15.4-oracle/STAT-COMMON-010/`; expected files unchanged.
 - Acceptance criteria: For balanced, unbalanced, empty-cell, and reordered-effect designs, verify hypothesis matrices, sums of squares, ranks, and F tests against source examples or independent linear-algebra derivations.
 
 <a id="stat-common-011"></a>
 
-### [TODO] STAT-COMMON-011 — Type II sums of squares and estimable functions
+### [DOING @dev6] STAT-COMMON-011 — Type II sums of squares and estimable functions
 
 - Source: S154 / Chapter 16 / `Type II SS and Estimable Functions` (PDF pp. 285–289); S154 / Chapter 6 / `Introduction to Analysis of Variance Procedures` (PDF pp. 123–134).
 - Scope: Implement type II hypothesis construction, degrees of freedom, and sums of squares; preserve differences in definition for unbalanced designs and missing cells.
 - Dependencies: [STAT-COMMON-009](#stat-common-009).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-COMMON-011/](tests/STAT15.4-oracle/STAT-COMMON-011/).
+- Dispatch contract: Extend the integrated GLM hypothesis/rank primitives for Type II; the wider COMMON-009 interface remains separately tracked. Validate hierarchy/containing effects explicitly rather than relabeling Type III output for arbitrary models.
 - Acceptance criteria: For balanced, unbalanced, empty-cell, and reordered-effect designs, verify hypothesis matrices, sums of squares, ranks, and F tests against source examples or independent linear-algebra derivations.
 
 <a id="stat-common-012"></a>
