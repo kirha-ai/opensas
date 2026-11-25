@@ -1240,7 +1240,7 @@ fn appendControlValues(a: std.mem.Allocator, out: *std.ArrayList(u8), sl: table_
 fn tableHeading(a: std.mem.Allocator, out: *std.ArrayList(u8), sl: table_model.Slice, number: usize, cross: bool) !void {
     const dims = sl.table.dimensions;
     const n = dims.len;
-    try out.appendSlice(a, TWOWAY_TITLE);
+    if (number <= 1) try out.appendSlice(a, TWOWAY_TITLE);
     try out.append(a, '\n');
     const title = if (number == 0 or cross) try std.fmt.allocPrint(a, "Table of {s} by {s}", .{ dims[n - 2].name, dims[n - 1].name }) else try std.fmt.allocPrint(a, "Table {d} of {s} by {s}", .{ number, dims[n - 2].name, dims[n - 1].name });
     const b = try line(a, @max(60, 25 + title.len));
@@ -2033,7 +2033,7 @@ fn analyzeTable(cx: ProcCtx, out: *std.ArrayList(u8), tab: *Table, req: Request,
                 try appendControlValues(a, out, sl);
                 try out.append(a, '\n');
             } else {
-                if (req.noprint) try tableHeading(a, out, sl, 0, false);
+                if (req.noprint) try out.appendSlice(a, TWOWAY_TITLE);
                 try out.appendSlice(a, try std.fmt.allocPrint(a, "\nStatistics for Table of {s} by {s}\n", .{ row_name, col_name }));
             }
             try out.appendSlice(a, body.items);
@@ -2052,6 +2052,7 @@ fn analyzeTable(cx: ProcCtx, out: *std.ArrayList(u8), tab: *Table, req: Request,
         var summary: std.ArrayList(u8) = .empty;
         try strat_exec.renderSummary(a, &summary, stratified, req.stratified, stratScope(req, opts), req.scores);
         if (summary.items.len > 0) {
+            try out.appendSlice(a, TWOWAY_TITLE);
             try out.appendSlice(a, try std.fmt.allocPrint(a, "\nSummary Statistics for {s} by {s}\n", .{ tab.dimensions[n - 2].name, tab.dimensions[n - 1].name }));
             if (n > 2) {
                 try out.appendSlice(a, "Controlling for");
@@ -2188,7 +2189,7 @@ test "stratified public hook computes mixed TEST requests and keeps exact gaps" 
     const source = "proc freq data=strata; weight n; tables s*r*c / cmh(bdt mf i2) agree commonriskdiff(cl=(mh mr score) test printwts) noprint; test kappa pcorr; run;";
     try runFreq(.{ .arena = a, .lib = &lib, .diags = &d }, &out, try @import("../lexer.zig").tokenize(a, source, &d));
     try std.testing.expect(!d.hasErrors());
-    for ([_][]const u8{ "8.3052", "1.4905", "19.2443", "Common Risk Difference", "Kappa Test", "Pearson Correlation" }) |value| try std.testing.expect(std.mem.indexOf(u8, out.items, value) != null);
+    for ([_][]const u8{ "8.3052", "1.4905", "19.2443", "Common Risk Difference", "Test of H0: Kappa = 0", "Pearson Correlation" }) |value| try std.testing.expect(std.mem.indexOf(u8, out.items, value) != null);
     out.clearRetainingCapacity();
     const duplicate = "proc freq data=strata; tables r*c; test kappa; test pcorr;run;";
     try std.testing.expectError(error.ParseError, runFreq(.{ .arena = a, .lib = &lib, .diags = &d }, &out, try @import("../lexer.zig").tokenize(a, duplicate, &d)));
