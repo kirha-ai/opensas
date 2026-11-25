@@ -18,7 +18,13 @@ pub fn fitDesign(cx: proc.ProcCtx, spec: Spec, d: design.Design) diag.Error!math
         return cx.diags.fail(error.ExecError, 0, "PROC GLM: numerical fit failed", .{});
     };
     errdefer result.deinit(cx.arena);
-    if (result.model.fit.rank < d.p) return proc.failGap(cx.diags, 0, "PROC GLM: rank-deficient or empty-cell effect hypotheses are not implemented", .{});
+    if (result.model.fit.rank < d.p) {
+        // Type I uses nested column spaces and actual rank increments, so empty
+        // cells do not require the missing-cell Type III hypothesis builder.
+        // Keep unsupported singular coefficient displays and graphs explicit.
+        if (!spec.ss1_only or spec.classes.len == 0) return proc.failGap(cx.diags, 0, "PROC GLM: rank-deficient parameter displays or Type III hypotheses are not implemented", .{});
+        if (cx.graphics) |g| if (g.enabled == true and !spec.plots_none and !spec.noprint) return proc.failGap(cx.diags, 0, "PROC GLM: rank-deficient model graphics are not implemented; specify PLOTS=NONE", .{});
+    }
     return result;
 }
 

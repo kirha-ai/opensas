@@ -29,6 +29,8 @@ pub const Spec = struct {
     noprint: bool = false,
     plots_none: bool = false,
     intercept: bool = true,
+    /// An explicit SS1 request replaces the default Type I + Type III tables.
+    ss1_only: bool = false,
 };
 fn at(t: []const lex.Token, i: usize, tag: lex.Tag) bool {
     return i < t.len and t[i].tag == tag;
@@ -171,7 +173,10 @@ pub fn parse(cx: proc.ProcCtx, tokens: []const lex.Token) diag.Error!Spec {
                 if (kw(tokens, j, "noint")) {
                     result.intercept = false;
                     j += 1;
-                } else if (kw(tokens, j, "alpha")) result.alpha = try real(cx, tokens[0..end], &j) else if (kw(tokens, j, "singular")) result.singular = try real(cx, tokens[0..end], &j) else return unsupported(cx, tokens[j], &.{ "solution", "ss1", "ss2", "ss3", "ss4", "e", "e1", "e2", "e3", "e4", "clparm", "cli", "clm", "p", "r", "nouni", "intercept", "tolerance", "inverse", "xpx", "effectsize" });
+                } else if (kw(tokens, j, "ss1")) {
+                    result.ss1_only = true;
+                    j += 1;
+                } else if (kw(tokens, j, "alpha")) result.alpha = try real(cx, tokens[0..end], &j) else if (kw(tokens, j, "singular")) result.singular = try real(cx, tokens[0..end], &j) else return unsupported(cx, tokens[j], &.{ "solution", "ss2", "ss3", "ss4", "e", "e1", "e2", "e3", "e4", "clparm", "cli", "clm", "p", "r", "nouni", "intercept", "tolerance", "inverse", "xpx", "effectsize" });
             }
         } else if (kw(tokens, i, "by")) {
             try bys.read(cx.arena, tokens, &i);
@@ -194,4 +199,8 @@ pub fn parse(cx: proc.ProcCtx, tokens: []const lex.Token) diag.Error!Spec {
     result.descending = parsed.desc;
     result.notsorted = parsed.notsorted;
     return result;
+}
+
+test {
+    _ = @import("glm_ss1_tests.zig");
 }

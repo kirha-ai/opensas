@@ -56,7 +56,7 @@ pub fn render(cx: proc.ProcCtx, out: *std.ArrayList(u8), spec: parse.Spec, d: de
         response, try number(a, model.r_square, 6), try number(a, 100 * @sqrt(fitted.mse) / fitted.y_mean, 6), try number(a, @sqrt(fitted.mse), 6), try number(a, fitted.y_mean, places(@abs(fitted.y_mean), 6)),
     });
     try effects(a, out, spec, "I", result.type_i);
-    try effects(a, out, spec, "III", result.type_iii);
+    if (!spec.ss1_only) try effects(a, out, spec, "III", result.type_iii);
     if (spec.classes.len == 0) {
         try out.appendSlice(a, "\nStandard\nParameter Estimate Error t Value Pr > |t|\n\n");
         var maximum: f64 = 0;
