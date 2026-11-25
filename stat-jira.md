@@ -11531,17 +11531,18 @@ Source: S154, Chapter 105, `The REG Procedure`, PDF pp. 8539–8728. Tasks in th
 
 <a id="stat-reg-004"></a>
 
-### [DOING @dev1] STAT-REG-004 — REG — ADD / DELETE / PRINT / REFIT / Interactive Analysis
+### [DONE] STAT-REG-004 — REG — ADD / DELETE / PRINT / REFIT / Interactive Analysis
 
 - Source: S154 / Chapter 105 / `ADD Statement` (PDF p. 8574); S154 / Chapter 105 / `DELETE Statement` (PDF pp. 8575–8576); S154 / Chapter 105 / `PRINT Statement` (PDF p. 8592); S154 / Chapter 105 / `REFIT Statement` (PDF pp. 8592–8593); S154 / Chapter 105 / `Interactive Analysis` (PDF pp. 8610–8613).
 - Scope: Implement ADD; DELETE; PRINT; REFIT; Interactive Analysis. This ticket owns the feature's options, defaults, computation, and results as an extension of the basic computational path; the chapter's output tickets handle ODS descriptors and file presentation.
 - Dependencies: [STAT-REG-001](#stat-reg-001), [STAT-REG-002](#stat-reg-002).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-REG-004/](tests/STAT15.4-oracle/STAT-REG-004/).
+- DONE (2026-11-25): Landed/pushed `579406d0`. Own original oracle passes rc/warnings 1/1 and all 1116 non-exempt tokens exactly; only the two established residual-sum bounds apply, strict whitespace equality remains false. Added atomic ADD/DELETE, silent REFIT, last-MODEL targeting and statement-ordered PRINT, with independent analytic CLI controls. Unsupported PRINT options/extensions remain explicit gaps. Gate: 1741 tests, 2309 corpus, 11 programs passed. Evidence: `tests/STAT15.4-oracle/STAT-REG-004/implementation-evidence.md` and receipts.
 - Acceptance criteria: For ADD / DELETE / PRINT / REFIT / Interactive Analysis, use an independently calculable small sample and the source examples to verify targets, estimates/statistics, degrees of freedom, and applicable probabilities or intervals; include at least one relevant degenerate or boundary case, asserting documented diagnostics and result status.
 
 <a id="stat-reg-005"></a>
 
-### [TODO] STAT-REG-005 — REG — Computations for Ridge Regression and IPC Analysis
+### [DOING @dev1] STAT-REG-005 — REG — Computations for Ridge Regression and IPC Analysis
 
 - Source: S154 / Chapter 105 / `Computations for Ridge Regression and IPC Analysis` (PDF pp. 8648–8649).
 - Scope: Implement Computations for Ridge Regression and IPC Analysis. This ticket owns the feature's options, defaults, computation, and results as an extension of the basic computational path; the chapter's output tickets handle ODS descriptors and file presentation.
