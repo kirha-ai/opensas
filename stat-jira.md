@@ -255,13 +255,14 @@ Complete prerequisite shared contracts first, then each PROC's data input, model
 
 <a id="stat-common-006"></a>
 
-### [DOING @dev7] STAT-COMMON-006 — CLASS level formation and ordering
+### [TODO] STAT-COMMON-006 — CLASS level formation and ordering
 
 - Source: S154 / Chapter 20 / `Levelization of Classification Variables` (PDF pp. 411–413).
 - Scope: Represent formatted levels, ordering methods, reference levels, and missing levels consistently; integrate procedure-specific ORDER=/REF= and related options in PROC tickets.
 - Dependencies: [STAT-COMMON-002](#stat-common-002).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-COMMON-006/](tests/STAT15.4-oracle/STAT-COMMON-006/).
 - Dispatch contract: dev7 owns a shared CLASS-level helper and its tests; dev2 integrates it into GLM, dev6 owns GLM numerical inference. Verify the original CLASS-order oracle after integration; helper-only tests do not count as DONE.
+- Scheduling note (2026-11-25): Reserved dev7 worktree is prepared, but both spawn attempts were rejected by the current session's thread limit. Manager cap and user runtime config are now 7; six dev agents actually run. No dev7 implementation attempt or 45-minute clock has started. Keep TODO until a real worker is dispatched.
 - Acceptance criteria: Verify level ordering and column mappings for character, numeric, formatted, missing, and multiple-BY-group data; changes in input order may have only the effects allowed by the documentation.
 
 <a id="stat-common-007"></a>
