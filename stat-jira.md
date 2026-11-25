@@ -193,7 +193,7 @@ Complete prerequisite shared contracts first, then each PROC's data input, model
 
 <a id="stat-common-001"></a>
 
-### [TODO] STAT-COMMON-001 — Statistical procedure execution and the 15.4 option contract
+### [DONE] STAT-COMMON-001 — Statistical procedure execution and the 15.4 option contract
 
 - Source: S154 / Chapter 3 / `Introduction` (PDF pp. 27–36); S154 / Chapter 2 / `What's New in SAS/STAT 15.4` (PDF pp. 25–26); S154 / Chapter 1 / `Procedures by Category` (PDF pp. 13–24).
 - Scope: Establish PROC-level parsing, default-parameter, execution-status, and result-object contracts; distinguish valid input, invalid input, and unsupported capabilities under SAS/STAT 15.4. This ticket owns shared interfaces; PROC tickets own their semantics.
@@ -202,6 +202,7 @@ Complete prerequisite shared contracts first, then each PROC's data input, model
 - Waiting for implementation (2026-11-25): Initial oracle exits 2 (expected 0), with missing REG tables and unrecognized `validmemname`. Implement existing STAT-REG-001/002 prerequisites, then revisit this case; missing REG alone is not grounds for PARK. Version must identify OpenSAS, not match SAS. Evidence: dev1 `.stat-common-001-evidence/actual.stderr` and `output.diff`.
 - Dispatch contract: dev5 owns honest OpenSAS runtime-version metadata and execution-contract regression checks; dev1/dev4 own REG implementation, dev2 owns option validation. Full oracle acceptance waits for those implementations.
 - Progress (2026-11-25): OpenSAS version metadata landed in `e24fbc2c`; option validation landed in `c768bb5f`. Await integrated REG oracle before claiming DONE. Version regression and gate passed; dev5 moves to the TTEST prerequisite while REG integration continues.
+- DONE (2026-11-25): REG integration landed/pushed `48b9312d`; original runtime oracle matches all 95 normalized tokens, allowing only the explicitly permitted current OpenSAS version identity. Actual/expected status 0/0, warning semantics match, no unexpected errors. Gate: 1643 tests, 2304 corpus, 11 programs passed. Exact comparison and gate receipt preserved in dev1 `.stat-reg-001-evidence/final-comparison.json` and `gate-receipt.json`; rerun original oracle at this SHA to reproduce.
 - Acceptance criteria: Provide minimal execution contract tests; define option defaults, explicit overrides, and procedure-specific RUN/QUIT rules; emit locatable diagnostics for unimplemented branches; record the specification version and handle version differences explicitly.
 
 <a id="stat-common-002"></a>
@@ -218,7 +219,7 @@ Complete prerequisite shared contracts first, then each PROC's data input, model
 
 <a id="stat-common-003"></a>
 
-### [DOING @dev2] STAT-COMMON-003 — Rank-deficient linear algebra and generalized inverses
+### [DONE] STAT-COMMON-003 — Rank-deficient linear algebra and generalized inverses
 
 - Source: S154 / Chapter 4 / `Important Linear Algebra Concepts` (PDF pp. 58–65).
 - Scope: Provide interfaces for linear equations, rank determination, projections, and generalized inverses; expose singular and nearly singular states under a consistent precision policy.
@@ -227,11 +228,12 @@ Complete prerequisite shared contracts first, then each PROC's data input, model
 - Dispatch contract: Evaluate the linear-algebra oracle through the existing interpreter entry point independently of COMMON-001's runtime-version requirement; do not assume its missing REG capability is implemented.
 - Waiting for implementation (2026-11-25): Oracle currently exits 2 with no REG/TOL/VIF output. Revisit after existing REG foundation tickets; do not park solely because REG is not implemented.
 - Current assignment: Reuse landed QR fitting and implement missing rank/alias/TOL/VIF diagnostics in a separate REG numerical helper; coordinate rendering with dev1. Verify the original oracle after REG dispatch is integrated.
+- DONE (2026-11-25): Ordered SINGULAR/alias helper adopted in REG and landed/pushed `48b9312d`. Original rank-deficient oracle matches all 167 normalized tokens, status 0/0, no unexpected errors. Nine independent algebra tests cover generalized-inverse/projection identities, scale-aware aliases and near-singularity; included in final integrated gate (1643 tests, 2304 corpus, 11 programs). No expected-output or numerical-tolerance change.
 - Acceptance criteria: For full-rank, exactly rank-deficient, and nearly collinear matrices, verify decomposition reconstruction, projection identities, and generalized-inverse identities against independent analytic results; explain scale-dependent tolerances and do not return success for numerical failure.
 
 <a id="stat-common-004"></a>
 
-### [TODO] STAT-COMMON-004 — Linear model moments and covariance foundations
+### [DOING @dev2] STAT-COMMON-004 — Linear model moments and covariance foundations
 
 - Source: S154 / Chapter 4 / `Expectations of Random Variables and Vectors` (PDF pp. 65–68); S154 / Chapter 4 / `Mean Squared Error` (PDF pp. 68–69); S154 / Chapter 4 / `Linear Model Theory` (PDF pp. 69–80); S154 / Chapter 7 / `Introduction to Mixed Modeling Procedures` (PDF pp. 135–148).
 - Scope: Implement shared linear model moments, residual sums of squares, variance, and covariance calculations; preserve the distinction between frequency and analysis weights.
@@ -11477,18 +11479,19 @@ Source: S154, Chapter 105, `The REG Procedure`, PDF pp. 8539–8728. Tasks in th
 
 <a id="stat-reg-001"></a>
 
-### [DOING @dev1] STAT-REG-001 — REG — Data input, variable roles, and basic options
+### [PARK] STAT-REG-001 — REG — Data input, variable roles, and basic options
 
 - Source: S154 / Chapter 105 / `PROC REG Statement` (PDF pp. 8560–8574); S154 / Chapter 105 / `BY Statement` (PDF pp. 8574–8575); S154 / Chapter 105 / `FREQ Statement` (PDF p. 8576); S154 / Chapter 105 / `ID Statement` (PDF p. 8576); S154 / Chapter 105 / `VAR Statement` (PDF pp. 8599–8600); S154 / Chapter 105 / `WEIGHT Statement` (PDF p. 8600); S154 / Chapter 105 / `Missing Values` (PDF p. 8600); S154 / Chapter 105 / `Input Data Sets` (PDF pp. 8600–8603).
 - Scope: Integrate PROC REG declarations, basic options, defaults, and execution boundaries; this ticket establishes parameter objects and result interfaces, while later feature tickets implement model-, algorithm-, and output-specific options. Also implement BY; FREQ; ID; VAR; WEIGHT; Missing Values; Input Data Sets; apply this procedure's rules for missing values, variable roles, and observation selection.
 - Dependencies: [STAT-COMMON-001](#stat-common-001), [STAT-COMMON-002](#stat-common-002).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-REG-001/](tests/STAT15.4-oracle/STAT-REG-001/).
 - Dispatch contract: Break the runtime-oracle validation cycle by implementing REG on existing interpreter/data interfaces. dev1 owns REG parsing, data selection and rendering; dev4 supplies the REG-002 numerical module. Revisit shared runtime and rank-deficiency oracles after integration. Missing REG is the work to implement, not a reason to PARK immediately.
+- PARK (2026-11-25, 45-minute attempt): Tested implementation landed/pushed `48b9312d`; gate 1643 tests, 2304 corpus, 11 programs green. Both original cases have correct status 1 and warnings; only two Sum of Residuals tokens differ: expected 0 / -4.4596E-11, actual 9.748646E-12 / -1.21227E-10. All other 1118/1206-token listing content matches. Preserve exact outputs; no unvalidated blanket tolerance or golden modification. REG-002 will independently assess numerical bounds for these theoretical-zero sums before this ticket is revisited. Evidence: dev1 `.stat-reg-001-evidence/final-comparison.json`.
 - Acceptance criteria: Create positive and negative parsing cases for the documented declarations and basic options; verify defaults, explicit settings, documented duplicate/conflicting declarations, and locations; valid but unimplemented features must not silently succeed. For BY / FREQ / ID / VAR / WEIGHT / Missing Values / Input Data Sets, construct valid, missing, empty, and multiple-group inputs; verify included observation counts, variable roles, BY boundaries, level ordering, and the frequency/weight rules relevant to this ticket; assert documented invalid-input behavior.
 
 <a id="stat-reg-002"></a>
 
-### [TODO] STAT-REG-002 — REG — Linear regression coefficients, variance, and basic fit statistics
+### [DOING @dev1] STAT-REG-002 — REG — Linear regression coefficients, variance, and basic fit statistics
 
 - Source: S154 / Chapter 105 / `Getting Started: REG Procedure` (PDF pp. 8542–8558); S154 / Chapter 105 / `Overview: REG Procedure` (PDF pp. 8540–8542).
 - Scope: Implement linear regression coefficients, variance, and basic fit statistics using the documented default path and establish the computational state needed by later extensions; implement specialized models, methods, and diagnostics outside that default example in their corresponding feature tickets.
@@ -11496,6 +11499,7 @@ Source: S154, Chapter 105, `The REG Procedure`, PDF pp. 8539–8728. Tasks in th
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-REG-002/](tests/STAT15.4-oracle/STAT-REG-002/).
 - Dispatch contract: Implement numerical fitting in a separate `src/stat/reg_fit.zig` module using existing probability functions, concurrently with REG-001 parsing/rendering. Validate numeric results independently, then require integrated oracle verification before DONE; dependent shared oracle requirements do not prevent implementing their needed foundation.
 - Progress (2026-11-25): QR fitting foundation landed/pushed in `f65c428a`, with seven dedicated numeric tests passing through a separate harness and existing integrated gate green. Full case acceptance awaits dev1 REG integration; no DONE claim for the numeric module alone.
+- Current assignment (2026-11-25): Integrated default case runs with expected status/warnings and only the same two residual-sum tail differences as REG-001. Derive any tolerance from independent intercept-model identities and floating-point error/conditioning, preserving complete comparisons for all other tokens; do not hardcode SAS rounding artifacts.
 - Acceptance criteria: Turn the smallest default analysis in Getting Started into a runnable case and verify its principal estimates, observation counts, and result status; add a smaller case with an independent manual calculation; meet the precision conventions.
 
 <a id="stat-reg-003"></a>
