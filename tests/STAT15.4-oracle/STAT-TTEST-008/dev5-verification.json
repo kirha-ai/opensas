@@ -1,0 +1,262 @@
+{
+  "ticket": "STAT-TTEST-008",
+  "status": "PASS: unchanged full AB/BA crossover oracle through the real CLI; eligible for DONE after landing under oracle-specific acceptance",
+  "implementation_revision_verified": "01bf76727c195ee342c04648a9ec1c48768a8992",
+  "integration_base": "1583ddd0b7cd8661e063af52bb0d5d23a79c3f87",
+  "readme_read": "tests/STAT15.4-oracle/STAT-TTEST-008/README.md",
+  "reference_log_read": "tests/STAT15.4-oracle/STAT-TTEST-008/abba_crossover.oracle.log",
+  "manual": {
+    "source": "SAS-STAT-15.4-Users-Guide.pdf (S154)",
+    "numbering": "one-based physical PDF pages",
+    "assigned_pages_read": [
+      10629,
+      10630
+    ],
+    "example_read": {
+      "name": "Example 128.4 AB/BA Crossover Design",
+      "physical_pages_inclusive": [
+        10661,
+        10670
+      ]
+    },
+    "contract": "Treatment contrast compares half period differences between AB and BA. Period contrast compares half treatment differences. Default normal model reuses two-independent-sample inference; original cell and full within-sequence treatment differences supply descriptive rows."
+  },
+  "comparison_method": "Complete ordered expected.read_text().split() == stdout.split(); only whitespace normalization. Every numeric/non-numeric field, heading, count and method row is checked. No numeric tolerance on printed fields; reference programs/expected/status/log files remain unchanged.",
+  "status_contract": "Oracle README statuses are diagnostic severity (0 clean,1 warning,2 error); D-009 CLI 1 denotes user errors. The assigned crossover oracle is clean 0/0. The invalid-ALPHA regression retains CLI1/reference severity2 with documented error semantics.",
+  "cases": [
+    {
+      "ticket": "STAT-TTEST-008",
+      "program": "tests/STAT15.4-oracle/STAT-TTEST-008/abba_crossover.sas",
+      "command": [
+        "zig-out/bin/opensas",
+        "tests/STAT15.4-oracle/STAT-TTEST-008/abba_crossover.sas"
+      ],
+      "actual_cli_rc": 0,
+      "reference_severity_status": 0,
+      "actual_severity_status": 0,
+      "status_semantics_match": true,
+      "all_tokens_match": true,
+      "expected_tokens": 270,
+      "actual_tokens": 270,
+      "normalized_tokens_sha256": "e626b6dec445546b7d12a25ea496f4f0c7c6ebdb2796de4ed772b08354a6cd13",
+      "reference_expected_sha256": "862d236b5aacd70df089b0ce3d2c4b9aa777e095386653f1bb39a4b529c9eec0",
+      "stderr": "",
+      "stdout": "The TTEST Procedure\n\nResponse Variables: pef1, pef2\n\nCrossover Variable Information\n\nPeriod Response Treatment\n1 pef1 drug1\n2 pef2 drug2\n\nSequence Treatment Period Method N Mean Std Dev Std Err Minimum Maximum\n\n1          for          1                           7 337.1 53.7631 20.3206 250.0 410.0\n2          for          2                           6 345.8 70.8814 28.9372 220.0 410.0\n2          sal          1                           6 283.3 105.4 43.0245 90.0000 380.0\n1          sal          2                           7 306.4 64.7247 24.4636 210.0 390.0\n1          Diff (1-2)                               7 30.7143 32.9682 12.4608 -35.0000 70.0000\n2          Diff (1-2)                               6 62.5000 44.6934 18.2460 15.0000 130.0\nBoth       Diff (1-2)                Pooled         46.6071 19.3702 10.7766\nBoth       Diff (1-2)                Satterthwaite  46.6071 11.0475\nBoth                    Diff (1-2)   Pooled         -15.8929 19.3702 10.7766\nBoth                    Diff (1-2)   Satterthwaite  -15.8929 11.0475\n\nSequence Treatment Period Method Mean 95% CL Mean Std Dev 95% CL Std Dev\n\n1          for          1                           337.1 287.4 386.9 53.7631 34.6446 118.4\n2          for          2                           345.8 271.4 420.2 70.8814 44.2447 173.8\n2          sal          1                           283.3 172.7 393.9 105.4 65.7841 258.5\n1          sal          2                           306.4 246.6 366.3 64.7247 41.7082 142.5\n1          Diff (1-2)                               30.7143 0.2238 61.2048 32.9682 21.2445 72.5982\n2          Diff (1-2)                               62.5000 15.5972 109.4 44.6934 27.8980 109.6\nBoth       Diff (1-2)                Pooled         46.6071 22.8881 70.3262 19.3702 13.7217 32.8882\nBoth       Diff (1-2)                Satterthwaite  46.6071 21.6585 71.5558\nBoth                    Diff (1-2)   Pooled         -15.8929 -39.6119 7.8262 19.3702 13.7217 32.8882\nBoth                    Diff (1-2)   Satterthwaite  -15.8929 -40.8415 9.0558\n\nTreatment Period Method Variances DF t Value Pr > |t|\n\nDiff (1-2)                Pooled Equal 11 4.32 0.0012\nDiff (1-2)                Satterthwaite Unequal 9.1017 4.22 0.0022\n             Diff (1-2)   Pooled Equal 11 -1.47 0.1683\n             Diff (1-2)   Satterthwaite Unequal 9.1017 -1.44 0.1838\n\nEquality of Variances\n\nMethod Num DF Den DF F Value Pr > F\n\nFolded F 5 6 1.84 0.4797\n\n",
+      "program_sha256": "1bb7230d4809390fd6464104c6068fdd07c7cd51bebf41cf8f4673c5bf82d33b"
+    },
+    {
+      "ticket": "STAT-TTEST-001",
+      "program": "tests/STAT15.4-oracle/STAT-TTEST-001/by_frequency_weight.sas",
+      "command": [
+        "zig-out/bin/opensas",
+        "tests/STAT15.4-oracle/STAT-TTEST-001/by_frequency_weight.sas"
+      ],
+      "actual_cli_rc": 0,
+      "reference_severity_status": 0,
+      "actual_severity_status": 0,
+      "status_semantics_match": true,
+      "all_tokens_match": true,
+      "expected_tokens": 188,
+      "actual_tokens": 188,
+      "normalized_tokens_sha256": "53beb48e63598bd4f1b5e9281b3aa802078ea1d52515a9621fd796810d58528a",
+      "reference_expected_sha256": "579a1688e85bfa3b649b6cc1cf977e6c1194c833b25c581bc4f822f16a178868",
+      "stderr": ""
+    },
+    {
+      "ticket": "STAT-TTEST-002",
+      "program": "tests/STAT15.4-oracle/STAT-TTEST-002/court_default.sas",
+      "command": [
+        "zig-out/bin/opensas",
+        "tests/STAT15.4-oracle/STAT-TTEST-002/court_default.sas"
+      ],
+      "actual_cli_rc": 0,
+      "reference_severity_status": 0,
+      "actual_severity_status": 0,
+      "status_semantics_match": true,
+      "all_tokens_match": true,
+      "expected_tokens": 44,
+      "actual_tokens": 44,
+      "normalized_tokens_sha256": "e75843d71d1045bee39976a67847efef2d817eb036637fb6bf80b92361a7b21e",
+      "reference_expected_sha256": "dc39bffbeaa987959fe6c6b1e44a6e32679ad1fe8aa66baa8bdf4ddc19270311",
+      "stderr": ""
+    },
+    {
+      "ticket": "STAT-TTEST-003",
+      "program": "tests/STAT15.4-oracle/STAT-TTEST-003/normal_lognormal.sas",
+      "command": [
+        "zig-out/bin/opensas",
+        "tests/STAT15.4-oracle/STAT-TTEST-003/normal_lognormal.sas"
+      ],
+      "actual_cli_rc": 0,
+      "reference_severity_status": 0,
+      "actual_severity_status": 0,
+      "status_semantics_match": true,
+      "all_tokens_match": true,
+      "expected_tokens": 88,
+      "actual_tokens": 88,
+      "normalized_tokens_sha256": "88f3daad6da26d31fe4f36fed1e941fd1c3753ba752d9131ed3e87ce8053125c",
+      "reference_expected_sha256": "8917af547c318e8e1b3fb5269ec5dfade50d48fd53efba07b3fd517dbac0219d",
+      "stderr": ""
+    },
+    {
+      "ticket": "STAT-TTEST-005",
+      "program": "tests/STAT15.4-oracle/STAT-TTEST-005/invalid_alpha.sas",
+      "command": [
+        "zig-out/bin/opensas",
+        "tests/STAT15.4-oracle/STAT-TTEST-005/invalid_alpha.sas"
+      ],
+      "actual_cli_rc": 1,
+      "reference_severity_status": 2,
+      "actual_severity_status": 2,
+      "status_semantics_match": true,
+      "all_tokens_match": true,
+      "expected_tokens": 0,
+      "actual_tokens": 0,
+      "normalized_tokens_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "reference_expected_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr": "ERROR(expanded L2): PROC TTEST: ALPHA must be between 0 and 1\n"
+    },
+    {
+      "ticket": "STAT-TTEST-005",
+      "program": "tests/STAT15.4-oracle/STAT-TTEST-005/one_sided_court.sas",
+      "command": [
+        "zig-out/bin/opensas",
+        "tests/STAT15.4-oracle/STAT-TTEST-005/one_sided_court.sas"
+      ],
+      "actual_cli_rc": 0,
+      "reference_severity_status": 0,
+      "actual_severity_status": 0,
+      "status_semantics_match": true,
+      "all_tokens_match": true,
+      "expected_tokens": 44,
+      "actual_tokens": 44,
+      "normalized_tokens_sha256": "9047e8755396009471a03a9fb92995c6f7a9a929a56bba544e76697c1ef7a90c",
+      "reference_expected_sha256": "801a0e9c7b5697f610c65cfd1e6f019ce6bd27fc28d7144da2c2a065717c07f8",
+      "stderr": ""
+    },
+    {
+      "ticket": "STAT-TTEST-006",
+      "program": "tests/STAT15.4-oracle/STAT-TTEST-006/paired_direction.sas",
+      "command": [
+        "zig-out/bin/opensas",
+        "tests/STAT15.4-oracle/STAT-TTEST-006/paired_direction.sas"
+      ],
+      "actual_cli_rc": 0,
+      "reference_severity_status": 0,
+      "actual_severity_status": 0,
+      "status_semantics_match": true,
+      "all_tokens_match": true,
+      "expected_tokens": 92,
+      "actual_tokens": 92,
+      "normalized_tokens_sha256": "a2b8736a6cdb05a940c00d97a0f5297829b72d76bf360b51ff9837d4090b73c6",
+      "reference_expected_sha256": "08258749bd97874f5736c07dca8f528988d3394b03d4ecdad1bc6ddf99e411e0",
+      "stderr": ""
+    },
+    {
+      "ticket": "STAT-TTEST-007",
+      "program": "tests/STAT15.4-oracle/STAT-TTEST-007/two_sample_variance.sas",
+      "command": [
+        "zig-out/bin/opensas",
+        "tests/STAT15.4-oracle/STAT-TTEST-007/two_sample_variance.sas"
+      ],
+      "actual_cli_rc": 0,
+      "reference_severity_status": 0,
+      "actual_severity_status": 0,
+      "status_semantics_match": true,
+      "all_tokens_match": true,
+      "expected_tokens": 123,
+      "actual_tokens": 123,
+      "normalized_tokens_sha256": "c5586c4e6adbaa478d983d647580fe17333a0b543bd5d253b660524451221868",
+      "reference_expected_sha256": "a72c151c2de68d57a6f1b0e9ce2fa52d27524773e831410714232d61e60a4d79",
+      "stderr": ""
+    },
+    {
+      "ticket": "STAT-TTEST-009",
+      "program": "tests/STAT15.4-oracle/STAT-TTEST-009/tost_difference.sas",
+      "command": [
+        "zig-out/bin/opensas",
+        "tests/STAT15.4-oracle/STAT-TTEST-009/tost_difference.sas"
+      ],
+      "actual_cli_rc": 0,
+      "reference_severity_status": 0,
+      "actual_severity_status": 0,
+      "status_semantics_match": true,
+      "all_tokens_match": true,
+      "expected_tokens": 184,
+      "actual_tokens": 184,
+      "normalized_tokens_sha256": "c6c6b25ad5a1597d3dc8a614ce29134413319ee0a089b71f968f3ce9c42c522c",
+      "reference_expected_sha256": "2259262ba4b47f9118050488e02d81d28eb48ba976878f31a38008a07d81728b",
+      "stderr": ""
+    },
+    {
+      "ticket": "STAT-COMMON-005",
+      "program": "tests/STAT15.4-oracle/STAT-COMMON-005/tails_and_intervals.sas",
+      "command": [
+        "zig-out/bin/opensas",
+        "tests/STAT15.4-oracle/STAT-COMMON-005/tails_and_intervals.sas"
+      ],
+      "actual_cli_rc": 0,
+      "reference_severity_status": 0,
+      "actual_severity_status": 0,
+      "status_semantics_match": true,
+      "all_tokens_match": true,
+      "expected_tokens": 132,
+      "actual_tokens": 132,
+      "normalized_tokens_sha256": "cdbd5242d0c79f5f33872ee2355416606be6f5b25d35b3b72af09c5bef7a422b",
+      "reference_expected_sha256": "09b5aed8c4d8aad3427e7df7324d60f5092bb74ee78617ec405da2035086fa0f",
+      "stderr": ""
+    }
+  ],
+  "independent_checks": [
+    {
+      "test": "CROSSOVER independent small AB BA treatment period and sequence quantities",
+      "input": "AB=(12,8),(16,10); BA=(10,18),(8,14)",
+      "derivation": "Half-period values AB=(2,3), BA=(-4,-3), each variance .5; treatment=6, pooled SD=SE=sqrt(.5), df=2, t=6*sqrt(2). Half-treatment values AB=(2,3), BA=(4,3); period=-1, t=-sqrt(2). Sequence differences have means5/7; cell means14/9/9/16; folded F=1, p=1 by symmetry.",
+      "tolerances": "Counts, means and integer DF exact. Absolute1e-14 for SD/SE, period t and Welch DF;1e-13 for treatment t and F probability to cover f64 rounding at these small magnitudes."
+    },
+    {
+      "test": "CROSSOVER response-pair missingness and FREQ preserve replicated counts",
+      "derivation": "FREQ2.9 truncates to2, giving AB half-differences(2,2,3), BA(-4,-3), n=3/2, residual df=3, treatment=35/6. Explicit physical replication preserves SE and period p. Missing either response, FREQ<1 and nonpositive weight are excluded.",
+      "tolerances": "Counts/DF exact;1e-14 absolute for rational estimate and physical-replication identities."
+    },
+    {
+      "test": "CROSSOVER independent small AB BA treatment period and sequence quantities",
+      "derivation": "Relabel treatments: treatment sign reverses, period stays. Reverse periods and sequences: treatment stays, period sign reverses.",
+      "tolerances": "Exact equality for these integer/half-integer contrast identities."
+    }
+  ],
+  "integration_regressions": [
+    "Full module-level oracle matches every reference token",
+    "Original CLI ABBA program matches complete unchanged expected listing and status",
+    "Parser preserves repeated response pairs, validates arity/conflicts and rejects summary input",
+    "BY and WHERE preserve selected groups and one procedure header per BY group across multiple response pairs",
+    "Invalid treatment assignments and absent sequences use captured located diagnostics",
+    "Paired and TOST original programs retain full output and status semantics"
+  ],
+  "core_reuse": [
+    "ttest_fit.oneSample for original cell and within-sequence moments",
+    "ttest_two_sample.compute for half-difference treatment/period inference and folded-F equality"
+  ],
+  "hook_api": "ttest_crossover.run(cx,out,one_by_group_view,responses:[2]usize,treatments:[2]usize,RunOptions)",
+  "changed_paths_in_delivery": [
+    "src/stat/ttest.zig",
+    "src/stat/ttest_crossover.zig",
+    "src/stat/ttest_parse.zig",
+    "tests/corpus/stat_ttest_crossover.sas",
+    "tests/corpus/stat_ttest_crossover.txt",
+    "tests/STAT15.4-oracle/STAT-TTEST-008/dev5-verification.json"
+  ],
+  "unchanged": "main.zig, proc.zig, numeric ttest_fit/ttest_two_sample/ttest_tost kernels, original oracle inputs/expected/logs; no board changes",
+  "remaining_features": "IGNOREPERIOD, lognormal crossover, crossover TOST and crossover ORDER=FREQ remain explicit gap diagnostics; none is exercised by this assigned default-normal oracle.",
+  "gate": {
+    "command": "/Users/thomas/.local/share/zig-0.16.0/zig build gate -j2 --summary all",
+    "first_direct_exit_code": 0,
+    "first_counts": {
+      "tests": 1684,
+      "corpus": 2307,
+      "programs": 11
+    },
+    "final_revision_policy": "Run exact-SHA gate on the final rebased evidence commit; direct exit and final SHA supplied in handoff"
+  },
+  "shared_integration": "Dev4 TOST dependency commits were cherry-picked in order, then dropped automatically as already applied when rebasing onto their manager landing; their implementation/tests are preserved."
+}
