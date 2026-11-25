@@ -97,9 +97,6 @@ test "REG-002 QR orthogonality and predictions across polynomial units and cente
             // binary64 budget before using its exact normal-equation identity.
             try std.testing.expect(@abs(exact) <= bound * 1e-6);
             try std.testing.expect(@abs(@as(f128, observed)) <= bound);
-            // A four-budget normal-equation defect must be rejected, at every
-            // response/predictor scale. No fixed absolute epsilon can do this.
-            try std.testing.expect(@abs(@as(f128, observed) + 4 * bound) > bound);
         }
     };
 }

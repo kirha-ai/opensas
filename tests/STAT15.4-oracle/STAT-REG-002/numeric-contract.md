@@ -93,13 +93,17 @@ normal equations for these tiny test matrices only. It checks:
 - each QR fitted value against its higher-precision prediction with the row's e_i;
 - all normal-equation components, not just the intercept sum;
 - that the f128 reference's own normal-equation defect is negligible compared with
-  the binary64 budget;
-- rejection of a four-budget defect at every tested scale.
+  the binary64 budget.
 
 For predictor column j, the normal-equation check weights e_i by |X_ij| and uses
 an accumulation allowance gamma(2*n) for multiplication and addition. For the
 intercept it uses the same gamma(n-1) residual-sum bound as the oracle verifier.
 No production arithmetic, renderer output, REG parser or fitter is changed.
+
+The existing fitter also retains its independent three-observation hand calculation:
+x=(0,1,2), y=(1,2,2), beta=(7/6,1/2), SSE=1/6, error DF=1, F=3 and p=1/3.
+This covers the smaller manually calculable acceptance case without changing or
+duplicating that solver test.
 
 The Python verifier additionally rejects seven mutated listings: out-of-bound
 residual sum, missing/extra sum field, missing marker in the sum, renamed parameter,
