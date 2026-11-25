@@ -1,0 +1,120 @@
+{
+  "ticket": "STAT-TTEST-005",
+  "verification_revision": "6249ea310f07e20bb155f0155d0db9cab684866b",
+  "status": "Existing one-sample implementation verified; full listings and documented diagnostic severities match. Invalid-ALPHA raw CLI code and diagnostic wording are not literal reference matches; details retained below.",
+  "readme_read": "tests/STAT15.4-oracle/STAT-TTEST-005/README.md",
+  "manual": {
+    "source": "SAS-STAT-15.4-Users-Guide.pdf (S154)",
+    "numbering": "one-based physical PDF pages",
+    "pages_read": [
+      10620,
+      10621,
+      10622,
+      10623
+    ],
+    "contract": "10620 sample size as sum of frequencies; 10621 weighted arithmetic moments, directed t inference and equal-tailed SD intervals; 10622 lognormal transformations; 10623 begins paired design, outside this ticket"
+  },
+  "status_contract": {
+    "oracle": "tests/STAT15.4-oracle/README.md defines .expected.rc as reference status: 0 clean, 1 warning, 2 error",
+    "opensas": "docs/decisions.md D-009: CLI 0 clean, 1 user-program error, 2 OpenSAS defect or unsupported feature",
+    "comparison": "For these cases compare reference severity with actual diagnostics AND independently require the documented CLI code. Preserve the unequal raw integers (invalid ALPHA: CLI 1, reference error status 2). No general warning-to-exit-code mapping is inferred.",
+    "diagnostic_difference": "SAS: ALPHA equals 0 or 1. Must be between these values. OpenSAS: PROC TTEST: ALPHA must be between 0 and 1. Both reject ALPHA=1; text is not claimed identical."
+  },
+  "cases": [
+    {
+      "program": "tests/STAT15.4-oracle/STAT-TTEST-005/invalid_alpha.sas",
+      "program_sha256": "6c49a2db8603e3f6bb721e21272b8b6eea7622172ff8cd886ddd03cf0cc85db9",
+      "command": [
+        "zig-out/bin/opensas",
+        "tests/STAT15.4-oracle/STAT-TTEST-005/invalid_alpha.sas"
+      ],
+      "actual_process_rc": 1,
+      "reference_status": 2,
+      "raw_integer_values_equal": false,
+      "actual_diagnostic_severity_status": 2,
+      "reference_severity_matches": true,
+      "D009_process_rc_matches": true,
+      "stdout_comparison": {
+        "method": "Complete expected.read_text().split() == stdout.split(); whitespace-only normalization, no dropped tokens or numeric tolerance",
+        "match": true,
+        "expected_tokens": 0,
+        "actual_tokens": 0
+      },
+      "reference_expected_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "reference_diagnostic": "ERROR: ALPHA equals 0 or 1.  Must be between these values.\n",
+      "diagnostic_text_equal_after_whitespace": false,
+      "diagnostic_semantics": "ALPHA=1 is rejected as outside the open interval (0,1); no listing; no unsupported-feature diagnostic",
+      "stdout": "",
+      "stderr": "ERROR(expanded L2): PROC TTEST: ALPHA must be between 0 and 1\n",
+      "original_inputs_expected_and_logs_modified": false
+    },
+    {
+      "program": "tests/STAT15.4-oracle/STAT-TTEST-005/one_sided_court.sas",
+      "program_sha256": "04f523c9e0b274cea53c5f07a2b96768b6e910573d69b2a42dff1dfa62869476",
+      "command": [
+        "zig-out/bin/opensas",
+        "tests/STAT15.4-oracle/STAT-TTEST-005/one_sided_court.sas"
+      ],
+      "actual_process_rc": 0,
+      "reference_status": 0,
+      "raw_integer_values_equal": true,
+      "actual_diagnostic_severity_status": 0,
+      "reference_severity_matches": true,
+      "D009_process_rc_matches": true,
+      "stdout_comparison": {
+        "method": "Complete expected.read_text().split() == stdout.split(); whitespace-only normalization, no dropped tokens or numeric tolerance",
+        "match": true,
+        "expected_tokens": 44,
+        "actual_tokens": 44
+      },
+      "reference_expected_sha256": "801a0e9c7b5697f610c65cfd1e6f019ce6bd27fc28d7144da2c2a065717c07f8",
+      "reference_diagnostic": "",
+      "diagnostic_text_equal_after_whitespace": true,
+      "diagnostic_semantics": "Clean execution with no diagnostics",
+      "stdout": "The TTEST Procedure\n\nVariable: time\n\nN Mean Std Dev Std Err Minimum Maximum\n20 89.8500 19.1456 4.2811 43.0000 121.0\n\nMean 90% CL Mean Std Dev 90% CL Std Dev\n89.8500 84.1659 Infty 19.1456 15.2002 26.2374\n\nDF t Value Pr > t\n19 2.30 0.0164\n\n",
+      "stderr": "",
+      "original_inputs_expected_and_logs_modified": false
+    }
+  ],
+  "existing_regression_references": [
+    {
+      "file": "src/stat/ttest_fit.zig",
+      "test": "TTEST court default oracle and documented 90 percent upper interval",
+      "covers": "n, mean, standard error, df, t, probability and 90% upper interval"
+    },
+    {
+      "file": "src/stat/ttest_fit.zig",
+      "test": "TTEST COMMON-005 signed tails and mean intervals",
+      "covers": "two-sided and upper/lower tails, reflected negative statistics, complementary probabilities"
+    },
+    {
+      "file": "src/stat/ttest_fit.zig",
+      "test": "TTEST independent hand moments Student Cauchy and chi-square df2",
+      "covers": "x=(1,2,3): mean=2, variance=1, SEM=1/sqrt(3), df=2; elementary Cauchy tails and chi-square(2) confidence limits; extreme tails"
+    },
+    {
+      "file": "src/stat/ttest_fit.zig",
+      "test": "TTEST summary input degenerate samples and validation",
+      "covers": "single observation df=0/missing inference; zero variance; empty input and invalid parameters"
+    },
+    {
+      "file": "src/stat/ttest_parse.zig",
+      "test": "STAT-TTEST-001 invalid declarations have captured locations; valid unsupported options are gaps",
+      "covers": "invalid ALPHA boundary via captured diagnostics"
+    },
+    {
+      "file": "src/stat/ttest.zig",
+      "test": "STAT-TTEST-001 one-sample two and directed sides preserve full COMMON005 oracle",
+      "covers": "complete two-sided and directed output listings through parser/execution/rendering"
+    }
+  ],
+  "changes": "Evidence only. No numeric defect reproduced; no new implementation or redundant regression invented. Shared TTEST files remain owned by dev4.",
+  "changed_paths_in_delivery": [
+    "tests/STAT15.4-oracle/STAT-TTEST-005/dev5-verification.json"
+  ],
+  "gate": {
+    "command": "/Users/thomas/.local/share/zig-0.16.0/zig build gate --summary all",
+    "revision_policy": "Run after committing this evidence; exact final commit and result reported in handoff"
+  },
+  "board_changed": false
+}
