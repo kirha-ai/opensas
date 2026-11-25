@@ -40,6 +40,7 @@ const dsfns = @import("dsfns.zig"); // libref→dir map for on-disk member delet
 
 const Token = lex.Token;
 const freq_stat = @import("stat/freq.zig");
+const selection = @import("stat/data_selection.zig");
 
 /// The three deps every PROC handler needs (QL-B, taste #5): one bundle instead
 /// of `(arena, lib, diags)` threaded through all 15 run* signatures. `out` stays
@@ -1469,7 +1470,8 @@ pub fn runMeans(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) diag.
         diags.report(.err, if (toks.len > 1) toks[1].line else 0, "File {s} does not exist", .{in_name orelse "_last_"}) catch {};
         return;
     };
-    var ds = try procInput(arena, raw, toks, diags); // WHERE stmt / data= options (BUG-procwhere)
+    const selected_input = try procInputObs(arena, raw, toks, diags);
+    var ds = selected_input.ds;
 
     // GAP-varcolonprefix-procs: expand `pfx:` entries now that the dataset is
     // known (PDV order — see expandVarPrefixes). ONE point, ahead of every
@@ -1479,26 +1481,17 @@ pub fn runMeans(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) diag.
     try expandVarListPrefixes(arena, ds, &classes, diags, toks[0].line, "PROC MEANS");
     try expandVarListPrefixes(arena, ds, &id_names, diags, toks[0].line, "PROC MEANS");
 
-    // FREQ f: each obs counts trunc(f) times (missing/<1 → dropped). Expand the
-    // rows once so every path (listing, CLASS, OUTPUT, _FREQ_) sees the
-    // effective sample (BUG-meansfreqstmt).
-    if (freq_var) |fv| {
-        const fcol = ds.indexOf(fv) orelse
-            return diags.fail(error.ParseError, 0, "PROC MEANS: FREQ variable {s} not in {s}", .{ fv, ds.name });
-        ds = try expandFreq(arena, diags, ds, fcol);
-    }
-
-    // WEIGHT column: Mean/Sum/Std/Var become weighted (BUG-meansweight). A
-    // named-but-absent weight var errors (BUG-weightvarcheck).
-    const wcol: ?usize = try resolveWeightCol(ds, weight_var, diags, toks[0].line);
-
-    // EXCLNPWGT: drop nonpositive-weight obs from the WHOLE analysis (the opt-in
-    // that overrides the default of counting ≤0-weight obs in N / MIN/MAX). Done
-    // once here so every path — listing, CLASS, OUTPUT, _FREQ_ — sees the reduced
-    // sample; the default (no EXCLNPWGT) keeps them via weightAt (BUG-meanszeroweight).
-    if (exclnpwgt) if (wcol) |wc| {
-        ds = try dropNonpositiveWeight(arena, ds, wc);
-    };
+    const fcol = try selection.Roles.numeric(ds, freq_var, "FREQ", diags, toks[0].line);
+    const wcol = try selection.Roles.numeric(ds, weight_var, "WEIGHT", diags, toks[0].line);
+    const input_view = try selection.View.init(arena, selected_input, .{ .frequency = fcol, .weight = wcol });
+    const analysis_view = try input_view.select(arena, .{
+        .frequency = .truncate_positive,
+        // MEANS counts zero/negative weights unless EXCLNPWGT is requested.
+        // Missing weights remain here for existing NMISS/CLASS accounting;
+        // each numerical kernel applies its own per-variable missing policy.
+        .weight = if (exclnpwgt) .positive_only else .preserve,
+    });
+    if (fcol != null or exclnpwgt) ds = try analysis_view.dataset(arena, true, diags);
 
     // FORMAT on a CLASS var → group + display by the formatted value
     // (NOTE-freqtablesfmt, tick167:176). Before the default analysis-var scan
@@ -1742,10 +1735,10 @@ pub fn runMeans(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) diag.
     // columns = the requested stats), per BY group. A single variable keeps the
     // "Analysis Variable :" block below.
     if (acols.items.len > 1) {
-        try out.appendSlice(arena, MEANS_COMBINED_TITLE);
-        for (slices) |bs| {
+        for (slices, 0..) |bs, group_index| {
             if (bs.rep) |r| try appendByLine(arena, out, ds, r, obcols.items);
-            try out.append(arena, '\n'); // the blank after the title / BY line
+            if (group_index == 0) try out.appendSlice(arena, MEANS_COMBINED_TITLE);
+            try out.append(arena, '\n');
             try emitMeansCombined(arena, out, ds, bs.rows, acols.items, wcol, chosen, vardef, maxdec, alpha);
         }
         return;
@@ -1817,12 +1810,12 @@ fn emitMeansCombined(arena: std.mem.Allocator, out: *std.ArrayList(u8), ds: *Dat
     const hdrs = try arena.alloc([]const u8, stats.len); // ALPHA-aware headers (BUG-meansoptnoop)
     for (stats, 0..) |sk, j| hdrs[j] = try statHeaderA(arena, sk, alpha);
     var content: usize = wname;
-    for (stats, 0..) |sk, j| content += statWidth(sk, hdrs[j]);
-    const rule_len = content + wname; // SAS draws the underline wider than the data
+    for (stats, 0..) |sk, j| content += @max(16, statWidth(sk, hdrs[j]));
+    const rule_len = content; // oracle: rule spans all displayed columns
 
     // header
     try out.appendSlice(arena, try ljust(arena, "Variable", wname));
-    for (stats, 0..) |sk, j| try out.appendSlice(arena, try rjust(arena, hdrs[j], statWidth(sk, hdrs[j])));
+    for (stats, 0..) |sk, j| try out.appendSlice(arena, try rjust(arena, hdrs[j], @max(16, statWidth(sk, hdrs[j]))));
     try out.append(arena, '\n');
     try appendRule(arena, out, rule_len);
 
@@ -1831,7 +1824,7 @@ fn emitMeansCombined(arena: std.mem.Allocator, out: *std.ArrayList(u8), ds: *Dat
         const s = computeStatsV(rows, ci, wcol, vardef);
         try out.appendSlice(arena, try ljust(arena, ds.columns.items[ci].name, wname));
         for (stats, 0..) |sk, j| {
-            const w = statWidth(sk, hdrs[j]);
+            const w = @max(16, statWidth(sk, hdrs[j]));
             if (sk == .n) {
                 try out.appendSlice(arena, try format.apply(arena, .{ .num = @floatFromInt(s.n) }, try std.fmt.allocPrint(arena, "{d}.", .{w})));
             } else if (sk == .nmiss) {
@@ -13338,11 +13331,11 @@ test "proc means combined table: multiple vars + requested stats (proc_means_var
     const want =
         "                          The MEANS Procedure\n" ++
         "\n" ++
-        "Variable     N            Mean             Sum\n" ++
-        "------------------------------------------------------\n" ++
-        "x            3       2.0000000       6.0000000\n" ++
-        "y            3     200.0000000     600.0000000\n" ++
-        "------------------------------------------------------\n";
+        "Variable               N            Mean             Sum\n" ++
+        "--------------------------------------------------------\n" ++
+        "x                      3       2.0000000       6.0000000\n" ++
+        "y                      3     200.0000000     600.0000000\n" ++
+        "--------------------------------------------------------\n";
     try t.expectEqualStrings(want, out.items);
 }
 
