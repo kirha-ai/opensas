@@ -2946,6 +2946,15 @@ fn runProc(a: std.mem.Allocator, listing_out: *std.ArrayList(u8), lib: *sas.exec
         }
     } else if (eqi(proc, "corr")) {
         try sas.corr.run(pcx, out, toks);
+    } else if (eqi(proc, "sgscatter")) {
+        var scatter_context = pcx;
+        scatter_context.graphics = native_graphics_session;
+        try sas.sgscatter.run(scatter_context, toks);
+    } else if (eqi(proc, "glm")) {
+        var glm_context = pcx;
+        if (@hasField(sas.proc.ProcCtx, "listing_titles")) glm_context.listing_titles = g;
+        try sas.glm.run(glm_context, out, toks);
+        if (!procHasKw(toks, "noprint")) try g.emitFootnotes(a, out);
     } else if (eqi(proc, "reg")) {
         const spec = try sas.reg.parse(pcx, toks);
         try sas.reg.execute(pcx, out, spec);
