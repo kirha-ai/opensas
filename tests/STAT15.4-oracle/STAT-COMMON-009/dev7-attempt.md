@@ -8,7 +8,7 @@ fixture request marginal group/h means to exercise real nonestimable results.
 ## Source and implementation
 
 Read S154 physical pp.278–284 (row-space criterion, generating sets, reduction
-notation), 4072–4076 and 4081 (LSMEANS/E/STDERR/SINGULAR), and 4144–4147
+notation), 4072–4076 and 4081 (LSMEANS/E/STDERR/SINGULAR), 4107–4109 (bar expansion), and 4144–4147
 (coefficient construction, covariate means and estimability).
 
 `glm_estimability` reuses the ordered alias equations from `reg_diagnostics`.
@@ -32,9 +32,10 @@ between the coded basis rank and the full model fails instead of returning
 inconsistent inference. Rendering emits `Non-est` and missing inference tokens,
 not a generalized-inverse coefficient passed off as an estimable mean.
 
-Shared edits are limited to the LSMEANS Spec field, statement hook, and execution
-hook. Type III/IV hypotheses, MODEL syntax, and ANOVA formatting belong to the
-coordinated dev6 integration. No PRINT, main/root, board or skill edits.
+Shared edits cover the LSMEANS Spec field, statement/execution hooks, and the
+subsequently authorized MODEL bar-expansion hunk. Type III/IV hypotheses, MODEL
+SS options, and ANOVA formatting remain the coordinated dev6 implementation.
+No PRINT, main/root, board or skill edits.
 
 ## Discriminating checks
 
@@ -73,16 +74,30 @@ marginal coefficient/Non-est contracts derive from pp.4144–4147 and typed
 row-space tests. This is a new golden, not a replacement of the original
 expected listing. Dev6's CV precision correction is already included.
 
-## Integration checkpoint (not original-oracle acceptance)
+## Original-case acceptance
 
-Dev6's COMMON012 commits were integrated locally without editing their owned
-MODEL/Type III hunks. With only `group|h` expanded to `group h group*h` in a
-**temporary diagnostic copy**, the complete listing matches all 206 original
-expected tokens exactly, status 0 and empty stderr. The unchanged original
-still fails at the unsupported MODEL bar syntax. This is explicitly not a
-claim that the original oracle passed, and the ticket is not declared DONE.
+The unchanged original program now returns status 0 and matches **all 206
+expected listing tokens**, with whitespace as the only normalization. Stderr
+is empty. No source rewrite or expected-output change is used for acceptance.
+`dev7-verification.json` records source/expected hashes, token counts, and
+independent exact-rational cell means, error SS and Type III SS checks.
 
-The combined checkpoint gate passed directly: 1,788 tests, 2,315 corpus cases,
-and 11 programs. Before handoff, rebase onto the latest local manager branch
-and rerun the direct-exit gate. MODEL grammar ownership remains a manager
-coordination item; this task's explicit shared-file scope is LSMEANS hooks only.
+The authorized MODEL implementation expands parsed variable IDs, not source
+text. Individual-variable bar chains use GLMMOD's bounded subset enumeration,
+with documented left-to-right effect order, repeated-variable removal, and
+maximum degree `@n`. Compound crossed/nested bar operands remain explicit
+unsupported cases. Tests compare actual model matrices and complete execution
+listings against explicit effects, pin three-variable ordering and degree
+limits, and capture malformed syntax diagnostics. The old negative bar test
+now uses a still-unsupported nested operand.
+
+`tests/corpus/glm_lsmeans_original.sas` is a byte-identical copy of the original
+oracle program. Its new compact golden is backed by the exact full original
+comparison and preserves every output token. The second corpus fixture adds
+source-derived marginal `Non-est` cases.
+
+Dev6's two COMMON012 changes were integrated locally as dependencies; this is
+not a claim they had already landed on the manager branch. Final handoff gives
+the actual rebased base/SHA and direct-exit gate result. The last checkpoint gate
+before bar expansion passed 1,788 tests, 2,315 corpus cases, and 11 programs;
+the final gate must include the new parser regression and original corpus case.
