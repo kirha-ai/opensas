@@ -24,7 +24,7 @@ pub const Analysis = struct {
     samples: []const fit.Result,
     lognormal_samples: ?[]const lognormal.Result = null,
 };
-pub const Group = struct { representative: ?[]const Value, analyses: []const Analysis };
+pub const Group = struct { representative: ?[]const Value, analyses: []const Analysis, view: selection.View };
 pub const Result = struct { spec: declarations.Spec, groups: []const Group };
 
 fn numericOptions(o: declarations.Options) fit.Options {
@@ -149,13 +149,29 @@ pub fn compute(cx: proc.ProcCtx, s: declarations.Spec) diag.Error!Result {
             for (samples, 0..) |*r, i| r.* = try sample(cx, s, group, ci, if (s.class != null) levels[i] else null, if (geometric) |gs| &gs[i] else null, null);
             try analyses.append(cx.arena, .{ .column = ci, .classes = levels, .samples = samples, .lognormal_samples = geometric });
         }
-        try results.append(cx.arena, .{ .representative = group.observations[0].cells, .analyses = analyses.items });
+        try results.append(cx.arena, .{ .representative = group.observations[0].cells, .analyses = analyses.items, .view = group });
     }
     if (results.items.len == 0) return cx.diags.fail(error.ParseError, s.line, "PROC TTEST: no observations in input data set", .{});
     return .{ .spec = s, .groups = results.items };
 }
 fn rendered(r: fit.Result) render.Sample {
     return .{ .n = @floatFromInt(r.n), .mean = r.mean, .stddev = r.std_dev, .stderr = r.std_err, .minimum = r.minimum, .maximum = r.maximum, .df = r.df, .t = r.t, .p = r.p, .lower = r.mean_ci.lower, .upper = r.mean_ci.upper, .std_lower = r.std_dev_ci.lower, .std_upper = r.std_dev_ci.upper };
+}
+
+const BootstrapInput = struct { first: []const f64, second: ?[]const f64 };
+fn bootstrapInput(cx: proc.ProcCtx, s: declarations.Spec, group: Group, analysis: Analysis) diag.Error!BootstrapInput {
+    const missing = if (analysis.pair) |p| try cx.arena.dupe(usize, &.{ p.left, p.right }) else if (s.class) |ci| try cx.arena.dupe(usize, &.{ analysis.column, ci }) else try cx.arena.dupe(usize, &.{analysis.column});
+    const selected = try group.view.select(cx.arena, .{ .missing_columns = missing, .frequency = .truncate_positive });
+    const expanded = try selected.dataset(cx.arena, true, cx.diags);
+    var values: [2]std.ArrayList(f64) = .{ .empty, .empty };
+    // Preserve original within-class order: fixed-seed indices refer to these
+    // observations, including the adjacent repetitions represented by FREQ.
+    for (expanded.rows.items) |row| {
+        const k: usize = if (s.class != null and !std.mem.eql(u8, try display(cx.arena, s, row), analysis.classes[0].label)) 1 else 0;
+        const value = if (analysis.pair) |p| row[p.left].num - row[p.right].num else row[analysis.column].num;
+        try values[k].append(cx.arena, value);
+    }
+    return .{ .first = values[0].items, .second = if (s.class != null) values[1].items else null };
 }
 
 pub fn runTtest(cx: proc.ProcCtx, out: *std.ArrayList(u8), toks: []const lex.Token) diag.Error!void {
@@ -204,6 +220,12 @@ pub fn runTtest(cx: proc.ProcCtx, out: *std.ArrayList(u8), toks: []const lex.Tok
     const result = try compute(cx, spec);
     if (spec.class != null and spec.options.distribution == .lognormal) return proc.failGap(cx.diags, spec.line, "PROC TTEST: lognormal two-sample inference is not implemented", .{});
     const a = cx.arena;
+    const bootstrap = @import("ttest_bootstrap.zig");
+    var boot_stream: ?bootstrap.Generator = if (spec.bootstrap) |o| try bootstrap.generator(o, cx.diags) else null;
+    var boot_dataset: ?*@import("../dataset.zig").Dataset = null;
+    if (spec.bootstrap) |o| if (o.bootdata) |name| {
+        boot_dataset = try bootstrap.outputDataset(a, name, spec.class != null);
+    };
     for (result.groups) |group| {
         var body: std.ArrayList(u8) = .empty;
         for (group.analyses) |analysis| {
@@ -290,6 +312,12 @@ pub fn runTtest(cx: proc.ProcCtx, out: *std.ArrayList(u8), toks: []const lex.Tok
                     try objects.finish(a, &tables, start, "TTests");
                 }
             }
+            if (spec.bootstrap) |o| {
+                const input = try bootstrapInput(cx, spec, group, analysis);
+                const report = try bootstrap.compute(a, input.first, input.second, &boot_stream.?, o, numericOptions(spec.options), cx.diags);
+                try bootstrap.render(a, &tables, report, if (spec.class) |ci| spec.input.ds.columns.items[ci].name else null, spec.options.alpha);
+                if (boot_dataset) |ds| try bootstrap.appendOutput(ds, spec.input.ds.columns.items[analysis.column].name, report, spec.class != null);
+            }
             if (tables.items.len == 0) continue;
             if (analysis.pair) |pair| {
                 try body.print(a, "Difference: {s} - {s}\n\n", .{ spec.input.ds.columns.items[pair.left].name, spec.input.ds.columns.items[pair.right].name });
@@ -303,6 +331,7 @@ pub fn runTtest(cx: proc.ProcCtx, out: *std.ArrayList(u8), toks: []const lex.Tok
         try out.appendSlice(a, "The TTEST Procedure\n\n");
         try out.appendSlice(a, body.items);
     }
+    if (boot_dataset) |ds| try cx.lib.put(ds.name, ds);
 }
 
 const Testing = struct {

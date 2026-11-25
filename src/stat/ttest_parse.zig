@@ -28,6 +28,7 @@ pub const Options = struct {
 };
 pub const Pair = struct { left: usize, right: usize };
 pub const Spec = struct {
+    bootstrap: ?@import("ttest_bootstrap.zig").Options = null,
     crossover: ?[2]usize = null,
     ignore_period: bool = false,
     paired: bool = false,
@@ -213,6 +214,7 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
     var ds = input.ds;
     var vars: std.ArrayList(usize) = .empty;
     var var_seen = false;
+    var bootstrap: ?@import("ttest_bootstrap.zig").Options = null;
     var var_occurrences: std.ArrayList(usize) = .empty;
     var crossover: ?[2]usize = null;
     var ignore_period = false;
@@ -283,7 +285,8 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
             if (i + 1 == end) return cx.diags.fail(error.ParseError, token.line, "PAIRED requires a pair-list", .{});
             try readPairs(cx, ds, t[i + 1 .. end], &pairs);
         } else if (kw(t, i, "bootstrap")) {
-            return proc.failGap(cx.diags, token.line, "PROC TTEST: {s} is not implemented", .{token.text});
+            if (bootstrap != null) return cx.diags.fail(error.ParseError, token.line, "BOOTSTRAP statement cannot be used more than once", .{});
+            bootstrap = try @import("ttest_bootstrap.zig").parse(cx.arena, t[i..end], cx.diags);
         } else if (!kw(t, i, "where") and !kw(t, i, "run") and !kw(t, i, "quit") and !(token.tag == .name and parser.isMidStepSkippable(token.text))) return invalid(cx, token);
         i = end + 1;
     }
@@ -308,6 +311,12 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
             break;
         };
     }
+    if (bootstrap) |boot| {
+        if (options.distribution != .normal or options.tost != null or crossover != null or weight.first() != null or summary != null)
+            return cx.diags.fail(error.ParseError, boot.line, "BOOTSTRAP is unavailable with lognormal data, TOST, CROSSOVER, WEIGHT or summary input", .{});
+        if (boot.bootdata != null and (paired or bcols.items.len > 0))
+            return proc.failGap(cx.diags, boot.line, "BOOTDATA for paired or BY analyses is not implemented", .{});
+    }
     if (summary != null and crossover != null) return cx.diags.fail(error.ParseError, t[0].line, "CROSSOVER requires observation values, not summary statistics", .{});
     if (summary != null and paired) return cx.diags.fail(error.ParseError, t[0].line, "PAIRED requires observation values, not summary statistics", .{});
     if (summary != null and options.distribution == .lognormal)
@@ -322,7 +331,7 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
         if (!contains(vars.items, pair.left)) try vars.append(cx.arena, pair.left);
         if (!contains(vars.items, pair.right)) try vars.append(cx.arena, pair.right);
     };
-    return .{ .crossover = crossover, .ignore_period = ignore_period, .paired = paired, .pairs = pairs.items, .input = input, .roles = .{ .analysis = vars.items, .by = bcols.items, .frequency = freq.first(), .weight = weight.first() }, .class = class, .summary = summary, .by_desc = by_spec.desc, .notsorted = by_spec.notsorted, .options = options, .line = t[0].line };
+    return .{ .bootstrap = bootstrap, .crossover = crossover, .ignore_period = ignore_period, .paired = paired, .pairs = pairs.items, .input = input, .roles = .{ .analysis = vars.items, .by = bcols.items, .frequency = freq.first(), .weight = weight.first() }, .class = class, .summary = summary, .by_desc = by_spec.desc, .notsorted = by_spec.notsorted, .options = options, .line = t[0].line };
 }
 
 const TestInput = struct {
@@ -567,4 +576,35 @@ test "CROSSOVER parser rejects malformed dimensions conflicts and summary input"
     const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &d };
     try std.testing.expectError(error.ParseError, parse(cx, try lex.tokenize(a, "proc ttest data=summary; var x y / crossover=(a b); run;", &d)));
     try std.testing.expect(std.mem.indexOf(u8, try d.render(), "requires observation values") != null);
+}
+
+test "BOOTSTRAP parser defaults, explicit options and documented invalid combinations" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var lib = @import("../exec.zig").Library.init(a);
+    try lib.put("sample", try TestInput.dataset(a));
+    var d = diag.Diagnostics.init(a);
+    const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &d };
+    const default = try parse(cx, try lex.tokenize(a, "proc ttest; var x; bootstrap; run;", &d));
+    try std.testing.expectEqual(@as(usize, 10000), default.bootstrap.?.samples);
+    try std.testing.expectEqual(@import("ttest_bootstrap.zig").Method.bc, default.bootstrap.?.method);
+    const spec = try parse(cx, try lex.tokenize(a, "proc ttest; class g; var x; bootstrap / nsamples=199 seed=314159 bootci=percentile bootdata=work.draws; run;", &d));
+    try std.testing.expectEqual(@as(usize, 199), spec.bootstrap.?.samples);
+    try std.testing.expectEqual(@as(?u32, 314159), spec.bootstrap.?.seed);
+    try std.testing.expectEqualStrings("work.draws", spec.bootstrap.?.bootdata.?);
+    for ([_][]const u8{
+        "proc ttest; var x; bootstrap / nsamples=1; run;",
+        "proc ttest; var x; bootstrap / nsamples=2.5; run;",
+        "proc ttest; var x; bootstrap / bootci=wrong; run;",
+        "proc ttest; var x; bootstrap; bootstrap; run;",
+        "proc ttest; var x; weight w; bootstrap; run;",
+        "proc ttest dist=lognormal; var x; bootstrap; run;",
+        "proc ttest tost(-1,1); var x; bootstrap; run;",
+    }) |source| {
+        var bad = diag.Diagnostics.init(a);
+        const badcx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &bad };
+        try std.testing.expectError(error.ParseError, parse(badcx, try lex.tokenize(a, source, &bad)));
+        try std.testing.expect(bad.hasErrors());
+    }
 }
