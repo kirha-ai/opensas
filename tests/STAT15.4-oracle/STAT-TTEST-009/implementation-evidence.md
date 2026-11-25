@@ -17,7 +17,7 @@ The shared hook must retain ordinary Statistics and ConfLimits, substitute Equiv
 
 ## Numerical and boundary checks
 
-Five inline tests pass independently of shared-file integration. They include the entire unchanged printed oracle, parser failures with captured locations, both tails, maximum p, confidence level, class/sign reflection, original-scale log-ratio margins, and degenerate cases.
+Five inline numerical tests pass, and 23 focused TTEST runner tests pass after shared-file integration. They include the entire unchanged printed oracle, parser failures with captured locations, both tails, maximum p, confidence level, class/sign reflection, original-scale log-ratio margins, and degenerate cases.
 
 - Independent exact boundary: observations (-1,1) have mean=0, SE=1, DF=1. Student(1) is Cauchy, so margins (-1,1), alpha=0.25 give both p-values exactly 0.25 and the 50% interval [-1,1]. SAS assesses this boundary **Equivalent**. Tighter margins are not equivalent; wider margins are equivalent. No oracle-derived epsilon changes the decision.
 - Student(1) uses its analytic Cauchy tail and quantile identities; other degrees of freedom reuse existing Student probability/inverse functions. The implementation has no dataset-specific constants or source-derived probability tolerances.
@@ -29,15 +29,15 @@ Analytic floating-point checks use fixed `1e-12` to `1e-14` tolerances according
 
 ## Original-program and independent SAS evidence
 
-On 2026-11-25 an isolated source copy with the prepared invocation hook executed the **unchanged original** `tost_difference.sas`, including its DATA step and header options. Actual/expected status was **0/0**, stderr was empty, and every expected listing token matched. The comparison covers ordinary summaries/95% intervals, both methods' 90% equivalence intervals and assessment arrows, both one-sided t tests and null values, overall p-values, and the folded-F table.
+On 2026-11-25 the real OpenSAS CLI, after integrating the hook on top of the landed paired-design implementation, executed the **unchanged original** `tost_difference.sas`, including its DATA step and header options. Actual/expected status was **0/0**, stderr was empty, and every expected listing token matched. The comparison covers ordinary summaries/95% intervals, both methods' 90% equivalence intervals and assessment arrows, both one-sided t tests and null values, overall p-values, and the folded-F table.
 
-The same isolated build passed the original TTEST-007, TTEST-003, TTEST-002, TTEST-001, and COMMON-005 programs with exit 0, empty stderr, and complete token equality. A separate live SAS 9.4 check on responses (0.9,1,1.1), `DIST=LOGNORMAL H0=1.2 TOST(1.5)`, also matched every token: the omitted lower bound resolves to 0.8. Live SAS probes independently established the exact-boundary, zero-SE, invalid-bound, and explicit-SIDES behaviors above.
+The same real build passed the original TTEST-007, TTEST-006 (paired direction), TTEST-005 (one-sided court), TTEST-003, TTEST-002, TTEST-001, and COMMON-005 programs with exit 0, empty stderr, and complete token equality. The invalid-ALPHA TTEST-005 case also retains its existing contract: empty listing, OpenSAS CLI exit 1 (D-009 user-program error), SAS reference severity status 2 (error), and actual diagnostic `ERROR(expanded L2): PROC TTEST: ALPHA must be between 0 and 1`. Its raw exit integers and diagnostic wording are not claimed identical to SAS; see the existing TTEST-005 verification record. A separate live SAS 9.4 check on responses (0.9,1,1.1), `DIST=LOGNORMAL H0=1.2 TOST(1.5)`, also matched every token: the omitted lower bound resolves to 0.8. Live SAS probes independently established the exact-boundary, zero-SE, invalid-bound, and explicit-SIDES behaviors above.
 
-**Integration status:** these full-program results are from the isolated invocation prototype, not a claim that the shared branch already accepts TOST. Shared parser/execution files remain with the paired-design owner pending manager-coordinated integration. The ticket is not DONE on numeric/prototype evidence alone. The final real-branch original oracle and authoritative gate must be recorded after the hook lands.
+**Integration status:** the real shared parser/execution hook is implemented. It preserves paired summaries and labels, ordinary normal/lognormal output when TOST is absent, and existing fitting APIs. Integrated tests exercise the original CLASS oracle, normal/lognormal/paired TOST invocation, delayed H0 resolution, explicit-SIDES warnings, and captured invalid-summary errors. The final exact-SHA authoritative gate and unit count are reported separately after committing this evidence; earlier unimported-module gates are not substituted for it. Normal-ratio, two-group lognormal, paired-logratio, and Cochran-specific TOST remain explicit unsupported paths. ODS dataset capture/registry expansion is outside this change; renderers use the documented EquivLimits/EquivTests producer names.
 
 ## Reproduction
 
-After applying the owner-reviewed invocation hook, build and compare from the repository root:
+Build and compare the integrated implementation from the repository root:
 
 ```sh
 /Users/thomas/.local/share/zig-0.16.0/zig build -j2

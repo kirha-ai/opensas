@@ -191,13 +191,45 @@ pub fn runTtest(cx: proc.ProcCtx, out: *std.ArrayList(u8), toks: []const lex.Tok
                 try two.intervals(a, &tables, pair, class_name, labels, spec.options.ci);
                 try objects.finish(a, &tables, start, "ConfLimits");
                 start = tables.items.len;
-                try two.tests(a, &tables, pair);
-                try objects.finish(a, &tables, start, "TTests");
+                if (spec.options.tost) |bounds| {
+                    const tost = @import("ttest_tost.zig");
+                    const rows = [_]tost.Row{
+                        .{ .label = "Diff (1-2)", .method = "Pooled", .variances = "Equal", .result = tost.evaluate(pair.pooled.estimate, pair.pooled.std_err, pair.pooled.df, bounds, spec.options.alpha, .difference) catch |err| return numericFailure(cx, spec, err) },
+                        .{ .label = "Diff (1-2)", .method = "Satterthwaite", .variances = "Unequal", .result = tost.evaluate(pair.satterthwaite.estimate, pair.satterthwaite.std_err, pair.satterthwaite.df, bounds, spec.options.alpha, .difference) catch |err| return numericFailure(cx, spec, err) },
+                    };
+                    try tost.renderAssessment(a, &tables, &rows, class_name);
+                    try objects.finish(a, &tables, start, "EquivLimits");
+                    start = tables.items.len;
+                    try tost.renderTests(a, &tables, &rows, class_name);
+                    try objects.finish(a, &tables, start, "EquivTests");
+                } else {
+                    try two.tests(a, &tables, pair);
+                    try objects.finish(a, &tables, start, "TTests");
+                }
                 start = tables.items.len;
                 try two.equalityTable(a, &tables, pair);
                 try objects.finish(a, &tables, start, "Equality");
             } else if (analysis.lognormal_samples) |gs| {
-                try lognormal.render(a, &tables, gs[0], lognormalOptions(spec), spec.options.ci);
+                if (spec.options.tost) |bounds| {
+                    const tost = @import("ttest_tost.zig");
+                    const s = gs[0].log_fit;
+                    const rows = [_]tost.Row{.{ .result = tost.evaluate(s.mean, s.std_err, s.df, bounds, spec.options.alpha, .log_ratio) catch |err| return numericFailure(cx, spec, err) }};
+                    const objects: @import("../ods_listing.zig").Tables = .{ .selection = cx.listing, .prefix = "Ttest" };
+                    var start = tables.items.len;
+                    try tost.renderLognormalStatistics(a, &tables, gs[0]);
+                    try objects.finish(a, &tables, start, "Statistics");
+                    start = tables.items.len;
+                    try tost.renderLognormalIntervals(a, &tables, gs[0], spec.options.alpha, spec.options.ci);
+                    try objects.finish(a, &tables, start, "ConfLimits");
+                    start = tables.items.len;
+                    try tost.renderAssessment(a, &tables, &rows, null);
+                    try objects.finish(a, &tables, start, "EquivLimits");
+                    start = tables.items.len;
+                    try tost.renderTests(a, &tables, &rows, null);
+                    try objects.finish(a, &tables, start, "EquivTests");
+                } else {
+                    try lognormal.render(a, &tables, gs[0], lognormalOptions(spec), spec.options.ci);
+                }
             } else {
                 const r = rendered(analysis.samples[0]);
                 const objects: @import("../ods_listing.zig").Tables = .{ .selection = cx.listing, .prefix = "Ttest" };
@@ -208,8 +240,19 @@ pub fn runTtest(cx: proc.ProcCtx, out: *std.ArrayList(u8), toks: []const lex.Tok
                 try render.intervals(a, &tables, r, spec.options);
                 try objects.finish(a, &tables, start, "ConfLimits");
                 start = tables.items.len;
-                try render.tests(a, &tables, r, spec.options);
-                try objects.finish(a, &tables, start, "TTests");
+                if (spec.options.tost) |bounds| {
+                    const tost = @import("ttest_tost.zig");
+                    const s = analysis.samples[0];
+                    const rows = [_]tost.Row{.{ .result = tost.evaluate(s.mean, s.std_err, s.df, bounds, spec.options.alpha, .difference) catch |err| return numericFailure(cx, spec, err) }};
+                    try tost.renderAssessment(a, &tables, &rows, null);
+                    try objects.finish(a, &tables, start, "EquivLimits");
+                    start = tables.items.len;
+                    try tost.renderTests(a, &tables, &rows, null);
+                    try objects.finish(a, &tables, start, "EquivTests");
+                } else {
+                    try render.tests(a, &tables, r, spec.options);
+                    try objects.finish(a, &tables, start, "TTests");
+                }
             }
             if (tables.items.len == 0) continue;
             if (analysis.pair) |pair| {
@@ -562,4 +605,49 @@ test "STAT-TTEST-006 pairwise missing exclusion and BY FREQ WEIGHT preserve inde
     const upper = try compute(cx, try declarations.parse(cx, try lex.tokenize(a, "proc ttest sides=u; by g; freq f; weight w; paired x*y y*x; run;", &d)));
     try std.testing.expectApproxEqAbs(@as(f64, 1), upper.groups[0].analyses[0].samples[0].p + upper.groups[0].analyses[1].samples[0].p, 1e-14);
     try std.testing.expectEqualStrings("", try d.render());
+}
+
+test "STAT-TTEST-009 integrated original TOST difference listing matches every oracle token" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var lib = @import("../exec.zig").Library.init(a);
+    try lib.put("sample", try Testing.sample(a));
+    var d = diag.Diagnostics.init(a);
+    const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &d };
+    var out: std.ArrayList(u8) = .empty;
+    try runTtest(cx, &out, try lex.tokenize(a, "proc ttest data=sample tost(-20,20) alpha=.05; class group; var x; run;", &d));
+    try Testing.expectWords(try Testing.oracle(a, "tests/STAT15.4-oracle/STAT-TTEST-009/tost_difference.expected.txt"), out.items);
+    try std.testing.expectEqualStrings("", try d.render());
+}
+
+test "STAT-TTEST-009 one-sample lognormal and paired invocation retain their scales" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var lib = @import("../exec.zig").Library.init(a);
+    try lib.put("sample", try Testing.sample(a));
+    var d = diag.Diagnostics.init(a);
+    const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &d };
+    for ([_][]const u8{
+        "proc ttest data=sample tost(-20,200); var x; run;",
+        "proc ttest data=sample dist=lognormal tost(20,200); var x; run;",
+        "proc ttest data=sample tost(-20,20); paired x*y; run;",
+    }, [_][]const u8{ "Variable: x", "Geometric Coefficient", "Difference: x - y" }) |source, label| {
+        var out: std.ArrayList(u8) = .empty;
+        try runTtest(cx, &out, try lex.tokenize(a, source, &d));
+        try std.testing.expect(std.mem.indexOf(u8, out.items, label) != null);
+        try std.testing.expect(std.mem.indexOf(u8, out.items, "90% CL Mean") != null);
+        try std.testing.expect(std.mem.indexOf(u8, out.items, "95% CL Mean") != null);
+        try std.testing.expect(std.mem.indexOf(u8, out.items, "Overall") != null);
+        try std.testing.expect(std.mem.indexOf(u8, out.items, "Pr > |t|") == null);
+    }
+    try std.testing.expectEqualStrings("", try d.render());
+    var tiny = @import("../dataset.zig").Dataset.init(a, "tiny");
+    _ = try tiny.addColumn("x", .num);
+    try tiny.appendRow(&.{.{ .num = 1 }});
+    try lib.put("tiny", &tiny);
+    var invalid_out: std.ArrayList(u8) = .empty;
+    try std.testing.expectError(error.ExecError, runTtest(cx, &invalid_out, try lex.tokenize(a, "proc ttest data=tiny tost(-1,1); var x; run;", &d)));
+    try std.testing.expect(d.hasErrors());
 }

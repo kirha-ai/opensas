@@ -19,6 +19,8 @@ pub const Options = struct {
     h0_explicit: bool = false,
     distribution: Distribution = .normal,
     sides: Sides = .two,
+    sides_explicit: bool = false,
+    tost: ?@import("ttest_tost.zig").Bounds = null,
     order: Order = .mixed,
     ci: bool = true,
     plots_none: bool = false,
@@ -119,10 +121,15 @@ fn readPairs(cx: proc.ProcCtx, ds: *const Dataset, tokens: []const lex.Token, ou
 pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
     if (t.len < 3) return cx.diags.fail(error.ParseError, 0, "Incomplete PROC TTEST statement", .{});
     var options: Options = .{};
+    var tost_raw: ?@import("ttest_tost.zig").RawBounds = null;
     var name: ?[]const u8 = null;
     var i: usize = 2;
     while (i < t.len and t[i].tag != .semicolon and t[i].tag != .eof) {
         const token = t[i];
+        if (kw(t, i, "tost")) {
+            tost_raw = try @import("ttest_tost.zig").parseOption(t, &i, cx.diags);
+            continue;
+        }
         if (kw(t, i, "cochran")) {
             options.cochran = true;
             i += 1;
@@ -132,7 +139,7 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
             i += 1;
             continue;
         }
-        if (kw(t, i, "nobyvar") or kw(t, i, "tost"))
+        if (kw(t, i, "nobyvar"))
             return proc.failGap(cx.diags, token.line, "PROC TTEST: {s} is not implemented", .{token.text});
         if (!at(t, i + 1, .eq)) return invalid(cx, token);
         i += 2;
@@ -164,6 +171,7 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
             const value = t[i];
             i += 1;
             if (eq(token.text, "sides") or eq(token.text, "sided") or eq(token.text, "side")) {
+                options.sides_explicit = true;
                 options.sides = if (eq(value.text, "2")) .two else if (eq(value.text, "l")) .lower else if (eq(value.text, "u")) .upper else return invalid(cx, value);
             } else if (eq(token.text, "order")) {
                 options.order = if (eq(value.text, "data")) .data else if (eq(value.text, "formatted")) .formatted else if (eq(value.text, "freq")) .freq else if (eq(value.text, "internal")) .internal else if (eq(value.text, "mixed")) .mixed else return invalid(cx, value);
@@ -191,6 +199,12 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
     if (!options.h0_explicit) options.h0 = if (options.distribution == .lognormal) 1 else 0;
     if (options.distribution == .lognormal and options.h0 <= 0)
         return cx.diags.fail(error.ParseError, t[0].line, "H0 must be greater than zero for a test of a mean ratio or when lognormal data is assumed.", .{});
+    if (tost_raw) |bounds| {
+        options.tost = try @import("ttest_tost.zig").resolveBounds(bounds, options.h0, if (options.distribution == .lognormal) .log_ratio else .difference, cx.diags);
+        if (options.sides_explicit) try cx.diags.report(.warning, bounds.line, "The SIDES option is ignored when using the TOST option.", .{});
+        options.sides = .two;
+        if (options.cochran) return proc.failGap(cx.diags, bounds.line, "PROC TTEST: Cochran TOST inference is not implemented", .{});
+    }
     const raw = (if (name) |n| cx.lib.find(n) else proc.lastDataset(cx.lib)) orelse
         return cx.diags.fail(error.ParseError, t[0].line, "File {s} does not exist.", .{name orelse "_last_"});
     var input = try proc.procInputObs(cx.arena, raw, t, cx.diags);
@@ -443,4 +457,34 @@ test "STAT-TTEST-006 malformed and conflicting pair declarations fail with captu
     const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &d };
     try std.testing.expectError(error.ParseError, parse(cx, try lex.tokenize(a, "proc ttest data=summary; paired x*y; run;", &d)));
     try std.testing.expect(std.mem.indexOf(u8, try d.render(), "requires observation values") != null);
+}
+
+test "STAT-TTEST-009 resolves bounds after H0 and warns for explicit ignored SIDES" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var lib = @import("../exec.zig").Library.init(a);
+    try lib.put("sample", try TestInput.dataset(a));
+    for ([_][]const u8{ "tost(20) h0=1 sides=2", "h0=1 tost(20) sides=u" }) |header| {
+        var d = diag.Diagnostics.init(a);
+        const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &d };
+        const source = try std.fmt.allocPrint(a, "proc ttest {s}; var x; run;", .{header});
+        const s = try parse(cx, try lex.tokenize(a, source, &d));
+        try std.testing.expectEqual(@as(f64, -18), s.options.tost.?.lower);
+        try std.testing.expectEqual(@as(f64, 20), s.options.tost.?.upper);
+        try std.testing.expectEqual(Sides.two, s.options.sides);
+        try std.testing.expectEqual(@as(usize, 1), d.list.items.len);
+        try std.testing.expectEqual(diag.Severity.warning, d.list.items[0].severity);
+        try std.testing.expectEqualStrings("The SIDES option is ignored when using the TOST option.", d.list.items[0].message);
+    }
+    var d = diag.Diagnostics.init(a);
+    const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &d };
+    const ratio = try parse(cx, try lex.tokenize(a, "proc ttest tost(1.5) h0=1.2 dist=lognormal; var x; run;", &d));
+    try std.testing.expectApproxEqAbs(@as(f64, 0.8), ratio.options.tost.?.lower, 1e-14);
+    try std.testing.expectEqual(@as(usize, 0), d.list.items.len);
+    try std.testing.expectError(error.ParseError, parse(cx, try lex.tokenize(a, "proc ttest tost(2,1); var x; run;", &d)));
+    diag.resetGap();
+    defer diag.resetGap();
+    try std.testing.expectError(error.ParseError, parse(cx, try lex.tokenize(a, "proc ttest cochran tost(-1,1); var x; run;", &d)));
+    try std.testing.expect(diag.gapHit());
 }
