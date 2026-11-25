@@ -2,7 +2,7 @@
 
 Created: 2026-11-24. **1,422 open tasks**: 1,327 functional tasks across 104 PROCs and 95 tasks for shared semantics, ODS, graphics, data, and application scope.
 
-This file independently tracks the SAS/STAT 15.4 implementation plan. As requested, capabilities are planned as work to implement, **without auditing existing code or test coverage**. The existing `jira.md` is unchanged. Counts describe functional work groups, not implementation progress.
+This file is the sole board for the active SAS/STAT 15.4 campaign. Process only its existing tickets; do not expand the backlog or perform GitHub intake, QA, performance, or documentation audits. The legacy board is outside this campaign. Counts describe functional work groups; ticket states and verification notes record implementation progress.
 
 ## Reference and page numbering
 
@@ -15,13 +15,13 @@ This file independently tracks the SAS/STAT 15.4 implementation plan. As request
 
 - Each ticket owns a directory under `tests/STAT15.4-oracle/`. Its README lists SAS programs, expected outputs, logs, and reference statuses. Available fixtures do not indicate implementation completion.
 
-- States: `TODO` available, `DOING @dev` claimed, `PARK` awaiting a specific external prerequisite. IDs are unique in this file. Dependencies refer to tickets here, not to an assessment of reusable existing implementations.
+- States: `TODO` available, `DOING @dev` claimed, `DONE` verified against the corresponding oracle, `PARK` not completed with a concrete recorded reason. Limit each ticket attempt to 30 minutes; park over-limit or infeasible work and assign the next eligible ticket. IDs are unique in this file. Dependencies refer to tickets here; reuse of an existing dependency contract must be documented explicitly when dispatching ahead of a prerequisite.
 - Each ticket has sources, scope, dependencies, and acceptance criteria. Features connect syntax, computation, and results. Shared tickets own common statement semantics; PROC tickets own supported options and integration. Default-computation tickets cover the smallest default path; specialized methods extend it in separate tickets.
 - Check published values at their displayed precision and rounding. For unrounded output data, use independent analytic values, verifiable literature, or SAS reference results with a recorded version. State and justify absolute/relative tolerances for each quantity. Do not generate expected results from the implementation being tested.
 - For randomized methods, verify fixed-seed reproducibility, sample layout, and distributional properties with error bounds. Match specified random-number algorithms/streams where documented. Record specific `needs-oracle` questions for unspecified behavior instead of inventing SAS semantics.
 - Validate graph data, object names, and visual output together. Successful execution, file creation alone, or skipped examples do not satisfy acceptance criteria.
 - Follow `CLAUDE.md` and `docs/decisions.md`: under D-029, place new statistical implementations in `src/stat/`, reuse interpreter entry points, and separate computation, parsing, and rendering. Implementation tickets require runnable checks and the repository gate. Complete this file's D-022 design ticket before extending ODS destinations.
-- All tasks are planned work; this file makes no implemented or verified compatibility claims. Remove accepted work and update dependencies under D-010; Git retains the history.
+- Read each assigned ticket's oracle README and the cited manual pages, execute the listed cases, and compare with supplied expected outputs and statuses. Retain accepted entries as `DONE` with verification evidence; retain `PARK` entries with reasons. A retained `DONE` entry satisfies dependencies. These campaign rules override D-010's completed-task removal policy.
 
 ## Shared task index
 
