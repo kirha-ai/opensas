@@ -40,26 +40,42 @@ pub fn probability(eta: f64) f64 {
     const e = @exp(-@abs(eta));
     return if (eta >= 0) 1 / (1 + e) else e / (1 + e);
 }
-fn likelihood(x: []const f64, y: []const f64, b: []const f64) f64 {
+fn likelihood(x: []const f64, y: []const f64, b: []const f64, multiplicity: []const f64) f64 {
     var s: Sum = .{};
     for (y, 0..) |v, i| {
         const eta = dot(x[i * b.len ..][0..b.len], b);
-        s.add(if (v == 1) -softplus(-eta) else -softplus(eta));
+        s.add(multiplicity[i] * (if (v == 1) -softplus(-eta) else -softplus(eta)));
     }
     return s.total();
 }
 
 pub fn fit(a: A, x: []const f64, y: []const f64, n: usize, p: usize, o: Options) diag.Error!Fit {
+    return fitWeighted(a, x, y, n, p, null, null, o);
+}
+
+/// Compact Bernoulli frequency representation. An events/trials row becomes at
+/// most two weighted rows; no expansion proportional to the trial count is used.
+pub fn fitWeighted(a: A, x: []const f64, y: []const f64, n: usize, p: usize, frequency: ?[]const f64, analysis_weights: ?[]const f64, o: Options) diag.Error!Fit {
     if (n == 0 or p == 0 or x.len != (std.math.mul(usize, n, p) catch return error.ExecError) or y.len != n or !(o.gconv > 0) or !std.math.isFinite(o.gconv)) return error.ExecError;
+    if (frequency) |f| if (f.len != n) return error.ExecError;
+    if (analysis_weights) |w| if (w.len != n) return error.ExecError;
+    const multiplicity = try a.alloc(f64, n);
+    defer a.free(multiplicity);
+    var total: f64 = 0;
     var events: f64 = 0;
     for (y, 0..) |v, i| {
         if (v != 0 and v != 1) return error.ExecError;
-        events += v;
+        const f = if (frequency) |f| f[i] else 1;
+        const w = if (analysis_weights) |w| w[i] else 1;
+        if (!(f > 0) or !(w > 0) or !std.math.isFinite(f * w)) return error.ExecError;
+        multiplicity[i] = f * w;
+        total += multiplicity[i];
+        events += multiplicity[i] * v;
         if (x[i * p] != 1) return error.ExecError;
     }
     for (x) |v| if (!std.math.isFinite(v)) return error.ExecError;
     const nf: f64 = @floatFromInt(n);
-    if (!(events > 0 and events < nf)) return error.ExecError;
+    if (!(events > 0 and events < total) or !std.math.isFinite(total)) return error.ExecError;
     var scratch = std.heap.ArenaAllocator.init(a);
     defer scratch.deinit();
     const tmp = scratch.allocator();
@@ -67,18 +83,18 @@ pub fn fit(a: A, x: []const f64, y: []const f64, n: usize, p: usize, o: Options)
     defer iteration.deinit();
     const b = try tmp.alloc(f64, p);
     @memset(b, 0);
-    b[0] = @log(events / (nf - events));
+    b[0] = @log(events / (total - events));
     const candidate = try tmp.alloc(f64, p);
     const probabilities = try tmp.alloc(f64, n);
     const weights = try tmp.alloc(f64, n);
     const residuals = try tmp.alloc(f64, n);
     const working = try tmp.alloc(f64, n);
     const gradient = try tmp.alloc(f64, p);
-    const null_ll = likelihood(x, y, b);
+    const null_ll = likelihood(x, y, b, multiplicity);
     var score_test: f64 = 0;
     for (0..o.max_iterations) |iter| {
         _ = iteration.reset(.retain_capacity);
-        const ll = likelihood(x, y, b);
+        const ll = likelihood(x, y, b, multiplicity);
         if (!std.math.isFinite(ll)) return error.ExecError;
         var separates = true;
         for (y, 0..) |v, i| {
@@ -86,8 +102,8 @@ pub fn fit(a: A, x: []const f64, y: []const f64, n: usize, p: usize, o: Options)
             const e = @exp(-@abs(eta));
             const denom = 1 + e;
             probabilities[i] = if (eta >= 0) 1 / denom else e / denom;
-            weights[i] = e / (denom * denom);
-            residuals[i] = if (v == 1) (if (eta >= 0) e / denom else 1 / denom) else -probabilities[i];
+            weights[i] = multiplicity[i] * e / (denom * denom);
+            residuals[i] = multiplicity[i] * (if (v == 1) (if (eta >= 0) e / denom else 1 / denom) else -probabilities[i]);
             if (!((v == 1 and eta > 0) or (v == 0 and eta < 0))) separates = false;
             if (!(weights[i] > 0)) return error.ExecError;
             working[i] = residuals[i] / weights[i];
@@ -115,20 +131,44 @@ pub fn fit(a: A, x: []const f64, y: []const f64, n: usize, p: usize, o: Options)
             }
             if (step.covariance_unscaled[j * p + j] * (css.total() / nf) > 5000) return error.ExecError;
         };
-        if (norm >= 0 and norm / @max(1, @abs(ll)) <= o.gconv) {
+        if (norm >= 0 and norm / (@abs(ll) + 1e-6) <= o.gconv) {
             for (0..p) |j| if (!(step.covariance_unscaled[j * p + j] > 0) or !std.math.isFinite(step.covariance_unscaled[j * p + j])) return error.ExecError;
             return .{ .coefficients = try a.dupe(f64, b), .covariance = try a.dupe(f64, step.covariance_unscaled), .probabilities = try a.dupe(f64, probabilities), .log_likelihood = ll, .null_log_likelihood = null_ll, .score_test = score_test, .iterations = iter };
         }
-        var fraction: f64 = 1;
-        var accepted = false;
-        for (0..40) |_| {
-            for (0..p) |j| candidate[j] = b[j] + fraction * step.coefficients[j];
-            const next = likelihood(x, y, candidate);
-            if (std.math.isFinite(next) and next >= ll) {
-                accepted = true;
-                break;
+        for (0..p) |j| candidate[j] = b[j] + step.coefficients[j];
+        var accepted = std.math.isFinite(likelihood(x, y, candidate, multiplicity)) and likelihood(x, y, candidate, multiplicity) >= ll;
+        if (!accepted) {
+            // Default RIDGING=RELATIVE (S154 physical p.5883): add a relative
+            // diagonal penalty to information, increasing it until LL improves.
+            // QR on appended diagonal rows avoids explicitly inverting X'WX.
+            const augmented_x = try iteration.allocator().alloc(f64, (n + p) * p);
+            const augmented_y = try iteration.allocator().alloc(f64, n + p);
+            const augmented_w = try iteration.allocator().alloc(f64, n + p);
+            @memset(augmented_x, 0);
+            @memcpy(augmented_x[0 .. n * p], x);
+            @memcpy(augmented_y[0..n], working);
+            @memset(augmented_y[n..], 0);
+            @memcpy(augmented_w[0..n], weights);
+            @memset(augmented_w[n..], 1);
+            const norms = try iteration.allocator().alloc(f64, p);
+            for (0..p) |j| {
+                var norm_x: f64 = 0;
+                for (0..n) |i| norm_x = std.math.hypot(norm_x, @sqrt(weights[i]) * x[i * p + j]);
+                norms[j] = norm_x;
             }
-            fraction /= 2;
+            var ridge: f64 = 0.0001;
+            for (0..40) |_| {
+                for (0..p) |j| augmented_x[(n + j) * p + j] = @sqrt(ridge) * norms[j];
+                var adjusted = try reg.fit(iteration.allocator(), augmented_x, augmented_y, n + p, p, augmented_w);
+                defer adjusted.deinit(iteration.allocator());
+                for (0..p) |j| candidate[j] = b[j] + adjusted.coefficients[j];
+                const next = likelihood(x, y, candidate, multiplicity);
+                if (std.math.isFinite(next) and next >= ll) {
+                    accepted = true;
+                    break;
+                }
+                ridge *= 2;
+            }
         }
         if (!accepted) return error.ExecError;
         @memcpy(b, candidate);
@@ -224,4 +264,18 @@ test "LOGISTIC_FIT rejects separation singularity and invalid responses" {
     try std.testing.expectError(error.ExecError, fit(a, &.{ 1, 0, 1, 1 }, &.{ 0, 1 }, 2, 2, .{}));
     try std.testing.expectError(error.ExecError, fit(a, &.{ 1, 1, 1, 1, 1, 1, 1, 1 }, &.{ 0, 1, 0, 1 }, 4, 2, .{}));
     try std.testing.expectError(error.ExecError, fit(a, &.{ 1, 1 }, &.{ 0, 2 }, 2, 1, .{}));
+}
+
+pub const WeightedAssociation = struct { concordant: f64 = 0, discordant: f64 = 0, tied: f64 = 0, pairs: f64 = 0 };
+pub fn associationWeighted(y: []const f64, probabilities: []const f64, frequencies: []const f64) WeightedAssociation {
+    var r: WeightedAssociation = .{};
+    for (y, 0..) |first, i| for (y[i + 1 ..], i + 1..) |second, j| {
+        if (first == second) continue;
+        const count = frequencies[i] * frequencies[j];
+        r.pairs += count;
+        const event = if (first == 1) probabilities[i] else probabilities[j];
+        const nonevent = if (first == 0) probabilities[i] else probabilities[j];
+        if (event > nonevent) r.concordant += count else if (event < nonevent) r.discordant += count else r.tied += count;
+    };
+    return r;
 }

@@ -9,11 +9,11 @@ const proc = @import("../proc.zig");
 const A = std.mem.Allocator;
 pub const Coding = enum { reference, effect };
 pub const ClassSpec = struct { column: usize, reference: levels.Reference = .last, coding: ?Coding = null };
-pub const Spec = struct { response: usize, event: levels.Reference = .first, classes: []const ClassSpec = &.{}, effects: []const usize, coding: Coding = .effect };
+pub const Spec = struct { response: usize, event: levels.Reference = .first, classes: []const ClassSpec = &.{}, effects: []const usize, terms: ?[]const []const usize = null, frequency: ?usize = null, weight: ?usize = null, coding: Coding = .effect };
 pub const Class = struct { column: usize, map: levels.Levels, reference: usize, coding: Coding };
 pub const Parameter = struct { name: []const u8, level: ?[]const u8 = null };
-pub const Effect = struct { column: usize, start: usize, len: usize, class_index: ?usize = null };
-pub const Design = struct { x: []const f64, y: []const f64, n: usize, p: usize, classes: []const Class, parameters: []const Parameter, effects: []const Effect, response: levels.Levels, event_index: usize };
+pub const Effect = struct { column: usize, start: usize, len: usize, class_index: ?usize = null, variables: []const usize, name: []const u8 };
+pub const Design = struct { x: []const f64, y: []const f64, n: usize, p: usize, classes: []const Class, parameters: []const Parameter, effects: []const Effect, response: levels.Levels, event_index: usize, frequencies: []const f64, weights: []const f64, source_rows: []const usize, total_frequency: f64 };
 pub fn code(level: usize, reference: usize, parameter_level: usize, coding: Coding) f64 {
     if (level == reference) return if (coding == .effect) -1 else 0;
     return if (level == parameter_level) 1 else 0;
@@ -52,22 +52,36 @@ pub fn build(a: A, ds: *const Dataset, s: Spec, d: *diag.Diagnostics) diag.Error
         try needed.append(a, ci);
     }
     var rows: std.ArrayList([]const Value) = .empty;
-    for (ds.rows.items) |row| {
+    var frequencies: std.ArrayList(f64) = .empty;
+    var weights: std.ArrayList(f64) = .empty;
+    var source_rows: std.ArrayList(usize) = .empty;
+    var total_frequency: f64 = 0;
+    for (ds.rows.items, 0..) |row, source| {
+        const frequency = if (s.frequency) |ci| @trunc(row[ci].num) else 1;
+        const weight = if (s.weight) |ci| row[ci].num else 1;
+        if (std.math.isNan(frequency) or frequency < 1 or std.math.isNan(weight) or weight <= 0) continue;
+        if (!std.math.isFinite(frequency) or !std.math.isFinite(weight)) return error.ExecError;
         var valid = true;
         for (needed.items) |ci| {
             if (ci >= row.len) return error.ExecError;
             if (missing(row[ci])) valid = false else if (row[ci] == .num and !std.math.isFinite(row[ci].num)) return error.ExecError;
         }
-        if (valid) try rows.append(a, row);
+        if (valid) {
+            try rows.append(a, row);
+            try frequencies.append(a, frequency);
+            try weights.append(a, weight);
+            try source_rows.append(a, source);
+            total_frequency += frequency;
+        }
     }
     if (rows.items.len == 0) return error.ExecError;
-    const response = try levels.build(a, ds, rows.items, s.response, .{});
+    const response = try levels.build(a, ds, rows.items, s.response, .{ .frequencies = frequencies.items });
     if (response.levels.len > 2) return proc.failGap(d, 0, "PROC LOGISTIC: only binary response models are implemented", .{});
     if (response.levels.len < 2) return d.fail(error.ExecError, 0, "PROC LOGISTIC: two response levels are required", .{});
     const event_index = choose(response, s.event, ds.columns.items[s.response]) orelse return d.fail(error.ParseError, 0, "PROC LOGISTIC: EVENT value is not a response level", .{});
     const classes = try a.alloc(Class, s.classes.len);
     for (s.classes, 0..) |c, i| {
-        const map = try levels.build(a, ds, rows.items, c.column, .{});
+        const map = try levels.build(a, ds, rows.items, c.column, .{ .frequencies = frequencies.items });
         const full = try levels.build(a, ds, ds.rows.items, c.column, .{});
         if (full.levels.len != map.levels.len) return proc.failGap(d, 0, "PROC LOGISTIC: CLASS levels lost through complete-case exclusion are not implemented", .{});
         if (map.levels.len < 2) return proc.failGap(d, 0, "PROC LOGISTIC: one-level CLASS effects are not implemented", .{});
@@ -76,21 +90,33 @@ pub fn build(a: A, ds: *const Dataset, s: Spec, d: *diag.Diagnostics) diag.Error
     var parameters: std.ArrayList(Parameter) = .empty;
     try parameters.append(a, .{ .name = "Intercept" });
     var effects: std.ArrayList(Effect) = .empty;
-    for (s.effects) |ci| {
+    var terms: std.ArrayList([]const usize) = .empty;
+    if (s.terms) |items| try terms.appendSlice(a, items) else for (s.effects) |ci| try terms.append(a, try a.dupe(usize, &.{ci}));
+    for (terms.items) |variables| {
+        const ci = variables[0];
         var class_index: ?usize = null;
-        for (classes, 0..) |c, i| if (c.column == ci) {
-            class_index = i;
+        for (classes, 0..) |c, k| if (c.column == ci) {
+            class_index = k;
             break;
         };
+        if (variables.len > 1) {
+            for (variables) |v| for (classes) |c| if (c.column == v) return proc.failGap(d, 0, "PROC LOGISTIC: CLASS interactions are not implemented", .{});
+            class_index = null;
+        }
+        var name: std.ArrayList(u8) = .empty;
+        for (variables, 0..) |v, k| {
+            if (k > 0) try name.append(a, '*');
+            try name.appendSlice(a, ds.columns.items[v].name);
+        }
         const start = parameters.items.len;
         if (class_index) |k| {
             const c = classes[k];
-            for (c.map.levels, 0..) |level, j| if (j != c.reference) try parameters.append(a, .{ .name = ds.columns.items[ci].name, .level = level.label });
+            for (c.map.levels, 0..) |level, j| if (j != c.reference) try parameters.append(a, .{ .name = name.items, .level = level.label });
         } else {
-            if (ds.columns.items[ci].type != .num) return error.ExecError;
-            try parameters.append(a, .{ .name = ds.columns.items[ci].name });
+            for (variables) |v| if (ds.columns.items[v].type != .num) return error.ExecError;
+            try parameters.append(a, .{ .name = name.items });
         }
-        try effects.append(a, .{ .column = ci, .start = start, .len = parameters.items.len - start, .class_index = class_index });
+        try effects.append(a, .{ .column = ci, .start = start, .len = parameters.items.len - start, .class_index = class_index, .variables = variables, .name = name.items });
     }
     const p = parameters.items.len;
     const np = std.math.mul(usize, rows.items.len, p) catch return error.ExecError;
@@ -107,10 +133,15 @@ pub fn build(a: A, ds: *const Dataset, s: Spec, d: *diag.Diagnostics) diag.Error
                     x[i * p + j] = code(c.map.row_to_level[i].?, c.reference, level, c.coding);
                     j += 1;
                 };
-            } else x[i * p + e.start] = row[e.column].num;
+            } else {
+                var product: f64 = 1;
+                for (e.variables) |ci| product *= row[ci].num;
+                if (!std.math.isFinite(product)) return error.ExecError;
+                x[i * p + e.start] = product;
+            }
         }
     }
-    return .{ .x = x, .y = y, .n = rows.items.len, .p = p, .classes = classes, .parameters = parameters.items, .effects = effects.items, .response = response, .event_index = event_index };
+    return .{ .x = x, .y = y, .n = rows.items.len, .p = p, .classes = classes, .parameters = parameters.items, .effects = effects.items, .response = response, .event_index = event_index, .frequencies = frequencies.items, .weights = weights.items, .source_rows = source_rows.items, .total_frequency = total_frequency };
 }
 
 pub fn originalFixture(a: A) !Dataset {
