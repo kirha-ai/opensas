@@ -3,22 +3,21 @@
 Binomial Proportion
 x = 1
 
-Statistic / Method              Estimate         ASE  40% Lower CL  40% Upper CL
-Proportion                        0.3500      0.1067        0.2941        0.4059
+Proportion                      0.3500
+ASE                             0.1067
+40% Lower Conf Limit            0.2941
+40% Upper Conf Limit            0.4059
 
-Confidence Limits for the Binomial Proportion
+Exact Conf Limits
+40% Lower Conf Limit            0.2753
+40% Upper Conf Limit            0.4341
 
-Statistic / Method            40% Lower CL  40% Upper CL
-Clopper-Pearson (Exact)             0.2753        0.4341
+Test of H0: Proportion = 0.5
 
-Equality Test for the Binomial Proportion
-Null = 0.5; Method = Wald
-
-Proportion                        0.3500
-Z                                -1.3416
-Standard Error                    0.1118
-One-sided Pr < Z                  0.0899
-Two-sided Pr > |Z|                0.1797
+ASE under H0                    0.1118
+Z                              -1.3416
+One-sided Pr <  Z               0.0899
+Two-sided Pr > |Z|              0.1797
 
 Noninferiority Analysis for the Binomial Proportion
 Limit = 0.3; Method = Wald

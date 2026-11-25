@@ -3,22 +3,21 @@
 Binomial Proportion
 x = 1
 
-Statistic / Method              Estimate         ASE  40% Lower CL  40% Upper CL
-Proportion                        0.3500      0.1067        0.2941        0.4059
+Proportion                      0.3500
+ASE                             0.1067
+40% Lower Conf Limit            0.2941
+40% Upper Conf Limit            0.4059
 
-Confidence Limits for the Binomial Proportion
+Exact Conf Limits
+40% Lower Conf Limit            0.2753
+40% Upper Conf Limit            0.4341
 
-Statistic / Method            40% Lower CL  40% Upper CL
-Clopper-Pearson (Exact)             0.2753        0.4341
+Test of H0: Proportion = 0.2
 
-Equality Test for the Binomial Proportion
-Null = 0.2; Method = Wald
-
-Proportion                        0.3500
-Z                                 1.6771
-Standard Error                    0.0894
-One-sided Pr > Z                  0.0468
-Two-sided Pr > |Z|                0.0935
+ASE under H0                    0.0894
+Z                               1.6771
+One-sided Pr >  Z               0.0468
+Two-sided Pr > |Z|              0.0935
 
 Sample Size = 20
                                       The FREQ Procedure
@@ -26,29 +25,28 @@ Sample Size = 20
 Binomial Proportion
 x = 1
 
-Statistic / Method              Estimate         ASE
-Proportion                        0.3500      0.1067
+Proportion                      0.3500
+ASE                             0.1067
 
 Confidence Limits for the Binomial Proportion
+Proportion = 0.3500
 
-Statistic / Method            90% Lower CL  90% Upper CL
-Agresti-Coull                       0.2014        0.5343
-Clopper-Pearson (Exact)             0.1773        0.5580
-Jeffreys                            0.1970        0.5332
-Likelihood Ratio                    0.1931        0.5329
-Logit                               0.1994        0.5379
-Mid-p                               0.1929        0.5377
-Wald                                0.1746        0.5254
-Wilson                              0.2023        0.5335
+Type                       90% Confidence Limits
+Agresti-Coull                    0.2014        0.5343
+Clopper-Pearson (Exact)          0.1773        0.5580
+Jeffreys                         0.1970        0.5332
+Likelihood Ratio                 0.1931        0.5329
+Logit                            0.1994        0.5379
+Mid-p                            0.1929        0.5377
+Wald                             0.1746        0.5254
+Wilson                           0.2023        0.5335
 
-Equality Test for the Binomial Proportion
-Null = 0.5; Method = Wald
+Test of H0: Proportion = 0.5
 
-Proportion                        0.3500
-Z                                -1.3416
-Standard Error                    0.1118
-One-sided Pr < Z                  0.0899
-Two-sided Pr > |Z|                0.1797
+ASE under H0                    0.1118
+Z                              -1.3416
+One-sided Pr <  Z               0.0899
+Two-sided Pr > |Z|              0.1797
 
 Sample Size = 20
                                       The FREQ Procedure
@@ -56,23 +54,22 @@ Sample Size = 20
 Binomial Proportion
 x = 2
 
-Statistic / Method              Estimate         ASE
-Proportion                        0.6500      0.1067
+Proportion                      0.6500
+ASE                             0.1067
 
 Confidence Limits for the Binomial Proportion
+Proportion = 0.6500
 
-Statistic / Method            95% Lower CL  95% Upper CL
-Wald (Corrected)                    0.4160        0.8840
-Wilson (Corrected)                  0.4095        0.8369
+Type                       95% Confidence Limits
+Wald (Corrected)                 0.4160        0.8840
+Wilson (Corrected)               0.4095        0.8369
 
-Equality Test for the Binomial Proportion
-Null = 0.01; Method = Wald
+Test of H0: Proportion = 0.01
 
-Proportion                        0.6500
-Z                                27.6422
-Standard Error                    0.0222
-One-sided Pr > Z                  <.0001
-Two-sided Pr > |Z|                <.0001
+ASE under H0                    0.0222
+Z                              27.6422
+One-sided Pr >  Z               <.0001
+Two-sided Pr > |Z|              <.0001
 
 Continuity correction included.
 

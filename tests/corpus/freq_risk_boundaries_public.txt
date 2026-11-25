@@ -3,22 +3,21 @@
 Binomial Proportion
 x = 1
 
-Statistic / Method              Estimate         ASE
-Proportion                        0.3500      0.1067
+Proportion                      0.3500
+ASE                             0.1067
 
 Confidence Limits for the Binomial Proportion
+Proportion = 0.3500
 
-Statistic / Method            95% Lower CL  95% Upper CL
-Wilson (Corrected)                  0.1631        0.5905
+Type                       95% Confidence Limits
+Wilson (Corrected)               0.1631        0.5905
 
-Equality Test for the Binomial Proportion
-Null = 0.5; Method = Wald
+Test of H0: Proportion = 0.5
 
-Proportion                        0.3500
-Z                                -1.3416
-Standard Error                    0.1118
-One-sided Pr < Z                  0.0899
-Two-sided Pr > |Z|                0.1797
+ASE under H0                    0.1118
+Z                              -1.3416
+One-sided Pr <  Z               0.0899
+Two-sided Pr > |Z|              0.1797
 
 Sample Size = 20
                                       The FREQ Procedure
@@ -26,22 +25,21 @@ Sample Size = 20
 Binomial Proportion
 x = 1
 
-Statistic / Method              Estimate         ASE
-Proportion                        0.3500      0.1067
+Proportion                      0.3500
+ASE                             0.1067
 
 Confidence Limits for the Binomial Proportion
+Proportion = 0.3500
 
-Statistic / Method            95% Lower CL  95% Upper CL
-Wald (Corrected)                    0.1160        0.5840
+Type                       95% Confidence Limits
+Wald (Corrected)                 0.1160        0.5840
 
-Equality Test for the Binomial Proportion
-Null = 0.5; Method = Wald
+Test of H0: Proportion = 0.5
 
-Proportion                        0.3500
-Z                                -1.1180
-Standard Error                    0.1118
-One-sided Pr < Z                  0.1318
-Two-sided Pr > |Z|                0.2636
+ASE under H0                    0.1118
+Z                              -1.1180
+One-sided Pr <  Z               0.1318
+Two-sided Pr > |Z|              0.2636
 
 Continuity correction included.
 
@@ -51,17 +49,17 @@ Sample Size = 20
 Binomial Proportion
 x = 1
 
-Statistic / Method              Estimate         ASE  95% Lower CL  95% Upper CL
-Proportion                        0.1792      0.1178        0.0000        0.4101
+Proportion                      0.1792
+ASE                             0.1178
+95% Lower Conf Limit            0.0000
+95% Upper Conf Limit            0.4101
 
-Equality Test for the Binomial Proportion
-Null = 0.5; Method = Wald
+Test of H0: Proportion = 0.5
 
-Proportion                        0.1792
-Z                                -2.0886
-Standard Error                    0.1536
-One-sided Pr < Z                  0.0184
-Two-sided Pr > |Z|                0.0367
+ASE under H0                    0.1536
+Z                              -2.0886
+One-sided Pr <  Z               0.0184
+Two-sided Pr > |Z|              0.0367
 
 Sample Size = 10.6
                         The FREQ Procedure

@@ -3,25 +3,24 @@
 Binomial Proportion
 x = 2
 
-Statistic / Method              Estimate         ASE
-Proportion                        0.6500      0.1067
+Proportion                      0.6500
+ASE                             0.1067
 
 Confidence Limits for the Binomial Proportion
+Proportion = 0.6500
 
-Statistic / Method            95% Lower CL  95% Upper CL
-Agresti-Coull                       0.4316        0.8201
-Clopper-Pearson (Exact)             0.4078        0.8461
-Likelihood Ratio                    0.4321        0.8317
-Wilson (Corrected)                  0.4095        0.8369
+Type                       95% Confidence Limits
+Agresti-Coull                    0.4316        0.8201
+Clopper-Pearson (Exact)          0.4078        0.8461
+Likelihood Ratio                 0.4321        0.8317
+Wilson (Corrected)               0.4095        0.8369
 
-Equality Test for the Binomial Proportion
-Null = 0.5; Method = Wald
+Test of H0: Proportion = 0.5
 
-Proportion                        0.6500
-Z                                 1.3416
-Standard Error                    0.1118
-One-sided Pr > Z                  0.0899
-Two-sided Pr > |Z|                0.1797
+ASE under H0                    0.1118
+Z                               1.3416
+One-sided Pr >  Z               0.0899
+Two-sided Pr > |Z|              0.1797
 
 Sample Size = 20
                                       The FREQ Procedure
@@ -29,35 +28,44 @@ Sample Size = 20
 Binomial Proportion
 x = 1
 
-Statistic / Method              Estimate         ASE  95% Lower CL  95% Upper CL
-Proportion                        0.3500      0.1067        0.1410        0.5590
+Proportion                      0.3500
+ASE                             0.1067
+95% Lower Conf Limit            0.1410
+95% Upper Conf Limit            0.5590
 
-Confidence Limits for the Binomial Proportion
+Exact Conf Limits
+95% Lower Conf Limit            0.1539
+95% Upper Conf Limit            0.5922
 
-Statistic / Method            95% Lower CL  95% Upper CL
-Clopper-Pearson (Exact)             0.1539        0.5922
+Test of H0: Proportion = 0.5
 
-Equality Test for the Binomial Proportion
-Null = 0.5; Method = Wald
+ASE (Sample)                    0.1067
+Z                              -1.4064
+One-sided Pr <  Z               0.0798
+Two-sided Pr > |Z|              0.1596
 
-Proportion                        0.3500
-Z                                -1.4064
-Standard Error                    0.1067
-One-sided Pr < Z                  0.0798
-Two-sided Pr > |Z|                0.1596
+Equivalence Analysis
 
-Equivalence Analysis for the Binomial Proportion
-Equivalence Limits = 0.2, 0.6; Method = Wald
+H0: P - p0 <= Lower Margin or >= Upper Margin
+Ha: Lower Margin < P - p0 < Upper Margin
 
-Proportion                        0.3500
-Lower Margin Z                    1.4064
-Standard Error                    0.1067
-Upper Margin Z                   -2.3440
-Lower Margin Pr > Z               0.0798
-Upper Margin Pr < Z               0.0095
-Overall P-Value                   0.0798
-90% Lower Conf Limit              0.1746
-90% Upper Conf Limit              0.5254
+p0 = 0.5   Lower Margin = -0.3   Upper Margin = 0.1
+
+Proportion    ASE (Sample)
+
+0.3500  0.1067
+
+Two One-Sided Tests (TOST)
+
+Test                   Z        P-Value
+
+Lower Margin 1.4064 Pr > Z 0.0798
+Upper Margin -2.3440 Pr < Z 0.0095
+Overall 0.0798
+
+Equivalence Limits    90% Confidence Limits
+
+0.2000 0.6000 0.1746 0.5254
 
 Sample Size = 20
                         The FREQ Procedure
@@ -136,25 +144,24 @@ Sample Size = 50
 Binomial Proportion
 x = 1
 
-Statistic / Method              Estimate         ASE
-Proportion                        1.0000      0.0000
+Proportion                      1.0000
+ASE                             0.0000
 
 Confidence Limits for the Binomial Proportion
+Proportion = 1.0000
 
-Statistic / Method            95% Lower CL  95% Upper CL
-Clopper-Pearson (Exact)             0.6915        1.0000
-Likelihood Ratio                    0.8252        1.0000
-Logit                                    .        1.0000
-Wald                                1.0000        1.0000
-Wilson                              0.7225        1.0000
+Type                       95% Confidence Limits
+Clopper-Pearson (Exact)          0.6915        1.0000
+Likelihood Ratio                 0.8252        1.0000
+Logit                                 .        1.0000
+Wald                             1.0000        1.0000
+Wilson                           0.7225        1.0000
 
-Equality Test for the Binomial Proportion
-Null = 0.5; Method = Wald
+Test of H0: Proportion = 0.5
 
-Proportion                        1.0000
-Z                                      .
-Standard Error                    0.0000
-One-sided Pr < Z                       .
-Two-sided Pr > |Z|                     .
+ASE (Sample)                    0.0000
+Z                                    .
+One-sided Pr <  Z                    .
+Two-sided Pr > |Z|                   .
 
 Sample Size = 10
