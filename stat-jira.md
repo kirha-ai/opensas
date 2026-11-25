@@ -11511,18 +11511,19 @@ Source: S154, Chapter 105, `The REG Procedure`, PDF pp. 8539–8728. Tasks in th
 
 <a id="stat-reg-003"></a>
 
-### [DOING @dev1] STAT-REG-003 — REG — MODEL
+### [DONE] STAT-REG-003 — REG — MODEL
 
 - Source: S154 / Chapter 105 / `MODEL Statement` (PDF pp. 8576–8588).
 - Scope: Implement MODEL. Implement the syntax and model semantics allowed by this procedure, using shared effect/parameterization support only for forms documented as supported.
 - Dependencies: [STAT-REG-001](#stat-reg-001), [STAT-COMMON-007](#stat-common-007).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-REG-003/](tests/STAT15.4-oracle/STAT-REG-003/).
 - Dispatch contract: Reuse REG's implemented numeric linear-model design while COMMON-007's broader CLASS/effect design is pending. Verify this MODEL ticket's own original oracle; do not infer support for unsupported categorical/effect syntax.
+- DONE (2026-11-25): Landed/pushed `8787cb2e`. Own unchanged oracle passes rc/warnings 1/1, all 1116 non-exempt tokens exact; only the two source-verified residual-sum bounds apply (strict whitespace equality false). Independent tests cover reordered numeric columns, multiple responses, labels, NOINT, analytic coefficients/SSE and character-regressor rejection. No production change or expected-file edit. Gate: 1689 tests, 2306 corpus, 11 programs passed. Evidence: `tests/STAT15.4-oracle/STAT-REG-003/model-verification.md` and numeric receipt.
 - Acceptance criteria: For MODEL, verify the parsed response/effect/parameter representation against the documented design matrix or model structure; cover applicable reference levels, interactions, missing levels, and invalid models; successful parsing alone is insufficient.
 
 <a id="stat-reg-004"></a>
 
-### [TODO] STAT-REG-004 — REG — ADD / DELETE / PRINT / REFIT / Interactive Analysis
+### [DOING @dev1] STAT-REG-004 — REG — ADD / DELETE / PRINT / REFIT / Interactive Analysis
 
 - Source: S154 / Chapter 105 / `ADD Statement` (PDF p. 8574); S154 / Chapter 105 / `DELETE Statement` (PDF pp. 8575–8576); S154 / Chapter 105 / `PRINT Statement` (PDF p. 8592); S154 / Chapter 105 / `REFIT Statement` (PDF pp. 8592–8593); S154 / Chapter 105 / `Interactive Analysis` (PDF pp. 8610–8613).
 - Scope: Implement ADD; DELETE; PRINT; REFIT; Interactive Analysis. This ticket owns the feature's options, defaults, computation, and results as an extension of the basic computational path; the chapter's output tickets handle ODS descriptors and file presentation.
