@@ -58,7 +58,7 @@ pub fn read(cx: proc.ProcCtx, tokens: []const lex.Token, spec: parse.Spec, effec
             i += 1;
         } else if (std.ascii.eqlIgnoreCase(token.text, "singular")) {
             if (i + 2 >= tokens.len or tokens[i + 1].tag != .eq or tokens[i + 2].tag != .number) return cx.diags.fail(error.ParseError, token.line, "PROC GLM: LSMEANS SINGULAR requires a number", .{});
-            options.singular = std.fmt.parseFloat(f64, tokens[i + 2].text) catch return error.ParseError;
+            options.singular = std.fmt.parseFloat(f64, tokens[i + 2].text) catch return cx.diags.fail(error.ParseError, token.line, "PROC GLM: invalid LSMEANS SINGULAR value", .{});
             if (!std.math.isFinite(options.singular) or options.singular <= 0 or options.singular >= 1) return cx.diags.fail(error.ParseError, token.line, "PROC GLM: LSMEANS SINGULAR must be between zero and one", .{});
             i += 3;
         } else return proc.failGap(cx.diags, token.line, "PROC GLM: LSMEANS option {s} is not implemented", .{token.text});
@@ -79,6 +79,7 @@ fn compatible(target: []const ?usize, column: []const ?usize) bool {
 /// refit its equivalent column space with the existing rank/QR primitive.
 pub fn compute(cx: proc.ProcCtx, spec: parse.Spec, d: design.Design, request: Request, mse: f64, df_error: usize) diag.Error!Table {
     const a = cx.arena;
+    if (spec.order == .freq and spec.freq != null) return proc.failGap(cx.diags, 0, "PROC GLM: LSMEANS ORDER=FREQ with a FREQ statement is not implemented", .{});
     const effects = try a.alloc(coded.Effect, spec.effects.len);
     for (effects, spec.effects) |*dest, source| dest.* = .{ .factors = source.variables };
     const rows = try a.alloc([]const @import("../value.zig").Value, d.n);
@@ -90,6 +91,9 @@ pub fn compute(cx: proc.ProcCtx, spec: parse.Spec, d: design.Design, request: Re
     var model = try ranks.fit(a, matrix.x, d.y, matrix.n, matrix.p, weights, spec.intercept, spec.singular);
     defer model.deinit(a);
     // Full-model frequency DF and MSE, not physical-row DF from this refit.
+    var total_frequency: f64 = 0;
+    for (d.frequencies) |frequency| total_frequency += frequency;
+    if (total_frequency - @as(f64, @floatFromInt(df_error)) != @as(f64, @floatFromInt(model.fit.rank))) return cx.diags.fail(error.ExecError, 0, "PROC GLM: LSMEANS coded design and MODEL rank disagree", .{});
     model.fit.mse = mse;
     model.fit.df_error = df_error;
     var means: std.ArrayList(Mean) = .empty;
@@ -181,7 +185,10 @@ pub fn render(cx: proc.ProcCtx, out: *std.ArrayList(u8), spec: parse.Spec, d: de
 
 pub fn execute(cx: proc.ProcCtx, out: *std.ArrayList(u8), spec: parse.Spec, d: design.Design, mse: f64, df_error: usize) diag.Error!void {
     for (spec.lsmeans) |request| {
-        const table = try compute(cx, spec, d, request, mse, df_error);
+        const table = compute(cx, spec, d, request, mse, df_error) catch |err| {
+            if (err != error.ExecError) return err;
+            return cx.diags.fail(error.ExecError, 0, "PROC GLM: LSMEANS computation failed", .{});
+        };
         if (!spec.noprint) try render(cx, out, spec, d, request, table);
     }
 }
@@ -305,4 +312,53 @@ test "COMMON009 unequal counts use balanced margins and FREQ WEIGHT inference" {
     try testing.expectApproxEqAbs(@as(f64, 12), table.means[1].inference.estimate.?, 1e-12);
     try testing.expectApproxEqAbs(@as(f64, 0.25), table.means[1].inference.variance_factor.?, 1e-12);
     try testing.expectApproxEqAbs(@sqrt(2.0 * 3.0 / 16.0), table.means[0].inference.standard_error.?, 1e-12);
+}
+
+test "COMMON009 class data ordering changes coefficients and row labels together" {
+    var arena = std.heap.ArenaAllocator.init(testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var lib = Library.init(a);
+    const ds = try sample(a, &lib);
+    std.mem.reverse([]const @import("../value.zig").Value, ds.rows.items);
+    var diagnostics = diag.Diagnostics.init(a);
+    const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &diagnostics };
+    const r = try analyzed(cx, "proc glm order=data; class group h; model y=group h group*h / ss1; lsmeans group*h / e; run;");
+    const table = try compute(cx, r.spec, r.d, r.spec.lsmeans[0], 74.0 / 6.0, 6);
+    try testing.expectEqualStrings("B", table.classes[0].map.levels[0].label);
+    for (table.means, [_]f64{ 22, 9, 8 }, [_][2]?usize{ .{ 0, 0 }, .{ 1, 0 }, .{ 1, 1 } }) |mean, value, levels| {
+        try testing.expectApproxEqAbs(value, mean.inference.estimate.?, 1e-12);
+        try testing.expectEqualSlices(?usize, &levels, mean.levels);
+    }
+}
+
+test "COMMON009 adjusted covariate means differ from raw group means" {
+    var arena = std.heap.ArenaAllocator.init(testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var lib = Library.init(a);
+    var ds = Dataset.init(a, "adjusted");
+    _ = try ds.addColumn("group", .char);
+    _ = try ds.addColumn("x", .num);
+    _ = try ds.addColumn("y", .num);
+    const noise = [_]f64{ -1, 2, -1 };
+    for (0..6) |i| {
+        const x: f64 = @floatFromInt(i % 3 + (if (i < 3) @as(usize, 0) else 2));
+        const intercept: f64 = if (i < 3) 10 else 20;
+        try ds.appendRow(&.{ .{ .str = if (i < 3) "A" else "B" }, .{ .num = x }, .{ .num = intercept + 2 * x + noise[i % 3] } });
+    }
+    try lib.put("adjusted", &ds);
+    var diagnostics = diag.Diagnostics.init(a);
+    const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &diagnostics };
+    const r = try analyzed(cx, "proc glm; class group; model y=group x; lsmeans group / e; run;");
+    var fit = try @import("glm.zig").fitDesign(cx, r.spec, r.d);
+    defer fit.deinit(a);
+    const table = try compute(cx, r.spec, r.d, r.spec.lsmeans[0], fit.model.fit.mse, fit.model.fit.df_error);
+    // Noise is centered and orthogonal to x within each group. The common
+    // slope is 2; at global x=2 margins are14,24, not raw means12,26.
+    for (table.means, [_]f64{ 14, 24 }) |mean, value| {
+        try testing.expectApproxEqAbs(value, mean.inference.estimate.?, 1e-12);
+        try testing.expectEqual(@as(f64, 2), mean.coefficients[3]);
+    }
+    try testing.expectApproxEqAbs(@as(f64, 4), fit.model.fit.mse, 1e-12);
 }
