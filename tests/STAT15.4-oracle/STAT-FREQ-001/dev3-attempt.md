@@ -1,74 +1,76 @@
-# dev3 — STAT-FREQ-001 bounded attempt: PARK, partial fix
+# dev3 — STAT-FREQ-001 full oracle verification
+
+Both unchanged oracle cases PASS: complete whitespace-normalized listings, expected return
+status 0, and no warnings/errors. The earlier partial-attempt conclusion is superseded.
+Dev2's shared prelude fix is integrated by rebase; no shared-option fix was duplicated.
 
 Baseline: c2bc2789f9b89415260bb50c8939bebe6f88dca8. Branch: codex/stat-dev3.
-Rebased onto local feat/stat15.4-tickets at 1d5da736ce28e352cf865bfac9fd35b6f1b0a641.
-Runtime/source checked: SHA ac01b91b06fb3940f427c1989ebe88f0a9d4ae77. No oracle inputs or expected files changed.
+The manager already landed the initial heading fix. Final branch/base/SHA and the integration
+gate result are reported in the handoff. No oracle source, expected listing, expected status,
+or reference log was altered.
 
-Read CLAUDE.md, src/lexer.zig, applicable decisions (especially D-002/003/009/017/018/029), ticket entry and README.
-Read physical PDF pages 3082–3085 and 3157–3162 from the shared manual at
-/Users/thomas/kirha/opensas/docs/SAS-STAT-15.4-Users-Guide.pdf (manual absent in this worktree).
-Reused existing FREQ runtime, BY and numeric-role/weight APIs; no shared implementation edits.
+## References and scope
 
-## Shipped partial fix
+Read CLAUDE.md, src/lexer.zig, relevant decisions, this ticket in stat-jira.md and its README.
+Read physical PDF pages 3082–3085 and 3157–3162 from
+/Users/thomas/kirha/opensas/docs/SAS-STAT-15.4-Users-Guide.pdf (absent in this worktree).
+Existing FREQ dispatch, BY, numeric-role and weight filtering APIs are reused.
+No MEANS, REG, global dispatch/parser/options, board, or skill edits; no push.
 
-Grid headings were positioned from the width of row *values*, so Internship and Enrollment
-ran together, and longer names were overwritten. Move the column heading only when the
-unlabelled variable names would collide. Keep frequency cells and existing separated headings
-unchanged. A unit regression exercises both the oracle names and a longer row name, and checks
-that the data-column headings remain intact.
+## Concrete corrections
 
-Initial gate exposed an unnecessary spacing change for Adverse/Dose; narrowed the condition
-without changing that fixture. Corrected gate: 18/18 steps, 1589/1589 unit tests,
-2301/2301 corpus, 11/11 programs, exit 0. Full gate output below.
+- Preserve variable headings when row names exceed the width of row values. The regression
+  covers Internship/Enrollment and a name wider than the entire first cell.
+- Show one procedure heading for a multi-stratum table, then a new heading for the summary.
+- TABLES NOPRINT no longer emits the suppressed cell table's heading above its statistics.
+- Restore the common odds/relative-risk table rule and the vertical Breslow–Day rows/rule.
+- Render Simple and Weighted Kappa in one Kappa Statistics table (TABLES=RESTORE preserved).
+- Render the full Test of H0 table including Estimate, standard error, Z, and both probabilities.
+  Estimate=0.3449 was absent in the original Kappa test table: it was a substantive missing field,
+  even though another table displayed the same estimate. The null value now appears in the
+  hypothesis heading. Nonzero-null tests include the estimate and its standard error as well.
 
-## Oracle comparison — 0/2 pass
+The new Kappa regression computes the published SkinCondition matrix and compares *all*
+whitespace-delimited tokens of the two complete tables, including the formerly missing estimate.
+39 affected local FREQ corpus goldens reflect these rendering changes; oracle expected files
+remain unchanged. Numeric comparison of these golden changes preserves all existing estimates,
+counts, tests, limits and probabilities: duplicate confidence headers are consolidated; Kappa
+hypothesis nulls move from four-decimal fields into headings; test estimates and nonzero-null
+standard errors are added. The weighted-missing regression also checks the four missing cells
+of the Weighted Kappa row, rather than merely its old table title.
 
-Both listed SAS programs executed unchanged, independently, using the freshly rebuilt binary:
+## Full oracle comparison — 2/2 PASS
+
+Each listed SAS case executes independently and unchanged:
 `zig-out/bin/opensas --graphics-dir <case-graphs> tests/STAT15.4-oracle/STAT-FREQ-001/<case>.sas`.
-Each graph directory was emptied before the final execution.
-Only normalization: Python `' '.join(text.split())`, collapsing whitespace runs (including
-newlines) to single spaces and trimming ends. No headings, rules, fields, tables, numbers,
-or diagnostics were removed. Current OpenSAS version identity is permitted; neither listing
-contains a version string, so no version substitution was needed.
+Graph directories are fresh for the recorded run. Whitespace normalization is exactly Python
+`' '.join(text.split())`: collapse whitespace runs and trim edges. No fields, rules, headings,
+tables, numbers, or diagnostics are dropped. Runtime identity comes from the current OpenSAS
+build, not a SAS version string; these listings contain no version text, so no substitution occurs.
 
-Both statuses: actual 1, expected 0. Both complete whitespace-normalized listings differ.
-The shared prelude reports `ERROR(expanded L5): system option validmemname is not recognized`.
-Dev2 exclusively owns this fix; it is not integrated in the checked base. Do not mark DONE
-without rerunning the unchanged cases after integration.
+Both complete listings PASS. Both statuses are 0, matching expected. Actual logs have no warnings
+or errors, matching reference warning/error semantics. Actual diagnostics contain three SVG-written
+notes per case. Reference startup/source echoes, workspace-deletion notes, observation/read notes
+and printed-page notes differ. Reference warning/error semantics and return status were checked;
+no exemption for informational logs is claimed. Complete actual diagnostics are retained below.
 
-All displayed counts, percentages, test statistics, p-values, confidence limits and sample sizes
-match the corresponding expected values. Counts are 223 overall; boys 105, girls 118;
-agreement sample size 88. BY case correctly repeats the first analysis for _oracle_by=1 and 2,
-each N=223. This numerical correspondence is NOT full text/field parity:
-
-- Extra procedure heading before stratum 2; missing procedure heading before CMH summary.
-- Missing rule beneath common odds/relative-risk header.
-- Breslow–Day is horizontal instead of the expected vertical layout and lacks its rule.
-- Extra `Table of Derm1 by Derm2` heading despite TABLES NOPRINT.
-- Expected combined Kappa Statistics table is split into Simple/Weighted Kappa Coefficient tables.
-- Expected `Test of H0: Kappa = 0` table is rendered as `Kappa Test`, with an extra Null Value
-  field and without the expected Estimate=0.3449 field in that test table. The estimate appearing
-  in the preceding statistics table does not substitute for the omitted field.
-- Logs differ: actual contains the prelude error and three SVG-written notes. Reference logs
-  contain SAS source echoes, workspace-deletion notes, INPUT/read/data-set observation notes,
-  and printed-page notes absent from actual. No reference ERROR/WARNING was found. These
-  diagnostics are retained as differences, not filtered to manufacture parity.
-
-PARK reason: complete parity requires broader statistical rendering/field and shared diagnostic
-work beyond this narrow declaration/input attempt. The acceptance matrix is not claimed complete.
-No backlog expansion, no expected-output changes, no board or skill edits, no push.
+Counts: first analysis N=223; controlling strata boys=105, girls=118; agreement N=88.
+The BY fixture has _oracle_by=1 and _oracle_by=2, each with the full first analysis at N=223.
+All 649 non-whitespace tokens in documented_feature and all 803 in statement_by match, in order,
+including every table, field, numerical value, and rule.
 
 ## Graph inspection
 
-Six SVGs rendered and visually inspected (three per unchanged case). Both sets show the boys
-and girls clustered frequency charts plus the agreement chart. Boys bars (27,29,14,35), girls
-(23,10,53,32), category labels, legends and agreement cumulative scale ending at 88 agree with
-inputs. No clipping/overlap observed. Matching plots in the two cases are identical. No saved
-oracle graph images are supplied, so pixel parity is not claimed. Contact sheet: dev3-graphs.png.
+Six SVGs rendered and visually inspected: two clustered frequency plots and an agreement plot
+per case. Boys bars (27,29,14,35), girls (23,10,53,32), category labels and legends agree with
+inputs. Agreement scale ends at 88. No clipping/overlap observed. Both cases produce identical
+sets of plots. After integrating the shared fix, all six SVGs remain byte-identical to those
+inspected. No oracle graph images are supplied, so pixel parity is not claimed.
+The inspected contact sheet remains dev3-graphs.png; graphics code was not changed.
 
-## documented_feature — complete actual output
+## documented_feature — complete actual listing
 
-Expected listing bytes: 6367; actual: 7012. Expected rc=0; actual rc=1.
+Expected bytes 6367; actual bytes 7027; full normalized text PASS (649 tokens). Expected status 0; actual 0.
 
 ```text
                         The FREQ Procedure
@@ -164,7 +166,6 @@ Two-sided Pr <= P           0.0467
 
 Sample Size = 105
 
-                        The FREQ Procedure
 
                         Table 2 of Internship by Enrollment
                         Controlling for Gender=girls
@@ -211,6 +212,7 @@ Table Probability (P)       0.1311
 Two-sided Pr <= P           0.5245
 
 Sample Size = 118
+                        The FREQ Procedure
 
 Summary Statistics for Internship by Enrollment
 Controlling for Gender
@@ -224,6 +226,7 @@ Statistic    Alternative Hypothesis    DF       Value      Prob
 
 Common Odds Ratio and Relative Risks
 Statistic                 Method               Value    95% Confidence Limits
+-------------------------------------------------------------------------------------
 Odds Ratio                Mantel-Haenszel      1.8230      1.0095      3.2921
                           Logit                1.8261      1.0112      3.2979
 Relative Risk (Column 1)  Mantel-Haenszel      1.3872      1.0099      1.9056
@@ -231,15 +234,15 @@ Relative Risk (Column 1)  Mantel-Haenszel      1.3872      1.0099      1.9056
 Relative Risk (Column 2)  Mantel-Haenszel      0.7993      0.6398      0.9985
                           Logit                0.8545      0.6971      1.0474
 
-Breslow-Day Test for Homogeneity of Odds Ratios
-Chi-Square        DF    Pr > ChiSq
-    0.7324         1        0.3921
+Breslow-Day Test for
+Homogeneity of Odds Ratios
+--------------------------
+Chi-Square                     0.7324
+DF                                  1
+Pr > ChiSq                     0.3921
 
 Total Sample Size = 223
                         The FREQ Procedure
-
-                        Table of Derm1 by Derm2
-
 
 Statistics for Table of Derm1 by Derm2
 
@@ -247,20 +250,15 @@ Symmetry Test
 Chi-Square        DF    Pr > ChiSq
     4.5354         6        0.6046
 
-Simple Kappa Coefficient
-Estimate       Standard Error    95% Confidence Limits
-    0.3449             0.0724       0.2030       0.4868
+Kappa Statistics
+                              Standard
+Statistic         Estimate       Error    95% Confidence Limits
+Simple Kappa        0.3449      0.0724      0.2030       0.4868
+Weighted Kappa      0.5082      0.0655      0.3798       0.6366
 
-Weighted Kappa Coefficient
-Estimate       Standard Error    95% Confidence Limits
-    0.5082             0.0655       0.3798       0.6366
-
-Kappa Test
-Null Value                     0.0000
-H0 Std Err                     0.0612
-Z                              5.6366
-Pr > Z                         <.0001
-Pr > |Z|                       <.0001
+Test of H0: Kappa = 0
+Estimate    H0 Std Err           Z    Pr > Z    Pr > |Z|
+  0.3449        0.0612      5.6366    <.0001      <.0001
 
 Sample Size = 88
 ```
@@ -268,39 +266,16 @@ Sample Size = 88
 Complete actual diagnostics:
 
 ```text
-ERROR(expanded L5): system option validmemname is not recognized
 NOTE: SVG graphic written to tests/STAT15.4-oracle/STAT-FREQ-001/dev3-evidence/documented_feature-graphs/opensas-0001-freqplot.svg.
 NOTE: SVG graphic written to tests/STAT15.4-oracle/STAT-FREQ-001/dev3-evidence/documented_feature-graphs/opensas-0002-freqplot.svg.
 NOTE: SVG graphic written to tests/STAT15.4-oracle/STAT-FREQ-001/dev3-evidence/documented_feature-graphs/opensas-0003-agreeplot.svg.
 ```
 
-Complete non-whitespace token differences (expected → actual):
+Unmodified SAS input SHA256: 4247fd0c5afd80da630325b9535197fbd5c96d173c46f5ee3f4fe8f84d1c69eb
 
-- '' → 'The FREQ Procedure'
-- 'The FREQ Procedure' → ''
-- '-------------------------------------------------------------------------------------' → ''
-- '--------------------------' → ''
-- '0.7324' → ''
-- '1' → ''
-- '' → '0.7324 1'
-- '' → 'Table of Derm1 by Derm2'
-- '' → 'Simple'
-- 'Statistics' → 'Coefficient Estimate'
-- 'Statistic Estimate' → ''
-- 'Simple Kappa' → ''
-- '' → 'Coefficient Estimate Standard Error 95% Confidence Limits'
-- '' → 'Kappa'
-- 'of H0: Kappa = 0 Estimate' → 'Null Value 0.0000'
-- '' → '0.0612'
-- '' → '5.6366'
-- '' → '<.0001'
-- '0.3449 0.0612 5.6366 <.0001' → ''
+## statement_by — complete actual listing
 
-Input SHA256: 4247fd0c5afd80da630325b9535197fbd5c96d173c46f5ee3f4fe8f84d1c69eb
-
-## statement_by — complete actual output
-
-Expected listing bytes: 7806; actual: 8758. Expected rc=0; actual rc=1.
+Expected bytes 7806; actual bytes 8773; full normalized text PASS (803 tokens). Expected status 0; actual 0.
 
 ```text
 
@@ -445,7 +420,6 @@ Two-sided Pr <= P           0.0467
 
 Sample Size = 105
 
-                        The FREQ Procedure
 
                         Table 2 of Internship by Enrollment
                         Controlling for Gender=girls
@@ -492,6 +466,7 @@ Table Probability (P)       0.1311
 Two-sided Pr <= P           0.5245
 
 Sample Size = 118
+                        The FREQ Procedure
 
 Summary Statistics for Internship by Enrollment
 Controlling for Gender
@@ -505,6 +480,7 @@ Statistic    Alternative Hypothesis    DF       Value      Prob
 
 Common Odds Ratio and Relative Risks
 Statistic                 Method               Value    95% Confidence Limits
+-------------------------------------------------------------------------------------
 Odds Ratio                Mantel-Haenszel      1.8230      1.0095      3.2921
                           Logit                1.8261      1.0112      3.2979
 Relative Risk (Column 1)  Mantel-Haenszel      1.3872      1.0099      1.9056
@@ -512,15 +488,15 @@ Relative Risk (Column 1)  Mantel-Haenszel      1.3872      1.0099      1.9056
 Relative Risk (Column 2)  Mantel-Haenszel      0.7993      0.6398      0.9985
                           Logit                0.8545      0.6971      1.0474
 
-Breslow-Day Test for Homogeneity of Odds Ratios
-Chi-Square        DF    Pr > ChiSq
-    0.7324         1        0.3921
+Breslow-Day Test for
+Homogeneity of Odds Ratios
+--------------------------
+Chi-Square                     0.7324
+DF                                  1
+Pr > ChiSq                     0.3921
 
 Total Sample Size = 223
                         The FREQ Procedure
-
-                        Table of Derm1 by Derm2
-
 
 Statistics for Table of Derm1 by Derm2
 
@@ -528,20 +504,15 @@ Symmetry Test
 Chi-Square        DF    Pr > ChiSq
     4.5354         6        0.6046
 
-Simple Kappa Coefficient
-Estimate       Standard Error    95% Confidence Limits
-    0.3449             0.0724       0.2030       0.4868
+Kappa Statistics
+                              Standard
+Statistic         Estimate       Error    95% Confidence Limits
+Simple Kappa        0.3449      0.0724      0.2030       0.4868
+Weighted Kappa      0.5082      0.0655      0.3798       0.6366
 
-Weighted Kappa Coefficient
-Estimate       Standard Error    95% Confidence Limits
-    0.5082             0.0655       0.3798       0.6366
-
-Kappa Test
-Null Value                     0.0000
-H0 Std Err                     0.0612
-Z                              5.6366
-Pr > Z                         <.0001
-Pr > |Z|                       <.0001
+Test of H0: Kappa = 0
+Estimate    H0 Std Err           Z    Pr > Z    Pr > |Z|
+  0.3449        0.0612      5.6366    <.0001      <.0001
 
 Sample Size = 88
 ```
@@ -549,61 +520,72 @@ Sample Size = 88
 Complete actual diagnostics:
 
 ```text
-ERROR(expanded L5): system option validmemname is not recognized
 NOTE: SVG graphic written to tests/STAT15.4-oracle/STAT-FREQ-001/dev3-evidence/statement_by-graphs/opensas-0001-freqplot.svg.
 NOTE: SVG graphic written to tests/STAT15.4-oracle/STAT-FREQ-001/dev3-evidence/statement_by-graphs/opensas-0002-freqplot.svg.
 NOTE: SVG graphic written to tests/STAT15.4-oracle/STAT-FREQ-001/dev3-evidence/statement_by-graphs/opensas-0003-agreeplot.svg.
 ```
 
-Complete non-whitespace token differences (expected → actual):
+Unmodified SAS input SHA256: 3f2fd0f3d54dbc8ac9eced03826091faf97fb6249c77aedb3111343e7c38d4c5
 
-- '' → 'The FREQ Procedure'
-- 'The FREQ Procedure' → ''
-- '-------------------------------------------------------------------------------------' → ''
-- '--------------------------' → ''
-- '0.7324' → ''
-- '1' → ''
-- '' → '0.7324 1'
-- '' → 'Table of Derm1 by Derm2'
-- '' → 'Simple'
-- 'Statistics' → 'Coefficient Estimate'
-- 'Statistic Estimate' → ''
-- 'Simple Kappa' → ''
-- '' → 'Coefficient Estimate Standard Error 95% Confidence Limits'
-- '' → 'Kappa'
-- 'of H0: Kappa = 0 Estimate' → 'Null Value 0.0000'
-- '' → '0.0612'
-- '' → '5.6366'
-- '' → '<.0001'
-- '0.3449 0.0612 5.6366 <.0001' → ''
+## Continued-attempt changed files
 
-Input SHA256: 3f2fd0f3d54dbc8ac9eced03826091faf97fb6249c77aedb3111343e7c38d4c5
-
-## Corrected gate transcript
-
-```text
-corpus: 2301/2301 passing
-programs: 11/11 passing
-Build Summary: 18/18 steps succeeded; 1589/1589 tests passed
-gate success
-+- test success
-|  +- run test 1484 pass (1484 total) 29s MaxRSS:115M
-|  |  +- compile test Debug native success 32s MaxRSS:1G
-|  +- run test 91 pass (91 total) 797ms MaxRSS:17M
-|  |  +- compile test Debug native success 20s MaxRSS:1G
-|  |     +- options success
-|  +- run test 11 pass (11 total) 22ms MaxRSS:3M
-|  |  +- compile test Debug native cached 80ms MaxRSS:38M
-|  +- run test 3 pass (3 total) 18ms MaxRSS:3M
-|     +- compile test Debug native cached 88ms MaxRSS:38M
-+- corpus success
-|  +- run exe corpus_runner success 15s
-|     +- compile exe corpus_runner Debug native cached 83ms MaxRSS:38M
-|     +- compile exe opensas Debug native success 19s MaxRSS:1G
-|        +- options (reused)
-+- programs success
-   +- run exe programs_runner success 241ms
-      +- compile exe programs_runner Debug native cached 86ms MaxRSS:38M
-      +- compile exe opensas Debug native (+1 more reused dependencies)
-
-```
+- `README.md`
+- `src/main.zig`
+- `src/proc.zig`
+- `src/stat/data_selection.zig`
+- `src/stat/freq.zig`
+- `src/stat/freq_stratified_execute.zig`
+- `src/stat/freq_stratified_render.zig`
+- `src/stat/reg_fit.zig`
+- `stat-jira.md`
+- `tests/STAT15.4-oracle/STAT-COMMON-002/implementation-evidence.md`
+- `tests/STAT15.4-oracle/STAT-FREQ-001/dev3-attempt.md`
+- `tests/corpus/freq_missing_strata.txt`
+- `tests/corpus/freq_nway_out.txt`
+- `tests/corpus/freq_risk_aliases_public.txt`
+- `tests/corpus/freq_risk_boundaries_public.txt`
+- `tests/corpus/freq_risk_equality_public.txt`
+- `tests/corpus/freq_risk_gap_common.txt`
+- `tests/corpus/freq_risk_high_alpha_public.txt`
+- `tests/corpus/freq_risk_inference_public.txt`
+- `tests/corpus/freq_risk_infinite_fractional_public.txt`
+- `tests/corpus/freq_risk_ni_sup_public.txt`
+- `tests/corpus/freq_risk_twoway_public.txt`
+- `tests/corpus/freq_stmt_opts.txt`
+- `tests/corpus/freq_strata_order.txt`
+- `tests/corpus/freq_stratified_agree_edges.txt`
+- `tests/corpus/freq_stratified_all.txt`
+- `tests/corpus/freq_stratified_by.txt`
+- `tests/corpus/freq_stratified_cmh.txt`
+- `tests/corpus/freq_stratified_common.txt`
+- `tests/corpus/freq_stratified_descending_weights.txt`
+- `tests/corpus/freq_stratified_details.txt`
+- `tests/corpus/freq_stratified_dfsym.txt`
+- `tests/corpus/freq_stratified_examples.txt`
+- `tests/corpus/freq_stratified_fractional_alpha.txt`
+- `tests/corpus/freq_stratified_gailsimon.txt`
+- `tests/corpus/freq_stratified_i2_zero.txt`
+- `tests/corpus/freq_stratified_inheritance.txt`
+- `tests/corpus/freq_stratified_missing.txt`
+- `tests/corpus/freq_stratified_options.txt`
+- `tests/corpus/freq_stratified_restore.txt`
+- `tests/corpus/freq_stratified_scores.txt`
+- `tests/corpus/freq_stratified_sparse.txt`
+- `tests/corpus/freq_stratified_weighted_missing.txt`
+- `tests/corpus/freq_stratified_weights.txt`
+- `tests/corpus/freq_table_displays.txt`
+- `tests/corpus/freq_tests_by_strata.txt`
+- `tests/corpus/freq_tests_gap_agree.txt`
+- `tests/corpus/freq_tests_noprint.txt`
+- `tests/corpus/freq_tests_scores.txt`
+- `tests/corpus/freq_tests_test_requests.txt`
+- `tests/corpus/means_by_emptygroup.txt`
+- `tests/corpus/means_by_multivar.txt`
+- `tests/corpus/means_stmt_replace.txt`
+- `tests/corpus/proc_inf.txt`
+- `tests/corpus/proc_means_multi.txt`
+- `tests/corpus/proc_means_var.txt`
+- `tests/corpus/sdtm_stat_multivar.txt`
+- `tests/corpus/stat_common002_weight_roles.sas`
+- `tests/corpus/stat_common002_weight_roles.txt`
+- `tests/corpus/var_colon_prefix_procs.txt`
