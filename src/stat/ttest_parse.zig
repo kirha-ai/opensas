@@ -11,10 +11,13 @@ const selection = @import("data_selection.zig");
 const eq = std.ascii.eqlIgnoreCase;
 
 pub const Sides = enum { two, lower, upper };
+pub const Distribution = enum { normal, lognormal };
 pub const Order = enum { data, formatted, freq, internal, mixed };
 pub const Options = struct {
     alpha: f64 = 0.05,
     h0: f64 = 0,
+    h0_explicit: bool = false,
+    distribution: Distribution = .normal,
     sides: Sides = .two,
     order: Order = .mixed,
     ci: bool = true,
@@ -92,7 +95,10 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
             if (eq(token.text, "alpha")) {
                 if (!(value > 0 and value < 1)) return cx.diags.fail(error.ParseError, token.line, "PROC TTEST: ALPHA must be between 0 and 1", .{});
                 options.alpha = value;
-            } else options.h0 = value;
+            } else {
+                options.h0 = value;
+                options.h0_explicit = true;
+            }
         } else {
             if (i >= t.len) return invalid(cx, token);
             const value = t[i];
@@ -102,8 +108,7 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
             } else if (eq(token.text, "order")) {
                 options.order = if (eq(value.text, "data")) .data else if (eq(value.text, "formatted")) .formatted else if (eq(value.text, "freq")) .freq else if (eq(value.text, "internal")) .internal else if (eq(value.text, "mixed")) .mixed else return invalid(cx, value);
             } else if (eq(token.text, "dist")) {
-                if (eq(value.text, "lognormal")) return proc.failGap(cx.diags, token.line, "PROC TTEST: DIST=LOGNORMAL is not implemented", .{});
-                if (!eq(value.text, "normal")) return invalid(cx, value);
+                options.distribution = if (eq(value.text, "lognormal")) .lognormal else if (eq(value.text, "normal")) .normal else return invalid(cx, value);
             } else if (eq(token.text, "test")) {
                 if (eq(value.text, "ratio")) return proc.failGap(cx.diags, token.line, "PROC TTEST: TEST=RATIO is not implemented", .{});
                 if (!eq(value.text, "diff")) return invalid(cx, value);
@@ -122,6 +127,10 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
         }
     }
     if (!at(t, i, .semicolon)) return invalid(cx, t[@min(i, t.len - 1)]);
+    // Resolve the default after all header options: H0 and DIST are order-independent.
+    if (!options.h0_explicit) options.h0 = if (options.distribution == .lognormal) 1 else 0;
+    if (options.distribution == .lognormal and options.h0 <= 0)
+        return cx.diags.fail(error.ParseError, t[0].line, "H0 must be greater than zero for a test of a mean ratio or when lognormal data is assumed.", .{});
     const raw = (if (name) |n| cx.lib.find(n) else proc.lastDataset(cx.lib)) orelse
         return cx.diags.fail(error.ParseError, t[0].line, "File {s} does not exist.", .{name orelse "_last_"});
     var input = try proc.procInputObs(cx.arena, raw, t, cx.diags);
@@ -182,6 +191,8 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
             break;
         };
     }
+    if (summary != null and options.distribution == .lognormal)
+        return cx.diags.fail(error.ParseError, t[0].line, "PROC TTEST: DIST=LOGNORMAL requires observation values, not summary statistics", .{});
     if (summary != null and (freq.first() != null or weight.first() != null))
         return cx.diags.fail(error.ParseError, t[0].line, "PROC TTEST: FREQ and WEIGHT cannot be used with summary statistics", .{});
     if (!var_seen) for (ds.columns.items, 0..) |c, ci| {
@@ -259,7 +270,44 @@ test "STAT-TTEST-001 invalid declarations have captured locations; valid unsuppo
     defer diag.resetGap();
     var d = diag.Diagnostics.init(a);
     const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &d };
-    try std.testing.expectError(error.ParseError, parse(cx, try lex.tokenize(a, "proc ttest dist=lognormal; var x; run;", &d)));
+    try std.testing.expectError(error.ParseError, parse(cx, try lex.tokenize(a, "proc ttest ci=umpu; var x; run;", &d)));
     try std.testing.expect(d.hasErrors());
     try std.testing.expect(diag.gapHit());
+}
+
+test "STAT-TTEST-003 DIST sets H0 default only when omitted; option order does not change explicit H0" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var lib = @import("../exec.zig").Library.init(a);
+    try lib.put("sample", try TestInput.dataset(a));
+    var d = diag.Diagnostics.init(a);
+    const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &d };
+    const defaults = try parse(cx, try lex.tokenize(a, "proc ttest dist=lognormal; var x; run;", &d));
+    try std.testing.expectEqual(@as(f64, 1), defaults.options.h0);
+    try std.testing.expect(!defaults.options.h0_explicit);
+    for ([_][]const u8{ "h0=2 dist=lognormal", "dist=lognormal h0=2" }) |header| {
+        const source = try std.fmt.allocPrint(a, "proc ttest {s}; var x; run;", .{header});
+        const s = try parse(cx, try lex.tokenize(a, source, &d));
+        try std.testing.expectEqual(@as(f64, 2), s.options.h0);
+        try std.testing.expect(s.options.h0_explicit);
+    }
+    const normal = try parse(cx, try lex.tokenize(a, "proc ttest dist=normal; var x; run;", &d));
+    try std.testing.expectEqual(@as(f64, 0), normal.options.h0);
+    try std.testing.expectEqual(Distribution.normal, normal.options.distribution);
+    for ([_][]const u8{ "proc ttest dist=lognormal h0=0; var x; run;", "proc ttest h0=-1 dist=lognormal; var x; run;", "proc ttest dist=wrong; var x; run;" }) |source| {
+        var bad = diag.Diagnostics.init(a);
+        const badcx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &bad };
+        try std.testing.expectError(error.ParseError, parse(badcx, try lex.tokenize(a, source, &bad)));
+        try std.testing.expectEqual(@as(u8, 1), diag.exitCode(false, bad.hasErrors()));
+        try std.testing.expect(bad.list.items[0].line > 0);
+    }
+    var summary = Dataset.init(a, "summary");
+    _ = try summary.addColumn("_STAT_", .char);
+    _ = try summary.addColumn("x", .num);
+    try lib.put("summary", &summary);
+    var bad = diag.Diagnostics.init(a);
+    const badcx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &bad };
+    try std.testing.expectError(error.ParseError, parse(badcx, try lex.tokenize(a, "proc ttest data=summary dist=lognormal; var x; run;", &bad)));
+    try std.testing.expect(std.mem.indexOf(u8, try bad.render(), "requires observation values") != null);
 }

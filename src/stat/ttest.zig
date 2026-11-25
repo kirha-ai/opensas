@@ -10,6 +10,7 @@ const selection = @import("data_selection.zig");
 const by = @import("by_groups.zig");
 pub const declarations = @import("ttest_parse.zig");
 const fit = @import("ttest_fit.zig");
+const lognormal = @import("ttest_lognormal.zig");
 const render = @import("ttest_render.zig");
 const eq = std.ascii.eqlIgnoreCase;
 const A = std.mem.Allocator;
@@ -18,7 +19,9 @@ pub const Class = struct { label: []const u8, raw: Value, count: f64 = 0 };
 pub const Analysis = struct {
     column: usize,
     classes: []const Class,
+    /// Normal results, or the underlying log-scale results when lognormal_samples is present.
     samples: []const fit.Result,
+    lognormal_samples: ?[]const lognormal.Result = null,
 };
 pub const Group = struct { representative: ?[]const Value, analyses: []const Analysis };
 pub const Result = struct { spec: declarations.Spec, groups: []const Group };
@@ -73,7 +76,7 @@ pub fn classes(cx: proc.ProcCtx, s: declarations.Spec, view: selection.View) dia
     return result.items;
 }
 
-fn sample(cx: proc.ProcCtx, s: declarations.Spec, view: selection.View, ci: usize, level: ?Class) diag.Error!fit.Result {
+fn sample(cx: proc.ProcCtx, s: declarations.Spec, view: selection.View, ci: usize, level: ?Class, geometric: ?*lognormal.Result) diag.Error!fit.Result {
     const a = cx.arena;
     const opts = numericOptions(s.options);
     if (s.summary) |kind| {
@@ -108,8 +111,16 @@ fn sample(cx: proc.ProcCtx, s: declarations.Spec, view: selection.View, ci: usiz
         try frequencies.append(a, row.frequency.num);
         try weights.append(a, row.weight.num);
     }
+    if (geometric) |destination| {
+        destination.* = try lognormal.oneSample(a, values.items, frequencies.items, weights.items, lognormalOptions(s), cx.diags);
+        return destination.log_fit;
+    }
     if (values.items.len == 0) return cx.diags.fail(error.ParseError, s.line, "PROC TTEST: no usable observations for variable {s}", .{s.input.ds.columns.items[ci].name});
     return fit.oneSample(values.items, frequencies.items, weights.items, opts) catch |err| return numericFailure(cx, s, err);
+}
+fn lognormalOptions(s: declarations.Spec) lognormal.Options {
+    const o = numericOptions(s.options);
+    return .{ .h0 = o.h0, .alpha = o.alpha, .sides = o.sides, .line = s.line };
 }
 fn numericFailure(cx: proc.ProcCtx, s: declarations.Spec, err: diag.Error) diag.Error {
     if (err == error.OutOfMemory) return err;
@@ -126,8 +137,9 @@ pub fn compute(cx: proc.ProcCtx, s: declarations.Spec) diag.Error!Result {
         var analyses: std.ArrayList(Analysis) = .empty;
         for (s.roles.analysis) |ci| {
             const samples = try cx.arena.alloc(fit.Result, if (s.class != null) 2 else 1);
-            for (samples, 0..) |*r, i| r.* = try sample(cx, s, group, ci, if (s.class != null) levels[i] else null);
-            try analyses.append(cx.arena, .{ .column = ci, .classes = levels, .samples = samples });
+            const geometric = if (s.options.distribution == .lognormal) try cx.arena.alloc(lognormal.Result, samples.len) else null;
+            for (samples, 0..) |*r, i| r.* = try sample(cx, s, group, ci, if (s.class != null) levels[i] else null, if (geometric) |gs| &gs[i] else null);
+            try analyses.append(cx.arena, .{ .column = ci, .classes = levels, .samples = samples, .lognormal_samples = geometric });
         }
         try results.append(cx.arena, .{ .representative = group.observations[0].cells, .analyses = analyses.items });
     }
@@ -151,18 +163,22 @@ pub fn runTtest(cx: proc.ProcCtx, out: *std.ArrayList(u8), toks: []const lex.Tok
     for (result.groups) |group| {
         var body: std.ArrayList(u8) = .empty;
         for (group.analyses) |analysis| {
-            const r = rendered(analysis.samples[0]);
             var tables: std.ArrayList(u8) = .empty;
-            const objects: @import("../ods_listing.zig").Tables = .{ .selection = cx.listing, .prefix = "Ttest" };
-            var start = tables.items.len;
-            try render.statistics(a, &tables, r, spec.summary != null);
-            try objects.finish(a, &tables, start, "Statistics");
-            start = tables.items.len;
-            try render.intervals(a, &tables, r, spec.options);
-            try objects.finish(a, &tables, start, "ConfLimits");
-            start = tables.items.len;
-            try render.tests(a, &tables, r, spec.options);
-            try objects.finish(a, &tables, start, "TTests");
+            if (analysis.lognormal_samples) |gs| {
+                try lognormal.render(a, &tables, gs[0], lognormalOptions(spec), spec.options.ci);
+            } else {
+                const r = rendered(analysis.samples[0]);
+                const objects: @import("../ods_listing.zig").Tables = .{ .selection = cx.listing, .prefix = "Ttest" };
+                var start = tables.items.len;
+                try render.statistics(a, &tables, r, spec.summary != null);
+                try objects.finish(a, &tables, start, "Statistics");
+                start = tables.items.len;
+                try render.intervals(a, &tables, r, spec.options);
+                try objects.finish(a, &tables, start, "ConfLimits");
+                start = tables.items.len;
+                try render.tests(a, &tables, r, spec.options);
+                try objects.finish(a, &tables, start, "TTests");
+            }
             if (tables.items.len == 0) continue;
             try body.print(a, "Variable: {s}\n\n", .{spec.input.ds.columns.items[analysis.column].name});
             if (spec.roles.frequency) |ci| try body.print(a, "Frequency: {s}\n", .{spec.input.ds.columns.items[ci].name});
@@ -334,4 +350,77 @@ test "STAT-TTEST-001 CLASS formatted levels, encounter and frequency ordering" {
     }
     const three = try declarations.parse(cx, try lex.tokenize(a, "proc ttest; class c; var x; run;", &d));
     try std.testing.expectError(error.ParseError, compute(cx, three));
+}
+
+test "STAT-TTEST-003 full normal and lognormal listing matches unchanged oracle" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var lib = @import("../exec.zig").Library.init(a);
+    try lib.put("sample", try Testing.sample(a));
+    var d = diag.Diagnostics.init(a);
+    const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &d };
+    var out: std.ArrayList(u8) = .empty;
+    for ([_][]const u8{ "normal", "lognormal" }) |distribution| {
+        const source = try std.fmt.allocPrint(a, "proc ttest data=sample dist={s} ci=equal; var x; run;", .{distribution});
+        try runTtest(cx, &out, try lex.tokenize(a, source, &d));
+    }
+    try Testing.expectWords(try Testing.oracle(a, "tests/STAT15.4-oracle/STAT-TTEST-003/normal_lognormal.expected.txt"), out.items);
+    try std.testing.expectEqualStrings("", try d.render());
+}
+
+test "STAT-TTEST-003 execution preserves frequency weight alignment and explicit original-scale H0" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const e = @exp(@as(f64, 1));
+    var ds = @import("../dataset.zig").Dataset.init(a, "d");
+    for ([_][]const u8{ "x", "f", "w" }) |name| _ = try ds.addColumn(name, .num);
+    // Omitted rows surround retained responses. The FREQ and WEIGHT arrays
+    // must follow the retained responses, not their original positions.
+    for ([_][3]f64{ .{ -1, 10, 3 }, .{ 1, 1.9, 2 }, .{ 0, 8, 7 }, .{ e, 2.1, 1 } }) |row|
+        try ds.appendRow(&.{ .{ .num = row[0] }, .{ .num = row[1] }, .{ .num = row[2] } });
+    var lib = @import("../exec.zig").Library.init(a);
+    try lib.put("d", &ds);
+    var d = diag.Diagnostics.init(a);
+    const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &d };
+    const source = try std.fmt.allocPrint(a, "proc ttest h0={d} dist=lognormal sides=u; var x; freq f; weight w; run;", .{@exp(@as(f64, 0.5))});
+    const result = try compute(cx, try declarations.parse(cx, try lex.tokenize(a, source, &d)));
+    const r = result.groups[0].analyses[0].lognormal_samples.?[0];
+    try std.testing.expectEqual(@as(usize, 3), r.log_fit.n);
+    try std.testing.expectEqual(@as(f64, 4), r.log_fit.sum_weights);
+    try std.testing.expectApproxEqAbs(@exp(@as(f64, 0.5)), r.geometric_mean, 1e-14);
+    try std.testing.expectApproxEqAbs(@sqrt(std.math.expm1(@as(f64, 0.5))), r.cv, 1e-14);
+    try std.testing.expectApproxEqAbs(@as(f64, 0.5), r.log_fit.p, 1e-14);
+    try std.testing.expectEqual(std.math.inf(f64), r.mean_ci.upper);
+    try std.testing.expectEqual(@as(usize, 2), r.omitted_nonpositive);
+    try std.testing.expectEqual(@as(usize, 1), d.count());
+    try std.testing.expectEqual(diag.Severity.warning, d.list.items[0].severity);
+    try std.testing.expectEqual(@as(u8, 0), diag.exitCode(false, d.hasErrors()));
+}
+
+test "STAT-TTEST-003 all invalid responses warn at rc0; constant CV and CI NONE remain defined" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var ds = @import("../dataset.zig").Dataset.init(a, "d");
+    _ = try ds.addColumn("x", .num);
+    for ([_]f64{ -1, 0, std.math.nan(f64) }) |x| try ds.appendRow(&.{.{ .num = x }});
+    var lib = @import("../exec.zig").Library.init(a);
+    try lib.put("d", &ds);
+    var d = diag.Diagnostics.init(a);
+    const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &d };
+    var out: std.ArrayList(u8) = .empty;
+    try runTtest(cx, &out, try lex.tokenize(a, "proc ttest dist=lognormal; var x; run;", &d));
+    try std.testing.expect(std.mem.indexOf(u8, out.items, "0 . . . .") != null);
+    try std.testing.expectEqual(@as(u8, 0), diag.exitCode(false, d.hasErrors()));
+    try std.testing.expectEqual(diag.Severity.warning, d.list.items[0].severity);
+    try std.testing.expect(std.mem.indexOf(u8, d.list.items[0].message, "2 observations") != null);
+    ds.rows.clearRetainingCapacity();
+    for (0..3) |_| try ds.appendRow(&.{.{ .num = 2 }});
+    out.clearRetainingCapacity();
+    try runTtest(cx, &out, try lex.tokenize(a, "proc ttest dist=lognormal ci=none; var x; run;", &d));
+    try std.testing.expect(std.mem.indexOf(u8, out.items, "CL CV") == null);
+    try std.testing.expect(std.mem.indexOf(u8, out.items, "CL Mean") != null);
+    try std.testing.expect(std.mem.indexOf(u8, out.items, "2 Infty <.0001") != null);
 }
