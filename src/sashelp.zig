@@ -52,7 +52,19 @@ pub fn loadReferenced(a: std.mem.Allocator, lib: *Library, source: []const @impo
         const qualified = tok.tag == .name and std.ascii.eqlIgnoreCase(tok.text, "sashelp.class");
         const split = tok.tag == .name and std.ascii.eqlIgnoreCase(tok.text, "sashelp") and i + 2 < source.len and source[i + 1].tag == .dot and source[i + 2].tag == .name and std.ascii.eqlIgnoreCase(source[i + 2].text, "class");
         if (!qualified and !split) continue;
-        if (lib.find("sashelp.class") == null) try lib.putInput("sashelp.class", try class(a));
+        if (lib.find("sashelp.class") == null) {
+            const previous_count = lib.sets.items.len;
+            try lib.putInput("sashelp.class", try class(a));
+            // Loading a system input does not replace an existing implicit
+            // DATA=_LAST_ target. The Library's index is rebuilt on next lookup.
+            if (previous_count > 0) {
+                const loaded = lib.sets.pop().?;
+                const name = lib.names.pop().?;
+                try lib.sets.insert(a, 0, loaded);
+                try lib.names.insert(a, 0, name);
+                lib.index.clearRetainingCapacity();
+            }
+        }
         return;
     }
 }

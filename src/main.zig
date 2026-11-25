@@ -103,7 +103,7 @@ pub fn main(init: std.process.Init) !void {
 }
 
 /// THE exit code for a finished run — D-009, including its ABORT override.
-/// 0 clean, 1 user-program error (their SAS is wrong — parse/exec/data errors
+/// 0 clean, 1 explicit warning condition or user-program error (parse/exec/data errors
 /// reported via `diags`, or a format error via `format.formatErrored`), 2 opensas
 /// defect/gap (any UNSUPPORTED: path — `failLoud`'s `g_failed` or proc's
 /// unsupported → `diag.gapHit()` — plus a caught propagated defect). A gap
@@ -121,7 +121,7 @@ pub fn main(init: std.process.Init) !void {
 pub fn processExitCode(diags: *const sas.diag.Diagnostics) u8 {
     if (sas.exec.g_abort_rc) |arc| return arc;
     const gap = g_failed or sas.diag.gapHit();
-    const user_err = diags.hasErrors() or sas.format.formatErrored();
+    const user_err = diags.hasErrors() or diags.warning_status or sas.format.formatErrored();
     return sas.diag.exitCode(gap, user_err);
 }
 
@@ -395,6 +395,8 @@ fn runExpanded(ctx: *StepCtx, text: []const u8, allow_anon: bool) sas.diag.Error
         }
     }
     toks = try coalesceLibrefs(a, toks, ctx.librefs.items);
+    // Built-in samples must never shadow an explicitly assigned SASHELP libref.
+    if(findLibref(ctx.librefs.items,"sashelp")==null) try sas.sashelp.loadReferenced(a,ctx.lib,toks);
     // BUG-existdisk: a libref member named only inside macro text first appears
     // as a literal `lib.ds` token HERE, after runtime expansion — the up-front
     // preload in `interpret` never saw it. Load any still-missing members now.
@@ -7325,4 +7327,24 @@ test "REG CLI RUN QUIT and new DATA step do not leak interactive state" {
     try std.testing.expect(!d.hasErrors());
     try std.testing.expect(std.mem.indexOf(u8,out.items,"The REG Procedure")==null);
     try std.testing.expect(std.mem.indexOf(u8,out.items,"done")!=null);
+}
+
+
+test "REG graphics warning contributes rc 1 without a step error" {
+    var arena=std.heap.ArenaAllocator.init(std.testing.allocator); defer arena.deinit();
+    resetRcSignals(); defer resetRcSignals();
+    var d=sas.diag.Diagnostics.init(arena.allocator());
+    try d.warnStatus(0,"You must enable ODS graphics before requesting plots with the PLOTS option in the PROC REG statement.",.{});
+    try std.testing.expect(!d.hasErrors());
+    try std.testing.expect(!d.hasStepErrors());
+    try std.testing.expectEqual(@as(u8,1),processExitCode(&d));
+}
+
+test "REG built-in CLASS is shared by direct procedure and DATA SET input" {
+    var arena=std.heap.ArenaAllocator.init(std.testing.allocator); defer arena.deinit(); const a=arena.allocator();
+    var d=sas.diag.Diagnostics.init(a); var out:std.ArrayList(u8)=.empty;
+    try interpret(a,&out,&d,"proc reg data=sashelp.class;model Weight=Height;run;quit;data copy;set sashelp.class;run;proc reg data=copy;model Weight=Height;run;quit;",null);
+    try std.testing.expect(!d.hasErrors());
+    try std.testing.expectEqual(@as(usize,2),std.mem.count(u8,out.items,"Number of Observations Used 19"));
+    try std.testing.expectEqual(@as(usize,2),std.mem.count(u8,out.items,"7193.24912" )/2);
 }

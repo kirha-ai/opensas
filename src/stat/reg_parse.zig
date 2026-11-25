@@ -117,7 +117,7 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
             if (cx.graphics) |g| {
                 if (g.enabled != false) return proc.failGap(cx.diags, t[start].line, "PROC REG: graphical output is not implemented", .{});
             } else return proc.failGap(cx.diags, t[start].line, "PROC REG: PLOTS requires a graphics consumer", .{});
-            try cx.diags.warn(0, "You must enable ODS graphics before requesting plots with the PLOTS option in the PROC REG statement.", .{});
+            try cx.diags.warnStatus(0, "You must enable ODS graphics before requesting plots with the PLOTS option in the PROC REG statement.", .{});
         } else if (kw(t, i, "alpha")) {
             alpha = try numeric(cx, t, &i);
         } else if (kw(t, i, "singular")) {

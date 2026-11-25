@@ -86,6 +86,9 @@ pub const Diagnostics = struct {
     /// property (CLIN-failloud). Set by main's OPTIONS branch exactly like
     /// suppress_notes; read by main's runExpanded gate (D-024).
     syntax_check: bool = true,
+    /// Documented warning conditions can require rc 1 without becoming errors
+    /// or stopping subsequent steps. Ordinary warnings retain their old status.
+    warning_status: bool = false,
 
     pub fn init(arena: std.mem.Allocator) Diagnostics {
         return .{ .arena = arena, .list = .empty };
@@ -161,6 +164,11 @@ pub const Diagnostics = struct {
             .recoverable = true,
             .expanded = self.expansion_space,
         });
+    }
+
+    pub fn warnStatus(self: *Diagnostics, line: usize, comptime fmt: []const u8, args: anytype) error{OutOfMemory}!void {
+        try self.warn(line, fmt, args);
+        self.warning_status = true;
     }
 
     pub fn warn(self: *Diagnostics, line: usize, comptime fmt: []const u8, args: anytype) error{OutOfMemory}!void {
@@ -421,4 +429,19 @@ test "syntax_check defaults ON; spendStepErrors keeps the error loud, drops the 
 
     diags.syntax_check = true; // OPTIONS SYNTAXCHECK re-arms the gate itself
     try std.testing.expect(diags.syntax_check);
+}
+
+test "explicit warning status is nonfatal and distinct from ordinary warnings" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    var d = Diagnostics.init(arena.allocator());
+    try d.warn(1, "ordinary warning", .{});
+    try std.testing.expect(!d.warning_status);
+    try d.warnStatus(2, "warning with a process condition", .{});
+    try std.testing.expect(d.warning_status);
+    try std.testing.expect(!d.hasErrors());
+    try std.testing.expect(!d.hasStepErrors());
+    try std.testing.expectEqual(Severity.warning, d.list.items[1].severity);
+    try std.testing.expectEqual(@as(u8, 1), exitCode(false, d.hasErrors() or d.warning_status));
+    try std.testing.expectEqual(@as(u8, 2), exitCode(true, d.hasErrors() or d.warning_status));
 }
