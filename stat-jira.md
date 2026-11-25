@@ -11549,12 +11549,13 @@ Source: S154, Chapter 105, `The REG Procedure`, PDF pp. 8539–8728. Tasks in th
 
 <a id="stat-reg-005"></a>
 
-### [DOING @dev1] STAT-REG-005 — REG — Computations for Ridge Regression and IPC Analysis
+### [PARK] STAT-REG-005 — REG — Computations for Ridge Regression and IPC Analysis
 
 - Source: S154 / Chapter 105 / `Computations for Ridge Regression and IPC Analysis` (PDF pp. 8648–8649).
 - Scope: Implement Computations for Ridge Regression and IPC Analysis. This ticket owns the feature's options, defaults, computation, and results as an extension of the basic computational path; the chapter's output tickets handle ODS descriptors and file presentation.
 - Dependencies: [STAT-REG-001](#stat-reg-001), [STAT-REG-002](#stat-reg-002).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-REG-005/](tests/STAT15.4-oracle/STAT-REG-005/).
+- PARK (2026-11-25, 45-minute limit): Ridge path/OUTEST/native-graph foundation is preserved on dev1 (`0d6f83e3`, evidence `113f8608`). Original last replay exits 0 with 588 tokens, but SST twice prints 2123.70938 rather than 2123.70937, and two negative small coefficients print 0.000 rather than -0.000. Full independent path verification, final-SHA oracle replay and visual review of all five graphs remain incomplete; only the packed ridge plot was inspected. IPC is an explicit gap. Existing gate passed 1771 tests/2311 corpus/11 programs on the preserved source; not an oracle-completion claim. See `tests/STAT15.4-oracle/STAT-REG-005/implementation-evidence.md` in dev1 until integration.
 - Acceptance criteria: For Computations for Ridge Regression and IPC Analysis, use an independently calculable small sample and the source examples to verify targets, estimates/statistics, degrees of freedom, and applicable probabilities or intervals; include at least one relevant degenerate or boundary case, asserting documented diagnostics and result status.
 
 <a id="stat-reg-006"></a>
