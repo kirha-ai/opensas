@@ -1,0 +1,19 @@
+# corpus assertions
+# Complete unchanged STAT-TTEST-006 SAS oracle; whitespace-only normalization.
+next The TTEST Procedure
+next Difference: x - y
+next N Mean Std Dev Std Err Minimum Maximum
+next 12 3.5000 3.8494 1.1112 -4.0000 7.0000
+next Mean 95% CL Mean Std Dev 95% CL Std Dev
+next 3.5000 1.0542 5.9458 3.8494 2.7269 6.5359
+next DF t Value Pr > |t|
+next 11 3.15 0.0092
+next The TTEST Procedure
+next Difference: y - x
+next N Mean Std Dev Std Err Minimum Maximum
+next 12 -3.5000 3.8494 1.1112 -7.0000 4.0000
+next Mean 95% CL Mean Std Dev 95% CL Std Dev
+next -3.5000 -5.4957 Infty 3.8494 2.7269 6.5359
+next DF t Value Pr > t
+next 11 -3.15 0.9954
+end-listing

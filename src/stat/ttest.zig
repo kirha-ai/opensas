@@ -17,6 +17,7 @@ const A = std.mem.Allocator;
 
 pub const Class = struct { label: []const u8, raw: Value, count: f64 = 0 };
 pub const Analysis = struct {
+    pair: ?declarations.Pair = null,
     column: usize,
     classes: []const Class,
     /// Normal results, or the underlying log-scale results when lognormal_samples is present.
@@ -76,7 +77,7 @@ pub fn classes(cx: proc.ProcCtx, s: declarations.Spec, view: selection.View) dia
     return result.items;
 }
 
-fn sample(cx: proc.ProcCtx, s: declarations.Spec, view: selection.View, ci: usize, level: ?Class, geometric: ?*lognormal.Result) diag.Error!fit.Result {
+fn sample(cx: proc.ProcCtx, s: declarations.Spec, view: selection.View, ci: usize, level: ?Class, geometric: ?*lognormal.Result, pair: ?declarations.Pair) diag.Error!fit.Result {
     const a = cx.arena;
     const opts = numericOptions(s.options);
     if (s.summary) |kind| {
@@ -100,14 +101,15 @@ fn sample(cx: proc.ProcCtx, s: declarations.Spec, view: selection.View, ci: usiz
         if (!std.math.isFinite(count) or count < 1 or @trunc(count) != count or count > max_n) return cx.diags.fail(error.ParseError, s.line, "PROC TTEST: summary N must be a positive integer", .{});
         return fit.fromSummary(@intFromFloat(count), mean.?, sd.?, opts) catch |err| return numericFailure(cx, s, err);
     }
-    const missing = if (s.class) |c| try a.dupe(usize, &.{ ci, c }) else try a.dupe(usize, &.{ci});
+    const missing = if (pair) |p| try a.dupe(usize, &.{ p.left, p.right }) else if (s.class) |c| try a.dupe(usize, &.{ ci, c }) else try a.dupe(usize, &.{ci});
     const selected = try view.select(a, .{ .missing_columns = missing, .frequency = .truncate_positive, .weight = .positive_only });
     var values: std.ArrayList(f64) = .empty;
     var frequencies: std.ArrayList(f64) = .empty;
     var weights: std.ArrayList(f64) = .empty;
     for (selected.observations) |row| {
         if (level) |c| if (!std.mem.eql(u8, c.label, try display(a, s, row.cells))) continue;
-        try values.append(a, row.cells[ci].num);
+        const value = if (pair) |p| row.cells[p.left].num - row.cells[p.right].num else row.cells[ci].num;
+        try values.append(a, value);
         try frequencies.append(a, row.frequency.num);
         try weights.append(a, row.weight.num);
     }
@@ -135,10 +137,16 @@ pub fn compute(cx: proc.ProcCtx, s: declarations.Spec) diag.Error!Result {
         if (group.observations.len == 0) continue;
         const levels = try classes(cx, s, group);
         var analyses: std.ArrayList(Analysis) = .empty;
-        for (s.roles.analysis) |ci| {
+        if (s.paired) {
+            for (s.pairs) |pair| {
+                const samples = try cx.arena.alloc(fit.Result, 1);
+                samples[0] = try sample(cx, s, group, pair.left, null, null, pair);
+                try analyses.append(cx.arena, .{ .pair = pair, .column = pair.left, .classes = &.{}, .samples = samples });
+            }
+        } else for (s.roles.analysis) |ci| {
             const samples = try cx.arena.alloc(fit.Result, if (s.class != null) 2 else 1);
             const geometric = if (s.options.distribution == .lognormal) try cx.arena.alloc(lognormal.Result, samples.len) else null;
-            for (samples, 0..) |*r, i| r.* = try sample(cx, s, group, ci, if (s.class != null) levels[i] else null, if (geometric) |gs| &gs[i] else null);
+            for (samples, 0..) |*r, i| r.* = try sample(cx, s, group, ci, if (s.class != null) levels[i] else null, if (geometric) |gs| &gs[i] else null, null);
             try analyses.append(cx.arena, .{ .column = ci, .classes = levels, .samples = samples, .lognormal_samples = geometric });
         }
         try results.append(cx.arena, .{ .representative = group.observations[0].cells, .analyses = analyses.items });
@@ -204,7 +212,9 @@ pub fn runTtest(cx: proc.ProcCtx, out: *std.ArrayList(u8), toks: []const lex.Tok
                 try objects.finish(a, &tables, start, "TTests");
             }
             if (tables.items.len == 0) continue;
-            try body.print(a, "Variable: {s}\n\n", .{spec.input.ds.columns.items[analysis.column].name});
+            if (analysis.pair) |pair| {
+                try body.print(a, "Difference: {s} - {s}\n\n", .{ spec.input.ds.columns.items[pair.left].name, spec.input.ds.columns.items[pair.right].name });
+            } else try body.print(a, "Variable: {s}\n\n", .{spec.input.ds.columns.items[analysis.column].name});
             if (spec.roles.frequency) |ci| try body.print(a, "Frequency: {s}\n", .{spec.input.ds.columns.items[ci].name});
             if (spec.roles.weight) |ci| try body.print(a, "Weight: {s}\n", .{spec.input.ds.columns.items[ci].name});
             try body.appendSlice(a, tables.items);
@@ -485,4 +495,71 @@ test "STAT-TTEST-007 preserves explicit gap for lognormal two-group analysis" {
     try std.testing.expect(diag.gapHit());
     try std.testing.expect(d.hasErrors());
     try std.testing.expectEqual(@as(usize, 0), out.items.len);
+}
+
+test "STAT-TTEST-006 original paired direction listing matches all reference tokens" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var lib = @import("../exec.zig").Library.init(a);
+    try lib.put("sample", try Testing.sample(a));
+    var d = diag.Diagnostics.init(a);
+    const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &d };
+    var out: std.ArrayList(u8) = .empty;
+    try runTtest(cx, &out, try lex.tokenize(a, "proc ttest data=sample; paired x*y; run;", &d));
+    try runTtest(cx, &out, try lex.tokenize(a, "proc ttest data=sample sides=u; paired y*x; run;", &d));
+    try Testing.expectWords(try Testing.oracle(a, "tests/STAT15.4-oracle/STAT-TTEST-006/paired_direction.expected.txt"), out.items);
+    try std.testing.expectEqualStrings("", try d.render());
+    out.clearRetainingCapacity();
+    try runTtest(cx, &out, try lex.tokenize(a, "proc ttest data=sample; paired x*x; run;", &d));
+    try std.testing.expectEqual(@as(usize, 0), out.items.len);
+}
+
+test "STAT-TTEST-006 pairwise missing exclusion and BY FREQ WEIGHT preserve independent analytic moments" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const nan = std.math.nan(f64);
+    var ds = @import("../dataset.zig").Dataset.init(a, "d");
+    for ([_][]const u8{ "x", "y", "z", "f", "w", "g" }) |name| _ = try ds.addColumn(name, .num);
+    for ([_][6]f64{
+        .{ 4, 1, 0, 1, 1, 1 },     .{ 6, 2, nan, 2.9, 2, 1 }, .{ nan, 5, 2, 1, 1, 1 },
+        .{ 100, 0, 0, 0.9, 1, 1 }, .{ 100, 0, 0, 1, 0, 1 },   .{ 8, 3, 1, 1, 1, 2 },
+        .{ 5, 3, 2, 1, 1, 2 },
+    }) |row| {
+        var cells: [6]Value = undefined;
+        for (row, &cells) |x, *cell| cell.* = .{ .num = x };
+        try ds.appendRow(&cells);
+    }
+    var lib = @import("../exec.zig").Library.init(a);
+    try lib.put("d", &ds);
+    var d = diag.Diagnostics.init(a);
+    const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &d };
+    const spec = try declarations.parse(cx, try lex.tokenize(a, "proc ttest; by g; freq f; weight w; paired (x y):(y z); run;", &d));
+    const result = try compute(cx, spec);
+    try std.testing.expectEqual(@as(usize, 2), result.groups.len);
+    const first = result.groups[0].analyses[0].samples[0];
+    const second = result.groups[0].analyses[1].samples[0];
+    // x-y retains differences (3,4) with frequencies (1,2), weights (1,2):
+    // n=3, W=5, mean=19/5, CSS=.8, variance=.4, SE=sqrt(.08).
+    try std.testing.expectEqual(@as(usize, 3), first.n);
+    try std.testing.expectEqual(@as(f64, 5), first.sum_weights);
+    try std.testing.expectApproxEqAbs(@as(f64, 19.0 / 5.0), first.mean, 1e-14);
+    try std.testing.expectApproxEqAbs(@sqrt(@as(f64, 0.4)), first.std_dev, 1e-14);
+    try std.testing.expectApproxEqAbs(@sqrt(@as(f64, 0.08)), first.std_err, 1e-14);
+    // y-z independently retains (1,3), including the row with missing x.
+    try std.testing.expectEqual(@as(usize, 2), second.n);
+    try std.testing.expectEqual(@as(f64, 2), second.mean);
+    try std.testing.expectApproxEqAbs(@sqrt(@as(f64, 2)), second.std_dev, 1e-14);
+    try std.testing.expectEqual(@as(usize, 2), result.groups[1].analyses[0].samples[0].n);
+    try std.testing.expectEqual(@as(usize, 7), ds.rows.items.len);
+    const reversed = try compute(cx, try declarations.parse(cx, try lex.tokenize(a, "proc ttest; by g; freq f; weight w; paired y*x; run;", &d)));
+    const rev = reversed.groups[0].analyses[0].samples[0];
+    try std.testing.expectApproxEqAbs(-first.mean, rev.mean, 1e-14);
+    try std.testing.expectApproxEqAbs(-first.t, rev.t, 1e-14);
+    try std.testing.expectApproxEqAbs(-first.mean_ci.upper, rev.mean_ci.lower, 1e-14);
+    try std.testing.expectApproxEqAbs(-first.mean_ci.lower, rev.mean_ci.upper, 1e-14);
+    const upper = try compute(cx, try declarations.parse(cx, try lex.tokenize(a, "proc ttest sides=u; by g; freq f; weight w; paired x*y y*x; run;", &d)));
+    try std.testing.expectApproxEqAbs(@as(f64, 1), upper.groups[0].analyses[0].samples[0].p + upper.groups[0].analyses[1].samples[0].p, 1e-14);
+    try std.testing.expectEqualStrings("", try d.render());
 }

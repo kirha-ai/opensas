@@ -24,7 +24,10 @@ pub const Options = struct {
     plots_none: bool = false,
     cochran: bool = false,
 };
+pub const Pair = struct { left: usize, right: usize };
 pub const Spec = struct {
+    paired: bool = false,
+    pairs: []const Pair = &.{},
     input: proc.ProcInput,
     roles: selection.Roles,
     class: ?usize,
@@ -60,6 +63,57 @@ fn column(cx: proc.ProcCtx, ds: *const Dataset, token: lex.Token) diag.Error!usi
 }
 fn contains(cols: []const usize, ci: usize) bool {
     return std.mem.indexOfScalar(usize, cols, ci) != null;
+}
+
+// Parentheses delimit a variable list. Outside parentheses, a single list
+// expression (including numbered ranges) forms each side. A bare colon between
+// sides is the pairing operator, not the variable-list prefix operator.
+fn pairSide(cx: proc.ProcCtx, ds: *const Dataset, tokens: []const lex.Token, pos: *usize, left: bool) diag.Error![]const usize {
+    if (pos.* >= tokens.len) return cx.diags.fail(error.ParseError, if (tokens.len > 0) tokens[tokens.len - 1].line else 0, "PAIRED requires variables on both sides", .{});
+    var result: std.ArrayList(usize) = .empty;
+    const parenthesized = at(tokens, pos.*, .lparen);
+    var end = tokens.len;
+    if (parenthesized) {
+        pos.* += 1;
+        end = pos.*;
+        while (end < tokens.len and tokens[end].tag != .rparen) : (end += 1) {}
+        if (end == tokens.len) return cx.diags.fail(error.ParseError, tokens[pos.* - 1].line, "PAIRED variable list has no closing parenthesis", .{});
+    } else if (left) {
+        end = pos.*;
+        while (end < tokens.len and tokens[end].tag != .star and tokens[end].tag != .colon) : (end += 1) {}
+    }
+    while (pos.* < end) {
+        const line = tokens[pos.*].line;
+        for (try lists.next(cx.arena, ds, tokens[0..end], pos, cx.diags)) |name| {
+            const ci = (try selection.Roles.numeric(ds, name, "PAIRED", cx.diags, line)).?;
+            try result.append(cx.arena, ci);
+        }
+        if (!parenthesized) break;
+    }
+    if (result.items.len == 0) return cx.diags.fail(error.ParseError, tokens[@min(pos.*, tokens.len - 1)].line, "PAIRED variable list is empty", .{});
+    if (parenthesized) pos.* = end + 1;
+    return result.items;
+}
+
+fn readPairs(cx: proc.ProcCtx, ds: *const Dataset, tokens: []const lex.Token, out: *std.ArrayList(Pair)) diag.Error!void {
+    if (tokens.len == 0) return cx.diags.fail(error.ParseError, 0, "PAIRED requires a pair-list", .{});
+    var i: usize = 0;
+    while (i < tokens.len) {
+        const lhs = try pairSide(cx, ds, tokens, &i, true);
+        if (!at(tokens, i, .star) and !at(tokens, i, .colon)) return cx.diags.fail(error.ParseError, tokens[@min(i, tokens.len - 1)].line, "PAIRED requires * or : between variable lists", .{});
+        const positional = at(tokens, i, .colon);
+        const line = tokens[i].line;
+        i += 1;
+        const rhs = try pairSide(cx, ds, tokens, &i, false);
+        if (positional and lhs.len != rhs.len) return cx.diags.fail(error.ParseError, line, "PAIRED colon lists must contain the same number of variables", .{});
+        for (lhs, 0..) |l, j| {
+            if (positional) {
+                if (l != rhs[j]) try out.append(cx.arena, .{ .left = l, .right = rhs[j] });
+            } else for (rhs) |r| {
+                if (l != r) try out.append(cx.arena, .{ .left = l, .right = r });
+            }
+        }
+    }
 }
 
 pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
@@ -143,6 +197,8 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
     var ds = input.ds;
     var vars: std.ArrayList(usize) = .empty;
     var var_seen = false;
+    var paired = false;
+    var pairs: std.ArrayList(Pair) = .empty;
     var by: groups.Statements = .{};
     var freq: lists.NumericRole = .{};
     var weight: lists.NumericRole = .{};
@@ -179,11 +235,18 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
             try role.add(cx.arena, ds, try lists.roleVariable(t[0..end], i + 1, false, cx.diags), cx.diags);
         } else if (kw(t, i, "format")) {
             try proc.parseProcFormat(cx.arena, t, &i, &formats);
-        } else if (kw(t, i, "paired") or kw(t, i, "bootstrap")) {
+        } else if (kw(t, i, "paired")) {
+            if (paired) return cx.diags.fail(error.ParseError, token.line, "PAIRED statement cannot be used more than once", .{});
+            paired = true;
+            if (i + 1 == end) return cx.diags.fail(error.ParseError, token.line, "PAIRED requires a pair-list", .{});
+            try readPairs(cx, ds, t[i + 1 .. end], &pairs);
+        } else if (kw(t, i, "bootstrap")) {
             return proc.failGap(cx.diags, token.line, "PROC TTEST: {s} is not implemented", .{token.text});
         } else if (!kw(t, i, "where") and !kw(t, i, "run") and !kw(t, i, "quit") and !(token.tag == .name and parser.isMidStepSkippable(token.text))) return invalid(cx, token);
         i = end + 1;
     }
+    if (paired and (var_seen or class != null)) return cx.diags.fail(error.ParseError, t[0].line, "PAIRED cannot be used with CLASS or VAR", .{});
+    if (paired and options.distribution == .lognormal) return proc.failGap(cx.diags, t[0].line, "PROC TTEST: lognormal paired ratios are not implemented", .{});
     for (formats.items) |f| if (ds.indexOf(f.name) == null) return cx.diags.fail(error.ParseError, t[0].line, "Variable {s} not found.", .{f.name});
     ds = try groups.withFormats(cx.arena, ds, formats.items);
     input.ds = ds;
@@ -197,15 +260,20 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
             break;
         };
     }
+    if (summary != null and paired) return cx.diags.fail(error.ParseError, t[0].line, "PAIRED requires observation values, not summary statistics", .{});
     if (summary != null and options.distribution == .lognormal)
         return cx.diags.fail(error.ParseError, t[0].line, "PROC TTEST: DIST=LOGNORMAL requires observation values, not summary statistics", .{});
     if (summary != null and (freq.first() != null or weight.first() != null))
         return cx.diags.fail(error.ParseError, t[0].line, "PROC TTEST: FREQ and WEIGHT cannot be used with summary statistics", .{});
-    if (!var_seen) for (ds.columns.items, 0..) |c, ci| {
+    if (!var_seen and !paired) for (ds.columns.items, 0..) |c, ci| {
         if (c.type == .num and class != ci and !contains(bcols.items, ci) and !freq.contains(ci) and !weight.contains(ci)) try vars.append(cx.arena, ci);
     };
-    if (vars.items.len == 0) return cx.diags.fail(error.ParseError, t[0].line, "PROC TTEST: variable list is empty", .{});
-    return .{ .input = input, .roles = .{ .analysis = vars.items, .by = bcols.items, .frequency = freq.first(), .weight = weight.first() }, .class = class, .summary = summary, .by_desc = by_spec.desc, .notsorted = by_spec.notsorted, .options = options, .line = t[0].line };
+    if (!paired and vars.items.len == 0) return cx.diags.fail(error.ParseError, t[0].line, "PROC TTEST: variable list is empty", .{});
+    if (paired) for (pairs.items) |pair| {
+        if (!contains(vars.items, pair.left)) try vars.append(cx.arena, pair.left);
+        if (!contains(vars.items, pair.right)) try vars.append(cx.arena, pair.right);
+    };
+    return .{ .paired = paired, .pairs = pairs.items, .input = input, .roles = .{ .analysis = vars.items, .by = bcols.items, .frequency = freq.first(), .weight = weight.first() }, .class = class, .summary = summary, .by_desc = by_spec.desc, .notsorted = by_spec.notsorted, .options = options, .line = t[0].line };
 }
 
 const TestInput = struct {
@@ -316,4 +384,63 @@ test "STAT-TTEST-003 DIST sets H0 default only when omitted; option order does n
     const badcx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &bad };
     try std.testing.expectError(error.ParseError, parse(badcx, try lex.tokenize(a, "proc ttest data=summary dist=lognormal; var x; run;", &bad)));
     try std.testing.expect(std.mem.indexOf(u8, try bad.render(), "requires observation values") != null);
+}
+
+test "STAT-TTEST-006 documented pair-lists retain direction, cross order, positional matching and self omission" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var lib = @import("../exec.zig").Library.init(a);
+    var ds = Dataset.init(a, "d");
+    for ([_][]const u8{ "a1", "a2", "b1", "b2" }) |name| _ = try ds.addColumn(name, .num);
+    try lib.put("d", &ds);
+    var d = diag.Diagnostics.init(a);
+    const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &d };
+    const Case = struct { statement: []const u8, expected: []const Pair };
+    for ([_]Case{
+        .{ .statement = "a1*b1 a2*b2", .expected = &.{ .{ .left = 0, .right = 2 }, .{ .left = 1, .right = 3 } } },
+        .{ .statement = "(a1 a2)*(b1 b2)", .expected = &.{ .{ .left = 0, .right = 2 }, .{ .left = 0, .right = 3 }, .{ .left = 1, .right = 2 }, .{ .left = 1, .right = 3 } } },
+        .{ .statement = "(a1 a2)*(b1 a2)", .expected = &.{ .{ .left = 0, .right = 2 }, .{ .left = 0, .right = 1 }, .{ .left = 1, .right = 2 } } },
+        .{ .statement = "(a1-a2):(b1-b2)", .expected = &.{ .{ .left = 0, .right = 2 }, .{ .left = 1, .right = 3 } } },
+        .{ .statement = "(b:):(a:)", .expected = &.{ .{ .left = 2, .right = 0 }, .{ .left = 3, .right = 1 } } },
+        .{ .statement = "a1:a2", .expected = &.{.{ .left = 0, .right = 1 }} },
+        .{ .statement = "a1*a1", .expected = &.{} },
+    }) |case| {
+        const source = try std.fmt.allocPrint(a, "proc ttest; paired {s}; run;", .{case.statement});
+        const spec = try parse(cx, try lex.tokenize(a, source, &d));
+        try std.testing.expect(spec.paired);
+        try std.testing.expectEqual(case.expected.len, spec.pairs.len);
+        for (case.expected, spec.pairs) |want, actual| try std.testing.expectEqual(want, actual);
+    }
+    try std.testing.expectEqualStrings("", try d.render());
+}
+
+test "STAT-TTEST-006 malformed and conflicting pair declarations fail with captured locations" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var lib = @import("../exec.zig").Library.init(a);
+    try lib.put("sample", try TestInput.dataset(a));
+    for ([_][]const u8{
+        "paired x*y; var x;", "var x; paired x*y;", "class g; paired x*y;",
+        "paired (x y):f;",    "paired (x y)*();",   "paired x*;",
+        "paired x y;",        "paired (x y*f;",     "paired g*x;",
+        "paired missing*x;",  "paired;",            "paired x*y; paired y*x;",
+    }) |body| {
+        var d = diag.Diagnostics.init(a);
+        const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &d };
+        const source = try std.fmt.allocPrint(a, "proc ttest;\n{s} run;", .{body});
+        try std.testing.expectError(error.ParseError, parse(cx, try lex.tokenize(a, source, &d)));
+        try std.testing.expect(d.hasErrors());
+        try std.testing.expect(d.list.items[0].line > 0);
+    }
+    var summary = Dataset.init(a, "summary");
+    _ = try summary.addColumn("_STAT_", .char);
+    _ = try summary.addColumn("x", .num);
+    _ = try summary.addColumn("y", .num);
+    try lib.put("summary", &summary);
+    var d = diag.Diagnostics.init(a);
+    const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &d };
+    try std.testing.expectError(error.ParseError, parse(cx, try lex.tokenize(a, "proc ttest data=summary; paired x*y; run;", &d)));
+    try std.testing.expect(std.mem.indexOf(u8, try d.render(), "requires observation values") != null);
 }
