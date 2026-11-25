@@ -5,6 +5,7 @@ pub const diag = @import("diag.zig");
 pub const ast = @import("ast.zig");
 pub const pdv = @import("pdv.zig");
 pub const dataset = @import("dataset.zig");
+pub const sashelp = @import("sashelp.zig");
 pub const lexer = @import("lexer.zig");
 pub const parser_expr = @import("parser_expr.zig");
 pub const parser = @import("parser.zig");
@@ -26,6 +27,7 @@ pub const sql = @import("sql.zig");
 
 test {
     _ = @import("stat/ttest.zig");
+    _ = @import("sashelp.zig");
     _ = @import("stat/reg.zig");
     _ = @import("stat/univ_histogram_bins.zig");
     _ = @import("stat/univ_histogram_output.zig");
