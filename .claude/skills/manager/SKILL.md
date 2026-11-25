@@ -34,7 +34,9 @@ These user-requested rules override conflicting instructions below for this camp
   to product version identity, not statistical results or execution status.
 - Retain accepted tickets as `DONE`; never remove completed entries. Record
   verification evidence. Dependencies are satisfied by DONE entries.
-- Limit each attempt to 30 minutes. If it exceeds that limit or cannot be
+- Limit each ticket attempt to 45 minutes, including currently running attempts
+  measured from their original assignment time (user update 2026-11-25).
+  If it exceeds that limit or cannot be
   completed, retain it as `PARK` with a concrete reason and dispatch the next
   eligible existing ticket. Do not claim dependent work without an explicit
   viable existing/stub contract.
