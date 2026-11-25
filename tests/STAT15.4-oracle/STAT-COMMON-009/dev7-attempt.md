@@ -72,3 +72,17 @@ and observed means derive from the unchanged SAS oracle; its additional
 marginal coefficient/Non-est contracts derive from pp.4144–4147 and typed
 row-space tests. This is a new golden, not a replacement of the original
 expected listing. Dev6's CV precision correction is already included.
+
+## Integration checkpoint (not original-oracle acceptance)
+
+Dev6's COMMON012 commits were integrated locally without editing their owned
+MODEL/Type III hunks. With only `group|h` expanded to `group h group*h` in a
+**temporary diagnostic copy**, the complete listing matches all 206 original
+expected tokens exactly, status 0 and empty stderr. The unchanged original
+still fails at the unsupported MODEL bar syntax. This is explicitly not a
+claim that the original oracle passed, and the ticket is not declared DONE.
+
+The combined checkpoint gate passed directly: 1,788 tests, 2,315 corpus cases,
+and 11 programs. Before handoff, rebase onto the latest local manager branch
+and rerun the direct-exit gate. MODEL grammar ownership remains a manager
+coordination item; this task's explicit shared-file scope is LSMEANS hooks only.
