@@ -24,6 +24,7 @@ pub const Options = struct {
     order: Order = .mixed,
     ci: bool = true,
     plots_none: bool = false,
+    plots: @import("ttest_plots.zig").Options = .{},
     cochran: bool = false,
 };
 pub const Pair = struct { left: usize, right: usize };
@@ -129,6 +130,11 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
     var i: usize = 2;
     while (i < t.len and t[i].tag != .semicolon and t[i].tag != .eof) {
         const token = t[i];
+        if (kw(t, i, "plots")) {
+            options.plots = try @import("ttest_plots.zig").parse(cx.arena, cx.diags, t, &i);
+            options.plots_none = options.plots.none;
+            continue;
+        }
         if (kw(t, i, "tost")) {
             tost_raw = try @import("ttest_tost.zig").parseOption(t, &i, cx.diags);
             continue;
@@ -186,14 +192,6 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
             } else if (eq(token.text, "ci") or eq(token.text, "cl")) {
                 if (eq(value.text, "umpu")) return proc.failGap(cx.diags, token.line, "PROC TTEST: CI=UMPU is not implemented", .{});
                 options.ci = if (eq(value.text, "equal")) true else if (eq(value.text, "none")) false else return invalid(cx, value);
-            } else if (eq(token.text, "plots")) {
-                if (!eq(value.text, "none")) {
-                    inline for (.{ "all", "agreement", "agreementplot", "bootstrap", "boot", "box", "boxplot", "histogram", "hist", "histdens", "interval", "intervalplot", "profiles", "profilesplot", "qq", "qqplot", "summary", "summaryplot" }) |known| {
-                        if (eq(value.text, known)) return proc.failGap(cx.diags, token.line, "PROC TTEST: plots are not implemented", .{});
-                    }
-                    return invalid(cx, value);
-                }
-                options.plots_none = true;
             } else return invalid(cx, token);
         }
     }

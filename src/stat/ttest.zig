@@ -177,9 +177,7 @@ fn bootstrapInput(cx: proc.ProcCtx, s: declarations.Spec, group: Group, analysis
 
 pub fn runTtest(cx: proc.ProcCtx, out: *std.ArrayList(u8), toks: []const lex.Token) diag.Error!void {
     const spec = try declarations.parse(cx, toks);
-    if (!spec.options.plots_none and spec.summary == null) if (cx.graphics) |g| {
-        if (g.enabled == true or (g.enabled != false and g.cli_dir != null)) return proc.failGap(cx.diags, spec.line, "PROC TTEST: ODS graphics are not implemented", .{});
-    };
+    try @import("ttest_plots.zig").validate(cx, spec);
     if (spec.crossover) |treatments| {
         if (cx.capture) |capture| {
             for ([_][]const u8{ "Statistics", "ConfLimits", "TTests", "Equality" }) |name| if (capture.wants(name)) return proc.failGap(cx.diags, spec.line, "TTEST crossover ODS dataset schemas are not verified", .{});
@@ -231,6 +229,7 @@ pub fn runTtest(cx: proc.ProcCtx, out: *std.ArrayList(u8), toks: []const lex.Tok
     if (spec.bootstrap) |o| if (o.bootdata) |name| {
         boot_dataset = try bootstrap.outputDataset(a, name, spec.class != null);
     };
+    var graph_order: usize = 0;
     for (result.groups, 1..) |group, by_index| {
         var body: std.ArrayList(u8) = .empty;
         for (group.analyses) |analysis| {
@@ -342,6 +341,7 @@ pub fn runTtest(cx: proc.ProcCtx, out: *std.ArrayList(u8), toks: []const lex.Tok
                 try bootstrap_object.finish(a, &tables, bootstrap_start, "Bootstrap");
                 if (boot_dataset) |ds| try bootstrap.appendOutput(ds, spec.input.ds.columns.items[analysis.column].name, report, spec.class != null);
             }
+            try @import("ttest_plots.zig").executeAnalysis(cx, spec, group, analysis, by_index, &graph_order);
             if (tables.items.len == 0) continue;
             if (analysis.pair) |pair| {
                 try body.print(a, "Difference: {s} - {s}\n\n", .{ spec.input.ds.columns.items[pair.left].name, spec.input.ds.columns.items[pair.right].name });
