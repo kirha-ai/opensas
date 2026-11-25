@@ -608,7 +608,10 @@ fn seedAutomatics(st: *State) Error!void {
     try st.setVar("sysindex", "0");
     try st.setVar("sysmacroname", "");
     try st.setVar("sysparm", functions.sysparm_text); // GAP-sysparm-opt: the shared session value (reads are live — getVar)
-    try st.setVar("sysver", "9.4");
+    try st.setVar("sysver", "9.4"); // language compatibility, not runtime identity
+    // STAT-COMMON-001: report the actual OpenSAS build, never a SAS build ID.
+    // Reuse the CLI's -Dversion / git describe / dev metadata on every target.
+    try st.setVar("sysvlong4", "opensas " ++ @import("build_options").version);
     try st.setVar("sysscp", switch (@import("builtin").os.tag) {
         .windows => "WIN X64",
         .macos => "MAC",
@@ -7873,4 +7876,21 @@ test "BUG-sysfuncmissingdot: %sysfunc maps bare `.`/`.A`–`.Z` to numeric missi
     try std.testing.expectEqualStrings("2", try expand(a, "%sysfunc(n(1,.,3))", &d4));
     try std.testing.expectEqualStrings("4", try expand(a, "%sysfunc(sum(1,.,3))", &d4));
     try std.testing.expectEqualStrings("", try d4.render());
+}
+
+test "STAT-COMMON-001: runtime identity reaches macro expansion and SYMGET" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var diags = diag.Diagnostics.init(a);
+    functions.unbindLibrary();
+    defer functions.clearLetVars();
+    const expected = "opensas " ++ @import("build_options").version;
+    try std.testing.expect(@import("build_options").version.len > 0);
+    try std.testing.expectEqualStrings(expected, try expand(a, "&SYSVLONG4", &diags));
+    var pdv = Pdv.init(a);
+    var ev: eval.Evaluator = .{ .arena = a, .pdv = &pdv, .diags = &diags };
+    try std.testing.expectEqualStrings(expected, (try functions.dispatch(&ev, "symget", &.{.{ .str = "SySvLoNg4" }})).str);
+    try std.testing.expectEqualStrings("9.4", (try functions.dispatch(&ev, "symget", &.{.{ .str = "sysver" }})).str);
+    try std.testing.expectEqualStrings("", try diags.render());
 }
