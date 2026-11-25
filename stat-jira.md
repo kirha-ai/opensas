@@ -255,14 +255,14 @@ Complete prerequisite shared contracts first, then each PROC's data input, model
 
 <a id="stat-common-006"></a>
 
-### [TODO] STAT-COMMON-006 — CLASS level formation and ordering
+### [DOING @dev4] STAT-COMMON-006 — CLASS level formation and ordering
 
 - Source: S154 / Chapter 20 / `Levelization of Classification Variables` (PDF pp. 411–413).
 - Scope: Represent formatted levels, ordering methods, reference levels, and missing levels consistently; integrate procedure-specific ORDER=/REF= and related options in PROC tickets.
 - Dependencies: [STAT-COMMON-002](#stat-common-002).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-COMMON-006/](tests/STAT15.4-oracle/STAT-COMMON-006/).
-- Dispatch contract: dev7 owns a shared CLASS-level helper and its tests; dev2 integrates it into GLM, dev6 owns GLM numerical inference. Verify the original CLASS-order oracle after integration; helper-only tests do not count as DONE.
-- Scheduling note (2026-11-25): Reserved dev7 worktree is prepared, but both spawn attempts were rejected by the current session's thread limit. Manager cap and user runtime config are now 7; six dev agents actually run. No dev7 implementation attempt or 45-minute clock has started. Keep TODO until a real worker is dispatched.
+- Dispatch contract: dev4 owns a shared CLASS-level helper and its tests; dev2 integrates it into GLM, dev6 owns GLM numerical inference. Verify the original CLASS-order oracle after integration; helper-only tests do not count as DONE.
+- Scheduling note (2026-11-25): Reserved dev7 could not start because of the current session's thread limit, despite saved cap 7. After finishing TTEST-009, the real dev4 worker takes this ticket; its 45-minute clock starts at this reassignment. Actual concurrent dev count remains six.
 - Acceptance criteria: Verify level ordering and column mappings for character, numeric, formatted, missing, and multiple-BY-group data; changes in input order may have only the effects allowed by the documentation.
 
 <a id="stat-common-007"></a>
@@ -14691,12 +14691,13 @@ Source: S154, Chapter 128, `The TTEST Procedure`, PDF pp. 10595–10692. Tasks i
 
 <a id="stat-ttest-009"></a>
 
-### [DOING @dev4] STAT-TTEST-009 — TTEST — TOST Equivalence Test
+### [DONE] STAT-TTEST-009 — TTEST — TOST Equivalence Test
 
 - Source: S154 / Chapter 128 / `TOST Equivalence Test` (PDF pp. 10630–10631).
 - Scope: Implement TOST Equivalence Test. This ticket owns the feature's options, defaults, computation, and results as an extension of the basic computational path; the chapter's output tickets handle ODS descriptors and file presentation.
 - Dependencies: [STAT-TTEST-001](#stat-ttest-001), [STAT-TTEST-002](#stat-ttest-002), [STAT-COMMON-005](#stat-common-005).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-TTEST-009/](tests/STAT15.4-oracle/STAT-TTEST-009/).
+- DONE (2026-11-25): Landed/pushed `7f34c84f`. Unchanged TOST oracle matches every output token with whitespace-only normalization, status 0, stderr empty; normal/lognormal/two-sample/paired/one-sided cases preserved. Direct-exit exact-SHA gate: 1687 tests, 2306 corpus, 11 programs passed. Evidence: `tests/STAT15.4-oracle/STAT-TTEST-009/implementation-evidence.md`; unsupported ratio/Cochran-specific TOST paths remain explicit gaps.
 - Acceptance criteria: For TOST Equivalence Test, separately verify both one-sided tests, the combined equivalence decision, and the corresponding interval confidence level; cover exact equivalence boundaries and difference/ratio scales; validate numerical values against the source formulas or an independent reference, following this file's precision conventions.
 
 <a id="stat-ttest-010"></a>
