@@ -268,22 +268,24 @@ Complete prerequisite shared contracts first, then each PROC's data input, model
 
 <a id="stat-common-007"></a>
 
-### [DOING @dev4] STAT-COMMON-007 — Design matrices for main effects, interactions, and nesting
+### [DONE] STAT-COMMON-007 — Design matrices for main effects, interactions, and nesting
 
 - Source: S154 / Chapter 20 / `GLM Parameterization of Classification Variables and Effects` (PDF pp. 414–418).
 - Scope: Implement intercepts, continuous effects, categorical main effects, interactions, nesting, continuous/class combinations, and general effect expansion; retain the mapping from column names to model effects.
 - Dependencies: [STAT-COMMON-006](#stat-common-006), [STAT-COMMON-003](#stat-common-003).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-COMMON-007/](tests/STAT15.4-oracle/STAT-COMMON-007/).
+- DONE (2026-11-25): Landed/pushed `1dc6858f`. Original GLMMOD case matches all 261 tokens, rc 0, empty diagnostics; full OUTPARM and OUTDESIGN listings retained. Typed tests verify 15 parameter rows, 12 design rows, all cells, blank metadata positions, column order and aliases. Successful retry gate: 1768 tests, 2311 corpus, 11 programs passed; earlier cache-failed attempt excluded. Evidence: `tests/STAT15.4-oracle/STAT-COMMON-007/implementation-evidence.md`.
 - Acceptance criteria: For small unbalanced designs, verify each design matrix column, its order, and its label; test empty cells, aliases, and no-intercept settings.
 
 <a id="stat-common-008"></a>
 
-### [TODO] STAT-COMMON-008 — Alternative parameterizations and reference coding
+### [DOING @dev4] STAT-COMMON-008 — Alternative parameterizations and reference coding
 
 - Source: S154 / Chapter 20 / `Other Parameterizations` (PDF pp. 418–421).
 - Scope: Implement the non-GLM parameterizations and reference-level semantics described in this section; expose them only to PROCs that document support for them.
 - Dependencies: [STAT-COMMON-007](#stat-common-007).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-COMMON-008/](tests/STAT15.4-oracle/STAT-COMMON-008/).
+- Dispatch contract: Reuse the completed CLASS/design helpers for REF/EFFECT coding and implement the LOGISTIC execution prerequisite required by this original case. Missing LOGISTIC alone is not grounds for immediate PARK; keep work bounded to the assigned observable contract and report any remaining gaps precisely.
 - Acceptance criteria: Verify equivalent predictions before and after parameter transformations for the same fitted space; check each documented coding scheme rather than substituting a single scheme for all parameterizations.
 
 <a id="stat-common-009"></a>
