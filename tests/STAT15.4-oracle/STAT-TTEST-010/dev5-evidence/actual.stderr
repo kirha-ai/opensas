@@ -1,0 +1,28 @@
+Output Added:
+-------------
+Name:       Statistics
+Label:      Statistics
+Template:   Stat.TTest.Statistics
+Path:       Ttest.x.Statistics
+-------------
+Output Added:
+-------------
+Name:       ConfLimits
+Label:      Confidence Limits
+Template:   Stat.TTest.ConfLimits
+Path:       Ttest.x.ConfLimits
+-------------
+Output Added:
+-------------
+Name:       TTests
+Label:      T-Tests
+Template:   Stat.TTest.TTests
+Path:       Ttest.x.TTests
+-------------
+Output Added:
+-------------
+Name:       Equality
+Label:      Equality of Variances
+Template:   Stat.TTest.Equality
+Path:       Ttest.x.Equality
+-------------

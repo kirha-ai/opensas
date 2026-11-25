@@ -1,0 +1,7 @@
+NAME,TYPE,LENGTH,VARNUM,FORMAT,FORMATL,FORMATD,INFORMAT,INFORML,INFORMD,LABEL
+Variable,2,1,1,,0,0,,0,0,
+Method,2,13,2,,0,0,,0,0,
+Variances,2,7,3,,0,0,,0,0,
+tValue,1,8,4,,7,2,,0,0,t Value
+DF,1,8,5,BEST,6,0,,0,0,
+Probt,1,8,6,PVALUE,6,4,,0,0,Pr > |t|
