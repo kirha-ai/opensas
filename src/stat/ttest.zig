@@ -158,13 +158,37 @@ pub fn runTtest(cx: proc.ProcCtx, out: *std.ArrayList(u8), toks: []const lex.Tok
     // Do not print a one-sample table for a requested two-sample analysis.
     // The selection and summary interfaces above are already shared by both.
     const result = try compute(cx, spec);
-    if (spec.class != null) return proc.failGap(cx.diags, spec.line, "PROC TTEST: two-sample inference is awaiting its numeric implementation", .{});
+    if (spec.class != null and spec.options.distribution == .lognormal) return proc.failGap(cx.diags, spec.line, "PROC TTEST: lognormal two-sample inference is not implemented", .{});
     const a = cx.arena;
     for (result.groups) |group| {
         var body: std.ArrayList(u8) = .empty;
         for (group.analyses) |analysis| {
             var tables: std.ArrayList(u8) = .empty;
-            if (analysis.lognormal_samples) |gs| {
+            if (spec.class) |class_column| {
+                const two = @import("ttest_two_sample.zig");
+                const base = numericOptions(spec.options);
+                const pair = two.compute(analysis.samples[0], analysis.samples[1], .{
+                    .h0 = base.h0,
+                    .alpha = base.alpha,
+                    .sides = base.sides,
+                    .cochran = spec.options.cochran,
+                }) catch |err| return numericFailure(cx, spec, err);
+                const labels: [2][]const u8 = .{ analysis.classes[0].label, analysis.classes[1].label };
+                const class_name = spec.input.ds.columns.items[class_column].name;
+                const objects: @import("../ods_listing.zig").Tables = .{ .selection = cx.listing, .prefix = "Ttest" };
+                var start = tables.items.len;
+                try two.statistics(a, &tables, pair, class_name, labels, spec.summary != null);
+                try objects.finish(a, &tables, start, "Statistics");
+                start = tables.items.len;
+                try two.intervals(a, &tables, pair, class_name, labels, spec.options.ci);
+                try objects.finish(a, &tables, start, "ConfLimits");
+                start = tables.items.len;
+                try two.tests(a, &tables, pair);
+                try objects.finish(a, &tables, start, "TTests");
+                start = tables.items.len;
+                try two.equalityTable(a, &tables, pair);
+                try objects.finish(a, &tables, start, "Equality");
+            } else if (analysis.lognormal_samples) |gs| {
                 try lognormal.render(a, &tables, gs[0], lognormalOptions(spec), spec.options.ci);
             } else {
                 const r = rendered(analysis.samples[0]);
@@ -423,4 +447,42 @@ test "STAT-TTEST-003 all invalid responses warn at rc0; constant CV and CI NONE 
     try std.testing.expect(std.mem.indexOf(u8, out.items, "CL CV") == null);
     try std.testing.expect(std.mem.indexOf(u8, out.items, "CL Mean") != null);
     try std.testing.expect(std.mem.indexOf(u8, out.items, "2 Infty <.0001") != null);
+}
+
+test "STAT-TTEST-007 integrated CLASS and COCHRAN listing matches original oracle" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var lib = @import("../exec.zig").Library.init(a);
+    try lib.put("sample", try Testing.sample(a));
+    var d = diag.Diagnostics.init(a);
+    const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &d };
+    var out: std.ArrayList(u8) = .empty;
+    try runTtest(cx, &out, try lex.tokenize(a, "proc ttest data=sample cochran; class group; var x; run;", &d));
+    try Testing.expectWords(try Testing.oracle(a, "tests/STAT15.4-oracle/STAT-TTEST-007/two_sample_variance.expected.txt"), out.items);
+    try std.testing.expectEqualStrings("", try d.render());
+    out.clearRetainingCapacity();
+    try runTtest(cx, &out, try lex.tokenize(a, "proc ttest data=sample sides=u ci=none; class group; var x; run;", &d));
+    try std.testing.expect(std.mem.indexOf(u8, out.items, "Cochran") == null);
+    try std.testing.expect(std.mem.indexOf(u8, out.items, "CL Std Dev") == null);
+    try std.testing.expect(std.mem.indexOf(u8, out.items, "Pr > t") != null);
+    try std.testing.expect(std.mem.indexOf(u8, out.items, "Infty") != null);
+    try std.testing.expect(std.mem.indexOf(u8, out.items, "Equality of Variances") != null);
+}
+
+test "STAT-TTEST-007 preserves explicit gap for lognormal two-group analysis" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var lib = @import("../exec.zig").Library.init(a);
+    try lib.put("sample", try Testing.sample(a));
+    var d = diag.Diagnostics.init(a);
+    const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &d };
+    var out: std.ArrayList(u8) = .empty;
+    diag.resetGap();
+    defer diag.resetGap();
+    try std.testing.expectError(error.ParseError, runTtest(cx, &out, try lex.tokenize(a, "proc ttest dist=lognormal; class group; var x; run;", &d)));
+    try std.testing.expect(diag.gapHit());
+    try std.testing.expect(d.hasErrors());
+    try std.testing.expectEqual(@as(usize, 0), out.items.len);
 }

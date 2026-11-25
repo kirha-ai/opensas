@@ -22,6 +22,7 @@ pub const Options = struct {
     order: Order = .mixed,
     ci: bool = true,
     plots_none: bool = false,
+    cochran: bool = false,
 };
 pub const Spec = struct {
     input: proc.ProcInput,
@@ -68,11 +69,16 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
     var i: usize = 2;
     while (i < t.len and t[i].tag != .semicolon and t[i].tag != .eof) {
         const token = t[i];
+        if (kw(t, i, "cochran")) {
+            options.cochran = true;
+            i += 1;
+            continue;
+        }
         if (kw(t, i, "byvar")) {
             i += 1;
             continue;
         }
-        if (kw(t, i, "nobyvar") or kw(t, i, "cochran") or kw(t, i, "tost"))
+        if (kw(t, i, "nobyvar") or kw(t, i, "tost"))
             return proc.failGap(cx.diags, token.line, "PROC TTEST: {s} is not implemented", .{token.text});
         if (!at(t, i + 1, .eq)) return invalid(cx, token);
         i += 2;
