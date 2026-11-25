@@ -53,8 +53,9 @@ pub fn render(cx: proc.ProcCtx, out: *std.ArrayList(u8), spec: parse.Spec, d: de
         fitted.df_error,                try number(a, fitted.sse, decimals),     try number(a, fitted.mse, decimals),     if (spec.intercept) @as([]const u8, "Corrected") else "Uncorrected", model.df_total,
         try number(a, total, decimals),
     });
+    const cv = 100 * @sqrt(fitted.mse) / fitted.y_mean;
     try out.print(a, "\nR-Square Coeff Var Root MSE {s} Mean\n\n{s} {s} {s} {s}\n", .{
-        response, try number(a, model.r_square, 6), try number(a, 100 * @sqrt(fitted.mse) / fitted.y_mean, 6), try number(a, @sqrt(fitted.mse), 6), try number(a, fitted.y_mean, places(@abs(fitted.y_mean), 6)),
+        response, try number(a, model.r_square, 6), try number(a, cv, places(@abs(cv), 6)), try number(a, @sqrt(fitted.mse), 6), try number(a, fitted.y_mean, places(@abs(fitted.y_mean), 6)),
     });
     const default_ss = spec.defaultSumsOfSquares();
     if (default_ss or spec.ss1) try effects(a, out, spec, "I", result.type_i);

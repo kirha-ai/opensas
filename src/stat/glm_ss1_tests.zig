@@ -153,9 +153,10 @@ test "COMMON010 missing-cell Type I matrices are estimable and use rank incremen
     try glm.execute(cx, &output, r.spec);
     try testing.expect(std.mem.indexOf(u8, try normalized(a, output.items), "A*B 0 0.00000000 . . .") != null);
     try testing.expect(!diagnostics.hasErrors());
-    // SS1 support does not silently enable missing-cell Type III hypotheses.
+    // SS1 support does not silently enable missing-cell Type IV hypotheses.
     var defaults = r.spec;
     defaults.ss1 = false;
+    defaults.ss4 = true;
     try testing.expectError(error.ParseError, glm.fitDesign(cx, defaults, r.data));
     try testing.expect(diagnostics.hasErrors());
     // An SS1 table does not make predictions in a missing cell estimable.

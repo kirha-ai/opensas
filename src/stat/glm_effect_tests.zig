@@ -129,7 +129,7 @@ test "GLM003 numeric effect products preserve factors and MODEL order" {
     try std.testing.expectEqualSlices(f64, &.{ 1, -2, 3, 4, -6, 12, 1, 0.5, -4, 0.25, -2, -1 }, matrix.x);
 }
 
-test "GLM003 unsupported reference nesting and empty-cell hypotheses remain captured gaps" {
+test "GLM003 unsupported reference nesting and empty-cell Type IV remain captured gaps" {
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
     const a = arena.allocator();
@@ -155,7 +155,7 @@ test "GLM003 unsupported reference nesting and empty-cell hypotheses remain capt
         try std.testing.expect(diag.gapHit());
         try std.testing.expect(d.list.items[d.list.items.len - 1].line > 0);
     }
-    const spec = try parse(cx, "proc glm; class A B; model y=A B A*B; run;");
+    const spec = try parse(cx, "proc glm; class A B; model y=A B A*B / ss4; run;");
     const matrix = try design(cx, spec);
     diag.resetGap();
     try std.testing.expectError(error.ParseError, glm.fitDesign(cx, spec, matrix));

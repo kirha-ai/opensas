@@ -22,7 +22,10 @@ pub fn fitDesign(cx: proc.ProcCtx, spec: Spec, d: design.Design) diag.Error!math
         }
         dest.* = .{ .classes = classes.items, .continuous = continuous.items };
     }
-    var result = math.fit(cx.arena, d.x, d.y, d.n, d.p, effects, .{ .weights = d.weights, .frequencies = d.frequencies, .has_intercept = spec.intercept, .singular = spec.singular, .type_ii = if (spec.ss2) factors else null }) catch |err| {
+    const type34 = @import("glm_type34.zig");
+    const empty_iii = !spec.ss4 and type34.singleEmpty2x2(spec, d, factors);
+    const need_ii = spec.ss2 or (empty_iii and (spec.defaultSumsOfSquares() or spec.ss3));
+    var result = math.fit(cx.arena, d.x, d.y, d.n, d.p, effects, .{ .weights = d.weights, .frequencies = d.frequencies, .has_intercept = spec.intercept, .singular = spec.singular, .type_ii = if (need_ii) factors else null }) catch |err| {
         if (err == error.OutOfMemory) return err;
         return cx.diags.fail(error.ExecError, 0, "PROC GLM: numerical fit failed", .{});
     };
@@ -31,10 +34,11 @@ pub fn fitDesign(cx: proc.ProcCtx, spec: Spec, d: design.Design) diag.Error!math
         // Type I/II use nested column spaces and actual rank increments, so empty
         // cells do not require the missing-cell Type III hypothesis builder.
         // Keep unsupported singular coefficient displays and graphs explicit.
-        if (spec.defaultSumsOfSquares() or spec.ss3 or spec.ss4 or spec.classes.len == 0) return proc.failGap(cx.diags, 0, "PROC GLM: rank-deficient parameter displays or Type III/IV hypotheses are not implemented", .{});
+        const needs_iii_iv = spec.defaultSumsOfSquares() or spec.ss3 or spec.ss4;
+        if ((needs_iii_iv and !(empty_iii and result.model.fit.rank == 3)) or spec.classes.len == 0) return proc.failGap(cx.diags, 0, "PROC GLM: rank-deficient parameter displays or Type III/IV hypotheses are not implemented", .{});
         if (cx.graphics) |g| if (g.enabled == true and !spec.plots_none and !spec.noprint) return proc.failGap(cx.diags, 0, "PROC GLM: rank-deficient model graphics are not implemented; specify PLOTS=NONE", .{});
     }
-    try @import("glm_type34.zig").prepare(cx, spec, d, factors, &result);
+    try type34.prepare(cx, spec, d, factors, &result);
     return result;
 }
 

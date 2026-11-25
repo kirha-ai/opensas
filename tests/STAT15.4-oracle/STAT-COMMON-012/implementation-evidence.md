@@ -27,7 +27,7 @@ effects can have estimable conditional tests despite absent joint cells.
 
 General missing-cell orthogonal/distributive III/IV hypothesis construction is
 **not implemented**. Such contained-effect patterns fail visibly, including a
-full-rank three-factor case. Rank-deficient III/IV requests remain guarded, and
+full-rank three-factor case. A saturated 2x2 design with exactly one empty cell additionally supports Type III: its interaction has zero estimable DF, and each main effect has a unique shared-level cell contrast, equal to Type II. Other rank-deficient III/IV requests remain guarded, and
 SS1/SS2 continue to work in their previously supported deficient cases. Existing
 limitations on mixed/nested/higher-order CLASS syntax and symbolic E3/E4 displays
 remain explicit. This change does not implement SOLUTION parameterization.
@@ -41,7 +41,7 @@ tables against these references within half their last printed decimal unit,
 in addition to exact full-output token comparison. It reuses COMMON011's
 verification-only rational solver, not production fit results.
 
-Six registered tests additionally verify:
+Eight registered tests additionally verify:
 
 - Complete unbalanced 2x2 cell means `(13,10,19,17)`, counts `(2,2,2,1)`:
   equal-cell contrasts give III/IV SS `(67.6,10,.4)`. Tests check hypothesis
@@ -49,7 +49,8 @@ Six registered tests additionally verify:
 - Balanced data give `(84.5,12.5,.5)`. Reversing observation order, CLASS order,
   effect order and level reference leaves the tests invariant by effect.
 - A missing-corner additive model has estimable III/IV SS `(64,16)`; adding its
-  interaction makes the unsupported III/IV request fail before table output.
+  interaction retains the unique shared-level Type III contrasts; Type IV still
+  fails before table output.
   Combining SS4 with SS1 cannot bypass the guard.
 - A three-factor model with seven of eight cells has full rank seven and N=14,
   yet is rejected for SS4. Raw rows with zero weight or zero frequency do not
@@ -59,6 +60,12 @@ Six registered tests additionally verify:
   agrees with the independent F(2,2) tail. Individual and combined table options
   produce exactly the requested tables. Unvalidated IV rendering fails visibly.
 - Allocation failures release applicability and result storage.
+- The COMMON009 ANOVA is checked independently: observed n=3 cell means 9, 8,
+  22 give III SS 253.5, 1.5, 0; error DF=6 and SSE=74. All four missing corners,
+  unequal cell counts, and interaction-first/reversed-effect order are checked.
+  Coeff Var uses seven significant digits, including COMMON009's 27.01450.
+  LSMEANS/E and MODEL bar expansion remain dev7 integration work; this does not
+  claim full COMMON009 oracle completion.
 
 The corpus includes the entire original analysis and a separate explicit
 OpenSAS unsupported-pattern guard (expected status 2, empty stdout). The latter

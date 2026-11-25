@@ -118,7 +118,7 @@ test "COMMON012 balanced cells and reordered effect and level declarations prese
     }
 }
 
-test "COMMON012 missing corner permits uncontained main effects but rejects interaction III IV" {
+test "COMMON012 missing corner permits main-effect III but rejects unsupported IV" {
     var arena = std.heap.ArenaAllocator.init(testing.allocator);
     defer arena.deinit();
     const a = arena.allocator();
@@ -133,7 +133,9 @@ test "COMMON012 missing corner permits uncontained main effects but rejects inte
         try testing.expectEqual(@as(usize, 1), effect.df);
         try testing.expectApproxEqAbs(expected, effect.ss, 1e-10);
     }
-    for ([_][]const u8{ "ss3", "ss4", "ss3 ss4", "ss1 ss4", "ss2 ss3" }) |options| {
+    const with_interaction = try analyze(cx, "proc glm plots=none; class A B; model y=A B A*B / ss3; run;");
+    for (with_interaction.result.type_iii, [_]f64{ 64, 16, 0 }) |effect, expected| try testing.expectApproxEqAbs(expected, effect.ss, 1e-10);
+    for ([_][]const u8{ "ss4", "ss3 ss4", "ss1 ss4" }) |options| {
         var diagnostics = diag.Diagnostics.init(a);
         var local = cx;
         local.diags = &diagnostics;
@@ -232,4 +234,77 @@ fn allocationCheck(allocator: A) !void {
 
 test "COMMON012 Type IV applicability and result allocation failures release storage" {
     try testing.checkAllAllocationFailures(testing.allocator, allocationCheck, .{});
+}
+
+test "COMMON012 COMMON009 default Type III ANOVA for the single empty cell" {
+    var arena = std.heap.ArenaAllocator.init(testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var ds = Dataset.init(a, "empty_cell");
+    _ = try ds.addColumn("group", .char);
+    _ = try ds.addColumn("h", .num);
+    _ = try ds.addColumn("y", .num);
+    for ([_]f64{ 4, 6, 7, 9, 13, 12, 17, 19, 20, 23, 25, 24 }, 0..) |y, i| {
+        const h: f64 = @floatFromInt((i + 1) % 2);
+        if (i >= 6 and h == 1) continue;
+        try ds.appendRow(&.{ .{ .str = if (i < 6) "A" else "B" }, .{ .num = h }, .{ .num = y } });
+    }
+    var lib = Library.init(a);
+    try lib.put("empty_cell", &ds);
+    var d = diag.Diagnostics.init(a);
+    const cx = proc.ProcCtx{ .arena = a, .lib = &lib, .diags = &d };
+    const r = try analyze(cx, "proc glm plots=none; class group h; model y=group h group*h; run;");
+    try testing.expectEqual(@as(usize, 9), r.data.n);
+    try testing.expectEqual(@as(usize, 3), r.result.model.fit.rank);
+    try testing.expectEqual(@as(usize, 6), r.result.model.fit.df_error);
+    try testing.expectApproxEqAbs(@as(f64, 74), r.result.model.fit.sse, 1e-10);
+    // Three n=3 means are A0=9, A1=8, B0=22. Type III compares A0-B0
+    // and A0-A1: (9-22)^2/(1/3+1/3)=253.5 and 1/(2/3)=1.5.
+    for (r.result.type_iii, [_]f64{ 253.5, 1.5, 0 }, 0..) |effect, expected, i| {
+        try testing.expectApproxEqAbs(expected, effect.ss, 1e-9);
+        try testing.expectEqual(@as(usize, if (i == 2) 0 else 1), effect.df);
+    }
+    try testing.expectApproxEqAbs(@as(f64, 364.5), r.result.type_i[0].ss, 1e-9);
+    try testing.expectApproxEqAbs(@as(f64, 0.0040), r.result.type_iii[0].p_value, 5e-5);
+    var out: std.ArrayList(u8) = .empty;
+    try render.render(cx, &out, r.spec, r.data, r.result);
+    try testing.expect(std.mem.indexOf(u8, out.items, "27.01450") != null);
+    try testing.expect(std.mem.indexOf(u8, out.items, "27.014502") == null);
+    try testing.expect(!d.hasErrors());
+}
+
+test "COMMON012 single empty cell Type III covers every corner with unequal counts and order" {
+    var arena = std.heap.ArenaAllocator.init(testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const counts = [_]usize{ 2, 3, 4, 5 };
+    for (0..4) |missing| {
+        var ds = Dataset.init(a, "cells");
+        _ = try ds.addColumn("A", .char);
+        _ = try ds.addColumn("B", .char);
+        _ = try ds.addColumn("y", .num);
+        for (counts, 0..) |count, cell| {
+            if (cell == missing) continue;
+            for (0..count) |rep| {
+                const mean = @as(f64, @floatFromInt(2 + 4 * cell));
+                const noise = @as(f64, @floatFromInt(rep)) - @as(f64, @floatFromInt(count - 1)) / 2;
+                try ds.appendRow(&.{ .{ .str = if (cell < 2) "A1" else "A2" }, .{ .str = if (cell % 2 == 0) "B1" else "B2" }, .{ .num = mean + noise } });
+            }
+        }
+        var lib = Library.init(a);
+        try lib.put("cells", &ds);
+        var d = diag.Diagnostics.init(a);
+        const cx = proc.ProcCtx{ .arena = a, .lib = &lib, .diags = &d };
+        const ordinary = try analyze(cx, "proc glm plots=none; class A B; model y=A B A*B / ss3; run;");
+        const reordered = try analyze(cx, "proc glm plots=none; class B A; model y=B*A B A / ss3; run;");
+        const b = 1 - missing % 2;
+        const ar = 1 - missing / 2;
+        const avar = 1 / @as(f64, @floatFromInt(counts[b])) + 1 / @as(f64, @floatFromInt(counts[2 + b]));
+        const bvar = 1 / @as(f64, @floatFromInt(counts[2 * ar])) + 1 / @as(f64, @floatFromInt(counts[2 * ar + 1]));
+        try testing.expectApproxEqAbs(64 / avar, ordinary.result.type_iii[0].ss, 1e-9);
+        try testing.expectApproxEqAbs(16 / bvar, ordinary.result.type_iii[1].ss, 1e-9);
+        try testing.expectEqual(@as(usize, 0), ordinary.result.type_iii[2].df);
+        for ([_]usize{ 2, 1, 0 }, 0..) |j, i| try testing.expectApproxEqAbs(ordinary.result.type_iii[i].ss, reordered.result.type_iii[j].ss, 1e-9);
+        try testing.expect(!d.hasErrors());
+    }
 }
