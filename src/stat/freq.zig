@@ -1314,13 +1314,16 @@ fn renderGrid(a: std.mem.Allocator, out: *std.ArrayList(u8), sl: table_model.Sli
     const cd = sl.table.dimensions[sl.table.dimensions.len - 1];
     const rn = if (rd.label) |label| try std.fmt.allocPrint(a, "{s}({s})", .{ rd.name, label }) else rd.name;
     const cn = if (cd.label) |label| try std.fmt.allocPrint(a, "{s}({s})", .{ cd.name, label }) else cd.name;
-    const labels = try line(a, @max(width, @max(15 + rn.len, sep0 + 1 + cn.len)));
+    // The variable heading can be wider than its data levels. Keep both names
+    // intact without widening the frequency cells (STAT-FREQ-001 oracle).
+    const column_heading = if (rd.label == null and cd.label == null and 15 + rn.len >= sep0 + 1) 15 + rn.len + 5 else sep0 + 1;
+    const labels = try line(a, @max(width, @max(15 + rn.len, column_heading + cn.len)));
     putLeft(labels, 15, rn);
     if (rd.label != null or cd.label != null) {
         try flush(a, out, labels);
         @memset(labels, ' ');
     }
-    putLeft(labels, sep0 + 1, cn);
+    putLeft(labels, column_heading, cn);
     try flush(a, out, labels);
     try out.append(a, '\n');
     for (stats, 0..) |s, k| {
@@ -1775,6 +1778,24 @@ test "table Cartesian ordering, padded ranges and parsed score types" {
             try std.testing.expectEqual(score, request.scores);
             try std.testing.expectEqual(k == 3, request.out_name != null);
         }
+    }
+}
+
+test "STAT-FREQ-001 grid headings preserve long variable names above short levels" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    for ([_][]const u8{ "Internship", "LongRowVariableNameBeyondCellWidth" }) |row_name| {
+        var ds = Dataset.init(a, "d");
+        _ = try ds.addColumn(row_name, .num);
+        _ = try ds.addColumn("Enrollment", .num);
+        try ds.appendRow(&.{ .{ .num = 1 }, .{ .num = 2 } });
+        var tab = try computeTable(a, &ds, &.{ 0, 1 }, null, false, false, .internal, &.{});
+        var out: std.ArrayList(u8) = .empty;
+        try renderTable(a, &out, &tab, .{}, .{});
+        const heading = try std.fmt.allocPrint(a, "{s}     Enrollment\n", .{row_name});
+        try std.testing.expect(std.mem.indexOf(u8, out.items, heading) != null);
+        try std.testing.expect(std.mem.indexOf(u8, out.items, "Col Pct  |2       |  Total") != null);
     }
 }
 
