@@ -27,6 +27,11 @@ fn heading(cx: proc.ProcCtx, out: *std.ArrayList(u8)) !void {
 }
 
 pub fn render(cx: proc.ProcCtx, out: *std.ArrayList(u8), spec: parse.Spec, d: design.Design, result: math.Result) !void {
+    const tables = try @import("glm_estimate.zig").computeAll(cx, spec, d, result.model.fit.mse, result.model.fit.df_error);
+    try renderPrepared(cx, out, spec, d, result, tables);
+}
+
+pub fn renderPrepared(cx: proc.ProcCtx, out: *std.ArrayList(u8), spec: parse.Spec, d: design.Design, result: math.Result, estimates: []const @import("glm_estimate.zig").Table) !void {
     const a = cx.arena;
     if (spec.ss4 and (result.type_iv_basis == null or result.type_iv.len != spec.effects.len)) return proc.failGap(cx.diags, 0, "PROC GLM: Type IV hypotheses have not been validated", .{});
     const fitted = result.model.fit;
@@ -43,6 +48,7 @@ pub fn render(cx: proc.ProcCtx, out: *std.ArrayList(u8), spec: parse.Spec, d: de
     try out.print(a, "\nNumber of Observations Read {d}\nNumber of Observations Used {d}\n", .{ d.read, d.n });
     if (spec.freq != null) try out.print(a, "Sum of Frequencies Used {d}\n", .{fitted.n_used});
     if (spec.weight) |ci| try out.print(a, "Weight: {s}\n", .{spec.input.ds.columns.items[ci].name});
+    try @import("glm_estimate.zig").renderCoefficients(cx, out, estimates);
     try heading(cx, out);
     const response = spec.input.ds.columns.items[d.response].name;
     try out.print(a, "\nDependent Variable: {s}\n\nSum of\nSource DF Squares Mean Square F Value Pr > F\n", .{response});
@@ -75,6 +81,7 @@ pub fn render(cx: proc.ProcCtx, out: *std.ArrayList(u8), spec: parse.Spec, d: de
             try out.print(a, "{s} {s} {s} {s} {s}\n", .{ name, try number(a, coefficient, places(maximum, 9)), try number(a, se, places(max_se, 8)), try number(a, fitted.coefficientT(j), 2), try probability(a, fitted.coefficientP(j)) });
         }
     }
+    try @import("glm_estimate.zig").renderResults(cx, out, estimates);
 }
 fn effects(a: A, out: *std.ArrayList(u8), spec: parse.Spec, kind: []const u8, tests: []const math.EffectTest) !void {
     var maximum: f64 = 0;

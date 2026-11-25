@@ -70,7 +70,8 @@ pub fn execute(cx: proc.ProcCtx, out: *std.ArrayList(u8), spec: Spec) diag.Error
             }
             var result = try fitDesign(cx, spec, d);
             defer result.deinit(cx.arena);
-            if (!spec.noprint) try @import("glm_render.zig").render(cx, out, spec, d, result);
+            const estimates = try @import("glm_estimate.zig").computeAll(cx, spec, d, result.model.fit.mse, result.model.fit.df_error);
+            if (!spec.noprint) try @import("glm_render.zig").renderPrepared(cx, out, spec, d, result, estimates);
             try @import("glm_lsmeans.zig").execute(cx, out, spec, d, result.model.fit.mse, result.model.fit.df_error);
             try @import("glm_plots.zig").emit(cx, spec, d, result, graph_order);
             graph_order += 1;

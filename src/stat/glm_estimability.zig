@@ -16,6 +16,39 @@ pub const Result = struct {
     p_value: ?f64 = null,
 };
 
+const proc = @import("../proc.zig");
+const parsing = @import("glm_parse.zig");
+const design = @import("glm_design.zig");
+const coded = @import("design_matrix.zig");
+
+/// Shared full-parameter basis for LSMEANS and ESTIMATE; empty interaction
+/// columns, formatted levels and parameter order come from the coded designer.
+pub fn codedDesign(cx: proc.ProcCtx, spec: parsing.Spec, d: design.Design) diag.Error!coded.Design {
+    if (spec.order == .freq and spec.freq != null) return proc.failGap(cx.diags, 0, "PROC GLM: coefficient statements with ORDER=FREQ and FREQ are not implemented", .{});
+    const effects = try cx.arena.alloc(coded.Effect, spec.effects.len);
+    for (effects, spec.effects) |*dest, source| dest.* = .{ .factors = source.variables };
+    const rows = try cx.arena.alloc([]const @import("../value.zig").Value, d.n);
+    for (d.observations, rows) |row, *dest| dest.* = row.cells;
+    const matrix = try coded.build(cx.arena, spec.input.ds, rows, .{ .response = d.response, .classes = spec.classes, .effects = effects, .intercept = spec.intercept, .order = spec.order });
+    if (matrix.n != d.n) return cx.diags.fail(error.ExecError, 0, "PROC GLM: coefficient statement analysis rows disagree", .{});
+    return matrix;
+}
+
+/// Retain the full model's FREQ-adjusted error DF/MSE. The two equivalent
+/// parameter bases must agree in numerical rank; otherwise fail visibly.
+pub fn fitCoded(cx: proc.ProcCtx, spec: parsing.Spec, d: design.Design, matrix: coded.Design, mse: f64, df_error: usize) diag.Error!ranks.Result {
+    const weights = try cx.arena.alloc(f64, d.n);
+    for (weights, d.weights, d.frequencies) |*w, precision, frequency| w.* = precision * frequency;
+    var model = try ranks.fit(cx.arena, matrix.x, d.y, matrix.n, matrix.p, weights, spec.intercept, spec.singular);
+    errdefer model.deinit(cx.arena);
+    var total_frequency: f64 = 0;
+    for (d.frequencies) |frequency| total_frequency += frequency;
+    if (total_frequency - @as(f64, @floatFromInt(df_error)) != @as(f64, @floatFromInt(model.fit.rank))) return cx.diags.fail(error.ExecError, 0, "PROC GLM: coded design and MODEL rank disagree", .{});
+    model.fit.mse = mse;
+    model.fit.df_error = df_error;
+    return model;
+}
+
 /// The tolerance belongs to the consumer (LSMEANS defaults to 1e-4), not
 /// MODEL's numerical rank cutoff. Invalid inputs fail rather than mean Non-est.
 pub fn check(model: ranks.Result, l: []const f64, tolerance: f64) diag.Error!Status {

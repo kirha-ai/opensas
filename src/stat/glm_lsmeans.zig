@@ -7,7 +7,6 @@ const lex = @import("../lexer.zig");
 const parse = @import("glm_parse.zig");
 const design = @import("glm_design.zig");
 const coded = @import("design_matrix.zig");
-const ranks = @import("reg_diagnostics.zig");
 const estimability = @import("glm_estimability.zig");
 const A = std.mem.Allocator;
 pub const Request = struct { effect: usize, e: bool = false, stderr: bool = false, singular: f64 = 1e-4 };
@@ -79,23 +78,9 @@ fn compatible(target: []const ?usize, column: []const ?usize) bool {
 /// refit its equivalent column space with the existing rank/QR primitive.
 pub fn compute(cx: proc.ProcCtx, spec: parse.Spec, d: design.Design, request: Request, mse: f64, df_error: usize) diag.Error!Table {
     const a = cx.arena;
-    if (spec.order == .freq and spec.freq != null) return proc.failGap(cx.diags, 0, "PROC GLM: LSMEANS ORDER=FREQ with a FREQ statement is not implemented", .{});
-    const effects = try a.alloc(coded.Effect, spec.effects.len);
-    for (effects, spec.effects) |*dest, source| dest.* = .{ .factors = source.variables };
-    const rows = try a.alloc([]const @import("../value.zig").Value, d.n);
-    for (d.observations, rows) |row, *dest| dest.* = row.cells;
-    const matrix = try coded.build(a, spec.input.ds, rows, .{ .response = d.response, .classes = spec.classes, .effects = effects, .intercept = spec.intercept, .order = spec.order });
-    if (matrix.n != d.n) return cx.diags.fail(error.ExecError, 0, "PROC GLM: LSMEANS analysis rows disagree", .{});
-    const weights = try a.alloc(f64, d.n);
-    for (weights, d.weights, d.frequencies) |*w, precision, frequency| w.* = precision * frequency;
-    var model = try ranks.fit(a, matrix.x, d.y, matrix.n, matrix.p, weights, spec.intercept, spec.singular);
+    const matrix = try estimability.codedDesign(cx, spec, d);
+    var model = try estimability.fitCoded(cx, spec, d, matrix, mse, df_error);
     defer model.deinit(a);
-    // Full-model frequency DF and MSE, not physical-row DF from this refit.
-    var total_frequency: f64 = 0;
-    for (d.frequencies) |frequency| total_frequency += frequency;
-    if (total_frequency - @as(f64, @floatFromInt(df_error)) != @as(f64, @floatFromInt(model.fit.rank))) return cx.diags.fail(error.ExecError, 0, "PROC GLM: LSMEANS coded design and MODEL rank disagree", .{});
-    model.fit.mse = mse;
-    model.fit.df_error = df_error;
     var means: std.ArrayList(Mean) = .empty;
     var name: []const u8 = spec.effects[request.effect].name;
     for (matrix.columns) |target| {

@@ -11,6 +11,7 @@ pub const Order = @import("class_levels.zig").Order;
 pub const Effect = struct { name: []const u8, variables: []const usize };
 pub const Spec = struct {
     input: proc.ProcInput,
+    estimates: []const @import("glm_estimate.zig").Request = &.{},
     lsmeans: []const @import("glm_lsmeans.zig").Request = &.{},
     classes: []const usize = &.{},
     responses: []const usize,
@@ -128,6 +129,7 @@ pub fn parse(cx: proc.ProcCtx, tokens: []const lex.Token) diag.Error!Spec {
     var model_seen = false;
     var ended = false;
     var effects: std.ArrayList(Effect) = .empty;
+    var estimates: std.ArrayList(@import("glm_estimate.zig").Request) = .empty;
     var lsmeans: std.ArrayList(@import("glm_lsmeans.zig").Request) = .empty;
     i += 1;
     while (i < tokens.len and !at(tokens, i, .eof)) {
@@ -221,6 +223,9 @@ pub fn parse(cx: proc.ProcCtx, tokens: []const lex.Token) diag.Error!Spec {
                     j += 1;
                 } else if (kw(tokens, j, "alpha")) result.alpha = try real(cx, tokens[0..end], &j) else if (kw(tokens, j, "singular")) result.singular = try real(cx, tokens[0..end], &j) else return unsupported(cx, tokens[j], &.{ "solution", "e", "e1", "e2", "e3", "e4", "clparm", "cli", "clm", "p", "r", "nouni", "intercept", "tolerance", "inverse", "xpx", "effectsize" });
             }
+        } else if (kw(tokens, i, "estimate")) {
+            if (!model_seen) return cx.diags.fail(error.ParseError, tokens[i].line, "PROC GLM: ESTIMATE must follow MODEL", .{});
+            try estimates.append(cx.arena, try @import("glm_estimate.zig").read(cx, tokens[i..end], result, effects.items));
         } else if (kw(tokens, i, "lsmeans")) {
             if (!model_seen) return cx.diags.fail(error.ParseError, tokens[i].line, "PROC GLM: LSMEANS must follow MODEL", .{});
             try @import("glm_lsmeans.zig").read(cx, tokens[i..end], result, effects.items, &lsmeans);
@@ -243,11 +248,13 @@ pub fn parse(cx: proc.ProcCtx, tokens: []const lex.Token) diag.Error!Spec {
     if (!model_seen) return cx.diags.fail(error.ParseError, 0, "PROC GLM: MODEL statement required", .{});
     result.effects = effects.items;
     result.lsmeans = lsmeans.items;
+    result.estimates = estimates.items;
     if (result.absorb.len > 0) {
         result.intercept = true; // MODEL NOINT is ignored with ABSORB (S154 p.4094).
         for (result.effects) |effect| for (effect.variables) |ci| {
             if (std.mem.indexOfScalar(usize, result.absorb, ci) != null) return proc.failGap(cx.diags, 0, "PROC GLM: an ABSORB variable also used in MODEL is not implemented", .{});
         };
+        if (result.estimates.len > 0) return proc.failGap(cx.diags, 0, "PROC GLM: ESTIMATE with ABSORB is not implemented", .{});
     }
     const parsed = try bys.resolve(cx.arena, ds, cx.diags);
     const indices = try cx.arena.alloc(usize, parsed.names.len);
