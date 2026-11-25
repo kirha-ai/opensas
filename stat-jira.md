@@ -3626,17 +3626,18 @@ Source: S154, Chapter 47, `The FREQ Procedure`, PDF pp. 3069–3290. Tasks in th
 
 <a id="stat-freq-006"></a>
 
-### [DOING @dev3] STAT-FREQ-006 — FREQ — Measures of Association
+### [DONE] STAT-FREQ-006 — FREQ — Measures of Association
 
 - Source: S154 / Chapter 47 / `Measures of Association` (PDF pp. 3170–3180).
 - Scope: Implement Measures of Association. This ticket owns the feature's options, defaults, computation, and results as an extension of the basic computational path; the chapter's output tickets handle ODS descriptors and file presentation.
 - Dependencies: [STAT-FREQ-001](#stat-freq-001), [STAT-FREQ-002](#stat-freq-002), [STAT-COMMON-005](#stat-common-005).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-FREQ-006/](tests/STAT15.4-oracle/STAT-FREQ-006/).
+- DONE (2026-11-25): Landed/pushed `778341da`, evidence-only. Own unchanged oracle matches all 649 tokens, status 0, no warning/error differences; three graphs inspected. Additional unchanged MEASURES regressions verify 13 estimate/ASE/CI rows, seven null-SE/Z/tail tests and zero-margin behavior using independent formulas. Exact-SHA gate: 1741 tests, 2309 corpus, 11 programs passed. No production or golden changes. Evidence/replay: `tests/STAT15.4-oracle/STAT-FREQ-006/dev3-attempt.md` and `verify.py`.
 - Acceptance criteria: For Measures of Association, use an independently calculable small sample and the source examples to verify targets, estimates/statistics, degrees of freedom, and applicable probabilities or intervals; include at least one relevant degenerate or boundary case, asserting documented diagnostics and result status.
 
 <a id="stat-freq-007"></a>
 
-### [TODO] STAT-FREQ-007 — FREQ — Binomial Proportion
+### [DOING @dev3] STAT-FREQ-007 — FREQ — Binomial Proportion
 
 - Source: S154 / Chapter 47 / `Binomial Proportion` (PDF pp. 3180–3188).
 - Scope: Implement Binomial Proportion. This ticket owns the feature's options, defaults, computation, and results as an extension of the basic computational path; the chapter's output tickets handle ODS descriptors and file presentation.
