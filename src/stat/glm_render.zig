@@ -55,8 +55,10 @@ pub fn render(cx: proc.ProcCtx, out: *std.ArrayList(u8), spec: parse.Spec, d: de
     try out.print(a, "\nR-Square Coeff Var Root MSE {s} Mean\n\n{s} {s} {s} {s}\n", .{
         response, try number(a, model.r_square, 6), try number(a, 100 * @sqrt(fitted.mse) / fitted.y_mean, 6), try number(a, @sqrt(fitted.mse), 6), try number(a, fitted.y_mean, places(@abs(fitted.y_mean), 6)),
     });
-    try effects(a, out, spec, "I", result.type_i);
-    if (!spec.ss1_only) try effects(a, out, spec, "III", result.type_iii);
+    const default_ss = !spec.ss1 and !spec.ss2;
+    if (default_ss or spec.ss1) try effects(a, out, spec, "I", result.type_i);
+    if (spec.ss2) try effects(a, out, spec, "II", result.type_ii);
+    if (default_ss) try effects(a, out, spec, "III", result.type_iii);
     if (spec.classes.len == 0) {
         try out.appendSlice(a, "\nStandard\nParameter Estimate Error t Value Pr > |t|\n\n");
         var maximum: f64 = 0;

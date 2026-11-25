@@ -1,9 +1,11 @@
-//! GLM model and sequential/partial effect tests (STAT-GLM-002).
+//! GLM model and Type I/II/III effect tests (STAT-GLM-002, STAT-COMMON-011).
 //! Reuses REG's ordered rank policy and QR; there is no second solver here.
 //! The caller owns effect construction. For complete crossed CLASS models,
 //! supply sum-to-zero contrasts and their products so that deleting an effect
 //! tests the Type III equal-cell-weight hypothesis, NOT reference-cell effects.
 //! Continuous effects use their raw columns (including polynomial powers).
+//! Type II uses caller-supplied CLASS/continuous metadata for containment;
+//! it excludes containing effects from the adjustment, not from the error model.
 //! Arbitrary dummy coding, missing-cell CLASS hypotheses, nesting and mixed
 //! continuous/CLASS interactions need an estimable-function builder upstream;
 //! this API does not infer those hypotheses from an unlabeled numeric matrix.
@@ -17,6 +19,28 @@ const nan = std.math.nan(f64);
 /// Effects partition columns 1..p in MODEL order (0..p without an intercept).
 /// A zero-width effect is allowed and has zero DF. Names remain caller-owned.
 pub const Effect = struct { start: usize, len: usize };
+/// Variable identifiers come from the caller's model metadata. Continuous
+/// multiplicity is significant: x and x*x are different effects, not containment.
+pub const Factors = struct { classes: []const usize = &.{}, continuous: []const usize = &.{} };
+
+/// S154 physical p.286: equal continuous multisets, strictly more CLASS factors,
+/// and every inner CLASS factor also in outer. Variable order is immaterial.
+pub fn contains(outer: Factors, inner: Factors) bool {
+    if (outer.classes.len <= inner.classes.len or outer.continuous.len != inner.continuous.len) return false;
+    for (inner.classes) |v| if (std.mem.indexOfScalar(usize, outer.classes, v) == null) return false;
+    for (inner.continuous) |v| {
+        var ni: usize = 0;
+        var no: usize = 0;
+        for (inner.continuous) |c| if (v == c) {
+            ni += 1;
+        };
+        for (outer.continuous) |c| if (v == c) {
+            no += 1;
+        };
+        if (ni != no) return false;
+    }
+    return true;
+}
 pub const Options = struct {
     weights: ?[]const f64 = null,
     /// Already truncated integer replication counts; zero excludes a row.
@@ -24,6 +48,9 @@ pub const Options = struct {
     frequencies: ?[]const f64 = null,
     has_intercept: bool = true,
     singular: f64 = ranks.default_singular,
+    /// Explicit metadata requests Type II tests; one entry per effect.
+    /// Null leaves type_ii empty, preserving existing callers and default output.
+    type_ii: ?[]const Factors = null,
 };
 pub const EffectTest = struct {
     rank_full: usize,
@@ -37,11 +64,13 @@ pub const EffectTest = struct {
 pub const Result = struct {
     model: ranks.Result,
     type_i: []EffectTest,
+    type_ii: []EffectTest,
     type_iii: []EffectTest,
 
     pub fn deinit(self: *Result, a: A) void {
         self.model.deinit(a);
         a.free(self.type_i);
+        a.free(self.type_ii);
         a.free(self.type_iii);
         self.* = undefined;
     }
@@ -61,6 +90,12 @@ pub const Result = struct {
 /// With FREQ, model.fit.n_used is the replicated count (not physical rows), and
 /// leverage is the aggregate weighted hat diagonal for each supplied row.
 pub fn fit(a: A, x: []const f64, y: []const f64, n: usize, p: usize, effects: []const Effect, options: Options) diag.Error!Result {
+    if (options.type_ii) |factors| {
+        if (factors.len != effects.len) return error.ExecError;
+        for (factors) |factor| for (factor.classes, 0..) |v, i| {
+            if (std.mem.indexOfScalar(usize, factor.classes[0..i], v) != null or std.mem.indexOfScalar(usize, factor.continuous, v) != null) return error.ExecError;
+        };
+    }
     var end: usize = if (options.has_intercept) 1 else 0;
     for (effects) |effect| {
         if (effect.start != end) return error.ExecError;
@@ -104,6 +139,8 @@ pub fn fit(a: A, x: []const f64, y: []const f64, n: usize, p: usize, effects: []
     errdefer a.free(type_i);
     const type_iii = try a.alloc(EffectTest, effects.len);
     errdefer a.free(type_iii);
+    const type_ii = try a.alloc(EffectTest, if (options.type_ii != null) effects.len else 0);
+    errdefer a.free(type_ii);
     const effective = try a.dupe(f64, x);
     defer a.free(effective);
     for (0..p) |j| {
@@ -133,7 +170,46 @@ pub fn fit(a: A, x: []const f64, y: []const f64, n: usize, p: usize, effects: []
         type_i[e] = try reducedTest(a, effective, n, p, effect.start, null, prefix.fit, model.fit, effective_options);
         type_iii[e] = try reducedTest(a, effective, n, p, p, effect, model.fit, model.fit, effective_options);
     }
-    return .{ .model = model, .type_i = type_i, .type_iii = type_iii };
+    if (options.type_ii) |factors| for (type_ii, 0..) |*test_value, e| {
+        test_value.* = try typeIITest(a, effective, n, p, effects, factors, e, model.fit, effective_options);
+    };
+    return .{ .model = model, .type_i = type_i, .type_ii = type_ii, .type_iii = type_iii };
+}
+
+/// R(target | effects not containing target). Reorder the adjustment blocks
+/// before the target and exclude containing blocks, then take one sequential
+/// increment. The numerator space is a subspace of the frozen full model;
+/// its residual DF/MSE must NOT replace the complete model's denominator.
+fn typeIITest(a: A, x: []const f64, n: usize, p: usize, effects: []const Effect, factors: []const Factors, target: usize, full: reg.Fit, options: Options) diag.Error!EffectTest {
+    const indices = try a.alloc(usize, p);
+    defer a.free(indices);
+    var width: usize = 0;
+    if (options.has_intercept) {
+        indices[0] = 0;
+        width = 1;
+    }
+    for (effects, factors, 0..) |effect, factor, e| {
+        if (e == target or contains(factor, factors[target])) continue;
+        for (effect.start..effect.start + effect.len) |column| {
+            indices[width] = column;
+            width += 1;
+        }
+    }
+    const reduced_width = width;
+    for (effects[target].start..effects[target].start + effects[target].len) |column| {
+        indices[width] = column;
+        width += 1;
+    }
+    if (width == 0) return testStats(0, 0, 0, full);
+    const selected = try a.alloc(f64, n * width);
+    defer a.free(selected);
+    for (0..n) |i| for (indices[0..width], 0..) |column, j| {
+        selected[i * width + j] = x[i * p + column];
+    };
+    var hypothesis = try ranks.fit(a, selected, full.fitted, n, width, options.weights, options.has_intercept, options.singular);
+    defer hypothesis.deinit(a);
+    if (hypothesis.fit.rank > full.rank) return error.ExecError;
+    return reducedTest(a, selected, n, width, reduced_width, null, hypothesis.fit, full, options);
 }
 
 fn select(a: A, x: []const f64, n: usize, p: usize, stop: usize, omit: ?Effect) diag.Error![]f64 {

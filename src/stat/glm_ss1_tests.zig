@@ -62,7 +62,7 @@ test "COMMON010 SS1 original unbalanced model retains all tables except unreques
     var diagnostics = diag.Diagnostics.init(a);
     const cx = proc.ProcCtx{ .arena = a, .lib = &lib, .diags = &diagnostics };
     const result = try analyze(cx, "proc glm data=sample; class group; model y=group x z / ss1; run; quit;");
-    try testing.expect(result.spec.ss1_only);
+    try testing.expect(result.spec.ss1);
     try testing.expectEqual(@as(usize, 12), result.data.n);
     try testing.expectEqual(@as(usize, 8), result.result.model.fit.df_error);
     for (result.result.type_i, [_]f64{ 494.0833333, 101.15, 0.7432584 }) |effect, ss| {
@@ -80,12 +80,12 @@ test "COMMON010 SS1 original unbalanced model retains all tables except unreques
     try testing.expect(std.mem.indexOf(u8, actual, "z 1 0.7432584 0.7432584 0.67 0.4384") != null);
     try testing.expect(!diagnostics.hasErrors());
     var defaults = result.spec;
-    defaults.ss1_only = false;
+    defaults.ss1 = false;
     output.clearRetainingCapacity();
     try render.render(cx, &output, defaults, result.data, result.result);
     try testing.expect(std.mem.indexOf(u8, output.items, "Type III SS") != null);
     const combined = try glm.parse(cx, try lex.tokenize(a, "proc glm; model y=x z / ss1 singular=.000001 noint; run;", &diagnostics));
-    try testing.expect(combined.ss1_only and !combined.intercept);
+    try testing.expect(combined.ss1 and !combined.intercept);
     try testing.expectEqual(@as(f64, 0.000001), combined.singular);
     try testing.expectError(error.ParseError, glm.parse(cx, try lex.tokenize(a, "proc glm; model y=x / ss1=1; run;", &diagnostics)));
 }
@@ -155,7 +155,7 @@ test "COMMON010 missing-cell Type I matrices are estimable and use rank incremen
     try testing.expect(!diagnostics.hasErrors());
     // SS1 support does not silently enable missing-cell Type III hypotheses.
     var defaults = r.spec;
-    defaults.ss1_only = false;
+    defaults.ss1 = false;
     try testing.expectError(error.ParseError, glm.fitDesign(cx, defaults, r.data));
     try testing.expect(diagnostics.hasErrors());
     // An SS1 table does not make predictions in a missing cell estimable.

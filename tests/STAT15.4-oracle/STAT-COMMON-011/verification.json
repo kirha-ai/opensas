@@ -1,0 +1,31 @@
+{
+  "status": "pass",
+  "exit_status": 0,
+  "expected_tokens": 96,
+  "actual_tokens": 96,
+  "raw_token_differences": 0,
+  "normalization": "whitespace only",
+  "source_sha256": "36df20d487d74ec7ff3a7fa364d6e7ef22e1c6d24539e0f11269d99fc9150306",
+  "expected_sha256": "a99323672a959142874cc9c18712cff139bb4d7a6072a6f4dac2c452e55e2bcb",
+  "mse_exact": "2387/2136",
+  "independent_effect_checks": [
+    {
+      "effect": "group",
+      "df": 1,
+      "ss_exact": "1243256/393825",
+      "f_exact": "1420864/502975"
+    },
+    {
+      "effect": "x",
+      "df": 1,
+      "ss_exact": "147175/1958",
+      "f_exact": "252300/3751"
+    },
+    {
+      "effect": "z",
+      "df": 1,
+      "ss_exact": "1323/1780",
+      "f_exact": "1134/1705"
+    }
+  ]
+}
