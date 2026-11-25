@@ -1,0 +1,267 @@
+//! TTEST input roles, group selection and execution. Numerical work belongs to
+//! ttest_fit.zig; parsing and listing have independent modules.
+const std = @import("std");
+const proc = @import("../proc.zig");
+const diag = @import("../diag.zig");
+const lex = @import("../lexer.zig");
+const Value = @import("../value.zig").Value;
+const format = @import("../format.zig");
+const selection = @import("data_selection.zig");
+const by = @import("by_groups.zig");
+pub const declarations = @import("ttest_parse.zig");
+const fit = @import("ttest_fit.zig");
+const render = @import("ttest_render.zig");
+const eq = std.ascii.eqlIgnoreCase;
+const A = std.mem.Allocator;
+
+pub const Class = struct { label: []const u8, raw: Value, count: f64 = 0 };
+pub const Analysis = struct {
+    column: usize,
+    classes: []const Class,
+    samples: []const fit.Result,
+};
+pub const Group = struct { representative: ?[]const Value, analyses: []const Analysis };
+pub const Result = struct { spec: declarations.Spec, groups: []const Group };
+
+fn numericOptions(o: declarations.Options) fit.Options {
+    return .{ .alpha = o.alpha, .h0 = o.h0, .sides = switch (o.sides) {
+        .two => .two_sided,
+        .lower => .lower,
+        .upper => .upper,
+    } };
+}
+fn display(a: A, s: declarations.Spec, row: []const Value) ![]const u8 {
+    const ci = s.class.?;
+    const info = s.input.ds.columns.items[ci];
+    return std.mem.trim(u8, if (info.format) |f| try format.apply(a, row[ci], f) else try proc.cellText(a, row[ci]), " ");
+}
+fn orderClasses(s: declarations.Spec, a: Class, b: Class) bool {
+    var order = s.options.order;
+    if (order == .freq) {
+        if (a.count != b.count) return a.count > b.count;
+        order = .mixed;
+    }
+    const info = s.input.ds.columns.items[s.class.?];
+    if (order == .mixed) order = if (info.type == .char) .formatted else .internal;
+    if (order == .formatted and !(info.type == .num and info.format == null)) return std.mem.order(u8, a.label, b.label) == .lt;
+    return proc.cmpValue(a.raw, b.raw) == .lt;
+}
+
+/// Formatted class levels are determined before per-analysis missing exclusion.
+/// FREQ contributes replicated observations to ORDER=FREQ; WEIGHT never does.
+pub fn classes(cx: proc.ProcCtx, s: declarations.Spec, view: selection.View) diag.Error![]const Class {
+    if (s.class == null) return &.{};
+    var result: std.ArrayList(Class) = .empty;
+    const filtered = try view.select(cx.arena, .{ .missing_columns = &.{s.class.?}, .frequency = .truncate_positive, .weight = .positive_only });
+    for (filtered.observations) |row| {
+        const label = try display(cx.arena, s, row.cells);
+        var found = false;
+        for (result.items) |*c| if (std.mem.eql(u8, c.label, label)) {
+            c.count += row.frequency.num;
+            found = true;
+            break;
+        };
+        if (!found) try result.append(cx.arena, .{ .label = label, .raw = row.cells[s.class.?], .count = row.frequency.num });
+    }
+    if (result.items.len != 2) return cx.diags.fail(error.ParseError, s.line, "PROC TTEST: CLASS variable must have exactly two nonmissing levels", .{});
+    if (s.options.order != .data) std.mem.sort(Class, result.items, s, orderClasses);
+    return result.items;
+}
+
+fn sample(cx: proc.ProcCtx, s: declarations.Spec, view: selection.View, ci: usize, level: ?Class) diag.Error!fit.Result {
+    const a = cx.arena;
+    const opts = numericOptions(s.options);
+    if (s.summary) |kind| {
+        var n: ?f64 = null;
+        var mean: ?f64 = null;
+        var sd: ?f64 = null;
+        for (view.observations) |row| {
+            if (level) |c| {
+                if (selection.missing(row.cells[s.class.?]) or !std.mem.eql(u8, c.label, try display(a, s, row.cells))) continue;
+            }
+            const name = std.mem.trim(u8, row.cells[kind].str, " ");
+            const target: ?*?f64 = if (eq(name, "n")) &n else if (eq(name, "mean")) &mean else if (eq(name, "std")) &sd else null;
+            if (target) |p| {
+                if (p.* != null) return cx.diags.fail(error.ParseError, s.line, "PROC TTEST: duplicate {s} summary statistic", .{name});
+                p.* = row.cells[ci].num;
+            }
+        }
+        if (n == null or mean == null or sd == null) return cx.diags.fail(error.ParseError, s.line, "PROC TTEST: summary input requires N, MEAN and STD for every variable and group", .{});
+        const count = n.?;
+        const max_n: f64 = @floatFromInt(@min(std.math.maxInt(usize), 9007199254740991));
+        if (!std.math.isFinite(count) or count < 1 or @trunc(count) != count or count > max_n) return cx.diags.fail(error.ParseError, s.line, "PROC TTEST: summary N must be a positive integer", .{});
+        return fit.fromSummary(@intFromFloat(count), mean.?, sd.?, opts) catch |err| return numericFailure(cx, s, err);
+    }
+    const missing = if (s.class) |c| try a.dupe(usize, &.{ ci, c }) else try a.dupe(usize, &.{ci});
+    const selected = try view.select(a, .{ .missing_columns = missing, .frequency = .truncate_positive, .weight = .positive_only });
+    var values: std.ArrayList(f64) = .empty;
+    var frequencies: std.ArrayList(f64) = .empty;
+    var weights: std.ArrayList(f64) = .empty;
+    for (selected.observations) |row| {
+        if (level) |c| if (!std.mem.eql(u8, c.label, try display(a, s, row.cells))) continue;
+        try values.append(a, row.cells[ci].num);
+        try frequencies.append(a, row.frequency.num);
+        try weights.append(a, row.weight.num);
+    }
+    if (values.items.len == 0) return cx.diags.fail(error.ParseError, s.line, "PROC TTEST: no usable observations for variable {s}", .{s.input.ds.columns.items[ci].name});
+    return fit.oneSample(values.items, frequencies.items, weights.items, opts) catch |err| return numericFailure(cx, s, err);
+}
+fn numericFailure(cx: proc.ProcCtx, s: declarations.Spec, err: diag.Error) diag.Error {
+    if (err == error.OutOfMemory) return err;
+    return cx.diags.fail(error.ExecError, s.line, "PROC TTEST: invalid summary statistics or nonfinite numerical result", .{});
+}
+
+pub fn compute(cx: proc.ProcCtx, s: declarations.Spec) diag.Error!Result {
+    const view = try selection.View.init(cx.arena, s.input, s.roles);
+    const slices = try view.groups(cx.arena, s.by_desc, s.notsorted, cx.diags);
+    var results: std.ArrayList(Group) = .empty;
+    for (slices) |group| {
+        if (group.observations.len == 0) continue;
+        const levels = try classes(cx, s, group);
+        var analyses: std.ArrayList(Analysis) = .empty;
+        for (s.roles.analysis) |ci| {
+            const samples = try cx.arena.alloc(fit.Result, if (s.class != null) 2 else 1);
+            for (samples, 0..) |*r, i| r.* = try sample(cx, s, group, ci, if (s.class != null) levels[i] else null);
+            try analyses.append(cx.arena, .{ .column = ci, .classes = levels, .samples = samples });
+        }
+        try results.append(cx.arena, .{ .representative = group.observations[0].cells, .analyses = analyses.items });
+    }
+    if (results.items.len == 0) return cx.diags.fail(error.ParseError, s.line, "PROC TTEST: no observations in input data set", .{});
+    return .{ .spec = s, .groups = results.items };
+}
+fn rendered(r: fit.Result) render.Sample {
+    return .{ .n = @floatFromInt(r.n), .mean = r.mean, .stddev = r.std_dev, .stderr = r.std_err, .minimum = r.minimum, .maximum = r.maximum, .df = r.df, .t = r.t, .p = r.p, .lower = r.mean_ci.lower, .upper = r.mean_ci.upper, .std_lower = r.std_dev_ci.lower, .std_upper = r.std_dev_ci.upper };
+}
+
+pub fn runTtest(cx: proc.ProcCtx, out: *std.ArrayList(u8), toks: []const lex.Token) diag.Error!void {
+    const spec = try declarations.parse(cx, toks);
+    if (!spec.options.plots_none and spec.summary == null) if (cx.graphics) |g| {
+        if (g.enabled == true or (g.enabled != false and g.cli_dir != null)) return proc.failGap(cx.diags, spec.line, "PROC TTEST: ODS graphics are not implemented", .{});
+    };
+    // Do not print a one-sample table for a requested two-sample analysis.
+    // The selection and summary interfaces above are already shared by both.
+    if (spec.class != null) return proc.failGap(cx.diags, spec.line, "PROC TTEST: two-sample inference is awaiting its numeric implementation", .{});
+    const result = try compute(cx, spec);
+    const a = cx.arena;
+    for (result.groups) |group| {
+        var body: std.ArrayList(u8) = .empty;
+        for (group.analyses) |analysis| {
+            const r = rendered(analysis.samples[0]);
+            var tables: std.ArrayList(u8) = .empty;
+            const objects: @import("../ods_listing.zig").Tables = .{ .selection = cx.listing, .prefix = "Ttest" };
+            var start = tables.items.len;
+            try render.statistics(a, &tables, r, spec.summary != null);
+            try objects.finish(a, &tables, start, "Statistics");
+            start = tables.items.len;
+            try render.intervals(a, &tables, r, spec.options);
+            try objects.finish(a, &tables, start, "ConfLimits");
+            start = tables.items.len;
+            try render.tests(a, &tables, r, spec.options);
+            try objects.finish(a, &tables, start, "TTests");
+            if (tables.items.len == 0) continue;
+            try body.print(a, "Variable: {s}\n\n", .{spec.input.ds.columns.items[analysis.column].name});
+            if (spec.roles.frequency) |ci| try body.print(a, "Frequency: {s}\n", .{spec.input.ds.columns.items[ci].name});
+            if (spec.roles.weight) |ci| try body.print(a, "Weight: {s}\n", .{spec.input.ds.columns.items[ci].name});
+            try body.appendSlice(a, tables.items);
+        }
+        if (body.items.len == 0) continue;
+        if (spec.roles.by.len > 0) try by.appendLine(a, out, spec.input.ds, group.representative.?, spec.roles.by);
+        try out.appendSlice(a, "The TTEST Procedure\n\n");
+        try out.appendSlice(a, body.items);
+    }
+}
+
+const Testing = struct {
+    fn expectWords(expected: []const u8, actual: []const u8) !void {
+        var e = std.mem.tokenizeAny(u8, expected, " \r\n\t\x0c");
+        var r = std.mem.tokenizeAny(u8, actual, " \r\n\t\x0c");
+        while (e.next()) |word| try std.testing.expectEqualStrings(word, r.next() orelse "<missing>");
+        try std.testing.expect(r.next() == null);
+    }
+    fn oracle(a: A, name: []const u8) ![]const u8 {
+        return std.Io.Dir.cwd().readFileAlloc(std.testing.io, name, a, .limited(1024 * 1024));
+    }
+    fn sample(a: A) !*@import("../dataset.zig").Dataset {
+        const Dataset = @import("../dataset.zig").Dataset;
+        const ds = try a.create(Dataset);
+        ds.* = Dataset.init(a, "sample");
+        for ([_][]const u8{ "x", "y" }) |n| _ = try ds.addColumn(n, .num);
+        _ = try ds.addColumn("group", .char);
+        _ = try ds.addColumn("freq", .num);
+        _ = try ds.addColumn("weight", .num);
+        // Published input from STAT-TTEST-001; no fitted values in the fixture.
+        const rows = [_][4]f64{
+            .{ 43, 40, 1, 1 }, .{ 90, 84, 2, 1 },   .{ 84, 88, 1, 2 },
+            .{ 87, 80, 1, 1 }, .{ 116, 110, 1, 1 }, .{ 95, 91, 1, 2 },
+            .{ 86, 79, 1, 1 }, .{ 99, 101, 2, 1 },  .{ 93, 90, 1, 2 },
+            .{ 92, 85, 1, 1 }, .{ 121, 115, 1, 1 }, .{ 71, 72, 1, 2 },
+        };
+        for (rows, 0..) |r, i| try ds.appendRow(&.{ .{ .num = r[0] }, .{ .num = r[1] }, .{ .str = if (i < 6) "A" else "B" }, .{ .num = r[2] }, .{ .num = r[3] } });
+        return ds;
+    }
+};
+
+test "STAT-TTEST-001 complete BY FREQ WEIGHT listing matches oracle tokens" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var lib = @import("../exec.zig").Library.init(a);
+    try lib.put("sample", try Testing.sample(a));
+    var d = diag.Diagnostics.init(a);
+    const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &d };
+    var out: std.ArrayList(u8) = .empty;
+    try runTtest(cx, &out, try lex.tokenize(a, "proc ttest data=sample order=data; by group; var x y; freq freq; weight weight; run;", &d));
+    const expected = try Testing.oracle(a, "tests/STAT15.4-oracle/STAT-TTEST-001/by_frequency_weight.expected.txt");
+    try Testing.expectWords(expected, out.items);
+    try std.testing.expectEqualStrings("", try d.render());
+}
+
+test "STAT-TTEST-001 one-sample two and directed sides preserve full COMMON005 oracle" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var ds = @import("../dataset.zig").Dataset.init(a, "time");
+    _ = try ds.addColumn("time", .num);
+    for ([_]f64{ 43, 90, 84, 87, 116, 95, 86, 99, 93, 92, 121, 71, 66, 98, 79, 102, 60, 112, 105, 98 }) |x| try ds.appendRow(&.{.{ .num = x }});
+    var lib = @import("../exec.zig").Library.init(a);
+    try lib.put("time", &ds);
+    var d = diag.Diagnostics.init(a);
+    const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &d };
+    var out: std.ArrayList(u8) = .empty;
+    for ([_][]const u8{ "2", "u", "l" }) |side| {
+        const source = try std.fmt.allocPrint(a, "proc ttest data=time h0=80 sides={s}; var time; run;", .{side});
+        try runTtest(cx, &out, try lex.tokenize(a, source, &d));
+    }
+    const expected = try Testing.oracle(a, "tests/STAT15.4-oracle/STAT-COMMON-005/tails_and_intervals.expected.txt");
+    try Testing.expectWords(expected, out.items);
+    try std.testing.expectEqualStrings("", try d.render());
+}
+
+test "STAT-TTEST-001 summary rows and CLASS ordering retain typed results" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var lib = @import("../exec.zig").Library.init(a);
+    try lib.put("sample", try Testing.sample(a));
+    var d = diag.Diagnostics.init(a);
+    const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &d };
+    const tokens = try lex.tokenize(a, "proc ttest data=sample order=internal; class group; var x; freq freq; weight weight; run;", &d);
+    const s = try declarations.parse(cx, tokens);
+    const r = try compute(cx, s);
+    try std.testing.expectEqual(@as(usize, 2), r.groups[0].analyses[0].samples.len);
+    try std.testing.expectEqualStrings("A", r.groups[0].analyses[0].classes[0].label);
+    try std.testing.expectEqual(@as(usize, 7), r.groups[0].analyses[0].samples[0].n);
+    var summary = @import("../dataset.zig").Dataset.init(a, "summary");
+    _ = try summary.addColumn("_TYPE_", .char);
+    _ = try summary.addColumn("x", .num);
+    for ([_][]const u8{ "N", "MEAN", "STD" }, [_]f64{ 3, 2, 1 }) |kind, value| try summary.appendRow(&.{ .{ .str = kind }, .{ .num = value } });
+    try lib.put("summary", &summary);
+    const summarized = try compute(cx, try declarations.parse(cx, try lex.tokenize(a, "proc ttest data=summary h0=2; var x; run;", &d)));
+    const result = summarized.groups[0].analyses[0].samples[0];
+    try std.testing.expectEqual(@as(usize, 3), result.n);
+    try std.testing.expectEqual(@as(f64, 1), result.std_dev);
+    try std.testing.expectEqual(@as(f64, 1), result.p);
+    var bad = diag.Diagnostics.init(a);
+    const badcx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &bad };
+    try std.testing.expectError(error.ParseError, declarations.parse(badcx, try lex.tokenize(a, "proc ttest data=summary; var x; freq x; run;", &bad)));
+}
