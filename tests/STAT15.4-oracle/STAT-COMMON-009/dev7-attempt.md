@@ -98,6 +98,8 @@ source-derived marginal `Non-est` cases.
 
 Dev6's two COMMON012 changes were integrated locally as dependencies; this is
 not a claim they had already landed on the manager branch. Final handoff gives
-the actual rebased base/SHA and direct-exit gate result. The last checkpoint gate
-before bar expansion passed 1,788 tests, 2,315 corpus cases, and 11 programs;
-the final gate must include the new parser regression and original corpus case.
+the actual rebased base/SHA and direct-exit gate result. The complete bar/parser
+and unchanged-original regression gate passed directly with **1,792 tests,
+2,316 corpus cases, and 11 programs**, on manager base `8b0bc8ca`. No original
+expected file changed. After this evidence commit, repeat the exact-SHA gate
+before handoff; the final report carries that command's direct exit status.
