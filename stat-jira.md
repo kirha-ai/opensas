@@ -14596,23 +14596,25 @@ Source: S154, Chapter 128, `The TTEST Procedure`, PDF pp. 10595–10692. Tasks i
 
 <a id="stat-ttest-002"></a>
 
-### [DOING @dev4] STAT-TTEST-002 — TTEST — Default one-sample and group mean tests
+### [TODO] STAT-TTEST-002 — TTEST — Default one-sample and group mean tests
 
 - Source: S154 / Chapter 128 / `Getting Started: TTEST Procedure` (PDF pp. 10597–10603); S154 / Chapter 128 / `Overview: TTEST Procedure` (PDF pp. 10596–10597).
 - Scope: Implement default one-sample and group mean tests using the documented default path and establish the computational state needed by later extensions; implement specialized models, methods, and diagnostics outside that default example in their corresponding feature tickets.
 - Dependencies: [STAT-TTEST-001](#stat-ttest-001), [STAT-COMMON-005](#stat-common-005).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-TTEST-002/](tests/STAT15.4-oracle/STAT-TTEST-002/).
 - Dispatch contract: Implement the numerical core in a separate TTEST module, reusing existing probability functions, concurrently with TTEST-001. The integrated oracle must pass before DONE. This also supplies the missing TTEST execution dependency of COMMON-005.
+- Progress (2026-11-25): Numerical core landed in `ec0eaeae`; six inline tests passed via explicit harness and existing gate passed. Full TTEST execution/oracle awaits dev5 integration, so this ticket remains TODO rather than claiming numeric-only completion.
 - Acceptance criteria: Turn the smallest default analysis in Getting Started into a runnable case and verify its principal estimates, observation counts, and result status; add a smaller case with an independent manual calculation; meet the precision conventions.
 
 <a id="stat-ttest-003"></a>
 
-### [TODO] STAT-TTEST-003 — TTEST — Arithmetic and Geometric Means / Coefficient of Variation
+### [DOING @dev4] STAT-TTEST-003 — TTEST — Arithmetic and Geometric Means / Coefficient of Variation
 
 - Source: S154 / Chapter 128 / `Arithmetic and Geometric Means` (PDF p. 10620); S154 / Chapter 128 / `Coefficient of Variation` (PDF p. 10620).
 - Scope: Implement Arithmetic and Geometric Means; Coefficient of Variation. This ticket owns the feature's options, defaults, computation, and results as an extension of the basic computational path; the chapter's output tickets handle ODS descriptors and file presentation.
 - Dependencies: [STAT-TTEST-001](#stat-ttest-001), [STAT-TTEST-002](#stat-ttest-002).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-TTEST-003/](tests/STAT15.4-oracle/STAT-TTEST-003/).
+- Dispatch contract: Extend landed TTEST numeric foundation in a separate lognormal module; dev5 integrates DIST=/CI= parsing and output after the base path. Require the original normal/lognormal oracle, not just a numeric module test, before DONE.
 - Acceptance criteria: For Arithmetic and Geometric Means / Coefficient of Variation, use an independently calculable small sample and the source examples to verify targets, estimates/statistics, degrees of freedom, and applicable probabilities or intervals; include at least one relevant degenerate or boundary case, asserting documented diagnostics and result status.
 
 <a id="stat-ttest-004"></a>
