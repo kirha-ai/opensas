@@ -3571,18 +3571,19 @@ Source: S154, Chapter 47, `The FREQ Procedure`, PDF pp. 3069–3290. Tasks in th
 
 <a id="stat-freq-002"></a>
 
-### [DOING @dev3] STAT-FREQ-002 — FREQ — One-way and crosstabulation counts and basic statistics
+### [DONE] STAT-FREQ-002 — FREQ — One-way and crosstabulation counts and basic statistics
 
 - Source: S154 / Chapter 47 / `Getting Started: FREQ Procedure` (PDF pp. 3072–3081); S154 / Chapter 47 / `Overview: FREQ Procedure` (PDF pp. 3070–3072); S154 / Chapter 9 / `Introduction to Categorical Data Analysis Procedures` (PDF pp. 187–198).
 - Scope: Implement one-way and crosstabulation counts and basic statistics using the documented default path and establish the computational state needed by later extensions; implement specialized models, methods, and diagnostics outside that default example in their corresponding feature tickets.
 - Dependencies: [STAT-FREQ-001](#stat-freq-001), [STAT-COMMON-005](#stat-common-005).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-FREQ-002/](tests/STAT15.4-oracle/STAT-FREQ-002/).
 - Dispatch contract: Reuse the existing tested FREQ probability/statistic routines while COMMON-005's TTEST integration remains in progress. Verify this ticket's own unchanged oracle and cited manual; no assumption of completion from FREQ-001.
+- DONE (2026-11-25): Landed/pushed `f19323dc`. Independently executed unchanged oracle matches 649/649 tokens using whitespace-only normalization, status 0, no warnings/errors; three graphs inspected. Existing regressions verify smaller independent count/statistic calculations. Gate: 1597 tests, 2303 corpus, 11 programs passed; evidence-only change. Evidence: `tests/STAT15.4-oracle/STAT-FREQ-002/dev3-attempt.md`.
 - Acceptance criteria: Turn the smallest default analysis in Getting Started into a runnable case and verify its principal estimates, observation counts, and result status; add a smaller case with an independent manual calculation; meet the precision conventions.
 
 <a id="stat-freq-003"></a>
 
-### [TODO] STAT-FREQ-003 — FREQ — TABLES
+### [DOING @dev3] STAT-FREQ-003 — FREQ — TABLES
 
 - Source: S154 / Chapter 47 / `TABLES Statement` (PDF pp. 3106–3154).
 - Scope: Implement TABLES syntax, variable combinations, multidimensional tables/strata, frequencies and margins, level ordering, and missing/zero-frequency policies; the chapter's corresponding feature tickets own individual statistical tests, intervals, and graphics.
