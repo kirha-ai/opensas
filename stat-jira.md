@@ -255,12 +255,13 @@ Complete prerequisite shared contracts first, then each PROC's data input, model
 
 <a id="stat-common-006"></a>
 
-### [TODO] STAT-COMMON-006 — CLASS level formation and ordering
+### [DOING @dev7] STAT-COMMON-006 — CLASS level formation and ordering
 
 - Source: S154 / Chapter 20 / `Levelization of Classification Variables` (PDF pp. 411–413).
 - Scope: Represent formatted levels, ordering methods, reference levels, and missing levels consistently; integrate procedure-specific ORDER=/REF= and related options in PROC tickets.
 - Dependencies: [STAT-COMMON-002](#stat-common-002).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-COMMON-006/](tests/STAT15.4-oracle/STAT-COMMON-006/).
+- Dispatch contract: dev7 owns a shared CLASS-level helper and its tests; dev2 integrates it into GLM, dev6 owns GLM numerical inference. Verify the original CLASS-order oracle after integration; helper-only tests do not count as DONE.
 - Acceptance criteria: Verify level ordering and column mappings for character, numeric, formatted, missing, and multiple-BY-group data; changes in input order may have only the effects allowed by the documentation.
 
 <a id="stat-common-007"></a>
@@ -4725,12 +4726,13 @@ Source: S154, Chapter 53, `The GLM Procedure`, PDF pp. 4043–4230. Tasks in thi
 
 <a id="stat-glm-002"></a>
 
-### [TODO] STAT-GLM-002 — GLM — General linear model estimation and basic effect tests
+### [DOING @dev6] STAT-GLM-002 — GLM — General linear model estimation and basic effect tests
 
 - Source: S154 / Chapter 53 / `Getting Started: GLM Procedure` (PDF pp. 4047–4055); S154 / Chapter 53 / `Overview: GLM Procedure` (PDF pp. 4045–4047).
 - Scope: Implement general linear model estimation and basic effect tests using the documented default path and establish the computational state needed by later extensions; implement specialized models, methods, and diagnostics outside that default example in their corresponding feature tickets.
 - Dependencies: [STAT-GLM-001](#stat-glm-001), [STAT-GLM-003](#stat-glm-003), [STAT-GLM-004](#stat-glm-004), [STAT-COMMON-005](#stat-common-005).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-GLM-002/](tests/STAT15.4-oracle/STAT-GLM-002/).
+- Dispatch contract: dev6 implements GLM fitting/effect-test calculations in a separate module, reusing landed QR/probability primitives. dev2 owns GLM parsing/rendering and dev7 CLASS levels. This explicit parallel interface breaks integration dependencies without claiming unsupported methods; require full original oracle before DONE.
 - Acceptance criteria: Turn the smallest default analysis in Getting Started into a runnable case and verify its principal estimates, observation counts, and result status; add a smaller case with an independent manual calculation; meet the precision conventions.
 
 <a id="stat-glm-003"></a>

@@ -24,6 +24,8 @@ description: >-
 ## Active STAT campaign overrides
 
 These user-requested rules override conflicting instructions below for this campaign:
+- Run up to 7 development agents (user update 2026-11-25), each with its own
+  assigned existing ticket and worktree; no extra audit roles.
 - Consume only existing `stat-jira.md` tickets. Never read the legacy board,
   grow the backlog, perform GitHub intake, or start QA, perf, doc-finder or audit lanes.
 - For every ticket, read its `tests/STAT15.4-oracle/<ID>/README.md`, run the
@@ -133,7 +135,7 @@ avoids re-running ~2k corpus fixtures on an unchanged tip. The file lives under
 3. **Unblock.** Deps clear mechanically as their tasks land (step 2b) — scan
    TODO tasks for stale `[deps: …]` ids that have left the board and clear
    the fields. If a dep is wrong/missing, file it as a new task.
-4. **Assign — never idle.** Ensure each active dev (at most 5, §4) has exactly
+4. **Assign — never idle.** Ensure each active dev (at most 7, §4) has exactly
    one `TODO`→`DOING` task, respecting deps and the family-queue judgment (§4).
    Prefer critical-path tasks. **Claim before dispatch:** flip the task to
    `DOING @devN`, commit `stat-jira.md` (pathspec), THEN spawn/continue the dev
@@ -321,8 +323,8 @@ decides what it actually changes.
   queue, landing per task — their edits overlap and their goldens interact;
   separately green fixes can be red combined. Split a family across devs only
   when leaving it whole would idle someone.
-- **Cap: at most 5 live devs.** A freed dev gets its next task in the same
-  tick; a 6th task waits as `TODO`.
+- **Cap: at most 7 live devs.** A freed dev gets its next task in the same
+  tick; an 8th task waits as `TODO`.
 
 ---
 

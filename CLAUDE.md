@@ -1,6 +1,6 @@
 # opensas — house rules (auto-loaded for every agent)
 
-SAS 9.4 interpreter in Zig. You are one agent of a team (up to 5 devs, QA,
+SAS 9.4 interpreter in Zig. You are one agent of a team (up to 7 devs, QA,
 manager). Each dev works in its own git worktree (`../opensas-devN`); the
 main tree belongs to the manager. Your task comes from `jira.md` (only lines
 tagged with your role).
