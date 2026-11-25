@@ -76,8 +76,8 @@ unknown PRINT/statement names, and named unsupported extensions. REFIT also pres
 an existing OUTEST dataset object, testing its no-output behavior directly.
 
 The manual's separate source example (physical pp.8610–8611) was also run: initial
-Weight=Age Height followed by DELETE Age, REFIT, PRINT. Its full-model numeric
-values match Figure 105.26. The entire reduced-model table matches the supplied
+Weight=Age Height followed by DELETE Age, REFIT, PRINT. Six full-model coefficient/SS/MS fields
+match Figure 105.26 at their documented precision. The entire reduced-model table matches the supplied
 CLASS Weight=Height reference, with MODEL1.1 as documented after DELETE. No numeric
 tolerance was used for that reduced table; source and results are recorded separately.
 

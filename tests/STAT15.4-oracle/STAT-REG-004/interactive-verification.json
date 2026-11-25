@@ -71,10 +71,19 @@
     "source": "SAS/STAT 15.4 physical pp.8610\u20138611, Figures 105.26\u2013105.27",
     "program": "options nodate nonumber nocenter;\nods graphics off;\nproc reg data=sashelp.class;\nmodel Weight=Age Height;\nrun;\ndelete Age;\nrefit;\nprint;\nrun;\nquit;\n",
     "rc": 0,
-    "full_model_reference_values_match": true,
     "reduced_model_complete_table_matches": true,
     "comparison": "The full reduced-model table equals the supplied CLASS Weight=Height reference, with MODEL1.1 as explicitly documented after DELETE Age. No numeric tolerance.",
     "stdout_sha256": "bba76d0df054fb3460de298ce27d1fe0db44ce48f0c72800d7e70f9cafdc928c",
-    "stderr": "NOTE(L6): Variable Age is deleted.\nNOTE(L6): Due to a DELETE statement, the model label is now MODEL1.1.\n"
-  }
+    "stderr": "NOTE(L6): Variable Age is deleted.\nNOTE(L6): Due to a DELETE statement, the model label is now MODEL1.1.\n",
+    "six_reference_fields_checked": {
+      "model_ss": "7215.63710",
+      "error_ss": "2120.09974",
+      "error_ms": "132.50623",
+      "Intercept": "-141.22376",
+      "Age": "1.27839",
+      "Height": "3.59703"
+    }
+  },
+  "source_commit": "adb32059da544d6a346fb4951df81dcbd4bd5a81",
+  "binary_version": "opensas v0.7.3-621-gadb32059"
 }
