@@ -1,0 +1,118 @@
+{
+  "normalization": "collapse whitespace runs and trim edges only",
+  "cases": {
+    "documented_feature.sas": {
+      "input_sha256": "7e08deb0876452b8836dba7b76ff9584b13ab86ae652c7c53b07c9edf3f84195",
+      "expected_sha256": "83dd1c9ef8ef81c14f00101819cc2849e11db0cc857b6b46694e5aa0e216df26",
+      "actual_sha256": "697eaf57b811d63cda122127905eb0e8df4b16d7adbe2adf8cc2a503946800dd",
+      "actual_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "normalized_sha256": "e7890de1b2be14aa8728fbe92013a1d35df5d17df15a61325875f0138967c842",
+      "tokens": 263,
+      "expected_status": 0,
+      "actual_status": 0,
+      "full_text_match": true,
+      "reference_warning_errors": [],
+      "actual_warning_errors": [],
+      "graphics": []
+    }
+  },
+  "independent_enumeration": {
+    "FatComp": {
+      "support": [
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13
+      ],
+      "integer_weights": [
+        1287,
+        17160,
+        77220,
+        154440,
+        150150,
+        72072,
+        16380,
+        1560,
+        45
+      ],
+      "denominator": 490314,
+      "point": "2730/81719",
+      "left": "162903/163438",
+      "right": "545/14858",
+      "fisher_two_sided": "292/7429",
+      "pearson_exact": "292/7429",
+      "odds_limits_95": [
+        "0.867737155043",
+        "105.548831004944"
+      ]
+    },
+    "zero_cells_and_ties": {
+      "cells": [
+        0,
+        5,
+        5,
+        0
+      ],
+      "support": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "weights": [
+        1,
+        25,
+        100,
+        100,
+        25,
+        1
+      ],
+      "denominator": 252,
+      "tied_point_mass": "1/126"
+    },
+    "degenerate_support": {
+      "cells": [
+        0,
+        0,
+        1,
+        2
+      ],
+      "support": [
+        0
+      ],
+      "weights": [
+        1
+      ],
+      "denominator": 1,
+      "mass": [
+        "1"
+      ]
+    },
+    "one_way": {
+      "counts": [
+        2,
+        8
+      ],
+      "null": [
+        "3/10",
+        "7/10"
+      ],
+      "pearson_exact": "183293017/250000000"
+    }
+  },
+  "baseline": {
+    "base": "69ea3f3d8048cc3b3d0c27206480678bc3187b03",
+    "status": 0,
+    "tokens": 239,
+    "actual_sha256": "492cf938c6c13cabc2219939980c00f16d3286b4e2edabe4dcf4ec6d9df512a1",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "full_text_match": false
+  }
+}
