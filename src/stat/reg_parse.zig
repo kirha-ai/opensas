@@ -31,6 +31,9 @@ pub const Spec = struct {
     weight: ?usize = null,
     ids: []const usize = &.{},
     noprint: bool = false,
+    outest: ?[]const u8 = null,
+    covout: bool = false,
+    output_variables: []const usize = &.{},
 };
 fn at(t: []const lex.Token, i: usize, tag: lex.Tag) bool {
     return i < t.len and t[i].tag == tag;
@@ -73,6 +76,8 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
     var singular: f64 = 1e-9;
     var noprint = false;
     var plots_none = false;
+    var outest: ?[]const u8 = null;
+    var covout = false;
     while (i < t.len and !at(t, i, .semicolon) and !at(t, i, .eof)) {
         if (kw(t, i, "data")) {
             if (name != null) return proc.failGap(cx.diags, t[i].line, "PROC REG: repeated DATA= declarations are not implemented", .{});
@@ -97,6 +102,20 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
                 }
                 i = end;
             }
+        } else if (kw(t, i, "outest")) {
+            if (outest != null) return proc.failGap(cx.diags, t[i].line, "PROC REG: repeated OUTEST= declarations are not implemented", .{});
+            if (!at(t, i + 1, .eq) or !at(t, i + 2, .name)) return cx.diags.fail(error.ParseError, t[i].line, "PROC REG: OUTEST= requires a dataset", .{});
+            outest = t[i + 2].text;
+            i += 3;
+            if (at(t, i, .dot)) {
+                if (!at(t, i + 1, .name)) return cx.diags.fail(error.ParseError, t[i].line, "PROC REG: expected an OUTEST member name", .{});
+                outest = try std.fmt.allocPrint(cx.arena, "{s}.{s}", .{ outest.?, t[i + 1].text });
+                i += 2;
+            }
+            if (at(t, i, .lparen)) return proc.failGap(cx.diags, t[i].line, "PROC REG: OUTEST dataset options are not implemented", .{});
+        } else if (kw(t, i, "covout")) {
+            covout = true;
+            i += 1;
         } else if (kw(t, i, "plots")) {
             const start = i;
             if (!at(t, i + 1, .eq) or !at(t, i + 2, .name)) return cx.diags.fail(error.ParseError, t[i].line, "PROC REG: expected PLOTS=request", .{});
@@ -144,6 +163,7 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
     const ds = try proc.procInput(cx.arena, raw, if (qualified_name_at != null) input_tokens.items else t, cx.diags);
     var models: std.ArrayList(Model) = .empty;
     var required: std.ArrayList(usize) = .empty;
+    var output_variables: std.ArrayList(usize) = .empty;
     var by_statements: by_groups.Statements = .{};
     var freq: ?usize = null;
     var weight: ?usize = null;
@@ -212,10 +232,14 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
                 model.dependent = dep;
                 try models.append(cx.arena, model);
             }
+            try appendUnique(cx.arena, &output_variables, regressors);
+            try appendUnique(cx.arena, &output_variables, dependents);
             try appendUnique(cx.arena, &required, dependents);
             try appendUnique(cx.arena, &required, regressors);
         } else if (kw(t, i, "var")) {
-            try appendUnique(cx.arena, &required, try columns(cx, ds, t[i + 1 .. end], true));
+            const declared = try columns(cx, ds, t[i + 1 .. end], true);
+            try appendUnique(cx.arena, &required, declared);
+            try appendUnique(cx.arena, &output_variables, declared);
         } else if (kw(t, i, "by")) {
             try by_statements.read(cx.arena, t, &i);
         } else if (kw(t, i, "id")) {
@@ -233,5 +257,5 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
     const by = try by_statements.resolve(cx.arena, ds, cx.diags);
     const bcols = try cx.arena.alloc(usize, by.names.len);
     for (by.names, 0..) |n, j| bcols[j] = ds.indexOf(n).?;
-    return .{ .ds = ds, .models = models.items, .required = required.items, .by = bcols, .descending = by.desc, .notsorted = by.notsorted, .freq = freq, .weight = weight, .ids = ids, .noprint = noprint };
+    return .{ .ds = ds, .models = models.items, .required = required.items, .by = bcols, .descending = by.desc, .notsorted = by.notsorted, .freq = freq, .weight = weight, .ids = ids, .noprint = noprint, .outest = outest, .covout = covout, .output_variables = output_variables.items };
 }

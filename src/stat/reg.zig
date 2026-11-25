@@ -58,6 +58,7 @@ pub fn run(cx: proc.ProcCtx, out: *std.ArrayList(u8), tokens: []const @import(".
 pub fn execute(cx: proc.ProcCtx, out: *std.ArrayList(u8), spec: Spec) diag.Error!void {
     const groups = try @import("by_groups.zig").checkedSlices(cx.arena, spec.ds, spec.by, spec.descending, spec.notsorted, cx.diags);
     if (groups.len == 0) return cx.diags.fail(error.ExecError, 0, "PROC REG: no observations", .{});
+    const estimates = if (spec.outest != null) try @import("reg_outest.zig").Builder.init(cx.arena, spec, cx.diags) else null;
     for (groups) |group| {
         if (group.rep) |rep| if (!spec.noprint) {
             try @import("by_groups.zig").appendLine(cx.arena, out, spec.ds, rep, spec.by);
@@ -82,6 +83,7 @@ pub fn execute(cx: proc.ProcCtx, out: *std.ArrayList(u8), spec: Spec) diag.Error
 
             var fit = diagnostics.fit;
             rescaleFrequencyInference(&fit, @intFromFloat(count));
+            if (estimates) |builder| try builder.append(cx.arena, model, group.rep, fit);
             const stats = fit.modelStats(model.intercept);
             const ts = try cx.arena.alloc(f64, input.columns);
             const ps = try cx.arena.alloc(f64, input.columns);
@@ -169,6 +171,8 @@ pub fn execute(cx: proc.ProcCtx, out: *std.ArrayList(u8), spec: Spec) diag.Error
             }
         }
     }
+    // Publish only after every BY/model fit and output row has succeeded.
+    if (estimates) |builder| try cx.lib.put(spec.outest.?, builder.ds);
 }
 
 test "REG selection keeps frequency, weight and source observations separate" {
