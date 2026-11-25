@@ -24,6 +24,10 @@ description: >-
 ## Active STAT campaign overrides
 
 These user-requested rules override conflicting instructions below for this campaign:
+- For an explicit graceful stop/handoff, stop dispatch, close devs after bounded
+  wind-down, and preserve all branches, worktrees, source edits and raw evidence.
+  The generic discard/force-remove procedure below does not apply. Record STOPPED
+  and per-ticket handoff on the board; resume only on explicit user instruction.
 - Run up to 7 development agents (user update 2026-11-25), each with its own
   assigned existing ticket and worktree; no extra audit roles.
 - If the live runtime permits fewer open agents, retain the seven-slot pool but

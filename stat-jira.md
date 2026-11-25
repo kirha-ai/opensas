@@ -1,5 +1,33 @@
 # OpenSAS — SAS/STAT 15.4 implementation backlog
 
+## STOPPED — handoff (2026-11-25, Europe/Paris)
+
+Stopped at the user's request (17:18:49). All dev agents were closed during the ten-minute wind-down. **No automatic resume or new dispatch; resume only on explicit user instruction.** Worktrees, branches and raw evidence are intentionally preserved. Do not apply the generic manager skill's destructive crash-recovery/discard procedure to these retained checkouts.
+
+Snapshot: **41 DONE, 3 PARK, 1,378 TODO, 0 DOING**. Final code batch `86a553ba` was fast-forwarded and pushed to `feat/stat15.4-tickets`. Its exact-SHA gate passed **1,824 tests, 2,318 corpus fixtures, 11 programs**; all five closing-ticket original replays passed. This later handoff edit is documentation only.
+
+### Preserved developer state
+
+Worktrees are under `/Users/thomas/kirha/`; all source is committed. dev1 also retains untracked `.stat-*-evidence/` captures. Historical branch tips can contain equivalent cherry-picked commits: compare them before any future merge or reset.
+
+| Dev | Worktree | Preserved branch / tip | Handoff |
+|---|---|---|---|
+| dev1 | `opensas-dev1` | `codex/stat-dev1` / `33239a4e` | REG-006 integrated as `05204cef`; REG-005 PARK; raw evidence retained. |
+| dev2 | `opensas-dev2` | `codex/stat-dev2-next` / `5288fd67` | GLM-005 foundation already integrated; seeded input mismatch remains. Earlier `codex/stat-dev2` also retained. |
+| dev3 | `opensas-dev3` | `codex/stat-dev3` / `ac7924b0` | FREQ-008 integrated as `86a553ba`; no assigned work remains. |
+| dev4 | `opensas-dev4` | `codex/stat-dev4` / `6a68050a` | LOGISTIC-001 equivalent patch integrated as `0346cd34`. |
+| dev5 | `opensas-dev5` | `codex/stat-dev5` / `a3d69e1f` | TTEST-011 integrated as `01333207`/`c2ecc4da`; TTEST-010 PARK. |
+| dev6 | `opensas-dev6` | `codex/stat-dev6` / `04bcf360` | COMMON-012 integrated in `415558f9`; already closed. |
+| dev7 | `opensas-dev7` | `codex/stat-dev7` / `86a553ba` | Combined closing batch landed; no unfinished rebase. |
+
+### PARK recovery
+
+1. **GLM-005:** investigate RAND/STREAMINIT input reproduction first. Unchanged seeded DATA yields mean/SST 15.584314333 / 126.244750211 versus SAS 15.57985 / 131.6028003. Independent arithmetic verifies absorption on actual input. Use the ticket's input-moment files, rational reference and raw diff; rerun both originals after fixing the input discrepancy.
+2. **REG-005:** resolve two SST midpoint-rounding and two negative-zero listing differences; finish independent whole-path verification and visual checks of all five graphs. Only the packed ridge plot was inspected. IPC remains unsupported. Preserve raw differences and do not substitute expected values.
+3. **TTEST-010:** resolve vertical PRINT/CONTENTS layout and metadata, and adjudicate three UMPU upper endpoints using the preserved independent precision reference. Four normal typed captures and TRACE routing work; the full original oracle does not pass.
+
+Resume with the existing STAT-only rules: 45 minutes per attempt, original README/manual/oracle verification, retained DONE/PARK records, no backlog expansion or audit roles. Seven dev slots/configured limit are preserved; this session admitted six open agents at once. No source or raw evidence was discarded; only reproducible inactive compilation caches were reclaimed.
+
 Created: 2026-11-24. **1,422 total tickets**: 1,327 functional tasks across 104 PROCs and 95 tasks for shared semantics, ODS, graphics, data, and application scope. Retained ticket states below track current progress.
 
 This file is the sole board for the active SAS/STAT 15.4 campaign. Process only its existing tickets; do not expand the backlog or perform GitHub intake, QA, performance, or documentation audits. The legacy board is outside this campaign. Counts describe functional work groups; ticket states and verification notes record implementation progress.
@@ -459,12 +487,13 @@ Complete prerequisite shared contracts first, then each PROC's data input, model
 
 <a id="stat-common-025"></a>
 
-### [DOING @dev7] STAT-COMMON-025 — ESTIMATE Statement
+### [DONE] STAT-COMMON-025 — ESTIMATE Statement
 
 - Source: S154 / Chapter 20 / `ESTIMATE Statement` (PDF pp. 472–489).
 - Scope: Implement shared semantics, defaults, and applicability checks for ESTIMATE Statement; procedure-specific options and result integration belong to the corresponding PROC tickets.
 - Dependencies: [STAT-COMMON-009](#stat-common-009), [STAT-COMMON-005](#stat-common-005).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-COMMON-025/](tests/STAT15.4-oracle/STAT-COMMON-025/).
+- DONE / handoff: pushed in closing batch `86a553ba`; unchanged original 151/151 tokens, rc 0, empty stderr. Coefficient mapping, E display, estimate/SE/t/p and nonestimable results verified. Combined gate 1824/2318/11 passed. ABSORB/post-RUN ESTIMATE and documented fill limits remain gaps. Evidence: this directory's `dev7-attempt.md` and verifier.
 - Acceptance criteria: Create positive and negative cases for the syntax forms, defaults, and option combinations listed in this section; verify result names, dimensions, and numerical values. Cover nonestimable functions, complex coefficients, adjusted comparisons, and procedure applicability; successful parsing alone is insufficient.
 
 <a id="stat-common-026"></a>
@@ -3656,12 +3685,13 @@ Source: S154, Chapter 47, `The FREQ Procedure`, PDF pp. 3069–3290. Tasks in th
 
 <a id="stat-freq-008"></a>
 
-### [DOING @dev3] STAT-FREQ-008 — FREQ — Sensitivity and Specificity
+### [DONE] STAT-FREQ-008 — FREQ — Sensitivity and Specificity
 
 - Source: S154 / Chapter 47 / `Sensitivity and Specificity` (PDF p. 3188).
 - Scope: Implement Sensitivity and Specificity. This ticket owns the feature's options, defaults, computation, and results as an extension of the basic computational path; the chapter's output tickets handle ODS descriptors and file presentation.
 - Dependencies: [STAT-FREQ-001](#stat-freq-001), [STAT-FREQ-002](#stat-freq-002), [STAT-COMMON-005](#stat-common-005).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-FREQ-008/](tests/STAT15.4-oracle/STAT-FREQ-008/).
+- DONE / handoff: evidence pushed in `86a553ba`; current replay 649/649 tokens, rc 0, graph and 96 independent metric/SE/CI checks passed. No production/golden changes. Combined gate 1824/2318/11 passed. Evidence/replay: this directory's `dev3-attempt.md` and `verify.py`.
 - Acceptance criteria: For Sensitivity and Specificity, use an independently calculable small sample and the source examples to verify targets, estimates/statistics, degrees of freedom, and applicable probabilities or intervals; include at least one relevant degenerate or boundary case, asserting documented diagnostics and result status.
 
 <a id="stat-freq-009"></a>
@@ -4780,12 +4810,13 @@ Source: S154, Chapter 53, `The GLM Procedure`, PDF pp. 4043–4230. Tasks in thi
 
 <a id="stat-glm-005"></a>
 
-### [DOING @dev2] STAT-GLM-005 — GLM — ABSORB / Statistical Assumptions for Using PROC GLM / Using PROC GLM Interactively
+### [PARK] STAT-GLM-005 — GLM — ABSORB / Statistical Assumptions for Using PROC GLM / Using PROC GLM Interactively
 
 - Source: S154 / Chapter 53 / `ABSORB Statement` (PDF p. 4065); S154 / Chapter 53 / `Statistical Assumptions for Using PROC GLM` (PDF pp. 4106–4107); S154 / Chapter 53 / `Using PROC GLM Interactively` (PDF p. 4110).
 - Scope: Implement ABSORB; Statistical Assumptions for Using PROC GLM; Using PROC GLM Interactively. This ticket owns the feature's options, defaults, computation, and results as an extension of the basic computational path; the chapter's output tickets handle ODS descriptors and file presentation.
 - Dependencies: [STAT-GLM-001](#stat-glm-001), [STAT-GLM-002](#stat-glm-002).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-GLM-005/](tests/STAT15.4-oracle/STAT-GLM-005/).
+- PARK / handoff: tested foundation `5288fd67` is landed/pushed; its gate 1811/2316/11 passed. Baseline original remains 671-token/three-graph green. Seeded ABSORB original exits 0 with correct counts/DF, but its input mean/SST already differ: 15.584314333 / 126.244750211 versus SAS 15.57985 / 131.6028003. Investigate seeded-input reproduction before altering the independently verified absorption math. Original inputs/expectations unchanged. See `implementation-evidence.md`, input-moment/reference files and raw diff. ABSORB plus ESTIMATE remains unsupported.
 - Acceptance criteria: For ABSORB / Statistical Assumptions for Using PROC GLM / Using PROC GLM Interactively, use an independently calculable small sample and the source examples to verify targets, estimates/statistics, degrees of freedom, and applicable probabilities or intervals; include at least one relevant degenerate or boundary case, asserting documented diagnostics and result status.
 
 <a id="stat-glm-006"></a>
@@ -8046,12 +8077,13 @@ Source: S154, Chapter 79, `The LOGISTIC Procedure`, PDF pp. 5823–6080. Tasks i
 
 <a id="stat-logistic-001"></a>
 
-### [DOING @dev4] STAT-LOGISTIC-001 — LOGISTIC — Data input, variable roles, and basic options
+### [DONE] STAT-LOGISTIC-001 — LOGISTIC — Data input, variable roles, and basic options
 
 - Source: S154 / Chapter 79 / `PROC LOGISTIC Statement` (PDF pp. 5836–5851); S154 / Chapter 79 / `BY Statement` (PDF p. 5851); S154 / Chapter 79 / `FREQ Statement` (PDF p. 5867); S154 / Chapter 79 / `ID Statement` (PDF p. 5867); S154 / Chapter 79 / `STRATA Statement` (PDF pp. 5901–5902); S154 / Chapter 79 / `WEIGHT Statement` (PDF pp. 5904–5905); S154 / Chapter 79 / `Missing Values` (PDF p. 5905).
 - Scope: Integrate PROC LOGISTIC declarations, basic options, defaults, and execution boundaries; this ticket establishes parameter objects and result interfaces, while later feature tickets implement model-, algorithm-, and output-specific options. Also implement BY; FREQ; ID; STRATA; WEIGHT; Missing Values; apply this procedure's rules for missing values, variable roles, and observation selection.
 - Dependencies: [STAT-COMMON-001](#stat-common-001), [STAT-COMMON-002](#stat-common-002).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-LOGISTIC-001/](tests/STAT15.4-oracle/STAT-LOGISTIC-001/).
+- DONE / handoff: equivalent patch `0346cd34` pushed in `86a553ba`. Both current originals match 605/605 and 826/826 tokens, rc 0, with one/two validated SVGs. REF/EFFECT preserved. Combined gate 1824/2318/11 passed. Conditional STRATA/broader options remain gaps. Evidence: this directory's `implementation-evidence.md`.
 - Acceptance criteria: Create positive and negative parsing cases for the documented declarations and basic options; verify defaults, explicit settings, documented duplicate/conflicting declarations, and locations; valid but unimplemented features must not silently succeed. For BY / FREQ / ID / STRATA / WEIGHT / Missing Values, construct valid, missing, empty, and multiple-group inputs; verify included observation counts, variable roles, BY boundaries, level ordering, and the frequency/weight rules relevant to this ticket; assert documented invalid-input behavior.
 
 <a id="stat-logistic-002"></a>
@@ -11568,12 +11600,13 @@ Source: S154, Chapter 105, `The REG Procedure`, PDF pp. 8539–8728. Tasks in th
 
 <a id="stat-reg-006"></a>
 
-### [DOING @dev1] STAT-REG-006 — REG — Parameter Estimates and Associated Statistics / Models of Less Than Full Rank / Computational Methods
+### [DONE] STAT-REG-006 — REG — Parameter Estimates and Associated Statistics / Models of Less Than Full Rank / Computational Methods
 
 - Source: S154 / Chapter 105 / `Parameter Estimates and Associated Statistics` (PDF pp. 8617–8619); S154 / Chapter 105 / `Models of Less Than Full Rank` (PDF pp. 8623–8624); S154 / Chapter 105 / `Computational Methods` (PDF pp. 8649–8650).
 - Scope: Implement Parameter Estimates and Associated Statistics; Models of Less Than Full Rank; Computational Methods. This ticket owns the feature's options, defaults, computation, and results as an extension of the basic computational path; the chapter's output tickets handle ODS descriptors and file presentation.
 - Dependencies: [STAT-REG-001](#stat-reg-001), [STAT-REG-002](#stat-reg-002).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-REG-006/](tests/STAT15.4-oracle/STAT-REG-006/).
+- DONE / handoff: evidence `05204cef` pushed in `86a553ba`. Current original replay passes rc/warnings 1/1, 1116 non-exempt tokens exact; only the two established independent residual-sum bounds apply (strict whitespace equality false). Rank boundary 167 tokens exact, rc 0. Combined gate 1824/2318/11 passed. Evidence and raw-bound disclosures remain in this directory.
 - Acceptance criteria: For Parameter Estimates and Associated Statistics / Models of Less Than Full Rank / Computational Methods, use an independently calculable small sample and the source examples to verify targets, estimates/statistics, degrees of freedom, and applicable probabilities or intervals; include at least one relevant degenerate or boundary case, asserting documented diagnostics and result status.
 
 <a id="stat-reg-007"></a>
@@ -14743,12 +14776,13 @@ Source: S154, Chapter 128, `The TTEST Procedure`, PDF pp. 10595–10692. Tasks i
 
 <a id="stat-ttest-011"></a>
 
-### [DOING @dev5] STAT-TTEST-011 — TTEST — ODS Graphics
+### [DONE] STAT-TTEST-011 — TTEST — ODS Graphics
 
 - Source: S154 / Chapter 128 / `ODS Graphics` (PDF pp. 10644–10650).
 - Scope: Implement ODS Graphics. Cover all triggering options, content, and naming specified by this section; computational tickets supply numerical values, while other output types are handled separately.
 - Dependencies: [STAT-TTEST-001](#stat-ttest-001), [STAT-TTEST-002](#stat-ttest-002), [STAT-TTEST-003](#stat-ttest-003), [STAT-TTEST-004](#stat-ttest-004), [STAT-TTEST-005](#stat-ttest-005), [STAT-TTEST-006](#stat-ttest-006), [STAT-TTEST-007](#stat-ttest-007), [STAT-TTEST-008](#stat-ttest-008), [STAT-TTEST-009](#stat-ttest-009), [STAT-GRAPHICS-001](#stat-graphics-001).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-TTEST-011/](tests/STAT15.4-oracle/STAT-TTEST-011/).
+- DONE / handoff: patches `01333207`/`c2ecc4da` pushed in `86a553ba`. Current original replay 118/118 tokens, rc 0, six TRACE identities; interval/QQ data checks and visual inspection passed. Combined gate 1824/2318/11 passed. Default SummaryPanel, weighted QQ and broader graph families remain documented gaps. Evidence/artifacts: this directory's `dev5-verification.json`.
 - Dispatch contract: Reuse the existing native SVG/ODS graphic interfaces while the wider GRAPHICS-001 ticket remains pending. Verify requested graph identities and real plotted data as well as this original listing/trace; do not treat file existence or skipped graphics as success.
 - Acceptance criteria: For ODS Graphics, verify graph names, triggering conditions, curve/point data, axes, grouping, and legends; check the relevant PLOTS= and ODS GRAPHICS controls and visually inspect exported graphs.
 
