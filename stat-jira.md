@@ -291,13 +291,14 @@ Complete prerequisite shared contracts first, then each PROC's data input, model
 
 <a id="stat-common-009"></a>
 
-### [DOING @dev7] STAT-COMMON-009 — Estimability and nonestimable result representation
+### [DONE] STAT-COMMON-009 — Estimability and nonestimable result representation
 
 - Source: S154 / Chapter 16 / `Estimability` (PDF pp. 278–284).
 - Scope: Implement estimability checks for linear functions, reduction notation, and nonestimable output contracts for ESTIMATE, LSMEANS, CONTRAST, and related consumers.
 - Dependencies: [STAT-COMMON-007](#stat-common-007), [STAT-COMMON-005](#stat-common-005).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-COMMON-009/](tests/STAT15.4-oracle/STAT-COMMON-009/).
 - Dispatch contract: dev7 implements the estimability/LSMEANS path required by the original empty-cell GLM case, reusing the completed coded-design/rank helpers. Coordinate Type III/IV empty-cell hypotheses with dev6; do not turn nonestimable results into fabricated estimates.
+- DONE (2026-11-25): Landed/pushed combined `415558f9`. Authorized MODEL bar expansion runs the unchanged original; all 206 tokens match, rc 0, stderr empty. True Non-est results, complete LSMEANS/E and typed missing-field checks are included; rewritten diagnostic source was not used for acceptance. Exact-SHA gate: 1803 tests, 2316 corpus, 11 programs passed. Evidence: `tests/STAT15.4-oracle/STAT-COMMON-009/dev7-attempt.md` and replay.
 - Acceptance criteria: Use the source examples to distinguish estimable and nonestimable linear functions; verify status, rank, and diagnostics with missing levels and rank-deficient designs.
 
 <a id="stat-common-010"></a>
@@ -326,13 +327,14 @@ Complete prerequisite shared contracts first, then each PROC's data input, model
 
 <a id="stat-common-012"></a>
 
-### [DOING @dev6] STAT-COMMON-012 — Type III / IV sums of squares and estimable functions
+### [DONE] STAT-COMMON-012 — Type III / IV sums of squares and estimable functions
 
 - Source: S154 / Chapter 16 / `Type III and IV SS and Estimable Functions` (PDF pp. 289–293); S154 / Chapter 6 / `Introduction to Analysis of Variance Procedures` (PDF pp. 123–134).
 - Scope: Implement type III / IV hypothesis construction, degrees of freedom, and sums of squares; preserve differences in definition for unbalanced designs and missing cells.
 - Dependencies: [STAT-COMMON-009](#stat-common-009).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-COMMON-012/](tests/STAT15.4-oracle/STAT-COMMON-012/).
 - Dispatch contract: Extend the integrated GLM hypothesis and rank primitives while the broader COMMON-009 interface remains separately tracked. Respect differences between Type III and IV for missing cells; do not relabel one as the other without a validated applicable condition.
+- DONE (2026-11-25): Landed/pushed combined `415558f9`. Own unchanged original matches all 126 tokens, rc 0, empty stderr. SS3/SS4 selection and validated single-empty-cell 2x2 Type III contrasts included; general missing-cell Type IV/broader deficient constructions still fail explicitly. Combined exact-SHA gate: 1803 tests, 2316 corpus, 11 programs passed. Evidence/replay: `tests/STAT15.4-oracle/STAT-COMMON-012/`.
 - Acceptance criteria: For balanced, unbalanced, empty-cell, and reordered-effect designs, verify hypothesis matrices, sums of squares, ranks, and F tests against source examples or independent linear-algebra derivations.
 
 <a id="stat-common-013"></a>
@@ -457,7 +459,7 @@ Complete prerequisite shared contracts first, then each PROC's data input, model
 
 <a id="stat-common-025"></a>
 
-### [TODO] STAT-COMMON-025 — ESTIMATE Statement
+### [DOING @dev7] STAT-COMMON-025 — ESTIMATE Statement
 
 - Source: S154 / Chapter 20 / `ESTIMATE Statement` (PDF pp. 472–489).
 - Scope: Implement shared semantics, defaults, and applicability checks for ESTIMATE Statement; procedure-specific options and result integration belong to the corresponding PROC tickets.
@@ -8044,7 +8046,7 @@ Source: S154, Chapter 79, `The LOGISTIC Procedure`, PDF pp. 5823–6080. Tasks i
 
 <a id="stat-logistic-001"></a>
 
-### [TODO] STAT-LOGISTIC-001 — LOGISTIC — Data input, variable roles, and basic options
+### [DOING @dev4] STAT-LOGISTIC-001 — LOGISTIC — Data input, variable roles, and basic options
 
 - Source: S154 / Chapter 79 / `PROC LOGISTIC Statement` (PDF pp. 5836–5851); S154 / Chapter 79 / `BY Statement` (PDF p. 5851); S154 / Chapter 79 / `FREQ Statement` (PDF p. 5867); S154 / Chapter 79 / `ID Statement` (PDF p. 5867); S154 / Chapter 79 / `STRATA Statement` (PDF pp. 5901–5902); S154 / Chapter 79 / `WEIGHT Statement` (PDF pp. 5904–5905); S154 / Chapter 79 / `Missing Values` (PDF p. 5905).
 - Scope: Integrate PROC LOGISTIC declarations, basic options, defaults, and execution boundaries; this ticket establishes parameter objects and result interfaces, while later feature tickets implement model-, algorithm-, and output-specific options. Also implement BY; FREQ; ID; STRATA; WEIGHT; Missing Values; apply this procedure's rules for missing values, variable roles, and observation selection.
