@@ -3584,17 +3584,18 @@ Source: S154, Chapter 47, `The FREQ Procedure`, PDF pp. 3069–3290. Tasks in th
 
 <a id="stat-freq-003"></a>
 
-### [DOING @dev3] STAT-FREQ-003 — FREQ — TABLES
+### [DONE] STAT-FREQ-003 — FREQ — TABLES
 
 - Source: S154 / Chapter 47 / `TABLES Statement` (PDF pp. 3106–3154).
 - Scope: Implement TABLES syntax, variable combinations, multidimensional tables/strata, frequencies and margins, level ordering, and missing/zero-frequency policies; the chapter's corresponding feature tickets own individual statistical tests, intervals, and graphics.
 - Dependencies: [STAT-FREQ-001](#stat-freq-001), [STAT-FREQ-002](#stat-freq-002).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-FREQ-003/](tests/STAT15.4-oracle/STAT-FREQ-003/).
+- DONE (2026-11-25): Landed/pushed `1e4add9e`. Own unchanged oracle matches 649/649 tokens with whitespace-only normalization; status 0, no warnings/errors; three graphs inspected. Seven relevant existing regressions passed, no implementation/golden changes. Gate: 1611 tests, 2304 corpus, 11 programs passed. Evidence: `tests/STAT15.4-oracle/STAT-FREQ-003/dev3-attempt.md` and preserved actual output/graphs.
 - Acceptance criteria: Verify one-way, multiway, nested, and combined-variable table specifications; check every cell count, margin, stratum, formatted-level order, and missing/zero-frequency behavior; corresponding statistical feature tickets validate tests and intervals.
 
 <a id="stat-freq-004"></a>
 
-### [TODO] STAT-FREQ-004 — FREQ — EXACT / Exact Statistics
+### [DOING @dev3] STAT-FREQ-004 — FREQ — EXACT / Exact Statistics
 
 - Source: S154 / Chapter 47 / `EXACT Statement` (PDF pp. 3085–3094); S154 / Chapter 47 / `Exact Statistics` (PDF pp. 3234–3238).
 - Scope: Implement EXACT; Exact Statistics. This ticket owns the feature's options, defaults, computation, and results as an extension of the basic computational path; the chapter's output tickets handle ODS descriptors and file presentation.
