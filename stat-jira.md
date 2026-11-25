@@ -279,13 +279,14 @@ Complete prerequisite shared contracts first, then each PROC's data input, model
 
 <a id="stat-common-008"></a>
 
-### [DOING @dev4] STAT-COMMON-008 — Alternative parameterizations and reference coding
+### [DONE] STAT-COMMON-008 — Alternative parameterizations and reference coding
 
 - Source: S154 / Chapter 20 / `Other Parameterizations` (PDF pp. 418–421).
 - Scope: Implement the non-GLM parameterizations and reference-level semantics described in this section; expose them only to PROCs that document support for them.
 - Dependencies: [STAT-COMMON-007](#stat-common-007).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-COMMON-008/](tests/STAT15.4-oracle/STAT-COMMON-008/).
 - Dispatch contract: Reuse the completed CLASS/design helpers for REF/EFFECT coding and implement the LOGISTIC execution prerequisite required by this original case. Missing LOGISTIC alone is not grounds for immediate PARK; keep work bounded to the assigned observable contract and report any remaining gaps precisely.
+- DONE (2026-11-25): Landed/pushed `d00eee36`. Both original LOGISTIC analyses match all 430 tokens, rc 0, empty diagnostics. Binary solver and REF/EFFECT design/display implemented; prediction, covariance, reference/event-change and OR invariance checks pass. Gate: 1785 tests, 2312 corpus, 11 programs passed. COMMON-006/007 regressions preserved. Evidence: `tests/STAT15.4-oracle/STAT-COMMON-008/implementation-evidence.md`; broader LOGISTIC methods/codings remain explicit gaps.
 - Acceptance criteria: Verify equivalent predictions before and after parameter transformations for the same fitted space; check each documented coding scheme rather than substituting a single scheme for all parameterizations.
 
 <a id="stat-common-009"></a>
@@ -14740,12 +14741,13 @@ Source: S154, Chapter 128, `The TTEST Procedure`, PDF pp. 10595–10692. Tasks i
 
 <a id="stat-ttest-011"></a>
 
-### [TODO] STAT-TTEST-011 — TTEST — ODS Graphics
+### [DOING @dev5] STAT-TTEST-011 — TTEST — ODS Graphics
 
 - Source: S154 / Chapter 128 / `ODS Graphics` (PDF pp. 10644–10650).
 - Scope: Implement ODS Graphics. Cover all triggering options, content, and naming specified by this section; computational tickets supply numerical values, while other output types are handled separately.
 - Dependencies: [STAT-TTEST-001](#stat-ttest-001), [STAT-TTEST-002](#stat-ttest-002), [STAT-TTEST-003](#stat-ttest-003), [STAT-TTEST-004](#stat-ttest-004), [STAT-TTEST-005](#stat-ttest-005), [STAT-TTEST-006](#stat-ttest-006), [STAT-TTEST-007](#stat-ttest-007), [STAT-TTEST-008](#stat-ttest-008), [STAT-TTEST-009](#stat-ttest-009), [STAT-GRAPHICS-001](#stat-graphics-001).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-TTEST-011/](tests/STAT15.4-oracle/STAT-TTEST-011/).
+- Dispatch contract: Reuse the existing native SVG/ODS graphic interfaces while the wider GRAPHICS-001 ticket remains pending. Verify requested graph identities and real plotted data as well as this original listing/trace; do not treat file existence or skipped graphics as success.
 - Acceptance criteria: For ODS Graphics, verify graph names, triggering conditions, curve/point data, axes, grouping, and legends; check the relevant PLOTS= and ODS GRAPHICS controls and visually inspect exported graphs.
 
 <a id="stat-ttest-012"></a>
