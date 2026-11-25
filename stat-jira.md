@@ -3653,7 +3653,7 @@ Source: S154, Chapter 47, `The FREQ Procedure`, PDF pp. 3069–3290. Tasks in th
 
 <a id="stat-freq-008"></a>
 
-### [TODO] STAT-FREQ-008 — FREQ — Sensitivity and Specificity
+### [DOING @dev3] STAT-FREQ-008 — FREQ — Sensitivity and Specificity
 
 - Source: S154 / Chapter 47 / `Sensitivity and Specificity` (PDF p. 3188).
 - Scope: Implement Sensitivity and Specificity. This ticket owns the feature's options, defaults, computation, and results as an extension of the basic computational path; the chapter's output tickets handle ODS descriptors and file presentation.
@@ -4764,7 +4764,7 @@ Source: S154, Chapter 53, `The GLM Procedure`, PDF pp. 4043–4230. Tasks in thi
 
 <a id="stat-glm-004"></a>
 
-### [DOING @dev2] STAT-GLM-004 — GLM — Parameterization of PROC GLM Models
+### [DONE] STAT-GLM-004 — GLM — Parameterization of PROC GLM Models
 
 - Source: S154 / Chapter 53 / `Parameterization of PROC GLM Models` (PDF pp. 4110–4115).
 - Scope: Implement Parameterization of PROC GLM Models. Implement the syntax and model semantics allowed by this procedure, using shared effect/parameterization support only for forms documented as supported.
@@ -4772,6 +4772,7 @@ Source: S154, Chapter 53, `The GLM Procedure`, PDF pp. 4043–4230. Tasks in thi
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-GLM-004/](tests/STAT15.4-oracle/STAT-GLM-004/).
 - Dispatch contract: Verify the existing GLM model-space implementation against this original case; COMMON-007's full coded-design module is ready and awaiting integration. Coordinate shared parser/rendering changes with dev6's Type II integration rather than duplicating it.
 - Integration queue note (2026-11-25): dev2's implementation/tests/oracle are complete on `ab039538`; final rebase/gate is pending. Its branch/worktree/context were preserved while temporarily closed for dev7, and it now resumes after FREQ-007 lands. This is intentional queueing, not a dead-worker recovery case.
+- DONE (2026-11-25): Landed/pushed `13c65a77`, tests/evidence only. Own original oracle matches all 671 tokens, rc 0, three graphs validated. Independent checks cover coded matrices, basis equivalence, aliases, estimable Type III functions, reference-order covariance and polynomial transformations. Exact-SHA gate: 1774 tests, 2312 corpus, 11 programs passed. Production and expected files unchanged. Evidence: `tests/STAT15.4-oracle/STAT-GLM-004/implementation-evidence.md`.
 - Acceptance criteria: For Parameterization of PROC GLM Models, verify the parsed response/effect/parameter representation against the documented design matrix or model structure; cover applicable reference levels, interactions, missing levels, and invalid models; successful parsing alone is insufficient.
 
 <a id="stat-glm-005"></a>
@@ -14726,13 +14727,14 @@ Source: S154, Chapter 128, `The TTEST Procedure`, PDF pp. 10595–10692. Tasks i
 
 <a id="stat-ttest-010"></a>
 
-### [DOING @dev5] STAT-TTEST-010 — TTEST — Displayed Output / ODS Table Names
+### [PARK] STAT-TTEST-010 — TTEST — Displayed Output / ODS Table Names
 
 - Source: S154 / Chapter 128 / `Displayed Output` (PDF pp. 10640–10644); S154 / Chapter 128 / `ODS Table Names` (PDF p. 10644).
 - Scope: Implement Displayed Output; ODS Table Names. Cover all triggering options, content, and naming specified by this section; computational tickets supply numerical values, while other output types are handled separately.
 - Dependencies: [STAT-TTEST-001](#stat-ttest-001), [STAT-TTEST-002](#stat-ttest-002), [STAT-TTEST-003](#stat-ttest-003), [STAT-TTEST-004](#stat-ttest-004), [STAT-TTEST-005](#stat-ttest-005), [STAT-TTEST-006](#stat-ttest-006), [STAT-TTEST-007](#stat-ttest-007), [STAT-TTEST-008](#stat-ttest-008), [STAT-TTEST-009](#stat-ttest-009), [STAT-ODS-007](#stat-ods-007).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-TTEST-010/](tests/STAT15.4-oracle/STAT-TTEST-010/).
 - Dispatch contract: Reuse the existing ODS table registry and capture/TRACE interfaces while the broader ODS-007 integration ticket remains pending. Implement TTEST-specific producers and verify this full original capture case; do not extend inert ODS destinations under D-022.
+- PARK (2026-11-25, 45-minute limit): Foundation preserved at dev5 `c358d563`, gate 1774 tests/2311 corpus/11 programs green. Original exits 0, but complete oracle has not passed: vertical PRINT and CONTENTS metadata/layout differ, and three UMPU upper endpoints require adjudication against independent high-precision solutions. Raw differences retained without broad tolerance; other capture families remain explicit gaps. Four normal typed captures, TRACE identities and portable TTests descriptor work. No original expected files changed. Integration queued; see dev5 `tests/STAT15.4-oracle/STAT-TTEST-010/dev5-verification.json` until landed.
 - Acceptance criteria: For Displayed Output / ODS Table Names, verify table names, labels, triggering conditions, rows, columns, degrees of freedom, statistics, and missing representations; exercise selection and capture with ODS TRACE/OUTPUT; unrelated options must not create extra tables.
 
 <a id="stat-ttest-011"></a>
