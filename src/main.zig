@@ -1758,6 +1758,42 @@ fn handleGlobal(a: std.mem.Allocator, g: *Globals, diags: *sas.diag.Diagnostics,
                 sas.diag.markGap();
                 try diags.report(.err, t.line, "system option NOREPLACE is not supported", .{});
                 return;
+            } else if (eqi(t.text, "locale")) {
+                // Existing formats and collation implement the en_US baseline.
+                // Other locales must not silently retain US separators/dates.
+                if (i + 2 < toks.len and toks[i + 1].tag == .eq and
+                    (toks[i + 2].tag == .name or toks[i + 2].tag == .string))
+                {
+                    const v = toks[i + 2].text;
+                    if (eqi(v, "en_US")) {
+                        i += 3;
+                        continue;
+                    }
+                    sas.diag.markGap();
+                    try diags.report(.err, t.line, "system option LOCALE={s} is not supported", .{v});
+                    return;
+                }
+                try diags.report(.err, t.line, "Invalid value for the LOCALE option.", .{});
+                return;
+            } else if (eqi(t.text, "validmemname")) {
+                // SAS 9.4 Concepts, printed p.33: COMPAT is an alias for
+                // COMPATIBLE, the ordinary member-name mode used here.
+                // EXTEND requires additional member-name semantics; do not
+                // silently accept it as an ordinary identifier mode.
+                if (i + 2 < toks.len and toks[i + 1].tag == .eq and toks[i + 2].tag == .name) {
+                    const v = toks[i + 2].text;
+                    if (eqi(v, "compatible") or eqi(v, "compat")) {
+                        i += 3;
+                        continue;
+                    }
+                    if (eqi(v, "extend")) {
+                        sas.diag.markGap();
+                        try diags.report(.err, t.line, "system option VALIDMEMNAME=EXTEND is not supported", .{});
+                        return;
+                    }
+                }
+                try diags.report(.err, t.line, "Invalid value for the VALIDMEMNAME option.", .{});
+                return;
             } else if (eqi(t.text, "validvarname")) {
                 // VALIDVARNAME=V6 has one safety-relevant tooth opensas can
                 // honour locally: a created variable name may not exceed 8
@@ -5693,6 +5729,11 @@ test "BUG-optionsstmtswallow: OPTIONS fails LOUD on typos/unsupported; the inert
         .{ .src = "options firstobs=0;\n", .msg = "Invalid value for the FIRSTOBS option." },
         .{ .src = "options mergenoby=zzz;\n", .msg = "Invalid value for the MERGENOBY option." },
         .{ .src = "options varinitchk=zzz;\n", .msg = "Invalid value for the VARINITCHK option." },
+        .{ .src = "options locale=fr_FR;\n", .msg = "system option LOCALE=fr_FR is not supported" },
+        .{ .src = "options locale;\n", .msg = "Invalid value for the LOCALE option." },
+        .{ .src = "options validmemname=invalid;\n", .msg = "Invalid value for the VALIDMEMNAME option." },
+        .{ .src = "options validmemname=extend;\n", .msg = "system option VALIDMEMNAME=EXTEND is not supported" },
+        .{ .src = "options validmemname;\n", .msg = "Invalid value for the VALIDMEMNAME option." },
         .{ .src = "options validvarname=v8;\n", .msg = "Invalid value for the VALIDVARNAME option." },
         .{ .src = "options dkricond=zzz;\n", .msg = "Invalid value for the DKRICOND option." },
     };
@@ -7208,4 +7249,28 @@ test "unmatched ODS OUTPUT warns and lets CORR and later steps run" {
     try std.testing.expect(std.mem.indexOf(u8, try d.render(), "Output 'DoesNotExist' was not created") != null);
     try std.testing.expect(std.mem.indexOf(u8, listing.items, "Pearson Correlation Coefficients") != null);
     try std.testing.expect(std.mem.indexOf(u8, listing.items, "CAPTURE_EXISTS=0") != null);
+}
+
+test "STAT-COMMON-002 VALIDMEMNAME compatible and alias preserve ordinary member access" {
+    try expectRun("options validmemname=compatible; data work.Mixed; x=42; run; options validmemname=compat; data _null_; set WORK.mixed; put x; run;", "42\n");
+}
+
+test "STAT-COMMON-002 en_US locale retains US numeric formatting" {
+    try expectRun("options locale='en_US'; data _null_; x=1234.5; put x comma10.2; run;", "  1,234.50\n");
+}
+
+test "STAT-COMMON-002 prelude option status distinguishes supported values, gaps and malformed input" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var out: std.ArrayList(u8) = .empty;
+    var log: []const u8 = "";
+    defer resetRcSignals();
+    try std.testing.expectEqual(@as(u8, 0), try rcOf(a, &out, "options validmemname=compatible locale=en_US;", &log));
+    try std.testing.expectEqualStrings("", log);
+    try std.testing.expectEqual(@as(u8, 0), try rcOf(a, &out, "options validmemname=compat locale='en_US';", &log));
+    try std.testing.expectEqual(@as(u8, 2), try rcOf(a, &out, "options validmemname=extend;", &log));
+    try std.testing.expectEqual(@as(u8, 2), try rcOf(a, &out, "options locale=fr_FR;", &log));
+    try std.testing.expectEqual(@as(u8, 1), try rcOf(a, &out, "options validmemname=wrong;", &log));
+    try std.testing.expectEqual(@as(u8, 1), try rcOf(a, &out, "options locale=;", &log));
 }
