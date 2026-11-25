@@ -193,7 +193,7 @@ Complete prerequisite shared contracts first, then each PROC's data input, model
 
 <a id="stat-common-001"></a>
 
-### [DOING @dev5] STAT-COMMON-001 — Statistical procedure execution and the 15.4 option contract
+### [TODO] STAT-COMMON-001 — Statistical procedure execution and the 15.4 option contract
 
 - Source: S154 / Chapter 3 / `Introduction` (PDF pp. 27–36); S154 / Chapter 2 / `What's New in SAS/STAT 15.4` (PDF pp. 25–26); S154 / Chapter 1 / `Procedures by Category` (PDF pp. 13–24).
 - Scope: Establish PROC-level parsing, default-parameter, execution-status, and result-object contracts; distinguish valid input, invalid input, and unsupported capabilities under SAS/STAT 15.4. This ticket owns shared interfaces; PROC tickets own their semantics.
@@ -201,22 +201,24 @@ Complete prerequisite shared contracts first, then each PROC's data input, model
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-COMMON-001/](tests/STAT15.4-oracle/STAT-COMMON-001/).
 - Waiting for implementation (2026-11-25): Initial oracle exits 2 (expected 0), with missing REG tables and unrecognized `validmemname`. Implement existing STAT-REG-001/002 prerequisites, then revisit this case; missing REG alone is not grounds for PARK. Version must identify OpenSAS, not match SAS. Evidence: dev1 `.stat-common-001-evidence/actual.stderr` and `output.diff`.
 - Dispatch contract: dev5 owns honest OpenSAS runtime-version metadata and execution-contract regression checks; dev1/dev4 own REG implementation, dev2 owns option validation. Full oracle acceptance waits for those implementations.
+- Progress (2026-11-25): OpenSAS version metadata landed in `e24fbc2c`; option validation landed in `c768bb5f`. Await integrated REG oracle before claiming DONE. Version regression and gate passed; dev5 moves to the TTEST prerequisite while REG integration continues.
 - Acceptance criteria: Provide minimal execution contract tests; define option defaults, explicit overrides, and procedure-specific RUN/QUIT rules; emit locatable diagnostics for unimplemented branches; record the specification version and handle version differences explicitly.
 
 <a id="stat-common-002"></a>
 
-### [DOING @dev2] STAT-COMMON-002 — Statistical data selection, missing values, and observation weight interfaces
+### [DONE] STAT-COMMON-002 — Statistical data selection, missing values, and observation weight interfaces
 
 - Source: S154 / Chapter 13 / `Introduction to Scoring, Standardization, and Ranking Procedures` (PDF pp. 253–254); S154 / Chapter 22 / `FREQ Statement` (PDF p. 564); S154 / Chapter 22 / `ID Statement` (PDF p. 564); S154 / Chapter 22 / `VAR Statement` (PDF p. 570); S154 / Chapter 22 / `WEIGHT Statement` (PDF p. 570).
 - Scope: Provide shared data access interfaces for BY, variable roles, FREQ, WEIGHT, ID, and missing-value filtering; individual procedures determine exclusion granularity, weight meaning, and invalid-value behavior rather than imposing one global policy.
 - Dependencies: [STAT-COMMON-001](#stat-common-001).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-COMMON-002/](tests/STAT15.4-oracle/STAT-COMMON-002/).
 - Dispatch contract: Reuse the existing PROC MEANS entry point while STAT-COMMON-001 is in progress; no new dispatcher or runtime-version contract is required. Own data selection and MEANS weight handling only.
+- DONE (2026-11-25): Landed and pushed `c768bb5f`. Unmodified `weight_roles.sas` matches the complete unchanged expected output using whitespace-only tokenization; actual/expected status 0/0, stderr empty. Gate: 1596 unit tests, 2303 corpus cases, 11 programs passed. Evidence: `tests/STAT15.4-oracle/STAT-COMMON-002/implementation-evidence.md`; golden layout corrections separately committed as `545b294e` with oracle evidence.
 - Acceptance criteria: Use multiple groups to verify traceability of original row numbers, variable types, and missing indicators; keep frequency and analysis weights separate in the interface; PROC-specific filtering policies must not modify the original data.
 
 <a id="stat-common-003"></a>
 
-### [TODO] STAT-COMMON-003 — Rank-deficient linear algebra and generalized inverses
+### [DOING @dev2] STAT-COMMON-003 — Rank-deficient linear algebra and generalized inverses
 
 - Source: S154 / Chapter 4 / `Important Linear Algebra Concepts` (PDF pp. 58–65).
 - Scope: Provide interfaces for linear equations, rank determination, projections, and generalized inverses; expose singular and nearly singular states under a consistent precision policy.
@@ -224,6 +226,7 @@ Complete prerequisite shared contracts first, then each PROC's data input, model
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-COMMON-003/](tests/STAT15.4-oracle/STAT-COMMON-003/).
 - Dispatch contract: Evaluate the linear-algebra oracle through the existing interpreter entry point independently of COMMON-001's runtime-version requirement; do not assume its missing REG capability is implemented.
 - Waiting for implementation (2026-11-25): Oracle currently exits 2 with no REG/TOL/VIF output. Revisit after existing REG foundation tickets; do not park solely because REG is not implemented.
+- Current assignment: Reuse landed QR fitting and implement missing rank/alias/TOL/VIF diagnostics in a separate REG numerical helper; coordinate rendering with dev1. Verify the original oracle after REG dispatch is integrated.
 - Acceptance criteria: For full-rank, exactly rank-deficient, and nearly collinear matrices, verify decomposition reconstruction, projection identities, and generalized-inverse identities against independent analytic results; explain scale-dependent tolerances and do not return success for numerical failure.
 
 <a id="stat-common-004"></a>
@@ -11481,13 +11484,14 @@ Source: S154, Chapter 105, `The REG Procedure`, PDF pp. 8539–8728. Tasks in th
 
 <a id="stat-reg-002"></a>
 
-### [DOING @dev4] STAT-REG-002 — REG — Linear regression coefficients, variance, and basic fit statistics
+### [TODO] STAT-REG-002 — REG — Linear regression coefficients, variance, and basic fit statistics
 
 - Source: S154 / Chapter 105 / `Getting Started: REG Procedure` (PDF pp. 8542–8558); S154 / Chapter 105 / `Overview: REG Procedure` (PDF pp. 8540–8542).
 - Scope: Implement linear regression coefficients, variance, and basic fit statistics using the documented default path and establish the computational state needed by later extensions; implement specialized models, methods, and diagnostics outside that default example in their corresponding feature tickets.
 - Dependencies: [STAT-REG-001](#stat-reg-001), [STAT-REG-003](#stat-reg-003), [STAT-COMMON-005](#stat-common-005).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-REG-002/](tests/STAT15.4-oracle/STAT-REG-002/).
 - Dispatch contract: Implement numerical fitting in a separate `src/stat/reg_fit.zig` module using existing probability functions, concurrently with REG-001 parsing/rendering. Validate numeric results independently, then require integrated oracle verification before DONE; dependent shared oracle requirements do not prevent implementing their needed foundation.
+- Progress (2026-11-25): QR fitting foundation landed/pushed in `f65c428a`, with seven dedicated numeric tests passing through a separate harness and existing integrated gate green. Full case acceptance awaits dev1 REG integration; no DONE claim for the numeric module alone.
 - Acceptance criteria: Turn the smallest default analysis in Getting Started into a runnable case and verify its principal estimates, observation counts, and result status; add a smaller case with an independent manual calculation; meet the precision conventions.
 
 <a id="stat-reg-003"></a>
@@ -14580,22 +14584,24 @@ Source: S154, Chapter 128, `The TTEST Procedure`, PDF pp. 10595–10692. Tasks i
 
 <a id="stat-ttest-001"></a>
 
-### [TODO] STAT-TTEST-001 — TTEST — Data input, variable roles, and basic options
+### [DOING @dev5] STAT-TTEST-001 — TTEST — Data input, variable roles, and basic options
 
 - Source: S154 / Chapter 128 / `PROC TTEST Statement` (PDF pp. 10604–10613); S154 / Chapter 128 / `BY Statement` (PDF pp. 10615–10616); S154 / Chapter 128 / `CLASS Statement` (PDF p. 10616); S154 / Chapter 128 / `FREQ Statement` (PDF pp. 10616–10617); S154 / Chapter 128 / `VAR Statement` (PDF pp. 10617–10618); S154 / Chapter 128 / `WEIGHT Statement` (PDF p. 10618); S154 / Chapter 128 / `Input Data Set of Statistics` (PDF pp. 10618–10619); S154 / Chapter 128 / `Missing Values` (PDF p. 10619).
 - Scope: Integrate PROC TTEST declarations, basic options, defaults, and execution boundaries; this ticket establishes parameter objects and result interfaces, while later feature tickets implement model-, algorithm-, and output-specific options. Also implement BY; CLASS; FREQ; VAR; WEIGHT; Input Data Set of Statistics; Missing Values; apply this procedure's rules for missing values, variable roles, and observation selection.
 - Dependencies: [STAT-COMMON-001](#stat-common-001), [STAT-COMMON-002](#stat-common-002).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-TTEST-001/](tests/STAT15.4-oracle/STAT-TTEST-001/).
+- Dispatch contract: Reuse landed statistical data selection and interpreter interfaces. dev5 owns TTEST parsing, selection and rendering in new TTEST modules; dev4 supplies the independent numerical core. Global dispatch wiring is coordinated with dev1 to avoid concurrent main.zig edits.
 - Acceptance criteria: Create positive and negative parsing cases for the documented declarations and basic options; verify defaults, explicit settings, documented duplicate/conflicting declarations, and locations; valid but unimplemented features must not silently succeed. For BY / CLASS / FREQ / VAR / WEIGHT / Input Data Set of Statistics / Missing Values, construct valid, missing, empty, and multiple-group inputs; verify included observation counts, variable roles, BY boundaries, level ordering, and the frequency/weight rules relevant to this ticket; assert documented invalid-input behavior.
 
 <a id="stat-ttest-002"></a>
 
-### [TODO] STAT-TTEST-002 — TTEST — Default one-sample and group mean tests
+### [DOING @dev4] STAT-TTEST-002 — TTEST — Default one-sample and group mean tests
 
 - Source: S154 / Chapter 128 / `Getting Started: TTEST Procedure` (PDF pp. 10597–10603); S154 / Chapter 128 / `Overview: TTEST Procedure` (PDF pp. 10596–10597).
 - Scope: Implement default one-sample and group mean tests using the documented default path and establish the computational state needed by later extensions; implement specialized models, methods, and diagnostics outside that default example in their corresponding feature tickets.
 - Dependencies: [STAT-TTEST-001](#stat-ttest-001), [STAT-COMMON-005](#stat-common-005).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-TTEST-002/](tests/STAT15.4-oracle/STAT-TTEST-002/).
+- Dispatch contract: Implement the numerical core in a separate TTEST module, reusing existing probability functions, concurrently with TTEST-001. The integrated oracle must pass before DONE. This also supplies the missing TTEST execution dependency of COMMON-005.
 - Acceptance criteria: Turn the smallest default analysis in Getting Started into a runnable case and verify its principal estimates, observation counts, and result status; add a smaller case with an independent manual calculation; meet the precision conventions.
 
 <a id="stat-ttest-003"></a>
