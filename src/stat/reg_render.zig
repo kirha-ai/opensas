@@ -94,3 +94,7 @@ pub fn observations(a: A, out: *std.ArrayList(u8), spec: parse.Spec, model: pars
     }
     try out.print(a, "\nSum of Residuals {s}\nSum of Squared Residuals {s}\nPredicted Residual SS (PRESS) {s}\n", .{ std.mem.trim(u8, try @import("../format.zig").apply(a, .{ .num = sum }, "best12."), " "), try statistic(a, fit.sse), try statistic(a, press) });
 }
+
+test {
+    _ = @import("reg_orthogonality_tests.zig");
+}
