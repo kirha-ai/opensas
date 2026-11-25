@@ -1,0 +1,21 @@
+{
+  "status": "pass",
+  "exit_status": 0,
+  "expected_tokens": 151,
+  "actual_tokens": 151,
+  "raw_token_differences": 0,
+  "normalization": "whitespace only",
+  "stderr_bytes": 0,
+  "source_sha256": "57e259b9cb4622c3753978031a1a5dd2f3a11f8addaf2306176a1f11ef176d28",
+  "expected_sha256": "0941e78a4df80a964e65829dd494450a3169d078d502a8cdbd902d6a0325e7ed",
+  "independent_ancova": {
+    "estimate": "79/30",
+    "variance_factor": "143/105",
+    "variance": "11869/8100",
+    "slope": "17/10",
+    "error_ss": "581/60",
+    "df_error": "9",
+    "t": "2.175410803997053",
+    "p": "0.05760356351866791"
+  }
+}
