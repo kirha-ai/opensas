@@ -74,3 +74,9 @@ unsupported for these coefficient statements. This ticket does not install
 GLM ESTIMATE syntax in other procedures or claim Chapter20 multiplicity-adjusted
 inference for GLM. Final SHA/base, original replay, and direct-exit gate counts
 are reported in the handoff after rebasing onto the manager branch.
+
+The completed implementation passed the direct `zig build gate -j2 --summary
+all` gate: **1,810 tests, 2,317 corpus cases, and 11 programs**. The original
+oracle is a full 151/151-token match, status 0 with empty stderr. After this
+completion-evidence commit and the required local-manager rebase, the final
+handoff reports a fresh direct-exit gate on the exact final SHA.
