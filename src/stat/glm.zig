@@ -53,6 +53,7 @@ pub fn execute(cx: proc.ProcCtx, out: *std.ArrayList(u8), spec: Spec) diag.Error
             var result = try fitDesign(cx, spec, d);
             defer result.deinit(cx.arena);
             if (!spec.noprint) try @import("glm_render.zig").render(cx, out, spec, d, result);
+            try @import("glm_lsmeans.zig").execute(cx, out, spec, d, result.model.fit.mse, result.model.fit.df_error);
             try @import("glm_plots.zig").emit(cx, spec, d, result, graph_order);
             graph_order += 1;
         }

@@ -11,6 +11,7 @@ pub const Order = @import("class_levels.zig").Order;
 pub const Effect = struct { name: []const u8, variables: []const usize };
 pub const Spec = struct {
     input: proc.ProcInput,
+    lsmeans: []const @import("glm_lsmeans.zig").Request = &.{},
     classes: []const usize = &.{},
     responses: []const usize,
     effects: []const Effect,
@@ -120,6 +121,7 @@ pub fn parse(cx: proc.ProcCtx, tokens: []const lex.Token) diag.Error!Spec {
     var model_seen = false;
     var ended = false;
     var effects: std.ArrayList(Effect) = .empty;
+    var lsmeans: std.ArrayList(@import("glm_lsmeans.zig").Request) = .empty;
     i += 1;
     while (i < tokens.len and !at(tokens, i, .eof)) {
         if (at(tokens, i, .semicolon)) {
@@ -182,6 +184,9 @@ pub fn parse(cx: proc.ProcCtx, tokens: []const lex.Token) diag.Error!Spec {
                     j += 1;
                 } else if (kw(tokens, j, "alpha")) result.alpha = try real(cx, tokens[0..end], &j) else if (kw(tokens, j, "singular")) result.singular = try real(cx, tokens[0..end], &j) else return unsupported(cx, tokens[j], &.{ "solution", "ss3", "ss4", "e", "e1", "e2", "e3", "e4", "clparm", "cli", "clm", "p", "r", "nouni", "intercept", "tolerance", "inverse", "xpx", "effectsize" });
             }
+        } else if (kw(tokens, i, "lsmeans")) {
+            if (!model_seen) return cx.diags.fail(error.ParseError, tokens[i].line, "PROC GLM: LSMEANS must follow MODEL", .{});
+            try @import("glm_lsmeans.zig").read(cx, tokens[i..end], result, effects.items, &lsmeans);
         } else if (kw(tokens, i, "by")) {
             try bys.read(cx.arena, tokens, &i);
         } else if (kw(tokens, i, "id")) {
@@ -196,6 +201,7 @@ pub fn parse(cx: proc.ProcCtx, tokens: []const lex.Token) diag.Error!Spec {
     }
     if (!model_seen) return cx.diags.fail(error.ParseError, 0, "PROC GLM: MODEL statement required", .{});
     result.effects = effects.items;
+    result.lsmeans = lsmeans.items;
     const parsed = try bys.resolve(cx.arena, ds, cx.diags);
     const indices = try cx.arena.alloc(usize, parsed.names.len);
     for (parsed.names, 0..) |nm, k| indices[k] = ds.indexOf(nm).?;
