@@ -46,7 +46,8 @@ Total                               0.5123        0.7879
 
 Odds Ratio and Relative Risks
 
-Statistic / Method                 Value  95% Lower CL  95% Upper CL
+Statistic                          Value       95% Confidence Limits
+------------------------------------------------------------------
 Odds Ratio                        7.5000        2.0189       27.8616
 Relative Risk (Column 1)          3.6000        1.4984        8.6491
 Relative Risk (Column 2)          0.4800        0.2742        0.8404

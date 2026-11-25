@@ -1,5 +1,10 @@
 # corpus assertions
+row Odds Ratio 1.0000
+row Asymptotic Conf Limits
+row 95% Lower Conf Limit 0.0625
+row 95% Upper Conf Limit 15.9875
+row Exact Conf Limits
 row 95% Lower Conf Limit 0.0327
 row 95% Upper Conf Limit 30.5804
-row-count 1 95% Lower Conf Limit {any}
-row-count 1 95% Upper Conf Limit {any}
+row-count 2 95% Lower Conf Limit {any}
+row-count 2 95% Upper Conf Limit {any}

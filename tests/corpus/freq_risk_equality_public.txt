@@ -102,7 +102,8 @@ Two-sided Pr > |Z|                <.0001
 
 Odds Ratio and Relative Risks
 
-Statistic / Method                 Value  40% Lower CL  40% Upper CL
+Statistic                          Value       40% Confidence Limits
+------------------------------------------------------------------
 Odds Ratio                        7.5000        5.2792       10.6550
 Relative Risk (Column 1)          3.6000        2.8474        4.5515
 Relative Risk (Column 2)          0.4800        0.4132        0.5576
