@@ -26,6 +26,7 @@ pub const RunOptions = struct {
     order: Order = .mixed,
     show_sd_ci: bool = true,
     ignore_period: bool = false,
+    procedure_header: bool = true,
     line: usize = 0,
 };
 pub const Result = struct {
@@ -44,7 +45,12 @@ fn scaled(s: fit.Result, factor: f64) fit.Result {
     r.std_err *= @abs(factor);
     r.minimum = (if (factor < 0) s.maximum else s.minimum) * factor;
     r.maximum = (if (factor < 0) s.minimum else s.maximum) * factor;
-    // two.compute refreshes inference from the scaled moments and supplied options.
+    // These are transformed moments, not a retained test of the original null.
+    // two.compute refreshes the intervals and comparison inference from them.
+    r.t = std.math.nan(f64);
+    r.p = std.math.nan(f64);
+    r.mean_ci = .{};
+    r.std_dev_ci = .{};
     return r;
 }
 
@@ -136,7 +142,7 @@ pub fn run(cx: proc.ProcCtx, out: *std.ArrayList(u8), view: selection.View, resp
         .weight = row.weight.num,
     });
     const r = try compute(cx.arena, rows.items, o.inference, cx.diags, o.line);
-    try render(cx.arena, out, r, .{ view.source.columns.items[responses[0]].name, view.source.columns.items[responses[1]].name }, .{ view.source.columns.items[treatments[0]].name, view.source.columns.items[treatments[1]].name }, .{ levels.items[0].label, levels.items[1].label }, o.show_sd_ci);
+    try renderWithHeader(cx.arena, out, r, .{ view.source.columns.items[responses[0]].name, view.source.columns.items[responses[1]].name }, .{ view.source.columns.items[treatments[0]].name, view.source.columns.items[treatments[1]].name }, .{ levels.items[0].label, levels.items[1].label }, o.show_sd_ci, o.procedure_header);
 }
 
 fn num(a: A, value: f64, spec: []const u8) ![]const u8 {
@@ -162,7 +168,11 @@ fn testRow(a: A, out: *std.ArrayList(u8), method: []const u8, variance: []const 
 }
 
 pub fn render(a: A, out: *std.ArrayList(u8), r: Result, responses: [2][]const u8, treatments: [2][]const u8, labels: [2][]const u8, show_sd_ci: bool) diag.Error!void {
-    try out.print(a, "The TTEST Procedure\n\nResponse Variables: {s}, {s}\n\nCrossover Variable Information\n\nPeriod Response Treatment\n1 {s} {s}\n2 {s} {s}\n\n", .{ responses[0], responses[1], responses[0], treatments[0], responses[1], treatments[1] });
+    try renderWithHeader(a, out, r, responses, treatments, labels, show_sd_ci, true);
+}
+fn renderWithHeader(a: A, out: *std.ArrayList(u8), r: Result, responses: [2][]const u8, treatments: [2][]const u8, labels: [2][]const u8, show_sd_ci: bool, procedure_header: bool) diag.Error!void {
+    if (procedure_header) try out.appendSlice(a, "The TTEST Procedure\n\n");
+    try out.print(a, "Response Variables: {s}, {s}\n\nCrossover Variable Information\n\nPeriod Response Treatment\n1 {s} {s}\n2 {s} {s}\n\n", .{ responses[0], responses[1], responses[0], treatments[0], responses[1], treatments[1] });
     const cells = [_]struct { sequence: usize, period: usize, treatment: usize }{ .{ .sequence = 0, .period = 0, .treatment = 0 }, .{ .sequence = 1, .period = 1, .treatment = 0 }, .{ .sequence = 1, .period = 0, .treatment = 1 }, .{ .sequence = 0, .period = 1, .treatment = 1 } };
     const numbers = [_][]const u8{ "1", "2" };
     try out.appendSlice(a, "Sequence Treatment Period Method N Mean Std Dev Std Err Minimum Maximum\n\n");

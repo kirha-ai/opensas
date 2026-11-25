@@ -28,6 +28,8 @@ pub const Options = struct {
 };
 pub const Pair = struct { left: usize, right: usize };
 pub const Spec = struct {
+    crossover: ?[2]usize = null,
+    ignore_period: bool = false,
     paired: bool = false,
     pairs: []const Pair = &.{},
     input: proc.ProcInput,
@@ -211,6 +213,9 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
     var ds = input.ds;
     var vars: std.ArrayList(usize) = .empty;
     var var_seen = false;
+    var var_occurrences: std.ArrayList(usize) = .empty;
+    var crossover: ?[2]usize = null;
+    var ignore_period = false;
     var paired = false;
     var pairs: std.ArrayList(Pair) = .empty;
     var by: groups.Statements = .{};
@@ -231,12 +236,35 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
         if (kw(t, i, "var")) {
             var_seen = true;
             var j = i + 1;
-            while (j < end) {
-                if (at(t, j, .slash)) return proc.failGap(cx.diags, t[j].line, "PROC TTEST: VAR crossover options are not implemented", .{});
+            while (j < end and !at(t, j, .slash)) {
                 const start = j;
                 for (try lists.next(cx.arena, ds, t[0..end], &j, cx.diags)) |n| {
                     const ci = (try selection.Roles.numeric(ds, n, "VAR", cx.diags, t[start].line)).?;
+                    try var_occurrences.append(cx.arena, ci);
                     if (!contains(vars.items, ci)) try vars.append(cx.arena, ci);
+                }
+            }
+            if (j < end) {
+                j += 1; // VAR slash options.
+                while (j < end) {
+                    if (kw(t, j, "ignoreperiod")) {
+                        ignore_period = true;
+                        j += 1;
+                    } else if (kw(t, j, "crossover")) {
+                        const line = t[j].line;
+                        if (!at(t, j + 1, .eq) or !at(t, j + 2, .lparen)) return invalid(cx, t[j]);
+                        j += 3;
+                        if (!at(t, j, .name)) return cx.diags.fail(error.ParseError, line, "CROSSOVER requires two treatment variables", .{});
+                        const first = try column(cx, ds, t[j]);
+                        j += 1;
+                        if (at(t, j, .comma)) j += 1;
+                        if (!at(t, j, .name)) return cx.diags.fail(error.ParseError, line, "CROSSOVER requires two treatment variables", .{});
+                        const second = try column(cx, ds, t[j]);
+                        j += 1;
+                        if (!at(t, j, .rparen)) return cx.diags.fail(error.ParseError, line, "CROSSOVER requires exactly two treatment variables in parentheses", .{});
+                        j += 1;
+                        crossover = .{ first, second };
+                    } else return invalid(cx, t[j]);
                 }
             }
         } else if (kw(t, i, "by")) {
@@ -259,6 +287,12 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
         } else if (!kw(t, i, "where") and !kw(t, i, "run") and !kw(t, i, "quit") and !(token.tag == .name and parser.isMidStepSkippable(token.text))) return invalid(cx, token);
         i = end + 1;
     }
+    if (crossover != null) {
+        if (paired or class != null) return cx.diags.fail(error.ParseError, t[0].line, "CROSSOVER cannot be used with CLASS or PAIRED", .{});
+        vars = var_occurrences; // Response pairs retain their declared order, including repeats.
+        if (vars.items.len == 0 or vars.items.len % 2 != 0) return cx.diags.fail(error.ParseError, t[0].line, "CROSSOVER requires an even number of response variables", .{});
+    }
+    if (ignore_period and crossover == null) return cx.diags.fail(error.ParseError, t[0].line, "IGNOREPERIOD requires CROSSOVER", .{});
     if (paired and (var_seen or class != null)) return cx.diags.fail(error.ParseError, t[0].line, "PAIRED cannot be used with CLASS or VAR", .{});
     if (paired and options.distribution == .lognormal) return proc.failGap(cx.diags, t[0].line, "PROC TTEST: lognormal paired ratios are not implemented", .{});
     for (formats.items) |f| if (ds.indexOf(f.name) == null) return cx.diags.fail(error.ParseError, t[0].line, "Variable {s} not found.", .{f.name});
@@ -274,6 +308,7 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
             break;
         };
     }
+    if (summary != null and crossover != null) return cx.diags.fail(error.ParseError, t[0].line, "CROSSOVER requires observation values, not summary statistics", .{});
     if (summary != null and paired) return cx.diags.fail(error.ParseError, t[0].line, "PAIRED requires observation values, not summary statistics", .{});
     if (summary != null and options.distribution == .lognormal)
         return cx.diags.fail(error.ParseError, t[0].line, "PROC TTEST: DIST=LOGNORMAL requires observation values, not summary statistics", .{});
@@ -287,7 +322,7 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
         if (!contains(vars.items, pair.left)) try vars.append(cx.arena, pair.left);
         if (!contains(vars.items, pair.right)) try vars.append(cx.arena, pair.right);
     };
-    return .{ .paired = paired, .pairs = pairs.items, .input = input, .roles = .{ .analysis = vars.items, .by = bcols.items, .frequency = freq.first(), .weight = weight.first() }, .class = class, .summary = summary, .by_desc = by_spec.desc, .notsorted = by_spec.notsorted, .options = options, .line = t[0].line };
+    return .{ .crossover = crossover, .ignore_period = ignore_period, .paired = paired, .pairs = pairs.items, .input = input, .roles = .{ .analysis = vars.items, .by = bcols.items, .frequency = freq.first(), .weight = weight.first() }, .class = class, .summary = summary, .by_desc = by_spec.desc, .notsorted = by_spec.notsorted, .options = options, .line = t[0].line };
 }
 
 const TestInput = struct {
@@ -487,4 +522,49 @@ test "STAT-TTEST-009 resolves bounds after H0 and warns for explicit ignored SID
     defer diag.resetGap();
     try std.testing.expectError(error.ParseError, parse(cx, try lex.tokenize(a, "proc ttest cochran tost(-1,1); var x; run;", &d)));
     try std.testing.expect(diag.gapHit());
+}
+
+test "CROSSOVER parser binds treatment columns and preserves ordered response pairs" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var lib = @import("../exec.zig").Library.init(a);
+    try lib.put("sample", try TestInput.dataset(a));
+    var d = diag.Diagnostics.init(a);
+    const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &d };
+    const s = try parse(cx, try lex.tokenize(a, "proc ttest; var x y x w / crossover=(g,b); run;", &d));
+    try std.testing.expectEqual(@as(?[2]usize, .{ 4, 5 }), s.crossover);
+    try std.testing.expectEqualSlices(usize, &.{ 0, 1, 0, 3 }, s.roles.analysis);
+    try std.testing.expect(!s.ignore_period);
+    const ignored = try parse(cx, try lex.tokenize(a, "proc ttest; var x y / ignoreperiod crossover=(g b); run;", &d));
+    try std.testing.expect(ignored.ignore_period);
+    try std.testing.expectEqualStrings("", try d.render());
+}
+
+test "CROSSOVER parser rejects malformed dimensions conflicts and summary input" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var lib = @import("../exec.zig").Library.init(a);
+    try lib.put("sample", try TestInput.dataset(a));
+    for ([_][]const u8{
+        "var x / crossover=(g b);",            "var x y / crossover=(g);",               "var x y / crossover=(g b x);",
+        "var x y / crossover=(g absent);",     "var x y / crossover=g b;",               "var x y / ignoreperiod;",
+        "class g; var x y / crossover=(g b);", "paired x*y; var x y / crossover=(g b);",
+    }) |body| {
+        var d = diag.Diagnostics.init(a);
+        const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &d };
+        const source = try std.fmt.allocPrint(a, "proc ttest;\n{s} run;", .{body});
+        try std.testing.expectError(error.ParseError, parse(cx, try lex.tokenize(a, source, &d)));
+        try std.testing.expect(d.hasErrors());
+        try std.testing.expect(d.list.items[0].line > 0);
+    }
+    var ds = Dataset.init(a, "summary");
+    _ = try ds.addColumn("_STAT_", .char);
+    for ([_][]const u8{ "x", "y", "a", "b" }) |name| _ = try ds.addColumn(name, .num);
+    try lib.put("summary", &ds);
+    var d = diag.Diagnostics.init(a);
+    const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &d };
+    try std.testing.expectError(error.ParseError, parse(cx, try lex.tokenize(a, "proc ttest data=summary; var x y / crossover=(a b); run;", &d)));
+    try std.testing.expect(std.mem.indexOf(u8, try d.render(), "requires observation values") != null);
 }

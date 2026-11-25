@@ -163,6 +163,42 @@ pub fn runTtest(cx: proc.ProcCtx, out: *std.ArrayList(u8), toks: []const lex.Tok
     if (!spec.options.plots_none and spec.summary == null) if (cx.graphics) |g| {
         if (g.enabled == true or (g.enabled != false and g.cli_dir != null)) return proc.failGap(cx.diags, spec.line, "PROC TTEST: ODS graphics are not implemented", .{});
     };
+    if (spec.crossover) |treatments| {
+        if (spec.options.distribution != .normal) return proc.failGap(cx.diags, spec.line, "PROC TTEST: lognormal crossover inference is not implemented", .{});
+        if (spec.options.tost != null) return proc.failGap(cx.diags, spec.line, "PROC TTEST: crossover TOST inference is not implemented", .{});
+        const crossover = @import("ttest_crossover.zig");
+        const a = cx.arena;
+        const view = try selection.View.init(a, spec.input, spec.roles);
+        const groups = try view.groups(a, spec.by_desc, spec.notsorted, cx.diags);
+        var body: std.ArrayList(u8) = .empty;
+        for (groups) |group| {
+            if (group.observations.len == 0) continue;
+            var group_body: std.ArrayList(u8) = .empty;
+            var j: usize = 0;
+            while (j < spec.roles.analysis.len) : (j += 2) {
+                const options = numericOptions(spec.options);
+                try crossover.run(cx, &group_body, group, .{ spec.roles.analysis[j], spec.roles.analysis[j + 1] }, treatments, .{
+                    .inference = .{ .h0 = options.h0, .alpha = options.alpha, .sides = options.sides, .cochran = spec.options.cochran },
+                    .order = switch (spec.options.order) {
+                        .data => .data,
+                        .formatted => .formatted,
+                        .freq => .freq,
+                        .internal => .internal,
+                        .mixed => .mixed,
+                    },
+                    .show_sd_ci = spec.options.ci,
+                    .ignore_period = spec.ignore_period,
+                    .line = spec.line,
+                    .procedure_header = j == 0,
+                });
+            }
+            if (spec.roles.by.len > 0) try by.appendLine(a, &body, spec.input.ds, group.observations[0].cells, spec.roles.by);
+            try body.appendSlice(a, group_body.items);
+        }
+        if (body.items.len == 0) return cx.diags.fail(error.ParseError, spec.line, "PROC TTEST CROSSOVER: no observations in input data set", .{});
+        try out.appendSlice(a, body.items);
+        return;
+    }
     // Do not print a one-sample table for a requested two-sample analysis.
     // The selection and summary interfaces above are already shared by both.
     const result = try compute(cx, spec);
@@ -650,4 +686,49 @@ test "STAT-TTEST-009 one-sample lognormal and paired invocation retain their sca
     var invalid_out: std.ArrayList(u8) = .empty;
     try std.testing.expectError(error.ExecError, runTtest(cx, &invalid_out, try lex.tokenize(a, "proc ttest data=tiny tost(-1,1); var x; run;", &d)));
     try std.testing.expect(d.hasErrors());
+}
+
+test "CROSSOVER hook preserves BY WHERE and repeated response pairs without disturbing TOST" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var ds = @import("../dataset.zig").Dataset.init(a, "cross");
+    for ([_][]const u8{ "y1", "y2", "g" }) |name| _ = try ds.addColumn(name, .num);
+    _ = try ds.addColumn("t1", .char);
+    _ = try ds.addColumn("t2", .char);
+    for ([_]f64{ 1, 2 }) |group| {
+        for ([_][2]f64{ .{ 12, 8 }, .{ 16, 10 }, .{ 10, 18 }, .{ 8, 14 } }, 0..) |row, k| {
+            try ds.appendRow(&.{ .{ .num = row[0] }, .{ .num = row[1] }, .{ .num = group }, .{ .str = if (k < 2) "A" else "B" }, .{ .str = if (k < 2) "B" else "A" } });
+        }
+    }
+    var lib = @import("../exec.zig").Library.init(a);
+    try lib.put("cross", &ds);
+    var d = diag.Diagnostics.init(a);
+    const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &d };
+    var out: std.ArrayList(u8) = .empty;
+    try runTtest(cx, &out, try lex.tokenize(a, "proc ttest; by g; where g=2; var y1 y2 y1 y2 / crossover=(t1 t2); run;", &d));
+    try std.testing.expect(std.mem.indexOf(u8, out.items, "g=2") != null);
+    try std.testing.expect(std.mem.indexOf(u8, out.items, "g=1") == null);
+    try std.testing.expectEqual(@as(usize, 1), std.mem.count(u8, out.items, "The TTEST Procedure"));
+    try std.testing.expectEqual(@as(usize, 2), std.mem.count(u8, out.items, "Response Variables: y1, y2"));
+    try std.testing.expectEqual(@as(usize, 8), ds.rows.items.len);
+    try std.testing.expectEqualStrings("", try d.render());
+    // These are valid feature families with no crossover implementation yet:
+    // fail visibly before emitting any plausible normal-difference output.
+    diag.resetGap();
+    defer diag.resetGap();
+    for ([_][]const u8{
+        "proc ttest dist=lognormal; var y1 y2 / crossover=(t1 t2); run;",
+        "proc ttest tost(-10,10); var y1 y2 / crossover=(t1 t2); run;",
+        "proc ttest; var y1 y2 / crossover=(t1 t2) ignoreperiod; run;",
+    }) |source| {
+        var bad = diag.Diagnostics.init(a);
+        const badcx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &bad };
+        var rejected: std.ArrayList(u8) = .empty;
+        diag.resetGap();
+        try std.testing.expectError(error.ParseError, runTtest(badcx, &rejected, try lex.tokenize(a, source, &bad)));
+        try std.testing.expect(diag.gapHit());
+        try std.testing.expect(bad.hasErrors());
+        try std.testing.expectEqual(@as(usize, 0), rejected.items.len);
+    }
 }
