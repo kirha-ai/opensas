@@ -55,7 +55,6 @@ Obs   x   COUNT        PERCENT
               Total           0        0
                               .        .
 
-                        The FREQ Procedure
 
                         Table 2 of g by s
                         Controlling for h=B

@@ -1,22 +1,17 @@
 details
                         The FREQ Procedure
 
-                        Table of r by c
-
-
 Statistics for Table of r by c
 
 Symmetry Test
 Chi-Square        DF    Pr > ChiSq
     3.8564         3        0.2774
 
-Simple Kappa Coefficient
-Estimate       Standard Error    95% Confidence Limits
-    0.5093             0.0776       0.3572       0.6614
-
-Weighted Kappa Coefficient
-Estimate       Standard Error    95% Confidence Limits
-    0.6015             0.0701       0.4641       0.7389
+Kappa Statistics
+                              Standard
+Statistic         Estimate       Error    95% Confidence Limits
+Simple Kappa        0.5093      0.0776      0.3572       0.6614
+Weighted Kappa      0.6015      0.0701      0.4641       0.7389
 
 Kappa Details
 Observed Agreement             0.6750
@@ -28,22 +23,17 @@ Sample Size = 80
 kappadetails
                         The FREQ Procedure
 
-                        Table of r by c
-
-
 Statistics for Table of r by c
 
 Symmetry Test
 Chi-Square        DF    Pr > ChiSq
     3.8564         3        0.2774
 
-Simple Kappa Coefficient
-Estimate       Standard Error    95% Confidence Limits
-    0.5093             0.0776       0.3572       0.6614
-
-Weighted Kappa Coefficient
-Estimate       Standard Error    95% Confidence Limits
-    0.6015             0.0701       0.4641       0.7389
+Kappa Statistics
+                              Standard
+Statistic         Estimate       Error    95% Confidence Limits
+Simple Kappa        0.5093      0.0776      0.3572       0.6614
+Weighted Kappa      0.6015      0.0701      0.4641       0.7389
 
 Kappa Details
 Observed Agreement             0.6750
@@ -55,22 +45,17 @@ Sample Size = 80
 wtkappadetails
                         The FREQ Procedure
 
-                        Table of r by c
-
-
 Statistics for Table of r by c
 
 Symmetry Test
 Chi-Square        DF    Pr > ChiSq
     3.8564         3        0.2774
 
-Simple Kappa Coefficient
-Estimate       Standard Error    95% Confidence Limits
-    0.5093             0.0776       0.3572       0.6614
-
-Weighted Kappa Coefficient
-Estimate       Standard Error    95% Confidence Limits
-    0.6015             0.0701       0.4641       0.7389
+Kappa Statistics
+                              Standard
+Statistic         Estimate       Error    95% Confidence Limits
+Simple Kappa        0.5093      0.0776      0.3572       0.6614
+Weighted Kappa      0.6015      0.0701      0.4641       0.7389
 
 Weighted Kappa Details
 Observed Agreement             0.8188
@@ -80,22 +65,17 @@ Sample Size = 80
 details wtkappadetails
                         The FREQ Procedure
 
-                        Table of r by c
-
-
 Statistics for Table of r by c
 
 Symmetry Test
 Chi-Square        DF    Pr > ChiSq
     3.8564         3        0.2774
 
-Simple Kappa Coefficient
-Estimate       Standard Error    95% Confidence Limits
-    0.5093             0.0776       0.3572       0.6614
-
-Weighted Kappa Coefficient
-Estimate       Standard Error    95% Confidence Limits
-    0.6015             0.0701       0.4641       0.7389
+Kappa Statistics
+                              Standard
+Statistic         Estimate       Error    95% Confidence Limits
+Simple Kappa        0.5093      0.0776      0.3572       0.6614
+Weighted Kappa      0.6015      0.0701      0.4641       0.7389
 
 Kappa Details
 Observed Agreement             0.6750

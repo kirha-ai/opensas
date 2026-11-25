@@ -46,9 +46,6 @@ Two-sided Pr > |Z|                0.0935
 Sample Size = 20
                         The FREQ Procedure
 
-                        Table of r by c
-
-
 Statistics for Table of r by c
 
 Column 1 Risk Estimates

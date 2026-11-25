@@ -1,9 +1,6 @@
 VISIBLE TABLE STATS
                         The FREQ Procedure
 
-                        Table of noprint by c
-
-
 Statistics for Table of noprint by c
 
 Statistic                     DF       Value      Prob

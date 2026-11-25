@@ -23,7 +23,6 @@
               Total           2        2        4
                           50.00    50.00   100.00
 
-                        The FREQ Procedure
 
                         Table 2 of b by c
                         Controlling for a=a2

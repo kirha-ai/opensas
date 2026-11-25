@@ -1,8 +1,5 @@
                         The FREQ Procedure
 
-                        Table of r by c
-
-
 Statistics for Table of r by c
 
 Statistic                              Value       ASE
@@ -38,9 +35,6 @@ Two-sided Pr > |Z|          0.0003
 Sample Size = 38
 
                         The FREQ Procedure
-
-                        Table of r by q
-
 
 Statistics for Table of r by q
 
@@ -86,9 +80,6 @@ Sample Size = 38
               2   2           17       44.74             38       100.00
 
                         The FREQ Procedure
-
-                        Table of r by q
-
 
 Statistics for Table of r by q
 
@@ -202,9 +193,6 @@ Relative Risk (Column 2)        1.5441        0.5888        4.0494
 
 Sample Size = 38
                         The FREQ Procedure
-
-                        Table of r by c
-
 
 Statistics for Table of r by c
 

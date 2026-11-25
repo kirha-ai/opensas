@@ -1,8 +1,5 @@
                         The FREQ Procedure
 
-                        Table of r by c
-
-
 Statistics for Table of r by c
 
 Sensitivity and Specificity
@@ -57,9 +54,6 @@ Relative Risk (Column 2)          0.4800        0.2742        0.8404
 Sample Size = 50
                         The FREQ Procedure
 
-                        Table of r by c
-
-
 Statistics for Table of r by c
 
 Confidence Limits for the Risk Difference
@@ -103,9 +97,6 @@ Likelihood Ratio                    1.6179        9.9526
 
 Sample Size = 50
                         The FREQ Procedure
-
-                        Table of r by c
-
 
 Statistics for Table of r by c
 

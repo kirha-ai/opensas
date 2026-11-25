@@ -29,8 +29,9 @@ Chi-Square        DF    Pr > ChiSq
          .         .             .
 NOTE: There are no discordant pairs.
 
-Simple Kappa Coefficient
-Estimate       Standard Error    95% Confidence Limits
-    1.0000             0.0000       1.0000       1.0000
+Kappa Statistics
+                              Standard
+Statistic         Estimate       Error    95% Confidence Limits
+Simple Kappa        1.0000      0.0000      1.0000       1.0000
 
 Sample Size = 2

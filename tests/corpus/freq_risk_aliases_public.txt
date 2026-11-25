@@ -62,9 +62,6 @@ Overall P-Value                   0.0798
 Sample Size = 20
                         The FREQ Procedure
 
-                        Table of r by c
-
-
 Statistics for Table of r by c
 
 Risk Estimates
@@ -79,9 +76,6 @@ Likelihood Ratio                    2.1287       30.3010
 
 Sample Size = 50
                         The FREQ Procedure
-
-                        Table of r by c
-
 
 Statistics for Table of r by c
 
@@ -119,9 +113,6 @@ Two-sided Pr > |Z|                0.0020
 
 Sample Size = 50
                         The FREQ Procedure
-
-                        Table of r by c
-
 
 Statistics for Table of r by c
 

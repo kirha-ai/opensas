@@ -23,7 +23,6 @@
               Total           2        1        3
                           66.67    33.33   100.00
 
-                        The FREQ Procedure
 
                         Table 2 of s by r
                         Controlling for g=A
@@ -72,7 +71,6 @@
               Total           2        1        3
                           66.67    33.33   100.00
 
-                        The FREQ Procedure
 
                         Table 2 of s by r
                         Controlling for g=A
@@ -121,7 +119,6 @@
               Total           0        2        2
                            0.00   100.00   100.00
 
-                        The FREQ Procedure
 
                         Table 2 of s by r
                         Controlling for g=Z

@@ -34,16 +34,19 @@ McNemar's Test
 Chi-Square        DF    Pr > ChiSq
    10.8889         1        0.0010
 
-Simple Kappa Coefficient
-Estimate       Standard Error    95% Confidence Limits
-   -0.0328             0.1167      -0.2615       0.1960
+Kappa Statistics
+                              Standard
+Statistic         Estimate       Error    95% Confidence Limits
+Simple Kappa       -0.0328      0.1167     -0.2615       0.1960
 
 Sample Size = 28
+                        The FREQ Procedure
 
 Summary Statistics for r by c
 
 Common Odds Ratio and Relative Risks
 Statistic                 Method               Value    95% Confidence Limits
+-------------------------------------------------------------------------------------
 Odds Ratio                Mantel-Haenszel      0.7500      0.1078      5.2161
                           Logit                0.7500      0.1078      5.2161
 Relative Risk (Column 1)  Mantel-Haenszel      0.8182      0.2183      3.0671
@@ -93,16 +96,19 @@ McNemar's Test
 Chi-Square        DF    Pr > ChiSq
    10.8889         1        0.0010
 
-Simple Kappa Coefficient
-Estimate       Standard Error    95% Confidence Limits
-   -0.0328             0.1167      -0.2615       0.1960
+Kappa Statistics
+                              Standard
+Statistic         Estimate       Error    95% Confidence Limits
+Simple Kappa       -0.0328      0.1167     -0.2615       0.1960
 
 Sample Size = 28
+                        The FREQ Procedure
 
 Summary Statistics for c by r
 
 Common Odds Ratio and Relative Risks
 Statistic                 Method               Value    95% Confidence Limits
+-------------------------------------------------------------------------------------
 Odds Ratio                Mantel-Haenszel      0.7500      0.1078      5.2161
                           Logit                0.7500      0.1078      5.2161
 Relative Risk (Column 1)  Mantel-Haenszel      0.9375      0.5941      1.4794

@@ -37,6 +37,7 @@ Sample Size = 161
 
 
 
+                        The FREQ Procedure
 
 Summary Statistics for Emotion by SkinResponse
 Controlling for Subject

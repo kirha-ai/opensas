@@ -1,8 +1,5 @@
                         The FREQ Procedure
 
-                        Table of r by c
-
-
 Statistics for Table of r by c
 
 Sensitivity and Specificity
@@ -48,9 +45,6 @@ Likelihood Ratio                    1.2706        4.5953
 Sample Size = 20
                         The FREQ Procedure
 
-                        Table of r by c
-
-
 Statistics for Table of r by c
 
 Risk Estimates
@@ -70,9 +64,6 @@ Likelihood Ratio                    0.0000        0.3949
 
 Sample Size = 20
                         The FREQ Procedure
-
-                        Table of r by c
-
 
 Statistics for Table of r by c
 
@@ -119,9 +110,6 @@ Likelihood Ratio                    2.5320      Infinity
 Sample Size = 20
                         The FREQ Procedure
 
-                        Table of r by c
-
-
 Statistics for Table of r by c
 
 Risk Estimates
@@ -141,9 +129,6 @@ Likelihood Ratio                    0.2176        0.7871
 
 Sample Size = 20
                         The FREQ Procedure
-
-                        Table of r by c
-
 
 Statistics for Table of r by c
 
@@ -190,9 +175,6 @@ Likelihood Ratio                    1.6010        9.5208
 Sample Size = 52
                         The FREQ Procedure
 
-                        Table of r by c
-
-
 Statistics for Table of r by c
 
 Risk Estimates
@@ -212,9 +194,6 @@ Likelihood Ratio                    0.2590        0.7811
 
 Sample Size = 52
                         The FREQ Procedure
-
-                        Table of r by c
-
 
 Statistics for Table of r by c
 
@@ -260,9 +239,6 @@ Likelihood Ratio                    0.0233        5.2102
 
 Sample Size = 2000
                         The FREQ Procedure
-
-                        Table of r by c
-
 
 Statistics for Table of r by c
 
