@@ -1,0 +1,329 @@
+//! PROC REG input selection and execution. Computation belongs to reg_fit.zig.
+const std = @import("std");
+const proc = @import("../proc.zig");
+const diag = @import("../diag.zig");
+const Value = @import("../value.zig").Value;
+pub const parsing = @import("reg_parse.zig");
+pub const Spec = parsing.Spec;
+pub const Model = parsing.Model;
+pub const parse = parsing.parse;
+
+/// Row-major design, including the intercept when requested. Frequency counts
+/// remain separate from relative precision weights: only frequencies affect N.
+pub const Selected = struct {
+    x: []const f64,
+    y: []const f64,
+    weights: []const f64,
+    frequencies: []const f64,
+    source_rows: []const usize,
+    columns: usize,
+    read: usize,
+};
+pub fn select(cx: proc.ProcCtx, spec: Spec, model: Model, rows: []const []const Value) diag.Error!Selected {
+    var x: std.ArrayList(f64) = .empty;
+    var y: std.ArrayList(f64) = .empty;
+    var weights: std.ArrayList(f64) = .empty;
+    var frequencies: std.ArrayList(f64) = .empty;
+    var source: std.ArrayList(usize) = .empty;
+    for (rows, 0..) |row, index| {
+        var usable = true;
+        for (spec.required) |ci| {
+            const v = row[ci].num;
+            if (std.math.isNan(v)) {
+                usable = false;
+                break;
+            }
+            if (!std.math.isFinite(v)) return cx.diags.fail(error.ExecError, 0, "PROC REG: nonfinite analysis value", .{});
+        }
+        if (!usable) continue;
+        const weight = if (spec.weight) |c| row[c].num else 1;
+        const frequency = if (spec.freq) |c| row[c].num else 1;
+        if (std.math.isNan(weight) or weight <= 0 or std.math.isNan(frequency) or frequency < 1) continue;
+        if (!std.math.isFinite(weight) or !std.math.isFinite(frequency)) return cx.diags.fail(error.ExecError, 0, "PROC REG: nonfinite frequency or weight", .{});
+        if (model.intercept) try x.append(cx.arena, 1);
+        for (model.regressors) |ci| try x.append(cx.arena, row[ci].num);
+        try y.append(cx.arena, row[model.dependent].num);
+        try weights.append(cx.arena, weight);
+        try frequencies.append(cx.arena, @floor(frequency));
+        try source.append(cx.arena, index + 1);
+    }
+    return .{ .x = x.items, .y = y.items, .weights = weights.items, .frequencies = frequencies.items, .source_rows = source.items, .columns = model.regressors.len + @as(usize, if (model.intercept) 1 else 0), .read = rows.len };
+}
+
+/// Execute a complete initial REG step. Unsupported continuations remain loud.
+pub fn run(cx: proc.ProcCtx, out: *std.ArrayList(u8), tokens: []const @import("../lexer.zig").Token) diag.Error!void {
+    const spec = try parse(cx, tokens);
+    try execute(cx, out, spec);
+}
+pub fn execute(cx: proc.ProcCtx, out: *std.ArrayList(u8), spec: Spec) diag.Error!void {
+    const groups = try @import("by_groups.zig").checkedSlices(cx.arena, spec.ds, spec.by, spec.descending, spec.notsorted, cx.diags);
+    if (groups.len == 0) return cx.diags.fail(error.ExecError, 0, "PROC REG: no observations", .{});
+    for (groups) |group| {
+        if (group.rep) |rep| if (!spec.noprint) {
+            try @import("by_groups.zig").appendLine(cx.arena, out, spec.ds, rep, spec.by);
+        };
+        for (spec.models) |model| {
+            const input = try select(cx, spec, model, group.rows);
+            if (input.y.len == 0) return cx.diags.fail(error.ExecError, 0, "PROC REG: no usable observations", .{});
+            if (model.singular != 1e-9) return proc.failGap(cx.diags, 0, "PROC REG: custom SINGULAR= is not implemented", .{});
+            // The solver accepts precision weights. Multiplying by frequency
+            // gives the same crossproducts, then DF and covariance are adjusted
+            // using the independently accumulated replication count.
+            const w = try cx.arena.alloc(f64, input.y.len);
+            var count: f64 = 0;
+            for (w, input.weights, input.frequencies) |*dest, weight, freq| {
+                dest.* = weight * freq;
+                count += freq;
+            }
+            if (count >= @as(f64, @floatFromInt(std.math.maxInt(usize)))) return cx.diags.fail(error.ExecError, 0, "PROC REG: frequency total exceeds representable observation count", .{});
+            var fit = @import("reg_fit.zig").fit(cx.arena, input.x, input.y, input.y.len, input.columns, w) catch |err| {
+                if (err == error.OutOfMemory) return err;
+                return cx.diags.fail(error.ExecError, 0, "PROC REG: numerical fit failed", .{});
+            };
+
+            fit.n_used = @intFromFloat(count);
+            fit.df_error = fit.n_used - fit.rank;
+            fit.mse = if (fit.df_error > 0) fit.sse / @as(f64, @floatFromInt(fit.df_error)) else std.math.nan(f64);
+            for (fit.se, 0..) |*se, j| se.* = if (fit.aliased[j]) std.math.nan(f64) else @sqrt(fit.mse * fit.covariance_unscaled[j * input.columns + j]);
+            const stats = fit.modelStats(model.intercept);
+            const ts = try cx.arena.alloc(f64, input.columns);
+            const ps = try cx.arena.alloc(f64, input.columns);
+            const tolerances = try cx.arena.alloc(f64, input.columns);
+            const vifs = try cx.arena.alloc(f64, input.columns);
+            for (ts, ps, 0..) |*t, *p, j| {
+                t.* = fit.coefficientT(j);
+                p.* = fit.coefficientP(j);
+                if (fit.aliased[j]) {
+                    tolerances[j] = std.math.nan(f64);
+                    vifs[j] = std.math.nan(f64);
+                    continue;
+                }
+                if (model.intercept and j == 0) {
+                    tolerances[j] = std.math.nan(f64);
+                    vifs[j] = 0;
+                    continue;
+                }
+                var sumw: f64 = 0;
+                var sumx: f64 = 0;
+                for (w, 0..) |weight, k| {
+                    sumw += weight;
+                    sumx += weight * input.x[k * input.columns + j];
+                }
+                const mean = if (model.intercept) sumx / sumw else 0;
+                var ss: f64 = 0;
+                for (w, 0..) |weight, k| {
+                    const delta = input.x[k * input.columns + j] - mean;
+                    ss += weight * delta * delta;
+                }
+                vifs[j] = ss * fit.covariance_unscaled[j * input.columns + j];
+                tolerances[j] = 1 / vifs[j];
+            }
+            var dependencies: std.ArrayList(u8) = .empty;
+            for (fit.aliased, 0..) |aliased, j| {
+                if (!aliased) continue;
+                const name = parameterName(spec, model, j);
+                try dependencies.print(cx.arena, "{s} = ", .{name});
+                var terms: usize = 0;
+                for (fit.aliased, 0..) |other_alias, k| {
+                    if (other_alias) continue;
+                    var coefficient: f64 = 0;
+                    for (0..input.columns) |l| {
+                        var cross: f64 = 0;
+                        for (w, 0..) |weight, row| cross += weight * input.x[row * input.columns + l] * input.x[row * input.columns + j];
+                        coefficient += fit.covariance_unscaled[k * input.columns + l] * cross;
+                    }
+                    if (@abs(coefficient) < 1e-10) continue;
+                    if (terms > 0) try dependencies.appendSlice(cx.arena, " + ");
+                    try dependencies.print(cx.arena, "{s} * {s}", .{ std.mem.trim(u8, try @import("../format.zig").apply(cx.arena, .{ .num = coefficient }, "best12."), " "), parameterName(spec, model, k) });
+                    terms += 1;
+                }
+                if (terms == 0) try dependencies.appendSlice(cx.arena, "0");
+                try dependencies.append(cx.arena, '\n');
+            }
+            if (!spec.noprint) try @import("reg_render.zig").render(cx.arena, out, spec, model, input.read, input.y.len, .{
+                .n = count,
+                .rank = fit.rank,
+                .df_model = @floatFromInt(stats.df_model),
+                .df_error = @floatFromInt(fit.df_error),
+                .df_total = @floatFromInt(stats.df_total),
+                .ss_model = stats.ss_model,
+                .ss_error = fit.sse,
+                .ss_total = if (model.intercept) fit.sst else fit.sst_uncorrected,
+                .ms_model = stats.ms_model,
+                .ms_error = fit.mse,
+                .f = stats.f_value,
+                .p = stats.p_value,
+                .root_mse = @sqrt(fit.mse),
+                .mean = fit.y_mean,
+                .cv = 100 * @sqrt(fit.mse) / fit.y_mean,
+                .r_square = stats.r_square,
+                .adj_r_square = stats.adj_r_square,
+                .aliased = fit.aliased,
+                .biased = fit.biased,
+                .dependencies = dependencies.items,
+                .estimates = fit.coefficients,
+                .errors = fit.se,
+                .t = ts,
+                .probabilities = ps,
+                .tolerance = tolerances,
+                .vif = vifs,
+            });
+            if (!spec.noprint and (model.residual or model.cli or model.clm)) {
+                if (spec.ids.len > 0 or spec.freq != null or spec.weight != null or input.y.len != input.read) return proc.failGap(cx.diags, 0, "PROC REG: diagnostic listing with ID, FREQ, WEIGHT or excluded rows is not implemented", .{});
+                if (fit.df_error == 0 or !(fit.mse > 0)) return proc.failGap(cx.diags, 0, "PROC REG: diagnostic listing for zero residual variance is not implemented", .{});
+                for (fit.leverage) |h| if (!(h < 1)) return proc.failGap(cx.diags, 0, "PROC REG: diagnostic listing for unit leverage is not implemented", .{});
+                try @import("reg_render.zig").observations(cx.arena, out, spec, model, input.y, fit);
+            }
+        }
+    }
+}
+
+test "REG selection keeps frequency, weight and source observations separate" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var d = diag.Diagnostics.init(a);
+    var lib = @import("../exec.zig").Library.init(a);
+    var ds = @import("../dataset.zig").Dataset.init(a, "sample");
+    for ([_][]const u8{ "x", "y", "extra", "w", "f" }) |n| _ = try ds.addColumn(n, .num);
+    for ([_][5]f64{ .{ 1, 3, 0, 2, 2.9 }, .{ 2, 5, std.math.nan(f64), 1, 1 }, .{ 3, 7, 0, 0, 1 }, .{ 4, 9, 0, 1, 0.9 }, .{ 5, 11, 0, 3, 1 } }) |row| {
+        var cells: [5]Value = undefined;
+        for (row, 0..) |v, i| cells[i] = .{ .num = v };
+        try ds.appendRow(&cells);
+    }
+    try lib.put("sample", &ds);
+    const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &d };
+    const tokens = try @import("../lexer.zig").tokenize(a, "proc reg; var extra; weight w; freq f; model y=x; run; quit;", &d);
+    const spec = try parse(cx, tokens);
+    const chosen = try select(cx, spec, spec.models[0], ds.rows.items);
+    try std.testing.expectEqualSlices(usize, &.{ 1, 5 }, chosen.source_rows);
+    try std.testing.expectEqualSlices(f64, &.{ 2, 1 }, chosen.frequencies);
+    try std.testing.expectEqualSlices(f64, &.{ 2, 3 }, chosen.weights);
+    try std.testing.expectEqualSlices(f64, &.{ 1, 1, 1, 5 }, chosen.x);
+    try std.testing.expectEqual(@as(usize, 5), ds.rows.items.len);
+}
+
+test "REG parsing distinguishes invalid syntax from unsupported documented features" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var d = diag.Diagnostics.init(a);
+    var lib = @import("../exec.zig").Library.init(a);
+    var ds = @import("../dataset.zig").Dataset.init(a, "sample");
+    _ = try ds.addColumn("x", .num);
+    _ = try ds.addColumn("y", .num);
+    _ = try ds.addColumn("id", .char);
+    try lib.put("sample", &ds);
+    const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &d };
+    const lex = @import("../lexer.zig");
+    for ([_][]const u8{ "proc reg; model y x; run;", "proc reg alpha=2; model y=x; run;", "proc reg; model id=x; run;", "proc reg; model y=x*x; run;", "proc reg; freq x y; model y=x; run;", "proc reg; model y=x / nonsense; run;" }) |src| {
+        try std.testing.expectError(error.ParseError, parse(cx, try lex.tokenize(a, src, &d)));
+    }
+    try std.testing.expect(d.hasErrors());
+    try std.testing.expectError(error.ParseError, parse(cx, try lex.tokenize(a, "proc reg; model y=x / selection=stepwise; run;", &d)));
+    try std.testing.expect(std.mem.indexOf(u8, d.list.items[d.list.items.len - 1].message, "not implemented") != null);
+}
+
+test "REG BY uses sorted groups and rejects reversal; IDs do not filter missing" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var d = diag.Diagnostics.init(a);
+    var lib = @import("../exec.zig").Library.init(a);
+    var ds = @import("../dataset.zig").Dataset.init(a, "sample");
+    for ([_][]const u8{ "x", "y", "g" }) |n| _ = try ds.addColumn(n, .num);
+    _ = try ds.addColumn("id", .char);
+    for ([_]f64{ 1, 1, 2, 2 }) |g| try ds.appendRow(&.{ .{ .num = 1 }, .{ .num = 2 }, .{ .num = g }, .{ .str = "" } });
+    try lib.put("sample", &ds);
+    const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &d };
+    const spec = try parse(cx, try @import("../lexer.zig").tokenize(a, "proc reg; by g; id id; model y=x; run;", &d));
+    const by = @import("by_groups.zig");
+    const groups = try by.checkedSlices(a, spec.ds, spec.by, spec.descending, spec.notsorted, &d);
+    try std.testing.expectEqual(@as(usize, 2), groups.len);
+    for (groups) |g| {
+        const chosen = try select(cx, spec, spec.models[0], g.rows);
+        try std.testing.expectEqual(@as(usize, 2), chosen.y.len);
+    }
+    try ds.appendRow(&.{ .{ .num = 1 }, .{ .num = 2 }, .{ .num = 1 }, .{ .str = "" } });
+    try std.testing.expectError(error.ParseError, by.checkedSlices(a, spec.ds, spec.by, spec.descending, false, &d));
+}
+
+test "REG missingness is shared across multiple models and VAR" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var d = diag.Diagnostics.init(a);
+    var lib = @import("../exec.zig").Library.init(a);
+    var ds = @import("../dataset.zig").Dataset.init(a, "sample");
+    for ([_][]const u8{ "x", "y", "z" }) |n| _ = try ds.addColumn(n, .num);
+    try ds.appendRow(&.{ .{ .num = 1 }, .{ .num = 2 }, Value.missing });
+    try ds.appendRow(&.{ .{ .num = 2 }, .{ .num = 4 }, .{ .num = 6 } });
+    try lib.put("sample", &ds);
+    const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &d };
+    const spec = try parse(cx, try @import("../lexer.zig").tokenize(a, "proc reg; first: model y=x; second: model z=x; run;", &d));
+    for (spec.models) |m| {
+        const chosen = try select(cx, spec, m, ds.rows.items);
+        try std.testing.expectEqualSlices(usize, &.{2}, chosen.source_rows);
+    }
+    try std.testing.expectEqualStrings("second", spec.models[1].label);
+}
+
+fn parameterName(spec: Spec, model: Model, i: usize) []const u8 {
+    return if (model.intercept and i == 0) "Intercept" else spec.ds.columns.items[model.regressors[i - @as(usize, if (model.intercept) 1 else 0)]].name;
+}
+pub const Session = struct {
+    spec: Spec,
+    revision: usize = 0,
+    /// The initial crossproducts pool is fixed before the first RUN. ADD may
+    /// only select variables already in that pool (MODEL or VAR declarations).
+    pub fn continuation(self: *Session, cx: proc.ProcCtx, out: *std.ArrayList(u8), t: []const @import("../lexer.zig").Token) diag.Error!bool {
+        const eq = std.ascii.eqlIgnoreCase;
+        var i: usize = 0;
+        var print = false;
+        var quit = false;
+        while (i < t.len and t[i].tag != .eof) {
+            if (t[i].tag == .semicolon) {
+                i += 1;
+                continue;
+            }
+            var end = i;
+            while (end < t.len and t[end].tag != .semicolon and t[end].tag != .eof) end += 1;
+            if (end == t.len or t[end].tag != .semicolon) return cx.diags.fail(error.ParseError, t[i].line, "PROC REG: expected semicolon", .{});
+            if (eq(t[i].text, "add")) {
+                if (self.spec.models.len != 1) return proc.failGap(cx.diags, t[i].line, "PROC REG: ADD with multiple models is not implemented", .{});
+                const added = try parsing.columns(cx, self.spec.ds, t[i + 1 .. end], true);
+                if (added.len == 0) return cx.diags.fail(error.ParseError, t[i].line, "PROC REG ADD requires variables", .{});
+                var model = self.spec.models[0];
+                var cols: std.ArrayList(usize) = .empty;
+                try cols.appendSlice(cx.arena, model.regressors);
+                for (added) |c| {
+                    if (std.mem.indexOfScalar(usize, self.spec.required, c) == null) return cx.diags.fail(error.ParseError, t[i].line, "PROC REG: ADD variable {s} was not declared before RUN", .{self.spec.ds.columns.items[c].name});
+                    if (std.mem.indexOfScalar(usize, cols.items, c) == null) {
+                        try cols.append(cx.arena, c);
+                        try cx.diags.note(t[i].line, "Variable {s} is added.", .{self.spec.ds.columns.items[c].name});
+                    }
+                }
+                self.revision += 1;
+                const base = std.mem.sliceTo(model.label, '.');
+                model.label = try std.fmt.allocPrint(cx.arena, "{s}.{d}", .{ base, self.revision });
+                model.regressors = cols.items;
+                const models = try cx.arena.alloc(Model, 1);
+                models[0] = model;
+                self.spec.models = models;
+                try cx.diags.note(t[i].line, "Due to an ADD statement, the model label is now {s}.", .{model.label});
+            } else if (eq(t[i].text, "print")) {
+                if (end != i + 1) return proc.failGap(cx.diags, t[i].line, "PROC REG: PRINT options are not implemented", .{});
+                print = true;
+            } else if (eq(t[i].text, "run") or eq(t[i].text, "quit")) {
+                if (end != i + 1) return cx.diags.fail(error.ParseError, t[i].line, "PROC REG: invalid execution boundary", .{});
+                if (print) {
+                    try execute(cx, out, self.spec);
+                    print = false;
+                }
+                if (eq(t[i].text, "quit")) quit = true;
+            } else return proc.failGap(cx.diags, t[i].line, "PROC REG: continuation {s} is not implemented", .{t[i].text});
+            i = end + 1;
+        }
+        return !quit;
+    }
+};

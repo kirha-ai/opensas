@@ -309,6 +309,7 @@ const StepCtx = struct {
     // unreadable (already reported once, naming the real cause) — later
     // loadLibInputs passes skip the re-read AND the re-report.
     damaged: *std.StringHashMap(void),
+    reg_session: ?sas.reg.Session = null,
     ended: bool = false, // ENDSAS seen: stop reading input, exit normally (BUG-endsasexit)
     // NOTE-chunkrelativelineno (QA tick312 F3): the current raw chunk's start
     // line in src, minus 1 — tokenize restarts line numbering per chunk, so a
@@ -398,6 +399,15 @@ fn runExpanded(ctx: *StepCtx, text: []const u8, allow_anon: bool) sas.diag.Error
     // as a literal `lib.ds` token HERE, after runtime expansion — the up-front
     // preload in `interpret` never saw it. Load any still-missing members now.
     if (ctx.io) |iov| try loadLibInputs(a, iov, ctx.lib, ctx.librefs.items, toks, ctx.loaded_ro, ctx.damaged, ctx.diags);
+    if (ctx.reg_session) |*session| {
+        if (toks.len > 0 and toks[0].tag == .name and (eqi(toks[0].text, "add") or eqi(toks[0].text, "print") or eqi(toks[0].text, "run") or eqi(toks[0].text, "quit"))) {
+            const pcx: sas.proc.ProcCtx = .{ .arena = a, .lib = ctx.lib, .diags = ctx.diags, .capture = &ods_capture, .listing = &ods_listing, .graphics = native_graphics_session };
+            var discard: std.ArrayList(u8) = .empty;
+            const output = if (ods_listing.accepts("reg")) ctx.out else &discard;
+            if (!try session.continuation(pcx, output, toks)) ctx.reg_session = null;
+            return;
+        }
+    }
     const segs = try segments(a, toks, !allow_anon, ctx.diags);
     if (segs.len == 0) {
         if (allow_anon and toks.len > 0 and !ctx.diags.hasStepErrors())
@@ -474,12 +484,13 @@ fn runExpanded(ctx: *StepCtx, text: []const u8, allow_anon: bool) sas.diag.Error
             // default, where this branch is unreachable with live step errors
             // (the gate above skips instead).
             if (!ctx.diags.syntax_check) ctx.diags.spendStepErrors();
+            ctx.reg_session = null; // a new DATA/PROC step terminates REG
             const step_toks = try sas.macro.bindStepVars(a, toks[seg.start..seg.end], &ctx.lib.macro_vars, ctx.diags);
             // PROC COPY runs here, not in runProc: it needs the CURRENT libref
             // bindings and Io to write through them eagerly (GAP-proccopy).
             if (step_toks.len > 1 and eqi(step_toks[0].text, "proc") and eqi(step_toks[1].text, "copy")) {
                 try runProcCopy(ctx, step_toks);
-            } else try runStep(a, ctx.out, ctx.lib, ctx.diags, step_toks, ctx.globals, ctx.io);
+            } else try runStep(a, ctx.out, ctx.lib, ctx.diags, step_toks, ctx.globals, ctx.io, &ctx.reg_session);
             // NOTE parity (GH#3 ISS-steperrhalt): real SAS ends the FAILING step
             // ITSELF with the same NOTE the later skipped steps get (Language
             // Reference: Concepts Ch.8 Examples 8.2/8.4/8.8) — opensas used to
@@ -2288,7 +2299,7 @@ fn dataName(a: std.mem.Allocator, toks: []const Token, pos: *usize) sas.diag.Err
     return name;
 }
 
-fn runStep(a: std.mem.Allocator, out: *std.ArrayList(u8), lib: *sas.exec.Library, diags: *sas.diag.Diagnostics, toks: []const Token, g: *Globals, io: ?Io) sas.diag.Error!void {
+fn runStep(a: std.mem.Allocator, out: *std.ArrayList(u8), lib: *sas.exec.Library, diags: *sas.diag.Diagnostics, toks: []const Token, g: *Globals, io: ?Io, reg_session: *?sas.reg.Session) sas.diag.Error!void {
     if (eqi(toks[0].text, "data")) {
         // header: `data [name] ;`  — a name, else an anonymous output dataset.
         var pos: usize = 1;
@@ -2357,7 +2368,7 @@ fn runStep(a: std.mem.Allocator, out: *std.ArrayList(u8), lib: *sas.exec.Library
             };
         }
     } else {
-        try runProc(a, out, lib, diags, toks, g);
+        try runProc(a, out, lib, diags, toks, g, reg_session);
     }
 }
 
@@ -2880,7 +2891,7 @@ fn sortInPlaceTarget(toks: []const Token) ?[]const u8 {
 
 /// Dispatch a `proc <name> …; … run;` step by name. Each proc hand-parses its
 /// own tokens (parser.zig is A2's) — SORT lives in proc.zig; PRINT is below.
-fn runProc(a: std.mem.Allocator, listing_out: *std.ArrayList(u8), lib: *sas.exec.Library, diags: *sas.diag.Diagnostics, toks: []const Token, g: *Globals) sas.diag.Error!void {
+fn runProc(a: std.mem.Allocator, listing_out: *std.ArrayList(u8), lib: *sas.exec.Library, diags: *sas.diag.Diagnostics, toks: []const Token, g: *Globals, reg_session: *?sas.reg.Session) sas.diag.Error!void {
     if (toks.len < 2 or toks[1].tag != .name) {
         failLoud("PROC name missing or unrecognized", .{});
         return;
@@ -2902,7 +2913,7 @@ fn runProc(a: std.mem.Allocator, listing_out: *std.ArrayList(u8), lib: *sas.exec
     // given (BUG-summarydefaultprint).
     const listing = eqi(proc, "print") or eqi(proc, "means") or
         eqi(proc, "report") or eqi(proc, "tabulate") or eqi(proc, "compare") or
-        eqi(proc, "univariate") or eqi(proc, "contents") or (eqi(proc, "corr") and !procHasKw(toks, "noprint")) or
+        eqi(proc, "univariate") or eqi(proc, "contents") or (eqi(proc, "reg") and !procHasKw(toks, "noprint")) or (eqi(proc, "corr") and !procHasKw(toks, "noprint")) or
         (eqi(proc, "summary") and procHasKw(toks, "print"));
     // BUG-byvaltitle: a TITLE/FOOTNOTE carrying #BYVAL/#BYVAR is re-resolved
     // per BY group, so PROC PRINT then owns its title/footnote emission
@@ -2933,6 +2944,12 @@ fn runProc(a: std.mem.Allocator, listing_out: *std.ArrayList(u8), lib: *sas.exec
         }
     } else if (eqi(proc, "corr")) {
         try sas.corr.run(pcx, out, toks);
+    } else if (eqi(proc, "reg")) {
+        const spec = try sas.reg.parse(pcx, toks);
+        try sas.reg.execute(pcx, out, spec);
+        var closes = false;
+        for(toks,0..) |tok,i| if((i==0 or toks[i-1].tag==.semicolon) and tok.tag==.name and eqi(tok.text,"quit")) { closes=true; };
+        if (spec.by.len == 0 and !closes) reg_session.* = .{ .spec = spec };
     } else if (eqi(proc, "freq")) {
         // FREQ owns PROC versus TABLES NOPRINT semantics. Stamp only an
         // actual listing, without mistaking option values or variable names.
@@ -7221,7 +7238,6 @@ test "comparative histograms paginate class cells, align levels and retain total
     try std.testing.expectEqual(@as(usize, 1), std.mem.count(u8, last_page, "class=\"panel\""));
     try std.testing.expect(std.mem.indexOf(u8, last_page, "data-row=\"1\" data-column=\"2\"") != null);
     try std.testing.expect(std.mem.indexOf(u8, last_page, "data-proportion=\"0.25\"") != null);
-
 }
 
 test "histogram statistical insets reuse EDF bounds, formatted skewness and labeled reference lines" {
@@ -7281,4 +7297,32 @@ test "STAT-COMMON-002 prelude option status distinguishes supported values, gaps
     try std.testing.expectEqual(@as(u8, 2), try rcOf(a, &out, "options locale=fr_FR;", &log));
     try std.testing.expectEqual(@as(u8, 1), try rcOf(a, &out, "options validmemname=wrong;", &log));
     try std.testing.expectEqual(@as(u8, 1), try rcOf(a, &out, "options locale=;", &log));
+}
+
+test "REG CLI executes ordinary models and ADD PRINT RUN continuation" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var d = sas.diag.Diagnostics.init(a);
+    var out: std.ArrayList(u8) = .empty;
+    try interpret(a,&out,&d,
+        "data sample; input x y z; datalines;\n1 2 1\n2 5 0\n3 5 1\n4 8 0\n5 9 1\n;run;" ++
+        "proc reg data=sample; var z; model y=x; run; add z; print; run; quit;" ++
+        "data _null_; put 'after-reg'; run;",null);
+    try std.testing.expect(!d.hasErrors());
+    try std.testing.expectEqual(@as(usize,2),std.mem.count(u8,out.items,"Analysis of Variance"));
+    try std.testing.expect(std.mem.indexOf(u8,out.items,"Model: MODEL1.1")!=null);
+    try std.testing.expect(std.mem.indexOf(u8,out.items,"after-reg")!=null);
+}
+
+test "REG CLI RUN QUIT and new DATA step do not leak interactive state" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a=arena.allocator();
+    var d=sas.diag.Diagnostics.init(a);
+    var out:std.ArrayList(u8)=.empty;
+    try interpret(a,&out,&d,"data sample;input x y;datalines;\n1 2\n2 3\n3 5\n;run;proc reg noprint;model y=x;run;quit;data _null_;put 'done';run;",null);
+    try std.testing.expect(!d.hasErrors());
+    try std.testing.expect(std.mem.indexOf(u8,out.items,"The REG Procedure")==null);
+    try std.testing.expect(std.mem.indexOf(u8,out.items,"done")!=null);
 }
