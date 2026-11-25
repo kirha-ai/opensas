@@ -1,0 +1,86 @@
+[
+  {
+    "program": "tests/STAT15.4-oracle/STAT-TTEST-001/by_frequency_weight.sas",
+    "baseline_rc": 0,
+    "current_rc": 0,
+    "stdout_and_stderr_byte_identical": true,
+    "full_reference_listing_match": true
+  },
+  {
+    "program": "tests/STAT15.4-oracle/STAT-TTEST-002/court_default.sas",
+    "baseline_rc": 0,
+    "current_rc": 0,
+    "stdout_and_stderr_byte_identical": true,
+    "full_reference_listing_match": true
+  },
+  {
+    "program": "tests/STAT15.4-oracle/STAT-TTEST-003/normal_lognormal.sas",
+    "baseline_rc": 0,
+    "current_rc": 0,
+    "stdout_and_stderr_byte_identical": true,
+    "full_reference_listing_match": true
+  },
+  {
+    "program": "tests/STAT15.4-oracle/STAT-TTEST-004/bootstrap_seeded.sas",
+    "baseline_rc": 0,
+    "current_rc": 0,
+    "stdout_and_stderr_byte_identical": true,
+    "full_reference_listing_match": true
+  },
+  {
+    "program": "tests/STAT15.4-oracle/STAT-TTEST-005/invalid_alpha.sas",
+    "baseline_rc": 1,
+    "current_rc": 1,
+    "stdout_and_stderr_byte_identical": true,
+    "full_reference_listing_match": true
+  },
+  {
+    "program": "tests/STAT15.4-oracle/STAT-TTEST-005/one_sided_court.sas",
+    "baseline_rc": 0,
+    "current_rc": 0,
+    "stdout_and_stderr_byte_identical": true,
+    "full_reference_listing_match": true
+  },
+  {
+    "program": "tests/STAT15.4-oracle/STAT-TTEST-006/paired_direction.sas",
+    "baseline_rc": 0,
+    "current_rc": 0,
+    "stdout_and_stderr_byte_identical": true,
+    "full_reference_listing_match": true
+  },
+  {
+    "program": "tests/STAT15.4-oracle/STAT-TTEST-007/two_sample_variance.sas",
+    "baseline_rc": 0,
+    "current_rc": 0,
+    "stdout_and_stderr_byte_identical": true,
+    "full_reference_listing_match": true
+  },
+  {
+    "program": "tests/STAT15.4-oracle/STAT-TTEST-008/abba_crossover.sas",
+    "baseline_rc": 0,
+    "current_rc": 0,
+    "stdout_and_stderr_byte_identical": true,
+    "full_reference_listing_match": true
+  },
+  {
+    "program": "tests/STAT15.4-oracle/STAT-TTEST-009/tost_difference.sas",
+    "baseline_rc": 0,
+    "current_rc": 0,
+    "stdout_and_stderr_byte_identical": true,
+    "full_reference_listing_match": true
+  },
+  {
+    "program": "tests/STAT15.4-oracle/STAT-TTEST-010/ods_tables.sas",
+    "baseline_rc": 0,
+    "current_rc": 0,
+    "stdout_and_stderr_byte_identical": true,
+    "full_reference_listing_match": false
+  },
+  {
+    "program": "tests/STAT15.4-oracle/STAT-TTEST-012/summary_statistics_example.sas",
+    "baseline_rc": 0,
+    "current_rc": 0,
+    "stdout_and_stderr_byte_identical": true,
+    "full_reference_listing_match": false
+  }
+]

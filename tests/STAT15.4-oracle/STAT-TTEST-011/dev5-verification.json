@@ -1,0 +1,262 @@
+{
+  "ticket": "STAT-TTEST-011",
+  "status": "Original listing/status and all six TRACE identities pass; actual Interval/QQ data and rendered visuals inspected; exact final-SHA gate follows evidence commit",
+  "implementation_revision": "409837381013205dfbce7d6f00b7444726b03155",
+  "integration_base": "e960fcd072184d3fb8b28cd129dba072ac5d2651",
+  "readme_and_reference_log_read": true,
+  "manual": {
+    "source": "SAS-STAT-15.4-Users-Guide.pdf (S154)",
+    "physical_pages_read": [
+      10644,
+      10645,
+      10646,
+      10647,
+      10648,
+      10649,
+      10650
+    ]
+  },
+  "original_program": "graph_names.sas",
+  "actual_rc": 0,
+  "expected_rc": 0,
+  "all_listing_tokens_match": true,
+  "expected_tokens": 118,
+  "actual_tokens": 118,
+  "listing_comparison": "Full ordered whitespace-token equality, no omitted headings or numerical tolerance",
+  "original_expected_sha256": "ebe44213f7fbf878a33b2a7f867a48029ff10e4fc81658658b1826556fee4f9a",
+  "trace_objects": [
+    {
+      "name": "Statistics",
+      "label": "Statistics",
+      "template": "Stat.TTest.Statistics",
+      "path": "Ttest.x.Statistics"
+    },
+    {
+      "name": "ConfLimits",
+      "label": "Confidence Limits",
+      "template": "Stat.TTest.ConfLimits",
+      "path": "Ttest.x.ConfLimits"
+    },
+    {
+      "name": "TTests",
+      "label": "T-Tests",
+      "template": "Stat.TTest.TTests",
+      "path": "Ttest.x.TTests"
+    },
+    {
+      "name": "Equality",
+      "label": "Equality of Variances",
+      "template": "Stat.TTest.Equality",
+      "path": "Ttest.x.Equality"
+    },
+    {
+      "name": "Interval",
+      "label": "Difference Interval Plot",
+      "template": "Stat.TTest.Graphics.Interval",
+      "path": "Ttest.x.Interval"
+    },
+    {
+      "name": "QQPlot",
+      "label": "Q-Q Plots",
+      "template": "Stat.TTest.Graphics.QQ2",
+      "path": "Ttest.x.QQPlot"
+    }
+  ],
+  "trace_comparison": "All six complete Name/Label/Template/Path blocks match reference, with no extra named objects",
+  "graphics_data": {
+    "intervals": [
+      {
+        "method": "Pooled",
+        "estimate": -7.833333333333329,
+        "lower": -34.203827048182575,
+        "upper": 18.537160381515914,
+        "painted_coordinates_match": true
+      },
+      {
+        "method": "Satterthwaite",
+        "estimate": -7.833333333333329,
+        "lower": -34.666149325182644,
+        "upper": 18.999482658515984,
+        "painted_coordinates_match": true
+      }
+    ],
+    "qq_panels": [
+      {
+        "group": "A",
+        "n": 6,
+        "all_observed_and_quantile_values_verified": true,
+        "painted_coordinates_match": true
+      },
+      {
+        "group": "B",
+        "n": 6,
+        "all_observed_and_quantile_values_verified": true,
+        "painted_coordinates_match": true
+      }
+    ],
+    "total_qq_points": 12,
+    "labels_axes_legends_verified": true,
+    "tolerances": {
+      "listing_interval_endpoints": 5e-05,
+      "normal_quantiles": 2e-09,
+      "svg_pixel_coordinates": 0.006
+    }
+  },
+  "qq_contract": {
+    "formula": "p_i=(i-3/8)/(n+1/4); x=standard normal inverse(p_i), y=ordered class observation. Reuses univ_distribution_values.quantilePlot.",
+    "source": "https://support.sas.com/documentation/cdl/en/sgug/59902/HTML/default/dist_sect21.htm",
+    "reference_line": "Normal model mean + sample SD * theoretical quantile, separately for each class; shared observation axis for class comparison",
+    "tested_groups": [
+      "A",
+      "B"
+    ],
+    "points_per_group": [
+      6,
+      6
+    ]
+  },
+  "validation": "dev5-verify-graphs.py independently reads original observations/reference intervals and verifies actual SVG values, painted coordinates, reference lines, visible group names, axes and legends. It does not generate plot data.",
+  "tolerances": {
+    "observations": "exact input values",
+    "plotting_probabilities": "2e-16, f64 rounding of exact rational Blom positions",
+    "normal_quantiles": "2e-9 conservative absolute bound for shared normal inverse, independently checked with Python NormalDist",
+    "interval_bounds": "5e-5, half the original SAS listing 4-decimal unit",
+    "mean_estimates": "2e-14 against exact rational group mean difference",
+    "painted_coordinates": "0.006 SVG pixels: 0.005 half-unit for two-decimal coordinate serialization plus numerical conversion slack"
+  },
+  "visual_inspection": {
+    "renderer": "rsvg-convert",
+    "inspected": [
+      "dev5-evidence/interval.png",
+      "dev5-evidence/qq.png"
+    ],
+    "result": "Both final PNGs inspected. Readable titles, ticks, method labels and legends; two interval rows with distinct confidence limits; two labeled QQ panels with six visible observations each; fitted normal lines and shared y scale; no clipped labels/points."
+  },
+  "controls_tested": [
+    "ODS GRAPHICS OFF creates no queued graphs and retains listing",
+    "PLOTS=NONE suppresses graphs when graphics are ON",
+    "ODS SELECT Interval suppresses QQ and text tables while retaining requested graph",
+    "One-sided bounds retain infinity in data and draw arrowheads",
+    "TYPE=PERGROUP uses two-sided group intervals even under SIDES=U",
+    "Invalid plot names/types and SHOWH0+PERGROUP conflict report captured diagnostics",
+    "Unimplemented default SummaryPanel family remains a loud gap, never silent partial default output"
+  ],
+  "old_cases": [
+    {
+      "program": "tests/STAT15.4-oracle/STAT-TTEST-001/by_frequency_weight.sas",
+      "baseline_rc": 0,
+      "current_rc": 0,
+      "stdout_and_stderr_byte_identical": true,
+      "full_reference_listing_match": true
+    },
+    {
+      "program": "tests/STAT15.4-oracle/STAT-TTEST-002/court_default.sas",
+      "baseline_rc": 0,
+      "current_rc": 0,
+      "stdout_and_stderr_byte_identical": true,
+      "full_reference_listing_match": true
+    },
+    {
+      "program": "tests/STAT15.4-oracle/STAT-TTEST-003/normal_lognormal.sas",
+      "baseline_rc": 0,
+      "current_rc": 0,
+      "stdout_and_stderr_byte_identical": true,
+      "full_reference_listing_match": true
+    },
+    {
+      "program": "tests/STAT15.4-oracle/STAT-TTEST-004/bootstrap_seeded.sas",
+      "baseline_rc": 0,
+      "current_rc": 0,
+      "stdout_and_stderr_byte_identical": true,
+      "full_reference_listing_match": true
+    },
+    {
+      "program": "tests/STAT15.4-oracle/STAT-TTEST-005/invalid_alpha.sas",
+      "baseline_rc": 1,
+      "current_rc": 1,
+      "stdout_and_stderr_byte_identical": true,
+      "full_reference_listing_match": true
+    },
+    {
+      "program": "tests/STAT15.4-oracle/STAT-TTEST-005/one_sided_court.sas",
+      "baseline_rc": 0,
+      "current_rc": 0,
+      "stdout_and_stderr_byte_identical": true,
+      "full_reference_listing_match": true
+    },
+    {
+      "program": "tests/STAT15.4-oracle/STAT-TTEST-006/paired_direction.sas",
+      "baseline_rc": 0,
+      "current_rc": 0,
+      "stdout_and_stderr_byte_identical": true,
+      "full_reference_listing_match": true
+    },
+    {
+      "program": "tests/STAT15.4-oracle/STAT-TTEST-007/two_sample_variance.sas",
+      "baseline_rc": 0,
+      "current_rc": 0,
+      "stdout_and_stderr_byte_identical": true,
+      "full_reference_listing_match": true
+    },
+    {
+      "program": "tests/STAT15.4-oracle/STAT-TTEST-008/abba_crossover.sas",
+      "baseline_rc": 0,
+      "current_rc": 0,
+      "stdout_and_stderr_byte_identical": true,
+      "full_reference_listing_match": true
+    },
+    {
+      "program": "tests/STAT15.4-oracle/STAT-TTEST-009/tost_difference.sas",
+      "baseline_rc": 0,
+      "current_rc": 0,
+      "stdout_and_stderr_byte_identical": true,
+      "full_reference_listing_match": true
+    },
+    {
+      "program": "tests/STAT15.4-oracle/STAT-TTEST-010/ods_tables.sas",
+      "baseline_rc": 0,
+      "current_rc": 0,
+      "stdout_and_stderr_byte_identical": true,
+      "full_reference_listing_match": false
+    },
+    {
+      "program": "tests/STAT15.4-oracle/STAT-TTEST-012/summary_statistics_example.sas",
+      "baseline_rc": 0,
+      "current_rc": 0,
+      "stdout_and_stderr_byte_identical": true,
+      "full_reference_listing_match": false
+    }
+  ],
+  "remaining_graph_families": "Default SummaryPanel, weighted QQ, lognormal/crossover and bootstrap-specific graphics remain explicit gaps. Only two-sample QQ2 template metadata is verified; unverified single-sample QQ template is omitted rather than invented.",
+  "changed_paths": [
+    "src/stat/graph_ods.zig",
+    "src/stat/ttest.zig",
+    "src/stat/ttest_parse.zig",
+    "src/stat/ttest_plots.zig",
+    "tests/corpus/stat_ttest_interval_qq.sas",
+    "tests/corpus/stat_ttest_interval_qq.txt",
+    "tests/STAT15.4-oracle/STAT-TTEST-011/dev5-evidence/actual.stderr",
+    "tests/STAT15.4-oracle/STAT-TTEST-011/dev5-evidence/actual.stdout",
+    "tests/STAT15.4-oracle/STAT-TTEST-011/dev5-evidence/graph-data-validation.json",
+    "tests/STAT15.4-oracle/STAT-TTEST-011/dev5-evidence/interval.png",
+    "tests/STAT15.4-oracle/STAT-TTEST-011/dev5-evidence/interval.svg",
+    "tests/STAT15.4-oracle/STAT-TTEST-011/dev5-evidence/old-case-comparison.json",
+    "tests/STAT15.4-oracle/STAT-TTEST-011/dev5-evidence/qq.png",
+    "tests/STAT15.4-oracle/STAT-TTEST-011/dev5-evidence/qq.svg",
+    "tests/STAT15.4-oracle/STAT-TTEST-011/dev5-verify-graphs.py",
+    "tests/STAT15.4-oracle/STAT-TTEST-011/dev5-verification.json"
+  ],
+  "original_oracles_modified": false,
+  "main_or_destination_handlers_modified": false,
+  "shared_graph_change": "Only Interval added to graph_ods.Name, for native identity/selection recognition",
+  "gate": {
+    "command": "/Users/thomas/.local/share/zig-0.16.0/zig build gate -j2 --summary all --cache-dir /tmp/dev5-bootstrap-final/priority-cache",
+    "corrected_precommit_gate": {
+      "exit": 0,
+      "tests": 1789,
+      "corpus": 2313,
+      "programs": 11
+    },
+    "final_policy": "Run on final evidence commit and report direct exit plus exact SHA; earlier failed rank-adjustment wiring test excluded"
+  }
+}

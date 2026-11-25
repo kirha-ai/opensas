@@ -1,0 +1,39 @@
+{
+  "intervals": [
+    {
+      "method": "Pooled",
+      "estimate": -7.833333333333329,
+      "lower": -34.203827048182575,
+      "upper": 18.537160381515914,
+      "painted_coordinates_match": true
+    },
+    {
+      "method": "Satterthwaite",
+      "estimate": -7.833333333333329,
+      "lower": -34.666149325182644,
+      "upper": 18.999482658515984,
+      "painted_coordinates_match": true
+    }
+  ],
+  "qq_panels": [
+    {
+      "group": "A",
+      "n": 6,
+      "all_observed_and_quantile_values_verified": true,
+      "painted_coordinates_match": true
+    },
+    {
+      "group": "B",
+      "n": 6,
+      "all_observed_and_quantile_values_verified": true,
+      "painted_coordinates_match": true
+    }
+  ],
+  "total_qq_points": 12,
+  "labels_axes_legends_verified": true,
+  "tolerances": {
+    "listing_interval_endpoints": 5e-05,
+    "normal_quantiles": 2e-09,
+    "svg_pixel_coordinates": 0.006
+  }
+}
