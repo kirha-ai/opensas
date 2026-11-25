@@ -65,3 +65,10 @@ AT/OM/PDIFF/CL/OUT and LSMEANS plots are not implemented by this ticket.
 Unsupported statement options fail loudly. ORDER=FREQ with a FREQ statement
 also fails loudly because the shared full-coded design does not yet accept
 frequency-weighted level ordering. The original case uses none of these.
+
+New corpus `glm_lsmeans_estimability` exercises the original E/observed-cell
+portion plus marginal means with explicit SS1. Its E labels/coefficient values
+and observed means derive from the unchanged SAS oracle; its additional
+marginal coefficient/Non-est contracts derive from pp.4144–4147 and typed
+row-space tests. This is a new golden, not a replacement of the original
+expected listing. Dev6's CV precision correction is already included.
