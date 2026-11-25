@@ -4746,23 +4746,25 @@ Source: S154, Chapter 53, `The GLM Procedure`, PDF pp. 4043–4230. Tasks in thi
 
 <a id="stat-glm-003"></a>
 
-### [DOING @dev2] STAT-GLM-003 — GLM — CLASS / MODEL / Specification of Effects
+### [DONE] STAT-GLM-003 — GLM — CLASS / MODEL / Specification of Effects
 
 - Source: S154 / Chapter 53 / `CLASS Statement` (PDF pp. 4066–4067); S154 / Chapter 53 / `MODEL Statement` (PDF pp. 4092–4096); S154 / Chapter 53 / `Specification of Effects` (PDF pp. 4107–4110).
 - Scope: Implement CLASS; MODEL; Specification of Effects. Implement the syntax and model semantics allowed by this procedure, using shared effect/parameterization support only for forms documented as supported.
 - Dependencies: [STAT-GLM-001](#stat-glm-001), [STAT-COMMON-007](#stat-common-007).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-GLM-003/](tests/STAT15.4-oracle/STAT-GLM-003/).
 - Dispatch contract: Reuse the integrated GLM contrast-design path for the original case while COMMON-007's full design-output interface is implemented separately. Do not imply unsupported nesting or missing-cell hypotheses are available.
+- DONE (2026-11-25): Landed/pushed `f89d49d9`. Original oracle matches all 671 tokens, status 0, three native graphs validated. Corrected documented SINGULAR default to 1e-9 and classified repeated MODEL as invalid user input; six effects-contract tests include observable near-rank behavior and exact design checks. Gate: 1753 tests, 2310 corpus, 11 programs passed. Evidence/replay: `tests/STAT15.4-oracle/STAT-GLM-003/`; no expected-file changes.
 - Acceptance criteria: For CLASS / MODEL / Specification of Effects, verify the parsed response/effect/parameter representation against the documented design matrix or model structure; cover applicable reference levels, interactions, missing levels, and invalid models; successful parsing alone is insufficient.
 
 <a id="stat-glm-004"></a>
 
-### [TODO] STAT-GLM-004 — GLM — Parameterization of PROC GLM Models
+### [DOING @dev2] STAT-GLM-004 — GLM — Parameterization of PROC GLM Models
 
 - Source: S154 / Chapter 53 / `Parameterization of PROC GLM Models` (PDF pp. 4110–4115).
 - Scope: Implement Parameterization of PROC GLM Models. Implement the syntax and model semantics allowed by this procedure, using shared effect/parameterization support only for forms documented as supported.
 - Dependencies: [STAT-GLM-001](#stat-glm-001), [STAT-COMMON-007](#stat-common-007).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-GLM-004/](tests/STAT15.4-oracle/STAT-GLM-004/).
+- Dispatch contract: Verify the existing GLM model-space implementation against this original case; COMMON-007's full coded-design module is ready and awaiting integration. Coordinate shared parser/rendering changes with dev6's Type II integration rather than duplicating it.
 - Acceptance criteria: For Parameterization of PROC GLM Models, verify the parsed response/effect/parameter representation against the documented design matrix or model structure; cover applicable reference levels, interactions, missing levels, and invalid models; successful parsing alone is insufficient.
 
 <a id="stat-glm-005"></a>
