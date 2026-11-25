@@ -14,11 +14,15 @@ const ranks = @import("reg_diagnostics.zig");
 const A = std.mem.Allocator;
 const nan = std.math.nan(f64);
 
-/// Effects partition columns 1..p in MODEL order; column zero is the intercept.
+/// Effects partition columns 1..p in MODEL order (0..p without an intercept).
 /// A zero-width effect is allowed and has zero DF. Names remain caller-owned.
 pub const Effect = struct { start: usize, len: usize };
 pub const Options = struct {
     weights: ?[]const f64 = null,
+    /// Already truncated integer replication counts; zero excludes a row.
+    /// Precision weights and frequencies must remain separate at the API.
+    frequencies: ?[]const f64 = null,
+    has_intercept: bool = true,
     singular: f64 = ranks.default_singular,
 };
 pub const EffectTest = struct {
@@ -43,8 +47,8 @@ pub const Result = struct {
     }
 };
 
-/// x is n*p row-major, with a leading column of ones. Filter missing rows
-/// upstream; weights are precision weights, not frequency counts. All tests
+/// x is n*p row-major, with leading ones when has_intercept=true. Filter
+/// missing rows upstream; weights are precision weights, not counts. All tests
 /// use the full model's error DF and MSE, including sequential Type I tests.
 /// Rank-deficient effects have actual rank-difference DF, never column-count DF.
 /// Zero-DF tests have SS=0 and undefined MS/F/p. Saturated models retain SS/DF
@@ -54,16 +58,48 @@ pub const Result = struct {
 /// columns are reconstructed in the retained space before submodel fitting.
 /// Otherwise a rejected near-alias could reenter a reduced model and compare
 /// nonnested fitted spaces. No model or hypothesis can acquire discarded rank.
+/// With FREQ, model.fit.n_used is the replicated count (not physical rows), and
+/// leverage is the aggregate weighted hat diagonal for each supplied row.
 pub fn fit(a: A, x: []const f64, y: []const f64, n: usize, p: usize, effects: []const Effect, options: Options) diag.Error!Result {
-    var end: usize = 1;
+    var end: usize = if (options.has_intercept) 1 else 0;
     for (effects) |effect| {
         if (effect.start != end) return error.ExecError;
         end = std.math.add(usize, end, effect.len) catch return error.ExecError;
         if (end > p) return error.ExecError;
     }
     if (end != p) return error.ExecError;
-    var model = try ranks.fit(a, x, y, n, p, options.weights, true, options.singular);
+    var combined: ?[]f64 = null;
+    defer if (combined) |w| a.free(w);
+    var effective_options = options;
+    var count: usize = 0;
+    if (options.frequencies) |frequencies| {
+        if (frequencies.len != n) return error.ExecError;
+        if (options.weights) |w| if (w.len != n) return error.ExecError;
+        const w = try a.alloc(f64, n);
+        combined = w;
+        for (frequencies, 0..) |frequency, i| {
+            const weight = if (options.weights) |weights| weights[i] else 1;
+            if (!std.math.isFinite(frequency) or frequency < 0 or frequency != @floor(frequency) or frequency >= @as(f64, @floatFromInt(std.math.maxInt(usize)))) return error.ExecError;
+            if (!std.math.isFinite(weight) or weight < 0) return error.ExecError;
+            w[i] = weight * frequency;
+            if (!std.math.isFinite(w[i]) or (weight > 0 and frequency > 0 and w[i] == 0)) return error.ExecError;
+            if (weight > 0) count = std.math.add(usize, count, @intFromFloat(frequency)) catch return error.ExecError;
+        }
+        effective_options.weights = w;
+    }
+    var model = try ranks.fit(a, x, y, n, p, effective_options.weights, options.has_intercept, options.singular);
     errdefer model.deinit(a);
+    if (options.frequencies != null) {
+        // Match explicit row replication in all inference representations.
+        if (count < model.fit.rank) return error.ExecError;
+        model.fit.n_used = count;
+        model.fit.df_error = count - model.fit.rank;
+        model.fit.mse = if (model.fit.df_error > 0) model.fit.sse / @as(f64, @floatFromInt(model.fit.df_error)) else nan;
+        for (model.fit.covariance, model.fit.covariance_unscaled, 0..) |*cov, unscaled, i| {
+            cov.* = if (model.fit.aliased[i / p] or model.fit.aliased[i % p]) nan else model.fit.mse * unscaled;
+        }
+        for (model.fit.se, 0..) |*se, j| se.* = @sqrt(model.fit.covariance[j * p + j]);
+    }
     const type_i = try a.alloc(EffectTest, effects.len);
     errdefer a.free(type_i);
     const type_iii = try a.alloc(EffectTest, effects.len);
@@ -79,16 +115,23 @@ pub fn fit(a: A, x: []const f64, y: []const f64, n: usize, p: usize, effects: []
             if (!std.math.isFinite(effective[i * p + j])) return error.ExecError;
         }
     }
+    var previous_rank: usize = if (options.has_intercept) 1 else 0;
     for (effects, 0..) |effect, e| {
+        if (effect.len == 0) {
+            type_i[e] = testStats(0, previous_rank, previous_rank, model.fit);
+            type_iii[e] = testStats(0, model.fit.rank, model.fit.rank, model.fit);
+            continue;
+        }
         // Prefix columns define Type I; deleting a block from the complete
         // supplied hypothesis parameterization defines the partial Type III.
         const stop = effect.start + effect.len;
         const prefix_x = try select(a, effective, n, p, stop, null);
         defer a.free(prefix_x);
-        var prefix = try ranks.fit(a, prefix_x, y, n, stop, options.weights, true, options.singular);
+        var prefix = try ranks.fit(a, prefix_x, y, n, stop, effective_options.weights, options.has_intercept, options.singular);
         defer prefix.deinit(a);
-        type_i[e] = try reducedTest(a, effective, n, p, effect.start, null, prefix.fit, model.fit, options);
-        type_iii[e] = try reducedTest(a, effective, n, p, p, effect, model.fit, model.fit, options);
+        previous_rank = prefix.fit.rank;
+        type_i[e] = try reducedTest(a, effective, n, p, effect.start, null, prefix.fit, model.fit, effective_options);
+        type_iii[e] = try reducedTest(a, effective, n, p, p, effect, model.fit, model.fit, effective_options);
     }
     return .{ .model = model, .type_i = type_i, .type_iii = type_iii };
 }
@@ -109,18 +152,33 @@ fn select(a: A, x: []const f64, n: usize, p: usize, stop: usize, omit: ?Effect) 
 
 fn reducedTest(a: A, x: []const f64, n: usize, p: usize, stop: usize, omit: ?Effect, full: reg.Fit, error_model: reg.Fit, options: Options) diag.Error!EffectTest {
     const width = stop - if (omit) |e| e.len else 0;
+    if (width == 0) {
+        var ss: Sum = .{};
+        for (full.fitted, 0..) |value, i| {
+            const weight = if (options.weights) |w| w[i] else 1;
+            if (weight == 0) continue;
+            const weighted = value * @sqrt(weight);
+            ss.add(weighted * weighted);
+        }
+        if (!std.math.isFinite(ss.total())) return error.ExecError;
+        return testStats(ss.total(), full.rank, 0, error_model);
+    }
     const reduced_x = try select(a, x, n, p, stop, omit);
     defer a.free(reduced_x);
     // Project fitted values rather than subtracting large, nearly equal SSEs.
     // For nested spaces ||(Pfull-Preduced)y||² is the hypothesis SS.
-    var reduced = try ranks.fit(a, reduced_x, full.fitted, n, width, options.weights, true, options.singular);
+    var reduced = try ranks.fit(a, reduced_x, full.fitted, n, width, options.weights, options.has_intercept, options.singular);
     defer reduced.deinit(a);
     if (reduced.fit.rank > full.rank) return error.ExecError;
-    const df = full.rank - reduced.fit.rank;
-    const ss = if (df == 0) 0 else reduced.fit.sse;
+    return testStats(reduced.fit.sse, full.rank, reduced.fit.rank, error_model);
+}
+
+fn testStats(raw_ss: f64, rank_full: usize, rank_reduced: usize, error_model: reg.Fit) EffectTest {
+    const df = rank_full - rank_reduced;
+    const ss = if (df == 0) 0 else raw_ss;
     const ms = if (df > 0) ss / @as(f64, @floatFromInt(df)) else nan;
     const f = if (df > 0 and error_model.df_error > 0 and error_model.mse > 0) ms / error_model.mse else nan;
-    return .{ .rank_full = full.rank, .rank_reduced = reduced.fit.rank, .df = df, .ss = ss, .ms = ms, .f_value = f, .p_value = reg.fProbability(f, df, error_model.df_error) };
+    return .{ .rank_full = rank_full, .rank_reduced = rank_reduced, .df = df, .ss = ss, .ms = ms, .f_value = f, .p_value = reg.fProbability(f, df, error_model.df_error) };
 }
 
 const Sum = struct {
@@ -375,4 +433,68 @@ fn allocationCheck(a: A) !void {
 
 test "GLM allocation failures free model and effect test storage" {
     try testing.checkAllAllocationFailures(testing.allocator, allocationCheck, .{});
+}
+
+test "GLM distinct frequency and precision weights equal explicit replication" {
+    const a = testing.allocator;
+    var grouped = try fit(a, &.{ 1, 0, 1, 1, 1, 2 }, &.{ 1, 2, 2 }, 3, 2, three_effects[0..1], .{ .frequencies = &.{ 2, 1, 3 }, .weights = &.{ 1, 2, 0.5 } });
+    defer grouped.deinit(a);
+    var expanded = try fit(a, &.{ 1, 0, 1, 0, 1, 1, 1, 2, 1, 2, 1, 2 }, &.{ 1, 1, 2, 2, 2, 2 }, 6, 2, three_effects[0..1], .{ .weights = &.{ 1, 1, 2, 0.5, 0.5, 0.5 } });
+    defer expanded.deinit(a);
+    try testing.expectEqual(@as(usize, 6), grouped.model.fit.n_used);
+    try testing.expectEqual(@as(usize, 4), grouped.model.fit.df_error);
+    try testing.expectApproxEqAbs(expanded.model.fit.sse, grouped.model.fit.sse, 1e-12);
+    try testing.expectApproxEqAbs(expanded.model.fit.mse, grouped.model.fit.mse, 1e-12);
+    for (expanded.model.fit.coefficients, grouped.model.fit.coefficients) |expected, actual| try testing.expectApproxEqAbs(expected, actual, 1e-12);
+    for (expanded.model.fit.covariance, grouped.model.fit.covariance) |expected, actual| try testing.expectApproxEqAbs(expected, actual, 1e-12);
+    for (expanded.model.fit.se, grouped.model.fit.se) |expected, actual| try testing.expectApproxEqAbs(expected, actual, 1e-12);
+    try testing.expectApproxEqAbs(expanded.type_i[0].ss, grouped.type_i[0].ss, 1e-12);
+    try testing.expectApproxEqAbs(expanded.type_iii[0].f_value, grouped.type_iii[0].f_value, 1e-12);
+    try testing.expectApproxEqAbs(expanded.type_iii[0].p_value, grouped.type_iii[0].p_value, 1e-12);
+    // Unlike precision weighting, frequency can make an aggregated saturated
+    // design have positive error DF, with covariance rescaled from unscaled G.
+    var saturated = try fit(a, &.{ 1, 0, 1, 1 }, &.{ 2, 3 }, 2, 2, three_effects[0..1], .{ .frequencies = &.{ 2, 2 } });
+    defer saturated.deinit(a);
+    try testing.expectEqual(@as(usize, 2), saturated.model.fit.df_error);
+    try testing.expect(std.math.isFinite(saturated.model.fit.covariance[0]));
+}
+
+test "GLM no-intercept effect tests use zero reduced model and uncorrected SS" {
+    const a = testing.allocator;
+    const effects = [_]Effect{ .{ .start = 0, .len = 0 }, .{ .start = 0, .len = 1 } };
+    var origin = try fit(a, &.{ 1, 2, 3 }, &.{ 1, 2, 2 }, 3, 1, &effects, .{ .has_intercept = false });
+    defer origin.deinit(a);
+    try testing.expectEqual(@as(usize, 0), origin.type_i[0].rank_full);
+    try testing.expectEqual(@as(usize, 2), origin.model.fit.df_error);
+    try testing.expectApproxEqAbs(@as(f64, 5.0 / 14.0), origin.model.fit.sse, 1e-12);
+    try testing.expectApproxEqAbs(@as(f64, 121.0 / 14.0), origin.type_i[1].ss, 1e-12);
+    try testing.expectApproxEqAbs(@as(f64, 242.0 / 5.0), origin.type_iii[1].f_value, 1e-10);
+    try testing.expectApproxEqAbs(origin.model.fit.modelStats(false).ss_model, origin.type_iii[1].ss, 1e-12);
+    var two = try fit(a, &.{ 1, 0, 0, 1, 1, 1 }, &.{ 1, 2, 4 }, 3, 2, &.{ .{ .start = 0, .len = 1 }, .{ .start = 1, .len = 1 } }, .{ .has_intercept = false });
+    defer two.deinit(a);
+    try testing.expectApproxEqAbs(@as(f64, 25.0 / 2.0), two.type_i[0].ss, 1e-12);
+    try testing.expectApproxEqAbs(@as(f64, 49.0 / 6.0), two.type_i[1].ss, 1e-12);
+    try testing.expectApproxEqAbs(@as(f64, 8.0 / 3.0), two.type_iii[0].ss, 1e-12);
+    try testing.expectApproxEqAbs(@as(f64, 49.0 / 6.0), two.type_iii[1].ss, 1e-12);
+}
+
+test "GLM frequency rejects invalid counts and excludes zero-weight counts" {
+    const a = testing.allocator;
+    for ([_]f64{ -1, 1.5, nan, std.math.inf(f64), @as(f64, @floatFromInt(std.math.maxInt(usize))) }) |bad| {
+        try testing.expectError(error.ExecError, fit(a, &.{ 1, 0, 1, 1 }, &.{ 2, 3 }, 2, 2, three_effects[0..1], .{ .frequencies = &.{ 1, bad } }));
+    }
+    try testing.expectError(error.ExecError, fit(a, &.{ 1, 0, 1, 1 }, &.{ 2, 3 }, 2, 2, three_effects[0..1], .{ .frequencies = &.{1} }));
+    var result = try fit(a, &.{ 1, 0, 1, 1, 1, 2 }, &.{ 2, 3, 100 }, 3, 2, three_effects[0..1], .{ .frequencies = &.{ 2, 3, 1000 }, .weights = &.{ 1, 1, 0 } });
+    defer result.deinit(a);
+    try testing.expectEqual(@as(usize, 5), result.model.fit.n_used);
+    try testing.expectEqual(@as(usize, 3), result.model.fit.df_error);
+}
+
+fn frequencyAllocationCheck(a: A) !void {
+    var result = try fit(a, &.{ 1, 0, 1, 1, 1, 2 }, &.{ 1, 2, 2 }, 3, 2, three_effects[0..1], .{ .frequencies = &.{ 2, 1, 3 } });
+    defer result.deinit(a);
+}
+
+test "GLM frequency allocation failures release combined weights" {
+    try testing.checkAllAllocationFailures(testing.allocator, frequencyAllocationCheck, .{});
 }
