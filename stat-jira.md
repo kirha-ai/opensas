@@ -1,6 +1,6 @@
 # OpenSAS — SAS/STAT 15.4 implementation backlog
 
-Created: 2026-11-24. **1,422 open tasks**: 1,327 functional tasks across 104 PROCs and 95 tasks for shared semantics, ODS, graphics, data, and application scope.
+Created: 2026-11-24. **1,422 total tickets**: 1,327 functional tasks across 104 PROCs and 95 tasks for shared semantics, ODS, graphics, data, and application scope. Retained ticket states below track current progress.
 
 This file is the sole board for the active SAS/STAT 15.4 campaign. Process only its existing tickets; do not expand the backlog or perform GitHub intake, QA, performance, or documentation audits. The legacy board is outside this campaign. Counts describe functional work groups; ticket states and verification notes record implementation progress.
 
@@ -3559,24 +3559,25 @@ Source: S154, Chapter 47, `The FREQ Procedure`, PDF pp. 3069–3290. Tasks in th
 
 <a id="stat-freq-001"></a>
 
-### [DOING @dev3] STAT-FREQ-001 — FREQ — Data input, variable roles, and basic options
+### [DONE] STAT-FREQ-001 — FREQ — Data input, variable roles, and basic options
 
 - Source: S154 / Chapter 47 / `PROC FREQ Statement` (PDF pp. 3082–3084); S154 / Chapter 47 / `BY Statement` (PDF pp. 3084–3085); S154 / Chapter 47 / `WEIGHT Statement` (PDF pp. 3157–3158); S154 / Chapter 47 / `Inputting Frequency Counts` (PDF pp. 3158–3159); S154 / Chapter 47 / `Grouping with Formats` (PDF pp. 3159–3160); S154 / Chapter 47 / `Missing Values` (PDF pp. 3160–3162).
 - Scope: Integrate PROC FREQ declarations, basic options, defaults, and execution boundaries; this ticket establishes parameter objects and result interfaces, while later feature tickets implement model-, algorithm-, and output-specific options. Also implement BY; WEIGHT; Inputting Frequency Counts; Grouping with Formats; Missing Values; apply this procedure's rules for missing values, variable roles, and observation selection.
 - Dependencies: [STAT-COMMON-001](#stat-common-001), [STAT-COMMON-002](#stat-common-002).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-FREQ-001/](tests/STAT15.4-oracle/STAT-FREQ-001/).
 - Dispatch contract: Reuse existing FREQ dispatch, BY groups, and weight filtering while shared tickets remain open; this attempt owns FREQ-specific behavior only, not shared MEANS or REG changes.
-- Progress (2026-11-25): Heading-collision fix landed/pushed in `fcd445e5`; gate 1589 unit tests, 2301 corpus cases, 11 programs passed. Both full oracle cases still differ in Kappa fields/rendering and shared option status; remain DOING while the attempt continues. Evidence: `tests/STAT15.4-oracle/STAT-FREQ-001/dev3-attempt.md`.
+- DONE (2026-11-25): Landed/pushed `c932de9b`. Both unchanged oracle listings match all 649/803 tokens after whitespace-only normalization, status 0/0, no warnings/errors. Six generated graphs inspected. Gate: 1597 unit tests, 2303 corpus cases, 11 programs passed. Existing corpus golden changes isolated in `96180f0e`; oracle expected files unchanged. Evidence: `tests/STAT15.4-oracle/STAT-FREQ-001/dev3-attempt.md`.
 - Acceptance criteria: Create positive and negative parsing cases for the documented declarations and basic options; verify defaults, explicit settings, documented duplicate/conflicting declarations, and locations; valid but unimplemented features must not silently succeed. For BY / WEIGHT / Inputting Frequency Counts / Grouping with Formats / Missing Values, construct valid, missing, empty, and multiple-group inputs; verify included observation counts, variable roles, BY boundaries, level ordering, and the frequency/weight rules relevant to this ticket; assert documented invalid-input behavior.
 
 <a id="stat-freq-002"></a>
 
-### [TODO] STAT-FREQ-002 — FREQ — One-way and crosstabulation counts and basic statistics
+### [DOING @dev3] STAT-FREQ-002 — FREQ — One-way and crosstabulation counts and basic statistics
 
 - Source: S154 / Chapter 47 / `Getting Started: FREQ Procedure` (PDF pp. 3072–3081); S154 / Chapter 47 / `Overview: FREQ Procedure` (PDF pp. 3070–3072); S154 / Chapter 9 / `Introduction to Categorical Data Analysis Procedures` (PDF pp. 187–198).
 - Scope: Implement one-way and crosstabulation counts and basic statistics using the documented default path and establish the computational state needed by later extensions; implement specialized models, methods, and diagnostics outside that default example in their corresponding feature tickets.
 - Dependencies: [STAT-FREQ-001](#stat-freq-001), [STAT-COMMON-005](#stat-common-005).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-FREQ-002/](tests/STAT15.4-oracle/STAT-FREQ-002/).
+- Dispatch contract: Reuse the existing tested FREQ probability/statistic routines while COMMON-005's TTEST integration remains in progress. Verify this ticket's own unchanged oracle and cited manual; no assumption of completion from FREQ-001.
 - Acceptance criteria: Turn the smallest default analysis in Getting Started into a runnable case and verify its principal estimates, observation counts, and result status; add a smaller case with an independent manual calculation; meet the precision conventions.
 
 <a id="stat-freq-003"></a>
