@@ -1,0 +1,44 @@
+Study 01
+Geographic Region = 01
+
+                              Geographic Region=01
+                      The FREQ Procedure
+
+              Category  Frequency     Percent
+              ----------------------------------
+              A               1       50.00
+              B               1       50.00
+Study 02
+Geographic Region = 02
+
+                              Geographic Region=02
+                      The FREQ Procedure
+
+              Category  Frequency     Percent
+              ----------------------------------
+              A               1       50.00
+              B               1       50.00
+
+                              Geographic Region=01
+                      The FREQ Procedure
+
+              Category  Frequency     Percent
+              ----------------------------------
+              A               1       50.00
+              B               1       50.00
+
+                              Geographic Region=02
+                      The FREQ Procedure
+
+              Category  Frequency     Percent
+              ----------------------------------
+              A               1       50.00
+              B               1       50.00
+Single report
+Second line
+                      The FREQ Procedure
+
+              Category  Frequency     Percent
+              ----------------------------------
+              A               2       50.00
+              B               2       50.00

@@ -354,12 +354,12 @@ Relative Risk (Column 2)        4.2000        1.5083       11.6953
 Sample Size = 24
                                       The FREQ Procedure
 
-                                                      Test  Cumulative  Cumulative
-              r          Frequency     Percent     Percent   Frequency     Percent
-              --------------------------------------------------------------------
-              1                 20       28.57       20.00          20       28.57
-              2                 27       38.57       30.00          47       67.14
-              3                 23       32.86       50.00          70      100.00
+                                                     Test  Cumulative  Cumulative
+              r         Frequency     Percent     Percent   Frequency     Percent
+              -------------------------------------------------------------------
+              1                20       28.57       20.00          20       28.57
+              2                27       38.57       30.00          47       67.14
+              3                23       32.86       50.00          70      100.00
 
 Chi-Square Test
 for Specified Proportions
