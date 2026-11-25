@@ -50,12 +50,49 @@ pub fn select(cx: proc.ProcCtx, spec: Spec, model: Model, rows: []const []const 
     return .{ .x = x.items, .y = y.items, .weights = weights.items, .frequencies = frequencies.items, .source_rows = source.items, .columns = model.regressors.len + @as(usize, if (model.intercept) 1 else 0), .read = rows.len };
 }
 
+pub const FittedModel = struct {
+    model: Model,
+    input: Selected,
+    weights: []const f64,
+    count: f64,
+    diagnostics: @import("reg_diagnostics.zig").Result,
+};
+
+/// Shared computation for listing execution and silent interactive REFIT.
+fn fitModel(cx: proc.ProcCtx, spec: Spec, model: Model, rows: []const []const Value) diag.Error!FittedModel {
+    const input = try select(cx, spec, model, rows);
+    if (input.y.len == 0) return cx.diags.fail(error.ExecError, 0, "PROC REG: no usable observations", .{});
+    // The solver accepts precision weights. Multiplying by frequency
+    // gives the same crossproducts, then DF and covariance are adjusted
+    // using the independently accumulated replication count.
+    const w = try cx.arena.alloc(f64, input.y.len);
+    var count: f64 = 0;
+    for (w, input.weights, input.frequencies) |*dest, weight, freq| {
+        dest.* = weight * freq;
+        count += freq;
+    }
+    if (count >= @as(f64, @floatFromInt(std.math.maxInt(usize)))) return cx.diags.fail(error.ExecError, 0, "PROC REG: frequency total exceeds representable observation count", .{});
+    const diagnostics = @import("reg_diagnostics.zig").fit(cx.arena, input.x, input.y, input.y.len, input.columns, w, model.intercept, model.singular) catch |err| {
+        if (err == error.OutOfMemory) return err;
+        return cx.diags.fail(error.ExecError, 0, "PROC REG: numerical fit failed", .{});
+    };
+
+    var fitted = diagnostics;
+    rescaleFrequencyInference(&fitted.fit, @intFromFloat(count));
+    return .{ .model = model, .input = input, .weights = w, .count = count, .diagnostics = fitted };
+}
+
 /// Execute a complete initial REG step. Unsupported continuations remain loud.
 pub fn run(cx: proc.ProcCtx, out: *std.ArrayList(u8), tokens: []const @import("../lexer.zig").Token) diag.Error!void {
     const spec = try parse(cx, tokens);
     try execute(cx, out, spec);
 }
 pub fn execute(cx: proc.ProcCtx, out: *std.ArrayList(u8), spec: Spec) diag.Error!void {
+    try executePrepared(cx, out, spec, null);
+}
+
+fn executePrepared(cx: proc.ProcCtx, out: *std.ArrayList(u8), spec: Spec, prepared: ?[]const FittedModel) diag.Error!void {
+    if (prepared) |fits| if (spec.by.len != 0 or fits.len != spec.models.len) return cx.diags.fail(error.ExecError, 0, "PROC REG: inconsistent prepared model results", .{});
     const groups = try @import("by_groups.zig").checkedSlices(cx.arena, spec.ds, spec.by, spec.descending, spec.notsorted, cx.diags);
     if (groups.len == 0) return cx.diags.fail(error.ExecError, 0, "PROC REG: no observations", .{});
     const estimates = if (spec.outest != null) try @import("reg_outest.zig").Builder.init(cx.arena, spec, cx.diags) else null;
@@ -63,26 +100,13 @@ pub fn execute(cx: proc.ProcCtx, out: *std.ArrayList(u8), spec: Spec) diag.Error
         if (group.rep) |rep| if (!spec.noprint) {
             try @import("by_groups.zig").appendLine(cx.arena, out, spec.ds, rep, spec.by);
         };
-        for (spec.models) |model| {
-            const input = try select(cx, spec, model, group.rows);
-            if (input.y.len == 0) return cx.diags.fail(error.ExecError, 0, "PROC REG: no usable observations", .{});
-            // The solver accepts precision weights. Multiplying by frequency
-            // gives the same crossproducts, then DF and covariance are adjusted
-            // using the independently accumulated replication count.
-            const w = try cx.arena.alloc(f64, input.y.len);
-            var count: f64 = 0;
-            for (w, input.weights, input.frequencies) |*dest, weight, freq| {
-                dest.* = weight * freq;
-                count += freq;
-            }
-            if (count >= @as(f64, @floatFromInt(std.math.maxInt(usize)))) return cx.diags.fail(error.ExecError, 0, "PROC REG: frequency total exceeds representable observation count", .{});
-            const diagnostics = @import("reg_diagnostics.zig").fit(cx.arena, input.x, input.y, input.y.len, input.columns, w, model.intercept, model.singular) catch |err| {
-                if (err == error.OutOfMemory) return err;
-                return cx.diags.fail(error.ExecError, 0, "PROC REG: numerical fit failed", .{});
-            };
-
-            var fit = diagnostics.fit;
-            rescaleFrequencyInference(&fit, @intFromFloat(count));
+        for (spec.models, 0..) |model, model_index| {
+            const computed = if (prepared) |fits| fits[model_index] else try fitModel(cx, spec, model, group.rows);
+            const input = computed.input;
+            const w = computed.weights;
+            const count = computed.count;
+            const diagnostics = computed.diagnostics;
+            const fit = diagnostics.fit;
             if (estimates) |builder| try builder.append(cx.arena, model, group.rep, fit);
             const stats = fit.modelStats(model.intercept);
             const ts = try cx.arena.alloc(f64, input.columns);
@@ -291,16 +315,93 @@ test "REG replication rescales covariance and standard errors together" {
 fn parameterName(spec: Spec, model: Model, i: usize) []const u8 {
     return if (model.intercept and i == 0) "Intercept" else spec.ds.columns.items[model.regressors[i - @as(usize, if (model.intercept) 1 else 0)]].name;
 }
+/// Keep the CLI continuation admission list beside its owning interpreter.
+pub fn continuationKeyword(word: []const u8) bool {
+    inline for (.{ "add", "delete", "print", "refit", "run", "quit", "model", "mtest", "output", "paint", "plot", "restrict", "reweight", "test" }) |name| {
+        if (std.ascii.eqlIgnoreCase(word, name)) return true;
+    }
+    return false;
+}
+
 pub const Session = struct {
     spec: Spec,
     revision: usize = 0,
-    /// The initial crossproducts pool is fixed before the first RUN. ADD may
-    /// only select variables already in that pool (MODEL or VAR declarations).
+    fitted: []const FittedModel = &.{},
+    base_labels: []const []const u8 = &.{},
+    other_models: bool = false,
+
+    /// The current MODEL is the last MODEL statement, including every response
+    /// from that statement. Crossproduct/missingness variables remain frozen.
+    fn current(self: *Session, cx: proc.ProcCtx) diag.Error!Spec {
+        if (self.spec.models.len == 0) return cx.diags.fail(error.ParseError, 0, "PROC REG: no current MODEL", .{});
+        if (self.spec.by.len > 0) return cx.diags.fail(error.ParseError, 0, "PROC REG: interactivity is disabled with BY processing", .{});
+        const group = self.spec.models[self.spec.models.len - 1].statement_index;
+        var first = self.spec.models.len - 1;
+        while (first > 0 and self.spec.models[first - 1].statement_index == group) first -= 1;
+        self.other_models = self.other_models or first > 0;
+        var selected = self.spec;
+        selected.models = self.spec.models[first..];
+        return selected;
+    }
+
+    fn compute(cx: proc.ProcCtx, spec: Spec) diag.Error![]const FittedModel {
+        const fits = try cx.arena.alloc(FittedModel, spec.models.len);
+        for (spec.models, fits) |model, *fit| fit.* = try fitModel(cx, spec, model, spec.ds.rows.items);
+        return fits;
+    }
+
+    /// REFIT has no listing or output-dataset side effects. It still executes
+    /// the numerical fit and exposes failures; it is never an inert keyword.
+    pub fn refit(self: *Session, cx: proc.ProcCtx) diag.Error!void {
+        self.fitted = try compute(cx, try self.current(cx));
+    }
+
+    fn edit(self: *Session, cx: proc.ProcCtx, tokens: []const @import("../lexer.zig").Token, adding: bool) diag.Error!void {
+        var selected = try self.current(cx);
+        const variables = try parsing.columns(cx, selected.ds, tokens[1..], true);
+        if (variables.len == 0) return cx.diags.fail(error.ParseError, tokens[0].line, "PROC REG {s} requires variables", .{if (adding) @as([]const u8, "ADD") else "DELETE"});
+        for (variables) |ci| {
+            if (adding and std.mem.indexOfScalar(usize, selected.required, ci) == null) return cx.diags.fail(error.ParseError, tokens[0].line, "PROC REG: ADD variable {s} was not declared before RUN", .{selected.ds.columns.items[ci].name});
+            if (!adding) for (selected.models) |model| {
+                if (std.mem.indexOfScalar(usize, model.regressors, ci) == null) return proc.failGap(cx.diags, tokens[0].line, "PROC REG: DELETE of inactive variable {s} is not implemented", .{selected.ds.columns.items[ci].name});
+            };
+        }
+        const labels = if (self.base_labels.len > 0) self.base_labels else blk: {
+            const names = try cx.arena.alloc([]const u8, selected.models.len);
+            for (names, selected.models) |*name, model| name.* = model.label;
+            break :blk names;
+        };
+        const old_models = selected.models;
+        const models = try cx.arena.dupe(Model, selected.models);
+        for (models, 0..) |*model, j| {
+            var columns: std.ArrayList(usize) = .empty;
+            for (model.regressors) |ci| {
+                if (adding or std.mem.indexOfScalar(usize, variables, ci) == null) try columns.append(cx.arena, ci);
+            }
+            if (adding) for (variables) |ci| {
+                if (std.mem.indexOfScalar(usize, columns.items, ci) == null) try columns.append(cx.arena, ci);
+            };
+            if (!model.intercept and columns.items.len == 0) return proc.failGap(cx.diags, tokens[0].line, "PROC REG: deleting every parameter of a NOINT model is not implemented", .{});
+            model.regressors = columns.items;
+            model.label = try std.fmt.allocPrint(cx.arena, "{s}.{d}", .{ labels[j], self.revision + 1 });
+        }
+        selected.models = models;
+        const fits = try compute(cx, selected);
+        // Commit only after validation and all response fits succeed.
+        self.spec = selected;
+        self.fitted = fits;
+        self.base_labels = labels;
+        self.revision += 1;
+        for (variables) |ci| {
+            if (!adding or std.mem.indexOfScalar(usize, old_models[0].regressors, ci) == null)
+                try cx.diags.note(tokens[0].line, "Variable {s} is {s}.", .{ selected.ds.columns.items[ci].name, if (adding) @as([]const u8, "added") else "deleted" });
+        }
+        try cx.diags.note(tokens[0].line, "Due to {s} {s} statement, the model label is now {s}.", .{ if (adding) @as([]const u8, "an") else "a", if (adding) @as([]const u8, "ADD") else "DELETE", models[0].label });
+    }
+
     pub fn continuation(self: *Session, cx: proc.ProcCtx, out: *std.ArrayList(u8), t: []const @import("../lexer.zig").Token) diag.Error!bool {
         const eq = std.ascii.eqlIgnoreCase;
         var i: usize = 0;
-        var print = false;
-        var quit = false;
         while (i < t.len and t[i].tag != .eof) {
             if (t[i].tag == .semicolon) {
                 i += 1;
@@ -309,42 +410,38 @@ pub const Session = struct {
             var end = i;
             while (end < t.len and t[end].tag != .semicolon and t[end].tag != .eof) end += 1;
             if (end == t.len or t[end].tag != .semicolon) return cx.diags.fail(error.ParseError, t[i].line, "PROC REG: expected semicolon", .{});
-            if (eq(t[i].text, "add")) {
-                if (self.spec.models.len != 1) return proc.failGap(cx.diags, t[i].line, "PROC REG: ADD with multiple models is not implemented", .{});
-                const added = try parsing.columns(cx, self.spec.ds, t[i + 1 .. end], true);
-                if (added.len == 0) return cx.diags.fail(error.ParseError, t[i].line, "PROC REG ADD requires variables", .{});
-                var model = self.spec.models[0];
-                var cols: std.ArrayList(usize) = .empty;
-                try cols.appendSlice(cx.arena, model.regressors);
-                for (added) |c| {
-                    if (std.mem.indexOfScalar(usize, self.spec.required, c) == null) return cx.diags.fail(error.ParseError, t[i].line, "PROC REG: ADD variable {s} was not declared before RUN", .{self.spec.ds.columns.items[c].name});
-                    if (std.mem.indexOfScalar(usize, cols.items, c) == null) {
-                        try cols.append(cx.arena, c);
-                        try cx.diags.note(t[i].line, "Variable {s} is added.", .{self.spec.ds.columns.items[c].name});
-                    }
-                }
-                self.revision += 1;
-                const base = std.mem.sliceTo(model.label, '.');
-                model.label = try std.fmt.allocPrint(cx.arena, "{s}.{d}", .{ base, self.revision });
-                model.regressors = cols.items;
-                const models = try cx.arena.alloc(Model, 1);
-                models[0] = model;
-                self.spec.models = models;
-                try cx.diags.note(t[i].line, "Due to an ADD statement, the model label is now {s}.", .{model.label});
+            if (t[i].tag != .name) return cx.diags.fail(error.ParseError, t[i].line, "PROC REG: expected an interactive statement", .{});
+            if (eq(t[i].text, "add") or eq(t[i].text, "delete")) {
+                try self.edit(cx, t[i..end], eq(t[i].text, "add"));
+            } else if (eq(t[i].text, "refit")) {
+                if (end != i + 1) return cx.diags.fail(error.ParseError, t[i].line, "PROC REG REFIT takes no arguments", .{});
+                try self.refit(cx);
             } else if (eq(t[i].text, "print")) {
-                if (end != i + 1) return proc.failGap(cx.diags, t[i].line, "PROC REG: PRINT options are not implemented", .{});
-                print = true;
+                if (end != i + 1) {
+                    inline for (.{ "acov", "all", "cli", "clm", "collin", "collinoint", "corrb", "covb", "dw", "i", "influence", "p", "partial", "pcorr1", "pcorr2", "r", "scorr1", "scorr2", "seqb", "spec", "ss1", "ss2", "stb", "tol", "vif", "xpx", "anova", "modeldata" }) |name| {
+                        if (eq(t[i + 1].text, name)) return proc.failGap(cx.diags, t[i + 1].line, "PROC REG PRINT {s} is not implemented", .{t[i + 1].text});
+                    }
+                    return cx.diags.fail(error.ParseError, t[i + 1].line, "PROC REG: invalid PRINT option {s}", .{t[i + 1].text});
+                }
+                const selected = try self.current(cx);
+                if (self.other_models and selected.outest != null) return proc.failGap(cx.diags, t[i].line, "PROC REG: interactive OUTEST with multiple MODEL statements is not implemented", .{});
+                try self.refit(cx);
+                // Execute at this statement, not at the later RUN. Otherwise
+                // PRINT; DELETE x; PRINT; RUN would lose the first result.
+                try executePrepared(cx, out, selected, self.fitted);
             } else if (eq(t[i].text, "run") or eq(t[i].text, "quit")) {
                 if (end != i + 1) return cx.diags.fail(error.ParseError, t[i].line, "PROC REG: invalid execution boundary", .{});
-                if (print) {
-                    try execute(cx, out, self.spec);
-                    print = false;
+                if (eq(t[i].text, "quit")) {
+                    for (t[end + 1 ..]) |tok| if (tok.tag != .semicolon and tok.tag != .eof) return cx.diags.fail(error.ParseError, tok.line, "PROC REG: statement after QUIT", .{});
+                    return false;
                 }
-                if (eq(t[i].text, "quit")) quit = true;
-            } else return proc.failGap(cx.diags, t[i].line, "PROC REG: continuation {s} is not implemented", .{t[i].text});
+            } else {
+                if (continuationKeyword(t[i].text)) return proc.failGap(cx.diags, t[i].line, "PROC REG: continuation {s} is not implemented", .{t[i].text});
+                return cx.diags.fail(error.ParseError, t[i].line, "PROC REG: invalid interactive statement {s}", .{t[i].text});
+            }
             i = end + 1;
         }
-        return !quit;
+        return true;
     }
 };
 
@@ -455,4 +552,8 @@ test "STAT-COMMON-004 weighted listing identifies weight without changing observ
     const observations = std.mem.indexOf(u8, out.items, "Number of Observations Used 3") orelse return error.TestUnexpectedResult;
     const anova = std.mem.indexOf(u8, out.items, "Analysis of Variance") orelse return error.TestUnexpectedResult;
     try std.testing.expect(observations < heading and heading < anova);
+}
+
+test {
+    _ = @import("reg_interactive_tests.zig");
 }

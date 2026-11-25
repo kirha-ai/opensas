@@ -402,7 +402,7 @@ fn runExpanded(ctx: *StepCtx, text: []const u8, allow_anon: bool) sas.diag.Error
     // preload in `interpret` never saw it. Load any still-missing members now.
     if (ctx.io) |iov| try loadLibInputs(a, iov, ctx.lib, ctx.librefs.items, toks, ctx.loaded_ro, ctx.damaged, ctx.diags);
     if (ctx.reg_session) |*session| {
-        if (toks.len > 0 and toks[0].tag == .name and (eqi(toks[0].text, "add") or eqi(toks[0].text, "print") or eqi(toks[0].text, "run") or eqi(toks[0].text, "quit"))) {
+        if (toks.len > 0 and toks[0].tag == .name and sas.reg.continuationKeyword(toks[0].text)) {
             const pcx: sas.proc.ProcCtx = .{ .arena = a, .lib = ctx.lib, .diags = ctx.diags, .capture = &ods_capture, .listing = &ods_listing, .graphics = native_graphics_session };
             var discard: std.ArrayList(u8) = .empty;
             const output = if (ods_listing.accepts("reg")) ctx.out else &discard;
@@ -7364,7 +7364,7 @@ test "STAT-COMMON-002 prelude option status distinguishes supported values, gaps
     try std.testing.expectEqual(@as(u8, 1), try rcOf(a, &out, "options locale=;", &log));
 }
 
-test "REG CLI executes ordinary models and ADD PRINT RUN continuation" {
+test "REG CLI executes ordinary models and ADD DELETE REFIT PRINT RUN continuation" {
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
     const a = arena.allocator();
@@ -7372,11 +7372,12 @@ test "REG CLI executes ordinary models and ADD PRINT RUN continuation" {
     var out: std.ArrayList(u8) = .empty;
     try interpret(a,&out,&d,
         "data sample; input x y z; datalines;\n1 2 1\n2 5 0\n3 5 1\n4 8 0\n5 9 1\n;run;" ++
-        "proc reg data=sample; var z; model y=x; run; add z; print; run; quit;" ++
+        "proc reg data=sample; var z; model y=x; run; refit; run; add z; print; run; delete z; refit; print; run; quit;" ++
         "data _null_; put 'after-reg'; run;",null);
     try std.testing.expect(!d.hasErrors());
-    try std.testing.expectEqual(@as(usize,2),std.mem.count(u8,out.items,"Analysis of Variance"));
+    try std.testing.expectEqual(@as(usize,3),std.mem.count(u8,out.items,"Analysis of Variance"));
     try std.testing.expect(std.mem.indexOf(u8,out.items,"Model: MODEL1.1")!=null);
+    try std.testing.expect(std.mem.indexOf(u8,out.items,"Model: MODEL1.2")!=null);
     try std.testing.expect(std.mem.indexOf(u8,out.items,"after-reg")!=null);
 }
 

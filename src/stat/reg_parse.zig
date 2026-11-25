@@ -9,6 +9,7 @@ const by_groups = @import("by_groups.zig");
 const eq = std.ascii.eqlIgnoreCase;
 pub const Model = struct {
     label: []const u8,
+    statement_index: usize = 0,
     dependent: usize,
     regressors: []const usize,
     intercept: bool = true,
@@ -199,7 +200,7 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
             var slash = equal + 1;
             while (slash < end and !at(t, slash, .slash)) slash += 1;
             const regressors = try columns(cx, ds, t[equal + 1 .. slash], true);
-            var model: Model = .{ .label = label orelse try std.fmt.allocPrint(cx.arena, "MODEL{d}", .{model_number}), .dependent = dependents[0], .regressors = regressors, .alpha = alpha, .singular = singular };
+            var model: Model = .{ .statement_index = model_number, .label = label orelse try std.fmt.allocPrint(cx.arena, "MODEL{d}", .{model_number}), .dependent = dependents[0], .regressors = regressors, .alpha = alpha, .singular = singular };
             var j = slash + 1;
             while (j < end) {
                 if (kw(t, j, "r")) {
