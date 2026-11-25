@@ -434,3 +434,25 @@ test "REG TYPE column in WHERE is not a summary dataset TYPE option" {
     const spec = try parse(cx, try @import("../lexer.zig").tokenize(a, "proc reg data=sample(where=(type=1));model y=x;run;", &d));
     try std.testing.expectEqual(@as(usize, 1), spec.ds.rows.items.len);
 }
+
+test "STAT-COMMON-004 weighted listing identifies weight without changing observations" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var lib = @import("../exec.zig").Library.init(a);
+    var d = diag.Diagnostics.init(a);
+    var ds = @import("../dataset.zig").Dataset.init(a, "sample");
+    for ([_][]const u8{ "x", "y", "w" }) |name| _ = try ds.addColumn(name, .num);
+    try ds.appendRow(&.{ .{ .num = 0 }, .{ .num = 1 }, .{ .num = 1 } });
+    try ds.appendRow(&.{ .{ .num = 1 }, .{ .num = 2 }, .{ .num = 2 } });
+    try ds.appendRow(&.{ .{ .num = 2 }, .{ .num = 2 }, .{ .num = 1 } });
+    try lib.put("sample", &ds);
+    const toks = try @import("../lexer.zig").tokenize(a, "proc reg data=sample; model y=x; weight w; run;", &d);
+    var out: std.ArrayList(u8) = .empty;
+    try run(.{ .arena = a, .lib = &lib, .diags = &d }, &out, toks);
+    try std.testing.expect(!d.hasErrors());
+    const heading = std.mem.indexOf(u8, out.items, "Weight: w") orelse return error.TestUnexpectedResult;
+    const observations = std.mem.indexOf(u8, out.items, "Number of Observations Used 3") orelse return error.TestUnexpectedResult;
+    const anova = std.mem.indexOf(u8, out.items, "Analysis of Variance") orelse return error.TestUnexpectedResult;
+    try std.testing.expect(observations < heading and heading < anova);
+}

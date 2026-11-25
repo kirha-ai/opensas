@@ -50,6 +50,7 @@ fn probability(a: A, p: f64) ![]const u8 {
 pub fn render(a: A, out: *std.ArrayList(u8), spec: parse.Spec, model: parse.Model, read: usize, used: usize, r: Result) !void {
     try out.print(a, "\nThe REG Procedure\nModel: {s}\nDependent Variable: {s}\n\nNumber of Observations Read {d}\nNumber of Observations Used {d}\n", .{ model.label, spec.ds.columns.items[model.dependent].name, read, used });
     if (spec.freq != null) try out.print(a, "Sum of Frequencies Used {d}\n", .{r.n});
+    if (spec.weight) |ci| try out.print(a, "\nWeight: {s}\n", .{spec.ds.columns.items[ci].name});
     try out.appendSlice(a, "\nAnalysis of Variance\n\nSum of Mean\nSource DF Squares Square F Value Pr > F\n\n");
     try out.print(a, "Model {s} {s} {s} {s} {s}\nError {s} {s} {s}\n{s} Total {s} {s}\n\n", .{ try number(a, r.df_model, 0), try statistic(a, r.ss_model), try statistic(a, r.ms_model), try number(a, r.f, 2), try probability(a, r.p), try number(a, r.df_error, 0), try statistic(a, r.ss_error), try statistic(a, r.ms_error), if (model.intercept) @as([]const u8, "Corrected") else "Uncorrected", try number(a, r.df_total, 0), try statistic(a, r.ss_total) });
     try out.print(a, "Root MSE {s} R-Square {s}\nDependent Mean {s} Adj R-Sq {s}\nCoeff Var {s}\n", .{ try statistic(a, r.root_mse), try number(a, r.r_square, 4), try statistic(a, r.mean), try number(a, r.adj_r_square, 4), try statistic(a, r.cv) });

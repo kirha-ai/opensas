@@ -3527,14 +3527,68 @@ fn printTable(a: std.mem.Allocator, out: *std.ArrayList(u8), ds: *sas.dataset.Da
         return;
     }
 
-    try printHeader(a, out, cols, sidx, colw, w_obs, opts);
-    r = 0;
-    while (r < nrows) : (r += 1) try printDataRow(a, out, ds, r, srcobs, cols, sidx, colw, w_obs, opts);
-    // BUG-print0obssum: 0 obs → SAS prints no table/total ("No observations"
-    // NOTE). The bare header stays (tick155 decision); only the phantom
-    // `= 0` grand total is suppressed.
-    if (opts.sums != null and nrows > 0)
-        try printTotalsRow(a, out, totals, cols, sidx, colw, w_obs, opts);
+    // LISTING divides wide flat reports into contiguous column panels. Keep
+    // explicit ID layout on its existing path until repeated-ID panels exist.
+    const ends = if (opts.id == null)
+        try printPanelEnds(a, colw, sas.io.global_linesize, if (opts.noobs) 0 else w_obs + gutter)
+    else
+        try a.dupe(usize, &.{sidx.len});
+    var first_column: usize = 0;
+    for (ends, 0..) |end_column, panel| {
+        if (panel > 0) try out.append(a, '\n');
+        const columns = sidx[first_column..end_column];
+        const widths = colw[first_column..end_column];
+        try printHeader(a, out, cols, columns, widths, w_obs, opts);
+        r = 0;
+        while (r < nrows) : (r += 1) try printDataRow(a, out, ds, r, srcobs, cols, columns, widths, w_obs, opts);
+        if (opts.sums != null and nrows > 0)
+            try printTotalsRow(a, out, totals[first_column..end_column], cols, columns, widths, w_obs, opts);
+        first_column = end_column;
+    }
+}
+
+/// Balance contiguous panels at the minimum number needed for LINESIZE.
+/// No cell is removed or reformatted; a single oversized column stays intact.
+/// SAS Procedures Guide, PRINT, printed pp.1798–1800; COMMON004 exercises
+/// mixed character identifiers and explicitly wide numeric formats.
+fn printPanelEnds(a: std.mem.Allocator, widths: []const usize, line_size: usize, leading: usize) ![]usize {
+    if (line_size == 0 or widths.len == 0) return a.dupe(usize, &.{widths.len});
+    var lower: usize = leading;
+    for (widths) |width| lower = @max(lower, leading + width);
+    var upper = @max(line_size, lower);
+    const wanted = printPanelCount(widths, line_size, leading);
+    if (wanted == 1) return a.dupe(usize, &.{widths.len});
+    // Minimize the widest panel while preserving column order and panel count.
+    // This avoids a nearly full first panel followed by a very sparse last one.
+    if (lower <= line_size) while (lower < upper) {
+        const middle = lower + (upper - lower) / 2;
+        if (printPanelCount(widths, middle, leading) <= wanted) upper = middle else lower = middle + 1;
+    };
+    const limit = if (lower > line_size) line_size else lower;
+    var ends: std.ArrayList(usize) = .empty;
+    var used: usize = 0;
+    for (widths, 0..) |width, j| {
+        const additional = width + (if (used == 0) @as(usize, 0) else gutter);
+        if (used > 0 and leading + used + additional > limit) {
+            try ends.append(a, j);
+            used = width;
+        } else used += additional;
+    }
+    try ends.append(a, widths.len);
+    return ends.items;
+}
+
+fn printPanelCount(widths: []const usize, limit: usize, leading: usize) usize {
+    var count: usize = 1;
+    var used: usize = 0;
+    for (widths) |width| {
+        const additional = width + (if (used == 0) @as(usize, 0) else gutter);
+        if (used > 0 and leading + used + additional > limit) {
+            count += 1;
+            used = width;
+        } else used += additional;
+    }
+    return count;
 }
 
 const Column = sas.dataset.Column;
@@ -7347,4 +7401,25 @@ test "REG built-in CLASS is shared by direct procedure and DATA SET input" {
     try std.testing.expect(!d.hasErrors());
     try std.testing.expectEqual(@as(usize,2),std.mem.count(u8,out.items,"Number of Observations Used 19"));
     try std.testing.expectEqual(@as(usize,2),std.mem.count(u8,out.items,"7193.24912" )/2);
+}
+
+test "STAT-COMMON-004 PRINT panels preserve every column row and observation number" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const saved = sas.io.global_linesize;
+    defer sas.io.global_linesize = saved;
+    var out: std.ArrayList(u8) = .empty;
+    var d = sas.diag.Diagnostics.init(a);
+    try interpret(a, &out, &d,
+        "options linesize=50; data sample; input a b c d; datalines;\n11 22 33 44\n55 66 77 88\n;\nrun; proc print data=sample; format _numeric_ 20.; run;", null);
+    try std.testing.expect(!d.hasErrors());
+    var actual = std.mem.tokenizeAny(u8, out.items, " \t\r\n");
+    var expected = std.mem.tokenizeAny(u8, "Obs a b 1 11 22 2 55 66 Obs c d 1 33 44 2 77 88", " ");
+    while (expected.next()) |token| try std.testing.expectEqualStrings(token, actual.next() orelse return error.TestUnexpectedResult);
+    try std.testing.expect(actual.next() == null);
+    const panels = try printPanelEnds(a, &.{ 7, 6, 9, 8, 32, 32, 32, 32, 32 }, 160, 0);
+    try std.testing.expectEqualSlices(usize, &.{ 6, 9 }, panels);
+    try std.testing.expectEqualSlices(usize, &.{4}, try printPanelEnds(a, &.{ 20, 20, 20, 20 }, 120, 0));
+    try std.testing.expectEqualSlices(usize, &.{ 1, 2 }, try printPanelEnds(a, &.{ 80, 20 }, 40, 0));
 }
