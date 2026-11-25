@@ -4777,7 +4777,7 @@ Source: S154, Chapter 53, `The GLM Procedure`, PDF pp. 4043–4230. Tasks in thi
 
 <a id="stat-glm-005"></a>
 
-### [TODO] STAT-GLM-005 — GLM — ABSORB / Statistical Assumptions for Using PROC GLM / Using PROC GLM Interactively
+### [DOING @dev2] STAT-GLM-005 — GLM — ABSORB / Statistical Assumptions for Using PROC GLM / Using PROC GLM Interactively
 
 - Source: S154 / Chapter 53 / `ABSORB Statement` (PDF p. 4065); S154 / Chapter 53 / `Statistical Assumptions for Using PROC GLM` (PDF pp. 4106–4107); S154 / Chapter 53 / `Using PROC GLM Interactively` (PDF p. 4110).
 - Scope: Implement ABSORB; Statistical Assumptions for Using PROC GLM; Using PROC GLM Interactively. This ticket owns the feature's options, defaults, computation, and results as an extension of the basic computational path; the chapter's output tickets handle ODS descriptors and file presentation.
@@ -14735,6 +14735,7 @@ Source: S154, Chapter 128, `The TTEST Procedure`, PDF pp. 10595–10692. Tasks i
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-TTEST-010/](tests/STAT15.4-oracle/STAT-TTEST-010/).
 - Dispatch contract: Reuse the existing ODS table registry and capture/TRACE interfaces while the broader ODS-007 integration ticket remains pending. Implement TTEST-specific producers and verify this full original capture case; do not extend inert ODS destinations under D-022.
 - PARK (2026-11-25, 45-minute limit): Foundation preserved at dev5 `c358d563`, gate 1774 tests/2311 corpus/11 programs green. Original exits 0, but complete oracle has not passed: vertical PRINT and CONTENTS metadata/layout differ, and three UMPU upper endpoints require adjudication against independent high-precision solutions. Raw differences retained without broad tolerance; other capture families remain explicit gaps. Four normal typed captures, TRACE identities and portable TTests descriptor work. No original expected files changed. Integration queued; see dev5 `tests/STAT15.4-oracle/STAT-TTEST-010/dev5-verification.json` until landed.
+- Foundation integration (2026-11-25): Landed/pushed `3ab3dd0f` with exact-SHA gate 1777 tests, 2312 corpus, 11 programs green. The ticket remains PARK; raw original output, descriptor data and independent precision evidence are now preserved in the main worktree.
 - Acceptance criteria: For Displayed Output / ODS Table Names, verify table names, labels, triggering conditions, rows, columns, degrees of freedom, statistics, and missing representations; exercise selection and capture with ODS TRACE/OUTPUT; unrelated options must not create extra tables.
 
 <a id="stat-ttest-011"></a>
