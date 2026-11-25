@@ -193,13 +193,14 @@ Complete prerequisite shared contracts first, then each PROC's data input, model
 
 <a id="stat-common-001"></a>
 
-### [TODO] STAT-COMMON-001 — Statistical procedure execution and the 15.4 option contract
+### [DOING @dev5] STAT-COMMON-001 — Statistical procedure execution and the 15.4 option contract
 
 - Source: S154 / Chapter 3 / `Introduction` (PDF pp. 27–36); S154 / Chapter 2 / `What's New in SAS/STAT 15.4` (PDF pp. 25–26); S154 / Chapter 1 / `Procedures by Category` (PDF pp. 13–24).
 - Scope: Establish PROC-level parsing, default-parameter, execution-status, and result-object contracts; distinguish valid input, invalid input, and unsupported capabilities under SAS/STAT 15.4. This ticket owns shared interfaces; PROC tickets own their semantics.
 - Dependencies: None.
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-COMMON-001/](tests/STAT15.4-oracle/STAT-COMMON-001/).
 - Waiting for implementation (2026-11-25): Initial oracle exits 2 (expected 0), with missing REG tables and unrecognized `validmemname`. Implement existing STAT-REG-001/002 prerequisites, then revisit this case; missing REG alone is not grounds for PARK. Version must identify OpenSAS, not match SAS. Evidence: dev1 `.stat-common-001-evidence/actual.stderr` and `output.diff`.
+- Dispatch contract: dev5 owns honest OpenSAS runtime-version metadata and execution-contract regression checks; dev1/dev4 own REG implementation, dev2 owns option validation. Full oracle acceptance waits for those implementations.
 - Acceptance criteria: Provide minimal execution contract tests; define option defaults, explicit overrides, and procedure-specific RUN/QUIT rules; emit locatable diagnostics for unimplemented branches; record the specification version and handle version differences explicitly.
 
 <a id="stat-common-002"></a>
