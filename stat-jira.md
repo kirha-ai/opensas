@@ -11480,7 +11480,7 @@ Source: S154, Chapter 105, `The REG Procedure`, PDF pp. 8539–8728. Tasks in th
 
 <a id="stat-reg-001"></a>
 
-### [PARK] STAT-REG-001 — REG — Data input, variable roles, and basic options
+### [DONE] STAT-REG-001 — REG — Data input, variable roles, and basic options
 
 - Source: S154 / Chapter 105 / `PROC REG Statement` (PDF pp. 8560–8574); S154 / Chapter 105 / `BY Statement` (PDF pp. 8574–8575); S154 / Chapter 105 / `FREQ Statement` (PDF p. 8576); S154 / Chapter 105 / `ID Statement` (PDF p. 8576); S154 / Chapter 105 / `VAR Statement` (PDF pp. 8599–8600); S154 / Chapter 105 / `WEIGHT Statement` (PDF p. 8600); S154 / Chapter 105 / `Missing Values` (PDF p. 8600); S154 / Chapter 105 / `Input Data Sets` (PDF pp. 8600–8603).
 - Scope: Integrate PROC REG declarations, basic options, defaults, and execution boundaries; this ticket establishes parameter objects and result interfaces, while later feature tickets implement model-, algorithm-, and output-specific options. Also implement BY; FREQ; ID; VAR; WEIGHT; Missing Values; Input Data Sets; apply this procedure's rules for missing values, variable roles, and observation selection.
@@ -11488,11 +11488,12 @@ Source: S154, Chapter 105, `The REG Procedure`, PDF pp. 8539–8728. Tasks in th
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-REG-001/](tests/STAT15.4-oracle/STAT-REG-001/).
 - Dispatch contract: Break the runtime-oracle validation cycle by implementing REG on existing interpreter/data interfaces. dev1 owns REG parsing, data selection and rendering; dev4 supplies the REG-002 numerical module. Revisit shared runtime and rank-deficiency oracles after integration. Missing REG is the work to implement, not a reason to PARK immediately.
 - PARK (2026-11-25, 45-minute attempt): Tested implementation landed/pushed `48b9312d`; gate 1643 tests, 2304 corpus, 11 programs green. Both original cases have correct status 1 and warnings; only two Sum of Residuals tokens differ: expected 0 / -4.4596E-11, actual 9.748646E-12 / -1.21227E-10. All other 1118/1206-token listing content matches. Preserve exact outputs; no unvalidated blanket tolerance or golden modification. REG-002 will independently assess numerical bounds for these theoretical-zero sums before this ticket is revisited. Evidence: dev1 `.stat-reg-001-evidence/final-comparison.json`.
+- DONE after prerequisite validation (2026-11-25): Prior PARK resolved by landed/pushed `3cea8de9`. Both unchanged originals pass the independent source-derived residual-sum contract: only two theoretical-zero sums use absolute bounds 7.261130843592319e-11 and 1.7845359484002278e-9; all other 1116/1204 tokens match exactly after whitespace normalization, status/warnings 1/1. Strict text equality remains false and is disclosed. Rational derivation, 24 scaled/centered fits and seven corruption checks justify the narrow bounds; no production arithmetic or expected files changed. Durable receipts are in this ticket's oracle directory; derivation/replay in `STAT-REG-002/numeric-contract.md`. Gate: 1665 tests, 2305 corpus, 11 programs passed.
 - Acceptance criteria: Create positive and negative parsing cases for the documented declarations and basic options; verify defaults, explicit settings, documented duplicate/conflicting declarations, and locations; valid but unimplemented features must not silently succeed. For BY / FREQ / ID / VAR / WEIGHT / Missing Values / Input Data Sets, construct valid, missing, empty, and multiple-group inputs; verify included observation counts, variable roles, BY boundaries, level ordering, and the frequency/weight rules relevant to this ticket; assert documented invalid-input behavior.
 
 <a id="stat-reg-002"></a>
 
-### [DOING @dev1] STAT-REG-002 — REG — Linear regression coefficients, variance, and basic fit statistics
+### [DONE] STAT-REG-002 — REG — Linear regression coefficients, variance, and basic fit statistics
 
 - Source: S154 / Chapter 105 / `Getting Started: REG Procedure` (PDF pp. 8542–8558); S154 / Chapter 105 / `Overview: REG Procedure` (PDF pp. 8540–8542).
 - Scope: Implement linear regression coefficients, variance, and basic fit statistics using the documented default path and establish the computational state needed by later extensions; implement specialized models, methods, and diagnostics outside that default example in their corresponding feature tickets.
@@ -11501,16 +11502,18 @@ Source: S154, Chapter 105, `The REG Procedure`, PDF pp. 8539–8728. Tasks in th
 - Dispatch contract: Implement numerical fitting in a separate `src/stat/reg_fit.zig` module using existing probability functions, concurrently with REG-001 parsing/rendering. Validate numeric results independently, then require integrated oracle verification before DONE; dependent shared oracle requirements do not prevent implementing their needed foundation.
 - Progress (2026-11-25): QR fitting foundation landed/pushed in `f65c428a`, with seven dedicated numeric tests passing through a separate harness and existing integrated gate green. Full case acceptance awaits dev1 REG integration; no DONE claim for the numeric module alone.
 - Current assignment (2026-11-25): Integrated default case runs with expected status/warnings and only the same two residual-sum tail differences as REG-001. Derive any tolerance from independent intercept-model identities and floating-point error/conditioning, preserving complete comparisons for all other tokens; do not hardcode SAS rounding artifacts.
+- DONE (2026-11-25): Landed/pushed `3cea8de9`. Unchanged default oracle passes status/warnings 1/1 and all 1116 non-exempt tokens exactly; only the two residual sums use independently derived, data-scaled zero-invariant bounds (7.261130843592319e-11 and 1.7845359484002278e-9). Strict whitespace equality is false; no undisclosed general tolerance. Gate: 1665 tests, 2305 corpus, 11 programs passed. Durable derivation, corruption rejection controls, complete receipts and replay script live in `tests/STAT15.4-oracle/STAT-REG-002/`.
 - Acceptance criteria: Turn the smallest default analysis in Getting Started into a runnable case and verify its principal estimates, observation counts, and result status; add a smaller case with an independent manual calculation; meet the precision conventions.
 
 <a id="stat-reg-003"></a>
 
-### [TODO] STAT-REG-003 — REG — MODEL
+### [DOING @dev1] STAT-REG-003 — REG — MODEL
 
 - Source: S154 / Chapter 105 / `MODEL Statement` (PDF pp. 8576–8588).
 - Scope: Implement MODEL. Implement the syntax and model semantics allowed by this procedure, using shared effect/parameterization support only for forms documented as supported.
 - Dependencies: [STAT-REG-001](#stat-reg-001), [STAT-COMMON-007](#stat-common-007).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-REG-003/](tests/STAT15.4-oracle/STAT-REG-003/).
+- Dispatch contract: Reuse REG's implemented numeric linear-model design while COMMON-007's broader CLASS/effect design is pending. Verify this MODEL ticket's own original oracle; do not infer support for unsupported categorical/effect syntax.
 - Acceptance criteria: For MODEL, verify the parsed response/effect/parameter representation against the documented design matrix or model structure; cover applicable reference levels, interactions, missing levels, and invalid models; successful parsing alone is insufficient.
 
 <a id="stat-reg-004"></a>
