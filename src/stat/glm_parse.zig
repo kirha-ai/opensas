@@ -174,6 +174,30 @@ pub fn parse(cx: proc.ProcCtx, tokens: []const lex.Token) diag.Error!Spec {
                     j += 1;
                     if (j >= end) return cx.diags.fail(error.ParseError, tokens[start].line, "PROC GLM: incomplete interaction", .{});
                 }
+                if (at(tokens, j, .pipe)) {
+                    // The supported bar operands are individual variables. Keep
+                    // crossed/nested bar operands loud until their grammar lands.
+                    if (variables.items.len != 1) return proc.failGap(cx.diags, tokens[start].line, "PROC GLM: compound bar operands are not implemented", .{});
+                    while (at(tokens, j, .pipe)) {
+                        j += 1;
+                        if (j >= end or !at(tokens, j, .name)) return cx.diags.fail(error.ParseError, tokens[start].line, "PROC GLM: bar requires a variable on both sides", .{});
+                        const ci = ds.indexOf(tokens[j].text) orelse return cx.diags.fail(error.ParseError, tokens[j].line, "PROC GLM: variable {s} not found", .{tokens[j].text});
+                        if (ds.columns.items[ci].type == .char and std.mem.indexOfScalar(usize, result.classes, ci) == null) return cx.diags.fail(error.ParseError, tokens[j].line, "PROC GLM: character predictor {s} must be in CLASS", .{tokens[j].text});
+                        if (std.mem.indexOfScalar(usize, variables.items, ci) == null) try variables.append(cx.arena, ci);
+                        j += 1;
+                        if (at(tokens, j, .star) or at(tokens, j, .lparen)) return proc.failGap(cx.diags, tokens[start].line, "PROC GLM: compound bar operands are not implemented", .{});
+                    }
+                    var degree = variables.items.len;
+                    if (at(tokens, j, .at)) {
+                        j += 1;
+                        if (j >= end or !at(tokens, j, .number)) return cx.diags.fail(error.ParseError, tokens[start].line, "PROC GLM: bar degree requires a positive integer", .{});
+                        degree = std.fmt.parseInt(usize, tokens[j].text, 10) catch return cx.diags.fail(error.ParseError, tokens[j].line, "PROC GLM: invalid bar degree", .{});
+                        if (degree == 0) return cx.diags.fail(error.ParseError, tokens[j].line, "PROC GLM: bar degree must be positive", .{});
+                        j += 1;
+                    }
+                    try expandBar(cx, ds, variables.items, degree, result.namelen, tokens[start].line, &effects);
+                    continue;
+                }
                 for (effects.items) |e| if (std.mem.eql(usize, e.variables, variables.items)) return proc.failGap(cx.diags, tokens[start].line, "PROC GLM: duplicate effects are not implemented", .{});
                 try effects.append(cx.arena, .{ .name = label.items[0..@min(label.items.len, result.namelen)], .variables = variables.items });
             }
@@ -221,6 +245,38 @@ pub fn parse(cx: proc.ProcCtx, tokens: []const lex.Token) diag.Error!Spec {
     result.descending = parsed.desc;
     result.notsorted = parsed.notsorted;
     return result;
+}
+
+/// S154 physical p.4109: left-to-right subsets A,B,A*B,C,A*C,B*C,A*B*C.
+/// Uses the same bounded subset enumeration as GLMMOD's effect expansion.
+/// This operates on parsed variable IDs, never on program source text.
+fn expandBar(cx: proc.ProcCtx, ds: *const Dataset, variables: []const usize, degree: usize, namelen: usize, line: usize, effects: *std.ArrayList(Effect)) diag.Error!void {
+    // ponytail: match GLMMOD's sixteen-variable cap on exponential expansion.
+    if (variables.len > 16) return proc.failGap(cx.diags, line, "PROC GLM: bar expansion beyond sixteen variables is not implemented", .{});
+    const limit = @as(usize, 1) << @as(std.math.Log2Int(usize), @intCast(variables.len));
+    for (1..limit) |mask| {
+        if (@popCount(mask) > degree) continue;
+        var factors: std.ArrayList(usize) = .empty;
+        var name: std.ArrayList(u8) = .empty;
+        for (variables, 0..) |ci, k| if (mask & (@as(usize, 1) << @as(std.math.Log2Int(usize), @intCast(k))) != 0) {
+            if (factors.items.len > 0) try name.append(cx.arena, '*');
+            try factors.append(cx.arena, ci);
+            try name.appendSlice(cx.arena, ds.columns.items[ci].name);
+        };
+        var duplicate = false;
+        for (effects.items) |effect| {
+            if (effect.variables.len != factors.items.len) continue;
+            var same = true;
+            for (factors.items) |ci| if (std.mem.indexOfScalar(usize, effect.variables, ci) == null) {
+                same = false;
+            };
+            if (same) {
+                duplicate = true;
+                break;
+            }
+        }
+        if (!duplicate) try effects.append(cx.arena, .{ .name = name.items[0..@min(name.items.len, namelen)], .variables = factors.items });
+    }
 }
 
 test {

@@ -148,7 +148,7 @@ test "GLM003 unsupported reference nesting and empty-cell Type IV remain capture
     for ([_][]const u8{
         "proc glm; class A(ref=first) B; model y=A B; run;",
         "proc glm; class A B; model y=A B(A); run;",
-        "proc glm; class A B; model y=A|B; run;",
+        "proc glm; class A B; model y=A|B(A); run;",
     }) |source| {
         diag.resetGap();
         try std.testing.expectError(error.ParseError, parse(cx, source));

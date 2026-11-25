@@ -221,7 +221,7 @@ test "COMMON009 original empty-cell coefficients and nonestimable marginal field
     _ = try sample(a, &lib);
     var diagnostics = diag.Diagnostics.init(a);
     const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &diagnostics };
-    const r = try analyzed(cx, "proc glm; class group h; model y=group h group*h / ss1; lsmeans group*h / e; lsmeans group h / e stderr singular=1e-6; run;");
+    const r = try analyzed(cx, "proc glm; class group h; model y=group|h; lsmeans group*h / e; lsmeans group h / e stderr singular=1e-6; run;");
     try testing.expectEqual(@as(usize, 3), r.spec.lsmeans.len);
     const table = try compute(cx, r.spec, r.d, r.spec.lsmeans[0], 74.0 / 6.0, 6);
     try testing.expectEqual(@as(usize, 3), table.means.len);
@@ -361,4 +361,45 @@ test "COMMON009 adjusted covariate means differ from raw group means" {
         try testing.expectEqual(@as(f64, 2), mean.coefficients[3]);
     }
     try testing.expectApproxEqAbs(@as(f64, 4), fit.model.fit.mse, 1e-12);
+}
+
+test "COMMON009 MODEL bar is token-level ordered subset expansion" {
+    var arena = std.heap.ArenaAllocator.init(testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var lib = Library.init(a);
+    _ = try sample(a, &lib);
+    var diagnostics = diag.Diagnostics.init(a);
+    const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &diagnostics };
+    const left = try analyzed(cx, "proc glm; class group h; model y=group|h; lsmeans group*h / e; run;");
+    const right = try analyzed(cx, "proc glm; class group h; model y=group h group*h; lsmeans group*h / e; run;");
+    try testing.expectEqualSlices(f64, right.d.x, left.d.x);
+    for (left.spec.effects, right.spec.effects) |l, r| {
+        try testing.expectEqualStrings(r.name, l.name);
+        try testing.expectEqualSlices(usize, r.variables, l.variables);
+    }
+    var lo: std.ArrayList(u8) = .empty;
+    var ro: std.ArrayList(u8) = .empty;
+    try @import("glm.zig").execute(cx, &lo, left.spec);
+    try @import("glm.zig").execute(cx, &ro, right.spec);
+    try testing.expectEqualStrings(ro.items, lo.items);
+    // Three generic variable operands exercise left-to-right order and @degree
+    // without depending on a particular pair of CLASS names or source spacing.
+    const expanded = try parse.parse(cx, try lex.tokenize(a, "proc glm; class group h; model y = group | h | y @2; run;", &diagnostics));
+    for (expanded.effects, [_][]const u8{ "group", "h", "group*h", "y", "group*y", "h*y" }) |effect, name| try testing.expectEqualStrings(name, effect.name);
+    const repeated = try parse.parse(cx, try lex.tokenize(a, "proc glm; class group h; model y=group|h|group; run;", &diagnostics));
+    try testing.expectEqual(@as(usize, 3), repeated.effects.len);
+    const main_only = try parse.parse(cx, try lex.tokenize(a, "proc glm; class group h; model y=group|h@1; run;", &diagnostics));
+    try testing.expectEqual(@as(usize, 2), main_only.effects.len);
+    for ([_][]const u8{
+        "proc glm; class group h; model y=group|; run;",
+        "proc glm; class group h; model y=group||h; run;",
+        "proc glm; class group h; model y=group|h@0; run;",
+        "proc glm; class group h; model y=group|h@1.5; run;",
+        "proc glm; class group h; model y=group|missing_variable; run;",
+        "proc glm; class group h; model y=group*h|h; run;",
+    }) |source| {
+        try testing.expectError(error.ParseError, parse.parse(cx, try lex.tokenize(a, source, &diagnostics)));
+        try testing.expect(diagnostics.list.items[diagnostics.list.items.len - 1].line > 0);
+    }
 }
