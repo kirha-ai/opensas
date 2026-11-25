@@ -3602,14 +3602,68 @@ fn printPanelCount(widths: []const usize, limit: usize, leading: usize) usize {
 
 const Column = sas.dataset.Column;
 
-/// A header's width contribution: its full text, or the widest piece under SPLIT=.
+// SAS automatically breaks mixed-case variable names at capitals when a
+// formatted column is narrower than its name (SUGI24 p312-24, mixed-case
+// names; STAT-TTEST-004 supplies a current SAS 9.4 oracle). Labels and explicit
+// SPLIT= retain their own rules. Never split a numeric cell or an unbroken word.
+fn capitalHeaderBreak(text: []const u8, i: usize) bool {
+    return i > 0 and i < text.len and std.ascii.isLower(text[i - 1]) and std.ascii.isUpper(text[i]);
+}
+fn capitalHeaderWordWidth(text: []const u8) usize {
+    var start: usize = 0;
+    var width: usize = 0;
+    for (1..text.len + 1) |i| if (i == text.len or capitalHeaderBreak(text, i)) {
+        width = @max(width, i - start);
+        start = i;
+    };
+    return width;
+}
+fn capitalHeaderRows(text: []const u8, width: usize) usize {
+    var rows: usize = 1;
+    var start: usize = 0;
+    var used: usize = 0;
+    for (1..text.len + 1) |i| if (i == text.len or capitalHeaderBreak(text, i)) {
+        const word = i - start;
+        if (used > 0 and used + word > width) { rows += 1; used = word; } else used += word;
+        start = i;
+    };
+    return rows;
+}
+fn appendCapitalHeader(a: std.mem.Allocator, pieces: *std.ArrayList([]const u8), text: []const u8, width: usize) !void {
+    if (text.len <= width or text.len == 0) { try pieces.append(a, text); return; }
+    // Balance the minimum number of header lines without inserting/deleting
+    // name characters. This keeps a short prefix above a compound suffix.
+    const wanted = capitalHeaderRows(text, width);
+    var lo = capitalHeaderWordWidth(text);
+    var hi = @max(width, lo);
+    while (lo < hi) {
+        const mid = lo + (hi - lo) / 2;
+        if (capitalHeaderRows(text, mid) <= wanted) hi = mid else lo = mid + 1;
+    }
+    var start: usize = 0;
+    var previous: usize = 0;
+    for (1..text.len + 1) |i| if (i == text.len or capitalHeaderBreak(text, i)) {
+        if (i - start > lo and previous > start) { try pieces.append(a, text[start..previous]); start = previous; }
+        previous = i;
+    };
+    try pieces.append(a, text[start..]);
+}
+
+/// Header contribution excludes only automatic capital breaks that fit the
+/// actual format width. Cell and total widths may still widen the column.
 fn headerWidth(c: Column, opts: PrintOpts) usize {
     const h = opts.header(c);
-    const sc = opts.split orelse return h.len;
-    var w: usize = 0;
-    var it = std.mem.splitScalar(u8, h, sc);
-    while (it.next()) |p| w = @max(w, p.len);
-    return w;
+    if (opts.split) |sc| {
+        var w: usize = 0;
+        var it = std.mem.splitScalar(u8, h, sc);
+        while (it.next()) |part| w = @max(w, part.len);
+        return w;
+    }
+    if (!opts.label) if (opts.fmtFor(c)) |fmt| {
+        const width = sas.format.parseSpec(fmt).w;
+        if (width > 0 and h.len > width) return @max(width, capitalHeaderWordWidth(h));
+    };
+    return h.len;
 }
 
 /// The column-name header block, then a blank line under it. Under SPLIT= the
@@ -3624,6 +3678,8 @@ fn printHeader(a: std.mem.Allocator, out: *std.ArrayList(u8), cols: []const Colu
         if (opts.split) |sc| {
             var it = std.mem.splitScalar(u8, opts.header(cols[cj]), sc);
             while (it.next()) |p| try list.append(a, p);
+        } else if (!opts.label) {
+            try appendCapitalHeader(a, &list, opts.header(cols[cj]), colw[k]);
         } else try list.append(a, opts.header(cols[cj]));
         pieces[k] = list.items;
         rows = @max(rows, list.items.len);
@@ -7432,4 +7488,39 @@ test "STAT-COMMON-004 PRINT panels preserve every column row and observation num
     try std.testing.expectEqualSlices(usize, &.{ 6, 9 }, panels);
     try std.testing.expectEqualSlices(usize, &.{4}, try printPanelEnds(a, &.{ 20, 20, 20, 20 }, 120, 0));
     try std.testing.expectEqualSlices(usize, &.{ 1, 2 }, try printPanelEnds(a, &.{ 80, 20 }, 40, 0));
+}
+
+
+test "STAT-TTEST-004 PRINT capital headers preserve cells LABEL and explicit SPLIT" {
+    const old_linesize = sas.io.global_linesize;
+    defer sas.io.global_linesize = old_linesize;
+    sas.io.global_linesize = 160;
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var ds = sas.dataset.Dataset.init(a, "dates");
+    _ = try ds.addColumn("DepartDate", .num);
+    _ = try ds.addColumn("ReturnDate", .num);
+    ds.setFormat("DepartDate", "mmddyy8.");
+    ds.setFormat("ReturnDate", "mmddyy8.");
+    try ds.appendRow(&.{ .{ .num = 0 }, .{ .num = 1 } });
+    var d = sas.diag.Diagnostics.init(a);
+    var out: std.ArrayList(u8) = .empty;
+    try printTable(a, &out, &ds, null, .{ .noobs = true }, &d, null);
+    var words = std.mem.tokenizeAny(u8, out.items, " \n\r\t");
+    for ([_][]const u8{ "Depart", "Return", "Date", "Date", "01/01/60", "01/02/60" }) |word| try std.testing.expectEqualStrings(word, words.next().?);
+    try std.testing.expect(words.next() == null);
+    ds.setLabel("DepartDate", "DepartureDateLabel");
+    out.clearRetainingCapacity();
+    try printTable(a, &out, &ds, null, .{ .noobs = true, .label = true }, &d, null);
+    try std.testing.expect(std.mem.indexOf(u8, out.items, "DepartureDateLabel") != null);
+    try std.testing.expect(std.mem.indexOf(u8, out.items, "ReturnDate") != null);
+    ds.setLabel("DepartDate", "Trip*Date");
+    out.clearRetainingCapacity();
+    try printTable(a, &out, &ds, null, .{ .noobs = true, .label = true, .split = '*' }, &d, null);
+    words = std.mem.tokenizeAny(u8, out.items, " \n\r\t");
+    for ([_][]const u8{ "Trip", "Date", "ReturnDate", "01/01/60", "01/02/60" }) |word| try std.testing.expectEqualStrings(word, words.next().?);
+    try std.testing.expect(words.next() == null);
+    try std.testing.expectEqual(@as(usize, 12), headerWidth(.{ .name = "LONGHEADINGX", .type = .num, .format = "8.2" }, .{}));
+    try std.testing.expectEqualStrings("", try d.render());
 }
