@@ -3597,17 +3597,18 @@ Source: S154, Chapter 47, `The FREQ Procedure`, PDF pp. 3069–3290. Tasks in th
 
 <a id="stat-freq-004"></a>
 
-### [DOING @dev3] STAT-FREQ-004 — FREQ — EXACT / Exact Statistics
+### [DONE] STAT-FREQ-004 — FREQ — EXACT / Exact Statistics
 
 - Source: S154 / Chapter 47 / `EXACT Statement` (PDF pp. 3085–3094); S154 / Chapter 47 / `Exact Statistics` (PDF pp. 3234–3238).
 - Scope: Implement EXACT; Exact Statistics. This ticket owns the feature's options, defaults, computation, and results as an extension of the basic computational path; the chapter's output tickets handle ODS descriptors and file presentation.
 - Dependencies: [STAT-FREQ-001](#stat-freq-001), [STAT-FREQ-002](#stat-freq-002).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-FREQ-004/](tests/STAT15.4-oracle/STAT-FREQ-004/).
+- DONE (2026-11-25): Landed/pushed `c0195f8f`; original oracle matches all 263 tokens with whitespace-only normalization, status 0, expected displayed sparse-cell warning preserved, stderr empty. Independent enumeration and conditional-odds inversion validate exact values. Gate: 1663 tests, 2305 corpus, 11 programs passed; local golden corrections isolated in `6e5f56f0`. Evidence/replay: `tests/STAT15.4-oracle/STAT-FREQ-004/dev3-attempt.md` and `verify.py`.
 - Acceptance criteria: For EXACT / Exact Statistics, independently enumerate probability masses and the relevant tails/intervals for small samples; cover ties, zero counts, degenerate boundaries, and exact-method applicability restrictions.
 
 <a id="stat-freq-005"></a>
 
-### [TODO] STAT-FREQ-005 — FREQ — Chi-Square Tests and Statistics
+### [DOING @dev3] STAT-FREQ-005 — FREQ — Chi-Square Tests and Statistics
 
 - Source: S154 / Chapter 47 / `Chi-Square Tests and Statistics` (PDF pp. 3165–3170).
 - Scope: Implement Chi-Square Tests and Statistics. This ticket owns the feature's options, defaults, computation, and results as an extension of the basic computational path; the chapter's output tickets handle ODS descriptors and file presentation.
