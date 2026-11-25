@@ -3553,12 +3553,13 @@ Source: S154, Chapter 47, `The FREQ Procedure`, PDF pp. 3069–3290. Tasks in th
 
 <a id="stat-freq-001"></a>
 
-### [TODO] STAT-FREQ-001 — FREQ — Data input, variable roles, and basic options
+### [DOING @dev3] STAT-FREQ-001 — FREQ — Data input, variable roles, and basic options
 
 - Source: S154 / Chapter 47 / `PROC FREQ Statement` (PDF pp. 3082–3084); S154 / Chapter 47 / `BY Statement` (PDF pp. 3084–3085); S154 / Chapter 47 / `WEIGHT Statement` (PDF pp. 3157–3158); S154 / Chapter 47 / `Inputting Frequency Counts` (PDF pp. 3158–3159); S154 / Chapter 47 / `Grouping with Formats` (PDF pp. 3159–3160); S154 / Chapter 47 / `Missing Values` (PDF pp. 3160–3162).
 - Scope: Integrate PROC FREQ declarations, basic options, defaults, and execution boundaries; this ticket establishes parameter objects and result interfaces, while later feature tickets implement model-, algorithm-, and output-specific options. Also implement BY; WEIGHT; Inputting Frequency Counts; Grouping with Formats; Missing Values; apply this procedure's rules for missing values, variable roles, and observation selection.
 - Dependencies: [STAT-COMMON-001](#stat-common-001), [STAT-COMMON-002](#stat-common-002).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-FREQ-001/](tests/STAT15.4-oracle/STAT-FREQ-001/).
+- Dispatch contract: Reuse existing FREQ dispatch, BY groups, and weight filtering while shared tickets remain open; this attempt owns FREQ-specific behavior only, not shared MEANS or REG changes.
 - Acceptance criteria: Create positive and negative parsing cases for the documented declarations and basic options; verify defaults, explicit settings, documented duplicate/conflicting declarations, and locations; valid but unimplemented features must not silently succeed. For BY / WEIGHT / Inputting Frequency Counts / Grouping with Formats / Missing Values, construct valid, missing, empty, and multiple-group inputs; verify included observation counts, variable roles, BY boundaries, level ordering, and the frequency/weight rules relevant to this ticket; assert documented invalid-input behavior.
 
 <a id="stat-freq-002"></a>
