@@ -65,7 +65,6 @@ pub fn execute(cx: proc.ProcCtx, out: *std.ArrayList(u8), spec: Spec) diag.Error
         for (spec.models) |model| {
             const input = try select(cx, spec, model, group.rows);
             if (input.y.len == 0) return cx.diags.fail(error.ExecError, 0, "PROC REG: no usable observations", .{});
-            if (model.singular != 1e-9) return proc.failGap(cx.diags, 0, "PROC REG: custom SINGULAR= is not implemented", .{});
             // The solver accepts precision weights. Multiplying by frequency
             // gives the same crossproducts, then DF and covariance are adjusted
             // using the independently accumulated replication count.
@@ -76,11 +75,12 @@ pub fn execute(cx: proc.ProcCtx, out: *std.ArrayList(u8), spec: Spec) diag.Error
                 count += freq;
             }
             if (count >= @as(f64, @floatFromInt(std.math.maxInt(usize)))) return cx.diags.fail(error.ExecError, 0, "PROC REG: frequency total exceeds representable observation count", .{});
-            var fit = @import("reg_fit.zig").fit(cx.arena, input.x, input.y, input.y.len, input.columns, w) catch |err| {
+            const diagnostics = @import("reg_diagnostics.zig").fit(cx.arena, input.x, input.y, input.y.len, input.columns, w, model.intercept, model.singular) catch |err| {
                 if (err == error.OutOfMemory) return err;
                 return cx.diags.fail(error.ExecError, 0, "PROC REG: numerical fit failed", .{});
             };
 
+            var fit = diagnostics.fit;
             rescaleFrequencyInference(&fit, @intFromFloat(count));
             const stats = fit.modelStats(model.intercept);
             const ts = try cx.arena.alloc(f64, input.columns);
@@ -123,15 +123,11 @@ pub fn execute(cx: proc.ProcCtx, out: *std.ArrayList(u8), spec: Spec) diag.Error
                 var terms: usize = 0;
                 for (fit.aliased, 0..) |other_alias, k| {
                     if (other_alias) continue;
-                    var coefficient: f64 = 0;
-                    for (0..input.columns) |l| {
-                        var cross: f64 = 0;
-                        for (w, 0..) |weight, row| cross += weight * input.x[row * input.columns + l] * input.x[row * input.columns + j];
-                        coefficient += fit.covariance_unscaled[k * input.columns + l] * cross;
-                    }
-                    if (@abs(coefficient) < 1e-10) continue;
-                    if (terms > 0) try dependencies.appendSlice(cx.arena, " + ");
-                    try dependencies.print(cx.arena, "{s} * {s}", .{ std.mem.trim(u8, try @import("../format.zig").apply(cx.arena, .{ .num = coefficient }, "best12."), " "), parameterName(spec, model, k) });
+                    const coefficient = diagnostics.alias_coefficients[j * input.columns + k];
+                    if (coefficient == 0) continue;
+                    if (terms > 0) try dependencies.appendSlice(cx.arena, if (coefficient < 0) " - " else " + ");
+                    const displayed = if (terms > 0) @abs(coefficient) else coefficient;
+                    try dependencies.print(cx.arena, "{s} * {s}", .{ std.mem.trim(u8, try @import("../format.zig").apply(cx.arena, .{ .num = displayed }, "best12."), " "), parameterName(spec, model, k) });
                     terms += 1;
                 }
                 if (terms == 0) try dependencies.appendSlice(cx.arena, "0");
