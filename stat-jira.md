@@ -14639,17 +14639,18 @@ Source: S154, Chapter 128, `The TTEST Procedure`, PDF pp. 10595–10692. Tasks i
 
 <a id="stat-ttest-005"></a>
 
-### [DOING @dev5] STAT-TTEST-005 — TTEST — One-Sample Design
+### [DONE] STAT-TTEST-005 — TTEST — One-Sample Design
 
 - Source: S154 / Chapter 128 / `One-Sample Design` (PDF pp. 10620–10623).
 - Scope: Implement One-Sample Design. This ticket owns the feature's options, defaults, computation, and results as an extension of the basic computational path; the chapter's output tickets handle ODS descriptors and file presentation.
 - Dependencies: [STAT-TTEST-001](#stat-ttest-001), [STAT-TTEST-002](#stat-ttest-002), [STAT-COMMON-005](#stat-common-005).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-TTEST-005/](tests/STAT15.4-oracle/STAT-TTEST-005/).
+- DONE (2026-11-25): Landed/pushed `85cc2f57`. One-sided court output matches all tokens, status 0. Invalid ALPHA produces the expected empty listing and user-error semantics: reference severity 2 corresponds to OpenSAS CLI 1 under D-009, not unsupported-feature CLI 2; wording/raw codes differ and are explicitly recorded. Existing boundary regressions pass. Exact-SHA successful retry gate: 1661 tests, 2305 corpus, 11 programs; failed disk-full attempt excluded. Evidence: `tests/STAT15.4-oracle/STAT-TTEST-005/dev5-verification.json`.
 - Acceptance criteria: For One-Sample Design, verify sample size, mean difference, standard error, t statistic, degrees of freedom, one-/two-sided probabilities, and intervals; include zero variance and insufficient samples; validate numerical values against the source formulas or an independent reference, following this file's precision conventions.
 
 <a id="stat-ttest-006"></a>
 
-### [TODO] STAT-TTEST-006 — TTEST — PAIRED / Paired Design
+### [DOING @dev5] STAT-TTEST-006 — TTEST — PAIRED / Paired Design
 
 - Source: S154 / Chapter 128 / `PAIRED Statement` (PDF p. 10617); S154 / Chapter 128 / `Paired Design` (PDF pp. 10623–10624).
 - Scope: Implement PAIRED; Paired Design. This ticket owns the feature's options, defaults, computation, and results as an extension of the basic computational path; the chapter's output tickets handle ODS descriptors and file presentation.
