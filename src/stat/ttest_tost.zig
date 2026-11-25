@@ -208,6 +208,29 @@ pub fn renderTests(a: A, out: *std.ArrayList(u8), rows: []const Row, class_name:
     try out.appendSlice(a, "\n");
 }
 
+/// Ordinary lognormal tables without the ordinary t test, for a TOST hook.
+/// These keep existing table identities without editing ttest_lognormal's API.
+pub fn renderLognormalStatistics(a: A, out: *std.ArrayList(u8), r: @import("ttest_lognormal.zig").Result) diag.Error!void {
+    try out.appendSlice(a, "Geometric Coefficient\nN Mean of Variation Minimum Maximum\n");
+    try out.print(a, "{s} {s} {s} {s} {s}\n\n", .{
+        try num(a, @floatFromInt(r.log_fit.n), "best12."), try num(a, r.geometric_mean, "d8.3"),
+        try num(a, r.cv, "d8.3"),                          try num(a, r.minimum, "d8.3"),
+        try num(a, r.maximum, "d8.3"),
+    });
+}
+
+pub fn renderLognormalIntervals(a: A, out: *std.ArrayList(u8), r: @import("ttest_lognormal.zig").Result, alpha: f64, show_cv_ci: bool) diag.Error!void {
+    const level = try num(a, 100 * (1 - alpha), "best8.");
+    try out.print(a, "Geometric Coefficient\nMean {s}% CL Mean of Variation", .{level});
+    if (show_cv_ci) try out.print(a, " {s}% CL CV", .{level});
+    try out.print(a, "\n{s} {s} {s} {s}", .{
+        try num(a, r.geometric_mean, "d8.3"), try num(a, r.mean_ci.lower, "d8.3"),
+        try num(a, r.mean_ci.upper, "d8.3"),  try num(a, r.cv, "d8.3"),
+    });
+    if (show_cv_ci) try out.print(a, " {s} {s}", .{ try num(a, r.cv_ci.lower, "d8.3"), try num(a, r.cv_ci.upper, "d8.3") });
+    try out.appendSlice(a, "\n\n");
+}
+
 test "TOST009 full unchanged difference oracle tables" {
     const two = @import("ttest_two_sample.zig");
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
