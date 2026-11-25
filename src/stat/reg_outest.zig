@@ -16,6 +16,8 @@ pub const Builder = struct {
     name_col: ?usize,
     dependent_col: usize,
     rmse_col: usize,
+    ridge_col: ?usize,
+    pcomit_col: ?usize,
     intercept_col: ?usize,
     /// Indexed by the input descriptor; absent variables are not output columns.
     source_to_output: []?usize,
@@ -29,6 +31,9 @@ pub const Builder = struct {
         const type_col = try add(ds, "_TYPE_", .char, 8, d);
         const name_col = if (spec.covout) try add(ds, "_NAME_", .char, 32, d) else null;
         const dependent_col = try add(ds, "_DEPVAR_", .char, 32, d);
+        const ridge_col = if (spec.ridge.len > 0) try add(ds, "_RIDGE_", .num, 8, d) else null;
+        const pcomit_col = if (spec.ridge.len > 0) try add(ds, "_PCOMIT_", .num, 8, d) else null;
+        if (ridge_col) |ci| ds.columns.items[ci].format = "6.3";
         const rmse_col = try add(ds, "_RMSE_", .num, 8, d);
         var intercept_col: ?usize = null;
         for (spec.models) |model| if (model.intercept) {
@@ -41,7 +46,7 @@ pub const Builder = struct {
             const column = spec.ds.columns.items[ci];
             mapping[ci] = try add(ds, column.name, .num, 8, d);
         }
-        return .{ .ds = ds, .spec = spec, .model_col = model_col, .type_col = type_col, .name_col = name_col, .dependent_col = dependent_col, .rmse_col = rmse_col, .intercept_col = intercept_col, .source_to_output = mapping };
+        return .{ .ds = ds, .spec = spec, .model_col = model_col, .type_col = type_col, .name_col = name_col, .dependent_col = dependent_col, .rmse_col = rmse_col, .ridge_col = ridge_col, .pcomit_col = pcomit_col, .intercept_col = intercept_col, .source_to_output = mapping };
     }
 
     fn baseRow(self: Builder, a: A, model: parse.Model, by_row: ?[]const Value, fit: Fit) ![]Value {
@@ -58,6 +63,47 @@ pub const Builder = struct {
     fn parameterColumn(self: Builder, model: parse.Model, j: usize) usize {
         if (model.intercept and j == 0) return self.intercept_col.?;
         return self.source_to_output[model.regressors[j - @as(usize, if (model.intercept) 1 else 0)]].?;
+    }
+
+    /// Ridge OUTEST mixes coefficient and VIF scales in the same columns.
+    /// Use one six-significant-digit display precision per column; cells keep
+    /// their original binary values. The RIDGE parameter has its own 6.3 format.
+    pub fn ridgeFormats(self: Builder, a: A) !void {
+        if (self.spec.ridge.len == 0) return;
+        for (self.ds.columns.items, 0..) |*column, j| {
+            if (column.type != .num or column.format != null) continue;
+            var maximum: f64 = 0;
+            var integral = true;
+            for (self.ds.rows.items) |row| {
+                const value = row[j].num;
+                if (!std.math.isFinite(value)) continue;
+                maximum = @max(maximum, @abs(value));
+                if (value != @trunc(value)) integral = false;
+            }
+            const digits: i32 = if (maximum > 0) @as(i32, @intFromFloat(@floor(@log10(maximum)))) + 1 else 1;
+            const decimals: usize = if (integral) 0 else @intCast(@max(0, 6 - digits));
+            const width = @max(@as(usize, 8), @as(usize, @intCast(@max(1, digits))) + decimals + 2);
+            column.format = try std.fmt.allocPrint(a, "{d}.{d}", .{ width, decimals });
+        }
+    }
+
+    pub fn appendRidge(self: Builder, a: A, model: parse.Model, by_row: ?[]const Value, fit: Fit, point: @import("reg_ridge.zig").Point) diag.Error!void {
+        if (self.spec.outvif) {
+            const row = try self.baseRow(a, model, by_row, fit);
+            row[self.type_col] = .{ .str = "RIDGEVIF" };
+            row[self.ridge_col.?] = .{ .num = point.k };
+            row[self.rmse_col] = Value.missing;
+            for (point.vif, 0..) |v, j| row[self.parameterColumn(model, j + 1)] = .{ .num = v };
+            row[self.source_to_output[model.dependent].?] = .{ .num = -1 };
+            try self.ds.appendRow(row);
+        }
+        const row = try self.baseRow(a, model, by_row, fit);
+        row[self.type_col] = .{ .str = "RIDGE" };
+        row[self.ridge_col.?] = .{ .num = point.k };
+        row[self.rmse_col] = .{ .num = point.rmse };
+        for (point.coefficients, 0..) |v, j| row[self.parameterColumn(model, j)] = .{ .num = v };
+        row[self.source_to_output[model.dependent].?] = .{ .num = -1 };
+        try self.ds.appendRow(row);
     }
 
     pub fn append(self: Builder, a: A, model: parse.Model, by_row: ?[]const Value, fit: Fit) diag.Error!void {

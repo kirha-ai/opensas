@@ -48,7 +48,11 @@ fn probability(a: A, p: f64) ![]const u8 {
     return number(a, p, 4);
 }
 pub fn render(a: A, out: *std.ArrayList(u8), spec: parse.Spec, model: parse.Model, read: usize, used: usize, r: Result) !void {
-    try out.print(a, "\nThe REG Procedure\nModel: {s}\nDependent Variable: {s}\n\nNumber of Observations Read {d}\nNumber of Observations Used {d}\n", .{ model.label, spec.ds.columns.items[model.dependent].name, read, used });
+    try out.print(a, "\nThe REG Procedure\nModel: {s}\nDependent Variable: {s}", .{ model.label, spec.ds.columns.items[model.dependent].name });
+    if (spec.ds.columns.items[model.dependent].label) |label| if (label.len > 0) {
+        try out.print(a, " {s}", .{label});
+    };
+    try out.print(a, "\n\nNumber of Observations Read {d}\nNumber of Observations Used {d}\n", .{ read, used });
     if (spec.freq != null) try out.print(a, "Sum of Frequencies Used {d}\n", .{r.n});
     if (spec.weight) |ci| try out.print(a, "\nWeight: {s}\n", .{spec.ds.columns.items[ci].name});
     try out.appendSlice(a, "\nAnalysis of Variance\n\nSum of Mean\nSource DF Squares Square F Value Pr > F\n\n");
@@ -57,13 +61,21 @@ pub fn render(a: A, out: *std.ArrayList(u8), spec: parse.Spec, model: parse.Mode
     if (r.dependencies.len > 0) try out.print(a, "\nNOTE: Model is not full rank. Least-squares solutions for the parameters are not unique. Some statistics will be misleading. A reported DF of 0 or B means that\n      the estimate is biased.\nNOTE: The following parameters have been set to 0, since the variables are a linear combination of other variables as shown.\n\n{s}\n", .{r.dependencies});
     try out.appendSlice(a, "\nParameter Estimates\n\nParameter Standard");
     if (model.vif) try out.appendSlice(a, " Variance");
-    try out.appendSlice(a, "\nVariable DF Estimate Error t Value Pr > |t|");
+    const labels = for (model.regressors) |ci| {
+        if (spec.ds.columns.items[ci].label != null) break true;
+    } else false;
+    try out.appendSlice(a, if (labels) "\nVariable Label DF Estimate Error t Value Pr > |t|" else "\nVariable DF Estimate Error t Value Pr > |t|");
     if (model.tol) try out.appendSlice(a, " Tolerance");
     if (model.vif) try out.appendSlice(a, " Inflation");
     try out.appendSlice(a, "\n\n");
     for (r.estimates, 0..) |estimate, i| {
         const name = if (model.intercept and i == 0) "Intercept" else spec.ds.columns.items[model.regressors[i - @as(usize, if (model.intercept) 1 else 0)]].name;
-        try out.print(a, "{s} {s} {s} {s} {s} {s}", .{ name, if (r.aliased[i]) @as([]const u8, "0") else if (r.biased[i]) "B" else "1", if (r.aliased[i]) @as([]const u8, "0") else try statistic(a, estimate), try statistic(a, r.errors[i]), try number(a, r.t[i], 2), try probability(a, r.probabilities[i]) });
+        try out.print(a, "{s}", .{name});
+        if (labels) {
+            const label = if (model.intercept and i == 0) "Intercept" else spec.ds.columns.items[model.regressors[i - @as(usize, if (model.intercept) 1 else 0)]].label orelse "";
+            try out.print(a, " {s}", .{label});
+        }
+        try out.print(a, " {s} {s} {s} {s} {s}", .{ if (r.aliased[i]) @as([]const u8, "0") else if (r.biased[i]) "B" else "1", if (r.aliased[i]) @as([]const u8, "0") else try statistic(a, estimate), try statistic(a, r.errors[i]), try number(a, r.t[i], 2), try probability(a, r.probabilities[i]) });
         if (model.tol) try out.print(a, " {s}", .{try statistic(a, r.tolerance[i])});
         if (model.vif) try out.print(a, " {s}", .{if (model.intercept and i == 0) @as([]const u8, "0") else try statistic(a, r.vif[i])});
         try out.append(a, '\n');

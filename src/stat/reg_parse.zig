@@ -7,6 +7,7 @@ const Dataset = @import("../dataset.zig").Dataset;
 const lists = @import("variable_lists.zig");
 const by_groups = @import("by_groups.zig");
 const eq = std.ascii.eqlIgnoreCase;
+const ridge_parse = @import("reg_ridge_parse.zig");
 pub const Model = struct {
     label: []const u8,
     statement_index: usize = 0,
@@ -35,6 +36,9 @@ pub const Spec = struct {
     outest: ?[]const u8 = null,
     covout: bool = false,
     output_variables: []const usize = &.{},
+    ridge: []const f64 = &.{},
+    outvif: bool = false,
+    ridge_plots: ridge_parse.Plots = .{},
 };
 fn at(t: []const lex.Token, i: usize, tag: lex.Tag) bool {
     return i < t.len and t[i].tag == tag;
@@ -79,6 +83,9 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
     var plots_none = false;
     var outest: ?[]const u8 = null;
     var covout = false;
+    var ridge: []const f64 = &.{};
+    var outvif = false;
+    var ridge_plots: ridge_parse.Plots = .{};
     while (i < t.len and !at(t, i, .semicolon) and !at(t, i, .eof)) {
         if (kw(t, i, "data")) {
             if (name != null) return proc.failGap(cx.diags, t[i].line, "PROC REG: repeated DATA= declarations are not implemented", .{});
@@ -117,7 +124,17 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
         } else if (kw(t, i, "covout")) {
             covout = true;
             i += 1;
+        } else if (kw(t, i, "ridge")) {
+            if (ridge.len > 0) return proc.failGap(cx.diags, t[i].line, "PROC REG: repeated RIDGE declarations are not implemented", .{});
+            ridge = try ridge_parse.constants(cx, t, &i);
+        } else if (kw(t, i, "outvif")) {
+            outvif = true;
+            i += 1;
         } else if (kw(t, i, "plots")) {
+            if (ridge_parse.matches(t, i)) {
+                ridge_plots = try ridge_parse.plots(cx, t, &i);
+                continue;
+            }
             const start = i;
             if (!at(t, i + 1, .eq) or !at(t, i + 2, .name)) return cx.diags.fail(error.ParseError, t[i].line, "PROC REG: expected PLOTS=request", .{});
             i += 2;
@@ -148,9 +165,13 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
         } else return unsupported(cx, t[i], &.{ "all", "corr", "covout", "edf", "outest", "outsscp", "outseb", "outstb", "outvif", "pcomit", "plots", "press", "ridge", "rsquare", "simple", "tableout", "usscp" });
     }
     if (!at(t, i, .semicolon)) return cx.diags.fail(error.ParseError, 0, "PROC REG: expected semicolon", .{});
-    if (!noprint and !plots_none) if (cx.graphics) |g| {
+    if (!noprint and !plots_none and ridge.len == 0) if (cx.graphics) |g| {
         if (g.enabled != false) return proc.failGap(cx.diags, 0, "PROC REG: default ODS graphics are not implemented; use ODS GRAPHICS OFF or PLOTS=NONE", .{});
     };
+    ridge_plots.disabled = plots_none;
+    if (ridge.len > 0 and outest == null) return cx.diags.fail(error.ParseError, 0, "PROC REG RIDGE requires OUTEST=", .{});
+    if (ridge.len == 0 and (outvif or ridge_plots.requested)) return cx.diags.fail(error.ParseError, 0, "PROC REG: OUTVIF and ridge plots require RIDGE=", .{});
+    if (ridge.len > 0 and covout) return proc.failGap(cx.diags, 0, "PROC REG: COVOUT with RIDGE is not implemented", .{});
     const raw = (if (name) |n| cx.lib.find(n) else proc.lastDataset(cx.lib)) orelse return cx.diags.fail(error.ExecError, 0, "File {s} does not exist.", .{name orelse "_LAST_"});
     // PROC input option filtering expects DATA= followed by one name token.
     // Native dispatch folds declared librefs, but built-in SASHELP and direct
@@ -255,8 +276,11 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
         i = end + 1;
     }
     if (models.items.len == 0) return proc.failGap(cx.diags, 0, "PROC REG: analysis without MODEL is not implemented", .{});
+    if (ridge.len > 0) for (models.items) |*model| {
+        model.intercept = true;
+    }; // documented: RIDGE ignores NOINT
     const by = try by_statements.resolve(cx.arena, ds, cx.diags);
     const bcols = try cx.arena.alloc(usize, by.names.len);
     for (by.names, 0..) |n, j| bcols[j] = ds.indexOf(n).?;
-    return .{ .ds = ds, .models = models.items, .required = required.items, .by = bcols, .descending = by.desc, .notsorted = by.notsorted, .freq = freq, .weight = weight, .ids = ids, .noprint = noprint, .outest = outest, .covout = covout, .output_variables = output_variables.items };
+    return .{ .ds = ds, .models = models.items, .required = required.items, .by = bcols, .descending = by.desc, .notsorted = by.notsorted, .freq = freq, .weight = weight, .ids = ids, .noprint = noprint, .outest = outest, .covout = covout, .output_variables = output_variables.items, .ridge = ridge, .outvif = outvif, .ridge_plots = ridge_plots };
 }

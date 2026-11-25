@@ -107,7 +107,23 @@ fn executePrepared(cx: proc.ProcCtx, out: *std.ArrayList(u8), spec: Spec, prepar
             const count = computed.count;
             const diagnostics = computed.diagnostics;
             const fit = diagnostics.fit;
-            if (estimates) |builder| try builder.append(cx.arena, model, group.rep, fit);
+            var ridge_path: ?@import("reg_ridge.zig").Path = null;
+            var ridge_x: []const f64 = &.{};
+            if (spec.ridge.len > 0) {
+                if (fit.rank != input.columns or model.regressors.len == 0 or !(fit.sst > 0)) return proc.failGap(cx.diags, 0, "PROC REG: ridge paths with aliased columns or constant responses are not implemented", .{});
+                const p = model.regressors.len;
+                const x = try cx.arena.alloc(f64, input.y.len * p);
+                for (0..input.y.len) |row| @memcpy(x[row * p ..][0..p], input.x[row * input.columns + 1 ..][0..p]);
+                ridge_x = x;
+                ridge_path = @import("reg_ridge.zig").compute(cx.arena, x, input.y, p, w, spec.ridge, fit.df_error) catch |err| {
+                    if (err == error.OutOfMemory) return err;
+                    return cx.diags.fail(error.ExecError, 0, "PROC REG: ridge numerical calculation failed", .{});
+                };
+            }
+            if (estimates) |builder| {
+                try builder.append(cx.arena, model, group.rep, fit);
+                if (ridge_path) |path| for (path.points) |point| try builder.appendRidge(cx.arena, model, group.rep, fit, point);
+            }
             const stats = fit.modelStats(model.intercept);
             const ts = try cx.arena.alloc(f64, input.columns);
             const ps = try cx.arena.alloc(f64, input.columns);
@@ -187,6 +203,7 @@ fn executePrepared(cx: proc.ProcCtx, out: *std.ArrayList(u8), spec: Spec, prepar
                 .tolerance = tolerances,
                 .vif = vifs,
             });
+            if (ridge_path) |path| try @import("reg_ridge_plots.zig").execute(cx, spec, model, path, ridge_x, input.y, fit);
             if (!spec.noprint and (model.residual or model.cli or model.clm)) {
                 if (spec.ids.len > 0 or spec.freq != null or spec.weight != null or input.y.len != input.read) return proc.failGap(cx.diags, 0, "PROC REG: diagnostic listing with ID, FREQ, WEIGHT or excluded rows is not implemented", .{});
                 if (fit.df_error == 0 or !(fit.mse > 0)) return proc.failGap(cx.diags, 0, "PROC REG: diagnostic listing for zero residual variance is not implemented", .{});
@@ -196,7 +213,10 @@ fn executePrepared(cx: proc.ProcCtx, out: *std.ArrayList(u8), spec: Spec, prepar
         }
     }
     // Publish only after every BY/model fit and output row has succeeded.
-    if (estimates) |builder| try cx.lib.put(spec.outest.?, builder.ds);
+    if (estimates) |builder| {
+        try builder.ridgeFormats(cx.arena);
+        try cx.lib.put(spec.outest.?, builder.ds);
+    }
 }
 
 test "REG selection keeps frequency, weight and source observations separate" {
