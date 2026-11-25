@@ -18,11 +18,13 @@ pub const format = @import("format.zig");
 pub const exec = @import("exec.zig");
 pub const normality = @import("stat/normality.zig");
 pub const corr = @import("stat/corr.zig");
+pub const ttest = @import("stat/ttest.zig");
 pub const proc = @import("proc.zig");
 pub const macro = @import("macro.zig");
 pub const sql = @import("sql.zig");
 
 test {
+    _ = @import("stat/ttest.zig");
     _ = @import("stat/univ_histogram_bins.zig");
     _ = @import("stat/univ_histogram_output.zig");
     _ = @import("stat/univ_kernel_output.zig");

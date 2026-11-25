@@ -2923,6 +2923,14 @@ fn runProc(a: std.mem.Allocator, listing_out: *std.ArrayList(u8), lib: *sas.exec
         try printProc(a, out, lib, diags, toks, if (print_bysubst) g else null);
     } else if (eqi(proc, "means") or eqi(proc, "summary")) {
         try sas.proc.runMeans(pcx, out, toks);
+    } else if (eqi(proc, "ttest")) {
+        var body: std.ArrayList(u8) = .empty;
+        try sas.ttest.runTtest(pcx, &body, toks);
+        if (body.items.len > 0) {
+            try g.emitTitles(a, out);
+            try out.appendSlice(a, body.items);
+            try g.emitFootnotes(a, out);
+        }
     } else if (eqi(proc, "corr")) {
         try sas.corr.run(pcx, out, toks);
     } else if (eqi(proc, "freq")) {

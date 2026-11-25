@@ -55,13 +55,18 @@ pub fn classes(cx: proc.ProcCtx, s: declarations.Spec, view: selection.View) dia
     const filtered = try view.select(cx.arena, .{ .missing_columns = &.{s.class.?}, .frequency = .truncate_positive, .weight = .positive_only });
     for (filtered.observations) |row| {
         const label = try display(cx.arena, s, row.cells);
+        const count = if (s.summary) |kind| blk: {
+            if (!eq(std.mem.trim(u8, row.cells[kind].str, " "), "N")) break :blk @as(f64, 0);
+            // A summary record represents N observations, not one observation.
+            break :blk row.cells[s.roles.analysis[0]].num;
+        } else row.frequency.num;
         var found = false;
         for (result.items) |*c| if (std.mem.eql(u8, c.label, label)) {
-            c.count += row.frequency.num;
+            c.count += count;
             found = true;
             break;
         };
-        if (!found) try result.append(cx.arena, .{ .label = label, .raw = row.cells[s.class.?], .count = row.frequency.num });
+        if (!found) try result.append(cx.arena, .{ .label = label, .raw = row.cells[s.class.?], .count = count });
     }
     if (result.items.len != 2) return cx.diags.fail(error.ParseError, s.line, "PROC TTEST: CLASS variable must have exactly two nonmissing levels", .{});
     if (s.options.order != .data) std.mem.sort(Class, result.items, s, orderClasses);
@@ -140,8 +145,8 @@ pub fn runTtest(cx: proc.ProcCtx, out: *std.ArrayList(u8), toks: []const lex.Tok
     };
     // Do not print a one-sample table for a requested two-sample analysis.
     // The selection and summary interfaces above are already shared by both.
-    if (spec.class != null) return proc.failGap(cx.diags, spec.line, "PROC TTEST: two-sample inference is awaiting its numeric implementation", .{});
     const result = try compute(cx, spec);
+    if (spec.class != null) return proc.failGap(cx.diags, spec.line, "PROC TTEST: two-sample inference is awaiting its numeric implementation", .{});
     const a = cx.arena;
     for (result.groups) |group| {
         var body: std.ArrayList(u8) = .empty;
@@ -264,4 +269,69 @@ test "STAT-TTEST-001 summary rows and CLASS ordering retain typed results" {
     var bad = diag.Diagnostics.init(a);
     const badcx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &bad };
     try std.testing.expectError(error.ParseError, declarations.parse(badcx, try lex.tokenize(a, "proc ttest data=summary; var x; freq x; run;", &bad)));
+}
+
+test "STAT-TTEST-001 sorted BY errors, NOTSORTED groups, missing and nonpositive roles" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const Dataset = @import("../dataset.zig").Dataset;
+    var ds = Dataset.init(a, "d");
+    for ([_][]const u8{ "g", "x", "y", "f", "w" }) |name| _ = try ds.addColumn(name, .num);
+    try ds.appendRow(&.{ .{ .num = 2 }, .{ .num = 1 }, Value.missing, .{ .num = 2.9 }, .{ .num = 0.5 } });
+    try ds.appendRow(&.{ .{ .num = 2 }, .{ .num = 3 }, .{ .num = 9 }, .{ .num = 1 }, .{ .num = 2 } });
+    try ds.appendRow(&.{ .{ .num = 1 }, .{ .num = 5 }, .{ .num = 8 }, .{ .num = 2 }, .{ .num = 1 } });
+    for ([_]f64{ 0, -1, std.math.nan(f64) }) |w| try ds.appendRow(&.{ .{ .num = 1 }, .{ .num = 999 }, .{ .num = 999 }, .{ .num = 5 }, .{ .num = w } });
+    for ([_]f64{ 0.9, -2, std.math.nan(f64) }) |f| try ds.appendRow(&.{ .{ .num = 1 }, .{ .num = 999 }, .{ .num = 999 }, .{ .num = f }, .{ .num = 1 } });
+    var lib = @import("../exec.zig").Library.init(a);
+    try lib.put("d", &ds);
+    var d = diag.Diagnostics.init(a);
+    const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &d };
+    const s = try declarations.parse(cx, try lex.tokenize(a, "proc ttest; by g notsorted; var x y; freq f; weight w; run;", &d));
+    const r = try compute(cx, s);
+    try std.testing.expectEqual(@as(usize, 2), r.groups.len);
+    const gx = r.groups[0].analyses[0].samples[0];
+    const gy = r.groups[0].analyses[1].samples[0];
+    try std.testing.expectEqual(@as(usize, 3), gx.n);
+    try std.testing.expectEqual(@as(usize, 1), gy.n);
+    try std.testing.expectApproxEqAbs(@as(f64, 7.0 / 3.0), gx.mean, 1e-14);
+    try std.testing.expectEqual(@as(usize, 2), r.groups[1].analyses[0].samples[0].n);
+    try std.testing.expectEqual(@as(f64, 5), r.groups[1].analyses[0].samples[0].mean);
+    const sorted = try declarations.parse(cx, try lex.tokenize(a, "proc ttest; by g; var x; run;", &d));
+    try std.testing.expectError(error.ParseError, compute(cx, sorted));
+    try std.testing.expect(std.mem.indexOf(u8, try d.render(), "not sorted") != null);
+    // No output is fabricated when WHERE produces an empty input.
+    var empty_d = diag.Diagnostics.init(a);
+    const empty_cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &empty_d };
+    var out: std.ArrayList(u8) = .empty;
+    try std.testing.expectError(error.ParseError, runTtest(empty_cx, &out, try lex.tokenize(a, "proc ttest; var x; where x<0; run;", &empty_d)));
+    try std.testing.expectEqual(@as(usize, 0), out.items.len);
+}
+
+test "STAT-TTEST-001 CLASS formatted levels, encounter and frequency ordering" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var ds = @import("../dataset.zig").Dataset.init(a, "d");
+    _ = try ds.addColumn("c", .num);
+    _ = try ds.addColumn("x", .num);
+    _ = try ds.addColumn("f", .num);
+    _ = try ds.addColumn("w", .num);
+    try ds.appendRow(&.{ .{ .num = 2.1 }, .{ .num = 1 }, .{ .num = 1 }, .{ .num = 100 } });
+    try ds.appendRow(&.{ .{ .num = 1.1 }, .{ .num = 3 }, .{ .num = 3 }, .{ .num = 1 } });
+    try ds.appendRow(&.{ .{ .num = 2.2 }, .{ .num = 2 }, .{ .num = 1 }, .{ .num = 100 } });
+    try ds.appendRow(&.{ Value.missing, .{ .num = 999 }, .{ .num = 9 }, .{ .num = 1 } });
+    var lib = @import("../exec.zig").Library.init(a);
+    try lib.put("d", &ds);
+    var d = diag.Diagnostics.init(a);
+    const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &d };
+    for ([_][]const u8{ "data", "freq", "internal", "formatted", "mixed" }, [_][]const u8{ "2", "1", "1", "1", "1" }) |order, first| {
+        const source = try std.fmt.allocPrint(a, "proc ttest order={s}; class c; var x; freq f; weight w; format c 3.; run;", .{order});
+        const s = try declarations.parse(cx, try lex.tokenize(a, source, &d));
+        const r = try compute(cx, s);
+        try std.testing.expectEqualStrings(first, r.groups[0].analyses[0].classes[0].label);
+        try std.testing.expectEqual(@as(usize, 2), r.groups[0].analyses[0].classes.len);
+    }
+    const three = try declarations.parse(cx, try lex.tokenize(a, "proc ttest; class c; var x; run;", &d));
+    try std.testing.expectError(error.ParseError, compute(cx, three));
 }

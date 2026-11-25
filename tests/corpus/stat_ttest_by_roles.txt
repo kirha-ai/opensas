@@ -1,0 +1,43 @@
+# corpus assertions
+# Full original SAS oracle, whitespace-only normalization; no rows omitted.
+next group=A
+next The TTEST Procedure
+next Variable: x
+next Frequency: freq
+next Weight: weight
+next N Mean Std Dev Std Err Minimum Maximum
+next 7 87.1111 22.1393 7.3798 43.0000 116.0
+next Mean 95% CL Mean Std Dev 95% CL Std Dev
+next 87.1111 69.0535 105.2 22.1393 14.2664 48.7522
+next DF t Value Pr > |t|
+next 6 11.80 <.0001
+next Variable: y
+next Frequency: freq
+next Weight: weight
+next N Mean Std Dev Std Err Minimum Maximum
+next 7 84.0000 21.4398 7.1466 40.0000 110.0
+next Mean 95% CL Mean Std Dev 95% CL Std Dev
+next 84.0000 66.5129 101.5 21.4398 13.8157 47.2119
+next DF t Value Pr > |t|
+next 6 11.75 <.0001
+next group=B
+next The TTEST Procedure
+next Variable: x
+next Frequency: freq
+next Weight: weight
+next N Mean Std Dev Std Err Minimum Maximum
+next 7 91.6667 17.5973 5.8658 71.0000 121.0
+next Mean 95% CL Mean Std Dev 95% CL Std Dev
+next 91.6667 77.3136 106.0 17.5973 11.3396 38.7505
+next DF t Value Pr > |t|
+next 6 15.63 <.0001
+next Variable: y
+next Frequency: freq
+next Weight: weight
+next N Mean Std Dev Std Err Minimum Maximum
+next 7 89.4444 16.6244 5.5415 72.0000 115.0
+next Mean 95% CL Mean Std Dev 95% CL Std Dev
+next 89.4444 75.8850 103.0 16.6244 10.7126 36.6080
+next DF t Value Pr > |t|
+next 6 16.14 <.0001
+end-listing

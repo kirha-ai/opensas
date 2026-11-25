@@ -111,7 +111,12 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
                 if (eq(value.text, "umpu")) return proc.failGap(cx.diags, token.line, "PROC TTEST: CI=UMPU is not implemented", .{});
                 options.ci = if (eq(value.text, "equal")) true else if (eq(value.text, "none")) false else return invalid(cx, value);
             } else if (eq(token.text, "plots")) {
-                if (!eq(value.text, "none")) return proc.failGap(cx.diags, token.line, "PROC TTEST: plots are not implemented", .{});
+                if (!eq(value.text, "none")) {
+                    inline for (.{ "all", "agreement", "agreementplot", "bootstrap", "boot", "box", "boxplot", "histogram", "hist", "histdens", "interval", "intervalplot", "profiles", "profilesplot", "qq", "qqplot", "summary", "summaryplot" }) |known| {
+                        if (eq(value.text, known)) return proc.failGap(cx.diags, token.line, "PROC TTEST: plots are not implemented", .{});
+                    }
+                    return invalid(cx, value);
+                }
                 options.plots_none = true;
             } else return invalid(cx, token);
         }
@@ -238,10 +243,11 @@ test "STAT-TTEST-001 invalid declarations have captured locations; valid unsuppo
     var lib = @import("../exec.zig").Library.init(a);
     try lib.put("sample", try TestInput.dataset(a));
     for ([_][]const u8{
-        "proc ttest alpha=0; run;",     "proc ttest sides=both; run;",
-        "proc ttest order=wrong; run;", "proc ttest; var g; run;",
-        "proc ttest; freq g; run;",     "proc ttest; weight absent; run;",
-        "proc ttest; class g b; run;",  "proc ttest; var; run;",
+        "proc ttest alpha=0; run;",        "proc ttest sides=both; run;",
+        "proc ttest order=wrong; run;",    "proc ttest plots=wrong; run;",
+        "proc ttest; var g; run;",         "proc ttest; freq g; run;",
+        "proc ttest; weight absent; run;", "proc ttest; class g b; run;",
+        "proc ttest; var; run;",
     }) |source| {
         var d = diag.Diagnostics.init(a);
         const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &d };
