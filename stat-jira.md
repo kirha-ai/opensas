@@ -3642,12 +3642,13 @@ Source: S154, Chapter 47, `The FREQ Procedure`, PDF pp. 3069–3290. Tasks in th
 
 <a id="stat-freq-007"></a>
 
-### [DOING @dev3] STAT-FREQ-007 — FREQ — Binomial Proportion
+### [DONE] STAT-FREQ-007 — FREQ — Binomial Proportion
 
 - Source: S154 / Chapter 47 / `Binomial Proportion` (PDF pp. 3180–3188).
 - Scope: Implement Binomial Proportion. This ticket owns the feature's options, defaults, computation, and results as an extension of the basic computational path; the chapter's output tickets handle ODS descriptors and file presentation.
 - Dependencies: [STAT-FREQ-001](#stat-freq-001), [STAT-FREQ-002](#stat-freq-002), [STAT-COMMON-005](#stat-common-005).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-FREQ-007/](tests/STAT15.4-oracle/STAT-FREQ-007/).
+- DONE (2026-11-25): Landed/pushed `03386aaa`. Original oracle matches 257/257 tokens, rc 0, empty stderr; graphics disabled. Independent interval, equality/TOST, all-zero/all-success and near-boundary checks pass. Existing numerical kernels reused; complete display fields restored. Golden changes isolated with evidence. Exact-SHA gate: 1771 tests, 2312 corpus, 11 programs passed. Evidence/replay: `tests/STAT15.4-oracle/STAT-FREQ-007/`.
 - Acceptance criteria: For Binomial Proportion, verify each requested proportion estimate, test, and interval method; include all-zero and all-success samples, small samples, and boundary null hypotheses; validate numerical values against the source formulas or an independent reference, following this file's precision conventions.
 
 <a id="stat-freq-008"></a>
@@ -4770,7 +4771,7 @@ Source: S154, Chapter 53, `The GLM Procedure`, PDF pp. 4043–4230. Tasks in thi
 - Dependencies: [STAT-GLM-001](#stat-glm-001), [STAT-COMMON-007](#stat-common-007).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-GLM-004/](tests/STAT15.4-oracle/STAT-GLM-004/).
 - Dispatch contract: Verify the existing GLM model-space implementation against this original case; COMMON-007's full coded-design module is ready and awaiting integration. Coordinate shared parser/rendering changes with dev6's Type II integration rather than duplicating it.
-- Integration queue note (2026-11-25): dev2's implementation/tests/oracle are complete on `ab039538`; final rebase/gate is pending. The completed agent is temporarily closed to free a runtime slot for dev7, with branch/worktree/context preserved. This is intentional queueing, not a dead-worker recovery case.
+- Integration queue note (2026-11-25): dev2's implementation/tests/oracle are complete on `ab039538`; final rebase/gate is pending. Its branch/worktree/context were preserved while temporarily closed for dev7, and it now resumes after FREQ-007 lands. This is intentional queueing, not a dead-worker recovery case.
 - Acceptance criteria: For Parameterization of PROC GLM Models, verify the parsed response/effect/parameter representation against the documented design matrix or model structure; cover applicable reference levels, interactions, missing levels, and invalid models; successful parsing alone is insufficient.
 
 <a id="stat-glm-005"></a>
