@@ -6,15 +6,14 @@ This file independently tracks the SAS/STAT 15.4 implementation plan. As request
 
 ## Reference and page numbering
 
-- **S154**: [SAS/STAT 15.4 User’s Guide](/Users/argos/Downloads/SAS-STAT-15.4-Users-Guide.pdf), cover date June 17, 2025; 10,926 PDF pages.
-- SHA-256: `01745c063639d707a7f97365c7e95b0605bdcf62a01d773154a3a6fd9e6fa61d`.
+- **S154**: SAS/STAT 15.4 User’s Guide (`SAS-STAT-15.4-Users-Guide.pdf`), cover date June 17, 2025; 10,926 PDF pages.
 - Every ticket uses **one-based physical PDF page numbers**, not printed book page numbers. Ranges are lookup windows; boundary pages can contain adjacent subsections.
 - Group tasks by chapter contents, bookmarks, and named functional subsections. Source headings retain their original English names for PDF lookup. Use the original pages for formulas, complex tables, and option restrictions.
 - This is a backlog organized by functional groups, not a completed option-by-option semantic audit. During implementation, expand each ticket's relevant suboptions, defaults, and applicability restrictions from its sources. No TXT artifact is required.
 
 ## Task and acceptance conventions
 
-- Each ticket owns a directory under `tests/STAT15.4-oracle/`. Its SAS programs and actual SAS listings, logs, status codes, and capture provenance are indexed in that archive. Fixture capture is separate from implementation acceptance.
+- Each ticket owns a directory under `tests/STAT15.4-oracle/`. Its README lists SAS programs, expected outputs, logs, and reference statuses. Available fixtures do not indicate implementation completion.
 
 - States: `TODO` available, `DOING @dev` claimed, `PARK` awaiting a specific external prerequisite. IDs are unique in this file. Dependencies refer to tickets here, not to an assessment of reusable existing implementations.
 - Each ticket has sources, scope, dependencies, and acceptance criteria. Features connect syntax, computation, and results. Shared tickets own common statement semantics; PROC tickets own supported options and integration. Default-computation tickets cover the smallest default path; specialized methods extend it in separate tickets.
