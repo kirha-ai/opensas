@@ -106,6 +106,7 @@ pub const Request = struct {
     missprint: bool = false,
     nocum: bool = false,
     noprint: bool = false,
+    procedure_title: bool = true, // internal listing state, not a TABLES option
     nofreq: bool = false,
     nopercent: bool = false,
     norow: bool = false,
@@ -592,7 +593,11 @@ pub fn runFreq(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) diag.E
         if (any and !opts.noprint) if (group.rep) |row| try appendByHeading(a, out, &view, row, bc);
         if (any and opts.nlevels and !opts.noprint) try renderLevels(cx, out, ds, vars.items, opts.order, analysis_wc, opts.zeros, fl.items, &view, bc, group.rep);
         var rendered = any and opts.nlevels and !opts.noprint;
-        for (opts.requests.items, 0..) |req, k| {
+        var binomial_rendered = false;
+        for (opts.requests.items, 0..) |request, k| {
+            var req = request;
+            req.procedure_title = req.risk.binomial == null or !binomial_rendered;
+            const request_start = out.items.len;
             const cols = try a.alloc(usize, req.vars.len);
             for (req.vars, 0..) |vn, j| cols[j] = ds.indexOf(vn).?;
             const output_cols = try uniqueColumns(a, cols);
@@ -645,6 +650,7 @@ pub fn runFreq(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) diag.E
                 try renderTable(a, out, &tab, req, opts);
                 rendered = true;
             }
+            if (req.risk.binomial != null and tab.dimensions.len == 1 and out.items.len > request_start) binomial_rendered = true;
         }
         if (out.items.len > listing_start) if (cx.listing_titles) |titles| {
             var heading: std.ArrayList(u8) = .empty;
@@ -1040,7 +1046,9 @@ fn renderOne(a: std.mem.Allocator, out: *std.ArrayList(u8), tab: *Table, req: Re
     const levels = tab.dimensions[0].levels;
     const no_pct = req.nopercent or tab.negative;
     // NOFREQ/NOROW/NOCOL are crosstab-only options in SAS (oracle controls).
-    if (no_pct or req.nocum) try out.appendSlice(a, ONEWAY_NOCUM_TITLE) else try out.appendSlice(a, ONEWAY_TITLE);
+    if (req.procedure_title) {
+        if (no_pct or req.nocum) try out.appendSlice(a, ONEWAY_NOCUM_TITLE) else try out.appendSlice(a, ONEWAY_TITLE);
+    }
     try out.append(a, '\n');
     if (tab.dimensions[0].label) |label| {
         const b = try line(a, @max(72, label.len + 28));
@@ -1049,11 +1057,12 @@ fn renderOne(a: std.mem.Allocator, out: *std.ArrayList(u8), tab: *Table, req: Re
         try out.append(a, '\n');
     }
 
-    var label_width: usize = 14;
+    const base_label_width: usize = if (req.risk.binomial != null) 3 else 14;
+    var label_width: usize = base_label_width;
     for (levels) |l| if (shown(l, req)) {
         label_width = @max(label_width, (try cellText(a, l.value)).len + 1);
     };
-    var shift = label_width - 14;
+    var shift = label_width - base_label_width;
     if (tab.dimensions[0].name.len > 7) shift = @max(shift, tab.dimensions[0].name.len - 7);
     for (levels, 0..) |l, k| if (shown(l, req)) {
         const needed = (try cellText(a, l.value)).len + (try freqText(a, tab.count(k))).len + 1;
@@ -2004,7 +2013,7 @@ fn analyzeTable(cx: ProcCtx, out: *std.ArrayList(u8), tab: *Table, req: Request,
         if (cx.capture) |capture| try @import("ods_freq_tests.zig").publish(a, cx.diags, capture, source, by, by_row, tab, 0, req, result);
         try risk_render.render(a, &body, risk_report);
         try body.appendSlice(a, exact_tables.odds_listing);
-        if (!req.noprint) try renderOne(a, out, tab, req) else if (body.items.len > 0) try out.appendSlice(a, ONEWAY_TITLE);
+        if (!req.noprint) try renderOne(a, out, tab, req) else if (body.items.len > 0 and req.procedure_title) try out.appendSlice(a, ONEWAY_TITLE);
         try out.appendSlice(a, body.items);
         const sample_size = if (result.goodness_of_fit) |gof| gof.total else risk_report.sample_size;
         if (sample_size) |total| {
@@ -2227,7 +2236,7 @@ fn renderOneExpected(a: std.mem.Allocator, out: *std.ArrayList(u8), tab: *Table,
     for (rows.items) |row| for (row, 0..) |v, i| {
         widths[i] = @max(widths[i], v.len + (if (i == 0) @as(usize, 1) else 2));
     };
-    try out.appendSlice(a, ONEWAY_TITLE);
+    if (req.procedure_title) try out.appendSlice(a, ONEWAY_TITLE);
     try out.append(a, '\n');
     if (tab.dimensions[0].label) |label| try out.appendSlice(a, try std.fmt.allocPrint(a, "              {s}\n\n", .{label}));
     try expectedRow(a, out, tops.items, widths, false);

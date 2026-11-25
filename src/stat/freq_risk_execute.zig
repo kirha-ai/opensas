@@ -14,6 +14,7 @@ const Builder = struct {
     d: *diag.Diagnostics,
     alpha: f64,
     sections: std.ArrayList(r.Section) = .empty,
+    binomial_analyses: std.ArrayList(r.BinomialAnalysis) = .empty,
     fn add(self: *Builder, title: []const u8, subtitle: []const u8, columns: []const []const u8, rows: []const r.Row, note: []const u8) diag.Error!void {
         try self.sections.append(self.a, .{ .title = title, .subtitle = subtitle, .columns = columns, .rows = try self.a.dupe(r.Row, rows), .note = note });
     }
@@ -173,6 +174,7 @@ fn hypotheses(b: *Builder, req: p.Request, table: ?k.Table2x2, sample: ?k.Binomi
         const modified: ?f64 = if (req.method == .waldmodified) (try k.ratio(table.?, if (req.column == 0) .first else .second, .relative_risk, b.alpha, .wald_modified, true)).estimate else null;
         const title = if (req.family == .binomial) try std.fmt.allocPrint(b.a, "{s} for the {s}", .{ name, family_name }) else try std.fmt.allocPrint(b.a, "{s} for the {s} (Column {d})", .{ name, family_name, req.column + 1 });
         try b.inference(test_request, h, result, title, point, modified);
+        if (req.family == .binomial) try b.binomial_analyses.append(b.a, .{ .name = name, .null_value = req.p, .variance = variance, .hypothesis = h, .result = result, .fallback = b.sections.items[b.sections.items.len - 1] });
     }
 }
 fn ratioMethod(m: p.Method) k.RatioMethod {
@@ -224,6 +226,7 @@ pub fn executeResolved(a: A, d: *diag.Diagnostics, table: Table, options: *p.Opt
     if (!options.any()) return .{};
     var b = Builder{ .a = a, .d = d, .alpha = alpha };
     var risk_columns: [2]?r.RiskColumn = @splat(null);
+    var binomial: ?r.Binomial = null;
     var total: f64 = 0;
     for (table.counts) |v| total += v;
     if (table.one_way) {
@@ -277,6 +280,7 @@ pub fn executeResolved(a: A, d: *diag.Diagnostics, table: Table, options: *p.Opt
                 test_req.correct = true;
             };
             try hypotheses(&b, test_req, null, s);
+            binomial = .{ .event = subtitle, .estimate = estimate, .alpha = alpha, .explicit_limits = req.cls.len > 0, .limits = rows.items, .analyses = b.binomial_analyses.items };
         }
     } else if (table.row_labels.len == 2 and table.col_labels.len == 2 and table.counts.len == 4) {
         const t = k.Table2x2{ .cells = table.counts[0..4].* };
@@ -382,7 +386,7 @@ pub fn executeResolved(a: A, d: *diag.Diagnostics, table: Table, options: *p.Opt
         };
     }
     const sample_size: ?f64 = if (b.sections.items.len > 0) total else null;
-    return .{ .sections = try b.sections.toOwnedSlice(a), .sample_size = sample_size, .risk_columns = risk_columns };
+    return .{ .sections = try b.sections.toOwnedSlice(a), .sample_size = sample_size, .risk_columns = risk_columns, .binomial = binomial };
 }
 
 test "FEAT-freq-risk public adapter corrected Wald test and fractional exact omission" {
