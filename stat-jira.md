@@ -3611,17 +3611,18 @@ Source: S154, Chapter 47, `The FREQ Procedure`, PDF pp. 3069–3290. Tasks in th
 
 <a id="stat-freq-005"></a>
 
-### [DOING @dev3] STAT-FREQ-005 — FREQ — Chi-Square Tests and Statistics
+### [DONE] STAT-FREQ-005 — FREQ — Chi-Square Tests and Statistics
 
 - Source: S154 / Chapter 47 / `Chi-Square Tests and Statistics` (PDF pp. 3165–3170).
 - Scope: Implement Chi-Square Tests and Statistics. This ticket owns the feature's options, defaults, computation, and results as an extension of the basic computational path; the chapter's output tickets handle ODS descriptors and file presentation.
 - Dependencies: [STAT-FREQ-001](#stat-freq-001), [STAT-FREQ-002](#stat-freq-002), [STAT-COMMON-005](#stat-common-005).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-FREQ-005/](tests/STAT15.4-oracle/STAT-FREQ-005/).
+- DONE (2026-11-25): Landed/pushed `092472d6`. Original oracle matches all 110 tokens with whitespace-only normalization, status 0, no warning/error differences; both graphs inspected. Restored labeled BY reports and full per-group titles; independent exact counts and closed-form probabilities validate statistics. Separate golden commit preserved numeric values. Final integration gate: 1697 tests, 2308 corpus, 11 programs passed. Evidence/replay: `tests/STAT15.4-oracle/STAT-FREQ-005/dev3-attempt.md` and `verify.py`.
 - Acceptance criteria: For Chi-Square Tests and Statistics, use independently calculated count tables to verify expected frequencies, statistics, corrections, degrees of freedom, and probabilities; include zero rows/columns and small expected counts; validate numerical values against the source formulas or an independent reference, following this file's precision conventions.
 
 <a id="stat-freq-006"></a>
 
-### [TODO] STAT-FREQ-006 — FREQ — Measures of Association
+### [DOING @dev3] STAT-FREQ-006 — FREQ — Measures of Association
 
 - Source: S154 / Chapter 47 / `Measures of Association` (PDF pp. 3170–3180).
 - Scope: Implement Measures of Association. This ticket owns the feature's options, defaults, computation, and results as an extension of the basic computational path; the chapter's output tickets handle ODS descriptors and file presentation.
