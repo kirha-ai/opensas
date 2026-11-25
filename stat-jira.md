@@ -255,7 +255,7 @@ Complete prerequisite shared contracts first, then each PROC's data input, model
 
 <a id="stat-common-006"></a>
 
-### [DOING @dev4] STAT-COMMON-006 — CLASS level formation and ordering
+### [DONE] STAT-COMMON-006 — CLASS level formation and ordering
 
 - Source: S154 / Chapter 20 / `Levelization of Classification Variables` (PDF pp. 411–413).
 - Scope: Represent formatted levels, ordering methods, reference levels, and missing levels consistently; integrate procedure-specific ORDER=/REF= and related options in PROC tickets.
@@ -263,11 +263,12 @@ Complete prerequisite shared contracts first, then each PROC's data input, model
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-COMMON-006/](tests/STAT15.4-oracle/STAT-COMMON-006/).
 - Dispatch contract: dev4 owns a shared CLASS-level helper and its tests; dev2 integrates it into GLM, dev6 owns GLM numerical inference. Verify the original CLASS-order oracle after integration; helper-only tests do not count as DONE.
 - Scheduling note (2026-11-25): Reserved dev7 could not start because of the current session's thread limit, despite saved cap 7. After finishing TTEST-009, the real dev4 worker takes this ticket; its 45-minute clock starts at this reassignment. Actual concurrent dev count remains six.
+- DONE (2026-11-25): Helper integrated into GLM and landed/pushed `def08486`. Original CLASS-order oracle matches all 228 tokens with whitespace-only normalization, status 0, stderr empty. Nine levelization tests run in the normal gate. Combined gate: 1732 tests, 2308 corpus, 11 programs passed. Final integration evidence: `tests/STAT15.4-oracle/STAT-GLM-001/implementation-evidence.md`, superseding the earlier helper-only state.
 - Acceptance criteria: Verify level ordering and column mappings for character, numeric, formatted, missing, and multiple-BY-group data; changes in input order may have only the effects allowed by the documentation.
 
 <a id="stat-common-007"></a>
 
-### [TODO] STAT-COMMON-007 — Design matrices for main effects, interactions, and nesting
+### [DOING @dev4] STAT-COMMON-007 — Design matrices for main effects, interactions, and nesting
 
 - Source: S154 / Chapter 20 / `GLM Parameterization of Classification Variables and Effects` (PDF pp. 414–418).
 - Scope: Implement intercepts, continuous effects, categorical main effects, interactions, nesting, continuous/class combinations, and general effect expansion; retain the mapping from column names to model effects.
@@ -297,12 +298,13 @@ Complete prerequisite shared contracts first, then each PROC's data input, model
 
 <a id="stat-common-010"></a>
 
-### [TODO] STAT-COMMON-010 — Type I sums of squares and estimable functions
+### [DOING @dev6] STAT-COMMON-010 — Type I sums of squares and estimable functions
 
 - Source: S154 / Chapter 16 / `Type I SS and Estimable Functions` (PDF pp. 284–285); S154 / Chapter 6 / `Introduction to Analysis of Variance Procedures` (PDF pp. 123–134).
 - Scope: Implement type I hypothesis construction, degrees of freedom, and sums of squares; preserve differences in definition for unbalanced designs and missing cells.
 - Dependencies: [STAT-COMMON-009](#stat-common-009).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-COMMON-010/](tests/STAT15.4-oracle/STAT-COMMON-010/).
+- Dispatch contract: Reuse the integrated GLM sequential-model comparisons and tested rank policy for this oracle while the broader COMMON-009 estimable-function interface remains pending. Do not claim unsupported general hypotheses; verify this original SS1 request and independent order/rank checks.
 - Acceptance criteria: For balanced, unbalanced, empty-cell, and reordered-effect designs, verify hypothesis matrices, sums of squares, ranks, and F tests against source examples or independent linear-algebra derivations.
 
 <a id="stat-common-011"></a>
@@ -4718,33 +4720,36 @@ Source: S154, Chapter 53, `The GLM Procedure`, PDF pp. 4043–4230. Tasks in thi
 
 <a id="stat-glm-001"></a>
 
-### [DOING @dev2] STAT-GLM-001 — GLM — Data input, variable roles, and basic options
+### [DONE] STAT-GLM-001 — GLM — Data input, variable roles, and basic options
 
 - Source: S154 / Chapter 53 / `PROC GLM Statement` (PDF pp. 4058–4065); S154 / Chapter 53 / `BY Statement` (PDF pp. 4065–4066); S154 / Chapter 53 / `FREQ Statement` (PDF pp. 4071–4072); S154 / Chapter 53 / `ID Statement` (PDF p. 4072); S154 / Chapter 53 / `WEIGHT Statement` (PDF p. 4106); S154 / Chapter 53 / `Missing Values` (PDF pp. 4160–4161).
 - Scope: Integrate PROC GLM declarations, basic options, defaults, and execution boundaries; this ticket establishes parameter objects and result interfaces, while later feature tickets implement model-, algorithm-, and output-specific options. Also implement BY; FREQ; ID; WEIGHT; Missing Values; apply this procedure's rules for missing values, variable roles, and observation selection.
 - Dependencies: [STAT-COMMON-001](#stat-common-001), [STAT-COMMON-002](#stat-common-002).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-GLM-001/](tests/STAT15.4-oracle/STAT-GLM-001/).
+- DONE (2026-11-25): Landed/pushed `def08486`, completed before the 45-minute deadline. Full unchanged five-analysis oracle matches 671/671 tokens, status 0; three real native SVGs checked numerically and visually, SGSCATTER prerequisite implemented. Combined gate: 1732 tests, 2308 corpus, 11 programs passed. All helper tests are integrated; expected files unchanged. Evidence/replay: `tests/STAT15.4-oracle/STAT-GLM-001/implementation-evidence.md` and `verify.py`.
 - Acceptance criteria: Create positive and negative parsing cases for the documented declarations and basic options; verify defaults, explicit settings, documented duplicate/conflicting declarations, and locations; valid but unimplemented features must not silently succeed. For BY / FREQ / ID / WEIGHT / Missing Values, construct valid, missing, empty, and multiple-group inputs; verify included observation counts, variable roles, BY boundaries, level ordering, and the frequency/weight rules relevant to this ticket; assert documented invalid-input behavior.
 
 <a id="stat-glm-002"></a>
 
-### [DOING @dev6] STAT-GLM-002 — GLM — General linear model estimation and basic effect tests
+### [DONE] STAT-GLM-002 — GLM — General linear model estimation and basic effect tests
 
 - Source: S154 / Chapter 53 / `Getting Started: GLM Procedure` (PDF pp. 4047–4055); S154 / Chapter 53 / `Overview: GLM Procedure` (PDF pp. 4045–4047).
 - Scope: Implement general linear model estimation and basic effect tests using the documented default path and establish the computational state needed by later extensions; implement specialized models, methods, and diagnostics outside that default example in their corresponding feature tickets.
 - Dependencies: [STAT-GLM-001](#stat-glm-001), [STAT-GLM-003](#stat-glm-003), [STAT-GLM-004](#stat-glm-004), [STAT-COMMON-005](#stat-common-005).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-GLM-002/](tests/STAT15.4-oracle/STAT-GLM-002/).
 - Dispatch contract: dev6 implements GLM fitting/effect-test calculations in a separate module, reusing landed QR/probability primitives. dev2 owns GLM parsing/rendering and dev7 CLASS levels. This explicit parallel interface breaks integration dependencies without claiming unsupported methods; require full original oracle before DONE.
+- DONE (2026-11-25): Numerical fitting and SGSCATTER dependency integrated by dev2 and landed/pushed `def08486` (CLASS helper ultimately owned by dev4). Own unchanged default oracle matches all 671 tokens, status 0, three native graphs verified; no numerical tolerance used. Thirteen numeric tests are included in the combined gate: 1732 tests, 2308 corpus, 11 programs passed. Final full-case evidence/replay is shared in `tests/STAT15.4-oracle/STAT-GLM-001/`.
 - Acceptance criteria: Turn the smallest default analysis in Getting Started into a runnable case and verify its principal estimates, observation counts, and result status; add a smaller case with an independent manual calculation; meet the precision conventions.
 
 <a id="stat-glm-003"></a>
 
-### [TODO] STAT-GLM-003 — GLM — CLASS / MODEL / Specification of Effects
+### [DOING @dev2] STAT-GLM-003 — GLM — CLASS / MODEL / Specification of Effects
 
 - Source: S154 / Chapter 53 / `CLASS Statement` (PDF pp. 4066–4067); S154 / Chapter 53 / `MODEL Statement` (PDF pp. 4092–4096); S154 / Chapter 53 / `Specification of Effects` (PDF pp. 4107–4110).
 - Scope: Implement CLASS; MODEL; Specification of Effects. Implement the syntax and model semantics allowed by this procedure, using shared effect/parameterization support only for forms documented as supported.
 - Dependencies: [STAT-GLM-001](#stat-glm-001), [STAT-COMMON-007](#stat-common-007).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-GLM-003/](tests/STAT15.4-oracle/STAT-GLM-003/).
+- Dispatch contract: Reuse the integrated GLM contrast-design path for the original case while COMMON-007's full design-output interface is implemented separately. Do not imply unsupported nesting or missing-cell hypotheses are available.
 - Acceptance criteria: For CLASS / MODEL / Specification of Effects, verify the parsed response/effect/parameter representation against the documented design matrix or model structure; cover applicable reference levels, interactions, missing levels, and invalid models; successful parsing alone is insufficient.
 
 <a id="stat-glm-004"></a>
