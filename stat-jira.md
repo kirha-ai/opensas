@@ -3563,6 +3563,7 @@ Source: S154, Chapter 47, `The FREQ Procedure`, PDF pp. 3069–3290. Tasks in th
 - Dependencies: [STAT-COMMON-001](#stat-common-001), [STAT-COMMON-002](#stat-common-002).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-FREQ-001/](tests/STAT15.4-oracle/STAT-FREQ-001/).
 - Dispatch contract: Reuse existing FREQ dispatch, BY groups, and weight filtering while shared tickets remain open; this attempt owns FREQ-specific behavior only, not shared MEANS or REG changes.
+- Progress (2026-11-25): Heading-collision fix landed/pushed in `fcd445e5`; gate 1589 unit tests, 2301 corpus cases, 11 programs passed. Both full oracle cases still differ in Kappa fields/rendering and shared option status; remain DOING while the attempt continues. Evidence: `tests/STAT15.4-oracle/STAT-FREQ-001/dev3-attempt.md`.
 - Acceptance criteria: Create positive and negative parsing cases for the documented declarations and basic options; verify defaults, explicit settings, documented duplicate/conflicting declarations, and locations; valid but unimplemented features must not silently succeed. For BY / WEIGHT / Inputting Frequency Counts / Grouping with Formats / Missing Values, construct valid, missing, empty, and multiple-group inputs; verify included observation counts, variable roles, BY boundaries, level ordering, and the frequency/weight rules relevant to this ticket; assert documented invalid-input behavior.
 
 <a id="stat-freq-002"></a>
