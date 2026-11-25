@@ -14616,7 +14616,7 @@ Source: S154, Chapter 128, `The TTEST Procedure`, PDF pp. 10595–10692. Tasks i
 
 <a id="stat-ttest-003"></a>
 
-### [DOING @dev5] STAT-TTEST-003 — TTEST — Arithmetic and Geometric Means / Coefficient of Variation
+### [DONE] STAT-TTEST-003 — TTEST — Arithmetic and Geometric Means / Coefficient of Variation
 
 - Source: S154 / Chapter 128 / `Arithmetic and Geometric Means` (PDF p. 10620); S154 / Chapter 128 / `Coefficient of Variation` (PDF p. 10620).
 - Scope: Implement Arithmetic and Geometric Means; Coefficient of Variation. This ticket owns the feature's options, defaults, computation, and results as an extension of the basic computational path; the chapter's output tickets handle ODS descriptors and file presentation.
@@ -14624,6 +14624,7 @@ Source: S154, Chapter 128, `The TTEST Procedure`, PDF pp. 10595–10692. Tasks i
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-TTEST-003/](tests/STAT15.4-oracle/STAT-TTEST-003/).
 - Dispatch contract: Extend landed TTEST numeric foundation in a separate lognormal module; dev5 integrates DIST=/CI= parsing and output after the base path. Require the original normal/lognormal oracle, not just a numeric module test, before DONE.
 - Progress (2026-11-25): dev4 numerical/render helper commit `65b999fe` passed standalone tests and existing gate; hand off to dev5 for integrated oracle verification. Original assignment time remains the 45-minute deadline basis.
+- DONE (2026-11-25): Landed/pushed `8c63eb71`; unchanged normal/lognormal oracle matches complete output with whitespace-only normalization, status 0. TTEST-001/002 and COMMON-005 also remain passing. Integrated gate: 1653 tests, 2305 corpus, 11 programs passed. Evidence: `tests/STAT15.4-oracle/STAT-TTEST-003/dev5-verification.json`; oracle expected files unchanged.
 - Acceptance criteria: For Arithmetic and Geometric Means / Coefficient of Variation, use an independently calculable small sample and the source examples to verify targets, estimates/statistics, degrees of freedom, and applicable probabilities or intervals; include at least one relevant degenerate or boundary case, asserting documented diagnostics and result status.
 
 <a id="stat-ttest-004"></a>
@@ -14638,7 +14639,7 @@ Source: S154, Chapter 128, `The TTEST Procedure`, PDF pp. 10595–10692. Tasks i
 
 <a id="stat-ttest-005"></a>
 
-### [TODO] STAT-TTEST-005 — TTEST — One-Sample Design
+### [DOING @dev5] STAT-TTEST-005 — TTEST — One-Sample Design
 
 - Source: S154 / Chapter 128 / `One-Sample Design` (PDF pp. 10620–10623).
 - Scope: Implement One-Sample Design. This ticket owns the feature's options, defaults, computation, and results as an extension of the basic computational path; the chapter's output tickets handle ODS descriptors and file presentation.
