@@ -12,6 +12,7 @@ pub const declarations = @import("ttest_parse.zig");
 const fit = @import("ttest_fit.zig");
 const lognormal = @import("ttest_lognormal.zig");
 const render = @import("ttest_render.zig");
+const ods_ttest = @import("ods_ttest.zig");
 const eq = std.ascii.eqlIgnoreCase;
 const A = std.mem.Allocator;
 
@@ -180,6 +181,10 @@ pub fn runTtest(cx: proc.ProcCtx, out: *std.ArrayList(u8), toks: []const lex.Tok
         if (g.enabled == true or (g.enabled != false and g.cli_dir != null)) return proc.failGap(cx.diags, spec.line, "PROC TTEST: ODS graphics are not implemented", .{});
     };
     if (spec.crossover) |treatments| {
+        if (cx.capture) |capture| {
+            for ([_][]const u8{ "Statistics", "ConfLimits", "TTests", "Equality" }) |name| if (capture.wants(name)) return proc.failGap(cx.diags, spec.line, "TTEST crossover ODS dataset schemas are not verified", .{});
+        }
+        if (cx.listing) |selected| if (selected.open and (selected.filtered() or selected.trace != null)) return proc.failGap(cx.diags, spec.line, "TTEST crossover ODS object routing is not implemented", .{});
         if (spec.options.distribution != .normal) return proc.failGap(cx.diags, spec.line, "PROC TTEST: lognormal crossover inference is not implemented", .{});
         if (spec.options.tost != null) return proc.failGap(cx.diags, spec.line, "PROC TTEST: crossover TOST inference is not implemented", .{});
         const crossover = @import("ttest_crossover.zig");
@@ -226,7 +231,7 @@ pub fn runTtest(cx: proc.ProcCtx, out: *std.ArrayList(u8), toks: []const lex.Tok
     if (spec.bootstrap) |o| if (o.bootdata) |name| {
         boot_dataset = try bootstrap.outputDataset(a, name, spec.class != null);
     };
-    for (result.groups) |group| {
+    for (result.groups, 1..) |group, by_index| {
         var body: std.ArrayList(u8) = .empty;
         for (group.analyses) |analysis| {
             var tables: std.ArrayList(u8) = .empty;
@@ -239,9 +244,10 @@ pub fn runTtest(cx: proc.ProcCtx, out: *std.ArrayList(u8), toks: []const lex.Tok
                     .sides = base.sides,
                     .cochran = spec.options.cochran,
                 }) catch |err| return numericFailure(cx, spec, err);
+                try ods_ttest.publishNormal(cx, spec, group, analysis, pair);
                 const labels: [2][]const u8 = .{ analysis.classes[0].label, analysis.classes[1].label };
                 const class_name = spec.input.ds.columns.items[class_column].name;
-                const objects: @import("../ods_listing.zig").Tables = .{ .selection = cx.listing, .prefix = "Ttest" };
+                const objects: @import("../ods_listing.zig").Tables = .{ .selection = cx.listing, .prefix = try ods_ttest.path(a, spec, by_index, analysis) };
                 var start = tables.items.len;
                 try two.statistics(a, &tables, pair, class_name, labels, spec.summary != null);
                 try objects.finish(a, &tables, start, "Statistics");
@@ -268,11 +274,15 @@ pub fn runTtest(cx: proc.ProcCtx, out: *std.ArrayList(u8), toks: []const lex.Tok
                 try two.equalityTable(a, &tables, pair);
                 try objects.finish(a, &tables, start, "Equality");
             } else if (analysis.lognormal_samples) |gs| {
+                if (cx.capture) |capture| {
+                    for ([_][]const u8{ "Statistics", "ConfLimits", "TTests", "Equality" }) |name| if (capture.wants(name))
+                        return proc.failGap(cx.diags, spec.line, "TTEST lognormal ODS dataset schemas are not verified", .{});
+                }
                 if (spec.options.tost) |bounds| {
                     const tost = @import("ttest_tost.zig");
                     const s = gs[0].log_fit;
                     const rows = [_]tost.Row{.{ .result = tost.evaluate(s.mean, s.std_err, s.df, bounds, spec.options.alpha, .log_ratio) catch |err| return numericFailure(cx, spec, err) }};
-                    const objects: @import("../ods_listing.zig").Tables = .{ .selection = cx.listing, .prefix = "Ttest" };
+                    const objects: @import("../ods_listing.zig").Tables = .{ .selection = cx.listing, .prefix = try ods_ttest.path(a, spec, by_index, analysis) };
                     var start = tables.items.len;
                     try tost.renderLognormalStatistics(a, &tables, gs[0]);
                     try objects.finish(a, &tables, start, "Statistics");
@@ -286,11 +296,22 @@ pub fn runTtest(cx: proc.ProcCtx, out: *std.ArrayList(u8), toks: []const lex.Tok
                     try tost.renderTests(a, &tables, &rows, null);
                     try objects.finish(a, &tables, start, "EquivTests");
                 } else {
-                    try lognormal.render(a, &tables, gs[0], lognormalOptions(spec), spec.options.ci);
+                    const log_tables = @import("ttest_tost.zig");
+                    const objects: @import("../ods_listing.zig").Tables = .{ .selection = cx.listing, .prefix = try ods_ttest.path(a, spec, by_index, analysis) };
+                    var start = tables.items.len;
+                    try log_tables.renderLognormalStatistics(a, &tables, gs[0]);
+                    try objects.finish(a, &tables, start, "Statistics");
+                    start = tables.items.len;
+                    try log_tables.renderLognormalIntervals(a, &tables, gs[0], spec.options.alpha, spec.options.ci);
+                    try objects.finish(a, &tables, start, "ConfLimits");
+                    start = tables.items.len;
+                    try render.tests(a, &tables, rendered(gs[0].log_fit), spec.options);
+                    try objects.finish(a, &tables, start, "TTests");
                 }
             } else {
+                try ods_ttest.publishNormal(cx, spec, group, analysis, null);
                 const r = rendered(analysis.samples[0]);
-                const objects: @import("../ods_listing.zig").Tables = .{ .selection = cx.listing, .prefix = "Ttest" };
+                const objects: @import("../ods_listing.zig").Tables = .{ .selection = cx.listing, .prefix = try ods_ttest.path(a, spec, by_index, analysis) };
                 var start = tables.items.len;
                 try render.statistics(a, &tables, r, spec.summary != null);
                 try objects.finish(a, &tables, start, "Statistics");
@@ -315,7 +336,10 @@ pub fn runTtest(cx: proc.ProcCtx, out: *std.ArrayList(u8), toks: []const lex.Tok
             if (spec.bootstrap) |o| {
                 const input = try bootstrapInput(cx, spec, group, analysis);
                 const report = try bootstrap.compute(a, input.first, input.second, &boot_stream.?, o, numericOptions(spec.options), cx.diags);
+                const bootstrap_start = tables.items.len;
                 try bootstrap.render(a, &tables, report, if (spec.class) |ci| spec.input.ds.columns.items[ci].name else null, spec.options.alpha);
+                const bootstrap_object: @import("../ods_listing.zig").Tables = .{ .selection = cx.listing, .prefix = try ods_ttest.path(a, spec, by_index, analysis) };
+                try bootstrap_object.finish(a, &tables, bootstrap_start, "Bootstrap");
                 if (boot_dataset) |ds| try bootstrap.appendOutput(ds, spec.input.ds.columns.items[analysis.column].name, report, spec.class != null);
             }
             if (tables.items.len == 0) continue;

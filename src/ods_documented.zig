@@ -4,6 +4,8 @@
 const std = @import("std");
 
 const documented = [_][]const u8{
+    // TTEST, S154 physical p.10644; unavailable typed producers stay loud.
+    "Statistics", "ConfLimits", "TTests", "Equality", "EquivLimits", "EquivTests", "Bootstrap", "CrossoverVarInfo",
     // CORR
     "Cov",                "CronbachAlpha",             "CronbachAlphaDel",    "Csscp",             "FisherPearsonCorr", "FisherPearsonPartialCorr",
     "FisherSpearmanCorr", "FisherSpearmanPartialCorr", "HoeffdingCorr",       "KendallCorr",       "PartialCov",        "PartialCsscp",

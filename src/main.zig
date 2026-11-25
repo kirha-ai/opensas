@@ -2901,7 +2901,7 @@ fn runProc(a: std.mem.Allocator, listing_out: *std.ArrayList(u8), lib: *sas.exec
     const proc = toks[1].text;
     defer ods_listing.endProc();
     var discard: std.ArrayList(u8) = .empty;
-    const routed = eqi(proc, "univariate") or eqi(proc, "corr");
+    const routed = eqi(proc, "univariate") or eqi(proc, "corr") or eqi(proc, "ttest");
     if (ods_listing.trace != null and !routed and ods_listing.accepts(proc))
         return sas.proc.failGap(diags, 0, "ODS TRACE: object metadata is not implemented for PROC {s}", .{proc});
     const visible = if (routed) ods_listing.open else ods_listing.accepts(proc);
