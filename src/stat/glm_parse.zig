@@ -33,6 +33,12 @@ pub const Spec = struct {
     /// Explicit SS requests replace the default Type I + Type III tables.
     ss1: bool = false,
     ss2: bool = false,
+    ss3: bool = false,
+    ss4: bool = false,
+
+    pub fn defaultSumsOfSquares(self: Spec) bool {
+        return !self.ss1 and !self.ss2 and !self.ss3 and !self.ss4;
+    }
 };
 fn at(t: []const lex.Token, i: usize, tag: lex.Tag) bool {
     return i < t.len and t[i].tag == tag;
@@ -182,7 +188,13 @@ pub fn parse(cx: proc.ProcCtx, tokens: []const lex.Token) diag.Error!Spec {
                 } else if (kw(tokens, j, "ss2")) {
                     result.ss2 = true;
                     j += 1;
-                } else if (kw(tokens, j, "alpha")) result.alpha = try real(cx, tokens[0..end], &j) else if (kw(tokens, j, "singular")) result.singular = try real(cx, tokens[0..end], &j) else return unsupported(cx, tokens[j], &.{ "solution", "ss3", "ss4", "e", "e1", "e2", "e3", "e4", "clparm", "cli", "clm", "p", "r", "nouni", "intercept", "tolerance", "inverse", "xpx", "effectsize" });
+                } else if (kw(tokens, j, "ss3")) {
+                    result.ss3 = true;
+                    j += 1;
+                } else if (kw(tokens, j, "ss4")) {
+                    result.ss4 = true;
+                    j += 1;
+                } else if (kw(tokens, j, "alpha")) result.alpha = try real(cx, tokens[0..end], &j) else if (kw(tokens, j, "singular")) result.singular = try real(cx, tokens[0..end], &j) else return unsupported(cx, tokens[j], &.{ "solution", "e", "e1", "e2", "e3", "e4", "clparm", "cli", "clm", "p", "r", "nouni", "intercept", "tolerance", "inverse", "xpx", "effectsize" });
             }
         } else if (kw(tokens, i, "lsmeans")) {
             if (!model_seen) return cx.diags.fail(error.ParseError, tokens[i].line, "PROC GLM: LSMEANS must follow MODEL", .{});
@@ -214,4 +226,5 @@ pub fn parse(cx: proc.ProcCtx, tokens: []const lex.Token) diag.Error!Spec {
 test {
     _ = @import("glm_ss1_tests.zig");
     _ = @import("glm_ss2_tests.zig");
+    _ = @import("glm_ss34_tests.zig");
 }

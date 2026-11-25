@@ -1,0 +1,58 @@
+{
+  "status": "pass",
+  "exit_status": 0,
+  "expected_tokens": 126,
+  "actual_tokens": 126,
+  "raw_token_differences": 0,
+  "normalization": "whitespace only",
+  "source_sha256": "107f7d71e0a3b2fd9fad896152e89713647eda2a7c1caeea1955dbe1d4eb34e2",
+  "expected_sha256": "154510c990d602cab29ac82a12b44167c105a6a5f8b5f38a337356a48a48494a",
+  "independent_hypothesis_checks": [
+    {
+      "type": "III",
+      "effects": [
+        {
+          "effect": "group",
+          "df": 1,
+          "ss_exact": "1243256/393825",
+          "f_exact": "1420864/502975"
+        },
+        {
+          "effect": "x",
+          "df": 1,
+          "ss_exact": "147175/1958",
+          "f_exact": "252300/3751"
+        },
+        {
+          "effect": "z",
+          "df": 1,
+          "ss_exact": "1323/1780",
+          "f_exact": "1134/1705"
+        }
+      ]
+    },
+    {
+      "type": "IV",
+      "effects": [
+        {
+          "effect": "group",
+          "df": 1,
+          "ss_exact": "1243256/393825",
+          "f_exact": "1420864/502975"
+        },
+        {
+          "effect": "x",
+          "df": 1,
+          "ss_exact": "147175/1958",
+          "f_exact": "252300/3751"
+        },
+        {
+          "effect": "z",
+          "df": 1,
+          "ss_exact": "1323/1780",
+          "f_exact": "1134/1705"
+        }
+      ]
+    }
+  ]
+}

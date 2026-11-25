@@ -28,6 +28,7 @@ fn heading(cx: proc.ProcCtx, out: *std.ArrayList(u8)) !void {
 
 pub fn render(cx: proc.ProcCtx, out: *std.ArrayList(u8), spec: parse.Spec, d: design.Design, result: math.Result) !void {
     const a = cx.arena;
+    if (spec.ss4 and (result.type_iv_basis == null or result.type_iv.len != spec.effects.len)) return proc.failGap(cx.diags, 0, "PROC GLM: Type IV hypotheses have not been validated", .{});
     const fitted = result.model.fit;
     const model = fitted.modelStats(spec.intercept);
     try heading(cx, out);
@@ -55,10 +56,11 @@ pub fn render(cx: proc.ProcCtx, out: *std.ArrayList(u8), spec: parse.Spec, d: de
     try out.print(a, "\nR-Square Coeff Var Root MSE {s} Mean\n\n{s} {s} {s} {s}\n", .{
         response, try number(a, model.r_square, 6), try number(a, 100 * @sqrt(fitted.mse) / fitted.y_mean, 6), try number(a, @sqrt(fitted.mse), 6), try number(a, fitted.y_mean, places(@abs(fitted.y_mean), 6)),
     });
-    const default_ss = !spec.ss1 and !spec.ss2;
+    const default_ss = spec.defaultSumsOfSquares();
     if (default_ss or spec.ss1) try effects(a, out, spec, "I", result.type_i);
     if (spec.ss2) try effects(a, out, spec, "II", result.type_ii);
-    if (default_ss) try effects(a, out, spec, "III", result.type_iii);
+    if (default_ss or spec.ss3) try effects(a, out, spec, "III", result.type_iii);
+    if (spec.ss4) try effects(a, out, spec, "IV", result.type_iv);
     if (spec.classes.len == 0) {
         try out.appendSlice(a, "\nStandard\nParameter Estimate Error t Value Pr > |t|\n\n");
         var maximum: f64 = 0;

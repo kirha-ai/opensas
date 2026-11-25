@@ -61,17 +61,23 @@ pub const EffectTest = struct {
     f_value: f64,
     p_value: f64,
 };
+/// Verified by glm_type34 from the model metadata and observed cell pattern.
+/// Neither value asserts support for arbitrary missing-cell Type IV hypotheses.
+pub const TypeIVBasis = enum { no_contained_effects, complete_factorial };
 pub const Result = struct {
     model: ranks.Result,
     type_i: []EffectTest,
     type_ii: []EffectTest,
     type_iii: []EffectTest,
+    type_iv: []EffectTest = &.{},
+    type_iv_basis: ?TypeIVBasis = null,
 
     pub fn deinit(self: *Result, a: A) void {
         self.model.deinit(a);
         a.free(self.type_i);
         a.free(self.type_ii);
         a.free(self.type_iii);
+        a.free(self.type_iv);
         self.* = undefined;
     }
 };
