@@ -13,6 +13,7 @@ pub const Spec = struct {
     input: proc.ProcInput,
     hov: ?@import("glm_hov.zig").Request = null,
     random: ?@import("glm_random.zig").Request = null,
+    test_requests: []const @import("glm_test_statement.zig").Request = &.{},
     estimates: []const @import("glm_estimate.zig").Request = &.{},
     lsmeans: []const @import("glm_lsmeans.zig").Request = &.{},
     classes: []const usize = &.{},
@@ -131,6 +132,7 @@ pub fn parse(cx: proc.ProcCtx, tokens: []const lex.Token) diag.Error!Spec {
     var model_seen = false;
     var ended = false;
     var effects: std.ArrayList(Effect) = .empty;
+    var tests: std.ArrayList(@import("glm_test_statement.zig").Request) = .empty;
     var estimates: std.ArrayList(@import("glm_estimate.zig").Request) = .empty;
     var lsmeans: std.ArrayList(@import("glm_lsmeans.zig").Request) = .empty;
     i += 1;
@@ -225,6 +227,9 @@ pub fn parse(cx: proc.ProcCtx, tokens: []const lex.Token) diag.Error!Spec {
                     j += 1;
                 } else if (kw(tokens, j, "alpha")) result.alpha = try real(cx, tokens[0..end], &j) else if (kw(tokens, j, "singular")) result.singular = try real(cx, tokens[0..end], &j) else return unsupported(cx, tokens[j], &.{ "solution", "e", "e1", "e2", "e3", "e4", "clparm", "cli", "clm", "p", "r", "nouni", "intercept", "tolerance", "inverse", "xpx", "effectsize" });
             }
+        } else if (kw(tokens, i, "test")) {
+            if (!model_seen) return cx.diags.fail(error.ParseError, tokens[i].line, "PROC GLM: TEST must follow MODEL", .{});
+            try tests.append(cx.arena, try @import("glm_test_statement.zig").read(cx, tokens[i..end], result, effects.items));
         } else if (kw(tokens, i, "means")) {
             if (!model_seen) return cx.diags.fail(error.ParseError, tokens[i].line, "PROC GLM: MEANS must follow MODEL", .{});
             if (result.hov != null) return proc.failGap(cx.diags, tokens[i].line, "PROC GLM: repeated MEANS statements are not implemented", .{});
@@ -265,6 +270,7 @@ pub fn parse(cx: proc.ProcCtx, tokens: []const lex.Token) diag.Error!Spec {
     result.effects = effects.items;
     result.lsmeans = lsmeans.items;
     result.estimates = estimates.items;
+    result.test_requests = tests.items;
     if (result.absorb.len > 0) {
         result.intercept = true; // MODEL NOINT is ignored with ABSORB (S154 p.4094).
         for (result.effects) |effect| for (effect.variables) |ci| {
