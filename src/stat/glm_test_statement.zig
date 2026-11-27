@@ -105,6 +105,7 @@ pub fn compute(cx: proc.ProcCtx, spec: parse.Spec, fit: math.Result) diag.Error!
             const numerator = numerators[index];
             if (numerator.df == 0 or !std.math.isFinite(numerator.ms)) return proc.failGap(cx.diags, 0, "PROC GLM: TEST with a nonestimable hypothesis effect is not implemented", .{});
             const statistic = numerator.ms / denominator.ms;
+            if (!std.math.isFinite(statistic)) return proc.failGap(cx.diags, 0, "PROC GLM: TEST F value exceeds the supported finite range", .{});
             row.* = .{ .effect = index, .numerator = numerator, .error_df = denominator.df, .f_value = statistic, .p_value = @import("reg_fit.zig").fProbability(statistic, numerator.df, denominator.df) };
         }
         table.* = .{ .request = request, .denominator = denominator, .rows = rows };

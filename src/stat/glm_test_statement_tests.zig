@@ -223,3 +223,26 @@ test "GLM012 complete original GLM and MIXED sequence retains all 481 reference 
     try t.expectEqual(@as(usize, 1), diagnostics.list.items.len);
     try t.expectEqualStrings("TYPE I EMS not available without the E1 option.", diagnostics.list.items[0].message);
 }
+
+test "GLM012 TEST ratio overflow is diagnosed instead of missing F with fabricated p zero" {
+    var arena = std.heap.ArenaAllocator.init(t.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var ds = Dataset.init(a, "sample");
+    for ([_][]const u8{ "x", "z", "y" }) |name| _ = try ds.addColumn(name, .num);
+    // Exact coordinate columns avoid projection-roundoff cancellation. Their
+    // MS are1e300 and1e-300: finite separately, but the requested ratio is1e600
+    // and cannot be represented by the result's finite f64 contract.
+    for (0..4) |i| try ds.appendRow(&.{ .{ .num = if (i == 0) 1 else 0 }, .{ .num = if (i == 1) 1 else 0 }, .{ .num = if (i == 0) 1e150 else if (i == 1) 1e-150 else 0 } });
+    var lib = Library.init(a);
+    try lib.put("sample", &ds);
+    var diagnostics = diag.Diagnostics.init(a);
+    const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &diagnostics };
+    diag.resetGap();
+    defer diag.resetGap();
+    var output: std.ArrayList(u8) = .empty;
+    try t.expectError(error.ParseError, glm.run(cx, &output, try lex.tokenize(a, "proc glm; model y=x z / noint; test h=x e=z; run;", &diagnostics)));
+    try t.expectEqual(@as(u8, 2), diag.exitCode(diag.gapHit(), diagnostics.hasErrors()));
+    try t.expectEqual(@as(usize, 0), output.items.len);
+    try t.expect(std.mem.indexOf(u8, try diagnostics.render(), "TEST F value exceeds the supported finite range") != null);
+}
