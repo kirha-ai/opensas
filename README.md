@@ -138,7 +138,8 @@ tests in the default gate, including numerical, typed-data, RNG and graph-data
 checks. [stat-jira.md](stat-jira.md) maps each completed or partially implemented
 ticket to its permanent tests and is the only task/handoff record.
 `tests/STAT15.4-oracle/` is a temporary read-only migration baseline, not a test
-dependency or report directory. CI and release CI run the gate with it absent.
+dependency or report directory. The `stat-impl` workflow locally verifies the
+gate and supplemental suite with it absent; CI/release workflows are unchanged.
 The user may delete migrated DONE reference folders; PARK references remain
 until their outstanding acceptance gaps are resolved.
 

@@ -24,12 +24,7 @@ jobs:
       - name: gate (hermetic suites)
         # One graph — see build.zig `gate` step. Avoids the post-test opensas
         # recompile that chained `test && corpus && programs` pays.
-        run: |
-          # Release tests must survive removal of the temporary STAT baseline.
-          if [ -d tests/STAT15.4-oracle ]; then
-            mv tests/STAT15.4-oracle "$RUNNER_TEMP/stat-oracle-reference"
-          fi
-          zig build gate
+        run: zig build gate
 
   # One parallel job per target (same names as the Makefile). fail-fast cancels
   # the siblings if any target fails, so a partial release is never published.
