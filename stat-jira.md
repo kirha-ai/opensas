@@ -12,6 +12,14 @@ Explicit user resume. Confirmed working branch `feat/stat/batch-4`, base `31356c
 - dev6: STAT-COMMON-017; `/Users/thomas/kirha/opensas-dev6`; branch `codex/stat-b4-dev6`; assigned 2026-11-27T13:42:13+00:00; implementation deadline 2026-11-27T14:27:13+00:00. Original README/cases and cited physical PDF pages required before edits.
 - dev7: STAT-COMMON-018; `/Users/thomas/kirha/opensas-dev7`; branch `codex/stat-b4-dev7`; assigned 2026-11-27T13:42:13+00:00; implementation deadline 2026-11-27T14:27:13+00:00. Original README/cases and cited physical PDF pages required before edits.
 
+### Batch 1 final verification and push (2026-11-27)
+
+Exact tested code SHA `02ae9b802408ec387b02e9d34083531df03f2402`: entire `tests/STAT15.4-oracle/` moved outside the checkout for `zig build gate -j2 --summary all` (direct exit 0: **1870/1870 unit tests, 2345/2345 corpus, 11/11 programs**), `zig build install -j2 --summary all` (direct 0), and separate `zig run tests/corpus_runner.zig -- zig-out/bin/opensas tests/corpus/supplemental` (direct 0: **1113/1113**). Finally restoration completed; Git confirms oracle unchanged. No source/corpus/fixture runtime references to the temporary directory remain. `79c56588` changes only this board after tested code and was successfully pushed to `feat/stat/batch-4`; no PR created.
+
+All eight unchanged original programs were replayed with that exact installed code. FREQ-009: 649/649 tokens identical, rc0/reference0, three graphs inspected. COMMON-018: 98/98 tokens identical, rc0/reference0, no diagnostics. These two folders are deletion-ready but left present. REG-005: rc0/reference0, 588/588 tokens with exactly four differences (two 2123.70938 vs2123.70937 SST tokens and two 0.000 vs-0.000). All five updated REG graphs visually inspected; histogram bars stay inside axes with Percent starting0. Numeric graph tests remain permanent; absent diagnostic/residual SAS images are not claimed pixel-equivalent. GLM-005: default671/671 identical, seeded108/108 with19 differing tokens; old/new actual outputs identical, so no new seeded regression. LOGISTIC-004: rc2/reference0, 0/935 listing tokens, PLOTS/ordinal prerequisites remain. TTEST-010: rc0/reference0,325/538 tokens due PRINT/CONTENTS layout/metadata and disclosed UMPU endpoints; complete four typed datasets covered. COMMON-017: rc2/reference0,0/98 tokens because NPAR1WAY was not yet integrated; kernel contract is tested, full original remains open.
+
+First-batch snapshot: **43 DONE, 5 PARK**; seven next tickets are now DOING with distinct owners below. New feature attempts have fresh 45-minute clocks; the completed first attempts are not extended. Remaining POWER001 default-example dependencies are existing POWER002/005/006/008/009/010/017; implement queued existing tickets through the concrete POWER solver/scenario interface, not stubs.
+
 ### Batch 1 integration and batch 2 ownership
 
 All seven first attempts finished feature work before their original deadline. Code batch `02ae9b802408ec387b02e9d34083531df03f2402` is integrated; final oracle-absent gate/install/separate supplemental is in progress. COMMON-017 partial was already verified absent-oracle at `a0829c32` (gate direct 0: 1846 tests, 2344 corpus, 11 programs; install 0; supplemental 0: 1113), restored, and pushed. FREQ-009 and COMMON-018 are in coordinator acceptance/push queue, not active dev assignments. REG-005, GLM-005, TTEST-010, LOGISTIC-004 and COMMON-017 remain PARK with durable partial tests.
@@ -485,9 +493,11 @@ Complete prerequisite shared contracts first, then each PROC's data input, model
 - Permanent original-case mapping: `ranks_with_ties.sas` -> `src/stat/ranks.zig` test `STAT-COMMON-017 tied original rank sum agrees with independent enumeration` (the original rounded inputs, complete rank vector, S=37, E=39, variance=36, z=-0.25, two-group chi-square=1/9, and exact 370/924 and 740/924). This is computational partial coverage, not full listing/PROC acceptance. Two further tests cover reverse order, constant/missing/near-equal values, tie rules, invalid vectors, explicit exact limits, and asymmetric equidistant two-sided tails (physical PDF p.7251); existing `src/proc.zig` PROC RANK tests cover integration and BY behavior.
 - Original replay before integration: unchanged `ranks_with_ties.sas`, direct CLI exit 2, stderr `ERROR: PROC npar1way is not supported`, no expected listing; SAS reference exit 0. Existing dependency tickets STAT-NPAR1WAY-001/002 requested from coordinator; COMMON-017 is not deletion-ready. Next step: connect shared ranks to the NPAR1WAY procedure and then replay the entire original listing/status, including normal and t approximations. No original result is replaced with a failing golden.
 
+- Final partial verification: integrated `02ae9b80` default1870/2345/11 and separate supplemental1113 direct0 with whole oracle absent/restored, pushed79c56588. Original still direct2/reference0 with NPAR1WAY unsupported. Existing NPAR1WAY-001/002 now assigned with explicit shared interface; retain PARK until full original passes.
+
 <a id="stat-common-018"></a>
 
-### [DOING @coordinator] STAT-COMMON-018 — Power and sample size inversion interface
+### [DONE] STAT-COMMON-018 — Power and sample size inversion interface
 
 - Source: S154 / Chapter 19 / `Computing Power and Sample Size` (PDF pp. 395–396); S154 / Chapter 19 / `Hypothesis Testing, Power, and Confidence Interval Precision` (PDF pp. 394–395).
 - Scope: Implement shared solver contracts for power, sample size, and interval precision; procedure tickets specify distributions, rounding, solvable ranges, and design parameters for each test.
@@ -500,6 +510,8 @@ Complete prerequisite shared contracts first, then each PROC's data input, model
 - Scope limits: the shared solver preserves below/above-range and iteration/numerical-failure statuses rather than fabricating a root. The consumer supports scalar balanced two-sided normal mean-difference forward power and total-N inversion; other POWER analyses, scenario lists, fractional/odd-N adjustment, unequal allocation, ODS Error/Info bound rows and statistical capture remain visible gaps owned by existing POWER tickets. Noncentrality above 1000 or failed inversion returns a numerical gap. Below-minimum roots remain a CLI gap until bound-result metadata is implemented; the generic status is permanently tested. No RNG, graph, or typed dataset is produced by the original case. Reference folder remains present and is not yet declared deletion-ready.
 
 - Acceptance criteria: Cross-check forward power and inverse solutions; examine noninteger and executable sample sizes, unreachable targets, and endpoints; retain root-finding convergence status.
+
+- Final acceptance: integrated code `02ae9b80`, unchanged `power_forward_inverse.sas`98/98 tokens identical and rc0/reference0, default1870/2345/11 + separate supplemental1113 direct0 with oracle absent/restored; pushed in79c56588. DONE for the shared solver contract and documented example; scalar balanced two-sided t integration limits remain explicit, broader POWER options belong to existing procedure tickets. Folder deletion-ready, not deleted.
 
 <a id="stat-common-019"></a>
 
@@ -3796,7 +3808,7 @@ Source: S154, Chapter 47, `The FREQ Procedure`, PDF pp. 3069–3290. Tasks in th
 <a id="stat-freq-009"></a>
 
 
-### [DOING @coordinator] STAT-FREQ-009 — FREQ — Risks and Risk Differences
+### [DONE] STAT-FREQ-009 — FREQ — Risks and Risk Differences
 
 - Source: S154 / Chapter 47 / `Risks and Risk Differences` (PDF pp. 3188–3199).
 - Scope: Implement Risks and Risk Differences. This ticket owns the feature's options, defaults, computation, and results as an extension of the basic computational path; the chapter's output tickets handle ODS descriptors and file presentation.
@@ -3809,6 +3821,8 @@ Source: S154, Chapter 47, `The FREQ Procedure`, PDF pp. 3069–3290. Tasks in th
 - Integration queue: dev3 `codex/stat-b4-dev3` based on `593a2131`; implementation finished, validation pending. A concurrent compilation hit system disk exhaustion; direct unit command exited 1 with an empty log, not a passing receipt. Removed only inactive disposable dev3 `.zig-cache` (3.6 GB), preserving all evidence, source and branches. At source SHA `82cd1816`, targeted direct-import FREQ009 verification passed all four new tests (5/5 including anonymous harness), direct exit 0; temporary import harness removed. Root/main filtered commands did not discover FREQ009 and are not counted as its validation. Coordinator will run the permitted combined-batch default gate, separate supplemental and oracle-absent acceptance at the final integrated SHA. Do not mark DONE until those checks and coordinator integration/push succeed. Full risk-ratio scope belongs to FREQ-011, additional common-risk methods to FREQ-010, and output/graphics extensions to their own tickets; no claims beyond covered options.
 
 - Acceptance criteria: For Risks and Risk Differences, verify risk direction, stratified or unstratified estimates, standard errors, and every requested interval; include zero cells and unbalanced margins; validate numerical values against the source formulas or an independent reference, following this file's precision conventions.
+
+- Final acceptance: integrated code `02ae9b80`, full original649/649 tokens and severity0, default1870/2345/11 + separate supplemental1113 all direct0 with oracle absent/restored; pushed in79c56588. DONE; shared permanent original mapping and independent tests above make this folder deletion-ready, not deleted.
 
 <a id="stat-freq-010"></a>
 
@@ -4942,6 +4956,8 @@ Source: S154, Chapter 53, `The GLM Procedure`, PDF pp. 4043–4230. Tasks in thi
 - Validation queue: AST checks exit0; full gate attempt failed with NoSpaceLeft/LLVM resource failures, not accepted as a receipt. Subsequent unit build was stopped by coordinator request (direct rc143) to serialize heavy validation. Required gate, separate supplemental and oracle-absent checks remain pending for the committed source. Raw logs/unchanged-original captures are under ignored `output/stat-glm005/`, never inside the oracle.
 
 - Attempt disposition (2026-11-27): PARK for the remaining seeded input and ABSORB+ESTIMATE acceptance gaps; source implementation finished within the 45-minute deadline and queued for serial integration. On exact source/tree `a739824a`, `/Users/thomas/.local/bin/zig test --stack 67108864 --test-filter GLM --dep build_options -Mroot=src/root.zig -Mbuild_options=/tmp/stat-b4-dev2-cache/c/8c1abc982d9089fb285de5048952325d/options.zig -lc --cache-dir /tmp/stat-b4-dev2-cache` exited 0, **52/52 tests passed**, explicitly including both new Type IV tests (51 and 52). The narrower GLM005 filter discovered only import tests and is not counted as validation. Coordinator will run the final combined gate, separate supplemental and absent-oracle verification before landing/push acceptance; no DONE/deletion-ready claim.
+
+- Final partial verification: integrated `02ae9b80` default1870/2345/11 and separate supplemental1113 direct0 with whole oracle absent/restored, pushed79c56588. Default original671/671 identical; targeted108 tokens has19 mismatches, not18 (earlier conversational count corrected); current and prechange actuals identical. PARK remains.
 
 <a id="stat-glm-006"></a>
 
@@ -8249,6 +8265,8 @@ Source: S154, Chapter 79, `The LOGISTIC Procedure`, PDF pp. 5823–6080. Tasks i
 - Validation queue: rebased SHA `5f577650` (source `dc3f6fb2`, identical logistic files to pre-rebase `d12f0445`) passed focused `zig test src/root.zig -lc --test-filter LOGISTIC004 --cache-dir output/stat-logistic004/cache`, direct exit 0, 9/9 tests (four behavior tests plus import tests). Initial full-test attempt exited 1 because the shared disk filled (NoSpaceLeft; 16 ancillary tests passed, root/main compilation incomplete), not a green receipt. Space recovered; coordinator queued full gate/install/separate supplemental/oracle-absent verification behind dev6/dev3. Fresh ignored cache avoids stale retained cache FileNotFound without deleting old evidence. Coordinator authorized the combined final batch gate/install/separate supplemental/oracle-absent check and integrated-SHA original replay; no additional full dev build is running. Source review also added a captured rc1 regression for a missing closing parenthesis before the combined EVENT+REF gap. Final original replay and full verification still pending.
 
 - Acceptance criteria: For Response Level Ordering, verify the parsed response/effect/parameter representation against the documented design matrix or model structure; cover applicable reference levels, interactions, missing levels, and invalid models; successful parsing alone is insufficient.
+
+- Final partial verification: integrated `02ae9b80` default1870/2345/11 and separate supplemental1113 direct0 with whole oracle absent/restored, pushed79c56588. Original direct2/reference0, no listing vs935 reference tokens; binary ordering partial is durable, ordinal/plot acceptance remains PARK.
 
 <a id="stat-logistic-005"></a>
 
@@ -11743,6 +11761,8 @@ Source: S154, Chapter 105, `The REG Procedure`, PDF pp. 8539–8728. Tasks in th
 - Handoff: retain PARK; this folder is not deletion-ready. Finish original listing semantics without changing expected output to observed results; rerun unchanged input on integrated CLI and inspect all five updated graphs. Remaining IPC gaps are reported visibly: cuts through repeated eigenvalues, aliased/constant input, more than 64 predictors, PCOMIT with NOINT/RIDGE/COVOUT, missing OUTEST, OUTSTB/OUTSEB and model-level PCOMIT options. Source attempt finished before its 14:27:13Z deadline; partial commit is in the integration queue, not an active feature worker. Historical evidence and original oracle remain untouched.
 - Acceptance criteria: For Computations for Ridge Regression and IPC Analysis, use an independently calculable small sample and the source examples to verify targets, estimates/statistics, degrees of freedom, and applicable probabilities or intervals; include at least one relevant degenerate or boundary case, asserting documented diagnostics and result status.
 
+- Final partial verification: integrated `02ae9b80` default1870/2345/11 and separate supplemental1113 direct0 with whole oracle absent/restored, pushed79c56588. Original rc0/reference0 still four listing-token differences. All five updated graphs visually inspected and histogram corrected; numerical identities/coordinates are covered by durable tests. PARK remains.
+
 <a id="stat-reg-006"></a>
 
 
@@ -14949,6 +14969,8 @@ Source: S154, Chapter 128, `The TTEST Procedure`, PDF pp. 10595–10692. Tasks i
 - Retained implementation: branch `codex/stat-b4-dev5`, worktree `/Users/thomas/kirha/opensas-dev5`, code `c00e3a20`, base `593a2131`; all source/tests committed. `zig build test -j2 --cache-dir .zig-cache/b4 --summary all` direct exit 0, 1844/1844 tests on the committed source content; original replay/evidence in ignored `.zig-cache/stat-b4-evidence/`. The retained old cache had a missing build runner; isolated `.zig-cache/b4` avoided discarding it. Final exact-SHA gate, separate supplemental and oracle-absent gate/supplemental are queued for serialized coordinator validation (disk pressure); not DONE and not yet integrated/pushed.
 - Integration rebase: cleanly rebased onto `feat/stat/batch-4` at `0c9dc7af`; implementation is now `83a52d51` (source and test assets byte-identical to `c00e3a20`), with rebased handoff `f089364e`. `git diff --check` passed. No full-suite claim for this new combined SHA; coordinator shared batch verification remains required.
 - Acceptance criteria: For Displayed Output / ODS Table Names, verify table names, labels, triggering conditions, rows, columns, degrees of freedom, statistics, and missing representations; exercise selection and capture with ODS TRACE/OUTPUT; unrelated options must not create extra tables.
+
+- Final partial verification: integrated `02ae9b80` default1870/2345/11 and separate supplemental1113 direct0 with whole oracle absent/restored, pushed79c56588. Original direct0/reference0,325 actual vs538 reference tokens; typed four-dataset contract passes but full listing/metadata/UMPU differences remain PARK.
 
 <a id="stat-ttest-011"></a>
 
