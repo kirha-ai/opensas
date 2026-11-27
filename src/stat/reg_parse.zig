@@ -312,7 +312,7 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
                     model.alpha = try numeric(cx, t[0..end], &j);
                 } else if (kw(t, j, "singular")) {
                     model.singular = try numeric(cx, t[0..end], &j);
-                } else return unsupported(cx, t[j], &.{ "r", "p", "clm", "cli", "clb", "selection", "sle", "slentry", "sls", "slstay", "maxstep", "details", "groupnames", "noprint", "influence", "dw", "dwprob", "acov", "hcc", "white", "stb", "covb", "corrb", "collin", "collinoint", "ss1", "ss2", "scorr1", "scorr2", "pcorr1", "pcorr2", "partial", "all", "press", "aic", "sbc", "cp", "mse", "edf", "rsquare", "adjrsq", "b", "seb" });
+                } else return unsupported(cx, t[j], &.{ "r", "p", "clm", "cli", "clb", "selection", "sle", "slentry", "sls", "slstay", "maxstep", "details", "groupnames", "noprint", "influence", "dw", "dwprob", "acov", "hcc", "white", "stb", "covb", "corrb", "collin", "collinoint", "ss1", "ss2", "scorr1", "scorr2", "pcorr1", "pcorr2", "partial", "partialdata", "all", "press", "aic", "bic", "sbc", "gmsep", "jp", "pc", "sp", "rmse", "cp", "mse", "edf", "rsquare", "adjrsq", "b", "seb" });
             }
             if (model.collin and model.collinoint) return proc.failGap(cx.diags, 0, "PROC REG: combined COLLIN/COLLINOINT output is not implemented", .{});
             if (model.influence and (model.residual or model.clm or model.cli)) return proc.failGap(cx.diags, 0, "PROC REG: combined INFLUENCE and interval/residual listings are not implemented", .{});

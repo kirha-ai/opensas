@@ -187,6 +187,14 @@ test "REG012 producers emit actual requested tables and reject unsupported conve
         try std.testing.expectError(error.ParseError, run(a, &lib, &errors, source));
         try std.testing.expectEqual(@as(u8, 2), diag.exitCode(diag.gapHit(), errors.hasErrors()));
     }
+    for ([_][]const u8{ "partialdata", "bic", "gmsep", "jp", "pc", "sp", "rmse" }) |option| {
+        var unsupported = diag.Diagnostics.init(a);
+        diag.resetGap();
+        defer diag.resetGap();
+        const source = try std.fmt.allocPrint(a, "proc reg data=sample; model y=x z / {s}; run;", .{option});
+        try std.testing.expectError(error.ParseError, run(a, &lib, &unsupported, source));
+        try std.testing.expectEqual(@as(u8, 2), diag.exitCode(diag.gapHit(), unsupported.hasErrors()));
+    }
     var errors = diag.Diagnostics.init(a);
     diag.resetGap();
     defer diag.resetGap();
