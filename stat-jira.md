@@ -2,7 +2,15 @@
 
 ## ACTIVE — resumed 2026-11-27
 
-### Batch5 isolated-fixture repair
+### Final batch5 verification and push
+
+Exacttested/pushed SHA `a7ed3bd79fa5188744b9979b8a56829de81f3b9b`: entireoracleunavailable for default `zig build gate -j2 --summary all`, direct0 (**2100/2100unit,2372/2372corpus,11/11programs**); install direct0; independent supplemental direct0 (**1113/1113**). Oracle restored unchanged. Isolatedfixture repairf5a94d73 changedonlyinputpackaging, retainingall193expectedtokens/RC0. No runner/CI/release/defaultgate changes. Pushed to `feat/stat/batch-4`; no PR.
+
+NPAR010 DONE: unchangedoriginal freshfinalCLIrc0,1417/1417tokens,7nativegraphs; all55TRACEobjects match allfieldsandorder. All13 documentedgraphproducers/controls andtiny/subnormal/extremeaxes have durabledata/geometry/roundtriptests andactualvisualreview; expectedpathcorrection is separately committed fromSASlog evidence. `persist_npar_graphics.*` and `npar_graph_axis_ranges.*` provide fullpersistentcontracts. NPAR005 DONE: its1417/1417originalrc0 reuses `persist_npar_default.*`; independentFP/EDF tests plus010's axisfix resolve its previously recordedpresentationblocker. Bothfolders deletion-ready, leftpresent.
+
+Otherfullreplays remain disclosedpartials: PARMS005326/326rc0; MIXED009578/578rc0 (allthreePROCs,includingGLMmiddle); GLM012481/481rc0; LOGISTIC008389/389rc0; COMMON031121/121rc0. Theirbroaderoptions/adaptergapsremainPARK. MIXED007stillrc2/0of1628tokens withnamedInfluence/plot/residualestimationgaps; rawRmatrixproofs are not fullestimationacceptance. Currentattemptsleepcorrection is separatelyrecorded above, preservingallprevioushistory.
+
+### Historical batch5 isolated-fixture repair
 
 At exactdb7a6d77, oracle-absentgate direct1:2100/2100unit,2371/2372corpus,11/11programs. Onlyfailure was `stat_glm_test_split_plot.sas` using a checkout-relative `%include` unavailable in corpusrunner's isolatedCWD; directrootCLI passed, so no statistic or expectedRC was changed. Repair `f5a94d73` inlines the exact24publicinputrows; all193expectedtokens/RC0 remain unchanged. Actualisolatedcorpusrunner targetedcase1/1direct0. Reusedretained `/Users/thomas/kirha/opensas-reg-gate-repair` onnew `codex/stat-glm-fixture-repair`; old378ce9bcbranch/evidence preserved. Fullgate/supplemental/absence rerunpending; noCI/runner/default-gate modifications.
 
@@ -827,6 +835,8 @@ Complete prerequisite shared contracts first, then each PROC's data input, model
 - Validation receipt: retained worktree `/Users/thomas/kirha/opensas-dev1`, branch `codex/stat-b4-common031-dev1`, base `ac058589`; main source `47d4d597`, nested-reference/API completion `8126f2554ad7a6587fa4928a72fd39b85f564896`. Exact final-source combined COMMON031/REG focused tests direct0,61/61. CLI install at47d4d597 direct0 (18s); REG consumer, numerical engine and permanent original fixture are byte-identical at8126f255 (verified diff exit0). Unchanged original direct rc0 matches reference0, all121/121 tokens exactly match, stderr is empty; permanent corpus runner direct0,1/1. Final integrated default gate, separate supplemental and oracle-unavailable verification remain the coordinator's responsibility; no old gate is claimed for this new source.
 - Handoff/scope review: numerical/shared-effect contracts and the real REG original are ready for serial integration, but retain PARK pending coordinator acceptance of the shared-versus-procedure boundary. Chapter20 effect API is not wired into all source-listed PROC frontends or global ODS dispatch; their actual model/effect/ODS producers must supply canonical metadata and TypeI/II/III matrices. More elaborate effect-list expansion remains an explicit gap. REG-specific PRINT intermediate tables, nonestimable/inconsistent/zero-rank/missing-inference listing forms, interactive TEST and combinations with RESTRICT/selection/RIDGE/PCOMIT remain explicit gaps under REG's own feature scope. Do not claim these procedure options from the shared API. Original folder remains retained for user-controlled deletion after acceptance. Feature work finished before17:03:28Z; no active feature worker or compiler remains, and all historical branches/evidence are preserved. Dev did not push.
 - Acceptance criteria: Create positive and negative cases for the syntax forms, defaults, and option combinations listed in this section; verify result names, dimensions, and numerical values. Cover nonestimable functions, complex coefficients, adjusted comparisons, and procedure applicability; successful parsing alone is insufficient.
+
+- Finalpartiala7ed3bd7: deterministicREGoriginal121/121tokensrc0; gate2100/2372/11+supplemental1113direct0wholeoracleabsent/restored,pushed. SharedchapterapplicabilityvsREGsyntaxdistinction preserved; remaininglistedPROCfrontends/format/otherdomainsPARK.
 
 <a id="stat-common-032"></a>
 
@@ -5284,6 +5294,8 @@ Source: S154, Chapter 53, `The GLM Procedure`, PDF pp. 4043–4230. Tasks in thi
 
 - Integration verification (no new feature work or clock reset): rebased cleanly onto coordinator `b60259ad`; all original production paths remain byte-identical to frozen `4fbd3c34`, and shared `split_plot.sas` / `glm_estimate.mapFor` are unchanged from the coordinator. An additional default-gate integration test now executes the entire MIXED009 three-PROC sequence on one library/output and checks **all578 tokens** using the existing canonical175+193+210 contracts, with no extra/missing tokens or diagnostics. Exact verification-test commit `02dfbc02e20c764fb9efe2cc04eafaeb7333cc1d`: the same focused GLM+mixed+COMMON025 command exited0 with **159/159** actual tests, explicitly including that578-token sequence and the complete481-token own original. This supplements the six original named tests with one integration-only test; final CLI/gate/supplemental/absence/push still belong to the coordinator.
 
+- Finalpartiala7ed3bd7: original481/481rc0 andsame-librarythree-PROCcrosscase578/578durable; fullgate2100/2372/11+supplemental1113direct0wholeoracleabsent/restored,pushed. Corpusmiddle193fields nowhermeticwithexactinlinepublicdata; noRC/expectedvaluechange. RemainingdomainsPARK.
+
 <a id="stat-glm-013"></a>
 
 ### [TODO] STAT-GLM-013 — GLM — LSMEANS / MEANS / Means versus LS-Means
@@ -8579,6 +8591,8 @@ Source: S154, Chapter 79, `The LOGISTIC Procedure`, PDF pp. 5823–6080. Tasks i
 
 - Acceptance criteria: For Classification Table / Goodness-of-Fit Tests / Overdispersion, use an independently calculable small sample and the source examples to verify targets, estimates/statistics, degrees of freedom, and applicable probabilities or intervals; include at least one relevant degenerate or boundary case, asserting documented diagnostics and result status.
 
+- Finalpartiala7ed3bd7: unchanged389/389tokensrc0; gate2100/2372/11+supplemental1113direct0wholeoracleabsent/restored,pushed. ActualGOF/explicitPPROB/PEVENT/HL testsmapped; defaultPPROB/scale/otherdomainsremainPARK.
+
 <a id="stat-logistic-009"></a>
 
 ### [TODO] STAT-LOGISTIC-009 — LOGISTIC — NLOPTIONS
@@ -9443,6 +9457,8 @@ Source: S154, Chapter 84, `The MIXED Procedure`, PDF pp. 6613–6810. Tasks in t
 
 - Acceptance criteria: For PARMS, cover valid boundaries, initial values, scope, and programming evaluation order as applicable; verify objective functions, constraint satisfaction, and stopping status; diagnose invalid settings.
 
+- Finalpartiala7ed3bd7: original326/326tokensrc0; default2100/2372/11+supplemental1113direct0absent-oracle,pushed. NOITERkeepssuppliedResidual(rawlikelihood), correctedfromstrongerphysical6701rule withindependentvariance/covarianceproof; validresourcecapsconsistentD009rc2. Remainingiterativeconstraint/LOGDETH/domainlimitsPARK.
+
 <a id="stat-mixed-006"></a>
 
 ### [PARK] STAT-MIXED-006 — MIXED — RANDOM
@@ -9487,6 +9503,8 @@ Source: S154, Chapter 84, `The MIXED Procedure`, PDF pp. 6613–6810. Tasks in t
 - Integration rebase: rebased frozen007 onto PARMS/NOITER/D-009 landing `2b8102a0`; core `aa742ffa`, handoff `c4e08e4f`. Sole conflict was shared entry guards: retained the exact TYPE3 invalid-REPEATED diagnostic and TYPE3 success branch, PARMS raw supplied NOITER/HOLD covariance semantics, conditional NOPROFILE support and resource guards; removed only the obsolete blanket REPEATED gap so real layout validation reaches the named residual-estimation gap. All root helpers/imports retained. The residual module and all three new test assets are byte-identical to `e3df4776`; diff-check passed. Post-rebase all-MIXED focused suite direct0, **61/61**. No new features or clock reset; final shared full gate/supplemental/oracle-absent receipt remains coordinator-owned.
 - Acceptance criteria: For REPEATED, use small models to verify covariance structures, subject/group indices, variance parameters, and applicable predictions/inference; cover repeated times, boundary variances, and nonidentifiable configurations.
 
+- Finalpartiala7ed3bd7: default2100/2372/11+supplemental1113direct0wholeoracleabsent/restored,pushed. Originalstillrc2/0of1628tokens (Influence/plots/residualestimation), nofakeVCsubstitution. TypedR/identity/duplicate-time/validationtests durable;PARK.
+
 <a id="stat-mixed-008"></a>
 
 ### [TODO] STAT-MIXED-008 — MIXED — PRIOR
@@ -9514,6 +9532,8 @@ Source: S154, Chapter 84, `The MIXED Procedure`, PDF pp. 6613–6810. Tasks in t
 - Remaining handoff: land dev2 GLM012 and rerun the untouched full578-token original; persist the complete combined sequence if marking this reference deletion-ready. Default gate, separate supplemental, oracle-unavailable verification, integration and push remain coordinator combined requirements. E/CHISQ/CL/ALPHA/one-sided table presentation, explicit SUBJECT/GROUP random contrast distributions, nested coefficient syntax, random-effect inference with REPEATED or negative-G covariance, and additional default-DF domains remain explicit gaps; typed intervals/one-sided probabilities are not claimed as implemented CLI table options. Dev3's PARMS enum/NOITER hooks and dev5's REPEATED hooks must preserve these statements and inference callbacks during rebase. Keep the original baseline; no DONE/deletion-readiness claim yet.
 
 - Acceptance criteria: For CONTRAST / ESTIMATE, use an independently calculable small sample and the source examples to verify targets, estimates/statistics, degrees of freedom, and applicable probabilities or intervals; include at least one relevant degenerate or boundary case, asserting documented diagnostics and result status.
+
+- Finalpartiala7ed3bd7: complete578/578tokensrc0 afteractualGLM012middlelanded; fullgate2100/2372/11+supplemental1113direct0wholeoracleabsent/restored,pushed. Fixed/randomBLUP/jointC/DF proofs preserved; explicitCI/otheroption gapskeepPARK.
 
 <a id="stat-mixed-010"></a>
 
@@ -10283,7 +10303,7 @@ Source: S154, Chapter 90, `The NPAR1WAY Procedure`, PDF pp. 7205–7282. Tasks i
 
 <a id="stat-npar1way-005"></a>
 
-### [PARK] STAT-NPAR1WAY-005 — NPAR1WAY — Fligner-Policello Test / Empirical Distribution Function Tests
+### [DONE] STAT-NPAR1WAY-005 — NPAR1WAY — Fligner-Policello Test / Empirical Distribution Function Tests
 
 - Source: S154 / Chapter 90 / `Fligner-Policello Test` (PDF pp. 7244–7246); S154 / Chapter 90 / `Empirical Distribution Function Tests` (PDF pp. 7247–7249).
 - Scope: Implement Fligner-Policello Test; Empirical Distribution Function Tests. This ticket owns the feature's options, defaults, computation, and results as an extension of the basic computational path; the chapter's output tickets handle ODS descriptors and file presentation.
@@ -10300,6 +10320,8 @@ Source: S154, Chapter 90, `The NPAR1WAY Procedure`, PDF pp. 7205–7282. Tasks i
 - Limits/next checks: one-sided D is a two-sample request; exact KS/other exact algorithms remain visible gaps owned by existing STAT-NPAR1WAY-006, not replaced by asymptotic results. Native EDF output explicitly caps the plotted grid at 100,000 class/value points before allocating the product. Literal SAS wording of the zero-scale FP warning is not claimed; its undefined mathematical status and captured warning are tested. Final same-SHA gate, separate supplemental and oracle-absent verification plus integration/push are pending coordinator acceptance; do not mark DONE before those succeed. The original is durably mapped and is a deletion-ready candidate after acceptance, but it remains present for the user to delete. Feature work finished before the original 15:54:56Z deadline; no clock reset for integration.
 
 - Finalstatisticalpartial24533f0f: original1417/1417tokensrc0/reference0; default2042/2366/11+supplemental1113direct0wholeoracleabsent/restored,pushed. KeepPARKforknownnewEDFaxislabelsmallrangegap; existingNPAR010activefix/visualvalidation, notanextended005clock.
+
+- Closurea7ed3bd7supersedespriorPARKaxisreceipt:010realaxisfix+roundtrip/geometry/visualtests nowintegrated. Freshoriginal1417/1417tokensrc0,sharedpersist_npar_default andFP/EDF tests; default2100/2372/11+supplemental1113direct0wholeoracleabsent/restored,pushed. DONE/deletion-ready,notdeleted.
 
 <a id="stat-npar1way-006"></a>
 
@@ -10343,7 +10365,7 @@ Source: S154, Chapter 90, `The NPAR1WAY Procedure`, PDF pp. 7205–7282. Tasks i
 
 <a id="stat-npar1way-010"></a>
 
-### [DOING @coordinator] STAT-NPAR1WAY-010 — NPAR1WAY — ODS Graphics
+### [DONE] STAT-NPAR1WAY-010 — NPAR1WAY — ODS Graphics
 
 - Source: S154 / Chapter 90 / `ODS Graphics` (PDF pp. 7269–7270).
 - Scope: Implement ODS Graphics. Cover all triggering options, content, and naming specified by this section; computational tickets supply numerical values, while other output types are handled separately.
@@ -10363,6 +10385,8 @@ Source: S154, Chapter 90, `The NPAR1WAY Procedure`, PDF pp. 7205–7282. Tasks i
 - Limits: templates/analysis-section paths are asserted from the original for its six graph families; unverified additional-family templates remain omitted. Broader input policy remains in STAT-NPAR1WAY-001: the pre-existing generic unknown-plot-name guard still reports a gap rather than a specific syntax classification. No full input-option conformance is claimed by this presentation change. Feature implementation froze before the original 16:58:24Z deadline; only verification/rebase remains.
 
 - Final local receipt for code `87149670c7aacb297dbab496db81826a029430c7`: install direct 0; unchanged original direct 0 with strict 1417 output tokens, all 55 TRACE objects exact in order and 7 graphics; tiny/extreme graph-only case direct 0, empty stdout and 2 graphics; complete corpus 2367/2367 direct 0. Final VW/Savage zero-axis and tiny/extreme images were re-rendered and inspected; data are correct and labels are readable. Focused NPAR tests 50/50 direct 0. This receipt/handoff edit is documentation only; final coordinator gate/supplemental/oracle-absent acceptance and push remain required.
+
+- FinalDONEa7ed3bd7: fullgate2100/2372/11andseparatesupplemental1113direct0wholeoracleabsent/restored,pushed. Original1417tokens/55completeTRACEobjects/7graphs strictcontracts andall13 producers/controls/axes verified. Allmappedcorpus/Zigassets self-contained; folderdeletion-ready,notdeleted.
 
 <a id="stat-npar1way-011"></a>
 
