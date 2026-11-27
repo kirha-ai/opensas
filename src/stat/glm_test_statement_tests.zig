@@ -253,3 +253,48 @@ test "GLM012 unresolved custom denominators are diagnosed without fabricated fin
         try t.expect(std.mem.indexOf(u8, try diagnostics.render(), "TEST error effect is below the supported numerical resolution") != null);
     }
 }
+
+test "GLM012 integrated MIXED009 original three-procedure sequence preserves all 578 tokens" {
+    var arena = std.heap.ArenaAllocator.init(t.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const helper = @import("glm_persistence_tests.zig");
+    var ds = try helper.data(a, "tests/fixtures/stat/mixed/split_plot.sas", "sp", &.{ "Block", "A", "B", "Y" }, &.{}, 0);
+    var lib = Library.init(a);
+    try lib.put("sp", &ds);
+    var diagnostics = diag.Diagnostics.init(a);
+    const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &diagnostics };
+    var output: std.ArrayList(u8) = .empty;
+    try @import("mixed.zig").run(cx, &output, try lex.tokenize(a, "proc mixed; class A B Block; model Y=A B A*B; random Block A*Block; run;", &diagnostics));
+    try glm.run(cx, &output, try lex.tokenize(a, "proc glm data=sp; class A B Block; model Y=A B A*B Block A*Block; test h=A e=A*Block; run;", &diagnostics));
+    try @import("mixed.zig").run(cx, &output, try lex.tokenize(a,
+        "proc mixed data=sp; class A B Block; model Y=A B A*B; random Block A*Block; " ++
+        "estimate 'a1 mean narrow' intercept 1 A 1 B .5 .5 A*B .5 .5 | Block .25 .25 .25 .25 A*Block .25 .25 .25 .25 0 0 0 0 0 0 0 0; " ++
+        "estimate 'a1 mean intermed' intercept 1 A 1 B .5 .5 A*B .5 .5 | Block .25 .25 .25 .25; " ++
+        "estimate 'a1 mean broad' intercept 1 a 1 b .5 .5 A*B .5 .5; run;", &diagnostics));
+    // The no-ESTIMATE first PROC is exactly the175-token leading portion of
+    // the same canonical MIXED listing; the third is all210 tokens. Reuse both
+    // contracts with the full193-token middle, never duplicate/trim actual data.
+    const mixed_contract = try helper.read(a, "tests/fixtures/stat/mixed/split_plot_estimates.txt");
+    var mixed_words: std.ArrayList([]const u8) = .empty;
+    var mixed_tokens = std.mem.tokenizeAny(u8, mixed_contract, " \t\r\n");
+    while (mixed_tokens.next()) |word| try mixed_words.append(a, word);
+    try t.expectEqual(@as(usize, 210), mixed_words.items.len);
+    try t.expectEqualStrings("Estimates", mixed_words.items[175]);
+    const glm_contract = try helper.read(a, "tests/corpus/stat_glm_test_split_plot.txt");
+    const word_start = std.mem.indexOf(u8, glm_contract, "words ").? + 6;
+    const word_end = std.mem.indexOfScalarPos(u8, glm_contract, word_start, '\n').?;
+    var glm_words: std.ArrayList([]const u8) = .empty;
+    var glm_tokens = std.mem.tokenizeAny(u8, glm_contract[word_start..word_end], " \t\r\n");
+    while (glm_tokens.next()) |word| try glm_words.append(a, word);
+    try t.expectEqual(@as(usize, 193), glm_words.items.len);
+    var actual = std.mem.tokenizeAny(u8, output.items, " \t\r\n");
+    var count: usize = 0;
+    for ([_][]const []const u8{ mixed_words.items[0..175], glm_words.items, mixed_words.items }) |part| for (part) |word| {
+        try t.expectEqualStrings(word, actual.next() orelse "");
+        count += 1;
+    };
+    try t.expectEqual(@as(usize, 578), count);
+    try t.expect(actual.next() == null);
+    try t.expectEqualStrings("", try diagnostics.render());
+}
