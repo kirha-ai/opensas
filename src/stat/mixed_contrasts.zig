@@ -139,7 +139,9 @@ fn one(cx: proc.ProcCtx, m: model.Spec, z: random.Design, t: []const lex.Token, 
                 request.divisor = value;
             } else {
                 if (value <= 0 or value >= 1) return bad(cx, line, "ALPHA and SINGULAR must be between zero and one");
-                if (eq(option, "alpha")) request.alpha = value else request.singular = value;
+                // S154 physical6644: ALPHA explicitly requests a t confidence
+                // interval; do not silently accept it while omitting CI output.
+                if (eq(option, "alpha")) return proc.failGap(cx.diags, line, "PROC MIXED: ESTIMATE ALPHA confidence-limit table presentation is not implemented", .{}) else request.singular = value;
             }
         } else {
             for ([_][]const u8{ "e", "chisq", "group", "grp", "subject", "sub" }) |known| if (eq(option, known)) return proc.failGap(cx.diags, line, "PROC MIXED: CONTRAST/ESTIMATE option {s} is not implemented", .{option});
@@ -373,7 +375,7 @@ test "STAT-MIXED-009 coefficient DIVISOR zero filling and nonestimability remain
     try std.testing.expect(std.mem.indexOf(u8, out.items, "scaled mean 32.8750 4.5403 9 7.24 <.0001") != null);
     try std.testing.expect(std.mem.indexOf(u8, out.items, "not estimable Non-est . . . .") != null);
     const Case = struct { body: []const u8, code: u8 };
-    for ([_]Case{ .{ .body = "estimate missing_label A 1;", .code = 1 }, .{ .body = "estimate 'bad' A 1 /divisor=0;", .code = 1 }, .{ .body = "estimate 'bad' A 1, A -1;", .code = 1 }, .{ .body = "contrast 'bad' A 1 /typo;", .code = 1 }, .{ .body = "estimate 'coef' A 1 /e;", .code = 2 }, .{ .body = "estimate 'ci' intercept 1 A 1 B .5 .5 A*B .5 .5 /cl;", .code = 2 } }) |c| {
+    for ([_]Case{ .{ .body = "estimate missing_label A 1;", .code = 1 }, .{ .body = "estimate 'bad' A 1 /divisor=0;", .code = 1 }, .{ .body = "estimate 'bad' A 1, A -1;", .code = 1 }, .{ .body = "contrast 'bad' A 1 /typo;", .code = 1 }, .{ .body = "estimate 'coef' A 1 /e;", .code = 2 }, .{ .body = "estimate 'ci' intercept 1 A 1 B .5 .5 A*B .5 .5 /cl;", .code = 2 }, .{ .body = "estimate 'alpha' intercept 1 A 1 B .5 .5 A*B .5 .5 /alpha=.1;", .code = 2 } }) |c| {
         diag.resetGap();
         defer diag.resetGap();
         var d = diag.Diagnostics.init(a);
