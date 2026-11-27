@@ -1,4 +1,4 @@
-//! Durable independent checks for STAT-FREQ-004..008. Original complete
+//! Durable independent checks for STAT-FREQ-004..009. Original complete
 //! listings live in tests/corpus/persist_freq_* and freq_binomial_example.
 //! No test reads a temporary oracle directory.
 const std = @import("std");
@@ -366,4 +366,168 @@ test "FREQ005 original 27 records independent GOF residual metadata and SVG coor
         }
         try t.expect(dots.next() == null);
     }
+}
+
+// STAT-FREQ-009: SAS/STAT 15.4 physical PDF pp.3188-3199 (printed
+// pp.3176-3187). Synthetic unequal row totals and zero cells distinguish row
+// risks from column proportions. References below use the defining equations,
+// fixed normal quantiles and finite binomial sums, never engine-generated
+// expected values. 2e-12 covers f64 arithmetic/CDF error at these sample sizes;
+// inverse-beta endpoints are checked at 2e-10 in probability space.
+test "FREQ009 default risk rows exact binomial endpoints and column orientation" {
+    var arena = std.heap.ArenaAllocator.init(t.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const execute = @import("freq_risk_execute.zig");
+    var diagnostics = @import("../diag.zig").Diagnostics.init(a);
+    const cases = [_][4]f64{ .{ 12, 8, 5, 25 }, .{ 0, 10, 3, 17 }, .{ 10, 0, 0, 20 }, .{ 1, 1, 7, 23 } };
+    for (cases) |cells| for ([_]bool{ false, true }) |correct| {
+        const report = try execute.execute(a, &diagnostics, .{ .name = "Treatment", .column_name = "Response", .row_labels = &.{ "A", "B" }, .col_labels = &.{ "yes", "no" }, .counts = &cells }, .{ .difference = .{ .family = .difference, .correct = correct } }, 0.05);
+        const n1 = cells[0] + cells[1];
+        const n2 = cells[2] + cells[3];
+        try t.expectEqual(@as(?f64, n1 + n2), report.sample_size);
+        try t.expectEqual(@as(usize, 4), report.sections.len);
+        for (0..2) |col| {
+            const result = report.risk_columns[col].?;
+            const samples = [_][2]f64{ .{ cells[col], n1 }, .{ cells[col + 2], n2 }, .{ cells[col] + cells[col + 2], n1 + n2 } };
+            for (samples, 0..) |sample, row| {
+                const x = sample[0];
+                const n = sample[1];
+                const p = x / n;
+                const se = @sqrt(p * (1 - p) / n);
+                const width = 1.959963984540054 * se + (if (correct) 0.5 / n else @as(f64, 0));
+                const estimate = result.estimates[row];
+                try t.expectApproxEqAbs(p, estimate.estimate.?, 2e-12);
+                try t.expectApproxEqAbs(se, estimate.se.?, 2e-12);
+                try t.expectApproxEqAbs(@max(0, p - width), estimate.limits.lower.?, 2e-12);
+                try t.expectApproxEqAbs(@min(1, p + width), estimate.limits.upper.?, 2e-12);
+                const cp = result.binomial_limits[row].?;
+                if (x == 0) try t.expectEqual(@as(?f64, 0), cp.lower) else try t.expectApproxEqAbs(@as(f64, 0.975), stableCdf(@intFromFloat(x - 1), @intFromFloat(n), cp.lower.?), 2e-10);
+                if (x == n) try t.expectEqual(@as(?f64, 1), cp.upper) else try t.expectApproxEqAbs(@as(f64, 0.025), stableCdf(@intFromFloat(x), @intFromFloat(n), cp.upper.?), 2e-10);
+            }
+            const p1 = cells[col] / n1;
+            const p2 = cells[col + 2] / n2;
+            const se = @sqrt(p1 * (1 - p1) / n1 + p2 * (1 - p2) / n2);
+            const width = 1.959963984540054 * se + (if (correct) (1 / n1 + 1 / n2) / 2 else @as(f64, 0));
+            const difference = result.estimates[3];
+            try t.expectApproxEqAbs(p1 - p2, difference.estimate.?, 2e-12);
+            try t.expectApproxEqAbs(se, difference.se.?, 2e-12);
+            try t.expectApproxEqAbs(@max(-1, p1 - p2 - width), difference.limits.lower.?, 2e-12);
+            try t.expectApproxEqAbs(@min(1, p1 - p2 + width), difference.limits.upper.?, 2e-12);
+        }
+    };
+    try t.expect(!diagnostics.hasErrors());
+}
+
+// Wilson limits are obtained directly from the quadratic score equation.
+fn referenceWilson(p: f64, n: f64, z: f64) [2]f64 {
+    const den = 1 + z * z / n;
+    const center = (p + z * z / (2 * n)) / den;
+    const width = z * @sqrt(p * (1 - p) / n + z * z / (4 * n * n)) / den;
+    return .{ @max(0, center - width), @min(1, center + width) };
+}
+
+test "FREQ009 independent Agresti Caffo Hauck Anderson and Newcombe formulas" {
+    const cases = [_][4]f64{ .{ 12, 8, 5, 25 }, .{ 0, 10, 3, 17 }, .{ 10, 0, 0, 20 }, .{ 1, 1, 7, 23 } };
+    const z: f64 = 1.959963984540054;
+    for (cases) |cells| for ([_]risk.Column{ .first, .second }) |column| {
+        const col: usize = if (column == .first) 0 else 1;
+        const n1 = cells[0] + cells[1];
+        const n2 = cells[2] + cells[3];
+        const p1 = cells[col] / n1;
+        const p2 = cells[col + 2] / n2;
+        const d = p1 - p2;
+        const q1 = (cells[col] + 1) / (n1 + 2);
+        const q2 = (cells[col + 2] + 1) / (n2 + 2);
+        const ac_width = z * @sqrt(q1 * (1 - q1) / (n1 + 2) + q2 * (1 - q2) / (n2 + 2));
+        // The prose specifies adding a success AND a failure to each sample;
+        // printed p.3178's q1*(1-q2) is a typographical inconsistency with that
+        // construction. Use each independent binomial's own variance.
+        const ha_width = 1 / (2 * @min(n1, n2)) + z * @sqrt(p1 * (1 - p1) / (n1 - 1) + p2 * (1 - p2) / (n2 - 1));
+        const w1 = referenceWilson(p1, n1, z);
+        const w2 = referenceWilson(p2, n2, z);
+        const expected = [_][2]f64{
+            .{ @max(-1, q1 - q2 - ac_width), @min(1, q1 - q2 + ac_width) },
+            .{ @max(-1, d - ha_width), @min(1, d + ha_width) },
+            .{ d - @sqrt((p1 - w1[0]) * (p1 - w1[0]) + (w2[1] - p2) * (w2[1] - p2)), d + @sqrt((w1[1] - p1) * (w1[1] - p1) + (p2 - w2[0]) * (p2 - w2[0])) },
+        };
+        for ([_]risk.DifferenceMethod{ .agresti_caffo, .hauck_anderson, .newcombe }, expected) |method, want| {
+            const got = try risk.differenceLimits(.{ .cells = cells }, column, 0.05, method, false, true);
+            try t.expectApproxEqAbs(want[0], got.lower.?, 2e-12);
+            try t.expectApproxEqAbs(want[1], got.upper.?, 2e-12);
+        }
+    };
+    const singleton = try risk.differenceLimits(.{ .cells = .{ 1, 0, 3, 17 } }, .first, 0.05, .hauck_anderson, false, true);
+    try t.expectEqual(@as(?f64, null), singleton.lower);
+    try t.expectEqual(@as(?f64, null), singleton.upper);
+}
+
+// At a score-interval endpoint, solve the defining variance equation for the
+// nuisance p2 (a quadratic), then test the independent likelihood score cubic.
+// This verifies both the constrained MLE and inversion without calling the
+// production constrainedFit/differenceScore to generate the expected result.
+test "FREQ009 MN and Mee endpoints satisfy likelihood and score equations" {
+    const z2: f64 = 1.959963984540054 * 1.959963984540054;
+    const cells = [_]f64{ 12, 8, 5, 25 };
+    for ([_]risk.Column{ .first, .second }) |column| for ([_]bool{ false, true }) |bias| {
+        const col: usize = if (column == .first) 0 else 1;
+        const x1 = cells[col];
+        const x2 = cells[col + 2];
+        const n1: f64 = 20;
+        const n2: f64 = 30;
+        const observed = x1 / n1 - x2 / n2;
+        const interval = try risk.differenceLimits(.{ .cells = cells }, column, 0.05, .miettinen_nurminen, false, bias);
+        for ([_]f64{ interval.lower.?, interval.upper.? }) |delta| {
+            const scale: f64 = if (bias) 50.0 / 49.0 else 1;
+            const variance = (observed - delta) * (observed - delta) / (z2 * scale);
+            const aa = 1 / n1 + 1 / n2;
+            const bb = (1 - 2 * delta) / n1 + 1 / n2;
+            const cc = delta * (1 - delta) / n1 - variance;
+            const disc = bb * bb + 4 * aa * cc;
+            try t.expect(disc >= 0);
+            var found = false;
+            for ([_]f64{ -1, 1 }) |sign| {
+                const p2 = (bb + sign * @sqrt(disc)) / (2 * aa);
+                const p1 = p2 + delta;
+                if (p1 <= 0 or p1 >= 1 or p2 <= 0 or p2 >= 1) continue;
+                const score = (x1 - n1 * p1) * p2 * (1 - p2) + (x2 - n2 * p2) * p1 * (1 - p1);
+                // Strict concavity of the binomial log likelihood makes its
+                // interior zero the unique maximum. Cubic residual tolerance
+                // is scaled to counts, allowing cancellation in the quadratic.
+                if (@abs(score) < 2e-10) found = true;
+            }
+            try t.expect(found);
+        }
+    };
+}
+
+test "FREQ009 common MH risk difference and Sato variance independent sums" {
+    var arena = std.heap.ArenaAllocator.init(t.allocator);
+    defer arena.deinit();
+    const tables = [_]risk.Table2x2{ .{ .cells = .{ 12, 8, 5, 25 } }, .{ .cells = .{ 0, 10, 3, 17 } } };
+    var sum_w: f64 = 0;
+    var sum_wd: f64 = 0;
+    var sum_p: f64 = 0;
+    var sum_q: f64 = 0;
+    for (tables) |table| {
+        const c = table.cells;
+        const n1 = c[0] + c[1];
+        const n2 = c[2] + c[3];
+        const n = n1 + n2;
+        sum_w += n1 * n2 / n;
+        sum_wd += (c[0] * n2 - c[2] * n1) / n;
+        sum_p += (n1 * n1 * c[2] - n2 * n2 * c[0] + n1 * n2 * (n2 - n1) / 2) / (n * n);
+        sum_q += (c[0] * c[3] + c[2] * c[1]) / (2 * n);
+    }
+    const estimate = sum_wd / sum_w;
+    const variance = (estimate * sum_p + sum_q) / (sum_w * sum_w);
+    const actual = (try @import("freq_stratified_risk.zig").commonDifference(arena.allocator(), &tables, .mantel_haenszel, .{})).?;
+    try t.expectApproxEqAbs(estimate, actual.value, 2e-12);
+    try t.expectApproxEqAbs(variance, actual.variance.?, 2e-12);
+    try t.expectApproxEqAbs(estimate / @sqrt(variance), actual.z.?, 2e-12);
+    try t.expectApproxEqAbs(erfc(@abs(estimate) / @sqrt(2 * variance)), actual.p_two.?, 2e-12);
+    try t.expectApproxEqAbs(estimate - 1.959963984540054 * @sqrt(variance), actual.limits.lower.?, 2e-12);
+    try t.expectApproxEqAbs(estimate + 1.959963984540054 * @sqrt(variance), actual.limits.upper.?, 2e-12);
+    try t.expectEqual(@as(usize, 2), actual.used);
+    try t.expectApproxEqAbs(@as(f64, 1), actual.weights[0] + actual.weights[1], 2e-12);
 }

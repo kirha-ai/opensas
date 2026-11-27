@@ -1,12 +1,13 @@
 /* STAT-FREQ-001: FREQ — Data input, variable roles, and basic options
  * Source: S154 / Chapter 47 / `PROC FREQ Statement` (PDF pp. 3082–3084); S154 / Chapter 47 / `BY Statement` (PDF pp. 3084–3085); S154 / Chapter 47 / `WEIGHT Statement` (PDF pp. 3157–3158); S154 / Chapter 47 / `Inputting Frequency Counts` (PDF pp. 3158–3159); S154 / Chapter 47 / `Grouping with Formats` (PDF pp. 3159–3160); S154 / Chapter 47 / `Missing Values` (PDF pp. 3160–3162).
  * Discriminates: Verified default procedure context; explicit statements: WEIGHT
- * Shared original case: STAT-FREQ-001/003/006/008 documented_feature and
+ * Shared original case: STAT-FREQ-001/003/006/008/009 documented_feature and
  * STAT-FREQ-002 documented_default. Executable bodies and full expected
  * outputs are identical except FREQ002's final RUN/QUIT whitespace.
  * Additional provenance: Chapter 47 Getting Started pp. 3072-3081 (002),
  * TABLES pp. 3106-3154 (003), Measures of Association pp. 3170-3180 (006),
- * Sensitivity and Specificity p. 3188 (008). Their independent numerical
+ * Sensitivity and Specificity p. 3188 (008), Risks and Risk Differences
+ * pp. 3188-3199 (009). Their independent numerical
  * checks remain in freq_persistence_tests.zig; this shared published example
  * alone does not exercise every option in those ticket families.
  */
