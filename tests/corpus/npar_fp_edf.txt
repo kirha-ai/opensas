@@ -1,0 +1,18 @@
+# corpus assertions
+words The NPAR1WAY Procedure Kolmogorov-Smirnov Two-Sample Test (Asymptotic) KS 0.333333 D 0.666667 KSa 0.816497 Pr > KSa 0.5176 D+ 0.666667 Pr > D+ 0.2636 D- 0.000000 Pr > D- 1.0000 The NPAR1WAY Procedure Fligner-Policello Test Difference (B - A) Z Pr > Z Pr > |Z| 6.0000 1.6641 0.0480 0.0961
+stderr-count 0 ERROR:
+stderr-count 0 WARNING:
+stderr-count 1 Name:       KS2Stats
+stderr-count 1 Name:       FPTest
+stderr-count 1 Name:       FPBoxPlot
+stderr-count 1 Name:       EDFPlot
+stderr-count 2 NOTE: SVG graphic written to
+svg-count 2
+svg-has 1 data-kind="fpboxplot"
+svg-count-text 1 2 class="score-box"
+svg-count-text 1 6 class="score-data"
+svg-has 1 Placement
+svg-has 2 data-kind="edfplot"
+svg-count-text 2 2 class="edf-line"
+svg-count-text 2 10 class="edf-data"
+svg-has 2 Cumulative Proportion

@@ -57,15 +57,20 @@ fn x(group: usize, count: usize) f64 {
     return 90 + 570 * (@as(f64, @floatFromInt(group)) + 0.5) / @as(f64, @floatFromInt(count));
 }
 pub fn render(a: A, scores: []const f64, groups: []const usize, labels: []const []const u8, response_name: []const u8, class_name: []const u8, probability: ?f64, by_label: []const u8) ![]const u8 {
+    return renderNamed(a, scores, groups, labels, response_name, class_name, probability, by_label, "wilcoxonboxplot", "Distribution of Wilcoxon Scores", "Score", "Pr > ChiSq");
+}
+pub fn renderNamed(a: A, scores: []const f64, groups: []const usize, labels: []const []const u8, response_name: []const u8, class_name: []const u8, probability: ?f64, by_label: []const u8, kind: []const u8, title_prefix: []const u8, axis: []const u8, probability_label: []const u8) ![]const u8 {
     const boxes = try summarize(a, scores, groups, labels.len);
     var maximum: f64 = 1;
     for (scores) |score| maximum = @max(maximum, score);
-    const ymax = @ceil(maximum / 10) * 10;
-    const title = try std.fmt.allocPrint(a, "Distribution of Wilcoxon Scores for {s}", .{response_name});
+    const ymax = if (std.mem.eql(u8, kind, "fpboxplot")) @ceil(maximum) else @ceil(maximum / 10) * 10;
+    const title = try std.fmt.allocPrint(a, "{s} for {s}", .{ title_prefix, response_name });
     var out: std.Io.Writer.Allocating = .init(a);
     errdefer out.deinit();
     const w = &out.writer;
-    try w.writeAll("<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"720\" height=\"470\" viewBox=\"0 0 720 470\" role=\"img\" data-kind=\"wilcoxonboxplot\"><title>");
+    try w.writeAll("<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"720\" height=\"470\" viewBox=\"0 0 720 470\" role=\"img\" data-kind=\"");
+    try svg.escaped(w, kind);
+    try w.writeAll("\"><title>");
     try svg.escaped(w, title);
     try w.writeAll("</title><rect width=\"100%\" height=\"100%\" fill=\"white\"/><style>text{font:13px sans-serif;fill:#243448}.whisker,.median{stroke:#3766b0;stroke-width:1.4}.box{fill:#dae2ed;stroke:#555}.outlier{fill:white;stroke:#555}.mean{fill:none;stroke:#3766b0}</style><text x=\"360\" y=\"27\" text-anchor=\"middle\" font-weight=\"bold\">");
     try svg.escaped(w, title);
@@ -77,7 +82,9 @@ pub fn render(a: A, scores: []const f64, groups: []const usize, labels: []const 
         const yy = y(value, ymax);
         try w.print("<line x1=\"90\" x2=\"660\" y1=\"{d}\" y2=\"{d}\" stroke=\"#dce2e8\"/><text x=\"80\" y=\"{d}\" text-anchor=\"end\">{d:.1}</text>", .{ yy, yy, yy + 4, value });
     }
-    try w.writeAll("<path d=\"M90 70V390H660\" fill=\"none\" stroke=\"#87939e\"/><text transform=\"translate(28 230) rotate(-90)\" text-anchor=\"middle\">Score</text><text x=\"375\" y=\"449\" text-anchor=\"middle\">");
+    try w.writeAll("<path d=\"M90 70V390H660\" fill=\"none\" stroke=\"#87939e\"/><text transform=\"translate(28 230) rotate(-90)\" text-anchor=\"middle\">");
+    try svg.escaped(w, axis);
+    try w.writeAll("</text><text x=\"375\" y=\"449\" text-anchor=\"middle\">");
     try svg.escaped(w, class_name);
     try w.writeAll("</text>");
     const half = @min(@as(f64, 25), 190 / @as(f64, @floatFromInt(labels.len)));
@@ -99,7 +106,9 @@ pub fn render(a: A, scores: []const f64, groups: []const usize, labels: []const 
     // while only box summaries and outliers are visible (matching Figure90.7).
     for (scores, groups, 0..) |score, g, i| try w.print("<circle class=\"score-data\" display=\"none\" data-index=\"{d}\" data-group=\"{d}\" data-score=\"{d}\" cx=\"{d}\" cy=\"{d}\"/>", .{ i, g, score, x(g, labels.len), y(score, ymax) });
     if (probability) |p| {
-        try w.writeAll("<text x=\"655\" y=\"435\" text-anchor=\"end\">Pr &gt; ChiSq ");
+        try w.writeAll("<text x=\"655\" y=\"435\" text-anchor=\"end\">");
+        try svg.escaped(w, probability_label);
+        try w.writeAll(" ");
         if (p < 0.0001) try w.writeAll("&lt;.0001") else try w.print("{d:.4}", .{p});
         try w.writeAll("</text>");
     }

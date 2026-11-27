@@ -67,6 +67,10 @@ pub const Edf = struct {
     cma: f64,
     cm_components: []f64,
     d: ?f64,
+    d_plus: ?f64 = null,
+    d_minus: ?f64 = null,
+    d_plus_p: ?f64 = null,
+    d_minus_p: ?f64 = null,
     ks_p: ?f64,
     kuiper: ?f64,
     kuiper_scaled: ?f64,
@@ -252,12 +256,22 @@ fn edf(a: A, values: []const f64, groups: []const usize, counts: []const usize, 
     var plus: f64 = 0;
     var minus: f64 = 0;
     var pooled_count: usize = 0;
+    const Entry = struct { value: f64, group: usize, index: usize };
+    const entries = try a.alloc(Entry, values.len);
+    for (values, groups, 0..) |value, group, index| entries[index] = .{ .value = value, .group = group, .index = index };
+    std.mem.sort(Entry, entries, {}, struct {
+        fn less(_: void, l: Entry, r: Entry) bool {
+            return l.value < r.value or (l.value == r.value and l.index < r.index);
+        }
+    }.less);
+    var cursor: usize = 0;
     for (ranked.groups) |tie| {
         var first_index: ?usize = null;
-        for (values, groups, 0..) |v, g, i| if (v == tie.value) {
-            cumulative[g] += 1;
-            if (first_index == null) first_index = i;
-        };
+        while (cursor < entries.len and entries[cursor].value == tie.value) : (cursor += 1) {
+            const entry = entries[cursor];
+            cumulative[entry.group] += 1;
+            if (first_index == null) first_index = entry.index;
+        }
         pooled_count += tie.count;
         const pooled = num(pooled_count) / n;
         var squared: f64 = 0;
@@ -287,6 +301,11 @@ fn edf(a: A, values: []const f64, groups: []const usize, counts: []const usize, 
     var result = Edf{ .at_max = at_max, .deviations = deviations, .pooled_at_max = pooled_at_max, .max_index = max_index, .max_value = max_value, .ks = @sqrt(maximum / n), .ksa = @sqrt(maximum), .cm = cma / n, .cma = cma, .cm_components = components, .d = null, .ks_p = null, .kuiper = null, .kuiper_scaled = null, .kuiper_p = null, .kuiper_deviations = .{ plus, minus } };
     if (counts.len == 2) {
         result.d = @max(plus, minus);
+        result.d_plus = plus;
+        result.d_minus = minus;
+        const effective = num(counts[0]) * num(counts[1]) / n;
+        result.d_plus_p = @exp(-2 * plus * plus * effective);
+        result.d_minus_p = @exp(-2 * minus * minus * effective);
         result.ks_p = kolmogorovTail(result.ksa);
         result.kuiper = plus + minus;
         result.kuiper_scaled = (plus + minus) * @sqrt(num(counts[0]) * num(counts[1]) / n);
@@ -343,4 +362,5 @@ test {
     _ = @import("npar1way_stats_tests.zig");
     _ = @import("npar1way_ties_tests.zig");
     _ = @import("npar1way_scale_tests.zig");
+    _ = @import("npar1way_edf_tests.zig");
 }
