@@ -26,12 +26,14 @@ pub const glmmod = @import("stat/glmmod.zig");
 pub const logistic = @import("stat/logistic.zig");
 pub const npar1way = @import("stat/npar1way.zig");
 pub const power = @import("stat/power.zig");
+pub const mixed = @import("stat/mixed.zig");
 pub const sgscatter = @import("stat/sgscatter.zig");
 pub const proc = @import("proc.zig");
 pub const macro = @import("macro.zig");
 pub const sql = @import("sql.zig");
 
 test {
+    _ = @import("stat/mixed.zig");
     _ = @import("stat/npar1way_stats.zig");
     _ = @import("stat/npar1way.zig");
     _ = @import("stat/power.zig");

@@ -1,0 +1,4 @@
+# corpus assertions
+words
+stderr-count 1 PROC MIXED: model estimation is not implemented
+stderr-count 1 ERROR
