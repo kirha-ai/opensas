@@ -12,6 +12,10 @@ Explicit user resume. Confirmed working branch `feat/stat/batch-4`, base `31356c
 - dev6: STAT-COMMON-017; `/Users/thomas/kirha/opensas-dev6`; branch `codex/stat-b4-dev6`; assigned 2026-11-27T13:42:13+00:00; implementation deadline 2026-11-27T14:27:13+00:00. Original README/cases and cited physical PDF pages required before edits.
 - dev7: STAT-COMMON-018; `/Users/thomas/kirha/opensas-dev7`; branch `codex/stat-b4-dev7`; assigned 2026-11-27T13:42:13+00:00; implementation deadline 2026-11-27T14:27:13+00:00. Original README/cases and cited physical PDF pages required before edits.
 
+### Rolling assignment — MIXED-001 prerequisite
+
+FREQ012 partial integrated from `c2977266`; original318/314-token layout differences remain PARK, final batch suites pending. dev5 now owns existing STAT-MIXED-001 on retained `opensas-dev5`, new branch `codex/stat-b4-mixed-dev5`, assigned 2026-11-27T14:41:14+00:00, deadline 2026-11-27T15:26:14+00:00. This dispatch implements the GLM007 original's in-repository MIXED prerequisite. Scope is declarations/input/BY/ID/WEIGHT and concrete model/result interfaces; MIXED003/002 will be assigned to available slots for model structure and computation. Missing computations must stay loud, not return stub success.
+
 ### Final repaired integration receipt (2026-11-27)
 
 Exact tested and pushed SHA `cd3e4fda80676e0835900ba1f5042f794a950097`: whole oracle absent; `zig build gate -j2 --summary all` direct0 (**1917/1917 unit,2352/2352 corpus,11/11 programs**), install direct0, independent supplemental direct0 (**1113/1113**). Oracle restored unchanged. The prior single stale-guard failure is resolved by e1647046 and was not suppressed or counted green. Current installed CLI reran all10 originals; complete tokens/status results are below. Generated graph bytes match the visually inspected versions. Pushed to `feat/stat/batch-4`; no PR created.
@@ -9149,7 +9153,7 @@ Source: S154, Chapter 84, `The MIXED Procedure`, PDF pp. 6613–6810. Tasks in t
 
 <a id="stat-mixed-001"></a>
 
-### [TODO] STAT-MIXED-001 — MIXED — Data input, variable roles, and basic options
+### [DOING @dev5] STAT-MIXED-001 — MIXED — Data input, variable roles, and basic options
 
 - Source: S154 / Chapter 84 / `PROC MIXED Statement` (PDF pp. 6626–6638); S154 / Chapter 84 / `BY Statement` (PDF pp. 6638–6639); S154 / Chapter 84 / `ID Statement` (PDF pp. 6645–6646); S154 / Chapter 84 / `WEIGHT Statement` (PDF pp. 6694–6695).
 - Scope: Integrate PROC MIXED declarations, basic options, defaults, and execution boundaries; this ticket establishes parameter objects and result interfaces, while later feature tickets implement model-, algorithm-, and output-specific options. Also implement BY; ID; WEIGHT; apply this procedure's rules for missing values, variable roles, and observation selection.
