@@ -9,9 +9,11 @@ const design = @import("glm_design.zig");
 const coded = @import("design_matrix.zig");
 const estimability = @import("glm_estimability.zig");
 const A = std.mem.Allocator;
-pub const Request = struct { effect: usize, e: bool = false, stderr: bool = false, singular: f64 = 1e-4 };
+const eq = std.ascii.eqlIgnoreCase;
+const inference = @import("lsmeans_inference.zig");
+pub const Request = struct { effect: usize, e: bool = false, stderr: bool = false, singular: f64 = 1e-4, pdiff: bool = false, cl: bool = false, alpha: f64 = 0.05, adjust: inference.Adjustment = .none, adjust_explicit: bool = false };
 pub const Mean = struct { levels: []const ?usize, coefficients: []const f64, inference: estimability.Result };
-pub const Table = struct { effect: []const u8, classes: []const coded.Class, columns: []const coded.Column, means: []const Mean };
+pub const Table = struct { effect: []const u8, classes: []const coded.Class, columns: []const coded.Column, means: []const Mean, comparisons: []const inference.Difference = &.{}, mean_limits: []const inference.Interval = &.{}, df_error: usize = 0 };
 
 /// Parses only the LSMEANS statement, after MODEL has resolved its effects.
 pub fn read(cx: proc.ProcCtx, tokens: []const lex.Token, spec: parse.Spec, effects: []const parse.Effect, requests: *std.ArrayList(Request)) diag.Error!void {
@@ -44,7 +46,7 @@ pub fn read(cx: proc.ProcCtx, tokens: []const lex.Token, spec: parse.Spec, effec
         try requests.append(cx.arena, .{ .effect = found orelse return cx.diags.fail(error.ParseError, tokens[0].line, "PROC GLM: LSMEANS effect is not in MODEL", .{}) });
     }
     if (requests.items.len == first) return cx.diags.fail(error.ParseError, tokens[0].line, "PROC GLM: LSMEANS requires effects", .{});
-    var options: Request = .{ .effect = 0 };
+    var options: Request = .{ .effect = 0, .alpha = spec.alpha };
     if (i < tokens.len) i += 1;
     while (i < tokens.len) {
         const token = tokens[i];
@@ -55,17 +57,48 @@ pub fn read(cx: proc.ProcCtx, tokens: []const lex.Token, spec: parse.Spec, effec
         } else if (std.ascii.eqlIgnoreCase(token.text, "stderr")) {
             options.stderr = true;
             i += 1;
-        } else if (std.ascii.eqlIgnoreCase(token.text, "singular")) {
-            if (i + 2 >= tokens.len or tokens[i + 1].tag != .eq or tokens[i + 2].tag != .number) return cx.diags.fail(error.ParseError, token.line, "PROC GLM: LSMEANS SINGULAR requires a number", .{});
-            options.singular = std.fmt.parseFloat(f64, tokens[i + 2].text) catch return cx.diags.fail(error.ParseError, token.line, "PROC GLM: invalid LSMEANS SINGULAR value", .{});
-            if (!std.math.isFinite(options.singular) or options.singular <= 0 or options.singular >= 1) return cx.diags.fail(error.ParseError, token.line, "PROC GLM: LSMEANS SINGULAR must be between zero and one", .{});
+        } else if (eq(token.text, "cl")) {
+            options.cl = true;
+            i += 1;
+        } else if (eq(token.text, "pdiff") or eq(token.text, "diff")) {
+            options.pdiff = true;
+            i += 1;
+            if (i < tokens.len and tokens[i].tag == .eq) {
+                i += 1;
+                if (i == tokens.len or tokens[i].tag != .name) return cx.diags.fail(error.ParseError, token.line, "PROC GLM: PDIFF requires a comparison type", .{});
+                if (!eq(tokens[i].text, "all")) {
+                    for ([_][]const u8{ "control", "controll", "controlu", "anom" }) |name| if (eq(tokens[i].text, name)) return proc.failGap(cx.diags, token.line, "PROC GLM: PDIFF={s} is not implemented", .{tokens[i].text});
+                    return cx.diags.fail(error.ParseError, token.line, "PROC GLM: invalid PDIFF type", .{});
+                }
+                if (!options.adjust_explicit) options.adjust = .tukey;
+                i += 1;
+            }
+        } else if (eq(token.text, "adjust")) {
+            if (i + 2 >= tokens.len or tokens[i + 1].tag != .eq or tokens[i + 2].tag != .name) return cx.diags.fail(error.ParseError, token.line, "PROC GLM: ADJUST requires a method", .{});
+            const value = tokens[i + 2].text;
+            options.adjust = if (eq(value, "t")) .none else if (eq(value, "bon")) .bon else if (eq(value, "sidak")) .sidak else if (eq(value, "tukey")) .tukey else {
+                for ([_][]const u8{ "dunnett", "nelson", "scheffe", "simulate", "sim", "smm", "gt2" }) |name| if (eq(value, name)) return proc.failGap(cx.diags, token.line, "PROC GLM: ADJUST={s} is not implemented", .{value});
+                return cx.diags.fail(error.ParseError, token.line, "PROC GLM: invalid ADJUST method", .{});
+            };
+            options.adjust_explicit = true;
+            options.pdiff = true;
             i += 3;
-        } else return proc.failGap(cx.diags, token.line, "PROC GLM: LSMEANS option {s} is not implemented", .{token.text});
+        } else if (eq(token.text, "alpha") or eq(token.text, "singular")) {
+            if (i + 2 >= tokens.len or tokens[i + 1].tag != .eq or tokens[i + 2].tag != .number) return cx.diags.fail(error.ParseError, token.line, "PROC GLM: LSMEANS numeric option requires =number", .{});
+            const value = std.fmt.parseFloat(f64, tokens[i + 2].text) catch return cx.diags.fail(error.ParseError, token.line, "PROC GLM: invalid LSMEANS numeric option", .{});
+            if (!std.math.isFinite(value) or value <= 0 or value >= 1) return cx.diags.fail(error.ParseError, token.line, "PROC GLM: LSMEANS ALPHA/SINGULAR must be between zero and one", .{});
+            if (eq(token.text, "alpha")) options.alpha = value else options.singular = value;
+            i += 3;
+        } else {
+            for ([_][]const u8{ "at", "bylevel", "cov", "e", "etype", "lines", "linestable", "noprint", "obsmargins", "om", "out", "plot", "plots", "slice", "tdiff" }) |name| if (eq(token.text, name)) return proc.failGap(cx.diags, token.line, "PROC GLM: LSMEANS option {s} is not implemented", .{token.text});
+            return cx.diags.fail(error.ParseError, token.line, "PROC GLM: invalid LSMEANS option {s}", .{token.text});
+        }
     }
+    if (options.pdiff and options.stderr) return proc.failGap(cx.diags, 0, "PROC GLM: combined PDIFF and STDERR presentation is not implemented", .{});
     for (requests.items[first..]) |*request| {
-        request.e = options.e;
-        request.stderr = options.stderr;
-        request.singular = options.singular;
+        const effect = request.effect;
+        request.* = options;
+        request.effect = effect;
     }
 }
 
@@ -121,10 +154,18 @@ pub fn compute(cx: proc.ProcCtx, spec: parse.Spec, d: design.Design, request: Re
         }
         try means.append(a, .{ .levels = target.class_values, .coefficients = l, .inference = try estimability.evaluate(model, l, request.singular) });
     }
-    return .{ .effect = name, .classes = matrix.classes, .columns = matrix.columns, .means = means.items };
+    if (request.pdiff and means.items.len < 2) return proc.failGap(cx.diags, 0, "PROC GLM: LSMEANS comparisons need at least two levels", .{});
+    if (request.pdiff and request.adjust == .tukey and means.items.len > 2) return proc.failGap(cx.diags, 0, "PROC GLM: Tukey studentized-range inference for more than two LS-means is not implemented", .{});
+    const limits = try a.alloc(inference.Interval, means.items.len);
+    for (means.items, limits) |mean, *limit| limit.* = if (request.cl) inference.interval(mean.inference, df_error, request.alpha, means.items.len, .none) catch return proc.failGap(cx.diags, 0, "PROC GLM: LSMEANS confidence critical value is outside the numerical domain", .{}) else .{};
+    var differences: std.ArrayList(inference.Difference) = .empty;
+    if (request.pdiff) for (means.items, 0..) |left, i| for (i + 1..means.items.len) |j| {
+        try differences.append(a, inference.difference(a, model, left.coefficients, means.items[j].coefficients, i, j, means.items.len, request.alpha, request.adjust, request.singular, request.cl) catch return proc.failGap(cx.diags, 0, "PROC GLM: LS-means difference inference is outside the implemented domain", .{}));
+    };
+    return .{ .effect = name, .classes = matrix.classes, .columns = matrix.columns, .means = means.items, .comparisons = differences.items, .mean_limits = limits, .df_error = df_error };
 }
 
-fn number(a: A, v: ?f64, decimals: usize) ![]const u8 {
+pub fn number(a: A, v: ?f64, decimals: usize) ![]const u8 {
     const value = v orelse return ".";
     return std.mem.trim(u8, try @import("../format.zig").apply(a, .{ .num = value }, try std.fmt.allocPrint(a, "32.{d}", .{decimals})), " ");
 }
@@ -132,6 +173,12 @@ pub fn render(cx: proc.ProcCtx, out: *std.ArrayList(u8), spec: parse.Spec, d: de
     const a = cx.arena;
     if (cx.listing_titles) |titles| try titles.emitTitles(a, out) else if (cx.graph_title) |title| try out.print(a, "\n{s}\n", .{title});
     try out.appendSlice(a, "\nThe GLM Procedure\nLeast Squares Means\n");
+    if (request.adjust != .none) try out.print(a, "Adjustment for Multiple Comparisons: {s}\n", .{switch (request.adjust) {
+        .none => "",
+        .bon => "Bonferroni",
+        .sidak => "Sidak",
+        .tukey => "Tukey-Kramer",
+    }});
     if (request.e) {
         try out.print(a, "\nCoefficients for {s} Least Square Means\n\n{s} Level\n", .{ table.effect, table.effect });
         for (table.classes, 0..) |class, c| {
@@ -154,6 +201,7 @@ pub fn render(cx: proc.ProcCtx, out: *std.ArrayList(u8), spec: parse.Spec, d: de
             try out.append(a, '\n');
         }
     }
+    if (request.pdiff or request.cl) return @import("glm_lsmeans_compare_render.zig").render(cx, out, spec, d, request, table);
     try out.append(a, '\n');
     for (table.classes, 0..) |class, c| if (table.means.len > 0 and table.means[0].levels[c] != null) try out.print(a, "{s} ", .{spec.input.ds.columns.items[class.column].name});
     try out.print(a, "{s} LSMEAN", .{spec.input.ds.columns.items[d.response].name});
@@ -265,7 +313,6 @@ test "COMMON009 LSMEANS parsing rejects invalid effects and unsupported options 
         "proc glm; class group h; model y=group; lsmeans; run;",
         "proc glm; class group h; model y=group; lsmeans group*; run;",
         "proc glm; class group h; model y=group; lsmeans group / singular=0; run;",
-        "proc glm; class group h; model y=group; lsmeans group / pdiff; run;",
         "proc glm; class group h; model y=group; lsmeans group / e=group; run;",
     }) |source| {
         try testing.expectError(error.ParseError, parse.parse(cx, try lex.tokenize(a, source, &diagnostics)));
@@ -387,4 +434,141 @@ test "COMMON009 MODEL bar is token-level ordered subset expansion" {
         try testing.expectError(error.ParseError, parse.parse(cx, try lex.tokenize(a, source, &diagnostics)));
         try testing.expect(diagnostics.list.items[diagnostics.list.items.len - 1].line > 0);
     }
+}
+
+test "STAT-COMMON-026 complete adjusted listing preserves fields and analytic two-level intervals" {
+    var arena = std.heap.ArenaAllocator.init(testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const helper = @import("glm_persistence_tests.zig");
+    var ds = try helper.data(a, "tests/corpus/stat_common026_adjusted_lsmeans.sas", "sample", &.{ "x", "z", "y", "group", "weight", "freq" }, &.{3}, 0);
+    try testing.expectEqual(@as(usize, 12), ds.rows.items.len);
+    var lib = Library.init(a);
+    try lib.put("sample", &ds);
+    var diagnostics = diag.Diagnostics.init(a);
+    const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &diagnostics };
+    const program = try helper.read(a, "tests/corpus/stat_common026_adjusted_lsmeans.sas");
+    const start = std.mem.indexOf(u8, program, "proc glm data=sample").?;
+    var out: std.ArrayList(u8) = .empty;
+    try @import("glm.zig").run(cx, &out, try lex.tokenize(a, program[start..], &diagnostics));
+    const contract = try helper.read(a, "tests/corpus/stat_common026_adjusted_lsmeans.txt");
+    const word_start = std.mem.indexOf(u8, contract, "words ").? + 6;
+    const end = std.mem.indexOfScalarPos(u8, contract, word_start, '\n').?;
+    var expected = std.mem.tokenizeAny(u8, contract[word_start..end], " \r\n\t");
+    var actual = std.mem.tokenizeAny(u8, out.items, " \r\n\t");
+    while (expected.next()) |word| try testing.expectEqualStrings(word, actual.next() orelse return error.TestUnexpectedResult);
+    try testing.expect(actual.next() == null);
+    try testing.expectEqual(@as(usize, 0), diagnostics.list.items.len);
+}
+
+test "STAT-COMMON-026 adjusted margins difference variance and intervals match rational ANCOVA" {
+    var arena = std.heap.ArenaAllocator.init(testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var ds = try @import("glm_persistence_tests.zig").data(a, "tests/corpus/stat_common026_adjusted_lsmeans.sas", "sample", &.{ "x", "z", "y", "group", "weight", "freq" }, &.{3}, 0);
+    var lib = Library.init(a);
+    try lib.put("sample", &ds);
+    var diagnostics = diag.Diagnostics.init(a);
+    const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &diagnostics };
+    const r = try analyzed(cx, "proc glm; class group; model y=group x; lsmeans group / pdiff cl adjust=tukey; run;");
+    var fit = try @import("glm.zig").fitDesign(cx, r.spec, r.d);
+    defer fit.deinit(a);
+    const table = try compute(cx, r.spec, r.d, r.spec.lsmeans[0], fit.model.fit.mse, fit.model.fit.df_error);
+    // Within-group Sxx=35,Sxy=119/2 -> slope17/10. Means at globalx=13/2:
+    // A=17/2+3*17/10=68/5, B=64/3-3*17/10=487/30.
+    const mse: f64 = 581.0 / 540.0;
+    const mean_factor: f64 = 89.0 / 210.0;
+    const diff_factor: f64 = 143.0 / 105.0;
+    try testing.expectApproxEqAbs(mse, fit.model.fit.mse, 1e-11);
+    for (table.means, [_]f64{ 68.0 / 5.0, 487.0 / 30.0 }, table.mean_limits) |mean, value, limits| {
+        try testing.expectApproxEqAbs(value, mean.inference.estimate.?, 1e-10);
+        try testing.expectApproxEqAbs(mean_factor, mean.inference.variance_factor.?, 1e-12);
+        // Independent t(9) .975 reference, with ordinary mean limits unadjusted.
+        const radius = 2.2621571627409915 * @sqrt(mse * mean_factor);
+        try testing.expectApproxEqAbs(value - radius, limits.lower.?, 1e-9);
+        try testing.expectApproxEqAbs(value + radius, limits.upper.?, 1e-9);
+    }
+    try testing.expectEqual(@as(usize, 1), table.comparisons.len);
+    const pair = table.comparisons[0];
+    try testing.expectApproxEqAbs(@as(f64, -79.0 / 30.0), pair.inference.estimate.?, 1e-10);
+    try testing.expectApproxEqAbs(diff_factor, pair.inference.variance_factor.?, 1e-12);
+    const radius = 2.2621571627409915 * @sqrt(mse * diff_factor);
+    try testing.expectApproxEqAbs(-79.0 / 30.0 - radius, pair.limits.lower.?, 1e-9);
+    try testing.expectApproxEqAbs(-79.0 / 30.0 + radius, pair.limits.upper.?, 1e-9);
+    try testing.expectEqual(pair.inference.p_value, pair.adjusted_p); // two levels: exact Tukey=t
+}
+
+test "STAT-COMMON-026 GLM applicability PDIFF defaults and conditional ALPHA are source specific" {
+    var arena = std.heap.ArenaAllocator.init(testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var lib = Library.init(a);
+    _ = try sample(a, &lib);
+    var diagnostics = diag.Diagnostics.init(a);
+    const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &diagnostics };
+    const bare = try analyzed(cx, "proc glm; class group; model y=group; lsmeans group /pdiff; run;");
+    try testing.expectEqual(inference.Adjustment.none, bare.spec.lsmeans[0].adjust);
+    const all = try analyzed(cx, "proc glm; class group; model y=group; lsmeans group /pdiff=all; run;");
+    try testing.expectEqual(inference.Adjustment.tukey, all.spec.lsmeans[0].adjust);
+    const override = try analyzed(cx, "proc glm; class group; model y=group; lsmeans group /adjust=t pdiff=all; run;");
+    try testing.expectEqual(inference.Adjustment.none, override.spec.lsmeans[0].adjust);
+    const implied = try analyzed(cx, "proc glm; class group; model y=group; lsmeans group /adjust=bon; run;");
+    try testing.expect(implied.spec.lsmeans[0].pdiff);
+    const alpha = try analyzed(cx, "proc glm alpha=.1; class group; model y=group; lsmeans group /alpha=.2; run;");
+    try testing.expectEqual(@as(f64, 0.2), alpha.spec.lsmeans[0].alpha);
+    try testing.expect(!alpha.spec.lsmeans[0].cl);
+    // Shared chapter permits omitted effects/ILINK/DF; GLM's own syntax doesnot.
+    for ([_][]const u8{ "proc glm; class group; model y=group; lsmeans; run;", "proc glm; class group; model y=group; lsmeans group /ilink; run;", "proc glm; class group; model y=group; lsmeans group /df=9; run;", "proc glm; class group; model y=group; lsmeans group /adjust=typo; run;" }) |source| {
+        diag.resetGap();
+        defer diag.resetGap();
+        var d = diag.Diagnostics.init(a);
+        try testing.expectError(error.ParseError, parse.parse(.{ .arena = a, .lib = &lib, .diags = &d }, try lex.tokenize(a, source, &d)));
+        try testing.expectEqual(@as(u8, 1), diag.exitCode(diag.gapHit(), d.hasErrors()));
+    }
+}
+
+test "STAT-COMMON-026 disconnected additive margins keep estimable differences" {
+    var arena = std.heap.ArenaAllocator.init(testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var ds = Dataset.init(a, "disconnected");
+    _ = try ds.addColumn("A", .char);
+    _ = try ds.addColumn("B", .char);
+    _ = try ds.addColumn("y", .num);
+    for ([_]f64{ 0, 2, 2, 4, 9, 11 }, 0..) |y, i| try ds.appendRow(&.{ .{ .str = if (i < 2) "a1" else if (i < 4) "a2" else "a3" }, .{ .str = if (i < 4) "b1" else "b2" }, .{ .num = y } });
+    var lib = Library.init(a);
+    try lib.put("disconnected", &ds);
+    var diagnostics = diag.Diagnostics.init(a);
+    const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &diagnostics };
+    const r = try analyzed(cx, "proc glm; class A B; model y=A B; lsmeans A /pdiff cl; run;");
+    // Three observed cell means have rank3; within-cell SS=6, df=3, MSE=2.
+    const table = try compute(cx, r.spec, r.d, r.spec.lsmeans[0], 2, 3);
+    try testing.expectEqual(@as(usize, 3), table.means.len);
+    try testing.expectEqual(@as(usize, 3), table.comparisons.len);
+    try testing.expectEqual(estimability.Status.nonestimable, table.means[0].inference.status);
+    try testing.expectEqual(estimability.Status.nonestimable, table.means[1].inference.status);
+    const diff = table.comparisons[0];
+    try testing.expectEqual(estimability.Status.estimable, diff.inference.status);
+    try testing.expectApproxEqAbs(@as(f64, -2), diff.inference.estimate.?, 1e-12);
+    try testing.expectApproxEqAbs(@as(f64, 1), diff.inference.variance_factor.?, 1e-12);
+    // Student t3 atsqrt2 has an independent elementary arctangent tail.
+    const probability = 1 - @as(f64, 2) / std.math.pi * (std.math.atan(@sqrt(@as(f64, 2.0 / 3.0))) + @sqrt(@as(f64, 6)) / 5);
+    try testing.expectApproxEqAbs(probability, diff.adjusted_p.?, 1e-12);
+    try testing.expectEqual(estimability.Status.nonestimable, table.comparisons[1].inference.status);
+    try testing.expect(table.comparisons[1].adjusted_p == null);
+}
+
+test "STAT-COMMON-026 GLM ALPHA without CL cannot alter or suppress requested probabilities" {
+    var arena = std.heap.ArenaAllocator.init(testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var lib = Library.init(a);
+    _ = try sample(a, &lib);
+    var diagnostics = diag.Diagnostics.init(a);
+    const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &diagnostics };
+    var plain: std.ArrayList(u8) = .empty;
+    var altered: std.ArrayList(u8) = .empty;
+    try @import("glm.zig").run(cx, &plain, try lex.tokenize(a, "proc glm; class group; model y=group; lsmeans group /pdiff; run;", &diagnostics));
+    try @import("glm.zig").run(cx, &altered, try lex.tokenize(a, "proc glm; class group; model y=group; lsmeans group /pdiff alpha=1e-20; run;", &diagnostics));
+    try testing.expectEqualStrings(plain.items, altered.items);
 }

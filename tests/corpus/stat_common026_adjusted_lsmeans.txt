@@ -1,0 +1,6 @@
+# corpus assertions
+# Two simultaneous CI endpoints use the exact two-level Tukey identity Q2=sqrt(2)*abs(t9).
+# Independent ANCOVA variance=11869/8100 and t9(.975)=2.2621571627409915 are proved in glm_lsmeans.zig.
+words The GLM Procedure Class Level Information Class Levels Values group 2 A B Number of Observations Read 12 Number of Observations Used 12 The GLM Procedure Dependent Variable: y Sum of Source DF Squares Mean Square F Value Pr > F Model 2 595.2333333 297.6166667 276.61 <.0001 Error 9 9.6833333 1.0759259 Corrected Total 11 604.9166667 R-Square Coeff Var Root MSE y Mean 0.983992 6.953755 1.037268 14.91667 Source DF Type I SS Mean Square F Value Pr > F group 1 494.0833333 494.0833333 459.22 <.0001 x 1 101.1500000 101.1500000 94.01 <.0001 Source DF Type III SS Mean Square F Value Pr > F group 1 5.0917249 5.0917249 4.73 0.0576 x 1 101.1500000 101.1500000 94.01 <.0001 The GLM Procedure Least Squares Means Adjustment for Multiple Comparisons: Tukey-Kramer H0:LSMean1= LSMean2 group y LSMEAN Pr > |t| A 13.6000000 0.0576 B 16.2333333 group y LSMEAN 95% Confidence Limits A 13.600000 12.072436 15.127564 B 16.233333 14.705770 17.760897 Least Squares Means for Effect group Difference Simultaneous 95% Between Confidence Limits for i j Means LSMean(i)-LSMean(j) 1 2 -2.633333 -5.371673 0.105006
+stderr-count 0 ERROR:
+stderr-count 0 WARNING:
