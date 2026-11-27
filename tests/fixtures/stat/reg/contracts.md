@@ -311,3 +311,55 @@ Wilks=59049/350170, Pillai=154141/175085, Hotelling=30440/6561,
 det(E^-1 H)=17161/59049 and Hotelling-Lawley denominator DF524/27.
 The tests check these identities and the published8-decimal statistics using
 only half a unit of printed precision. No seeded input is used as a golden.
+
+## Shared TEST and the REG consumer
+
+Chapter20 TEST (S154 physical pp.545–546) specifies effect tests for ICPHREG,
+LIFEREG, ORTHOREG, PLM, PROBIT, SURVEYPHREG and SURVEYREG (and RELIABILITY
+in SAS/QC). REG and GLM have different TEST statements. The REG consumer here
+follows physical pp.8598–8599 and does not accept HTYPE/DDF/CHISQ options.
+The shared effect API applies TypeIII by default, maps TypeI/II/III tests to
+Tests1/Tests2/Tests3 and coefficient displays to Coef, and retains procedure
+applicability, E/E1/EI/E2/EII/E3/EIII, INTERCEPT, fractional DDF/DF and missing
+DDF-list positions. An unavailable producer matrix is distinct from a supplied
+zero-rank matrix; it cannot be substituted by an empty or fabricated hypothesis.
+
+For real fitted beta, symmetric generalized covariance kernel G, scale s²,
+and supplied L beta=c, let T=L G L' and d=L beta-c. The shared engine checks
+estimability using the established COMMON009 orientation: alias[j*p+k] stores
+H transpose for H=G X'WX, so projected L_j=sum_k L_k*alias[j*p+k]. A reflexive
+g2 is sufficient; Moore-Penrose is not required. Each hypothesis row is
+standardized by sqrt(T_ii) before rank-revealing elimination, preserving results
+under arbitrary nonzero row scaling. The caller supplies both rank and
+estimability tolerances. Consistent redundant equations reduce rank; an
+inconsistent residual equation returns a distinct missing-inference status.
+
+```
+SS = d' T^- d
+Wald = SS/s²
+F = Wald/rank(T)
+p_F = I_(ddf/(ddf+Wald))(ddf/2,rank(T)/2)
+```
+
+The chi-square tail uses rank(T) degrees of freedom. Missing scale/denominator
+DF, nonestimability, zero-rank hypotheses and estimable zero SS remain distinct.
+For the actual four-row two-predictor fit beta=(10,3,-1), SSE=4 and SST=56,
+the joint slope test has SS52, F(2,1)=6.5, p=sqrt(1/14), and chi-square2
+survival exp(-6.5). DDF=4.7 changes the F probability to
+(4.7/(4.7+13))^(4.7/2), while leaving F and the chi-square result unchanged.
+The complex row 2*x-3*z=5 has variance factor113/18 and SS288/113; its
+F(1,1) tail is independently checked against the Cauchy arctangent formula.
+
+For x,z with crossproduct[[10,8],[8,10]], TypeI x tests the full-parameter
+function x+0.8z and gives SS48.4; TypeIII x tests x alone and gives SS32.4.
+The effect API evaluates these actual fitted-model hypotheses, rather than
+feeding every type the same result. A real aliased three-level CLASS design
+with observations(1,3),(4,6),(7,9) gives between-cell SS36, MSE2 and F(2,3)=9.
+Its two-row estimable contrast matrix, overall-mean intercept and coefficient
+report dimensions are checked under the actual ordered g2 fit. Column-order
+changes in an aliased regression preserve the estimable joint result.
+
+The complete deterministic COMMON031 original is retained as
+`persist_reg_common031_joint_linear_test.sas`; its expected contract contains
+all original SAS listing tokens, with whitespace normalization only and no
+numerical exemptions. New shared numerical/option contracts run as Zig tests.

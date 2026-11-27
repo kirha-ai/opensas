@@ -254,6 +254,15 @@ fn executePrepared(cx: proc.ProcCtx, out: *std.ArrayList(u8), spec: Spec, prepar
                 for (fit.leverage) |h| if (!(h < 1)) return proc.failGap(cx.diags, 0, "PROC REG: diagnostic listing for unit leverage is not implemented", .{});
                 try @import("reg_render.zig").observations(cx.arena, out, spec, model, input.y, fit);
             }
+            for (spec.tests) |test_spec| {
+                if (test_spec.statement_index != model.statement_index) continue;
+                const result = @import("linear_hypothesis.zig").evaluate(cx.arena, @import("linear_hypothesis.zig").fromRegression(diagnostics, model.singular), test_spec.rows, null) catch |err| {
+                    if (err == error.OutOfMemory) return err;
+                    return proc.failGap(cx.diags, 0, "PROC REG TEST: unsupported hypothesis covariance or rank calculation", .{});
+                };
+                if (result.status != .estimable or result.f == null) return proc.failGap(cx.diags, 0, "PROC REG TEST: nonestimable, inconsistent, zero-rank, or missing-inference hypothesis output is not implemented", .{});
+                if (!spec.noprint) try @import("reg_test.zig").render(cx.arena, out, model.label, spec.ds.columns.items[model.dependent].name, test_spec, result, fit.mse);
+            }
             if (model_index + 1 == spec.models.len or spec.models[model_index + 1].statement_index != model.statement_index) {
                 var first = model_index;
                 while (first > 0 and spec.models[first - 1].statement_index == model.statement_index) first -= 1;
@@ -440,6 +449,9 @@ pub const Session = struct {
 
     fn edit(self: *Session, cx: proc.ProcCtx, tokens: []const @import("../lexer.zig").Token, adding: bool) diag.Error!void {
         var selected = try self.current(cx);
+        for (self.spec.tests) |test_spec| for (selected.models) |model| {
+            if (test_spec.statement_index == model.statement_index) return proc.failGap(cx.diags, 0, "PROC REG: ADD/DELETE with active TEST is not implemented", .{});
+        };
         for (self.spec.mtests) |test_spec| for (selected.models) |model| {
             if (test_spec.statement_index == model.statement_index) return proc.failGap(cx.diags, 0, "PROC REG: ADD/DELETE with active MTEST is not implemented", .{});
         };
@@ -641,6 +653,7 @@ test "STAT-COMMON-004 weighted listing identifies weight without changing observ
 }
 
 test {
+    _ = @import("linear_hypothesis_tests.zig");
     _ = @import("reg_mtest_tests.zig");
     _ = @import("reg_selection_tests.zig");
     _ = @import("reg_restrict.zig");
