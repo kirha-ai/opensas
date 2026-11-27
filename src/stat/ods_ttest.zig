@@ -66,7 +66,11 @@ fn addCommon(cells: *std.ArrayList(Value), a: A, variable: []const u8, row: Row,
 
 pub fn publishNormal(cx: proc.ProcCtx, s: decl.Spec, g: tt.Group, analysis: tt.Analysis, comparison: ?two.Result) diag.Error!void {
     const capture = cx.capture orelse return;
-    if (!capture.wants("Statistics") and !capture.wants("ConfLimits") and !capture.wants("TTests") and !capture.wants("Equality")) return;
+    // A requested name that this design does not produce must remain unmatched:
+    // Capture.finish emits the SAS warning. Do not turn it into a schema gap.
+    const wants_test = capture.wants("TTests") and s.options.tost == null;
+    const wants_equality = capture.wants("Equality") and comparison != null;
+    if (!capture.wants("Statistics") and !capture.wants("ConfLimits") and !wants_test and !wants_equality) return;
     if (analysis.pair != null) return proc.failGap(cx.diags, s.line, "TTEST paired ODS dataset schemas are not verified", .{});
     const a = cx.arena;
     const name = s.input.ds.columns.items[analysis.column].name;
@@ -149,6 +153,81 @@ pub fn publishNormal(cx: proc.ProcCtx, s: decl.Spec, g: tt.Group, analysis: tt.A
 }
 
 const Testing = struct {
+    // Independently calculated at 70 decimal places by
+    // tests/fixtures/stat/ttest/reference.py from S154 pp.10621-10626.
+    // Every cell of all four requested datasets is checked, including blank
+    // strings and special ._ values. UMPU uses the mathematical solution, not
+    // the three discrepant SAS upper endpoints (which remain a ticket blocker).
+    fn completeOriginal(stats: *const @import("../dataset.zig").Dataset, limits: *const @import("../dataset.zig").Dataset, tests: *const @import("../dataset.zig").Dataset, equality: *const @import("../dataset.zig").Dataset) !void {
+        const missing = std.math.nan(f64);
+        const expected = [4][12]f64{
+            .{ 6, 85.8333333333333333333, 60.7747381007815410681, 110.891928565885125599, 23.8781629667499058776, 14.9049404030893774207, 58.5639165130867311886, 14.0857023636606677238, 53.6831236977216182038, 9.74821921059317263124, 43, 116 },
+            .{ 6, 93.6666666666666666667, 76.4141660403827386120, 110.919167292950594721, 16.4397891308455251325, 10.2618479309240194324, 40.3204567910959897867, 9.69781372800273567316, 36.9600975881003249106, 6.71151580825408206417, 71, 121 },
+            .{ missing, -7.83333333333333333333, -34.2038270481825641533, 18.5371603815158974866, 20.4991869757477617546, 14.3231313314478429861, 35.9747109184386830223, 13.9064983423993988299, 34.5702393828515526038, 11.8352111186164407273, missing, missing },
+            .{ missing, -7.83333333333333333333, -34.6661493251826518839, 18.9994826585159852172, missing, missing, missing, missing, missing, 11.8352111186164407273, missing, missing },
+        };
+        const classes = [_][]const u8{ "A", "B", "Diff (1-2)", "Diff (1-2)" };
+        const methods = [_][]const u8{ "", "", "Pooled", "Satterthwaite" };
+        const variances = [_][]const u8{ "", "", "Equal", "Unequal" };
+        const limit_names = [_][]const u8{ "Variable", "Class", "Method", "Variances", "Mean", "LowerCLMean", "UpperCLMean", "StdDev", "LowerCLStdDev", "UpperCLStdDev", "UMPULowerCLStdDev", "UMPUUpperCLStdDev" };
+        for (limit_names, limits.columns.items) |name, col| try std.testing.expectEqualStrings(name, col.name);
+        for ([_]*const @import("../dataset.zig").Dataset{ stats, limits }, 0..) |ds, kind| {
+            try std.testing.expectEqualStrings(if (kind == 0) "Statistics" else "Confidence Limits", ds.label.?);
+            for (ds.columns.items, 0..) |col, j| try std.testing.expectEqual(j < 3 + kind, col.type == .char);
+            for (ds.rows.items, expected, 0..) |row, ref, i| {
+                try std.testing.expectEqualStrings("x", row[0].str);
+                try std.testing.expectEqualStrings(classes[i], row[1].str);
+                try std.testing.expectEqualStrings(methods[i], row[2].str);
+                if (kind == 1) try std.testing.expectEqualStrings(variances[i], row[3].str);
+                const start: usize = if (kind == 0) 0 else 1;
+                const stop: usize = if (kind == 0) 12 else 9;
+                for (ref[start..stop], start..) |want, j| {
+                    const got = row[j + 3].num;
+                    if (std.math.isNan(want)) {
+                        try std.testing.expect(std.math.isNan(got));
+                        try std.testing.expectEqual(@as(u8, '_'), Value.missingChar(got));
+                        continue;
+                    }
+                    const eps = std.math.floatEps(f64);
+                    var tolerance = 64 * eps * @max(1, @abs(want));
+                    if (j == 5 or j == 6) {
+                        // Inverting a chi-square CDF: |d sd / d p| =
+                        // sd_endpoint/(2*q*f(q)). Propagate a conservative
+                        // 256-ulp probability budget plus endpoint rounding.
+                        // The density uses elementary half/integer gamma here,
+                        // independent of the implementation's CDF and inverse.
+                        const df: f64 = if (i < 2) 5 else 10;
+                        const q = df * ref[4] * ref[4] / (want * want);
+                        const gamma: f64 = if (i < 2) 3 * @sqrt(@as(f64, std.math.pi)) / 4 else 24;
+                        const density = @exp((df / 2 - 1) * @log(q / 2) - q / 2) / (2 * gamma);
+                        tolerance += want / (2 * q * density) * 256 * eps;
+                    } else if (j == 7 or j == 8) tolerance = 2e-12;
+                    try std.testing.expectApproxEqAbs(want, got, tolerance);
+                }
+            }
+        }
+        const test_values = [2][3]f64{
+            .{ -0.661866801937460096991, 10, 0.523015130794195647269 },
+            .{ -0.661866801937460096991, 8.87048094786399565111, 0.524875590267479617597 },
+        };
+        for (tests.rows.items, test_values, 0..) |row, ref, i| {
+            try std.testing.expectEqualStrings("x", row[0].str);
+            try std.testing.expectEqualStrings(methods[i + 2], row[1].str);
+            try std.testing.expectEqualStrings(variances[i + 2], row[2].str);
+            for (ref, row[3..]) |want, got| try std.testing.expectApproxEqAbs(want, got.num, 256 * std.math.floatEps(f64) * @max(1, @abs(want)));
+        }
+        const equality_names = [_][]const u8{ "Variable", "Method", "NumDF", "DenDF", "FValue", "ProbF" };
+        for (equality_names, equality.columns.items, 0..) |name, col, i| {
+            try std.testing.expectEqualStrings(name, col.name);
+            try std.testing.expectEqual(i < 2, col.type == .char);
+        }
+        try std.testing.expectEqualStrings("Equality of Variances", equality.label.?);
+        const row = equality.rows.items[0];
+        try std.testing.expectEqualStrings("x", row[0].str);
+        try std.testing.expectEqualStrings("Folded F", row[1].str);
+        const eq_values = [_]f64{ 5, 5, 2.10964479526393685249, 0.432030793097767682722 };
+        for (eq_values, row[2..]) |want, got| try std.testing.expectApproxEqAbs(want, got.num, 256 * std.math.floatEps(f64) * @max(1, @abs(want)));
+    }
     fn sample(a: A) !*@import("../dataset.zig").Dataset {
         const Dataset = @import("../dataset.zig").Dataset;
         const ds = try a.create(Dataset);
@@ -203,6 +282,7 @@ test "TTEST ODS typed original schemas precision special missing and TRACE ident
     try std.testing.expectEqual(@as(usize, 6), tests.columns.items.len);
     try std.testing.expectEqual(@as(usize, 1), equality.rows.items.len);
     try std.testing.expectEqual(@as(usize, 6), equality.columns.items.len);
+    try Testing.completeOriginal(stats, limits, tests, equality);
     const mean = stats.rows.items[0][stats.indexOf("Mean").?].num;
     try std.testing.expectApproxEqAbs(@as(f64, 515.0 / 6.0), mean, 2e-14); // exact rational mean, two rounded f64 operations
     try std.testing.expect(@abs(mean - 85.8333) > 0.00003); // never scrape the four-decimal listing
@@ -255,4 +335,82 @@ test "TTEST ODS selection and closed listing leave typed capture independent" {
     try std.testing.expectEqual(@as(usize, 0), out.items.len);
     try std.testing.expectEqual(@as(usize, 2), lib.find("closed").?.rows.items.len);
     try std.testing.expect(!d.hasErrors());
+}
+
+// S154 physical pp.10642-10644: TOST replaces TTests; Equality belongs only
+// to independent two-sample or crossover designs. An ODS name with no object
+// is an unmatched request, not an unsupported schema for a produced object.
+test "TTEST absent objects warn without inventing datasets or schema errors" {
+    const cases = [_]struct { code: []const u8, request: []const u8 }{
+        .{ .code = "proc ttest data=sample; var x; run;", .request = "Equality" },
+        .{ .code = "proc ttest data=sample; paired x*y; run;", .request = "Equality" },
+        .{ .code = "proc ttest data=sample dist=lognormal; var x; run;", .request = "Equality" },
+        .{ .code = "proc ttest data=sample tost(-100,100); paired x*y; run;", .request = "TTests" },
+        .{ .code = "proc ttest data=sample dist=lognormal tost(0.1,1000); var x; run;", .request = "TTests" },
+    };
+    for (cases) |case| {
+        var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+        defer arena.deinit();
+        const a = arena.allocator();
+        var lib = @import("../exec.zig").Library.init(a);
+        const ds = try Testing.sample(a);
+        _ = try ds.addColumn("y", .num);
+        // Supply a nonconstant paired difference so all inference paths are
+        // independently valid, preserving the existing sample's two columns.
+        for (ds.rows.items, 0..) |*row, i| {
+            const cells = try a.alloc(Value, 3);
+            @memcpy(cells[0..2], row.*);
+            cells[2] = b.n(@as(f64, @floatFromInt(i + 1)));
+            row.* = cells;
+        }
+        try lib.put("sample", ds);
+        var d = diag.Diagnostics.init(a);
+        var capture: ods.Capture = .{};
+        const statement = try std.fmt.allocPrint(a, "ods output {s}=absent;", .{case.request});
+        try capture.parse(a, &d, try @import("../lexer.zig").tokenize(a, statement, &d));
+        const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &d, .capture = &capture };
+        var out: std.ArrayList(u8) = .empty;
+        diag.resetGap();
+        defer diag.resetGap();
+        try tt.runTtest(cx, &out, try @import("../lexer.zig").tokenize(a, case.code, &d));
+        try capture.finish(&lib, &d);
+        try std.testing.expect(lib.find("absent") == null);
+        try std.testing.expect(!d.hasErrors());
+        try std.testing.expect(!diag.gapHit());
+        try std.testing.expectEqual(@as(u8, 0), diag.exitCode(diag.gapHit(), d.hasErrors() or d.warning_status));
+        try std.testing.expectEqual(@as(usize, 1), d.list.items.len);
+        try std.testing.expectEqual(diag.Severity.warning, d.list.items[0].severity);
+        try std.testing.expectEqualStrings(try std.fmt.allocPrint(a, "Output '{s}' was not created. Make sure the output object is produced by the procedure.", .{case.request}), d.list.items[0].message);
+    }
+}
+
+test "TTEST produced unverified paired and lognormal schemas retain D009 gaps" {
+    const cases = [_]struct { code: []const u8, request: []const u8 }{
+        .{ .code = "proc ttest data=sample; paired x*y; run;", .request = "Statistics" },
+        .{ .code = "proc ttest data=sample dist=lognormal; var x; run;", .request = "ConfLimits" },
+    };
+    for (cases) |case| {
+        var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+        defer arena.deinit();
+        const a = arena.allocator();
+        var lib = @import("../exec.zig").Library.init(a);
+        const ds = try a.create(@import("../dataset.zig").Dataset);
+        ds.* = @import("../dataset.zig").Dataset.init(a, "sample");
+        _ = try ds.addColumn("x", .num);
+        _ = try ds.addColumn("y", .num);
+        for ([_][2]f64{ .{ 2, 1 }, .{ 4, 1 }, .{ 8, 2 } }) |row| try ds.appendRow(&.{ b.n(row[0]), b.n(row[1]) });
+        try lib.put("sample", ds);
+        var d = diag.Diagnostics.init(a);
+        var capture: ods.Capture = .{};
+        const statement = try std.fmt.allocPrint(a, "ods output {s}=unsupported;", .{case.request});
+        try capture.parse(a, &d, try @import("../lexer.zig").tokenize(a, statement, &d));
+        const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &d, .capture = &capture };
+        var out: std.ArrayList(u8) = .empty;
+        diag.resetGap();
+        defer diag.resetGap();
+        try std.testing.expectError(error.ParseError, tt.runTtest(cx, &out, try @import("../lexer.zig").tokenize(a, case.code, &d)));
+        try std.testing.expectEqual(@as(u8, 2), diag.exitCode(diag.gapHit(), d.hasErrors()));
+        try std.testing.expect(lib.find("unsupported") == null);
+        try std.testing.expect(std.mem.indexOf(u8, try d.render(), "ODS dataset schemas are not verified") != null);
+    }
 }

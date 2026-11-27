@@ -274,7 +274,10 @@ pub fn runTtest(cx: proc.ProcCtx, out: *std.ArrayList(u8), toks: []const lex.Tok
                 try objects.finish(a, &tables, start, "Equality");
             } else if (analysis.lognormal_samples) |gs| {
                 if (cx.capture) |capture| {
-                    for ([_][]const u8{ "Statistics", "ConfLimits", "TTests", "Equality" }) |name| if (capture.wants(name))
+                    // Equality is not produced by this one-sample/paired design,
+                    // and TOST replaces TTests. Unmatched requests warn at finish.
+                    if (capture.wants("Statistics") or capture.wants("ConfLimits") or
+                        (capture.wants("TTests") and spec.options.tost == null))
                         return proc.failGap(cx.diags, spec.line, "TTEST lognormal ODS dataset schemas are not verified", .{});
                 }
                 if (spec.options.tost) |bounds| {
