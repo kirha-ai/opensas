@@ -7,7 +7,7 @@ const Dataset = @import("../dataset.zig").Dataset;
 const k = @import("freq_tests.zig");
 const p = @import("freq_tests_parse.zig");
 const render = @import("freq_tests_render.zig");
-pub const Table = struct { suppress_fisher: bool = false, defer_fisher: bool = false, numeric_table_scores_valid: bool = true, name: ?[]const u8 = null, warning_location: []const u8 = "", matrix: k.CountMatrix, one_way: bool = false, negative_weights: bool = false, score_display: ?render.ScoreDisplay = null };
+pub const Table = struct { suppress_fisher: bool = false, defer_fisher: bool = false, exact_chisq: bool = false, numeric_table_scores_valid: bool = true, name: ?[]const u8 = null, warning_location: []const u8 = "", matrix: k.CountMatrix, one_way: bool = false, negative_weights: bool = false, score_display: ?render.ScoreDisplay = null };
 pub const Report = struct { goodness_of_fit: ?k.GoodnessOfFit = null, chi_square: ?k.ChiSquare = null, warning: ?bool = null };
 fn canonicalName(name: []const u8) []const u8 {
     return if (name.len > 5 and std.ascii.eqlIgnoreCase(name[0..5], "work.")) name[5..] else name;
@@ -92,7 +92,7 @@ pub fn execute(a: std.mem.Allocator, d: *diag.Diagnostics, out: *std.ArrayList(u
         report.goodness_of_fit = gof;
         if (options.warn.output) report.warning = gof.sparse;
         try warn(a, d, table, gof.sparse, gof.small_percent, options, proc_noprint);
-        if (!proc_noprint) try render.goodnessOfFit(a, out, gof, options);
+        if (!proc_noprint) try render.goodnessOfFit(a, out, gof, options, table.exact_chisq);
         return report;
     }
     if (m.rows == 0 or m.cols == 0 or m.rows > std.math.maxInt(usize) / m.cols or m.counts.len != m.rows * m.cols) return d.fail(error.ExecError, 0, "PROC FREQ: invalid count matrix", .{});
@@ -126,7 +126,7 @@ pub fn execute(a: std.mem.Allocator, d: *diag.Diagnostics, out: *std.ArrayList(u
         if (!proc_noprint) {
             var displayed = chisq;
             if (table.defer_fisher) displayed.fisher = null;
-            try render.contingency(a, out, displayed, options, m.counts[0]);
+            try render.contingency(a, out, displayed, options, m.counts[0], table.exact_chisq);
         }
     }
     if (options.measures or options.plcorr) {
@@ -265,6 +265,33 @@ test "FEAT-freq-tests SAS zero-total table notes instead of errors with validati
     d.list.clearRetainingCapacity();
     try std.testing.expectError(error.ExecError, execute(a, &d, &out, table, .{ .chisq = true, .df = 0 }, .{}, .equal, true));
     try std.testing.expect(d.hasErrors());
+}
+
+test "sparse warnings preserve ordinary wording and qualify explicit exact comparisons" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    for ([_]bool{ false, true }) |one_way| {
+        const subject = if (one_way) "The table cells" else "100% of the cells";
+        const ordinary = try std.fmt.allocPrint(a, "WARNING: {s} have expected counts less than 5. Chi-Square may not be a valid test.", .{subject});
+        const qualified = try std.fmt.allocPrint(a, "WARNING: {s} have expected counts less than 5.\n         (Asymptotic) Chi-Square may not be a valid test.", .{subject});
+        for ([_]bool{ false, true }) |exact| {
+            for ([_]bool{ false, true }) |display| {
+                var d = diag.Diagnostics.init(a);
+                var out: std.ArrayList(u8) = .empty;
+                const table = Table{
+                    .one_way = one_way,
+                    .exact_chisq = exact,
+                    .matrix = if (one_way) .{ .rows = 1, .cols = 2, .counts = &.{ 1, 3 } } else .{ .rows = 2, .cols = 2, .counts = &.{ 1, 4, 4, 1 } },
+                };
+                _ = try execute(a, &d, &out, table, .{ .chisq = true, .warn = .{ .display = display } }, .{}, .equal, false);
+                try std.testing.expectEqual(@as(usize, if (display) 1 else 0), std.mem.count(u8, out.items, "WARNING:"));
+                if (display) try std.testing.expect(std.mem.indexOf(u8, out.items, if (exact) qualified else ordinary) != null);
+                try std.testing.expectEqual(@as(usize, if (display and exact) 1 else 0), std.mem.count(u8, out.items, "(Asymptotic)"));
+                try std.testing.expectEqual(@as(usize, 0), d.list.items.len);
+            }
+        }
+    }
 }
 
 test "FEAT-freq-tests numeric missing TABLE display scores never become inference scores" {

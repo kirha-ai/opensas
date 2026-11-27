@@ -121,10 +121,11 @@ python3 -m http.server -d web    # open http://localhost:8000
 
 ## How it is verified
 
-Three suites run in CI on every push and before every release.
+Four suites run in CI on every pull request to main and before every release.
 
-- **Unit tests.** `zig build test` runs 1,842 tests across four Zig test suites.
+- **Unit tests.** `zig build test` runs 1,843 tests across four Zig test suites.
 - **Conformance corpus.** `zig build corpus` runs the 2,344 SAS programs directly under `tests/corpus/`, including 238 statistical cases verified against SAS 9.4 M9. [Corpus fixtures](tests/corpus)
+- **Supplemental statistics.** `zig build supplemental` runs all 1,113 option and boundary regression programs in `tests/corpus/supplemental/`. This suite is also a required part of `zig build gate`.
 - **End-to-end programs.** 11 whole programs in [`tests/programs/`](tests/programs), datasets in and datasets out. Every output column and value is diffed against the golden dataset.
 
 The `.sas7bdat` and `.xpt` readers and writers are round-tripped against files
@@ -144,11 +145,12 @@ until their outstanding acceptance gaps are resolved.
 
 Run these commands from the repository root. Build the CLI once with `zig build install`.
 The corpus runner runs the programs directly in the directory you give it.
-Two statistical suites are available on demand outside the default gate.
+The supplemental suite can also be run separately; only the known-difference
+pending suite remains outside the default gate.
 
 ```sh
-# Run all 1,113 supplemental programs.
-zig run tests/corpus_runner.zig -- zig-out/bin/opensas tests/corpus/supplemental
+# Run all 1,113 supplemental programs (also included in the default gate).
+zig build supplemental
 
 # Replay the 9 known differences against their SAS 9.4 M9 expectations.
 zig run tests/corpus_runner.zig -- zig-out/bin/opensas tests/corpus/pending
@@ -206,7 +208,8 @@ ignored.
 
 ```sh
 zig build                    # debug binary
-zig build gate               # test + corpus + programs (shared compile graph)
+zig build gate               # test + corpus + supplemental + programs
+zig build supplemental       # all supplemental statistical regressions
 zig build test               # unit tests only
 zig build corpus             # conformance corpus
 zig build programs           # end-to-end programs

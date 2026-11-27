@@ -24,6 +24,12 @@ description: >-
 ## Active STAT campaign overrides
 
 These user-requested rules override conflicting instructions below for this campaign:
+- **Supplemental is mandatory (2026-11-27).** The default `zig build gate`
+  includes all `tests/corpus/supplemental/` cases as well as unit, corpus and
+  program suites. Report all four outcomes. Never infer supplemental success
+  from a top-level corpus run; changed shared rendering must preserve every
+  numerical/status assertion or supply explicit SAS evidence for a contract
+  migration. Known-difference `pending/` fixtures remain outside the green gate.
 - **Permanent test contract (2026-11-27).** `tests/STAT15.4-oracle/` is a
   temporary read-only reference that the user will delete. It is never a task
   tracker or output directory. Do not add implementation-evidence.md, dev reports,
@@ -517,7 +523,7 @@ task):
    `git rebase --abort`, REPORT the conflict to the manager — never guess.
    Never end your turn mid-rebase.
 3. Apply **Gate skip** (same SHA); if still needed, run the hermetic gate
-   (`zig build gate` — preferred over chained `test && corpus && programs`;
+   (`zig build gate` — preferred over separate test/corpus/supplemental/programs;
    one shared compile graph), then record the tip SHA on green. Red →
    attribute first: `git rebase --abort` (lossless), re-run on your base —
    red there = your bug (fix it, then redo the rebase); green there = bad

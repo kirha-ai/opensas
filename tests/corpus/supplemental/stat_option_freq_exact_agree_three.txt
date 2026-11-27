@@ -1,6 +1,11 @@
 # corpus assertions
-stdout-count 2 Simple Kappa Coefficient
-stdout-count 2 Weighted Kappa Coefficient
+# SAS/STAT 15.4 Figure 47.10 p.3068, pp.3099,3237-3238: one combined coefficient table.
+# Preserve all exact tails and their original tolerances separately from normal p-values.
+# Added normal fields independently evaluated from pp.3206,3208-3209: CI=k +/- 1.959964*SE;
+# Z=k/SE0, normal tails=Phi(-abs(Z)) and twice that value; CA uses linear score-distance weights.
+stdout-count 1 Kappa Statistics
+stdout-count 1 Simple Kappa Coefficient
+stdout-count 1 Weighted Kappa Coefficient
 stdout-count 0 Exact Pr >= Statistic
 row One-sided Pr >= Statistic 0.0459~5.1e-05
 row Two-sided Pr >= |Statistic| 0.0576~5.1e-05
@@ -8,3 +13,22 @@ row One-sided Pr >= Statistic 0.1082~5.1e-05
 row Two-sided Pr >= |Statistic| 0.1303~5.1e-05
 row-count 2 One-sided Pr >= Statistic {any}
 row-count 2 Two-sided Pr >= | Statistic | {any}
+rewind
+row Symmetry Test
+next Chi-Square DF Pr > ChiSq
+next 2.0000 3 0.5724
+next Kappa Statistics
+next Standard
+next Statistic Estimate Error 95% Confidence Limits
+next Simple Kappa 0.4500 0.2176 0.0234 0.8766
+next Weighted Kappa 0.4107 0.2472 -0.0738 0.8952
+next Test of H0: Kappa = 0
+next Estimate H0 Std Err Z Pr > Z Pr > |Z|
+next 0.4500 0.2113 2.1294 0.0166 0.0332
+next Test of H0: Weighted Kappa = 0
+next Estimate H0 Std Err Z Pr > Z Pr > |Z|
+next 0.4107 0.2403 1.7091 0.0437 0.0874
+next Sample Size = 11
+end-listing
+log-words NOTE: SVG graphic written to ./opensas-0001-agreeplot.svg.
+svg-count 1

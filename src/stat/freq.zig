@@ -2004,7 +2004,7 @@ fn analyzeTable(cx: ProcCtx, out: *std.ArrayList(u8), tab: *Table, req: Request,
             return;
         }
         var body: std.ArrayList(u8) = .empty;
-        const result = try stat_exec.execute(a, cx.diags, &body, .{ .name = tab.dimensions[0].name, .one_way = true, .matrix = inferenceMatrix(scored.matrix) }, req.statistics, requested_tests, req.resolved_expected, opts.noprint);
+        const result = try stat_exec.execute(a, cx.diags, &body, .{ .name = tab.dimensions[0].name, .one_way = true, .matrix = inferenceMatrix(scored.matrix), .exact_chisq = req.exact.families.contains(.pchi) or req.exact.families.contains(.lrchi) }, req.statistics, requested_tests, req.resolved_expected, opts.noprint);
         if (writer) |w| try w.append(by_row, tab, 0, tab.total, tab.missing, result, false);
         // SAS skips risk analysis when PROC NOPRINT has no output request.
         // Existing test-family NOPRINT execution remains independent above.
@@ -2054,6 +2054,7 @@ fn analyzeTable(cx: ProcCtx, out: *std.ArrayList(u8), tab: *Table, req: Request,
                 const result = try stat_exec.execute(a, cx.diags, &body, .{
                     .suppress_fisher = req.exact.families.contains(.fisher),
                     .defer_fisher = defer_fisher,
+                    .exact_chisq = defer_fisher,
                     .warning_location = if (opts.noprint and req.statistics.chisq and req.statistics.warn.log) try warningLocation(a, sl, number) else "",
                     .matrix = inferenceMatrix(scored.matrix),
                     .numeric_table_scores_valid = scored.numeric_table_scores_valid,

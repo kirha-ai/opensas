@@ -33,6 +33,10 @@ only from assigned tickets in `stat-jira.md`; do not consume the legacy board.
 
 ## Definition of done
 
+The default gate includes unit, top-level corpus, supplemental statistics and
+end-to-end programs. A top-level corpus pass alone is not a STAT regression pass;
+never omit supplemental when changing shared statistical behavior or output.
+
 `zig build gate` green with `tests/STAT15.4-oracle/` absent, permanent regressions
 included, tracker updated if the task names one (docs/sas-functions.md
 `[x]`, EBNF `(* opensas *)`), committed locally by pathspec. Then STAY RUNNING

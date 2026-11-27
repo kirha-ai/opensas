@@ -201,6 +201,14 @@ pub fn build(b: *std.Build) void {
     const corpus_step = b.step("corpus", "Run the conformance corpus");
     corpus_step.dependOn(&run_corpus.step);
 
+    // These option/boundary regressions must not be omitted when shared STAT
+    // rendering changes. Use the same runner and CLI compilation as the corpus.
+    const run_supplemental = b.addRunArtifact(corpus_runner);
+    run_supplemental.addArtifactArg(exe);
+    run_supplemental.addDirectoryArg(b.path("tests/corpus/supplemental"));
+    const supplemental_step = b.step("supplemental", "Run supplemental statistical regressions");
+    supplemental_step.dependOn(&run_supplemental.step);
+
     // The runner's own unit tests (the diff logic) ride the normal test gate.
     const corpus_tests = b.addTest(.{ .root_module = corpus_runner.root_module });
     const run_corpus_tests = b.addRunArtifact(corpus_tests);
@@ -228,13 +236,14 @@ pub fn build(b: *std.Build) void {
     const run_programs_tests = b.addRunArtifact(programs_tests);
     test_step.dependOn(&run_programs_tests.step);
 
-    // Hermetic merge gate as ONE build graph. `zig build test && corpus &&
-    // programs` pays an extra opensas compile after test (test binaries ≠
+    // Hermetic merge gate as ONE build graph. Separate test/corpus/supplemental/
+    // programs invocations pay an extra opensas compile after test (test binaries ≠
     // CLI exe). One step shares the exe across corpus/programs and overlaps
     // its compile with the unit-test compiles (~55s dirty vs ~75s chained).
-    const gate_step = b.step("gate", "Run test + corpus + programs (shared compile graph)");
+    const gate_step = b.step("gate", "Run test + corpus + supplemental + programs (shared compile graph)");
     gate_step.dependOn(test_step);
     gate_step.dependOn(corpus_step);
+    gate_step.dependOn(supplemental_step);
     gate_step.dependOn(programs_step);
 
     // Web demo: `zig build wasm` compiles the interpreter to wasm32-wasi (a

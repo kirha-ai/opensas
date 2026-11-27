@@ -1,5 +1,5 @@
 # AGT-ci — independent gate: the manager must not self-attest green.
-# Runs the three hermetic suites on every push/PR to main. wasm compiles in a
+# Runs all four hermetic suites on every push/PR to main. wasm compiles in a
 # sibling job so native-only-valid breaks cannot merge while keeping `gate` off
 # the ReleaseSmall wasm32-wasi critical path.
 name: ci
@@ -21,7 +21,7 @@ jobs:
       # One build graph: shares the opensas CLI compile across corpus/programs
       # and overlaps it with unit-test compiles (chained `test && corpus &&
       # programs` re-compiles opensas after test — different artifact).
-      - name: hermetic gate (test + corpus + programs)
+      - name: hermetic gate (test + corpus + supplemental + programs)
         run: |
           # STAT oracle inputs are temporary migration references, not test dependencies.
           if [ -d tests/STAT15.4-oracle ]; then
