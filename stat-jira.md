@@ -12,7 +12,17 @@ Explicit user resume. Confirmed working branch `feat/stat/batch-4`, base `31356c
 - dev6: STAT-COMMON-017; `/Users/thomas/kirha/opensas-dev6`; branch `codex/stat-b4-dev6`; assigned 2026-11-27T13:42:13+00:00; implementation deadline 2026-11-27T14:27:13+00:00. Original README/cases and cited physical PDF pages required before edits.
 - dev7: STAT-COMMON-018; `/Users/thomas/kirha/opensas-dev7`; branch `codex/stat-b4-dev7`; assigned 2026-11-27T13:42:13+00:00; implementation deadline 2026-11-27T14:27:13+00:00. Original README/cases and cited physical PDF pages required before edits.
 
-### Pending batch3 gate diagnostic repair
+### Final batch3 verification and push
+
+Exact tested/pushed code SHA `e2853af886f9bf2b7a908b2811220cedc439a226`: entire oracle unavailable for `zig build gate -j2 --summary all`, direct0 (**1990/1990 unit,2361/2361 corpus,11/11 programs**); install direct0; separate supplemental direct0 (**1113/1113**). Oracle restored unchanged. Repair378ce9bc preserves all six invalid REG syntax cases and exact captured unsupported-listing/D-009 checks; no failing statistics/goldens were suppressed. Replayed all12 original programs again with finalinstalledCLI: every output/status matches the preceding batch3 replay and generated graphs are byte-identical to inspected versions. Pushed to `feat/stat/batch-4`; no PR. Isolated repair checkout `/Users/thomas/kirha/opensas-reg-gate-repair` and branch `codex/stat-reg-gate-repair`/378ce9bc retained.
+
+GLM008 is DONE for its specified computational-method mathematics: unchanged original671/671tokens,rc0/reference0, three inspected/persistently checked graphs, independent g2/joint-L proof plus reused rank/degenerate tests. Shared full original maps to `tests/corpus/persist_glm_glm001_documented_feature.*`; folder deletion-ready but not deleted. This does not claim separate unsupported INVERSE/SOLUTION rendering.
+
+Other batch3 originals remain partial: FREQ012 rc0,314/318tokens (layout/identity gaps); POWER008 rc2,0/248tokens (binomial/plot prerequisites); NPAR003 rc0,91/91fields and NPAR004 rc0,73/73fields with only three explicit trailing-zero differences, persisted as exactly three numeric~0 assertions (stricttextfalse,notdeletionready); REG008 rc1/reference1,1118fields with two previously bounded residual sums, originalcontainsnoselection; GLM007 rc2,254/481tokens with exact fullGLM prefix but missingMIXEDestimation; LOGISTIC013 rc2,0/239tokens PLOTSgap; MIXED001/003/006 rc2,0/326tokens and MIXED001BY0/478tokens. All passing parts have default-gate tests, listed in their tickets. MIXED006 continues realdriverintegration under its originaldeadline; no successfulstub claimed.
+
+Current counts: **48 DONE,19 PARK,7 DOING,1348 TODO**. All temporary reference folders remain retained.
+
+### Historical batch3 diagnostic repair
 
 At exact c78ef7c6ca2b0b65ecf00e697687e906a887fc63, oracle-absent gate direct1:1989/1990unit,2361/2361corpus,11/11programs. Single failure is old REG parser-test substring `not implemented` after STEPWISE gained a real NOPRINT/OUTEST path; current explicit unsupported-listing diagnostic has changed. Repair378ce9bc retains all six invalid-syntax assertions, resets the gap flag before the supported-method/unsupported-listing path, and checks the exact captured message plus D-009 rc2. Targeted actual regression8/8 direct0; full rerun pending. Repair worktree `/Users/thomas/kirha/opensas-reg-gate-repair`, branch `codex/stat-reg-gate-repair`, created from c78ef7c6; ongoing REG009 source/evidence untouched. Supplemental not claimed for failedrun; oracle restored. Batchnotpushed.
 
@@ -3964,6 +3974,8 @@ Source: S154, Chapter 47, `The FREQ Procedure`, PDF pp. 3069–3290. Tasks in th
 - Integration rebase: cleanly rebased onto `549b2f29`; code `5941bc51` is byte-identical to `f8637903`, with handoff `c6ed7a08`. Diff-check passed; final coordinator batch verification remains pending.
 - Acceptance criteria: For Cochran-Armitage Test for Trend, use an independently calculable small sample and the source examples to verify targets, estimates/statistics, degrees of freedom, and applicable probabilities or intervals; include at least one relevant degenerate or boundary case, asserting documented diagnostics and result status.
 
+- Finalpartialbatchreceipt e2853af8: default1990/2361/11,supplemental1113 direct0 withwholeoracleabsent/restored,pushed. Originalrc0/314actualvs318referencefields; fulltextstillfails. Stabletrend/exactpartialdurabletests pass;retainPARK.
+
 <a id="stat-freq-013"></a>
 
 ### [TODO] STAT-FREQ-013 — FREQ — Jonckheere-Terpstra Test
@@ -5106,9 +5118,11 @@ Source: S154, Chapter 53, `The GLM Procedure`, PDF pp. 4043–4230. Tasks in thi
 - Verification at code `b80568582e9a0927847cad45ecc7697a0596269e`: `/Users/thomas/.local/bin/zig test --stack 67108864 --test-filter GLM --test-filter COMMON025 --dep build_options -Mroot=src/root.zig -Mbuild_options=/tmp/stat-b4-dev2-cache/c/8c1abc982d9089fb285de5048952325d/options.zig -lc --cache-dir /tmp/stat-b4-dev2-cache` direct exit 0, **76/76** actual tests passed. `zig build install -j2 --cache-dir /tmp/stat-b4-dev2-cache --summary all` direct exit 0, 4/4 steps; permanent GLM corpus program direct exit 0 and all 254 tokens exact. Full gate/separate supplemental/oracle-unavailable runs remain the coordinator combined-batch requirement under serialized heavy-build scheduling. Raw evidence stays in ignored `output/stat-glm007/`.
 - PARK handoff: finish full multivariate H/E construction, eigenvalue statistics and documented F/exact distributions for MANOVA; do not substitute speculative approximations. Extend RANDOM beyond the proved two-way Type III domain (Q, other EMS types, weighted/frequency, empty-cell/general random structures and negative denominator combinations remain gaps). HOV repeated MEANS, WEIGHT/FREQ, Welch and degenerate dispersion/zero group-variance conventions remain guarded pending their contracts; missing/zero inference is not fabricated. Complete the existing MIXED prerequisite and rerun the untouched original. Keep the temporary reference directory. Implementation ended within the 15:11:31Z deadline and is queued for serial integration.
 
+- Finalpartialbatchreceipt e2853af8: default1990/2361/11,supplemental1113 direct0 withwholeoracleabsent/restored,pushed. Originalrc2/reference0,complete254-token GLM prefix exact vs481fulltokens;MIXEDestimationmissing. RANDOM/HOV passingfeaturesdurable;MANOVA/otherdomainsremainPARK.
+
 <a id="stat-glm-008"></a>
 
-### [DOING @coordinator] STAT-GLM-008 — GLM — Computational Method
+### [DONE] STAT-GLM-008 — GLM — Computational Method
 
 - Source: S154 / Chapter 53 / `Computational Method` (PDF pp. 4163–4164).
 - Scope: Implement Computational Method. This ticket owns the feature's options, defaults, computation, and results as an extension of the basic computational path; the chapter's output tickets handle ODS descriptors and file presentation.
@@ -5123,6 +5137,8 @@ Source: S154, Chapter 53, `The GLM Procedure`, PDF pp. 4043–4230. Tasks in thi
 - Targeted verification at exact source `8862b74506acc1bad68c6a31e84816c00192bfd6`: `/Users/thomas/.local/bin/zig test --stack 67108864 --test-filter GLM --test-filter STAT-COMMON-003 --test-filter COMMON009 --test-filter COMMON025 --dep build_options -Mroot=src/root.zig -Mbuild_options=/tmp/stat-b4-dev2-cache/c/8c1abc982d9089fb285de5048952325d/options.zig -lc --cache-dir /tmp/stat-b4-dev2-cache` direct exit 0, **97/97** tests, including the new named GLM008 proof and the reused boundary tests. Default gate, separate supplemental and oracle-unavailable validation still require the final combined coordinator receipt before DONE/push.
 - Original/visual replay on retained starting CLI `b8056858`: unchanged program direct exit 0 versus reference severity 0; all **671/671** output tokens equal. Three SVGs (GLM interaction, SGSCATTER and GLM fit) were rendered and visually inspected: titles, axes, B1/B2 identity, points and nested prediction/mean bands are intact. Raw outputs/images remain only in ignored `output/stat-glm008/`. Coordinator must repeat the unchanged original on the final integrated CLI; this older binary receipt is not a same-SHA final acceptance substitute.
 - Integration handoff: mathematical contract is ready for completion review; retain DOING until integration, full final verification and authorized push succeed. This does not enable public INVERSE/SOLUTION output options or broaden currently guarded rank-deficient presentation/hypothesis domains owned by other feature tickets. No oracle folder is deleted. Implementation/verification work finished before the 15:46:05Z assignment deadline; integration waiting is separate from the feature clock.
+
+- FinalDONE: exacte2853af8 default1990/2361/11 and separate supplemental1113 direct0 with wholeoracleabsent/restored, pushed. FinalinstalledCLI unchangedoriginal671/671tokens rc0/reference0 andthreebyte-identical inspectedgraphs. Originalfolderdeletion-ready,notdeleted; narrowcomputationalcontractonly.
 
 <a id="stat-glm-009"></a>
 
@@ -8510,6 +8526,8 @@ Source: S154, Chapter 79, `The LOGISTIC Procedure`, PDF pp. 5823–6080. Tasks i
 
 - Acceptance criteria: For ODDSRATIO / UNITS / Odds Ratio Estimation, verify event/reference levels, ratio direction, zero cells, and all requested tests/intervals; row or column swaps must produce the correct transformations; validate numerical values against the source formulas or an independent reference, following this file's precision conventions.
 
+- Finalpartialbatchreceipt e2853af8: default1990/2361/11,supplemental1113 direct0 withwholeoracleabsent/restored,pushed. Originalrc2/reference0,0/239fields atPLOTSgap; partialUNITS/odds/profile full188-token supportedcaseandindependenttests pass. Groupedinputisexpandedtobinary internally;newtestsverifygrouped/individualconditionalprofileequivalence,notafalselyclaimedpriorgroupedbug. PARK.
+
 <a id="stat-logistic-014"></a>
 
 ### [TODO] STAT-LOGISTIC-014 — LOGISTIC — CONTRAST / ESTIMATE / TEST
@@ -9226,6 +9244,8 @@ Source: S154, Chapter 84, `The MIXED Procedure`, PDF pp. 6613–6810. Tasks in t
 - Integration rebase: cleanly rebased onto `18116ec3`; frontend `cf568390` plus targeted regression `002b088f` are byte-identical in all five owned new files to `27982f59`; minimal MIXED root/main hooks preserved. Handoff `93553fb9`; diff-check passed. Final shared batch verification remains pending.
 - Acceptance criteria: Create positive and negative parsing cases for the documented declarations and basic options; verify defaults, explicit settings, documented duplicate/conflicting declarations, and locations; valid but unimplemented features must not silently succeed. For BY / ID / WEIGHT, construct valid, missing, empty, and multiple-group inputs; verify included observation counts, variable roles, BY boundaries, level ordering, and the frequency/weight rules relevant to this ticket; assert documented invalid-input behavior.
 
+- Finalfrontendbatchreceipt e2853af8: default1990/2361/11,supplemental1113 direct0 withwholeoracleabsent/restored,pushed. Originalsremainrc2/nooutput vs326/478fields,explicitestimationgap. Actualinput/declarationcontractsaretested;PARK,awaitreal002consumer.
+
 <a id="stat-mixed-002"></a>
 
 ### [DOING @dev3] STAT-MIXED-002 — MIXED — Linear mixed model estimation and fixed-effect inference
@@ -9252,6 +9272,8 @@ Source: S154, Chapter 84, `The MIXED Procedure`, PDF pp. 6613–6810. Tasks in t
 - Remaining acceptance / active handoff: the two full original MIXED listings, REML iterations/covariance components/DF/tests and RANDOM Family/Family*Gender result are not yet accepted. Existing MIXED001/002/006 owners are actively implementing the required front-end/estimation/random-component interfaces; continue them rather than abandoning this dependency chain. CLASS TRUNCATE/shorthand/repeated declarations, advanced MODEL options/DF methods/output families, no-X models and broader hypothesis domains remain visibly unsupported. SOLUTION/CL/NOTEST/INTERCEPT/ALPHA/DDFM/SINGULAR state must be consumed or explicitly gated by the actual procedure backend. Keep the original reference folder; not deletion-ready and not DONE.
 
 - Acceptance criteria: For CLASS / MODEL / Parameterization of Mixed Models, verify the parsed response/effect/parameter representation against the documented design matrix or model structure; cover applicable reference levels, interactions, missing levels, and invalid models; successful parsing alone is insufficient.
+
+- Finaldesignbatchreceipt e2853af8: default1990/2361/11,supplemental1113 direct0 withwholeoracleabsent/restored,pushed. Originalrc2/no326-fieldoutputwhileestimationunconnected. FullX/TypeIII/REFtests pass;optionalsharedreferences defaultcallersremaincovered. PARK.
 
 <a id="stat-mixed-004"></a>
 
@@ -9288,6 +9310,8 @@ Source: S154, Chapter 84, `The MIXED Procedure`, PDF pp. 6613–6810. Tasks in t
 - Retained implementation: branch `codex/stat-b4-mixed-random-dev5`, base `e777f43c`, core `b6b77945`, worktree `/Users/thomas/kirha/opensas-dev5`. Focused `zig test ... --test-filter MIXED006 --cache-dir .zig-cache/b4` direct0,12/12 (five feature tests plus seven import anchors). Evidence in ignored `.zig-cache/stat-mixed006/` and `.zig-cache/stat-b4-evidence/mixed006-focused.log`. Ready for serial integration before numerical consumer wiring. Coordinator exact-SHA gate/separate supplemental/oracle-absent verification and push remain pending; no acceptance claim for unexecuted fits or predictions.
 - Integration rebase: rebased onto MIXED-003 landing `0a34c6f5`; preserved all three model/design/random root imports while resolving the sole additive import conflict. Random core `7ae97f3b` is byte-identical to `b6b77945`, handoff `c04a15f7`; diff-check passed and rebased focused MIXED006 suite passed12/12, direct0. Numerical entry wiring remains pending actual MIXED-002 consumer landing.
 - Acceptance criteria: For RANDOM, use small models to verify covariance structures, subject/group indices, variance parameters, and applicable predictions/inference; cover repeated times, boundary variances, and nonidentifiable configurations.
+
+- Corebatchreceipt e2853af8: default1990/2361/11,supplemental1113 direct0 withwholeoracleabsent/restored,pushed. Originalstillrc2/no326-fieldoutput;actualVCZ/kernelsaretestedbutnoCLIestimationclaim. dev5continuesactualdriverintegrationunderoriginal006deadline,notreset.
 
 <a id="stat-mixed-007"></a>
 
@@ -10059,6 +10083,8 @@ Source: S154, Chapter 90, `The NPAR1WAY Procedure`, PDF pp. 7205–7282. Tasks i
 
 - Acceptance criteria: For Tied Values / Simple Linear Rank Tests for Two-Sample Data / One-Way ANOVA Tests, use an independently calculable small sample and the source examples to verify targets, estimates/statistics, degrees of freedom, and applicable probabilities or intervals; include at least one relevant degenerate or boundary case, asserting documented diagnostics and result status.
 
+- Finalpartialbatchreceipt e2853af8: default1990/2361/11,supplemental1113 direct0 withwholeoracleabsent/restored,pushed. Originalrc0/91fields,stricttextdiffers exactlythree trailing-zero tokens; corpus permits onlythose three as numeric~0. Remaining88fieldsstrict. No guessedformatters shipped;PARK/nondeletionready.
+
 <a id="stat-npar1way-004"></a>
 
 ### [PARK] STAT-NPAR1WAY-004 — NPAR1WAY — Scores for Linear Rank and One-Way ANOVA Tests / Stratified Analysis / Hodges-Lehmann Estimation of Location Shift
@@ -10080,6 +10106,8 @@ Source: S154, Chapter 90, `The NPAR1WAY Procedure`, PDF pp. 7205–7282. Tasks i
 - PARK remaining acceptance: verify the original score-column precision from a SAS template/oracle before changing formatting; complete ADJUST/per-score adjustment, ALIGN=STRATA, exact tests for other score families and their graphics/output families in the relevant existing tickets. Broader SAS STRATA listing/typed metadata compatibility still needs an original reference; current public-example statistics are independently verified. Unsupported forms fail loudly. The original folder remains retained and is not declared deletion-ready. Feature work finished before the original 15:11:31Z deadline; integration/rebase queue does not extend the implementation clock.
 
 - Integration check: rebased onto `96e962eb`; the sole conflict was the `npar1way_stats.zig` test-import block and both NPAR003 tie tests and NPAR004 scale tests were preserved. VARINFO hooks, MIXED dispatch and POWER imports remain intact. New VARINFO output now uses the same producer-side ODS filtering/TRACE contract. All NPAR focused tests **32/32**, direct exit 0, after rebase/integration fixes. A public FREQ=1001-per-class test reaches the HL pair guard and asserts gap severity 2 and zero partial listing; `x.len > 1,000,000 / y.len` is checked before multiplying/allocating the pair array, and exact sample limits are rejected before pair construction. Source/worktree remains preserved; coordinator performs final combined verification/push.
+
+- Finalpartialbatchreceipt e2853af8: default1990/2361/11,supplemental1113 direct0 withwholeoracleabsent/restored,pushed. Originalrc0/73fields,stricttextdiffers same three trailing-zero tokens; thoseonly numeric~0,other70strict. HL/STRATA/score/ODS partialscovered;PARK/nondeletionready.
 
 <a id="stat-npar1way-005"></a>
 
@@ -10940,6 +10968,8 @@ Source: S154, Chapter 96, `The POWER Procedure`, PDF pp. 7733–7988. Tasks in t
 - Next handoff: `lists.Grid` plus scalar `compute`/`Result` is the concrete interface for existing POWER009 grouped lists, POWER010 sample adjustment and POWER017 plot grids, advancing the still-PARK POWER001/002 full examples. For this ticket's own binomial original, dispatch POWER004/012/016/017 rather than treating missing in-repository features as permanently external blockers. All remaining full reference outputs/status/graph/capture contracts must pass before DONE.
 
 - Acceptance criteria: For Summary of Analyses / Keyword-Lists / Number-Lists, use an independently calculable small sample and the source examples to verify targets, estimates/statistics, degrees of freedom, and applicable probabilities or intervals; include at least one relevant degenerate or boundary case, asserting documented diagnostics and result status.
+
+- Finalpartialbatchreceipt e2853af8: default1990/2361/11,supplemental1113 direct0 withwholeoracleabsent/restored,pushed. Originalrc2/0of248fields;retainPARK. Repair6bf561a0 preserves tiny signed nonzero scenario values (mixedzero-column roundtrip test), no display-to-zero shortcut.
 
 <a id="stat-power-009"></a>
 
@@ -12040,6 +12070,8 @@ Source: S154, Chapter 105, `The REG Procedure`, PDF pp. 8539–8728. Tasks in th
 - Original replay: unchanged program direct rc1 matches reference warning severity1; all1118 output tokens retained. Only two known residual sums differ:9.748646E-12 versus0 and -1.21227E-10 versus-4.4596E-11. Both remain within the existing independent quantity-specific bounds; strict token equality is not claimed. Both disabled-graphics warnings and intervening ADD notes remain in order. No original input, reference output or permanent expected contract was weakened.
 - Handoff/blockers: retain PARK and the reference folder. Default selection listings/ODS/graphs (existing REG-017/REG-018 presentation work), grouped candidate effects, aliased candidates, exact/near-tied criterion ordering, more than10 candidate variables, sequential/MAXR/MINR NOINT, interactive selection, and combinations with COVOUT/RIDGE/PCOMIT/RESTRICT remain explicit gaps. Near-zero full-model variance also reports a gap unless a supported SIGMA reference resolves Cp. The current tie guard conservatively rejects unresolved order even in candidate subsets that might later be filtered by BEST; it does not invent SAS tie-breaking. Finish these interfaces and replay source selection examples before closing; the existing original fixture only validates the default model. Source feature work finished before15:11:31Z and is queued for serial integration. Preserved source/history/evidence/oracle are unchanged outside the explicit committed paths; no dev push.
 - Acceptance criteria: For Model-Selection Methods / Criteria Used in Model-Selection Methods / Limitations in Model-Selection Methods, on small candidate sets that can be exhaustively enumerated, verify selection paths, criterion values, tie-breaking, stopping reasons, and the final model; check for partition leakage when validation/test sets are used.
+
+- Finalpartialbatchreceipt e2853af8: default1990/2361/11,supplemental1113 direct0 withwholeoracleabsent/restored,pushed. Originalrc1/reference1,1118fields withtwo previouslyboundedresiduals;doesnotexerciseselection. Independentpath/typedOUTEST fixtures cover actualpartialselection. Oldparserdiagnostic assertion repairedwithoutweakeningseverity;PARK.
 
 <a id="stat-reg-009"></a>
 
