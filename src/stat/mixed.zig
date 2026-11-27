@@ -8,12 +8,55 @@ const Value = @import("../value.zig").Value;
 pub const declarations = @import("mixed_parse.zig");
 pub const input = @import("mixed_input.zig");
 pub fn run(cx: proc.ProcCtx, out: *std.ArrayList(u8), tokens: []const lex.Token) diag.Error!void {
-    _ = out;
+    const model = @import("mixed_model.zig");
+    const fixed = @import("mixed_design.zig");
+    const random = @import("mixed_random.zig");
+    const math = @import("mixed_fit.zig");
+    const render = @import("mixed_render.zig");
+    const info = @import("mixed_info.zig");
     const spec = try declarations.parse(cx, tokens);
-    // Validate real input/BY/weight contracts before the numerical handoff.
-    // Required model columns are supplied by MIXED-003 when it is integrated.
-    _ = try input.prepare(cx, spec, &.{});
-    return proc.failGap(cx.diags, spec.line, "PROC MIXED: model estimation is not implemented", .{});
+    // PROC ALPHA controls covariance-parameter CIs, not MODEL ALPHA.
+    const m = try model.parse(cx, spec.input.ds, spec.statements, spec.options.order, 0.05);
+    const r = try random.parse(cx, spec.input.ds, m.matrix, spec.statements);
+    var required: std.ArrayList(usize) = .empty;
+    try required.appendSlice(cx.arena, m.required_columns);
+    for (r.required_columns) |ci| if (std.mem.indexOfScalar(usize, required.items, ci) == null) try required.append(cx.arena, ci);
+    const groups = try input.prepare(cx, spec, required.items);
+    if (spec.options.method != .reml) return proc.failGap(cx.diags, spec.line, "PROC MIXED: model estimation is not implemented for METHOD={s}", .{@tagName(spec.options.method)});
+    if (spec.options.noprofile or spec.options.alpha_explicit) return proc.failGap(cx.diags, spec.line, "PROC MIXED: unprofiled estimation or covariance-parameter confidence limits are not implemented", .{});
+    if (m.has_repeated) return proc.failGap(cx.diags, spec.line, "PROC MIXED: REPEATED covariance inference is not implemented", .{});
+    if (m.options.solution or m.options.cl or m.options.intercept_test or m.options.alpha != 0.05) return proc.failGap(cx.diags, m.line, "PROC MIXED: requested fixed-effect solution or confidence-limit output is not implemented", .{});
+    if (cx.listing) |listing| if (listing.filtered() or listing.trace != null) return proc.failGap(cx.diags, spec.line, "PROC MIXED: ODS table selection and TRACE routing are not implemented", .{});
+    if (cx.graphics) |graphics| if (graphics.enabled == true and !spec.options.plots_none) return proc.failGap(cx.diags, spec.line, "PROC MIXED: ODS graphics are not implemented; specify PLOTS=NONE", .{});
+    if (cx.capture) |capture| for ([_][]const u8{ "ModelInfo", "ClassLevels", "Dimensions", "NObs", "CovParms", "FitStatistics", "Tests3", "SolutionF", "SolutionR" }) |name| if (capture.wants(name)) return proc.failGap(cx.diags, spec.line, "PROC MIXED: ODS OUTPUT {s} is not implemented", .{name});
+    if (groups.len == 0) return proc.failGap(cx.diags, spec.line, "PROC MIXED: empty input analysis is not implemented", .{});
+    for (groups) |group| {
+        if (group.used_count == 0) return proc.failGap(cx.diags, spec.line, "PROC MIXED: fully excluded BY-group analysis is not implemented", .{});
+        const x = try fixed.build(cx, m, group.selected);
+        const z = try random.build(cx, r, group.selected);
+        if (x.matrix.n != z.n) return proc.failGap(cx.diags, spec.line, "PROC MIXED: fixed/random observation selection differs", .{});
+        for (x.matrix.columns) |column| if (column.effect_name.len > spec.options.namelen) return proc.failGap(cx.diags, spec.line, "PROC MIXED: long effect-name presentation is not implemented", .{});
+        const components = try cx.arena.alloc(math.Component, z.components.len);
+        const names = try cx.arena.alloc([]const u8, z.components.len + 1);
+        for (z.components, components, names[0..z.components.len]) |component, *target, *name| {
+            target.* = .{ .name = component.name, .kernel = component.kernel, .columns = component.columns };
+            name.* = component.name;
+        }
+        names[names.len - 1] = "Residual";
+        const fit = math.fit(cx.arena, .{ .x = x.matrix.x, .y = x.y, .n = x.matrix.n, .p = x.matrix.p, .weights = x.weights, .components = components, .has_intercept = m.matrix.intercept, .singular = m.options.singular }, .{ .method = .reml, .maxiter = spec.options.maxiter, .maxfunc = spec.options.maxfunc, .bic_n = if (components.len == 0) null else @as(f64, @floatFromInt(if (z.subject_count > 1) z.subject_count else z.first_effect_levels)) }) catch |err| return if (err == error.OutOfMemory) error.OutOfMemory else proc.failGap(cx.diags, spec.line, "PROC MIXED: this estimation boundary is not implemented ({t})", .{err});
+        if (!fit.converged) return proc.failGap(cx.diags, spec.line, "PROC MIXED: nonconverged-result reporting is not implemented ({t})", .{fit.status});
+        var tests: std.ArrayList(render.NamedTest) = .empty;
+        if (!m.options.notest) for (m.matrix.effects, 0..) |_, ei| {
+            const contrast = try fixed.type3(cx, m, x, ei);
+            const df = if (m.options.ddfm == .residual or z.components.len == 0) fit.df_error else try random.containmentDF(cx, r, x.matrix, z, ei, x.weights, m.options.singular);
+            if (df == 0) return proc.failGap(cx.diags, spec.line, "PROC MIXED: zero containment degrees-of-freedom inference is not implemented", .{});
+            const tested = math.testContrast(cx.arena, fit, contrast.coefficients, contrast.rows, df) catch |err| return if (err == error.OutOfMemory) error.OutOfMemory else proc.failGap(cx.diags, spec.line, "PROC MIXED: fixed-effect test is not implemented for this estimability boundary ({t})", .{err});
+            try tests.append(cx.arena, .{ .name = contrast.name, .num_df = tested.num_df, .den_df = tested.den_df, .f = tested.f, .p = tested.p });
+        };
+        if (spec.roles.by.len > 0) try @import("by_groups.zig").appendLine(cx.arena, out, spec.input.ds, group.raw.observations[0].cells, spec.roles.by);
+        try info.render(cx.arena, out, spec, m, group, x, z);
+        render.render(cx.arena, out, fit, names, tests.items, .{ .noitprint = spec.options.noitprint, .notest = m.options.notest }) catch |err| return if (err == error.OutOfMemory) error.OutOfMemory else proc.failGap(cx.diags, spec.line, "PROC MIXED: numerical table rendering failed ({t})", .{err});
+    }
 }
 
 const Testing = struct {
