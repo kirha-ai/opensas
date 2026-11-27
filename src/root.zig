@@ -31,6 +31,7 @@ pub const macro = @import("macro.zig");
 pub const sql = @import("sql.zig");
 
 test {
+    _ = @import("stat/npar1way_stats.zig");
     _ = @import("stat/power.zig");
     _ = @import("stat/power_means.zig");
     _ = @import("stat/power_solver.zig");
