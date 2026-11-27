@@ -9,7 +9,7 @@ const Value = @import("../value.zig").Value;
 const levels = @import("class_levels.zig");
 const A = std.mem.Allocator;
 pub const Effect = struct { factors: []const usize, nested: []const usize = &.{} };
-pub const Spec = struct { response: usize, classes: []const usize = &.{}, effects: []const Effect, intercept: bool = true, order: levels.Order = .formatted };
+pub const Spec = struct { response: usize, classes: []const usize = &.{}, effects: []const Effect, intercept: bool = true, order: levels.Order = .formatted, references: []const ?levels.Reference = &.{} };
 pub const Class = struct { column: usize, map: levels.Levels };
 pub const Column = struct {
     effect_name: []const u8,
@@ -131,7 +131,32 @@ pub fn build(a: A, ds: *const Dataset, rows: []const []const Value, s: Spec) dia
     }
     if (selected.items.len == 0) return error.ExecError;
     const classes = try a.alloc(Class, s.classes.len);
-    for (s.classes, 0..) |ci, i| classes[i] = .{ .column = ci, .map = try levels.build(a, ds, selected.items, ci, .{ .order = s.order }) };
+    if (s.references.len != 0 and s.references.len != s.classes.len) return error.ExecError;
+    for (s.classes, 0..) |ci, i| {
+        var map = try levels.build(a, ds, selected.items, ci, .{ .order = s.order });
+        // MIXED REF= reorders a full-level singular design, never drops a
+        // column. Empty references preserves every existing caller's order.
+        if (s.references.len != 0) if (s.references[i]) |reference| {
+            const ref = map.reference(reference) orelse return error.ExecError;
+            if (ref + 1 != map.levels.len) {
+                const ordered = try a.alloc(levels.Level, map.levels.len);
+                const remap = try a.alloc(usize, map.levels.len);
+                var next: usize = 0;
+                for (map.levels, 0..) |level, old| if (old != ref) {
+                    ordered[next] = level;
+                    remap[old] = next;
+                    next += 1;
+                };
+                ordered[next] = map.levels[ref];
+                remap[ref] = next;
+                const rows_reordered = try a.alloc(?usize, map.row_to_level.len);
+                for (map.row_to_level, 0..) |old, row| rows_reordered[row] = if (old) |index| remap[index] else null;
+                map.levels = ordered;
+                map.row_to_level = rows_reordered;
+            }
+        };
+        classes[i] = .{ .column = ci, .map = map };
+    }
     var columns: std.ArrayList(Column) = .empty;
     var vectors: std.ArrayList([]const f64) = .empty;
     if (s.intercept) {
@@ -289,4 +314,30 @@ test "DESIGN_MATRIX general crossed factors vary faster than nested factors" {
         try std.testing.expectEqualSlices(?usize, &.{ (i / 2) % 2, i % 2, i / 8, (i / 4) % 2 }, column.class_values);
         for (0..16) |j| try std.testing.expectEqual(@as(f64, if (i == j) 6 else 0), r.x[i * 16 + j]);
     }
+}
+
+test "STAT-MIXED-003 CLASS references reorder full indicators before interactions" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var ds = try sample(a);
+    const effects = [_]Effect{ .{ .factors = &.{0} }, .{ .factors = &.{1} }, .{ .factors = &.{ 0, 1 } } };
+    const design = try build(a, &ds, ds.rows.items, .{ .response = 3, .classes = &.{ 0, 1 }, .effects = &effects, .references = &.{ .first, .{ .label = "1" } } });
+    try std.testing.expectEqual(@as(usize, 12), design.p);
+    try std.testing.expectEqualStrings("B", design.classes[0].map.levels[0].label);
+    try std.testing.expectEqualStrings("A", design.classes[0].map.levels[1].label);
+    try std.testing.expectEqualStrings("1", design.classes[1].map.levels[2].label);
+    const b_order = [_]usize{ 0, 2, 1 };
+    for (0..6) |row| {
+        const ai: usize = if (row < 3) 1 else 0;
+        const bi = b_order[row % 3];
+        const x = design.x[row * design.p ..][0..design.p];
+        try std.testing.expectEqual(@as(f64, 1), x[0]);
+        for (0..2) |j| try std.testing.expectEqual(@as(f64, if (ai == j) 1 else 0), x[1 + j]);
+        for (0..3) |j| try std.testing.expectEqual(@as(f64, if (bi == j) 1 else 0), x[3 + j]);
+        for (0..6) |j| try std.testing.expectEqual(@as(f64, if (ai * 3 + bi == j) 1 else 0), x[6 + j]);
+    }
+    const original = try build(a, &ds, ds.rows.items, .{ .response = 3, .classes = &.{ 0, 1 }, .effects = &effects });
+    const explicit_last = try build(a, &ds, ds.rows.items, .{ .response = 3, .classes = &.{ 0, 1 }, .effects = &effects, .references = &.{ .last, .last } });
+    try std.testing.expectEqualSlices(f64, original.x, explicit_last.x);
 }

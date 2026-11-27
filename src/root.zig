@@ -34,6 +34,8 @@ pub const sql = @import("sql.zig");
 
 test {
     _ = @import("stat/mixed.zig");
+    _ = @import("stat/mixed_model.zig");
+    _ = @import("stat/mixed_design.zig");
     _ = @import("stat/npar1way_stats.zig");
     _ = @import("stat/npar1way.zig");
     _ = @import("stat/power.zig");
