@@ -548,12 +548,19 @@ test "LOGISTIC original REF and EFFECT complete oracle listing" {
         const source = try std.fmt.allocPrint(a, "proc logistic data=binary; class group(ref='A') / param={s}; model event(event='1')=group x; run;", .{param});
         try run(cx, &out, try lex.tokenize(a, source, &d));
     }
-    const expected = try std.Io.Dir.cwd().readFileAlloc(std.testing.io, "tests/STAT15.4-oracle/STAT-COMMON-008/reference_effect_coding.expected.txt", a, .limited(1024 * 1024));
+    const asset = try std.Io.Dir.cwd().readFileAlloc(std.testing.io, "tests/corpus/persist_logistic_common008_reference_effect_coding.txt", a, .limited(1024 * 1024));
+    const prefix = "# corpus assertions\nwords ";
+    try std.testing.expect(std.mem.startsWith(u8, asset, prefix));
+    const expected = asset[prefix.len..][0..std.mem.indexOfScalar(u8, asset[prefix.len..], '\n').?];
     var e = std.mem.tokenizeAny(u8, expected, " \r\n\t\x0c");
     var got = std.mem.tokenizeAny(u8, out.items, " \r\n\t\x0c");
     while (e.next()) |word| try std.testing.expectEqualStrings(word, got.next() orelse "<missing>");
     try std.testing.expect(got.next() == null);
     try std.testing.expectEqualStrings("", try d.render());
+}
+
+test {
+    _ = @import("logistic_persistence_tests.zig");
 }
 
 test "LOGISTIC errors are captured and unsupported parameterizations never fall back" {
@@ -650,4 +657,40 @@ test "LOGISTIC001 AT contrasts and graph rows retain independent Wald endpoints"
     try std.testing.expectEqual(@as(usize, 4), std.mem.count(u8, bytes, "class=\"odds-row\""));
     try std.testing.expect(std.mem.indexOf(u8, bytes, "data-reference=\"1\"") != null);
     try std.testing.expect(std.mem.indexOf(u8, bytes, "_oracle_by=1") != null);
+}
+
+test "persistence LOGISTIC original grouped information independently verifies every SVG odds endpoint" {
+    const t = std.testing;
+    var arena = std.heap.ArenaAllocator.init(t.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const helper = @import("glm_persistence_tests.zig");
+    const plots = @import("logistic_plots.zig");
+    var ds = try helper.data(a, "tests/corpus/persist_logistic_logistic001_documented_feature.sas", "ingots", &.{ "Heat", "Soak", "r", "n" }, &.{}, 0);
+    try t.expectEqual(@as(usize, 19), ds.rows.items.len);
+    const independent = try @import("logistic_persistence_tests.zig").reference(ds);
+    var lib = @import("../exec.zig").Library.init(a);
+    try lib.put("ingots", &ds);
+    var d = @import("../diag.zig").Diagnostics.init(a);
+    const cx: @import("../proc.zig").ProcCtx = .{ .arena = a, .lib = &lib, .diags = &d };
+    const spec = try parse(cx, try @import("../lexer.zig").tokenize(a, "proc logistic data=ingots; model r/n=Heat|Soak; oddsratio Heat / at(Soak=1 2 3 4); run;", &d));
+    const analysis = try analyze(cx, spec);
+    const rows = try plots.atRows(a, analysis.data, analysis.design, analysis.fit, 0, 1, &.{ 1, 2, 3, 4 }, 0.05);
+    const bytes = try plots.render(a, rows, "Odds Ratios for Heat", "_oracle_by=1");
+    var tags = std.mem.tokenizeScalar(u8, bytes, '<');
+    var n: usize = 0;
+    while (tags.next()) |tag| if (std.mem.indexOf(u8, tag, "class=\"odds-row\"") != null) {
+        const soak: f64 = @floatFromInt(n + 1);
+        const eta = independent.beta[1] + soak * independent.beta[3];
+        const v = independent.covariance;
+        const radius = 1.959963984540054 * @sqrt(v[1][1] + 2 * soak * v[1][3] + soak * soak * v[3][3]);
+        // Original independent NumPy-vs-QR verification used 1e-9 absolute
+        // on unrounded OR endpoints; retain it, never listing tolerances.
+        try t.expectApproxEqAbs(@exp(eta), try helper.attribute(tag, "data-estimate=\""), 1e-9);
+        try t.expectApproxEqAbs(@exp(eta - radius), try helper.attribute(tag, "data-lower=\""), 1e-9);
+        try t.expectApproxEqAbs(@exp(eta + radius), try helper.attribute(tag, "data-upper=\""), 1e-9);
+        n += 1;
+    };
+    try t.expectEqual(@as(usize, 4), n);
+    try t.expectEqualStrings("", try d.render());
 }

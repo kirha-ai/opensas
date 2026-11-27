@@ -291,7 +291,7 @@ test "BOOTSTRAP MT1998 reproduces fixed-seed SAS aggregates and every displayed 
     try std.testing.expectApproxEqAbs(@as(f64, -2.9249), r.pooled_sd.bias, 0.00005);
     try std.testing.expectApproxEqAbs(@as(f64, 13.7307), r.pooled_sd.lower, 0.00005);
     try std.testing.expectApproxEqAbs(@as(f64, 39.8066), r.pooled_sd.upper, 0.00005);
-    const expected = try std.Io.Dir.cwd().readFileAlloc(std.testing.io, "tests/STAT15.4-oracle/STAT-TTEST-004/bootstrap_seeded.expected.txt", a, .limited(1024 * 1024));
+    const expected = try @import("ttest_test_assets.zig").listing(a, "tests/corpus/stat_ttest_bootstrap.txt");
     var lines = std.mem.tokenizeScalar(u8, expected, '\n');
     var checked: usize = 0;
     while (lines.next()) |line| {
@@ -322,6 +322,62 @@ test "BOOTSTRAP MT1998 reproduces fixed-seed SAS aggregates and every displayed 
     var replay = try generator(o, &d);
     const repeated = try compute(a, &.{ 43, 90, 84, 87, 116, 95 }, &.{ 86, 99, 93, 92, 121, 71 }, &replay, o, .{}, &d);
     for (r.replicates, repeated.replicates) |left, right| try std.testing.expectEqual(left, right);
+    // Port of the independent standard-library replay: unfolded MT1998
+    // recurrence (Matsumoto/Nishimura appendix), no production Generator,
+    // fit, summarize or quantile calls. Replicate-major, then group-major.
+    var reference: [624 + 199 * 12]u32 = undefined;
+    reference[0] = 314159;
+    for (1..624) |i| reference[i] = reference[i - 1] *% 69069;
+    for (0..199 * 12) |i| {
+        const joined = (reference[i] & 0x80000000) | (reference[i + 1] & 0x7fffffff);
+        reference[i + 624] = reference[i + 397] ^ (joined >> 1) ^ (if (joined & 1 == 1) @as(u32, 0x9908b0df) else 0);
+    }
+    const originals = [2][6]f64{ .{ 43, 90, 84, 87, 116, 95 }, .{ 86, 99, 93, 92, 121, 71 } };
+    var values: [3][199]f64 = undefined;
+    for (r.replicates, 0..) |draw, rep| {
+        var means: [2]f64 = undefined;
+        var variances: [2]f64 = undefined;
+        for (originals, 0..) |group, g| {
+            var sample: [6]f64 = undefined;
+            var sum: f64 = 0;
+            for (&sample, 0..) |*v, j| {
+                var word = reference[624 + rep * 12 + g * 6 + j];
+                word ^= word >> 11;
+                word ^= (word << 7) & 0x9d2c5680;
+                word ^= (word << 15) & 0xefc60000;
+                word ^= word >> 18;
+                v.* = group[@intCast((@as(u64, word) * 6) >> 32)];
+                sum += v.*;
+            }
+            means[g] = sum / 6;
+            var ss: f64 = 0;
+            for (sample) |v| ss += (v - means[g]) * (v - means[g]);
+            variances[g] = ss / 5;
+        }
+        values[0][rep] = means[0] - means[1];
+        values[1][rep] = @sqrt(variances[0] + variances[1]);
+        values[2][rep] = values[1][rep]; // equal group sizes: pooled and Welch SD coincide
+        for ([_]f64{ draw.mean, draw.pooled_sd, draw.satt_sd }, 0..) |got, j|
+            try std.testing.expectApproxEqAbs(values[j][rep], got, 1e-12);
+    }
+    // Independent summaries and inward ranks 5 and 195 for B=199, alpha=.05.
+    // The full SAS display is asserted by the shared corpus asset; here check
+    // unrounded production summaries against the independent replay.
+    const points = [3]f64{ -47.0 / 6.0, @sqrt(@as(f64, 50426.0 / 60.0)), @sqrt(@as(f64, 50426.0 / 60.0)) };
+    for (&values, [_]Summary{ r.mean, r.pooled_sd, r.satt_sd }, points) |*column, summary, point| {
+        var sum: f64 = 0;
+        for (column) |v| sum += v;
+        const mean = sum / 199;
+        var ss: f64 = 0;
+        for (column) |v| ss += (v - mean) * (v - mean);
+        std.mem.sort(f64, column, {}, struct {
+            fn lt(_: void, x: f64, y: f64) bool {
+                return x < y;
+            }
+        }.lt);
+        for ([_]f64{ @sqrt(ss / 198), mean - point, column[4], column[194] }, [_]f64{ summary.standard_error, summary.bias, summary.lower, summary.upper }) |expected_value, got|
+            try std.testing.expectApproxEqAbs(expected_value, got, 1e-12);
+    }
 }
 
 test "BOOTSTRAP independently enumerated n2 means and inward quantiles" {

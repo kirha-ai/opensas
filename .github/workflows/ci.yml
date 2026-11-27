@@ -22,7 +22,12 @@ jobs:
       # and overlaps it with unit-test compiles (chained `test && corpus &&
       # programs` re-compiles opensas after test — different artifact).
       - name: hermetic gate (test + corpus + programs)
-        run: zig build gate
+        run: |
+          # STAT oracle inputs are temporary migration references, not test dependencies.
+          if [ -d tests/STAT15.4-oracle ]; then
+            mv tests/STAT15.4-oracle "$RUNNER_TEMP/stat-oracle-reference"
+          fi
+          zig build gate
 
   # Parallel with `test`: compile-only check for the web demo. Kept off
   # `zig build gate` / `test` so dirty-tree wasm (~26s) does not dominate the

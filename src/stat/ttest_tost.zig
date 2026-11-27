@@ -251,7 +251,7 @@ test "TOST009 full unchanged difference oracle tables" {
     try renderAssessment(a, &out, &rows, "group");
     try renderTests(a, &out, &rows, "group");
     try two.equalityTable(a, &out, pair);
-    const expected = try std.Io.Dir.cwd().readFileAlloc(std.testing.io, "tests/STAT15.4-oracle/STAT-TTEST-009/tost_difference.expected.txt", a, .limited(1024 * 1024));
+    const expected = try @import("ttest_test_assets.zig").listing(a, "tests/corpus/persist_ttest_tost_difference.txt");
     var e = std.mem.tokenizeAny(u8, expected, " \r\n\t\x0c");
     var got = std.mem.tokenizeAny(u8, out.items, " \r\n\t\x0c");
     while (e.next()) |word| try std.testing.expectEqualStrings(word, got.next() orelse "<missing>");

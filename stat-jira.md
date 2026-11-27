@@ -6,6 +6,16 @@ Stopped at the user's request (17:18:49). All dev agents were closed during the 
 
 Snapshot: **41 DONE, 3 PARK, 1,378 TODO, 0 DOING**. Final code batch `86a553ba` was fast-forwarded and pushed to `feat/stat15.4-tickets`. Its exact-SHA gate passed **1,824 tests, 2,318 corpus fixtures, 11 programs**; all five closing-ticket original replays passed. This later handoff edit is documentation only.
 
+## Permanent regression migration (2026-11-27)
+
+This bounded cleanup does not resume the stopped manager. Every DONE original case is mapped below to a self-contained corpus program and its canonical expected contract; necessary numerical, typed-data, diagnostic, graph and RNG checks run as Zig tests. Identical executable cases share permanent fixtures. `words` assertions compare all output tokens, including headings and rules; they reject extra/missing fields. Explicit error-status mappings and the existing quantity-specific numerical bounds remain disclosed in test sources and `tests/fixtures/stat/reg/contracts.md`.
+
+The three PARK tickets retain passing-feature tests and specific blockers below. A failed full oracle has not been turned into a passing expected file. No test locks in a known wrong seeded stream or requires disagreement with SAS. Runtime version identity remains OpenSAS.
+
+The temporary baseline's original files are unchanged. The 119 development-added reports, Python validators, actual outputs and images were removed from it after their useful checks were migrated. Handoff/status is recorded only here; mathematical sources and tolerance derivations belong beside executable tests. Temporary agent mapping files and run logs are not committed. Deleting the whole temporary directory must not break the default gate; CI and release CI now run with it absent. Original folders remain present until the user chooses to delete them.
+
+Validation (2026-11-27): the entire temporary directory was moved outside the checkout before `zig build gate -j2 --summary all`; direct exit 0, 1842/1842 unit tests, 2344/2344 corpus cases and 11/11 programs passed. The baseline was restored automatically afterward. All 41 DONE tickets (45 original cases, deduplicated where identical) are deletion-ready; the three PARK folders are retained until their remaining acceptance gaps are resolved. 26 additional corpus programs and 18 additional unit tests are now in the default gate. Original baseline tree matches commit `78998700` exactly; only 119 development-added files were removed.
+
 ### Preserved developer state
 
 Worktrees are under `/Users/thomas/kirha/`; all source is committed. dev1 also retains untracked `.stat-*-evidence/` captures. Historical branch tips can contain equivalent cherry-picked commits: compare them before any future merge or reset.
@@ -26,7 +36,7 @@ Worktrees are under `/Users/thomas/kirha/`; all source is committed. dev1 also r
 2. **REG-005:** resolve two SST midpoint-rounding and two negative-zero listing differences; finish independent whole-path verification and visual checks of all five graphs. Only the packed ridge plot was inspected. IPC remains unsupported. Preserve raw differences and do not substitute expected values.
 3. **TTEST-010:** resolve vertical PRINT/CONTENTS layout and metadata, and adjudicate three UMPU upper endpoints using the preserved independent precision reference. Four normal typed captures and TRACE routing work; the full original oracle does not pass.
 
-Resume with the existing STAT-only rules: 45 minutes per attempt, original README/manual/oracle verification, retained DONE/PARK records, no backlog expansion or audit roles. Seven dev slots/configured limit are preserved; this session admitted six open agents at once. No source or raw evidence was discarded; only reproducible inactive compilation caches were reclaimed.
+Resume with the existing STAT-only rules: 45 minutes per attempt, original README/manual/oracle verification, retained DONE/PARK records, no backlog expansion or audit roles. Seven dev slots/configured limit are preserved; this session admitted six open agents at once. The stop retained source/worktree history. The later persistence cleanup removes development-added oracle artifacts from the current tree after migrating useful checks; Git retains their history. Original reference files remain unchanged.
 
 Created: 2026-11-24. **1,422 total tickets**: 1,327 functional tasks across 104 PROCs and 95 tasks for shared semantics, ODS, graphics, data, and application scope. Retained ticket states below track current progress.
 
@@ -41,9 +51,9 @@ This file is the sole board for the active SAS/STAT 15.4 campaign. Process only 
 
 ## Task and acceptance conventions
 
-- Each ticket owns a directory under `tests/STAT15.4-oracle/`. Its README lists SAS programs, expected outputs, logs, and reference statuses. Available fixtures do not indicate implementation completion.
+- The temporary read-only reference for each ticket is under `tests/STAT15.4-oracle/`. Never add state, handoff, validators or run artifacts there. Persist tested behavior in corpus/Zig tests before DONE or handing off partial work; record the case-to-test mapping here. The user may delete migrated reference folders, so permanent tests cannot read or include them.
 
-- States: `TODO` available, `DOING @dev` claimed, `DONE` verified against the corresponding oracle, `PARK` not completed with a concrete recorded reason. Limit each ticket attempt to 45 minutes, including active attempts measured from their original assignment time (user update 2026-11-25); park over-limit or infeasible work and assign the next eligible ticket. IDs are unique in this file. Dependencies refer to tickets here; reuse of an existing dependency contract must be documented explicitly when dispatching ahead of a prerequisite.
+- States: `TODO` available, `DOING @dev` claimed, `DONE` verified against the corresponding oracle and permanently covered by the default gate without the temporary directory, `PARK` not completed with a concrete recorded reason. Limit each ticket attempt to 45 minutes, including active attempts measured from their original assignment time (user update 2026-11-25); park over-limit or infeasible work and assign the next eligible ticket. IDs are unique in this file. Dependencies refer to tickets here; reuse of an existing dependency contract must be documented explicitly when dispatching ahead of a prerequisite.
 - Each ticket has sources, scope, dependencies, and acceptance criteria. Features connect syntax, computation, and results. Shared tickets own common statement semantics; PROC tickets own supported options and integration. Default-computation tickets cover the smallest default path; specialized methods extend it in separate tickets.
 - Check published values at their displayed precision and rounding. For unrounded output data, use independent analytic values, verifiable literature, or SAS reference results with a recorded version. State and justify absolute/relative tolerances for each quantity. Do not generate expected results from the implementation being tested.
 - For randomized methods, verify fixed-seed reproducibility, sample layout, and distributional properties with error bounds. Match specified random-number algorithms/streams where documented. Record specific `needs-oracle` questions for unspecified behavior instead of inventing SAS semantics.
@@ -227,13 +237,13 @@ Complete prerequisite shared contracts first, then each PROC's data input, model
 - Scope: Establish PROC-level parsing, default-parameter, execution-status, and result-object contracts; distinguish valid input, invalid input, and unsupported capabilities under SAS/STAT 15.4. This ticket owns shared interfaces; PROC tickets own their semantics.
 - Dependencies: None.
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-COMMON-001/](tests/STAT15.4-oracle/STAT-COMMON-001/).
-- Waiting for implementation (2026-11-25): Initial oracle exits 2 (expected 0), with missing REG tables and unrecognized `validmemname`. Implement existing STAT-REG-001/002 prerequisites, then revisit this case; missing REG alone is not grounds for PARK. Version must identify OpenSAS, not match SAS. Evidence: dev1 `.stat-common-001-evidence/actual.stderr` and `output.diff`.
-- Dispatch contract: dev5 owns honest OpenSAS runtime-version metadata and execution-contract regression checks; dev1/dev4 own REG implementation, dev2 owns option validation. Full oracle acceptance waits for those implementations.
-- Progress (2026-11-25): OpenSAS version metadata landed in `e24fbc2c`; option validation landed in `c768bb5f`. Await integrated REG oracle before claiming DONE. Version regression and gate passed; dev5 moves to the TTEST prerequisite while REG integration continues.
-- DONE (2026-11-25): REG integration landed/pushed `48b9312d`; original runtime oracle matches all 95 normalized tokens, allowing only the explicitly permitted current OpenSAS version identity. Actual/expected status 0/0, warning semantics match, no unexpected errors. Gate: 1643 tests, 2304 corpus, 11 programs passed. Exact comparison and gate receipt preserved in dev1 `.stat-reg-001-evidence/final-comparison.json` and `gate-receipt.json`; rerun original oracle at this SHA to reproduce.
+- Permanent cases: `runtime_contract.sas` -> `tests/corpus/persist_reg_common001_runtime_contract.sas`. Same-stem `.txt` owns the expected contract; identical cases share one fixture.
+- Permanent Zig checks (default gate): `src/macro.zig`, `src/stat/reg_fit.zig`.
+- Persistence (2026-11-27): migrated; oracle-absent gate passed (1842 unit tests, 2344 corpus cases, 11 programs). This DONE folder is deletion-ready. No executable dependency on this temporary reference folder remains. Original reference files are retained for user-controlled deletion.
 - Acceptance criteria: Provide minimal execution contract tests; define option defaults, explicit overrides, and procedure-specific RUN/QUIT rules; emit locatable diagnostics for unimplemented branches; record the specification version and handle version differences explicitly.
 
 <a id="stat-common-002"></a>
+
 
 ### [DONE] STAT-COMMON-002 — Statistical data selection, missing values, and observation weight interfaces
 
@@ -241,11 +251,13 @@ Complete prerequisite shared contracts first, then each PROC's data input, model
 - Scope: Provide shared data access interfaces for BY, variable roles, FREQ, WEIGHT, ID, and missing-value filtering; individual procedures determine exclusion granularity, weight meaning, and invalid-value behavior rather than imposing one global policy.
 - Dependencies: [STAT-COMMON-001](#stat-common-001).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-COMMON-002/](tests/STAT15.4-oracle/STAT-COMMON-002/).
-- Dispatch contract: Reuse the existing PROC MEANS entry point while STAT-COMMON-001 is in progress; no new dispatcher or runtime-version contract is required. Own data selection and MEANS weight handling only.
-- DONE (2026-11-25): Landed and pushed `c768bb5f`. Unmodified `weight_roles.sas` matches the complete unchanged expected output using whitespace-only tokenization; actual/expected status 0/0, stderr empty. Gate: 1596 unit tests, 2303 corpus cases, 11 programs passed. Evidence: `tests/STAT15.4-oracle/STAT-COMMON-002/implementation-evidence.md`; golden layout corrections separately committed as `545b294e` with oracle evidence.
+- Permanent cases: `weight_roles.sas` -> `tests/corpus/stat_common002_weight_roles.sas`. Same-stem `.txt` owns the expected contract; identical cases share one fixture.
+- Permanent Zig checks (default gate): `src/stat/data_selection.zig`.
+- Persistence (2026-11-27): migrated; oracle-absent gate passed (1842 unit tests, 2344 corpus cases, 11 programs). This DONE folder is deletion-ready. No executable dependency on this temporary reference folder remains. Original reference files are retained for user-controlled deletion.
 - Acceptance criteria: Use multiple groups to verify traceability of original row numbers, variable types, and missing indicators; keep frequency and analysis weights separate in the interface; PROC-specific filtering policies must not modify the original data.
 
 <a id="stat-common-003"></a>
+
 
 ### [DONE] STAT-COMMON-003 — Rank-deficient linear algebra and generalized inverses
 
@@ -253,13 +265,13 @@ Complete prerequisite shared contracts first, then each PROC's data input, model
 - Scope: Provide interfaces for linear equations, rank determination, projections, and generalized inverses; expose singular and nearly singular states under a consistent precision policy.
 - Dependencies: [STAT-COMMON-001](#stat-common-001).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-COMMON-003/](tests/STAT15.4-oracle/STAT-COMMON-003/).
-- Dispatch contract: Evaluate the linear-algebra oracle through the existing interpreter entry point independently of COMMON-001's runtime-version requirement; do not assume its missing REG capability is implemented.
-- Waiting for implementation (2026-11-25): Oracle currently exits 2 with no REG/TOL/VIF output. Revisit after existing REG foundation tickets; do not park solely because REG is not implemented.
-- Current assignment: Reuse landed QR fitting and implement missing rank/alias/TOL/VIF diagnostics in a separate REG numerical helper; coordinate rendering with dev1. Verify the original oracle after REG dispatch is integrated.
-- DONE (2026-11-25): Ordered SINGULAR/alias helper adopted in REG and landed/pushed `48b9312d`. Original rank-deficient oracle matches all 167 normalized tokens, status 0/0, no unexpected errors. Nine independent algebra tests cover generalized-inverse/projection identities, scale-aware aliases and near-singularity; included in final integrated gate (1643 tests, 2304 corpus, 11 programs). No expected-output or numerical-tolerance change.
+- Permanent cases: `rank_deficient_regression.sas` -> `tests/corpus/persist_reg_common003_rank_deficient_regression.sas`. Same-stem `.txt` owns the expected contract; identical cases share one fixture.
+- Permanent Zig checks (default gate): `src/stat/reg_diagnostics.zig`, `src/stat/reg_fit.zig`, `src/stat/reg_persistence_tests.zig`.
+- Persistence (2026-11-27): migrated; oracle-absent gate passed (1842 unit tests, 2344 corpus cases, 11 programs). This DONE folder is deletion-ready. No executable dependency on this temporary reference folder remains. Original reference files are retained for user-controlled deletion.
 - Acceptance criteria: For full-rank, exactly rank-deficient, and nearly collinear matrices, verify decomposition reconstruction, projection identities, and generalized-inverse identities against independent analytic results; explain scale-dependent tolerances and do not return success for numerical failure.
 
 <a id="stat-common-004"></a>
+
 
 ### [DONE] STAT-COMMON-004 — Linear model moments and covariance foundations
 
@@ -267,10 +279,13 @@ Complete prerequisite shared contracts first, then each PROC's data input, model
 - Scope: Implement shared linear model moments, residual sums of squares, variance, and covariance calculations; preserve the distinction between frequency and analysis weights.
 - Dependencies: [STAT-COMMON-003](#stat-common-003), [STAT-COMMON-002](#stat-common-002).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-COMMON-004/](tests/STAT15.4-oracle/STAT-COMMON-004/).
-- DONE (2026-11-25): Landed/pushed `6b3c3735`. Original weighted oracle exits 0 with empty stderr; REG listing, PRINT panels, nonnumeric fields, missing cells and metadata match. Unrounded BEST32 cells pass independently derived coefficient/variance/covariance bounds against exact Fraction references; maximum raw difference 8.706e-15, not a hidden exact-text claim. Complete actual output and raw diff preserved; expected files unchanged. Gate: 1679 tests, 2306 corpus, 11 programs passed. Evidence/replay: `tests/STAT15.4-oracle/STAT-COMMON-004/evidence.md` and `verify.py`.
+- Permanent cases: `weighted_linear_moments.sas` -> `tests/corpus/persist_reg_common004_weighted_linear_moments.sas`. Same-stem `.txt` owns the expected contract; identical cases share one fixture.
+- Permanent Zig checks (default gate): `src/stat/reg.zig`, `src/stat/reg_outest.zig`, `src/stat/reg_persistence_tests.zig`.
+- Persistence (2026-11-27): migrated; oracle-absent gate passed (1842 unit tests, 2344 corpus cases, 11 programs). This DONE folder is deletion-ready. No executable dependency on this temporary reference folder remains. Original reference files are retained for user-controlled deletion.
 - Acceptance criteria: Use manually calculable intercept-only, weighted, and rank-deficient models to verify coefficients, residuals, degrees of freedom, and covariance; verify scaling relationships.
 
 <a id="stat-common-005"></a>
+
 
 ### [DONE] STAT-COMMON-005 — Shared interfaces for tests, tail probabilities, and confidence intervals
 
@@ -278,10 +293,13 @@ Complete prerequisite shared contracts first, then each PROC's data input, model
 - Scope: Establish shared result conventions for statistics, degrees of freedom, one-/two-sided tail probabilities, and intervals; callers specify distributions and correction formulas from the relevant guide sections.
 - Dependencies: [STAT-COMMON-004](#stat-common-004).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-COMMON-005/](tests/STAT15.4-oracle/STAT-COMMON-005/).
-- DONE (2026-11-25): TTEST dependency implemented and landed/pushed in `d658cfff`. Read this README and cited manual; unchanged `tails_and_intervals.sas` matches complete output after whitespace-only normalization, actual/expected status 0/0. Uses implemented probability and one-sample inference primitives, independent of the pending general linear-model oracle. Gate: 1611 tests, 2304 corpus, 11 programs passed. Evidence: `tests/STAT15.4-oracle/STAT-COMMON-005/dev5-verification.json`.
+- Permanent cases: `tails_and_intervals.sas` -> `tests/corpus/persist_ttest_tails_and_intervals.sas`. Same-stem `.txt` owns the expected contract; identical cases share one fixture.
+- Permanent Zig checks (default gate): `src/stat/ttest.zig`, `src/stat/ttest_fit.zig`, `src/stat/ttest_parse.zig`.
+- Persistence (2026-11-27): migrated; oracle-absent gate passed (1842 unit tests, 2344 corpus cases, 11 programs). This DONE folder is deletion-ready. No executable dependency on this temporary reference folder remains. Original reference files are retained for user-controlled deletion.
 - Acceptance criteria: Use independent reference values for positive/negative statistics, one-/two-sided conversions, degenerate degrees of freedom, and extreme tails; each caller records absolute/relative tolerances and justification rather than masking tail errors with a broad common tolerance.
 
 <a id="stat-common-006"></a>
+
 
 ### [DONE] STAT-COMMON-006 — CLASS level formation and ordering
 
@@ -289,12 +307,13 @@ Complete prerequisite shared contracts first, then each PROC's data input, model
 - Scope: Represent formatted levels, ordering methods, reference levels, and missing levels consistently; integrate procedure-specific ORDER=/REF= and related options in PROC tickets.
 - Dependencies: [STAT-COMMON-002](#stat-common-002).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-COMMON-006/](tests/STAT15.4-oracle/STAT-COMMON-006/).
-- Dispatch contract: dev4 owns a shared CLASS-level helper and its tests; dev2 integrates it into GLM, dev6 owns GLM numerical inference. Verify the original CLASS-order oracle after integration; helper-only tests do not count as DONE.
-- Scheduling note (2026-11-25): Reserved dev7 could not start because of the current session's thread limit, despite saved cap 7. After finishing TTEST-009, the real dev4 worker takes this ticket; its 45-minute clock starts at this reassignment. Actual concurrent dev count remains six.
-- DONE (2026-11-25): Helper integrated into GLM and landed/pushed `def08486`. Original CLASS-order oracle matches all 228 tokens with whitespace-only normalization, status 0, stderr empty. Nine levelization tests run in the normal gate. Combined gate: 1732 tests, 2308 corpus, 11 programs passed. Final integration evidence: `tests/STAT15.4-oracle/STAT-GLM-001/implementation-evidence.md`, superseding the earlier helper-only state.
+- Permanent cases: `class_order.sas` -> `tests/corpus/persist_glm_common006_class_order.sas`. Same-stem `.txt` owns the expected contract; identical cases share one fixture.
+- Permanent Zig checks (default gate): `src/stat/class_levels.zig`, `src/stat/glm_tests.zig`.
+- Persistence (2026-11-27): migrated; oracle-absent gate passed (1842 unit tests, 2344 corpus cases, 11 programs). This DONE folder is deletion-ready. No executable dependency on this temporary reference folder remains. Original reference files are retained for user-controlled deletion.
 - Acceptance criteria: Verify level ordering and column mappings for character, numeric, formatted, missing, and multiple-BY-group data; changes in input order may have only the effects allowed by the documentation.
 
 <a id="stat-common-007"></a>
+
 
 ### [DONE] STAT-COMMON-007 — Design matrices for main effects, interactions, and nesting
 
@@ -302,10 +321,13 @@ Complete prerequisite shared contracts first, then each PROC's data input, model
 - Scope: Implement intercepts, continuous effects, categorical main effects, interactions, nesting, continuous/class combinations, and general effect expansion; retain the mapping from column names to model effects.
 - Dependencies: [STAT-COMMON-006](#stat-common-006), [STAT-COMMON-003](#stat-common-003).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-COMMON-007/](tests/STAT15.4-oracle/STAT-COMMON-007/).
-- DONE (2026-11-25): Landed/pushed `1dc6858f`. Original GLMMOD case matches all 261 tokens, rc 0, empty diagnostics; full OUTPARM and OUTDESIGN listings retained. Typed tests verify 15 parameter rows, 12 design rows, all cells, blank metadata positions, column order and aliases. Successful retry gate: 1768 tests, 2311 corpus, 11 programs passed; earlier cache-failed attempt excluded. Evidence: `tests/STAT15.4-oracle/STAT-COMMON-007/implementation-evidence.md`.
+- Permanent cases: `effect_design.sas` -> `tests/corpus/persist_glm_common007_effect_design.sas`. Same-stem `.txt` owns the expected contract; identical cases share one fixture.
+- Permanent Zig checks (default gate): `src/stat/design_matrix.zig`, `src/stat/glmmod.zig`.
+- Persistence (2026-11-27): migrated; oracle-absent gate passed (1842 unit tests, 2344 corpus cases, 11 programs). This DONE folder is deletion-ready. No executable dependency on this temporary reference folder remains. Original reference files are retained for user-controlled deletion.
 - Acceptance criteria: For small unbalanced designs, verify each design matrix column, its order, and its label; test empty cells, aliases, and no-intercept settings.
 
 <a id="stat-common-008"></a>
+
 
 ### [DONE] STAT-COMMON-008 — Alternative parameterizations and reference coding
 
@@ -313,11 +335,13 @@ Complete prerequisite shared contracts first, then each PROC's data input, model
 - Scope: Implement the non-GLM parameterizations and reference-level semantics described in this section; expose them only to PROCs that document support for them.
 - Dependencies: [STAT-COMMON-007](#stat-common-007).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-COMMON-008/](tests/STAT15.4-oracle/STAT-COMMON-008/).
-- Dispatch contract: Reuse the completed CLASS/design helpers for REF/EFFECT coding and implement the LOGISTIC execution prerequisite required by this original case. Missing LOGISTIC alone is not grounds for immediate PARK; keep work bounded to the assigned observable contract and report any remaining gaps precisely.
-- DONE (2026-11-25): Landed/pushed `d00eee36`. Both original LOGISTIC analyses match all 430 tokens, rc 0, empty diagnostics. Binary solver and REF/EFFECT design/display implemented; prediction, covariance, reference/event-change and OR invariance checks pass. Gate: 1785 tests, 2312 corpus, 11 programs passed. COMMON-006/007 regressions preserved. Evidence: `tests/STAT15.4-oracle/STAT-COMMON-008/implementation-evidence.md`; broader LOGISTIC methods/codings remain explicit gaps.
+- Permanent cases: `reference_effect_coding.sas` -> `tests/corpus/persist_logistic_common008_reference_effect_coding.sas`. Same-stem `.txt` owns the expected contract; identical cases share one fixture.
+- Permanent Zig checks (default gate): `src/stat/logistic.zig`, `src/stat/logistic_design.zig`.
+- Persistence (2026-11-27): migrated; oracle-absent gate passed (1842 unit tests, 2344 corpus cases, 11 programs). This DONE folder is deletion-ready. No executable dependency on this temporary reference folder remains. Original reference files are retained for user-controlled deletion.
 - Acceptance criteria: Verify equivalent predictions before and after parameter transformations for the same fitted space; check each documented coding scheme rather than substituting a single scheme for all parameterizations.
 
 <a id="stat-common-009"></a>
+
 
 ### [DONE] STAT-COMMON-009 — Estimability and nonestimable result representation
 
@@ -325,11 +349,13 @@ Complete prerequisite shared contracts first, then each PROC's data input, model
 - Scope: Implement estimability checks for linear functions, reduction notation, and nonestimable output contracts for ESTIMATE, LSMEANS, CONTRAST, and related consumers.
 - Dependencies: [STAT-COMMON-007](#stat-common-007), [STAT-COMMON-005](#stat-common-005).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-COMMON-009/](tests/STAT15.4-oracle/STAT-COMMON-009/).
-- Dispatch contract: dev7 implements the estimability/LSMEANS path required by the original empty-cell GLM case, reusing the completed coded-design/rank helpers. Coordinate Type III/IV empty-cell hypotheses with dev6; do not turn nonestimable results into fabricated estimates.
-- DONE (2026-11-25): Landed/pushed combined `415558f9`. Authorized MODEL bar expansion runs the unchanged original; all 206 tokens match, rc 0, stderr empty. True Non-est results, complete LSMEANS/E and typed missing-field checks are included; rewritten diagnostic source was not used for acceptance. Exact-SHA gate: 1803 tests, 2316 corpus, 11 programs passed. Evidence: `tests/STAT15.4-oracle/STAT-COMMON-009/dev7-attempt.md` and replay.
+- Permanent cases: `estimability.sas` -> `tests/corpus/persist_glm_common009_estimability.sas`. Same-stem `.txt` owns the expected contract; identical cases share one fixture.
+- Permanent Zig checks (default gate): `src/stat/glm_estimability.zig`, `src/stat/glm_lsmeans.zig`, `src/stat/glm_ss34_tests.zig`.
+- Persistence (2026-11-27): migrated; oracle-absent gate passed (1842 unit tests, 2344 corpus cases, 11 programs). This DONE folder is deletion-ready. No executable dependency on this temporary reference folder remains. Original reference files are retained for user-controlled deletion.
 - Acceptance criteria: Use the source examples to distinguish estimable and nonestimable linear functions; verify status, rank, and diagnostics with missing levels and rank-deficient designs.
 
 <a id="stat-common-010"></a>
+
 
 ### [DONE] STAT-COMMON-010 — Type I sums of squares and estimable functions
 
@@ -337,11 +363,13 @@ Complete prerequisite shared contracts first, then each PROC's data input, model
 - Scope: Implement type I hypothesis construction, degrees of freedom, and sums of squares; preserve differences in definition for unbalanced designs and missing cells.
 - Dependencies: [STAT-COMMON-009](#stat-common-009).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-COMMON-010/](tests/STAT15.4-oracle/STAT-COMMON-010/).
-- Dispatch contract: Reuse the integrated GLM sequential-model comparisons and tested rank policy for this oracle while the broader COMMON-009 estimable-function interface remains pending. Do not claim unsupported general hypotheses; verify this original SS1 request and independent order/rank checks.
-- DONE (2026-11-25): Landed/pushed `410cc75b`. Original SS1 oracle matches all 96 tokens with whitespace-only normalization, status 0. Independent rational, balanced, reordered-effect, empty-cell and hypothesis-matrix checks pass; default GLM case remains 671-token/three-graph green. Direct gate: 1736 tests, 2309 corpus, 11 programs passed. Evidence/replay in `tests/STAT15.4-oracle/STAT-COMMON-010/`; expected files unchanged.
+- Permanent cases: `unbalanced_sums_of_squares.sas` -> `tests/corpus/persist_glm_common010_unbalanced_sums_of_squares.sas`. Same-stem `.txt` owns the expected contract; identical cases share one fixture.
+- Permanent Zig checks (default gate): `src/stat/glm_persistence_tests.zig`, `src/stat/glm_ss1_tests.zig`.
+- Persistence (2026-11-27): migrated; oracle-absent gate passed (1842 unit tests, 2344 corpus cases, 11 programs). This DONE folder is deletion-ready. No executable dependency on this temporary reference folder remains. Original reference files are retained for user-controlled deletion.
 - Acceptance criteria: For balanced, unbalanced, empty-cell, and reordered-effect designs, verify hypothesis matrices, sums of squares, ranks, and F tests against source examples or independent linear-algebra derivations.
 
 <a id="stat-common-011"></a>
+
 
 ### [DONE] STAT-COMMON-011 — Type II sums of squares and estimable functions
 
@@ -349,11 +377,13 @@ Complete prerequisite shared contracts first, then each PROC's data input, model
 - Scope: Implement type II hypothesis construction, degrees of freedom, and sums of squares; preserve differences in definition for unbalanced designs and missing cells.
 - Dependencies: [STAT-COMMON-009](#stat-common-009).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-COMMON-011/](tests/STAT15.4-oracle/STAT-COMMON-011/).
-- Dispatch contract: Extend the integrated GLM hypothesis/rank primitives for Type II; the wider COMMON-009 interface remains separately tracked. Validate hierarchy/containing effects explicitly rather than relabeling Type III output for arbitrary models.
-- DONE (2026-11-25): Landed/pushed `5a03f479`. Original SS2 oracle matches all 96 tokens, status 0, whitespace-only normalization. Type II uses actual effect-containment metadata and full-model error variance; eight independent checks distinguish Type II/III on unbalanced interactions and cover order, rank and empty cells. Parser fixes retained. Exact-SHA direct gate: 1761 tests, 2311 corpus, 11 programs passed; earlier disk-failed gate excluded. Evidence/replay: `tests/STAT15.4-oracle/STAT-COMMON-011/`.
+- Permanent cases: `unbalanced_sums_of_squares.sas` -> `tests/corpus/persist_glm_common011_unbalanced_sums_of_squares.sas`. Same-stem `.txt` owns the expected contract; identical cases share one fixture.
+- Permanent Zig checks (default gate): `src/stat/glm_persistence_tests.zig`, `src/stat/glm_ss2_tests.zig`.
+- Persistence (2026-11-27): migrated; oracle-absent gate passed (1842 unit tests, 2344 corpus cases, 11 programs). This DONE folder is deletion-ready. No executable dependency on this temporary reference folder remains. Original reference files are retained for user-controlled deletion.
 - Acceptance criteria: For balanced, unbalanced, empty-cell, and reordered-effect designs, verify hypothesis matrices, sums of squares, ranks, and F tests against source examples or independent linear-algebra derivations.
 
 <a id="stat-common-012"></a>
+
 
 ### [DONE] STAT-COMMON-012 — Type III / IV sums of squares and estimable functions
 
@@ -361,11 +391,13 @@ Complete prerequisite shared contracts first, then each PROC's data input, model
 - Scope: Implement type III / IV hypothesis construction, degrees of freedom, and sums of squares; preserve differences in definition for unbalanced designs and missing cells.
 - Dependencies: [STAT-COMMON-009](#stat-common-009).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-COMMON-012/](tests/STAT15.4-oracle/STAT-COMMON-012/).
-- Dispatch contract: Extend the integrated GLM hypothesis and rank primitives while the broader COMMON-009 interface remains separately tracked. Respect differences between Type III and IV for missing cells; do not relabel one as the other without a validated applicable condition.
-- DONE (2026-11-25): Landed/pushed combined `415558f9`. Own unchanged original matches all 126 tokens, rc 0, empty stderr. SS3/SS4 selection and validated single-empty-cell 2x2 Type III contrasts included; general missing-cell Type IV/broader deficient constructions still fail explicitly. Combined exact-SHA gate: 1803 tests, 2316 corpus, 11 programs passed. Evidence/replay: `tests/STAT15.4-oracle/STAT-COMMON-012/`.
+- Permanent cases: `unbalanced_sums_of_squares.sas` -> `tests/corpus/persist_glm_common012_unbalanced_sums_of_squares.sas`. Same-stem `.txt` owns the expected contract; identical cases share one fixture.
+- Permanent Zig checks (default gate): `src/stat/glm_persistence_tests.zig`, `src/stat/glm_ss34_tests.zig`.
+- Persistence (2026-11-27): migrated; oracle-absent gate passed (1842 unit tests, 2344 corpus cases, 11 programs). This DONE folder is deletion-ready. No executable dependency on this temporary reference folder remains. Original reference files are retained for user-controlled deletion.
 - Acceptance criteria: For balanced, unbalanced, empty-cell, and reordered-effect designs, verify hypothesis matrices, sums of squares, ranks, and F tests against source examples or independent linear-algebra derivations.
 
 <a id="stat-common-013"></a>
+
 
 ### [TODO] STAT-COMMON-013 — Bayesian priors and posterior summary contracts
 
@@ -493,10 +525,13 @@ Complete prerequisite shared contracts first, then each PROC's data input, model
 - Scope: Implement shared semantics, defaults, and applicability checks for ESTIMATE Statement; procedure-specific options and result integration belong to the corresponding PROC tickets.
 - Dependencies: [STAT-COMMON-009](#stat-common-009), [STAT-COMMON-005](#stat-common-005).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-COMMON-025/](tests/STAT15.4-oracle/STAT-COMMON-025/).
-- DONE / handoff: pushed in closing batch `86a553ba`; unchanged original 151/151 tokens, rc 0, empty stderr. Coefficient mapping, E display, estimate/SE/t/p and nonestimable results verified. Combined gate 1824/2318/11 passed. ABSORB/post-RUN ESTIMATE and documented fill limits remain gaps. Evidence: this directory's `dev7-attempt.md` and verifier.
+- Permanent cases: `estimate_coefficients.sas` -> `tests/corpus/persist_glm_common025_estimate_coefficients.sas`. Same-stem `.txt` owns the expected contract; identical cases share one fixture.
+- Permanent Zig checks (default gate): `src/stat/glm_estimate.zig`.
+- Persistence (2026-11-27): migrated; oracle-absent gate passed (1842 unit tests, 2344 corpus cases, 11 programs). This DONE folder is deletion-ready. No executable dependency on this temporary reference folder remains. Original reference files are retained for user-controlled deletion.
 - Acceptance criteria: Create positive and negative cases for the syntax forms, defaults, and option combinations listed in this section; verify result names, dimensions, and numerical values. Cover nonestimable functions, complex coefficients, adjusted comparisons, and procedure applicability; successful parsing alone is insufficient.
 
 <a id="stat-common-026"></a>
+
 
 ### [TODO] STAT-COMMON-026 — LSMEANS Statement
 
@@ -3612,11 +3647,13 @@ Source: S154, Chapter 47, `The FREQ Procedure`, PDF pp. 3069–3290. Tasks in th
 - Scope: Integrate PROC FREQ declarations, basic options, defaults, and execution boundaries; this ticket establishes parameter objects and result interfaces, while later feature tickets implement model-, algorithm-, and output-specific options. Also implement BY; WEIGHT; Inputting Frequency Counts; Grouping with Formats; Missing Values; apply this procedure's rules for missing values, variable roles, and observation selection.
 - Dependencies: [STAT-COMMON-001](#stat-common-001), [STAT-COMMON-002](#stat-common-002).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-FREQ-001/](tests/STAT15.4-oracle/STAT-FREQ-001/).
-- Dispatch contract: Reuse existing FREQ dispatch, BY groups, and weight filtering while shared tickets remain open; this attempt owns FREQ-specific behavior only, not shared MEANS or REG changes.
-- DONE (2026-11-25): Landed/pushed `c932de9b`. Both unchanged oracle listings match all 649/803 tokens after whitespace-only normalization, status 0/0, no warnings/errors. Six generated graphs inspected. Gate: 1597 unit tests, 2303 corpus cases, 11 programs passed. Existing corpus golden changes isolated in `96180f0e`; oracle expected files unchanged. Evidence: `tests/STAT15.4-oracle/STAT-FREQ-001/dev3-attempt.md`.
+- Permanent cases: `documented_feature.sas` -> `tests/corpus/persist_freq_001_documented_feature.sas`; `statement_by.sas` -> `tests/corpus/persist_freq_001_statement_by.sas`. Same-stem `.txt` owns the expected contract; identical cases share one fixture.
+- Permanent Zig checks (default gate): `src/stat/freq.zig`, `src/stat/freq_stratified_render.zig`.
+- Persistence (2026-11-27): migrated; oracle-absent gate passed (1842 unit tests, 2344 corpus cases, 11 programs). This DONE folder is deletion-ready. No executable dependency on this temporary reference folder remains. Original reference files are retained for user-controlled deletion.
 - Acceptance criteria: Create positive and negative parsing cases for the documented declarations and basic options; verify defaults, explicit settings, documented duplicate/conflicting declarations, and locations; valid but unimplemented features must not silently succeed. For BY / WEIGHT / Inputting Frequency Counts / Grouping with Formats / Missing Values, construct valid, missing, empty, and multiple-group inputs; verify included observation counts, variable roles, BY boundaries, level ordering, and the frequency/weight rules relevant to this ticket; assert documented invalid-input behavior.
 
 <a id="stat-freq-002"></a>
+
 
 ### [DONE] STAT-FREQ-002 — FREQ — One-way and crosstabulation counts and basic statistics
 
@@ -3624,11 +3661,12 @@ Source: S154, Chapter 47, `The FREQ Procedure`, PDF pp. 3069–3290. Tasks in th
 - Scope: Implement one-way and crosstabulation counts and basic statistics using the documented default path and establish the computational state needed by later extensions; implement specialized models, methods, and diagnostics outside that default example in their corresponding feature tickets.
 - Dependencies: [STAT-FREQ-001](#stat-freq-001), [STAT-COMMON-005](#stat-common-005).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-FREQ-002/](tests/STAT15.4-oracle/STAT-FREQ-002/).
-- Dispatch contract: Reuse the existing tested FREQ probability/statistic routines while COMMON-005's TTEST integration remains in progress. Verify this ticket's own unchanged oracle and cited manual; no assumption of completion from FREQ-001.
-- DONE (2026-11-25): Landed/pushed `f19323dc`. Independently executed unchanged oracle matches 649/649 tokens using whitespace-only normalization, status 0, no warnings/errors; three graphs inspected. Existing regressions verify smaller independent count/statistic calculations. Gate: 1597 tests, 2303 corpus, 11 programs passed; evidence-only change. Evidence: `tests/STAT15.4-oracle/STAT-FREQ-002/dev3-attempt.md`.
+- Permanent cases: `documented_default.sas` -> `tests/corpus/persist_freq_001_documented_feature.sas`. Same-stem `.txt` owns the expected contract; identical cases share one fixture.
+- Persistence (2026-11-27): migrated; oracle-absent gate passed (1842 unit tests, 2344 corpus cases, 11 programs). This DONE folder is deletion-ready. No executable dependency on this temporary reference folder remains. Original reference files are retained for user-controlled deletion.
 - Acceptance criteria: Turn the smallest default analysis in Getting Started into a runnable case and verify its principal estimates, observation counts, and result status; add a smaller case with an independent manual calculation; meet the precision conventions.
 
 <a id="stat-freq-003"></a>
+
 
 ### [DONE] STAT-FREQ-003 — FREQ — TABLES
 
@@ -3636,10 +3674,13 @@ Source: S154, Chapter 47, `The FREQ Procedure`, PDF pp. 3069–3290. Tasks in th
 - Scope: Implement TABLES syntax, variable combinations, multidimensional tables/strata, frequencies and margins, level ordering, and missing/zero-frequency policies; the chapter's corresponding feature tickets own individual statistical tests, intervals, and graphics.
 - Dependencies: [STAT-FREQ-001](#stat-freq-001), [STAT-FREQ-002](#stat-freq-002).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-FREQ-003/](tests/STAT15.4-oracle/STAT-FREQ-003/).
-- DONE (2026-11-25): Landed/pushed `1e4add9e`. Own unchanged oracle matches 649/649 tokens with whitespace-only normalization; status 0, no warnings/errors; three graphs inspected. Seven relevant existing regressions passed, no implementation/golden changes. Gate: 1611 tests, 2304 corpus, 11 programs passed. Evidence: `tests/STAT15.4-oracle/STAT-FREQ-003/dev3-attempt.md` and preserved actual output/graphs.
+- Permanent cases: `documented_feature.sas` -> `tests/corpus/persist_freq_001_documented_feature.sas`. Same-stem `.txt` owns the expected contract; identical cases share one fixture.
+- Permanent Zig checks (default gate): `src/stat/freq.zig`.
+- Persistence (2026-11-27): migrated; oracle-absent gate passed (1842 unit tests, 2344 corpus cases, 11 programs). This DONE folder is deletion-ready. No executable dependency on this temporary reference folder remains. Original reference files are retained for user-controlled deletion.
 - Acceptance criteria: Verify one-way, multiway, nested, and combined-variable table specifications; check every cell count, margin, stratum, formatted-level order, and missing/zero-frequency behavior; corresponding statistical feature tickets validate tests and intervals.
 
 <a id="stat-freq-004"></a>
+
 
 ### [DONE] STAT-FREQ-004 — FREQ — EXACT / Exact Statistics
 
@@ -3647,10 +3688,13 @@ Source: S154, Chapter 47, `The FREQ Procedure`, PDF pp. 3069–3290. Tasks in th
 - Scope: Implement EXACT; Exact Statistics. This ticket owns the feature's options, defaults, computation, and results as an extension of the basic computational path; the chapter's output tickets handle ODS descriptors and file presentation.
 - Dependencies: [STAT-FREQ-001](#stat-freq-001), [STAT-FREQ-002](#stat-freq-002).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-FREQ-004/](tests/STAT15.4-oracle/STAT-FREQ-004/).
-- DONE (2026-11-25): Landed/pushed `c0195f8f`; original oracle matches all 263 tokens with whitespace-only normalization, status 0, expected displayed sparse-cell warning preserved, stderr empty. Independent enumeration and conditional-odds inversion validate exact values. Gate: 1663 tests, 2305 corpus, 11 programs passed; local golden corrections isolated in `6e5f56f0`. Evidence/replay: `tests/STAT15.4-oracle/STAT-FREQ-004/dev3-attempt.md` and `verify.py`.
+- Permanent cases: `documented_feature.sas` -> `tests/corpus/persist_freq_004_documented_feature.sas`. Same-stem `.txt` owns the expected contract; identical cases share one fixture.
+- Permanent Zig checks (default gate): `src/stat/freq_exact.zig`, `src/stat/freq_exact_execute.zig`, `src/stat/freq_persistence_tests.zig`.
+- Persistence (2026-11-27): migrated; oracle-absent gate passed (1842 unit tests, 2344 corpus cases, 11 programs). This DONE folder is deletion-ready. No executable dependency on this temporary reference folder remains. Original reference files are retained for user-controlled deletion.
 - Acceptance criteria: For EXACT / Exact Statistics, independently enumerate probability masses and the relevant tails/intervals for small samples; cover ties, zero counts, degenerate boundaries, and exact-method applicability restrictions.
 
 <a id="stat-freq-005"></a>
+
 
 ### [DONE] STAT-FREQ-005 — FREQ — Chi-Square Tests and Statistics
 
@@ -3658,10 +3702,13 @@ Source: S154, Chapter 47, `The FREQ Procedure`, PDF pp. 3069–3290. Tasks in th
 - Scope: Implement Chi-Square Tests and Statistics. This ticket owns the feature's options, defaults, computation, and results as an extension of the basic computational path; the chapter's output tickets handle ODS descriptors and file presentation.
 - Dependencies: [STAT-FREQ-001](#stat-freq-001), [STAT-FREQ-002](#stat-freq-002), [STAT-COMMON-005](#stat-common-005).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-FREQ-005/](tests/STAT15.4-oracle/STAT-FREQ-005/).
-- DONE (2026-11-25): Landed/pushed `092472d6`. Original oracle matches all 110 tokens with whitespace-only normalization, status 0, no warning/error differences; both graphs inspected. Restored labeled BY reports and full per-group titles; independent exact counts and closed-form probabilities validate statistics. Separate golden commit preserved numeric values. Final integration gate: 1697 tests, 2308 corpus, 11 programs passed. Evidence/replay: `tests/STAT15.4-oracle/STAT-FREQ-005/dev3-attempt.md` and `verify.py`.
+- Permanent cases: `documented_feature.sas` -> `tests/corpus/persist_freq_005_documented_feature.sas`. Same-stem `.txt` owns the expected contract; identical cases share one fixture.
+- Permanent Zig checks (default gate): `src/stat/freq.zig`, `src/stat/freq_persistence_tests.zig`.
+- Persistence (2026-11-27): migrated; oracle-absent gate passed (1842 unit tests, 2344 corpus cases, 11 programs). This DONE folder is deletion-ready. No executable dependency on this temporary reference folder remains. Original reference files are retained for user-controlled deletion.
 - Acceptance criteria: For Chi-Square Tests and Statistics, use independently calculated count tables to verify expected frequencies, statistics, corrections, degrees of freedom, and probabilities; include zero rows/columns and small expected counts; validate numerical values against the source formulas or an independent reference, following this file's precision conventions.
 
 <a id="stat-freq-006"></a>
+
 
 ### [DONE] STAT-FREQ-006 — FREQ — Measures of Association
 
@@ -3669,10 +3716,13 @@ Source: S154, Chapter 47, `The FREQ Procedure`, PDF pp. 3069–3290. Tasks in th
 - Scope: Implement Measures of Association. This ticket owns the feature's options, defaults, computation, and results as an extension of the basic computational path; the chapter's output tickets handle ODS descriptors and file presentation.
 - Dependencies: [STAT-FREQ-001](#stat-freq-001), [STAT-FREQ-002](#stat-freq-002), [STAT-COMMON-005](#stat-common-005).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-FREQ-006/](tests/STAT15.4-oracle/STAT-FREQ-006/).
-- DONE (2026-11-25): Landed/pushed `778341da`, evidence-only. Own unchanged oracle matches all 649 tokens, status 0, no warning/error differences; three graphs inspected. Additional unchanged MEASURES regressions verify 13 estimate/ASE/CI rows, seven null-SE/Z/tail tests and zero-margin behavior using independent formulas. Exact-SHA gate: 1741 tests, 2309 corpus, 11 programs passed. No production or golden changes. Evidence/replay: `tests/STAT15.4-oracle/STAT-FREQ-006/dev3-attempt.md` and `verify.py`.
+- Permanent cases: `documented_feature.sas` -> `tests/corpus/persist_freq_001_documented_feature.sas`. Same-stem `.txt` owns the expected contract; identical cases share one fixture.
+- Permanent Zig checks (default gate): `src/stat/freq_persistence_tests.zig`, `src/stat/freq_tests.zig`.
+- Persistence (2026-11-27): migrated; oracle-absent gate passed (1842 unit tests, 2344 corpus cases, 11 programs). This DONE folder is deletion-ready. No executable dependency on this temporary reference folder remains. Original reference files are retained for user-controlled deletion.
 - Acceptance criteria: For Measures of Association, use an independently calculable small sample and the source examples to verify targets, estimates/statistics, degrees of freedom, and applicable probabilities or intervals; include at least one relevant degenerate or boundary case, asserting documented diagnostics and result status.
 
 <a id="stat-freq-007"></a>
+
 
 ### [DONE] STAT-FREQ-007 — FREQ — Binomial Proportion
 
@@ -3680,10 +3730,13 @@ Source: S154, Chapter 47, `The FREQ Procedure`, PDF pp. 3069–3290. Tasks in th
 - Scope: Implement Binomial Proportion. This ticket owns the feature's options, defaults, computation, and results as an extension of the basic computational path; the chapter's output tickets handle ODS descriptors and file presentation.
 - Dependencies: [STAT-FREQ-001](#stat-freq-001), [STAT-FREQ-002](#stat-freq-002), [STAT-COMMON-005](#stat-common-005).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-FREQ-007/](tests/STAT15.4-oracle/STAT-FREQ-007/).
-- DONE (2026-11-25): Landed/pushed `03386aaa`. Original oracle matches 257/257 tokens, rc 0, empty stderr; graphics disabled. Independent interval, equality/TOST, all-zero/all-success and near-boundary checks pass. Existing numerical kernels reused; complete display fields restored. Golden changes isolated with evidence. Exact-SHA gate: 1771 tests, 2312 corpus, 11 programs passed. Evidence/replay: `tests/STAT15.4-oracle/STAT-FREQ-007/`.
+- Permanent cases: `documented_feature.sas` -> `tests/corpus/freq_binomial_example.sas`. Same-stem `.txt` owns the expected contract; identical cases share one fixture.
+- Permanent Zig checks (default gate): `src/stat/freq_persistence_tests.zig`, `src/stat/freq_risk.zig`, `src/stat/freq_risk_inference.zig`.
+- Persistence (2026-11-27): migrated; oracle-absent gate passed (1842 unit tests, 2344 corpus cases, 11 programs). This DONE folder is deletion-ready. No executable dependency on this temporary reference folder remains. Original reference files are retained for user-controlled deletion.
 - Acceptance criteria: For Binomial Proportion, verify each requested proportion estimate, test, and interval method; include all-zero and all-success samples, small samples, and boundary null hypotheses; validate numerical values against the source formulas or an independent reference, following this file's precision conventions.
 
 <a id="stat-freq-008"></a>
+
 
 ### [DONE] STAT-FREQ-008 — FREQ — Sensitivity and Specificity
 
@@ -3691,10 +3744,13 @@ Source: S154, Chapter 47, `The FREQ Procedure`, PDF pp. 3069–3290. Tasks in th
 - Scope: Implement Sensitivity and Specificity. This ticket owns the feature's options, defaults, computation, and results as an extension of the basic computational path; the chapter's output tickets handle ODS descriptors and file presentation.
 - Dependencies: [STAT-FREQ-001](#stat-freq-001), [STAT-FREQ-002](#stat-freq-002), [STAT-COMMON-005](#stat-common-005).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-FREQ-008/](tests/STAT15.4-oracle/STAT-FREQ-008/).
-- DONE / handoff: evidence pushed in `86a553ba`; current replay 649/649 tokens, rc 0, graph and 96 independent metric/SE/CI checks passed. No production/golden changes. Combined gate 1824/2318/11 passed. Evidence/replay: this directory's `dev3-attempt.md` and `verify.py`.
+- Permanent cases: `documented_feature.sas` -> `tests/corpus/persist_freq_001_documented_feature.sas`. Same-stem `.txt` owns the expected contract; identical cases share one fixture.
+- Permanent Zig checks (default gate): `src/stat/freq_persistence_tests.zig`, `src/stat/freq_risk.zig`.
+- Persistence (2026-11-27): migrated; oracle-absent gate passed (1842 unit tests, 2344 corpus cases, 11 programs). This DONE folder is deletion-ready. No executable dependency on this temporary reference folder remains. Original reference files are retained for user-controlled deletion.
 - Acceptance criteria: For Sensitivity and Specificity, use an independently calculable small sample and the source examples to verify targets, estimates/statistics, degrees of freedom, and applicable probabilities or intervals; include at least one relevant degenerate or boundary case, asserting documented diagnostics and result status.
 
 <a id="stat-freq-009"></a>
+
 
 ### [TODO] STAT-FREQ-009 — FREQ — Risks and Risk Differences
 
@@ -4768,10 +4824,13 @@ Source: S154, Chapter 53, `The GLM Procedure`, PDF pp. 4043–4230. Tasks in thi
 - Scope: Integrate PROC GLM declarations, basic options, defaults, and execution boundaries; this ticket establishes parameter objects and result interfaces, while later feature tickets implement model-, algorithm-, and output-specific options. Also implement BY; FREQ; ID; WEIGHT; Missing Values; apply this procedure's rules for missing values, variable roles, and observation selection.
 - Dependencies: [STAT-COMMON-001](#stat-common-001), [STAT-COMMON-002](#stat-common-002).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-GLM-001/](tests/STAT15.4-oracle/STAT-GLM-001/).
-- DONE (2026-11-25): Landed/pushed `def08486`, completed before the 45-minute deadline. Full unchanged five-analysis oracle matches 671/671 tokens, status 0; three real native SVGs checked numerically and visually, SGSCATTER prerequisite implemented. Combined gate: 1732 tests, 2308 corpus, 11 programs passed. All helper tests are integrated; expected files unchanged. Evidence/replay: `tests/STAT15.4-oracle/STAT-GLM-001/implementation-evidence.md` and `verify.py`.
+- Permanent cases: `documented_feature.sas` -> `tests/corpus/persist_glm_glm001_documented_feature.sas`. Same-stem `.txt` owns the expected contract; identical cases share one fixture.
+- Permanent Zig checks (default gate): `src/stat/glm_persistence_tests.zig`, `src/stat/glm_tests.zig`.
+- Persistence (2026-11-27): migrated; oracle-absent gate passed (1842 unit tests, 2344 corpus cases, 11 programs). This DONE folder is deletion-ready. No executable dependency on this temporary reference folder remains. Original reference files are retained for user-controlled deletion.
 - Acceptance criteria: Create positive and negative parsing cases for the documented declarations and basic options; verify defaults, explicit settings, documented duplicate/conflicting declarations, and locations; valid but unimplemented features must not silently succeed. For BY / FREQ / ID / WEIGHT / Missing Values, construct valid, missing, empty, and multiple-group inputs; verify included observation counts, variable roles, BY boundaries, level ordering, and the frequency/weight rules relevant to this ticket; assert documented invalid-input behavior.
 
 <a id="stat-glm-002"></a>
+
 
 ### [DONE] STAT-GLM-002 — GLM — General linear model estimation and basic effect tests
 
@@ -4779,11 +4838,13 @@ Source: S154, Chapter 53, `The GLM Procedure`, PDF pp. 4043–4230. Tasks in thi
 - Scope: Implement general linear model estimation and basic effect tests using the documented default path and establish the computational state needed by later extensions; implement specialized models, methods, and diagnostics outside that default example in their corresponding feature tickets.
 - Dependencies: [STAT-GLM-001](#stat-glm-001), [STAT-GLM-003](#stat-glm-003), [STAT-GLM-004](#stat-glm-004), [STAT-COMMON-005](#stat-common-005).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-GLM-002/](tests/STAT15.4-oracle/STAT-GLM-002/).
-- Dispatch contract: dev6 implements GLM fitting/effect-test calculations in a separate module, reusing landed QR/probability primitives. dev2 owns GLM parsing/rendering and dev7 CLASS levels. This explicit parallel interface breaks integration dependencies without claiming unsupported methods; require full original oracle before DONE.
-- DONE (2026-11-25): Numerical fitting and SGSCATTER dependency integrated by dev2 and landed/pushed `def08486` (CLASS helper ultimately owned by dev4). Own unchanged default oracle matches all 671 tokens, status 0, three native graphs verified; no numerical tolerance used. Thirteen numeric tests are included in the combined gate: 1732 tests, 2308 corpus, 11 programs passed. Final full-case evidence/replay is shared in `tests/STAT15.4-oracle/STAT-GLM-001/`.
+- Permanent cases: `documented_default.sas` -> `tests/corpus/persist_glm_glm001_documented_feature.sas`. Same-stem `.txt` owns the expected contract; identical cases share one fixture.
+- Permanent Zig checks (default gate): `src/stat/glm_fit.zig`, `src/stat/glm_persistence_tests.zig`, `src/stat/sgscatter.zig`.
+- Persistence (2026-11-27): migrated; oracle-absent gate passed (1842 unit tests, 2344 corpus cases, 11 programs). This DONE folder is deletion-ready. No executable dependency on this temporary reference folder remains. Original reference files are retained for user-controlled deletion.
 - Acceptance criteria: Turn the smallest default analysis in Getting Started into a runnable case and verify its principal estimates, observation counts, and result status; add a smaller case with an independent manual calculation; meet the precision conventions.
 
 <a id="stat-glm-003"></a>
+
 
 ### [DONE] STAT-GLM-003 — GLM — CLASS / MODEL / Specification of Effects
 
@@ -4791,11 +4852,13 @@ Source: S154, Chapter 53, `The GLM Procedure`, PDF pp. 4043–4230. Tasks in thi
 - Scope: Implement CLASS; MODEL; Specification of Effects. Implement the syntax and model semantics allowed by this procedure, using shared effect/parameterization support only for forms documented as supported.
 - Dependencies: [STAT-GLM-001](#stat-glm-001), [STAT-COMMON-007](#stat-common-007).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-GLM-003/](tests/STAT15.4-oracle/STAT-GLM-003/).
-- Dispatch contract: Reuse the integrated GLM contrast-design path for the original case while COMMON-007's full design-output interface is implemented separately. Do not imply unsupported nesting or missing-cell hypotheses are available.
-- DONE (2026-11-25): Landed/pushed `f89d49d9`. Original oracle matches all 671 tokens, status 0, three native graphs validated. Corrected documented SINGULAR default to 1e-9 and classified repeated MODEL as invalid user input; six effects-contract tests include observable near-rank behavior and exact design checks. Gate: 1753 tests, 2310 corpus, 11 programs passed. Evidence/replay: `tests/STAT15.4-oracle/STAT-GLM-003/`; no expected-file changes.
+- Permanent cases: `documented_feature.sas` -> `tests/corpus/persist_glm_glm001_documented_feature.sas`. Same-stem `.txt` owns the expected contract; identical cases share one fixture.
+- Permanent Zig checks (default gate): `src/stat/glm_effect_tests.zig`, `src/stat/glm_persistence_tests.zig`.
+- Persistence (2026-11-27): migrated; oracle-absent gate passed (1842 unit tests, 2344 corpus cases, 11 programs). This DONE folder is deletion-ready. No executable dependency on this temporary reference folder remains. Original reference files are retained for user-controlled deletion.
 - Acceptance criteria: For CLASS / MODEL / Specification of Effects, verify the parsed response/effect/parameter representation against the documented design matrix or model structure; cover applicable reference levels, interactions, missing levels, and invalid models; successful parsing alone is insufficient.
 
 <a id="stat-glm-004"></a>
+
 
 ### [DONE] STAT-GLM-004 — GLM — Parameterization of PROC GLM Models
 
@@ -4803,12 +4866,13 @@ Source: S154, Chapter 53, `The GLM Procedure`, PDF pp. 4043–4230. Tasks in thi
 - Scope: Implement Parameterization of PROC GLM Models. Implement the syntax and model semantics allowed by this procedure, using shared effect/parameterization support only for forms documented as supported.
 - Dependencies: [STAT-GLM-001](#stat-glm-001), [STAT-COMMON-007](#stat-common-007).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-GLM-004/](tests/STAT15.4-oracle/STAT-GLM-004/).
-- Dispatch contract: Verify the existing GLM model-space implementation against this original case; COMMON-007's full coded-design module is ready and awaiting integration. Coordinate shared parser/rendering changes with dev6's Type II integration rather than duplicating it.
-- Integration queue note (2026-11-25): dev2's implementation/tests/oracle are complete on `ab039538`; final rebase/gate is pending. Its branch/worktree/context were preserved while temporarily closed for dev7, and it now resumes after FREQ-007 lands. This is intentional queueing, not a dead-worker recovery case.
-- DONE (2026-11-25): Landed/pushed `13c65a77`, tests/evidence only. Own original oracle matches all 671 tokens, rc 0, three graphs validated. Independent checks cover coded matrices, basis equivalence, aliases, estimable Type III functions, reference-order covariance and polynomial transformations. Exact-SHA gate: 1774 tests, 2312 corpus, 11 programs passed. Production and expected files unchanged. Evidence: `tests/STAT15.4-oracle/STAT-GLM-004/implementation-evidence.md`.
+- Permanent cases: `documented_feature.sas` -> `tests/corpus/persist_glm_glm001_documented_feature.sas`. Same-stem `.txt` owns the expected contract; identical cases share one fixture.
+- Permanent Zig checks (default gate): `src/stat/glm_parameterization_tests.zig`, `src/stat/glm_persistence_tests.zig`.
+- Persistence (2026-11-27): migrated; oracle-absent gate passed (1842 unit tests, 2344 corpus cases, 11 programs). This DONE folder is deletion-ready. No executable dependency on this temporary reference folder remains. Original reference files are retained for user-controlled deletion.
 - Acceptance criteria: For Parameterization of PROC GLM Models, verify the parsed response/effect/parameter representation against the documented design matrix or model structure; cover applicable reference levels, interactions, missing levels, and invalid models; successful parsing alone is insufficient.
 
 <a id="stat-glm-005"></a>
+
 
 ### [PARK] STAT-GLM-005 — GLM — ABSORB / Statistical Assumptions for Using PROC GLM / Using PROC GLM Interactively
 
@@ -4816,10 +4880,14 @@ Source: S154, Chapter 53, `The GLM Procedure`, PDF pp. 4043–4230. Tasks in thi
 - Scope: Implement ABSORB; Statistical Assumptions for Using PROC GLM; Using PROC GLM Interactively. This ticket owns the feature's options, defaults, computation, and results as an extension of the basic computational path; the chapter's output tickets handle ODS descriptors and file presentation.
 - Dependencies: [STAT-GLM-001](#stat-glm-001), [STAT-GLM-002](#stat-glm-002).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-GLM-005/](tests/STAT15.4-oracle/STAT-GLM-005/).
-- PARK / handoff: tested foundation `5288fd67` is landed/pushed; its gate 1811/2316/11 passed. Baseline original remains 671-token/three-graph green. Seeded ABSORB original exits 0 with correct counts/DF, but its input mean/SST already differ: 15.584314333 / 126.244750211 versus SAS 15.57985 / 131.6028003. Investigate seeded-input reproduction before altering the independently verified absorption math. Original inputs/expectations unchanged. See `implementation-evidence.md`, input-moment/reference files and raw diff. ABSORB plus ESTIMATE remains unsupported.
+- Permanent cases: `documented_feature.sas` -> `tests/corpus/persist_glm_glm001_documented_feature.sas`. Same-stem `.txt` owns the expected contract; identical cases share one fixture.
+- Permanent Zig checks (default gate): `src/stat/glm_absorb_tests.zig`, `src/stat/glm_persistence_tests.zig`.
+- Partial regression coverage (2026-11-27): implemented passing behavior is in the listed default-gate tests; full original acceptance is not claimed. This reference folder is not deletion-ready.
+- Handoff: Keep PARK. The original seeded DATA input has mean/SST 15.584314333 / 126.244750211 versus SAS 15.57985 / 131.6028003 before GLM. Correct absorption is protected using fixed inputs and independent exact references, not a golden that requires the wrong RNG stream. Resolve RAND/STREAMINIT reproduction, then rerun both original cases. ABSORB+ESTIMATE and documented unsupported options remain gaps.
 - Acceptance criteria: For ABSORB / Statistical Assumptions for Using PROC GLM / Using PROC GLM Interactively, use an independently calculable small sample and the source examples to verify targets, estimates/statistics, degrees of freedom, and applicable probabilities or intervals; include at least one relevant degenerate or boundary case, asserting documented diagnostics and result status.
 
 <a id="stat-glm-006"></a>
+
 
 ### [TODO] STAT-GLM-006 — GLM — Effect Size Measures for F Tests in GLM / Absorption / Specification of ESTIMATE Expressions
 
@@ -8083,10 +8151,13 @@ Source: S154, Chapter 79, `The LOGISTIC Procedure`, PDF pp. 5823–6080. Tasks i
 - Scope: Integrate PROC LOGISTIC declarations, basic options, defaults, and execution boundaries; this ticket establishes parameter objects and result interfaces, while later feature tickets implement model-, algorithm-, and output-specific options. Also implement BY; FREQ; ID; STRATA; WEIGHT; Missing Values; apply this procedure's rules for missing values, variable roles, and observation selection.
 - Dependencies: [STAT-COMMON-001](#stat-common-001), [STAT-COMMON-002](#stat-common-002).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-LOGISTIC-001/](tests/STAT15.4-oracle/STAT-LOGISTIC-001/).
-- DONE / handoff: equivalent patch `0346cd34` pushed in `86a553ba`. Both current originals match 605/605 and 826/826 tokens, rc 0, with one/two validated SVGs. REF/EFFECT preserved. Combined gate 1824/2318/11 passed. Conditional STRATA/broader options remain gaps. Evidence: this directory's `implementation-evidence.md`.
+- Permanent cases: `documented_feature.sas` -> `tests/corpus/persist_logistic_logistic001_documented_feature.sas`; `statement_by.sas` -> `tests/corpus/persist_logistic_logistic001_statement_by.sas`. Same-stem `.txt` owns the expected contract; identical cases share one fixture.
+- Permanent Zig checks (default gate): `src/stat/logistic.zig`, `src/stat/logistic_persistence_tests.zig`.
+- Persistence (2026-11-27): migrated; oracle-absent gate passed (1842 unit tests, 2344 corpus cases, 11 programs). This DONE folder is deletion-ready. No executable dependency on this temporary reference folder remains. Original reference files are retained for user-controlled deletion.
 - Acceptance criteria: Create positive and negative parsing cases for the documented declarations and basic options; verify defaults, explicit settings, documented duplicate/conflicting declarations, and locations; valid but unimplemented features must not silently succeed. For BY / FREQ / ID / STRATA / WEIGHT / Missing Values, construct valid, missing, empty, and multiple-group inputs; verify included observation counts, variable roles, BY boundaries, level ordering, and the frequency/weight rules relevant to this ticket; assert documented invalid-input behavior.
 
 <a id="stat-logistic-002"></a>
+
 
 ### [TODO] STAT-LOGISTIC-002 — LOGISTIC — Logistic model estimation for categorical responses
 
@@ -11544,12 +11615,13 @@ Source: S154, Chapter 105, `The REG Procedure`, PDF pp. 8539–8728. Tasks in th
 - Scope: Integrate PROC REG declarations, basic options, defaults, and execution boundaries; this ticket establishes parameter objects and result interfaces, while later feature tickets implement model-, algorithm-, and output-specific options. Also implement BY; FREQ; ID; VAR; WEIGHT; Missing Values; Input Data Sets; apply this procedure's rules for missing values, variable roles, and observation selection.
 - Dependencies: [STAT-COMMON-001](#stat-common-001), [STAT-COMMON-002](#stat-common-002).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-REG-001/](tests/STAT15.4-oracle/STAT-REG-001/).
-- Dispatch contract: Break the runtime-oracle validation cycle by implementing REG on existing interpreter/data interfaces. dev1 owns REG parsing, data selection and rendering; dev4 supplies the REG-002 numerical module. Revisit shared runtime and rank-deficiency oracles after integration. Missing REG is the work to implement, not a reason to PARK immediately.
-- PARK (2026-11-25, 45-minute attempt): Tested implementation landed/pushed `48b9312d`; gate 1643 tests, 2304 corpus, 11 programs green. Both original cases have correct status 1 and warnings; only two Sum of Residuals tokens differ: expected 0 / -4.4596E-11, actual 9.748646E-12 / -1.21227E-10. All other 1118/1206-token listing content matches. Preserve exact outputs; no unvalidated blanket tolerance or golden modification. REG-002 will independently assess numerical bounds for these theoretical-zero sums before this ticket is revisited. Evidence: dev1 `.stat-reg-001-evidence/final-comparison.json`.
-- DONE after prerequisite validation (2026-11-25): Prior PARK resolved by landed/pushed `3cea8de9`. Both unchanged originals pass the independent source-derived residual-sum contract: only two theoretical-zero sums use absolute bounds 7.261130843592319e-11 and 1.7845359484002278e-9; all other 1116/1204 tokens match exactly after whitespace normalization, status/warnings 1/1. Strict text equality remains false and is disclosed. Rational derivation, 24 scaled/centered fits and seven corruption checks justify the narrow bounds; no production arithmetic or expected files changed. Durable receipts are in this ticket's oracle directory; derivation/replay in `STAT-REG-002/numeric-contract.md`. Gate: 1665 tests, 2305 corpus, 11 programs passed.
+- Permanent cases: `documented_feature.sas` -> `tests/corpus/persist_reg_population.sas`; `statement_by.sas` -> `tests/corpus/persist_reg_reg001_statement_by.sas`. Same-stem `.txt` owns the expected contract; identical cases share one fixture.
+- Permanent Zig checks (default gate): `src/stat/reg.zig`, `src/stat/reg_fit.zig`, `src/stat/reg_orthogonality_tests.zig`, `src/stat/reg_persistence_tests.zig`.
+- Persistence (2026-11-27): migrated; oracle-absent gate passed (1842 unit tests, 2344 corpus cases, 11 programs). This DONE folder is deletion-ready. No executable dependency on this temporary reference folder remains. Original reference files are retained for user-controlled deletion.
 - Acceptance criteria: Create positive and negative parsing cases for the documented declarations and basic options; verify defaults, explicit settings, documented duplicate/conflicting declarations, and locations; valid but unimplemented features must not silently succeed. For BY / FREQ / ID / VAR / WEIGHT / Missing Values / Input Data Sets, construct valid, missing, empty, and multiple-group inputs; verify included observation counts, variable roles, BY boundaries, level ordering, and the frequency/weight rules relevant to this ticket; assert documented invalid-input behavior.
 
 <a id="stat-reg-002"></a>
+
 
 ### [DONE] STAT-REG-002 — REG — Linear regression coefficients, variance, and basic fit statistics
 
@@ -11557,13 +11629,13 @@ Source: S154, Chapter 105, `The REG Procedure`, PDF pp. 8539–8728. Tasks in th
 - Scope: Implement linear regression coefficients, variance, and basic fit statistics using the documented default path and establish the computational state needed by later extensions; implement specialized models, methods, and diagnostics outside that default example in their corresponding feature tickets.
 - Dependencies: [STAT-REG-001](#stat-reg-001), [STAT-REG-003](#stat-reg-003), [STAT-COMMON-005](#stat-common-005).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-REG-002/](tests/STAT15.4-oracle/STAT-REG-002/).
-- Dispatch contract: Implement numerical fitting in a separate `src/stat/reg_fit.zig` module using existing probability functions, concurrently with REG-001 parsing/rendering. Validate numeric results independently, then require integrated oracle verification before DONE; dependent shared oracle requirements do not prevent implementing their needed foundation.
-- Progress (2026-11-25): QR fitting foundation landed/pushed in `f65c428a`, with seven dedicated numeric tests passing through a separate harness and existing integrated gate green. Full case acceptance awaits dev1 REG integration; no DONE claim for the numeric module alone.
-- Current assignment (2026-11-25): Integrated default case runs with expected status/warnings and only the same two residual-sum tail differences as REG-001. Derive any tolerance from independent intercept-model identities and floating-point error/conditioning, preserving complete comparisons for all other tokens; do not hardcode SAS rounding artifacts.
-- DONE (2026-11-25): Landed/pushed `3cea8de9`. Unchanged default oracle passes status/warnings 1/1 and all 1116 non-exempt tokens exactly; only the two residual sums use independently derived, data-scaled zero-invariant bounds (7.261130843592319e-11 and 1.7845359484002278e-9). Strict whitespace equality is false; no undisclosed general tolerance. Gate: 1665 tests, 2305 corpus, 11 programs passed. Durable derivation, corruption rejection controls, complete receipts and replay script live in `tests/STAT15.4-oracle/STAT-REG-002/`.
+- Permanent cases: `documented_default.sas` -> `tests/corpus/persist_reg_population.sas`. Same-stem `.txt` owns the expected contract; identical cases share one fixture.
+- Permanent Zig checks (default gate): `src/stat/reg_fit.zig`, `src/stat/reg_orthogonality_tests.zig`, `src/stat/reg_persistence_tests.zig`, `src/stat/reg_render.zig`.
+- Persistence (2026-11-27): migrated; oracle-absent gate passed (1842 unit tests, 2344 corpus cases, 11 programs). This DONE folder is deletion-ready. No executable dependency on this temporary reference folder remains. Original reference files are retained for user-controlled deletion.
 - Acceptance criteria: Turn the smallest default analysis in Getting Started into a runnable case and verify its principal estimates, observation counts, and result status; add a smaller case with an independent manual calculation; meet the precision conventions.
 
 <a id="stat-reg-003"></a>
+
 
 ### [DONE] STAT-REG-003 — REG — MODEL
 
@@ -11571,11 +11643,13 @@ Source: S154, Chapter 105, `The REG Procedure`, PDF pp. 8539–8728. Tasks in th
 - Scope: Implement MODEL. Implement the syntax and model semantics allowed by this procedure, using shared effect/parameterization support only for forms documented as supported.
 - Dependencies: [STAT-REG-001](#stat-reg-001), [STAT-COMMON-007](#stat-common-007).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-REG-003/](tests/STAT15.4-oracle/STAT-REG-003/).
-- Dispatch contract: Reuse REG's implemented numeric linear-model design while COMMON-007's broader CLASS/effect design is pending. Verify this MODEL ticket's own original oracle; do not infer support for unsupported categorical/effect syntax.
-- DONE (2026-11-25): Landed/pushed `8787cb2e`. Own unchanged oracle passes rc/warnings 1/1, all 1116 non-exempt tokens exact; only the two source-verified residual-sum bounds apply (strict whitespace equality false). Independent tests cover reordered numeric columns, multiple responses, labels, NOINT, analytic coefficients/SSE and character-regressor rejection. No production change or expected-file edit. Gate: 1689 tests, 2306 corpus, 11 programs passed. Evidence: `tests/STAT15.4-oracle/STAT-REG-003/model-verification.md` and numeric receipt.
+- Permanent cases: `documented_feature.sas` -> `tests/corpus/persist_reg_population.sas`. Same-stem `.txt` owns the expected contract; identical cases share one fixture.
+- Permanent Zig checks (default gate): `src/stat/reg_model_tests.zig`, `src/stat/reg_persistence_tests.zig`.
+- Persistence (2026-11-27): migrated; oracle-absent gate passed (1842 unit tests, 2344 corpus cases, 11 programs). This DONE folder is deletion-ready. No executable dependency on this temporary reference folder remains. Original reference files are retained for user-controlled deletion.
 - Acceptance criteria: For MODEL, verify the parsed response/effect/parameter representation against the documented design matrix or model structure; cover applicable reference levels, interactions, missing levels, and invalid models; successful parsing alone is insufficient.
 
 <a id="stat-reg-004"></a>
+
 
 ### [DONE] STAT-REG-004 — REG — ADD / DELETE / PRINT / REFIT / Interactive Analysis
 
@@ -11583,10 +11657,13 @@ Source: S154, Chapter 105, `The REG Procedure`, PDF pp. 8539–8728. Tasks in th
 - Scope: Implement ADD; DELETE; PRINT; REFIT; Interactive Analysis. This ticket owns the feature's options, defaults, computation, and results as an extension of the basic computational path; the chapter's output tickets handle ODS descriptors and file presentation.
 - Dependencies: [STAT-REG-001](#stat-reg-001), [STAT-REG-002](#stat-reg-002).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-REG-004/](tests/STAT15.4-oracle/STAT-REG-004/).
-- DONE (2026-11-25): Landed/pushed `579406d0`. Own original oracle passes rc/warnings 1/1 and all 1116 non-exempt tokens exactly; only the two established residual-sum bounds apply, strict whitespace equality remains false. Added atomic ADD/DELETE, silent REFIT, last-MODEL targeting and statement-ordered PRINT, with independent analytic CLI controls. Unsupported PRINT options/extensions remain explicit gaps. Gate: 1741 tests, 2309 corpus, 11 programs passed. Evidence: `tests/STAT15.4-oracle/STAT-REG-004/implementation-evidence.md` and receipts.
+- Permanent cases: `documented_feature.sas` -> `tests/corpus/persist_reg_population.sas`. Same-stem `.txt` owns the expected contract; identical cases share one fixture.
+- Permanent Zig checks (default gate): `src/stat/reg_interactive_tests.zig`, `src/stat/reg_persistence_tests.zig`.
+- Persistence (2026-11-27): migrated; oracle-absent gate passed (1842 unit tests, 2344 corpus cases, 11 programs). This DONE folder is deletion-ready. No executable dependency on this temporary reference folder remains. Original reference files are retained for user-controlled deletion.
 - Acceptance criteria: For ADD / DELETE / PRINT / REFIT / Interactive Analysis, use an independently calculable small sample and the source examples to verify targets, estimates/statistics, degrees of freedom, and applicable probabilities or intervals; include at least one relevant degenerate or boundary case, asserting documented diagnostics and result status.
 
 <a id="stat-reg-005"></a>
+
 
 ### [PARK] STAT-REG-005 — REG — Computations for Ridge Regression and IPC Analysis
 
@@ -11594,11 +11671,13 @@ Source: S154, Chapter 105, `The REG Procedure`, PDF pp. 8539–8728. Tasks in th
 - Scope: Implement Computations for Ridge Regression and IPC Analysis. This ticket owns the feature's options, defaults, computation, and results as an extension of the basic computational path; the chapter's output tickets handle ODS descriptors and file presentation.
 - Dependencies: [STAT-REG-001](#stat-reg-001), [STAT-REG-002](#stat-reg-002).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-REG-005/](tests/STAT15.4-oracle/STAT-REG-005/).
-- PARK (2026-11-25, 45-minute limit): Ridge path/OUTEST/native-graph foundation is preserved on dev1 (`0d6f83e3`, evidence `113f8608`). Original last replay exits 0 with 588 tokens, but SST twice prints 2123.70938 rather than 2123.70937, and two negative small coefficients print 0.000 rather than -0.000. Full independent path verification, final-SHA oracle replay and visual review of all five graphs remain incomplete; only the packed ridge plot was inspected. IPC is an explicit gap. Existing gate passed 1771 tests/2311 corpus/11 programs on the preserved source; not an oracle-completion claim. See `tests/STAT15.4-oracle/STAT-REG-005/implementation-evidence.md` in dev1 until integration.
-- Foundation integration (2026-11-25): Landed/pushed `60aa5bb0`, with exact-SHA gate 1771 tests, 2311 corpus, 11 programs green. The ticket remains PARK for the recorded oracle/visual-verification gaps; durable evidence is now in the main worktree.
+- Permanent Zig checks (default gate): `src/stat/reg_outest.zig`, `src/stat/reg_persistence_tests.zig`, `src/stat/reg_ridge.zig`, `src/stat/reg_ridge_plots.zig`.
+- Partial regression coverage (2026-11-27): implemented passing behavior is in the listed default-gate tests; full original acceptance is not claimed. This reference folder is not deletion-ready.
+- Handoff: Keep PARK. Two SST midpoint-rounding tokens (2123.70938 versus 2123.70937) and two negative-zero tokens (0.000 versus -0.000) still differ. The persistent tests cover analytic shrinkage/scaling, OUTEST rows and numeric graph metadata; complete independent acetylene-path and all-graph visual acceptance remain unfinished. IPC and documented graph extensions remain gaps. Do not promote the failed full listing to a passing golden.
 - Acceptance criteria: For Computations for Ridge Regression and IPC Analysis, use an independently calculable small sample and the source examples to verify targets, estimates/statistics, degrees of freedom, and applicable probabilities or intervals; include at least one relevant degenerate or boundary case, asserting documented diagnostics and result status.
 
 <a id="stat-reg-006"></a>
+
 
 ### [DONE] STAT-REG-006 — REG — Parameter Estimates and Associated Statistics / Models of Less Than Full Rank / Computational Methods
 
@@ -11606,10 +11685,13 @@ Source: S154, Chapter 105, `The REG Procedure`, PDF pp. 8539–8728. Tasks in th
 - Scope: Implement Parameter Estimates and Associated Statistics; Models of Less Than Full Rank; Computational Methods. This ticket owns the feature's options, defaults, computation, and results as an extension of the basic computational path; the chapter's output tickets handle ODS descriptors and file presentation.
 - Dependencies: [STAT-REG-001](#stat-reg-001), [STAT-REG-002](#stat-reg-002).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-REG-006/](tests/STAT15.4-oracle/STAT-REG-006/).
-- DONE / handoff: evidence `05204cef` pushed in `86a553ba`. Current original replay passes rc/warnings 1/1, 1116 non-exempt tokens exact; only the two established independent residual-sum bounds apply (strict whitespace equality false). Rank boundary 167 tokens exact, rc 0. Combined gate 1824/2318/11 passed. Evidence and raw-bound disclosures remain in this directory.
+- Permanent cases: `documented_feature.sas` -> `tests/corpus/persist_reg_population.sas`. Same-stem `.txt` owns the expected contract; identical cases share one fixture.
+- Permanent Zig checks (default gate): `src/stat/reg_diagnostics.zig`, `src/stat/reg_fit.zig`, `src/stat/reg_persistence_tests.zig`.
+- Persistence (2026-11-27): migrated; oracle-absent gate passed (1842 unit tests, 2344 corpus cases, 11 programs). This DONE folder is deletion-ready. No executable dependency on this temporary reference folder remains. Original reference files are retained for user-controlled deletion.
 - Acceptance criteria: For Parameter Estimates and Associated Statistics / Models of Less Than Full Rank / Computational Methods, use an independently calculable small sample and the source examples to verify targets, estimates/statistics, degrees of freedom, and applicable probabilities or intervals; include at least one relevant degenerate or boundary case, asserting documented diagnostics and result status.
 
 <a id="stat-reg-007"></a>
+
 
 ### [TODO] STAT-REG-007 — REG — RESTRICT
 
@@ -14665,11 +14747,13 @@ Source: S154, Chapter 128, `The TTEST Procedure`, PDF pp. 10595–10692. Tasks i
 - Scope: Integrate PROC TTEST declarations, basic options, defaults, and execution boundaries; this ticket establishes parameter objects and result interfaces, while later feature tickets implement model-, algorithm-, and output-specific options. Also implement BY; CLASS; FREQ; VAR; WEIGHT; Input Data Set of Statistics; Missing Values; apply this procedure's rules for missing values, variable roles, and observation selection.
 - Dependencies: [STAT-COMMON-001](#stat-common-001), [STAT-COMMON-002](#stat-common-002).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-TTEST-001/](tests/STAT15.4-oracle/STAT-TTEST-001/).
-- Dispatch contract: Reuse landed statistical data selection and interpreter interfaces. dev5 owns TTEST parsing, selection and rendering in new TTEST modules; dev4 supplies the independent numerical core. Global dispatch wiring is coordinated with dev1 to avoid concurrent main.zig edits.
-- DONE (2026-11-25): Landed/pushed `d658cfff`. Original BY/FREQ/WEIGHT oracle matches every output token under whitespace-only normalization, status 0/0. Gate: 1611 tests, 2304 corpus, 11 programs passed. Evidence: `tests/STAT15.4-oracle/STAT-TTEST-001/dev5-verification.json`. Two-sample inference is a separate existing ticket and still fails loudly until implemented.
+- Permanent cases: `by_frequency_weight.sas` -> `tests/corpus/stat_ttest_by_roles.sas`. Same-stem `.txt` owns the expected contract; identical cases share one fixture.
+- Permanent Zig checks (default gate): `src/stat/ttest.zig`, `src/stat/ttest_fit.zig`, `src/stat/ttest_parse.zig`.
+- Persistence (2026-11-27): migrated; oracle-absent gate passed (1842 unit tests, 2344 corpus cases, 11 programs). This DONE folder is deletion-ready. No executable dependency on this temporary reference folder remains. Original reference files are retained for user-controlled deletion.
 - Acceptance criteria: Create positive and negative parsing cases for the documented declarations and basic options; verify defaults, explicit settings, documented duplicate/conflicting declarations, and locations; valid but unimplemented features must not silently succeed. For BY / CLASS / FREQ / VAR / WEIGHT / Input Data Set of Statistics / Missing Values, construct valid, missing, empty, and multiple-group inputs; verify included observation counts, variable roles, BY boundaries, level ordering, and the frequency/weight rules relevant to this ticket; assert documented invalid-input behavior.
 
 <a id="stat-ttest-002"></a>
+
 
 ### [DONE] STAT-TTEST-002 — TTEST — Default one-sample and group mean tests
 
@@ -14677,11 +14761,13 @@ Source: S154, Chapter 128, `The TTEST Procedure`, PDF pp. 10595–10692. Tasks i
 - Scope: Implement default one-sample and group mean tests using the documented default path and establish the computational state needed by later extensions; implement specialized models, methods, and diagnostics outside that default example in their corresponding feature tickets.
 - Dependencies: [STAT-TTEST-001](#stat-ttest-001), [STAT-COMMON-005](#stat-common-005).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-TTEST-002/](tests/STAT15.4-oracle/STAT-TTEST-002/).
-- Dispatch contract: Implement the numerical core in a separate TTEST module, reusing existing probability functions, concurrently with TTEST-001. The integrated oracle must pass before DONE. This also supplies the missing TTEST execution dependency of COMMON-005.
-- DONE (2026-11-25): Numerical core `ec0eaeae` integrated and landed/pushed with `d658cfff`. Unchanged `court_default.sas` matches complete output after whitespace-only normalization, status 0/0. Six numerical tests are included through the integrated TTEST module; gate: 1611 tests, 2304 corpus, 11 programs passed. Evidence: `tests/STAT15.4-oracle/STAT-TTEST-002/dev5-verification.json`. Acceptance is for the supplied oracle; two-sample extension remains tracked separately.
+- Permanent cases: `court_default.sas` -> `tests/corpus/persist_ttest_court_default.sas`. Same-stem `.txt` owns the expected contract; identical cases share one fixture.
+- Permanent Zig checks (default gate): `src/stat/ttest_fit.zig`.
+- Persistence (2026-11-27): migrated; oracle-absent gate passed (1842 unit tests, 2344 corpus cases, 11 programs). This DONE folder is deletion-ready. No executable dependency on this temporary reference folder remains. Original reference files are retained for user-controlled deletion.
 - Acceptance criteria: Turn the smallest default analysis in Getting Started into a runnable case and verify its principal estimates, observation counts, and result status; add a smaller case with an independent manual calculation; meet the precision conventions.
 
 <a id="stat-ttest-003"></a>
+
 
 ### [DONE] STAT-TTEST-003 — TTEST — Arithmetic and Geometric Means / Coefficient of Variation
 
@@ -14689,12 +14775,13 @@ Source: S154, Chapter 128, `The TTEST Procedure`, PDF pp. 10595–10692. Tasks i
 - Scope: Implement Arithmetic and Geometric Means; Coefficient of Variation. This ticket owns the feature's options, defaults, computation, and results as an extension of the basic computational path; the chapter's output tickets handle ODS descriptors and file presentation.
 - Dependencies: [STAT-TTEST-001](#stat-ttest-001), [STAT-TTEST-002](#stat-ttest-002).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-TTEST-003/](tests/STAT15.4-oracle/STAT-TTEST-003/).
-- Dispatch contract: Extend landed TTEST numeric foundation in a separate lognormal module; dev5 integrates DIST=/CI= parsing and output after the base path. Require the original normal/lognormal oracle, not just a numeric module test, before DONE.
-- Progress (2026-11-25): dev4 numerical/render helper commit `65b999fe` passed standalone tests and existing gate; hand off to dev5 for integrated oracle verification. Original assignment time remains the 45-minute deadline basis.
-- DONE (2026-11-25): Landed/pushed `8c63eb71`; unchanged normal/lognormal oracle matches complete output with whitespace-only normalization, status 0. TTEST-001/002 and COMMON-005 also remain passing. Integrated gate: 1653 tests, 2305 corpus, 11 programs passed. Evidence: `tests/STAT15.4-oracle/STAT-TTEST-003/dev5-verification.json`; oracle expected files unchanged.
+- Permanent cases: `normal_lognormal.sas` -> `tests/corpus/stat_ttest_lognormal.sas`. Same-stem `.txt` owns the expected contract; identical cases share one fixture.
+- Permanent Zig checks (default gate): `src/stat/ttest.zig`, `src/stat/ttest_lognormal.zig`.
+- Persistence (2026-11-27): migrated; oracle-absent gate passed (1842 unit tests, 2344 corpus cases, 11 programs). This DONE folder is deletion-ready. No executable dependency on this temporary reference folder remains. Original reference files are retained for user-controlled deletion.
 - Acceptance criteria: For Arithmetic and Geometric Means / Coefficient of Variation, use an independently calculable small sample and the source examples to verify targets, estimates/statistics, degrees of freedom, and applicable probabilities or intervals; include at least one relevant degenerate or boundary case, asserting documented diagnostics and result status.
 
 <a id="stat-ttest-004"></a>
+
 
 ### [DONE] STAT-TTEST-004 — TTEST — BOOTSTRAP / Bootstrap Methods
 
@@ -14702,10 +14789,13 @@ Source: S154, Chapter 128, `The TTEST Procedure`, PDF pp. 10595–10692. Tasks i
 - Scope: Implement BOOTSTRAP; Bootstrap Methods. This ticket owns the feature's options, defaults, computation, and results as an extension of the basic computational path; the chapter's output tickets handle ODS descriptors and file presentation.
 - Dependencies: [STAT-TTEST-001](#stat-ttest-001), [STAT-TTEST-002](#stat-ttest-002).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-TTEST-004/](tests/STAT15.4-oracle/STAT-TTEST-004/).
-- DONE (2026-11-25): Landed/pushed `daf44731`. Original bootstrap oracle matches all 248 tokens, status 0; independent MT1998 replay checks all 199 resamples, intervals and BOOTDATA. Generic formatted PRINT heading wrap is documented and two existing heading-only goldens were corrected in a separate evidence-bearing commit; original oracle files unchanged. Verified fresh-cache direct-exit gate: 1746 tests, 2310 corpus, 11 programs passed; disk-failed launches excluded. Evidence/RNG replay: `tests/STAT15.4-oracle/STAT-TTEST-004/`.
+- Permanent cases: `bootstrap_seeded.sas` -> `tests/corpus/stat_ttest_bootstrap.sas`. Same-stem `.txt` owns the expected contract; identical cases share one fixture.
+- Permanent Zig checks (default gate): `src/stat/ttest_bootstrap.zig`, `src/stat/ttest_parse.zig`.
+- Persistence (2026-11-27): migrated; oracle-absent gate passed (1842 unit tests, 2344 corpus cases, 11 programs). This DONE folder is deletion-ready. No executable dependency on this temporary reference folder remains. Original reference files are retained for user-controlled deletion.
 - Acceptance criteria: For BOOTSTRAP / Bootstrap Methods, verify resampling units, replicate counts, fixed-seed reproducibility, successful replicate counts, and failed-replicate handling; validate intervals/probabilities against enumerated or error-bounded references.
 
 <a id="stat-ttest-005"></a>
+
 
 ### [DONE] STAT-TTEST-005 — TTEST — One-Sample Design
 
@@ -14713,10 +14803,13 @@ Source: S154, Chapter 128, `The TTEST Procedure`, PDF pp. 10595–10692. Tasks i
 - Scope: Implement One-Sample Design. This ticket owns the feature's options, defaults, computation, and results as an extension of the basic computational path; the chapter's output tickets handle ODS descriptors and file presentation.
 - Dependencies: [STAT-TTEST-001](#stat-ttest-001), [STAT-TTEST-002](#stat-ttest-002), [STAT-COMMON-005](#stat-common-005).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-TTEST-005/](tests/STAT15.4-oracle/STAT-TTEST-005/).
-- DONE (2026-11-25): Landed/pushed `85cc2f57`. One-sided court output matches all tokens, status 0. Invalid ALPHA produces the expected empty listing and user-error semantics: reference severity 2 corresponds to OpenSAS CLI 1 under D-009, not unsupported-feature CLI 2; wording/raw codes differ and are explicitly recorded. Existing boundary regressions pass. Exact-SHA successful retry gate: 1661 tests, 2305 corpus, 11 programs; failed disk-full attempt excluded. Evidence: `tests/STAT15.4-oracle/STAT-TTEST-005/dev5-verification.json`.
+- Permanent cases: `invalid_alpha.sas` -> `tests/corpus/persist_ttest_invalid_alpha.sas`; `one_sided_court.sas` -> `tests/corpus/persist_ttest_one_sided_court.sas`. Same-stem `.txt` owns the expected contract; identical cases share one fixture.
+- Permanent Zig checks (default gate): `src/stat/ttest_fit.zig`, `src/stat/ttest_parse.zig`, `src/stat/ttest_render.zig`.
+- Persistence (2026-11-27): migrated; oracle-absent gate passed (1842 unit tests, 2344 corpus cases, 11 programs). This DONE folder is deletion-ready. No executable dependency on this temporary reference folder remains. Original reference files are retained for user-controlled deletion.
 - Acceptance criteria: For One-Sample Design, verify sample size, mean difference, standard error, t statistic, degrees of freedom, one-/two-sided probabilities, and intervals; include zero variance and insufficient samples; validate numerical values against the source formulas or an independent reference, following this file's precision conventions.
 
 <a id="stat-ttest-006"></a>
+
 
 ### [DONE] STAT-TTEST-006 — TTEST — PAIRED / Paired Design
 
@@ -14724,10 +14817,13 @@ Source: S154, Chapter 128, `The TTEST Procedure`, PDF pp. 10595–10692. Tasks i
 - Scope: Implement PAIRED; Paired Design. This ticket owns the feature's options, defaults, computation, and results as an extension of the basic computational path; the chapter's output tickets handle ODS descriptors and file presentation.
 - Dependencies: [STAT-TTEST-001](#stat-ttest-001), [STAT-TTEST-002](#stat-ttest-002), [STAT-COMMON-005](#stat-common-005).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-TTEST-006/](tests/STAT15.4-oracle/STAT-TTEST-006/).
-- DONE (2026-11-25): Landed/pushed `aa72b172`. Original paired oracle matches all 92 tokens with whitespace-only normalization, status 0. Pairwise missing exclusion, list forms, BY/FREQ/WEIGHT and reversed direction have regression coverage; seven prior original programs remain green. Exact-SHA direct-exit gate: 1669 tests, 2306 corpus, 11 programs passed. Evidence: `tests/STAT15.4-oracle/STAT-TTEST-006/dev5-verification.json`; paired ratios remain a separately reported unsupported path.
+- Permanent cases: `paired_direction.sas` -> `tests/corpus/stat_ttest_paired.sas`. Same-stem `.txt` owns the expected contract; identical cases share one fixture.
+- Permanent Zig checks (default gate): `src/stat/ttest.zig`, `src/stat/ttest_parse.zig`.
+- Persistence (2026-11-27): migrated; oracle-absent gate passed (1842 unit tests, 2344 corpus cases, 11 programs). This DONE folder is deletion-ready. No executable dependency on this temporary reference folder remains. Original reference files are retained for user-controlled deletion.
 - Acceptance criteria: For PAIRED / Paired Design, verify paired differences, pairwise missing-value exclusion rules, degrees of freedom, and intervals; reversing pair order must correctly change direction and one-sided probabilities; validate numerical values against the source formulas or an independent reference, following this file's precision conventions.
 
 <a id="stat-ttest-007"></a>
+
 
 ### [DONE] STAT-TTEST-007 — TTEST — Two-Independent-Sample Design
 
@@ -14735,11 +14831,13 @@ Source: S154, Chapter 128, `The TTEST Procedure`, PDF pp. 10595–10692. Tasks i
 - Scope: Implement Two-Independent-Sample Design. This ticket owns the feature's options, defaults, computation, and results as an extension of the basic computational path; the chapter's output tickets handle ODS descriptors and file presentation.
 - Dependencies: [STAT-TTEST-001](#stat-ttest-001), [STAT-TTEST-002](#stat-ttest-002), [STAT-COMMON-005](#stat-common-005).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-TTEST-007/](tests/STAT15.4-oracle/STAT-TTEST-007/).
-- Dispatch contract: Implement two-group inference and rendering in a separate module reusing existing TTEST class selection; coordinate its small dispatch hook with dev5, who owns shared TTEST parsing/execution until lognormal integration is complete.
-- DONE (2026-11-25): Landed/pushed `e73376b2`. Original two-sample oracle matches every expected output token, status 0, stderr empty; normal/lognormal and shared tail cases remain green. Verified direct-exit retry gate after disk-cache cleanup: 1661 tests, 2305 corpus, 11 programs passed. Earlier NoSpaceLeft gate is explicitly excluded. Evidence: `tests/STAT15.4-oracle/STAT-TTEST-007/implementation-evidence.md`.
+- Permanent cases: `two_sample_variance.sas` -> `tests/corpus/persist_ttest_two_sample_variance.sas`. Same-stem `.txt` owns the expected contract; identical cases share one fixture.
+- Permanent Zig checks (default gate): `src/stat/ttest.zig`, `src/stat/ttest_two_sample.zig`.
+- Persistence (2026-11-27): migrated; oracle-absent gate passed (1842 unit tests, 2344 corpus cases, 11 programs). This DONE folder is deletion-ready. No executable dependency on this temporary reference folder remains. Original reference files are retained for user-controlled deletion.
 - Acceptance criteria: For Two-Independent-Sample Design, separately verify the documented equal-variance and unequal-variance paths, degrees-of-freedom approximations, probabilities, and intervals; include very unequal sample sizes; validate numerical values against the source formulas or an independent reference, following this file's precision conventions.
 
 <a id="stat-ttest-008"></a>
+
 
 ### [DONE] STAT-TTEST-008 — TTEST — AB/BA Crossover Design
 
@@ -14747,10 +14845,13 @@ Source: S154, Chapter 128, `The TTEST Procedure`, PDF pp. 10595–10692. Tasks i
 - Scope: Implement AB/BA Crossover Design. This ticket owns the feature's options, defaults, computation, and results as an extension of the basic computational path; the chapter's output tickets handle ODS descriptors and file presentation.
 - Dependencies: [STAT-TTEST-001](#stat-ttest-001), [STAT-TTEST-002](#stat-ttest-002), [STAT-COMMON-005](#stat-common-005).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-TTEST-008/](tests/STAT15.4-oracle/STAT-TTEST-008/).
-- DONE (2026-11-25): Landed/pushed `1cc21512`. Original normal AB/BA oracle matches all 270 tokens with whitespace-only normalization, status 0. Paired/TOST and seven other original regressions remain green. Direct-exit exact-SHA gate: 1696 tests, 2307 corpus, 11 programs passed. Evidence: `tests/STAT15.4-oracle/STAT-TTEST-008/dev5-verification.json`; IGNOREPERIOD, lognormal/crossover TOST and ORDER=FREQ remain explicit unsupported extensions.
+- Permanent cases: `abba_crossover.sas` -> `tests/corpus/stat_ttest_crossover.sas`. Same-stem `.txt` owns the expected contract; identical cases share one fixture.
+- Permanent Zig checks (default gate): `src/stat/ttest.zig`, `src/stat/ttest_crossover.zig`, `src/stat/ttest_parse.zig`.
+- Persistence (2026-11-27): migrated; oracle-absent gate passed (1842 unit tests, 2344 corpus cases, 11 programs). This DONE folder is deletion-ready. No executable dependency on this temporary reference folder remains. Original reference files are retained for user-controlled deletion.
 - Acceptance criteria: For AB/BA Crossover Design, verify sequence, period, treatment contrasts, and the corresponding degrees of freedom; compare each result with the source crossover design example; validate numerical values against the source formulas or an independent reference, following this file's precision conventions.
 
 <a id="stat-ttest-009"></a>
+
 
 ### [DONE] STAT-TTEST-009 — TTEST — TOST Equivalence Test
 
@@ -14758,10 +14859,13 @@ Source: S154, Chapter 128, `The TTEST Procedure`, PDF pp. 10595–10692. Tasks i
 - Scope: Implement TOST Equivalence Test. This ticket owns the feature's options, defaults, computation, and results as an extension of the basic computational path; the chapter's output tickets handle ODS descriptors and file presentation.
 - Dependencies: [STAT-TTEST-001](#stat-ttest-001), [STAT-TTEST-002](#stat-ttest-002), [STAT-COMMON-005](#stat-common-005).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-TTEST-009/](tests/STAT15.4-oracle/STAT-TTEST-009/).
-- DONE (2026-11-25): Landed/pushed `7f34c84f`. Unchanged TOST oracle matches every output token with whitespace-only normalization, status 0, stderr empty; normal/lognormal/two-sample/paired/one-sided cases preserved. Direct-exit exact-SHA gate: 1687 tests, 2306 corpus, 11 programs passed. Evidence: `tests/STAT15.4-oracle/STAT-TTEST-009/implementation-evidence.md`; unsupported ratio/Cochran-specific TOST paths remain explicit gaps.
+- Permanent cases: `tost_difference.sas` -> `tests/corpus/persist_ttest_tost_difference.sas`. Same-stem `.txt` owns the expected contract; identical cases share one fixture.
+- Permanent Zig checks (default gate): `src/stat/ttest.zig`, `src/stat/ttest_parse.zig`, `src/stat/ttest_tost.zig`.
+- Persistence (2026-11-27): migrated; oracle-absent gate passed (1842 unit tests, 2344 corpus cases, 11 programs). This DONE folder is deletion-ready. No executable dependency on this temporary reference folder remains. Original reference files are retained for user-controlled deletion.
 - Acceptance criteria: For TOST Equivalence Test, separately verify both one-sided tests, the combined equivalence decision, and the corresponding interval confidence level; cover exact equivalence boundaries and difference/ratio scales; validate numerical values against the source formulas or an independent reference, following this file's precision conventions.
 
 <a id="stat-ttest-010"></a>
+
 
 ### [PARK] STAT-TTEST-010 — TTEST — Displayed Output / ODS Table Names
 
@@ -14769,12 +14873,13 @@ Source: S154, Chapter 128, `The TTEST Procedure`, PDF pp. 10595–10692. Tasks i
 - Scope: Implement Displayed Output; ODS Table Names. Cover all triggering options, content, and naming specified by this section; computational tickets supply numerical values, while other output types are handled separately.
 - Dependencies: [STAT-TTEST-001](#stat-ttest-001), [STAT-TTEST-002](#stat-ttest-002), [STAT-TTEST-003](#stat-ttest-003), [STAT-TTEST-004](#stat-ttest-004), [STAT-TTEST-005](#stat-ttest-005), [STAT-TTEST-006](#stat-ttest-006), [STAT-TTEST-007](#stat-ttest-007), [STAT-TTEST-008](#stat-ttest-008), [STAT-TTEST-009](#stat-ttest-009), [STAT-ODS-007](#stat-ods-007).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-TTEST-010/](tests/STAT15.4-oracle/STAT-TTEST-010/).
-- Dispatch contract: Reuse the existing ODS table registry and capture/TRACE interfaces while the broader ODS-007 integration ticket remains pending. Implement TTEST-specific producers and verify this full original capture case; do not extend inert ODS destinations under D-022.
-- PARK (2026-11-25, 45-minute limit): Foundation preserved at dev5 `c358d563`, gate 1774 tests/2311 corpus/11 programs green. Original exits 0, but complete oracle has not passed: vertical PRINT and CONTENTS metadata/layout differ, and three UMPU upper endpoints require adjudication against independent high-precision solutions. Raw differences retained without broad tolerance; other capture families remain explicit gaps. Four normal typed captures, TRACE identities and portable TTests descriptor work. No original expected files changed. Integration queued; see dev5 `tests/STAT15.4-oracle/STAT-TTEST-010/dev5-verification.json` until landed.
-- Foundation integration (2026-11-25): Landed/pushed `3ab3dd0f` with exact-SHA gate 1777 tests, 2312 corpus, 11 programs green. The ticket remains PARK; raw original output, descriptor data and independent precision evidence are now preserved in the main worktree.
+- Permanent Zig checks (default gate): `src/stat/ods_ttest.zig`, `src/stat/ttest_umpu.zig`.
+- Partial regression coverage (2026-11-27): implemented passing behavior is in the listed default-gate tests; full original acceptance is not claimed. This reference folder is not deletion-ready.
+- Handoff: Keep PARK. Original vertical PRINT/CONTENTS layout and metadata remain different. Three SAS UMPU upper endpoints disagree with the independent mathematical solutions; persistent tests check mass/moment equations and independent values, not a broad tolerance claiming SAS equality. Normal typed captures/TRACE are covered; broader capture families remain incomplete. Retain and rerun the original before closing.
 - Acceptance criteria: For Displayed Output / ODS Table Names, verify table names, labels, triggering conditions, rows, columns, degrees of freedom, statistics, and missing representations; exercise selection and capture with ODS TRACE/OUTPUT; unrelated options must not create extra tables.
 
 <a id="stat-ttest-011"></a>
+
 
 ### [DONE] STAT-TTEST-011 — TTEST — ODS Graphics
 
@@ -14782,11 +14887,13 @@ Source: S154, Chapter 128, `The TTEST Procedure`, PDF pp. 10595–10692. Tasks i
 - Scope: Implement ODS Graphics. Cover all triggering options, content, and naming specified by this section; computational tickets supply numerical values, while other output types are handled separately.
 - Dependencies: [STAT-TTEST-001](#stat-ttest-001), [STAT-TTEST-002](#stat-ttest-002), [STAT-TTEST-003](#stat-ttest-003), [STAT-TTEST-004](#stat-ttest-004), [STAT-TTEST-005](#stat-ttest-005), [STAT-TTEST-006](#stat-ttest-006), [STAT-TTEST-007](#stat-ttest-007), [STAT-TTEST-008](#stat-ttest-008), [STAT-TTEST-009](#stat-ttest-009), [STAT-GRAPHICS-001](#stat-graphics-001).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-TTEST-011/](tests/STAT15.4-oracle/STAT-TTEST-011/).
-- DONE / handoff: patches `01333207`/`c2ecc4da` pushed in `86a553ba`. Current original replay 118/118 tokens, rc 0, six TRACE identities; interval/QQ data checks and visual inspection passed. Combined gate 1824/2318/11 passed. Default SummaryPanel, weighted QQ and broader graph families remain documented gaps. Evidence/artifacts: this directory's `dev5-verification.json`.
-- Dispatch contract: Reuse the existing native SVG/ODS graphic interfaces while the wider GRAPHICS-001 ticket remains pending. Verify requested graph identities and real plotted data as well as this original listing/trace; do not treat file existence or skipped graphics as success.
+- Permanent cases: `graph_names.sas` -> `tests/corpus/stat_ttest_interval_qq.sas`. Same-stem `.txt` owns the expected contract; identical cases share one fixture.
+- Permanent Zig checks (default gate): `src/stat/ttest_plots.zig`.
+- Persistence (2026-11-27): migrated; oracle-absent gate passed (1842 unit tests, 2344 corpus cases, 11 programs). This DONE folder is deletion-ready. No executable dependency on this temporary reference folder remains. Original reference files are retained for user-controlled deletion.
 - Acceptance criteria: For ODS Graphics, verify graph names, triggering conditions, curve/point data, axes, grouping, and legends; check the relevant PLOTS= and ODS GRAPHICS controls and visually inspect exported graphs.
 
 <a id="stat-ttest-012"></a>
+
 
 ### [TODO] STAT-TTEST-012 — TTEST — Official examples and feature integration regression
 

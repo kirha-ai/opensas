@@ -123,8 +123,8 @@ python3 -m http.server -d web    # open http://localhost:8000
 
 Three suites run in CI on every push and before every release.
 
-- **Unit tests.** `zig build test` runs 1,824 tests across four Zig test suites.
-- **Conformance corpus.** `zig build corpus` runs the 2,318 SAS programs directly under `tests/corpus/`, including 238 statistical cases verified against SAS 9.4 M9. [Corpus fixtures](tests/corpus)
+- **Unit tests.** `zig build test` runs 1,842 tests across four Zig test suites.
+- **Conformance corpus.** `zig build corpus` runs the 2,344 SAS programs directly under `tests/corpus/`, including 238 statistical cases verified against SAS 9.4 M9. [Corpus fixtures](tests/corpus)
 - **End-to-end programs.** 11 whole programs in [`tests/programs/`](tests/programs), datasets in and datasets out. Every output column and value is diffed against the golden dataset.
 
 The `.sas7bdat` and `.xpt` readers and writers are round-tripped against files
@@ -132,6 +132,15 @@ written by SAS® 9.4. Fixtures use invented data or published samples such as th
 CDISC pilot study.
 
 ### Running statistical tests
+
+Completed STAT behavior is covered by self-contained corpus fixtures and Zig
+tests in the default gate, including numerical, typed-data, RNG and graph-data
+checks. [stat-jira.md](stat-jira.md) maps each completed or partially implemented
+ticket to its permanent tests and is the only task/handoff record.
+`tests/STAT15.4-oracle/` is a temporary read-only migration baseline, not a test
+dependency or report directory. CI and release CI run the gate with it absent.
+The user may delete migrated DONE reference folders; PARK references remain
+until their outstanding acceptance gaps are resolved.
 
 Run these commands from the repository root. Build the CLI once with `zig build install`.
 The corpus runner runs the programs directly in the directory you give it.

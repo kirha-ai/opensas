@@ -35,6 +35,38 @@ fn close(expected: f64, actual: f64) !void {
     try std.testing.expectApproxEqAbs(expected, actual, 32 * ku / (1 - ku) * @max(1, @abs(expected)));
 }
 
+test "persistence GLM005 fixed observations independent absorption and covariance" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const helper = @import("glm_persistence_tests.zig");
+    var ds = try helper.data(a, "tests/fixtures/stat/glm/absorb_input.sas", "sample", &.{ "block", "group", "replicate", "y" }, &.{}, 0);
+    try std.testing.expectEqual(@as(usize, 40), ds.rows.items.len);
+    var lib = Library.init(a);
+    try lib.put("sample", &ds);
+    var d = diag.Diagnostics.init(a);
+    const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &d };
+    const spec = try parse(cx, "proc glm data=sample; absorb block; class group; model y=group; run; quit;");
+    var fit = try absorb.fit(cx, spec, try build(cx, spec));
+    defer fit.deinit(a);
+    // Original exact-Fraction calculation on all forty round-trip input rows.
+    const reference = try std.json.parseFromSlice(std.json.Value, a, try helper.read(a, "tests/fixtures/stat/glm/input-independent-reference.json"), .{});
+    const actual = [_]f64{ fit.y_mean, fit.sst, fit.absorbed[0].test_value.ss, fit.conditional.?.type_i[0].ss, fit.sse, fit.mse };
+    for ([_][]const u8{ "mean", "SST", "block_SS", "group_SS", "SSE", "MSE" }, actual) |name, value| {
+        var fraction = std.mem.splitScalar(u8, reference.value.object.get(name).?.string, '/');
+        const numerator = try std.fmt.parseFloat(f64, fraction.next().?);
+        const denominator = try std.fmt.parseFloat(f64, fraction.next().?);
+        try close(numerator / denominator, value);
+    }
+    try std.testing.expectEqual(@as(usize, 35), fit.df_error);
+    try std.testing.expectEqual(@as(usize, 5), fit.rank);
+    // Each block has five observations at each contrast level (+1,-1).
+    // Projection therefore leaves X'X=40; Var(beta)=MSE/40, independently
+    // of the numerical absorption implementation.
+    try close(fit.mse / 40, fit.conditional.?.model.fit.covariance[0]);
+    try std.testing.expectEqualStrings("", try d.render());
+}
+
 test "GLM005 absorption agrees with explicit nuisance projection and independent covariance" {
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();

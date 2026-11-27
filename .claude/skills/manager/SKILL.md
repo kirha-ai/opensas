@@ -24,6 +24,28 @@ description: >-
 ## Active STAT campaign overrides
 
 These user-requested rules override conflicting instructions below for this campaign:
+- **Permanent test contract (2026-11-27).** `tests/STAT15.4-oracle/` is a
+  temporary read-only reference that the user will delete. It is never a task
+  tracker or output directory. Do not add implementation-evidence.md, dev reports,
+  verification scripts, actual output, logs or graphics to it; never change its
+  expected values to obtain a pass.
+- For every DONE ticket and every implemented part of DOING/PARK, persist all
+  required checks in self-contained corpus fixtures or Zig tests reached by the
+  default gate. No executable test may depend on the temporary reference path.
+  Preserve full listing and diagnostic/status contracts, typed data/missing
+  cells, random-stream checks and graph-data checks. Existing identical tests
+  may be reused with an explicit mapping, not duplicated snapshots.
+- Before DONE, record the original-case to permanent-test mapping in
+  `stat-jira.md` and run the gate with the reference directory unavailable.
+  A passed manual/Python replay alone is insufficient. Any numerical tolerance
+  must remain independently justified and executable in persistent tests.
+  Partial work cannot be handed off without regression coverage for the portion
+  actually implemented. Failed original cases remain PARK with their exact gap.
+- `stat-jira.md` is the sole state/handoff record. Put scientific provenance and
+  formulas beside the tests, not in separate per-dev/per-ticket status reports.
+  Keep temporary runtime artifacts in ignored scratch directories. DONE means
+  the oracle folder is safe to delete; only the user decides when to delete it.
+  If it is already deleted, use the permanent mapping and cited specifications.
 - For an explicit graceful stop/handoff, stop dispatch, close devs after bounded
   wind-down, and preserve all branches, worktrees, source edits and raw evidence.
   The generic discard/force-remove procedure below does not apply. Record STOPPED
@@ -40,6 +62,8 @@ These user-requested rules override conflicting instructions below for this camp
 - For every ticket, read its `tests/STAT15.4-oracle/<ID>/README.md`, run the
   listed SAS cases and compare actual results with the supplied expected outputs.
   Consult `docs/SAS-STAT-15.4-Users-Guide.pdf` at the ticket's physical PDF pages.
+  If the temporary reference has already been removed after migration, use its
+  permanent test mapping in `stat-jira.md` instead of recreating the folder.
 - Runtime version fields must identify the current OpenSAS version; they need
   not equal the SAS version string in the oracle. This exception applies only
   to product version identity, not statistical results or execution status.
@@ -424,6 +448,11 @@ the subagent does not share your context and never reads `stat-jira.md`:
   output a user can check as text. Use an in-source Zig `test` for checks
   such as column types, numeric tolerances or plot coordinates. Cite the
   real SAS result or manual section that establishes the expected value.
+- **Persistence handoff.** Return each assigned original case's permanent
+  corpus/Zig test path, checks preserved, and the result of running the default
+  gate with the temporary oracle directory absent. Record partial implemented
+  behavior the same way even on PARK. Never report DONE from a standalone
+  oracle script or leave test dependencies inside the reference directory.
 - **git discipline**: work and commit ONLY in your worktree, by explicit
   pathspec (`git commit src/foo.zig tests/... -m "devN: DONE <ID> — …"`). A
   golden/expected-output edit is its OWN commit whose message states what was

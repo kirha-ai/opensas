@@ -344,6 +344,115 @@ pub fn executeAnalysis(cx: proc.ProcCtx, s: decl.Spec, g: tt.Group, analysis: tt
 }
 
 const Testing = struct {
+    fn attr(tag: []const u8, name: []const u8) ![]const u8 {
+        var offset: usize = 0;
+        while (std.mem.indexOfPos(u8, tag, offset, name)) |i| {
+            const end = i + name.len;
+            if (i > 0 and tag[i - 1] == ' ' and std.mem.startsWith(u8, tag[end..], "=\"")) {
+                const value = tag[end + 2 ..];
+                return value[0 .. std.mem.indexOfScalar(u8, value, '"') orelse return error.MissingAttribute];
+            }
+            offset = end;
+        }
+        return error.MissingAttribute;
+    }
+    fn number(tag: []const u8, name: []const u8) !f64 {
+        return std.fmt.parseFloat(f64, try attr(tag, name));
+    }
+    fn tagAfter(bytes: []const u8, marker: []const u8) ![]const u8 {
+        const start = std.mem.indexOf(u8, bytes, marker) orelse return error.MissingElement;
+        const rest = bytes[start..];
+        return rest[0 .. (std.mem.indexOfScalar(u8, rest, '>') orelse return error.MissingElement) + 1];
+    }
+    fn pathNumbers(comptime n: usize, tag: []const u8) ![n]f64 {
+        var fields = std.mem.tokenizeAny(u8, try attr(tag, "d"), "M VHL");
+        var result: [n]f64 = undefined;
+        for (&result) |*v| v.* = try std.fmt.parseFloat(f64, fields.next() orelse return error.MissingCoordinate);
+        try std.testing.expect(fields.next() == null);
+        return result;
+    }
+    // Port of the independent graph verifier: read the actual SVG attributes,
+    // axis and painted coordinates, without calling Frame.px/py or nice().
+    fn painted(a: A, plot: Data) !void {
+        const interval = try intervalSvg(a, plot, false, null);
+        const axis = try pathNumbers(4, try tagAfter(interval, "<path class=\"axis\""));
+        const left = axis[0];
+        const top = axis[1];
+        const bottom = axis[2];
+        const right = axis[3];
+        var xmin = std.math.inf(f64);
+        var xmax = -std.math.inf(f64);
+        var texts = std.mem.splitSequence(u8, interval, "<text ");
+        _ = texts.next();
+        while (texts.next()) |node| {
+            const end = std.mem.indexOfScalar(u8, node, '>').?;
+            const tag = try std.fmt.allocPrint(a, "<text {s}", .{node[0..end]});
+            const y = try number(tag, "y");
+            if (y <= bottom or y >= bottom + 30) continue;
+            const rest = node[end + 1 ..];
+            const value = try std.fmt.parseFloat(f64, rest[0..std.mem.indexOfScalar(u8, rest, '<').?]);
+            xmin = @min(xmin, value);
+            xmax = @max(xmax, value);
+        }
+        try std.testing.expect(xmin < xmax);
+        var rows = std.mem.splitSequence(u8, interval, "<g class=\"interval-row\"");
+        _ = rows.next();
+        for (plot.intervals) |expected| {
+            const row = rows.next() orelse return error.MissingElement;
+            const estimate = try number(row, "data-estimate");
+            const lower = try number(row, "data-lower");
+            const upper = try number(row, "data-upper");
+            try std.testing.expectEqualStrings(expected.label, try attr(row, "data-method"));
+            try std.testing.expectEqual(expected.estimate, estimate);
+            try std.testing.expectEqual(expected.lower, lower);
+            try std.testing.expectEqual(expected.upper, upper);
+            const line = try pathNumbers(3, try tagAfter(row, "<path class=\"interval\""));
+            const cx = try number(try tagAfter(row, "<circle "), "cx");
+            for ([_]f64{ estimate, lower, upper }, [_]f64{ cx, line[0], line[2] }) |value, pixel|
+                try std.testing.expectApproxEqAbs(left + (right - left) * (value - xmin) / (xmax - xmin), pixel, 0.006);
+            try std.testing.expect(top < line[1] and line[1] < bottom);
+            try std.testing.expect(left <= line[0] and line[0] <= cx and cx <= line[2] and line[2] <= right);
+        }
+        try std.testing.expect(rows.next() == null);
+        for ([_][]const u8{ "group: A - B", "Difference in means", "95% confidence intervals" }) |label|
+            try std.testing.expect(std.mem.indexOf(u8, interval, label) != null);
+        const qq = try qqSvg(a, plot, null);
+        var panels = std.mem.splitSequence(u8, qq, "<g class=\"qq-panel\"");
+        _ = panels.next();
+        for (plot.qq) |group| {
+            const panel = panels.next() orelse return error.MissingElement;
+            try std.testing.expectEqualStrings(group.label, try attr(panel, "data-group"));
+            try std.testing.expectEqual(@as(f64, @floatFromInt(group.points.len)), try number(panel, "data-n"));
+            try std.testing.expectEqual(group.mean, try number(panel, "data-mean"));
+            try std.testing.expectEqual(group.sd, try number(panel, "data-sd"));
+            const limits = [4]f64{ try number(panel, "data-xmin"), try number(panel, "data-xmax"), try number(panel, "data-ymin"), try number(panel, "data-ymax") };
+            const frame = try pathNumbers(4, try tagAfter(panel, "<path class=\"axis\""));
+            var circles = std.mem.splitSequence(u8, panel, "<circle ");
+            _ = circles.next();
+            for (group.points) |point| {
+                const circle = circles.next() orelse return error.MissingElement;
+                try std.testing.expectEqual(point.observed, try number(circle, "data-observed"));
+                try std.testing.expectEqual(point.probability, try number(circle, "data-probability"));
+                try std.testing.expectEqual(point.quantile, try number(circle, "data-quantile"));
+                const cx = try number(circle, "cx");
+                const cy = try number(circle, "cy");
+                // .006 pixels = two-decimal SVG rounding (.005), plus .001
+                // margin for independent inverse-normal approximation.
+                try std.testing.expectApproxEqAbs(frame[0] + (frame[3] - frame[0]) * (point.quantile - limits[0]) / (limits[1] - limits[0]), cx, 0.006);
+                try std.testing.expectApproxEqAbs(frame[2] - (frame[2] - frame[1]) * (point.observed - limits[2]) / (limits[3] - limits[2]), cy, 0.006);
+                try std.testing.expect(frame[0] <= cx and cx <= frame[3] and frame[1] <= cy and cy <= frame[2]);
+            }
+            try std.testing.expect(circles.next() == null);
+            const reference = try tagAfter(panel, "<path class=\"reference\"");
+            try std.testing.expectEqual(group.mean, try number(reference, "data-intercept"));
+            try std.testing.expectEqual(group.sd, try number(reference, "data-slope"));
+            const label = try std.fmt.allocPrint(a, "group = {s} (n=6)", .{group.label});
+            try std.testing.expect(std.mem.indexOf(u8, qq, label) != null);
+        }
+        try std.testing.expect(panels.next() == null);
+        try std.testing.expectEqual(@as(usize, 2), std.mem.count(u8, qq, "Normal Quantile"));
+        try std.testing.expect(std.mem.indexOf(u8, qq, "Circles: observations") != null);
+    }
     fn sample(a: A) !*@import("../dataset.zig").Dataset {
         const Dataset = @import("../dataset.zig").Dataset;
         const ds = try a.create(Dataset);
@@ -391,6 +500,9 @@ test "TTEST GRAPHICS interval endpoints and all QQ observations probabilities an
     }
     try std.testing.expectApproxEqAbs(@as(f64, 515.0 / 6.0), plot.qq[0].mean, 2e-14);
     try std.testing.expectApproxEqAbs(@sqrt(@as(f64, 3421.0 / 6.0)), plot.qq[0].sd, 1e-13);
+    try std.testing.expectApproxEqAbs(@as(f64, 281.0 / 3.0), plot.qq[1].mean, 2e-13);
+    try std.testing.expectApproxEqAbs(@sqrt(@as(f64, 4054.0 / 15.0)), plot.qq[1].sd, 1e-12);
+    try Testing.painted(a, plot);
     try std.testing.expectEqualStrings("", try d.render());
 }
 
@@ -409,6 +521,13 @@ test "TTEST GRAPHICS ODS OFF NONE selection and reference TRACE identities" {
     try tt.runTtest(cx, &out, code);
     try std.testing.expectEqual(@as(usize, 2), session.prepared.items.len);
     const log = try d.render();
+    // Full six-object original TRACE, including the table identities that
+    // accompany the graphs. Names/labels/templates/paths are all contractual.
+    for ([_][]const u8{ "Statistics", "ConfLimits", "TTests", "Equality" }, [_][]const u8{ "Statistics", "Confidence Limits", "T-Tests", "Equality of Variances" }) |name, label| {
+        const identity = try std.fmt.allocPrint(a, "Name:       {s}\nLabel:      {s}\nTemplate:   Stat.TTest.{s}\nPath:       Ttest.x.{s}", .{ name, label, name, name });
+        try std.testing.expectEqual(@as(usize, 1), std.mem.count(u8, log, identity));
+    }
+    try std.testing.expectEqual(@as(usize, 6), std.mem.count(u8, log, "Name:       "));
     try std.testing.expect(std.mem.indexOf(u8, log, "Name:       Interval\nLabel:      Difference Interval Plot\nTemplate:   Stat.TTest.Graphics.Interval\nPath:       Ttest.x.Interval") != null);
     try std.testing.expect(std.mem.indexOf(u8, log, "Name:       QQPlot\nLabel:      Q-Q Plots\nTemplate:   Stat.TTest.Graphics.QQ2\nPath:       Ttest.x.QQPlot") != null);
     try std.testing.expectEqual(@as(usize, 12), std.mem.count(u8, session.prepared.items[1].bytes, "data-observed="));

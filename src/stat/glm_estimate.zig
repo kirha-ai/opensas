@@ -255,6 +255,16 @@ test "COMMON025 original adjusted group contrast and E coefficient order" {
     try testing.expectApproxEqAbs(@sqrt(83083.0 / 56700.0), value.standard_error.?, 1e-12);
     try testing.expectApproxEqAbs((79.0 / 30.0) / @sqrt(83083.0 / 56700.0), value.t_value.?, 1e-12);
     try testing.expectApproxEqAbs(@as(f64, 0.0576), value.p_value.?, 0.00005);
+    // Independent odd-DF Student tail, ported from the original verifier:
+    // integrate cos(theta)^8 by its elementary reduction formula (DF=9).
+    const theta = std.math.atan(@abs(value.t_value.?) / 3);
+    var integral = theta;
+    var total: f64 = @as(f64, std.math.pi) / 2;
+    for ([_]f64{ 2, 4, 6, 8 }) |power| {
+        integral = @sin(theta) * std.math.pow(f64, @cos(theta), power - 1) / power + (power - 1) * integral / power;
+        total *= (power - 1) / power;
+    }
+    try testing.expectApproxEqAbs(1 - integral / total, value.p_value.?, 1e-12);
     var output: std.ArrayList(u8) = .empty;
     try glm.execute(cx, &output, r.spec);
     const coeff_at = std.mem.indexOf(u8, output.items, "Coefficients for Estimate B minus A").?;

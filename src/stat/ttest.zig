@@ -366,7 +366,7 @@ const Testing = struct {
         try std.testing.expect(r.next() == null);
     }
     fn oracle(a: A, name: []const u8) ![]const u8 {
-        return std.Io.Dir.cwd().readFileAlloc(std.testing.io, name, a, .limited(1024 * 1024));
+        return @import("ttest_test_assets.zig").listing(a, name);
     }
     fn sample(a: A) !*@import("../dataset.zig").Dataset {
         const Dataset = @import("../dataset.zig").Dataset;
@@ -398,7 +398,7 @@ test "STAT-TTEST-001 complete BY FREQ WEIGHT listing matches oracle tokens" {
     const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &d };
     var out: std.ArrayList(u8) = .empty;
     try runTtest(cx, &out, try lex.tokenize(a, "proc ttest data=sample order=data; by group; var x y; freq freq; weight weight; run;", &d));
-    const expected = try Testing.oracle(a, "tests/STAT15.4-oracle/STAT-TTEST-001/by_frequency_weight.expected.txt");
+    const expected = try Testing.oracle(a, "tests/corpus/stat_ttest_by_roles.txt");
     try Testing.expectWords(expected, out.items);
     try std.testing.expectEqualStrings("", try d.render());
 }
@@ -419,7 +419,7 @@ test "STAT-TTEST-001 one-sample two and directed sides preserve full COMMON005 o
         const source = try std.fmt.allocPrint(a, "proc ttest data=time h0=80 sides={s}; var time; run;", .{side});
         try runTtest(cx, &out, try lex.tokenize(a, source, &d));
     }
-    const expected = try Testing.oracle(a, "tests/STAT15.4-oracle/STAT-COMMON-005/tails_and_intervals.expected.txt");
+    const expected = try Testing.oracle(a, "tests/corpus/persist_ttest_tails_and_intervals.txt");
     try Testing.expectWords(expected, out.items);
     try std.testing.expectEqualStrings("", try d.render());
 }
@@ -531,7 +531,7 @@ test "STAT-TTEST-003 full normal and lognormal listing matches unchanged oracle"
         const source = try std.fmt.allocPrint(a, "proc ttest data=sample dist={s} ci=equal; var x; run;", .{distribution});
         try runTtest(cx, &out, try lex.tokenize(a, source, &d));
     }
-    try Testing.expectWords(try Testing.oracle(a, "tests/STAT15.4-oracle/STAT-TTEST-003/normal_lognormal.expected.txt"), out.items);
+    try Testing.expectWords(try Testing.oracle(a, "tests/corpus/stat_ttest_lognormal.txt"), out.items);
     try std.testing.expectEqualStrings("", try d.render());
 }
 
@@ -601,7 +601,7 @@ test "STAT-TTEST-007 integrated CLASS and COCHRAN listing matches original oracl
     const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &d };
     var out: std.ArrayList(u8) = .empty;
     try runTtest(cx, &out, try lex.tokenize(a, "proc ttest data=sample cochran; class group; var x; run;", &d));
-    try Testing.expectWords(try Testing.oracle(a, "tests/STAT15.4-oracle/STAT-TTEST-007/two_sample_variance.expected.txt"), out.items);
+    try Testing.expectWords(try Testing.oracle(a, "tests/corpus/persist_ttest_two_sample_variance.txt"), out.items);
     try std.testing.expectEqualStrings("", try d.render());
     out.clearRetainingCapacity();
     try runTtest(cx, &out, try lex.tokenize(a, "proc ttest data=sample sides=u ci=none; class group; var x; run;", &d));
@@ -640,7 +640,7 @@ test "STAT-TTEST-006 original paired direction listing matches all reference tok
     var out: std.ArrayList(u8) = .empty;
     try runTtest(cx, &out, try lex.tokenize(a, "proc ttest data=sample; paired x*y; run;", &d));
     try runTtest(cx, &out, try lex.tokenize(a, "proc ttest data=sample sides=u; paired y*x; run;", &d));
-    try Testing.expectWords(try Testing.oracle(a, "tests/STAT15.4-oracle/STAT-TTEST-006/paired_direction.expected.txt"), out.items);
+    try Testing.expectWords(try Testing.oracle(a, "tests/corpus/stat_ttest_paired.txt"), out.items);
     try std.testing.expectEqualStrings("", try d.render());
     out.clearRetainingCapacity();
     try runTtest(cx, &out, try lex.tokenize(a, "proc ttest data=sample; paired x*x; run;", &d));
@@ -706,7 +706,7 @@ test "STAT-TTEST-009 integrated original TOST difference listing matches every o
     const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &d };
     var out: std.ArrayList(u8) = .empty;
     try runTtest(cx, &out, try lex.tokenize(a, "proc ttest data=sample tost(-20,20) alpha=.05; class group; var x; run;", &d));
-    try Testing.expectWords(try Testing.oracle(a, "tests/STAT15.4-oracle/STAT-TTEST-009/tost_difference.expected.txt"), out.items);
+    try Testing.expectWords(try Testing.oracle(a, "tests/corpus/persist_ttest_tost_difference.txt"), out.items);
     try std.testing.expectEqualStrings("", try d.render());
 }
 

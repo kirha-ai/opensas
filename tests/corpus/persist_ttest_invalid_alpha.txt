@@ -1,0 +1,9 @@
+# corpus assertions
+# Original STAT-TTEST-005; whitespace only; no numeric substitutions.
+words
+stderr-count 1 ERROR
+# Baseline SAS wording differs; preserved semantic diagnostic per original verification.
+stderr-count 1 PROC TTEST: ALPHA must be between 0 and 1
+stderr-count 0 UNSUPPORTED
+stderr-count 0 WARNING
+svg-count 0

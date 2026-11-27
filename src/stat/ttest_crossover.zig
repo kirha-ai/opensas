@@ -308,7 +308,7 @@ test "CROSSOVER full default Example128.4 listing matches unchanged original ora
     const view = try selection.View.init(a, .{ .ds = ds }, .{ .analysis = &.{ 2, 3 } });
     var out: std.ArrayList(u8) = .empty;
     try run(cx, &out, view, .{ 2, 3 }, .{ 0, 1 }, .{});
-    const expected = try std.Io.Dir.cwd().readFileAlloc(std.testing.io, "tests/STAT15.4-oracle/STAT-TTEST-008/abba_crossover.expected.txt", a, .limited(1024 * 1024));
+    const expected = try @import("ttest_test_assets.zig").listing(a, "tests/corpus/stat_ttest_crossover.txt");
     try Testing.expectWords(expected, out.items);
     try std.testing.expectEqualStrings("", try d.render());
 }

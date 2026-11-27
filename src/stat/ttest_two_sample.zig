@@ -277,7 +277,7 @@ test "TWO_SAMPLE original complete table oracle tokens" {
     try intervals(a, &out, r, "group", .{ "A", "B" }, true);
     try tests(a, &out, r);
     try equalityTable(a, &out, r);
-    const expected = try std.Io.Dir.cwd().readFileAlloc(std.testing.io, "tests/STAT15.4-oracle/STAT-TTEST-007/two_sample_variance.expected.txt", a, .limited(1024 * 1024));
+    const expected = try @import("ttest_test_assets.zig").listing(a, "tests/corpus/persist_ttest_two_sample_variance.txt");
     var e = std.mem.tokenizeAny(u8, expected, " \r\n\t\x0c");
     var actual = std.mem.tokenizeAny(u8, out.items, " \r\n\t\x0c");
     while (e.next()) |word| try std.testing.expectEqualStrings(word, actual.next() orelse "<missing>");

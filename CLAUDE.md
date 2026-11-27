@@ -33,10 +33,32 @@ only from assigned tickets in `stat-jira.md`; do not consume the legacy board.
 
 ## Definition of done
 
-`zig build gate` green (or equivalently `test` + `corpus` + `programs`),
-fixture included, tracker updated if the task names one (docs/sas-functions.md
+`zig build gate` green with `tests/STAT15.4-oracle/` absent, permanent regressions
+included, tracker updated if the task names one (docs/sas-functions.md
 `[x]`, EBNF `(* opensas *)`), committed locally by pathspec. Then STAY RUNNING
 and wait for the next task — do not exit.
+
+## Temporary STAT reference baseline
+
+- `tests/STAT15.4-oracle/` is a temporary, read-only reference. The user will
+  delete it. Never add status, handoff documents, implementation-evidence files,
+  validators, actual outputs or generated images there; never edit its expected
+  values to make the interpreter pass.
+- Every completed behavior, including a partial DOING/PARK implementation,
+  must have persistent `tests/corpus/` fixtures or Zig `test` coverage in the
+  default gate. Migrate the input and expected contract before reporting.
+  Permanent tests may not read/include files from the temporary baseline.
+- DONE additionally requires a case-to-test mapping and verification with the
+  temporary baseline unavailable. Preserve full output/status/diagnostic checks,
+  typed/missing-field checks and graph/random/numerical checks as applicable;
+  do not weaken them to execution-only or a few selected rows.
+- Keep task status, partial progress, blockers and handoff only in
+  `stat-jira.md`. Keep SAS citations, input provenance and independently derived
+  tolerance formulas next to executable tests. Reuse an existing identical test
+  instead of maintaining duplicate permanent expected results.
+- Do not delete reference folders during implementation unless requested.
+  DONE means safe to delete, not permission to delete. When a reference folder
+  has already been removed, use the board's permanent test mapping and sources.
 
 ## No confidential data in the tree (D-011)
 

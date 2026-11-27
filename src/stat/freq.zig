@@ -33,6 +33,10 @@ const lastDataset = p.lastDataset;
 const eqi = p.eqi;
 const failGap = p.failGap;
 
+test {
+    _ = @import("freq_persistence_tests.zig");
+}
+
 pub fn isMissing(v: Value) bool {
     return switch (v) {
         .num => |x| std.math.isNan(x),

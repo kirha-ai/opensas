@@ -576,4 +576,5 @@ test "STAT-COMMON-004 weighted listing identifies weight without changing observ
 
 test {
     _ = @import("reg_interactive_tests.zig");
+    _ = @import("reg_persistence_tests.zig");
 }

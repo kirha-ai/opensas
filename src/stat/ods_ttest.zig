@@ -180,6 +180,23 @@ test "TTEST ODS typed original schemas precision special missing and TRACE ident
     const equality = lib.find("variance").?;
     try std.testing.expectEqual(@as(usize, 4), stats.rows.items.len);
     try std.testing.expectEqual(@as(usize, 15), stats.columns.items.len);
+    // All Statistics names reconstructed by the independent Python verifier
+    // from all three vertical header panels in the original SAS listing.
+    for ([_][]const u8{ "Variable", "Class", "Method", "N", "Mean", "LowerCLMean", "UpperCLMean", "StdDev", "LowerCLStdDev", "UpperCLStdDev", "UMPULowerCLStdDev", "UMPUUpperCLStdDev", "StdErr", "Minimum", "Maximum" }, stats.columns.items) |name, col|
+        try std.testing.expectEqualStrings(name, col.name);
+    // Independently solved at 70 decimal digits by mpmath from the published
+    // mass/moment equations (S154 pp.10621-10622), not fitted to SAS endpoints.
+    // Port of dev5-precision-reference.py's 2e-12 accuracy bound. The discrepant
+    // SAS upper endpoints remain a PARK blocker, not a relaxed baseline test.
+    const independent = [3][2]f64{
+        .{ 14.0857023636606677238079520183254, 53.6831236977216182037906490660967 },
+        .{ 9.69781372800273567316032580064943, 36.9600975881003249106143239137669 },
+        .{ 13.9064983423993988298985184793070, 34.5702393828515526037835190616999 },
+    };
+    for (independent, stats.rows.items[0..3]) |bounds, row| {
+        try std.testing.expectApproxEqAbs(bounds[0], row[stats.indexOf("UMPULowerCLStdDev").?].num, 2e-12);
+        try std.testing.expectApproxEqAbs(bounds[1], row[stats.indexOf("UMPUUpperCLStdDev").?].num, 2e-12);
+    }
     try std.testing.expectEqual(@as(usize, 4), limits.rows.items.len);
     try std.testing.expectEqual(@as(usize, 12), limits.columns.items.len);
     try std.testing.expectEqual(@as(usize, 2), tests.rows.items.len);

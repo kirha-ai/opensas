@@ -81,6 +81,7 @@ pub fn execute(cx: proc.ProcCtx, out: *std.ArrayList(u8), spec: Spec) diag.Error
 
 test {
     _ = @import("glm_tests.zig");
+    _ = @import("glm_persistence_tests.zig");
 }
 
 /// Minimal retained GLM execution boundary. Initial analyses are not replayed
