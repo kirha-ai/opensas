@@ -77,6 +77,17 @@ Current counts: **48 DONE,19 PARK,7 DOING,1348 TODO**. All temporary reference f
 
 At exact c78ef7c6ca2b0b65ecf00e697687e906a887fc63, oracle-absent gate direct1:1989/1990unit,2361/2361corpus,11/11programs. Single failure is old REG parser-test substring `not implemented` after STEPWISE gained a real NOPRINT/OUTEST path; current explicit unsupported-listing diagnostic has changed. Repair378ce9bc retains all six invalid-syntax assertions, resets the gap flag before the supported-method/unsupported-listing path, and checks the exact captured message plus D-009 rc2. Targeted actual regression8/8 direct0; full rerun pending. Repair worktree `/Users/thomas/kirha/opensas-reg-gate-repair`, branch `codex/stat-reg-gate-repair`, created from c78ef7c6; ongoing REG009 source/evidence untouched. Supplemental not claimed for failedrun; oracle restored. Batchnotpushed.
 
+### Active-time assignments — multiple comparisons, SLICE, CODE, LSMESTIMATE
+
+Priorfourattemptsarefrozenandintegratedthrough `56fba24a`, stillPARKpendingremainingfeatures/referenceandfinalbatchchecks. New45-awake-minuteattemptsuseabsolutePythonmonotonicclock; checkbeforeedits, no handoffreset.
+
+- dev2: STAT-GLM-014; retained `opensas-dev2`, `codex/stat-b4-glm014-dev2`; assignedUTC 2026-11-27T22:41:00+00:00; initialUTCdeadline 2026-11-27T23:26:00+00:00; activeStart=351037.381166, activeDeadline=353737.381166.
+- dev3: STAT-COMMON-029; retained `opensas-dev3`, `codex/stat-b4-common029-dev3`; assignedUTC 2026-11-27T22:41:00+00:00; initialUTCdeadline 2026-11-27T23:26:00+00:00; activeStart=351037.381166, activeDeadline=353737.381166.
+- dev5: STAT-COMMON-020; retained `opensas-dev5`, `codex/stat-b4-common020-dev5`; assignedUTC 2026-11-27T22:41:00+00:00; initialUTCdeadline 2026-11-27T23:26:00+00:00; activeStart=351037.381166, activeDeadline=353737.381166.
+- dev7: STAT-COMMON-027; retained `opensas-dev7`, `codex/stat-b4-common027-dev7`; assignedUTC 2026-11-27T22:41:00+00:00; initialUTCdeadline 2026-11-27T23:26:00+00:00; activeStart=351037.381166, activeDeadline=353737.381166.
+
+ReuseactualGLM/MIXEDcodedX,LSmeanL,covariance,DFandscoringinterfaces. Source-specificapplicabilityisrequired: sharedstatementsmustnotbeacceptedbyincompatiblePROCs. dev2ownsGLMcomparisonintegration; dev3SLICEanddev7LSMESTIMATE coordinateMIXEDparser/entry; dev5CODEchoosesonlysource-supportedproducerandcoordinatesitsparserowner. Generatedcode mustexecuteinindependentDATAstep. No fakeadjustmentdistributions/unknownRNGstream, noextraagents/lanes/backlog.
+
 ### Active-time assignments — reweighting, conditional logistic, pairwise ranks
 
 PreviousREG010/LOGISTIC005/NPAR006 attemptsarefrozenandintegratedthrough `5e54da1e`; theirremaininglimitsstayPARK. Newattemptsuseverifiedsleep-excludingPython3.13mach_absolute_time(), checkbeforeevery sourceedit andfreezeatdeadline.
@@ -738,7 +749,7 @@ Complete prerequisite shared contracts first, then each PROC's data input, model
 
 <a id="stat-common-020"></a>
 
-### [TODO] STAT-COMMON-020 — CODE Statement
+### [DOING @dev5] STAT-COMMON-020 — CODE Statement
 
 - Source: S154 / Chapter 20 / `CODE Statement` (PDF pp. 421–424).
 - Scope: Implement shared semantics, defaults, and applicability checks for CODE Statement; procedure-specific options and result integration belong to the corresponding PROC tickets.
@@ -823,7 +834,7 @@ Complete prerequisite shared contracts first, then each PROC's data input, model
 
 <a id="stat-common-027"></a>
 
-### [TODO] STAT-COMMON-027 — LSMESTIMATE Statement
+### [DOING @dev7] STAT-COMMON-027 — LSMESTIMATE Statement
 
 - Source: S154 / Chapter 20 / `LSMESTIMATE Statement` (PDF pp. 510–522).
 - Scope: Implement shared semantics, defaults, and applicability checks for LSMESTIMATE Statement; procedure-specific options and result integration belong to the corresponding PROC tickets.
@@ -843,7 +854,7 @@ Complete prerequisite shared contracts first, then each PROC's data input, model
 
 <a id="stat-common-029"></a>
 
-### [TODO] STAT-COMMON-029 — SLICE Statement
+### [DOING @dev3] STAT-COMMON-029 — SLICE Statement
 
 - Source: S154 / Chapter 20 / `SLICE Statement` (PDF pp. 539–543).
 - Scope: Implement shared semantics, defaults, and applicability checks for SLICE Statement; procedure-specific options and result integration belong to the corresponding PROC tickets.
@@ -5374,7 +5385,7 @@ Source: S154, Chapter 53, `The GLM Procedure`, PDF pp. 4043–4230. Tasks in thi
 
 <a id="stat-glm-014"></a>
 
-### [TODO] STAT-GLM-014 — GLM — Multiple Comparisons / Simple Effects / Weighted Means
+### [DOING @dev2] STAT-GLM-014 — GLM — Multiple Comparisons / Simple Effects / Weighted Means
 
 - Source: S154 / Chapter 53 / `Multiple Comparisons` (PDF pp. 4131–4141); S154 / Chapter 53 / `Simple Effects` (PDF pp. 4141–4143); S154 / Chapter 53 / `Weighted Means` (PDF p. 4144).
 - Scope: Implement Multiple Comparisons; Simple Effects; Weighted Means. This ticket owns the feature's options, defaults, computation, and results as an extension of the basic computational path; the chapter's output tickets handle ODS descriptors and file presentation.
