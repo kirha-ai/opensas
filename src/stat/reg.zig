@@ -139,6 +139,16 @@ fn executePrepared(cx: proc.ProcCtx, out: *std.ArrayList(u8), spec: Spec, prepar
             }
             const diagnostics = computed.diagnostics;
             const fit = diagnostics.fit;
+            if ((model.influence or model.collin or model.collinoint) and fit.rank != input.columns) return proc.failGap(cx.diags, 0, "PROC REG: INFLUENCE/COLLIN for aliased parameterizations is not implemented", .{});
+            if (model.influence and (spec.row_weights != null or input.y.len != input.read or spec.ids.len > 0)) return proc.failGap(cx.diags, 0, "PROC REG: INFLUENCE listing with reweighted/excluded rows or ID variables is not implemented", .{});
+            const influence = if (model.influence) @import("reg_influence.zig").compute(cx.arena, input.x, input.y, w, fit) catch |err| {
+                if (err == error.OutOfMemory) return err;
+                return proc.failGap(cx.diags, 0, "PROC REG: influence diagnostics are numerically unavailable", .{});
+            } else null;
+            const collinearity = if (model.collin or model.collinoint) @import("reg_collinearity.zig").compute(cx.arena, input.x, input.y.len, input.columns, w, model.intercept, model.collinoint) catch |err| {
+                if (err == error.OutOfMemory) return err;
+                return proc.failGap(cx.diags, 0, "PROC REG: collinearity diagnostics require nonzero independent columns and at most16 parameters", .{});
+            } else null;
             var ipc_points: []const @import("reg_ipc.zig").Point = &.{};
             var ridge_path: ?@import("reg_ridge.zig").Path = null;
             var ridge_x: []const f64 = &.{};
@@ -249,6 +259,10 @@ fn executePrepared(cx: proc.ProcCtx, out: *std.ArrayList(u8), spec: Spec, prepar
                 .vif = vifs,
                 .restrictions = computed.restrictions,
             });
+            if (!spec.noprint) {
+                if (collinearity) |result| try @import("reg_diagnostic_render.zig").collinearity(cx.arena, out, spec, model, result);
+                if (influence) |result| try @import("reg_diagnostic_render.zig").influence(cx.arena, out, spec, model, input.source_rows, fit, result);
+            }
             if (ridge_path) |path| try @import("reg_ridge_plots.zig").execute(cx, spec, model, path, ridge_x, input.y, fit);
             if (!spec.noprint and (model.residual or model.cli or model.clm)) {
                 if (spec.ids.len > 0 or spec.freq != null or spec.weight != null or input.y.len != input.read) return proc.failGap(cx.diags, 0, "PROC REG: diagnostic listing with ID, FREQ, WEIGHT or excluded rows is not implemented", .{});
@@ -774,6 +788,7 @@ test "STAT-COMMON-004 weighted listing identifies weight without changing observ
 }
 
 test {
+    _ = @import("reg_influence_tests.zig");
     _ = @import("reg_reweight_tests.zig");
     _ = @import("reg_test_tests.zig");
     _ = @import("linear_hypothesis_tests.zig");

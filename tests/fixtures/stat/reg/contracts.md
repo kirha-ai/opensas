@@ -416,3 +416,50 @@ standardizations undefined; missing values retain SAS's numeric missing ordering
 RESET restores the original WEIGHT value (or1), not necessarily the last weight.
 UNDO restores the saved previous weight vector while preserving the last fit
 until the next explicit or implicit refit. Model revisions count REWEIGHT calls.
+
+## Collinearity and influence diagnostics
+
+SAS/STAT15.4 physical pp.8624–8629 defines scaled-crossproduct eigenvalues,
+condition indices and variance proportions, and the leave-one-observation
+influence statistics. COLLIN scales the fitted design's crossproduct to unit
+diagonal; COLLINOINT first projects out the intercept. With eigenpairs(lambda,v),
+CI_k=sqrt(lambda_max/lambda_k), and the fraction for parameter j/component k is
+(v_jk²/lambda_k)/sum_l(v_jl²/lambda_l). The common scale and parameter units
+cancel in that fraction. E=I in the existing characteristic solver gives the
+required ordinary orthonormal eigenvectors without altering its algorithm.
+
+For centered columns with squared norms10 and crossproduct8, eigenvalues are
+1.8,.2, condition indices1,3 and each parameter's proportions are.1,.9. The
+columns128u+v and128u-v, for orthogonal unit-sign u,v, have eigenvalues
+32768/16385 and2/16385, condition index128, and small-root proportions
+16384/16385. Precision-weight crossproducts are compared with literal repeated
+rows; intercept adjustment is separately invariant to predictor translation.
+
+For one deleted observation with precision weight w, residual r, weighted
+leverage h and G=(X'WX)^-1:
+
+```
+PRESS residual = r/(1-h)
+beta-beta_deleted = G*x*w*r/(1-h)
+SSE_deleted = SSE-w*r²/(1-h)
+MSE_deleted = SSE_deleted/(DF_error-1)
+RSTUDENT = sqrt(w)*r/sqrt(MSE_deleted*(1-h))
+DFFITS = RSTUDENT*sqrt(h/(1-h))
+DFBETAS_j = (beta_j-beta_deleted_j)/sqrt(MSE_deleted*G_jj)
+COVRATIO = (MSE_deleted/MSE)^rank/(1-h)
+```
+
+The weighted identities are checked against every explicit deleted weighted fit
+and its actual covariance determinant, not merely against the same formulas.
+Frequency aggregation requires a separately defined deletion unit. Unit leverage
+causes rank loss on deletion; undefined statistics remain missing, not zero.
+
+The five-row line x=(0,1,2,3,4), y=(1,2,2,4,8) has last-row h=.6,
+RSTUDENT=sqrt(14), DFFITS=sqrt(21), CookD=63/32, COVRATIO=45/512,
+DFBETAS=(-7/sqrt(21),sqrt(14)) and total PRESS16805/784. The paired four-corner
+example has beta=(10,3,-1), SSE8, residual DF5, all h=3/8 and residuals±1.
+Every deleted MSE is8/5, hence RSTUDENT=±1, COVRATIO=8/5, DFFITS=±sqrt(3/5)
+and total PRESS512/25. Its expected listing uses these independent exact values.
+Only the residual sum, exactly zero with an intercept, uses a bound:
+E=gamma(8)*208 and B=E+gamma(7)*(8+E), where208 is the exact sum of response
+and fitted-term magnitudes. The sole persisted tolerance is pinned by a Zig test.

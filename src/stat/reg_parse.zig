@@ -21,6 +21,9 @@ pub const Model = struct {
     cli: bool = false,
     tol: bool = false,
     vif: bool = false,
+    influence: bool = false,
+    collin: bool = false,
+    collinoint: bool = false,
     restrictions: []const @import("reg_restrict.zig").Constraint = &.{},
     selection: @import("reg_selection.zig").Options = .{},
     selection_output: @import("reg_selection.zig").Output = .{},
@@ -296,12 +299,23 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
                 } else if (kw(t, j, "edf") or kw(t, j, "rsquare") or kw(t, j, "adjrsq") or kw(t, j, "cp") or kw(t, j, "sse") or kw(t, j, "mse")) {
                     if (kw(t, j, "edf")) model.selection_output.edf = true else if (kw(t, j, "rsquare")) model.selection_output.rsquare = true else if (kw(t, j, "adjrsq")) model.selection_output.adjrsq = true else if (kw(t, j, "cp")) model.selection_output.cp = true else if (kw(t, j, "sse")) model.selection_output.sse = true else model.selection_output.mse = true;
                     j += 1;
+                } else if (kw(t, j, "influence")) {
+                    model.influence = true;
+                    j += 1;
+                } else if (kw(t, j, "collin")) {
+                    model.collin = true;
+                    j += 1;
+                } else if (kw(t, j, "collinoint")) {
+                    model.collinoint = true;
+                    j += 1;
                 } else if (kw(t, j, "alpha")) {
                     model.alpha = try numeric(cx, t[0..end], &j);
                 } else if (kw(t, j, "singular")) {
                     model.singular = try numeric(cx, t[0..end], &j);
                 } else return unsupported(cx, t[j], &.{ "r", "p", "clm", "cli", "clb", "selection", "sle", "slentry", "sls", "slstay", "maxstep", "details", "groupnames", "noprint", "influence", "dw", "dwprob", "acov", "hcc", "white", "stb", "covb", "corrb", "collin", "collinoint", "ss1", "ss2", "scorr1", "scorr2", "pcorr1", "pcorr2", "partial", "all", "press", "aic", "sbc", "cp", "mse", "edf", "rsquare", "adjrsq", "b", "seb" });
             }
+            if (model.collin and model.collinoint) return proc.failGap(cx.diags, 0, "PROC REG: combined COLLIN/COLLINOINT output is not implemented", .{});
+            if (model.influence and (model.residual or model.clm or model.cli)) return proc.failGap(cx.diags, 0, "PROC REG: combined INFLUENCE and interval/residual listings are not implemented", .{});
             if ((model.residual or model.clm or model.cli) and !(model.residual and model.clm and model.cli)) return proc.failGap(cx.diags, t[i].line, "PROC REG: diagnostic listing currently requires R CLM CLI together", .{});
             if (!model.intercept and regressors.len == 0) return cx.diags.fail(error.ParseError, t[i].line, "PROC REG: empty model", .{});
             for (dependents) |dep| {
@@ -398,6 +412,11 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
         if (options.include > model.regressors.len or options.include > (options.stop orelse model.regressors.len) or (options.start orelse 1) > (options.stop orelse model.regressors.len) or (options.stop orelse model.regressors.len) > model.regressors.len) return cx.diags.fail(error.ParseError, 0, "PROC REG: invalid subset size limits", .{});
         if (!noprint or outest == null) return proc.failGap(cx.diags, 0, "PROC REG: model selection currently requires NOPRINT and OUTEST", .{});
         if (covout or ridge.len > 0 or pcomit.len > 0 or model.restrictions.len > 0) return proc.failGap(cx.diags, 0, "PROC REG: subset selection with COVOUT, RIDGE, PCOMIT, or RESTRICT is not implemented", .{});
+    }
+    for (models.items) |model| {
+        if ((model.influence or model.collin or model.collinoint) and (model.selection.method != .none or model.restrictions.len > 0 or ridge.len > 0 or pcomit.len > 0)) return proc.failGap(cx.diags, 0, "PROC REG: these diagnostics combined with selection, RESTRICT, RIDGE, or PCOMIT are not implemented", .{});
+        if (model.influence and (weight != null or freq != null)) return proc.failGap(cx.diags, 0, "PROC REG: WEIGHT/FREQ INFLUENCE listing conventions are not implemented", .{});
+        if (model.collinoint and !model.intercept) return proc.failGap(cx.diags, 0, "PROC REG: COLLINOINT with NOINT is not implemented", .{});
     }
     for (tests.items) |test_spec| for (models.items) |model| {
         if (model.statement_index != test_spec.statement_index) continue;
