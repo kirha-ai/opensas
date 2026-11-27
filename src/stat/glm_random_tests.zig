@@ -313,3 +313,135 @@ test "GLM009 requested Type IV EMS reuse only validated equal hypothesis spaces"
     try close(21.0 / 8.0, result.coefficients[0][0]);
     try close(205.0 / 16.0, result.tests[0].f_value);
 }
+
+test "GLM009 RANDOM FREQ equals literal replication for EMS and denominator inference" {
+    var arena = std.heap.ArenaAllocator.init(t.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var lib = Library.init(a);
+    const ds = try sample(a, &lib);
+    var expanded = Dataset.init(a, "expanded");
+    for (ds.columns.items) |column| _ = try expanded.addColumn(column.name, column.type);
+    for (ds.rows.items) |*observation| {
+        const cells = try a.dupe(@import("../value.zig").Value, observation.*);
+        cells[3] = .{ .num = 2 };
+        observation.* = cells;
+        try expanded.appendRow(cells);
+        try expanded.appendRow(cells);
+    }
+    try lib.put("expanded", &expanded);
+    var diagnostics = diag.Diagnostics.init(a);
+    const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &diagnostics };
+    const programs = [_][]const u8{
+        "proc glm data=sample; class A B; model Y=A B A*B; freq w; random B A*B / test; run;",
+        "proc glm data=expanded; class A B; model Y=A B A*B; random B A*B / test; run;",
+    };
+    var results: [2]random.Result = undefined;
+    for (programs, 0..) |program, index| {
+        const spec = try glm.parse(cx, try lex.tokenize(a, program, &diagnostics));
+        const view = try selection.View.init(a, spec.input, .{ .frequency = spec.freq });
+        const d = try glm.design.build(cx, spec, view, spec.responses[0]);
+        var fit = try glm.fitDesign(cx, spec, d);
+        defer fit.deinit(a);
+        results[index] = try random.compute(cx, spec, d, fit);
+        try t.expectEqual(@as(usize, 24), fit.model.fit.n_used);
+        try t.expectEqual(@as(usize, 18), fit.model.fit.df_error);
+        try close(24, fit.model.fit.sse);
+        try close(4.0 / 3.0, fit.model.fit.mse);
+    }
+    for (results[0].coefficients, results[1].coefficients) |left, right| for (left, right) |x, y| try close(x, y);
+    for (results[0].tests, results[1].tests) |left, right| {
+        inline for (.{ "interaction_weight", "error_weight", "denominator_ms", "denominator_df", "f_value", "p_value" }) |field| try close(@field(left, field), @field(right, field));
+    }
+    try close(4, results[0].coefficients[0][1]);
+    try close(12, results[0].coefficients[1][0]);
+    try close(6, results[0].tests[2].f_value);
+    // For F(2,18), survival at6 is (1+6/9)^-9=(3/5)^9.
+    try close(std.math.pow(f64, 3.0 / 5.0, 9), results[0].tests[2].p_value);
+    // A one-way FREQ request uses replicated group counts in the coefficient,
+    // not the number of stored rows: two copies of counts(2,3,3) give21/4.
+    const one = try oneWaySample(a, &lib);
+    _ = try one.addColumn("frequency", .num);
+    for (one.rows.items) |*observation| {
+        const cells = try a.alloc(@import("../value.zig").Value, 3);
+        @memcpy(cells[0..2], observation.*);
+        cells[2] = .{ .num = 2 };
+        observation.* = cells;
+    }
+    const spec = try glm.parse(cx, try lex.tokenize(a, "proc glm data=sample; class group; model y=group; freq frequency; random group / test; run;", &diagnostics));
+    const d = try glm.design.build(cx, spec, try selection.View.init(a, spec.input, .{ .frequency = spec.freq }), spec.responses[0]);
+    var fit = try glm.fitDesign(cx, spec, d);
+    defer fit.deinit(a);
+    const result = try random.compute(cx, spec, d, fit);
+    try close(21.0 / 4.0, result.coefficients[0][0]);
+    try close(13, result.tests[0].denominator_df);
+    try close(24.0 / 13.0, result.tests[0].denominator_ms);
+    try close(533.0 / 16.0, result.tests[0].f_value);
+}
+
+test "GLM009 RANDOM rejects nonclassification effects and invalid option syntax as user errors" {
+    var arena = std.heap.ArenaAllocator.init(t.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var lib = Library.init(a);
+    _ = try oneWaySample(a, &lib);
+    var diagnostics = diag.Diagnostics.init(a);
+    const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &diagnostics };
+    for ([_][]const u8{
+        "proc glm; model y=group; random group; run;",
+        "proc glm; class group; model y=group; random group / test=1; run;",
+        "proc glm; class group; model y=group; random group / invalid; run;",
+    }) |program| {
+        diag.resetGap();
+        defer diag.resetGap();
+        var output: std.ArrayList(u8) = .empty;
+        try t.expectError(error.ParseError, glm.run(cx, &output, try lex.tokenize(a, program, &diagnostics)));
+        try t.expectEqual(@as(u8, 1), diag.exitCode(diag.gapHit(), diagnostics.hasErrors()));
+        try t.expectEqual(@as(usize, 0), output.items.len);
+    }
+    try t.expect(std.mem.indexOf(u8, try diagnostics.render(), "RANDOM effects must contain only CLASS variables") != null);
+    // Q is documented, but not yet implemented: it remains a capability gap.
+    diag.resetGap();
+    defer diag.resetGap();
+    var output: std.ArrayList(u8) = .empty;
+    try t.expectError(error.ParseError, glm.run(cx, &output, try lex.tokenize(a, "proc glm; class group; model y=group; random group / q; run;", &diagnostics)));
+    try t.expectEqual(@as(u8, 2), diag.exitCode(diag.gapHit(), diagnostics.hasErrors()));
+    // Multiple requests before RUN are supported; interactive RANDOM must not
+    // accidentally succeed only through the direct parser execution path.
+    diag.resetGap();
+    try t.expectError(error.ParseError, glm.run(cx, &output, try lex.tokenize(a, "proc glm; class group; model y=group; run; random group / test; run;", &diagnostics)));
+    try t.expectEqual(@as(u8, 2), diag.exitCode(diag.gapHit(), diagnostics.hasErrors()));
+}
+
+test "GLM009 an explicitly random interaction does not make its main effects random" {
+    var arena = std.heap.ArenaAllocator.init(t.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var lib = Library.init(a);
+    _ = try sample(a, &lib);
+    var diagnostics = diag.Diagnostics.init(a);
+    const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &diagnostics };
+    const spec = try glm.parse(cx, try lex.tokenize(a, "proc glm; class A B; model Y=A B A*B; random A*B / test; run;", &diagnostics));
+    const d = try glm.design.build(cx, spec, try selection.View.init(a, spec.input, .{}), spec.responses[0]);
+    var fit = try glm.fitDesign(cx, spec, d);
+    defer fit.deinit(a);
+    const result = try random.compute(cx, spec, d, fit);
+    try t.expect(result.interaction_only and !result.one_way);
+    for (result.coefficients) |row| { try close(0, row[0]); try close(2, row[1]); }
+    try close(169, result.tests[0].f_value);
+    try close(48, result.tests[1].f_value);
+    var output: std.ArrayList(u8) = .empty;
+    try random.render(cx, &output, spec, d, fit, result);
+    try t.expect(std.mem.indexOf(u8, output.items, "A Var(Error) + 2 Var(A*B) + Q(A)") != null);
+    try t.expect(std.mem.indexOf(u8, output.items, "B Var(Error) + 2 Var(A*B) + Q(B)") != null);
+    try t.expect(std.mem.indexOf(u8, output.items, "Var(A)") == null);
+    try t.expect(std.mem.indexOf(u8, output.items, "Var(B)") == null);
+    // The reverse implication is equally invalid: random main effects do not
+    // silently make the omitted interaction random (S154 physical p.4100).
+    diag.resetGap();
+    defer diag.resetGap();
+    output.clearRetainingCapacity();
+    try t.expectError(error.ParseError, glm.run(cx, &output, try lex.tokenize(a, "proc glm; class A B; model Y=A B A*B; random A B / test; run;", &diagnostics)));
+    try t.expectEqual(@as(u8, 2), diag.exitCode(diag.gapHit(), diagnostics.hasErrors()));
+    try t.expectEqual(@as(usize, 0), output.items.len);
+}
