@@ -2,7 +2,7 @@
 
 ## ACTIVE — resumed 2026-11-27
 
-Explicit user resume. Confirmed working branch `feat/stat/batch-4`, base `31356cef`; clean coordinator tree. All seven historical worktrees/branches preserved; dev1 untracked evidence preserved. Owned caffeinate PID 67392 (session 56781). Runtime advertises eight total slots (coordinator + up to seven devs); admission to be recorded after dispatch. No QA/perf/doc-finder/intake/audit lanes.
+Explicit user resume. Confirmed working branch `feat/stat/batch-4`, base `31356cef`; clean coordinator tree. All seven historical worktrees/branches preserved; dev1 untracked evidence preserved. Owned caffeinate PID 67392 (session 56781). Runtime advertises eight total slots (coordinator + up to seven devs); all seven dev agents were admitted and are active. No QA/perf/doc-finder/intake/audit lanes.
 
 - dev1: STAT-REG-005; `/Users/thomas/kirha/opensas-dev1`; branch `codex/stat-b4-dev1`; assigned 2026-11-27T13:42:13+00:00; implementation deadline 2026-11-27T14:27:13+00:00. Original README/cases and cited physical PDF pages required before edits.
 - dev2: STAT-GLM-005; `/Users/thomas/kirha/opensas-dev2`; branch `codex/stat-b4-dev2`; assigned 2026-11-27T13:42:13+00:00; implementation deadline 2026-11-27T14:27:13+00:00. Original README/cases and cited physical PDF pages required before edits.
@@ -11,6 +11,12 @@ Explicit user resume. Confirmed working branch `feat/stat/batch-4`, base `31356c
 - dev5: STAT-TTEST-010; `/Users/thomas/kirha/opensas-dev5`; branch `codex/stat-b4-dev5`; assigned 2026-11-27T13:42:13+00:00; implementation deadline 2026-11-27T14:27:13+00:00. Original README/cases and cited physical PDF pages required before edits.
 - dev6: STAT-COMMON-017; `/Users/thomas/kirha/opensas-dev6`; branch `codex/stat-b4-dev6`; assigned 2026-11-27T13:42:13+00:00; implementation deadline 2026-11-27T14:27:13+00:00. Original README/cases and cited physical PDF pages required before edits.
 - dev7: STAT-COMMON-018; `/Users/thomas/kirha/opensas-dev7`; branch `codex/stat-b4-dev7`; assigned 2026-11-27T13:42:13+00:00; implementation deadline 2026-11-27T14:27:13+00:00. Original README/cases and cited physical PDF pages required before edits.
+
+### Dependency queue for next available dev
+
+- `STAT-NPAR1WAY-001`, then `STAT-NPAR1WAY-002`: COMMON-017 original requires NPAR1WAY integration. Shared rank/tie/exact/asymptotic interfaces are under dev6; these existing tickets remain TODO, not phantom assigned workers.
+- `STAT-POWER-001` / `STAT-POWER-002`: dev7 is establishing the COMMON-018 solver plus a minimal executable two-sample interface; remaining procedure scope stays with these existing tickets.
+- `STAT-LOGISTIC-002` / `STAT-LOGISTIC-003` and shared EFFECT prerequisites: LOGISTIC-004 original exercises ordinal models; binary ordering alone cannot close the ticket.
 
 ## Historical STOPPED — handoff (2026-11-25, Europe/Paris)
 
