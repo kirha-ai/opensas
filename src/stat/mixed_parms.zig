@@ -193,7 +193,13 @@ pub fn grid(cx: proc.ProcCtx, s: Spec, count: usize) diag.Error![]const []const 
     return rows;
 }
 pub const Point = struct { gls: fit.GLS, values: []f64, objective: f64, profile: bool };
+fn constantResponse(model: fit.Model) bool {
+    if (!model.has_intercept or model.y.len == 0) return false;
+    for (model.y) |v| if (v != model.y[0]) return false;
+    return true;
+}
 pub fn evaluatePoint(a: A, model: fit.Model, values: []const f64, profile: bool, method: fit.Method) !Point {
+    if (profile and constantResponse(model)) return error.DegenerateResponse;
     var gls = try fit.knownCovariance(a, model, values);
     const adjusted = try a.dupe(f64, values);
     if (profile) {
@@ -224,6 +230,7 @@ pub fn execute(cx: proc.ProcCtx, model: fit.Model, s: Spec, options: fit.Options
     if (model.n == 0 or model.n > 512) return cx.diags.fail(error.ExecError, s.line, "PROC MIXED: invalid PARMS model dimensions", .{});
     if (s.logdeth) return proc.failGap(cx.diags, s.line, "PROC MIXED: PARMS LOGDETH is not implemented", .{});
     const raw = proc_noprofile or s.noprofile or s.hold.len > 0;
+    if (!raw and constantResponse(model)) return proc.failGap(cx.diags, s.line, "PROC MIXED: a constant response has no finite positive residual-profile optimum", .{});
     if (!s.noiter and (raw or s.lower.len > 0 or s.upper.len > 0 or s.nobound)) return proc.failGap(cx.diags, s.line, "PROC MIXED: iterative PARMS bounds/HOLD/NOBOUND or unprofiled optimization are not implemented", .{});
     if (!raw and (s.lower.len > 0 or s.upper.len > 0 or s.hold.len > 0 or s.nobound)) return proc.failGap(cx.diags, s.line, "PROC MIXED: profile-coupled PARMS boundary constraints are not implemented; explicit unprofiled NOITER values are supported", .{});
     if (s.ols) {

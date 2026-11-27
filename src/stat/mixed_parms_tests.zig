@@ -230,3 +230,20 @@ test "MIXED005 published 651 point likelihood surface and best-grid Newton trans
     // Chi-square2 survival has the elementary form exp(-x/2).
     try t.expectApproxEqAbs(@exp(-lrt.statistic / 2), lrt.p, 1e-14);
 }
+
+test "MIXED005 constant response rejects infinite profile but permits known variance" {
+    var arena = std.heap.ArenaAllocator.init(t.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const model = f.Model{ .x = &.{ 1, 1, 1 }, .y = &.{ 2, 2, 2 }, .n = 3, .p = 1 };
+    // A supplied positive variance is valid. Profiling it would drive it to
+    // zero and yield an unbounded likelihood, not a tiny positive roundoff fit.
+    const known = try p.evaluatePoint(a, model, &.{1}, false, .reml);
+    try t.expect(std.math.isFinite(known.objective));
+    try t.expectError(error.DegenerateResponse, p.evaluatePoint(a, model, &.{1}, true, .reml));
+    const h = try Harness.init(a);
+    diag.resetGap();
+    defer diag.resetGap();
+    try t.expectError(error.ParseError, p.execute(h.cx, model, try h.parse("/ ols"), .{}, false));
+    try t.expect(diag.gapHit());
+}
