@@ -274,3 +274,25 @@ test "COMMON031 malformed geometry is not hidden by a nonestimable first row" {
     invalid.covariance_kernel = &.{ 1, 1, 0, 0, 1, 0, 0, 0, 1 };
     try std.testing.expectError(error.ExecError, h.evaluate(a, invalid, &.{.{ .coefficients = &.{ 1, 0, 0 } }}, null));
 }
+
+test "COMMON031 nested effect reference consumes actual within-group contrasts" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var d = diag.Diagnostics.init(a);
+    // Balanced A nested in B: four cell means2,5,8,11, two observations/cell.
+    // Columns are intercept,B contrast,A(B1) contrast,A(B2) contrast.
+    const fit = try ranks.fit(a, &.{ 1, -1, -1, 0, 1, -1, -1, 0, 1, -1, 1, 0, 1, -1, 1, 0, 1, 1, 0, -1, 1, 1, 0, -1, 1, 1, 0, 1, 1, 1, 0, 1 }, &.{ 1, 3, 4, 6, 7, 9, 10, 12 }, 8, 4, null, true, 1e-9);
+    const rows = [_]h.Row{ .{ .coefficients = &.{ 0, 0, 1, 0 } }, .{ .coefficients = &.{ 0, 0, 0, 1 } } };
+    const catalog = [_]shared.Effect{.{ .name = "A(B)", .rows = .{ &rows, &rows, &rows } }};
+    const request = try options(a, &d, "ORTHOREG", "a(b) / e");
+    const result = try shared.evaluate(a, h.fromRegression(fit, 1e-9), &catalog, request, .f);
+    try std.testing.expectEqualStrings("A(B)", result.tests[0].effect);
+    try std.testing.expectEqual(@as(usize, 2), result.tests[0].result.rank);
+    try close(18, result.tests[0].result.numerator_ss.?);
+    try close(4.5, result.tests[0].result.f.?);
+    try close(16.0 / 169.0, result.tests[0].result.f_probability.?);
+    try std.testing.expectEqual(@as(usize, 3), result.coefficients.len);
+    const crossed = try options(a, &d, "PLM", "A*B(D C) / htype=3");
+    try std.testing.expectEqualStrings("A*B(D C)", crossed.effects[0]);
+}

@@ -30,6 +30,20 @@ pub fn parse(cx: proc.ProcCtx, procedure: []const u8, tokens: []const lex.Token)
             try effect.appendSlice(cx.arena, tokens[i].text);
             i += 1;
         }
+        if (i < tokens.len and tokens[i].tag == .lparen) {
+            try effect.append(cx.arena, '(');
+            i += 1;
+            var count: usize = 0;
+            while (i < tokens.len and tokens[i].tag == .name) {
+                if (count > 0) try effect.append(cx.arena, ' ');
+                try effect.appendSlice(cx.arena, tokens[i].text);
+                count += 1;
+                i += 1;
+            }
+            if (count == 0 or i == tokens.len or tokens[i].tag != .rparen) return cx.diags.fail(error.ParseError, 0, "TEST: invalid nesting reference", .{});
+            try effect.append(cx.arena, ')');
+            i += 1;
+        }
         try effects.append(cx.arena, effect.items);
     }
     if (i < tokens.len) i += 1;
@@ -85,15 +99,15 @@ pub const NativeStatistic = enum { f, chi_square };
 pub const Test = struct { effect: []const u8, table_name: []const u8, hypothesis_type: u2, result: hypothesis.Result, show_f: bool, show_chisq: bool };
 pub const Coefficients = struct { effect: []const u8, table_name: []const u8 = "Coef", hypothesis_type: u2, rows: []const hypothesis.Row };
 pub const Report = struct { tests: []const Test, coefficients: []const Coefficients };
-fn sameEffect(left: []const u8, right: []const u8) bool {
-    var l = std.mem.tokenizeScalar(u8, left, '*');
+fn sameFactors(left: []const u8, right: []const u8, delimiters: []const u8) bool {
+    var l = std.mem.tokenizeAny(u8, left, delimiters);
     var nl: usize = 0;
     while (l.next()) |factor| {
         nl += 1;
         var lc: usize = 0;
         var rc: usize = 0;
-        var ll = std.mem.tokenizeScalar(u8, left, '*');
-        var rr = std.mem.tokenizeScalar(u8, right, '*');
+        var ll = std.mem.tokenizeAny(u8, left, delimiters);
+        var rr = std.mem.tokenizeAny(u8, right, delimiters);
         while (ll.next()) |v| if (std.ascii.eqlIgnoreCase(factor, v)) {
             lc += 1;
         };
@@ -102,10 +116,20 @@ fn sameEffect(left: []const u8, right: []const u8) bool {
         };
         if (lc != rc) return false;
     }
-    var r = std.mem.tokenizeScalar(u8, right, '*');
+    var r = std.mem.tokenizeAny(u8, right, delimiters);
     var nr: usize = 0;
     while (r.next() != null) nr += 1;
     return nl == nr;
+}
+fn sameEffect(left: []const u8, right: []const u8) bool {
+    const l = std.mem.indexOfScalar(u8, left, '(');
+    const r = std.mem.indexOfScalar(u8, right, '(');
+    if ((l == null) != (r == null)) return false;
+    if (l) |begin| {
+        if (!std.mem.endsWith(u8, left, ")") or !std.mem.endsWith(u8, right, ")")) return false;
+        return sameFactors(left[0..begin], right[0..r.?], "*") and sameFactors(left[begin + 1 .. left.len - 1], right[r.? + 1 .. right.len - 1], " *");
+    }
+    return sameFactors(left, right, "*");
 }
 pub fn evaluate(a: A, model: hypothesis.Model, catalog: []const Effect, options: Options, native: NativeStatistic) diag.Error!Report {
     if (options.intercept) {
@@ -149,4 +173,11 @@ pub fn evaluate(a: A, model: hypothesis.Model, catalog: []const Effect, options:
         }
     }
     return .{ .tests = tests.items, .coefficients = coefficients.items };
+}
+
+test "COMMON031 effect identity preserves crossing nesting and repeated covariates" {
+    try std.testing.expect(sameEffect("A*B(C D)", "b*a(d c)"));
+    try std.testing.expect(!sameEffect("A*B(C)", "A(B C)"));
+    try std.testing.expect(!sameEffect("x*x", "x"));
+    try std.testing.expect(sameEffect("x*x*B(A)", "b*x*x(a)"));
 }
