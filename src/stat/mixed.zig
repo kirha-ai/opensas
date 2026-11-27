@@ -382,3 +382,19 @@ test "MIXED017 real residual panels match manual studentized statistics and actu
     try std.testing.expectEqual(@as(usize, 3), graphics.prepared.items.len);
     for (graphics.prepared.items) |artifact| try plots.verifyGeometry(artifact.bytes);
 }
+
+test "MIXED013 limited fits retain covariance state without producing influence diagnostics" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const h = try Testing.init(a);
+    _ = try h.heights(1);
+    var out: std.ArrayList(u8) = .empty;
+    diag.resetGap();
+    defer diag.resetGap();
+    try run(h.cx, &out, try lex.tokenize(a, "proc mixed maxiter=0;class Family Gender;model Height=Gender / influence;random Family Family*Gender;run;", h.d));
+    try std.testing.expectEqual(@as(u8, 1), diag.exitCode(diag.gapHit(), h.d.hasErrors() or h.d.warning_status));
+    try std.testing.expect(std.mem.indexOf(u8, out.items, "Covariance Parameter Estimates") != null);
+    try std.testing.expect(std.mem.indexOf(u8, out.items, "Influence Diagnostics") == null);
+    try std.testing.expect(std.mem.indexOf(u8, out.items, "Type 3 Tests of Fixed Effects") == null);
+}
