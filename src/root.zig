@@ -33,6 +33,7 @@ pub const macro = @import("macro.zig");
 pub const sql = @import("sql.zig");
 
 test {
+    _ = @import("stat/mixed_theory_type3.zig");
     _ = @import("stat/mixed.zig");
     _ = @import("stat/mixed_model.zig");
     _ = @import("stat/mixed_design.zig");
