@@ -787,7 +787,11 @@ fn renderCore(a: A, out: *std.ArrayList(u8), s: Spec, d: design.Design, r: kerne
     const intercepts: usize = if (ordinal_result) |fit| fit.levels - 1 else 1;
     if (!s.roc_detail) try modelHeader(a, out, s, d, counts, intercepts);
     try out.appendSlice(a, "\nModel Convergence Status\n\n");
-    if (r.converged) try out.print(a, "Convergence criterion ({s}={s}) satisfied.\n\n", .{ kernel.convergence.name(r.stop.reason), if (r.stop.threshold == 1e-8) "1E-8" else try number(a, r.stop.threshold, "best12.") }) else try out.print(a, "Convergence not attained after {d} iterations.\n\n", .{r.iterations});
+    if (r.converged) try out.print(a, "Convergence criterion ({s}={s}) satisfied.\n\n", .{ kernel.convergence.name(r.stop.reason), if (r.stop.threshold == 1e-8) "1E-8" else try number(a, r.stop.threshold, "best12.") }) else {
+        try out.appendSlice(a, "Iteration limit reached without convergence.\n\nWARNING: ");
+        try out.print(a, kernel.convergence.limit_warning, .{r.iterations});
+        try out.appendSlice(a, "\n\nWARNING: " ++ kernel.convergence.limit_continuation ++ "\n\n");
+    }
     if (ordinal_result) |fit| if (fit.parallel_score) |score| {
         try out.print(a, "Score Test for the {s} Assumption\n\nChi-Square DF Pr > ChiSq\n\n{s} {d} {s}\n\n", .{ if (s.link == .logit) "Proportional Odds" else "Equal Slopes", try number(a, score, "10.4"), fit.parallel_df, try number(a, kernel.chiTail(score, fit.parallel_df), "pvalue6.4") });
     };
@@ -995,7 +999,10 @@ pub fn analyze(cx: proc.ProcCtx, s: Spec) diag.Error!Analysis {
         if (err == error.OutOfMemory) return err;
         return proc.failGap(cx.diags, 0, "PROC LOGISTIC: fitting failed (rank deficiency, separation, or nonconvergence); no results emitted", .{});
     };
-    if (!r.converged and !s.nofit) try cx.diags.report(.warning, 0, "PROC LOGISTIC: maximum number of iterations ({d}) reached; results use the last iterate", .{r.iterations});
+    if (!r.converged and !s.nofit) {
+        try cx.diags.warnStatus(0, kernel.convergence.limit_warning, .{r.iterations});
+        try cx.diags.warnStatus(0, kernel.convergence.limit_continuation, .{});
+    }
     const used = try a.alloc(bool, ds.rows.items.len);
     @memset(used, false);
     var counts: Counts = .{ .read = ds.rows.items.len, .used = 0, .frequency_read = frequency_read, .frequency_used = d.total_frequency, .events = 0 };

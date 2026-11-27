@@ -45,3 +45,8 @@ pub fn valid(options: anytype) bool {
     };
     return active;
 }
+
+// SAS reference COMMON033 iteration_limit: two warnings are present both in
+// the listing and the diagnostic log; warnStatus gives the nonclean D-009 RC.
+pub const limit_warning = "Convergence was not attained in {d} iterations. You may want to increase the maximum number of iterations (MAXITER= option) or change the convergence criteria (ABSFCONV=, FCONV=, GCONV=, XCONV= options) in the MODEL statement.";
+pub const limit_continuation = "The LOGISTIC procedure continues in spite of the above warning. Results shown are based on the last maximum likelihood iteration. Validity of the model fit is questionable.";
