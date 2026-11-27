@@ -1384,7 +1384,10 @@ test "LOGISTIC013 original numeric UNITS profile likelihood and negative-unit en
     try run(cx, &out, try lex.tokenize(a, source, &d));
     try std.testing.expect(std.mem.indexOf(u8, out.items, "age 10.0000 7.892 3.881 21.406") != null);
     try std.testing.expect(std.mem.indexOf(u8, out.items, "age -10.0000") != null);
-    try std.testing.expect(std.mem.indexOf(u8, out.items, "Odds Ratio Estimates and Wald Confidence Intervals") != null);
+    try std.testing.expectEqual(@as(usize, 1), std.mem.count(u8, out.items, "Odds Ratio Estimates and Wald Confidence Intervals"));
+    // One profile table is requested by MODEL CLODDS=PL, and another by
+    // ODDSRATIO CL=BOTH; the former must not conceal a missing latter object.
+    try std.testing.expectEqual(@as(usize, 2), std.mem.count(u8, out.items, "Odds Ratio Estimates and Profile-Likelihood Confidence Intervals"));
     try std.testing.expectEqualStrings("", try d.render());
 }
 
@@ -1494,6 +1497,16 @@ test "LOGISTIC013 unsupported new odds graphics are visible and PLOTS NONE enabl
         }
         try std.testing.expectEqual(@as(usize, 0), graphics.prepared.items.len);
     }
+    // Exercise the separate ODDSRATIO plot producer without UNITS/CLODDS.
+    var d = diag.Diagnostics.init(a);
+    var out: std.ArrayList(u8) = .empty;
+    var graphics: proc.native_graphics.Session = .{ .arena = a, .io = std.testing.io, .diags = &d, .enabled = true };
+    const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &d, .graphics = &graphics };
+    diag.resetGap();
+    try std.testing.expectError(error.ParseError, run(cx, &out, try lex.tokenize(a, "proc logistic; model disease/n=age; oddsratio age; run;", &d)));
+    try std.testing.expectEqual(@as(u8, 2), diag.exitCode(diag.gapHit(), d.hasErrors()));
+    try std.testing.expectEqual(@as(usize, 0), out.items.len);
+    try std.testing.expectEqual(@as(usize, 0), graphics.prepared.items.len);
 }
 
 test "LOGISTIC013 multi-parameter CLASS profile agrees with independent two-binomial constraint" {

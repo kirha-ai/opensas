@@ -1,8 +1,7 @@
-/* STAT-LOGISTIC-013 supported numeric/profile path, public S154 Example79.7.
-   This is a new regression, not a replacement for the full original (which
-   additionally requests unimplemented ROC/GOF/RSQUARE/CLPARM/EFFECTPLOT).
-   Expected complete listing comes from the SAS reference objects requested
-   here; no OpenSAS output was used to generate the expected contract. */
+/* Public S154 Example79.7 data, numeric UNITS and profile-likelihood CIs.
+   This regression requests CLODDS=PL, UNITS age=10, and ID. Its complete
+   expected listing comes from the corresponding SAS reference output objects;
+   no OpenSAS output was used to generate the expected contract. */
 ods graphics off;
 data Data1;
 input disease n age id $;
