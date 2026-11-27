@@ -1086,7 +1086,7 @@ test "NPAR005 selected tests retain BY context and native identities without pla
     var table_path = false;
     for (d.list.items) |item| {
         if (std.mem.indexOf(u8, item.message, "Npar1way.ByGroup2.x.FPBoxPlot") != null) graph_path = true;
-        if (std.mem.indexOf(u8, item.message, "Npar1way.ByGroup2.x.KS2Stats") != null) table_path = true;
+        if (std.mem.indexOf(u8, item.message, "Npar1way.ByGroup2.x.EDF.KS2Stats") != null) table_path = true;
     }
     try std.testing.expect(graph_path and table_path);
 }

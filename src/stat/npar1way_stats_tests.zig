@@ -238,9 +238,10 @@ test "NPAR002 original WilcoxonBoxPlot five quartiles every rank coordinate and 
     }
     const object = try plots.object(a, null, "Gain");
     try t.expectEqual(@import("graph_ods.zig").Name.WilcoxonBoxPlot, object.name);
-    try t.expectEqualStrings("Npar1way.Gain.WilcoxonBoxPlot", object.path);
+    // NPAR010 original SAS TRACE verifies the analysis section in this path.
+    try t.expectEqualStrings("Npar1way.Gain.Wilcoxon.WilcoxonBoxPlot", object.path);
     const by = try plots.object(a, 2, "Gain");
-    try t.expectEqualStrings("Npar1way.ByGroup2.Gain.WilcoxonBoxPlot", by.path);
+    try t.expectEqualStrings("Npar1way.ByGroup2.Gain.Wilcoxon.WilcoxonBoxPlot", by.path);
     const no_stats = try plots.render(a, &.{ 1, 2 }, &.{ 0, 1 }, &.{ "A&B", "<B>" }, "R&x", "Group", null, "site=1");
     try t.expect(std.mem.indexOf(u8, no_stats, "Pr &gt;") == null);
     try t.expect(std.mem.indexOf(u8, no_stats, "A&amp;B") != null);

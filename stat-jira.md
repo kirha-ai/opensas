@@ -10333,6 +10333,8 @@ Source: S154, Chapter 90, `The NPAR1WAY Procedure`, PDF pp. 7205–7282. Tasks i
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-NPAR1WAY-010/](tests/STAT15.4-oracle/STAT-NPAR1WAY-010/).
 - Acceptance criteria: For ODS Graphics, verify graph names, triggering conditions, curve/point data, axes, grouping, and legends; check the relevant PLOTS= and ODS GRAPHICS controls and visually inspect exported graphs.
 
+- Reference correction (2026-11-27): the original TRACE explicitly verifies `Npar1way.Gain.Wilcoxon.WilcoxonBoxPlot` and `Npar1way.Gain.EDF.KS2Stats`, including analysis sections previously omitted by native producers. Existing path expectations are corrected in a separate expectation-only commit before producer changes, retaining all numerical/geometry checks. Implementation/combined validation remain in progress; this is not a green completion receipt.
+
 <a id="stat-npar1way-011"></a>
 
 ### [TODO] STAT-NPAR1WAY-011 — NPAR1WAY — Official examples and feature integration regression
