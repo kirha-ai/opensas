@@ -100,6 +100,19 @@ pub fn compute(cx: proc.ProcCtx, spec: parse.Spec, fit: math.Result) diag.Error!
         if (denominators.len != spec.effects.len or numerators.len != spec.effects.len) return cx.diags.fail(error.ExecError, 0, "PROC GLM: requested TEST sum-of-squares table is unavailable", .{});
         const denominator = denominators[request.error_effect];
         if (denominator.df == 0 or !std.math.isFinite(denominator.ms) or !(denominator.ms > 0)) return proc.failGap(cx.diags, 0, "PROC GLM: TEST with a degenerate error effect is not implemented", .{});
+        // A custom denominator is unsafe when its SS is below the resolution
+        // of the fitted-space projections. Use a dimension-derived arithmetic
+        // budget (32*n*p² unit roundoffs) and the relevant response energy.
+        // This is a supported-domain check, NEVER a substitute denominator or
+        // an alteration of the effect SS. Centered models use corrected energy
+        // so a harmless response offset does not alone trip the check.
+        const n: f64 = @floatFromInt(fit.model.fit.fitted.len);
+        const p: f64 = @floatFromInt(fit.model.fit.coefficients.len);
+        const ku = 32 * n * p * p * (std.math.floatEps(f64) / 2);
+        const energy = if (spec.intercept) fit.model.fit.sst else fit.model.fit.sst_uncorrected;
+        if (ku >= 1 or !std.math.isFinite(energy)) return proc.failGap(cx.diags, 0, "PROC GLM: TEST numerical resolution is not supported for this model", .{});
+        const gamma = ku / (1 - ku);
+        if (denominator.ss <= gamma * gamma * energy) return proc.failGap(cx.diags, 0, "PROC GLM: TEST error effect is below the supported numerical resolution", .{});
         const rows = try cx.arena.alloc(Row, request.hypotheses.len);
         for (request.hypotheses, rows) |index, *row| {
             const numerator = numerators[index];
