@@ -9,8 +9,8 @@ pub fn known(name: []const u8) bool {
     return false;
 }
 pub fn label(name: []const u8) []const u8 {
-    const ids = [_][]const u8{ "ModelInfo", "ClassLevels", "Dimensions", "NObs", "IterHistory", "ConvergenceStatus", "CovParms", "FitStatistics", "Tests3", "ParmSearch", "LRT", "Type3", "Contrasts", "Estimates", "Influence" };
-    const labels = [_][]const u8{ "Model Information", "Class Level Information", "Dimensions", "Number of Observations", "Iteration History", "Convergence Status", "Covariance Parameter Estimates", "Fit Statistics", "Type 3 Tests of Fixed Effects", "Parameter Search", "PARMS Model Likelihood Ratio Test", "Type 3 Analysis of Variance", "Contrasts", "Estimates", "Influence Diagnostics" };
+    const ids = [_][]const u8{ "ModelInfo", "ClassLevels", "Dimensions", "NObs", "IterHistory", "ConvergenceStatus", "CovParms", "FitStatistics", "Tests3", "ParmSearch", "LRT", "Type3", "Contrasts", "Estimates", "Influence", "LSMeans", "Diffs" };
+    const labels = [_][]const u8{ "Model Information", "Class Level Information", "Dimensions", "Number of Observations", "Iteration History", "Convergence Status", "Covariance Parameter Estimates", "Fit Statistics", "Type 3 Tests of Fixed Effects", "Parameter Search", "PARMS Model Likelihood Ratio Test", "Type 3 Analysis of Variance", "Contrasts", "Estimates", "Influence Diagnostics", "Least Squares Means", "Differences of Least Squares Means" };
     for (ids, labels) |id, text| if (std.ascii.eqlIgnoreCase(name, id)) return text;
     return name;
 }
