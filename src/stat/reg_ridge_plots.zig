@@ -9,7 +9,7 @@ const fns = @import("../functions.zig");
 const svg = @import("graphics_svg.zig");
 const A = std.mem.Allocator;
 const colors = [_][]const u8{ "#3155a6", "#bd493c", "#247e68", "#8155a4", "#a67820", "#3a809c", "#cc6a89", "#657b35", "#6d657e", "#82583d" };
-const Series = struct { name: []const u8, x: []const f64, y: []const f64, line: bool = false, bars: bool = false };
+const Series = struct { name: []const u8, x: []const f64, y: []const f64, line: bool = false, bars: bool = false, edges: []const f64 = &.{} };
 const Panel = struct { title: []const u8, xlabel: []const u8, ylabel: []const u8, series: []const Series = &.{}, logx: bool = false, logy: bool = false, text: []const []const u8 = &.{}, padx: bool = true, nonnegative: bool = false };
 fn xml(a: A, s: []const u8) ![]const u8 {
     var out: std.ArrayList(u8) = .empty;
@@ -60,6 +60,9 @@ fn render(a: A, title: []const u8, panels: []const Panel, columns: usize, metada
         if (!std.math.isFinite(xmin) or !std.math.isFinite(ymin)) return error.ExecError;
         for (panel.series) |series| if (series.bars) {
             ymin = @min(0, ymin);
+            if (series.edges.len != series.x.len + 1) return error.ExecError;
+            xmin = @min(xmin, series.edges[0]);
+            xmax = @max(xmax, series.edges[series.edges.len - 1]);
         };
         if (panel.logy) {
             ymin = @floor(ymin);
@@ -103,14 +106,15 @@ fn render(a: A, title: []const u8, panels: []const Panel, columns: usize, metada
         for (panel.series, 0..) |series, si| {
             const color = colors[si % colors.len];
             if (series.line) try out.print(a, "<polyline data-series=\"{s}\" fill=\"none\" stroke=\"{s}\" stroke-width=\"1.8\" points=\"", .{ try xml(a, series.name), color });
-            for (series.x, series.y) |x, y| {
+            for (series.x, series.y, 0..) |x, y, bin| {
                 if (!std.math.isFinite(x) or !std.math.isFinite(y) or (panel.logx and x <= 0) or (panel.logy and y <= 0)) continue;
                 const px = left + (transformed(x, panel.logx) - xmin) / (xmax - xmin) * (right - left);
                 const py = bottom - (transformed(y, panel.logy) - ymin) / (ymax - ymin) * (bottom - top);
                 if (series.line) try out.print(a, "{d:.3},{d:.3} ", .{ px, py }) else if (series.bars) {
-                    const width_bar = (right - left) / @as(f64, @floatFromInt(series.x.len + 1)) * 0.8;
+                    const bar_left = left + (series.edges[bin] - xmin) / (xmax - xmin) * (right - left);
+                    const width_bar = (series.edges[bin + 1] - series.edges[bin]) / (xmax - xmin) * (right - left);
                     const zero = bottom - (0 - ymin) / (ymax - ymin) * (bottom - top);
-                    try out.print(a, "<rect data-x=\"{d}\" data-y=\"{d}\" x=\"{d:.3}\" y=\"{d:.3}\" width=\"{d:.3}\" height=\"{d:.3}\" fill=\"{s}\" fill-opacity=\".65\"/>", .{ x, y, px - width_bar / 2, @min(py, zero), width_bar, @abs(zero - py), color });
+                    try out.print(a, "<rect data-x=\"{d}\" data-y=\"{d}\" x=\"{d:.3}\" y=\"{d:.3}\" width=\"{d:.3}\" height=\"{d:.3}\" fill=\"{s}\" fill-opacity=\".65\"/>", .{ x, y, bar_left, @min(py, zero), width_bar, @abs(zero - py), color });
                 } else try out.print(a, "<circle data-x=\"{d}\" data-y=\"{d}\" cx=\"{d:.3}\" cy=\"{d:.3}\" r=\"2.8\" fill=\"{s}\" fill-opacity=\".8\"/>", .{ x, y, px, py, color });
             }
             if (series.line) try out.appendSlice(a, "\"/>");
@@ -226,7 +230,7 @@ pub fn execute(cx: proc.ProcCtx, spec: parse.Spec, model: parse.Model, path: rid
         .{ .title = "Normal Q-Q", .xlabel = "Normal Quantile", .ylabel = "Residual", .series = &.{.{ .name = "Residual", .x = quantiles, .y = sorted }} },
         .{ .title = "Observed by Predicted", .xlabel = "Predicted", .ylabel = "Observed", .series = &.{.{ .name = "Observed", .x = fit.fitted, .y = y }} },
         .{ .title = "Cook's D", .xlabel = "Observation", .ylabel = "Cook's D", .series = &.{.{ .name = "Cook's D", .x = obs, .y = cooks }} },
-        .{ .title = "Residual Histogram", .xlabel = "Residual", .ylabel = "Percent", .series = &.{.{ .name = "Percent", .x = hx, .y = hy, .bars = true }} },
+        .{ .title = "Residual Histogram", .xlabel = "Residual", .ylabel = "Percent", .series = &.{.{ .name = "Percent", .x = hx, .y = hy, .bars = true, .edges = edges }}, .nonnegative = true, .padx = false },
         .{ .title = "Residual-Fit Spread", .xlabel = "Residual (left) / Fit (right)", .ylabel = "Centered value", .series = &.{ .{ .name = "Residual", .x = ranks, .y = sorted, .line = true }, .{ .name = "Fit", .x = fit_ranks, .y = centered, .line = true } } },
         .{ .title = "Fit Statistics", .xlabel = "", .ylabel = "", .text = text },
     };
@@ -241,4 +245,37 @@ pub fn execute(cx: proc.ProcCtx, spec: parse.Spec, model: parse.Model, path: rid
         residual_panels[j] = .{ .title = spec.ds.columns.items[ci].name, .xlabel = spec.ds.columns.items[ci].name, .ylabel = "Residual", .series = series };
     }
     try queue(cx, spec, model, .ResidualPlot, "residuals", 1, residual_panels, if (p > 1) 2 else 1, diagnostic_meta);
+}
+
+fn attribute(element: []const u8, key: []const u8) !f64 {
+    const begin = (std.mem.indexOf(u8, element, key) orelse return error.TestUnexpectedResult) + key.len;
+    const end = std.mem.indexOfScalarPos(u8, element, begin, '"') orelse return error.TestUnexpectedResult;
+    return std.fmt.parseFloat(f64, element[begin..end]);
+}
+
+test "REG005 diagnostic histogram bins stay inside plot with exact edge widths" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const result = try render(arena.allocator(), "Histogram", &.{.{ .title = "Percent", .xlabel = "Residual", .ylabel = "Percent", .series = &.{.{ .name = "Percent", .x = &.{ 0.5, 2 }, .y = &.{ 25, 75 }, .bars = true, .edges = &.{ 0, 1, 3 } }}, .nonnegative = true, .padx = false }}, 1, "{}");
+    // One-column panel bounds are x=[90,916], y=[85,307]. Bins have
+    // widths 1 and 2 in data space, so they must tile the entire plot 1:2.
+    var cursor: usize = 0;
+    var previous_right: f64 = 90;
+    for ([_]f64{ 1, 2 }) |width| {
+        const begin = std.mem.indexOfPos(u8, result, cursor, "<rect data-x=") orelse return error.TestUnexpectedResult;
+        const end = std.mem.indexOfScalarPos(u8, result, begin, '>') orelse return error.TestUnexpectedResult;
+        const bar = result[begin..end];
+        const x = try attribute(bar, " x=\"");
+        const y = try attribute(bar, " y=\"");
+        const w = try attribute(bar, " width=\"");
+        const h = try attribute(bar, " height=\"");
+        try std.testing.expectApproxEqAbs(previous_right, x, 0.001);
+        try std.testing.expectApproxEqAbs(826 * width / 3, w, 0.001);
+        try std.testing.expect(y >= 85);
+        try std.testing.expectApproxEqAbs(@as(f64, 307), y + h, 0.001);
+        previous_right = x + w;
+        cursor = end;
+    }
+    try std.testing.expectApproxEqAbs(@as(f64, 916), previous_right, 0.001);
+    try std.testing.expect(std.mem.indexOfPos(u8, result, cursor, "<rect data-x=") == null);
 }

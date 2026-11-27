@@ -107,6 +107,7 @@ fn executePrepared(cx: proc.ProcCtx, out: *std.ArrayList(u8), spec: Spec, prepar
             const count = computed.count;
             const diagnostics = computed.diagnostics;
             const fit = diagnostics.fit;
+            var ipc_points: []const @import("reg_ipc.zig").Point = &.{};
             var ridge_path: ?@import("reg_ridge.zig").Path = null;
             var ridge_x: []const f64 = &.{};
             if (spec.ridge.len > 0) {
@@ -120,8 +121,19 @@ fn executePrepared(cx: proc.ProcCtx, out: *std.ArrayList(u8), spec: Spec, prepar
                     return cx.diags.fail(error.ExecError, 0, "PROC REG: ridge numerical calculation failed", .{});
                 };
             }
+            if (spec.pcomit.len > 0) {
+                if (fit.rank != input.columns or model.regressors.len == 0 or model.regressors.len > 64 or !(fit.sst > 0)) return proc.failGap(cx.diags, 0, "PROC REG: IPC needs full-rank nonconstant data with 1–64 predictors", .{});
+                const p = model.regressors.len;
+                const x = try cx.arena.alloc(f64, input.y.len * p);
+                for (0..input.y.len) |row| @memcpy(x[row * p ..][0..p], input.x[row * input.columns + 1 ..][0..p]);
+                ipc_points = @import("reg_ipc.zig").compute(cx.arena, x, input.y, p, w, spec.pcomit, fit.df_error) catch |err| {
+                    if (err == error.OutOfMemory) return err;
+                    return proc.failGap(cx.diags, 0, "PROC REG: IPC eigensystem is singular, nonconverged, or has a repeated eigenvalue at the omission boundary", .{});
+                };
+            }
             if (estimates) |builder| {
                 try builder.append(cx.arena, model, group.rep, fit);
+                for (ipc_points) |point| try builder.appendIpc(cx.arena, model, group.rep, fit, point);
                 if (ridge_path) |path| for (path.points) |point| try builder.appendRidge(cx.arena, model, group.rep, fit, point);
             }
             const stats = fit.modelStats(model.intercept);
@@ -575,6 +587,8 @@ test "STAT-COMMON-004 weighted listing identifies weight without changing observ
 }
 
 test {
+    _ = @import("reg_ipc.zig");
+    _ = @import("reg_outest.zig");
     _ = @import("reg_interactive_tests.zig");
     _ = @import("reg_persistence_tests.zig");
 }

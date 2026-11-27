@@ -31,8 +31,8 @@ pub const Builder = struct {
         const type_col = try add(ds, "_TYPE_", .char, 8, d);
         const name_col = if (spec.covout) try add(ds, "_NAME_", .char, 32, d) else null;
         const dependent_col = try add(ds, "_DEPVAR_", .char, 32, d);
-        const ridge_col = if (spec.ridge.len > 0) try add(ds, "_RIDGE_", .num, 8, d) else null;
-        const pcomit_col = if (spec.ridge.len > 0) try add(ds, "_PCOMIT_", .num, 8, d) else null;
+        const ridge_col = if (spec.ridge.len > 0 or spec.pcomit.len > 0) try add(ds, "_RIDGE_", .num, 8, d) else null;
+        const pcomit_col = if (spec.ridge.len > 0 or spec.pcomit.len > 0) try add(ds, "_PCOMIT_", .num, 8, d) else null;
         if (ridge_col) |ci| ds.columns.items[ci].format = "6.3";
         const rmse_col = try add(ds, "_RMSE_", .num, 8, d);
         var intercept_col: ?usize = null;
@@ -100,6 +100,25 @@ pub const Builder = struct {
         const row = try self.baseRow(a, model, by_row, fit);
         row[self.type_col] = .{ .str = "RIDGE" };
         row[self.ridge_col.?] = .{ .num = point.k };
+        row[self.rmse_col] = .{ .num = point.rmse };
+        for (point.coefficients, 0..) |v, j| row[self.parameterColumn(model, j)] = .{ .num = v };
+        row[self.source_to_output[model.dependent].?] = .{ .num = -1 };
+        try self.ds.appendRow(row);
+    }
+
+    pub fn appendIpc(self: Builder, a: A, model: parse.Model, by_row: ?[]const Value, fit: Fit, point: @import("reg_ipc.zig").Point) diag.Error!void {
+        if (self.spec.outvif) {
+            const row = try self.baseRow(a, model, by_row, fit);
+            row[self.type_col] = .{ .str = "IPCVIF" };
+            row[self.pcomit_col.?] = .{ .num = @floatFromInt(point.omitted) };
+            row[self.rmse_col] = Value.missing;
+            for (point.vif, 0..) |v, j| row[self.parameterColumn(model, j + 1)] = .{ .num = v };
+            row[self.source_to_output[model.dependent].?] = .{ .num = -1 };
+            try self.ds.appendRow(row);
+        }
+        const row = try self.baseRow(a, model, by_row, fit);
+        row[self.type_col] = .{ .str = "IPC" };
+        row[self.pcomit_col.?] = .{ .num = @floatFromInt(point.omitted) };
         row[self.rmse_col] = .{ .num = point.rmse };
         for (point.coefficients, 0..) |v, j| row[self.parameterColumn(model, j)] = .{ .num = v };
         row[self.source_to_output[model.dependent].?] = .{ .num = -1 };
@@ -382,4 +401,124 @@ test "STAT-COMMON-004 later BY fit failure does not publish partial OUTEST" {
     try std.testing.expect(lib.find("prior").? == prior);
     try std.testing.expectEqual(@as(usize, 3), prior.rows.items.len);
     try std.testing.expect(d.hasErrors());
+}
+
+fn ipcSample(a: A, lib: *@import("../exec.zig").Library) !void {
+    const ds = try a.create(data.Dataset);
+    ds.* = data.Dataset.init(a, "ipc_sample");
+    for ([_][]const u8{ "x", "z", "y" }) |name| _ = try ds.addColumn(name, .num);
+    const rows = [_][3]f64{ .{ -2, -1, 6 }, .{ -1, -2, 8 }, .{ 1, 2, 10 }, .{ 2, 1, 16 } };
+    for (rows) |row| try ds.appendRow(&.{ .{ .num = row[0] }, .{ .num = row[1] }, .{ .num = row[2] } });
+    try lib.put("ipc_sample", ds);
+}
+
+test "REG005 PCOMIT parser and typed OUTEST match independent eigensystem" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var lib = @import("../exec.zig").Library.init(a);
+    var d = diag.Diagnostics.init(a);
+    try ipcSample(a, &lib);
+    try execute(a, &lib, &d, "proc reg data=ipc_sample pcomit=0 to 2 by 1 outvif outest=est noprint; model y=x z; run;");
+    const ds = lib.find("est").?;
+    const names = [_][]const u8{ "_MODEL_", "_TYPE_", "_DEPVAR_", "_RIDGE_", "_PCOMIT_", "_RMSE_", "Intercept", "x", "z", "y" };
+    try std.testing.expectEqual(@as(usize, 7), ds.rows.items.len);
+    try std.testing.expectEqual(names.len, ds.columns.items.len);
+    for (names, ds.columns.items, 0..) |name, column, j| {
+        try std.testing.expectEqualStrings(name, column.name);
+        try std.testing.expectEqual(if (j < 3) @import("../pdv.zig").VarType.char else .num, column.type);
+    }
+    // X'X=[[10,8],[8,10]], normalized eigenvalues (1.8,.2). Removing
+    // the difference direction leaves beta=(10,1,1), SSE=20, residual DF=2.
+    const betas = [_][3]f64{ .{ 10, 3, -1 }, .{ 10, 1, 1 }, .{ 10, 0, 0 } };
+    const rmses = [_]f64{ 2, @sqrt(10.0), @sqrt(56.0 / 3.0) };
+    const vifs = [_]f64{ 25.0 / 9.0, 5.0 / 18.0, 0 };
+    for (0..7) |i| {
+        try std.testing.expectEqualStrings("MODEL1", text(ds, i, "_MODEL_"));
+        try std.testing.expectEqualStrings("y", text(ds, i, "_DEPVAR_"));
+        try close(-1, number(ds, i, "y"));
+        try std.testing.expect(std.math.isNan(number(ds, i, "_RIDGE_")));
+    }
+    try std.testing.expectEqualStrings("PARMS", text(ds, 0, "_TYPE_"));
+    try std.testing.expect(std.math.isNan(number(ds, 0, "_PCOMIT_")));
+    for (betas[0], [_][]const u8{ "Intercept", "x", "z" }) |want, name| try close(want, number(ds, 0, name));
+    for (0..3) |i| {
+        const vrow = 1 + 2 * i;
+        const brow = vrow + 1;
+        try std.testing.expectEqualStrings("IPCVIF", text(ds, vrow, "_TYPE_"));
+        try std.testing.expectEqualStrings("IPC", text(ds, brow, "_TYPE_"));
+        try close(@floatFromInt(i), number(ds, vrow, "_PCOMIT_"));
+        try close(@floatFromInt(i), number(ds, brow, "_PCOMIT_"));
+        try std.testing.expect(std.math.isNan(number(ds, vrow, "Intercept")));
+        try std.testing.expect(std.math.isNan(number(ds, vrow, "_RMSE_")));
+        for ([_][]const u8{ "x", "z" }) |name| try close(vifs[i], number(ds, vrow, name));
+        for (betas[i], [_][]const u8{ "Intercept", "x", "z" }) |want, name| try close(want, number(ds, brow, name));
+        try close(rmses[i], number(ds, brow, "_RMSE_"));
+    }
+    try std.testing.expect(!d.hasErrors());
+    try execute(a, &lib, &d, "proc reg data=ipc_sample pcomit=1 outest=single noprint; model y=x z; run;");
+    const single = lib.find("single").?;
+    try std.testing.expectEqual(@as(usize, 2), single.rows.items.len);
+    try std.testing.expectEqualStrings("IPC", text(single, 1, "_TYPE_"));
+}
+
+test "REG005 PCOMIT invalid counts and unsupported combinations report captured diagnostics" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var lib = @import("../exec.zig").Library.init(a);
+    try ipcSample(a, &lib);
+    for ([_][]const u8{
+        "proc reg data=ipc_sample pcomit=.5 outest=bad noprint; model y=x z; run;",
+        "proc reg data=ipc_sample pcomit=-1 outest=bad noprint; model y=x z; run;",
+        "proc reg data=ipc_sample pcomit=0 to 2 by 0 outest=bad noprint; model y=x z; run;",
+    }) |source| {
+        var d = diag.Diagnostics.init(a);
+        diag.resetGap();
+        defer diag.resetGap();
+        try std.testing.expectError(error.ParseError, execute(a, &lib, &d, source));
+        try std.testing.expect(d.hasErrors());
+        try std.testing.expectEqual(@as(u8, 1), diag.exitCode(diag.gapHit(), d.hasErrors()));
+        try std.testing.expect(lib.find("bad") == null);
+    }
+    for ([_][]const u8{
+        "proc reg data=ipc_sample pcomit=3 outest=bad noprint; model y=x z; run;",
+        "proc reg data=ipc_sample pcomit=1 ridge=.1 outest=bad noprint; model y=x z; run;",
+        "proc reg data=ipc_sample pcomit=1 covout outest=bad noprint; model y=x z; run;",
+        "proc reg data=ipc_sample pcomit=1 outest=bad noprint; model y=x z / noint; run;",
+    }) |source| {
+        var d = diag.Diagnostics.init(a);
+        diag.resetGap();
+        defer diag.resetGap();
+        try std.testing.expectError(error.ParseError, execute(a, &lib, &d, source));
+        try std.testing.expect(d.hasErrors());
+        try std.testing.expectEqual(@as(u8, 2), diag.exitCode(diag.gapHit(), d.hasErrors()));
+        try std.testing.expect(lib.find("bad") == null);
+    }
+}
+
+test "REG005 repeated-eigenvalue IPC gap preserves existing OUTEST and severity" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var lib = @import("../exec.zig").Library.init(a);
+    var d = diag.Diagnostics.init(a);
+    try ipcSample(a, &lib);
+    const input = lib.find("ipc_sample").?;
+    const x = [_]f64{ -1, -1, 1, 1 };
+    const z = [_]f64{ -1, 1, -1, 1 };
+    for (input.rows.items, 0..) |old, i| {
+        const row = try a.dupe(Value, old);
+        input.rows.items[i] = row;
+        row[0] = .{ .num = x[i] };
+        row[1] = .{ .num = z[i] };
+    }
+    const prior = try sample(a, &lib, "prior", 1, 1);
+    diag.resetGap();
+    defer diag.resetGap();
+    try std.testing.expectError(error.ParseError, execute(a, &lib, &d, "proc reg data=ipc_sample pcomit=1 outest=prior noprint; model y=x z; run;"));
+    try std.testing.expect(d.hasErrors());
+    try std.testing.expectEqual(@as(u8, 2), diag.exitCode(diag.gapHit(), d.hasErrors()));
+    try std.testing.expect(lib.find("prior").? == prior);
+    try std.testing.expect(std.mem.indexOf(u8, d.list.items[d.list.items.len - 1].message, "repeated eigenvalue") != null);
 }

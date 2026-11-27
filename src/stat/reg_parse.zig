@@ -37,6 +37,7 @@ pub const Spec = struct {
     covout: bool = false,
     output_variables: []const usize = &.{},
     ridge: []const f64 = &.{},
+    pcomit: []const f64 = &.{},
     outvif: bool = false,
     ridge_plots: ridge_parse.Plots = .{},
 };
@@ -84,6 +85,7 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
     var outest: ?[]const u8 = null;
     var covout = false;
     var ridge: []const f64 = &.{};
+    var pcomit: []const f64 = &.{};
     var outvif = false;
     var ridge_plots: ridge_parse.Plots = .{};
     while (i < t.len and !at(t, i, .semicolon) and !at(t, i, .eof)) {
@@ -127,6 +129,10 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
         } else if (kw(t, i, "ridge")) {
             if (ridge.len > 0) return proc.failGap(cx.diags, t[i].line, "PROC REG: repeated RIDGE declarations are not implemented", .{});
             ridge = try ridge_parse.constants(cx, t, &i);
+        } else if (kw(t, i, "pcomit")) {
+            if (pcomit.len > 0) return proc.failGap(cx.diags, t[i].line, "PROC REG: repeated PCOMIT declarations are not implemented", .{});
+            pcomit = try ridge_parse.constantsFor(cx, t, &i, "PCOMIT");
+            for (pcomit) |m| if (m != @trunc(m)) return cx.diags.fail(error.ParseError, 0, "PROC REG PCOMIT requires nonnegative integers", .{});
         } else if (kw(t, i, "outvif")) {
             outvif = true;
             i += 1;
@@ -170,8 +176,10 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
     };
     ridge_plots.disabled = plots_none;
     if (ridge.len > 0 and outest == null) return cx.diags.fail(error.ParseError, 0, "PROC REG RIDGE requires OUTEST=", .{});
-    if (ridge.len == 0 and (outvif or ridge_plots.requested)) return cx.diags.fail(error.ParseError, 0, "PROC REG: OUTVIF and ridge plots require RIDGE=", .{});
+    if (ridge.len == 0 and ((pcomit.len == 0 and outvif) or ridge_plots.requested)) return cx.diags.fail(error.ParseError, 0, "PROC REG: OUTVIF and ridge plots require RIDGE=", .{});
     if (ridge.len > 0 and covout) return proc.failGap(cx.diags, 0, "PROC REG: COVOUT with RIDGE is not implemented", .{});
+    if (pcomit.len > 0 and outest == null) return proc.failGap(cx.diags, 0, "PROC REG: PCOMIT without OUTEST is not implemented", .{});
+    if (pcomit.len > 0 and (ridge.len > 0 or covout)) return proc.failGap(cx.diags, 0, "PROC REG: PCOMIT combined with RIDGE or COVOUT is not implemented", .{});
     const raw = (if (name) |n| cx.lib.find(n) else proc.lastDataset(cx.lib)) orelse return cx.diags.fail(error.ExecError, 0, "File {s} does not exist.", .{name orelse "_LAST_"});
     // PROC input option filtering expects DATA= followed by one name token.
     // Native dispatch folds declared librefs, but built-in SASHELP and direct
@@ -279,8 +287,12 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
     if (ridge.len > 0) for (models.items) |*model| {
         model.intercept = true;
     }; // documented: RIDGE ignores NOINT
+    if (pcomit.len > 0) for (models.items) |model| {
+        if (!model.intercept) return proc.failGap(cx.diags, 0, "PROC REG: PCOMIT with NOINT is not implemented", .{});
+        for (pcomit) |m| if (m > @as(f64, @floatFromInt(model.regressors.len))) return proc.failGap(cx.diags, 0, "PROC REG: PCOMIT exceeding the predictor count is not implemented", .{});
+    };
     const by = try by_statements.resolve(cx.arena, ds, cx.diags);
     const bcols = try cx.arena.alloc(usize, by.names.len);
     for (by.names, 0..) |n, j| bcols[j] = ds.indexOf(n).?;
-    return .{ .ds = ds, .models = models.items, .required = required.items, .by = bcols, .descending = by.desc, .notsorted = by.notsorted, .freq = freq, .weight = weight, .ids = ids, .noprint = noprint, .outest = outest, .covout = covout, .output_variables = output_variables.items, .ridge = ridge, .outvif = outvif, .ridge_plots = ridge_plots };
+    return .{ .ds = ds, .models = models.items, .required = required.items, .by = bcols, .descending = by.desc, .notsorted = by.notsorted, .freq = freq, .weight = weight, .ids = ids, .noprint = noprint, .outest = outest, .covout = covout, .output_variables = output_variables.items, .ridge = ridge, .pcomit = pcomit, .outvif = outvif, .ridge_plots = ridge_plots };
 }

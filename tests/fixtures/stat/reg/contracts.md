@@ -134,5 +134,47 @@ counts, series counts and residual-point counts. For every point it independentl
 reevaluates source-row residuals and checks SSE and RMSE²=SSE/(16-6). The 1e-10
 relative cross-check budgets cancellation when recovering residuals from raw
 temperature and temperature-squared coefficients; it is not a tolerance on a
-SAS expected listing. Five-graph visual equivalence, a complete independent
-acetylene ridge-path solution and IPC are not asserted by these checks.
+SAS expected listing. The additional whole-path test parses the public decimal inputs as f128,
+constructs C=Z'Z and r=Z'yc, and solves each of the 11 systems independently by
+pivoted Gauss-Jordan elimination. It checks every coefficient, standardized
+coefficient, VIF=diag(G C G), SSE and RMSE, where G=(C+kI)^-1.
+
+Let e=gamma(8np+16p²+32), n=16, p=5. The binary64 accuracy contract budgets
+centering/scaling, factorization/crossproducts and final conversions. Unit-norm
+columns give elementwise perturbation allowances |dC|<=e and |dr|<=e||yc||₂.
+Set h=p e ||G||inf < 1. Each inverse-entry budget is
+
+```
+dG_ij = sum_lm |G_il| e |G_mj| / (1-h)
+dg_j = sum_l |G_jl| e (||yc||₂+sum_m |g_m|) / (1-h)
+```
+
+Coefficient bounds rescale dg by predictor scales and propagate centering into
+the intercept. VIF bounds propagate dG, e, dG through the product G C G.
+Residual evaluation propagates every coefficient bound; SSE uses
+sum(2 |residual| prediction_bound + prediction_bound²) plus accumulation error.
+RMSE uses the square-root difference identity. These are independently specified
+accuracy budgets, not a universal forward-error theorem for every QR problem.
+The executable derivation does not measure production discrepancies. It includes
+out-of-bound scalar corruption checks. The source has no randomized inputs.
+
+## Incomplete principal components
+
+SAS/STAT 15.4 physical pp.8562 and 8648–8649 specifies omission of the m smallest
+eigenvalues of the centered, scaled predictor crossproduct matrix. For retained
+eigenvectors V and eigenvalues L, coefficients on standardized columns are
+V L^-1 V' Z'yc; variance inflation factors are diag(V L^-1 V'). Coefficients
+are rescaled to original predictor units and the intercept restores the means.
+Residual mean square uses the retained submodel residual degrees of freedom.
+
+The permanent IPC tests use four rows X=[(-2,-1),(-1,-2),(1,2),(2,1)] and
+y=(6,8,10,16). Here X'X=[[10,8],[8,10]], the normalized eigenvalues are
+1.8 and .2 with eigenvectors (1,1)/sqrt(2) and (1,-1)/sqrt(2).
+The full beta=(10,3,-1), SSE=4. Omitting the smaller eigenvalue gives
+beta=(10,1,1), SSE=20 and residual DF=2; omitting both gives the sample mean,
+SSE=56 and residual DF=3. VIFs are respectively 25/9, 5/18 and zero.
+The numerical and typed OUTEST tests derive their expected values from these
+identities, and test parser/diagnostic boundaries through the captured reporter.
+A cut inside a repeated eigenspace has no unique retained subspace; the current
+producer reports a visible implementation gap instead of choosing an arbitrary
+basis. Ordinary zero-omission and omit-all endpoints do not need a cut choice.

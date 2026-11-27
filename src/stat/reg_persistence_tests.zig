@@ -575,3 +575,152 @@ test "REG005 persistence original ridge OUTEST rows and five graph data objects"
     try std.testing.expectEqual(@as(usize, 80), std.mem.count(u8, graphics.prepared.items[2].bytes, "<circle data-x="));
     for (graphics.prepared.items[3..]) |graph| try std.testing.expectEqual(@as(usize, 5), std.mem.count(u8, graph.bytes, "<polyline data-series="));
 }
+
+// Independent f128 normal-equation reference, not the production augmented QR.
+// Inputs are parsed as decimal f128 from the durable public example; it never
+// reads the temporary reference tree. The precision budgets below are functions
+// of source dimensions, crossproducts and conditioning, not observed errors.
+fn inverse5(input: [5][5]f128) [5][5]f128 {
+    var matrix = input;
+    var inv = [_][5]f128{.{0} ** 5} ** 5;
+    for (0..5) |i| inv[i][i] = 1;
+    for (0..5) |j| {
+        var pivot = j;
+        for (j + 1..5) |i| if (@abs(matrix[i][j]) > @abs(matrix[pivot][j])) {
+            pivot = i;
+        };
+        std.mem.swap([5]f128, &matrix[j], &matrix[pivot]);
+        std.mem.swap([5]f128, &inv[j], &inv[pivot]);
+        const scale = matrix[j][j];
+        for (0..5) |k| {
+            matrix[j][k] /= scale;
+            inv[j][k] /= scale;
+        }
+        for (0..5) |i| {
+            if (i == j) continue;
+            const factor = matrix[i][j];
+            for (0..5) |k| {
+                matrix[i][k] -= factor * matrix[j][k];
+                inv[i][k] -= factor * inv[j][k];
+            }
+        }
+    }
+    return inv;
+}
+
+fn bounded(reference: f128, actual: f64, bound: f128) !void {
+    try std.testing.expect(std.math.isFinite(actual) and std.math.isFinite(bound) and bound >= 0);
+    try std.testing.expect(@abs(reference - actual) <= bound);
+    // A corruption larger than this independently derived accuracy budget must
+    // be rejected, even where a broad fixed relative tolerance would pass.
+    try std.testing.expect(@abs(reference - (reference + 4 * bound)) > bound);
+}
+
+test "REG005 entire acetylene ridge path independent normal equations and VIF covariance" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const values = try tokenize(a, try datalines(try read(a, "tests/fixtures/stat/reg/ridge_original.sas")));
+    var x: [16][5]f128 = undefined;
+    var y: [16]f128 = undefined;
+    var means = [_]f128{0} ** 5;
+    var ym: f128 = 0;
+    var xf: [80]f64 = undefined;
+    var yf: [16]f64 = undefined;
+    for (0..16) |i| {
+        for (0..3) |j| x[i][j] = try std.fmt.parseFloat(f128, values[4 * i + j]);
+        y[i] = try std.fmt.parseFloat(f128, values[4 * i + 3]);
+        x[i][3] = x[i][0] * x[i][1];
+        x[i][4] = x[i][0] * x[i][0];
+        for (0..5) |j| {
+            means[j] += x[i][j] / 16;
+            xf[i * 5 + j] = @floatCast(x[i][j]);
+        }
+        ym += y[i] / 16;
+        yf[i] = @floatCast(y[i]);
+    }
+    var scales = [_]f128{0} ** 5;
+    var yss: f128 = 0;
+    for (x, y) |row, value| {
+        for (0..5) |j| scales[j] += (row[j] - means[j]) * (row[j] - means[j]);
+        yss += (value - ym) * (value - ym);
+    }
+    for (&scales) |*v| v.* = @sqrt(v.*);
+    const ys = @sqrt(yss);
+    var c = [_][5]f128{.{0} ** 5} ** 5;
+    var rhs = [_]f128{0} ** 5;
+    for (x, y) |row, value| for (0..5) |j| {
+        const zj = (row[j] - means[j]) / scales[j];
+        rhs[j] += zj * (value - ym);
+        for (0..5) |k| c[j][k] += zj * ((row[k] - means[k]) / scales[k]);
+    };
+    var constants: [11]f64 = undefined;
+    for (&constants, 0..) |*k, i| k.* = @as(f64, @floatFromInt(i)) / 500;
+    const actual = try @import("reg_ridge.zig").compute(a, &xf, &yf, 5, null, &constants, 10);
+    // Binary64 acceptance contract: N accounts for centering/scaling (8np),
+    // factorization/crossproducts (16p²), and final conversions (32).
+    // Allow elementwise |dC|<=e (unit-norm columns), |dRHS|<=e*||yc||₂.
+    // Inverse perturbations propagate through |G|, retaining conditioning.
+    const e = gamma(8 * 16 * 5 + 16 * 5 * 5 + 32);
+    for (actual.points, 0..) |point, index| {
+        var matrix = c;
+        const k = @as(f128, @floatFromInt(index)) / 500;
+        for (0..5) |j| matrix[j][j] += k;
+        const inv = inverse5(matrix);
+        var max_row: f128 = 0;
+        for (inv) |row| {
+            var norm: f128 = 0;
+            for (row) |v| norm += @abs(v);
+            max_row = @max(max_row, norm);
+        }
+        const contraction = 5 * e * max_row;
+        try std.testing.expect(contraction < 1);
+        var g = [_]f128{0} ** 5;
+        var beta: [6]f128 = undefined;
+        var budget: [6]f128 = undefined;
+        var dg = [_][5]f128{.{0} ** 5} ** 5;
+        for (0..5) |j| for (0..5) |l| {
+            g[j] += inv[j][l] * rhs[l];
+            for (0..5) |m| for (0..5) |q| {
+                dg[j][l] += @abs(inv[j][m]) * e * @abs(inv[q][l]) / (1 - contraction);
+            };
+        };
+        var g_abs: f128 = 0;
+        for (g) |v| g_abs += @abs(v);
+        beta[0] = ym;
+        budget[0] = e * @abs(ym);
+        for (0..5) |j| {
+            beta[j + 1] = g[j] / scales[j];
+            var gamma_budget: f128 = 0;
+            for (0..5) |l| gamma_budget += @abs(inv[j][l]) * e * (ys + g_abs) / (1 - contraction);
+            budget[j + 1] = gamma_budget / scales[j] + e * @abs(beta[j + 1]);
+            beta[0] -= means[j] * beta[j + 1];
+            budget[0] += @abs(means[j]) * budget[j + 1] + e * @abs(means[j] * beta[j + 1]);
+            try bounded(g[j] / ys, point.standardized[j], gamma_budget / ys + e * @abs(g[j] / ys));
+            var variance: f128 = 0;
+            var variance_budget: f128 = 0;
+            for (0..5) |l| for (0..5) |m| {
+                variance += inv[j][l] * c[l][m] * inv[m][j];
+                variance_budget += (@abs(inv[j][l]) + dg[j][l]) * (@abs(c[l][m]) + e) * (@abs(inv[m][j]) + dg[m][j]) - @abs(inv[j][l] * c[l][m] * inv[m][j]);
+            };
+            try bounded(variance, point.vif[j], variance_budget + e * @abs(variance));
+        }
+        for (beta, budget, point.coefficients) |want, tolerance, got| try bounded(want, got, tolerance);
+        var sse: f128 = 0;
+        var sse_budget: f128 = 0;
+        for (x, y) |row, value| {
+            var residual = value - beta[0];
+            var prediction_budget = budget[0] + e * (@abs(value) + @abs(beta[0]));
+            for (0..5) |j| {
+                residual -= row[j] * beta[j + 1];
+                prediction_budget += @abs(row[j]) * budget[j + 1] + e * @abs(row[j] * beta[j + 1]);
+            }
+            sse += residual * residual;
+            sse_budget += 2 * @abs(residual) * prediction_budget + prediction_budget * prediction_budget;
+        }
+        sse_budget += e * sse;
+        try bounded(sse, point.sse, sse_budget);
+        const rmse = @sqrt(sse / 10);
+        try bounded(rmse, point.rmse, sse_budget / (10 * (rmse + @sqrt((sse - sse_budget) / 10))) + e * rmse);
+    }
+}

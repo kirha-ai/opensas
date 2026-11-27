@@ -9,30 +9,33 @@ fn at(t: []const lex.Token, i: usize, tag: lex.Tag) bool {
 fn kw(t: []const lex.Token, i: usize, s: []const u8) bool {
     return at(t, i, .name) and std.ascii.eqlIgnoreCase(t[i].text, s);
 }
-fn number(cx: proc.ProcCtx, t: []const lex.Token, i: *usize) diag.Error!f64 {
-    if (!at(t, i.*, .number)) return cx.diags.fail(error.ParseError, if (i.* < t.len) t[i.*].line else 0, "PROC REG RIDGE: expected a nonnegative number", .{});
+fn number(cx: proc.ProcCtx, t: []const lex.Token, i: *usize, option: []const u8) diag.Error!f64 {
+    if (!at(t, i.*, .number)) return cx.diags.fail(error.ParseError, if (i.* < t.len) t[i.*].line else 0, "PROC REG {s}: expected a nonnegative number", .{option});
     const v = std.fmt.parseFloat(f64, t[i.*].text) catch return error.ParseError;
     i.* += 1;
-    if (!std.math.isFinite(v) or v < 0) return cx.diags.fail(error.ParseError, t[i.* - 1].line, "PROC REG RIDGE: invalid constant", .{});
+    if (!std.math.isFinite(v) or v < 0) return cx.diags.fail(error.ParseError, t[i.* - 1].line, "PROC REG {s}: invalid constant", .{option});
     return v;
 }
 pub fn constants(cx: proc.ProcCtx, t: []const lex.Token, i: *usize) diag.Error![]const f64 {
-    if (!at(t, i.* + 1, .eq)) return cx.diags.fail(error.ParseError, t[i.*].line, "PROC REG RIDGE requires =", .{});
+    return constantsFor(cx, t, i, "RIDGE");
+}
+pub fn constantsFor(cx: proc.ProcCtx, t: []const lex.Token, i: *usize, option: []const u8) diag.Error![]const f64 {
+    if (!at(t, i.* + 1, .eq)) return cx.diags.fail(error.ParseError, t[i.*].line, "PROC REG {s} requires =", .{option});
     i.* += 2;
     var values: std.ArrayList(f64) = .empty;
     while (true) {
-        const start = try number(cx, t, i);
+        const start = try number(cx, t, i, option);
         if (kw(t, i.*, "to")) {
             i.* += 1;
-            const end = try number(cx, t, i);
+            const end = try number(cx, t, i, option);
             var step: f64 = 1;
             if (kw(t, i.*, "by")) {
                 i.* += 1;
-                step = try number(cx, t, i);
+                step = try number(cx, t, i, option);
             }
-            if (!(step > 0) or end < start) return cx.diags.fail(error.ParseError, t[i.* - 1].line, "PROC REG RIDGE: expected an ascending range with positive increment", .{});
+            if (!(step > 0) or end < start) return cx.diags.fail(error.ParseError, t[i.* - 1].line, "PROC REG {s}: expected an ascending range with positive increment", .{option});
             const ratio = (end - start) / step;
-            if (!std.math.isFinite(ratio) or ratio > 100000) return proc.failGap(cx.diags, 0, "PROC REG: RIDGE paths above 100001 points are not implemented", .{});
+            if (!std.math.isFinite(ratio) or ratio > 100000) return proc.failGap(cx.diags, 0, "PROC REG: {s} paths above 100001 points are not implemented", .{option});
             const count: usize = @intFromFloat(@floor(std.math.nextAfter(f64, ratio, std.math.inf(f64))) + 1);
             for (0..count) |j| try values.append(cx.arena, start + @as(f64, @floatFromInt(j)) * step);
         } else try values.append(cx.arena, start);
