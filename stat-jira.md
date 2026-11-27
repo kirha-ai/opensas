@@ -26,6 +26,10 @@ Current counts: **48 DONE,19 PARK,7 DOING,1348 TODO**. All temporary reference f
 
 At exact c78ef7c6ca2b0b65ecf00e697687e906a887fc63, oracle-absent gate direct1:1989/1990unit,2361/2361corpus,11/11programs. Single failure is old REG parser-test substring `not implemented` after STEPWISE gained a real NOPRINT/OUTEST path; current explicit unsupported-listing diagnostic has changed. Repair378ce9bc retains all six invalid-syntax assertions, resets the gap flag before the supported-method/unsupported-listing path, and checks the exact captured message plus D-009 rc2. Targeted actual regression8/8 direct0; full rerun pending. Repair worktree `/Users/thomas/kirha/opensas-reg-gate-repair`, branch `codex/stat-reg-gate-repair`, created from c78ef7c6; ongoing REG009 source/evidence untouched. Supplemental not claimed for failedrun; oracle restored. Batchnotpushed.
 
+### Rolling assignments — LOGISTIC fit diagnostics and MIXED contrasts
+
+FrozenROC012/TYPE3partialsthrough `8c8cea7a` are integrated andawaitfinalbatchchecks; nofeatureclockextended. dev4owns existing STAT-LOGISTIC-008 in `codex/stat-b4-logistic008-dev4`; dev7owns existing STAT-MIXED-009 in `codex/stat-b4-mixed-contrasts-dev7`, retainedworktrees. Assigned 2026-11-27T16:01:28+00:00; deadline 2026-11-27T16:46:28+00:00. Diagnosticconsumersreuseactualbinaryfit/probability/weights; contrastsreuseactualfullcodedX/GLSβ/covariance/estimability and explicitdfmetadata. Partialprerequisitesremainopen, neverstubs. Coordinate mixed_fit/entry withPARMSdev3 andREPEATEDdev5 beforeanysharededits.
+
 ### Rolling assignments — MIXED PARMS and REPEATED
 
 ActualREMLentry through `496c8189` nowreplays completefixed/random326-token andBY478-token originals atCLIrc0,withrealoptimizerhistory. Finalcombinedgate/supplemental/absence/pushpending, so002is coordinatoracceptancequeued and006retainsPARKforremainingtypes/options. Itsfeatureworkfrozebeforeoriginal15:42deadline; rebase/testingwereintegrationqueue,notextension.
@@ -8466,7 +8470,7 @@ Source: S154, Chapter 79, `The LOGISTIC Procedure`, PDF pp. 5823–6080. Tasks i
 
 <a id="stat-logistic-008"></a>
 
-### [TODO] STAT-LOGISTIC-008 — LOGISTIC — Classification Table / Goodness-of-Fit Tests / Overdispersion
+### [DOING @dev4] STAT-LOGISTIC-008 — LOGISTIC — Classification Table / Goodness-of-Fit Tests / Overdispersion
 
 - Source: S154 / Chapter 79 / `Classification Table` (PDF pp. 5926–5929); S154 / Chapter 79 / `Goodness-of-Fit Tests` (PDF pp. 5929–5932); S154 / Chapter 79 / `Overdispersion` (PDF pp. 5932–5934).
 - Scope: Implement Classification Table; Goodness-of-Fit Tests; Overdispersion. This ticket owns the feature's options, defaults, computation, and results as an extension of the basic computational path; the chapter's output tickets handle ODS descriptors and file presentation.
@@ -9368,7 +9372,7 @@ Source: S154, Chapter 84, `The MIXED Procedure`, PDF pp. 6613–6810. Tasks in t
 
 <a id="stat-mixed-009"></a>
 
-### [TODO] STAT-MIXED-009 — MIXED — CONTRAST / ESTIMATE
+### [DOING @dev7] STAT-MIXED-009 — MIXED — CONTRAST / ESTIMATE
 
 - Source: S154 / Chapter 84 / `CONTRAST Statement` (PDF pp. 6640–6643); S154 / Chapter 84 / `ESTIMATE Statement` (PDF pp. 6643–6645).
 - Scope: Implement CONTRAST; ESTIMATE. This ticket owns the feature's options, defaults, computation, and results as an extension of the basic computational path; the chapter's output tickets handle ODS descriptors and file presentation.
