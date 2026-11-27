@@ -222,9 +222,26 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
             s.model.response = try variable(cx, s.input.ds, t[0..end], &j);
             if (at(t, j, .lparen)) {
                 j += 1;
-                if (!kw(t, j, "event") or !at(t, j + 1, .eq)) return unsupported(cx, t[j]);
-                j += 2;
-                s.model.event = try reference(cx, t[0..end], &j);
+                while (j < end and !at(t, j, .rparen)) {
+                    const option = t[j];
+                    if (kw(t, j, "descending") or kw(t, j, "desc")) {
+                        s.model.response_descending = true;
+                        j += 1;
+                        continue;
+                    }
+                    if (!at(t, j + 1, .eq)) return invalid(cx, t, j);
+                    j += 2;
+                    if (eq(option.text, "event")) {
+                        s.model.event = try reference(cx, t[0..end], &j);
+                    } else if (eq(option.text, "ref") or eq(option.text, "reference")) {
+                        s.model.response_reference = try reference(cx, t[0..end], &j);
+                    } else if (eq(option.text, "order")) {
+                        if (kw(t, j, "data")) s.model.response_order = .data else if (kw(t, j, "formatted")) s.model.response_order = .formatted else if (kw(t, j, "freq")) s.model.response_order = .freq else if (kw(t, j, "internal")) s.model.response_order = .internal else return invalid(cx, t, j);
+                        j += 1;
+                    } else return unsupported(cx, option);
+                }
+                if (s.model.event != null and s.model.response_reference != null)
+                    return proc.failGap(cx.diags, t[j - 1].line, "PROC LOGISTIC: combined EVENT and REF options are not implemented", .{});
                 if (!at(t, j, .rparen)) return invalid(cx, t, j);
                 j += 1;
             }
@@ -693,4 +710,154 @@ test "persistence LOGISTIC original grouped information independently verifies e
     };
     try t.expectEqual(@as(usize, 4), n);
     try t.expectEqualStrings("", try d.render());
+}
+
+// S154 physical pp.5870–5871 and5905–5906. With an intercept-only
+// binomial sample, beta=log(nevent/nother), Var(beta)=1/nevent+1/nother.
+// These closed forms (not a captured OpenSAS listing) establish the ordering
+// and fit contract, including the complete response profile and row mapping.
+test "LOGISTIC004 response ordering and reference options preserve analytic binary fit" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var ds = Dataset.init(a, "ordered");
+    _ = try ds.addColumn("y", .num);
+    _ = try ds.addColumn("f", .num);
+    try ds.appendRow(&.{ .{ .num = 10 }, .{ .num = 2 } });
+    try ds.appendRow(&.{ .{ .num = 2 }, .{ .num = 8 } });
+    try ds.appendRow(&.{ .{ .num = 99 }, .{ .num = 0 } });
+    try ds.appendRow(&.{ @import("../value.zig").Value.missing, .{ .num = 20 } });
+    var lib = @import("../exec.zig").Library.init(a);
+    try lib.put("ordered", &ds);
+    var d = diag.Diagnostics.init(a);
+    const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &d };
+    const Case = struct { options: []const u8, first: f64, event: f64 };
+    const cases = [_]Case{
+        .{ .options = "", .first = 2, .event = 2 },
+        .{ .options = "order=formatted", .first = 2, .event = 2 },
+        .{ .options = "order=internal", .first = 2, .event = 2 },
+        .{ .options = "order=data", .first = 10, .event = 10 },
+        .{ .options = "order=freq", .first = 2, .event = 2 },
+        .{ .options = "descending", .first = 10, .event = 10 },
+        .{ .options = "order=data desc", .first = 2, .event = 2 },
+        .{ .options = "desc order=freq", .first = 10, .event = 10 },
+        .{ .options = "order=data event=last", .first = 10, .event = 2 },
+        .{ .options = "order=data event=first", .first = 10, .event = 10 },
+        .{ .options = "desc event='2'", .first = 10, .event = 2 },
+        .{ .options = "reference='2'", .first = 2, .event = 10 },
+        .{ .options = "ref=first", .first = 2, .event = 10 },
+        .{ .options = "ref=last", .first = 2, .event = 2 },
+        .{ .options = "order=data desc ref=last", .first = 2, .event = 2 },
+    };
+    for (cases) |c| {
+        const response_options = if (c.options.len == 0) "" else try std.fmt.allocPrint(a, "({s})", .{c.options});
+        const source = try std.fmt.allocPrint(a, "proc logistic data=ordered; freq f; model y{s}=; run;", .{response_options});
+        const spec = try parse(cx, try lex.tokenize(a, source, &d));
+        const result = try analyze(cx, spec);
+        const profile = result.design.response;
+        try std.testing.expectEqual(@as(usize, 2), profile.levels.len);
+        try std.testing.expectEqual(c.first, profile.levels[0].value.num);
+        try std.testing.expectEqual(@as(f64, 12) - c.first, profile.levels[1].value.num);
+        try std.testing.expectEqual(c.event, profile.levels[result.design.event_index].value.num);
+        for (profile.levels) |level| try std.testing.expectEqual(if (level.value.num == 2) @as(f64, 8) else @as(f64, 2), level.frequency);
+        try std.testing.expectEqualSlices(usize, &.{ 0, 1 }, result.design.source_rows);
+        try std.testing.expectEqualSlices(f64, &.{ 1, 1 }, result.design.x);
+        try std.testing.expectEqualSlices(f64, if (c.event == 10) &.{ 1, 0 } else &.{ 0, 1 }, result.design.y);
+        const events: f64 = if (c.event == 2) 8 else 2;
+        // Exact intercept initialization; 1e-12 accommodates floating log/QR.
+        try std.testing.expectApproxEqAbs(@log(events / (10 - events)), result.fit.coefficients[0], 1e-12);
+        try std.testing.expectApproxEqAbs(@as(f64, 0.625), result.fit.covariance[0], 1e-12);
+        for (result.fit.probabilities) |p| try std.testing.expectApproxEqAbs(events / 10, p, 1e-12);
+        try std.testing.expectEqual(@as(usize, 4), result.counts.read);
+        try std.testing.expectEqual(@as(usize, 2), result.counts.used);
+        try std.testing.expectEqual(@as(f64, 10), result.counts.frequency_used);
+        var listing: std.ArrayList(u8) = .empty;
+        try run(cx, &listing, try lex.tokenize(a, source, &d));
+        const want = try std.fmt.allocPrint(a, "Response Profile\n\nOrdered Total\nValue y Frequency\n\n1 {d} {d}\n2 {d} {d}\n\nProbability modeled is y={d}.\n\n", .{
+            @as(i32, @intFromFloat(c.first)),      @as(i32, if (c.first == 2) 8 else 2),
+            @as(i32, @intFromFloat(12 - c.first)), @as(i32, if (c.first == 2) 2 else 8),
+            @as(i32, @intFromFloat(c.event)),
+        });
+        try std.testing.expect(std.mem.indexOf(u8, listing.items, want) != null);
+    }
+    try std.testing.expectEqualStrings("", try d.render());
+}
+
+test "LOGISTIC004 formatted response values and ordering do not fall back to raw event labels" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const entries = [_]format.UserFmtEntry{ .{ .lo = 0, .hi = 0, .label = "nonevent" }, .{ .lo = 1, .hi = 1, .label = "event" } };
+    const formats = [_]format.UserFmt{.{ .name = "logistic004", .is_char = false, .entries = &entries }};
+    const previous = format.userFormats();
+    format.setUserFormats(&formats);
+    defer format.setUserFormats(previous);
+    var ds = Dataset.init(a, "formatted");
+    _ = try ds.addColumn("y", .num);
+    ds.columns.items[0].format = "logistic004.";
+    for ([_]f64{ 0, 0, 0, 1 }) |value| try ds.appendRow(&.{.{ .num = value }});
+    var lib = @import("../exec.zig").Library.init(a);
+    try lib.put("formatted", &ds);
+    var d = diag.Diagnostics.init(a);
+    const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &d };
+    for ([_][]const u8{ "", "event='event'", "ref='nonevent'", "order=internal desc" }) |options| {
+        const response_options = if (options.len == 0) "" else try std.fmt.allocPrint(a, "({s})", .{options});
+        const source = try std.fmt.allocPrint(a, "proc logistic; model y{s}=; run;", .{response_options});
+        const spec = try parse(cx, try lex.tokenize(a, source, &d));
+        const result = try analyze(cx, spec);
+        try std.testing.expectEqualStrings("event", result.design.response.levels[result.design.event_index].label);
+        try std.testing.expectApproxEqAbs(-@log(@as(f64, 3)), result.fit.coefficients[0], 1e-12);
+    }
+    var out: std.ArrayList(u8) = .empty;
+    try std.testing.expectError(error.ParseError, run(cx, &out, try lex.tokenize(a, "proc logistic; model y(event='1')=; run;", &d)));
+    try std.testing.expectEqual(@as(usize, 0), out.items.len);
+    try std.testing.expect(std.mem.indexOf(u8, try d.render(), "EVENT/REF value is not a response level") != null);
+}
+
+test "LOGISTIC004 invalid ordering and unsupported ordinal responses stay visible" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var ds = Dataset.init(a, "ordinal");
+    _ = try ds.addColumn("y", .num);
+    for ([_]f64{ 1, 2, 3 }) |value| try ds.appendRow(&.{.{ .num = value }});
+    var lib = @import("../exec.zig").Library.init(a);
+    try lib.put("ordinal", &ds);
+    diag.resetGap();
+    defer diag.resetGap();
+    for ([_][]const u8{ "order=bogus", "event='missing' ref=first", "desc" }, [_]bool{ false, true, true }) |options, gap| {
+        var d = diag.Diagnostics.init(a);
+        var out: std.ArrayList(u8) = .empty;
+        const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &d };
+        const source = try std.fmt.allocPrint(a, "proc logistic; model y({s})=; run;", .{options});
+        diag.resetGap();
+        try std.testing.expectError(error.ParseError, run(cx, &out, try lex.tokenize(a, source, &d)));
+        try std.testing.expectEqual(@as(usize, 0), out.items.len);
+        try std.testing.expect(d.hasErrors());
+        try std.testing.expectEqual(@as(u8, if (gap) 2 else 1), diag.exitCode(diag.gapHit(), d.hasErrors()));
+    }
+}
+
+test "LOGISTIC004 character data frequency ordering and missing exclusion" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var ds = Dataset.init(a, "character");
+    _ = try ds.addColumn("y", .char);
+    _ = try ds.addColumn("f", .num);
+    for ([_][]const u8{ "yes", "no", " ", "none" }, [_]f64{ 7, 3, 50, 0 }) |value, frequency| try ds.appendRow(&.{ .{ .str = value }, .{ .num = frequency } });
+    var lib = @import("../exec.zig").Library.init(a);
+    try lib.put("character", &ds);
+    var d = diag.Diagnostics.init(a);
+    const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &d };
+    for ([_][]const u8{ "data", "freq", "internal", "formatted" }, [_][]const u8{ "yes", "yes", "no", "no" }) |order, first| {
+        const source = try std.fmt.allocPrint(a, "proc logistic; freq f; model y(order={s} ref=first)=; run;", .{order});
+        const result = try analyze(cx, try parse(cx, try lex.tokenize(a, source, &d)));
+        try std.testing.expectEqualStrings(first, result.design.response.levels[0].label);
+        try std.testing.expectEqual(@as(usize, 2), result.design.response.levels.len);
+        const events: f64 = if (std.mem.eql(u8, first, "yes")) 3 else 7;
+        try std.testing.expectApproxEqAbs(@log(events / (10 - events)), result.fit.coefficients[0], 1e-12);
+        try std.testing.expectEqual(events, result.counts.events);
+        try std.testing.expectEqualSlices(usize, &.{ 0, 1 }, result.design.source_rows);
+    }
 }

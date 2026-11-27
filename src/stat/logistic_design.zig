@@ -9,7 +9,7 @@ const proc = @import("../proc.zig");
 const A = std.mem.Allocator;
 pub const Coding = enum { reference, effect };
 pub const ClassSpec = struct { column: usize, reference: levels.Reference = .last, coding: ?Coding = null };
-pub const Spec = struct { response: usize, event: levels.Reference = .first, classes: []const ClassSpec = &.{}, effects: []const usize, terms: ?[]const []const usize = null, frequency: ?usize = null, weight: ?usize = null, coding: Coding = .effect };
+pub const Spec = struct { response: usize, event: ?levels.Reference = null, response_reference: ?levels.Reference = null, response_order: levels.Order = .formatted, response_descending: bool = false, classes: []const ClassSpec = &.{}, effects: []const usize, terms: ?[]const []const usize = null, frequency: ?usize = null, weight: ?usize = null, coding: Coding = .effect };
 pub const Class = struct { column: usize, map: levels.Levels, reference: usize, coding: Coding };
 pub const Parameter = struct { name: []const u8, level: ?[]const u8 = null };
 pub const Effect = struct { column: usize, start: usize, len: usize, class_index: ?usize = null, variables: []const usize, name: []const u8 };
@@ -75,10 +75,29 @@ pub fn build(a: A, ds: *const Dataset, s: Spec, d: *diag.Diagnostics) diag.Error
         }
     }
     if (rows.items.len == 0) return error.ExecError;
-    const response = try levels.build(a, ds, rows.items, s.response, .{ .frequencies = frequencies.items });
+    var response = try levels.build(a, ds, rows.items, s.response, .{ .frequencies = frequencies.items, .order = s.response_order });
+    // S154 physical pp.5870–5871,5905–5906: ORDER is applied before DESC;
+    // both the displayed profile and row indices must describe the same order.
+    if (s.response_descending) {
+        const reversed = try a.dupe(levels.Level, response.levels);
+        std.mem.reverse(levels.Level, reversed);
+        const remapped = try a.dupe(?usize, response.row_to_level);
+        for (remapped) |*entry| if (entry.*) |index| {
+            entry.* = reversed.len - 1 - index;
+        };
+        response.levels = reversed;
+        response.row_to_level = remapped;
+    }
     if (response.levels.len > 2) return proc.failGap(d, 0, "PROC LOGISTIC: only binary response models are implemented", .{});
     if (response.levels.len < 2) return d.fail(error.ExecError, 0, "PROC LOGISTIC: two response levels are required", .{});
-    const event_index = choose(response, s.event, ds.columns.items[s.response]) orelse return d.fail(error.ParseError, 0, "PROC LOGISTIC: EVENT value is not a response level", .{});
+    const choice = s.event orelse s.response_reference orelse levels.Reference.first;
+    // A formatted response category must be specified by its formatted value.
+    // Do not reuse CLASS's historical raw-value fallback for response options.
+    const selected = (if (ds.columns.items[s.response].format == null)
+        choose(response, choice, ds.columns.items[s.response])
+    else
+        response.reference(choice)) orelse return d.fail(error.ParseError, 0, "PROC LOGISTIC: EVENT/REF value is not a response level", .{});
+    const event_index = if (s.event == null and s.response_reference != null) 1 - selected else selected;
     const classes = try a.alloc(Class, s.classes.len);
     for (s.classes, 0..) |c, i| {
         const map = try levels.build(a, ds, rows.items, c.column, .{ .frequencies = frequencies.items });
