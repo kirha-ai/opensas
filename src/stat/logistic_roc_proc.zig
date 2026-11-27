@@ -50,6 +50,16 @@ pub fn subset(a: A, d: design.Design, terms: []const []const usize) diag.Error!d
 pub fn run(cx: proc.ProcCtx, out: *std.ArrayList(u8), s: logistic.Spec) diag.Error!void {
     const a = cx.arena;
     if (s.by_columns.len > 0 or s.model.classes.len > 0 or s.link != .logit or s.clodds != null or s.units_present or s.odds_requests.len > 0) return proc.failGap(cx.diags, 0, "PROC LOGISTIC: this combination with ROC analysis is not implemented", .{});
+    const active_graphics = !s.noprint and !s.plots_none and (s.roc_plot or s.roc_models.len > 0) and (if (cx.graphics) |g| (g.enabled == true or (g.enabled != false and g.cli_dir != null)) else false);
+    if (active_graphics) {
+        // S154 physical p.5844 gives these macro variables observable plot
+        // effects. Until supported, an override must not silently show defaults.
+        var pdv = @import("../pdv.zig").Pdv.init(a);
+        var evaluator: @import("../eval.zig").Evaluator = .{ .arena = a, .pdv = &pdv, .diags = cx.diags };
+        for ([_][]const u8{ "_ROC_ENTRY_ID", "_ROC_ENTRYTITLE", "_ROC_ENTRYTITLE2", "_ROC_XAXISOPTS_LABEL", "_ROC_YAXISOPTS_LABEL", "_ROCOVERLAY_ENTRYTITLE" }) |name| {
+            if (cx.lib.macroVar(name) != null or (try fns.dispatch(&evaluator, "symexist", &.{.{ .str = name }})).num == 1) return proc.failGap(cx.diags, 0, "PROC LOGISTIC: ROC macro graph customization {s} is not implemented", .{name});
+        }
+    }
     const base = try logistic.analyze(cx, s);
     if (s.nofit) try cx.diags.note(0, "The NOFIT option is specified. No parameters are estimated for the MODEL statement.", .{});
     if (base.design.response.levels.len != 2) return proc.failGap(cx.diags, 0, "PROC LOGISTIC: ROC analysis requires a binary response", .{});
@@ -360,5 +370,40 @@ test "LOGISTIC012 NOFIT avoids separated full fit and PRED matrix comparisons ar
         try std.testing.expectError(error.ParseError, logistic.run(context, &actual, try @import("../lexer.zig").tokenize(a, program, &errors)));
         try std.testing.expectEqual(rc, diag.exitCode(diag.gapHit(), errors.hasErrors()));
         try std.testing.expectEqual(@as(usize, 0), actual.items.len);
+    }
+}
+
+test "LOGISTIC012 macro graph overrides fail visibly only when graphs are requested" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var fixture = try originalDataset(a);
+    var lib = @import("../exec.zig").Library.init(a);
+    try lib.put("roc", &fixture.ds);
+    fns.clearLetVars();
+    defer fns.clearLetVars();
+    fns.bindLibrary(&lib);
+    defer fns.unbindLibrary();
+    try fns.setLetVar("_ROC_XAXISOPTS_LABEL", "Custom horizontal label");
+    diag.resetGap();
+    defer diag.resetGap();
+    for ([_]usize{ 0, 1, 2 }) |mode| {
+        var d = diag.Diagnostics.init(a);
+        var out: std.ArrayList(u8) = .empty;
+        var graphics: proc.native_graphics.Session = .{ .arena = a, .io = std.testing.io, .diags = &d, .enabled = mode != 2 };
+        const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &d, .graphics = &graphics };
+        const source = try std.fmt.allocPrint(a, "proc logistic data=roc plots={s}; model popind(event='0')=alb / nofit; roc 'Albumin' alb; run;", .{if (mode == 1) "none" else "roc"});
+        const tokens = try @import("../lexer.zig").tokenize(a, source, &d);
+        diag.resetGap();
+        if (mode == 0) {
+            try std.testing.expectError(error.ParseError, logistic.run(cx, &out, tokens));
+            try std.testing.expectEqual(@as(u8, 2), diag.exitCode(diag.gapHit(), d.hasErrors()));
+            try std.testing.expectEqual(@as(usize, 0), out.items.len);
+            try std.testing.expect(std.mem.indexOf(u8, try d.render(), "_ROC_XAXISOPTS_LABEL") != null);
+        } else {
+            try logistic.run(cx, &out, tokens);
+            try std.testing.expect(!d.hasErrors());
+        }
+        try std.testing.expectEqual(@as(usize, 0), graphics.prepared.items.len);
     }
 }
