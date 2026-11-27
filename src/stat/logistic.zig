@@ -20,6 +20,7 @@ const fns = @import("../functions.zig");
 const A = std.mem.Allocator;
 const eq = std.ascii.eqlIgnoreCase;
 pub const OddsRequest = odds_kernel.Request;
+pub const StratumVariable = struct { column: usize, missing: bool = false };
 pub const Spec = struct {
     input: proc.ProcInput,
     model: design.Spec,
@@ -28,6 +29,13 @@ pub const Spec = struct {
     by_columns: []const usize = &.{},
     by_desc: []const bool = &.{},
     notsorted: bool = false,
+    strata: []const StratumVariable = &.{},
+    strata_missing: bool = false,
+    strata_summary: bool = true,
+    strata_info: bool = false,
+    strata_check: bool = true,
+    link_specified: bool = false,
+    maxiter_specified: bool = false,
     odds_requests: []const OddsRequest = &.{},
     alpha: f64 = 0.05,
     plots_none: bool = false,
@@ -331,6 +339,7 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
     var odds_requests: std.ArrayList(OddsRequest) = .empty;
     var units: std.ArrayList(odds_kernel.Units) = .empty;
     var roc_models: std.ArrayList(roc.Model) = .empty;
+    var strata: std.ArrayList(StratumVariable) = .empty;
     var bys: by.Statements = .{};
     var model_seen = false;
     i += 1;
@@ -489,6 +498,7 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
                             s.scale = .constant;
                         }
                     } else if (eq(option.text, "pprob")) s.pprob = try probabilityList(cx, t[0..end], &j) else if (eq(option.text, "pevent")) s.pevent = try probabilityList(cx, t[0..end], &j) else if (eq(option.text, "link")) {
+                        s.link_specified = true;
                         if (kw(t, j, "logit")) s.link = .logit else if (kw(t, j, "probit") or kw(t, j, "normit")) s.link = .probit else if (kw(t, j, "cloglog")) s.link = .cloglog else if (kw(t, j, "alogit")) s.link = .alogit else return unsupported(cx, t[j]);
                         j += 1;
                     } else if (eq(option.text, "clodds")) {
@@ -503,6 +513,7 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
                         }
                         if (eq(option.text, "gconv")) s.fit_options.gconv = threshold else if (eq(option.text, "absfconv")) s.fit_options.absfconv = threshold else if (eq(option.text, "fconv")) s.fit_options.fconv = threshold else s.fit_options.xconv = threshold;
                     } else if (eq(option.text, "maxiter")) {
+                        s.maxiter_specified = true;
                         s.fit_options.max_iterations = try integerOption(cx, t[0..end], &j);
                         if (s.fit_options.max_iterations == 0) return proc.failGap(cx.diags, option.line, "PROC LOGISTIC: zero-iteration fitting is not implemented", .{});
                     } else if (eq(option.text, "technique") or eq(option.text, "tech")) {
@@ -513,6 +524,43 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
                         j += 1;
                     } else return unsupported(cx, option);
                 }
+            }
+        } else if (kw(t, i, "strata")) {
+            var j = i + 1;
+            var count: usize = 0;
+            while (j < end and !at(t, j, .slash)) {
+                var value: StratumVariable = .{ .column = try variable(cx, s.input.ds, t[0..end], &j) };
+                if (at(t, j, .lparen)) {
+                    if (!kw(t, j + 1, "missing") or !at(t, j + 2, .rparen)) return unsupported(cx, t[j]);
+                    value.missing = true;
+                    j += 3;
+                }
+                var duplicate = false;
+                for (strata.items) |*old| if (old.column == value.column) {
+                    old.missing = old.missing or value.missing;
+                    duplicate = true;
+                };
+                if (!duplicate) try strata.append(cx.arena, value);
+                count += 1;
+            }
+            if (count == 0) return invalid(cx, t, i);
+            if (at(t, j, .slash)) j += 1;
+            while (j < end) {
+                if (kw(t, j, "missing")) {
+                    s.strata_missing = true;
+                    j += 1;
+                } else if (kw(t, j, "nosummary")) {
+                    s.strata_summary = false;
+                    j += 1;
+                } else if (kw(t, j, "info")) {
+                    s.strata_info = true;
+                    j += 1;
+                } else if (kw(t, j, "checkdependency") or kw(t, j, "check")) {
+                    if (!at(t, j + 1, .eq)) return invalid(cx, t, j);
+                    j += 2;
+                    if (kw(t, j, "none")) s.strata_check = false else if (kw(t, j, "covariates")) s.strata_check = true else return unsupported(cx, t[j]);
+                    j += 1;
+                } else return unsupported(cx, t[j]);
             }
         } else if (kw(t, i, "by")) {
             var j = i;
@@ -694,6 +742,7 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
     s.model.terms = terms.items;
     s.odds_requests = odds_requests.items;
     s.roc_models = roc_models.items;
+    s.strata = strata.items;
     s.units = units.items;
     s.units_present = units.items.len > 0 or s.default_units.len > 0;
     const by_spec = try bys.resolve(cx.arena, s.input.ds, cx.diags);
@@ -1066,6 +1115,7 @@ fn unitTables(a: A, out: *std.ArrayList(u8), s: Spec, result: Analysis) diag.Err
 pub fn run(cx: proc.ProcCtx, out: *std.ArrayList(u8), tokens: []const lex.Token) diag.Error!void {
     const spec = try parse(cx, tokens);
     const a = cx.arena;
+    if (spec.strata.len > 0) return @import("logistic_conditional_proc.zig").run(cx, out, spec);
     if (spec.nofit or spec.roc_plot or spec.roc_models.len > 0 or spec.roc_contrast != null) return @import("logistic_roc_proc.zig").run(cx, out, spec);
     if (spec.by_columns.len > 0 and spec.model.classes.len > 0) return proc.failGap(cx.diags, 0, "PROC LOGISTIC: global CLASS levels across BY groups are not implemented", .{});
     const groups = try by.checkedSlices(a, spec.input.ds, spec.by_columns, spec.by_desc, spec.notsorted, cx.diags);
@@ -1157,6 +1207,8 @@ test {
     _ = @import("logistic_roc.zig");
     _ = @import("logistic_gof.zig");
     _ = @import("logistic_convergence_tests.zig");
+    _ = @import("logistic_conditional.zig");
+    _ = @import("logistic_conditional_tests.zig");
     _ = @import("logistic_gof_tests.zig");
     _ = @import("logistic_roc_proc.zig");
 }
