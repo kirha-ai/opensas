@@ -69,6 +69,17 @@ Current counts: **48 DONE,19 PARK,7 DOING,1348 TODO**. All temporary reference f
 
 At exact c78ef7c6ca2b0b65ecf00e697687e906a887fc63, oracle-absent gate direct1:1989/1990unit,2361/2361corpus,11/11programs. Single failure is old REG parser-test substring `not implemented` after STEPWISE gained a real NOPRINT/OUTEST path; current explicit unsupported-listing diagnostic has changed. Repair378ce9bc retains all six invalid-syntax assertions, resets the gap flag before the supported-method/unsupported-listing path, and checks the exact captured message plus D-009 rc2. Targeted actual regression8/8 direct0; full rerun pending. Repair worktree `/Users/thomas/kirha/opensas-reg-gate-repair`, branch `codex/stat-reg-gate-repair`, created from c78ef7c6; ongoing REG009 source/evidence untouched. Supplemental not claimed for failedrun; oracle restored. Batchnotpushed.
 
+### Active-time assignments — means, computational issues, influence
+
+New45-minuteattempts use the same-machine sleep-excluding clock: `/opt/homebrew/Caskroom/miniconda/base/bin/python3`, `time.monotonic()` (`mach_absolute_time()`). Verified local AppleSDK mach_time.h59–62 states continuous_time additionallyadvancesduringsleep. Active-time deadline below isauthoritative; UTCisinitialdisplayestimate. Checkthisclockbeforeevery sourceedit; nofreshclockafterhandoff. Ifcounterreset/reboot, freezeandpreserveratherthaninventelapsedtime. Previousattempts remainfrozen/queued, notextended.
+
+- dev2: STAT-GLM-013; `codex/stat-b4-glm013-dev2` in retained `opensas-dev2`; assignedUTC 2026-11-27T21:25:56+00:00; initialUTCdeadline 2026-11-27T22:10:56+00:00; activeStart=346533.472655, activeDeadline=349233.472655seconds.
+- dev3: STAT-MIXED-018; `codex/stat-b4-mixed-issues-dev3` in retained `opensas-dev3`; assignedUTC 2026-11-27T21:25:56+00:00; initialUTCdeadline 2026-11-27T22:10:56+00:00; activeStart=346533.472655, activeDeadline=349233.472655seconds.
+- dev5: STAT-MIXED-013; `codex/stat-b4-mixed-influence-dev5` in retained `opensas-dev5`; assignedUTC 2026-11-27T21:25:56+00:00; initialUTCdeadline 2026-11-27T22:10:56+00:00; activeStart=346533.472655, activeDeadline=349233.472655seconds.
+- dev7: STAT-MIXED-010; `codex/stat-b4-mixed-lsmeans-dev7` in retained `opensas-dev7`; assignedUTC 2026-11-27T21:25:56+00:00; initialUTCdeadline 2026-11-27T22:10:56+00:00; activeStart=346533.472655, activeDeadline=349233.472655seconds.
+
+Realinterfaces: MIXED018 owns numericaltermination/constraints, MIXED013 owns diagnostics using actualfit/V/BLUP data, MIXED010 owns LSmeans via actualcodedX/GLS/covariance/df; coordinate mixed_fit/entry/ODS hooks. GLM013 owns GLM-specificMEANS/LSMEANS; commonpartialcomparisons are reused onlywithin theirproveddomains. No perf/audit lane orunrelatedbenchmarks; undocumentedstatus staysneeds-oracle/gap, notsuccessfulguess.
+
 ### Rolling assignments — REG TEST, LOGISTIC convergence, NPAR exact methods
 
 FrozenCOMMON031/LOGISTIC008/NPAR010 workis integratedthrough `4b2401a7`, finalbatchchecks pending; mathematical/reference limitsremainexplicit. NPAR010 iscoordinatoracceptancequeued, notactivefeaturework.
@@ -5323,7 +5334,7 @@ Source: S154, Chapter 53, `The GLM Procedure`, PDF pp. 4043–4230. Tasks in thi
 
 <a id="stat-glm-013"></a>
 
-### [TODO] STAT-GLM-013 — GLM — LSMEANS / MEANS / Means versus LS-Means
+### [DOING @dev2] STAT-GLM-013 — GLM — LSMEANS / MEANS / Means versus LS-Means
 
 - Source: S154 / Chapter 53 / `LSMEANS Statement` (PDF pp. 4072–4081); S154 / Chapter 53 / `MEANS Statement` (PDF pp. 4086–4092); S154 / Chapter 53 / `Means versus LS-Means` (PDF pp. 4129–4131).
 - Scope: Implement LSMEANS; MEANS; Means versus LS-Means. This ticket owns the feature's options, defaults, computation, and results as an extension of the basic computational path; the chapter's output tickets handle ODS descriptors and file presentation.
@@ -9562,7 +9573,7 @@ Source: S154, Chapter 84, `The MIXED Procedure`, PDF pp. 6613–6810. Tasks in t
 
 <a id="stat-mixed-010"></a>
 
-### [TODO] STAT-MIXED-010 — MIXED — LSMEANS
+### [DOING @dev7] STAT-MIXED-010 — MIXED — LSMEANS
 
 - Source: S154 / Chapter 84 / `LSMEANS Statement` (PDF pp. 6646–6652).
 - Scope: Implement LSMEANS. This ticket owns the feature's options, defaults, computation, and results as an extension of the basic computational path; the chapter's output tickets handle ODS descriptors and file presentation.
@@ -9592,7 +9603,7 @@ Source: S154, Chapter 84, `The MIXED Procedure`, PDF pp. 6613–6810. Tasks in t
 
 <a id="stat-mixed-013"></a>
 
-### [TODO] STAT-MIXED-013 — MIXED — Residuals and Influence Diagnostics
+### [DOING @dev5] STAT-MIXED-013 — MIXED — Residuals and Influence Diagnostics
 
 - Source: S154 / Chapter 84 / `Residuals and Influence Diagnostics` (PDF pp. 6712–6720).
 - Scope: Implement Residuals and Influence Diagnostics. This ticket owns the feature's options, defaults, computation, and results as an extension of the basic computational path; the chapter's output tickets handle ODS descriptors and file presentation.
@@ -9659,7 +9670,7 @@ Source: S154, Chapter 84, `The MIXED Procedure`, PDF pp. 6613–6810. Tasks in t
 
 <a id="stat-mixed-018"></a>
 
-### [TODO] STAT-MIXED-018 — MIXED — Computational Issues
+### [DOING @dev3] STAT-MIXED-018 — MIXED — Computational Issues
 
 - Source: S154 / Chapter 84 / `Computational Issues` (PDF pp. 6734–6738).
 - Scope: Implement Computational Issues. Cover the source suboptions, defaults, and applicability restrictions; implement only this feature group, without extending to languages or runtime environments outside the cited scope.
