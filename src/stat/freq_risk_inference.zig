@@ -147,9 +147,7 @@ pub fn relativeRisk(table: risk.Table2x2, column: risk.Column, h: Hypothesis, me
         t.* = switch (method) {
             .wald, .wald_modified => if (estimate.estimate != null and estimate.log_se != null) wald(@log(estimate.estimate.?) - @log(v), estimate.log_se.?, 0) else .{},
             .score => blk: {
-                const fit = try risk.constrainedFit(table, column, .{ .relative_risk = v });
-                const samples = table.samples(column);
-                const se = @sqrt(fit.p1 * (1 - fit.p1) / samples[0].total + v * v * fit.p2 * (1 - fit.p2) / samples[1].total);
+                const se = try risk.relativeRiskStdErr(table, column, v, false);
                 break :blk fromZ(try risk.relativeRiskScore(table, column, v, false), se);
             },
             .likelihood_ratio => blk: {
@@ -299,5 +297,30 @@ test "FEAT-freq-risk SAS NI TOST full ALPHA range preserves reversed and missing
         const rzero = try relativeRisk(table, .first, h, method, 0.5);
         try near(if (method == .wald_modified) 3.3814 else 3.6000, rzero.limits.lower);
         try std.testing.expectEqual(rzero.limits.lower, rzero.limits.upper);
+    }
+}
+
+// S154 physical pp.3208,3212-3213: row exchange maps R to 1/R;
+// the constrained score obeys z_r(A,B)=-z_(1/r)(B,A), while the
+// standard error on the difference p1-r*p2 scales by r. These identities
+// supply a reference without trusting a large-r production computation.
+test "FREQ011 relative risk score preserves reciprocal rows at extreme finite nulls" {
+    const table = risk.Table2x2{ .cells = .{ 12, 8, 5, 25 } };
+    const swapped = risk.Table2x2{ .cells = .{ 5, 25, 12, 8 } };
+    for ([_]f64{ 1e200, 1e300 }) |null_value| {
+        const forward = try relativeRisk(table, .first, .{ .equality = null_value }, .score, 0.05);
+        const reverse = try relativeRisk(swapped, .first, .{ .equality = 1 / null_value }, .score, 0.05);
+        try std.testing.expect(std.math.isFinite(forward.lower.z.?));
+        try std.testing.expect(forward.lower.z.? < -1e90);
+        try std.testing.expectApproxEqRel(-reverse.lower.z.?, forward.lower.z.?, 2e-12);
+        try std.testing.expect(std.math.isFinite(forward.lower.se.?));
+        try std.testing.expectApproxEqRel(null_value * reverse.lower.se.?, forward.lower.se.?, 2e-12);
+        // As r grows, the constrained MLE p1 tends to (x1+x2)/(n1+x2)
+        // =17/25. Corrections are O(1/r), below f64 precision for this grid.
+        const asymptotic_se = @sqrt(null_value * (17.0 / 25.0) / 30);
+        try std.testing.expectApproxEqRel(asymptotic_se, forward.lower.se.?, 2e-12);
+        try std.testing.expectApproxEqRel(-null_value / (6 * asymptotic_se), forward.lower.z.?, 2e-12);
+        try std.testing.expectEqual(@as(?f64, 0), forward.p);
+        try std.testing.expectEqual(@as(?f64, 0), reverse.p);
     }
 }

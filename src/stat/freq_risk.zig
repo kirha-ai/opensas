@@ -286,16 +286,35 @@ test "FEAT-freq-risk validates finite counts and confidence levels" {
 pub const RatioKind = enum { odds_ratio, relative_risk };
 pub const RatioMethod = enum { wald, wald_modified, score, likelihood_ratio };
 pub const Ratio = struct { estimate: ?f64, log_se: ?f64, limits: Interval };
-/// Signed score for FM tests / exact unconditional RR tail ordering. The
-/// finite-sample bias factor applies to score CLs, not FM tests (pp204,209).
-pub fn relativeRiskScore(table: Table2x2, column: Column, null_value: f64, bias_correct: bool) Error!f64 {
+/// Standard error of p1-r*p2 under the constrained null. For r>1 use
+/// se_r(A,B)=r*se_(1/r)(B,A), avoiding r*r overflow before the square root.
+/// S154 physical pp.3208,3213. The reciprocal has exactly the same likelihood.
+pub fn relativeRiskStdErr(table: Table2x2, column: Column, null_value: f64, bias_correct: bool) Error!f64 {
+    if (null_value > 1 and std.math.isFinite(null_value)) {
+        const c = table.cells;
+        return null_value * try relativeRiskStdErr(.{ .cells = .{ c[2], c[3], c[0], c[1] } }, column, 1 / null_value, bias_correct);
+    }
     const fit = try constrainedFit(table, column, .{ .relative_risk = null_value });
     const s = table.samples(column);
     const n = s[0].total + s[1].total;
     const v = (fit.p1 * (1 - fit.p1) / s[0].total + square(null_value) * fit.p2 * (1 - fit.p2) / s[1].total) * (if (bias_correct) n / (n - 1) else @as(f64, 1));
+    return @sqrt(v);
+}
+/// Signed score for FM tests / exact unconditional RR tail ordering. The
+/// finite-sample bias factor applies to score CLs, not FM tests (S154 pp.3208,3213).
+pub fn relativeRiskScore(table: Table2x2, column: Column, null_value: f64, bias_correct: bool) Error!f64 {
+    // The signed score has the corresponding exact reciprocal symmetry.
+    // Evaluate it directly in the small-r orientation rather than dividing
+    // two independently large intermediate quantities.
+    if (null_value > 1 and std.math.isFinite(null_value)) {
+        const c = table.cells;
+        return -(try relativeRiskScore(.{ .cells = .{ c[2], c[3], c[0], c[1] } }, column, 1 / null_value, bias_correct));
+    }
+    const se = try relativeRiskStdErr(table, column, null_value, bias_correct);
+    const s = table.samples(column);
     const delta = s[0].proportion() - null_value * s[1].proportion();
-    if (delta == 0 and v == 0) return 0;
-    return delta / @sqrt(v);
+    if (delta == 0 and se == 0) return 0;
+    return delta / se;
 }
 pub fn ratioStatistic(table: Table2x2, column: Column, kind: RatioKind, value: f64, method: RatioMethod, bias_correct: bool) Error!f64 {
     if (method != .score and method != .likelihood_ratio) return error.ExecError;
@@ -434,5 +453,81 @@ test "FEAT-freq-risk SAS opposite boundary proportions score and LR" {
         try std.testing.expectApproxEqAbs(lower, first.limits.lower.?, 0.00005);
         try std.testing.expect(std.math.isInf(first.limits.upper.?));
         try expectLimits((try ratio(t, .second, .relative_risk, 0.05, method, true)).limits, 0, upper);
+    }
+}
+
+test "FREQ011 all asymptotic ratio intervals respect row and event reversals" {
+    const table = Table2x2{ .cells = .{ 12, 8, 5, 25 } };
+    const rows = Table2x2{ .cells = .{ 5, 25, 12, 8 } };
+    const columns = Table2x2{ .cells = .{ 8, 12, 25, 5 } };
+    for (std.enums.values(RatioMethod)) |method| {
+        for (std.enums.values(RatioKind)) |kind| {
+            const first = try ratio(table, .first, kind, 0.05, method, true);
+            const reversed = try ratio(rows, .first, kind, 0.05, method, true);
+            try std.testing.expectApproxEqRel(1 / first.estimate.?, reversed.estimate.?, 2e-13);
+            try std.testing.expectApproxEqRel(1 / first.limits.upper.?, reversed.limits.lower.?, 2e-12);
+            try std.testing.expectApproxEqRel(1 / first.limits.lower.?, reversed.limits.upper.?, 2e-12);
+            const other_event = try ratio(table, .second, kind, 0.05, method, true);
+            const swapped_event = try ratio(columns, .first, kind, 0.05, method, true);
+            try std.testing.expectApproxEqRel(other_event.estimate.?, swapped_event.estimate.?, 2e-13);
+            try std.testing.expectApproxEqRel(other_event.limits.lower.?, swapped_event.limits.lower.?, 2e-12);
+            try std.testing.expectApproxEqRel(other_event.limits.upper.?, swapped_event.limits.upper.?, 2e-12);
+            if (kind == .odds_ratio) {
+                try std.testing.expectApproxEqRel(1 / first.estimate.?, other_event.estimate.?, 2e-13);
+                try std.testing.expectApproxEqRel(1 / first.limits.upper.?, other_event.limits.lower.?, 2e-12);
+                try std.testing.expectApproxEqRel(1 / first.limits.lower.?, other_event.limits.upper.?, 2e-12);
+            }
+        }
+    }
+    // Wald-modified RR adds .5 to row totals, whereas modified OR adds .5
+    // to each of four cells (S154 pp.3204,3207). Do not conflate them.
+    const rr = try ratio(table, .first, .relative_risk, 0.05, .wald_modified, true);
+    try std.testing.expectApproxEqRel((12.5 / 20.5) / (5.5 / 30.5), rr.estimate.?, 2e-15);
+    const odds = try ratio(table, .first, .odds_ratio, 0.05, .wald_modified, true);
+    try std.testing.expectApproxEqRel((12.5 * 25.5) / (8.5 * 5.5), odds.estimate.?, 2e-15);
+}
+
+test "FREQ011 OR and RR score LR endpoints invert independently solved quadratic MLE" {
+    // S154 pp.3204-3208 provides closed quadratic roots, independent of the
+    // production constrainedFit's iterative likelihood-score bisection.
+    const table = Table2x2{ .cells = .{ 12, 8, 5, 25 } };
+    const cutoff: f64 = 3.84145882069412595836; // Phi^-1(.975)^2
+    for ([_]RatioKind{ .odds_ratio, .relative_risk }) |kind| {
+        for ([_]RatioMethod{ .score, .likelihood_ratio }) |method| {
+            for ([_]bool{ false, true }) |bias| {
+                const result = try ratio(table, .first, kind, 0.05, method, bias);
+                for ([_]f64{ result.limits.lower.?, result.limits.upper.? }) |r| {
+                    var p1: f64 = undefined;
+                    var p2: f64 = undefined;
+                    if (kind == .odds_ratio) {
+                        const aa = 30 * (r - 1);
+                        const bb = 20 * r + 30 - 17 * (r - 1);
+                        const cc: f64 = -17;
+                        p2 = -2 * cc / (bb + @sqrt(bb * bb - 4 * aa * cc));
+                        p1 = r * p2 / (1 + (r - 1) * p2);
+                        try std.testing.expectApproxEqAbs(@as(f64, 17), 20 * p1 + 30 * p2, 2e-12);
+                    } else {
+                        const aa: f64 = 2.5;
+                        const bb = -(r * 1.25 + 2.1);
+                        const cc = r * 0.85;
+                        p1 = 2 * cc / (-bb + @sqrt(bb * bb - 4 * aa * cc));
+                        p2 = p1 / r;
+                        // First-order likelihood score must vanish under p1=r*p2.
+                        const score_residual = r * (12 / p1 - 8 / (1 - p1)) + 5 / p2 - 25 / (1 - p2);
+                        try std.testing.expectApproxEqAbs(@as(f64, 0), score_residual, 2e-11);
+                    }
+                    const statistic = if (method == .likelihood_ratio)
+                        2 * (12 * @log(0.6 / p1) + 8 * @log(0.4 / (1 - p1)) + 5 * @log((1.0 / 6.0) / p2) + 25 * @log((5.0 / 6.0) / (1 - p2)))
+                    else if (kind == .odds_ratio)
+                        square(12 - 20 * p1) * (1 / (20 * p1 * (1 - p1)) + 1 / (30 * p2 * (1 - p2))) / (if (bias) @as(f64, 50.0 / 49.0) else 1)
+                    else
+                        square(0.6 - r / 6) / ((p1 * (1 - p1) / 20 + r * r * p2 * (1 - p2) / 30) * (if (bias) @as(f64, 50.0 / 49.0) else 1));
+                    // Quadratic evaluation + logarithms amplify f64 error at
+                    // the two asymmetric roots; this bound is on the pivotal
+                    // statistic, not on an implementation-generated endpoint.
+                    try std.testing.expectApproxEqAbs(cutoff, statistic, 2e-11);
+                }
+            }
+        }
     }
 }
