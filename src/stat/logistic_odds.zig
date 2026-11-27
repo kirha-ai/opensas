@@ -1,5 +1,5 @@
 //! Log-odds contrasts and binary-logit profile likelihood intervals.
-//! S154 physical pp.5889–5891,5903–5904,5922–5925. Contrasts, including
+//! S154 physical pp.5889–5891,5903–5904,5921–5925. Contrasts, including
 //! negative units and CLASS coding, are formed before exponentiation.
 const std = @import("std");
 const diag = @import("../diag.zig");
@@ -122,7 +122,8 @@ fn likelihood(x: []const f64, y: []const f64, multiplicity: []const f64, b: []co
 
 /// Maximize the binary log likelihood subject to c'beta=target. Eliminate
 /// the largest contrast coefficient and retain all other nuisance parameters;
-/// this is a full likelihood profile, not an exponentiated Wald interval.
+/// Constraint elimination and bracketed endpoint roots solve the likelihood-
+/// ratio level-set definition on physical p.5921.
 pub fn constrainedLikelihood(a: A, d: design.Design, fit: kernel.Fit, contrast: []const f64, target: f64) diag.Error!f64 {
     const p = d.p;
     if (contrast.len != p or fit.coefficients.len != p or p == 0 or !std.math.isFinite(target)) return error.ExecError;
