@@ -49,7 +49,7 @@ pub fn subset(a: A, d: design.Design, terms: []const []const usize) diag.Error!d
 
 pub fn run(cx: proc.ProcCtx, out: *std.ArrayList(u8), s: logistic.Spec) diag.Error!void {
     const a = cx.arena;
-    if (s.by_columns.len > 0 or s.model.classes.len > 0 or s.link != .logit or s.clodds != null or s.units_present or s.odds_requests.len > 0) return proc.failGap(cx.diags, 0, "PROC LOGISTIC: this combination with ROC analysis is not implemented", .{});
+    if (logistic.diagnosticOptions(s) or s.by_columns.len > 0 or s.model.classes.len > 0 or s.link != .logit or s.clodds != null or s.units_present or s.odds_requests.len > 0) return proc.failGap(cx.diags, 0, "PROC LOGISTIC: this combination with ROC analysis is not implemented", .{});
     const active_graphics = !s.noprint and !s.plots_none and (s.roc_plot or s.roc_models.len > 0) and (if (cx.graphics) |g| (g.enabled == true or (g.enabled != false and g.cli_dir != null)) else false);
     if (active_graphics) {
         // S154 physical p.5844 gives these macro variables observable plot

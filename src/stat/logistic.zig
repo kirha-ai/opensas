@@ -14,6 +14,7 @@ const kernel = @import("logistic_fit.zig");
 const ordinal = @import("logistic_ordinal.zig");
 const odds_kernel = @import("logistic_odds.zig");
 const roc = @import("logistic_roc.zig");
+const gof = @import("logistic_gof.zig");
 const format = @import("../format.zig");
 const fns = @import("../functions.zig");
 const A = std.mem.Allocator;
@@ -46,6 +47,13 @@ pub const Spec = struct {
     roc_alpha: ?f64 = null,
     roc_epsilon: f64 = @sqrt(std.math.floatEps(f64)),
     roc_detail: bool = false,
+    scale: gof.Scale = .unspecified,
+    scale_constant: f64 = 1,
+    aggregate: ?[]const usize = null,
+    ctable: bool = false,
+    pprob: []const f64 = &.{},
+    pevent: []const f64 = &.{},
+    lackfit: ?gof.HlOptions = null,
 };
 pub const Counts = struct { read: usize, used: usize, frequency_read: f64, frequency_used: f64, events: f64, full_constant: f64 = 0 };
 fn at(t: []const lex.Token, i: usize, tag: lex.Tag) bool {
@@ -183,6 +191,46 @@ fn unitsFor(s: Spec, variable_: usize) []const f64 {
 fn customizedUnits(s: Spec, variable_: usize) ?[]const f64 {
     for (s.units) |unit| if (unit.variable == variable_) return unit.values;
     return if (s.default_units.len > 0) s.default_units else null;
+}
+fn probabilityList(cx: proc.ProcCtx, t: []const lex.Token, i: *usize) diag.Error![]const f64 {
+    const parenthesized = at(t, i.*, .lparen);
+    if (parenthesized) i.* += 1;
+    var values: std.ArrayList(f64) = .empty;
+    while (i.* < t.len and !at(t, i.*, .rparen)) {
+        if (at(t, i.*, .comma)) {
+            i.* += 1;
+            continue;
+        }
+        if (!at(t, i.*, .number) and !at(t, i.*, .minus) and !at(t, i.*, .plus)) break;
+        const first = try numericLiteral(cx, t, i);
+        if (!(first >= 0 and first <= 1)) return invalid(cx, t, i.* - 1);
+        if (kw(t, i.*, "to")) {
+            i.* += 1;
+            const last = try numericLiteral(cx, t, i);
+            var step: f64 = 1;
+            if (kw(t, i.*, "by")) {
+                i.* += 1;
+                step = try numericLiteral(cx, t, i);
+            }
+            if (!(last >= 0 and last <= 1) or step == 0 or (last - first) / step < 0) return invalid(cx, t, i.* - 1);
+            const intervals = (last - first) / step;
+            if (intervals > 10000) return proc.failGap(cx.diags, 0, "PROC LOGISTIC: probability list is too large", .{});
+            const count: usize = @intFromFloat(@floor(intervals + 8 * std.math.floatEps(f64) * @max(1, intervals)));
+            for (0..count + 1) |index| try values.append(cx.arena, @min(1, @max(0, first + @as(f64, @floatFromInt(index)) * step)));
+        } else try values.append(cx.arena, first);
+    }
+    if (values.items.len == 0) return invalid(cx, t, i.*);
+    if (parenthesized) {
+        if (!at(t, i.*, .rparen)) return invalid(cx, t, i.*);
+        i.* += 1;
+    }
+    return values.items;
+}
+fn integerOption(cx: proc.ProcCtx, t: []const lex.Token, i: *usize) diag.Error!usize {
+    const number_ = try numericLiteral(cx, t, i);
+    if (number_ < 0 or @trunc(number_) != number_) return invalid(cx, t, i.* - 1);
+    if (number_ >= @as(f64, @floatFromInt(std.math.maxInt(usize)))) return proc.failGap(cx.diags, 0, "PROC LOGISTIC: integer option is too large", .{});
+    return @intFromFloat(number_);
 }
 pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
     var s: Spec = .{ .input = undefined, .model = .{ .response = 0, .effects = &.{} } };
@@ -365,6 +413,50 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
                 j += 1;
                 while (j < end) {
                     const option = t[j];
+                    if (kw(t, j, "ctable")) {
+                        s.ctable = true;
+                        j += 1;
+                        continue;
+                    }
+                    if (kw(t, j, "aggregate")) {
+                        j += 1;
+                        var columns: std.ArrayList(usize) = .empty;
+                        if (at(t, j, .eq)) {
+                            j += 1;
+                            if (!at(t, j, .lparen)) return invalid(cx, t, j);
+                            j += 1;
+                            const begin = j;
+                            while (j < end and !at(t, j, .rparen)) j += 1;
+                            if (begin == j or !at(t, j, .rparen)) return invalid(cx, t, j);
+                            var names: std.ArrayList([]const u8) = .empty;
+                            try lists.append(cx.arena, s.input.ds, t[begin..j], &names, cx.diags);
+                            for (names.items) |name_| try columns.append(cx.arena, s.input.ds.indexOf(name_).?);
+                            j += 1;
+                        }
+                        s.aggregate = columns.items;
+                        continue;
+                    }
+                    if (kw(t, j, "lackfit")) {
+                        j += 1;
+                        var options: gof.HlOptions = .{};
+                        if (at(t, j, .lparen)) {
+                            j += 1;
+                            while (j < end and !at(t, j, .rparen)) {
+                                const name_ = t[j];
+                                if (!at(t, j + 1, .eq)) return invalid(cx, t, j);
+                                j += 2;
+                                const value = try integerOption(cx, t[0..end], &j);
+                                if (eq(name_.text, "ngroups")) {
+                                    if (value < 5) return invalid(cx, t, j - 1);
+                                    options.groups = value;
+                                } else if (eq(name_.text, "df")) options.df = value else if (eq(name_.text, "dfreduce")) options.reduce = value else return unsupported(cx, name_);
+                            }
+                            if (!at(t, j, .rparen)) return invalid(cx, t, j);
+                            j += 1;
+                        }
+                        s.lackfit = options;
+                        continue;
+                    }
                     if (kw(t, j, "nofit")) {
                         s.nofit = true;
                         j += 1;
@@ -377,7 +469,25 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
                     }
                     if (!at(t, j + 1, .eq)) return unsupported(cx, option);
                     j += 2;
-                    if (eq(option.text, "link")) {
+                    if (eq(option.text, "scale")) {
+                        if (kw(t, j, "none") or kw(t, j, "n")) {
+                            s.scale = .none;
+                            j += 1;
+                        } else if (kw(t, j, "pearson") or kw(t, j, "p")) {
+                            s.scale = .pearson;
+                            j += 1;
+                        } else if (kw(t, j, "deviance") or kw(t, j, "d")) {
+                            s.scale = .deviance;
+                            j += 1;
+                        } else if (kw(t, j, "williams")) {
+                            if (s.trials == null) return cx.diags.fail(error.ParseError, option.line, "PROC LOGISTIC: SCALE=WILLIAMS requires events/trials syntax", .{});
+                            return unsupported(cx, t[j]);
+                        } else {
+                            s.scale_constant = try numericLiteral(cx, t[0..end], &j);
+                            if (!(s.scale_constant > 0)) return invalid(cx, t, j - 1);
+                            s.scale = .constant;
+                        }
+                    } else if (eq(option.text, "pprob")) s.pprob = try probabilityList(cx, t[0..end], &j) else if (eq(option.text, "pevent")) s.pevent = try probabilityList(cx, t[0..end], &j) else if (eq(option.text, "link")) {
                         if (kw(t, j, "logit")) s.link = .logit else if (kw(t, j, "probit") or kw(t, j, "normit")) s.link = .probit else if (kw(t, j, "cloglog")) s.link = .cloglog else if (kw(t, j, "alogit")) s.link = .alogit else return unsupported(cx, t[j]);
                         j += 1;
                     } else if (eq(option.text, "clodds")) {
@@ -562,6 +672,9 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
     s.input.ds = try by.withFormats(cx.arena, s.input.ds, formats.items);
     s.model.classes = classes.items;
     s.model.effects = effects.items;
+    if (s.aggregate) |columns| if (columns.len == 0) {
+        s.aggregate = effects.items;
+    };
     s.model.terms = terms.items;
     s.odds_requests = odds_requests.items;
     s.roc_models = roc_models.items;
@@ -601,7 +714,7 @@ fn hasDefaultOdds(d: design.Design) bool {
     return false;
 }
 pub fn render(a: A, out: *std.ArrayList(u8), s: Spec, d: design.Design, r: kernel.Fit, counts: Counts) diag.Error!void {
-    return renderCore(a, out, s, d, r, counts, null);
+    return renderCore(a, out, s, d, r, counts, null, null);
 }
 fn renderOrdinal(a: A, out: *std.ArrayList(u8), s: Spec, original: design.Design, fit: ordinal.Fit, counts: Counts) diag.Error!void {
     var d = original;
@@ -614,7 +727,7 @@ fn renderOrdinal(a: A, out: *std.ArrayList(u8), s: Spec, original: design.Design
     const effects = try a.dupe(design.Effect, original.effects);
     for (effects) |*effect| effect.start += k - 1;
     d.effects = effects;
-    return renderCore(a, out, s, d, fit.result, counts, fit);
+    return renderCore(a, out, s, d, fit.result, counts, fit, null);
 }
 pub fn modelHeader(a: A, out: *std.ArrayList(u8), s: Spec, d: design.Design, counts: Counts, intercepts: usize) diag.Error!void {
     const ds = s.input.ds;
@@ -653,7 +766,7 @@ pub fn modelHeader(a: A, out: *std.ArrayList(u8), s: Spec, d: design.Design, cou
         };
     }
 }
-fn renderCore(a: A, out: *std.ArrayList(u8), s: Spec, d: design.Design, r: kernel.Fit, counts: Counts, ordinal_result: ?ordinal.Fit) diag.Error!void {
+fn renderCore(a: A, out: *std.ArrayList(u8), s: Spec, d: design.Design, r: kernel.Fit, counts: Counts, ordinal_result: ?ordinal.Fit, report: ?gof.Report) diag.Error!void {
     const ds = s.input.ds;
     const intercepts: usize = if (ordinal_result) |fit| fit.levels - 1 else 1;
     if (!s.roc_detail) try modelHeader(a, out, s, d, counts, intercepts);
@@ -661,6 +774,7 @@ fn renderCore(a: A, out: *std.ArrayList(u8), s: Spec, d: design.Design, r: kerne
     if (ordinal_result) |fit| if (fit.parallel_score) |score| {
         try out.print(a, "Score Test for the {s} Assumption\n\nChi-Square DF Pr > ChiSq\n\n{s} {d} {s}\n\n", .{ if (s.link == .logit) "Proportional Odds" else "Equal Slopes", try number(a, score, "10.4"), fit.parallel_df, try number(a, kernel.chiTail(score, fit.parallel_df), "pvalue6.4") });
     };
+    if (report) |diagnostics| if (diagnostics.goodness) |statistics| try gof.renderGoodness(a, out, statistics);
     try out.appendSlice(a, "Model Fit Statistics\n\n");
     if (s.trials != null) try out.appendSlice(a, "Intercept and Covariates\nIntercept Log Full Log\nCriterion Only Likelihood Likelihood\n\n") else try out.appendSlice(a, "Intercept\nIntercept and\nCriterion Only Covariates\n\n");
     const null_deviance = -2 * r.null_log_likelihood;
@@ -745,9 +859,53 @@ fn renderCore(a: A, out: *std.ArrayList(u8), s: Spec, d: design.Design, r: kerne
             try number(a, 100 * nt / pairs, "6.1"), try number(a, 2 * (nc - nd) / (nf * (nf - 1)), "6.3"), try number(a, assoc.pairs, "best12."),  try number(a, (nc + 0.5 * nt) / pairs, "6.3"),
         });
     }
+    if (report) |diagnostics| try gof.renderExtras(a, out, diagnostics, ds.columns.items[s.model.response].name, d.response.levels[d.event_index].label, d.response.levels[1 - d.event_index].label);
 }
 
-pub const Analysis = struct { data: *Dataset, design: design.Design, fit: kernel.Fit, counts: Counts, ordinal_fit: ?ordinal.Fit = null };
+pub const Analysis = struct { data: *Dataset, design: design.Design, fit: kernel.Fit, counts: Counts, ordinal_fit: ?ordinal.Fit = null, original_rows: []const usize = &.{}, report: ?gof.Report = null };
+pub fn diagnosticOptions(s: Spec) bool {
+    const scale_output = s.scale != .unspecified and (s.scale == .constant or s.trials != null or s.aggregate != null);
+    return !s.nofit and (scale_output or s.ctable or s.lackfit != null);
+}
+fn diagnosticReport(cx: proc.ProcCtx, s: Spec, ds: *const Dataset, d: design.Design, fit: kernel.Fit, originals: []const usize) diag.Error!?gof.Report {
+    if (!diagnosticOptions(s)) return null;
+    var report: gof.Report = .{ .explicit_prior = s.pevent.len > 0 };
+    const goodness_requested = s.scale != .unspecified and (s.scale == .constant or s.trials != null or s.aggregate != null);
+    const classify = s.ctable and d.response.levels.len == 2;
+    if (!goodness_requested and !classify and s.lackfit == null) return null;
+    if (s.link != .logit or d.response.levels.len != 2) return proc.failGap(cx.diags, 0, "PROC LOGISTIC: these diagnostics currently require binary LOGIT", .{});
+    if (goodness_requested) {
+        if (s.scale != .none) return proc.failGap(cx.diags, 0, "PROC LOGISTIC: dispersion-adjusted inference tables are not implemented", .{});
+        if (s.model.classes.len > 0) return proc.failGap(cx.diags, 0, "PROC LOGISTIC: CLASS aggregation semantics for goodness-of-fit are not implemented", .{});
+        if (s.trials != null and s.aggregate == null) if (s.model.frequency) |column| {
+            for (d.source_rows) |source| if (@trunc(ds.rows.items[source][column].num) != 1) return proc.failGap(cx.diags, 0, "PROC LOGISTIC: replicated grouped-trial goodness-of-fit without AGGREGATE is not implemented", .{});
+        };
+        const profiles = gof.profiles(cx.arena, ds, d, fit, originals, s.aggregate) catch |err| {
+            if (err == error.OutOfMemory) return err;
+            return proc.failGap(cx.diags, 0, "PROC LOGISTIC: weighted or heterogeneous-probability goodness-of-fit profiles are not implemented", .{});
+        };
+        report.goodness = gof.goodness(profiles, d.p, s.aggregate == null) catch |err| {
+            if (err == error.OutOfMemory) return err;
+            return proc.failGap(cx.diags, 0, "PROC LOGISTIC: goodness-of-fit profiles have insufficient degrees of freedom or invalid probabilities", .{});
+        };
+    }
+    if (classify) {
+        const predictions = gof.crossvalidated(cx.arena, d, fit) catch |err| {
+            if (err == error.OutOfMemory) return err;
+            return proc.failGap(cx.diags, 0, "PROC LOGISTIC: one-step classification is unavailable for this leverage/probability boundary", .{});
+        };
+        if (s.pprob.len == 0) return proc.failGap(cx.diags, 0, "PROC LOGISTIC: default CTABLE cutpoints are not implemented; specify PPROB", .{});
+        report.classification = try gof.classification(cx.arena, d, predictions, s.pprob, s.pevent);
+    }
+    if (s.lackfit) |options| {
+        if (s.trials != null) return proc.failGap(cx.diags, 0, "PROC LOGISTIC: grouped-trial Hosmer-Lemeshow partitioning is not implemented", .{});
+        report.hosmer = gof.hosmer(cx.arena, d, fit, options) catch |err| {
+            if (err == error.OutOfMemory) return err;
+            return proc.failGap(cx.diags, 0, "PROC LOGISTIC: Hosmer-Lemeshow test requires at least three usable groups and valid degrees of freedom", .{});
+        };
+    }
+    return report;
+}
 pub fn analyze(cx: proc.ProcCtx, s: Spec) diag.Error!Analysis {
     const a = cx.arena;
     const ds = s.input.ds;
@@ -831,7 +989,10 @@ pub fn analyze(cx: proc.ProcCtx, s: Spec) diag.Error!Analysis {
         counts.used += 1;
         counts.full_constant += constants[i];
     };
-    return .{ .data = work, .design = d, .fit = r, .counts = counts, .ordinal_fit = ordinal_fit };
+    const original_rows = try a.alloc(usize, d.n);
+    for (d.source_rows, original_rows) |row, *original| original.* = origin.items[row];
+    const report = try diagnosticReport(cx, s, work, d, r, original_rows);
+    return .{ .data = work, .design = d, .fit = r, .counts = counts, .ordinal_fit = ordinal_fit, .original_rows = original_rows, .report = report };
 }
 fn oddsTable(a: A, out: *std.ArrayList(u8), rows: []const @import("logistic_plots.zig").Row, alpha: f64, method: odds_kernel.Confidence) diag.Error!void {
     try out.print(a, "\nOdds Ratio Estimates and {s} Confidence Intervals\n\nOdds Ratio Estimate {s}% Confidence Limits\n\n", .{ if (method == .pl) "Profile-Likelihood" else "Wald", try number(a, 100 * (1 - alpha), "best8.") });
@@ -900,7 +1061,7 @@ pub fn run(cx: proc.ProcCtx, out: *std.ArrayList(u8), tokens: []const lex.Token)
         };
         if (profile_requested and result.design.response.levels.len > 2) return proc.failGap(cx.diags, 0, "PROC LOGISTIC: profile-likelihood intervals for ordinal models are not implemented", .{});
         if (!s.noprint) {
-            if (result.ordinal_fit) |fit| try renderOrdinal(a, &body, s, result.design, fit, result.counts) else try render(a, &body, s, result.design, result.fit, result.counts);
+            if (result.ordinal_fit) |fit| try renderOrdinal(a, &body, s, result.design, fit, result.counts) else try renderCore(a, &body, s, result.design, result.fit, result.counts, null, result.report);
         }
         if (!s.noprint) unitTables(a, &body, s, result) catch |err| {
             if (err == error.OutOfMemory) return err;
@@ -969,6 +1130,8 @@ test {
     _ = @import("logistic_ordinal.zig");
     _ = @import("logistic_odds.zig");
     _ = @import("logistic_roc.zig");
+    _ = @import("logistic_gof.zig");
+    _ = @import("logistic_gof_tests.zig");
     _ = @import("logistic_roc_proc.zig");
 }
 
