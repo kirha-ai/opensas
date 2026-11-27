@@ -77,6 +77,16 @@ Current counts: **48 DONE,19 PARK,7 DOING,1348 TODO**. All temporary reference f
 
 At exact c78ef7c6ca2b0b65ecf00e697687e906a887fc63, oracle-absent gate direct1:1989/1990unit,2361/2361corpus,11/11programs. Single failure is old REG parser-test substring `not implemented` after STEPWISE gained a real NOPRINT/OUTEST path; current explicit unsupported-listing diagnostic has changed. Repair378ce9bc retains all six invalid-syntax assertions, resets the gap flag before the supported-method/unsupported-listing path, and checks the exact captured message plus D-009 rc2. Targeted actual regression8/8 direct0; full rerun pending. Repair worktree `/Users/thomas/kirha/opensas-reg-gate-repair`, branch `codex/stat-reg-gate-repair`, created from c78ef7c6; ongoing REG009 source/evidence untouched. Supplemental not claimed for failedrun; oracle restored. Batchnotpushed.
 
+### Active-time assignments — diagnostics, exact logistic, NPAR output
+
+PriorREG011/LOGISTIC006/NPAR007 sourceisfrozenandintegratedthrough `82ace68f`, finalbatchverificationpending. New45-awake-minuteattemptschecktheverifiedabsolutePythonmonotonicclockbeforeeveryedit, no resetonhandoff.
+
+- dev1: STAT-REG-012; retained `opensas-dev1`, `codex/stat-b4-reg012-dev1`; assignedUTC 2026-11-27T23:02:39+00:00; initialUTCdeadline 2026-11-27T23:47:39+00:00; activeStart=352336.446135, activeDeadline=355036.446135.
+- dev4: STAT-LOGISTIC-011; retained `opensas-dev4`, `codex/stat-b4-logistic011-dev4`; assignedUTC 2026-11-27T23:02:39+00:00; initialUTCdeadline 2026-11-27T23:47:39+00:00; activeStart=352336.446135, activeDeadline=355036.446135.
+- dev6: STAT-NPAR1WAY-008; retained `opensas-dev6`, `codex/stat-b4-npar008-dev6`; assignedUTC 2026-11-27T23:02:39+00:00; initialUTCdeadline 2026-11-27T23:47:39+00:00; activeStart=352336.446135, activeDeadline=355036.446135.
+
+ExactLOGISTIC is the existing prerequisite for conditional006secondPROC, usingactualfinite conditionaldistributions, notanunconditionalfit or unvalidatedRNG. NPAROUTPUT reusesrealstatistics/descriptors and ordinarytypedDATA/BY interfaces; pendingbroaderTYPE/contracts neverbecome inventedcolumns or missingnumbers. REGdiagnostics validate source-specificWEIGHT/FREQ/deletion/alias assumptions beforetouchingsharedkernels. No newbacklog/lanes/agents.
+
 ### Active-time assignments — multiple comparisons, SLICE, CODE, LSMESTIMATE
 
 Priorfourattemptsarefrozenandintegratedthrough `56fba24a`, stillPARKpendingremainingfeatures/referenceandfinalbatchchecks. New45-awake-minuteattemptsuseabsolutePythonmonotonicclock; checkbeforeedits, no handoffreset.
@@ -8715,7 +8725,7 @@ Source: S154, Chapter 79, `The LOGISTIC Procedure`, PDF pp. 5823–6080. Tasks i
 
 <a id="stat-logistic-011"></a>
 
-### [TODO] STAT-LOGISTIC-011 — LOGISTIC — EXACT / EXACTOPTIONS / Exact Conditional Logistic Regression
+### [DOING @dev4] STAT-LOGISTIC-011 — LOGISTIC — EXACT / EXACTOPTIONS / Exact Conditional Logistic Regression
 
 - Source: S154 / Chapter 79 / `EXACT Statement` (PDF pp. 5861–5863); S154 / Chapter 79 / `EXACTOPTIONS Statement` (PDF pp. 5863–5867); S154 / Chapter 79 / `Exact Conditional Logistic Regression` (PDF pp. 5949–5954).
 - Scope: Implement EXACT; EXACTOPTIONS; Exact Conditional Logistic Regression. This ticket owns the feature's options, defaults, computation, and results as an extension of the basic computational path; the chapter's output tickets handle ODS descriptors and file presentation.
@@ -10512,7 +10522,7 @@ Source: S154, Chapter 90, `The NPAR1WAY Procedure`, PDF pp. 7205–7282. Tasks i
 
 <a id="stat-npar1way-008"></a>
 
-### [TODO] STAT-NPAR1WAY-008 — NPAR1WAY — OUTPUT / Contents of the Output Data Set
+### [DOING @dev6] STAT-NPAR1WAY-008 — NPAR1WAY — OUTPUT / Contents of the Output Data Set
 
 - Source: S154 / Chapter 90 / `OUTPUT Statement` (PDF pp. 7230–7233); S154 / Chapter 90 / `Contents of the Output Data Set` (PDF pp. 7253–7259).
 - Scope: Implement OUTPUT; Contents of the Output Data Set. Cover all triggering options, content, and naming specified by this section; computational tickets supply numerical values, while other output types are handled separately.
@@ -12512,7 +12522,7 @@ Source: S154, Chapter 105, `The REG Procedure`, PDF pp. 8539–8728. Tasks in th
 
 <a id="stat-reg-012"></a>
 
-### [TODO] STAT-REG-012 — REG — Collinearity Diagnostics / Model Fit and Diagnostic Statistics / Influence Statistics
+### [DOING @dev1] STAT-REG-012 — REG — Collinearity Diagnostics / Model Fit and Diagnostic Statistics / Influence Statistics
 
 - Source: S154 / Chapter 105 / `Collinearity Diagnostics` (PDF pp. 8624–8626); S154 / Chapter 105 / `Model Fit and Diagnostic Statistics` (PDF pp. 8626–8628); S154 / Chapter 105 / `Influence Statistics` (PDF pp. 8628–8636).
 - Scope: Implement Collinearity Diagnostics; Model Fit and Diagnostic Statistics; Influence Statistics. This ticket owns the feature's options, defaults, computation, and results as an extension of the basic computational path; the chapter's output tickets handle ODS descriptors and file presentation.
