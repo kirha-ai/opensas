@@ -81,6 +81,10 @@ Current counts: **48 DONE,19 PARK,7 DOING,1348 TODO**. All temporary reference f
 
 At exact c78ef7c6ca2b0b65ecf00e697687e906a887fc63, oracle-absent gate direct1:1989/1990unit,2361/2361corpus,11/11programs. Single failure is old REG parser-test substring `not implemented` after STEPWISE gained a real NOPRINT/OUTEST path; current explicit unsupported-listing diagnostic has changed. Repair378ce9bc retains all six invalid-syntax assertions, resets the gap flag before the supported-method/unsupported-listing path, and checks the exact captured message plus D-009 rc2. Targeted actual regression8/8 direct0; full rerun pending. Repair worktree `/Users/thomas/kirha/opensas-reg-gate-repair`, branch `codex/stat-reg-gate-repair`, created from c78ef7c6; ongoing REG009 source/evidence untouched. Supplemental not claimed for failedrun; oracle restored. Batchnotpushed.
 
+### Same-ticket dev3 context recovery
+
+The dev3 context exhausted while starting MIXED011. Verified retained `opensas-dev3`/`codex/stat-b4-mixed-lsmestimate-dev3` clean at29761753, no source edits in that attempt. Replacement `/root/dev3r` continues the same logicaldev3 slot and same activeStart354826.533546/deadline357526.533546, no fresh45minutes or extra concurrentlyworkingdevslot. Originalhistory and workspace preserved; taskscope/rules unchanged.
+
 ### Same-ticket context recovery
 
 The dev7 model context exhausted while starting MIXED012. Verified retained `opensas-dev7`/`codex/stat-b4-mixed-slice-dev7` clean at29761753; no source edits in that attempt. Replacement runtimeagent `/root/dev7r` continues the same dev7 slot/ticket/worktree and SAME activeStart354826.533546/deadline357526.533546. No fresh45-minute budget, no additional concurrentlyworkingdevslot, no discardedsource/history. All currentrules/ownership remain unchanged.
