@@ -12,6 +12,10 @@ Explicit user resume. Confirmed working branch `feat/stat/batch-4`, base `31356c
 - dev6: STAT-COMMON-017; `/Users/thomas/kirha/opensas-dev6`; branch `codex/stat-b4-dev6`; assigned 2026-11-27T13:42:13+00:00; implementation deadline 2026-11-27T14:27:13+00:00. Original README/cases and cited physical PDF pages required before edits.
 - dev7: STAT-COMMON-018; `/Users/thomas/kirha/opensas-dev7`; branch `codex/stat-b4-dev7`; assigned 2026-11-27T13:42:13+00:00; implementation deadline 2026-11-27T14:27:13+00:00. Original README/cases and cited physical PDF pages required before edits.
 
+### Rolling assignment — REG-009
+
+REG008 computational partial integrated from `a1b09895`; explicit selection-listing/graph/group/tie/domain gaps keep it PARK, final batch checks pending. dev1 owns existing STAT-REG-009 in retained `opensas-dev1`, branch `codex/stat-b4-reg009-dev1`, assigned 2026-11-27T14:59:06+00:00, deadline 2026-11-27T15:44:06+00:00. Scope is multivariate tests/MTEST with actual residual/hypothesis matrices and independent small-matrix identities, not unrelated model selection or RNG changes.
+
 ### Rolling assignment — MIXED-006 RANDOM
 
 MIXED001 typed frontend integrated from `ff458a41`, remains PARK for missing estimation/broader options; full batch verification pending. dev5 now owns existing STAT-MIXED-006 (the board's actual RANDOM ticket) in retained `opensas-dev5`, branch `codex/stat-b4-mixed-random-dev5`, assigned 2026-11-27T14:57:14+00:00, deadline 2026-11-27T15:42:14+00:00. Dev7 owns fixed CLASS/MODEL design; dev3 owns MIXED002 likelihood/inference. This real RANDOM producer must deliver Z/subject/group/covariance-component matrices and supported-domain validation, not silently reinterpret stored raw tokens. The002↔006 dependency cycle is broken by that concrete jointly tested interface; full originals remain required. No extra ticket/agent/lane.
@@ -11971,7 +11975,7 @@ Source: S154, Chapter 105, `The REG Procedure`, PDF pp. 8539–8728. Tasks in th
 
 <a id="stat-reg-009"></a>
 
-### [TODO] STAT-REG-009 — REG — Multivariate Tests / MTEST
+### [DOING @dev1] STAT-REG-009 — REG — Multivariate Tests / MTEST
 
 - Source: S154 / Chapter 105 / `Multivariate Tests` (PDF pp. 8644–8647); S154 / Chapter 105 / `MTEST Statement` (PDF pp. 8588–8590).
 - Scope: Implement Multivariate Tests; MTEST. This ticket owns the feature's options, defaults, computation, and results as an extension of the basic computational path; the chapter's output tickets handle ODS descriptors and file presentation.
