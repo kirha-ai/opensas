@@ -24,6 +24,7 @@ pub fn render(cx: proc.ProcCtx, out: *std.ArrayList(u8), results: []const module
         if (count > 0 and capture.wants("LSMEstimates")) return proc.failGap(cx.diags, 0, "PROC MIXED: LSMEstimates typed metadata is not independently verified", .{});
         for (results) |result| if (result.joint != null and capture.wants("Contrasts")) return proc.failGap(cx.diags, 0, "PROC MIXED: joint LSMESTIMATE typed metadata is not independently verified", .{});
     }
+    if (count > 0 and one_sided) for (results) |result| if (result.request.tail != results[0].request.tail) return proc.failGap(cx.diags, 0, "PROC MIXED: mixed-tail LSMESTIMATE table styles are not implemented", .{});
     if (count > 0) {
         const start = out.items.len;
         try out.print(cx.arena, "\nLeast Squares Means Estimate{s}\n", .{if (count == 1) @as([]const u8, "") else "s"});
@@ -37,7 +38,7 @@ pub fn render(cx: proc.ProcCtx, out: *std.ArrayList(u8), results: []const module
             }});
         }
         try out.appendSlice(cx.arena, "\nStandard\nEffect Label Estimate Error DF t Value");
-        if (one_sided) try out.appendSlice(cx.arena, " Tails Pr > t") else try out.appendSlice(cx.arena, " Pr > |t|");
+        if (one_sided) try out.appendSlice(cx.arena, if (results[0].request.tail == .lower) " Tails Pr < t" else " Tails Pr > t") else try out.appendSlice(cx.arena, " Pr > |t|");
         if (adjusted) try out.appendSlice(cx.arena, " Adj P");
         if (cl) try out.appendSlice(cx.arena, " Alpha Lower Upper");
         if (cl and adjusted) try out.appendSlice(cx.arena, " Adj Lower Adj Upper");

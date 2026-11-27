@@ -215,3 +215,14 @@ test "STAT-COMMON-027 actual JOINT ONLY output and GLM applicability remain dist
     try t.expectError(error.ParseError, @import("glm.zig").run(h.cx, &invalid, try lex.tokenize(a, "proc glm data=sample;class group;model y=group x;lsmestimate group -1 1 /cl;run;", h.cx.diags)));
     try t.expectEqual(@as(u8, 1), diag.exitCode(diag.gapHit(), h.cx.diags.hasErrors()));
 }
+
+test "STAT-COMMON-027 lower-tail presentation names the probability it reports" {
+    var arena = std.heap.ArenaAllocator.init(t.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const h = try Harness.init(a);
+    var out: std.ArrayList(u8) = .empty;
+    try @import("mixed.zig").run(h.cx, &out, try lex.tokenize(a, "proc mixed data=sample;class group;model y=group x;lsmestimate group 'lower' 1 -1 /lower cl;run;", h.cx.diags));
+    try t.expect(std.mem.indexOf(u8, out.items, "Tails Pr < t") != null);
+    try t.expect(std.mem.indexOf(u8, out.items, "Lower 0.0288") != null);
+}
