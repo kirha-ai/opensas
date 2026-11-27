@@ -3,7 +3,7 @@
 //! unchanged STAT-MIXED-016 SAS trace. Other template IDs remain unknown.
 const std = @import("std");
 const listing = @import("../ods_listing.zig");
-pub const names = [_][]const u8{ "AccRates", "AsyCorr", "AsyCov", "Base", "Bound", "CholG", "CholR", "CholV", "ClassLevels", "Coef", "Contrasts", "ConvergenceStatus", "CorrB", "CovB", "CovParms", "Diffs", "Dimensions", "Estimates", "FitStatistics", "G", "GCorr", "HLM1", "HLM2", "HLM3", "HLPS1", "HLPS2", "HLPS3", "Influence", "InfoCrit", "InvCholG", "InvCholR", "InvCholV", "InvCovB", "InvG", "InvR", "InvV", "IterHistory", "LComponents", "LRT", "LSMeans", "MMEq", "MMEqSol", "ModelInfo", "NObs", "ParmSearch", "Posterior", "Ranks", "R", "RCorr", "Search", "Slices", "SliceTests", "SliceDiffs", "SliceLines", "SolutionF", "SolutionR", "Tests1", "Tests2", "Tests3", "Type1", "Type2", "Type3", "Trans", "V", "VCorr" };
+pub const names = [_][]const u8{ "AccRates", "AsyCorr", "AsyCov", "Base", "Bound", "CholG", "CholR", "CholV", "ClassLevels", "Coef", "Contrasts", "ConvergenceStatus", "CorrB", "CovB", "CovParms", "Diffs", "Dimensions", "Estimates", "FitStatistics", "G", "GCorr", "HLM1", "HLM2", "HLM3", "HLPS1", "HLPS2", "HLPS3", "Influence", "InfoCrit", "InvCholG", "InvCholR", "InvCholV", "InvCovB", "InvG", "InvR", "InvV", "IterHistory", "LComponents", "LRT", "LSMeans", "LSMEstimates", "MMEq", "MMEqSol", "ModelInfo", "NObs", "ParmSearch", "Posterior", "Ranks", "R", "RCorr", "Search", "Slices", "SliceTests", "SliceDiffs", "SliceLines", "SolutionF", "SolutionR", "Tests1", "Tests2", "Tests3", "Type1", "Type2", "Type3", "Trans", "V", "VCorr" };
 pub fn known(name: []const u8) bool {
     for (names) |n| if (std.ascii.eqlIgnoreCase(name, n)) return true;
     return false;

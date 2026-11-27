@@ -108,19 +108,21 @@ test "STAT-MIXED-003 nesting polynomial noint missing provenance and reference l
 
 pub const Contrast = struct { coefficients: []const f64, rows: usize, name: []const u8 };
 /// Equal-cell marginal hypotheses over full singular X. This construction is
-/// valid for complete, hierarchical pure-CLASS models with an intercept. It
-/// intentionally rejects missing cells, covariates and nesting rather than
+/// valid for complete hierarchical CLASS effects with additive continuous
+/// regressors and an intercept. It rejects missing cells, crossed covariates and nesting rather than
 /// substituting column-deletion tests for Type III hypotheses (S154 ch.16).
 pub fn type3(cx: proc.ProcCtx, s: model.Spec, d: Design, effect_index: usize) diag.Error!Contrast {
     if (!s.matrix.intercept or effect_index >= s.matrix.effects.len) return proc.failGap(cx.diags, s.line, "PROC MIXED: Type III contract requires an intercept and a valid effect", .{});
     const classes = d.matrix.classes;
     if (classes.len > 12) return proc.failGap(cx.diags, s.line, "PROC MIXED: Type III factorial expansion exceeds the implemented bound", .{});
     const masks = try cx.arena.alloc(usize, s.matrix.effects.len);
+    const continuous = try cx.arena.alloc(bool, s.matrix.effects.len);
     var used: usize = 0;
     var name: []const u8 = "";
     for (s.matrix.effects, 0..) |effect, index| {
         const normal = try coded.normalize(cx.arena, s.source, s.matrix.classes, effect);
-        if (normal.continuous.len > 0 or normal.nested.len > 0) return proc.failGap(cx.diags, s.line, "PROC MIXED: Type III covariate or nested-effect contrasts are not implemented", .{});
+        if (normal.nested.len > 0 or (normal.continuous.len > 0 and normal.crossed.len > 0)) return proc.failGap(cx.diags, s.line, "PROC MIXED: Type III crossed-covariate or nested-effect contrasts are not implemented", .{});
+        continuous[index] = normal.continuous.len > 0;
         var mask: usize = 0;
         for (normal.crossed) |ci| {
             const position = std.mem.indexOfScalar(usize, s.matrix.classes, ci) orelse return error.ExecError;
@@ -129,6 +131,18 @@ pub fn type3(cx: proc.ProcCtx, s: model.Spec, d: Design, effect_index: usize) di
         masks[index] = mask;
         used |= mask;
         if (index == effect_index) name = normal.name;
+    }
+    if (continuous[effect_index]) {
+        var selected: ?usize = null;
+        for (d.matrix.columns, 0..) |column, index| if (column.effect_index == effect_index) {
+            if (selected != null) return proc.failGap(cx.diags, s.line, "PROC MIXED: multi-column continuous Type III effect is not implemented", .{});
+            selected = index;
+        };
+        const column = selected orelse return proc.failGap(cx.diags, s.line, "PROC MIXED: aliased duplicate continuous effect is not implemented", .{});
+        const coefficients = try cx.arena.alloc(f64, d.matrix.p);
+        @memset(coefficients, 0);
+        coefficients[column] = 1;
+        return .{ .coefficients = coefficients, .rows = 1, .name = name };
     }
     for (masks) |mask| {
         var subset = mask;
@@ -182,7 +196,12 @@ pub fn type3(cx: proc.ProcCtx, s: model.Spec, d: Design, effect_index: usize) di
                     weight *= if (level == contrast_levels[k]) @as(f64, 1) else if (level + 1 == class.map.levels.len) -1 else 0;
                 } else weight /= @as(f64, @floatFromInt(class.map.levels.len));
             }
-            for (0..d.matrix.p) |column| coefficients[contrast * d.matrix.p + column] += weight * d.matrix.x[row * d.matrix.p + column];
+            for (0..d.matrix.p) |column| {
+                // Additive covariates cancel from equal-margin CLASS contrasts;
+                // never insert a representative cell's observed covariate value.
+                if (d.matrix.columns[column].effect_index) |effect| if (continuous[effect]) continue;
+                coefficients[contrast * d.matrix.p + column] += weight * d.matrix.x[row * d.matrix.p + column];
+            }
         }
     }
     return .{ .coefficients = coefficients, .rows = q, .name = name };
@@ -253,7 +272,7 @@ test "STAT-MIXED-003 absent references and unsupported Type III domains fail vis
     try std.testing.expectError(error.ExecError, build(cx, invalid, view));
     try std.testing.expect(diagnostics.hasErrors());
     const Case = struct { class: []const u8, effects: []const u8 };
-    for ([_]Case{ .{ .class = "Family Gender", .effects = "Height=Family*Gender" }, .{ .class = "Gender", .effects = "Height=Family Gender" }, .{ .class = "Family Gender", .effects = "Height=Family Gender(Family)" }, .{ .class = "Gender", .effects = "Height=Gender /noint" } }) |c| {
+    for ([_]Case{ .{ .class = "Family Gender", .effects = "Height=Family*Gender" }, .{ .class = "Gender", .effects = "Height=Family Gender Family*Gender" }, .{ .class = "Family Gender", .effects = "Height=Family Gender(Family)" }, .{ .class = "Gender", .effects = "Height=Gender /noint" } }) |c| {
         diag.resetGap();
         defer diag.resetGap();
         const spec = try parseSample(cx, &ds, c.class, c.effects);

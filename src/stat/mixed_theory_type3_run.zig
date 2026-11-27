@@ -85,4 +85,6 @@ pub fn runRouted(cx: proc.ProcCtx, out: *std.ArrayList(u8), s: declarations.Spec
     try @import("mixed_contrasts.zig").publishRouted(cx, out, m, r, x, z, gls, moments.variances, requests, route);
     const lsmean_requests = try @import("mixed_lsmeans.zig").parse(cx, m, s.statements);
     try @import("mixed_lsmeans.zig").publishRouted(cx, out, m, r, x, z, gls, lsmean_requests, route);
+    const lsmestimate_requests = try @import("mixed_lsmestimate.zig").parse(cx, m, s.statements);
+    try @import("mixed_lsmestimate.zig").publishRouted(cx, out, m, r, x, z, gls, lsmestimate_requests, route);
 }

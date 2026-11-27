@@ -99,6 +99,9 @@ pub fn estimable(j: Joint, l: []const f64, tolerance: f64) bool {
 pub const Tail = enum { two, lower, upper };
 pub const Estimate = struct { estimable: bool, estimate: ?f64 = null, se: ?f64 = null, t: ?f64 = null, p: ?f64 = null, df: f64, lower: ?f64 = null, upper: ?f64 = null };
 pub fn estimate(j: Joint, l: []const f64, df: f64, alpha: f64, tail: Tail, tolerance: f64) !Estimate {
+    return estimateWithLimits(j, l, df, alpha, tail, tolerance, true);
+}
+pub fn estimateWithLimits(j: Joint, l: []const f64, df: f64, alpha: f64, tail: Tail, tolerance: f64, want_limits: bool) !Estimate {
     if (!std.math.isFinite(df) or df <= 0 or !std.math.isFinite(alpha) or alpha <= 0 or alpha >= 1 or !std.math.isFinite(tolerance) or tolerance <= 0 or tolerance >= 1) return error.InvalidInput;
     if (!estimable(j, l, tolerance)) return .{ .estimable = false, .df = df };
     var value: f64 = 0;
@@ -120,6 +123,7 @@ pub fn estimate(j: Joint, l: []const f64, df: f64, alpha: f64, tail: Tail, toler
         .lower => if (t < 0) two / 2 else 1 - two / 2,
         .upper => if (t > 0) two / 2 else 1 - two / 2,
     };
+    if (!want_limits) return result;
     const target = 1 - alpha / (if (tail == .two) @as(f64, 2) else 1);
     const endpoint_tail = f.betaI(df / (df + 1e12), df / 2, 0.5) / 2;
     if (target <= endpoint_tail or target >= 1 - endpoint_tail or target == 0 or target == 1) return error.NumericalDomain;

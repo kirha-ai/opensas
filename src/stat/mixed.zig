@@ -55,6 +55,7 @@ pub fn run(cx: proc.ProcCtx, out: *std.ArrayList(u8), tokens: []const lex.Token)
         for (x.matrix.columns) |column| if (column.effect_name.len > spec.options.namelen) return proc.failGap(cx.diags, spec.line, "PROC MIXED: long effect-name presentation is not implemented", .{});
         const lsmean_requests = try @import("mixed_lsmeans.zig").parse(cx, m, spec.statements);
         const slice_requests = try @import("mixed_slice.zig").parse(cx, m, spec.statements);
+        const lsmestimate_requests = try @import("mixed_lsmestimate.zig").parse(cx, m, spec.statements);
         const inference_requests = try @import("mixed_contrasts.zig").parse(cx, m, z, spec.statements);
         const components = try cx.arena.alloc(math.Component, z.components.len);
         const names = try cx.arena.alloc([]const u8, z.components.len + 1);
@@ -97,6 +98,7 @@ pub fn run(cx: proc.ProcCtx, out: *std.ArrayList(u8), tokens: []const lex.Token)
         if (usable_inference) try @import("mixed_contrasts.zig").publishRouted(cx, out, m, r, x, z, fit, fit.variances, inference_requests, &route);
         if (usable_inference) try @import("mixed_lsmeans.zig").publishRouted(cx, out, m, r, x, z, fit, lsmean_requests, &route);
         if (usable_inference) try @import("mixed_slice.zig").publishRouted(cx, out, m, r, x, z, fit, slice_requests, &route);
+        if (usable_inference) try @import("mixed_lsmestimate.zig").publishRouted(cx, out, m, r, x, z, fit, lsmestimate_requests, &route);
         if (usable_inference) try @import("mixed_influence_run.zig").publish(cx, out, spec, m, group, x, z, fit, if (parameter_search) |search| search.profile else true, &route);
         if (route.visible == 0) out.shrinkRetainingCapacity(group_start);
         if (usable_inference) try @import("mixed_plots.zig").execute(cx, spec, m, group, x, z, fit, if (spec.roles.by.len > 0) by_index + 1 else null);
@@ -228,13 +230,13 @@ test "MIXED001 declarations diagnose invalid names and preserve unsupported opti
     defer arena.deinit();
     const h = try Testing.init(arena.allocator());
     _ = try h.sample();
-    for ([_][]const u8{ "proc mixed alpha=0;run;", "proc mixed namelen=19;run;", "proc mixed method=banana;run;", "proc mixed order=banana;run;", "proc mixed;weight id;run;", "proc mixed;weight w x;run;", "proc mixed;id absent;run;", "proc mixed;by absent;run;", "proc mixed;model y=x;class g;run;", "proc mixed;freq w;run;", "proc mixed;lsmeans g;run;" }) |code| {
+    for ([_][]const u8{ "proc mixed alpha=0;run;", "proc mixed namelen=19;run;", "proc mixed method=banana;run;", "proc mixed order=banana;run;", "proc mixed;weight id;run;", "proc mixed;weight w x;run;", "proc mixed;id absent;run;", "proc mixed;by absent;run;", "proc mixed;model y=x;class g;run;", "proc mixed;freq w;run;", "proc mixed;lsmeans g;run;", "proc mixed;lsmestimate g 1;run;" }) |code| {
         diag.resetGap();
         defer diag.resetGap();
         try std.testing.expectError(error.ParseError, h.parse(code));
         try std.testing.expect(!diag.gapHit());
     }
-    for ([_][]const u8{ "proc mixed empirical;run;", "proc mixed plots=all;run;", "proc mixed;weight w;weight x;run;", "proc mixed;id id;id x;run;", "proc mixed;class g;model y=g;lsmestimate g 1;run;" }) |code| {
+    for ([_][]const u8{ "proc mixed empirical;run;", "proc mixed plots=all;run;", "proc mixed;weight w;weight x;run;", "proc mixed;id id;id x;run;" }) |code| {
         diag.resetGap();
         defer diag.resetGap();
         try std.testing.expectError(error.ParseError, h.parse(code));
