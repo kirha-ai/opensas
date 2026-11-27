@@ -120,14 +120,21 @@ test "GLM006 noncentral F inversion agrees with independent closed form" {
     // For DF=DFE=2, I_z(1+j,1)=z^(j+1), so the entire Poisson series
     // sums exactly to z*exp(-NC*(1-z)/2). No beta/Poisson implementation is
     // used by this reference; inverse NC=-2 log(p/z)/(1-z).
+    // Budget eight roundoff units per term over the hard 2000-term cap,
+    // plus the explicit omitted-mass bound. Root tolerance is derived below
+    // from the exact CDF derivative, not from an observed root discrepancy.
+    const cdf_budget = 8 * 2000 * std.math.floatEps(f64) + 1e-14;
     for ([_]f64{ 0.1, 1, 4, 20 }) |x| {
         const z = x / (x + 1);
         for ([_]f64{ 0, 0.01, 1, 10, 100, 1000 }) |nc| {
             const exact = z * @exp(-nc * (1 - z) / 2);
-            try std.testing.expectApproxEqAbs(exact, try noncentralCdf(x, 2, 2, nc), 3e-12);
+            try std.testing.expectApproxEqAbs(exact, try noncentralCdf(x, 2, 2, nc), cdf_budget);
         }
         const p = z / 3;
-        try std.testing.expectApproxEqAbs(-2 * @log(p / z) / (1 - z), try noncentrality(x, 2, 2, p), 2e-9);
+        const exact_root = -2 * @log(p / z) / (1 - z);
+        const derivative = p * (1 - z) / 2;
+        const root_budget = 2 * cdf_budget / derivative + 2e-12 * @max(1, exact_root);
+        try std.testing.expectApproxEqAbs(exact_root, try noncentrality(x, 2, 2, p), root_budget);
     }
     try std.testing.expectEqual(@as(f64, 0), try noncentrality(4, 2, 2, 0.9));
     try std.testing.expectEqual(@as(f64, 0), try noncentrality(0, 2, 2, 0.5));
