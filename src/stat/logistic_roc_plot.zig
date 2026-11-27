@@ -7,7 +7,7 @@ const diag = @import("../diag.zig");
 const A = std.mem.Allocator;
 pub fn svg(a: A, curves: []const roc.Curve, labels: []const []const u8, probabilities: bool, overlay: bool) ![]const u8 {
     if (curves.len == 0 or curves.len != labels.len) return error.ExecError;
-    const height: usize = if (overlay) 650 + 28 * curves.len else 680;
+    const height: usize = if (overlay) 670 + 28 * curves.len else 680;
     var output: std.Io.Writer.Allocating = .init(a);
     errdefer output.deinit();
     const w = &output.writer;
@@ -40,7 +40,10 @@ pub fn svg(a: A, curves: []const roc.Curve, labels: []const []const u8, probabil
             try w.print("<g class=\"roc-point\" data-threshold=\"{d}\" data-sensitivity=\"{d}\" data-fpr=\"{d}\" data-positive=\"{d}\" data-negative=\"{d}\" data-x=\"{d}\" data-y=\"{d}\">", .{ point.threshold, point.sensitivity, point.false_positive, point.positives, point.negatives, x, y });
             if (probabilities and point.label) {
                 const text = std.mem.trim(u8, try format.apply(a, .{ .num = point.threshold }, "6.2"), " ");
-                try w.print("<circle cx=\"{d}\" cy=\"{d}\" r=\"3\" fill=\"{s}\"/><text class=\"cutpoint\" x=\"{d}\" y=\"{d}\">", .{ x, y, color, x + 8, y - 7 });
+                // Curves rise to the right: upper-left labels stay clear of
+                // diagonal segments. At the left boundary use lower-right.
+                const boundary = point.false_positive < 0.05;
+                try w.print("<circle cx=\"{d}\" cy=\"{d}\" r=\"3\" fill=\"{s}\"/><text class=\"cutpoint\" x=\"{d}\" y=\"{d}\" text-anchor=\"{s}\">", .{ x, y, color, if (boundary) x + 8 else x - 8, if (boundary) y + 18 else y - 7, if (boundary) "start" else "end" });
                 try graphics.escaped(w, text);
                 try w.writeAll("</text>");
             }
