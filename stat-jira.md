@@ -81,6 +81,17 @@ Current counts: **48 DONE,19 PARK,7 DOING,1348 TODO**. All temporary reference f
 
 At exact c78ef7c6ca2b0b65ecf00e697687e906a887fc63, oracle-absent gate direct1:1989/1990unit,2361/2361corpus,11/11programs. Single failure is old REG parser-test substring `not implemented` after STEPWISE gained a real NOPRINT/OUTEST path; current explicit unsupported-listing diagnostic has changed. Repair378ce9bc retains all six invalid-syntax assertions, resets the gap flag before the supported-method/unsupported-listing path, and checks the exact captured message plus D-009 rc2. Targeted actual regression8/8 direct0; full rerun pending. Repair worktree `/Users/thomas/kirha/opensas-reg-gate-repair`, branch `codex/stat-reg-gate-repair`, created from c78ef7c6; ongoing REG009 source/evidence untouched. Supplemental not claimed for failedrun; oracle restored. Batchnotpushed.
 
+### Active-time assignments — LS-mean construction and consumers, scoring
+
+Frozenpriorworkthrough `2c8661a9` isintegrated; verification/pushpending, originalscopegapsremainPARK. NewattemptscheckverifiedPythonmonotonicclockbeforeeditsandfreezeafter2700awake seconds.
+
+- dev2: STAT-GLM-015; retained `opensas-dev2`, `codex/stat-b4-glm015-dev2`; assignedUTC 2026-11-27T23:44:09+00:00; initialUTCdeadline 2026-11-28T00:29:09+00:00; activeStart=354826.533546, activeDeadline=357526.533546.
+- dev3: STAT-MIXED-011; retained `opensas-dev3`, `codex/stat-b4-mixed-lsmestimate-dev3`; assignedUTC 2026-11-27T23:44:09+00:00; initialUTCdeadline 2026-11-28T00:29:09+00:00; activeStart=354826.533546, activeDeadline=357526.533546.
+- dev5: STAT-LOGISTIC-018; retained `opensas-dev5`, `codex/stat-b4-logistic-code-dev5`; assignedUTC 2026-11-27T23:44:09+00:00; initialUTCdeadline 2026-11-28T00:29:09+00:00; activeStart=354826.533546, activeDeadline=357526.533546.
+- dev7: STAT-MIXED-012; retained `opensas-dev7`, `codex/stat-b4-mixed-slice-dev7`; assignedUTC 2026-11-27T23:44:09+00:00; initialUTCdeadline 2026-11-28T00:29:09+00:00; activeStart=354826.533546, activeDeadline=357526.533546.
+
+ConcreteinterfacesareactualLSmeanL/GLS/covariance/estimability/sharedhypotheses andrealCODEgeneration. MIXEDLSMESTIMATE/SLICE consumersretainprocedure-specificDF/triggersemantics; sourceFamilylimitsare notstubprerequisites. LOGISTIC018 mayimplementnecessaryFILENAME TEMP/fileref integration onlyfromdocumentedexistingfile semantics andwithindependentscoringproof, coordinatedmainhooks; originalCOMMON020 TEMPfailuremustnotbehidden. No newbacklog/CI/destinationpolicychanges.
+
 ### Active-time assignments — diagnostics, exact logistic, NPAR output
 
 PriorREG011/LOGISTIC006/NPAR007 sourceisfrozenandintegratedthrough `82ace68f`, finalbatchverificationpending. New45-awake-minuteattemptschecktheverifiedabsolutePythonmonotonicclockbeforeeveryedit, no resetonhandoff.
@@ -5438,7 +5449,7 @@ Source: S154, Chapter 53, `The GLM Procedure`, PDF pp. 4043–4230. Tasks in thi
 
 <a id="stat-glm-015"></a>
 
-### [TODO] STAT-GLM-015 — GLM — Construction of Least Squares Means
+### [DOING @dev2] STAT-GLM-015 — GLM — Construction of Least Squares Means
 
 - Source: S154 / Chapter 53 / `Construction of Least Squares Means` (PDF pp. 4144–4147).
 - Scope: Implement Construction of Least Squares Means. This ticket owns the feature's options, defaults, computation, and results as an extension of the basic computational path; the chapter's output tickets handle ODS descriptors and file presentation.
@@ -8848,7 +8859,7 @@ Source: S154, Chapter 79, `The LOGISTIC Procedure`, PDF pp. 5823–6080. Tasks i
 
 <a id="stat-logistic-018"></a>
 
-### [TODO] STAT-LOGISTIC-018 — LOGISTIC — CODE / SCORE / Linear Predictor, Predicted Probability, and Confidence Limits
+### [DOING @dev5] STAT-LOGISTIC-018 — LOGISTIC — CODE / SCORE / Linear Predictor, Predicted Probability, and Confidence Limits
 
 - Source: S154 / Chapter 79 / `CODE Statement` (PDF p. 5855); S154 / Chapter 79 / `SCORE Statement` (PDF pp. 5898–5900); S154 / Chapter 79 / `Linear Predictor, Predicted Probability, and Confidence Limits` (PDF pp. 5925–5926).
 - Scope: Implement CODE; SCORE; Linear Predictor, Predicted Probability, and Confidence Limits. Cover the source suboptions, defaults, and applicability restrictions; implement only this feature group, without extending to languages or runtime environments outside the cited scope.
@@ -9699,7 +9710,7 @@ Source: S154, Chapter 84, `The MIXED Procedure`, PDF pp. 6613–6810. Tasks in t
 
 <a id="stat-mixed-011"></a>
 
-### [TODO] STAT-MIXED-011 — MIXED — LSMESTIMATE
+### [DOING @dev3] STAT-MIXED-011 — MIXED — LSMESTIMATE
 
 - Source: S154 / Chapter 84 / `LSMESTIMATE Statement` (PDF pp. 6652–6653).
 - Scope: Implement LSMESTIMATE. This ticket owns the feature's options, defaults, computation, and results as an extension of the basic computational path; the chapter's output tickets handle ODS descriptors and file presentation.
@@ -9709,7 +9720,7 @@ Source: S154, Chapter 84, `The MIXED Procedure`, PDF pp. 6613–6810. Tasks in t
 
 <a id="stat-mixed-012"></a>
 
-### [TODO] STAT-MIXED-012 — MIXED — SLICE
+### [DOING @dev7] STAT-MIXED-012 — MIXED — SLICE
 
 - Source: S154 / Chapter 84 / `SLICE Statement` (PDF p. 6694).
 - Scope: Implement SLICE. This ticket owns the feature's options, defaults, computation, and results as an extension of the basic computational path; the chapter's output tickets handle ODS descriptors and file presentation.
