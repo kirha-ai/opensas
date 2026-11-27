@@ -24,6 +24,10 @@ pub const Options = struct {
     maxiter: usize = 50,
     maxfunc: usize = 150,
     namelen: usize = 20,
+    convergence: f64 = 1e-8,
+    criterion: @import("mixed_fit.zig").Convergence = .hessian,
+    convergence_explicit: bool = false,
+    absolute: bool = false,
 };
 pub const Statement = struct {
     kind: enum { class, model, random, repeated, parms, contrast, estimate },
@@ -74,6 +78,21 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
             continue;
         }
         i += 1;
+        if (eq(token.text, "absolute")) {
+            opts.absolute = true;
+            continue;
+        }
+        if (eq(token.text, "convh") or eq(token.text, "convg") or eq(token.text, "convf")) {
+            if (opts.convergence_explicit) return proc.failGap(cx.diags, token.line, "PROC MIXED: multiple convergence-criterion options are not independently verified", .{});
+            opts.convergence_explicit = true;
+            opts.criterion = if (eq(token.text, "convg")) .gradient else if (eq(token.text, "convf")) .function else .hessian;
+            if (is(t, i, .eq)) {
+                i += 1;
+                opts.convergence = try numeric(cx, t, &i);
+            }
+            if (!(opts.convergence > 0)) return proc.failGap(cx.diags, token.line, "PROC MIXED: nonpositive convergence tolerances are not independently verified", .{});
+            continue;
+        }
         if (eq(token.text, "noprofile") or eq(token.text, "sigiter")) {
             opts.noprofile = true;
             continue;
@@ -87,7 +106,7 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
             continue;
         }
         if (eq(token.text, "namelen") and !is(t, i, .eq)) continue; // default20, optional argument
-        const unsupported = [_][]const u8{ "absolute", "anovaf", "asycorr", "asycov", "cl", "convf", "convg", "convh", "covtest", "dfbw", "empirical", "ic", "itdetails", "lognote", "mmeq", "mmeqsol", "nobound", "noclprint", "ranks", "ratio", "ridge", "scoring", "update" };
+        const unsupported = [_][]const u8{ "anovaf", "asycorr", "asycov", "cl", "covtest", "dfbw", "empirical", "ic", "itdetails", "lognote", "mmeq", "mmeqsol", "nobound", "noclprint", "ranks", "ratio", "ridge", "scoring", "update" };
         for (unsupported) |option| if (eq(token.text, option)) return proc.failGap(cx.diags, token.line, "PROC MIXED: option {s} is not implemented", .{token.text});
         if (!is(t, i, .eq)) return bad(cx, token);
         i += 1;

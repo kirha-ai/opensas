@@ -66,15 +66,16 @@ pub fn run(cx: proc.ProcCtx, out: *std.ArrayList(u8), tokens: []const lex.Token)
             continue;
         }
         const fit_model = math.Model{ .x = x.matrix.x, .y = x.y, .n = x.matrix.n, .p = x.matrix.p, .weights = x.weights, .components = components, .has_intercept = m.matrix.intercept, .singular = m.options.singular };
-        const fit_options = math.Options{ .method = .reml, .maxiter = spec.options.maxiter, .maxfunc = spec.options.maxfunc, .bic_n = if (components.len == 0) null else @as(f64, @floatFromInt(if (z.subject_count > 1) z.subject_count else z.first_effect_levels)) };
+        const fit_options = math.Options{ .method = .reml, .maxiter = spec.options.maxiter, .maxfunc = spec.options.maxfunc, .convergence = spec.options.convergence, .criterion = spec.options.criterion, .absolute = spec.options.absolute, .bic_n = if (components.len == 0) null else @as(f64, @floatFromInt(if (z.subject_count > 1) z.subject_count else z.first_effect_levels)) };
         var parameter_search: ?parms.Result = null;
         const fit = if (parameter_spec) |parameters| blk: {
             parameter_search = try parms.execute(cx, fit_model, parameters, fit_options, spec.options.noprofile);
             break :blk parameter_search.?.fit;
         } else math.fit(cx.arena, fit_model, fit_options) catch |err| return if (err == error.OutOfMemory) error.OutOfMemory else proc.failGap(cx.diags, spec.line, "PROC MIXED: this estimation boundary is not implemented ({t})", .{err});
-        if (!fit.converged and fit.status != .evaluated) return proc.failGap(cx.diags, spec.line, "PROC MIXED: nonconverged-result reporting is not implemented ({t})", .{fit.status});
+        const usable_inference = fit.converged or fit.status == .evaluated;
+        if (!usable_inference) try cx.diags.warnStatus(0, "Convergence criteria not met: {s} Last covariance estimates are retained; fixed-effect inference is not produced.", .{math.statusReason(fit.status)});
         var tests: std.ArrayList(render.NamedTest) = .empty;
-        if (!m.options.notest) for (m.matrix.effects, 0..) |_, ei| {
+        if (usable_inference and !m.options.notest) for (m.matrix.effects, 0..) |_, ei| {
             const contrast = try fixed.type3(cx, m, x, ei);
             const df = if (m.options.ddfm == .residual or z.components.len == 0) fit.df_error else try random.containmentDF(cx, r, x.matrix, z, ei, x.weights, m.options.singular);
             if (df == 0) return proc.failGap(cx.diags, spec.line, "PROC MIXED: zero containment degrees-of-freedom inference is not implemented", .{});
@@ -88,10 +89,10 @@ pub fn run(cx: proc.ProcCtx, out: *std.ArrayList(u8), tokens: []const lex.Token)
         if (parameter_search) |search| displayed_spec.options.noprofile = !search.profile;
         try info.renderRouted(cx.arena, out, displayed_spec, m, group, x, z, &route);
         if (parameter_search) |search| try parms.renderSearchRouted(cx.arena, out, search, parameter_spec.?, &route);
-        render.render(cx.arena, out, fit, names, tests.items, .{ .noitprint = spec.options.noitprint, .notest = m.options.notest, .nofit = fit.status == .evaluated, .parms_lrt = if (parameter_search) |search| search.likelihood_ratio else null, .route = &route }) catch |err| return if (err == error.OutOfMemory) error.OutOfMemory else proc.failGap(cx.diags, spec.line, "PROC MIXED: numerical table rendering failed ({t})", .{err});
-        try @import("mixed_contrasts.zig").publishRouted(cx, out, m, r, x, z, fit, fit.variances, inference_requests, &route);
+        render.render(cx.arena, out, fit, names, tests.items, .{ .noitprint = spec.options.noitprint, .notest = m.options.notest or !usable_inference, .nofit = fit.status == .evaluated or !usable_inference, .parms_lrt = if (parameter_search) |search| search.likelihood_ratio else null, .route = &route }) catch |err| return if (err == error.OutOfMemory) error.OutOfMemory else proc.failGap(cx.diags, spec.line, "PROC MIXED: numerical table rendering failed ({t})", .{err});
+        if (usable_inference) try @import("mixed_contrasts.zig").publishRouted(cx, out, m, r, x, z, fit, fit.variances, inference_requests, &route);
         if (route.visible == 0) out.shrinkRetainingCapacity(group_start);
-        try @import("mixed_plots.zig").execute(cx, spec, m, group, x, z, fit, if (spec.roles.by.len > 0) by_index + 1 else null);
+        if (usable_inference) try @import("mixed_plots.zig").execute(cx, spec, m, group, x, z, fit, if (spec.roles.by.len > 0) by_index + 1 else null);
     }
 }
 

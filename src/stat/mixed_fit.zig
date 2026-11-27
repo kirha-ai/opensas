@@ -11,8 +11,18 @@ const reg = @import("reg_fit.zig");
 pub const Component = struct { name: []const u8, kernel: []const f64, columns: usize = 0 };
 pub const Model = struct { x: []const f64, y: []const f64, n: usize, p: usize, weights: ?[]const f64 = null, components: []const Component = &.{}, has_intercept: bool = true, singular: f64 = 1e-10 };
 pub const Method = enum { reml, ml };
-pub const Options = struct { method: Method = .reml, maxiter: usize = 50, maxfunc: usize = 150, convergence: f64 = 1e-8, bic_n: ?f64 = null, start: ?[]const f64 = null, ols_start: bool = false };
+pub const Convergence = enum { hessian, gradient, function };
+pub const Options = struct { method: Method = .reml, maxiter: usize = 50, maxfunc: usize = 150, convergence: f64 = 1e-8, bic_n: ?f64 = null, start: ?[]const f64 = null, ols_start: bool = false, criterion: Convergence = .hessian, absolute: bool = false };
 pub const Status = enum { converged, evaluated, max_iterations, max_evaluations, line_search_failed };
+pub fn statusReason(status: Status) []const u8 {
+    return switch (status) {
+        .converged => "Convergence criteria met.",
+        .evaluated => "Covariance parameters evaluated without iteration.",
+        .max_iterations => "Maximum number of iterations reached.",
+        .max_evaluations => "Maximum number of likelihood evaluations reached.",
+        .line_search_failed => "No improving feasible likelihood step was found.",
+    };
+}
 pub const Iteration = struct { iteration: usize, evaluations: usize, objective: f64, criterion: ?f64, parameters: []f64 };
 pub const Fit = struct {
     n: usize,
@@ -34,6 +44,9 @@ pub const Fit = struct {
     method: Method,
     df_error: usize,
     pd_h: ?bool = null,
+    evaluation_count: usize = 0,
+    rejected_evaluations: usize = 0,
+    last_iteration: usize = 0,
 };
 const Evaluation = struct { objective: f64, q: f64, sigma: f64, beta: []f64, cov_unit: []f64, pmat: []f64, py: []f64, hinv: []f64 };
 fn num(i: usize) f64 {
@@ -92,17 +105,20 @@ fn derivatives(a: A, e: Evaluation, components: []const Component, n: usize, df:
     const products = try a.alloc([]f64, m);
     const vectors = try a.alloc([]f64, m);
     const quadratic = try a.alloc(f64, m);
+    const normalized = try a.alloc(f64, e.py.len);
+    const root_q = @sqrt(e.q);
+    for (e.py, normalized) |v, *dest| dest.* = v / root_q;
     for (components, 0..) |component, i| {
         products[i] = try matrix.multiply(a, if (method == .reml) e.pmat else e.hinv, component.kernel, n);
-        vectors[i] = try matrix.vector(a, component.kernel, e.py, n);
-        quadratic[i] = matrix.dot(e.py, vectors[i]);
+        vectors[i] = try matrix.vector(a, component.kernel, normalized, n);
+        quadratic[i] = matrix.dot(normalized, vectors[i]);
         var trace: f64 = 0;
         for (0..n) |j| trace += products[i][j * n + j];
-        gradient[i] = trace - df * quadratic[i] / e.q;
+        gradient[i] = trace - df * quadratic[i];
     }
     for (0..m) |i| for (0..m) |j| {
         const v = try matrix.vector(a, e.pmat, vectors[j], n);
-        hessian[i * m + j] = -matrix.traceProduct(products[i], products[j], n) + df * (2 * matrix.dot(vectors[i], v) / e.q - quadratic[i] * quadratic[j] / (e.q * e.q));
+        hessian[i * m + j] = -matrix.traceProduct(products[i], products[j], n) + df * (2 * matrix.dot(vectors[i], v) - quadratic[i] * quadratic[j]);
     };
     return .{ .gradient = gradient, .hessian = hessian };
 }
@@ -164,6 +180,12 @@ pub fn fit(a: A, model: Model, options: Options) !Fit {
         for (values) |v| if (!std.math.isFinite(v) or v < 0) return error.InvalidInput;
         if (!(values[values.len - 1] > 0)) return error.InvalidInput;
     }
+    if (model.has_intercept) {
+        const constant = for (model.y) |v| {
+            if (v != model.y[0]) break false;
+        } else true;
+        if (constant) return error.DegenerateResponse;
+    }
     var ranked = try ranker.fit(a, model.x, model.y, model.n, model.p, model.weights, model.has_intercept, model.singular);
     defer ranked.deinit(a);
     const p = ranked.fit.rank;
@@ -193,6 +215,10 @@ pub fn fit(a: A, model: Model, options: Options) !Fit {
     var current = try evaluate(state_arena.allocator(), x, model.y, model.n, p, model.components, ratios, model.weights, options.method);
     const df = num(if (options.method == .reml) model.n - p else model.n);
     var pd_h: ?bool = null;
+    var rejected: usize = 0;
+    var previous_objective: ?f64 = null;
+    const previous_bound = try a.alloc(bool, m);
+    @memset(previous_bound, false);
     var i: usize = 0;
     while (i <= options.maxiter) : (i += 1) {
         var scratch = std.heap.ArenaAllocator.init(a);
@@ -208,15 +234,23 @@ pub fn fit(a: A, model: Model, options: Options) !Fit {
             error.NotPositiveDefinite => false,
             else => return err,
         };
+        var released = false;
+        for (ratios, previous_bound) |ratio, on_bound| if (on_bound and ratio > 0) {
+            released = true;
+        };
         // Active lower bounds satisfy the one-sided KKT condition; freeze only
         // coordinates whose gradient points out of the nonnegative domain.
-        for (0..m) |j| if (ratios[j] <= 1e-12 and d.gradient[j] >= 0) {
+        for (0..m) |j| if (ratios[j] == 0 and d.gradient[j] >= 0) {
             for (0..m) |k| {
                 d.hessian[j * m + k] = 0;
                 d.hessian[k * m + j] = 0;
             }
             d.hessian[j * m + j] = 1;
             d.gradient[j] = 0;
+        };
+        const unregularized = matrix.inverse(tmp, d.hessian, m) catch |err| switch (err) {
+            error.NotPositiveDefinite => null,
+            else => return err,
         };
         var scale: f64 = 1;
         for (0..m) |j| scale = @max(scale, @abs(d.hessian[j * m + j]));
@@ -238,7 +272,17 @@ pub fn fit(a: A, model: Model, options: Options) !Fit {
         // The optimization objective omits the Gaussian additive constant.
         // Reporting -2 log likelihood includes it; CONVH uses the optimized
         // objective (physical p.6629), so its denominator excludes that constant.
-        const criterion = @max(0, -matrix.dot(d.gradient, step)) / @max(1e-100, @abs(e.objective - df * @log(2 * std.math.pi)));
+        const objective = e.objective - df * @log(2 * std.math.pi);
+        const numerator: ?f64 = switch (options.criterion) {
+            .hessian => if (unregularized) |u| @max(0, matrix.dot(d.gradient, try matrix.vector(tmp, u.values, d.gradient, m))) else matrix.dot(d.gradient, d.gradient),
+            .gradient => blk: {
+                var largest: f64 = 0;
+                for (d.gradient) |g| largest = @max(largest, @abs(g));
+                break :blk largest;
+            },
+            .function => if (previous_objective) |last| @abs(objective - last) else null,
+        };
+        const criterion: ?f64 = if (numerator) |v| v / (if (options.absolute) @as(f64, 1) else @max(1e-100, @abs(objective))) else null;
         // Iteration zero is the independently evaluated homogeneous residual
         // baseline (the same fixed X), not the MIVQUE0 starting point. This
         // convention reproduces physical p.6622 Figure84.11 from its data.
@@ -249,8 +293,8 @@ pub fn fit(a: A, model: Model, options: Options) !Fit {
             @memset(reported_parameters[0..m], 0);
             reported_parameters[m] = starting.null_sigma;
         }
-        if (i > 0 or !explicit_start) try history.append(a, .{ .iteration = i, .evaluations = if (i == 0) 1 else evaluations, .objective = if (i == 0) starting.null_objective else e.objective, .criterion = if (i == 0) null else criterion, .parameters = reported_parameters });
-        if (criterion < options.convergence) {
+        if (i > 0 or !explicit_start) try history.append(a, .{ .iteration = i, .evaluations = if (i == 0) 1 else evaluations, .objective = if (i == 0) starting.null_objective else e.objective, .criterion = if (i == 0 or released) null else criterion, .parameters = reported_parameters });
+        if (criterion != null and criterion.? <= options.convergence) {
             if (i == 0 and (explicit_start or @abs(starting.null_objective - e.objective) > 1e-12)) try history.append(a, .{ .iteration = 1, .evaluations = evaluations, .objective = e.objective, .criterion = criterion, .parameters = try parameters(a, ratios, e.sigma) });
             status = .converged;
             break;
@@ -264,6 +308,7 @@ pub fn fit(a: A, model: Model, options: Options) !Fit {
             status = .line_search_failed;
             break;
         }
+        for (ratios, previous_bound) |ratio, *bound| bound.* = ratio == 0;
         const trial = try tmp.alloc(f64, m);
         var accepted = false;
         for (0..30) |_| {
@@ -280,15 +325,40 @@ pub fn fit(a: A, model: Model, options: Options) !Fit {
             var trial_arena = std.heap.ArenaAllocator.init(a);
             var transferred = false;
             defer if (!transferred) trial_arena.deinit();
+            evaluations += 1;
             const candidate = evaluate(trial_arena.allocator(), x, model.y, model.n, p, model.components, trial, model.weights, options.method) catch |err| switch (err) {
                 error.NotPositiveDefinite, error.DegenerateResponse => {
+                    rejected += 1;
                     length *= 0.5;
                     continue;
                 },
                 else => return err,
             };
-            evaluations += 1;
-            if (candidate.objective < e.objective) {
+            const reaches_bound = for (ratios, trial) |old, next| {
+                if (old > 0 and next == 0) break true;
+            } else false;
+            var equal_objective_progress = false;
+            if (candidate.objective == e.objective) {
+                const moved = for (ratios, trial) |old, next| {
+                    if (old != next) break true;
+                } else false;
+                if (moved) {
+                    const next_d = try derivatives(trial_arena.allocator(), candidate, model.components, model.n, df, options.method);
+                    var old_norm: f64 = 0;
+                    var next_norm: f64 = 0;
+                    for (d.gradient, next_d.gradient, trial) |old, g, r| {
+                        old_norm = @max(old_norm, @abs(old));
+                        const projected = if (r == 0 and g >= 0) @as(f64, 0) else g;
+                        next_norm = @max(next_norm, @abs(projected));
+                    }
+                    equal_objective_progress = next_norm < old_norm;
+                }
+            }
+            // Near the optimum, objective changes can be below one ULP while
+            // the gradient still improves. Accept equality only with measured
+            // stationarity progress (or an actual step onto a lower bound).
+            if (candidate.objective < e.objective or (candidate.objective == e.objective and (reaches_bound or equal_objective_progress))) {
+                previous_objective = objective;
                 @memcpy(ratios, trial);
                 state_arena.deinit();
                 state_arena = trial_arena;
@@ -328,7 +398,7 @@ pub fn fit(a: A, model: Model, options: Options) !Fit {
     const aic = final.objective + 2 * count;
     const denominator = @max(effective, count + 2) - count - 1;
     const bic_n = options.bic_n orelse if (m == 0) effective else std.math.nan(f64);
-    return .{ .n = model.n, .p = model.p, .rank = p, .independent = independent, .coefficients = coefficients, .covariance = covariance, .alias_coefficients = try a.dupe(f64, ranked.alias_coefficients), .variances = try parameters(a, ratios, final.sigma), .residual_variance = final.sigma, .minus2loglik = final.objective, .aic = aic, .aicc = if (denominator > 0) aic + 2 * count * (count + 1) / denominator else null, .bic = if (bic_n > 0) final.objective + count * @log(bic_n) else if (bic_n == 0) final.objective else null, .iterations = try history.toOwnedSlice(a), .converged = status == .converged, .status = status, .method = options.method, .df_error = model.n - p, .pd_h = pd_h };
+    return .{ .n = model.n, .p = model.p, .rank = p, .independent = independent, .coefficients = coefficients, .covariance = covariance, .alias_coefficients = try a.dupe(f64, ranked.alias_coefficients), .variances = try parameters(a, ratios, final.sigma), .residual_variance = final.sigma, .minus2loglik = final.objective, .aic = aic, .aicc = if (denominator > 0) aic + 2 * count * (count + 1) / denominator else null, .bic = if (bic_n > 0) final.objective + count * @log(bic_n) else if (bic_n == 0) final.objective else null, .iterations = try history.toOwnedSlice(a), .converged = status == .converged, .status = status, .method = options.method, .df_error = model.n - p, .pd_h = pd_h, .evaluation_count = evaluations, .rejected_evaluations = rejected, .last_iteration = i };
 }
 pub const Test = struct { num_df: usize, den_df: usize, f: f64, p: f64 };
 pub fn testContrast(a: A, fitted: anytype, l: []const f64, q: usize, den_df: usize) !Test {
@@ -355,6 +425,7 @@ pub fn testContrast(a: A, fitted: anytype, l: []const f64, q: usize, den_df: usi
 }
 
 test {
+    _ = @import("mixed_issues_tests.zig");
     _ = @import("mixed_fit_tests.zig");
     _ = @import("mixed_parms_tests.zig");
     _ = @import("mixed_ods_tests.zig");

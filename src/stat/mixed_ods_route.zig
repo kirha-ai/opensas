@@ -38,6 +38,6 @@ pub const Router = struct {
         self.visible += 1;
     }
     fn statusNote(self: Router, name: []const u8) !void {
-        if (std.mem.eql(u8, name, "ConvergenceStatus")) if (self.diags) |d| try d.note(0, "{s}", .{if (self.converged) @as([]const u8, "Convergence criteria met.") else "Convergence criteria not met."});
+        if (self.converged and std.mem.eql(u8, name, "ConvergenceStatus")) if (self.diags) |d| try d.note(0, "{s}", .{if (self.converged) @as([]const u8, "Convergence criteria met.") else "Convergence criteria not met."});
     }
 };

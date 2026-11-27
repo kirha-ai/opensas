@@ -74,8 +74,8 @@ pub fn publish(cx: proc.ProcCtx, s: decl.Spec, m: model.Spec, g: input.Group, x:
         for (labels, [_]usize{ g.read_count, x.matrix.n, g.read_count - x.matrix.n }) |label, count| try table.row(&.{ b.s(label), b.n(@floatFromInt(count)), b.n(@floatFromInt(g.read_count)), b.n(@floatFromInt(x.matrix.n)) });
         try send(cx, "NObs", &table);
     }
-    const iterative = s.options.method == .reml and f.variances.len > 1 and f.iterations.len > 0 and f.status != .evaluated;
-    if (iterative and c.wants("IterHistory")) {
+    const iterative = s.options.method == .reml and f.variances.len > 1 and f.status != .evaluated;
+    if (iterative and f.iterations.len > 0 and c.wants("IterHistory")) {
         if (s.options.noitprint) return proc.failGap(cx.diags, s.line, "PROC MIXED: NOITPRINT with IterHistory capture is not independently verified", .{});
         var table = try make(a, s, g, "IterHistory");
         try table.num("Iteration", "8.");
@@ -93,7 +93,7 @@ pub fn publish(cx: proc.ProcCtx, s: decl.Spec, m: model.Spec, g: input.Group, x:
         for (f.variances[0..z.components.len]) |v| {
             if (v <= 0) pd_g = false;
         }
-        try table.row(&.{ b.n(if (f.converged) 0 else 1), b.n(if (pd_g) 1 else 0), if (f.pd_h) |pd| b.n(if (pd) 1 else 0) else Value.missing, b.s(if (f.converged) "Convergence criteria met." else "Convergence criteria not met.") });
+        try table.row(&.{ b.n(if (f.converged) 0 else 1), b.n(if (pd_g) 1 else 0), if (f.pd_h) |pd| b.n(if (pd) 1 else 0) else Value.missing, b.s(math.statusReason(f.status)) });
         try send(cx, "ConvergenceStatus", &table);
     }
     if (c.wants("CovParms")) {
@@ -104,7 +104,7 @@ pub fn publish(cx: proc.ProcCtx, s: decl.Spec, m: model.Spec, g: input.Group, x:
         for (cov_names, f.variances) |name, value| try table.row(&.{ b.s(name), b.n(value) });
         try send(cx, "CovParms", &table);
     }
-    if ((f.status != .evaluated or s.options.method == .type3) and c.wants("FitStatistics")) {
+    if ((f.converged or s.options.method == .type3) and c.wants("FitStatistics")) {
         var table = try make(a, s, g, "FitStatistics");
         try table.char("Descr", 64);
         try table.num("Value", "12.1");

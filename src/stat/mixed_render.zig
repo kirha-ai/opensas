@@ -7,21 +7,21 @@ pub const LikelihoodRatio = struct { df: usize, statistic: f64, p: f64 };
 pub const Options = struct { noitprint: bool = false, notest: bool = false, nofit: bool = false, parms_lrt: ?LikelihoodRatio = null, route: ?*@import("mixed_ods_route.zig").Router = null };
 pub fn render(a: std.mem.Allocator, out: *std.ArrayList(u8), fitted: math.Fit, covariance_names: []const []const u8, tests: []const NamedTest, options: Options) !void {
     if (covariance_names.len != fitted.variances.len) return error.InvalidInput;
-    const iterative = fitted.variances.len > 1 and fitted.iterations.len > 0;
+    const iterative = fitted.variances.len > 1 and fitted.status != .evaluated;
     var start = out.items.len;
-    if (iterative and !options.noitprint) {
+    if (iterative and fitted.iterations.len > 0 and !options.noitprint) {
         try out.appendSlice(a, "\nIteration History\n\nIteration Evaluations ");
         try out.appendSlice(a, if (fitted.method == .reml) "-2 Res Log Like Criterion\n" else "-2 Log Like Criterion\n");
         for (fitted.iterations) |row| {
             try out.print(a, "{d} {d} {d:.8}", .{ row.iteration, row.evaluations, row.objective });
-            if (row.criterion) |criterion| try out.print(a, " {d:.8}", .{criterion});
+            if (row.criterion) |criterion| try out.print(a, " {d:.8}", .{criterion}) else if (row.iteration > 0) try out.appendSlice(a, " .");
             try out.append(a, '\n');
         }
         if (options.route) |r| try r.finish(a, out, start, "IterHistory");
     }
     if (iterative) {
         start = out.items.len;
-        try out.appendSlice(a, if (fitted.converged) "\nConvergence criteria met.\n" else "\nConvergence criteria not met.\n");
+        if (fitted.converged) try out.appendSlice(a, "\nConvergence criteria met.\n") else try out.print(a, "\nConvergence criteria not met: {s}\n", .{math.statusReason(fitted.status)});
     }
     if (iterative) if (options.route) |r| try r.finish(a, out, start, "ConvergenceStatus");
     start = out.items.len;
