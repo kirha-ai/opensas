@@ -12,6 +12,10 @@ Explicit user resume. Confirmed working branch `feat/stat/batch-4`, base `31356c
 - dev6: STAT-COMMON-017; `/Users/thomas/kirha/opensas-dev6`; branch `codex/stat-b4-dev6`; assigned 2026-11-27T13:42:13+00:00; implementation deadline 2026-11-27T14:27:13+00:00. Original README/cases and cited physical PDF pages required before edits.
 - dev7: STAT-COMMON-018; `/Users/thomas/kirha/opensas-dev7`; branch `codex/stat-b4-dev7`; assigned 2026-11-27T13:42:13+00:00; implementation deadline 2026-11-27T14:27:13+00:00. Original README/cases and cited physical PDF pages required before edits.
 
+### Rolling assignment — FREQ-011
+
+FREQ-010 implementation/replay/focused checks are complete and integrated at `22219f47`, awaiting coordinator final gate/supplemental/absence/push (not yet DONE). dev5 owns existing STAT-FREQ-011 on retained `opensas-dev5`, branch `codex/stat-b4c-dev5`, assigned 2026-11-27T14:12:55+00:00, deadline 2026-11-27T14:57:55+00:00. Scope remains odds ratio/relative risks with permanent original mapping and independent boundary/inversion tests; no new tickets.
+
 ### Rolling assignment — POWER-002
 
 POWER-001 partial integrated from `bbaef53b`; full final batch gate/supplemental/absence still pending, so its broad original remains PARK. dev7 now owns existing STAT-POWER-002 on retained `opensas-dev7`, new branch `codex/stat-b4c-dev7`, assigned 2026-11-27T14:09:40+00:00, deadline 2026-11-27T14:54:40+00:00. Its POWER-001/COMMON-018 interface is the concrete public Options/Scenario/Result/compute contract and tested exact solver; pending broad analyses/plots are not claimed implemented. No new backlog ticket.
@@ -3830,7 +3834,7 @@ Source: S154, Chapter 47, `The FREQ Procedure`, PDF pp. 3069–3290. Tasks in th
 
 <a id="stat-freq-010"></a>
 
-### [DOING @dev5] STAT-FREQ-010 — FREQ — Common Risk Difference
+### [DOING @coordinator] STAT-FREQ-010 — FREQ — Common Risk Difference
 
 - Source: S154 / Chapter 47 / `Common Risk Difference` (PDF pp. 3199–3203).
 - Scope: Implement Common Risk Difference. This ticket owns the feature's options, defaults, computation, and results as an extension of the basic computational path; the chapter's output tickets handle ODS descriptors and file presentation.
@@ -3846,7 +3850,7 @@ Source: S154, Chapter 47, `The FREQ Procedure`, PDF pp. 3069–3290. Tasks in th
 
 <a id="stat-freq-011"></a>
 
-### [TODO] STAT-FREQ-011 — FREQ — Odds Ratio and Relative Risks
+### [DOING @dev5] STAT-FREQ-011 — FREQ — Odds Ratio and Relative Risks
 
 - Source: S154 / Chapter 47 / `Odds Ratio and Relative Risks` (PDF pp. 3203–3213).
 - Scope: Implement Odds Ratio and Relative Risks. This ticket owns the feature's options, defaults, computation, and results as an extension of the basic computational path; the chapter's output tickets handle ODS descriptors and file presentation.
