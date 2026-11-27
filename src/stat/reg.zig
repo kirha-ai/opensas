@@ -111,6 +111,31 @@ fn executePrepared(cx: proc.ProcCtx, out: *std.ArrayList(u8), spec: Spec, prepar
             const input = computed.input;
             const w = computed.weights;
             const count = computed.count;
+            if (model.selection.method != .none) {
+                const candidates = @import("reg_selection.zig").compute(cx.arena, input.x, input.y, w, model.regressors.len, model.intercept, @intFromFloat(count), model.singular, model.selection) catch |err| {
+                    if (err == error.OutOfMemory) return err;
+                    return proc.failGap(cx.diags, 0, "PROC REG: all-subset selection needs 1–10 full-rank candidates, positive residual variance, and uniquely ordered criteria", .{});
+                };
+                const builder = estimates.?;
+                var selection_arena = std.heap.ArenaAllocator.init(cx.arena);
+                defer selection_arena.deinit();
+                for (candidates) |candidate| {
+                    var selected_model = model;
+                    const columns = try cx.arena.alloc(usize, candidate.size);
+                    var column: usize = 0;
+                    for (model.regressors, 0..) |ci, j| if (candidate.mask & (@as(u16, 1) << @intCast(j)) != 0) {
+                        columns[column] = ci;
+                        column += 1;
+                    };
+                    selected_model.regressors = columns;
+                    var selection_context = cx;
+                    selection_context.arena = selection_arena.allocator();
+                    const selected_fit = try fitModel(selection_context, spec, selected_model, group.rows);
+                    try builder.appendSelection(cx.arena, selected_model, group.rep, selected_fit.diagnostics.fit, candidate);
+                    _ = selection_arena.reset(.retain_capacity);
+                }
+                continue;
+            }
             const diagnostics = computed.diagnostics;
             const fit = diagnostics.fit;
             var ipc_points: []const @import("reg_ipc.zig").Point = &.{};
@@ -373,6 +398,7 @@ pub const Session = struct {
     /// from that statement. Crossproduct/missingness variables remain frozen.
     fn current(self: *Session, cx: proc.ProcCtx) diag.Error!Spec {
         if (self.spec.models.len == 0) return cx.diags.fail(error.ParseError, 0, "PROC REG: no current MODEL", .{});
+        for (self.spec.models) |model| if (model.selection.method != .none) return proc.failGap(cx.diags, 0, "PROC REG: interactive subset selection is not implemented", .{});
         if (self.spec.by.len > 0) return cx.diags.fail(error.ParseError, 0, "PROC REG: interactivity is disabled with BY processing", .{});
         const group = self.spec.models[self.spec.models.len - 1].statement_index;
         var first = self.spec.models.len - 1;
@@ -595,6 +621,7 @@ test "STAT-COMMON-004 weighted listing identifies weight without changing observ
 }
 
 test {
+    _ = @import("reg_selection_tests.zig");
     _ = @import("reg_restrict.zig");
     _ = @import("reg_restrict_tests.zig");
     _ = @import("reg_ipc.zig");

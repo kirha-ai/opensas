@@ -22,6 +22,8 @@ pub const Model = struct {
     tol: bool = false,
     vif: bool = false,
     restrictions: []const @import("reg_restrict.zig").Constraint = &.{},
+    selection: @import("reg_selection.zig").Options = .{},
+    selection_output: @import("reg_selection.zig").Output = .{},
 };
 pub const Spec = struct {
     ds: *Dataset,
@@ -70,6 +72,13 @@ fn numeric(cx: proc.ProcCtx, t: []const lex.Token, i: *usize) diag.Error!f64 {
     i.* += 3;
     if (!std.math.isFinite(v) or v <= 0 or v >= 1) return cx.diags.fail(error.ParseError, t[i.* - 1].line, "PROC REG: option value must be between 0 and 1", .{});
     return v;
+}
+fn selectionNumber(cx: proc.ProcCtx, t: []const lex.Token, i: *usize, integral: bool) diag.Error!f64 {
+    if (!at(t, i.* + 1, .eq) or !at(t, i.* + 2, .number)) return cx.diags.fail(error.ParseError, t[i.*].line, "PROC REG: selection option requires a nonnegative number", .{});
+    const value = std.fmt.parseFloat(f64, t[i.* + 2].text) catch return error.ParseError;
+    i.* += 3;
+    if (!std.math.isFinite(value) or value < 0 or (integral and (value != @trunc(value) or value > 1000000))) return cx.diags.fail(error.ParseError, t[i.* - 1].line, "PROC REG: invalid selection option value", .{});
+    return value;
 }
 fn unsupported(cx: proc.ProcCtx, tok: lex.Token, known: []const []const u8) diag.Error {
     for (known) |name| if (eq(tok.text, name)) return proc.failGap(cx.diags, tok.line, "PROC REG: {s} is not implemented", .{tok.text});
@@ -229,6 +238,7 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
             if (dependents.len == 0) return cx.diags.fail(error.ParseError, t[i].line, "PROC REG MODEL requires a response", .{});
             var slash = equal + 1;
             while (slash < end and !at(t, slash, .slash)) slash += 1;
+            for (t[equal + 1 .. slash]) |token| if (token.tag == .lbrace or token.tag == .rbrace) return proc.failGap(cx.diags, token.line, "PROC REG: grouped selection variables are not implemented", .{});
             const regressors = try columns(cx, ds, t[equal + 1 .. slash], true);
             var model: Model = .{ .statement_index = model_number, .label = label orelse try std.fmt.allocPrint(cx.arena, "MODEL{d}", .{model_number}), .dependent = dependents[0], .regressors = regressors, .alpha = alpha, .singular = singular };
             var j = slash + 1;
@@ -251,11 +261,39 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
                 } else if (kw(t, j, "vif")) {
                     model.vif = true;
                     j += 1;
+                } else if (kw(t, j, "selection")) {
+                    if (!at(t, j + 1, .eq) or !at(t, j + 2, .name)) return cx.diags.fail(error.ParseError, t[j].line, "PROC REG: SELECTION requires a method", .{});
+                    model.selection.method = if (kw(t, j + 2, "none")) .none else if (kw(t, j + 2, "rsquare")) .rsquare else if (kw(t, j + 2, "adjrsq")) .adjrsq else if (kw(t, j + 2, "cp")) .cp else if (kw(t, j + 2, "forward") or kw(t, j + 2, "f")) .forward else if (kw(t, j + 2, "backward") or kw(t, j + 2, "b")) .backward else if (kw(t, j + 2, "stepwise")) .stepwise else if (kw(t, j + 2, "maxr")) .maxr else if (kw(t, j + 2, "minr")) .minr else {
+                        return unsupported(cx, t[j + 2], &.{ "forward", "f", "backward", "b", "stepwise", "maxr", "minr" });
+                    };
+                    j += 3;
+                } else if (kw(t, j, "start") or kw(t, j, "stop") or kw(t, j, "best") or kw(t, j, "include") or kw(t, j, "maxstep")) {
+                    const option = t[j].text;
+                    const value: usize = @intFromFloat(try selectionNumber(cx, t[0..end], &j, true));
+                    if (eq(option, "maxstep")) model.selection.maxstep = value else if (eq(option, "start")) model.selection.start = value else if (eq(option, "stop")) model.selection.stop = value else if (eq(option, "include")) {
+                        model.selection.include = value;
+                        model.selection.include_specified = true;
+                    } else {
+                        if (value == 0) return cx.diags.fail(error.ParseError, 0, "PROC REG BEST must be positive", .{});
+                        model.selection.best = value;
+                    }
+                } else if (kw(t, j, "sle") or kw(t, j, "slentry") or kw(t, j, "sls") or kw(t, j, "slstay")) {
+                    const entry = kw(t, j, "sle") or kw(t, j, "slentry");
+                    const value = try selectionNumber(cx, t[0..end], &j, false);
+                    if (value > 1) return cx.diags.fail(error.ParseError, 0, "PROC REG: selection significance must be between zero and one", .{});
+                    if (entry) model.selection.entry = value else model.selection.stay = value;
+                } else if (kw(t, j, "sigma")) {
+                    const value = try selectionNumber(cx, t[0..end], &j, false);
+                    if (!(value > 0)) return cx.diags.fail(error.ParseError, 0, "PROC REG SIGMA must be positive", .{});
+                    model.selection.sigma = value;
+                } else if (kw(t, j, "edf") or kw(t, j, "rsquare") or kw(t, j, "adjrsq") or kw(t, j, "cp") or kw(t, j, "sse") or kw(t, j, "mse")) {
+                    if (kw(t, j, "edf")) model.selection_output.edf = true else if (kw(t, j, "rsquare")) model.selection_output.rsquare = true else if (kw(t, j, "adjrsq")) model.selection_output.adjrsq = true else if (kw(t, j, "cp")) model.selection_output.cp = true else if (kw(t, j, "sse")) model.selection_output.sse = true else model.selection_output.mse = true;
+                    j += 1;
                 } else if (kw(t, j, "alpha")) {
                     model.alpha = try numeric(cx, t[0..end], &j);
                 } else if (kw(t, j, "singular")) {
                     model.singular = try numeric(cx, t[0..end], &j);
-                } else return unsupported(cx, t[j], &.{ "r", "p", "clm", "cli", "clb", "selection", "influence", "dw", "dwprob", "acov", "hcc", "white", "stb", "covb", "corrb", "collin", "collinoint", "ss1", "ss2", "scorr1", "scorr2", "pcorr1", "pcorr2", "partial", "all", "press", "aic", "sbc", "cp", "mse", "edf", "rsquare", "adjrsq", "b", "seb" });
+                } else return unsupported(cx, t[j], &.{ "r", "p", "clm", "cli", "clb", "selection", "sle", "slentry", "sls", "slstay", "maxstep", "details", "groupnames", "noprint", "influence", "dw", "dwprob", "acov", "hcc", "white", "stb", "covb", "corrb", "collin", "collinoint", "ss1", "ss2", "scorr1", "scorr2", "pcorr1", "pcorr2", "partial", "all", "press", "aic", "sbc", "cp", "mse", "edf", "rsquare", "adjrsq", "b", "seb" });
             }
             if ((model.residual or model.clm or model.cli) and !(model.residual and model.clm and model.cli)) return proc.failGap(cx.diags, t[i].line, "PROC REG: diagnostic listing currently requires R CLM CLI together", .{});
             if (!model.intercept and regressors.len == 0) return cx.diags.fail(error.ParseError, t[i].line, "PROC REG: empty model", .{});
@@ -305,6 +343,26 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
         if (!model.intercept) return proc.failGap(cx.diags, 0, "PROC REG: PCOMIT with NOINT is not implemented", .{});
         for (pcomit) |m| if (m > @as(f64, @floatFromInt(model.regressors.len))) return proc.failGap(cx.diags, 0, "PROC REG: PCOMIT exceeding the predictor count is not implemented", .{});
     };
+    for (models.items) |model| {
+        const options = model.selection;
+        if (options.method == .none) {
+            if (options.include_specified) return cx.diags.fail(error.ParseError, 0, "PROC REG: INCLUDE is unavailable with SELECTION=NONE", .{});
+            if (options.start != null or options.stop != null or options.best != null or options.include != 0 or options.sigma != null or options.entry != null or options.stay != null or options.maxstep != null or model.selection_output.any()) return proc.failGap(cx.diags, 0, "PROC REG: selection criteria/options without an all-subset method are not implemented", .{});
+            continue;
+        }
+        const improving = options.method == .maxr or options.method == .minr;
+        if (improving and (options.best != null or options.sigma != null or options.entry != null or options.stay != null or options.maxstep != null)) return cx.diags.fail(error.ParseError, 0, "PROC REG: option is not applicable to MAXR/MINR", .{});
+        if (improving and !model.intercept) return proc.failGap(cx.diags, 0, "PROC REG: MAXR/MINR with NOINT is not implemented", .{});
+        const sequential = options.method == .forward or options.method == .backward or options.method == .stepwise;
+        if ((options.method == .forward and options.stay != null) or (options.method == .backward and options.entry != null)) return proc.failGap(cx.diags, 0, "PROC REG: this selection method/significance-option combination is not implemented", .{});
+        if (sequential) {
+            if (options.best != null or options.stop != null or options.sigma != null or (options.start != null and options.method != .stepwise)) return cx.diags.fail(error.ParseError, 0, "PROC REG: subset size/criterion option is not applicable to this selection method", .{});
+            if (!model.intercept) return proc.failGap(cx.diags, 0, "PROC REG: sequential selection with NOINT is not implemented", .{});
+        } else if (options.entry != null or options.stay != null or options.maxstep != null) return cx.diags.fail(error.ParseError, 0, "PROC REG: significance/MAXSTEP options require sequential selection", .{});
+        if (options.include > model.regressors.len or options.include > (options.stop orelse model.regressors.len) or (options.start orelse 1) > (options.stop orelse model.regressors.len) or (options.stop orelse model.regressors.len) > model.regressors.len) return cx.diags.fail(error.ParseError, 0, "PROC REG: invalid subset size limits", .{});
+        if (!noprint or outest == null) return proc.failGap(cx.diags, 0, "PROC REG: model selection currently requires NOPRINT and OUTEST", .{});
+        if (covout or ridge.len > 0 or pcomit.len > 0 or model.restrictions.len > 0) return proc.failGap(cx.diags, 0, "PROC REG: subset selection with COVOUT, RIDGE, PCOMIT, or RESTRICT is not implemented", .{});
+    }
     const by = try by_statements.resolve(cx.arena, ds, cx.diags);
     const bcols = try cx.arena.alloc(usize, by.names.len);
     for (by.names, 0..) |n, j| bcols[j] = ds.indexOf(n).?;

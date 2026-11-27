@@ -214,3 +214,51 @@ precision weights and FREQ replication have distinct residual degrees of
 freedom; durable tests verify both rescalings. The CLI fixture
 `stat_reg_restrict_linear.sas` asserts the complete coefficient/covariance output
 at five decimal places from these hand-calculated values.
+
+## Model selection on finite candidate sets
+
+SAS/STAT15.4 physical pp.8613–8617 defines the nine selection methods,
+Cp=SSE_p/MSE_full-(N-2p), and adjusted R²=1-(N-i)(1-R²)/(N-p), where i
+indicates an intercept. Option definitions and defaults are on physical
+pp.8578–8587. The selection tests use an eight-row Walsh design with mutually
+orthogonal intercept,x,z,w and residual x*z, each of squared norm8. For
+
+```
+y = 10 + 4x + 2z + w/4 + x*z
+SST = 337/2
+SSE_subset = 8 + sum(omitted predictor contributions: 128,32,1/2)
+MSE_full = 8/(8-4) = 2
+```
+
+These identities specify every subset's SSE, R², adjusted R² and Cp, independently
+of the selection implementation. All seven nonempty candidate masks are checked,
+including output ordering, BEST per size versus BEST globally, forced INCLUDE,
+START/STOP, and SIGMA overriding the full-model residual standard deviation.
+The eight-model CLI corpus covers every selection method other than NONE;
+its complete14-row coefficient/criterion output follows these equations.
+A row missing any full candidate variable is excluded even when a subset omits
+that variable, so different subsets cannot select on different response samples.
+
+Forward and backward single-variable decisions use the relevant partial F,
+(extra SSE)/(residual MSE of the larger model). Their p-values are checked by an
+independent trigonometric integral: with theta=atan(sqrt(F/nu)), the F(1,nu)
+tail is the normalized integral of cos(theta)^(nu-1) from theta to pi/2.
+An integration-by-parts recurrence evaluates it without calling the production
+incomplete-beta function. Tests cover the documented defaults, MAXSTEP, START,
+INCLUDE, threshold stops, exhaustion, and the stepwise just-removed stop.
+Uniform precision-weight scaling leaves partial F and Cp unchanged; replication
+changes N, residual DF and the entry significance, and has a separate test.
+
+MAXR and MINR are tested on correlated candidates formed from orthogonal
+u,v,w,uv: X1=2u+v+w/2, X2=v, X3=u, Y=10+2u+v+uv/4. Starting with X1,X2
+has SSE81/34. Swapping X2 for X3 gives SSE21/10; swapping X1 for X3 gives
+SSE1/2. MAXR takes the larger improvement directly (masks3->6); MINR takes
+the smaller positive improvement first (3->5->6). Both comparisons inspect all
+available exchanges, and INCLUDE prevents removal of forced columns.
+
+For these small binary-exact designs, the scalar regression checks use the
+binary64 budget gamma(8*n*p²) times max(1,abs(reference)), n=8,p=4, covering
+normalization and the two projection sweeps plus criterion propagation. The
+reference criteria are algebraic; the error budget is not fitted to observed
+implementation differences. Exact or numerically unresolved criterion ties are
+reported visibly rather than assigned an unverified SAS ordering.

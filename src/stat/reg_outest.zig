@@ -21,6 +21,7 @@ pub const Builder = struct {
     intercept_col: ?usize,
     /// Indexed by the input descriptor; absent variables are not output columns.
     source_to_output: []?usize,
+    selection_columns: [8]?usize = .{null} ** 8,
 
     pub fn init(a: A, spec: parse.Spec, d: *diag.Diagnostics) diag.Error!Builder {
         const name = spec.outest orelse return error.ExecError;
@@ -46,7 +47,18 @@ pub const Builder = struct {
             const column = spec.ds.columns.items[ci];
             mapping[ci] = try add(ds, column.name, .num, 8, d);
         }
-        return .{ .ds = ds, .spec = spec, .model_col = model_col, .type_col = type_col, .name_col = name_col, .dependent_col = dependent_col, .rmse_col = rmse_col, .ridge_col = ridge_col, .pcomit_col = pcomit_col, .intercept_col = intercept_col, .source_to_output = mapping };
+        var requested: @import("reg_selection.zig").Output = .{};
+        for (spec.models) |model| {
+            inline for (.{ "edf", "rsquare", "adjrsq", "cp", "sse", "mse" }) |field| @field(requested, field) = @field(requested, field) or @field(model.selection_output, field);
+        }
+        var selection_columns: [8]?usize = .{null} ** 8;
+        if (requested.any()) {
+            const enabled = [_]bool{ true, true, true, requested.sse, requested.mse, true, requested.adjrsq, requested.cp };
+            for ([_][]const u8{ "_IN_", "_P_", "_EDF_", "_SSE_", "_MSE_", "_RSQ_", "_ADJRSQ_", "_CP_" }, enabled, 0..) |column, yes, j| if (yes) {
+                selection_columns[j] = try add(ds, column, .num, 8, d);
+            };
+        }
+        return .{ .selection_columns = selection_columns, .ds = ds, .spec = spec, .model_col = model_col, .type_col = type_col, .name_col = name_col, .dependent_col = dependent_col, .rmse_col = rmse_col, .ridge_col = ridge_col, .pcomit_col = pcomit_col, .intercept_col = intercept_col, .source_to_output = mapping };
     }
 
     fn baseRow(self: Builder, a: A, model: parse.Model, by_row: ?[]const Value, fit: Fit) ![]Value {
@@ -122,6 +134,20 @@ pub const Builder = struct {
         row[self.rmse_col] = .{ .num = point.rmse };
         for (point.coefficients, 0..) |v, j| row[self.parameterColumn(model, j)] = .{ .num = v };
         row[self.source_to_output[model.dependent].?] = .{ .num = -1 };
+        try self.ds.appendRow(row);
+    }
+
+    pub fn appendSelection(self: Builder, a: A, model: parse.Model, by_row: ?[]const Value, fit: Fit, candidate: @import("reg_selection.zig").Candidate) diag.Error!void {
+        const row = try self.baseRow(a, model, by_row, fit);
+        for (fit.coefficients, 0..) |coefficient, j| row[self.parameterColumn(model, j)] = .{ .num = coefficient };
+        row[self.source_to_output[model.dependent].?] = .{ .num = -1 };
+        if (model.selection_output.any()) {
+            const enabled = [_]bool{ true, true, true, model.selection_output.sse, model.selection_output.mse, true, model.selection_output.adjrsq, model.selection_output.cp };
+            const values = [_]f64{ @floatFromInt(candidate.size), @floatFromInt(candidate.parameters), @floatFromInt(candidate.error_df), candidate.sse, candidate.mse, candidate.rsquare, candidate.adjrsq, candidate.cp };
+            for (self.selection_columns, values, enabled) |column, value, yes| if (yes) {
+                row[column.?] = .{ .num = value };
+            };
+        }
         try self.ds.appendRow(row);
     }
 
