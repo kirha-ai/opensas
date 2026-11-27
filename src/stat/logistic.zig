@@ -13,6 +13,7 @@ const design = @import("logistic_design.zig");
 const kernel = @import("logistic_fit.zig");
 const ordinal = @import("logistic_ordinal.zig");
 const odds_kernel = @import("logistic_odds.zig");
+const roc = @import("logistic_roc.zig");
 const format = @import("../format.zig");
 const fns = @import("../functions.zig");
 const A = std.mem.Allocator;
@@ -36,6 +37,15 @@ pub const Spec = struct {
     units_present: bool = false,
     clodds: ?odds_kernel.Confidence = null,
     no_odds_ratio: bool = false,
+    nofit: bool = false,
+    roc_models: []const roc.Model = &.{},
+    roc_contrast: ?roc.Contrast = null,
+    roc_plot: bool = false,
+    roc_id_probability: bool = false,
+    roc_nodetails: bool = false,
+    roc_alpha: ?f64 = null,
+    roc_epsilon: f64 = @sqrt(std.math.floatEps(f64)),
+    roc_detail: bool = false,
 };
 pub const Counts = struct { read: usize, used: usize, frequency_read: f64, frequency_used: f64, events: f64, full_constant: f64 = 0 };
 fn at(t: []const lex.Token, i: usize, tag: lex.Tag) bool {
@@ -192,10 +202,55 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
             if (!(s.alpha > 0 and s.alpha < 1)) return invalid(cx, t, i - 1);
             continue;
         }
+        if (kw(t, i, "rocoptions")) {
+            if (!at(t, i + 1, .lparen)) return invalid(cx, t, i);
+            i += 2;
+            while (i < t.len and !at(t, i, .rparen)) {
+                if (kw(t, i, "nodetails")) {
+                    s.roc_nodetails = true;
+                    i += 1;
+                    continue;
+                }
+                const option = t[i];
+                if (!at(t, i + 1, .eq)) return unsupported(cx, option);
+                i += 2;
+                if (eq(option.text, "alpha")) {
+                    s.roc_alpha = try numericLiteral(cx, t, &i);
+                    if (!(s.roc_alpha.? > 0 and s.roc_alpha.? < 1)) return invalid(cx, t, i - 1);
+                } else if (eq(option.text, "eps")) {
+                    s.roc_epsilon = try numericLiteral(cx, t, &i);
+                    if (s.roc_epsilon < 0) return invalid(cx, t, i - 1);
+                } else if (eq(option.text, "id") and kw(t, i, "prob")) {
+                    s.roc_id_probability = true;
+                    i += 1;
+                } else return unsupported(cx, option);
+            }
+            if (!at(t, i, .rparen)) return invalid(cx, t, i);
+            i += 1;
+            continue;
+        }
         if (kw(t, i, "plots")) {
-            if (!at(t, i + 1, .eq) or !kw(t, i + 2, "none")) return unsupported(cx, t[i]);
-            s.plots_none = true;
-            i += 3;
+            const option = t[i];
+            i += 1;
+            if (at(t, i, .lparen)) {
+                if (!kw(t, i + 1, "only") or !at(t, i + 2, .rparen)) return unsupported(cx, option);
+                i += 3;
+            }
+            if (!at(t, i, .eq)) return unsupported(cx, option);
+            i += 1;
+            if (kw(t, i, "none")) {
+                s.plots_none = true;
+                i += 1;
+                continue;
+            }
+            if (!kw(t, i, "roc")) return unsupported(cx, option);
+            s.roc_plot = true;
+            i += 1;
+            if (at(t, i, .lparen)) {
+                if (!kw(t, i + 1, "id") or !at(t, i + 2, .eq) or !kw(t, i + 3, "prob") or !at(t, i + 4, .rparen)) return unsupported(cx, option);
+                s.roc_id_probability = true;
+                i += 5;
+            }
             continue;
         }
         if (!kw(t, i, "data")) return unsupported(cx, t[i]);
@@ -226,6 +281,7 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
     var terms: std.ArrayList([]const usize) = .empty;
     var odds_requests: std.ArrayList(OddsRequest) = .empty;
     var units: std.ArrayList(odds_kernel.Units) = .empty;
+    var roc_models: std.ArrayList(roc.Model) = .empty;
     var bys: by.Statements = .{};
     var model_seen = false;
     i += 1;
@@ -309,6 +365,11 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
                 j += 1;
                 while (j < end) {
                     const option = t[j];
+                    if (kw(t, j, "nofit")) {
+                        s.nofit = true;
+                        j += 1;
+                        continue;
+                    }
                     if (kw(t, j, "nooddsratio")) {
                         s.no_odds_ratio = true;
                         j += 1;
@@ -344,6 +405,83 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
         } else if (kw(t, i, "id")) {
             var names: std.ArrayList([]const u8) = .empty;
             try lists.append(cx.arena, s.input.ds, t[i + 1 .. end], &names, cx.diags);
+        } else if (kw(t, i, "roc")) {
+            var j = i + 1;
+            const label = if (at(t, j, .string)) blk: {
+                const text = t[j].text;
+                j += 1;
+                break :blk text;
+            } else try std.fmt.allocPrint(cx.arena, "ROC{d}", .{roc_models.items.len + 1});
+            var request: roc.Model = .{ .label = label };
+            if (kw(t, j, "pred") and at(t, j + 1, .eq)) {
+                j += 2;
+                request.pred = try variable(cx, s.input.ds, t[0..end], &j);
+                if (j != end) return unsupported(cx, t[j]);
+            } else {
+                var variables: std.ArrayList(usize) = .empty;
+                var roc_terms: std.ArrayList([]const usize) = .empty;
+                var stop = j;
+                while (stop < end and !at(t, stop, .slash)) stop += 1;
+                if (stop != end) return unsupported(cx, t[stop]);
+                try modelTerms(cx, s.input.ds, t[j..stop], &variables, &roc_terms);
+                request.terms = roc_terms.items;
+            }
+            try roc_models.append(cx.arena, request);
+        } else if (kw(t, i, "roccontrast")) {
+            if (s.roc_contrast != null) return unsupported(cx, t[i]);
+            var c: roc.Contrast = .{};
+            var j = i + 1;
+            if (at(t, j, .string)) {
+                c.label = t[j].text;
+                j += 1;
+            }
+            if (kw(t, j, "reference")) {
+                j += 1;
+                if (at(t, j, .lparen)) {
+                    j += 1;
+                    if (at(t, j, .string)) c.reference = t[j].text else if (kw(t, j, "model")) c.reference = "Model" else return invalid(cx, t, j);
+                    j += 1;
+                    if (!at(t, j, .rparen)) return invalid(cx, t, j);
+                    j += 1;
+                }
+            } else if (kw(t, j, "adjacentpairs")) {
+                c.kind = .adjacent;
+                j += 1;
+            } else if (j < end and !at(t, j, .slash)) {
+                c.kind = .matrix;
+                var values: std.ArrayList(f64) = .empty;
+                var row_count: usize = 0;
+                while (j < end and !at(t, j, .slash)) {
+                    if (at(t, j, .comma)) {
+                        if (row_count == 0 or (c.columns != 0 and row_count != c.columns)) return invalid(cx, t, j);
+                        c.columns = row_count;
+                        row_count = 0;
+                        j += 1;
+                        continue;
+                    }
+                    try values.append(cx.arena, try numericLiteral(cx, t[0..end], &j));
+                    row_count += 1;
+                }
+                if (row_count == 0 or (c.columns != 0 and row_count != c.columns)) return invalid(cx, t, j);
+                c.columns = row_count;
+                c.coefficients = values.items;
+            }
+            if (at(t, j, .slash)) j += 1;
+            while (j < end) {
+                if (kw(t, j, "e")) {
+                    c.display = true;
+                    j += 1;
+                } else if (kw(t, j, "estimate")) {
+                    c.estimates = true;
+                    j += 1;
+                    if (at(t, j, .eq)) {
+                        j += 1;
+                        if (kw(t, j, "allpairs")) c.all_pairs = true else if (!kw(t, j, "rows")) return invalid(cx, t, j);
+                        j += 1;
+                    }
+                } else return unsupported(cx, t[j]);
+            }
+            s.roc_contrast = c;
         } else if (kw(t, i, "units")) {
             // Only the last UNITS statement applies (S154 physical p.5903).
             units.clearRetainingCapacity();
@@ -426,6 +564,7 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
     s.model.effects = effects.items;
     s.model.terms = terms.items;
     s.odds_requests = odds_requests.items;
+    s.roc_models = roc_models.items;
     s.units = units.items;
     s.units_present = units.items.len > 0 or s.default_units.len > 0;
     const by_spec = try bys.resolve(cx.arena, s.input.ds, cx.diags);
@@ -477,9 +616,8 @@ fn renderOrdinal(a: A, out: *std.ArrayList(u8), s: Spec, original: design.Design
     d.effects = effects;
     return renderCore(a, out, s, d, fit.result, counts, fit);
 }
-fn renderCore(a: A, out: *std.ArrayList(u8), s: Spec, d: design.Design, r: kernel.Fit, counts: Counts, ordinal_result: ?ordinal.Fit) diag.Error!void {
+pub fn modelHeader(a: A, out: *std.ArrayList(u8), s: Spec, d: design.Design, counts: Counts, intercepts: usize) diag.Error!void {
     const ds = s.input.ds;
-    const intercepts: usize = if (ordinal_result) |fit| fit.levels - 1 else 1;
     const response_name = ds.columns.items[s.model.response].name;
     try out.print(a, "The LOGISTIC Procedure\n\nModel Information\n\nData Set {s}\n", .{try lists.datasetName(a, ds)});
     if (s.trials) |trials| {
@@ -514,6 +652,11 @@ fn renderCore(a: A, out: *std.ArrayList(u8), s: Spec, d: design.Design, r: kerne
             try out.appendSlice(a, "\n");
         };
     }
+}
+fn renderCore(a: A, out: *std.ArrayList(u8), s: Spec, d: design.Design, r: kernel.Fit, counts: Counts, ordinal_result: ?ordinal.Fit) diag.Error!void {
+    const ds = s.input.ds;
+    const intercepts: usize = if (ordinal_result) |fit| fit.levels - 1 else 1;
+    if (!s.roc_detail) try modelHeader(a, out, s, d, counts, intercepts);
     try out.print(a, "\nModel Convergence Status\n\nConvergence criterion (GCONV={s}) satisfied.\n\n", .{if (s.fit_options.gconv == 1e-8) "1E-8" else try number(a, s.fit_options.gconv, "best12.")});
     if (ordinal_result) |fit| if (fit.parallel_score) |score| {
         try out.print(a, "Score Test for the {s} Assumption\n\nChi-Square DF Pr > ChiSq\n\n{s} {d} {s}\n\n", .{ if (s.link == .logit) "Proportional Odds" else "Equal Slopes", try number(a, score, "10.4"), fit.parallel_df, try number(a, kernel.chiTail(score, fit.parallel_df), "pvalue6.4") });
@@ -581,6 +724,7 @@ fn renderCore(a: A, out: *std.ArrayList(u8), s: Spec, d: design.Design, r: kerne
             }
         }
     }
+    if (s.roc_detail) return;
     const assoc = if (intercepts > 1) try ordinal.association(a, d.y, r.probabilities, d.response.levels.len, d.frequencies) else blk: {
         var probabilities = r.probabilities;
         if (ordinal_result != null) {
@@ -603,8 +747,8 @@ fn renderCore(a: A, out: *std.ArrayList(u8), s: Spec, d: design.Design, r: kerne
     }
 }
 
-const Analysis = struct { data: *Dataset, design: design.Design, fit: kernel.Fit, counts: Counts, ordinal_fit: ?ordinal.Fit = null };
-fn analyze(cx: proc.ProcCtx, s: Spec) diag.Error!Analysis {
+pub const Analysis = struct { data: *Dataset, design: design.Design, fit: kernel.Fit, counts: Counts, ordinal_fit: ?ordinal.Fit = null };
+pub fn analyze(cx: proc.ProcCtx, s: Spec) diag.Error!Analysis {
     const a = cx.arena;
     const ds = s.input.ds;
     var model = s.model;
@@ -657,7 +801,14 @@ fn analyze(cx: proc.ProcCtx, s: Spec) diag.Error!Analysis {
         return cx.diags.fail(error.ExecError, 0, "PROC LOGISTIC: invalid or nonfinite complete-case model data", .{});
     };
     var ordinal_fit: ?ordinal.Fit = null;
-    const r = if (d.response.levels.len > 2 or s.link != .logit) blk: {
+    const r = if (s.nofit) blk: {
+        if (d.response.levels.len != 2) return proc.failGap(cx.diags, 0, "PROC LOGISTIC: NOFIT for ordinal responses is not implemented", .{});
+        const score = kernel.nullScore(a, d.x, d.y, d.p, d.frequencies, d.weights) catch |err| {
+            if (err == error.OutOfMemory) return err;
+            return proc.failGap(cx.diags, 0, "PROC LOGISTIC: NOFIT score is unavailable for this rank-deficient or nonfinite design", .{});
+        };
+        break :blk kernel.Fit{ .coefficients = &.{}, .covariance = &.{}, .probabilities = &.{}, .log_likelihood = score.log_likelihood, .null_log_likelihood = score.log_likelihood, .score_test = score.statistic, .iterations = 0 };
+    } else if (d.response.levels.len > 2 or s.link != .logit) blk: {
         const responses = try a.alloc(usize, d.n);
         for (d.y, 0..) |y, i| responses[i] = if (d.response.levels.len == 2) (if (y == 1) 0 else 1) else @intFromFloat(y);
         ordinal_fit = ordinal.fit(a, s.link, d.x, responses, d.p, d.response.levels.len, d.frequencies, d.weights, s.fit_options) catch |err| {
@@ -729,6 +880,7 @@ fn unitTables(a: A, out: *std.ArrayList(u8), s: Spec, result: Analysis) diag.Err
 pub fn run(cx: proc.ProcCtx, out: *std.ArrayList(u8), tokens: []const lex.Token) diag.Error!void {
     const spec = try parse(cx, tokens);
     const a = cx.arena;
+    if (spec.nofit or spec.roc_plot or spec.roc_models.len > 0 or spec.roc_contrast != null) return @import("logistic_roc_proc.zig").run(cx, out, spec);
     if (spec.by_columns.len > 0 and spec.model.classes.len > 0) return proc.failGap(cx.diags, 0, "PROC LOGISTIC: global CLASS levels across BY groups are not implemented", .{});
     const groups = try by.checkedSlices(a, spec.input.ds, spec.by_columns, spec.by_desc, spec.notsorted, cx.diags);
     for (groups, 0..) |group, group_index| {
@@ -816,6 +968,8 @@ test {
     _ = @import("logistic_persistence_tests.zig");
     _ = @import("logistic_ordinal.zig");
     _ = @import("logistic_odds.zig");
+    _ = @import("logistic_roc.zig");
+    _ = @import("logistic_roc_proc.zig");
 }
 
 test "LOGISTIC errors are captured and unsupported parameterizations never fall back" {

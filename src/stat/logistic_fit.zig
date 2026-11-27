@@ -279,3 +279,35 @@ pub fn associationWeighted(y: []const f64, probabilities: []const f64, frequenci
     };
     return r;
 }
+
+/// Global score at the intercept-only null, without estimating a full model.
+/// NOFIT still requests this statistic (S154 physical pp.5918–5919).
+pub fn nullScore(a: A, x: []const f64, y: []const f64, p: usize, frequencies: []const f64, weights_: []const f64) diag.Error!struct { statistic: f64, log_likelihood: f64 } {
+    if (p == 0 or y.len == 0 or x.len != y.len * p or frequencies.len != y.len or weights_.len != y.len) return error.ExecError;
+    const weights = try a.alloc(f64, y.len);
+    defer a.free(weights);
+    const working = try a.alloc(f64, y.len);
+    defer a.free(working);
+    const gradient = try a.alloc(f64, p);
+    defer a.free(gradient);
+    @memset(gradient, 0);
+    var total: f64 = 0;
+    var events: f64 = 0;
+    for (y, frequencies, weights_) |value, frequency, weight| {
+        if (value != 0 and value != 1) return error.ExecError;
+        total += frequency * weight;
+        events += value * frequency * weight;
+    }
+    if (!(events > 0 and events < total)) return error.ExecError;
+    const probability_ = events / total;
+    for (y, 0..) |value, i| {
+        const multiplicity = frequencies[i] * weights_[i];
+        weights[i] = multiplicity * probability_ * (1 - probability_);
+        working[i] = (value - probability_) / (probability_ * (1 - probability_));
+        for (0..p) |j| gradient[j] += x[i * p + j] * multiplicity * (value - probability_);
+    }
+    var solution = try reg.fit(a, x, working, y.len, p, weights);
+    defer solution.deinit(a);
+    if (solution.rank != p) return error.ExecError;
+    return .{ .statistic = @max(0, dot(gradient, solution.coefficients)), .log_likelihood = events * @log(probability_) + (total - events) * std.math.log1p(-probability_) };
+}
