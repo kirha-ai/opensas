@@ -6,7 +6,10 @@ const diag = @import("../diag.zig");
 const reg = @import("reg_fit.zig");
 const fns = @import("../functions.zig");
 const A = std.mem.Allocator;
-pub const Options = struct { gconv: f64 = 1e-8, max_iterations: usize = 100 };
+pub const convergence = @import("logistic_convergence.zig");
+pub const Technique = enum { automatic, fisher, newton };
+pub const Ridging = enum { relative, absolute, none };
+pub const Options = struct { gconv: f64 = 1e-8, absfconv: ?f64 = null, fconv: ?f64 = null, xconv: ?f64 = null, max_iterations: usize = 25, technique: Technique = .automatic, ridging: Ridging = .relative, initial: ?[]const f64 = null, return_incomplete: bool = false, capture_history: bool = false };
 pub const Fit = struct {
     coefficients: []const f64,
     covariance: []const f64,
@@ -15,6 +18,11 @@ pub const Fit = struct {
     null_log_likelihood: f64,
     score_test: f64,
     iterations: usize,
+    converged: bool = true,
+    stop: convergence.Stop = .{},
+    history: []const convergence.Iteration = &.{},
+    ridge_steps: usize = 0,
+    halving_steps: usize = 0,
 };
 const Sum = struct {
     value: f64 = 0,
@@ -56,7 +64,7 @@ pub fn fit(a: A, x: []const f64, y: []const f64, n: usize, p: usize, o: Options)
 /// Compact Bernoulli frequency representation. An events/trials row becomes at
 /// most two weighted rows; no expansion proportional to the trial count is used.
 pub fn fitWeighted(a: A, x: []const f64, y: []const f64, n: usize, p: usize, frequency: ?[]const f64, analysis_weights: ?[]const f64, o: Options) diag.Error!Fit {
-    if (n == 0 or p == 0 or x.len != (std.math.mul(usize, n, p) catch return error.ExecError) or y.len != n or !(o.gconv > 0) or !std.math.isFinite(o.gconv)) return error.ExecError;
+    if (n == 0 or p == 0 or x.len != (std.math.mul(usize, n, p) catch return error.ExecError) or y.len != n or !convergence.valid(o)) return error.ExecError;
     if (frequency) |f| if (f.len != n) return error.ExecError;
     if (analysis_weights) |w| if (w.len != n) return error.ExecError;
     const multiplicity = try a.alloc(f64, n);
@@ -92,7 +100,26 @@ pub fn fitWeighted(a: A, x: []const f64, y: []const f64, n: usize, p: usize, fre
     const gradient = try tmp.alloc(f64, p);
     const null_ll = likelihood(x, y, b, multiplicity);
     var score_test: f64 = 0;
-    for (0..o.max_iterations) |iter| {
+    if (o.initial) |initial| {
+        if (initial.len != p) return error.ExecError;
+        for (initial) |value| if (!std.math.isFinite(value)) return error.ExecError;
+        score_test = (try nullScore(a, x, y, p, frequency orelse blk: {
+            const ones = try tmp.alloc(f64, n);
+            @memset(ones, 1);
+            break :blk ones;
+        }, analysis_weights orelse blk: {
+            const ones = try tmp.alloc(f64, n);
+            @memset(ones, 1);
+            break :blk ones;
+        })).statistic;
+        @memcpy(b, initial);
+    }
+    const previous_b = try tmp.alloc(f64, p);
+    var previous_ll: ?f64 = null;
+    var history: std.ArrayList(convergence.Iteration) = .empty;
+    var ridge_steps: usize = 0;
+    var halving_steps: usize = 0;
+    for (0..o.max_iterations + 1) |iter| {
         _ = iteration.reset(.retain_capacity);
         const ll = likelihood(x, y, b, multiplicity);
         if (!std.math.isFinite(ll)) return error.ExecError;
@@ -118,7 +145,7 @@ pub fn fitWeighted(a: A, x: []const f64, y: []const f64, n: usize, p: usize, fre
         defer step.deinit(iteration.allocator());
         if (step.rank != p) return error.ExecError;
         const norm = dot(gradient, step.coefficients);
-        if (iter == 0) score_test = @max(0, norm);
+        if (iter == 0 and o.initial == null) score_test = @max(0, norm);
         // Published standardized-information check for quasi-separation.
         if (iter >= 8) for (1..p) |j| {
             var mean: Sum = .{};
@@ -131,13 +158,30 @@ pub fn fitWeighted(a: A, x: []const f64, y: []const f64, n: usize, p: usize, fre
             }
             if (step.covariance_unscaled[j * p + j] * (css.total() / nf) > 5000) return error.ExecError;
         };
-        if (norm >= 0 and norm / (@abs(ll) + 1e-6) <= o.gconv) {
+        const metrics = convergence.metrics(ll, b, norm, previous_ll, if (previous_ll != null) previous_b else null);
+        if (o.capture_history) try history.append(a, .{ .index = iter, .log_likelihood = ll, .metrics = metrics });
+        const stop = convergence.satisfied(o, metrics);
+        if (stop != null or iter == o.max_iterations) {
+            if (stop == null and !o.return_incomplete) return error.ExecError;
             for (0..p) |j| if (!(step.covariance_unscaled[j * p + j] > 0) or !std.math.isFinite(step.covariance_unscaled[j * p + j])) return error.ExecError;
-            return .{ .coefficients = try a.dupe(f64, b), .covariance = try a.dupe(f64, step.covariance_unscaled), .probabilities = try a.dupe(f64, probabilities), .log_likelihood = ll, .null_log_likelihood = null_ll, .score_test = score_test, .iterations = iter };
+            return .{ .coefficients = try a.dupe(f64, b), .covariance = try a.dupe(f64, step.covariance_unscaled), .probabilities = try a.dupe(f64, probabilities), .log_likelihood = ll, .null_log_likelihood = null_ll, .score_test = score_test, .iterations = iter, .converged = stop != null, .stop = stop orelse .{ .reason = .iteration_limit, .threshold = @floatFromInt(o.max_iterations), .metric = metrics.gradient }, .history = history.items, .ridge_steps = ridge_steps, .halving_steps = halving_steps };
         }
         for (0..p) |j| candidate[j] = b[j] + step.coefficients[j];
         var accepted = std.math.isFinite(likelihood(x, y, candidate, multiplicity)) and likelihood(x, y, candidate, multiplicity) >= ll;
-        if (!accepted) {
+        if (!accepted and o.ridging == .none) {
+            var factor: f64 = 0.5;
+            for (0..40) |_| {
+                halving_steps += 1;
+                for (0..p) |j| candidate[j] = b[j] + factor * step.coefficients[j];
+                const next = likelihood(x, y, candidate, multiplicity);
+                if (std.math.isFinite(next) and next >= ll) {
+                    accepted = true;
+                    break;
+                }
+                factor /= 2;
+            }
+        }
+        if (!accepted and o.ridging != .none) {
             // Default RIDGING=RELATIVE (S154 physical p.5883): add a relative
             // diagonal penalty to information, increasing it until LL improves.
             // QR on appended diagonal rows avoids explicitly inverting X'WX.
@@ -158,7 +202,8 @@ pub fn fitWeighted(a: A, x: []const f64, y: []const f64, n: usize, p: usize, fre
             }
             var ridge: f64 = 0.0001;
             for (0..40) |_| {
-                for (0..p) |j| augmented_x[(n + j) * p + j] = @sqrt(ridge) * norms[j];
+                ridge_steps += 1;
+                for (0..p) |j| augmented_x[(n + j) * p + j] = @sqrt(ridge) * (if (o.ridging == .relative) norms[j] else 1);
                 var adjusted = try reg.fit(iteration.allocator(), augmented_x, augmented_y, n + p, p, augmented_w);
                 defer adjusted.deinit(iteration.allocator());
                 for (0..p) |j| candidate[j] = b[j] + adjusted.coefficients[j];
@@ -171,6 +216,8 @@ pub fn fitWeighted(a: A, x: []const f64, y: []const f64, n: usize, p: usize, fre
             }
         }
         if (!accepted) return error.ExecError;
+        @memcpy(previous_b, b);
+        previous_ll = ll;
         @memcpy(b, candidate);
     }
     return error.ExecError;

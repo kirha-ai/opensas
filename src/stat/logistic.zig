@@ -32,7 +32,8 @@ pub const Spec = struct {
     alpha: f64 = 0.05,
     plots_none: bool = false,
     link: ordinal.Link = .logit,
-    fit_options: kernel.Options = .{},
+    fit_options: kernel.Options = .{ .return_incomplete = true },
+    convergence_specified: bool = false,
     units: []const odds_kernel.Units = &.{},
     default_units: []const f64 = &.{},
     units_present: bool = false,
@@ -492,10 +493,24 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
                         j += 1;
                     } else if (eq(option.text, "clodds")) {
                         s.clodds = try confidence(cx, t[0..end], &j);
-                    } else if (eq(option.text, "gconv")) {
-                        s.fit_options.gconv = try numericLiteral(cx, t[0..end], &j);
-                        if (s.fit_options.gconv < 0) return invalid(cx, t, j - 1);
-                        if (s.fit_options.gconv == 0) return proc.failGap(cx.diags, option.line, "PROC LOGISTIC: disabling GCONV is not implemented", .{});
+                    } else if (eq(option.text, "gconv") or eq(option.text, "absfconv") or eq(option.text, "fconv") or eq(option.text, "xconv")) {
+                        const threshold = try numericLiteral(cx, t[0..end], &j);
+                        if (threshold < 0) return invalid(cx, t, j - 1);
+                        if (threshold == 0) return proc.failGap(cx.diags, option.line, "PROC LOGISTIC: zero convergence criteria are not implemented", .{});
+                        if (!s.convergence_specified) {
+                            s.fit_options.gconv = 0;
+                            s.convergence_specified = true;
+                        }
+                        if (eq(option.text, "gconv")) s.fit_options.gconv = threshold else if (eq(option.text, "absfconv")) s.fit_options.absfconv = threshold else if (eq(option.text, "fconv")) s.fit_options.fconv = threshold else s.fit_options.xconv = threshold;
+                    } else if (eq(option.text, "maxiter")) {
+                        s.fit_options.max_iterations = try integerOption(cx, t[0..end], &j);
+                        if (s.fit_options.max_iterations == 0) return proc.failGap(cx.diags, option.line, "PROC LOGISTIC: zero-iteration fitting is not implemented", .{});
+                    } else if (eq(option.text, "technique") or eq(option.text, "tech")) {
+                        if (kw(t, j, "fisher") or kw(t, j, "fs")) s.fit_options.technique = .fisher else if (kw(t, j, "newton") or kw(t, j, "nr")) s.fit_options.technique = .newton else return unsupported(cx, t[j]);
+                        j += 1;
+                    } else if (eq(option.text, "ridging")) {
+                        if (kw(t, j, "relative")) s.fit_options.ridging = .relative else if (kw(t, j, "absolute")) s.fit_options.ridging = .absolute else if (kw(t, j, "none")) s.fit_options.ridging = .none else return invalid(cx, t, j);
+                        j += 1;
                     } else return unsupported(cx, option);
                 }
             }
@@ -670,6 +685,7 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
     }
     if (!model_seen) return cx.diags.fail(error.ParseError, 0, "PROC LOGISTIC: MODEL statement required", .{});
     s.input.ds = try by.withFormats(cx.arena, s.input.ds, formats.items);
+    if (s.link == .alogit and s.fit_options.technique == .fisher) return proc.failGap(cx.diags, 0, "PROC LOGISTIC: Fisher scoring is unavailable for the adjacent-category logit link", .{});
     s.model.classes = classes.items;
     s.model.effects = effects.items;
     if (s.aggregate) |columns| if (columns.len == 0) {
@@ -745,7 +761,7 @@ pub fn modelHeader(a: A, out: *std.ArrayList(u8), s: Spec, d: design.Design, cou
         .alogit => "logit",
     };
     const model_name = if (s.link == .alogit and intercepts > 1) "adjacent-category" else if (intercepts > 1) "cumulative" else "binary";
-    try out.print(a, "Model {s} {s}\nOptimization Technique {s}\n\nNumber of Observations Read {d}\nNumber of Observations Used {d}\n", .{ model_name, link_name, if (s.link == .alogit) "Newton-Raphson ridge" else "Fisher's scoring", counts.read, counts.used });
+    try out.print(a, "Model {s} {s}\nOptimization Technique {s}\n\nNumber of Observations Read {d}\nNumber of Observations Used {d}\n", .{ model_name, link_name, if (s.link == .alogit) "Newton-Raphson ridge" else if (s.fit_options.technique == .newton) "Newton-Raphson" else "Fisher's scoring", counts.read, counts.used });
     if (s.trials != null or s.model.frequency != null) try out.print(a, "Sum of Frequencies Read {s}\nSum of Frequencies Used {s}\n", .{ try number(a, counts.frequency_read, "best12."), try number(a, counts.frequency_used, "best12.") });
     if (s.trials != null) {
         try out.print(a, "\nResponse Profile\n\nOrdered Binary Total\nValue Outcome Frequency\n\n1 Event {s}\n2 Nonevent {s}\n\n", .{ try number(a, counts.events, "best12."), try number(a, counts.frequency_used - counts.events, "best12.") });
@@ -770,7 +786,8 @@ fn renderCore(a: A, out: *std.ArrayList(u8), s: Spec, d: design.Design, r: kerne
     const ds = s.input.ds;
     const intercepts: usize = if (ordinal_result) |fit| fit.levels - 1 else 1;
     if (!s.roc_detail) try modelHeader(a, out, s, d, counts, intercepts);
-    try out.print(a, "\nModel Convergence Status\n\nConvergence criterion (GCONV={s}) satisfied.\n\n", .{if (s.fit_options.gconv == 1e-8) "1E-8" else try number(a, s.fit_options.gconv, "best12.")});
+    try out.appendSlice(a, "\nModel Convergence Status\n\n");
+    if (r.converged) try out.print(a, "Convergence criterion ({s}={s}) satisfied.\n\n", .{ kernel.convergence.name(r.stop.reason), if (r.stop.threshold == 1e-8) "1E-8" else try number(a, r.stop.threshold, "best12.") }) else try out.print(a, "Convergence not attained after {d} iterations.\n\n", .{r.iterations});
     if (ordinal_result) |fit| if (fit.parallel_score) |score| {
         try out.print(a, "Score Test for the {s} Assumption\n\nChi-Square DF Pr > ChiSq\n\n{s} {d} {s}\n\n", .{ if (s.link == .logit) "Proportional Odds" else "Equal Slopes", try number(a, score, "10.4"), fit.parallel_df, try number(a, kernel.chiTail(score, fit.parallel_df), "pvalue6.4") });
     };
@@ -965,7 +982,7 @@ pub fn analyze(cx: proc.ProcCtx, s: Spec) diag.Error!Analysis {
             if (err == error.OutOfMemory) return err;
             return proc.failGap(cx.diags, 0, "PROC LOGISTIC: NOFIT score is unavailable for this rank-deficient or nonfinite design", .{});
         };
-        break :blk kernel.Fit{ .coefficients = &.{}, .covariance = &.{}, .probabilities = &.{}, .log_likelihood = score.log_likelihood, .null_log_likelihood = score.log_likelihood, .score_test = score.statistic, .iterations = 0 };
+        break :blk kernel.Fit{ .coefficients = &.{}, .covariance = &.{}, .probabilities = &.{}, .log_likelihood = score.log_likelihood, .null_log_likelihood = score.log_likelihood, .score_test = score.statistic, .iterations = 0, .converged = false, .stop = .{ .reason = .not_fit, .threshold = 0 } };
     } else if (d.response.levels.len > 2 or s.link != .logit) blk: {
         const responses = try a.alloc(usize, d.n);
         for (d.y, 0..) |y, i| responses[i] = if (d.response.levels.len == 2) (if (y == 1) 0 else 1) else @intFromFloat(y);
@@ -978,6 +995,7 @@ pub fn analyze(cx: proc.ProcCtx, s: Spec) diag.Error!Analysis {
         if (err == error.OutOfMemory) return err;
         return proc.failGap(cx.diags, 0, "PROC LOGISTIC: fitting failed (rank deficiency, separation, or nonconvergence); no results emitted", .{});
     };
+    if (!r.converged and !s.nofit) try cx.diags.report(.warning, 0, "PROC LOGISTIC: maximum number of iterations ({d}) reached; results use the last iterate", .{r.iterations});
     const used = try a.alloc(bool, ds.rows.items.len);
     @memset(used, false);
     var counts: Counts = .{ .read = ds.rows.items.len, .used = 0, .frequency_read = frequency_read, .frequency_used = d.total_frequency, .events = 0 };
@@ -1131,6 +1149,7 @@ test {
     _ = @import("logistic_odds.zig");
     _ = @import("logistic_roc.zig");
     _ = @import("logistic_gof.zig");
+    _ = @import("logistic_convergence_tests.zig");
     _ = @import("logistic_gof_tests.zig");
     _ = @import("logistic_roc_proc.zig");
 }

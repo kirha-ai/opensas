@@ -133,9 +133,9 @@ fn evaluate(a: A, link: Link, b: []const f64, x: []const f64, y: []const usize, 
 
 // The parallel-lines score uses the observed negative Hessian at the fitted
 // restricted model (S154 physical pp.5918–5920), whereas Fisher scoring and
-// coefficient covariance use expected information. These differ for ordinal
+// Fisher covariance use expected information. These differ for ordinal
 // cumulative links even though they coincide in the binary-logit case.
-fn observedInformation(a: A, link: Link, b: []const f64, x: []const f64, y: []const usize, pcols: usize, k: usize, multiplicity: []const f64) diag.Error![]f64 {
+fn observedInformation(a: A, link: Link, b: []const f64, x: []const f64, y: []const usize, pcols: usize, k: usize, multiplicity: []const f64, parallel: bool) diag.Error![]f64 {
     const q = b.len;
     const info = try a.alloc(f64, q * q);
     @memset(info, 0);
@@ -145,17 +145,20 @@ fn observedInformation(a: A, link: Link, b: []const f64, x: []const f64, y: []co
     defer a.free(jac);
     for (y, 0..) |response, i| {
         const row = x[i * pcols ..][0..pcols];
-        try probabilities(a, link, b, row, k, false, probabilities_, jac);
+        try probabilities(a, link, b, row, k, parallel, probabilities_, jac);
         const p = probabilities_[response];
         for (0..q) |j| for (0..q) |h| {
             info[j * q + h] += multiplicity[i] * jac[response * q + j] * jac[response * q + h] / (p * p);
         };
         for (0..k) |cutpoint| {
             const sign: f64 = if (cutpoint == response) 1 else if (cutpoint + 1 == response) -1 else continue;
-            const eta = dot(b[cutpoint * pcols ..][0..pcols], row);
+            var eta: f64 = if (parallel) b[cutpoint] else b[cutpoint * pcols];
+            for (1..pcols) |j| eta += row[j] * b[if (parallel) k + j - 1 else cutpoint * pcols + j];
             const second = sign * densityDerivative(link, eta);
             for (0..pcols) |j| for (0..pcols) |h| {
-                info[(cutpoint * pcols + j) * q + cutpoint * pcols + h] -= multiplicity[i] * second * row[j] * row[h] / p;
+                const r = if (parallel) (if (j == 0) cutpoint else k + j - 1) else cutpoint * pcols + j;
+                const c = if (parallel) (if (h == 0) cutpoint else k + h - 1) else cutpoint * pcols + h;
+                info[r * q + c] -= multiplicity[i] * second * row[j] * row[h] / p;
             };
         }
     }
@@ -211,7 +214,9 @@ fn inverse(a: A, matrix: []const f64, n: usize) diag.Error![]f64 {
 }
 
 pub fn fit(a: A, link: Link, x: []const f64, y: []const usize, pcols: usize, levels: usize, frequencies: []const f64, weights: []const f64, options: binary.Options) diag.Error!Fit {
-    if (levels < 2 or pcols == 0 or y.len == 0 or x.len != y.len * pcols or frequencies.len != y.len or weights.len != y.len or !(options.gconv > 0)) return error.ExecError;
+    if (levels < 2 or pcols == 0 or y.len == 0 or x.len != y.len * pcols or frequencies.len != y.len or weights.len != y.len or !binary.convergence.valid(options)) return error.ExecError;
+    if (link == .alogit and options.technique == .fisher) return error.ExecError;
+    const newton = link == .alogit or options.technique == .newton;
     var scratch = std.heap.ArenaAllocator.init(a);
     defer scratch.deinit();
     const tmp = scratch.allocator();
@@ -240,15 +245,32 @@ pub fn fit(a: A, link: Link, x: []const f64, y: []const usize, pcols: usize, lev
     var null_ll: f64 = 0;
     for (counts) |count| null_ll += count * @log(count / total);
     var global_score: f64 = 0;
+    if (options.initial) |initial| {
+        if (initial.len != q) return error.ExecError;
+        for (initial) |value| if (!std.math.isFinite(value)) return error.ExecError;
+        const null_evaluation = try evaluate(tmp, link, b, x, y, pcols, k, multiplicity, true);
+        const null_information = if (newton and link != .alogit) try observedInformation(tmp, link, b, x, y, pcols, k, multiplicity, true) else null_evaluation.information;
+        const null_step = try solve(tmp, null_information, null_evaluation.gradient);
+        global_score = @max(0, dot(null_evaluation.gradient, null_step));
+        @memcpy(b, initial);
+    }
+    const previous_b = try tmp.alloc(f64, q);
+    var previous_ll: ?f64 = null;
+    var history: std.ArrayList(binary.convergence.Iteration) = .empty;
+    var ridge_steps: usize = 0;
+    var halving_steps: usize = 0;
     var iteration = std.heap.ArenaAllocator.init(tmp);
     defer iteration.deinit();
-    for (0..options.max_iterations) |iter| {
+    for (0..options.max_iterations + 1) |iter| {
         _ = iteration.reset(.retain_capacity);
         const ia = iteration.allocator();
         const e = try evaluate(ia, link, b, x, y, pcols, k, multiplicity, true);
-        const step = try solve(ia, e.information, e.gradient);
+        // ALOGIT is canonical in cumulative category indicators and common
+        // slopes: its observed and expected information both equal Cov(T).
+        const information = if (newton and link != .alogit) try observedInformation(ia, link, b, x, y, pcols, k, multiplicity, true) else e.information;
+        const step = try solve(ia, information, e.gradient);
         const norm = dot(e.gradient, step);
-        if (iter == 0) global_score = @max(0, norm);
+        if (iter == 0 and options.initial == null) global_score = @max(0, norm);
         // S154 physical p.5912: after eight iterations, do not report a
         // finite converged fit for a completely separated observed response.
         if (iter > 8) {
@@ -263,9 +285,13 @@ pub fn fit(a: A, link: Link, x: []const f64, y: []const usize, pcols: usize, lev
             }
             if (separated) return error.ExecError;
         }
-        if (norm >= 0 and norm / (@abs(e.ll) + 1e-6) <= options.gconv) {
-            const cov = try inverse(a, e.information, q);
-            var answer: Fit = .{ .levels = levels, .result = .{ .coefficients = try a.dupe(f64, b), .covariance = cov, .probabilities = try a.dupe(f64, e.probabilities), .log_likelihood = e.ll, .null_log_likelihood = null_ll, .score_test = global_score, .iterations = iter } };
+        const metrics = binary.convergence.metrics(e.ll, b, norm, previous_ll, if (previous_ll != null) previous_b else null);
+        if (options.capture_history) try history.append(a, .{ .index = iter, .log_likelihood = e.ll, .metrics = metrics });
+        const stop = binary.convergence.satisfied(options, metrics);
+        if (stop != null or iter == options.max_iterations) {
+            if (stop == null and !options.return_incomplete) return error.ExecError;
+            const cov = try inverse(a, information, q);
+            var answer: Fit = .{ .levels = levels, .result = .{ .coefficients = try a.dupe(f64, b), .covariance = cov, .probabilities = try a.dupe(f64, e.probabilities), .log_likelihood = e.ll, .null_log_likelihood = null_ll, .score_test = global_score, .iterations = iter, .converged = stop != null, .stop = stop orelse .{ .reason = .iteration_limit, .threshold = @floatFromInt(options.max_iterations), .metric = metrics.gradient }, .history = history.items, .ridge_steps = ridge_steps, .halving_steps = halving_steps } };
             if (link != .alogit and k > 1 and pcols > 1) {
                 const unrestricted = try ia.alloc(f64, k * pcols);
                 for (0..k) |j| {
@@ -276,7 +302,7 @@ pub fn fit(a: A, link: Link, x: []const f64, y: []const usize, pcols: usize, lev
                 // Evaluate the documented score quadratic with the observed
                 // Hessian. Sparse categories can restrict its identifiable
                 // subspace; a range check below rejects inconsistent systems.
-                const observed = try observedInformation(ia, link, unrestricted, x, y, pcols, k, multiplicity);
+                const observed = try observedInformation(ia, link, unrestricted, x, y, pcols, k, multiplicity, false);
                 var score_fit = try @import("reg_fit.zig").fit(ia, observed, general.gradient, unrestricted.len, unrestricted.len, null);
                 defer score_fit.deinit(ia);
                 // Solve in the identifiable subspace. Sparse observed categories
@@ -303,25 +329,33 @@ pub fn fit(a: A, link: Link, x: []const f64, y: []const usize, pcols: usize, lev
         // SAS default relative ridging: retry with increasing diagonal penalty
         // when an update makes cumulative probabilities invalid or decreases LL.
         var ridge: f64 = 0;
+        var factor: f64 = 1;
         for (0..40) |_| {
             const adjustment = if (ridge == 0) step else blk: {
-                const penalized = try ia.dupe(f64, e.information);
-                for (0..q) |j| penalized[j * q + j] *= 1 + ridge;
+                const penalized = try ia.dupe(f64, information);
+                for (0..q) |j| penalized[j * q + j] += if (options.ridging == .relative) ridge * information[j * q + j] else ridge;
                 break :blk try solve(ia, penalized, e.gradient);
             };
-            for (0..q) |j| candidate[j] = b[j] + adjustment[j];
-            const next = evaluate(ia, link, candidate, x, y, pcols, k, multiplicity, true) catch |err| {
+            for (0..q) |j| candidate[j] = b[j] + factor * adjustment[j];
+            const next: ?Evaluation = evaluate(ia, link, candidate, x, y, pcols, k, multiplicity, true) catch |err| blk: {
                 if (err == error.OutOfMemory) return err;
-                ridge = if (ridge == 0) 0.0001 else ridge * 2;
-                continue;
+                break :blk null;
             };
-            if (next.ll >= e.ll) {
+            if (next) |value| if (value.ll >= e.ll) {
                 accepted = true;
                 break;
+            };
+            if (options.ridging == .none) {
+                factor /= 2;
+                halving_steps += 1;
+            } else {
+                ridge = if (ridge == 0) 0.0001 else ridge * 2;
+                ridge_steps += 1;
             }
-            ridge = if (ridge == 0) 0.0001 else ridge * 2;
         }
         if (!accepted) return error.ExecError;
+        @memcpy(previous_b, b);
+        previous_ll = e.ll;
         @memcpy(b, candidate);
     }
     return error.ExecError;
@@ -442,7 +476,7 @@ test "LOGISTIC007 observed cumulative Hessian matches derivative of full score" 
     // Separate cutpoint slopes, evaluated inside the common-slope null.
     const b = [_]f64{ -0.7, 0.2, 0.8, 0.2 };
     for ([_]Link{ .logit, .probit, .cloglog }) |link| {
-        const info = try observedInformation(a, link, &b, &x, &y, 2, 2, &frequencies);
+        const info = try observedInformation(a, link, &b, &x, &y, 2, 2, &frequencies, false);
         for (0..4) |j| {
             var plus = b;
             var minus = b;
@@ -494,4 +528,62 @@ test "LOGISTIC007 closed-form cumulative slope and frequency weight likelihood e
         for (0..3) |k| product += info[3 * i + k] * result.result.covariance[3 * k + j];
         try std.testing.expectApproxEqAbs(@as(f64, if (i == j) 1 else 0), product, 1e-7);
     };
+}
+
+test "LOGISTIC005 common-slope observed Hessian and Fisher Newton covariance contracts" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const x = [_]f64{ 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 2, 1, 2, 1, 2 };
+    const y = [_]usize{ 0, 1, 2, 0, 1, 2, 0, 1, 2 };
+    const frequency = [_]f64{ 2, 3, 5, 4, 2, 4, 7, 2, 1 };
+    const weights = [_]f64{1} ** 9;
+    const b = [_]f64{ -0.7, 0.8, 0.2 };
+    for ([_]Link{ .logit, .probit, .cloglog }) |link| {
+        const observed = try observedInformation(a, link, &b, &x, &y, 2, 2, &frequency, true);
+        for (0..3) |j| {
+            var plus = b;
+            var minus = b;
+            const h = 1e-5;
+            plus[j] += h;
+            minus[j] -= h;
+            const ep = try evaluate(a, link, &plus, &x, &y, 2, 2, &frequency, true);
+            const em = try evaluate(a, link, &minus, &x, &y, 2, 2, &frequency, true);
+            for (0..3) |i| try std.testing.expectApproxEqAbs(-(ep.gradient[i] - em.gradient[i]) / (2 * h), observed[3 * i + j], 2e-7); // central O(h²)+eps/h, weights sum30
+        }
+    }
+    // Adjacent logits form an exponential family, so the expected matrix is
+    // also the observed negative Hessian. Verify it rather than relabeling
+    // a Fisher matrix as Newton without checking the canonical-link identity.
+    const adjacent = try evaluate(a, .alogit, &b, &x, &y, 2, 2, &frequency, true);
+    for (0..3) |j| {
+        var plus = b;
+        var minus = b;
+        const h = 1e-5;
+        plus[j] += h;
+        minus[j] -= h;
+        const ep = try evaluate(a, .alogit, &plus, &x, &y, 2, 2, &frequency, true);
+        const em = try evaluate(a, .alogit, &minus, &x, &y, 2, 2, &frequency, true);
+        for (0..3) |i| try std.testing.expectApproxEqAbs(-(ep.gradient[i] - em.gradient[i]) / (2 * h), adjacent.information[3 * i + j], 2e-7);
+    }
+    const fisher = try fit(a, .logit, &x, &y, 2, 3, &frequency, &weights, .{ .technique = .fisher, .gconv = 1e-18, .capture_history = true });
+    const newton = try fit(a, .logit, &x, &y, 2, 3, &frequency, &weights, .{ .technique = .newton, .gconv = 1e-18, .capture_history = true });
+    for (fisher.result.coefficients, newton.result.coefficients) |first, second| try std.testing.expectApproxEqAbs(first, second, 1e-8);
+    try std.testing.expect(@abs(fisher.result.covariance[0] - newton.result.covariance[0]) > 1e-4);
+    // At the fitted point, covariance is the inverse of its actual information
+    // method, not a relabeled copy of Fisher covariance for TECHNIQUE=NEWTON.
+    for ([_]Fit{ fisher, newton }, [_]bool{ false, true }) |result, use_observed| {
+        const evaluation = try evaluate(a, .logit, result.result.coefficients, &x, &y, 2, 2, &frequency, true);
+        const information = if (use_observed) try observedInformation(a, .logit, result.result.coefficients, &x, &y, 2, 2, &frequency, true) else evaluation.information;
+        for (0..3) |i| for (0..3) |j| {
+            var product: f64 = 0;
+            for (0..3) |r| product += information[3 * i + r] * result.result.covariance[3 * r + j];
+            try std.testing.expectApproxEqAbs(@as(f64, if (i == j) 1 else 0), product, 1e-12);
+        };
+        for (result.result.history[1..], result.result.history[0 .. result.result.history.len - 1]) |current, previous| try std.testing.expect(current.log_likelihood >= previous.log_likelihood);
+    }
+    const limited = try fit(a, .logit, &x, &y, 2, 3, &frequency, &weights, .{ .max_iterations = 1, .return_incomplete = true });
+    try std.testing.expect(!limited.result.converged);
+    try std.testing.expectEqual(@as(usize, 1), limited.result.iterations);
+    try std.testing.expectEqual(binary.convergence.Reason.iteration_limit, limited.result.stop.reason);
 }
