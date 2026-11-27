@@ -508,9 +508,11 @@ pub fn run(cx: proc.ProcCtx, out: *std.ArrayList(u8), t: []const lex.Token) diag
         s.by_number = if (s.by_cols.len > 0) bi + 1 else null;
         const input = try prepare(cx, s, slice.rows, v);
         if (s.variable_info and !s.noprint) {
+            const info_start = body.items.len;
             try heading(cx, &body, s, slice.rep);
             const info = try varinfo.collect(cx.arena, s.input.ds, slice.rows, s.class, v, s.frequency, s.missing);
             try varinfo.render(cx.arena, &body, s.input.ds.columns.items[v].name, info, s.frequency != null, s.variable_ties);
+            try finishTable(cx, &body, info_start, s, v, "VarInfo");
         }
         if (input.labels.len < 2) {
             try cx.diags.warn(0, "PROC NPAR1WAY: fewer than two nonempty CLASS levels for {s}", .{s.input.ds.columns.items[v].name});
@@ -798,7 +800,7 @@ test "NPAR004 HL object selection preserves only requested complete table and tr
     _ = try listing.parse(a, &d, try lex.tokenize(a, "ods select HodgesLehmann;", &d));
     listing.trace = &d;
     var out: std.ArrayList(u8) = .empty;
-    try run(.{ .arena = a, .lib = &lib, .diags = &d, .listing = &listing }, &out, try lex.tokenize(a, "proc npar1way hl(refclass=1) alpha=.2; class g; var x; exact hl; run;", &d));
+    try run(.{ .arena = a, .lib = &lib, .diags = &d, .listing = &listing }, &out, try lex.tokenize(a, "proc npar1way varinfo hl(refclass=1) alpha=.2; class g; var x; exact hl; run;", &d));
     try std.testing.expect(std.mem.indexOf(u8, out.items, "Location Shift (2 - 1) 4.0000") != null);
     try std.testing.expect(std.mem.indexOf(u8, out.items, "Wilcoxon Scores") == null);
     try std.testing.expect(std.mem.indexOf(u8, out.items, "Kruskal-Wallis") == null);
@@ -852,4 +854,25 @@ test "NPAR004 HL string reference preserves significant leading label blanks" {
     try run(.{ .arena = a, .lib = &lib, .diags = &d }, &out, try lex.tokenize(a, "proc npar1way hl(refclass=' A') alpha=.2; class g; var x; run;", &d));
     try std.testing.expect(!d.hasErrors());
     try std.testing.expect(std.mem.indexOf(u8, out.items, "Location Shift (B - A) 4.0000") != null);
+}
+
+test "NPAR004 expanded FREQ reaches explicit HL pair allocation guard without partial listing" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var lib = @import("../exec.zig").Library.init(a);
+    const ds = try a.create(Dataset);
+    ds.* = Dataset.init(a, "sample");
+    for ([_][]const u8{ "g", "x", "f" }) |name| _ = try ds.addColumn(name, .num);
+    try ds.appendRow(&.{ .{ .num = 0 }, .{ .num = 1 }, .{ .num = 1001 } });
+    try ds.appendRow(&.{ .{ .num = 1 }, .{ .num = 2 }, .{ .num = 1001 } });
+    try lib.put("sample", ds);
+    var d = diag.Diagnostics.init(a);
+    var out: std.ArrayList(u8) = .empty;
+    diag.resetGap();
+    defer diag.resetGap();
+    try std.testing.expectError(error.ParseError, run(.{ .arena = a, .lib = &lib, .diags = &d }, &out, try lex.tokenize(a, "proc npar1way hl; class g; var x; freq f; run;", &d)));
+    try std.testing.expectEqual(@as(u8, 2), diag.exitCode(diag.gapHit(), d.hasErrors()));
+    try std.testing.expect(std.mem.indexOf(u8, d.list.items[0].message, "PairLimit") != null);
+    try std.testing.expectEqual(@as(usize, 0), out.items.len);
 }

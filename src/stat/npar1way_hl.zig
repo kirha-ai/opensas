@@ -46,6 +46,7 @@ pub fn distribution(a: A, values: []const f64, n1: usize) !Distribution {
 pub fn compute(a: A, x: []const f64, y: []const f64, alpha: f64, exact: bool) !Result {
     if (x.len == 0 or y.len == 0 or !(alpha > 0 and alpha < 1)) return error.InvalidInput;
     if (x.len > 1_000_000 / y.len) return error.PairLimit;
+    if (exact and (x.len > 60 or y.len > 60 - x.len)) return error.ExactLimit;
     const m = x.len * y.len;
     const differences = try a.alloc(f64, m);
     var at: usize = 0;
