@@ -2,6 +2,10 @@
 
 ## ACTIVE — resumed 2026-11-27
 
+### Batch7 interaction-regression repair
+
+At31729fd8, oracle-absentgate direct1:2188/2189unit,2384/2384corpus,11/11programs. Solefailure wasobsolete REG004 expectation that validREWEIGHTstillgaps. Isolatedrepair `7f47dc58` preservesotherinvalid/gapchecks and replacesonlythatobsoleteexpectation with actualprivateweights,unchangedDATA/stalefit,silentREFIT coefficients(7,3,0)/DF0,andunchangedOUTEST/listing checks. TargetedactualREG004+REG01125/25direct0. No productmath or corpusgolden changed. Retainedrepairworktree `/Users/thomas/kirha/opensas-reg-gate-repair`, newbranch `codex/stat-reg-interactive-repair`; priorrepairbranches/evidence preserved. Fullgate/separatesupplemental/absence rerunpending; no passingreceipt claimedforfailedrun.
+
 ### Final batch6 verification and push
 
 Exacttested/pushed SHA `eeec9a694e717254538962b32aeed93dfb270db4`: entireoracleunavailable for defaultgate direct0 (**2139/2139unit,2379/2379corpus,11/11programs**), install direct0, separate supplemental direct0 (**1113/1113**). Oracle restored unchanged; no CI/release/default-gate compositionchanges. Alloriginalsreplayedunchanged. MIXED016/017 each326/326tokensrc0 plus16completeTRACEobjects(allfields/order)exact;017correctlyproduceszero graphs withoutplotrequest, explicit6-panelnativegraphs retainindependentdata/visualproof. BothremainPARK fordescriptors/otherobjects/plotfamilies.
