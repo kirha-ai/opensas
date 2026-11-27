@@ -296,4 +296,5 @@ pub fn kuiperTail(z: f64) f64 {
 
 test {
     _ = @import("npar1way_stats_tests.zig");
+    _ = @import("npar1way_ties_tests.zig");
 }

@@ -15,6 +15,7 @@ const selection = @import("data_selection.zig");
 const lists = @import("variable_lists.zig");
 const stats = @import("npar1way_stats.zig");
 const plots = @import("npar1way_plots.zig");
+const varinfo = @import("npar1way_varinfo.zig");
 const A = std.mem.Allocator;
 const eq = std.ascii.eqlIgnoreCase;
 pub const Spec = struct {
@@ -27,6 +28,8 @@ pub const Spec = struct {
     notsorted: bool = false,
     missing: bool = false,
     noprint: bool = false,
+    variable_info: bool = false,
+    variable_ties: bool = false,
     plots_none: bool = false,
     plots_only: bool = false,
     plots_wilcoxon: bool = false,
@@ -79,6 +82,14 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
         } else if (kw(t, i, "noprint")) {
             s.noprint = true;
             i += 1;
+        } else if (kw(t, i, "varinfo")) {
+            s.variable_info = true;
+            i += 1;
+            if (at(t, i, .lparen)) {
+                if (!kw(t, i + 1, "ties") or !at(t, i + 2, .rparen)) return invalid(cx, t, i);
+                s.variable_ties = true;
+                i += 3;
+            }
         } else if (kw(t, i, "missing")) {
             s.missing = true;
             i += 1;
@@ -328,6 +339,11 @@ pub fn run(cx: proc.ProcCtx, out: *std.ArrayList(u8), t: []const lex.Token) diag
     var plot_order: usize = 0;
     for (slices, 0..) |slice, bi| for (s.variables) |v| {
         const input = try prepare(cx, s, slice.rows, v);
+        if (s.variable_info and !s.noprint) {
+            try heading(cx, &body, s, slice.rep);
+            const info = try varinfo.collect(cx.arena, s.input.ds, slice.rows, s.class, v, s.frequency, s.missing);
+            try varinfo.render(cx.arena, &body, s.input.ds.columns.items[v].name, info, s.frequency != null, s.variable_ties);
+        }
         if (input.labels.len < 2) {
             try cx.diags.warn(0, "PROC NPAR1WAY: fewer than two nonempty CLASS levels for {s}", .{s.input.ds.columns.items[v].name});
             continue;

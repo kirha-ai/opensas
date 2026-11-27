@@ -1,0 +1,5 @@
+# corpus assertions
+# All reference fields retained. Zero numerical tolerance only for 110.5/13=8.5, rank sum79.5 and 79.5/6=13.25; trailing-zero precision is not asserted for those three fields.
+words The NPAR1WAY Procedure Wilcoxon Scores (Rank Sums) for Variable Time Classified by Variable Stim Sum of Expected Std Dev Mean Stim N Scores Under H0 Under H0 Score 1 13 110.50 130.0 11.004784 8.500~0 2 6 79.50~0 60.0 11.004784 13.250~0 Average scores were used for ties. Wilcoxon Two-Sample Test t Approximation ----------Exact---------- Statistic (S) Z Pr > Z Pr > |Z| Pr > Z Pr > |Z| Pr >= S Pr >= |S-Mean| 79.5000 1.7720 0.0382 0.0764 0.0467 0.0933 0.0527 0.1054 Kruskal-Wallis Test Chi-Square DF Pr > ChiSq 3.1398 1 0.0764
+stderr-count 0 ERROR:
+stderr-count 0 WARNING:
