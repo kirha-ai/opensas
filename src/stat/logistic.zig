@@ -788,13 +788,13 @@ test "LOGISTIC004 formatted response values and ordering do not fall back to raw
     defer arena.deinit();
     const a = arena.allocator();
     const entries = [_]format.UserFmtEntry{ .{ .lo = 0, .hi = 0, .label = "nonevent" }, .{ .lo = 1, .hi = 1, .label = "event" } };
-    const formats = [_]format.UserFmt{.{ .name = "logistic004", .is_char = false, .entries = &entries }};
+    const formats = [_]format.UserFmt{.{ .name = "responseorder", .is_char = false, .entries = &entries }};
     const previous = format.userFormats();
     format.setUserFormats(&formats);
     defer format.setUserFormats(previous);
     var ds = Dataset.init(a, "formatted");
     _ = try ds.addColumn("y", .num);
-    ds.columns.items[0].format = "logistic004.";
+    ds.columns.items[0].format = "responseorder.";
     for ([_]f64{ 0, 0, 0, 1 }) |value| try ds.appendRow(&.{.{ .num = value }});
     var lib = @import("../exec.zig").Library.init(a);
     try lib.put("formatted", &ds);
