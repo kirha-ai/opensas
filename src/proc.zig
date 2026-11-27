@@ -5385,7 +5385,8 @@ fn uNum(arena: std.mem.Allocator, x: f64) ![]const u8 {
 // NPLUS1/NORMAL=/SAVAGE) and an unrecognized TIES= ParseError instead of silently
 // emitting ordinal ranks (GAP-rankguards); add scores when a study needs them.
 
-const TiesKind = enum { mean, low, high, dense };
+const rank_stats = @import("stat/ranks.zig");
+const TiesKind = rank_stats.Ties;
 
 /// null = an unrecognized TIES= value — the caller must fail LOUD rather than
 /// silently defaulting to MEAN and shipping the wrong tie handling (GAP-rankguards).
@@ -5562,39 +5563,14 @@ pub fn runRank(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) diag.E
 /// Rank the rows `[start,end)` of `ds` on column `vidx`, writing each row's rank
 /// (or GROUPS bucket) into `cells[row][tidx]`; missing values stay missing.
 fn rankRange(arena: std.mem.Allocator, ds: *Dataset, start: usize, end: usize, vidx: usize, descending: bool, ties: TiesKind, groups: ?usize, cells: [][]Value, tidx: usize) !void {
-    const RV = struct { idx: usize, v: f64 };
-    var ent: std.ArrayList(RV) = .empty;
-    for (start..end) |r| {
-        const x = toNum(ds.row(r)[vidx]);
-        if (std.math.isNan(x)) continue; // missing → no rank (cell already missing)
-        try ent.append(arena, .{ .idx = r, .v = x });
-    }
-    const n = ent.items.len;
-    if (n == 0) return;
-    std.mem.sort(RV, ent.items, descending, struct {
-        fn lt(desc: bool, x: RV, y: RV) bool {
-            return if (desc) x.v > y.v else x.v < y.v;
-        }
-    }.lt);
-
-    const nf: f64 = @floatFromInt(n);
-    var i: usize = 0;
-    var dense: f64 = 0;
-    while (i < n) {
-        var j = i + 1;
-        while (j < n and ent.items[j].v == ent.items[i].v) j += 1; // a run of equal values
-        dense += 1;
-        const lo: f64 = @floatFromInt(i + 1); // 1-based ordinal span of the tie run
-        const hi: f64 = @floatFromInt(j);
-        const rank: f64 = switch (ties) {
-            .mean => (lo + hi) / 2,
-            .low => lo,
-            .high => hi,
-            .dense => dense,
-        };
-        const val: f64 = if (groups) |g| @floor(rank * @as(f64, @floatFromInt(g)) / (nf + 1)) else rank;
-        for (i..j) |m| cells[ent.items[m].idx][tidx] = .{ .num = val };
-        i = j;
+    const values = try arena.alloc(f64, end - start);
+    for (start..end, 0..) |r, i| values[i] = toNum(ds.row(r)[vidx]);
+    const ranked = try rank_stats.rank(arena, values, descending, ties);
+    const nf: f64 = @floatFromInt(ranked.n);
+    for (ranked.values, start..) |r, row| {
+        if (std.math.isNan(r)) continue;
+        const val = if (groups) |g| @floor(r * @as(f64, @floatFromInt(g)) / (nf + 1)) else r;
+        cells[row][tidx] = .{ .num = val };
     }
 }
 

@@ -465,6 +465,10 @@ Complete prerequisite shared contracts first, then each PROC's data input, model
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-COMMON-017/](tests/STAT15.4-oracle/STAT-COMMON-017/).
 - Acceptance criteria: Verify ranks and tie corrections with tied, reverse-ordered, constant, and missing data; enumerate permutations to check small-sample statistics.
 
+- Active implementation (2026-11-27, dev6): shared `src/stat/ranks.zig` supplies original-order ranks, sorted tie groups, tie correction, finite-population linear-rank moments/continuity-corrected z, and exact conditional rank-sum tails. Existing `PROC RANK` now calls this shared rank implementation. Exact DP keeps tied observations as distinct allocations, validates midrank multiplicities, and returns `ExactLimit` above 60 observations rather than silently approximating.
+- Permanent original-case mapping: `ranks_with_ties.sas` -> `src/stat/ranks.zig` test `STAT-COMMON-017 tied original rank sum agrees with independent enumeration` (the original rounded inputs, complete rank vector, S=37, E=39, variance=36, z=-0.25, two-group chi-square=1/9, and exact 370/924 and 740/924). This is computational partial coverage, not full listing/PROC acceptance. Two further tests cover reverse order, constant/missing/near-equal values, tie rules, invalid vectors, explicit exact limits, and asymmetric equidistant two-sided tails (physical PDF p.7251); existing `src/proc.zig` PROC RANK tests cover integration and BY behavior.
+- Original replay before integration: unchanged `ranks_with_ties.sas`, direct CLI exit 2, stderr `ERROR: PROC npar1way is not supported`, no expected listing; SAS reference exit 0. Existing dependency tickets STAT-NPAR1WAY-001/002 requested from coordinator; COMMON-017 is not deletion-ready. Next step: connect shared ranks to the NPAR1WAY procedure and then replay the entire original listing/status, including normal and t approximations. No original result is replaced with a failing golden.
+
 <a id="stat-common-018"></a>
 
 ### [DOING @dev7] STAT-COMMON-018 — Power and sample size inversion interface
