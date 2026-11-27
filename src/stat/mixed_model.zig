@@ -31,7 +31,7 @@ pub const Spec = struct {
 };
 /// Test/front-end adapter. parse accepts any structurally identical statement
 /// slice, including mixed_parse.Statement, avoiding a front-end import cycle.
-pub const Statement = struct { kind: enum { class, model, random, repeated, parms, contrast, estimate, lsmeans }, tokens: []const lex.Token, line: usize };
+pub const Statement = struct { kind: enum { class, model, random, repeated, parms, contrast, estimate, lsmeans, slice }, tokens: []const lex.Token, line: usize };
 fn at(t: []const lex.Token, i: usize, tag: lex.Tag) bool {
     return i < t.len and t[i].tag == tag;
 }
@@ -254,7 +254,7 @@ pub fn parse(cx: proc.ProcCtx, ds: *const Dataset, statements: anytype, order: l
         },
         .random => s.has_random = true,
         .repeated => s.has_repeated = true,
-        .parms, .contrast, .estimate, .lsmeans => {},
+        .parms, .contrast, .estimate, .lsmeans, .slice => {},
     };
     if (!seen) return cx.diags.fail(error.ParseError, 0, "PROC MIXED: MODEL statement is required", .{});
     s.matrix.classes = classes.items;

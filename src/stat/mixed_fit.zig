@@ -426,6 +426,7 @@ pub fn testContrast(a: A, fitted: anytype, l: []const f64, q: usize, den_df: usi
 
 test {
     _ = @import("mixed_issues_tests.zig");
+    _ = @import("mixed_slice_tests.zig");
     _ = @import("mixed_fit_tests.zig");
     _ = @import("mixed_parms_tests.zig");
     _ = @import("mixed_ods_tests.zig");

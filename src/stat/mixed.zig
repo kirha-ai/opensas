@@ -54,6 +54,7 @@ pub fn run(cx: proc.ProcCtx, out: *std.ArrayList(u8), tokens: []const lex.Token)
         if (x.matrix.n != z.n) return proc.failGap(cx.diags, spec.line, "PROC MIXED: fixed/random observation selection differs", .{});
         for (x.matrix.columns) |column| if (column.effect_name.len > spec.options.namelen) return proc.failGap(cx.diags, spec.line, "PROC MIXED: long effect-name presentation is not implemented", .{});
         const lsmean_requests = try @import("mixed_lsmeans.zig").parse(cx, m, spec.statements);
+        const slice_requests = try @import("mixed_slice.zig").parse(cx, m, spec.statements);
         const inference_requests = try @import("mixed_contrasts.zig").parse(cx, m, z, spec.statements);
         const components = try cx.arena.alloc(math.Component, z.components.len);
         const names = try cx.arena.alloc([]const u8, z.components.len + 1);
@@ -63,6 +64,7 @@ pub fn run(cx: proc.ProcCtx, out: *std.ArrayList(u8), tokens: []const lex.Token)
         }
         names[names.len - 1] = "Residual";
         if (spec.options.method == .type3) {
+            if (slice_requests.len > 0) return proc.failGap(cx.diags, spec.line, "PROC MIXED: SLICE with METHOD=TYPE3 is not implemented", .{});
             try @import("mixed_theory_type3_run.zig").runRouted(cx, out, spec, m, r, group, x, z, components, names, &route);
             if (route.visible == 0) out.shrinkRetainingCapacity(group_start);
             continue;
@@ -94,6 +96,7 @@ pub fn run(cx: proc.ProcCtx, out: *std.ArrayList(u8), tokens: []const lex.Token)
         render.render(cx.arena, out, fit, names, tests.items, .{ .noitprint = spec.options.noitprint, .notest = m.options.notest or !usable_inference, .nofit = fit.status == .evaluated or !usable_inference, .parms_lrt = if (parameter_search) |search| search.likelihood_ratio else null, .route = &route }) catch |err| return if (err == error.OutOfMemory) error.OutOfMemory else proc.failGap(cx.diags, spec.line, "PROC MIXED: numerical table rendering failed ({t})", .{err});
         if (usable_inference) try @import("mixed_contrasts.zig").publishRouted(cx, out, m, r, x, z, fit, fit.variances, inference_requests, &route);
         if (usable_inference) try @import("mixed_lsmeans.zig").publishRouted(cx, out, m, r, x, z, fit, lsmean_requests, &route);
+        if (usable_inference) try @import("mixed_slice.zig").publishRouted(cx, out, m, r, x, z, fit, slice_requests, &route);
         if (usable_inference) try @import("mixed_influence_run.zig").publish(cx, out, spec, m, group, x, z, fit, if (parameter_search) |search| search.profile else true, &route);
         if (route.visible == 0) out.shrinkRetainingCapacity(group_start);
         if (usable_inference) try @import("mixed_plots.zig").execute(cx, spec, m, group, x, z, fit, if (spec.roles.by.len > 0) by_index + 1 else null);

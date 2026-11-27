@@ -30,7 +30,7 @@ pub const Options = struct {
     absolute: bool = false,
 };
 pub const Statement = struct {
-    kind: enum { class, model, random, repeated, parms, contrast, estimate, lsmeans },
+    kind: enum { class, model, random, repeated, parms, contrast, estimate, lsmeans, slice },
     tokens: []const lex.Token, // excludes keyword and semicolon
     line: usize,
 };
@@ -186,10 +186,10 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
             if (weight != null) return proc.failGap(cx.diags, token.line, "PROC MIXED: repeated WEIGHT statements are not yet verified", .{});
             const variable = try lists.roleVariable(t[0..end], i + 1, false, cx.diags);
             weight = try selection.Roles.numeric(input.ds, variable.text, "WEIGHT", cx.diags, variable.line);
-        } else if (eq(token.text, "class") or eq(token.text, "model") or eq(token.text, "random") or eq(token.text, "repeated") or eq(token.text, "parms") or eq(token.text, "contrast") or eq(token.text, "estimate") or eq(token.text, "lsmeans")) {
+        } else if (eq(token.text, "class") or eq(token.text, "model") or eq(token.text, "random") or eq(token.text, "repeated") or eq(token.text, "parms") or eq(token.text, "contrast") or eq(token.text, "estimate") or eq(token.text, "lsmeans") or eq(token.text, "slice")) {
             if (eq(token.text, "class") and model_seen) return cx.diags.fail(error.ParseError, token.line, "PROC MIXED: CLASS must precede MODEL", .{});
-            if (eq(token.text, "lsmeans") and !model_seen) return cx.diags.fail(error.ParseError, token.line, "PROC MIXED: LSMEANS must follow MODEL", .{});
-            const kind: @FieldType(Statement, "kind") = if (eq(token.text, "class")) .class else if (eq(token.text, "model")) .model else if (eq(token.text, "random")) .random else if (eq(token.text, "repeated")) .repeated else if (eq(token.text, "parms")) .parms else if (eq(token.text, "contrast")) .contrast else if (eq(token.text, "estimate")) .estimate else .lsmeans;
+            if ((eq(token.text, "lsmeans") or eq(token.text, "slice")) and !model_seen) return cx.diags.fail(error.ParseError, token.line, "PROC MIXED: LSMEANS must follow MODEL", .{});
+            const kind: @FieldType(Statement, "kind") = if (eq(token.text, "class")) .class else if (eq(token.text, "model")) .model else if (eq(token.text, "random")) .random else if (eq(token.text, "repeated")) .repeated else if (eq(token.text, "parms")) .parms else if (eq(token.text, "contrast")) .contrast else if (eq(token.text, "estimate")) .estimate else if (eq(token.text, "slice")) .slice else .lsmeans;
             if (kind == .model) model_seen = true;
             try statements.append(cx.arena, .{ .kind = kind, .tokens = t[i + 1 .. end], .line = token.line });
         } else if (eq(token.text, "format")) {
@@ -197,7 +197,7 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
         } else if (eq(token.text, "where") or eq(token.text, "run") or eq(token.text, "quit") or (token.tag == .name and parser.isMidStepSkippable(token.text))) {
             // WHERE is applied by procInputObs; globals are handled by main.
         } else {
-            for ([_][]const u8{ "contrast", "estimate", "lsmeans", "lsmestimate", "slice", "store" }) |known| if (eq(token.text, known)) return proc.failGap(cx.diags, token.line, "PROC MIXED: statement {s} is not implemented", .{token.text});
+            for ([_][]const u8{ "contrast", "estimate", "lsmeans", "lsmestimate", "code", "store" }) |known| if (eq(token.text, known)) return proc.failGap(cx.diags, token.line, "PROC MIXED: statement {s} is not implemented", .{token.text});
             return bad(cx, token);
         }
         i = end + 1;
