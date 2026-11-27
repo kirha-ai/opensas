@@ -15,7 +15,7 @@ pub fn render(a: std.mem.Allocator, out: *std.ArrayList(u8), s: declarations.Spe
             s.input.ds.columns.items[m.matrix.response].name,
             if (z.components.len == 0) @as([]const u8, "Diagonal") else "Variance Components",
             if (s.options.method == .type3) @as([]const u8, "Type 3") else try std.ascii.allocUpperString(a, @tagName(s.options.method)),
-            if (s.options.method == .type3) @as([]const u8, "Factor") else "Profile",
+            if (s.options.method == .type3) @as([]const u8, "Factor") else if (s.options.noprofile) "Parameter" else "Profile",
             if (m.options.ddfm == .residual or z.components.len == 0) @as([]const u8, "Residual") else "Containment",
         });
     }

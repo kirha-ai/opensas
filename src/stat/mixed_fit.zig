@@ -11,8 +11,8 @@ const reg = @import("reg_fit.zig");
 pub const Component = struct { name: []const u8, kernel: []const f64, columns: usize = 0 };
 pub const Model = struct { x: []const f64, y: []const f64, n: usize, p: usize, weights: ?[]const f64 = null, components: []const Component = &.{}, has_intercept: bool = true, singular: f64 = 1e-10 };
 pub const Method = enum { reml, ml };
-pub const Options = struct { method: Method = .reml, maxiter: usize = 50, maxfunc: usize = 150, convergence: f64 = 1e-8, bic_n: ?f64 = null };
-pub const Status = enum { converged, max_iterations, max_evaluations, line_search_failed };
+pub const Options = struct { method: Method = .reml, maxiter: usize = 50, maxfunc: usize = 150, convergence: f64 = 1e-8, bic_n: ?f64 = null, start: ?[]const f64 = null, ols_start: bool = false };
+pub const Status = enum { converged, evaluated, max_iterations, max_evaluations, line_search_failed };
 pub const Iteration = struct { iteration: usize, evaluations: usize, objective: f64, criterion: ?f64, parameters: []f64 };
 pub const Fit = struct {
     n: usize,
@@ -106,12 +106,17 @@ fn derivatives(a: A, e: Evaluation, components: []const Component, n: usize, df:
     return .{ .gradient = gradient, .hessian = hessian };
 }
 const Initial = struct { ratios: []f64, sigma: f64, null_objective: f64, null_sigma: f64 };
-fn initial(a: A, model: Model, x: []const f64, p: usize, method: Method) !Initial {
+fn initial(a: A, model: Model, x: []const f64, p: usize, method: Method, supplied: ?[]const f64, ols: bool) !Initial {
     const m = model.components.len;
     const ratios = try a.alloc(f64, m);
     @memset(ratios, 0);
     if (m == 0) return .{ .ratios = ratios, .sigma = std.math.nan(f64), .null_objective = std.math.nan(f64), .null_sigma = std.math.nan(f64) };
     const e = try evaluate(a, x, model.y, model.n, p, model.components, ratios, model.weights, method);
+    if (supplied) |values| {
+        for (ratios, 0..) |*r, i| r.* = values[i] / values[m];
+        return .{ .ratios = ratios, .sigma = values[m], .null_objective = e.objective, .null_sigma = e.sigma };
+    }
+    if (ols) return .{ .ratios = ratios, .sigma = e.sigma, .null_objective = e.objective, .null_sigma = e.sigma };
     const ks = try a.alloc([]const f64, m + 1);
     for (model.components, 0..) |c, i| ks[i] = c.kernel;
     const residual = try a.alloc(f64, model.n * model.n);
@@ -153,6 +158,11 @@ pub fn fit(a: A, model: Model, options: Options) !Fit {
             if (!std.math.isFinite(c.kernel[i * model.n + j]) or @abs(c.kernel[i * model.n + j] - c.kernel[j * model.n + i]) > 1e-12) return error.InvalidInput;
         };
     }
+    if (options.start) |values| {
+        if (values.len != model.components.len + 1 or options.ols_start) return error.InvalidInput;
+        for (values) |v| if (!std.math.isFinite(v) or v < 0) return error.InvalidInput;
+        if (!(values[values.len - 1] > 0)) return error.InvalidInput;
+    }
     var ranked = try ranker.fit(a, model.x, model.y, model.n, model.p, model.weights, model.has_intercept, model.singular);
     defer ranked.deinit(a);
     const p = ranked.fit.rank;
@@ -169,13 +179,14 @@ pub fn fit(a: A, model: Model, options: Options) !Fit {
     };
     var init_arena = std.heap.ArenaAllocator.init(a);
     defer init_arena.deinit();
-    const starting = try initial(init_arena.allocator(), model, x, p, options.method);
+    const starting = try initial(init_arena.allocator(), model, x, p, options.method, options.start, options.ols_start);
     const ratios = try a.dupe(f64, starting.ratios);
     const m = ratios.len;
     if (m > 0 and options.maxfunc < 2) return error.EvaluationLimit;
     var history: std.ArrayList(Iteration) = .empty;
     var status: Status = if (m == 0) .converged else .max_iterations;
-    var evaluations: usize = if (m == 0) 1 else 2;
+    const explicit_start = options.start != null or options.ols_start;
+    var evaluations: usize = if (m == 0 or explicit_start) 1 else 2;
     var state_arena = std.heap.ArenaAllocator.init(a);
     defer state_arena.deinit();
     var current = try evaluate(state_arena.allocator(), x, model.y, model.n, p, model.components, ratios, model.weights, options.method);
@@ -232,9 +243,9 @@ pub fn fit(a: A, model: Model, options: Options) !Fit {
             @memset(reported_parameters[0..m], 0);
             reported_parameters[m] = starting.null_sigma;
         }
-        try history.append(a, .{ .iteration = i, .evaluations = if (i == 0) 1 else evaluations, .objective = if (i == 0) starting.null_objective else e.objective, .criterion = if (i == 0) null else criterion, .parameters = reported_parameters });
+        if (i > 0 or !explicit_start) try history.append(a, .{ .iteration = i, .evaluations = if (i == 0) 1 else evaluations, .objective = if (i == 0) starting.null_objective else e.objective, .criterion = if (i == 0) null else criterion, .parameters = reported_parameters });
         if (criterion < options.convergence) {
-            if (i == 0 and @abs(starting.null_objective - e.objective) > 1e-12) try history.append(a, .{ .iteration = 1, .evaluations = evaluations, .objective = e.objective, .criterion = criterion, .parameters = try parameters(a, ratios, e.sigma) });
+            if (i == 0 and (explicit_start or @abs(starting.null_objective - e.objective) > 1e-12)) try history.append(a, .{ .iteration = 1, .evaluations = evaluations, .objective = e.objective, .criterion = criterion, .parameters = try parameters(a, ratios, e.sigma) });
             status = .converged;
             break;
         }
@@ -339,6 +350,7 @@ pub fn testContrast(a: A, fitted: anytype, l: []const f64, q: usize, den_df: usi
 
 test {
     _ = @import("mixed_fit_tests.zig");
+    _ = @import("mixed_parms_tests.zig");
 }
 
 /// GLS at supplied covariance components, without optimization/profiling.
@@ -356,21 +368,13 @@ pub const GLS = struct {
     /// Evaluated likelihoods, never claimed to be optimized fits.
     minus2reml: f64,
     minus2ml: f64,
+    quadratic: f64,
 };
 pub fn knownCovariance(a: A, model: Model, variances: []const f64) !GLS {
     if (model.n == 0 or model.p == 0 or model.n > 512 or model.p > 1024 or model.components.len > 8 or variances.len != model.components.len + 1) return error.InvalidInput;
+    if (model.weights) |w| if (w.len != model.n) return error.InvalidInput;
     const sigma = variances[variances.len - 1];
     if (!(sigma > 0) or !std.math.isFinite(sigma)) return error.InvalidInput;
-    var ranked = try ranker.fit(a, model.x, model.y, model.n, model.p, model.weights, model.has_intercept, model.singular);
-    defer ranked.deinit(a);
-    const p = ranked.fit.rank;
-    if (p == 0) return error.InvalidInput;
-    const independent = try a.alloc(usize, p);
-    var at: usize = 0;
-    for (ranked.fit.aliased, 0..) |alias, j| if (!alias) {
-        independent[at] = j;
-        at += 1;
-    };
     const n = model.n;
     const v = try a.alloc(f64, n * n);
     @memset(v, 0);
@@ -387,6 +391,26 @@ pub fn knownCovariance(a: A, model: Model, variances: []const f64) !GLS {
             v[i * n + j] += value * k;
         };
     }
+    return knownCovarianceMatrix(a, model, v);
+}
+/// GLS for an actual supplied observation covariance (for REPEATED UN/CS/etc).
+/// No fictitious residual parameter or positive-component decomposition.
+pub fn knownCovarianceMatrix(a: A, model: Model, v: []const f64) !GLS {
+    if (model.n == 0 or model.p == 0 or model.n > 512 or model.p > 1024 or v.len != model.n * model.n) return error.InvalidInput;
+    const n = model.n;
+    for (0..n) |i| for (0..n) |j| {
+        if (!std.math.isFinite(v[i * n + j]) or @abs(v[i * n + j] - v[j * n + i]) > 1e-12) return error.InvalidInput;
+    };
+    var ranked = try ranker.fit(a, model.x, model.y, model.n, model.p, model.weights, model.has_intercept, model.singular);
+    defer ranked.deinit(a);
+    const p = ranked.fit.rank;
+    if (p == 0) return error.InvalidInput;
+    const independent = try a.alloc(usize, p);
+    var at: usize = 0;
+    for (ranked.fit.aliased, 0..) |alias, j| if (!alias) {
+        independent[at] = j;
+        at += 1;
+    };
     const vi = try matrix.inverse(a, v, n);
     const x = try a.alloc(f64, n * p);
     for (0..n) |i| for (independent, 0..) |j, k| {
@@ -422,5 +446,5 @@ pub fn knownCovariance(a: A, model: Model, variances: []const f64) !GLS {
         coefficients[j] = beta[k];
         for (independent, 0..) |h, l| covariance[j * model.p + h] = ci.values[k * p + l];
     }
-    return .{ .n = n, .p = model.p, .rank = p, .independent = independent, .coefficients = coefficients, .covariance = covariance, .alias_coefficients = try a.dupe(f64, ranked.alias_coefficients), .df_error = n - p, .minus2reml = vi.logdet + ci.logdet + q + num(n - p) * @log(2 * std.math.pi), .minus2ml = vi.logdet + q + num(n) * @log(2 * std.math.pi) };
+    return .{ .n = n, .p = model.p, .rank = p, .independent = independent, .coefficients = coefficients, .covariance = covariance, .alias_coefficients = try a.dupe(f64, ranked.alias_coefficients), .df_error = n - p, .minus2reml = vi.logdet + ci.logdet + q + num(n - p) * @log(2 * std.math.pi), .minus2ml = vi.logdet + q + num(n) * @log(2 * std.math.pi), .quadratic = q };
 }

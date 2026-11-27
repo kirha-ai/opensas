@@ -14,7 +14,13 @@ pub fn run(cx: proc.ProcCtx, out: *std.ArrayList(u8), tokens: []const lex.Token)
     const math = @import("mixed_fit.zig");
     const render = @import("mixed_render.zig");
     const info = @import("mixed_info.zig");
+    const parms = @import("mixed_parms.zig");
     const spec = try declarations.parse(cx, tokens);
+    const parameter_spec = try parms.parse(cx, spec.statements);
+    if (parameter_spec != null and spec.options.method != .reml) return proc.failGap(cx.diags, spec.line, "PROC MIXED: PARMS with METHOD={s} is not implemented", .{@tagName(spec.options.method)});
+    if (parameter_spec) |parameters| if (parameters.data_name) |data_name| if (cx.lib.find(data_name)) |data| {
+        for (spec.roles.by) |ci| if (data.indexOf(spec.input.ds.columns.items[ci].name) != null) return proc.failGap(cx.diags, spec.line, "PROC MIXED: BY-specific PARMSDATA matching is not implemented", .{});
+    };
     // PROC ALPHA controls covariance-parameter CIs, not MODEL ALPHA.
     const m = try model.parse(cx, spec.input.ds, spec.statements, spec.options.order, 0.05);
     const r = try random.parse(cx, spec.input.ds, m.matrix, spec.statements);
@@ -23,7 +29,7 @@ pub fn run(cx: proc.ProcCtx, out: *std.ArrayList(u8), tokens: []const lex.Token)
     for (r.required_columns) |ci| if (std.mem.indexOfScalar(usize, required.items, ci) == null) try required.append(cx.arena, ci);
     const groups = try input.prepare(cx, spec, required.items);
     if (spec.options.method != .reml and spec.options.method != .type3) return proc.failGap(cx.diags, spec.line, "PROC MIXED: model estimation is not implemented for METHOD={s}", .{@tagName(spec.options.method)});
-    if (spec.options.noprofile or spec.options.alpha_explicit) return proc.failGap(cx.diags, spec.line, "PROC MIXED: unprofiled estimation or covariance-parameter confidence limits are not implemented", .{});
+    if ((spec.options.noprofile and parameter_spec == null) or spec.options.alpha_explicit) return proc.failGap(cx.diags, spec.line, "PROC MIXED: unprofiled estimation or covariance-parameter confidence limits are not implemented", .{});
     if (m.has_repeated and spec.options.method == .type3) return cx.diags.fail(error.ParseError, spec.line, "PROC MIXED: METHOD=TYPE3 does not permit a REPEATED statement", .{});
     if (m.has_repeated) return proc.failGap(cx.diags, spec.line, "PROC MIXED: REPEATED covariance inference is not implemented", .{});
     if (m.options.solution or m.options.cl or m.options.intercept_test or m.options.alpha != 0.05) return proc.failGap(cx.diags, m.line, "PROC MIXED: requested fixed-effect solution or confidence-limit output is not implemented", .{});
@@ -31,6 +37,7 @@ pub fn run(cx: proc.ProcCtx, out: *std.ArrayList(u8), tokens: []const lex.Token)
     if (cx.graphics) |graphics| if (graphics.enabled == true and !spec.options.plots_none) return proc.failGap(cx.diags, spec.line, "PROC MIXED: ODS graphics are not implemented; specify PLOTS=NONE", .{});
     if (cx.capture) |capture| for ([_][]const u8{ "ModelInfo", "ClassLevels", "Dimensions", "NObs", "CovParms", "FitStatistics", "Tests3", "SolutionF", "SolutionR" }) |name| if (capture.wants(name)) return proc.failGap(cx.diags, spec.line, "PROC MIXED: ODS OUTPUT {s} is not implemented", .{name});
     if (spec.options.method == .type3) if (cx.capture) |capture| if (capture.wants("Type3")) return proc.failGap(cx.diags, spec.line, "PROC MIXED: ODS OUTPUT Type3 is not implemented", .{});
+    if (parameter_spec != null) if (cx.capture) |capture| if (capture.wants("ParmSearch")) return proc.failGap(cx.diags, spec.line, "PROC MIXED: ODS OUTPUT ParmSearch is not implemented", .{});
     if (groups.len == 0) return proc.failGap(cx.diags, spec.line, "PROC MIXED: empty input analysis is not implemented", .{});
     for (groups) |group| {
         if (group.used_count == 0) return proc.failGap(cx.diags, spec.line, "PROC MIXED: fully excluded BY-group analysis is not implemented", .{});
@@ -49,8 +56,14 @@ pub fn run(cx: proc.ProcCtx, out: *std.ArrayList(u8), tokens: []const lex.Token)
             try @import("mixed_theory_type3_run.zig").run(cx, out, spec, m, r, group, x, z, components, names);
             continue;
         }
-        const fit = math.fit(cx.arena, .{ .x = x.matrix.x, .y = x.y, .n = x.matrix.n, .p = x.matrix.p, .weights = x.weights, .components = components, .has_intercept = m.matrix.intercept, .singular = m.options.singular }, .{ .method = .reml, .maxiter = spec.options.maxiter, .maxfunc = spec.options.maxfunc, .bic_n = if (components.len == 0) null else @as(f64, @floatFromInt(if (z.subject_count > 1) z.subject_count else z.first_effect_levels)) }) catch |err| return if (err == error.OutOfMemory) error.OutOfMemory else proc.failGap(cx.diags, spec.line, "PROC MIXED: this estimation boundary is not implemented ({t})", .{err});
-        if (!fit.converged) return proc.failGap(cx.diags, spec.line, "PROC MIXED: nonconverged-result reporting is not implemented ({t})", .{fit.status});
+        const fit_model = math.Model{ .x = x.matrix.x, .y = x.y, .n = x.matrix.n, .p = x.matrix.p, .weights = x.weights, .components = components, .has_intercept = m.matrix.intercept, .singular = m.options.singular };
+        const fit_options = math.Options{ .method = .reml, .maxiter = spec.options.maxiter, .maxfunc = spec.options.maxfunc, .bic_n = if (components.len == 0) null else @as(f64, @floatFromInt(if (z.subject_count > 1) z.subject_count else z.first_effect_levels)) };
+        var parameter_search: ?parms.Result = null;
+        const fit = if (parameter_spec) |parameters| blk: {
+            parameter_search = try parms.execute(cx, fit_model, parameters, fit_options, spec.options.noprofile);
+            break :blk parameter_search.?.fit;
+        } else math.fit(cx.arena, fit_model, fit_options) catch |err| return if (err == error.OutOfMemory) error.OutOfMemory else proc.failGap(cx.diags, spec.line, "PROC MIXED: this estimation boundary is not implemented ({t})", .{err});
+        if (!fit.converged and fit.status != .evaluated) return proc.failGap(cx.diags, spec.line, "PROC MIXED: nonconverged-result reporting is not implemented ({t})", .{fit.status});
         var tests: std.ArrayList(render.NamedTest) = .empty;
         if (!m.options.notest) for (m.matrix.effects, 0..) |_, ei| {
             const contrast = try fixed.type3(cx, m, x, ei);
@@ -60,8 +73,11 @@ pub fn run(cx: proc.ProcCtx, out: *std.ArrayList(u8), tokens: []const lex.Token)
             try tests.append(cx.arena, .{ .name = contrast.name, .num_df = tested.num_df, .den_df = tested.den_df, .f = tested.f, .p = tested.p });
         };
         if (spec.roles.by.len > 0) try @import("by_groups.zig").appendLine(cx.arena, out, spec.input.ds, group.raw.observations[0].cells, spec.roles.by);
-        try info.render(cx.arena, out, spec, m, group, x, z);
-        render.render(cx.arena, out, fit, names, tests.items, .{ .noitprint = spec.options.noitprint, .notest = m.options.notest }) catch |err| return if (err == error.OutOfMemory) error.OutOfMemory else proc.failGap(cx.diags, spec.line, "PROC MIXED: numerical table rendering failed ({t})", .{err});
+        var displayed_spec = spec;
+        if (parameter_search) |search| displayed_spec.options.noprofile = !search.profile;
+        try info.render(cx.arena, out, displayed_spec, m, group, x, z);
+        if (parameter_search) |search| try parms.renderSearch(cx.arena, out, search, parameter_spec.?);
+        render.render(cx.arena, out, fit, names, tests.items, .{ .noitprint = spec.options.noitprint, .notest = m.options.notest, .nofit = fit.status == .evaluated, .parms_lrt = if (parameter_search) |search| search.likelihood_ratio else null }) catch |err| return if (err == error.OutOfMemory) error.OutOfMemory else proc.failGap(cx.diags, spec.line, "PROC MIXED: numerical table rendering failed ({t})", .{err});
     }
 }
 
