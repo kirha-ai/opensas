@@ -22,13 +22,15 @@ pub fn run(cx: proc.ProcCtx, out: *std.ArrayList(u8), tokens: []const lex.Token)
     try required.appendSlice(cx.arena, m.required_columns);
     for (r.required_columns) |ci| if (std.mem.indexOfScalar(usize, required.items, ci) == null) try required.append(cx.arena, ci);
     const groups = try input.prepare(cx, spec, required.items);
-    if (spec.options.method != .reml) return proc.failGap(cx.diags, spec.line, "PROC MIXED: model estimation is not implemented for METHOD={s}", .{@tagName(spec.options.method)});
+    if (spec.options.method != .reml and spec.options.method != .type3) return proc.failGap(cx.diags, spec.line, "PROC MIXED: model estimation is not implemented for METHOD={s}", .{@tagName(spec.options.method)});
     if (spec.options.noprofile or spec.options.alpha_explicit) return proc.failGap(cx.diags, spec.line, "PROC MIXED: unprofiled estimation or covariance-parameter confidence limits are not implemented", .{});
+    if (m.has_repeated and spec.options.method == .type3) return cx.diags.fail(error.ParseError, spec.line, "PROC MIXED: METHOD=TYPE3 does not permit a REPEATED statement", .{});
     if (m.has_repeated) return proc.failGap(cx.diags, spec.line, "PROC MIXED: REPEATED covariance inference is not implemented", .{});
     if (m.options.solution or m.options.cl or m.options.intercept_test or m.options.alpha != 0.05) return proc.failGap(cx.diags, m.line, "PROC MIXED: requested fixed-effect solution or confidence-limit output is not implemented", .{});
     if (cx.listing) |listing| if (listing.filtered() or listing.trace != null) return proc.failGap(cx.diags, spec.line, "PROC MIXED: ODS table selection and TRACE routing are not implemented", .{});
     if (cx.graphics) |graphics| if (graphics.enabled == true and !spec.options.plots_none) return proc.failGap(cx.diags, spec.line, "PROC MIXED: ODS graphics are not implemented; specify PLOTS=NONE", .{});
     if (cx.capture) |capture| for ([_][]const u8{ "ModelInfo", "ClassLevels", "Dimensions", "NObs", "CovParms", "FitStatistics", "Tests3", "SolutionF", "SolutionR" }) |name| if (capture.wants(name)) return proc.failGap(cx.diags, spec.line, "PROC MIXED: ODS OUTPUT {s} is not implemented", .{name});
+    if (spec.options.method == .type3) if (cx.capture) |capture| if (capture.wants("Type3")) return proc.failGap(cx.diags, spec.line, "PROC MIXED: ODS OUTPUT Type3 is not implemented", .{});
     if (groups.len == 0) return proc.failGap(cx.diags, spec.line, "PROC MIXED: empty input analysis is not implemented", .{});
     for (groups) |group| {
         if (group.used_count == 0) return proc.failGap(cx.diags, spec.line, "PROC MIXED: fully excluded BY-group analysis is not implemented", .{});
@@ -43,6 +45,10 @@ pub fn run(cx: proc.ProcCtx, out: *std.ArrayList(u8), tokens: []const lex.Token)
             name.* = component.name;
         }
         names[names.len - 1] = "Residual";
+        if (spec.options.method == .type3) {
+            try @import("mixed_theory_type3_run.zig").run(cx, out, spec, m, r, group, x, z, components, names);
+            continue;
+        }
         const fit = math.fit(cx.arena, .{ .x = x.matrix.x, .y = x.y, .n = x.matrix.n, .p = x.matrix.p, .weights = x.weights, .components = components, .has_intercept = m.matrix.intercept, .singular = m.options.singular }, .{ .method = .reml, .maxiter = spec.options.maxiter, .maxfunc = spec.options.maxfunc, .bic_n = if (components.len == 0) null else @as(f64, @floatFromInt(if (z.subject_count > 1) z.subject_count else z.first_effect_levels)) }) catch |err| return if (err == error.OutOfMemory) error.OutOfMemory else proc.failGap(cx.diags, spec.line, "PROC MIXED: this estimation boundary is not implemented ({t})", .{err});
         if (!fit.converged) return proc.failGap(cx.diags, spec.line, "PROC MIXED: nonconverged-result reporting is not implemented ({t})", .{fit.status});
         var tests: std.ArrayList(render.NamedTest) = .empty;

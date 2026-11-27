@@ -1,0 +1,74 @@
+The Mixed Procedure
+
+                  Model Information
+
+Data Set                     WORK.MACHINE             
+Dependent Variable           rating                   
+Covariance Structure         Variance Components      
+Estimation Method            Type 3                   
+Residual Variance Method     Factor                   
+Fixed Effects SE Method      Model-Based              
+Degrees of Freedom Method    Containment              
+
+
+              Class Level Information
+ 
+Class      Levels    Values
+
+machine         3    1 2 3                         
+person          6    1 2 3 4 5 6                   
+
+
+            Dimensions
+
+Covariance Parameters             3
+Columns in X                      4
+Columns in Z                     24
+Subjects                          1
+Max Obs per Subject              44
+
+
+          Number of Observations
+
+Number of Observations Read              44
+Number of Observations Used              44
+Number of Observations Not Used           0
+
+
+                                                                  Type 3 Analysis of Variance
+ 
+                              Sum of                                                                                                     Error
+Source              DF       Squares   Mean Square  Expected Mean Square                        Error Term                                  DF  F Value  Pr > F
+
+machine              2   1238.197626    619.098813  Var(Residual) + 2.137 Var(machine*person)   0.9226 MS(machine*person)               10.036    16.57  0.0007
+                                                    + Q(machine)                                + 0.0774 MS(Residual)                                          
+person               5   1011.053834    202.210767  Var(Residual) + 2.2408 Var(machine*person)  0.9674 MS(machine*person)               10.015     5.17  0.0133
+                                                    + 6.7224 Var(person)                        + 0.0326 MS(Residual)                                          
+machine*person      10    404.315028     40.431503  Var(Residual) + 2.3162 Var(machine*person)  MS(Residual)                                26    46.34  <.0001
+Residual            26     22.686667      0.872564  Var(Residual)                               .                                            .      .     .    
+
+
+   Covariance Parameter
+         Estimates
+ 
+Cov Parm           Estimate
+
+person              24.2571
+machine*person      17.0791
+Residual             0.8726
+
+
+           Fit Statistics
+
+-2 Res Log Likelihood           182.0
+AIC (Smaller is Better)         188.0
+AICC (Smaller is Better)        188.7
+BIC (Smaller is Better)         187.4
+
+
+        Type 3 Tests of Fixed Effects
+ 
+              Num     Den
+Effect         DF      DF    F Value    Pr > F
+
+machine         2      10      16.72    0.0006

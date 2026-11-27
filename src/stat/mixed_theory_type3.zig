@@ -236,3 +236,36 @@ test "STAT-MIXED-004 negative moments and incompatible covariance structures sta
     try std.testing.expectError(error.ParseError, estimate(cx, good.spec, with_subject, good.random_design, good.view));
     try std.testing.expectEqual(@as(u8, 1), diag.exitCode(diag.gapHit(), diagnostics.hasErrors()));
 }
+
+test "STAT-MIXED-004 actual TYPE3 entry preserves complete machine listing and known covariance GLS" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var ds = try @import("glm_persistence_tests.zig").data(a, "tests/corpus/stat_glm_random_two_way.sas", "machine", &.{ "machine", "person", "rating" }, &.{}, 0);
+    var lib = @import("../exec.zig").Library.init(a);
+    try lib.put("machine", &ds);
+    var diagnostics = diag.Diagnostics.init(a);
+    const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &diagnostics };
+    var out: std.ArrayList(u8) = .empty;
+    const tokens = try @import("../lexer.zig").tokenize(a, "proc mixed data=machine method=type3; class machine person; model rating=machine; random person machine*person; run;", &diagnostics);
+    try @import("mixed.zig").run(cx, &out, tokens);
+    const expected = try @import("glm_persistence_tests.zig").read(a, "tests/fixtures/stat/mixed/machine_type3_full.txt");
+    var actual = std.mem.tokenizeAny(u8, out.items, " \r\n\t");
+    var reference = std.mem.tokenizeAny(u8, expected, " \r\n\t");
+    while (reference.next()) |word| try std.testing.expectEqualStrings(word, actual.next() orelse return error.TestUnexpectedResult);
+    try std.testing.expect(actual.next() == null);
+    try std.testing.expectEqual(@as(usize, 0), diagnostics.list.items.len);
+    const b = try Testing.prepare(cx, &ds, "machine person", "rating=machine", "person machine*person");
+    const moments = try estimate(cx, b.spec, b.random_spec, b.random_design, b.view);
+    const backend = @import("mixed_fit.zig");
+    const components = try a.alloc(backend.Component, b.random_design.components.len);
+    for (b.random_design.components, components) |source, *dest| dest.* = .{ .name = source.name, .kernel = source.kernel, .columns = source.columns };
+    const gls = try backend.knownCovariance(a, .{ .x = b.design.matrix.x, .y = b.design.y, .n = b.design.matrix.n, .p = b.design.matrix.p, .weights = b.design.weights, .components = components, .singular = b.spec.options.singular }, moments.variances);
+    const l = try fixed.type3(cx, b.spec, b.design, 0);
+    const df = try random.containmentDF(cx, b.random_spec, b.design.matrix, b.random_design, 0, b.design.weights, b.spec.options.singular);
+    try std.testing.expectEqual(@as(usize, 10), df);
+    const tested = try backend.testContrast(a, gls, l.coefficients, l.rows, df);
+    try std.testing.expect(@abs(gls.minus2reml - 182.0) < 0.05);
+    try std.testing.expect(@abs(tested.f - 16.72) < 0.005);
+    try std.testing.expect(@abs(tested.p - 0.0006) < 0.00005);
+}

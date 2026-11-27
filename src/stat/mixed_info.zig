@@ -10,11 +10,12 @@ pub fn render(a: std.mem.Allocator, out: *std.ArrayList(u8), s: declarations.Spe
     if (!s.options.noinfo) {
         const raw = try std.ascii.allocUpperString(a, s.input.ds.name);
         const name = if (std.mem.indexOfScalar(u8, raw, '.') == null) try std.fmt.allocPrint(a, "WORK.{s}", .{raw}) else raw;
-        try out.print(a, "Model Information\n\nData Set {s}\nDependent Variable {s}\nCovariance Structure {s}\nEstimation Method {s}\nResidual Variance Method Profile\nFixed Effects SE Method Model-Based\nDegrees of Freedom Method {s}\n\n", .{
+        try out.print(a, "Model Information\n\nData Set {s}\nDependent Variable {s}\nCovariance Structure {s}\nEstimation Method {s}\nResidual Variance Method {s}\nFixed Effects SE Method Model-Based\nDegrees of Freedom Method {s}\n\n", .{
             name,
             s.input.ds.columns.items[m.matrix.response].name,
             if (z.components.len == 0) @as([]const u8, "Diagonal") else "Variance Components",
-            try std.ascii.allocUpperString(a, @tagName(s.options.method)),
+            if (s.options.method == .type3) @as([]const u8, "Type 3") else try std.ascii.allocUpperString(a, @tagName(s.options.method)),
+            if (s.options.method == .type3) @as([]const u8, "Factor") else "Profile",
             if (m.options.ddfm == .residual or z.components.len == 0) @as([]const u8, "Residual") else "Containment",
         });
     }
