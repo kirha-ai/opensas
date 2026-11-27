@@ -1,6 +1,18 @@
 # OpenSAS — SAS/STAT 15.4 implementation backlog
 
-## STOPPED — handoff (2026-11-25, Europe/Paris)
+## ACTIVE — resumed 2026-11-27
+
+Explicit user resume. Confirmed working branch `feat/stat/batch-4`, base `31356cef`; clean coordinator tree. All seven historical worktrees/branches preserved; dev1 untracked evidence preserved. Owned caffeinate PID 67392 (session 56781). Runtime advertises eight total slots (coordinator + up to seven devs); admission to be recorded after dispatch. No QA/perf/doc-finder/intake/audit lanes.
+
+- dev1: STAT-REG-005; `/Users/thomas/kirha/opensas-dev1`; branch `codex/stat-b4-dev1`; assigned 2026-11-27T13:42:13+00:00; implementation deadline 2026-11-27T14:27:13+00:00. Original README/cases and cited physical PDF pages required before edits.
+- dev2: STAT-GLM-005; `/Users/thomas/kirha/opensas-dev2`; branch `codex/stat-b4-dev2`; assigned 2026-11-27T13:42:13+00:00; implementation deadline 2026-11-27T14:27:13+00:00. Original README/cases and cited physical PDF pages required before edits.
+- dev3: STAT-FREQ-009; `/Users/thomas/kirha/opensas-dev3`; branch `codex/stat-b4-dev3`; assigned 2026-11-27T13:42:13+00:00; implementation deadline 2026-11-27T14:27:13+00:00. Original README/cases and cited physical PDF pages required before edits.
+- dev4: STAT-LOGISTIC-004; `/Users/thomas/kirha/opensas-dev4`; branch `codex/stat-b4-dev4`; assigned 2026-11-27T13:42:13+00:00; implementation deadline 2026-11-27T14:27:13+00:00. Original README/cases and cited physical PDF pages required before edits.
+- dev5: STAT-TTEST-010; `/Users/thomas/kirha/opensas-dev5`; branch `codex/stat-b4-dev5`; assigned 2026-11-27T13:42:13+00:00; implementation deadline 2026-11-27T14:27:13+00:00. Original README/cases and cited physical PDF pages required before edits.
+- dev6: STAT-COMMON-017; `/Users/thomas/kirha/opensas-dev6`; branch `codex/stat-b4-dev6`; assigned 2026-11-27T13:42:13+00:00; implementation deadline 2026-11-27T14:27:13+00:00. Original README/cases and cited physical PDF pages required before edits.
+- dev7: STAT-COMMON-018; `/Users/thomas/kirha/opensas-dev7`; branch `codex/stat-b4-dev7`; assigned 2026-11-27T13:42:13+00:00; implementation deadline 2026-11-27T14:27:13+00:00. Original README/cases and cited physical PDF pages required before edits.
+
+## Historical STOPPED — handoff (2026-11-25, Europe/Paris)
 
 Stopped at the user's request (17:18:49). All dev agents were closed during the ten-minute wind-down. **No automatic resume or new dispatch; resume only on explicit user instruction.** Worktrees, branches and raw evidence are intentionally preserved. Do not apply the generic manager skill's destructive crash-recovery/discard procedure to these retained checkouts.
 
@@ -439,7 +451,7 @@ Complete prerequisite shared contracts first, then each PROC's data input, model
 
 <a id="stat-common-017"></a>
 
-### [TODO] STAT-COMMON-017 — Ranks, ties, and nonparametric test interfaces
+### [DOING @dev6] STAT-COMMON-017 — Ranks, ties, and nonparametric test interfaces
 
 - Source: S154 / Chapter 17 / `Introduction to Nonparametric Analysis` (PDF pp. 295–302).
 - Scope: Implement shared rank, tie-group, and statistic interfaces for nonparametric procedures; distinguish exact distributions from asymptotic approximations.
@@ -449,7 +461,7 @@ Complete prerequisite shared contracts first, then each PROC's data input, model
 
 <a id="stat-common-018"></a>
 
-### [TODO] STAT-COMMON-018 — Power and sample size inversion interface
+### [DOING @dev7] STAT-COMMON-018 — Power and sample size inversion interface
 
 - Source: S154 / Chapter 19 / `Computing Power and Sample Size` (PDF pp. 395–396); S154 / Chapter 19 / `Hypothesis Testing, Power, and Confidence Interval Precision` (PDF pp. 394–395).
 - Scope: Implement shared solver contracts for power, sample size, and interval precision; procedure tickets specify distributions, rounding, solvable ranges, and design parameters for each test.
@@ -3752,7 +3764,7 @@ Source: S154, Chapter 47, `The FREQ Procedure`, PDF pp. 3069–3290. Tasks in th
 <a id="stat-freq-009"></a>
 
 
-### [TODO] STAT-FREQ-009 — FREQ — Risks and Risk Differences
+### [DOING @dev3] STAT-FREQ-009 — FREQ — Risks and Risk Differences
 
 - Source: S154 / Chapter 47 / `Risks and Risk Differences` (PDF pp. 3188–3199).
 - Scope: Implement Risks and Risk Differences. This ticket owns the feature's options, defaults, computation, and results as an extension of the basic computational path; the chapter's output tickets handle ODS descriptors and file presentation.
@@ -4874,7 +4886,7 @@ Source: S154, Chapter 53, `The GLM Procedure`, PDF pp. 4043–4230. Tasks in thi
 <a id="stat-glm-005"></a>
 
 
-### [PARK] STAT-GLM-005 — GLM — ABSORB / Statistical Assumptions for Using PROC GLM / Using PROC GLM Interactively
+### [DOING @dev2] STAT-GLM-005 — GLM — ABSORB / Statistical Assumptions for Using PROC GLM / Using PROC GLM Interactively
 
 - Source: S154 / Chapter 53 / `ABSORB Statement` (PDF p. 4065); S154 / Chapter 53 / `Statistical Assumptions for Using PROC GLM` (PDF pp. 4106–4107); S154 / Chapter 53 / `Using PROC GLM Interactively` (PDF p. 4110).
 - Scope: Implement ABSORB; Statistical Assumptions for Using PROC GLM; Using PROC GLM Interactively. This ticket owns the feature's options, defaults, computation, and results as an extension of the basic computational path; the chapter's output tickets handle ODS descriptors and file presentation.
@@ -8179,7 +8191,7 @@ Source: S154, Chapter 79, `The LOGISTIC Procedure`, PDF pp. 5823–6080. Tasks i
 
 <a id="stat-logistic-004"></a>
 
-### [TODO] STAT-LOGISTIC-004 — LOGISTIC — Response Level Ordering
+### [DOING @dev4] STAT-LOGISTIC-004 — LOGISTIC — Response Level Ordering
 
 - Source: S154 / Chapter 79 / `Response Level Ordering` (PDF pp. 5905–5907).
 - Scope: Implement Response Level Ordering. Implement the syntax and model semantics allowed by this procedure, using shared effect/parameterization support only for forms documented as supported.
@@ -11665,7 +11677,7 @@ Source: S154, Chapter 105, `The REG Procedure`, PDF pp. 8539–8728. Tasks in th
 <a id="stat-reg-005"></a>
 
 
-### [PARK] STAT-REG-005 — REG — Computations for Ridge Regression and IPC Analysis
+### [DOING @dev1] STAT-REG-005 — REG — Computations for Ridge Regression and IPC Analysis
 
 - Source: S154 / Chapter 105 / `Computations for Ridge Regression and IPC Analysis` (PDF pp. 8648–8649).
 - Scope: Implement Computations for Ridge Regression and IPC Analysis. This ticket owns the feature's options, defaults, computation, and results as an extension of the basic computational path; the chapter's output tickets handle ODS descriptors and file presentation.
@@ -14867,7 +14879,7 @@ Source: S154, Chapter 128, `The TTEST Procedure`, PDF pp. 10595–10692. Tasks i
 <a id="stat-ttest-010"></a>
 
 
-### [PARK] STAT-TTEST-010 — TTEST — Displayed Output / ODS Table Names
+### [DOING @dev5] STAT-TTEST-010 — TTEST — Displayed Output / ODS Table Names
 
 - Source: S154 / Chapter 128 / `Displayed Output` (PDF pp. 10640–10644); S154 / Chapter 128 / `ODS Table Names` (PDF p. 10644).
 - Scope: Implement Displayed Output; ODS Table Names. Cover all triggering options, content, and naming specified by this section; computational tickets supply numerical values, while other output types are handled separately.
