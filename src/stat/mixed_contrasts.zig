@@ -186,6 +186,9 @@ pub fn coefficients(cx: proc.ProcCtx, m: model.Spec, x: fixed.Design, r: random.
 }
 
 pub fn publish(cx: proc.ProcCtx, out: *std.ArrayList(u8), m: model.Spec, r: random.Spec, x: fixed.Design, z: random.Design, fitted: anytype, variances: []const f64, requests: []const Request) diag.Error!void {
+    return publishRouted(cx, out, m, r, x, z, fitted, variances, requests, null);
+}
+pub fn publishRouted(cx: proc.ProcCtx, out: *std.ArrayList(u8), m: model.Spec, r: random.Spec, x: fixed.Design, z: random.Design, fitted: anytype, variances: []const f64, requests: []const Request, route: ?*@import("mixed_ods_route.zig").Router) diag.Error!void {
     if (requests.len == 0) return;
     var needs_random = false;
     var estimates: usize = 0;
@@ -195,6 +198,10 @@ pub fn publish(cx: proc.ProcCtx, out: *std.ArrayList(u8), m: model.Spec, r: rand
         for (request.rows) |row| if (row.random_terms.len > 0) {
             needs_random = true;
         };
+    }
+    if (cx.capture) |capture| {
+        if (estimates > 0 and capture.wants("Estimates")) return proc.failGap(cx.diags, m.line, "PROC MIXED: Estimates typed metadata is not independently verified", .{});
+        if (estimates < requests.len and capture.wants("Contrasts")) return proc.failGap(cx.diags, m.line, "PROC MIXED: Contrasts typed metadata is not independently verified", .{});
     }
     if (needs_random and m.has_repeated) return proc.failGap(cx.diags, m.line, "PROC MIXED: random-effect inference with REPEATED covariance is not implemented", .{});
     const width = x.matrix.p + z.q;
@@ -220,6 +227,7 @@ pub fn publish(cx: proc.ProcCtx, out: *std.ArrayList(u8), m: model.Spec, r: rand
     }
     const fmt = @import("../format.zig");
     if (estimates < requests.len) {
+        const start = out.items.len;
         try out.appendSlice(cx.arena, "\nContrasts\n\nNum Den\nLabel DF DF F Value Pr > F\n");
         for (requests, lines, dfs) |request, l, df| if (!request.is_estimate) {
             const result = kernel.contrast(cx.arena, joint, l, request.rows.len, df, request.singular) catch |err| return if (err == error.OutOfMemory) error.OutOfMemory else proc.failGap(cx.diags, request.line, "PROC MIXED: contrast covariance boundary is not implemented ({t})", .{err});
@@ -228,13 +236,16 @@ pub fn publish(cx: proc.ProcCtx, out: *std.ArrayList(u8), m: model.Spec, r: rand
                 try out.print(cx.arena, "{s} . . . .\n", .{request.label});
             } else try out.print(cx.arena, "{s} {d} {d} {s} {s}\n", .{ request.label, result.num_df, result.den_df, if (result.f) |v| try std.fmt.allocPrint(cx.arena, "{d:.2}", .{v}) else ".", if (result.p) |p| std.mem.trim(u8, try fmt.apply(cx.arena, .{ .num = p }, "pvalue6.4"), " ") else "." });
         };
+        if (route) |routed| try routed.finish(cx.arena, out, start, "Contrasts");
     }
     if (estimates > 0) {
+        const start = out.items.len;
         try out.appendSlice(cx.arena, "\nEstimates\n\nStandard\nLabel Estimate Error DF t Value Pr > |t|\n");
         for (requests, lines, dfs) |request, l, df| if (request.is_estimate) {
             const result = kernel.estimate(joint, l, df, request.alpha, request.tail, request.singular) catch |err| return if (err == error.OutOfMemory) error.OutOfMemory else proc.failGap(cx.diags, request.line, "PROC MIXED: estimate covariance boundary is not implemented ({t})", .{err});
             if (!result.estimable) try out.print(cx.arena, "{s} Non-est . . . .\n", .{request.label}) else try out.print(cx.arena, "{s} {d:.4} {d:.4} {d} {s} {s}\n", .{ request.label, result.estimate.?, result.se.?, df, if (result.t) |v| try std.fmt.allocPrint(cx.arena, "{d:.2}", .{v}) else ".", if (result.p) |p| std.mem.trim(u8, try fmt.apply(cx.arena, .{ .num = p }, "pvalue6.4"), " ") else "." });
         };
+        if (route) |routed| try routed.finish(cx.arena, out, start, "Estimates");
     }
 }
 

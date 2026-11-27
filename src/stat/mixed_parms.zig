@@ -284,6 +284,10 @@ pub fn execute(cx: proc.ProcCtx, model: fit.Model, s: Spec, options: fit.Options
     return .{ .fit = fitted, .rows = rows.items, .profile = true, .likelihood_ratio = lrt };
 }
 pub fn renderSearch(a: A, out: *std.ArrayList(u8), result: Result, s: Spec) !void {
+    return renderSearchRouted(a, out, result, s, null);
+}
+pub fn renderSearchRouted(a: A, out: *std.ArrayList(u8), result: Result, s: Spec, route: ?*@import("mixed_ods_route.zig").Router) !void {
+    const start = out.items.len;
     if (s.noprint or result.rows.len == 0) return;
     try out.appendSlice(a, "\nParameter Search\n\n");
     for (0..result.rows[0].values.len) |i| try out.print(a, "CovP{d} ", .{i + 1});
@@ -296,6 +300,7 @@ pub fn renderSearch(a: A, out: *std.ArrayList(u8), result: Result, s: Spec) !voi
         }
         if (row.objective) |v| try out.print(a, "{d:.4} {d:.4}\n", .{ -v / 2, v }) else try out.appendSlice(a, ". .\n");
     }
+    if (route) |r| try r.finish(a, out, start, "ParmSearch");
 }
 test {
     _ = @import("mixed_parms_tests.zig");

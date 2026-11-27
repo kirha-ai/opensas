@@ -37,6 +37,9 @@ fn anova(a: std.mem.Allocator, out: *std.ArrayList(u8), moments: theory.Result) 
     try out.print(a, "Residual {d} {d:.6} {d:.6} Var(Residual) . . . .\n\n", .{ moments.residual_df, moments.residual_ss, moments.residual_ms });
 }
 pub fn run(cx: proc.ProcCtx, out: *std.ArrayList(u8), s: declarations.Spec, m: model.Spec, r: random.Spec, group: input.Group, x: fixed.Design, z: random.Design, components: []const math.Component, names: []const []const u8) diag.Error!void {
+    return runRouted(cx, out, s, m, r, group, x, z, components, names, null);
+}
+pub fn runRouted(cx: proc.ProcCtx, out: *std.ArrayList(u8), s: declarations.Spec, m: model.Spec, r: random.Spec, group: input.Group, x: fixed.Design, z: random.Design, components: []const math.Component, names: []const []const u8, route: ?*@import("mixed_ods_route.zig").Router) diag.Error!void {
     const moments = try theory.estimate(cx, m, r, z, group.selected);
     const gls = math.knownCovariance(cx.arena, .{ .x = x.matrix.x, .y = x.y, .n = x.matrix.n, .p = x.matrix.p, .weights = x.weights, .components = components, .has_intercept = m.matrix.intercept, .singular = m.options.singular }, moments.variances) catch |err| return if (err == error.OutOfMemory) error.OutOfMemory else proc.failGap(cx.diags, s.line, "PROC MIXED METHOD=TYPE3: GLS boundary is not implemented ({t})", .{err});
     var tests: std.ArrayList(render.NamedTest) = .empty;
@@ -48,10 +51,15 @@ pub fn run(cx: proc.ProcCtx, out: *std.ArrayList(u8), s: declarations.Spec, m: m
         try tests.append(cx.arena, .{ .name = contrast.name, .num_df = result.num_df, .den_df = result.den_df, .f = result.f, .p = result.p });
     };
     if (s.roles.by.len > 0) try @import("by_groups.zig").appendLine(cx.arena, out, s.input.ds, group.raw.observations[0].cells, s.roles.by);
-    try @import("mixed_info.zig").render(cx.arena, out, s, m, group, x, z);
+    try @import("mixed_info.zig").renderRouted(cx.arena, out, s, m, group, x, z, route);
+    var start = out.items.len;
     try anova(cx.arena, out, moments);
+    if (route) |rr| try rr.finish(cx.arena, out, start, "Type3");
+    start = out.items.len;
     try out.appendSlice(cx.arena, "Covariance Parameter Estimates\n\nCov Parm Estimate\n");
     for (names, moments.variances) |name, value| try out.print(cx.arena, "{s} {d:.4}\n", .{ name, value });
+    if (route) |rr| try rr.finish(cx.arena, out, start, "CovParms");
+    start = out.items.len;
     var count: f64 = 0;
     for (moments.variances) |v| if (v > 0) {
         count += 1;
@@ -64,10 +72,15 @@ pub fn run(cx: proc.ProcCtx, out: *std.ArrayList(u8), s: declarations.Spec, m: m
     const neff = @as(f64, @floatFromInt(z.first_effect_levels));
     const bic = gls.minus2reml + count * (if (neff > 0) @log(neff) else 0);
     try out.print(cx.arena, "\nFit Statistics\n\n-2 Res Log Likelihood {d:.1}\nAIC (Smaller is Better) {d:.1}\nAICC (Smaller is Better) {d:.1}\nBIC (Smaller is Better) {d:.1}\n", .{ gls.minus2reml, aic, aicc, bic });
+    if (route) |rr| try rr.finish(cx.arena, out, start, "FitStatistics");
     if (!m.options.notest) {
+        start = out.items.len;
         try out.appendSlice(cx.arena, "\nType 3 Tests of Fixed Effects\n\nNum Den\nEffect DF DF F Value Pr > F\n");
         for (tests.items) |row| try out.print(cx.arena, "{s} {d} {d} {d:.2} {s}\n", .{ row.name, row.num_df, row.den_df, row.f, try probability(cx.arena, row.p) });
     }
+    if (!m.options.notest) if (route) |rr| try rr.finish(cx.arena, out, start, "Tests3");
+    const typed = math.Fit{ .n = gls.n, .p = gls.p, .rank = gls.rank, .independent = gls.independent, .coefficients = gls.coefficients, .covariance = gls.covariance, .alias_coefficients = gls.alias_coefficients, .variances = try cx.arena.dupe(f64, moments.variances), .residual_variance = moments.variances[moments.variances.len - 1], .minus2loglik = gls.minus2reml, .aic = aic, .aicc = aicc, .bic = bic, .iterations = &.{}, .converged = false, .status = .evaluated, .method = .reml, .df_error = gls.df_error };
+    try @import("mixed_ods.zig").publish(cx, s, m, group, x, z, r, typed, names, tests.items, null, null);
     const requests = try @import("mixed_contrasts.zig").parse(cx, m, z, s.statements);
-    try @import("mixed_contrasts.zig").publish(cx, out, m, r, x, z, gls, moments.variances, requests);
+    try @import("mixed_contrasts.zig").publishRouted(cx, out, m, r, x, z, gls, moments.variances, requests, route);
 }

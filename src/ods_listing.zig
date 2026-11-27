@@ -191,6 +191,7 @@ fn identity(name: []const u8) ?Identity {
 // and paths directly; template names are omitted until independently verified.
 const npar_names=[_][]const u8{"FPPlacements","FPTest","VarInfo","ABScores","ABTest","ABAnalysis","STScores","STTest","STAnalysis","KlotzScores","KlotzTest","KlotzAnalysis","MoodScores","MoodTest","MoodAnalysis","ConoverScores","ConoverTest","ConoverAnalysis","DataScores","DataScoresTest","DataScoresAnalysis","ClassMeans","ANOVA","WilcoxonScores","WilcoxonTest","KruskalWallisTest","MedianScores","MedianTest","MedianAnalysis","VWScores","VWTest","VWAnalysis","SavageScores","SavageTest","SavageAnalysis","KSTest","KSStats","KS2Stats","CVMTest","CVMStats","KuiperTest","KuiperStats","HodgesLehmann","StrataInfo","StrataMethod","WilcoxonStrata","WilcoxonStrataTest","MedianStrata","MedianStrataTest","VWStrata","VWStrataTest","SavageStrata","SavageStrataTest","DataScoresStrata","DataScoresStrataTest"};
 fn known(name: []const u8) bool {
+    if (@import("stat/mixed_ods_route.zig").known(name)) return true;
     for(npar_names) |n| if(eq(name,n)) return true;
     return identity(name) != null or @import("stat/graph_ods.zig").known(name);
 }

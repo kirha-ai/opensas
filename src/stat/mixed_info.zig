@@ -6,8 +6,12 @@ const fixed = @import("mixed_design.zig");
 const random = @import("mixed_random.zig");
 const input = @import("mixed_input.zig");
 pub fn render(a: std.mem.Allocator, out: *std.ArrayList(u8), s: declarations.Spec, m: model.Spec, group: input.Group, x: fixed.Design, z: random.Design) !void {
+    return renderRouted(a, out, s, m, group, x, z, null);
+}
+pub fn renderRouted(a: std.mem.Allocator, out: *std.ArrayList(u8), s: declarations.Spec, m: model.Spec, group: input.Group, x: fixed.Design, z: random.Design, route: ?*@import("mixed_ods_route.zig").Router) !void {
     try out.appendSlice(a, "The Mixed Procedure\n\n");
     if (!s.options.noinfo) {
+        const start = out.items.len;
         const raw = try std.ascii.allocUpperString(a, s.input.ds.name);
         const name = if (std.mem.indexOfScalar(u8, raw, '.') == null) try std.fmt.allocPrint(a, "WORK.{s}", .{raw}) else raw;
         try out.print(a, "Model Information\n\nData Set {s}\nDependent Variable {s}\nCovariance Structure {s}\nEstimation Method {s}\nResidual Variance Method {s}\nFixed Effects SE Method Model-Based\nDegrees of Freedom Method {s}\n\n", .{
@@ -18,8 +22,10 @@ pub fn render(a: std.mem.Allocator, out: *std.ArrayList(u8), s: declarations.Spe
             if (s.options.method == .type3) @as([]const u8, "Factor") else if (s.options.noprofile) "Parameter" else "Profile",
             if (m.options.ddfm == .residual or z.components.len == 0) @as([]const u8, "Residual") else "Containment",
         });
+        if (route) |r| try r.finish(a, out, start, "ModelInfo");
     }
     if (x.matrix.classes.len > 0) {
+        const start = out.items.len;
         try out.appendSlice(a, "Class Level Information\n\nClass Levels Values\n\n");
         for (x.matrix.classes) |class| {
             try out.print(a, "{s} {d}", .{ s.input.ds.columns.items[class.column].name, class.map.levels.len });
@@ -27,9 +33,15 @@ pub fn render(a: std.mem.Allocator, out: *std.ArrayList(u8), s: declarations.Spe
             try out.append(a, '\n');
         }
         try out.append(a, '\n');
+        if (route) |r| try r.finish(a, out, start, "ClassLevels");
     }
     if (!s.options.noinfo) {
-        try out.print(a, "Dimensions\n\nCovariance Parameters {d}\nColumns in X {d}\nColumns in Z {d}\nSubjects {d}\nMax Obs per Subject {d}\n\nNumber of Observations\n\nNumber of Observations Read {d}\nNumber of Observations Used {d}\nNumber of Observations Not Used {d}\n\n", .{ z.components.len + 1, x.matrix.p, z.q, z.subject_count, z.max_obs_per_subject, group.read_count, x.matrix.n, group.read_count - x.matrix.n });
+        var start = out.items.len;
+        try out.print(a, "Dimensions\n\nCovariance Parameters {d}\nColumns in X {d}\nColumns in Z {d}\nSubjects {d}\nMax Obs per Subject {d}\n\n", .{ z.components.len + 1, x.matrix.p, z.q, z.subject_count, z.max_obs_per_subject });
+        if (route) |r| try r.finish(a, out, start, "Dimensions");
+        start = out.items.len;
+        try out.print(a, "Number of Observations\n\nNumber of Observations Read {d}\nNumber of Observations Used {d}\nNumber of Observations Not Used {d}\n\n", .{ group.read_count, x.matrix.n, group.read_count - x.matrix.n });
+        if (route) |r| try r.finish(a, out, start, "NObs");
     }
 }
 

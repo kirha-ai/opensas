@@ -14,6 +14,7 @@ pub fn run(cx: proc.ProcCtx, out: *std.ArrayList(u8), tokens: []const lex.Token)
     const math = @import("mixed_fit.zig");
     const render = @import("mixed_render.zig");
     const info = @import("mixed_info.zig");
+    const mixed_ods = @import("mixed_ods.zig");
     const parms = @import("mixed_parms.zig");
     const spec = try declarations.parse(cx, tokens);
     const parameter_spec = try parms.parse(cx, spec.statements);
@@ -36,13 +37,12 @@ pub fn run(cx: proc.ProcCtx, out: *std.ArrayList(u8), tokens: []const lex.Token)
     if (spec.options.method != .reml and spec.options.method != .type3) return proc.failGap(cx.diags, spec.line, "PROC MIXED: model estimation is not implemented for METHOD={s}", .{@tagName(spec.options.method)});
     if ((spec.options.noprofile and parameter_spec == null) or spec.options.alpha_explicit) return proc.failGap(cx.diags, spec.line, "PROC MIXED: unprofiled estimation or covariance-parameter confidence limits are not implemented", .{});
     if (m.options.solution or m.options.cl or m.options.intercept_test or m.options.alpha != 0.05) return proc.failGap(cx.diags, m.line, "PROC MIXED: requested fixed-effect solution or confidence-limit output is not implemented", .{});
-    if (cx.listing) |listing| if (listing.filtered() or listing.trace != null) return proc.failGap(cx.diags, spec.line, "PROC MIXED: ODS table selection and TRACE routing are not implemented", .{});
     if (cx.graphics) |graphics| if (graphics.enabled == true and !spec.options.plots_none) return proc.failGap(cx.diags, spec.line, "PROC MIXED: ODS graphics are not implemented; specify PLOTS=NONE", .{});
-    if (cx.capture) |capture| for ([_][]const u8{ "ModelInfo", "ClassLevels", "Dimensions", "NObs", "CovParms", "FitStatistics", "Tests3", "SolutionF", "SolutionR" }) |name| if (capture.wants(name)) return proc.failGap(cx.diags, spec.line, "PROC MIXED: ODS OUTPUT {s} is not implemented", .{name});
     if (spec.options.method == .type3) if (cx.capture) |capture| if (capture.wants("Type3")) return proc.failGap(cx.diags, spec.line, "PROC MIXED: ODS OUTPUT Type3 is not implemented", .{});
-    if (parameter_spec != null) if (cx.capture) |capture| if (capture.wants("ParmSearch")) return proc.failGap(cx.diags, spec.line, "PROC MIXED: ODS OUTPUT ParmSearch is not implemented", .{});
     if (groups.len == 0) return proc.failGap(cx.diags, spec.line, "PROC MIXED: empty input analysis is not implemented", .{});
-    for (groups) |group| {
+    for (groups, 0..) |group, by_index| {
+        const group_start = out.items.len;
+        var route = mixed_ods.routing.Router{ .selection = cx.listing, .prefix = if (spec.roles.by.len > 0) try std.fmt.allocPrint(cx.arena, "Mixed.ByGroup{d}", .{by_index + 1}) else "Mixed", .diags = if (cx.listing != null or cx.capture != null) cx.diags else null };
         if (group.used_count == 0) return proc.failGap(cx.diags, spec.line, "PROC MIXED: fully excluded BY-group analysis is not implemented", .{});
         if (residual_spec) |rs| {
             _ = try repeated.layout(cx, rs, group.raw, group.selected);
@@ -61,7 +61,8 @@ pub fn run(cx: proc.ProcCtx, out: *std.ArrayList(u8), tokens: []const lex.Token)
         }
         names[names.len - 1] = "Residual";
         if (spec.options.method == .type3) {
-            try @import("mixed_theory_type3_run.zig").run(cx, out, spec, m, r, group, x, z, components, names);
+            try @import("mixed_theory_type3_run.zig").runRouted(cx, out, spec, m, r, group, x, z, components, names, &route);
+            if (route.visible == 0) out.shrinkRetainingCapacity(group_start);
             continue;
         }
         const fit_model = math.Model{ .x = x.matrix.x, .y = x.y, .n = x.matrix.n, .p = x.matrix.p, .weights = x.weights, .components = components, .has_intercept = m.matrix.intercept, .singular = m.options.singular };
@@ -80,13 +81,16 @@ pub fn run(cx: proc.ProcCtx, out: *std.ArrayList(u8), tokens: []const lex.Token)
             const tested = math.testContrast(cx.arena, fit, contrast.coefficients, contrast.rows, df) catch |err| return if (err == error.OutOfMemory) error.OutOfMemory else proc.failGap(cx.diags, spec.line, "PROC MIXED: fixed-effect test is not implemented for this estimability boundary ({t})", .{err});
             try tests.append(cx.arena, .{ .name = contrast.name, .num_df = tested.num_df, .den_df = tested.den_df, .f = tested.f, .p = tested.p });
         };
+        try mixed_ods.publish(cx, spec, m, group, x, z, r, fit, names, tests.items, parameter_search, parameter_spec);
+        route.converged = fit.converged;
         if (spec.roles.by.len > 0) try @import("by_groups.zig").appendLine(cx.arena, out, spec.input.ds, group.raw.observations[0].cells, spec.roles.by);
         var displayed_spec = spec;
         if (parameter_search) |search| displayed_spec.options.noprofile = !search.profile;
-        try info.render(cx.arena, out, displayed_spec, m, group, x, z);
-        if (parameter_search) |search| try parms.renderSearch(cx.arena, out, search, parameter_spec.?);
-        render.render(cx.arena, out, fit, names, tests.items, .{ .noitprint = spec.options.noitprint, .notest = m.options.notest, .nofit = fit.status == .evaluated, .parms_lrt = if (parameter_search) |search| search.likelihood_ratio else null }) catch |err| return if (err == error.OutOfMemory) error.OutOfMemory else proc.failGap(cx.diags, spec.line, "PROC MIXED: numerical table rendering failed ({t})", .{err});
-        try @import("mixed_contrasts.zig").publish(cx, out, m, r, x, z, fit, fit.variances, inference_requests);
+        try info.renderRouted(cx.arena, out, displayed_spec, m, group, x, z, &route);
+        if (parameter_search) |search| try parms.renderSearchRouted(cx.arena, out, search, parameter_spec.?, &route);
+        render.render(cx.arena, out, fit, names, tests.items, .{ .noitprint = spec.options.noitprint, .notest = m.options.notest, .nofit = fit.status == .evaluated, .parms_lrt = if (parameter_search) |search| search.likelihood_ratio else null, .route = &route }) catch |err| return if (err == error.OutOfMemory) error.OutOfMemory else proc.failGap(cx.diags, spec.line, "PROC MIXED: numerical table rendering failed ({t})", .{err});
+        try @import("mixed_contrasts.zig").publishRouted(cx, out, m, r, x, z, fit, fit.variances, inference_requests, &route);
+        if (route.visible == 0) out.shrinkRetainingCapacity(group_start);
     }
 }
 

@@ -33,6 +33,7 @@ pub const Fit = struct {
     status: Status,
     method: Method,
     df_error: usize,
+    pd_h: ?bool = null,
 };
 const Evaluation = struct { objective: f64, q: f64, sigma: f64, beta: []f64, cov_unit: []f64, pmat: []f64, py: []f64, hinv: []f64 };
 fn num(i: usize) f64 {
@@ -191,6 +192,7 @@ pub fn fit(a: A, model: Model, options: Options) !Fit {
     defer state_arena.deinit();
     var current = try evaluate(state_arena.allocator(), x, model.y, model.n, p, model.components, ratios, model.weights, options.method);
     const df = num(if (options.method == .reml) model.n - p else model.n);
+    var pd_h: ?bool = null;
     var i: usize = 0;
     while (i <= options.maxiter) : (i += 1) {
         var scratch = std.heap.ArenaAllocator.init(a);
@@ -202,6 +204,10 @@ pub fn fit(a: A, model: Model, options: Options) !Fit {
             break;
         }
         const d = try derivatives(tmp, e, model.components, model.n, df, options.method);
+        pd_h = if (matrix.inverse(tmp, d.hessian, m)) |_| true else |err| switch (err) {
+            error.NotPositiveDefinite => false,
+            else => return err,
+        };
         // Active lower bounds satisfy the one-sided KKT condition; freeze only
         // coordinates whose gradient points out of the nonnegative domain.
         for (0..m) |j| if (ratios[j] <= 1e-12 and d.gradient[j] >= 0) {
@@ -322,7 +328,7 @@ pub fn fit(a: A, model: Model, options: Options) !Fit {
     const aic = final.objective + 2 * count;
     const denominator = @max(effective, count + 2) - count - 1;
     const bic_n = options.bic_n orelse if (m == 0) effective else std.math.nan(f64);
-    return .{ .n = model.n, .p = model.p, .rank = p, .independent = independent, .coefficients = coefficients, .covariance = covariance, .alias_coefficients = try a.dupe(f64, ranked.alias_coefficients), .variances = try parameters(a, ratios, final.sigma), .residual_variance = final.sigma, .minus2loglik = final.objective, .aic = aic, .aicc = if (denominator > 0) aic + 2 * count * (count + 1) / denominator else null, .bic = if (bic_n > 0) final.objective + count * @log(bic_n) else if (bic_n == 0) final.objective else null, .iterations = try history.toOwnedSlice(a), .converged = status == .converged, .status = status, .method = options.method, .df_error = model.n - p };
+    return .{ .n = model.n, .p = model.p, .rank = p, .independent = independent, .coefficients = coefficients, .covariance = covariance, .alias_coefficients = try a.dupe(f64, ranked.alias_coefficients), .variances = try parameters(a, ratios, final.sigma), .residual_variance = final.sigma, .minus2loglik = final.objective, .aic = aic, .aicc = if (denominator > 0) aic + 2 * count * (count + 1) / denominator else null, .bic = if (bic_n > 0) final.objective + count * @log(bic_n) else if (bic_n == 0) final.objective else null, .iterations = try history.toOwnedSlice(a), .converged = status == .converged, .status = status, .method = options.method, .df_error = model.n - p, .pd_h = pd_h };
 }
 pub const Test = struct { num_df: usize, den_df: usize, f: f64, p: f64 };
 pub fn testContrast(a: A, fitted: anytype, l: []const f64, q: usize, den_df: usize) !Test {
@@ -351,6 +357,7 @@ pub fn testContrast(a: A, fitted: anytype, l: []const f64, q: usize, den_df: usi
 test {
     _ = @import("mixed_fit_tests.zig");
     _ = @import("mixed_parms_tests.zig");
+    _ = @import("mixed_ods_tests.zig");
 }
 
 /// GLS at supplied covariance components, without optimization/profiling.
