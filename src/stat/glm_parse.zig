@@ -11,6 +11,7 @@ pub const Order = @import("class_levels.zig").Order;
 pub const Effect = struct { name: []const u8, variables: []const usize };
 pub const Spec = struct {
     input: proc.ProcInput,
+    means: []const @import("glm_means.zig").Request = &.{},
     hov: ?@import("glm_hov.zig").Request = null,
     random: ?@import("glm_random.zig").Request = null,
     contrasts: []const @import("glm_contrast.zig").Request = &.{},
@@ -28,6 +29,7 @@ pub const Spec = struct {
     ids: []const usize = &.{},
     absorb: []const usize = &.{},
     alpha: f64 = 0.05,
+    proc_alpha: f64 = 0.05,
     singular: f64 = 1e-9,
     namelen: usize = 20,
     order: Order = .formatted,
@@ -92,7 +94,10 @@ pub fn parse(cx: proc.ProcCtx, tokens: []const lex.Token) diag.Error!Spec {
                 i += 2;
             }
             if (at(tokens, i, .lparen)) i = proc.skipParen(tokens, i);
-        } else if (kw(tokens, i, "alpha")) result.alpha = try real(cx, tokens, &i) else if (kw(tokens, i, "namelen")) {
+        } else if (kw(tokens, i, "alpha")) {
+            result.alpha = try real(cx, tokens, &i);
+            result.proc_alpha = result.alpha;
+        } else if (kw(tokens, i, "namelen")) {
             if (!at(tokens, i + 1, .eq) or !at(tokens, i + 2, .number)) return cx.diags.fail(error.ParseError, tokens[i].line, "PROC GLM: NAMELEN= requires an integer", .{});
             result.namelen = std.fmt.parseInt(usize, tokens[i + 2].text, 10) catch return cx.diags.fail(error.ParseError, tokens[i].line, "PROC GLM: invalid NAMELEN", .{});
             if (result.namelen < 20 or result.namelen > 200) return cx.diags.fail(error.ParseError, tokens[i].line, "PROC GLM: NAMELEN must be 20 through 200", .{});
@@ -133,6 +138,7 @@ pub fn parse(cx: proc.ProcCtx, tokens: []const lex.Token) diag.Error!Spec {
     var model_seen = false;
     var ended = false;
     var effects: std.ArrayList(Effect) = .empty;
+    var means: std.ArrayList(@import("glm_means.zig").Request) = .empty;
     var contrasts: std.ArrayList(@import("glm_contrast.zig").Request) = .empty;
     var tests: std.ArrayList(@import("glm_test_statement.zig").Request) = .empty;
     var estimates: std.ArrayList(@import("glm_estimate.zig").Request) = .empty;
@@ -238,8 +244,15 @@ pub fn parse(cx: proc.ProcCtx, tokens: []const lex.Token) diag.Error!Spec {
             try tests.append(cx.arena, try @import("glm_test_statement.zig").read(cx, tokens[i..end], result, effects.items));
         } else if (kw(tokens, i, "means")) {
             if (!model_seen) return cx.diags.fail(error.ParseError, tokens[i].line, "PROC GLM: MEANS must follow MODEL", .{});
-            if (result.hov != null) return proc.failGap(cx.diags, tokens[i].line, "PROC GLM: repeated MEANS statements are not implemented", .{});
-            result.hov = try @import("glm_hov.zig").read(cx, tokens[i..end], result);
+            var requests_hov = false;
+            for (tokens[i..end]) |option| if (eq(option.text, "hovtest")) { requests_hov = true; };
+            if (requests_hov) {
+                if (result.hov != null or means.items.len > 0) return proc.failGap(cx.diags, tokens[i].line, "PROC GLM: mixed or repeated HOVTEST MEANS requests are not implemented", .{});
+                result.hov = try @import("glm_hov.zig").read(cx, tokens[i..end], result);
+            } else {
+                if (result.hov != null) return proc.failGap(cx.diags, tokens[i].line, "PROC GLM: mixed HOVTEST and descriptive MEANS requests are not implemented", .{});
+                try @import("glm_means.zig").read(cx, tokens[i..end], result, effects.items, &means);
+            }
         } else if (kw(tokens, i, "random")) {
             if (!model_seen) return cx.diags.fail(error.ParseError, tokens[i].line, "PROC GLM: RANDOM must follow MODEL", .{});
             const request = try @import("glm_random.zig").read(cx, tokens[i..end], result, effects.items);
@@ -275,6 +288,7 @@ pub fn parse(cx: proc.ProcCtx, tokens: []const lex.Token) diag.Error!Spec {
     if (!model_seen) return cx.diags.fail(error.ParseError, 0, "PROC GLM: MODEL statement required", .{});
     result.effects = effects.items;
     result.lsmeans = lsmeans.items;
+    result.means = means.items;
     result.estimates = estimates.items;
     result.contrasts = contrasts.items;
     result.test_requests = tests.items;

@@ -1,0 +1,4 @@
+# corpus assertions
+words Balanced Data from Randomized Complete Block The GLM Procedure Class Level Information Class Levels Values Block 3 1 2 3 Type 7 Clarion Clinton Compost Knox O'Neill Wabash Webster Number of Observations Read 21 Number of Observations Used 21 Balanced Data from Randomized Complete Block The GLM Procedure Dependent Variable: StemLength Sum of Source DF Squares Mean Square F Value Pr > F Model 8 142.1885714 17.7735714 10.80 0.0002 Error 12 19.7428571 1.6452381 Corrected Total 20 161.9314286 R-Square Coeff Var Root MSE StemLength Mean 0.878079 3.939745 1.282668 32.55714 Source DF Type I SS Mean Square F Value Pr > F Block 2 39.0371429 19.5185714 11.86 0.0014 Type 6 103.1514286 17.1919048 10.45 0.0004 Source DF Type III SS Mean Square F Value Pr > F Block 2 39.0371429 19.5185714 11.86 0.0014 Type 6 103.1514286 17.1919048 10.45 0.0004
+stderr-count 0 ERROR:
+stderr-count 0 WARNING:

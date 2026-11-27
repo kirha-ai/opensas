@@ -11,7 +11,7 @@ const estimability = @import("glm_estimability.zig");
 const A = std.mem.Allocator;
 const eq = std.ascii.eqlIgnoreCase;
 const inference = @import("lsmeans_inference.zig");
-pub const Request = struct { effect: usize, e: bool = false, stderr: bool = false, singular: f64 = 1e-4, pdiff: bool = false, cl: bool = false, alpha: f64 = 0.05, adjust: inference.Adjustment = .none, adjust_explicit: bool = false };
+pub const Request = struct { effect: usize, error_effect: ?usize = null, error_kind: ?@import("glm_test_statement.zig").Kind = null, e: bool = false, stderr: bool = false, singular: f64 = 1e-4, pdiff: bool = false, cl: bool = false, alpha: f64 = 0.05, adjust: inference.Adjustment = .none, adjust_explicit: bool = false };
 pub const Mean = struct { levels: []const ?usize, coefficients: []const f64, inference: estimability.Result };
 pub const Table = struct { effect: []const u8, classes: []const coded.Class, columns: []const coded.Column, means: []const Mean, comparisons: []const inference.Difference = &.{}, mean_limits: []const inference.Interval = &.{}, df_error: usize = 0 };
 
@@ -46,7 +46,7 @@ pub fn read(cx: proc.ProcCtx, tokens: []const lex.Token, spec: parse.Spec, effec
         try requests.append(cx.arena, .{ .effect = found orelse return cx.diags.fail(error.ParseError, tokens[0].line, "PROC GLM: LSMEANS effect is not in MODEL", .{}) });
     }
     if (requests.items.len == first) return cx.diags.fail(error.ParseError, tokens[0].line, "PROC GLM: LSMEANS requires effects", .{});
-    var options: Request = .{ .effect = 0, .alpha = spec.alpha };
+    var options: Request = .{ .effect = 0, .alpha = spec.proc_alpha };
     if (i < tokens.len) i += 1;
     while (i < tokens.len) {
         const token = tokens[i];
@@ -54,6 +54,29 @@ pub fn read(cx: proc.ProcCtx, tokens: []const lex.Token, spec: parse.Spec, effec
         if (std.ascii.eqlIgnoreCase(token.text, "e") and !(i + 1 < tokens.len and tokens[i + 1].tag == .eq)) {
             options.e = true;
             i += 1;
+        } else if (eq(token.text, "e")) {
+            i += 2; // E=; bare E was handled above.
+            var variables: std.ArrayList(usize) = .empty;
+            while (true) {
+                if (i >= tokens.len or tokens[i].tag != .name) return cx.diags.fail(error.ParseError, token.line, "PROC GLM: LSMEANS E= requires an effect", .{});
+                const col = spec.input.ds.indexOf(tokens[i].text) orelse return cx.diags.fail(error.ParseError, token.line, "PROC GLM: LSMEANS error variable not found", .{});
+                try variables.append(cx.arena, col);
+                i += 1;
+                if (i == tokens.len or tokens[i].tag != .star) break;
+                i += 1;
+            }
+            options.error_effect = for (effects, 0..) |effect, index| {
+                if (effect.variables.len != variables.items.len) continue;
+                var matches = true;
+                for (effect.variables) |col| if (std.mem.count(usize, effect.variables, &.{col}) != std.mem.count(usize, variables.items, &.{col})) { matches = false; };
+                if (matches) break index;
+            } else return cx.diags.fail(error.ParseError, token.line, "PROC GLM: LSMEANS error effect is not in MODEL", .{});
+        } else if (eq(token.text, "etype")) {
+            if (i + 2 >= tokens.len or tokens[i + 1].tag != .eq or tokens[i + 2].tag != .number) return cx.diags.fail(error.ParseError, token.line, "PROC GLM: LSMEANS ETYPE requires1,2,3,or4", .{});
+            const value = std.fmt.parseFloat(f64, tokens[i + 2].text) catch return cx.diags.fail(error.ParseError, token.line, "PROC GLM: invalid LSMEANS ETYPE", .{});
+            if (!std.math.isFinite(value) or value < 1 or value > 4 or @floor(value) != value) return cx.diags.fail(error.ParseError, token.line, "PROC GLM: LSMEANS ETYPE requires1,2,3,or4", .{});
+            options.error_kind = @enumFromInt(@as(u3, @intFromFloat(value)));
+            i += 3;
         } else if (std.ascii.eqlIgnoreCase(token.text, "stderr")) {
             options.stderr = true;
             i += 1;
@@ -110,10 +133,36 @@ fn compatible(target: []const ?usize, column: []const ?usize) bool {
 /// Arena-owned table. Reuse full GLM coding for E labels and observed cells;
 /// refit its equivalent column space with the existing rank/QR primitive.
 pub fn compute(cx: proc.ProcCtx, spec: parse.Spec, d: design.Design, request: Request, mse: f64, df_error: usize) diag.Error!Table {
+    if (request.error_effect != null and (request.stderr or request.pdiff)) return proc.failGap(cx.diags, 0, "PROC GLM: LSMEANS alternate error requires the full fitted effect tables", .{});
+    return computeResolved(cx, spec, d, request, mse, df_error, mse, df_error);
+}
+/// Preserve the actual model rank/covariance basis while selecting the requested
+/// inference scale/DF. E= is ignored unless STDERR/PDIFF/TDIFF is requested;
+/// CL by itself does not activate it (S154 physical p.4076).
+pub fn computeWithFit(cx: proc.ProcCtx, spec: parse.Spec, d: design.Design, request: Request, fit: @import("glm_fit.zig").Result) diag.Error!Table {
+    var mse = fit.model.fit.mse;
+    var df = fit.model.fit.df_error;
+    if (request.error_effect) |effect| if (request.stderr or request.pdiff) {
+        const Kind = @import("glm_test_statement.zig").Kind;
+        const kind = request.error_kind orelse (if (spec.ss4) Kind.iv else if (spec.ss3 or spec.defaultSumsOfSquares()) Kind.iii else if (spec.ss2) Kind.ii else Kind.i);
+        const available = switch (kind) { .i => spec.ss1 or spec.defaultSumsOfSquares(), .ii => spec.ss2, .iii => spec.ss3 or spec.defaultSumsOfSquares(), .iv => spec.ss4 };
+        if (!available) return proc.failGap(cx.diags, 0, "PROC GLM: requested LSMEANS ETYPE was not computed in MODEL", .{});
+        const table = switch (kind) { .i => fit.type_i, .ii => fit.type_ii, .iii => fit.type_iii, .iv => fit.type_iv };
+        if (table.len != spec.effects.len) return error.ExecError;
+        const error_effect = table[effect];
+        if (error_effect.df == 0 or !std.math.isFinite(error_effect.ms) or !(error_effect.ms > 0)) return proc.failGap(cx.diags, 0, "PROC GLM: degenerate LSMEANS error-effect inference is not implemented", .{});
+        mse = error_effect.ms;
+        df = error_effect.df;
+    };
+    return computeResolved(cx, spec, d, request, fit.model.fit.mse, fit.model.fit.df_error, mse, df);
+}
+fn computeResolved(cx: proc.ProcCtx, spec: parse.Spec, d: design.Design, request: Request, model_mse: f64, model_df: usize, mse: f64, df_error: usize) diag.Error!Table {
     const a = cx.arena;
     const matrix = try estimability.codedDesign(cx, spec, d);
-    var model = try estimability.fitCoded(cx, spec, d, matrix, mse, df_error);
+    var model = try estimability.fitCoded(cx, spec, d, matrix, model_mse, model_df);
     defer model.deinit(a);
+    model.fit.mse = mse;
+    model.fit.df_error = df_error;
     var means: std.ArrayList(Mean) = .empty;
     var name: []const u8 = spec.effects[request.effect].name;
     for (matrix.columns) |target| {
@@ -226,6 +275,13 @@ pub fn execute(cx: proc.ProcCtx, out: *std.ArrayList(u8), spec: parse.Spec, d: d
     }
 }
 
+pub fn executeWithFit(cx: proc.ProcCtx, out: *std.ArrayList(u8), spec: parse.Spec, d: design.Design, fit: @import("glm_fit.zig").Result) diag.Error!void {
+    for (spec.lsmeans) |request| {
+        const table = try computeWithFit(cx, spec, d, request, fit);
+        if (!spec.noprint) try render(cx, out, spec, d, request, table);
+    }
+}
+
 const testing = std.testing;
 const Dataset = @import("../dataset.zig").Dataset;
 const Library = @import("../exec.zig").Library;
@@ -313,7 +369,7 @@ test "COMMON009 LSMEANS parsing rejects invalid effects and unsupported options 
         "proc glm; class group h; model y=group; lsmeans; run;",
         "proc glm; class group h; model y=group; lsmeans group*; run;",
         "proc glm; class group h; model y=group; lsmeans group / singular=0; run;",
-        "proc glm; class group h; model y=group; lsmeans group / e=group; run;",
+        "proc glm; class group h; model y=group; lsmeans group / e=h; run;",
     }) |source| {
         try testing.expectError(error.ParseError, parse.parse(cx, try lex.tokenize(a, source, &diagnostics)));
         try testing.expect(diagnostics.list.items[diagnostics.list.items.len - 1].line > 0);

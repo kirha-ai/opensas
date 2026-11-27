@@ -69,6 +69,7 @@ pub fn execute(cx: proc.ProcCtx, out: *std.ArrayList(u8), spec: Spec) diag.Error
                     try @import("glm_absorb_render.zig").render(cx, out, spec, d, absorbed);
                     try @import("glm_estimate.zig").renderResults(cx, out, estimates);
                 }
+                try @import("glm_means.zig").execute(cx, out, spec, d);
                 if (!spec.noprint and !spec.plots_none) if (cx.graphics) |g| {
                     if (g.enabled == true) return proc.failGap(cx.diags, 0, "PROC GLM: default graphics with ABSORB are not implemented; use PLOTS=NONE", .{});
                 };
@@ -85,13 +86,14 @@ pub fn execute(cx: proc.ProcCtx, out: *std.ArrayList(u8), spec: Spec) diag.Error
             if (!spec.noprint) try @import("glm_render.zig").renderPrepared(cx, out, spec, d, result, estimates);
             if (!spec.noprint) try @import("glm_contrast.zig").render(cx, out, contrasts);
             try @import("glm_test_statement.zig").render(cx, out, spec, tests);
+            try @import("glm_means.zig").execute(cx, out, spec, d);
             if (hov) |values| try @import("glm_hov.zig").render(cx, out, spec, d, values);
             for (random) |analysis| {
                 var random_spec = spec;
                 random_spec.random = analysis.request;
                 try @import("glm_random.zig").render(cx, out, random_spec, d, result, analysis.result);
             }
-            try @import("glm_lsmeans.zig").execute(cx, out, spec, d, result.model.fit.mse, result.model.fit.df_error);
+            try @import("glm_lsmeans.zig").executeWithFit(cx, out, spec, d, result);
             try @import("glm_plots.zig").emit(cx, spec, d, result, graph_order);
             graph_order += 1;
         }
