@@ -31,22 +31,25 @@ fn signedNumber(cx: proc.ProcCtx, tokens: []const lex.Token, i: *usize, line: us
     return value;
 }
 pub fn read(cx: proc.ProcCtx, tokens: []const lex.Token, spec: parse.Spec, effects: []const parse.Effect) diag.Error!Request {
+    return readFor("ESTIMATE", cx, tokens, spec, effects);
+}
+pub fn readFor(comptime statement: []const u8, cx: proc.ProcCtx, tokens: []const lex.Token, spec: parse.Spec, effects: []const parse.Effect) diag.Error!Request {
     const line = tokens[0].line;
-    if (tokens.len < 2 or tokens[1].tag != .string) return cx.diags.fail(error.ParseError, line, "PROC GLM: ESTIMATE requires a quoted label", .{});
+    if (tokens.len < 2 or tokens[1].tag != .string) return cx.diags.fail(error.ParseError, line, "PROC GLM: " ++ statement ++ " requires a quoted label", .{});
     var terms: std.ArrayList(Term) = .empty;
     var i: usize = 2;
     while (i < tokens.len and tokens[i].tag != .slash) {
-        if (tokens[i].tag == .comma or tokens[i].tag == .lbrace) return proc.failGap(cx.diags, line, "PROC GLM: multirow/nonpositional ESTIMATE syntax is not supported", .{});
-        if (tokens[i].tag != .name) return cx.diags.fail(error.ParseError, line, "PROC GLM: ESTIMATE requires an effect name", .{});
+        if (tokens[i].tag == .comma or tokens[i].tag == .lbrace) return proc.failGap(cx.diags, line, "PROC GLM: multirow/nonpositional " ++ statement ++ " syntax is not supported", .{});
+        if (tokens[i].tag != .name) return cx.diags.fail(error.ParseError, line, "PROC GLM: " ++ statement ++ " requires an effect name", .{});
         var index: ?usize = null;
         if (eq(tokens[i].text, "intercept")) {
-            if (!spec.intercept) return cx.diags.fail(error.ParseError, line, "PROC GLM: ESTIMATE INTERCEPT is unavailable with NOINT", .{});
+            if (!spec.intercept) return cx.diags.fail(error.ParseError, line, "PROC GLM: " ++ statement ++ " INTERCEPT is unavailable with NOINT", .{});
             i += 1;
         } else {
             var variables: std.ArrayList(usize) = .empty;
             while (true) {
-                if (i >= tokens.len or tokens[i].tag != .name) return cx.diags.fail(error.ParseError, line, "PROC GLM: incomplete ESTIMATE effect", .{});
-                const ci = spec.input.ds.indexOf(tokens[i].text) orelse return cx.diags.fail(error.ParseError, line, "PROC GLM: ESTIMATE variable {s} not found", .{tokens[i].text});
+                if (i >= tokens.len or tokens[i].tag != .name) return cx.diags.fail(error.ParseError, line, "PROC GLM: incomplete " ++ statement ++ " effect", .{});
+                const ci = spec.input.ds.indexOf(tokens[i].text) orelse return cx.diags.fail(error.ParseError, line, "PROC GLM: " ++ statement ++ " variable {s} not found", .{tokens[i].text});
                 try variables.append(cx.arena, ci);
                 i += 1;
                 if (i == tokens.len or tokens[i].tag != .star) break;
@@ -56,35 +59,35 @@ pub fn read(cx: proc.ProcCtx, tokens: []const lex.Token, spec: parse.Spec, effec
                 index = e;
                 break;
             };
-            if (index == null) return cx.diags.fail(error.ParseError, line, "PROC GLM: ESTIMATE effect is not in MODEL", .{});
+            if (index == null) return cx.diags.fail(error.ParseError, line, "PROC GLM: " ++ statement ++ " effect is not in MODEL", .{});
         }
-        for (terms.items) |term| if (term.effect == index) return proc.failGap(cx.diags, line, "PROC GLM: repeated ESTIMATE effect specifications are not implemented", .{});
+        for (terms.items) |term| if (term.effect == index) return proc.failGap(cx.diags, line, "PROC GLM: repeated " ++ statement ++ " effect specifications are not implemented", .{});
         var values: std.ArrayList(f64) = .empty;
         while (i < tokens.len and (tokens[i].tag == .number or tokens[i].tag == .minus or tokens[i].tag == .plus)) try values.append(cx.arena, try signedNumber(cx, tokens, &i, line));
-        if (values.items.len == 0) return cx.diags.fail(error.ParseError, line, "PROC GLM: ESTIMATE effect requires coefficients", .{});
+        if (values.items.len == 0) return cx.diags.fail(error.ParseError, line, "PROC GLM: " ++ statement ++ " effect requires coefficients", .{});
         try terms.append(cx.arena, .{ .effect = index, .values = values.items });
     }
-    if (terms.items.len == 0) return cx.diags.fail(error.ParseError, line, "PROC GLM: ESTIMATE requires an effect and coefficients", .{});
+    if (terms.items.len == 0) return cx.diags.fail(error.ParseError, line, "PROC GLM: " ++ statement ++ " requires an effect and coefficients", .{});
     var request: Request = .{ .label = tokens[1].text, .terms = terms.items, .line = line };
     if (i < tokens.len) i += 1;
     while (i < tokens.len) {
         const token = tokens[i];
         i += 1;
-        if (token.tag != .name) return cx.diags.fail(error.ParseError, line, "PROC GLM: invalid ESTIMATE option", .{});
+        if (token.tag != .name) return cx.diags.fail(error.ParseError, line, "PROC GLM: invalid " ++ statement ++ " option", .{});
         if (eq(token.text, "e") and !(i < tokens.len and tokens[i].tag == .eq)) {
             request.e = true;
         } else if (eq(token.text, "divisor") or eq(token.text, "singular")) {
-            if (i == tokens.len or tokens[i].tag != .eq) return cx.diags.fail(error.ParseError, line, "PROC GLM: ESTIMATE option requires =number", .{});
+            if (i == tokens.len or tokens[i].tag != .eq) return cx.diags.fail(error.ParseError, line, "PROC GLM: " ++ statement ++ " option requires =number", .{});
             i += 1;
             const value = try signedNumber(cx, tokens, &i, line);
             if (eq(token.text, "divisor")) {
-                if (value == 0) return cx.diags.fail(error.ParseError, line, "PROC GLM: ESTIMATE DIVISOR must be nonzero", .{});
+                if (value == 0) return cx.diags.fail(error.ParseError, line, "PROC GLM: " ++ statement ++ " DIVISOR must be nonzero", .{});
                 request.divisor = value;
             } else {
-                if (value <= 0 or value >= 1) return cx.diags.fail(error.ParseError, line, "PROC GLM: ESTIMATE SINGULAR must be between zero and one", .{});
+                if (value <= 0 or value >= 1) return cx.diags.fail(error.ParseError, line, "PROC GLM: " ++ statement ++ " SINGULAR must be between zero and one", .{});
                 request.singular = value;
             }
-        } else return proc.failGap(cx.diags, line, "PROC GLM: ESTIMATE option {s} is not supported", .{token.text});
+        } else return proc.failGap(cx.diags, line, "PROC GLM: " ++ statement ++ " option {s} is not supported", .{token.text});
     }
     return request;
 }

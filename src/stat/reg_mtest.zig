@@ -124,7 +124,12 @@ fn stat(value: f64, f: f64, d1: f64, d2: f64) diag.Error!Statistic {
     return .{ .value = value, .f = f, .numerator_df = d1, .denominator_df = d2, .probability = probability };
 }
 
-fn largerRoots(a: A, e: []const f64, h: []const f64, p: usize) diag.Error![]f64 {
+pub const Characteristic = struct { roots: []f64, vectors: []f64 };
+/// Generalized eigenvectors are response-by-root columns with V'EV=I.
+/// Signs and bases within repeated roots are not uniquely defined; no
+/// sample-specific SAS signs are hard-coded into the Jacobi rotations.
+pub fn characteristic(a: A, e: []const f64, h: []const f64, p: usize) diag.Error!Characteristic {
+    if (p == 0 or p > 16 or e.len != p * p or h.len != p * p) return error.ExecError;
     const lower = try a.alloc(f128, p * p);
     const inverse_lower = try a.alloc(f128, p * p);
     const symmetric = try a.alloc(f128, p * p);
@@ -159,6 +164,9 @@ fn largerRoots(a: A, e: []const f64, h: []const f64, p: usize) diag.Error![]f64 
         symmetric[i * p + j] = sum;
         whitened_scale = @max(whitened_scale, @abs(sum));
     };
+    const vectors = try a.alloc(f128, p * p);
+    @memset(vectors, 0);
+    for (0..p) |i| vectors[i * p + i] = 1;
     var converged = false;
     for (0..100 * p * p) |_| {
         var r: usize = 0;
@@ -180,6 +188,12 @@ fn largerRoots(a: A, e: []const f64, h: []const f64, p: usize) diag.Error![]f64 
         const t = (if (tau >= 0) @as(f128, 1) else -1) / (@abs(tau) + @sqrt(1 + tau * tau));
         const cosine = 1 / @sqrt(1 + t * t);
         const sine = t * cosine;
+        for (0..p) |i| {
+            const left = vectors[i * p + r];
+            const right = vectors[i * p + c];
+            vectors[i * p + r] = cosine * left - sine * right;
+            vectors[i * p + c] = sine * left + cosine * right;
+        }
         symmetric[r * p + r] -= t * off;
         symmetric[c * p + c] += t * off;
         symmetric[r * p + c] = 0;
@@ -201,8 +215,25 @@ fn largerRoots(a: A, e: []const f64, h: []const f64, p: usize) diag.Error![]f64 
         if (value < -@max(1, whitened_scale) * 0x1p-44) return error.ExecError;
         root.* = @floatCast(@max(0, value));
     }
-    std.mem.sort(f64, roots, {}, std.sort.desc(f64));
-    return roots;
+    const order = try a.alloc(usize, p);
+    for (order, 0..) |*index, i| index.* = i;
+    std.mem.sort(usize, order, @as([]const f64, roots), struct {
+        fn before(values: []const f64, left: usize, right: usize) bool { return values[left] > values[right]; }
+    }.before);
+    const sorted = try a.alloc(f64, p);
+    const original = try a.alloc(f64, p * p);
+    for (order, 0..) |column, j| {
+        sorted[j] = roots[column];
+        for (0..p) |i| {
+            var value: f128 = 0;
+            for (0..p) |k| value += inverse_lower[k * p + i] * vectors[k * p + column];
+            original[i * p + j] = @floatCast(value);
+        }
+    }
+    return .{ .roots = sorted, .vectors = original };
+}
+fn largerRoots(a: A, e: []const f64, h: []const f64, p: usize) diag.Error![]f64 {
+    return (try characteristic(a, e, h, p)).roots;
 }
 
 pub fn statistics(a: A, e: []const f64, h: []const f64, p: usize, q: usize, error_df: usize, exact: bool) diag.Error!Result {
