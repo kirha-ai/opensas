@@ -68,4 +68,6 @@ pub fn run(cx: proc.ProcCtx, out: *std.ArrayList(u8), s: declarations.Spec, m: m
         try out.appendSlice(cx.arena, "\nType 3 Tests of Fixed Effects\n\nNum Den\nEffect DF DF F Value Pr > F\n");
         for (tests.items) |row| try out.print(cx.arena, "{s} {d} {d} {d:.2} {s}\n", .{ row.name, row.num_df, row.den_df, row.f, try probability(cx.arena, row.p) });
     }
+    const requests = try @import("mixed_contrasts.zig").parse(cx, m, z, s.statements);
+    try @import("mixed_contrasts.zig").publish(cx, out, m, r, x, z, gls, moments.variances, requests);
 }

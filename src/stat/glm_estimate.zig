@@ -107,6 +107,9 @@ fn compatible(source: coded.Column, target: coded.Column) bool {
 /// Missing coefficient positions are zero; extra positions warn and are
 /// ignored as specified on physical p.4127. Explicit zero effects suppress fill.
 pub fn map(cx: proc.ProcCtx, spec: parse.Spec, matrix: coded.Design, request: Request) diag.Error![]const f64 {
+    return mapFor("GLM", cx, spec, matrix, request);
+}
+pub fn mapFor(comptime procedure: []const u8, cx: proc.ProcCtx, spec: parse.Spec, matrix: coded.Design, request: Request) diag.Error![]const f64 {
     const a = cx.arena;
     const l = try a.alloc(f64, matrix.p);
     @memset(l, 0);
@@ -119,7 +122,7 @@ pub fn map(cx: proc.ProcCtx, spec: parse.Spec, matrix: coded.Design, request: Re
             l[j] = if (count < term.values.len) term.values[count] else 0;
             count += 1;
         };
-        if (term.values.len > count) try cx.diags.warn(request.line, "PROC GLM: extra ESTIMATE coefficients for {s} are ignored", .{if (term.effect) |e| spec.effects[e].name else "Intercept"});
+        if (term.values.len > count) try cx.diags.warn(request.line, "PROC " ++ procedure ++ ": extra ESTIMATE coefficients for {s} are ignored", .{if (term.effect) |e| spec.effects[e].name else "Intercept"});
     }
     // Fill an omitted higher-order CLASS effect from the most specific
     // explicitly supplied contained effect. Intercept spreads over CLASS
@@ -146,7 +149,7 @@ pub fn map(cx: proc.ProcCtx, spec: parse.Spec, matrix: coded.Design, request: Re
                 tied = false;
             }
         }
-        if (tied) return proc.failGap(cx.diags, request.line, "PROC GLM: tied ESTIMATE coefficient fill sources are not implemented; specify the higher-order effect", .{});
+        if (tied) return proc.failGap(cx.diags, request.line, "PROC " ++ procedure ++ ": tied ESTIMATE coefficient fill sources are not implemented; specify the higher-order effect", .{});
         if (best) |t| {
             const source = request.terms[t].effect;
             for (matrix.columns, 0..) |source_column, s| if (source_column.effect_index == source) {
@@ -163,7 +166,7 @@ pub fn map(cx: proc.ProcCtx, spec: parse.Spec, matrix: coded.Design, request: Re
     }
     for (l) |*value| {
         value.* /= request.divisor;
-        if (!std.math.isFinite(value.*)) return cx.diags.fail(error.ExecError, request.line, "PROC GLM: ESTIMATE coefficient overflow", .{});
+        if (!std.math.isFinite(value.*)) return cx.diags.fail(error.ExecError, request.line, "PROC " ++ procedure ++ ": ESTIMATE coefficient overflow", .{});
     }
     return l;
 }

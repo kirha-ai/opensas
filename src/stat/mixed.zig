@@ -52,6 +52,7 @@ pub fn run(cx: proc.ProcCtx, out: *std.ArrayList(u8), tokens: []const lex.Token)
         const z = try random.build(cx, r, group.selected);
         if (x.matrix.n != z.n) return proc.failGap(cx.diags, spec.line, "PROC MIXED: fixed/random observation selection differs", .{});
         for (x.matrix.columns) |column| if (column.effect_name.len > spec.options.namelen) return proc.failGap(cx.diags, spec.line, "PROC MIXED: long effect-name presentation is not implemented", .{});
+        const inference_requests = try @import("mixed_contrasts.zig").parse(cx, m, z, spec.statements);
         const components = try cx.arena.alloc(math.Component, z.components.len);
         const names = try cx.arena.alloc([]const u8, z.components.len + 1);
         for (z.components, components, names[0..z.components.len]) |component, *target, *name| {
@@ -85,6 +86,7 @@ pub fn run(cx: proc.ProcCtx, out: *std.ArrayList(u8), tokens: []const lex.Token)
         try info.render(cx.arena, out, displayed_spec, m, group, x, z);
         if (parameter_search) |search| try parms.renderSearch(cx.arena, out, search, parameter_spec.?);
         render.render(cx.arena, out, fit, names, tests.items, .{ .noitprint = spec.options.noitprint, .notest = m.options.notest, .nofit = fit.status == .evaluated, .parms_lrt = if (parameter_search) |search| search.likelihood_ratio else null }) catch |err| return if (err == error.OutOfMemory) error.OutOfMemory else proc.failGap(cx.diags, spec.line, "PROC MIXED: numerical table rendering failed ({t})", .{err});
+        try @import("mixed_contrasts.zig").publish(cx, out, m, r, x, z, fit, fit.variances, inference_requests);
     }
 }
 
