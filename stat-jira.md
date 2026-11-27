@@ -26,6 +26,10 @@ Current counts: **48 DONE,19 PARK,7 DOING,1348 TODO**. All temporary reference f
 
 At exact c78ef7c6ca2b0b65ecf00e697687e906a887fc63, oracle-absent gate direct1:1989/1990unit,2361/2361corpus,11/11programs. Single failure is old REG parser-test substring `not implemented` after STEPWISE gained a real NOPRINT/OUTEST path; current explicit unsupported-listing diagnostic has changed. Repair378ce9bc retains all six invalid-syntax assertions, resets the gap flag before the supported-method/unsupported-listing path, and checks the exact captured message plus D-009 rc2. Targeted actual regression8/8 direct0; full rerun pending. Repair worktree `/Users/thomas/kirha/opensas-reg-gate-repair`, branch `codex/stat-reg-gate-repair`, created from c78ef7c6; ongoing REG009 source/evidence untouched. Supplemental not claimed for failedrun; oracle restored. Batchnotpushed.
 
+### Rolling assignment — shared TEST prerequisite
+
+REG009 partial integrated from `588d1c84`; seededoriginaldifference/exacttail/optionsgaps remainPARK, finalbatchpending. dev1owns existing STAT-COMMON-031 in retained `opensas-dev1`, branch `codex/stat-b4-common031-dev1`, assigned 2026-11-27T16:18:28+00:00, deadline 2026-11-27T17:03:28+00:00. Originalrequires actualPROC REG jointTEST; reuse proven realestimability/covariance/MTESTinterfaces and implementshared TESTsemantics with independenthypothesis tests. Coordinate dev2GLMTEST H/E specialization next; no artificialsharedstub ornewticket.
+
 ### Rolling assignment — NPAR graphics
 
 NPAR005 frozenstatistical/graphpartial integrated from `d6a67561`; unchangedoriginal1417tokenspasses, but newEDFaxis fixed3decimal labels can misrepresent sub-.001ranges as0.000. Keep005PARK pendingthatknownpresentationgap; no speculativeformatclaim orclockextension. dev6owns existing STAT-NPAR1WAY-010 on retained `opensas-dev6`, branch `codex/stat-b4-npar010-dev6`, assigned 2026-11-27T16:13:24+00:00, deadline 2026-11-27T16:58:24+00:00. UseactualexistingWilcoxon/FP/EDF data andsharedgraphiccontrols; preserveunsupportedremainingfamilies. Prioritize finite tiny/large-range axislabel/coordinate correctness with durable roundtrip/geometry tests and visualinspection. Missing computational prerequisites remainexplicit, not stubs.
@@ -751,7 +755,7 @@ Complete prerequisite shared contracts first, then each PROC's data input, model
 
 <a id="stat-common-031"></a>
 
-### [TODO] STAT-COMMON-031 — TEST Statement
+### [DOING @dev1] STAT-COMMON-031 — TEST Statement
 
 - Source: S154 / Chapter 20 / `TEST Statement` (PDF pp. 545–547).
 - Scope: Implement shared semantics, defaults, and applicability checks for TEST Statement; procedure-specific options and result integration belong to the corresponding PROC tickets.
