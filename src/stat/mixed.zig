@@ -143,7 +143,7 @@ test "MIXED001 declarations diagnose invalid names and preserve unsupported opti
     try std.testing.expectEqual(@as(usize, 2), h.d.list.items[before].line);
 }
 
-test "MIXED001 execution never reports unimplemented estimation as successful output" {
+test "MIXED001 unimplemented MIVQUE0 never reports successful output" {
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
     const h = try Testing.init(arena.allocator());
@@ -151,7 +151,7 @@ test "MIXED001 execution never reports unimplemented estimation as successful ou
     var out: std.ArrayList(u8) = .empty;
     diag.resetGap();
     defer diag.resetGap();
-    try std.testing.expectError(error.ParseError, run(h.cx, &out, try lex.tokenize(h.cx.arena, "proc mixed;by g;model y=x;run;", h.d)));
+    try std.testing.expectError(error.ParseError, run(h.cx, &out, try lex.tokenize(h.cx.arena, "proc mixed method=mivque0;by g;model y=x;run;", h.d)));
     try std.testing.expectEqual(@as(u8, 2), diag.exitCode(diag.gapHit(), h.d.hasErrors()));
     try std.testing.expectEqual(@as(usize, 0), out.items.len);
     try std.testing.expect(std.mem.indexOf(u8, try h.d.render(), "model estimation is not implemented") != null);

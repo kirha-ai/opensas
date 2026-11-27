@@ -1,5 +1,5 @@
 /* STAT-MIXED-001: the real PROC dispatcher reaches declarations and input,
-   but must not fabricate a successful numerical analysis. expect-rc: 2 */
+   but must not fabricate an unimplemented MIVQUE0 analysis. expect-rc: 2 */
 data sample;
 input g y x w;
 datalines;
@@ -8,7 +8,7 @@ datalines;
 2 6 3 1
 ;
 run;
-proc mixed data=sample method=reml;
+proc mixed data=sample method=mivque0;
 by g;
 weight w;
 id;
