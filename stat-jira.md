@@ -12,6 +12,10 @@ Explicit user resume. Confirmed working branch `feat/stat/batch-4`, base `31356c
 - dev6: STAT-COMMON-017; `/Users/thomas/kirha/opensas-dev6`; branch `codex/stat-b4-dev6`; assigned 2026-11-27T13:42:13+00:00; implementation deadline 2026-11-27T14:27:13+00:00. Original README/cases and cited physical PDF pages required before edits.
 - dev7: STAT-COMMON-018; `/Users/thomas/kirha/opensas-dev7`; branch `codex/stat-b4-dev7`; assigned 2026-11-27T13:42:13+00:00; implementation deadline 2026-11-27T14:27:13+00:00. Original README/cases and cited physical PDF pages required before edits.
 
+### Rolling assignment — MIXED-004 and continuing006 integration
+
+MIXED003/006 real design cores integrated through `1df9fa0d`. dev5 continues006 driver wiring under its ORIGINAL recorded deadline (no clock reset); core receipt does not claim user-facing estimation works yet. dev7 owns existing STAT-MIXED-004 (Mixed Models Theory) in retained `opensas-dev7`, branch `codex/stat-b4-mixed-theory-dev7`, assigned 2026-11-27T15:13:56+00:00, deadline 2026-11-27T15:58:56+00:00. Coordinate with dev3 MIXED002 numericalowner; prioritize source-justified covariance/Type3 method theory needed by GLM007 while preserving fullGaussian model/GLS/variance-component identities. Never duplicate or overwrite active mixed_fit work. Any source ambiguity stays explicit; use real design/covariance interfaces, not stub acceptance.
+
 ### Rolling assignments — ROC and nonparametric EDF
 
 LOGISTIC013 and NPAR004 partials integrated through `0be77a3f`, final batch checks pending; both retain their whole-original gaps/PARK. dev4 owns existing STAT-LOGISTIC-012 on `codex/stat-b4-roc-dev4`; dev6 owns existing STAT-NPAR1WAY-005 on `codex/stat-b4-npar005-dev6`, both in retained worktrees. Assigned 2026-11-27T15:09:56+00:00; deadline 2026-11-27T15:54:56+00:00. ROC uses actual binary fit/probability/weight/response interfaces while broader LOGISTIC002 remains open; NPAR005 uses the tested selected-array/score/EDF results while broad001 remains open. Reuse real interfaces, never stub acceptance; preserve full table/graph data and original replay requirements.
@@ -9235,7 +9239,7 @@ Source: S154, Chapter 84, `The MIXED Procedure`, PDF pp. 6613–6810. Tasks in t
 
 <a id="stat-mixed-004"></a>
 
-### [TODO] STAT-MIXED-004 — MIXED — Mixed Models Theory
+### [DOING @dev7] STAT-MIXED-004 — MIXED — Mixed Models Theory
 
 - Source: S154 / Chapter 84 / `Mixed Models Theory` (PDF pp. 6695–6707).
 - Scope: Implement Mixed Models Theory. This ticket owns the feature's options, defaults, computation, and results as an extension of the basic computational path; the chapter's output tickets handle ODS descriptors and file presentation.
@@ -9255,7 +9259,7 @@ Source: S154, Chapter 84, `The MIXED Procedure`, PDF pp. 6613–6810. Tasks in t
 
 <a id="stat-mixed-006"></a>
 
-### [PARK] STAT-MIXED-006 — MIXED — RANDOM
+### [DOING @dev5] STAT-MIXED-006 — MIXED — RANDOM
 
 - Source: S154 / Chapter 84 / `RANDOM Statement` (PDF pp. 6675–6680).
 - Scope: Implement RANDOM. This ticket owns the feature's options, defaults, computation, and results as an extension of the basic computational path; the chapter's output tickets handle ODS descriptors and file presentation.
