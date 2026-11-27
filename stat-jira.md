@@ -26,6 +26,10 @@ Current counts: **48 DONE,19 PARK,7 DOING,1348 TODO**. All temporary reference f
 
 At exact c78ef7c6ca2b0b65ecf00e697687e906a887fc63, oracle-absent gate direct1:1989/1990unit,2361/2361corpus,11/11programs. Single failure is old REG parser-test substring `not implemented` after STEPWISE gained a real NOPRINT/OUTEST path; current explicit unsupported-listing diagnostic has changed. Repair378ce9bc retains all six invalid-syntax assertions, resets the gap flag before the supported-method/unsupported-listing path, and checks the exact captured message plus D-009 rc2. Targeted actual regression8/8 direct0; full rerun pending. Repair worktree `/Users/thomas/kirha/opensas-reg-gate-repair`, branch `codex/stat-reg-gate-repair`, created from c78ef7c6; ongoing REG009 source/evidence untouched. Supplemental not claimed for failedrun; oracle restored. Batchnotpushed.
 
+### Rolling assignment — GLM TEST H/E prerequisite
+
+GLM009 partial integrated from `480ccbbf`, confirmedexistingMIXEDTYPE3consumergreen; broadRANDOMgapsremainPARK. dev2owns existing STAT-GLM-012 in retained `opensas-dev2`, branch `codex/stat-b4-glm012-dev2`, assigned 2026-11-27T16:21:55+00:00, deadline 2026-11-27T17:06:55+00:00. This implements the literal `TEST H=A E=A*Block` in MIXED009originalmiddlePROC. Source distinction: sharedCOMMON031chapter545–547 names otherprocedurefamilies, notGLM/REG; dev1validates thatsharedcontract and itsREGoracleunderREG-specificsyntax. GLM012usesitsown4105–4106/4115–4120syntax plus realexistingANOVASS/DF/estimability/F-tail contracts, not a pretendsharedparser. PendingCOMMON031applicabilityscope staysopen.
+
 ### Rolling assignment — shared TEST prerequisite
 
 REG009 partial integrated from `588d1c84`; seededoriginaldifference/exacttail/optionsgaps remainPARK, finalbatchpending. dev1owns existing STAT-COMMON-031 in retained `opensas-dev1`, branch `codex/stat-b4-common031-dev1`, assigned 2026-11-27T16:18:28+00:00, deadline 2026-11-27T17:03:28+00:00. Originalrequires actualPROC REG jointTEST; reuse proven realestimability/covariance/MTESTinterfaces and implementshared TESTsemantics with independenthypothesis tests. Coordinate dev2GLMTEST H/E specialization next; no artificialsharedstub ornewticket.
@@ -5197,7 +5201,7 @@ Source: S154, Chapter 53, `The GLM Procedure`, PDF pp. 4043–4230. Tasks in thi
 
 <a id="stat-glm-012"></a>
 
-### [TODO] STAT-GLM-012 — GLM — TEST / Hypothesis Testing in PROC GLM
+### [DOING @dev2] STAT-GLM-012 — GLM — TEST / Hypothesis Testing in PROC GLM
 
 - Source: S154 / Chapter 53 / `TEST Statement` (PDF pp. 4105–4106); S154 / Chapter 53 / `Hypothesis Testing in PROC GLM` (PDF pp. 4115–4120).
 - Scope: Implement TEST; Hypothesis Testing in PROC GLM. This ticket owns the feature's options, defaults, computation, and results as an extension of the basic computational path; the chapter's output tickets handle ODS descriptors and file presentation.
