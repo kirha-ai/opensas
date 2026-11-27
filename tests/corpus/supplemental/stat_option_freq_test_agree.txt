@@ -1,7 +1,10 @@
 # corpus assertions
-# SAS/STAT 15.4 Figure 47.10 p.3068; TABLES=RESTORE p.3099. Default is tabular.
-# Original FREQ-001 documented_feature.expected.txt confirms this field order.
-# Kappa/variance/Z: pp.3205-3208; original SE/Z bounds retained (half printed unit + 1e-6).
-words The FREQ Procedure Statistics for Table of x by y Symmetry Test Chi-Square DF Pr > ChiSq 2.2762 3 0.5171 Kappa Statistics Standard Statistic Estimate Error 95% Confidence Limits Simple Kappa 0.5667 0.0934 0.3836 0.7497 Weighted Kappa 0.5820 0.0978 0.3904 0.7736 Test of H0: Kappa = 0 Estimate H0 Std Err Z Pr > Z Pr > |Z| 0.5667 0.0975~5.1e-05 5.8116~5.1e-05 <.0001 <.0001 Test of H0: Weighted Kappa = 0 Estimate H0 Std Err Z Pr > Z Pr > |Z| 0.5820 0.111~5.1e-05 5.2452~5.1e-05 <.0001 <.0001 Sample Size = 52
-log-words NOTE: SVG graphic written to ./opensas-0001-agreeplot.svg.
-svg-count 1
+stdout-count 2 Kappa Test
+stdout-count 1 Weighted Kappa Test
+stdout-count 4 <.0001
+row H0 Std Err 0.0975~5.1e-05
+row Z 5.8116~5.1e-05
+row H0 Std Err 0.111~5.1e-05
+row Z 5.2452~5.1e-05
+row-count 2 H0 Std Err {any}
+row-count 2 Z {any}

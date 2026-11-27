@@ -1,6 +1,3 @@
 # corpus assertions
-# SAS/STAT 15.4 Figure 47.10 p.3068 and pp.3099,3207-3208: combined statistics, FC weights.
-# Original weighted estimate/SE/CI and bounds retained; now check simple kappa and symmetry too.
-words The FREQ Procedure Statistics for Table of x by y Symmetry Test Chi-Square DF Pr > ChiSq 2.2762 3 0.5171 Kappa Statistics Standard Statistic Estimate Error 95% Confidence Limits Simple Kappa 0.5667 0.0934 0.3836 0.7497 Weighted Kappa 0.5963~5.1e-05 0.1128~5.1e-05 0.3753~5.1e-05 0.8173~5.1e-05 Sample Size = 52
-log-words NOTE: SVG graphic written to ./opensas-0001-agreeplot.svg.
-svg-count 1
+row Weighted Kappa Coefficient
+row 0.5963~5.1e-05 0.1128~5.1e-05 0.3753~5.1e-05 0.8173~5.1e-05

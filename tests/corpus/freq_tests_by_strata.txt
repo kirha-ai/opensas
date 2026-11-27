@@ -171,7 +171,8 @@ Phi Coefficient                        -0.4472
 Contingency Coefficient                 0.4082
 Cramer's V                             -0.4472
 
-WARNING: 50% of the cells have expected counts less than 5. Chi-Square may not be a valid test.
+WARNING: 50% of the cells have expected counts less than 5.
+         (Asymptotic) Chi-Square may not be a valid test.
 
 Fisher's Exact Test
 ----------------------------------
@@ -291,7 +292,8 @@ Phi Coefficient                         0.3780
 Contingency Coefficient                 0.3536
 Cramer's V                              0.3780
 
-WARNING: 100% of the cells have expected counts less than 5. Chi-Square may not be a valid test.
+WARNING: 100% of the cells have expected counts less than 5.
+         (Asymptotic) Chi-Square may not be a valid test.
 
 Fisher's Exact Test
 ----------------------------------

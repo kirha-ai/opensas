@@ -2,10 +2,5 @@
 stdout-count 1 Nonzero Correlation
 stdout-count 1 Row Mean Scores Differ
 stdout-count 0 General Association
-# S154 Example 47.1 test-table layout; original numeric assertions retained.
-row Breslow-Day-Tarone Test for
-next Homogeneity of Odds Ratios
-next Chi-Square 8.5392~5.1e-05
-next DF 1~5.1e-05
-next Pr > ChiSq 0.0035~5.1e-05
-stdout-count 1 Breslow-Day-Tarone Test for\nHomogeneity of Odds Ratios
+row Breslow-Day-Tarone Test for Homogeneity of Odds Ratios
+row 8.5392~5.1e-05 1~5.1e-05 0.0035~5.1e-05
