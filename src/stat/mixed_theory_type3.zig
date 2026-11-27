@@ -33,9 +33,11 @@ fn gap(cx: proc.ProcCtx, line: usize, comptime message: []const u8) diag.Error {
 /// complete crossed cells, unweighted observations, one variance-component
 /// RANDOM statement. Other domains remain explicit rather than approximate.
 pub fn estimate(cx: proc.ProcCtx, s: model.Spec, rs: random.Spec, rd: random.Design, view: selection.View) diag.Error!Result {
-    if (s.has_repeated or !s.matrix.intercept or s.matrix.classes.len != 2 or s.matrix.effects.len != 1 or rs.requests.len != 1 or rd.components.len != 2) return gap(cx, s.line, "requires complete two-way A fixed and B A*B random VC models");
+    if (s.has_repeated) return cx.diags.fail(error.ParseError, s.line, "PROC MIXED: METHOD=TYPE3 does not permit a REPEATED statement", .{});
+    if (!s.matrix.intercept or s.matrix.classes.len != 2 or s.matrix.effects.len != 1 or rs.requests.len != 1 or rd.components.len != 2) return gap(cx, s.line, "requires complete two-way A fixed and B A*B random VC models");
     const request = rs.requests[0];
-    if (request.intercept or request.subject.len > 0 or request.group.len > 0 or request.nofullz or request.effects.len != 2) return gap(cx, s.line, "SUBJECT/GROUP/intercept or alternate RANDOM layouts are not implemented");
+    if (request.subject.len > 0) return cx.diags.fail(error.ParseError, s.line, "PROC MIXED: METHOD=TYPE3 does not permit SUBJECT effects", .{});
+    if (request.intercept or request.group.len > 0 or request.nofullz or request.effects.len != 2) return gap(cx, s.line, "GROUP/intercept or alternate RANDOM layouts are not implemented");
     for (view.observations) |observation| if (observation.weight != .num or observation.frequency != .num or observation.weight.num != 1 or observation.frequency.num != 1) return gap(cx, s.line, "weighted or frequency-replicated moment equations are not implemented");
     const combined = try cx.arena.alloc(coded.Effect, 3);
     combined[0] = s.matrix.effects[0];
@@ -86,8 +88,9 @@ pub fn estimate(cx: proc.ProcCtx, s: model.Spec, rs: random.Spec, rd: random.Des
     const interaction = (fitted.type_iii[anova.interaction].ms - residual) / anova.coefficients[anova.interaction][1];
     const main = (fitted.type_iii[anova.random_main].ms - residual - anova.coefficients[anova.random_main][1] * interaction) / anova.coefficients[anova.random_main][0];
     if (!std.math.isFinite(main) or !std.math.isFinite(interaction) or !std.math.isFinite(residual) or residual <= 0) return gap(cx, s.line, "moment equations are degenerate or nonfinite");
-    // No evidence establishes SAS's TYPE3 negative-component boundary policy
-    // here. Preserve the distinction from zero and never silently clip to zero.
+    // PARMS NOBOUND (physical p.6670) documents the usual zero lower bound,
+    // but not how TYPE3 reconciles negative moment equations with that bound
+    // (truncate versus re-solve). No unverified clipping policy is substituted.
     if (main < 0 or interaction < 0) return gap(cx, s.line, "negative variance-component moment estimates require a verified boundary policy");
     const variances = try cx.arena.alloc(f64, 3);
     for (rd.components, 0..) |component, i| variances[i] = if (1 + component.effect_index == anova.random_main) main else interaction;
@@ -224,5 +227,12 @@ test "STAT-MIXED-004 negative moments and incompatible covariance structures sta
     repeated.has_repeated = true;
     diag.resetGap();
     try std.testing.expectError(error.ParseError, estimate(cx, repeated, good.random_spec, good.random_design, good.view));
-    try std.testing.expect(diag.gapHit());
+    try std.testing.expectEqual(@as(u8, 1), diag.exitCode(diag.gapHit(), diagnostics.hasErrors()));
+    var with_subject = good.random_spec;
+    const requests = try a.dupe(random.Request, with_subject.requests);
+    requests[0].subject = &.{1};
+    with_subject.requests = requests;
+    diag.resetGap();
+    try std.testing.expectError(error.ParseError, estimate(cx, good.spec, with_subject, good.random_design, good.view));
+    try std.testing.expectEqual(@as(u8, 1), diag.exitCode(diag.gapHit(), diagnostics.hasErrors()));
 }
