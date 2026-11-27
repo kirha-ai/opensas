@@ -12,6 +12,20 @@ Explicit user resume. Confirmed working branch `feat/stat/batch-4`, base `31356c
 - dev6: STAT-COMMON-017; `/Users/thomas/kirha/opensas-dev6`; branch `codex/stat-b4-dev6`; assigned 2026-11-27T13:42:13+00:00; implementation deadline 2026-11-27T14:27:13+00:00. Original README/cases and cited physical PDF pages required before edits.
 - dev7: STAT-COMMON-018; `/Users/thomas/kirha/opensas-dev7`; branch `codex/stat-b4-dev7`; assigned 2026-11-27T13:42:13+00:00; implementation deadline 2026-11-27T14:27:13+00:00. Original README/cases and cited physical PDF pages required before edits.
 
+### Next dev assignments after second integration
+
+All previous attempts have finished implementation within their own deadlines. Integrated code `1f9fff554bbf132118fbecc9e72854f20094601a` includes NPAR kernels/input/plots, RESTRICT, GLM absorbed ESTIMATE, ordinal LOGISTIC, one-sample POWER, and stable relative-risk score. Current-CLI original replays and final absent-oracle gate/install/separate supplemental are pending; NPAR002/FREQ011 stay coordinator acceptance-queued, partial tickets remain PARK.
+
+- dev1: STAT-REG-008; retained `opensas-dev1`, new branch `codex/stat-b4-next-dev1`; assigned 2026-11-27T14:26:31+00:00; deadline 2026-11-27T15:11:31+00:00.
+- dev2: STAT-GLM-007; retained `opensas-dev2`, new branch `codex/stat-b4-next-dev2`; assigned 2026-11-27T14:26:31+00:00; deadline 2026-11-27T15:11:31+00:00.
+- dev3: STAT-NPAR1WAY-003; retained `opensas-dev3`, new branch `codex/stat-b4-next-dev3`; assigned 2026-11-27T14:26:31+00:00; deadline 2026-11-27T15:11:31+00:00.
+- dev4: STAT-LOGISTIC-013; retained `opensas-dev4`, new branch `codex/stat-b4-next-dev4`; assigned 2026-11-27T14:26:31+00:00; deadline 2026-11-27T15:11:31+00:00.
+- dev5: STAT-FREQ-012; retained `opensas-dev5`, new branch `codex/stat-b4-next-dev5`; assigned 2026-11-27T14:26:31+00:00; deadline 2026-11-27T15:11:31+00:00.
+- dev6: STAT-NPAR1WAY-004; retained `opensas-dev6`, new branch `codex/stat-b4-next-dev6`; assigned 2026-11-27T14:26:31+00:00; deadline 2026-11-27T15:11:31+00:00.
+- dev7: STAT-POWER-008; retained `opensas-dev7`, new branch `codex/stat-b4-next-dev7`; assigned 2026-11-27T14:26:31+00:00; deadline 2026-11-27T15:11:31+00:00.
+
+Explicit dependency interfaces: NPAR003 owns unstratified rank/ANOVA kernels and tests; NPAR004 owns new stratified kernels and parser/renderer in npar1way.zig, sharing the concrete selected-array/group/result interface whose unchanged original98/1417/1896-token cases have passed. Broad NPAR001 remains PARK for STRATA/etc, not a stub prerequisite. LOGISTIC013 uses the tested binary/ordinal coefficient/covariance and ordered-response interfaces; pending broad LOGISTIC002 original options remain open. POWER008 uses concrete one-/two-sample scalar Scenario/Result/compute interfaces; pending POWER001/002 composite examples remain open. Each dev must coordinate any shared import or parser edit and preserve other intents. No backlog additions.
+
 ### Rolling verification — POWER-001 partial and FREQ-010 DONE
 
 Exact tested/pushed SHA `afceae40f4bf1be97e4d9bf0424828506a38bf80`: entire oracle absent for `zig build gate -j2 --summary all` direct0 (**1878/1878 unit,2346/2346 corpus,11/11 programs**), install direct0, separate supplemental direct0 (**1113/1113**). Restoration completed and original files unchanged. Pushed to `feat/stat/batch-4`. Current-CLI unchanged FREQ010 original is649/649 tokens,rc0/reference0; its reused full corpus and independent common-risk tests make folder deletion-ready, left present. POWER001 original remains rc2/reference0,0/450 tokens with ONESAMPLEMEANS/scenario/GROUPMEANS/NFRACTIONAL gaps; its declarations/PLOTONLY partial is durable, remains PARK. Next POWER002 already active.
@@ -3856,7 +3870,7 @@ Source: S154, Chapter 47, `The FREQ Procedure`, PDF pp. 3069–3290. Tasks in th
 
 <a id="stat-freq-011"></a>
 
-### [DOING @dev5] STAT-FREQ-011 — FREQ — Odds Ratio and Relative Risks
+### [DOING @coordinator] STAT-FREQ-011 — FREQ — Odds Ratio and Relative Risks
 
 - Source: S154 / Chapter 47 / `Odds Ratio and Relative Risks` (PDF pp. 3203–3213).
 - Scope: Implement Odds Ratio and Relative Risks. This ticket owns the feature's options, defaults, computation, and results as an extension of the basic computational path; the chapter's output tickets handle ODS descriptors and file presentation.
@@ -3872,7 +3886,7 @@ Source: S154, Chapter 47, `The FREQ Procedure`, PDF pp. 3069–3290. Tasks in th
 
 <a id="stat-freq-012"></a>
 
-### [TODO] STAT-FREQ-012 — FREQ — Cochran-Armitage Test for Trend
+### [DOING @dev5] STAT-FREQ-012 — FREQ — Cochran-Armitage Test for Trend
 
 - Source: S154 / Chapter 47 / `Cochran-Armitage Test for Trend` (PDF pp. 3213–3214).
 - Scope: Implement Cochran-Armitage Test for Trend. This ticket owns the feature's options, defaults, computation, and results as an extension of the basic computational path; the chapter's output tickets handle ODS descriptors and file presentation.
@@ -5005,7 +5019,7 @@ Source: S154, Chapter 53, `The GLM Procedure`, PDF pp. 4043–4230. Tasks in thi
 
 <a id="stat-glm-007"></a>
 
-### [TODO] STAT-GLM-007 — GLM — Homogeneity of Variance in One-Way Models / Multivariate Analysis of Variance / Random-Effects Analysis
+### [DOING @dev2] STAT-GLM-007 — GLM — Homogeneity of Variance in One-Way Models / Multivariate Analysis of Variance / Random-Effects Analysis
 
 - Source: S154 / Chapter 53 / `Homogeneity of Variance in One-Way Models` (PDF pp. 4143–4144); S154 / Chapter 53 / `Multivariate Analysis of Variance` (PDF pp. 4147–4149); S154 / Chapter 53 / `Random-Effects Analysis` (PDF pp. 4157–4160).
 - Scope: Implement Homogeneity of Variance in One-Way Models; Multivariate Analysis of Variance; Random-Effects Analysis. This ticket owns the feature's options, defaults, computation, and results as an extension of the basic computational path; the chapter's output tickets handle ODS descriptors and file presentation.
@@ -8391,7 +8405,7 @@ Source: S154, Chapter 79, `The LOGISTIC Procedure`, PDF pp. 5823–6080. Tasks i
 
 <a id="stat-logistic-013"></a>
 
-### [TODO] STAT-LOGISTIC-013 — LOGISTIC — ODDSRATIO / UNITS / Odds Ratio Estimation
+### [DOING @dev4] STAT-LOGISTIC-013 — LOGISTIC — ODDSRATIO / UNITS / Odds Ratio Estimation
 
 - Source: S154 / Chapter 79 / `ODDSRATIO Statement` (PDF pp. 5889–5891); S154 / Chapter 79 / `UNITS Statement` (PDF pp. 5903–5904); S154 / Chapter 79 / `Odds Ratio Estimation` (PDF pp. 5922–5925).
 - Scope: Implement ODDSRATIO; UNITS; Odds Ratio Estimation. This ticket owns the feature's options, defaults, computation, and results as an extension of the basic computational path; the chapter's output tickets handle ODS descriptors and file presentation.
@@ -9894,7 +9908,7 @@ Source: S154, Chapter 90, `The NPAR1WAY Procedure`, PDF pp. 7205–7282. Tasks i
 
 <a id="stat-npar1way-002"></a>
 
-### [DOING @dev3] STAT-NPAR1WAY-002 — NPAR1WAY — Nonparametric location and distribution comparisons for independent samples
+### [DOING @coordinator] STAT-NPAR1WAY-002 — NPAR1WAY — Nonparametric location and distribution comparisons for independent samples
 
 - Source: S154 / Chapter 90 / `Getting Started: NPAR1WAY Procedure` (PDF pp. 7206–7215); S154 / Chapter 90 / `Overview: NPAR1WAY Procedure` (PDF p. 7206).
 - Scope: Implement nonparametric location and distribution comparisons for independent samples using the documented default path and establish the computational state needed by later extensions; implement specialized models, methods, and diagnostics outside that default example in their corresponding feature tickets.
@@ -9911,7 +9925,7 @@ Source: S154, Chapter 90, `The NPAR1WAY Procedure`, PDF pp. 7205–7282. Tasks i
 
 <a id="stat-npar1way-003"></a>
 
-### [TODO] STAT-NPAR1WAY-003 — NPAR1WAY — Tied Values / Simple Linear Rank Tests for Two-Sample Data / One-Way ANOVA Tests
+### [DOING @dev3] STAT-NPAR1WAY-003 — NPAR1WAY — Tied Values / Simple Linear Rank Tests for Two-Sample Data / One-Way ANOVA Tests
 
 - Source: S154 / Chapter 90 / `Tied Values` (PDF p. 7236); S154 / Chapter 90 / `Simple Linear Rank Tests for Two-Sample Data` (PDF pp. 7236–7238); S154 / Chapter 90 / `One-Way ANOVA Tests` (PDF pp. 7238–7239).
 - Scope: Implement Tied Values; Simple Linear Rank Tests for Two-Sample Data; One-Way ANOVA Tests. This ticket owns the feature's options, defaults, computation, and results as an extension of the basic computational path; the chapter's output tickets handle ODS descriptors and file presentation.
@@ -9921,7 +9935,7 @@ Source: S154, Chapter 90, `The NPAR1WAY Procedure`, PDF pp. 7205–7282. Tasks i
 
 <a id="stat-npar1way-004"></a>
 
-### [TODO] STAT-NPAR1WAY-004 — NPAR1WAY — Scores for Linear Rank and One-Way ANOVA Tests / Stratified Analysis / Hodges-Lehmann Estimation of Location Shift
+### [DOING @dev6] STAT-NPAR1WAY-004 — NPAR1WAY — Scores for Linear Rank and One-Way ANOVA Tests / Stratified Analysis / Hodges-Lehmann Estimation of Location Shift
 
 - Source: S154 / Chapter 90 / `Scores for Linear Rank and One-Way ANOVA Tests` (PDF pp. 7239–7241); S154 / Chapter 90 / `Stratified Analysis` (PDF pp. 7241–7242); S154 / Chapter 90 / `Hodges-Lehmann Estimation of Location Shift` (PDF pp. 7242–7244).
 - Scope: Implement Scores for Linear Rank and One-Way ANOVA Tests; Stratified Analysis; Hodges-Lehmann Estimation of Location Shift. This ticket owns the feature's options, defaults, computation, and results as an extension of the basic computational path; the chapter's output tickets handle ODS descriptors and file presentation.
@@ -10772,7 +10786,7 @@ Source: S154, Chapter 96, `The POWER Procedure`, PDF pp. 7733–7988. Tasks in t
 
 <a id="stat-power-008"></a>
 
-### [TODO] STAT-POWER-008 — POWER — Summary of Analyses / Keyword-Lists / Number-Lists
+### [DOING @dev7] STAT-POWER-008 — POWER — Summary of Analyses / Keyword-Lists / Number-Lists
 
 - Source: S154 / Chapter 96 / `Summary of Analyses` (PDF pp. 7848–7850); S154 / Chapter 96 / `Keyword-Lists` (PDF p. 7850); S154 / Chapter 96 / `Number-Lists` (PDF p. 7850).
 - Scope: Implement Summary of Analyses; Keyword-Lists; Number-Lists. This ticket owns the feature's options, defaults, computation, and results as an extension of the basic computational path; the chapter's output tickets handle ODS descriptors and file presentation.
@@ -11865,7 +11879,7 @@ Source: S154, Chapter 105, `The REG Procedure`, PDF pp. 8539–8728. Tasks in th
 
 <a id="stat-reg-008"></a>
 
-### [TODO] STAT-REG-008 — REG — Model-Selection Methods / Criteria Used in Model-Selection Methods / Limitations in Model-Selection Methods
+### [DOING @dev1] STAT-REG-008 — REG — Model-Selection Methods / Criteria Used in Model-Selection Methods / Limitations in Model-Selection Methods
 
 - Source: S154 / Chapter 105 / `Model-Selection Methods` (PDF pp. 8613–8616); S154 / Chapter 105 / `Criteria Used in Model-Selection Methods` (PDF pp. 8616–8617); S154 / Chapter 105 / `Limitations in Model-Selection Methods` (PDF p. 8617).
 - Scope: Implement Model-Selection Methods; Criteria Used in Model-Selection Methods; Limitations in Model-Selection Methods. Cover the source suboptions, defaults, and applicability restrictions; implement only this feature group, without extending to languages or runtime environments outside the cited scope.
