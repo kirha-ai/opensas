@@ -418,7 +418,6 @@ test "GLM006 absorbed ESTIMATE preserves explicit gaps for unsupported parameter
     for ([_][]const u8{
         "proc glm; absorb block; model y=x; estimate 'intercept' intercept 1; run;",
         "proc glm; absorb block; model y=x; estimate 'display' x 1 / e; run;",
-        "proc glm; absorb block; class unit; model y=x; estimate 'class domain' x 1; run;",
     }) |source| {
         diag.resetGap();
         defer diag.resetGap();
@@ -428,7 +427,7 @@ test "GLM006 absorbed ESTIMATE preserves explicit gaps for unsupported parameter
         try std.testing.expectEqual(@as(usize, 0), output.items.len);
     }
     const messages = try diagnostics.render();
-    for ([_][]const u8{ "INTERCEPT ESTIMATE with ABSORB", "ESTIMATE E display with ABSORB", "CLASS ESTIMATE with ABSORB" }) |message| try std.testing.expect(std.mem.indexOf(u8, messages, message) != null);
+    for ([_][]const u8{ "INTERCEPT ESTIMATE with ABSORB", "ESTIMATE E display with ABSORB" }) |message| try std.testing.expect(std.mem.indexOf(u8, messages, message) != null);
     // A covariate constant inside each nuisance block has no separately
     // estimable slope. Keep this unsupported alias mapping loud, not beta=0.
     for (ds.rows.items) |*observation| {
@@ -442,4 +441,84 @@ test "GLM006 absorbed ESTIMATE preserves explicit gaps for unsupported parameter
     try std.testing.expectError(error.ParseError, glm.run(cx, &output, try @import("../lexer.zig").tokenize(a, "proc glm; absorb block; model y=x; estimate 'aliased' x 1; run;", &diagnostics)));
     try std.testing.expectEqual(@as(u8, 2), diag.exitCode(diag.gapHit(), diagnostics.hasErrors()));
     try std.testing.expectEqual(@as(usize, 0), output.items.len);
+}
+
+test "GLM006 absorbed CLASS contrast is estimable but an isolated class mean is not" {
+    // Blocks have means 4 and 14; group means differ by -4 in BOTH blocks.
+    // Within-block dummy columns are (+.5,-.5) for group 1 and (-.5,+.5)
+    // for group 2. Their sum is zero, hence L=(1,-1) is estimable while
+    // L=(1,0) is not. SSE=8, rank=2 blocks+1 group, DFE=5, MSE=8/5;
+    // Var(group1-group2)=MSE*(1/4+1/4)=4/5.
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var lib = Library.init(a);
+    var diagnostics = diag.Diagnostics.init(a);
+    const ds = try dataset(a, &lib);
+    for (1..3) |block| for (1..3) |group| for ([_]f64{ -1, 1 }) |error_value| {
+        const b: f64 = @floatFromInt(block);
+        const g: f64 = @floatFromInt(group);
+        try row(ds, .{ b, g, 0, 10 * (b - 1) + 4 * g - 2 + error_value, 3, 2 });
+    };
+    const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &diagnostics };
+    const spec = try parse(cx, "proc glm; absorb block; class unit; model y=unit; estimate 'difference' unit 1 -1; estimate 'mean1' unit 1; run;");
+    const data = try build(cx, spec);
+    var fit = try absorb.fit(cx, spec, data);
+    defer fit.deinit(a);
+    const estimates = try @import("glm_estimate.zig").computeAbsorbed(cx, spec, data, fit);
+    try std.testing.expectEqual(@as(usize, 5), fit.df_error);
+    try close(8, fit.sse);
+    try close(8.0 / 5.0, fit.mse);
+    const contrast = estimates[0];
+    try std.testing.expectEqualStrings("1", contrast.matrix.classes[0].map.levels[0].label);
+    try std.testing.expectEqualStrings("2", contrast.matrix.classes[0].map.levels[1].label);
+    try std.testing.expectEqualSlices(f64, &.{ 1, -1 }, contrast.coefficients);
+    for (0..8) |i| {
+        try close(0, contrast.matrix.x[2 * i] + contrast.matrix.x[2 * i + 1]);
+        try close(if ((i / 2) % 2 == 0) @as(f64, 0.5) else -0.5, contrast.matrix.x[2 * i]);
+    }
+    try close(-4, contrast.inference.estimate.?);
+    try close(0.5, contrast.inference.variance_factor.?);
+    try close(@sqrt(@as(f64, 4.0 / 5.0)), contrast.inference.standard_error.?);
+    // Independent integral of the t_5 density at |t|=sqrt(20), u=t/sqrt(5)=2:
+    // integral_0^2 (1+u²)^-3 du = 17/100 + 3 atan(2)/8.
+    const tail = 1 - 16.0 / (3 * std.math.pi) * (0.17 + 3 * std.math.atan(@as(f64, 2)) / 8);
+    try close(tail, contrast.inference.p_value.?);
+    const mean = estimates[1].inference;
+    try std.testing.expectEqual(@import("glm_estimability.zig").Status.nonestimable, mean.status);
+    try std.testing.expect(mean.estimate == null and mean.variance_factor == null and mean.standard_error == null and mean.t_value == null and mean.p_value == null);
+    var output: std.ArrayList(u8) = .empty;
+    try glm.execute(cx, &output, spec);
+    try std.testing.expect(std.mem.endsWith(u8, output.items,
+        "\nStandard\nParameter Estimate Error t Value Pr > |t|\n\n" ++
+        "difference -4.00000000 0.89442719 -4.47 0.0066\n" ++
+        "mean1 Non-est . . .\n"));
+    // Replication counts change N/DF; precision weights scale SSE and X'WX.
+    // With FREQ=2, WEIGHT=3: N=16, DFE=13, SSE=48, Var(contrast)=4/13.
+    const weighted = try parse(cx, "proc glm; absorb block; class unit; model y=unit; freq f; weight w; estimate 'difference' unit 1 -1; run;");
+    const weighted_data = try build(cx, weighted);
+    var weighted_fit = try absorb.fit(cx, weighted, weighted_data);
+    defer weighted_fit.deinit(a);
+    const weighted_estimates = try @import("glm_estimate.zig").computeAbsorbed(cx, weighted, weighted_data, weighted_fit);
+    try std.testing.expectEqual(@as(usize, 13), weighted_fit.df_error);
+    try std.testing.expectEqual(@as(usize, 16), weighted_fit.n_used);
+    try close(48, weighted_fit.sse);
+    try close(-4, weighted_estimates[0].inference.estimate.?);
+    try close(1.0 / 12.0, weighted_estimates[0].inference.variance_factor.?);
+    try close(@sqrt(@as(f64, 4.0 / 13.0)), weighted_estimates[0].inference.standard_error.?);
+    // Positional coefficients must follow ORDER=DATA, not internal numeric
+    // level order. Put group 2 first in each block without changing the fit.
+    for ([_]usize{ 0, 4 }) |start| {
+        std.mem.swap([]const Value, &ds.rows.items[start], &ds.rows.items[start + 2]);
+        std.mem.swap([]const Value, &ds.rows.items[start + 1], &ds.rows.items[start + 3]);
+    }
+    const reordered = try parse(cx, "proc glm order=data; absorb block; class unit; model y=unit; estimate 'reverse' unit 1 -1; run;");
+    const reordered_data = try build(cx, reordered);
+    var reordered_fit = try absorb.fit(cx, reordered, reordered_data);
+    defer reordered_fit.deinit(a);
+    const reordered_estimates = try @import("glm_estimate.zig").computeAbsorbed(cx, reordered, reordered_data, reordered_fit);
+    try std.testing.expectEqualStrings("2", reordered_estimates[0].matrix.classes[0].map.levels[0].label);
+    try close(4, reordered_estimates[0].inference.estimate.?);
+    try close(@sqrt(@as(f64, 4.0 / 5.0)), reordered_estimates[0].inference.standard_error.?);
+    try std.testing.expectEqualStrings("", try diagnostics.render());
 }

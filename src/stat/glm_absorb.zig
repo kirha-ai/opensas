@@ -228,3 +228,25 @@ pub fn fit(cx: proc.ProcCtx, spec: parse.Spec, d: design.Design) diag.Error!Resu
 test {
     _ = @import("glm_absorb_tests.zig");
 }
+
+/// Project an alternate parameterization into the same within-stratum space
+/// used by fit. In particular, full CLASS indicator columns retain their alias
+/// relations after nuisance effects are removed. No raw dummy intercept or
+/// nuisance coefficient is passed to the estimability check.
+pub fn projectColumns(cx: proc.ProcCtx, spec: parse.Spec, d: design.Design, weights: []const f64, x: []const f64, p: usize) diag.Error![]f64 {
+    if (spec.absorb.len == 0 or weights.len != d.n or x.len != d.n * p) return error.ExecError;
+    const result = try cx.arena.dupe(f64, x);
+    const scratch = try cx.arena.alloc(f64, d.n);
+    var start: usize = 0;
+    while (start < d.n) {
+        var end = start + 1;
+        while (end < d.n and equal(d.observations[start].cells, d.observations[end].cells, spec.absorb)) end += 1;
+        for (0..p) |j| {
+            for (start..end) |i| scratch[i - start] = x[i * p + j];
+            const mean = try weightedMean(scratch[0 .. end - start], weights[start..end]);
+            for (start..end) |i| result[i * p + j] -= mean;
+        }
+        start = end;
+    }
+    return result;
+}

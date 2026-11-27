@@ -186,10 +186,11 @@ pub fn computeAll(cx: proc.ProcCtx, spec: parse.Spec, d: design.Design, mse: f64
 /// absorption are free of nuisance parameters. For a full-rank continuous
 /// design the projected coefficients have the same parameter order as MODEL,
 /// and the absorbed fit already carries the full model's MSE and error DF.
-/// CLASS, intercept coefficients and E displays require additional mappings.
+/// CLASS uses its full projected indicator basis so L=LH detects nonestimable
+/// means rather than reporting arbitrary generalized-inverse coefficients.
+/// Intercept coefficients and E displays require additional mappings.
 pub fn computeAbsorbed(cx: proc.ProcCtx, spec: parse.Spec, d: design.Design, absorbed: @import("glm_absorb.zig").Result) diag.Error![]const Table {
     if (spec.estimates.len == 0) return &.{};
-    if (spec.classes.len != 0) return proc.failGap(cx.diags, 0, "PROC GLM: CLASS ESTIMATE with ABSORB is not implemented", .{});
     const conditional = absorbed.conditional orelse return proc.failGap(cx.diags, 0, "PROC GLM: ABSORB ESTIMATE requires explicit continuous effects", .{});
     if (conditional.model.fit.rank != d.p - 1) return proc.failGap(cx.diags, 0, "PROC GLM: rank-deficient ABSORB ESTIMATE is not implemented", .{});
     for (spec.estimates) |request| {
@@ -199,13 +200,25 @@ pub fn computeAbsorbed(cx: proc.ProcCtx, spec: parse.Spec, d: design.Design, abs
     var conditional_spec = spec;
     conditional_spec.intercept = false;
     var matrix = try estimability.codedDesign(cx, conditional_spec, d);
-    // Retain the actual projected basis in the result metadata as well.
-    matrix.x = try cx.arena.dupe(f64, absorbed.within_x);
-    if (matrix.p != conditional.model.fit.coefficients.len) return error.ExecError;
+    var full_basis: ?@import("reg_diagnostics.zig").Result = null;
+    defer if (full_basis) |*model| model.deinit(cx.arena);
+    if (spec.classes.len == 0) {
+        // Preserve the already-tested continuous coefficient basis.
+        matrix.x = try cx.arena.dupe(f64, absorbed.within_x);
+        if (matrix.p != conditional.model.fit.coefficients.len) return error.ExecError;
+    } else {
+        matrix.x = try @import("glm_absorb.zig").projectColumns(cx, spec, d, absorbed.weights, matrix.x, matrix.p);
+        full_basis = try @import("reg_diagnostics.zig").fit(cx.arena, matrix.x, absorbed.within_y, matrix.n, matrix.p, absorbed.weights, false, spec.singular);
+        if (full_basis.?.fit.rank != conditional.model.fit.rank) return cx.diags.fail(error.ExecError, 0, "PROC GLM: absorbed ESTIMATE parameterizations disagree in rank", .{});
+        full_basis.?.fit.mse = absorbed.mse;
+        full_basis.?.fit.df_error = absorbed.df_error;
+        full_basis.?.fit.n_used = absorbed.n_used;
+    }
+    const fitted = full_basis orelse conditional.model;
     const tables = try cx.arena.alloc(Table, spec.estimates.len);
     for (spec.estimates, tables) |request, *table| {
         const coefficients = try map(cx, conditional_spec, matrix, request);
-        table.* = .{ .request = request, .matrix = matrix, .coefficients = coefficients, .inference = try estimability.evaluate(conditional.model, coefficients, request.singular) };
+        table.* = .{ .request = request, .matrix = matrix, .coefficients = coefficients, .inference = try estimability.evaluate(fitted, coefficients, request.singular) };
     }
     return tables;
 }
