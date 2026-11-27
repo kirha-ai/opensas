@@ -14,6 +14,7 @@ const classes = @import("class_levels.zig");
 const selection = @import("data_selection.zig");
 const lists = @import("variable_lists.zig");
 const stats = @import("npar1way_stats.zig");
+const output_data = @import("npar1way_output.zig");
 const hl = @import("npar1way_hl.zig");
 const exact_methods = @import("npar1way_exact.zig");
 const fp = @import("npar1way_fp.zig");
@@ -49,6 +50,7 @@ pub const Spec = struct {
     fp_plot_stats: ?bool = null,
     edf_plot_stats: ?bool = null,
     options: stats.Options = .{},
+    output: ?output_data.Request = null,
     fp_test: bool = false,
     dscf_test: bool = false,
     fp_reference: ?union(enum) { index: usize, label: []const u8 } = null,
@@ -360,7 +362,43 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
                 j += 1;
             }
             if (kinds.items.len > 0) s.strata_kinds = kinds.items;
-        } else if (kw(t, i, "output")) return proc.failGap(cx.diags, t[i].line, "PROC NPAR1WAY: OUTPUT is not implemented", .{}) else if (kw(t, i, "x")) {
+        } else if (kw(t, i, "output")) {
+            if (s.output != null) return proc.failGap(cx.diags, t[i].line, "PROC NPAR1WAY: multiple OUTPUT statements are not verified", .{});
+            var request: output_data.Request = .{ .name = "" };
+            var j = i + 1;
+            while (j < end) {
+                if (kw(t, j, "out") and at(t, j + 1, .eq)) {
+                    j += 2;
+                    request.name = try member(cx, t[0..end], &j);
+                    if (at(t, j, .lparen)) {
+                        const start = j + 1;
+                        const next = proc.skipParen(t, j);
+                        if (next > end or next <= start) return invalid(cx, t, j);
+                        request.options = t[start .. next - 1];
+                        j = next;
+                    }
+                    continue;
+                }
+                request.explicit = true;
+                if (kw(t, j, "anova")) request.selection.anova = true else if (kw(t, j, "edf") or kw(t, j, "ks")) request.selection.edf = true else if (kw(t, j, "fp")) request.selection.fp = true else if (kw(t, j, "hl")) request.selection.hl = true else if (kw(t, j, "rmd")) request.selection.rmd = true else {
+                    const kind: stats.Kind = if (kw(t, j, "scores")) blk: {
+                        if (!at(t, j + 1, .eq) or !kw(t, j + 2, "data")) return invalid(cx, t, j);
+                        j += 2;
+                        break :blk .data;
+                    } else if (kw(t, j, "perm")) .data else if (kw(t, j, "normal")) .vw else if (kw(t, j, "data")) return invalid(cx, t, j) else std.meta.stringToEnum(stats.Kind, try std.ascii.allocLowerString(cx.arena, t[j].text)) orelse return invalid(cx, t, j);
+                    request.selection.scores[@intFromEnum(kind)] = true;
+                }
+                j += 1;
+            }
+            if (request.name.len == 0) return proc.failGap(cx.diags, t[i].line, "PROC NPAR1WAY: OUTPUT DATAn allocation is not verified; specify OUT=", .{});
+            if (eq(request.name, "_null_")) return proc.failGap(cx.diags, t[i].line, "PROC NPAR1WAY: OUTPUT _NULL_ semantics are not verified", .{});
+            var option_depth: usize = 0;
+            for (request.options, 0..) |token, k| {
+                if (token.tag == .lparen) option_depth += 1 else if (token.tag == .rparen) option_depth -|= 1 else if (option_depth == 0 and token.tag == .name and eq(token.text, "type") and at(request.options, k + 1, .eq)) return proc.failGap(cx.diags, token.line, "PROC NPAR1WAY: OUTPUT TYPE= is not implemented", .{});
+            }
+            if (cx.lib.readonlyOut(request.name)) return cx.lib.failReadonly(request.name);
+            s.output = request;
+        } else if (kw(t, i, "x")) {
             // X is deliberately outside the generic mid-step skip predicate.
             try parser.noteUnexecuted(cx.diags, t[i..end]);
         } else if (at(t, i, .name) and parser.isMidStepSkippable(t[i].text)) {
@@ -424,6 +462,32 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
             .edf => s.options.edf = true,
         }
     };
+    if (s.output) |*request| {
+        if (!request.explicit) {
+            request.selection = .{ .anova = s.options.anova, .edf = s.options.edf, .fp = s.fp_test, .hl = s.hodges, .rmd = s.rmd_test, .scores = .{ s.options.wilcoxon, s.options.median, s.options.vw, s.options.savage, s.options.ab, s.options.st, s.options.klotz, s.options.mood, s.options.conover, s.options.data } };
+            for (s.options.exact_scores, 0..) |value, index| request.selection.scores[index] = request.selection.scores[index] or value;
+        }
+        if (!request.selection.any()) return proc.failGap(cx.diags, 0, "PROC NPAR1WAY: OUTPUT has no supported unstratified analysis", .{});
+        s.options.anova = s.options.anova or request.selection.anova;
+        s.options.edf = s.options.edf or request.selection.edf;
+        s.fp_test = s.fp_test or request.selection.fp;
+        s.hodges = s.hodges or request.selection.hl;
+        s.rmd_test = s.rmd_test or request.selection.rmd;
+        for (std.meta.tags(stats.Kind)) |kind| if (request.selection.scores[@intFromEnum(kind)]) {
+            switch (kind) {
+                .wilcoxon => s.options.wilcoxon = true,
+                .median => s.options.median = true,
+                .vw => s.options.vw = true,
+                .savage => s.options.savage = true,
+                .ab => s.options.ab = true,
+                .st => s.options.st = true,
+                .klotz => s.options.klotz = true,
+                .mood => s.options.mood = true,
+                .conover => s.options.conover = true,
+                .data => s.options.data = true,
+            }
+        };
+    }
     if (s.options.exact_wilcoxon or s.plots_wilcoxon) s.options.wilcoxon = true;
     if (s.plots_fp) s.fp_test = true;
     if (s.plots_edf) s.options.edf = true;
@@ -691,6 +755,12 @@ fn render(cx: proc.ProcCtx, out: *std.ArrayList(u8), s: Spec, input: Input, r: s
 
 pub fn run(cx: proc.ProcCtx, out: *std.ArrayList(u8), t: []const lex.Token) diag.Error!void {
     var s = try parse(cx, t);
+    var output_builder: ?output_data.Builder = null;
+    if (s.output) |request| {
+        var width: usize = 1;
+        for (s.variables) |v| width = @max(width, s.input.ds.columns.items[v].name.len);
+        output_builder = .{ .a = cx.arena, .source = s.input.ds, .by_cols = s.by_cols, .selection = request.selection, .variable_width = width };
+    }
     const slices = try by.checkedSlices(cx.arena, s.input.ds, s.by_cols, s.by_desc, s.notsorted, cx.diags);
     var body: std.ArrayList(u8) = .empty;
     var plot_order: usize = 0;
@@ -705,6 +775,7 @@ pub fn run(cx: proc.ProcCtx, out: *std.ArrayList(u8), t: []const lex.Token) diag
             try finishTable(cx, &body, info_start, s, v, "VarInfo");
         }
         if (input.labels.len < 2) {
+            if (s.output != null) return proc.failGap(cx.diags, 0, "PROC NPAR1WAY: OUTPUT for empty or one-class results is not verified", .{});
             try cx.diags.warn(0, "PROC NPAR1WAY: fewer than two nonempty CLASS levels for {s}", .{s.input.ds.columns.items[v].name});
             continue;
         }
@@ -713,6 +784,7 @@ pub fn run(cx: proc.ProcCtx, out: *std.ArrayList(u8), t: []const lex.Token) diag
             else => return proc.failGap(cx.diags, 0, "PROC NPAR1WAY: analysis cannot be computed ({s})", .{@errorName(err)}),
         };
         if (s.edf_one_sided and input.labels.len != 2) return proc.failGap(cx.diags, 0, "PROC NPAR1WAY: one-sided EDF requires two CLASS levels", .{});
+        var packet: output_data.Packet = .{ .base = r, .point = s.exact_point, .midp = s.exact_midp };
         const analysis_start = body.items.len;
         if (!s.noprint) try render(cx, &body, s, input, r, v, slice.rep, &plot_order);
         if (s.strata.len > 0) {
@@ -767,6 +839,7 @@ pub fn run(cx: proc.ProcCtx, out: *std.ArrayList(u8), t: []const lex.Token) diag
                 error.OutOfMemory => return error.OutOfMemory,
                 else => return proc.failGap(cx.diags, 0, "PROC NPAR1WAY: exact KS unavailable ({s})", .{@errorName(err)}),
             };
+            packet.ks = result;
             if (!s.noprint) {
                 const start = body.items.len;
                 if (start == analysis_start) try heading(cx, &body, s, slice.rep);
@@ -798,6 +871,7 @@ pub fn run(cx: proc.ProcCtx, out: *std.ArrayList(u8), t: []const lex.Token) diag
                 error.OutOfMemory => return error.OutOfMemory,
                 else => return proc.failGap(cx.diags, 0, "PROC NPAR1WAY: exact RMD unavailable ({s})", .{@errorName(err)}),
             };
+            packet.rmd = result;
             if (!s.noprint) {
                 var start = body.items.len;
                 try heading(cx, &body, s, slice.rep);
@@ -828,6 +902,7 @@ pub fn run(cx: proc.ProcCtx, out: *std.ArrayList(u8), t: []const lex.Token) diag
                 error.OutOfMemory => return error.OutOfMemory,
                 else => return proc.failGap(cx.diags, 0, "PROC NPAR1WAY: FP unavailable ({s})", .{@errorName(err)}),
             };
+            packet.fp = result;
             if (result.z == null) try cx.diags.warn(0, "PROC NPAR1WAY: Fligner-Policello standardization is undefined because its scale is zero", .{});
             if (!s.noprint) {
                 var start = body.items.len;
@@ -863,6 +938,7 @@ pub fn run(cx: proc.ProcCtx, out: *std.ArrayList(u8), t: []const lex.Token) diag
                 error.OutOfMemory => return error.OutOfMemory,
                 else => return proc.failGap(cx.diags, 0, "PROC NPAR1WAY: HL unavailable ({s})", .{@errorName(err)}),
             };
+            packet.hl = estimate;
             if (!s.noprint) {
                 const start = body.items.len;
                 if (start == analysis_start) try heading(cx, &body, s, slice.rep);
@@ -872,12 +948,32 @@ pub fn run(cx: proc.ProcCtx, out: *std.ArrayList(u8), t: []const lex.Token) diag
             }
         }
         if (s.fp_test) if (r.edf) |e| try queuePlot(cx, s, input, input.values, .edf, e.ks_p, v, slice.rep, &plot_order);
+        if (output_builder) |*builder| builder.append(s.input.ds.columns.items[v].name, slice.rep, packet) catch |err| switch (err) {
+            error.OutOfMemory => return error.OutOfMemory,
+            else => return proc.failGap(cx.diags, 0, "PROC NPAR1WAY: OUTPUT result unavailable ({s})", .{@errorName(err)}),
+        };
     };
+    if (output_builder) |*builder| {
+        const request = s.output.?;
+        const dataset = builder.finish(request.name) catch |err| switch (err) {
+            error.OutOfMemory => return error.OutOfMemory,
+            else => return proc.failGap(cx.diags, 0, "PROC NPAR1WAY: OUTPUT descriptor unavailable ({s})", .{@errorName(err)}),
+        };
+        if (request.options.len > 0) {
+            const diagnostics_start = cx.diags.list.items.len;
+            try @import("../io.zig").applyDatasetOptions(cx.arena, dataset, request.options, cx.diags, false);
+            // Dataset option handling can record a fatal diagnostic without
+            // throwing. Do not publish that partial/untyped output afterward.
+            for (cx.diags.list.items[diagnostics_start..]) |message| if (message.severity == .err) return error.ParseError;
+        }
+        try cx.lib.put(request.name, dataset);
+    }
     try out.appendSlice(cx.arena, body.items);
 }
 
 test {
     _ = stats;
+    _ = output_data;
     _ = hl;
     _ = fp;
     _ = dscf;
@@ -1363,4 +1459,119 @@ test "NPAR007 DSCF consumer selection missing variance and two-class restriction
     try std.testing.expectError(error.ParseError, run(.{ .arena = a, .lib = &lib, .diags = &bad }, &out, try lex.tokenize(a, "proc npar1way dscf; class g; var x; where g ne 'C'; run;", &bad)));
     try std.testing.expectEqual(@as(u8, 1), diag.exitCode(diag.gapHit(), bad.hasErrors()));
     try std.testing.expectEqual(@as(usize, 0), out.items.len);
+}
+
+fn outputFixture(a: A, lib: *@import("../exec.zig").Library) !*Dataset {
+    const ds = try a.create(Dataset);
+    ds.* = Dataset.init(a, "sample");
+    _ = try ds.addColumn("g", .char);
+    _ = try ds.addColumn("x", .num);
+    _ = try ds.addColumn("ylong", .num);
+    _ = try ds.addColumn("visit", .num);
+    ds.columns.items[3].format = "date9.";
+    ds.columns.items[3].informat = "best12.";
+    ds.columns.items[3].label = "Visit date";
+    ds.columns.items[3].len = 8;
+    for (1..3) |b| for (0..6) |i| {
+        const offset = @as(f64, @floatFromInt(10 * (b - 1)));
+        try ds.appendRow(&.{ .{ .str = if (i < 2) "A" else if (i < 4) "B" else "C" }, if (i < 4) .{ .num = offset + @as(f64, @floatFromInt(i + 1)) } else Value.missing, .{ .num = offset + @as(f64, @floatFromInt(i / 2 + 1)) }, .{ .num = @floatFromInt(b) } });
+    };
+    try lib.put("sample", ds);
+    return ds;
+}
+test "NPAR008 real OUTPUT multipleVAR BY union descriptors NOPRINT and dataset options" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var lib = @import("../exec.zig").Library.init(a);
+    const input = try outputFixture(a, &lib);
+    var d = diag.Diagnostics.init(a);
+    var out: std.ArrayList(u8) = .empty;
+    try run(.{ .arena = a, .lib = &lib, .diags = &d }, &out, try lex.tokenize(a, "proc npar1way data=sample wilcoxon noprint; class g; var x ylong; by visit; output out=work.results wilcoxon; run;", &d));
+    const ds = lib.find("results").?;
+    try std.testing.expectEqual(@as(usize, 4), ds.rowCount());
+    try std.testing.expectEqual(@as(usize, 13), ds.columns.items.len);
+    try std.testing.expectEqual(@as(?usize, 5), ds.columns.items[ds.indexOf("_VAR_").?].len);
+    try std.testing.expectEqualStrings("date9.", ds.columns.items[0].format.?);
+    try std.testing.expectEqualStrings("best12.", ds.columns.items[0].informat.?);
+    try std.testing.expectEqualStrings("Visit date", ds.columns.items[0].label.?);
+    try std.testing.expectEqual(@as(usize, 0), out.items.len);
+    for (ds.rows.items, 0..) |row, i| {
+        try std.testing.expectEqual(@as(f64, @floatFromInt(i / 2 + 1)), row[0].num);
+        try std.testing.expectEqualStrings(if (i % 2 == 0) "x" else "ylong", row[1].str);
+        if (i % 2 == 0) {
+            try std.testing.expectEqual(@as(f64, 3), row[ds.indexOf("_WIL_").?].num);
+            try std.testing.expectApproxEqAbs(@as(f64, 2.4), row[ds.indexOf("_KW_").?].num, 1e-14);
+        } else {
+            try std.testing.expect(std.math.isNan(row[ds.indexOf("_WIL_").?].num));
+            try std.testing.expectEqual(@as(f64, 5), row[ds.indexOf("_KW_").?].num);
+            try std.testing.expectApproxEqAbs(@exp(-@as(f64, 2.5)), row[ds.indexOf("P_KW").?].num, 1e-14);
+        }
+    }
+    try std.testing.expectEqual(@as(usize, 12), input.rowCount());
+    try run(.{ .arena = a, .lib = &lib, .diags = &d }, &out, try lex.tokenize(a, "proc npar1way data=sample noprint; class g; var x; output out=thin(keep=_var_ p_kw rename=(p_kw=p)) wilcoxon; run;", &d));
+    const thin = lib.find("thin").?;
+    try std.testing.expectEqual(@as(usize, 2), thin.columns.items.len);
+    try std.testing.expectEqualStrings("_VAR_", thin.columns.items[0].name);
+    try std.testing.expectEqualStrings("p", thin.columns.items[1].name);
+    try std.testing.expect(thin.indexOf("_MSA_") == null);
+}
+test "NPAR008 OUTPUT triggers computation without fabricating unrequested fields" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var lib = @import("../exec.zig").Library.init(a);
+    _ = try outputFixture(a, &lib);
+    var d = diag.Diagnostics.init(a);
+    var out: std.ArrayList(u8) = .empty;
+    try run(.{ .arena = a, .lib = &lib, .diags = &d }, &out, try lex.tokenize(a, "proc npar1way data=sample wilcoxon noprint; class g; var x; run;", &d));
+    try std.testing.expectEqual(@as(usize, 1), lib.names.items.len);
+    try run(.{ .arena = a, .lib = &lib, .diags = &d }, &out, try lex.tokenize(a, "proc npar1way data=sample wilcoxon noprint; class g; var x; output out=anova_only anova; run;", &d));
+    const ds = lib.find("anova_only").?;
+    try std.testing.expectEqual(@as(usize, 5), ds.columns.items.len);
+    try std.testing.expect(ds.indexOf("_MSA_") != null and ds.indexOf("_WIL_") == null);
+    try std.testing.expectEqual(@as(usize, 1), ds.rowCount());
+    try run(.{ .arena = a, .lib = &lib, .diags = &d }, &out, try lex.tokenize(a, "proc npar1way data=sample wilcoxon noprint; class g; var x; output out=defaults; run;", &d));
+    try std.testing.expect(lib.find("defaults").?.indexOf("_WIL_") != null);
+}
+test "NPAR008 empty and unknown naming contracts fail atomically with captured diagnostics" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var lib = @import("../exec.zig").Library.init(a);
+    _ = try outputFixture(a, &lib);
+    for ([_][]const u8{ "proc npar1way data=sample noprint; class g; var x; where 1=0; output out=bad wilcoxon; run;", "proc npar1way data=sample noprint; class g; var x; output wilcoxon; run;", "proc npar1way data=sample noprint; class g; var x; output out=bad dscf; run;" }, 0..) |source, i| {
+        diag.resetGap();
+        defer diag.resetGap();
+        var d = diag.Diagnostics.init(a);
+        var out: std.ArrayList(u8) = .empty;
+        try std.testing.expectError(error.ParseError, run(.{ .arena = a, .lib = &lib, .diags = &d }, &out, try lex.tokenize(a, source, &d)));
+        try std.testing.expectEqual(@as(u8, if (i == 2) 1 else 2), diag.exitCode(diag.gapHit(), d.hasErrors()));
+        try std.testing.expect(lib.find("bad") == null);
+    }
+}
+
+test "NPAR008 unsupported descriptors and readonly targets never replace existing data" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var lib = @import("../exec.zig").Library.init(a);
+    const input = try outputFixture(a, &lib);
+    lib.readonly_refs = &.{"ro"};
+    for ([_][]const u8{ "proc npar1way data=sample wilcoxon noprint; class g; var x; output out=ro.o wilcoxon; run;", "proc npar1way data=sample wilcoxon noprint; class g; var x; output out=o(type=corr) wilcoxon; run;", "proc npar1way data=sample wilcoxon noprint; class g; var x; where 1=0; output out=sample wilcoxon; run;" }, 0..) |source, i| {
+        diag.resetGap();
+        defer diag.resetGap();
+        var d = diag.Diagnostics.init(a);
+        lib.diags = &d;
+        var out: std.ArrayList(u8) = .empty;
+        var failed = false;
+        run(.{ .arena = a, .lib = &lib, .diags = &d }, &out, try lex.tokenize(a, source, &d)) catch {
+            failed = true;
+        };
+        try std.testing.expect(failed);
+        try std.testing.expectEqual(@as(u8, if (i == 0) 1 else 2), diag.exitCode(diag.gapHit(), d.hasErrors()));
+        try std.testing.expect(lib.find("sample").? == input);
+        try std.testing.expect(lib.find("o") == null and lib.find("ro.o") == null);
+        try std.testing.expectEqual(@as(usize, 12), input.rowCount());
+    }
 }
