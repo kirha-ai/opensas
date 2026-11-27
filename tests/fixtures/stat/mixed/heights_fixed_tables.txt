@@ -1,0 +1,24 @@
+Covariance Parameter
+      Estimates
+ 
+Cov Parm     Estimate
+
+Residual       2.1000
+
+
+           Fit Statistics
+
+-2 Res Log Likelihood            41.6
+AIC (Smaller is Better)          43.6
+AICC (Smaller is Better)         44.1
+BIC (Smaller is Better)          43.9
+
+
+          Type 3 Tests of Fixed Effects
+ 
+                  Num     Den
+Effect             DF      DF    F Value    Pr > F
+
+Gender              1      10      17.63    0.0018
+Family              3      10       5.90    0.0139
+Family*Gender       3      10       2.89    0.0889
