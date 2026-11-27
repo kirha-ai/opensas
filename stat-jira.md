@@ -53,6 +53,17 @@ Current counts: **48 DONE,19 PARK,7 DOING,1348 TODO**. All temporary reference f
 
 At exact c78ef7c6ca2b0b65ecf00e697687e906a887fc63, oracle-absent gate direct1:1989/1990unit,2361/2361corpus,11/11programs. Single failure is old REG parser-test substring `not implemented` after STEPWISE gained a real NOPRINT/OUTEST path; current explicit unsupported-listing diagnostic has changed. Repair378ce9bc retains all six invalid-syntax assertions, resets the gap flag before the supported-method/unsupported-listing path, and checks the exact captured message plus D-009 rc2. Targeted actual regression8/8 direct0; full rerun pending. Repair worktree `/Users/thomas/kirha/opensas-reg-gate-repair`, branch `codex/stat-reg-gate-repair`, created from c78ef7c6; ongoing REG009 source/evidence untouched. Supplemental not claimed for failedrun; oracle restored. Batchnotpushed.
 
+### Rolling assignments — MANOVA, MIXED output/graphics, shared LSMEANS
+
+Previousimplementationsarefrozenandintegratedthrough `397d4a68`; remainingoriginal/optionscopegapsstayPARKandfinalbatchchecksarestillpending. Newassignmentsuseactualtestedresultinterfaces,notstubprerequisites.
+
+- dev2: STAT-GLM-011; retained `opensas-dev2`, branch `codex/stat-b4-glm011-dev2`; assigned 2026-11-27T17:28:14+00:00; deadline 2026-11-27T18:13:14+00:00.
+- dev3: STAT-MIXED-016; retained `opensas-dev3`, branch `codex/stat-b4-mixed-ods-dev3`; assigned 2026-11-27T17:28:14+00:00; deadline 2026-11-27T18:13:14+00:00.
+- dev5: STAT-MIXED-017; retained `opensas-dev5`, branch `codex/stat-b4-mixed-graphics-dev5`; assigned 2026-11-27T17:28:14+00:00; deadline 2026-11-27T18:13:14+00:00.
+- dev7: STAT-COMMON-026; retained `opensas-dev7`, branch `codex/stat-b4-common026-dev7`; assigned 2026-11-27T17:28:14+00:00; deadline 2026-11-27T18:13:14+00:00.
+
+MIXED016ownsactualdefaulttableobjects/typedcaptures/routing, while017ownsrealplotdata/graphs; unavailablecomputationsmustremainexplicitgapsandnoextraobjectsareinvented. Theycoordinatesharedmixed.zig/main/ODS hooks. GLM011mustconstructGLM-specificsampling/H/E before reusingpureREGmultivariatekernels; do not importREGmissingnessassumptions. COMMON026ownsreusableLSmean/contrastsemanticsandactualGLMconsumercontracts; coordinateGLMsharedfileswithdev2. No destination/CI/gatecompositionchanges ornewbacklog.
+
 ### Rolling assignment — GLM TEST H/E prerequisite
 
 GLM009 partial integrated from `480ccbbf`, confirmedexistingMIXEDTYPE3consumergreen; broadRANDOMgapsremainPARK. dev2owns existing STAT-GLM-012 in retained `opensas-dev2`, branch `codex/stat-b4-glm012-dev2`, assigned 2026-11-27T16:21:55+00:00, deadline 2026-11-27T17:06:55+00:00. This implements the literal `TEST H=A E=A*Block` in MIXED009originalmiddlePROC. Source distinction: sharedCOMMON031chapter545–547 names otherprocedurefamilies, notGLM/REG; dev1validates thatsharedcontract and itsREGoracleunderREG-specificsyntax. GLM012usesitsown4105–4106/4115–4120syntax plus realexistingANOVASS/DF/estimability/F-tail contracts, not a pretendsharedparser. PendingCOMMON031applicabilityscope staysopen.
@@ -736,7 +747,7 @@ Complete prerequisite shared contracts first, then each PROC's data input, model
 <a id="stat-common-026"></a>
 
 
-### [TODO] STAT-COMMON-026 — LSMEANS Statement
+### [DOING @dev7] STAT-COMMON-026 — LSMEANS Statement
 
 - Source: S154 / Chapter 20 / `LSMEANS Statement` (PDF pp. 489–510).
 - Scope: Implement shared semantics, defaults, and applicability checks for LSMEANS Statement; procedure-specific options and result integration belong to the corresponding PROC tickets.
@@ -5222,7 +5233,7 @@ Source: S154, Chapter 53, `The GLM Procedure`, PDF pp. 4043–4230. Tasks in thi
 
 <a id="stat-glm-011"></a>
 
-### [TODO] STAT-GLM-011 — GLM — CONTRAST / ESTIMATE / MANOVA
+### [DOING @dev2] STAT-GLM-011 — GLM — CONTRAST / ESTIMATE / MANOVA
 
 - Source: S154 / Chapter 53 / `CONTRAST Statement` (PDF pp. 4068–4070); S154 / Chapter 53 / `ESTIMATE Statement` (PDF pp. 4070–4071); S154 / Chapter 53 / `MANOVA Statement` (PDF pp. 4081–4086).
 - Scope: Implement CONTRAST; ESTIMATE; MANOVA. This ticket owns the feature's options, defaults, computation, and results as an extension of the basic computational path; the chapter's output tickets handle ODS descriptors and file presentation.
@@ -9536,7 +9547,7 @@ Source: S154, Chapter 84, `The MIXED Procedure`, PDF pp. 6613–6810. Tasks in t
 
 <a id="stat-mixed-016"></a>
 
-### [TODO] STAT-MIXED-016 — MIXED — Default Output / ODS Table Names
+### [DOING @dev3] STAT-MIXED-016 — MIXED — Default Output / ODS Table Names
 
 - Source: S154 / Chapter 84 / `Default Output` (PDF pp. 6720–6724); S154 / Chapter 84 / `ODS Table Names` (PDF pp. 6724–6729).
 - Scope: Implement Default Output; ODS Table Names. Cover all triggering options, content, and naming specified by this section; computational tickets supply numerical values, while other output types are handled separately.
@@ -9546,7 +9557,7 @@ Source: S154, Chapter 84, `The MIXED Procedure`, PDF pp. 6613–6810. Tasks in t
 
 <a id="stat-mixed-017"></a>
 
-### [TODO] STAT-MIXED-017 — MIXED — ODS Graphics
+### [DOING @dev5] STAT-MIXED-017 — MIXED — ODS Graphics
 
 - Source: S154 / Chapter 84 / `ODS Graphics` (PDF pp. 6729–6734).
 - Scope: Implement ODS Graphics. Cover all triggering options, content, and naming specified by this section; computational tickets supply numerical values, while other output types are handled separately.
