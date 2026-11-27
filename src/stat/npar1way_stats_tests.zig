@@ -193,7 +193,12 @@ test "NPAR002 transform ordinal scores before averaging ties and explicit select
     try t.expectEqual(@as(usize, 1), singleton.scores.len);
     try t.expectEqual(k.Kind.wilcoxon, singleton.scores[0].kind);
     try t.expectEqual(@as(u64, 2), singleton.scores[0].two_sample.?.exact.?.allocations);
-    try t.expectError(error.ExactLimit, k.compute(arena.allocator(), &.{ 1, 2, 3 }, &.{ 0, 1, 2 }, 3, .{ .exact_wilcoxon = true }));
+    // S154 p7227 explicitly supports exact multisample Wilcoxon. With one
+    // observation per class all3!=6 labelings have identical rank ANOVA=2.
+    const exact_multi = try k.compute(arena.allocator(), &.{ 1, 2, 3 }, &.{ 0, 1, 2 }, 3, .{ .exact_wilcoxon = true });
+    try t.expectEqual(@as(u64, 6), exact_multi.scores[0].conditional.?.allocations);
+    try t.expectEqual(@as(u64, 6), exact_multi.scores[0].conditional.?.upper_count);
+    try t.expectEqual(@as(u64, 6), exact_multi.scores[0].conditional.?.point_count);
 }
 
 test "NPAR002 original WilcoxonBoxPlot five quartiles every rank coordinate and ODS identity" {
