@@ -12,6 +12,10 @@ Explicit user resume. Confirmed working branch `feat/stat/batch-4`, base `31356c
 - dev6: STAT-COMMON-017; `/Users/thomas/kirha/opensas-dev6`; branch `codex/stat-b4-dev6`; assigned 2026-11-27T13:42:13+00:00; implementation deadline 2026-11-27T14:27:13+00:00. Original README/cases and cited physical PDF pages required before edits.
 - dev7: STAT-COMMON-018; `/Users/thomas/kirha/opensas-dev7`; branch `codex/stat-b4-dev7`; assigned 2026-11-27T13:42:13+00:00; implementation deadline 2026-11-27T14:27:13+00:00. Original README/cases and cited physical PDF pages required before edits.
 
+### Pending batch3 gate diagnostic repair
+
+At exact c78ef7c6ca2b0b65ecf00e697687e906a887fc63, oracle-absent gate direct1:1989/1990unit,2361/2361corpus,11/11programs. Single failure is old REG parser-test substring `not implemented` after STEPWISE gained a real NOPRINT/OUTEST path; current explicit unsupported-listing diagnostic has changed. Repair378ce9bc retains all six invalid-syntax assertions, resets the gap flag before the supported-method/unsupported-listing path, and checks the exact captured message plus D-009 rc2. Targeted actual regression8/8 direct0; full rerun pending. Repair worktree `/Users/thomas/kirha/opensas-reg-gate-repair`, branch `codex/stat-reg-gate-repair`, created from c78ef7c6; ongoing REG009 source/evidence untouched. Supplemental not claimed for failedrun; oracle restored. Batchnotpushed.
+
 ### Rolling assignment — GLM-009 while008 awaits acceptance
 
 GLM008 computational proof integrated at `1880529c`, source-only test addition/no solver change; coordinator will decide narrow DONE after current original and final suites/push. dev2 now owns existing STAT-GLM-009 in retained `opensas-dev2`, branch `codex/stat-b4-glm009-dev2`, assigned 2026-11-27T15:16:28+00:00, deadline 2026-11-27T16:01:28+00:00. Extend actual RANDOM syntax/EMS/inference within source4099–4100, preserving GLM007 tests; coordinate with MIXED004 if sharing numerical helpers, no unrequested core rewrite.
