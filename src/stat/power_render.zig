@@ -40,7 +40,7 @@ fn precision(values: []const ?f64) usize {
     for (0..7) |digits| {
         var fits = true;
         for (values) |optional| if (optional) |x| {
-            if (@abs(@round(x * scale) / scale - x) > 8 * std.math.floatEps(f64) * @max(1, @abs(x))) fits = false;
+            if (@abs(@round(x * scale) / scale - x) > 8 * std.math.floatEps(f64) * @abs(x)) fits = false;
         };
         if (fits) return digits;
         scale *= 10;
@@ -101,4 +101,18 @@ test "STAT-POWER-008 numeric column precision preserves decimal scenario values"
     const text = try numeric(t.allocator, 1, precision(&.{ 1, 1.5, 2 }));
     defer t.allocator.free(text);
     try t.expectEqualStrings("1.0", text);
+}
+
+test "STAT-POWER-008 tiny signed scenario values survive mixed zero columns" {
+    const t = std.testing;
+    const values = [_]?f64{ 0, 1e-20, -1e-20 };
+    const digits = precision(&values);
+    try t.expectEqual(@as(usize, 7), digits);
+    for (values) |value| {
+        const text = try numeric(t.allocator, value, digits);
+        defer t.allocator.free(text);
+        const restored = try std.fmt.parseFloat(f64, text);
+        try t.expectEqual(value.?, restored);
+        if (value.? != 0) try t.expect(restored != 0);
+    }
 }
