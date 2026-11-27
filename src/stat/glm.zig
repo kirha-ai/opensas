@@ -75,11 +75,15 @@ pub fn execute(cx: proc.ProcCtx, out: *std.ArrayList(u8), spec: Spec) diag.Error
             var result = try fitDesign(cx, spec, d);
             defer result.deinit(cx.arena);
             const hov = if (spec.hov != null) try @import("glm_hov.zig").compute(cx, spec, d) else null;
-            const random = if (spec.random != null) try @import("glm_random.zig").compute(cx, spec, d, result) else null;
+            const random = try @import("glm_random.zig").computeAll(cx, spec, d, result);
             const estimates = try @import("glm_estimate.zig").computeAll(cx, spec, d, result.model.fit.mse, result.model.fit.df_error);
             if (!spec.noprint) try @import("glm_render.zig").renderPrepared(cx, out, spec, d, result, estimates);
             if (hov) |values| try @import("glm_hov.zig").render(cx, out, spec, d, values);
-            if (random) |values| try @import("glm_random.zig").render(cx, out, spec, d, result, values);
+            for (random) |analysis| {
+                var random_spec = spec;
+                random_spec.random = analysis.request;
+                try @import("glm_random.zig").render(cx, out, random_spec, d, result, analysis.result);
+            }
             try @import("glm_lsmeans.zig").execute(cx, out, spec, d, result.model.fit.mse, result.model.fit.df_error);
             try @import("glm_plots.zig").emit(cx, spec, d, result, graph_order);
             graph_order += 1;

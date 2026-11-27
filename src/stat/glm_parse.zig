@@ -231,8 +231,14 @@ pub fn parse(cx: proc.ProcCtx, tokens: []const lex.Token) diag.Error!Spec {
             result.hov = try @import("glm_hov.zig").read(cx, tokens[i..end], result);
         } else if (kw(tokens, i, "random")) {
             if (!model_seen) return cx.diags.fail(error.ParseError, tokens[i].line, "PROC GLM: RANDOM must follow MODEL", .{});
-            if (result.random != null) return proc.failGap(cx.diags, tokens[i].line, "PROC GLM: repeated RANDOM declarations are not implemented", .{});
-            result.random = try @import("glm_random.zig").read(cx, tokens[i..end], result, effects.items);
+            const request = try @import("glm_random.zig").read(cx, tokens[i..end], result, effects.items);
+            if (result.random) |*first| {
+                var tail = first;
+                while (tail.next) |next| tail = next;
+                const node = try cx.arena.create(@import("glm_random.zig").Request);
+                node.* = request;
+                tail.next = node;
+            } else result.random = request;
         } else if (kw(tokens, i, "estimate")) {
             if (!model_seen) return cx.diags.fail(error.ParseError, tokens[i].line, "PROC GLM: ESTIMATE must follow MODEL", .{});
             try estimates.append(cx.arena, try @import("glm_estimate.zig").read(cx, tokens[i..end], result, effects.items));

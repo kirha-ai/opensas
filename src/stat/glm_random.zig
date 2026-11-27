@@ -10,9 +10,12 @@ const design = @import("glm_design.zig");
 const math = @import("glm_fit.zig");
 const reg = @import("reg_fit.zig");
 const eq = std.ascii.eqlIgnoreCase;
-pub const Request = struct { effects: []const usize, tests: bool = false };
+pub const Request = struct { effects: []const usize, tests: bool = false, next: ?*Request = null };
 pub const Test = struct { interaction_weight: f64, error_weight: f64, denominator_ms: f64, denominator_df: f64, f_value: f64, p_value: f64 };
-pub const Result = struct { fixed: usize, random_main: usize, interaction: usize, coefficients: [3][2]f64, tests: [3]Test };
+/// For one_way results only row0/column0 and tests[0] apply; fixed/interaction
+/// are unused. Existing two-way coefficient indexing is unchanged.
+pub const SumOfSquares = enum { iii, iv };
+pub const Result = struct { ss_kind: SumOfSquares = .iii, one_way: bool = false, fixed: usize, random_main: usize, interaction: usize, coefficients: [3][2]f64, tests: [3]Test };
 
 pub fn read(cx: proc.ProcCtx, tokens: []const lex.Token, spec: parse.Spec, effects: []const parse.Effect) diag.Error!Request {
     var selected: std.ArrayList(usize) = .empty;
@@ -47,8 +50,14 @@ pub fn read(cx: proc.ProcCtx, tokens: []const lex.Token, spec: parse.Spec, effec
 
 pub fn compute(cx: proc.ProcCtx, spec: parse.Spec, d: design.Design, fitted: math.Result) diag.Error!Result {
     const request = spec.random.?;
-    if (spec.absorb.len > 0 or spec.weight != null or spec.freq != null or !spec.intercept or spec.classes.len != 2 or spec.effects.len != 3 or request.effects.len != 2 or spec.ss2 or spec.ss4 or (!spec.defaultSumsOfSquares() and !spec.ss3)) return proc.failGap(cx.diags, 0, "PROC GLM: RANDOM supports complete unweighted two-way Type III mixed models", .{});
+    if (spec.absorb.len > 0 or spec.weight != null or spec.freq != null or !spec.intercept or spec.ss2 or (!spec.defaultSumsOfSquares() and !spec.ss3 and !spec.ss4)) return proc.failGap(cx.diags, 0, "PROC GLM: RANDOM supports unweighted Type III models without ABSORB", .{});
+    // For complete factorials, and one-way effects without containing terms,
+    // III and IV define the same hypothesis space (S154 physical pp.289–293).
+    // Require the existing validated basis; never infer IV from rank alone.
+    if (spec.ss4 and fitted.type_iv_basis == null) return proc.failGap(cx.diags, 0, "PROC GLM: RANDOM Type IV requires validated complete-model hypotheses", .{});
     if (fitted.model.fit.rank != d.p or fitted.model.fit.df_error == 0 or !(fitted.model.fit.mse > 0)) return proc.failGap(cx.diags, 0, "PROC GLM: RANDOM requires full rank and positive residual variation", .{});
+    if (spec.effects.len == 1 and spec.classes.len == 1 and request.effects.len == 1) return oneWay(cx, spec, d, fitted);
+    if (spec.classes.len != 2 or spec.effects.len != 3 or request.effects.len != 2) return proc.failGap(cx.diags, 0, "PROC GLM: RANDOM supports one-way or complete two-way mixed models", .{});
     var main: ?usize = null;
     var interaction: ?usize = null;
     for (request.effects) |index| {
@@ -111,8 +120,52 @@ pub fn compute(cx: proc.ProcCtx, spec: parse.Spec, d: design.Design, fitted: mat
         const numerator_df: f64 = @floatFromInt(fitted.type_iii[index].df);
         test_value.* = .{ .interaction_weight = weight, .error_weight = error_weight, .denominator_ms = denominator_ms, .denominator_df = denominator_df, .f_value = statistic, .p_value = @import("../functions.zig").betaI(1 / (1 + statistic * numerator_df / denominator_df), denominator_df / 2, numerator_df / 2) };
     }
-    return .{ .fixed = fixed, .random_main = main.?, .interaction = interaction.?, .coefficients = coefficients, .tests = tests };
+    return .{ .ss_kind = if (spec.ss4 and !spec.ss3) .iv else .iii, .fixed = fixed, .random_main = main.?, .interaction = interaction.?, .coefficients = coefficients, .tests = tests };
 }
+fn oneWay(cx: proc.ProcCtx, spec: parse.Spec, d: design.Design, fitted: math.Result) diag.Error!Result {
+    if (spec.effects[0].variables.len != 1 or spec.effects[0].variables[0] != spec.classes[0] or spec.random.?.effects[0] != 0) return proc.failGap(cx.diags, 0, "PROC GLM: one-way RANDOM requires the MODEL CLASS factor", .{});
+    const k = d.classes[0].levels.len;
+    if (k < 2 or fitted.type_iii[0].df != k - 1) return proc.failGap(cx.diags, 0, "PROC GLM: one-way RANDOM variance is not identifiable", .{});
+    const counts = try cx.arena.alloc(usize, k);
+    @memset(counts, 0);
+    for (d.classes[0].row_levels) |level| counts[level.?] += 1;
+    const n: f64 = @floatFromInt(d.n);
+    var squares: f64 = 0;
+    for (counts) |count| { const value: f64 = @floatFromInt(count); squares += value * value; }
+    // tr[(I-11'/N)ZZ']/(k-1): full IID level indicators Z, with no
+    // sum-to-zero constraint on random coefficients (S154 pp.4099,4157).
+    const coefficient = (n - squares / n) / @as(f64, @floatFromInt(k - 1));
+    if (!(coefficient > 0) or !std.math.isFinite(coefficient)) return error.ExecError;
+    var coefficients: [3][2]f64 = @splat(@splat(0));
+    coefficients[0][0] = coefficient;
+    const nan = std.math.nan(f64);
+    var tests: [3]Test = @splat(.{ .interaction_weight = nan, .error_weight = nan, .denominator_ms = nan, .denominator_df = nan, .f_value = nan, .p_value = nan });
+    const statistic = fitted.type_iii[0].ms / fitted.model.fit.mse;
+    tests[0] = .{ .interaction_weight = 0, .error_weight = 1, .denominator_ms = fitted.model.fit.mse, .denominator_df = @floatFromInt(fitted.model.fit.df_error), .f_value = statistic, .p_value = reg.fProbability(statistic, k - 1, fitted.model.fit.df_error) };
+    return .{ .ss_kind = if (spec.ss4 and !spec.ss3) .iv else .iii, .one_way = true, .fixed = 0, .random_main = 0, .interaction = 0, .coefficients = coefficients, .tests = tests };
+}
+
+pub const Analysis = struct { request: Request, result: Result };
+/// Separate RANDOM statements request separate post-hoc analyses. They never
+/// alter the fixed-effect fit or silently union random-effect declarations.
+pub fn computeAll(cx: proc.ProcCtx, spec: parse.Spec, d: design.Design, fitted: math.Result) diag.Error![]const Analysis {
+    var results: std.ArrayList(Analysis) = .empty;
+    var current = spec.random;
+    while (current) |request| {
+        var one = spec;
+        one.random = request;
+        const value = try compute(cx, one, d, fitted);
+        try results.append(cx.arena, .{ .request = request, .result = value });
+        if (spec.ss3 and spec.ss4) {
+            var fourth = value;
+            fourth.ss_kind = .iv;
+            try results.append(cx.arena, .{ .request = request, .result = fourth });
+        }
+        current = if (request.next) |next| next.* else null;
+    }
+    return results.items;
+}
+
 fn number(a: std.mem.Allocator, x: f64, decimals: usize) ![]const u8 {
     return std.mem.trim(u8, try @import("../format.zig").apply(a, .{ .num = x }, try std.fmt.allocPrint(a, "32.{d}", .{decimals})), " ");
 }
@@ -125,22 +178,23 @@ fn probability(a: std.mem.Allocator, p: f64) ![]const u8 {
 }
 pub fn render(cx: proc.ProcCtx, out: *std.ArrayList(u8), spec: parse.Spec, d: design.Design, fitted: math.Result, random: Result) diag.Error!void {
     const a = cx.arena;
-    if (spec.defaultSumsOfSquares() or spec.ss1) try cx.diags.report(.note, 0, "TYPE I EMS not available without the E1 option.", .{});
+    if ((spec.defaultSumsOfSquares() or spec.ss1) and (random.ss_kind == .iii or !spec.ss3)) try cx.diags.report(.note, 0, "TYPE I EMS not available without the E1 option.", .{});
     if (spec.noprint) return;
-    try out.appendSlice(a, "\nThe GLM Procedure\n\nSource Type III Expected Mean Square\n\n");
+    const kind: []const u8 = if (random.ss_kind == .iv) "IV" else "III";
+    try out.print(a, "\nThe GLM Procedure\n\nSource Type {s} Expected Mean Square\n\n", .{kind});
     for (spec.effects, 0..) |effect, index| {
         try out.print(a, "{s} Var(Error)", .{effect.name});
-        try out.print(a, " + {s} Var({s})", .{ try compact(a, random.coefficients[index][1]), spec.effects[random.interaction].name });
+        if (!random.one_way) try out.print(a, " + {s} Var({s})", .{ try compact(a, random.coefficients[index][1]), spec.effects[random.interaction].name });
         if (index == random.random_main) try out.print(a, " + {s} Var({s})", .{ try compact(a, random.coefficients[index][0]), spec.effects[random.random_main].name });
-        if (index == random.fixed) try out.print(a, " + Q({s})", .{spec.effects[index].name});
+        if (!random.one_way and index == random.fixed) try out.print(a, " + Q({s})", .{spec.effects[index].name});
         try out.append(a, '\n');
     }
     if (!spec.random.?.tests) return;
     try out.print(a, "\nThe GLM Procedure\nTests of Hypotheses for Mixed Model Analysis of Variance\n\nDependent Variable: {s}\n", .{spec.input.ds.columns.items[d.response].name});
-    for (spec.effects, random.tests, fitted.type_iii, 0..) |effect, test_value, hypothesis, index| {
-        try out.appendSlice(a, "\nSource DF Type III SS Mean Square F Value Pr > F\n\n");
+    for (spec.effects, random.tests[0..spec.effects.len], fitted.type_iii, 0..) |effect, test_value, hypothesis, index| {
+        try out.print(a, "\nSource DF Type {s} SS Mean Square F Value Pr > F\n\n", .{kind});
         try out.print(a, "{s} {d} {s} {s} {s} {s}\n\n", .{ effect.name, hypothesis.df, try number(a, hypothesis.ss, 6), try number(a, hypothesis.ms, 6), try number(a, test_value.f_value, 2), try probability(a, test_value.p_value) });
-        if (index == random.interaction) {
+        if (random.one_way or index == random.interaction) {
             try out.print(a, "Error: MS(Error) {d} {s} {s}\n", .{ fitted.model.fit.df_error, try number(a, fitted.model.fit.sse, 6), try number(a, fitted.model.fit.mse, 6) });
         } else if (test_value.error_weight == 0) {
             const denominator = fitted.type_iii[random.interaction];
