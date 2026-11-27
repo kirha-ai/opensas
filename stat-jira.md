@@ -26,6 +26,12 @@ Current counts: **48 DONE,19 PARK,7 DOING,1348 TODO**. All temporary reference f
 
 At exact c78ef7c6ca2b0b65ecf00e697687e906a887fc63, oracle-absent gate direct1:1989/1990unit,2361/2361corpus,11/11programs. Single failure is old REG parser-test substring `not implemented` after STEPWISE gained a real NOPRINT/OUTEST path; current explicit unsupported-listing diagnostic has changed. Repair378ce9bc retains all six invalid-syntax assertions, resets the gap flag before the supported-method/unsupported-listing path, and checks the exact captured message plus D-009 rc2. Targeted actual regression8/8 direct0; full rerun pending. Repair worktree `/Users/thomas/kirha/opensas-reg-gate-repair`, branch `codex/stat-reg-gate-repair`, created from c78ef7c6; ongoing REG009 source/evidence untouched. Supplemental not claimed for failedrun; oracle restored. Batchnotpushed.
 
+### Rolling assignments — MIXED PARMS and REPEATED
+
+ActualREMLentry through `496c8189` nowreplays completefixed/random326-token andBY478-token originals atCLIrc0,withrealoptimizerhistory. Finalcombinedgate/supplemental/absence/pushpending, so002is coordinatoracceptancequeued and006retainsPARKforremainingtypes/options. Itsfeatureworkfrozebeforeoriginal15:42deadline; rebase/testingwereintegrationqueue,notextension.
+
+dev3owns existing STAT-MIXED-005 on `codex/stat-b4-mixed-parms-dev3`; dev5owns existing STAT-MIXED-007 on `codex/stat-b4-mixed-repeated-dev5`, bothretainedworktrees. Assigned 2026-11-27T15:45:29+00:00; deadline 2026-11-27T16:30:29+00:00. Concreteinterfacesaretheactualselectedinput/fixeddesign/randomkernels/profiledML-REMLfit/typedstatus alreadytested. dev3owns parameterinitialization/bounds/parserhelpers; dev5owns residualstructure/subject-time parser/design, coordinating any fit-option support withdev3. Keepunsupportedstructures/initialization modes loud. dev7ownsTYPE3branch insharedentry; preserveallthreeintents.
+
 ### Rolling assignment — GLM-009 while008 awaits acceptance
 
 GLM008 computational proof integrated at `1880529c`, source-only test addition/no solver change; coordinator will decide narrow DONE after current original and final suites/push. dev2 now owns existing STAT-GLM-009 in retained `opensas-dev2`, branch `codex/stat-b4-glm009-dev2`, assigned 2026-11-27T15:16:28+00:00, deadline 2026-11-27T16:01:28+00:00. Extend actual RANDOM syntax/EMS/inference within source4099–4100, preserving GLM007 tests; coordinate with MIXED004 if sharing numerical helpers, no unrequested core rewrite.
@@ -9248,7 +9254,7 @@ Source: S154, Chapter 84, `The MIXED Procedure`, PDF pp. 6613–6810. Tasks in t
 
 <a id="stat-mixed-002"></a>
 
-### [DOING @dev3] STAT-MIXED-002 — MIXED — Linear mixed model estimation and fixed-effect inference
+### [DOING @coordinator] STAT-MIXED-002 — MIXED — Linear mixed model estimation and fixed-effect inference
 
 - Source: S154 / Chapter 84 / `Getting Started: MIXED Procedure` (PDF pp. 6618–6624); S154 / Chapter 84 / `Overview: MIXED Procedure` (PDF pp. 6614–6618).
 - Scope: Implement linear mixed model estimation and fixed-effect inference using the documented default path and establish the computational state needed by later extensions; implement specialized models, methods, and diagnostics outside that default example in their corresponding feature tickets.
@@ -9294,7 +9300,7 @@ Source: S154, Chapter 84, `The MIXED Procedure`, PDF pp. 6613–6810. Tasks in t
 
 <a id="stat-mixed-005"></a>
 
-### [TODO] STAT-MIXED-005 — MIXED — PARMS
+### [DOING @dev3] STAT-MIXED-005 — MIXED — PARMS
 
 - Source: S154 / Chapter 84 / `PARMS Statement` (PDF pp. 6668–6671).
 - Scope: Implement PARMS. Cover the source suboptions, defaults, and applicability restrictions; implement only this feature group, without extending to languages or runtime environments outside the cited scope.
@@ -9328,7 +9334,7 @@ Source: S154, Chapter 84, `The MIXED Procedure`, PDF pp. 6613–6810. Tasks in t
 
 <a id="stat-mixed-007"></a>
 
-### [TODO] STAT-MIXED-007 — MIXED — REPEATED
+### [DOING @dev5] STAT-MIXED-007 — MIXED — REPEATED
 
 - Source: S154 / Chapter 84 / `REPEATED Statement` (PDF pp. 6680–6694).
 - Scope: Implement REPEATED. This ticket owns the feature's options, defaults, computation, and results as an extension of the basic computational path; the chapter's output tickets handle ODS descriptors and file presentation.
