@@ -136,7 +136,35 @@ test "REG-004 REFIT is silent and PRINT options distinguish gaps from typos" {
     _ = try send(&session, cx, &out, "refit;run;");
     try std.testing.expectEqual(listed, out.items.len);
     try std.testing.expect(stored == lib.find("est").?);
-    for ([_]struct { source: []const u8, gap: bool }{ .{ .source = "refit x;", .gap = false }, .{ .source = "delete;", .gap = false }, .{ .source = "print nonsense;", .gap = false }, .{ .source = "print modeldata;", .gap = true }, .{ .source = "reweight y>10;", .gap = true }, .{ .source = "prnt;", .gap = false } }) |check| {
+    // REWEIGHT is implemented: y>10 selects source observations1,3,5,
+    // including the already-unusable missing-z row. It must preserve DATA,
+    // the last fit and published OUTEST until an explicit output-producing step.
+    diag.resetGap();
+    defer diag.resetGap();
+    try std.testing.expect(try send(&session, cx, &out, "reweight y>10;"));
+    try std.testing.expectEqualSlices(f64, &.{ 0, 1, 0, 1, 0 }, session.reweight_state.?.current);
+    try fitIs(session, 0, &.{ 10, 2, -3 }, 4, 1);
+    try std.testing.expectEqual(listed, out.items.len);
+    try std.testing.expect(stored == lib.find("est").?);
+    try std.testing.expectEqual(@as(usize, 5), spec.ds.rows.items.len);
+    try std.testing.expectEqual(@as(f64, 12), spec.ds.rows.items[0][2].num);
+    try std.testing.expectEqual(@as(f64, 14), spec.ds.rows.items[2][2].num);
+    try std.testing.expectEqual(@as(f64, 1000), spec.ds.rows.items[4][2].num);
+    try std.testing.expect(try send(&session, cx, &out, "refit;run;"));
+    // The two retained points (-1,4),(1,10) give intercept7, slope3;
+    // z=1 is aliased with the intercept and residual DF is zero.
+    try std.testing.expectEqualSlices(usize, &.{ 2, 4 }, session.fitted[0].input.source_rows);
+    // Small two-point QR rounding does not change the independent(7,3)
+    // solution. Budget64 binary64 rounding units; the aliased z remains zero.
+    for (session.fitted[0].diagnostics.fit.coefficients[0..2], [_]f64{ 7, 3 }) |actual, expected|
+        try std.testing.expectApproxEqAbs(expected, actual, 64 * std.math.floatEps(f64) * @max(1, @abs(expected)));
+    try std.testing.expectEqual(@as(f64, 0), session.fitted[0].diagnostics.fit.coefficients[2]);
+    try std.testing.expectEqual(@as(usize, 0), session.fitted[0].diagnostics.fit.df_error);
+    try std.testing.expectEqual(listed, out.items.len);
+    try std.testing.expect(stored == lib.find("est").?);
+    try std.testing.expect(!d.hasErrors());
+    try std.testing.expectEqual(@as(u8, 0), diag.exitCode(diag.gapHit(), d.hasErrors()));
+    for ([_]struct { source: []const u8, gap: bool }{ .{ .source = "refit x;", .gap = false }, .{ .source = "delete;", .gap = false }, .{ .source = "print nonsense;", .gap = false }, .{ .source = "print modeldata;", .gap = true }, .{ .source = "prnt;", .gap = false } }) |check| {
         diag.resetGap();
         defer diag.resetGap();
         try std.testing.expectError(error.ParseError, send(&session, cx, &out, check.source));
