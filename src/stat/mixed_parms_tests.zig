@@ -72,10 +72,19 @@ test "MIXED005 real raw and profiled grid objectives known covariance and constr
     for (raw.rows, [_]f64{ 1, 4 }) |r, v| try t.expectApproxEqAbs(3 * @log(2 * std.math.pi * v) + @log(@as(f64, 4)) + 8 / v, r.objective.?, 1e-12);
     try t.expectEqual(@as(f64, 4), raw.fit.residual_variance);
     try t.expectApproxEqAbs(@as(f64, 1), raw.fit.covariance[0], 1e-14);
-    const profiled = try p.execute(h.cx, simple, try h.parse("(1,4) / noiter"), .{}, false);
+    const implicit_raw = try p.execute(h.cx, simple, try h.parse("(1,4) / noiter"), .{}, false);
+    try t.expect(!implicit_raw.profile);
+    try t.expectEqualSlices(f64, raw.fit.variances, implicit_raw.fit.variances);
+    try t.expectEqualSlices(f64, raw.fit.covariance, implicit_raw.fit.covariance);
+    const profiled = try p.execute(h.cx, simple, try h.parse("(1,4)"), .{}, false);
     try t.expect(profiled.profile);
     try t.expectApproxEqAbs(@as(f64, 8.0 / 3.0), profiled.fit.residual_variance, 1e-12);
     try t.expectApproxEqAbs(profiled.rows[0].objective.?, profiled.rows[1].objective.?, 1e-12);
+    // NOITER must preserve selected sigma²4, unlike the actual profile optimum
+    // SSE/df=8/3. Their known-covariance GLS variances are1 versus2/3.
+    try t.expectApproxEqAbs(@as(f64, 1), implicit_raw.fit.covariance[0], 1e-14);
+    try t.expectApproxEqAbs(@as(f64, 2.0 / 3.0), profiled.fit.covariance[0], 1e-13);
+    try t.expect(implicit_raw.fit.minus2loglik > profiled.fit.minus2loglik);
     const bounded = try p.execute(h.cx, simple, try h.parse("(1,4) / noiter noprofile lowerb=2 upperb=4 hold=1"), .{}, false);
     try t.expect(bounded.rows[0].objective == null);
     try t.expectEqual(@as(f64, 4), bounded.fit.variances[0]);
@@ -129,7 +138,7 @@ test "MIXED005 invalid and unimplemented requests are captured not silently igno
     }
     const empty = try Harness.init(a);
     try t.expectError(error.ExecError, p.execute(empty.cx, simple, try empty.parse("(0,1) / noiter noprofile lowerb=2"), .{}, false));
-    for ([_][]const u8{ "(1) / logdeth", "(1) / hold=1", "(1) / lowerb=.1", "(1) / noiter lowerb=.1" }) |source| {
+    for ([_][]const u8{ "(1) / logdeth", "(1) / hold=1", "(1) / lowerb=.1", "/ lowerb=.1 noiter noprofile" }) |source| {
         const h = try Harness.init(a);
         diag.resetGap();
         defer diag.resetGap();
@@ -176,9 +185,9 @@ test "MIXED005 public PARMS runs complete known variance grid and hides only req
     try t.expect(std.mem.indexOf(u8, out.items, "Fit Statistics") == null);
     out.clearRetainingCapacity();
     try @import("mixed.zig").run(h.cx, &out, try lex.tokenize(a, "proc mixed data=sample noinfo;model y= /notest;parms (1,4) /noiter noprint;run;", h.cx.diags));
-    try sameWords("The Mixed Procedure Covariance Parameter Estimates Cov Parm Estimate Residual 2.6667", out.items);
+    try sameWords("The Mixed Procedure Covariance Parameter Estimates Cov Parm Estimate Residual 4.0000", out.items);
     out.clearRetainingCapacity();
-    try @import("mixed.zig").run(h.cx, &out, try lex.tokenize(a, "proc mixed data=sample noprofile;model y= /notest;parms (4) /noiter noprint;run;", h.cx.diags));
+    try @import("mixed.zig").run(h.cx, &out, try lex.tokenize(a, "proc mixed data=sample;model y= /notest;parms (4) /noiter noprint;run;", h.cx.diags));
     try t.expect(std.mem.indexOf(u8, out.items, "Residual Variance Method Parameter") != null);
     try t.expect(std.mem.indexOf(u8, out.items, "Parameter Search") == null);
 }

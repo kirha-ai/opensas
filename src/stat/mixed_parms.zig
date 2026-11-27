@@ -229,7 +229,9 @@ fn admissible(s: Spec, values: []const f64) bool {
 pub fn execute(cx: proc.ProcCtx, model: fit.Model, s: Spec, options: fit.Options, proc_noprofile: bool) diag.Error!Result {
     if (model.n == 0 or model.n > 512) return cx.diags.fail(error.ExecError, s.line, "PROC MIXED: invalid PARMS model dimensions", .{});
     if (s.logdeth) return proc.failGap(cx.diags, s.line, "PROC MIXED: PARMS LOGDETH is not implemented", .{});
-    const raw = proc_noprofile or s.noprofile or s.hold.len > 0;
+    // S154 physical p.6701 explicitly disables residual profiling for
+    // PARMS NOITER or HOLD, even without an explicit NOPROFILE flag.
+    const raw = proc_noprofile or s.noprofile or s.hold.len > 0 or s.noiter;
     if (!raw and constantResponse(model)) return proc.failGap(cx.diags, s.line, "PROC MIXED: a constant response has no finite positive residual-profile optimum", .{});
     if (!s.noiter and (raw or s.lower.len > 0 or s.upper.len > 0 or s.nobound)) return proc.failGap(cx.diags, s.line, "PROC MIXED: iterative PARMS bounds/HOLD/NOBOUND or unprofiled optimization are not implemented", .{});
     if (!raw and (s.lower.len > 0 or s.upper.len > 0 or s.hold.len > 0 or s.nobound)) return proc.failGap(cx.diags, s.line, "PROC MIXED: profile-coupled PARMS boundary constraints are not implemented; explicit unprofiled NOITER values are supported", .{});
