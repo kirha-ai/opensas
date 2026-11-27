@@ -8363,7 +8363,7 @@ Source: S154, Chapter 79, `The LOGISTIC Procedure`, PDF pp. 5823–6080. Tasks i
 
 <a id="stat-logistic-007"></a>
 
-### [DOING @dev4] STAT-LOGISTIC-007 — LOGISTIC — Link Functions and the Corresponding Distributions / Determining Observations for Likelihood Contributions / Score Statistics and Tests
+### [PARK] STAT-LOGISTIC-007 — LOGISTIC — Link Functions and the Corresponding Distributions / Determining Observations for Likelihood Contributions / Score Statistics and Tests
 
 - Source: S154 / Chapter 79 / `Link Functions and the Corresponding Distributions` (PDF pp. 5907–5908); S154 / Chapter 79 / `Determining Observations for Likelihood Contributions` (PDF pp. 5908–5909); S154 / Chapter 79 / `Score Statistics and Tests` (PDF pp. 5918–5920).
 - Scope: Implement Link Functions and the Corresponding Distributions; Determining Observations for Likelihood Contributions; Score Statistics and Tests. This ticket owns the feature's options, defaults, computation, and results as an extension of the basic computational path; the chapter's output tickets handle ODS descriptors and file presentation.
@@ -9919,7 +9919,7 @@ Source: S154, Chapter 90, `The NPAR1WAY Procedure`, PDF pp. 7205–7282. Tasks i
 
 <a id="stat-npar1way-001"></a>
 
-### [DOING @dev6] STAT-NPAR1WAY-001 — NPAR1WAY — Data input, variable roles, and basic options
+### [PARK] STAT-NPAR1WAY-001 — NPAR1WAY — Data input, variable roles, and basic options
 
 - Source: S154 / Chapter 90 / `PROC NPAR1WAY Statement` (PDF pp. 7215–7224); S154 / Chapter 90 / `BY Statement` (PDF p. 7224); S154 / Chapter 90 / `CLASS Statement` (PDF pp. 7224–7225); S154 / Chapter 90 / `FREQ Statement` (PDF pp. 7229–7230); S154 / Chapter 90 / `STRATA Statement` (PDF pp. 7233–7235); S154 / Chapter 90 / `VAR Statement` (PDF p. 7235); S154 / Chapter 90 / `Missing Values` (PDF pp. 7235–7236).
 - Scope: Integrate PROC NPAR1WAY declarations, basic options, defaults, and execution boundaries; this ticket establishes parameter objects and result interfaces, while later feature tickets implement model-, algorithm-, and output-specific options. Also implement BY; CLASS; FREQ; STRATA; VAR; Missing Values; apply this procedure's rules for missing values, variable roles, and observation selection.
