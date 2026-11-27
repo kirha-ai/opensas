@@ -263,3 +263,90 @@ test "GLM005 interactivity disables for unequal response missing patterns and BY
     const by = try parse(cx, "proc glm; by g; model y=; run;");
     try std.testing.expect(!try glm.canContinue(cx, by));
 }
+
+test "GLM005 ABSORB Type IV continuous slope uses full-model error and renders only requested effects" {
+    // S154 physical p.289: if F1 is not contained in another effect, the same
+    // hypothesis defines Types II, III and IV. Physical pp.4124–4125 make
+    // absorption equivalent to including nuisance block indicators, except
+    // that their Types II/III/IV tests are not produced.
+    // Independent arithmetic: within-block X=(-.5,.5,-.5,.5),
+    // Y=(-1,1,-2,2); X'X=1, X'Y=3, beta=3, SSE=1. Rank is 2 blocks
+    // plus one slope, so residual DF=1, Var(beta)=1, slope SS=9, F=9.
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var lib = Library.init(a);
+    var diagnostics = diag.Diagnostics.init(a);
+    const ds = try dataset(a, &lib);
+    for ([_]f64{ 1, 3, 10, 14 }, 0..) |y, i| try row(ds, .{ @floatFromInt(i / 2 + 1), 1, @floatFromInt(i % 2), y, 1, 1 });
+    const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &diagnostics };
+    const spec = try parse(cx, "proc glm; absorb block; model y=x / ss4; run;");
+    var result = try absorb.fit(cx, spec, try build(cx, spec));
+    defer result.deinit(a);
+    try close(110, result.sst);
+    try close(1, result.sse);
+    try close(1, result.mse);
+    try std.testing.expectEqual(@as(usize, 1), result.df_error);
+    const conditional = result.conditional.?;
+    try std.testing.expectEqual(@as(usize, 1), conditional.type_iv.len);
+    try std.testing.expectEqual(@import("glm_fit.zig").TypeIVBasis.no_contained_effects, conditional.type_iv_basis.?);
+    const hypothesis = conditional.type_iv[0];
+    try std.testing.expectEqual(@as(usize, 3), hypothesis.rank_full);
+    try std.testing.expectEqual(@as(usize, 2), hypothesis.rank_reduced);
+    try std.testing.expectEqual(@as(usize, 1), hypothesis.df);
+    try close(9, hypothesis.ss);
+    try close(9, hypothesis.ms);
+    try close(9, hypothesis.f_value);
+    // t_1 is Cauchy, so the independent two-sided tail at t=3 is 2 atan(1/3)/pi.
+    try close(2 * std.math.atan(@as(f64, 1.0 / 3.0)) / std.math.pi, hypothesis.p_value);
+    try close(3, conditional.model.fit.coefficients[0]);
+    try close(1, conditional.model.fit.covariance[0]);
+    var output: std.ArrayList(u8) = .empty;
+    try glm.execute(cx, &output, spec);
+    // Every token is retained; this expected listing follows the arithmetic
+    // above, not a regenerated implementation golden. The overall F tail
+    // is 1/sqrt(110), and R-square is 109/110.
+    const expected =
+        \\The GLM Procedure
+        \\Number of Observations Read 4 Number of Observations Used 4
+        \\The GLM Procedure Dependent Variable: y
+        \\Sum of Source DF Squares Mean Square F Value Pr > F
+        \\Model 2 109.0000000 54.5000000 54.50 0.0953
+        \\Error 1 1.0000000 1.0000000
+        \\Corrected Total 3 110.0000000
+        \\R-Square Coeff Var Root MSE y Mean
+        \\0.990909 14.285714 1.000000 7.000000
+        \\Source DF Type IV SS Mean Square F Value Pr > F
+        \\x 1 9.000000000 9.000000000 9.00 0.2048
+        \\Standard Parameter Estimate Error t Value Pr > |t|
+        \\x 3.000000000 1.00000000 3.00 0.2048
+    ;
+    var want = std.mem.tokenizeAny(u8, expected, " \t\r\n");
+    var got = std.mem.tokenizeAny(u8, output.items, " \t\r\n");
+    while (want.next()) |word| try std.testing.expectEqualStrings(word, got.next() orelse "");
+    try std.testing.expect(got.next() == null);
+    try std.testing.expectEqualStrings("", try diagnostics.render());
+}
+
+test "GLM005 ABSORB Type IV retains captured gaps for CLASS and confounded columns" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var lib = Library.init(a);
+    var diagnostics = diag.Diagnostics.init(a);
+    const ds = try dataset(a, &lib);
+    for ([_]f64{ 1, 3, 10, 14 }, 0..) |y, i| try row(ds, .{ @floatFromInt(i / 2 + 1), 1, @floatFromInt(i / 2 + 1), y, 1, 1 });
+    const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &diagnostics };
+    for ([_][]const u8{
+        "proc glm; absorb block; model y=x / ss4; run;",
+        "proc glm; absorb block; class unit; model y=unit / ss4; run;",
+    }) |source| {
+        diag.resetGap();
+        defer diag.resetGap();
+        var output: std.ArrayList(u8) = .empty;
+        try std.testing.expectError(error.ParseError, glm.run(cx, &output, try @import("../lexer.zig").tokenize(a, source, &diagnostics)));
+        try std.testing.expectEqual(@as(u8, 2), diag.exitCode(diag.gapHit(), diagnostics.hasErrors()));
+        try std.testing.expectEqual(@as(usize, 0), output.items.len);
+    }
+    try std.testing.expect(std.mem.indexOf(u8, try diagnostics.render(), "ABSORB Type IV requires a full-rank continuous model") != null);
+}

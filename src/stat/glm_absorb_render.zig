@@ -63,6 +63,7 @@ pub fn render(cx: proc.ProcCtx, out: *std.ArrayList(u8), spec: parse.Spec, d: de
     }
     if (flag(spec, "ss2") and spec.effects.len > 0) try table(a, out, spec, "II", if (r.conditional) |c| c.type_ii else r.zero_effects);
     if ((defaults or flag(spec, "ss3")) and spec.effects.len > 0) try table(a, out, spec, "III", if (r.conditional) |c| c.type_iii else r.zero_effects);
+    if (flag(spec, "ss4") and spec.effects.len > 0) try table(a, out, spec, "IV", if (r.conditional) |c| c.type_iv else r.zero_effects);
     if (spec.classes.len == 0) if (r.conditional) |c| {
         try out.appendSlice(a, "\nStandard\nParameter Estimate Error t Value Pr > |t|\n\n");
         var largest: f64 = 0;

@@ -171,6 +171,18 @@ pub fn fit(cx: proc.ProcCtx, spec: parse.Spec, d: design.Design) diag.Error!Resu
         };
     }
     const residual_rank = if (conditional) |c| c.model.fit.rank else 0;
+    if (spec.ss4) {
+        // S154 physical pp.289–293: III=IV for effects not contained in
+        // another effect. Absorption (pp.4124–4125) projects nuisance columns
+        // away first. Restrict this extension to full-rank continuous models:
+        // no CLASS containment, missing-cell or aliased hypotheses are inferred.
+        if (spec.classes.len != 0 or residual_rank != q)
+            return proc.failGap(cx.diags, 0, "PROC GLM: ABSORB Type IV requires a full-rank continuous model", .{});
+        if (conditional) |*c| {
+            c.type_iv = try a.dupe(math.EffectTest, c.type_iii);
+            c.type_iv_basis = .no_contained_effects;
+        }
+    }
     const explicit_three = if (@hasField(parse.Spec, "ss3")) spec.ss3 else false;
     const explicit_four = if (@hasField(parse.Spec, "ss4")) spec.ss4 else false;
     const wants_three = explicit_three or (!spec.ss1 and !spec.ss2 and !explicit_four);
