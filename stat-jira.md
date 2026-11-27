@@ -2,6 +2,14 @@
 
 ## ACTIVE — resumed 2026-11-27
 
+### Final batch6 verification and push
+
+Exacttested/pushed SHA `eeec9a694e717254538962b32aeed93dfb270db4`: entireoracleunavailable for defaultgate direct0 (**2139/2139unit,2379/2379corpus,11/11programs**), install direct0, separate supplemental direct0 (**1113/1113**). Oracle restored unchanged; no CI/release/default-gate compositionchanges. Alloriginalsreplayedunchanged. MIXED016/017 each326/326tokensrc0 plus16completeTRACEobjects(allfields/order)exact;017correctlyproduceszero graphs withoutplotrequest, explicit6-panelnativegraphs retainindependentdata/visualproof. BothremainPARK fordescriptors/otherobjects/plotfamilies.
+
+COMMON026 original174fields/status0 hasexactlytwoCIendpointdifferences versusSAS; newpermanentfullcontract uses independentlyderivedtwo-levelTukey=t endpoints, notfittedtolerance orOpenSASregeneration; strictoriginalPARK retained. GLM011originalrc2/0of1047MANOVAgap; actualformattedinput/contrast/eigenpair partialshavedurablechecks andhermetic130-fieldfixture. REG010default1118fields/refseverity1 retains2knownboundedresidualdifferences; seeded121-fieldtargetrc0 differs23fields; nativePRINT/interactivesupporttested butbroaderlayout/nonestimable/seedgapsPARK. LOGISTIC005originalrc2/0of935PLOTSgap; existingCOMMON033iteration_limit nowexact242fields+twoSASwarningtexts andRC1/reference1—nonconvergenceisnotfalsesuccess. NPAR006original67/67tokensrc0, provedconditionalexacttails/RMD/KS;MC/unverifiedprecision/controlgapsremainPARK.
+
+Sleep-relatedtimestampaudits remainretained withuser-confirmed120minpausecorrection. Sourcefeaturefreezesoccurredbeforeadjustedactive deadlines; subsequentrebase/verificationdidnotresetfeatureclocks. Currentnewattempts useverifiedsleep-excludingmonotonicdeadlines. Noactualoraclefolderdeleted andno PRcreated.
+
 ### Final batch5 verification and push
 
 Exacttested/pushed SHA `a7ed3bd79fa5188744b9979b8a56829de81f3b9b`: entireoracleunavailable for default `zig build gate -j2 --summary all`, direct0 (**2100/2100unit,2372/2372corpus,11/11programs**); install direct0; independent supplemental direct0 (**1113/1113**). Oracle restored unchanged. Isolatedfixture repairf5a94d73 changedonlyinputpackaging, retainingall193expectedtokens/RC0. No runner/CI/release/defaultgate changes. Pushed to `feat/stat/batch-4`; no PR.
@@ -810,6 +818,8 @@ Complete prerequisite shared contracts first, then each PROC's data input, model
 - Remaining handoff: resolve the two strict-reference endpoint differences without inventing a tolerance or pinning a wrong stream; implement/document general studentized-range inference before Tukey>2, and complete remaining AT/OM/BYLEVEL/control/ANOM/stepdown/simulation/graphics/ODS output and other consumer applicability contracts. Combined PDIFF+STDERR presentation is explicitly unavailable. The shared helper is not an all-procedure implementation claim. Keep the baseline and retain PARK for the unresolved strict-reference/method scope gaps; no further feature work is active in this attempt.
 
 - Acceptance criteria: Create positive and negative cases for the syntax forms, defaults, and option combinations listed in this section; verify result names, dimensions, and numerical values. Cover nonestimable functions, complex coefficients, adjusted comparisons, and procedure applicability; successful parsing alone is insufficient.
+
+- Finalpartialeeec9a69: default2139/2379/11+supplemental1113direct0wholeoracleabsent/restored,pushed. Originalrc0/174fields withonly2CIendpointmismatches; analyticfullcorpus andtightt-identityunitproof pass. Noobserved-errorfit/noassertedSASdisagreement; strictreferencePARK.
 
 <a id="stat-common-027"></a>
 
@@ -5320,6 +5330,8 @@ Source: S154, Chapter 53, `The GLM Procedure`, PDF pp. 4043–4230. Tasks in thi
 
 - Integration-only corpus isolation repair: `c5ccbc3668a264ba2dac5e6870c7f7138e13a696` inlines the exact existing `pottery_formatted.sas` DATA bytes into `stat_glm_pottery_contrast.sas`, including `Site $12.` positions. Its130-token expected file and expected success status are unchanged; production features and the original freeze/history are untouched. This removes the known relative-INCLUDE dependency under the corpus runner's isolated working directory. `git diff --check` exits0; fresh isolated CLI/corpus verification is deferred to the coordinator batch, not claimed from the earlier focused tests.
 
+- Finalpartialeeec9a69: default2139/2379/11+supplemental1113direct0wholeoracleabsent/restored,pushed. Originalrc2/0of1047fields MANOVAunimplemented; contrast/eigenpair/formattedinputproofs andhermetic130-fieldcorpus pass. Oldredretainedsnapshot supersededbytestedpartial,notclaimedfullDONE.
+
 <a id="stat-glm-012"></a>
 
 ### [PARK] STAT-GLM-012 — GLM — TEST / Hypothesis Testing in PROC GLM
@@ -8604,6 +8616,8 @@ Source: S154, Chapter 79, `The LOGISTIC Procedure`, PDF pp. 5823–6080. Tasks i
 
 - Acceptance criteria: For Convergence Criteria / Iterative Algorithms for Model Fitting, use an independently calculable small sample and the source examples to verify targets, estimates/statistics, degrees of freedom, and applicable probabilities or intervals; include at least one relevant degenerate or boundary case, asserting documented diagnostics and result status.
 
+- Finalpartialeeec9a69: default2139/2379/11+supplemental1113direct0wholeoracleabsent/restored,pushed. Ownoriginalstillrc2/0of935PLOTS; source-backedCOMMON033original242/242+exact2warnings nowRC1/reference1 (supersedesoldprobeRC0). Broaderalgorithm/adjacentroundinglimitsPARK.
+
 <a id="stat-logistic-006"></a>
 
 ### [DOING @dev4] STAT-LOGISTIC-006 — LOGISTIC — Conditional Logistic Regression
@@ -9672,6 +9686,8 @@ Source: S154, Chapter 84, `The MIXED Procedure`, PDF pp. 6613–6810. Tasks in t
 
 - Acceptance criteria: For Default Output / ODS Table Names, verify table names, labels, triggering conditions, rows, columns, degrees of freedom, statistics, and missing representations; exercise selection and capture with ODS TRACE/OUTPUT; unrelated options must not create extra tables.
 
+- Finalpartialeeec9a69: default2139/2379/11+supplemental1113direct0wholeoracleabsent/restored,pushed. Original326/326tokensrc0 plus16completeTRACEobjectsexact; actuallogicaltypedresults/defaultselectionverified. ExactSASdescriptor/optionalproducerlimitsremainPARK.
+
 <a id="stat-mixed-017"></a>
 
 ### [PARK] STAT-MIXED-017 — MIXED — ODS Graphics
@@ -9691,6 +9707,8 @@ Source: S154, Chapter 84, `The MIXED Procedure`, PDF pp. 6613–6810. Tasks in t
 - Rebased validation: all-MIXED84/84 direct0; combined ODS-or-graphics name-filter selection21/21 direct0 (these are separate possibly overlapping selections, not a unique summed count). Fresh install4/4/direct0. **Unchanged original now directly exits0 with326/326 listing tokens and16/16 complete TRACE objects exactly matching SAS, and0graphs as the original requests no graph-producing option.** The explicit six-panel program directly exits0 with326/326 unchanged numerical tokens; all six fresh SVGs are byte-identical to the final visually inspected renders. Raw receipts are `.zig-cache/stat-mixed017/rebase-*`. No product work/time reset occurred during rebase/verification.
 - Current remaining acceptance is the broader unsupported graph families and exact graph-template/label/path and SAS auto-binning equivalence described above, not default table TRACE. Passing portions reuse `persist_mixed_heights` numerical expectations, MIXED-016's complete persistent `default_trace.txt`/object tests, and MIXED-017's active-GRAPHICSON/no-trigger and full plotted-coordinate tests. Keep PARK for the unimplemented scope; full integrated gate/separate supplemental/oracle-absent checks and push remain coordinator-owned. No automatic oracle deletion.
 - Acceptance criteria: For ODS Graphics, verify graph names, triggering conditions, curve/point data, axes, grouping, and legends; check the relevant PLOTS= and ODS GRAPHICS controls and visually inspect exported graphs.
+
+- Finalpartialeeec9a69: default2139/2379/11+supplemental1113direct0wholeoracleabsent/restored,pushed. With016,original326/326tokensrc0+16TRACEobjectsexact,zero defaultgraphs; actual6requestedpanels/datacoordinates/visualsverified. Templateidentity/otherfamilies/binninglimitsremainPARK.
 
 <a id="stat-mixed-018"></a>
 
@@ -10420,6 +10438,8 @@ Source: S154, Chapter 90, `The NPAR1WAY Procedure`, PDF pp. 7205–7282. Tasks i
 - Local verification: focused NPAR **55/55**, direct exit 0; install direct exit 0; original and auxiliary programs direct exits 0. Whole corpus **2373/2374**, direct exit **1**, NOT green: sole failure `stat_glm_test_split_plot.sas` returns 1 where its fixture expects 0. Coordinator identified the pre-existing fixture CWD dependency and already fixed it in root commit `f5a94d73` using the exact 24 input rows inline, keeping all 193 expected fields and rc0 unchanged. Dev6 did not edit that fixture or relax its status. Rebase/combined verification must inherit that repair before acceptance.
 - Remaining PARK scope: validated VW/Klotz/Conover exact conditioning/precision, broader exact-network/precision domains, noninteger/observed-zero RMD, KS POINT/MIDP presentation/semantics, PFORMAT, MAXTIME, and Monte Carlo algorithms/streams. Supported generic score enumeration is bounded to n<=24, <=8 classes and 2,000,000 visited states; KS is n<=60 with the same state bound; unsupported precision raises a gap. MC/N/SEED/EXACT-ALPHA remain explicit gaps until both algorithm and fixed-seed stream are independently validated. No wrong stream or approximate p-value is pinned as exact. The folder is retained and not declared deletion-ready for the full ticket.
 - Handoff: freeze feature edits; safely rebase onto the coordinator's repaired tip, preserve separate expectation/history commits, rerun applicable focused/core checks, then let the coordinator run the exact-SHA default gate, separate supplemental, oracle-absent verification and authorized push. No such final combined receipt is claimed here.
+
+- Finalpartialeeec9a69: default2139/2379/11+supplemental1113direct0wholeoracleabsent/restored,pushed. Unchangedoriginal67/67tokensrc0; exactinteger/rational/tiedEDF/RMDtests pass. OldbranchsoleGLMfixturefailurewasinherited-rootpackagingbugf5a94d73, resolvedwithoutchangingexpectedRC. MC/precision/optionslimitsPARK.
 
 <a id="stat-npar1way-007"></a>
 
@@ -12412,6 +12432,8 @@ Source: S154, Chapter 105, `The REG Procedure`, PDF pp. 8539–8728. Tasks in th
 - Unchanged originals at aaf4d1e2: `documented_feature` direct rc1 matches reference warning severity1, all1118 tokens retained; only the two already-bounded residual sums differ (9.748646E-12 vs0, -1.21227E-10 vs-4.4596E-11). `targeted_statements` direct rc0 matches reference0 and all121 tokens remain, but the known seeded-input discrepancy persists: SST430.16654 vs245.76974, error SS105.18130 vs66.06162, TEST numerator MS162.49262 vs89.85406, denominator MS1.20898 vs0.75933 and F134.40 vs118.33. No seeded stream or failed full listing was converted into a passing golden.
 - Handoff/blockers: retain PARK and the original folder. Resolve RAND/STREAMINIT reproduction before full seeded acceptance; obtain/verify exact PRINT presentation and nonestimable/inconsistent/zero-rank/missing-inference diagnostic/output contracts. These result forms, PRINT with dependent rows, numerically unresolved residual variance, initial active-TEST ADD/DELETE, and TEST combined with RESTRICT/selection/RIDGE/PCOMIT remain explicit gaps. ACOV/HCC/WHITE covariance providers remain existing REG-013 prerequisites. No REG MTEST eigenvector draft was assumed or edited. All passing partial behavior has durable tests, all historical source/evidence/worktrees remain, and no dev push occurred. Feature work and safe checks finished before adjusted20:37:47Z; only serial integration/shared final validation remain.
 - Acceptance criteria: For TEST, use an independently calculable small sample and the source examples to verify targets, estimates/statistics, degrees of freedom, and applicable probabilities or intervals; include at least one relevant degenerate or boundary case, asserting documented diagnostics and result status.
+
+- Finalpartialeeec9a69: default2139/2379/11+supplemental1113direct0wholeoracleabsent/restored,pushed. Actualinteractive/labeledTEST+PRINT regressions green; originals1118/121fields retain2/23differences respectively, severity1/0 asreference. Layout/nonestimable/seedlimitsPARK; corrected-sleepclockpreserved.
 
 <a id="stat-reg-011"></a>
 
