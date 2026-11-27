@@ -2,6 +2,10 @@
 
 ## ACTIVE — resumed 2026-11-27
 
+### Batch5 isolated-fixture repair
+
+At exactdb7a6d77, oracle-absentgate direct1:2100/2100unit,2371/2372corpus,11/11programs. Onlyfailure was `stat_glm_test_split_plot.sas` using a checkout-relative `%include` unavailable in corpusrunner's isolatedCWD; directrootCLI passed, so no statistic or expectedRC was changed. Repair `f5a94d73` inlines the exact24publicinputrows; all193expectedtokens/RC0 remain unchanged. Actualisolatedcorpusrunner targetedcase1/1direct0. Reusedretained `/Users/thomas/kirha/opensas-reg-gate-repair` onnew `codex/stat-glm-fixture-repair`; old378ce9bcbranch/evidence preserved. Fullgate/supplemental/absence rerunpending; noCI/runner/default-gate modifications.
+
 ### User-confirmed sleep pause and continuation (2026-11-27)
 
 At about20:00Z the user explicitly clarified that the computer slept for two hours and instructed **continue, do not stop**. The observed two-hour tool-time gap is therefore an authorized pause in active development time, not an automatic new45-minute attempt. Preserve all source/commits and prior clock-audit records; their wall-clock observations remain historical, but expiry conclusions based on counting the sleep are superseded. Current attempts retain all used active time; deadlines are extended by exactly two hours: dev2/3/5/7 ->20:13:14Z, dev1/4/6 ->20:37:47Z. All seven existing assignments continue, no backlog expansion or fresh45-minute reset. Check actualUTC before further source edits; stop featurework at adjusteddeadline. OwnedcaffeinatePID67392 continues; explicitcomputer sleep can still pause this session.
