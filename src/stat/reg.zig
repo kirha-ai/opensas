@@ -305,8 +305,11 @@ test "REG parsing distinguishes invalid syntax from unsupported documented featu
         try std.testing.expectError(error.ParseError, parse(cx, try lex.tokenize(a, src, &d)));
     }
     try std.testing.expect(d.hasErrors());
+    diag.resetGap();
+    defer diag.resetGap();
     try std.testing.expectError(error.ParseError, parse(cx, try lex.tokenize(a, "proc reg; model y=x / selection=stepwise; run;", &d)));
-    try std.testing.expect(std.mem.indexOf(u8, d.list.items[d.list.items.len - 1].message, "not implemented") != null);
+    try std.testing.expectEqualStrings("PROC REG: model selection currently requires NOPRINT and OUTEST", d.list.items[d.list.items.len - 1].message);
+    try std.testing.expectEqual(@as(u8, 2), diag.exitCode(diag.gapHit(), d.hasErrors()));
 }
 
 test "REG BY uses sorted groups and rejects reversal; IDs do not filter missing" {
