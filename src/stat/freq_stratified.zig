@@ -69,28 +69,69 @@ pub fn trend(m: Matrix) Error!?Normal {
     const by_row = m.cols == 2;
     const len = if (by_row) m.rows else m.cols;
     const scores = if (by_row) m.row_scores else m.col_scores;
-    var successes: f64 = 0;
-    var weighted: f64 = 0;
+    // A finite affine score transformation cannot alter Z except for its sign
+    // (S154 physical pp.3213-3214). Center before accumulating and normalize
+    // the spread before squaring: raw score sums lose offsets or overflow for
+    // valid large scores, and squaring small scores can underflow to zero.
+    // Zero-frequency levels must not choose the origin or scaling factor.
+    var origin: f64 = 0;
     for (0..len) |i| {
         const x = if (by_row) m.counts[i * 2] else m.counts[i];
         const y = if (by_row) m.counts[i * 2 + 1] else m.counts[m.cols + i];
-        successes += x;
-        weighted += (x + y) * score(scores, i);
+        if (x + y > 0) {
+            origin = score(scores, i);
+            break;
+        }
     }
-    const mean = weighted / n;
+    var halve = false;
+    for (0..len) |i| {
+        const x = if (by_row) m.counts[i * 2] else m.counts[i];
+        const y = if (by_row) m.counts[i * 2 + 1] else m.counts[m.cols + i];
+        if (x + y > 0 and !std.math.isFinite(score(scores, i) - origin)) halve = true;
+    }
+    var scale: f64 = 0;
+    for (0..len) |i| {
+        const x = if (by_row) m.counts[i * 2] else m.counts[i];
+        const y = if (by_row) m.counts[i * 2 + 1] else m.counts[m.cols + i];
+        if (x + y > 0) scale = @max(scale, @abs(trendCenteredScore(score(scores, i), origin, halve)));
+    }
+    if (scale == 0) return null;
+    var successes: f64 = 0;
+    var failures: f64 = 0;
+    var mean: f64 = 0;
+    for (0..len) |i| {
+        const x = if (by_row) m.counts[i * 2] else m.counts[i];
+        const y = if (by_row) m.counts[i * 2 + 1] else m.counts[m.cols + i];
+        if (x + y == 0) continue;
+        successes += x;
+        failures += y;
+        mean += ((x + y) / n) * (trendCenteredScore(score(scores, i), origin, halve) / scale);
+    }
     var numerator: f64 = 0;
     var ss: f64 = 0;
     for (0..len) |i| {
         const x = if (by_row) m.counts[i * 2] else m.counts[i];
         const y = if (by_row) m.counts[i * 2 + 1] else m.counts[m.cols + i];
-        const delta = score(scores, i) - mean;
-        numerator += x * delta;
-        ss += (x + y) * sq(delta);
+        if (x + y == 0) continue;
+        const delta = trendCenteredScore(score(scores, i), origin, halve) / scale - mean;
+        // sum(margin*centered_score)=0, so the minority response gives
+        // the same numerator with opposite sign while avoiding cancellation
+        // of nearly equal majority fractions (e.g. 1e20 versus one failure).
+        numerator += (if (successes <= failures) x / n else -y / n) * delta;
+        ss += ((x + y) / n) * sq(delta);
     }
-    const variance = (successes / n) * (1 - successes / n) * ss;
+    // Compute both response fractions directly, preserving rare failures
+    // when successes/n rounds to 1. The normalized counts also prevent
+    // weighted sums from overflowing when the finite total is very large.
+    const variance = (successes / n) * (failures / n) * ss;
     if (variance <= 0) return null;
-    const z = numerator / @sqrt(variance);
+    const z = @sqrt(n) * numerator / @sqrt(variance);
     return normal(z, z);
+}
+
+fn trendCenteredScore(value: f64, origin: f64, halve: bool) f64 {
+    // Only opposite extreme finite scores require halving before subtraction.
+    return if (halve) value * 0.5 - origin * 0.5 else value - origin;
 }
 
 /// Unstandardized J, suitable for EXACT JT. Scores do not change ordered pairs.
@@ -1092,4 +1133,43 @@ test "stratified descending CA keeps signed span and FC remains valid" {
     try std.testing.expect(fc.valid);
     try std.testing.expectEqualSlices(f64, &.{ 1, 0.75, 0, 0.75, 1, 0.75, 0, 0.75, 1 }, fc.values);
     try std.testing.expectApproxEqAbs(@as(f64, 0.6885), (try kappa(a, m, .fleiss_cohen, 0.05, 0)).?.coefficient.value, 0.00005);
+}
+
+test "FREQ012 trend is invariant to finite affine explanatory score transforms" {
+    // Three groups of size2, first-column counts0,1,2: centered numerator2,
+    // pooled p=1/2 and weighted score SS=4, hence Z=2 exactly (S154 p.3213).
+    const counts = [_]f64{ 0, 2, 1, 1, 2, 0 };
+    for ([_][3]f64{ .{ 0, 1, 2 }, .{ 1e200, 2e200, 3e200 }, .{ 1e-200, 2e-200, 3e-200 }, .{ -1e308, 0, 1e308 } }) |scores| {
+        const result = try trend(.{ .rows = 3, .cols = 2, .counts = &counts, .row_scores = &scores });
+        try std.testing.expect(result != null);
+        try std.testing.expectApproxEqAbs(@as(f64, 2), result.?.z, 2e-13);
+        try std.testing.expectApproxEqAbs(@as(f64, 0.0227501319481792072), result.?.p_one, 2e-15);
+        try std.testing.expectApproxEqAbs(@as(f64, 0.0455002638963584144), result.?.p_two, 4e-15);
+    }
+}
+
+test "FREQ012 pain example exact rational statistic survives large score offset" {
+    // Independent rational evaluation of S154 Example47.8:
+    // N=161, mean score=321/161, numerator=-6660/161,
+    // weighted SS=51680/161 and Z²=29755215/1295876.
+    const counts = [_]f64{ 26, 26, 23, 18, 9, 6, 7, 9, 14, 23 };
+    const expected = -@sqrt(@as(f64, 29755215.0 / 1295876.0));
+    for ([_][5]f64{ .{ 0, 1, 2, 3, 4 }, .{ 1e15, 1e15 + 1, 1e15 + 2, 1e15 + 3, 1e15 + 4 } }) |scores| {
+        const result = (try trend(.{ .rows = 2, .cols = 5, .counts = &counts, .col_scores = &scores })).?;
+        try std.testing.expectApproxEqAbs(expected, result.z, 2e-13);
+    }
+}
+
+test "FREQ012 trend ignores empty score levels and preserves rare response reversal" {
+    const empty = (try trend(.{ .rows = 4, .cols = 2, .counts = &.{ 0, 0, 0, 2, 1, 1, 2, 0 }, .row_scores = &.{ 1e308, 0, 1, 2 } })).?;
+    try std.testing.expectApproxEqAbs(@as(f64, 2), empty.z, 2e-13);
+    const rare = (try trend(.{ .rows = 2, .cols = 2, .counts = &.{ 1, 1e20, 2, 1e20 } })).?;
+    const reverse = (try trend(.{ .rows = 2, .cols = 2, .counts = &.{ 1e20, 1, 1e20, 2 } })).?;
+    // At this scale the O(1e-20) corrections are below f64 precision;
+    // centered numerator=1/2, variance=3/4 gives Z=1/sqrt(3).
+    try std.testing.expectApproxEqAbs(1 / @sqrt(@as(f64, 3)), rare.z, 2e-13);
+    try std.testing.expectApproxEqAbs(-rare.z, reverse.z, 2e-13);
+    try std.testing.expectApproxEqAbs(rare.p_two, reverse.p_two, 2e-14);
+    try std.testing.expectEqual(@as(?Normal, null), try trend(.{ .rows = 3, .cols = 2, .counts = &.{ 0, 2, 1, 1, 2, 0 }, .row_scores = &.{ 7, 7, 7 } }));
+    try std.testing.expectEqual(@as(?Normal, null), try trend(.{ .rows = 3, .cols = 2, .counts = &.{ 0, 2, 0, 2, 0, 2 } }));
 }

@@ -791,3 +791,24 @@ test "trend simulation sorts the binary response in either table dimension" {
         try std.testing.expectEqual(@as(f64, @floatFromInt(two)) / 431, r.two_sided.p);
     }
 }
+
+test "FREQ012 exact trend matches twenty labeled allocations under score and table reversals" {
+    const t = std.testing;
+    // Three groups contain two labeled subjects each, with three responses
+    // assigned among six subjects. There are C(6,3)=20 equally likely
+    // assignments. Observed successes (0,1,2) attain the maximum score;
+    // its two assignments give upper tail=.1, and both extremes give .2.
+    const counts = [_]f64{ 0, 2, 1, 1, 2, 0 };
+    for ([_][3]f64{ .{ 0, 1, 2 }, .{ 2, 1, 0 }, .{ 1e15, 1e15 + 1, 1e15 + 2 } }) |scores| {
+        const m = tests.CountMatrix{ .rows = 3, .cols = 2, .counts = &counts, .row_scores = &scores };
+        const result = (try run(t.allocator, m, .trend, .{})).exact_test;
+        try t.expectApproxEqAbs(@as(f64, 2.0 / 20.0), result.one_sided, 2e-15);
+        try t.expectApproxEqAbs(@as(f64, 2.0 / 20.0), result.point, 2e-15);
+        try t.expectApproxEqAbs(@as(f64, 4.0 / 20.0), result.two_sided, 2e-15);
+        const transposed = tests.CountMatrix{ .rows = 2, .cols = 3, .counts = &.{ 0, 1, 2, 2, 1, 0 }, .col_scores = &scores };
+        const other = (try run(t.allocator, transposed, .trend, .{})).exact_test;
+        try t.expectApproxEqAbs(result.one_sided, other.one_sided, 2e-15);
+        try t.expectApproxEqAbs(result.two_sided, other.two_sided, 2e-15);
+        try t.expectApproxEqAbs(result.point, other.point, 2e-15);
+    }
+}
