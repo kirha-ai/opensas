@@ -1,0 +1,5 @@
+# corpus assertions
+words The NPAR1WAY Procedure Deviations for Variable x g N Median Mean Absolute Deviation A 3 3.000000 1.333333 B 3 3.000000 0.666667 Ratio Mean Deviations Exact Test RMD RMD2 Pr >= RMD Pr >= RMD2 2.0000 2.0000 0.3000 0.6000 Exact Point Probability 0.2000 Exact Mid P-Value 0.2000 The NPAR1WAY Procedure Kolmogorov-Smirnov Exact Test Statistic Value Exact Pr D 1.000000 0.3333 D+ 1.000000 0.1667 D- 0.000000 1.0000
+stderr-count 0 ERROR:
+stderr-count 0 WARNING:
+svg-count 0

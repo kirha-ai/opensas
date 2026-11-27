@@ -4,6 +4,7 @@
 //! are averages of the individual ordinal scores, NOT transforms of midranks.
 const std = @import("std");
 const ranks = @import("ranks.zig");
+const exact = @import("npar1way_exact.zig");
 const math = @import("../functions.zig");
 const A = std.mem.Allocator;
 pub const Options = struct {
@@ -20,6 +21,7 @@ pub const Options = struct {
     conover: bool = false,
     data: bool = false,
     exact_wilcoxon: bool = false,
+    exact_scores: [10]bool = @splat(false),
     continuity: bool = true,
 };
 pub const Kind = enum { wilcoxon, median, vw, savage, ab, st, klotz, mood, conover, data };
@@ -43,6 +45,7 @@ pub const ScoreAnalysis = struct {
     p: ?f64,
     two_sample: ?TwoSample,
     has_ties: bool = false,
+    conditional: ?exact.Result = null,
 };
 pub const Anova = struct {
     among_ss: f64,
@@ -128,7 +131,7 @@ pub fn compute(a: A, values: []const f64, groups: []const usize, group_count: us
     }
     var analyses: std.ArrayList(ScoreAnalysis) = .empty;
     for ([_]Kind{ .wilcoxon, .median, .vw, .savage, .ab, .st, .klotz, .mood, .conover, .data }, [_]bool{ options.wilcoxon, options.median, options.vw, options.savage, options.ab, options.st, options.klotz, options.mood, options.conover, options.data }) |kind, requested| {
-        if (requested or (kind == .wilcoxon and options.exact_wilcoxon)) try analyses.append(a, try scores(a, values, groups, counts, ranked, kind, options));
+        if (requested or options.exact_scores[@intFromEnum(kind)] or (kind == .wilcoxon and options.exact_wilcoxon)) try analyses.append(a, try scores(a, values, groups, counts, ranked, kind, options));
     }
     out.scores = try analyses.toOwnedSlice(a);
     if (options.edf) out.edf = try edf(a, values, groups, counts, ranked);
@@ -233,9 +236,24 @@ fn scores(a: A, values: []const f64, groups: []const usize, counts: []const usiz
                 test_result.p_t_two = 2 * t_tail;
             }
         }
-        if (kind == .wilcoxon and options.exact_wilcoxon) test_result.exact = try ranks.exactRankSum(a, ranked.values, selected);
+
         result.two_sample = test_result;
-    } else if (kind == .wilcoxon and options.exact_wilcoxon) return error.ExactLimit;
+    }
+    if (options.exact_scores[@intFromEnum(kind)] or (kind == .wilcoxon and options.exact_wilcoxon)) {
+        if (kind == .wilcoxon and counts.len == 2) {
+            const selected = try a.alloc(bool, n);
+            const chosen: usize = if (counts[0] <= counts[1]) 0 else 1;
+            for (groups, selected) |g, *p| p.* = g == chosen;
+            const distribution = try ranks.exactRankSum(a, ranked.values, selected);
+            result.conditional = .{ .right = summary[chosen].sum > summary[chosen].expected, .allocations = distribution.allocations, .lower_count = distribution.lower_count, .upper_count = distribution.upper_count, .two_sided_count = distribution.two_sided_count, .point_count = distribution.lower_count + distribution.upper_count - distribution.allocations };
+            result.two_sample.?.exact = distribution;
+        } else {
+            if (counts.len > 2 and result.chi_square == null) return error.DegenerateExact;
+            const weights = try exact.scoreWeights(a, values, kind, transformed);
+            result.conditional = try exact.testScores(a, weights, groups, counts);
+            if (result.two_sample) |*test_result| test_result.exact = result.conditional.?.asRanks();
+        }
+    }
     return result;
 }
 
@@ -362,5 +380,6 @@ test {
     _ = @import("npar1way_stats_tests.zig");
     _ = @import("npar1way_ties_tests.zig");
     _ = @import("npar1way_scale_tests.zig");
+    _ = exact;
     _ = @import("npar1way_edf_tests.zig");
 }

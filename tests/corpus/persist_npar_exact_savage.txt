@@ -1,0 +1,5 @@
+# corpus assertions
+words The NPAR1WAY Procedure Savage Scores (Exponential) for Variable Days Classified by Variable Treatment Sum of Expected Std Dev Mean Treatment N Scores Under H0 Under H0 Score 1 5 -3.367980 0.0 1.634555 -0.673596 2 5 0.095618 0.0 1.634555 0.019124 3 5 3.272362 0.0 1.634555 0.654472 Average scores were used for ties. Savage One-Way Analysis Exact Chi-Square DF Pr > ChiSq Pr >= ChiSq 5.5047 2 0.0638 0.0445
+stderr-count 0 ERROR:
+stderr-count 0 WARNING:
+svg-count 0

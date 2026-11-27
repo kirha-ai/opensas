@@ -15,6 +15,7 @@ const selection = @import("data_selection.zig");
 const lists = @import("variable_lists.zig");
 const stats = @import("npar1way_stats.zig");
 const hl = @import("npar1way_hl.zig");
+const exact_methods = @import("npar1way_exact.zig");
 const fp = @import("npar1way_fp.zig");
 const edf_plot = @import("npar1way_edf_plot.zig");
 const stratified = @import("npar1way_strata.zig");
@@ -52,6 +53,10 @@ pub const Spec = struct {
     edf_one_sided: bool = false,
     hodges: bool = false,
     exact_hl: bool = false,
+    rmd_test: bool = false,
+    exact_ks: bool = false,
+    exact_point: bool = false,
+    exact_midp: bool = false,
     alpha: f64 = 0.05,
     reference: ?union(enum) { index: usize, label: []const u8 } = null,
     by_number: ?usize = null,
@@ -104,6 +109,10 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
             name = try member(cx, t, &i);
             if (i - first == 3) qualified = first;
             if (at(t, i, .lparen)) i = proc.skipParen(t, i);
+        } else if (kw(t, i, "rmd")) {
+            s.rmd_test = true;
+            chosen = true;
+            i += 1;
         } else if (kw(t, i, "fp")) {
             s.fp_test = true;
             chosen = true;
@@ -279,12 +288,37 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
             try proc.parseProcFormat(cx.arena, t, &j, &formats);
         } else if (kw(t, i, "exact")) {
             exact_seen = true;
-            for (t[i + 1 .. end]) |token| {
-                if (token.tag == .name and eq(token.text, "wilcoxon")) s.options.exact_wilcoxon = true else if (token.tag == .name and eq(token.text, "hl")) {
+            var j = i + 1;
+            while (j < end and !at(t, j, .slash)) : (j += 1) {
+                if (kw(t, j, "ks") or kw(t, j, "edf")) {
+                    s.exact_ks = true;
+                    s.options.edf = true;
+                    s.edf_one_sided = true;
+                    continue;
+                }
+                if (kw(t, j, "rmd")) {
+                    s.rmd_test = true;
+                    continue;
+                }
+                if (kw(t, j, "hl")) {
                     s.hodges = true;
                     s.exact_hl = true;
                     s.options.wilcoxon = true;
-                } else return proc.failGap(cx.diags, token.line, "PROC NPAR1WAY: EXACT {s} is not implemented", .{token.text});
+                    continue;
+                }
+                const kind: stats.Kind = if (kw(t, j, "scores")) blk: {
+                    if (!at(t, j + 1, .eq) or !kw(t, j + 2, "data")) return invalid(cx, t, j);
+                    j += 2;
+                    break :blk .data;
+                } else if (kw(t, j, "data")) return invalid(cx, t, j) else if (kw(t, j, "perm")) .data else if (kw(t, j, "normal")) .vw else std.meta.stringToEnum(stats.Kind, try std.ascii.allocLowerString(cx.arena, t[j].text)) orelse return invalid(cx, t, j);
+                s.options.exact_scores[@intFromEnum(kind)] = true;
+                if (kind == .wilcoxon) s.options.exact_wilcoxon = true;
+            }
+            if (at(t, j, .slash)) {
+                j += 1;
+                while (j < end) : (j += 1) {
+                    if (kw(t, j, "point")) s.exact_point = true else if (kw(t, j, "midp")) s.exact_midp = true else if (kw(t, j, "mc") or kw(t, j, "n") or kw(t, j, "seed") or kw(t, j, "alpha") or kw(t, j, "maxtime") or kw(t, j, "pformat")) return proc.failGap(cx.diags, t[j].line, "PROC NPAR1WAY: EXACT option {s} is not implemented", .{t[j].text}) else return invalid(cx, t, j);
+                }
             }
         } else if (kw(t, i, "strata")) {
             if (s.strata.len > 0) return proc.failGap(cx.diags, t[i].line, "PROC NPAR1WAY: duplicate STRATA policy is not verified", .{});
@@ -350,13 +384,23 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
     if (!chosen and s.strata.len == 0) {
         const correction = s.options.continuity;
         const exact = s.options.exact_wilcoxon;
+        const exact_scores = s.options.exact_scores;
         s.options = .{};
+        s.options.exact_scores = exact_scores;
         s.options.continuity = correction;
         s.options.exact_wilcoxon = exact;
     }
-    if (exact_seen and !s.options.exact_wilcoxon and !s.exact_hl) {
-        if (s.options.wilcoxon and !s.options.anova and !s.options.median and !s.options.vw and !s.options.savage and !s.options.edf and !s.options.ab and !s.options.st and !s.options.klotz and !s.options.mood and !s.options.conover and !s.options.data) s.options.exact_wilcoxon = true else return proc.failGap(cx.diags, 0, "PROC NPAR1WAY: default EXACT analyses other than WILCOXON are not implemented", .{});
+    var exact_named = false;
+    for (s.options.exact_scores) |requested| exact_named = exact_named or requested;
+    if (exact_seen and !exact_named and !s.options.exact_wilcoxon and !s.exact_hl and !s.rmd_test and !s.exact_ks) {
+        if (s.options.edf) {
+            s.exact_ks = true;
+            s.edf_one_sided = true;
+        }
+        s.options.exact_scores = .{ s.options.wilcoxon, s.options.median, s.options.vw, s.options.savage, s.options.ab, s.options.st, s.options.klotz, s.options.mood, s.options.conover, s.options.data };
     }
+    if (s.exact_ks and (s.exact_point or s.exact_midp)) return proc.failGap(cx.diags, 0, "PROC NPAR1WAY: POINT/MIDP for exact KS are not yet verified", .{});
+    if (s.exact_hl and (s.exact_point or s.exact_midp)) return cx.diags.fail(error.ParseError, 0, "PROC NPAR1WAY: POINT and MIDP do not apply to EXACT HL", .{});
     inline for (std.meta.tags(graph_kinds.Kind)) |kind| if (s.plot_requests[@intFromEnum(kind)]) {
         switch (kind) {
             .anova => s.options.anova = true,
@@ -542,26 +586,44 @@ fn renderScores(cx: proc.ProcCtx, out: *std.ArrayList(u8), s: Spec, input: Input
     if (sc.two_sample) |ts| {
         if (start == analysis_start) try heading(cx, out, s, rep);
         try out.print(a, "\n{s} Two-Sample Test\n\n", .{short});
-        if (sc.kind == .wilcoxon) {
-            try out.appendSlice(a, "t Approximation");
-            if (ts.exact != null) try out.appendSlice(a, " ----------Exact----------");
-            try out.appendSlice(a, "\n");
-        }
+        if (sc.kind == .wilcoxon) try out.appendSlice(a, "t Approximation");
+        if (ts.exact != null) try out.appendSlice(a, " ----------Exact----------");
+        if (sc.kind == .wilcoxon or ts.exact != null) try out.appendSlice(a, "\n");
         const right = if (ts.z) |z| z > 0 else false;
         const tail: []const u8 = if (right) "Pr > Z" else "Pr < Z";
         try out.print(a, "{s} Z {s} Pr > |Z|", .{ if (ts.exact != null) @as([]const u8, "Statistic (S)") else "Statistic", tail });
         if (sc.kind == .wilcoxon) try out.print(a, " {s} Pr > |Z|", .{tail});
-        if (ts.exact != null) try out.print(a, " {s} Pr >= |S-Mean|", .{if (ts.statistic > sc.groups[ts.selected].expected) @as([]const u8, "Pr >= S") else "Pr <= S"});
+        if (ts.exact != null) try out.print(a, " {s} Pr >= |S-Mean|", .{if (sc.conditional.?.right) @as([]const u8, "Pr >= S") else "Pr <= S"});
         try out.print(a, "\n{s} {s} {s} {s}", .{ try num(a, ts.statistic, "12.4"), try num(a, ts.z, "12.4"), try num(a, ts.p_one, "pvalue6.4"), try num(a, ts.p_two, "pvalue6.4") });
         if (sc.kind == .wilcoxon) try out.print(a, " {s} {s}", .{ try num(a, ts.p_t_one, "pvalue6.4"), try num(a, ts.p_t_two, "pvalue6.4") });
-        if (ts.exact) |e| try out.print(a, " {s} {s}", .{ try num(a, if (ts.statistic > sc.groups[ts.selected].expected) e.upper else e.lower, "pvalue6.4"), try num(a, e.two_sided, "pvalue6.4") });
+        if (ts.exact) |e| try out.print(a, " {s} {s}", .{ try num(a, if (sc.conditional.?.right) e.upper else e.lower, "pvalue6.4"), try num(a, e.two_sided, "pvalue6.4") });
         try out.appendSlice(a, "\n");
         if ((sc.kind == .wilcoxon or sc.kind == .st) and s.options.continuity) try out.appendSlice(a, "\nZ includes a continuity correction of 0.5.\n");
+        if (sc.conditional) |e| {
+            const one = if (e.right) e.upper_count else e.lower_count;
+            if (s.exact_point) try out.print(a, "Exact Point Probability {s}\n", .{try num(a, e.probability(e.point_count), "pvalue6.4")});
+            if (s.exact_midp) try out.print(a, "Exact Mid P-Value {s}\n", .{try num(a, e.probability(one) - 0.5 * e.probability(e.point_count), "pvalue6.4")});
+        }
     }
     try finishTable(cx, out, start, s, v, try std.fmt.allocPrint(a, "{s}Test", .{object_prefix}));
     start = out.items.len;
     if (start == analysis_start) try heading(cx, out, s, rep);
-    try out.print(a, "\n{s}\n\nChi-Square DF Pr > ChiSq\n{s} {d} {s}\n", .{ if (sc.kind == .wilcoxon) @as([]const u8, "Kruskal-Wallis Test") else try std.fmt.allocPrint(a, "{s} One-Way Analysis", .{short}), try num(a, sc.chi_square, "12.4"), sc.df, try num(a, sc.p, "pvalue6.4") });
+    try out.print(a, "\n{s}\n\n", .{if (sc.kind == .wilcoxon) @as([]const u8, "Kruskal-Wallis Test") else try std.fmt.allocPrint(a, "{s} One-Way Analysis", .{short})});
+    const multi = sc.two_sample == null and sc.conditional != null;
+    if (multi) try out.appendSlice(a, "Exact\n");
+    try out.appendSlice(a, "Chi-Square DF Pr > ChiSq");
+    if (multi) try out.appendSlice(a, " Pr >= ChiSq");
+    try out.print(a, "\n{s} {d} {s}", .{ try num(a, sc.chi_square, "12.4"), sc.df, try num(a, sc.p, "pvalue6.4") });
+    if (multi) {
+        const e = sc.conditional.?;
+        try out.print(a, " {s}", .{try num(a, e.probability(e.upper_count), "pvalue6.4")});
+    }
+    try out.appendSlice(a, "\n");
+    if (sc.conditional) |e| if (multi and (s.exact_point or s.exact_midp)) {
+        const one = e.upper_count;
+        if (s.exact_point) try out.print(a, "Exact Point Probability {s}\n", .{try num(a, e.probability(e.point_count), "pvalue6.4")});
+        if (s.exact_midp) try out.print(a, "Exact Mid P-Value {s}\n", .{try num(a, e.probability(one) - 0.5 * e.probability(e.point_count), "pvalue6.4")});
+    };
     try finishTable(cx, out, start, s, v, if (sc.kind == .wilcoxon) "KruskalWallisTest" else try std.fmt.allocPrint(a, "{s}Analysis", .{object_prefix}));
     try queuePlot(cx, s, input, sc.values, graph_kinds.parse(@tagName(sc.kind)).?, sc.p, v, rep, order);
 }
@@ -691,6 +753,41 @@ pub fn run(cx: proc.ProcCtx, out: *std.ArrayList(u8), t: []const lex.Token) diag
                     try body.print(cx.arena, "\nStratified {s} Test\nStatistic Expected Variance Z One-Sided Pr Two-Sided Pr\n{s} {s} {s} {s} {s} {s}\n", .{ prefix, try num(cx.arena, sr.sum, "12.6"), try num(cx.arena, sr.expected, "12.6"), try num(cx.arena, sr.variance, "12.6"), try num(cx.arena, sr.z, "12.4"), try num(cx.arena, sr.p_one, "pvalue6.4"), try num(cx.arena, sr.p_two, "pvalue6.4") });
                     try finishTable(cx, &body, test_start, s, v, try std.fmt.allocPrint(cx.arena, "{s}StrataTest", .{prefix}));
                 }
+            }
+        }
+        if (s.exact_ks) {
+            if (input.labels.len != 2) return cx.diags.fail(error.ParseError, 0, "PROC NPAR1WAY: exact KS requires two CLASS levels", .{});
+            const result = exact_methods.ks(cx.arena, input.values, input.groups) catch |err| switch (err) {
+                error.OutOfMemory => return error.OutOfMemory,
+                else => return proc.failGap(cx.diags, 0, "PROC NPAR1WAY: exact KS unavailable ({s})", .{@errorName(err)}),
+            };
+            if (!s.noprint) {
+                const start = body.items.len;
+                if (start == analysis_start) try heading(cx, &body, s, slice.rep);
+                try body.appendSlice(cx.arena, "\nKolmogorov-Smirnov Exact Test\nStatistic Value Exact Pr\n");
+                for ([_][]const u8{ "D", "D+", "D-" }, 0..) |name, j| try body.print(cx.arena, "{s} {s} {s}\n", .{ name, try num(cx.arena, result.statistics[j], "12.6"), try num(cx.arena, result.p[j], "pvalue6.4") });
+                try finishTable(cx, &body, start, s, v, "KSExactTest");
+            }
+        }
+        if (s.rmd_test) {
+            if (input.labels.len != 2) return cx.diags.fail(error.ParseError, 0, "PROC NPAR1WAY: RMD requires two CLASS levels", .{});
+            const result = exact_methods.rmd(cx.arena, input.values, input.groups) catch |err| switch (err) {
+                error.OutOfMemory => return error.OutOfMemory,
+                else => return proc.failGap(cx.diags, 0, "PROC NPAR1WAY: exact RMD unavailable ({s})", .{@errorName(err)}),
+            };
+            if (!s.noprint) {
+                var start = body.items.len;
+                try heading(cx, &body, s, slice.rep);
+                try body.print(cx.arena, "Deviations for Variable {s}\n{s} N Median Mean Absolute Deviation\n", .{ s.input.ds.columns.items[v].name, s.input.ds.columns.items[s.class].name });
+                for (0..2) |g| try body.print(cx.arena, "{s} {d} {s} {s}\n", .{ input.labels[g], result.counts[g], try num(cx.arena, result.medians[g], "12.6"), try num(cx.arena, result.mean_deviations[g], "12.6") });
+                try finishTable(cx, &body, start, s, v, "RMDDeviations");
+                start = body.items.len;
+                const e = result.exact;
+                const one = if (result.ratio <= 1) e.lower_count else e.upper_count;
+                try body.print(cx.arena, "\nRatio Mean Deviations Exact Test\nRMD RMD2 {s} Pr >= RMD2\n{s} {s} {s} {s}\n", .{ if (result.ratio <= 1) @as([]const u8, "Pr <= RMD") else "Pr >= RMD", try num(cx.arena, result.ratio, "12.4"), try num(cx.arena, result.ratio_two, "12.4"), try num(cx.arena, e.probability(one), "pvalue6.4"), try num(cx.arena, e.probability(e.two_sided_count), "pvalue6.4") });
+                if (s.exact_point) try body.print(cx.arena, "Exact Point Probability {s}\n", .{try num(cx.arena, e.probability(e.point_count), "pvalue6.4")});
+                if (s.exact_midp) try body.print(cx.arena, "Exact Mid P-Value {s}\n", .{try num(cx.arena, e.probability(one) - 0.5 * e.probability(e.point_count), "pvalue6.4")});
+                try finishTable(cx, &body, start, s, v, "RMDTest");
             }
         }
         if (s.fp_test) {
@@ -1084,7 +1181,7 @@ test "NPAR005 FP zero-scale result remains visible and exact unsupported remains
     diag.resetGap();
     defer diag.resetGap();
     var dg = diag.Diagnostics.init(a);
-    try std.testing.expectError(error.ParseError, parse(.{ .arena = a, .lib = &lib, .diags = &dg }, try lex.tokenize(a, "proc npar1way edf; class g; var x; exact ks; run;", &dg)));
+    try std.testing.expectError(error.ParseError, parse(.{ .arena = a, .lib = &lib, .diags = &dg }, try lex.tokenize(a, "proc npar1way edf; class g; var x; exact ks / mc; run;", &dg)));
     try std.testing.expectEqual(@as(u8, 2), diag.exitCode(diag.gapHit(), dg.hasErrors()));
 }
 
@@ -1179,4 +1276,35 @@ test "NPAR010 all available graph producers ALL ONLY aliases and NONE" {
     out.clearRetainingCapacity();
     try run(cx, &out, try lex.tokenize(a, "proc npar1way plots(only); class g; var x; run;", &d));
     try std.testing.expectEqual(@as(usize, 0), graphics.prepared.items.len);
+}
+
+test "NPAR006 exact request defaults point midp and unsupported precision stay explicit" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var lib = @import("../exec.zig").Library.init(a);
+    const ds = try a.create(Dataset);
+    ds.* = Dataset.init(a, "sample");
+    _ = try ds.addColumn("g", .num);
+    _ = try ds.addColumn("x", .num);
+    for ([_]f64{ 1, 3, 5, 2, 3, 4 }, 0..) |v, i| try ds.appendRow(&.{ .{ .num = if (i < 3) 0 else 1 }, .{ .num = v } });
+    try lib.put("sample", ds);
+    var d = diag.Diagnostics.init(a);
+    var out: std.ArrayList(u8) = .empty;
+    const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &d };
+    try run(cx, &out, try lex.tokenize(a, "proc npar1way rmd; class g; var x; exact rmd / point midp; run;", &d));
+    try std.testing.expect(std.mem.indexOf(u8, out.items, "2.0000 2.0000 0.3000 0.6000") != null);
+    try std.testing.expect(std.mem.indexOf(u8, out.items, "Exact Point Probability 0.2000") != null);
+    try std.testing.expect(std.mem.indexOf(u8, out.items, "Exact Mid P-Value 0.2000") != null);
+    const implicit = try parse(cx, try lex.tokenize(a, "proc npar1way savage; class g; var x; exact; run;", &d));
+    try std.testing.expect(implicit.options.exact_scores[@intFromEnum(stats.Kind.savage)]);
+    const named = try parse(cx, try lex.tokenize(a, "proc npar1way; class g; var x; exact savage; run;", &d));
+    try std.testing.expect(named.options.exact_scores[@intFromEnum(stats.Kind.savage)]);
+    for ([_][]const u8{ "proc npar1way; class g; var x; exact data; run;", "proc npar1way; class g; var x; exact typo; run;", "proc npar1way; class g; var x; exact scores=wrong; run;", "proc npar1way; class g; var x; exact savage / typo; run;" }) |source| {
+        diag.resetGap();
+        defer diag.resetGap();
+        var dd = diag.Diagnostics.init(a);
+        try std.testing.expectError(error.ParseError, parse(.{ .arena = a, .lib = &lib, .diags = &dd }, try lex.tokenize(a, source, &dd)));
+        try std.testing.expectEqual(@as(u8, 1), diag.exitCode(diag.gapHit(), dd.hasErrors()));
+    }
 }
