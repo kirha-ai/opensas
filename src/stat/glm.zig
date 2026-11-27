@@ -88,6 +88,7 @@ pub fn execute(cx: proc.ProcCtx, out: *std.ArrayList(u8), spec: Spec) diag.Error
 }
 
 test {
+    _ = @import("glm_computational_tests.zig");
     _ = @import("glm_effectsize.zig");
     _ = @import("glm_tests.zig");
     _ = @import("glm_persistence_tests.zig");
