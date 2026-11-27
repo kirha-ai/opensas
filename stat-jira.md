@@ -12,6 +12,15 @@ Explicit user resume. Confirmed working branch `feat/stat/batch-4`, base `31356c
 - dev6: STAT-COMMON-017; `/Users/thomas/kirha/opensas-dev6`; branch `codex/stat-b4-dev6`; assigned 2026-11-27T13:42:13+00:00; implementation deadline 2026-11-27T14:27:13+00:00. Original README/cases and cited physical PDF pages required before edits.
 - dev7: STAT-COMMON-018; `/Users/thomas/kirha/opensas-dev7`; branch `codex/stat-b4-dev7`; assigned 2026-11-27T13:42:13+00:00; implementation deadline 2026-11-27T14:27:13+00:00. Original README/cases and cited physical PDF pages required before edits.
 
+### Pending batch validation repair
+
+At exact SHA `53992d26e0851ef90e047ba474dbb4e3514891d9`, oracle-absent gate returned direct1:1916/1917 unit tests,2352/2352 corpus,11/11 programs. The single failure is the obsolete COMMON025 test asserting all ABSORB+ESTIMATE must fail during parsing; GLM006 now implements a verified subset. Repair `e1647046` replaces the obsolete blanket parser rejection with an executed absorbed-INTERCEPT guard assertion (empty output, exact gap diagnostic and D-009 rc2), preserving independent supported-slope/CLASS tests. Targeted GLM+COMMON02566/66 direct0; full rerun pending. No supplemental run or green receipt is claimed for this failed attempt, oracle restored unchanged, and this batch has not been pushed.
+
+### Existing prerequisite queue identified during implementation
+
+- GLM-007 original continues with `PROC MIXED METHOD=TYPE3`; queue existing STAT-MIXED-001/002 and their existing prerequisites for the next available dev. GLM dev owns only its RANDOM/TEST portion; missing MIXED is not treated as completed or as an automatic reason to abandon the chain.
+- POWER-008 sawtooth original requires existing POWER-004/012/016/017 (ONESAMPLEFREQ methods, typed outputs, plot); list parsing alone will not establish full original acceptance. Continue existing tickets through the actual scenario/computation contract.
+
 ### Next dev assignments after second integration
 
 All previous attempts have finished implementation within their own deadlines. Integrated code `1f9fff554bbf132118fbecc9e72854f20094601a` includes NPAR kernels/input/plots, RESTRICT, GLM absorbed ESTIMATE, ordinal LOGISTIC, one-sample POWER, and stable relative-risk score. Current-CLI original replays and final absent-oracle gate/install/separate supplemental are pending; NPAR002/FREQ011 stay coordinator acceptance-queued, partial tickets remain PARK.
