@@ -12,7 +12,18 @@ Explicit user resume. Confirmed working branch `feat/stat/batch-4`, base `31356c
 - dev6: STAT-COMMON-017; `/Users/thomas/kirha/opensas-dev6`; branch `codex/stat-b4-dev6`; assigned 2026-11-27T13:42:13+00:00; implementation deadline 2026-11-27T14:27:13+00:00. Original README/cases and cited physical PDF pages required before edits.
 - dev7: STAT-COMMON-018; `/Users/thomas/kirha/opensas-dev7`; branch `codex/stat-b4-dev7`; assigned 2026-11-27T13:42:13+00:00; implementation deadline 2026-11-27T14:27:13+00:00. Original README/cases and cited physical PDF pages required before edits.
 
-### Pending batch validation repair
+### Final repaired integration receipt (2026-11-27)
+
+Exact tested and pushed SHA `cd3e4fda80676e0835900ba1f5042f794a950097`: whole oracle absent; `zig build gate -j2 --summary all` direct0 (**1917/1917 unit,2352/2352 corpus,11/11 programs**), install direct0, independent supplemental direct0 (**1113/1113**). Oracle restored unchanged. The prior single stale-guard failure is resolved by e1647046 and was not suppressed or counted green. Current installed CLI reran all10 originals; complete tokens/status results are below. Generated graph bytes match the visually inspected versions. Pushed to `feat/stat/batch-4`; no PR created.
+
+- COMMON017:98/98 tokens,rc0/reference0. NPAR001 default1417/1417 and BY1896/1896,rc0/reference0; NPAR002 default1417/1417,rc0/reference0. Permanent full cases are `tests/corpus/persist_npar_wilcoxon_ties.*`, `persist_npar_default.*`, `persist_npar_by.*`, with typed statistical/graph tests under `src/stat/npar1way*` and `ranks.zig`. COMMON017 and NPAR002 now DONE and their folders deletion-ready; NPAR001 stays PARK for remaining input/options scope despite passing originals.
+- FREQ011:649/649 tokens,rc0/reference0, three graphs byte-identical; durable original mapping reuses `persist_freq_001_documented_feature.*` plus independent risk/inference tests. DONE/deletion-ready.
+- REG007: default1118/1118 tokens,rc1/reference1, two disclosed residual-sum numerical differences; targeted112/112 tokens,rc0/reference0,24 differences from seeded input plus constrained-zero display. Independent fixed-data restrictions are covered; PARK.
+- GLM006:671/671 tokens,rc0/reference0, three unchanged graphs; supported absorbed contrasts/effect-size kernels covered, broader EFFECTSIZE presentation and restrictions remain PARK. LOGISTIC007:rc2/reference0,0/935 tokens because original PLOTS remains unsupported; ordinal numerical partial remains PARK. POWER002:rc2/reference0,37/450 tokens (first scalar analysis exact), remaining scenario/group/NFRACTIONAL errors remain PARK.
+
+Current snapshot after closure: **47 DONE,10 PARK,7 DOING,1358 TODO**. All original folders remain present; no actual deletion.
+
+### Historical failed validation and repair
 
 At exact SHA `53992d26e0851ef90e047ba474dbb4e3514891d9`, oracle-absent gate returned direct1:1916/1917 unit tests,2352/2352 corpus,11/11 programs. The single failure is the obsolete COMMON025 test asserting all ABSORB+ESTIMATE must fail during parsing; GLM006 now implements a verified subset. Repair `e1647046` replaces the obsolete blanket parser rejection with an executed absorbed-INTERCEPT guard assertion (empty output, exact gap diagnostic and D-009 rc2), preserving independent supported-slope/CLASS tests. Targeted GLM+COMMON02566/66 direct0; full rerun pending. No supplemental run or green receipt is claimed for this failed attempt, oracle restored unchanged, and this batch has not been pushed.
 
@@ -516,7 +527,7 @@ Complete prerequisite shared contracts first, then each PROC's data input, model
 
 <a id="stat-common-017"></a>
 
-### [PARK] STAT-COMMON-017 — Ranks, ties, and nonparametric test interfaces
+### [DONE] STAT-COMMON-017 — Ranks, ties, and nonparametric test interfaces
 
 - Source: S154 / Chapter 17 / `Introduction to Nonparametric Analysis` (PDF pp. 295–302).
 - Scope: Implement shared rank, tie-group, and statistic interfaces for nonparametric procedures; distinguish exact distributions from asymptotic approximations.
@@ -529,6 +540,8 @@ Complete prerequisite shared contracts first, then each PROC's data input, model
 - Original replay before integration: unchanged `ranks_with_ties.sas`, direct CLI exit 2, stderr `ERROR: PROC npar1way is not supported`, no expected listing; SAS reference exit 0. Existing dependency tickets STAT-NPAR1WAY-001/002 requested from coordinator; COMMON-017 is not deletion-ready. Next step: connect shared ranks to the NPAR1WAY procedure and then replay the entire original listing/status, including normal and t approximations. No original result is replaced with a failing golden.
 
 - Final partial verification: integrated `02ae9b80` default1870/2345/11 and separate supplemental1113 direct0 with whole oracle absent/restored, pushed79c56588. Original still direct2/reference0 with NPAR1WAY unsupported. Existing NPAR1WAY-001/002 now assigned with explicit shared interface; retain PARK until full original passes.
+
+- Closure supersedes prior PARK receipts: full unchanged `ranks_with_ties.sas` maps to `tests/corpus/persist_npar_wilcoxon_ties.sas` +same-stem.txt (all98tokens/rc0), in addition to independent `ranks.zig` tests. Exact cd3e4fda gate1917/2352/11 and supplemental1113 direct0 with whole oracle absent/restored, pushed. DONE and deletion-ready; not deleted.
 
 <a id="stat-common-018"></a>
 
@@ -3879,7 +3892,7 @@ Source: S154, Chapter 47, `The FREQ Procedure`, PDF pp. 3069–3290. Tasks in th
 
 <a id="stat-freq-011"></a>
 
-### [DOING @coordinator] STAT-FREQ-011 — FREQ — Odds Ratio and Relative Risks
+### [DONE] STAT-FREQ-011 — FREQ — Odds Ratio and Relative Risks
 
 - Source: S154 / Chapter 47 / `Odds Ratio and Relative Risks` (PDF pp. 3203–3213).
 - Scope: Implement Odds Ratio and Relative Risks. This ticket owns the feature's options, defaults, computation, and results as an extension of the basic computational path; the chapter's output tickets handle ODS descriptors and file presentation.
@@ -3892,6 +3905,8 @@ Source: S154, Chapter 47, `The FREQ Procedure`, PDF pp. 3069–3290. Tasks in th
 - Validation/integration queue: branch `codex/stat-b4c-dev5`, base `afceae40`, code `b4bcd78b`, worktree `/Users/thomas/kirha/opensas-dev5`. Focused `zig test ... --test-filter FREQ011 --cache-dir .zig-cache/b4` exit 0, 8/8 (three feature tests plus five anchors); existing `FEAT-freq-risk` selection exit 0, 25/25; exact unconditional method/orientation selection exit 0, 6/6. Before-fix reproducer exit 1 is retained in ignored `.zig-cache/stat-b4-evidence/freq011-before.log`; new evidence in `.zig-cache/stat-freq011/` and `.zig-cache/stat-b4-evidence/freq011-*.log`. Implementation completed within its 45-minute attempt. Final integrated-SHA gate, separate supplemental, oracle-absent verification and push remain coordinator acceptance prerequisites; not yet DONE or deletion-ready.
 - Integration rebase: cleanly rebased onto `c484ea29`; code `ada59c9c` is byte-identical to `b4bcd78b`, with handoff `ffb114da`. Diff-check passed; final shared batch validation remains pending.
 - Acceptance criteria: For Odds Ratio and Relative Risks, verify event/reference levels, ratio direction, zero cells, and all requested tests/intervals; row or column swaps must produce the correct transformations; validate numerical values against the source formulas or an independent reference, following this file's precision conventions.
+
+- Final DONE: exact cd3e4fda default1917/2352/11 + separate supplemental1113 direct0 with whole oracle absent/restored, pushed. Original649/649 tokens rc0/reference0 and three unchanged inspected graphs. Shared full corpus + risk/inference tests make folder deletion-ready; not deleted.
 
 <a id="stat-freq-012"></a>
 
@@ -5025,6 +5040,8 @@ Source: S154, Chapter 53, `The GLM Procedure`, PDF pp. 4043–4230. Tasks in thi
 - Original replay: unchanged `documented_feature.sas` on the retained starting CLI exited 0, all 671 output tokens equal to the reference and no errors/warnings. The default example does not exercise EFFECTSIZE or ESTIMATE; its pass is not full ticket acceptance. Raw replay is in ignored `output/stat-glm006/`. Coordinator must repeat the original on the final integrated CLI.
 - Verification: exact source `ef8424f0dfedf9f570910800566e0cd9d068c876`, `/Users/thomas/.local/bin/zig test --stack 67108864 --test-filter GLM --dep build_options -Mroot=src/root.zig -Mbuild_options=/tmp/stat-b4-dev2-cache/c/8c1abc982d9089fb285de5048952325d/options.zig -lc --cache-dir /tmp/stat-b4-dev2-cache` direct exit 0, **58/58** tests passed, with every new test named in the log. Full gate/install/separate supplemental and oracle-unavailable acceptance are delegated to the coordinator combined batch under the serialized-build schedule; no green full-suite receipt is claimed here.
 - PARK handoff: implement and verify the complete EFFECTSIZE output/object contract beyond the isolated Type I table shown in Figure 53.16, including overall ANOVA applicability and degenerate/low-DF/large-noncentrality behavior; obtain a full SAS output reference for those boundaries rather than choosing plausible missing-value conventions. Finish absorbed INTERCEPT/E coefficient displays and remaining rank-deficient/nested mappings with independently verified estimability. The reference directory is not deletion-ready. Retain all existing passing mappings; do not change seeded expectations to bypass the separate GLM005 RNG discrepancy.
+
+- Final partial receipt: cd3e4fda default1917/2352/11 + separate supplemental1113 direct0 with whole oracle absent/restored, pushed. Original671/671 exact rc0; independent continuous/CLASS absorbed contrasts remain covered. Blanket COMMON025 parser-gap test replaced by actual unsupported absorbed INTERCEPT guard; no loss of supported-basis coverage. PARK for stated remaining scope.
 
 <a id="stat-glm-007"></a>
 
@@ -8362,6 +8379,8 @@ Source: S154, Chapter 79, `The LOGISTIC Procedure`, PDF pp. 5823–6080. Tasks i
 
 - Acceptance criteria: For Link Functions and the Corresponding Distributions / Determining Observations for Likelihood Contributions / Score Statistics and Tests, use an independently calculable small sample and the source examples to verify targets, estimates/statistics, degrees of freedom, and applicable probabilities or intervals; include at least one relevant degenerate or boundary case, asserting documented diagnostics and result status.
 
+- Final partial receipt: cd3e4fda default1917/2352/11 + separate supplemental1113 direct0 with whole oracle absent/restored, pushed. Originalrc2/reference0,0/935 tokens; PLOTS etc remain gaps and default adjacent3coefficient/9Wald differences remain disclosed. PARK.
+
 <a id="stat-logistic-008"></a>
 
 ### [TODO] STAT-LOGISTIC-008 — LOGISTIC — Classification Table / Goodness-of-Fit Tests / Overdispersion
@@ -9915,9 +9934,11 @@ Source: S154, Chapter 90, `The NPAR1WAY Procedure`, PDF pp. 7205–7282. Tasks i
 - Validation before integration: current-source focused NPAR001 tests **12/12** direct exit 0 (five substantive + import tests); CLI install direct 0; complete corpus **2348/2348**, direct exit 0. Kernel dependency blobs: stats `c74126961d92a79944e970fa4eab66c8d28a3b69`, tests `07a874db2182f7f03bd16c36d8a45a2c065f4a12`, plots `77d605e759b15c1e687034bd6086bcfe8ab012ad`, graph identity `5141e4c3b50c4ba9b523e640420cbda10d02c653`. Combined exact-SHA gate, separate supplemental and absent-oracle verification remain coordinator integration requirements; no green receipt is claimed for those yet.
 - Remaining scope: STRATA/ALIGN (existing STAT-NPAR1WAY-004), OUTPUT/capture families, advanced score/options and non-Wilcoxon graph families remain explicit gaps. Duplicate CLASS/FREQ semantics are not specified by the cited pages and remain captured gap diagnostics pending oracle adjudication, rather than silently assuming a winner. Exact requests beyond two groups or 60 observations fail visibly; no approximation is substituted. This broad input/options ticket is not DONE merely because its two originals pass; retained original folder is not yet deletion-ready for full scope.
 
+- Final partial receipt: cd3e4fda default1917/2352/11 + separate supplemental1113 direct0 with whole oracle absent/restored, pushed. Both originals1417/1896 tokens strict equal rc0,graphs unchanged/inspected; PARK for remaining STRATA/option/duplicate-policy scope. Existing NPAR004 now owns stratified/HL extensions.
+
 <a id="stat-npar1way-002"></a>
 
-### [DOING @coordinator] STAT-NPAR1WAY-002 — NPAR1WAY — Nonparametric location and distribution comparisons for independent samples
+### [DONE] STAT-NPAR1WAY-002 — NPAR1WAY — Nonparametric location and distribution comparisons for independent samples
 
 - Source: S154 / Chapter 90 / `Getting Started: NPAR1WAY Procedure` (PDF pp. 7206–7215); S154 / Chapter 90 / `Overview: NPAR1WAY Procedure` (PDF p. 7206).
 - Scope: Implement nonparametric location and distribution comparisons for independent samples using the documented default path and establish the computational state needed by later extensions; implement specialized models, methods, and diagnostics outside that default example in their corresponding feature tickets.
@@ -9931,6 +9952,8 @@ Source: S154, Chapter 90, `The NPAR1WAY Procedure`, PDF pp. 7205–7282. Tasks i
 - Handoff/integration: branch `codex/stat-b4b-dev3`, base `79c56588`, retained worktree `/Users/thomas/kirha/opensas-dev3`; numerical/graph foundation ready, not DONE. NPAR1WAY-001 parser/listing/controls must consume this typed contract, replay the unchanged full original and persist its complete listing before acceptance. No new backlog or claims for nondefault score families/stratified/HL/DSCF/general exact extensions.
 
 - Acceptance criteria: Turn the smallest default analysis in Getting Started into a runnable case and verify its principal estimates, observation counts, and result status; add a smaller case with an independent manual calculation; meet the precision conventions.
+
+- Final DONE: exact cd3e4fda default1917/2352/11 + separate supplemental1113 direct0 with oracle absent/restored, pushed. Unchanged original1417/1417 tokens rc0/reference0; shared persist_npar_default full contract and independently tested graph data/visually checked WilcoxonBoxPlot. Folder deletion-ready, not deleted.
 
 <a id="stat-npar1way-003"></a>
 
@@ -10742,6 +10765,8 @@ Source: S154, Chapter 96, `The POWER Procedure`, PDF pp. 7733–7988. Tasks in t
 - Next: use the concrete scalar `Scenario`/`Result`/`compute` + kind-aware `Design` to dispatch existing POWER008 scenario lists, POWER009 grouped lists, POWER010 fractional/allocation adjustments, applicable POWER006 numerical allocation support and POWER017 graph generation. The full source example's second, third and fourth analyses and requested graph must be compared in full before DONE. These are implementation prerequisites to execute, not reasons to abandon the dependency chain; no new ticket was created.
 
 - Acceptance criteria: Turn the smallest default analysis in Getting Started into a runnable case and verify its principal estimates, observation counts, and result status; add a smaller case with an independent manual calculation; meet the precision conventions.
+
+- Final partial receipt: cd3e4fda default1917/2352/11 + separate supplemental1113 direct0 with whole oracle absent/restored, pushed. Originalrc2/reference0,37/450 tokens with first scalar analysis exact; lists/GROUPMEANS/NFRACTIONAL remain. PARK; existing POWER008 now implements list interface.
 
 <a id="stat-power-003"></a>
 
@@ -11885,6 +11910,8 @@ Source: S154, Chapter 105, `The REG Procedure`, PDF pp. 8539–8728. Tasks in th
 - Original replays: `documented_feature` direct rc1 matches reference warning severity1; all1118 tokens retained, only the two residual sums differ (9.748646E-12 vs0 and -1.21227E-10 vs-4.4596E-11), within the existing independently derived bounds; both graphics warnings and ADD notes remain. `targeted_statements` direct rc0 matches reference0 and all112 tokens remain, but generated input has mean/SST5.809942309816122/430.16654405356984 versus SAS5.66685/245.76974. Actual restricted intercept/x/SSE are5.886246802487665/1.630234628605185/145.49646273607767; an independent70-digit decimal calculation on the actual input agrees, including lambda−57.59291947123144 and SE11.66325533596837. SAS values5.87410/1.39063/105.12673 do not match that input. No incorrect stream was pinned as a golden. The fixed z listing also differs: exact0/0/missing t,p versus SAS7.50555E-18/0/Infty/<.0001; this discrepancy is disclosed, not normalized away.
 - Handoff/blockers: retain PARK and its original folder. Resolve the seeded RAND/STREAMINIT discrepancy shared with GLM-005, then replay unchanged targeted input. Remaining RESTRICT contracts fail visibly: aliased systems, redundant/inconsistent equations (SAS instead reports a zero-DF unapplied restriction), fully constrained systems, negative model SS, interactive RESTRICT and ADD/DELETE on a restricted model. Initial multiple MODEL declarations lift prior restrictions correctly. Source work finished before14:47:39Z; partial is queued for serial integration. No source, branch, evidence or oracle file was discarded; no push by dev.
 - Acceptance criteria: For RESTRICT, cover valid boundaries, initial values, scope, and programming evaluation order as applicable; verify objective functions, constraint satisfaction, and stopping status; diagnose invalid settings.
+
+- Final partial receipt: cd3e4fda default1917/2352/11 + separate supplemental1113 direct0 with whole oracle absent/restored, pushed. Whole originals rc1/rc0 matching severities;1118tokens has2 disclosed residual-sum differences,112tokens has24 seeded/constrained-zero differences. Preserve PARK and independent durable fixed-input coverage.
 
 <a id="stat-reg-008"></a>
 
