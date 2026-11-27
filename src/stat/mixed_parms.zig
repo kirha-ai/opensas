@@ -227,7 +227,8 @@ fn admissible(s: Spec, values: []const f64) bool {
     return true;
 }
 pub fn execute(cx: proc.ProcCtx, model: fit.Model, s: Spec, options: fit.Options, proc_noprofile: bool) diag.Error!Result {
-    if (model.n == 0 or model.n > 512) return cx.diags.fail(error.ExecError, s.line, "PROC MIXED: invalid PARMS model dimensions", .{});
+    if (model.n == 0 or model.p == 0) return cx.diags.fail(error.ExecError, s.line, "PROC MIXED: invalid PARMS model dimensions", .{});
+    if (model.n > 512 or model.p > 1024 or model.components.len > 8) return proc.failGap(cx.diags, s.line, "PROC MIXED: PARMS models above 512 observations, 1024 X columns, or 8 covariance components are not implemented", .{});
     if (s.logdeth) return proc.failGap(cx.diags, s.line, "PROC MIXED: PARMS LOGDETH is not implemented", .{});
     // S154 physical p.6701 explicitly disables residual profiling for
     // PARMS NOITER or HOLD, even without an explicit NOPROFILE flag.

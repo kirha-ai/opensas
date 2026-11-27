@@ -256,3 +256,43 @@ test "MIXED005 constant response rejects infinite profile but permits known vari
     try t.expectError(error.ParseError, p.execute(h.cx, model, try h.parse("/ ols"), .{}, false));
     try t.expect(diag.gapHit());
 }
+
+test "MIXED005 D009 resource limits agree with ordinary fitting and user bounds remain rc1" {
+    var arena = std.heap.ArenaAllocator.init(t.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    // Exercise both public paths with the same valid 513-row SAS model. The
+    // implementation's dense workspace limit is a gap, not a user-program error.
+    for ([_][]const u8{
+        "proc mixed data=large noinfo;model y= /notest;run;",
+        "proc mixed data=large noinfo;model y= /notest;parms (1) /noiter;run;",
+    }) |source| {
+        const h = try Harness.init(a);
+        const data = try a.create(Dataset);
+        data.* = .init(a, "large");
+        _ = try data.addColumn("y", .num);
+        for (0..513) |i| try data.appendRow(&.{.{ .num = @floatFromInt(i % 7) }});
+        try h.cx.lib.put("large", data);
+        diag.resetGap();
+        defer diag.resetGap();
+        var out: std.ArrayList(u8) = .empty;
+        try t.expectError(error.ParseError, @import("mixed.zig").run(h.cx, &out, try lex.tokenize(a, source, h.cx.diags)));
+        try t.expectEqual(@as(u8, 2), diag.exitCode(diag.gapHit(), h.cx.diags.hasErrors()));
+        try t.expectEqual(@as(usize, 0), out.items.len);
+    }
+    for ([_]usize{ 0, 1 }) |which| {
+        const h = try Harness.init(a);
+        var model = simple;
+        const components = [_]f.Component{.{ .name = "effect", .kernel = &.{}, .columns = 1 }} ** 9;
+        if (which == 0) model.p = 1025 else model.components = &components;
+        diag.resetGap();
+        defer diag.resetGap();
+        try t.expectError(error.ParseError, p.execute(h.cx, model, try h.parse("(1) /noiter"), .{}, false));
+        try t.expectEqual(@as(u8, 2), diag.exitCode(diag.gapHit(), h.cx.diags.hasErrors()));
+    }
+    const invalid = try Harness.init(a);
+    diag.resetGap();
+    defer diag.resetGap();
+    try t.expectError(error.ParseError, p.execute(invalid.cx, simple, try invalid.parse("(1) /noiter lowerb=5 upperb=2"), .{}, false));
+    try t.expectEqual(@as(u8, 1), diag.exitCode(diag.gapHit(), invalid.cx.diags.hasErrors()));
+}
