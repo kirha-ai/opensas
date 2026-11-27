@@ -2,7 +2,7 @@
 const std = @import("std");
 const pathPart = @import("../ods_listing.zig").pathPart;
 const A = std.mem.Allocator;
-pub const Name = enum { CDFPlot, PPPlot, QQPlot, ProbPlot, Histogram, ScatterPlot, FitPlot, IntPlot, MatrixPlot, FreqPlot, CumFreqPlot, DeviationPlot, MosaicPlot, AgreePlot, DiagnosticsPanel, ResidualPlot, RidgePanel, RidgePlot, VIFPlot, OddsRatioPlot, ROCCurve, ROCOverlay, Interval, WilcoxonBoxPlot, FPBoxPlot, EDFPlot };
+pub const Name = enum { CDFPlot, PPPlot, QQPlot, ProbPlot, Histogram, ScatterPlot, FitPlot, IntPlot, MatrixPlot, FreqPlot, CumFreqPlot, DeviationPlot, MosaicPlot, AgreePlot, DiagnosticsPanel, ResidualPlot, RidgePanel, RidgePlot, VIFPlot, OddsRatioPlot, ROCCurve, ROCOverlay, Interval, WilcoxonBoxPlot, FPBoxPlot, EDFPlot, ANOVABoxPlot, MedianPlot, VWBoxPlot, SavageBoxPlot, ABBoxPlot, STBoxPlot, KlotzBoxPlot, MoodBoxPlot, ConoverBoxPlot, DataScoresBoxPlot };
 pub const Object = struct { name: Name, label: []const u8, template: ?[]const u8, path: []const u8 };
 pub fn known(name: []const u8) bool {
     for (std.meta.tags(Name)) |tag| if (std.ascii.eqlIgnoreCase(@tagName(tag), name)) return true;

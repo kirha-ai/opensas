@@ -19,6 +19,7 @@ const fp = @import("npar1way_fp.zig");
 const edf_plot = @import("npar1way_edf_plot.zig");
 const stratified = @import("npar1way_strata.zig");
 const plots = @import("npar1way_plots.zig");
+const graph_kinds = @import("npar1way_graphs.zig");
 const varinfo = @import("npar1way_varinfo.zig");
 const A = std.mem.Allocator;
 const eq = std.ascii.eqlIgnoreCase;
@@ -40,6 +41,8 @@ pub const Spec = struct {
     plots_fp: bool = false,
     plots_edf: bool = false,
     plot_stats: bool = true,
+    plot_requests: [graph_kinds.size]bool = @splat(false),
+    plot_overrides: [graph_kinds.size]?bool = @splat(null),
     wilcoxon_plot_stats: ?bool = null,
     fp_plot_stats: ?bool = null,
     edf_plot_stats: ?bool = null,
@@ -189,12 +192,22 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
                 if (!at(t, i, .rparen)) return invalid(cx, t, i);
                 i += 1;
             }
-            if (!at(t, i, .eq)) return proc.failGap(cx.diags, 0, "PROC NPAR1WAY: default PLOTS requests are not implemented", .{});
+            if (!at(t, i, .eq)) {
+                continue;
+            }
             i += 1;
             const paren = at(t, i, .lparen);
             if (paren) i += 1;
             while (i < t.len) {
-                if (kw(t, i, "none")) s.plots_none = true else if (kw(t, i, "wilcoxonboxplot") or kw(t, i, "wilcoxon")) s.plots_wilcoxon = true else if (kw(t, i, "fpboxplot") or kw(t, i, "fp")) s.plots_fp = true else if (kw(t, i, "edfplot") or kw(t, i, "edf")) s.plots_edf = true else return proc.failGap(cx.diags, t[i].line, "PROC NPAR1WAY: plot {s} is not implemented", .{t[i].text});
+                if (kw(t, i, "none")) s.plots_none = true else if (kw(t, i, "all")) s.plots_only = false else if (graph_kinds.parse(t[i].text)) |kind| {
+                    s.plot_requests[@intFromEnum(kind)] = true;
+                    switch (kind) {
+                        .wilcoxon => s.plots_wilcoxon = true,
+                        .fp => s.plots_fp = true,
+                        .edf => s.plots_edf = true,
+                        else => {},
+                    }
+                } else return proc.failGap(cx.diags, t[i].line, "PROC NPAR1WAY: plot {s} is not implemented", .{t[i].text});
                 const request = t[i].text;
                 i += 1;
                 if (at(t, i, .lparen)) {
@@ -208,7 +221,7 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
                         show = value;
                     }
                     if (show == null or !at(t, i, .rparen)) return invalid(cx, t, i);
-                    if (eq(request, "fp") or eq(request, "fpboxplot")) s.fp_plot_stats = show else if (eq(request, "edf") or eq(request, "edfplot")) s.edf_plot_stats = show else s.wilcoxon_plot_stats = show;
+                    if (graph_kinds.parse(request)) |kind| s.plot_overrides[@intFromEnum(kind)] = show else return invalid(cx, t, i);
                     i += 1;
                 }
                 if (!paren) break;
@@ -344,6 +357,23 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
     if (exact_seen and !s.options.exact_wilcoxon and !s.exact_hl) {
         if (s.options.wilcoxon and !s.options.anova and !s.options.median and !s.options.vw and !s.options.savage and !s.options.edf and !s.options.ab and !s.options.st and !s.options.klotz and !s.options.mood and !s.options.conover and !s.options.data) s.options.exact_wilcoxon = true else return proc.failGap(cx.diags, 0, "PROC NPAR1WAY: default EXACT analyses other than WILCOXON are not implemented", .{});
     }
+    inline for (std.meta.tags(graph_kinds.Kind)) |kind| if (s.plot_requests[@intFromEnum(kind)]) {
+        switch (kind) {
+            .anova => s.options.anova = true,
+            .wilcoxon => s.options.wilcoxon = true,
+            .median => s.options.median = true,
+            .vw => s.options.vw = true,
+            .savage => s.options.savage = true,
+            .ab => s.options.ab = true,
+            .st => s.options.st = true,
+            .klotz => s.options.klotz = true,
+            .mood => s.options.mood = true,
+            .conover => s.options.conover = true,
+            .data => s.options.data = true,
+            .fp => s.fp_test = true,
+            .edf => s.options.edf = true,
+        }
+    };
     if (s.options.exact_wilcoxon or s.plots_wilcoxon) s.options.wilcoxon = true;
     if (s.plots_fp) s.fp_test = true;
     if (s.plots_edf) s.options.edf = true;
@@ -426,14 +456,44 @@ fn finishTable(cx: proc.ProcCtx, out: *std.ArrayList(u8), start: usize, s: Spec,
     const listing = cx.listing orelse return;
     if (out.items.len == start) return;
     const prefix = if (s.by_number) |n| try std.fmt.allocPrint(cx.arena, "Npar1way.ByGroup{d}", .{n}) else "Npar1way";
-    const path = try std.fmt.allocPrint(cx.arena, "{s}.{s}.{s}", .{ prefix, try @import("../ods_listing.zig").pathPart(cx.arena, s.input.ds.columns.items[v].name), name });
+    const meta = graph_kinds.table(name);
+    const variable = try @import("../ods_listing.zig").pathPart(cx.arena, s.input.ds.columns.items[v].name);
+    const path = if (meta.section) |section| try std.fmt.allocPrint(cx.arena, "{s}.{s}.{s}.{s}", .{ prefix, variable, section, name }) else try std.fmt.allocPrint(cx.arena, "{s}.{s}.{s}", .{ prefix, variable, name });
     if (!listing.accepts(path)) {
         out.shrinkRetainingCapacity(start);
         return;
     }
-    try listing.traceObject(cx.arena, name, null, null, path);
+    try listing.traceObject(cx.arena, name, meta.label, meta.template, path);
 }
-fn renderScores(cx: proc.ProcCtx, out: *std.ArrayList(u8), s: Spec, input: Input, r: stats.Result, v: usize, rep: ?[]const Value, sc: stats.ScoreAnalysis) !void {
+fn queuePlot(cx: proc.ProcCtx, s: Spec, input: Input, values: []const f64, kind: graph_kinds.Kind, p: ?f64, v: usize, rep: ?[]const Value, order: *usize) diag.Error!void {
+    const graphics = cx.graphics orelse return;
+    if (s.noprint or s.plots_none or graphics.enabled == false or (graphics.enabled == null and graphics.cli_dir == null and graphics.gpath == null)) return;
+    if (s.plots_only and !s.plot_requests[@intFromEnum(kind)] and !(kind == .wilcoxon and s.plots_wilcoxon) and !(kind == .fp and s.plots_fp) and !(kind == .edf and s.plots_edf)) return;
+    const show = s.plot_overrides[@intFromEnum(kind)] orelse (switch (kind) {
+        .wilcoxon => s.wilcoxon_plot_stats,
+        .fp => s.fp_plot_stats,
+        .edf => s.edf_plot_stats,
+        else => null,
+    }) orelse s.plot_stats;
+    const d = graph_kinds.definition(kind);
+    var by_text: std.ArrayList(u8) = .empty;
+    if (rep) |row| if (s.by_cols.len > 0) try by.appendLine(cx.arena, &by_text, s.input.ds, row, s.by_cols);
+    const by_label = std.mem.trim(u8, by_text.items, " \r\n");
+    const variable = s.input.ds.columns.items[v].name;
+    const class = s.input.ds.columns.items[s.class].name;
+    const bytes = (if (kind == .edf) edf_plot.render(cx.arena, values, input.groups, input.labels, variable, class, by_label, if (show) p else null) else if (kind == .median) graph_kinds.median(cx.arena, values, input.groups, input.labels, variable, class, by_label, if (show) p else null) else plots.renderNamed(cx.arena, values, input.groups, input.labels, variable, class, if (show) p else null, by_label, d.kind, try std.fmt.allocPrint(cx.arena, "Distribution of {s}", .{d.title}), if (kind == .anova) "Value" else if (kind == .fp) "Placement" else "Score", if (kind == .anova) "Pr > F" else if (kind == .fp) "Pr > |Z|" else "Pr > ChiSq")) catch |err| switch (err) {
+        error.OutOfMemory => return error.OutOfMemory,
+        else => return proc.failGap(cx.diags, 0, "PROC NPAR1WAY: graph unavailable ({s})", .{@errorName(err)}),
+    };
+    var object = try graph_kinds.object(cx.arena, kind, s.by_number, variable);
+    if (kind == .fp) {
+        const prefix = if (s.by_number) |n| try std.fmt.allocPrint(cx.arena, "Npar1way.ByGroup{d}", .{n}) else "Npar1way";
+        object.path = try std.fmt.allocPrint(cx.arena, "{s}.{s}.FPBoxPlot", .{ prefix, try @import("../ods_listing.zig").pathPart(cx.arena, variable) });
+    }
+    try graphics.queue(order.*, @tagName(d.name), bytes, object);
+    order.* += 1;
+}
+fn renderScores(cx: proc.ProcCtx, out: *std.ArrayList(u8), s: Spec, input: Input, r: stats.Result, v: usize, rep: ?[]const Value, sc: stats.ScoreAnalysis, order: *usize) !void {
     const a = cx.arena;
     var start = out.items.len;
     const analysis_start = start;
@@ -503,8 +563,9 @@ fn renderScores(cx: proc.ProcCtx, out: *std.ArrayList(u8), s: Spec, input: Input
     if (start == analysis_start) try heading(cx, out, s, rep);
     try out.print(a, "\n{s}\n\nChi-Square DF Pr > ChiSq\n{s} {d} {s}\n", .{ if (sc.kind == .wilcoxon) @as([]const u8, "Kruskal-Wallis Test") else try std.fmt.allocPrint(a, "{s} One-Way Analysis", .{short}), try num(a, sc.chi_square, "12.4"), sc.df, try num(a, sc.p, "pvalue6.4") });
     try finishTable(cx, out, start, s, v, if (sc.kind == .wilcoxon) "KruskalWallisTest" else try std.fmt.allocPrint(a, "{s}Analysis", .{object_prefix}));
+    try queuePlot(cx, s, input, sc.values, graph_kinds.parse(@tagName(sc.kind)).?, sc.p, v, rep, order);
 }
-fn render(cx: proc.ProcCtx, out: *std.ArrayList(u8), s: Spec, input: Input, r: stats.Result, v: usize, rep: ?[]const Value) !void {
+fn render(cx: proc.ProcCtx, out: *std.ArrayList(u8), s: Spec, input: Input, r: stats.Result, v: usize, rep: ?[]const Value, order: *usize) !void {
     const a = cx.arena;
     const variable = s.input.ds.columns.items[v].name;
     const class = s.input.ds.columns.items[s.class].name;
@@ -520,8 +581,9 @@ fn render(cx: proc.ProcCtx, out: *std.ArrayList(u8), s: Spec, input: Input, r: s
         try out.print(a, "\nSource DF Sum of Squares Mean Square F Value Pr > F\nAmong {d} {s} {s} {s} {s}\nWithin {d} {s} {s}\n", .{ an.among_df, try num(a, an.among_ss, "16.6"), try num(a, an.among_ms, if (@abs(an.among_ms) >= 1000) "16.5" else "16.6"), try num(a, an.f, "12.4"), try num(a, an.p, "pvalue6.4"), an.within_df, try num(a, an.within_ss, "16.6"), try num(a, an.within_ms, if (@abs(an.within_ms) >= 500) "16.5" else "16.6") });
         if (r.has_ties) try out.appendSlice(a, "\nAverage scores were used for ties.\n");
         try finishTable(cx, out, start, s, v, "ANOVA");
+        try queuePlot(cx, s, input, input.values, .anova, an.p, v, rep, order);
     }
-    for (r.scores) |sc| try renderScores(cx, out, s, input, r, v, rep, sc);
+    for (r.scores) |sc| try renderScores(cx, out, s, input, r, v, rep, sc, order);
     if (r.edf) |e| {
         start = out.items.len;
         const edf_start = start;
@@ -535,6 +597,7 @@ fn render(cx: proc.ProcCtx, out: *std.ArrayList(u8), s: Spec, input: Input, r: s
         if (e.d) |d| try out.print(a, "Kolmogorov-Smirnov Two-Sample Test (Asymptotic)\n\nKS {s} D {s}\nKSa {s} Pr > KSa {s}\n", .{ try num(a, e.ks, "12.6"), try num(a, d, "12.6"), try num(a, e.ksa, "12.6"), try num(a, e.ks_p, "pvalue6.4") }) else try out.print(a, "Kolmogorov-Smirnov Statistics (Asymptotic)\n\nKS {s} KSa {s}\n", .{ try num(a, e.ks, "12.6"), try num(a, e.ksa, "12.6") });
         if (s.edf_one_sided) try out.print(a, "D+ {s} Pr > D+ {s}\nD- {s} Pr > D- {s}\n", .{ try num(a, e.d_plus, "12.6"), try num(a, e.d_plus_p, "pvalue6.4"), try num(a, e.d_minus, "12.6"), try num(a, e.d_minus_p, "pvalue6.4") });
         try finishTable(cx, out, start, s, v, if (e.d != null) "KS2Stats" else "KSStats");
+        if (!s.fp_test) try queuePlot(cx, s, input, input.values, .edf, e.ks_p, v, rep, order);
         start = out.items.len;
         if (start == edf_start) try heading(cx, out, s, rep);
         try out.print(a, "\nCramer-von Mises Test for Variable {s}\nClassified by Variable {s}\n\nSummed Deviation\n{s} N from Mean\n", .{ variable, class, class });
@@ -560,8 +623,6 @@ fn render(cx: proc.ProcCtx, out: *std.ArrayList(u8), s: Spec, input: Input, r: s
 
 pub fn run(cx: proc.ProcCtx, out: *std.ArrayList(u8), t: []const lex.Token) diag.Error!void {
     var s = try parse(cx, t);
-    const graphs = if (cx.graphics) |g| g.enabled != false and (g.enabled == true or g.cli_dir != null or g.gpath != null) else false;
-    if (!s.noprint and !s.plots_none and graphs and !s.plots_only and (s.options.anova or s.options.median or s.options.vw or s.options.savage or s.options.ab or s.options.st or s.options.klotz or s.options.mood or s.options.conover or s.options.data)) return proc.failGap(cx.diags, 0, "PROC NPAR1WAY: default graphics for the selected score analyses are not implemented; use PLOTS(ONLY) or PLOTS=NONE", .{});
     const slices = try by.checkedSlices(cx.arena, s.input.ds, s.by_cols, s.by_desc, s.notsorted, cx.diags);
     var body: std.ArrayList(u8) = .empty;
     var plot_order: usize = 0;
@@ -585,7 +646,7 @@ pub fn run(cx: proc.ProcCtx, out: *std.ArrayList(u8), t: []const lex.Token) diag
         };
         if (s.edf_one_sided and input.labels.len != 2) return proc.failGap(cx.diags, 0, "PROC NPAR1WAY: one-sided EDF requires two CLASS levels", .{});
         const analysis_start = body.items.len;
-        if (!s.noprint) try render(cx, &body, s, input, r, v, slice.rep);
+        if (!s.noprint) try render(cx, &body, s, input, r, v, slice.rep, &plot_order);
         if (s.strata.len > 0) {
             var strat_spec = s;
             strat_spec.stratified_selection = true;
@@ -660,17 +721,7 @@ pub fn run(cx: proc.ProcCtx, out: *std.ArrayList(u8), t: []const lex.Token) diag
                 try body.print(cx.arena, "\nFligner-Policello Test\nDifference ({s} - {s}) Z {s} Pr > |Z|\n{s} {s} {s} {s}\n", .{ input.labels[1 - result.reference], input.labels[result.reference], if ((result.z orelse 0) > 0) @as([]const u8, "Pr > Z") else "Pr < Z", try num(cx.arena, result.difference, "12.4"), try num(cx.arena, result.z, "12.4"), try num(cx.arena, result.p_one, "pvalue6.4"), try num(cx.arena, result.p_two, "pvalue6.4") });
                 try finishTable(cx, &body, start, s, v, "FPTest");
             }
-            if (!s.noprint and !s.plots_none and graphs and (!s.plots_only or s.plots_fp)) {
-                var by_text: std.ArrayList(u8) = .empty;
-                if (slice.rep) |rep| if (s.by_cols.len > 0) try by.appendLine(cx.arena, &by_text, s.input.ds, rep, s.by_cols);
-                const bytes = plots.renderNamed(cx.arena, result.placements, input.groups, input.labels, s.input.ds.columns.items[v].name, s.input.ds.columns.items[s.class].name, if (s.fp_plot_stats orelse s.plot_stats) result.p_two else null, std.mem.trim(u8, by_text.items, " \r\n"), "fpboxplot", "Distribution of Fligner-Policello Placements", "Placement", "Pr > |Z|") catch |err| switch (err) {
-                    error.OutOfMemory => return error.OutOfMemory,
-                    else => return proc.failGap(cx.diags, 0, "PROC NPAR1WAY: FP plot unavailable ({s})", .{@errorName(err)}),
-                };
-                const prefix = if (s.by_number) |n| try std.fmt.allocPrint(cx.arena, "Npar1way.ByGroup{d}", .{n}) else "Npar1way";
-                try cx.graphics.?.queue(plot_order, "FPBoxPlot", bytes, .{ .name = .FPBoxPlot, .label = "Box Plot of Fligner-Policello Placements", .template = null, .path = try std.fmt.allocPrint(cx.arena, "{s}.{s}.FPBoxPlot", .{ prefix, try @import("../ods_listing.zig").pathPart(cx.arena, s.input.ds.columns.items[v].name) }) });
-                plot_order += 1;
-            }
+            try queuePlot(cx, s, input, result.placements, .fp, result.p_two, v, slice.rep, &plot_order);
         }
         if (s.hodges) {
             if (input.labels.len != 2) return proc.failGap(cx.diags, 0, "PROC NPAR1WAY: Hodges-Lehmann requires two CLASS levels", .{});
@@ -700,29 +751,7 @@ pub fn run(cx: proc.ProcCtx, out: *std.ArrayList(u8), t: []const lex.Token) diag
                 try finishTable(cx, &body, start, s, v, "HodgesLehmann");
             }
         }
-        if (!s.noprint and !s.plots_none and graphs and (!s.plots_only or s.plots_wilcoxon)) for (r.scores) |sc| {
-            if (sc.kind != .wilcoxon) continue;
-            var by_text: std.ArrayList(u8) = .empty;
-            if (slice.rep) |rep| if (s.by_cols.len > 0) try by.appendLine(cx.arena, &by_text, s.input.ds, rep, s.by_cols);
-            const bytes = plots.render(cx.arena, sc.values, input.groups, input.labels, s.input.ds.columns.items[v].name, s.input.ds.columns.items[s.class].name, if (s.wilcoxon_plot_stats orelse s.plot_stats) sc.p else null, std.mem.trim(u8, by_text.items, " \r\n")) catch |err| switch (err) {
-                error.OutOfMemory => return error.OutOfMemory,
-                else => return proc.failGap(cx.diags, 0, "PROC NPAR1WAY: cannot render Wilcoxon plot ({s})", .{@errorName(err)}),
-            };
-            const object = try plots.object(cx.arena, if (s.by_cols.len > 0) bi + 1 else null, s.input.ds.columns.items[v].name);
-            try cx.graphics.?.queue(plot_order, "WilcoxonBoxPlot", bytes, object);
-            plot_order += 1;
-        };
-        if (!s.noprint and !s.plots_none and graphs and (!s.plots_only or s.plots_edf)) if (r.edf) |e| {
-            var by_text: std.ArrayList(u8) = .empty;
-            if (slice.rep) |rep| if (s.by_cols.len > 0) try by.appendLine(cx.arena, &by_text, s.input.ds, rep, s.by_cols);
-            const bytes = edf_plot.render(cx.arena, input.values, input.groups, input.labels, s.input.ds.columns.items[v].name, s.input.ds.columns.items[s.class].name, std.mem.trim(u8, by_text.items, " \r\n"), if (s.edf_plot_stats orelse s.plot_stats) e.ks_p else null) catch |err| switch (err) {
-                error.OutOfMemory => return error.OutOfMemory,
-                else => return proc.failGap(cx.diags, 0, "PROC NPAR1WAY: EDF plot unavailable ({s})", .{@errorName(err)}),
-            };
-            const prefix = if (s.by_number) |n| try std.fmt.allocPrint(cx.arena, "Npar1way.ByGroup{d}", .{n}) else "Npar1way";
-            try cx.graphics.?.queue(plot_order, "EDFPlot", bytes, .{ .name = .EDFPlot, .label = "Empirical Distribution Plot", .template = null, .path = try std.fmt.allocPrint(cx.arena, "{s}.{s}.EDFPlot", .{ prefix, try @import("../ods_listing.zig").pathPart(cx.arena, s.input.ds.columns.items[v].name) }) });
-            plot_order += 1;
-        };
+        if (s.fp_test) if (r.edf) |e| try queuePlot(cx, s, input, input.values, .edf, e.ks_p, v, slice.rep, &plot_order);
     };
     try out.appendSlice(cx.arena, body.items);
 }
@@ -800,7 +829,7 @@ test "STAT-NPAR1WAY-001 BY last statement grouping NOPRINT and diagnostic guards
         "proc npar1way wilcoxno; class group; var x; run;",
         "proc npar1way wilcoxon align=strata; class group; var x; strata b; run;",
         "proc npar1way wilcoxon; class group; var x; exact wilcoxon / mc; run;",
-        "proc npar1way plots=medianplot; class group; var x; run;",
+        "proc npar1way plots=unknownplot; class group; var x; run;",
         "proc npar1way wilcoxon; class group; class group; var x; run;",
         "proc npar1way wilcoxon; class group; freq f; freq f; var x; run;",
     }, 0..) |source, k| {
@@ -1111,4 +1140,43 @@ test "NPAR005 per-plot STATS overrides global NOSTATS independently" {
     try std.testing.expect(std.mem.indexOf(u8, graphics.prepared.items[0].bytes, "Pr &gt; |Z|") != null);
     try std.testing.expect(std.mem.indexOf(u8, graphics.prepared.items[1].bytes, "Pr &gt; KSa") == null);
     try std.testing.expectError(error.ParseError, parse(cx, try lex.tokenize(a, "proc npar1way fp plots=fpboxplot(stats nostats); class g; var x; run;", &d)));
+}
+
+test "NPAR010 all available graph producers ALL ONLY aliases and NONE" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var lib = @import("../exec.zig").Library.init(a);
+    const ds = try a.create(Dataset);
+    ds.* = Dataset.init(a, "sample");
+    _ = try ds.addColumn("g", .char);
+    _ = try ds.addColumn("x", .num);
+    for ([_]f64{ 1, 2, 3, 2, 4, 5 }, 0..) |value, i| try ds.appendRow(&.{ .{ .str = if (i < 3) "A" else "B" }, .{ .num = value } });
+    try lib.put("sample", ds);
+    var d = diag.Diagnostics.init(a);
+    var out: std.ArrayList(u8) = .empty;
+    var graphics: proc.native_graphics.Session = .{ .arena = a, .io = std.testing.io, .diags = &d, .enabled = true };
+    const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &d, .graphics = &graphics };
+    try run(cx, &out, try lex.tokenize(a, "proc npar1way anova wilcoxon median vw savage ab st klotz mood conover scores=data fp edf plots=all; class g; var x; run;", &d));
+    try std.testing.expectEqual(graph_kinds.size, graphics.prepared.items.len);
+    for (std.meta.tags(graph_kinds.Kind)) |kind| {
+        var count: usize = 0;
+        for (graphics.prepared.items) |artifact| if (std.mem.eql(u8, artifact.kind, @tagName(graph_kinds.definition(kind).name))) {
+            count += 1;
+        };
+        try std.testing.expectEqual(@as(usize, 1), count);
+    }
+    graphics.clear();
+    out.clearRetainingCapacity();
+    try run(cx, &out, try lex.tokenize(a, "proc npar1way plots(only)=normalboxplot(nostats); class g; var x; run;", &d));
+    try std.testing.expectEqual(@as(usize, 1), graphics.prepared.items.len);
+    try std.testing.expectEqualStrings("VWBoxPlot", graphics.prepared.items[0].kind);
+    try std.testing.expect(std.mem.indexOf(u8, graphics.prepared.items[0].bytes, "Pr &gt;") == null);
+    graphics.clear();
+    out.clearRetainingCapacity();
+    try run(cx, &out, try lex.tokenize(a, "proc npar1way plots=none; class g; var x; run;", &d));
+    try std.testing.expectEqual(@as(usize, 0), graphics.prepared.items.len);
+    out.clearRetainingCapacity();
+    try run(cx, &out, try lex.tokenize(a, "proc npar1way plots(only); class g; var x; run;", &d));
+    try std.testing.expectEqual(@as(usize, 0), graphics.prepared.items.len);
 }

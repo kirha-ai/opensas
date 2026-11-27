@@ -5,14 +5,14 @@
 const std = @import("std");
 const t = std.testing;
 const k = @import("npar1way_stats.zig");
-const gains = [_]f64{
+pub const gains = [_]f64{
     228, 229, 218, 216, 224, 208, 235, 229, 233, 219, 224, 220, 232, 200, 208, 232,
     186, 229, 220, 208, 228, 198, 222, 273, 216, 198, 213, 179, 193, 183, 180, 143,
     204, 114, 188, 178, 134, 208, 196, 130, 87,  135, 116, 118, 165, 151, 59,  126,
     64,  78,  94,  150, 160, 122, 110, 178, 154, 130, 130, 118, 118, 104, 112, 134,
     98,  100, 104,
 };
-fn groups() [67]usize {
+pub fn groups() [67]usize {
     var result: [67]usize = undefined;
     var i: usize = 0;
     for ([_]usize{ 16, 11, 12, 17, 11 }, 0..) |count, g| {

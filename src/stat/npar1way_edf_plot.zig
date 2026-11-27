@@ -1,6 +1,7 @@
 //! Empirical CDF step geometry, SAS/STAT15.4 physical pp.7247-7249/7270.
 const std = @import("std");
 const ranks = @import("ranks.zig");
+const axis_math = @import("npar1way_axis.zig");
 const svg = @import("graphics_svg.zig");
 const A = std.mem.Allocator;
 pub const Step = struct { group: usize, value: f64, previous: f64, cdf: f64 };
@@ -38,7 +39,7 @@ pub fn steps(a: A, values: []const f64, groups: []const usize, count: usize) ![]
     return result;
 }
 fn x(v: f64, lo: f64, hi: f64) f64 {
-    return 80 + 620 * (v - lo) / (hi - lo);
+    return 80 + 620 * (axis_math.Axis{ .low = lo, .high = hi }).fraction(v);
 }
 fn y(p: f64) f64 {
     return 370 - 290 * p;
@@ -48,10 +49,9 @@ pub fn render(a: A, values: []const f64, groups: []const usize, labels: []const 
     const per_group = grid.len / labels.len;
     const minimum = grid[0].value;
     const maximum = grid[per_group - 1].value;
-    const pad = if (maximum > minimum) (maximum - minimum) * 0.05 else @max(0.5, @abs(minimum) * 0.05);
-    const lo = minimum - pad;
-    const hi = maximum + pad;
-    if (!std.math.isFinite(lo) or !std.math.isFinite(hi) or !(hi > lo)) return error.InvalidInput;
+    const axis = try axis_math.Axis.init(minimum, maximum, true);
+    const lo = axis.low;
+    const hi = axis.high;
     const height = 450 + ((labels.len + 3) / 4) * 24;
     var output: std.Io.Writer.Allocating = .init(a);
     errdefer output.deinit();
@@ -67,10 +67,12 @@ pub fn render(a: A, values: []const f64, groups: []const usize, labels: []const 
         const value = @as(f64, @floatFromInt(i)) / 5;
         try w.print("<line x1=\"80\" x2=\"700\" y1=\"{d}\" y2=\"{d}\" stroke=\"#e0e5eb\"/><text x=\"70\" y=\"{d}\" text-anchor=\"end\">{d:.1}</text>", .{ y(value), y(value), y(value) + 4, value });
     }
-    for (0..6) |i| {
-        const value = minimum + (maximum - minimum) * @as(f64, @floatFromInt(i)) / 5;
-        if (maximum == minimum and i > 0) continue;
-        try w.print("<text x=\"{d}\" y=\"391\" text-anchor=\"middle\">{d:.3}</text>", .{ x(value, lo, hi), value });
+    const marks = try axis_math.ticks(a, minimum, maximum);
+    for (marks, 0..) |mark, i| {
+        const anchor: []const u8 = if (marks.len == 1) (if (x(mark.value, lo, hi) > 620) @as([]const u8, "end") else if (x(mark.value, lo, hi) < 140) "start" else "middle") else if (i == 0) "start" else if (i + 1 == marks.len) "end" else "middle";
+        try w.print("<text class=\"x-tick\" data-value=\"{e}\" x=\"{d}\" y=\"391\" text-anchor=\"{s}\">", .{ mark.value, x(mark.value, lo, hi), anchor });
+        try svg.escaped(w, mark.label);
+        try w.writeAll("</text>");
     }
     try w.writeAll("<path d=\"M80 80V370H700\" fill=\"none\" stroke=\"#777\"/><text transform=\"translate(25 225) rotate(-90)\" text-anchor=\"middle\">Cumulative Proportion</text><text x=\"390\" y=\"414\" text-anchor=\"middle\">");
     try svg.escaped(w, variable);
@@ -140,5 +142,42 @@ test "NPAR005 EDF graph exact jump geometry ties escaping and constant support" 
     for (constant) |point| {
         try std.testing.expectEqual(@as(f64, 0), point.previous);
         try std.testing.expectEqual(@as(f64, 1), point.cdf);
+    }
+}
+
+test {
+    _ = axis_math;
+}
+
+test "NPAR010 EDF rendered tick labels roundtrip at tiny and extreme finite scales" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const max = std.math.floatMax(f64);
+    for ([_][4]f64{ .{ 1e-9, 2e-9, 4e-9, 6e-9 }, .{ -max, -max / 2, max / 2, max }, .{ max, max, max, max }, .{ 1, 1, std.math.nextAfter(f64, 1, 2), std.math.nextAfter(f64, 1, 2) } }) |values| {
+        const image = try render(a, &values, &.{ 0, 1, 0, 1 }, &.{ "A", "B" }, "x", "g", "", null);
+        var rest = image;
+        var count: usize = 0;
+        while (std.mem.indexOf(u8, rest, "class=\"x-tick\"")) |index| {
+            rest = rest[index..];
+            const at = std.mem.indexOf(u8, rest, "data-value=\"").? + 12;
+            const end = at + std.mem.indexOfScalar(u8, rest[at..], '"').?;
+            const value = try std.fmt.parseFloat(f64, rest[at..end]);
+            const label_start = std.mem.indexOfScalar(u8, rest, '>').? + 1;
+            const label_end = label_start + std.mem.indexOf(u8, rest[label_start..], "</text>").?;
+            try std.testing.expectEqual(value, try std.fmt.parseFloat(f64, rest[label_start..label_end]));
+            count += 1;
+            rest = rest[label_end..];
+        }
+        try std.testing.expect(count >= 1);
+        rest = image;
+        while (std.mem.indexOf(u8, rest, "class=\"edf-data\"")) |index| {
+            rest = rest[index..];
+            const at = std.mem.indexOf(u8, rest, "cx=\"").? + 4;
+            const end = at + std.mem.indexOfScalar(u8, rest[at..], '"').?;
+            const coordinate = try std.fmt.parseFloat(f64, rest[at..end]);
+            try std.testing.expect(std.math.isFinite(coordinate) and coordinate >= 80 and coordinate <= 700);
+            rest = rest[end..];
+        }
     }
 }
