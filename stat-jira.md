@@ -12,6 +12,10 @@ Explicit user resume. Confirmed working branch `feat/stat/batch-4`, base `31356c
 - dev6: STAT-COMMON-017; `/Users/thomas/kirha/opensas-dev6`; branch `codex/stat-b4-dev6`; assigned 2026-11-27T13:42:13+00:00; implementation deadline 2026-11-27T14:27:13+00:00. Original README/cases and cited physical PDF pages required before edits.
 - dev7: STAT-COMMON-018; `/Users/thomas/kirha/opensas-dev7`; branch `codex/stat-b4-dev7`; assigned 2026-11-27T13:42:13+00:00; implementation deadline 2026-11-27T14:27:13+00:00. Original README/cases and cited physical PDF pages required before edits.
 
+### Rolling assignment — MIXED-002 numerical consumer
+
+NPAR003 partial integrated from `bc4af73a`; its full91-field original keeps exactly three trailing-zero fields as numeric `~0`, no numerical tolerance and no formatting guess. Literal text remains different, so PARK. dev3 now owns existing STAT-MIXED-002 in retained `opensas-dev3`, branch `codex/stat-b4-mixed-dev3`, assigned 2026-11-27T14:51:41+00:00, deadline 2026-11-27T15:36:41+00:00. Dev5 owns input/options; dev7 owns CLASS/MODEL/design. Concrete estimator interface must retain the full GLM-coded X/reported dimensions, ordered independent likelihood basis, covariance-component matrices and explicit inference metadata; REML determinant normalization must not silently change with alternative effect coding. These are active real dependency implementations, not successful stubs. Default original includes fixed and random variance models; exact optimizer trajectory differences remain acceptance gaps, never fabricated rows.
+
 ### Rolling assignment — MIXED-003 model interface
 
 POWER008 partial integrated from `13c94c22`; full binomial/plot original remains PARK and final batch checks pending. dev7 now owns existing STAT-MIXED-003 on retained `opensas-dev7`, branch `codex/stat-b4-mixed-dev7`, assigned 2026-11-27T14:42:58+00:00, deadline 2026-11-27T15:27:58+00:00. Dev5 MIXED001 owns top-level input/options/BY/ID/WEIGHT; dev7 owns CLASS/MODEL syntax and numerical design matrices, reusing tested shared class/effect/model contracts. They must agree a concrete typed Spec/selected rows/design/result interface. Partial input/model support is not a substitute for MIXED002 estimation or a passing whole original. MIXED002 remains queued for next free dev.
@@ -9167,7 +9171,7 @@ Source: S154, Chapter 84, `The MIXED Procedure`, PDF pp. 6613–6810. Tasks in t
 
 <a id="stat-mixed-002"></a>
 
-### [TODO] STAT-MIXED-002 — MIXED — Linear mixed model estimation and fixed-effect inference
+### [DOING @dev3] STAT-MIXED-002 — MIXED — Linear mixed model estimation and fixed-effect inference
 
 - Source: S154 / Chapter 84 / `Getting Started: MIXED Procedure` (PDF pp. 6618–6624); S154 / Chapter 84 / `Overview: MIXED Procedure` (PDF pp. 6614–6618).
 - Scope: Implement linear mixed model estimation and fixed-effect inference using the documented default path and establish the computational state needed by later extensions; implement specialized models, methods, and diagnostics outside that default example in their corresponding feature tickets.
