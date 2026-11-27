@@ -104,7 +104,7 @@ test "GLM007 RANDOM unsupported domains and malformed effects stay captured" {
     defer arena.deinit();
     const a = arena.allocator();
     var lib = Library.init(a);
-    _ = try sample(a, &lib);
+    const ds = try sample(a, &lib);
     var diagnostics = diag.Diagnostics.init(a);
     const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &diagnostics };
     for ([_][]const u8{
@@ -124,7 +124,6 @@ test "GLM007 RANDOM unsupported domains and malformed effects stay captured" {
     var output: std.ArrayList(u8) = .empty;
     try t.expectError(error.ParseError, glm.run(cx, &output, try lex.tokenize(a, "proc glm; class A B; model Y=A B A*B; random B B; run;", &diagnostics)));
     try t.expectEqual(@as(u8, 1), diag.exitCode(diag.gapHit(), diagnostics.hasErrors()));
-    const ds = lib.get("sample").?;
     for (ds.rows.items) |*observation| {
         const cells = try a.dupe(@import("../value.zig").Value, observation.*);
         cells[2] = .{ .num = 0 };
