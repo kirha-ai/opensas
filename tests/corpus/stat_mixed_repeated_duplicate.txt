@@ -1,0 +1,4 @@
+# corpus assertions
+words
+stderr-count 1 repeated levels are not distinct within a subject; R is singular
+stderr-count 1 ERROR

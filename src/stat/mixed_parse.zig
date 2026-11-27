@@ -81,7 +81,7 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
             continue;
         }
         if (eq(token.text, "namelen") and !is(t, i, .eq)) continue; // default20, optional argument
-        if (eq(token.text, "plots") and is(t, i, .lparen)) return proc.failGap(cx.diags, token.line, "PROC MIXED: plot options are not implemented", .{});
+        if ((eq(token.text, "plots") or eq(token.text, "plot")) and is(t, i, .lparen)) return proc.failGap(cx.diags, token.line, "PROC MIXED: plot options are not implemented", .{});
         const unsupported = [_][]const u8{ "absolute", "anovaf", "asycorr", "asycov", "cl", "convf", "convg", "convh", "covtest", "dfbw", "empirical", "ic", "itdetails", "lognote", "mmeq", "mmeqsol", "nobound", "noclprint", "ranks", "ratio", "ridge", "scoring", "update" };
         for (unsupported) |option| if (eq(token.text, option)) return proc.failGap(cx.diags, token.line, "PROC MIXED: option {s} is not implemented", .{token.text});
         if (!is(t, i, .eq)) return bad(cx, token);
@@ -112,7 +112,7 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
                 if (eq(t[i].text, @tagName(order))) break order;
             } else return bad(cx, t[i]);
             i += 1;
-        } else if (eq(token.text, "plots")) {
+        } else if (eq(token.text, "plots") or eq(token.text, "plot")) {
             if (!is(t, i, .name) or !eq(t[i].text, "none")) return proc.failGap(cx.diags, token.line, "PROC MIXED: requested plots are not implemented", .{});
             opts.plots_none = true;
             i += 1;

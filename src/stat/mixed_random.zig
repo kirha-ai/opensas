@@ -112,12 +112,12 @@ pub fn parse(cx: proc.ProcCtx, ds: *const Dataset, basis: coded.Spec, statements
     return .{ .source = ds, .basis = basis, .requests = requests.items, .required_columns = required.items };
 }
 const BasisColumn = struct { name: []const u8, effect: usize, values: []const f64 };
-const Groups = struct { ids: []usize, labels: []const []const u8 };
+pub const Groups = struct { ids: []usize, labels: []const []const u8 };
 fn mapIndex(classes: []const coded.Class, ci: usize) ?usize {
     for (classes, 0..) |c, j| if (c.column == ci) return j;
     return null;
 }
-fn grouping(cx: proc.ProcCtx, ds: *const Dataset, rows: []const []const Value, classes: []const coded.Class, vars: []const usize) diag.Error!Groups {
+pub fn grouping(cx: proc.ProcCtx, ds: *const Dataset, rows: []const []const Value, classes: []const coded.Class, vars: []const usize) diag.Error!Groups {
     const a = cx.arena;
     const ids = try a.alloc(usize, rows.len);
     @memset(ids, 0);

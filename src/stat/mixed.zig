@@ -24,14 +24,17 @@ pub fn run(cx: proc.ProcCtx, out: *std.ArrayList(u8), tokens: []const lex.Token)
     // PROC ALPHA controls covariance-parameter CIs, not MODEL ALPHA.
     const m = try model.parse(cx, spec.input.ds, spec.statements, spec.options.order, 0.05);
     const r = try random.parse(cx, spec.input.ds, m.matrix, spec.statements);
+    const repeated = @import("mixed_repeated.zig");
+    const residual_spec = try repeated.parse(cx, spec.input.ds, m.matrix, spec.statements);
     var required: std.ArrayList(usize) = .empty;
     try required.appendSlice(cx.arena, m.required_columns);
     for (r.required_columns) |ci| if (std.mem.indexOfScalar(usize, required.items, ci) == null) try required.append(cx.arena, ci);
+    if (residual_spec) |rs| for (rs.required_columns) |ci| if (std.mem.indexOfScalar(usize, required.items, ci) == null) try required.append(cx.arena, ci);
     const groups = try input.prepare(cx, spec, required.items);
+    if (m.has_repeated and spec.options.method == .type3) return cx.diags.fail(error.ParseError, spec.line, "PROC MIXED: METHOD=TYPE3 does not permit a REPEATED statement", .{});
+    if (m.has_repeated and (spec.options.method == .type1 or spec.options.method == .type2)) return cx.diags.fail(error.ParseError, spec.line, "PROC MIXED: METHOD=TYPE1/TYPE2 cannot be used with REPEATED", .{});
     if (spec.options.method != .reml and spec.options.method != .type3) return proc.failGap(cx.diags, spec.line, "PROC MIXED: model estimation is not implemented for METHOD={s}", .{@tagName(spec.options.method)});
     if ((spec.options.noprofile and parameter_spec == null) or spec.options.alpha_explicit) return proc.failGap(cx.diags, spec.line, "PROC MIXED: unprofiled estimation or covariance-parameter confidence limits are not implemented", .{});
-    if (m.has_repeated and spec.options.method == .type3) return cx.diags.fail(error.ParseError, spec.line, "PROC MIXED: METHOD=TYPE3 does not permit a REPEATED statement", .{});
-    if (m.has_repeated) return proc.failGap(cx.diags, spec.line, "PROC MIXED: REPEATED covariance inference is not implemented", .{});
     if (m.options.solution or m.options.cl or m.options.intercept_test or m.options.alpha != 0.05) return proc.failGap(cx.diags, m.line, "PROC MIXED: requested fixed-effect solution or confidence-limit output is not implemented", .{});
     if (cx.listing) |listing| if (listing.filtered() or listing.trace != null) return proc.failGap(cx.diags, spec.line, "PROC MIXED: ODS table selection and TRACE routing are not implemented", .{});
     if (cx.graphics) |graphics| if (graphics.enabled == true and !spec.options.plots_none) return proc.failGap(cx.diags, spec.line, "PROC MIXED: ODS graphics are not implemented; specify PLOTS=NONE", .{});
@@ -41,6 +44,10 @@ pub fn run(cx: proc.ProcCtx, out: *std.ArrayList(u8), tokens: []const lex.Token)
     if (groups.len == 0) return proc.failGap(cx.diags, spec.line, "PROC MIXED: empty input analysis is not implemented", .{});
     for (groups) |group| {
         if (group.used_count == 0) return proc.failGap(cx.diags, spec.line, "PROC MIXED: fully excluded BY-group analysis is not implemented", .{});
+        if (residual_spec) |rs| {
+            _ = try repeated.layout(cx, rs, group.raw, group.selected);
+            return proc.failGap(cx.diags, rs.line, "PROC MIXED REPEATED: TYPE={s} residual covariance estimation is not implemented", .{repeated.structureName(rs.kind)});
+        }
         const x = try fixed.build(cx, m, group.selected);
         const z = try random.build(cx, r, group.selected);
         if (x.matrix.n != z.n) return proc.failGap(cx.diags, spec.line, "PROC MIXED: fixed/random observation selection differs", .{});
