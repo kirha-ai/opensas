@@ -17,6 +17,7 @@ const stats = @import("npar1way_stats.zig");
 const hl = @import("npar1way_hl.zig");
 const exact_methods = @import("npar1way_exact.zig");
 const fp = @import("npar1way_fp.zig");
+const dscf = @import("npar1way_dscf.zig");
 const edf_plot = @import("npar1way_edf_plot.zig");
 const stratified = @import("npar1way_strata.zig");
 const plots = @import("npar1way_plots.zig");
@@ -49,6 +50,7 @@ pub const Spec = struct {
     edf_plot_stats: ?bool = null,
     options: stats.Options = .{},
     fp_test: bool = false,
+    dscf_test: bool = false,
     fp_reference: ?union(enum) { index: usize, label: []const u8 } = null,
     edf_one_sided: bool = false,
     hodges: bool = false,
@@ -109,6 +111,10 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
             name = try member(cx, t, &i);
             if (i - first == 3) qualified = first;
             if (at(t, i, .lparen)) i = proc.skipParen(t, i);
+        } else if (kw(t, i, "dscf")) {
+            s.dscf_test = true;
+            chosen = true;
+            i += 1;
         } else if (kw(t, i, "rmd")) {
             s.rmd_test = true;
             chosen = true;
@@ -769,6 +775,23 @@ pub fn run(cx: proc.ProcCtx, out: *std.ArrayList(u8), t: []const lex.Token) diag
                 try finishTable(cx, &body, start, s, v, "KSExactTest");
             }
         }
+        if (s.dscf_test) {
+            if (input.labels.len < 3) return cx.diags.fail(error.ParseError, 0, "PROC NPAR1WAY: DSCF requires at least three nonempty CLASS levels", .{});
+            const comparisons = dscf.compute(cx.arena, input.values, input.groups, input.labels.len) catch |err| switch (err) {
+                error.OutOfMemory => return error.OutOfMemory,
+                else => return proc.failGap(cx.diags, 0, "PROC NPAR1WAY: DSCF unavailable ({s})", .{@errorName(err)}),
+            };
+            const start = body.items.len;
+            if (!s.noprint) {
+                try heading(cx, &body, s, slice.rep);
+                try body.print(cx.arena, "Pairwise Two-Sided Multiple Comparison Analysis\nDwass, Steel, Critchlow-Fligner Method\nVariable: {s}\n\n{s} Wilcoxon Z DSCF Value Pr > DSCF\n", .{ s.input.ds.columns.items[v].name, s.input.ds.columns.items[s.class].name });
+            }
+            for (comparisons.pairs) |pair| {
+                if (pair.status != .ok) try cx.diags.warn(0, "PROC NPAR1WAY: DSCF comparison {s} versus {s} is not estimable ({s})", .{ input.labels[pair.first], input.labels[pair.second], @tagName(pair.status) });
+                if (!s.noprint) try body.print(cx.arena, "{s} vs. {s} {s} {s} {s}\n", .{ input.labels[pair.first], input.labels[pair.second], try num(cx.arena, pair.z, "12.4"), try num(cx.arena, pair.dscf, "12.4"), try num(cx.arena, pair.p, "pvalue6.4") });
+            }
+            if (!s.noprint) try finishTable(cx, &body, start, s, v, "DSCF");
+        }
         if (s.rmd_test) {
             if (input.labels.len != 2) return cx.diags.fail(error.ParseError, 0, "PROC NPAR1WAY: RMD requires two CLASS levels", .{});
             const result = exact_methods.rmd(cx.arena, input.values, input.groups) catch |err| switch (err) {
@@ -857,6 +880,7 @@ test {
     _ = stats;
     _ = hl;
     _ = fp;
+    _ = dscf;
     _ = edf_plot;
     _ = stratified;
 }
@@ -1307,4 +1331,36 @@ test "NPAR006 exact request defaults point midp and unsupported precision stay e
         try std.testing.expectError(error.ParseError, parse(.{ .arena = a, .lib = &lib, .diags = &dd }, try lex.tokenize(a, source, &dd)));
         try std.testing.expectEqual(@as(u8, 1), diag.exitCode(diag.gapHit(), dd.hasErrors()));
     }
+}
+
+test "NPAR007 DSCF consumer selection missing variance and two-class restriction" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var lib = @import("../exec.zig").Library.init(a);
+    const ds = try a.create(Dataset);
+    ds.* = Dataset.init(a, "sample");
+    _ = try ds.addColumn("g", .char);
+    _ = try ds.addColumn("x", .num);
+    for ([_]f64{ 1, 1, 3, 2, 4, 50, 60 }, 0..) |value, i| try ds.appendRow(&.{ .{ .str = if (i < 3) "A" else if (i < 5) "B" else "C" }, .{ .num = value } });
+    try lib.put("sample", ds);
+    var d = diag.Diagnostics.init(a);
+    var out: std.ArrayList(u8) = .empty;
+    var listing: @import("../ods_listing.zig").Listing = .{};
+    _ = try listing.parse(a, &d, try lex.tokenize(a, "ods select DSCF;", &d));
+    listing.trace = &d;
+    try run(.{ .arena = a, .lib = &lib, .diags = &d, .listing = &listing }, &out, try lex.tokenize(a, "proc npar1way dscf; class g; var x; run;", &d));
+    try std.testing.expect(std.mem.indexOf(u8, out.items, "A vs. B -1.1847 1.6754 0.4623") != null);
+    try std.testing.expect(std.mem.indexOf(u8, out.items, "A vs. C -1.7770 2.5131 0.1773") != null);
+    try std.testing.expect(std.mem.indexOf(u8, out.items, "B vs. C -1.5492 2.1909 0.2680") != null);
+    try std.testing.expect(std.mem.indexOf(u8, out.items, "Wilcoxon Scores") == null);
+    try std.testing.expectEqual(@as(usize, 1), d.list.items.len);
+    try std.testing.expect(std.mem.indexOf(u8, d.list.items[0].message, "Name:       DSCF") != null);
+    var bad = diag.Diagnostics.init(a);
+    out.clearRetainingCapacity();
+    diag.resetGap();
+    defer diag.resetGap();
+    try std.testing.expectError(error.ParseError, run(.{ .arena = a, .lib = &lib, .diags = &bad }, &out, try lex.tokenize(a, "proc npar1way dscf; class g; var x; where g ne 'C'; run;", &bad)));
+    try std.testing.expectEqual(@as(u8, 1), diag.exitCode(diag.gapHit(), bad.hasErrors()));
+    try std.testing.expectEqual(@as(usize, 0), out.items.len);
 }

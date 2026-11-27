@@ -1,0 +1,4 @@
+# corpus assertions
+words The NPAR1WAY Procedure Pairwise Two-Sided Multiple Comparison Analysis Dwass, Steel, Critchlow-Fligner Method Variable: x g Wilcoxon Z DSCF Value Pr > DSCF A vs. B -1.1847 1.6754 0.4623 A vs. C -1.7770 2.5131 0.1773 B vs. C -1.5492 2.1909 0.2680
+log-words Output Added: ------------- Name: DSCF Path: Npar1way.x.DSCF -------------
+svg-count 0
