@@ -57,6 +57,7 @@ pub fn execute(cx: proc.ProcCtx, out: *std.ArrayList(u8), spec: Spec) diag.Error
         for (spec.responses) |response| {
             const d = try design.build(cx, spec, group, response);
             if (spec.absorb.len > 0) {
+                if (spec.hov != null) return proc.failGap(cx.diags, 0, "PROC GLM: MEANS with ABSORB is not implemented", .{});
                 if (spec.random != null) return proc.failGap(cx.diags, 0, "PROC GLM: RANDOM with ABSORB is not implemented", .{});
                 if (@hasField(Spec, "lsmeans")) if (spec.lsmeans.len > 0) return cx.diags.fail(error.ParseError, 0, "PROC GLM: LSMEANS is unavailable with ABSORB", .{});
                 var absorbed = try @import("glm_absorb.zig").fit(cx, spec, d);
@@ -73,9 +74,11 @@ pub fn execute(cx: proc.ProcCtx, out: *std.ArrayList(u8), spec: Spec) diag.Error
             }
             var result = try fitDesign(cx, spec, d);
             defer result.deinit(cx.arena);
+            const hov = if (spec.hov != null) try @import("glm_hov.zig").compute(cx, spec, d) else null;
             const random = if (spec.random != null) try @import("glm_random.zig").compute(cx, spec, d, result) else null;
             const estimates = try @import("glm_estimate.zig").computeAll(cx, spec, d, result.model.fit.mse, result.model.fit.df_error);
             if (!spec.noprint) try @import("glm_render.zig").renderPrepared(cx, out, spec, d, result, estimates);
+            if (hov) |values| try @import("glm_hov.zig").render(cx, out, spec, d, values);
             if (random) |values| try @import("glm_random.zig").render(cx, out, spec, d, result, values);
             try @import("glm_lsmeans.zig").execute(cx, out, spec, d, result.model.fit.mse, result.model.fit.df_error);
             try @import("glm_plots.zig").emit(cx, spec, d, result, graph_order);

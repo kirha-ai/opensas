@@ -11,6 +11,7 @@ pub const Order = @import("class_levels.zig").Order;
 pub const Effect = struct { name: []const u8, variables: []const usize };
 pub const Spec = struct {
     input: proc.ProcInput,
+    hov: ?@import("glm_hov.zig").Request = null,
     random: ?@import("glm_random.zig").Request = null,
     estimates: []const @import("glm_estimate.zig").Request = &.{},
     lsmeans: []const @import("glm_lsmeans.zig").Request = &.{},
@@ -224,6 +225,10 @@ pub fn parse(cx: proc.ProcCtx, tokens: []const lex.Token) diag.Error!Spec {
                     j += 1;
                 } else if (kw(tokens, j, "alpha")) result.alpha = try real(cx, tokens[0..end], &j) else if (kw(tokens, j, "singular")) result.singular = try real(cx, tokens[0..end], &j) else return unsupported(cx, tokens[j], &.{ "solution", "e", "e1", "e2", "e3", "e4", "clparm", "cli", "clm", "p", "r", "nouni", "intercept", "tolerance", "inverse", "xpx", "effectsize" });
             }
+        } else if (kw(tokens, i, "means")) {
+            if (!model_seen) return cx.diags.fail(error.ParseError, tokens[i].line, "PROC GLM: MEANS must follow MODEL", .{});
+            if (result.hov != null) return proc.failGap(cx.diags, tokens[i].line, "PROC GLM: repeated MEANS statements are not implemented", .{});
+            result.hov = try @import("glm_hov.zig").read(cx, tokens[i..end], result);
         } else if (kw(tokens, i, "random")) {
             if (!model_seen) return cx.diags.fail(error.ParseError, tokens[i].line, "PROC GLM: RANDOM must follow MODEL", .{});
             if (result.random != null) return proc.failGap(cx.diags, tokens[i].line, "PROC GLM: repeated RANDOM declarations are not implemented", .{});
