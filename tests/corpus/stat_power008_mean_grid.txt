@@ -1,0 +1,4 @@
+# corpus assertions
+words The POWER Procedure One-Sample t Test for Mean Fixed Scenario Elements Distribution Normal Method Exact Total Sample Size 150 Number of Sides 2 Null Mean 0 Alpha 0.05 Computed Power Std Index Mean Dev Power 1 5 30 0.527 2 5 50 0.229 3 10 30 0.982 4 10 50 0.682
+stderr-count 0 ERROR:
+stderr-count 0 WARNING:
