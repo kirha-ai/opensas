@@ -178,7 +178,7 @@ fn axes(a: A, out: *std.ArrayList(u8), f: Frame, xlabel: []const u8, ylabel: []c
         const y = f.ymin + t * (f.ymax - f.ymin);
         try out.print(a, "<path d=\"M{d} {d}V{d} M{d} {d}H{d}\" stroke=\"#e4e9ef\" fill=\"none\"/><text x=\"{d}\" y=\"{d}\" text-anchor=\"middle\">{s}</text><text x=\"{d}\" y=\"{d}\" text-anchor=\"end\">{s}</text>", .{ f.x(x), f.top, f.bottom, f.left, f.y(y), f.right, f.x(x), f.bottom + 18, try xml(a, try svg.label(a, x)), f.left - 8, f.y(y) + 4, try xml(a, try svg.label(a, y)) });
     }
-    try out.print(a, "<text x=\"{d}\" y=\"{d}\" text-anchor=\"middle\">{s}</text><text transform=\"translate({d} {d}) rotate(-90)\" text-anchor=\"middle\">{s}</text>", .{ (f.left + f.right) / 2, f.bottom + 40, xlabel, f.left - 48, (f.top + f.bottom) / 2, ylabel });
+    try out.print(a, "<text x=\"{d}\" y=\"{d}\" text-anchor=\"middle\">{s}</text><text transform=\"translate({d} {d}) rotate(-90)\" text-anchor=\"middle\">{s}</text>", .{ (f.left + f.right) / 2, f.bottom + 40, xlabel, f.left - 68, (f.top + f.bottom) / 2, ylabel });
 }
 fn chart(a: A, out: *std.ArrayList(u8), s: data.Series, part: Part, ox: f64, oy: f64, width: f64, height: f64, obsno: bool) !void {
     var xmin = std.math.inf(f64);
@@ -218,7 +218,7 @@ fn chart(a: A, out: *std.ArrayList(u8), s: data.Series, part: Part, ox: f64, oy:
     }
     const xr = range(xmin, xmax);
     const yr = if (part == .histogram) [2]f64{ 0, @max(1, ymax * 1.12) } else range(ymin, ymax);
-    const f = Frame{ .left = ox + 66, .top = oy + 30, .right = ox + width - 20, .bottom = oy + height - 55, .xmin = xr[0], .xmax = xr[1], .ymin = yr[0], .ymax = yr[1] };
+    const f = Frame{ .left = ox + 88, .top = oy + 30, .right = ox + width - 20, .bottom = oy + height - 55, .xmin = xr[0], .xmax = xr[1], .ymin = yr[0], .ymax = yr[1] };
     if (!std.math.isFinite(f.xmax - f.xmin) or !std.math.isFinite(f.ymax - f.ymin)) return error.InvalidRange;
     try out.print(a, "<g data-panel=\"{s}\" data-xmin=\"{d}\" data-xmax=\"{d}\" data-ymin=\"{d}\" data-ymax=\"{d}\" data-left=\"{d}\" data-right=\"{d}\" data-top=\"{d}\" data-bottom=\"{d}\">", .{ @tagName(part), f.xmin, f.xmax, f.ymin, f.ymax, f.left, f.right, f.top, f.bottom });
     try axes(a, out, f, switch (part) {
