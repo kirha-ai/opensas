@@ -168,6 +168,7 @@ fn executePrepared(cx: proc.ProcCtx, out: *std.ArrayList(u8), spec: Spec, prepar
                 for (ipc_points) |point| try builder.appendIpc(cx.arena, model, group.rep, fit, point);
                 if (ridge_path) |path| for (path.points) |point| try builder.appendRidge(cx.arena, model, group.rep, fit, point);
             }
+            try @import("code_reg.zig").publish(cx, out, spec, model, fit);
             const stats = fit.modelStats(model.intercept);
             const ts = try cx.arena.alloc(f64, input.columns);
             const ps = try cx.arena.alloc(f64, input.columns);
@@ -403,7 +404,7 @@ fn parameterName(spec: Spec, model: Model, i: usize) []const u8 {
 }
 /// Keep the CLI continuation admission list beside its owning interpreter.
 pub fn continuationKeyword(word: []const u8) bool {
-    inline for (.{ "add", "delete", "print", "refit", "run", "quit", "model", "mtest", "output", "paint", "plot", "restrict", "reweight", "test" }) |name| {
+    inline for (.{ "add", "delete", "print", "refit", "run", "quit", "model", "mtest", "output", "paint", "plot", "restrict", "reweight", "test", "code" }) |name| {
         if (std.ascii.eqlIgnoreCase(word, name)) return true;
     }
     return false;
@@ -436,6 +437,8 @@ pub const Session = struct {
         while (first > 0 and self.spec.models[first - 1].statement_index == group) first -= 1;
         self.other_models = self.other_models or first > 0;
         var selected = self.spec;
+        // CODE is a one-time initial-statement side effect, not a PRINT action.
+        selected.code = null;
         selected.models = self.spec.models[first..];
         return selected;
     }

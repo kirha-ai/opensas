@@ -1,0 +1,6 @@
+# corpus assertions
+# Exact model coefficients and mean are independently specified in the input.
+words p= 3.000 r= 7.000 warn=[ ] p= 8.000 r= 0.000 warn=[ ] p= 4.500 r= -4.500 warn=[M ] p= 4.500 r= -4.500 warn=[M ]
+stderr-count 0 ERROR
+stderr-count 0 WARNING
+stderr-count 0 UNSUPPORTED

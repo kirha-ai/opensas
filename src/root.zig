@@ -33,6 +33,8 @@ pub const macro = @import("macro.zig");
 pub const sql = @import("sql.zig");
 
 test {
+    _ = @import("stat/code.zig");
+    _ = @import("stat/code_reg.zig");
     _ = @import("stat/mixed_lsmeans.zig");
     _ = @import("stat/mixed_lsmeans_tests.zig");
     _ = @import("stat/glm_lsmeans.zig");

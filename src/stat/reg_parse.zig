@@ -26,6 +26,7 @@ pub const Model = struct {
     selection_output: @import("reg_selection.zig").Output = .{},
 };
 pub const Spec = struct {
+    code: ?@import("code.zig").Options = null,
     ds: *Dataset,
     models: []const Model,
     mtests: []const @import("reg_mtest.zig").Spec = &.{},
@@ -213,6 +214,7 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
     var freq: ?usize = null;
     var weight: ?usize = null;
     var ids: []const usize = &.{};
+    var code: ?@import("code.zig").Options = null;
     i += 1;
     var ended = false;
     var model_number: usize = 0;
@@ -310,6 +312,9 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
             try appendUnique(cx.arena, &output_variables, dependents);
             try appendUnique(cx.arena, &required, dependents);
             try appendUnique(cx.arena, &required, regressors);
+        } else if (kw(t, i, "code")) {
+            if (code != null or models.items.len != 1) return proc.failGap(cx.diags, t[i].line, "PROC REG CODE requires one preceding MODEL and one CODE statement", .{});
+            code = try @import("code.zig").parse(cx, t[i + 1 .. end]);
         } else if (kw(t, i, "test")) {
             if (models.items.len == 0) return cx.diags.fail(error.ParseError, t[i].line, "PROC REG TEST requires a preceding MODEL", .{});
             const last = models.items[models.items.len - 1];
@@ -403,7 +408,8 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
         if (model.restrictions.len > 0 or model.selection.method != .none or ridge.len > 0 or pcomit.len > 0) return proc.failGap(cx.diags, 0, "PROC REG: MTEST with RESTRICT, selection, RIDGE, or PCOMIT is not implemented", .{});
     };
     const by = try by_statements.resolve(cx.arena, ds, cx.diags);
+    if (code != null and (by.names.len > 0 or models.items.len != 1 or ridge.len > 0 or pcomit.len > 0 or models.items[0].selection.method != .none)) return proc.failGap(cx.diags, code.?.line, "PROC REG CODE for BY, multiple models, selection, RIDGE or IPC is not implemented", .{});
     const bcols = try cx.arena.alloc(usize, by.names.len);
     for (by.names, 0..) |n, j| bcols[j] = ds.indexOf(n).?;
-    return .{ .ds = ds, .models = models.items, .mtests = mtests.items, .tests = tests.items, .required = required.items, .by = bcols, .descending = by.desc, .notsorted = by.notsorted, .freq = freq, .weight = weight, .ids = ids, .noprint = noprint, .outest = outest, .covout = covout, .output_variables = output_variables.items, .ridge = ridge, .pcomit = pcomit, .outvif = outvif, .ridge_plots = ridge_plots };
+    return .{ .code = code, .ds = ds, .models = models.items, .mtests = mtests.items, .tests = tests.items, .required = required.items, .by = bcols, .descending = by.desc, .notsorted = by.notsorted, .freq = freq, .weight = weight, .ids = ids, .noprint = noprint, .outest = outest, .covout = covout, .output_variables = output_variables.items, .ridge = ridge, .pcomit = pcomit, .outvif = outvif, .ridge_plots = ridge_plots };
 }

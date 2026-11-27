@@ -404,14 +404,14 @@ fn runExpanded(ctx: *StepCtx, text: []const u8, allow_anon: bool) sas.diag.Error
     if (ctx.io) |iov| try loadLibInputs(a, iov, ctx.lib, ctx.librefs.items, toks, ctx.loaded_ro, ctx.damaged, ctx.diags);
     if (ctx.glm_session) |*session| {
         if (toks.len > 0 and toks[0].tag == .name and sas.glm.continuationKeyword(toks[0].text)) {
-            const pcx: sas.proc.ProcCtx = .{ .arena = a, .lib = ctx.lib, .diags = ctx.diags, .capture = &ods_capture, .listing = &ods_listing, .graphics = native_graphics_session };
+            const pcx: sas.proc.ProcCtx = .{ .resolve_fileref = &findFileref, .arena = a, .lib = ctx.lib, .diags = ctx.diags, .capture = &ods_capture, .listing = &ods_listing, .graphics = native_graphics_session };
             if (!try session.continuation(pcx, toks)) ctx.glm_session = null;
             return;
         }
     }
     if (ctx.reg_session) |*session| {
         if (sas.reg.continuationStart(toks)) {
-            const pcx: sas.proc.ProcCtx = .{ .arena = a, .lib = ctx.lib, .diags = ctx.diags, .capture = &ods_capture, .listing = &ods_listing, .graphics = native_graphics_session };
+            const pcx: sas.proc.ProcCtx = .{ .resolve_fileref = &findFileref, .arena = a, .lib = ctx.lib, .diags = ctx.diags, .capture = &ods_capture, .listing = &ods_listing, .graphics = native_graphics_session };
             var discard: std.ArrayList(u8) = .empty;
             const output = if (ods_listing.accepts("reg")) ctx.out else &discard;
             if (!try session.continuation(pcx, output, toks)) ctx.reg_session = null;
@@ -2916,7 +2916,7 @@ fn runProc(a: std.mem.Allocator, listing_out: *std.ArrayList(u8), lib: *sas.exec
     const visible = if (routed) ods_listing.open else ods_listing.accepts(proc);
     const out = if (visible) listing_out else &discard;
     const graph_sink = if (native_graphics_session) |graphics| graphics.sink() else null;
-    const pcx: sas.proc.ProcCtx = .{ .arena = a, .lib = lib, .diags = diags, .capture = &ods_capture, .listing = &ods_listing, .listing_titles = if (eqi(proc, "freq")) g else null, .univariate_plot_sink = graph_sink, .graphics = if (graph_sink != null) native_graphics_session else null, .graph_title = g.titles[0] };
+    const pcx: sas.proc.ProcCtx = .{ .resolve_fileref = &findFileref, .arena = a, .lib = lib, .diags = diags, .capture = &ods_capture, .listing = &ods_listing, .listing_titles = if (eqi(proc, "freq")) g else null, .univariate_plot_sink = graph_sink, .graphics = if (graph_sink != null) native_graphics_session else null, .graph_title = g.titles[0] };
     if (native_graphics_session) |graphics| graphics.clear();
     // TITLE/FOOTNOTE print with the report procs (a listing), not with SORT or
     // TRANSPOSE (which produce a dataset, no page). Titles atop, footnotes below.

@@ -51,7 +51,7 @@ pub const OdsListing = @import("ods_listing.zig").Listing;
 pub const native_graphics = @import("stat/graphics_svg.zig");
 pub const univariate_plot = @import("stat/univ_plot_data.zig");
 pub const univariate_edf = @import("stat/univ_edf_inference.zig");
-pub const ProcCtx = struct { arena: std.mem.Allocator, lib: *Library, diags: *diag.Diagnostics, capture: ?*ods.Capture = null, listing: ?*const OdsListing = null, listing_titles: ?*const @import("sql.zig").Titles = null, univariate_plot_sink: ?univariate_plot.Sink = null, graphics: ?*native_graphics.Session = null, graph_title: ?[]const u8 = null, univariate_edf_sampler: ?univariate_edf.AccountedSimulator = null };
+pub const ProcCtx = struct { resolve_fileref: ?*const fn ([]const u8) ?[]const u8 = null, arena: std.mem.Allocator, lib: *Library, diags: *diag.Diagnostics, capture: ?*ods.Capture = null, listing: ?*const OdsListing = null, listing_titles: ?*const @import("sql.zig").Titles = null, univariate_plot_sink: ?univariate_plot.Sink = null, graphics: ?*native_graphics.Session = null, graph_title: ?[]const u8 = null, univariate_edf_sampler: ?univariate_edf.AccountedSimulator = null };
 
 const SortKey = struct { idx: usize, desc: bool };
 
