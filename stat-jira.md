@@ -10392,13 +10392,19 @@ Source: S154, Chapter 90, `The NPAR1WAY Procedure`, PDF pp. 7205–7282. Tasks i
 
 <a id="stat-npar1way-006"></a>
 
-### [DOING @dev6] STAT-NPAR1WAY-006 — NPAR1WAY — EXACT / Ratio Mean Deviations (RMD) Exact Test / Exact Tests
+### [PARK] STAT-NPAR1WAY-006 — NPAR1WAY — EXACT / Ratio Mean Deviations (RMD) Exact Test / Exact Tests
 
 - Source: S154 / Chapter 90 / `EXACT Statement` (PDF pp. 7225–7229); S154 / Chapter 90 / `Ratio Mean Deviations (RMD) Exact Test` (PDF pp. 7246–7247); S154 / Chapter 90 / `Exact Tests` (PDF pp. 7249–7253).
 - Scope: Implement EXACT; Ratio Mean Deviations (RMD) Exact Test; Exact Tests. This ticket owns the feature's options, defaults, computation, and results as an extension of the basic computational path; the chapter's output tickets handle ODS descriptors and file presentation.
 - Dependencies: [STAT-NPAR1WAY-001](#stat-npar1way-001), [STAT-NPAR1WAY-002](#stat-npar1way-002).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-NPAR1WAY-006/](tests/STAT15.4-oracle/STAT-NPAR1WAY-006/).
 - Acceptance criteria: For EXACT / Ratio Mean Deviations (RMD) Exact Test / Exact Tests, independently enumerate probability masses and the relevant tails/intervals for small samples; cover ties, zero counts, degenerate boundaries, and exact-method applicability restrictions.
+
+- TIMEBOX FAILURE / frozen handoff (2026-11-27, dev6): assigned 17:52:47Z, deadline 18:37:47Z. Coordinator enforced stop at 19:54:47Z; read-only state verification at 19:57:47Z found the attempt 125 wall-clock minutes after assignment, 80 minutes past deadline. No implementation completion occurred before the deadline. Work during this attempt was reference reading and deterministic-method design consideration only; **no source/test feature edits were made at any time**. Do not count this as a completed or compliant 45-minute implementation attempt, and do not reset its clock.
+- Retained source: `/Users/thomas/kirha/opensas-dev6`, branch `codex/stat-b4-npar006-dev6`, unchanged code/base `571c2dc4332bf57a72f4fe368e2c7935c311ca48`. Worktree was clean before this tracker-only handoff. All older branches/worktrees and evidence remain intact; no oracle files were modified or removed.
+- Original replay: unchanged `documented_feature.sas` using the retained installed CLI, direct exit **2**, zero output words, diagnostic `ERROR(expanded L14): PROC NPAR1WAY: EXACT savage is not implemented`; SAS reference exit **0** and its full Savage multisample table/exact p=.0445 are unmet. This was not a fresh exact-SHA build/gate receipt for the current source; no gate/supplemental/absence success is claimed for this attempt.
+- Permanent mapping/coverage: **no new behavior was implemented and no new passing original-case mapping exists**. Previously implemented exact Wilcoxon and HL behavior remains covered by the earlier tickets' self-contained corpus/Zig tests (`persist_npar_wilcoxon_ties`, `persist_npar_hl`, `ranks.zig`, `npar1way_hl.zig`); they do not satisfy this original exact Savage test. The failed original has not been copied into a passing golden.
+- Remaining acceptance: deterministic exact Savage/multisample score tails and other EXACT families/options, RMD conditional deviation distributions and applicability/degenerate handling, exact KS, and validated Monte Carlo algorithms/streams. A future separately authorized attempt should first implement a bounded deterministic conditional calculation and independently verify every probability mass/tail for the 15-observation, three-class original (fixed margins); keep exact/asymptotic inference distinct and reject unvalidated resource/precision domains explicitly. MC remains unsupported until both its table-generation algorithm and fixed-seed stream are verified. This folder is not deletion-ready; this attempt has nothing to integrate beyond this truthful tracker handoff.
 
 <a id="stat-npar1way-007"></a>
 
