@@ -12,7 +12,23 @@ Explicit user resume. Confirmed working branch `feat/stat/batch-4`, base `31356c
 - dev6: STAT-COMMON-017; `/Users/thomas/kirha/opensas-dev6`; branch `codex/stat-b4-dev6`; assigned 2026-11-27T13:42:13+00:00; implementation deadline 2026-11-27T14:27:13+00:00. Original README/cases and cited physical PDF pages required before edits.
 - dev7: STAT-COMMON-018; `/Users/thomas/kirha/opensas-dev7`; branch `codex/stat-b4-dev7`; assigned 2026-11-27T13:42:13+00:00; implementation deadline 2026-11-27T14:27:13+00:00. Original README/cases and cited physical PDF pages required before edits.
 
-### Dependency queue for next available dev
+### Batch 1 integration and batch 2 ownership
+
+All seven first attempts finished feature work before their original deadline. Code batch `02ae9b802408ec387b02e9d34083531df03f2402` is integrated; final oracle-absent gate/install/separate supplemental is in progress. COMMON-017 partial was already verified absent-oracle at `a0829c32` (gate direct 0: 1846 tests, 2344 corpus, 11 programs; install 0; supplemental 0: 1113), restored, and pushed. FREQ-009 and COMMON-018 are in coordinator acceptance/push queue, not active dev assignments. REG-005, GLM-005, TTEST-010, LOGISTIC-004 and COMMON-017 remain PARK with durable partial tests.
+
+The runtime admitted seven devs. Simultaneous full Zig builds exhausted temporary disk space; failed infrastructure runs are not green receipts. Only an inactive disposable dev3 compiler cache (3.6GB) was removed, preserving source/history/evidence. Heavy builds are now serialized; final batch validation may cover all included tickets. Owned caffeinate PID67392 remains active.
+
+- dev1: STAT-REG-007; same retained `opensas-dev1`; new branch `codex/stat-b4b-dev1`; assigned 2026-11-27T14:02:39+00:00; deadline 2026-11-27T14:47:39+00:00.
+- dev2: STAT-GLM-006; same retained `opensas-dev2`; new branch `codex/stat-b4b-dev2`; assigned 2026-11-27T14:02:39+00:00; deadline 2026-11-27T14:47:39+00:00.
+- dev3: STAT-NPAR1WAY-002; same retained `opensas-dev3`; new branch `codex/stat-b4b-dev3`; assigned 2026-11-27T14:02:39+00:00; deadline 2026-11-27T14:47:39+00:00.
+- dev4: STAT-LOGISTIC-007; same retained `opensas-dev4`; new branch `codex/stat-b4b-dev4`; assigned 2026-11-27T14:02:39+00:00; deadline 2026-11-27T14:47:39+00:00.
+- dev5: STAT-FREQ-010; same retained `opensas-dev5`; new branch `codex/stat-b4b-dev5`; assigned 2026-11-27T14:02:39+00:00; deadline 2026-11-27T14:47:39+00:00.
+- dev6: STAT-NPAR1WAY-001; same retained `opensas-dev6`; new branch `codex/stat-b4b-dev6`; assigned 2026-11-27T14:02:39+00:00; deadline 2026-11-27T14:47:39+00:00.
+- dev7: STAT-POWER-001; same retained `opensas-dev7`; new branch `codex/stat-b4b-dev7`; assigned 2026-11-27T14:02:39+00:00; deadline 2026-11-27T14:47:39+00:00.
+
+Dependency contracts: NPAR1WAY-001 owns parser/input/BY/FREQ/dispatch and explicit Wilcoxon integration; NPAR1WAY-002 owns numerical default analyses over filtered values/group indices/frequencies, sharing the tested ranks interface. COMMON-017/NPAR1WAY-002 acceptance cycle is broken only by this concrete tested computational interface; full originals remain required. LOGISTIC-007 may build on the existing binary fit/design and newly tested ordered-response map while LOGISTIC-002/004 await ordinal links; this is not a claim that pending CLASS/EFFECT or ordinal options work. Dev4 must preserve unsupported forms explicitly. No backlog additions.
+
+### Earlier dependency queue
 
 - `STAT-NPAR1WAY-001`, then `STAT-NPAR1WAY-002`: COMMON-017 original requires NPAR1WAY integration. Shared rank/tie/exact/asymptotic interfaces are under dev6; these existing tickets remain TODO, not phantom assigned workers.
 - `STAT-POWER-001` / `STAT-POWER-002`: dev7 is establishing the COMMON-018 solver plus a minimal executable two-sample interface; remaining procedure scope stays with these existing tickets.
@@ -457,7 +473,7 @@ Complete prerequisite shared contracts first, then each PROC's data input, model
 
 <a id="stat-common-017"></a>
 
-### [DOING @dev6] STAT-COMMON-017 — Ranks, ties, and nonparametric test interfaces
+### [PARK] STAT-COMMON-017 — Ranks, ties, and nonparametric test interfaces
 
 - Source: S154 / Chapter 17 / `Introduction to Nonparametric Analysis` (PDF pp. 295–302).
 - Scope: Implement shared rank, tie-group, and statistic interfaces for nonparametric procedures; distinguish exact distributions from asymptotic approximations.
@@ -471,7 +487,7 @@ Complete prerequisite shared contracts first, then each PROC's data input, model
 
 <a id="stat-common-018"></a>
 
-### [DOING @dev7] STAT-COMMON-018 — Power and sample size inversion interface
+### [DOING @coordinator] STAT-COMMON-018 — Power and sample size inversion interface
 
 - Source: S154 / Chapter 19 / `Computing Power and Sample Size` (PDF pp. 395–396); S154 / Chapter 19 / `Hypothesis Testing, Power, and Confidence Interval Precision` (PDF pp. 394–395).
 - Scope: Implement shared solver contracts for power, sample size, and interval precision; procedure tickets specify distributions, rounding, solvable ranges, and design parameters for each test.
@@ -3780,7 +3796,7 @@ Source: S154, Chapter 47, `The FREQ Procedure`, PDF pp. 3069–3290. Tasks in th
 <a id="stat-freq-009"></a>
 
 
-### [DOING @dev3] STAT-FREQ-009 — FREQ — Risks and Risk Differences
+### [DOING @coordinator] STAT-FREQ-009 — FREQ — Risks and Risk Differences
 
 - Source: S154 / Chapter 47 / `Risks and Risk Differences` (PDF pp. 3188–3199).
 - Scope: Implement Risks and Risk Differences. This ticket owns the feature's options, defaults, computation, and results as an extension of the basic computational path; the chapter's output tickets handle ODS descriptors and file presentation.
@@ -3796,7 +3812,7 @@ Source: S154, Chapter 47, `The FREQ Procedure`, PDF pp. 3069–3290. Tasks in th
 
 <a id="stat-freq-010"></a>
 
-### [TODO] STAT-FREQ-010 — FREQ — Common Risk Difference
+### [DOING @dev5] STAT-FREQ-010 — FREQ — Common Risk Difference
 
 - Source: S154 / Chapter 47 / `Common Risk Difference` (PDF pp. 3199–3203).
 - Scope: Implement Common Risk Difference. This ticket owns the feature's options, defaults, computation, and results as an extension of the basic computational path; the chapter's output tickets handle ODS descriptors and file presentation.
@@ -4930,7 +4946,7 @@ Source: S154, Chapter 53, `The GLM Procedure`, PDF pp. 4043–4230. Tasks in thi
 <a id="stat-glm-006"></a>
 
 
-### [TODO] STAT-GLM-006 — GLM — Effect Size Measures for F Tests in GLM / Absorption / Specification of ESTIMATE Expressions
+### [DOING @dev2] STAT-GLM-006 — GLM — Effect Size Measures for F Tests in GLM / Absorption / Specification of ESTIMATE Expressions
 
 - Source: S154 / Chapter 53 / `Effect Size Measures for F Tests in GLM` (PDF pp. 4120–4124); S154 / Chapter 53 / `Absorption` (PDF pp. 4124–4127); S154 / Chapter 53 / `Specification of ESTIMATE Expressions` (PDF pp. 4127–4128).
 - Scope: Implement Effect Size Measures for F Tests in GLM; Absorption; Specification of ESTIMATE Expressions. This ticket owns the feature's options, defaults, computation, and results as an extension of the basic computational path; the chapter's output tickets handle ODS descriptors and file presentation.
@@ -8220,7 +8236,7 @@ Source: S154, Chapter 79, `The LOGISTIC Procedure`, PDF pp. 5823–6080. Tasks i
 
 <a id="stat-logistic-004"></a>
 
-### [DOING @dev4] STAT-LOGISTIC-004 — LOGISTIC — Response Level Ordering
+### [PARK] STAT-LOGISTIC-004 — LOGISTIC — Response Level Ordering
 
 - Source: S154 / Chapter 79 / `Response Level Ordering` (PDF pp. 5905–5907).
 - Scope: Implement Response Level Ordering. Implement the syntax and model semantics allowed by this procedure, using shared effect/parameterization support only for forms documented as supported.
@@ -8256,7 +8272,7 @@ Source: S154, Chapter 79, `The LOGISTIC Procedure`, PDF pp. 5823–6080. Tasks i
 
 <a id="stat-logistic-007"></a>
 
-### [TODO] STAT-LOGISTIC-007 — LOGISTIC — Link Functions and the Corresponding Distributions / Determining Observations for Likelihood Contributions / Score Statistics and Tests
+### [DOING @dev4] STAT-LOGISTIC-007 — LOGISTIC — Link Functions and the Corresponding Distributions / Determining Observations for Likelihood Contributions / Score Statistics and Tests
 
 - Source: S154 / Chapter 79 / `Link Functions and the Corresponding Distributions` (PDF pp. 5907–5908); S154 / Chapter 79 / `Determining Observations for Likelihood Contributions` (PDF pp. 5908–5909); S154 / Chapter 79 / `Score Statistics and Tests` (PDF pp. 5918–5920).
 - Scope: Implement Link Functions and the Corresponding Distributions; Determining Observations for Likelihood Contributions; Score Statistics and Tests. This ticket owns the feature's options, defaults, computation, and results as an extension of the basic computational path; the chapter's output tickets handle ODS descriptors and file presentation.
@@ -9802,7 +9818,7 @@ Source: S154, Chapter 90, `The NPAR1WAY Procedure`, PDF pp. 7205–7282. Tasks i
 
 <a id="stat-npar1way-001"></a>
 
-### [TODO] STAT-NPAR1WAY-001 — NPAR1WAY — Data input, variable roles, and basic options
+### [DOING @dev6] STAT-NPAR1WAY-001 — NPAR1WAY — Data input, variable roles, and basic options
 
 - Source: S154 / Chapter 90 / `PROC NPAR1WAY Statement` (PDF pp. 7215–7224); S154 / Chapter 90 / `BY Statement` (PDF p. 7224); S154 / Chapter 90 / `CLASS Statement` (PDF pp. 7224–7225); S154 / Chapter 90 / `FREQ Statement` (PDF pp. 7229–7230); S154 / Chapter 90 / `STRATA Statement` (PDF pp. 7233–7235); S154 / Chapter 90 / `VAR Statement` (PDF p. 7235); S154 / Chapter 90 / `Missing Values` (PDF pp. 7235–7236).
 - Scope: Integrate PROC NPAR1WAY declarations, basic options, defaults, and execution boundaries; this ticket establishes parameter objects and result interfaces, while later feature tickets implement model-, algorithm-, and output-specific options. Also implement BY; CLASS; FREQ; STRATA; VAR; Missing Values; apply this procedure's rules for missing values, variable roles, and observation selection.
@@ -9812,7 +9828,7 @@ Source: S154, Chapter 90, `The NPAR1WAY Procedure`, PDF pp. 7205–7282. Tasks i
 
 <a id="stat-npar1way-002"></a>
 
-### [TODO] STAT-NPAR1WAY-002 — NPAR1WAY — Nonparametric location and distribution comparisons for independent samples
+### [DOING @dev3] STAT-NPAR1WAY-002 — NPAR1WAY — Nonparametric location and distribution comparisons for independent samples
 
 - Source: S154 / Chapter 90 / `Getting Started: NPAR1WAY Procedure` (PDF pp. 7206–7215); S154 / Chapter 90 / `Overview: NPAR1WAY Procedure` (PDF p. 7206).
 - Scope: Implement nonparametric location and distribution comparisons for independent samples using the documented default path and establish the computational state needed by later extensions; implement specialized models, methods, and diagnostics outside that default example in their corresponding feature tickets.
@@ -10598,7 +10614,7 @@ Source: S154, Chapter 96, `The POWER Procedure`, PDF pp. 7733–7988. Tasks in t
 
 <a id="stat-power-001"></a>
 
-### [TODO] STAT-POWER-001 — POWER — Data input, variable roles, and basic options
+### [DOING @dev7] STAT-POWER-001 — POWER — Data input, variable roles, and basic options
 
 - Source: S154 / Chapter 96 / `PROC POWER Statement` (PDF pp. 7745–7746).
 - Scope: Integrate PROC POWER declarations, basic options, defaults, and execution boundaries; this ticket establishes parameter objects and result interfaces, while later feature tickets implement model-, algorithm-, and output-specific options. Also implement the default input data contract for this procedure; apply this procedure's rules for missing values, variable roles, and observation selection.
@@ -11744,7 +11760,7 @@ Source: S154, Chapter 105, `The REG Procedure`, PDF pp. 8539–8728. Tasks in th
 <a id="stat-reg-007"></a>
 
 
-### [TODO] STAT-REG-007 — REG — RESTRICT
+### [DOING @dev1] STAT-REG-007 — REG — RESTRICT
 
 - Source: S154 / Chapter 105 / `RESTRICT Statement` (PDF pp. 8593–8595).
 - Scope: Implement RESTRICT. Cover the source suboptions, defaults, and applicability restrictions; implement only this feature group, without extending to languages or runtime environments outside the cited scope.
