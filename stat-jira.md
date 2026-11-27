@@ -12,6 +12,10 @@ Explicit user resume. Confirmed working branch `feat/stat/batch-4`, base `31356c
 - dev6: STAT-COMMON-017; `/Users/thomas/kirha/opensas-dev6`; branch `codex/stat-b4-dev6`; assigned 2026-11-27T13:42:13+00:00; implementation deadline 2026-11-27T14:27:13+00:00. Original README/cases and cited physical PDF pages required before edits.
 - dev7: STAT-COMMON-018; `/Users/thomas/kirha/opensas-dev7`; branch `codex/stat-b4-dev7`; assigned 2026-11-27T13:42:13+00:00; implementation deadline 2026-11-27T14:27:13+00:00. Original README/cases and cited physical PDF pages required before edits.
 
+### Rolling assignment — POWER-002
+
+POWER-001 partial integrated from `bbaef53b`; full final batch gate/supplemental/absence still pending, so its broad original remains PARK. dev7 now owns existing STAT-POWER-002 on retained `opensas-dev7`, new branch `codex/stat-b4c-dev7`, assigned 2026-11-27T14:09:40+00:00, deadline 2026-11-27T14:54:40+00:00. Its POWER-001/COMMON-018 interface is the concrete public Options/Scenario/Result/compute contract and tested exact solver; pending broad analyses/plots are not claimed implemented. No new backlog ticket.
+
 ### Batch 1 final verification and push (2026-11-27)
 
 Exact tested code SHA `02ae9b802408ec387b02e9d34083531df03f2402`: entire `tests/STAT15.4-oracle/` moved outside the checkout for `zig build gate -j2 --summary all` (direct exit 0: **1870/1870 unit tests, 2345/2345 corpus, 11/11 programs**), `zig build install -j2 --summary all` (direct 0), and separate `zig run tests/corpus_runner.zig -- zig-out/bin/opensas tests/corpus/supplemental` (direct 0: **1113/1113**). Finally restoration completed; Git confirms oracle unchanged. No source/corpus/fixture runtime references to the temporary directory remain. `79c56588` changes only this board after tested code and was successfully pushed to `feat/stat/batch-4`; no PR created.
@@ -10648,7 +10652,7 @@ Source: S154, Chapter 96, `The POWER Procedure`, PDF pp. 7733–7988. Tasks in t
 
 <a id="stat-power-002"></a>
 
-### [TODO] STAT-POWER-002 — POWER — Forward and inverse test power and sample size calculations
+### [DOING @dev7] STAT-POWER-002 — POWER — Forward and inverse test power and sample size calculations
 
 - Source: S154 / Chapter 96 / `Getting Started: POWER Procedure` (PDF pp. 7737–7744); S154 / Chapter 96 / `Overview: POWER Procedure` (PDF pp. 7735–7737).
 - Scope: Implement forward and inverse test power and sample size calculations using the documented default path and establish the computational state needed by later extensions; implement specialized models, methods, and diagnostics outside that default example in their corresponding feature tickets.
