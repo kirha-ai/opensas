@@ -4902,7 +4902,7 @@ Source: S154, Chapter 53, `The GLM Procedure`, PDF pp. 4043–4230. Tasks in thi
 <a id="stat-glm-005"></a>
 
 
-### [DOING @dev2] STAT-GLM-005 — GLM — ABSORB / Statistical Assumptions for Using PROC GLM / Using PROC GLM Interactively
+### [PARK] STAT-GLM-005 — GLM — ABSORB / Statistical Assumptions for Using PROC GLM / Using PROC GLM Interactively
 
 - Source: S154 / Chapter 53 / `ABSORB Statement` (PDF p. 4065); S154 / Chapter 53 / `Statistical Assumptions for Using PROC GLM` (PDF pp. 4106–4107); S154 / Chapter 53 / `Using PROC GLM Interactively` (PDF p. 4110).
 - Scope: Implement ABSORB; Statistical Assumptions for Using PROC GLM; Using PROC GLM Interactively. This ticket owns the feature's options, defaults, computation, and results as an extension of the basic computational path; the chapter's output tickets handle ODS descriptors and file presentation.
@@ -4918,6 +4918,8 @@ Source: S154, Chapter 53, `The GLM Procedure`, PDF pp. 4043–4230. Tasks in thi
 - Original replays at starting source: `documented_feature.sas` direct rc0, all 671 tokens equal; `targeted_statements.sas` direct rc0, 108 tokens but numeric mismatches persist (SST 126.2447502 vs SAS 131.6028003; SSE 28.6178240 vs 18.4918468). Existing permanent mapping remains above; no failed seeded output was promoted to a golden.
 - RNG prerequisite refined: [SAS 2018 RNG paper](https://support.sas.com/resources/papers/proceedings18/1810-2018.pdf) specifies default MTHYBRID, using MT1998 initialization except for seeds divisible by 8192. Current `functions.zig` instead uses Python-style init_by_array/res53 and uncached Box–Muller normal. Exact SAS uniform/normal stream evidence is required before replacing it; no RNG code or seeded goldens changed.
 - Validation queue: AST checks exit0; full gate attempt failed with NoSpaceLeft/LLVM resource failures, not accepted as a receipt. Subsequent unit build was stopped by coordinator request (direct rc143) to serialize heavy validation. Required gate, separate supplemental and oracle-absent checks remain pending for the committed source. Raw logs/unchanged-original captures are under ignored `output/stat-glm005/`, never inside the oracle.
+
+- Attempt disposition (2026-11-27): PARK for the remaining seeded input and ABSORB+ESTIMATE acceptance gaps; source implementation finished within the 45-minute deadline and queued for serial integration. On exact source/tree `a739824a`, `/Users/thomas/.local/bin/zig test --stack 67108864 --test-filter GLM --dep build_options -Mroot=src/root.zig -Mbuild_options=/tmp/stat-b4-dev2-cache/c/8c1abc982d9089fb285de5048952325d/options.zig -lc --cache-dir /tmp/stat-b4-dev2-cache` exited 0, **52/52 tests passed**, explicitly including both new Type IV tests (51 and 52). The narrower GLM005 filter discovered only import tests and is not counted as validation. Coordinator will run the final combined gate, separate supplemental and absent-oracle verification before landing/push acceptance; no DONE/deletion-ready claim.
 
 <a id="stat-glm-006"></a>
 
