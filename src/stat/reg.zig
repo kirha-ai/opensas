@@ -56,6 +56,7 @@ pub const FittedModel = struct {
     weights: []const f64,
     count: f64,
     diagnostics: @import("reg_diagnostics.zig").Result,
+    restrictions: []const @import("reg_restrict.zig").Multiplier = &.{},
 };
 
 /// Shared computation for listing execution and silent interactive REFIT.
@@ -79,7 +80,12 @@ fn fitModel(cx: proc.ProcCtx, spec: Spec, model: Model, rows: []const []const Va
 
     var fitted = diagnostics;
     rescaleFrequencyInference(&fitted.fit, @intFromFloat(count));
-    return .{ .model = model, .input = input, .weights = w, .count = count, .diagnostics = fitted };
+    const restrictions = @import("reg_restrict.zig").apply(cx.arena, &fitted.fit, input.x, input.y, w, model.restrictions) catch |err| {
+        if (err == error.OutOfMemory) return err;
+        return proc.failGap(cx.diags, 0, "PROC REG: aliased, redundant, inconsistent, or fully constrained RESTRICT systems are not implemented", .{});
+    };
+    if (restrictions.len > 0 and fitted.fit.sse > (if (model.intercept) fitted.fit.sst else fitted.fit.sst_uncorrected)) return proc.failGap(cx.diags, 0, "PROC REG: restrictions yielding a negative model sum of squares are not implemented", .{});
+    return .{ .model = model, .input = input, .weights = w, .count = count, .diagnostics = fitted, .restrictions = restrictions };
 }
 
 /// Execute a complete initial REG step. Unsupported continuations remain loud.
@@ -214,6 +220,7 @@ fn executePrepared(cx: proc.ProcCtx, out: *std.ArrayList(u8), spec: Spec, prepar
                 .probabilities = ps,
                 .tolerance = tolerances,
                 .vif = vifs,
+                .restrictions = computed.restrictions,
             });
             if (ridge_path) |path| try @import("reg_ridge_plots.zig").execute(cx, spec, model, path, ridge_x, input.y, fit);
             if (!spec.noprint and (model.residual or model.cli or model.clm)) {
@@ -390,6 +397,7 @@ pub const Session = struct {
 
     fn edit(self: *Session, cx: proc.ProcCtx, tokens: []const @import("../lexer.zig").Token, adding: bool) diag.Error!void {
         var selected = try self.current(cx);
+        for (selected.models) |model| if (model.restrictions.len > 0) return proc.failGap(cx.diags, 0, "PROC REG: ADD/DELETE with active restrictions is not implemented", .{});
         const variables = try parsing.columns(cx, selected.ds, tokens[1..], true);
         if (variables.len == 0) return cx.diags.fail(error.ParseError, tokens[0].line, "PROC REG {s} requires variables", .{if (adding) @as([]const u8, "ADD") else "DELETE"});
         for (variables) |ci| {
@@ -587,6 +595,8 @@ test "STAT-COMMON-004 weighted listing identifies weight without changing observ
 }
 
 test {
+    _ = @import("reg_restrict.zig");
+    _ = @import("reg_restrict_tests.zig");
     _ = @import("reg_ipc.zig");
     _ = @import("reg_outest.zig");
     _ = @import("reg_interactive_tests.zig");

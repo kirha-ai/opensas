@@ -21,6 +21,7 @@ pub const Model = struct {
     cli: bool = false,
     tol: bool = false,
     vif: bool = false,
+    restrictions: []const @import("reg_restrict.zig").Constraint = &.{},
 };
 pub const Spec = struct {
     ds: *Dataset,
@@ -266,6 +267,19 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
             try appendUnique(cx.arena, &output_variables, dependents);
             try appendUnique(cx.arena, &required, dependents);
             try appendUnique(cx.arena, &required, regressors);
+        } else if (kw(t, i, "restrict")) {
+            if (models.items.len == 0) return cx.diags.fail(error.ParseError, t[i].line, "PROC REG RESTRICT requires a preceding MODEL", .{});
+            // The guide explicitly ignores restrictions for RIDGE/PCOMIT.
+            if (ridge.len == 0 and pcomit.len == 0) {
+                const last = models.items[models.items.len - 1];
+                const names = try cx.arena.alloc([]const u8, last.regressors.len + @as(usize, if (last.intercept) 1 else 0));
+                if (last.intercept) names[0] = "Intercept";
+                for (last.regressors, 0..) |ci, j| names[j + @as(usize, if (last.intercept) 1 else 0)] = ds.columns.items[ci].name;
+                const restrictions = try @import("reg_restrict.zig").parse(cx, t[i + 1 .. end], names);
+                for (models.items) |*model| if (model.statement_index == last.statement_index) {
+                    model.restrictions = restrictions;
+                };
+            }
         } else if (kw(t, i, "var")) {
             const declared = try columns(cx, ds, t[i + 1 .. end], true);
             try appendUnique(cx.arena, &required, declared);

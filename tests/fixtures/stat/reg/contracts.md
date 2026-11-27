@@ -178,3 +178,39 @@ identities, and test parser/diagnostic boundaries through the captured reporter.
 A cut inside a repeated eigenspace has no unique retained subspace; the current
 producer reports a visible implementation gap instead of choosing an arbitrary
 basis. Ordinary zero-omission and omit-all endpoints do not need a cut choice.
+
+## Equality-restricted least squares
+
+SAS/STAT 15.4 physical pp.8593–8595 specifies linear equations on MODEL
+parameters, replacement of earlier RESTRICT statements, and Lagrange parameter
+inference using a beta distribution. For a full-column-rank weighted design,
+write G=(X'WX)^-1, H=R G R', d=R beta_hat-r. Then
+
+```
+lambda = H^-1 d
+beta_R = beta_hat - G R' lambda
+G_R = G - G R' H^-1 R G
+MSE_R = (y-X beta_R)' W (y-X beta_R)/(N-p+q)
+Cov(beta_R) = MSE_R G_R
+Cov(lambda) = MSE_R H^-1
+```
+
+The tests use the same four-row two-predictor design described above. With
+z=0, beta_R=(10,11/5,0), SSE=38/5, DF_R=2 and MSE_R=19/5.
+G_R=diag(1/4,1/10,0), lambda=-18/5 and SE(lambda)=sqrt(342)/5.
+Releasing a single constraint while retaining the others yields an independent
+one-degree-of-freedom extra sum of squares. Therefore
+lambda_i²/(H^-1)_ii / SSE_R = t_i²/DF_R has a
+Beta(1/2,(DF_R-1)/2) distribution. The test with DF_R=2 uses the independent
+closed-form arcsine CDF of Beta(1/2,1/2), rather than the production beta routine.
+The KKT stationarity equation X'W(y-X beta_R)=R'lambda, every supplied
+constraint, the zero constrained covariance R Cov(beta_R)=0, and the quadratic
+minimum against perturbed feasible vectors are checked separately.
+
+A directly fixed parameter has exact zero covariance; its individual 0/0 t
+statistic is undefined. The producer enforces that mathematical identity rather
+than computing a spurious finite statistic from cancellation remnants. Uniform
+precision weights and FREQ replication have distinct residual degrees of
+freedom; durable tests verify both rescalings. The CLI fixture
+`stat_reg_restrict_linear.sas` asserts the complete coefficient/covariance output
+at five decimal places from these hand-calculated values.

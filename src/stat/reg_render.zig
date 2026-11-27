@@ -29,6 +29,7 @@ pub const Result = struct {
     probabilities: []const f64,
     tolerance: []const f64 = &.{},
     vif: []const f64 = &.{},
+    restrictions: []const @import("reg_restrict.zig").Multiplier = &.{},
 };
 fn number(a: A, x: f64, comptime places: usize) ![]const u8 {
     if (!std.math.isFinite(x)) return ".";
@@ -52,6 +53,7 @@ pub fn render(a: A, out: *std.ArrayList(u8), spec: parse.Spec, model: parse.Mode
     if (spec.ds.columns.items[model.dependent].label) |label| if (label.len > 0) {
         try out.print(a, " {s}", .{label});
     };
+    if (r.restrictions.len > 0) try out.appendSlice(a, "\n\nNOTE: Restrictions have been applied to parameter estimates.");
     try out.print(a, "\n\nNumber of Observations Read {d}\nNumber of Observations Used {d}\n", .{ read, used });
     if (spec.freq != null) try out.print(a, "Sum of Frequencies Used {d}\n", .{r.n});
     if (spec.weight) |ci| try out.print(a, "\nWeight: {s}\n", .{spec.ds.columns.items[ci].name});
@@ -80,6 +82,13 @@ pub fn render(a: A, out: *std.ArrayList(u8), spec: parse.Spec, model: parse.Mode
         if (model.vif) try out.print(a, " {s}", .{if (model.intercept and i == 0) @as([]const u8, "0") else try statistic(a, r.vif[i])});
         try out.append(a, '\n');
     }
+    for (r.restrictions) |restriction| {
+        try out.print(a, "RESTRICT{s} -1 {s} {s} {s} {s}*", .{ if (labels) @as([]const u8, " ") else "", try statistic(a, restriction.estimate), try statistic(a, restriction.se), try number(a, restriction.t, 2), try probability(a, restriction.probability) });
+        if (model.tol) try out.appendSlice(a, " .");
+        if (model.vif) try out.appendSlice(a, " .");
+        try out.append(a, '\n');
+    }
+    if (r.restrictions.len > 0) try out.appendSlice(a, "\n* Probability computed using beta distribution.\n");
 }
 
 pub fn observations(a: A, out: *std.ArrayList(u8), spec: parse.Spec, model: parse.Model, y: []const f64, fit: @import("reg_fit.zig").Fit) !void {
