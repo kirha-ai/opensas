@@ -2,6 +2,10 @@
 
 ## ACTIVE — resumed 2026-11-27
 
+### User-confirmed sleep pause and continuation (2026-11-27)
+
+At about20:00Z the user explicitly clarified that the computer slept for two hours and instructed **continue, do not stop**. The observed two-hour tool-time gap is therefore an authorized pause in active development time, not an automatic new45-minute attempt. Preserve all source/commits and prior clock-audit records; their wall-clock observations remain historical, but expiry conclusions based on counting the sleep are superseded. Current attempts retain all used active time; deadlines are extended by exactly two hours: dev2/3/5/7 ->20:13:14Z, dev1/4/6 ->20:37:47Z. All seven existing assignments continue, no backlog expansion or fresh45-minute reset. Check actualUTC before further source edits; stop featurework at adjusteddeadline. OwnedcaffeinatePID67392 continues; explicitcomputer sleep can still pause this session.
+
 <!-- CURRENT-STAT-OWNERS-BEGIN -->
 ### Current ownership snapshot (2026-11-27)
 
@@ -57,9 +61,9 @@ At exact c78ef7c6ca2b0b65ecf00e697687e906a887fc63, oracle-absent gate direct1:19
 
 FrozenCOMMON031/LOGISTIC008/NPAR010 workis integratedthrough `4b2401a7`, finalbatchchecks pending; mathematical/reference limitsremainexplicit. NPAR010 iscoordinatoracceptancequeued, notactivefeaturework.
 
-- dev1: STAT-REG-010; retained `opensas-dev1`, branch `codex/stat-b4-reg010-dev1`; assigned 2026-11-27T17:52:47+00:00; deadline 2026-11-27T18:37:47+00:00.
-- dev4: STAT-LOGISTIC-005; retained `opensas-dev4`, branch `codex/stat-b4-logistic005-dev4`; assigned 2026-11-27T17:52:47+00:00; deadline 2026-11-27T18:37:47+00:00.
-- dev6: STAT-NPAR1WAY-006; retained `opensas-dev6`, branch `codex/stat-b4-npar006-dev6`; assigned 2026-11-27T17:52:47+00:00; deadline 2026-11-27T18:37:47+00:00.
+- dev1: STAT-REG-010; retained `opensas-dev1`, branch `codex/stat-b4-reg010-dev1`; assigned 2026-11-27T17:52:47+00:00; deadline 2026-11-27T20:37:47+00:00 (adjusted for user-confirmed two-hour computer sleep).
+- dev4: STAT-LOGISTIC-005; retained `opensas-dev4`, branch `codex/stat-b4-logistic005-dev4`; assigned 2026-11-27T17:52:47+00:00; deadline 2026-11-27T20:37:47+00:00 (adjusted for user-confirmed two-hour computer sleep).
+- dev6: STAT-NPAR1WAY-006; retained `opensas-dev6`, branch `codex/stat-b4-npar006-dev6`; assigned 2026-11-27T17:52:47+00:00; deadline 2026-11-27T20:37:47+00:00 (adjusted for user-confirmed two-hour computer sleep).
 
 REG010usesactualsharedlinear-hypothesisandREGconsumercontracts whileCOMMON031listed-procadaptersremainopen. LOGISTIC005usesrealbinary/ordinalfitinterfacesandmustpreservealgorithm/statussemanticsratherthanfitSASroundingbyloosenedbounds. NPAR006usesactualrank/score/EDFinterfaces; unknownseededMonteCarlostreams remainunsupported untilvalidated, no substitutedgenerator.
 
@@ -67,10 +71,10 @@ REG010usesactualsharedlinear-hypothesisandREGconsumercontracts whileCOMMON031lis
 
 Previousimplementationsarefrozenandintegratedthrough `397d4a68`; remainingoriginal/optionscopegapsstayPARKandfinalbatchchecksarestillpending. Newassignmentsuseactualtestedresultinterfaces,notstubprerequisites.
 
-- dev2: STAT-GLM-011; retained `opensas-dev2`, branch `codex/stat-b4-glm011-dev2`; assigned 2026-11-27T17:28:14+00:00; deadline 2026-11-27T18:13:14+00:00.
-- dev3: STAT-MIXED-016; retained `opensas-dev3`, branch `codex/stat-b4-mixed-ods-dev3`; assigned 2026-11-27T17:28:14+00:00; deadline 2026-11-27T18:13:14+00:00.
-- dev5: STAT-MIXED-017; retained `opensas-dev5`, branch `codex/stat-b4-mixed-graphics-dev5`; assigned 2026-11-27T17:28:14+00:00; deadline 2026-11-27T18:13:14+00:00.
-- dev7: STAT-COMMON-026; retained `opensas-dev7`, branch `codex/stat-b4-common026-dev7`; assigned 2026-11-27T17:28:14+00:00; deadline 2026-11-27T18:13:14+00:00.
+- dev2: STAT-GLM-011; retained `opensas-dev2`, branch `codex/stat-b4-glm011-dev2`; assigned 2026-11-27T17:28:14+00:00; deadline 2026-11-27T20:13:14+00:00 (adjusted for user-confirmed two-hour computer sleep).
+- dev3: STAT-MIXED-016; retained `opensas-dev3`, branch `codex/stat-b4-mixed-ods-dev3`; assigned 2026-11-27T17:28:14+00:00; deadline 2026-11-27T20:13:14+00:00 (adjusted for user-confirmed two-hour computer sleep).
+- dev5: STAT-MIXED-017; retained `opensas-dev5`, branch `codex/stat-b4-mixed-graphics-dev5`; assigned 2026-11-27T17:28:14+00:00; deadline 2026-11-27T20:13:14+00:00 (adjusted for user-confirmed two-hour computer sleep).
+- dev7: STAT-COMMON-026; retained `opensas-dev7`, branch `codex/stat-b4-common026-dev7`; assigned 2026-11-27T17:28:14+00:00; deadline 2026-11-27T20:13:14+00:00 (adjusted for user-confirmed two-hour computer sleep).
 
 MIXED016ownsactualdefaulttableobjects/typedcaptures/routing, while017ownsrealplotdata/graphs; unavailablecomputationsmustremainexplicitgapsandnoextraobjectsareinvented. Theycoordinatesharedmixed.zig/main/ODS hooks. GLM011mustconstructGLM-specificsampling/H/E before reusingpureREGmultivariatekernels; do not importREGmissingnessassumptions. COMMON026ownsreusableLSmean/contrastsemanticsandactualGLMconsumercontracts; coordinateGLMsharedfileswithdev2. No destination/CI/gatecompositionchanges ornewbacklog.
 
