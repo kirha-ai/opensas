@@ -26,6 +26,10 @@ Current counts: **48 DONE,19 PARK,7 DOING,1348 TODO**. All temporary reference f
 
 At exact c78ef7c6ca2b0b65ecf00e697687e906a887fc63, oracle-absent gate direct1:1989/1990unit,2361/2361corpus,11/11programs. Single failure is old REG parser-test substring `not implemented` after STEPWISE gained a real NOPRINT/OUTEST path; current explicit unsupported-listing diagnostic has changed. Repair378ce9bc retains all six invalid-syntax assertions, resets the gap flag before the supported-method/unsupported-listing path, and checks the exact captured message plus D-009 rc2. Targeted actual regression8/8 direct0; full rerun pending. Repair worktree `/Users/thomas/kirha/opensas-reg-gate-repair`, branch `codex/stat-reg-gate-repair`, created from c78ef7c6; ongoing REG009 source/evidence untouched. Supplemental not claimed for failedrun; oracle restored. Batchnotpushed.
 
+### Rolling assignment — NPAR graphics
+
+NPAR005 frozenstatistical/graphpartial integrated from `d6a67561`; unchangedoriginal1417tokenspasses, but newEDFaxis fixed3decimal labels can misrepresent sub-.001ranges as0.000. Keep005PARK pendingthatknownpresentationgap; no speculativeformatclaim orclockextension. dev6owns existing STAT-NPAR1WAY-010 on retained `opensas-dev6`, branch `codex/stat-b4-npar010-dev6`, assigned 2026-11-27T16:13:24+00:00, deadline 2026-11-27T16:58:24+00:00. UseactualexistingWilcoxon/FP/EDF data andsharedgraphiccontrols; preserveunsupportedremainingfamilies. Prioritize finite tiny/large-range axislabel/coordinate correctness with durable roundtrip/geometry tests and visualinspection. Missing computational prerequisites remainexplicit, not stubs.
+
 ### Rolling assignments — LOGISTIC fit diagnostics and MIXED contrasts
 
 FrozenROC012/TYPE3partialsthrough `8c8cea7a` are integrated andawaitfinalbatchchecks; nofeatureclockextended. dev4owns existing STAT-LOGISTIC-008 in `codex/stat-b4-logistic008-dev4`; dev7owns existing STAT-MIXED-009 in `codex/stat-b4-mixed-contrasts-dev7`, retainedworktrees. Assigned 2026-11-27T16:01:28+00:00; deadline 2026-11-27T16:46:28+00:00. Diagnosticconsumersreuseactualbinaryfit/probability/weights; contrastsreuseactualfullcodedX/GLSβ/covariance/estimability and explicitdfmetadata. Partialprerequisitesremainopen, neverstubs. Coordinate mixed_fit/entry withPARMSdev3 andREPEATEDdev5 beforeanysharededits.
@@ -10148,7 +10152,7 @@ Source: S154, Chapter 90, `The NPAR1WAY Procedure`, PDF pp. 7205–7282. Tasks i
 
 <a id="stat-npar1way-005"></a>
 
-### [DOING @dev6] STAT-NPAR1WAY-005 — NPAR1WAY — Fligner-Policello Test / Empirical Distribution Function Tests
+### [PARK] STAT-NPAR1WAY-005 — NPAR1WAY — Fligner-Policello Test / Empirical Distribution Function Tests
 
 - Source: S154 / Chapter 90 / `Fligner-Policello Test` (PDF pp. 7244–7246); S154 / Chapter 90 / `Empirical Distribution Function Tests` (PDF pp. 7247–7249).
 - Scope: Implement Fligner-Policello Test; Empirical Distribution Function Tests. This ticket owns the feature's options, defaults, computation, and results as an extension of the basic computational path; the chapter's output tickets handle ODS descriptors and file presentation.
@@ -10206,7 +10210,7 @@ Source: S154, Chapter 90, `The NPAR1WAY Procedure`, PDF pp. 7205–7282. Tasks i
 
 <a id="stat-npar1way-010"></a>
 
-### [TODO] STAT-NPAR1WAY-010 — NPAR1WAY — ODS Graphics
+### [DOING @dev6] STAT-NPAR1WAY-010 — NPAR1WAY — ODS Graphics
 
 - Source: S154 / Chapter 90 / `ODS Graphics` (PDF pp. 7269–7270).
 - Scope: Implement ODS Graphics. Cover all triggering options, content, and naming specified by this section; computational tickets supply numerical values, while other output types are handled separately.
