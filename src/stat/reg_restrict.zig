@@ -12,7 +12,7 @@ pub const Constraint = struct { coefficients: []const f64, rhs: f64 };
 pub const Multiplier = struct { estimate: f64, se: f64, t: f64, probability: f64 };
 const Expression = struct { coefficients: []f64, constant: f64 };
 
-fn expression(cx: proc.ProcCtx, t: []const lex.Token, i: *usize, names: []const []const u8) diag.Error!Expression {
+fn expression(cx: proc.ProcCtx, t: []const lex.Token, i: *usize, names: []const []const u8, statement: []const u8) diag.Error!Expression {
     const coefficients = try cx.arena.alloc(f64, names.len);
     @memset(coefficients, 0);
     var constant: f64 = 0;
@@ -22,47 +22,50 @@ fn expression(cx: proc.ProcCtx, t: []const lex.Token, i: *usize, names: []const 
         if (t[i.*].tag == .minus or t[i.*].tag == .plus) {
             if (t[i.*].tag == .minus) sign = -1;
             i.* += 1;
-        } else if (terms > 0) return cx.diags.fail(error.ParseError, t[i.*].line, "PROC REG RESTRICT: expected + or - between terms", .{});
-        if (i.* == t.len) return cx.diags.fail(error.ParseError, 0, "PROC REG RESTRICT: missing term", .{});
+        } else if (terms > 0) return cx.diags.fail(error.ParseError, t[i.*].line, "PROC REG {s}: expected + or - between terms", .{statement});
+        if (i.* == t.len) return cx.diags.fail(error.ParseError, 0, "PROC REG {s}: missing term", .{statement});
         var coefficient: f64 = sign;
         if (t[i.*].tag == .number) {
             coefficient *= std.fmt.parseFloat(f64, t[i.*].text) catch return error.ParseError;
             i.* += 1;
             if (i.* < t.len and t[i.*].tag == .star) {
                 i.* += 1;
-                if (i.* == t.len or t[i.*].tag != .name) return cx.diags.fail(error.ParseError, 0, "PROC REG RESTRICT: expected a parameter after *", .{});
+                if (i.* == t.len or t[i.*].tag != .name) return cx.diags.fail(error.ParseError, 0, "PROC REG {s}: expected a parameter after *", .{statement});
             } else {
                 constant += coefficient;
                 terms += 1;
                 continue;
             }
         }
-        if (t[i.*].tag != .name) return cx.diags.fail(error.ParseError, t[i.*].line, "PROC REG RESTRICT: expected a linear parameter term", .{});
+        if (t[i.*].tag != .name) return cx.diags.fail(error.ParseError, t[i.*].line, "PROC REG {s}: expected a linear parameter term", .{statement});
         const index = for (names, 0..) |name, j| {
             if (std.ascii.eqlIgnoreCase(name, t[i.*].text)) break j;
-        } else return cx.diags.fail(error.ParseError, t[i.*].line, "PROC REG RESTRICT: {s} is not a parameter in the current MODEL", .{t[i.*].text});
+        } else return cx.diags.fail(error.ParseError, t[i.*].line, "PROC REG {s}: {s} is not a parameter in the current MODEL", .{ statement, t[i.*].text });
         coefficients[index] += coefficient;
         i.* += 1;
         terms += 1;
     }
-    if (terms == 0) return cx.diags.fail(error.ParseError, 0, "PROC REG RESTRICT: empty equation", .{});
-    if (!std.math.isFinite(constant)) return cx.diags.fail(error.ParseError, 0, "PROC REG RESTRICT: nonfinite constant", .{});
-    for (coefficients) |v| if (!std.math.isFinite(v)) return cx.diags.fail(error.ParseError, 0, "PROC REG RESTRICT: nonfinite coefficient", .{});
+    if (terms == 0) return cx.diags.fail(error.ParseError, 0, "PROC REG {s}: empty equation", .{statement});
+    if (!std.math.isFinite(constant)) return cx.diags.fail(error.ParseError, 0, "PROC REG {s}: nonfinite constant", .{statement});
+    for (coefficients) |v| if (!std.math.isFinite(v)) return cx.diags.fail(error.ParseError, 0, "PROC REG {s}: nonfinite coefficient", .{statement});
     return .{ .coefficients = coefficients, .constant = constant };
 }
 
 /// Tokens exclude RESTRICT and its semicolon. A comma starts a new equation;
 /// a=b=c expands to a-b=0 and b-c=0 in the same constraint system.
 pub fn parse(cx: proc.ProcCtx, tokens: []const lex.Token, names: []const []const u8) diag.Error![]const Constraint {
+    return parseFor(cx, tokens, names, "RESTRICT");
+}
+pub fn parseFor(cx: proc.ProcCtx, tokens: []const lex.Token, names: []const []const u8, statement: []const u8) diag.Error![]const Constraint {
     var result: std.ArrayList(Constraint) = .empty;
     var i: usize = 0;
     while (i < tokens.len) {
-        var left = try expression(cx, tokens, &i, names);
+        var left = try expression(cx, tokens, &i, names, statement);
         var equality = false;
         while (i < tokens.len and tokens[i].tag == .eq) {
             equality = true;
             i += 1;
-            const right = try expression(cx, tokens, &i, names);
+            const right = try expression(cx, tokens, &i, names, statement);
             const row = try cx.arena.alloc(f64, names.len);
             for (row, left.coefficients, right.coefficients) |*v, l, r| v.* = l - r;
             try result.append(cx.arena, .{ .coefficients = row, .rhs = right.constant - left.constant });
@@ -70,12 +73,12 @@ pub fn parse(cx: proc.ProcCtx, tokens: []const lex.Token, names: []const []const
         }
         if (!equality) try result.append(cx.arena, .{ .coefficients = left.coefficients, .rhs = -left.constant });
         if (i < tokens.len) {
-            if (tokens[i].tag != .comma) return cx.diags.fail(error.ParseError, tokens[i].line, "PROC REG RESTRICT: expected comma", .{});
+            if (tokens[i].tag != .comma) return cx.diags.fail(error.ParseError, tokens[i].line, "PROC REG {s}: expected comma", .{statement});
             i += 1;
-            if (i == tokens.len) return cx.diags.fail(error.ParseError, 0, "PROC REG RESTRICT: missing equation after comma", .{});
+            if (i == tokens.len) return cx.diags.fail(error.ParseError, 0, "PROC REG {s}: missing equation after comma", .{statement});
         }
     }
-    if (result.items.len == 0) return cx.diags.fail(error.ParseError, 0, "PROC REG RESTRICT requires an equation", .{});
+    if (result.items.len == 0) return cx.diags.fail(error.ParseError, 0, "PROC REG {s} requires an equation", .{statement});
     return result.items;
 }
 

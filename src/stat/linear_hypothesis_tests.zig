@@ -128,11 +128,10 @@ test "COMMON031 REG consumer labels multiple TEST defaults and procedure-specifi
         try std.testing.expectError(error.ParseError, run(a, &lib, &errors, source));
         try std.testing.expectEqual(@as(u8, 1), diag.exitCode(diag.gapHit(), errors.hasErrors()));
     }
-    var errors = diag.Diagnostics.init(a);
-    diag.resetGap();
-    defer diag.resetGap();
-    try std.testing.expectError(error.ParseError, run(a, &lib, &errors, "proc reg data=sample; model y=x z; test x / print; run;"));
-    try std.testing.expectEqual(@as(u8, 2), diag.exitCode(diag.gapHit(), errors.hasErrors()));
+    var print_diagnostics = diag.Diagnostics.init(a);
+    const printed = try run(a, &lib, &print_diagnostics, "proc reg data=sample; model y=x z; test x / print; run;");
+    try std.testing.expect(std.mem.indexOf(u8, printed, "TestCov") != null and std.mem.indexOf(u8, printed, "InvTestCov") != null);
+    try std.testing.expect(!print_diagnostics.hasErrors());
 }
 
 const shared = @import("test_statement.zig");

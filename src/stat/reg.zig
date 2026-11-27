@@ -256,12 +256,7 @@ fn executePrepared(cx: proc.ProcCtx, out: *std.ArrayList(u8), spec: Spec, prepar
             }
             for (spec.tests) |test_spec| {
                 if (test_spec.statement_index != model.statement_index) continue;
-                const result = @import("linear_hypothesis.zig").evaluate(cx.arena, @import("linear_hypothesis.zig").fromRegression(diagnostics, model.singular), test_spec.rows, null) catch |err| {
-                    if (err == error.OutOfMemory) return err;
-                    return proc.failGap(cx.diags, 0, "PROC REG TEST: unsupported hypothesis covariance or rank calculation", .{});
-                };
-                if (result.status != .estimable or result.f == null) return proc.failGap(cx.diags, 0, "PROC REG TEST: nonestimable, inconsistent, zero-rank, or missing-inference hypothesis output is not implemented", .{});
-                if (!spec.noprint) try @import("reg_test.zig").render(cx.arena, out, model.label, spec.ds.columns.items[model.dependent].name, test_spec, result, fit.mse);
+                try @import("reg_test.zig").execute(cx, out, model.label, spec.ds.columns.items[model.dependent].name, test_spec, diagnostics, spec.noprint);
             }
             if (model_index + 1 == spec.models.len or spec.models[model_index + 1].statement_index != model.statement_index) {
                 var first = model_index;
@@ -413,12 +408,20 @@ pub fn continuationKeyword(word: []const u8) bool {
     return false;
 }
 
+/// Admit labels only for the supported interactive TEST form.
+pub fn continuationStart(tokens: []const @import("../lexer.zig").Token) bool {
+    if (tokens.len == 0 or tokens[0].tag != .name) return false;
+    if (continuationKeyword(tokens[0].text)) return true;
+    return tokens.len >= 3 and tokens[1].tag == .colon and tokens[2].tag == .name and std.ascii.eqlIgnoreCase(tokens[2].text, "test");
+}
+
 pub const Session = struct {
     spec: Spec,
     revision: usize = 0,
     fitted: []const FittedModel = &.{},
     base_labels: []const []const u8 = &.{},
     other_models: bool = false,
+    next_test_number: ?usize = null,
 
     /// The current MODEL is the last MODEL statement, including every response
     /// from that statement. Crossproduct/missingness variables remain frozen.
@@ -497,6 +500,26 @@ pub const Session = struct {
         try cx.diags.note(tokens[0].line, "Due to {s} {s} statement, the model label is now {s}.", .{ if (adding) @as([]const u8, "an") else "a", if (adding) @as([]const u8, "ADD") else "DELETE", models[0].label });
     }
 
+    fn testStatement(self: *Session, cx: proc.ProcCtx, out: *std.ArrayList(u8), tokens: []const @import("../lexer.zig").Token, label: ?[]const u8) diag.Error!void {
+        const selected = try self.current(cx);
+        const current_model = selected.models[0];
+        for (selected.models) |model| if (model.restrictions.len > 0 or selected.ridge.len > 0 or selected.pcomit.len > 0) return proc.failGap(cx.diags, 0, "PROC REG: interactive TEST with RESTRICT, RIDGE, or PCOMIT is not implemented", .{});
+        const names = try cx.arena.alloc([]const u8, current_model.regressors.len + @as(usize, if (current_model.intercept) 1 else 0));
+        if (current_model.intercept) names[0] = "Intercept";
+        for (current_model.regressors, 0..) |ci, j| names[j + @as(usize, if (current_model.intercept) 1 else 0)] = selected.ds.columns.items[ci].name;
+        var number = self.next_test_number orelse 1;
+        if (self.next_test_number == null) for (self.spec.tests) |prior| {
+            if (prior.statement_index == current_model.statement_index) number = @max(number, prior.number + 1);
+        };
+        const request = try @import("reg_test.zig").parse(cx, tokens[1..], names, current_model.statement_index, number, label);
+        const fits = try compute(cx, selected);
+        var pending: std.ArrayList(u8) = .empty;
+        for (fits) |fit| try @import("reg_test.zig").execute(cx, &pending, fit.model.label, selected.ds.columns.items[fit.model.dependent].name, request, fit.diagnostics, selected.noprint);
+        try out.appendSlice(cx.arena, pending.items);
+        self.fitted = fits;
+        self.next_test_number = number + 1;
+    }
+
     pub fn continuation(self: *Session, cx: proc.ProcCtx, out: *std.ArrayList(u8), t: []const @import("../lexer.zig").Token) diag.Error!bool {
         const eq = std.ascii.eqlIgnoreCase;
         var i: usize = 0;
@@ -509,6 +532,17 @@ pub const Session = struct {
             while (end < t.len and t[end].tag != .semicolon and t[end].tag != .eof) end += 1;
             if (end == t.len or t[end].tag != .semicolon) return cx.diags.fail(error.ParseError, t[i].line, "PROC REG: expected semicolon", .{});
             if (t[i].tag != .name) return cx.diags.fail(error.ParseError, t[i].line, "PROC REG: expected an interactive statement", .{});
+            var label: ?[]const u8 = null;
+            if (i + 1 < end and t[i + 1].tag == .colon) {
+                label = t[i].text;
+                i += 2;
+                if (i >= end or t[i].tag != .name or !eq(t[i].text, "test")) return proc.failGap(cx.diags, 0, "PROC REG: this labeled interactive statement is not implemented", .{});
+            }
+            if (eq(t[i].text, "test")) {
+                try self.testStatement(cx, out, t[i..end], label);
+                i = end + 1;
+                continue;
+            }
             if (eq(t[i].text, "add") or eq(t[i].text, "delete")) {
                 try self.edit(cx, t[i..end], eq(t[i].text, "add"));
             } else if (eq(t[i].text, "refit")) {
@@ -653,6 +687,7 @@ test "STAT-COMMON-004 weighted listing identifies weight without changing observ
 }
 
 test {
+    _ = @import("reg_test_tests.zig");
     _ = @import("linear_hypothesis_tests.zig");
     _ = @import("reg_mtest_tests.zig");
     _ = @import("reg_selection_tests.zig");

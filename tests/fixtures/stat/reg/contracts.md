@@ -364,3 +364,28 @@ crossed factors and nesting factors separate while matching factor order and
 case independently. Repeated covariates retain their multiplicities. A balanced
 actual A(B) design with four cell means2,5,8,11 (two observations each) supplies
 two within-B contrasts: nested SS18, residual MSE2, F(2,4)=4.5 and p=16/169.
+
+## REG TEST intermediate calculations and interactive execution
+
+SAS/STAT15.4 physical pp.8598–8599 defines TEST PRINT's covariance T=L G L',
+bordering difference d=L beta-c, inverse T^-1 and bordering solution T^-1 d.
+The object names TestCov and InvTestCov are listed on physical p.8669. The
+native presentation displays every matrix cell and its corresponding bordering
+vector, using scientific notation with twelve mantissa decimals. An ordinary
+inverse requires independent hypothesis rows; a consistent dependent system
+instead has a quadratic form defined through rank reduction.
+
+For the actual four-row two-predictor fit above, T=[[5/18,-2/9],[-2/9,5/18]],
+d=(3,-1), T^-1=[[10,8],[8,10]] and T^-1 d=(22,14). Matrix multiplication
+checks T*T^-1=I and d' T^-1 d=52. Rescaling the first hypothesis by1000 and
+the second by1/1000 changes the solution to(.022,14000) without changing SS.
+The single affine row2*x-3*z=5 gives T=113/18,d=4,inverse=18/113 and
+solution=72/113. Native expected numeric tokens are independently rounded from
+these rational values, not generated from interpreter output.
+
+Interactive TEST is documented on physical p.8610. The implementation computes
+the current model when the statement is reached, emits only that test, and does
+not repeat it at RUN. A later ADD changes the fitted covariance: testing x before
+adding z gives SS48.4,F(1,2)=242/19; testing both after ADD gives SS52,F(2,1)=6.5.
+Labels are admitted only in active REG TEST continuations. Invalid syntax does
+not advance numbering or publish a partial test; BY interactivity remains disabled.

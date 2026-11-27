@@ -410,7 +410,7 @@ fn runExpanded(ctx: *StepCtx, text: []const u8, allow_anon: bool) sas.diag.Error
         }
     }
     if (ctx.reg_session) |*session| {
-        if (toks.len > 0 and toks[0].tag == .name and sas.reg.continuationKeyword(toks[0].text)) {
+        if (sas.reg.continuationStart(toks)) {
             const pcx: sas.proc.ProcCtx = .{ .arena = a, .lib = ctx.lib, .diags = ctx.diags, .capture = &ods_capture, .listing = &ods_listing, .graphics = native_graphics_session };
             var discard: std.ArrayList(u8) = .empty;
             const output = if (ods_listing.accepts("reg")) ctx.out else &discard;
