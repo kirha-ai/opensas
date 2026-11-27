@@ -422,7 +422,7 @@ test "COMMON025 invalid coefficients and GLM-inapplicable shared options are cap
     }
 }
 
-test "COMMON025 ABSORB combination fails instead of silently using the wrong basis" {
+test "COMMON025 absorbed INTERCEPT estimate fails instead of silently using the wrong basis" {
     var arena = std.heap.ArenaAllocator.init(testing.allocator);
     defer arena.deinit();
     const a = arena.allocator();
@@ -430,11 +430,17 @@ test "COMMON025 ABSORB combination fails instead of silently using the wrong bas
     _ = try sample(a, &lib);
     var diagnostics = diag.Diagnostics.init(a);
     const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &diagnostics };
-    // Remains a gap before and after the independently owned ABSORB parser
-    // lands; the ESTIMATE-specific guard then protects the absorbed branch.
-    const tokens = try lex.tokenize(a, "proc glm; absorb group; model y=x; estimate 'slope' x 1; run;", &diagnostics);
-    try testing.expectError(error.ParseError, parse.parse(cx, tokens));
-    try testing.expect(diagnostics.hasErrors());
+    // Explicit-effect contrasts now use the nuisance-projected basis. An
+    // absorbed intercept still has no supported parameter mapping and must
+    // fail at execution, not fabricate an arbitrary group/generalized mean.
+    const tokens = try lex.tokenize(a, "proc glm; absorb group; model y=x; estimate 'intercept' intercept 1; run;", &diagnostics);
+    diag.resetGap();
+    defer diag.resetGap();
+    var output: std.ArrayList(u8) = .empty;
+    try testing.expectError(error.ParseError, glm.run(cx, &output, tokens));
+    try testing.expectEqual(@as(u8, 2), diag.exitCode(diag.gapHit(), diagnostics.hasErrors()));
+    try testing.expectEqual(@as(usize, 0), output.items.len);
+    try testing.expect(std.mem.indexOf(u8, try diagnostics.render(), "INTERCEPT ESTIMATE with ABSORB is not implemented") != null);
 }
 
 test "COMMON025 saturated estimate retains its value with missing inference" {
