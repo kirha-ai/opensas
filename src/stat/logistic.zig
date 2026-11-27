@@ -11,6 +11,7 @@ const lists = @import("variable_lists.zig");
 const by = @import("by_groups.zig");
 const design = @import("logistic_design.zig");
 const kernel = @import("logistic_fit.zig");
+const ordinal = @import("logistic_ordinal.zig");
 const format = @import("../format.zig");
 const fns = @import("../functions.zig");
 const A = std.mem.Allocator;
@@ -27,6 +28,8 @@ pub const Spec = struct {
     odds_requests: []const OddsRequest = &.{},
     alpha: f64 = 0.05,
     plots_none: bool = false,
+    link: ordinal.Link = .logit,
+    fit_options: kernel.Options = .{},
 };
 pub const Counts = struct { read: usize, used: usize, frequency_read: f64, frequency_used: f64, events: f64, full_constant: f64 = 0 };
 fn at(t: []const lex.Token, i: usize, tag: lex.Tag) bool {
@@ -257,7 +260,19 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
             j = model_end;
             if (j < end) {
                 j += 1;
-                if (!kw(t, j, "link") or !at(t, j + 1, .eq) or !kw(t, j + 2, "logit") or j + 3 != end) return unsupported(cx, t[j]);
+                while (j < end) {
+                    const option = t[j];
+                    if (!at(t, j + 1, .eq)) return unsupported(cx, option);
+                    j += 2;
+                    if (eq(option.text, "link")) {
+                        if (kw(t, j, "logit")) s.link = .logit else if (kw(t, j, "probit") or kw(t, j, "normit")) s.link = .probit else if (kw(t, j, "cloglog")) s.link = .cloglog else if (kw(t, j, "alogit")) s.link = .alogit else return unsupported(cx, t[j]);
+                        j += 1;
+                    } else if (eq(option.text, "gconv")) {
+                        s.fit_options.gconv = try numericLiteral(cx, t[0..end], &j);
+                        if (s.fit_options.gconv < 0) return invalid(cx, t, j - 1);
+                        if (s.fit_options.gconv == 0) return proc.failGap(cx.diags, option.line, "PROC LOGISTIC: disabling GCONV is not implemented", .{});
+                    } else return unsupported(cx, option);
+                }
             }
         } else if (kw(t, i, "by")) {
             var j = i;
@@ -339,22 +354,48 @@ fn hasDefaultOdds(d: design.Design) bool {
     return false;
 }
 pub fn render(a: A, out: *std.ArrayList(u8), s: Spec, d: design.Design, r: kernel.Fit, counts: Counts) diag.Error!void {
+    return renderCore(a, out, s, d, r, counts, null);
+}
+fn renderOrdinal(a: A, out: *std.ArrayList(u8), s: Spec, original: design.Design, fit: ordinal.Fit, counts: Counts) diag.Error!void {
+    var d = original;
+    const k = fit.levels - 1;
+    d.p = fit.result.coefficients.len;
+    const parameters = try a.alloc(design.Parameter, d.p);
+    for (0..k) |j| parameters[j] = .{ .name = "Intercept", .level = if (k == 1) null else original.response.levels[j].label };
+    @memcpy(parameters[k..], original.parameters[1..]);
+    d.parameters = parameters;
+    const effects = try a.dupe(design.Effect, original.effects);
+    for (effects) |*effect| effect.start += k - 1;
+    d.effects = effects;
+    return renderCore(a, out, s, d, fit.result, counts, fit);
+}
+fn renderCore(a: A, out: *std.ArrayList(u8), s: Spec, d: design.Design, r: kernel.Fit, counts: Counts, ordinal_result: ?ordinal.Fit) diag.Error!void {
     const ds = s.input.ds;
+    const intercepts: usize = if (ordinal_result) |fit| fit.levels - 1 else 1;
     const response_name = ds.columns.items[s.model.response].name;
     try out.print(a, "The LOGISTIC Procedure\n\nModel Information\n\nData Set {s}\n", .{try lists.datasetName(a, ds)});
     if (s.trials) |trials| {
         try out.print(a, "Response Variable (Events) {s}\nResponse Variable (Trials) {s}\n", .{ response_name, ds.columns.items[trials].name });
-    } else try out.print(a, "Response Variable {s}\nNumber of Response Levels 2\n", .{response_name});
+    } else try out.print(a, "Response Variable {s}\nNumber of Response Levels {d}\n", .{ response_name, d.response.levels.len });
     if (s.model.frequency) |ci| try out.print(a, "Frequency Variable {s}\n", .{ds.columns.items[ci].name});
     if (s.model.weight) |ci| try out.print(a, "Weight Variable {s}\n", .{ds.columns.items[ci].name});
-    try out.print(a, "Model binary logit\nOptimization Technique Fisher's scoring\n\nNumber of Observations Read {d}\nNumber of Observations Used {d}\n", .{ counts.read, counts.used });
+    const link_name = switch (s.link) {
+        .logit => "logit",
+        .probit => "probit",
+        .cloglog => "complementary log-log",
+        .alogit => "logit",
+    };
+    const model_name = if (s.link == .alogit and intercepts > 1) "adjacent-category" else if (intercepts > 1) "cumulative" else "binary";
+    try out.print(a, "Model {s} {s}\nOptimization Technique {s}\n\nNumber of Observations Read {d}\nNumber of Observations Used {d}\n", .{ model_name, link_name, if (s.link == .alogit) "Newton-Raphson ridge" else "Fisher's scoring", counts.read, counts.used });
     if (s.trials != null or s.model.frequency != null) try out.print(a, "Sum of Frequencies Read {s}\nSum of Frequencies Used {s}\n", .{ try number(a, counts.frequency_read, "best12."), try number(a, counts.frequency_used, "best12.") });
     if (s.trials != null) {
         try out.print(a, "\nResponse Profile\n\nOrdered Binary Total\nValue Outcome Frequency\n\n1 Event {s}\n2 Nonevent {s}\n\n", .{ try number(a, counts.events, "best12."), try number(a, counts.frequency_used - counts.events, "best12.") });
     } else {
         try out.print(a, "\nResponse Profile\n\nOrdered Total\nValue {s} Frequency\n\n", .{response_name});
         for (d.response.levels, 0..) |level, i| try out.print(a, "{d} {s} {s}\n", .{ i + 1, level.label, try number(a, level.frequency, "best12.") });
-        try out.print(a, "\nProbability modeled is {s}={s}.\n\n", .{ response_name, d.response.levels[d.event_index].label });
+        if (intercepts > 1) {
+            try out.appendSlice(a, if (s.link == .alogit) "\nLogits modeled use the response level with the next higher Ordered Value as the reference category.\n\n" else "\nProbabilities modeled are cumulated over the lower Ordered Values.\n\n");
+        } else try out.print(a, "\nProbability modeled is {s}={s}.\n\n", .{ response_name, d.response.levels[d.event_index].label });
     }
     if (d.classes.len > 0) {
         try out.appendSlice(a, "Class Level Information\n\nDesign\nClass Value Variables\n\n");
@@ -365,22 +406,27 @@ pub fn render(a: A, out: *std.ArrayList(u8), s: Spec, d: design.Design, r: kerne
             try out.appendSlice(a, "\n");
         };
     }
-    try out.appendSlice(a, "\nModel Convergence Status\n\nConvergence criterion (GCONV=1E-8) satisfied.\n\nModel Fit Statistics\n\n");
+    try out.print(a, "\nModel Convergence Status\n\nConvergence criterion (GCONV={s}) satisfied.\n\n", .{if (s.fit_options.gconv == 1e-8) "1E-8" else try number(a, s.fit_options.gconv, "best12.")});
+    if (ordinal_result) |fit| if (fit.parallel_score) |score| {
+        try out.print(a, "Score Test for the {s} Assumption\n\nChi-Square DF Pr > ChiSq\n\n{s} {d} {s}\n\n", .{ if (s.link == .logit) "Proportional Odds" else "Equal Slopes", try number(a, score, "10.4"), fit.parallel_df, try number(a, kernel.chiTail(score, fit.parallel_df), "pvalue6.4") });
+    };
+    try out.appendSlice(a, "Model Fit Statistics\n\n");
     if (s.trials != null) try out.appendSlice(a, "Intercept and Covariates\nIntercept Log Full Log\nCriterion Only Likelihood Likelihood\n\n") else try out.appendSlice(a, "Intercept\nIntercept and\nCriterion Only Covariates\n\n");
     const null_deviance = -2 * r.null_log_likelihood;
     const deviance = -2 * r.log_likelihood;
     const nf: f64 = counts.frequency_used;
     const pf: f64 = @floatFromInt(d.p);
-    for ([_][]const u8{ "AIC", "SC", "-2 Log L" }, [_]f64{ null_deviance + 2, null_deviance + @log(nf), null_deviance }, [_]f64{ deviance + 2 * pf, deviance + pf * @log(nf), deviance }) |name, null_value, full| {
+    const kf: f64 = @floatFromInt(intercepts);
+    for ([_][]const u8{ "AIC", "SC", "-2 Log L" }, [_]f64{ null_deviance + 2 * kf, null_deviance + kf * @log(nf), null_deviance }, [_]f64{ deviance + 2 * pf, deviance + pf * @log(nf), deviance }) |name, null_value, full| {
         try out.print(a, "{s} {s} {s}", .{ name, try number(a, null_value, "10.3"), try number(a, full, "10.3") });
         if (s.trials != null) try out.print(a, " {s}", .{try number(a, full - 2 * counts.full_constant, "10.3")});
         try out.appendSlice(a, "\n");
     }
-    if (d.p > 1) {
+    if (d.p > intercepts) {
         try out.appendSlice(a, "\nTesting Global Null Hypothesis: BETA=0\n\nTest Chi-Square DF Pr > ChiSq\n\n");
-        try testRow(a, out, "Likelihood Ratio", @max(0, 2 * (r.log_likelihood - r.null_log_likelihood)), d.p - 1);
-        try testRow(a, out, "Score", r.score_test, d.p - 1);
-        try testRow(a, out, "Wald", try kernel.blockWald(a, r, 1, d.p - 1), d.p - 1);
+        try testRow(a, out, "Likelihood Ratio", @max(0, 2 * (r.log_likelihood - r.null_log_likelihood)), d.p - intercepts);
+        try testRow(a, out, "Score", r.score_test, d.p - intercepts);
+        try testRow(a, out, "Wald", try kernel.blockWald(a, r, intercepts, d.p - intercepts), d.p - intercepts);
     }
     if (d.classes.len > 0) {
         try out.appendSlice(a, "\nType 3 Analysis of Effects\n\nWald\nEffect DF Chi-Square Pr > ChiSq\n\n");
@@ -395,7 +441,7 @@ pub fn render(a: A, out: *std.ArrayList(u8), s: Spec, d: design.Design, r: kerne
         const q = r.coefficients[j] * r.coefficients[j] / r.covariance[j * d.p + j];
         try out.print(a, "{s} {s} 1 {s} {s} {s} {s}\n", .{ parameter.name, parameter.level orelse "", try estimateText(a, r.coefficients[j]), try number(a, se, "10.4"), try number(a, q, "10.4"), try number(a, kernel.chiTail(q, 1), "pvalue6.4") });
     }
-    if (hasDefaultOdds(d)) {
+    if ((s.link == .logit or s.link == .alogit) and hasDefaultOdds(d)) {
         try out.print(a, "\nOdds Ratio Estimates\n\nPoint {s}% Wald\nEffect Estimate Confidence Limits\n\n", .{try number(a, 100 * (1 - s.alpha), "best8.")});
         const z = fns.distQuantile(.normal, 1 - s.alpha / 2, &.{}).?;
         const contrast = try a.alloc(f64, d.p);
@@ -427,7 +473,15 @@ pub fn render(a: A, out: *std.ArrayList(u8), s: Spec, d: design.Design, r: kerne
             }
         }
     }
-    const assoc = kernel.associationWeighted(d.y, r.probabilities, d.frequencies);
+    const assoc = if (intercepts > 1) try ordinal.association(a, d.y, r.probabilities, d.response.levels.len, d.frequencies) else blk: {
+        var probabilities = r.probabilities;
+        if (ordinal_result != null) {
+            const event_probabilities = try a.alloc(f64, d.n);
+            for (event_probabilities, 0..) |*value, i| value.* = r.probabilities[2 * i];
+            probabilities = event_probabilities;
+        }
+        break :blk kernel.associationWeighted(d.y, probabilities, d.frequencies);
+    };
     const pairs: f64 = assoc.pairs;
     if (assoc.pairs > 0) {
         const nc: f64 = assoc.concordant;
@@ -441,11 +495,12 @@ pub fn render(a: A, out: *std.ArrayList(u8), s: Spec, d: design.Design, r: kerne
     }
 }
 
-const Analysis = struct { data: *Dataset, design: design.Design, fit: kernel.Fit, counts: Counts };
+const Analysis = struct { data: *Dataset, design: design.Design, fit: kernel.Fit, counts: Counts, ordinal_fit: ?ordinal.Fit = null };
 fn analyze(cx: proc.ProcCtx, s: Spec) diag.Error!Analysis {
     const a = cx.arena;
     const ds = s.input.ds;
     var model = s.model;
+    model.allow_ordinal = true;
     var work = ds;
     var origin: std.ArrayList(usize) = .empty;
     const constants = try a.alloc(f64, ds.rows.items.len);
@@ -493,7 +548,16 @@ fn analyze(cx: proc.ProcCtx, s: Spec) diag.Error!Analysis {
         if (err == error.OutOfMemory or cx.diags.list.items.len > before) return err;
         return cx.diags.fail(error.ExecError, 0, "PROC LOGISTIC: invalid or nonfinite complete-case model data", .{});
     };
-    const r = kernel.fitWeighted(a, d.x, d.y, d.n, d.p, d.frequencies, d.weights, .{}) catch |err| {
+    var ordinal_fit: ?ordinal.Fit = null;
+    const r = if (d.response.levels.len > 2 or s.link != .logit) blk: {
+        const responses = try a.alloc(usize, d.n);
+        for (d.y, 0..) |y, i| responses[i] = if (d.response.levels.len == 2) (if (y == 1) 0 else 1) else @intFromFloat(y);
+        ordinal_fit = ordinal.fit(a, s.link, d.x, responses, d.p, d.response.levels.len, d.frequencies, d.weights, s.fit_options) catch |err| {
+            if (err == error.OutOfMemory) return err;
+            return proc.failGap(cx.diags, 0, "PROC LOGISTIC: ordinal/link fitting failed (invalid probabilities, rank deficiency, or nonconvergence); no results emitted", .{});
+        };
+        break :blk ordinal_fit.?.result;
+    } else kernel.fitWeighted(a, d.x, d.y, d.n, d.p, d.frequencies, d.weights, s.fit_options) catch |err| {
         if (err == error.OutOfMemory) return err;
         return proc.failGap(cx.diags, 0, "PROC LOGISTIC: fitting failed (rank deficiency, separation, or nonconvergence); no results emitted", .{});
     };
@@ -508,7 +572,7 @@ fn analyze(cx: proc.ProcCtx, s: Spec) diag.Error!Analysis {
         counts.used += 1;
         counts.full_constant += constants[i];
     };
-    return .{ .data = work, .design = d, .fit = r, .counts = counts };
+    return .{ .data = work, .design = d, .fit = r, .counts = counts, .ordinal_fit = ordinal_fit };
 }
 fn oddsTable(a: A, out: *std.ArrayList(u8), rows: []const @import("logistic_plots.zig").Row, alpha: f64) diag.Error!void {
     try out.print(a, "\nOdds Ratio Estimates and Wald Confidence Intervals\n\nOdds Ratio Estimate {s}% Confidence Limits\n\n", .{try number(a, 100 * (1 - alpha), "best8.")});
@@ -527,7 +591,10 @@ pub fn run(cx: proc.ProcCtx, out: *std.ArrayList(u8), tokens: []const lex.Token)
         s.input.ds = &ds;
         const result = try analyze(cx, s);
         var body: std.ArrayList(u8) = .empty;
-        if (!s.noprint) try render(a, &body, s, result.design, result.fit, result.counts);
+        if (result.ordinal_fit != null and s.odds_requests.len > 0) return proc.failGap(cx.diags, 0, "PROC LOGISTIC: ODDSRATIO AT for ordinal/nonlogit links is not implemented", .{});
+        if (!s.noprint) {
+            if (result.ordinal_fit) |fit| try renderOrdinal(a, &body, s, result.design, fit, result.counts) else try render(a, &body, s, result.design, result.fit, result.counts);
+        }
         var by_text: std.ArrayList(u8) = .empty;
         if (s.by_columns.len > 0) try by.appendLine(a, &by_text, spec.input.ds, group.rep.?, s.by_columns);
         for (s.odds_requests, 0..) |request, request_index| {
@@ -578,6 +645,7 @@ test "LOGISTIC original REF and EFFECT complete oracle listing" {
 
 test {
     _ = @import("logistic_persistence_tests.zig");
+    _ = @import("logistic_ordinal.zig");
 }
 
 test "LOGISTIC errors are captured and unsupported parameterizations never fall back" {
@@ -814,7 +882,7 @@ test "LOGISTIC004 formatted response values and ordering do not fall back to raw
     try std.testing.expect(std.mem.indexOf(u8, try d.render(), "EVENT/REF value is not a response level") != null);
 }
 
-test "LOGISTIC004 invalid ordering and unsupported ordinal responses stay visible" {
+test "LOGISTIC004 invalid ordering and unsupported ordinal reference options stay visible" {
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
     const a = arena.allocator();
@@ -825,7 +893,7 @@ test "LOGISTIC004 invalid ordering and unsupported ordinal responses stay visibl
     try lib.put("ordinal", &ds);
     diag.resetGap();
     defer diag.resetGap();
-    for ([_][]const u8{ "order=bogus", "event='missing' ref=first", "desc" }, [_]bool{ false, true, true }) |options, gap| {
+    for ([_][]const u8{ "order=bogus", "event='missing' ref=first", "ref=first" }, [_]bool{ false, true, true }) |options, gap| {
         var d = diag.Diagnostics.init(a);
         var out: std.ArrayList(u8) = .empty;
         const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &d };
@@ -867,5 +935,163 @@ test "LOGISTIC004 character data frequency ordering and missing exclusion" {
         try std.testing.expectApproxEqAbs(@log(events / (10 - events)), result.fit.coefficients[0], 1e-12);
         try std.testing.expectEqual(events, result.counts.events);
         try std.testing.expectEqualSlices(usize, &.{ 0, 1 }, result.design.source_rows);
+    }
+}
+
+test "LOGISTIC007 Cheese ordinal links preserve SAS reference estimates and score tests" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var ds = Dataset.init(a, "cheese");
+    _ = try ds.addColumn("Additive", .num);
+    _ = try ds.addColumn("y", .num);
+    _ = try ds.addColumn("freq", .num);
+    // Public Example79.3, S154; same 36 frequency cells as the original.
+    const frequencies = [_][9]f64{ .{ 0, 0, 1, 7, 8, 8, 19, 8, 1 }, .{ 6, 9, 12, 11, 7, 6, 1, 0, 0 }, .{ 1, 1, 6, 8, 23, 7, 5, 1, 0 }, .{ 0, 0, 0, 1, 3, 7, 14, 16, 11 } };
+    for (frequencies, 0..) |row, i| for (row, 0..) |f, j| try ds.appendRow(&.{ .{ .num = @floatFromInt(i + 1) }, .{ .num = @floatFromInt(j + 1) }, .{ .num = f } });
+    var lib = @import("../exec.zig").Library.init(a);
+    try lib.put("cheese", &ds);
+    var diagnostics = diag.Diagnostics.init(a);
+    const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &diagnostics };
+    const coefficients = [_][11]f64{
+        .{ -7.0801, -6.0249, -4.9254, -3.8568, -2.5205, -1.5685, -0.0669, 1.4930, 1.6128, 4.9645, 3.3227 },
+        .{ -2.2262, -2.4238, -1.9852, -1.8164, -0.6908, -1.0433, 0.0322, 0.5160, 0.7172, 1.9838, 1.3826 },
+    };
+    const errors = [_][11]f64{
+        .{ 0.5624, 0.4755, 0.4272, 0.3902, 0.3431, 0.3086, 0.2658, 0.3310, 0.3778, 0.4741, 0.4251 },
+        .{ 0.5542, 0.4620, 0.3800, 0.3294, 0.3097, 0.2841, 0.2667, 0.3527, 0.1783, 0.2463, 0.2122 },
+    };
+    for ([_][]const u8{ "logit", "alogit" }, 0..) |link, model_index| {
+        const source = try std.fmt.allocPrint(a, "proc logistic data=cheese; freq freq; class Additive(param=ref ref='4'); model y=Additive / link={s}{s}; run;", .{ link, if (model_index == 0) "" else " gconv=1e-12" });
+        const result = try analyze(cx, try parse(cx, try lex.tokenize(a, source, &diagnostics)));
+        const r = result.fit;
+        try std.testing.expectEqual(@as(usize, 36), result.counts.read);
+        try std.testing.expectEqual(@as(usize, 28), result.counts.used);
+        try std.testing.expectEqual(@as(f64, 208), result.counts.frequency_used);
+        try std.testing.expectEqual(@as(usize, 11), r.coefficients.len);
+        // Cumulative uses default GCONV; adjacent requests documented1e-12
+        // because default1e-8 stops at a different last printed digit. This
+        // stricter path validates the model, not equality of the original run.
+        // SAS reference numbers are printed to four decimal places; use half
+        // the last displayed unit plus 1e-10 binary roundoff, not an empirical
+        // margin. Deviances have three decimal places in the reference.
+        for (coefficients[model_index], errors[model_index], r.coefficients, 0..) |b, se, actual, j| {
+            try std.testing.expectApproxEqAbs(b, actual, 0.0000500001);
+            try std.testing.expectApproxEqAbs(se, @sqrt(r.covariance[11 * j + j]), 0.0000500001);
+        }
+        try std.testing.expectApproxEqAbs(@as(f64, 859.802), -2 * r.null_log_likelihood, 0.0005000001);
+        try std.testing.expectApproxEqAbs(([_]f64{ 711.348, 707.902 })[model_index], -2 * r.log_likelihood, 0.0005000001);
+        try std.testing.expectApproxEqAbs(([_]f64{ 111.2670, 109.9790 })[model_index], r.score_test, 0.0000500001);
+        try std.testing.expectApproxEqAbs(([_]f64{ 115.1504, 66.8401 })[model_index], try kernel.blockWald(a, r, 8, 3), 0.0000500001);
+        if (model_index == 0) {
+            // SAS Example79.3 covariance capture, persisted outside the oracle.
+            // Each displayed decimal defines its own half-last-unit interval;
+            // all121 entries are checked, preserving signs and row order.
+            var tokens = std.mem.tokenizeAny(u8, @embedFile("testdata/logistic_cheese_covariance.txt"), " \r\n\t");
+            for (r.covariance) |value| {
+                const text = tokens.next().?;
+                const decimal = std.mem.indexOfScalar(u8, text, '.').?;
+                const digits: f64 = @floatFromInt(text.len - decimal - 1);
+                try std.testing.expectApproxEqAbs(try std.fmt.parseFloat(f64, text), value, 0.5 * std.math.pow(f64, 10, -digits) + 1e-10);
+            }
+            try std.testing.expect(tokens.next() == null);
+            try std.testing.expectEqual(@as(usize, 21), result.ordinal_fit.?.parallel_df);
+            try std.testing.expectApproxEqAbs(@as(f64, 17.2866), result.ordinal_fit.?.parallel_score.?, 0.0000500001);
+            // Reversing a cumulative-logit response reverses and negates the
+            // cutpoints and negates common slopes. Covariance permutes; each
+            // observation's complete probability vector reverses.
+            const reversed_source = "proc logistic data=cheese; freq freq; class Additive(param=ref ref='4'); model y(descending)=Additive; run;";
+            const reversed = try analyze(cx, try parse(cx, try lex.tokenize(a, reversed_source, &diagnostics)));
+            for (0..11) |j| {
+                const original_j = if (j < 8) 7 - j else j;
+                try std.testing.expectApproxEqAbs(-r.coefficients[original_j], reversed.fit.coefficients[j], 1e-10);
+                for (0..11) |h| {
+                    const original_h = if (h < 8) 7 - h else h;
+                    try std.testing.expectApproxEqAbs(r.covariance[11 * original_j + original_h], reversed.fit.covariance[11 * j + h], 1e-10);
+                }
+            }
+            for (0..result.design.n) |i| for (0..9) |c| try std.testing.expectApproxEqAbs(r.probabilities[i * 9 + c], reversed.fit.probabilities[i * 9 + 8 - c], 1e-12);
+        } else try std.testing.expect(result.ordinal_fit.?.parallel_score == null);
+        const association = try ordinal.association(a, result.design.y, r.probabilities, 9, result.design.frequencies);
+        try std.testing.expectEqual(@as(f64, 18635), association.pairs);
+        try std.testing.expectApproxEqAbs(@as(f64, 67.6), 100 * association.concordant / association.pairs, 0.0500000001);
+        try std.testing.expectApproxEqAbs(@as(f64, 9.8), 100 * association.discordant / association.pairs, 0.0500000001);
+        for (0..result.design.n) |i| {
+            var sum: f64 = 0;
+            for (r.probabilities[i * 9 ..][0..9]) |probability| {
+                try std.testing.expect(probability > 0 and probability < 1);
+                sum += probability;
+            }
+            try std.testing.expectApproxEqAbs(@as(f64, 1), sum, 1e-14);
+        }
+        var output: std.ArrayList(u8) = .empty;
+        try run(cx, &output, try lex.tokenize(a, source, &diagnostics));
+        try std.testing.expect(std.mem.indexOf(u8, output.items, "Number of Response Levels 9") != null);
+        try std.testing.expect(std.mem.indexOf(u8, output.items, if (model_index == 0) "Model cumulative logit" else "Model adjacent-category logit") != null);
+    }
+    try std.testing.expectEqualStrings("", try diagnostics.render());
+}
+
+test "LOGISTIC007 binary inverse links agree with analytic binomial MLE and grouped trials" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var ds = Dataset.init(a, "linkdata");
+    for ([_][]const u8{ "x", "y", "f" }) |name| _ = try ds.addColumn(name, .num);
+    for ([_][3]f64{ .{ 0, 0, 2 }, .{ 0, 1, 8 }, .{ 1, 0, 7 }, .{ 1, 1, 3 } }) |row| try ds.appendRow(&.{ .{ .num = row[0] }, .{ .num = row[1] }, .{ .num = row[2] } });
+    var grouped = Dataset.init(a, "groupedlinks");
+    for ([_][]const u8{ "x", "r", "n" }) |name| _ = try grouped.addColumn(name, .num);
+    try grouped.appendRow(&.{ .{ .num = 0 }, .{ .num = 2 }, .{ .num = 10 } });
+    try grouped.appendRow(&.{ .{ .num = 1 }, .{ .num = 7 }, .{ .num = 10 } });
+    var lib = @import("../exec.zig").Library.init(a);
+    try lib.put("linkdata", &ds);
+    try lib.put("groupedlinks", &grouped);
+    var d = diag.Diagnostics.init(a);
+    const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &d };
+    for ([_][]const u8{ "probit", "normit", "cloglog", "alogit" }) |link| {
+        const alpha = if (eq(link, "cloglog")) @log(-@log(@as(f64, 0.8))) else if (eq(link, "alogit")) @log(@as(f64, 0.2 / 0.8)) else -0.8416212335729143;
+        const upper = if (eq(link, "cloglog")) @log(-@log(@as(f64, 0.3))) else if (eq(link, "alogit")) @log(@as(f64, 0.7 / 0.3)) else 0.5244005127080409;
+        const source = try std.fmt.allocPrint(a, "proc logistic data=linkdata; freq f; model y=x / link={s} gconv=1e-14; run;", .{link});
+        const result = try analyze(cx, try parse(cx, try lex.tokenize(a, source, &d)));
+        // GCONV1e-14 bounds remaining local coefficient error; tight1e-7
+        // compared with an exact saturated-binomial solution, not SAS output.
+        try std.testing.expectApproxEqAbs(alpha, result.fit.coefficients[0], 1e-7);
+        try std.testing.expectApproxEqAbs(upper - alpha, result.fit.coefficients[1], 1e-7);
+        const dens0 = if (eq(link, "cloglog")) -0.8 * @log(@as(f64, 0.8)) else if (eq(link, "alogit")) 0.2 * 0.8 else @exp(-alpha * alpha / 2) / @sqrt(2 * std.math.pi);
+        const dens1 = if (eq(link, "cloglog")) -0.3 * @log(@as(f64, 0.3)) else if (eq(link, "alogit")) 0.7 * 0.3 else @exp(-upper * upper / 2) / @sqrt(2 * std.math.pi);
+        const v0 = 0.2 * 0.8 / (10 * dens0 * dens0);
+        const v1 = 0.7 * 0.3 / (10 * dens1 * dens1);
+        for ([_]f64{ v0, -v0, -v0, v0 + v1 }, result.fit.covariance) |want, got| try std.testing.expectApproxEqAbs(want, got, 1e-7);
+        const grouped_source = try std.fmt.allocPrint(a, "proc logistic data=groupedlinks; model r/n=x / gconv=1e-14 link={s}; run;", .{link});
+        const grouped_fit = try analyze(cx, try parse(cx, try lex.tokenize(a, grouped_source, &d)));
+        for (result.fit.coefficients, grouped_fit.fit.coefficients) |want, got| try std.testing.expectApproxEqAbs(want, got, 1e-12);
+        var output: std.ArrayList(u8) = .empty;
+        try run(cx, &output, try lex.tokenize(a, source, &d));
+        if (!eq(link, "alogit")) try std.testing.expect(std.mem.indexOf(u8, output.items, "Odds Ratio Estimates") == null);
+        try std.testing.expect(std.mem.indexOf(u8, output.items, "Probability modeled is y=0.") != null);
+    }
+    try std.testing.expectEqualStrings("", try d.render());
+}
+
+test "LOGISTIC007 link boundaries and unsupported options retain captured diagnostics" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var ds = Dataset.init(a, "links");
+    _ = try ds.addColumn("y", .num);
+    for ([_]f64{ 0, 0, 1 }) |value| try ds.appendRow(&.{.{ .num = value }});
+    var lib = @import("../exec.zig").Library.init(a);
+    try lib.put("links", &ds);
+    diag.resetGap();
+    defer diag.resetGap();
+    for ([_][]const u8{ "gconv=-1", "gconv=0", "link=glogit" }, [_]u8{ 1, 2, 2 }) |options, rc| {
+        var d = diag.Diagnostics.init(a);
+        var out: std.ArrayList(u8) = .empty;
+        const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &d };
+        diag.resetGap();
+        const source = try std.fmt.allocPrint(a, "proc logistic; model y= / {s}; run;", .{options});
+        try std.testing.expectError(error.ParseError, run(cx, &out, try lex.tokenize(a, source, &d)));
+        try std.testing.expectEqual(rc, diag.exitCode(diag.gapHit(), d.hasErrors()));
+        try std.testing.expectEqual(@as(usize, 0), out.items.len);
     }
 }

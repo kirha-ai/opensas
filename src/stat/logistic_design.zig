@@ -9,7 +9,7 @@ const proc = @import("../proc.zig");
 const A = std.mem.Allocator;
 pub const Coding = enum { reference, effect };
 pub const ClassSpec = struct { column: usize, reference: levels.Reference = .last, coding: ?Coding = null };
-pub const Spec = struct { response: usize, event: ?levels.Reference = null, response_reference: ?levels.Reference = null, response_order: levels.Order = .formatted, response_descending: bool = false, classes: []const ClassSpec = &.{}, effects: []const usize, terms: ?[]const []const usize = null, frequency: ?usize = null, weight: ?usize = null, coding: Coding = .effect };
+pub const Spec = struct { response: usize, event: ?levels.Reference = null, response_reference: ?levels.Reference = null, response_order: levels.Order = .formatted, response_descending: bool = false, allow_ordinal: bool = false, classes: []const ClassSpec = &.{}, effects: []const usize, terms: ?[]const []const usize = null, frequency: ?usize = null, weight: ?usize = null, coding: Coding = .effect };
 pub const Class = struct { column: usize, map: levels.Levels, reference: usize, coding: Coding };
 pub const Parameter = struct { name: []const u8, level: ?[]const u8 = null };
 pub const Effect = struct { column: usize, start: usize, len: usize, class_index: ?usize = null, variables: []const usize, name: []const u8 };
@@ -88,16 +88,17 @@ pub fn build(a: A, ds: *const Dataset, s: Spec, d: *diag.Diagnostics) diag.Error
         response.levels = reversed;
         response.row_to_level = remapped;
     }
-    if (response.levels.len > 2) return proc.failGap(d, 0, "PROC LOGISTIC: only binary response models are implemented", .{});
+    if (response.levels.len > 2 and !s.allow_ordinal) return proc.failGap(d, 0, "PROC LOGISTIC: only binary response models are implemented", .{});
     if (response.levels.len < 2) return d.fail(error.ExecError, 0, "PROC LOGISTIC: two response levels are required", .{});
-    const choice = s.event orelse s.response_reference orelse levels.Reference.first;
+    if (response.levels.len > 2 and s.response_reference != null) return proc.failGap(d, 0, "PROC LOGISTIC: REF for ordinal links is not implemented", .{});
+    const choice = if (response.levels.len > 2) levels.Reference.first else s.event orelse s.response_reference orelse levels.Reference.first;
     // A formatted response category must be specified by its formatted value.
     // Do not reuse CLASS's historical raw-value fallback for response options.
     const selected = (if (ds.columns.items[s.response].format == null)
         choose(response, choice, ds.columns.items[s.response])
     else
         response.reference(choice)) orelse return d.fail(error.ParseError, 0, "PROC LOGISTIC: EVENT/REF value is not a response level", .{});
-    const event_index = if (s.event == null and s.response_reference != null) 1 - selected else selected;
+    const event_index = if (response.levels.len == 2 and s.event == null and s.response_reference != null) 1 - selected else selected;
     const classes = try a.alloc(Class, s.classes.len);
     for (s.classes, 0..) |c, i| {
         const map = try levels.build(a, ds, rows.items, c.column, .{ .frequencies = frequencies.items });
@@ -142,7 +143,7 @@ pub fn build(a: A, ds: *const Dataset, s: Spec, d: *diag.Diagnostics) diag.Error
     const x = try a.alloc(f64, np);
     const y = try a.alloc(f64, rows.items.len);
     for (rows.items, 0..) |row, i| {
-        y[i] = if (response.row_to_level[i].? == event_index) 1 else 0;
+        y[i] = if (response.levels.len > 2) @floatFromInt(response.row_to_level[i].?) else if (response.row_to_level[i].? == event_index) 1 else 0;
         x[i * p] = 1;
         for (effects.items) |e| {
             if (e.class_index) |k| {
