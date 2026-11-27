@@ -53,6 +53,16 @@ Current counts: **48 DONE,19 PARK,7 DOING,1348 TODO**. All temporary reference f
 
 At exact c78ef7c6ca2b0b65ecf00e697687e906a887fc63, oracle-absent gate direct1:1989/1990unit,2361/2361corpus,11/11programs. Single failure is old REG parser-test substring `not implemented` after STEPWISE gained a real NOPRINT/OUTEST path; current explicit unsupported-listing diagnostic has changed. Repair378ce9bc retains all six invalid-syntax assertions, resets the gap flag before the supported-method/unsupported-listing path, and checks the exact captured message plus D-009 rc2. Targeted actual regression8/8 direct0; full rerun pending. Repair worktree `/Users/thomas/kirha/opensas-reg-gate-repair`, branch `codex/stat-reg-gate-repair`, created from c78ef7c6; ongoing REG009 source/evidence untouched. Supplemental not claimed for failedrun; oracle restored. Batchnotpushed.
 
+### Rolling assignments — REG TEST, LOGISTIC convergence, NPAR exact methods
+
+FrozenCOMMON031/LOGISTIC008/NPAR010 workis integratedthrough `4b2401a7`, finalbatchchecks pending; mathematical/reference limitsremainexplicit. NPAR010 iscoordinatoracceptancequeued, notactivefeaturework.
+
+- dev1: STAT-REG-010; retained `opensas-dev1`, branch `codex/stat-b4-reg010-dev1`; assigned 2026-11-27T17:52:47+00:00; deadline 2026-11-27T18:37:47+00:00.
+- dev4: STAT-LOGISTIC-005; retained `opensas-dev4`, branch `codex/stat-b4-logistic005-dev4`; assigned 2026-11-27T17:52:47+00:00; deadline 2026-11-27T18:37:47+00:00.
+- dev6: STAT-NPAR1WAY-006; retained `opensas-dev6`, branch `codex/stat-b4-npar006-dev6`; assigned 2026-11-27T17:52:47+00:00; deadline 2026-11-27T18:37:47+00:00.
+
+REG010usesactualsharedlinear-hypothesisandREGconsumercontracts whileCOMMON031listed-procadaptersremainopen. LOGISTIC005usesrealbinary/ordinalfitinterfacesandmustpreservealgorithm/statussemanticsratherthanfitSASroundingbyloosenedbounds. NPAR006usesactualrank/score/EDFinterfaces; unknownseededMonteCarlostreams remainunsupported untilvalidated, no substitutedgenerator.
+
 ### Rolling assignments — MANOVA, MIXED output/graphics, shared LSMEANS
 
 Previousimplementationsarefrozenandintegratedthrough `397d4a68`; remainingoriginal/optionscopegapsstayPARKandfinalbatchchecksarestillpending. Newassignmentsuseactualtestedresultinterfaces,notstubprerequisites.
@@ -8506,7 +8516,7 @@ Source: S154, Chapter 79, `The LOGISTIC Procedure`, PDF pp. 5823–6080. Tasks i
 
 <a id="stat-logistic-005"></a>
 
-### [TODO] STAT-LOGISTIC-005 — LOGISTIC — Convergence Criteria / Iterative Algorithms for Model Fitting
+### [DOING @dev4] STAT-LOGISTIC-005 — LOGISTIC — Convergence Criteria / Iterative Algorithms for Model Fitting
 
 - Source: S154 / Chapter 79 / `Convergence Criteria` (PDF p. 5911); S154 / Chapter 79 / `Iterative Algorithms for Model Fitting` (PDF pp. 5909–5911).
 - Scope: Implement Convergence Criteria; Iterative Algorithms for Model Fitting. This ticket owns the feature's options, defaults, computation, and results as an extension of the basic computational path; the chapter's output tickets handle ODS descriptors and file presentation.
@@ -10285,7 +10295,7 @@ Source: S154, Chapter 90, `The NPAR1WAY Procedure`, PDF pp. 7205–7282. Tasks i
 
 <a id="stat-npar1way-006"></a>
 
-### [TODO] STAT-NPAR1WAY-006 — NPAR1WAY — EXACT / Ratio Mean Deviations (RMD) Exact Test / Exact Tests
+### [DOING @dev6] STAT-NPAR1WAY-006 — NPAR1WAY — EXACT / Ratio Mean Deviations (RMD) Exact Test / Exact Tests
 
 - Source: S154 / Chapter 90 / `EXACT Statement` (PDF pp. 7225–7229); S154 / Chapter 90 / `Ratio Mean Deviations (RMD) Exact Test` (PDF pp. 7246–7247); S154 / Chapter 90 / `Exact Tests` (PDF pp. 7249–7253).
 - Scope: Implement EXACT; Ratio Mean Deviations (RMD) Exact Test; Exact Tests. This ticket owns the feature's options, defaults, computation, and results as an extension of the basic computational path; the chapter's output tickets handle ODS descriptors and file presentation.
@@ -10325,7 +10335,7 @@ Source: S154, Chapter 90, `The NPAR1WAY Procedure`, PDF pp. 7205–7282. Tasks i
 
 <a id="stat-npar1way-010"></a>
 
-### [DOING @dev6] STAT-NPAR1WAY-010 — NPAR1WAY — ODS Graphics
+### [DOING @coordinator] STAT-NPAR1WAY-010 — NPAR1WAY — ODS Graphics
 
 - Source: S154 / Chapter 90 / `ODS Graphics` (PDF pp. 7269–7270).
 - Scope: Implement ODS Graphics. Cover all triggering options, content, and naming specified by this section; computational tickets supply numerical values, while other output types are handled separately.
@@ -12269,7 +12279,7 @@ Source: S154, Chapter 105, `The REG Procedure`, PDF pp. 8539–8728. Tasks in th
 
 <a id="stat-reg-010"></a>
 
-### [TODO] STAT-REG-010 — REG — TEST
+### [DOING @dev1] STAT-REG-010 — REG — TEST
 
 - Source: S154 / Chapter 105 / `TEST Statement` (PDF pp. 8598–8599).
 - Scope: Implement TEST. This ticket owns the feature's options, defaults, computation, and results as an extension of the basic computational path; the chapter's output tickets handle ODS descriptors and file presentation.
