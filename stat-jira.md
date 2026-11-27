@@ -12,6 +12,10 @@ Explicit user resume. Confirmed working branch `feat/stat/batch-4`, base `31356c
 - dev6: STAT-COMMON-017; `/Users/thomas/kirha/opensas-dev6`; branch `codex/stat-b4-dev6`; assigned 2026-11-27T13:42:13+00:00; implementation deadline 2026-11-27T14:27:13+00:00. Original README/cases and cited physical PDF pages required before edits.
 - dev7: STAT-COMMON-018; `/Users/thomas/kirha/opensas-dev7`; branch `codex/stat-b4-dev7`; assigned 2026-11-27T13:42:13+00:00; implementation deadline 2026-11-27T14:27:13+00:00. Original README/cases and cited physical PDF pages required before edits.
 
+### Rolling assignment — MIXED-003 model interface
+
+POWER008 partial integrated from `13c94c22`; full binomial/plot original remains PARK and final batch checks pending. dev7 now owns existing STAT-MIXED-003 on retained `opensas-dev7`, branch `codex/stat-b4-mixed-dev7`, assigned 2026-11-27T14:42:58+00:00, deadline 2026-11-27T15:27:58+00:00. Dev5 MIXED001 owns top-level input/options/BY/ID/WEIGHT; dev7 owns CLASS/MODEL syntax and numerical design matrices, reusing tested shared class/effect/model contracts. They must agree a concrete typed Spec/selected rows/design/result interface. Partial input/model support is not a substitute for MIXED002 estimation or a passing whole original. MIXED002 remains queued for next free dev.
+
 ### Rolling assignment — MIXED-001 prerequisite
 
 FREQ012 partial integrated from `c2977266`; original318/314-token layout differences remain PARK, final batch suites pending. dev5 now owns existing STAT-MIXED-001 on retained `opensas-dev5`, new branch `codex/stat-b4-mixed-dev5`, assigned 2026-11-27T14:41:14+00:00, deadline 2026-11-27T15:26:14+00:00. This dispatch implements the GLM007 original's in-repository MIXED prerequisite. Scope is declarations/input/BY/ID/WEIGHT and concrete model/result interfaces; MIXED003/002 will be assigned to available slots for model structure and computation. Missing computations must stay loud, not return stub success.
@@ -9173,7 +9177,7 @@ Source: S154, Chapter 84, `The MIXED Procedure`, PDF pp. 6613–6810. Tasks in t
 
 <a id="stat-mixed-003"></a>
 
-### [TODO] STAT-MIXED-003 — MIXED — CLASS / MODEL / Parameterization of Mixed Models
+### [DOING @dev7] STAT-MIXED-003 — MIXED — CLASS / MODEL / Parameterization of Mixed Models
 
 - Source: S154 / Chapter 84 / `CLASS Statement` (PDF pp. 6639–6640); S154 / Chapter 84 / `MODEL Statement` (PDF pp. 6653–6668); S154 / Chapter 84 / `Parameterization of Mixed Models` (PDF pp. 6707–6712).
 - Scope: Implement CLASS; MODEL; Parameterization of Mixed Models. Implement the syntax and model semantics allowed by this procedure, using shared effect/parameterization support only for forms documented as supported.
