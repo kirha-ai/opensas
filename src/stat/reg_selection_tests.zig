@@ -122,6 +122,9 @@ test "REG008 typed OUTEST subset estimates missing cells metadata and fixed comp
         try std.testing.expectEqual(if (j < 3) @import("../pdv.zig").VarType.char else .num, column.type);
     }
     for ([_]f64{ 40.5, 8.5, 8 }, 0..) |sse, i| {
+        try std.testing.expectEqualStrings("MODEL1", ds.rows.items[i][ds.indexOf("_MODEL_").?].str);
+        try std.testing.expectEqualStrings("PARMS", ds.rows.items[i][ds.indexOf("_TYPE_").?].str);
+        try std.testing.expectEqualStrings("y", ds.rows.items[i][ds.indexOf("_DEPVAR_").?].str);
         const size = i + 1;
         try close(10, number(ds, i, "Intercept"));
         try close(-1, number(ds, i, "y"));
