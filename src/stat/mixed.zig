@@ -37,7 +37,7 @@ pub fn run(cx: proc.ProcCtx, out: *std.ArrayList(u8), tokens: []const lex.Token)
     if (spec.options.method != .reml and spec.options.method != .type3) return proc.failGap(cx.diags, spec.line, "PROC MIXED: model estimation is not implemented for METHOD={s}", .{@tagName(spec.options.method)});
     if ((spec.options.noprofile and parameter_spec == null) or spec.options.alpha_explicit) return proc.failGap(cx.diags, spec.line, "PROC MIXED: unprofiled estimation or covariance-parameter confidence limits are not implemented", .{});
     if (m.options.solution or m.options.cl or m.options.intercept_test or m.options.alpha != 0.05) return proc.failGap(cx.diags, m.line, "PROC MIXED: requested fixed-effect solution or confidence-limit output is not implemented", .{});
-    if (cx.graphics) |graphics| if (graphics.enabled == true and !spec.options.plots_none) return proc.failGap(cx.diags, spec.line, "PROC MIXED: ODS graphics are not implemented; specify PLOTS=NONE", .{});
+    try @import("mixed_plots.zig").validate(cx, spec, m);
     if (spec.options.method == .type3) if (cx.capture) |capture| if (capture.wants("Type3")) return proc.failGap(cx.diags, spec.line, "PROC MIXED: ODS OUTPUT Type3 is not implemented", .{});
     if (groups.len == 0) return proc.failGap(cx.diags, spec.line, "PROC MIXED: empty input analysis is not implemented", .{});
     for (groups, 0..) |group, by_index| {
@@ -91,6 +91,7 @@ pub fn run(cx: proc.ProcCtx, out: *std.ArrayList(u8), tokens: []const lex.Token)
         render.render(cx.arena, out, fit, names, tests.items, .{ .noitprint = spec.options.noitprint, .notest = m.options.notest, .nofit = fit.status == .evaluated, .parms_lrt = if (parameter_search) |search| search.likelihood_ratio else null, .route = &route }) catch |err| return if (err == error.OutOfMemory) error.OutOfMemory else proc.failGap(cx.diags, spec.line, "PROC MIXED: numerical table rendering failed ({t})", .{err});
         try @import("mixed_contrasts.zig").publishRouted(cx, out, m, r, x, z, fit, fit.variances, inference_requests, &route);
         if (route.visible == 0) out.shrinkRetainingCapacity(group_start);
+        try @import("mixed_plots.zig").execute(cx, spec, m, group, x, z, fit, if (spec.roles.by.len > 0) by_index + 1 else null);
     }
 }
 
@@ -323,4 +324,58 @@ test "MIXED006 real BY entry reproduces complete grouped and pooled original lis
     try std.testing.expect(got.next() == null);
     try std.testing.expect(!h.d.hasErrors());
     try std.testing.expect(!diag.gapHit());
+}
+
+test "MIXED017 real residual panels match manual studentized statistics and actual SVG coordinates" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const h = try Testing.init(a);
+    _ = try h.heights(1);
+    var graphics = @import("graphics_svg.zig").Session{ .arena = a, .io = std.testing.io, .diags = h.d, .enabled = true };
+    var cx = h.cx;
+    cx.graphics = &graphics;
+    var out: std.ArrayList(u8) = .empty;
+    const code = "proc mixed plots(only obsno)=studentpanel(marginal conditional);class Family Gender;model Height=Gender;random Family Family*Gender;run;";
+    try run(cx, &out, try lex.tokenize(a, code, h.d));
+    try std.testing.expectEqual(@as(usize, 2), graphics.prepared.items.len);
+    const plots = @import("mixed_plots.zig");
+    // S154 physical figures84.15/84.16, pp.6731-6732, displayed precision.
+    for (graphics.prepared.items, [_][4]f64{ .{ -1.88, 0.1353, 1.6916, 0.9261 }, .{ -1.678, -0.022, 2.0034, 1.0329 } }, 0..) |artifact, ref, mode_index| {
+        const bytes = artifact.bytes;
+        try std.testing.expectApproxEqAbs(ref[0], try plots.attribute(bytes, "data-minimum"), 0.0005);
+        // Figure84.16 prints conditional mean to THREE decimals (-0.022);
+        // Figure84.15 prints marginal mean to four (.1353).
+        try std.testing.expectApproxEqAbs(ref[1], try plots.attribute(bytes, "data-mean"), if (mode_index == 0) @as(f64, 0.00005) else 0.0005);
+        try std.testing.expectApproxEqAbs(ref[2], try plots.attribute(bytes, "data-maximum"), 0.00005);
+        try std.testing.expectApproxEqAbs(ref[3], try plots.attribute(bytes, "data-sd"), 0.00005);
+        try std.testing.expectEqual(@as(f64, 18), try plots.attribute(bytes, "data-observations"));
+        try std.testing.expectEqual(@as(usize, 18), std.mem.count(u8, bytes, "class=\"observation\""));
+        try std.testing.expectEqual(@as(usize, 18), std.mem.count(u8, bytes, "class=\"quantile\""));
+        try std.testing.expectEqual(@as(usize, 65), std.mem.count(u8, bytes, "class=\"density-coordinate\""));
+        try plots.verifyGeometry(bytes);
+        try std.testing.expect(std.mem.indexOf(u8, bytes, "Predicted Mean") != null);
+        try std.testing.expect(std.mem.indexOf(u8, bytes, "Normal density") != null);
+        try std.testing.expect(std.mem.indexOf(u8, bytes, "Observation 1;") != null);
+    }
+    graphics.clear();
+    out.clearRetainingCapacity();
+    graphics.enabled = false;
+    try run(cx, &out, try lex.tokenize(a, code, h.d));
+    try std.testing.expectEqual(@as(usize, 0), graphics.prepared.items.len);
+    graphics.enabled = true;
+    out.clearRetainingCapacity();
+    try run(cx, &out, try lex.tokenize(a, "proc mixed plots=none;class Family Gender;model Height=Gender / residual;random Family Family*Gender;run;", h.d));
+    try std.testing.expectEqual(@as(usize, 0), graphics.prepared.items.len);
+    out.clearRetainingCapacity();
+    try run(cx, &out, try lex.tokenize(a, "proc mixed;class Family Gender;model Height=Gender;random Family Family*Gender;run;", h.d));
+    try std.testing.expectEqual(@as(usize, 0), graphics.prepared.items.len);
+    out.clearRetainingCapacity();
+    try run(cx, &out, try lex.tokenize(a, "proc mixed plots(only maxpoints=2)=residualpanel;class Family Gender;model Height=Gender;random Family Family*Gender;run;", h.d));
+    try std.testing.expectEqual(@as(usize, 0), graphics.prepared.items.len);
+    try std.testing.expect(std.mem.indexOf(u8, try h.d.render(), "MAXPOINTS=2") != null);
+    out.clearRetainingCapacity();
+    try run(cx, &out, try lex.tokenize(a, "proc mixed plots(only)=pearsonpanel(unpack);class Family Gender;model Height=Gender;random Family Family*Gender;run;", h.d));
+    try std.testing.expectEqual(@as(usize, 3), graphics.prepared.items.len);
+    for (graphics.prepared.items) |artifact| try plots.verifyGeometry(artifact.bytes);
 }

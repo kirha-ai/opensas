@@ -14,6 +14,7 @@ pub const Options = struct {
     solution: bool = false,
     cl: bool = false,
     notest: bool = false,
+    residual: bool = false,
     intercept_test: bool = false,
     ddfm: enum { default, residual } = .default,
     singular: f64 = 1e4 * std.math.floatEps(f64),
@@ -170,6 +171,10 @@ fn modelOptions(cx: proc.ProcCtx, t: []const lex.Token, s: *Spec) diag.Error!voi
             s.options.cl = true;
             continue;
         }
+        if (eq(token.text, "residual") or eq(token.text, "residuals")) {
+            s.options.residual = true;
+            continue;
+        }
         if (eq(token.text, "notest")) {
             s.options.notest = true;
             continue;
@@ -211,7 +216,7 @@ fn modelOptions(cx: proc.ProcCtx, t: []const lex.Token, s: *Spec) diag.Error!voi
             }
             continue;
         }
-        for ([_][]const u8{ "alphap", "chisq", "contain", "corrb", "covb", "covbi", "ddf", "e", "e1", "e2", "e3", "fullx", "influence", "lcomponents", "outp", "outpred", "outpm", "outpredm", "residual", "residuals", "singchol", "singres", "vciry", "xpvix", "xpvixi", "zeta" }) |name| if (eq(token.text, name)) return proc.failGap(cx.diags, token.line, "PROC MIXED: MODEL option {s} is not implemented", .{token.text});
+        for ([_][]const u8{ "alphap", "chisq", "contain", "corrb", "covb", "covbi", "ddf", "e", "e1", "e2", "e3", "fullx", "influence", "lcomponents", "outp", "outpred", "outpm", "outpredm", "singchol", "singres", "vciry", "xpvix", "xpvixi", "zeta" }) |name| if (eq(token.text, name)) return proc.failGap(cx.diags, token.line, "PROC MIXED: MODEL option {s} is not implemented", .{token.text});
         return bad(cx, t, i - 1);
     }
 }

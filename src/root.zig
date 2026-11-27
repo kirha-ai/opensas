@@ -40,6 +40,8 @@ test {
     _ = @import("stat/mixed_model.zig");
     _ = @import("stat/mixed_design.zig");
     _ = @import("stat/mixed_random.zig");
+    _ = @import("stat/mixed_plot_data.zig");
+    _ = @import("stat/mixed_plots.zig");
     _ = @import("stat/mixed_repeated.zig");
     _ = @import("stat/mixed_fit.zig");
     _ = @import("stat/mixed_info.zig");

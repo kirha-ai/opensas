@@ -2,7 +2,7 @@
 const std = @import("std");
 const pathPart = @import("../ods_listing.zig").pathPart;
 const A = std.mem.Allocator;
-pub const Name = enum { CDFPlot, PPPlot, QQPlot, ProbPlot, Histogram, ScatterPlot, FitPlot, IntPlot, MatrixPlot, FreqPlot, CumFreqPlot, DeviationPlot, MosaicPlot, AgreePlot, DiagnosticsPanel, ResidualPlot, RidgePanel, RidgePlot, VIFPlot, OddsRatioPlot, ROCCurve, ROCOverlay, Interval, WilcoxonBoxPlot, FPBoxPlot, EDFPlot, ANOVABoxPlot, MedianPlot, VWBoxPlot, SavageBoxPlot, ABBoxPlot, STBoxPlot, KlotzBoxPlot, MoodBoxPlot, ConoverBoxPlot, DataScoresBoxPlot };
+pub const Name = enum { CDFPlot, PPPlot, QQPlot, ProbPlot, Histogram, ScatterPlot, FitPlot, IntPlot, MatrixPlot, FreqPlot, CumFreqPlot, DeviationPlot, MosaicPlot, AgreePlot, DiagnosticsPanel, ResidualPlot, RidgePanel, RidgePlot, VIFPlot, OddsRatioPlot, ROCCurve, ROCOverlay, Interval, WilcoxonBoxPlot, FPBoxPlot, EDFPlot, ANOVABoxPlot, MedianPlot, VWBoxPlot, SavageBoxPlot, ABBoxPlot, STBoxPlot, KlotzBoxPlot, MoodBoxPlot, ConoverBoxPlot, DataScoresBoxPlot, ResidualPanel, StudentPanel, PearsonPanel, ResidualByPredicted, StudentByPredicted, PearsonByPredicted, ResidualHistogram, StudentHistogram, PearsonHistogram, ResidualQQplot, StudentQQplot, PearsonQQplot };
 pub const Object = struct { name: Name, label: []const u8, template: ?[]const u8, path: []const u8 };
 pub fn known(name: []const u8) bool {
     for (std.meta.tags(Name)) |tag| if (std.ascii.eqlIgnoreCase(@tagName(tag), name)) return true;
@@ -43,4 +43,10 @@ pub fn freq(a: A, name: Name, by: ?usize, table: usize, one: bool, dot: bool, st
     };
     const path = try std.fmt.allocPrint(a, "{s}.Table{d}{s}.{s}", .{ try prefix(a, "Freq", by), table, group, n });
     return .{ .name = name, .label = title, .template = template, .path = path };
+}
+
+/// MIXED native graph names are documented in S154 physical pp.6729-6730.
+/// The graph template was not captured in the baseline; do not invent one.
+pub fn mixed(a: A, name: Name, by: ?usize, label: []const u8) !Object {
+    return .{ .name = name, .label = label, .template = null, .path = try std.fmt.allocPrint(a, "{s}.{s}", .{ try prefix(a, "Mixed", by), @tagName(name) }) };
 }

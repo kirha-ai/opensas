@@ -20,6 +20,7 @@ pub const Options = struct {
     noinfo: bool = false,
     noitprint: bool = false,
     plots_none: bool = false,
+    plots: @import("mixed_plots.zig").Options = .{},
     maxiter: usize = 50,
     maxfunc: usize = 150,
     namelen: usize = 20,
@@ -67,6 +68,11 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
     while (i < t.len and !is(t, i, .semicolon) and !is(t, i, .eof)) {
         const token = t[i];
         if (token.tag != .name) return bad(cx, token);
+        if (eq(token.text, "plots") or eq(token.text, "plot")) {
+            opts.plots = try @import("mixed_plots.zig").parse(cx.arena, cx.diags, t, &i);
+            opts.plots_none = opts.plots.none;
+            continue;
+        }
         i += 1;
         if (eq(token.text, "noprofile") or eq(token.text, "sigiter")) {
             opts.noprofile = true;
@@ -81,7 +87,6 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
             continue;
         }
         if (eq(token.text, "namelen") and !is(t, i, .eq)) continue; // default20, optional argument
-        if ((eq(token.text, "plots") or eq(token.text, "plot")) and is(t, i, .lparen)) return proc.failGap(cx.diags, token.line, "PROC MIXED: plot options are not implemented", .{});
         const unsupported = [_][]const u8{ "absolute", "anovaf", "asycorr", "asycov", "cl", "convf", "convg", "convh", "covtest", "dfbw", "empirical", "ic", "itdetails", "lognote", "mmeq", "mmeqsol", "nobound", "noclprint", "ranks", "ratio", "ridge", "scoring", "update" };
         for (unsupported) |option| if (eq(token.text, option)) return proc.failGap(cx.diags, token.line, "PROC MIXED: option {s} is not implemented", .{token.text});
         if (!is(t, i, .eq)) return bad(cx, token);
@@ -111,10 +116,6 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
             opts.order = for (std.enums.values(classes.Order)) |order| {
                 if (eq(t[i].text, @tagName(order))) break order;
             } else return bad(cx, t[i]);
-            i += 1;
-        } else if (eq(token.text, "plots") or eq(token.text, "plot")) {
-            if (!is(t, i, .name) or !eq(t[i].text, "none")) return proc.failGap(cx.diags, token.line, "PROC MIXED: requested plots are not implemented", .{});
-            opts.plots_none = true;
             i += 1;
         } else if (eq(token.text, "alpha") or eq(token.text, "maxiter") or eq(token.text, "maxfunc") or eq(token.text, "namelen")) {
             const number = try numeric(cx, t, &i);
