@@ -12,6 +12,10 @@ Explicit user resume. Confirmed working branch `feat/stat/batch-4`, base `31356c
 - dev6: STAT-COMMON-017; `/Users/thomas/kirha/opensas-dev6`; branch `codex/stat-b4-dev6`; assigned 2026-11-27T13:42:13+00:00; implementation deadline 2026-11-27T14:27:13+00:00. Original README/cases and cited physical PDF pages required before edits.
 - dev7: STAT-COMMON-018; `/Users/thomas/kirha/opensas-dev7`; branch `codex/stat-b4-dev7`; assigned 2026-11-27T13:42:13+00:00; implementation deadline 2026-11-27T14:27:13+00:00. Original README/cases and cited physical PDF pages required before edits.
 
+### Rolling verification — POWER-001 partial and FREQ-010 DONE
+
+Exact tested/pushed SHA `afceae40f4bf1be97e4d9bf0424828506a38bf80`: entire oracle absent for `zig build gate -j2 --summary all` direct0 (**1878/1878 unit,2346/2346 corpus,11/11 programs**), install direct0, separate supplemental direct0 (**1113/1113**). Restoration completed and original files unchanged. Pushed to `feat/stat/batch-4`. Current-CLI unchanged FREQ010 original is649/649 tokens,rc0/reference0; its reused full corpus and independent common-risk tests make folder deletion-ready, left present. POWER001 original remains rc2/reference0,0/450 tokens with ONESAMPLEMEANS/scenario/GROUPMEANS/NFRACTIONAL gaps; its declarations/PLOTONLY partial is durable, remains PARK. Next POWER002 already active.
+
 ### Rolling assignment — FREQ-011
 
 FREQ-010 implementation/replay/focused checks are complete and integrated at `22219f47`, awaiting coordinator final gate/supplemental/absence/push (not yet DONE). dev5 owns existing STAT-FREQ-011 on retained `opensas-dev5`, branch `codex/stat-b4c-dev5`, assigned 2026-11-27T14:12:55+00:00, deadline 2026-11-27T14:57:55+00:00. Scope remains odds ratio/relative risks with permanent original mapping and independent boundary/inversion tests; no new tickets.
@@ -3834,7 +3838,7 @@ Source: S154, Chapter 47, `The FREQ Procedure`, PDF pp. 3069–3290. Tasks in th
 
 <a id="stat-freq-010"></a>
 
-### [DOING @coordinator] STAT-FREQ-010 — FREQ — Common Risk Difference
+### [DONE] STAT-FREQ-010 — FREQ — Common Risk Difference
 
 - Source: S154 / Chapter 47 / `Common Risk Difference` (PDF pp. 3199–3203).
 - Scope: Implement Common Risk Difference. This ticket owns the feature's options, defaults, computation, and results as an extension of the basic computational path; the chapter's output tickets handle ODS descriptors and file presentation.
@@ -3847,6 +3851,8 @@ Source: S154, Chapter 47, `The FREQ Procedure`, PDF pp. 3069–3290. Tasks in th
 - Validation/integration queue: branch `codex/stat-b4b-dev5`, base `79c56588`, code `724edbe9`, worktree `/Users/thomas/kirha/opensas-dev5`. Focused `zig test ... --test-filter FREQ010 --cache-dir .zig-cache/b4` direct exit 0, 10/10 (five feature tests plus five import anchors); existing common-risk focused suite exit 0, 8/8; shared original corpus replay exit 0, 1/1 including graph assertions. Raw evidence is in ignored `.zig-cache/stat-freq010/`. Implementation finished within the 45-minute attempt; ready for serial rebase/integration. Final exact-integrated-SHA gate, separate supplemental and oracle-absent checks are pending the coordinator's shared batch verification. Do not mark DONE or claim deletion-ready until these checks and push succeed.
 - Integration rebase: cleanly rebased onto `b9b0ce73`; code `09fa3257` is byte-identical to `724edbe9`, with handoff `34f63956`. Diff-check passed; final shared batch validation remains pending.
 - Acceptance criteria: For Common Risk Difference, verify risk direction, stratified or unstratified estimates, standard errors, and every requested interval; include zero cells and unbalanced margins; validate numerical values against the source formulas or an independent reference, following this file's precision conventions.
+
+- Final DONE receipt: exact integrated/pushed afceae40, unchanged original649/649 tokens rc0/reference0; whole oracle absent default1878/2346/11 and separate supplemental1113 direct0, restored unchanged. Folder deletion-ready, not deleted.
 
 <a id="stat-freq-011"></a>
 
@@ -10659,6 +10665,8 @@ Source: S154, Chapter 96, `The POWER Procedure`, PDF pp. 7733–7988. Tasks in t
 - Verification so far: original README, all SAS/output/rc/log, physical pp.7745–7746 and relevant pp.7744/7824/7855 reviewed. Focused `zig test --test-filter STAT-POWER-001 --dep build_options -Mroot=src/root.zig -Mbuild_options=.zig-cache/c/8c1abc982d9089fb285de5048952325d/options.zig -lc` passed direct rc0, 8/8 tests (three new plus five import roots); COMMON018 focused regression passed direct rc0, 9/9. Full gate/install/separate supplemental/oracle-absence checks are pending the coordinator's serial combined validation, as requested during resource contention. Ignored raw logs are under `output/stat-power001/`. Do not promote to DONE on these focused checks.
 
 - Acceptance criteria: Create positive and negative parsing cases for the documented declarations and basic options; verify defaults, explicit settings, documented duplicate/conflicting declarations, and locations; valid but unimplemented features must not silently succeed. Check execution prerequisites with empty, missing, and valid input.
+
+- Final partial receipt: exact integrated/pushed afceae40, whole oracle absent default1878/2346/11 and separate supplemental1113 direct0, restored unchanged. Original rc2/reference0,0/450 tokens; four explicit gaps remain, no acceptance claim. Subsequent existing POWER002 assigned.
 
 <a id="stat-power-002"></a>
 
