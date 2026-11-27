@@ -69,6 +69,16 @@ Current counts: **48 DONE,19 PARK,7 DOING,1348 TODO**. All temporary reference f
 
 At exact c78ef7c6ca2b0b65ecf00e697687e906a887fc63, oracle-absent gate direct1:1989/1990unit,2361/2361corpus,11/11programs. Single failure is old REG parser-test substring `not implemented` after STEPWISE gained a real NOPRINT/OUTEST path; current explicit unsupported-listing diagnostic has changed. Repair378ce9bc retains all six invalid-syntax assertions, resets the gap flag before the supported-method/unsupported-listing path, and checks the exact captured message plus D-009 rc2. Targeted actual regression8/8 direct0; full rerun pending. Repair worktree `/Users/thomas/kirha/opensas-reg-gate-repair`, branch `codex/stat-reg-gate-repair`, created from c78ef7c6; ongoing REG009 source/evidence untouched. Supplemental not claimed for failedrun; oracle restored. Batchnotpushed.
 
+### Active-time assignments — reweighting, conditional logistic, pairwise ranks
+
+PreviousREG010/LOGISTIC005/NPAR006 attemptsarefrozenandintegratedthrough `5e54da1e`; theirremaininglimitsstayPARK. Newattemptsuseverifiedsleep-excludingPython3.13mach_absolute_time(), checkbeforeevery sourceedit andfreezeatdeadline.
+
+- dev1: STAT-REG-011; retained `opensas-dev1`, `codex/stat-b4-reg011-dev1`; assignedUTC 2026-11-27T22:07:21+00:00; initialUTCdeadline 2026-11-27T22:52:21+00:00; activeStart=349018.149945, activeDeadline=351718.149945.
+- dev4: STAT-LOGISTIC-006; retained `opensas-dev4`, `codex/stat-b4-logistic006-dev4`; assignedUTC 2026-11-27T22:07:21+00:00; initialUTCdeadline 2026-11-27T22:52:21+00:00; activeStart=349018.149945, activeDeadline=351718.149945.
+- dev6: STAT-NPAR1WAY-007; retained `opensas-dev6`, `codex/stat-b4-npar007-dev6`; assignedUTC 2026-11-27T22:07:21+00:00; initialUTCdeadline 2026-11-27T22:52:21+00:00; activeStart=349018.149945, activeDeadline=351718.149945.
+
+UseactualexistingREGsession/GLM-compatiblehypothesis,LOGISTICresponse/fit,andNPARrankinterfaces only. Conditional likelihood mustnotreuseunconditional Bernoulli likelihood or outputs incorrectly; multiple-comparisonadjustments requiretheir actualdistribution, not anapproximation chosen to fit reference. Scope/citation/default-gate/originalreplay rulesunchanged; no newbacklog/lane.
+
 ### Active-time assignments — means, computational issues, influence
 
 New45-minuteattempts use the same-machine sleep-excluding clock: `/opt/homebrew/Caskroom/miniconda/base/bin/python3`, `time.monotonic()` (`mach_absolute_time()`). Verified local AppleSDK mach_time.h59–62 states continuous_time additionallyadvancesduringsleep. Active-time deadline below isauthoritative; UTCisinitialdisplayestimate. Checkthisclockbeforeevery sourceedit; nofreshclockafterhandoff. Ifcounterreset/reboot, freezeandpreserveratherthaninventelapsedtime. Previousattempts remainfrozen/queued, notextended.
@@ -8596,7 +8606,7 @@ Source: S154, Chapter 79, `The LOGISTIC Procedure`, PDF pp. 5823–6080. Tasks i
 
 <a id="stat-logistic-006"></a>
 
-### [TODO] STAT-LOGISTIC-006 — LOGISTIC — Conditional Logistic Regression
+### [DOING @dev4] STAT-LOGISTIC-006 — LOGISTIC — Conditional Logistic Regression
 
 - Source: S154 / Chapter 79 / `Conditional Logistic Regression` (PDF pp. 5946–5949).
 - Scope: Implement Conditional Logistic Regression. This ticket owns the feature's options, defaults, computation, and results as an extension of the basic computational path; the chapter's output tickets handle ODS descriptors and file presentation.
@@ -10413,7 +10423,7 @@ Source: S154, Chapter 90, `The NPAR1WAY Procedure`, PDF pp. 7205–7282. Tasks i
 
 <a id="stat-npar1way-007"></a>
 
-### [TODO] STAT-NPAR1WAY-007 — NPAR1WAY — Multiple Comparisons Based on Pairwise Rankings
+### [DOING @dev6] STAT-NPAR1WAY-007 — NPAR1WAY — Multiple Comparisons Based on Pairwise Rankings
 
 - Source: S154 / Chapter 90 / `Multiple Comparisons Based on Pairwise Rankings` (PDF p. 7247).
 - Scope: Implement Multiple Comparisons Based on Pairwise Rankings. This ticket owns the feature's options, defaults, computation, and results as an extension of the basic computational path; the chapter's output tickets handle ODS descriptors and file presentation.
@@ -12405,7 +12415,7 @@ Source: S154, Chapter 105, `The REG Procedure`, PDF pp. 8539–8728. Tasks in th
 
 <a id="stat-reg-011"></a>
 
-### [TODO] STAT-REG-011 — REG — REWEIGHT / Reweighting Observations in an Analysis
+### [DOING @dev1] STAT-REG-011 — REG — REWEIGHT / Reweighting Observations in an Analysis
 
 - Source: S154 / Chapter 105 / `REWEIGHT Statement` (PDF pp. 8595–8598); S154 / Chapter 105 / `Reweighting Observations in an Analysis` (PDF pp. 8636–8642).
 - Scope: Implement REWEIGHT; Reweighting Observations in an Analysis. This ticket owns the feature's options, defaults, computation, and results as an extension of the basic computational path; the chapter's output tickets handle ODS descriptors and file presentation.
