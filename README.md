@@ -123,7 +123,7 @@ python3 -m http.server -d web    # open http://localhost:8000
 
 Three suites run in CI on every push and before every release.
 
-- **Unit tests.** `zig build test` runs 1,842 tests across four Zig test suites.
+- **Unit tests.** `zig build test` runs 1,843 tests across four Zig test suites.
 - **Conformance corpus.** `zig build corpus` runs the 2,344 SAS programs directly under `tests/corpus/`, including 238 statistical cases verified against SAS 9.4 M9. [Corpus fixtures](tests/corpus)
 - **End-to-end programs.** 11 whole programs in [`tests/programs/`](tests/programs), datasets in and datasets out. Every output column and value is diffed against the golden dataset.
 
