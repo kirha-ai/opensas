@@ -240,9 +240,9 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
                         j += 1;
                     } else return unsupported(cx, option);
                 }
+                if (!at(t, j, .rparen)) return invalid(cx, t, j);
                 if (s.model.event != null and s.model.response_reference != null)
                     return proc.failGap(cx.diags, t[j - 1].line, "PROC LOGISTIC: combined EVENT and REF options are not implemented", .{});
-                if (!at(t, j, .rparen)) return invalid(cx, t, j);
                 j += 1;
             }
             if (at(t, j, .slash)) {
@@ -836,6 +836,14 @@ test "LOGISTIC004 invalid ordering and unsupported ordinal responses stay visibl
         try std.testing.expect(d.hasErrors());
         try std.testing.expectEqual(@as(u8, if (gap) 2 else 1), diag.exitCode(diag.gapHit(), d.hasErrors()));
     }
+    // Malformed syntax stays a user error even when valid combined options
+    // would require an unsupported precedence rule.
+    var d = diag.Diagnostics.init(a);
+    var out: std.ArrayList(u8) = .empty;
+    const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &d };
+    diag.resetGap();
+    try std.testing.expectError(error.ParseError, run(cx, &out, try lex.tokenize(a, "proc logistic; model y(event=first ref=last; run;", &d)));
+    try std.testing.expectEqual(@as(u8, 1), diag.exitCode(diag.gapHit(), d.hasErrors()));
 }
 
 test "LOGISTIC004 character data frequency ordering and missing exclusion" {
