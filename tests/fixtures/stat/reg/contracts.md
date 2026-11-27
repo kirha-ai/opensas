@@ -359,11 +359,6 @@ Its two-row estimable contrast matrix, overall-mean intercept and coefficient
 report dimensions are checked under the actual ordered g2 fit. Column-order
 changes in an aliased regression preserve the estimable joint result.
 
-The complete deterministic COMMON031 original is retained as
-`persist_reg_common031_joint_linear_test.sas`; its expected contract contains
-all original SAS listing tokens, with whitespace normalization only and no
-numerical exemptions. New shared numerical/option contracts run as Zig tests.
-
 Nested effect references use the COMMON007 canonical form A(B C), keeping
 crossed factors and nesting factors separate while matching factor order and
 case independently. Repeated covariates retain their multiplicities. A balanced
