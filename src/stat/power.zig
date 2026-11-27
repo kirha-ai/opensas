@@ -1,5 +1,6 @@
 //! Minimal POWER consumer of the shared numerical inversion contract.
-//! TWOSAMPLEMEANS scalar equal-allocation TEST=DIFF: S154 physical pp.7820-7830.
+//! Scalar ONESAMPLEMEANS TEST=T and balanced TWOSAMPLEMEANS TEST=DIFF.
+//! S154 physical pp.7780-7786 and 7820-7830 define their defaults/options.
 //! Other analyses, list scenarios and allocation specifications remain loud gaps.
 const std = @import("std");
 const proc = @import("../proc.zig");
@@ -8,7 +9,7 @@ const lex = @import("../lexer.zig");
 const means = @import("power_means.zig");
 const parser = @import("../parser.zig");
 const eq = std.ascii.eqlIgnoreCase;
-pub const Scenario = struct { line: usize = 0, difference: ?f64 = null, sigma: ?f64 = null, alpha: f64 = 0.05, alpha_explicit: bool = false, sides_explicit: bool = false, null_explicit: bool = false, null_difference: f64 = 0, power: ?f64 = null, n: ?f64 = null, power_seen: bool = false, n_seen: bool = false };
+pub const Scenario = struct { kind: means.Kind = .two_sample, line: usize = 0, difference: ?f64 = null, effect_seen: bool = false, sigma: ?f64 = null, sigma_seen: bool = false, alpha: f64 = 0.05, alpha_explicit: bool = false, sides_explicit: bool = false, null_explicit: bool = false, null_difference: f64 = 0, power: ?f64 = null, n: ?f64 = null, power_seen: bool = false, n_seen: bool = false };
 fn at(t: []const lex.Token, i: usize, tag: lex.Tag) bool {
     return i < t.len and t[i].tag == tag;
 }
@@ -39,7 +40,8 @@ fn listed(name: []const u8, names: []const []const u8) bool {
 }
 // Documented POWER/TWOSAMPLEMEANS vocabulary (S154 physical pp.7744-7745,
 // 7820-7827). Unknown spellings are user errors; recognized gaps remain rc 2.
-fn unsupportedOption(name: []const u8) bool {
+fn unsupportedOption(kind: means.Kind, name: []const u8) bool {
+    if (kind == .one_sample) return listed(name, &.{ "ci", "cv", "halfwidth", "lower", "nfractional", "nfrac", "outputorder", "probtype", "probwidth", "upper" });
     return listed(name, &.{ "ci", "cv", "groupmeans", "gmeans", "groupns", "gns", "groupstddevs", "gstddevs", "groupstds", "gstds", "groupweights", "gweights", "halfwidth", "lower", "meanratio", "nfractional", "nfrac", "npergroup", "nperg", "nullratio", "nullr", "outputorder", "probtype", "probwidth", "upper" });
 }
 pub const Options = struct { plotonly: bool = false };
@@ -61,21 +63,23 @@ pub fn declaration(cx: proc.ProcCtx, t: []const lex.Token, i: *usize) diag.Error
 /// Typed result contract for subsequent analysis/output consumers. Unsupported
 /// requests return captured diagnostics rather than plausible missing rows.
 pub fn compute(cx: proc.ProcCtx, s: Scenario) diag.Error!Result {
-    if (s.difference == null or s.sigma == null or !s.power_seen or !s.n_seen or (s.power == null) == (s.n == null)) return invalid(cx, s.line, "MEANDIFF, STDDEV, POWER and NTOTAL are required; exactly one of POWER or NTOTAL must be missing");
-    const d: means.Design = .{ .difference = s.difference.? - s.null_difference, .sigma = s.sigma.?, .alpha = s.alpha };
+    const unknowns = @as(u8, @intFromBool(s.difference == null)) + @as(u8, @intFromBool(s.sigma == null)) + @as(u8, @intFromBool(s.power == null)) + @as(u8, @intFromBool(s.n == null));
+    if (unknowns == 1 and s.power_seen and s.n_seen and ((s.difference == null and s.effect_seen) or (s.sigma == null and s.sigma_seen))) return proc.failGap(cx.diags, s.line, "PROC POWER: solving for the effect or standard deviation is not implemented", .{});
+    if (s.difference == null or s.sigma == null or !s.power_seen or !s.n_seen or (s.power == null) == (s.n == null)) return invalid(cx, s.line, "MEAN (one sample) or MEANDIFF (two samples), STDDEV, POWER and NTOTAL are required; exactly one of POWER or NTOTAL must be missing");
+    const d: means.Design = .{ .kind = s.kind, .difference = s.difference.? - s.null_difference, .sigma = s.sigma.?, .alpha = s.alpha };
     if (!d.valid()) return invalid(cx, s.line, "STDDEV must be positive and ALPHA must lie strictly between zero and one");
     var n: f64 = undefined;
     var power: f64 = undefined;
     if (s.n) |given| {
-        if (given < 4 or @floor(given) != given) return invalid(cx, s.line, "NTOTAL must be an integer of at least four");
-        if (@mod(given, 2) != 0) return proc.failGap(cx.diags, s.line, "PROC POWER: odd NTOTAL allocation adjustment is not implemented", .{});
+        if (given < d.minimumN() or @floor(given) != given) return invalid(cx, s.line, "NTOTAL must be an integer with at least two observations per group");
+        if (s.kind == .two_sample and @mod(given, 2) != 0) return proc.failGap(cx.diags, s.line, "PROC POWER: odd NTOTAL allocation adjustment is not implemented", .{});
         n = given;
         power = d.power(n);
     } else {
         if (s.power.? <= 0 or s.power.? >= 1) return invalid(cx, s.line, "POWER must lie strictly between zero and one");
         const result = d.sampleSize(s.power.?);
         if (result.status != .converged) return proc.failGap(cx.diags, s.line, "PROC POWER: sample-size inversion did not converge ({s})", .{@tagName(result.status)});
-        n = means.executableN(result.x);
+        n = d.executable(result.x);
         power = d.power(n);
     }
     if (!std.math.isFinite(power)) return proc.failGap(cx.diags, s.line, "PROC POWER: exact power is outside the implemented numerical domain", .{});
@@ -84,19 +88,24 @@ pub fn compute(cx: proc.ProcCtx, s: Scenario) diag.Error!Result {
 fn render(cx: proc.ProcCtx, out: *std.ArrayList(u8), s: Scenario, result: Result) diag.Error!void {
     const n = result.sample_size;
     const power = result.power;
-    try out.appendSlice(cx.arena, "The POWER Procedure\nTwo-Sample t Test for Mean Difference\n\nFixed Scenario Elements\n\nDistribution Normal\nMethod Exact\n");
+    try out.appendSlice(cx.arena, "The POWER Procedure\n");
+    try out.appendSlice(cx.arena, if (s.kind == .one_sample) "One-Sample t Test for Mean\n" else "Two-Sample t Test for Mean Difference\n");
+    try out.appendSlice(cx.arena, "\nFixed Scenario Elements\n\nDistribution Normal\nMethod Exact\n");
+    const mean_label = if (s.kind == .one_sample) "Mean" else "Mean Difference";
+    const null_label = if (s.kind == .one_sample) "Null Mean" else "Null Difference";
     // Fixed elements list supplied parameters before defaults, each in the
     // documented internal order (S154 physical pp.7824 and 7855).
     if (s.sides_explicit) try out.appendSlice(cx.arena, "Number of Sides 2\n");
-    if (s.null_explicit) try out.appendSlice(cx.arena, try std.fmt.allocPrint(cx.arena, "Null Difference {d}\n", .{s.null_difference}));
+    if (s.null_explicit) try out.appendSlice(cx.arena, try std.fmt.allocPrint(cx.arena, "{s} {d}\n", .{ null_label, s.null_difference }));
     if (s.alpha_explicit) try out.appendSlice(cx.arena, try std.fmt.allocPrint(cx.arena, "Alpha {d}\n", .{s.alpha}));
-    const fixed = try std.fmt.allocPrint(cx.arena, "Mean Difference {d}\nStandard Deviation {d}\n", .{ s.difference.?, s.sigma.? });
+    const fixed = try std.fmt.allocPrint(cx.arena, "{s} {d}\nStandard Deviation {d}\n", .{ mean_label, s.difference.?, s.sigma.? });
     try out.appendSlice(cx.arena, fixed);
     try out.appendSlice(cx.arena, try std.fmt.allocPrint(cx.arena, "{s} {d}\n", .{ if (s.n == null) "Nominal Power" else "Total Sample Size", if (s.n == null) s.power.? else n }));
     if (!s.sides_explicit) try out.appendSlice(cx.arena, "Number of Sides 2\n");
-    if (!s.null_explicit) try out.appendSlice(cx.arena, try std.fmt.allocPrint(cx.arena, "Null Difference {d}\n", .{s.null_difference}));
+    if (!s.null_explicit) try out.appendSlice(cx.arena, try std.fmt.allocPrint(cx.arena, "{s} {d}\n", .{ null_label, s.null_difference }));
     if (!s.alpha_explicit) try out.appendSlice(cx.arena, try std.fmt.allocPrint(cx.arena, "Alpha {d}\n", .{s.alpha}));
-    try out.appendSlice(cx.arena, "Group 1 Weight 1\nGroup 2 Weight 1\n\n");
+    if (s.kind == .two_sample) try out.appendSlice(cx.arena, "Group 1 Weight 1\nGroup 2 Weight 1\n");
+    try out.appendSlice(cx.arena, "\n");
     if (s.n == null) try out.appendSlice(cx.arena, try std.fmt.allocPrint(cx.arena, "Computed N Total\n\nActual N\nPower Total\n\n{d:.3} {d:.0}\n\n", .{ power, n })) else try out.appendSlice(cx.arena, try std.fmt.allocPrint(cx.arena, "Computed Power\n\nPower\n\n{d:.3}\n", .{power}));
 }
 pub fn run(cx: proc.ProcCtx, out: *std.ArrayList(u8), t: []const lex.Token) diag.Error!void {
@@ -116,11 +125,11 @@ pub fn run(cx: proc.ProcCtx, out: *std.ArrayList(u8), t: []const lex.Token) diag
             if (at(t, i, .semicolon)) i += 1;
             continue;
         }
-        if (!kw(t, i, "twosamplemeans")) {
+        if (!kw(t, i, "twosamplemeans") and !kw(t, i, "onesamplemeans")) {
             if (listed(t[i].text, &.{ "coxreg", "custom", "logistic", "multreg", "onecorr", "onesamplefreq", "onesamplemeans", "onewayanova", "pairedfreq", "pairedmeans", "plot", "twosamplefreq", "twosamplesurvival", "twosamplewilcoxon" })) return proc.failGap(cx.diags, t[i].line, "PROC POWER: statement {s} is not implemented", .{t[i].text});
             return invalid(cx, t[i].line, "unknown analysis statement");
         }
-        var s: Scenario = .{ .line = t[i].line };
+        var s: Scenario = .{ .kind = if (kw(t, i, "onesamplemeans")) .one_sample else .two_sample, .line = t[i].line };
         i += 1;
         while (i < t.len and !at(t, i, .semicolon) and !at(t, i, .eof)) {
             if (!at(t, i, .name)) return proc.failGap(cx.diags, 0, "PROC POWER: scenario lists are not implemented", .{});
@@ -129,25 +138,34 @@ pub fn run(cx: proc.ProcCtx, out: *std.ArrayList(u8), t: []const lex.Token) diag
             i += 1;
             if (eq(name, "test") and !at(t, i, .eq)) continue;
             if (!at(t, i, .eq)) {
-                if (unsupportedOption(name)) return proc.failGap(cx.diags, line, "PROC POWER: option {s} is not implemented", .{name});
+                if (unsupportedOption(s.kind, name)) return proc.failGap(cx.diags, line, "PROC POWER: option {s} is not implemented", .{name});
                 return invalid(cx, line, "expected option=value");
             }
             i += 1;
             if (eq(name, "test") or eq(name, "dist")) {
-                if (!kw(t, i, if (eq(name, "test")) "diff" else "normal")) {
-                    if (i < t.len and listed(t[i].text, if (eq(name, "test")) &.{ "diff_satt", "equiv_diff", "equiv_ratio", "ratio" } else &.{"lognormal"})) return proc.failGap(cx.diags, line, "PROC POWER: only TEST=DIFF DIST=NORMAL is implemented", .{});
+                if (!kw(t, i, if (eq(name, "test")) (if (s.kind == .one_sample) "t" else "diff") else "normal")) {
+                    if (i < t.len and listed(t[i].text, if (eq(name, "test")) (if (s.kind == .one_sample) &.{"equiv"} else &.{ "diff_satt", "equiv_diff", "equiv_ratio", "ratio" }) else &.{"lognormal"})) return proc.failGap(cx.diags, line, "PROC POWER: only the default normal two-sided t test is implemented", .{});
                     return invalid(cx, line, "unknown TEST or DIST value");
                 }
                 i += 1;
                 continue;
             }
-            if (!eq(name, "meandiff") and !eq(name, "stddev") and !eq(name, "std") and !eq(name, "alpha") and !eq(name, "power") and !eq(name, "ntotal") and !eq(name, "sides") and !eq(name, "nulldiff") and !eq(name, "nulld")) {
-                if (unsupportedOption(name)) return proc.failGap(cx.diags, line, "PROC POWER: option {s} is not implemented", .{name});
-                return invalid(cx, line, "unknown TWOSAMPLEMEANS option");
+            const mean_option = if (s.kind == .one_sample) "mean" else "meandiff";
+            const null_option = if (s.kind == .one_sample) "nullmean" else "nulldiff";
+            const null_alias = if (s.kind == .one_sample) "nullm" else "nulld";
+            if (!eq(name, mean_option) and !eq(name, "stddev") and !eq(name, "std") and !eq(name, "alpha") and !eq(name, "power") and !eq(name, "ntotal") and !eq(name, "sides") and !eq(name, null_option) and !eq(name, null_alias)) {
+                if (unsupportedOption(s.kind, name)) return proc.failGap(cx.diags, line, "PROC POWER: option {s} is not implemented", .{name});
+                return invalid(cx, line, "unknown mean-analysis option");
             }
             if (eq(name, "sides") and (kw(t, i, "u") or kw(t, i, "l"))) return proc.failGap(cx.diags, line, "PROC POWER: only SIDES=2 is implemented", .{});
             const v = try number(cx, t, &i);
-            if (eq(name, "meandiff")) s.difference = v else if (eq(name, "stddev") or eq(name, "std")) s.sigma = v else if (eq(name, "alpha")) {
+            if (eq(name, mean_option)) {
+                s.difference = v;
+                s.effect_seen = true;
+            } else if (eq(name, "stddev") or eq(name, "std")) {
+                s.sigma = v;
+                s.sigma_seen = true;
+            } else if (eq(name, "alpha")) {
                 s.alpha = v orelse return proc.failGap(cx.diags, line, "PROC POWER: solving for ALPHA is not implemented", .{});
                 s.alpha_explicit = true;
             } else if (eq(name, "power")) {
@@ -161,7 +179,7 @@ pub fn run(cx: proc.ProcCtx, out: *std.ArrayList(u8), t: []const lex.Token) diag
                 if (v == null or (v.? != 1 and v.? != 2)) return invalid(cx, line, "invalid SIDES value");
                 if (v.? == 1) return proc.failGap(cx.diags, line, "PROC POWER: only SIDES=2 is implemented", .{});
             } else {
-                s.null_difference = v orelse return invalid(cx, line, "NULLDIFF must be nonmissing");
+                s.null_difference = v orelse return invalid(cx, line, "null mean or difference must be nonmissing");
                 s.null_explicit = true;
             }
         }
@@ -248,7 +266,7 @@ test "STAT-POWER-001 prerequisites and locations stay visible under PLOTONLY" {
         .{ .source = "proc power; run;", .line = 1, .code = 1 },
         .{ .source = "proc power\n data=missing; run;", .line = 2, .code = 1 },
         .{ .source = "proc power plotonly;\n twosamplemeans meandiff=2 stddev=. ntotal=100 power=.; run;", .line = 2, .code = 1 },
-        .{ .source = "proc power plotonly;\n onesamplemeans mean=8 stddev=40 ntotal=150 power=.; run;", .line = 2, .code = 2 },
+        .{ .source = "proc power plotonly;\n onewayanova test=overall; run;", .line = 2, .code = 2 },
         .{ .source = "proc power plotonly;\n twosamplemeans meandiff=2 stddev=3 ntotal=100 power=.;\n plot x=n; run;", .line = 3, .code = 2 },
     }) |case| {
         diag.resetGap();
@@ -274,4 +292,56 @@ test "STAT-POWER-001 multiple analyses and mid-step inert globals preserve bound
     try run(.{ .arena = a, .lib = &lib, .diags = &diagnostics }, &out, tokens);
     try std.testing.expectEqual(@as(usize, 2), std.mem.count(u8, out.items, "The POWER Procedure"));
     try std.testing.expectEqual(@as(usize, 0), diagnostics.list.items.len);
+}
+
+test "STAT-POWER-002 one-sample default agrees with explicit settings and remains distinct from two-sample" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var lib = @import("../exec.zig").Library.init(a);
+    var diagnostics = diag.Diagnostics.init(a);
+    const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &diagnostics };
+    const original = try compute(cx, .{ .kind = .one_sample, .difference = 8, .sigma = 40, .power_seen = true, .n_seen = true, .n = 150 });
+    const shifted = try compute(cx, .{ .kind = .one_sample, .difference = 12, .null_difference = 4, .sigma = 40, .power_seen = true, .n_seen = true, .n = 150 });
+    try std.testing.expectEqual(original, shifted);
+    var out: std.ArrayList(u8) = .empty;
+    try run(cx, &out, try lex.tokenize(a, "proc power; onesamplemeans test=t dist=normal mean=8 stddev=40 ntotal=150 power=. sides=2 nullmean=0 alpha=.05; run;", &diagnostics));
+    try std.testing.expect(std.mem.indexOf(u8, out.items, "One-Sample t Test for Mean") != null);
+    try std.testing.expect(std.mem.indexOf(u8, out.items, "0.682") != null);
+    try std.testing.expect(std.mem.indexOf(u8, out.items, "Group 1 Weight") == null);
+    try std.testing.expectEqual(@as(usize, 0), diagnostics.list.items.len);
+    const cases = [_][]const u8{
+        "proc power; onesamplemeans meandiff=8 stddev=40 ntotal=150 power=.; run;",
+        "proc power; twosamplemeans mean=8 stddev=40 ntotal=150 power=.; run;",
+        "proc power; onesamplemeans test=diff mean=8 stddev=40 ntotal=150 power=.; run;",
+        "proc power; onesamplemeans mean=8 stddev=40 ntotal=1 power=.; run;",
+    };
+    for (cases) |source| {
+        diag.resetGap();
+        defer diag.resetGap();
+        var bad = diag.Diagnostics.init(a);
+        var rejected: std.ArrayList(u8) = .empty;
+        try std.testing.expectError(error.ParseError, run(.{ .arena = a, .lib = &lib, .diags = &bad }, &rejected, try lex.tokenize(a, source, &bad)));
+        try std.testing.expectEqual(@as(u8, 1), diag.exitCode(diag.gapHit(), bad.hasErrors()));
+    }
+}
+
+test "STAT-POWER-002 valid missing effect and scale solutions remain unsupported not user errors" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var lib = @import("../exec.zig").Library.init(a);
+    for ([_][]const u8{
+        "proc power; onesamplemeans mean=. stddev=40 ntotal=150 power=.8; run;",
+        "proc power; onesamplemeans mean=8 stddev=. ntotal=150 power=.8; run;",
+        "proc power; twosamplemeans meandiff=. stddev=40 ntotal=150 power=.8; run;",
+    }) |source| {
+        diag.resetGap();
+        defer diag.resetGap();
+        var diagnostics = diag.Diagnostics.init(a);
+        var out: std.ArrayList(u8) = .empty;
+        try std.testing.expectError(error.ParseError, run(.{ .arena = a, .lib = &lib, .diags = &diagnostics }, &out, try lex.tokenize(a, source, &diagnostics)));
+        try std.testing.expectEqual(@as(u8, 2), diag.exitCode(diag.gapHit(), diagnostics.hasErrors()));
+        try std.testing.expectEqual(@as(usize, 0), out.items.len);
+    }
 }
