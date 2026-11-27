@@ -11,9 +11,9 @@ const estimability = @import("glm_estimability.zig");
 const A = std.mem.Allocator;
 const eq = std.ascii.eqlIgnoreCase;
 const inference = @import("lsmeans_inference.zig");
-pub const Request = struct { effect: usize, error_effect: ?usize = null, error_kind: ?@import("glm_test_statement.zig").Kind = null, e: bool = false, stderr: bool = false, singular: f64 = 1e-4, pdiff: bool = false, cl: bool = false, alpha: f64 = 0.05, adjust: inference.Adjustment = .none, adjust_explicit: bool = false };
+pub const Request = struct { effect: usize, scheffe: bool = false, slice_columns: []const usize = &.{}, error_effect: ?usize = null, error_kind: ?@import("glm_test_statement.zig").Kind = null, e: bool = false, stderr: bool = false, singular: f64 = 1e-4, pdiff: bool = false, cl: bool = false, alpha: f64 = 0.05, adjust: inference.Adjustment = .none, adjust_explicit: bool = false };
 pub const Mean = struct { levels: []const ?usize, coefficients: []const f64, inference: estimability.Result };
-pub const Table = struct { effect: []const u8, classes: []const coded.Class, columns: []const coded.Column, means: []const Mean, comparisons: []const inference.Difference = &.{}, mean_limits: []const inference.Interval = &.{}, df_error: usize = 0 };
+pub const Table = struct { slices: []const @import("glm_lsmeans_slice.zig").Result = &.{}, effect: []const u8, classes: []const coded.Class, columns: []const coded.Column, means: []const Mean, comparisons: []const inference.Difference = &.{}, mean_limits: []const inference.Interval = &.{}, df_error: usize = 0 };
 
 /// Parses only the LSMEANS statement, after MODEL has resolved its effects.
 pub fn read(cx: proc.ProcCtx, tokens: []const lex.Token, spec: parse.Spec, effects: []const parse.Effect, requests: *std.ArrayList(Request)) diag.Error!void {
@@ -80,6 +80,23 @@ pub fn read(cx: proc.ProcCtx, tokens: []const lex.Token, spec: parse.Spec, effec
         } else if (std.ascii.eqlIgnoreCase(token.text, "stderr")) {
             options.stderr = true;
             i += 1;
+        } else if (eq(token.text, "slice")) {
+            if (options.slice_columns.len > 0 or i + 2 >= tokens.len or tokens[i + 1].tag != .eq) return cx.diags.fail(error.ParseError, token.line, "PROC GLM: SLICE requires =CLASS-factor or =(CLASS-factors)", .{});
+            i += 2;
+            const parenthesized = tokens[i].tag == .lparen;
+            if (parenthesized) i += 1;
+            var columns: std.ArrayList(usize) = .empty;
+            while (i < tokens.len and tokens[i].tag == .name) {
+                const column = spec.input.ds.indexOf(tokens[i].text) orelse return cx.diags.fail(error.ParseError, token.line, "PROC GLM: SLICE variable not found", .{});
+                if (std.mem.indexOfScalar(usize, spec.classes, column) == null) return cx.diags.fail(error.ParseError, token.line, "PROC GLM: SLICE requires CLASS factors", .{});
+                if (std.mem.indexOfScalar(usize, columns.items, column) != null) return cx.diags.fail(error.ParseError, token.line, "PROC GLM: repeated SLICE factor", .{});
+                try columns.append(cx.arena, column);
+                i += 1;
+                if (!parenthesized) break;
+            }
+            if (columns.items.len == 0 or (parenthesized and (i >= tokens.len or tokens[i].tag != .rparen))) return cx.diags.fail(error.ParseError, token.line, "PROC GLM: malformed SLICE factor list", .{});
+            if (parenthesized) i += 1;
+            options.slice_columns = columns.items;
         } else if (eq(token.text, "cl")) {
             options.cl = true;
             i += 1;
@@ -99,7 +116,8 @@ pub fn read(cx: proc.ProcCtx, tokens: []const lex.Token, spec: parse.Spec, effec
         } else if (eq(token.text, "adjust")) {
             if (i + 2 >= tokens.len or tokens[i + 1].tag != .eq or tokens[i + 2].tag != .name) return cx.diags.fail(error.ParseError, token.line, "PROC GLM: ADJUST requires a method", .{});
             const value = tokens[i + 2].text;
-            options.adjust = if (eq(value, "t")) .none else if (eq(value, "bon")) .bon else if (eq(value, "sidak")) .sidak else if (eq(value, "tukey")) .tukey else {
+            options.scheffe = eq(value, "scheffe");
+            options.adjust = if (options.scheffe or eq(value, "t")) .none else if (eq(value, "bon")) .bon else if (eq(value, "sidak")) .sidak else if (eq(value, "tukey")) .tukey else {
                 for ([_][]const u8{ "dunnett", "nelson", "scheffe", "simulate", "sim", "smm", "gt2" }) |name| if (eq(value, name)) return proc.failGap(cx.diags, token.line, "PROC GLM: ADJUST={s} is not implemented", .{value});
                 return cx.diags.fail(error.ParseError, token.line, "PROC GLM: invalid ADJUST method", .{});
             };
@@ -122,6 +140,9 @@ pub fn read(cx: proc.ProcCtx, tokens: []const lex.Token, spec: parse.Spec, effec
         const effect = request.effect;
         request.* = options;
         request.effect = effect;
+        for (request.slice_columns) |column| {
+            if (effects[effect].variables.len < 2 or std.mem.indexOfScalar(usize, effects[effect].variables, column) == null) return cx.diags.fail(error.ParseError, 0, "PROC GLM: SLICE factor must belong to the requested interaction", .{});
+        }
     }
 }
 
@@ -207,11 +228,29 @@ fn computeResolved(cx: proc.ProcCtx, spec: parse.Spec, d: design.Design, request
     if (request.pdiff and request.adjust == .tukey and means.items.len > 2) return proc.failGap(cx.diags, 0, "PROC GLM: Tukey studentized-range inference for more than two LS-means is not implemented", .{});
     const limits = try a.alloc(inference.Interval, means.items.len);
     for (means.items, limits) |mean, *limit| limit.* = if (request.cl) inference.interval(mean.inference, df_error, request.alpha, means.items.len, .none) catch return proc.failGap(cx.diags, 0, "PROC GLM: LSMEANS confidence critical value is outside the numerical domain", .{}) else .{};
+    var scheffe_rank: usize = 0;
+    if (request.scheffe) {
+        const rows = try a.alloc([]const f64, means.items.len);
+        const indices = try a.alloc(usize, means.items.len);
+        for (means.items, rows, indices, 0..) |mean, *row, *index, i| { row.* = mean.coefficients; index.* = i; }
+        const family = @import("lsmeans_slice.zig").testPartition(a, @import("linear_hypothesis.zig").fromRegression(model, request.singular), rows, indices) catch |err| return if (err == error.OutOfMemory) error.OutOfMemory else proc.failGap(cx.diags, 0, "PROC GLM: Scheffe difference-family rank is outside the implemented domain", .{});
+        if (family.result.status != .estimable or family.result.rank == 0) return proc.failGap(cx.diags, 0, "PROC GLM: Scheffe inference for a nonestimable difference family is not implemented", .{});
+        scheffe_rank = family.result.rank;
+    }
     var differences: std.ArrayList(inference.Difference) = .empty;
     if (request.pdiff) for (means.items, 0..) |left, i| for (i + 1..means.items.len) |j| {
-        try differences.append(a, inference.difference(a, model, left.coefficients, means.items[j].coefficients, i, j, means.items.len, request.alpha, request.adjust, request.singular, request.cl) catch return proc.failGap(cx.diags, 0, "PROC GLM: LS-means difference inference is outside the implemented domain", .{}));
+        var difference = inference.difference(a, model, left.coefficients, means.items[j].coefficients, i, j, means.items.len, request.alpha, request.adjust, request.singular, request.cl and !request.scheffe) catch return proc.failGap(cx.diags, 0, "PROC GLM: LS-means difference inference is outside the implemented domain", .{});
+        if (request.scheffe) {
+            if (difference.inference.t_value) |value| difference.adjusted_p = @import("glm_scheffe.zig").probability(value, @floatFromInt(df_error), scheffe_rank) catch return proc.failGap(cx.diags, 0, "PROC GLM: Scheffe probability is outside the numerical domain", .{});
+            if (request.cl and difference.inference.standard_error != null and df_error > 0) {
+                const cutoff = @import("glm_scheffe.zig").critical(@floatFromInt(df_error), request.alpha, scheffe_rank) catch return proc.failGap(cx.diags, 0, "PROC GLM: Scheffe critical value is outside the numerical domain", .{});
+                const radius = cutoff * difference.inference.standard_error.?;
+                difference.limits = .{ .lower = difference.inference.estimate.? - radius, .upper = difference.inference.estimate.? + radius };
+            }
+        }
+        try differences.append(a, difference);
     };
-    return .{ .effect = name, .classes = matrix.classes, .columns = matrix.columns, .means = means.items, .comparisons = differences.items, .mean_limits = limits, .df_error = df_error };
+    return .{ .slices = try @import("glm_lsmeans_slice.zig").compute(cx, request, matrix.classes, means.items, model), .effect = name, .classes = matrix.classes, .columns = matrix.columns, .means = means.items, .comparisons = differences.items, .mean_limits = limits, .df_error = df_error };
 }
 
 pub fn number(a: A, v: ?f64, decimals: usize) ![]const u8 {
@@ -222,6 +261,7 @@ pub fn render(cx: proc.ProcCtx, out: *std.ArrayList(u8), spec: parse.Spec, d: de
     const a = cx.arena;
     if (cx.listing_titles) |titles| try titles.emitTitles(a, out) else if (cx.graph_title) |title| try out.print(a, "\n{s}\n", .{title});
     try out.appendSlice(a, "\nThe GLM Procedure\nLeast Squares Means\n");
+    if (request.scheffe) try out.appendSlice(a, "Adjustment for Multiple Comparisons: Scheffe\n");
     if (request.adjust != .none) try out.print(a, "Adjustment for Multiple Comparisons: {s}\n", .{switch (request.adjust) {
         .none => "",
         .bon => "Bonferroni",
@@ -250,7 +290,10 @@ pub fn render(cx: proc.ProcCtx, out: *std.ArrayList(u8), spec: parse.Spec, d: de
             try out.append(a, '\n');
         }
     }
-    if (request.pdiff or request.cl) return @import("glm_lsmeans_compare_render.zig").render(cx, out, spec, d, request, table);
+    if (request.pdiff or request.cl) {
+        try @import("glm_lsmeans_compare_render.zig").render(cx, out, spec, d, request, table);
+        return @import("glm_lsmeans_slice.zig").render(cx, out, spec, d.response, table);
+    }
     try out.append(a, '\n');
     for (table.classes, 0..) |class, c| if (table.means.len > 0 and table.means[0].levels[c] != null) try out.print(a, "{s} ", .{spec.input.ds.columns.items[class.column].name});
     try out.print(a, "{s} LSMEAN", .{spec.input.ds.columns.items[d.response].name});
@@ -263,6 +306,7 @@ pub fn render(cx: proc.ProcCtx, out: *std.ArrayList(u8), spec: parse.Spec, d: de
         if (request.stderr) try out.print(a, " {s} {s}", .{ try number(a, r.standard_error, 7), if (r.p_value != null and r.p_value.? < 0.0001) "<.0001" else try number(a, r.p_value, 4) });
         try out.append(a, '\n');
     }
+    try @import("glm_lsmeans_slice.zig").render(cx, out, spec, d.response, table);
 }
 
 pub fn execute(cx: proc.ProcCtx, out: *std.ArrayList(u8), spec: parse.Spec, d: design.Design, mse: f64, df_error: usize) diag.Error!void {
@@ -628,3 +672,5 @@ test "STAT-COMMON-026 GLM ALPHA without CL cannot alter or suppress requested pr
     try @import("glm.zig").run(cx, &altered, try lex.tokenize(a, "proc glm; class group; model y=group; lsmeans group /pdiff alpha=1e-20; run;", &diagnostics));
     try testing.expectEqualStrings(plain.items, altered.items);
 }
+
+test { _ = @import("glm_slice_tests.zig"); }

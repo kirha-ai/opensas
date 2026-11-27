@@ -62,7 +62,7 @@ pub fn render(cx: proc.ProcCtx, out: *std.ArrayList(u8), spec: parsing.Spec, d: 
             try out.print(a, "{s} {s} {s}\n", .{ if (mean.inference.status == .nonestimable) "Non-est" else try glm.number(a, mean.inference.estimate, 6), try glm.number(a, limit.lower, 6), try glm.number(a, limit.upper, 6) });
         }
         if (request.pdiff) {
-            try out.print(a, "\nLeast Squares Means for Effect {s}\n\nDifference {s}{d}%\nBetween Confidence Limits for\ni j Means LSMean(i)-LSMean(j)\n\n", .{ table.effect, if (request.adjust != .none) @as([]const u8, "Simultaneous ") else "", percent });
+            try out.print(a, "\nLeast Squares Means for Effect {s}\n\nDifference {s}{d}%\nBetween Confidence Limits for\ni j Means LSMean(i)-LSMean(j)\n\n", .{ table.effect, if (request.adjust != .none or request.scheffe) @as([]const u8, "Simultaneous ") else "", percent });
             for (table.comparisons) |comparison| try out.print(a, "{d} {d} {s} {s} {s}\n", .{ comparison.i + 1, comparison.j + 1, if (comparison.inference.status == .nonestimable) "Non-est" else try glm.number(a, comparison.inference.estimate, 6), try glm.number(a, comparison.limits.lower, 6), try glm.number(a, comparison.limits.upper, 6) });
         }
     }
