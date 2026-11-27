@@ -13,10 +13,16 @@ pub const Options = struct {
     vw: bool = true,
     savage: bool = true,
     edf: bool = true,
+    ab: bool = false,
+    st: bool = false,
+    klotz: bool = false,
+    mood: bool = false,
+    conover: bool = false,
+    data: bool = false,
     exact_wilcoxon: bool = false,
     continuity: bool = true,
 };
-pub const Kind = enum { wilcoxon, median, vw, savage };
+pub const Kind = enum { wilcoxon, median, vw, savage, ab, st, klotz, mood, conover, data };
 pub const GroupScore = struct { sum: f64, expected: f64, stddev: f64, mean: f64 };
 pub const TwoSample = struct {
     selected: usize,
@@ -36,6 +42,7 @@ pub const ScoreAnalysis = struct {
     df: usize,
     p: ?f64,
     two_sample: ?TwoSample,
+    has_ties: bool = false,
 };
 pub const Anova = struct {
     among_ss: f64,
@@ -116,7 +123,7 @@ pub fn compute(a: A, values: []const f64, groups: []const usize, group_count: us
         out.anova = .{ .among_ss = among, .within_ss = within, .among_ms = ms1, .within_ms = ms2, .among_df = df1, .within_df = df2, .f = f, .p = if (f) |v| math.betaI(num(df2) / (num(df2) + num(df1) * v), num(df2) / 2, num(df1) / 2) else null };
     }
     var analyses: std.ArrayList(ScoreAnalysis) = .empty;
-    for ([_]Kind{ .wilcoxon, .median, .vw, .savage }, [_]bool{ options.wilcoxon, options.median, options.vw, options.savage }) |kind, requested| {
+    for ([_]Kind{ .wilcoxon, .median, .vw, .savage, .ab, .st, .klotz, .mood, .conover, .data }, [_]bool{ options.wilcoxon, options.median, options.vw, options.savage, options.ab, options.st, options.klotz, options.mood, options.conover, options.data }) |kind, requested| {
         if (requested or (kind == .wilcoxon and options.exact_wilcoxon)) try analyses.append(a, try scores(a, values, groups, counts, ranked, kind, options));
     }
     out.scores = try analyses.toOwnedSlice(a);
@@ -128,33 +135,71 @@ fn scores(a: A, values: []const f64, groups: []const usize, counts: []const usiz
     const n = values.len;
     const nf = num(n);
     const transformed = try a.alloc(f64, n);
-    const ordinal = try a.alloc(f64, n);
-    var harmonic: f64 = 0;
-    for (ordinal, 0..) |*v, i| {
-        const r = num(i + 1);
-        harmonic += 1 / num(n - i);
-        v.* = switch (kind) {
-            .wilcoxon => r,
-            .median => if (r > (nf + 1) / 2) 1 else 0,
-            .vw => math.distQuantile(.normal, r / (nf + 1), &.{}).?,
-            .savage => harmonic - 1,
-        };
-    }
-    for (ranked.groups) |tie| {
-        var total: f64 = 0;
-        for (ordinal[tie.first - 1 ..][0..tie.count]) |v| total += v;
-        const average = if (ranked.groups.len == 1 and (kind == .vw or kind == .savage)) @as(f64, 0) else total / num(tie.count);
-        for (values, transformed) |v, *score| if (v == tie.value) {
-            score.* = average;
-        };
+    var score_ties = ranked.tie_correction > 0;
+    if (kind == .data) {
+        @memcpy(transformed, values);
+    } else if (kind == .conover) {
+        const means = try a.alloc(f64, counts.len);
+        @memset(means, 0);
+        for (values, groups) |v, g| means[g] += v / num(counts[g]);
+        const deviations = try a.alloc(f64, n);
+        for (values, groups, deviations) |v, g, *d| {
+            d.* = @abs(v - means[g]);
+            if (!std.math.isFinite(d.*)) return error.InvalidInput;
+        }
+        const deviation_ranks = try ranks.rank(a, deviations, false, .mean);
+        score_ties = deviation_ranks.tie_correction > 0;
+        // Conover specifically squares the AVERAGED rank of tied deviations.
+        for (deviation_ranks.values, transformed) |r, *v| v.* = square(r);
+    } else {
+        const ordinal = try a.alloc(f64, n);
+        var harmonic: f64 = 0;
+        for (ordinal, 0..) |*v, i| {
+            const r = num(i + 1);
+            harmonic += 1 / num(n - i);
+            v.* = switch (kind) {
+                .wilcoxon => r,
+                .median => if (r > (nf + 1) / 2) 1 else 0,
+                .vw => math.distQuantile(.normal, r / (nf + 1), &.{}).?,
+                .savage => harmonic - 1,
+                .ab => @min(r, nf + 1 - r),
+                .mood => square(r - (nf + 1) / 2),
+                .klotz => square(math.distQuantile(.normal, r / (nf + 1), &.{}).?),
+                .st => 0,
+                .conover, .data => unreachable,
+            };
+        }
+        if (kind == .st) {
+            var lo: usize = 0;
+            var hi: usize = n - 1;
+            for (0..n) |j| {
+                if (j % 4 == 0 or j % 4 == 3) {
+                    ordinal[lo] = num(j + 1);
+                    lo += 1;
+                } else {
+                    ordinal[hi] = num(j + 1);
+                    hi -|= 1;
+                }
+            }
+        }
+        for (ranked.groups) |tie| {
+            var total: f64 = 0;
+            for (ordinal[tie.first - 1 ..][0..tie.count]) |v| total += v;
+            const average = if (ranked.groups.len == 1 and (kind == .vw or kind == .savage)) @as(f64, 0) else total / num(tie.count);
+            for (values, transformed) |v, *score| if (v == tie.value) {
+                score.* = average;
+            };
+        }
     }
     var total: f64 = 0;
     for (transformed) |score| total += score;
+    if (!std.math.isFinite(total)) return error.InvalidInput;
     // Normal and Savage score populations have exact zero mean. Enforce the
     // mathematical identity rather than letting summation noise choose a tail.
     const mean: f64 = if (kind == .vw or kind == .savage) 0 else total / nf;
     var ss: f64 = 0;
     for (transformed) |score| ss += square(score - mean);
+    if (!std.math.isFinite(ss)) return error.InvalidInput;
     const summary = try a.alloc(GroupScore, counts.len);
     for (summary, counts) |*g, count| g.* = .{ .sum = 0, .expected = num(count) * mean, .stddev = @sqrt(num(count) * (nf - num(count)) * ss / (nf * (nf - 1))), .mean = 0 };
     for (transformed, groups) |v, g| summary[g].sum += v;
@@ -164,12 +209,12 @@ fn scores(a: A, values: []const f64, groups: []const usize, counts: []const usiz
         between += square(g.sum - g.expected) / num(count);
     }
     const chi: ?f64 = if (ss > 0) between * (nf - 1) / ss else null;
-    var result = ScoreAnalysis{ .kind = kind, .values = transformed, .groups = summary, .chi_square = chi, .df = counts.len - 1, .p = if (chi) |v| 1 - math.distCdf(.chisq, v, &.{ .{ .num = 0 }, .{ .num = 0 }, .{ .num = num(counts.len - 1) } }).? else null, .two_sample = null };
+    var result = ScoreAnalysis{ .kind = kind, .values = transformed, .groups = summary, .chi_square = chi, .df = counts.len - 1, .p = if (chi) |v| 1 - math.distCdf(.chisq, v, &.{ .{ .num = 0 }, .{ .num = 0 }, .{ .num = num(counts.len - 1) } }).? else null, .two_sample = null, .has_ties = score_ties };
     if (counts.len == 2) {
         const chosen: usize = if (counts[0] <= counts[1]) 0 else 1;
         const selected = try a.alloc(bool, n);
         for (groups, selected) |g, *p| p.* = g == chosen;
-        const linear = try ranks.linearRank(transformed, selected, options.continuity and kind == .wilcoxon);
+        const linear = try ranks.linearRank(transformed, selected, options.continuity and (kind == .wilcoxon or kind == .st));
         var test_result = TwoSample{ .selected = chosen, .statistic = summary[chosen].sum, .z = linear.z, .p_one = null, .p_two = null };
         if (linear.z) |z| {
             const tail = math.distCdf(.normal, -@abs(z), &.{}).?;
@@ -297,4 +342,5 @@ pub fn kuiperTail(z: f64) f64 {
 test {
     _ = @import("npar1way_stats_tests.zig");
     _ = @import("npar1way_ties_tests.zig");
+    _ = @import("npar1way_scale_tests.zig");
 }

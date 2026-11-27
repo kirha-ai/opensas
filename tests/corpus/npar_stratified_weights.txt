@@ -1,0 +1,5 @@
+# corpus assertions
+words The NPAR1WAY Procedure Stratum Information Stratum Frequency blocks=1 2 blocks=2 3 blocks=3 3 blocks=4 6 Stratified Analysis Method Ranks Within Strata Weights 1/(N+1) Reference Class 1 Wilcoxon Scores by Strata for Variable consump Stratum N Sum Expected Std Dev blocks=1 1 1.000000 1.500000 0.500000 blocks=2 1 2.000000 2.000000 0.816497 blocks=3 2 3.000000 4.000000 0.816497 blocks=4 3 8.000000 10.500000 2.291288 Stratified Wilcoxon Test Statistic Expected Variance Z One-Sided Pr Two-Sided Pr 2.726190 3.500000 0.218254 -1.6564 0.0488 0.0977
+stderr-count 0 ERROR:
+stderr-count 0 WARNING:
+svg-count 0
