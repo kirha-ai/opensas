@@ -12,11 +12,12 @@ const by = @import("by_groups.zig");
 const design = @import("logistic_design.zig");
 const kernel = @import("logistic_fit.zig");
 const ordinal = @import("logistic_ordinal.zig");
+const odds_kernel = @import("logistic_odds.zig");
 const format = @import("../format.zig");
 const fns = @import("../functions.zig");
 const A = std.mem.Allocator;
 const eq = std.ascii.eqlIgnoreCase;
-pub const OddsRequest = struct { variable: usize, at_variable: usize, values: []const f64 };
+pub const OddsRequest = odds_kernel.Request;
 pub const Spec = struct {
     input: proc.ProcInput,
     model: design.Spec,
@@ -30,6 +31,11 @@ pub const Spec = struct {
     plots_none: bool = false,
     link: ordinal.Link = .logit,
     fit_options: kernel.Options = .{},
+    units: []const odds_kernel.Units = &.{},
+    default_units: []const f64 = &.{},
+    units_present: bool = false,
+    clodds: ?odds_kernel.Confidence = null,
+    no_odds_ratio: bool = false,
 };
 pub const Counts = struct { read: usize, used: usize, frequency_read: f64, frequency_used: f64, events: f64, full_constant: f64 = 0 };
 fn at(t: []const lex.Token, i: usize, tag: lex.Tag) bool {
@@ -128,6 +134,46 @@ fn numericLiteral(cx: proc.ProcCtx, t: []const lex.Token, i: *usize) diag.Error!
     if (!std.math.isFinite(value)) return invalid(cx, t, i.* - 1);
     return value;
 }
+fn confidence(cx: proc.ProcCtx, t: []const lex.Token, i: *usize) diag.Error!odds_kernel.Confidence {
+    const result: odds_kernel.Confidence = if (kw(t, i.*, "wald")) .wald else if (kw(t, i.*, "pl")) .pl else if (kw(t, i.*, "both")) .both else return invalid(cx, t, i.*);
+    i.* += 1;
+    return result;
+}
+fn unitValues(cx: proc.ProcCtx, t: []const lex.Token, i: *usize, ignore_sd: bool) diag.Error![]const f64 {
+    var values: std.ArrayList(f64) = .empty;
+    while (i.* < t.len and !at(t, i.*, .slash) and !(at(t, i.*, .name) and at(t, i.* + 1, .eq))) {
+        if (kw(t, i.*, "sd") or ((at(t, i.*, .minus) or at(t, i.*, .plus)) and kw(t, i.* + 1, "sd"))) {
+            if (!ignore_sd) return proc.failGap(cx.diags, t[i.*].line, "PROC LOGISTIC: SD units are not implemented", .{});
+            // CLASS units are ignored, including their SD forms; no standard
+            // deviation is computed or represented by this parser placeholder.
+            i.* += if (kw(t, i.*, "sd")) @as(usize, 1) else 2;
+            try values.append(cx.arena, 1);
+            continue;
+        }
+        const value = try numericLiteral(cx, t, i);
+        if (at(t, i.*, .star)) {
+            if (!kw(t, i.* + 1, "sd")) return invalid(cx, t, i.*);
+            if (!ignore_sd) return proc.failGap(cx.diags, t[i.*].line, "PROC LOGISTIC: SD units are not implemented", .{});
+            i.* += 2;
+        }
+        if (value == 0) return invalid(cx, t, i.* - 1);
+        try values.append(cx.arena, value);
+    }
+    if (values.items.len == 0) return invalid(cx, t, i.*);
+    return values.items;
+}
+fn unitsFor(s: Spec, variable_: usize) []const f64 {
+    var i = s.units.len;
+    while (i > 0) {
+        i -= 1;
+        if (s.units[i].variable == variable_) return s.units[i].values;
+    }
+    return if (s.default_units.len > 0) s.default_units else &.{1};
+}
+fn customizedUnits(s: Spec, variable_: usize) ?[]const f64 {
+    for (s.units) |unit| if (unit.variable == variable_) return unit.values;
+    return if (s.default_units.len > 0) s.default_units else null;
+}
 pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
     var s: Spec = .{ .input = undefined, .model = .{ .response = 0, .effects = &.{} } };
     var name: ?[]const u8 = null;
@@ -179,6 +225,7 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
     var formats: std.ArrayList(proc.VarSpec) = .empty;
     var terms: std.ArrayList([]const usize) = .empty;
     var odds_requests: std.ArrayList(OddsRequest) = .empty;
+    var units: std.ArrayList(odds_kernel.Units) = .empty;
     var bys: by.Statements = .{};
     var model_seen = false;
     i += 1;
@@ -262,11 +309,18 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
                 j += 1;
                 while (j < end) {
                     const option = t[j];
+                    if (kw(t, j, "nooddsratio")) {
+                        s.no_odds_ratio = true;
+                        j += 1;
+                        continue;
+                    }
                     if (!at(t, j + 1, .eq)) return unsupported(cx, option);
                     j += 2;
                     if (eq(option.text, "link")) {
                         if (kw(t, j, "logit")) s.link = .logit else if (kw(t, j, "probit") or kw(t, j, "normit")) s.link = .probit else if (kw(t, j, "cloglog")) s.link = .cloglog else if (kw(t, j, "alogit")) s.link = .alogit else return unsupported(cx, t[j]);
                         j += 1;
+                    } else if (eq(option.text, "clodds")) {
+                        s.clodds = try confidence(cx, t[0..end], &j);
                     } else if (eq(option.text, "gconv")) {
                         s.fit_options.gconv = try numericLiteral(cx, t[0..end], &j);
                         if (s.fit_options.gconv < 0) return invalid(cx, t, j - 1);
@@ -290,24 +344,76 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
         } else if (kw(t, i, "id")) {
             var names: std.ArrayList([]const u8) = .empty;
             try lists.append(cx.arena, s.input.ds, t[i + 1 .. end], &names, cx.diags);
+        } else if (kw(t, i, "units")) {
+            // Only the last UNITS statement applies (S154 physical p.5903).
+            units.clearRetainingCapacity();
+            s.default_units = &.{};
+            s.units_present = true;
+            var j = i + 1;
+            while (j < end and !at(t, j, .slash)) {
+                const target = try variable(cx, s.input.ds, t[0..end], &j);
+                if (!at(t, j, .eq)) return invalid(cx, t, j);
+                j += 1;
+                var ignored = false;
+                for (classes.items) |c| if (c.column == target) {
+                    ignored = true;
+                };
+                const values = try unitValues(cx, t[0..end], &j, ignored);
+                if (!ignored) {
+                    for (units.items) |prior| if (prior.variable == target) return proc.failGap(cx.diags, t[i].line, "PROC LOGISTIC: repeated variables within one UNITS statement are not implemented", .{});
+                    try units.append(cx.arena, .{ .variable = target, .values = values });
+                }
+            }
+            if (at(t, j, .slash)) {
+                j += 1;
+                if (!kw(t, j, "default") or !at(t, j + 1, .eq)) return unsupported(cx, t[j]);
+                j += 2;
+                s.default_units = try unitValues(cx, t[0..end], &j, false);
+            }
+            if (j != end) return invalid(cx, t, j);
         } else if (kw(t, i, "oddsratio")) {
             var j = i + 1;
-            const target = try variable(cx, s.input.ds, t[0..end], &j);
-            if (!at(t, j, .slash) or !kw(t, j + 1, "at") or !at(t, j + 2, .lparen)) return unsupported(cx, t[i]);
-            j += 3;
-            const at_variable = try variable(cx, s.input.ds, t[0..end], &j);
-            if (!at(t, j, .eq)) return invalid(cx, t, j);
-            j += 1;
-            var values: std.ArrayList(f64) = .empty;
-            while (j < end and !at(t, j, .rparen)) {
-                if (at(t, j, .comma)) {
-                    j += 1;
-                    continue;
-                }
-                try values.append(cx.arena, try numericLiteral(cx, t[0..end], &j));
+            var label: ?[]const u8 = null;
+            if (at(t, j, .string)) {
+                label = t[j].text;
+                j += 1;
             }
-            if (values.items.len == 0 or !at(t, j, .rparen) or j + 1 != end) return invalid(cx, t, j);
-            try odds_requests.append(cx.arena, .{ .variable = target, .at_variable = at_variable, .values = values.items });
+            var request: OddsRequest = .{ .variable = try variable(cx, s.input.ds, t[0..end], &j), .label = label };
+            if (j < end) {
+                if (!at(t, j, .slash)) return invalid(cx, t, j);
+                j += 1;
+            }
+            while (j < end) {
+                const option = t[j];
+                if (kw(t, j, "at")) {
+                    if (!at(t, j + 1, .lparen)) return invalid(cx, t, j);
+                    if (request.at_variable != null) return unsupported(cx, option);
+                    j += 2;
+                    request.at_variable = try variable(cx, s.input.ds, t[0..end], &j);
+                    if (!at(t, j, .eq)) return invalid(cx, t, j);
+                    j += 1;
+                    var values: std.ArrayList(f64) = .empty;
+                    while (j < end and !at(t, j, .rparen)) {
+                        if (at(t, j, .comma)) {
+                            j += 1;
+                            continue;
+                        }
+                        if (at(t, j, .string) or at(t, j, .name)) return unsupported(cx, t[j]);
+                        try values.append(cx.arena, try numericLiteral(cx, t[0..end], &j));
+                    }
+                    if (values.items.len == 0 or !at(t, j, .rparen)) return invalid(cx, t, j);
+                    request.values = values.items;
+                    j += 1;
+                } else {
+                    if (!at(t, j + 1, .eq)) return invalid(cx, t, j);
+                    j += 2;
+                    if (eq(option.text, "cl")) request.confidence = try confidence(cx, t[0..end], &j) else if (eq(option.text, "diff")) {
+                        if (kw(t, j, "ref")) request.reference_only = true else if (kw(t, j, "all")) request.reference_only = false else return invalid(cx, t, j);
+                        j += 1;
+                    } else return unsupported(cx, option);
+                }
+            }
+            try odds_requests.append(cx.arena, request);
         } else if (kw(t, i, "format")) {
             var j = i;
             try proc.parseProcFormat(cx.arena, t, &j, &formats);
@@ -320,6 +426,8 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
     s.model.effects = effects.items;
     s.model.terms = terms.items;
     s.odds_requests = odds_requests.items;
+    s.units = units.items;
+    s.units_present = units.items.len > 0 or s.default_units.len > 0;
     const by_spec = try bys.resolve(cx.arena, s.input.ds, cx.diags);
     const by_columns = try cx.arena.alloc(usize, by_spec.names.len);
     for (by_spec.names, 0..) |by_name, k| by_columns[k] = s.input.ds.indexOf(by_name).?;
@@ -441,7 +549,7 @@ fn renderCore(a: A, out: *std.ArrayList(u8), s: Spec, d: design.Design, r: kerne
         const q = r.coefficients[j] * r.coefficients[j] / r.covariance[j * d.p + j];
         try out.print(a, "{s} {s} 1 {s} {s} {s} {s}\n", .{ parameter.name, parameter.level orelse "", try estimateText(a, r.coefficients[j]), try number(a, se, "10.4"), try number(a, q, "10.4"), try number(a, kernel.chiTail(q, 1), "pvalue6.4") });
     }
-    if ((s.link == .logit or s.link == .alogit) and hasDefaultOdds(d)) {
+    if (s.clodds == null and !s.no_odds_ratio and (s.link == .logit or s.link == .alogit) and hasDefaultOdds(d)) {
         try out.print(a, "\nOdds Ratio Estimates\n\nPoint {s}% Wald\nEffect Estimate Confidence Limits\n\n", .{try number(a, 100 * (1 - s.alpha), "best8.")});
         const z = fns.distQuantile(.normal, 1 - s.alpha / 2, &.{}).?;
         const contrast = try a.alloc(f64, d.p);
@@ -574,9 +682,49 @@ fn analyze(cx: proc.ProcCtx, s: Spec) diag.Error!Analysis {
     };
     return .{ .data = work, .design = d, .fit = r, .counts = counts, .ordinal_fit = ordinal_fit };
 }
-fn oddsTable(a: A, out: *std.ArrayList(u8), rows: []const @import("logistic_plots.zig").Row, alpha: f64) diag.Error!void {
-    try out.print(a, "\nOdds Ratio Estimates and Wald Confidence Intervals\n\nOdds Ratio Estimate {s}% Confidence Limits\n\n", .{try number(a, 100 * (1 - alpha), "best8.")});
+fn oddsTable(a: A, out: *std.ArrayList(u8), rows: []const @import("logistic_plots.zig").Row, alpha: f64, method: odds_kernel.Confidence) diag.Error!void {
+    try out.print(a, "\nOdds Ratio Estimates and {s} Confidence Intervals\n\nOdds Ratio Estimate {s}% Confidence Limits\n\n", .{ if (method == .pl) "Profile-Likelihood" else "Wald", try number(a, 100 * (1 - alpha), "best8.") });
     for (rows) |row| try out.print(a, "{s} {s} {s} {s}\n", .{ row.label, try odds(a, @exp(row.log_estimate)), try odds(a, @exp(row.log_lower)), try odds(a, @exp(row.log_upper)) });
+}
+fn requestRows(a: A, result: Analysis, s: Spec, request: OddsRequest, method: odds_kernel.Confidence) diag.Error![]const @import("logistic_plots.zig").Row {
+    const contrasts = try odds_kernel.contrasts(a, result.data, result.design, result.fit.coefficients.len, request, unitsFor(s, request.variable));
+    return if (method == .pl) odds_kernel.profile(a, result.design, result.fit, contrasts, s.alpha) else odds_kernel.wald(a, result.fit, contrasts, s.alpha);
+}
+fn unitTables(a: A, out: *std.ArrayList(u8), s: Spec, result: Analysis) diag.Error!void {
+    if (!s.units_present and s.clodds == null) return;
+    for ([_]odds_kernel.Confidence{ .wald, .pl }) |method| {
+        if (s.clodds) |requested| {
+            if (requested != .both and requested != method) continue;
+        } else if (method != .wald) continue;
+        var body: std.ArrayList(u8) = .empty;
+        for (result.design.effects) |effect| {
+            if (!defaultOdds(result.design, effect)) continue;
+            if (effect.class_index != null) {
+                if (s.clodds == null) continue;
+                const rows = try requestRows(a, result, s, .{ .variable = effect.column, .reference_only = true }, method);
+                for (rows) |row| {
+                    try body.print(a, "{s} {s} {s} {s}\n", .{ row.label, try odds(a, @exp(row.log_estimate)), try odds(a, @exp(row.log_lower)), try odds(a, @exp(row.log_upper)) });
+                }
+            } else {
+                const values = customizedUnits(s, effect.column) orelse (if (s.clodds != null) @as([]const f64, &.{1}) else continue);
+                for (values) |unit| {
+                    const contrasts = try odds_kernel.contrasts(a, result.data, result.design, result.fit.coefficients.len, .{ .variable = effect.column }, &.{unit});
+                    const rows = if (method == .pl) try odds_kernel.profile(a, result.design, result.fit, contrasts, s.alpha) else try odds_kernel.wald(a, result.fit, contrasts, s.alpha);
+                    const row = rows[0];
+                    try body.print(a, "{s}", .{result.data.columns.items[effect.column].name});
+                    if (s.units_present) try body.print(a, " {s}", .{try number(a, unit, "10.4")});
+                    try body.print(a, " {s}", .{try odds(a, @exp(row.log_estimate))});
+                    if (s.clodds != null) try body.print(a, " {s} {s}", .{ try odds(a, @exp(row.log_lower)), try odds(a, @exp(row.log_upper)) });
+                    try body.appendSlice(a, "\n");
+                }
+            }
+        }
+        if (body.items.len == 0) continue;
+        if (s.clodds == null) try out.appendSlice(a, "\nCustomized Odds Ratio Estimates\n\nEffect Unit Estimate\n\n") else {
+            try out.print(a, "\nOdds Ratio Estimates and {s} Confidence Intervals\n\nEffect {s}Estimate {s}% Confidence Limits\n\n", .{ if (method == .pl) "Profile-Likelihood" else "Wald", if (s.units_present) "Unit " else "", try number(a, 100 * (1 - s.alpha), "best8.") });
+        }
+        try out.appendSlice(a, body.items);
+    }
 }
 pub fn run(cx: proc.ProcCtx, out: *std.ArrayList(u8), tokens: []const lex.Token) diag.Error!void {
     const spec = try parse(cx, tokens);
@@ -590,21 +738,42 @@ pub fn run(cx: proc.ProcCtx, out: *std.ArrayList(u8), tokens: []const lex.Token)
         var s = spec;
         s.input.ds = &ds;
         const result = try analyze(cx, s);
+        const graphics_active = !s.noprint and !s.plots_none and (if (cx.graphics) |g| (g.enabled == true or (g.enabled != false and g.cli_dir != null)) else false);
+        if (graphics_active and (s.clodds != null or s.units_present)) return proc.failGap(cx.diags, 0, "PROC LOGISTIC: plots for customized odds-ratio intervals are not implemented; use PLOTS=NONE", .{});
         var body: std.ArrayList(u8) = .empty;
-        if (result.ordinal_fit != null and s.odds_requests.len > 0) return proc.failGap(cx.diags, 0, "PROC LOGISTIC: ODDSRATIO AT for ordinal/nonlogit links is not implemented", .{});
+        if ((s.link != .logit and s.link != .alogit) and (s.odds_requests.len > 0 or s.units_present or s.clodds != null)) return proc.failGap(cx.diags, 0, "PROC LOGISTIC: odds ratios for nonlogit links are not implemented", .{});
+        var profile_requested = s.clodds != null and s.clodds.? != .wald;
+        for (s.odds_requests) |request| if (request.confidence != .wald) {
+            profile_requested = true;
+        };
+        if (profile_requested and result.design.response.levels.len > 2) return proc.failGap(cx.diags, 0, "PROC LOGISTIC: profile-likelihood intervals for ordinal models are not implemented", .{});
         if (!s.noprint) {
             if (result.ordinal_fit) |fit| try renderOrdinal(a, &body, s, result.design, fit, result.counts) else try render(a, &body, s, result.design, result.fit, result.counts);
         }
+        if (!s.noprint) unitTables(a, &body, s, result) catch |err| {
+            if (err == error.OutOfMemory) return err;
+            return proc.failGap(cx.diags, 0, "PROC LOGISTIC: customized odds-ratio computation failed; no results emitted", .{});
+        };
         var by_text: std.ArrayList(u8) = .empty;
         if (s.by_columns.len > 0) try by.appendLine(a, &by_text, spec.input.ds, group.rep.?, s.by_columns);
         for (s.odds_requests, 0..) |request, request_index| {
             const plots = @import("logistic_plots.zig");
-            const rows = plots.atRows(a, result.data, result.design, result.fit, request.variable, request.at_variable, request.values, s.alpha) catch |err| {
+            const method: odds_kernel.Confidence = if (request.confidence == .pl) .pl else .wald;
+            const rows = requestRows(a, result, s, request, method) catch |err| {
                 if (err == error.OutOfMemory) return err;
-                return cx.diags.fail(error.ExecError, 0, "PROC LOGISTIC: unsupported or invalid ODDSRATIO AT request", .{});
+                return proc.failGap(cx.diags, 0, "PROC LOGISTIC: unsupported or invalid ODDSRATIO contrast/profile; no results emitted", .{});
             };
-            if (!s.noprint) try oddsTable(a, &body, rows, s.alpha);
+            if (!s.noprint) try oddsTable(a, &body, rows, s.alpha, method);
+            if (request.confidence == .both) {
+                const profile_rows = requestRows(a, result, s, request, .pl) catch |err| {
+                    if (err == error.OutOfMemory) return err;
+                    return proc.failGap(cx.diags, 0, "PROC LOGISTIC: odds-ratio profile likelihood failed; no results emitted", .{});
+                };
+                if (!s.noprint) try oddsTable(a, &body, profile_rows, s.alpha, .pl);
+            }
             if (!s.noprint and !s.plots_none) if (cx.graphics) |g| if (g.enabled == true or (g.enabled != false and g.cli_dir != null)) {
+                const unit_values = unitsFor(s, request.variable);
+                if (request.at_variable == null or request.label != null or request.confidence != .wald or unit_values.len != 1 or unit_values[0] != 1 or result.ordinal_fit != null) return proc.failGap(cx.diags, 0, "PROC LOGISTIC: plots for these odds-ratio options are not implemented; use PLOTS=NONE", .{});
                 const title = try std.fmt.allocPrint(a, "Odds Ratios for {s} ({s}% Wald CI)", .{ ds.columns.items[request.variable].name, try number(a, 100 * (1 - s.alpha), "best8.") });
                 const bytes = plots.render(a, rows, title, std.mem.trim(u8, by_text.items, " \r\n")) catch return error.OutOfMemory;
                 const path = if (s.by_columns.len > 0) try std.fmt.allocPrint(a, "Logistic.ByGroup{d}.OddsRatioPlot", .{group_index + 1}) else "Logistic.OddsRatioPlot";
@@ -646,6 +815,7 @@ test "LOGISTIC original REF and EFFECT complete oracle listing" {
 test {
     _ = @import("logistic_persistence_tests.zig");
     _ = @import("logistic_ordinal.zig");
+    _ = @import("logistic_odds.zig");
 }
 
 test "LOGISTIC errors are captured and unsupported parameterizations never fall back" {
@@ -1093,5 +1263,267 @@ test "LOGISTIC007 link boundaries and unsupported options retain captured diagno
         try std.testing.expectError(error.ParseError, run(cx, &out, try lex.tokenize(a, source, &d)));
         try std.testing.expectEqual(rc, diag.exitCode(diag.gapHit(), d.hasErrors()));
         try std.testing.expectEqual(@as(usize, 0), out.items.len);
+    }
+}
+
+// S154 physical p.5924 published four-race contingency table. Counts are
+// public textbook data; odds and their log variances are exactly calculable.
+fn oddsFixture(a: A) !Dataset {
+    var ds = Dataset.init(a, "oddsdata");
+    _ = try ds.addColumn("Race", .char);
+    _ = try ds.addColumn("y", .num);
+    _ = try ds.addColumn("f", .num);
+    for ([_][]const u8{ "White", "Black", "Hispanic", "Other" }, [_]f64{ 5, 20, 15, 10 }, [_]f64{ 20, 10, 10, 10 }) |race, events, nonevents| {
+        try ds.appendRow(&.{ .{ .str = race }, .{ .num = 1 }, .{ .num = events } });
+        try ds.appendRow(&.{ .{ .str = race }, .{ .num = 0 }, .{ .num = nonevents } });
+    }
+    return ds;
+}
+test "LOGISTIC013 all CLASS pairs are coding invariant and reverse with the event" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var ds = try oddsFixture(a);
+    var lib = @import("../exec.zig").Library.init(a);
+    try lib.put("oddsdata", &ds);
+    var d = diag.Diagnostics.init(a);
+    const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &d };
+    var first_rows: ?[]const @import("logistic_plots.zig").Row = null;
+    for ([_][]const u8{ "ref", "effect" }) |coding_| for ([_][]const u8{ "1", "0" }) |event| {
+        const source = try std.fmt.allocPrint(a, "proc logistic; class Race(param={s} ref='White'); freq f; model y(event='{s}')=Race / gconv=1e-14; oddsratio Race; run;", .{ coding_, event });
+        const spec = try parse(cx, try lex.tokenize(a, source, &d));
+        const analysis = try analyze(cx, spec);
+        const rows = try requestRows(a, analysis, spec, spec.odds_requests[0], .wald);
+        try std.testing.expectEqual(@as(usize, 6), rows.len);
+        // Pair order follows formatted levels Black,Hispanic,Other,White.
+        const events = [_]f64{ 20, 15, 10, 5 };
+        const nonevents = [_]f64{ 10, 10, 10, 20 };
+        var index: usize = 0;
+        for (0..4) |i| for (i + 1..4) |j| {
+            const ratio = events[i] * nonevents[j] / (nonevents[i] * events[j]);
+            const log_ratio = @log(ratio) * @as(f64, if (eq(event, "1")) 1 else -1);
+            const variance = 1 / events[i] + 1 / nonevents[i] + 1 / events[j] + 1 / nonevents[j];
+            const margin = 1.959963984540054 * @sqrt(variance);
+            try std.testing.expectApproxEqAbs(log_ratio, rows[index].log_estimate, 1e-7);
+            try std.testing.expectApproxEqAbs(log_ratio - margin, rows[index].log_lower, 1e-7);
+            try std.testing.expectApproxEqAbs(log_ratio + margin, rows[index].log_upper, 1e-7);
+            index += 1;
+        };
+        if (first_rows == null) first_rows = rows else if (eq(event, "0")) for (first_rows.?, rows) |original, reversed| {
+            try std.testing.expectApproxEqAbs(-original.log_estimate, reversed.log_estimate, 1e-7);
+            try std.testing.expectApproxEqAbs(-original.log_upper, reversed.log_lower, 1e-7);
+            try std.testing.expectApproxEqAbs(-original.log_lower, reversed.log_upper, 1e-7);
+        };
+        const reference_rows = try requestRows(a, analysis, spec, .{ .variable = 0, .reference_only = true, .label = "Comparison" }, .wald);
+        try std.testing.expectEqual(@as(usize, 3), reference_rows.len);
+        for (reference_rows, [_][]const u8{ "Comparison", "Comparison 2", "Comparison 3" }) |row, label| try std.testing.expectEqualStrings(label, row.label);
+        var output: std.ArrayList(u8) = .empty;
+        try run(cx, &output, try lex.tokenize(a, source, &d));
+        try std.testing.expect(std.mem.indexOf(u8, output.items, "Black vs White") != null);
+    };
+    try std.testing.expectEqualStrings("", try d.render());
+}
+
+fn ageOddsFixture(a: A) !Dataset {
+    var ds = Dataset.init(a, "Data1");
+    for ([_][]const u8{ "disease", "n", "age" }) |name| _ = try ds.addColumn(name, .num);
+    for ([_]f64{ 0, 0, 0, 7, 6, 17 }, [_]f64{ 14, 20, 19, 18, 12, 17 }, [_]f64{ 25, 35, 45, 55, 65, 75 }) |events, n, age| try ds.appendRow(&.{ .{ .num = events }, .{ .num = n }, .{ .num = age } });
+    return ds;
+}
+// Independent one-dimensional nuisance maximization: at fixed age slope,
+// solve sum(events - n*expit(intercept+slope*age))=0 by monotone bisection.
+// This does not use the production constrained design/QR optimizer.
+fn ageProfileReference(ds: Dataset, slope: f64) f64 {
+    var lo: f64 = -1000;
+    var hi: f64 = 1000;
+    for (0..120) |_| {
+        const intercept = (lo + hi) / 2;
+        var score: f64 = 0;
+        for (ds.rows.items) |row| score += row[0].num - row[1].num / (1 + @exp(-(intercept + slope * row[2].num)));
+        if (score > 0) lo = intercept else hi = intercept;
+    }
+    var ll: f64 = 0;
+    for (ds.rows.items) |row| {
+        const eta = (lo + hi) / 2 + slope * row[2].num;
+        const log_denom = @max(0, eta) + std.math.log1p(@exp(-@abs(eta)));
+        ll += row[0].num * eta - row[1].num * log_denom;
+    }
+    return ll;
+}
+test "LOGISTIC013 original numeric UNITS profile likelihood and negative-unit endpoints" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var ds = try ageOddsFixture(a);
+    var lib = @import("../exec.zig").Library.init(a);
+    try lib.put("Data1", &ds);
+    var d = diag.Diagnostics.init(a);
+    const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &d };
+    const source = "proc logistic data=Data1; model disease/n=age / clodds=pl; units age=10 -10; oddsratio age / cl=both; run;";
+    const spec = try parse(cx, try lex.tokenize(a, source, &d));
+    const analysis = try analyze(cx, spec);
+    const rows = try requestRows(a, analysis, spec, spec.odds_requests[0], .pl);
+    try std.testing.expectEqual(@as(usize, 2), rows.len);
+    // Original SAS capture displays three decimal places: half-last-unit
+    // intervals are fixed before measuring the implementation.
+    for ([_]f64{ 7.892, 3.881, 21.406 }, [_]f64{ @exp(rows[0].log_estimate), @exp(rows[0].log_lower), @exp(rows[0].log_upper) }) |expected, actual| try std.testing.expectApproxEqAbs(expected, actual, 0.0005000001);
+    try std.testing.expectApproxEqAbs(-rows[0].log_estimate, rows[1].log_estimate, 1e-10);
+    try std.testing.expectApproxEqAbs(-rows[0].log_upper, rows[1].log_lower, 1e-9);
+    try std.testing.expectApproxEqAbs(-rows[0].log_lower, rows[1].log_upper, 1e-9);
+    for ([_]f64{ rows[0].log_lower, rows[0].log_upper }) |endpoint| {
+        const reference_ll = ageProfileReference(ds, endpoint / 10);
+        // chi-square(1)0.95 is a published quantile. Root width1e-10 and
+        // nuisance score tolerance1e-13 justify2e-7 on the LR statistic.
+        try std.testing.expectApproxEqAbs(@as(f64, 3.841458820694124), 2 * (analysis.fit.log_likelihood - reference_ll), 2e-7);
+    }
+    const wald = try requestRows(a, analysis, spec, spec.odds_requests[0], .wald);
+    const margin = 10 * 1.959963984540054 * @sqrt(analysis.fit.covariance[3]);
+    try std.testing.expectApproxEqAbs(10 * analysis.fit.coefficients[1] - margin, wald[0].log_lower, 1e-12);
+    try std.testing.expectApproxEqAbs(10 * analysis.fit.coefficients[1] + margin, wald[0].log_upper, 1e-12);
+    var out: std.ArrayList(u8) = .empty;
+    try run(cx, &out, try lex.tokenize(a, source, &d));
+    try std.testing.expect(std.mem.indexOf(u8, out.items, "age 10.0000 7.892 3.881 21.406") != null);
+    try std.testing.expect(std.mem.indexOf(u8, out.items, "age -10.0000") != null);
+    try std.testing.expect(std.mem.indexOf(u8, out.items, "Odds Ratio Estimates and Wald Confidence Intervals") != null);
+    try std.testing.expectEqualStrings("", try d.render());
+}
+
+test "LOGISTIC013 units last statement default list ignored CLASS and diagnostics" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var ds = try design.originalFixture(a);
+    var lib = @import("../exec.zig").Library.init(a);
+    try lib.put("binary", &ds);
+    var diagnostics = diag.Diagnostics.init(a);
+    const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &diagnostics };
+    const source = "proc logistic; class group(ref='A') / param=ref; model event(event='1')=group x; units x=10; units group=SD -SD 2*SD x=2 -2 / default=3; oddsratio 'Double change' x; oddsratio group / diff=ref; run;";
+    const spec = try parse(cx, try lex.tokenize(a, source, &diagnostics));
+    try std.testing.expectEqual(@as(usize, 1), spec.units.len);
+    try std.testing.expectEqualSlices(f64, &.{ 2, -2 }, unitsFor(spec, 1));
+    try std.testing.expectEqualSlices(f64, &.{3}, spec.default_units);
+    const analysis = try analyze(cx, spec);
+    const rows = try requestRows(a, analysis, spec, spec.odds_requests[0], .wald);
+    try std.testing.expectEqualStrings("Double change", rows[0].label);
+    try std.testing.expectEqualStrings("Double change 2", rows[1].label);
+    try std.testing.expectApproxEqAbs(-rows[0].log_estimate, rows[1].log_estimate, 1e-12);
+    try std.testing.expectApproxEqAbs(-rows[0].log_upper, rows[1].log_lower, 1e-12);
+    const class_rows = try requestRows(a, analysis, spec, spec.odds_requests[1], .wald);
+    try std.testing.expectEqual(@as(usize, 1), class_rows.len);
+    try std.testing.expectEqualStrings("group B vs A", class_rows[0].label);
+    const expected = analysis.fit.coefficients[1];
+    try std.testing.expectApproxEqAbs(expected, class_rows[0].log_estimate, 1e-12); // DEFAULT=3 never scales CLASS
+    var output: std.ArrayList(u8) = .empty;
+    try run(cx, &output, try lex.tokenize(a, source, &diagnostics));
+    try std.testing.expect(std.mem.indexOf(u8, output.items, "Customized Odds Ratio Estimates") != null);
+    try std.testing.expect(std.mem.indexOf(u8, output.items, "x -2.0000") != null);
+    diag.resetGap();
+    defer diag.resetGap();
+    for ([_][]const u8{ "units x=0;", "units x=SD;", "oddsratio x / plconv=0.01;" }, [_]u8{ 1, 2, 2 }) |statement, rc| {
+        var d = diag.Diagnostics.init(a);
+        var out: std.ArrayList(u8) = .empty;
+        const context: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &d };
+        diag.resetGap();
+        const program = try std.fmt.allocPrint(a, "proc logistic; model event=x; {s} run;", .{statement});
+        try std.testing.expectError(error.ParseError, run(context, &out, try lex.tokenize(a, program, &d)));
+        try std.testing.expectEqual(rc, diag.exitCode(diag.gapHit(), d.hasErrors()));
+        try std.testing.expectEqual(@as(usize, 0), out.items.len);
+    }
+}
+
+test "LOGISTIC013 ordinal odds use slope block and numeric interaction increments" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var ds = Dataset.init(a, "ordinalodds");
+    for ([_][]const u8{ "x", "y", "f" }) |name| _ = try ds.addColumn(name, .num);
+    for ([_][3]f64{ .{ 0, 0, 2 }, .{ 0, 1, 3 }, .{ 0, 2, 5 }, .{ 1, 0, 5 }, .{ 1, 1, 3 }, .{ 1, 2, 2 } }) |row| try ds.appendRow(&.{ .{ .num = row[0] }, .{ .num = row[1] }, .{ .num = row[2] } });
+    var lib = @import("../exec.zig").Library.init(a);
+    try lib.put("ordinalodds", &ds);
+    var d = diag.Diagnostics.init(a);
+    const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &d };
+    const program = "proc logistic; freq f; model y=x / gconv=1e-14; units x=2 -2; oddsratio x; run;";
+    const spec = try parse(cx, try lex.tokenize(a, program, &d));
+    const result = try analyze(cx, spec);
+    const contrasts = try odds_kernel.contrasts(a, result.data, result.design, result.fit.coefficients.len, spec.odds_requests[0], unitsFor(spec, 0));
+    try std.testing.expectEqualSlices(f64, &.{ 0, 0, 2 }, contrasts[0].coefficients);
+    const rows = try requestRows(a, result, spec, spec.odds_requests[0], .wald);
+    try std.testing.expectApproxEqAbs(@log(@as(f64, 16)), rows[0].log_estimate, 1e-7);
+    try std.testing.expectApproxEqAbs(-@log(@as(f64, 16)), rows[1].log_estimate, 1e-7);
+    var out: std.ArrayList(u8) = .empty;
+    try run(cx, &out, try lex.tokenize(a, program, &d));
+    try std.testing.expect(std.mem.indexOf(u8, out.items, "x Units=2") != null);
+    var binary_data = try ingots(a);
+    try lib.put("ingots", &binary_data);
+    const interact = try parse(cx, try lex.tokenize(a, "proc logistic data=ingots; model r/n=Heat|Soak; units Heat=-2; oddsratio Heat / at(Soak=1 3); run;", &d));
+    const fit = try analyze(cx, interact);
+    const interaction_rows = try requestRows(a, fit, interact, interact.odds_requests[0], .wald);
+    for (interaction_rows, [_]f64{ 1, 3 }) |row, soak| {
+        const estimate = -2 * (fit.fit.coefficients[1] + soak * fit.fit.coefficients[3]);
+        const variance = 4 * (fit.fit.covariance[5] + 2 * soak * fit.fit.covariance[7] + soak * soak * fit.fit.covariance[15]);
+        try std.testing.expectApproxEqAbs(estimate, row.log_estimate, 1e-12);
+        try std.testing.expectApproxEqAbs(estimate - 1.959963984540054 * @sqrt(variance), row.log_lower, 1e-12);
+    }
+}
+
+test "LOGISTIC013 unsupported new odds graphics are visible and PLOTS NONE enables tables" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var ds = try ageOddsFixture(a);
+    var lib = @import("../exec.zig").Library.init(a);
+    try lib.put("Data1", &ds);
+    diag.resetGap();
+    defer diag.resetGap();
+    for ([_]bool{ false, true }) |suppressed| {
+        var d = diag.Diagnostics.init(a);
+        var out: std.ArrayList(u8) = .empty;
+        var graphics: proc.native_graphics.Session = .{ .arena = a, .io = std.testing.io, .diags = &d, .enabled = true };
+        const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &d, .graphics = &graphics };
+        diag.resetGap();
+        const program = try std.fmt.allocPrint(a, "proc logistic {s}; model disease/n=age / clodds=pl; units age=10; run;", .{if (suppressed) "plots=none" else ""});
+        const tokens = try lex.tokenize(a, program, &d);
+        if (suppressed) {
+            try run(cx, &out, tokens);
+            try std.testing.expect(!d.hasErrors());
+            try std.testing.expect(std.mem.indexOf(u8, out.items, "age 10.0000 7.892 3.881 21.406") != null);
+        } else {
+            try std.testing.expectError(error.ParseError, run(cx, &out, tokens));
+            try std.testing.expectEqual(@as(u8, 2), diag.exitCode(diag.gapHit(), d.hasErrors()));
+            try std.testing.expectEqual(@as(usize, 0), out.items.len);
+        }
+        try std.testing.expectEqual(@as(usize, 0), graphics.prepared.items.len);
+    }
+}
+
+test "LOGISTIC013 multi-parameter CLASS profile agrees with independent two-binomial constraint" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var ds = try oddsFixture(a);
+    var lib = @import("../exec.zig").Library.init(a);
+    try lib.put("oddsdata", &ds);
+    var d = diag.Diagnostics.init(a);
+    const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &d };
+    const source = "proc logistic; class Race(param=effect ref='White'); freq f; model y(event='1')=Race / gconv=1e-14; oddsratio Race / diff=ref cl=pl; run;";
+    const spec = try parse(cx, try lex.tokenize(a, source, &d));
+    const result = try analyze(cx, spec);
+    const rows = try requestRows(a, result, spec, spec.odds_requests[0], .pl);
+    try std.testing.expectEqualStrings("Race Black vs White", rows[0].label);
+    try std.testing.expectApproxEqAbs(@log(@as(f64, 8)), rows[0].log_estimate, 1e-7);
+    for ([_]f64{ rows[0].log_lower, rows[0].log_upper }) |theta| {
+        var lo: f64 = -100;
+        var hi: f64 = 100;
+        for (0..100) |_| {
+            const intercept = (lo + hi) / 2;
+            const white = 1 / (1 + @exp(-intercept));
+            const black = 1 / (1 + @exp(-intercept - theta));
+            if (25 - 25 * white - 30 * black > 0) lo = intercept else hi = intercept;
+        }
+        const white = 1 / (1 + @exp(-(lo + hi) / 2));
+        const black = 1 / (1 + @exp(-(lo + hi) / 2 - theta));
+        // The other two groups retain their empirical binomial MLEs.
+        const ll = 5 * @log(white) + 20 * @log(1 - white) + 20 * @log(black) + 10 * @log(1 - black) + 15 * @log(@as(f64, 0.6)) + 10 * @log(@as(f64, 0.4)) + 20 * @log(@as(f64, 0.5));
+        try std.testing.expectApproxEqAbs(@as(f64, 3.841458820694124), 2 * (result.fit.log_likelihood - ll), 2e-7);
     }
 }
