@@ -1,7 +1,7 @@
 /* COMMON020: independent DATA-step scoring from an actual REG fit.
    Full-rank design has exact y=1+2*x+3*z and mean4.5. */
 ods graphics off;
-filename scorecd temp;
+filename scorecd 'common020-score.sas';
 data training;
 input x z y;
 datalines;
@@ -29,6 +29,6 @@ datalines;
 run;
 data scored;
 set incoming;
-%include scorecd;
+%include 'common020-score.sas';
 put 'p=' P_y 8.3 ' r=' R_y 8.3 ' warn=[' _WARN_ $char2. ']';
 run;
