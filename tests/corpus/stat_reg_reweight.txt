@@ -1,0 +1,4 @@
+# corpus assertions
+# Complete coefficients/RMSE derive from the two independent fits in the source.
+words MODEL1.1 0.900000 0.900000 0.591608 MODEL1 0.200000 1.600000 1.366260
+log-words NOTE(expanded L2): 1 observation is deleted. NOTE(expanded L2): Due to a REWEIGHT statement, the model label is now MODEL1.1.

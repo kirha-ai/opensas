@@ -36,6 +36,7 @@ pub const Spec = struct {
     notsorted: bool,
     freq: ?usize = null,
     weight: ?usize = null,
+    row_weights: ?[]const f64 = null,
     ids: []const usize = &.{},
     noprint: bool = false,
     outest: ?[]const u8 = null,

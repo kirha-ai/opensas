@@ -20,6 +20,7 @@ pub const Selected = struct {
     read: usize,
 };
 pub fn select(cx: proc.ProcCtx, spec: Spec, model: Model, rows: []const []const Value) diag.Error!Selected {
+    if (spec.row_weights) |weights_override| if (weights_override.len != rows.len) return error.ExecError;
     var x: std.ArrayList(f64) = .empty;
     var y: std.ArrayList(f64) = .empty;
     var weights: std.ArrayList(f64) = .empty;
@@ -36,7 +37,7 @@ pub fn select(cx: proc.ProcCtx, spec: Spec, model: Model, rows: []const []const 
             if (!std.math.isFinite(v)) return cx.diags.fail(error.ExecError, 0, "PROC REG: nonfinite analysis value", .{});
         }
         if (!usable) continue;
-        const weight = if (spec.weight) |c| row[c].num else 1;
+        const weight = if (spec.row_weights) |weights_override| weights_override[index] else if (spec.weight) |c| row[c].num else 1;
         const frequency = if (spec.freq) |c| row[c].num else 1;
         if (std.math.isNan(weight) or weight <= 0 or std.math.isNan(frequency) or frequency < 1) continue;
         if (!std.math.isFinite(weight) or !std.math.isFinite(frequency)) return cx.diags.fail(error.ExecError, 0, "PROC REG: nonfinite frequency or weight", .{});
@@ -422,6 +423,7 @@ pub const Session = struct {
     base_labels: []const []const u8 = &.{},
     other_models: bool = false,
     next_test_number: ?usize = null,
+    reweight_state: ?@import("reg_reweight.zig").State = null,
 
     /// The current MODEL is the last MODEL statement, including every response
     /// from that statement. Crossproduct/missingness variables remain frozen.
@@ -500,6 +502,86 @@ pub const Session = struct {
         try cx.diags.note(tokens[0].line, "Due to {s} {s} statement, the model label is now {s}.", .{ if (adding) @as([]const u8, "an") else "a", if (adding) @as([]const u8, "ADD") else "DELETE", models[0].label });
     }
 
+    fn reweightStatement(self: *Session, cx: proc.ProcCtx, tokens: []const @import("../lexer.zig").Token) diag.Error!void {
+        const rw = @import("reg_reweight.zig");
+        var selected = try self.current(cx);
+        const request = try rw.parse(cx, selected.ds, tokens[1..]);
+        var state = self.reweight_state orelse try rw.State.init(cx.arena, selected.ds, selected.weight);
+        const line = tokens[0].line;
+        if (request.kind == .status) {
+            var count: usize = 0;
+            for (state.current, state.original, 0..) |weight, original, i| {
+                const same = weight == original or (std.math.isNan(weight) and std.math.isNan(original) and Value.missingRank(weight) == Value.missingRank(original));
+                if (same) continue;
+                count += 1;
+                if (weight == 0) try cx.diags.note(line, "Observation {d} is deleted.", .{i + 1}) else try cx.diags.note(line, "Observation {d} has weight {s}.", .{ i + 1, std.mem.trim(u8, try @import("../format.zig").apply(cx.arena, .{ .num = weight }, "best12."), " ") });
+            }
+            if (count == 0) try cx.diags.note(line, "No observations are reweighted.", .{});
+            // The guide counts every REWEIGHT statement in the model label;
+            // STATUS leaves weights and the last-fit numerical snapshot intact.
+            const labels = if (self.base_labels.len > 0) self.base_labels else labels: {
+                const names = try cx.arena.alloc([]const u8, selected.models.len);
+                for (selected.models, names) |model, *name| name.* = model.label;
+                break :labels names;
+            };
+            const models = try cx.arena.dupe(Model, selected.models);
+            for (models, labels) |*model, label| model.label = try std.fmt.allocPrint(cx.arena, "{s}.{d}", .{ label, self.revision + 1 });
+            selected.models = models;
+            selected.row_weights = state.current;
+            self.spec = selected;
+            self.reweight_state = state;
+            self.base_labels = labels;
+            self.revision += 1;
+            try cx.diags.note(line, "Due to a REWEIGHT statement, the model label is now {s}.", .{models[0].label});
+            return;
+        }
+        if (request.kind == .undo and state.previous == null) return proc.failGap(cx.diags, line, "PROC REG REWEIGHT: UNDO without a saved change is not implemented", .{});
+        if (request.selection == .previous and request.kind == .change and state.after_undo) return proc.failGap(cx.diags, line, "PROC REG REWEIGHT: selection reuse immediately after UNDO is not implemented", .{});
+        if (request.selection == .previous and request.kind == .change and state.selected == null) return cx.diags.fail(error.ParseError, line, "PROC REG REWEIGHT: no previously selected observations", .{});
+        // The first snapshot is the already-fitted, still-unmodified model.
+        // Later REWEIGHT statements must NOT recompute it from changed weights.
+        if (self.fitted.len == 0) self.fitted = try compute(cx, selected);
+        if (request.kind == .undo) {
+            try state.undo();
+        } else {
+            const snapshots = try cx.arena.alloc(rw.DiagnosticModel, self.fitted.len);
+            for (self.fitted, snapshots) |fitted, *snapshot| snapshot.* = .{ .response = fitted.model.dependent, .regressors = fitted.model.regressors, .intercept = fitted.model.intercept, .fit = fitted.diagnostics.fit, .source_rows = fitted.input.source_rows, .precision_weights = fitted.input.weights, .has_frequency = selected.freq != null };
+            const chosen = rw.selection(cx.arena, selected.ds, selected.required, snapshots, request, state.selected) catch |err| {
+                if (err == error.OutOfMemory) return err;
+                return proc.failGap(cx.diags, line, "PROC REG REWEIGHT: diagnostic selection for this model is not implemented", .{});
+            };
+            try state.change(cx.arena, chosen, request);
+        }
+        const labels = if (self.base_labels.len > 0) self.base_labels else labels: {
+            const values = try cx.arena.alloc([]const u8, selected.models.len);
+            for (selected.models, values) |model, *name| name.* = model.label;
+            break :labels values;
+        };
+        const models = try cx.arena.dupe(Model, selected.models);
+        for (models, labels) |*model, label| model.label = try std.fmt.allocPrint(cx.arena, "{s}.{d}", .{ label, self.revision + 1 });
+        selected.models = models;
+        selected.row_weights = state.current;
+        self.spec = selected;
+        self.reweight_state = state;
+        self.base_labels = labels;
+        self.revision += 1;
+        if (request.kind == .undo) {
+            try cx.diags.note(line, "The most recent REWEIGHT changes are undone.", .{});
+        } else if (request.selection == .all and request.reset) {
+            try cx.diags.note(line, "All observations are reset.", .{});
+        } else {
+            var count: usize = 0;
+            for (state.selected.?, 0..) |chosen, i| if (chosen) {
+                count += 1;
+                if (!request.nolist) {
+                    if (request.reset) try cx.diags.note(line, "Observation {d} is reset.", .{i + 1}) else if (request.weight == 0) try cx.diags.note(line, "Observation {d} is deleted.", .{i + 1}) else try cx.diags.note(line, "Observation {d} is reweighted to {s}.", .{ i + 1, std.mem.trim(u8, try @import("../format.zig").apply(cx.arena, .{ .num = request.weight }, "best12."), " ") });
+                }
+            };
+            if (count == 0) try cx.diags.note(line, "No observations are selected.", .{}) else try cx.diags.note(line, "{d} {s} {s} {s}.", .{ count, if (count == 1) @as([]const u8, "observation") else "observations", if (count == 1) @as([]const u8, "is") else "are", if (request.reset) @as([]const u8, "reset") else if (request.weight == 0) "deleted" else "reweighted" });
+        }
+        try cx.diags.note(line, "Due to a REWEIGHT statement, the model label is now {s}.", .{models[0].label});
+    }
+
     fn testStatement(self: *Session, cx: proc.ProcCtx, out: *std.ArrayList(u8), tokens: []const @import("../lexer.zig").Token, label: ?[]const u8) diag.Error!void {
         const selected = try self.current(cx);
         const current_model = selected.models[0];
@@ -543,7 +625,9 @@ pub const Session = struct {
                 i = end + 1;
                 continue;
             }
-            if (eq(t[i].text, "add") or eq(t[i].text, "delete")) {
+            if (eq(t[i].text, "reweight")) {
+                try self.reweightStatement(cx, t[i..end]);
+            } else if (eq(t[i].text, "add") or eq(t[i].text, "delete")) {
                 try self.edit(cx, t[i..end], eq(t[i].text, "add"));
             } else if (eq(t[i].text, "refit")) {
                 if (end != i + 1) return cx.diags.fail(error.ParseError, t[i].line, "PROC REG REFIT takes no arguments", .{});
@@ -687,6 +771,7 @@ test "STAT-COMMON-004 weighted listing identifies weight without changing observ
 }
 
 test {
+    _ = @import("reg_reweight_tests.zig");
     _ = @import("reg_test_tests.zig");
     _ = @import("linear_hypothesis_tests.zig");
     _ = @import("reg_mtest_tests.zig");

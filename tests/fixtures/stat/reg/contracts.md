@@ -389,3 +389,30 @@ not repeat it at RUN. A later ADD changes the fitted covariance: testing x befor
 adding z gives SS48.4,F(1,2)=242/19; testing both after ADD gives SS52,F(2,1)=6.5.
 Labels are admitted only in active REG TEST continuations. Invalid syntax does
 not advance numbering or publish a partial test; BY interactivity remains disabled.
+
+## REWEIGHT geometry and deferred recomputation
+
+SAS/STAT15.4 physical pp.8595–8598 and8636–8642 separates current private
+precision weights from the last fitted model used by diagnostic conditions.
+Changing weights must not change DATA rows. REFIT changes numerical results
+without publishing a listing or OUTEST; PRINT and TEST use the current weights.
+A condition uses its own response's diagnostic values before the selected rows
+are unioned across responses. Option-only changes reuse selected observation IDs,
+not a newly evaluated version of the old condition.
+
+For x=(0,1,2,3,4), y=(1,2,2,4,8), the all-row line is beta=(1/5,8/5),
+SSE=28/5, residual DF3 and residuals=(.8,.2,-1.4,-1,1.4). Removing observation5
+from the analysis gives beta=(.9,.9), SSE=.7 and residual DF2. Therefore the
+condition residual<-1.2 selects observation3 before REFIT but not after REFIT.
+Giving observation5 precision weight.5 instead yields beta=(.4,1.4), SSE=4.2.
+Uniform FREQ2 replication of the four retained rows leaves the coefficients
+unchanged but gives SSE1.4 and residual DF6, rather than precision-weight DF2.
+
+For positive fitted precision weight w and weighted leverage h, residual standard
+error is sqrt(MSE*(1-h)/w), STUDENT=r/STDR, CookD=w*r²*h/(rank*MSE*(1-h)²),
+and RSTUDENT uses deleted MSE=(SSE-w*r²/(1-h))/(DF-1). The manual small design
+has CookD1.96875 and RSTUDENT=sqrt(14) at observation5. Unit leverage makes these
+standardizations undefined; missing values retain SAS's numeric missing ordering.
+RESET restores the original WEIGHT value (or1), not necessarily the last weight.
+UNDO restores the saved previous weight vector while preserving the last fit
+until the next explicit or implicit refit. Model revisions count REWEIGHT calls.
