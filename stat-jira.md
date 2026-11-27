@@ -12,6 +12,10 @@ Explicit user resume. Confirmed working branch `feat/stat/batch-4`, base `31356c
 - dev6: STAT-COMMON-017; `/Users/thomas/kirha/opensas-dev6`; branch `codex/stat-b4-dev6`; assigned 2026-11-27T13:42:13+00:00; implementation deadline 2026-11-27T14:27:13+00:00. Original README/cases and cited physical PDF pages required before edits.
 - dev7: STAT-COMMON-018; `/Users/thomas/kirha/opensas-dev7`; branch `codex/stat-b4-dev7`; assigned 2026-11-27T13:42:13+00:00; implementation deadline 2026-11-27T14:27:13+00:00. Original README/cases and cited physical PDF pages required before edits.
 
+### Rolling assignment — GLM-008
+
+GLM007 RANDOM/HOV partial integrated from `8ea30d11`; its254-token GLM prefix passes, whole original still needs MIXED and broad MANOVA/domain work remains PARK. dev2 owns existing STAT-GLM-008 in retained `opensas-dev2`, branch `codex/stat-b4-glm008-dev2`, assigned 2026-11-27T15:01:05+00:00, deadline 2026-11-27T15:46:05+00:00. Read cited computational-method contract and verify actual matrix/rank/solver behavior with independent cases and unchanged originals; no performance/audit lane or unrelated shared-kernel rewrite.
+
 ### Rolling assignment — REG-009
 
 REG008 computational partial integrated from `a1b09895`; explicit selection-listing/graph/group/tie/domain gaps keep it PARK, final batch checks pending. dev1 owns existing STAT-REG-009 in retained `opensas-dev1`, branch `codex/stat-b4-reg009-dev1`, assigned 2026-11-27T14:59:06+00:00, deadline 2026-11-27T15:44:06+00:00. Scope is multivariate tests/MTEST with actual residual/hypothesis matrices and independent small-matrix identities, not unrelated model selection or RNG changes.
@@ -5088,7 +5092,7 @@ Source: S154, Chapter 53, `The GLM Procedure`, PDF pp. 4043–4230. Tasks in thi
 
 <a id="stat-glm-008"></a>
 
-### [TODO] STAT-GLM-008 — GLM — Computational Method
+### [DOING @dev2] STAT-GLM-008 — GLM — Computational Method
 
 - Source: S154 / Chapter 53 / `Computational Method` (PDF pp. 4163–4164).
 - Scope: Implement Computational Method. This ticket owns the feature's options, defaults, computation, and results as an extension of the basic computational path; the chapter's output tickets handle ODS descriptors and file presentation.
