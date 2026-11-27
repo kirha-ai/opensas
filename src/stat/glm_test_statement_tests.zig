@@ -187,3 +187,39 @@ test "GLM012 degenerate H E inference is explicit while valid zero SS gives p on
     try t.expect(std.mem.indexOf(u8, messages, "degenerate error effect") != null);
     try t.expect(std.mem.indexOf(u8, messages, "nonestimable hypothesis effect") != null);
 }
+
+test "GLM012 complete original GLM and MIXED sequence retains all 481 reference tokens" {
+    var arena = std.heap.ArenaAllocator.init(t.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const helper = @import("glm_persistence_tests.zig");
+    var ds = try helper.data(a, "tests/corpus/stat_glm_random_two_way.sas", "machine", &.{ "machine", "person", "rating" }, &.{}, 0);
+    var lib = Library.init(a);
+    try lib.put("machine", &ds);
+    var diagnostics = diag.Diagnostics.init(a);
+    const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &diagnostics };
+    var output: std.ArrayList(u8) = .empty;
+    // Exact two analysis blocks from the original. Both operate on the SAME
+    // persistent library and output stream; no re-created input between PROCs.
+    try glm.run(cx, &output, try lex.tokenize(a, "proc glm data=machine; class machine person; model rating=machine person machine*person; random person machine*person / test; run;", &diagnostics));
+    try @import("mixed.zig").run(cx, &output, try lex.tokenize(a, "proc mixed data=machine method=type3; class machine person; model rating=machine; random person machine*person; run;", &diagnostics));
+    // Reuse the canonical existing expected contracts, not duplicate goldens.
+    const prefix = try helper.read(a, "tests/corpus/stat_glm_random_two_way.txt");
+    const word_start = std.mem.indexOf(u8, prefix, "words ").? + 6;
+    const word_end = std.mem.indexOfScalarPos(u8, prefix, word_start, '\n').?;
+    const suffix = try helper.read(a, "tests/fixtures/stat/mixed/machine_type3_full.txt");
+    var actual = std.mem.tokenizeAny(u8, output.items, " \t\r\n");
+    var count: usize = 0;
+    for ([_][]const u8{ prefix[word_start..word_end], suffix }) |contract| {
+        var expected = std.mem.tokenizeAny(u8, contract, " \t\r\n");
+        while (expected.next()) |word| {
+            try t.expectEqualStrings(word, actual.next() orelse "");
+            count += 1;
+        }
+    }
+    try t.expectEqual(@as(usize, 481), count);
+    try t.expect(actual.next() == null);
+    try t.expect(!diagnostics.hasErrors());
+    try t.expectEqual(@as(usize, 1), diagnostics.list.items.len);
+    try t.expectEqualStrings("TYPE I EMS not available without the E1 option.", diagnostics.list.items[0].message);
+}
