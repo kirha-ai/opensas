@@ -204,7 +204,7 @@ test "LOGISTIC006 conditional invalid and unsupported paths fail without uncondi
         .{ .source = "proc logistic; strata ID; model Outcome(event='1')=Gall / ctable pprob=.5; run;", .rc = 1 },
         .{ .source = "proc logistic; strata ID; model Outcome(event='1')=Gall / clodds=pl; run;", .rc = 1 },
         .{ .source = "proc logistic; strata ID / check=all; model Outcome(event='1')=Gall; run;", .rc = 2 },
-        .{ .source = "proc logistic exactonly; strata ID; model Outcome(event='1')=Gall; exact Gall; run;", .rc = 2 },
+        .{ .source = "proc logistic exactonly; strata ID; model Outcome(event='1')=Gall; exactoptions method=networkmc; exact Gall; run;", .rc = 2 },
         .{ .source = "proc logistic; strata ID; model Outcome(event='1')=ID; run;", .rc = 2 },
     };
     for (cases) |case| {

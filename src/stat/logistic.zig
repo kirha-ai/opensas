@@ -15,6 +15,7 @@ const ordinal = @import("logistic_ordinal.zig");
 const odds_kernel = @import("logistic_odds.zig");
 const roc = @import("logistic_roc.zig");
 const gof = @import("logistic_gof.zig");
+const exact = @import("logistic_exact.zig");
 const format = @import("../format.zig");
 const fns = @import("../functions.zig");
 const A = std.mem.Allocator;
@@ -25,6 +26,10 @@ pub const Spec = struct {
     input: proc.ProcInput,
     model: design.Spec,
     noprint: bool = false,
+    exact_only: bool = false,
+    exact_request: ?exact.Request = null,
+    exact_method: exact.Method = .network,
+    exact_epsilon: f64 = 1e-8,
     trials: ?usize = null,
     by_columns: []const usize = &.{},
     by_desc: []const bool = &.{},
@@ -247,6 +252,11 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
     var qualified: ?usize = null;
     var i: usize = 2;
     while (i < t.len and !at(t, i, .semicolon) and !at(t, i, .eof)) {
+        if (kw(t, i, "exactonly")) {
+            s.exact_only = true;
+            i += 1;
+            continue;
+        }
         if (kw(t, i, "noprint")) {
             s.noprint = true;
             i += 1;
@@ -525,6 +535,61 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
                     } else return unsupported(cx, option);
                 }
             }
+        } else if (kw(t, i, "exactoptions")) {
+            var j = i + 1;
+            while (j < end) {
+                const option = t[j];
+                if (!at(t, j + 1, .eq)) return unsupported(cx, option);
+                j += 2;
+                if (eq(option.text, "method")) {
+                    if (kw(t, j, "direct")) s.exact_method = .direct else if (kw(t, j, "network")) s.exact_method = .network else return unsupported(cx, t[j]);
+                    j += 1;
+                } else if (eq(option.text, "epsilon")) {
+                    s.exact_epsilon = try numericLiteral(cx, t[0..end], &j);
+                    if (s.exact_epsilon < 0 or s.exact_epsilon > 1) return invalid(cx, t, j - 1);
+                    if (s.exact_epsilon == 1) return proc.failGap(cx.diags, 0, "PROC LOGISTIC: exact integer-state coarsening is not implemented", .{});
+                } else return unsupported(cx, option);
+            }
+        } else if (kw(t, i, "exact")) {
+            if (!model_seen) return cx.diags.fail(error.ParseError, t[i].line, "EXACT must follow MODEL", .{});
+            if (s.exact_request != null) return proc.failGap(cx.diags, t[i].line, "PROC LOGISTIC: multiple EXACT statements are not implemented", .{});
+            var j = i + 1;
+            if (at(t, j, .string) or kw(t, j, "intercept")) return unsupported(cx, t[j]);
+            var request: exact.Request = .{ .variable = try variable(cx, s.input.ds, t[0..end], &j) };
+            if (j < end and !at(t, j, .slash)) return proc.failGap(cx.diags, t[j].line, "PROC LOGISTIC: multivariate EXACT effects are not implemented", .{});
+            if (at(t, j, .slash)) j += 1;
+            while (j < end) {
+                const option = t[j];
+                j += 1;
+                if (eq(option.text, "onesided")) {
+                    request.one_sided = true;
+                    continue;
+                }
+                if (eq(option.text, "estimate")) {
+                    request.estimate = .parm;
+                    if (at(t, j, .eq)) {
+                        j += 1;
+                        if (kw(t, j, "parm")) request.estimate = .parm else if (kw(t, j, "odds")) request.estimate = .odds else if (kw(t, j, "both")) request.estimate = .both else return invalid(cx, t, j);
+                        j += 1;
+                    }
+                    continue;
+                }
+                if (!at(t, j, .eq)) return unsupported(cx, option);
+                j += 1;
+                if (eq(option.text, "alpha")) {
+                    request.alpha = try numericLiteral(cx, t[0..end], &j);
+                    if (!(request.alpha.? > 0 and request.alpha.? < 1)) return invalid(cx, t, j - 1);
+                } else if (eq(option.text, "cltype")) {
+                    if (kw(t, j, "exact")) request.midp_interval = false else if (kw(t, j, "midp")) request.midp_interval = true else return invalid(cx, t, j);
+                    j += 1;
+                } else if (eq(option.text, "midpfactor")) {
+                    const values = try probabilityList(cx, t[0..end], &j);
+                    if (values.len > 2) return invalid(cx, t, j);
+                    request.delta1 = values[0];
+                    if (values.len == 2) request.delta2 = values[1];
+                } else return unsupported(cx, option);
+            }
+            s.exact_request = request;
         } else if (kw(t, i, "strata")) {
             var j = i + 1;
             var count: usize = 0;
@@ -1115,6 +1180,7 @@ fn unitTables(a: A, out: *std.ArrayList(u8), s: Spec, result: Analysis) diag.Err
 pub fn run(cx: proc.ProcCtx, out: *std.ArrayList(u8), tokens: []const lex.Token) diag.Error!void {
     const spec = try parse(cx, tokens);
     const a = cx.arena;
+    if (spec.exact_only or spec.exact_request != null) return @import("logistic_exact_proc.zig").run(cx, out, spec);
     if (spec.strata.len > 0) return @import("logistic_conditional_proc.zig").run(cx, out, spec);
     if (spec.nofit or spec.roc_plot or spec.roc_models.len > 0 or spec.roc_contrast != null) return @import("logistic_roc_proc.zig").run(cx, out, spec);
     if (spec.by_columns.len > 0 and spec.model.classes.len > 0) return proc.failGap(cx.diags, 0, "PROC LOGISTIC: global CLASS levels across BY groups are not implemented", .{});
@@ -1209,6 +1275,8 @@ test {
     _ = @import("logistic_convergence_tests.zig");
     _ = @import("logistic_conditional.zig");
     _ = @import("logistic_conditional_tests.zig");
+    _ = @import("logistic_exact.zig");
+    _ = @import("logistic_exact_tests.zig");
     _ = @import("logistic_gof_tests.zig");
     _ = @import("logistic_roc_proc.zig");
 }

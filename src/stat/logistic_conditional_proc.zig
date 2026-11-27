@@ -14,10 +14,11 @@ const format = @import("../format.zig");
 const A = std.mem.Allocator;
 pub const Group = struct { keys: []const usize, rows: []const usize, events: usize };
 pub const Analysis = struct { data: @import("../dataset.zig").Dataset, design: design.Design, groups: []const Group, maps: []const levels.Levels, fit: conditional.Fit, read: usize, informative: usize };
+pub const Prepared = struct { data: @import("../dataset.zig").Dataset, design: design.Design, groups: []const Group, maps: []const levels.Levels, read: usize, informative: usize };
 fn num(a: A, value: f64, specification: []const u8) ![]const u8 {
     return std.mem.trim(u8, try format.apply(a, .{ .num = value }, specification), " ");
 }
-pub fn analyze(cx: proc.ProcCtx, s: l.Spec) diag.Error!Analysis {
+pub fn prepare(cx: proc.ProcCtx, s: l.Spec) diag.Error!Prepared {
     const a = cx.arena;
     if (s.model.weight != null or s.link_specified or s.nofit or s.ctable or s.lackfit != null or s.scale != .unspecified or s.roc_plot or s.roc_models.len > 0 or s.roc_contrast != null or (s.clodds != null and s.clodds.? != .wald)) return cx.diags.fail(error.ParseError, 0, "PROC LOGISTIC: requested statement or MODEL option is not available with STRATA", .{});
     if (s.model.classes.len > 0 or s.trials != null or s.by_columns.len > 0 or s.convergence_specified or s.maxiter_specified or s.fit_options.ridging != .relative or s.odds_requests.len > 0 or s.units_present or s.clodds != null) return proc.failGap(cx.diags, 0, "PROC LOGISTIC: this conditional analysis adapter/option is not implemented", .{});
@@ -84,21 +85,14 @@ pub fn analyze(cx: proc.ProcCtx, s: l.Spec) diag.Error!Analysis {
         }
     };
     std.mem.sort(Group, groups.items, {}, Sort.less);
-    const strata = try a.alloc(conditional.Stratum, groups.items.len);
     var informative: usize = 0;
-    for (groups.items, strata) |group, *stratum| {
-        stratum.* = .{ .rows = group.rows, .events = group.events };
+    for (groups.items) |group| {
         if (group.events > 0 and group.events < group.rows.len) informative += group.rows.len;
     }
     if (informative == 0) return cx.diags.fail(error.ExecError, 0, "PROC LOGISTIC: no informative strata contain both outcomes", .{});
     const p = d.p - 1;
     const x = try a.alloc(f64, d.n * p);
     for (0..d.n) |i| @memcpy(x[i * p ..][0..p], d.x[i * d.p + 1 ..][0..p]);
-    const fit = conditional.fit(a, x, d.y, p, strata, .{}) catch |err| {
-        if (err == error.OutOfMemory) return err;
-        return proc.failGap(cx.diags, 0, "PROC LOGISTIC: conditional likelihood is singular, unbounded, or exceeds the exact DP resource limit", .{});
-    };
-    if (fit.status != .converged) try cx.diags.warnStatus(0, "Conditional logistic optimization did not converge; results use the last iterate", .{});
     var conditional_design = d;
     conditional_design.x = x;
     conditional_design.p = p;
@@ -106,22 +100,32 @@ pub fn analyze(cx: proc.ProcCtx, s: l.Spec) diag.Error!Analysis {
     const effects = try a.dupe(design.Effect, d.effects);
     for (effects) |*effect| effect.start -= 1;
     conditional_design.effects = effects;
-    return .{ .data = selected, .design = conditional_design, .groups = groups.items, .maps = maps, .fit = fit, .read = ds.rows.items.len, .informative = informative };
+    return .{ .data = selected, .design = conditional_design, .groups = groups.items, .maps = maps, .read = ds.rows.items.len, .informative = informative };
+}
+pub fn analyze(cx: proc.ProcCtx, s: l.Spec) diag.Error!Analysis {
+    const prepared = try prepare(cx, s);
+    const a = cx.arena;
+    const strata = try a.alloc(conditional.Stratum, prepared.groups.len);
+    for (prepared.groups, strata) |group, *stratum| stratum.* = .{ .rows = group.rows, .events = group.events };
+    const fit = conditional.fit(a, prepared.design.x, prepared.design.y, prepared.design.p, strata, .{}) catch |err| {
+        if (err == error.OutOfMemory) return err;
+        return proc.failGap(cx.diags, 0, "PROC LOGISTIC: conditional likelihood is singular, unbounded, or exceeds the exact DP resource limit", .{});
+    };
+    if (fit.status != .converged) try cx.diags.warnStatus(0, "Conditional logistic optimization did not converge; results use the last iterate", .{});
+    return .{ .data = prepared.data, .design = prepared.design, .groups = prepared.groups, .maps = prepared.maps, .fit = fit, .read = prepared.read, .informative = prepared.informative };
 }
 fn rowTest(a: A, out: *std.ArrayList(u8), label: []const u8, q: f64, df: usize) !void {
     try out.print(a, "{s} {s} {d} {s}\n", .{ label, try num(a, q, "10.4"), df, try num(a, kernel.chiTail(q, df), "pvalue6.4") });
 }
-pub fn run(cx: proc.ProcCtx, out: *std.ArrayList(u8), s: l.Spec) diag.Error!void {
-    const result = try analyze(cx, s);
-    if (s.noprint) return;
-    const a = cx.arena;
+pub fn renderHeader(a: A, out: *std.ArrayList(u8), s: l.Spec, result: anytype, optimization: bool) diag.Error!void {
     const d = result.design;
-    const fit = result.fit;
     const ds = s.input.ds;
     const response = ds.columns.items[s.model.response].name;
     try out.print(a, "The LOGISTIC Procedure\n\nConditional Analysis\n\nModel Information\n\nData Set {s}\nResponse Variable {s}\nNumber of Response Levels 2\nNumber of Strata {d}\n", .{ try lists.datasetName(a, ds), response, result.groups.len });
     if (s.model.frequency) |column| try out.print(a, "Frequency Variable {s}\n", .{ds.columns.items[column].name});
-    try out.print(a, "Model binary logit\nOptimization Technique Newton-Raphson ridge\n\nNumber of Observations Read {d}\nNumber of Observations Used {d}\nNumber of Observations Informative {d}\n\nResponse Profile\n\nOrdered Total\nValue {s} Frequency\n\n", .{ result.read, d.n, result.informative, response });
+    try out.appendSlice(a, "Model binary logit\n");
+    if (optimization) try out.appendSlice(a, "Optimization Technique Newton-Raphson ridge\n");
+    try out.print(a, "\nNumber of Observations Read {d}\nNumber of Observations Used {d}\nNumber of Observations Informative {d}\n\nResponse Profile\n\nOrdered Total\nValue {s} Frequency\n\n", .{ result.read, d.n, result.informative, response });
     for (d.response.levels, 0..) |level, i| try out.print(a, "{d} {s} {s}\n", .{ i + 1, level.label, try num(a, level.frequency, "best12.") });
     try out.print(a, "\nProbability modeled is {s}={s}.\n\n", .{ response, d.response.levels[d.event_index].label });
     if (s.strata_summary) {
@@ -161,6 +165,14 @@ pub fn run(cx: proc.ProcCtx, out: *std.ArrayList(u8), s: l.Spec) diag.Error!void
             try out.print(a, " {d} {d} {d}\n", .{ group.events, group.rows.len - group.events, group.rows.len });
         }
     }
+}
+pub fn run(cx: proc.ProcCtx, out: *std.ArrayList(u8), s: l.Spec) diag.Error!void {
+    const result = try analyze(cx, s);
+    if (s.noprint) return;
+    const a = cx.arena;
+    const d = result.design;
+    const fit = result.fit;
+    try renderHeader(a, out, s, result, true);
     try out.appendSlice(a, "\nNewton-Raphson Ridge Optimization\n\nWithout Parameter Scaling\n\n");
     if (fit.status == .converged) try out.appendSlice(a, "Convergence criterion (GCONV=1E-8) satisfied.\n\n") else try out.appendSlice(a, "Conditional optimization terminated without convergence.\n\n");
     try out.appendSlice(a, "Model Fit Statistics\n\nWithout With\nCriterion Covariates Covariates\n\n");
