@@ -28,6 +28,7 @@ pub const Model = struct {
 pub const Spec = struct {
     ds: *Dataset,
     models: []const Model,
+    mtests: []const @import("reg_mtest.zig").Spec = &.{},
     required: []const usize,
     by: []const usize,
     descending: []const bool,
@@ -202,6 +203,7 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
     }
     const ds = try proc.procInput(cx.arena, raw, if (qualified_name_at != null) input_tokens.items else t, cx.diags);
     var models: std.ArrayList(Model) = .empty;
+    var mtests: std.ArrayList(@import("reg_mtest.zig").Spec) = .empty;
     var required: std.ArrayList(usize) = .empty;
     var output_variables: std.ArrayList(usize) = .empty;
     var by_statements: by_groups.Statements = .{};
@@ -305,6 +307,21 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
             try appendUnique(cx.arena, &output_variables, dependents);
             try appendUnique(cx.arena, &required, dependents);
             try appendUnique(cx.arena, &required, regressors);
+        } else if (kw(t, i, "mtest")) {
+            if (models.items.len == 0) return cx.diags.fail(error.ParseError, t[i].line, "PROC REG MTEST requires a preceding MODEL", .{});
+            const last = models.items[models.items.len - 1];
+            var first = models.items.len - 1;
+            while (first > 0 and models.items[first - 1].statement_index == last.statement_index) first -= 1;
+            const responses = try cx.arena.alloc([]const u8, models.items.len - first);
+            for (models.items[first..], responses) |model, *response_name| response_name.* = ds.columns.items[model.dependent].name;
+            const parameters = try cx.arena.alloc([]const u8, last.regressors.len + @as(usize, if (last.intercept) 1 else 0));
+            if (last.intercept) parameters[0] = "Intercept";
+            for (last.regressors, 0..) |ci, j| parameters[j + @as(usize, if (last.intercept) 1 else 0)] = ds.columns.items[ci].name;
+            var number: usize = 1;
+            for (mtests.items) |test_spec| if (test_spec.statement_index == last.statement_index) {
+                number += 1;
+            };
+            try mtests.append(cx.arena, try @import("reg_mtest.zig").parse(cx, t[i + 1 .. end], parameters, responses, last.intercept, last.statement_index, number, label));
         } else if (kw(t, i, "restrict")) {
             if (models.items.len == 0) return cx.diags.fail(error.ParseError, t[i].line, "PROC REG RESTRICT requires a preceding MODEL", .{});
             // The guide explicitly ignores restrictions for RIDGE/PCOMIT.
@@ -363,8 +380,12 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
         if (!noprint or outest == null) return proc.failGap(cx.diags, 0, "PROC REG: model selection currently requires NOPRINT and OUTEST", .{});
         if (covout or ridge.len > 0 or pcomit.len > 0 or model.restrictions.len > 0) return proc.failGap(cx.diags, 0, "PROC REG: subset selection with COVOUT, RIDGE, PCOMIT, or RESTRICT is not implemented", .{});
     }
+    for (mtests.items) |test_spec| for (models.items) |model| {
+        if (model.statement_index != test_spec.statement_index) continue;
+        if (model.restrictions.len > 0 or model.selection.method != .none or ridge.len > 0 or pcomit.len > 0) return proc.failGap(cx.diags, 0, "PROC REG: MTEST with RESTRICT, selection, RIDGE, or PCOMIT is not implemented", .{});
+    };
     const by = try by_statements.resolve(cx.arena, ds, cx.diags);
     const bcols = try cx.arena.alloc(usize, by.names.len);
     for (by.names, 0..) |n, j| bcols[j] = ds.indexOf(n).?;
-    return .{ .ds = ds, .models = models.items, .required = required.items, .by = bcols, .descending = by.desc, .notsorted = by.notsorted, .freq = freq, .weight = weight, .ids = ids, .noprint = noprint, .outest = outest, .covout = covout, .output_variables = output_variables.items, .ridge = ridge, .pcomit = pcomit, .outvif = outvif, .ridge_plots = ridge_plots };
+    return .{ .ds = ds, .models = models.items, .mtests = mtests.items, .required = required.items, .by = bcols, .descending = by.desc, .notsorted = by.notsorted, .freq = freq, .weight = weight, .ids = ids, .noprint = noprint, .outest = outest, .covout = covout, .output_variables = output_variables.items, .ridge = ridge, .pcomit = pcomit, .outvif = outvif, .ridge_plots = ridge_plots };
 }

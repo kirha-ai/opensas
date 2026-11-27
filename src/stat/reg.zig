@@ -254,6 +254,20 @@ fn executePrepared(cx: proc.ProcCtx, out: *std.ArrayList(u8), spec: Spec, prepar
                 for (fit.leverage) |h| if (!(h < 1)) return proc.failGap(cx.diags, 0, "PROC REG: diagnostic listing for unit leverage is not implemented", .{});
                 try @import("reg_render.zig").observations(cx.arena, out, spec, model, input.y, fit);
             }
+            if (model_index + 1 == spec.models.len or spec.models[model_index + 1].statement_index != model.statement_index) {
+                var first = model_index;
+                while (first > 0 and spec.models[first - 1].statement_index == model.statement_index) first -= 1;
+                for (spec.mtests) |test_spec| {
+                    if (test_spec.statement_index != model.statement_index) continue;
+                    const fits = try cx.arena.alloc(@import("reg_fit.zig").Fit, model_index - first + 1);
+                    for (spec.models[first .. model_index + 1], fits) |response_model, *response_fit| response_fit.* = (try fitModel(cx, spec, response_model, group.rows)).diagnostics.fit;
+                    const result = @import("reg_mtest.zig").evaluate(cx.arena, fits, w, test_spec) catch |err| {
+                        if (err == error.OutOfMemory) return err;
+                        return proc.failGap(cx.diags, 0, "PROC REG MTEST: singular hypotheses/error matrices, more than sixteen transformed responses, or these inference degrees of freedom are not implemented", .{});
+                    };
+                    if (!spec.noprint) try @import("reg_mtest_render.zig").render(cx.arena, out, model.label, test_spec, result);
+                }
+            }
         }
     }
     // Publish only after every BY/model fit and output row has succeeded.
@@ -426,6 +440,9 @@ pub const Session = struct {
 
     fn edit(self: *Session, cx: proc.ProcCtx, tokens: []const @import("../lexer.zig").Token, adding: bool) diag.Error!void {
         var selected = try self.current(cx);
+        for (self.spec.mtests) |test_spec| for (selected.models) |model| {
+            if (test_spec.statement_index == model.statement_index) return proc.failGap(cx.diags, 0, "PROC REG: ADD/DELETE with active MTEST is not implemented", .{});
+        };
         for (selected.models) |model| if (model.restrictions.len > 0) return proc.failGap(cx.diags, 0, "PROC REG: ADD/DELETE with active restrictions is not implemented", .{});
         const variables = try parsing.columns(cx, selected.ds, tokens[1..], true);
         if (variables.len == 0) return cx.diags.fail(error.ParseError, tokens[0].line, "PROC REG {s} requires variables", .{if (adding) @as([]const u8, "ADD") else "DELETE"});
@@ -624,6 +641,7 @@ test "STAT-COMMON-004 weighted listing identifies weight without changing observ
 }
 
 test {
+    _ = @import("reg_mtest_tests.zig");
     _ = @import("reg_selection_tests.zig");
     _ = @import("reg_restrict.zig");
     _ = @import("reg_restrict_tests.zig");

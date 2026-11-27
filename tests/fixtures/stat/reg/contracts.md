@@ -262,3 +262,52 @@ normalization and the two projection sweeps plus criterion propagation. The
 reference criteria are algebraic; the error budget is not fitted to observed
 implementation differences. Exact or numerically unresolved criterion ties are
 reported visibly rather than assigned an unverified SAS ordering.
+
+## Multivariate hypotheses
+
+REG MTEST follows SAS/STAT15.4 physical pp.8588–8589 and8644–8647. With
+shared complete-case X, response coefficient matrix B, residual matrix R,
+precision/frequency weights W, and hypothesis (L B-c j) M=0, tests verify
+
+```
+E = M' R' W R M
+H = D' (L G L')^-1 D,  D=(L B-c j)M,  G=(X'WX)^-1
+```
+
+The scalar distribution transforms are the guide's formulas on physical
+pp.113–114 (printed101–102), inspected visually to preserve the fractions.
+The Hotelling-Lawley computation uses 1/(b-1) directly, avoiding the removable
+singularity of intermediate b at n=1. Rank-one hypothesis/response cases use
+exact F; general default tests retain the specified approximations and Roy's
+upper-bound note. Wilks' exactness note is limited to min(p,q)<=2.
+
+The corpus's eight-row Walsh example has y1=10+2x+z+xz and
+y2=20+x+3z+w, with x,z,xz,w pairwise orthogonal of squared norm8.
+Thus E=8I and H=[[40,40],[40,80]], v=5, eigenvalues=(15±5sqrt(5))/2,
+Wilks=1/41, Pillai=65/41, Hotelling-Lawley=15. All four F probabilities have
+independent closed forms: I_z(a,2)=(a+1)z^a-a z^(a+1), or I_z(a,1)=z^a.
+The y1-y2 contrast gives E=16,H=40 and exact F(2,5)=6.25 for all four tests.
+A nonzero constant is subtracted from every response before applying M; a
+zero-sum response contrast therefore cancels the shared constant.
+
+Only the two zero off-diagonal E cells in the complete CLI listing use bounds.
+For u=2^-53 and gamma(k)=ku/(1-ku), let
+r=gamma(192)*24+gamma(8)*49, accounting for the8x3 orthogonal fit and
+three-term prediction on max response25 and max coefficient L1 norm24.
+The cross-error-product budget is B=8*(2r+r²)+gamma(32)*(8+8*(2r+r²)).
+All other corpus tokens retain their independently derived display precision.
+The executable test pins both tolerance fields to this calculation.
+
+A third response y3=30+3x+2z+xw gives E=8I3 and
+H=[[40,40,64],[40,80,72],[64,72,104]], with roots25,3,0. This checks the
+Cholesky-whitened Jacobi path and fractional Hotelling-Lawley DF20/7.
+Independent finite beta-density integrals verify fractional-DF probabilities.
+An invertible response mixing transformation checks generalized-root invariance.
+
+The published Morrison example's matrices, S154 Figure105.52 physical
+pp.8646–8647, give E=[[94.5,76.5],[76.5,114]] and
+H=[[301,97.5],[97.5,109/3]], v=18. Independent rational algebra gives
+Wilks=59049/350170, Pillai=154141/175085, Hotelling=30440/6561,
+det(E^-1 H)=17161/59049 and Hotelling-Lawley denominator DF524/27.
+The tests check these identities and the published8-decimal statistics using
+only half a unit of printed precision. No seeded input is used as a golden.
