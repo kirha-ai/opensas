@@ -12,6 +12,10 @@ Explicit user resume. Confirmed working branch `feat/stat/batch-4`, base `31356c
 - dev6: STAT-COMMON-017; `/Users/thomas/kirha/opensas-dev6`; branch `codex/stat-b4-dev6`; assigned 2026-11-27T13:42:13+00:00; implementation deadline 2026-11-27T14:27:13+00:00. Original README/cases and cited physical PDF pages required before edits.
 - dev7: STAT-COMMON-018; `/Users/thomas/kirha/opensas-dev7`; branch `codex/stat-b4-dev7`; assigned 2026-11-27T13:42:13+00:00; implementation deadline 2026-11-27T14:27:13+00:00. Original README/cases and cited physical PDF pages required before edits.
 
+### Rolling assignment — MIXED-006 RANDOM
+
+MIXED001 typed frontend integrated from `ff458a41`, remains PARK for missing estimation/broader options; full batch verification pending. dev5 now owns existing STAT-MIXED-006 (the board's actual RANDOM ticket) in retained `opensas-dev5`, branch `codex/stat-b4-mixed-random-dev5`, assigned 2026-11-27T14:57:14+00:00, deadline 2026-11-27T15:42:14+00:00. Dev7 owns fixed CLASS/MODEL design; dev3 owns MIXED002 likelihood/inference. This real RANDOM producer must deliver Z/subject/group/covariance-component matrices and supported-domain validation, not silently reinterpret stored raw tokens. The002↔006 dependency cycle is broken by that concrete jointly tested interface; full originals remain required. No extra ticket/agent/lane.
+
 ### Rolling assignment — MIXED-002 numerical consumer
 
 NPAR003 partial integrated from `bc4af73a`; its full91-field original keeps exactly three trailing-zero fields as numeric `~0`, no numerical tolerance and no formatting guess. Literal text remains different, so PARK. dev3 now owns existing STAT-MIXED-002 in retained `opensas-dev3`, branch `codex/stat-b4-mixed-dev3`, assigned 2026-11-27T14:51:41+00:00, deadline 2026-11-27T15:36:41+00:00. Dev5 owns input/options; dev7 owns CLASS/MODEL/design. Concrete estimator interface must retain the full GLM-coded X/reported dimensions, ordered independent likelihood basis, covariance-component matrices and explicit inference metadata; REML determinant normalization must not silently change with alternative effect coding. These are active real dependency implementations, not successful stubs. Default original includes fixed and random variance models; exact optimizer trajectory differences remain acceptance gaps, never fabricated rows.
@@ -9217,7 +9221,7 @@ Source: S154, Chapter 84, `The MIXED Procedure`, PDF pp. 6613–6810. Tasks in t
 
 <a id="stat-mixed-006"></a>
 
-### [TODO] STAT-MIXED-006 — MIXED — RANDOM
+### [DOING @dev5] STAT-MIXED-006 — MIXED — RANDOM
 
 - Source: S154 / Chapter 84 / `RANDOM Statement` (PDF pp. 6675–6680).
 - Scope: Implement RANDOM. This ticket owns the feature's options, defaults, computation, and results as an extension of the basic computational path; the chapter's output tickets handle ODS descriptors and file presentation.
