@@ -38,6 +38,7 @@ test {
     _ = @import("stat/mixed_design.zig");
     _ = @import("stat/mixed_random.zig");
     _ = @import("stat/mixed_fit.zig");
+    _ = @import("stat/mixed_info.zig");
     _ = @import("stat/npar1way_stats.zig");
     _ = @import("stat/npar1way.zig");
     _ = @import("stat/power.zig");

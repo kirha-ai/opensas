@@ -15,6 +15,7 @@ pub const Options = struct {
     method: Method = .reml,
     order: classes.Order = .formatted,
     alpha: f64 = 0.05,
+    alpha_explicit: bool = false,
     noprofile: bool = false,
     noinfo: bool = false,
     noitprint: bool = false,
@@ -120,6 +121,7 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
             if (eq(token.text, "alpha")) {
                 if (!(number > 0 and number < 1)) return cx.diags.fail(error.ParseError, token.line, "PROC MIXED: ALPHA must be between 0 and 1", .{});
                 opts.alpha = number;
+                opts.alpha_explicit = true;
             } else {
                 if (number < 0 or number != @trunc(number) or number >= @as(f64, @floatFromInt(std.math.maxInt(usize)))) return bad(cx, token);
                 const integer: usize = @intFromFloat(number);

@@ -51,6 +51,7 @@ test "MIXED001 defaults explicit methods order bounds and retained model interfa
     try std.testing.expectEqual(declarations.Method.reml, defaults.options.method);
     try std.testing.expectEqual(@import("class_levels.zig").Order.formatted, defaults.options.order);
     try std.testing.expectEqual(@as(f64, 0.05), defaults.options.alpha);
+    try std.testing.expect(!defaults.options.alpha_explicit);
     try std.testing.expectEqual(@as(usize, 50), defaults.options.maxiter);
     try std.testing.expectEqual(@as(usize, 150), defaults.options.maxfunc);
     try std.testing.expectEqual(@as(usize, 20), defaults.options.namelen);
@@ -63,6 +64,7 @@ test "MIXED001 defaults explicit methods order bounds and retained model interfa
         try std.testing.expectEqual(method, s.options.method);
         try std.testing.expectEqual(@import("class_levels.zig").Order.data, s.options.order);
         try std.testing.expectEqual(@as(f64, 0.1), s.options.alpha);
+        try std.testing.expect(s.options.alpha_explicit);
         try std.testing.expectEqual(@as(usize, 12), s.options.maxiter);
         try std.testing.expectEqual(@as(usize, 45), s.options.maxfunc);
         try std.testing.expectEqual(@as(usize, 32), s.options.namelen);

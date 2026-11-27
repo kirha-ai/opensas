@@ -468,3 +468,87 @@ test "MIXED006 duplicate random effects expose nonidentifiable covariance kernel
     // must identify this boundary/rank issue; this builder does not fit it.
     for (result.components[0].kernel, result.components[1].kernel) |left, right| try std.testing.expectEqual(2 * left + 3 * right, 5 * left + 0 * right);
 }
+
+fn jointRank(cx: proc.ProcCtx, x: coded.Design, z: Design, omit: ?Column, weights: ?[]const f64, singular: f64, intercept: bool) diag.Error!usize {
+    var kept: std.ArrayList(usize) = .empty;
+    for (z.columns, 0..) |column, j| {
+        if (omit) |excluded| if (column.request_index == excluded.request_index and std.mem.eql(u8, column.name, excluded.name)) continue;
+        try kept.append(cx.arena, j);
+    }
+    const p = x.p + kept.items.len;
+    const values = try cx.arena.alloc(f64, x.n * p);
+    for (0..x.n) |i| {
+        @memcpy(values[i * p ..][0..x.p], x.x[i * x.p ..][0..x.p]);
+        for (kept.items, 0..) |j, k| values[i * p + x.p + k] = z.z[i * z.q + j];
+    }
+    const zeros = try cx.arena.alloc(f64, x.n);
+    @memset(zeros, 0);
+    const ranked = try @import("reg_diagnostics.zig").fit(cx.arena, values, zeros, x.n, p, weights, intercept, singular);
+    return ranked.fit.rank;
+}
+/// S154 physical p.6656: smallest rank contribution to [X Z] among RANDOM
+/// effects syntactically containing the fixed effect; otherwise N-rank([X Z]).
+/// Removing an effect removes all its SUBJECT/GROUP columns together.
+pub fn containmentDF(cx: proc.ProcCtx, s: Spec, x: coded.Design, z: Design, effect_index: usize, weights: ?[]const f64, singular: f64) diag.Error!usize {
+    if (effect_index >= s.basis.effects.len or x.n != z.n) return error.ExecError;
+    const full = try jointRank(cx, x, z, null, weights, singular, s.basis.intercept);
+    const target = s.basis.effects[effect_index];
+    var minimum: ?usize = null;
+    for (z.columns, 0..) |column, j| {
+        var seen = false;
+        for (z.columns[0..j]) |prior| if (prior.request_index == column.request_index and std.mem.eql(u8, prior.name, column.name)) {
+            seen = true;
+            break;
+        };
+        if (seen) continue;
+        const request = s.requests[column.request_index];
+        var variables: std.ArrayList(usize) = .empty;
+        try variables.appendSlice(cx.arena, request.subject);
+        for (request.effects) |effect| {
+            const normalized = try coded.normalize(cx.arena, s.source, s.basis.classes, effect);
+            if (std.mem.eql(u8, normalized.name, column.name)) {
+                try variables.appendSlice(cx.arena, effect.factors);
+                try variables.appendSlice(cx.arena, effect.nested);
+                break;
+            }
+        }
+        var contains = true;
+        for (target.factors) |ci| contains = contains and std.mem.indexOfScalar(usize, variables.items, ci) != null;
+        for (target.nested) |ci| contains = contains and std.mem.indexOfScalar(usize, variables.items, ci) != null;
+        if (!contains) continue;
+        const without = try jointRank(cx, x, z, column, weights, singular, s.basis.intercept);
+        if (without > full) return error.ExecError;
+        const contribution = full - without;
+        minimum = if (minimum) |prior| @min(prior, contribution) else contribution;
+    }
+    return minimum orelse x.n - full;
+}
+
+test "MIXED006 containment uses actual joint-rank contributions not a named-effect shortcut" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var d = diag.Diagnostics.init(a);
+    var lib = @import("../exec.zig").Library.init(a);
+    const cx = Testing.context(a, &d, &lib);
+    var ds = Dataset.init(a, "heights");
+    _ = try ds.addColumn("Family", .num);
+    _ = try ds.addColumn("Gender", .char);
+    _ = try ds.addColumn("Height", .num);
+    for ([_]usize{ 3, 2, 3, 3, 1, 1, 2, 3 }, 0..) |count, cell| for (0..count) |_| try ds.appendRow(&.{ .{ .num = @floatFromInt(cell / 2 + 1) }, .{ .str = if (cell % 2 == 0) "F" else "M" }, .{ .num = 0 } });
+    const basis = coded.Spec{ .response = 2, .classes = &.{ 0, 1 }, .effects = &.{.{ .factors = &.{1} }} };
+    const view = try selection.View.init(a, .{ .ds = &ds }, .{});
+    const x = try coded.build(a, &ds, ds.rows.items, basis);
+    const s = try Testing.parseBody(cx, &ds, basis, "Family Family*Gender");
+    const z = try build(cx, s, view);
+    // rank[X Z]=8; removing Family*Gender leaves rank5 => denominator3.
+    try std.testing.expectEqual(@as(usize, 3), try containmentDF(cx, s, x, z, 0, null, 1e-10));
+    const only = try Testing.parseBody(cx, &ds, basis, "Family");
+    const zonly = try build(cx, only, view);
+    // Family does not syntactically contain Gender: residual18-rank5=13.
+    try std.testing.expectEqual(@as(usize, 13), try containmentDF(cx, only, x, zonly, 0, null, 1e-10));
+    const aliased = try Testing.parseBody(cx, &ds, basis, "Gender");
+    const za = try build(cx, aliased, view);
+    // A random effect entirely inside X has zero contribution, not residualDF.
+    try std.testing.expectEqual(@as(usize, 0), try containmentDF(cx, aliased, x, za, 0, null, 1e-10));
+}
