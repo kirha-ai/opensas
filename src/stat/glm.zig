@@ -57,11 +57,14 @@ pub fn execute(cx: proc.ProcCtx, out: *std.ArrayList(u8), spec: Spec) diag.Error
         for (spec.responses) |response| {
             const d = try design.build(cx, spec, group, response);
             if (spec.absorb.len > 0) {
-                if (@hasField(Spec, "estimates")) if (spec.estimates.len > 0) return proc.failGap(cx.diags, 0, "PROC GLM: ESTIMATE with ABSORB requires an absorbed estimable-function mapping", .{});
                 if (@hasField(Spec, "lsmeans")) if (spec.lsmeans.len > 0) return cx.diags.fail(error.ParseError, 0, "PROC GLM: LSMEANS is unavailable with ABSORB", .{});
                 var absorbed = try @import("glm_absorb.zig").fit(cx, spec, d);
                 defer absorbed.deinit(cx.arena);
-                if (!spec.noprint) try @import("glm_absorb_render.zig").render(cx, out, spec, d, absorbed);
+                const estimates = try @import("glm_estimate.zig").computeAbsorbed(cx, spec, d, absorbed);
+                if (!spec.noprint) {
+                    try @import("glm_absorb_render.zig").render(cx, out, spec, d, absorbed);
+                    try @import("glm_estimate.zig").renderResults(cx, out, estimates);
+                }
                 if (!spec.noprint and !spec.plots_none) if (cx.graphics) |g| {
                     if (g.enabled == true) return proc.failGap(cx.diags, 0, "PROC GLM: default graphics with ABSORB are not implemented; use PLOTS=NONE", .{});
                 };
@@ -79,6 +82,7 @@ pub fn execute(cx: proc.ProcCtx, out: *std.ArrayList(u8), spec: Spec) diag.Error
 }
 
 test {
+    _ = @import("glm_effectsize.zig");
     _ = @import("glm_tests.zig");
     _ = @import("glm_persistence_tests.zig");
 }

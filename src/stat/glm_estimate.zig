@@ -182,6 +182,34 @@ pub fn computeAll(cx: proc.ProcCtx, spec: parse.Spec, d: design.Design, mse: f64
     }
     return tables;
 }
+/// S154 physical pp.4124–4128: the explicit-effect estimable functions after
+/// absorption are free of nuisance parameters. For a full-rank continuous
+/// design the projected coefficients have the same parameter order as MODEL,
+/// and the absorbed fit already carries the full model's MSE and error DF.
+/// CLASS, intercept coefficients and E displays require additional mappings.
+pub fn computeAbsorbed(cx: proc.ProcCtx, spec: parse.Spec, d: design.Design, absorbed: @import("glm_absorb.zig").Result) diag.Error![]const Table {
+    if (spec.estimates.len == 0) return &.{};
+    if (spec.classes.len != 0) return proc.failGap(cx.diags, 0, "PROC GLM: CLASS ESTIMATE with ABSORB is not implemented", .{});
+    const conditional = absorbed.conditional orelse return proc.failGap(cx.diags, 0, "PROC GLM: ABSORB ESTIMATE requires explicit continuous effects", .{});
+    if (conditional.model.fit.rank != d.p - 1) return proc.failGap(cx.diags, 0, "PROC GLM: rank-deficient ABSORB ESTIMATE is not implemented", .{});
+    for (spec.estimates) |request| {
+        if (request.e) return proc.failGap(cx.diags, request.line, "PROC GLM: ESTIMATE E display with ABSORB is not implemented", .{});
+        for (request.terms) |term| if (term.effect == null) return proc.failGap(cx.diags, request.line, "PROC GLM: INTERCEPT ESTIMATE with ABSORB is not implemented", .{});
+    }
+    var conditional_spec = spec;
+    conditional_spec.intercept = false;
+    var matrix = try estimability.codedDesign(cx, conditional_spec, d);
+    // Retain the actual projected basis in the result metadata as well.
+    matrix.x = try cx.arena.dupe(f64, absorbed.within_x);
+    if (matrix.p != conditional.model.fit.coefficients.len) return error.ExecError;
+    const tables = try cx.arena.alloc(Table, spec.estimates.len);
+    for (spec.estimates, tables) |request, *table| {
+        const coefficients = try map(cx, conditional_spec, matrix, request);
+        table.* = .{ .request = request, .matrix = matrix, .coefficients = coefficients, .inference = try estimability.evaluate(conditional.model, coefficients, request.singular) };
+    }
+    return tables;
+}
+
 fn number(a: std.mem.Allocator, v: ?f64, decimals: usize) ![]const u8 {
     const value = v orelse return ".";
     return std.mem.trim(u8, try @import("../format.zig").apply(a, .{ .num = value }, try std.fmt.allocPrint(a, "32.{d}", .{decimals})), " ");

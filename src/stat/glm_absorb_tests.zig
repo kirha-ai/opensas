@@ -350,3 +350,96 @@ test "GLM005 ABSORB Type IV retains captured gaps for CLASS and confounded colum
     }
     try std.testing.expect(std.mem.indexOf(u8, try diagnostics.render(), "ABSORB Type IV requires a full-rank continuous model") != null);
 }
+
+test "GLM006 absorbed continuous ESTIMATE uses projected contrast covariance and full residual DF" {
+    // Two nuisance blocks, each with orthogonal x,z in {-1,+1}. Response is
+    // 10*block + 2*x - 3*z + x*z. Thus X'X=diag(8,8), beta=(2,-3),
+    // SSE=8 and full error DF=8-2-2=4, not the conditional fit's naive 6.
+    // L=(1,-1) gives estimate=5, variance=2*(1/8+1/8)=1/2.
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var lib = Library.init(a);
+    var diagnostics = diag.Diagnostics.init(a);
+    const ds = try dataset(a, &lib);
+    // Reuse the numeric `unit` column as the second continuous covariate.
+    for (1..3) |block| for ([_]f64{ -1, 1 }) |x| for ([_]f64{ -1, 1 }) |z| {
+        const b: f64 = @floatFromInt(block);
+        try row(ds, .{ b, z, x, 10 * b + 2 * x - 3 * z + x * z, 1, 1 });
+    };
+    const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &diagnostics };
+    const spec = try parse(cx, "proc glm; absorb block; model y=x unit; estimate 'difference' x 1 unit -1; estimate 'scaled' x 2 unit -2 / divisor=2; estimate 'zero' x 0 unit 0; run;");
+    const data = try build(cx, spec);
+    var fit = try absorb.fit(cx, spec, data);
+    defer fit.deinit(a);
+    const estimates = try @import("glm_estimate.zig").computeAbsorbed(cx, spec, data, fit);
+    try std.testing.expectEqual(@as(usize, 3), estimates.len);
+    try std.testing.expectEqual(@as(usize, 4), fit.df_error);
+    try close(8, fit.sse);
+    try close(2, fit.mse);
+    const u = 5 / @sqrt(@as(f64, 27));
+    // t_4 has the elementary two-sided tail 1-3u/2+u^3/2,
+    // where u=t/sqrt(t*t+4); this avoids calling the implementation's t CDF.
+    const p = 1 - 1.5 * u + 0.5 * u * u * u;
+    for (estimates[0..2]) |estimate| {
+        try std.testing.expectEqual(@as(usize, 2), estimate.matrix.p);
+        try std.testing.expectEqualSlices(f64, fit.within_x, estimate.matrix.x);
+        try std.testing.expectEqualSlices(f64, &.{ 1, -1 }, estimate.coefficients);
+        try std.testing.expectEqual(@import("glm_estimability.zig").Status.estimable, estimate.inference.status);
+        try close(5, estimate.inference.estimate.?);
+        try close(0.25, estimate.inference.variance_factor.?);
+        try close(@sqrt(@as(f64, 0.5)), estimate.inference.standard_error.?);
+        try close(5 * @sqrt(@as(f64, 2)), estimate.inference.t_value.?);
+        try close(p, estimate.inference.p_value.?);
+    }
+    const zero = estimates[2].inference;
+    try close(0, zero.estimate.?);
+    try close(0, zero.standard_error.?);
+    try std.testing.expect(zero.t_value == null and zero.p_value == null);
+    var output: std.ArrayList(u8) = .empty;
+    try glm.execute(cx, &output, spec);
+    try std.testing.expect(std.mem.endsWith(u8, output.items,
+        "\nStandard\nParameter Estimate Error t Value Pr > |t|\n\n" ++
+        "difference 5.00000000 0.70710678 7.07 0.0021\n" ++
+        "scaled 5.00000000 0.70710678 7.07 0.0021\n" ++
+        "zero 0.00000000 0.00000000 . .\n"));
+    try std.testing.expectEqualStrings("", try diagnostics.render());
+}
+
+test "GLM006 absorbed ESTIMATE preserves explicit gaps for unsupported parameter mappings" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var lib = Library.init(a);
+    var diagnostics = diag.Diagnostics.init(a);
+    const ds = try dataset(a, &lib);
+    for ([_]f64{ 1, 3, 10, 14 }, 0..) |y, i| try row(ds, .{ @floatFromInt(i / 2 + 1), 1, @floatFromInt(i % 2), y, 1, 1 });
+    const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &diagnostics };
+    for ([_][]const u8{
+        "proc glm; absorb block; model y=x; estimate 'intercept' intercept 1; run;",
+        "proc glm; absorb block; model y=x; estimate 'display' x 1 / e; run;",
+        "proc glm; absorb block; class unit; model y=x; estimate 'class domain' x 1; run;",
+    }) |source| {
+        diag.resetGap();
+        defer diag.resetGap();
+        var output: std.ArrayList(u8) = .empty;
+        try std.testing.expectError(error.ParseError, glm.run(cx, &output, try @import("../lexer.zig").tokenize(a, source, &diagnostics)));
+        try std.testing.expectEqual(@as(u8, 2), diag.exitCode(diag.gapHit(), diagnostics.hasErrors()));
+        try std.testing.expectEqual(@as(usize, 0), output.items.len);
+    }
+    const messages = try diagnostics.render();
+    for ([_][]const u8{ "INTERCEPT ESTIMATE with ABSORB", "ESTIMATE E display with ABSORB", "CLASS ESTIMATE with ABSORB" }) |message| try std.testing.expect(std.mem.indexOf(u8, messages, message) != null);
+    // A covariate constant inside each nuisance block has no separately
+    // estimable slope. Keep this unsupported alias mapping loud, not beta=0.
+    for (ds.rows.items) |*observation| {
+        const cells = try a.dupe(Value, observation.*);
+        cells[2] = cells[0];
+        observation.* = cells;
+    }
+    diag.resetGap();
+    defer diag.resetGap();
+    var output: std.ArrayList(u8) = .empty;
+    try std.testing.expectError(error.ParseError, glm.run(cx, &output, try @import("../lexer.zig").tokenize(a, "proc glm; absorb block; model y=x; estimate 'aliased' x 1; run;", &diagnostics)));
+    try std.testing.expectEqual(@as(u8, 2), diag.exitCode(diag.gapHit(), diagnostics.hasErrors()));
+    try std.testing.expectEqual(@as(usize, 0), output.items.len);
+}

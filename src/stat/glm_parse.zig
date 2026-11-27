@@ -254,7 +254,6 @@ pub fn parse(cx: proc.ProcCtx, tokens: []const lex.Token) diag.Error!Spec {
         for (result.effects) |effect| for (effect.variables) |ci| {
             if (std.mem.indexOfScalar(usize, result.absorb, ci) != null) return proc.failGap(cx.diags, 0, "PROC GLM: an ABSORB variable also used in MODEL is not implemented", .{});
         };
-        if (result.estimates.len > 0) return proc.failGap(cx.diags, 0, "PROC GLM: ESTIMATE with ABSORB is not implemented", .{});
     }
     const parsed = try bys.resolve(cx.arena, ds, cx.diags);
     const indices = try cx.arena.alloc(usize, parsed.names.len);
