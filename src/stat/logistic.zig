@@ -1540,3 +1540,48 @@ test "LOGISTIC013 multi-parameter CLASS profile agrees with independent two-bino
         try std.testing.expectApproxEqAbs(@as(f64, 3.841458820694124), 2 * (result.fit.log_likelihood - ll), 2e-7);
     }
 }
+
+test "LOGISTIC013 grouped and fully expanded profile endpoints and conditional maxima agree" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var grouped = try ageOddsFixture(a);
+    var individual = Dataset.init(a, "individual");
+    _ = try individual.addColumn("response", .num);
+    _ = try individual.addColumn("age", .num);
+    for (grouped.rows.items) |row| for (0..@as(usize, @intFromFloat(row[1].num))) |trial| try individual.appendRow(&.{ .{ .num = if (@as(f64, @floatFromInt(trial)) < row[0].num) 1 else 0 }, row[2] });
+    var lib = @import("../exec.zig").Library.init(a);
+    try lib.put("Data1", &grouped);
+    try lib.put("individual", &individual);
+    var diagnostics = diag.Diagnostics.init(a);
+    const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &diagnostics };
+    const grouped_spec = try parse(cx, try lex.tokenize(a, "proc logistic data=Data1; model disease/n=age; units age=10; oddsratio age / cl=pl; run;", &diagnostics));
+    const individual_spec = try parse(cx, try lex.tokenize(a, "proc logistic data=individual; model response(event='1')=age; units age=10; oddsratio age / cl=pl; run;", &diagnostics));
+    const grouped_fit = try analyze(cx, grouped_spec);
+    const individual_fit = try analyze(cx, individual_spec);
+    try std.testing.expectEqual(@as(usize, 100), individual_fit.design.n);
+    // Existing producer contract: each grouped row yields up to two binary
+    // observations, with integer frequencies; it does not emit r/n as y.
+    try std.testing.expect(grouped_fit.design.n < individual_fit.design.n);
+    for (grouped_fit.design.y) |value| try std.testing.expect(value == 0 or value == 1);
+    try std.testing.expectEqual(@as(f64, 100), grouped_fit.design.total_frequency);
+    for ([_]f64{ 0.1, 0.2, 0.3 }) |slope| {
+        const compact_ll = try odds_kernel.constrainedLikelihood(a, grouped_fit.design, grouped_fit.fit, &.{ 0, 1 }, slope);
+        const expanded_ll = try odds_kernel.constrainedLikelihood(a, individual_fit.design, individual_fit.fit, &.{ 0, 1 }, slope);
+        const reference_ll = ageProfileReference(grouped, slope);
+        // Row expansion changes only floating summation; each result also
+        // agrees with the independent scalar-intercept score root.
+        try std.testing.expectApproxEqAbs(reference_ll, compact_ll, 1e-9);
+        try std.testing.expectApproxEqAbs(reference_ll, expanded_ll, 1e-9);
+    }
+    const compact = (try requestRows(a, grouped_fit, grouped_spec, grouped_spec.odds_requests[0], .pl))[0];
+    const expanded = (try requestRows(a, individual_fit, individual_spec, individual_spec.odds_requests[0], .pl))[0];
+    try std.testing.expectApproxEqAbs(compact.log_estimate, expanded.log_estimate, 1e-8);
+    try std.testing.expectApproxEqAbs(compact.log_lower, expanded.log_lower, 1e-8);
+    try std.testing.expectApproxEqAbs(compact.log_upper, expanded.log_upper, 1e-8);
+    var fractional_design = grouped_fit.design;
+    const responses = try a.dupe(f64, fractional_design.y);
+    responses[0] = 0.5;
+    fractional_design.y = responses;
+    try std.testing.expectError(error.ExecError, odds_kernel.constrainedLikelihood(a, fractional_design, grouped_fit.fit, &.{ 0, 1 }, 0.2));
+}

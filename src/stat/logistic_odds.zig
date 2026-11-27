@@ -126,7 +126,17 @@ fn likelihood(x: []const f64, y: []const f64, multiplicity: []const f64, b: []co
 /// ratio level-set definition on physical p.5921.
 pub fn constrainedLikelihood(a: A, d: design.Design, fit: kernel.Fit, contrast: []const f64, target: f64) diag.Error!f64 {
     const p = d.p;
-    if (contrast.len != p or fit.coefficients.len != p or p == 0 or !std.math.isFinite(target)) return error.ExecError;
+    if (contrast.len != p or fit.coefficients.len != p or p == 0 or d.n == 0 or !std.math.isFinite(target)) return error.ExecError;
+    // The PROC producer expands events/trials into binary rows with trial
+    // frequencies. Enforce that contract before using Bernoulli likelihoods;
+    // a compact fractional response must never be treated as a nonevent.
+    if (d.x.len != (std.math.mul(usize, d.n, p) catch return error.ExecError) or d.y.len != d.n or d.frequencies.len != d.n or d.weights.len != d.n) return error.ExecError;
+    for (d.y, d.frequencies, d.weights) |value, frequency, weight| {
+        if (value != 0 and value != 1) return error.ExecError;
+        if (!(frequency > 0) or !(weight > 0) or !std.math.isFinite(frequency * weight)) return error.ExecError;
+    }
+    for (d.x) |value| if (!std.math.isFinite(value)) return error.ExecError;
+    for (contrast, fit.coefficients) |coefficient, estimate| if (!std.math.isFinite(coefficient) or !std.math.isFinite(estimate)) return error.ExecError;
     var pivot: usize = 0;
     for (contrast, 0..) |coefficient, j| if (@abs(coefficient) > @abs(contrast[pivot])) {
         pivot = j;
