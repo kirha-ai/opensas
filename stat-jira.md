@@ -12,6 +12,10 @@ Explicit user resume. Confirmed working branch `feat/stat/batch-4`, base `31356c
 - dev6: STAT-COMMON-017; `/Users/thomas/kirha/opensas-dev6`; branch `codex/stat-b4-dev6`; assigned 2026-11-27T13:42:13+00:00; implementation deadline 2026-11-27T14:27:13+00:00. Original README/cases and cited physical PDF pages required before edits.
 - dev7: STAT-COMMON-018; `/Users/thomas/kirha/opensas-dev7`; branch `codex/stat-b4-dev7`; assigned 2026-11-27T13:42:13+00:00; implementation deadline 2026-11-27T14:27:13+00:00. Original README/cases and cited physical PDF pages required before edits.
 
+### Rolling assignments — ROC and nonparametric EDF
+
+LOGISTIC013 and NPAR004 partials integrated through `0be77a3f`, final batch checks pending; both retain their whole-original gaps/PARK. dev4 owns existing STAT-LOGISTIC-012 on `codex/stat-b4-roc-dev4`; dev6 owns existing STAT-NPAR1WAY-005 on `codex/stat-b4-npar005-dev6`, both in retained worktrees. Assigned 2026-11-27T15:09:56+00:00; deadline 2026-11-27T15:54:56+00:00. ROC uses actual binary fit/probability/weight/response interfaces while broader LOGISTIC002 remains open; NPAR005 uses the tested selected-array/score/EDF results while broad001 remains open. Reuse real interfaces, never stub acceptance; preserve full table/graph data and original replay requirements.
+
 ### Rolling assignment — GLM-008
 
 GLM007 RANDOM/HOV partial integrated from `8ea30d11`; its254-token GLM prefix passes, whole original still needs MIXED and broad MANOVA/domain work remains PARK. dev2 owns existing STAT-GLM-008 in retained `opensas-dev2`, branch `codex/stat-b4-glm008-dev2`, assigned 2026-11-27T15:01:05+00:00, deadline 2026-11-27T15:46:05+00:00. Read cited computational-method contract and verify actual matrix/rank/solver behavior with independent cases and unchanged originals; no performance/audit lane or unrelated shared-kernel rewrite.
@@ -8460,7 +8464,7 @@ Source: S154, Chapter 79, `The LOGISTIC Procedure`, PDF pp. 5823–6080. Tasks i
 
 <a id="stat-logistic-012"></a>
 
-### [TODO] STAT-LOGISTIC-012 — LOGISTIC — ROC / ROCCONTRAST / Receiver Operating Characteristic Curves
+### [DOING @dev4] STAT-LOGISTIC-012 — LOGISTIC — ROC / ROCCONTRAST / Receiver Operating Characteristic Curves
 
 - Source: S154 / Chapter 79 / `ROC Statement` (PDF pp. 5896–5897); S154 / Chapter 79 / `ROCCONTRAST Statement` (PDF pp. 5897–5898); S154 / Chapter 79 / `Receiver Operating Characteristic Curves` (PDF pp. 5934–5937).
 - Scope: Implement ROC; ROCCONTRAST; Receiver Operating Characteristic Curves. This ticket owns the feature's options, defaults, computation, and results as an extension of the basic computational path; the chapter's output tickets handle ODS descriptors and file presentation.
@@ -8470,7 +8474,7 @@ Source: S154, Chapter 79, `The LOGISTIC Procedure`, PDF pp. 5823–6080. Tasks i
 
 <a id="stat-logistic-013"></a>
 
-### [DOING @dev4] STAT-LOGISTIC-013 — LOGISTIC — ODDSRATIO / UNITS / Odds Ratio Estimation
+### [PARK] STAT-LOGISTIC-013 — LOGISTIC — ODDSRATIO / UNITS / Odds Ratio Estimation
 
 - Source: S154 / Chapter 79 / `ODDSRATIO Statement` (PDF pp. 5889–5891); S154 / Chapter 79 / `UNITS Statement` (PDF pp. 5903–5904); S154 / Chapter 79 / `Odds Ratio Estimation` (PDF pp. 5922–5925).
 - Scope: Implement ODDSRATIO; UNITS; Odds Ratio Estimation. This ticket owns the feature's options, defaults, computation, and results as an extension of the basic computational path; the chapter's output tickets handle ODS descriptors and file presentation.
@@ -10046,7 +10050,7 @@ Source: S154, Chapter 90, `The NPAR1WAY Procedure`, PDF pp. 7205–7282. Tasks i
 
 <a id="stat-npar1way-005"></a>
 
-### [TODO] STAT-NPAR1WAY-005 — NPAR1WAY — Fligner-Policello Test / Empirical Distribution Function Tests
+### [DOING @dev6] STAT-NPAR1WAY-005 — NPAR1WAY — Fligner-Policello Test / Empirical Distribution Function Tests
 
 - Source: S154 / Chapter 90 / `Fligner-Policello Test` (PDF pp. 7244–7246); S154 / Chapter 90 / `Empirical Distribution Function Tests` (PDF pp. 7247–7249).
 - Scope: Implement Fligner-Policello Test; Empirical Distribution Function Tests. This ticket owns the feature's options, defaults, computation, and results as an extension of the basic computational path; the chapter's output tickets handle ODS descriptors and file presentation.
