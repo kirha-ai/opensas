@@ -73,6 +73,19 @@ const Testing = struct {
     fn parse(self: Testing, code: []const u8) !declarations.Spec {
         return declarations.parse(self.cx, try lex.tokenize(self.cx.arena, code, self.d));
     }
+    const heights_values = [_][3]f64{ .{ 1, 0, 67 }, .{ 1, 0, 66 }, .{ 1, 0, 64 }, .{ 1, 1, 71 }, .{ 1, 1, 72 }, .{ 2, 0, 63 }, .{ 2, 0, 63 }, .{ 2, 0, 67 }, .{ 2, 1, 69 }, .{ 2, 1, 68 }, .{ 2, 1, 70 }, .{ 3, 0, 63 }, .{ 3, 1, 64 }, .{ 4, 0, 67 }, .{ 4, 0, 66 }, .{ 4, 1, 67 }, .{ 4, 1, 67 }, .{ 4, 1, 69 } };
+    fn heights(self: Testing, copies: usize) !*Dataset {
+        const ds = try self.cx.arena.create(Dataset);
+        ds.* = Dataset.init(self.cx.arena, "heights");
+        _ = try ds.addColumn("Family", .num);
+        _ = try ds.addColumn("Gender", .char);
+        _ = try ds.addColumn("Height", .num);
+        _ = try ds.addColumn("batch", .num);
+
+        for (0..copies) |copy| for (heights_values) |row| try ds.appendRow(&.{ .{ .num = row[0] }, .{ .str = if (row[1] == 0) "F" else "M" }, .{ .num = row[2] }, .{ .num = @floatFromInt(copy + 1) } });
+        try self.lib.put("heights", ds);
+        return ds;
+    }
     fn sample(self: Testing) !*Dataset {
         const ds = try self.cx.arena.create(Dataset);
         ds.* = Dataset.init(self.cx.arena, "sample");
@@ -209,15 +222,8 @@ test "MIXED001 complete Heights inputs preserve eighteen observations in each BY
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
     const h = try Testing.init(arena.allocator());
-    const ds = try h.cx.arena.create(Dataset);
-    ds.* = Dataset.init(h.cx.arena, "heights");
-    _ = try ds.addColumn("Family", .num);
-    _ = try ds.addColumn("Gender", .char);
-    _ = try ds.addColumn("Height", .num);
-    _ = try ds.addColumn("batch", .num);
-    const values = [_][3]f64{ .{ 1, 0, 67 }, .{ 1, 0, 66 }, .{ 1, 0, 64 }, .{ 1, 1, 71 }, .{ 1, 1, 72 }, .{ 2, 0, 63 }, .{ 2, 0, 63 }, .{ 2, 0, 67 }, .{ 2, 1, 69 }, .{ 2, 1, 68 }, .{ 2, 1, 70 }, .{ 3, 0, 63 }, .{ 3, 1, 64 }, .{ 4, 0, 67 }, .{ 4, 0, 66 }, .{ 4, 1, 67 }, .{ 4, 1, 67 }, .{ 4, 1, 69 } };
-    for ([_]f64{ 1, 2 }) |batch| for (values) |row| try ds.appendRow(&.{ .{ .num = row[0] }, .{ .str = if (row[1] == 0) "F" else "M" }, .{ .num = row[2] }, .{ .num = batch } });
-    try h.lib.put("heights", ds);
+    _ = try h.heights(2);
+    const values = Testing.heights_values;
     const s = try h.parse("proc mixed data=heights;by batch;class Family Gender;model Height=Gender Family Family*Gender;run;");
     const grouped = try input.prepare(h.cx, s, &.{ 0, 1, 2 });
     try std.testing.expectEqual(@as(usize, 2), grouped.len);
@@ -239,4 +245,47 @@ test "MIXED001 complete Heights inputs preserve eighteen observations in each BY
     try std.testing.expectEqual(@as(usize, 36), pooled[0].used_count);
     try std.testing.expectEqual(@as(usize, 3), random.statements.len);
     try std.testing.expectEqual(@FieldType(declarations.Statement, "kind").random, random.statements[2].kind);
+}
+
+test "MIXED006 real entry reproduces complete Heights fixed and random listing tokens" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const h = try Testing.init(a);
+    _ = try h.heights(1);
+    var out: std.ArrayList(u8) = .empty;
+    diag.resetGap();
+    defer diag.resetGap();
+    try run(h.cx, &out, try lex.tokenize(a, "proc mixed data=heights;class Family Gender;model Height=Gender Family Family*Gender;run;", h.d));
+    try run(h.cx, &out, try lex.tokenize(a, "proc mixed;class Family Gender;model Height=Gender;random Family Family*Gender;run;", h.d));
+    const expected = try @import("ttest_test_assets.zig").listing(a, "tests/corpus/persist_mixed_heights.txt");
+    var want = std.mem.tokenizeAny(u8, expected, " \t\r\n\x0c");
+    var got = std.mem.tokenizeAny(u8, out.items, " \t\r\n\x0c");
+    while (want.next()) |token| try std.testing.expectEqualStrings(token, got.next() orelse return error.TestExpectedEqual);
+    try std.testing.expect(got.next() == null);
+    try std.testing.expect(!h.d.hasErrors());
+    try std.testing.expect(!diag.gapHit());
+}
+
+test "MIXED006 real BY entry reproduces complete grouped and pooled original listing" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const h = try Testing.init(a);
+    const ds = try h.heights(2);
+    ds.name = "_oracle_input";
+    ds.columns.items[3].name = "_oracle_by";
+    try h.lib.put("_oracle_input", ds);
+    var out: std.ArrayList(u8) = .empty;
+    diag.resetGap();
+    defer diag.resetGap();
+    try run(h.cx, &out, try lex.tokenize(a, "proc mixed data=_oracle_input;by _oracle_by;class Family Gender;model Height=Gender Family Family*Gender;run;", h.d));
+    try run(h.cx, &out, try lex.tokenize(a, "proc mixed;class Family Gender;model Height=Gender;random Family Family*Gender;run;", h.d));
+    const expected = try @import("ttest_test_assets.zig").listing(a, "tests/corpus/persist_mixed_heights_by.txt");
+    var want = std.mem.tokenizeAny(u8, expected, " \t\r\n\x0c");
+    var got = std.mem.tokenizeAny(u8, out.items, " \t\r\n\x0c");
+    while (want.next()) |token| try std.testing.expectEqualStrings(token, got.next() orelse return error.TestExpectedEqual);
+    try std.testing.expect(got.next() == null);
+    try std.testing.expect(!h.d.hasErrors());
+    try std.testing.expect(!diag.gapHit());
 }
