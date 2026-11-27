@@ -217,3 +217,20 @@ test "STAT-MIXED-010 real LSMeans and Diffs objects honor selection and trace id
     try @import("mixed.zig").run(cx, &out, try lex.tokenize(a, source, &diagnostics));
     try t.expectEqual(@as(usize, 0), out.items.len);
 }
+
+test "STAT-MIXED-010 integration limited fits retain covariance without publishing LSMeans" {
+    var arena = std.heap.ArenaAllocator.init(t.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var ds = try @import("glm_persistence_tests.zig").data(a, "tests/corpus/persist_mixed_heights.sas", "heights", &.{ "Family", "Gender", "Height" }, &.{1}, 0);
+    var lib = Library.init(a);
+    try lib.put("heights", &ds);
+    var diagnostics = diag.Diagnostics.init(a);
+    var out: std.ArrayList(u8) = .empty;
+    const source = "proc mixed data=heights maxiter=0;class Family Gender;model Height=Gender;random Family Family*Gender;lsmeans Gender /diff;run;";
+    try @import("mixed.zig").run(.{ .arena = a, .lib = &lib, .diags = &diagnostics }, &out, try lex.tokenize(a, source, &diagnostics));
+    try t.expect(diagnostics.warning_status);
+    try t.expect(std.mem.indexOf(u8, out.items, "Covariance Parameter Estimates") != null);
+    try t.expect(std.mem.indexOf(u8, out.items, "Least Squares Means") == null);
+    try t.expect(std.mem.indexOf(u8, out.items, "Type 3 Tests of Fixed Effects") == null);
+}
