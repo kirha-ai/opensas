@@ -18,16 +18,16 @@ fn sameEffect(left: []const usize, right: []const usize) bool {
     for (left) |v| if (std.mem.count(usize, left, &.{v}) != std.mem.count(usize, right, &.{v})) return false;
     return true;
 }
-fn signedNumber(cx: proc.ProcCtx, tokens: []const lex.Token, i: *usize, line: usize) diag.Error!f64 {
+fn signedNumber(comptime statement: []const u8, cx: proc.ProcCtx, tokens: []const lex.Token, i: *usize, line: usize) diag.Error!f64 {
     var sign: f64 = 1;
     if (i.* < tokens.len and (tokens[i.*].tag == .minus or tokens[i.*].tag == .plus)) {
         if (tokens[i.*].tag == .minus) sign = -1;
         i.* += 1;
     }
-    if (i.* >= tokens.len or tokens[i.*].tag != .number) return cx.diags.fail(error.ParseError, line, "PROC GLM: ESTIMATE requires a finite numeric coefficient", .{});
-    const value = sign * (std.fmt.parseFloat(f64, tokens[i.*].text) catch return cx.diags.fail(error.ParseError, line, "PROC GLM: invalid ESTIMATE number", .{}));
+    if (i.* >= tokens.len or tokens[i.*].tag != .number) return cx.diags.fail(error.ParseError, line, "PROC GLM: " ++ statement ++ " requires a finite numeric coefficient", .{});
+    const value = sign * (std.fmt.parseFloat(f64, tokens[i.*].text) catch return cx.diags.fail(error.ParseError, line, "PROC GLM: invalid " ++ statement ++ " number", .{}));
     i.* += 1;
-    if (!std.math.isFinite(value)) return cx.diags.fail(error.ParseError, line, "PROC GLM: ESTIMATE requires finite numbers", .{});
+    if (!std.math.isFinite(value)) return cx.diags.fail(error.ParseError, line, "PROC GLM: " ++ statement ++ " requires finite numbers", .{});
     return value;
 }
 pub fn read(cx: proc.ProcCtx, tokens: []const lex.Token, spec: parse.Spec, effects: []const parse.Effect) diag.Error!Request {
@@ -63,7 +63,7 @@ pub fn readFor(comptime statement: []const u8, cx: proc.ProcCtx, tokens: []const
         }
         for (terms.items) |term| if (term.effect == index) return proc.failGap(cx.diags, line, "PROC GLM: repeated " ++ statement ++ " effect specifications are not implemented", .{});
         var values: std.ArrayList(f64) = .empty;
-        while (i < tokens.len and (tokens[i].tag == .number or tokens[i].tag == .minus or tokens[i].tag == .plus)) try values.append(cx.arena, try signedNumber(cx, tokens, &i, line));
+        while (i < tokens.len and (tokens[i].tag == .number or tokens[i].tag == .minus or tokens[i].tag == .plus)) try values.append(cx.arena, try signedNumber(statement, cx, tokens, &i, line));
         if (values.items.len == 0) return cx.diags.fail(error.ParseError, line, "PROC GLM: " ++ statement ++ " effect requires coefficients", .{});
         try terms.append(cx.arena, .{ .effect = index, .values = values.items });
     }
@@ -79,7 +79,7 @@ pub fn readFor(comptime statement: []const u8, cx: proc.ProcCtx, tokens: []const
         } else if (eq(token.text, "divisor") or eq(token.text, "singular")) {
             if (i == tokens.len or tokens[i].tag != .eq) return cx.diags.fail(error.ParseError, line, "PROC GLM: " ++ statement ++ " option requires =number", .{});
             i += 1;
-            const value = try signedNumber(cx, tokens, &i, line);
+            const value = try signedNumber(statement, cx, tokens, &i, line);
             if (eq(token.text, "divisor")) {
                 if (value == 0) return cx.diags.fail(error.ParseError, line, "PROC GLM: " ++ statement ++ " DIVISOR must be nonzero", .{});
                 request.divisor = value;

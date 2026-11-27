@@ -1,0 +1,4 @@
+# corpus assertions
+words Romano-British Pottery The GLM Procedure Class Level Information Class Levels Values Site 4 AshleyRails Caldicot 11. IslandThorns Llanederyn 1 Number of Observations Read 26 Number of Observations Used 26 Romano-British Pottery The GLM Procedure Dependent Variable: Al Sum of Source DF Squares Mean Square F Value Pr > F Model 3 1353.656473 451.218824 197.48 <.0001 Error 22 50.268143 2.284916 Corrected Total 25 1403.924615 R-Square Coeff Var Root MSE Al Mean 0.964195 17.28295 1.511594 8.746154 Source DF Type I SS Mean Square F Value Pr > F Site 3 1353.656473 451.218824 197.48 <.0001 Source DF Type III SS Mean Square F Value Pr > F Site 3 1353.656473 451.218824 197.48 <.0001 Contrast DF Contrast SS Mean Square F Value Pr > F Llanederyn vs. the rest 1 785.2555886 785.2555886 343.67 <.0001
+stderr-count 0 ERROR:
+stderr-count 0 WARNING:

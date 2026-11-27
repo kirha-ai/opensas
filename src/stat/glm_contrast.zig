@@ -34,7 +34,7 @@ pub fn read(cx: proc.ProcCtx, tokens: []const lex.Token, spec: parse.Spec, effec
     while (i < tokens.len) {
         if (std.ascii.eqlIgnoreCase(tokens[i].text, "singular")) {
             if (i + 2 >= tokens.len or tokens[i + 1].tag != .eq or tokens[i + 2].tag != .number) return cx.diags.fail(error.ParseError, tokens[i].line, "PROC GLM: CONTRAST SINGULAR requires a number", .{});
-            result.singular = std.fmt.parseFloat(f64, tokens[i + 2].text) catch return error.ParseError;
+            result.singular = std.fmt.parseFloat(f64, tokens[i + 2].text) catch return cx.diags.fail(error.ParseError, tokens[i].line, "PROC GLM: invalid CONTRAST SINGULAR value", .{});
             if (!(result.singular > 0 and result.singular < 1)) return cx.diags.fail(error.ParseError, tokens[i].line, "PROC GLM: CONTRAST SINGULAR must be between zero and one", .{});
             i += 3;
         } else if (std.ascii.eqlIgnoreCase(tokens[i].text, "e") or std.ascii.eqlIgnoreCase(tokens[i].text, "etype")) return proc.failGap(cx.diags, tokens[i].line, "PROC GLM: CONTRAST E/ETYPE output and alternate errors are not implemented", .{}) else return cx.diags.fail(error.ParseError, tokens[i].line, "PROC GLM: unknown CONTRAST option {s}", .{tokens[i].text});
