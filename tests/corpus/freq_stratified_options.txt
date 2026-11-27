@@ -1,5 +1,6 @@
 test printwts
 
+                        The FREQ Procedure
 
 Summary Statistics for r by c
 Controlling for s
@@ -25,6 +26,7 @@ Stratum         s            Difference   Frequency    Fraction   MH Weight
 Total Sample Size = 106
 cl=score printwts
 
+                        The FREQ Procedure
 
 Summary Statistics for r by c
 Controlling for s
@@ -43,6 +45,7 @@ Stratum         s            Difference   Frequency    Fraction Score Midpoint S
 Total Sample Size = 106
 cl=mh cl=score printwts
 
+                        The FREQ Procedure
 
 Summary Statistics for r by c
 Controlling for s
@@ -62,6 +65,7 @@ Stratum         s            Difference   Frequency    Fraction   MH Weight Scor
 Total Sample Size = 106
 cl=none cl=score test printwts
 
+                        The FREQ Procedure
 
 Summary Statistics for r by c
 Controlling for s
@@ -80,6 +84,7 @@ Stratum         s            Difference   Frequency    Fraction Score Midpoint S
 Total Sample Size = 106
 cl=score cl=none test printwts
 
+                        The FREQ Procedure
 
 Summary Statistics for r by c
 Controlling for s
@@ -98,6 +103,7 @@ Stratum         s            Difference   Frequency    Fraction Score Midpoint S
 Total Sample Size = 106
 cl=(k score) test printwts
 
+                        The FREQ Procedure
 
 Summary Statistics for r by c
 Controlling for s

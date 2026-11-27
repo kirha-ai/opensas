@@ -72,6 +72,7 @@ pub fn cmh(a: A, out: *Out, results: [3]?k.Chi, limit: u2, score_label: []const 
 pub const RatioRow = struct { label: []const u8, mh: ?k.Ratio, logit: ?k.Ratio, corrected: bool = false };
 pub fn ratios(a: A, out: *Out, rows: []const RatioRow, alpha: f64) Error!void {
     try text(a, out, try std.fmt.allocPrint(a, "\nCommon Odds Ratio and Relative Risks\nStatistic                 Method               Value    {s}% Confidence Limits\n", .{try format.bestNumW(a, 100 * (1 - alpha), 12)}));
+    try text(a, out, "-------------------------------------------------------------------------------------\n");
     var corrected = false;
     for (rows) |row| {
         inline for (.{ false, true }) |logit| {
@@ -198,14 +199,31 @@ pub fn kappa(a: A, out: *Out, title: []const u8, value: ?k.Estimate, alpha: f64,
         try text(a, out, "\n");
     }
 }
-pub fn kappaTest(a: A, out: *Out, title: []const u8, result: ?k.Kappa, null_value: f64) Error!void {
-    try text(a, out, try std.fmt.allocPrint(a, "\n{s}\n", .{title}));
-    try pair(a, out, "Null Value", null_value, false);
-    if (null_value == 0) try pair(a, out, "H0 Std Err", if (result) |r| @sqrt(r.null_variance) else null, false);
+pub fn kappaStatistics(a: A, out: *Out, simple: ?k.Kappa, weighted: ?k.Kappa, include_weighted: bool, alpha: f64) Error!void {
+    try text(a, out, try std.fmt.allocPrint(a, "\nKappa Statistics\n                              Standard\nStatistic         Estimate       Error    {s}% Confidence Limits\n", .{try format.bestNumW(a, 100 * (1 - alpha), 12)}));
+    const values = [_]?k.Kappa{ simple, weighted };
+    const labels = [_][]const u8{ "Simple Kappa", "Weighted Kappa" };
+    for (values[0..if (include_weighted) @as(usize, 2) else 1], 0..) |value, i| {
+        try pad(a, out, labels[i], 16, false);
+        try num(a, out, if (value) |v| v.coefficient.value else null, 10);
+        try num(a, out, if (value) |v| @sqrt(v.coefficient.variance) else null, 12);
+        try num(a, out, if (value) |v| v.coefficient.lower else null, 12);
+        try num(a, out, if (value) |v| v.coefficient.upper else null, 13);
+        try text(a, out, "\n");
+    }
+}
+pub fn kappaTest(a: A, out: *Out, name: []const u8, result: ?k.Kappa, null_value: f64) Error!void {
+    try text(a, out, try std.fmt.allocPrint(a, "\nTest of H0: {s} = {s}\n", .{ name, try format.bestNumW(a, null_value, 12) }));
     const test_result = if (result) |r| r.test_result else null;
-    try pair(a, out, "Z", if (test_result) |t| t.z else null, false);
-    try pair(a, out, if (test_result != null and test_result.?.z > 0) "Pr > Z" else "Pr < Z", if (test_result) |t| t.p_one else null, true);
-    try pair(a, out, "Pr > |Z|", if (test_result) |t| t.p_two else null, true);
+    try text(a, out, if (null_value == 0) "Estimate    H0 Std Err           Z" else "Estimate     Std Err            Z");
+    try text(a, out, if (test_result != null and test_result.?.z > 0) "    Pr > Z" else "    Pr < Z");
+    try text(a, out, "    Pr > |Z|\n");
+    try num(a, out, if (result) |r| r.coefficient.value else null, 8);
+    try num(a, out, if (result) |r| @sqrt(if (null_value == 0) r.null_variance else r.coefficient.variance) else null, 14);
+    try num(a, out, if (test_result) |t| t.z else null, 12);
+    try prob(a, out, if (test_result) |t| t.p_one else null, 10);
+    try prob(a, out, if (test_result) |t| t.p_two else null, 12);
+    try text(a, out, "\n");
 }
 pub fn agreementDetails(a: A, out: *Out, details: k.AgreementDetails, weighted: ?k.Kappa, include_simple: bool, include_weighted: bool) Error!void {
     if (include_simple) {
@@ -224,6 +242,28 @@ pub fn agreementDetails(a: A, out: *Out, details: k.AgreementDetails, weighted: 
         try pair(a, out, "Observed Agreement", if (weighted) |w| w.observed else null, false);
         try pair(a, out, "Chance-Expected Agreement", if (weighted) |w| w.expected else null, false);
     }
+}
+
+test "STAT-FREQ-001 complete Kappa fields match SkinCondition oracle" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const matrix: k.Matrix = .{ .rows = 4, .cols = 4, .counts = &.{ 10, 4, 1, 0, 5, 10, 12, 2, 2, 4, 12, 5, 0, 2, 6, 13 } };
+    const simple = try k.kappa(a, matrix, .simple, 0.05, 0);
+    const weighted = try k.kappa(a, matrix, .cicchetti_allison, 0.05, 0);
+    var out: Out = .empty;
+    try kappaStatistics(a, &out, simple, weighted, true, 0.05);
+    try kappaTest(a, &out, "Kappa", simple, 0);
+    const expected =
+        "Kappa Statistics Standard Statistic Estimate Error 95% Confidence Limits " ++
+        "Simple Kappa 0.3449 0.0724 0.2030 0.4868 " ++
+        "Weighted Kappa 0.5082 0.0655 0.3798 0.6366 " ++
+        "Test of H0: Kappa = 0 Estimate H0 Std Err Z Pr > Z Pr > |Z| " ++
+        "0.3449 0.0612 5.6366 <.0001 <.0001";
+    var actual_words = std.mem.tokenizeAny(u8, out.items, " \r\n\t");
+    var expected_words = std.mem.tokenizeAny(u8, expected, " \r\n\t");
+    while (expected_words.next()) |word| try std.testing.expectEqualStrings(word, actual_words.next() orelse return error.TestExpectedEqual);
+    try std.testing.expect(actual_words.next() == null);
 }
 pub fn kappaWeights(a: A, out: *Out, labels: []const []const u8, weights: []const f64) Error!void {
     if (labels.len == 0 or weights.len / labels.len != labels.len or weights.len % labels.len != 0) return error.ExecError;
@@ -308,7 +348,7 @@ test "stratified renderer exercises typed summaries weights and agreement detail
     const m: k.Matrix = .{ .rows = 3, .cols = 3, .counts = &.{ 18, 3, 1, 7, 12, 4, 2, 9, 24 } };
     const kap = (try k.kappa(a, m, .simple, 0.05, 0)).?;
     const weighted = (try k.kappa(a, m, .cicchetti_allison, 0.05, 0)).?;
-    try kappaTest(a, &out, "Test of H0: Kappa = 0", kap, 0);
+    try kappaTest(a, &out, "Kappa", kap, 0);
     try std.testing.expect(std.mem.indexOf(u8, out.items, "6.4731") != null);
     try agreementDetails(a, &out, (try k.agreementDetails(a, m, 0.05)).?, weighted, true, true);
     try std.testing.expect(std.mem.indexOf(u8, out.items, "0.8868") != null);

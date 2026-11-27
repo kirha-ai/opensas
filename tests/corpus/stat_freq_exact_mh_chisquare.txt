@@ -1,3 +1,3 @@
 # corpus assertions
-row Exact Pr >= Statistic 0.0857
-row-count 1 Exact Pr >= Statistic {any}
+row Exact Pr >= ChiSq 0.0857
+row-count 1 Exact Pr >= ChiSq {any}

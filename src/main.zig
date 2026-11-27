@@ -103,7 +103,7 @@ pub fn main(init: std.process.Init) !void {
 }
 
 /// THE exit code for a finished run — D-009, including its ABORT override.
-/// 0 clean, 1 user-program error (their SAS is wrong — parse/exec/data errors
+/// 0 clean, 1 explicit warning condition or user-program error (parse/exec/data errors
 /// reported via `diags`, or a format error via `format.formatErrored`), 2 opensas
 /// defect/gap (any UNSUPPORTED: path — `failLoud`'s `g_failed` or proc's
 /// unsupported → `diag.gapHit()` — plus a caught propagated defect). A gap
@@ -121,7 +121,7 @@ pub fn main(init: std.process.Init) !void {
 pub fn processExitCode(diags: *const sas.diag.Diagnostics) u8 {
     if (sas.exec.g_abort_rc) |arc| return arc;
     const gap = g_failed or sas.diag.gapHit();
-    const user_err = diags.hasErrors() or sas.format.formatErrored();
+    const user_err = diags.hasErrors() or diags.warning_status or sas.format.formatErrored();
     return sas.diag.exitCode(gap, user_err);
 }
 
@@ -309,6 +309,8 @@ const StepCtx = struct {
     // unreadable (already reported once, naming the real cause) — later
     // loadLibInputs passes skip the re-read AND the re-report.
     damaged: *std.StringHashMap(void),
+    reg_session: ?sas.reg.Session = null,
+    glm_session: ?sas.glm.Session = null,
     ended: bool = false, // ENDSAS seen: stop reading input, exit normally (BUG-endsasexit)
     // NOTE-chunkrelativelineno (QA tick312 F3): the current raw chunk's start
     // line in src, minus 1 — tokenize restarts line numbering per chunk, so a
@@ -394,10 +396,28 @@ fn runExpanded(ctx: *StepCtx, text: []const u8, allow_anon: bool) sas.diag.Error
         }
     }
     toks = try coalesceLibrefs(a, toks, ctx.librefs.items);
+    // Built-in samples must never shadow an explicitly assigned SASHELP libref.
+    if(findLibref(ctx.librefs.items,"sashelp")==null) try sas.sashelp.loadReferenced(a,ctx.lib,toks);
     // BUG-existdisk: a libref member named only inside macro text first appears
     // as a literal `lib.ds` token HERE, after runtime expansion — the up-front
     // preload in `interpret` never saw it. Load any still-missing members now.
     if (ctx.io) |iov| try loadLibInputs(a, iov, ctx.lib, ctx.librefs.items, toks, ctx.loaded_ro, ctx.damaged, ctx.diags);
+    if (ctx.glm_session) |*session| {
+        if (toks.len > 0 and toks[0].tag == .name and sas.glm.continuationKeyword(toks[0].text)) {
+            const pcx: sas.proc.ProcCtx = .{ .arena = a, .lib = ctx.lib, .diags = ctx.diags, .capture = &ods_capture, .listing = &ods_listing, .graphics = native_graphics_session };
+            if (!try session.continuation(pcx, toks)) ctx.glm_session = null;
+            return;
+        }
+    }
+    if (ctx.reg_session) |*session| {
+        if (toks.len > 0 and toks[0].tag == .name and sas.reg.continuationKeyword(toks[0].text)) {
+            const pcx: sas.proc.ProcCtx = .{ .arena = a, .lib = ctx.lib, .diags = ctx.diags, .capture = &ods_capture, .listing = &ods_listing, .graphics = native_graphics_session };
+            var discard: std.ArrayList(u8) = .empty;
+            const output = if (ods_listing.accepts("reg")) ctx.out else &discard;
+            if (!try session.continuation(pcx, output, toks)) ctx.reg_session = null;
+            return;
+        }
+    }
     const segs = try segments(a, toks, !allow_anon, ctx.diags);
     if (segs.len == 0) {
         if (allow_anon and toks.len > 0 and !ctx.diags.hasStepErrors())
@@ -474,12 +494,14 @@ fn runExpanded(ctx: *StepCtx, text: []const u8, allow_anon: bool) sas.diag.Error
             // default, where this branch is unreachable with live step errors
             // (the gate above skips instead).
             if (!ctx.diags.syntax_check) ctx.diags.spendStepErrors();
+            ctx.reg_session = null; // a new DATA/PROC step terminates REG
+            ctx.glm_session = null; // and retained GLM state
             const step_toks = try sas.macro.bindStepVars(a, toks[seg.start..seg.end], &ctx.lib.macro_vars, ctx.diags);
             // PROC COPY runs here, not in runProc: it needs the CURRENT libref
             // bindings and Io to write through them eagerly (GAP-proccopy).
             if (step_toks.len > 1 and eqi(step_toks[0].text, "proc") and eqi(step_toks[1].text, "copy")) {
                 try runProcCopy(ctx, step_toks);
-            } else try runStep(a, ctx.out, ctx.lib, ctx.diags, step_toks, ctx.globals, ctx.io);
+            } else try runStep(a, ctx.out, ctx.lib, ctx.diags, step_toks, ctx.globals, ctx.io, &ctx.reg_session, &ctx.glm_session);
             // NOTE parity (GH#3 ISS-steperrhalt): real SAS ends the FAILING step
             // ITSELF with the same NOTE the later skipped steps get (Language
             // Reference: Concepts Ch.8 Examples 8.2/8.4/8.8) — opensas used to
@@ -1758,6 +1780,42 @@ fn handleGlobal(a: std.mem.Allocator, g: *Globals, diags: *sas.diag.Diagnostics,
                 sas.diag.markGap();
                 try diags.report(.err, t.line, "system option NOREPLACE is not supported", .{});
                 return;
+            } else if (eqi(t.text, "locale")) {
+                // Existing formats and collation implement the en_US baseline.
+                // Other locales must not silently retain US separators/dates.
+                if (i + 2 < toks.len and toks[i + 1].tag == .eq and
+                    (toks[i + 2].tag == .name or toks[i + 2].tag == .string))
+                {
+                    const v = toks[i + 2].text;
+                    if (eqi(v, "en_US")) {
+                        i += 3;
+                        continue;
+                    }
+                    sas.diag.markGap();
+                    try diags.report(.err, t.line, "system option LOCALE={s} is not supported", .{v});
+                    return;
+                }
+                try diags.report(.err, t.line, "Invalid value for the LOCALE option.", .{});
+                return;
+            } else if (eqi(t.text, "validmemname")) {
+                // SAS 9.4 Concepts, printed p.33: COMPAT is an alias for
+                // COMPATIBLE, the ordinary member-name mode used here.
+                // EXTEND requires additional member-name semantics; do not
+                // silently accept it as an ordinary identifier mode.
+                if (i + 2 < toks.len and toks[i + 1].tag == .eq and toks[i + 2].tag == .name) {
+                    const v = toks[i + 2].text;
+                    if (eqi(v, "compatible") or eqi(v, "compat")) {
+                        i += 3;
+                        continue;
+                    }
+                    if (eqi(v, "extend")) {
+                        sas.diag.markGap();
+                        try diags.report(.err, t.line, "system option VALIDMEMNAME=EXTEND is not supported", .{});
+                        return;
+                    }
+                }
+                try diags.report(.err, t.line, "Invalid value for the VALIDMEMNAME option.", .{});
+                return;
             } else if (eqi(t.text, "validvarname")) {
                 // VALIDVARNAME=V6 has one safety-relevant tooth opensas can
                 // honour locally: a created variable name may not exceed 8
@@ -2252,7 +2310,7 @@ fn dataName(a: std.mem.Allocator, toks: []const Token, pos: *usize) sas.diag.Err
     return name;
 }
 
-fn runStep(a: std.mem.Allocator, out: *std.ArrayList(u8), lib: *sas.exec.Library, diags: *sas.diag.Diagnostics, toks: []const Token, g: *Globals, io: ?Io) sas.diag.Error!void {
+fn runStep(a: std.mem.Allocator, out: *std.ArrayList(u8), lib: *sas.exec.Library, diags: *sas.diag.Diagnostics, toks: []const Token, g: *Globals, io: ?Io, reg_session: *?sas.reg.Session, glm_session: *?sas.glm.Session) sas.diag.Error!void {
     if (eqi(toks[0].text, "data")) {
         // header: `data [name] ;`  — a name, else an anonymous output dataset.
         var pos: usize = 1;
@@ -2321,7 +2379,7 @@ fn runStep(a: std.mem.Allocator, out: *std.ArrayList(u8), lib: *sas.exec.Library
             };
         }
     } else {
-        try runProc(a, out, lib, diags, toks, g);
+        try runProc(a, out, lib, diags, toks, g, reg_session, glm_session);
     }
 }
 
@@ -2844,7 +2902,7 @@ fn sortInPlaceTarget(toks: []const Token) ?[]const u8 {
 
 /// Dispatch a `proc <name> …; … run;` step by name. Each proc hand-parses its
 /// own tokens (parser.zig is A2's) — SORT lives in proc.zig; PRINT is below.
-fn runProc(a: std.mem.Allocator, listing_out: *std.ArrayList(u8), lib: *sas.exec.Library, diags: *sas.diag.Diagnostics, toks: []const Token, g: *Globals) sas.diag.Error!void {
+fn runProc(a: std.mem.Allocator, listing_out: *std.ArrayList(u8), lib: *sas.exec.Library, diags: *sas.diag.Diagnostics, toks: []const Token, g: *Globals, reg_session: *?sas.reg.Session, glm_session: *?sas.glm.Session) sas.diag.Error!void {
     if (toks.len < 2 or toks[1].tag != .name) {
         failLoud("PROC name missing or unrecognized", .{});
         return;
@@ -2852,13 +2910,13 @@ fn runProc(a: std.mem.Allocator, listing_out: *std.ArrayList(u8), lib: *sas.exec
     const proc = toks[1].text;
     defer ods_listing.endProc();
     var discard: std.ArrayList(u8) = .empty;
-    const routed = eqi(proc, "univariate") or eqi(proc, "corr");
+    const routed = eqi(proc, "univariate") or eqi(proc, "corr") or eqi(proc, "ttest");
     if (ods_listing.trace != null and !routed and ods_listing.accepts(proc))
         return sas.proc.failGap(diags, 0, "ODS TRACE: object metadata is not implemented for PROC {s}", .{proc});
     const visible = if (routed) ods_listing.open else ods_listing.accepts(proc);
     const out = if (visible) listing_out else &discard;
     const graph_sink = if (native_graphics_session) |graphics| graphics.sink() else null;
-    const pcx: sas.proc.ProcCtx = .{ .arena = a, .lib = lib, .diags = diags, .capture = &ods_capture, .listing = &ods_listing, .univariate_plot_sink = graph_sink, .graphics = if (graph_sink != null) native_graphics_session else null, .graph_title = g.titles[0] };
+    const pcx: sas.proc.ProcCtx = .{ .arena = a, .lib = lib, .diags = diags, .capture = &ods_capture, .listing = &ods_listing, .listing_titles = if (eqi(proc, "freq")) g else null, .univariate_plot_sink = graph_sink, .graphics = if (graph_sink != null) native_graphics_session else null, .graph_title = g.titles[0] };
     if (native_graphics_session) |graphics| graphics.clear();
     // TITLE/FOOTNOTE print with the report procs (a listing), not with SORT or
     // TRANSPOSE (which produce a dataset, no page). Titles atop, footnotes below.
@@ -2866,7 +2924,7 @@ fn runProc(a: std.mem.Allocator, listing_out: *std.ArrayList(u8), lib: *sas.exec
     // given (BUG-summarydefaultprint).
     const listing = eqi(proc, "print") or eqi(proc, "means") or
         eqi(proc, "report") or eqi(proc, "tabulate") or eqi(proc, "compare") or
-        eqi(proc, "univariate") or eqi(proc, "contents") or (eqi(proc, "corr") and !procHasKw(toks, "noprint")) or
+        eqi(proc, "univariate") or eqi(proc, "contents") or (eqi(proc, "reg") and !procHasKw(toks, "noprint")) or (eqi(proc, "corr") and !procHasKw(toks, "noprint")) or
         (eqi(proc, "summary") and procHasKw(toks, "print"));
     // BUG-byvaltitle: a TITLE/FOOTNOTE carrying #BYVAL/#BYVAR is re-resolved
     // per BY group, so PROC PRINT then owns its title/footnote emission
@@ -2887,15 +2945,52 @@ fn runProc(a: std.mem.Allocator, listing_out: *std.ArrayList(u8), lib: *sas.exec
         try printProc(a, out, lib, diags, toks, if (print_bysubst) g else null);
     } else if (eqi(proc, "means") or eqi(proc, "summary")) {
         try sas.proc.runMeans(pcx, out, toks);
+    } else if (eqi(proc, "ttest")) {
+        var body: std.ArrayList(u8) = .empty;
+        try sas.ttest.runTtest(pcx, &body, toks);
+        if (body.items.len > 0) {
+            try g.emitTitles(a, out);
+            try out.appendSlice(a, body.items);
+            try g.emitFootnotes(a, out);
+        }
+    } else if (eqi(proc, "logistic")) {
+        var body: std.ArrayList(u8) = .empty;
+        try sas.logistic.run(pcx, &body, toks);
+        if (body.items.len > 0) {
+            try g.emitTitles(a, out);
+            try out.appendSlice(a, body.items);
+            try g.emitFootnotes(a, out);
+        }
     } else if (eqi(proc, "corr")) {
         try sas.corr.run(pcx, out, toks);
+    } else if (eqi(proc, "sgscatter")) {
+        var scatter_context = pcx;
+        scatter_context.graphics = native_graphics_session;
+        try sas.sgscatter.run(scatter_context, toks);
+    } else if (eqi(proc, "glmmod")) {
+        try sas.glmmod.run(pcx, toks);
+    } else if (eqi(proc, "glm")) {
+        var glm_context = pcx;
+        if (@hasField(sas.proc.ProcCtx, "listing_titles")) glm_context.listing_titles = g;
+        const spec = try sas.glm.parse(glm_context, toks);
+        try sas.glm.execute(glm_context, out, spec);
+        var closes = false;
+        for (toks, 0..) |token, i| if ((i == 0 or toks[i-1].tag == .semicolon) and token.tag == .name and eqi(token.text,"quit")) { closes = true; };
+        if (!closes and try sas.glm.canContinue(glm_context, spec)) glm_session.* = .{ .spec = spec };
+        if (!procHasKw(toks, "noprint")) try g.emitFootnotes(a, out);
+    } else if (eqi(proc, "reg")) {
+        const spec = try sas.reg.parse(pcx, toks);
+        try sas.reg.execute(pcx, out, spec);
+        var closes = false;
+        for(toks,0..) |tok,i| if((i==0 or toks[i-1].tag==.semicolon) and tok.tag==.name and eqi(tok.text,"quit")) { closes=true; };
+        if (spec.by.len == 0 and !closes) reg_session.* = .{ .spec = spec };
     } else if (eqi(proc, "freq")) {
         // FREQ owns PROC versus TABLES NOPRINT semantics. Stamp only an
         // actual listing, without mistaking option values or variable names.
+        // FREQ emits the title stack per visible group, including BY substitution.
         var body: std.ArrayList(u8) = .empty;
         try sas.proc.runFreq(pcx, &body, toks);
         if (body.items.len > 0) {
-            try g.emitTitles(a, out);
             try out.appendSlice(a, body.items);
             try g.emitFootnotes(a, out);
         }
@@ -3464,26 +3559,134 @@ fn printTable(a: std.mem.Allocator, out: *std.ArrayList(u8), ds: *sas.dataset.Da
         return;
     }
 
-    try printHeader(a, out, cols, sidx, colw, w_obs, opts);
-    r = 0;
-    while (r < nrows) : (r += 1) try printDataRow(a, out, ds, r, srcobs, cols, sidx, colw, w_obs, opts);
-    // BUG-print0obssum: 0 obs → SAS prints no table/total ("No observations"
-    // NOTE). The bare header stays (tick155 decision); only the phantom
-    // `= 0` grand total is suppressed.
-    if (opts.sums != null and nrows > 0)
-        try printTotalsRow(a, out, totals, cols, sidx, colw, w_obs, opts);
+    // LISTING divides wide flat reports into contiguous column panels. Keep
+    // explicit ID layout on its existing path until repeated-ID panels exist.
+    const ends = if (opts.id == null)
+        try printPanelEnds(a, colw, sas.io.global_linesize, if (opts.noobs) 0 else w_obs + gutter)
+    else
+        try a.dupe(usize, &.{sidx.len});
+    var first_column: usize = 0;
+    for (ends, 0..) |end_column, panel| {
+        if (panel > 0) try out.append(a, '\n');
+        const columns = sidx[first_column..end_column];
+        const widths = colw[first_column..end_column];
+        try printHeader(a, out, cols, columns, widths, w_obs, opts);
+        r = 0;
+        while (r < nrows) : (r += 1) try printDataRow(a, out, ds, r, srcobs, cols, columns, widths, w_obs, opts);
+        if (opts.sums != null and nrows > 0)
+            try printTotalsRow(a, out, totals[first_column..end_column], cols, columns, widths, w_obs, opts);
+        first_column = end_column;
+    }
+}
+
+/// Balance contiguous panels at the minimum number needed for LINESIZE.
+/// No cell is removed or reformatted; a single oversized column stays intact.
+/// SAS Procedures Guide, PRINT, printed pp.1798–1800; COMMON004 exercises
+/// mixed character identifiers and explicitly wide numeric formats.
+fn printPanelEnds(a: std.mem.Allocator, widths: []const usize, line_size: usize, leading: usize) ![]usize {
+    if (line_size == 0 or widths.len == 0) return a.dupe(usize, &.{widths.len});
+    var lower: usize = leading;
+    for (widths) |width| lower = @max(lower, leading + width);
+    var upper = @max(line_size, lower);
+    const wanted = printPanelCount(widths, line_size, leading);
+    if (wanted == 1) return a.dupe(usize, &.{widths.len});
+    // Minimize the widest panel while preserving column order and panel count.
+    // This avoids a nearly full first panel followed by a very sparse last one.
+    if (lower <= line_size) while (lower < upper) {
+        const middle = lower + (upper - lower) / 2;
+        if (printPanelCount(widths, middle, leading) <= wanted) upper = middle else lower = middle + 1;
+    };
+    const limit = if (lower > line_size) line_size else lower;
+    var ends: std.ArrayList(usize) = .empty;
+    var used: usize = 0;
+    for (widths, 0..) |width, j| {
+        const additional = width + (if (used == 0) @as(usize, 0) else gutter);
+        if (used > 0 and leading + used + additional > limit) {
+            try ends.append(a, j);
+            used = width;
+        } else used += additional;
+    }
+    try ends.append(a, widths.len);
+    return ends.items;
+}
+
+fn printPanelCount(widths: []const usize, limit: usize, leading: usize) usize {
+    var count: usize = 1;
+    var used: usize = 0;
+    for (widths) |width| {
+        const additional = width + (if (used == 0) @as(usize, 0) else gutter);
+        if (used > 0 and leading + used + additional > limit) {
+            count += 1;
+            used = width;
+        } else used += additional;
+    }
+    return count;
 }
 
 const Column = sas.dataset.Column;
 
-/// A header's width contribution: its full text, or the widest piece under SPLIT=.
+// SAS automatically breaks mixed-case variable names at capitals when a
+// formatted column is narrower than its name (SUGI24 p312-24, mixed-case
+// names; STAT-TTEST-004 supplies a current SAS 9.4 oracle). Labels and explicit
+// SPLIT= retain their own rules. Never split a numeric cell or an unbroken word.
+fn capitalHeaderBreak(text: []const u8, i: usize) bool {
+    return i > 0 and i < text.len and std.ascii.isLower(text[i - 1]) and std.ascii.isUpper(text[i]);
+}
+fn capitalHeaderWordWidth(text: []const u8) usize {
+    var start: usize = 0;
+    var width: usize = 0;
+    for (1..text.len + 1) |i| if (i == text.len or capitalHeaderBreak(text, i)) {
+        width = @max(width, i - start);
+        start = i;
+    };
+    return width;
+}
+fn capitalHeaderRows(text: []const u8, width: usize) usize {
+    var rows: usize = 1;
+    var start: usize = 0;
+    var used: usize = 0;
+    for (1..text.len + 1) |i| if (i == text.len or capitalHeaderBreak(text, i)) {
+        const word = i - start;
+        if (used > 0 and used + word > width) { rows += 1; used = word; } else used += word;
+        start = i;
+    };
+    return rows;
+}
+fn appendCapitalHeader(a: std.mem.Allocator, pieces: *std.ArrayList([]const u8), text: []const u8, width: usize) !void {
+    if (text.len <= width or text.len == 0) { try pieces.append(a, text); return; }
+    // Balance the minimum number of header lines without inserting/deleting
+    // name characters. This keeps a short prefix above a compound suffix.
+    const wanted = capitalHeaderRows(text, width);
+    var lo = capitalHeaderWordWidth(text);
+    var hi = @max(width, lo);
+    while (lo < hi) {
+        const mid = lo + (hi - lo) / 2;
+        if (capitalHeaderRows(text, mid) <= wanted) hi = mid else lo = mid + 1;
+    }
+    var start: usize = 0;
+    var previous: usize = 0;
+    for (1..text.len + 1) |i| if (i == text.len or capitalHeaderBreak(text, i)) {
+        if (i - start > lo and previous > start) { try pieces.append(a, text[start..previous]); start = previous; }
+        previous = i;
+    };
+    try pieces.append(a, text[start..]);
+}
+
+/// Header contribution excludes only automatic capital breaks that fit the
+/// actual format width. Cell and total widths may still widen the column.
 fn headerWidth(c: Column, opts: PrintOpts) usize {
     const h = opts.header(c);
-    const sc = opts.split orelse return h.len;
-    var w: usize = 0;
-    var it = std.mem.splitScalar(u8, h, sc);
-    while (it.next()) |p| w = @max(w, p.len);
-    return w;
+    if (opts.split) |sc| {
+        var w: usize = 0;
+        var it = std.mem.splitScalar(u8, h, sc);
+        while (it.next()) |part| w = @max(w, part.len);
+        return w;
+    }
+    if (!opts.label) if (opts.fmtFor(c)) |fmt| {
+        const width = sas.format.parseSpec(fmt).w;
+        if (width > 0 and h.len > width) return @max(width, capitalHeaderWordWidth(h));
+    };
+    return h.len;
 }
 
 /// The column-name header block, then a blank line under it. Under SPLIT= the
@@ -3498,6 +3701,8 @@ fn printHeader(a: std.mem.Allocator, out: *std.ArrayList(u8), cols: []const Colu
         if (opts.split) |sc| {
             var it = std.mem.splitScalar(u8, opts.header(cols[cj]), sc);
             while (it.next()) |p| try list.append(a, p);
+        } else if (!opts.label) {
+            try appendCapitalHeader(a, &list, opts.header(cols[cj]), colw[k]);
         } else try list.append(a, opts.header(cols[cj]));
         pieces[k] = list.items;
         rows = @max(rows, list.items.len);
@@ -5693,6 +5898,11 @@ test "BUG-optionsstmtswallow: OPTIONS fails LOUD on typos/unsupported; the inert
         .{ .src = "options firstobs=0;\n", .msg = "Invalid value for the FIRSTOBS option." },
         .{ .src = "options mergenoby=zzz;\n", .msg = "Invalid value for the MERGENOBY option." },
         .{ .src = "options varinitchk=zzz;\n", .msg = "Invalid value for the VARINITCHK option." },
+        .{ .src = "options locale=fr_FR;\n", .msg = "system option LOCALE=fr_FR is not supported" },
+        .{ .src = "options locale;\n", .msg = "Invalid value for the LOCALE option." },
+        .{ .src = "options validmemname=invalid;\n", .msg = "Invalid value for the VALIDMEMNAME option." },
+        .{ .src = "options validmemname=extend;\n", .msg = "system option VALIDMEMNAME=EXTEND is not supported" },
+        .{ .src = "options validmemname;\n", .msg = "Invalid value for the VALIDMEMNAME option." },
         .{ .src = "options validvarname=v8;\n", .msg = "Invalid value for the VALIDVARNAME option." },
         .{ .src = "options dkricond=zzz;\n", .msg = "Invalid value for the DKRICOND option." },
     };
@@ -7172,7 +7382,6 @@ test "comparative histograms paginate class cells, align levels and retain total
     try std.testing.expectEqual(@as(usize, 1), std.mem.count(u8, last_page, "class=\"panel\""));
     try std.testing.expect(std.mem.indexOf(u8, last_page, "data-row=\"1\" data-column=\"2\"") != null);
     try std.testing.expect(std.mem.indexOf(u8, last_page, "data-proportion=\"0.25\"") != null);
-
 }
 
 test "histogram statistical insets reuse EDF bounds, formatted skewness and labeled reference lines" {
@@ -7208,4 +7417,144 @@ test "unmatched ODS OUTPUT warns and lets CORR and later steps run" {
     try std.testing.expect(std.mem.indexOf(u8, try d.render(), "Output 'DoesNotExist' was not created") != null);
     try std.testing.expect(std.mem.indexOf(u8, listing.items, "Pearson Correlation Coefficients") != null);
     try std.testing.expect(std.mem.indexOf(u8, listing.items, "CAPTURE_EXISTS=0") != null);
+}
+
+test "STAT-COMMON-002 VALIDMEMNAME compatible and alias preserve ordinary member access" {
+    try expectRun("options validmemname=compatible; data work.Mixed; x=42; run; options validmemname=compat; data _null_; set WORK.mixed; put x; run;", "42\n");
+}
+
+test "STAT-COMMON-002 en_US locale retains US numeric formatting" {
+    try expectRun("options locale='en_US'; data _null_; x=1234.5; put x comma10.2; run;", "  1,234.50\n");
+}
+
+test "STAT-COMMON-002 prelude option status distinguishes supported values, gaps and malformed input" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var out: std.ArrayList(u8) = .empty;
+    var log: []const u8 = "";
+    defer resetRcSignals();
+    try std.testing.expectEqual(@as(u8, 0), try rcOf(a, &out, "options validmemname=compatible locale=en_US;", &log));
+    try std.testing.expectEqualStrings("", log);
+    try std.testing.expectEqual(@as(u8, 0), try rcOf(a, &out, "options validmemname=compat locale='en_US';", &log));
+    try std.testing.expectEqual(@as(u8, 2), try rcOf(a, &out, "options validmemname=extend;", &log));
+    try std.testing.expectEqual(@as(u8, 2), try rcOf(a, &out, "options locale=fr_FR;", &log));
+    try std.testing.expectEqual(@as(u8, 1), try rcOf(a, &out, "options validmemname=wrong;", &log));
+    try std.testing.expectEqual(@as(u8, 1), try rcOf(a, &out, "options locale=;", &log));
+}
+
+test "REG CLI executes ordinary models and ADD DELETE REFIT PRINT RUN continuation" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var d = sas.diag.Diagnostics.init(a);
+    var out: std.ArrayList(u8) = .empty;
+    try interpret(a,&out,&d,
+        "data sample; input x y z; datalines;\n1 2 1\n2 5 0\n3 5 1\n4 8 0\n5 9 1\n;run;" ++
+        "proc reg data=sample; var z; model y=x; run; refit; run; add z; print; run; delete z; refit; print; run; quit;" ++
+        "data _null_; put 'after-reg'; run;",null);
+    try std.testing.expect(!d.hasErrors());
+    try std.testing.expectEqual(@as(usize,3),std.mem.count(u8,out.items,"Analysis of Variance"));
+    try std.testing.expect(std.mem.indexOf(u8,out.items,"Model: MODEL1.1")!=null);
+    try std.testing.expect(std.mem.indexOf(u8,out.items,"Model: MODEL1.2")!=null);
+    try std.testing.expect(std.mem.indexOf(u8,out.items,"after-reg")!=null);
+}
+
+test "REG CLI RUN QUIT and new DATA step do not leak interactive state" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a=arena.allocator();
+    var d=sas.diag.Diagnostics.init(a);
+    var out:std.ArrayList(u8)=.empty;
+    try interpret(a,&out,&d,"data sample;input x y;datalines;\n1 2\n2 3\n3 5\n;run;proc reg noprint;model y=x;run;quit;data _null_;put 'done';run;",null);
+    try std.testing.expect(!d.hasErrors());
+    try std.testing.expect(std.mem.indexOf(u8,out.items,"The REG Procedure")==null);
+    try std.testing.expect(std.mem.indexOf(u8,out.items,"done")!=null);
+}
+
+
+test "REG graphics warning contributes rc 1 without a step error" {
+    var arena=std.heap.ArenaAllocator.init(std.testing.allocator); defer arena.deinit();
+    resetRcSignals(); defer resetRcSignals();
+    var d=sas.diag.Diagnostics.init(arena.allocator());
+    try d.warnStatus(0,"You must enable ODS graphics before requesting plots with the PLOTS option in the PROC REG statement.",.{});
+    try std.testing.expect(!d.hasErrors());
+    try std.testing.expect(!d.hasStepErrors());
+    try std.testing.expectEqual(@as(u8,1),processExitCode(&d));
+}
+
+test "REG built-in CLASS is shared by direct procedure and DATA SET input" {
+    var arena=std.heap.ArenaAllocator.init(std.testing.allocator); defer arena.deinit(); const a=arena.allocator();
+    var d=sas.diag.Diagnostics.init(a); var out:std.ArrayList(u8)=.empty;
+    try interpret(a,&out,&d,"proc reg data=sashelp.class;model Weight=Height;run;quit;data copy;set sashelp.class;run;proc reg data=copy;model Weight=Height;run;quit;",null);
+    try std.testing.expect(!d.hasErrors());
+    try std.testing.expectEqual(@as(usize,2),std.mem.count(u8,out.items,"Number of Observations Used 19"));
+    try std.testing.expectEqual(@as(usize,2),std.mem.count(u8,out.items,"7193.24912" )/2);
+}
+
+test "STAT-COMMON-004 PRINT panels preserve every column row and observation number" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const saved = sas.io.global_linesize;
+    defer sas.io.global_linesize = saved;
+    var out: std.ArrayList(u8) = .empty;
+    var d = sas.diag.Diagnostics.init(a);
+    try interpret(a, &out, &d,
+        "options linesize=50; data sample; input a b c d; datalines;\n11 22 33 44\n55 66 77 88\n;\nrun; proc print data=sample; format _numeric_ 20.; run;", null);
+    try std.testing.expect(!d.hasErrors());
+    var actual = std.mem.tokenizeAny(u8, out.items, " \t\r\n");
+    var expected = std.mem.tokenizeAny(u8, "Obs a b 1 11 22 2 55 66 Obs c d 1 33 44 2 77 88", " ");
+    while (expected.next()) |token| try std.testing.expectEqualStrings(token, actual.next() orelse return error.TestUnexpectedResult);
+    try std.testing.expect(actual.next() == null);
+    const panels = try printPanelEnds(a, &.{ 7, 6, 9, 8, 32, 32, 32, 32, 32 }, 160, 0);
+    try std.testing.expectEqualSlices(usize, &.{ 6, 9 }, panels);
+    try std.testing.expectEqualSlices(usize, &.{4}, try printPanelEnds(a, &.{ 20, 20, 20, 20 }, 120, 0));
+    try std.testing.expectEqualSlices(usize, &.{ 1, 2 }, try printPanelEnds(a, &.{ 80, 20 }, 40, 0));
+}
+
+
+test "STAT-TTEST-004 PRINT capital headers preserve cells LABEL and explicit SPLIT" {
+    const old_linesize = sas.io.global_linesize;
+    defer sas.io.global_linesize = old_linesize;
+    sas.io.global_linesize = 160;
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var ds = sas.dataset.Dataset.init(a, "dates");
+    _ = try ds.addColumn("DepartDate", .num);
+    _ = try ds.addColumn("ReturnDate", .num);
+    ds.setFormat("DepartDate", "mmddyy8.");
+    ds.setFormat("ReturnDate", "mmddyy8.");
+    try ds.appendRow(&.{ .{ .num = 0 }, .{ .num = 1 } });
+    var d = sas.diag.Diagnostics.init(a);
+    var out: std.ArrayList(u8) = .empty;
+    try printTable(a, &out, &ds, null, .{ .noobs = true }, &d, null);
+    var words = std.mem.tokenizeAny(u8, out.items, " \n\r\t");
+    for ([_][]const u8{ "Depart", "Return", "Date", "Date", "01/01/60", "01/02/60" }) |word| try std.testing.expectEqualStrings(word, words.next().?);
+    try std.testing.expect(words.next() == null);
+    ds.setLabel("DepartDate", "DepartureDateLabel");
+    out.clearRetainingCapacity();
+    try printTable(a, &out, &ds, null, .{ .noobs = true, .label = true }, &d, null);
+    try std.testing.expect(std.mem.indexOf(u8, out.items, "DepartureDateLabel") != null);
+    try std.testing.expect(std.mem.indexOf(u8, out.items, "ReturnDate") != null);
+    ds.setLabel("DepartDate", "Trip*Date");
+    out.clearRetainingCapacity();
+    try printTable(a, &out, &ds, null, .{ .noobs = true, .label = true, .split = '*' }, &d, null);
+    words = std.mem.tokenizeAny(u8, out.items, " \n\r\t");
+    for ([_][]const u8{ "Trip", "Date", "ReturnDate", "01/01/60", "01/02/60" }) |word| try std.testing.expectEqualStrings(word, words.next().?);
+    try std.testing.expect(words.next() == null);
+    try std.testing.expectEqual(@as(usize, 12), headerWidth(.{ .name = "LONGHEADINGX", .type = .num, .format = "8.2" }, .{}));
+    try std.testing.expectEqualStrings("", try d.render());
+}
+
+
+test "GLM005 retained RUN ignores late declarations and QUIT closes without replay" {
+    try expectRun("ods graphics off; data sample; input x y; datalines;\n0 1\n1 2\n2 2\n;\nrun; proc glm data=sample noprint; model y=x; run; absorb absent; weight absent; freq absent; id absent; by absent; run; quit; data _null_; put 'AFTER'; run;", "AFTER\n");
+    var arena=std.heap.ArenaAllocator.init(std.testing.allocator); defer arena.deinit();
+    const a=arena.allocator(); var out:std.ArrayList(u8)=.empty; var log:[]const u8="";
+    defer resetRcSignals();
+    const status=try rcOf(a,&out,"ods graphics off; data sample; x=1; y=2; run; proc glm data=sample noprint; model y=; run; model y=x; run;",&log);
+    try std.testing.expectEqual(@as(u8,1),status);
+    try std.testing.expect(std.mem.indexOf(u8,log,"cannot be redeclared")!=null);
 }

@@ -7,9 +7,10 @@ McNemar's Test
 Chi-Square        DF    Pr > ChiSq
    10.0000         1        0.0016
 
-Simple Kappa Coefficient
-Estimate       Standard Error    95% Confidence Limits
-    0.0000             0.0000       0.0000       0.0000
+Kappa Statistics
+                              Standard
+Statistic         Estimate       Error    95% Confidence Limits
+Simple Kappa        0.0000      0.0000      0.0000       0.0000
 
 Sample Size = 17
 
@@ -8197,11 +8198,13 @@ McNemar's Test
 Chi-Square        DF    Pr > ChiSq
    20.0000         1        <.0001
 
-Simple Kappa Coefficient
-Estimate       Standard Error    95% Confidence Limits
-    0.0000             0.0000       0.0000       0.0000
+Kappa Statistics
+                              Standard
+Statistic         Estimate       Error    95% Confidence Limits
+Simple Kappa        0.0000      0.0000      0.0000       0.0000
 
 Sample Size = 20
+                        The FREQ Procedure
 
 Summary Statistics for v10 by v11
 Controlling for v0 v1 v2 v3 v4 v5 v6 v7 v8 v9

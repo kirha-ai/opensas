@@ -32,6 +32,7 @@ pub fn build(b: *std.Build) void {
     const version = b.option([]const u8, "version", "Release version string reported by `sas --version`") orelse describeGit(b) orelse "dev";
     const version_opts = b.addOptions();
     version_opts.addOption([]const u8, "version", version);
+    const version_mod = version_opts.createModule();
 
     // This creates a module, which represents a collection of source files alongside
     // some compilation options, such as optimization mode and linked system libraries.
@@ -57,6 +58,9 @@ pub fn build(b: *std.Build) void {
         // which requires us to specify a target.
         .target = target,
     });
+
+    // STAT-COMMON-001: SYMGET and the CLI share the same build identity.
+    mod.addImport("build_options", version_mod);
 
     // Here we define an executable. An executable needs to have a root module
     // which needs to expose a `main` function. While we could add a main function
@@ -97,9 +101,8 @@ pub fn build(b: *std.Build) void {
                 // importing modules from different packages).
                 .{ .name = "sas", .module = mod },
                 // GH#10: `@import("build_options").version` — the string
-                // `sas --version` prints. CLI module only; the interpreter
-                // (root.zig) has no use for the build's git state.
-                .{ .name = "build_options", .module = version_opts.createModule() },
+                // `sas --version` prints; also shared with macro metadata.
+                .{ .name = "build_options", .module = version_mod },
             },
         }),
     });
@@ -255,6 +258,7 @@ pub fn build(b: *std.Build) void {
                     .target = wasm_target,
                     .optimize = .ReleaseSmall,
                     .link_libc = true,
+                    .imports = &.{.{ .name = "build_options", .module = version_mod }},
                 }) },
             },
         }),

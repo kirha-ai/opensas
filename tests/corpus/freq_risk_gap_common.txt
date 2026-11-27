@@ -59,6 +59,7 @@ Row 2                               0.6528        0.9436
 Total                               0.5123        0.7879
 
 Sample Size = 50
+                        The FREQ Procedure
 
 Summary Statistics for r by c
 

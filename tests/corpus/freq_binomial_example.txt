@@ -1,0 +1,90 @@
+Hair and Eye Color of European Children
+                                      The FREQ Procedure
+
+              Eye Color
+
+                                             Cumulative    Cumulative
+              Eyes      Frequency     Percent     Frequency      Percent
+              ----------------------------------------------------------
+              brown           341       44.75            341        44.75
+              blue            222       29.13            563        73.88
+              green           199       26.12            762       100.00
+
+Binomial Proportion
+Eyes = brown
+
+Proportion                      0.4475
+ASE                             0.0180
+
+Confidence Limits for the Binomial Proportion
+Proportion = 0.4475
+
+Type                       90% Confidence Limits
+Agresti-Coull                    0.4181        0.4773
+Clopper-Pearson (Exact)          0.4174        0.4779
+Wilson                           0.4181        0.4773
+
+Test of H0: Proportion = 0.5
+
+ASE under H0                    0.0181
+Z                              -2.8981
+One-sided Pr <  Z               0.0019
+Two-sided Pr > |Z|              0.0038
+
+Sample Size = 762
+
+
+              Hair Color
+
+                                              Cumulative    Cumulative
+              Hair       Frequency     Percent     Frequency      Percent
+              -----------------------------------------------------------
+              fair             228       29.92            228        29.92
+              medium           217       28.48            445        58.40
+              dark             182       23.88            627        82.28
+              red              113       14.83            740        97.11
+              black             22        2.89            762       100.00
+
+Binomial Proportion
+Hair = fair
+
+Proportion                      0.2992
+ASE                             0.0166
+95% Lower Conf Limit            0.2667
+95% Upper Conf Limit            0.3317
+
+Exact Conf Limits
+95% Lower Conf Limit            0.2669
+95% Upper Conf Limit            0.3331
+
+Test of H0: Proportion = 0.28
+
+ASE under H0                    0.0163
+Z                               1.1812
+One-sided Pr >  Z               0.1188
+Two-sided Pr > |Z|              0.2375
+
+Equivalence Analysis
+
+H0: P - p0 <= Lower Margin or >= Upper Margin
+Ha: Lower Margin < P - p0 < Upper Margin
+
+p0 = 0.28   Lower Margin = -0.1   Upper Margin = 0.1
+
+Proportion    ASE (Sample)
+
+0.2992  0.0166
+
+Two One-Sided Tests (TOST)
+
+Test                   Z        P-Value
+
+Lower Margin 7.1865 Pr > Z <.0001
+Upper Margin -4.8701 Pr < Z <.0001
+Overall <.0001
+
+Equivalence Limits    90% Confidence Limits
+
+0.1800 0.3800 0.2719 0.3265
+
+Sample Size = 762

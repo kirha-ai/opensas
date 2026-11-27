@@ -30,13 +30,21 @@ pub fn sparseWarning(a: A, percent: ?u8, location: []const u8) Error![]const u8 
     const subject = if (percent) |v| try std.fmt.allocPrint(a, "{d}% of the cells", .{v}) else "The table cells";
     return std.fmt.allocPrint(a, "{s} have expected counts less than 5{s}. Chi-Square may not be a valid test.", .{ subject, location });
 }
-fn warningFootnote(a: A, out: *Out, percent: ?u8) Error!void {
+fn warningFootnote(a: A, out: *Out, percent: ?u8, exact_comparison: bool) Error!void {
     try text(a, out, "\nWARNING: ");
-    try text(a, out, try sparseWarning(a, percent, ""));
+    // SAS sample 34979 retains the ordinary warning. The explicit exact
+    // chi-square comparison in S154 Example 47.5 qualifies it as asymptotic.
+    if (!exact_comparison) {
+        try text(a, out, try sparseWarning(a, percent, ""));
+        try out.append(a, '\n');
+        return;
+    }
+    const subject = if (percent) |v| try std.fmt.allocPrint(a, "{d}% of the cells", .{v}) else "The table cells";
+    try text(a, out, try std.fmt.allocPrint(a, "{s} have expected counts less than 5.\n         (Asymptotic) Chi-Square may not be a valid test.", .{subject}));
     try out.append(a, '\n');
 }
 
-pub fn goodnessOfFit(a: A, out: *Out, result: k.GoodnessOfFit, opts: parse.Options) Error!void {
+pub fn goodnessOfFit(a: A, out: *Out, result: k.GoodnessOfFit, opts: parse.Options, exact_comparison: bool) Error!void {
     const hypothesis: []const u8 = switch (opts.expected) {
         .equal => "Equal Proportions",
         .proportions, .proportion_dataset => "Specified Proportions",
@@ -52,7 +60,7 @@ pub fn goodnessOfFit(a: A, out: *Out, result: k.GoodnessOfFit, opts: parse.Optio
         try pair(a, out, "DF", result.likelihood_ratio.df, false);
         try pair(a, out, "Pr > ChiSq", result.likelihood_ratio.p, true);
     }
-    if (result.sparse and opts.warn.display) try warningFootnote(a, out, result.small_percent);
+    if (result.sparse and opts.warn.display) try warningFootnote(a, out, result.small_percent, exact_comparison);
 }
 fn chiRow(a: A, out: *Out, label: []const u8, result: k.Test) Error!void {
     try pad(a, out, label, 30, false);
@@ -66,7 +74,7 @@ fn coefficient(a: A, out: *Out, label: []const u8, value: f64) Error!void {
     try pad(a, out, try number(a, value), 12, true);
     try text(a, out, "\n");
 }
-pub fn contingency(a: A, out: *Out, result: k.ChiSquare, opts: parse.Options, first_cell: f64) Error!void {
+pub fn contingency(a: A, out: *Out, result: k.ChiSquare, opts: parse.Options, first_cell: f64, exact_comparison: bool) Error!void {
     try text(a, out, "\nStatistic                     DF       Value      Prob\n------------------------------------------------------\n");
     try chiRow(a, out, "Chi-Square", result.pearson);
     try chiRow(a, out, "Likelihood Ratio Chi-Square", result.likelihood_ratio);
@@ -80,15 +88,16 @@ pub fn contingency(a: A, out: *Out, result: k.ChiSquare, opts: parse.Options, fi
     try coefficient(a, out, "Phi Coefficient", result.phi);
     try coefficient(a, out, "Contingency Coefficient", result.contingency);
     try coefficient(a, out, "Cramer's V", result.cramer_v);
-    if (result.sparse and opts.warn.display) try warningFootnote(a, out, result.small_percent);
-    if (result.fisher) |f| {
-        try text(a, out, "\nFisher's Exact Test\n----------------------------------\n");
-        try pair(a, out, "Cell (1,1) Frequency (F)", first_cell, false);
-        try pair(a, out, "Left-sided Pr <= F", f.left, true);
-        try pair(a, out, "Right-sided Pr >= F", f.right, true);
-        try pair(a, out, "Table Probability (P)", f.probability, true);
-        try pair(a, out, "Two-sided Pr <= P", f.two_sided, true);
-    }
+    if (result.sparse and opts.warn.display) try warningFootnote(a, out, result.small_percent, exact_comparison);
+    if (result.fisher) |f| try fisher(a, out, f, first_cell);
+}
+pub fn fisher(a: A, out: *Out, f: k.Fisher, first_cell: f64) Error!void {
+    try text(a, out, "\nFisher's Exact Test\n----------------------------------\n");
+    try pair(a, out, "Cell (1,1) Frequency (F)", first_cell, false);
+    try pair(a, out, "Left-sided Pr <= F", f.left, true);
+    try pair(a, out, "Right-sided Pr >= F", f.right, true);
+    try pair(a, out, "Table Probability (P)", f.probability, true);
+    try pair(a, out, "Two-sided Pr <= P", f.two_sided, true);
 }
 fn measureRow(a: A, out: *Out, label: []const u8, m: k.Measure, cl: bool) Error!void {
     try pad(a, out, label, 36, false);
@@ -174,7 +183,7 @@ test "FEAT-freq-tests renderer retains automatic Fisher and requested TEST outpu
     const a = arena.allocator();
     const m = k.CountMatrix{ .rows = 2, .cols = 2, .counts = &.{ 1, 9, 11, 3 } };
     var out: Out = .empty;
-    try contingency(a, &out, try k.contingency(a, m, null), .{ .chisq = true }, 1);
+    try contingency(a, &out, try k.contingency(a, m, null), .{ .chisq = true }, 1, false);
     try measures(a, &out, try k.association(a, m, 0.05), try k.nominal(a, m, 0.05), try k.polychoric(a, m, .{}), true, .{ .measures = true, .cl = true }, .{ .gamma = true, .polychoric = true });
     try risks(a, &out, try k.risks(m.counts, 0.05), 0.05);
     for ([_][]const u8{ "Fisher's Exact Test", "Two-sided Pr <= P", "ASE under H0", "Tetrachoric Correlation", "LR Chi-Square", "Uncertainty Coefficient Symmetric", "Relative Risk (Column 2)" }) |needle| try std.testing.expect(std.mem.indexOf(u8, out.items, needle) != null);

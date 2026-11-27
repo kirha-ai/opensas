@@ -23,7 +23,6 @@
               Total          21       31       52
                           40.38    59.62   100.00
 
-                        The FREQ Procedure
 
                         Table 2 of r by c
                         Controlling for s=2
@@ -47,6 +46,7 @@
               ---------+--------+--------+
               Total          19       35       54
                           35.19    64.81   100.00
+                        The FREQ Procedure
 
 Summary Statistics for r by c
 Controlling for s
@@ -101,7 +101,6 @@ Total Sample Size = 106
               Total          21       31       52
                           40.38    59.62   100.00
 
-                        The FREQ Procedure
 
                         Table 2 of r by c
                         Controlling for s=2
@@ -125,6 +124,7 @@ Total Sample Size = 106
               ---------+--------+--------+
               Total          19       35       54
                           35.19    64.81   100.00
+                        The FREQ Procedure
 
 Summary Statistics for r by c
 Controlling for s
@@ -172,7 +172,6 @@ Total Sample Size = 106
               Total          21       31       52
                           40.38    59.62   100.00
 
-                        The FREQ Procedure
 
                         Table 2 of r by c
                         Controlling for s=2
@@ -196,6 +195,7 @@ Total Sample Size = 106
               ---------+--------+--------+
               Total          19       35       54
                           35.19    64.81   100.00
+                        The FREQ Procedure
 
 Summary Statistics for r by c
 Controlling for s

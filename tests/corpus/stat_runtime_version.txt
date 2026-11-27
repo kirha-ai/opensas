@@ -1,0 +1,4 @@
+identified   same   compatible
+
+         1      1            1
+RUNTIME_AFTER_QUIT=ok

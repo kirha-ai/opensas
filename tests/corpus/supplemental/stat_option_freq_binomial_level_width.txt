@@ -1,4 +1,31 @@
 # corpus assertions
+# SAS/STAT 15.4 Ch.47, Displayed Output p.3231 and Outputs 47.4.1-2
+# pp.3255-3257 (PDF pp.3267-3269): separate estimate/ASE/limits and H0 test.
+# Layout also agrees with the immutable STAT-FREQ-007 SAS listing; no oracle dependency.
+# Numbers: p=k/n, ASE=sqrt(p*(1-p)/n), Wald p +/- normal quantile*ASE;
+# exact limits invert binomial tails (pp.3168-3169); H0 Z/p-values pp.3171-3172.
+# next/end-listing checks every field in order, ignoring only blank/rule lines.
+# Invented weights 3,7,9: selected count 9 of 19.
 stdout-count 1 x = ccc
-row Proportion 0.4737~5.1e-05 0.1145 0.2492 0.6982
-row-count 1 Proportion {any} {any} {any} {any}
+next The FREQ Procedure
+next Cumulative Cumulative
+next x Frequency Percent Frequency Percent
+next a 3 15.79 3 15.79
+next bb 7 36.84 10 52.63
+next ccc 9 47.37 19 100.00
+next Binomial Proportion
+next x = ccc
+next Proportion 0.4737~5.1e-05
+next ASE 0.1145
+next 95% Lower Conf Limit 0.2492
+next 95% Upper Conf Limit 0.6982
+next Exact Conf Limits
+next 95% Lower Conf Limit 0.2445
+next 95% Upper Conf Limit 0.7114
+next Test of H0: Proportion = 0.5
+next ASE under H0 0.1147
+next Z -0.2294
+next One-sided Pr < Z 0.4093
+next Two-sided Pr > |Z| 0.8185
+next Sample Size = 19
+end-listing

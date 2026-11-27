@@ -1,0 +1,8 @@
+# corpus assertions
+words The GLM Procedure Class Level Information Class Levels Values group 2 A B Number of Observations Read 12 Number of Observations Used 12 The GLM Procedure Coefficients for Estimate B minus A Row 1 Intercept 0 group A -1 group B 1 x 0 The GLM Procedure Dependent Variable: y Sum of Source DF Squares Mean Square F Value Pr > F Model 2 595.2333333 297.6166667 276.61 <.0001 Error 9 9.6833333 1.0759259 Corrected Total 11 604.9166667 R-Square Coeff Var Root MSE y Mean 0.983992 6.953755 1.037268 14.91667 Source DF Type I SS Mean Square F Value Pr > F group 1 494.0833333 494.0833333 459.22 <.0001 x 1 101.1500000 101.1500000 94.01 <.0001 Source DF Type III SS Mean Square F Value Pr > F group 1 5.0917249 5.0917249 4.73 0.0576 x 1 101.1500000 101.1500000 94.01 <.0001 Standard Parameter Estimate Error t Value Pr > |t| B minus A 2.63333333 1.21049934 2.18 0.0576
+stderr-count 0 ERROR:
+stderr-count 0 WARNING:
+stderr-count 0 NOTE: SVG graphic written to
+stderr-count 0 \n
+svg-count 0
+log-words

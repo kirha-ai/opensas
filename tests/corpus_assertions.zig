@@ -3,6 +3,8 @@
 //! Rows are ordered, whitespace-insensitive and keep pipe-delimited columns.
 //! The token {any} skips one field. A number followed by ~tolerance has an absolute
 //! error bound. Counts and substrings also cover diagnostics and generated SVGs.
+//! `words` compares the complete whitespace-tokenized stdout, without skipping
+//! headings, rules, rows or trailing fields. `log-words` does the same for stderr.
 const std = @import("std");
 const Io = std.Io;
 const Allocator = std.mem.Allocator;
@@ -28,6 +30,7 @@ fn fieldMatches(want: []const u8, got: []const u8) bool {
     const expected = std.fmt.parseFloat(f64, want[0..sep]) catch return false;
     const tolerance = std.fmt.parseFloat(f64, want[sep + 1 ..]) catch return false;
     const actual = std.fmt.parseFloat(f64, got) catch return false;
+    if (!std.math.isFinite(expected) or !std.math.isFinite(tolerance) or !std.math.isFinite(actual)) return false;
     // At a printed half-digit boundary the binary subtraction may cross the
     // decimal bound by one floating-point rounding unit.
     if (tolerance == 0) return actual == expected;
@@ -37,6 +40,15 @@ fn fieldMatches(want: []const u8, got: []const u8) bool {
 fn rowMatches(expected: []const u8, actual: []const u8) bool {
     var want: Words = .{ .rest = expected };
     var got: Words = .{ .rest = actual };
+    while (want.next()) |field| {
+        if (!fieldMatches(field, got.next() orelse return false)) return false;
+    }
+    return got.next() == null;
+}
+
+fn wordsMatch(expected: []const u8, actual: []const u8) bool {
+    var want = std.mem.tokenizeAny(u8, expected, " \t\r\n\x0c");
+    var got = std.mem.tokenizeAny(u8, actual, " \t\r\n\x0c");
     while (want.next()) |field| {
         if (!fieldMatches(field, got.next() orelse return false)) return false;
     }
@@ -99,7 +111,11 @@ pub fn mismatch(a: Allocator, io: Io, dir: Io.Dir, spec: []const u8, stdout: []c
             lines = std.mem.tokenizeScalar(u8, stdout, '\n');
             continue;
         }
-        const pass = if (std.mem.eql(u8, command, "row")) found: {
+        const pass = if (std.mem.eql(u8, command, "words"))
+            wordsMatch(args, stdout)
+        else if (std.mem.eql(u8, command, "log-words"))
+            wordsMatch(args, stderr)
+        else if (std.mem.eql(u8, command, "row")) found: {
             while (lines.next()) |line| {
                 if (rowMatches(args, line)) break :found true;
             }
@@ -149,6 +165,33 @@ test "ordered row fields preserve missing cells, operators and numeric tolerance
     try std.testing.expect(!rowMatches("P | . | 0.320~0.0005", "P | 0 | .3201"));
     try std.testing.expect(!rowMatches("P | . | 0.320~0.0005", "P | . | .321"));
     try std.testing.expect(!rowMatches("x 1", "x 1 2"));
+}
+
+test "complete listing words reject missing extra reordered and nonfinite fields" {
+    const expected = "Model x ---- Estimate 1.25 Residual 0~1e-12 Missing .";
+    const actual = "Model\tx\n----\nEstimate 1.25\nResidual 5e-13\nMissing .\n";
+    try std.testing.expect(wordsMatch(expected, actual));
+    try std.testing.expect(!wordsMatch(expected, actual ++ "extra 1"));
+    try std.testing.expect(!wordsMatch(expected, "Model x ---- Estimate 1.25 Residual 5e-13 Missing"));
+    try std.testing.expect(!wordsMatch(expected, "Model x Estimate 1.25 Residual 5e-13 Missing ."));
+    try std.testing.expect(!wordsMatch(expected, "Model x ---- Estimate 1.26 Residual 5e-13 Missing ."));
+    try std.testing.expect(!wordsMatch(expected, "Model x ---- Residual 5e-13 Estimate 1.25 Missing ."));
+    try std.testing.expect(!wordsMatch(expected, "Model x ---- Estimate 1.25 Residual 2e-12 Missing ."));
+    try std.testing.expect(!wordsMatch(expected, "Model x ---- Estimate 1.25 Residual nan Missing ."));
+    try std.testing.expect(!wordsMatch("x 0~inf", "x 9"));
+    try std.testing.expect(wordsMatch("", " \n\t"));
+    try std.testing.expect(!wordsMatch("", "unexpected"));
+}
+
+test "full stream corpus assertions enforce both stdout and diagnostics" {
+    const a = std.testing.allocator;
+    const io = std.testing.io;
+    var scratch = std.testing.tmpDir(.{ .iterate = true });
+    defer scratch.cleanup();
+    const spec = header ++ "words Estimate 1.25 .\nlog-words NOTE: complete\nsvg-count 0\n";
+    try std.testing.expect((try mismatch(a, io, scratch.dir, spec, "Estimate\n1.25 .", "NOTE: complete\n")) == null);
+    try std.testing.expectEqualStrings("words Estimate 1.25 .", (try mismatch(a, io, scratch.dir, spec, "Estimate 1.25 . extra", "NOTE: complete")).?);
+    try std.testing.expectEqualStrings("log-words NOTE: complete", (try mismatch(a, io, scratch.dir, spec, "Estimate 1.25 .", "NOTE: complete\nERROR: bad")).?);
 }
 
 test "a corpus expectation fails on extra result rows, wrong diagnostics and missing graphs" {

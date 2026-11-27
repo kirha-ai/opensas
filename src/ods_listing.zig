@@ -133,6 +133,14 @@ const Identity = struct {
 };
 
 const identities = [_]Identity{
+    .{ .name = "Statistics", .template = "Stat.TTest.Statistics", .label = "Statistics" },
+    .{ .name = "ConfLimits", .template = "Stat.TTest.ConfLimits", .label = "Confidence Limits" },
+    .{ .name = "TTests", .template = "Stat.TTest.TTests", .label = "T-Tests" },
+    .{ .name = "Equality", .template = "Stat.TTest.Equality", .label = "Equality of Variances" },
+    .{ .name = "EquivLimits", .template = "Stat.TTest.EquivLimits", .label = "Equivalence Limits" },
+    .{ .name = "EquivTests", .template = "Stat.TTest.EquivTests", .label = "Equivalence Tests" },
+    .{ .name = "Bootstrap", .template = "Stat.TTest.Bootstrap", .label = "Bootstrap Statistics and Confidence Limits" },
+    .{ .name = "CrossoverVarInfo", .template = "Stat.TTest.CrossoverVarInfo", .label = "Crossover Variable Information" },
     .{ .name = "VarInformation", .template = "base.corr.VarInfo", .label = "Variables Information" },
     .{ .name = "Sscp", .template = "base.corr.Matrix", .label = "SSCP Matrix" },
     .{ .name = "Csscp", .template = "base.corr.Matrix", .label = "CSSCP Matrix" },

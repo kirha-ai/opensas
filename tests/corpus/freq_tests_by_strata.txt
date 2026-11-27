@@ -117,7 +117,6 @@ Relative Risk (Column 2)        0.3633        0.1691        0.7808
 
 Sample Size = 38
 
-                        The FREQ Procedure
 
                         Table 2 of r by c
                         Controlling for s=2
@@ -356,7 +355,6 @@ One or more statistics not computed -- zero cell.
 
 Sample Size = 9
 
-                        The FREQ Procedure
 
                         Table 2 of r by c
                         Controlling for s=2

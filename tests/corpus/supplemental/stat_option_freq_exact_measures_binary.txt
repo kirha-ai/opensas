@@ -1,4 +1,6 @@
 # corpus assertions
+# SAS/STAT 15.4 Output 47.5.3 p.3259 and original FREQ-004 documented_feature:
+# Odds Ratio has distinct Asymptotic Conf Limits and Exact Conf Limits sections.
 stdout-count 1 Pearson Correlation Coefficient
 stdout-count 1 Spearman Correlation Coefficient
 row One-sided Pr <= Statistic 0.2619~5.1e-05
@@ -6,8 +8,37 @@ row Two-sided Pr >= |Statistic| 0.5238~5.1e-05
 row One-sided Pr <= Statistic 0.2619~5.1e-05
 row Two-sided Pr >= |Statistic| 0.5238~5.1e-05
 rewind
-row Exact Confidence Limits
-row 95% Lower Conf Limit 0.0026~5.1e-05
-row 95% Upper Conf Limit 4.5861~5.1e-05
+row Odds Ratio
+next Odds Ratio 0.1667
+next Asymptotic Conf Limits
+next 95% Lower Conf Limit 0.0098
+next 95% Upper Conf Limit 2.8213
+next Exact Conf Limits
+next 95% Lower Conf Limit 0.0026~5.1e-05
+next 95% Upper Conf Limit 4.5861~5.1e-05
+next Sample Size = 10
+end-listing
+log-words
 row-count 2 One-sided Pr <= Statistic {any}
 row-count 2 Two-sided Pr >= | Statistic | {any}
+rewind
+row Pearson Correlation
+next Estimate -0.4082
+next ASE 0.2850
+next 95% Lower Conf Limit -0.9669
+next 95% Upper Conf Limit 0.1504
+next Test of H0: Pearson Correlation = 0
+next ASE under H0 0.2887
+next Z -1.4142
+next One-sided Pr < Z 0.0786
+next Two-sided Pr > |Z| 0.1573
+next Spearman Correlation
+next Estimate -0.4082
+next ASE 0.2850
+next 95% Lower Conf Limit -0.9669
+next 95% Upper Conf Limit 0.1504
+next Test of H0: Spearman Correlation = 0
+next ASE under H0 0.2887
+next Z -1.4142
+next One-sided Pr < Z 0.0786
+next Two-sided Pr > |Z| 0.1573

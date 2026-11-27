@@ -321,15 +321,17 @@ pub fn renderStratum(a: A, out: *std.ArrayList(u8), s: Stratum, options: p.Optio
     const ag = options.agreement;
     const two = s.scored.matrix.rows == 2;
     if (two) try r.mcnemar(a, out, s.symmetry, ag.null_ratio, ag.restore) else try r.chiSquare(a, out, "Symmetry Test", s.symmetry, ag.restore);
-    try r.kappa(a, out, "Simple Kappa Coefficient", if (s.simple) |v| v.coefficient else null, scope.alpha, ag.restore);
-    if (!two) try r.kappa(a, out, "Weighted Kappa Coefficient", if (s.weighted) |v| v.coefficient else null, scope.alpha, ag.restore);
+    if (ag.restore) {
+        try r.kappa(a, out, "Simple Kappa Coefficient", if (s.simple) |v| v.coefficient else null, scope.alpha, true);
+        if (!two) try r.kappa(a, out, "Weighted Kappa Coefficient", if (s.weighted) |v| v.coefficient else null, scope.alpha, true);
+    } else try r.kappaStatistics(a, out, s.simple, s.weighted, !two, scope.alpha);
     if (s.details) |details| {
         if (ag.pabak) try r.kappa(a, out, "P-B Adjusted Kappa", details.pabak, scope.alpha, ag.restore);
         if (ag.ac1) try r.kappa(a, out, "Chance-Corrected AC1", details.ac1, scope.alpha, ag.restore);
         try r.agreementDetails(a, out, details, s.weighted, ag.details, ag.weighted_details and !two);
     }
-    if (scope.tests.kappa or ag.null_kappa != null) try r.kappaTest(a, out, "Kappa Test", s.simple, ag.null_kappa orelse 0);
-    if (!two and (scope.tests.weighted_kappa or ag.null_weighted != null)) try r.kappaTest(a, out, "Weighted Kappa Test", s.weighted, ag.null_weighted orelse 0);
+    if (scope.tests.kappa or ag.null_kappa != null) try r.kappaTest(a, out, "Kappa", s.simple, ag.null_kappa orelse 0);
+    if (!two and (scope.tests.weighted_kappa or ag.null_weighted != null)) try r.kappaTest(a, out, "Weighted Kappa", s.weighted, ag.null_weighted orelse 0);
     if (ag.print_weights and !two and s.weights != null) {
         const labels = try a.alloc([]const u8, s.scored.col_levels.len);
         for (labels, s.scored.col_levels) |*name, level| name.* = try label(a, level.value);
@@ -347,7 +349,7 @@ pub fn renderSummary(a: A, out: *std.ArrayList(u8), report: Report, options: p.O
         });
         if (options.mantel_fleiss) try r.mantelFleiss(a, out, report.mantel_fleiss);
         if (report.ratios.len > 0) try r.ratios(a, out, report.ratios, scope.alpha);
-        if (report.breslow_day) |v| try r.chiSquare(a, out, if (options.bdt) "Breslow-Day-Tarone Test for Homogeneity of Odds Ratios" else "Breslow-Day Test for Homogeneity of Odds Ratios", if (options.bdt) v.tarone else v.unadjusted, false);
+        if (report.breslow_day) |v| try r.chiSquare(a, out, if (options.bdt) "Breslow-Day-Tarone Test for\nHomogeneity of Odds Ratios\n--------------------------" else "Breslow-Day Test for\nHomogeneity of Odds Ratios\n--------------------------", if (options.bdt) v.tarone else v.unadjusted, true);
         if (options.qor) try r.chiSquare(a, out, "Q Test for Homogeneity of Odds Ratios", report.qor, false);
         if (options.i2) try r.heterogeneity(a, out, report.i_square, if (report.qor) |v| v.df else null, scope.alpha);
     }
@@ -686,7 +688,7 @@ test "stratified agreement warning and details follow weighted column score elig
     out.clearRetainingCapacity();
     try renderStratum(a, &out, col.strata[0], options, .{});
     try std.testing.expect(std.mem.indexOf(u8, out.items, "Weighted Kappa Details") == null);
-    try std.testing.expect(std.mem.indexOf(u8, out.items, "Weighted Kappa Coefficient") != null);
+    try std.testing.expect(std.mem.indexOf(u8, out.items, "Weighted Kappa           .           .           .            .") != null);
     // Captured CA error preserves the raw PRINTKWTS matrix and simple result.
     for (table.dimensions) |*dim| for (dim.levels, 0..) |*level, i| {
         const v: f64 = @floatFromInt(3 - i);
@@ -701,6 +703,6 @@ test "stratified agreement warning and details follow weighted column score elig
     try std.testing.expectEqual(@as(f64, 2), bad.strata[0].weights.?[2]);
     out.clearRetainingCapacity();
     try renderStratum(a, &out, bad.strata[0], .{ .agreement = .{ .enabled = true, .details = true, .print_weights = true, .weighted_details = true } }, .{});
-    for ([_][]const u8{ "Symmetry Test", "Simple Kappa Coefficient", "Weighted Kappa Coefficient", "Kappa Details", "1.5000", "2.0000" }) |text_value| try std.testing.expect(std.mem.indexOf(u8, out.items, text_value) != null);
+    for ([_][]const u8{ "Symmetry Test", "Simple Kappa", "Weighted Kappa", "Kappa Details", "1.5000", "2.0000" }) |text_value| try std.testing.expect(std.mem.indexOf(u8, out.items, text_value) != null);
     try std.testing.expect(std.mem.indexOf(u8, out.items, "Weighted Kappa Details") == null);
 }

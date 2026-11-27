@@ -34,21 +34,18 @@
               Total           5        1        6
                           83.33    16.67   100.00
 
-                        The FREQ Procedure
 
                         Table 2 of r by c
                         Controlling for g=1 h=2
 
 Sample Size = 0
 
-                        The FREQ Procedure
 
                         Table 3 of r by c
                         Controlling for g=2 h=1
 
 Sample Size = 0
 
-                        The FREQ Procedure
 
                         Table 4 of r by c
                         Controlling for g=2 h=2
@@ -166,7 +163,6 @@ Sample Size = 0
                                 50.00    10.00    60.00
                                 83.33    16.67   100.00
 
-                        The FREQ Procedure
 
                         Table 2 of r by c
                         Controlling for g=2
@@ -368,21 +364,18 @@ Sample Size = 0
                       Total               6       100.00
               --------------------------------------------------------------------
 
-                        The FREQ Procedure
 
                         Table 2 of r by c
                         Controlling for g=1 h=2
 
 Sample Size = 0
 
-                        The FREQ Procedure
 
                         Table 3 of r by c
                         Controlling for g=2 h=1
 
 Sample Size = 0
 
-                        The FREQ Procedure
 
                         Table of r by c
                         Controlling for g=2 h=2
@@ -435,7 +428,6 @@ Sample Size = 0
                           50.00     0.00    50.00
                          100.00     0.00   100.00
 
-                        The FREQ Procedure
 
                         Table 2 of r by c
                         Controlling for g=1

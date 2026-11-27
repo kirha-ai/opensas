@@ -94,7 +94,15 @@ pub const Session = struct {
     fn save(self: *Session, kind: []const u8, bytes: []const u8) diag.Error!void {
         const path = self.cli_dir orelse self.gpath orelse ".";
         const cwd = std.Io.Dir.cwd();
-        cwd.createDirPath(self.io, path) catch |e| return self.diags.fail(error.ExecError, 0, "Cannot create graphics directory {s}: {t}", .{ path, e });
+        // Existing directory symlinks (notably macOS /tmp) are valid GPATHs.
+        // createDirPath rejects a symlink component, so open existing directories
+        // first and create only when the target does not exist.
+        if (cwd.openDir(self.io, path, .{})) |directory| {
+            directory.close(self.io);
+        } else |open_error| {
+            if (open_error != error.FileNotFound) return self.diags.fail(error.ExecError, 0, "Cannot open graphics directory {s}: {t}", .{ path, open_error });
+            cwd.createDirPath(self.io, path) catch |e| return self.diags.fail(error.ExecError, 0, "Cannot create graphics directory {s}: {t}", .{ path, e });
+        }
         while (true) {
             self.count += 1;
             const name = try std.fmt.allocPrint(self.arena, "{s}/opensas-{d:0>4}-{s}.svg", .{ path, self.count, kind });

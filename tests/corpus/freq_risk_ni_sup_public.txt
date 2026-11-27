@@ -1,8 +1,5 @@
                         The FREQ Procedure
 
-                        Table of r by c
-
-
 Statistics for Table of r by c
 
 Noninferiority Analysis for the Risk Difference (Column 1)
@@ -17,9 +14,6 @@ Pr > Z                            <.0001
 
 Sample Size = 50
                         The FREQ Procedure
-
-                        Table of r by c
-
 
 Statistics for Table of r by c
 
@@ -36,9 +30,6 @@ Pr > Z                            0.0352
 Sample Size = 50
                         The FREQ Procedure
 
-                        Table of r by c
-
-
 Statistics for Table of r by c
 
 Noninferiority Analysis for the Risk Difference (Column 1)
@@ -53,9 +44,6 @@ Pr > Z                            <.0001
 
 Sample Size = 50
                         The FREQ Procedure
-
-                        Table of r by c
-
 
 Statistics for Table of r by c
 
@@ -72,9 +60,6 @@ Pr > Z                            0.0572
 Sample Size = 50
                         The FREQ Procedure
 
-                        Table of r by c
-
-
 Statistics for Table of r by c
 
 Noninferiority Analysis for the Risk Difference (Column 1)
@@ -89,9 +74,6 @@ Pr > Z                            <.0001
 
 Sample Size = 50
                         The FREQ Procedure
-
-                        Table of r by c
-
 
 Statistics for Table of r by c
 
@@ -108,9 +90,6 @@ Pr > Z                            0.0431
 Sample Size = 50
                         The FREQ Procedure
 
-                        Table of r by c
-
-
 Statistics for Table of r by c
 
 Noninferiority Analysis for the Risk Difference (Column 1)
@@ -123,9 +102,6 @@ Risk Difference                   0.4333
 Sample Size = 50
                         The FREQ Procedure
 
-                        Table of r by c
-
-
 Statistics for Table of r by c
 
 Superiority Analysis for the Risk Difference (Column 1)
@@ -137,9 +113,6 @@ Risk Difference                   0.4333
 
 Sample Size = 50
                         The FREQ Procedure
-
-                        Table of r by c
-
 
 Statistics for Table of r by c
 
@@ -157,9 +130,6 @@ Continuity correction included.
 
 Sample Size = 50
                         The FREQ Procedure
-
-                        Table of r by c
-
 
 Statistics for Table of r by c
 
@@ -181,9 +151,6 @@ Continuity correction included.
 Sample Size = 50
                         The FREQ Procedure
 
-                        Table of r by c
-
-
 Statistics for Table of r by c
 
 Noninferiority Analysis for the Relative Risk (Column 1)
@@ -198,9 +165,6 @@ Pr > Z                            0.0004
 Sample Size = 50
                         The FREQ Procedure
 
-                        Table of r by c
-
-
 Statistics for Table of r by c
 
 Superiority Analysis for the Relative Risk (Column 1)
@@ -214,9 +178,6 @@ Pr > Z                            0.0090
 
 Sample Size = 50
                         The FREQ Procedure
-
-                        Table of r by c
-
 
 Statistics for Table of r by c
 
@@ -233,9 +194,6 @@ Pr > Z                            0.0003
 Sample Size = 50
                         The FREQ Procedure
 
-                        Table of r by c
-
-
 Statistics for Table of r by c
 
 Superiority Analysis for the Relative Risk (Column 1)
@@ -250,9 +208,6 @@ Pr > Z                            0.0095
 
 Sample Size = 50
                         The FREQ Procedure
-
-                        Table of r by c
-
 
 Statistics for Table of r by c
 
@@ -269,9 +224,6 @@ Pr > Z                            <.0001
 Sample Size = 50
                         The FREQ Procedure
 
-                        Table of r by c
-
-
 Statistics for Table of r by c
 
 Superiority Analysis for the Relative Risk (Column 1)
@@ -287,9 +239,6 @@ Pr > Z                            0.0051
 Sample Size = 50
                         The FREQ Procedure
 
-                        Table of r by c
-
-
 Statistics for Table of r by c
 
 Noninferiority Analysis for the Relative Risk (Column 1)
@@ -304,9 +253,6 @@ Pr > Z                            <.0001
 Sample Size = 50
                         The FREQ Procedure
 
-                        Table of r by c
-
-
 Statistics for Table of r by c
 
 Superiority Analysis for the Relative Risk (Column 1)
@@ -320,9 +266,6 @@ Pr > Z                            0.0043
 
 Sample Size = 50
                         The FREQ Procedure
-
-                        Table of r by c
-
 
 Statistics for Table of r by c
 

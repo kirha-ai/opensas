@@ -139,9 +139,6 @@ CASE SEPARATE LIST AND STATISTICS
 
                         The FREQ Procedure
 
-                        Table of r by c
-
-
 Statistics for Table of r by c
 
 Statistic                              Value       ASE
@@ -177,9 +174,6 @@ Two-sided Pr > |Z|          <.0001
 Sample Size = 70
 CASE TABLE SCORES
                         The FREQ Procedure
-
-                        Table of r by c
-
 
 Statistics for Table of r by c
 
@@ -245,9 +239,6 @@ Sample Size = 70
 CASE RANK SCORES
                         The FREQ Procedure
 
-                        Table of r by c
-
-
 Statistics for Table of r by c
 
 Scores for Table of r by c
@@ -312,9 +303,6 @@ Sample Size = 70
 CASE RIDIT SCORES
                         The FREQ Procedure
 
-                        Table of r by c
-
-
 Statistics for Table of r by c
 
 Scores for Table of r by c
@@ -378,9 +366,6 @@ Two-sided Pr > |Z|          <.0001
 Sample Size = 70
 CASE MODRIDIT SCORES
                         The FREQ Procedure
-
-                        Table of r by c
-
 
 Statistics for Table of r by c
 

@@ -1,0 +1,42 @@
+# corpus assertions
+# Full unchanged TTEST011 listing plus graph content and identities.
+next The TTEST Procedure
+next Variable: x
+next group Method N Mean Std Dev Std Err Minimum Maximum
+next A 6 85.8333 23.8782 9.7482 43.0000 116.0
+next B 6 93.6667 16.4398 6.7115 71.0000 121.0
+next Diff (1-2) Pooled -7.8333 20.4992 11.8352
+next Diff (1-2) Satterthwaite -7.8333 11.8352
+next group Method Mean 95% CL Mean Std Dev 95% CL Std Dev
+next A 85.8333 60.7747 110.9 23.8782 14.9049 58.5639
+next B 93.6667 76.4142 110.9 16.4398 10.2618 40.3205
+next Diff (1-2) Pooled -7.8333 -34.2038 18.5372 20.4992 14.3231 35.9747
+next Diff (1-2) Satterthwaite -7.8333 -34.6661 18.9995
+next Method Variances DF t Value Pr > |t|
+next Pooled Equal 10 -0.66 0.5230
+next Satterthwaite Unequal 8.8705 -0.66 0.5249
+next Equality of Variances
+next Method Num DF Den DF F Value Pr > F
+next Folded F 5 5 2.11 0.4320
+end-listing
+svg-count 2
+svg-has 1 data-kind="ttest-interval"
+svg-count-text 1 2 class="interval-row"
+svg-has 1 data-method="Pooled"
+svg-has 1 data-method="Satterthwaite"
+svg-has 2 data-kind="ttest-qq"
+svg-count-text 2 2 class="qq-panel"
+svg-count-text 2 12 data-observed=
+svg-has 2 data-group="A"
+svg-has 2 data-group="B"
+svg-has 2 Normal Quantile
+log-row Name: Interval
+log-row Label: Difference Interval Plot
+log-row Template: Stat.TTest.Graphics.Interval
+log-row Path: Ttest.x.Interval
+log-row Name: QQPlot
+log-row Label: Q-Q Plots
+log-row Template: Stat.TTest.Graphics.QQ2
+log-row Path: Ttest.x.QQPlot
+stderr-count 0 ERROR
+stderr-count 0 WARNING

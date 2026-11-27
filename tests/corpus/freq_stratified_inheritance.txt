@@ -22,6 +22,7 @@ Statistic / Method            95% Lower CL  95% Upper CL
 Newcombe                           -0.3832        0.0925
 
 Sample Size = 54
+                        The FREQ Procedure
 
 Summary Statistics for r by c
 Controlling for s
@@ -59,6 +60,7 @@ Statistic / Method            95% Lower CL  95% Upper CL
 Newcombe                           -0.0925        0.3832
 
 Sample Size = 54
+                        The FREQ Procedure
 
 Summary Statistics for r by c
 Controlling for s
@@ -71,6 +73,7 @@ Column 1 (c = 1)
 
 Total Sample Size = 106
 
+                        The FREQ Procedure
 
 Summary Statistics for r by c
 Controlling for s
@@ -107,6 +110,7 @@ Statistic / Method            95% Lower CL  95% Upper CL
 Newcombe                           -0.0925        0.3832
 
 Sample Size = 54
+                        The FREQ Procedure
 
 Summary Statistics for r by c
 Controlling for s

@@ -1,15 +1,6 @@
 # corpus assertions
-row Case freq_agreement_test_kappa
-row Kappa Test
-row Null Value 0.2~5.1e-05
-row Z 3.9261~5.1e-05
-row Case freq_agreement_test_wtkap
-row Weighted Kappa Test
-row Null Value 0.3~5.1e-05
-row Z 2.6274~5.1e-05
-row Case freq_agreement_test_wtkappa
-row Weighted Kappa Test
-row Null Value 0.3~5.1e-05
-row Z 2.6274~5.1e-05
-row-count 3 Null Value {any}
-row-count 3 Z {any}
+# SAS/STAT 15.4 Figure 47.10 p.3068 and pp.3099,3206-3208: null in heading;
+# nonzero-null Z uses coefficient SE, not H0 SE. Preserve all three null/Z assertions.
+words Case freq_agreement_test_kappa The FREQ Procedure Statistics for Table of x by y Symmetry Test Chi-Square DF Pr > ChiSq 2.2762 3 0.5171 Kappa Statistics Standard Statistic Estimate Error 95% Confidence Limits Simple Kappa 0.5667 0.0934 0.3836 0.7497 Weighted Kappa 0.5963 0.1128 0.3753 0.8173 Test of H0: Kappa = 0.2~5.1e-05 Estimate Std Err Z Pr > Z Pr > |Z| 0.5667 0.0934 3.9261~5.1e-05 <.0001 <.0001 Sample Size = 52 Case freq_agreement_test_wtkap The FREQ Procedure Statistics for Table of x by y Symmetry Test Chi-Square DF Pr > ChiSq 2.2762 3 0.5171 Kappa Statistics Standard Statistic Estimate Error 95% Confidence Limits Simple Kappa 0.5667 0.0934 0.3836 0.7497 Weighted Kappa 0.5963 0.1128 0.3753 0.8173 Test of H0: Weighted Kappa = 0.3~5.1e-05 Estimate Std Err Z Pr > Z Pr > |Z| 0.5963 0.1128 2.6274~5.1e-05 0.0043 0.0086 Sample Size = 52 Case freq_agreement_test_wtkappa The FREQ Procedure Statistics for Table of x by y Symmetry Test Chi-Square DF Pr > ChiSq 2.2762 3 0.5171 Kappa Statistics Standard Statistic Estimate Error 95% Confidence Limits Simple Kappa 0.5667 0.0934 0.3836 0.7497 Weighted Kappa 0.5963 0.1128 0.3753 0.8173 Test of H0: Weighted Kappa = 0.3~5.1e-05 Estimate Std Err Z Pr > Z Pr > |Z| 0.5963 0.1128 2.6274~5.1e-05 0.0043 0.0086 Sample Size = 52
+log-words NOTE: SVG graphic written to ./opensas-0001-agreeplot.svg. NOTE: SVG graphic written to ./opensas-0002-agreeplot.svg. NOTE: SVG graphic written to ./opensas-0003-agreeplot.svg.
+svg-count 3

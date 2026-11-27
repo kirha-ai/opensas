@@ -1,5 +1,5 @@
 # corpus assertions
-row Exact Pr >= Statistic 0.5815
-row Point Pr = Statistic 0.0810
-row-count 1 Exact Pr >= Statistic {any}
-row-count 1 Point Pr = Statistic {any}
+row Exact Pr >= ChiSq 0.5815
+row Point Pr = ChiSq 0.0810
+row-count 1 Exact Pr >= ChiSq {any}
+row-count 1 Point Pr = ChiSq {any}

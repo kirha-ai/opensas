@@ -1,11 +1,49 @@
 # corpus assertions
-stdout-count 1 Overall P-Value
+# SAS/STAT 15.4 Ch.47, Displayed Output p.3231 and Outputs 47.4.1-2
+# pp.3255-3257 (PDF pp.3267-3269): separate estimate/ASE/limits and H0 test.
+# Layout also agrees with the immutable STAT-FREQ-007 SAS listing; no oracle dependency.
+# Numbers: p=k/n, ASE=sqrt(p*(1-p)/n), Wald p +/- normal quantile*ASE;
+# exact limits invert binomial tails (pp.3168-3169); H0 Z/p-values pp.3171-3172.
+# next/end-listing checks every field in order, ignoring only blank/rule lines.
+# Output 47.4.2 fixes all TOST values; original four tolerances are retained.
+# Equivalence formulas pp.3174-3175: limits p0+margin, Z=(p-limit)/ASE,
+# Overall=max(right-tail lower, left-tail upper), CI=p +/- z(.95)*ASE.
+stdout-count 1 Overall
 stdout-count 3 <.0001
-row Lower Margin Z 7.1865~5.1e-05
-row Upper Margin Z -4.8701~5.1e-05
-row 90% Lower Conf Limit 0.2719~5.1e-05
-row 90% Upper Conf Limit 0.3265~5.1e-05
-row-count 1 Lower Margin Z {any}
-row-count 1 Upper Margin Z {any}
-row-count 1 90% Lower Conf Limit {any}
-row-count 1 90% Upper Conf Limit {any}
+next The FREQ Procedure
+next Cumulative Cumulative
+next x Frequency Percent Frequency Percent
+next 1 228 29.92 228 29.92
+next 2 217 28.48 445 58.40
+next 3 182 23.88 627 82.28
+next 4 113 14.83 740 97.11
+next 5 22 2.89 762 100.00
+next Binomial Proportion
+next x = 1
+next Proportion 0.2992
+next ASE 0.0166
+next 95% Lower Conf Limit 0.2667
+next 95% Upper Conf Limit 0.3317
+next Exact Conf Limits
+next 95% Lower Conf Limit 0.2669
+next 95% Upper Conf Limit 0.3331
+next Test of H0: Proportion = 0.28
+next ASE under H0 0.0163
+next Z 1.1812
+next One-sided Pr > Z 0.1188
+next Two-sided Pr > |Z| 0.2375
+next Equivalence Analysis
+next H0: P - p0 <= Lower Margin or >= Upper Margin
+next Ha: Lower Margin < P - p0 < Upper Margin
+next p0 = 0.28 Lower Margin = -0.1 Upper Margin = 0.1
+next Proportion ASE (Sample)
+next 0.2992 0.0166
+next Two One-Sided Tests (TOST)
+next Test Z P-Value
+next Lower Margin 7.1865~5.1e-05 Pr > Z <.0001
+next Upper Margin -4.8701~5.1e-05 Pr < Z <.0001
+next Overall <.0001
+next Equivalence Limits 90% Confidence Limits
+next 0.1800 0.3800 0.2719~5.1e-05 0.3265~5.1e-05
+next Sample Size = 762
+end-listing

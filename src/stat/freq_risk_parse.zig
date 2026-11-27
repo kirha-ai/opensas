@@ -404,7 +404,7 @@ test "FEAT-freq-risk parser captures invalid requests versus pending dependencie
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
     const a = arena.allocator();
-    for ([_][]const u8{ "bin(ac(correct))", "bin(ha)", "bin(unknown)", "bin(level=0)", "bin(p=0)", "riskdiff(column=3)", "riskdiff(method=typo)", "or(cl=agresticoull)", "relrisk(cl=wald(correct))", "riskdiff(cl=mn(correct=mee))", "relrisk(cl=score(mee))" }) |source| {
+    for ([_][]const u8{ "bin(ac(correct))", "bin(ha)", "bin(unknown)", "bin(level=0)", "bin(p=0)", "bin(p=100)", "riskdiff(column=3)", "riskdiff(method=typo)", "or(cl=agresticoull)", "relrisk(cl=wald(correct))", "riskdiff(cl=mn(correct=mee))", "relrisk(cl=score(mee))" }) |source| {
         var d = diag.Diagnostics.init(a);
         const t = try lex.tokenize(a, source, &d);
         var i: usize = 0;

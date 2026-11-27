@@ -5,6 +5,12 @@ manager). Each dev works in its own git worktree (`../opensas-devN`); the
 main tree belongs to the manager. Your task comes from `jira.md` (only lines
 tagged with your role).
 
+For SAS/STAT 15.4 work, use `.claude/skills/stat-impl/SKILL.md` instead of the
+general manager workflow. That skill uses only `stat-jira.md`, supports up to
+7 dev slots within runtime limits, and defines the temporary oracle and
+permanent-test requirements. The general `manager` skill continues to use
+`jira.md` and its own workflow unchanged.
+
 ## Git — the rules that prevent lost work
 
 - Commit ONLY with an explicit pathspec: `git commit src/foo.zig tests/... -m "..."`.
@@ -33,9 +39,18 @@ tagged with your role).
 
 ## Definition of done
 
-`zig build gate` green (or equivalently `test` + `corpus` + `programs`),
-fixture included, tracker updated if the task names one (docs/sas-functions.md
-`[x]`, EBNF `(* opensas *)`), committed locally by pathspec. Then STAY RUNNING
+`zig build gate` green (or equivalently `test` + `corpus` + `programs`), **and
+all `tests/corpus/supplemental/` tests pass**. Build the current CLI with
+`zig build install`, then run the supplemental suite separately:
+
+```sh
+zig run tests/corpus_runner.zig -- zig-out/bin/opensas tests/corpus/supplemental
+```
+
+This is a completion requirement, not a change to CI or default gate membership.
+Include a runnable regression fixture, update the tracker if the task names one
+(docs/sas-functions.md `[x]`, EBNF `(* opensas *)`), and commit locally by
+pathspec. Then STAY RUNNING
 and wait for the next task — do not exit.
 
 ## No confidential data in the tree (D-011)

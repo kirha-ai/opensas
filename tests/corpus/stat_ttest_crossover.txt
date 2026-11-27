@@ -1,0 +1,39 @@
+# corpus assertions
+# Complete unchanged STAT-TTEST-008 SAS oracle; whitespace-only normalization.
+next The TTEST Procedure
+next Response Variables: pef1, pef2
+next Crossover Variable Information
+next Period Response Treatment
+next 1 pef1 drug1
+next 2 pef2 drug2
+next Sequence Treatment Period Method N Mean Std Dev Std Err Minimum Maximum
+next 1 for 1 7 337.1 53.7631 20.3206 250.0 410.0
+next 2 for 2 6 345.8 70.8814 28.9372 220.0 410.0
+next 2 sal 1 6 283.3 105.4 43.0245 90.0000 380.0
+next 1 sal 2 7 306.4 64.7247 24.4636 210.0 390.0
+next 1 Diff (1-2) 7 30.7143 32.9682 12.4608 -35.0000 70.0000
+next 2 Diff (1-2) 6 62.5000 44.6934 18.2460 15.0000 130.0
+next Both Diff (1-2) Pooled 46.6071 19.3702 10.7766
+next Both Diff (1-2) Satterthwaite 46.6071 11.0475
+next Both Diff (1-2) Pooled -15.8929 19.3702 10.7766
+next Both Diff (1-2) Satterthwaite -15.8929 11.0475
+next Sequence Treatment Period Method Mean 95% CL Mean Std Dev 95% CL Std Dev
+next 1 for 1 337.1 287.4 386.9 53.7631 34.6446 118.4
+next 2 for 2 345.8 271.4 420.2 70.8814 44.2447 173.8
+next 2 sal 1 283.3 172.7 393.9 105.4 65.7841 258.5
+next 1 sal 2 306.4 246.6 366.3 64.7247 41.7082 142.5
+next 1 Diff (1-2) 30.7143 0.2238 61.2048 32.9682 21.2445 72.5982
+next 2 Diff (1-2) 62.5000 15.5972 109.4 44.6934 27.8980 109.6
+next Both Diff (1-2) Pooled 46.6071 22.8881 70.3262 19.3702 13.7217 32.8882
+next Both Diff (1-2) Satterthwaite 46.6071 21.6585 71.5558
+next Both Diff (1-2) Pooled -15.8929 -39.6119 7.8262 19.3702 13.7217 32.8882
+next Both Diff (1-2) Satterthwaite -15.8929 -40.8415 9.0558
+next Treatment Period Method Variances DF t Value Pr > |t|
+next Diff (1-2) Pooled Equal 11 4.32 0.0012
+next Diff (1-2) Satterthwaite Unequal 9.1017 4.22 0.0022
+next Diff (1-2) Pooled Equal 11 -1.47 0.1683
+next Diff (1-2) Satterthwaite Unequal 9.1017 -1.44 0.1838
+next Equality of Variances
+next Method Num DF Den DF F Value Pr > F
+next Folded F 5 6 1.84 0.4797
+end-listing
