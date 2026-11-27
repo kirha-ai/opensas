@@ -12,6 +12,10 @@ Explicit user resume. Confirmed working branch `feat/stat/batch-4`, base `31356c
 - dev6: STAT-COMMON-017; `/Users/thomas/kirha/opensas-dev6`; branch `codex/stat-b4-dev6`; assigned 2026-11-27T13:42:13+00:00; implementation deadline 2026-11-27T14:27:13+00:00. Original README/cases and cited physical PDF pages required before edits.
 - dev7: STAT-COMMON-018; `/Users/thomas/kirha/opensas-dev7`; branch `codex/stat-b4-dev7`; assigned 2026-11-27T13:42:13+00:00; implementation deadline 2026-11-27T14:27:13+00:00. Original README/cases and cited physical PDF pages required before edits.
 
+### Rolling assignment — GLM-009 while008 awaits acceptance
+
+GLM008 computational proof integrated at `1880529c`, source-only test addition/no solver change; coordinator will decide narrow DONE after current original and final suites/push. dev2 now owns existing STAT-GLM-009 in retained `opensas-dev2`, branch `codex/stat-b4-glm009-dev2`, assigned 2026-11-27T15:16:28+00:00, deadline 2026-11-27T16:01:28+00:00. Extend actual RANDOM syntax/EMS/inference within source4099–4100, preserving GLM007 tests; coordinate with MIXED004 if sharing numerical helpers, no unrequested core rewrite.
+
 ### Rolling assignment — MIXED-004 and continuing006 integration
 
 MIXED003/006 real design cores integrated through `1df9fa0d`. dev5 continues006 driver wiring under its ORIGINAL recorded deadline (no clock reset); core receipt does not claim user-facing estimation works yet. dev7 owns existing STAT-MIXED-004 (Mixed Models Theory) in retained `opensas-dev7`, branch `codex/stat-b4-mixed-theory-dev7`, assigned 2026-11-27T15:13:56+00:00, deadline 2026-11-27T15:58:56+00:00. Coordinate with dev3 MIXED002 numericalowner; prioritize source-justified covariance/Type3 method theory needed by GLM007 while preserving fullGaussian model/GLS/variance-component identities. Never duplicate or overwrite active mixed_fit work. Any source ambiguity stays explicit; use real design/covariance interfaces, not stub acceptance.
@@ -5100,7 +5104,7 @@ Source: S154, Chapter 53, `The GLM Procedure`, PDF pp. 4043–4230. Tasks in thi
 
 <a id="stat-glm-008"></a>
 
-### [DOING @dev2] STAT-GLM-008 — GLM — Computational Method
+### [DOING @coordinator] STAT-GLM-008 — GLM — Computational Method
 
 - Source: S154 / Chapter 53 / `Computational Method` (PDF pp. 4163–4164).
 - Scope: Implement Computational Method. This ticket owns the feature's options, defaults, computation, and results as an extension of the basic computational path; the chapter's output tickets handle ODS descriptors and file presentation.
@@ -5118,7 +5122,7 @@ Source: S154, Chapter 53, `The GLM Procedure`, PDF pp. 4043–4230. Tasks in thi
 
 <a id="stat-glm-009"></a>
 
-### [TODO] STAT-GLM-009 — GLM — RANDOM
+### [DOING @dev2] STAT-GLM-009 — GLM — RANDOM
 
 - Source: S154 / Chapter 53 / `RANDOM Statement` (PDF pp. 4099–4100).
 - Scope: Implement RANDOM. This ticket owns the feature's options, defaults, computation, and results as an extension of the basic computational path; the chapter's output tickets handle ODS descriptors and file presentation.
