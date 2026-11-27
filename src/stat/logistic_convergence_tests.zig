@@ -87,7 +87,7 @@ test "LOGISTIC005 MAXITER retains actual last iterate and warns without false co
     const v0 = 1 / (10 * p0 * (1 - p0));
     const v1 = 1 / (10 * p1 * (1 - p1));
     for ([_]f64{ v0, -v0, -v0, v0 + v1 }, fit.covariance) |expected, actual| try t.expectApproxEqAbs(expected, actual, 1e-12);
-    try t.expectEqual(@as(usize, 1), d.list.items.len);
+    try t.expectEqual(@as(usize, 2), d.list.items.len);
     try t.expectEqual(diag.Severity.warning, d.list.items[0].severity);
     var output_diagnostics = diag.Diagnostics.init(a);
     const output_context: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &output_diagnostics };
@@ -95,10 +95,11 @@ test "LOGISTIC005 MAXITER retains actual last iterate and warns without false co
     diag.resetGap();
     defer diag.resetGap();
     try l.run(output_context, &out, try lex.tokenize(a, source, &output_diagnostics));
-    try t.expect(std.mem.indexOf(u8, out.items, "Convergence not attained after 1 iterations.") != null);
+    try t.expect(std.mem.indexOf(u8, out.items, "Iteration limit reached without convergence.") != null);
     try t.expect(std.mem.indexOf(u8, out.items, "satisfied") == null);
     try t.expect(std.mem.indexOf(u8, out.items, "Analysis of Maximum Likelihood Estimates") != null);
-    try t.expectEqual(@as(u8, 0), diag.exitCode(diag.gapHit(), output_diagnostics.hasErrors()));
+    try t.expect(output_diagnostics.warning_status);
+    try t.expectEqual(@as(u8, 1), diag.exitCode(diag.gapHit(), output_diagnostics.hasErrors() or output_diagnostics.warning_status));
 }
 test "LOGISTIC005 explicit criteria replace default and technique aliases use true fits" {
     var arena = std.heap.ArenaAllocator.init(t.allocator);
@@ -135,4 +136,60 @@ test "LOGISTIC005 explicit criteria replace default and technique aliases use tr
     try t.expect(!score_only.fit.converged);
     try t.expectEqual(c.Reason.not_fit, score_only.fit.stop.reason);
     try t.expectEqual(@as(usize, 0), score_only.fit.coefficients.len);
+}
+
+test "LOGISTIC005 COMMON033 complete original pins warning status and last-iterate output" {
+    var arena = std.heap.ArenaAllocator.init(t.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const source = try std.Io.Dir.cwd().readFileAlloc(std.testing.io, "tests/corpus/stat_logistic005_iteration_limit.sas", a, .limited(1024 * 1024));
+    const begin = std.mem.indexOf(u8, source, "datalines;").? + "datalines;".len;
+    var cells = std.mem.tokenizeAny(u8, source[begin..][0..std.mem.indexOfScalar(u8, source[begin..], ';').?], " \r\n\t");
+    var ds = Dataset.init(a, "binary");
+    _ = try ds.addColumn("x", .num);
+    _ = try ds.addColumn("z", .num);
+    _ = try ds.addColumn("y", .num);
+    _ = try ds.addColumn("group", .char);
+    _ = try ds.addColumn("weight", .num);
+    _ = try ds.addColumn("freq", .num);
+    _ = try ds.addColumn("event", .num);
+    var index: usize = 0;
+    while (cells.next()) |first| {
+        var row: [7]@import("../value.zig").Value = undefined;
+        row[0] = .{ .num = try std.fmt.parseFloat(f64, first) };
+        row[1] = .{ .num = try std.fmt.parseFloat(f64, cells.next().?) };
+        row[2] = .{ .num = try std.fmt.parseFloat(f64, cells.next().?) };
+        row[3] = .{ .str = cells.next().? };
+        row[4] = .{ .num = try std.fmt.parseFloat(f64, cells.next().?) };
+        row[5] = .{ .num = try std.fmt.parseFloat(f64, cells.next().?) };
+        index += 1;
+        row[6] = .{ .num = if (index % 3 == 0) 1 else 0 };
+        try ds.appendRow(&row);
+    }
+    var lib = Library.init(a);
+    try lib.put("binary", &ds);
+    var d = diag.Diagnostics.init(a);
+    const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &d };
+    const program = source[std.mem.indexOf(u8, source, "proc logistic data=binary;").?..];
+    var out: std.ArrayList(u8) = .empty;
+    diag.resetGap();
+    defer diag.resetGap();
+    try l.run(cx, &out, try lex.tokenize(a, program, &d));
+    try t.expectEqual(@as(usize, 2), d.list.items.len);
+    for (d.list.items) |item| try t.expectEqual(diag.Severity.warning, item.severity);
+    try t.expect(!d.hasErrors());
+    try t.expect(d.warning_status);
+    try t.expectEqual(@as(u8, 1), diag.exitCode(diag.gapHit(), d.hasErrors() or d.warning_status));
+    const expected = try std.Io.Dir.cwd().readFileAlloc(std.testing.io, "tests/corpus/stat_logistic005_iteration_limit.txt", a, .limited(1024 * 1024));
+    var lines = std.mem.tokenizeScalar(u8, expected, '\n');
+    _ = lines.next();
+    const wanted_out = lines.next().?["words ".len..];
+    const wanted_log = lines.next().?["log-words ".len..];
+    const actual_log = try d.render();
+    for ([_][]const u8{ wanted_out, wanted_log }, [_][]const u8{ out.items, actual_log }) |want, got| {
+        var words = std.mem.tokenizeAny(u8, want, " \r\n\t");
+        var actual = std.mem.tokenizeAny(u8, got, " \r\n\t");
+        while (words.next()) |word| try t.expectEqualStrings(word, actual.next() orelse "<missing>");
+        try t.expect(actual.next() == null);
+    }
 }
