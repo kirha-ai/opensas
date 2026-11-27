@@ -38,6 +38,7 @@ pub fn run(cx: proc.ProcCtx, out: *std.ArrayList(u8), tokens: []const lex.Token)
     if ((spec.options.noprofile and parameter_spec == null) or spec.options.alpha_explicit) return proc.failGap(cx.diags, spec.line, "PROC MIXED: unprofiled estimation or covariance-parameter confidence limits are not implemented", .{});
     if (m.options.solution or m.options.cl or m.options.intercept_test or m.options.alpha != 0.05) return proc.failGap(cx.diags, m.line, "PROC MIXED: requested fixed-effect solution or confidence-limit output is not implemented", .{});
     try @import("mixed_plots.zig").validate(cx, spec, m);
+    try @import("mixed_influence_run.zig").validate(cx, spec, m);
     if (spec.options.method == .type3) if (cx.capture) |capture| if (capture.wants("Type3")) return proc.failGap(cx.diags, spec.line, "PROC MIXED: ODS OUTPUT Type3 is not implemented", .{});
     if (groups.len == 0) return proc.failGap(cx.diags, spec.line, "PROC MIXED: empty input analysis is not implemented", .{});
     for (groups, 0..) |group, by_index| {
@@ -91,6 +92,7 @@ pub fn run(cx: proc.ProcCtx, out: *std.ArrayList(u8), tokens: []const lex.Token)
         if (parameter_search) |search| try parms.renderSearchRouted(cx.arena, out, search, parameter_spec.?, &route);
         render.render(cx.arena, out, fit, names, tests.items, .{ .noitprint = spec.options.noitprint, .notest = m.options.notest or !usable_inference, .nofit = fit.status == .evaluated or !usable_inference, .parms_lrt = if (parameter_search) |search| search.likelihood_ratio else null, .route = &route }) catch |err| return if (err == error.OutOfMemory) error.OutOfMemory else proc.failGap(cx.diags, spec.line, "PROC MIXED: numerical table rendering failed ({t})", .{err});
         if (usable_inference) try @import("mixed_contrasts.zig").publishRouted(cx, out, m, r, x, z, fit, fit.variances, inference_requests, &route);
+        if (usable_inference) try @import("mixed_influence_run.zig").publish(cx, out, spec, m, group, x, z, fit, if (parameter_search) |search| search.profile else true, &route);
         if (route.visible == 0) out.shrinkRetainingCapacity(group_start);
         if (usable_inference) try @import("mixed_plots.zig").execute(cx, spec, m, group, x, z, fit, if (spec.roles.by.len > 0) by_index + 1 else null);
     }

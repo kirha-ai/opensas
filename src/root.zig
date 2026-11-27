@@ -39,6 +39,8 @@ test {
     _ = @import("stat/mixed_contrasts_kernel.zig");
     _ = @import("stat/mixed_theory_type3.zig");
     _ = @import("stat/mixed.zig");
+    _ = @import("stat/mixed_influence.zig");
+    _ = @import("stat/mixed_influence_run.zig");
     _ = @import("stat/mixed_model.zig");
     _ = @import("stat/mixed_design.zig");
     _ = @import("stat/mixed_random.zig");

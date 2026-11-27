@@ -15,6 +15,7 @@ pub const Options = struct {
     cl: bool = false,
     notest: bool = false,
     residual: bool = false,
+    influence: ?@import("mixed_influence_run.zig").Options = null,
     intercept_test: bool = false,
     ddfm: enum { default, residual } = .default,
     singular: f64 = 1e4 * std.math.floatEps(f64),
@@ -159,6 +160,11 @@ fn modelOptions(cx: proc.ProcCtx, t: []const lex.Token, s: *Spec) diag.Error!voi
     while (i < t.len) {
         const token = t[i];
         i += 1;
+        if (eq(token.text, "influence")) {
+            i -= 1;
+            s.options.influence = try @import("mixed_influence_run.zig").parse(cx, s.source, t, &i);
+            continue;
+        }
         if (eq(token.text, "noint")) {
             s.matrix.intercept = false;
             continue;
@@ -216,7 +222,7 @@ fn modelOptions(cx: proc.ProcCtx, t: []const lex.Token, s: *Spec) diag.Error!voi
             }
             continue;
         }
-        for ([_][]const u8{ "alphap", "chisq", "contain", "corrb", "covb", "covbi", "ddf", "e", "e1", "e2", "e3", "fullx", "influence", "lcomponents", "outp", "outpred", "outpm", "outpredm", "singchol", "singres", "vciry", "xpvix", "xpvixi", "zeta" }) |name| if (eq(token.text, name)) return proc.failGap(cx.diags, token.line, "PROC MIXED: MODEL option {s} is not implemented", .{token.text});
+        for ([_][]const u8{ "alphap", "chisq", "contain", "corrb", "covb", "covbi", "ddf", "e", "e1", "e2", "e3", "fullx", "lcomponents", "outp", "outpred", "outpm", "outpredm", "singchol", "singres", "vciry", "xpvix", "xpvixi", "zeta" }) |name| if (eq(token.text, name)) return proc.failGap(cx.diags, token.line, "PROC MIXED: MODEL option {s} is not implemented", .{token.text});
         return bad(cx, t, i - 1);
     }
 }
