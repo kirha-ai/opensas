@@ -24,12 +24,16 @@ pub const reg = @import("stat/reg.zig");
 pub const glm = @import("stat/glm.zig");
 pub const glmmod = @import("stat/glmmod.zig");
 pub const logistic = @import("stat/logistic.zig");
+pub const power = @import("stat/power.zig");
 pub const sgscatter = @import("stat/sgscatter.zig");
 pub const proc = @import("proc.zig");
 pub const macro = @import("macro.zig");
 pub const sql = @import("sql.zig");
 
 test {
+    _ = @import("stat/power.zig");
+    _ = @import("stat/power_means.zig");
+    _ = @import("stat/power_solver.zig");
     _ = @import("stat/reg_model_tests.zig");
     _ = @import("stat/glm.zig");
     _ = @import("stat/glmmod.zig");
