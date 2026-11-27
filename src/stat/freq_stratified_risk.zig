@@ -166,6 +166,17 @@ pub fn commonDifference(a: std.mem.Allocator, tables: []const Table, method: Met
     return .{ .value = value, .variance = if (has_test) variance else null, .limits = limits, .z = z, .p_two = if (z) |v| 2 * @exp(math.logStdNormTail(@abs(v))) else null, .weights = weights, .components = differences, .used = used };
 }
 fn newcombe(tables: []const Table, weights: []const f64, difference: f64, opts: Options) Error!risk.Interval {
+    // S154 physical p.3203: a single stratum is exactly the unstratified
+    // Newcombe interval. Use that identity also at p=0 or p=1, where the
+    // generic Yan-Su level expression below would otherwise evaluate 0/0.
+    // Empty-row strata have zero weight and do not create another stratum.
+    var single: ?Table = null;
+    var used: usize = 0;
+    for (tables) |table| if (try active(table)) {
+        single = table;
+        used += 1;
+    };
+    if (used == 1) return risk.differenceLimits(single.?, opts.column, opts.alpha, .newcombe, false, true);
     const z = -math.distQuantile(.normal, opts.alpha / 2, &.{}).?;
     var gamma = [_]f64{ 0, 0 };
     var lower = [_]f64{ 0, 0 };
@@ -353,4 +364,139 @@ test "stratified common risk boundary variances and undefined Newcombe SAS" {
     try std.testing.expectError(error.ExecError, commonDifference(a, &first, .minimum_risk, .{ .alpha = 0 }));
     const invalid = [_]Table{.{ .cells = .{ 1, -1, 2, 3 } }};
     try std.testing.expectError(error.ExecError, commonDifference(a, &invalid, .minimum_risk, .{}));
+}
+
+// STAT-FREQ-010, S154 physical pp.3199-3203. Exact rational arithmetic
+// on the three unbalanced tables below gives W=404/21, P=3029/3675,
+// Q=1127/150, d=-179/2020 and Sato variance=165699117/8242408000.
+// These contracts supplement four-decimal SAS references with independent
+// algebra and orientation checks. 2e-12 allows ordinary double arithmetic
+// and the documented numerical inversions, not changes in displayed values.
+test "FREQ010 exact Sato rational variance and Klingenberg inversion" {
+    const a = std.testing.allocator;
+    const tables = [_]Table{ .{ .cells = .{ 2, 18, 9, 1 } }, .{ .cells = .{ 12, 3, 1, 19 } }, .{ .cells = .{ 1, 4, 18, 2 } } };
+    const mh = (try commonDifference(a, &tables, .mantel_haenszel, .{})).?;
+    defer mh.deinit(a);
+    const k = (try commonDifference(a, &tables, .klingenberg, .{})).?;
+    defer k.deinit(a);
+    const expected: f64 = -179.0 / 2020.0;
+    const variance: f64 = 165699117.0 / 8242408000.0;
+    try std.testing.expectApproxEqAbs(expected, mh.value, 2e-15);
+    try std.testing.expectApproxEqAbs(variance, mh.variance.?, 2e-15);
+    try std.testing.expectApproxEqAbs(expected / @sqrt(variance), mh.z.?, 2e-14);
+    const z: f64 = 1.95996398454005423552;
+    try std.testing.expectApproxEqAbs(expected - z * @sqrt(variance), mh.limits.lower.?, 2e-12);
+    try std.testing.expectApproxEqAbs(expected + z * @sqrt(variance), mh.limits.upper.?, 2e-12);
+    for ([_]f64{ k.limits.lower.?, k.limits.upper.? }) |delta| {
+        // Klingenberg inverts (d-delta)^2 = z^2 (delta P + Q)/W^2.
+        // Checking the equation avoids regenerating endpoints from production.
+        const null_variance = (delta * (3029.0 / 3675.0) + 1127.0 / 150.0) / sq(404.0 / 21.0);
+        try std.testing.expectApproxEqAbs(sq(expected - delta), z * z * null_variance, 2e-13);
+    }
+    try std.testing.expectEqual(@as(?f64, null), k.variance);
+    try std.testing.expectEqual(@as(?f64, null), k.z);
+    try std.testing.expectEqual(@as(?f64, null), k.p_two);
+}
+
+test "FREQ010 minimum risk independently minimizes quadratic MSE" {
+    const a = std.testing.allocator;
+    const tables = [_]Table{ .{ .cells = .{ 2, 18, 9, 1 } }, .{ .cells = .{ 12, 3, 1, 19 } }, .{ .cells = .{ 1, 4, 18, 2 } } };
+    const d = [_]f64{ -0.8, 0.75, -0.7 };
+    const v = [_]f64{ 0.1 * 0.9 / 20.0 + 0.9 * 0.1 / 10.0, 0.8 * 0.2 / 15.0 + 0.05 * 0.95 / 20.0, 0.2 * 0.8 / 5.0 + 0.9 * 0.1 / 20.0 };
+    const target: f64 = (30 * d[0] + 35 * d[1] + 25 * d[2]) / 90;
+    const mr = (try commonDifference(a, &tables, .minimum_risk, .{ .correct = false, .sample_variance = true })).?;
+    defer mr.deinit(a);
+    var estimate: f64 = 0;
+    var variance: f64 = 0;
+    var sum: f64 = 0;
+    for (mr.weights, d, v) |w, delta, variance_h| {
+        sum += w;
+        estimate += w * delta;
+        variance += w * w * variance_h;
+    }
+    try std.testing.expectApproxEqAbs(@as(f64, 1), sum, 2e-14);
+    try std.testing.expectApproxEqAbs(estimate, mr.value, 2e-14);
+    try std.testing.expectApproxEqAbs(variance, mr.variance.?, 2e-14);
+    // Objective: sum(v_h*w_h^2) + (sum(d_h*w_h)-target)^2.
+    // Positive v_h makes it strictly convex. With sum(w)=1, all gradient
+    // components must equal the same Lagrange multiplier: sufficient AND
+    // necessary for the unique minimum, independently of alpha/beta algebra.
+    const gradient = v[0] * mr.weights[0] + d[0] * (estimate - target);
+    for (mr.weights, d, v) |w, delta, variance_h|
+        try std.testing.expectApproxEqAbs(gradient, variance_h * w + delta * (estimate - target), 2e-14);
+    try std.testing.expectApproxEqAbs(estimate / @sqrt(variance), mr.z.?, 2e-13);
+    const corrected = (try commonDifference(a, &tables, .minimum_risk, .{ .sample_variance = true })).?;
+    defer corrected.deinit(a);
+    const correction: f64 = 0.1875 / (404.0 / 21.0);
+    try std.testing.expectApproxEqAbs(mr.limits.lower.? - correction, corrected.limits.lower.?, 2e-14);
+    try std.testing.expectApproxEqAbs(mr.limits.upper.? + correction, corrected.limits.upper.?, 2e-14);
+    try std.testing.expectApproxEqAbs((estimate + correction) / @sqrt(variance), corrected.z.?, 2e-13);
+}
+
+test "FREQ010 every common interval reverses columns and retains sparse stratum slots" {
+    const a = std.testing.allocator;
+    // Includes a zero cell, unbalanced margins, and an unusable all-zero row.
+    const tables = [_]Table{ .{ .cells = .{ 0, 10, 3, 17 } }, .{ .cells = .{ 0, 0, 6, 8 } }, .{ .cells = .{ 12, 8, 5, 25 } } };
+    for (std.enums.values(Method)) |method| {
+        const first = (try commonDifference(a, &tables, method, .{})).?;
+        defer first.deinit(a);
+        const second = (try commonDifference(a, &tables, method, .{ .column = .second })).?;
+        defer second.deinit(a);
+        try std.testing.expectEqual(@as(usize, 2), first.used);
+        try std.testing.expectEqual(@as(usize, tables.len), first.weights.len);
+        try std.testing.expectEqual(@as(f64, 0), first.weights[1]);
+        try std.testing.expectApproxEqAbs(@as(f64, 1), first.weights[0] + first.weights[2], 2e-14);
+        try std.testing.expectApproxEqAbs(-first.value, second.value, 2e-12);
+        try std.testing.expectApproxEqAbs(-first.limits.upper.?, second.limits.lower.?, 2e-12);
+        try std.testing.expectApproxEqAbs(-first.limits.lower.?, second.limits.upper.?, 2e-12);
+        for (first.weights, second.weights) |w1, w2| try std.testing.expectApproxEqAbs(w1, w2, 2e-12);
+        if (first.variance) |v1| try std.testing.expectApproxEqAbs(v1, second.variance.?, 2e-12);
+        if (first.z) |z1| try std.testing.expectApproxEqAbs(-z1, second.z.?, 2e-12);
+        if (first.p_two) |p1| try std.testing.expectApproxEqAbs(p1, second.p_two.?, 2e-12);
+    }
+}
+
+test "FREQ010 single stratum score and Newcombe reduce to unstratified intervals" {
+    const a = std.testing.allocator;
+    const table = Table{ .cells = .{ 16, 11, 5, 20 } };
+    for ([_]risk.Column{ .first, .second }) |column| {
+        const options = Options{ .column = column, .alpha = 0.1 };
+        const score = (try commonDifference(a, &.{table}, .summary_score, options)).?;
+        defer score.deinit(a);
+        const mn = try risk.differenceLimits(table, column, 0.1, .miettinen_nurminen, false, true);
+        try std.testing.expectApproxEqAbs(mn.lower.?, score.limits.lower.?, 2e-13);
+        try std.testing.expectApproxEqAbs(mn.upper.?, score.limits.upper.?, 2e-13);
+        try std.testing.expectApproxEqAbs((mn.lower.? + mn.upper.?) / 2, score.value, 2e-13);
+        const nc = try risk.differenceLimits(table, column, 0.1, .newcombe, false, true);
+        for ([_]Method{ .newcombe, .newcombe_mr }) |method| {
+            const common = (try commonDifference(a, &.{table}, method, options)).?;
+            defer common.deinit(a);
+            try std.testing.expectApproxEqAbs(nc.lower.?, common.limits.lower.?, 2e-13);
+            try std.testing.expectApproxEqAbs(nc.upper.?, common.limits.upper.?, 2e-13);
+            try std.testing.expectApproxEqAbs(@as(f64, 1), common.weights[0], 2e-14);
+        }
+    }
+}
+
+test "FREQ010 single-stratum Newcombe boundary has Wilson-derived finite limits" {
+    const a = std.testing.allocator;
+    const table = Table{ .cells = .{ 0, 10, 5, 5 } };
+    const z: f64 = 1.95996398454005423552;
+    // Wilson for 0/10: [0,z²/(10+z²)]; for 5/10: [1/2-h,1/2+h]
+    // where h=z/(2sqrt(10+z²)). Unstratified Newcombe combines the
+    // corresponding Wilson distances in quadrature (S154 pp.3190,3203).
+    const upper_zero = z * z / (10 + z * z);
+    const h = z / (2 * @sqrt(10 + z * z));
+    const lower = -0.5 - h;
+    const upper = -0.5 + @sqrt(upper_zero * upper_zero + h * h);
+    for ([_]Method{ .newcombe, .newcombe_mr }) |method| {
+        for ([_]risk.Column{ .first, .second }) |column| {
+            const result = (try commonDifference(a, &.{ .{ .cells = .{ 0, 0, 2, 3 } }, table }, method, .{ .column = column })).?;
+            defer result.deinit(a);
+            try std.testing.expectEqual(@as(usize, 1), result.used);
+            try std.testing.expectEqual(@as(f64, 0), result.weights[0]);
+            try std.testing.expectApproxEqAbs(if (column == .first) lower else -upper, result.limits.lower.?, 2e-12);
+            try std.testing.expectApproxEqAbs(if (column == .first) upper else -lower, result.limits.upper.?, 2e-12);
+        }
+    }
 }
