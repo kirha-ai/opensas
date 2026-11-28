@@ -1,0 +1,26 @@
+
+The SURVEYMEANS Procedure
+
+            Data Summary
+
+Number of Strata                   2
+Number of Clusters                 4
+Number of Observations             6
+
+
+   Class Level Information
+ 
+Variable      Levels    Values
+
+part               2    1 2  
+
+
+                                        Statistics
+ 
+                                                        Std Error
+Variable    Level               N            Mean         of Mean       95% CL for Mean
+------------------------------------------------------------------------------------------
+y                               6       13.500000        1.006231    9.17053921 17.8294608
+part        1                   3        0.500000        0.111803    0.01894880  0.9810512
+            2                   3        0.500000        0.111803    0.01894880  0.9810512
+------------------------------------------------------------------------------------------

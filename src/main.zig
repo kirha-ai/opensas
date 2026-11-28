@@ -3085,6 +3085,16 @@ fn runProc(a: std.mem.Allocator, listing_out: *std.ArrayList(u8), lib: *sas.exec
             try out.appendSlice(a, body.items);
             try g.emitFootnotes(a, out);
         }
+    } else if (eqi(proc, "surveymeans")) {
+        var body: std.ArrayList(u8) = .empty;
+        var survey_context = pcx;
+        survey_context.listing_titles = g; // titles repeat before every BY group
+        try sas.surveymeans.run(survey_context, &body, toks);
+        if (body.items.len > 0) {
+            try g.emitTitles(a, out);
+            try out.appendSlice(a, body.items);
+            try g.emitFootnotes(a, out);
+        }
     } else if (eqi(proc, "power")) {
         var body: std.ArrayList(u8) = .empty;
         try sas.power.run(pcx, &body, toks);
