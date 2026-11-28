@@ -1,0 +1,44 @@
+
+The SURVEYREG Procedure
+ 
+Regression Analysis for Dependent Variable y
+
+            Data Summary
+
+Number of Observations             6
+Mean of y                    4.83333
+Sum of y                    29.00000
+
+
+         Design Summary
+
+Number of Clusters             3
+
+
+      Fit Statistics
+
+R-Square            0.8949
+Root MSE            0.8395
+Denominator DF           2
+
+
+         Tests of Model Effects
+ 
+Effect       Num DF    F Value    Pr > F
+
+Model             1     112.47    0.0088
+Intercept         1      12.76    0.0702
+x                 1     112.47    0.0088
+
+NOTE: The denominator degrees of freedom for the F tests is 2.
+
+
+             Estimated Regression Coefficients
+ 
+                             Standard
+Parameter      Estimate         Error    t Value    Pr > |t|
+
+Intercept    0.73333333    0.20529554       3.57      0.0702
+x            1.17142857    0.11045700      10.61      0.0088
+
+NOTE: The degrees of freedom for the t tests is 2.

@@ -86,6 +86,60 @@ pub fn taylorMean(a: A, d: Design, y: []const f64) !Estimate {
     return .{ .mean = mean, .stderr = @sqrt(variance), .sum_weights = sum_w, .single_unit_stratum = single };
 }
 
+/// Linearized "meat" of the regression sandwich variance, SAS/STAT 15.4
+/// chapter 123 (Variance Estimation, Taylor series):
+///   G = sum_h (1 - f_h) n_h/(n_h - 1) sum_i (e_hi - ebar_h)(e_hi - ebar_h)',
+///   e_hi = sum over the observations of unit i of  w r x,
+/// returned row-major p x p. `x` holds the n design rows row-major (n*p),
+/// `r` the residuals. The caller applies the (n-1)/(n-p) adjustment and the
+/// generalized inverse of X'WX on both sides.
+pub fn taylorRegressionMeat(a: A, d: Design, x: []const f64, r: []const f64, p: usize) ![]f64 {
+    const unit = try a.alloc(f64, d.n_clusters * p);
+    defer a.free(unit);
+    const unit_stratum = try a.alloc(usize, d.n_clusters);
+    defer a.free(unit_stratum);
+    @memset(unit, 0);
+    for (r, d.weight, d.cluster, d.stratum, 0..) |res, w, c, h, k| {
+        for (0..p) |j| unit[c * p + j] += w * res * x[k * p + j];
+        unit_stratum[c] = h;
+    }
+    const count = try a.alloc(f64, d.n_strata);
+    defer a.free(count);
+    const mean = try a.alloc(f64, d.n_strata * p);
+    defer a.free(mean);
+    @memset(count, 0);
+    @memset(mean, 0);
+    for (unit_stratum, 0..) |h, c| {
+        count[h] += 1;
+        for (0..p) |j| mean[h * p + j] += unit[c * p + j];
+    }
+    for (count, 0..) |n, h| if (n > 0) for (0..p) |j| {
+        mean[h * p + j] /= n;
+    };
+    const g = try a.alloc(f64, p * p);
+    @memset(g, 0);
+    for (unit_stratum, 0..) |h, c| {
+        const n = count[h];
+        if (n < 2) continue;
+        const fpc = if (d.rate) |rt| 1 - rt[h] else 1;
+        const factor = fpc * n / (n - 1);
+        for (0..p) |i| for (0..p) |j| {
+            g[i * p + j] += factor * (unit[c * p + i] - mean[h * p + i]) * (unit[c * p + j] - mean[h * p + j]);
+        };
+    }
+    return g;
+}
+
+test "STAT-SURVEYREG-001 regression meat of an intercept-only design is the mean variance times sum(w)^2" {
+    const a = std.testing.allocator;
+    // Intercept only: e_hi = w (y - ybar); the mean's linearized variance
+    // uses e / sum(w), so G = V(mean) * sum(w)^2 = 0.45 * 50^2.
+    const d: Design = .{ .stratum = &.{ 0, 0, 0, 0, 0 }, .cluster = &.{ 0, 1, 2, 3, 4 }, .weight = &.{ 10, 10, 10, 10, 10 }, .n_strata = 1, .n_clusters = 5, .rate = &.{0.1} };
+    const g = try taylorRegressionMeat(a, d, &.{ 1, 1, 1, 1, 1 }, &.{ -2, -1, 0, 1, 2 }, 1);
+    defer a.free(g);
+    try std.testing.expectApproxEqAbs(@as(f64, 0.45 * 2500), g[0], 1e-9);
+}
+
 test "STAT-SURVEYMEANS-001 Taylor variance reduces to (1-f)s^2/n for a simple random sample" {
     const a = std.testing.allocator;
     // y = 1..5, N = 50: mean 3, s^2 = 2.5, V = 0.9 * 2.5 / 5 = 0.45.
