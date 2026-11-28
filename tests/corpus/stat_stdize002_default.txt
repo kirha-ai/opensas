@@ -1,0 +1,85 @@
+High School Scores Data
+Default METHOD
+
+Type=rural
+
+The STDIZE Procedure
+
+Location and Scale Measures
+ 
+Location = mean     Scale = standard deviation
+ 
+Name         Location           Scale           N
+
+total      167.050000       41.956713          20
+
+High School Scores Data
+Default METHOD
+
+Type=urban
+
+The STDIZE Procedure
+
+Location and Scale Measures
+ 
+Location = mean     Scale = standard deviation
+ 
+Name         Location           Scale           N
+
+total      153.300000       30.066768          20
+
+High School Scores Data
+After Removing Outlier, METHOD=STD
+
+Type=rural
+
+The STDIZE Procedure
+
+Location and Scale Measures
+ 
+Location = mean     Scale = standard deviation
+ 
+Name         Location           Scale           N
+
+total      167.050000       41.956713          20
+
+High School Scores Data
+After Removing Outlier, METHOD=STD
+
+Type=urban
+
+The STDIZE Procedure
+
+Location and Scale Measures
+ 
+Location = mean     Scale = standard deviation
+ 
+Name         Location           Scale           N
+
+total      158.000000       22.088207          19
+
+id   Type           total
+
+23   urban    -2.97005653
+
+The STDIZE Procedure
+
+Location and Scale Measures
+ 
+Location = mean     Scale = standard deviation
+ 
+Name        Location           Scale           N
+
+x           5.000000        2.138090           8
+y           8.000000        3.741657           6
+
+           x              y
+
+ -1.40312152    -1.33630621
+ -0.46770717              .
+ -0.46770717    -0.80178373
+ -0.46770717    -0.26726124
+  0.00000000     0.26726124
+  0.00000000              .
+  0.93541435     0.80178373
+  1.87082869     1.33630621

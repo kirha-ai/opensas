@@ -274,3 +274,43 @@ test "STAT-STDIZE-001 repeated declarations, NORM, MISSING=method, NOTRUNCATE an
     try e.run(&out, "proc stdize data=d out=w1 method=range; where grp = 1; var x; weight w; run;");
     try approx(@as(f64, 0.2), (try e.col("w1", "x"))[1], 1e-12);
 }
+
+test "STAT-STDIZE-002 default path: METHOD=STD location, scale, N and standardized values" {
+    var e = fresh();
+    defer e.arena.deinit();
+    try e.init();
+    const a = e.arena.allocator();
+    // Getting Started (pp.9449-9455), published High School Scores urban
+    // totals: Figure 115.3 reports mean 153.300000, std 30.066768, N 20;
+    // removing the outlier 64 gives Figure 115.7: 158.000000, 22.088207, 19.
+    const urban = [_]f64{ 192, 186, 64, 159, 133, 163, 130, 163, 189, 144, 154, 198, 150, 151, 152, 151, 127, 167, 170, 123 };
+    var obs: [urban.len]stdize.Obs = undefined;
+    for (urban, &obs) |v, *o| o.* = .{ .x = v, .f = 1, .w = 1 };
+    const s = try e.parse("proc stdize data=d; run;");
+    try expectEqual(stdize.Method.std, s.method);
+    const m = (try stdize.measures(a, s, &obs)).?;
+    try approx(@as(f64, 153.3), m.location, 1e-12);
+    try approx(@as(f64, 30.066768), m.scale, 5e-7);
+    try approx(@as(f64, 20), m.n, 0);
+    var kept: [urban.len - 1]stdize.Obs = undefined;
+    @memcpy(kept[0..2], obs[0..2]);
+    @memcpy(kept[2..], obs[3..]);
+    const m2 = (try stdize.measures(a, s, &kept)).?;
+    try approx(@as(f64, 158), m2.location, 1e-12);
+    try approx(@as(f64, 22.088207), m2.scale, 5e-7);
+    try approx(@as(f64, 19), m2.n, 0);
+
+    // Default run (no METHOD=) on the invented d, BY grp, VAR x:
+    // grp 1 x = 1,2,3,6 -> mean 3, CSS 14, std sqrt(14/3);
+    // grp 2 x = 10,10,10,20 -> mean 12.5, CSS 75, std 5 -> -0.5 and 1.5.
+    var out: std.ArrayList(u8) = .empty;
+    try e.run(&out, "proc stdize data=d out=o pstat; by grp; var x; run;");
+    const x = try e.col("o", "x");
+    try approx(-2.0 / @sqrt(14.0 / 3.0), x[0], 1e-14);
+    try approx(3.0 / @sqrt(14.0 / 3.0), x[3], 1e-14);
+    try approx(@as(f64, -0.5), x[4], 1e-14);
+    try approx(@as(f64, 1.5), x[7], 1e-14);
+    try expect(std.mem.indexOf(u8, out.items, "Location = mean     Scale = standard deviation") != null);
+    try expect(std.mem.indexOf(u8, out.items, "x          12.500000        5.000000           4\n") != null);
+    try expect(!e.diags.hasErrors());
+}
