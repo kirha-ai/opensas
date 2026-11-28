@@ -114,9 +114,15 @@ fn expectFail(source: []const u8, gap: bool, message: []const u8) !void {
 
 test "STAT-RMSTREG-001 invalid input is a user error" {
     try expectFail("proc rmstreg data=s tau=-1; model t*status(0)=age; run;", false, "The parameter value -1 is less than the minimum allowed value of 0.");
-    try expectFail("proc rmstreg data=s tau=0; model t*status(0)=age; run;", false, "TAU= must be positive");
-    try expectFail("proc rmstreg data=s alpha=1; model t*status(0)=age; run;", false, "ALPHA= must be between 0 and 1");
-    try expectFail("proc rmstreg data=s namelen=10; model t*status(0)=age; run;", false, "NAMELEN=");
+    try expectFail("proc rmstreg data=s tau=0; model t*status(0)=age; run;", false, "The TAU= value must be positive.");
+    // SAS 9.4 reference log texts (close-out batch).
+    try expectFail("proc rmstreg data=s alpha=1.5; model t*status(0)=age; run;", false, "The parameter value 1.5 is not within the required range of 0 and 1.");
+    try expectFail("proc rmstreg data=s; model t*status(0)=age / alpha=2; run;", false, "The parameter value 2 is not within the required range of 0 and 1.");
+    try expectFail("proc rmstreg data=s namelen=10; model t*status(0)=age; run;", false, "The parameter value 10 is not within the required range of 20 and 200.");
+    try expectFail("proc rmstreg data=s namelen=201; model t*status(0)=age; run;", false, "The parameter value 201 is not within the required range of 20 and 200.");
+    try expectFail("proc rmstreg data=s singular=2; model t*status(0)=age; run;", false, "The parameter value 2 is not within the required range of 0 and 1.");
+    try expectFail("proc rmstreg data=s; freq c; model t*status(0)=age; run;", false, "Variable c in list does not match type prescribed for this list.");
+    try expectFail("proc rmstreg data=s namelen=25.5; model t*status(0)=age; run;", false, "Expecting an integer constant.");
     try expectFail("proc rmstreg data=s; run;", false, "MODEL statement required");
     try expectFail("proc rmstreg data=s; model t*status(0)=nosuch; run;", false, "Variable nosuch not found.");
     try expectFail("proc rmstreg data=s; model c*status(0)=age; run;", false, "must be numeric");
@@ -124,7 +130,6 @@ test "STAT-RMSTREG-001 invalid input is a user error" {
     try expectFail("proc rmstreg data=s; weight f; model t*status(0)=age; run;", false, "invalid statement or token weight");
     try expectFail("proc rmstreg data=s bogus; model t*status(0)=age; run;", false, "invalid statement or token bogus");
     try expectFail("proc rmstreg data=nosuch; model t*status(0)=age; run;", false, "input dataset not found");
-    try expectFail("proc rmstreg data=s tau=2; by g; model t*status(0)=age / link=linear; where t > 100; run;", true, "without observations");
 }
 
 test "STAT-RMSTREG-001 valid but unimplemented features are loud gaps" {
@@ -215,4 +220,28 @@ test "STAT-RMSTREG-001 BY order is checked and an empty BY group is a user error
     // Every observation of the only group has a missing FREQ-or-better rule
     // failure: SAS 9.4 reports the documented ERROR (rc 1), not a gap.
     try expectFail("proc rmstreg data=s tau=2; where age = .; model t*status(0)=age / link=linear; run;", false, "No valid observations due to invalid or missing values in the response, explanatory, or frequency variable.");
+}
+
+test "STAT-RMSTREG-001 duplicate FREQ, ALPHA endpoints and the ALPHA=0 critical value" {
+    var env: Env = .{ .arena = std.heap.ArenaAllocator.init(std.testing.allocator) };
+    defer env.arena.deinit();
+    try env.init();
+    // SAS 9.4 reference: of two FREQ statements the first is used.
+    const d = try env.parse("proc rmstreg data=s; freq f; freq g; model t*status(0)=age; run;");
+    try expectEqual(@as(usize, 3), d.frequency.?);
+    const z0 = try env.parse("proc rmstreg data=s alpha=0; model t*status(0)=age; run;");
+    try expectEqual(@as(f64, 0), z0.alpha);
+    const z1 = try env.parse("proc rmstreg data=s; model t*status(0)=age / alpha=1; run;");
+    try expectEqual(@as(f64, 1), z1.alpha);
+    // probit(1 - 1e-15) = 7.941345 (hand: Mills ratio); SAS 9.4 reference
+    // half-width 4.5282 / SE 0.5702 = 7.941.
+    try approx(@as(f64, 7.941345), rmstreg.zCritical(0), 2e-5);
+    try approx(@as(f64, 0), rmstreg.zCritical(1), 1e-9);
+    try approx(@as(f64, 7.941345), rmstreg.zCritical(1e-16), 2e-5); // SAS: same as ALPHA=0
+    // SAS 9.4 reference ALPHA=1e-12: half-width 4.0659 / SE 0.5702 = 7.131;
+    // probit(1 - 5e-13) = 7.1305 (independent erfc bisection).
+    try approx(@as(f64, 7.1305), rmstreg.zCritical(1e-12), 2e-4);
+    const sg = try env.parse("proc rmstreg data=s singular=0; model t*status(0)=age; run;");
+    try expectEqual(@as(f64, 0), sg.singular);
+    try approx(@as(f64, 1.959964), rmstreg.zCritical(0.05), 1e-6);
 }

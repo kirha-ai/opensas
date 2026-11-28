@@ -66,6 +66,21 @@ fn oneOf(name: []const u8, list: []const []const u8) bool {
     for (list) |v| if (eq(name, v)) return true;
     return false;
 }
+/// SAS 9.4 reference log for an out-of-range ALPHA=, SINGULAR= or NAMELEN=.
+fn rangeError(cx: proc.ProcCtx, line: usize, x: f64, lo: f64, hi: f64) diag.Error {
+    return cx.diags.fail(error.ParseError, line, "The parameter value {s} is not within the required range of {d} and {d}.", .{ try format.bestNum(cx.arena, x), lo, hi });
+}
+/// ALPHA= (PROC or MODEL): SAS 9.4 accepts the closed range [0, 1]; ALPHA=0
+/// gives "100% Confidence" limits with z = probit(1 - 1e-15) (reference
+/// listing, 4 decimals); ALPHA=1 gives "0% Confidence Limits" equal to the
+/// estimate; ALPHA=1e-12 follows z = probit(1 - alpha/2) (7.13). Positive
+/// values below 2e-15 are clamped like 0 (ALPHA=1e-16 reference).
+fn alphaValue(cx: proc.ProcCtx, t: []const lex.Token, i: *usize) diag.Error!f64 {
+    const x = try number(cx, t, i);
+    const line = t[i.* - 1].line;
+    if (!(x >= 0 and x <= 1)) return rangeError(cx, line, x, 0, 1);
+    return x;
+}
 /// A signed numeric literal at `i.*`; advances past it.
 fn number(cx: proc.ProcCtx, t: []const lex.Token, i: *usize) diag.Error!f64 {
     var sign: f64 = 1;
@@ -119,25 +134,27 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
             i += 1;
         } else if (eq(word, "alpha") and valued) {
             i += 2;
-            const x = try number(cx, t, &i);
-            if (!(x > 0 and x < 1)) return cx.diags.fail(error.ParseError, t[i - 1].line, "PROC RMSTREG: ALPHA= must be between 0 and 1", .{});
-            s.alpha = x;
+            s.alpha = try alphaValue(cx, t, &i);
         } else if (eq(word, "tau") and valued) {
             i += 2;
             const x = try number(cx, t, &i);
-            // SAS 9.4 reference log for TAU=-1.
+            // SAS 9.4 reference logs for TAU=-1 and TAU=0.
             if (x < 0) return cx.diags.fail(error.ParseError, t[i - 1].line, "The parameter value {s} is less than the minimum allowed value of 0.", .{try format.bestNum(cx.arena, x)});
-            if (!(x > 0)) return cx.diags.fail(error.ParseError, t[i - 1].line, "PROC RMSTREG: TAU= must be positive", .{});
+            if (!(x > 0)) return cx.diags.fail(error.ParseError, t[i - 1].line, "The TAU= value must be positive.", .{});
             s.tau = x;
         } else if ((eq(word, "singular") or eq(word, "epsilon")) and valued) {
             i += 2;
             const x = try number(cx, t, &i);
-            if (!(x > 0 and x < 1)) return cx.diags.fail(error.ParseError, t[i - 1].line, "PROC RMSTREG: SINGULAR= must be between 0 and 1", .{});
+            if (!(x >= 0 and x <= 1)) return rangeError(cx, t[i - 1].line, x, 0, 1);
+            // SAS 9.4 reference: SINGULAR=0 fits normally; SINGULAR=1 makes
+            // the design singular (a gap of the fitting stage below).
             s.singular = x;
         } else if (eq(word, "namelen") and valued) {
             i += 2;
             const x = try number(cx, t, &i);
-            if (!(x >= 20 and x <= 200 and x == @trunc(x))) return cx.diags.fail(error.ParseError, t[i - 1].line, "PROC RMSTREG: NAMELEN= must be an integer between 20 and 200", .{});
+            if (!(x >= 20 and x <= 200)) return rangeError(cx, t[i - 1].line, x, 20, 200);
+            // SAS 9.4 reference log: ERROR 22-322.
+            if (x != @trunc(x)) return cx.diags.fail(error.ParseError, t[i - 1].line, "Expecting an integer constant.", .{});
             s.namelen = @intFromFloat(x);
         } else if (eq(word, "ithistory")) {
             return gap(cx, t[i].line, "ITHISTORY (iteration history and last gradient) is not implemented", .{});
@@ -178,8 +195,11 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
             model_seen = true;
         } else if (kw(t, i, "freq") or kw(t, i, "frequency")) {
             if (end != i + 2) return invalid(cx, t, i + 2);
-            if (s.frequency != null) return gap(cx, t[i].line, "duplicate FREQ statement policy is not verified", .{});
-            s.frequency = try numericColumn(cx, ds, t, i + 1, "FREQ");
+            // SAS 9.4 reference: of two FREQ statements the first is used,
+            // without a log message.
+            const c = try column(cx, ds, t, i + 1);
+            if (ds.columns.items[c].type != .num) return cx.diags.fail(error.ParseError, t[i + 1].line, "Variable {s} in list does not match type prescribed for this list.", .{t[i + 1].text});
+            if (s.frequency == null) s.frequency = c;
         } else if (kw(t, i, "by")) {
             // Only the last BY statement is used (p.8737).
             bys = .{};
@@ -262,9 +282,7 @@ fn model(cx: proc.ProcCtx, ds: *const Dataset, t: []const lex.Token, start: usiz
             i += 3;
         } else if (eq(word, "alpha") and valued) {
             i += 2;
-            const x = try number(cx, t, &i);
-            if (!(x > 0 and x < 1)) return cx.diags.fail(error.ParseError, t[i - 1].line, "PROC RMSTREG: ALPHA= must be between 0 and 1", .{});
-            s.alpha = x;
+            s.alpha = try alphaValue(cx, t, &i);
         } else if (eq(word, "converge") and valued) {
             i += 2;
             const x = try number(cx, t, &i);
@@ -501,6 +519,8 @@ pub fn chiProbability(x: f64, df: f64) f64 {
 }
 /// z with P(|Z| <= z) = 1 - alpha, from P(|Z| <= z) = P(1/2, z^2/2).
 pub fn zCritical(alpha: f64) f64 {
+    // SAS 9.4 references: ALPHA=0 and ALPHA=1e-16 both give 7.941.
+    if (alpha < 1e-11) return upperNormalQuantile(@max(alpha / 2, 1e-15));
     var lo: f64 = 0;
     var hi: f64 = 40;
     for (0..200) |_| {
@@ -555,7 +575,48 @@ fn infoTable(a: A, out: *Out, title: ?[]const u8, rows: []const [2][]const u8) !
     }
 }
 
+fn headerField(a: A, body: *Out, text: []const u8, width: usize) !void {
+    const lead = if (text.len == 0) 0 else 2 + (25 - text.len) / 2;
+    try body.appendNTimes(a, ' ', lead);
+    try body.appendSlice(a, text);
+    try body.appendNTimes(a, ' ', width - lead - text.len);
+}
+
+/// SAS 9.4 reference log for an ascending single-variable BY out of order:
+/// "Data set WORK.D is not sorted in ascending sequence. The current BY group
+/// has g = 2 and the next BY group has g = 0."
+fn byOrderError(cx: proc.ProcCtx, ds: *const Dataset, s: Spec, cur: []const Value, next: []const Value, k: usize) diag.Error {
+    const a = cx.arena;
+    const dir: []const u8 = if (s.by_desc[k]) "descending" else "ascending";
+    // SAS 9.4 reference (BY x g, g out of order): only the variable that
+    // breaks the order is named.
+    const c = s.by_cols[k];
+    const info = ds.columns.items[c];
+    const fmtd = struct {
+        fn text(al: A, col: anytype, v: Value) ![]const u8 {
+            const raw = if (col.format) |f| try format.apply(al, v, f) else try proc.cellText(al, v);
+            return std.mem.trim(u8, raw, " ");
+        }
+    };
+    return cx.diags.fail(error.ParseError, 0, "Data set {s} is not sorted in {s} sequence. The current BY group has {s} = {s} and the next BY group has {s} = {s}.", .{ s.data_name, dir, info.name, try fmtd.text(a, info, cur[c]), info.name, try fmtd.text(a, info, next[c]) });
+}
+
 const Group = struct { sel: Selected, rep: ?[]const Value };
+
+/// z with upper-tail probability q (tiny q): bisection on the asymptotic
+/// Mills-ratio series Q(z) = phi(z)/z (1 - 1/z^2 + 3/z^4 - 15/z^6 + 105/z^8),
+/// accurate to ~1e-6 relative for z > 7.
+fn upperNormalQuantile(q: f64) f64 {
+    var lo: f64 = 7;
+    var hi: f64 = 40;
+    for (0..200) |_| {
+        const z = (lo + hi) / 2;
+        const r = 1 / (z * z);
+        const tail = @exp(-z * z / 2) / (z * @sqrt(2 * std.math.pi)) * (1 - r + 3 * r * r - 15 * r * r * r + 105 * r * r * r * r);
+        if (tail > q) lo = z else hi = z;
+    }
+    return (lo + hi) / 2;
+}
 
 /// Per-BY-group fit and listing; nothing is written until every group of
 /// the step has been checked against the execution boundary.
@@ -566,13 +627,29 @@ pub fn run(cx: proc.ProcCtx, out: *Out, t: []const lex.Token) diag.Error!void {
     if (cx.capture) |c| for ([_][]const u8{ "ModelInfo", "NObs", "ConvergenceStatus", "Type3Test", "ParameterEstimates" }) |tbl| {
         if (c.wants(tbl)) return gap(cx, 0, "ODS OUTPUT {s}= is not implemented", .{tbl});
     };
-    const slices = try by.checkedSlices(a, ds, s.by_cols, s.by_desc, s.notsorted, cx.diags);
-    if (slices.len == 0 or (slices.len == 1 and slices[0].rows.len == 0)) return gap(cx, 0, "the result for an input data set without observations is not verified", .{});
+    // The BY order is checked group by group below: the SAS 9.4 reference
+    // keeps the pages of the groups before an out-of-order boundary.
+    const slices = try by.checkedSlices(a, ds, s.by_cols, s.by_desc, true, cx.diags);
+    // SAS 9.4 reference: an input data set without observations is a NOTE,
+    // no listing, and the step continues with rc 0.
+    if (slices.len == 0 or (slices.len == 1 and slices[0].rows.len == 0)) {
+        // SAS 9.4 reference log for a WHERE statement that selects nothing.
+        if (s.input.srcobs != null) return cx.diags.note(0, "No observations were selected from data set {s}.", .{s.data_name});
+        return cx.diags.note(0, "No observations in data set {s}.", .{s.data_name});
+    }
     const p = s.covariates.len + @intFromBool(!s.noint);
     if (p == 0) return gap(cx, 0, "a model without parameters (NOINT and no effects) is not verified", .{});
     const z = zCritical(s.alpha);
     var body: Out = .empty;
-    for (slices) |slice| {
+    for (slices, 0..) |slice, gi| {
+        // SAS 9.4 reference: the "current" group before an out-of-order
+        // boundary is not analysed; the groups before it keep their pages.
+        if (!s.notsorted and gi + 1 < slices.len) {
+            if (proc.byOrderViolation(slices[gi + 1].rep.?, slice.rep.?, s.by_cols, s.by_desc, ds.sortseq_linguistic orelse @import("../io.zig").global_sortseq_linguistic)) |k| {
+                try out.appendSlice(a, body.items);
+                return byOrderError(cx, ds, s, slice.rep.?, slices[gi + 1].rep.?, k);
+            }
+        }
         const sel = try select(a, s, slice.rows);
         if (sel.units.len == 0) {
             // SAS 9.4 reference: the groups before keep their pages.
@@ -585,6 +662,7 @@ pub fn run(cx: proc.ProcCtx, out: *Out, t: []const lex.Token) diag.Error!void {
         var events: f64 = 0;
         var used: f64 = 0;
         var last_event: ?f64 = null;
+        var first_event: ?f64 = null;
         var largest: f64 = 0;
         for (sel.units) |u| {
             used += u.freq;
@@ -592,11 +670,17 @@ pub fn run(cx: proc.ProcCtx, out: *Out, t: []const lex.Token) diag.Error!void {
             if (u.event) {
                 events += u.freq;
                 last_event = u.time;
+                if (first_event == null) first_event = u.time;
             }
         }
-        const tau = s.tau orelse last_event orelse return gap(cx, 0, "the default TAU= without any event time is not verified", .{});
+        // Without any event time the SAS 9.4 reference uses the largest
+        // observed time (all-censored data: "Tau Value 6.517").
+        const tau = s.tau orelse last_event orelse largest;
         if (!(tau > 0)) return gap(cx, 0, "a nonpositive default TAU= (largest event time) is not verified", .{});
         if (s.tau != null and tau > largest) try cx.diags.warn(0, "The specified TAU= value is greater than the largest observed time.", .{});
+        // SAS 9.4 reference log (the fit that follows is degenerate, which
+        // the estimation stage below reports as a gap).
+        if (s.tau != null and first_event != null and tau < first_event.?) try cx.diags.warn(0, "The specified TAU= value is less than the smallest event time.", .{});
         const y = try pseudovalues(a, sel.units, tau);
         const result = fit(a, sel.units, y, p, !s.noint, s.link, s.converge, s.maxiter, s.singular) catch |e| switch (e) {
             error.OutOfMemory => return error.OutOfMemory,
@@ -695,11 +779,28 @@ pub fn run(cx: proc.ProcCtx, out: *Out, t: []const lex.Token) diag.Error!void {
         const level = try format.bestNum(a, 100 * (1 - s.alpha));
         try body.appendNTimes(a, ' ', pw + 22);
         try body.appendSlice(a, "Standard");
-        const conf = try std.fmt.allocPrint(a, "{s}% Confidence", .{level});
-        try padRight(a, &body, conf, 21);
-        try body.appendSlice(a, "          Chi-\n");
+        // SAS 9.4 references (ALPHA= 0.05, 0, 1, 1e-12, 0.00001234): the
+        // label "<level>% Confidence Limits" is word-wrapped greedily at 20
+        // columns onto the two header lines (one line: the second), each
+        // line placed at 2 + floor((25 - len) / 2) after "Standard"/"Error".
+        const words = [_][]const u8{ try std.fmt.allocPrint(a, "{s}%", .{level}), "Confidence", "Limits" };
+        var lines = [2]Out{ .empty, .empty };
+        var li: usize = 0;
+        for (words) |w| {
+            if (lines[li].items.len > 0 and lines[li].items.len + 1 + w.len > 20) {
+                if (li == 1) return gap(cx, 0, "confidence label for ALPHA={s} wider than the reference header is not verified", .{try format.bestNum(a, s.alpha)});
+                li = 1;
+            }
+            if (lines[li].items.len > 0) try lines[li].append(a, ' ');
+            try lines[li].appendSlice(a, w);
+        }
+        const head = if (li == 0) [2][]const u8{ "", lines[0].items } else [2][]const u8{ lines[0].items, lines[1].items };
+        try headerField(a, &body, head[0], 31);
+        try body.appendSlice(a, "Chi-\n");
         try padLeft(a, &body, "Parameter", pw);
-        try body.appendSlice(a, "    DF    Estimate       Error           Limits            Square    Pr > ChiSq\n\n");
+        try body.appendSlice(a, "    DF    Estimate       Error");
+        try headerField(a, &body, head[1], 29);
+        try body.appendSlice(a, "Square    Pr > ChiSq\n\n");
         for (0..p) |j| {
             const b = result.beta[j];
             const chi = b * b / result.cov[j * p + j];
