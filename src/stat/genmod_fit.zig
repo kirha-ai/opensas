@@ -210,6 +210,32 @@ pub fn fitNormal(a: A, x: []const f64, y: []const f64, f: []const f64, p: usize,
     };
 }
 
+/// WEIGHT statement (p.3567): the dispersion is divided by w_i, so the fit
+/// minimizes sum f w (y-mu)^2 while n stays the frequency sum. Verified against
+/// SAS 9.4: sigma^2 = sum f w r^2 / sum f, and the log likelihood gains
+/// +0.5 sum f log w_i.
+pub fn fitNormalWeighted(a: A, x: []const f64, y: []const f64, f: []const f64, w: ?[]const f64, p: usize, link: Link) Error!Fit {
+    const weights = w orelse return fitNormal(a, x, y, f, p, link);
+    std.debug.assert(weights.len == f.len);
+    const fw = try a.alloc(f64, f.len);
+    var n: f64 = 0;
+    var log_w: f64 = 0;
+    for (fw, f, weights) |*v, fi, wi| {
+        v.* = fi * wi;
+        n += fi;
+        log_w += fi * @log(wi);
+    }
+    var r = try fitNormal(a, x, y, fw, p, link);
+    const old_variance = r.scale * r.scale;
+    const variance = r.deviance / n;
+    for (r.cov) |*c| c.* *= variance / old_variance;
+    r.n = n;
+    r.scale = @sqrt(variance);
+    r.scale_se = r.scale / @sqrt(2 * n);
+    r.loglik = -0.5 * n * (@log(2 * std.math.pi * variance) + 1) + 0.5 * log_w;
+    return r;
+}
+
 test {
     _ = @import("genmod_fit_tests.zig");
 }

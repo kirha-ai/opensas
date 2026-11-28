@@ -249,10 +249,10 @@ test "STAT-GENMOD-001 invalid declarations are user errors and valid unimplement
         .{ .source = "proc genmod; model y = x; weight nothere; run;", .rc = 1 },
         .{ .source = "proc genmod; model y = x; by nothere; run;", .rc = 1 },
         .{ .source = "proc genmod; model y = x; by descending g; run;", .rc = 1 }, // g ascends: not sorted descending
-        .{ .source = "proc genmod; model y = x; strata g; run;", .rc = 1 }, // STRATA needs EXACT
         .{ .source = "proc genmod; model y = x; exact x; strata; run;", .rc = 1 },
         .{ .source = "proc genmod; model y = x; exact x; strata g / check=some; run;", .rc = 1 },
-        .{ .source = "proc genmod; model y = x; exact x; strata g; output out=o; run;", .rc = 1 }, // not available with STRATA
+        .{ .source = "proc genmod; model y = x; exact x; strata g; repeated subject=g; run;", .rc = 1 }, // SAS: not allowed with exact analyses
+        .{ .source = "proc genmod; exact x; model y = x; run;", .rc = 1 }, // SAS: EXACT must follow MODEL
         .{ .source = "proc genmod; model y = x; frobnicate x; run;", .rc = 1 },
         // rc 2: valid SAS that is not implemented, or an undocumented repeat.
         .{ .source = "proc genmod; model y = x / dist=poisson; run;", .rc = 2 },
@@ -260,8 +260,6 @@ test "STAT-GENMOD-001 invalid declarations are user errors and valid unimplement
         .{ .source = "proc genmod; model y = x / dist=normal link=log type3; run;", .rc = 2 },
         .{ .source = "proc genmod; model y = x / offset=f; run;", .rc = 2 },
         .{ .source = "proc genmod; class c; model y = x c; run;", .rc = 2 },
-        .{ .source = "proc genmod; model y = x; freq f; run;", .rc = 2 },
-        .{ .source = "proc genmod; model y = x; weight w; run;", .rc = 2 },
         .{ .source = "proc genmod; model y/f = x; run;", .rc = 2 },
         .{ .source = "proc genmod; model y = x x; run;", .rc = 2 },
         .{ .source = "proc genmod; model y = g; by g; run;", .rc = 2 }, // constant regressor within a BY group
@@ -273,6 +271,8 @@ test "STAT-GENMOD-001 invalid declarations are user errors and valid unimplement
         .{ .source = "proc genmod plots=all; model y = x; run;", .rc = 2 },
         .{ .source = "proc genmod exactonly; model y = x; exact x; run;", .rc = 2 },
         .{ .source = "proc genmod; model y = x; exact x; strata g; run;", .rc = 2 },
+        .{ .source = "proc genmod; model y = x; exact x; strata g; output out=o pred=p; run;", .rc = 2 }, // SAS runs it (NOTE: no effect on exact analyses); exact is STAT-GENMOD-010
+        .{ .source = "proc genmod; model y = x; exact x; strata g; estimate 'a' x 1; run;", .rc = 2 },
         .{ .source = "proc genmod; class c; model y = x*c; run;", .rc = 2 },
         .{ .source = "proc genmod; class c(ref='a'); model y = x; run;", .rc = 2 },
         .{ .source = "proc genmod; class c / param=ref; model y = x; run;", .rc = 2 },
@@ -280,11 +280,17 @@ test "STAT-GENMOD-001 invalid declarations are user errors and valid unimplement
         .{ .source = "proc genmod; model y = x; repeated subject=g; run;", .rc = 2 },
         .{ .source = "proc genmod; model y = x; bayes; run;", .rc = 2 },
         .{ .source = "proc genmod order=data order=freq; model y = x; run;", .rc = 2 },
-        .{ .source = "proc genmod desc descending; model y = x; run;", .rc = 2 },
-        .{ .source = "proc genmod; model y = x; model y = x; run;", .rc = 2 },
-        .{ .source = "proc genmod; model y = x; freq f; freq f; run;", .rc = 2 },
-        .{ .source = "proc genmod; model y = x; weight w; scwgt w; run;", .rc = 2 },
         .{ .source = "proc genmod; model y = x / dist=normal d=poisson; run;", .rc = 2 },
+        // STAT-GENMOD-001 close-out: still-unverified boundaries stay gaps.
+        .{ .source = "proc genmod namelen=30 namelen=40; model y = x; run;", .rc = 2 },
+        .{ .source = "proc genmod exactonly exactonly; model y = x; exact x; run;", .rc = 2 }, // repeat is harmless; exact analysis is STAT-GENMOD-010
+        .{ .source = "proc genmod trace; model y = x; run;", .rc = 2 },
+        .{ .source = "proc genmod; model y = x; freq f; output out=o pred=p; run;", .rc = 2 },
+        .{ .source = "proc genmod; model y = x; weight w; output out=o pred=p; run;", .rc = 2 },
+        .{ .source = "proc genmod data=sample(obs=0); model y = x; run;", .rc = 2 }, // emptied by OBS=: not verified
+        .{ .source = "proc genmod data=sample; by g; model y = x; where y = .; run;", .rc = 1 }, // SAS: ERROR for every BY group, nothing printed
+        // Verified SAS 9.4 user errors.
+        .{ .source = "proc genmod data=sample; model y = x; where y = .; run;", .rc = 1 }, // no valid observations
     };
     for (cases) |case| {
         diag.resetGap();
@@ -337,4 +343,144 @@ test "STAT-GENMOD-002 default Normal step runs, prints every table once and repo
             return err;
         };
     }
+}
+
+const fit = @import("genmod_fit.zig");
+
+fn runCase(a: A, lib: *Library, source: []const u8, d: *diag.Diagnostics, output: *std.ArrayList(u8)) !u8 {
+    diag.resetGap();
+    defer diag.resetGap();
+    genmod.run(.{ .arena = a, .lib = lib, .diags = d }, output, try lex.tokenize(a, source, d)) catch |err| switch (err) {
+        error.ParseError => {},
+        else => return err,
+    };
+    return diag.exitCode(diag.gapHit(), d.hasErrors());
+}
+
+fn logHas(d: *const diag.Diagnostics, severity: anytype, text: []const u8) bool {
+    for (d.list.items) |m| if (m.severity == severity and std.mem.eql(u8, m.message, text)) return true;
+    return false;
+}
+
+// Every rule below was observed in SAS 9.4 (SAS/STAT 15.4) on 2026-11-28 for
+// the STAT-GENMOD-001 close-out; tests/corpus/stat_genmod001_freq_weight_missing
+// holds the matching SAS listings.
+test "STAT-GENMOD-001 verified repeated declarations, STRATA without EXACT, empty and no-valid inputs" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var lib = Library.init(a);
+    _ = try fixture(a, &lib, "sample", &sample);
+    _ = try fixture(a, &lib, "none", &.{});
+    const Case = struct { source: []const u8, rc: u8, severity: diag.Severity, message: []const u8, listing: bool };
+    const cases = [_]Case{
+        .{ .source = "proc genmod data=sample; model y = x; model y = g; run;", .rc = 0, .severity = .warning, .message = "Only the last MODEL statement is used.", .listing = true },
+        .{ .source = "proc genmod data=sample data=none; model y = x; run;", .rc = 0, .severity = .warning, .message = "Ignoring second data set reference.", .listing = true },
+        .{ .source = "proc genmod data=sample; strata g; model y = x; run;", .rc = 0, .severity = .warning, .message = "The STRATA statement is valid only for an exact analysis specified with an EXACT statement. The statement is ignored.", .listing = true },
+        .{ .source = "proc genmod data=sample desc descending; model y = x; run;", .rc = 0, .severity = .note, .message = "The DESCENDING option applies only to the multinomial distribution with ordinal response.", .listing = true },
+        .{ .source = "proc genmod data=none; model y = x; run;", .rc = 0, .severity = .note, .message = "No observations in data set WORK.NONE.", .listing = false },
+        .{ .source = "proc genmod data=sample; where x > 99; model y = x; run;", .rc = 0, .severity = .note, .message = "No observations were selected from data set WORK.SAMPLE.", .listing = false },
+        .{ .source = "proc genmod data=sample(where=(x > 99)); model y = x; run;", .rc = 0, .severity = .note, .message = "No observations were selected from data set WORK.SAMPLE.", .listing = false },
+        .{ .source = "proc genmod data=sample; model y = x; class c; run;", .rc = 1, .severity = .err, .message = "CLASS statement must precede the MODEL statement.", .listing = false },
+        .{ .source = "proc genmod data=sample noprint; model y = x; run;", .rc = 1, .severity = .err, .message = "ERROR 22-322: Syntax error, expecting one of the following: ;, (, DATA, DESC, DESCEND, DESCENDING, EXACTONLY, NAMELEN, ORDER, PLOT, PLOTS, RORDER, TRACE.", .listing = false },
+        .{ .source = "proc genmod data=sample; exact x; model y = x; run;", .rc = 1, .severity = .err, .message = "The EXACT statement must follow a MODEL statement.", .listing = false },
+        .{ .source = "proc genmod data=sample; model y = x; exact x; strata g; repeated subject=g; run;", .rc = 1, .severity = .err, .message = "The following statements are not allowed with exact analyses:REPEATED.", .listing = false },
+        .{ .source = "proc genmod data=sample; model y = x; where y = .; run;", .rc = 1, .severity = .err, .message = "No valid observations due to invalid or missing values in the response, explanatory, offset, frequency, or weight variable.", .listing = false },
+    };
+    for (cases) |case| {
+        var d = diag.Diagnostics.init(a);
+        var output: std.ArrayList(u8) = .empty;
+        const rc = try runCase(a, &lib, case.source, &d, &output);
+        expectEqual(case.rc, rc) catch |err| {
+            std.debug.print("unexpected exit class for: {s}\n", .{case.source});
+            return err;
+        };
+        expect(logHas(&d, case.severity, case.message)) catch |err| {
+            std.debug.print("missing log line for: {s}\n", .{case.source});
+            return err;
+        };
+        try expectEqual(case.listing, output.items.len > 0);
+    }
+
+    // A BY group with no valid observation: ERROR + BY note, the other group prints (exit 1).
+    {
+        var d = diag.Diagnostics.init(a);
+        var output: std.ArrayList(u8) = .empty;
+        var rows = sample;
+        rows[9].y = nan;
+        rows[10].y = nan;
+        _ = try fixture(a, &lib, "bym", &rows);
+        try expectEqual(@as(u8, 1), try runCase(a, &lib, "proc genmod data=bym; by g; model y = x; run;", &d, &output));
+        try expect(logHas(&d, .err, "No valid observations due to invalid or missing values in the response, explanatory, offset, frequency, or weight variable."));
+        try expect(logHas(&d, .note, "The above message was for the following BY group:\n      g=2"));
+        try expectEqual(@as(usize, 1), std.mem.count(u8, output.items, "The GENMOD Procedure"));
+        try expect(std.mem.indexOf(u8, output.items, "g=1") != null);
+    }
+    // Repeated FREQ / WEIGHT: the first statement is used.
+    var e: Env = .{ .arena = std.heap.ArenaAllocator.init(std.testing.allocator) };
+    defer e.arena.deinit();
+    try e.init();
+    const fw = try e.parse("proc genmod; freq f; freq w; weight w; scwgt f; model y = x; run;");
+    try expectEqual(@as(?usize, 4), fw.frequency);
+    try expectEqual(@as(?usize, 5), fw.weight);
+    // Repeated DIST=/LINK=: the last value is used.
+    const dl = try e.parse("proc genmod; model y = x / dist=poisson d=normal link=log link=identity; run;");
+    try std.testing.expectEqualStrings("normal", dl.dist.?);
+    try std.testing.expectEqualStrings("identity", dl.link.?);
+    // Repeated MODEL: the last one is fitted, but rows missing on a variable
+    // of an earlier MODEL statement are still dropped (row 3 misses x).
+    const mm = try e.parse("proc genmod; model y = x; model y = g; run;");
+    try std.testing.expectEqualSlices(usize, &.{0}, mm.effects);
+    const sel = try genmod.prepare(e.cx(), mm, e.ds.rows.items[0..9]);
+    try expectEqual(@as(usize, 7), sel.used);
+    try expectEqual(@as(usize, 2), sel.missing);
+    // STRATA without EXACT is ignored: its variable no longer selects rows.
+    try expectEqual(@as(usize, 0), (try e.parse("proc genmod; strata c; model y = x; run;")).strata.len);
+    // FREQ and WEIGHT together: an invalid-weight row is not in Sum of
+    // Frequencies Read (rows 7 and 8: 18 -> 16 in the SAS listing; here 9 - 2).
+    const both = try genmod.prepare(e.cx(), try e.parse("proc genmod; model y = x; freq f; weight w; run;"), e.ds.rows.items[0..9]);
+    try expectEqual(@as(f64, 6), both.frequency_read); // 2+1+1+1+1+0+0 (rows 7, 8 excluded)
+}
+
+test "STAT-GENMOD-001 FREQ and WEIGHT Normal fits match the SAS listings" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    // Used rows of the corpus fixture (x, y, f, w), SAS 9.4 listing values.
+    const xs = [_]f64{ 0, 0, 0, 1, 1, 1, 2, 2, 3, 3, 4 };
+    const ys = [_]f64{ 5, 7, 9, 7, 10, 8, 11, 9, 16, 13, 24 };
+    const ws = [_]f64{ 1, 0.5, 2, 1, 1.5, 1, 1, 3, 1, 1, 1 };
+    var x: [24]f64 = undefined;
+    // WEIGHT w (FREQ absent): the 12 used rows are the 11 above plus (3, 14, w 1).
+    const wx = [_]f64{ 0, 0, 0, 1, 1, 1, 2, 2, 3, 3, 3, 4 };
+    const wy = [_]f64{ 5, 7, 9, 7, 10, 8, 11, 9, 16, 13, 14, 24 };
+    const ww = [_]f64{ 1, 0.5, 2, 1, 1.5, 1, 1, 3, 1, 1, 1, 1 };
+    const ones = [_]f64{1} ** 12;
+    for (wx, 0..) |v, i| {
+        x[2 * i] = 1;
+        x[2 * i + 1] = v;
+    }
+    const r = try fit.fitNormalWeighted(a, &x, &wy, &ones, &ww, 2, .identity);
+    const tol = 5e-5;
+    try std.testing.expectApproxEqAbs(@as(f64, 5.8836), r.beta[0], tol);
+    try std.testing.expectApproxEqAbs(@as(f64, 2.9896), r.beta[1], tol);
+    try std.testing.expectApproxEqAbs(@as(f64, 1.2159), @sqrt(r.cov[0]), tol);
+    try std.testing.expectApproxEqAbs(@as(f64, 2.8245), r.scale, tol);
+    try std.testing.expectApproxEqAbs(@as(f64, 0.5765), r.scale_se, tol);
+    try std.testing.expectApproxEqAbs(@as(f64, 95.7309), r.deviance, tol);
+    try std.testing.expectApproxEqAbs(@as(f64, -28.7350), r.loglik, tol);
+    try expectEqual(@as(f64, 12), r.n);
+    // FREQ and WEIGHT together: 10 used rows, n = sum f = 14 (SAS: DF 12, LL -27.6235).
+    const bf = [_]f64{ 1, 2, 1, 3, 1, 1, 2, 1, 1, 1 };
+    for (xs[0..10], 0..) |v, i| {
+        x[2 * i] = 1;
+        x[2 * i + 1] = v;
+    }
+    const rb = try fit.fitNormalWeighted(a, x[0..20], ys[0..10], &bf, ws[0..10], 2, .identity);
+    try expectEqual(@as(f64, 14), rb.n);
+    try std.testing.expectApproxEqAbs(@as(f64, 44.9393), rb.deviance, tol);
+    try std.testing.expectApproxEqAbs(@as(f64, -27.6235), rb.loglik, tol);
+    // Without WEIGHT the weighted entry point is the plain fit.
+    const plain = try fit.fitNormalWeighted(a, x[0..20], ys[0..10], &bf, null, 2, .identity);
+    try std.testing.expectApproxEqAbs((try fit.fitNormal(a, x[0..20], ys[0..10], &bf, 2, .identity)).loglik, plain.loglik, 1e-12);
 }

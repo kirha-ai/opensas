@@ -10,8 +10,12 @@
 //! effects and LRCI/WALDCI (genmod_logit.zig, kernel genmod_binomial.zig) and
 //! the MODEL option table (unknown option: user error; documented: gap).
 //!
-//! ponytail: every other valid step (other DIST=/LINK=, CLASS designs, FREQ,
-//! WEIGHT, MODEL options, unfinished OUTPUT keywords and all later statements) still ends in a
+//! STAT-GENMOD-001 close-out: FREQ and WEIGHT in the Normal fit, the
+//! "Missing Values" line, and the SAS 9.4 rules for repeated declarations,
+//! STRATA without EXACT and empty / no-valid inputs (verified against SAS).
+//!
+//! ponytail: every other valid step (other DIST=/LINK=, CLASS designs, FREQ/WEIGHT
+//! with OUTPUT or the binomial model, MODEL options, unfinished OUTPUT keywords and all later statements) still ends in a
 //! D-009 gap (exit 2) with NOTHING printed, so a GENMOD step can never
 //! silently succeed. `parse` and `prepare` are the parameter object and
 //! selected-observation interface later tickets build on.
@@ -29,6 +33,8 @@ const fit = @import("genmod_fit.zig");
 const output = @import("genmod_output.zig");
 const logit = @import("genmod_logit.zig");
 const chiTail = @import("logistic_fit.zig").chiTail;
+const format = @import("../format.zig");
+const io = @import("../io.zig");
 const A = std.mem.Allocator;
 const Out = std.ArrayList(u8);
 const eq = std.ascii.eqlIgnoreCase;
@@ -40,6 +46,9 @@ pub const Spec = struct {
     input: proc.ProcInput,
     /// Input data set name as written (or the last data set), for Model Information.
     data_name: []const u8 = "",
+    /// Data set options on DATA= (where they may filter rows) and a WHERE statement.
+    data_options: bool = false,
+    where_statement: bool = false,
     // PROC statement (p.3509): defaults are the documented ones.
     descending: bool = false,
     exact_only: bool = false,
@@ -65,6 +74,9 @@ pub const Spec = struct {
     strata_nosummary: bool = false,
     strata_info: bool = false,
     exact: bool = false,
+    /// Variables of earlier (ignored) MODEL statements: SAS 9.4 still drops
+    /// observations missing on them (verified, STAT-GENMOD-001 close-out).
+    earlier_model: []const usize = &.{},
     /// Statements owned by later GENMOD tickets, by name, in source order.
     later: []const []const u8 = &.{},
     /// OUTPUT statement (p.3555): OUT= member and keyword=name requests in source order.
@@ -92,8 +104,6 @@ pub const Selection = struct {
 };
 
 const later_statements = [_][]const u8{ "assess", "assessment", "bayes", "code", "contrast", "deviance", "effectplot", "estimate", "exactoptions", "fwdlink", "invlink", "lsmeans", "lsmestimate", "repeated", "slice", "store", "variance", "zeromodel" };
-/// p.3566: statements "not available with a STRATA statement".
-const strata_conflicts = [_][]const u8{ "assess", "assessment", "bayes", "contrast", "effectplot", "estimate", "lsmeans", "lsmestimate", "output", "repeated", "slice", "store" };
 
 fn oneOf(name: []const u8, list: []const []const u8) bool {
     for (list) |v| if (eq(name, v)) return true;
@@ -190,8 +200,18 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
         if (!at(t, i, .name)) return invalid(cx, t, i);
         const option = try std.ascii.allocLowerString(a, t[i].text);
         const canonical: []const u8 = if (eq(option, "descend") or eq(option, "desc")) "descending" else option;
-        // SAS documents no rule for a repeated PROC option; do not guess one.
-        if ((try seen.getOrPut(a, canonical)).found_existing) return proc.failGap(cx.diags, t[i].line, "PROC GENMOD: repeated PROC statement option {s} is not verified", .{t[i].text});
+        // SAS documents no rule for a repeated PROC option. Verified against
+        // SAS 9.4 (STAT-GENMOD-001 close-out): a second DATA= is ignored with a
+        // WARNING and a repeated DESCENDING is harmless; any other repeat stays a gap.
+        const repeated = (try seen.getOrPut(a, canonical)).found_existing;
+        if (repeated and eq(canonical, "data") and at(t, i + 1, .eq) and at(t, i + 2, .name)) {
+            try cx.diags.warn(t[i].line, "Ignoring second data set reference.", .{});
+            i += 3;
+            if (at(t, i, .dot) and at(t, i + 1, .name)) i += 2;
+            if (at(t, i, .lparen)) i = proc.skipParen(t, i);
+            continue;
+        }
+        if (repeated and !eq(canonical, "descending") and !eq(canonical, "exactonly")) return proc.failGap(cx.diags, t[i].line, "PROC GENMOD: repeated PROC statement option {s} is not verified", .{t[i].text});
         if (eq(canonical, "data") and at(t, i + 1, .eq)) {
             i += 2;
             const first = i;
@@ -204,7 +224,16 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
                 i += 2;
                 qualified = first;
             }
-            if (at(t, i, .lparen)) i = proc.skipParen(t, i);
+            if (at(t, i, .lparen)) {
+                const close = proc.skipParen(t, i);
+                // Only a WHERE= option is verified to give "No observations were
+                // selected"; OBS=/FIRSTOBS= emptying stays a gap.
+                for (t[i..close]) |tok| if (tok.tag == .name) {
+                    if (eq(tok.text, "obs") or eq(tok.text, "firstobs")) s.data_options = true;
+                    if (eq(tok.text, "where")) s.where_statement = true;
+                };
+                i = close;
+            }
         } else if (eq(canonical, "descending")) {
             s.descending = true;
             i += 1;
@@ -220,9 +249,18 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
             const value = try orderValue(cx, t, i + 2);
             if (eq(canonical, "order")) s.order = value else s.rorder = value;
             i += 3;
-        } else if (eq(canonical, "plots")) {
+        } else if (eq(canonical, "plots") or eq(canonical, "plot")) {
             return proc.failGap(cx.diags, t[i].line, "PROC GENMOD: PLOTS is not implemented (STAT-GENMOD-020)", .{});
-        } else return invalid(cx, t, i); // includes NOPRINT, documented as unavailable (p.3514)
+        } else if (eq(canonical, "trace")) {
+            return proc.failGap(cx.diags, t[i].line, "PROC GENMOD: the undocumented TRACE option is not implemented", .{});
+        } else if (!at(t, i + 1, .eq) or eq(canonical, "data") or eq(canonical, "namelen") or eq(canonical, "order") or eq(canonical, "rorder")) {
+            // Unknown option names (NOPRINT included, p.3514): SAS 9.4's own
+            // syntax errors (verified). Malformed known options stay generic.
+            if (eq(canonical, "data") or eq(canonical, "namelen") or eq(canonical, "order") or eq(canonical, "rorder")) return invalid(cx, t, i);
+            try cx.diags.numberedError("22-322", "Syntax error, expecting one of the following: ;, (, DATA, DESC, DESCEND, DESCENDING, EXACTONLY, NAMELEN, ORDER, PLOT, PLOTS, RORDER, TRACE.");
+            try cx.diags.numberedError("202-322", "The option or parameter is not recognized and will be ignored.");
+            return error.ParseError;
+        } else return invalid(cx, t, i);
     }
     if (!at(t, i, .semicolon)) return invalid(cx, t, i);
     const raw = (if (name) |n| cx.lib.find(n) else proc.lastDataset(cx.lib)) orelse return cx.diags.fail(error.ParseError, line(t, 0), "PROC GENMOD: input data set not found", .{});
@@ -243,6 +281,7 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
     var strata: std.ArrayList(Stratum) = .empty;
     var later: std.ArrayList([]const u8) = .empty;
     var strata_missing_all = false;
+    var earlier: std.ArrayList(usize) = .empty;
     var model_seen = false;
     var model_line: usize = 0;
     i += 1;
@@ -262,7 +301,7 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
             try bys.read(a, t, &j);
         } else if (eq(word, "class")) {
             // p.3526: "The CLASS statement must precede the MODEL statement."
-            if (model_seen) return cx.diags.fail(error.ParseError, t[i].line, "PROC GENMOD: the CLASS statement must precede the MODEL statement", .{});
+            if (model_seen) return cx.diags.fail(error.ParseError, t[i].line, "CLASS statement must precede the MODEL statement.", .{});
             if (end == i + 1) return invalid(cx, t, end);
             var j = i + 1;
             while (j < end) : (j += 1) {
@@ -271,7 +310,18 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
                 if (!has(class.items, ci)) try class.append(a, ci);
             }
         } else if (eq(word, "model")) {
-            if (model_seen) return proc.failGap(cx.diags, t[i].line, "PROC GENMOD: more than one MODEL statement is not verified", .{});
+            // SAS 9.4: "WARNING: Only the last MODEL statement is used."
+            if (model_seen) {
+                try cx.diags.warn(t[i].line, "Only the last MODEL statement is used.", .{});
+                try earlier.append(a, s.response);
+                if (s.trials) |ci| try earlier.append(a, ci);
+                try earlier.appendSlice(a, effects.items);
+                s.trials = null;
+                s.dist = null;
+                s.link = null;
+                effects.clearRetainingCapacity();
+                model_options.clearRetainingCapacity();
+            }
             model_seen = true;
             model_line = t[i].line;
             var j = i + 1;
@@ -317,20 +367,21 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
                     const is_dist = oneOf(option, &.{ "dist", "d", "error", "err" });
                     if (is_dist or eq(option, "link")) {
                         const v = value orelse return proc.failGap(cx.diags, line(t, j - 1), "PROC GENMOD: MODEL {s}= with a parenthesized or missing value is not implemented (STAT-GENMOD-003)", .{option});
-                        const slot = if (is_dist) &s.dist else &s.link;
-                        if (slot.* != null) return proc.failGap(cx.diags, line(t, j - 1), "PROC GENMOD: repeated MODEL option {s}= is not verified", .{option});
-                        slot.* = v;
+                        // SAS 9.4: a repeated DIST=/LINK= takes the last value.
+                        if (is_dist) s.dist = v else s.link = v;
                     } else try model_options.append(a, option);
                 }
             }
         } else if (eq(word, "freq") or eq(word, "frequency")) {
-            if (s.frequency != null) return proc.failGap(cx.diags, t[i].line, "PROC GENMOD: more than one FREQ statement is not verified", .{});
             if (end != i + 2) return invalid(cx, t, @min(i + 2, end));
-            s.frequency = try numericColumn(cx, ds, t, i + 1, "FREQ");
+            // SAS 9.4: with several FREQ statements the first one is used, silently.
+            const ci = try numericColumn(cx, ds, t, i + 1, "FREQ");
+            if (s.frequency == null) s.frequency = ci;
         } else if (eq(word, "weight") or eq(word, "scwgt")) {
-            if (s.weight != null) return proc.failGap(cx.diags, t[i].line, "PROC GENMOD: more than one WEIGHT statement is not verified", .{});
             if (end != i + 2) return invalid(cx, t, @min(i + 2, end));
-            s.weight = try numericColumn(cx, ds, t, i + 1, "WEIGHT");
+            // SAS 9.4: with several WEIGHT statements the first one is used, silently.
+            const ci = try numericColumn(cx, ds, t, i + 1, "WEIGHT");
+            if (s.weight == null) s.weight = ci;
         } else if (eq(word, "strata")) {
             // p.3565: several STRATA statements equal one with all variables.
             var j = i + 1;
@@ -372,6 +423,8 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
                 }
             }
         } else if (eq(word, "exact")) {
+            // SAS 9.4 (verified): "ERROR: The EXACT statement must follow a MODEL statement."
+            if (!model_seen) return cx.diags.fail(error.ParseError, t[i].line, "The EXACT statement must follow a MODEL statement.", .{});
             s.exact = true;
         } else if (eq(word, "output")) {
             s.output = try parseOutput(cx, t, i, end, s.output != null);
@@ -381,6 +434,7 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
             return proc.failGap(cx.diags, t[i].line, "PROC GENMOD: a FORMAT statement inside the step is not implemented", .{});
         } else if (eq(word, "where")) {
             // Applied by procInputObs above.
+            s.where_statement = true;
         } else if (parser.isMidStepSkippable(word)) {
             try parser.noteUnexecuted(cx.diags, t[i..end]);
         } else return invalid(cx, t, i);
@@ -395,14 +449,20 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
     s.model_options = model_options.items;
     s.strata = strata.items;
     s.later = later.items;
-    if (s.strata.len > 0) {
-        // p.3565–3566. The reference SAS text for these conditions is not
-        // available; the classification (user error) follows the document.
-        if (!s.exact) return cx.diags.fail(error.ParseError, model_line, "PROC GENMOD: the STRATA statement requires an EXACT statement", .{});
-        if (s.output != null) return cx.diags.fail(error.ParseError, model_line, "PROC GENMOD: the output statement is not available with a STRATA statement", .{});
-        for (s.later) |statement| if (oneOf(statement, &strata_conflicts))
-            return cx.diags.fail(error.ParseError, model_line, "PROC GENMOD: the {s} statement is not available with a STRATA statement", .{statement});
+    s.earlier_model = earlier.items;
+    if (s.strata.len > 0 and !s.exact) {
+        // SAS 9.4 (verified): the statement is ignored with this WARNING, so
+        // its variables take no part in observation selection.
+        try cx.diags.warn(model_line, "The STRATA statement is valid only for an exact analysis specified with an EXACT statement. The statement is ignored.", .{});
+        s.strata = &.{};
     }
+    // p.3566 calls these statements "not available with a STRATA statement",
+    // but SAS 9.4 (verified) runs the step: OUTPUT and ESTIMATE only draw
+    // "NOTE: The following statements have no effect on exact analyses:...",
+    // while REPEATED is an ERROR. Exact analysis is a gap (STAT-GENMOD-010) in
+    // `run`, so only the verified ERROR is reported here.
+    if (s.exact) for (s.later) |statement| if (eq(statement, "repeated"))
+        return cx.diags.fail(error.ParseError, model_line, "The following statements are not allowed with exact analyses:REPEATED.", .{});
     const pb = try bys.resolve(a, ds, cx.diags);
     const cols = try a.alloc(usize, pb.names.len);
     for (pb.names, 0..) |n, k| cols[k] = ds.indexOf(n).?;
@@ -434,17 +494,20 @@ pub fn prepare(cx: proc.ProcCtx, s: Spec, rows: []const []const Value) diag.Erro
             f_ok = !std.math.isNan(x) and x >= 1;
             f = if (f_ok) @floor(x) else 0;
         }
-        out.frequency_read += f;
         var w: f64 = 1;
         var w_ok = true;
         if (s.weight) |ci| {
             w = row[ci].num;
             w_ok = !std.math.isNan(w) and w > 0;
         }
+        // SAS 9.4 (verified with FREQ and WEIGHT together): an observation
+        // with an invalid weight does not count in Sum of Frequencies Read.
+        if (w_ok) out.frequency_read += f;
         var miss = selection.missing(row[s.response]);
         if (s.trials) |ci| miss = miss or selection.missing(row[ci]);
         for (s.effects) |ci| miss = miss or selection.missing(row[ci]);
         for (s.class) |ci| miss = miss or selection.missing(row[ci]);
+        for (s.earlier_model) |ci| miss = miss or selection.missing(row[ci]);
         for (s.strata) |item| miss = miss or (!item.missing and selection.missing(row[item.column]));
         if (miss) out.missing += 1;
         if (!f_ok) out.bad_frequency += 1;
@@ -484,6 +547,11 @@ fn centered(a: A, out: *Out, title: []const u8, width: usize) !void {
     try out.append(a, '\n');
 }
 
+fn modelDataName(a: A, s: Spec) ![]const u8 {
+    const upper = try std.ascii.allocUpperString(a, s.data_name);
+    return if (std.mem.indexOfScalar(u8, upper, '.') == null) try std.fmt.allocPrint(a, "WORK.{s}", .{upper}) else upper;
+}
+
 /// Two-sided 95% standard normal quantile, PROBIT(0.975) (ALPHA= is a gap).
 const z95: f64 = 1.959963984540054;
 
@@ -493,26 +561,43 @@ const z95: f64 = 1.959963984540054;
 fn render(a: A, out: *Out, s: Spec, sel: Selection, link: fit.Link, r: fit.Fit) !void {
     const ds = s.input.ds;
     try out.appendSlice(a, "\nThe GENMOD Procedure\n\n");
-    const data_name = blk: {
-        const upper = try std.ascii.allocUpperString(a, s.data_name);
-        break :blk if (std.mem.indexOfScalar(u8, upper, '.') == null) try std.fmt.allocPrint(a, "WORK.{s}", .{upper}) else upper;
-    };
-    const info = [_][2][]const u8{
+    const data_name = try modelDataName(a, s);
+    var info: std.ArrayList([2][]const u8) = .empty;
+    try info.appendSlice(a, &.{
         .{ "Data Set", data_name },
         .{ "Distribution", "Normal" },
         .{ "Link Function", if (link == .log) "Log" else "Identity" },
         .{ "Dependent Variable", ds.columns.items[s.response].name },
-    };
+    });
+    // SAS 9.4 listing order (verified): Scale Weight, then Frequency Weight.
+    if (s.weight) |ci| try info.append(a, .{ "Scale Weight Variable", ds.columns.items[ci].name });
+    if (s.frequency) |ci| try info.append(a, .{ "Frequency Weight Variable", ds.columns.items[ci].name });
     var value_width: usize = 0;
-    for (info) |row| value_width = @max(value_width, row[1].len);
-    try centered(a, out, "Model Information", 22 + value_width);
+    var label_width: usize = 0;
+    for (info.items) |row| {
+        value_width = @max(value_width, row[1].len);
+        label_width = @max(label_width, row[0].len);
+    }
+    try centered(a, out, "Model Information", label_width + 4 + value_width);
     try out.append(a, '\n');
-    for (info) |row| {
-        try padRight(a, out, row[0], 18);
+    for (info.items) |row| {
+        try padRight(a, out, row[0], label_width);
         try padLeft(a, out, row[1], value_width + 4);
         try out.append(a, '\n');
     }
-    try out.print(a, "\n\nNumber of Observations Read{d:>12}\nNumber of Observations Used{d:>12}\n\n\n", .{ sel.read, sel.used });
+    try out.print(a, "\n\nNumber of Observations Read{d:>12}\nNumber of Observations Used{d:>12}\n", .{ sel.read, sel.used });
+    // Verified against SAS 9.4: the FREQ sums, the WEIGHT sum (BEST12.) and,
+    // when any observation was dropped, "Missing Values" = read - used.
+    if (s.frequency != null) try out.print(a, "Sum of Frequencies Read{d:>16}\nSum of Frequencies Used{d:>16}\n", .{ sel.frequency_read, sel.frequency_used });
+    if (s.weight != null) {
+        var total: f64 = 0;
+        for (sel.weight) |w| total += w;
+        try padRight(a, out, "Sum of Weights", 27);
+        try padLeft(a, out, try format.bestNum(a, total), 12);
+        try out.append(a, '\n');
+    }
+    if (sel.used < sel.read) try out.print(a, "Missing Values{d:>25}\n", .{sel.read - sel.used});
+    try out.appendSlice(a, "\n\n");
 
     const p: f64 = @floatFromInt(r.p);
     const df = r.n - p;
@@ -593,6 +678,8 @@ pub fn run(cx: proc.ProcCtx, out: *Out, t: []const lex.Token) diag.Error!void {
     // STAT-GENMOD-003: events/trials binomial-logit model with CLASS main effects.
     if (s.trials != null and s.dist != null) {
         if (groups.len != 1) return proc.failGap(cx.diags, l0, "PROC GENMOD: BY groups or an empty input with a binomial model are not verified (STAT-GENMOD-003 remaining gap)", .{});
+        // The binomial listing's "Missing Values" line placement is not verified.
+        if (selections[0].used < selections[0].read) return proc.failGap(cx.diags, l0, "PROC GENMOD: dropped observations (Missing Values line) with a binomial model are not verified (STAT-GENMOD-003 remaining gap)", .{});
         var body: Out = .empty;
         try logit.run(cx, &body, s, selections[0], groups[0].rows, l0);
         return out.appendSlice(a, body.items);
@@ -605,10 +692,38 @@ pub fn run(cx: proc.ProcCtx, out: *Out, t: []const lex.Token) diag.Error!void {
     if (s.model_options.len > 0) return proc.failGap(cx.diags, l0, "PROC GENMOD: MODEL option {s} is not implemented (STAT-GENMOD-003)", .{s.model_options[0]});
     if (s.class.len > 0) return proc.failGap(cx.diags, l0, "PROC GENMOD: CLASS effects in the fitted model are not implemented (STAT-GENMOD-003/004)", .{});
     if (s.trials != null) return proc.failGap(cx.diags, l0, "PROC GENMOD: events/trials responses are not implemented (STAT-GENMOD-005)", .{});
-    if (s.frequency != null or s.weight != null) return proc.failGap(cx.diags, l0, "PROC GENMOD: FREQ and WEIGHT in the fitted model are not verified against SAS output (STAT-GENMOD-002 remaining gap)", .{});
+    if ((s.frequency != null or s.weight != null) and s.output != null) return proc.failGap(cx.diags, l0, "PROC GENMOD: OUTPUT with FREQ or WEIGHT is not verified against SAS output (STAT-GENMOD-018)", .{});
     if (ds.columns.items[s.response].type != .num) return cx.diags.fail(error.ParseError, l0, "PROC GENMOD: the response variable must be numeric for DIST=NORMAL", .{});
     for (s.effects, 0..) |ci, j| if (has(s.effects[0..j], ci))
         return proc.failGap(cx.diags, l0, "PROC GENMOD: a repeated MODEL effect is not verified", .{});
+
+    // SAS 9.4 (verified): an input with no observations ends the step with
+    // this NOTE and no listing; the exit status is unaffected.
+    // SAS 9.4 (verified): a WHERE statement or WHERE= option that selects no
+    // row gives this NOTE and no listing. Other filters (OBS=, FIRSTOBS=) are not verified.
+    if (ds.rows.items.len == 0 and s.input.srcobs != null) {
+        if (s.where_statement and !s.data_options and !io.globalObsActive()) return cx.diags.note(l0, "No observations were selected from data set {s}.", .{try modelDataName(a, s)});
+        return proc.failGap(cx.diags, l0, "PROC GENMOD: an input emptied by data set options or OBS=/FIRSTOBS= is not verified", .{});
+    }
+    if (ds.rows.items.len == 0) return cx.diags.note(l0, "No observations in data set {s}.", .{try modelDataName(a, s)});
+    const no_valid = "No valid observations due to invalid or missing values in the response, explanatory, offset, frequency, or weight variable.";
+    var valid_groups: usize = 0;
+    for (selections) |sel| valid_groups += @intFromBool(sel.used > 0);
+    if (valid_groups == 0 and s.by_cols.len == 0) return cx.diags.fail(error.ParseError, l0, no_valid, .{});
+    // SAS 9.4 (verified): a BY group without valid observations prints
+    // nothing, logs this ERROR with its BY note, and the other groups run.
+    if (valid_groups < groups.len and s.output != null) return proc.failGap(cx.diags, l0, "PROC GENMOD: OUTPUT with a BY group that has no valid observations is not verified", .{});
+    // SAS 9.4 (verified): with BY, every group without valid observations
+    // gets the ERROR and its BY note; nothing is printed if none has any.
+    if (valid_groups == 0) {
+        for (groups) |group| {
+            try cx.diags.recoverableErr(0, no_valid, .{});
+            try by.reportNote(a, cx.diags, ds, group.rows[0], s.by_cols);
+        }
+        return error.ParseError;
+    }
+    // SAS 9.4 (verified): DESCENDING with DIST=NORMAL only draws this NOTE.
+    if (s.descending) try cx.diags.note(l0, "The DESCENDING option applies only to the multinomial distribution with ordinal response.", .{});
 
     const p = s.effects.len + 1;
     var result: ?*Dataset = null;
@@ -625,9 +740,13 @@ pub fn run(cx: proc.ProcCtx, out: *Out, t: []const lex.Token) diag.Error!void {
         result = created;
     }
     var body: Out = .empty;
-    const Message = struct { row: []const Value };
+    const Message = struct { row: []const Value, valid: bool = true };
     var messages: std.ArrayList(Message) = .empty;
     for (groups, selections) |group, sel| {
+        if (sel.used == 0) {
+            try messages.append(a, .{ .row = group.rows[0], .valid = false });
+            continue;
+        }
         // The printed layouts for these boundaries are not verified against SAS.
         if (sel.used <= p + 2) return proc.failGap(cx.diags, l0, "PROC GENMOD: a fit with {d} usable observations for {d} parameters is not verified", .{ sel.used, p + 1 });
         const x = try a.alloc(f64, sel.used * p);
@@ -638,7 +757,7 @@ pub fn run(cx: proc.ProcCtx, out: *Out, t: []const lex.Token) diag.Error!void {
             x[i * p] = 1;
             for (s.effects, 1..) |ci, j| x[i * p + j] = row[ci].num;
         }
-        const r = fit.fitNormal(a, x, y, sel.frequency, p, link) catch |err| switch (err) {
+        const r = fit.fitNormalWeighted(a, x, y, sel.frequency, if (s.weight != null) sel.weight else null, p, link) catch |err| switch (err) {
             error.OutOfMemory => return error.OutOfMemory,
             error.Singular => return proc.failGap(cx.diags, l0, "PROC GENMOD: linearly dependent model columns (aliased parameters) are not implemented (STAT-GENMOD-004)", .{}),
             error.NotConverged => return proc.failGap(cx.diags, l0, "PROC GENMOD: the fit did not converge; nonconvergence reporting is not implemented", .{}),
@@ -677,6 +796,11 @@ pub fn run(cx: proc.ProcCtx, out: *Out, t: []const lex.Token) diag.Error!void {
         try messages.append(a, .{ .row = group.rows[0] });
     }
     for (messages.items) |m| {
+        if (!m.valid) {
+            try cx.diags.recoverableErr(0, no_valid, .{});
+            try by.reportNote(a, cx.diags, ds, m.row, s.by_cols);
+            continue;
+        }
         try cx.diags.note(0, "Algorithm converged.", .{});
         try cx.diags.note(0, "The scale parameter was estimated by maximum likelihood.", .{});
         if (s.by_cols.len > 0) try by.reportNote(a, cx.diags, ds, m.row, s.by_cols);
