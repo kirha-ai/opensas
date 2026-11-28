@@ -1,6 +1,8 @@
 /* expect-rc: 2
-   STAT-GENMOD-002 boundary: the Normal/log model itself is fitted, but the
-   OUTPUT statement (STAT-GENMOD-015/018) is not implemented. The step must
+   STAT-GENMOD-002 boundary: the Normal/log model itself is fitted, and
+   STAT-GENMOD-018 writes PRED= and the residual keywords, but the OUTPUT
+   case-deletion keywords (DFBETA= here; STAT-GENMOD-015/018) are not
+   implemented. The step must
    fail visibly (D-009 gap) and print no table at all, never a listing with a
    silently missing output data set. A following step that needs a different
    distribution must stop the same way (STAT-GENMOD-005).
@@ -21,5 +23,5 @@ datalines;
 ;
 proc genmod data=nor;
 model y = x / dist = normal link = log;
-output out = Residuals pred = Pred resraw = Resraw;
+output out = Residuals pred = Pred resraw = Resraw dfbeta = _all_;
 run;

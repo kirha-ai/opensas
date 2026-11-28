@@ -94,7 +94,7 @@ pub fn scoreInformation(x: []const f64, y: []const f64, f: []const f64, p: usize
 
 /// In-place Cholesky factor (lower) of a symmetric p*p matrix. False when the
 /// matrix is not positive definite relative to its own diagonal.
-fn cholesky(m: []f64, p: usize) bool {
+pub fn cholesky(m: []f64, p: usize) bool {
     for (0..p) |j| {
         const original = m[j * p + j];
         var d = original;
@@ -111,7 +111,7 @@ fn cholesky(m: []f64, p: usize) bool {
     return true;
 }
 
-fn choleskySolve(l: []const f64, p: usize, b: []f64) void {
+pub fn choleskySolve(l: []const f64, p: usize, b: []f64) void {
     for (0..p) |i| {
         var s = b[i];
         for (0..i) |k| s -= l[i * p + k] * b[k];

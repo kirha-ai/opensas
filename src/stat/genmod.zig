@@ -7,7 +7,7 @@
 //! identity or log link and ML scale (kernel in genmod_fit.zig).
 //!
 //! ponytail: every other valid step (other DIST=/LINK=, CLASS designs, FREQ,
-//! WEIGHT, MODEL options, OUTPUT and all later statements) still ends in a
+//! WEIGHT, MODEL options, unfinished OUTPUT keywords and all later statements) still ends in a
 //! D-009 gap (exit 2) with NOTHING printed, so a GENMOD step can never
 //! silently succeed. `parse` and `prepare` are the parameter object and
 //! selected-observation interface later tickets build on.
@@ -22,6 +22,7 @@ const by = @import("by_groups.zig");
 const classes = @import("class_levels.zig");
 const selection = @import("data_selection.zig");
 const fit = @import("genmod_fit.zig");
+const output = @import("genmod_output.zig");
 const chiTail = @import("logistic_fit.zig").chiTail;
 const A = std.mem.Allocator;
 const Out = std.ArrayList(u8);
@@ -61,6 +62,8 @@ pub const Spec = struct {
     exact: bool = false,
     /// Statements owned by later GENMOD tickets, by name, in source order.
     later: []const []const u8 = &.{},
+    /// OUTPUT statement (p.3555): OUT= member and keyword=name requests in source order.
+    output: ?output.Request = null,
 };
 
 /// One BY group's selected observations. `rows` indexes the supplied slice.
@@ -83,7 +86,7 @@ pub const Selection = struct {
     levels: []const classes.Levels,
 };
 
-const later_statements = [_][]const u8{ "assess", "assessment", "bayes", "code", "contrast", "deviance", "effectplot", "estimate", "exactoptions", "fwdlink", "invlink", "lsmeans", "lsmestimate", "output", "repeated", "slice", "store", "variance", "zeromodel" };
+const later_statements = [_][]const u8{ "assess", "assessment", "bayes", "code", "contrast", "deviance", "effectplot", "estimate", "exactoptions", "fwdlink", "invlink", "lsmeans", "lsmestimate", "repeated", "slice", "store", "variance", "zeromodel" };
 /// p.3566: statements "not available with a STRATA statement".
 const strata_conflicts = [_][]const u8{ "assess", "assessment", "bayes", "contrast", "effectplot", "estimate", "lsmeans", "lsmestimate", "output", "repeated", "slice", "store" };
 
@@ -121,6 +124,54 @@ fn numericColumn(cx: proc.ProcCtx, ds: *const Dataset, t: []const lex.Token, i: 
 }
 fn has(list: []const usize, v: usize) bool {
     return std.mem.indexOfScalar(usize, list, v) != null;
+}
+
+/// OUTPUT <OUT=data-set> <keyword=name ...> (p.3555). Unknown keywords and
+/// malformed syntax are user errors; documented shapes that are not computed
+/// (and rules the section does not state) are loud gaps.
+fn parseOutput(cx: proc.ProcCtx, t: []const lex.Token, start: usize, end: usize, repeated: bool) diag.Error!output.Request {
+    const a = cx.arena;
+    if (repeated) return proc.failGap(cx.diags, t[start].line, "PROC GENMOD: more than one OUTPUT statement is not verified", .{});
+    var request: output.Request = .{ .name = "" };
+    var items: std.ArrayList(output.Item) = .empty;
+    var out_seen = false;
+    var j = start + 1;
+    while (j < end) {
+        if (!at(t, j, .name) or !at(t, j + 1, .eq)) return invalid(cx, t, j);
+        const word = t[j].text;
+        j += 2;
+        if (j >= end) return invalid(cx, t, j - 1);
+        if (eq(word, "out")) {
+            if (out_seen) return proc.failGap(cx.diags, t[j].line, "PROC GENMOD: a repeated OUTPUT OUT= is not verified", .{});
+            out_seen = true;
+            if (!at(t, j, .name)) return invalid(cx, t, j);
+            request.name = t[j].text;
+            j += 1;
+            if (j < end and at(t, j, .dot)) {
+                if (j + 1 >= end or !at(t, j + 1, .name)) return invalid(cx, t, j);
+                request.name = try std.fmt.allocPrint(a, "{s}.{s}", .{ request.name, t[j + 1].text });
+                j += 2;
+            }
+            if (j < end and at(t, j, .lparen)) return proc.failGap(cx.diags, t[j].line, "PROC GENMOD: data set options on OUTPUT OUT= are not implemented (STAT-GENMOD-018)", .{});
+            continue;
+        }
+        const k = output.kind(word) orelse {
+            if (output.documentedGap(word)) return proc.failGap(cx.diags, t[j].line, "PROC GENMOD: OUTPUT keyword {s}= is not implemented (STAT-GENMOD-018)", .{word});
+            return cx.diags.fail(error.ParseError, t[j].line, "PROC GENMOD: {s} is not a valid OUTPUT statement keyword", .{word});
+        };
+        // p.3556: only the DFBETA family takes a parenthesized list or _ALL_.
+        if (!at(t, j, .name)) return invalid(cx, t, j);
+        for (items.items) |item| {
+            if (item.kind == k) return proc.failGap(cx.diags, t[j].line, "PROC GENMOD: a repeated OUTPUT keyword {s}= is not verified", .{word});
+            if (eq(item.name, t[j].text)) return proc.failGap(cx.diags, t[j].line, "PROC GENMOD: OUTPUT variable name {s} used twice is not verified", .{t[j].text});
+        }
+        try items.append(a, .{ .kind = k, .name = t[j].text });
+        j += 1;
+    }
+    if (!out_seen) return proc.failGap(cx.diags, t[start].line, "PROC GENMOD: OUTPUT without OUT= (DATAn naming) is not implemented; specify OUT=", .{});
+    if (eq(request.name, "_null_")) return proc.failGap(cx.diags, t[start].line, "PROC GENMOD: OUTPUT OUT=_NULL_ is not verified", .{});
+    request.items = items.items;
+    return request;
 }
 
 pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
@@ -315,6 +366,8 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
             }
         } else if (eq(word, "exact")) {
             s.exact = true;
+        } else if (eq(word, "output")) {
+            s.output = try parseOutput(cx, t, i, end, s.output != null);
         } else if (oneOf(word, &later_statements)) {
             try later.append(a, try std.ascii.allocLowerString(a, word));
         } else if (eq(word, "format")) {
@@ -339,6 +392,7 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
         // p.3565–3566. The reference SAS text for these conditions is not
         // available; the classification (user error) follows the document.
         if (!s.exact) return cx.diags.fail(error.ParseError, model_line, "PROC GENMOD: the STRATA statement requires an EXACT statement", .{});
+        if (s.output != null) return cx.diags.fail(error.ParseError, model_line, "PROC GENMOD: the output statement is not available with a STRATA statement", .{});
         for (s.later) |statement| if (oneOf(statement, &strata_conflicts))
             return cx.diags.fail(error.ParseError, model_line, "PROC GENMOD: the {s} statement is not available with a STRATA statement", .{statement});
     }
@@ -540,6 +594,19 @@ pub fn run(cx: proc.ProcCtx, out: *Out, t: []const lex.Token) diag.Error!void {
         return proc.failGap(cx.diags, l0, "PROC GENMOD: a repeated MODEL effect is not verified", .{});
 
     const p = s.effects.len + 1;
+    var result: ?*Dataset = null;
+    if (s.output) |request| {
+        if (cx.lib.readonlyOut(request.name)) return cx.lib.failReadonly(request.name);
+        // The section does not say what happens when a statistic takes the
+        // name of an input variable; do not guess.
+        for (request.items) |item| if (ds.indexOf(item.name) != null)
+            return proc.failGap(cx.diags, l0, "PROC GENMOD: OUTPUT variable {s} already exists in the input data set; replacement is not verified", .{item.name});
+        const created = try a.create(Dataset);
+        created.* = Dataset.init(a, request.name);
+        for (ds.columns.items) |c| _ = try created.addColumnLike(c.name, c);
+        for (request.items) |item| _ = try created.addColumn(item.name, .num);
+        result = created;
+    }
     var body: Out = .empty;
     const Message = struct { row: []const Value };
     var messages: std.ArrayList(Message) = .empty;
@@ -563,12 +630,48 @@ pub fn run(cx: proc.ProcCtx, out: *Out, t: []const lex.Token) diag.Error!void {
         if (!(r.deviance > 0)) return proc.failGap(cx.diags, l0, "PROC GENMOD: a perfect fit (zero scale) is not verified", .{});
         if (s.by_cols.len > 0) try by.appendLine(a, &body, ds, group.rows[0], s.by_cols);
         try render(a, &body, s, sel, link, r);
+        if (result) |created| {
+            const request = s.output.?;
+            const h = (try output.leverages(a, x, r.mu, p, link)) orelse return proc.failGap(cx.diags, l0, "PROC GENMOD: OUTPUT leverages for a singular weighted cross-product matrix are not verified", .{});
+            for (h) |hv| if (!(hv < 1)) return proc.failGap(cx.diags, l0, "PROC GENMOD: OUTPUT standardized residuals at leverage 1 are not verified", .{});
+            // p.3556: every input observation gets a row. XBETA, STDXBETA and
+            // the predicted value with its limits need only the covariates;
+            // residuals and leverage need an observation used in the fit.
+            var used: usize = 0;
+            for (group.rows, 0..) |row, ri| {
+                const fitted = used < sel.rows.len and sel.rows[used] == ri;
+                var design: ?[]f64 = try a.alloc(f64, p);
+                design.?[0] = 1;
+                for (s.effects, 1..) |ci, j| {
+                    if (selection.missing(row[ci])) {
+                        design = null;
+                        break;
+                    }
+                    design.?[j] = row[ci].num;
+                }
+                const cells = try a.alloc(Value, created.columns.items.len);
+                @memcpy(cells[0..row.len], row);
+                for (request.items, row.len..) |item, ci|
+                    cells[ci] = .{ .num = output.value(item.kind, .{ .x = design, .y = row[s.response].num, .h = if (fitted) h[used] else null }, r, link, z95) };
+                if (fitted) used += 1;
+                try created.appendRow(cells);
+            }
+        }
         try messages.append(a, .{ .row = group.rows[0] });
     }
     for (messages.items) |m| {
         try cx.diags.note(0, "Algorithm converged.", .{});
         try cx.diags.note(0, "The scale parameter was estimated by maximum likelihood.", .{});
         if (s.by_cols.len > 0) try by.reportNote(a, cx.diags, ds, m.row, s.by_cols);
+    }
+    if (result) |created| {
+        const member = s.output.?.name;
+        try cx.lib.put(member, created);
+        // Reference log: "NOTE: The data set WORK.RESIDUALS has 16 observations and 9 variables."
+        // ponytail: a one-level name is reported under WORK (no USER libref lookup).
+        const upper = try std.ascii.allocUpperString(a, member);
+        const prefix: []const u8 = if (std.mem.indexOfScalar(u8, member, '.') == null) "WORK." else "";
+        try cx.diags.note(0, "The data set {s}{s} has {d} observations and {d} variables.", .{ prefix, upper, created.rows.items.len, created.columns.items.len });
     }
     try out.appendSlice(a, body.items);
 }

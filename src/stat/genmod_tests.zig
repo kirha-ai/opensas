@@ -268,7 +268,8 @@ test "STAT-GENMOD-001 invalid declarations are user errors and valid unimplement
         .{ .source = "proc genmod; model y = x; lsmeans x; run;", .rc = 2 },
         .{ .source = "proc genmod; model y = x; estimate 'a' x 1; run;", .rc = 2 },
         .{ .source = "proc genmod data=sample; by g; class c; model y = x c / dist=normal link=log; freq f; weight w; run;", .rc = 2 },
-        .{ .source = "proc genmod; model y = x / dist=normal link=log; output out=r pred=p; run;", .rc = 2 },
+        // STAT-GENMOD-018 computes PRED= and the residual keywords; the case-deletion keywords stay gaps.
+        .{ .source = "proc genmod; model y = x / dist=normal link=log; output out=r pred=p dfbeta=_all_; run;", .rc = 2 },
         .{ .source = "proc genmod plots=all; model y = x; run;", .rc = 2 },
         .{ .source = "proc genmod exactonly; model y = x; exact x; run;", .rc = 2 },
         .{ .source = "proc genmod; model y = x; exact x; strata g; run;", .rc = 2 },
