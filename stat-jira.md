@@ -32,11 +32,11 @@ This section is the only current status summary; every section below it is a his
 - **Unchanged original replays with the installed CLI at that SHA** (whitespace-normalised token lines produced/reference, differing lines, exit vs reference 0). Exact, rc 0: FREQ-014 220/220; FREQ-015 649/649; ANOVA-001 364/364 and 528/528; ANOVA-007 364/364; LIFETEST-001 and -002 341/341; PHREG-003 267/267; GENMOD-001 131/131 and 264/264; GENMOD-002 131/131; GENMOD-018 131/131; COMMON-015 113/113. Still rc 2 (loud gaps): PLM-001/002/007 545/869 (328 differ); GLIMMIX-001 0/379 and 0/706; GLIMMIX-002 0/379; GLIMMIX-003 0/896; FREQ-019 0/649; ANOVA-010 0/364; PHREG-001 146/434 and 146/562; PHREG-002 146/434; COMMON-022 0/176; COMMON-030 114/311; COMMON-028 0/207.
 - **Open review (not done):** the originals of GENMOD-001/002/018, ANOVA-001/007, FREQ-014, PHREG-003 and LIFETEST-001/002 now match exactly but the tickets stay PARK; check each against its full acceptance criteria and recorded remaining gaps before any is marked DONE.
 - **Interrupted by the full disk:** STAT-ANOVA-009 and STAT-PHREG-004 are TODO (no file changed; reading notes in the tickets). STAT-LIFETEST-003 and STAT-GENMOD-003 are PARK with UNCOMMITTED, NEVER-COMPILED source retained in `opensas-dev5` (`stat-b6/lifetest003-dev5`) and `opensas-dev7` (`stat-b6/genmod003-dev7`); do not integrate it before it is built, tested and committed there.
-- **User approval (2026-11-28):** SASHELP sample data taken from SAS's public sample material may be committed to this public repository, for STAT-SASHELP-001 and the later SASHELP tickets; record source and verification, never invent rows, ask before adding a data set above about 2 MB.
-- **Held, not integrated (needs a user decision):** STAT-FASTCLUS-001, branch `stat-b7/fastclus001-dev2` (`4d730ead` code and tests, `45dd37bd` ticket note). It adds SASHELP.IRIS (150 rows, Fisher 1936) taken from a SAS 9.4 dump, which is outside the approved SASHELP-ticket, public-sample-material scope. Also held for the same question: STAT-VARCLUS-001, branch `stat-b7/varclus001-dev7` (`5dd2e52b`, note `090678d2`), which inlines the same 150 rows from a SAS dump in two corpus fixtures.
-- **Live slots (auto):** dev1 STAT-ICPHREG-001, dev2 STAT-ROBUSTREG-001, dev3 STAT-CATMOD-001, dev4 STAT-PRINT-001, dev5 STAT-HPLOGISTIC-001, dev6 STAT-HPGENSELECT-001, dev7 STAT-NLMIXED-001.
-- **Counts:** 56 DONE, 124 PARK, 7 DOING, 1236 TODO.
-- **Next:** integrate each returned ticket, refill its slot, verify and push the next batch; run the open review above. Pending user decision: the `best32.` display fix found by STAT-STDIZE-001 changes five existing test expectations (patch kept in the coordinator scratchpad, not applied).
+- **User approvals (2026-11-28):** public classic sample data, including rows exported from real SAS (Iris), may be committed; build caches (`.zig-cache`) may be deleted automatically when free disk falls to about 8 GB, only for idle worktrees (done once, 41 GB free); the `best32.` display fix is approved as STAT-BEST-001. Earlier scope: SASHELP sample data taken from SAS's public sample material may be committed to this public repository, for STAT-SASHELP-001 and the later SASHELP tickets; record source and verification, never invent rows, ask before adding a data set above about 2 MB.
+- **Live slots (auto):** dev1 STAT-SASHELP-004, dev2 STAT-SASHELP-006, dev3 STAT-CAUSALTRT-001, dev4 STAT-HPLMIXED-001, dev4 STAT-PRINT-001, dev5 STAT-HPLOGISTIC-001, dev6 STAT-PSMATCH-001, dev7 STAT-BEST-001.
+- **Integrated locally, awaiting batch verification (auto):** STAT-ROBUSTREG-001 (PARK), STAT-HPGENSELECT-001 (PARK), STAT-ICPHREG-001 (PARK), STAT-NLMIXED-001 (PARK), STAT-CATMOD-001 (PARK), STAT-FASTCLUS-001 (PARK), STAT-VARCLUS-001 (PARK).
+- **Counts:** 56 DONE, 129 PARK, 8 DOING, 1231 TODO.
+- **Next:** integrate each returned ticket, refill its slot, verify and push the next batch; run the open review above. The `best32.` fix is assigned as STAT-BEST-001.
 - **Working branch:** `feat/stat/batch-4`. Last tested and pushed code SHA `6b2bfb79619e238219aab0a713ca3849d5c73d4d` (batch 18; batch 17 was `0edd9657d00c612fad1b66104cee2c6e6f54cc18`). The bullets below this one describe batch 5 and are historical. Later commits that touch only this file are documentation. No PR created or merged; `main` untouched.
 - **Batch 5 verification at that exact SHA (2026-11-28):** whole `tests/STAT15.4-oracle/` moved out of the checkout, then `zig build gate -j2 --summary all` direct exit 0 — **2380/2380 unit tests** (2262 + 102 + 13 + 3), **2409/2409 corpus**, **11/11 programs**; `zig build install` direct 0; separate supplemental direct 0, **1113/1113**. Oracle restored unchanged (1425 entries), tree clean.
 - **Integration method:** seven branches `stat-b5/<ticket>-devN` from `bbf110dd`, applied serially by `git cherry-pick` (17 commits) in the order GENMOD-001, PLM-001, GLIMMIX-001, PHREG-001, ANOVA-001, FREQ-014, LIFETEST-001. Two additive conflicts (PHREG in `src/main.zig`/`src/root.zig`, LIFETEST in `src/root.zig`: adjacent registration lines) were resolved by keeping every line of both sides; nothing else was hand-edited.
@@ -1681,7 +1681,7 @@ Complete prerequisite shared contracts first, then each PROC's data input, model
 
 <a id="stat-sashelp-004"></a>
 
-### [TODO] STAT-SASHELP-004 — SASHELP example data — El Nino–Southern Oscillation Data / Finland's Lake Laengelmaevesi Fish Catch Data / Exhaust Emissions Data
+### [DOING @dev1] STAT-SASHELP-004 — SASHELP example data — El Nino–Southern Oscillation Data / Finland's Lake Laengelmaevesi Fish Catch Data / Exhaust Emissions Data
 
 - Source: S154 / Sashelp Data Sets / `El Nino–Southern Oscillation Data` (PDF pp. 10909–10910); S154 / Sashelp Data Sets / `Finland's Lake Laengelmaevesi Fish Catch Data` (PDF pp. 10910–10911); S154 / Sashelp Data Sets / `Exhaust Emissions Data` (PDF pp. 10911–10912).
 - Scope: For El Nino–Southern Oscillation Data; Finland's Lake Laengelmaevesi Fish Catch Data; Exhaust Emissions Data provide reproducible public example data or the compatible loading method explicitly documented in the source; use public or synthetic data only.
@@ -1701,7 +1701,7 @@ Complete prerequisite shared contracts first, then each PROC's data input, model
 
 <a id="stat-sashelp-006"></a>
 
-### [TODO] STAT-SASHELP-006 — SASHELP example data — Margarine Data / Flying Mileages between 10 US Cities Data / Earthquake Locations in the United States
+### [DOING @dev2] STAT-SASHELP-006 — SASHELP example data — Margarine Data / Flying Mileages between 10 US Cities Data / Earthquake Locations in the United States
 
 - Source: S154 / Sashelp Data Sets / `Margarine Data` (PDF pp. 10918–10919); S154 / Sashelp Data Sets / `Flying Mileages between 10 US Cities Data` (PDF pp. 10919–10921); S154 / Sashelp Data Sets / `Earthquake Locations in the United States` (PDF pp. 10921–10922).
 - Scope: For Margarine Data; Flying Mileages between 10 US Cities Data; Earthquake Locations in the United States provide reproducible public example data or the compatible loading method explicitly documented in the source; use public or synthetic data only.
@@ -2936,7 +2936,7 @@ Source: S154, Chapter 36, `The CATMOD Procedure`, PDF pp. 2175–2302. Tasks in 
 
 <a id="stat-catmod-001"></a>
 
-### [DOING @dev3] STAT-CATMOD-001 — CATMOD — Data input, variable roles, and basic options
+### [PARK] STAT-CATMOD-001 — CATMOD — Data input, variable roles, and basic options
 
 - Source: S154 / Chapter 36 / `PROC CATMOD Statement` (PDF pp. 2191–2192); S154 / Chapter 36 / `BY Statement` (PDF pp. 2192–2193); S154 / Chapter 36 / `POPULATION Statement` (PDF pp. 2208–2211); S154 / Chapter 36 / `WEIGHT Statement` (PDF p. 2220); S154 / Chapter 36 / `Missing Values` (PDF p. 2220); S154 / Chapter 36 / `Input Data Sets` (PDF pp. 2220–2223); S154 / Chapter 36 / `Ordering of Populations and Responses` (PDF pp. 2223–2224).
 - Scope: Integrate PROC CATMOD declarations, basic options, defaults, and execution boundaries; this ticket establishes parameter objects and result interfaces, while later feature tickets implement model-, algorithm-, and output-specific options. Also implement BY; POPULATION; WEIGHT; Missing Values; Input Data Sets; Ordering of Populations and Responses; apply this procedure's rules for missing values, variable roles, and observation selection.
@@ -3300,7 +3300,7 @@ Source: S154, Chapter 39, `The CAUSALTRT Procedure`, PDF pp. 2429–2488. Tasks 
 
 <a id="stat-causaltrt-001"></a>
 
-### [TODO] STAT-CAUSALTRT-001 — CAUSALTRT — Data input, variable roles, and basic options
+### [DOING @dev3] STAT-CAUSALTRT-001 — CAUSALTRT — Data input, variable roles, and basic options
 
 - Source: S154 / Chapter 39 / `PROC CAUSALTRT Statement` (PDF pp. 2437–2445); S154 / Chapter 39 / `BY Statement` (PDF p. 2448); S154 / Chapter 39 / `FREQ Statement` (PDF p. 2450); S154 / Chapter 39 / `Missing Values` (PDF p. 2473).
 - Scope: Integrate PROC CAUSALTRT declarations, basic options, defaults, and execution boundaries; this ticket establishes parameter objects and result interfaces, while later feature tickets implement model-, algorithm-, and output-specific options. Also implement BY; FREQ; Missing Values; apply this procedure's rules for missing values, variable roles, and observation selection.
@@ -3956,7 +3956,7 @@ Source: S154, Chapter 45, `The FASTCLUS Procedure`, PDF pp. 2893–2942. Tasks i
   - Permanent tests: `tests/corpus/stat_fastclus001_iris.sas` (original minus PROC FREQ, reference listing), `stat_fastclus001_roles.sas` (BY + FREQ + NOMISS + ID + OUT=, default MAXITER=1 listing, iteration limit without convergence, VARIABLESAREUNCORRELATED; SAS listings of the same steps), `stat_fastclus001_missing.sas` (partial missing without NOMISS + SHORT; SAS listing), `stat_fastclus001_gap.sas` (LEAST=1, rc 2); Zig tests `STAT-FASTCLUS-001 *` (defaults/aliases/last BY, 12 user errors rc 1, 18 gaps rc 2 incl. duplicates, conflicting roles, single cluster, empty input, hand-calculated two-cluster BY/FREQ case with OUT= values).
   - Validation: `zig build install` exit 0; `zig test src/root.zig -lc --test-filter "STAT-FASTCLUS-001"` exit 0 (3/3 FASTCLUS tests, 48/48 filtered); corpus runner on each of the 4 new fixtures exit 0 (1/1 each). Not run (coordinator): `zig build gate`, supplemental suite, oracle-absent check. Fixture inter-step/trailing blank lines follow the opensas convention; the BY line is not checked (NOBYLINE) because house `appendByLine` centres it while SAS NOCENTER does not.
   - Remaining gaps (loud rc 2): WEIGHT with a listing (Weight column unverified), noninteger FREQ in the listing, RADIUS= > 0 listing (Radius Exceeded column), MAXITER=0, clusters with fewer than 2 observations per variable / constant variables / single cluster / empty input or BY group, REPLACE=RANDOM/RANDOM=, DRIFT, DELETE=, STRICT, LEAST=/BINS=/HC=/HP=/IRLS (STAT-FASTCLUS-003), SEED=/INSTAT=/IMPUTE/OUTSEED=/MEAN=/OUTSTAT=/OUTITER/CLUSTERLABEL= (STAT-FASTCLUS-004), DISTANCE/LIST/SUMMARY and ODS tables (STAT-FASTCLUS-005), VARDEF=. Outside STAT: base PROC FREQ numeric column-level alignment blocks the original.
-- Status (coordinator, 2026-11-28): PARK. Implementation on unintegrated branch `stat-b7/fastclus001-dev2` (`4d730ead`, note `45dd37bd`), held for the user's decision on its SASHELP.IRIS data. Reported there: the FASTCLUS listing of the original is byte-identical, 6 tokens differ in the following Base PROC FREQ step; WEIGHT listing, noninteger FREQ listing, RADIUS= > 0 and MAXITER=0 stay gaps.
+- Status (coordinator, 2026-11-28): PARK. Integrated after the user approved the Iris rows; formerly on branch `stat-b7/fastclus001-dev2` (`4d730ead`, note `45dd37bd`). Reported there: the FASTCLUS listing of the original is byte-identical, 6 tokens differ in the following Base PROC FREQ step; WEIGHT listing, noninteger FREQ listing, RADIUS= > 0 and MAXITER=0 stay gaps.
 
 <a id="stat-fastclus-002"></a>
 
@@ -6436,7 +6436,7 @@ Source: S154, Chapter 59, `The HPGENSELECT Procedure`, PDF pp. 4621–4692. Task
 
 <a id="stat-hpgenselect-001"></a>
 
-### [DOING @dev6] STAT-HPGENSELECT-001 — HPGENSELECT — Data input, variable roles, and basic options
+### [PARK] STAT-HPGENSELECT-001 — HPGENSELECT — Data input, variable roles, and basic options
 
 - Source: S154 / Chapter 59 / `PROC HPGENSELECT Statement` (PDF pp. 4629–4636); S154 / Chapter 59 / `BY Statement` (PDF p. 4636); S154 / Chapter 59 / `FREQ Statement` (PDF pp. 4637–4638); S154 / Chapter 59 / `ID Statement` (PDF p. 4638); S154 / Chapter 59 / `WEIGHT Statement` (PDF p. 4652); S154 / Chapter 59 / `Missing Values` (PDF pp. 4653–4654).
 - Scope: Integrate PROC HPGENSELECT declarations, basic options, defaults, and execution boundaries; this ticket establishes parameter objects and result interfaces, while later feature tickets implement model-, algorithm-, and output-specific options. Also implement BY; FREQ; ID; WEIGHT; Missing Values; apply this procedure's rules for missing values, variable roles, and observation selection.
@@ -6445,6 +6445,7 @@ Source: S154, Chapter 59, `The HPGENSELECT Procedure`, PDF pp. 4621–4692. Task
 - Acceptance criteria: Create positive and negative parsing cases for the documented declarations and basic options; verify defaults, explicit settings, documented duplicate/conflicting declarations, and locations; valid but unimplemented features must not silently succeed. For BY / FREQ / ID / WEIGHT / Missing Values, construct valid, missing, empty, and multiple-group inputs; verify included observation counts, variable roles, BY boundaries, level ordering, and the frequency/weight rules relevant to this ticket; assert documented invalid-input behavior.
 
 - Status (dev6, 2026-11-28): DONE candidate. Branch `stat-b7/hpgenselect001-dev6`, base `8d123a33`, code `7263e3eb`. Implemented: `src/stat/hpgenselect.zig` (+ `hpgenselect_tests.zig`, registration after `lifetest` in `src/main.zig`/`src/root.zig`): PROC options DATA= (qualified, data set options), ALPHA= (validated, recorded), NOPRINT; every other Table 59.1 option a loud gap; BY (last statement wins, sort checked, per-group pages and log notes), repeated CLASS before MODEL with numbered ranges, numeric levels in value order and character levels in byte order, MODEL main effects with DISTRIBUTION=/DIST=/D= and LINK=, FREQ (truncated, < 1 or missing dropped, Sum of Frequencies Read/Used), WEIGHT (nonpositive/missing dropped, weighted likelihood), ID (validated, recorded for OUTPUT), missing response/explanatory/CLASS values excluded; Poisson log-link ML fit (Newton, GLM-parameterization aliasing) with Performance (true thread count 1), Data Access, Model Information, counts, Class Level Information, Dimensions, Fit Statistics, Parameter Estimates and convergence line. Original replays (unchanged): documented_feature 292/292 tokens, 1 differing (Number of Threads 1 vs reference machine 2, by design), rc 0/0; statement_by 568/568 tokens, 1 differing (same thread line), rc 0/0; no ERROR/WARNING. Permanent tests: documented_feature -> `tests/corpus/stat_hpgenselect001_getstarted.sas`; statement_by -> `tests/corpus/stat_hpgenselect001_by.sas`; FREQ/WEIGHT/ID/missing/level order (SAS 9.4 listing of invented data) -> `stat_hpgenselect001_roles.sas`; loud gaps (rc 2) -> `stat_hpgenselect001_gaps.sas`; user errors (rc 1) -> `stat_hpgenselect001_errors.sas`; unit tests `STAT-HPGENSELECT-001 *` (5 blocks). Validation: `heavy.sh zig build install` exit 0; `heavy.sh zig test src/root.zig -lc --test-filter "STAT-HPGENSELECT-001"` exit 0 (64/64 filtered binary, 5 own); corpus runner on each of the 5 fixtures exit 0, 1/1 each. Not run (coordinator batch): `zig build gate`, supplemental suite, oracle-absent check. Remaining loud gaps and owners: default NORMAL and all other distributions/links (STAT-HPGENSELECT-004/005); CLASS options, response options, events/trials, crossed/nested effects, MODEL options (STAT-HPGENSELECT-003); SELECTION/PARTITION (STAT-HPGENSELECT-007, STAT-HP-004); OUTPUT (010); CODE (009); RESTRICT (006); PERFORMANCE and thread semantics (012, STAT-HP-002); output/optimization/tolerance options and display formats outside the verified ranges (011, 005); FREQ with WEIGHT together, duplicate FREQ/WEIGHT, a second MODEL, formatted CLASS variables, empty BY groups (layout not verified).
+- Coordinator review: PARK, not DONE. Both originals match except the true thread count, but most PROC options and several FREQ/WEIGHT/CLASS combinations of this ticket are still loud gaps.
 
 <a id="stat-hpgenselect-002"></a>
 
@@ -6574,7 +6575,7 @@ Source: S154, Chapter 60, `The HPLMIXED Procedure`, PDF pp. 4693–4736. Tasks i
 
 <a id="stat-hplmixed-001"></a>
 
-### [TODO] STAT-HPLMIXED-001 — HPLMIXED — Data input, variable roles, and basic options
+### [DOING @dev4] STAT-HPLMIXED-001 — HPLMIXED — Data input, variable roles, and basic options
 
 - Source: S154 / Chapter 60 / `PROC HPLMIXED Statement` (PDF pp. 4701–4706); S154 / Chapter 60 / `ID Statement` (PDF pp. 4706–4707).
 - Scope: Integrate PROC HPLMIXED declarations, basic options, defaults, and execution boundaries; this ticket establishes parameter objects and result interfaces, while later feature tickets implement model-, algorithm-, and output-specific options. Also implement ID; apply this procedure's rules for missing values, variable roles, and observation selection.
@@ -7834,7 +7835,7 @@ Source: S154, Chapter 70, `The ICPHREG Procedure`, PDF pp. 5199–5268. Tasks in
 
 <a id="stat-icphreg-001"></a>
 
-### [DOING @dev1] STAT-ICPHREG-001 — ICPHREG — Data input, variable roles, and basic options
+### [PARK] STAT-ICPHREG-001 — ICPHREG — Data input, variable roles, and basic options
 
 - Source: S154 / Chapter 70 / `PROC ICPHREG Statement` (PDF pp. 5207–5214); S154 / Chapter 70 / `BY Statement` (PDF pp. 5217–5218); S154 / Chapter 70 / `FREQ Statement` (PDF p. 5221); S154 / Chapter 70 / `ID Statement` (PDF pp. 5223–5224); S154 / Chapter 70 / `STRATA Statement` (PDF pp. 5228–5229); S154 / Chapter 70 / `Missing Values` (PDF p. 5246).
 - Scope: Integrate PROC ICPHREG declarations, basic options, defaults, and execution boundaries; this ticket establishes parameter objects and result interfaces, while later feature tickets implement model-, algorithm-, and output-specific options. Also implement BY; FREQ; ID; STRATA; Missing Values; apply this procedure's rules for missing values, variable roles, and observation selection.
@@ -10691,7 +10692,7 @@ Source: S154, Chapter 89, `The NLMIXED Procedure`, PDF pp. 7087–7204. Tasks in
 
 <a id="stat-nlmixed-001"></a>
 
-### [DOING @dev7] STAT-NLMIXED-001 — NLMIXED — Data input, variable roles, and basic options
+### [PARK] STAT-NLMIXED-001 — NLMIXED — Data input, variable roles, and basic options
 
 - Source: S154 / Chapter 89 / `PROC NLMIXED Statement` (PDF pp. 7097–7116); S154 / Chapter 89 / `BY Statement` (PDF p. 7117); S154 / Chapter 89 / `ID Statement` (PDF p. 7122).
 - Scope: Integrate PROC NLMIXED declarations, basic options, defaults, and execution boundaries; this ticket establishes parameter objects and result interfaces, while later feature tickets implement model-, algorithm-, and output-specific options. Also implement BY; ID; apply this procedure's rules for missing values, variable roles, and observation selection.
@@ -12379,7 +12380,7 @@ Source: S154, Chapter 101, `The PSMATCH Procedure`, PDF pp. 8199–8324. Tasks i
 
 <a id="stat-psmatch-001"></a>
 
-### [TODO] STAT-PSMATCH-001 — PSMATCH — Data input, variable roles, and basic options
+### [DOING @dev6] STAT-PSMATCH-001 — PSMATCH — Data input, variable roles, and basic options
 
 - Source: S154 / Chapter 101 / `PROC PSMATCH Statement` (PDF pp. 8214–8217); S154 / Chapter 101 / `BY Statement` (PDF pp. 8222–8223); S154 / Chapter 101 / `CLASS Statement` (PDF p. 8223); S154 / Chapter 101 / `FREQ Statement` (PDF p. 8223); S154 / Chapter 101 / `ID Statement` (PDF p. 8223); S154 / Chapter 101 / `STRATA Statement` (PDF pp. 8234–8235); S154 / Chapter 101 / `Weighting after Stratification` (PDF pp. 8243–8244); S154 / Chapter 101 / `Weighting after Matching` (PDF pp. 8248–8250).
 - Scope: Integrate PROC PSMATCH declarations, basic options, defaults, and execution boundaries; this ticket establishes parameter objects and result interfaces, while later feature tickets implement model-, algorithm-, and output-specific options. Also implement BY; CLASS; FREQ; ID; STRATA; Weighting after Stratification; Weighting after Matching; apply this procedure's rules for missing values, variable roles, and observation selection.
@@ -13338,7 +13339,7 @@ Source: S154, Chapter 107, `The ROBUSTREG Procedure`, PDF pp. 8771–8862. Tasks
 
 <a id="stat-robustreg-001"></a>
 
-### [DOING @dev2] STAT-ROBUSTREG-001 — ROBUSTREG — Data input, variable roles, and basic options
+### [PARK] STAT-ROBUSTREG-001 — ROBUSTREG — Data input, variable roles, and basic options
 
 - Source: S154 / Chapter 107 / `PROC ROBUSTREG Statement` (PDF pp. 8784–8792); S154 / Chapter 107 / `BY Statement` (PDF p. 8792); S154 / Chapter 107 / `ID Statement` (PDF pp. 8793–8794); S154 / Chapter 107 / `WEIGHT Statement` (PDF p. 8799).
 - Scope: Integrate PROC ROBUSTREG declarations, basic options, defaults, and execution boundaries; this ticket establishes parameter objects and result interfaces, while later feature tickets implement model-, algorithm-, and output-specific options. Also implement BY; ID; WEIGHT; apply this procedure's rules for missing values, variable roles, and observation selection.
@@ -16340,7 +16341,7 @@ Source: S154, Chapter 129, `The VARCLUS Procedure`, PDF pp. 10693–10724. Tasks
 - Dependencies: [STAT-COMMON-001](#stat-common-001), [STAT-COMMON-002](#stat-common-002).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-VARCLUS-001/](tests/STAT15.4-oracle/STAT-VARCLUS-001/).
 - Acceptance criteria: Create positive and negative parsing cases for the documented declarations and basic options; verify defaults, explicit settings, documented duplicate/conflicting declarations, and locations; valid but unimplemented features must not silently succeed. For BY / FREQ / VAR / WEIGHT / Missing Values, construct valid, missing, empty, and multiple-group inputs; verify included observation counts, variable roles, BY boundaries, level ordering, and the frequency/weight rules relevant to this ticket; assert documented invalid-input behavior.
-- Status (coordinator, 2026-11-28): PARK. Implementation on unintegrated branch `stat-b7/varclus001-dev7` (`5dd2e52b`, note `090678d2`), held for the user's decision on the inlined Iris rows. Reported there: all 276 VARCLUS tokens match with inline data; the unchanged original needs SASHELP.IRIS and differs in Base PROC PRINT.
+- Status (coordinator, 2026-11-28): PARK. Integrated after the user approved the Iris rows; formerly on branch `stat-b7/varclus001-dev7` (`5dd2e52b`, note `090678d2`). Reported there: all 276 VARCLUS tokens match with inline data; the unchanged original needs SASHELP.IRIS and differs in Base PROC PRINT.
 
 - Status (dev7, 2026-11-28): PARK. Branch `stat-b7/varclus001-dev7`, base `b9a3dd4e`, code `5dd2e52b`. Implemented in `src/stat/varclus.zig` (registered in `src/main.zig`/`src/root.zig` after `lifetest`; reuses `princomp.select/moments/eigenSym` read-only): PROC VARCLUS DATA= (default last data set, WHERE), OUTSTAT=, MAXCLUSTERS=/MAXC=, MAXEIGEN=, PROPORTION=/PERCENT= (>1 = percent), MAXITER=, MAXSEARCH=, MINCLUSTERS=1, VARDEF=, NOPRINT, PLOTS=NONE; documented defaults (MAXEIGEN 0 with MAXC=, else 1; MAXC = number of variables; MAXSEARCH = 1000/p); CENTROID+MAXEIGEN= user error; VAR (default all numeric not in other roles), BY (last statement, DESCENDING/NOTSORTED, sort check, BY line), FREQ (integer part, <1 dropped, N = sum), WEIGHT (<=0 dropped), missing values omitted, with the SAS omission WARNINGs (rc 1, per BY group); oblique principal component clustering: split by largest second eigenvalue, raw quartimax rotation of two eigenvectors, NCS phase, search phase; listing (header, per-level Cluster Summary, R-squared table, scoring/structure/inter-cluster matrices with SAS table-wide decimals, split / "No cluster meets" messages, history table) for labelled and unlabelled variables; OUTSTAT= rows MEAN/STD/N/CORR + per level MEMBERS/VAREXP/PROPOR/GROUP/RSQUARED/SCORE/STRUCTUR/CCORR.
 - Original `documented_feature.sas` unchanged: rc 1 vs reference 0, 0/384 tokens, blocked only by `SASHELP.IRIS` (owned by STAT-SASHELP-005) and then the known PROC PRINT layout blocker. With only the data set swapped for an inline copy of the 150 public iris rows (scratch variant, labels as SASHELP): rc 0 vs 0, 380/384 tokens, all 276 PROC VARCLUS tokens identical, 56 differing tokens all in the following PROC PRINT (header splitting, per-column decimals — known Base blocker; values agree).
@@ -16727,3 +16728,13 @@ Source: S154, Chapter 131, `The VARIOGRAM Procedure`, PDF pp. 10751–10878. Tas
 - Acceptance criteria: derive each layout rule from SAS listings (reference files or real SAS runs on invented data), not from opensas output; the PROC PRINT sections of the listed originals match the references token for token; permanent corpus fixtures cover each rule with its boundary cases. Any existing expected output that changes needs specific SAS evidence, preserved coverage and a separate commit from the code change; list every changed expectation.
 
 <a id="stat-print-001"></a>
+
+### [DOING @dev7] STAT-BEST-001 — Base `best32.` (wide BESTw.) display matches SAS
+
+- Source: added 2026-11-28 with the user's approval; found by STAT-STDIZE-001.
+- Scope: when BESTw. has more than 16 characters besides the sign, round to 16 significant digits, cut the text to 16 characters and drop trailing zeros, as observed in real SAS. A candidate patch exists in the coordinator scratchpad (`stat/stdize001-best-wide-format.patch`).
+- Dependencies: none.
+- Oracle fixtures: [tests/STAT15.4-oracle/STAT-STDIZE-001/](tests/STAT15.4-oracle/STAT-STDIZE-001/) (read-only).
+- Acceptance criteria: verify the rule and each affected expected value with real SAS; keep the code change and the expected-result corrections in separate commits; known affected tests are `bestfmt_enotation`, `mod_fuzz`, `note_probit_deeptail` and supplemental `stat_stratified_proven_range_othercol`, `stat_stratified_overflow_bound_rev`; preserve numerical and diagnostic coverage and disclose every changed expectation. The `probit(1e-7)` accuracy difference is a separate finding: report it, do not fit the expectation to it.
+
+<a id="stat-best-001"></a>
