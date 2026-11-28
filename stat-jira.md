@@ -8,9 +8,9 @@ This section is the only current status summary; every section below it is a his
 - **Resumed 2026-11-28 about 07:20Z** after the 06:31Z account usage limit stopped all dev contexts. At the user's direction devs may compare with real SAS via `/Users/thomas/sas/bin/sasrun foo.sas -f text -o - -l /dev/null`, only when truly blocked. Coordinator keep-awake `caffeinate` PID 62218. Coordinator scripts and dev brief live in the session scratchpad `stat/` directory.
 - **Batch 42 verification at exact SHA `a4b69a6ac64090dc9d1ef8a72966f5d8f8cb467b` (2026-11-28):** `zig build install` direct 0; whole `tests/STAT15.4-oracle/` moved out of the checkout, then `zig build gate -j2 --summary all` direct 0 — **2825/2825 unit tests**, **2765/2765 corpus**, **11/11 programs**; `zig build install` direct 0; separate supplemental direct 0, **1113/1113**. Oracle restored unchanged, tree clean, HEAD unchanged. Pushed. **Integrated, PARK:** STAT-GENMOD-001 close-out (fixed a missing "Missing Values" count line).
 - **User approvals (2026-11-28):** move CATMOD's TYPE=EST direct input to STAT-CATMOD-004; add the Base random-stream ticket STAT-RAND-001; public classic sample data, including rows exported from real SAS (Iris), may be committed; build caches (`.zig-cache`) may be deleted automatically when free disk falls to about 8 GB, only for idle worktrees (done twice: 41 GB free the first time; the second at 9.5 GB free with every worktree idle, just before a seven-dev round); the `best32.` display fix is approved as STAT-BEST-001. Earlier scope: SASHELP sample data taken from SAS's public sample material may be committed to this public repository, for STAT-SASHELP-001 and the later SASHELP tickets; record source and verification, never invent rows, ask before adding a data set above about 2 MB.
-- **Live slots (auto):** dev1 STAT-STDIZE-003, dev2 STAT-RAND-001, dev3 STAT-NESTED-003, dev4 STAT-SASHELP-005, dev5 STAT-CAUSALGRAPH-005, dev6 STAT-LIFETEST-001, dev7 STAT-ANOVA-001, dev7 STAT-CATMOD-005.
-- **Integrated locally, awaiting batch verification (auto):** STAT-ANOVA-001 (DONE candidate).
-- **Counts:** 70 DONE, 136 PARK, 8 DOING, 1211 TODO.
+- **Live slots (auto):** dev1 STAT-STDIZE-003, dev2 STAT-RAND-001, dev3 STAT-NESTED-003, dev4 STAT-SASHELP-005, dev5 STAT-CAUSALGRAPH-005, dev6 STAT-DATASET-001, dev7 STAT-ANOVA-001, dev7 STAT-CATMOD-005.
+- **Integrated locally, awaiting batch verification (auto):** STAT-ANOVA-001 (DONE candidate), STAT-LIFETEST-001 (PARK).
+- **Counts:** 70 DONE, 137 PARK, 8 DOING, 1210 TODO.
 - **Next:** integrate each returned ticket and refill its slot, preferring close-out attempts on PARK tickets whose originals now match exactly (DISTANCE-001, PRINQUAL-001, VARCLUS-001, TPSPLINE-001, CATMOD-001, CANCORR-001, GEE-001, INBREED-001, then the open review in the batch 6 receipt), because a DONE ticket unlocks its dependents; then other eligible tickets.
 - **Working branch:** `feat/stat/batch-4`. Last tested and pushed code SHA `a4b69a6ac64090dc9d1ef8a72966f5d8f8cb467b` (batch 42; batch 41 was `c1530bcaea0bb84c6255182384fe25da98ed9579`). The bullets below this one describe batch 5 and are historical. Later commits that touch only this file are documentation. No PR created or merged; `main` untouched.
 
@@ -1592,7 +1592,7 @@ Complete prerequisite shared contracts first, then each PROC's data input, model
 
 <a id="stat-dataset-001"></a>
 
-### [TODO] STAT-DATASET-001 — Statistical data set types, matrices, and reserved metadata contracts
+### [DOING @dev6] STAT-DATASET-001 — Statistical data set types, matrices, and reserved metadata contracts
 
 - Source: S154 / Special SAS Data Sets / `Introduction to Special SAS Data Sets` (PDF pp. 10880–10883).
 - Scope: Represent statistical data set TYPE= attributes, matrix row identifiers, and reserved metadata consistently; subsequent type-specific tickets define the fields and formulas for each TYPE=.
@@ -8809,7 +8809,7 @@ Source: S154, Chapter 77, `The LIFETEST Procedure`, PDF pp. 5639–5754. Tasks i
 
 <a id="stat-lifetest-001"></a>
 
-### [DOING @dev6] STAT-LIFETEST-001 — LIFETEST — Data input, variable roles, and basic options
+### [PARK] STAT-LIFETEST-001 — LIFETEST — Data input, variable roles, and basic options
 
 - Source: S154 / Chapter 77 / `PROC LIFETEST Statement` (PDF pp. 5650–5662); S154 / Chapter 77 / `BY Statement` (PDF pp. 5662–5663); S154 / Chapter 77 / `FREQ Statement` (PDF p. 5663); S154 / Chapter 77 / `ID Statement` (PDF p. 5663); S154 / Chapter 77 / `STRATA Statement` (PDF pp. 5663–5668); S154 / Chapter 77 / `WEIGHT Statement` (PDF p. 5670); S154 / Chapter 77 / `Missing Values` (PDF pp. 5670–5671).
 - Scope: Integrate PROC LIFETEST declarations, basic options, defaults, and execution boundaries; this ticket establishes parameter objects and result interfaces, while later feature tickets implement model-, algorithm-, and output-specific options. Also implement BY; FREQ; ID; STRATA; WEIGHT; Missing Values; apply this procedure's rules for missing values, variable roles, and observation selection.
@@ -8832,6 +8832,7 @@ Source: S154, Chapter 77, `The LIFETEST Procedure`, PDF pp. 5639–5754. Tasks i
   - Permanent tests: new corpus `stat_lifetest_{by,freq,weight,id,missing_level,numeric_strata,no_strata,no_strata_small,two_digit}.sas/.txt`; `stat_lifetest_roles_gap.sas` now gaps on WEIGHT+FREQ; new block `STAT-LIFETEST-001 WEIGHT kernels FREQ replication and final-plateau quartile match hand calculation`; gap lists in the 001/002 blocks updated to shapes that stay loud.
   - Validation (dev6): `heavy.sh zig build install` exit 0; `heavy.sh zig test src/root.zig -lc --test-filter "STAT-LIFETEST"` exit 0, 91/91; `heavy.sh zig run tests/corpus_runner.zig -- zig-out/bin/opensas tests/corpus <f>` exit 0, 1/1 for each of the 14 `stat_lifetest_*` fixtures. NOT run: `zig build gate`, supplemental suite, oracle-absent check (coordinator).
   - Remaining before DONE (all loud rc 2): (1) several STRATA variables (SAS layout seen under NOTABLE only: numbered strata, legend table; stratum page heading not captured); (2) STRATA options and interval lists (`/ TEST= GROUP= ADJUST= ...`, `age(5,10)`) — test options partly STAT-LIFETEST-004; (3) formatted STRATA/ID values (FORMAT statement), missing or noninteger numeric STRATA levels; (4) empty input after selection: SAS prints no listing with NOTE "No observations were selected" and "stopped processing this step because of errors" — rc not settled; (5) duplicate TIME/STRATA/FREQ/WEIGHT statements and repeated STRATA variables (policy not documented, needs SAS run); (6) display outside the evidenced ranges: times >= 10, strata of 100+ observations, FREQ/WEIGHT/ID with strata of 10+, weighted sums >= 100, rank columns outside [0.1,100), covariance columns outside [0.1,1000) or mixed-magnitude columns; (7) BY/FREQ/WEIGHT/ID/NOTABLE without STRATA; names/levels longer than 8 characters.
+- Coordinator note: PARK. Disclosed by the dev as having no SAS reference yet and raising no error: the multi-page stratum layout beyond the shapes SAS showed, and BY groups whose magnitudes differ (each group picks its own column layout). These can differ from SAS silently and must be closed before DONE.
 
 <a id="stat-lifetest-002"></a>
 
