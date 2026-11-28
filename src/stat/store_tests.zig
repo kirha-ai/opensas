@@ -371,3 +371,88 @@ test "STAT-COMMON-030 unused CLASS declaration does not become a scoring prerequ
     const x = (try store.row(a, m, &incoming, &.{.{ .num = 2 }})).?;
     try t.expectEqualSlices(f64, &.{ 1, 2 }, x);
 }
+
+// Base SAS Procedures Guide physical631–632,651,675: KILL/CHANGE default
+// ALL; DELETE defaults DATA. Only the member operations that could touch an
+// existing native store are blocked; DATA-only operations still take effect.
+test "STAT-COMMON-030 DATASETS guards native WORK management and preserves DATA-only semantics" {
+    var arena = std.heap.ArenaAllocator.init(t.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var ds = try sample(a);
+    var lib = Library.init(a);
+    try lib.put("sample", &ds);
+    var d = diag.Diagnostics.init(a);
+    const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &d };
+    _ = try fitted(cx);
+    try lib.put("fitted", &ds);
+    for ([_][]const u8{
+        "proc datasets nolist kill; quit;",
+        "proc datasets library=work nolist; change fitted=renamed; quit;",
+        "proc datasets nolist; delete fitted / memtype=all; quit;",
+        "proc datasets nolist; delete fitted / memtype=itemstor; quit;",
+        "proc datasets memtype=itemstor nolist; delete fitted; quit;",
+    }) |source| {
+        var reporter = diag.Diagnostics.init(a);
+        var out: std.ArrayList(u8) = .empty;
+        const local: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &reporter };
+        diag.resetGap();
+        defer diag.resetGap();
+        try t.expectError(error.ParseError, proc.runDatasets(local, &out, try lex.tokenize(a, source, &reporter)));
+        try t.expectEqual(@as(u8, 2), diag.exitCode(diag.gapHit(), reporter.hasErrors()));
+        try t.expect(lib.find("fitted") != null);
+        try t.expectEqual(@as(usize, 1), lib.item_stores.count());
+        try t.expect(std.mem.indexOf(u8, reporter.list.items[0].message, "not implemented") != null);
+    }
+    var out: std.ArrayList(u8) = .empty;
+    // Default DELETE removes DATA only even though the native store shares its name.
+    try proc.runDatasets(cx, &out, try lex.tokenize(a, "proc datasets nolist; delete fitted; quit;", &d));
+    try t.expect(lib.find("fitted") == null);
+    _ = try store.restore(cx, "fitted");
+    try lib.put("fitted", &ds);
+    try proc.runDatasets(cx, &out, try lex.tokenize(a, "proc datasets memtype=data nolist; change fitted=renamed; quit;", &d));
+    try t.expect(lib.find("renamed") != null);
+    _ = try store.restore(cx, "fitted");
+    // A default CHANGE of an unrelated DATA member remains allowed.
+    try proc.runDatasets(cx, &out, try lex.tokenize(a, "proc datasets nolist; change renamed=other; quit;", &d));
+    try t.expect(lib.find("other") != null);
+    try proc.runDatasets(cx, &out, try lex.tokenize(a, "proc datasets memtype=data kill nolist; quit;", &d));
+    try t.expectEqual(@as(usize, 0), lib.sets.items.len);
+    _ = try store.restore(cx, "fitted");
+}
+
+test "STAT-COMMON-030 DATASETS detects native disk stores across sessions without deleting files" {
+    var tmp = t.tmpDir(.{});
+    defer tmp.cleanup();
+    const dir = try tmp.dir.realPathFileAlloc(t.io, ".", t.allocator);
+    defer t.allocator.free(dir);
+    const refs = [_]@import("../dsfns.zig").Libref{.{ .name = "saved", .dir = dir }};
+    @import("../dsfns.zig").bindLibrefs(&refs);
+    defer @import("../dsfns.zig").bindLibrefs(&.{});
+    var arena = std.heap.ArenaAllocator.init(t.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var ds = try sample(a);
+    var lib = Library.init(a);
+    try lib.put("sample", &ds);
+    var d = diag.Diagnostics.init(a);
+    const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &d };
+    const m = try fitted(cx);
+    try store.save(cx, .{ .name = "saved.fitted" }, m);
+    var fresh = Library.init(a);
+    try fresh.put("saved.data", &ds);
+    for ([_][]const u8{ "proc datasets library=saved kill nolist; quit;", "proc datasets library=saved nolist; change fitted=other; quit;" }) |source| {
+        var reporter = diag.Diagnostics.init(a);
+        var out: std.ArrayList(u8) = .empty;
+        diag.resetGap();
+        defer diag.resetGap();
+        try t.expectError(error.ParseError, proc.runDatasets(.{ .arena = a, .lib = &fresh, .diags = &reporter }, &out, try lex.tokenize(a, source, &reporter)));
+        try t.expectEqual(@as(u8, 2), diag.exitCode(diag.gapHit(), reporter.hasErrors()));
+        try t.expect(fresh.find("saved.data") != null);
+    }
+    var out: std.ArrayList(u8) = .empty;
+    try proc.runDatasets(.{ .arena = a, .lib = &fresh, .diags = &d }, &out, try lex.tokenize(a, "proc datasets library=saved memtype=data kill nolist; quit;", &d));
+    try t.expect(fresh.find("saved.data") == null);
+    const restored = try store.restore(.{ .arena = a, .lib = &fresh, .diags = &d }, "saved.fitted");
+    try close(m.coefficients[0], restored.coefficients[0]);
+}

@@ -6501,6 +6501,7 @@ pub fn runDatasets(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) di
     const diags = cx.diags;
     var i: usize = 2; // past `proc datasets`
     var kill = false;
+    var data_only = false;
     var libname: ?[]const u8 = null;
     while (i < toks.len and toks[i].tag != .semicolon) {
         if (tkKw(toks[i], "kill")) {
@@ -6520,11 +6521,12 @@ pub fn runDatasets(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) di
             // ends in a real else.
             i += 1;
         } else if (tkKw(toks[i], "memtype") and i + 2 < toks.len and toks[i + 1].tag == .eq and toks[i + 2].tag == .name) {
-            // MEMTYPE=DATA is inert — data is the only member type opensas
-            // stores, so the filter matches everything it would anyway. Any
+            // MEMTYPE=DATA excludes native item stores. Any
             // OTHER type scopes the step's DELETE/CHANGE to member kinds we
             // can't distinguish (a MEMTYPE=CATALOG DELETE must touch nothing)
             // → LOUD, never silently mis-scope a delete (GAP-procopts).
+            data_only = eqi(toks[i + 2].text, "data");
+            if (eqi(toks[i + 2].text, "itemstor")) return failGap(diags, toks[i].line, "PROC DATASETS: native item-store management is not implemented", .{});
             if (!eqi(toks[i + 2].text, "data")) {
                 // ALL/CATALOG/VIEW are documented SAS 9.4 member types we can't
                 // scope to — a gap (rc 2); anything else is the user's typo (rc 1).
@@ -6551,7 +6553,10 @@ pub fn runDatasets(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) di
     if (i < toks.len) i += 1; // past ';'
     // KILL: delete every member of the target library (BUG-datasetskill — the
     // end-of-program WORK-clear idiom, 80 of 164 real programs).
-    if (kill) dsKill(arena, lib, libname);
+    if (kill) {
+        try @import("stat/store_management.zig").checkKill(cx, libname, data_only);
+        dsKill(arena, lib, libname);
+    }
 
     var cur: ?*Dataset = null; // the MODIFY target, if any
     while (i < toks.len and toks[i].tag != .eof) {
@@ -6590,6 +6595,7 @@ pub fn runDatasets(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) di
             };
             try applyAttrib(arena, ds, stmt[1..], diags);
         } else if (tkKw(kw, "delete")) {
+            try @import("stat/store_management.zig").checkStatement(cx, libname, data_only, stmt);
             var k: usize = 1;
             while (k < stmt.len) : (k += 1) {
                 if (stmt[k].tag != .name) continue;
@@ -6618,6 +6624,7 @@ pub fn runDatasets(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) di
                 }
             }
         } else if (tkKw(kw, "change")) {
+            try @import("stat/store_management.zig").checkStatement(cx, libname, data_only, stmt);
             var k: usize = 1;
             while (k + 2 < stmt.len + 1 and k + 2 <= stmt.len) : (k += 3) {
                 if (stmt[k].tag == .name and stmt[k + 1].tag == .eq and stmt[k + 2].tag == .name) {
