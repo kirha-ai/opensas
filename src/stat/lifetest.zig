@@ -13,7 +13,7 @@ const Dataset = @import("../dataset.zig").Dataset;
 const Value = @import("../value.zig").Value;
 const fns = @import("../functions.zig");
 const by = @import("by_groups.zig");
-const selection = @import("data_selection.zig");
+const survival = @import("survival_data.zig");
 const A = std.mem.Allocator;
 const eq = std.ascii.eqlIgnoreCase;
 const Out = std.ArrayList(u8);
@@ -219,81 +219,31 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
     return s;
 }
 
-pub const Obs = struct { time: f64, event: bool, stratum: usize, freq: f64 = 1, weight: f64 = 1 };
+pub const Obs = survival.Obs;
 pub const Selected = struct {
-    obs: []Obs,
+    obs: []const Obs,
     /// One representative row per stratum level, ascending (missing first).
     levels: []const []const Value,
     read: usize,
 };
 
-fn valueLess(x: Value, y: Value) bool {
-    return switch (x) {
-        .num => |xv| blk: {
-            const yv = y.num;
-            if (std.math.isNan(xv)) break :blk !std.math.isNan(yv);
-            if (std.math.isNan(yv)) break :blk false;
-            break :blk xv < yv;
-        },
-        .str => |xs| std.mem.lessThan(u8, std.mem.trimEnd(u8, xs, " "), std.mem.trimEnd(u8, y.str, " ")),
-    };
-}
-fn levelOrder(cols: []const usize, x: []const Value, y: []const Value) std.math.Order {
-    for (cols) |c| {
-        if (valueLess(x[c], y[c])) return .lt;
-        if (valueLess(y[c], x[c])) return .gt;
-    }
-    return .eq;
-}
-fn levelLess(cols: []const usize, x: []const Value, y: []const Value) bool {
-    return levelOrder(cols, x, y) == .lt;
-}
-
-/// Observation selection, physical pp.5663, 5670-5671: a missing time or
-/// censoring value drops the observation; a missing stratum value drops it
-/// unless MISSING; FREQ is truncated unless NOTRUNCATE and a missing or
-/// nonpositive (after truncation: below one) frequency drops it; a missing or
-/// nonpositive WEIGHT drops it. ID values never select. Strata levels are
-/// ordered ascending by unformatted value.
+/// Observation selection, physical pp.5663, 5670-5671, through the shared
+/// survival-data contract: a missing time or censoring value drops the
+/// observation; a missing stratum value drops it unless MISSING; FREQ is
+/// truncated unless NOTRUNCATE and a missing or nonpositive (after
+/// truncation: below one) frequency drops it; a missing or nonpositive WEIGHT
+/// drops it. ID values never select. Strata levels are ordered ascending by
+/// unformatted value.
 pub fn select(a: A, s: Spec, rows: []const []const Value) !Selected {
-    var kept: std.ArrayList([]const Value) = .empty;
-    var obs: std.ArrayList(Obs) = .empty;
-    for (rows) |row| {
-        if (selection.missing(row[s.time])) continue;
-        var o: Obs = .{ .time = row[s.time].num, .event = true, .stratum = 0 };
-        if (s.censor) |c| {
-            if (selection.missing(row[c])) continue;
-            o.event = std.mem.indexOfScalar(f64, s.censor_values, row[c].num) == null;
-        }
-        if (!s.missing) {
-            var skip = false;
-            for (s.strata) |c| skip = skip or selection.missing(row[c]);
-            if (skip) continue;
-        }
-        if (s.frequency) |c| {
-            if (selection.missing(row[c])) continue;
-            o.freq = if (s.notruncate) row[c].num else @trunc(row[c].num);
-            if (!(o.freq > 0)) continue;
-        }
-        if (s.weight) |c| {
-            if (selection.missing(row[c]) or !(row[c].num > 0)) continue;
-            o.weight = row[c].num;
-        }
-        try kept.append(a, row);
-        try obs.append(a, o);
-    }
-    var levels: std.ArrayList([]const Value) = .empty;
-    if (s.strata.len > 0) {
-        const sorted = try a.dupe([]const Value, kept.items);
-        std.mem.sort([]const Value, sorted, s.strata, levelLess);
-        for (sorted) |row| if (levels.items.len == 0 or levelOrder(s.strata, levels.items[levels.items.len - 1], row) != .eq) try levels.append(a, row);
-        for (kept.items, obs.items) |row, *o| {
-            for (levels.items, 0..) |level, k| if (levelOrder(s.strata, level, row) == .eq) {
-                o.stratum = k;
-            };
-        }
-    }
-    return .{ .obs = obs.items, .levels = levels.items, .read = rows.len };
+    const c = try survival.classifyRight(a, .{
+        .response = .{ .right = .{ .time = s.time, .censor = s.censor, .censor_values = s.censor_values } },
+        .strata = s.strata,
+        .missing = s.missing,
+        .frequency = s.frequency,
+        .notruncate = s.notruncate,
+        .weight = s.weight,
+    }, rows);
+    return .{ .obs = c.obs, .levels = c.levels, .read = rows.len };
 }
 
 pub const Row = struct { time: f64, censored: bool, survival: ?f64 = null, se: ?f64 = null, failed: usize, left: usize };
@@ -612,9 +562,12 @@ fn render(cx: proc.ProcCtx, out: *Out, s: Spec, sel: Selected) diag.Error!void {
     for ([_]f64{ h.logrank_cov[0], h.wilcoxon_cov[0] }) |x| if (!(x >= 1 and x < 100)) return gap(cx, 0, "rank covariance display outside 1 <= x < 100 is not verified", .{});
 
     var body: Out = .empty;
-    for (strata, 0..) |st, k| {
+    // NOTABLE (physical p.5654) leaves only the censoring summary and the
+    // tests: the SAS listing drops each stratum's page (estimates, quartiles,
+    // mean) and the log drops the quartile-transform note.
+    if (!s.notable) for (strata, 0..) |st, k| {
         try body.print(a, "\nThe LIFETEST Procedure\n \nStratum {d}: {s} = {s}\n\n", .{ k + 1, strata_name, labels[k] });
-        if (!s.notable) {
+        {
             try body.appendSlice(a, "                 Product-Limit Survival Estimates\n \n                                     Survival\n                                     Standard    Number    Number\n");
             try padRight(a, &body, time_name, 8);
             try body.appendSlice(a, "     Survival    Failure      Error      Failed     Left\n\n");
@@ -648,8 +601,9 @@ fn render(cx: proc.ProcCtx, out: *Out, s: Spec, sel: Selected) diag.Error!void {
         try body.append(a, '\n');
         // ponytail: the note is wrapped as the reference wraps it at LINESIZE=160.
         if (st.last_censored) try body.appendSlice(a, "\nNOTE: The mean survival time and its standard error were underestimated because the largest observation was censored and the estimation was restricted to the \n      largest event time.\n");
-    }
-    try body.appendSlice(a, "\n\n    Summary of the Number of Censored and Uncensored Values\n \n                                                        Percent\nStratum    ");
+    };
+    try body.appendSlice(a, if (s.notable) "\nThe LIFETEST Procedure\n" else "\n");
+    try body.appendSlice(a, "\n    Summary of the Number of Censored and Uncensored Values\n \n                                                        Percent\nStratum    ");
     try padLeft(a, &body, strata_name, 8);
     try body.appendSlice(a, "       Total  Failed    Censored    Censored\n\n");
     var total: usize = 0;
@@ -704,7 +658,7 @@ fn render(cx: proc.ProcCtx, out: *Out, s: Spec, sel: Selected) diag.Error!void {
         try body.appendSlice(a, if (p < 0.0001) "<.0001" else try fixed(a, p, 4));
         try body.appendSlice(a, "  \n");
     }
-    try cx.diags.note(0, "The LOGLOG transform is used to compute the confidence limits for the quartiles of the survivor distribution. To suppress using this transform, specify CONFTYPE=LINEAR in the PROC LIFETEST statement.", .{});
+    if (!s.notable) try cx.diags.note(0, "The LOGLOG transform is used to compute the confidence limits for the quartiles of the survivor distribution. To suppress using this transform, specify CONFTYPE=LINEAR in the PROC LIFETEST statement.", .{});
     try out.appendSlice(a, body.items);
 }
 

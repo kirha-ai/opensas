@@ -340,6 +340,12 @@ test "STAT-LIFETEST-001 default stratified listing NOTABLE and all-censored prod
     try expectEqual(@as(u8, 0), short.rc);
     try expectEqual(@as(usize, 0), std.mem.count(u8, short.out, "Product-Limit"));
     try expectEqual(@as(usize, 0), std.mem.count(u8, short.out, "marked survival times"));
+    // NOTABLE drops each stratum's page entirely (SAS reference listing):
+    // the output opens with the censoring summary.
+    try expectEqual(@as(usize, 0), std.mem.count(u8, short.out, "Stratum 1:") + std.mem.count(u8, short.out, "Quartile Estimates") + std.mem.count(u8, short.out, "Mean"));
+    try expect(std.mem.startsWith(u8, short.out, "\nThe LIFETEST Procedure\n\n    Summary of the Number of Censored and Uncensored Values\n"));
+    try expectEqual(@as(usize, 2), std.mem.count(u8, short.out, "The LIFETEST Procedure"));
+    try expectEqual(@as(usize, 3), std.mem.count(u8, listing.out, "The LIFETEST Procedure"));
     try expect(std.mem.indexOf(u8, short.out, "Log-Rank      0.6940       1      0.4048  \n") != null);
     // A sample without events keeps the estimate at 1 and is flagged rather
     // than summarised.

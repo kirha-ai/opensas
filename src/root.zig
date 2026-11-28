@@ -68,6 +68,7 @@ test {
     _ = @import("stat/plm.zig");
     _ = @import("stat/phreg.zig");
     _ = @import("stat/lifetest.zig");
+    _ = @import("stat/survival_data.zig");
     _ = @import("stat/power.zig");
     _ = @import("stat/power_means.zig");
     _ = @import("stat/power_solver.zig");
