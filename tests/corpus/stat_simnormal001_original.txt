@@ -1,0 +1,11 @@
+# corpus assertions
+# Rows: SAS 9.4 reference listing of the unchanged original (documented_feature.expected.txt).
+row Variable N Mean Std Dev Sum Minimum Maximum
+row s1 500 1.32531 1.44980 662.65682 -2.77983 5.50843
+# SAS prints the s2 Sum as 1048 (PROC CORR column width); the value 1047.5... is checked by the mean (2.09504 x 500).
+row s2 500 2.09504 1.97278 {any} -5.69812 7.83275
+row s1 1.00000 0.18774
+row s2 0.18774 1.00000
+# The p-values (<.0001) sit on separate lines in SAS and on a P row in opensas (PROC CORR layout); not asserted.
+stderr-count 1 The data set WORK.DRAWS has 500 observations and 3 variables.
+stderr-count 0 ERROR

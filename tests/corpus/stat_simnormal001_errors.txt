@@ -1,0 +1,34 @@
+# corpus assertions
+# Messages: SAS 9.4 log of this program; listing row: SAS 9.4 output (BY group 1 kept, groups after the error not produced).
+row r3 n=1 g=1 a=3.9306276301 b=5.9535803229 Rnum=1
+stderr-count 1 Variable c in list does not match type prescribed for this list.
+stderr-count 1 Variable ZZ not found.
+stderr-count 1 Invalid covariance or conditional covariance matrix; matrix is not positive definite.
+stderr-count 1 The data set WORK.E3 may be incomplete.  When this step was stopped there were 0 observations and 3 variables.
+stderr-count 1 COV matrix incomplete in data set WORK.MIS.
+stderr-count 1 The data set WORK.E4 has 0 observations and 3 variables.
+stderr-count 1 The parameter value -1 is less than the minimum allowed value of 0.
+stderr-count 1 The parameter value 2 is not within the required range of 0 and 1.
+stderr-count 1 Syntax error, expecting one of the following: ;, DATA, N, NUMREAL, OUT, OUTC, OUTCOND, OUTSEED, SEED, SEEDBY, SING1, SING2, SINGULAR1, SINGULAR2.
+stderr-count 1 Syntax error, statement will be ignored.
+stderr-count 1 Data set WORK.SCOVB is not sorted in descending sequence. The current BY group has g = 1 and the next BY group has g = 2.
+stderr-count 1 No observations in data set WORK.EMP or current by group.
+stderr-count 1 The data set WORK.R2 has 0 observations and 3 variables.
+stderr-count 1 COV matrix not found in data set WORK.BG.
+stderr-count 1 The data set WORK.R3 has 1 observations and 4 variables.
+stderr-count 1 CORR matrix incomplete in data set WORK.CI.
+stderr-count 1 The data set WORK.R6 has 0 observations and 3 variables.
+stderr-count 1 Variable a already exists on file WORK.R8, using a2 instead.
+stderr-count 1 COV matrix incomplete in data set WORK.C3.
+stderr-count 1 The data set WORK.R8 has 0 observations and 4 variables.
+stderr-count 1 Variable g already exists on file WORK.R9, using g2 instead.
+stderr-count 1 COV matrix incomplete in data set WORK.BG.
+stderr-count 1 The data set WORK.R9 has 0 observations and 4 variables.
+stderr-count 1 No variables were specified.
+stderr-count 1 The data set WORK.C3 does not indicate how many observations were used to compute the COV matrix. The number of observations has been set to 10000.
+stderr-count 1 The data set WORK.R10 has 2 observations and 1 variables.
+stderr-count 1 The COV matrix read from the input data set WORK.ASY is not symmetric between variable b and variable a.
+stderr-count 1 The data set WORK.R15 has 0 observations and 3 variables.
+stderr-count 1 COV matrix incomplete in data set WORK.MR.
+stderr-count 1 The data set WORK.R14 has 0 observations and 3 variables.
+stderr-count 1 Variable G not found.
