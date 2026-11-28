@@ -1,0 +1,202 @@
+
+The HPGENSELECT Procedure
+
+      Performance Information
+
+Execution Mode       Single-Machine
+Number of Threads    1             
+
+
+        Data Access Information
+ 
+Data        Engine    Role     Path
+
+WORK.CNT    V9        Input    On Client
+
+
+                  Model Information
+
+Data Source               WORK.CNT                   
+Response Variable         y                          
+Frequency Variable        f                          
+Class Parameterization    GLM                        
+Distribution              Poisson                    
+Link Function             Log                        
+Optimization Technique    Newton-Raphson with Ridging
+
+
+Number of Observations Read              18
+Number of Observations Used              13
+Sum of Frequencies Read                  21
+Sum of Frequencies Used                  18
+
+
+ Class Level Information
+ 
+Class    Levels    Values
+
+g             3    1 2 3 
+
+
+           Dimensions
+
+Number of Effects              3
+Number of Parameters           4
+Columns in X                   5
+
+
+              Fit Statistics
+
+-2 Log Likelihood                  49.5665
+AIC (smaller is better)            57.5665
+AICC (smaller is better)           60.6435
+BIC (smaller is better)            61.1280
+Pearson Chi-Square                  4.3435
+Pearson Chi-Square/DF               0.3102
+
+
+                            Parameter Estimates
+ 
+                                       Standard
+Parameter    DF        Estimate           Error    Chi-Square    Pr > ChiSq
+
+Intercept     1       -0.552237        0.566723        0.9495        0.3298
+g 1           1        0.220332        0.363761        0.3669        0.5447
+g 2           1       -0.336098        0.385334        0.7608        0.3831
+g 3           0               0               .         .             .    
+x             1        1.092485        0.274379       15.8537        <.0001
+
+         Convergence criterion (GCONV=1E-8) satisfied.          
+
+The HPGENSELECT Procedure
+
+      Performance Information
+
+Execution Mode       Single-Machine
+Number of Threads    1             
+
+
+        Data Access Information
+ 
+Data        Engine    Role     Path
+
+WORK.CNT    V9        Input    On Client
+
+
+                  Model Information
+
+Data Source               WORK.CNT                   
+Response Variable         y                          
+Weight Variable           w                          
+Class Parameterization    GLM                        
+Distribution              Poisson                    
+Link Function             Log                        
+Optimization Technique    Newton-Raphson with Ridging
+
+
+Number of Observations Read              18
+Number of Observations Used              13
+
+
+ Class Level Information
+ 
+Class    Levels    Values
+
+g             3    1 2 3 
+
+
+           Dimensions
+
+Number of Effects              3
+Number of Parameters           4
+Columns in X                   5
+
+
+              Fit Statistics
+
+-2 Log Likelihood                  40.2902
+AIC (smaller is better)            48.2902
+AICC (smaller is better)           53.2902
+BIC (smaller is better)            50.5500
+Pearson Chi-Square                  2.7278
+Pearson Chi-Square/DF               0.3031
+
+
+                            Parameter Estimates
+ 
+                                       Standard
+Parameter    DF        Estimate           Error    Chi-Square    Pr > ChiSq
+
+Intercept     1       -0.217828        0.518762        0.1763        0.6746
+g 1           1        0.073847        0.363384        0.0413        0.8390
+g 2           1       -0.406351        0.445392        0.8324        0.3616
+g 3           0               0               .         .             .    
+x             1        0.917528        0.293138        9.7970        0.0017
+
+         Convergence criterion (GCONV=1E-8) satisfied.          
+
+The HPGENSELECT Procedure
+
+      Performance Information
+
+Execution Mode       Single-Machine
+Number of Threads    1             
+
+
+         Data Access Information
+ 
+Data         Engine    Role     Path
+
+WORK.CNTC    V9        Input    On Client
+
+
+                  Model Information
+
+Data Source               WORK.CNTC                  
+Response Variable         y                          
+Class Parameterization    GLM                        
+Distribution              Poisson                    
+Link Function             Log                        
+Optimization Technique    Newton-Raphson with Ridging
+
+
+Number of Observations Read              18
+Number of Observations Used              15
+
+
+      Class Level Information
+ 
+Class    Levels    Values
+
+gc            3    Gamma alpha beta 
+
+
+           Dimensions
+
+Number of Effects              3
+Number of Parameters           4
+Columns in X                   5
+
+
+              Fit Statistics
+
+-2 Log Likelihood                  42.3350
+AIC (smaller is better)            50.3350
+AICC (smaller is better)           54.3350
+BIC (smaller is better)            53.1672
+Pearson Chi-Square                  2.5413
+Pearson Chi-Square/DF               0.2310
+
+
+                            Parameter Estimates
+ 
+                                       Standard
+Parameter    DF        Estimate           Error    Chi-Square    Pr > ChiSq
+
+Intercept     1       -0.127632        0.482752        0.0699        0.7915
+x             1        0.929707        0.291861       10.1470        0.0014
+gc Gamma      1       -0.119509        0.381347        0.0982        0.7540
+gc alpha      1       -0.397821        0.414324        0.9219        0.3370
+gc beta       0               0               .         .             .    
+
+         Convergence criterion (GCONV=1E-8) satisfied.          
