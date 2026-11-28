@@ -11,8 +11,7 @@
 //! enumerated over the measured covariates and listed by increasing size.
 //! Layout and messages follow SAS 9.4 reference runs. Everything not proven
 //! against a reference listing (METHOD=BACKDOOR/IV, TESTID, IMAP, COMMON,
-//! PSUMMARY, NOSORT, CYCLES=, ORDERMODELS with several models, joint
-//! effects, disconnected models) is a
+//! PSUMMARY, NOSORT, CYCLES=, joint effects) is a
 //! D-009 gap (rc 2) raised before any listing text is produced.
 const std = @import("std");
 const proc = @import("../proc.zig");
@@ -464,19 +463,14 @@ pub fn validate(cx: proc.ProcCtx, s: Spec) diag.Error!void {
         // ponytail: the reference run also prints the DirectedCycles table
         // before this error; only the error is produced here.
     }
-    if (s.models.len > 1 and s.opts.ordermodels) return gap(cx, s.models[1].line, "ORDERMODELS with more than one MODEL statement is not implemented", .{});
     // Disconnected models: VariableInfo, summary and the ConnectedComponents
     // table (SAS 9.4 reference runs). Forms without a reference run stay
     // gaps.
-    var ndisc: usize = 0;
-    for (s.models) |m| if (try components(cx.arena, s.names.len, m) > 1) {
-        ndisc += 1;
-        for (m.nodes) |v| if (contains(s.unmeasured, v))
-            return gap(cx, m.line, "a disconnected model with unmeasured variables (ConnectedComponents table) is not implemented", .{});
-        if (s.opts.disconnected and s.models.len > 1)
-            return gap(cx, m.line, "the DISCONNECTED option with more than one MODEL statement is not implemented", .{});
-    };
-    if (ndisc > 1) return gap(cx, s.models[0].line, "more than one disconnected model is not implemented", .{});
+    for (s.models, 0..) |m, k| if (k > 0 and s.opts.disconnected and try components(cx.arena, s.names.len, m) > 1)
+        // ponytail: the reference run had only the first model disconnected;
+        // whether a later model's table precedes the first AdjustList is
+        // unverified.
+        return gap(cx, m.line, "the DISCONNECTED option with a disconnected model after the first MODEL statement is not implemented", .{});
     if (s.opts.method != .adjustment) return gap(cx, 0, "METHOD={s} is not implemented", .{if (s.opts.method == .iv) "IV" else "BACKDOOR"});
     if (s.treatments.len > 1 or s.outcomes.len > 1) return gap(cx, line, "joint causal effects (several treatment or outcome variables) are not implemented", .{});
 }
@@ -795,8 +789,19 @@ fn sortedIds(names: []const []const u8, ids: []usize) void {
 
 pub fn run(cx: proc.ProcCtx, out: *Out, t: []const lex.Token) diag.Error!void {
     const a = cx.arena;
-    const s = try parse(cx, t);
+    var s = try parse(cx, t);
     try validate(cx, s);
+    if (s.opts.ordermodels) {
+        // ORDERMODELS: models in label order (reference run: Alpha, Mid,
+        // Zeta for models written Zeta, Alpha, Mid).
+        const ms = try a.dupe(Model, s.models);
+        std.mem.sort(Model, ms, {}, struct {
+            fn f(_: void, l: Model, r: Model) bool {
+                return std.ascii.lessThanIgnoreCase(l.label, r.label);
+            }
+        }.f);
+        s.models = ms;
+    }
     const n = s.names.len;
     const list = s.opts.list orelse s.identify;
 
@@ -828,8 +833,12 @@ pub fn run(cx: proc.ProcCtx, out: *Out, t: []const lex.Token) diag.Error!void {
             };
             var required: u64 = 0;
             for (s.adjust) |z| {
-                const k = std.mem.indexOfScalar(usize, mc.items, z) orelse
-                    return gap(cx, m.line, "a prescribed adjustment variable that is not in every model is not implemented", .{});
+                // A prescribed variable missing from this model is dropped
+                // for it with a warning (SAS 9.4 reference run).
+                const k = std.mem.indexOfScalar(usize, mc.items, z) orelse {
+                    try cx.diags.warn(s.identify_line, "The adjustment variable {s} is not found in the model {s}.", .{ s.names[z], m.label });
+                    continue;
+                };
                 required |= @as(u64, 1) << @intCast(k);
             }
             const g = try expandLatent(a, n, m.edges);

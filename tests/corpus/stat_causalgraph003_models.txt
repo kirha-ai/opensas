@@ -120,3 +120,97 @@ Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasure
 
 Aa              2           1             0           0           2             0
 Bb              3           3             0           0           3             0
+F4 ordermodels
+
+The CAUSALGRAPH Procedure
+
+         Variables in Models
+
+                       N    Variables
+
+Measured               5    V W X Y Z
+Unmeasured             0
+
+
+                             Graphical Model Summary
+
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+Alpha           2           1             1           1           2             0
+Mid             4           4             1           1           4             0
+Zeta            3           3             1           1           3             0
+F4 ordermodels
+
+The CAUSALGRAPH Procedure
+
+       Covariate Adjustment Sets for Alpha
+             Causal Effect of X on Y
+
+                                    -Covariates--
+                Size    Minimal     V     W     Z
+
+       1           0    Yes
+F4 ordermodels
+
+The CAUSALGRAPH Procedure
+
+        Covariate Adjustment Sets for Mid
+             Causal Effect of X on Y
+
+                                    -Covariates--
+                Size    Minimal     V     W     Z
+
+       1           1    Yes               *
+       2           2    No          *     *
+F4 ordermodels
+
+The CAUSALGRAPH Procedure
+
+        Covariate Adjustment Sets for Zeta
+             Causal Effect of X on Y
+
+                                    -Covariates--
+                Size    Minimal     V     W     Z
+
+       1           1    Yes                     *
+F5 prescribed adj in one model only
+
+The CAUSALGRAPH Procedure
+
+         Variables in Models
+
+                       N    Variables
+
+Measured               4    W X Y Z
+Unmeasured             0
+
+
+                             Graphical Model Summary
+
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+P               3           3             1           1           3             0
+Q               3           2             1           1           3             0
+F5 prescribed adj in one model only
+
+The CAUSALGRAPH Procedure
+
+         Covariate Adjustment Sets for P
+             Causal Effect of X on Y
+
+                                    -Covariates-
+                Size    Minimal     W          Z
+
+       1           1    Yes                    *
+F5 prescribed adj in one model only
+
+The CAUSALGRAPH Procedure
+
+         Covariate Adjustment Sets for Q
+             Causal Effect of X on Y
+
+                                    -Covariates-
+                Size    Minimal     W          Z
+
+       1           0    Yes
+       2           1    No          *

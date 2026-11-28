@@ -15,3 +15,6 @@ stderr-count 1 The edge B <===> C appears more than once in the model D3.
 stderr-count 1 The edge X <===> Y appears more than once in the model D3.
 stderr-count 1 The model D3 contains 2 disconnected DAGs.
 stderr-count 1 The model E1 contains 2 disconnected DAGs.
+stderr-count 1 The model P contains 2 disconnected DAGs.
+stderr-count 1 The model Q contains 2 disconnected DAGs.
+stderr-count 1 The adjustment variable Z is not found in the model Q.

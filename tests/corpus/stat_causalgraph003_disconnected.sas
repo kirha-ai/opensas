@@ -5,7 +5,9 @@
  * and prints no adjustment sets for any model (also when only the second of
  * two models is disconnected); with DISCONNECTED the sets follow the table
  * and range over the nodes of every component. The last step is disconnected
- * only once its bidirected edges are taken into account. The expected
+ * only once its bidirected edges are taken into account; later steps: an
+ * unmeasured node (listed among the component nodes), DISCONNECTED with two
+ * models, two disconnected models (one table each, no sets). The expected
  * listing is a SAS 9.4 reference run of these steps, the blank line SAS
  * writes before each new page title dropped.
  */
@@ -38,5 +40,23 @@ run;
 title "D3 cov path duplicates and group bidirected";
 proc causalgraph;
   model "D3" X ==> Y, A <==> B, B <==> C, A <==> C, <==> {A B C}, {A B} <==> {B C}, <==> {Y Y X};
+  identify X ==> Y;
+run;
+title "F1 disconnected with unmeasured";
+proc causalgraph;
+  model "F1" X ==> Y, A ==> B, U ==> A;
+  identify X ==> Y;
+  unmeasured U;
+run;
+title "F2 disconnected option two models";
+proc causalgraph disconnected;
+  model "P" X ==> Y, A ==> B;
+  model "Q" X ==> Y, Z ==> X Y;
+  identify X ==> Y;
+run;
+title "F3 two disconnected models";
+proc causalgraph;
+  model "P" X ==> Y, A ==> B;
+  model "Q" X ==> Y, C ==> D;
   identify X ==> Y;
 run;

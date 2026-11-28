@@ -4,6 +4,9 @@
  * the models. One VariableInfo table ("Variables in Models") over the union
  * of the models, one summary row per model, one adjustment page per model
  * whose covariate columns are the union of the models' measured covariates.
+ * Later steps: ORDERMODELS (models in label order) and a prescribed
+ * adjustment variable missing from the second model (dropped there with a
+ * warning).
  * Invented graphs; the expected listing is a SAS 9.4 reference run of these
  * steps, the blank line SAS writes before each new page title dropped.
  */
@@ -30,4 +33,17 @@ title "D6 two models no identify";
 proc causalgraph;
   model "Aa" A ==> B;
   model "Bb" A ==> B ==> C <==> A;
+run;
+title "F4 ordermodels";
+proc causalgraph ordermodels;
+  model "Zeta" X ==> Y, Z ==> X Y;
+  model "Alpha" X ==> Y;
+  model "Mid" X ==> Y, W ==> X Y, V ==> W;
+  identify X ==> Y;
+run;
+title "F5 prescribed adj in one model only";
+proc causalgraph;
+  model "P" X ==> Y, Z ==> X Y;
+  model "Q" X ==> Y, W ==> X;
+  identify X ==> Y | Z;
 run;

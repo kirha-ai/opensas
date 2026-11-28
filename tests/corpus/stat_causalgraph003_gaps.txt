@@ -1,7 +1,3 @@
 # corpus assertions
 empty-listing
-stderr-count 1 a disconnected model with unmeasured variables (ConnectedComponents table) is not implemented
-stderr-count 1 the DISCONNECTED option with more than one MODEL statement is not implemented
-stderr-count 1 more than one disconnected model is not implemented
-stderr-count 1 ORDERMODELS with more than one MODEL statement is not implemented
-stderr-count 1 a prescribed adjustment variable that is not in every model is not implemented
+stderr-count 1 the DISCONNECTED option with a disconnected model after the first MODEL statement is not implemented
