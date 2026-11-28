@@ -1,0 +1,60 @@
+
+The CAUSALTRT Procedure
+
+      Model Information
+
+Data Set                WORK.J
+Distribution          Binomial
+Estimation Method         IPWR
+Treatment Variable        drug
+Outcome Variable       outcome
+
+The CAUSALTRT Procedure
+
+      Model Information
+
+Data Set                WORK.K
+Distribution          Binomial
+Estimation Method         IPWR
+Treatment Variable        drug
+Outcome Variable       outcome
+
+The CAUSALTRT Procedure
+
+      Model Information
+
+Data Set                WORK.K
+Distribution          Binomial
+Estimation Method         IPWR
+Treatment Variable        drug
+Outcome Variable       outcome
+
+The CAUSALTRT Procedure
+
+      Model Information
+
+Data Set               WORK.J3
+Distribution          Binomial
+Estimation Method         IPWR
+Treatment Variable        drug
+Outcome Variable       outcome
+
+The CAUSALTRT Procedure
+
+       Model Information
+
+Data Set              WORK.TRIAL
+Distribution            Binomial
+Estimation Method           IPWR
+Treatment Variable          drug
+Outcome Variable         outcome
+
+The CAUSALTRT Procedure
+
+      Model Information
+
+Data Set               WORK.O1
+Distribution          Binomial
+Estimation Method         IPWR
+Treatment Variable        drug
+Outcome Variable       outcome

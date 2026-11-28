@@ -3245,7 +3245,14 @@ fn runProc(a: std.mem.Allocator, listing_out: *std.ArrayList(u8), lib: *sas.exec
         try out.appendSlice(a, body.items);
     } else if (eqi(proc, "causaltrt")) {
         var body: std.ArrayList(u8) = .empty;
-        try sas.causaltrt.run(pcx, &body, toks);
+        // SAS prints the Model Information table before a data error.
+        sas.causaltrt.run(pcx, &body, toks) catch |err| {
+            if (body.items.len > 0) {
+                try g.emitTitles(a, out);
+                try out.appendSlice(a, body.items);
+            }
+            return err;
+        };
         if (body.items.len > 0) {
             try g.emitTitles(a, out);
             try out.appendSlice(a, body.items);

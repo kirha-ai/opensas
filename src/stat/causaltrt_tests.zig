@@ -117,7 +117,6 @@ test "STAT-CAUSALTRT-001 user errors and loud gaps via captured diagnostics" {
         "proc causaltrt data=s att; psmodel t=x; model y; run;",
         "proc causaltrt data=s plots=none; psmodel t=x; model y; run;",
         "proc causaltrt data=s covdiffps; psmodel t=x; model y; run;",
-        "proc causaltrt data=s alpha=0.1 alpha=0.2; psmodel t=x; model y; run;",
         "proc causaltrt data=s; psmodel t=x*x; model y; run;",
         "proc causaltrt data=s; psmodel t=x / plots=all; model y; run;",
         "proc causaltrt data=s; psmodel t=x; model y / dist=poisson; run;",
@@ -130,6 +129,32 @@ test "STAT-CAUSALTRT-001 user errors and loud gaps via captured diagnostics" {
         "proc causaltrt data=s; psmodel t(order=data)=x; model y; run;",
     };
     for (gaps) |src| try env.fails(src, true);
+}
+
+test "STAT-CAUSALTRT-001 ORDER=, RORDER=, repeated options and FREQ statement rules" {
+    var env: Env = .{ .arena = std.heap.ArenaAllocator.init(std.testing.allocator) };
+    defer env.arena.deinit();
+    try env.init();
+    // Defaults (pp.2441-2442): ORDER=FORMATTED, RORDER=FORMATTED; no EVENT=/REF=.
+    const d = try env.parse("proc causaltrt data=s; psmodel t=x; model y / dist=bin; run;");
+    try expect(d.order == .formatted and d.rorder == .formatted and !d.outcome.explicit);
+    // SAS 9.4 verified: repeated METHOD=/ALPHA= are not errors; the last wins.
+    const r = try env.parse("proc causaltrt data=s method=ipw method=ipwr alpha=0.1 alpha=0.2 order=data order=freq rorder=data rorder=internal; psmodel t=x; model y(ref=first) / dist=bin; run;");
+    try expectEqual(ct.Method.ipwr, r.method);
+    try approx(@as(f64, 0.2), r.alpha, 0);
+    try expect(r.order == .freq and r.rorder == .internal and r.outcome.explicit);
+    // SAS 9.4 verified: a second DATA= is ignored with a warning.
+    env.diags = diag.Diagnostics.init(env.arena.allocator());
+    const w = try env.parse("proc causaltrt data=s data=nosuch; psmodel t=x; model y; run;");
+    try expectEqual(@as(usize, 1), w.treatment.col);
+    try expect(env.diags.count() > 0 and !env.diags.hasErrors());
+    const user = [_][]const u8{
+        "proc causaltrt data=s order=bogus; psmodel t=x; model y; run;",
+        "proc causaltrt data=s rorder=; psmodel t=x; model y; run;",
+        // SAS 9.4 verified: "Only one FREQ statement is allowed."
+        "proc causaltrt data=s; psmodel t=x; model y; freq f; freq f; run;",
+    };
+    for (user) |src| try env.fails(src, false);
 }
 
 test "STAT-CAUSALTRT-001 hand-calculated IPW and IPWR estimates" {

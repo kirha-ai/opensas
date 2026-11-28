@@ -1,0 +1,206 @@
+
+The CAUSALTRT Procedure
+
+       Model Information
+
+Data Set              WORK.TRIAL
+Distribution            Binomial
+Estimation Method           IPWR
+Treatment Variable          drug
+Outcome Variable         outcome
+
+
+Number of Observations Read         200
+Number of Observations Used         200
+
+
+  Class Level Information
+ 
+Class       Levels    Values
+
+gender           2    0 1   
+
+
+        Response Profile
+ 
+ Ordered                   Total
+   Value    outcome    Frequency
+
+       1    1                 78
+       2    0                122
+
+PROC CAUSALTRT is modeling the probability that outcome='1'.
+
+
+      Treatment Profile
+ 
+ Ordered                Total
+   Value    drug    Frequency
+
+       1    1              72
+       2    0             128
+
+PROC CAUSALTRT is modeling the probability that drug='1'.
+
+The CAUSALTRT Procedure
+
+                                  Analysis of Causal Effect
+ 
+             Treatment                  Robust          Wald 80% 
+Parameter    Level        Estimate     Std Err      Confidence Limits           Z    Pr > |Z|
+
+POM          1              0.3456      0.0549      0.2752      0.4159       6.29      <.0001
+POM          0              0.4157      0.0434      0.3600      0.4713       9.57      <.0001
+ATE                       -0.07010      0.0689     -0.1584     0.01817      -1.02      0.3088
+
+The CAUSALTRT Procedure
+
+      Model Information
+
+Data Set               WORK.P2
+Distribution          Binomial
+Estimation Method         IPWR
+Treatment Variable        drug
+Outcome Variable       outcome
+
+
+Number of Observations Read         200
+Number of Observations Used         200
+
+
+  Class Level Information
+ 
+Class       Levels    Values
+
+gender           2    0 1   
+
+
+        Response Profile
+ 
+ Ordered                   Total
+   Value    outcome    Frequency
+
+       1    1                122
+       2    0                 78
+
+PROC CAUSALTRT is modeling the probability that outcome='1'.
+
+
+      Treatment Profile
+ 
+ Ordered                Total
+   Value    drug    Frequency
+
+       1    0             128
+       2    1              72
+
+PROC CAUSALTRT is modeling the probability that drug='0'.
+
+The CAUSALTRT Procedure
+
+                                  Analysis of Causal Effect
+ 
+             Treatment                  Robust          Wald 95% 
+Parameter    Level        Estimate     Std Err      Confidence Limits           Z    Pr > |Z|
+
+POM          0              0.5843      0.0434      0.4992      0.6694      13.46      <.0001
+POM          1              0.6544      0.0549      0.5468      0.7620      11.92      <.0001
+ATE                       -0.07010      0.0689     -0.2051     0.06490      -1.02      0.3088
+
+The CAUSALTRT Procedure
+
+     Model Information
+
+Data Set              WORK.G
+Distribution          Normal
+Estimation Method       IPWR
+Treatment Variable      drug
+Outcome Variable           y
+
+
+Number of Observations Read         200
+Number of Observations Used         200
+
+
+  Class Level Information
+ 
+Class       Levels    Values
+
+gender           2    0 1   
+
+
+      Treatment Profile
+ 
+ Ordered                Total
+   Value    drug    Frequency
+
+       1    1              72
+       2    0             128
+
+PROC CAUSALTRT is modeling the probability that drug='1'.
+
+The CAUSALTRT Procedure
+
+                                  Analysis of Causal Effect
+ 
+             Treatment                  Robust          Wald 95% 
+Parameter    Level        Estimate     Std Err      Confidence Limits           Z    Pr > |Z|
+
+POM          1             65.9809      1.4728     63.0943     68.8675      44.80      <.0001
+POM          0             63.2001      1.3912     60.4734     65.9268      45.43      <.0001
+ATE                         2.7808      0.3391      2.1163      3.4454       8.20      <.0001
+
+The CAUSALTRT Procedure
+
+       Model Information
+
+Data Set              WORK.TRIAL
+Distribution            Binomial
+Estimation Method           IPWR
+Treatment Variable          drug
+Outcome Variable         outcome
+
+
+Number of Observations Read         200
+Number of Observations Used         200
+
+
+  Class Level Information
+ 
+Class       Levels    Values
+
+gender           2    0 1   
+
+
+        Response Profile
+ 
+ Ordered                   Total
+   Value    outcome    Frequency
+
+       1    0                122
+       2    1                 78
+
+PROC CAUSALTRT is modeling the probability that outcome='0'. One way to change this to model the 
+probability that outcome='1' is to specify the DESCENDING option in the PROC statement.
+
+
+      Treatment Profile
+ 
+ Ordered                Total
+   Value    drug    Frequency
+
+       1    0             128
+       2    1              72
+
+PROC CAUSALTRT is modeling the probability that drug='0'.
+
+The CAUSALTRT Procedure
+
+                                  Analysis of Causal Effect
+ 
+             Treatment                  Robust          Wald 95% 
+Parameter    Level        Estimate     Std Err      Confidence Limits           Z    Pr > |Z|
+
+POM          0              0.5843      0.0434      0.4992      0.6694      13.46      <.0001
+POM          1              0.6544      0.0549      0.5468      0.7620      11.92      <.0001
+ATE                       -0.07010      0.0689     -0.2051     0.06490      -1.02      0.3088
