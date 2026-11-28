@@ -1,0 +1,82 @@
+
+The FASTCLUS Procedure
+Replace=FULL  Radius=0  Maxclusters=3 Maxiter=50  Converge=0.02
+
+                                 Initial Seeds
+ 
+Cluster       SepalLength        SepalWidth       PetalLength        PetalWidth
+-------------------------------------------------------------------------------
+   1          77.00000000       38.00000000       67.00000000       22.00000000
+   2          57.00000000       44.00000000       15.00000000        4.00000000
+   3          49.00000000       25.00000000       45.00000000       17.00000000
+
+
+Minimum Distance Between Initial Seeds = 38.23611
+
+                     Iteration History
+ 
+                          Relative Change in Cluster Seeds
+Iteration    Criterion           1           2           3
+----------------------------------------------------------
+        1       7.0151      0.3205      0.3151      0.2985
+        2       3.7097      0.0459           0      0.0317
+        3       3.6427      0.0182           0      0.0124
+
+
+Convergence criterion is satisfied.                             
+
+
+Criterion Based on Final Seeds =   3.6289
+
+
+                                         Cluster Summary
+ 
+                                      Maximum Distance
+                           RMS Std           from Seed     Radius     Nearest     Distance Between
+Cluster     Frequency    Deviation      to Observation    Exceeded    Cluster    Cluster Centroids
+--------------------------------------------------------------------------------------------------
+   1               38       4.0168             14.9736                      3              17.9718
+   2               50       2.7803             12.4803                      3              33.5693
+   3               62       4.0398             16.9272                      1              17.9718
+
+
+                      Statistics for Variables
+ 
+Variable        Total STD    Within STD      R-Square     RSQ/(1-RSQ)
+---------------------------------------------------------------------
+SepalLength       8.28066       4.39488      0.722096        2.598359
+SepalWidth        4.35866       3.24816      0.452102        0.825156
+PetalLength      17.65298       4.21431      0.943773       16.784895
+PetalWidth        7.62238       2.45244      0.897872        8.791618
+OVER-ALL         10.69224       3.66198      0.884275        7.641194
+
+
+Pseudo F Statistic =   561.63
+
+
+Approximate Expected Over-All R-Squared =   0.62728
+
+
+Cubic Clustering Criterion =   25.021
+
+WARNING: The two values above are invalid for correlated variables.
+
+
+                                 Cluster Means
+ 
+Cluster       SepalLength        SepalWidth       PetalLength        PetalWidth
+-------------------------------------------------------------------------------
+   1          68.50000000       30.73684211       57.42105263       20.71052632
+   2          50.06000000       34.28000000       14.62000000        2.46000000
+   3          59.01612903       27.48387097       43.93548387       14.33870968
+
+
+                          Cluster Standard Deviations
+ 
+Cluster       SepalLength        SepalWidth       PetalLength        PetalWidth
+-------------------------------------------------------------------------------
+   1          4.941550255       2.900924461       4.885895746       2.798724562
+   2          3.524896872       3.790643691       1.736639965       1.053855894
+   3          4.664100551       2.962840548       5.088949673       2.974997167
+
+

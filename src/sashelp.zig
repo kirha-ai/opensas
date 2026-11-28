@@ -91,10 +91,31 @@ pub fn baseball(a: std.mem.Allocator) error{OutOfMemory}!*Dataset {
     return ds;
 }
 
+const iris_rows = @import("sashelp_iris.zig").rows;
+
+/// SASHELP.IRIS (provenance and verification in sashelp_iris.zig).
+pub fn iris(a: std.mem.Allocator) error{OutOfMemory}!*Dataset {
+    const ds = try a.create(Dataset);
+    ds.* = Dataset.init(a, "sashelp.iris");
+    ds.label = "Fisher's Iris Data (1936)";
+    _ = try ds.addColumn("Species", .char);
+    ds.setLen("Species", 10);
+    ds.setLabel("Species", "Iris Species");
+    const nums = [_][2][]const u8{ .{ "SepalLength", "Sepal Length (mm)" }, .{ "SepalWidth", "Sepal Width (mm)" }, .{ "PetalLength", "Petal Length (mm)" }, .{ "PetalWidth", "Petal Width (mm)" } };
+    for (nums) |c| {
+        _ = try ds.addColumn(c[0], .num);
+        ds.setLen(c[0], 8);
+        ds.setLabel(c[0], c[1]);
+    }
+    for (iris_rows) |r| try ds.appendRow(&.{ .{ .str = r[0] }, .{ .num = r[1][0] }, .{ .num = r[1][1] }, .{ .num = r[1][2] }, .{ .num = r[1][3] } });
+    return ds;
+}
+
 const Builtin = struct { member: []const u8, full: []const u8, build: *const fn (std.mem.Allocator) error{OutOfMemory}!*Dataset };
 const builtins = [_]Builtin{
     .{ .member = "class", .full = "sashelp.class", .build = class },
     .{ .member = "baseball", .full = "sashelp.baseball", .build = baseball },
+    .{ .member = "iris", .full = "sashelp.iris", .build = iris },
 };
 
 /// True when `member` names a built-in SASHELP sample table.

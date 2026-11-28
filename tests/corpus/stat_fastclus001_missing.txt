@@ -1,0 +1,52 @@
+
+The FASTCLUS Procedure
+Replace=FULL  Radius=0  Maxclusters=2 Maxiter=5  Converge=0.02
+
+Convergence criterion is satisfied.                             
+
+
+Criterion Based on Final Seeds =   1.2983
+
+
+                                         Cluster Summary
+ 
+                                      Maximum Distance
+                           RMS Std           from Seed     Radius     Nearest     Distance Between
+Cluster     Frequency    Deviation      to Observation    Exceeded    Cluster    Cluster Centroids
+--------------------------------------------------------------------------------------------------
+   1                5       1.8552              3.6500                      2               8.3593
+   2                3       0.5774              0.7454                      1               8.3593
+
+
+1 Observation(s) were omitted due to missing values.
+
+
+                     Statistics for Variables
+ 
+Variable     Total STD    Within STD      R-Square     RSQ/(1-RSQ)
+------------------------------------------------------------------
+x              3.28416       1.52023      0.816336        4.444712
+y              3.53217       1.51107      0.847487        5.556830
+OVER-ALL       3.40087       1.51608      0.831845        4.946888
+
+
+Pseudo F Statistic =    29.68
+
+
+Approximate Expected Over-All R-Squared =    .     
+
+
+Cubic Clustering Criterion =     .   
+
+WARNING: The two values above are invalid for correlated variables.
+
+
+a1 1 2.03039
+a2 1 1.38654
+a3 1 1.61941
+a4 2 0.47140
+a5 2 0.74536
+a6 2 0.74536
+a7 .       .
+a8 1 1.97990
+a9 1 3.65000
