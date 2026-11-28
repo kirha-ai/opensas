@@ -1,14 +1,18 @@
 //! PROC PLM statement, S154 physical pp.7628–7632: RESTORE= against the
 //! OpenSAS native item store (store.zig), documented basic options and the
 //! default "Store Information" / "Class Level Information" listing.
-//! Analysis statements (SHOW, TEST, LSMEANS, ...) belong to later PLM tickets
-//! and are diagnosed as D-009 gaps BEFORE any listing is produced, so a
-//! partial listing can never be mistaken for a completed analysis.
+//! STAT-PLM-002 adds SHOW FIT / SHOW PARMS and TEST effect-list (Type III)
+//! from the restored model (plm_infer.zig). Every other analysis statement
+//! belongs to later PLM tickets and is diagnosed as a D-009 gap BEFORE any
+//! listing is produced, so a partial listing can never be mistaken for a
+//! completed analysis.
 const std = @import("std");
 const proc = @import("../proc.zig");
 const diag = @import("../diag.zig");
 const lex = @import("../lexer.zig");
 const store = @import("store.zig");
+const infer = @import("plm_infer.zig");
+const format = @import("../format.zig");
 const eq = std.ascii.eqlIgnoreCase;
 const A = std.mem.Allocator;
 
@@ -38,10 +42,17 @@ pub const Options = struct {
     singular: ?f64 = null,
     zeta: ?f64 = null,
     line: usize = 0,
+    statements: []const Statement = &.{},
+};
+/// STAT-PLM-002 Getting Started path (S154 physical pp.7620–7623).
+pub const Statement = union(enum) {
+    show: struct { fit: bool, parms: bool },
+    /// Effect names exactly as stored (resolved case-insensitively at run time).
+    type3: struct { effects: []const []const u8, line: usize },
 };
 
 /// Statements documented for PROC PLM (S154 ch.94) that later tickets own.
-const later_statements = [_][]const u8{ "code", "effectplot", "estimate", "filter", "lsmeans", "lsmestimate", "score", "show", "slice", "test", "where", "by" };
+const later_statements = [_][]const u8{ "code", "effectplot", "estimate", "filter", "lsmeans", "lsmestimate", "score", "slice", "where", "by" };
 
 const P = struct {
     cx: proc.ProcCtx,
@@ -217,6 +228,7 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Options {
     if (o.restore.len == 0) return cx.diags.fail(error.ParseError, o.line, "PROC PLM: the RESTORE= option is required", .{});
     // Statement boundary: nothing after the PROC statement is executed by
     // this ticket. Documented statements are gaps; anything else is a user error.
+    var statements: std.ArrayList(Statement) = .empty;
     while (p.i < t.len) {
         if (t[p.i].tag == .semicolon) {
             p.i += 1;
@@ -225,11 +237,55 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Options {
         const s = t[p.i];
         if (s.tag == .eof) break;
         if (s.tag == .name and (eq(s.text, "run") or eq(s.text, "quit"))) break;
+        if (s.tag == .name and eq(s.text, "show")) {
+            // Only the two tables of the Getting Started example; the rest of
+            // the SHOW catalogue belongs to STAT-PLM-003.
+            p.i += 1;
+            var fit = false;
+            var parms = false;
+            while (p.i < t.len and t[p.i].tag != .semicolon and t[p.i].tag != .eof) : (p.i += 1) {
+                const w = t[p.i];
+                if (w.tag == .name and eq(w.text, "fit") and !fit and !parms) {
+                    fit = true;
+                } else if (w.tag == .name and any(w.text, &.{ "parms", "parameters" }) and !parms) {
+                    parms = true;
+                } else return proc.failGap(cx.diags, w.line, "PROC PLM: SHOW {s} (or this SHOW option order/repetition) is not implemented", .{w.text});
+            }
+            if (!fit and !parms) return proc.failGap(cx.diags, s.line, "PROC PLM: SHOW without options is not implemented", .{});
+            try statements.append(cx.arena, .{ .show = .{ .fit = fit, .parms = parms } });
+            continue;
+        }
+        if (s.tag == .name and eq(s.text, "test")) {
+            p.i += 1;
+            var effects: std.ArrayList([]const u8) = .empty;
+            while (p.i < t.len and t[p.i].tag != .semicolon and t[p.i].tag != .eof) {
+                if (!p.at(.name)) return proc.failGap(cx.diags, s.line, "PROC PLM: TEST options and non-effect operands ({s}) are not implemented", .{t[p.i].text});
+                var name: []const u8 = t[p.i].text;
+                p.i += 1;
+                while (p.at(.star)) {
+                    p.i += 1;
+                    if (!p.at(.name)) return p.bad("TEST expects a variable after *");
+                    name = try std.fmt.allocPrint(cx.arena, "{s}*{s}", .{ name, t[p.i].text });
+                    p.i += 1;
+                }
+                try effects.append(cx.arena, name);
+            }
+            // The default effect list (and whether it includes Intercept) is
+            // not exercised by the reference: refuse instead of guessing.
+            if (effects.items.len == 0) return proc.failGap(cx.diags, s.line, "PROC PLM: TEST without an effect list is not implemented", .{});
+            try statements.append(cx.arena, .{ .type3 = .{ .effects = effects.items, .line = s.line } });
+            continue;
+        }
         if (s.tag == .name) for (later_statements) |name| {
             if (eq(s.text, name)) return proc.failGap(cx.diags, s.line, "PROC PLM: the {s} statement is not implemented", .{name});
         };
         return cx.diags.fail(error.ParseError, s.line, "PROC PLM: invalid statement {s}", .{s.text});
     }
+    // pp.7631: GROUP reorders statements by type; only syntax order is implemented.
+    if (statements.items.len > 0 and o.statement_order != null and o.statement_order.? == .group) return proc.failGap(cx.diags, o.line, "PROC PLM: STMTORDER=GROUP with analysis statements is not implemented", .{});
+    // Whether NOPRINT still runs/prints explicit requests is not verified.
+    if (statements.items.len > 0 and o.noprint) return proc.failGap(cx.diags, o.line, "PROC PLM: NOPRINT with analysis statements is not implemented", .{});
+    o.statements = statements.items;
     return o;
 }
 
@@ -348,7 +404,105 @@ pub fn run(cx: proc.ProcCtx, out: *std.ArrayList(u8), t: []const lex.Token) diag
         error.OutOfMemory => return error.OutOfMemory,
         error.Truncation => return proc.failGap(cx.diags, o.line, "PROC PLM: Store Information strings longer than MAXLEN={d} (truncated display) are not implemented", .{o.maxlen}),
     };
+    // NOINFO NOCLPRINT leaves no default table; the procedure title still heads the analysis tables.
+    if (o.statements.len > 0 and body.items.len == 0) try body.appendSlice(cx.arena, "The PLM Procedure\n");
+    for (o.statements) |statement| analysis(cx.arena, &body, m, statement) catch |err| switch (err) {
+        error.OutOfMemory => return error.OutOfMemory,
+        error.Unsupported => return proc.failGap(cx.diags, o.line, "PROC PLM: stored-model inference is implemented only for full-rank CLASS-only GLM stores whose effects span the GLM parameterization", .{}),
+        error.UnknownEffect => return cx.diags.fail(error.ExecError, o.line, "PROC PLM: a TEST effect is not in the stored model", .{}),
+        error.FormatError => return cx.diags.fail(error.ExecError, o.line, "PROC PLM: cannot format a stored-model statistic", .{}),
+    };
     try out.appendSlice(cx.arena, body.items);
+}
+
+fn right(a: A, out: *std.ArrayList(u8), text: []const u8, width: usize) !void {
+    if (width > text.len) try out.appendNTimes(a, ' ', width - text.len);
+    try out.appendSlice(a, text);
+}
+fn probability(a: A, p: f64) ![]const u8 {
+    return if (p < 0.0001) "<.0001" else std.fmt.allocPrint(a, "{d:.4}", .{p});
+}
+/// Column layout follows the retained SAS listing of the Getting Started
+/// store: 4-blank gutters, 8-wide numeric cells, titles centred on the table.
+fn analysis(a: A, out: *std.ArrayList(u8), m: store.Model, statement: Statement) !void {
+    switch (statement) {
+        .show => |show| {
+            if (show.fit) {
+                try out.append(a, '\n');
+                try title(a, out, "Fit Statistics", 20);
+                try out.append(a, '\n');
+                try pad(a, out, "MSE", 12);
+                try right(a, out, format.bestNumW(a, m.mse, 8) catch return error.FormatError, 8);
+                try out.append(a, '\n');
+                try pad(a, out, "Error df", 12);
+                try right(a, out, try std.fmt.allocPrint(a, "{d}", .{m.df_error}), 8);
+                try out.appendSlice(a, "\n\n");
+            }
+            if (show.parms) {
+                const parms = try infer.parameters(a, m);
+                var ew: usize = "Effect".len;
+                if (m.intercept) ew = @max(ew, "Intercept".len);
+                for (m.effects) |e| ew = @max(ew, e.name.len);
+                const cw = try a.alloc(usize, m.classes.len);
+                var width: usize = ew + 4;
+                for (cw, m.classes) |*w, c| {
+                    w.* = c.name.len;
+                    for (c.levels) |l| w.* = @max(w.*, std.mem.trim(u8, l.label, " ").len);
+                    width += w.* + 4;
+                }
+                width += 8 + 12;
+                try out.append(a, '\n');
+                try title(a, out, "Parameter Estimates", width);
+                try out.appendSlice(a, " \n");
+                try right(a, out, "Standard", width);
+                try out.append(a, '\n');
+                try pad(a, out, "Effect", ew + 4);
+                for (cw, m.classes) |w, c| try pad(a, out, c.name, w + 4);
+                try out.appendSlice(a, "Estimate       Error\n\n");
+                for (parms) |parm| {
+                    try pad(a, out, if (parm.effect) |e| m.effects[e].name else "Intercept", ew + 4);
+                    for (cw, m.classes, parm.levels) |w, c, level| try pad(a, out, if (level) |l| std.mem.trim(u8, c.levels[l].label, " ") else "", w + 4);
+                    if (parm.stderr) |se| {
+                        try right(a, out, try std.fmt.allocPrint(a, "{d:.4}", .{parm.estimate}), 8);
+                        try right(a, out, try std.fmt.allocPrint(a, "{d:.4}", .{se}), 12);
+                    } else {
+                        try right(a, out, "0", 8);
+                        try right(a, out, ".", 12);
+                    }
+                    try out.append(a, '\n');
+                }
+                try out.append(a, '\n');
+            }
+        },
+        .type3 => |request| {
+            const indices = try a.alloc(usize, request.effects.len);
+            var ew: usize = "Effect".len;
+            for (indices, request.effects) |*index, name| {
+                index.* = for (m.effects, 0..) |e, i| {
+                    if (eq(e.name, name)) break i;
+                } else return error.UnknownEffect;
+                ew = @max(ew, name.len);
+            }
+            try out.append(a, '\n');
+            try title(a, out, "Type III Tests of Model Effects", ew + 4 + 7 + 9 + 11 + 10);
+            try out.appendSlice(a, " \n");
+            try right(a, out, "Num", ew + 4 + 7);
+            try right(a, out, "Den", 9);
+            try out.append(a, '\n');
+            try pad(a, out, "Effect", ew + 4);
+            try out.appendSlice(a, "     DF       DF    F Value    Pr > F\n\n");
+            for (indices) |index| {
+                const r = try infer.type3(a, m, index);
+                try pad(a, out, m.effects[index].name, ew + 4);
+                try right(a, out, try std.fmt.allocPrint(a, "{d}", .{r.num_df}), 7);
+                try right(a, out, try std.fmt.allocPrint(a, "{d}", .{r.den_df}), 9);
+                try right(a, out, try std.fmt.allocPrint(a, "{d:.2}", .{r.f}), 11);
+                try right(a, out, try probability(a, r.p), 10);
+                try out.append(a, '\n');
+            }
+            try out.append(a, '\n');
+        },
+    }
 }
 
 test {

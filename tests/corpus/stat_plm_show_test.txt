@@ -1,0 +1,49 @@
+The PLM Procedure
+
+  Class Level Information
+ 
+Class    Levels    Values
+
+block         4    1 2 3 4 
+a             3    1 2 3   
+b             2    1 2     
+
+
+   Fit Statistics
+
+MSE         21.66667
+Error df          15
+
+
+                Parameter Estimates
+ 
+                                            Standard
+Effect       block    a    b    Estimate       Error
+
+Intercept                        20.4167      2.8504
+block        1                   17.0000      2.6874
+block        2                    4.5000      2.6874
+block        3                   -1.1667      2.6874
+block        4                         0           .
+a                     1           3.2500      3.2914
+a                     2           4.7500      3.2914
+a                     3                0           .
+b                          1      0.5000      3.2914
+b                          2           0           .
+a*b                   1    1      7.7500      4.6547
+a*b                   1    2           0           .
+a*b                   2    1      7.2500      4.6547
+a*b                   2    2           0           .
+a*b                   3    1           0           .
+a*b                   3    2           0           .
+
+
+        Type III Tests of Model Effects
+ 
+              Num      Den
+Effect         DF       DF    F Value    Pr > F
+
+a               2       15       7.54    0.0054
+b               1       15       8.38    0.0111
+a*b             2       15       1.74    0.2097
+

@@ -243,8 +243,13 @@ test "STAT-PLM-001 invalid declarations are user errors (rc 1) through the captu
 
 test "STAT-PLM-001 valid but unimplemented requests are loud gaps (rc 2) with no listing" {
     for ([_][]const u8{
-        "proc plm restore=BlockAnalysis; show fit parms; run;",
-        "proc plm restore=BlockAnalysis; test a b a*b; run;",
+        "proc plm restore=BlockAnalysis; show all; run;",
+        "proc plm restore=BlockAnalysis; show parms fit; run;",
+        "proc plm restore=BlockAnalysis; show; run;",
+        "proc plm restore=BlockAnalysis; test; run;",
+        "proc plm restore=BlockAnalysis; test a / chisq; run;",
+        "proc plm restore=BlockAnalysis stmtorder=group; test a; run;",
+        "proc plm restore=BlockAnalysis noprint; show fit; run;",
         "proc plm restore=BlockAnalysis; lsmeans a / diff; run;",
         "proc plm restore=BlockAnalysis; lsmestimate a -1 1; run;",
         "proc plm restore=BlockAnalysis; slice a*b / sliceby(b='1') diff; run;",
@@ -306,4 +311,185 @@ test "STAT-PLM-001 restores a store written by PROC GLM STORE in the same sessio
         try words.append(a, ' ');
     }
     try t.expectEqualStrings("The PLM Procedure Store Information Item Store WORK.FITTED Label A stored fit Data Set Created From WORK.SAMPLE Created By PROC GLM Date Created Response Variable y Class Variables group Model Effects Intercept group x Class Level Information Class Levels Values group 2 A B ", words.items);
+}
+
+// ---- STAT-PLM-002: stored-model inference (S154 physical pp.7620–7623) ----
+// Expected block-design text is the SAS listing of the published Getting
+// Started example (SHOW FIT PARMS; TEST a b a*b;), held here verbatim; the
+// fixture never reads the temporary reference directory.
+const block_y = [_]f64{ 56, 41, 50, 36, 39, 35, 30, 25, 36, 28, 33, 30, 32, 24, 31, 27, 15, 19, 30, 25, 35, 30, 17, 18 };
+const block_inference =
+    \\
+    \\   Fit Statistics
+    \\
+    \\MSE         21.66667
+    \\Error df          15
+    \\
+    \\
+    \\                Parameter Estimates
+    \\
+    \\                                            Standard
+    \\Effect       block    a    b    Estimate       Error
+    \\
+    \\Intercept                        20.4167      2.8504
+    \\block        1                   17.0000      2.6874
+    \\block        2                    4.5000      2.6874
+    \\block        3                   -1.1667      2.6874
+    \\block        4                         0           .
+    \\a                     1           3.2500      3.2914
+    \\a                     2           4.7500      3.2914
+    \\a                     3                0           .
+    \\b                          1      0.5000      3.2914
+    \\b                          2           0           .
+    \\a*b                   1    1      7.7500      4.6547
+    \\a*b                   1    2           0           .
+    \\a*b                   2    1      7.2500      4.6547
+    \\a*b                   2    2           0           .
+    \\a*b                   3    1           0           .
+    \\a*b                   3    2           0           .
+    \\
+    \\
+    \\        Type III Tests of Model Effects
+    \\
+    \\              Num      Den
+    \\Effect         DF       DF    F Value    Pr > F
+    \\
+    \\a               2       15       7.54    0.0054
+    \\b               1       15       8.38    0.0111
+    \\a*b             2       15       1.74    0.2097
+    \\
+    \\
+;
+const Fitted = struct {
+    arena: std.heap.ArenaAllocator,
+    lib: Library = undefined,
+    d: diag.Diagnostics = undefined,
+    fn cx(self: *Fitted) proc.ProcCtx {
+        return .{ .arena = self.arena.allocator(), .lib = &self.lib, .diags = &self.d };
+    }
+    fn exec(self: *Fitted, comptime which: enum { glm, plm }, source: []const u8) ![]const u8 {
+        var out: std.ArrayList(u8) = .empty;
+        const c = self.cx();
+        const tokens = try lex.tokenize(c.arena, source, c.diags);
+        if (which == .glm) try glm.run(c, &out, tokens) else try plm.run(c, &out, tokens);
+        return out.items;
+    }
+};
+fn blockFit(s: *Fitted) !void {
+    const a = s.arena.allocator();
+    s.lib = Library.init(a);
+    s.d = diag.Diagnostics.init(a);
+    const ds = try a.create(Dataset);
+    ds.* = Dataset.init(a, "BlockDesign");
+    for ([_][]const u8{ "block", "a", "b", "y" }) |name| _ = try ds.addColumn(name, .num);
+    for (block_y, 0..) |y, i| try ds.appendRow(&.{ .{ .num = @floatFromInt(i / 6 + 1) }, .{ .num = @floatFromInt(i / 2 % 3 + 1) }, .{ .num = @floatFromInt(i % 2 + 1) }, .{ .num = y } });
+    try s.lib.put("BlockDesign", ds);
+    _ = try s.exec(.glm, "proc glm data=BlockDesign noprint; class block a b; model y = block a b a*b; store work.BlockAnalysis; run;");
+}
+
+test "STAT-PLM-002 Getting Started: SHOW FIT PARMS and TEST from a GLM store match the SAS listing" {
+    var s: Fitted = .{ .arena = std.heap.ArenaAllocator.init(t.allocator) };
+    defer s.arena.deinit();
+    try blockFit(&s);
+    const out = try s.exec(.plm, "proc plm restore=work.BlockAnalysis noinfo; show fit parms; test a b a*b; run;");
+    try t.expect(!s.d.hasErrors());
+    try sameListing("The PLM Procedure\n\n" ++ class_levels ++ block_inference, out);
+    // PARAMETERS is the documented alias; one table per request, syntax order.
+    const split = try s.exec(.plm, "proc plm restore=BlockAnalysis noinfo noclprint; test a*b; show parameters; run;");
+    try t.expect(std.mem.indexOf(u8, split, "Type III Tests").? < std.mem.indexOf(u8, split, "Parameter Estimates").?);
+    try t.expect(std.mem.indexOf(u8, split, "Fit Statistics") == null);
+    try t.expect(std.mem.indexOf(u8, split, "a*b             2       15       1.74    0.2097") != null);
+}
+
+test "STAT-PLM-002 block design: unrounded estimates and F statistics against exact rational values" {
+    // Balanced design, so every quantity is a closed form of cell/marginal
+    // means: MSE = 325/15; SE(block i) = sqrt(2 MSE/6); F = SS/df/MSE with
+    // SS(a)=326.58333.., SS(b)=181.5, SS(a*b)=75.25 (hand ANOVA of the data).
+    var s: Fitted = .{ .arena = std.heap.ArenaAllocator.init(t.allocator) };
+    defer s.arena.deinit();
+    try blockFit(&s);
+    const infer = @import("plm_infer.zig");
+    const m = try store.restore(s.cx(), "work.BlockAnalysis");
+    const mse = 325.0 / 15.0;
+    const parms = try infer.parameters(s.arena.allocator(), m);
+    try t.expectEqual(@as(usize, 16), parms.len);
+    // 1e-9 absolute: values are O(10..100) from a 9-parameter least-squares
+    // solve with condition number < 1e3; double rounding is ~1e-13.
+    const tol = 1e-9;
+    try t.expectApproxEqAbs(@as(f64, 245.0 / 12.0), parms[0].estimate, tol);
+    try t.expectApproxEqAbs(@as(f64, 17), parms[1].estimate, tol);
+    try t.expectApproxEqAbs(@sqrt(2.0 * mse / 6.0), parms[1].stderr.?, tol);
+    try t.expectApproxEqAbs(@as(f64, -7.0 / 6.0), parms[3].estimate, tol);
+    try t.expect(parms[4].stderr == null and parms[4].estimate == 0);
+    try t.expectApproxEqAbs(@as(f64, 7.75), parms[10].estimate, tol);
+    try t.expectApproxEqAbs(@sqrt(4.0 * mse / 4.0), parms[10].stderr.?, tol);
+    const expected = [_]struct { usize, f64 }{ .{ 1, 3919.0 / 12.0 / 2.0 / mse }, .{ 2, 181.5 / mse }, .{ 3, 75.25 / 2.0 / mse } };
+    for (expected) |e| {
+        const r = try infer.type3(s.arena.allocator(), m, e[0]);
+        try t.expectEqual(@as(usize, 15), r.den_df);
+        try t.expectApproxEqAbs(e[1], r.f, tol);
+    }
+}
+
+test "STAT-PLM-002 smaller case with an independent manual calculation" {
+    // y = {1,3} in group 1 and {4,8} in group 2. Means 2 and 6; SSE = 2 + 8 =
+    // 10 on 2 df, MSE = 5. GLM parameters: Intercept = mean(2) = 6 with
+    // SE sqrt(5/2) = 1.5811; g 1 = 2 - 6 = -4 with SE sqrt(5/2 + 5/2) = 2.2361;
+    // g 2 = 0. SS(g) = 2*(2-4)^2 + 2*(6-4)^2 = 16, F = 16/5 = 3.20 on (1,2) df;
+    // t = sqrt(3.2), Pr = 1 - t/sqrt(t^2 + 2) = 1 - sqrt(3.2/5.2) = 0.2155.
+    var s: Fitted = .{ .arena = std.heap.ArenaAllocator.init(t.allocator) };
+    defer s.arena.deinit();
+    const a = s.arena.allocator();
+    s.lib = Library.init(a);
+    s.d = diag.Diagnostics.init(a);
+    var ds = Dataset.init(a, "two");
+    _ = try ds.addColumn("g", .num);
+    _ = try ds.addColumn("y", .num);
+    for ([_][2]f64{ .{ 1, 1 }, .{ 1, 3 }, .{ 2, 4 }, .{ 2, 8 } }) |r| try ds.appendRow(&.{ .{ .num = r[0] }, .{ .num = r[1] } });
+    try s.lib.put("two", &ds);
+    _ = try s.exec(.glm, "proc glm data=two noprint; class g; model y = g; store small; run;");
+    const out = try s.exec(.plm, "proc plm restore=small noinfo noclprint; show fit parms; test g; run;");
+    try t.expect(!s.d.hasErrors());
+    var words: std.ArrayList(u8) = .empty;
+    var it = std.mem.tokenizeAny(u8, out, " \n");
+    while (it.next()) |w| {
+        try words.appendSlice(a, w);
+        try words.append(a, ' ');
+    }
+    try t.expectEqualStrings("The PLM Procedure Fit Statistics MSE 5 Error df 2 Parameter Estimates Standard Effect g Estimate Error Intercept 6.0000 1.5811 g 1 -4.0000 2.2361 g 2 0 . Type III Tests of Model Effects Num Den Effect DF DF F Value Pr > F g 1 2 3.20 0.2155 ", words.items);
+    const r = try @import("plm_infer.zig").type3(a, try store.restore(s.cx(), "small"), 0);
+    try t.expectApproxEqAbs(@as(f64, 3.2), r.f, 1e-12);
+    try t.expectApproxEqAbs(1.0 - @sqrt(3.2 / 5.2), r.p, 1e-12);
+}
+
+test "STAT-PLM-002 unsupported stored-model inference is a loud gap with no listing" {
+    // Covariate store: the CLASS-grid mapping does not apply. Unknown TEST
+    // effect: user error. Both go through the captured reporter.
+    for ([_]struct { []const u8, u8 }{
+        .{ "proc plm restore=cov; show parms; run;", 2 },
+        .{ "proc plm restore=cov; test g; run;", 2 },
+        .{ "proc plm restore=cov; test nosuch; run;", 1 },
+    }) |case| {
+        var s: Fitted = .{ .arena = std.heap.ArenaAllocator.init(t.allocator) };
+        defer s.arena.deinit();
+        const a = s.arena.allocator();
+        s.lib = Library.init(a);
+        s.d = diag.Diagnostics.init(a);
+        var ds = Dataset.init(a, "lines");
+        _ = try ds.addColumn("g", .num);
+        _ = try ds.addColumn("x", .num);
+        _ = try ds.addColumn("y", .num);
+        for ([_][3]f64{ .{ 1, 1, 4 }, .{ 1, 2, 6 }, .{ 1, 3, 7 }, .{ 2, 1, 9 }, .{ 2, 2, 13 }, .{ 2, 3, 12 } }) |r| try ds.appendRow(&.{ .{ .num = r[0] }, .{ .num = r[1] }, .{ .num = r[2] } });
+        try s.lib.put("lines", &ds);
+        _ = try s.exec(.glm, "proc glm data=lines noprint; class g; model y = g x; store cov; run;");
+        diag.resetGap();
+        defer diag.resetGap();
+        var out: std.ArrayList(u8) = .empty;
+        const c = s.cx();
+        const result = plm.run(c, &out, try lex.tokenize(a, case[0], c.diags));
+        try t.expect(std.meta.isError(result));
+        try t.expect(s.d.hasErrors());
+        try t.expectEqual(@as(usize, 0), out.items.len);
+        try t.expectEqual(case[1], diag.exitCode(diag.gapHit(), s.d.hasErrors()));
+    }
 }
