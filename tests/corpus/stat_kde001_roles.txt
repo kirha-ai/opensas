@@ -1,0 +1,375 @@
+
+The KDE Procedure
+
+                      Inputs
+
+Data Set                          WORK.S           
+Number of Observations Used       6                
+Variable 1                        x                
+Variable 2                        y                
+Bandwidth Method                  Simple Normal    
+                                  Reference        
+
+
+                  Controls
+ 
+                                  x         y
+
+Grid Points                      60        60
+Lower Grid Limit                 -2      -1.5
+Upper Grid Limit                 10       8.5
+Bandwidth Multiplier              1         1
+
+The KDE Procedure
+
+                      Inputs
+
+Data Set                          WORK.S           
+Number of Observations Used       5                
+Variable 1                        x                
+Variable 2                        y                
+Freq                              f                
+Bandwidth Method                  Simple Normal    
+                                  Reference        
+
+
+                  Controls
+ 
+                                  x         y
+
+Grid Points                      60        60
+Lower Grid Limit                 -2        -1
+Upper Grid Limit                 10         7
+Bandwidth Multiplier              1         1
+
+The KDE Procedure
+
+                      Inputs
+
+Data Set                          WORK.S           
+Number of Observations Used       5                
+Variable 1                        x                
+Variable 2                        y                
+Weight                            w                
+Bandwidth Method                  Simple Normal    
+                                  Reference        
+
+
+                  Controls
+ 
+                                  x         y
+
+Grid Points                      10        10
+Lower Grid Limit                 -2      -1.5
+Upper Grid Limit                 10       8.5
+Bandwidth Multiplier              2         2
+
+The KDE Procedure
+
+                      Inputs
+
+Data Set                          WORK.S           
+Number of Observations Used       6                
+Variable 1                        x                
+Variable 2                        y                
+Bandwidth Method                  Simple Normal    
+                                  Reference        
+
+
+                  Controls
+ 
+                                  x         y
+
+Grid Points                       5        60
+Lower Grid Limit                  0         1
+Upper Grid Limit                  7         6
+Bandwidth Multiplier              1         1
+
+The KDE Procedure
+
+                      Inputs
+
+Data Set                          WORK.S           
+Number of Observations Used       5                
+Variable                          x                
+Weight                            w                
+Freq                              f                
+Bandwidth Method                  Simple Normal    
+                                  Reference        
+
+
+             Controls
+ 
+                                  x
+
+Grid Points                     401
+Lower Grid Limit                 -2
+Upper Grid Limit                 10
+Bandwidth Multiplier              1
+
+The KDE Procedure
+
+                      Inputs
+
+Data Set                          WORK.S           
+Number of Observations Used       5                
+Variable                          y                
+Weight                            w                
+Freq                              f                
+Bandwidth Method                  Simple Normal    
+                                  Reference        
+
+
+             Controls
+ 
+                                  y
+
+Grid Points                     401
+Lower Grid Limit                 -1
+Upper Grid Limit                  7
+Bandwidth Multiplier              1
+
+The KDE Procedure
+
+                      Inputs
+
+Data Set                          WORK.T           
+Number of Observations Used       21               
+Variable                          x                
+Bandwidth Method                  Oversmoothed     
+                                  Estimation       
+
+
+             Controls
+ 
+                                  x
+
+Grid Points                     401
+Lower Grid Limit             -39.06
+Upper Grid Limit             139.06
+Bandwidth Multiplier              1
+
+The KDE Procedure
+
+                      Inputs
+
+Data Set                          WORK.T           
+Number of Observations Used       21               
+Variable                          x                
+Bandwidth Method                  User defined     
+
+
+             Controls
+ 
+                                  x
+
+Grid Points                      11
+Lower Grid Limit             -9.375
+Upper Grid Limit             109.38
+Bandwidth Multiplier            1.5
+
+The KDE Procedure
+
+                      Inputs
+
+Data Set                          WORK.T           
+Number of Observations Used       21               
+Variable                          y                
+Bandwidth Method                  User defined     
+
+
+             Controls
+ 
+                                  y
+
+Grid Points                      11
+Lower Grid Limit             -4.688
+Upper Grid Limit             104.69
+Bandwidth Multiplier            1.5
+
+The KDE Procedure
+
+                      Inputs
+
+Data Set                          WORK.T           
+Number of Observations Used       21               
+Variable                          x                
+Bandwidth Method                  User defined     
+
+
+             Controls
+ 
+                                  x
+
+Grid Points                     401
+Lower Grid Limit                 -5
+Upper Grid Limit             103.28
+Bandwidth Multiplier              1
+
+The KDE Procedure
+
+                      Inputs
+
+Data Set                          WORK.T           
+Number of Observations Used       21               
+Variable                          y                
+Bandwidth Method                  Simple Normal    
+                                  Reference        
+
+
+             Controls
+ 
+                                  y
+
+Grid Points                     401
+Lower Grid Limit                -25
+Upper Grid Limit                 50
+Bandwidth Multiplier              1
+
+g=1
+
+The KDE Procedure
+
+                      Inputs
+
+Data Set                          WORK.T           
+Number of Observations Used       10               
+Variable 1                        x                
+Variable 2                        y                
+Bandwidth Method                  Simple Normal    
+                                  Reference        
+
+
+                  Controls
+ 
+                                  x         y
+
+Grid Points                      60        60
+Lower Grid Limit               -4.5      -4.5
+Upper Grid Limit               13.5      13.5
+Bandwidth Multiplier              1         1
+
+g=2
+
+The KDE Procedure
+
+                      Inputs
+
+Data Set                          WORK.T           
+Number of Observations Used       11               
+Variable 1                        x                
+Variable 2                        y                
+Bandwidth Method                  Simple Normal    
+                                  Reference        
+
+
+                  Controls
+ 
+                                  x         y
+
+Grid Points                      60        60
+Lower Grid Limit                -35       -35
+Upper Grid Limit                145       145
+Bandwidth Multiplier              1         1
+
+g=1
+
+The KDE Procedure
+
+                      Inputs
+
+Data Set                          WORK.T           
+Number of Observations Used       10               
+Variable                          x                
+Bandwidth Method                  User defined     
+
+
+             Controls
+ 
+                                  x
+
+Grid Points                     401
+Lower Grid Limit             -3.023
+Upper Grid Limit             12.023
+Bandwidth Multiplier              1
+
+g=2
+
+The KDE Procedure
+
+                      Inputs
+
+Data Set                          WORK.T           
+Number of Observations Used       11               
+Variable                          x                
+Bandwidth Method                  User defined     
+
+
+             Controls
+ 
+                                  x
+
+Grid Points                     401
+Lower Grid Limit             6.4844
+Upper Grid Limit             103.52
+Bandwidth Multiplier              1
+
+The KDE Procedure
+
+                      Inputs
+
+Data Set                          WORK.T           
+Number of Observations Used       11               
+Variable 1                        x                
+Variable 2                        y                
+Bandwidth Method                  User defined     
+
+
+                  Controls
+ 
+                                  x         y
+
+Grid Points                      60        60
+Lower Grid Limit             6.4844    6.4844
+Upper Grid Limit             103.52    103.52
+Bandwidth Multiplier              1         1
+
+The KDE Procedure
+
+                      Inputs
+
+Data Set                          WORK.T           
+Number of Observations Used       11               
+Variable 1                        y                
+Variable 2                        x                
+Bandwidth Method                  User defined     
+
+
+                  Controls
+ 
+                                  y         x
+
+Grid Points                      60        60
+Lower Grid Limit             6.4844    6.4844
+Upper Grid Limit             103.52    103.52
+Bandwidth Multiplier              1         1
+
+The KDE Procedure
+
+                      Inputs
+
+Data Set                          WORK.T           
+Number of Observations Used       20               
+Variable                          x                
+Freq                              y                
+Bandwidth Method                  User defined     
+
+
+             Controls
+ 
+                                  x
+
+Grid Points                     401
+Lower Grid Limit             -2.094
+Upper Grid Limit             103.09
+Bandwidth Multiplier              1

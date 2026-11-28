@@ -1,0 +1,48 @@
+
+_oracle_by=1
+
+The KDE Procedure
+
+                      Inputs
+
+Data Set                          WORK._ORACLE_    
+                                  INPUT            
+Number of Observations Used       1000             
+Variable 1                        x                
+Variable 2                        y                
+Bandwidth Method                  Simple Normal    
+                                  Reference        
+
+
+                  Controls
+ 
+                                  x         y
+
+Grid Points                      60        60
+Lower Grid Limit             -14.27    -13.18
+Upper Grid Limit              12.17    12.165
+Bandwidth Multiplier              1         1
+
+_oracle_by=2
+
+The KDE Procedure
+
+                      Inputs
+
+Data Set                          WORK._ORACLE_    
+                                  INPUT            
+Number of Observations Used       1000             
+Variable 1                        x                
+Variable 2                        y                
+Bandwidth Method                  Simple Normal    
+                                  Reference        
+
+
+                  Controls
+ 
+                                  x         y
+
+Grid Points                      60        60
+Lower Grid Limit             -14.27    -13.18
+Upper Grid Limit              12.17    12.165
+Bandwidth Multiplier              1         1

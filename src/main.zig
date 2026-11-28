@@ -3090,6 +3090,15 @@ fn runProc(a: std.mem.Allocator, listing_out: *std.ArrayList(u8), lib: *sas.exec
         var body: std.ArrayList(u8) = .empty;
         try sas.lattice.run(lattice_context, &body, toks);
         try out.appendSlice(a, body.items);
+    } else if (eqi(proc, "kde")) {
+        var body: std.ArrayList(u8) = .empty;
+        const result = sas.kde.run(pcx, &body, toks); // tables printed before a run-time error stay
+        if (body.items.len > 0) {
+            try g.emitTitles(a, out);
+            try out.appendSlice(a, body.items);
+            try g.emitFootnotes(a, out);
+        }
+        try result;
     } else if (eqi(proc, "lifetest")) {
         var body: std.ArrayList(u8) = .empty;
         try sas.lifetest.run(pcx, &body, toks);
