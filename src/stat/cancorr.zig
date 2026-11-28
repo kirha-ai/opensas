@@ -16,6 +16,13 @@
 //! p.2132: WEIGHT does not alter the degrees of freedom).
 //! The test statistics use df = sum(FREQ) - 1 (pp.2132-2133); the formulas
 //! are the chapter-5 multivariate tests, symmetric in p and q here.
+//! Boundaries (SAS 9.4 verified listings): a canonical correlation of one
+//! (Infty eigenvalue, missing traces), a zero correlation for one VAR and one
+//! WITH variable, linearly dependent or constant variables (dropped by an
+//! incremental Cholesky with SINGULAR=, tests use the set's rank, NOTE), no
+//! more observations than variables (WARNING + NOTE, no multivariate table),
+//! fewer than two observations (ERROR, per BY group). Coefficient pages whose
+//! SAS signs or rounding noise are not reproduced stay loud gaps (SHORT works).
 const std = @import("std");
 const proc = @import("../proc.zig");
 const diag = @import("../diag.zig");
@@ -244,8 +251,8 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
         }
         if (vars.items.len == 0) return cx.diags.fail(error.ParseError, line(t, 0), "PROC CANCORR: no numeric variables remain for the VAR set", .{});
     }
-    for (vars.items) |ci| if (std.mem.indexOfScalar(usize, with.items, ci) != null)
-        return gap(cx.diags, line(t, 0), "PROC CANCORR: variable {s} in both the VAR and WITH statements is not verified", .{ds.columns.items[ci].name});
+    // SAS 9.4: a variable in both sets is analysed (a canonical correlation
+    // of one, Infty eigenvalue).
     for ([_]?usize{ s.freq, s.weight }) |role| if (role) |ci| {
         if (std.mem.indexOfScalar(usize, vars.items, ci) != null or std.mem.indexOfScalar(usize, with.items, ci) != null)
             return gap(cx.diags, line(t, 0), "PROC CANCORR: variable {s} used both as an analysis variable and as FREQ or WEIGHT is not verified", .{ds.columns.items[ci].name});
@@ -257,26 +264,81 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
 
 /// The canonical analysis of one group.
 pub const Result = struct {
+    /// Ranks of the VAR and WITH sets (the test statistics use these).
     p: usize,
     q: usize,
     /// sum(FREQ) - 1.
     df: f64,
     /// Canonical correlations, descending, min(p, q) of them.
     r: []const f64,
-    /// Standardized coefficients, row-major p*s and q*s.
+    /// Standardized coefficients, row-major (all VAR variables)*s and
+    /// (all WITH variables)*s; a linearly dependent variable has zeros.
     a: []const f64,
     b: []const f64,
     sdx: []const f64,
     sdy: []const f64,
-    /// Correlation matrix of (X, Y), (p+q)^2.
+    /// Correlation matrix of all (X, Y) variables.
     corr: []const f64,
+    /// A set had a linearly dependent variable (displayed NOTE).
+    x_deficient: bool = false,
+    y_deficient: bool = false,
+    /// Constant variables (indices into the p+q columns), dropped like a
+    /// linearly dependent one (SAS 9.4 WARNING).
+    constant: []const usize = &.{},
 };
 
-pub const Failure = error{ Singular, PerfectFit, ZeroCorrelation, TooFew, OutOfMemory };
+pub const Failure = error{ Singular, ZeroCorrelation, TooFew, OutOfMemory };
+
+/// Variables of `set` (indices into the k x k matrix `corr`) kept in order:
+/// one whose R square on the earlier kept variables is at least 1 - singular
+/// is linearly dependent and dropped (incremental Cholesky of the
+/// correlation matrix).
+fn independent(a: A, corr: []const f64, k: usize, set: []const usize, constant: []const usize, singular: f64) ![]usize {
+    var kept: std.ArrayList(usize) = .empty;
+    const l = try a.alloc(f64, set.len * set.len);
+    @memset(l, 0);
+    const z = try a.alloc(f64, set.len);
+    for (set) |j| {
+        if (std.mem.indexOfScalar(usize, constant, j) != null) continue;
+        const m = kept.items.len;
+        var ss: f64 = 0;
+        for (0..m) |r| {
+            var v = corr[kept.items[r] * k + j];
+            for (0..r) |t| v -= l[r * set.len + t] * z[t];
+            z[r] = v / l[r * set.len + r];
+            ss += z[r] * z[r];
+        }
+        const d = 1 - ss;
+        if (!(d > singular)) continue;
+        for (0..m) |t| l[m * set.len + t] = z[t];
+        l[m * set.len + m] = @sqrt(d);
+        try kept.append(a, j);
+    }
+    return kept.items;
+}
+
+fn pick(a: A, m: []const f64, k: usize, rows: []const usize, cols: []const usize) ![]f64 {
+    const o = try a.alloc(f64, rows.len * cols.len);
+    for (rows, 0..) |r, i| for (cols, 0..) |c, j| {
+        o[i * cols.len + j] = m[r * k + c];
+    };
+    return o;
+}
+
+/// ponytail: an eigenvector entry this small relative to the column's
+/// largest is rounding noise of an exact zero (SAS 9.4 prints 0 for a
+/// variable that does not enter a canonical correlation of one).
+fn snap(v: []f64) void {
+    var mx: f64 = 0;
+    for (v) |x| mx = @max(mx, @abs(x));
+    for (v) |*x| if (@abs(x.*) < 1e-10 * mx) {
+        x.* = 0;
+    };
+}
 
 /// `x` holds n rows of p+q values, `f` the frequencies and `w` the weights.
-pub fn analyze(a: A, x: []const f64, f: []const f64, w: []const f64, p: usize, q: usize, singular: f64) Failure!Result {
-    const k = p + q;
+pub fn analyze(a: A, x: []const f64, f: []const f64, w: []const f64, p_all: usize, q_all: usize, singular: f64) Failure!Result {
+    const k = p_all + q_all;
     const nrows = f.len;
     var n: f64 = 0;
     var sw: f64 = 0;
@@ -297,17 +359,30 @@ pub fn analyze(a: A, x: []const f64, f: []const f64, w: []const f64, p: usize, q
     };
     const corr = try a.alloc(f64, k * k);
     const sd = try a.alloc(f64, k);
+    var constant: std.ArrayList(usize) = .empty;
     for (0..k) |i| {
-        if (!(css[i * k + i] > 0)) return error.Singular;
+        if (!(css[i * k + i] > 0)) try constant.append(a, i);
         sd[i] = @sqrt(css[i * k + i] / (n - 1));
     }
     for (0..k) |i| for (0..k) |j| {
-        corr[i * k + j] = if (i == j) 1 else css[i * k + j] / @sqrt(css[i * k + i] * css[j * k + j]);
+        const zero = !(css[i * k + i] > 0) or !(css[j * k + j] > 0);
+        corr[i * k + j] = if (i == j) 1 else if (zero) 0 else css[i * k + j] / @sqrt(css[i * k + i] * css[j * k + j]);
     };
-    const rxx = try sub(a, corr, k, 0, 0, p, p);
-    const ryy = try sub(a, corr, k, p, p, q, q);
-    const rxy = try sub(a, corr, k, 0, p, p, q);
-    const ryx = try sub(a, corr, k, p, 0, q, p);
+    const xs = try a.alloc(usize, p_all);
+    for (xs, 0..) |*v, i| v.* = i;
+    const ys = try a.alloc(usize, q_all);
+    for (ys, 0..) |*v, i| v.* = p_all + i;
+    // SAS 9.4: a linearly dependent variable gets zero coefficients and the
+    // tests use the rank of its set (NOTE in the listing).
+    const kx = try independent(a, corr, k, xs, constant.items, singular);
+    const ky = try independent(a, corr, k, ys, constant.items, singular);
+    const p = kx.len;
+    const q = ky.len;
+    if (p == 0 or q == 0) return error.Singular;
+    const rxx = try pick(a, corr, k, kx, kx);
+    const ryy = try pick(a, corr, k, ky, ky);
+    const rxy = try pick(a, corr, k, kx, ky);
+    const ryx = try pick(a, corr, k, ky, kx);
     const rxx_h = try powSym(a, rxx, p, -0.5, singular);
     const ryy_i = try powSym(a, ryy, q, -1, singular);
     // M = Rxx^-1/2 Rxy Ryy^-1 Ryx Rxx^-1/2.
@@ -320,18 +395,33 @@ pub fn analyze(a: A, x: []const f64, f: []const f64, w: []const f64, p: usize, q
     const e = try pc.eigenSym(a, m, p);
     const s = @min(p, q);
     const r = try a.alloc(f64, s);
-    const ca = try a.alloc(f64, p * s);
-    const cb = try a.alloc(f64, q * s);
+    const ca = try a.alloc(f64, p_all * s);
+    const cb = try a.alloc(f64, q_all * s);
+    @memset(ca, 0);
+    @memset(cb, 0);
     const u = try a.alloc(f64, p);
     for (0..s) |c| {
-        const rsq = e.values[c];
-        if (rsq >= 1 - 1e-12) return error.PerfectFit;
-        if (!(rsq > 1e-12)) return error.ZeroCorrelation;
-        r[c] = @sqrt(rsq);
+        var rsq = e.values[c];
+        // SAS 9.4 displays a canonical correlation of one (Infty eigenvalue).
+        if (rsq >= 1 - 1e-12) rsq = 1;
         for (0..p) |i| u[i] = e.vectors[i * p + c];
         const av = try mul(a, rxx_h, u, p, p, 1);
-        const bv = try mul(a, try mul(a, ryy_i, ryx, q, q, p), av, q, p, 1);
-        for (bv) |*v| v.* /= r[c];
+        var bv: []f64 = undefined;
+        if (!(rsq > 1e-12)) {
+            // SAS 9.4 (one VAR and one WITH variable): r = 0 with both
+            // standardized coefficients 1; otherwise b is undetermined.
+            if (p != 1 or q != 1) return error.ZeroCorrelation;
+            rsq = 0;
+            bv = try a.alloc(f64, 1);
+            bv[0] = 1;
+            r[c] = 0;
+        } else {
+            r[c] = @sqrt(rsq);
+            bv = try mul(a, try mul(a, ryy_i, ryx, q, q, p), av, q, p, 1);
+            for (bv) |*v| v.* /= r[c];
+        }
+        snap(av);
+        snap(bv);
         // ponytail: orientation = nonnegative sum of the standardized
         // coefficients of the larger set (VAR on a tie); this reproduces every
         // SAS 9.4 listing checked (3x3, 2x3, 3x2 and 5x2 cases).
@@ -340,10 +430,10 @@ pub fn analyze(a: A, x: []const f64, f: []const f64, w: []const f64, p: usize, q
             for (bv) |v| sum += v;
         } else for (av) |v| sum += v;
         const sign: f64 = if (sum < 0) -1 else 1;
-        for (0..p) |i| ca[i * s + c] = sign * av[i];
-        for (0..q) |i| cb[i * s + c] = sign * bv[i];
+        for (kx, 0..) |ix, i| ca[ix * s + c] = sign * av[i];
+        for (ky, 0..) |iy, i| cb[(iy - p_all) * s + c] = sign * bv[i];
     }
-    return .{ .p = p, .q = q, .df = n - 1, .r = r, .a = ca, .b = cb, .sdx = sd[0..p], .sdy = sd[p..], .corr = corr };
+    return .{ .p = p, .q = q, .df = n - 1, .r = r, .a = ca, .b = cb, .sdx = sd[0..p_all], .sdy = sd[p_all..], .corr = corr, .x_deficient = p < p_all, .y_deficient = q < q_all, .constant = constant.items };
 }
 
 fn sub(a: A, m: []const f64, k: usize, r0: usize, c0: usize, nr: usize, nc: usize) ![]f64 {
@@ -407,6 +497,8 @@ pub fn adjusted(a: A, res: Result) ![]?f64 {
 pub const FTest = struct { value: f64, f: f64, df1: f64, df2: f64, prob: f64 };
 
 fn fprob(f: f64, d1: f64, d2: f64) f64 {
+    if (!(d2 > 0)) return nan;
+    if (std.math.isInf(f)) return 0;
     if (!(f > 0)) return 1;
     return fns.betaI(d2 / (d2 + d1 * f), d2 / 2, d1 / 2);
 }
@@ -427,7 +519,9 @@ pub fn rao(res: Result, k: usize) FTest {
     const d1 = pk * qk;
     const d2 = w * t - pk * qk / 2 + 1;
     const power = std.math.pow(f64, lr, 1 / t);
-    return ftest(lr, (1 - power) / power * d2 / d1, d1, d2);
+    // SAS 9.4: zero denominator degrees of freedom leave F missing.
+    const f = if (!(d2 > 0)) nan else if (power == 0) std.math.inf(f64) else (1 - power) / power * d2 / d1;
+    return ftest(lr, f, d1, d2);
 }
 
 pub const Multivariate = struct { s: usize, m: f64, n: f64, tests: [4]FTest };
@@ -443,9 +537,9 @@ pub fn multivariate(res: Result) Multivariate {
     var hotelling: f64 = 0;
     for (res.r) |x| {
         pillai += x * x;
-        hotelling += x * x / (1 - x * x);
+        hotelling += if (x == 1) std.math.inf(f64) else x * x / (1 - x * x);
     }
-    const roy = res.r[0] * res.r[0] / (1 - res.r[0] * res.r[0]);
+    const roy = if (res.r[0] == 1) std.math.inf(f64) else res.r[0] * res.r[0] / (1 - res.r[0] * res.r[0]);
     var tests: [4]FTest = undefined;
     tests[0] = rao(res, 0);
     const rd1 = @max(pf, qf);
@@ -498,6 +592,23 @@ fn prob(a: A, value: f64) ![]const u8 {
     if (value < 0.0001) return "<.0001";
     return fixed(a, value, 4);
 }
+/// SAS 9.4: an infinite statistic prints Infty; a missing one prints a
+/// dot at the decimal-point position of the column.
+fn num(a: A, out: *Out, value: f64, decimals: usize, width: usize) !void {
+    if (std.math.isInf(value)) return right(a, out, "Infty", width);
+    if (std.math.isNan(value)) {
+        try pad(a, out, width - decimals - 1);
+        try out.append(a, '.');
+        return pad(a, out, decimals);
+    }
+    try right(a, out, try fixed(a, value, decimals), width);
+}
+fn probCol(a: A, out: *Out, value: f64, width: usize) !void {
+    if (std.math.isNan(value)) return num(a, out, value, 4, width);
+    try right(a, out, try prob(a, value), width);
+}
+const nan = std.math.nan(f64);
+
 fn centered(a: A, out: *Out, text: []const u8, width: usize) !void {
     if (width > text.len) try pad(a, out, (width - text.len) / 2);
     try out.appendSlice(a, text);
@@ -517,10 +628,12 @@ fn canCorrTable(a: A, out: *Out, res: Result) !void {
     const s = res.r.len;
     const adj = try adjusted(a, res);
     const ev = try a.alloc(f64, s);
+    // SAS 9.4: a canonical correlation of one has an Infty eigenvalue, a
+    // missing proportion, and the finite eigenvalues share the proportions.
     var total: f64 = 0;
     for (res.r, ev) |x, *e| {
-        e.* = x * x / (1 - x * x);
-        total += e.*;
+        e.* = if (x == 1) std.math.inf(f64) else x * x / (1 - x * x);
+        if (x != 1) total += e.*;
     }
     try out.appendSlice(a, "\n" ++ header ++ "\n");
     var cum: f64 = 0;
@@ -531,17 +644,24 @@ fn canCorrTable(a: A, out: *Out, res: Result) !void {
         if (adj[k]) |v| try right(a, out, try fixed(a, v, 6), 13) else try out.appendSlice(a, "      .      ");
         try right(a, out, try fixed(a, (1 - x * x) / @sqrt(res.df), 6), 13);
         try right(a, out, try fixed(a, x * x, 6), 13);
-        try right(a, out, try fixed(a, ev[k], 4), 12);
-        if (k + 1 < s) try right(a, out, try fixed(a, ev[k] - ev[k + 1], 4), 12) else try pad(a, out, 12);
-        cum += ev[k] / total;
-        try right(a, out, try fixed(a, ev[k] / total, 4), 12);
-        try right(a, out, try fixed(a, cum, 4), 12);
+        try num(a, out, ev[k], 4, 12);
+        if (k + 1 < s) try num(a, out, ev[k] - ev[k + 1], 4, 12) else try pad(a, out, 12);
+        if (std.math.isInf(ev[k])) {
+            try num(a, out, nan, 4, 12);
+            try num(a, out, nan, 4, 12);
+        } else {
+            // SAS 9.4: a zero canonical correlation alone has proportion 0.
+            const share = if (total > 0) ev[k] / total else 0;
+            cum += share;
+            try num(a, out, share, 4, 12);
+            try num(a, out, cum, 4, 12);
+        }
         const ft = rao(res, k);
-        try right(a, out, try fixed(a, ft.value, 8), 12);
-        try right(a, out, try fixed(a, ft.f, 2), 13);
+        try num(a, out, ft.value, 8, 12);
+        try num(a, out, ft.f, 2, 13);
         try right(a, out, try best(a, ft.df1, "best6."), 8);
         try right(a, out, try best(a, ft.df2, "best6."), 8);
-        try right(a, out, try prob(a, ft.prob), 8);
+        try probCol(a, out, ft.prob, 8);
         try out.append(a, '\n');
     }
     if (s == 1) try out.appendSlice(a, "\nNOTE: The F statistic is exact.\n");
@@ -556,12 +676,14 @@ fn multivariateTable(a: A, out: *Out, res: Result) !void {
     try centered(a, out, try std.fmt.allocPrint(a, "S={d}    M={d}    N={d}", .{ mv.s, mv.m, mv.n }), width);
     try out.appendSlice(a, " \nStatistic                        Value    F Value    Num DF    Den DF    Pr > F\n\n");
     for ([_][]const u8{ "Wilks' Lambda", "Pillai's Trace", "Hotelling-Lawley Trace", "Roy's Greatest Root" }, mv.tests) |label, ft| {
+        // SAS 9.4: an infinite trace or root prints as missing value and F.
+        const inf_value = std.math.isInf(ft.value);
         try left(a, out, label, 24);
-        try right(a, out, try fixed(a, ft.value, 8), 14);
-        try right(a, out, try fixed(a, ft.f, 2), 11);
+        try num(a, out, if (inf_value) nan else ft.value, 8, 14);
+        try num(a, out, if (inf_value) nan else ft.f, 2, 11);
         try right(a, out, try best(a, ft.df1, "best6."), 10);
         try right(a, out, try best(a, ft.df2, "best6."), 10);
-        try right(a, out, try prob(a, ft.prob), 10);
+        try probCol(a, out, ft.prob, 10);
         try out.append(a, '\n');
     }
     if (mv.s > 1) {
@@ -651,13 +773,12 @@ pub fn run(cx: proc.ProcCtx, out: *Out, t: []const lex.Token) diag.Error!void {
     const cols = try std.mem.concat(a, usize, &.{ s.vars, s.with });
     const xrows = try rowsOf(a, ds, s.vars);
     const yrows = try rowsOf(a, ds, s.with);
-    const vh = try headings(a, s.vprefix, @min(p, q));
-    const wh = try headings(a, s.wprefix, @min(p, q));
     var body: Out = .empty;
     var first = true;
     // SAS 9.4: an empty input data set is a NOTE, not an error.
     if (ds.rows.items.len == 0) return cx.diags.note(l0, "No observations in the input data set.", .{});
     for (groups) |group| {
+        const logged = cx.diags.count();
         // p.2134: an observation with a missing value for any analysis
         // variable is omitted; pp.2132-2133: FREQ < 1 and WEIGHT <= 0 (or
         // missing) observations are not used, and only the integer part of
@@ -665,8 +786,12 @@ pub fn run(cx: proc.ProcCtx, out: *Out, t: []const lex.Token) diag.Error!void {
         var x: std.ArrayList(f64) = .empty;
         var f: std.ArrayList(f64) = .empty;
         var w: std.ArrayList(f64) = .empty;
+        var omitted: usize = 0;
         rows: for (group.rows) |row| {
-            for (cols) |ci| if (row[ci].isMissing()) continue :rows;
+            for (cols) |ci| if (row[ci].isMissing()) {
+                omitted += 1;
+                continue :rows;
+            };
             var fi: f64 = 1;
             if (s.freq) |ci| {
                 if (row[ci].isMissing()) continue;
@@ -684,8 +809,23 @@ pub fn run(cx: proc.ProcCtx, out: *Out, t: []const lex.Token) diag.Error!void {
         }
         var nobs: f64 = 0;
         for (f.items) |v| nobs += v;
-        // SAS 9.4 analyses df - p - q = 0 (N = -0.5); fewer is not verified.
-        if (nobs - 1 - @as(f64, @floatFromInt(p + q)) < 0) return gap(cx.diags, l0, "PROC CANCORR: {d} usable observations for {d} VAR and {d} WITH variables (fewer than p+q+1) is not verified", .{ nobs, p, q });
+        const upper = try std.ascii.allocUpperString(a, ds.name);
+        const prefix: []const u8 = if (std.mem.indexOfScalar(u8, upper, '.') == null) "WORK." else "";
+        // SAS 9.4 (p.2134 rule): the omitted count is a WARNING.
+        if (omitted > 0) try cx.diags.warn(l0, "{d} of {d} observations in data set {s}{s} omitted due to missing values.", .{ omitted, group.rows.len, prefix, upper });
+        // SAS 9.4: fewer than two observations stop the step; in a BY group
+        // the ERROR names the group and the other groups are analysed.
+        if (nobs < 2) {
+            if (s.by_cols.len == 0) return cx.diags.fail(error.ParseError, l0, "There must be at least 2 observations in data set {s}{s}.", .{ prefix, upper });
+            try cx.diags.recoverableErr(l0, "There must be at least 2 observations in data set {s}{s}.", .{ prefix, upper });
+            try by.reportNote(a, cx.diags, ds, group.rows[0], s.by_cols);
+            continue;
+        }
+        // SAS 9.4: with at most p+q observations a WARNING and NOTE replace
+        // the multivariate table. ponytail: the canonical coefficients of such
+        // a fit are not unique; only listings matching SAS 9.4 are accepted.
+        const few = nobs <= @as(f64, @floatFromInt(p + q));
+        if (few and !s.short) return gap(cx.diags, l0, "PROC CANCORR: canonical coefficients for {d} observations and {d} variables (not more observations than variables) are not verified; SHORT is supported", .{ nobs, p + q });
         // SAS 9.4: when every variable of one set is constant, each gets a
         // WARNING and the step stops with "A correlation matrix has zero rank."
         for ([_][]const usize{ s.vars, s.with }, 0..) |set, si| {
@@ -708,12 +848,31 @@ pub fn run(cx: proc.ProcCtx, out: *Out, t: []const lex.Token) diag.Error!void {
         const res = analyze(a, x.items, f.items, w.items, p, q, s.singular) catch |e| switch (e) {
             error.OutOfMemory => return error.OutOfMemory,
             error.Singular => return gap(cx.diags, l0, "PROC CANCORR: a constant or linearly dependent VAR or WITH variable set is not verified", .{}),
-            error.PerfectFit => return gap(cx.diags, l0, "PROC CANCORR: a canonical correlation of one is not verified", .{}),
             error.ZeroCorrelation => return gap(cx.diags, l0, "PROC CANCORR: a zero canonical correlation is not verified", .{}),
             error.TooFew => return gap(cx.diags, l0, "PROC CANCORR: fewer than two usable observations is not verified", .{}),
         };
-        if (s.by_cols.len > 0) try by.reportNote(a, cx.diags, ds, group.rows[0], s.by_cols);
+        if (few) {
+            try cx.diags.warn(l0, "The number of observations {d} is not greater than the number of variables {d}.", .{ nobs, p + q });
+            try cx.diags.note(l0, "No multivariate tests performed due to insufficient degrees of freedom.", .{});
+        }
+        for (res.constant) |j| try cx.diags.warn(l0, "The variable {s} is constant.", .{ds.columns.items[cols[j]].name});
+        // ponytail: the orientation rule does not reproduce SAS 9.4's signs for
+        // a rank-deficient set (checked on a 3x2 case); only SHORT is accepted.
+        if ((res.x_deficient or res.y_deficient) and !s.short) return gap(cx.diags, l0, "PROC CANCORR: canonical coefficients for a linearly dependent VAR or WITH variable set are not verified; SHORT is supported", .{});
+        // SAS 9.4 wording: one deficient set keeping min(p, q) canonical
+        // variables, or both sets deficient with fewer; other mixes unverified.
+        const reduced = res.r.len < @min(p, q);
+        if (res.x_deficient != res.y_deficient and reduced or res.x_deficient and res.y_deficient and !reduced)
+            return gap(cx.diags, l0, "PROC CANCORR: this combination of linearly dependent VAR and WITH variables is not verified", .{});
+        // ponytail: with a canonical correlation of one SAS 9.4 prints the
+        // rounding noise of exact zeros (e.g. 7.931816E-17); coefficient pages
+        // are accepted only for one VAR and one WITH variable.
+        if (res.r[0] == 1 and !s.short and (p != 1 or q != 1)) return gap(cx.diags, l0, "PROC CANCORR: canonical coefficients for a canonical correlation of one are not verified; SHORT is supported", .{});
+        // SAS 9.4: the BY-group NOTE follows only a group's own messages.
+        if (s.by_cols.len > 0 and cx.diags.count() > logged) try by.reportNote(a, cx.diags, ds, group.rows[0], s.by_cols);
         if (s.noprint) continue;
+        const vh = try headings(a, s.vprefix, res.r.len);
+        const wh = try headings(a, s.wprefix, res.r.len);
         var byline: []const u8 = "";
         if (s.by_cols.len > 0) {
             var tmp: Out = .empty;
@@ -721,8 +880,14 @@ pub fn run(cx: proc.ProcCtx, out: *Out, t: []const lex.Token) diag.Error!void {
             byline = std.mem.trim(u8, tmp.items, " \n");
         }
         try pageStart(a, cx, &body, &first, byline, "Canonical Correlation Analysis");
+        // SAS 9.4 (VAR set verified): a linearly dependent variable.
+        const what: []const u8 = if (reduced) "canonical correlations and coefficients" else "canonical coefficients";
+        if (res.x_deficient) try body.print(a, "\nNOTE: The correlation matrix for the {s} is less than full rank. Therefore, some {s} will be zero.\n", .{ s.vname, what });
+        if (res.y_deficient) try body.print(a, "\nNOTE: The correlation matrix for the {s} is less than full rank. Therefore, some {s} will be zero.\n", .{ s.wname, what });
+        if (res.x_deficient or res.y_deficient) try body.append(a, '\n');
         try canCorrTable(a, &body, res);
-        try multivariateTable(a, &body, res);
+        // SAS 9.4 keeps one blank line where the multivariate table would start.
+        if (few) try body.append(a, '\n') else try multivariateTable(a, &body, res);
         if (s.short) continue;
         const sc = res.r.len;
         const rawa = try a.alloc(f64, p * sc);

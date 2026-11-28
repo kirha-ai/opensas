@@ -194,6 +194,7 @@ test "STAT-CANCORR-001 invalid input and loud gaps" {
     e.* = Dataset.init(a, "e");
     for ([_][]const u8{ "x", "y" }) |n| _ = try e.addColumn(n, .num);
     try lib.put("e", e);
+    try buildBounds(a, &lib);
     const Case = struct { source: []const u8, rc: u8 };
     const cases = [_]Case{
         .{ .source = "proc cancorr data=s; var x; run;", .rc = 1 }, // WITH is required
@@ -220,7 +221,14 @@ test "STAT-CANCORR-001 invalid input and loud gaps" {
         .{ .source = "proc cancorr data=s; var x; var x; with y; run;", .rc = 2 }, // repeated across statements
         .{ .source = "proc cancorr data=s; var x; with y; freq f; freq w; run;", .rc = 2 },
         .{ .source = "proc cancorr data=s; var x; with y; weight w; weight f; run;", .rc = 2 },
-        .{ .source = "proc cancorr data=s; var x y; with y; run;", .rc = 2 }, // in both sets
+        .{ .source = "proc cancorr data=s; var x y; with y; run;", .rc = 2 }, // in both sets: r = 1 coefficient pages
+        // Coefficient pages whose SAS 9.4 signs are not reproduced (SHORT works).
+        .{ .source = "proc cancorr data=s(where=(g=1 and x<3)); var x; with y; run;", .rc = 2 }, // n <= p+q
+        .{ .source = "proc cancorr data=t2; var x xx; with y; run;", .rc = 2 }, // linearly dependent VAR set
+        .{ .source = "proc cancorr data=t2 short; var x xx; with y z; run;", .rc = 2 }, // one deficient set losing a canonical variable
+        .{ .source = "proc cancorr data=t2; var x z; with y x2; run;", .rc = 2 }, // r = 1, 2x2
+        .{ .source = "proc cancorr data=t2 short; var x; with zero zero2; run;", .rc = 2 }, // zero r beyond 1x1
+        .{ .source = "proc cancorr data=one; var x; with y; run;", .rc = 1 }, // fewer than 2 observations
         .{ .source = "proc cancorr data=s; var x x; with y; run;", .rc = 2 },
         .{ .source = "proc cancorr data=s; var x; with y; freq x; run;", .rc = 2 },
         .{ .source = "proc cancorr data=s(where=(g=1 and x<3)); var x; with y; run;", .rc = 2 }, // too few
@@ -244,4 +252,75 @@ test "STAT-CANCORR-001 invalid input and loud gaps" {
         };
         try expectEqual(@as(usize, 0), output.items.len);
     }
+}
+
+/// t2: x=(1..5), y=(2,1,4,3,5), z=(5,3,4,1,2), xx = 2x (dependent on x),
+/// x2 = 3x+1 (r = 1 with x), yy = 2y, k constant; one: a single observation.
+fn buildBounds(a: std.mem.Allocator, lib: *Library) !void {
+    const t2 = try a.create(Dataset);
+    t2.* = Dataset.init(a, "t2");
+    for ([_][]const u8{ "x", "y", "z", "xx", "x2", "yy", "zero", "k", "zero2" }) |n| _ = try t2.addColumn(n, .num);
+    const xs = [_]f64{ 1, 2, 3, 4, 5 };
+    const ys = [_]f64{ 2, 1, 4, 3, 5 };
+    const zs = [_]f64{ 5, 3, 4, 1, 2 };
+    // zero = (1,-1,0,-1,1) is uncorrelated with x (sum (x-3)*zero = 0).
+    // zero2 = (1,0,-2,0,1) likewise.
+    const zero = [_]f64{ 1, -1, 0, -1, 1 };
+    const zero2 = [_]f64{ 1, 0, -2, 0, 1 };
+    for (xs, ys, zs, zero, zero2) |x, y, z, o, o2| try t2.appendRow(&.{ .{ .num = x }, .{ .num = y }, .{ .num = z }, .{ .num = 2 * x }, .{ .num = 3 * x + 1 }, .{ .num = 2 * y }, .{ .num = o }, .{ .num = 7 }, .{ .num = o2 } });
+    try lib.put("t2", t2);
+    const one = try a.create(Dataset);
+    one.* = Dataset.init(a, "one");
+    for ([_][]const u8{ "x", "y" }) |n| _ = try one.addColumn(n, .num);
+    try one.appendRow(&.{ .{ .num = 1 }, .{ .num = 2 } });
+    try lib.put("one", one);
+}
+
+test "STAT-CANCORR-001 boundary inputs: r = 1, r = 0, rank, constant, few and missing observations" {
+    var env: Env = .{ .arena = std.heap.ArenaAllocator.init(std.testing.allocator) };
+    defer env.arena.deinit();
+    try env.init();
+    const a = env.arena.allocator();
+    try buildBounds(a, &env.lib);
+    diag.resetGap();
+    defer diag.resetGap();
+    var out: std.ArrayList(u8) = .empty;
+    // x2 = 3x + 1: r = 1 exactly; eigenvalue Infty, Hotelling-Lawley and Roy
+    // missing with Pr < .0001 (SAS 9.4 listing shape).
+    try env.run(&out, "proc cancorr data=t2; var x; with x2; run;");
+    try expect(std.mem.indexOf(u8, out.items, "     1.000000     1.000000     0.000000     1.000000       Infty                   .           .      0.00000000        Infty       1       3  <.0001") != null);
+    try expect(std.mem.indexOf(u8, out.items, "Hotelling-Lawley Trace       .                .           1         3    <.0001") != null);
+    // x and zero: r = 0 exactly; proportion 0, Wilks 1, F 0, Pr 1.
+    out.clearRetainingCapacity();
+    try env.run(&out, "proc cancorr data=t2; var x; with zero; run;");
+    try expect(std.mem.indexOf(u8, out.items, "     0.000000      .           0.500000     0.000000      0.0000                  0.0000      0.0000  1.00000000         0.00       1       3  1.0000") != null);
+    // xx = 2x is dependent: the tests use rank 2 (x, z) -> Num DF 2 * 1 = 2,
+    // and the NOTE names the VAR set; xx gets zero coefficients.
+    out.clearRetainingCapacity();
+    try env.run(&out, "proc cancorr data=t2 short; var x xx z; with y; run;");
+    try expect(std.mem.indexOf(u8, out.items, "NOTE: The correlation matrix for the VAR Variables is less than full rank. Therefore, some canonical coefficients will be zero.") != null);
+    try expect(std.mem.indexOf(u8, out.items, "S=1    M=0    N=0") != null);
+    // k is constant: WARNING, then dropped like a dependent variable.
+    out.clearRetainingCapacity();
+    try env.run(&out, "proc cancorr data=t2 short; var x k; with y; run;");
+    try expect(std.mem.indexOf(u8, try env.diags.render(), "The variable k is constant.") != null);
+    try expect(!diag.gapHit());
+    // Three observations for two variables: WARNING + NOTE, no multivariate
+    // table; Rao's denominator df is 0 so F and Pr are missing.
+    out.clearRetainingCapacity();
+    try env.run(&out, "proc cancorr data=t2(where=(x<3)) short; var x; with y; run;");
+    try expect(std.mem.indexOf(u8, out.items, "Multivariate") == null);
+    const log = try env.diags.render();
+    try expect(std.mem.indexOf(u8, log, "The number of observations 2 is not greater than the number of variables 2.") != null);
+    try expect(std.mem.indexOf(u8, log, "No multivariate tests performed due to insufficient degrees of freedom.") != null);
+    try expect(!env.diags.hasErrors() and !diag.gapHit());
+    // p.2134: omitted observations are counted in a WARNING (SAS 9.4 text).
+    out.clearRetainingCapacity();
+    try env.run(&out, "proc cancorr data=s short; var x; with y; where g=1; run;");
+    try expect(std.mem.indexOf(u8, try env.diags.render(), "1 of 9 observations in data set WORK.S omitted due to missing values.") != null);
+    // A single observation stops the step (SAS 9.4 ERROR text).
+    var d = diag.Diagnostics.init(a);
+    const r = cancorr.run(.{ .arena = a, .lib = &env.lib, .diags = &d }, &out, try lex.tokenize(a, "proc cancorr data=one; var x; with y; run;", &d));
+    try std.testing.expectError(error.ParseError, r);
+    try expect(std.mem.indexOf(u8, try d.render(), "There must be at least 2 observations in data set WORK.ONE.") != null);
 }

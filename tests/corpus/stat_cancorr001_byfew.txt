@@ -1,0 +1,58 @@
+
+g=1
+
+The CANCORR Procedure
+ 
+Canonical Correlation Analysis
+
+                                                                                                                 Test of H0: The canonical correlations in the
+                                                                          Eigenvalues of Inv(E)*H                  current row and all that follow are zero
+                          Adjusted  Approximate      Squared                = CanRsq/(1-CanRsq)
+            Canonical    Canonical     Standard    Canonical                                                  Likelihood  Approximate
+          Correlation  Correlation        Error  Correlation  Eigenvalue  Difference  Proportion  Cumulative       Ratio      F Value  Num DF  Den DF  Pr > F
+
+       1     0.720577      .           0.339955     0.519231      1.0800                  1.0000      1.0000  0.48076923         1.08       1       1  0.4878
+
+NOTE: The F statistic is exact.
+
+
+
+                Multivariate Statistics and Exact F Statistics
+ 
+                            S=1    M=-0.5    N=-0.5
+ 
+Statistic                        Value    F Value    Num DF    Den DF    Pr > F
+
+Wilks' Lambda               0.48076923       1.08         1         1    0.4878
+Pillai's Trace              0.51923077       1.08         1         1    0.4878
+Hotelling-Lawley Trace      1.08000000       1.08         1         1    0.4878
+Roy's Greatest Root         1.08000000       1.08         1         1    0.4878
+
+g=3
+
+The CANCORR Procedure
+ 
+Canonical Correlation Analysis
+
+                                                                                                                 Test of H0: The canonical correlations in the
+                                                                          Eigenvalues of Inv(E)*H                  current row and all that follow are zero
+                          Adjusted  Approximate      Squared                = CanRsq/(1-CanRsq)
+            Canonical    Canonical     Standard    Canonical                                                  Likelihood  Approximate
+          Correlation  Correlation        Error  Correlation  Eigenvalue  Difference  Proportion  Cumulative       Ratio      F Value  Num DF  Den DF  Pr > F
+
+       1     0.500000      .           0.530330     0.250000      0.3333                  1.0000      1.0000  0.75000000         0.33       1       1  0.6667
+
+NOTE: The F statistic is exact.
+
+
+
+                Multivariate Statistics and Exact F Statistics
+ 
+                            S=1    M=-0.5    N=-0.5
+ 
+Statistic                        Value    F Value    Num DF    Den DF    Pr > F
+
+Wilks' Lambda               0.75000000       0.33         1         1    0.6667
+Pillai's Trace              0.25000000       0.33         1         1    0.6667
+Hotelling-Lawley Trace      0.33333333       0.33         1         1    0.6667
+Roy's Greatest Root         0.33333333       0.33         1         1    0.6667
