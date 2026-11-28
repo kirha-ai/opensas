@@ -158,10 +158,10 @@ test "STAT-SURVEYFREQ-001 invalid declarations are user errors and unimplemented
         "proc surveyfreq data=clean total=1; strata h; cluster c; weight w; tables a*b / row;",
     });
     try fx.expectRc(2, &.{
-        "proc surveyfreq data=clean nomcar; tables a*b;",
         "proc surveyfreq data=clean page; tables a*b;",
         "proc surveyfreq data=clean order=freq; tables a*b;",
-        "proc surveyfreq data=clean varheader=label; tables a*b;",
+        "proc surveyfreq data=clean nomcar; weight w; tables a*b / chisq;",
+        "proc surveyfreq data=clean; format a 3.; weight w; tables a*b;",
         "proc surveyfreq data=clean varmethod=brr; tables a*b;",
         "proc surveyfreq data=clean varmethod=jackknife; tables a*b;",
         "proc surveyfreq data=clean varmethod=bootstrap; tables a*b;",
@@ -176,7 +176,6 @@ test "STAT-SURVEYFREQ-001 invalid declarations are user errors and unimplemented
         "proc surveyfreq data=clean; weight w; tables h*a*b;",
         "proc surveyfreq data=clean; weight w; tables a;", // one-way
         "proc surveyfreq data=clean; weight w;", // default one-way tables
-        "proc surveyfreq data=clean; weight w; tables a*s;", // character variable
         "proc surveyfreq data=clean; weight w; tables a*b / cl;",
         "proc surveyfreq data=clean; weight w; tables a*b / chisq(secondorder);",
         "proc surveyfreq data=clean; weight w; tables a*b / alpha=.1;",
@@ -187,9 +186,6 @@ test "STAT-SURVEYFREQ-001 invalid declarations are user errors and unimplemented
         // has no a=1, b=2 observation): not verified.
         "proc surveyfreq data=clean; weight w; by h; tables a*b / row;",
         "proc surveyfreq data=level_hole missing; strata h; cluster c; weight w; tables a*b / row;",
-        // Observations excluded only by a missing CLUSTER value: Data Summary
-        // layout not verified.
-        "proc surveyfreq data=cluster_hole; strata h; cluster c; weight w; tables a*b;",
         // CHISQ with excluded observations or single-cluster strata.
         "proc surveyfreq data=holes; strata h; cluster c; weight w; tables a*b / chisq;",
         "proc surveyfreq data=clean; strata h c; cluster c; weight w; tables a*b / chisq;",
@@ -291,7 +287,7 @@ test "STAT-SURVEYFREQ-001 listing blocks follow the requested options" {
     try expectEqual(@as(usize, 0), o.notes);
     try expect(std.mem.startsWith(u8, o.out, "\nThe SURVEYFREQ Procedure\n\n            Data Summary\n\nNumber of Strata                   2\nNumber of Clusters                 4\nNumber of Observations             8\nSum of Weights                    20\n\n\n"));
     try expect(std.mem.indexOf(u8, o.out, "Table of a by b\n") != null);
-    try expect(std.mem.indexOf(u8, o.out, "         1           1             3       6.00000       1.41421     30.0000       14.1421     75.0000        22.0971\n") != null);
+    try expect(std.mem.indexOf(u8, o.out, "    1        1             3       6.00000       1.41421     30.0000       14.1421     75.0000        22.0971\n") != null);
     try expect(std.mem.indexOf(u8, o.out, "Rao-Scott") == null);
     // No STRATA / CLUSTER statement: their Data Summary rows are not shown.
     const bare = try fx.outcome("proc surveyfreq data=clean; weight w; tables a*b / row;");
@@ -319,13 +315,13 @@ test "STAT-SURVEYFREQ-001 BY groups, no WEIGHT, duplicate roles, exclusions and 
     try expectEqual(@as(u8, 0), bare.rc);
     try expect(std.mem.indexOf(u8, bare.out, "Sum of Weights") == null and std.mem.indexOf(u8, bare.out, "Weighted") == null);
     try expect(std.mem.indexOf(u8, bare.out, "Number of Observations             8\n\n\n") != null);
-    try expect(std.mem.indexOf(u8, bare.out, "         1           1             3     37.5000       18.2981") != null);
+    try expect(std.mem.indexOf(u8, bare.out, "    1        1             3     37.5000       18.2981") != null);
     // Missing TABLES value: excluded from the table and its variances (MCAR),
     // still a valid observation of the Data Summary; the table equals `clean`.
     const mcar = try fx.outcome("proc surveyfreq data=holes; strata h; cluster c; weight w; tables a*b / row;");
     try expectEqual(@as(u8, 0), mcar.rc);
     try expect(std.mem.indexOf(u8, mcar.out, "Number of Observations             9\nSum of Weights                    25\n") != null);
-    try expect(std.mem.indexOf(u8, mcar.out, "         1           1             3       6.00000       1.41421     30.0000       14.1421     75.0000        22.0971\n") != null);
+    try expect(std.mem.indexOf(u8, mcar.out, "    1        1             3       6.00000       1.41421     30.0000       14.1421     75.0000        22.0971\n") != null);
     try expect(std.mem.indexOf(u8, mcar.out, "Frequency Missing = 1\n") != null);
     // Nonpositive weights and a missing STRATA / CLUSTER value: Used and
     // Nonpositive rows, one NOTE; the remaining design is `clean`.
@@ -333,25 +329,57 @@ test "STAT-SURVEYFREQ-001 BY groups, no WEIGHT, duplicate roles, exclusions and 
     try expectEqual(@as(u8, 0), excl.rc);
     try expectEqual(@as(usize, 1), excl.notes);
     try expect(std.mem.indexOf(u8, excl.out, "Number of Observations                            13\nNumber of Observations Used                        8\nNumber of Obs with Nonpositive Weights             3\nSum of Weights                                    20\n") != null);
-    try expect(std.mem.indexOf(u8, excl.out, "         1           1             3       6.00000       1.41421     30.0000       14.1421") != null);
+    try expect(std.mem.indexOf(u8, excl.out, "    1        1             3       6.00000       1.41421     30.0000       14.1421") != null);
     // One cluster per stratum everywhere: variances missing, with a NOTE.
     const single = try fx.outcome("proc surveyfreq data=clean; strata h c; cluster c; weight w; tables a*b;");
     try expectEqual(@as(u8, 0), single.rc);
     try expectEqual(@as(usize, 1), single.notes);
-    try expect(std.mem.indexOf(u8, single.out, "         1           1             3       6.00000             .     30.0000         .    \n") != null);
+    try expect(std.mem.indexOf(u8, single.out, "    1        1             3       6.00000             .     30.0000         .    \n") != null);
     // BY groups: one Data Summary per group with its own counts, one BY NOTE.
     // A zero-frequency cell is shown with missing estimates (BY h=2: a=1, b=2).
     const grouped = try fx.outcome("proc surveyfreq data=clean; by h; cluster c; weight w; tables a*b;");
     try expectEqual(@as(u8, 0), grouped.rc);
-    try expect(std.mem.indexOf(u8, grouped.out, "                     2             0             .             .       .             .    \n") != null);
+    try expect(std.mem.indexOf(u8, grouped.out, "             2             0             .             .       .             .    \n") != null);
     // MISSING: the missing TABLES value is a level, ordered first; w = 5 of 25.
     const level = try fx.outcome("proc surveyfreq data=level_hole missing; strata h; cluster c; weight w; tables a*b;");
     try expectEqual(@as(u8, 0), level.rc);
-    try expect(std.mem.indexOf(u8, level.out, "         1           .             1       5.00000") != null);
+    try expect(std.mem.indexOf(u8, level.out, "    1        .             1       5.00000") != null);
     try expect(std.mem.indexOf(u8, level.out, "     20.0000") != null);
     const by_ok = try fx.outcome("proc surveyfreq data=clean; by h; weight w; tables c*h;");
     try expectEqual(@as(u8, 0), by_ok.rc);
     try expectEqual(@as(usize, 1), by_ok.notes);
     try expect(std.mem.indexOf(u8, by_ok.out, "\nh=1\n\nThe SURVEYFREQ Procedure\n") != null and std.mem.indexOf(u8, by_ok.out, "\nh=2\n\nThe SURVEYFREQ Procedure\n") != null);
     try expectEqual(@as(usize, 2), std.mem.count(u8, by_ok.out, "Data Summary"));
+}
+
+test "STAT-SURVEYFREQ-001 NOMCAR, ORDER=DATA, VARHEADER and character TABLES columns" {
+    var fx = try fixture();
+    defer fx.arena.deinit();
+    try fx.init();
+    // Only a missing CLUSTER value excluded: Number of Observations is the
+    // valid count, no Used row (SAS-verified).
+    const ch = try fx.outcome("proc surveyfreq data=cluster_hole; strata h; cluster c; weight w; tables a*b;");
+    try expectEqual(@as(u8, 0), ch.rc);
+    try expect(std.mem.indexOf(u8, ch.out, "Number of Observations             8\nSum of Weights                    20\n") != null);
+    // NOMCAR: the missing-a observation (w = 5, stratum 1, PSU 1) stays in the
+    // variance with zero values. Cell (1,1) total: PSU sums 2, 3 | 1, 0 as in
+    // `clean` -> sd 1.41421; the percent linearization w(d - .3)/20 gains
+    // nothing for it either, so the table equals `clean` and only the
+    // Variance Estimation block and Frequency Missing differ.
+    const nm = try fx.outcome("proc surveyfreq data=holes nomcar; strata h; cluster c; weight w; tables a*b;");
+    try expectEqual(@as(u8, 0), nm.rc);
+    try expect(std.mem.indexOf(u8, nm.out, "      Variance Estimation\n\nMethod            Taylor Series\nMissing Values           NOMCAR\n") != null);
+    try expect(std.mem.indexOf(u8, nm.out, "Frequency Missing = 1\n") != null);
+    // Short names: TABLES columns 5 wide ("Total"), values right-aligned.
+    try expect(std.mem.indexOf(u8, nm.out, "    a        b     Frequency") != null);
+    // ORDER=DATA: a's first value is 1, b's first values 1 then 2 (same as
+    // internal here); for h*a the first h value 1 precedes 2.
+    const od = try fx.outcome("proc surveyfreq data=clean order=data; weight w; tables b*a;");
+    try expectEqual(@as(u8, 0), od.rc);
+    // Character variable: left-aligned, width max(length 8 default, 5).
+    const cv = try fx.outcome("proc surveyfreq data=clean; weight w; tables s*a;");
+    try expectEqual(@as(u8, 0), cv.rc);
+    try expect(std.mem.indexOf(u8, cv.out, "s               a     Frequency") != null);
+    try expect(std.mem.indexOf(u8, cv.out, "\nx               1") != null);
+    try expect(std.mem.indexOf(u8, cv.out, "\nTotal           1") != null);
 }

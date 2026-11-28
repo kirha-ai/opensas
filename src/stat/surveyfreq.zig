@@ -34,6 +34,10 @@ pub const Spec = struct {
     by_cols: []const usize = &.{},
     by_desc: []const bool = &.{},
     notsorted: bool = false,
+    varheader: enum { name, label, namelabel } = .name,
+    /// ORDER=DATA: levels in order of first appearance in the input.
+    order_data: bool = false,
+    nomcar: bool = false,
 };
 
 fn at(t: []const lex.Token, i: usize, tag: lex.Tag) bool {
@@ -108,19 +112,21 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
         } else if (eq(word, "nosummary") and !valued) {
             s.nosummary = true;
             i += 1;
-        } else if (oneOf(word, &.{ "nomcar", "page" }) and !valued) {
+        } else if (eq(word, "nomcar") and !valued) {
+            s.nomcar = true;
+            i += 1;
+        } else if (oneOf(word, &.{"page"}) and !valued) {
             return gap(cx, t[i].line, "option {s} is not implemented", .{word});
         } else if (eq(word, "order") and valued) {
             if (!at(t, i + 2, .name)) return invalid(cx, t, i + 2);
             const v = t[i + 2].text;
-            if (oneOf(v, &.{ "data", "formatted", "freq" })) return gap(cx, t[i].line, "ORDER={s} is not implemented", .{v});
-            if (!eq(v, "internal")) return invalid(cx, t, i + 2);
+            if (eq(v, "data")) s.order_data = true else if (oneOf(v, &.{ "formatted", "freq" })) return gap(cx, t[i].line, "ORDER={s} is not implemented", .{v});
+            if (!eq(v, "internal") and !eq(v, "data")) return invalid(cx, t, i + 2);
             i += 3;
         } else if (eq(word, "varheader") and valued) {
             if (!at(t, i + 2, .name)) return invalid(cx, t, i + 2);
             const v = t[i + 2].text;
-            if (oneOf(v, &.{ "label", "namelabel" })) return gap(cx, t[i].line, "VARHEADER={s} is not implemented", .{v});
-            if (!eq(v, "name")) return invalid(cx, t, i + 2);
+            s.varheader = if (eq(v, "name")) .name else if (eq(v, "label")) .label else if (eq(v, "namelabel")) .namelabel else return invalid(cx, t, i + 2);
             i += 3;
         } else if (eq(word, "varmethod") and valued) {
             if (!at(t, i + 2, .name)) return invalid(cx, t, i + 2);
@@ -427,7 +433,60 @@ pub const Group = struct {
     /// Some stratum of the table has a single cluster (left out of variances).
     single_psu: bool,
     rep: ?[]const Value,
+    /// Per TABLES variable: level texts when the table holds level codes
+    /// (character variables, ORDER=DATA), else null (unformatted numbers).
+    labels: [2]?[]const []const u8,
 };
+
+/// Level dictionary of a TABLES variable over the whole input: character
+/// values (trailing blanks dropped) ascending, or ORDER=DATA first appearance.
+/// Missing values (blank, or numeric missing) are not levels.
+fn levelDict(a: A, ds: *const Dataset, c: usize, order_data: bool) !?[]const []const u8 {
+    const char = ds.columns.items[c].type != .num;
+    if (!char and !order_data) return null;
+    var list: std.ArrayList([]const u8) = .empty;
+    for (ds.rows.items) |row| {
+        const text = try levelText(a, row[c]) orelse continue;
+        for (list.items) |l| {
+            if (std.mem.eql(u8, l, text)) break;
+        } else try list.append(a, text);
+    }
+    if (char and !order_data) std.mem.sort([]const u8, list.items, {}, struct {
+        fn lt(_: void, x: []const u8, y: []const u8) bool {
+            return std.mem.order(u8, x, y) == .lt;
+        }
+    }.lt);
+    return list.items;
+}
+fn levelText(a: A, v: Value) !?[]const u8 {
+    return switch (v) {
+        .str => |t| blk: {
+            const x = std.mem.trimEnd(u8, t, " ");
+            break :blk if (x.len == 0) null else x;
+        },
+        .num => |x| if (std.math.isNan(x)) null else try format.bestNum(a, x),
+    };
+}
+/// Rows with the TABLES values replaced by level codes (missing: NaN).
+fn codeRows(a: A, rows: []const []const Value, cols: [2]usize, dicts: [2]?[]const []const u8) ![]const []const Value {
+    if (dicts[0] == null and dicts[1] == null) return rows;
+    const out = try a.alloc([]const Value, rows.len);
+    for (rows, out) |row, *o| {
+        const copy = try a.dupe(Value, row);
+        for (cols, dicts) |c, dict| if (dict) |levels| {
+            var code = std.math.nan(f64);
+            if (try levelText(a, row[c])) |text| {
+                for (levels, 0..) |l, k| if (std.mem.eql(u8, l, text)) {
+                    code = @floatFromInt(k);
+                    break;
+                };
+            }
+            copy[c] = .{ .num = code };
+        };
+        o.* = copy;
+    }
+    return out;
+}
 
 fn hasMissing(rows: []const []const Value, kept: []const usize, cols: []const usize) bool {
     for (kept) |r| for (cols) |c| if (std.math.isNan(rows[r][c].num)) return true;
@@ -443,36 +502,47 @@ pub fn plan(cx: proc.ProcCtx, s: Spec) diag.Error![]Group {
     if (s.requests.len > 1) return gap(cx, 0, "several TABLES requests are not implemented", .{});
     const req = s.requests[0];
     const col = req.col orelse return gap(cx, req.line, "one-way frequency tables are not implemented (listing layout not verified)", .{});
-    for ([_]usize{ req.row, col }) |c| {
+    var dicts: [2]?[]const []const u8 = undefined;
+    for ([_]usize{ req.row, col }, &dicts) |c, *dict| {
         const v = ds.columns.items[c];
-        if (v.type != .num or v.format != null) return gap(cx, req.line, "character or formatted TABLES variables are not implemented", .{});
-        if (v.name.len > 10) return gap(cx, req.line, "listing columns for TABLES variable names longer than 10 characters are not verified", .{});
+        if (v.format != null) return gap(cx, req.line, "formatted TABLES variables are not implemented", .{});
+        dict.* = try levelDict(a, ds, c, s.order_data);
+        // Missing levels are verified only as numeric '.' in internal order.
+        if (s.roles.missing and dict.* != null) for (ds.rows.items) |row| {
+            if (try levelText(a, row[c]) == null) return gap(cx, req.line, "MISSING levels of character or ORDER=DATA TABLES variables are not implemented", .{});
+        };
     }
+    if (s.nomcar and s.chisq) return gap(cx, 0, "CHISQ with NOMCAR is not implemented", .{});
     if (s.chisq and s.roles.fpc != .none) return gap(cx, 0, "CHISQ with RATE= or TOTAL= is not implemented", .{});
     const slices = try by.checkedSlices(a, ds, s.by_cols, s.by_desc, s.notsorted, cx.diags);
     const groups = try a.alloc(Group, slices.len);
     const table_cols = [_]usize{ req.row, col };
     for (slices, groups) |slice, *group| {
-        const d = try design.build(a, slice.rows, s.roles);
+        const group_rows = try codeRows(a, slice.rows, table_cols, dicts);
+        const d = try design.build(a, group_rows, s.roles);
         if (d.kept.len == 0) return gap(cx, 0, "the result for an input without valid observations is not verified", .{});
         if (d.invalidFpc()) return cx.diags.fail(error.ParseError, 0, "PROC SURVEYFREQ: TOTAL= is less than the number of sampled clusters in a stratum", .{});
-        // SAS-verified layout: Observations / Observations Used / Obs with
-        // Nonpositive Weights. Exclusions by STRATA / CLUSTER alone are not.
-        if (d.bad_design > 0 and d.bad_weight == 0) return gap(cx, 0, "the Data Summary for observations excluded only by missing STRATA or CLUSTER values is not verified", .{});
         // Missing TABLES values: without MISSING the observations are excluded
         // from the table and all its analyses (MCAR, p.9631), so the table's
         // design is rebuilt without them (empty strata and clusters drop out).
         var td = d;
-        var table_rows = slice.rows;
+        var table_rows = group_rows;
         var freq_missing: usize = 0;
         if (s.roles.missing) {
             for (d.kept) |r| for (table_cols) |c| {
-                const x = slice.rows[r][c].num;
+                const x = group_rows[r][c].num;
                 if (std.math.isNan(x) and Value.missingChar(x) != '.') return gap(cx, 0, "special missing values as TABLES levels are not implemented", .{});
             };
-        } else if (hasMissing(slice.rows, d.kept, &table_cols)) {
+        } else if (s.nomcar) {
+            // NOMCAR (p.9631): the nonmissing observations are a domain of the
+            // whole design; missing ones keep their PSU with zero values.
+            for (d.kept) |r| if (std.math.isNan(group_rows[r][req.row].num) or std.math.isNan(group_rows[r][col].num)) {
+                freq_missing += 1;
+            };
+            if (freq_missing == d.kept.len) return gap(cx, 0, "a table without nonmissing observations is not verified", .{});
+        } else if (hasMissing(group_rows, d.kept, &table_cols)) {
             var keep: std.ArrayList([]const Value) = .empty;
-            for (d.kept) |r| if (!std.math.isNan(slice.rows[r][req.row].num) and !std.math.isNan(slice.rows[r][col].num)) try keep.append(a, slice.rows[r]);
+            for (d.kept) |r| if (!std.math.isNan(group_rows[r][req.row].num) and !std.math.isNan(group_rows[r][col].num)) try keep.append(a, group_rows[r]);
             freq_missing = d.kept.len - keep.items.len;
             if (keep.items.len == 0) return gap(cx, 0, "a table without nonmissing observations is not verified", .{});
             td = try design.build(a, keep.items, s.roles);
@@ -493,7 +563,7 @@ pub fn plan(cx: proc.ProcCtx, s: Spec) diag.Error![]Group {
             // table (test not computable) is verified here.
             if (rs.?.positive) return gap(cx, 0, "the Rao-Scott chi-square test with a positive design correction is not implemented", .{});
         }
-        group.* = .{ .d = d, .table = tb, .rs = rs, .freq_missing = freq_missing, .single_psu = single, .rep = slice.rep };
+        group.* = .{ .d = d, .table = tb, .rs = rs, .freq_missing = freq_missing, .single_psu = single, .rep = slice.rep, .labels = dicts };
     }
     return groups;
 }
@@ -503,10 +573,12 @@ fn centered(a: A, out: *Out, text: []const u8, width: usize) !void {
     try out.appendSlice(a, text);
     try out.append(a, '\n');
 }
-/// SAS-verified (90-wide table, 31-character title: 30 leading blanks): the
-/// crosstabulation title rounds an odd margin up.
+/// SAS-verified on five widths: the crosstabulation title's half margin
+/// rounds half to even (59 -> 30 blanks, 69 -> 34, 67 -> 34).
 fn centeredUp(a: A, out: *Out, text: []const u8, width: usize) !void {
-    try out.appendNTimes(a, ' ', (width -| text.len + 1) / 2);
+    const margin = width -| text.len;
+    const half = margin / 2;
+    try out.appendNTimes(a, ' ', if (margin % 2 == 1 and half % 2 == 1) half + 1 else half);
     try out.appendSlice(a, text);
     try out.append(a, '\n');
 }
@@ -526,31 +598,45 @@ fn fixed(a: A, x: f64, comptime decimals: u8) ![]const u8 {
     return text;
 }
 
-/// Right edges (1-based) of the crosstabulation columns: the two variables,
-/// Frequency, Weighted Frequency, Std Err of Wgt Freq, Percent, Std Err of
-/// Percent, Row Percent, Std Err of Row Percent.
-const edges = [_]usize{ 10, 22, 36, 50, 64, 76, 90, 102, 117 };
+/// Right edges of Frequency, Weighted Frequency, Std Err of Wgt Freq,
+/// Percent, Std Err of Percent, Row Percent, Std Err of Row Percent, past the
+/// end of the second variable column (SAS-verified).
+const offsets = [_]usize{ 14, 28, 42, 54, 68, 80, 95 };
 /// SAS-verified: without a WEIGHT statement the two weighted-frequency
 /// columns are absent and the later columns move left by their 28 positions.
-const unweighted_edges = [_]usize{ 10, 22, 36, 0, 0, 48, 62, 74, 89 };
+const unweighted_offsets = [_]usize{ 14, 0, 0, 26, 40, 52, 67 };
+
+/// A TABLES variable column (SAS-verified layouts): width the largest of its
+/// header, its level texts, "Total" (5) and, for a character variable, its
+/// length; numbers and their header right-aligned, character values, their
+/// header and the "Total" label left-aligned.
+const VarColumn = struct {
+    header: []const u8,
+    width: usize,
+    left: bool,
+    fn put(self: VarColumn, b: []u8, start: usize, text: []const u8) void {
+        if (self.left) @memcpy(b[start .. start + text.len], text) else proc.putRight(b, start + self.width, text);
+    }
+};
 const head1 = [_][]const u8{ "", "", "", "Weighted", "Std Err of", "", "Std Err of", "Row", "Std Err of" };
 const head2 = [_][]const u8{ "", "", "Frequency", "Frequency", "Wgt Freq", "Percent", "Percent", "Percent", "Row Percent" };
 
-fn tableLine(cx: proc.ProcCtx, a: A, out: *Out, cols: []const usize, width: usize, first: []const u8, second: []const u8, cell: Cell, row_pct: bool, se_pct: bool, se_row: bool) diag.Error!void {
+fn tableLine(cx: proc.ProcCtx, a: A, out: *Out, vc: [2]VarColumn, cols: []const usize, width: usize, first: []const u8, second: []const u8, cell: Cell, row_pct: bool, se_pct: bool, se_row: bool) diag.Error!void {
     const b = try proc.line(a, width);
+    vc[0].put(b, 0, first);
+    vc[1].put(b, vc[0].width + 4, second);
     const texts = [_][]const u8{
-        first,                                                second,
         try std.fmt.allocPrint(a, "{d}", .{cell.count}),      try fixed(a, cell.wfreq, 5),
         try fixed(a, cell.sd_wfreq, 5),                       try fixed(a, cell.pct, 4),
         if (se_pct) try fixed(a, cell.se_pct, 4) else "",     if (row_pct) try fixed(a, cell.row_pct, 4) else "",
         if (se_row) try fixed(a, cell.se_row_pct, 4) else "",
     };
-    for (texts, cols, 0..) |text, edge, k| {
+    for (texts, cols) |text, edge| {
         if (edge == 0) continue;
         if (edge > width) break;
         // ponytail: fixed w.d columns as in the reference; larger magnitudes
         // need the template's width rules.
-        if (text.len > @as(usize, if (k < 2) 10 else 12)) return gap(cx, 0, "listing columns for values wider than the verified layout are not implemented", .{});
+        if (text.len > 12) return gap(cx, 0, "listing columns for values wider than the verified layout are not implemented", .{});
         proc.putRight(b, edge, text);
     }
     try out.appendSlice(a, b);
@@ -563,6 +649,28 @@ fn render(cx: proc.ProcCtx, out: *Out, s: Spec, g: Group) diag.Error!void {
     const req = s.requests[0];
     const rname = ds.columns.items[req.row].name;
     const cname = ds.columns.items[req.col.?].name;
+    var vc: [2]VarColumn = undefined;
+    var level_texts: [2][]const []const u8 = undefined;
+    for ([_]usize{ req.row, req.col.? }, [_][]const f64{ g.table.row_levels, g.table.col_levels }, g.labels, &vc, &level_texts) |c, levels, dict, *v, *texts| {
+        const info = ds.columns.items[c];
+        v.header = switch (s.varheader) {
+            .name => info.name,
+            .label => info.label orelse info.name,
+            .namelabel => if (info.label) |l| try std.fmt.allocPrint(a, "{s}({s})", .{ info.name, l }) else info.name,
+        };
+        v.left = info.type != .num;
+        v.width = @max(v.header.len, 5);
+        if (v.left) v.width = @max(v.width, info.len orelse 8);
+        const tx = try a.alloc([]const u8, levels.len);
+        for (levels, tx) |x, *t| {
+            t.* = if (dict) |d| (if (std.math.isNan(x)) "." else d[@intFromFloat(x)]) else try format.bestNum(a, x);
+            v.width = @max(v.width, t.len);
+        }
+        texts.* = tx;
+    }
+    const base = vc[0].width + 4 + vc[1].width;
+    var col_edges: [7]usize = undefined;
+    for (&col_edges, if (s.roles.weight != null) offsets else unweighted_offsets) |*e, o| e.* = if (o == 0) 0 else base + o;
     const tb = g.table;
     const R = tb.row_levels.len;
     const C = tb.col_levels.len;
@@ -570,30 +678,41 @@ fn render(cx: proc.ProcCtx, out: *Out, s: Spec, g: Group) diag.Error!void {
     if (g.rep) |row| try byLine(a, &body, ds, row, s.by_cols);
     try body.appendSlice(a, "\nThe SURVEYFREQ Procedure\n\n");
     if (!s.nosummary) {
-        // SAS-verified: with excluded observations the label column widens to
-        // the longest label; the value column stays 14 wide.
-        const excluded = g.d.kept.len < g.d.read;
-        const lw: usize = if (g.d.bad_weight > 0) 38 else if (excluded) 27 else 22;
+        // SAS-verified: with nonpositive weights the table shows the
+        // observations read, used and with nonpositive weights, and the label
+        // column widens to the longest label (the value column stays 14 wide);
+        // otherwise Number of Observations is the valid count only (an
+        // observation dropped for a missing STRATA / CLUSTER value is not
+        // mentioned).
+        const excluded = g.d.bad_weight > 0;
+        const lw: usize = if (excluded) 38 else 22;
         try centered(a, &body, "Data Summary", lw + 14);
         try body.append(a, '\n');
         if (s.roles.strata.len > 0) try pair(a, &body, "Number of Strata", lw, try std.fmt.allocPrint(a, "{d}", .{g.d.strata()}), 14);
         if (s.roles.clusters.len > 0) try pair(a, &body, "Number of Clusters", lw, try std.fmt.allocPrint(a, "{d}", .{g.d.clusters()}), 14);
-        try pair(a, &body, "Number of Observations", lw, try std.fmt.allocPrint(a, "{d}", .{g.d.read}), 14);
+        try pair(a, &body, "Number of Observations", lw, try std.fmt.allocPrint(a, "{d}", .{if (excluded) g.d.read else g.d.kept.len}), 14);
         if (excluded) try pair(a, &body, "Number of Observations Used", lw, try std.fmt.allocPrint(a, "{d}", .{g.d.kept.len}), 14);
         if (g.d.bad_weight > 0) try pair(a, &body, "Number of Obs with Nonpositive Weights", lw, try std.fmt.allocPrint(a, "{d}", .{g.d.bad_weight}), 14);
         if (s.roles.weight != null) try pair(a, &body, "Sum of Weights", lw, try format.bestNum(a, g.d.sum_weights), 14);
         try body.appendSlice(a, "\n\n");
     }
-    const weighted = s.roles.weight != null;
-    const cols: []const usize = if (weighted) &edges else &unweighted_edges;
-    const width: usize = if (s.row_percent) cols[8] else cols[6];
-    try centeredUp(a, &body, try std.fmt.allocPrint(a, "Table of {s} by {s}", .{ rname, cname }), width);
+    if (s.nomcar) {
+        // SAS-verified: NOMCAR adds the Variance Estimation table.
+        try centered(a, &body, "Variance Estimation", 31);
+        try body.append(a, '\n');
+        try pair(a, &body, "Method", 14, "Taylor Series", 17);
+        try pair(a, &body, "Missing Values", 14, "NOMCAR", 17);
+        try body.appendSlice(a, "\n\n");
+    }
+    const cols: []const usize = &col_edges;
+    const width: usize = if (s.row_percent) cols[6] else cols[4];
+    try centeredUp(a, &body, try std.fmt.allocPrint(a, "Table of {s} by {s}", .{ vc[0].header, vc[1].header }), width);
     try body.appendSlice(a, " \n");
-    for ([_][]const []const u8{ &head1, &head2 }, 0..) |heads, n| {
+    for ([_][]const []const u8{ head1[2..], head2[2..] }, 0..) |heads, n| {
         const b = try proc.line(a, width);
         if (n == 1) {
-            proc.putRight(b, cols[0], rname);
-            proc.putRight(b, cols[1], cname);
+            vc[0].put(b, 0, vc[0].header);
+            vc[1].put(b, vc[0].width + 4, vc[1].header);
         }
         for (heads, cols) |h, edge| if (edge != 0 and edge <= width) proc.putRight(b, edge, h);
         try body.appendSlice(a, b);
@@ -604,10 +723,10 @@ fn render(cx: proc.ProcCtx, out: *Out, s: Spec, g: Group) diag.Error!void {
     rule[width] = '\n';
     try body.appendSlice(a, rule);
     for (0..R + 1) |r| {
-        const rtext = if (r == R) "Total" else try format.bestNum(a, tb.row_levels[r]);
-        for (0..C) |c| try tableLine(cx, a, &body, cols, width, if (c == 0) rtext else "", try format.bestNum(a, tb.col_levels[c]), tb.at(r, c), s.row_percent and r < R, true, s.row_percent and r < R);
+        const rtext = if (r == R) "Total" else level_texts[0][r];
+        for (0..C) |c| try tableLine(cx, a, &body, vc, cols, width, if (c == 0) rtext else "", level_texts[1][c], tb.at(r, c), s.row_percent and r < R, true, s.row_percent and r < R);
         try body.append(a, '\n');
-        try tableLine(cx, a, &body, cols, width, "", "Total", tb.at(r, C), s.row_percent and r < R, r < R, false);
+        try tableLine(cx, a, &body, vc, cols, width, "", "Total", tb.at(r, C), s.row_percent and r < R, r < R, false);
         try body.appendSlice(a, rule);
     }
     // SAS-verified: centred under the table (p.9631: displayed below it).
