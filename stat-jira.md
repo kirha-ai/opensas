@@ -8,9 +8,10 @@ This section is the only current status summary; every section below it is a his
 - **Resumed 2026-11-28 about 07:20Z** after the 06:31Z account usage limit stopped all dev contexts. At the user's direction devs may compare with real SAS via `/Users/thomas/sas/bin/sasrun foo.sas -f text -o - -l /dev/null`, only when truly blocked. Coordinator keep-awake `caffeinate` PID 62218. Coordinator scripts and dev brief live in the session scratchpad `stat/` directory.
 - **Batch 59 verification at exact SHA `9ce601f6e8f29dca6838223fd7fdce475d6ee455` (2026-11-28):** `zig build install` direct 0; whole `tests/STAT15.4-oracle/` moved out of the checkout, then `zig build gate -j2 --summary all` direct 0 — **2860/2860 unit tests**, **2840/2840 corpus**, **11/11 programs**; `zig build install` direct 0; separate supplemental direct 0, **1113/1113**. Oracle restored unchanged, tree clean, HEAD unchanged. Pushed. **New DONE:** STAT-RMSTREG-001 (original 116/116, rc 0; reference folder safe to delete, not deleted; remaining gaps belong to later RMSTREG tickets). **Integrated, PARK:** STAT-ANOVA-003 (only extreme-magnitude EFFECTSIZE displays fail loudly).
 - **User approvals (2026-11-28):** move CATMOD's TYPE=EST direct input to STAT-CATMOD-004; add the Base random-stream ticket STAT-RAND-001; public classic sample data, including rows exported from real SAS (Iris), may be committed; build caches (`.zig-cache`) may be deleted automatically when free disk falls to about 8 GB, only for idle worktrees (done twice: 41 GB free the first time; the second at 9.5 GB free with every worktree idle, just before a seven-dev round); the `best32.` display fix is approved as STAT-BEST-001. Earlier scope: SASHELP sample data taken from SAS's public sample material may be committed to this public repository, for STAT-SASHELP-001 and the later SASHELP tickets; record source and verification, never invent rows, ask before adding a data set above about 2 MB.
-- **Live slots (auto):** dev1 STAT-COMMON-016, dev2 STAT-COMMON-023, dev3 STAT-CAUSALTRT-001, dev4 STAT-COMMON-021, dev5 STAT-COMMON-019, dev6 STAT-REG-001, dev7 STAT-CAUSALGRAPH-008.
+- **Live slots (auto):** dev1 STAT-SIMNORMAL-001, dev2 STAT-COMMON-023, dev3 STAT-HP-001, dev3 STAT-CAUSALTRT-001, dev4 STAT-COMMON-021, dev5 STAT-COMMON-019, dev6 STAT-REG-001, dev7 STAT-CAUSALGRAPH-008.
 - **Held, not integrated (needs a user decision):** STAT-SASHELP-005, branch `stat-b7/sashelp005-dev4` (`50a9f8d7` code and data, `c3d1db77` ticket note). It adds SASHELP.JUNKMAIL (708 KB text), LEUTRAIN and LEUTEST (2.24 MB and 1.99 MB as text, committed gzip-compressed at 857 KB and 766 KB), about 2.3 MB in the repository, above the size the user is asked about.
-- **Counts:** 76 DONE, 144 PARK, 7 DOING, 1198 TODO.
+- **Integrated locally, awaiting batch verification (auto):** STAT-CAUSALTRT-001 (DONE candidate), STAT-COMMON-016 (PARK).
+- **Counts:** 76 DONE, 145 PARK, 8 DOING, 1196 TODO.
 - **Next:** integrate each returned ticket and refill its slot, preferring close-out attempts on PARK tickets whose originals now match exactly (DISTANCE-001, PRINQUAL-001, VARCLUS-001, TPSPLINE-001, CATMOD-001, CANCORR-001, GEE-001, INBREED-001, then the open review in the batch 6 receipt), because a DONE ticket unlocks its dependents; then other eligible tickets.
 - **Working branch:** `feat/stat/batch-4`. Last tested and pushed code SHA `9ce601f6e8f29dca6838223fd7fdce475d6ee455` (batch 59; batch 58 was `6eee13906ed72059ee690ea4acd8286a9aa5bd3c`). The bullets below this one describe batch 5 and are historical. Later commits that touch only this file are documentation. No PR created or merged; `main` untouched.
 
@@ -853,7 +854,7 @@ Complete prerequisite shared contracts first, then each PROC's data input, model
 
 <a id="stat-common-016"></a>
 
-### [DOING @dev1] STAT-COMMON-016 — Complex survey design and variance interfaces
+### [PARK] STAT-COMMON-016 — Complex survey design and variance interfaces
 
 - Source: S154 / Chapter 15 / `Survey Design Specification` (PDF pp. 271–273); S154 / Chapter 15 / `Variance Estimation` (PDF pp. 273–274).
 - Scope: Represent stratification, clustering, multistage designs, sampling weights, and population information consistently; support procedure integration with Taylor and replication variance methods.
@@ -1134,7 +1135,7 @@ Complete prerequisite shared contracts first, then each PROC's data input, model
 
 <a id="stat-hp-001"></a>
 
-### [TODO] STAT-HP-001 — HP single-machine execution, data access, and format semantics
+### [DOING @dev3] STAT-HP-001 — HP single-machine execution, data access, and format semantics
 
 - Source: S154 / Chapter 21 / `Single-Machine Mode` (PDF pp. 555–556); S154 / Chapter 21 / `Single-Machine Data Access Mode` (PDF p. 556); S154 / Chapter 21 / `Output Data Sets` (PDF p. 556); S154 / Chapter 21 / `Working with Formats` (PDF pp. 556–557).
 - Scope: Implement the documented single-machine execution and data access contracts; define supported data layouts, formats, and output semantics.
@@ -14205,7 +14206,7 @@ Source: S154, Chapter 113, `The SIMNORMAL Procedure`, PDF pp. 9365–9380. Tasks
 
 <a id="stat-simnormal-001"></a>
 
-### [TODO] STAT-SIMNORMAL-001 — SIMNORMAL — Data input, variable roles, and basic options
+### [DOING @dev1] STAT-SIMNORMAL-001 — SIMNORMAL — Data input, variable roles, and basic options
 
 - Source: S154 / Chapter 113 / `PROC SIMNORMAL Statement` (PDF pp. 9367–9369); S154 / Chapter 113 / `BY Statement` (PDF p. 9369); S154 / Chapter 113 / `VAR Statement` (PDF p. 9370).
 - Scope: Integrate PROC SIMNORMAL declarations, basic options, defaults, and execution boundaries; this ticket establishes parameter objects and result interfaces, while later feature tickets implement model-, algorithm-, and output-specific options. Also implement BY; VAR; apply this procedure's rules for missing values, variable roles, and observation selection.
