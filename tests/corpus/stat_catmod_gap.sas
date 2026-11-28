@@ -3,8 +3,7 @@
    tickets or not yet verified must fail visibly (D-009 gap) and print no
    table: other RESPONSE functions, CONTRAST/DIRECT/FACTORS/LOGLIN/REPEATED/
    RESTRICT, effect names longer than 24 characters, MODEL options other
-   than DESIGN, nested effects, a direct design matrix, MODEL / DESIGN with
-   maximum likelihood, multiple responses, fractional weights with
+   than DESIGN, bar effects, a direct design matrix, multiple responses, fractional weights with
    whole-number sums, a fractional Data Summary value of 8 characters,
    RESPONSE MEANS on a format that merges response values, DATA= options
    other than WHERE=, maximum likelihood with a near-zero cell (SAS marks
@@ -24,9 +23,8 @@ proc catmod data=t; weight w; loglin g; model y=g; run;
 data ln; set t; rename g=a_very_long_variable_name_x h=b_long; run;
 proc catmod data=ln namelen=30; weight w; model y=a_very_long_variable_name_x*b_long; run;
 proc catmod data=t; weight w; model y=g / pred; run;
-proc catmod data=t; weight w; model y=g h(g); run;
+proc catmod data=t; weight w; model y=g|h; run;
 proc catmod data=t; weight w; model y=(1 0, 1 1, 1 0, 1 1); run;
-proc catmod data=t; weight w; model y=g / design; run;
 proc catmod data=t; weight w; model y*g=h; run;
 data f; set t; if _n_ <= 2 then w = w + 0.5; run;
 proc catmod data=f; weight w; response means; model y=g; run;
@@ -42,6 +40,12 @@ data r; input g $ y @@; datalines;
 b 2 b 2 a 1 a 1 a 2 c 3 c 3 c 1 b 1 a 3 c 2 b 3
 ;
 proc catmod data=r order=freq; response means; model y=g; run;
+/* A chi-square of 1E6 or more (STAT-CATMOD-005 reference run: SAS shows
+   1318307.78 as 1318308). */
+data u; input g y w @@; datalines;
+1 1 30000 1 2 40000 2 1 25000 2 2 35000
+;
+proc catmod data=u; weight w; response means; model y=g; run;
 /* Input Data Sets: response functions and covariances read directly
    (TYPE=EST, RESPONSE READ, _F_; guide example p.2210). */
 data direct(type=est);

@@ -57,7 +57,11 @@ pub const State = struct {
 /// ORDER= (p.2180): level order of classification and response variables.
 pub const Order = enum { internal, data, formatted, freq };
 
-pub const Effect = struct { name: []const u8, vars: []const usize };
+/// `vars` are crossed; `nest` (Generation of the Design Matrix, p. 2224)
+/// holds the variable an effect is nested within: A(B) or, with `value`,
+/// the nested-by-value form A(B=v).
+pub const Nest = struct { v: usize, value: ?[]const u8 = null, numeric: ?f64 = null };
+pub const Effect = struct { name: []const u8, vars: []const usize, nest: ?Nest = null };
 
 pub const Spec = struct {
     ds: *Dataset,
@@ -184,14 +188,49 @@ fn parseModel(cx: proc.ProcCtx, s: *Spec, t: []const Token) diag.Error!void {
             }
             break;
         }
+        var nest: ?Nest = null;
+        if (at(t, i, .lparen)) {
+            // ponytail: only one crossed-free variable nested within one
+            // variable (A(B), A(B=v)), the forms this section documents;
+            // A*B(C) and A(B C) are Specification of Effects (STAT-CATMOD-004).
+            if (vars.items.len != 1) return gap(cx, t[i].line, "crossed effects within a nested effect are not implemented", .{});
+            const nv = try column(cx, ds, t, i + 1);
+            if (nv == vars.items[0]) return gap(cx, t[i].line, "an effect nested within itself is not implemented", .{});
+            nest = .{ .v = nv };
+            i += 2;
+            if (at(t, i, .eq)) {
+                i += 1;
+                if (at(t, i, .number)) {
+                    // A numeric nested value is its BEST16 text (p. 2224;
+                    // SAS reference run: b=2.0 and b=1E0 print as b=2, b=1).
+                    const x = std.fmt.parseFloat(f64, t[i].text) catch return invalid(cx, t, i);
+                    nest.?.numeric = x;
+                    nest.?.value = std.mem.trim(u8, try format.apply(cx.arena, .{ .num = x }, "best16."), " ");
+                } else if (at(t, i, .string)) {
+                    nest.?.value = t[i].text;
+                } else return gap(cx, lineOf(t, i), "nested-by-value values other than a number or a quoted string are not implemented", .{});
+                i += 1;
+            }
+            if (!at(t, i, .rparen)) {
+                if (at(t, i, .name)) return gap(cx, t[i].line, "effects nested within several variables are not implemented", .{});
+                return invalid(cx, t, i);
+            }
+            i += 1;
+        }
         if (at(t, i, .lparen) or at(t, i, .pipe) or at(t, i, .at)) return gap(cx, t[i].line, "nested, bar and @ effects are not implemented", .{});
         var nm: Out = .empty;
         for (vars.items, 0..) |c, k| {
             if (k > 0) try nm.append(cx.arena, '*');
             try nm.appendSlice(cx.arena, ds.columns.items[c].name);
         }
+        if (nest) |n| {
+            try nm.append(cx.arena, '(');
+            try nm.appendSlice(cx.arena, ds.columns.items[n.v].name);
+            if (n.value) |v| try nm.print(cx.arena, "={s}", .{v});
+            try nm.append(cx.arena, ')');
+        }
         for (effects.items) |e| if (eq(e.name, nm.items)) return cx.diags.fail(error.ParseError, t[first].line, "PROC CATMOD: effect {s} is specified twice", .{nm.items});
-        try effects.append(cx.arena, .{ .name = nm.items, .vars = vars.items });
+        try effects.append(cx.arena, .{ .name = nm.items, .vars = vars.items, .nest = nest });
     }
     if (effects.items.len == 0) return gap(cx, lineOf(t, i), "an intercept-only MODEL is not implemented", .{});
     s.effects = effects.items;
@@ -202,11 +241,20 @@ fn parseModel(cx: proc.ProcCtx, s: *Spec, t: []const Token) diag.Error!void {
             if (!at(t, i, .name)) return invalid(cx, t, i);
             if (eq(t[i].text, "design")) {
                 s.design = true;
-            } else if (oneOf(t[i].text, &.{ "addcell", "alpha", "avgdesign", "clparm", "corrb", "covb", "epsilon", "freq", "maxiter", "ml", "gls", "wls", "noiter", "noint", "noprofile", "noresponse", "nodesign", "noparm", "nogls", "noprint", "onefactor", "oneway", "pred", "predict", "prob", "pcov", "profile", "title", "xpx", "zero" })) {
+            } else if (oneOf(t[i].text, &.{ "averaged", "param", "cov", "missing", "nopredvar", "addcell", "alpha", "avgdesign", "clparm", "corrb", "covb", "epsilon", "freq", "maxiter", "ml", "gls", "wls", "noiter", "noint", "noprofile", "noresponse", "nodesign", "noparm", "nogls", "noprint", "onefactor", "oneway", "pred", "predict", "prob", "pcov", "profile", "title", "xpx", "zero" })) {
                 return gap(cx, t[i].line, "MODEL option {s} is not implemented", .{t[i].text});
             } else return invalid(cx, t, i);
         }
     }
+}
+
+/// The crossed variables of an effect followed by its nesting variable.
+fn effectVars(a: A, e: Effect) ![]const usize {
+    const n = e.nest orelse return e.vars;
+    const all = try a.alloc(usize, e.vars.len + 1);
+    @memcpy(all[0..e.vars.len], e.vars);
+    all[e.vars.len] = n.v;
+    return all;
 }
 
 pub fn resolve(cx: proc.ProcCtx, st: State) diag.Error!Spec {
@@ -232,14 +280,14 @@ pub fn resolve(cx: proc.ProcCtx, st: State) diag.Error!Spec {
     try parseModel(cx, &s, st.model.?);
     if (st.population) |p| {
         s.pop_vars = try varList(cx, ds, p, 1);
-        for (s.effects) |e| for (e.vars) |v| {
+        for (s.effects) |e| for (try effectVars(cx.arena, e)) |v| {
             for (s.pop_vars) |pv| {
                 if (pv == v) break;
             } else return gap(cx, s.model_line, "model effect variables outside the POPULATION statement are not implemented", .{});
         };
     } else {
         var pv: std.ArrayList(usize) = .empty;
-        for (s.effects) |e| for (e.vars) |v| {
+        for (s.effects) |e| for (try effectVars(cx.arena, e)) |v| {
             for (pv.items) |o| {
                 if (o == v) break;
             } else try pv.append(cx.arena, v);
@@ -248,7 +296,6 @@ pub fn resolve(cx: proc.ProcCtx, st: State) diag.Error!Spec {
     }
     for (s.pop_vars) |v| if (v == s.response) return cx.diags.fail(error.ParseError, s.model_line, "PROC CATMOD: the response variable cannot also be an explanatory variable", .{});
     if (s.means and ds.columns.items[s.response].type != .num) return cx.diags.fail(error.ParseError, s.model_line, "PROC CATMOD: RESPONSE MEANS requires a numeric response variable", .{});
-    if (s.design and !s.means) return gap(cx, s.model_line, "MODEL / DESIGN with maximum likelihood is not implemented", .{});
     if (st.by_stmt) |b| {
         var bys: by.Statements = .{};
         var j: usize = 0;
@@ -485,10 +532,8 @@ pub fn designMatrix(a: A, s: Spec, tb: Table) !Design {
     const cols = try a.alloc(usize, s.effects.len);
     var q: usize = 1;
     for (s.effects, cols) |e, *c| {
-        var n: usize = 1;
-        for (e.vars) |v| n *= tb.pop_levels[popPos(s, v)].len - 1;
-        c.* = n;
-        q += n;
+        c.* = crossedCols(s, tb, e) * nestCols(s, tb, e);
+        q += c.*;
     }
     const r = tb.pops.len;
     const x = try a.alloc(f64, r * q);
@@ -496,8 +541,13 @@ pub fn designMatrix(a: A, s: Spec, tb: Table) !Design {
         x[i * q] = 1;
         var off: usize = 1;
         for (s.effects, cols) |e, n| {
+            const nc = crossedCols(s, tb, e);
+            // A(B): one block of A's columns per level of B (B outer,
+            // p. 2224); A(B=v): A's columns where B is v, zeros elsewhere.
+            const in_level: ?usize = if (e.nest) |ns| pop[popPos(s, ns.v)] else null;
+            const want: ?usize = if (e.nest) |ns| (if (ns.value != null) byValueLevel(s, tb, ns).? else null) else null;
             for (0..n) |k| {
-                var rem = k;
+                var rem = k % nc;
                 var value: f64 = 1;
                 var vi = e.vars.len;
                 while (vi > 0) {
@@ -509,6 +559,10 @@ pub fn designMatrix(a: A, s: Spec, tb: Table) !Design {
                     const have = pop[pp];
                     value *= if (have == level) 1 else if (have == m) -1 else 0;
                 }
+                if (in_level) |lv| {
+                    const block = want orelse k / nc;
+                    if (lv != block) value = 0;
+                }
                 x[i * q + off + k] = value;
             }
             off += n;
@@ -516,6 +570,34 @@ pub fn designMatrix(a: A, s: Spec, tb: Table) !Design {
     }
     return .{ .x = x, .q = q, .cols = cols };
 }
+
+fn crossedCols(s: Spec, tb: Table, e: Effect) usize {
+    var n: usize = 1;
+    for (e.vars) |v| n *= tb.pop_levels[popPos(s, v)].len - 1;
+    return n;
+}
+fn nestCols(s: Spec, tb: Table, e: Effect) usize {
+    const ns = e.nest orelse return 1;
+    return if (ns.value != null) 1 else tb.pop_levels[popPos(s, ns.v)].len;
+}
+
+/// The level of a nested-by-value effect's variable (p. 2224): values are
+/// compared as BEST16 text, left-justified, or as formatted values.
+/// ponytail: an unformatted numeric variable compares numerically, which
+/// equals the BEST16 comparison except beyond 16 significant digits.
+fn byValueLevel(s: Spec, tb: Table, ns: Nest) ?usize {
+    const pp = popPos(s, ns.v);
+    const formatted = s.ds.columns.items[ns.v].format != null;
+    if (!formatted and s.ds.columns.items[ns.v].type == .num) {
+        const x = ns.numeric orelse return null;
+        for (tb.pop_levels[pp], 0..) |l, k| if (l.num == x) return k;
+        return null;
+    }
+    const want = std.mem.trim(u8, ns.value.?, " ");
+    for (tb.pop_text[pp], 0..) |l, k| if (std.mem.eql(u8, std.mem.trim(u8, l, " "), want)) return k;
+    return null;
+}
+
 fn popPos(s: Spec, v: usize) usize {
     for (s.pop_vars, 0..) |p, k| if (p == v) return k;
     unreachable;
@@ -764,7 +846,9 @@ fn estimate(cx: proc.ProcCtx, x: f64) diag.Error![]const u8 {
     return fixed(cx.arena, x, 4);
 }
 fn chisq(cx: proc.ProcCtx, x: f64) diag.Error![]const u8 {
-    if (x >= 1e8) return gap(cx, 0, "chi-square values of 1E8 or more are not implemented", .{});
+    // ponytail: SAS shows 1318307.78 as 1318308 (reference run, STAT-CATMOD-005);
+    // the rule for values of 1E6 or more is unverified, so loud.
+    if (x >= 1e6) return gap(cx, 0, "chi-square values of 1E6 or more are not implemented", .{});
     return fixed(cx.arena, x, 2);
 }
 fn levelText(a: A, v: Value) ![]const u8 {
@@ -800,9 +884,6 @@ fn dataSummary(cx: proc.ProcCtx, out: *Out, s: Spec, tb: Table) !void {
     if (!fractional and tb.frac_weights) return gap(cx, s.model_line, "the Data Summary for fractional weights with whole-number sums is not implemented", .{});
     const fm = if (fractional) try format.bestNumW(a, tb.freq_missing, 8) else try format.bestNum(a, tb.freq_missing);
     const v1 = [_][]const u8{ cols[s.response].name, if (s.weight) |wc| cols[wc].name else "None", dsname, fm };
-    var w1: usize = if (fractional) 7 else 3;
-    for (v1) |v| w1 = @max(w1, v.len);
-    w1 += 5;
     const n2 = [_][]const u8{
         try std.fmt.allocPrint(a, "{d}", .{tb.resp_levels.len}),
         try std.fmt.allocPrint(a, "{d}", .{tb.pops.len}),
@@ -817,6 +898,12 @@ fn dataSummary(cx: proc.ProcCtx, out: *Out, s: Spec, tb: Table) !void {
         if (nw > 7) return gap(cx, s.model_line, "a fractional Data Summary frequency of 8 or more characters is not implemented", .{});
         nw = 6;
     }
+    // The first value column is at least one wider than the number field
+    // (SAS reference runs, STAT-CATMOD-005: 1-character texts with totals
+    // of 3, 4 and 6 digits give columns of 4, 5 and 7; 2 digits give 3).
+    var w1: usize = if (fractional) 7 else @max(3, nw + 1);
+    for (v1) |v| w1 = @max(w1, v.len);
+    w1 += 5;
     const l1 = [_][]const u8{ "Response", "Weight Variable", "Data Set", "Frequency Missing" };
     const l2 = [_][]const u8{ "Response Levels", "Populations", "Total Frequency", "Observations" };
     const width = 19 + w1 + 17 + nw;
@@ -891,27 +978,38 @@ fn profiles(cx: proc.ProcCtx, out: *Out, s: Spec, tb: Table) !void {
     try out.appendSlice(a, "\n\n");
 }
 
-fn designTable(cx: proc.ProcCtx, out: *Out, tb: Table, d: Design, f: Fit) !void {
+/// With q > 1 functions per population (generalized logits of a response
+/// with q + 1 levels) only the submatrix shared by the functions is shown,
+/// beside the observed functions log(n_j / n_last) (p. 2226; SAS reference
+/// runs with 1, 2 and 3 functions). ponytail: the "Response Functions"
+/// heading start 7*q is verified for q = 2 and 3 only.
+fn designTable(cx: proc.ProcCtx, out: *Out, s: Spec, tb: Table, d: Design, f: Fit) !void {
     const a = cx.arena;
-    const width = 20 + 9 * d.q;
+    const nf: usize = if (s.means) 1 else tb.resp_levels.len - 1;
+    const base = 20 + 14 * (nf - 1);
+    const width = base + 9 * d.q;
     try centered(a, out, "Response Functions and Design Matrix", width);
     try out.appendSlice(a, " \n");
     var b = try proc.line(a, width);
-    proc.putRight(b, 20, "Response");
+    if (nf == 1) proc.putRight(b, 20, "Response") else proc.putLeft(b, 7 * nf, "Response Functions");
     const span = 9 * d.q - 2;
-    proc.putLeft(b, 22 + (span - 12) / 2 + 2, "Design Matrix");
+    proc.putLeft(b, base + 2 + (span - 12) / 2 + 2, "Design Matrix");
     try emit(a, out, b);
     b = try proc.line(a, width);
     proc.putLeft(b, 1, "Sample");
-    proc.putRight(b, 20, "Function");
-    for (0..d.q) |k| proc.putRight(b, 20 + 9 * (k + 1), try std.fmt.allocPrint(a, "{d}", .{k + 1}));
+    if (nf == 1) proc.putRight(b, 20, "Function") else for (0..nf) |j| proc.putRight(b, 20 + 14 * j, try std.fmt.allocPrint(a, "{d}", .{j + 1}));
+    for (0..d.q) |k| proc.putRight(b, base + 9 * (k + 1), try std.fmt.allocPrint(a, "{d}", .{k + 1}));
     try emit(a, out, b);
     try dashes(a, out, width);
+    const J = tb.resp_levels.len;
     for (0..tb.pops.len) |i| {
         b = try proc.line(a, width);
         proc.putRight(b, 5, try std.fmt.allocPrint(a, "{d}", .{i + 1}));
-        proc.putRight(b, 20, try fixed(a, f.funcs[i], 5));
-        for (0..d.q) |k| proc.putRight(b, 20 + 9 * (k + 1), try fixed(a, d.x[i * d.q + k], 0));
+        for (0..nf) |j| {
+            const v = if (s.means) f.funcs[i] else @log(tb.counts[i * J + j] / tb.counts[i * J + J - 1]);
+            proc.putRight(b, 20 + 14 * j, try fixed(a, v, 5));
+        }
+        for (0..d.q) |k| proc.putRight(b, base + 9 * (k + 1), try fixed(a, d.x[i * d.q + k], 0));
         try emit(a, out, b);
     }
     try out.appendSlice(a, "\n\n");
@@ -966,9 +1064,10 @@ fn paramLabels(a: A, s: Spec, tb: Table, d: Design) ![]Param {
     out[0] = .{ .effect = "Intercept", .level = "" };
     var off: usize = 1;
     for (s.effects, d.cols) |e, n| {
+        const nc = crossedCols(s, tb, e);
         for (0..n) |k| {
             var parts: std.ArrayList([]const u8) = .empty;
-            var rem = k;
+            var rem = k % nc;
             var vi = e.vars.len;
             while (vi > 0) {
                 vi -= 1;
@@ -977,6 +1076,9 @@ fn paramLabels(a: A, s: Spec, tb: Table, d: Design) ![]Param {
                 try parts.insert(a, 0, tb.pop_text[pp][rem % m]);
                 rem /= m;
             }
+            // A(B) labels add B's level after A's (SAS reference run:
+            // "rural female"); A(B=v) labels show A's level only.
+            if (e.nest) |ns| if (ns.value == null) try parts.append(a, tb.pop_text[popPos(s, ns.v)][k / nc]);
             out[off + k] = .{ .effect = e.name, .level = try std.mem.join(a, " ", parts.items) };
         }
         off += n;
@@ -994,19 +1096,21 @@ fn estimatesTable(cx: proc.ProcCtx, out: *Out, s: Spec, tb: Table, d: Design, f:
         lw = @max(lw, l.level.len);
     }
     const pw = ew + 1 + lw;
-    const fn_w: usize = if (s.means) 0 else 9;
+    // One function per population (a two-level response under maximum
+    // likelihood) drops the Function Number column (SAS reference run).
+    const fn_w: usize = if (s.means or f.nf == 1) 0 else 9;
     const width = pw + fn_w + 12 + 11 + 12 + 14;
     const est = pw + fn_w + 12;
     try centered(a, out, if (s.means) "Analysis of Weighted Least Squares Estimates" else "Analysis of Maximum Likelihood Estimates", width);
     try out.appendSlice(a, " \n");
     var b = try proc.line(a, width);
-    if (!s.means) proc.putRight(b, pw + 9, "Function");
+    if (fn_w > 0) proc.putRight(b, pw + 9, "Function");
     proc.putRight(b, est + 11, "Standard");
     proc.putRight(b, est + 23, "Chi-");
     try emit(a, out, b);
     b = try proc.line(a, width);
     proc.putLeft(b, 1, "Parameter");
-    if (!s.means) proc.putLeft(b, pw + 3, "Number");
+    if (fn_w > 0) proc.putLeft(b, pw + 3, "Number");
     proc.putRight(b, est, "Estimate");
     proc.putRight(b, est + 11, "Error");
     proc.putRight(b, est + 23, "Square");
@@ -1022,7 +1126,7 @@ fn estimatesTable(cx: proc.ProcCtx, out: *Out, s: Spec, tb: Table, d: Design, f:
         const first_of_effect = j == 0 and (k == 0 or !std.mem.eql(u8, labels[k - 1].effect, l.effect));
         if (first_of_effect) proc.putLeft(b, 1, l.effect);
         if (l.level.len > 0) proc.putLeft(b, ew + 2, l.level);
-        if (!s.means) proc.putLeft(b, pw + 5, try std.fmt.allocPrint(a, "{d}", .{j + 1}));
+        if (fn_w > 0) proc.putLeft(b, pw + 5, try std.fmt.allocPrint(a, "{d}", .{j + 1}));
         proc.putRight(b, est, try estimate(cx, f.beta[ix]));
         proc.putRight(b, est + 11, try estimate(cx, se));
         proc.putRight(b, est + 23, try chisq(cx, w));
@@ -1045,13 +1149,19 @@ pub fn analyze(cx: proc.ProcCtx, out: *Out, s: Spec, rows: []const []const Value
         for (0..J) |j| n += tb.counts[i * J + j];
         for (0..J) |j| if (tb.counts[i * J + j] < 1e-4 * n) return gap(cx, s.model_line, "maximum likelihood with a zero or near-zero response cell (infinite parameters) is not implemented", .{});
     };
+    for (s.effects) |e| if (e.nest) |ns| if (ns.value != null and byValueLevel(s, tb, ns) == null)
+        return cx.diags.fail(error.ParseError, s.model_line, "The formatted value specified as a nested level for variable {s} is not in the data.", .{s.ds.columns.items[ns.v].name});
     const d = try designMatrix(a, s, tb);
+    // ponytail: an absent nested level combination makes the design rank
+    // deficient; SAS then marks redundant parameters ('*' DF, '.' estimates,
+    // SAS reference run). That stays loud through the more-parameters-than-
+    // functions and singular-matrix gaps of the fits.
     const f = if (s.means) try fitMeans(cx, tb, d) else try fitLogits(cx, tb, d);
     var b: Out = .empty;
     try b.appendSlice(a, "\nThe CATMOD Procedure\n\n");
     try dataSummary(cx, &b, s, tb);
     try profiles(cx, &b, s, tb);
-    if (s.design) try designTable(cx, &b, tb, d, f);
+    if (s.design) try designTable(cx, &b, s, tb, d, f);
     if (!s.means) {
         try b.appendSlice(a, "                   Maximum Likelihood Analysis\n\n           Maximum likelihood computations converged.\n\n\n");
     }
@@ -1228,6 +1338,47 @@ test "STAT-CATMOD-001 deviation coding of a crossed effect" {
     try std.testing.expectEqualSlices(f64, &.{ 1, 1, -1, -1, -1, -1 }, d.x[6..12]);
     // (a=2, b=2): 1 | -1 | 0 1 | 0 -1
     try std.testing.expectEqualSlices(f64, &.{ 1, -1, 0, 1, 0, -1 }, d.x[12..18]);
+}
+
+test "STAT-CATMOD-005 nested and nested-by-value design columns (guide p. 2224 tables)" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var ds = Dataset.init(a, "t");
+    _ = try ds.addColumn("b", .num);
+    _ = try ds.addColumn("a", .num);
+    const lb = [_]Value{ .{ .num = 1 }, .{ .num = 2 } };
+    const la = [_]Value{ .{ .num = 1 }, .{ .num = 2 }, .{ .num = 3 } };
+    const pops = [_][]const usize{ &.{ 0, 0 }, &.{ 0, 1 }, &.{ 0, 2 }, &.{ 1, 0 }, &.{ 1, 1 }, &.{ 1, 2 } };
+    const tb: Table = .{ .pop_levels = &.{ &lb, &la }, .pop_text = &.{ &.{ "1", "2" }, &.{ "1", "2", "3" } }, .pops = &pops, .resp_levels = &.{}, .counts = &.{}, .n_obs = 0, .total = 0 };
+    // A(B): B outer, A's deviation columns inside each block.
+    const nested = [_]Effect{.{ .name = "a(b)", .vars = &.{1}, .nest = .{ .v = 0 } }};
+    const s1: Spec = .{ .ds = &ds, .pop_vars = &.{ 0, 1 }, .effects = &nested };
+    const d = try designMatrix(a, s1, tb);
+    try std.testing.expectEqual(@as(usize, 5), d.q);
+    const want = [_]f64{
+        1, 1,  0,  0,  0,
+        1, 0,  1,  0,  0,
+        1, -1, -1, 0,  0,
+        1, 0,  0,  1,  0,
+        1, 0,  0,  0,  1,
+        1, 0,  0,  -1, -1,
+    };
+    try std.testing.expectEqualSlices(f64, &want, d.x);
+    // A(B=1) A(B=2) gives the same columns.
+    const by_value = [_]Effect{ .{ .name = "a(b=1)", .vars = &.{1}, .nest = .{ .v = 0, .value = "1", .numeric = 1 } }, .{ .name = "a(b=2)", .vars = &.{1}, .nest = .{ .v = 0, .value = "2", .numeric = 2.0 } } };
+    const s2: Spec = .{ .ds = &ds, .pop_vars = &.{ 0, 1 }, .effects = &by_value };
+    const d2 = try designMatrix(a, s2, tb);
+    try std.testing.expectEqualSlices(f64, &want, d2.x);
+    try std.testing.expectEqualSlices(usize, &.{ 2, 2 }, d2.cols);
+    // Labels: A(B) shows A's level then B's; A(B=v) shows A's level only.
+    const l1 = try paramLabels(a, s1, tb, d);
+    try std.testing.expectEqualStrings("2 1", l1[2].level);
+    try std.testing.expectEqualStrings("1 2", l1[3].level);
+    const l2 = try paramLabels(a, s2, tb, d2);
+    try std.testing.expectEqualStrings("1", l2[3].level);
+    // A value not in the data has no level (the SAS user error).
+    try std.testing.expect(byValueLevel(s2, tb, .{ .v = 0, .value = "3", .numeric = 3 }) == null);
 }
 
 test "STAT-CATMOD-001 WLS means and ML logits by hand on a saturated two-population table" {

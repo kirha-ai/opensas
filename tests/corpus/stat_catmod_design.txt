@@ -1,0 +1,637 @@
+
+The CATMOD Procedure
+
+                  Data Summary
+
+Response           y        Response Levels    3
+Weight Variable    w        Populations        6
+Data Set           T        Total Frequency  105
+Frequency Missing  0        Observations      18
+
+
+      Population Profiles
+ 
+Sample    b    a    Sample Size
+-------------------------------
+    1     1    1             21
+    2     1    2             18
+    3     1    3             17
+    4     2    1             14
+    5     2    2             19
+    6     2    3             16
+
+
+Response Profiles
+ 
+Response    y
+-------------
+    1       0
+    2       1
+    3       2
+
+
+                   Response Functions and Design Matrix
+ 
+            Response                       Design Matrix
+Sample      Function        1        2        3        4        5        6
+--------------------------------------------------------------------------
+    1        1.19048        1        1        1        0        0        0
+    2        0.88889        1        1        0        1        0        0
+    3        1.11765        1        1       -1       -1        0        0
+    4        0.71429        1       -1        0        0        1        0
+    5        1.15789        1       -1        0        0        0        1
+    6        0.68750        1       -1        0        0       -1       -1
+
+
+           Analysis of Variance
+ 
+Source        DF   Chi-Square    Pr > ChiSq
+-------------------------------------------
+Intercept      1       159.15        <.0001
+b              1         1.95        0.1625
+a(b)           4         5.57        0.2333
+
+Residual       0          .           .    
+
+
+         Analysis of Weighted Least Squares Estimates
+ 
+                            Standard        Chi-
+Parameter        Estimate      Error      Square    Pr > ChiSq
+--------------------------------------------------------------
+Intercept          0.9594     0.0761      159.15        <.0001
+b         1        0.1062     0.0761        1.95        0.1625
+a(b)      1 1      0.1248     0.1451        0.74        0.3897
+          2 1     -0.1768     0.1588        1.24        0.2656
+          1 2     -0.1389     0.1541        0.81        0.3673
+          2 2      0.3047     0.1477        4.26        0.0391
+
+The CATMOD Procedure
+
+                  Data Summary
+
+Response           y        Response Levels    3
+Weight Variable    w        Populations        6
+Data Set           T        Total Frequency  105
+Frequency Missing  0        Observations      18
+
+
+      Population Profiles
+ 
+Sample    b    a    Sample Size
+-------------------------------
+    1     1    1             21
+    2     1    2             18
+    3     1    3             17
+    4     2    1             14
+    5     2    2             19
+    6     2    3             16
+
+
+Response Profiles
+ 
+Response    y
+-------------
+    1       0
+    2       1
+    3       2
+
+
+                   Response Functions and Design Matrix
+ 
+            Response                       Design Matrix
+Sample      Function        1        2        3        4        5        6
+--------------------------------------------------------------------------
+    1        1.19048        1        1        1        0        0        0
+    2        0.88889        1        1        0        1        0        0
+    3        1.11765        1        1       -1       -1        0        0
+    4        0.71429        1       -1        0        0        1        0
+    5        1.15789        1       -1        0        0        0        1
+    6        0.68750        1       -1        0        0       -1       -1
+
+
+           Analysis of Variance
+ 
+Source        DF   Chi-Square    Pr > ChiSq
+-------------------------------------------
+Intercept      1       159.15        <.0001
+b              1         1.95        0.1625
+a(b=1)         2         1.31        0.5183
+a(b=2)         2         4.26        0.1188
+
+Residual       0          .           .    
+
+
+        Analysis of Weighted Least Squares Estimates
+ 
+                          Standard        Chi-
+Parameter      Estimate      Error      Square    Pr > ChiSq
+------------------------------------------------------------
+Intercept        0.9594     0.0761      159.15        <.0001
+b         1      0.1062     0.0761        1.95        0.1625
+a(b=1)    1      0.1248     0.1451        0.74        0.3897
+          2     -0.1768     0.1588        1.24        0.2656
+a(b=2)    1     -0.1389     0.1541        0.81        0.3673
+          2      0.3047     0.1477        4.26        0.0391
+
+The CATMOD Procedure
+
+                  Data Summary
+
+Response           y        Response Levels    3
+Weight Variable    w        Populations        6
+Data Set           T        Total Frequency  105
+Frequency Missing  0        Observations      18
+
+
+      Population Profiles
+ 
+Sample    b    a    Sample Size
+-------------------------------
+    1     1    1             21
+    2     1    2             18
+    3     1    3             17
+    4     2    1             14
+    5     2    2             19
+    6     2    3             16
+
+
+Response Profiles
+ 
+Response    y
+-------------
+    1       0
+    2       1
+    3       2
+
+
+          Response Functions and Design Matrix
+ 
+            Response              Design Matrix
+Sample      Function        1        2        3        4
+--------------------------------------------------------
+    1        1.19048        1        1        1        0
+    2        0.88889        1        1        0        1
+    3        1.11765        1        1       -1       -1
+    4        0.71429        1       -1        0        0
+    5        1.15789        1       -1        0        0
+    6        0.68750        1       -1        0        0
+
+
+           Analysis of Variance
+ 
+Source        DF   Chi-Square    Pr > ChiSq
+-------------------------------------------
+Intercept      1       167.20        <.0001
+b              1         1.42        0.2330
+a(b=1)         2         1.31        0.5183
+
+Residual       2         4.26        0.1188
+
+
+        Analysis of Weighted Least Squares Estimates
+ 
+                          Standard        Chi-
+Parameter      Estimate      Error      Square    Pr > ChiSq
+------------------------------------------------------------
+Intercept        0.9757     0.0755      167.20        <.0001
+b         1      0.0900     0.0755        1.42        0.2330
+a(b=1)    1      0.1248     0.1451        0.74        0.3897
+          2     -0.1768     0.1588        1.24        0.2656
+
+The CATMOD Procedure
+
+                    Data Summary
+
+Response           periods     Response Levels     3
+Weight Variable    count       Populations         4
+Data Set           COLDS       Total Frequency  1080
+Frequency Missing  0           Observations       12
+
+
+            Population Profiles
+ 
+Sample    sex       residence    Sample Size
+--------------------------------------------
+    1     female    rural                180
+    2     female    urban                300
+    3     male      rural                290
+    4     male      urban                310
+
+
+ Response Profiles
+ 
+Response    periods
+-------------------
+    1       0      
+    2       1      
+    3       2      
+
+
+          Response Functions and Design Matrix
+ 
+            Response              Design Matrix
+Sample      Function        1        2        3        4
+--------------------------------------------------------
+    1        1.14444        1        1        1        0
+    2        1.12000        1        1       -1        0
+    3        0.99310        1       -1        0        1
+    4        0.93871        1       -1        0       -1
+
+
+              Analysis of Variance
+ 
+Source             DF   Chi-Square    Pr > ChiSq
+------------------------------------------------
+Intercept           1      1841.13        <.0001
+sex                 1        11.57        0.0007
+residence(sex)      2         0.85        0.6531
+
+Residual            0          .           .    
+
+
+                Analysis of Weighted Least Squares Estimates
+ 
+                                          Standard        Chi-
+Parameter                      Estimate      Error      Square    Pr > ChiSq
+----------------------------------------------------------------------------
+Intercept                        1.0491     0.0244     1841.13        <.0001
+sex            female            0.0832     0.0244       11.57        0.0007
+residence(sex) rural female      0.0122     0.0374        0.11        0.7438
+               rural male        0.0272     0.0315        0.75        0.3880
+
+The CATMOD Procedure
+
+                    Data Summary
+
+Response           periods     Response Levels     3
+Weight Variable    count       Populations         4
+Data Set           COLDS       Total Frequency  1080
+Frequency Missing  0           Observations       12
+
+
+            Population Profiles
+ 
+Sample    sex       residence    Sample Size
+--------------------------------------------
+    1     female    rural                180
+    2     female    urban                300
+    3     male      rural                290
+    4     male      urban                310
+
+
+ Response Profiles
+ 
+Response    periods
+-------------------
+    1       0      
+    2       1      
+    3       2      
+
+
+     Response Functions and Design Matrix
+ 
+            Response         Design Matrix
+Sample      Function        1        2        3
+-----------------------------------------------
+    1        1.14444        1        1        1
+    2        1.12000        1        1       -1
+    3        0.99310        1       -1        0
+    4        0.93871        1       -1        0
+
+
+                 Analysis of Variance
+ 
+Source                    DF   Chi-Square    Pr > ChiSq
+-------------------------------------------------------
+Intercept                  1      1841.43        <.0001
+sex                        1        11.55        0.0007
+residence(sex=female)      1         0.11        0.7438
+
+Residual                   1         0.75        0.3880
+
+
+                Analysis of Weighted Least Squares Estimates
+ 
+                                           Standard        Chi-
+Parameter                       Estimate      Error      Square    Pr > ChiSq
+-----------------------------------------------------------------------------
+Intercept                         1.0491     0.0244     1841.43        <.0001
+sex                   female      0.0831     0.0244       11.55        0.0007
+residence(sex=female) rural       0.0122     0.0374        0.11        0.7438
+
+The CATMOD Procedure
+
+                   Data Summary
+
+Response           Style      Response Levels    3
+Weight Variable    Count      Populations        6
+Data Set           SCHOOL     Total Frequency  338
+Frequency Missing  0          Observations      18
+
+
+            Population Profiles
+ 
+Sample    School    Program      Sample Size
+--------------------------------------------
+    1     1         regular               53
+    2     1         afternoon             67
+    3     2         regular               64
+    4     2         afternoon             64
+    5     3         regular               46
+    6     3         afternoon             44
+
+
+Response Profiles
+ 
+Response    Style
+-----------------
+    1       self 
+    2       team 
+    3       class
+
+
+                 Response Functions and Design Matrix
+ 
+             Response Functions                 Design Matrix
+Sample             1             2        1        2        3        4
+----------------------------------------------------------------------
+    1       -0.95551      -0.42488        1        1        0        1
+    2       -2.30259      -1.42712        1        1        0       -1
+    3       -0.21357      -0.42488        1        0        1        1
+    4       -0.81093      -1.09861        1        0        1       -1
+    5       -0.06454      -0.06454        1       -1       -1        1
+    6       -0.51083      -0.51083        1       -1       -1       -1
+
+
+                   Maximum Likelihood Analysis
+
+           Maximum likelihood computations converged.           
+
+
+     Maximum Likelihood Analysis of Variance
+ 
+Source               DF   Chi-Square    Pr > ChiSq
+--------------------------------------------------
+Intercept             2        39.88        <.0001
+School                4        14.84        0.0050
+Program               2        10.92        0.0043
+
+Likelihood Ratio      4         1.78        0.7766
+
+
+                 Analysis of Maximum Likelihood Estimates
+ 
+                  Function               Standard        Chi-
+Parameter          Number     Estimate      Error      Square    Pr > ChiSq
+---------------------------------------------------------------------------
+Intercept            1         -0.7979     0.1465       29.65        <.0001
+                     2         -0.6589     0.1367       23.23        <.0001
+School    1          1         -0.7992     0.2198       13.22        0.0003
+          1          2         -0.2786     0.1867        2.23        0.1356
+          2          1          0.2836     0.1899        2.23        0.1352
+          2          2         -0.0985     0.1892        0.27        0.6028
+Program   regular    1          0.3737     0.1410        7.03        0.0080
+          regular    2          0.3713     0.1353        7.53        0.0061
+
+The CATMOD Procedure
+
+                   Data Summary
+
+Response           Style      Response Levels    3
+Weight Variable    Count      Populations        6
+Data Set           SCHOOL     Total Frequency  338
+Frequency Missing  0          Observations      18
+
+
+            Population Profiles
+ 
+Sample    Program      School    Sample Size
+--------------------------------------------
+    1     regular      1                  53
+    2     regular      2                  64
+    3     regular      3                  46
+    4     afternoon    1                  67
+    5     afternoon    2                  64
+    6     afternoon    3                  44
+
+
+Response Profiles
+ 
+Response    Style
+-----------------
+    1       self 
+    2       team 
+    3       class
+
+
+                   Maximum Likelihood Analysis
+
+           Maximum likelihood computations converged.           
+
+
+     Maximum Likelihood Analysis of Variance
+ 
+Source               DF   Chi-Square    Pr > ChiSq
+--------------------------------------------------
+Intercept             2        40.05        <.0001
+Program               2        10.48        0.0053
+School(Program)       8        15.75        0.0461
+
+Likelihood Ratio      0          .           .    
+
+
+                      Analysis of Maximum Likelihood Estimates
+ 
+                            Function               Standard        Chi-
+Parameter                    Number     Estimate      Error      Square    Pr > ChiSq
+-------------------------------------------------------------------------------------
+Intercept                      1         -0.8097     0.1488       29.60        <.0001
+                               2         -0.6585     0.1366       23.25        <.0001
+Program         regular        1          0.3985     0.1488        7.17        0.0074
+                regular        2          0.3537     0.1366        6.71        0.0096
+School(Program) 1 regular      1         -0.5443     0.2923        3.47        0.0626
+                1 regular      2         -0.1201     0.2615        0.21        0.6460
+                2 regular      1          0.1976     0.2608        0.57        0.4485
+                2 regular      2         -0.1201     0.2615        0.21        0.6460
+                1 afternoon    1         -1.0945     0.3501        9.77        0.0018
+                1 afternoon    2         -0.4149     0.2703        2.36        0.1248
+                2 afternoon    1          0.3972     0.2817        1.99        0.1586
+                2 afternoon    2         -0.0864     0.2751        0.10        0.7534
+
+The CATMOD Procedure
+
+                   Data Summary
+
+Response           periods     Response Levels    2
+Weight Variable    count       Populations        4
+Data Set           C2          Total Frequency  724
+Frequency Missing  0           Observations       8
+
+
+            Population Profiles
+ 
+Sample    sex       residence    Sample Size
+--------------------------------------------
+    1     female    rural                109
+    2     female    urban                184
+    3     male      rural                208
+    4     male      urban                223
+
+
+ Response Profiles
+ 
+Response    periods
+-------------------
+    1       0      
+    2       1      
+
+
+     Response Functions and Design Matrix
+ 
+            Response         Design Matrix
+Sample      Function        1        2        3
+-----------------------------------------------
+    1       -0.35222        1        1        1
+    2       -0.26236        1        1       -1
+    3       -0.38946        1       -1        1
+    4       -0.09873        1       -1       -1
+
+
+                   Maximum Likelihood Analysis
+
+           Maximum likelihood computations converged.           
+
+
+     Maximum Likelihood Analysis of Variance
+ 
+Source               DF   Chi-Square    Pr > ChiSq
+--------------------------------------------------
+Intercept             1        13.33        0.0003
+sex                   1         0.28        0.5963
+residence             1         1.95        0.1624
+
+Likelihood Ratio      1         0.41        0.5211
+
+
+            Analysis of Maximum Likelihood Estimates
+ 
+                               Standard        Chi-
+Parameter           Estimate      Error      Square    Pr > ChiSq
+-----------------------------------------------------------------
+Intercept            -0.2830     0.0775       13.33        0.0003
+sex       female     -0.0408     0.0770        0.28        0.5963
+residence rural      -0.1066     0.0763        1.95        0.1624
+
+The CATMOD Procedure
+
+                  Data Summary
+
+Response           y        Response Levels    4
+Weight Variable    w        Populations        3
+Data Set           F4       Total Frequency  184
+Frequency Missing  0        Observations      12
+
+
+   Population Profiles
+ 
+Sample    g    Sample Size
+--------------------------
+    1     1             57
+    2     2             74
+    3     3             53
+
+
+Response Profiles
+ 
+Response    y
+-------------
+    1       1
+    2       2
+    3       3
+    4       4
+
+
+                   Response Functions and Design Matrix
+ 
+                    Response Functions                   Design Matrix
+Sample             1             2             3        1        2        3
+---------------------------------------------------------------------------
+    1       -0.18232       0.51083       0.22314        1        1        0
+    2       -1.32176      -1.00330      -0.18232        1        0        1
+    3       -0.19416      -0.63599      -0.26826        1       -1       -1
+
+
+                   Maximum Likelihood Analysis
+
+           Maximum likelihood computations converged.           
+
+
+     Maximum Likelihood Analysis of Variance
+ 
+Source               DF   Chi-Square    Pr > ChiSq
+--------------------------------------------------
+Intercept             3         7.98        0.0465
+g                     6        15.36        0.0176
+
+Likelihood Ratio      0          .           .    
+
+
+              Analysis of Maximum Likelihood Estimates
+ 
+            Function               Standard        Chi-
+Parameter    Number     Estimate      Error      Square    Pr > ChiSq
+---------------------------------------------------------------------
+Intercept      1         -0.5661     0.2290        6.11        0.0134
+               2         -0.3762     0.2179        2.98        0.0844
+               3         -0.0758     0.1997        0.14        0.7043
+g         1    1          0.3838     0.3370        1.30        0.2548
+          1    2          0.8870     0.3032        8.56        0.0034
+          1    3          0.2990     0.2998        0.99        0.3187
+          2    1         -0.7557     0.3244        5.43        0.0198
+          2    2         -0.6271     0.2982        4.42        0.0354
+          2    3         -0.1065     0.2537        0.18        0.6746
+
+The CATMOD Procedure
+
+                   Data Summary
+
+Response           y         Response Levels     2
+Weight Variable    w         Populations         2
+Data Set           T         Total Frequency  1300
+Frequency Missing  0         Observations        4
+
+
+   Population Profiles
+ 
+Sample    g    Sample Size
+--------------------------
+    1     1            700
+    2     2            600
+
+
+Response Profiles
+ 
+Response    y
+-------------
+    1       1
+    2       2
+
+
+           Analysis of Variance
+ 
+Source        DF   Chi-Square    Pr > ChiSq
+-------------------------------------------
+Intercept      1     13183.08        <.0001
+g              1         0.19        0.6648
+
+Residual       0          .           .    
+
+
+        Analysis of Weighted Least Squares Estimates
+ 
+                          Standard        Chi-
+Parameter      Estimate      Error      Square    Pr > ChiSq
+------------------------------------------------------------
+Intercept        1.5774     0.0137    13183.08        <.0001
+g         1    -0.00595     0.0137        0.19        0.6648
