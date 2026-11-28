@@ -362,8 +362,13 @@ pub fn run(cx: proc.ProcCtx, out: *std.ArrayList(u8), t: []const lex.Token) diag
     const a = cx.arena;
     const groups = try by.checkedSlices(a, s.input.ds, s.by_cols, s.by_desc, s.notsorted, cx.diags);
     if (groups.len == 0 or s.input.ds.rows.items.len == 0) {
-        try cx.diags.note(0, "No observations in data set {s}.", .{s.input.ds.name});
-        return cx.diags.fail(error.ExecError, 0, "PROC GLMMOD stopped processing this step because of errors.", .{});
+        // SAS 9.4 writes only these NOTEs (no ERROR), prints nothing and
+        // creates no output data set; the step severity stays a note.
+        const name = try std.ascii.allocUpperString(a, s.input.ds.name);
+        const qualified = if (std.mem.indexOfScalar(u8, name, '.') == null) try std.fmt.allocPrint(a, "WORK.{s}", .{name}) else name;
+        try cx.diags.note(0, "No observations in data set {s}.", .{qualified});
+        try cx.diags.note(0, "The SAS System stopped processing this step because of errors.", .{});
+        return;
     }
     const designs = try a.alloc(matrix.Design, groups.len);
     for (groups, designs) |group, *d| {
@@ -641,4 +646,41 @@ test "STAT-GLMMOD-001 declarations: last BY wins, CLASS after MODEL, duplicate r
     try std.testing.expectEqualStrings("z", fd.columns.items[1].name);
     try std.testing.expectEqual(@as(f64, 2), fd.rows.items[0][1].num);
     try std.testing.expect(std.math.isNan(fd.rows.items[1][1].num));
+}
+
+test "STAT-GLMMOD-001 empty input notes only; explicit ORDER=INTERNAL and ORDER=FORMATTED" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var lib = @import("../exec.zig").Library.init(a);
+    var d = diag.Diagnostics.init(a);
+    const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &d };
+    var sink: std.ArrayList(u8) = .empty;
+    const empty = try a.create(Dataset);
+    empty.* = Dataset.init(a, "e");
+    _ = try empty.addColumn("g", .char);
+    _ = try empty.addColumn("y", .num);
+    try lib.put("e", empty);
+    try run(cx, &sink, try lex.tokenize(a, "proc glmmod data=e outdesign=none; class g; model y=g; run;", &d));
+    try std.testing.expect(!d.hasErrors());
+    try std.testing.expect(std.mem.indexOf(u8, try d.render(), "No observations in data set WORK.E.") != null);
+    try std.testing.expectEqual(@as(usize, 0), sink.items.len);
+    try std.testing.expect(lib.find("none") == null);
+    // p.4237: ORDER=INTERNAL sorts 1 < 2 < 3; ORDER=FORMATTED sorts the
+    // WORDS. text, "one" < "three" < "two" (explicit format, so it applies).
+    const ds = try a.create(Dataset);
+    ds.* = Dataset.init(a, "o");
+    _ = try ds.addColumn("k", .num);
+    _ = try ds.addColumn("y", .num);
+    ds.columns.items[0].format = "words.";
+    for ([_]f64{ 1, 2, 3, 1 }, 0..) |k, i| try ds.appendRow(&.{ .{ .num = k }, .{ .num = @floatFromInt(i) } });
+    try lib.put("o", ds);
+    inline for (.{ .{ "internal", "two", "three" }, .{ "formatted", "three", "two" } }) |case| {
+        try run(cx, &sink, try lex.tokenize(a, "proc glmmod data=o outparm=op order=" ++ case[0] ++ " noprint; class k; model y=k / noint; run;", &d));
+        const op = lib.find("op").?;
+        try std.testing.expectEqual(@as(usize, 3), op.rowCount());
+        try std.testing.expectEqualStrings("one", op.rows.items[0][2].str);
+        try std.testing.expectEqualStrings(case[1], op.rows.items[1][2].str);
+        try std.testing.expectEqualStrings(case[2], op.rows.items[2][2].str);
+    }
 }
