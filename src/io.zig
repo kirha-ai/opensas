@@ -1447,6 +1447,13 @@ pub fn labelSidecar(a: std.mem.Allocator, ds: *const Dataset) diag.Error!?[]cons
         try appendCsvField(a, &buf, l);
         try buf.append(a, '\n');
     }
+    // STAT-DATASET-001: the data set TYPE= attribute rides as a `*type` record
+    // (never a legal column name; an older reader's setLabel finds no column).
+    if (ds.ds_type) |ty| {
+        try buf.appendSlice(a, "*type,");
+        try appendCsvField(a, &buf, ty);
+        try buf.append(a, '\n');
+    }
     for (ds.columns.items) |c| {
         if (c.label == null and c.format == null and c.informat == null) continue;
         try appendCsvField(a, &buf, c.name);
@@ -1474,6 +1481,10 @@ pub fn applyLabelSidecar(a: std.mem.Allocator, ds: *Dataset, bytes: []const u8) 
         if (f.items.len < 2) continue;
         if (std.mem.eql(u8, f.items[0], "*")) { // F8: dataset-level label record
             if (f.items[1].len > 0) ds.label = f.items[1];
+            continue;
+        }
+        if (std.mem.eql(u8, f.items[0], "*type")) { // STAT-DATASET-001: data set TYPE=
+            if (f.items[1].len > 0) ds.ds_type = f.items[1];
             continue;
         }
         if (f.items[1].len > 0) ds.setLabel(f.items[0], f.items[1]);
@@ -2122,6 +2133,20 @@ pub fn applyDatasetOptionsObs(a: std.mem.Allocator, ds: *Dataset, opt_toks: []co
         } else if (eqiTok(key, "in")) {
             // Single-token value, consumed by exec.inVarOf.
             if (i < opt_toks.len) i += 1;
+        } else if (eqiTok(key, "type") and !input) {
+            // STAT-DATASET-001 (S154 pp.10880-10881): TYPE= on an OUTPUT data set
+            // records the data set type, stored uppercase, any SAS name (SAS keeps
+            // an unknown name such as MYTYP as given — never guessed or rewritten).
+            // ponytail: TYPE= on an INPUT data set (the per-procedure override)
+            // stays the loud "not supported" arm below until every special-input
+            // consumer reads Dataset.ds_type — accepting it earlier would let a
+            // procedure silently analyse a TYPE=CORR override as raw data.
+            if (i >= opt_toks.len or opt_toks[i].tag != .name) {
+                try diags.report(.err, 0, "Invalid value for the TYPE= data set option; a data set type name is required.", .{});
+                return;
+            }
+            ds.ds_type = try std.ascii.allocUpperString(a, opt_toks[i].text);
+            i += 1;
         } else {
             // BUG-wheredsoptswallow: a misspelled or unimplemented option used
             // to fall through this chain and vanish — `set d(wehre=(x>2))`
@@ -3682,4 +3707,47 @@ test "GH#25: EXPORT preserves attached formats; BEST12. stays the unformatted de
     // their bytes.
     const internal = try writeCsv(a, &ds);
     try std.testing.expectEqualStrings("who,d,cost,raw,hole\nAnn,23421,8765.4,0.6666666667,.\n", internal);
+}
+
+test "STAT-DATASET-001: TYPE= output option, input loud gap, sidecar round trip" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var ds = Dataset.init(a, "c");
+    _ = try ds.addColumn("x", .num);
+    try ds.appendRow(&.{.{ .num = 1 }});
+    try std.testing.expect(ds.ds_type == null); // ordinary data set: blank TYPE
+
+    // OUTPUT: any name, stored uppercase, never rewritten (SAS: mytyp -> MYTYP)
+    const out_toks = [_]lex.Token{ .{ .tag = .name, .text = "type" }, .{ .tag = .eq }, .{ .tag = .name, .text = "mytyp" } };
+    var g = diag.Diagnostics.init(a);
+    try applyDatasetOptions(a, &ds, &out_toks, &g, false);
+    try std.testing.expect(!g.hasErrors());
+    try std.testing.expectEqualStrings("MYTYP", ds.ds_type.?);
+
+    // OUTPUT without a name: user error, type unchanged
+    var g_bad = diag.Diagnostics.init(a);
+    try applyDatasetOptions(a, &ds, &.{ .{ .tag = .name, .text = "type" }, .{ .tag = .eq }, .{ .tag = .number, .text = "3" } }, &g_bad, false);
+    try std.testing.expect(g_bad.hasErrors());
+    try std.testing.expectEqualStrings("MYTYP", ds.ds_type.?);
+
+    // INPUT override stays a loud error (consumers do not read it yet)
+    var inp = Dataset.init(a, "i");
+    _ = try inp.addColumn("x", .num);
+    try inp.appendRow(&.{.{ .num = 1 }});
+    var g_in = diag.Diagnostics.init(a);
+    try applyDatasetOptions(a, &inp, &.{ .{ .tag = .name, .text = "type" }, .{ .tag = .eq }, .{ .tag = .name, .text = "corr" } }, &g_in, true);
+    try std.testing.expect(g_in.hasErrors());
+    try std.testing.expect(inp.ds_type == null);
+    try std.testing.expectEqual(@as(usize, 0), inp.rowCount()); // never the unfiltered superset
+
+    // persistence: the `*type` sidecar record survives a reload
+    ds.ds_type = "CORR";
+    const side = (try labelSidecar(a, &ds)).?;
+    try std.testing.expect(std.mem.indexOf(u8, side, "*type,CORR\n") != null);
+    var back = Dataset.init(a, "c");
+    _ = try back.addColumn("x", .num);
+    try applyLabelSidecar(a, &back, side);
+    try std.testing.expectEqualStrings("CORR", back.ds_type.?);
+    try std.testing.expect(back.columns.items[0].label == null); // marker never lands on a column
 }

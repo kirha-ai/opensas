@@ -185,7 +185,11 @@ test "STAT-FACTOR-001 invalid input is a user error and unimplemented valid synt
         .{ .source = "proc factor data=four mineigen=2; var x y; run;", .rc = 2 }, // no factor retained
         .{ .source = "proc factor data=four all; var x y; run;", .rc = 2 },
         .{ .source = "proc factor data=four cov; var x y; run;", .rc = 2 },
-        .{ .source = "proc factor data=four outstat=st; var x y; run;", .rc = 2 },
+        // STAT-DATASET-001: OUTSTAT= is written for the verified default layout;
+        // SCORE rows, BY groups and OUTSTAT= data set options stay loud gaps.
+        .{ .source = "proc factor data=four outstat=st score; var x y; run;", .rc = 2 },
+        .{ .source = "proc factor data=four outstat=st; var x y; by grp; run;", .rc = 2 },
+        .{ .source = "proc factor data=four outstat=st(type=corr); var x y; run;", .rc = 2 },
         .{ .source = "proc factor data=four plots=scree; var x y; run;", .rc = 2 },
         .{ .source = "proc factor data=four simple simple; var x y; run;", .rc = 2 },
         .{ .source = "proc factor data=four; var x y; partial grp; run;", .rc = 2 },
@@ -211,5 +215,38 @@ test "STAT-FACTOR-001 invalid input is a user error and unimplemented valid synt
             return err;
         };
         try expectEqual(@as(usize, 0), output.items.len);
+    }
+}
+
+test "STAT-DATASET-001: OUTSTAT= TYPE=FACTOR layout (hand mathematics)" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var lib = Library.init(a);
+    try build(a, &lib);
+    diag.resetGap();
+    defer diag.resetGap();
+    var d = diag.Diagnostics.init(a);
+    var output: std.ArrayList(u8) = .empty;
+    // Group 1 only: x = 1..4, y = 2,1,4,3 -> means 2.5, STD sqrt(5/3), r = 0.6,
+    // eigenvalues 1.6 / 0.4, one factor: pattern sqrt(1.6)/sqrt(2) = sqrt(0.8),
+    // communality 0.8.
+    try factor.run(.{ .arena = a, .lib = &lib, .diags = &d }, &output, try lex.tokenize(a, "proc factor data=four noprint n=1 outstat=st; var x y; where grp = 1; run;", &d));
+    const st = lib.find("st").?;
+    try std.testing.expectEqualStrings("FACTOR", st.ds_type.?);
+    try expectEqual(@as(usize, 4), st.columns.items.len);
+    try std.testing.expectEqualStrings("_TYPE_", st.columns.items[0].name);
+    try std.testing.expectEqualStrings("Type of Observation", st.columns.items[0].label.?);
+    try std.testing.expectEqualStrings("Row Variable Name", st.columns.items[1].label.?);
+    try expectEqual(@as(usize, 8), st.columns.items[1].len.?);
+    const types = [_][]const u8{ "MEAN", "STD", "N", "CORR", "CORR", "COMMUNAL", "PRIORS", "EIGENVAL", "PATTERN" };
+    const rows_names = [_][]const u8{ "", "", "", "x", "y", "", "", "", "Factor1" };
+    const want = [_][2]f64{ .{ 2.5, 2.5 }, .{ @sqrt(5.0 / 3.0), @sqrt(5.0 / 3.0) }, .{ 4, 4 }, .{ 1, 0.6 }, .{ 0.6, 1 }, .{ 0.8, 0.8 }, .{ 1, 1 }, .{ 1.6, 0.4 }, .{ @sqrt(0.8), @sqrt(0.8) } };
+    try expectEqual(types.len, st.rows.items.len);
+    for (st.rows.items, types, rows_names, want) |row, ty, nm, w| {
+        try std.testing.expectEqualStrings(ty, row[0].str);
+        try std.testing.expectEqualStrings(nm, row[1].str);
+        try approx(w[0], row[2].num, 1e-12);
+        try approx(w[1], row[3].num, 1e-12);
     }
 }

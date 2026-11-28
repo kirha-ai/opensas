@@ -868,6 +868,7 @@ pub fn run(cx: proc.ProcCtx, out: *Out, t: []const lex.Token) diag.Error!void {
     // p.10686: DATA= may be TYPE=CORR, COV, UCORR, UCOV, FACTOR, SSCP; opensas
     // keeps no data set TYPE= attribute, so such input is not read as a matrix.
     if (ds.indexOf("_type_") != null) return gap(cx.diags, l0, "PROC VARCLUS: input data sets with a _TYPE_ variable (TYPE=CORR, COV, UCORR, UCOV, FACTOR, SSCP) are not implemented", .{});
+    if (ds.ds_type) |ty| return gap(cx.diags, l0, "PROC VARCLUS: TYPE={s} input data sets are not implemented", .{ty}); // STAT-DATASET-001
     // SAS 9.4 (verified): an empty input prints nothing, notes it and does not fail.
     if (ds.rows.items.len == 0) {
         const upper = try std.ascii.allocUpperString(a, ds.name);
@@ -903,6 +904,7 @@ pub fn run(cx: proc.ProcCtx, out: *Out, t: []const lex.Token) diag.Error!void {
     if (s.outstat) |member| {
         const o = try a.create(Dataset);
         o.* = Dataset.init(a, member);
+        o.ds_type = "CORR"; // STAT-DATASET-001: S154 Table A.2 (NOINT/UCORR is a loud gap above)
         for (s.by_cols) |c| try o.columns.append(a, ds.columns.items[c]);
         key = s.by_cols.len;
         var name_len: usize = 8;

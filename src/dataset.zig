@@ -30,6 +30,11 @@ pub const Dataset = struct {
     columns: std.ArrayList(Column),
     rows: std.ArrayList([]const Value),
     label: ?[]const u8 = null, // dataset label (PROC DATASETS MODIFY (LABEL=)) — BUG-datasetsstrip
+    /// Data set TYPE= attribute (STAT-DATASET-001, S154 pp.10880-10881), stored
+    /// uppercase; null = an ordinary data set (ATTRC TYPE and the CONTENTS
+    /// "Data Set Type" are blank). Set by the TYPE= output data set option or by
+    /// a procedure writing a special data set; a DATA step SET never copies it.
+    ds_type: ?[]const u8 = null,
     sortseq_linguistic: ?bool = null, // PROC SORT collation for later BY verification; null = unknown/use current system default
 
     pub fn init(arena: std.mem.Allocator, name: []const u8) Dataset {

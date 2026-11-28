@@ -136,6 +136,7 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
     s.ds = try proc.procInput(a, raw, t[0..@min(t.len, i + 1)], cx.diags);
     // Input Data Set (pp.2162-2163): TYPE=CORR/COV/CSSCP/SSCP input is read by _TYPE_.
     if (s.ds.indexOf("_type_") != null) return gap(cx, lineOf(t, 0), "input data sets with a _TYPE_ variable (TYPE=CORR, COV, CSSCP, SSCP) are not implemented", .{});
+    if (s.ds.ds_type) |ty| return gap(cx, lineOf(t, 0), "TYPE={s} input data sets are not implemented", .{ty}); // STAT-DATASET-001
 
     var bys: ?by.Statements = null;
     var class: ?usize = null;

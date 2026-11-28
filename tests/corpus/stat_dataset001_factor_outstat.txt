@@ -1,0 +1,65 @@
+
+The FACTOR Procedure
+
+Input Data Type                 Raw Data
+Number of Records Read                12
+Number of Records Used                12
+N for Significance Tests              12
+
+The FACTOR Procedure
+Initial Factor Method: Principal Components
+
+Prior Communality Estimates: ONE    
+
+
+
+Eigenvalues of the Correlation Matrix: Total = 3  Average = 1
+ 
+        Eigenvalue    Difference    Proportion    Cumulative
+
+   1    2.80006744    2.61111715        0.9334        0.9334
+   2    0.18895030    0.17796803        0.0630        0.9963
+   3    0.01098226                      0.0037        1.0000
+
+2 factors will be retained by the NFACTOR criterion.
+
+
+
+         Factor Pattern
+ 
+          Factor1         Factor2
+
+x         0.97790        -0.19683
+z         0.93313         0.35946
+y         0.98644        -0.14491
+
+
+Variance Explained by Each Factor
+ 
+   Factor1         Factor2
+
+ 2.8000674       0.1889503
+
+
+Final Communality Estimates: Total = 2.989018
+ 
+         x               z               y
+
+0.99502013      0.99994289      0.99405471
+TYPE=FACTOR NOBS=11 NVARS=5
+1 _TYPE_   C 8 Type of Observation
+2 _NAME_   C 8 Row Variable Name
+3 x        N 8 
+4 z        N 8 
+5 y        N 8 
+MEAN                6.5000   2.8333  14.9167
+STD                 3.6056   1.4668   7.4157
+N                  12.0000  12.0000  12.0000
+CORR     x          1.0000   0.8423   0.9877
+CORR     z          0.8423   1.0000   0.8678
+CORR     y          0.9877   0.8678   1.0000
+COMMUNAL            0.9950   0.9999   0.9941
+PRIORS              1.0000   1.0000   1.0000
+EIGENVAL            2.8001   0.1890   0.0110
+PATTERN  Factor1    0.9779   0.9331   0.9864
+PATTERN  Factor2   -0.1968   0.3595  -0.1449

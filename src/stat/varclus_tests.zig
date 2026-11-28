@@ -173,6 +173,7 @@ test "STAT-VARCLUS-001 observation selection and OUTSTAT= rows" {
     try expect(!e.diags.hasErrors() and !diag.gapHit());
     try expectEqual(@as(usize, 0), out.items.len);
     const st = e.lib.find("st").?;
+    try std.testing.expectEqualStrings("CORR", st.ds_type.?); // STAT-DATASET-001: Table A.2
     // 4 + 2 rows (MEAN, STD, N, CORR x2), then per level: MEMBERS VAREXP
     // PROPOR GROUP RSQUARED + 3k (SCORE, STRUCTUR, CCORR): 8 + 11.
     try expectEqual(@as(usize, 5 + 8 + 11), st.rows.items.len);

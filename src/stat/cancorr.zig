@@ -184,6 +184,7 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
     const ds = s.input.ds;
     // p.2127: TYPE=CORR, COV, FACTOR, SSCP, UCORR or UCOV input is read by _TYPE_.
     if (ds.indexOf("_type_") != null) return gap(cx.diags, line(t, 0), "PROC CANCORR: input data sets with a _TYPE_ variable (TYPE=CORR, COV, SSCP, ...) are not implemented", .{});
+    if (ds.ds_type) |ty| return gap(cx.diags, line(t, 0), "PROC CANCORR: TYPE={s} input data sets are not implemented", .{ty}); // STAT-DATASET-001
 
     var bys: by.Statements = .{};
     var vars: std.ArrayList(usize) = .empty;

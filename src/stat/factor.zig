@@ -37,6 +37,8 @@ pub const Spec = struct {
     corr: bool = false,
     score: bool = false,
     noprint: bool = false,
+    /// OUTSTAT= member (STAT-DATASET-001): a TYPE=FACTOR data set (S154 Table A.2).
+    outstat: ?[]const u8 = null,
     nfactors: ?usize = null,
     mineigen: ?f64 = null,
     // Roles.
@@ -99,7 +101,7 @@ fn canonical(lower: []const u8) []const u8 {
 const documented_gaps = [_][]const u8{
     "all",       "alpha",        "ci",          "converge",  "cov",       "eigenvectors", "flag",     "fuzz",
     "gamma",     "heywood",      "hkpower",     "map",       "maxiter",   "msa",          "nobs",     "nocorr",
-    "noint",     "nopromaxnorm", "norm",        "nplots",    "nthreads",  "out",          "outstat",  "parallel",
+    "noint",     "nopromaxnorm", "norm",        "nplots",    "nthreads",  "out",          "parallel",
     "parprefix", "plot",         "plotref",     "plots",     "power",     "prefix",       "preplot",  "prerotate",
     "print",     "proportion",   "random",      "rconverge", "reorder",   "residuals",    "riter",    "round",
     "scree",     "stderr",       "singular",    "target",    "tau",       "ultraheywood", "vardef",   "weight",
@@ -174,6 +176,11 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
         } else if (eq(option, "noprint") and !valued) {
             s.noprint = true;
             i += 1;
+        } else if (eq(option, "outstat") and valued) {
+            const first = i + 2;
+            const after = try memberName(cx, t, first, &s.outstat);
+            if (after > 0 and at(t, after - 1, .rparen)) return gap(cx.diags, t[i].line, "PROC FACTOR: data set options on OUTSTAT= are not implemented", .{});
+            i = after;
         } else {
             for (documented_gaps) |g| if (eq(option, g)) return gap(cx.diags, t[i].line, "PROC FACTOR: the {s} option is not implemented", .{t[i].text});
             return invalid(cx, t, i);
@@ -191,6 +198,7 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
     const ds = s.input.ds;
     // pp.2824-2826: TYPE=CORR/COV/UCOV/FACTOR/... input is read by _TYPE_.
     if (ds.indexOf("_type_") != null) return gap(cx.diags, line(t, 0), "PROC FACTOR: input data sets with a _TYPE_ variable (TYPE=CORR, COV, FACTOR, ...) are not implemented", .{});
+    if (ds.ds_type) |ty| return gap(cx.diags, line(t, 0), "PROC FACTOR: TYPE={s} input data sets are not implemented", .{ty}); // STAT-DATASET-001
 
     var bys: by.Statements = .{};
     var vars: std.ArrayList(usize) = .empty;
@@ -492,6 +500,48 @@ fn byLine(a: A, out: *Out, ds: *Dataset, row: []const Value, cols: []const usize
     try out.appendSlice(a, std.mem.trimStart(u8, text, " "));
 }
 
+/// The OUTSTAT= data set (STAT-DATASET-001; S154 pp.10880-10881, TYPE=FACTOR
+/// p.10890): `_TYPE_` / `_NAME_` (character, length 8, labelled as SAS labels
+/// them) then one numeric column per analysis variable. Rows, as SAS 9.4 writes
+/// them for METHOD=PRINCIPAL PRIORS=ONE with no rotation: MEAN, STD, N, one CORR
+/// row per variable (_NAME_ = the row variable), COMMUNAL, PRIORS, EIGENVAL (all
+/// p eigenvalues), one PATTERN row per retained factor (_NAME_ = FactorK).
+pub fn outstatSet(a: A, member: []const u8, names: []const []const u8, m: pc.Moments, n: f64, e: pc.Eigen, sol: Solution, factors: []const []const u8) !*Dataset {
+    const p = names.len;
+    const nf = factors.len;
+    const o = try a.create(Dataset);
+    o.* = Dataset.init(a, member);
+    o.ds_type = "FACTOR";
+    try o.columns.append(a, .{ .name = "_TYPE_", .type = .char, .len = 8, .label = "Type of Observation" });
+    try o.columns.append(a, .{ .name = "_NAME_", .type = .char, .len = 8, .label = "Row Variable Name" });
+    for (names) |nm| try o.columns.append(a, .{ .name = nm, .type = .num, .len = 8 });
+    const Row = struct {
+        fn add(al: A, ds: *Dataset, ty: []const u8, name: []const u8, vals: []const f64) !void {
+            const cells = try al.alloc(Value, vals.len + 2);
+            cells[0] = .{ .str = ty };
+            cells[1] = .{ .str = name };
+            for (vals, 0..) |v, k| cells[k + 2] = .{ .num = v };
+            try ds.appendRow(cells);
+        }
+    };
+    const buf = try a.alloc(f64, p);
+    try Row.add(a, o, "MEAN", "", m.mean);
+    try Row.add(a, o, "STD", "", m.std);
+    @memset(buf, n);
+    try Row.add(a, o, "N", "", buf);
+    for (names, 0..) |nm, j| try Row.add(a, o, "CORR", nm, m.corr[j * p .. (j + 1) * p]);
+    try Row.add(a, o, "COMMUNAL", "", sol.communality);
+    @memset(buf, 1); // PRIORS=ONE
+    try Row.add(a, o, "PRIORS", "", buf);
+    try Row.add(a, o, "EIGENVAL", "", e.values[0..p]);
+    for (factors, 0..) |f, k| {
+        const row = try a.alloc(f64, p);
+        for (row, 0..) |*v, j| v.* = sol.pattern[j * nf + k];
+        try Row.add(a, o, "PATTERN", f, row);
+    }
+    return o;
+}
+
 pub fn run(cx: proc.ProcCtx, out: *Out, t: []const lex.Token) diag.Error!void {
     const a = cx.arena;
     const s = try parse(cx, t);
@@ -515,6 +565,14 @@ pub fn run(cx: proc.ProcCtx, out: *Out, t: []const lex.Token) diag.Error!void {
         label = @max(label, n.len);
         if (n.len > 15) return gap(cx.diags, l0, "PROC FACTOR: the listing layout for variable name {s} longer than 15 characters is not verified", .{n.*});
     }
+    if (s.outstat != null) {
+        // STAT-DATASET-001: the TYPE=FACTOR layout written here is the SAS 9.4
+        // reference for METHOD=PRINCIPAL PRIORS=ONE without rotation; the rows a
+        // SCORE request or BY groups add are not verified (STAT-FACTOR-008).
+        if (s.score) return gap(cx.diags, l0, "PROC FACTOR: OUTSTAT= together with SCORE is not implemented (STAT-FACTOR-008)", .{});
+        if (s.by_cols.len > 0) return gap(cx.diags, l0, "PROC FACTOR: OUTSTAT= with a BY statement is not implemented (STAT-FACTOR-008)", .{});
+        for (names) |n| if (n.len > 8) return gap(cx.diags, l0, "PROC FACTOR: OUTSTAT= with variable name {s} longer than 8 characters (_NAME_ length) is not verified (STAT-FACTOR-008)", .{n});
+    }
     const ks = kernelSpec(s);
     var body: Out = .empty;
     for (groups, 0..) |group, gi| {
@@ -533,6 +591,14 @@ pub fn run(cx: proc.ProcCtx, out: *Out, t: []const lex.Token) diag.Error!void {
         if (widest > ls) return gap(cx.diags, l0, "PROC FACTOR: tables wider than the line size ({d} > {d}) are not implemented", .{ widest, ls });
         const sol = try solve(a, e, p, r.count);
         try cx.diags.note(0, "{d} {s} will be retained by the {s} criterion.", .{ r.count, if (r.count == 1) "factor" else "factors", r.criterion });
+        if (s.outstat) |member| {
+            if (r.count > 9) return gap(cx.diags, l0, "PROC FACTOR: OUTSTAT= with more than nine factors (_NAME_ length) is not verified (STAT-FACTOR-008)", .{});
+            const o = try outstatSet(a, member, names, m, sel.n, e, sol, factors);
+            try cx.lib.put(member, o);
+            const upper = try std.ascii.allocUpperString(a, member);
+            const prefix: []const u8 = if (std.mem.indexOfScalar(u8, member, '.') == null) "WORK." else "";
+            try cx.diags.note(0, "The data set {s}{s} has {d} observations and {d} variables.", .{ prefix, upper, o.rows.items.len, o.columns.items.len });
+        }
         if (s.by_cols.len > 0) try by.reportNote(a, cx.diags, ds, group.rows[0], s.by_cols);
         if (s.noprint) continue;
         const pg: Page = .{ .names = names, .label = label, .factors = factors };

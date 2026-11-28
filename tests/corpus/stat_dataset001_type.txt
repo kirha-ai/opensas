@@ -1,0 +1,19 @@
+a []       3
+c [CORR]   2
+d []       2
+e [MYTYP]  3
+s [CORR]   2
+                          The CONTENTS Procedure
+
+Data Set Name  c
+Data Set Type  CORR
+Observations   2
+Variables      4
+
+              Alphabetic List of Variables and Attributes
+
+#  Variable  Type  Len  Format  Informat  Label
+2  _name_    Char    1
+1  _type_    Char    4
+3  x         Num     8
+4  y         Num     8

@@ -213,6 +213,8 @@ pub fn attrn(dsid: f64, attr: []const u8) f64 {
 pub fn attrc(dsid: f64, attr: []const u8) []const u8 {
     const o = entry(dsid) orelse return "";
     if (eqi(attr, "MEMNAME")) return o.ds.name;
+    // STAT-DATASET-001: the data set TYPE= attribute, blank for an ordinary set (SAS).
+    if (eqi(attr, "TYPE")) return o.ds.ds_type orelse "";
     return "";
 }
 
@@ -489,6 +491,10 @@ test "SCL engine: open/exist/attrn/varnum/fetch/getvar/curobs/fetchobs/close" {
     try t.expectEqual(@as(f64, 2), attrn(id, "NOBS"));
     try t.expectEqual(@as(f64, 2), attrn(id, "NVARS"));
     try t.expectEqualStrings("have", attrc(id, "MEMNAME"));
+    try t.expectEqualStrings("", attrc(id, "TYPE")); // STAT-DATASET-001: ordinary set → blank
+    ds.ds_type = "CORR";
+    try t.expectEqualStrings("CORR", attrc(id, "TYPE")); // STAT-DATASET-001
+    ds.ds_type = null;
     try t.expectEqual(@as(f64, 1), varnum(id, "name"));
     try t.expectEqual(@as(f64, 2), varnum(id, "age"));
     try t.expectEqual(@as(f64, 0), varnum(id, "missing"));

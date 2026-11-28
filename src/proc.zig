@@ -106,6 +106,7 @@ pub fn procInputObs(arena: std.mem.Allocator, ds: *Dataset, toks: []const Token,
     const wstmt = try whereStmtToks(arena, toks);
     if (opts.len == 0 and wstmt == null and !io.globalObsActive()) return .{ .ds = ds };
     const copy = try dupDataset(arena, ds);
+    copy.ds_type = ds.ds_type; // STAT-DATASET-001: the filtered copy keeps the member's TYPE=
     var optdiags = diag.Diagnostics.init(arena); // local: PROC dataset-option WARNINGS drop here (.err promoted below)
     // ponytail: PROC data= is INPUT, but dataset-option WARNINGS are dropped
     // here (local `optdiags`), so DKRICOND-vs-DKROCOND severity is moot for
@@ -388,6 +389,7 @@ pub fn runSort(cx: ProcCtx, toks: []const Token) diag.Error!void {
         const o = try arena.create(Dataset);
         o.* = Dataset.init(arena, out_name.?);
         o.sortseq_linguistic = src.sortseq_linguistic;
+        o.ds_type = src.ds_type; // STAT-DATASET-001: SORT OUT= keeps TYPE= (SAS 9.4 run: CORR stays CORR)
         for (src.columns.items) |c| try o.columns.append(arena, c); // full struct: keep format/informat/label (GH#49)
         try o.rows.appendSlice(arena, src.rows.items);
         if (!out_null) try lib.put(out_name.?, o);
@@ -5982,6 +5984,9 @@ fn printOneContents(arena: std.mem.Allocator, out: *std.ArrayList(u8), ds: *Data
     try out.appendSlice(arena, (" " ** 26) ++ "The CONTENTS Procedure\n\n");
     try out.appendSlice(arena, try std.fmt.allocPrint(arena, "Data Set Name  {s}\n", .{ds.name}));
     if (ds.label) |lbl| try out.appendSlice(arena, try std.fmt.allocPrint(arena, "Label          {s}\n", .{lbl}));
+    // STAT-DATASET-001: a special data set's TYPE= (SAS prints "Data Set Type  CORR";
+    // blank for an ordinary set — omitted here like the blank Label line).
+    if (ds.ds_type) |ty| try out.appendSlice(arena, try std.fmt.allocPrint(arena, "Data Set Type  {s}\n", .{ty}));
     try out.appendSlice(arena, try std.fmt.allocPrint(arena, "Observations   {d}\n", .{ds.rows.items.len}));
     try out.appendSlice(arena, try std.fmt.allocPrint(arena, "Variables      {d}\n\n", .{nvar}));
 
