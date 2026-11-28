@@ -7,6 +7,14 @@
  * rational arithmetic (normal equations over Fractions) and rounded to the
  * BESTD18.9 template format (SAS truncates at the 15th significant digit);
  * opensas's Givens fit carries f128 and matches it.
+ * DEVIATION (strict, disclosed): SAS prints Prices 1324.506793624790,
+ * GNP**2 3.1369569286211E-8, Military 4.911620145609, Year**2
+ * 50.806760353824; this fixture expects 1324.506793624720,
+ * 3.1369569286216E-8, 4.911620145608, 50.806760353826. Executable
+ * justification (exact values, derived componentwise-condition bound
+ * covering both, strict inequality asserted): Zig test "STAT-ORTHOREG-001
+ * Longley cells: opensas vs SAS vs exact least squares" in
+ * src/stat/orthoreg_tests.zig.
  */
 options nodate nonumber nocenter linesize=160 pagesize=max;
 title 'PROC ORTHOREG used with Longley data';
