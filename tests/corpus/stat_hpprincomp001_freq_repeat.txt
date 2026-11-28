@@ -1,0 +1,126 @@
+Q3 freq only
+
+The HPPRINCOMP Procedure
+
+      Performance Information
+
+Execution Mode       Single-Machine
+Number of Threads    1             
+
+
+       Data Access Information
+ 
+Data      Engine    Role     Path
+
+WORK.T    V9        Input    On Client
+
+
+                   Model Information
+
+Data Source                    WORK.T                  
+Component Extraction Method    Eigenvalue Decomposition
+
+
+Number of Observations Read             12
+Number of Observations Used             10
+Sum of Frequencies Read                 14
+Sum of Frequencies Used                 13
+
+
+Number of Variables                    2
+Number of Principal Components         2
+
+
+          Simple Statistics
+ 
+                              Standard
+Variable           Mean      Deviation
+
+x               5.00000        2.67706
+y               3.84615        2.54448
+
+
+      Correlation Matrix
+ 
+Variable          x          y
+
+x            1.0000     0.7830
+y            0.7830     1.0000
+
+
+              Eigenvalues of the Correlation Matrix
+ 
+          Eigenvalue      Difference    Proportion    Cumulative
+
+   1        1.782964        1.565928        0.8915        0.8915
+   2        0.217036                        0.1085        1.0000
+
+
+             Eigenvectors
+ 
+Variable          Prin1          Prin2
+
+x               0.70711        0.70711
+y               0.70711       -0.70711
+Q7 dup option
+
+The HPPRINCOMP Procedure
+
+      Performance Information
+
+Execution Mode       Single-Machine
+Number of Threads    1             
+
+
+       Data Access Information
+ 
+Data      Engine    Role     Path
+
+WORK.T    V9        Input    On Client
+
+
+                   Model Information
+
+Data Source                    WORK.T                  
+Component Extraction Method    Eigenvalue Decomposition
+
+
+Number of Observations Read             12
+Number of Observations Used             11
+
+
+Number of Variables                    2
+Number of Principal Components         2
+
+
+          Simple Statistics
+ 
+                              Standard
+Variable           Mean      Deviation
+
+x               4.81818        2.52262
+y               4.09091        2.58668
+
+
+      Correlation Matrix
+ 
+Variable          x          y
+
+x            1.0000     0.7690
+y            0.7690     1.0000
+
+
+              Eigenvalues of the Correlation Matrix
+ 
+          Eigenvalue      Difference    Proportion    Cumulative
+
+   1        1.769044        1.538088        0.8845        0.8845
+   2        0.230956                        0.1155        1.0000
+
+
+             Eigenvectors
+ 
+Variable          Prin1          Prin2
+
+x               0.70711        0.70711
+y               0.70711       -0.70711

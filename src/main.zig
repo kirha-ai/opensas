@@ -3172,6 +3172,13 @@ fn runProc(a: std.mem.Allocator, listing_out: *std.ArrayList(u8), lib: *sas.exec
             try out.appendSlice(a, body.items);
             try g.emitFootnotes(a, out);
         }
+    } else if (eqi(proc, "hpprincomp")) {
+        // Titles and BY lines are emitted per page by the procedure.
+        var hpprincomp_context = pcx;
+        hpprincomp_context.listing_titles = g;
+        // Writes straight to `out`: SAS keeps the tables printed before an
+        // all-observations-missing ERROR.
+        try sas.hpprincomp.run(hpprincomp_context, out, toks);
     } else if (eqi(proc, "lifetest")) {
         var body: std.ArrayList(u8) = .empty;
         try sas.lifetest.run(pcx, &body, toks);

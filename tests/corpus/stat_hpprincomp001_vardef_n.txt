@@ -1,0 +1,66 @@
+R3 vardef=n
+
+The HPPRINCOMP Procedure
+
+      Performance Information
+
+Execution Mode       Single-Machine
+Number of Threads    1             
+
+
+       Data Access Information
+ 
+Data      Engine    Role     Path
+
+WORK.T    V9        Input    On Client
+
+
+                   Model Information
+
+Data Source                    WORK.T                  
+Component Extraction Method    Eigenvalue Decomposition
+
+
+Number of Observations Read             12
+Number of Observations Used             11
+
+
+Number of Variables                    3
+Number of Principal Components         3
+
+
+          Simple Statistics
+ 
+                              Standard
+Variable           Mean      Deviation
+
+x               4.81818        2.40523
+y               4.09091        2.46630
+z_ab            0.00242        0.00109
+
+
+           Correlation Matrix
+ 
+Variable          x          y       z_ab
+
+x            1.0000     0.7690     0.2853
+y            0.7690     1.0000     0.3304
+z_ab         0.2853     0.3304     1.0000
+
+
+              Eigenvalues of the Correlation Matrix
+ 
+          Eigenvalue      Difference    Proportion    Cumulative
+
+   1        1.965510        1.160402        0.6552        0.6552
+   2        0.805108        0.575725        0.2684        0.9235
+   3        0.229382                        0.0765        1.0000
+
+
+                    Eigenvectors
+ 
+Variable          Prin1          Prin2          Prin3
+
+x               0.63916       -0.32649        0.69634
+y               0.64986       -0.25492       -0.71603
+z_ab            0.41128        0.91018        0.04924

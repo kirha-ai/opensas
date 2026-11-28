@@ -1,0 +1,64 @@
+R2 weight vardef=weight
+
+The HPPRINCOMP Procedure
+
+      Performance Information
+
+Execution Mode       Single-Machine
+Number of Threads    1             
+
+
+       Data Access Information
+ 
+Data      Engine    Role     Path
+
+WORK.T    V9        Input    On Client
+
+
+                   Model Information
+
+Data Source                    WORK.T                  
+Component Extraction Method    Eigenvalue Decomposition
+
+
+Number of Observations Read             12
+Number of Observations Used              8
+Sum of Weights Read                   11.5
+Sum of Weights Used                   10.5
+
+
+Number of Variables                    2
+Number of Principal Components         2
+
+
+          Simple Statistics
+ 
+                              Standard
+Variable           Mean      Deviation
+
+x               4.66667        2.41687
+y               3.09524        2.50532
+
+
+      Correlation Matrix
+ 
+Variable          x          y
+
+x            1.0000     0.8074
+y            0.8074     1.0000
+
+
+              Eigenvalues of the Correlation Matrix
+ 
+          Eigenvalue      Difference    Proportion    Cumulative
+
+   1        1.807408        1.614815        0.9037        0.9037
+   2        0.192592                        0.0963        1.0000
+
+
+             Eigenvectors
+ 
+Variable          Prin1          Prin2
+
+x               0.70711        0.70711
+y               0.70711       -0.70711

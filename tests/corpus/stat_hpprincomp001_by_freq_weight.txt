@@ -1,0 +1,73 @@
+R1 freq weight by
+
+The HPPRINCOMP Procedure
+
+      Performance Information
+
+Execution Mode       Single-Machine
+Number of Threads    1             
+
+
+       Data Access Information
+ 
+Data      Engine    Role     Path
+
+WORK.T    V9        Input    On Client
+R1 freq weight by
+
+g=2
+
+The HPPRINCOMP Procedure
+
+                   Model Information
+
+Data Source                    WORK.T                  
+Component Extraction Method    Eigenvalue Decomposition
+
+
+Number of Observations Read              6
+Number of Observations Used              4
+Sum of Frequencies Read                  7
+Sum of Frequencies Used                  5
+Sum of Weights Read                      7
+Sum of Weights Used                      7
+
+
+Number of Variables                    3
+Number of Principal Components         2
+
+
+          Simple Statistics
+ 
+                              Standard
+Variable           Mean      Deviation
+
+x               6.00000        2.88675
+y               4.00000        3.10913
+z_ab            0.00220        0.00103
+
+
+           Correlation Matrix
+ 
+Variable          x          y       z_ab
+
+x            1.0000     0.8356     0.8019
+y            0.8356     1.0000     0.9580
+z_ab         0.8019     0.9580     1.0000
+
+
+              Eigenvalues of the Correlation Matrix
+ 
+          Eigenvalue      Difference    Proportion    Cumulative
+
+   1        2.732156        2.504113        0.9107        0.9107
+   2        0.228043                        0.0760        0.9867
+
+
+             Eigenvectors
+ 
+Variable           Abc1           Abc2
+
+x               0.55578        0.82636
+y               0.59131       -0.31621
+z_ab            0.58434       -0.46599
