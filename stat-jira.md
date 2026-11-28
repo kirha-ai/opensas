@@ -18,9 +18,9 @@ This section is the only current status summary; every section below it is a his
 - **Open review (not done):** the originals of GENMOD-001/002/018, ANOVA-001/007, FREQ-014, PHREG-003 and LIFETEST-001/002 now match exactly but the tickets stay PARK; check each against its full acceptance criteria and recorded remaining gaps before any is marked DONE.
 - **Interrupted by the full disk:** STAT-ANOVA-009 and STAT-PHREG-004 are TODO (no file changed; reading notes in the tickets). STAT-LIFETEST-003 and STAT-GENMOD-003 are PARK with UNCOMMITTED, NEVER-COMPILED source retained in `opensas-dev5` (`stat-b6/lifetest003-dev5`) and `opensas-dev7` (`stat-b6/genmod003-dev7`); do not integrate it before it is built, tested and committed there.
 - **User approval (2026-11-28):** SASHELP sample data taken from SAS's public sample material may be committed to this public repository, for STAT-SASHELP-001 and the later SASHELP tickets; record source and verification, never invent rows, ask before adding a data set above about 2 MB.
-- **Live slots (auto):** dev1 STAT-GLMMOD-001, dev2 STAT-DISTANCE-001, dev3 STAT-ORTHOREG-001, dev4 STAT-CORRESP-001, dev5 STAT-LATTICE-001, dev6 STAT-INBREED-001, dev7 STAT-STDIZE-001.
-- **Integrated locally, awaiting batch verification (auto):** STAT-SASHELP-001 (PARK), STAT-SCORE-001 (PARK), STAT-NESTED-001 (PARK).
-- **Counts:** 55 DONE, 102 PARK, 7 DOING, 1258 TODO.
+- **Live slots (auto):** dev1 STAT-RSREG-001, dev2 STAT-DISTANCE-001, dev3 STAT-ORTHOREG-001, dev4 STAT-CORRESP-001, dev5 STAT-LATTICE-001, dev6 STAT-INBREED-001, dev7 STAT-STDIZE-001.
+- **Integrated locally, awaiting batch verification (auto):** STAT-SASHELP-001 (PARK), STAT-SCORE-001 (PARK), STAT-NESTED-001 (PARK), STAT-GLMMOD-001 (DONE candidate).
+- **Counts:** 55 DONE, 102 PARK, 8 DOING, 1257 TODO.
 - **Next:** integrate each returned ticket, refill its slot from the current tip, verify and push the next batch; run the open review above.
 - **Working branch:** `feat/stat/batch-4`. Last tested and pushed code SHA `86b2d33ada09baa3aebe968febca3ffff8b5f625` (batch 8; batch 7 was `43c2bdef2e694a523f1f95f99bec9ebb4e7b1da4`). The bullets below this one describe batch 5 and are historical. Later commits that touch only this file are documentation. No PR created or merged; `main` untouched.
 - **Batch 5 verification at that exact SHA (2026-11-28):** whole `tests/STAT15.4-oracle/` moved out of the checkout, then `zig build gate -j2 --summary all` direct exit 0 — **2380/2380 unit tests** (2262 + 102 + 13 + 3), **2409/2409 corpus**, **11/11 programs**; `zig build install` direct 0; separate supplemental direct 0, **1113/1113**. Oracle restored unchanged (1425 entries), tree clean.
@@ -13366,7 +13366,7 @@ Source: S154, Chapter 108, `The RSREG Procedure`, PDF pp. 8863–8900. Tasks in 
 
 <a id="stat-rsreg-001"></a>
 
-### [TODO] STAT-RSREG-001 — RSREG — Data input, variable roles, and basic options
+### [DOING @dev1] STAT-RSREG-001 — RSREG — Data input, variable roles, and basic options
 
 - Source: S154 / Chapter 108 / `PROC RSREG Statement` (PDF pp. 8870–8874); S154 / Chapter 108 / `BY Statement` (PDF p. 8874); S154 / Chapter 108 / `ID Statement` (PDF p. 8874); S154 / Chapter 108 / `WEIGHT Statement` (PDF pp. 8878–8879); S154 / Chapter 108 / `Missing Values` (PDF pp. 8881–8882).
 - Scope: Integrate PROC RSREG declarations, basic options, defaults, and execution boundaries; this ticket establishes parameter objects and result interfaces, while later feature tickets implement model-, algorithm-, and output-specific options. Also implement BY; ID; WEIGHT; Missing Values; apply this procedure's rules for missing values, variable roles, and observation selection.
