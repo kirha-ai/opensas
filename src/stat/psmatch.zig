@@ -1,5 +1,5 @@
 //! PROC PSMATCH (SAS/STAT 15.4 ch.101, STAT-PSMATCH-001): PROC statement
-//! (DATA=, REGION=CS), CLASS / PSMODEL / MATCH / ASSESS / OUTPUT / BY / FREQ /
+//! (DATA=, REGION=ALLOBS|CS|TREATED with suboptions), CLASS / PSMODEL / MATCH / ASSESS / OUTPUT / BY / FREQ /
 //! ID declarations and roles, the binary logistic propensity score fit, the
 //! extended common support region, greedy nearest neighbor matching without
 //! replacement (deterministic ORDER=DESCENDING|ASCENDING, K=1) and the default
@@ -12,6 +12,10 @@
 //! - Pooled SD = sqrt((var_treated + var_control) / 2), n-1 divisors, over all
 //!   observations; CS = [max(min_t, min_c), min(max_t, max_c)] in LPS,
 //!   extended by 0.25 * pooled SD(LPS) at each end (EXTEND default).
+//!   REGION=TREATED (default with MATCH) uses [min_t, max_t]; EXTEND(DISTANCE=PS)
+//!   works on the PS scale, MULT=ONE drops the SD factor, LOWER=/UPPER= replace
+//!   p at one end; REGION=ALLOBS is [min PS, max PS] or [PSMIN, PSMAX]. All
+//!   verified against a batched SAS 9.4 run (tests/corpus/stat_psmatch001_region*).
 //! - Caliper = r * pooled SD(LPS) (MULT=STDDEV default); treated units in the
 //!   region in descending PS order each take the nearest available control in
 //!   LPS (ties: first in data order) when |difference| <= caliper.
@@ -35,6 +39,22 @@ const nan = std.math.nan(f64);
 pub const Order = enum { descending, ascending };
 pub const ObsSel = enum { all, region, match };
 
+/// REGION= (pp. 8202-8204). Default REGION=TREATED with MATCH.
+pub const RegionKind = enum { allobs, cs, treated };
+pub const Region = struct {
+    kind: RegionKind = .treated,
+    /// EXTEND=p, LOWER=pl, UPPER=pu (null: p).
+    extend: f64 = 0.25,
+    lower: ?f64 = null,
+    upper: ?f64 = null,
+    ps_dist: bool = false,
+    mult_one: bool = false,
+    /// REGION=ALLOBS(PSMIN= PSMAX=); `bounded` when either is given.
+    psmin: f64 = 0,
+    psmax: f64 = 1,
+    bounded: bool = false,
+};
+
 pub const Spec = struct {
     input: proc.ProcInput,
     data_name: []const u8 = "",
@@ -46,6 +66,7 @@ pub const Spec = struct {
     k: usize = 1,
     order: Order = .descending,
     caliper: f64 = 0.25,
+    region: Region = .{},
     assess: bool = false,
     assess_lps: bool = false,
     assess_vars: []const usize = &.{},
@@ -97,6 +118,83 @@ fn oneVar(cx: proc.ProcCtx, ds: *const Dataset, t: []const lex.Token, i: usize, 
     return ci;
 }
 
+/// REGION=ALLOBS<(PSMIN= PSMAX=)> | CS|TREATED<(EXTEND<(DISTANCE= MULT=)>=p<(LOWER= UPPER=)>)>.
+/// Returns the index after the option.
+fn parseRegion(cx: proc.ProcCtx, t: []const lex.Token, start: usize, r: *Region) diag.Error!usize {
+    const gap = proc.failGap;
+    const l = line(t, start);
+    var i = start;
+    if (kw(t, i, "allobs")) r.kind = .allobs else if (kw(t, i, "cs")) r.kind = .cs else if (kw(t, i, "treated")) r.kind = .treated else return cx.diags.fail(error.ParseError, l, "PROC PSMATCH: REGION= must be ALLOBS, CS or TREATED", .{});
+    i += 1;
+    if (!at(t, i, .lparen)) return i;
+    i += 1;
+    if (r.kind == .allobs) {
+        var min_seen = false;
+        var max_seen = false;
+        while (!at(t, i, .rparen)) {
+            const is_min = kw(t, i, "psmin");
+            if (!(is_min or kw(t, i, "psmax")) or !at(t, i + 1, .eq)) return invalid(cx, t, i);
+            if ((is_min and min_seen) or (!is_min and max_seen)) return gap(cx.diags, l, "PROC PSMATCH: a repeated REGION=ALLOBS suboption is not verified", .{});
+            var v: f64 = 0;
+            i = number(t, i + 2, &v) orelse return invalid(cx, t, i + 2);
+            if (v < 0 or v > 1) return cx.diags.fail(error.ParseError, l, "PROC PSMATCH: PSMIN= and PSMAX= must lie between 0 and 1", .{});
+            if (is_min) {
+                r.psmin = v;
+                min_seen = true;
+            } else {
+                r.psmax = v;
+                max_seen = true;
+            }
+        }
+        // ponytail: only both bounds together are SAS-verified ("PS Bounded Obs").
+        if (!(min_seen and max_seen)) return gap(cx.diags, l, "PROC PSMATCH: REGION=ALLOBS with only one of PSMIN=/PSMAX= is not verified", .{});
+        if (r.psmin > r.psmax) return cx.diags.fail(error.ParseError, l, "PROC PSMATCH: PSMIN= must not exceed PSMAX=", .{});
+        r.bounded = true;
+        return i + 1;
+    }
+    if (!kw(t, i, "extend")) return invalid(cx, t, i);
+    i += 1;
+    if (at(t, i, .lparen)) {
+        i += 1;
+        var d_seen = false;
+        var m_seen = false;
+        while (!at(t, i, .rparen)) {
+            if (kw(t, i, "distance") and at(t, i + 1, .eq) and !d_seen) {
+                d_seen = true;
+                if (kw(t, i + 2, "ps")) r.ps_dist = true else if (!kw(t, i + 2, "lps")) return cx.diags.fail(error.ParseError, l, "PROC PSMATCH: EXTEND DISTANCE= must be LPS or PS", .{});
+            } else if (kw(t, i, "mult") and at(t, i + 1, .eq) and !m_seen) {
+                m_seen = true;
+                if (kw(t, i + 2, "one")) r.mult_one = true else if (!kw(t, i + 2, "stddev")) return cx.diags.fail(error.ParseError, l, "PROC PSMATCH: EXTEND MULT= must be ONE or STDDEV", .{});
+            } else return invalid(cx, t, i);
+            i += 3;
+        }
+        i += 1;
+    }
+    if (!at(t, i, .eq)) return invalid(cx, t, i);
+    i = number(t, i + 1, &r.extend) orelse return invalid(cx, t, i + 1);
+    if (r.extend < 0) return cx.diags.fail(error.ParseError, l, "PROC PSMATCH: EXTEND= must be nonnegative", .{});
+    if (at(t, i, .lparen)) {
+        i += 1;
+        while (!at(t, i, .rparen)) {
+            const is_lo = kw(t, i, "lower");
+            if (!(is_lo or kw(t, i, "upper")) or !at(t, i + 1, .eq)) return invalid(cx, t, i);
+            if ((is_lo and r.lower != null) or (!is_lo and r.upper != null)) return gap(cx.diags, l, "PROC PSMATCH: a repeated LOWER=/UPPER= suboption is not verified", .{});
+            var v: f64 = 0;
+            i = number(t, i + 2, &v) orelse return invalid(cx, t, i + 2);
+            if (v < 0) return cx.diags.fail(error.ParseError, l, "PROC PSMATCH: LOWER= and UPPER= must be nonnegative", .{});
+            if (is_lo) r.lower = v else r.upper = v;
+        }
+        i += 1;
+    }
+    if (!at(t, i, .rparen)) return invalid(cx, t, i);
+    const lo = r.lower orelse r.extend;
+    const hi = r.upper orelse r.extend;
+    // ponytail: the unextended TREATED label is not SAS-verified.
+    if (r.kind == .treated and lo == 0 and hi == 0) return gap(cx.diags, l, "PROC PSMATCH: REGION=TREATED without an extension is not verified", .{});
+    if (r.kind == .cs and lo == 0 and hi == 0 and (r.lower != null or r.upper != null)) return gap(cx.diags, l, "PROC PSMATCH: REGION=CS with LOWER=0 UPPER=0 is not verified", .{});
+    return i + 1;
+}
+
 pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
     const a = cx.arena;
     const gap = proc.failGap;
@@ -121,12 +219,7 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
         } else if (kw(t, i, "region") and at(t, i + 1, .eq)) {
             if (region_seen) return gap(cx.diags, l, "PROC PSMATCH: repeated REGION= option is not verified", .{});
             region_seen = true;
-            if (kw(t, i + 2, "cs")) {
-                if (at(t, i + 3, .lparen)) return gap(cx.diags, l, "PROC PSMATCH: REGION=CS(EXTEND=...) suboptions are not implemented (STAT-PSMATCH-002)", .{});
-                i += 3;
-            } else if (kw(t, i + 2, "treated") or kw(t, i + 2, "allobs")) {
-                return gap(cx.diags, l, "PROC PSMATCH: REGION={s} is not implemented; only REGION=CS is verified (STAT-PSMATCH-002)", .{t[i + 2].text});
-            } else return cx.diags.fail(error.ParseError, l, "PROC PSMATCH: REGION= must be ALLOBS, CS or TREATED", .{});
+            i = try parseRegion(cx, t, i + 2, &s.region);
         } else return invalid(cx, t, i);
     }
     if (!at(t, i, .semicolon)) return invalid(cx, t, i);
@@ -313,7 +406,6 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
     // p.8211: MATCH is not allowed with FREQ.
     if (s.match and s.freq != null) return cx.diags.fail(error.ParseError, line(t, 0), "PROC PSMATCH: the MATCH statement is not allowed if a FREQ statement is specified", .{});
     if (!s.match) return gap(cx.diags, line(t, 0), "PROC PSMATCH: analysis without a MATCH statement (weighting, stratification) is not implemented (STAT-PSMATCH-002/007)", .{});
-    if (!region_seen) return gap(cx.diags, line(t, 0), "PROC PSMATCH: the default REGION=TREATED is not implemented; only REGION=CS is verified (STAT-PSMATCH-002)", .{});
     if (!s.assess) return gap(cx.diags, line(t, 0), "PROC PSMATCH: a MATCH analysis without an ASSESS statement is not verified", .{});
     if (s.out != null and s.out_obs != .match) return gap(cx.diags, line(t, 0), "PROC PSMATCH: OUTPUT OUT(OBS=ALL|REGION)= with MATCH is not verified (STAT-PSMATCH-006)", .{});
     if (covs.items.len == 0) return gap(cx.diags, line(t, 0), "PROC PSMATCH: an intercept-only PSMODEL is not verified", .{});
@@ -380,6 +472,11 @@ pub const Fail = error{ OutOfMemory, NotConverged, Unmatched, Degenerate, Levels
 /// Matching on already computed propensity scores (`used` marks analysed
 /// rows). Exposed for unit tests.
 pub fn matchGreedy(a: A, ps: []f64, treated: []const bool, used: []const bool, caliper_r: f64, order: Order, g: *Group) Fail!void {
+    return matchGreedyIn(a, ps, treated, used, caliper_r, order, .{ .kind = .cs }, g);
+}
+
+/// Greedy matching inside the REGION= support region (pp. 8203-8204).
+pub fn matchGreedyIn(a: A, ps: []f64, treated: []const bool, used: []const bool, caliper_r: f64, order: Order, reg: Region, g: *Group) Fail!void {
     const n = ps.len;
     const lps = try a.alloc(f64, n);
     for (ps, 0..) |p, r| lps[r] = if (used[r]) @log(p / (1 - p)) else nan;
@@ -394,13 +491,31 @@ pub fn matchGreedy(a: A, ps: []f64, treated: []const bool, used: []const bool, c
     const sc = stats(lps, selc);
     if (st.n < 2 or sc.n < 2) return error.Degenerate;
     const sd = @sqrt((st.variance + sc.variance) / 2);
-    const lo = @max(st.min, sc.min) - 0.25 * sd;
-    const hi = @min(st.max, sc.max) + 0.25 * sd;
-    g.lower = lfit.probability(lo);
-    g.upper = lfit.probability(hi);
     g.caliper = caliper_r * sd;
+    // The region is an interval on the EXTEND DISTANCE= scale (LPS or PS).
+    const xs = if (reg.ps_dist or reg.kind == .allobs) ps else lps;
+    var lo: f64 = undefined;
+    var hi: f64 = undefined;
+    switch (reg.kind) {
+        .allobs => {
+            const sa = stats(ps, used);
+            lo = if (reg.bounded) reg.psmin else sa.min;
+            hi = if (reg.bounded) reg.psmax else sa.max;
+        },
+        .cs, .treated => {
+            const xt = stats(xs, selt);
+            const xc = stats(xs, selc);
+            lo = if (reg.kind == .cs) @max(xt.min, xc.min) else xt.min;
+            hi = if (reg.kind == .cs) @min(xt.max, xc.max) else xt.max;
+            const m = if (reg.mult_one) 1 else @sqrt((xt.variance + xc.variance) / 2);
+            lo -= (reg.lower orelse reg.extend) * m;
+            hi += (reg.upper orelse reg.extend) * m;
+        },
+    }
+    g.lower = if (xs.ptr == ps.ptr) lo else lfit.probability(lo);
+    g.upper = if (xs.ptr == ps.ptr) hi else lfit.probability(hi);
     const in_region = try a.alloc(bool, n);
-    for (0..n) |r| in_region[r] = used[r] and lps[r] >= lo and lps[r] <= hi;
+    for (0..n) |r| in_region[r] = used[r] and xs[r] >= lo and xs[r] <= hi;
     g.in_region = in_region;
     // Treated units in the region, ordered by PS (stable: data order on ties).
     var order_rows: std.ArrayList(usize) = .empty;
@@ -551,7 +666,7 @@ fn analyze(a: A, ds: *const Dataset, rows: []const []const Value, s: Spec) Fail!
     g.ps = ps;
     g.treated = treated;
     g.used = used;
-    try matchGreedy(a, ps, treated, used, s.caliper, s.order, &g);
+    try matchGreedyIn(a, ps, treated, used, s.caliper, s.order, s.region, &g);
     return g;
 }
 
@@ -565,6 +680,15 @@ fn fixed(a: A, v: f64, d: usize) ![]const u8 {
         else => std.fmt.allocPrint(a, "{d:.6}", .{v}),
     };
 }
+/// BEST8. for a value in [0, 1]: six decimals, trailing zeros dropped
+/// (SAS prints 0.36401, 0.4). ponytail: PS support bounds only.
+fn best8(a: A, v: f64) ![]const u8 {
+    var txt = try fixed(a, v, 6);
+    while (txt.len > 1 and txt[txt.len - 1] == '0') txt = txt[0 .. txt.len - 1];
+    if (txt.len > 1 and txt[txt.len - 1] == '.') txt = txt[0 .. txt.len - 1];
+    return txt;
+}
+
 fn spaces(a: A, out: *Out, n: usize) !void {
     try out.appendNTimes(a, ' ', n);
 }
@@ -655,9 +779,15 @@ fn render(cx: proc.ProcCtx, out: *Out, ds: *const Dataset, s: Spec, g: Group, ro
     try info.append(a, .{ "Treated Group", s.treated_text });
     try info.append(a, .{ "All Obs (Treated)", try std.fmt.allocPrint(a, "{d}", .{cnt(ta)}) });
     try info.append(a, .{ "All Obs (Control)", try std.fmt.allocPrint(a, "{d}", .{cnt(ca)}) });
-    try info.append(a, .{ "Support Region", "Extended Common Support" });
-    try info.append(a, .{ "Lower PS Support", try fixed(a, g.lower, 6) });
-    try info.append(a, .{ "Upper PS Support", try fixed(a, g.upper, 6) });
+    const reg = s.region;
+    const extended = (reg.lower orelse reg.extend) != 0 or (reg.upper orelse reg.extend) != 0;
+    try info.append(a, .{ "Support Region", switch (reg.kind) {
+        .allobs => if (reg.bounded) "PS Bounded Obs" else "All Obs",
+        .cs => if (extended) "Extended Common Support" else "Common Support",
+        .treated => "Extended Treated Group",
+    } });
+    try info.append(a, .{ "Lower PS Support", try best8(a, g.lower) });
+    try info.append(a, .{ "Upper PS Support", try best8(a, g.upper) });
     try info.append(a, .{ "Support Region Obs (Treated)", try std.fmt.allocPrint(a, "{d}", .{cnt(tr)}) });
     try info.append(a, .{ "Support Region Obs (Control)", try std.fmt.allocPrint(a, "{d}", .{cnt(cr)}) });
     try keyValue(a, out, "Data Information", info.items);

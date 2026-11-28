@@ -1,0 +1,5 @@
+# corpus assertions
+empty-listing
+stderr-count 1 REGION=TREATED without an extension is not verified
+stderr-count 1 REGION=ALLOBS with only one of PSMIN=/PSMAX= is not verified
+stderr-count 1 REGION=CS with LOWER=0 UPPER=0 is not verified

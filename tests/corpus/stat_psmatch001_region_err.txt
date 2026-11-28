@@ -1,0 +1,7 @@
+# corpus assertions
+empty-listing
+stderr-count 1 REGION= must be ALLOBS, CS or TREATED
+stderr-count 1 EXTEND= must be nonnegative
+stderr-count 1 PSMIN= and PSMAX= must lie between 0 and 1
+stderr-count 1 PSMIN= must not exceed PSMAX=
+stderr-count 1 EXTEND DISTANCE= must be LPS or PS
