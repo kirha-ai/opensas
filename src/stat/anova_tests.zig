@@ -255,11 +255,11 @@ test "ANOVA001 missing values: per-response selection, CLASS exclusion and MANOV
     try close(9, fit.type_i[0].ss);
     try close(1, fit.model.fit.sse);
     try has(try listing(a, ds, "proc anova manova; class g; model y1 y2=g; run;"), "Number of Observations Read 7\nNumber of Observations Used 4\n");
-    // The per-pattern dependent-variable group display is not implemented.
-    try t.expectEqual(@as(u8, 2), try exitOf(a, ds, "proc anova; class g; model y1 y2=g; run;"));
-    // Nothing usable: user error.
+    // Different patterns: one "Data for Analysis" block per pattern (close-out test below).
+    try t.expectEqual(@as(u8, 0), try exitOf(a, ds, "proc anova; class g; model y1 y2=g; run;"));
+    // SAS reference: an empty data set is a NOTE, no tables, no error.
     const empty = try table(a, "z", &.{ "g", "y" }, &.{});
-    try t.expectEqual(@as(u8, 1), try exitOf(a, empty, "proc anova; class g; model y=g; run;"));
+    try t.expectEqual(@as(u8, 0), try exitOf(a, empty, "proc anova; class g; model y=g; run;"));
     const blank = try table(a, "m", &.{ "g", "y" }, &.{ .{ 1, M }, .{ M, 2 } });
     try t.expectEqual(@as(u8, 1), try exitOf(a, blank, "proc anova; class g; model y=g; run;"));
 }
@@ -636,4 +636,104 @@ test "ANOVA010 graph triggers and suppression: one-way model, MEANS, PLOTS=NONE,
         try t.expectEqual(case.code, code);
         try t.expectEqual(@as(usize, 0), ge.session.prepared.items.len);
     }
+}
+
+// ---- STAT-ANOVA-001 close-out: layouts checked against SAS 9.4 listings of
+// the same invented data (see tests/corpus/stat_anova_missing.sas). ----
+
+test "ANOVA001 different missing patterns: per-pattern groups, union class levels, interactivity disabled" {
+    var arena = std.heap.ArenaAllocator.init(t.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    // y1 and y3 miss row 5 only; y2 misses rows 3, 8, 9 (all of level 3).
+    const ds = try table(a, "s", &.{ "g", "y1", "y2", "y3" }, &.{ .{ 1, 1, 10, 4 }, .{ 1, 2, 11, 5 }, .{ 2, 3, M, 6 }, .{ 2, 5, 13, 7 }, .{ 1, M, 12, M }, .{ 2, 4, 15, 8 }, .{ 1, 6, 14, 2 }, .{ 3, 8, M, 1 }, .{ 3, 9, M, 3 } });
+    const text = try listing(a, ds, "proc anova; class g; model y1 y2 y3=g; run;");
+    try has(text, "\ng 3 1 2 3\n\nData for Analysis of y1 y3\n\nNumber of Observations Read 9\nNumber of Observations Used 8\n\nData for Analysis of y2\n\nNumber of Observations Read 9\nNumber of Observations Used 6\n\nNOTE: Variables in each group are consistent with respect to the presence or absence of missing values.\n");
+    // Pages follow the groups: y1, y3, then y2.
+    const y1 = std.mem.indexOf(u8, text, "Dependent Variable: y1").?;
+    const y3 = std.mem.indexOf(u8, text, "Dependent Variable: y3").?;
+    const y2 = std.mem.indexOf(u8, text, "Dependent Variable: y2").?;
+    try t.expect(y1 < y3 and y3 < y2);
+    // y2 sees only levels 1 and 2: g=1 {10,11,12,14} mean 11.75, g=2 {13,15}
+    // mean 14, grand 12.5: SS = 4*0.75^2 + 2*1.5^2 = 6.75 on 1 DF.
+    try has(text[y2..], "\ng 1 ");
+    try has(text[y2..], " 6.75000000 ");
+    // p.1139: interactivity is disabled; a later MEANS is not consumed.
+    const e = try env(a, ds);
+    const cx = e.cx(a);
+    var out: std.ArrayList(u8) = .empty;
+    try anova.runStep(cx, &out, try lex.tokenize(a, "proc anova; class g; model y1 y2=g; run;", &e.diags));
+    try t.expect(!try anova.continuation(cx, &out, try lex.tokenize(a, "means g; run;", &e.diags)));
+    // Same pattern everywhere keeps the single counts block and interactivity.
+    const same = try listing(a, ds, "proc anova; class g; model y1 y3=g; run;");
+    try t.expect(std.mem.indexOf(u8, same, "Data for Analysis") == null);
+}
+
+test "ANOVA001 FREQ prints frequencies read and used and names the FREQ variable" {
+    var arena = std.heap.ArenaAllocator.init(t.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    // Frequencies read add the truncated values >= 1 of every row:
+    // 1 + 1 (1.5) + 1 + 3 = 6. Used rows also need y and FREQ >= 1:
+    // rows 1, 5 and 6 -> 3 observations, 1 + 1 + 3 = 5 frequencies.
+    const ds = try table(a, "s", &.{ "g", "y", "f" }, &.{ .{ 1, 4, 1 }, .{ 1, 5, -2 }, .{ 2, 6, M }, .{ 2, M, 1.5 }, .{ 1, 7, 1 }, .{ 2, 8, 3 }, .{ 1, 2, 0 } });
+    const text = try listing(a, ds, "proc anova; class g; model y=g; freq f; run;");
+    try has(text, "Number of Observations Read 7\nNumber of Observations Used 3\nSum of Frequencies Read 6\nSum of Frequencies Used 5\n");
+    try has(text, "\nDependent Variable: y\n\nFrequency: f\n");
+}
+
+test "ANOVA001 duplicate declarations, empty BY groups and ANOVA-labelled reader diagnostics" {
+    var arena = std.heap.ArenaAllocator.init(t.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const ds = try table(a, "s", &.{ "u", "g", "y" }, &.{ .{ 1, 1, 1 }, .{ 1, 2, 3 }, .{ 1, 1, 2 }, .{ 1, 2, 6 }, .{ 2, 1, M }, .{ 2, 2, M }, .{ 3, 1, 5 }, .{ 3, 2, 9 } });
+    const other = try table(a, "b", &.{"x"}, &.{.{1}});
+    const e = try env(a, ds);
+    try e.lib.put("b", other);
+    const cx = e.cx(a);
+    // A second DATA= is ignored with a WARNING; the first data set is used.
+    const spec = try anova.parse(cx, try lex.tokenize(a, "proc anova data=s data=b; class g; model y=g; run;", &e.diags));
+    try t.expectEqualStrings("s", spec.input.ds.name);
+    try t.expectEqualStrings("Ignoring second data set reference.", e.diags.list.items[e.diags.list.items.len - 1].message);
+    // A second CLASS statement adds its variables to the first.
+    const merged = try anova.parse(cx, try lex.tokenize(a, "proc anova data=s; class u; class g; model y=g; run;", &e.diags));
+    try t.expectEqualSlices(usize, &.{ 0, 1 }, merged.classes);
+    // p.1117: only the last BY statement is used.
+    const by = try anova.parse(cx, try lex.tokenize(a, "proc anova data=s; by g; by u; class g; model y=g; run;", &e.diags));
+    try t.expectEqualSlices(usize, &.{0}, by.by);
+    try t.expect(!e.diags.hasErrors());
+    // Errors raised by the shared CLASS/MODEL reader name PROC ANOVA.
+    const before = e.diags.list.items.len;
+    try t.expectError(error.ParseError, anova.parse(cx, try lex.tokenize(a, "proc anova data=s; class g; model y=g nosuch; run;", &e.diags)));
+    for (e.diags.list.items[before..]) |item| try t.expect(std.mem.indexOf(u8, item.message, "PROC GLM") == null);
+    try t.expectEqualStrings("PROC ANOVA: variable nosuch not found", e.diags.list.items[e.diags.list.items.len - 1].message);
+    // A BY group without valid observations is an ERROR for that group only:
+    // u=1 and u=3 still print (SAS reference), and the exit class is 1.
+    const e2 = try env(a, ds);
+    var out: std.ArrayList(u8) = .empty;
+    try anova.run(e2.cx(a), &out, try lex.tokenize(a, "proc anova; by u; class g; model y=g; run;", &e2.diags));
+    try has(out.items, "u=1");
+    try has(out.items, "u=3");
+    try t.expect(std.mem.indexOf(u8, out.items, "u=2") == null);
+    try t.expectEqual(@as(u8, 1), diag.exitCode(diag.gapHit(), e2.diags.hasErrors()));
+    // Without BY the same condition is a user error.
+    const blank = try table(a, "m", &.{ "g", "y" }, &.{ .{ 1, M }, .{ 2, M } });
+    try t.expectEqual(@as(u8, 1), try exitOf(a, blank, "proc anova; class g; model y=g; run;"));
+}
+
+test "ANOVA001 NAMELEN shortens effect names as SAS does; unverified shapes stay loud" {
+    var arena = std.heap.ArenaAllocator.init(t.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const ds = try table(a, "s", &.{ "averyveryverylongname_aa", "anotherverylongname_bbb", "y" }, &.{ .{ 1, 1, 1 }, .{ 1, 2, 2 }, .{ 2, 1, 4 }, .{ 2, 2, 7 }, .{ 1, 1, 2 }, .{ 1, 2, 3 }, .{ 2, 1, 5 }, .{ 2, 2, 9 } });
+    const short = try listing(a, ds, "proc anova; class averyveryverylongname_aa anotherverylongname_bbb; model y=averyveryverylongname_aa|anotherverylongname_bbb; run;");
+    try has(short, "\naveryveryverylongnam 1 ");
+    try has(short, "\nanotherverylongname_ 1 ");
+    try has(short, "\naveryvery*anotherver 1 ");
+    const long = try listing(a, ds, "proc anova namelen=40; class averyveryverylongname_aa anotherverylongname_bbb; model y=averyveryverylongname_aa|anotherverylongname_bbb; run;");
+    try has(long, "\naveryveryverylongna*anotherverylongname_ 1 ");
+    try has(long, "\naveryveryverylongname_aa 1 ");
+    // A short first name would leave its share unused: not SAS-verified.
+    const mixed = try table(a, "m", &.{ "g", "anotherveryveryverylongname_bbb", "y" }, &.{ .{ 1, 1, 1 }, .{ 1, 2, 2 }, .{ 2, 1, 4 }, .{ 2, 2, 7 }, .{ 1, 1, 2 }, .{ 1, 2, 3 }, .{ 2, 1, 5 }, .{ 2, 2, 9 } });
+    try t.expectEqual(@as(u8, 2), try exitOf(a, mixed, "proc anova; class g anotherveryveryverylongname_bbb; model y=g|anotherveryveryverylongname_bbb; run;"));
 }

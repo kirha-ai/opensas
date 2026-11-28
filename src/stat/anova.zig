@@ -173,16 +173,45 @@ pub fn parseAll(cx: proc.ProcCtx, tokens: []const lex.Token) diag.Error!Parsed {
     // The shared CLASS/MODEL reader never sees MEANS: ANOVA owns that grammar.
     var rest: std.ArrayList(lex.Token) = .empty;
     var statements: std.ArrayList([]const lex.Token) = .empty;
+    var class_end: ?usize = null; // index of the first CLASS statement's semicolon in `rest`
     var i: usize = 0;
     while (i < tokens.len) {
         var end = i;
         while (end < tokens.len and tokens[end].tag != .semicolon and tokens[end].tag != .eof) end += 1;
         if (kw(tokens, i, "means") and i > 0) {
             try statements.append(cx.arena, tokens[i..end]);
-        } else try rest.appendSlice(cx.arena, tokens[i..@min(tokens.len, end + 1)]);
+        } else if (i == 0) {
+            // SAS reference: a repeated DATA= is ignored with a WARNING and
+            // the first one is used.
+            var data_seen = false;
+            var j: usize = 0;
+            while (j < @min(tokens.len, end + 1)) {
+                if (j >= 2 and kw(tokens, j, "data") and at(tokens, j + 1, .eq)) {
+                    if (data_seen) {
+                        try cx.diags.report(.warning, tokens[j].line, "Ignoring second data set reference.", .{});
+                        j += 3;
+                        if (at(tokens, j, .dot)) j += 2;
+                        if (at(tokens, j, .lparen)) j = proc.skipParen(tokens, j);
+                        continue;
+                    }
+                    data_seen = true;
+                }
+                try rest.append(cx.arena, tokens[j]);
+                j += 1;
+            }
+        } else if (kw(tokens, i, "class") and class_end != null) {
+            // SAS reference: a second CLASS statement adds its variables to
+            // the first; the shared reader takes one CLASS statement.
+            try rest.insertSlice(cx.arena, class_end.?, tokens[i + 1 .. end]);
+            class_end.? += end - (i + 1);
+        } else {
+            if (kw(tokens, i, "class") and i > 0) class_end = rest.items.len + (end - i);
+            try rest.appendSlice(cx.arena, tokens[i..@min(tokens.len, end + 1)]);
+        }
         i = end + 1;
     }
-    var spec = try glm.parse(cx, rest.items);
+    const mark = cx.diags.list.items.len;
+    var spec = glm.parse(cx, rest.items) catch |err| return relabel(cx, mark, err);
     // ANOVA prints one "Anova SS" table; never ask the kernel for Type II–IV.
     spec.ss1 = true;
     for (spec.effects) |effect| for (effect.variables) |ci| {
@@ -304,14 +333,15 @@ fn renderMeans(cx: proc.ProcCtx, out: *std.ArrayList(u8), spec: Spec, group: sel
     try heading(cx, out, spec, group);
     try out.appendSlice(a, "\nLevel of");
     for (designs) |design| {
-        // ponytail: 29-column spanner with the name centred; an odd
-        // remainder puts the extra dash on the right (not SAS-verified).
+        // 29-column spanner with the name centred; an odd remainder puts
+        // the extra dash on the left (SAS reference: 14 + "y1" + 13).
+        // ponytail: names of 29+ characters are not SAS-verified.
         const name = spec.input.ds.columns.items[design.response].name;
         const dashes = if (name.len < 29) 29 - name.len else 2;
         try out.append(a, ' ');
-        try out.appendNTimes(a, '-', dashes / 2);
-        try out.appendSlice(a, name);
         try out.appendNTimes(a, '-', dashes - dashes / 2);
+        try out.appendSlice(a, name);
+        try out.appendNTimes(a, '-', dashes / 2);
     }
     try out.print(a, "\n{s} N", .{spec.input.ds.columns.items[class.column].name});
     for (designs) |_| try out.appendSlice(a, " Mean Std Dev");
@@ -343,11 +373,53 @@ pub fn execute(cx: proc.ProcCtx, out: *std.ArrayList(u8), spec: Spec) diag.Error
     return executeAll(cx, out, .{ .spec = spec, .means = &.{} }, false);
 }
 
+/// Set by executeAll when the dependent variables of some BY group have
+/// different missing-value patterns: p.1139 disables interactivity then.
+var patterns_differ = false;
+
+/// Class Level Information when the dependent-variable groups differ
+/// (pp.1138–1139): levels come from every observation usable for the
+/// independent variables, not from one response's rows (SAS reference: a
+/// level absent for one response is still listed).
+fn classInfo(cx: proc.ProcCtx, spec: Spec, group: selection.View) ![]const glm.design.Class {
+    const a = cx.arena;
+    var required: std.ArrayList(usize) = .empty;
+    for (spec.effects) |effect| for (effect.variables) |ci| if (std.mem.indexOfScalar(usize, required.items, ci) == null) try required.append(a, ci);
+    const usable = try group.select(a, .{ .missing_columns = required.items, .frequency = .truncate_positive, .weight = .positive_only });
+    const rows = try a.alloc([]const @import("../value.zig").Value, usable.observations.len);
+    const counts = try a.alloc(f64, usable.observations.len);
+    for (usable.observations, rows, counts) |row, *r, *c| {
+        r.* = row.cells;
+        c.* = row.frequency.num;
+    }
+    const infos = try a.alloc(glm.design.Class, spec.classes.len);
+    for (spec.classes, infos) |ci, *info| {
+        const formed = try @import("class_levels.zig").build(a, spec.input.ds, rows, ci, .{ .order = spec.order, .frequencies = counts, .missing = .exclude });
+        info.* = .{ .column = ci, .levels = formed.levels, .row_levels = formed.row_to_level };
+    }
+    return infos;
+}
+
+/// Observation and frequency counts of one dependent-variable group (FREQ:
+/// p.1119; SAS reference listing prints both frequency rows).
+fn printCounts(cx: proc.ProcCtx, out: *std.ArrayList(u8), spec: Spec, group: selection.View, d: Design) !void {
+    try out.print(cx.arena, "\nNumber of Observations Read {d}\nNumber of Observations Used {d}\n", .{ d.read, d.n });
+    if (spec.freq == null) return;
+    var read: f64 = 0;
+    for (group.observations) |row| if (row.frequency == .num and std.math.isFinite(row.frequency.num) and @trunc(row.frequency.num) >= 1) {
+        read += @trunc(row.frequency.num);
+    };
+    var used: f64 = 0;
+    for (d.frequencies[0..d.n]) |f| used += f;
+    try out.print(cx.arena, "Sum of Frequencies Read {d}\nSum of Frequencies Used {d}\n", .{ read, used });
+}
+
 /// `means_only` replays the retained model for interactive MEANS: the fit is
 /// rebuilt and validated but the ANOVA tables are not printed again.
 pub fn executeAll(cx: proc.ProcCtx, out: *std.ArrayList(u8), parsed: Parsed, means_only: bool) diag.Error!void {
     const spec = parsed.spec;
     const a = cx.arena;
+    patterns_differ = false;
     const graphs = !spec.noprint and !spec.plots_none and if (cx.graphics) |g| g.enabled == true else false;
     // ponytail: with ODS Graphics the Tukey grouping is the LinesPlot graph
     // (STAT-ANOVA-010). The listing LINES table printed otherwise has no SAS
@@ -358,74 +430,152 @@ pub fn executeAll(cx: proc.ProcCtx, out: *std.ArrayList(u8), parsed: Parsed, mea
     var order: usize = 0;
     const view = try selection.View.init(a, spec.input, .{ .by = spec.by, .frequency = spec.freq });
     const groups = try view.groups(a, spec.descending, spec.notsorted, cx.diags);
-    if (groups.len == 0) return cx.diags.fail(error.ExecError, 0, "PROC ANOVA: no observations in the input data set", .{});
-    for (groups, 0..) |group, group_index| {
+    // SAS reference: an empty input is a NOTE with no tables, not an error.
+    if (groups.len == 0 or view.observations.len == 0) return cx.diags.note(0, "No observations in data set {s}.", .{try @import("variable_lists.zig").datasetName(a, spec.input.ds)});
+    groups: for (groups, 0..) |group, group_index| {
         const by: ?usize = if (spec.by.len != 0) group_index + 1 else null;
-        var first: ?Design = null;
         var designs: std.ArrayList(Design) = .empty;
         var errors: std.ArrayList(ErrorTerm) = .empty;
+        var fits: std.ArrayList(FitResult) = .empty;
         for (spec.responses) |response| {
-            const d = try build(cx, spec, group, response);
-            if (d.n == 0) return cx.diags.fail(error.ExecError, 0, "PROC ANOVA: no valid observations for dependent variable {s}", .{spec.input.ds.columns.items[response].name});
+            const mark = cx.diags.list.items.len;
+            const d = build(cx, spec, group, response) catch |err| return relabel(cx, mark, err);
+            if (d.n == 0) {
+                // SAS reference: this ERROR ends only the current BY group.
+                const message = "PROC ANOVA: One or more variables are missing or freq or weight is zero on every observation.";
+                if (by == null) return cx.diags.fail(error.ExecError, 0, message, .{});
+                try cx.diags.recoverableErr(0, message, .{});
+                continue :groups;
+            }
             if (!try balanced(a, spec, d)) return proc.failGap(cx.diags, 0, "PROC ANOVA: unbalanced or incomplete multi-effect designs are not implemented", .{});
-            if (first) |f| {
-                // p.1139: differing missing patterns form dependent-variable
-                // groups with their own displays; that listing is not validated.
-                if (!std.mem.eql(usize, f.source_rows, d.source_rows)) return proc.failGap(cx.diags, 0, "PROC ANOVA: dependent variables with different missing-value patterns are not implemented; use the MANOVA option", .{});
-            } else first = d;
-            var result = try glm.fitDesign(cx, spec, d);
-            defer result.deinit(a);
+            const result = glm.fitDesign(cx, spec, d) catch |err| return relabel(cx, mark, err);
             if (result.model.fit.rank < d.p) return proc.failGap(cx.diags, 0, "PROC ANOVA: rank-deficient models are not implemented", .{});
             try designs.append(a, d);
             try errors.append(a, .{ .df = @floatFromInt(result.model.fit.df_error), .mse = result.model.fit.mse });
-            if (spec.noprint or means_only) continue;
-            const fitted = result.model.fit;
-            if (first.?.response == response) {
-                try heading(cx, out, spec, group);
-                try out.appendSlice(a, "\nClass Level Information\n\nClass Levels Values\n");
-                for (d.classes) |class| {
-                    try out.print(a, "\n{s} {d}", .{ spec.input.ds.columns.items[class.column].name, class.levels.len });
-                    for (class.levels) |level| try out.print(a, " {s}", .{level.label});
+            try fits.append(a, result);
+        }
+        // pp.1138–1139: dependent variables sharing a missing-value pattern
+        // form one group; groups print in order of their first variable.
+        const owner = try a.alloc(usize, designs.items.len);
+        var partitions: usize = 0;
+        for (designs.items, 0..) |d, k| {
+            owner[k] = for (designs.items[0..k], 0..) |e, j| {
+                if (std.mem.eql(usize, e.source_rows, d.source_rows)) break owner[j];
+            } else blk: {
+                partitions += 1;
+                break :blk partitions - 1;
+            };
+        }
+        const multiple = partitions > 1;
+        if (multiple) patterns_differ = true;
+        if (!spec.noprint and !means_only) {
+            try heading(cx, out, spec, group);
+            try out.appendSlice(a, "\nClass Level Information\n\nClass Levels Values\n");
+            const classes = if (multiple) try classInfo(cx, spec, group) else designs.items[0].classes;
+            for (classes) |class| {
+                try out.print(a, "\n{s} {d}", .{ spec.input.ds.columns.items[class.column].name, class.levels.len });
+                for (class.levels) |level| try out.print(a, " {s}", .{level.label});
+                try out.append(a, '\n');
+            }
+            for (0..partitions) |part| {
+                if (multiple) {
+                    try out.appendSlice(a, "\nData for Analysis of");
+                    for (designs.items, owner) |d, o| if (o == part) try out.print(a, " {s}", .{spec.input.ds.columns.items[d.response].name});
                     try out.append(a, '\n');
                 }
-                try out.print(a, "\nNumber of Observations Read {d}\nNumber of Observations Used {d}\n", .{ d.read, d.n });
-                // ponytail: FREQ summary row follows the GLM listing; no SAS
-                // ANOVA reference for this row was available to this ticket.
-                if (spec.freq != null) try out.print(a, "Sum of Frequencies Used {d}\n", .{fitted.n_used});
+                for (designs.items, owner) |d, o| if (o == part) {
+                    try printCounts(cx, out, spec, group, d);
+                    break;
+                };
             }
-            const model = fitted.modelStats(true);
-            try heading(cx, out, spec, group);
-            const name = spec.input.ds.columns.items[response].name;
-            try out.print(a, "\nDependent Variable: {s}\n\nSum of\nSource DF Squares Mean Square F Value Pr > F\n", .{name});
-            const decimals = places(@max(fitted.sst, @max(model.ss_model, fitted.sse)), 9);
-            try out.print(a, "\nModel {d} {s} {s} {s} {s}\n\nError {d} {s} {s}\n\nCorrected Total {d} {s}\n", .{
-                model.df_model,  try number(a, model.ss_model, decimals), try number(a, model.ms_model, decimals), try number(a, model.f_value, 2), try probability(a, model.p_value),
-                fitted.df_error, try number(a, fitted.sse, decimals),     try number(a, fitted.mse, decimals),     model.df_total,                  try number(a, fitted.sst, decimals),
-            });
-            const cv = 100 * @sqrt(fitted.mse) / fitted.y_mean;
-            try out.print(a, "\nR-Square Coeff Var Root MSE {s} Mean\n\n{s} {s} {s} {s}\n", .{
-                name, try number(a, model.r_square, 6), try number(a, cv, places(@abs(cv), 6)), try number(a, @sqrt(fitted.mse), 6), try number(a, fitted.y_mean, places(@abs(fitted.y_mean), 6)),
-            });
-            var maximum: f64 = 0;
-            for (result.type_i) |effect| maximum = @max(maximum, @abs(effect.ss));
-            const effect_decimals = places(maximum, 9);
-            try out.appendSlice(a, "\nSource DF Anova SS Mean Square F Value Pr > F\n\n");
-            for (spec.effects, result.type_i) |effect, value| try out.print(a, "{s} {d} {s} {s} {s} {s}\n", .{
-                effect.name, value.df, try number(a, value.ss, effect_decimals), try number(a, value.ms, effect_decimals), try number(a, value.f_value, 2), try probability(a, value.p_value),
-            });
-            // pp.1116, 1143: default grouped box plot of a one-way model.
-            if (graphs and oneWay(spec)) try boxPlot(cx, spec, d, 0, .model, by, .{ .f = model.f_value, .p = model.p_value }, &order);
+            if (multiple) try out.appendSlice(a, "\nNOTE: Variables in each group are consistent with respect to the presence or absence of missing values.\n");
         }
-        if (!spec.noprint) for (parsed.means) |request| {
-            // pp.1116, 1143: every MEANS effect gets a box plot per response.
-            if (graphs) for (designs.items) |d| try boxPlot(cx, spec, d, request.effect, .means, by, null, &order);
-            if (request.tukey) {
-                for (designs.items, errors.items) |d, term| try tukeyPage(cx, out, spec, group, d, term, request, by, &order);
-            } else try renderMeans(cx, out, spec, group, designs.items, request);
-        };
+        for (0..partitions) |part| {
+            var members: std.ArrayList(Design) = .empty;
+            var terms: std.ArrayList(ErrorTerm) = .empty;
+            for (designs.items, errors.items, fits.items, owner) |d, term, result, o| {
+                if (o != part) continue;
+                try members.append(a, d);
+                try terms.append(a, term);
+                if (spec.noprint or means_only) continue;
+                try anovaPage(cx, out, spec, group, d, result);
+                // pp.1116, 1143: default grouped box plot of a one-way model.
+                if (graphs and oneWay(spec)) {
+                    const model = result.model.fit.modelStats(true);
+                    try boxPlot(cx, spec, d, 0, .model, by, .{ .f = model.f_value, .p = model.p_value }, &order);
+                }
+            }
+            if (!spec.noprint) for (parsed.means) |request| {
+                // pp.1116, 1143: every MEANS effect gets a box plot per response.
+                if (graphs) for (members.items) |d| try boxPlot(cx, spec, d, request.effect, .means, by, null, &order);
+                if (request.tukey) {
+                    for (members.items, terms.items) |d, term| try tukeyPage(cx, out, spec, group, d, term, request, by, &order);
+                } else try renderMeans(cx, out, spec, group, members.items, request);
+            };
+        }
     }
 }
 
+fn anovaPage(cx: proc.ProcCtx, out: *std.ArrayList(u8), spec: Spec, group: selection.View, d: Design, result: FitResult) diag.Error!void {
+    const a = cx.arena;
+    const fitted = result.model.fit;
+    const model = fitted.modelStats(true);
+    try heading(cx, out, spec, group);
+    const name = spec.input.ds.columns.items[d.response].name;
+    try out.print(a, "\nDependent Variable: {s}\n", .{name});
+    // SAS reference listing: the FREQ variable is named under the heading.
+    if (spec.freq) |fc| try out.print(a, "\nFrequency: {s}\n", .{spec.input.ds.columns.items[fc].name});
+    try out.appendSlice(a, "\nSum of\nSource DF Squares Mean Square F Value Pr > F\n");
+    // SAS reference listings: the sums-of-squares columns never show more
+    // than 8 decimals (6.75000000, 0.42857143), whatever the magnitude.
+    const decimals = @min(8, places(@max(fitted.sst, @max(model.ss_model, fitted.sse)), 9));
+    try out.print(a, "\nModel {d} {s} {s} {s} {s}\n\nError {d} {s} {s}\n\nCorrected Total {d} {s}\n", .{
+        model.df_model,  try number(a, model.ss_model, decimals), try number(a, model.ms_model, decimals), try number(a, model.f_value, 2), try probability(a, model.p_value),
+        fitted.df_error, try number(a, fitted.sse, decimals),     try number(a, fitted.mse, decimals),     model.df_total,                  try number(a, fitted.sst, decimals),
+    });
+    const cv = 100 * @sqrt(fitted.mse) / fitted.y_mean;
+    try out.print(a, "\nR-Square Coeff Var Root MSE {s} Mean\n\n{s} {s} {s} {s}\n", .{
+        name, try number(a, model.r_square, 6), try number(a, cv, places(@abs(cv), 6)), try number(a, @sqrt(fitted.mse), 6), try number(a, fitted.y_mean, places(@abs(fitted.y_mean), 6)),
+    });
+    var maximum: f64 = 0;
+    for (result.type_i) |effect| maximum = @max(maximum, @abs(effect.ss));
+    const effect_decimals = @min(8, places(maximum, 9));
+    try out.appendSlice(a, "\nSource DF Anova SS Mean Square F Value Pr > F\n\n");
+    for (spec.effects, result.type_i) |effect, value| try out.print(a, "{s} {d} {s} {s} {s} {s}\n", .{
+        try effectLabel(cx, spec, effect), value.df, try number(a, value.ss, effect_decimals), try number(a, value.ms, effect_decimals), try number(a, value.f_value, 2), try probability(a, value.p_value),
+    });
+}
+
+/// NAMELEN= (p.1115) display of an effect name. SAS reference listings:
+/// a long main effect is cut to NAMELEN characters; a two-factor crossing
+/// shares NAMELEN-1 characters between its names, the extra character
+/// going to the second (NAMELEN=20: "averyvery*anotherver"; NAMELEN=40:
+/// 19 + "*" + 20). Other shortened shapes are not SAS-verified: loud gap.
+fn effectLabel(cx: proc.ProcCtx, spec: Spec, effect: glm.parsing.Effect) diag.Error![]const u8 {
+    const a = cx.arena;
+    const names = try a.alloc([]const u8, effect.variables.len);
+    var joined: usize = effect.variables.len - 1;
+    for (names, effect.variables) |*name, ci| {
+        name.* = spec.input.ds.columns.items[ci].name;
+        joined += name.len;
+    }
+    if (effect.variables.len == 1 or joined <= spec.namelen) return effect.name;
+    const share = (spec.namelen - 1) / 2;
+    if (effect.variables.len != 2 or std.mem.indexOfScalar(u8, effect.name, '(') != null or names[0].len < share or names[1].len < spec.namelen - 1 - share)
+        return proc.failGap(cx.diags, 0, "PROC ANOVA: shortening effect name {s} to NAMELEN={d} is not implemented for this effect shape", .{ effect.name, spec.namelen });
+    return std.fmt.allocPrint(a, "{s}*{s}", .{ names[0][0..share], names[1][0 .. spec.namelen - 1 - share] });
+}
+
+/// The shared GLM reader and design builder label their diagnostics
+/// `PROC GLM:`; under PROC ANOVA the message must name this procedure.
+fn relabel(cx: proc.ProcCtx, mark: usize, err: diag.Error) diag.Error {
+    for (cx.diags.list.items[mark..]) |*item| if (std.mem.startsWith(u8, item.message, "PROC GLM:")) {
+        item.message = std.fmt.allocPrint(cx.diags.arena, "PROC ANOVA:{s}", .{item.message["PROC GLM:".len..]}) catch return error.OutOfMemory;
+    };
+    return err;
+}
+
+const FitResult = @typeInfo(@typeInfo(@TypeOf(glm.fitDesign)).@"fn".return_type.?).error_union.payload;
 const ErrorTerm = struct { df: f64, mse: f64 };
 const plots = @import("anova_plots.zig");
 
@@ -541,7 +691,8 @@ pub fn runStep(cx: proc.ProcCtx, out: *std.ArrayList(u8), tokens: []const lex.To
     for (tokens, 0..) |token, i| if ((i == 0 or tokens[i - 1].tag == .semicolon) and token.tag == .name and eq(token.text, "quit")) {
         quit = true;
     };
-    if (parsed.spec.by.len != 0 or quit) return;
+    // p.1139: different missing-value patterns disable interactivity.
+    if (parsed.spec.by.len != 0 or quit or patterns_differ) return;
     // Keep PROC/CLASS/MODEL/FREQ/WHERE...; drop RUN and already-run MEANS.
     retained_arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
     const keep = retained_arena.?.allocator();

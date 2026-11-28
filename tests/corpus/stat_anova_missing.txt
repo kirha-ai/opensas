@@ -1,0 +1,439 @@
+Q17 y1 y3 share pattern
+
+The ANOVA Procedure
+
+Class Level Information
+
+Class Levels Values
+
+g 3 1 2 3
+
+Data for Analysis of y1 y3
+
+Number of Observations Read 9
+Number of Observations Used 8
+
+Data for Analysis of y2
+
+Number of Observations Read 9
+Number of Observations Used 6
+
+NOTE: Variables in each group are consistent with respect to the presence or absence of missing values.
+Q17 y1 y3 share pattern
+
+The ANOVA Procedure
+
+Dependent Variable: y1
+
+Sum of
+Source DF Squares Mean Square F Value Pr > F
+
+Model 2                      39.00000000                      19.50000000                             5.91                           0.0482
+
+Error 5                      16.50000000                       3.30000000
+
+Corrected Total 7                      55.50000000
+
+R-Square Coeff Var Root MSE y1 Mean
+
+                        0.702703                         38.24400                         1.816590                         4.750000
+
+Source DF Anova SS Mean Square F Value Pr > F
+
+g 2                      39.00000000                      19.50000000                             5.91                           0.0482
+Q17 y1 y3 share pattern
+
+The ANOVA Procedure
+
+Dependent Variable: y3
+
+Sum of
+Source DF Squares Mean Square F Value Pr > F
+
+Model 2                      33.33333333                      16.66666667                             9.62                           0.0193
+
+Error 5                       8.66666667                       1.73333333
+
+Corrected Total 7                      42.00000000
+
+R-Square Coeff Var Root MSE y3 Mean
+
+                        0.793651                         29.25692                         1.316561                         4.500000
+
+Source DF Anova SS Mean Square F Value Pr > F
+
+g 2                      33.33333333                      16.66666667                             9.62                           0.0193
+Q17 y1 y3 share pattern
+
+The ANOVA Procedure
+
+Dependent Variable: y2
+
+Sum of
+Source DF Squares Mean Square F Value Pr > F
+
+Model 1                       6.75000000                       6.75000000                             2.51                           0.1882
+
+Error 4                      10.75000000                       2.68750000
+
+Corrected Total 5                      17.50000000
+
+R-Square Coeff Var Root MSE y2 Mean
+
+                        0.385714                         13.11488                         1.639360                         12.50000
+
+Source DF Anova SS Mean Square F Value Pr > F
+
+g 1                       6.75000000                       6.75000000                             2.51                           0.1882
+Q18 level absent for y2
+
+The ANOVA Procedure
+
+Class Level Information
+
+Class Levels Values
+
+g 3 1 2 3
+
+Data for Analysis of y1
+
+Number of Observations Read 9
+Number of Observations Used 8
+
+Data for Analysis of y2
+
+Number of Observations Read 9
+Number of Observations Used 6
+
+NOTE: Variables in each group are consistent with respect to the presence or absence of missing values.
+Q18 level absent for y2
+
+The ANOVA Procedure
+
+Dependent Variable: y1
+
+Sum of
+Source DF Squares Mean Square F Value Pr > F
+
+Model 2                      39.00000000                      19.50000000                             5.91                           0.0482
+
+Error 5                      16.50000000                       3.30000000
+
+Corrected Total 7                      55.50000000
+
+R-Square Coeff Var Root MSE y1 Mean
+
+                        0.702703                         38.24400                         1.816590                         4.750000
+
+Source DF Anova SS Mean Square F Value Pr > F
+
+g 2                      39.00000000                      19.50000000                             5.91                           0.0482
+Q18 level absent for y2
+
+The ANOVA Procedure
+
+Dependent Variable: y2
+
+Sum of
+Source DF Squares Mean Square F Value Pr > F
+
+Model 1                       6.75000000                       6.75000000                             2.51                           0.1882
+
+Error 4                      10.75000000                       2.68750000
+
+Corrected Total 5                      17.50000000
+
+R-Square Coeff Var Root MSE y2 Mean
+
+                        0.385714                         13.11488                         1.639360                         12.50000
+
+Source DF Anova SS Mean Square F Value Pr > F
+
+g 1                       6.75000000                       6.75000000                             2.51                           0.1882
+Q19 patterns with means
+
+The ANOVA Procedure
+
+Class Level Information
+
+Class Levels Values
+
+g 3 1 2 3
+
+Data for Analysis of y1
+
+Number of Observations Read 9
+Number of Observations Used 8
+
+Data for Analysis of y2
+
+Number of Observations Read 9
+Number of Observations Used 6
+
+NOTE: Variables in each group are consistent with respect to the presence or absence of missing values.
+Q19 patterns with means
+
+The ANOVA Procedure
+
+Dependent Variable: y1
+
+Sum of
+Source DF Squares Mean Square F Value Pr > F
+
+Model 2                      39.00000000                      19.50000000                             5.91                           0.0482
+
+Error 5                      16.50000000                       3.30000000
+
+Corrected Total 7                      55.50000000
+
+R-Square Coeff Var Root MSE y1 Mean
+
+                        0.702703                         38.24400                         1.816590                         4.750000
+
+Source DF Anova SS Mean Square F Value Pr > F
+
+g 2                      39.00000000                      19.50000000                             5.91                           0.0482
+Q19 patterns with means
+
+The ANOVA Procedure
+
+Level of --------------y1-------------
+g N Mean Std Dev
+
+1 3 3.00000000 2.64575131
+2 3 4.00000000 1.00000000
+3 2 8.50000000 0.70710678
+Q19 patterns with means
+
+The ANOVA Procedure
+
+Dependent Variable: y2
+
+Sum of
+Source DF Squares Mean Square F Value Pr > F
+
+Model 1                       6.75000000                       6.75000000                             2.51                           0.1882
+
+Error 4                      10.75000000                       2.68750000
+
+Corrected Total 5                      17.50000000
+
+R-Square Coeff Var Root MSE y2 Mean
+
+                        0.385714                         13.11488                         1.639360                         12.50000
+
+Source DF Anova SS Mean Square F Value Pr > F
+
+g 1                       6.75000000                       6.75000000                             2.51                           0.1882
+Q19 patterns with means
+
+The ANOVA Procedure
+
+Level of --------------y2-------------
+g N Mean Std Dev
+
+1 4 11.7500000 1.70782513
+2 2 14.0000000 1.41421356
+Q12 freq with missing and negative
+
+The ANOVA Procedure
+
+Class Level Information
+
+Class Levels Values
+
+g 2 1 2
+
+Number of Observations Read 9
+Number of Observations Used 4
+Sum of Frequencies Read 8
+Sum of Frequencies Used 6
+Q12 freq with missing and negative
+
+The ANOVA Procedure
+
+Dependent Variable: y3
+
+Frequency: f
+
+Sum of
+Source DF Squares Mean Square F Value Pr > F
+
+Model 1                       0.75000000                       0.75000000                             0.07                           0.8007
+
+Error 4                      41.25000000                      10.31250000
+
+Corrected Total 5                      42.00000000
+
+R-Square Coeff Var Root MSE y3 Mean
+
+                        0.017857                         53.52180                         3.211308                         6.000000
+
+Source DF Anova SS Mean Square F Value Pr > F
+
+g 1                       0.75000000                       0.75000000                             0.07                           0.8007
+Q13 patterns with freq
+
+The ANOVA Procedure
+
+Class Level Information
+
+Class Levels Values
+
+g 2 1 2
+
+Data for Analysis of y1
+
+Number of Observations Read 9
+Number of Observations Used 4
+Sum of Frequencies Read 8
+Sum of Frequencies Used 6
+
+Data for Analysis of y2
+
+Number of Observations Read 9
+Number of Observations Used 4
+Sum of Frequencies Read 8
+Sum of Frequencies Used 6
+
+NOTE: Variables in each group are consistent with respect to the presence or absence of missing values.
+Q13 patterns with freq
+
+The ANOVA Procedure
+
+Dependent Variable: y1
+
+Frequency: f
+
+Sum of
+Source DF Squares Mean Square F Value Pr > F
+
+Model 1                      13.33333333                      13.33333333                             4.44                           0.1027
+
+Error 4                      12.00000000                       3.00000000
+
+Corrected Total 5                      25.33333333
+
+R-Square Coeff Var Root MSE y1 Mean
+
+                        0.526316                         39.97040                         1.732051                         4.333333
+
+Source DF Anova SS Mean Square F Value Pr > F
+
+g 1                      13.33333333                      13.33333333                             4.44                           0.1027
+Q13 patterns with freq
+
+The ANOVA Procedure
+
+Dependent Variable: y2
+
+Frequency: f
+
+Sum of
+Source DF Squares Mean Square F Value Pr > F
+
+Model 1                      16.33333333                      16.33333333                            13.07                           0.0225
+
+Error 4                       5.00000000                       1.25000000
+
+Corrected Total 5                      21.33333333
+
+R-Square Coeff Var Root MSE y2 Mean
+
+                        0.765625                         8.385255                         1.118034                         13.33333
+
+Source DF Anova SS Mean Square F Value Pr > F
+
+g 1                      16.33333333                      16.33333333                            13.07                           0.0225
+Q14 three responses, y1 and y3 share pattern
+
+The ANOVA Procedure
+
+Class Level Information
+
+Class Levels Values
+
+g 2 1 2
+
+Data for Analysis of y1
+
+Number of Observations Read 8
+Number of Observations Used 6
+
+Data for Analysis of y2
+
+Number of Observations Read 8
+Number of Observations Used 5
+
+Data for Analysis of y3
+
+Number of Observations Read 8
+Number of Observations Used 7
+
+NOTE: Variables in each group are consistent with respect to the presence or absence of missing values.
+Q14 three responses, y1 and y3 share pattern
+
+The ANOVA Procedure
+
+Dependent Variable: y1
+
+Sum of
+Source DF Squares Mean Square F Value Pr > F
+
+Model 1                       6.00000000                       6.00000000                             0.86                           0.4069
+
+Error 4                      28.00000000                       7.00000000
+
+Corrected Total 5                      34.00000000
+
+R-Square Coeff Var Root MSE y1 Mean
+
+                        0.176471                         66.14378                         2.645751                         4.000000
+
+Source DF Anova SS Mean Square F Value Pr > F
+
+g 1                       6.00000000                       6.00000000                             0.86                           0.4069
+Q14 three responses, y1 and y3 share pattern
+
+The ANOVA Procedure
+
+Dependent Variable: y2
+
+Sum of
+Source DF Squares Mean Square F Value Pr > F
+
+Model 1                       8.45000000                       8.45000000                             2.90                           0.1873
+
+Error 3                       8.75000000                       2.91666667
+
+Corrected Total 4                      17.20000000
+
+R-Square Coeff Var Root MSE y2 Mean
+
+                        0.491279                         13.77278                         1.707825                         12.40000
+
+Source DF Anova SS Mean Square F Value Pr > F
+
+g 1                       8.45000000                       8.45000000                             2.90                           0.1873
+Q14 three responses, y1 and y3 share pattern
+
+The ANOVA Procedure
+
+Dependent Variable: y3
+
+Sum of
+Source DF Squares Mean Square F Value Pr > F
+
+Model 1                       0.42857143                       0.42857143                             0.05                           0.8240
+
+Error 5                      39.00000000                       7.80000000
+
+Corrected Total 6                      39.42857143
+
+R-Square Coeff Var Root MSE y3 Mean
+
+                        0.010870                         59.24223                         2.792848                         4.714286
+
+Source DF Anova SS Mean Square F Value Pr > F
+
+g 1                       0.42857143                       0.42857143                             0.05                           0.8240

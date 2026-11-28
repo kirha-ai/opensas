@@ -1,0 +1,80 @@
+Q15 BY group with no valid obs
+
+                                       u=1
+
+The ANOVA Procedure
+
+Class Level Information
+
+Class Levels Values
+
+g 2 1 2
+
+Number of Observations Read 4
+Number of Observations Used 4
+Q15 BY group with no valid obs
+
+                                       u=1
+
+The ANOVA Procedure
+
+Dependent Variable: y
+
+Sum of
+Source DF Squares Mean Square F Value Pr > F
+
+Model 1                       9.00000000                       9.00000000                             3.60                           0.1982
+
+Error 2                       5.00000000                       2.50000000
+
+Corrected Total 3                      14.00000000
+
+R-Square Coeff Var Root MSE y Mean
+
+                        0.642857                         52.70463                         1.581139                         3.000000
+
+Source DF Anova SS Mean Square F Value Pr > F
+
+g 1                       9.00000000                       9.00000000                             3.60                           0.1982
+Q15 BY group with no valid obs
+
+                                       u=3
+
+The ANOVA Procedure
+
+Class Level Information
+
+Class Levels Values
+
+g 2 1 2
+
+Number of Observations Read 4
+Number of Observations Used 4
+Q15 BY group with no valid obs
+
+                                       u=3
+
+The ANOVA Procedure
+
+Dependent Variable: y
+
+Sum of
+Source DF Squares Mean Square F Value Pr > F
+
+Model 1                      12.25000000                      12.25000000                             9.80                           0.0887
+
+Error 2                       2.50000000                       1.25000000
+
+Corrected Total 3                      14.75000000
+
+R-Square Coeff Var Root MSE y Mean
+
+                        0.830508                         17.88854                         1.118034                         6.250000
+
+Source DF Anova SS Mean Square F Value Pr > F
+
+g 1                      12.25000000                      12.25000000                             9.80                           0.0887
+Q16 after
+Obs   u   g   y
+
+  1   1   1   1
