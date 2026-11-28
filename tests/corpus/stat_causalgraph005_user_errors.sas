@@ -6,7 +6,10 @@
  * TESTID without IDENTIFY, not exactly one IV variable, treatment as a
  * control, conditioning on the treatment, the outcome or an unmeasured
  * variable, duplicate labels, an unmeasured instrument, unknown TESTID
- * options and path types (SAS: ERROR 22-322). Invented graphs.
+ * options and path types (SAS: ERROR 22-322), several treatments under
+ * METHOD=IV (formerly a STAT-CAUSALGRAPH-004 gap), a treatment as the
+ * instrument, an outcome as a control, an instrument absent from a model.
+ * Invented graphs.
  */
 options nosyntaxcheck;
 proc causalgraph method=iv; model 'A' Z ==> X ==> M ==> Y, U ==> X Y; identify X ==> Y; unmeasured U; run;
@@ -23,3 +26,7 @@ proc causalgraph method=iv; model 'A' Z ==> X ==> Y, U ==> X Y; identify X ==> Y
 proc causalgraph method=iv; model 'A' Z ==> X ==> Y, U ==> X Y, X ==> M; identify X ==> Y; unmeasured U; testid Z / conditional=M; testid Z / conditional=U; run;
 proc causalgraph; model 'P' X ==> Y, C ==> X Y; identify X ==> Y; testid C / foo; run;
 proc causalgraph; model 'P' X ==> Y, C ==> X Y; identify X ==> Y; testid C / paths=bogus; run;
+proc causalgraph method=iv; model 'M' Z ==> X1 ==> Y, X2 ==> Y, U ==> X1 Y; identify X1 X2 ==> Y; unmeasured U; run;
+proc causalgraph method=iv; model 'A' Z ==> X ==> Y, U ==> X Y; identify X ==> Y; unmeasured U; testid X; run;
+proc causalgraph; model 'P' X ==> Y, C ==> X Y; identify X ==> Y; testid C Y; run;
+proc causalgraph method=iv; model 'A' Z ==> X ==> Y, U ==> X Y; model 'B' X ==> Y, U ==> X Y; identify X ==> Y; unmeasured U; testid Z; run;

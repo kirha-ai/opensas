@@ -2,12 +2,18 @@
  * causal/blocked flags and the biasing-path and over-control footnotes),
  * METHOD=IV searches and tests, COMPACT and PSUMMARY with TESTID. Invented
  * graphs; listing tokens equal a batched SAS 9.4 reference run of exactly
- * these steps (1661 tokens). Hand checks: T01 nothing adjusted, both forks
+ * these steps (2266 tokens over four runs, 0 differing). Hand checks: T01 nothing adjusted, both forks
  * open (biasing); T04 K is a collider descending from X (over-control
  * footnote, X ==> K <== Y opened), X <=> Y is never blocked; T05 C blocks
  * X <== C <== U ==> Y and X <== C ==> Y; T16-T18 instrument Z needs W
  * (Z <- W -> U -> Y); the reported conditioning set follows the SAS
- * search order (A1 kept, ZZ not).
+ * search order (A1 kept, ZZ not). U04/U09 a disconnected model: tests after
+ * the components with DISCONNECTED, none without (warning); U08 BACKDOOR
+ * set {C D} invalid (D descends from X), paths without footnote (second
+ * reference run, 3 steps). V01 BACKDOOR set {C M} blocks the causal path
+ * X ==> M ==> Y: starred as biasing, no footnote. V02-V05 METHOD=IV with
+ * bidirected edges: W <==> Y makes W a direct neighbour of Y in the search
+ * ({A1 W}, {B W}, {W} not ZZ); Z is an instrument given W only.
  */
 options nodate nonumber nocenter linesize=160 pagesize=max;
 title; footnote;
@@ -26,3 +32,11 @@ title 'T17'; proc causalgraph method=iv; model 'A' Z ==> X ==> Y, U ==> X Y, W =
 title 'T18'; proc causalgraph method=iv; model 'A' Z ==> X ==> Y, U ==> X Y, W ==> Z, W ==> U, A1 ==> Y, ZZ ==> Y; identify X ==> Y; unmeasured U; run;
 title 'T19'; proc causalgraph method=backdoor; model 'P' C ==> X ==> M ==> Y, C ==> Y, X ==> D, X ==> Y, E ==> Y; identify X ==> Y; testid C / paths; run;
 title 'T20'; proc causalgraph; model 'P' X ==> Y, C ==> X Y; identify X ==> Y; testid C / paths=(causal); testid C / paths=all; testid C / paths=(blocked noncausal); run;
+title 'U04'; proc causalgraph disconnected; model 'A' X ==> Y, C ==> X Y, P ==> Q; identify X ==> Y; testid C; run;
+title 'U08'; proc causalgraph method=backdoor; model 'P' C ==> X ==> Y, C ==> Y, X ==> D; identify X ==> Y; testid C D / paths; run;
+title 'U09'; proc causalgraph; model 'A' X ==> Y, C ==> X Y, P ==> Q; identify X ==> Y; testid C; run;
+title 'V01'; proc causalgraph method=backdoor; model 'P' C ==> X ==> M ==> Y, C ==> Y; identify X ==> Y; testid C M / paths; run;
+title 'V02'; proc causalgraph method=iv; model 'A' Z ==> X ==> Y, X <==> Y, W ==> Z, W <==> Y, A1 ==> Y; identify X ==> Y; run;
+title 'V03'; proc causalgraph method=iv; model 'A' Z ==> X ==> Y, X <==> Y, W ==> Z, W <==> Y, B ==> Y; identify X ==> Y; run;
+title 'V04'; proc causalgraph method=iv; model 'A' Z ==> X ==> Y, X <==> Y, W ==> Z, W <==> Y, ZZ ==> Y; identify X ==> Y; run;
+title 'V05'; proc causalgraph method=iv; model 'A' Z ==> X ==> Y, X <==> Y, W ==> Z, W <==> Y, ZZ ==> Y; identify X ==> Y; testid Z / conditional=W; testid Z; run;

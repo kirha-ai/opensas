@@ -683,3 +683,276 @@ The CAUSALGRAPH Procedure
              Causal      Blocked     Paths
 
        1     No          Yes         X <== C ==> Y
+U04
+
+The CAUSALGRAPH Procedure
+
+         Variables in Model
+ 
+                       N    Variables
+
+Measured               5    C P Q X Y
+Unmeasured             0             
+
+
+                             Graphical Model Summary
+ 
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+A               5           4             1           1           5             0
+U04
+
+The CAUSALGRAPH Procedure
+
+          Connected Components for A
+ 
+                         --------Nodes--------
+Component        Size    C    P    Q    X    Y
+
+        1           3    *              *    *
+        2           2         *    *          
+U04
+
+The CAUSALGRAPH Procedure
+
+             Covariate Adjustment Test: Test1
+ 
+                  Causal Effect of X on Y
+ 
+                                             -Covariates--
+Model        Size    Valid       Minimal     C     P     Q
+
+A               1    Yes         Yes         *            
+U08
+
+The CAUSALGRAPH Procedure
+
+         Variables in Model
+ 
+                       N    Variables
+
+Measured               4    C D X Y  
+Unmeasured             0             
+
+
+                             Graphical Model Summary
+ 
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+P               4           4             1           1           4             0
+U08
+
+The CAUSALGRAPH Procedure
+
+             Covariate Adjustment Test: Test1
+ 
+                 Causal Effect of X on Y
+ 
+                                             -Covariates-
+Model        Size    Valid       Minimal     C          D
+
+P               2    No          No          *          *
+U08
+
+The CAUSALGRAPH Procedure
+
+            Treatment-to-Outcome Paths
+              Test Test1 for Model P
+    Causal Effect of X on Y Adjusted for {C D}
+ 
+             Causal      Blocked     Paths
+
+       1     No          Yes         X <== C ==> Y
+       2     Yes         No          X ==> Y      
+U09
+
+The CAUSALGRAPH Procedure
+
+         Variables in Model
+ 
+                       N    Variables
+
+Measured               5    C P Q X Y
+Unmeasured             0             
+
+
+                             Graphical Model Summary
+ 
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+A               5           4             1           1           5             0
+U09
+
+The CAUSALGRAPH Procedure
+
+          Connected Components for A
+ 
+                         --------Nodes--------
+Component        Size    C    P    Q    X    Y
+
+        1           3    *              *    *
+        2           2         *    *          
+V01
+
+The CAUSALGRAPH Procedure
+
+         Variables in Model
+ 
+                       N    Variables
+
+Measured               4    C M X Y  
+Unmeasured             0             
+
+
+                             Graphical Model Summary
+ 
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+P               4           4             1           1           4             0
+V01
+
+The CAUSALGRAPH Procedure
+
+             Covariate Adjustment Test: Test1
+ 
+                 Causal Effect of X on Y
+ 
+                                             -Covariates-
+Model        Size    Valid       Minimal     C          M
+
+P               2    No          No          *          *
+V01
+
+The CAUSALGRAPH Procedure
+
+            Treatment-to-Outcome Paths
+              Test Test1 for Model P
+    Causal Effect of X on Y Adjusted for {C M}
+ 
+             Causal      Blocked     Paths
+
+       1     No          Yes         X <== C ==> Y
+       2*    Yes         Yes         X ==> M ==> Y
+
+            * indicates a biasing path
+V02
+
+The CAUSALGRAPH Procedure
+
+          Variables in Model
+ 
+                       N    Variables
+
+Measured               5    A1 W X Y Z
+Unmeasured             0              
+
+
+                             Graphical Model Summary
+ 
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+A               5           6             1           1           5             0
+V02
+
+The CAUSALGRAPH Procedure
+
+      Instrumental Variables for A
+         Causal Effect of X on Y
+ 
+                          -Conditionals-
+            Instrument    A1     W     Z
+
+       1    Z             *      *      
+V03
+
+The CAUSALGRAPH Procedure
+
+         Variables in Model
+ 
+                       N    Variables
+
+Measured               5    B W X Y Z
+Unmeasured             0             
+
+
+                             Graphical Model Summary
+ 
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+A               5           6             1           1           5             0
+V03
+
+The CAUSALGRAPH Procedure
+
+       Instrumental Variables for A
+         Causal Effect of X on Y
+ 
+                          -Conditionals--
+            Instrument    B      W      Z
+
+       1    Z             *      *       
+V04
+
+The CAUSALGRAPH Procedure
+
+          Variables in Model
+ 
+                       N    Variables
+
+Measured               5    W X Y Z ZZ
+Unmeasured             0              
+
+
+                             Graphical Model Summary
+ 
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+A               5           6             1           1           5             0
+V04
+
+The CAUSALGRAPH Procedure
+
+      Instrumental Variables for A
+         Causal Effect of X on Y
+ 
+                          -Conditionals-
+            Instrument    W     Z     ZZ
+
+       1    Z             *             
+V05
+
+The CAUSALGRAPH Procedure
+
+          Variables in Model
+ 
+                       N    Variables
+
+Measured               5    W X Y Z ZZ
+Unmeasured             0              
+
+
+                             Graphical Model Summary
+ 
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+A               5           6             1           1           5             0
+V05
+
+The CAUSALGRAPH Procedure
+
+        Instrumental Variable Test: Test1
+             Causal Effect of X on Y
+ 
+                                   -Conditionals-
+Model    Instrument    Valid       W     Z     ZZ
+
+A        Z             Yes         *             
+
+
+        Instrumental Variable Test: Test2
+             Causal Effect of X on Y
+ 
+                                   -Conditionals-
+Model    Instrument    Valid       W     Z     ZZ
+
+A        Z             No                        

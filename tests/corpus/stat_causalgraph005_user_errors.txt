@@ -11,3 +11,7 @@ stderr-count 1 The instrumental variable Z must be observed.
 stderr-count 1 The outcome variable Y cannot be conditioned upon.
 stderr-count 1 The conditioning variable U must be observed.
 stderr-count 2 PROC CAUSALGRAPH: invalid statement or token
+stderr-count 1 The IDENTIFY statement must contain a single treatment variable when METHOD=IV.
+stderr-count 1 The variable X is both a treatment and an instrument.
+stderr-count 1 The variable Y is both an outcome and a control.
+stderr-count 1 The instrumental variable Z in the TESTID statement is not found in the model B.

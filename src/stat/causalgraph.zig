@@ -593,9 +593,10 @@ pub fn validate(cx: proc.ProcCtx, s: Spec) diag.Error!void {
             if (t.vars.len != 1) return user(cx, t.line, "You must specify a single variable on the TESTID statement when METHOD=IV.", .{});
             const z = t.vars[0];
             if (contains(s.unmeasured, z)) return user(cx, t.line, "The instrumental variable {s} must be observed.", .{s.names[z]});
-            // ponytail: the SAS text for a treatment/outcome named as the
-            // instrument has no reference run.
-            if (contains(s.treatments, z) or contains(s.outcomes, z)) return gap(cx, t.line, "a treatment or outcome variable as the TESTID instrument is not implemented", .{});
+            // ponytail: the outcome wording mirrors the reference-run
+            // treatment message.
+            if (contains(s.treatments, z)) return user(cx, t.line, "The variable {s} is both a treatment and an instrument.", .{s.names[z]});
+            if (contains(s.outcomes, z)) return user(cx, t.line, "The variable {s} is both an outcome and an instrument.", .{s.names[z]});
             for (t.cond) |c| {
                 if (contains(s.treatments, c)) return user(cx, t.line, "The treatment variable {s} cannot be conditioned upon.", .{s.names[c]});
                 if (contains(s.outcomes, c)) return user(cx, t.line, "The outcome variable {s} cannot be conditioned upon.", .{s.names[c]});
@@ -614,14 +615,12 @@ pub fn validate(cx: proc.ProcCtx, s: Spec) diag.Error!void {
         }
     }
     if (iv) {
-        // p.2303: METHOD=IV takes one treatment and one outcome; the
-        // SAS text for several has no reference run.
-        if (s.treatments.len > 1 or s.outcomes.len > 1) return gap(cx, line, "METHOD=IV with several treatment or outcome variables is not implemented", .{});
+        // p.2303: METHOD=IV takes one treatment and one outcome (reference
+        // run text; ponytail: the outcome wording mirrors it).
+        if (s.treatments.len > 1) return user(cx, line, "The IDENTIFY statement must contain a single treatment variable when METHOD=IV.", .{});
+        if (s.outcomes.len > 1) return user(cx, line, "The IDENTIFY statement must contain a single outcome variable when METHOD=IV.", .{});
         if (s.identify and s.adjust.len > 0) try cx.diags.warn(line, "The adjustment variables in the IDENTIFY statement are ignored when METHOD=IV.", .{});
         if (s.identify) for (s.models) |m| {
-            // ponytail: the instrument search order over latent nodes of
-            // bidirected edges has no reference run.
-            for (m.edges) |e| if (e.bi) return gap(cx, m.line, "METHOD=IV with bidirected edges is not implemented", .{});
             var direct = false;
             for (m.edges) |e| if (!e.bi and e.from == s.treatments[0] and e.to == s.outcomes[0]) {
                 direct = true;
@@ -632,17 +631,8 @@ pub fn validate(cx: proc.ProcCtx, s: Spec) diag.Error!void {
     if (s.tests.len > 0) for (s.models) |m| {
         for (s.treatments) |x| if (!contains(m.nodes, x)) return gap(cx, m.line, "TESTID with a treatment variable missing from a model is not implemented", .{});
         for (s.outcomes) |y| if (!contains(m.nodes, y)) return gap(cx, m.line, "TESTID with an outcome variable missing from a model is not implemented", .{});
-        if ((try componentIds(cx.arena, s.names, m)).count > 1) return gap(cx, m.line, "TESTID with a disconnected model is not implemented", .{});
         for (s.tests) |t| {
-            if (iv and t.vars.len == 1 and !contains(m.nodes, t.vars[0])) return gap(cx, t.line, "a TESTID instrument missing from a model is not implemented", .{});
-            // ponytail: the PATHS footnote for a backdoor set holding a
-            // descendant of the treatment has no reference run.
-            if (s.opts.method == .backdoor and t.paths != null) {
-                const g = try expandLatent(cx.arena, s.names.len, m.edges);
-                const an = try analyseMethod(cx.arena, g.n, g.edges, s.treatments, s.outcomes, .backdoor);
-                for (t.vars) |v| if (an.backdoor.?.de_x[v] and contains(m.nodes, v)) return gap(cx, t.line, "the PATHS option with METHOD=BACKDOOR and a descendant of the treatment in the set is not implemented", .{});
-                for (s.adjust) |v| if (an.backdoor.?.de_x[v] and contains(m.nodes, v)) return gap(cx, t.line, "the PATHS option with METHOD=BACKDOOR and a descendant of the treatment in the set is not implemented", .{});
-            }
+            if (iv and t.vars.len == 1 and !contains(m.nodes, t.vars[0])) return user(cx, t.line, "The instrumental variable {s} in the TESTID statement is not found in the model {s}.", .{ s.names[t.vars[0]], m.label });
         }
     };
     // Joint effects (several treatments and/or outcomes, pp.2303/2317) use
@@ -1153,8 +1143,10 @@ pub fn run(cx: proc.ProcCtx, out: *Out, t: []const lex.Token) diag.Error!void {
         try page(cx, out);
         try componentsTable(a, out, s.names, m, cc);
     }
+    // Without DISCONNECTED a disconnected model suppresses the TESTID tables
+    // too (reference run); with it they follow the components tables.
     var open = true;
-    try emitTests(cx, out, s, cands.items, &open);
+    if (!(any_disc and !s.opts.disconnected)) try emitTests(cx, out, s, cands.items, &open);
     if (!list or (any_disc and !s.opts.disconnected)) return endPage(cx, out);
 
     // One AdjustList (InstrumentList) page per model.
@@ -1367,7 +1359,19 @@ pub fn ivFind(a: A, g: Graph, names: []const []const u8, observed: []const bool,
         for (gc.edges) |e| if (e.to == v and anc[e.from]) try ps.append(a, e.from);
         for (ps.items, 0..) |p, k| for (ps.items[k + 1 ..]) |q| try link(a, adj, p, q);
     };
-    for (adj) |l| std.mem.sort(usize, l.items, names, lessName);
+    // A bidirected edge u <==> v links u and v directly (its latent parent
+    // is not visited): reference runs W <==> Y with A1 ==> Y give {A1, W},
+    // with ZZ ==> Y give {W}.
+    for (names.len..g.n) |l| if (anc[l]) {
+        const nb = adj[l].items;
+        for (nb, 0..) |p, k| for (nb[k + 1 ..]) |q| if (p < names.len and q < names.len) try link(a, adj, p, q);
+    };
+    for (adj) |*l| {
+        var kept: std.ArrayList(usize) = .empty;
+        for (l.items) |u| if (u < names.len) try kept.append(a, u);
+        std.mem.sort(usize, kept.items, names, lessName);
+        l.* = kept;
+    }
     const vis = try a.alloc(bool, g.n);
     @memset(vis, false);
     vis[y] = true;
@@ -1737,8 +1741,10 @@ fn pathsTable(cx: proc.ProcCtx, out: *Out, s: Spec, t: Test, m: Model) !void {
     const an = try analyseMethod(a, g.n, g.edges, s.treatments, s.outcomes, s.opts.method);
     var overcontrol = false;
     for (set) |v| if (contains(m.nodes, v)) {
-        if (an.forbidden[v]) overcontrol = true;
-        if (an.backdoor) |bd| if (bd.de_x[v]) return gap(cx, t.line, "the PATHS option with METHOD=BACKDOOR and a descendant of the treatment in the set is not implemented", .{});
+        // Over-control footnote: METHOD=ADJUSTMENT only (reference runs; a
+        // BACKDOOR set with M on X ==> M ==> Y stars the blocked causal path
+        // and prints no footnote).
+        if (an.forbidden[v] and an.backdoor == null) overcontrol = true;
     };
     const f = t.paths.?;
     var shown: std.ArrayList(PathRow) = .empty;
@@ -1763,7 +1769,9 @@ fn pathsTable(cx: proc.ProcCtx, out: *Out, s: Spec, t: Test, m: Model) !void {
     var biasing = false;
     for (shown.items, 0..) |p, r| {
         obs[r] = try num(a, r + 1);
-        const bias = !p.causal and !p.blocked;
+        // ponytail: a blocked causal path is starred as biasing under
+        // BACKDOOR (reference run); the ADJUSTMENT case is assumed alike.
+        const bias = p.causal == p.blocked;
         if (bias) biasing = true;
         flag[r] = if (bias) "*" else "";
         causal[r] = if (p.causal) "Yes" else "No";
