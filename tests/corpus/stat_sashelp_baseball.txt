@@ -1,0 +1,83 @@
+NAME        TYPE   LENGTH   VARNUM   LABEL
+
+Name           2       18        1   Player's Name
+Team           2       14        2   Team at the End of 1986
+nAtBat         1        8        3   Times at Bat in 1986
+nHits          1        8        4   Hits in 1986
+nHome          1        8        5   Home Runs in 1986
+nRuns          1        8        6   Runs in 1986
+nRBI           1        8        7   RBIs in 1986
+nBB            1        8        8   Walks in 1986
+YrMajor        1        8        9   Years in the Major Leagues
+CrAtBat        1        8       10   Career Times at Bat
+CrHits         1        8       11   Career Hits
+CrHome         1        8       12   Career Home Runs
+CrRuns         1        8       13   Career Runs
+CrRbi          1        8       14   Career RBIs
+CrBB           1        8       15   Career Walks
+League         2        8       16   League at the End of 1986
+Division       2        8       17   Division at the End of 1986
+Position       2        8       18   Position(s) in 1986
+nOuts          1        8       19   Put Outs in 1986
+nAssts         1        8       20   Assists in 1986
+nError         1        8       21   Errors in 1986
+Salary         1        8       22   1987 Salary in $ Thousands
+Div            2       16       23   League and Division
+logSalary      1        8       24   Log Salary
+N=322 NSalary=263 SumSal=140948.507 SumHits=33294 SumCrAtBat=889711 SumOuts=93056 SumAssts=34427 SumError=2589
+MeanLog=5.9272215412
+DivCode=AE N=85 Home=1106 Sal=45617.77
+DivCode=AW N=90 Home=1079 Sal=29720.167
+DivCode=NE N=72 Home=678 Sal=34913.236
+DivCode=NW N=75 Home=712 Sal=30697.334
+TeamName=Atlanta N=11 RBI=463 CrHits=10227
+TeamName=Baltimore N=15 RBI=636 CrHits=10398
+TeamName=Boston N=10 RBI=702 CrHits=11969
+TeamName=California N=13 RBI=722 CrHits=14521
+TeamName=Chicago N=24 RBI=1127 CrHits=18840
+TeamName=Cincinnati N=12 RBI=583 CrHits=16158
+TeamName=Cleveland N=12 RBI=746 CrHits=6062
+TeamName=Detroit N=12 RBI=679 CrHits=12643
+TeamName=Houston N=11 RBI=538 CrHits=9306
+TeamName=Kansas City N=14 RBI=586 CrHits=13080
+TeamName=Los Angeles N=14 RBI=512 CrHits=10123
+TeamName=Milwaukee N=14 RBI=577 CrHits=11791
+TeamName=Minneapolis N=13 RBI=677 CrHits=6066
+TeamName=Montreal N=14 RBI=536 CrHits=6171
+TeamName=New York N=24 RBI=1371 CrHits=20559
+TeamName=Oakland N=12 RBI=632 CrHits=10126
+TeamName=Philadelphia N=12 RBI=638 CrHits=5389
+TeamName=Pittsburgh N=11 RBI=530 CrHits=4417
+TeamName=San Diego N=13 RBI=580 CrHits=11029
+TeamName=San Francisco N=14 RBI=592 CrHits=4570
+TeamName=Seattle N=12 RBI=628 CrHits=4375
+TeamName=St Louis N=11 RBI=447 CrHits=6172
+TeamName=Texas N=13 RBI=684 CrHits=9237
+TeamName=Toronto N=11 RBI=712 CrHits=7526
+Pos=13 N=1 Yrs=8
+Pos=1B N=31 Yrs=276
+Pos=1O N=1 Yrs=1
+Pos=23 N=1 Yrs=4
+Pos=2B N=31 Yrs=228
+Pos=2S N=1 Yrs=4
+Pos=32 N=1 Yrs=8
+Pos=3B N=32 Yrs=261
+Pos=3O N=1 Yrs=15
+Pos=3S N=3 Yrs=25
+Pos=C N=40 Yrs=304
+Pos=CD N=1 Yrs=16
+Pos=CF N=26 Yrs=161
+Pos=CS N=1 Yrs=12
+Pos=DH N=16 Yrs=211
+Pos=DO N=2 Yrs=20
+Pos=LF N=25 Yrs=174
+Pos=O1 N=4 Yrs=13
+Pos=OD N=1 Yrs=5
+Pos=OF N=30 Yrs=215
+Pos=OS N=2 Yrs=3
+Pos=RF N=26 Yrs=190
+Pos=S3 N=1 Yrs=7
+Pos=SS N=30 Yrs=150
+Pos=UT N=14 Yrs=162
+LAST Name=Wilson, Willie Team=Kansas City Position=CF logSalary=6.907755279
+MAXSAL who=Murray, Eddie mx=2460

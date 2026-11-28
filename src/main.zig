@@ -908,7 +908,10 @@ fn coalesceLibrefs(a: std.mem.Allocator, toks: []const Token, librefs: []const L
         // Fold `<libref>.<name>` for a declared libref, and also the implicit
         // `work.<name>` (WORK is the default library) — BUG-twolevelread.
         if (i + 2 < toks.len and toks[i].tag == .name and toks[i + 1].tag == .dot and
-            toks[i + 2].tag == .name and (findLibref(librefs, toks[i].text) != null or eqi(toks[i].text, "work")))
+            toks[i + 2].tag == .name and (findLibref(librefs, toks[i].text) != null or eqi(toks[i].text, "work") or
+            // STAT-SASHELP-001: a built-in SASHELP sample member reads as one
+            // two-level name everywhere (PROC DATA=, SQL FROM), not only in SET.
+            (eqi(toks[i].text, "sashelp") and findLibref(librefs, "sashelp") == null and sas.sashelp.isBuiltin(toks[i + 2].text))))
         {
             const text = try std.fmt.allocPrint(a, "{s}.{s}", .{ toks[i].text, toks[i + 2].text });
             try out.append(a, .{ .tag = .name, .text = text, .line = toks[i].line });
