@@ -31,8 +31,9 @@ This section is the only current status summary; every section below it is a his
 - **Interrupted by the full disk:** STAT-ANOVA-009 and STAT-PHREG-004 are TODO (no file changed; reading notes in the tickets). STAT-LIFETEST-003 and STAT-GENMOD-003 are PARK with UNCOMMITTED, NEVER-COMPILED source retained in `opensas-dev5` (`stat-b6/lifetest003-dev5`) and `opensas-dev7` (`stat-b6/genmod003-dev7`); do not integrate it before it is built, tested and committed there.
 - **User approval (2026-11-28):** SASHELP sample data taken from SAS's public sample material may be committed to this public repository, for STAT-SASHELP-001 and the later SASHELP tickets; record source and verification, never invent rows, ask before adding a data set above about 2 MB.
 - **Held, not integrated (needs a user decision):** STAT-FASTCLUS-001, branch `stat-b7/fastclus001-dev2` (`4d730ead` code and tests, `45dd37bd` ticket note). It adds SASHELP.IRIS (150 rows, Fisher 1936) taken from a SAS 9.4 dump, which is outside the approved SASHELP-ticket, public-sample-material scope. Also held for the same question: STAT-VARCLUS-001, branch `stat-b7/varclus001-dev7` (`5dd2e52b`, note `090678d2`), which inlines the same 150 rows from a SAS dump in two corpus fixtures.
-- **Live slots (auto):** dev1 STAT-HPPRINCOMP-001, dev2 STAT-RMSTREG-001, dev3 STAT-SURVEYPHREG-001, dev4 STAT-KRIGE2D-001, dev5 STAT-TPSPLINE-001, dev6 STAT-SEQTEST-001, dev7 STAT-HPREG-001.
-- **Counts:** 56 DONE, 117 PARK, 7 DOING, 1242 TODO.
+- **Live slots (auto):** dev1 STAT-HPPRINCOMP-001, dev2 STAT-RMSTREG-001, dev3 STAT-SURVEYPHREG-001, dev4 STAT-PRINT-001, dev5 STAT-TPSPLINE-001, dev6 STAT-SEQTEST-001, dev7 STAT-HPREG-001.
+- **Integrated locally, awaiting batch verification (auto):** STAT-KRIGE2D-001 (PARK).
+- **Counts:** 56 DONE, 118 PARK, 7 DOING, 1242 TODO.
 - **Next:** integrate each returned ticket, refill its slot, verify and push the next batch; run the open review above. Pending user decision: the `best32.` display fix found by STAT-STDIZE-001 changes five existing test expectations (patch kept in the coordinator scratchpad, not applied).
 - **Working branch:** `feat/stat/batch-4`. Last tested and pushed code SHA `9cff2c63a6ceaa612e7b5f44f9804ebdb2cdec63` (batch 15; batch 14 was `b0e5f94c36bd1bf66424677fef7f98a93ed8f34a`). The bullets below this one describe batch 5 and are historical. Later commits that touch only this file are documentation. No PR created or merged; `main` untouched.
 - **Batch 5 verification at that exact SHA (2026-11-28):** whole `tests/STAT15.4-oracle/` moved out of the checkout, then `zig build gate -j2 --summary all` direct exit 0 — **2380/2380 unit tests** (2262 + 102 + 13 + 3), **2409/2409 corpus**, **11/11 programs**; `zig build install` direct 0; separate supplemental direct 0, **1113/1113**. Oracle restored unchanged (1425 entries), tree clean.
@@ -8290,7 +8291,7 @@ Source: S154, Chapter 74, `The KRIGE2D Procedure`, PDF pp. 5435–5510. Tasks in
 
 <a id="stat-krige2d-001"></a>
 
-### [DOING @dev4] STAT-KRIGE2D-001 — KRIGE2D — Data input, variable roles, and basic options
+### [PARK] STAT-KRIGE2D-001 — KRIGE2D — Data input, variable roles, and basic options
 
 - Source: S154 / Chapter 74 / `PROC KRIGE2D Statement` (PDF pp. 5443–5449); S154 / Chapter 74 / `BY Statement` (PDF pp. 5449–5450); S154 / Chapter 74 / `ID Statement` (PDF p. 5453).
 - Scope: Integrate PROC KRIGE2D declarations, basic options, defaults, and execution boundaries; this ticket establishes parameter objects and result interfaces, while later feature tickets implement model-, algorithm-, and output-specific options. Also implement BY; ID; apply this procedure's rules for missing values, variable roles, and observation selection.
@@ -16652,7 +16653,7 @@ Source: S154, Chapter 131, `The VARIOGRAM Procedure`, PDF pp. 10751–10878. Tas
 
 ## Base prerequisites added with user approval
 
-### [TODO] STAT-PRINT-001 — Base PROC PRINT listing layout needed by STAT originals
+### [DOING @dev4] STAT-PRINT-001 — Base PROC PRINT listing layout needed by STAT originals
 
 - Source: added 2026-11-28 with the user's approval; blockers reported while implementing STAT tickets. The evidence is the reference listings under the oracle folders named below (SAS 9.4).
 - Scope: PROC PRINT listing layout where STAT originals differ from SAS: (1) splitting column headers at blanks, underscores and lower-to-upper case changes (`RunTime` shown as `Run` / `Time`); (2) one number format per unformatted numeric column, with aligned decimals (`375.50`, `69.0`, `0.00000`), instead of independent BEST12. cells; (3) stacking headers so that columns fit one page before splitting into panels. The `best32.` display width is NOT in this ticket (separate pending user decision). PROC FREQ column alignment and BY-line placement under NOCENTER are not in this ticket.
