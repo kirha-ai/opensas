@@ -8,9 +8,10 @@ This section is the only current status summary; every section below it is a his
 - **Resumed 2026-11-28 about 07:20Z** after the 06:31Z account usage limit stopped all dev contexts. At the user's direction devs may compare with real SAS via `/Users/thomas/sas/bin/sasrun foo.sas -f text -o - -l /dev/null`, only when truly blocked. Coordinator keep-awake `caffeinate` PID 62218. Coordinator scripts and dev brief live in the session scratchpad `stat/` directory.
 - **Batch 60 verification at exact SHA `d0d4ab66a3eb11161c6c3f3b3b02956a7f54ace1` (2026-11-28):** `zig build install` direct 0; whole `tests/STAT15.4-oracle/` moved out of the checkout, then `zig build gate -j2 --summary all` direct 0 — **2865/2865 unit tests**, **2851/2851 corpus**, **11/11 programs**; `zig build install` direct 0; separate supplemental direct 0, **1113/1113**. Oracle restored unchanged, tree clean, HEAD unchanged. Pushed. **New DONE:** STAT-CAUSALTRT-001 (original 126/126, rc 0; reference folder safe to delete, not deleted; remaining gaps belong to later CAUSALTRT tickets). **Integrated, PARK:** STAT-COMMON-016.
 - **User approvals (2026-11-28):** move CATMOD's TYPE=EST direct input to STAT-CATMOD-004; add the Base random-stream ticket STAT-RAND-001; public classic sample data, including rows exported from real SAS (Iris), may be committed; build caches (`.zig-cache`) may be deleted automatically when free disk falls to about 8 GB, only for idle worktrees (done twice: 41 GB free the first time; the second at 9.5 GB free with every worktree idle, just before a seven-dev round); the `best32.` display fix is approved as STAT-BEST-001. Earlier scope: SASHELP sample data taken from SAS's public sample material may be committed to this public repository, for STAT-SASHELP-001 and the later SASHELP tickets; record source and verification, never invent rows, ask before adding a data set above about 2 MB.
-- **Live slots (auto):** dev1 STAT-SIMNORMAL-001, dev2 STAT-COMMON-023, dev3 STAT-HP-001, dev4 STAT-COMMON-021, dev5 STAT-COMMON-019, dev6 STAT-REG-001, dev7 STAT-CAUSALGRAPH-008.
+- **Live slots (auto):** dev1 STAT-SIMNORMAL-001, dev2 STAT-COMMON-023, dev3 STAT-HP-001, dev4 STAT-COMMON-021, dev5 STAT-TREE-001, dev6 STAT-REG-007, dev7 STAT-CAUSALGRAPH-008, dev7 STAT-PLAN-001.
 - **Held, not integrated (needs a user decision):** STAT-SASHELP-005, branch `stat-b7/sashelp005-dev4` (`50a9f8d7` code and data, `c3d1db77` ticket note). It adds SASHELP.JUNKMAIL (708 KB text), LEUTRAIN and LEUTEST (2.24 MB and 1.99 MB as text, committed gzip-compressed at 857 KB and 766 KB), about 2.3 MB in the repository, above the size the user is asked about.
-- **Counts:** 77 DONE, 145 PARK, 7 DOING, 1196 TODO.
+- **Integrated locally, awaiting batch verification (auto):** STAT-COMMON-019 (PARK), STAT-REG-001 (PARK), STAT-CAUSALGRAPH-008 (DONE candidate).
+- **Counts:** 77 DONE, 146 PARK, 8 DOING, 1194 TODO.
 - **Next:** integrate each returned ticket and refill its slot, preferring close-out attempts on PARK tickets whose originals now match exactly (DISTANCE-001, PRINQUAL-001, VARCLUS-001, TPSPLINE-001, CATMOD-001, CANCORR-001, GEE-001, INBREED-001, then the open review in the batch 6 receipt), because a DONE ticket unlocks its dependents; then other eligible tickets.
 - **Working branch:** `feat/stat/batch-4`. Last tested and pushed code SHA `d0d4ab66a3eb11161c6c3f3b3b02956a7f54ace1` (batch 60; batch 59 was `9ce601f6e8f29dca6838223fd7fdce475d6ee455`). The bullets below this one describe batch 5 and are historical. Later commits that touch only this file are documentation. No PR created or merged; `main` untouched.
 
@@ -905,7 +906,7 @@ Complete prerequisite shared contracts first, then each PROC's data input, model
 
 <a id="stat-common-019"></a>
 
-### [DOING @dev5] STAT-COMMON-019 — Clustering distances, transformations, and tie rules
+### [PARK] STAT-COMMON-019 — Clustering distances, transformations, and tie rules
 
 - Source: S154 / Chapter 12 / `Introduction to Clustering Procedures` (PDF pp. 213–252); S154 / Chapter 10 / `Introduction to Multivariate Procedures` (PDF pp. 199–204); S154 / Chapter 11 / `Introduction to Discriminant Procedures` (PDF pp. 205–212).
 - Scope: Provide sample/variable distance, standardization, and covariance/correlation input contracts for multivariate procedures; individual procedures implement their clustering, discrimination, or dimension-reduction algorithms.
@@ -11690,7 +11691,7 @@ Source: S154, Chapter 93, `The PLAN Procedure`, PDF pp. 7583–7616. Tasks in th
 
 <a id="stat-plan-001"></a>
 
-### [TODO] STAT-PLAN-001 — PLAN — Data input, variable roles, and basic options
+### [DOING @dev7] STAT-PLAN-001 — PLAN — Data input, variable roles, and basic options
 
 - Source: S154 / Chapter 93 / `PROC PLAN Statement` (PDF pp. 7588–7589).
 - Scope: Integrate PROC PLAN declarations, basic options, defaults, and execution boundaries; this ticket establishes parameter objects and result interfaces, while later feature tickets implement model-, algorithm-, and output-specific options. Also implement the default input data contract for this procedure; apply this procedure's rules for missing values, variable roles, and observation selection.
@@ -13119,7 +13120,7 @@ Source: S154, Chapter 105, `The REG Procedure`, PDF pp. 8539–8728. Tasks in th
 
 <a id="stat-reg-001"></a>
 
-### [DOING @dev6] STAT-REG-001 — REG — Data input, variable roles, and basic options
+### [PARK] STAT-REG-001 — REG — Data input, variable roles, and basic options
 
 - Source: S154 / Chapter 105 / `PROC REG Statement` (PDF pp. 8560–8574); S154 / Chapter 105 / `BY Statement` (PDF pp. 8574–8575); S154 / Chapter 105 / `FREQ Statement` (PDF p. 8576); S154 / Chapter 105 / `ID Statement` (PDF p. 8576); S154 / Chapter 105 / `VAR Statement` (PDF pp. 8599–8600); S154 / Chapter 105 / `WEIGHT Statement` (PDF p. 8600); S154 / Chapter 105 / `Missing Values` (PDF p. 8600); S154 / Chapter 105 / `Input Data Sets` (PDF pp. 8600–8603).
 - Scope: Integrate PROC REG declarations, basic options, defaults, and execution boundaries; this ticket establishes parameter objects and result interfaces, while later feature tickets implement model-, algorithm-, and output-specific options. Also implement BY; FREQ; ID; VAR; WEIGHT; Missing Values; Input Data Sets; apply this procedure's rules for missing values, variable roles, and observation selection.
@@ -13211,7 +13212,7 @@ Source: S154, Chapter 105, `The REG Procedure`, PDF pp. 8539–8728. Tasks in th
 <a id="stat-reg-007"></a>
 
 
-### [PARK] STAT-REG-007 — REG — RESTRICT
+### [DOING @dev6] STAT-REG-007 — REG — RESTRICT
 
 - Source: S154 / Chapter 105 / `RESTRICT Statement` (PDF pp. 8593–8595).
 - Scope: Implement RESTRICT. Cover the source suboptions, defaults, and applicability restrictions; implement only this feature group, without extending to languages or runtime environments outside the cited scope.
@@ -13225,6 +13226,7 @@ Source: S154, Chapter 105, `The REG Procedure`, PDF pp. 8539–8728. Tasks in th
 - Acceptance criteria: For RESTRICT, cover valid boundaries, initial values, scope, and programming evaluation order as applicable; verify objective functions, constraint satisfaction, and stopping status; diagnose invalid settings.
 
 - Final partial receipt: cd3e4fda default1917/2352/11 + separate supplemental1113 direct0 with whole oracle absent/restored, pushed. Whole originals rc1/rc0 matching severities;1118tokens has2 disclosed residual-sum differences,112tokens has24 seeded/constrained-zero differences. Preserve PARK and independent durable fixed-input coverage.
+- Coordinator note (2026-11-28): silent wrong output, found while closing STAT-REG-001. With two RESTRICT statements (`x=0` and `z=0`) real SAS applies both; opensas applies only the last, rc 0, no message. The expected result of `tests/corpus/stat_reg_restrict_linear` assumes only the last and is wrong against SAS. Fix first.
 
 <a id="stat-reg-008"></a>
 
@@ -16343,7 +16345,7 @@ Source: S154, Chapter 127, `The TREE Procedure`, PDF pp. 10569–10594. Tasks in
 
 <a id="stat-tree-001"></a>
 
-### [TODO] STAT-TREE-001 — TREE — Data input, variable roles, and basic options
+### [DOING @dev5] STAT-TREE-001 — TREE — Data input, variable roles, and basic options
 
 - Source: S154 / Chapter 127 / `PROC TREE Statement` (PDF pp. 10575–10581); S154 / Chapter 127 / `BY Statement` (PDF p. 10581); S154 / Chapter 127 / `COPY Statement` (PDF p. 10581); S154 / Chapter 127 / `FREQ Statement` (PDF pp. 10581–10582); S154 / Chapter 127 / `ID Statement` (PDF p. 10582); S154 / Chapter 127 / `Missing Values` (PDF p. 10583).
 - Scope: Integrate PROC TREE declarations, basic options, defaults, and execution boundaries; this ticket establishes parameter objects and result interfaces, while later feature tickets implement model-, algorithm-, and output-specific options. Also implement BY; COPY; FREQ; ID; Missing Values; apply this procedure's rules for missing values, variable roles, and observation selection.
