@@ -22,8 +22,12 @@ const eq = std.ascii.eqlIgnoreCase;
 /// `run` -- the listing needs SAS's dual quasi-Newton iteration history, which
 /// the kernel does not reproduce, so every step still ends in the D-009 gap.
 pub const estimation = @import("glimmix_fit.zig");
+/// Fixed-effects model structure (STAT-GLIMMIX-003): non-full-rank X, aliased
+/// columns, full-rank reduction and contrast coefficient resolution.
+pub const design = @import("glimmix_design.zig");
 test {
     _ = estimation;
+    _ = design;
 }
 
 pub const Method = enum { rspl, mspl, rmpl, mmpl, laplace, quad };
@@ -70,6 +74,10 @@ pub const Model = struct {
     trials: ?usize = null,
     /// Tokens after the option slash; interpreted by the estimation tickets.
     option_tokens: []const lex.Token = &.{},
+    /// MODEL effects in statement order (p.3875); see glimmix_design.zig.
+    effects: []const design.Effect = &.{},
+    /// false under the MODEL NOINT option (p.3875).
+    intercept: bool = true,
     line: usize,
 };
 pub const Spec = struct {
@@ -215,9 +223,10 @@ fn parseOptions(cx: proc.ProcCtx, t: []const lex.Token, i: *usize, name: *?[]con
     return o;
 }
 
-/// `response <events/trials> = effects </ options>`; only variable references
-/// are resolved here. Effect construction belongs to the estimation tickets.
-fn parseModel(cx: proc.ProcCtx, ds: *const Dataset, t: []const lex.Token, line: usize, vars: *std.ArrayList(usize)) diag.Error!Model {
+/// `response <events/trials> = effects </ options>`. Effects are interpreted
+/// against the CLASS list (CLASS precedes MODEL, p.3731); of the options only
+/// NOINT is read here.
+fn parseModel(cx: proc.ProcCtx, ds: *const Dataset, class_columns: []const usize, t: []const lex.Token, line: usize, vars: *std.ArrayList(usize)) diag.Error!Model {
     var depth: usize = 0;
     var eq_at: ?usize = null;
     for (t, 0..) |token, k| {
@@ -254,7 +263,11 @@ fn parseModel(cx: proc.ProcCtx, ds: *const Dataset, t: []const lex.Token, line: 
         else => return bad(cx, t[k]),
     };
     if (depth != 0) return cx.diags.fail(error.ParseError, line, "PROC GLIMMIX: unbalanced parentheses in MODEL", .{});
+    model.effects = try design.parseEffects(cx, ds, class_columns, t[split + 1 .. k], line);
     if (k < t.len) model.option_tokens = t[k + 1 ..];
+    for (model.option_tokens) |o| if (o.tag == .name and eq(o.text, "noint")) {
+        model.intercept = false;
+    };
     return model;
 }
 
@@ -339,7 +352,7 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
             }
         } else if (eq(token.text, "model")) {
             if (model != null) return cx.diags.fail(error.ParseError, token.line, "PROC GLIMMIX: only one MODEL statement is allowed", .{});
-            model = try parseModel(cx, input.ds, body, token.line, &required);
+            model = try parseModel(cx, input.ds, class_columns.items, body, token.line, &required);
         } else if (eq(token.text, "random")) {
             try randomVariables(cx, input.ds, body, &required);
         } else if (eq(token.text, "freq")) {
@@ -430,6 +443,28 @@ pub fn prepare(cx: proc.ProcCtx, spec: Spec) diag.Error![]Group {
     return results;
 }
 
+/// Non-full-rank X of one BY group with its aliased columns and full-rank
+/// reduction (STAT-GLIMMIX-003). Shapes whose design is not independently
+/// verified are loud gaps rather than a plausible matrix.
+pub fn fixedDesign(cx: proc.ProcCtx, spec: Spec, group: Group) diag.Error!design.Design {
+    const ds = spec.input.ds;
+    // ponytail: the shared builder needs a numeric response column only for its
+    // own listwise filter; response levels belong to the distribution tickets.
+    if (ds.columns.items[spec.model.response].type != .num) return gap(cx, spec.model.line, "character response variables are not implemented", .{});
+    // prepare() orders ORDER=FREQ levels by FREQ-weighted counts; the shared
+    // design builder counts observations.
+    if (spec.options.order == .freq and spec.roles.frequency != null) return gap(cx, spec.model.line, "ORDER=FREQ with a FREQ statement is not implemented for the model matrix", .{});
+    if (spec.model.effects.len == 0 and !spec.model.intercept) return gap(cx, spec.model.line, "a model without fixed-effects columns is not implemented", .{});
+    const rows = try cx.arena.alloc([]const Value, group.selected.observations.len);
+    for (group.selected.observations, rows) |row, *cells| cells.* = row.cells;
+    const d = design.build(cx.arena, ds, rows, spec.model.response, spec.class_columns, spec.options.order, .{ .effects = spec.model.effects, .intercept = spec.model.intercept }, spec.options.singular) catch |err| switch (err) {
+        error.OutOfMemory => return err,
+        else => return gap(cx, spec.model.line, "the model matrix could not be constructed from the input values", .{}),
+    };
+    if (d.full.n != group.used_count) return gap(cx, spec.model.line, "the model matrix does not cover every used observation", .{});
+    return d;
+}
+
 /// Validates the declarations and the input of every BY group, then stops at
 /// the estimation boundary. ponytail: no table is rendered before a fit exists,
 /// so a partial listing can never be mistaken for a completed analysis.
@@ -439,6 +474,7 @@ pub fn run(cx: proc.ProcCtx, tokens: []const lex.Token) diag.Error!void {
     if (prepared.len == 0) return gap(cx, spec.line, "an analysis without usable observations is not implemented", .{});
     for (prepared) |group| if (group.used_count == 0) return gap(cx, spec.line, "an analysis without usable observations is not implemented", .{});
     if (spec.options.has(.nofit)) return gap(cx, spec.line, "NOFIT model summaries are not implemented", .{});
+    for (prepared) |group| _ = try fixedDesign(cx, spec, group);
     return gap(cx, spec.model.line, "model estimation is not implemented", .{});
 }
 
@@ -599,7 +635,9 @@ test "GLIMMIX001 invalid declarations are user errors and unimplemented features
     defer arena.deinit();
     const h = try Harness.init(arena.allocator());
     const E = error.ParseError;
-    const m = "model events/n = arm;";
+    // STAT-GLIMMIX-003: MODEL effects are now interpreted, so a character
+    // variable outside CLASS is a user error; these cases use a covariate.
+    const m = "model events/n = site;";
     const user = [_]struct { []const u8, []const u8 }{
         .{ "proc glimmix data=trial bogus; " ++ m ++ " run;", "unexpected token bogus" },
         .{ "proc glimmix data=trial method=reml; " ++ m ++ " run;", "unexpected token reml" },
@@ -657,4 +695,75 @@ test "GLIMMIX001 invalid declarations are user errors and unimplemented features
             return error.TestUnexpectedResult;
         }
     }
+}
+
+test "GLIMMIX003 MODEL effects: invalid structure is a user error, unimplemented syntax a loud gap" {
+    var arena = std.heap.ArenaAllocator.init(t_.allocator);
+    defer arena.deinit();
+    const h = try Harness.init(arena.allocator());
+    const E = error.ParseError;
+    const cases = [_]struct { []const u8, []const u8, bool }{
+        .{ "class site; model events/n = arm;", "character variable arm in a MODEL effect must be listed in the CLASS statement", false },
+        .{ "class arm; model events/n = arm(site);", "nesting variable site must be listed in the CLASS statement", false },
+        .{ "class arm; model events/n = n(w);", "nesting variable w must be listed in the CLASS statement", false },
+        .{ "class arm site; model events/n = arm(arm);", "variable arm cannot be nested within itself", false },
+        .{ "class arm site; model events/n = arm();", "malformed nesting in MODEL effect", false },
+        .{ "class arm site; model events/n = arm(site)(site);", "malformed MODEL effect", false },
+        .{ "class arm site; model events/n = arm(site;", "unbalanced parentheses in MODEL", false },
+        .{ "class arm site; model events/n = arm*;", "malformed MODEL effect", false },
+        .{ "class arm site; model events/n = arm(nosuch);", "Variable nosuch not found.", false },
+        .{ "class arm site; model events/n = arm|site;", "the bar operator in MODEL effects is not implemented", true },
+        .{ "class arm site; model events/n = arm site arm*site @2;", "the @ operator in MODEL effects is not implemented", true },
+        .{ "class arm; model arm = site;", "character response variables are not implemented", true },
+        .{ "model events/n = / noint;", "a model without fixed-effects columns is not implemented", true },
+        .{ "class arm; model events/n = arm; effect s = spline(n);", "statement effect is not implemented", true },
+        .{ "class arm; model events/n = arm; estimate 'd' arm 1 -1;", "statement estimate is not implemented", true },
+        .{ "class arm; model events/n = arm; contrast 'd' arm [1, 1] [-1, 2];", "", true },
+        .{ "class arm site; model events/n = arm site(arm) n*arm / noint solution;", "model estimation is not implemented", true },
+    };
+    for (cases) |case| {
+        const source = try std.fmt.allocPrint(h.cx.arena, "proc glimmix data=trial; {s} run;", .{case[0]});
+        const message = try h.failure(source, E, case[2]);
+        if (std.mem.indexOf(u8, message, case[1]) == null) {
+            std.debug.print("{s}\nunexpected diagnostic: {s}\n", .{ source, message });
+            return error.TestUnexpectedResult;
+        }
+    }
+}
+
+test "GLIMMIX003 step-level design: used observations, CLASS order, NOINT and aliased columns" {
+    var arena = std.heap.ArenaAllocator.init(t_.allocator);
+    defer arena.deinit();
+    const h = try Harness.init(arena.allocator());
+    // Used rows (site, arm): 2B 1A 1B 2A 3A 3B 4A 5A -- eight distinct cells.
+    const s = try h.spec("proc glimmix data=trial; class arm site; model events/n = arm site*arm; run;");
+    try t_.expect(s.model.intercept);
+    try t_.expectEqual(@as(usize, 2), s.model.effects.len);
+    const g = try prepare(h.cx, s);
+    const d = try fixedDesign(h.cx, s, g[0]);
+    try t_.expectEqual(@as(usize, 8), d.full.n);
+    // Int | A B | A1 A2 A3 A4 A5 B1 B2 B3: site*arm is reordered to arm*site
+    // and the cells B4, B5 are deleted.
+    try t_.expectEqual(@as(usize, 11), d.full.p);
+    try t_.expectEqualStrings("arm*site", d.effects[2].name);
+    try t_.expectEqualSlices(f64, &.{
+        1, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0,
+        1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0,
+        1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0,
+        1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0,
+        1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0,
+        1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1,
+        1, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0,
+        1, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0,
+    }, d.full.x);
+    // B = Int - A; A5 = A - A1..A4; B3 = Int - A - B1 - B2.
+    try t_.expectEqualSlices(bool, &.{ false, false, true, false, false, false, false, true, false, false, true }, d.aliased);
+    try t_.expectEqual(@as(usize, 8), d.rank);
+    try t_.expectEqualSlices(usize, &.{ 0, 1, 3, 4, 5, 6, 8, 9 }, d.kept);
+    const noint = try h.spec("proc glimmix data=trial; class arm site; model events/n = arm n / solution noint; run;");
+    try t_.expect(!noint.model.intercept);
+    const dn = try fixedDesign(h.cx, noint, (try prepare(h.cx, noint))[0]);
+    try t_.expectEqual(@as(usize, 3), dn.full.p);
+    try t_.expectEqual(@as(usize, 3), dn.rank);
+    try t_.expectEqualSlices(f64, &.{ 0, 1, 10, 1, 0, 12, 0, 1, 11, 1, 0, 9, 1, 0, 8, 0, 1, 8, 1, 0, 7, 1, 0, 6 }, dn.full.x);
 }

@@ -1,0 +1,4 @@
+# corpus assertions
+words
+stderr-count 1 PROC GLIMMIX: nesting variable site must be listed in the CLASS statement
+stderr-count 1 ERROR
