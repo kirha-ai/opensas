@@ -1,0 +1,4 @@
+# corpus assertions
+words The HPMIXED Procedure Model Information Data Set WORK.SIM Response Variable Yield Estimation Method Restricted Maximum Likelihood (REML) Degrees of Freedom Method Residual Class Level Information Class Levels Values Species 5 1 2 3 4 5 Farm 100 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 ... Animal 3000 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 ... Number of Observations Read 40000 Number of Observations Used 40000 Dimensions G-side Cov. Parameters 1 R-side Cov. Parameters 1 Columns in X 506 Columns in Z 3000 Subjects (Blocks in V) 1 Optimization Information Optimization Technique Dual Quasi-Newton Parameters in Optimization 1 Lower Boundaries 1 Upper Boundaries 0 Residual Variance Profiled
+stderr-count 1 PROC HPMIXED: REML estimation
+stderr-count 1 ERROR

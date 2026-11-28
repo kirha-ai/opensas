@@ -1,0 +1,11 @@
+# corpus assertions
+empty-listing
+stderr-count 1 METHOD= must be REML
+stderr-count 1 NAMELEN= must be an integer of at least 20
+stderr-count 1 MAXCLPRINT= must be a nonnegative integer
+stderr-count 1 the CLASS statement must precede the MODEL statement
+stderr-count 1 MODEL statement required
+stderr-count 1 response variable id must be numeric
+stderr-count 1 WEIGHT variable id must be numeric
+stderr-count 1 only one WEIGHT statement is allowed
+stderr-count 1 Variable nothere not found.
