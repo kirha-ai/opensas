@@ -1,0 +1,80 @@
+Spatial Prediction With Kriging
+
+                                       g=1
+
+The KRIGE2D Procedure
+Dependent Variable: z
+
+Number of Observations Read           5
+Number of Observations Used           5
+
+
+              Kriging Information
+
+Prediction Grid Points                         2
+Type of Analysis                           Local
+Neighborhood Search Radius                   1.2
+Grid Points with Radius Incremented            1
+Maximum Radius                         3.0413813
+Grid Points with Radius Decremented            1
+Minimum Radius                         0.7071068
+Minimum Neighbors                              2
+Maximum Neighbors                              3
+
+Spatial Prediction With Kriging
+
+                                       g=1
+
+The KRIGE2D Procedure
+Dependent Variable: z
+Prediction: Pred1, Model: Model1
+
+Covariance Model Information
+
+Type                Gaussian
+Sill                       2
+Range                      1
+Effective Range    1.7320508
+Nugget Effect              0
+
+Spatial Prediction With Kriging
+
+                                       g=2
+
+The KRIGE2D Procedure
+Dependent Variable: z
+
+Number of Observations Read           3
+Number of Observations Used           2
+
+
+              Kriging Information
+
+Prediction Grid Points                         2
+Type of Analysis                           Local
+Neighborhood Search Radius                   1.2
+Grid Points with Radius Incremented            2
+Maximum Radius                         4.0311289
+Minimum Neighbors                              2
+Maximum Neighbors                              3
+
+Spatial Prediction With Kriging
+
+                                       g=2
+
+The KRIGE2D Procedure
+Dependent Variable: z
+Prediction: Pred1, Model: Model1
+
+Covariance Model Information
+
+Type                Gaussian
+Sill                       2
+Range                      1
+Effective Range    1.7320508
+Nugget Effect              0
+
+ 1Pred1.Model1 z  0.5 0.5  3   2.13976542   0.78310397
+ 1Pred1.Model1 z  4.0 0.5  2   5.50214922   1.73158578
+ 2Pred1.Model1 z  0.5 0.5  2   5.46576957   1.16658025
+ 2Pred1.Model1 z  4.0 0.5  2   6.01453028   1.72904012
