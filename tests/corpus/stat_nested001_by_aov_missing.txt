@@ -1,0 +1,149 @@
+T
+
+The NESTED Procedure
+
+  Coefficients of Expected Mean Squares
+ 
+Source        Plantxyz      Lf      Error
+
+Plantxyz             4       2          1
+Lf                   0       2          1
+Error                0       0          1
+
+
+                      Nested Random Effects Analysis of Variance for Variable Measurement
+ 
+Variance                    Sum of                         Error                           Variance     Percent
+Source          DF         Squares    F Value    Pr > F    Term         Mean Square       Component    of Total
+
+Total           15       70.937500                                         4.729167        5.687500    100.0000
+Plantxyz         3       13.187500       0.53    0.6861    Lf              4.395833       -0.979167      0.0000
+Lf               4       33.250000       2.71    0.1070    Error           8.312500        2.625000     46.1538
+Error            8       24.500000                                         3.062500        3.062500     53.8462
+
+
+Measurement Mean                          5.06250000
+Standard Error of Measurement Mean        0.52415607
+
+
+                           Nested Random Effects Analysis of Variance for Variable Z
+ 
+Variance                    Sum of                         Error                           Variance     Percent
+Source          DF         Squares    F Value    Pr > F    Term         Mean Square       Component    of Total
+
+Total           15       95.437500                                         6.362500        7.177083    100.0000
+Plantxyz         3       58.187500       6.08    0.0568    Lf             19.395833        4.052083     56.4586
+Lf               4       12.750000       1.04    0.4434    Error           3.187500        0.062500      0.8708
+Error            8       24.500000                                         3.062500        3.062500     42.6705
+
+
+Z Mean                          3.68750000
+Standard Error of Z Mean        1.10101752
+T
+
+Grp=1
+
+The NESTED Procedure
+
+  Coefficients of Expected Mean Squares
+ 
+Source        Plantxyz      Lf      Error
+
+Plantxyz             4       2          1
+Lf                   0       2          1
+Error                0       0          1
+
+
+                      Nested Random Effects Analysis of Variance for Variable Measurement
+ 
+Variance                    Sum of                         Error                           Variance     Percent
+Source          DF         Squares    F Value    Pr > F    Term         Mean Square       Component    of Total
+
+Total            7       28.875000                                         4.125000        5.625000    100.0000
+Plantxyz         1        0.125000       0.02    0.9126    Lf              0.125000       -2.000000      0.0000
+Lf               2       16.250000       2.60    0.1890    Error           8.125000        2.500000     44.4444
+Error            4       12.500000                                         3.125000        3.125000     55.5556
+
+
+Measurement Mean                          4.87500000
+Standard Error of Measurement Mean        0.12500000
+T
+
+Grp=2
+
+The NESTED Procedure
+
+  Coefficients of Expected Mean Squares
+ 
+Source        Plantxyz      Lf      Error
+
+Plantxyz             4       2          1
+Lf                   0       2          1
+Error                0       0          1
+
+
+                      Nested Random Effects Analysis of Variance for Variable Measurement
+ 
+Variance                    Sum of                         Error                           Variance     Percent
+Source          DF         Squares    F Value    Pr > F    Term         Mean Square       Component    of Total
+
+Total            7       41.500000                                         5.928571        6.750000    100.0000
+Plantxyz         1       12.500000       1.47    0.3491    Lf             12.500000        1.000000     14.8148
+Lf               2       17.000000       2.83    0.1712    Error           8.500000        2.750000     40.7407
+Error            4       12.000000                                         3.000000        3.000000     44.4444
+
+
+Measurement Mean                          5.25000000
+Standard Error of Measurement Mean        1.25000000
+T
+
+The NESTED Procedure
+
+    Coefficients of Expected Mean Squares
+ 
+Source        Plantxy      Leafnumb      Error
+
+Plantxy             4             2          1
+Leafnumb            0             2          1
+Error               0             0          1
+
+
+                           Nested Random Effects Analysis of Variance for Variable Z
+ 
+Variance                    Sum of                         Error                           Variance     Percent
+Source          DF         Squares    F Value    Pr > F    Term         Mean Square       Component    of Total
+
+Total            7       49.875000                                         7.125000       10.750000    100.0000
+Plantxy          1       36.125000      11.56    0.0767    Leafnumb       36.125000        8.250000     76.7442
+Leafnumb         2        6.250000       1.67    0.2975    Error           3.125000        0.625000      5.8140
+Error            4        7.500000                                         1.875000        1.875000     17.4419
+
+
+Z Mean                          4.62500000
+Standard Error of Z Mean        2.12500000
+T
+
+The NESTED Procedure
+
+ Coefficients of Expected Mean Squares
+ 
+Source       Grp      Plantxy      Error
+
+Grp            8            4          1
+Plantxy        0            4          1
+Error          0            0          1
+
+
+                          Nested Random Effects Analysis of Variance for Variable Z
+ 
+Variance                    Sum of                         Error                          Variance     Percent
+Source          DF         Squares    F Value    Pr > F    Term        Mean Square       Component    of Total
+
+Total           15       95.437500                                        6.362500        7.843750    100.0000
+Grp              1       14.062500       0.64    0.5084    Plantxy       14.062500       -1.000000      0.0000
+Plantxy          2       44.125000       7.11    0.0092    Error         22.062500        4.739583     60.4250
+Error           12       37.250000                                        3.104167        3.104167     39.5750
+
+
+Z Mean                          3.68750000
+Standard Error of Z Mean        0.93750000

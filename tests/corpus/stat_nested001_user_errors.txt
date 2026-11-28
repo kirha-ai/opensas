@@ -1,0 +1,4 @@
+# corpus assertions
+empty-listing
+stderr-count 1 a CLASS statement is required
+stderr-count 1 VAR variable g must be numeric

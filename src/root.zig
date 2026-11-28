@@ -32,6 +32,7 @@ pub const plm = @import("stat/plm.zig");
 pub const phreg = @import("stat/phreg.zig");
 pub const lifetest = @import("stat/lifetest.zig");
 pub const score = @import("stat/score.zig");
+pub const nested = @import("stat/nested.zig");
 pub const factor = @import("stat/factor.zig");
 pub const surveylogistic = @import("stat/surveylogistic.zig");
 pub const gee = @import("stat/gee.zig");
@@ -88,6 +89,7 @@ test {
     _ = @import("stat/phreg.zig");
     _ = @import("stat/lifetest.zig");
     _ = @import("stat/score.zig");
+    _ = @import("stat/nested.zig");
     _ = @import("stat/factor.zig");
     _ = @import("stat/surveylogistic.zig");
     _ = @import("stat/gee.zig");
