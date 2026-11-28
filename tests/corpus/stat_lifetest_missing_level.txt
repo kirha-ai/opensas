@@ -1,0 +1,163 @@
+
+The LIFETEST Procedure
+ 
+Stratum 1: group = 
+
+                 Product-Limit Survival Estimates
+ 
+                                     Survival
+                                     Standard    Number    Number
+    time     Survival    Failure      Error      Failed     Left
+
+ 0.00000       1.0000           0           0      0         3   
+ 2.00000       0.6667      0.3333      0.2722      1         2   
+ 3.00000*           .           .           .      1         1   
+ 6.00000            0      1.0000           .      2         0   
+
+NOTE: The marked survival times are censored observations.
+
+
+Summary Statistics for Time Variable time
+
+                   Quartile Estimates
+ 
+              Point         95% Confidence Interval
+Percent    Estimate    Transform      [Lower      Upper)
+
+     75     6.00000    LOGLOG        2.00000      .     
+     50     6.00000    LOGLOG        2.00000      .     
+     25     2.00000    LOGLOG        2.00000      .     
+
+
+            Standard
+    Mean       Error
+
+ 4.66667     1.53960
+
+The LIFETEST Procedure
+ 
+Stratum 2: group = A
+
+                 Product-Limit Survival Estimates
+ 
+                                     Survival
+                                     Standard    Number    Number
+    time     Survival    Failure      Error      Failed     Left
+
+ 0.00000       1.0000           0           0      0         4   
+ 1.00000       0.7500      0.2500      0.2165      1         3   
+ 2.00000       0.5000      0.5000      0.2500      2         2   
+ 4.00000       0.2500      0.7500      0.2165      3         1   
+ 5.00000*           .           .           .      3         0   
+
+NOTE: The marked survival times are censored observations.
+
+
+Summary Statistics for Time Variable time
+
+                   Quartile Estimates
+ 
+              Point         95% Confidence Interval
+Percent    Estimate    Transform      [Lower      Upper)
+
+     75      .         LOGLOG        1.00000      .     
+     50     3.00000    LOGLOG        1.00000      .     
+     25     1.50000    LOGLOG        1.00000     4.00000
+
+
+            Standard
+    Mean       Error
+
+ 2.75000     0.79550
+
+NOTE: The mean survival time and its standard error were underestimated because the largest observation was censored and the estimation was restricted to the 
+      largest event time.
+
+The LIFETEST Procedure
+ 
+Stratum 3: group = B
+
+                 Product-Limit Survival Estimates
+ 
+                                     Survival
+                                     Standard    Number    Number
+    time     Survival    Failure      Error      Failed     Left
+
+ 0.00000       1.0000           0           0      0         4   
+ 1.00000*           .           .           .      0         3   
+ 3.00000       0.6667      0.3333      0.2722      1         2   
+ 4.00000       0.3333      0.6667      0.2722      2         1   
+ 7.00000            0      1.0000           .      3         0   
+
+NOTE: The marked survival times are censored observations.
+
+
+Summary Statistics for Time Variable time
+
+                   Quartile Estimates
+ 
+              Point         95% Confidence Interval
+Percent    Estimate    Transform      [Lower      Upper)
+
+     75     7.00000    LOGLOG        3.00000      .     
+     50     4.00000    LOGLOG        3.00000      .     
+     25     3.00000    LOGLOG        3.00000      .     
+
+
+            Standard
+    Mean       Error
+
+ 4.66667     1.20185
+
+
+    Summary of the Number of Censored and Uncensored Values
+ 
+                                                        Percent
+Stratum    group          Total  Failed    Censored    Censored
+
+      1                       3       2           1       33.33
+      2    A                  4       3           1       25.00
+      3    B                  4       3           1       25.00
+---------------------------------------------------------------
+  Total                      11       8           3       27.27
+
+The LIFETEST Procedure
+
+Testing Homogeneity of Survival Curves for time over Strata
+
+
+        Rank Statistics
+ 
+group       Log-Rank    Wilcoxon
+
+            -0.12511     -3.0000
+A            0.88398      9.0000
+B           -0.75887     -6.0000
+
+
+ Covariance Matrix for the Log-Rank Statistics
+ 
+group                           A             B
+
+            1.28132      -0.49525      -0.78607
+A          -0.49525       1.18438      -0.68912
+B          -0.78607      -0.68912       1.47519
+
+
+ Covariance Matrix for the Wilcoxon Statistics
+ 
+group                           A             B
+
+            72.5000      -34.7500      -37.7500
+A          -34.7500       78.5000      -43.7500
+B          -37.7500      -43.7500       81.5000
+
+
+       Test of Equality over Strata
+ 
+                                   Pr >
+Test      Chi-Square      DF    Chi-Square
+
+Log-Rank      0.7154       2      0.6993  
+Wilcoxon      1.0488       2      0.5919  
+-2Log(LR)     0.1369       2      0.9338  

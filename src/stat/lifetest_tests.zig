@@ -156,11 +156,15 @@ test "STAT-LIFETEST-001 invalid declarations are user errors and unimplemented o
         .{ "proc lifetest; time t*c(0);", 2 },
         .{ "proc lifetest; time t*c(0); strata n;", 2 },
         .{ "proc lifetest; time t*c(0); strata g n;", 2 },
-        .{ "proc lifetest missing; time t*c(0); strata g;", 2 },
-        .{ "proc lifetest; time t*c(0); strata g; by b;", 2 },
-        .{ "proc lifetest; time t*c(0); strata g; freq f;", 2 },
-        .{ "proc lifetest; time t*c(0); strata g; weight w;", 2 },
-        .{ "proc lifetest; time t*c(0); strata g; id id;", 2 },
+        // BY, FREQ, WEIGHT, ID and MISSING each execute (corpus fixtures
+        // stat_lifetest_{by,freq,weight,id,missing_level}); their
+        // combinations and shapes without a SAS listing stay loud.
+        .{ "proc lifetest; time t*c(0); strata g; freq f; id id;", 2 },
+        .{ "proc lifetest; time t*c(0); strata g; freq f; weight w;", 2 },
+        .{ "proc lifetest; time t*c(0); strata g; weight w; id id;", 2 },
+        .{ "proc lifetest; time t*c(0); strata g; id id g;", 2 },
+        .{ "proc lifetest; time t*c(0); strata g; id n;", 2 }, // numeric ID
+        .{ "proc lifetest; time t*c(0); strata g; freq f / notruncate;", 2 }, // fractional FREQ
         .{ "proc lifetest; time t*c(0, 1); strata g;", 2 }, // every stratum fully censored
     }) |case| {
         const result = try fx.outcome(case[0]);
@@ -569,7 +573,7 @@ fn grouped(a: A) !*Dataset {
     _ = try ds.addColumn("g", .char);
     const rows = [_]struct { f64, f64, f64 }{
         .{ 0.5, 1, 2 }, .{ 1, 0, 2 }, .{ 2, 1, 1 }, .{ 3, 1, 2 },
-        .{ 4, 1, 1 }, .{ 4, 0, 1 }, .{ 9, 0, 1 },
+        .{ 4, 1, 1 },   .{ 4, 0, 1 }, .{ 9, 0, 1 },
         .{ 5, 1, 0 }, // zero frequency: deleted
         .{ nan, 1, 1 }, // missing time: deleted
     };
@@ -585,8 +589,8 @@ test "STAT-LIFETEST-003 life table matches hand calculation with endpoint ties a
     // event and a censoring coincide at 4.
     const obs = [_]lifetest.Obs{
         .{ .time = 0.5, .event = true, .freq = 2 }, .{ .time = 1, .event = false, .freq = 2 },
-        .{ .time = 2, .event = true }, .{ .time = 3, .event = true, .freq = 2 },
-        .{ .time = 4, .event = true }, .{ .time = 4, .event = false },
+        .{ .time = 2, .event = true },              .{ .time = 3, .event = true, .freq = 2 },
+        .{ .time = 4, .event = true },              .{ .time = 4, .event = false },
         .{ .time = 9, .event = false },
     };
     const table = try lt.lifeTable(a, &obs, &.{ 0, 2, 4 });
@@ -815,4 +819,63 @@ test "STAT-LIFETEST-003 life-table listing layout for the published sample match
         std.debug.print("missing: {s}\n", .{line});
         return err;
     };
+}
+
+test "STAT-LIFETEST-001 WEIGHT kernels FREQ replication and final-plateau quartile match hand calculation" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const tight = struct {
+        fn f(want: f64, got: f64) !void {
+            try std.testing.expectApproxEqAbs(want, got, 1e-12 * @max(1, @abs(want)));
+        }
+    }.f;
+    // Invented weighted sample (corpus stat_lifetest_weight): stratum 0 and 1.
+    const obs = [_]lifetest.Obs{
+        .{ .time = 1, .event = true, .weight = 1.5 },              .{ .time = 2, .event = false, .weight = 1 },
+        .{ .time = 2, .event = true, .weight = 2 },                .{ .time = 4, .event = true, .weight = 0.5 },
+        .{ .time = 5, .event = false, .weight = 1 },               .{ .time = 1, .event = false, .stratum = 1, .weight = 1 },
+        .{ .time = 3, .event = true, .stratum = 1, .weight = 1 },  .{ .time = 4, .event = true, .stratum = 1, .weight = 2.5 },
+        .{ .time = 6, .event = false, .stratum = 1, .weight = 1 }, .{ .time = 7, .event = true, .stratum = 1, .weight = 1 },
+    };
+    // AKME, physical p.5673. At t=1: Y=6, d=1.5, sum w^2 = 8.5, M = 36/8.5.
+    const st = try lifetest.productLimitWeighted(a, obs[0..5]);
+    try tight(0.75, st.survival[0]);
+    const v1 = 0.25 / ((36.0 / 8.5) * 0.75);
+    try tight(0.75 * @sqrt(v1), st.se[0].?);
+    // At t=2: Y = 4.5, d = 2, sum w^2 = 6.25, M = 4.5^2/6.25.
+    const s2 = 0.75 * (1 - 2.0 / 4.5);
+    try tight(s2, st.survival[1]);
+    const v2 = (2.0 / 4.5) / ((4.5 * 4.5 / 6.25) * (1 - 2.0 / 4.5));
+    try tight(s2 * @sqrt(v1 + v2), st.se[1].?);
+    // Restricted mean 1 + 0.75 + 2 s2 = 31/12; weighted failed/left columns.
+    try tight(31.0 / 12.0, st.mean);
+    try tight(3.5, st.rows[1].failed_w);
+    try tight(2.5, st.rows[1].left_w);
+    // Weighted log-rank and Wilcoxon (physical p.5682) by hand over the four
+    // distinct event times 1, 2, 3, 4, 7 (exact rational sum 991/700).
+    const h = try lifetest.weightedHomogeneity(a, &obs, 2);
+    try tight(991.0 / 700.0, h.logrank[0]);
+    try tight(-991.0 / 700.0, h.logrank[1]);
+    try tight(17.75, h.wilcoxon[0]);
+    try tight(h.logrank_cov[0], -h.logrank_cov[1]);
+    try tight(1.501498511904762, h.logrank_cov[0]);
+    try tight(142.79270833333334, h.wilcoxon_cov[0]);
+    // FREQ replicates: a frequency-3 event equals three unit events.
+    const freq = [_]lifetest.Obs{ .{ .time = 1, .event = true }, .{ .time = 2, .event = true, .freq = 3 }, .{ .time = 3, .event = false } };
+    const unit = [_]lifetest.Obs{ .{ .time = 1, .event = true }, .{ .time = 2, .event = true }, .{ .time = 2, .event = true }, .{ .time = 2, .event = true }, .{ .time = 3, .event = false } };
+    const fs = try lifetest.productLimit(a, &freq);
+    const us = try lifetest.productLimit(a, &unit);
+    try expectEqual(@as(usize, 5), fs.total);
+    try expectEqual(@as(usize, 3), fs.rows.len);
+    try expectEqual(@as(usize, 4), fs.rows[1].failed);
+    try std.testing.expectEqualSlices(f64, us.survival, fs.survival);
+    try tight(us.mean_se.?, fs.mean_se.?);
+    // Survival equal to 1-p on the plateau after the last event time (the
+    // last observation censored): the estimate is missing (SAS listing).
+    const plateau = [_]lifetest.Obs{ .{ .time = 1, .event = true }, .{ .time = 2, .event = true }, .{ .time = 4, .event = true }, .{ .time = 5, .event = false } };
+    const ps = try lifetest.productLimit(a, &plateau);
+    try expect(ps.unverified == null);
+    try expectEqual(@as(?f64, null), ps.quartiles[0].estimate);
+    try tight(1.5, ps.quartiles[2].estimate.?);
 }

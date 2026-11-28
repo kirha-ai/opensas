@@ -1,7 +1,7 @@
 /* expect-rc: 2
- * STAT-LIFETEST-001: BY, FREQ, WEIGHT and ID roles parse and select
- * observations, but their estimates and listing are not implemented; the step
- * must fail visibly (D-009 gap) without printing a partial analysis.
+ * STAT-LIFETEST-001: BY, FREQ, WEIGHT and ID each execute, but WEIGHT
+ * combined with FREQ has no SAS listing reference; the step must fail
+ * visibly (D-009 gap) without printing a partial analysis.
  * Invented data.
  */
 data visits;
@@ -17,5 +17,6 @@ proc lifetest data=visits;
 time time*status(0);
 strata arm;
 freq n;
+weight n;
 by site;
 run;
