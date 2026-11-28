@@ -1,0 +1,188 @@
+
+_oracle_by=1
+
+The SURVEYIMPUTE Procedure
+
+          Imputation Information
+
+Data Set                 WORK._ORACLE_INPUT
+Weight Variable          SamplingWeight    
+Stratum Variables        State             
+                         NewUser           
+Cluster Variable         School            
+Imputation Method        FEFI              
+Replication Method       JACKKNIFE         
+Number of Replicates     47                
+
+
+Number of Observations Read              235
+Number of Observations Used              235
+Sum of Weights Read                     6468
+Sum of Weights Used                     6468
+
+
+      Class Level Information
+ 
+Class           Levels    Values
+
+Department           2    0 1       
+Response             5    1 2 3 4 5 
+
+
+         Design Summary
+
+Number of Strata               6
+Number of Clusters            47
+
+
+                               Missing Data Patterns
+ 
+                                                   Sum of    Unweighted    Weighted
+Group    Department    Response        Freq       Weights       Percent     Percent
+
+    1        X            X             157          4272         66.81       66.05
+    2        X            .              52          1480         22.13       22.88
+    3        .            X              21           586          8.94        9.06
+    4        .            .               5           130          2.13        2.01
+
+                                                Missing Data Patterns
+ 
+         -------------------------------------------------Group Means------------------------------------------------
+Group    Department 0    Department 1      Response 1      Response 2      Response 3      Response 4      Response 5
+
+    1        0.440309        0.559691        0.184457        0.206695        0.265684        0.209738        0.133427
+    2        0.641892        0.358108               .               .               .               .               .
+    3               .               .        0.261092        0.235495        0.230375        0.085324        0.187713
+    4               .               .               .               .               .               .               .
+
+
+        Donor Cell Counts
+ 
+                           Total
+  Donors       Units        Rows
+
+       0         157         157
+       2          21          42
+       5          52         260
+      10           5          50
+
+
+          Iteration History
+ 
+                Maximum       Maximum
+Iteration      Absolute      Relative
+   Number    Difference    Difference
+
+        1      2.288442       0.15521
+        2      0.317648       0.02188
+        3       0.07555       0.00752
+        4       0.02541       0.00270
+        5      0.009657       0.00096
+
+                     EM algorithm converged                     
+
+
+                Imputation Summary
+ 
+                           Number of        Sum of
+Observation Status      Observations       Weights
+
+Nonmissing                       157          4272
+Missing                           78          2196
+
+Missing, Imputed                  78          2196
+Missing, Not Imputed               0             0
+
+_oracle_by=2
+
+The SURVEYIMPUTE Procedure
+
+          Imputation Information
+
+Data Set                 WORK._ORACLE_INPUT
+Weight Variable          SamplingWeight    
+Stratum Variables        State             
+                         NewUser           
+Cluster Variable         School            
+Imputation Method        FEFI              
+Replication Method       JACKKNIFE         
+Number of Replicates     47                
+
+
+Number of Observations Read              235
+Number of Observations Used              235
+Sum of Weights Read                     6468
+Sum of Weights Used                     6468
+
+
+      Class Level Information
+ 
+Class           Levels    Values
+
+Department           2    0 1       
+Response             5    1 2 3 4 5 
+
+
+         Design Summary
+
+Number of Strata               6
+Number of Clusters            47
+
+
+                               Missing Data Patterns
+ 
+                                                   Sum of    Unweighted    Weighted
+Group    Department    Response        Freq       Weights       Percent     Percent
+
+    1        X            X             157          4272         66.81       66.05
+    2        X            .              52          1480         22.13       22.88
+    3        .            X              21           586          8.94        9.06
+    4        .            .               5           130          2.13        2.01
+
+                                                Missing Data Patterns
+ 
+         -------------------------------------------------Group Means------------------------------------------------
+Group    Department 0    Department 1      Response 1      Response 2      Response 3      Response 4      Response 5
+
+    1        0.440309        0.559691        0.184457        0.206695        0.265684        0.209738        0.133427
+    2        0.641892        0.358108               .               .               .               .               .
+    3               .               .        0.261092        0.235495        0.230375        0.085324        0.187713
+    4               .               .               .               .               .               .               .
+
+
+        Donor Cell Counts
+ 
+                           Total
+  Donors       Units        Rows
+
+       0         157         157
+       2          21          42
+       5          52         260
+      10           5          50
+
+
+          Iteration History
+ 
+                Maximum       Maximum
+Iteration      Absolute      Relative
+   Number    Difference    Difference
+
+        1      2.288442       0.15521
+        2      0.317648       0.02188
+        3       0.07555       0.00752
+        4       0.02541       0.00270
+        5      0.009657       0.00096
+
+                     EM algorithm converged                     
+
+
+                Imputation Summary
+ 
+                           Number of        Sum of
+Observation Status      Observations       Weights
+
+Nonmissing                       157          4272
+Missing                           78          2196
+
+Missing, Imputed                  78          2196
+Missing, Not Imputed               0             0
