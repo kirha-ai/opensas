@@ -1,0 +1,4 @@
+# corpus assertions
+words
+stderr-count 1 Variable arm in the FREQ statement must be numeric
+stderr-count 1 ERROR

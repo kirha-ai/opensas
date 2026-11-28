@@ -3026,6 +3026,8 @@ fn runProc(a: std.mem.Allocator, listing_out: *std.ArrayList(u8), lib: *sas.exec
             try out.appendSlice(a, body.items);
             try g.emitFootnotes(a, out);
         }
+    } else if (eqi(proc, "glimmix")) {
+        try sas.glimmix.run(pcx, toks);
     } else if (eqi(proc, "mixed")) {
         var body: std.ArrayList(u8) = .empty;
         try sas.mixed.run(pcx, &body, toks);

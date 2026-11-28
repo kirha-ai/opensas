@@ -29,6 +29,7 @@ pub const npar1way = @import("stat/npar1way.zig");
 pub const plm = @import("stat/plm.zig");
 pub const power = @import("stat/power.zig");
 pub const mixed = @import("stat/mixed.zig");
+pub const glimmix = @import("stat/glimmix.zig");
 pub const sgscatter = @import("stat/sgscatter.zig");
 pub const proc = @import("proc.zig");
 pub const macro = @import("macro.zig");
@@ -58,6 +59,7 @@ test {
     _ = @import("stat/mixed_repeated.zig");
     _ = @import("stat/mixed_fit.zig");
     _ = @import("stat/mixed_info.zig");
+    _ = @import("stat/glimmix.zig");
     _ = @import("stat/npar1way_stats.zig");
     _ = @import("stat/npar1way.zig");
     _ = @import("stat/plm.zig");
