@@ -1,0 +1,43 @@
+
+The GENMOD Procedure
+
+       Model Information
+
+Data Set              WORK.LINE
+Distribution             Normal
+Link Function          Identity
+Dependent Variable            y
+
+
+Number of Observations Read           6
+Number of Observations Used           6
+
+
+             Criteria For Assessing Goodness Of Fit
+ 
+Criterion                     DF           Value        Value/DF
+
+Deviance                       4          1.9429          0.4857
+Scaled Deviance                4          6.0000          1.5000
+Pearson Chi-Square             4          1.9429          0.4857
+Scaled Pearson X2              4          6.0000          1.5000
+Log Likelihood                           -5.1308                
+Full Log Likelihood                      -5.1308                
+AIC (smaller is better)                  16.2617                
+AICC (smaller is better)                 28.2617                
+BIC (smaller is better)                  15.6369                
+
+
+Algorithm converged.                                                       
+
+
+                    Analysis Of Maximum Likelihood Parameter Estimates
+ 
+                               Standard     Wald 95% Confidence          Wald
+Parameter    DF    Estimate       Error           Limits           Chi-Square    Pr > ChiSq
+
+Intercept     1      1.2000      0.5297      0.1617      2.2383          5.13        0.0235
+x             1      0.9429      0.1360      0.6762      1.2095         48.04        <.0001
+Scale         1      0.5690      0.1643      0.3232      1.0020                            
+
+NOTE: The scale parameter was estimated by maximum likelihood.

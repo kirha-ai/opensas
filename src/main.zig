@@ -3070,7 +3070,13 @@ fn runProc(a: std.mem.Allocator, listing_out: *std.ArrayList(u8), lib: *sas.exec
             try g.emitFootnotes(a, out);
         }
     } else if (eqi(proc, "genmod")) {
-        try sas.genmod.run(pcx, out, toks);
+        var body: std.ArrayList(u8) = .empty;
+        try sas.genmod.run(pcx, &body, toks);
+        if (body.items.len > 0) {
+            try g.emitTitles(a, out);
+            try out.appendSlice(a, body.items);
+            try g.emitFootnotes(a, out);
+        }
     } else if (eqi(proc, "corr")) {
         try sas.corr.run(pcx, out, toks);
     } else if (eqi(proc, "sgscatter")) {

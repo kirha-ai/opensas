@@ -3,11 +3,14 @@
 //! Physical PDF pp.3509–3514 (PROC options), 3525 (BY), 3541 (FREQ), 3565–3567
 //! (STRATA, WEIGHT), 3616 (Missing Values).
 //!
-//! ponytail: no estimation lives here yet. Every syntactically valid step ends
-//! in a D-009 gap (exit 2) after its declarations and data roles validate, so
-//! a GENMOD step can never silently succeed. The fit, OUTPUT, residuals and all
-//! other statements belong to STAT-GENMOD-002..023; `parse` and `prepare` are
-//! the parameter object and selected-observation interface they build on.
+//! STAT-GENMOD-002 adds the default listing for the Normal model with an
+//! identity or log link and ML scale (kernel in genmod_fit.zig).
+//!
+//! ponytail: every other valid step (other DIST=/LINK=, CLASS designs, FREQ,
+//! WEIGHT, MODEL options, OUTPUT and all later statements) still ends in a
+//! D-009 gap (exit 2) with NOTHING printed, so a GENMOD step can never
+//! silently succeed. `parse` and `prepare` are the parameter object and
+//! selected-observation interface later tickets build on.
 const std = @import("std");
 const proc = @import("../proc.zig");
 const diag = @import("../diag.zig");
@@ -18,7 +21,10 @@ const Value = @import("../value.zig").Value;
 const by = @import("by_groups.zig");
 const classes = @import("class_levels.zig");
 const selection = @import("data_selection.zig");
+const fit = @import("genmod_fit.zig");
+const chiTail = @import("logistic_fit.zig").chiTail;
 const A = std.mem.Allocator;
+const Out = std.ArrayList(u8);
 const eq = std.ascii.eqlIgnoreCase;
 
 pub const Stratum = struct { column: usize, missing: bool = false };
@@ -26,6 +32,8 @@ pub const Check = enum { covariates, none, all };
 
 pub const Spec = struct {
     input: proc.ProcInput,
+    /// Input data set name as written (or the last data set), for Model Information.
+    data_name: []const u8 = "",
     // PROC statement (p.3509): defaults are the documented ones.
     descending: bool = false,
     exact_only: bool = false,
@@ -168,6 +176,7 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
         try folded.append(a, .{ .tag = .name, .text = name.?, .line = t[q].line });
         try folded.appendSlice(a, t[q + 3 ..]);
     }
+    s.data_name = name orelse raw.name;
     s.input = try proc.procInputObs(a, raw, if (qualified != null) folded.items else t, cx.diags);
     const ds = s.input.ds;
 
@@ -397,16 +406,174 @@ pub fn prepare(cx: proc.ProcCtx, s: Spec, rows: []const []const Value) diag.Erro
     return out;
 }
 
-pub fn run(cx: proc.ProcCtx, out: *std.ArrayList(u8), t: []const lex.Token) diag.Error!void {
-    _ = out; // nothing may be printed until an owning ticket supplies real results
+fn padLeft(a: A, out: *Out, text: []const u8, width: usize) !void {
+    if (text.len < width) try out.appendNTimes(a, ' ', width - text.len);
+    try out.appendSlice(a, text);
+}
+fn padRight(a: A, out: *Out, text: []const u8, width: usize) !void {
+    try out.appendSlice(a, text);
+    if (text.len < width) try out.appendNTimes(a, ' ', width - text.len);
+}
+fn number(a: A, out: *Out, x: f64, decimals: usize, width: usize) !void {
+    try padLeft(a, out, try std.fmt.allocPrint(a, "{d:.[1]}", .{ x, decimals }), width);
+}
+fn centered(a: A, out: *Out, title: []const u8, width: usize) !void {
+    if (title.len < width) try out.appendNTimes(a, ' ', (width - title.len) / 2);
+    try out.appendSlice(a, title);
+    try out.append(a, '\n');
+}
+
+/// Two-sided 95% standard normal quantile, PROBIT(0.975) (ALPHA= is a gap).
+const z95: f64 = 1.959963984540054;
+
+/// One BY group's listing: Model Information, Number of Observations,
+/// Criteria For Assessing Goodness Of Fit, the convergence line and Analysis
+/// Of Maximum Likelihood Parameter Estimates (Getting Started, pp.3489–3508).
+fn render(a: A, out: *Out, s: Spec, sel: Selection, link: fit.Link, r: fit.Fit) !void {
+    const ds = s.input.ds;
+    try out.appendSlice(a, "\nThe GENMOD Procedure\n\n");
+    const data_name = blk: {
+        const upper = try std.ascii.allocUpperString(a, s.data_name);
+        break :blk if (std.mem.indexOfScalar(u8, upper, '.') == null) try std.fmt.allocPrint(a, "WORK.{s}", .{upper}) else upper;
+    };
+    const info = [_][2][]const u8{
+        .{ "Data Set", data_name },
+        .{ "Distribution", "Normal" },
+        .{ "Link Function", if (link == .log) "Log" else "Identity" },
+        .{ "Dependent Variable", ds.columns.items[s.response].name },
+    };
+    var value_width: usize = 0;
+    for (info) |row| value_width = @max(value_width, row[1].len);
+    try centered(a, out, "Model Information", 22 + value_width);
+    try out.append(a, '\n');
+    for (info) |row| {
+        try padRight(a, out, row[0], 18);
+        try padLeft(a, out, row[1], value_width + 4);
+        try out.append(a, '\n');
+    }
+    try out.print(a, "\n\nNumber of Observations Read{d:>12}\nNumber of Observations Used{d:>12}\n\n\n", .{ sel.read, sel.used });
+
+    const p: f64 = @floatFromInt(r.p);
+    const df = r.n - p;
+    const variance = r.scale * r.scale;
+    try centered(a, out, "Criteria For Assessing Goodness Of Fit", 64);
+    try out.appendSlice(a, " \nCriterion                     DF           Value        Value/DF\n\n");
+    // Normal: unit variance function, so Pearson chi-square equals the deviance.
+    for ([_][]const u8{ "Deviance", "Scaled Deviance", "Pearson Chi-Square", "Scaled Pearson X2" }, [_]f64{ r.deviance, r.deviance / variance, r.deviance, r.deviance / variance }) |label, value| {
+        try padRight(a, out, label, 24);
+        try number(a, out, df, 0, 8);
+        try number(a, out, value, 4, 16);
+        try number(a, out, value / df, 4, 16);
+        try out.append(a, '\n');
+    }
+    // p+1 parameters: the regression coefficients and the ML scale.
+    const k = p + 1;
+    const aic = -2 * r.loglik + 2 * k;
+    // Normal: the full log likelihood has no extra data-only term.
+    for ([_][]const u8{ "Log Likelihood", "Full Log Likelihood", "AIC (smaller is better)", "AICC (smaller is better)", "BIC (smaller is better)" }, [_]f64{ r.loglik, r.loglik, aic, aic + 2 * k * (k + 1) / (r.n - k - 1), -2 * r.loglik + k * @log(r.n) }) |label, value| {
+        try padRight(a, out, label, 32);
+        try number(a, out, value, 4, 16);
+        try out.appendNTimes(a, ' ', 16);
+        try out.append(a, '\n');
+    }
+    try out.appendSlice(a, "\n\n");
+    try padRight(a, out, "Algorithm converged.", 75);
+    try out.appendSlice(a, "\n\n\n");
+
+    var name_width: usize = 9;
+    for (s.effects) |ci| name_width = @max(name_width, ds.columns.items[ci].name.len);
+    const extra = name_width - 9;
+    try out.appendNTimes(a, ' ', extra);
+    try centered(a, out, "Analysis Of Maximum Likelihood Parameter Estimates", 91);
+    try out.appendSlice(a, " \n");
+    try out.appendNTimes(a, ' ', extra);
+    try out.appendSlice(a, "                               Standard     Wald 95% Confidence          Wald\n");
+    try padRight(a, out, "Parameter", name_width);
+    try out.appendSlice(a, "    DF    Estimate       Error           Limits           Chi-Square    Pr > ChiSq\n\n");
+    for (0..r.p) |j| {
+        const se = @sqrt(r.cov[j * r.p + j]);
+        const chi = (r.beta[j] / se) * (r.beta[j] / se);
+        const pv = chiTail(chi, 1);
+        try padRight(a, out, if (j == 0) "Intercept" else ds.columns.items[s.effects[j - 1]].name, name_width);
+        try out.appendSlice(a, "     1");
+        try number(a, out, r.beta[j], 4, 12);
+        try number(a, out, se, 4, 12);
+        try number(a, out, r.beta[j] - z95 * se, 4, 12);
+        try number(a, out, r.beta[j] + z95 * se, 4, 12);
+        try number(a, out, chi, 2, 14);
+        if (pv < 0.0001) try padLeft(a, out, "<.0001", 14) else try number(a, out, pv, 4, 14);
+        try out.append(a, '\n');
+    }
+    // Scale limits are Wald limits for log(sigma), back-transformed.
+    const spread = @exp(z95 * r.scale_se / r.scale);
+    try padRight(a, out, "Scale", name_width);
+    try out.appendSlice(a, "     1");
+    try number(a, out, r.scale, 4, 12);
+    try number(a, out, r.scale_se, 4, 12);
+    try number(a, out, r.scale / spread, 4, 12);
+    try number(a, out, r.scale * spread, 4, 12);
+    try out.appendNTimes(a, ' ', 28);
+    try out.appendSlice(a, "\n\nNOTE: The scale parameter was estimated by maximum likelihood.\n");
+}
+
+pub fn run(cx: proc.ProcCtx, out: *Out, t: []const lex.Token) diag.Error!void {
+    const a = cx.arena;
     const s = try parse(cx, t);
-    const groups = try by.checkedSlices(cx.arena, s.input.ds, s.by_cols, s.by_desc, s.notsorted, cx.diags);
-    for (groups) |group| _ = try prepare(cx, s, group.rows);
-    if (s.later.len > 0) return proc.failGap(cx.diags, line(t, 0), "PROC GENMOD: the {s} statement is not implemented", .{s.later[0]});
-    if (s.exact or s.exact_only or s.strata.len > 0) return proc.failGap(cx.diags, line(t, 0), "PROC GENMOD: exact analysis is not implemented (STAT-GENMOD-010)", .{});
-    return proc.failGap(cx.diags, line(t, 0), "PROC GENMOD: generalized linear model estimation is not implemented (STAT-GENMOD-002)", .{});
+    const ds = s.input.ds;
+    const l0 = line(t, 0);
+    const groups = try by.checkedSlices(a, ds, s.by_cols, s.by_desc, s.notsorted, cx.diags);
+    const selections = try a.alloc(Selection, groups.len);
+    for (groups, selections) |group, *sel| sel.* = try prepare(cx, s, group.rows);
+    if (s.later.len > 0) return proc.failGap(cx.diags, l0, "PROC GENMOD: the {s} statement is not implemented", .{s.later[0]});
+    if (s.exact or s.exact_only or s.strata.len > 0) return proc.failGap(cx.diags, l0, "PROC GENMOD: exact analysis is not implemented (STAT-GENMOD-010)", .{});
+    // STAT-GENMOD-002 fits the Normal model with an identity or log link.
+    // Everything else stays a loud gap: nothing is printed for the step.
+    if (s.dist) |d| if (!eq(d, "normal") and !eq(d, "nor") and !eq(d, "n"))
+        return proc.failGap(cx.diags, l0, "PROC GENMOD: DIST={s} estimation is not implemented (only DIST=NORMAL; STAT-GENMOD-005)", .{d});
+    const link: fit.Link = if (s.link) |v| (if (eq(v, "log")) .log else if (eq(v, "identity") or eq(v, "id")) .identity else return proc.failGap(cx.diags, l0, "PROC GENMOD: LINK={s} is not implemented for DIST=NORMAL (STAT-GENMOD-005)", .{v})) else .identity;
+    if (s.model_options.len > 0) return proc.failGap(cx.diags, l0, "PROC GENMOD: MODEL option {s} is not implemented (STAT-GENMOD-003)", .{s.model_options[0]});
+    if (s.class.len > 0) return proc.failGap(cx.diags, l0, "PROC GENMOD: CLASS effects in the fitted model are not implemented (STAT-GENMOD-003/004)", .{});
+    if (s.trials != null) return proc.failGap(cx.diags, l0, "PROC GENMOD: events/trials responses are not implemented (STAT-GENMOD-005)", .{});
+    if (s.frequency != null or s.weight != null) return proc.failGap(cx.diags, l0, "PROC GENMOD: FREQ and WEIGHT in the fitted model are not verified against SAS output (STAT-GENMOD-002 remaining gap)", .{});
+    if (ds.columns.items[s.response].type != .num) return cx.diags.fail(error.ParseError, l0, "PROC GENMOD: the response variable must be numeric for DIST=NORMAL", .{});
+    for (s.effects, 0..) |ci, j| if (has(s.effects[0..j], ci))
+        return proc.failGap(cx.diags, l0, "PROC GENMOD: a repeated MODEL effect is not verified", .{});
+
+    const p = s.effects.len + 1;
+    var body: Out = .empty;
+    const Message = struct { row: []const Value };
+    var messages: std.ArrayList(Message) = .empty;
+    for (groups, selections) |group, sel| {
+        // The printed layouts for these boundaries are not verified against SAS.
+        if (sel.used <= p + 2) return proc.failGap(cx.diags, l0, "PROC GENMOD: a fit with {d} usable observations for {d} parameters is not verified", .{ sel.used, p + 1 });
+        const x = try a.alloc(f64, sel.used * p);
+        const y = try a.alloc(f64, sel.used);
+        for (sel.rows, 0..) |ri, i| {
+            const row = group.rows[ri];
+            y[i] = row[s.response].num;
+            x[i * p] = 1;
+            for (s.effects, 1..) |ci, j| x[i * p + j] = row[ci].num;
+        }
+        const r = fit.fitNormal(a, x, y, sel.frequency, p, link) catch |err| switch (err) {
+            error.OutOfMemory => return error.OutOfMemory,
+            error.Singular => return proc.failGap(cx.diags, l0, "PROC GENMOD: linearly dependent model columns (aliased parameters) are not implemented (STAT-GENMOD-004)", .{}),
+            error.NotConverged => return proc.failGap(cx.diags, l0, "PROC GENMOD: the fit did not converge; nonconvergence reporting is not implemented", .{}),
+            error.InvalidStart => return proc.failGap(cx.diags, l0, "PROC GENMOD: the log link needs a positive mean response for initial values; other starts are not implemented", .{}),
+        };
+        if (!(r.deviance > 0)) return proc.failGap(cx.diags, l0, "PROC GENMOD: a perfect fit (zero scale) is not verified", .{});
+        if (s.by_cols.len > 0) try by.appendLine(a, &body, ds, group.rows[0], s.by_cols);
+        try render(a, &body, s, sel, link, r);
+        try messages.append(a, .{ .row = group.rows[0] });
+    }
+    for (messages.items) |m| {
+        try cx.diags.note(0, "Algorithm converged.", .{});
+        try cx.diags.note(0, "The scale parameter was estimated by maximum likelihood.", .{});
+        if (s.by_cols.len > 0) try by.reportNote(a, cx.diags, ds, m.row, s.by_cols);
+    }
+    try out.appendSlice(a, body.items);
 }
 
 test {
     _ = @import("genmod_tests.zig");
+    _ = @import("genmod_fit.zig");
 }

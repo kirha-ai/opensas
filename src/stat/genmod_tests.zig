@@ -255,7 +255,18 @@ test "STAT-GENMOD-001 invalid declarations are user errors and valid unimplement
         .{ .source = "proc genmod; model y = x; exact x; strata g; output out=o; run;", .rc = 1 }, // not available with STRATA
         .{ .source = "proc genmod; model y = x; frobnicate x; run;", .rc = 1 },
         // rc 2: valid SAS that is not implemented, or an undocumented repeat.
-        .{ .source = "proc genmod; model y = x; run;", .rc = 2 },
+        .{ .source = "proc genmod; model y = x / dist=poisson; run;", .rc = 2 },
+        .{ .source = "proc genmod; model y = x / dist=normal link=power; run;", .rc = 2 },
+        .{ .source = "proc genmod; model y = x / dist=normal link=log type3; run;", .rc = 2 },
+        .{ .source = "proc genmod; model y = x / offset=f; run;", .rc = 2 },
+        .{ .source = "proc genmod; class c; model y = x c; run;", .rc = 2 },
+        .{ .source = "proc genmod; model y = x; freq f; run;", .rc = 2 },
+        .{ .source = "proc genmod; model y = x; weight w; run;", .rc = 2 },
+        .{ .source = "proc genmod; model y/f = x; run;", .rc = 2 },
+        .{ .source = "proc genmod; model y = x x; run;", .rc = 2 },
+        .{ .source = "proc genmod; model y = g; by g; run;", .rc = 2 }, // constant regressor within a BY group
+        .{ .source = "proc genmod; model y = x; lsmeans x; run;", .rc = 2 },
+        .{ .source = "proc genmod; model y = x; estimate 'a' x 1; run;", .rc = 2 },
         .{ .source = "proc genmod data=sample; by g; class c; model y = x c / dist=normal link=log; freq f; weight w; run;", .rc = 2 },
         .{ .source = "proc genmod; model y = x / dist=normal link=log; output out=r pred=p; run;", .rc = 2 },
         .{ .source = "proc genmod plots=all; model y = x; run;", .rc = 2 },
@@ -290,5 +301,39 @@ test "STAT-GENMOD-001 invalid declarations are user errors and valid unimplement
         };
         try expect(d.hasErrors());
         try expectEqual(@as(usize, 0), output.items.len); // never a partial or fake table
+    }
+}
+
+test "STAT-GENMOD-002 default Normal step runs, prints every table once and reports its notes" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var lib = Library.init(a);
+    _ = try fixture(a, &lib, "sample", &sample);
+    diag.resetGap();
+    defer diag.resetGap();
+    var d = diag.Diagnostics.init(a);
+    var output: std.ArrayList(u8) = .empty;
+    // No DIST=/LINK=: Normal with the identity link. Rows 2 and 3 are missing
+    // on y or x; FREQ/WEIGHT/CLASS are not declared, so 9 of 11 rows are used.
+    try genmod.run(.{ .arena = a, .lib = &lib, .diags = &d }, &output, try lex.tokenize(a, "proc genmod data=sample; model y = x; run;", &d));
+    try expectEqual(@as(u8, 0), diag.exitCode(diag.gapHit(), d.hasErrors()));
+    for ([_][]const u8{
+        "The GENMOD Procedure",
+        "Data Set              WORK.SAMPLE",
+        "Distribution               Normal",
+        "Link Function            Identity",
+        "Dependent Variable              y",
+        "Number of Observations Read          11",
+        "Number of Observations Used           9",
+        "Criteria For Assessing Goodness Of Fit",
+        "Algorithm converged.",
+        "Analysis Of Maximum Likelihood Parameter Estimates",
+        "NOTE: The scale parameter was estimated by maximum likelihood.",
+    }) |needle| {
+        expectEqual(@as(usize, 1), std.mem.count(u8, output.items, needle)) catch |err| {
+            std.debug.print("missing or repeated: {s}\n{s}\n", .{ needle, output.items });
+            return err;
+        };
     }
 }
