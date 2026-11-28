@@ -27,9 +27,10 @@ This section is the only current status summary; every section below it is a his
 - **Open review (not done):** the originals of GENMOD-001/002/018, ANOVA-001/007, FREQ-014, PHREG-003 and LIFETEST-001/002 now match exactly but the tickets stay PARK; check each against its full acceptance criteria and recorded remaining gaps before any is marked DONE.
 - **Interrupted by the full disk:** STAT-ANOVA-009 and STAT-PHREG-004 are TODO (no file changed; reading notes in the tickets). STAT-LIFETEST-003 and STAT-GENMOD-003 are PARK with UNCOMMITTED, NEVER-COMPILED source retained in `opensas-dev5` (`stat-b6/lifetest003-dev5`) and `opensas-dev7` (`stat-b6/genmod003-dev7`); do not integrate it before it is built, tested and committed there.
 - **User approval (2026-11-28):** SASHELP sample data taken from SAS's public sample material may be committed to this public repository, for STAT-SASHELP-001 and the later SASHELP tickets; record source and verification, never invent rows, ask before adding a data set above about 2 MB.
-- **Live slots (auto):** dev1 STAT-CLUSTER-001, dev2 STAT-RMSTREG-001, dev3 STAT-CANDISC-001, dev4 STAT-KRIGE2D-001, dev5 STAT-MODECLUS-001, dev6 STAT-PRINQUAL-001, dev7 STAT-VARCLUS-001.
 - **Held, not integrated (needs a user decision):** STAT-FASTCLUS-001, branch `stat-b7/fastclus001-dev2` (`4d730ead` code and tests, `45dd37bd` ticket note). It adds SASHELP.IRIS (150 rows, Fisher 1936) taken from a SAS 9.4 dump, which is outside the approved SASHELP-ticket, public-sample-material scope.
-- **Counts:** 56 DONE, 112 PARK, 7 DOING, 1247 TODO.
+- **Live slots (auto):** dev1 STAT-CLUSTER-001, dev2 STAT-RMSTREG-001, dev3 STAT-SURVEYPHREG-001, dev4 STAT-KRIGE2D-001, dev5 STAT-MODECLUS-001, dev6 STAT-PRINQUAL-001, dev7 STAT-VARCLUS-001.
+- **Integrated locally, awaiting batch verification (auto):** STAT-CANDISC-001 (PARK).
+- **Counts:** 56 DONE, 113 PARK, 7 DOING, 1246 TODO.
 - **Next:** integrate each returned ticket, refill its slot, verify and push the next batch; run the open review above. Pending user decision: the `best32.` display fix found by STAT-STDIZE-001 changes five existing test expectations (patch kept in the coordinator scratchpad, not applied).
 - **Working branch:** `feat/stat/batch-4`. Last tested and pushed code SHA `56853ce983df02fcc8f8a07d491c734825808fd8` (batch 12; batch 11 was `b9a3dd4e7838cc9475a4d8184ff88883ef9a0a5c`). The bullets below this one describe batch 5 and are historical. Later commits that touch only this file are documentation. No PR created or merged; `main` untouched.
 - **Batch 5 verification at that exact SHA (2026-11-28):** whole `tests/STAT15.4-oracle/` moved out of the checkout, then `zig build gate -j2 --summary all` direct exit 0 — **2380/2380 unit tests** (2262 + 102 + 13 + 3), **2409/2409 corpus**, **11/11 programs**; `zig build install` direct 0; separate supplemental direct 0, **1113/1113**. Oracle restored unchanged (1425 entries), tree clean.
@@ -2849,7 +2850,7 @@ Source: S154, Chapter 35, `The CANDISC Procedure`, PDF pp. 2149–2174. Tasks in
 
 <a id="stat-candisc-001"></a>
 
-### [DOING @dev3] STAT-CANDISC-001 — CANDISC — Data input, variable roles, and basic options
+### [PARK] STAT-CANDISC-001 — CANDISC — Data input, variable roles, and basic options
 
 - Source: S154 / Chapter 35 / `PROC CANDISC Statement` (PDF pp. 2156–2159); S154 / Chapter 35 / `BY Statement` (PDF p. 2159); S154 / Chapter 35 / `CLASS Statement` (PDF pp. 2159–2160); S154 / Chapter 35 / `FREQ Statement` (PDF p. 2160); S154 / Chapter 35 / `VAR Statement` (PDF p. 2160); S154 / Chapter 35 / `WEIGHT Statement` (PDF pp. 2160–2161); S154 / Chapter 35 / `Missing Values` (PDF p. 2161); S154 / Chapter 35 / `Input Data Set` (PDF pp. 2162–2163).
 - Scope: Integrate PROC CANDISC declarations, basic options, defaults, and execution boundaries; this ticket establishes parameter objects and result interfaces, while later feature tickets implement model-, algorithm-, and output-specific options. Also implement BY; CLASS; FREQ; VAR; WEIGHT; Missing Values; Input Data Set; apply this procedure's rules for missing values, variable roles, and observation selection.
@@ -15099,7 +15100,7 @@ Source: S154, Chapter 122, `The SURVEYPHREG Procedure`, PDF pp. 10003–10102. T
 
 <a id="stat-surveyphreg-001"></a>
 
-### [TODO] STAT-SURVEYPHREG-001 — SURVEYPHREG — Data input, variable roles, and basic options
+### [DOING @dev3] STAT-SURVEYPHREG-001 — SURVEYPHREG — Data input, variable roles, and basic options
 
 - Source: S154 / Chapter 122 / `PROC SURVEYPHREG Statement` (PDF pp. 10010–10018); S154 / Chapter 122 / `BY Statement` (PDF pp. 10018–10019); S154 / Chapter 122 / `CLUSTER Statement` (PDF pp. 10021–10022); S154 / Chapter 122 / `FREQ Statement` (PDF pp. 10024–10025); S154 / Chapter 122 / `REPWEIGHTS Statement` (PDF pp. 10038–10040); S154 / Chapter 122 / `STRATA Statement` (PDF pp. 10040–10041); S154 / Chapter 122 / `WEIGHT Statement` (PDF pp. 10041–10042); S154 / Chapter 122 / `Missing Values` (PDF pp. 10054–10057).
 - Scope: Integrate PROC SURVEYPHREG declarations, basic options, defaults, and execution boundaries; this ticket establishes parameter objects and result interfaces, while later feature tickets implement model-, algorithm-, and output-specific options. Also implement BY; CLUSTER; FREQ; REPWEIGHTS; STRATA; WEIGHT; Missing Values; apply this procedure's rules for missing values, variable roles, and observation selection.
