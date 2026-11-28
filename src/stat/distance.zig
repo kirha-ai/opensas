@@ -203,11 +203,20 @@ fn parseVar(cx: proc.ProcCtx, ds: *const Dataset, t: []const lex.Token, start: u
                             k += 1;
                             continue;
                         }
-                        if (kw(t, k, "to") or kw(t, k, "by")) return gap(cx.diags, ol, "PROC DISTANCE: a WEIGHTS= start TO stop BY increment list is not implemented", .{});
                         var w: f64 = 0;
-                        const next = number(t, k, &w) orelse break;
+                        var next = number(t, k, &w) orelse break;
                         if (!(w >= 0)) return gap(cx.diags, ol, "PROC DISTANCE: a negative WEIGHTS= value is not verified against SAS output", .{});
-                        try weights.append(a, w);
+                        if (kw(t, next, "to")) {
+                            // p.2746: start TO stop BY increment (verified: 1 to 2 by 1 = 1 2).
+                            var stop: f64 = 0;
+                            var inc: f64 = 0;
+                            const after_stop = number(t, next + 1, &stop) orelse return invalid(cx, t, next + 1);
+                            if (!kw(t, after_stop, "by")) return invalid(cx, t, after_stop);
+                            next = number(t, after_stop + 1, &inc) orelse return invalid(cx, t, after_stop + 1);
+                            if (!(inc > 0) or !(stop >= w)) return gap(cx.diags, ol, "PROC DISTANCE: a WEIGHTS= TO/BY list that does not increase is not verified against SAS output", .{});
+                            var m: f64 = 0;
+                            while (w + m * inc <= stop + 1e-9 * inc) : (m += 1) try weights.append(a, w + m * inc);
+                        } else try weights.append(a, w);
                         k = next;
                     }
                     if (weights.items.len == 0) return cx.diags.fail(error.ParseError, ol, "PROC DISTANCE: WEIGHTS= needs at least one weight", .{});
@@ -249,7 +258,9 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
         if (!at(t, i, .name)) return invalid(cx, t, i);
         const l = t[i].line;
         const option = try std.ascii.allocLowerString(a, t[i].text);
-        if ((try seen.getOrPut(a, option)).found_existing) return gap(cx.diags, l, "PROC DISTANCE: repeated PROC statement option {s} is not verified", .{t[i].text});
+        // Verified (SAS 9.4 run): a repeated METHOD= or PREFIX= keeps the last value.
+        const last_wins = eq(option, "method") or eq(option, "prefix");
+        if ((try seen.getOrPut(a, option)).found_existing and !last_wins) return gap(cx.diags, l, "PROC DISTANCE: repeated PROC statement option {s} is not verified", .{t[i].text});
         const valued = at(t, i + 1, .eq);
         if (eq(option, "data") and valued) {
             const first = i + 2;
@@ -333,7 +344,7 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
             var j = i;
             try bys.read(a, t, &j);
         } else if (eq(word, "var")) {
-            if (var_seen) return gap(cx.diags, t[i].line, "PROC DISTANCE: more than one VAR statement is not verified", .{});
+            // Verified (SAS 9.4 run): several VAR statements add their lists together.
             var_seen = true;
             try parseVar(cx, ds, t, i + 1, end, &vars, &explicit_std);
         } else if (eq(word, "id")) {
@@ -501,7 +512,10 @@ pub fn run(cx: proc.ProcCtx, out: *Out, t: []const lex.Token) diag.Error!void {
     for (s.vars) |v| {
         if (v.std != .none) any_std = true;
     }
-    if (!any_std and s.mult != 1) return gap(cx.diags, l0, "PROC DISTANCE: MULT= without standardization is not verified against SAS output", .{});
+    // Verified (SAS 9.4 run): with NOSTD, MULT= still multiplies every value
+    // (distances scale by MULT=); without NOSTD and without standardization
+    // (one level, no STD=) MULT= and ADD= have no effect.
+    const nostd_mult: f64 = if (!any_std and s.nostd) s.mult else 1;
     const groups = try by.checkedSlices(a, ds, s.by_cols, s.by_desc, s.notsorted, cx.diags);
 
     // Distance variable names: PREFIX= plus 1..n or plus the ID values.
@@ -510,15 +524,19 @@ pub fn run(cx: proc.ProcCtx, out: *Out, t: []const lex.Token) diag.Error!void {
     // Verified: the matrix width is the first BY group's size; a smaller
     // later group is padded with all-missing rows carrying its BY values and
     // the first group's ID value at that position.
+    // Verified (SAS 9.4 run): a later BY group larger than the first widens the
+    // matrix to the largest group, and every smaller group (the first one too)
+    // is padded; padded rows carry the BY values, blank/missing COPY, FREQ and
+    // WEIGHT values and missing distances even with UNDEF=.
     if (groups.len > 0) width = groups[0].rows.len;
-    if (s.by_cols.len > 0 and groups.len == 0) return gap(cx.diags, l0, "PROC DISTANCE: an empty input data set with a BY statement is not verified against SAS output", .{});
-    var padded = false;
+    if (s.by_cols.len > 0 and groups.len == 0 and (s.copy.len > 0 or s.id != null or s.freq != null or s.weight != null))
+        return gap(cx.diags, l0, "PROC DISTANCE: an empty input data set with a BY statement and COPY, ID, FREQ or WEIGHT is not verified against SAS output", .{});
     for (groups) |g| {
-        if (g.rows.len > width) return gap(cx.diags, l0, "PROC DISTANCE: a BY group larger than the first BY group is not verified against SAS output", .{});
-        if (g.rows.len < width) padded = true;
+        if (g.rows.len > width) {
+            if (s.id != null) return gap(cx.diags, l0, "PROC DISTANCE: an ID statement with a BY group larger than the first BY group is not verified against SAS output", .{});
+            width = g.rows.len;
+        }
     }
-    if (padded and (s.copy.len > 0 or s.freq != null or s.weight != null or s.undef != null))
-        return gap(cx.diags, l0, "PROC DISTANCE: padding a smaller BY group with COPY, FREQ, WEIGHT or UNDEF= is not verified against SAS output", .{});
     const id_text = try a.alloc([]const u8, width);
     var raw_ids: std.ArrayList([]const u8) = .empty;
     for (0..width) |k| {
@@ -526,8 +544,8 @@ pub fn run(cx: proc.ProcCtx, out: *Out, t: []const lex.Token) diag.Error!void {
             const text = std.mem.trim(u8, groups[0].rows[k][ci].str, " ");
             id_text[k] = groups[0].rows[k][ci].str;
             for (groups[1..]) |g| if (k < g.rows.len and !std.mem.eql(u8, std.mem.trim(u8, g.rows[k][ci].str, " "), text))
-                return gap(cx.diags, l0, "PROC DISTANCE: ID values that differ between BY groups are not verified against SAS output", .{});
-            if (text.len == 0) return gap(cx.diags, l0, "PROC DISTANCE: a blank ID value is not verified against SAS output", .{});
+                return cx.diags.fail(error.ParseError, l0, "The ID variable must have the same values in the same order in each BY group.", .{});
+            if (text.len == 0) return cx.diags.fail(error.ParseError, l0, "The ID variable contains at least one missing value. No distance matrix will be created.", .{});
             if (s.prefix == null and std.ascii.isDigit(text[0])) return gap(cx.diags, l0, "PROC DISTANCE: an ID value starting with a digit and no PREFIX= is not verified against SAS output", .{});
             for (text) |c| if (!(std.ascii.isAlphanumeric(c) or c == '_')) return gap(cx.diags, l0, "PROC DISTANCE: ID value '{s}' is not a valid name suffix; the naming rule is not verified", .{text});
             // Verified: a repeated ID value gets the suffix 2 (a, b, c, a2, b2).
@@ -577,10 +595,20 @@ pub fn run(cx: proc.ProcCtx, out: *Out, t: []const lex.Token) diag.Error!void {
         const scales = try a.alloc(f64, p);
         for (s.vars, scales) |v, *sc| {
             if (v.std == .none) {
-                sc.* = 1;
+                sc.* = 1 / nostd_mult;
                 continue;
             }
-            sc.* = scale(s, v, g.rows, use) orelse return gap(cx.diags, l0, "PROC DISTANCE: a zero or undefined scale for variable {s} is not verified against SAS output", .{ds.columns.items[v.col].name});
+            sc.* = scale(s, v, g.rows, use) orelse {
+                // Verified (SAS 9.4 run, STD=STD on a constant variable): two
+                // WARNINGs and no OUT= data set. ponytail: the scale is treated
+                // as undefined when zero or not computable, like the constant case.
+                const vn = ds.columns.items[v.col].name;
+                if (s.by_cols.len > 0) return gap(cx.diags, l0, "PROC DISTANCE: a zero or undefined scale for variable {s} inside a BY group is not verified against SAS output", .{vn});
+                try cx.diags.warnStatus(l0, "The scale estimator for variable {s} is less than or equal to 0.  {s} will not be standardized.", .{ vn, vn });
+                try cx.diags.warnStatus(l0, "Because some variables can not be standardized, PROC DISTANCE will not compute the distance matrix. Choose other standardization methods for those variables.", .{});
+                try cx.diags.note(l0, "OUT= data set is not created.", .{});
+                return;
+            };
             if (v.std != .none) sc.* /= s.mult;
         }
         const z = try a.alloc(f64, n * p);
@@ -606,7 +634,7 @@ pub fn run(cx: proc.ProcCtx, out: *Out, t: []const lex.Token) diag.Error!void {
             const values = try a.alloc(Value, o.columns.items.len);
             @memset(values, Value.missing);
             for (carried.items, 0..) |ci, c| {
-                if (has(s.by_cols, ci)) values[c] = g.rows[0][ci] else if (s.id == ci) values[c] = .{ .str = id_text[k] };
+                if (has(s.by_cols, ci)) values[c] = g.rows[0][ci] else if (s.id == ci) values[c] = .{ .str = id_text[k] } else if (ds.columns.items[ci].type != .num) values[c] = .{ .str = "" };
             }
             try o.appendRow(values);
         }

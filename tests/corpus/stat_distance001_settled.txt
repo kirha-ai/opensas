@@ -1,0 +1,45 @@
+=== C2 bigger
+g=A Dist1=0 Dist2=. Dist3=. Dist4=. _ERROR_=0 _N_=1
+g=A Dist1=2.1044171232 Dist2=0 Dist3=. Dist4=. _ERROR_=0 _N_=2
+g=A Dist1=2.2038926601 Dist2=1.6475089421 Dist3=0 Dist4=. _ERROR_=0 _N_=3
+g=A Dist1=. Dist2=. Dist3=. Dist4=. _ERROR_=0 _N_=4
+g=B Dist1=0 Dist2=. Dist3=. Dist4=. _ERROR_=0 _N_=5
+g=B Dist1=1.6587233466 Dist2=0 Dist3=. Dist4=. _ERROR_=0 _N_=6
+g=B Dist1=1.9139048108 Dist2=1.1814635214 Dist3=0 Dist4=. _ERROR_=0 _N_=7
+g=B Dist1=2.5707014603 Dist2=2.6736323056 Dist3=1.5597863568 Dist4=0 _ERROR_=0 _N_=8
+=== C3 pad
+g=B f=1 w=1 Dist1=0 Dist2=. Dist3=. Dist4=. _ERROR_=0 _N_=1
+g=B f=1 w=2 Dist1=1.5376911252 Dist2=0 Dist3=. Dist4=. _ERROR_=0 _N_=2
+g=B f=1 w=1 Dist1=1.898925398 Dist2=1.0861280309 Dist3=0 Dist4=. _ERROR_=0 _N_=3
+g=B f=1 w=1 Dist1=2.487016026 Dist2=2.374283317 Dist3=1.3586960251 Dist4=0 _ERROR_=0 _N_=4
+g=C f=1 w=1 Dist1=0 Dist2=. Dist3=. Dist4=. _ERROR_=0 _N_=5
+g=C f=2 w=2 Dist1=2.0122775862 Dist2=0 Dist3=. Dist4=. _ERROR_=0 _N_=6
+g=C f=1 w=1 Dist1=2.5383754162 Dist2=1.8275397336 Dist3=0 Dist4=. _ERROR_=0 _N_=7
+g=C f=. w=. Dist1=. Dist2=. Dist3=. Dist4=. _ERROR_=0 _N_=8
+blank c at _N_=8
+=== C6 mult nostd single level
+Dist1=0 Dist2=. Dist3=. _ERROR_=0 _N_=1
+Dist1=1 Dist2=0 Dist3=. _ERROR_=0 _N_=2
+Dist1=3 Dist2=2 Dist3=0 _ERROR_=0 _N_=3
+=== C6b nostd mult
+Dist1=0 Dist2=. Dist3=. _ERROR_=0 _N_=1
+Dist1=2 Dist2=0 Dist3=. _ERROR_=0 _N_=2
+Dist1=6 Dist2=4 Dist3=0 _ERROR_=0 _N_=3
+=== C9 twovar
+Dist1=0 Dist2=. Dist3=. _ERROR_=0 _N_=1
+Dist1=2.1044171232 Dist2=0 Dist3=. _ERROR_=0 _N_=2
+Dist1=2.2038926601 Dist2=1.6475089421 Dist3=0 _ERROR_=0 _N_=3
+=== C9e twomethod
+Dist1=0 Dist2=. Dist3=. _ERROR_=0 _N_=1
+Dist1=2.6546536707 Dist2=0 Dist3=. _ERROR_=0 _N_=2
+Dist1=2.9639610121 Dist2=2.3093073414 Dist3=0 _ERROR_=0 _N_=3
+=== C11 toby
+Dist1=0 Dist2=. Dist3=. Dist4=. Dist5=. _ERROR_=0 _N_=1
+Dist1=0.6546536707 Dist2=0 Dist3=. Dist4=. Dist5=. _ERROR_=0 _N_=2
+Dist1=2.0071301474 Dist2=1.3093073414 Dist3=0 Dist4=. Dist5=. _ERROR_=0 _N_=3
+Dist1=2.4142434485 Dist2=3.2732683535 Dist3=1.4040757 Dist4=0 Dist5=. _ERROR_=0 _N_=4
+Dist1=4.0567404227 Dist2=. Dist3=2.0283702113 Dist4=3.042555317 Dist5=0 _ERROR_=0 _N_=5
+=== C13 twoprefix
+B1=0 B2=. B3=. _ERROR_=0 _N_=1
+B1=2.1044171232 B2=0 B3=. _ERROR_=0 _N_=2
+B1=2.2038926601 B2=1.6475089421 B3=0 _ERROR_=0 _N_=3

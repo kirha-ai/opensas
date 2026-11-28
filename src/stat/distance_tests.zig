@@ -202,9 +202,9 @@ test "STAT-DISTANCE-001 user errors and loud gaps via captured diagnostics" {
         "proc distance data=s out=o; var interval(x / missing=0); run;",
         "proc distance data=s out=o replace; var interval(x); run;",
         "proc distance data=s out=o outsdz=z; var interval(x); run;",
-        "proc distance data=s out=o; var interval(x / std=std); by g; id c; run;", // ID differs between groups
-        "proc distance data=s(where=(g='B' or x=1)) out=o; var interval(x); by g; run;", // later BY group larger than the first
-        "proc distance data=s out=o; var interval(x / std=std); by g; id c; run;", // ID differs between groups
+        "proc distance data=s(where=(g='B' or x=1)) out=o; var interval(x); by g; id id; run;", // ID with a later BY group larger than the first
+        "proc distance data=s(where=(x=1 or g='B')) out=o; var interval(x / std=std); by g; run;", // undefined scale inside a BY group (group A has one obs)
+        "proc distance data=s out=o; var interval(x / std=std weights=2 to 1 by 1); run;", // non-increasing TO/BY list
     };
     for (gaps) |src| {
         diag.resetGap();
@@ -251,4 +251,57 @@ test "STAT-DISTANCE-001 empty input, DATAn naming, repeated ID and padded BY gro
     try expectEqualStrings("B", o.rows.items[5][0].str);
     try expectEqualStrings("c", o.rows.items[5][1].str);
     try expect(std.math.isNan(o.rows.items[3][3].num) and std.math.isNan(o.rows.items[3][4].num));
+}
+
+test "STAT-DISTANCE-001 rules settled by a SAS 9.4 run: ID errors, zero scale, empty BY input" {
+    var e: Env = .{ .arena = std.heap.ArenaAllocator.init(std.testing.allocator) };
+    defer e.arena.deinit();
+    try e.init();
+    const a = e.arena.allocator();
+    // SAS: "ERROR: The ID variable must have the same values in the same order
+    // in each BY group." -- a user error (rc 1), no data set.
+    diag.resetGap();
+    try e.fails("proc distance data=s out=o; var interval(x / std=std); by g; id c; run;");
+    try expect(!diag.gapHit());
+    try expect(e.lib.find("o") == null);
+    // SAS: "ERROR: The ID variable contains at least one missing value. No
+    // distance matrix will be created."
+    const b = try a.create(Dataset);
+    b.* = Dataset.init(a, "b");
+    _ = try b.addColumn("id", .char);
+    _ = try b.addColumn("x", .num);
+    for ([_][]const u8{ "", "u", "v" }, [_]f64{ 1, 2, 4 }) |id, x| try b.appendRow(&.{ .{ .str = id }, .{ .num = x } });
+    try e.lib.put("b", b);
+    diag.resetGap();
+    try e.fails("proc distance data=b out=o; var interval(x / std=std); id id; run;");
+    try expect(!diag.gapHit());
+    // SAS: STD=STD of a constant variable gives two WARNINGs, the NOTE "OUT=
+    // data set is not created." and no data set (not an ERROR).
+    const zc = try a.create(Dataset);
+    zc.* = Dataset.init(a, "zc");
+    _ = try zc.addColumn("x", .num);
+    _ = try zc.addColumn("z", .num);
+    for ([_]f64{ 1, 2, 4 }) |x| try zc.appendRow(&.{ .{ .num = x }, .{ .num = 5 } });
+    try e.lib.put("zc", zc);
+    e.diags = diag.Diagnostics.init(a);
+    var out: std.ArrayList(u8) = .empty;
+    try distance.run(e.cx(), &out, try lex.tokenize(a, "proc distance data=zc out=o; var interval(x z / std=std); run;", &e.diags));
+    try expect(!e.diags.hasErrors());
+    try expect(e.lib.find("o") == null);
+    var warnings: usize = 0;
+    for (e.diags.list.items) |d| if (d.severity == .warning) {
+        warnings += 1;
+    };
+    try expectEqual(@as(usize, 2), warnings);
+    try expectEqualStrings("The scale estimator for variable z is less than or equal to 0.  z will not be standardized.", e.diags.list.items[0].message);
+    // SAS: an empty input with BY g gives 0 observations and 1 variable (g).
+    const em = try a.create(Dataset);
+    em.* = Dataset.init(a, "em");
+    _ = try em.addColumn("g", .char);
+    _ = try em.addColumn("x", .num);
+    try e.lib.put("em", em);
+    const o = try e.run("proc distance data=em out=o; var interval(x); by g; run;");
+    try expectEqual(@as(usize, 1), o.columns.items.len);
+    try expectEqualStrings("g", o.columns.items[0].name);
+    try expectEqual(@as(usize, 0), o.rows.items.len);
 }
