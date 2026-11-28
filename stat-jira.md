@@ -8,9 +8,10 @@ This section is the only current status summary; every section below it is a his
 - **Resumed 2026-11-28 about 07:20Z** after the 06:31Z account usage limit stopped all dev contexts. At the user's direction devs may compare with real SAS via `/Users/thomas/sas/bin/sasrun foo.sas -f text -o - -l /dev/null`, only when truly blocked. Coordinator keep-awake `caffeinate` PID 62218. Coordinator scripts and dev brief live in the session scratchpad `stat/` directory.
 - **Batch 61 verification at exact SHA `7e3b24a6663f4af0f744b984a6b67535347b88cc` (2026-11-28):** `zig build install` direct 0; whole `tests/STAT15.4-oracle/` moved out of the checkout, then `zig build gate -j2 --summary all` direct 0 — **2869/2869 unit tests**, **2861/2861 corpus**, **11/11 programs**; `zig build install` direct 0; separate supplemental direct 0, **1113/1113**. Oracle restored unchanged, tree clean, HEAD unchanged. Pushed. **New DONE:** STAT-CAUSALGRAPH-008 (original 95/95, rc 0; reference folder safe to delete, not deleted; disclosed: the first-minimal-set rule under MINIMAL with MAXLIST=1 is inferred from 4 SAS graphs, and more than 64 covariates or 2^20 listed sets fail loudly). **Integrated, PARK:** STAT-COMMON-019, STAT-REG-001 (typed summary input implemented).
 - **User approvals (2026-11-28):** move CATMOD's TYPE=EST direct input to STAT-CATMOD-004; add the Base random-stream ticket STAT-RAND-001; public classic sample data, including rows exported from real SAS (Iris), may be committed; build caches (`.zig-cache`) may be deleted automatically when free disk falls to about 8 GB, only for idle worktrees (done twice: 41 GB free the first time; the second at 9.5 GB free with every worktree idle, just before a seven-dev round); the `best32.` display fix is approved as STAT-BEST-001. Earlier scope: SASHELP sample data taken from SAS's public sample material may be committed to this public repository, for STAT-SASHELP-001 and the later SASHELP tickets; record source and verification, never invent rows, ask before adding a data set above about 2 MB.
-- **Live slots (auto):** dev1 STAT-SIMNORMAL-001, dev2 STAT-COMMON-023, dev3 STAT-HP-001, dev4 STAT-COMMON-021, dev5 STAT-TREE-001, dev6 STAT-REG-007, dev7 STAT-PLAN-001.
+- **Live slots (auto):** dev1 STAT-SIMNORMAL-001, dev2 STAT-COMMON-023, dev3 STAT-COMMON-032, dev4 STAT-COMMON-021, dev5 STAT-TREE-001, dev6 STAT-REG-007, dev7 STAT-PLAN-001.
 - **Held, not integrated (needs a user decision):** STAT-SASHELP-005, branch `stat-b7/sashelp005-dev4` (`50a9f8d7` code and data, `c3d1db77` ticket note). It adds SASHELP.JUNKMAIL (708 KB text), LEUTRAIN and LEUTEST (2.24 MB and 1.99 MB as text, committed gzip-compressed at 857 KB and 766 KB), about 2.3 MB in the repository, above the size the user is asked about.
-- **Counts:** 78 DONE, 146 PARK, 7 DOING, 1194 TODO.
+- **Integrated locally, awaiting batch verification (auto):** STAT-HP-001 (PARK).
+- **Counts:** 78 DONE, 147 PARK, 7 DOING, 1193 TODO.
 - **Next:** integrate each returned ticket and refill its slot, preferring close-out attempts on PARK tickets whose originals now match exactly (DISTANCE-001, PRINQUAL-001, VARCLUS-001, TPSPLINE-001, CATMOD-001, CANCORR-001, GEE-001, INBREED-001, then the open review in the batch 6 receipt), because a DONE ticket unlocks its dependents; then other eligible tickets.
 - **Working branch:** `feat/stat/batch-4`. Last tested and pushed code SHA `7e3b24a6663f4af0f744b984a6b67535347b88cc` (batch 61; batch 60 was `d0d4ab66a3eb11161c6c3f3b3b02956a7f54ace1`). The bullets below this one describe batch 5 and are historical. Later commits that touch only this file are documentation. No PR created or merged; `main` untouched.
 
@@ -1107,7 +1108,7 @@ Complete prerequisite shared contracts first, then each PROC's data input, model
 
 <a id="stat-common-032"></a>
 
-### [TODO] STAT-COMMON-032 — Programming Statements
+### [DOING @dev3] STAT-COMMON-032 — Programming Statements
 
 - Source: S154 / Chapter 20 / `Programming Statements` (PDF pp. 547–549).
 - Scope: Implement shared semantics, defaults, and applicability checks for programming Statements; procedure-specific options and result integration belong to the corresponding PROC tickets.
@@ -1137,7 +1138,7 @@ Complete prerequisite shared contracts first, then each PROC's data input, model
 
 <a id="stat-hp-001"></a>
 
-### [DOING @dev3] STAT-HP-001 — HP single-machine execution, data access, and format semantics
+### [PARK] STAT-HP-001 — HP single-machine execution, data access, and format semantics
 
 - Source: S154 / Chapter 21 / `Single-Machine Mode` (PDF pp. 555–556); S154 / Chapter 21 / `Single-Machine Data Access Mode` (PDF p. 556); S154 / Chapter 21 / `Output Data Sets` (PDF p. 556); S154 / Chapter 21 / `Working with Formats` (PDF pp. 556–557).
 - Scope: Implement the documented single-machine execution and data access contracts; define supported data layouts, formats, and output semantics.
