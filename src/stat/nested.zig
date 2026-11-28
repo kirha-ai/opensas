@@ -3,9 +3,10 @@
 //! pp.6970-6971, VAR p.6971, Missing Values p.6971, Computational Method and
 //! Displayed Output pp.6973-6975). `parse` records every documented
 //! declaration; whatever has not been proven against a SAS reference listing
-//! (long names, zero-df factors; STAT-NESTED-003 added unbalanced designs and
-//! the analysis of covariation, verified against SAS 15.4 runs) is a D-009
-//! gap (rc 2) raised before any listing text is produced.
+//! (long names; STAT-NESTED-003 added unbalanced designs and the analysis of
+//! covariation, STAT-NESTED-004 the error terms and degenerate designs, all
+//! verified against SAS 15.4 runs) is a D-009 gap (rc 2) raised before any
+//! listing text is produced.
 const std = @import("std");
 const proc = @import("../proc.zig");
 const diag = @import("../diag.zig");
@@ -250,8 +251,8 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
     s.vars = var_list.items;
     // TRUNCATE on any CLASS statement applies to every CLASS variable (SAS
     // 15.4 reference run with the option on the first or the second one).
-    for (s.class, 0..) |c, k| for (s.class[0..k]) |p| if (p == c)
-        return gap(cx, 0, "CLASS variable {s} listed more than once (a zero-degrees-of-freedom factor, STAT-NESTED-004) is not implemented", .{s.ds.columns.items[c].name});
+    // A CLASS variable listed again is a factor with zero degrees of
+    // freedom (SAS 15.4 reference runs, STAT-NESTED-004).
     for (formats.items) |spec| if (s.ds.indexOf(spec.name) == null) return cx.diags.fail(error.ParseError, 0, "Variable {s} not found.", .{try std.ascii.allocUpperString(a, spec.name)});
     s.ds = try by.withFormats(a, s.ds, formats.items);
     if (by_seen) {
@@ -482,29 +483,53 @@ pub const Derived = struct {
 pub fn derive(a: A, r: Anova) !Derived {
     const k = r.coef.len;
     const ms = try a.alloc(f64, k + 1);
-    for (ms, r.ss, r.df) |*m, s, d| m.* = s / @as(f64, @floatFromInt(d));
+    for (ms, r.ss, r.df) |*m, s, d| m.* = meanSquare(s, d);
     const comp = try components(a, r, ms);
     var total: f64 = 0;
     for (comp) |c| if (c > 0) {
         total += c;
     };
+    // Error Terms in F Tests (p.6972): factor i is tested against the mean
+    // square of factor i+1 (the last factor against Error), never skipping
+    // a degenerate denominator. SAS 15.4 reference runs (STAT-NESTED-004)
+    // print `.` when the factor or its denominator has zero degrees of
+    // freedom or the denominator mean square is not positive.
     const f = try a.alloc(f64, k);
     const p = try a.alloc(f64, k);
     for (0..k) |j| {
-        f[j] = ms[j] / ms[j + 1];
-        p[j] = reg_fit.fProbability(f[j], r.df[j], r.df[j + 1]);
+        if (r.df[j] > 0 and r.df[j + 1] > 0 and ms[j + 1] > 0) {
+            f[j] = ms[j] / ms[j + 1];
+            p[j] = reg_fit.fProbability(f[j], r.df[j], r.df[j + 1]);
+        } else {
+            f[j] = std.math.nan(f64);
+            p[j] = std.math.nan(f64);
+        }
     }
     const nf: f64 = @floatFromInt(r.n);
     var se = @sqrt(ms[0] / nf);
-    if (!r.balanced) {
+    if (!r.balanced or degenerate(r)) {
         // Var(mean) = sum_j s2_j sum_d n_d^2 / n^2 + s2 / n with the signed
-        // component estimates (matches SAS 15.4 reference runs; reduces to
-        // MS_1 / n when balanced).
+        // component estimates (zero for zero-df rows); reduces to MS_1 / n
+        // when balanced. A negative estimate prints 0 (SAS 15.4 reference
+        // runs, unbalanced one-factor design with equal group means).
         var v = comp[k] / nf;
         for (0..k) |j| v += comp[j] * r.sumsq[j] / (nf * nf);
-        se = @sqrt(v);
+        se = @sqrt(@max(v, 0));
     }
     return .{ .ms = ms, .comp = comp, .total_comp = total, .f = f, .p = p, .se_mean = se };
+}
+
+/// Mean square, missing (NaN, printed `.`) with zero degrees of freedom.
+fn meanSquare(s: f64, df: usize) f64 {
+    if (df == 0) return std.math.nan(f64);
+    return s / @as(f64, @floatFromInt(df));
+}
+
+/// A factor or the error with zero degrees of freedom (a repeated CLASS
+/// variable, one level per parent level, or one observation per cell).
+pub fn degenerate(r: Anova) bool {
+    for (r.df) |d| if (d == 0) return true;
+    return false;
 }
 
 /// Components from mean squares (or mean products): balanced closed form
@@ -513,14 +538,19 @@ pub fn derive(a: A, r: Anova) !Derived {
 pub fn components(a: A, r: Anova, ms: []const f64) ![]f64 {
     const k = r.coef.len;
     const comp = try a.alloc(f64, k + 1);
-    comp[k] = ms[k];
+    // A row with zero degrees of freedom has component 0 and the others
+    // are solved from the full EMS matrix (SAS 15.4 reference runs).
+    const closed = (r.balanced and !degenerate(r)) or r.ems.len == 0;
+    comp[k] = if (r.df[k] == 0) 0 else ms[k];
     var i = k;
     while (i > 0) {
         i -= 1;
-        if (r.balanced or r.ems.len == 0) {
+        if (r.df[i] == 0) {
+            comp[i] = 0;
+        } else if (closed) {
             comp[i] = (ms[i] - ms[i + 1]) / r.coef[i];
         } else {
-            var rest = ms[i] - ms[k];
+            var rest = ms[i] - comp[k];
             for (i + 1..k) |j| rest -= r.ems[i][j] * comp[j];
             comp[i] = rest / r.ems[i][i];
         }
@@ -600,7 +630,7 @@ pub fn covariation(a: A, d: Design, ry: Anova, dy: Derived, rz: Anova, dz: Deriv
     const k = d.levels.len;
     const x = try crossproducts(a, d, y, z);
     const mp = try a.alloc(f64, k + 1);
-    for (mp, x.sp, ry.df) |*m, s, df| m.* = s / @as(f64, @floatFromInt(df));
+    for (mp, x.sp, ry.df) |*m, s, df| m.* = meanSquare(s, df);
     const comp = try components(a, ry, mp);
     var total_comp: f64 = 0;
     var ty: f64 = 0;
@@ -613,10 +643,17 @@ pub fn covariation(a: A, d: Design, ry: Anova, dy: Derived, rz: Anova, dz: Deriv
     const vc = try a.alloc(f64, k + 1);
     const msc = try a.alloc(f64, k + 1);
     for (0..k + 1) |i| {
+        // Zero-df rows print `.` for both correlations (reference runs).
+        if (ry.df[i] == 0) {
+            vc[i] = std.math.nan(f64);
+            msc[i] = std.math.nan(f64);
+            continue;
+        }
         vc[i] = vcCorr(comp[i], dy.comp[i], dz.comp[i]);
         msc[i] = if (dy.ms[i] * dz.ms[i] > 0) mp[i] / @sqrt(dy.ms[i] * dz.ms[i]) else 0;
     }
-    const nm1: f64 = @floatFromInt(d.n - 1);
+    const nm1: f64 = @floatFromInt(d.n -| 1);
+    const tvar = ry.total_ss / nm1 * (rz.total_ss / nm1);
     return .{
         .total_sp = x.total,
         .sp = x.sp,
@@ -624,9 +661,10 @@ pub fn covariation(a: A, d: Design, ry: Anova, dy: Derived, rz: Anova, dz: Deriv
         .comp = comp,
         .total_comp = total_comp,
         .vc_corr = vc,
-        .total_vc_corr = vcCorr(total_comp, ty, tz),
+        // One observation: the Total row is missing too (reference run).
+        .total_vc_corr = if (d.n < 2) std.math.nan(f64) else vcCorr(total_comp, ty, tz),
         .ms_corr = msc,
-        .total_ms_corr = (x.total / nm1) / @sqrt(ry.total_ss / nm1 * (rz.total_ss / nm1)),
+        .total_ms_corr = if (d.n < 2) std.math.nan(f64) else if (tvar > 0) (x.total / nm1) / @sqrt(tvar) else 0,
     };
 }
 
@@ -653,7 +691,7 @@ fn pvalue(a: A, p: f64) ![]const u8 {
 }
 
 fn renderEms(a: A, out: *Out, names: []const []const u8, r: Anova) !void {
-    if (!r.balanced) return renderEmsGeneral(a, out, names, r.ems);
+    if (!r.balanced) return renderEmsGeneral(a, out, names, r.ems, r.df);
     const coef = r.coef;
     // Column widths inferred from the SAS 15.4 reference listings: the
     // Source column is at least 6 wide; each coefficient column is the name
@@ -680,11 +718,15 @@ fn renderEms(a: A, out: *Out, names: []const []const u8, r: Anova) !void {
     const k = names.len;
     for (0..k + 1) |i| {
         try pad(a, out, if (i < k) names[i] else "Error", src, true);
+        // A zero-df factor's row is all 0 (Error column included); its
+        // column keeps the coefficients of the factors above it (SAS 15.4
+        // reference runs).
+        const zero = i < k and r.df[i] == 0;
         for (0..k) |j| {
-            const c: f64 = if (i <= j) coef[j] else 0;
+            const c: f64 = if (zero or i > j) 0 else if (r.ems.len > 0) r.ems[i][j] else coef[j];
             try pad(a, out, try std.fmt.allocPrint(a, "{d:.0}", .{c}), @max(names[j].len, 2) + 6, false);
         }
-        try pad(a, out, "1", 11, false);
+        try pad(a, out, if (zero) "0" else "1", 11, false);
         try out.append(a, '\n');
     }
 }
@@ -693,7 +735,7 @@ fn renderEms(a: A, out: *Out, names: []const []const u8, r: Anova) !void {
 /// fewest decimals d <= 8 that show all coefficients exactly (8 otherwise);
 /// with w the widest value, factor columns are max(w + 7, name + 6) wide, the
 /// Error column max(w + 7, 11), the Source column max(6, longest name).
-fn renderEmsGeneral(a: A, out: *Out, names: []const []const u8, ems: []const []const f64) !void {
+fn renderEmsGeneral(a: A, out: *Out, names: []const []const u8, ems: []const []const f64, df: []const usize) !void {
     var src: usize = 6;
     for (names) |nm| src = @max(src, nm.len);
     const k = names.len;
@@ -720,7 +762,15 @@ fn renderEmsGeneral(a: A, out: *Out, names: []const []const u8, ems: []const []c
     }
     const ew = @max(w + 7, 11);
     total += ew;
-    try centered(a, out, "Coefficients of Expected Mean Squares", total);
+    const title = "Coefficients of Expected Mean Squares";
+    if (total >= title.len) {
+        try centered(a, out, title, total);
+    } else {
+        // Narrow tables break the title as the balanced layout does (SAS
+        // 15.4 reference run, unbalanced one-factor design).
+        try centered(a, out, "Coefficients of Expected", total);
+        try centered(a, out, "Mean Squares", total);
+    }
     try out.appendSlice(a, " \n");
     try pad(a, out, "Source", src, true);
     for (names, widths) |nm, x| try pad(a, out, nm, x, false);
@@ -732,7 +782,8 @@ fn renderEmsGeneral(a: A, out: *Out, names: []const []const u8, ems: []const []c
             const c: f64 = if (i < k and i <= j) ems[i][j] else 0;
             try pad(a, out, try std.fmt.allocPrint(a, "{[0]d:.[1]}", .{ c, d }), widths[j], false);
         }
-        try pad(a, out, try std.fmt.allocPrint(a, "{[0]d:.[1]}", .{ @as(f64, 1), d }), ew, false);
+        const one: f64 = if (i < k and df[i] == 0) 0 else 1;
+        try pad(a, out, try std.fmt.allocPrint(a, "{[0]d:.[1]}", .{ one, d }), ew, false);
         try out.append(a, '\n');
     }
 }
@@ -741,6 +792,7 @@ fn renderEmsGeneral(a: A, out: *Out, names: []const []const u8, ems: []const []c
 /// reference runs of unbalanced designs with a zero sum of squares).
 /// ponytail: exact float zero only, no fuzz.
 fn six(a: A, x: f64) ![]const u8 {
+    if (std.math.isNan(x)) return ".";
     if (x == 0) return "0";
     return std.fmt.allocPrint(a, "{d:.6}", .{x});
 }
@@ -753,8 +805,15 @@ fn renderCovariation(a: A, out: *Out, names: []const []const u8, ny: []const u8,
     try out.appendSlice(a, "Covariance                    Sum of                      Covariance      Component    Mean Square\n");
     try out.appendSlice(a, "Source            DF        Products    Mean Product       Component    Correlation    Correlation\n\n");
     const k = names.len;
-    try covRow(a, out, "Total", n - 1, c.total_sp, c.total_sp / @as(f64, @floatFromInt(n - 1)), c.total_comp, c.total_vc_corr, c.total_ms_corr);
-    for (0..k + 1) |i| try covRow(a, out, if (i < k) names[i] else "Error", df[i], c.sp[i], c.mp[i], c.comp[i], c.vc_corr[i], c.ms_corr[i]);
+    const tdf = n - 1;
+    try covRow(a, out, "Total", tdf, if (tdf == 0) std.math.nan(f64) else c.total_sp, meanSquare(c.total_sp, tdf), c.total_comp, c.total_vc_corr, c.total_ms_corr);
+    for (0..k + 1) |i| try covRow(a, out, if (i < k) names[i] else "Error", df[i], if (df[i] == 0) std.math.nan(f64) else c.sp[i], c.mp[i], c.comp[i], c.vc_corr[i], c.ms_corr[i]);
+}
+
+/// Four-decimal cell; missing prints `.` where the decimal point would be.
+fn four(a: A, x: f64) ![]const u8 {
+    if (std.math.isNan(x)) return ".    ";
+    return std.fmt.allocPrint(a, "{d:.4}", .{x});
 }
 
 fn covRow(a: A, out: *Out, name: []const u8, df: usize, sp: f64, mp: f64, comp: f64, vc: f64, msc: f64) !void {
@@ -763,8 +822,8 @@ fn covRow(a: A, out: *Out, name: []const u8, df: usize, sp: f64, mp: f64, comp: 
     try pad(a, out, try six(a, sp), 16, false);
     try pad(a, out, try six(a, mp), 16, false);
     try pad(a, out, try six(a, comp), 16, false);
-    try pad(a, out, try std.fmt.allocPrint(a, "{d:.4}", .{vc}), 15, false);
-    try pad(a, out, try std.fmt.allocPrint(a, "{d:.4}", .{msc}), 15, false);
+    try pad(a, out, try four(a, vc), 15, false);
+    try pad(a, out, try four(a, msc), 15, false);
     try out.append(a, '\n');
 }
 
@@ -784,14 +843,17 @@ fn renderAnova(a: A, out: *Out, names: []const []const u8, dep: []const u8, r: A
     try out.appendSlice(a, "Source          DF         Squares    F Value    Pr > F    ");
     try pad(a, out, "Term", term, true);
     try out.appendSlice(a, "  Mean Square       Component    of Total\n\n");
-    const total_ms = r.total_ss / @as(f64, @floatFromInt(r.n - 1));
-    try row(a, out, term, "Total", r.n - 1, r.total_ss, null, null, total_ms, d.total_comp, 100);
+    const nan = std.math.nan(f64);
+    const tdf = r.n - 1;
+    try row(a, out, term, "Total", tdf, if (tdf == 0) nan else r.total_ss, null, null, meanSquare(r.total_ss, tdf), d.total_comp, if (d.total_comp > 0) 100 else 0);
     for (0..k + 1) |i| {
         const pct = if (d.comp[i] > 0) 100 * d.comp[i] / d.total_comp else 0;
-        // Unbalanced Data (p.6971): the F test columns are left blank.
-        const tested = i < k and r.balanced;
-        const test_: ?Test = if (tested) .{ .f = d.f[i], .p = d.p[i] } else null;
-        try row(a, out, term, if (i < k) names[i] else "Error", r.df[i], r.ss[i], test_, if (tested) (if (i + 1 < k) names[i + 1] else "Error") else null, d.ms[i], d.comp[i], pct);
+        // Unbalanced Data (p.6971): the F test columns are left blank;
+        // balanced rows without a valid test print `.` (derive).
+        const shown = i < k and r.balanced;
+        const tested = shown and !std.math.isNan(d.f[i]);
+        const test_: ?Test = if (shown) .{ .f = d.f[i], .p = d.p[i] } else null;
+        try row(a, out, term, if (i < k) names[i] else "Error", r.df[i], if (r.df[i] == 0) nan else r.ss[i], test_, if (tested) (if (i + 1 < k) names[i + 1] else "Error") else null, d.ms[i], d.comp[i], pct);
     }
     try out.appendSlice(a, "\n\n");
     const se_label = try std.fmt.allocPrint(a, "Standard Error of {s} Mean", .{dep});
@@ -814,8 +876,13 @@ fn row(a: A, out: *Out, term_width: usize, name: []const u8, df: usize, ss: f64,
     try pad(a, out, try std.fmt.allocPrint(a, "{d}", .{df}), 6, false);
     try pad(a, out, try six(a, ss), 16, false);
     if (t) |x| {
-        try pad(a, out, try std.fmt.allocPrint(a, "{d:.2}", .{x.f}), 11, false);
-        try pad(a, out, try pvalue(a, x.p), 10, false);
+        if (std.math.isNan(x.f)) {
+            try pad(a, out, ".  ", 11, false);
+            try pad(a, out, ".    ", 10, false);
+        } else {
+            try pad(a, out, try std.fmt.allocPrint(a, "{d:.2}", .{x.f}), 11, false);
+            try pad(a, out, try pvalue(a, x.p), 10, false);
+        }
     } else try out.appendNTimes(a, ' ', 21);
     try out.appendSlice(a, "    ");
     try pad(a, out, term orelse "", term_width, true);
@@ -855,12 +922,9 @@ fn analyze(cx: proc.ProcCtx, s: Spec, rows_in: []const []const Value) diag.Error
     // leave the F test columns blank.
     // (The WARNING itself is issued by `run`, with the BY-group NOTE.)
 
-    var prev: usize = 1;
-    for (d.levels) |l| {
-        if (l <= prev) return gap(cx, 0, "a classification factor with zero degrees of freedom is not implemented", .{});
-        prev = l;
-    }
-    if (d.n <= prev) return gap(cx, 0, "a design with zero error degrees of freedom is not implemented", .{});
+    // Degenerate designs (STAT-NESTED-004): a factor or the error with zero
+    // degrees of freedom, zero mean squares, a zero total, are listed with
+    // `.` cells and zero components as SAS 15.4 does (derive, renderAnova).
     const results = try a.alloc(Anova, s.vars.len);
     const derived = try a.alloc(Derived, s.vars.len);
     const ys = try a.alloc([]f64, s.vars.len);
@@ -870,10 +934,6 @@ fn analyze(cx: proc.ProcCtx, s: Spec, rows_in: []const []const Value) diag.Error
         for (rows.items, y) |r, *x| x.* = r[v].num;
         res.* = try anova(a, d, y);
         der.* = try derive(a, res.*);
-        if (d.balanced) for (der.ms[1..]) |m| if (!(m > 0)) return gap(cx, 0, "an F test with a zero denominator mean square is not implemented", .{});
-        if (!(der.total_comp > 0)) return gap(cx, 0, "a zero total variance component is not implemented", .{});
-        if (!(res.total_ss > 0)) return gap(cx, 0, "a zero total sum of squares is not implemented", .{});
-        if (!(der.se_mean >= 0)) return gap(cx, 0, "an unbalanced design whose estimated variance of the mean is negative is not implemented", .{});
     }
     return .{ .design = d, .results = results, .derived = derived, .ys = @ptrCast(ys) };
 }

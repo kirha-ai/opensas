@@ -1,4 +1,3 @@
 # corpus assertions
 empty-listing
-stderr-count 1 CLASS variable a listed more than once
-stderr-count 1 an F test with a zero denominator mean square is not implemented
+stderr-count 1 listing layout for CLASS variable names longer than 8 characters (longclass9) is not verified

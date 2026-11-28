@@ -1,3 +1,0 @@
-# corpus assertions
-empty-listing
-stderr-count 2 a design with zero error degrees of freedom is not implemented

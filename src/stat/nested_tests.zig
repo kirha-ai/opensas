@@ -1,4 +1,4 @@
-//! STAT-NESTED-001/-002 permanent tests: PROC NESTED options, CLASS/VAR/BY roles,
+//! STAT-NESTED-001/-002/-003/-004 permanent tests: PROC NESTED options, CLASS/VAR/BY roles,
 //! missing values, level runs, the balanced closed form and loud boundaries,
 //! asserted through the captured diagnostics reporter (no spawned process).
 //! Data are invented (D-011); expected values are hand sums of squares that
@@ -100,8 +100,6 @@ test "STAT-NESTED-001 user errors fail with rc 1 and gaps with rc 2" {
         try expect(!diag.gapHit());
     }
     const gap_cases = [_][]const u8{
-        "proc nested data=s; class a a; var y; run;", // repeated CLASS variable: zero-df factor (STAT-NESTED-004)
-        "proc nested data=s; class a b; var y; by g; class b; run;", // CLASS a b b
         "proc nested data=s; class a b; var y; attrib y transcode=no; run;",
     };
     for (gap_cases) |src| {
@@ -190,10 +188,12 @@ test "STAT-NESTED-001 FORMAT groups CLASS levels and an empty data set lists not
     const out = try e.run("proc nested data=s; format a 1.; class a b; var y; run;");
     try expect(std.mem.indexOf(u8, out, "a                1        0.125000       0.02    0.9126    b            0.125000       -2.000000      0.0000") != null);
     // Unformatted, every raw a value starts a new run (8 levels of a), so b
-    // has zero degrees of freedom: a loud gap.
+    // has zero degrees of freedom, as does the error: both list `.` cells
+    // and component 0 (STAT-NESTED-004, SAS 15.4 reference runs).
     diag.resetGap();
-    try std.testing.expectError(error.ParseError, e.run("proc nested data=s; class a b; var y; run;"));
-    try expect(diag.gapHit());
+    const raw = try e.run("proc nested data=s; class a b; var y; run;");
+    try expect(!diag.gapHit());
+    try expect(std.mem.indexOf(u8, raw, "b                0               .        .       .                            .               0      0.0000") != null);
     // An input data set without observations: no listing, no error.
     const empty = try e.arena.allocator().create(Dataset);
     empty.* = Dataset.init(e.arena.allocator(), "none");
@@ -352,5 +352,99 @@ test "STAT-NESTED-003 unbalanced runs and covariation list with a WARNING, no ga
             if (std.mem.indexOf(u8, m.message, "The design is not balanced--F tests cannot be computed.") != null) n += 1;
         }
         try expectEqual(c.warnings, n);
+    }
+}
+
+test "STAT-NESTED-004 error terms and zero-df rows match a hand calculation" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    // Balanced A/B with one observation per cell (zero error df): y = 3 5 4 8.
+    const ys = [_]f64{ 3, 5, 4, 8 };
+    var keys: [4][]const Value = undefined;
+    for (0..4) |i| keys[i] = try a.dupe(Value, &.{ .{ .num = @floatFromInt(i / 2) }, .{ .num = @floatFromInt(i) } });
+    const d = try nested.design(a, &keys);
+    const r = try nested.anova(a, d, &ys);
+    try std.testing.expectEqualSlices(usize, &.{ 1, 2, 0 }, r.df);
+    const x = try nested.derive(a, r);
+    // MS_A = 4, MS_B = 5, error mean square missing and component 0;
+    // s2_B = 5, s2_A = (4 - 5) / 2 = -0.5; F_A = 0.8 on (1, 2) df with
+    // Pr = 1 - sqrt(0.8 / 2.8); B has no denominator (`.`).
+    try expect(std.math.isNan(x.ms[2]));
+    try approx(@as(f64, 0), x.comp[2], 0);
+    try approx(@as(f64, 5), x.comp[1], 1e-12);
+    try approx(@as(f64, -0.5), x.comp[0], 1e-12);
+    try approx(@as(f64, 0.8), x.f[0], 1e-12);
+    try approx(1 - @sqrt(@as(f64, 0.8) / 2.8), x.p[0], 1e-12);
+    try expect(std.math.isNan(x.f[1]));
+    try approx(@as(f64, 1), x.se_mean, 1e-12);
+
+    // CLASS a a: the repeated factor has zero df, component 0, and the
+    // first factor has no valid denominator. y = 3 5 / 4 8.
+    var k2: [4][]const Value = undefined;
+    for (0..4) |i| {
+        const v = Value{ .num = @floatFromInt(i / 2) };
+        k2[i] = try a.dupe(Value, &.{ v, v });
+    }
+    const d2 = try nested.design(a, &k2);
+    const r2 = try nested.anova(a, d2, &ys);
+    try std.testing.expectEqualSlices(usize, &.{ 1, 0, 2 }, r2.df);
+    const x2 = try nested.derive(a, r2);
+    try expect(std.math.isNan(x2.f[0]) and std.math.isNan(x2.f[1]));
+    // MS_A = 4, MSE = (2 + 8) / 2 = 5: s2_A = (4 - 5) / 2 = -0.5.
+    try approx(@as(f64, -0.5), x2.comp[0], 1e-12);
+    try approx(@as(f64, 0), x2.comp[1], 0);
+    try approx(@as(f64, 5), x2.total_comp, 1e-12);
+    try approx(@as(f64, 1), x2.se_mean, 1e-12);
+    // EMS: the zero-df row is all 0; its column keeps n / levels = 2.
+    try approx(@as(f64, 2), r2.ems[0][1], 1e-12);
+    try approx(@as(f64, 0), r2.ems[1][1], 0);
+
+    // Zero denominator mean square: B means equal within A (y = 3 5 3 5 /
+    // 6 8 6 8): MS_B = 0, so A prints `.`, B gets F = 0, Pr = 1.
+    const y3 = [_]f64{ 3, 5, 3, 5, 6, 8, 6, 8 };
+    var k3: [8][]const Value = undefined;
+    for (0..8) |i| k3[i] = try a.dupe(Value, &.{ .{ .num = @floatFromInt(i / 4) }, .{ .num = @floatFromInt(i / 2) } });
+    const r3 = try nested.anova(a, try nested.design(a, &k3), &y3);
+    const x3 = try nested.derive(a, r3);
+    try expect(std.math.isNan(x3.f[0]));
+    try approx(@as(f64, 0), x3.f[1], 0);
+    try approx(@as(f64, 1), x3.p[1], 1e-12);
+}
+
+test "STAT-NESTED-004 negative estimated variance of the mean prints 0" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    // One factor, group sizes 1 and 3 with equal means 5: SS_A = 0, MSE = 1,
+    // C = 1.5, s2_A = -2/3, Var(mean) = -2/3 * 10/16 + 1/4 = -1/6 -> 0.
+    const ys = [_]f64{ 5, 4, 5, 6 };
+    var keys: [4][]const Value = undefined;
+    for (0..4) |i| keys[i] = try a.dupe(Value, &.{.{ .num = if (i == 0) 1 else 2 }});
+    const r = try nested.anova(a, try nested.design(a, &keys), &ys);
+    try expect(!r.balanced);
+    const x = try nested.derive(a, r);
+    try approx(@as(f64, 1.5), r.ems[0][0], 1e-12);
+    try approx(@as(f64, -2.0 / 3.0), x.comp[0], 1e-12);
+    try approx(@as(f64, 0), x.se_mean, 0);
+}
+
+test "STAT-NESTED-004 degenerate designs list without a gap" {
+    const cases = [_][]const u8{
+        "proc nested data=s; class a a; var y; run;",
+        "proc nested data=s; class a b; var y; by g; class b; run;", // CLASS a b b
+        "proc nested data=s; class a b; var y z; run;",
+        "proc nested data=s aov; by g; class a b; run;", // default VAR list incl. nothing degenerate
+        "proc nested data=s(where=(a=1 and b=1)); class a; var y z; run;", // one level
+        "proc nested data=s(where=(y=3)); class a; var y z; run;", // one observation
+    };
+    for (cases) |src| {
+        var e: Env = .{ .arena = std.heap.ArenaAllocator.init(std.testing.allocator) };
+        defer e.arena.deinit();
+        try e.init();
+        const listing = try e.run(src);
+        try expect(!diag.gapHit());
+        try expect(!e.diags.hasErrors());
+        try expect(std.mem.indexOf(u8, listing, "Nested Random Effects Analysis of Variance") != null);
     }
 }

@@ -1,0 +1,28 @@
+Reliability of Automobile Models
+
+The NESTED Procedure
+
+      Coefficients of Expected Mean Squares
+ 
+Source      Make      Model      Model      Error
+
+Make           9          3          3          1
+Model          0          3          3          1
+Model          0          0          0          0
+Error          0          0          0          1
+
+
+                       Nested Random Effects Analysis of Variance for Variable Score
+ 
+Variance                    Sum of                         Error                        Variance     Percent
+Source          DF         Squares    F Value    Pr > F    Term      Mean Square       Component    of Total
+
+Total           35     4177.888889                                    119.368254      131.876543    100.0000
+Make             3     1709.000000       2.15    0.1719    Model      569.666667       33.867284     25.6811
+Model            8     2118.888889        .       .                   264.861111       83.425926     63.2606
+Model            0               .        .       .                            .               0      0.0000
+Error           24      350.000000                                     14.583333       14.583333     11.0583
+
+
+Score Mean                         75.94444444
+Standard Error of Score Mean        3.97794848
