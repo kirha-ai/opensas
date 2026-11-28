@@ -814,6 +814,14 @@ fn modelingNote(a: A, s: Spec, sel: Selection) ![]const u8 {
     return std.fmt.allocPrint(a, "{s} One way to change this to model the probability that {s}='{s}' is to specify the DESCENDING option in the PROC statement.", .{ text, name, std.mem.trim(u8, levels[1 - event].label, " ") });
 }
 
+/// LINESIZE for the hint: OPTIONS LINESIZE= when given, else 120, the
+/// default reported by the SAS reference session (getoption(linesize)=120,
+/// listing wrapped there). ponytail: other SAS session types may default
+/// differently; that default is the one unverified aspect.
+fn lineSize() usize {
+    return if (io.global_linesize == 0) 120 else io.global_linesize;
+}
+
 /// Greedy word wrap: each line holds at most linesize-1 columns counting the
 /// blank after each word (reference listing at LINESIZE=160).
 pub fn wrapText(a: A, out: *Out, text: []const u8, linesize: usize) !void {
@@ -902,7 +910,7 @@ fn render(a: A, out: *Out, s: Spec, sel: Selection, m: Model) !void {
         try out.append(a, '\n');
     }
     try out.append(a, '\n');
-    try wrapText(a, out, try modelingNote(a, s, sel), io.global_linesize);
+    try wrapText(a, out, try modelingNote(a, s, sel), lineSize());
     try out.appendSlice(a, "\n\n");
 
     // Parameter Information: one column per CLASS variable among the effects.
@@ -1059,9 +1067,6 @@ pub fn run(cx: proc.ProcCtx, out: *Out, t: []const lex.Token) diag.Error!void {
         .internal, .freq => !s.descending,
     };
     if (!verified_order) return proc.failGap(cx.diags, l0, "PROC GEE: ORDER={s} {s} DESCENDING is not verified against SAS output", .{ @tagName(s.order), if (s.descending) "with" else "without" });
-    // ponytail: the DESCENDING hint wraps at LINESIZE; opensas has no verified
-    // default LINESIZE, so that listing needs an explicit OPTIONS LINESIZE=.
-    if (!s.descending and io.global_linesize == 0) return proc.failGap(cx.diags, l0, "PROC GEE: without DESCENDING the listing needs an explicit OPTIONS LINESIZE= (the default line size is not verified)", .{});
     const groups = try by.checkedSlices(a, ds, s.by_cols, s.by_desc, s.notsorted, cx.diags);
     // SAS 9.4 reference run (empty WHERE= subset): Model Information, then this ERROR.
     const no_valid = "No valid observations due to invalid or missing values in the response, explanatory, offset, frequency, or weight variable.";
