@@ -8,8 +8,9 @@ This section is the only current status summary; every section below it is a his
 - **Resumed 2026-11-28 about 07:20Z** after the 06:31Z account usage limit stopped all dev contexts. At the user's direction devs may compare with real SAS via `/Users/thomas/sas/bin/sasrun foo.sas -f text -o - -l /dev/null`, only when truly blocked. Coordinator keep-awake `caffeinate` PID 62218. Coordinator scripts and dev brief live in the session scratchpad `stat/` directory.
 - **Batch 30 verification at exact SHA `6798b717c7e43c70c7c7b92a29e8b2d8193f997a` (2026-11-28):** `zig build install` direct 0; whole `tests/STAT15.4-oracle/` moved out of the checkout, then `zig build gate -j2 --summary all` direct 0 — **2774/2774 unit tests**, **2679/2679 corpus**, **11/11 programs**; `zig build install` direct 0; separate supplemental direct 0, **1113/1113**. Oracle restored unchanged, tree clean, HEAD unchanged. Pushed. **New DONE:** STAT-NESTED-001 (original 96/96 tokens, rc 0; reference folder safe to delete, not deleted).
 - **User approvals (2026-11-28):** public classic sample data, including rows exported from real SAS (Iris), may be committed; build caches (`.zig-cache`) may be deleted automatically when free disk falls to about 8 GB, only for idle worktrees (done once, 41 GB free); the `best32.` display fix is approved as STAT-BEST-001. Earlier scope: SASHELP sample data taken from SAS's public sample material may be committed to this public repository, for STAT-SASHELP-001 and the later SASHELP tickets; record source and verification, never invent rows, ask before adding a data set above about 2 MB.
-- **Live slots (auto):** dev1 STAT-LATTICE-001, dev2 STAT-CAUSALGRAPH-003, dev3 STAT-TPSPLINE-003, dev4 STAT-DISCRIM-001, dev5 STAT-GLMMOD-003, dev6 STAT-STDIZE-001, dev7 STAT-GEE-001.
-- **Counts:** 60 DONE, 132 PARK, 7 DOING, 1225 TODO.
+- **Live slots (auto):** dev1 STAT-LATTICE-001, dev2 STAT-CAUSALGRAPH-003, dev3 STAT-TPSPLINE-003, dev4 STAT-DISCRIM-001, dev5 STAT-GLMMOD-003, dev6 STAT-STDIZE-001, dev7 STAT-STEPDISC-001.
+- **Integrated locally, awaiting batch verification (auto):** STAT-GEE-001 (PARK).
+- **Counts:** 60 DONE, 133 PARK, 7 DOING, 1224 TODO.
 - **Next:** integrate each returned ticket and refill its slot, preferring close-out attempts on PARK tickets whose originals now match exactly (DISTANCE-001, PRINQUAL-001, VARCLUS-001, TPSPLINE-001, CATMOD-001, CANCORR-001, GEE-001, INBREED-001, then the open review in the batch 6 receipt), because a DONE ticket unlocks its dependents; then other eligible tickets.
 - **Working branch:** `feat/stat/batch-4`. Last tested and pushed code SHA `6798b717c7e43c70c7c7b92a29e8b2d8193f997a` (batch 30; batch 29 was `d199452bc4dfb15f49b9c07763071d29a85f17f6`). The bullets below this one describe batch 5 and are historical. Later commits that touch only this file are documentation. No PR created or merged; `main` untouched.
 
@@ -4784,7 +4785,7 @@ Source: S154, Chapter 50, `The GEE Procedure`, PDF pp. 3421–3480. Tasks in thi
 
 <a id="stat-gee-001"></a>
 
-### [DOING @dev7] STAT-GEE-001 — GEE — Data input, variable roles, and basic options
+### [PARK] STAT-GEE-001 — GEE — Data input, variable roles, and basic options
 
 - Source: S154 / Chapter 50 / `PROC GEE Statement` (PDF pp. 3426–3428); S154 / Chapter 50 / `BY Statement` (PDF p. 3428); S154 / Chapter 50 / `FREQ Statement` (PDF pp. 3431–3432); S154 / Chapter 50 / `WEIGHT Statement` (PDF p. 3444).
 - Scope: Integrate PROC GEE declarations, basic options, defaults, and execution boundaries; this ticket establishes parameter objects and result interfaces, while later feature tickets implement model-, algorithm-, and output-specific options. Also implement BY; FREQ; WEIGHT; apply this procedure's rules for missing values, variable roles, and observation selection.
@@ -14444,7 +14445,7 @@ Source: S154, Chapter 117, `The STEPDISC Procedure`, PDF pp. 9553–9576. Tasks 
 
 <a id="stat-stepdisc-001"></a>
 
-### [TODO] STAT-STEPDISC-001 — STEPDISC — Data input, variable roles, and basic options
+### [DOING @dev7] STAT-STEPDISC-001 — STEPDISC — Data input, variable roles, and basic options
 
 - Source: S154 / Chapter 117 / `PROC STEPDISC Statement` (PDF pp. 9559–9563); S154 / Chapter 117 / `BY Statement` (PDF pp. 9563–9564); S154 / Chapter 117 / `CLASS Statement` (PDF p. 9564); S154 / Chapter 117 / `FREQ Statement` (PDF p. 9564); S154 / Chapter 117 / `VAR Statement` (PDF p. 9564); S154 / Chapter 117 / `WEIGHT Statement` (PDF pp. 9564–9565); S154 / Chapter 117 / `Missing Values` (PDF p. 9565); S154 / Chapter 117 / `Input Data Sets` (PDF pp. 9565–9566).
 - Scope: Integrate PROC STEPDISC declarations, basic options, defaults, and execution boundaries; this ticket establishes parameter objects and result interfaces, while later feature tickets implement model-, algorithm-, and output-specific options. Also implement BY; CLASS; FREQ; VAR; WEIGHT; Missing Values; Input Data Sets; apply this procedure's rules for missing values, variable roles, and observation selection.
