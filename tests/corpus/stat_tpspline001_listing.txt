@@ -1,0 +1,42 @@
+
+The TPSPLINE Procedure
+Dependent Variable:  y    
+
+       Summary of Input Data Set
+
+Number of Non-Missing Observations    50
+Number of Missing Observations         0
+Unique Smoothing Design Points        25
+
+
+        Summary of Final Model
+
+Number of Regression Variables        0
+Number of Smoothing Variables         2
+Order of Derivative in the Penalty    2
+Dimension of Polynomial Space         3
+
+
+          GCV Function
+ 
+log10(n*Lambda)             GCV
+
+      -4.000000        0.004833 
+      -3.500000        0.004734 
+      -3.000000        0.004467 
+      -2.500000        0.003912*
+
+Note: * indicates minimum GCV value.
+
+
+        Summary Statistics
+       of Final Estimation
+
+log10(n*Lambda)            -1.7934
+Smoothing Penalty           7.7851
+Residual SS                 0.0734
+Tr(I-A)                    33.8835
+Model DF                   16.1165
+Standard Deviation          0.0465
+GCV                         0.0032
+rows=50 ok=1

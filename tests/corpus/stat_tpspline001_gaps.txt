@@ -1,0 +1,16 @@
+# corpus assertions
+empty-listing
+stderr-count 1 regression variables (semiparametric models) are not implemented
+stderr-count 1 1 smoothing variables are not verified
+stderr-count 1 more than one dependent variable is not verified
+stderr-count 1 the LAMBDA0= option is not implemented
+stderr-count 1 the DF= option is not implemented
+stderr-count 1 M=3 is not implemented
+stderr-count 1 DISTANCE= greater than 0 is not implemented
+stderr-count 1 the GCV table for a LAMBDA= list is not verified
+stderr-count 1 the SCORE statement is not implemented
+stderr-count 1 the OUTPUT keyword COEF is not implemented
+stderr-count 1 PLOTS= requests are not implemented
+stderr-count 1 a missing or less-than-one FREQ value is not verified
+stderr-count 1 OUTPUT values for observations with missing values are not verified
+stderr-count 1 an input data set with no observations is not verified
