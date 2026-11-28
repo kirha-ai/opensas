@@ -10,10 +10,10 @@ This section is the only current status summary; every section below it is a his
 - **Unchanged original replays with the installed CLI at that SHA** (whitespace-normalised token lines produced/reference, differing lines, exit vs reference 0). Exact, rc 0: FREQ-014 220/220; FREQ-015 649/649; ANOVA-001 364/364 and 528/528; ANOVA-007 364/364; LIFETEST-001 and -002 341/341; PHREG-003 267/267; GENMOD-001 131/131 and 264/264; GENMOD-002 131/131; GENMOD-018 131/131; COMMON-015 113/113. Still rc 2 (loud gaps): PLM-001/002/007 545/869 (328 differ); GLIMMIX-001 0/379 and 0/706; GLIMMIX-002 0/379; GLIMMIX-003 0/896; FREQ-019 0/649; ANOVA-010 0/364; PHREG-001 146/434 and 146/562; PHREG-002 146/434; COMMON-022 0/176; COMMON-030 114/311; COMMON-028 0/207.
 - **Open review (not done):** the originals of GENMOD-001/002/018, ANOVA-001/007, FREQ-014, PHREG-003 and LIFETEST-001/002 now match exactly but the tickets stay PARK; check each against its full acceptance criteria and recorded remaining gaps before any is marked DONE.
 - **Interrupted by the full disk:** STAT-ANOVA-009 and STAT-PHREG-004 are TODO (no file changed; reading notes in the tickets). STAT-LIFETEST-003 and STAT-GENMOD-003 are PARK with UNCOMMITTED, NEVER-COMPILED source retained in `opensas-dev5` (`stat-b6/lifetest003-dev5`) and `opensas-dev7` (`stat-b6/genmod003-dev7`); do not integrate it before it is built, tested and committed there.
-- **Live slots (auto):** dev1 STAT-QUANTREG-001, dev2 STAT-GLMSELECT-001, dev3 STAT-SURVEYFREQ-001, dev4 STAT-SURVEYMEANS-001, dev5 STAT-STDRATE-001, dev6 STAT-NLIN-001, dev7 STAT-PRINCOMP-001.
-- **Integrated locally, awaiting batch verification (auto):** STAT-LIFETEST-003 (PARK), STAT-LIFEREG-001 (PARK), STAT-MULTTEST-001 (PARK), STAT-MIANALYZE-001 (PARK), STAT-PROBIT-001 (PARK), STAT-GENMOD-003 (PARK), STAT-MI-001 (PARK).
 - **Interim (not a receipt):** oracle-present `zig build install` 0 and `zig build gate -j2` 0 at `3e0f629f` (first six batch-7 tickets): 2492/2492 unit, 2441/2441 corpus, 11/11 programs. STAT-MI-001 was integrated after it. New dev subagents run on Opus 5.5 at the user's request (from STAT-QUANTREG-001 on).
-- **Counts:** 55 DONE, 87 PARK, 7 DOING, 1273 TODO.
+- **Live slots (auto):** dev1 STAT-QUANTREG-001, dev2 STAT-GLMSELECT-001, dev3 STAT-SURVEYFREQ-001, dev4 STAT-SURVEYMEANS-001, dev5 STAT-VARCOMP-001, dev6 STAT-NLIN-001, dev7 STAT-PRINCOMP-001.
+- **Integrated locally, awaiting batch verification (auto):** STAT-LIFETEST-003 (PARK), STAT-LIFEREG-001 (PARK), STAT-MULTTEST-001 (PARK), STAT-MIANALYZE-001 (PARK), STAT-PROBIT-001 (PARK), STAT-GENMOD-003 (PARK), STAT-MI-001 (PARK), STAT-STDRATE-001 (PARK).
+- **Counts:** 55 DONE, 88 PARK, 7 DOING, 1272 TODO.
 - **Next:** resume the two retained partial tickets or dispatch new eligible tickets from the current tip; run the open review above.
 - **Working branch:** `feat/stat/batch-4`. Last tested and pushed SHA `9c4780bff01fd8fecf5074ac7ae4b34f6888f3dd` (batch 6; batch 5 was `470bdc33c8b8e070e4a4d7c5fbbf3f26ccaec8b5`). The bullets below this one describe batch 5 and are historical. Later commits that touch only this file are documentation. No PR created or merged; `main` untouched.
 - **Batch 5 verification at that exact SHA (2026-11-28):** whole `tests/STAT15.4-oracle/` moved out of the checkout, then `zig build gate -j2 --summary all` direct exit 0 — **2380/2380 unit tests** (2262 + 102 + 13 + 3), **2409/2409 corpus**, **11/11 programs**; `zig build install` direct 0; separate supplemental direct 0, **1113/1113**. Oracle restored unchanged (1425 entries), tree clean.
@@ -14121,7 +14121,7 @@ Source: S154, Chapter 116, `The STDRATE Procedure`, PDF pp. 9483–9552. Tasks i
 
 <a id="stat-stdrate-001"></a>
 
-### [DOING @dev5] STAT-STDRATE-001 — STDRATE — Data input, variable roles, and basic options
+### [PARK] STAT-STDRATE-001 — STDRATE — Data input, variable roles, and basic options
 
 - Source: S154 / Chapter 116 / `PROC STDRATE Statement` (PDF pp. 9493–9497); S154 / Chapter 116 / `BY Statement` (PDF p. 9497); S154 / Chapter 116 / `POPULATION Statement` (PDF pp. 9497–9499); S154 / Chapter 116 / `STRATA Statement` (PDF pp. 9500–9502).
 - Scope: Integrate PROC STDRATE declarations, basic options, defaults, and execution boundaries; this ticket establishes parameter objects and result interfaces, while later feature tickets implement model-, algorithm-, and output-specific options. Also implement BY; POPULATION; STRATA; apply this procedure's rules for missing values, variable roles, and observation selection.
@@ -16237,7 +16237,7 @@ Source: S154, Chapter 130, `The VARCOMP Procedure`, PDF pp. 10725–10750. Tasks
 
 <a id="stat-varcomp-001"></a>
 
-### [TODO] STAT-VARCOMP-001 — VARCOMP — Data input, variable roles, and basic options
+### [DOING @dev5] STAT-VARCOMP-001 — VARCOMP — Data input, variable roles, and basic options
 
 - Source: S154 / Chapter 130 / `PROC VARCOMP Statement` (PDF pp. 10730–10731); S154 / Chapter 130 / `BY Statement` (PDF p. 10731); S154 / Chapter 130 / `Missing Values` (PDF p. 10733).
 - Scope: Integrate PROC VARCOMP declarations, basic options, defaults, and execution boundaries; this ticket establishes parameter objects and result interfaces, while later feature tickets implement model-, algorithm-, and output-specific options. Also implement BY; Missing Values; apply this procedure's rules for missing values, variable roles, and observation selection.
