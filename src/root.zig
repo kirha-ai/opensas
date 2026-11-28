@@ -176,6 +176,7 @@ test {
     _ = @import("stat/sgscatter.zig");
     _ = @import("stat/ttest.zig");
     _ = @import("sashelp.zig");
+    _ = @import("sashelp_tsv.zig");
     _ = @import("stat/reg.zig");
     _ = @import("stat/univ_histogram_bins.zig");
     _ = @import("stat/univ_histogram_output.zig");

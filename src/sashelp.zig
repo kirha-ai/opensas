@@ -172,6 +172,9 @@ pub fn gas(a: std.mem.Allocator) error{OutOfMemory}!*Dataset {
     return ds;
 }
 
+/// SASHELP.MARGARIN/MILEAGES/QUAKES/SPRINGS (provenance in sashelp_tsv.zig).
+const tsv = @import("sashelp_tsv.zig");
+
 const Builtin = struct { member: []const u8, full: []const u8, build: *const fn (std.mem.Allocator) error{OutOfMemory}!*Dataset };
 const builtins = [_]Builtin{
     .{ .member = "class", .full = "sashelp.class", .build = class },
@@ -180,6 +183,10 @@ const builtins = [_]Builtin{
     .{ .member = "enso", .full = "sashelp.enso", .build = enso },
     .{ .member = "fish", .full = "sashelp.fish", .build = fish },
     .{ .member = "gas", .full = "sashelp.gas", .build = gas },
+    .{ .member = "margarin", .full = "sashelp.margarin", .build = tsv.margarin },
+    .{ .member = "mileages", .full = "sashelp.mileages", .build = tsv.mileages },
+    .{ .member = "quakes", .full = "sashelp.quakes", .build = tsv.quakes },
+    .{ .member = "springs", .full = "sashelp.springs", .build = tsv.springs },
 };
 
 /// True when `member` names a built-in SASHELP sample table.

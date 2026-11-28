@@ -1,0 +1,25 @@
+MILEAGES nobs=10
+City=Atlanta lc=15 Atlanta=0 Chicago=. Denver=. Seattle=. WashingtonDC=.
+City=Chicago lc=15 Atlanta=587 Chicago=0 Denver=. Seattle=. WashingtonDC=.
+City=Denver lc=15 Atlanta=1212 Chicago=920 Denver=0 Seattle=. WashingtonDC=.
+City=Houston lc=15 Atlanta=701 Chicago=940 Denver=879 Seattle=. WashingtonDC=.
+City=Los Angeles lc=15 Atlanta=1936 Chicago=1745 Denver=831 Seattle=. WashingtonDC=.
+City=Miami lc=15 Atlanta=604 Chicago=1188 Denver=1726 Seattle=. WashingtonDC=.
+City=New York lc=15 Atlanta=748 Chicago=713 Denver=1631 Seattle=. WashingtonDC=.
+City=San Francisco lc=15 Atlanta=2139 Chicago=1858 Denver=949 Seattle=. WashingtonDC=.
+City=Seattle lc=15 Atlanta=2182 Chicago=1737 Denver=1021 Seattle=0 WashingtonDC=.
+City=Washington D.C. lc=15 Atlanta=543 Chicago=597 Denver=1494 Seattle=2329 WashingtonDC=0
+HouseID=2100016 Set=1 Choice=1 Brand=PPk LogPrice=-0.41552 LogInc=3.48124 FamSize=2
+HouseID=2153791 Set=3405 Choice=0 Brand=PSS LogPrice=-0.23572 LogInc=3.48124 FamSize=4
+MARGARIN nobs=20430 n=20430 sc=3405 sf=66216 pss=3405 sp=-11884.10026 si=64003.40118
+Latitude=35.6879997 Longitude=-121.1286697 Depth=6.25 Magnitude=2.75 Type=earthquake
+dNearestStation=0.02121 RootMeanSquareTime=0.07
+Latitude=41.9009 Longitude=-119.6224 Depth=0 Magnitude=4.59 Type=earthquake
+dNearestStation=0.507 RootMeanSquareTime=0.0742
+Latitude=37.211 Longitude=-119.792 Depth=16.2 Magnitude=2.8 Type=earthquake
+dNearestStation=. RootMeanSquareTime=.
+QUAKES nobs=15578 md=11914 mr=9289 nq=17 smag=47815.4 sdep=110034.8432
+Name=Fumaroles on Kanaga Island Area=Adak Type=Hotspring Farenheit=219 Celsius=104
+Name=Serpentine Hot Springs Area=Bendeleben Type=Hotspring Farenheit=171 Celsius=77
+Name=Hot Springs Near Makushin Volcano Area=Unalaska Type=Hotspring Farenheit=H Celsius=H
+SPRINGS nobs=1587 nh=107 nw=61 np=2
