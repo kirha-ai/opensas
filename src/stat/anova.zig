@@ -9,7 +9,8 @@
 //! (p.1128 rules), never from the GLM least-squares kernel.
 //!
 //! ponytail: dataset/CLASS/response/BY/FREQ resolution and row selection
-//! are GLM's reader and builder; EFFECTSIZE stays a loud D-009 gap.
+//! are GLM's reader and builder. EFFECTSIZE reuses glm_effectsize.zig's
+//! noncentral-F inversion; its degenerate displays stay loud gaps.
 const std = @import("std");
 const proc = @import("../proc.zig");
 const diag = @import("../diag.zig");
@@ -109,7 +110,7 @@ fn check(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!void {
             // p.1129: the whole MODEL option grammar (SAS 9.4 wording for others).
             while (j < end) : (j += 1) {
                 if (at(t, j, .name) and oneOf(t[j].text, .{ "int", "intercept", "nouni" })) continue;
-                if (kw(t, j, "effectsize")) return proc.failGap(cx.diags, t[j].line, "PROC ANOVA: MODEL option EFFECTSIZE is not implemented", .{});
+                if (kw(t, j, "effectsize")) continue;
                 return cx.diags.fail(error.ParseError, t[j].line, "Syntax error, expecting one of the following: ;, EFFECTSIZE, INTERCEPT, NOUNI.", .{});
             }
         } else if (eq(word, "freq")) {
@@ -130,6 +131,7 @@ pub const Parsed = struct { spec: Spec, means: []const MeansRequest, options: Op
 /// GLM reader does not carry. `refs` is indexed like `spec.classes`.
 pub const Options = struct {
     intercept: bool = false,
+    effectsize: bool = false,
     nouni: bool = false,
     truncate: bool = false,
     refs: []const ?Reference = &.{},
@@ -362,6 +364,7 @@ pub fn parseAll(cx: proc.ProcCtx, tokens: []const lex.Token) diag.Error!Parsed {
     var refs: std.ArrayList(NamedRef) = .empty;
     var global_ref: ?Reference = null;
     var effect_tokens: []const lex.Token = &.{};
+    var response_tokens: []const lex.Token = &.{};
     var i: usize = 0;
     while (i < tokens.len) {
         var end = i;
@@ -408,9 +411,11 @@ pub fn parseAll(cx: proc.ProcCtx, tokens: []const lex.Token) diag.Error!Parsed {
             var slash = equal;
             while (slash < end and !at(tokens, slash, .slash)) slash += 1;
             if (equal < end) effect_tokens = tokens[equal + 1 .. slash];
+            response_tokens = tokens[i + 1 .. equal];
             for (tokens[@min(slash + 1, end)..end]) |option| {
                 if (oneOf(option.text, .{ "int", "intercept" })) options.intercept = true;
                 if (eq(option.text, "nouni")) options.nouni = true;
+                if (eq(option.text, "effectsize")) options.effectsize = true;
             }
             try rest.appendSlice(cx.arena, tokens[i..@min(end, equal + 1)]);
             try rest.append(cx.arena, tokens[end]);
@@ -420,7 +425,14 @@ pub fn parseAll(cx: proc.ProcCtx, tokens: []const lex.Token) diag.Error!Parsed {
         i = end + 1;
     }
     const mark = cx.diags.list.items.len;
-    var spec = glm.parse(cx, rest.items) catch |err| return relabel(cx, mark, err);
+    var spec = glm.parse(cx, rest.items) catch |err| {
+        // SAS 9.4 wording for a character dependent variable (live probe).
+        for (cx.diags.list.items[mark..]) |*item| for (response_tokens) |token| {
+            const wording = std.fmt.allocPrint(cx.arena, "PROC GLM: variable {s} must be numeric", .{token.text}) catch return error.OutOfMemory;
+            if (std.ascii.eqlIgnoreCase(item.message, wording)) item.message = std.fmt.allocPrint(cx.diags.arena, "Variable {s} in list does not match type prescribed for this list.", .{token.text}) catch return error.OutOfMemory;
+        };
+        return relabel(cx, mark, err);
+    };
     // ANOVA prints one "Anova SS" table; never ask the kernel for Type II–IV.
     spec.ss1 = true;
     spec.effects = try readEffects(cx, spec, effect_tokens);
@@ -611,8 +623,11 @@ pub fn ssTable(cx: proc.ProcCtx, spec: Spec, d: Design) diag.Error!Table {
     return .{ .effects = rows, .model_df = model_df, .model_ss = model_ss, .error_df = error_df, .sse = total - model_ss, .total = total, .n = n, .mean = sum / n, .cf = cf, .uss = uss, .unequal = unequal };
 }
 
+/// `decimals` sentinel: BEST12. (E notation for tiny sums of squares).
+const e_notation: usize = 99;
 fn number(a: A, value: f64, decimals: usize) ![]const u8 {
     if (!std.math.isFinite(value)) return ".";
+    if (decimals == e_notation) return @import("../format.zig").apply(a, .{ .num = value }, "best12.");
     return @import("../format.zig").apply(a, .{ .num = value }, try std.fmt.allocPrint(a, "32.{d}", .{decimals}));
 }
 fn compact(a: A, value: f64, decimals: usize) ![]const u8 {
@@ -793,6 +808,7 @@ pub fn executeAll(cx: proc.ProcCtx, out: *std.ArrayList(u8), parsed: Parsed, mea
     if (groups.len == 0 or view.observations.len == 0) return cx.diags.note(0, "No observations in data set {s}.", .{try @import("variable_lists.zig").datasetName(a, spec.input.ds)});
     groups: for (groups, 0..) |group, group_index| {
         const by: ?usize = if (spec.by.len != 0) group_index + 1 else null;
+        if (by != null) warned = false;
         var designs: std.ArrayList(Design) = .empty;
         var errors: std.ArrayList(ErrorTerm) = .empty;
         var fits: std.ArrayList(Table) = .empty;
@@ -807,11 +823,13 @@ pub fn executeAll(cx: proc.ProcCtx, out: *std.ArrayList(u8), parsed: Parsed, mea
                 continue :groups;
             }
             const result = try ssTable(cx, spec, d);
-            // SAS 9.4 reference: one WARNING per step, only for models with
-            // more than one effect (an unbalanced one-way model is valid).
+            // SAS 9.4 reference: one WARNING per step (per BY group, followed
+            // by the BY-group NOTE), only for models with more than one
+            // effect (an unbalanced one-way model is valid).
             if (result.unequal and spec.effects.len > 1 and !warned and !means_only) {
                 warned = true;
                 try cx.diags.report(.warning, 0, "PROC ANOVA has determined that the number of observations in each cell is not equal.  PROC GLM may be more appropriate.", .{});
+                if (by != null and group.observations.len > 0) try @import("by_groups.zig").reportNote(a, cx.diags, spec.input.ds, group.observations[0].cells, spec.by);
             }
             try designs.append(a, d);
             try errors.append(a, .{ .df = result.error_df, .mse = if (result.error_df > 0) result.sse / result.error_df else std.math.nan(f64) });
@@ -880,6 +898,15 @@ pub fn executeAll(cx: proc.ProcCtx, out: *std.ArrayList(u8), parsed: Parsed, mea
     }
 }
 
+/// Coeff Var, Root MSE and the mean fill 8 characters (SAS 9.4 reference
+/// runs across magnitudes: 0.016167, 1.779513, 1579.825, 97044.70).
+fn fitDecimals(x: f64) usize {
+    const ax = @abs(x);
+    if (!std.math.isFinite(ax) or ax < 1) return 6;
+    const digits: usize = @intFromFloat(@floor(std.math.log10(ax)) + 1);
+    return 7 -| digits;
+}
+
 const FTest = struct { value: f64, p: f64, f_text: []const u8, p_text: []const u8 };
 
 /// SAS 9.4 reference: no error DF prints `.`; a zero error mean square with
@@ -893,6 +920,9 @@ fn fTest(cx: proc.ProcCtx, ms: f64, df: f64, t: Table) diag.Error!FTest {
         return proc.failGap(cx.diags, 0, "PROC ANOVA: an F test with zero numerator and zero error mean square is not implemented", .{});
     }
     const value = ms / mse;
+    // ponytail: SAS prints F in 7 columns (6374.94, then 63920.2, 639747,
+    // 6.4E7); the overflow shapes are not pinned, so they are loud.
+    if (value >= 1e4) return proc.failGap(cx.diags, 0, "PROC ANOVA: F values of 1E4 or more (overflow display) are not implemented", .{});
     const p = @import("reg_fit.zig").fProbability(value, @intFromFloat(df), @intFromFloat(t.error_df));
     return .{ .value = value, .p = p, .f_text = try number(a, value, 2), .p_text = try probability(a, p) };
 }
@@ -917,7 +947,11 @@ fn anovaPage(cx: proc.ProcCtx, out: *std.ArrayList(u8), spec: Spec, options: Opt
     const model_f = try fTest(cx, model_ms, model_df, t);
     // SAS reference listings: the sums-of-squares columns never show more
     // than 8 decimals (6.75000000, 0.42857143), whatever the magnitude.
-    const decimals = @min(8, places(@max(total_ss, @max(model_ss, t.sse)), 9));
+    const largest = @max(total_ss, @max(model_ss, t.sse));
+    // SAS 9.4 reference (40 random BY groups): below 1E-5 the SS and MS
+    // columns switch to BEST12. E notation (5.6E-5 still prints 0.00005637,
+    // 9.98E-6 prints 9.9768518E-6). The 8-decimal cap otherwise holds.
+    const decimals: usize = if (largest > 0 and largest < 1e-5) e_notation else @min(8, places(largest, 9));
     const mse: f64 = if (t.error_df > 0) t.sse / t.error_df else std.math.nan(f64);
     try out.print(a, "\nModel {d} {s} {s} {s} {s}\n\nError {d} {s} {s}\n\n{s} Total {d} {s}\n", .{
         model_df,                          try number(a, model_ss, decimals), try number(a, model_ms, decimals), model_f.f_text,                                     model_f.p_text,
@@ -928,18 +962,43 @@ fn anovaPage(cx: proc.ProcCtx, out: *std.ArrayList(u8), spec: Spec, options: Opt
     const root = @sqrt(mse);
     const cv = 100 * root / t.mean;
     // SAS reference: a zero Root MSE prints as `0` in both columns.
-    const cv_text = if (root == 0) "0" else try number(a, cv, places(@abs(cv), 6));
-    const root_text = if (root == 0) "0" else try number(a, root, 6);
+    const cv_text = if (root == 0) "0" else try number(a, cv, fitDecimals(cv));
+    const root_text = if (root == 0) "0" else try number(a, root, fitDecimals(root));
     try out.print(a, "\nR-Square Coeff Var Root MSE {s} Mean\n\n{s} {s} {s} {s}\n", .{
-        name, try number(a, r_square, 6), cv_text, root_text, try number(a, t.mean, places(@abs(t.mean), 6)),
+        name, try number(a, r_square, 6), cv_text, root_text, try number(a, t.mean, fitDecimals(t.mean)),
     });
     var maximum: f64 = if (with_intercept) t.cf else 0;
     for (t.effects) |effect| maximum = @max(maximum, effect.ss);
-    const effect_decimals = @min(8, places(maximum, 9));
-    try out.appendSlice(a, "\nSource DF Anova SS Mean Square F Value Pr > F\n\n");
+    const effect_decimals: usize = if (maximum > 0 and maximum < 1e-5) e_notation else @min(8, places(maximum, 9));
+    // EFFECTSIZE rows: the intercept (when shown) and each effect.
+    const count = t.effects.len + @as(usize, if (with_intercept) 1 else 0);
+    const sizes = try a.alloc(es.Sizes, count);
+    if (options.effectsize) {
+        const intercept_only = spec.effects.len == 0;
+        // Overall: the corrected model (or the intercept alone).
+        const overall = if (intercept_only) try es.row(cx, t, t.cf, 1, .intercept_only) else try es.row(cx, t, t.model_ss, t.model_df, .overall);
+        try es.renderOverall(cx, out, overall);
+        var k: usize = 0;
+        if (with_intercept) {
+            sizes[0] = try es.row(cx, t, t.cf, 1, if (intercept_only) .intercept_only else .intercept);
+            k = 1;
+        }
+        for (t.effects) |row| {
+            sizes[k] = try es.row(cx, t, @max(0, row.ss), row.df, .effect);
+            k += 1;
+        }
+    }
+    const columns = if (options.effectsize) try es.ncColumns(cx, sizes) else undefined;
+    if (options.effectsize) {
+        try out.appendSlice(a, "\nNoncentrality Parameter\nMin Var\nUnbiased Low MSE\nSource DF Anova SS Mean Square F Value Pr > F Estimate Estimate 95% Confidence Limits\n\n");
+    } else try out.appendSlice(a, "\nSource DF Anova SS Mean Square F Value Pr > F\n\n");
+    var labels: std.ArrayList([]const u8) = .empty;
     if (with_intercept) {
         const f = try fTest(cx, t.cf, 1, t);
-        try out.print(a, "Intercept 1 {s} {s} {s} {s}\n", .{ try number(a, t.cf, effect_decimals), try number(a, t.cf, effect_decimals), f.f_text, f.p_text });
+        try out.print(a, "Intercept 1 {s} {s} {s} {s}", .{ try number(a, t.cf, effect_decimals), try number(a, t.cf, effect_decimals), f.f_text, f.p_text });
+        if (options.effectsize) try es.ncCells(out, a, columns, 0);
+        try out.append(a, '\n');
+        try labels.append(a, "Intercept");
     }
     for (spec.effects, t.effects) |effect, row| {
         const ss = @max(0, row.ss);
@@ -947,8 +1006,13 @@ fn anovaPage(cx: proc.ProcCtx, out: *std.ArrayList(u8), spec: Spec, options: Opt
         const f = try fTest(cx, ms, row.df, t);
         // SAS 9.4 reference: an all-zero Anova SS column prints `0`.
         const ss_text = if (maximum == 0) "0" else try number(a, ss, effect_decimals);
-        try out.print(a, "{s} {d} {s} {s} {s} {s}\n", .{ try effectLabel(cx, spec, effect), row.df, ss_text, try number(a, ms, effect_decimals), f.f_text, f.p_text });
+        const label = try effectLabel(cx, spec, effect);
+        try out.print(a, "{s} {d} {s} {s} {s} {s}", .{ label, row.df, ss_text, try number(a, ms, effect_decimals), f.f_text, f.p_text });
+        if (options.effectsize) try es.ncCells(out, a, columns, labels.items.len);
+        try out.append(a, '\n');
+        try labels.append(a, label);
     }
+    if (options.effectsize) try es.renderVariation(a, out, labels.items, sizes);
 }
 
 /// NAMELEN= (p.1115) display of an effect name. SAS reference listings:
@@ -1002,6 +1066,7 @@ fn relabel(cx: proc.ProcCtx, mark: usize, err: diag.Error) diag.Error {
 
 const ErrorTerm = struct { df: f64, mse: f64 };
 const plots = @import("anova_plots.zig");
+const es = @import("anova_effectsize.zig");
 
 fn oneWay(spec: Spec) bool {
     return spec.effects.len == 1 and spec.effects[0].variables.len == 1 and spec.classes.len == 1;
@@ -1210,4 +1275,5 @@ test "ANOVA001 open procedure turns unimplemented interactive requests into gaps
 
 test {
     _ = @import("anova_tests.zig");
+    _ = @import("anova_effectsize.zig");
 }

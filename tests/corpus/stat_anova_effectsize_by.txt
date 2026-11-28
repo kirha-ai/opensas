@@ -1,0 +1,2680 @@
+
+                                      grp=1
+
+The ANOVA Procedure
+
+Class Level Information
+
+Class Levels Values
+
+A 2 1 2
+
+B 3 1 2 3
+
+C 2 1 2
+
+Number of Observations Read 12
+Number of Observations Used 12
+
+                                      grp=1
+
+The ANOVA Procedure
+
+Dependent Variable: y
+
+Sum of
+Source DF Squares Mean Square F Value Pr > F
+
+Model 4                       0.00001554                       0.00000388                             0.67                           0.6356
+
+Error 7                       0.00004083                       0.00000583
+
+Corrected Total 11                       0.00005637
+
+R-Square Coeff Var Root MSE y Mean
+
+                        0.275630                         154.5917                         0.002415                         0.001562
+
+Overall Noncentrality
+
+Min Var Unbiased Estimate -2.097
+Low MSE Estimate -1.258
+95% Confidence Limits (0,9.4824)
+
+
+Proportion of Variation Accounted for
+
+Eta-Square 0.28
+Omega-Square -0.13
+95% Confidence Limits (0.00,0.44)
+
+Noncentrality Parameter
+Min Var
+Unbiased Low MSE
+Source DF Anova SS Mean Square F Value Pr > F Estimate Estimate 95% Confidence Limits
+
+A 1                       0.00000053                       0.00000053                             0.09                           0.7715 -0.935 -0.561 0 4.58
+B 2                       0.00001434                       0.00000717                             1.23                           0.3488 -0.244 -0.147 0 11.80
+C 1                       0.00000067                       0.00000067                             0.11                           0.7450 -0.918 -0.551 0 4.85
+
+Total Variation Accounted For Partial Variation Accounted For
+Semipartial Conservative Partial
+Semipartial Omega- 95% Confidence Partial Omega-
+Source Eta-Square Square Limits Eta-Square Square 95% Confidence Limits
+
+A 0.0094 -0.0852 0.0000 0.2792 0.0129 -0.0819 0.0000 0.2762
+B 0.2544 0.0429 0.0000 0.5245 0.2599 0.0368 0.0000 0.4958
+C 0.0118 -0.0830 0.0000 0.2908 0.0161 -0.0797 0.0000 0.2877
+
+                                      grp=2
+
+The ANOVA Procedure
+
+Class Level Information
+
+Class Levels Values
+
+A 2 1 2
+
+B 3 1 2 3
+
+C 2 1 2
+
+Number of Observations Read 12
+Number of Observations Used 12
+
+                                      grp=2
+
+The ANOVA Procedure
+
+Dependent Variable: y
+
+Sum of
+Source DF Squares Mean Square F Value Pr > F
+
+Model 4                       0.01199365                       0.00299841                             2.36                           0.1512
+
+Error 7                       0.00887985                       0.00126855
+
+Corrected Total 11                       0.02087350
+
+R-Square Coeff Var Root MSE y Mean
+
+                        0.574588                         103.3718                         0.035617                         0.034455
+
+Overall Noncentrality
+
+Min Var Unbiased Estimate 2.7533
+Low MSE Estimate 1.652
+95% Confidence Limits (0,27.005)
+
+
+Proportion of Variation Accounted for
+
+Eta-Square 0.57
+Omega-Square 0.31
+95% Confidence Limits (0.00,0.69)
+
+Noncentrality Parameter
+Min Var
+Unbiased Low MSE
+Source DF Anova SS Mean Square F Value Pr > F Estimate Estimate 95% Confidence Limits
+
+A 1                       0.00390660                       0.00390660                             3.08                           0.1227 1.200 0.720 0 14.91
+B 2                       0.00786847                       0.00393424                             3.10                           0.1085 2.431 1.458 0 21.51
+C 1                       0.00021858                       0.00021858                             0.17                           0.6905 -0.877 -0.526 0 5.36
+
+Total Variation Accounted For Partial Variation Accounted For
+Semipartial Conservative Partial
+Semipartial Omega- 95% Confidence Partial Omega-
+Source Eta-Square Square Limits Eta-Square Square 95% Confidence Limits
+
+A 0.1872 0.1191 0.0000 0.5123 0.3055 0.1477 0.0000 0.5541
+B 0.3770 0.2408 0.0000 0.6140 0.4698 0.2594 0.0000 0.6419
+C 0.0105 -0.0474 0.0000 0.2845 0.0240 -0.0741 0.0000 0.3089
+
+                                      grp=3
+
+The ANOVA Procedure
+
+Class Level Information
+
+Class Levels Values
+
+A 2 1 2
+
+B 3 1 2 3
+
+C 2 1 2
+
+Number of Observations Read 12
+Number of Observations Used 12
+
+                                      grp=3
+
+The ANOVA Procedure
+
+Dependent Variable: y
+
+Sum of
+Source DF Squares Mean Square F Value Pr > F
+
+Model 4                       0.34130351                       0.08532588                             0.45                           0.7693
+
+Error 7                       1.32285974                       0.18897996
+
+Corrected Total 11                       1.66416325
+
+R-Square Coeff Var Root MSE y Mean
+
+                        0.205090                         109.3408                         0.434718                         0.397581
+
+Overall Noncentrality
+
+Min Var Unbiased Estimate -2.71
+Low MSE Estimate -1.626
+95% Confidence Limits (0,6.7338)
+
+
+Proportion of Variation Accounted for
+
+Eta-Square 0.21
+Omega-Square -0.22
+95% Confidence Limits (0.00,0.36)
+
+Noncentrality Parameter
+Min Var
+Unbiased Low MSE
+Source DF Anova SS Mean Square F Value Pr > F Estimate Estimate 95% Confidence Limits
+
+A 1                       0.17967363                       0.17967363                             0.95                           0.3620 -0.321 -0.193 0 8.79
+B 2                       0.09427608                       0.04713804                             0.25                           0.7859 -1.644 -0.986 0 5.00
+C 1                       0.06735380                       0.06735380                             0.36                           0.5693 -0.745 -0.447 0 6.47
+
+Total Variation Accounted For Partial Variation Accounted For
+Semipartial Conservative Partial
+Semipartial Omega- 95% Confidence Partial Omega-
+Source Eta-Square Square Limits Eta-Square Square 95% Confidence Limits
+
+A 0.1080 -0.0050 0.0000 0.4433 0.1196 -0.0041 0.0000 0.4228
+B 0.0567 -0.1531 0.0000 0.3023 0.0665 -0.1430 0.0000 0.2942
+C 0.0405 -0.0656 0.0000 0.3607 0.0484 -0.0567 0.0000 0.3502
+
+                                      grp=4
+
+The ANOVA Procedure
+
+Class Level Information
+
+Class Levels Values
+
+A 2 1 2
+
+B 3 1 2 3
+
+C 2 1 2
+
+Number of Observations Read 12
+Number of Observations Used 12
+
+                                      grp=4
+
+The ANOVA Procedure
+
+Dependent Variable: y
+
+Sum of
+Source DF Squares Mean Square F Value Pr > F
+
+Model 4                      168.3962783                       42.0990696                             1.00                           0.4692
+
+Error 7                      296.0297951                       42.2899707
+
+Corrected Total 11                      464.4260734
+
+R-Square Coeff Var Root MSE y Mean
+
+                        0.362590                         96.10655                         6.503074                         6.766525
+
+Overall Noncentrality
+
+Min Var Unbiased Estimate -1.156
+Low MSE Estimate -0.693
+95% Confidence Limits (0,13.227)
+
+
+Proportion of Variation Accounted for
+
+Eta-Square 0.36
+Omega-Square -0.00
+95% Confidence Limits (0.00,0.52)
+
+Noncentrality Parameter
+Min Var
+Unbiased Low MSE
+Source DF Anova SS Mean Square F Value Pr > F Estimate Estimate 95% Confidence Limits
+
+A 1                        5.2534136                        5.2534136                             0.12                           0.7349 -0.911 -0.547 0 4.95
+B 2                      163.1306721                       81.5653361                             1.93                           0.2152 0.755 0.453 0 15.59
+C 1                        0.0121925                        0.0121925                             0.00                           0.9869 -1.000 -0.600 0 0.00
+
+Total Variation Accounted For Partial Variation Accounted For
+Semipartial Conservative Partial
+Semipartial Omega- 95% Confidence Partial Omega-
+Source Eta-Square Square Limits Eta-Square Square 95% Confidence Limits
+
+A 0.0113 -0.0731 0.0000 0.2884 0.0174 -0.0787 0.0000 0.2919
+B 0.3513 0.1550 0.0000 0.5962 0.3553 0.1340 0.0000 0.5651
+C 0.0000 -0.0834 0.0000 0.0000 0.0000 -0.0909 0.0000 0.0000
+
+                                      grp=5
+
+The ANOVA Procedure
+
+Class Level Information
+
+Class Levels Values
+
+A 2 1 2
+
+B 3 1 2 3
+
+C 2 1 2
+
+Number of Observations Read 12
+Number of Observations Used 12
+
+                                      grp=5
+
+The ANOVA Procedure
+
+Dependent Variable: y
+
+Sum of
+Source DF Squares Mean Square F Value Pr > F
+
+Model 4                      1776.462319                       444.115580                             3.48                           0.0720
+
+Error 7                       892.244487                       127.463498
+
+Corrected Total 11                      2668.706806
+
+R-Square Coeff Var Root MSE y Mean
+
+                        0.665664                         36.39099                         11.28997                         31.02409
+
+Overall Noncentrality
+
+Min Var Unbiased Estimate 5.955
+Low MSE Estimate 3.573
+95% Confidence Limits (0,37.678)
+
+
+Proportion of Variation Accounted for
+
+Eta-Square 0.67
+Omega-Square 0.45
+95% Confidence Limits (0.00,0.76)
+
+Noncentrality Parameter
+Min Var
+Unbiased Low MSE
+Source DF Anova SS Mean Square F Value Pr > F Estimate Estimate 95% Confidence Limits
+
+A 1                      1407.224328                      1407.224328                            11.04                           0.0127 6.886 4.132 0.399 34.30
+B 2                       316.788839                       158.394420                             1.24                           0.3453 -0.225 -0.135 0.000 11.88
+C 1                        52.449152                        52.449152                             0.41                           0.5416 -0.706 -0.424 0.000 6.73
+
+Total Variation Accounted For Partial Variation Accounted For
+Semipartial Conservative Partial
+Semipartial Omega- 95% Confidence Partial Omega-
+Source Eta-Square Square Limits Eta-Square Square 95% Confidence Limits
+
+A 0.5273 0.4577 0.0562 0.7317 0.6120 0.4555 0.0322 0.7408
+B 0.1187 0.0221 0.0000 0.3967 0.2620 0.0389 0.0000 0.4975
+C 0.0197 -0.0268 0.0000 0.3174 0.0555 -0.0516 0.0000 0.3593
+
+                                      grp=6
+
+The ANOVA Procedure
+
+Class Level Information
+
+Class Levels Values
+
+A 2 1 2
+
+B 3 1 2 3
+
+C 2 1 2
+
+Number of Observations Read 12
+Number of Observations Used 12
+
+                                      grp=6
+
+The ANOVA Procedure
+
+Dependent Variable: y
+
+Sum of
+Source DF Squares Mean Square F Value Pr > F
+
+Model 4                      145604.0198                       36401.0049                             1.65                           0.2640
+
+Error 7                      154420.6064                       22060.0866
+
+Corrected Total 11                      300024.6262
+
+R-Square Coeff Var Root MSE y Mean
+
+                        0.485307                         143.3115                         148.5264                         103.6389
+
+Overall Noncentrality
+
+Min Var Unbiased Estimate 0.7145
+Low MSE Estimate 0.4287
+95% Confidence Limits (0,20.006)
+
+
+Proportion of Variation Accounted for
+
+Eta-Square 0.49
+Omega-Square 0.18
+95% Confidence Limits (0.00,0.63)
+
+Noncentrality Parameter
+Min Var
+Unbiased Low MSE
+Source DF Anova SS Mean Square F Value Pr > F Estimate Estimate 95% Confidence Limits
+
+A 1                       5134.11707                       5134.11707                             0.23                           0.6442 -0.834 -0.500 0 5.78
+B 2                      84425.66420                      42212.83210                             1.91                           0.2173 0.734 0.440 0 15.51
+C 1                      56044.23852                      56044.23852                             2.54                           0.1550 0.815 0.489 0 13.48
+
+Total Variation Accounted For Partial Variation Accounted For
+Semipartial Conservative Partial
+Semipartial Omega- 95% Confidence Partial Omega-
+Source Eta-Square Square Limits Eta-Square Square 95% Confidence Limits
+
+A 0.0171 -0.0526 0.0000 0.3099 0.0322 -0.0683 0.0000 0.3252
+B 0.2814 0.1251 0.0000 0.5455 0.3535 0.1321 0.0000 0.5638
+C 0.1868 0.1055 0.0000 0.5121 0.2663 0.1138 0.0000 0.5290
+
+                                      grp=7
+
+The ANOVA Procedure
+
+Class Level Information
+
+Class Levels Values
+
+A 2 1 2
+
+B 3 1 2 3
+
+C 2 1 2
+
+Number of Observations Read 12
+Number of Observations Used 12
+
+                                      grp=7
+
+The ANOVA Procedure
+
+Dependent Variable: y
+
+Sum of
+Source DF Squares Mean Square F Value Pr > F
+
+Model 4                       18497597.6                        4624399.4                             0.39                           0.8125
+
+Error 7                       83823643.4                       11974806.2
+
+Corrected Total 11                      102321241.0
+
+R-Square Coeff Var Root MSE y Mean
+
+                        0.180780                         76.51782                         3460.463                         4522.428
+
+Overall Noncentrality
+
+Min Var Unbiased Estimate -2.897
+Low MSE Estimate -1.738
+95% Confidence Limits (0,5.7956)
+
+
+Proportion of Variation Accounted for
+
+Eta-Square 0.18
+Omega-Square -0.26
+95% Confidence Limits (0.00,0.33)
+
+Noncentrality Parameter
+Min Var
+Unbiased Low MSE
+Source DF Anova SS Mean Square F Value Pr > F Estimate Estimate 95% Confidence Limits
+
+A 1                         18761.68                         18761.68                             0.00                           0.9695 -0.999 -0.599 0 0.396
+B 2                      17151919.05                       8575959.53                             0.72                           0.5212 -0.977 -0.586 0 8.705
+C 1                       1326916.86                       1326916.86                             0.11                           0.7490 -0.921 -0.553 0 4.809
+
+Total Variation Accounted For Partial Variation Accounted For
+Semipartial Conservative Partial
+Semipartial Omega- 95% Confidence Partial Omega-
+Source Eta-Square Square Limits Eta-Square Square 95% Confidence Limits
+
+A 0.0002 -0.1046 0.0000 0.0457 0.0002 -0.0908 0.0000 0.0319
+B 0.1676 -0.0595 0.0000 0.4490 0.1699 -0.0497 0.0000 0.4204
+C 0.0130 -0.0932 0.0000 0.2954 0.0156 -0.0800 0.0000 0.2861
+
+                                      grp=8
+
+The ANOVA Procedure
+
+Class Level Information
+
+Class Levels Values
+
+A 2 1 2
+
+B 3 1 2 3
+
+C 2 1 2
+
+Number of Observations Read 12
+Number of Observations Used 12
+
+                                      grp=8
+
+The ANOVA Procedure
+
+Dependent Variable: y
+
+Sum of
+Source DF Squares Mean Square F Value Pr > F
+
+Model 4                       2618125342                        654531335                             0.35                           0.8381
+
+Error 7                      13186613191                       1883801884
+
+Corrected Total 11                      15804738533
+
+R-Square Coeff Var Root MSE y Mean
+
+                        0.165654                         44.72453                         43402.79                         97044.70
+
+Overall Noncentrality
+
+Min Var Unbiased Estimate -3.007
+Low MSE Estimate -1.804
+95% Confidence Limits (0,5.2031)
+
+
+Proportion of Variation Accounted for
+
+Eta-Square 0.17
+Omega-Square -0.28
+95% Confidence Limits (0.00,0.30)
+
+Noncentrality Parameter
+Min Var
+Unbiased Low MSE
+Source DF Anova SS Mean Square F Value Pr > F Estimate Estimate 95% Confidence Limits
+
+A 1                        122656900                        122656900                             0.07                           0.8059 -0.953 -0.572 0 4.20
+B 2                       2342340556                       1171170278                             0.62                           0.5642 -1.112 -0.667 0 8.07
+C 1                        153127886                        153127886                             0.08                           0.7838 -0.942 -0.565 0 4.45
+
+Total Variation Accounted For Partial Variation Accounted For
+Semipartial Conservative Partial
+Semipartial Omega- 95% Confidence Partial Omega-
+Source Eta-Square Square Limits Eta-Square Square 95% Confidence Limits
+
+A 0.0078 -0.0996 0.0000 0.2693 0.0092 -0.0845 0.0000 0.2593
+B 0.1482 -0.0806 0.0000 0.4295 0.1508 -0.0673 0.0000 0.4021
+C 0.0097 -0.0978 0.0000 0.2805 0.0115 -0.0829 0.0000 0.2705
+
+                                      grp=9
+
+The ANOVA Procedure
+
+Class Level Information
+
+Class Levels Values
+
+A 2 1 2
+
+B 3 1 2 3
+
+C 2 1 2
+
+Number of Observations Read 12
+Number of Observations Used 12
+
+                                      grp=9
+
+The ANOVA Procedure
+
+Dependent Variable: y
+
+Sum of
+Source DF Squares Mean Square F Value Pr > F
+
+Model 4 8.4390034E-7 2.1097509E-7                             0.42                           0.7916
+
+Error 7 3.5352599E-6 5.0503713E-7
+
+Corrected Total 11 4.3791603E-6
+
+R-Square Coeff Var Root MSE y Mean
+
+                        0.192708                         159.0745                         0.000711                         0.000447
+
+Overall Noncentrality
+
+Min Var Unbiased Estimate -2.806
+Low MSE Estimate -1.684
+95% Confidence Limits (0,6.2573)
+
+
+Proportion of Variation Accounted for
+
+Eta-Square 0.19
+Omega-Square -0.24
+95% Confidence Limits (0.00,0.34)
+
+Noncentrality Parameter
+Min Var
+Unbiased Low MSE
+Source DF Anova SS Mean Square F Value Pr > F Estimate Estimate 95% Confidence Limits
+
+A 1 1.4355206E-7 1.4355206E-7                             0.28                           0.6104 -0.797 -0.478 0 6.09
+B 2 4.6134916E-7 2.3067458E-7                             0.46                           0.6510 -1.348 -0.809 0 6.87
+C 1 2.3899912E-7 2.3899912E-7                             0.47                           0.5136 -0.662 -0.397 0 7.00
+
+Total Variation Accounted For Partial Variation Accounted For
+Semipartial Conservative Partial
+Semipartial Omega- 95% Confidence Partial Omega-
+Source Eta-Square Square Limits Eta-Square Square 95% Confidence Limits
+
+A 0.0328 -0.0740 0.0000 0.3471 0.0390 -0.0634 0.0000 0.3366
+B 0.1054 -0.1123 0.0000 0.3802 0.1154 -0.0996 0.0000 0.3640
+C 0.0546 -0.0545 0.0000 0.3820 0.0633 -0.0459 0.0000 0.3686
+
+                                     grp=10
+
+The ANOVA Procedure
+
+Class Level Information
+
+Class Levels Values
+
+A 2 1 2
+
+B 3 1 2 3
+
+C 2 1 2
+
+Number of Observations Read 12
+Number of Observations Used 12
+
+                                     grp=10
+
+The ANOVA Procedure
+
+Dependent Variable: y
+
+Sum of
+Source DF Squares Mean Square F Value Pr > F
+
+Model 4 6.4063554E-6 1.6015888E-6                             3.14                           0.0890
+
+Error 7 3.5704964E-6 5.1007091E-7
+
+Corrected Total 11 9.9768518E-6
+
+R-Square Coeff Var Root MSE y Mean
+
+                        0.642122                         39.82162                         0.000714                         0.001793
+
+Overall Noncentrality
+
+Min Var Unbiased Estimate 4.9712
+Low MSE Estimate 2.9827
+95% Confidence Limits (0,34.423)
+
+
+Proportion of Variation Accounted for
+
+Eta-Square 0.64
+Omega-Square 0.42
+95% Confidence Limits (0.00,0.74)
+
+Noncentrality Parameter
+Min Var
+Unbiased Low MSE
+Source DF Anova SS Mean Square F Value Pr > F Estimate Estimate 95% Confidence Limits
+
+A 1 2.8026233E-6 2.8026233E-6                             5.49                           0.0515 2.92 1.75 0 21.0
+B 2 1.3237227E-7 6.6186134E-8                             0.13                           0.8804 -1.81 -1.09 0 3.4
+C 1 3.4713597E-6 3.4713597E-6                             6.81                           0.0350 3.86 2.32 0 24.2
+
+Total Variation Accounted For Partial Variation Accounted For
+Semipartial Conservative Partial
+Semipartial Omega- 95% Confidence Partial Omega-
+Source Eta-Square Square Limits Eta-Square Square 95% Confidence Limits
+
+A 0.2809 0.2186 0.0000 0.5804 0.4398 0.2725 0.0000 0.6367
+B 0.0133 -0.0847 0.0000 0.1278 0.0357 -0.1696 0.0000 0.2206
+C 0.3479 0.2824 0.0000 0.6242 0.4930 0.3261 0.0000 0.6687
+
+                                     grp=11
+
+The ANOVA Procedure
+
+Class Level Information
+
+Class Levels Values
+
+A 2 1 2
+
+B 3 1 2 3
+
+C 2 1 2
+
+Number of Observations Read 12
+Number of Observations Used 12
+
+                                     grp=11
+
+The ANOVA Procedure
+
+Dependent Variable: y
+
+Sum of
+Source DF Squares Mean Square F Value Pr > F
+
+Model 4                       0.00505759                       0.00126440                            11.40                           0.0035
+
+Error 7                       0.00077652                       0.00011093
+
+Corrected Total 11                       0.00583411
+
+R-Square Coeff Var Root MSE y Mean
+
+                        0.866901                         30.17837                         0.010532                         0.034900
+
+Overall Noncentrality
+
+Min Var Unbiased Estimate 28.566
+Low MSE Estimate 17.14
+95% Confidence Limits (4.8321,110.87)
+
+
+Proportion of Variation Accounted for
+
+Eta-Square 0.87
+Omega-Square 0.78
+95% Confidence Limits (0.29,0.90)
+
+Noncentrality Parameter
+Min Var
+Unbiased Low MSE
+Source DF Anova SS Mean Square F Value Pr > F Estimate Estimate 95% Confidence Limits
+
+A 1                       0.00313782                       0.00313782                            28.29                           0.0011 19.20 11.52 3.625 74.3
+B 2                       0.00063496                       0.00031748                             2.86                           0.1235 2.09 1.25 0.000 20.3
+C 1                       0.00128481                       0.00128481                            11.58                           0.0114 7.27 4.36 0.479 35.6
+
+Total Variation Accounted For Partial Variation Accounted For
+Semipartial Conservative Partial
+Semipartial Omega- 95% Confidence Partial Omega-
+Source Eta-Square Square Limits Eta-Square Square 95% Confidence Limits
+
+A 0.5378 0.5091 0.0632 0.7378 0.8016 0.6945 0.2320 0.8609
+B 0.1088 0.0695 0.0000 0.3846 0.4499 0.2368 0.0000 0.6288
+C 0.2202 0.1975 0.0000 0.5375 0.6233 0.4686 0.0384 0.7478
+
+                                     grp=12
+
+The ANOVA Procedure
+
+Class Level Information
+
+Class Levels Values
+
+A 2 1 2
+
+B 3 1 2 3
+
+C 2 1 2
+
+Number of Observations Read 12
+Number of Observations Used 12
+
+                                     grp=12
+
+The ANOVA Procedure
+
+Dependent Variable: y
+
+Sum of
+Source DF Squares Mean Square F Value Pr > F
+
+Model 4                       0.71907239                       0.17976810                             2.84                           0.1085
+
+Error 7                       0.44352597                       0.06336085
+
+Corrected Total 11                       1.16259836
+
+R-Square Coeff Var Root MSE y Mean
+
+                        0.618505                         35.66573                         0.251716                         0.705764
+
+Overall Noncentrality
+
+Min Var Unbiased Estimate 4.1063
+Low MSE Estimate 2.4638
+95% Confidence Limits (0,31.546)
+
+
+Proportion of Variation Accounted for
+
+Eta-Square 0.62
+Omega-Square 0.38
+95% Confidence Limits (0.00,0.72)
+
+Noncentrality Parameter
+Min Var
+Unbiased Low MSE
+Source DF Anova SS Mean Square F Value Pr > F Estimate Estimate 95% Confidence Limits
+
+A 1                       0.00487709                       0.00487709                             0.08                           0.7895 -0.945 -0.567 0 4.39
+B 2                       0.65650185                       0.32825092                             5.18                           0.0416 5.401 3.241 0 31.53
+C 1                       0.05769345                       0.05769345                             0.91                           0.3717 -0.350 -0.210 0 8.65
+
+Total Variation Accounted For Partial Variation Accounted For
+Semipartial Conservative Partial
+Semipartial Omega- 95% Confidence Partial Omega-
+Source Eta-Square Square Limits Eta-Square Square 95% Confidence Limits
+
+A 0.0042 -0.0477 0.0000 0.2381 0.0109 -0.0833 0.0000 0.2677
+B 0.5647 0.4321 0.0036 0.7344 0.5968 0.4106 0.0000 0.7243
+C 0.0496 -0.0046 0.0000 0.3749 0.1151 -0.0075 0.0000 0.4190
+
+                                     grp=13
+
+The ANOVA Procedure
+
+Class Level Information
+
+Class Levels Values
+
+A 2 1 2
+
+B 3 1 2 3
+
+C 2 1 2
+
+Number of Observations Read 12
+Number of Observations Used 12
+
+                                     grp=13
+
+The ANOVA Procedure
+
+Dependent Variable: y
+
+Sum of
+Source DF Squares Mean Square F Value Pr > F
+
+Model 4                       41.6710678                       10.4177670                             0.51                           0.7287
+
+Error 7                      141.8804682                       20.2686383
+
+Corrected Total 11                      183.5515360
+
+R-Square Coeff Var Root MSE y Mean
+
+                        0.227027                         67.72912                         4.502070                         6.647171
+
+Overall Noncentrality
+
+Min Var Unbiased Estimate -2.531
+Low MSE Estimate -1.519
+95% Confidence Limits (0,7.5772)
+
+
+Proportion of Variation Accounted for
+
+Eta-Square 0.23
+Omega-Square -0.19
+95% Confidence Limits (0.00,0.39)
+
+Noncentrality Parameter
+Min Var
+Unbiased Low MSE
+Source DF Anova SS Mean Square F Value Pr > F Estimate Estimate 95% Confidence Limits
+
+A 1                       4.11945217                       4.11945217                             0.20                           0.6657 -0.855 -0.513 0 5.59
+B 2                      31.50580769                      15.75290384                             0.78                           0.4957 -0.890 -0.534 0 9.10
+C 1                       6.04580796                       6.04580796                             0.30                           0.6019 -0.787 -0.472 0 6.17
+
+Total Variation Accounted For Partial Variation Accounted For
+Semipartial Conservative Partial
+Semipartial Omega- 95% Confidence Partial Omega-
+Source Eta-Square Square Limits Eta-Square Square 95% Confidence Limits
+
+A 0.0224 -0.0792 0.0000 0.3248 0.0282 -0.0711 0.0000 0.3178
+B 0.1716 -0.0443 0.0000 0.4529 0.1817 -0.0386 0.0000 0.4313
+C 0.0329 -0.0698 0.0000 0.3474 0.0409 -0.0621 0.0000 0.3394
+
+                                     grp=14
+
+The ANOVA Procedure
+
+Class Level Information
+
+Class Levels Values
+
+A 2 1 2
+
+B 3 1 2 3
+
+C 2 1 2
+
+Number of Observations Read 12
+Number of Observations Used 12
+
+                                     grp=14
+
+The ANOVA Procedure
+
+Dependent Variable: y
+
+Sum of
+Source DF Squares Mean Square F Value Pr > F
+
+Model 4                       7682.52735                       1920.63184                             1.03                           0.4536
+
+Error 7                      13022.56941                       1860.36706
+
+Corrected Total 11                      20705.09676
+
+R-Square Coeff Var Root MSE y Mean
+
+                        0.371045                         62.78060                         43.13197                         68.70270
+
+Overall Noncentrality
+
+Min Var Unbiased Estimate -1.05
+Low MSE Estimate -0.63
+95% Confidence Limits (0,13.626)
+
+
+Proportion of Variation Accounted for
+
+Eta-Square 0.37
+Omega-Square 0.01
+95% Confidence Limits (0.00,0.53)
+
+Noncentrality Parameter
+Min Var
+Unbiased Low MSE
+Source DF Anova SS Mean Square F Value Pr > F Estimate Estimate 95% Confidence Limits
+
+A 1                      3615.911955                      3615.911955                             1.94                           0.2059 0.388 0.233 0 11.82
+B 2                      3134.875257                      1567.437628                             0.84                           0.4700 -0.796 -0.478 0 9.51
+C 1                       931.740143                       931.740143                             0.50                           0.5020 -0.642 -0.385 0 7.12
+
+Total Variation Accounted For Partial Variation Accounted For
+Semipartial Conservative Partial
+Semipartial Omega- 95% Confidence Partial Omega-
+Source Eta-Square Square Limits Eta-Square Square 95% Confidence Limits
+
+A 0.1746 0.0778 0.0000 0.5024 0.2173 0.0729 0.0000 0.4962
+B 0.1514 -0.0260 0.0000 0.4328 0.1940 -0.0270 0.0000 0.4422
+C 0.0450 -0.0412 0.0000 0.3680 0.0668 -0.0434 0.0000 0.3725
+
+                                     grp=15
+
+The ANOVA Procedure
+
+Class Level Information
+
+Class Levels Values
+
+A 2 1 2
+
+B 3 1 2 3
+
+C 2 1 2
+
+Number of Observations Read 12
+Number of Observations Used 12
+
+                                     grp=15
+
+The ANOVA Procedure
+
+Dependent Variable: y
+
+Sum of
+Source DF Squares Mean Square F Value Pr > F
+
+Model 4                      18294.93989                       4573.73497                             0.52                           0.7234
+
+Error 7                      61305.07652                       8757.86807
+
+Corrected Total 11                      79600.01641
+
+R-Square Coeff Var Root MSE y Mean
+
+                        0.229836                        -1377.849                         93.58348                        -6.791997
+
+Overall Noncentrality
+
+Min Var Unbiased Estimate -2.508
+Low MSE Estimate -1.505
+95% Confidence Limits (0,7.6855)
+
+
+Proportion of Variation Accounted for
+
+Eta-Square 0.23
+Omega-Square -0.19
+95% Confidence Limits (0.00,0.39)
+
+Noncentrality Parameter
+Min Var
+Unbiased Low MSE
+Source DF Anova SS Mean Square F Value Pr > F Estimate Estimate 95% Confidence Limits
+
+A 1                      7113.099566                      7113.099566                             0.81                           0.3974 -0.420 -0.252 0 8.31
+B 2                      2678.323319                      1339.161659                             0.15                           0.8610 -1.782 -1.069 0 3.78
+C 1                      8503.517009                      8503.517009                             0.97                           0.3573 -0.306 -0.184 0 8.86
+
+Total Variation Accounted For Partial Variation Accounted For
+Semipartial Conservative Partial
+Semipartial Omega- 95% Confidence Partial Omega-
+Source Eta-Square Square Limits Eta-Square Square 95% Confidence Limits
+
+A 0.0894 -0.0186 0.0000 0.4241 0.1040 -0.0159 0.0000 0.4092
+B 0.0336 -0.1679 0.0000 0.2417 0.0419 -0.1644 0.0000 0.2393
+C 0.1068 -0.0029 0.0000 0.4421 0.1218 -0.0024 0.0000 0.4247
+
+                                     grp=16
+
+The ANOVA Procedure
+
+Class Level Information
+
+Class Levels Values
+
+A 2 1 2
+
+B 3 1 2 3
+
+C 2 1 2
+
+Number of Observations Read 12
+Number of Observations Used 12
+
+                                     grp=16
+
+The ANOVA Procedure
+
+Dependent Variable: y
+
+Sum of
+Source DF Squares Mean Square F Value Pr > F
+
+Model 4                      37959996.15                       9489999.04                             1.69                           0.2558
+
+Error 7                      39354343.13                       5622049.02
+
+Corrected Total 11                      77314339.28
+
+R-Square Coeff Var Root MSE y Mean
+
+                        0.490983                         37.67172                         2371.086                         6294.074
+
+Overall Noncentrality
+
+Min Var Unbiased Estimate 0.8228
+Low MSE Estimate 0.4937
+95% Confidence Limits (0,20.385)
+
+
+Proportion of Variation Accounted for
+
+Eta-Square 0.49
+Omega-Square 0.19
+95% Confidence Limits (0.00,0.63)
+
+Noncentrality Parameter
+Min Var
+Unbiased Low MSE
+Source DF Anova SS Mean Square F Value Pr > F Estimate Estimate 95% Confidence Limits
+
+A 1                        304030.18                        304030.18                             0.05                           0.8228 -0.961 -0.577 0 4.0
+B 2                      12524207.04                       6262103.52                             1.11                           0.3802 -0.409 -0.245 0 11.1
+C 1                      25131758.93                      25131758.93                             4.47                           0.0723 2.193 1.316 0 18.5
+
+Total Variation Accounted For Partial Variation Accounted For
+Semipartial Conservative Partial
+Semipartial Omega- 95% Confidence Partial Omega-
+Source Eta-Square Square Limits Eta-Square Square 95% Confidence Limits
+
+A 0.0039 -0.0641 0.0000 0.2348 0.0077 -0.0856 0.0000 0.2499
+B 0.1620 0.0154 0.0000 0.4435 0.2414 0.0186 0.0000 0.4814
+C 0.3251 0.2352 0.0000 0.6096 0.3897 0.2243 0.0000 0.6063
+
+                                     grp=17
+
+The ANOVA Procedure
+
+Class Level Information
+
+Class Levels Values
+
+A 2 1 2
+
+B 3 1 2 3
+
+C 2 1 2
+
+Number of Observations Read 12
+Number of Observations Used 12
+
+                                     grp=17
+
+The ANOVA Procedure
+
+Dependent Variable: y
+
+Sum of
+Source DF Squares Mean Square F Value Pr > F
+
+Model 4                       3106575413                        776643853                             1.80                           0.2331
+
+Error 7                       3017574181                        431082026
+
+Corrected Total 11                       6124149594
+
+R-Square Coeff Var Root MSE y Mean
+
+                        0.507266                         53.82615                         20762.51                         38573.29
+
+Overall Noncentrality
+
+Min Var Unbiased Estimate 1.1475
+Low MSE Estimate 0.6885
+95% Confidence Limits (0,21.514)
+
+
+Proportion of Variation Accounted for
+
+Eta-Square 0.51
+Omega-Square 0.21
+95% Confidence Limits (0.00,0.64)
+
+Noncentrality Parameter
+Min Var
+Unbiased Low MSE
+Source DF Anova SS Mean Square F Value Pr > F Estimate Estimate 95% Confidence Limits
+
+A 1                       1992493643                       1992493643                             4.62                           0.0686 2.301 1.381 0 18.86
+B 2                        362839637                        181419819                             0.42                           0.6721 -1.399 -0.839 0 6.58
+C 1                        751242133                        751242133                             1.74                           0.2283 0.245 0.147 0 11.24
+
+Total Variation Accounted For Partial Variation Accounted For
+Semipartial Conservative Partial
+Semipartial Omega- 95% Confidence Partial Omega-
+Source Eta-Square Square Limits Eta-Square Square 95% Confidence Limits
+
+A 0.3254 0.2382 0.0000 0.6098 0.3977 0.2319 0.0000 0.6112
+B 0.0592 -0.0762 0.0000 0.3077 0.1073 -0.1068 0.0000 0.3542
+C 0.1227 0.0488 0.0000 0.4574 0.1993 0.0583 0.0000 0.4837
+
+                                     grp=18
+
+The ANOVA Procedure
+
+Class Level Information
+
+Class Levels Values
+
+A 2 1 2
+
+B 3 1 2 3
+
+C 2 1 2
+
+Number of Observations Read 12
+Number of Observations Used 12
+
+                                     grp=18
+
+The ANOVA Procedure
+
+Dependent Variable: y
+
+Sum of
+Source DF Squares Mean Square F Value Pr > F
+
+Model 4 8.1861369E-7 2.0465342E-7                             1.00                           0.4682
+
+Error 7 1.4359612E-6 2.0513732E-7
+
+Corrected Total 11 2.2545749E-6
+
+R-Square Coeff Var Root MSE y Mean
+
+                        0.363090                         255.6181                         0.000453                         0.000177
+
+Overall Noncentrality
+
+Min Var Unbiased Estimate -1.15
+Low MSE Estimate -0.69
+95% Confidence Limits (0,13.25)
+
+
+Proportion of Variation Accounted for
+
+Eta-Square 0.36
+Omega-Square -0.00
+95% Confidence Limits (0.00,0.52)
+
+Noncentrality Parameter
+Min Var
+Unbiased Low MSE
+Source DF Anova SS Mean Square F Value Pr > F Estimate Estimate 95% Confidence Limits
+
+A 1 7.1436031E-8 7.1436031E-8                             0.35                           0.5737 -0.751 -0.451 0 6.43
+B 2 6.9395162E-7 3.4697581E-7                             1.69                           0.2516 0.416 0.250 0 14.34
+C 1 5.3226038E-8 5.3226038E-8                             0.26                           0.6261 -0.815 -0.489 0 5.95
+
+Total Variation Accounted For Partial Variation Accounted For
+Semipartial Conservative Partial
+Semipartial Omega- 95% Confidence Partial Omega-
+Source Eta-Square Square Limits Eta-Square Square 95% Confidence Limits
+
+A 0.0317 -0.0544 0.0000 0.3450 0.0474 -0.0574 0.0000 0.3488
+B 0.3078 0.1153 0.0000 0.5652 0.3258 0.1033 0.0000 0.5444
+C 0.0236 -0.0618 0.0000 0.3276 0.0357 -0.0658 0.0000 0.3313
+
+                                     grp=19
+
+The ANOVA Procedure
+
+Class Level Information
+
+Class Levels Values
+
+A 2 1 2
+
+B 3 1 2 3
+
+C 2 1 2
+
+Number of Observations Read 12
+Number of Observations Used 12
+
+                                     grp=19
+
+The ANOVA Procedure
+
+Dependent Variable: y
+
+Sum of
+Source DF Squares Mean Square F Value Pr > F
+
+Model 4                       0.00029834                       0.00007458                             1.90                           0.2153
+
+Error 7                       0.00027473                       0.00003925
+
+Corrected Total 11                       0.00057306
+
+R-Square Coeff Var Root MSE y Mean
+
+                        0.520598                         103.2030                         0.006265                         0.006070
+
+Overall Noncentrality
+
+Min Var Unbiased Estimate 1.4297
+Low MSE Estimate 0.8578
+95% Confidence Limits (0,22.49)
+
+
+Proportion of Variation Accounted for
+
+Eta-Square 0.52
+Omega-Square 0.23
+95% Confidence Limits (0.00,0.65)
+
+Noncentrality Parameter
+Min Var
+Unbiased Low MSE
+Source DF Anova SS Mean Square F Value Pr > F Estimate Estimate 95% Confidence Limits
+
+A 1                       0.00012958                       0.00012958                             3.30                           0.1121 1.358 0.815 0 15.50
+B 2                       0.00016796                       0.00008398                             2.14                           0.1883 1.057 0.634 0 16.68
+C 1                       0.00000080                       0.00000080                             0.02                           0.8906 -0.985 -0.591 0 2.98
+
+Total Variation Accounted For Partial Variation Accounted For
+Semipartial Conservative Partial
+Semipartial Omega- 95% Confidence Partial Omega-
+Source Eta-Square Square Limits Eta-Square Square 95% Confidence Limits
+
+A 0.2261 0.1475 0.0000 0.5418 0.3205 0.1609 0.0000 0.5636
+B 0.2931 0.1461 0.0000 0.5543 0.3794 0.1596 0.0000 0.5816
+C 0.0014 -0.0628 0.0000 0.1788 0.0029 -0.0889 0.0000 0.1987
+
+                                     grp=20
+
+The ANOVA Procedure
+
+Class Level Information
+
+Class Levels Values
+
+A 2 1 2
+
+B 3 1 2 3
+
+C 2 1 2
+
+Number of Observations Read 12
+Number of Observations Used 12
+
+                                     grp=20
+
+The ANOVA Procedure
+
+Dependent Variable: y
+
+Sum of
+Source DF Squares Mean Square F Value Pr > F
+
+Model 4                       0.00407546                       0.00101886                            15.48                           0.0014
+
+Error 7                       0.00046086                       0.00006584
+
+Corrected Total 11                       0.00453632
+
+R-Square Coeff Var Root MSE y Mean
+
+                        0.898406                         10.94110                         0.008114                         0.074161
+
+Overall Noncentrality
+
+Min Var Unbiased Estimate 40.215
+Low MSE Estimate 24.129
+95% Confidence Limits (8.5083,148.29)
+
+
+Proportion of Variation Accounted for
+
+Eta-Square 0.90
+Omega-Square 0.83
+95% Confidence Limits (0.41,0.93)
+
+Noncentrality Parameter
+Min Var
+Unbiased Low MSE
+Source DF Anova SS Mean Square F Value Pr > F Estimate Estimate 95% Confidence Limits
+
+A 1                       0.00074720                       0.00074720                            11.35                           0.0119 7.107 4.264 0.444 35.0
+B 2                       0.00024468                       0.00012234                             1.86                           0.2253 0.655 0.393 0.000 15.2
+C 1                       0.00308357                       0.00308357                            46.84                           0.0002 32.454 19.473 7.737 116.9
+
+Total Variation Accounted For Partial Variation Accounted For
+Semipartial Conservative Partial
+Semipartial Omega- 95% Confidence Partial Omega-
+Source Eta-Square Square Limits Eta-Square Square 95% Confidence Limits
+
+A 0.1647 0.1481 0.0000 0.4943 0.6185 0.4631 0.0357 0.7448
+B 0.0539 0.0246 0.0000 0.2966 0.3468 0.1251 0.0000 0.5592
+C 0.6798 0.6557 0.2049 0.8181 0.8700 0.7925 0.3920 0.9069
+
+                                     grp=21
+
+The ANOVA Procedure
+
+Class Level Information
+
+Class Levels Values
+
+A 2 1 2
+
+B 3 1 2 3
+
+C 2 1 2
+
+Number of Observations Read 24
+Number of Observations Used 24
+
+                                     grp=21
+
+The ANOVA Procedure
+
+Dependent Variable: y
+
+Sum of
+Source DF Squares Mean Square F Value Pr > F
+
+Model 4                       0.20923691                       0.05230923                             1.32                           0.3002
+
+Error 19                       0.75577857                       0.03977782
+
+Corrected Total 23                       0.96501548
+
+R-Square Coeff Var Root MSE y Mean
+
+                        0.216822                         187.3663                         0.199444                         0.106446
+
+Overall Noncentrality
+
+Min Var Unbiased Estimate 0.7064
+Low MSE Estimate 0.6233
+95% Confidence Limits (0,14.964)
+
+
+Proportion of Variation Accounted for
+
+Eta-Square 0.22
+Omega-Square 0.05
+95% Confidence Limits (0.00,0.38)
+
+Noncentrality Parameter
+Min Var
+Unbiased Low MSE
+Source DF Anova SS Mean Square F Value Pr > F Estimate Estimate 95% Confidence Limits
+
+A 1                       0.04598023                       0.04598023                             1.16                           0.2958 0.0342 0.0302 0 9.30
+B 2                       0.05867003                       0.02933502                             0.74                           0.4915 -0.6803 -0.6003 0 8.57
+C 1                       0.10458664                       0.10458664                             2.63                           0.1214 1.3525 1.1934 0 13.16
+
+Total Variation Accounted For Partial Variation Accounted For
+Semipartial Conservative Partial
+Semipartial Omega- 95% Confidence Partial Omega-
+Source Eta-Square Square Limits Eta-Square Square 95% Confidence Limits
+
+A 0.0476 0.0062 0.0000 0.2755 0.0573 0.0065 0.0000 0.2794
+B 0.0608 -0.0208 0.0000 0.2548 0.0720 -0.0224 0.0000 0.2632
+C 0.1084 0.0645 0.0000 0.3552 0.1216 0.0636 0.0000 0.3541
+
+                                     grp=22
+
+The ANOVA Procedure
+
+Class Level Information
+
+Class Levels Values
+
+A 2 1 2
+
+B 3 1 2 3
+
+C 2 1 2
+
+Number of Observations Read 24
+Number of Observations Used 24
+
+                                     grp=22
+
+The ANOVA Procedure
+
+Dependent Variable: y
+
+Sum of
+Source DF Squares Mean Square F Value Pr > F
+
+Model 4                       80.9866775                       20.2466694                             1.41                           0.2681
+
+Error 19                      272.4765165                       14.3408693
+
+Corrected Total 23                      353.4631940
+
+R-Square Coeff Var Root MSE y Mean
+
+                        0.229123                         102.5508                         3.786934                         3.692738
+
+Overall Noncentrality
+
+Min Var Unbiased Estimate 1.0528
+Low MSE Estimate 0.929
+95% Confidence Limits (0,15.81)
+
+
+Proportion of Variation Accounted for
+
+Eta-Square 0.23
+Omega-Square 0.06
+95% Confidence Limits (0.00,0.40)
+
+Noncentrality Parameter
+Min Var
+Unbiased Low MSE
+Source DF Anova SS Mean Square F Value Pr > F Estimate Estimate 95% Confidence Limits
+
+A 1                       0.09470050                       0.09470050                             0.01                           0.9361 -0.994 -0.877 0 1.88
+B 2                      77.42724769                      38.71362384                             2.70                           0.0929 2.831 2.498 0 17.94
+C 1                       3.46472935                       3.46472935                             0.24                           0.6287 -0.784 -0.692 0 5.86
+
+Total Variation Accounted For Partial Variation Accounted For
+Semipartial Conservative Partial
+Semipartial Omega- 95% Confidence Partial Omega-
+Source Eta-Square Square Limits Eta-Square Square 95% Confidence Limits
+
+A 0.0003 -0.0387 0.0000 0.0687 0.0003 -0.0432 0.0000 0.0727
+B 0.2191 0.1325 0.0000 0.4402 0.2213 0.1241 0.0000 0.4278
+C 0.0098 -0.0296 0.0000 0.1922 0.0126 -0.0326 0.0000 0.1961
+
+                                     grp=23
+
+The ANOVA Procedure
+
+Class Level Information
+
+Class Levels Values
+
+A 2 1 2
+
+B 3 1 2 3
+
+C 2 1 2
+
+Number of Observations Read 24
+Number of Observations Used 24
+
+                                     grp=23
+
+The ANOVA Procedure
+
+Dependent Variable: y
+
+Sum of
+Source DF Squares Mean Square F Value Pr > F
+
+Model 4                       7697.94385                       1924.48596                             2.50                           0.0767
+
+Error 19                      14608.25038                        768.85528
+
+Corrected Total 23                      22306.19423
+
+R-Square Coeff Var Root MSE y Mean
+
+                        0.345103                         42.62116                         27.72824                         65.05745
+
+Overall Noncentrality
+
+Min Var Unbiased Estimate 4.9583
+Low MSE Estimate 4.375
+95% Confidence Limits (0,24.729)
+
+
+Proportion of Variation Accounted for
+
+Eta-Square 0.35
+Omega-Square 0.20
+95% Confidence Limits (0.00,0.51)
+
+Noncentrality Parameter
+Min Var
+Unbiased Low MSE
+Source DF Anova SS Mean Square F Value Pr > F Estimate Estimate 95% Confidence Limits
+
+A 1                      4437.641263                      4437.641263                             5.77                           0.0267 4.16 3.674 0 20.0
+B 2                      3260.279988                      1630.139994                             2.12                           0.1475 1.79 1.583 0 15.4
+C 1                         0.022598                         0.022598                             0.00                           0.9957 -1.00 -0.882 0 0.0
+
+Total Variation Accounted For Partial Variation Accounted For
+Semipartial Conservative Partial
+Semipartial Omega- 95% Confidence Partial Omega-
+Source Eta-Square Square Limits Eta-Square Square 95% Confidence Limits
+
+A 0.1989 0.1590 0.0000 0.4454 0.2330 0.1658 0.0000 0.4551
+B 0.1462 0.0747 0.0000 0.3672 0.1825 0.0854 0.0000 0.3915
+C 0.0000 -0.0333 0.0000 0.0000 0.0000 -0.0435 0.0000 0.0000
+
+                                     grp=24
+
+The ANOVA Procedure
+
+Class Level Information
+
+Class Levels Values
+
+A 2 1 2
+
+B 3 1 2 3
+
+C 2 1 2
+
+Number of Observations Read 24
+Number of Observations Used 24
+
+                                     grp=24
+
+The ANOVA Procedure
+
+Dependent Variable: y
+
+Sum of
+Source DF Squares Mean Square F Value Pr > F
+
+Model 4                      1012034.619                       253008.655                             0.74                           0.5784
+
+Error 19                      6525322.715                       343438.038
+
+Corrected Total 23                      7537357.334
+
+R-Square Coeff Var Root MSE y Mean
+
+                        0.134269                         74.88126                         586.0359                         782.6202
+
+Overall Noncentrality
+
+Min Var Unbiased Estimate -1.363
+Low MSE Estimate -1.203
+95% Confidence Limits (0,9.499)
+
+
+Proportion of Variation Accounted for
+
+Eta-Square 0.13
+Omega-Square -0.05
+95% Confidence Limits (0.00,0.28)
+
+Noncentrality Parameter
+Min Var
+Unbiased Low MSE
+Source DF Anova SS Mean Square F Value Pr > F Estimate Estimate 95% Confidence Limits
+
+A 1                       38383.7334                       38383.7334                             0.11                           0.7418 -0.9000 -0.7941 0 4.85
+B 2                      755286.9466                      377643.4733                             1.10                           0.3533 -0.0323 -0.0285 0 10.59
+C 1                      218363.9391                      218363.9391                             0.64                           0.4351 -0.4311 -0.3804 0 7.61
+
+Total Variation Accounted For Partial Variation Accounted For
+Semipartial Conservative Partial
+Semipartial Omega- 95% Confidence Partial Omega-
+Source Eta-Square Square Limits Eta-Square Square 95% Confidence Limits
+
+A 0.0051 -0.0387 0.0000 0.1685 0.0058 -0.0384 0.0000 0.1682
+B 0.1002 0.0087 0.0000 0.3127 0.1037 0.0082 0.0000 0.3061
+C 0.0290 -0.0159 0.0000 0.2425 0.0324 -0.0154 0.0000 0.2409
+
+                                     grp=25
+
+The ANOVA Procedure
+
+Class Level Information
+
+Class Levels Values
+
+A 2 1 2
+
+B 3 1 2 3
+
+C 2 1 2
+
+Number of Observations Read 24
+Number of Observations Used 24
+
+                                     grp=25
+
+The ANOVA Procedure
+
+Dependent Variable: y
+
+Sum of
+Source DF Squares Mean Square F Value Pr > F
+
+Model 4                       3380851.61                        845212.90                             0.65                           0.6334
+
+Error 19                      24683667.59                       1299140.40
+
+Corrected Total 23                      28064519.20
+
+R-Square Coeff Var Root MSE y Mean
+
+                        0.120467                         85.98436                         1139.798                         1325.588
+
+Overall Noncentrality
+
+Min Var Unbiased Estimate -1.672
+Low MSE Estimate -1.475
+95% Confidence Limits (0,8.5831)
+
+
+Proportion of Variation Accounted for
+
+Eta-Square 0.12
+Omega-Square -0.06
+95% Confidence Limits (0.00,0.26)
+
+Noncentrality Parameter
+Min Var
+Unbiased Low MSE
+Source DF Anova SS Mean Square F Value Pr > F Estimate Estimate 95% Confidence Limits
+
+A 1                      1657169.876                      1657169.876                             1.28                           0.2728 0.141 0.125 0 9.65
+B 2                      1634646.702                       817323.351                             0.63                           0.5438 -0.874 -0.771 0 7.90
+C 1                        89035.029                        89035.029                             0.07                           0.7963 -0.939 -0.828 0 4.30
+
+Total Variation Accounted For Partial Variation Accounted For
+Semipartial Conservative Partial
+Semipartial Omega- 95% Confidence Partial Omega-
+Source Eta-Square Square Limits Eta-Square Square 95% Confidence Limits
+
+A 0.0590 0.0122 0.0000 0.2928 0.0629 0.0114 0.0000 0.2868
+B 0.0582 -0.0328 0.0000 0.2505 0.0621 -0.0319 0.0000 0.2478
+C 0.0032 -0.0412 0.0000 0.1526 0.0036 -0.0404 0.0000 0.1518
+
+                                     grp=26
+
+The ANOVA Procedure
+
+Class Level Information
+
+Class Levels Values
+
+A 2 1 2
+
+B 3 1 2 3
+
+C 2 1 2
+
+Number of Observations Read 24
+Number of Observations Used 24
+
+                                     grp=26
+
+The ANOVA Procedure
+
+Dependent Variable: y
+
+Sum of
+Source DF Squares Mean Square F Value Pr > F
+
+Model 4                       5707354172                       1426838543                             2.17                           0.1115
+
+Error 19                      12490024798                        657369726
+
+Corrected Total 23                      18197378970
+
+R-Square Coeff Var Root MSE y Mean
+
+                        0.313636                         74.71263                         25639.22                         34317.12
+
+Overall Noncentrality
+
+Min Var Unbiased Estimate 3.7682
+Low MSE Estimate 3.3249
+95% Confidence Limits (0,22.097)
+
+
+Proportion of Variation Accounted for
+
+Eta-Square 0.31
+Omega-Square 0.16
+95% Confidence Limits (0.00,0.48)
+
+Noncentrality Parameter
+Min Var
+Unbiased Low MSE
+Source DF Anova SS Mean Square F Value Pr > F Estimate Estimate 95% Confidence Limits
+
+A 1                       3287859780                       3287859780                             5.00                           0.0375 3.475 3.066 0 18.44
+B 2                       2036609194                       1018304597                             1.55                           0.2381 0.772 0.681 0 12.82
+C 1                        382885197                        382885197                             0.58                           0.4547 -0.479 -0.423 0 7.42
+
+Total Variation Accounted For Partial Variation Accounted For
+Semipartial Conservative Partial
+Semipartial Omega- 95% Confidence Partial Omega-
+Source Eta-Square Square Limits Eta-Square Square 95% Confidence Limits
+
+A 0.1807 0.1395 0.0000 0.4287 0.2084 0.1429 0.0000 0.4345
+B 0.1119 0.0383 0.0000 0.3275 0.1402 0.0438 0.0000 0.3482
+C 0.0210 -0.0146 0.0000 0.2253 0.0297 -0.0177 0.0000 0.2361
+
+                                     grp=27
+
+The ANOVA Procedure
+
+Class Level Information
+
+Class Levels Values
+
+A 2 1 2
+
+B 3 1 2 3
+
+C 2 1 2
+
+Number of Observations Read 24
+Number of Observations Used 24
+
+                                     grp=27
+
+The ANOVA Procedure
+
+Dependent Variable: y
+
+Sum of
+Source DF Squares Mean Square F Value Pr > F
+
+Model 4  6.201274E-7 1.5503185E-7                             2.03                           0.1308
+
+Error 19 1.4509198E-6 7.6364201E-8
+
+Corrected Total 23 2.0710472E-6
+
+R-Square Coeff Var Root MSE y Mean
+
+                        0.299427                         89.02925                         0.000276                         0.000310
+
+Overall Noncentrality
+
+Min Var Unbiased Estimate 3.2659
+Low MSE Estimate 2.8816
+95% Confidence Limits (0,20.968)
+
+
+Proportion of Variation Accounted for
+
+Eta-Square 0.30
+Omega-Square 0.15
+95% Confidence Limits (0.00,0.47)
+
+Noncentrality Parameter
+Min Var
+Unbiased Low MSE
+Source DF Anova SS Mean Square F Value Pr > F Estimate Estimate 95% Confidence Limits
+
+A 1 3.2900631E-7 3.2900631E-7                             4.31                           0.0517 2.8549 2.5190 0 17.0
+B 2 1.6486331E-7 8.2431656E-8                             1.08                           0.3597 -0.0683 -0.0603 0 10.5
+C 1 1.2625778E-7 1.2625778E-7                             1.65                           0.2140 0.4793 0.4229 0 10.7
+
+Total Variation Accounted For Partial Variation Accounted For
+Semipartial Conservative Partial
+Semipartial Omega- 95% Confidence Partial Omega-
+Source Eta-Square Square Limits Eta-Square Square 95% Confidence Limits
+
+A 0.1589 0.1176 0.0000 0.4080 0.1848 0.1211 0.0000 0.4140
+B 0.0796 0.0057 0.0000 0.2843 0.1020 0.0066 0.0000 0.3039
+C 0.0610 0.0232 0.0000 0.2955 0.0801 0.0265 0.0000 0.3084
+
+                                     grp=28
+
+The ANOVA Procedure
+
+Class Level Information
+
+Class Levels Values
+
+A 2 1 2
+
+B 3 1 2 3
+
+C 2 1 2
+
+Number of Observations Read 24
+Number of Observations Used 24
+
+                                     grp=28
+
+The ANOVA Procedure
+
+Dependent Variable: y
+
+Sum of
+Source DF Squares Mean Square F Value Pr > F
+
+Model 4                       0.00012531                       0.00003133                             2.68                           0.0634
+
+Error 19                       0.00022243                       0.00001171
+
+Corrected Total 23                       0.00034774
+
+R-Square Coeff Var Root MSE y Mean
+
+                        0.360364                         40.05190                         0.003422                         0.008543
+
+Overall Noncentrality
+
+Min Var Unbiased Estimate 5.5776
+Low MSE Estimate 4.9214
+95% Confidence Limits (0,26.078)
+
+
+Proportion of Variation Accounted for
+
+Eta-Square 0.36
+Omega-Square 0.22
+95% Confidence Limits (0.00,0.52)
+
+Noncentrality Parameter
+Min Var
+Unbiased Low MSE
+Source DF Anova SS Mean Square F Value Pr > F Estimate Estimate 95% Confidence Limits
+
+A 1                       0.00000077                       0.00000077                             0.07                           0.8005 -0.941 -0.831 0 4.25
+B 2                       0.00007310                       0.00003655                             3.12                           0.0672 3.587 3.165 0 19.71
+C 1                       0.00005145                       0.00005145                             4.39                           0.0497 2.932 2.587 0 17.14
+
+Total Variation Accounted For Partial Variation Accounted For
+Semipartial Conservative Partial
+Semipartial Omega- 95% Confidence Partial Omega-
+Source Eta-Square Square Limits Eta-Square Square 95% Confidence Limits
+
+A 0.0022 -0.0304 0.0000 0.1407 0.0034 -0.0405 0.0000 0.1504
+B 0.2102 0.1382 0.0000 0.4320 0.2474 0.1503 0.0000 0.4509
+C 0.1479 0.1106 0.0000 0.3972 0.1878 0.1239 0.0000 0.4167
+
+                                     grp=29
+
+The ANOVA Procedure
+
+Class Level Information
+
+Class Levels Values
+
+A 2 1 2
+
+B 3 1 2 3
+
+C 2 1 2
+
+Number of Observations Read 24
+Number of Observations Used 24
+
+                                     grp=29
+
+The ANOVA Procedure
+
+Dependent Variable: y
+
+Sum of
+Source DF Squares Mean Square F Value Pr > F
+
+Model 4                       0.00206057                       0.00051514                             0.18                           0.9444
+
+Error 19                       0.05349275                       0.00281541
+
+Corrected Total 23                       0.05555332
+
+R-Square Coeff Var Root MSE y Mean
+
+                        0.037092                         80.95549                         0.053060                         0.065543
+
+Overall Noncentrality
+
+Min Var Unbiased Estimate -3.345
+Low MSE Estimate -2.952
+95% Confidence Limits (0,1.8522)
+
+
+Proportion of Variation Accounted for
+
+Eta-Square 0.04
+Omega-Square -0.16
+95% Confidence Limits (0.00,0.07)
+
+Noncentrality Parameter
+Min Var
+Unbiased Low MSE
+Source DF Anova SS Mean Square F Value Pr > F Estimate Estimate 95% Confidence Limits
+
+A 1                       0.00010315                       0.00010315                             0.04                           0.8502 -0.967 -0.853 0 3.63
+B 2                       0.00180327                       0.00090164                             0.32                           0.7298 -1.427 -1.259 0 5.63
+C 1                       0.00015414                       0.00015414                             0.05                           0.8175 -0.951 -0.839 0 4.05
+
+Total Variation Accounted For Partial Variation Accounted For
+Semipartial Conservative Partial
+Semipartial Omega- 95% Confidence Partial Omega-
+Source Eta-Square Square Limits Eta-Square Square 95% Confidence Limits
+
+A 0.0019 -0.0465 0.0000 0.1350 0.0019 -0.0418 0.0000 0.1313
+B 0.0325 -0.0656 0.0000 0.1975 0.0326 -0.0600 0.0000 0.1901
+C 0.0028 -0.0456 0.0000 0.1482 0.0029 -0.0410 0.0000 0.1445
+
+                                     grp=30
+
+The ANOVA Procedure
+
+Class Level Information
+
+Class Levels Values
+
+A 2 1 2
+
+B 3 1 2 3
+
+C 2 1 2
+
+Number of Observations Read 24
+Number of Observations Used 24
+
+                                     grp=30
+
+The ANOVA Procedure
+
+Dependent Variable: y
+
+Sum of
+Source DF Squares Mean Square F Value Pr > F
+
+Model 4                       0.03324653                       0.00831163                             0.61                           0.6600
+
+Error 19                       0.25864086                       0.01361268
+
+Corrected Total 23                       0.29188739
+
+R-Square Coeff Var Root MSE y Mean
+
+                        0.113902                         993.5114                         0.116673                         0.011744
+
+Overall Noncentrality
+
+Min Var Unbiased Estimate -1.815
+Low MSE Estimate -1.601
+95% Confidence Limits (0,8.1417)
+
+
+Proportion of Variation Accounted for
+
+Eta-Square 0.11
+Omega-Square -0.07
+95% Confidence Limits (0.00,0.25)
+
+Noncentrality Parameter
+Min Var
+Unbiased Low MSE
+Source DF Anova SS Mean Square F Value Pr > F Estimate Estimate 95% Confidence Limits
+
+A 1                       0.00044395                       0.00044395                             0.03                           0.8586 -0.971 -0.857 0 3.51
+B 2                       0.03276344                       0.01638172                             1.20                           0.3220 0.153 0.135 0 11.12
+C 1                       0.00003914                       0.00003914                             0.00                           0.9578 -0.997 -0.880 0 1.05
+
+Total Variation Accounted For Partial Variation Accounted For
+Semipartial Conservative Partial
+Semipartial Omega- 95% Confidence Partial Omega-
+Source Eta-Square Square Limits Eta-Square Square 95% Confidence Limits
+
+A 0.0015 -0.0431 0.0000 0.1284 0.0017 -0.0420 0.0000 0.1274
+B 0.1122 0.0181 0.0000 0.3279 0.1124 0.0167 0.0000 0.3166
+C 0.0001 -0.0444 0.0000 0.0430 0.0002 -0.0433 0.0000 0.0418
+
+                                     grp=31
+
+The ANOVA Procedure
+
+Class Level Information
+
+Class Levels Values
+
+A 2 1 2
+
+B 3 1 2 3
+
+C 2 1 2
+
+Number of Observations Read 24
+Number of Observations Used 24
+
+                                     grp=31
+
+The ANOVA Procedure
+
+Dependent Variable: y
+
+Sum of
+Source DF Squares Mean Square F Value Pr > F
+
+Model 4                       71.2348950                       17.8087238                             3.30                           0.0326
+
+Error 19                      102.5198188                        5.3957799
+
+Corrected Total 23                      173.7547138
+
+R-Square Coeff Var Root MSE y Mean
+
+                        0.409974                         86.89401                         2.322882                         2.673236
+
+Overall Noncentrality
+
+Min Var Unbiased Estimate 7.8123
+Low MSE Estimate 6.8932
+95% Confidence Limits (0,30.863)
+
+
+Proportion of Variation Accounted for
+
+Eta-Square 0.41
+Omega-Square 0.28
+95% Confidence Limits (0.00,0.56)
+
+Noncentrality Parameter
+Min Var
+Unbiased Low MSE
+Source DF Anova SS Mean Square F Value Pr > F Estimate Estimate 95% Confidence Limits
+
+A 1                       0.04479823                       0.04479823                             0.01                           0.9284 -0.993 -0.876 0.000 2.11
+B 2                      25.47689229                      12.73844614                             2.36                           0.1214 2.225 1.963 0.000 16.49
+C 1                      45.71320451                      45.71320451                             8.47                           0.0090 6.580 5.806 0.496 25.44
+
+Total Variation Accounted For Partial Variation Accounted For
+Semipartial Conservative Partial
+Semipartial Omega- 95% Confidence Partial Omega-
+Source Eta-Square Square Limits Eta-Square Square 95% Confidence Limits
+
+A 0.0003 -0.0299 0.0000 0.0673 0.0004 -0.0431 0.0000 0.0809
+B 0.1466 0.0820 0.0000 0.3678 0.1990 0.1019 0.0000 0.4073
+C 0.2631 0.2250 0.0165 0.5002 0.3084 0.2374 0.0202 0.5146
+
+                                     grp=32
+
+The ANOVA Procedure
+
+Class Level Information
+
+Class Levels Values
+
+A 2 1 2
+
+B 3 1 2 3
+
+C 2 1 2
+
+Number of Observations Read 24
+Number of Observations Used 24
+
+                                     grp=32
+
+The ANOVA Procedure
+
+Dependent Variable: y
+
+Sum of
+Source DF Squares Mean Square F Value Pr > F
+
+Model 4                      10311.24359                       2577.81090                             2.77                           0.0571
+
+Error 19                      17672.68407                        930.14127
+
+Corrected Total 23                      27983.92765
+
+R-Square Coeff Var Root MSE y Mean
+
+                        0.368470                         32.11907                         30.49822                         94.95361
+
+Overall Noncentrality
+
+Min Var Unbiased Estimate 5.9188
+Low MSE Estimate 5.2224
+95% Confidence Limits (0,26.817)
+
+
+Proportion of Variation Accounted for
+
+Eta-Square 0.37
+Omega-Square 0.23
+95% Confidence Limits (0.00,0.53)
+
+Noncentrality Parameter
+Min Var
+Unbiased Low MSE
+Source DF Anova SS Mean Square F Value Pr > F Estimate Estimate 95% Confidence Limits
+
+A 1                      6711.088670                      6711.088670                             7.22                           0.0146 5.46 4.81 0.234 22.96
+B 2                       513.971611                       256.985805                             0.28                           0.7616 -1.51 -1.33 0.000 5.22
+C 1                      3086.183305                      3086.183305                             3.32                           0.0843 1.97 1.74 0.000 14.76
+
+Total Variation Accounted For Partial Variation Accounted For
+Semipartial Conservative Partial
+Semipartial Omega- 95% Confidence Partial Omega-
+Source Eta-Square Square Limits Eta-Square Square 95% Confidence Limits
+
+A 0.2398 0.1999 0.0088 0.4810 0.2752 0.2057 0.0097 0.4890
+B 0.0184 -0.0466 0.0000 0.1533 0.0283 -0.0642 0.0000 0.1787
+C 0.1103 0.0746 0.0000 0.3573 0.1487 0.0881 0.0000 0.3808
+
+                                     grp=33
+
+The ANOVA Procedure
+
+Class Level Information
+
+Class Levels Values
+
+A 2 1 2
+
+B 3 1 2 3
+
+C 2 1 2
+
+Number of Observations Read 24
+Number of Observations Used 24
+
+                                     grp=33
+
+The ANOVA Procedure
+
+Dependent Variable: y
+
+Sum of
+Source DF Squares Mean Square F Value Pr > F
+
+Model 4                      1441306.673                       360326.668                             2.89                           0.0502
+
+Error 19                      2367209.334                       124589.965
+
+Corrected Total 23                      3808516.006
+
+R-Square Coeff Var Root MSE y Mean
+
+                        0.378443                         95.22434                         352.9730                         370.6752
+
+Overall Noncentrality
+
+Min Var Unbiased Estimate 6.3507
+Low MSE Estimate 5.6035
+95% Confidence Limits (0,27.747)
+
+
+Proportion of Variation Accounted for
+
+Eta-Square 0.38
+Omega-Square 0.24
+95% Confidence Limits (0.00,0.54)
+
+Noncentrality Parameter
+Min Var
+Unbiased Low MSE
+Source DF Anova SS Mean Square F Value Pr > F Estimate Estimate 95% Confidence Limits
+
+A 1                        40040.387                        40040.387                             0.32                           0.5774 -0.712 -0.629 0.000 6.29
+B 2                       236094.901                       118047.450                             0.95                           0.4053 -0.304 -0.269 0.000 9.77
+C 1                      1165171.385                      1165171.385                             9.35                           0.0065 7.368 6.501 0.699 27.15
+
+Total Variation Accounted For Partial Variation Accounted For
+Semipartial Conservative Partial
+Semipartial Omega- 95% Confidence Partial Omega-
+Source Eta-Square Square Limits Eta-Square Square 95% Confidence Limits
+
+A 0.0105 -0.0215 0.0000 0.1949 0.0166 -0.0291 0.0000 0.2078
+B 0.0620 -0.0033 0.0000 0.2568 0.0907 -0.0044 0.0000 0.2893
+C 0.3059 0.2646 0.0340 0.5344 0.3299 0.2582 0.0283 0.5308
+
+                                     grp=34
+
+The ANOVA Procedure
+
+Class Level Information
+
+Class Levels Values
+
+A 2 1 2
+
+B 3 1 2 3
+
+C 2 1 2
+
+Number of Observations Read 24
+Number of Observations Used 24
+
+                                     grp=34
+
+The ANOVA Procedure
+
+Dependent Variable: y
+
+Sum of
+Source DF Squares Mean Square F Value Pr > F
+
+Model 4                      307642637.8                       76910659.5                             3.22                           0.0355
+
+Error 19                      454225535.5                       23906607.1
+
+Corrected Total 23                      761868173.4
+
+R-Square Coeff Var Root MSE y Mean
+
+                        0.403800                         88.44031                         4889.438                         5528.518
+
+Overall Noncentrality
+
+Min Var Unbiased Estimate 7.5139
+Low MSE Estimate 6.6299
+95% Confidence Limits (0,30.231)
+
+
+Proportion of Variation Accounted for
+
+Eta-Square 0.40
+Omega-Square 0.27
+95% Confidence Limits (0.00,0.56)
+
+Noncentrality Parameter
+Min Var
+Unbiased Low MSE
+Source DF Anova SS Mean Square F Value Pr > F Estimate Estimate 95% Confidence Limits
+
+A 1                       35727496.8                       35727496.8                             1.49                           0.2365 0.337 0.297 0 10.3
+B 2                      201933143.7                      100966571.9                             4.22                           0.0304 5.558 4.904 0 24.1
+C 1                       69981997.2                       69981997.2                             2.93                           0.1034 1.619 1.429 0 13.9
+
+Total Variation Accounted For Partial Variation Accounted For
+Semipartial Conservative Partial
+Semipartial Omega- 95% Confidence Partial Omega-
+Source Eta-Square Square Limits Eta-Square Square 95% Confidence Limits
+
+A 0.0469 0.0150 0.0000 0.2743 0.0729 0.0202 0.0000 0.2997
+B 0.2650 0.1961 0.0000 0.4812 0.3078 0.2117 0.0000 0.5015
+C 0.0919 0.0586 0.0000 0.3359 0.1335 0.0743 0.0000 0.3661
+
+                                     grp=35
+
+The ANOVA Procedure
+
+Class Level Information
+
+Class Levels Values
+
+A 2 1 2
+
+B 3 1 2 3
+
+C 2 1 2
+
+Number of Observations Read 24
+Number of Observations Used 24
+
+                                     grp=35
+
+The ANOVA Procedure
+
+Dependent Variable: y
+
+Sum of
+Source DF Squares Mean Square F Value Pr > F
+
+Model 4                       2428591571                        607147893                             8.77                           0.0003
+
+Error 19                       1315624704                         69243405
+
+Corrected Total 23                       3744216275
+
+R-Square Coeff Var Root MSE y Mean
+
+                        0.648625                         27.37449                         8321.262                         30397.87
+
+Overall Noncentrality
+
+Min Var Unbiased Estimate 27.381
+Low MSE Estimate 24.16
+95% Confidence Limits (7.5541,70.49)
+
+
+Proportion of Variation Accounted for
+
+Eta-Square 0.65
+Omega-Square 0.56
+95% Confidence Limits (0.24,0.75)
+
+Noncentrality Parameter
+Min Var
+Unbiased Low MSE
+Source DF Anova SS Mean Square F Value Pr > F Estimate Estimate 95% Confidence Limits
+
+A 1                       2316152910                       2316152910                            33.45 <.0001 28.928 25.525 9.39 70.91
+B 2                         46525474                         23262737                             0.34                           0.7188 -1.399 -1.234 0.00 5.77
+C 1                         65913187                         65913187                             0.95                           0.3415 -0.148 -0.131 0.00 8.68
+
+Total Variation Accounted For Partial Variation Accounted For
+Semipartial Conservative Partial
+Semipartial Omega- 95% Confidence Partial Omega-
+Source Eta-Square Square Limits Eta-Square Square 95% Confidence Limits
+
+A 0.6186 0.5892 0.3128 0.7535 0.6377 0.5748 0.2812 0.7471
+B 0.0124 -0.0241 0.0000 0.1248 0.0342 -0.0586 0.0000 0.1938
+C 0.0176 -0.0009 0.0000 0.2168 0.0477 -0.0020 0.0000 0.2656
+
+                                     grp=36
+
+The ANOVA Procedure
+
+Class Level Information
+
+Class Levels Values
+
+A 2 1 2
+
+B 3 1 2 3
+
+C 2 1 2
+
+Number of Observations Read 24
+Number of Observations Used 24
+
+                                     grp=36
+
+The ANOVA Procedure
+
+Dependent Variable: y
+
+Sum of
+Source DF Squares Mean Square F Value Pr > F
+
+Model 4 1.1663159E-6 2.9157897E-7                             5.75                           0.0033
+
+Error 19 9.6390362E-7  5.073177E-8
+
+Corrected Total 23 2.1302195E-6
+
+R-Square Coeff Var Root MSE y Mean
+
+                        0.547510                         38.93621                         0.000225                         0.000578
+
+Overall Noncentrality
+
+Min Var Unbiased Estimate 16.57
+Low MSE Estimate 14.62
+95% Confidence Limits (2.8583,48.897)
+
+
+Proportion of Variation Accounted for
+
+Eta-Square 0.55
+Omega-Square 0.44
+95% Confidence Limits (0.11,0.67)
+
+Noncentrality Parameter
+Min Var
+Unbiased Low MSE
+Source DF Anova SS Mean Square F Value Pr > F Estimate Estimate 95% Confidence Limits
+
+A 1 3.4620734E-8 3.4620734E-8                             0.68                           0.4190 -0.389 -0.344 0.00 7.78
+B 2 1.7807537E-7 8.9037685E-8                             1.76                           0.1998 1.141 1.006 0.00 13.79
+C 1 9.5361978E-7 9.5361978E-7                            18.80                           0.0004 15.819 13.958 3.63 44.73
+
+Total Variation Accounted For Partial Variation Accounted For
+Semipartial Conservative Partial
+Semipartial Omega- 95% Confidence Partial Omega-
+Source Eta-Square Square Limits Eta-Square Square 95% Confidence Limits
+
+A 0.0163 -0.0074 0.0000 0.2131 0.0347 -0.0134 0.0000 0.2449
+B 0.0836 0.0351 0.0000 0.2901 0.1559 0.0592 0.0000 0.3649
+C 0.4477 0.4140 0.1270 0.6383 0.4973 0.4258 0.1315 0.6508
+
+                                     grp=37
+
+The ANOVA Procedure
+
+Class Level Information
+
+Class Levels Values
+
+A 2 1 2
+
+B 3 1 2 3
+
+C 2 1 2
+
+Number of Observations Read 24
+Number of Observations Used 24
+
+                                     grp=37
+
+The ANOVA Procedure
+
+Dependent Variable: y
+
+Sum of
+Source DF Squares Mean Square F Value Pr > F
+
+Model 4                       0.00007926                       0.00001981                             2.55                           0.0726
+
+Error 19                       0.00014745                       0.00000776
+
+Corrected Total 23                       0.00022671
+
+R-Square Coeff Var Root MSE y Mean
+
+                        0.349613                         56.57042                         0.002786                         0.004924
+
+Overall Noncentrality
+
+Min Var Unbiased Estimate 5.1383
+Low MSE Estimate 4.5338
+95% Confidence Limits (0,25.122)
+
+
+Proportion of Variation Accounted for
+
+Eta-Square 0.35
+Omega-Square 0.21
+95% Confidence Limits (0.00,0.51)
+
+Noncentrality Parameter
+Min Var
+Unbiased Low MSE
+Source DF Anova SS Mean Square F Value Pr > F Estimate Estimate 95% Confidence Limits
+
+A 1                       0.00000400                       0.00000400                             0.52                           0.4815 -0.539 -0.475 0.000 7.16
+B 2                       0.00007469                       0.00003735                             4.81                           0.0204 6.612 5.834 0.138 26.44
+C 1                       0.00000057                       0.00000057                             0.07                           0.7899 -0.935 -0.825 0.000 4.37
+
+Total Variation Accounted For Partial Variation Accounted For
+Semipartial Conservative Partial
+Semipartial Omega- 95% Confidence Partial Omega-
+Source Eta-Square Square Limits Eta-Square Square 95% Confidence Limits
+
+A 0.0176 -0.0160 0.0000 0.2169 0.0264 -0.0206 0.0000 0.2297
+B 0.3295 0.2524 0.0146 0.5346 0.3362 0.2411 0.0057 0.5242
+C 0.0025 -0.0307 0.0000 0.1448 0.0038 -0.0402 0.0000 0.1539
+
+                                     grp=38
+
+The ANOVA Procedure
+
+Class Level Information
+
+Class Levels Values
+
+A 2 1 2
+
+B 3 1 2 3
+
+C 2 1 2
+
+Number of Observations Read 24
+Number of Observations Used 24
+
+                                     grp=38
+
+The ANOVA Procedure
+
+Dependent Variable: y
+
+Sum of
+Source DF Squares Mean Square F Value Pr > F
+
+Model 4                       0.00656251                       0.00164063                             0.98                           0.4397
+
+Error 19                       0.03167290                       0.00166699
+
+Corrected Total 23                       0.03823541
+
+R-Square Coeff Var Root MSE y Mean
+
+                        0.171634                         63.30356                         0.040829                         0.064497
+
+Overall Noncentrality
+
+Min Var Unbiased Estimate -0.478
+Low MSE Estimate -0.421
+95% Confidence Limits (0,11.949)
+
+
+Proportion of Variation Accounted for
+
+Eta-Square 0.17
+Omega-Square -0.00
+95% Confidence Limits (0.00,0.33)
+
+Noncentrality Parameter
+Min Var
+Unbiased Low MSE
+Source DF Anova SS Mean Square F Value Pr > F Estimate Estimate 95% Confidence Limits
+
+A 1                       0.00367517                       0.00367517                             2.20                           0.1540 0.973 0.858 0 12.122
+B 2                       0.00288545                       0.00144273                             0.87                           0.4368 -0.451 -0.398 0 9.315
+C 1                       0.00000189                       0.00000189                             0.00                           0.9735 -0.999 -0.881 0 0.115
+
+Total Variation Accounted For Partial Variation Accounted For
+Semipartial Conservative Partial
+Semipartial Omega- 95% Confidence Partial Omega-
+Source Eta-Square Square Limits Eta-Square Square 95% Confidence Limits
+
+A 0.0961 0.0503 0.0000 0.3410 0.1040 0.0478 0.0000 0.3356
+B 0.0755 -0.0112 0.0000 0.2782 0.0835 -0.0113 0.0000 0.2796
+C 0.0000 -0.0417 0.0000 0.0032 0.0001 -0.0434 0.0000 0.0048
+
+                                     grp=39
+
+The ANOVA Procedure
+
+Class Level Information
+
+Class Levels Values
+
+A 2 1 2
+
+B 3 1 2 3
+
+C 2 1 2
+
+Number of Observations Read 24
+Number of Observations Used 24
+
+                                     grp=39
+
+The ANOVA Procedure
+
+Dependent Variable: y
+
+Sum of
+Source DF Squares Mean Square F Value Pr > F
+
+Model 4                       3.23744654                       0.80936163                             3.43                           0.0286
+
+Error 19                       4.48964862                       0.23629730
+
+Corrected Total 23                       7.72709515
+
+R-Square Coeff Var Root MSE y Mean
+
+                        0.418973                         163.0167                         0.486104                         0.298193
+
+Overall Noncentrality
+
+Min Var Unbiased Estimate 8.2586
+Low MSE Estimate 7.287
+95% Confidence Limits (0,31.805)
+
+
+Proportion of Variation Accounted for
+
+Eta-Square 0.42
+Omega-Square 0.29
+95% Confidence Limits (0.00,0.57)
+
+Noncentrality Parameter
+Min Var
+Unbiased Low MSE
+Source DF Anova SS Mean Square F Value Pr > F Estimate Estimate 95% Confidence Limits
+
+A 1                       0.02573269                       0.02573269                             0.11                           0.7450 -0.903 -0.796 0.000 4.82
+B 2                       2.57077463                       1.28538731                             5.44                           0.0136 7.734 6.824 0.444 28.86
+C 1                       0.64093922                       0.64093922                             2.71                           0.1160 1.427 1.259 0.000 13.36
+
+Total Variation Accounted For Partial Variation Accounted For
+Semipartial Conservative Partial
+Semipartial Omega- 95% Confidence Partial Omega-
+Source Eta-Square Square Limits Eta-Square Square 95% Confidence Limits
+
+A 0.0033 -0.0264 0.0000 0.1543 0.0057 -0.0386 0.0000 0.1673
+B 0.3327 0.2635 0.0161 0.5372 0.3641 0.2701 0.0182 0.5460
+C 0.0829 0.0508 0.0000 0.3249 0.1249 0.0666 0.0000 0.3575
+
+                                     grp=40
+
+The ANOVA Procedure
+
+Class Level Information
+
+Class Levels Values
+
+A 2 1 2
+
+B 3 1 2 3
+
+C 2 1 2
+
+Number of Observations Read 24
+Number of Observations Used 24
+
+                                     grp=40
+
+The ANOVA Procedure
+
+Dependent Variable: y
+
+Sum of
+Source DF Squares Mean Square F Value Pr > F
+
+Model 4                      44.21604581                      11.05401145                            22.55 <.0001
+
+Error 19                       9.31181405                       0.49009548
+
+Corrected Total 23                      53.52785986
+
+R-Square Coeff Var Root MSE y Mean
+
+                        0.826038                         12.08916                         0.700068                         5.790876
+
+Overall Noncentrality
+
+Min Var Unbiased Estimate 76.722
+Low MSE Estimate 67.696
+95% Confidence Limits (31.797,166.92)
+
+
+Proportion of Variation Accounted for
+
+Eta-Square 0.83
+Omega-Square 0.78
+95% Confidence Limits (0.57,0.87)
+
+Noncentrality Parameter
+Min Var
+Unbiased Low MSE
+Source DF Anova SS Mean Square F Value Pr > F Estimate Estimate 95% Confidence Limits
+
+A 1                       6.17003252                       6.17003252                            12.59                           0.0021 10.264 9.057 1.58 33.30
+B 2                       0.63811308                       0.31905654                             0.65                           0.5328 -0.835 -0.737 0.00 8.04
+C 1                      37.40790020                      37.40790020                            76.33 <.0001 67.293 59.376 28.25 145.91
+
+Total Variation Accounted For Partial Variation Accounted For
+Semipartial Conservative Partial
+Semipartial Omega- 95% Confidence Partial Omega-
+Source Eta-Square Square Limits Eta-Square Square 95% Confidence Limits
+
+A 0.1153 0.1051 0.0000 0.3629 0.3985 0.3256 0.0616 0.5811
+B 0.0119 -0.0063 0.0000 0.1218 0.0641 -0.0300 0.0000 0.2510
+C 0.6988 0.6834 0.4278 0.8057 0.8007 0.7584 0.5406 0.8587

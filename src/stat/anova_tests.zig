@@ -151,7 +151,6 @@ test "ANOVA001 valid features owned by later tickets fail loudly as gaps" {
         "proc anova; class g; model y=g; test h=g e=g; run;",
         "proc anova; absorb g; class g; model y=g; run;",
         "proc anova; class g; model y x=g; run; manova h=g; run;", // interactive (MEANS is implemented)
-        "proc anova; class g; model y=g / effectsize; run;", // STAT-ANOVA-003 remainder
     }) |text| {
         const code = try exitOf(a, ds, text);
         if (code != 2) std.debug.print("program: {s}\n", .{text});
@@ -874,7 +873,7 @@ test "STAT-ANOVA-003 REF= moves the reference level last; TRUNCATE merges on 16 
     try t.expectEqual(@as(u8, 1), try exitOf(a, ds, "proc anova; class a(ref='9'); model y=a; run;"));
 }
 
-test "STAT-ANOVA-003 invalid models are user errors with SAS wording; EFFECTSIZE stays a loud gap" {
+test "STAT-ANOVA-003 invalid models are user errors with SAS wording" {
     var arena = std.heap.ArenaAllocator.init(t.allocator);
     defer arena.deinit();
     const a = arena.allocator();
@@ -905,7 +904,51 @@ test "STAT-ANOVA-003 invalid models are user errors with SAS wording; EFFECTSIZE
         try t.expect(found);
         try t.expectEqual(@as(usize, 0), out.items.len);
     }
-    try t.expectEqual(@as(u8, 2), try exitOf(a, ds, "proc anova; class a; model y=a / effectsize; run;"));
+    try t.expectEqual(@as(u8, 0), try exitOf(a, ds, "proc anova; class a; model y=a / effectsize; run;"));
     // Same variables through two different effects: loud, not double-counted.
     try t.expectEqual(@as(u8, 2), try exitOf(a, ds, "proc anova; class a b; model y=a*b b(a); run;"));
+}
+
+test "STAT-ANOVA-003 EFFECTSIZE measures from hand formulas (GLM pp.4120-4122)" {
+    var arena = std.heap.ArenaAllocator.init(t.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const es = @import("anova_effectsize.zig");
+    // Same invented data as the INT test: SS(a)=8 on 1 DF, SSE=92 on 6 DF,
+    // total 100, N=8. MSE=46/3, F=12/23. MVUE = 1*4*F/6 - 1 = -15/23;
+    // Low MSE = 1*2*F/6 - 2/4 = 4/23 - 1/2; eta^2 = 8/100 (semi and
+    // partial coincide in a one-way model); omega^2 = (8-46/3)/(100+46/3).
+    const ds = try table(a, "n", &.{ "a", "b", "y" }, &.{ .{ 1, 1, 1 }, .{ 1, 1, 3 }, .{ 1, 2, 5 }, .{ 1, 2, 7 }, .{ 2, 1, 2 }, .{ 2, 1, 2 }, .{ 2, 2, 8 }, .{ 2, 2, 12 } });
+    const e = try env(a, ds);
+    const cx = e.cx(a);
+    const spec = try anova.parse(cx, try lex.tokenize(a, "proc anova; class a; model y=a / effectsize; run;", &e.diags));
+    const tab = try anova.ssTable(cx, spec, try anova.build(cx, spec, try selection.View.init(a, spec.input, .{}), spec.responses[0]));
+    const s = try es.row(cx, tab, 8, 1, .effect);
+    try close(-15.0 / 23.0, s.mvue);
+    try close(4.0 / 23.0 - 0.5, s.low_mse);
+    try close(0.08, s.semi_eta);
+    try close(0.08, s.eta);
+    try close((8.0 - 46.0 / 3.0) / (100.0 + 46.0 / 3.0), s.semi_omega);
+    try close((8.0 - 46.0 / 3.0) / (8.0 + 7.0 * 46.0 / 3.0), s.omega);
+    // F below the 2.5% point: the lower noncentrality limit is 0.
+    try t.expectEqual(@as(f64, 0), s.lcl);
+    // DFE <= 4 has no Low MSE estimate; no error DF leaves every measure missing.
+    var small = tab;
+    small.error_df = 4;
+    try t.expect(std.math.isNan((try es.row(cx, small, 8, 1, .effect)).low_mse));
+    small.error_df = 0;
+    try t.expect(std.math.isNan((try es.row(cx, small, 8, 1, .effect)).mvue));
+    const text = try squeezed(a, ds, "proc anova; class a; model y=a / effectsize; run;");
+    try has(text, "\nOverall Noncentrality\n\nMin Var Unbiased Estimate -0.652\n");
+    try has(text, "\nEta-Square 0.08\n");
+    // Character response: SAS 9.4 wording, user error.
+    const chars = try a.create(Dataset);
+    chars.* = Dataset.init(a, "c");
+    _ = try chars.addColumn("g", .num);
+    _ = try chars.addColumn("z", .char);
+    try chars.appendRow(&.{ .{ .num = 1 }, .{ .str = "a" } });
+    const ce = try env(a, chars);
+    var sink: std.ArrayList(u8) = .empty;
+    try t.expectError(error.ParseError, anova.run(ce.cx(a), &sink, try lex.tokenize(a, "proc anova; class g; model z=g; run;", &ce.diags)));
+    try t.expectEqualStrings("Variable z in list does not match type prescribed for this list.", ce.diags.list.items[ce.diags.list.items.len - 1].message);
 }

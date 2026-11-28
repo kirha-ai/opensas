@@ -1,0 +1,18 @@
+
+The ANOVA Procedure
+
+Class Level Information
+
+Class Levels Values
+
+g 4 1 2 3 4
+
+Number of Observations Read 12
+Number of Observations Used 12
+
+The ANOVA Procedure
+
+Dependent Variable: y
+
+Sum of
+Source DF Squares Mean Square F Value Pr > F
