@@ -11,9 +11,9 @@ This section is the only current status summary; every section below it is a his
 - **Open review (not done):** the originals of GENMOD-001/002/018, ANOVA-001/007, FREQ-014, PHREG-003 and LIFETEST-001/002 now match exactly but the tickets stay PARK; check each against its full acceptance criteria and recorded remaining gaps before any is marked DONE.
 - **Interrupted by the full disk:** STAT-ANOVA-009 and STAT-PHREG-004 are TODO (no file changed; reading notes in the tickets). STAT-LIFETEST-003 and STAT-GENMOD-003 are PARK with UNCOMMITTED, NEVER-COMPILED source retained in `opensas-dev5` (`stat-b6/lifetest003-dev5`) and `opensas-dev7` (`stat-b6/genmod003-dev7`); do not integrate it before it is built, tested and committed there.
 - **Interim (not a receipt):** oracle-present `zig build install` 0 and `zig build gate -j2` 0 at `3e0f629f` (first six batch-7 tickets): 2492/2492 unit, 2441/2441 corpus, 11/11 programs. STAT-MI-001 was integrated after it. New dev subagents run on Opus 5.5 at the user's request (from STAT-QUANTREG-001 on).
-- **Live slots (auto):** dev1 STAT-QUANTREG-001, dev2 STAT-GLMSELECT-001, dev3 STAT-SURVEYFREQ-001, dev4 STAT-SURVEYREG-001, dev5 STAT-VARCOMP-001, dev6 STAT-GEE-001, dev7 STAT-FACTOR-001.
-- **Integrated locally, awaiting batch verification (auto):** STAT-LIFETEST-003 (PARK), STAT-LIFEREG-001 (PARK), STAT-MULTTEST-001 (PARK), STAT-MIANALYZE-001 (PARK), STAT-PROBIT-001 (PARK), STAT-GENMOD-003 (PARK), STAT-MI-001 (PARK), STAT-STDRATE-001 (PARK), STAT-SURVEYMEANS-001 (PARK), STAT-NLIN-001 (PARK), STAT-PRINCOMP-001 (PARK).
-- **Counts:** 55 DONE, 91 PARK, 7 DOING, 1269 TODO.
+- **Live slots (auto):** dev1 STAT-QUANTREG-001, dev2 STAT-GLMSELECT-001, dev3 STAT-SURVEYLOGISTIC-001, dev4 STAT-SURVEYREG-001, dev5 STAT-VARCOMP-001, dev6 STAT-GEE-001, dev7 STAT-FACTOR-001.
+- **Integrated locally, awaiting batch verification (auto):** STAT-LIFETEST-003 (PARK), STAT-LIFEREG-001 (PARK), STAT-MULTTEST-001 (PARK), STAT-MIANALYZE-001 (PARK), STAT-PROBIT-001 (PARK), STAT-GENMOD-003 (PARK), STAT-MI-001 (PARK), STAT-STDRATE-001 (PARK), STAT-SURVEYMEANS-001 (PARK), STAT-NLIN-001 (PARK), STAT-PRINCOMP-001 (PARK), STAT-SURVEYFREQ-001 (PARK).
+- **Counts:** 55 DONE, 92 PARK, 7 DOING, 1268 TODO.
 - **Next:** resume the two retained partial tickets or dispatch new eligible tickets from the current tip; run the open review above.
 - **Working branch:** `feat/stat/batch-4`. Last tested and pushed SHA `9c4780bff01fd8fecf5074ac7ae4b34f6888f3dd` (batch 6; batch 5 was `470bdc33c8b8e070e4a4d7c5fbbf3f26ccaec8b5`). The bullets below this one describe batch 5 and are historical. Later commits that touch only this file are documentation. No PR created or merged; `main` untouched.
 - **Batch 5 verification at that exact SHA (2026-11-28):** whole `tests/STAT15.4-oracle/` moved out of the checkout, then `zig build gate -j2 --summary all` direct exit 0 — **2380/2380 unit tests** (2262 + 102 + 13 + 3), **2409/2409 corpus**, **11/11 programs**; `zig build install` direct 0; separate supplemental direct 0, **1113/1113**. Oracle restored unchanged (1425 entries), tree clean.
@@ -14286,7 +14286,7 @@ Source: S154, Chapter 118, `The SURVEYFREQ Procedure`, PDF pp. 9577–9694. Task
 
 <a id="stat-surveyfreq-001"></a>
 
-### [DOING @dev3] STAT-SURVEYFREQ-001 — SURVEYFREQ — Data input, variable roles, and basic options
+### [PARK] STAT-SURVEYFREQ-001 — SURVEYFREQ — Data input, variable roles, and basic options
 
 - Source: S154 / Chapter 118 / `PROC SURVEYFREQ Statement` (PDF pp. 9587–9598); S154 / Chapter 118 / `BY Statement` (PDF p. 9598); S154 / Chapter 118 / `CLUSTER Statement` (PDF pp. 9598–9599); S154 / Chapter 118 / `REPWEIGHTS Statement` (PDF pp. 9599–9601); S154 / Chapter 118 / `STRATA Statement` (PDF pp. 9601–9602); S154 / Chapter 118 / `WEIGHT Statement` (PDF pp. 9626–9627); S154 / Chapter 118 / `Missing Values` (PDF pp. 9630–9632).
 - Scope: Integrate PROC SURVEYFREQ declarations, basic options, defaults, and execution boundaries; this ticket establishes parameter objects and result interfaces, while later feature tickets implement model-, algorithm-, and output-specific options. Also implement BY; CLUSTER; REPWEIGHTS; STRATA; WEIGHT; Missing Values; apply this procedure's rules for missing values, variable roles, and observation selection.
@@ -14589,7 +14589,7 @@ Source: S154, Chapter 120, `The SURVEYLOGISTIC Procedure`, PDF pp. 9795–9898. 
 
 <a id="stat-surveylogistic-001"></a>
 
-### [TODO] STAT-SURVEYLOGISTIC-001 — SURVEYLOGISTIC — Data input, variable roles, and basic options
+### [DOING @dev3] STAT-SURVEYLOGISTIC-001 — SURVEYLOGISTIC — Data input, variable roles, and basic options
 
 - Source: S154 / Chapter 120 / `PROC SURVEYLOGISTIC Statement` (PDF pp. 9803–9811); S154 / Chapter 120 / `BY Statement` (PDF pp. 9811–9812); S154 / Chapter 120 / `CLUSTER Statement` (PDF p. 9814); S154 / Chapter 120 / `FREQ Statement` (PDF p. 9820); S154 / Chapter 120 / `REPWEIGHTS Statement` (PDF pp. 9834–9836); S154 / Chapter 120 / `STRATA Statement` (PDF p. 9837); S154 / Chapter 120 / `WEIGHT Statement` (PDF p. 9839); S154 / Chapter 120 / `Missing Values` (PDF pp. 9839–9840).
 - Scope: Integrate PROC SURVEYLOGISTIC declarations, basic options, defaults, and execution boundaries; this ticket establishes parameter objects and result interfaces, while later feature tickets implement model-, algorithm-, and output-specific options. Also implement BY; CLUSTER; FREQ; REPWEIGHTS; STRATA; WEIGHT; Missing Values; apply this procedure's rules for missing values, variable roles, and observation selection.
