@@ -1,0 +1,979 @@
+
+g=1
+
+The STDIZE Procedure
+
+Location and Scale Measures
+ 
+Location = mean     Scale = 1.
+ 
+Name        Location           Scale           N
+
+x           2.333333        1.000000           3
+
+g=2
+
+The STDIZE Procedure
+
+Location and Scale Measures
+ 
+Location = mean     Scale = 1.
+ 
+Name        Location           Scale           N
+
+x                  .               .           0
+
+M1   -1.333333333
+M1   -0.333333333
+M1    1.666666667
+M1 missing
+M1 missing
+
+g=1
+
+The STDIZE Procedure
+
+Location and Scale Measures
+ 
+Location = median     Scale = 1.
+ 
+Name        Location           Scale           N
+
+x           2.000000        1.000000           3
+
+g=2
+
+The STDIZE Procedure
+
+Location and Scale Measures
+ 
+Location = median     Scale = 1.
+ 
+Name        Location           Scale           N
+
+x                  .        1.000000           0
+
+M2   -1.000000000
+M2    0.000000000
+M2    2.000000000
+M2 missing
+M2 missing
+
+g=1
+
+The STDIZE Procedure
+
+Location and Scale Measures
+ 
+Location = 0.     Scale = sum
+ 
+Name        Location           Scale           N
+
+x                  0        7.000000           3
+
+g=2
+
+The STDIZE Procedure
+
+Location and Scale Measures
+ 
+Location = 0.     Scale = sum
+ 
+Name        Location           Scale           N
+
+x                  .               .           0
+
+M3    0.142857143
+M3    0.285714286
+M3    0.571428571
+M3 missing
+M3 missing
+
+g=1
+
+The STDIZE Procedure
+
+Location and Scale Measures
+ 
+Location = 0.     Scale = Euclidean length
+ 
+Name        Location           Scale           N
+
+x                  0        4.582576           3
+
+g=2
+
+The STDIZE Procedure
+
+Location and Scale Measures
+ 
+Location = 0.     Scale = Euclidean length
+ 
+Name        Location           Scale           N
+
+x                  0               .           0
+
+M4    0.218217890
+M4    0.436435780
+M4    0.872871561
+M4 missing
+M4 missing
+
+g=1
+
+The STDIZE Procedure
+
+Location and Scale Measures
+ 
+Location = 0.     Scale = standard dev. about origin
+ 
+Name        Location           Scale           N
+
+x                  0        2.645751           3
+
+g=2
+
+The STDIZE Procedure
+
+Location and Scale Measures
+ 
+Location = 0.     Scale = standard dev. about origin
+ 
+Name        Location           Scale           N
+
+x                  .               .           0
+
+M5    0.377964473
+M5    0.755928946
+M5    1.511857892
+M5 missing
+M5 missing
+
+g=1
+
+The STDIZE Procedure
+
+Location and Scale Measures
+ 
+Location = mean     Scale = standard deviation
+ 
+Name        Location           Scale           N
+
+x           2.333333        1.527525           3
+
+g=2
+
+The STDIZE Procedure
+
+Location and Scale Measures
+ 
+Location = mean     Scale = standard deviation
+ 
+Name        Location           Scale           N
+
+x                  .               .           0
+
+M6   -0.872871561
+M6   -0.218217890
+M6    1.091089451
+M6 missing
+M6 missing
+
+g=1
+
+The STDIZE Procedure
+
+Location and Scale Measures
+ 
+Location = minimum     Scale = range
+ 
+Name        Location           Scale           N
+
+x           1.000000        3.000000           3
+
+g=2
+
+The STDIZE Procedure
+
+Location and Scale Measures
+ 
+Location = minimum     Scale = range
+ 
+Name        Location           Scale           N
+
+x                  .               .           0
+
+M7    0.000000000
+M7    0.333333333
+M7    1.000000000
+M7 missing
+M7 missing
+
+g=1
+
+The STDIZE Procedure
+
+Location and Scale Measures
+ 
+Location = midrange     Scale = range/2.
+ 
+Name        Location           Scale           N
+
+x           2.500000        1.500000           3
+
+g=2
+
+The STDIZE Procedure
+
+Location and Scale Measures
+ 
+Location = midrange     Scale = range/2.
+ 
+Name        Location           Scale           N
+
+x                  .               .           0
+
+M8   -1.000000000
+M8   -0.333333333
+M8    1.000000000
+M8 missing
+M8 missing
+
+g=1
+
+The STDIZE Procedure
+
+Location and Scale Measures
+ 
+Location = 0.     Scale = maximum abs value
+ 
+Name        Location           Scale           N
+
+x                  0        4.000000           3
+
+g=2
+
+The STDIZE Procedure
+
+Location and Scale Measures
+ 
+Location = 0.     Scale = maximum abs value
+ 
+Name        Location           Scale           N
+
+x                  0               .           0
+
+M9    0.250000000
+M9    0.500000000
+M9    1.000000000
+M9 missing
+M9 missing
+
+g=1
+
+The STDIZE Procedure
+
+Location and Scale Measures
+ 
+Location = median     Scale = interquartile range
+ 
+Name        Location           Scale           N
+
+x           2.000000        3.000000           3
+
+g=2
+
+The STDIZE Procedure
+
+Location and Scale Measures
+ 
+Location = median     Scale = interquartile range
+ 
+Name        Location           Scale           N
+
+x                  .               .           0
+
+M10   -0.333333333
+M10    0.000000000
+M10    0.666666667
+M10 missing
+M10 missing
+
+g=1
+
+The STDIZE Procedure
+
+Location and Scale Measures
+ 
+Location = median     Scale = median abs dev from median
+ 
+Name        Location           Scale           N
+
+x           2.000000        1.000000           3
+
+g=2
+
+The STDIZE Procedure
+
+Location and Scale Measures
+ 
+Location = median     Scale = median abs dev from median
+ 
+Name        Location           Scale           N
+
+x                  .               .           0
+
+M11   -1.000000000
+M11    0.000000000
+M11    2.000000000
+M11 missing
+M11 missing
+
+g=1
+
+The STDIZE Procedure
+
+Location and Scale Measures
+ 
+Location = biweight 1-step M-estimate     Scale = biweight A-estimate
+ 
+Name        Location           Scale           N
+
+x           2.168901        2.078501           3
+
+g=2
+
+The STDIZE Procedure
+
+Location and Scale Measures
+ 
+Location = biweight 1-step M-estimate     Scale = biweight A-estimate
+ 
+Name        Location           Scale           N
+
+x                  .               .           0
+
+M12   -0.562376799
+M12   -0.081260868
+M12    0.880970994
+M12 missing
+M12 missing
+
+g=1
+
+The STDIZE Procedure
+
+Location and Scale Measures
+ 
+Location = Huber 1-step M-estimate     Scale = Huber A-estimate
+ 
+Name        Location           Scale           N
+
+x           2.000000        1.500000           3
+
+g=2
+
+The STDIZE Procedure
+
+Location and Scale Measures
+ 
+Location = Huber 1-step M-estimate     Scale = Huber A-estimate
+ 
+Name        Location           Scale           N
+
+x                  .               .           0
+
+M13   -0.666666667
+M13    0.000000000
+M13    1.333333333
+M13 missing
+M13 missing
+
+g=1
+
+The STDIZE Procedure
+
+Location and Scale Measures
+ 
+Location = Wave 1-step M-estimate     Scale = Wave A-estimate
+ 
+Name        Location           Scale           N
+
+x           2.000000        1.000000           3
+
+g=2
+
+The STDIZE Procedure
+
+Location and Scale Measures
+ 
+Location = Wave 1-step M-estimate     Scale = Wave A-estimate
+ 
+Name        Location           Scale           N
+
+x                  .               .           0
+
+M14   -1.000000000
+M14    0.000000000
+M14    2.000000000
+M14 missing
+M14 missing
+
+g=1
+
+The STDIZE Procedure
+
+Location and Scale Measures
+ 
+Location = mean     Scale = AGK estimate (ACECLUS)
+ 
+Name        Location           Scale           N
+
+x           2.333333        0.707107           3
+
+g=2
+
+The STDIZE Procedure
+
+Location and Scale Measures
+ 
+Location = mean     Scale = AGK estimate (ACECLUS)
+ 
+Name        Location           Scale           N
+
+x                  .               .           0
+
+M15   -1.885618083
+M15   -0.471404521
+M15    2.357022604
+M15 missing
+M15 missing
+
+g=1
+
+The STDIZE Procedure
+
+Location and Scale Measures
+ 
+Location = mid minimum-spacing     Scale = minimum spacing
+ 
+Name        Location           Scale           N
+
+x           1.500000        1.000000           3
+
+g=2
+
+The STDIZE Procedure
+
+Location and Scale Measures
+ 
+Location = mid minimum-spacing     Scale = minimum spacing
+ 
+Name        Location           Scale           N
+
+x                  .               .           0
+
+M16   -0.500000000
+M16    0.500000000
+M16    2.500000000
+M16 missing
+M16 missing
+
+The STDIZE Procedure
+
+Location and Scale Measures
+ 
+Location = 0.     Scale = standard dev. about origin
+ 
+Name        Location           Scale           N
+
+x                  0        5.000000           4
+
+K1    1.000000000
+K1    1.000000000
+K1 missing
+K1    1.000000000
+K1    1.000000000
+
+The STDIZE Procedure
+
+Location and Scale Measures
+ 
+Location = midrange     Scale = range/2.
+ 
+Name        Location           Scale           N
+
+x           5.000000               .           4
+
+K2    5.000000000
+K2    5.000000000
+K2 missing
+K2    5.000000000
+K2    5.000000000
+
+The STDIZE Procedure
+
+Location and Scale Measures
+ 
+Location = biweight 1-step M-estimate     Scale = biweight A-estimate
+ 
+Name        Location           Scale           N
+
+x           5.000000               .           4
+
+K3    5.000000000
+K3    5.000000000
+K3 missing
+K3    5.000000000
+K3    5.000000000
+
+The STDIZE Procedure
+
+Location and Scale Measures
+ 
+Location = Huber 1-step M-estimate     Scale = Huber A-estimate
+ 
+Name        Location           Scale           N
+
+x           5.000000               .           4
+
+K4    5.000000000
+K4    5.000000000
+K4 missing
+K4    5.000000000
+K4    5.000000000
+
+The STDIZE Procedure
+
+Location and Scale Measures
+ 
+Location = Wave 1-step M-estimate     Scale = Wave A-estimate
+ 
+Name        Location           Scale           N
+
+x           5.000000               .           4
+
+K5    5.000000000
+K5    5.000000000
+K5 missing
+K5    5.000000000
+K5    5.000000000
+
+The STDIZE Procedure
+
+Location and Scale Measures
+ 
+Location = mean     Scale = AGK estimate (ACECLUS)
+ 
+Name        Location           Scale           N
+
+x           5.000000               .           4
+
+K6    5.000000000
+K6    5.000000000
+K6 missing
+K6    5.000000000
+K6    5.000000000
+
+The STDIZE Procedure
+
+Location and Scale Measures
+ 
+Location = mid minimum-spacing     Scale = minimum spacing
+ 
+Name        Location           Scale           N
+
+x           5.000000               .           4
+
+K7    5.000000000
+K7    5.000000000
+K7 missing
+K7    5.000000000
+K7    5.000000000
+
+The STDIZE Procedure
+
+Location and Scale Measures
+ 
+Location = median     Scale = interquartile range
+ 
+Name        Location           Scale           N
+
+x           5.000000               .           4
+
+K8    5.000000000
+K8    5.000000000
+K8 missing
+K8    5.000000000
+K8    5.000000000
+
+The STDIZE Procedure
+
+Location and Scale Measures
+ 
+Location = mean     Scale = standard deviation
+ 
+Name        Location           Scale           N
+
+x           5.000000               .           4
+
+K9    5.000000000
+K9    5.000000000
+K9 missing
+K9    5.000000000
+K9    5.000000000
+
+The STDIZE Procedure
+
+Location and Scale Measures
+ 
+Location = 0.     Scale = maximum abs value
+ 
+Name        Location           Scale           N
+
+x                  0               .           3
+
+K10    0.000000000
+K10    0.000000000
+K10    0.000000000
+
+The STDIZE Procedure
+
+Location and Scale Measures
+ 
+Location = 0.     Scale = Euclidean length
+ 
+Name        Location           Scale           N
+
+x                  0               .           3
+
+K11    0.000000000
+K11    0.000000000
+K11    0.000000000
+R1    5.000000000
+R1    5.000000000
+R1 missing
+R1    5.000000000
+R1    5.000000000
+R2    5.000000000
+R2    5.000000000
+R2 missing
+R2    5.000000000
+R2    5.000000000
+R3    5.000000000
+R3    5.000000000
+R3    5.000000000
+R3    5.000000000
+R3    5.000000000
+R4    5.000000000
+R4    5.000000000
+R4   -1.000000000
+R4    5.000000000
+R4    5.000000000
+R5    5.000000000
+R5    5.000000000
+R5    5.000000000
+R5    5.000000000
+R5    5.000000000
+
+The STDIZE Procedure
+
+Location and Scale Measures
+ 
+Location = mean     Scale = 1.
+ 
+Name        Location           Scale           N
+
+x           5.000000        1.000000           4
+
+R6    0.000000000
+R6    0.000000000
+R6 missing
+R6    0.000000000
+R6    0.000000000
+S1   -0.707106781
+S1    0.707106781
+S1   -1.000000000
+S1   -1.000000000
+S1    7.000000000
+S1   -1.000000000
+S2   -0.707106781
+S2    0.707106781
+S2 missing
+S2 missing
+S2    7.000000000
+S2 missing
+S3   -0.707106781
+S3    0.707106781
+S3 missing
+S3 missing
+S3    7.000000000
+S3 missing
+S4    1.000000000
+S4    2.000000000
+S4 missing
+S4 missing
+S4    7.000000000
+S4    7.000000000
+S5    1.000000000
+S5    2.000000000
+S5 missing
+S5 missing
+S5    7.000000000
+S5    7.000000000
+
+The STDIZE Procedure
+
+Location and Scale Measures
+ 
+Location = median     Scale = median abs dev from median
+ 
+Name        Location           Scale           N
+
+x           1.000000               .           5
+
+Z1    1.000000000
+Z1    1.000000000
+Z1    1.000000000
+Z1    1.000000000
+Z1    9.000000000
+Z1 missing
+Z2    1.000000000
+Z2    1.000000000
+Z2    1.000000000
+Z2    1.000000000
+Z2    9.000000000
+Z2   -1.000000000
+
+The STDIZE Procedure
+
+Location and Scale Measures
+ 
+Location = 0.     Scale = sum
+ 
+Name        Location           Scale           N
+
+x                  0               .           3
+
+Z3   -1.000000000
+Z3    1.000000000
+Z3 missing
+Z3    0.000000000
+
+The STDIZE Procedure
+
+Location and Scale Measures
+ 
+Location = mean     Scale = standard deviation
+ 
+Name        Location           Scale           N
+
+x                  0        1.000000           3
+
+Z4   -1.000000000
+Z4    1.000000000
+Z4 missing
+Z4    0.000000000
+
+g=1
+
+The STDIZE Procedure
+
+Location and Scale Measures
+ 
+Location = mean     Scale = standard deviation
+ 
+Name        Location           Scale           N
+
+x           7.000000               .           1
+y           2.000000               .           1
+
+g=2
+
+The STDIZE Procedure
+
+Location and Scale Measures
+ 
+Location = mean     Scale = standard deviation
+ 
+Name        Location           Scale           N
+
+x                  .               .           0
+y           5.000000               .           2
+
+g=3
+
+The STDIZE Procedure
+
+Location and Scale Measures
+ 
+Location = mean     Scale = standard deviation
+ 
+Name        Location           Scale           N
+
+x           1.500000        0.707107           2
+y                  .               .           0
+
+B3 x    7.000000000
+B3 y    2.000000000
+B3 x missing
+B3 y    5.000000000
+B3 x missing
+B3 y    5.000000000
+B3 x   -0.707106781
+B3 y missing
+B3 x    0.707106781
+B3 y missing
+B1    7.000000000
+B1 missing
+B1 missing
+B1   -0.518544973
+B1    0.518544973
+B4    7.000000000
+B4 missing
+B4 missing
+B4   -0.707106781
+B4    0.707106781
+B5    7.000000000
+B5 missing
+B5 missing
+B5    1.000000000
+B5    2.000000000
+
+g=1
+
+The STDIZE Procedure
+
+Location and Scale Measures
+ 
+Location = mean     Scale = standard deviation
+ 
+Name        Location           Scale           N
+
+x           7.000000               .           1
+y           2.000000               .           1
+
+g=2
+
+The STDIZE Procedure
+
+Location and Scale Measures
+ 
+Location = mean     Scale = standard deviation
+ 
+Name        Location           Scale           N
+
+x                  .               .           0
+y                  .               .           0
+
+g=3
+
+The STDIZE Procedure
+
+Location and Scale Measures
+ 
+Location = mean     Scale = standard deviation
+ 
+Name        Location           Scale           N
+
+x                  .               .           0
+y                  .               .           0
+
+B7    7.000000000
+B7 missing
+B7 missing
+B7 missing
+B7 missing
+
+The STDIZE Procedure
+
+Location and Scale Measures
+ 
+Location = 0.     Scale = standard dev. about origin
+ 
+Name        Location           Scale           N
+
+x                  0        3.316625           5
+
+U1    0.301511345
+U1    0.603022689
+U1    0.904534034
+U1    1.206045378
+U1    1.507556723
+U2    0.294457471
+U2    0.588914942
+U2    0.883372413
+U2    1.177829885
+U2    1.472287356
+U3    0.240423518
+U3    0.480847037
+U3    0.721270555
+U3    0.961694074
+U3    1.202117592
+
+The STDIZE Procedure
+
+Location and Scale Measures
+ 
+Location = mean     Scale = standard deviation
+ 
+Name        Location           Scale           N
+
+x           3.250000               0           4
+
+F1   -0.500000000
+F1   -0.500000000
+F1   -0.500000000
+F1    1.500000000
+F2    0.000000000
+F2    0.000000000
+F2    0.000000000
+F2    1.500000000
+N1 x   -0.800640769
+N1 y   -0.927172650
+N1 x   -0.320256308
+N1 y   -0.132453236
+N1 x    0.160128154
+N1 y missing
+N1 x    1.120897077
+N1 y    1.059625886
+N1 x missing
+N1 y missing
+N1 x missing
+N1 y missing
+N2 x   -0.800640769
+N2 y   -0.927172650
+N2 x   -0.320256308
+N2 y   -0.132453236
+N2 x    0.160128154
+N2 y   -1.000000000
+N2 x    1.120897077
+N2 y    1.059625886
+N2 x missing
+N2 y   -1.000000000
+N2 x missing
+N2 y   -1.000000000
+N3 x    1.000000000
+N3 y    2.000000000
+N3 x    2.000000000
+N3 y    4.000000000
+N3 x    3.000000000
+N3 y    4.333333333
+N3 x    5.000000000
+N3 y    7.000000000
+N3 x    1.000000000
+N3 y missing
+N3 x    2.000000000
+N3 y missing
+N4 x   -0.800640769
+N4 y   -0.927172650
+N4 x   -0.320256308
+N4 y   -0.132453236
+N4 x    0.160128154
+N4 y    0.000000000
+N4 x    1.120897077
+N4 y    1.059625886
+N4 x missing
+N4 y missing
+N4 x missing
+N4 y missing

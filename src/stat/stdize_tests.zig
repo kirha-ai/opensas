@@ -119,19 +119,15 @@ test "STAT-STDIZE-001 invalid input is a user error and documented unimplemented
     };
     for (gaps) |src| try std.testing.expectError(error.ParseError, e.parse(src));
     var out: std.ArrayList(u8) = .empty;
+    // Weighted percentiles, the remaining PSTAT labels and constant data
+    // are implemented under STAT-STDIZE-004 (tests below).
     const run_gaps = [_][]const u8{
-        "proc stdize data=d method=iqr out=o; var x; weight w; run;",
-        "proc stdize data=d method=std missing=median out=o; var x; weight w; run;", // weighted median
-        "proc stdize data=d method=mad out=o; var x; freq f / notruncate; run;",
-        "proc stdize data=d method=mean pstat out=o; var x; run;", // label not verified
         "proc stdize data=d pstat out=o; var x; weight w; run;", // Sum of Weights column
     };
     for (run_gaps) |src| {
         try std.testing.expectError(error.ParseError, e.run(&out, src));
         try expect(e.lib.find("o") == null);
     }
-    // Constant data (zero scale) stays a gap: f is constant (1) in grp 2.
-    try std.testing.expectError(error.ParseError, e.run(&out, "proc stdize data=d out=o; by grp; var f; run;"));
     try std.testing.expectEqual(@as(usize, 0), out.items.len);
 }
 
@@ -181,7 +177,7 @@ test "STAT-STDIZE-001 closed-form measures, WEIGHT, VARDEF, ADD/MULT and REPONLY
     const cases = [_]Case{
         .{ .m = .mean, .loc = 3, .scale = 1 },                 .{ .m = .median, .loc = 2.5, .scale = 1 },
         .{ .m = .sum, .loc = 0, .scale = 12 },                 .{ .m = .euclen, .loc = 0, .scale = @sqrt(50.0) },
-        .{ .m = .ustd, .loc = 0, .scale = @sqrt(50.0 / 3.0) }, .{ .m = .std, .loc = 3, .scale = @sqrt(14.0 / 3.0) },
+        .{ .m = .ustd, .loc = 0, .scale = @sqrt(50.0 / 4.0) }, .{ .m = .std, .loc = 3, .scale = @sqrt(14.0 / 3.0) },
         .{ .m = .range, .loc = 1, .scale = 5 },                .{ .m = .midrange, .loc = 3.5, .scale = 2.5 },
         .{ .m = .maxabs, .loc = 0, .scale = 6 },               .{ .m = .iqr, .loc = 2.5, .scale = 3 },
         .{ .m = .mad, .loc = 2.5, .scale = 1 },
@@ -419,4 +415,106 @@ test "STAT-STDIZE-003 METHOD=IN(ds): _TYPE_ rows, LOCATION/SCALE, ADD/MULT and U
     try approx(-0.25, c[0], 1e-15);
     try approx(1.0, c[1], 1e-15);
     try std.testing.expectError(error.ParseError, e.run(&out, "proc stdize data=q method=in(ls) out=o4; var x; run;"));
+}
+
+fn obsOf(a: A, xs: []const f64, ws: ?[]const f64, fs: ?[]const f64) ![]stdize.Obs {
+    const o = try a.alloc(stdize.Obs, xs.len);
+    for (o, 0..) |*e, i| e.* = .{ .x = xs[i], .w = if (ws) |w| w[i] else 1, .f = if (fs) |f| f[i] else 1 };
+    return o;
+}
+
+test "STAT-STDIZE-004 PCTLDEF=1..5 and weighted percentiles" {
+    var e = fresh();
+    defer e.arena.deinit();
+    try e.init();
+    const a = e.arena.allocator();
+    // Ten values (pp.9455-9456), hand: median np = 5 (g = 0), quartiles
+    // np = 2.5 / 7.5; 4: (n+1)p = 5.5, 2.75, 8.25.
+    const a10 = try obsOf(a, &.{ 144, 2, 3, 5, 8, 13, 21, 34, 55, 89 }, null, null);
+    const med = [_]f64{ 13, 13, 13, 17, 17 };
+    const q1 = [_]f64{ 4, 3, 5, 4.5, 5 };
+    const q3 = [_]f64{ 44.5, 55, 55, 63.5, 55 };
+    for (1..6) |d| {
+        try approx(med[d - 1], try stdize.percentile(a, a10, 0.5, @intCast(d), false), 1e-12);
+        try approx(q1[d - 1], try stdize.percentile(a, a10, 0.25, @intCast(d), false), 1e-12);
+        try approx(q3[d - 1], try stdize.percentile(a, a10, 0.75, @intCast(d), false), 1e-12);
+    }
+    // Seven values: PCTLDEF=2 q3 i = int(5.25 + .5) = 5 -> 25, q1 -> 4;
+    // PCTLDEF=1 q1 .25*1 + .75*4 = 3.25. Six values, PCTLDEF=2, g = 1/2:
+    // q1 j = 1 odd -> x_2 = 20, q3 j = 4 even -> x_4 = 40.
+    const a7 = try obsOf(a, &.{ 49, 1, 36, 4, 25, 9, 16 }, null, null);
+    try approx(@as(f64, 25), try stdize.percentile(a, a7, 0.75, 2, false), 0);
+    try approx(@as(f64, 4), try stdize.percentile(a, a7, 0.25, 2, false), 0);
+    try approx(@as(f64, 3.25), try stdize.percentile(a, a7, 0.25, 1, false), 1e-12);
+    const a6 = try obsOf(a, &.{ 10, 20, 30, 40, 50, 60 }, null, null);
+    try approx(@as(f64, 20), try stdize.percentile(a, a6, 0.25, 2, false), 0);
+    try approx(@as(f64, 40), try stdize.percentile(a, a6, 0.75, 2, false), 0);
+    // Weighted (SAS 15.4 rule): weights 1,2,.5,3,1,2.5 (W = 10): median
+    // pW = 5 -> x_4 = 4; q3 pW = 7.5 equals the cumulative weight of x_5 ->
+    // x_5 = 5 (the guide's average would give 5.5); q1 pW = 2.5 -> 2.
+    const w = try obsOf(a, &.{ 1, 2, 3, 4, 5, 6 }, &.{ 1, 2, 0.5, 3, 1, 2.5 }, null);
+    try approx(@as(f64, 4), try stdize.percentile(a, w, 0.5, 5, true), 0);
+    try approx(@as(f64, 5), try stdize.percentile(a, w, 0.75, 5, true), 0);
+    try approx(@as(f64, 2), try stdize.percentile(a, w, 0.25, 5, true), 0);
+    // Equal weights 2 on the ten values: median x_5 = 13 (SAS), not 17.
+    for (a10) |*o| o.w = 2;
+    try approx(@as(f64, 13), try stdize.percentile(a, a10, 0.5, 5, true), 0);
+    // WEIGHT with FREQ uses w f: 2,2,.5,3,2 (W 9.5), pW 4.75 -> x_4 = 4.
+    const wf = try obsOf(a, &.{ 1, 2, 3, 4, 5 }, &.{ 1, 2, 0.5, 3, 1 }, &.{ 2, 1, 1, 1, 2 });
+    try approx(@as(f64, 4), try stdize.percentile(a, wf, 0.5, 5, true), 0);
+    // MAD with PCTLDEF=4 on the ten values: median 17, |x - 17| median 14.5.
+    var s = try e.parse("proc stdize data=d method=mad pctldef=4; run;");
+    for (a10) |*o| o.w = 1;
+    const m = (try stdize.measures(a, s, a10)).?;
+    try approx(@as(f64, 17), m.location, 0);
+    try approx(@as(f64, 14.5), m.scale, 1e-12);
+    s.pctldef = 1;
+    try approx(@as(f64, 10), (try stdize.measures(a, s, a10)).?.scale, 1e-12);
+    try std.testing.expectError(error.ParseError, e.parse("proc stdize data=d pctldef=6; run;"));
+    try std.testing.expectError(error.ParseError, e.parse("proc stdize data=d pctldef=0; run;"));
+}
+
+test "STAT-STDIZE-004 constant data, empty samples, USTD divisor and FUZZ" {
+    var e = fresh();
+    defer e.arena.deinit();
+    try e.init();
+    const a = e.arena.allocator();
+    var s = try e.parse("proc stdize data=d; run;");
+    // No usable value: location missing except EUCLEN/MAXABS (0), scale
+    // missing except MEDIAN (1) -- SAS-verified for every method.
+    const none = [_]stdize.Obs{};
+    for ([_]stdize.Method{ .mean, .median, .sum, .euclen, .ustd, .std, .range, .midrange, .maxabs, .iqr, .mad, .spacing }) |meth| {
+        s.method = meth;
+        const m = (try stdize.measures(a, s, &none)).?;
+        try expect(m.empty and m.n == 0);
+        try expect(std.math.isNan(m.location) == (meth != .euclen and meth != .maxabs));
+        try expect(std.math.isNan(m.scale) == (meth != .median));
+    }
+    // One value, VARDEF=DF: STD keeps the mean, scale missing; USTD uses
+    // n (x = 4, 6: sqrt(26), SAS-verified).
+    s.method = .std;
+    const one = [_]stdize.Obs{.{ .x = 7, .f = 1, .w = 1 }};
+    const m1 = (try stdize.measures(a, s, &one)).?;
+    try expect(m1.location == 7 and std.math.isNan(m1.scale));
+    s.method = .ustd;
+    const two = [_]stdize.Obs{ .{ .x = 4, .f = 1, .w = 1 }, .{ .x = 6, .f = 1, .w = 1 } };
+    try approx(@sqrt(26.0), (try stdize.measures(a, s, &two)).?.scale, 1e-14);
+    // FUZZ=0.2 on 3,3,3,4: std 0.5 < 3.25 * 0.2 is reported 0 but kept.
+    s.method = .std;
+    s.fuzz = 0.2;
+    const f0 = [_]stdize.Obs{ .{ .x = 3, .f = 1, .w = 1 }, .{ .x = 3, .f = 1, .w = 1 }, .{ .x = 3, .f = 1, .w = 1 }, .{ .x = 4, .f = 1, .w = 1 } };
+    const mf = (try stdize.measures(a, s, &f0)).?;
+    try expect(mf.fuzzed);
+    try approx(@as(f64, 0.5), mf.scale, 1e-14);
+    // Run: f is constant (1) in grp 2 -> WARNING, copied unstandardized.
+    var out: std.ArrayList(u8) = .empty;
+    try e.run(&out, "proc stdize data=d out=o pstat; by grp; var f; run;");
+    const v = try e.col("o", "f");
+    for (v[4..]) |x| try expectEqual(@as(f64, 1), x);
+    try expect(std.mem.indexOf(u8, out.items, "f           1.000000               .           4") != null);
+    var warned = false;
+    for (e.diags.list.items) |d| if (std.mem.startsWith(u8, d.message, "The scale estimator for variable f is less than or equal to 0.")) {
+        warned = true;
+    };
+    try expect(warned);
 }

@@ -63,6 +63,11 @@ pub const Spec = struct {
     initial_method: Method = .mad,
     initial_arg: f64 = 0,
     pstat: bool = false,
+    /// PCTLDEF= (pp.9446, 9455-9456) for ORD_STAT percentiles.
+    pctldef: u8 = 5,
+    pctldef_given: bool = false,
+    /// PCTLPTS= was given (its values only feed OUTSTAT=).
+    pctlpts: bool = false,
     /// OUT= member; null means the DATAn convention.
     out: ?[]const u8 = null,
     // Roles.
@@ -159,7 +164,7 @@ fn methodArg(cx: proc.ProcCtx, t: []const lex.Token, i: *usize, m: Method, l: us
 }
 
 /// Documented PROC STDIZE options (Table 115.1) this ticket does not implement.
-const option_gaps = [_][]const u8{ "keeplen", "oprefix", "sprefix", "outstat", "pctldef" };
+const option_gaps = [_][]const u8{ "keeplen", "oprefix", "sprefix", "outstat" };
 
 fn methodByName(m: []const u8) ?Method {
     for (method_names) |p| if (eq(m, p[0])) return p[1];
@@ -258,10 +263,23 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
             if (!at(t, i + 2, .name)) return cx.diags.fail(error.ParseError, l, "PROC STDIZE: PCTLMTD= must be ORD_STAT, ONEPASS or P2", .{});
             const v = t[i + 2].text;
             if (!eq(v, "ord_stat")) {
-                if (eq(v, "onepass") or eq(v, "p2")) return gap(cx.diags, l, "PROC STDIZE: PCTLMTD={s} is not implemented (STAT-STDIZE-004)", .{v});
+                // ponytail: the one-pass estimator modifies the P2 algorithm in
+                // ways the guide does not specify (marker moves, p.9455); SAS
+                // gives 8 / 58.2222 where order statistics give 17 / 50 for ten
+                // values, so it stays a loud gap.
+                if (eq(v, "onepass") or eq(v, "p2")) return gap(cx.diags, l, "PROC STDIZE: PCTLMTD={s} (one-pass quantile estimation) is not implemented", .{v});
                 return cx.diags.fail(error.ParseError, l, "PROC STDIZE: PCTLMTD={s} is not valid", .{v});
             }
             i += 3;
+        } else if (eq(option, "pctldef") and valued) {
+            i += 2;
+            const v = number(t, &i) orelse return cx.diags.fail(error.ParseError, l, "PROC STDIZE: PCTLDEF= must be a number", .{});
+            // SAS-verified text for 0 and 6. ponytail: a nonintegral value
+            // is rejected the same way.
+            if (!(v >= 1 and v <= 5 and v == @floor(v))) return cx.diags.fail(error.ParseError, l, "The parameter value {d} is not within the required range of 1 and 5.", .{v});
+            s.pctldef = @intFromFloat(v);
+            s.pctldef_given = true;
+            continue;
         } else if (eq(option, "missing") and valued) {
             i += 2;
             if (at(t, i, .name)) {
@@ -304,6 +322,7 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
         } else if (eq(option, "pctlpts") and valued) {
             // Only written to OUTSTAT= (itself a STAT-STDIZE-005 gap); SAS
             // accepts and ignores it otherwise (verified with PCTLPTS=10, 150).
+            s.pctlpts = true;
             i += 2;
             _ = number(t, &i) orelse return cx.diags.fail(error.ParseError, l, "PROC STDIZE: PCTLPTS= must be a list of numbers", .{});
             while (at(t, i, .comma) or at(t, i, .number)) {
@@ -498,17 +517,48 @@ fn orderStat(sorted: []const Obs, k: f64) f64 {
     }
     return sorted[sorted.len - 1].x;
 }
-/// PCTLDEF=5 (p.9456): np = j + g; g = 0 -> (x_j + x_{j+1}) / 2, else x_{j+1}.
-pub fn percentile(a: A, obs: []const Obs, p: f64) !f64 {
+/// Percentile 100p of the usable values (Computing Quantiles, pp.9455-9456).
+/// Unweighted (integer frequencies expand the sample), PCTLDEF=def with
+/// np = j + g ((n+1)p for definition 4), x_0 = x_1 and x_{n+1} = x_n:
+///   1: (1-g) x_j + g x_{j+1}
+///   2: x_i, i = int(np + 1/2) if g != 1/2, else x_j (j even) / x_{j+1} (j odd)
+///   3: x_j if g = 0, else x_{j+1}
+///   4: (1-g) x_j + g x_{j+1} at (n+1)p
+///   5: (x_j + x_{j+1}) / 2 if g = 0, else x_{j+1}
+/// All five SAS-verified for MEDIAN, IQR and MAD with n = 6, 7, 8, 10.
+/// Weighted (WEIGHT, or FREQ / NOTRUNCATE; weight w f): SAS 15.4 returns
+/// x_{i+1} for sum_{j<=i} w_j < pW <= sum_{j<=i+1} w_j. ponytail: the guide
+/// (p.9456) averages x_i and x_{i+1} when the cumulative weight equals pW
+/// exactly, but real SAS does not (equal weights 2 on ten values give a median
+/// x_5, not (x_5 + x_6) / 2; also verified at q1, q3 and with NOTRUNCATE), so
+/// the observed rule is implemented.
+pub fn percentile(a: A, obs: []const Obs, p: f64, def: u8, weighted: bool) !f64 {
     const sorted = try a.dupe(Obs, obs);
     std.mem.sort(Obs, sorted, {}, lessX);
+    if (weighted) {
+        var total: f64 = 0;
+        for (sorted) |o| total += o.w * o.f;
+        const target = p * total;
+        var cum: f64 = 0;
+        for (sorted) |o| {
+            cum += o.w * o.f;
+            if (cum >= target) return o.x;
+        }
+        return sorted[sorted.len - 1].x;
+    }
     var n: f64 = 0;
     for (sorted) |o| n += o.f;
-    const np = n * p;
-    const j = @floor(np);
-    const g = np - j;
-    if (g == 0) return (orderStat(sorted, @max(j, 1)) + orderStat(sorted, j + 1)) / 2;
-    return orderStat(sorted, j + 1);
+    const pos = if (def == 4) (n + 1) * p else n * p;
+    const j = @floor(pos);
+    const g = pos - j;
+    const xj = orderStat(sorted, @max(j, 1));
+    const xj1 = orderStat(sorted, @min(j + 1, n));
+    return switch (def) {
+        1, 4 => if (g == 0) xj else (1 - g) * xj + g * xj1,
+        2 => if (g != 0.5) orderStat(sorted, @min(@max(@floor(pos + 0.5), 1), n)) else if (@mod(j, 2) == 0) xj else xj1,
+        3 => if (g == 0) xj else xj1,
+        else => if (g == 0) (xj + xj1) / 2 else xj1,
+    };
 }
 
 pub const Measures = struct {
@@ -519,13 +569,28 @@ pub const Measures = struct {
     norm: ?f64 = null,
     /// ABW/AHUBER/AWAVE used the initial estimates (no accepted value).
     fallback: bool = false,
+    /// No usable values (Constant Data, p.9456): not standardized.
+    empty: bool = false,
+    /// FUZZ= reports this positive scale as 0 (still used to divide).
+    fuzzed: bool = false,
 };
 
 /// Location and scale of Table 115.2 for one variable (Computation of the
 /// Statistics, p.9454; weighted moments, p.9451). Null when the sample does
 /// not determine the measure (no values, or a variance divisor <= 0).
 pub fn measures(a: A, s: Spec, obs: []const Obs) error{OutOfMemory}!?Measures {
-    if (obs.len == 0) return null;
+    // Constant Data / no usable values (SAS-verified for every closed-form
+    // and robust method): the location is missing except 0 for EUCLEN and
+    // MAXABS, the scale is missing except 1 for MEDIAN; see run for the
+    // WARNING and the unstandardized output.
+    if (obs.len == 0) return .{
+        .location = if (s.method == .euclen or s.method == .maxabs) 0 else std.math.nan(f64),
+        .scale = if (s.method == .median) 1 else std.math.nan(f64),
+        .n = 0,
+        .empty = true,
+    };
+    // Weighted percentiles (p.9456) for WEIGHT and FREQ / NOTRUNCATE.
+    const wq = s.weight != null or s.notruncate;
     var n: f64 = 0;
     var sw: f64 = 0;
     var swx: f64 = 0;
@@ -550,15 +615,20 @@ pub fn measures(a: A, s: Spec, obs: []const Obs) error{OutOfMemory}!?Measures {
     var fallback = false;
     const loc_scale: [2]f64 = switch (s.method) {
         .mean => .{ mean, 1 },
-        .median => .{ try percentile(a, obs, 0.5), 1 },
+        .median => .{ try percentile(a, obs, 0.5, s.pctldef, wq), 1 },
         .sum => .{ 0, swx },
         .euclen => .{ 0, @sqrt(swxx) },
-        .ustd => blk: {
-            if (d <= 0) return null;
-            break :blk .{ 0, @sqrt(swxx / d) };
-        },
+        // SAS-verified NOTEs: "VARDEF= DF is equivalent to VARDEF= N" and
+        // "VARDEF= WDF is equivalent to VARDEF= WEIGHT" for USTD (x = 4, 6:
+        // sqrt(26); weighted sum w x^2 / sum w).
+        .ustd => .{ 0, @sqrt(swxx / switch (s.vardef) {
+            .df, .n => n,
+            .wdf, .weight => sw,
+        }) },
         .std => blk: {
-            if (d <= 0) return null;
+            // SAS-verified (one value, VARDEF=DF): a divisor <= 0 is the
+            // "scale <= 0" case, missing scale, location the mean.
+            if (d <= 0) break :blk .{ mean, std.math.nan(f64) };
             var css: f64 = 0;
             for (obs) |o| css += o.f * o.w * (o.x - mean) * (o.x - mean);
             break :blk .{ mean, @sqrt(css / d) };
@@ -566,12 +636,12 @@ pub fn measures(a: A, s: Spec, obs: []const Obs) error{OutOfMemory}!?Measures {
         .range => .{ lo, hi - lo },
         .midrange => .{ (hi + lo) / 2, (hi - lo) / 2 },
         .maxabs => .{ 0, @max(@abs(lo), @abs(hi)) },
-        .iqr => .{ try percentile(a, obs, 0.5), try percentile(a, obs, 0.75) - try percentile(a, obs, 0.25) },
+        .iqr => .{ try percentile(a, obs, 0.5, s.pctldef, wq), try percentile(a, obs, 0.75, s.pctldef, wq) - try percentile(a, obs, 0.25, s.pctldef, wq) },
         .mad => blk: {
-            const med = try percentile(a, obs, 0.5);
+            const med = try percentile(a, obs, 0.5, s.pctldef, wq);
             const dev = try a.alloc(Obs, obs.len);
             for (obs, dev) |o, *e| e.* = .{ .x = @abs(o.x - med), .f = o.f, .w = o.w };
-            break :blk .{ med, try percentile(a, dev, 0.5) };
+            break :blk .{ med, try percentile(a, dev, 0.5, s.pctldef, wq) };
         },
         .abw, .ahuber, .awave => blk: {
             const r = (try aEstimate(a, s, obs, n)) orelse return null;
@@ -586,7 +656,13 @@ pub fn measures(a: A, s: Spec, obs: []const Obs) error{OutOfMemory}!?Measures {
     var location = loc_scale[0];
     var scale = loc_scale[1];
     // FUZZ= (p.9445) for the location and scale values.
-    if (scale < @abs(location) * s.fuzz) scale = 0 else if (@abs(location) < @abs(s.mult) * s.fuzz) location = 0;
+    // SAS-verified (3,3,3,4 with FUZZ=0.2 and 0.6): a positive scale below
+    // |location| * FUZZ is reported as 0 but the values are still divided by
+    // the computed scale, with no WARNING.
+    var fuzzed = false;
+    if (scale < @abs(location) * s.fuzz) {
+        if (scale > 0) fuzzed = true else scale = 0;
+    } else if (@abs(location) < @abs(s.mult) * s.fuzz) location = 0;
     const normed: ?f64 = if (!s.norm) null else switch (s.method) {
         .iqr => scale / (2 * z75),
         .mad => scale / z75,
@@ -595,7 +671,7 @@ pub fn measures(a: A, s: Spec, obs: []const Obs) error{OutOfMemory}!?Measures {
         .spacing => scale / (2 * zQuantile((1 + s.arg) / 2)),
         else => null,
     };
-    return .{ .location = location, .scale = scale, .n = n, .norm = normed, .fallback = fallback };
+    return .{ .location = location, .scale = scale, .n = n, .norm = normed, .fallback = fallback, .fuzzed = fuzzed };
 }
 
 /// One-step M-estimate of location and A-estimate of scale (p.9454; Goodall
@@ -608,14 +684,18 @@ pub fn measures(a: A, s: Spec, obs: []const Obs) error{OutOfMemory}!?Measures {
 /// SAS: ABW(4) on the Getting Started data (162.889603 / 56.662855) and
 /// ABW(4), AHUBER(1.5), AWAVE(2), INITIAL=STD / IQR on invented data.
 fn aEstimate(a: A, s: Spec, obs: []const Obs, n: f64) error{OutOfMemory}!?[3]f64 {
-    if (n <= 1) return null;
     var init = s;
     init.method = s.initial_method;
     init.arg = s.initial_arg;
     init.norm = false;
     const m0 = (try measures(a, init, obs)) orelse return null;
-    // ponytail: a zero initial scale is constant data (STAT-STDIZE-004).
-    if (!(m0.scale > 0)) return .{ m0.location, 0, 0 };
+    // ponytail: a missing initial scale (INITIAL=STD with one value) is not
+    // verified; the caller reports a gap.
+    if (std.math.isNan(m0.scale)) return null;
+    // SAS-verified (constant data and one value, default INITIAL=MAD): a zero
+    // initial scale gives the acceptance-interval NOTE, the initial location
+    // and a zero scale (then the Constant Data WARNING).
+    if (!(m0.scale > 0)) return .{ m0.location, 0, 1 };
     const cs = s.arg * m0.scale;
     var sp: f64 = 0;
     var sd: f64 = 0;
@@ -766,7 +846,15 @@ fn labels(m: Method) ?[2][]const u8 {
         .spacing => .{ "mid minimum-spacing", "minimum spacing" },
         .agk => .{ "mean", "AGK estimate (ACECLUS)" },
         .in => .{ "read from data set", "read from data set" },
-        else => null,
+        // SAS-verified listings (STAT-STDIZE-004 runs with PSTAT).
+        .mean => .{ "mean", "1." },
+        .median => .{ "median", "1." },
+        .sum => .{ "0.", "sum" },
+        .euclen => .{ "0.", "Euclidean length" },
+        .ustd => .{ "0.", "standard dev. about origin" },
+        .range => .{ "minimum", "range" },
+        .midrange => .{ "midrange", "range/2." },
+        .maxabs => .{ "0.", "maximum abs value" },
     };
 }
 
@@ -797,12 +885,21 @@ fn table(a: A, out: *Out, names: []const []const u8, label: usize, lab: [2][]con
     try out.appendSlice(a, "\n\n");
     for (names, values) |n, m| {
         try left(a, out, n, label);
-        try right(a, out, try std.fmt.allocPrint(a, "{d:.6}", .{m.location}), 16);
-        try right(a, out, try std.fmt.allocPrint(a, "{d:.6}", .{m.scale}), 16);
+        try right(a, out, try cell(a, m.location), 16);
+        try right(a, out, try cell(a, if (m.fuzzed) 0 else m.scale), 16);
         if (norm) try right(a, out, try std.fmt.allocPrint(a, "{d:.6}", .{m.norm.?}), 16);
         if (with_n) try right(a, out, try std.fmt.allocPrint(a, "{d}", .{m.n}), 12);
         try out.appendSlice(a, "\n");
     }
+}
+
+/// A PSTAT Location / Scale cell: six decimals, "." when missing and "0"
+/// for an exact zero (SAS-verified: METHOD=SUM / USTD / MAXABS locations,
+/// a FUZZ= zero scale, missing scales of constant data).
+fn cell(a: A, v: f64) ![]const u8 {
+    if (std.math.isNan(v)) return ".";
+    if (v == 0) return "0";
+    return std.fmt.allocPrint(a, "{d:.6}", .{v});
 }
 
 /// BY line flush left. ponytail: as in PROC FACTOR, the shared helper centers
@@ -864,10 +961,25 @@ pub fn run(cx: proc.ProcCtx, out: *Out, t: []const lex.Token) diag.Error!void {
     }
     const pct = isPercentile(s.method) or (s.missing_method != null and isPercentile(s.missing_method.?)) or
         (isAEstimate(s.method) and isPercentile(s.initial_method));
-    if (s.weight != null and pct)
-        return gap(cx.diags, l0, "PROC STDIZE: weighted percentiles (WEIGHT with MEDIAN, IQR or MAD) are not implemented (STAT-STDIZE-004)", .{});
-    if (s.notruncate and pct)
-        return gap(cx.diags, l0, "PROC STDIZE: nonintegral FREQ / NOTRUNCATE frequencies in percentiles (MEDIAN, IQR, MAD) are not implemented (STAT-STDIZE-004)", .{});
+    // PCTLDEF= diagnostics (SAS-verified texts): without a MEDIAN, IQR or MAD
+    // method or PCTLPTS= it does not apply; with WEIGHT or FREQ / NOTRUNCATE
+    // the weighted percentiles are used instead.
+    if (s.pctldef_given) {
+        if (isAEstimate(s.method) and !s.initial)
+            return gap(cx.diags, l0, "PROC STDIZE: PCTLDEF= with the default INITIAL=MAD of METHOD={s} is not verified", .{@tagName(s.method)});
+        if (!pct and !s.pctlpts) {
+            try cx.diags.warnStatus(l0, "PCTLDEF= is only applicable with quantiles estimation; one of MEDIAN, IQR or MAD must be specified in METHOD=, MISSING= or INITIAL=, or PCTLPTS= needs to be specified.", .{});
+        } else if (s.weight != null or s.notruncate) {
+            try cx.diags.warnStatus(l0, "The PCTLDEF= option is not applicable when a WEIGHT statement or a FREQ/NOTRUNCATE statement is used.", .{});
+            s.pctldef = 5;
+        }
+    }
+    if (s.method == .ustd) {
+        if (s.vardef == .df) try cx.diags.note(l0, "VARDEF= DF is equivalent to VARDEF= N when USTD is used for standardization or for the initial estimates for the A estimates.", .{});
+        if (s.vardef == .wdf) try cx.diags.note(l0, "VARDEF= WDF is equivalent to VARDEF= WEIGHT when USTD is used for standardization.", .{});
+    } else if (isAEstimate(s.method) and s.initial_method == .ustd and s.vardef == .df) {
+        try cx.diags.note(l0, "VARDEF= DF is equivalent to VARDEF= N when USTD is used for standardization or for the initial estimates for the A estimates.", .{});
+    }
     if (s.norm and s.method != .iqr and s.method != .mad and s.method != .spacing) {
         try cx.diags.warnStatus(l0, "The option NORM will be ignored since none of the standardization methods including MAD, IQR, AGK and SPACING has been specified for METHOD= .", .{});
         s.norm = false;
@@ -922,10 +1034,22 @@ pub fn run(cx: proc.ProcCtx, out: *Out, t: []const lex.Token) diag.Error!void {
         // SAS-verified: an empty DATA= set gives the two NOTEs above, an empty
         // OUT= data set and no PSTAT table.
         if (group.rows.len == 0) continue;
-        for (s.vars, ms, fill) |ci, *m, *fv| {
+        // Constant Data (p.9456): a variable whose location or scale cannot
+        // be used is copied unstandardized; its diagnostics are followed by
+        // one BY-group NOTE per group (SAS-verified order).
+        const skip = try a.alloc(bool, p);
+        @memset(skip, false);
+        // No usable value at all (an empty group, or every row dropped by
+        // NOMISS): the location is missing.
+        const none = try a.alloc(bool, p);
+        @memset(none, false);
+        var messages = false;
+        for (s.vars, ms, fill, skip, none) |ci, *m, *fv, *sk, *no| {
             const obs = try usable(a, s, group.rows, ci);
+            no.* = obs.len == 0;
+            const vname = ds.columns.items[ci].name;
             if (s.missing_method != null) {
-                const mm = (try measures(a, ms_spec, obs)) orelse return gap(cx.diags, l0, "PROC STDIZE: variable {s} has too few usable values for the MISSING= method (STAT-STDIZE-004)", .{ds.columns.items[ci].name});
+                const mm = (try measures(a, ms_spec, obs)) orelse return gap(cx.diags, l0, "PROC STDIZE: variable {s}: the MISSING= method location is not verified for these values", .{vname});
                 fv.* = mm.location;
             }
             if (in_ms) |im| {
@@ -933,15 +1057,48 @@ pub fn run(cx: proc.ProcCtx, out: *Out, t: []const lex.Token) diag.Error!void {
                 if (!(m.scale > 0)) return gap(cx.diags, l0, "PROC STDIZE: a METHOD=IN scale that is missing or not positive is not implemented", .{});
                 continue;
             }
-            m.* = (try measures(a, s, obs)) orelse return gap(cx.diags, l0, "PROC STDIZE: variable {s} has too few usable values in a BY group; the missing location/scale handling is not verified (STAT-STDIZE-004)", .{ds.columns.items[ci].name});
-            if (s.method == .agk and std.math.isNan(m.scale)) return cx.diags.fail(error.ParseError, l0, "The value of METHOD= (or INITIAL= and MISSING= ) AGK() is too small to have at least one pair.", .{});
-            if (m.fallback) try cx.diags.note(l0, "After centered by the initial location estimate, all observations of variable {s} are outside the acceptance interval. Consequently, the original method chosen cannot be performed. Instead, the initial estimates of the location and the scale (specified from the INITIAL= option or by default) will be used as the location and scale measures.", .{ds.columns.items[ci].name});
-            if (m.scale == 0 and !s.reponly) return gap(cx.diags, l0, "PROC STDIZE: constant data (variable {s} has zero scale) are not implemented (STAT-STDIZE-004)", .{ds.columns.items[ci].name});
+            var few_agk = false;
+            if (s.method == .agk and obs.len > 0) {
+                var nn: f64 = 0;
+                for (obs) |ob| nn += ob.f;
+                few_agk = nn < 2;
+            }
+            if (few_agk) {
+                // SAS-verified (one value): NOTE, the mean as location, a
+                // missing scale and the "can not be computed" WARNING.
+                var mean: f64 = 0;
+                var nn: f64 = 0;
+                for (obs) |ob| {
+                    mean += ob.f * ob.x;
+                    nn += ob.f;
+                }
+                m.* = .{ .location = mean / nn, .scale = std.math.nan(f64), .n = nn, .empty = true };
+            } else m.* = (try measures(a, s, obs)) orelse return gap(cx.diags, l0, "PROC STDIZE: variable {s}: a missing INITIAL= scale for the A estimates is not verified", .{vname});
+            if (s.method == .agk and !m.empty and std.math.isNan(m.scale)) return cx.diags.fail(error.ParseError, l0, "The value of METHOD= (or INITIAL= and MISSING= ) AGK() is too small to have at least one pair.", .{});
+            if (m.empty and isAEstimate(s.method)) m.fallback = true;
+            if (m.fallback) try cx.diags.note(l0, "After centered by the initial location estimate, all observations of variable {s} are outside the acceptance interval. Consequently, the original method chosen cannot be performed. Instead, the initial estimates of the location and the scale (specified from the INITIAL= option or by default) will be used as the location and scale measures.", .{vname});
+            if (m.fallback or m.empty) messages = true;
+            if (m.empty and s.method == .agk) try cx.diags.note(l0, "There are fewer than two usable observations in the data set or BY group for variable {s} when the AGK method is specified.", .{vname});
+            if (m.empty) {
+                // SAS-verified: also with REPONLY.
+                try cx.diags.warnStatus(l0, "At least one of the scale and location estimators of variable {s} can not be computed. Variable {s} will not be standardized.", .{ vname, vname });
+                sk.* = true;
+            } else if (!(m.scale > 0)) {
+                // SAS-verified: no WARNING with REPONLY (nothing is divided).
+                if (!s.reponly) {
+                    try cx.diags.warnStatus(l0, "The scale estimator for variable {s} is less than or equal to 0. Variable {s} will not be standardized and a missing value is assigned to its scale estimator.", .{ vname, vname });
+                    messages = true;
+                }
+                m.scale = std.math.nan(f64);
+                sk.* = true;
+            }
             if (s.pstat) {
-                const text = try std.fmt.allocPrint(a, "{d:.6}", .{@max(@abs(m.location), @abs(m.scale))});
+                const big = @max(if (std.math.isNan(m.location)) 0 else @abs(m.location), if (std.math.isNan(m.scale)) 0 else @abs(m.scale));
+                const text = try std.fmt.allocPrint(a, "{d:.6}", .{big});
                 if (text.len > 14) return gap(cx.diags, l0, "PROC STDIZE: the PSTAT number layout for magnitudes this large is not verified", .{});
             }
         }
+        if (messages and s.by_cols.len > 0) try by.reportNote(a, cx.diags, ds, group.rows[0], s.by_cols);
         if (s.pstat) {
             // Verified (SAS listing): every BY-group page after the first
             // repeats the titles after one blank line.
@@ -954,8 +1111,30 @@ pub fn run(cx: proc.ProcCtx, out: *Out, t: []const lex.Token) diag.Error!void {
         }
         for (group.rows) |row| {
             const values = try a.dupe(Value, row);
-            for (s.vars, ms, fill) |ci, m, fv| {
+            for (s.vars, ms, fill, skip, none) |ci, m, fv, sk, no| {
                 const x = row[ci].num;
+                // SAS-verified (NOMISS dropping every row of a group): the
+                // present values become missing, except with REPONLY.
+                // ponytail: assumed the same for EUCLEN/MAXABS (location 0).
+                if (no and !s.reponly and !std.math.isNan(x)) {
+                    values[ci] = .{ .num = std.math.nan(f64) };
+                    continue;
+                }
+                if (sk) {
+                    // SAS-verified (constant, one-value and empty groups):
+                    // values are copied; a missing value becomes the MISSING=
+                    // method location with REPONLY, else MISSING=value, else the
+                    // location with REPONLY; REPLACE and MISSING=method alone
+                    // keep it missing.
+                    if (std.math.isNan(x)) {
+                        if (s.missing_method != null) {
+                            if (s.reponly) values[ci] = .{ .num = fv };
+                        } else if (s.missing) |v| {
+                            values[ci] = .{ .num = v };
+                        } else if (s.reponly) values[ci] = .{ .num = m.location };
+                    }
+                    continue;
+                }
                 if (std.math.isNan(x)) {
                     // Missing Values (p.9457): MISSING=value -> value after
                     // standardizing; MISSING=method -> that location before
