@@ -31,6 +31,7 @@ pub const npar1way = @import("stat/npar1way.zig");
 pub const plm = @import("stat/plm.zig");
 pub const phreg = @import("stat/phreg.zig");
 pub const lifetest = @import("stat/lifetest.zig");
+pub const nlmixed = @import("stat/nlmixed.zig");
 pub const icphreg = @import("stat/icphreg.zig");
 pub const hpgenselect = @import("stat/hpgenselect.zig");
 pub const robustreg = @import("stat/robustreg.zig");
@@ -111,6 +112,7 @@ test {
     _ = @import("stat/plm.zig");
     _ = @import("stat/phreg.zig");
     _ = @import("stat/lifetest.zig");
+    _ = @import("stat/nlmixed.zig");
     _ = @import("stat/icphreg.zig");
     _ = @import("stat/hpgenselect.zig");
     _ = @import("stat/robustreg.zig");
