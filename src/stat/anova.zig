@@ -550,20 +550,40 @@ fn anovaPage(cx: proc.ProcCtx, out: *std.ArrayList(u8), spec: Spec, group: selec
 /// a long main effect is cut to NAMELEN characters; a two-factor crossing
 /// shares NAMELEN-1 characters between its names, the extra character
 /// going to the second (NAMELEN=20: "averyvery*anotherver"; NAMELEN=40:
-/// 19 + "*" + 20). Other shortened shapes are not SAS-verified: loud gap.
+/// 19 + "*" + 20). Other shortened shapes (three or more factors, nested
+/// effects) are not SAS-verified: loud gap.
 fn effectLabel(cx: proc.ProcCtx, spec: Spec, effect: glm.parsing.Effect) diag.Error![]const u8 {
     const a = cx.arena;
+    if (effect.variables.len == 1) return effect.name;
+    // SAS reference: the factors of a crossed CLASS effect are named in
+    // CLASS-statement order (`model y=b|a` with `class a b;` prints a*b).
+    const position = struct {
+        fn of(classes: []const usize, ci: usize) usize {
+            return std.mem.indexOfScalar(usize, classes, ci) orelse classes.len;
+        }
+    }.of;
+    var swapped = false;
+    if (effect.variables.len == 2 and std.mem.indexOfScalar(u8, effect.name, '(') == null and position(spec.classes, effect.variables[1]) < position(spec.classes, effect.variables[0])) swapped = true;
     const names = try a.alloc([]const u8, effect.variables.len);
     var joined: usize = effect.variables.len - 1;
     for (names, effect.variables) |*name, ci| {
         name.* = spec.input.ds.columns.items[ci].name;
         joined += name.len;
     }
-    if (effect.variables.len == 1 or joined <= spec.namelen) return effect.name;
-    const share = (spec.namelen - 1) / 2;
-    if (effect.variables.len != 2 or std.mem.indexOfScalar(u8, effect.name, '(') != null or names[0].len < share or names[1].len < spec.namelen - 1 - share)
+    if (swapped) std.mem.swap([]const u8, &names[0], &names[1]);
+    if (joined <= spec.namelen) {
+        if (!swapped) return effect.name;
+        const star = std.mem.indexOfScalar(u8, effect.name, '*') orelse return effect.name;
+        return std.fmt.allocPrint(a, "{s}*{s}", .{ effect.name[star + 1 ..], effect.name[0..star] });
+    }
+    if (effect.variables.len != 2 or std.mem.indexOfScalar(u8, effect.name, '(') != null)
         return proc.failGap(cx.diags, 0, "PROC ANOVA: shortening effect name {s} to NAMELEN={d} is not implemented for this effect shape", .{ effect.name, spec.namelen });
-    return std.fmt.allocPrint(a, "{s}*{s}", .{ names[0][0..share], names[1][0 .. spec.namelen - 1 - share] });
+    // A name shorter than its share keeps its length and leaves the rest to
+    // the other (SAS reference: "g*anotherveryveryver").
+    const room = spec.namelen - 1;
+    var first = room / 2;
+    if (names[0].len < first) first = names[0].len else if (names[1].len < room - first) first = room - names[1].len;
+    return std.fmt.allocPrint(a, "{s}*{s}", .{ names[0][0..first], names[1][0 .. room - first] });
 }
 
 /// The shared GLM reader and design builder label their diagnostics

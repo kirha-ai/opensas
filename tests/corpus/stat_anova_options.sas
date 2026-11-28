@@ -46,3 +46,22 @@ proc anova data=o order=freq; class g; model y=g; run; quit;
 title 'Q10 empty';
 data e; set o; if y>100; run;
 proc anova data=e; class g; model y=g; run; quit;
+data m;
+  input g anotherveryveryverylongname_bbb y;
+  datalines;
+1 1 1
+1 2 2
+2 1 4
+2 2 7
+1 1 2
+1 2 3
+2 1 5
+2 2 9
+;
+title 'N1 short first';
+proc anova data=m; class g anotherveryveryverylongname_bbb; model y=g|anotherveryveryverylongname_bbb; run; quit;
+title 'N2 short second';
+proc anova data=m; class g anotherveryveryverylongname_bbb; model y=anotherveryveryverylongname_bbb|g; run; quit;
+data m3; set m; abcdefghijkl=g; run;
+title 'N3 twelve and long';
+proc anova data=m3; class abcdefghijkl anotherveryveryverylongname_bbb; model y=abcdefghijkl|anotherveryveryverylongname_bbb; run; quit;

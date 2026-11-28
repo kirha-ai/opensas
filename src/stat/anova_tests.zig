@@ -733,7 +733,14 @@ test "ANOVA001 NAMELEN shortens effect names as SAS does; unverified shapes stay
     const long = try listing(a, ds, "proc anova namelen=40; class averyveryverylongname_aa anotherverylongname_bbb; model y=averyveryverylongname_aa|anotherverylongname_bbb; run;");
     try has(long, "\naveryveryverylongna*anotherverylongname_ 1 ");
     try has(long, "\naveryveryverylongname_aa 1 ");
-    // A short first name would leave its share unused: not SAS-verified.
-    const mixed = try table(a, "m", &.{ "g", "anotherveryveryverylongname_bbb", "y" }, &.{ .{ 1, 1, 1 }, .{ 1, 2, 2 }, .{ 2, 1, 4 }, .{ 2, 2, 7 }, .{ 1, 1, 2 }, .{ 1, 2, 3 }, .{ 2, 1, 5 }, .{ 2, 2, 9 } });
-    try t.expectEqual(@as(u8, 2), try exitOf(a, mixed, "proc anova; class g anotherveryveryverylongname_bbb; model y=g|anotherveryveryverylongname_bbb; run;"));
+    // A short name keeps its length; the other takes the rest (SAS reference).
+    const mixed = try table(a, "m", &.{ "g", "anotherveryveryverylongname_bbb", "abcdefghijkl", "y" }, &.{ .{ 1, 1, 1, 1 }, .{ 1, 2, 1, 2 }, .{ 2, 1, 2, 4 }, .{ 2, 2, 2, 7 }, .{ 1, 1, 1, 2 }, .{ 1, 2, 1, 3 }, .{ 2, 1, 2, 5 }, .{ 2, 2, 2, 9 } });
+    try has(try listing(a, mixed, "proc anova; class g anotherveryveryverylongname_bbb; model y=g|anotherveryveryverylongname_bbb; run;"), "\ng*anotherveryveryver 1 ");
+    try has(try listing(a, mixed, "proc anova; class abcdefghijkl anotherveryveryverylongname_bbb; model y=abcdefghijkl|anotherveryveryverylongname_bbb; run;"), "\nabcdefghi*anotherver 1 ");
+    // Crossed factors are named in CLASS order, also when shortened.
+    try has(try listing(a, mixed, "proc anova; class g anotherveryveryverylongname_bbb; model y=anotherveryveryverylongname_bbb|g; run;"), "\ng*anotherveryveryver 1 ");
+    const small = try table(a, "q", &.{ "a", "b", "y" }, &.{ .{ 1, 1, 1 }, .{ 1, 2, 2 }, .{ 2, 1, 4 }, .{ 2, 2, 7 }, .{ 1, 1, 2 }, .{ 1, 2, 3 }, .{ 2, 1, 5 }, .{ 2, 2, 9 } });
+    try has(try listing(a, small, "proc anova; class a b; model y=b|a; run;"), "\na*b 1 ");
+    // Nested effects with long names are not SAS-verified: loud gap.
+    try t.expectEqual(@as(u8, 2), try exitOf(a, mixed, "proc anova; class g anotherveryveryverylongname_bbb; model y=g anotherveryveryverylongname_bbb(g); run;"));
 }
