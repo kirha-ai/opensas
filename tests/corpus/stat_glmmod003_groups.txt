@@ -1,0 +1,444 @@
+S1 group of two plus one
+
+The GLMMOD Procedure
+
+Class Level Information
+
+Class Levels Values
+
+h 2 1 2
+
+
+
+Data for Analysis of y1 y1
+
+Number of Observations Read 8
+Number of Observations Used 8
+
+
+Data for Analysis of y2
+
+Number of Observations Read 8
+Number of Observations Used 7
+
+
+Data for Analysis of y3
+
+Number of Observations Read 8
+Number of Observations Used 7
+
+
+NOTE: Variables in each group are consistent with respect to the presence or absence of missing values.
+S1 group of two plus one
+
+The GLMMOD Procedure
+Dependent Variables: y1 y1
+
+Parameter Definitions
+
+Name of
+Column Associated CLASS Variable Values
+Number Effect h
+
+1 Intercept
+2 h 1
+3 h 2
+S1 group of two plus one
+
+The GLMMOD Procedure
+Dependent Variables: y1 y1
+
+Design Points
+
+Observation Column Number
+Number y1 y1 1 2 3
+
+1 4 4 1 1 0
+2 5 5 1 0 1
+3 6 6 1 1 0
+4 7 7 1 0 1
+5 8 8 1 1 0
+6 4 4 1 1 0
+7 5 5 1 0 1
+8 6 6 1 0 1
+S1 group of two plus one
+
+The GLMMOD Procedure
+Dependent Variables: y2
+
+Parameter Definitions
+
+Name of
+Column Associated CLASS Variable Values
+Number Effect h
+
+1 Intercept
+2 h 1
+3 h 2
+S1 group of two plus one
+
+The GLMMOD Procedure
+Dependent Variables: y2
+
+Design Points
+
+Observation Column Number
+Number y2 1 2 3
+
+1 5 1 1 0
+2 7 1 1 0
+3 8 1 0 1
+4 9 1 1 0
+5 5 1 1 0
+6 6 1 0 1
+7 7 1 0 1
+S1 group of two plus one
+
+The GLMMOD Procedure
+Dependent Variables: y3
+
+Parameter Definitions
+
+Name of
+Column Associated CLASS Variable Values
+Number Effect h
+
+1 Intercept
+2 h 1
+3 h 2
+S1 group of two plus one
+
+The GLMMOD Procedure
+Dependent Variables: y3
+
+Design Points
+
+Observation Column Number
+Number y3 1 2 3
+
+1 6 1 1 0
+2 7 1 0 1
+3 8 1 1 0
+4 9 1 0 1
+5 6 1 1 0
+6 7 1 0 1
+7 8 1 0 1
+S1 group of two plus one
+Obs   _YPASS_   _COLNUM_   EFFNAME     h
+
+  1         1          1   Intercept
+  2         1          2   h           1
+  3         1          3   h           2
+  4         2          1   Intercept
+  5         2          2   h           1
+  6         2          3   h           2
+  7         3          1   Intercept
+  8         3          2   h           1
+  9         3          3   h           2
+S2 by with passes
+
+                                       b=1
+
+The GLMMOD Procedure
+
+Class Level Information
+
+Class Levels Values
+
+h 2 1 2
+
+
+
+Data for Analysis of y1
+
+Number of Observations Read 5
+Number of Observations Used 5
+
+
+Data for Analysis of y2
+
+Number of Observations Read 5
+Number of Observations Used 4
+
+
+NOTE: Variables in each group are consistent with respect to the presence or absence of missing values.
+S2 by with passes
+
+                                       b=1
+
+The GLMMOD Procedure
+Dependent Variables: y1
+
+Parameter Definitions
+
+Name of
+Column Associated CLASS Variable Values
+Number Effect h
+
+1 Intercept
+2 h 1
+3 h 2
+S2 by with passes
+
+                                       b=1
+
+The GLMMOD Procedure
+Dependent Variables: y1
+
+Design Points
+
+Observation Column Number
+Number y1 1 2 3
+
+1 4 1 1 0
+2 5 1 0 1
+3 6 1 1 0
+4 7 1 0 1
+5 8 1 1 0
+S2 by with passes
+
+                                       b=1
+
+The GLMMOD Procedure
+Dependent Variables: y2
+
+Parameter Definitions
+
+Name of
+Column Associated CLASS Variable Values
+Number Effect h
+
+1 Intercept
+2 h 1
+3 h 2
+S2 by with passes
+
+                                       b=1
+
+The GLMMOD Procedure
+Dependent Variables: y2
+
+Design Points
+
+Observation Column Number
+Number y2 1 2 3
+
+1 5 1 1 0
+2 7 1 1 0
+3 8 1 0 1
+4 9 1 1 0
+S2 by with passes
+
+                                       b=2
+
+The GLMMOD Procedure
+
+Class Level Information
+
+Class Levels Values
+
+h 2 1 2
+
+
+Number of Observations Read 3
+Number of Observations Used 3
+S2 by with passes
+
+                                       b=2
+
+The GLMMOD Procedure
+
+Parameter Definitions
+
+Name of
+Column Associated CLASS Variable Values
+Number Effect h
+
+1 Intercept
+2 h 1
+3 h 2
+S2 by with passes
+
+                                       b=2
+
+The GLMMOD Procedure
+
+Design Points
+
+Observation Column Number
+Number y1 y2 1 2 3
+
+1 4 5 1 1 0
+2 5 6 1 0 1
+3 6 7 1 0 1
+S2 by with passes
+Obs   b   _YPASS_   y1   y2   Col1   Col2   Col3
+
+  1   1         1    4    .      1      1      0
+  2   1         1    5    .      1      0      1
+  3   1         1    6    .      1      1      0
+  4   1         1    7    .      1      0      1
+  5   1         1    8    .      1      1      0
+  6   1         2    .    5      1      1      0
+  7   1         2    .    7      1      1      0
+  8   1         2    .    8      1      0      1
+  9   1         2    .    9      1      1      0
+ 10   2         1    4    5      1      1      0
+ 11   2         1    5    6      1      0      1
+ 12   2         1    6    7      1      0      1
+S2 by with passes
+Obs   b   _YPASS_   _COLNUM_   EFFNAME     h
+
+  1   1         1          1   Intercept
+  2   1         1          2   h           1
+  3   1         1          3   h           2
+  4   1         2          1   Intercept
+  5   1         2          2   h           1
+  6   1         2          3   h           2
+  7   2         1          1   Intercept
+  8   2         1          2   h           1
+  9   2         1          3   h           2
+S3 passes different levels
+
+The GLMMOD Procedure
+
+Class Level Information
+
+Class Levels Values
+
+g 3 a b c
+
+
+
+Data for Analysis of y1
+
+Number of Observations Read 8
+Number of Observations Used 8
+
+
+Data for Analysis of y3
+
+Number of Observations Read 8
+Number of Observations Used 7
+
+
+NOTE: Variables in each group are consistent with respect to the presence or absence of missing values.
+S3 passes different levels
+
+The GLMMOD Procedure
+Dependent Variables: y1
+
+Parameter Definitions
+
+Name of
+Column Associated CLASS Variable Values
+Number Effect g
+
+1 Intercept
+2 g a
+3 g b
+4 g c
+S3 passes different levels
+
+The GLMMOD Procedure
+Dependent Variables: y1
+
+Design Points
+
+Observation Column Number
+Number y1 1 2 3 4
+
+1 4 1 1 0 0
+2 5 1 1 0 0
+3 6 1 0 1 0
+4 7 1 0 1 0
+5 8 1 0 0 1
+6 4 1 1 0 0
+7 5 1 0 1 0
+8 6 1 1 0 0
+S3 passes different levels
+
+The GLMMOD Procedure
+Dependent Variables: y3
+
+Parameter Definitions
+
+Name of
+Column Associated CLASS Variable Values
+Number Effect g
+
+1 Intercept
+2 g a
+3 g b
+S3 passes different levels
+
+The GLMMOD Procedure
+Dependent Variables: y3
+
+Design Points
+
+Observation Column Number
+Number y3 1 2 3
+
+1 6 1 1 0
+2 7 1 1 0
+3 8 1 0 1
+4 9 1 0 1
+5 6 1 1 0
+6 7 1 0 1
+7 8 1 1 0
+S4 crossed nested
+
+The GLMMOD Procedure
+
+Class Level Information
+
+Class Levels Values
+
+g 3 a b c
+
+h 2 1 2
+
+k 2 1 2
+
+
+Number of Observations Read 8
+Number of Observations Used 8
+S4 crossed nested
+
+The GLMMOD Procedure
+
+Parameter Definitions
+
+Name of
+Column Associated CLASS Variable Values
+Number Effect g h k
+
+1 Intercept
+2 h*k(g*h) a 1 1
+3 h*k(g*h) a 2 1
+4 h*k(g*h) a 2 2
+5 h*k(g*h) b 1 1
+6 h*k(g*h) b 2 2
+7 h*k(g*h) c 1 2
+8 h*k(k) 1 1
+9 h*k(k) 2 1
+10 h*k(k) 1 2
+11 h*k(k) 2 2
+S4 crossed nested
+
+The GLMMOD Procedure
+
+Design Points
+
+Observation Column Number
+Number y1 1 2 3 4 5 6 7 8 9 10 11
+
+1 4 1 1 0 0 0 0 0 1 0 0 0
+2 5 1 0 0 1 0 0 0 0 0 0 1
+3 6 1 0 0 0 1 0 0 1 0 0 0
+4 7 1 0 0 0 0 1 0 0 0 0 1
+5 8 1 0 0 0 0 0 1 0 0 1 0
+6 4 1 1 0 0 0 0 0 1 0 0 0
+7 5 1 0 0 0 0 1 0 0 0 0 1
+8 6 1 0 1 0 0 0 0 0 1 0 0

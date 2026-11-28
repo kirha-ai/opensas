@@ -18,6 +18,9 @@ pub const Spec = struct {
     model: matrix.Spec,
     /// MODEL dependents in statement order (model.response is the first).
     responses: []const usize = &.{},
+    /// SAS effect name for an effect rebuilt from a crossed-and-nesting form,
+    /// aligned with model.effects; null keeps the kernel name.
+    effect_names: []const ?[]const u8 = &.{},
     outdesign: ?[]const u8 = null,
     outparm: ?[]const u8 = null,
     prefix: []const u8 = "Col",
@@ -67,7 +70,19 @@ fn factor(cx: proc.ProcCtx, ds: *const Dataset, classes: []const usize, t: []con
     if (ds.columns.items[ci].type != .num) return cx.diags.fail(error.ParseError, line, "Variable {s} should be either numeric or specified in the CLASS statement.", .{ds.columns.items[ci].name});
     return ci;
 }
-fn term(cx: proc.ProcCtx, ds: *const Dataset, classes: []const usize, t: []const lex.Token, i: *usize) diag.Error!matrix.Effect {
+fn classOrder(classes: []const usize, x: usize, y: usize) bool {
+    return std.mem.indexOfScalar(usize, classes, x).? < std.mem.indexOfScalar(usize, classes, y).?;
+}
+fn joined(a: A, ds: *const Dataset, columns: []const usize) ![]const u8 {
+    var text: std.ArrayList(u8) = .empty;
+    for (columns, 0..) |c, k| {
+        if (k > 0) try text.append(a, '*');
+        try text.appendSlice(a, ds.columns.items[c].name);
+    }
+    return text.items;
+}
+fn term(cx: proc.ProcCtx, ds: *const Dataset, classes: []const usize, t: []const lex.Token, i: *usize, overlap_name: *?[]const u8) diag.Error!matrix.Effect {
+    overlap_name.* = null;
     var factors: std.ArrayList(usize) = .empty;
     var nested: std.ArrayList(usize) = .empty;
     try factors.append(cx.arena, try factor(cx, ds, classes, t, i, false));
@@ -87,21 +102,52 @@ fn term(cx: proc.ProcCtx, ds: *const Dataset, classes: []const usize, t: []const
         }
         if (nested.items.len == 0 or !at(t, i.*, .rparen)) return invalid(cx, t, i.*);
         i.* += 1;
-        // SAS accepts a factor that is both crossed and nesting (g*h(g)); the
-        // shared kernel rejects it, so keep it a visible gap, not rc 1.
-        for (nested.items) |n| if (std.mem.indexOfScalar(usize, factors.items, n) != null)
-            return proc.failGap(cx.diags, line, "PROC GLMMOD: a crossed factor that also appears in its own nesting list is not implemented", .{});
+        // SAS 9.4 accepts a factor that is both crossed and nesting (S4 probe):
+        // k*h(h g) is named h*k(g*h) and its columns are those of k(g h), the
+        // nesting list varying slowest. Build it as the reduced effect.
+        var overlap = false;
+        for (nested.items) |n| if (std.mem.indexOfScalar(usize, factors.items, n) != null) {
+            overlap = true;
+        };
+        if (overlap) {
+            var crossed: std.ArrayList(usize) = .empty;
+            var reduced: std.ArrayList(usize) = .empty;
+            for (factors.items) |f| {
+                if (std.mem.indexOfScalar(usize, classes, f) == null) return proc.failGap(cx.diags, line, "PROC GLMMOD: a continuous factor in an effect whose crossed factor is also nesting is not implemented", .{});
+                if (std.mem.indexOfScalar(usize, crossed.items, f) == null) try crossed.append(cx.arena, f);
+                if (std.mem.indexOfScalar(usize, nested.items, f) == null and std.mem.indexOfScalar(usize, reduced.items, f) == null) try reduced.append(cx.arena, f);
+            }
+            if (reduced.items.len == 0) return proc.failGap(cx.diags, line, "PROC GLMMOD: an effect nested within all of its own factors is not implemented", .{});
+            var nest: std.ArrayList(usize) = .empty;
+            for (nested.items) |n| if (std.mem.indexOfScalar(usize, nest.items, n) == null) try nest.append(cx.arena, n);
+            std.mem.sort(usize, crossed.items, classes, classOrder);
+            std.mem.sort(usize, nest.items, classes, classOrder);
+            overlap_name.* = try std.fmt.allocPrint(cx.arena, "{s}({s})", .{ try joined(cx.arena, ds, crossed.items), try joined(cx.arena, ds, nest.items) });
+            return .{ .factors = reduced.items, .nested = nest.items };
+        }
     }
     return .{ .factors = factors.items, .nested = nested.items };
 }
-fn effects(cx: proc.ProcCtx, ds: *const Dataset, classes: []const usize, t: []const lex.Token, out: *std.ArrayList(matrix.Effect)) diag.Error!void {
+fn effects(cx: proc.ProcCtx, ds: *const Dataset, classes: []const usize, t: []const lex.Token, out: *std.ArrayList(matrix.Effect), names: *std.ArrayList(?[]const u8)) diag.Error!void {
     var i: usize = 0;
     while (i < t.len) {
         var chain: std.ArrayList(matrix.Effect) = .empty;
-        try chain.append(cx.arena, try term(cx, ds, classes, t, &i));
+        var overlap_name: ?[]const u8 = null;
+        var overlapped = false;
+        try chain.append(cx.arena, try term(cx, ds, classes, t, &i, &overlap_name));
+        if (overlap_name != null) overlapped = true;
         while (at(t, i, .pipe)) {
             i += 1;
-            try chain.append(cx.arena, try term(cx, ds, classes, t, &i));
+            var other: ?[]const u8 = null;
+            try chain.append(cx.arena, try term(cx, ds, classes, t, &i, &other));
+            if (other != null) overlapped = true;
+        }
+        if (overlapped and chain.items.len > 1) return proc.failGap(cx.diags, if (i < t.len) t[i].line else 0, "PROC GLMMOD: bar expansion of an effect whose crossed factor is also nesting is not implemented", .{});
+        if (overlap_name) |name| {
+            if (at(t, i, .at)) return invalid(cx, t, i);
+            try out.append(cx.arena, chain.items[0]);
+            try names.append(cx.arena, name);
+            continue;
         }
         var degree: usize = std.math.maxInt(usize);
         if (at(t, i, .at)) {
@@ -133,6 +179,7 @@ fn effects(cx: proc.ProcCtx, ds: *const Dataset, classes: []const usize, t: []co
             };
             if (overlap) continue;
             try out.append(cx.arena, .{ .factors = factors.items, .nested = nested.items });
+            try names.append(cx.arena, null);
         }
     }
 }
@@ -188,6 +235,7 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
     result.input = try proc.procInputObs(cx.arena, ds, if (qualified_start != null) folded.items else t, cx.diags);
     var classes: std.ArrayList(usize) = .empty;
     var model_effects: std.ArrayList(matrix.Effect) = .empty;
+    var effect_names: std.ArrayList(?[]const u8) = .empty;
     var formats: std.ArrayList(proc.VarSpec) = .empty;
     var model_seen = false;
     var bys: by.Statements = .{};
@@ -221,6 +269,7 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
             // replaces an earlier one, so only the last one is kept.
             model_seen = true;
             model_effects.clearRetainingCapacity();
+            effect_names.clearRetainingCapacity();
             result.model.intercept = true;
             var eqpos = i + 1;
             while (eqpos < end and !at(t, eqpos, .eq)) eqpos += 1;
@@ -238,7 +287,14 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
             var j = eqpos + 1;
             var slash = j;
             while (slash < end and !at(t, slash, .slash)) slash += 1;
-            try effects(cx, result.input.ds, classes.items, t[j..slash], &model_effects);
+            try effects(cx, result.input.ds, classes.items, t[j..slash], &model_effects, &effect_names);
+            // The kernel merges effects by name; a rebuilt effect must not
+            // collide with another one (k*h(h g) beside k(g h)).
+            for (model_effects.items, effect_names.items, 0..) |e, nm, k| if (nm != null) for (model_effects.items, 0..) |other, m| if (m != k) {
+                const x = matrix.normalize(cx.arena, result.input.ds, classes.items, e) catch continue;
+                const y = matrix.normalize(cx.arena, result.input.ds, classes.items, other) catch continue;
+                if (std.mem.eql(u8, x.name, y.name)) return proc.failGap(cx.diags, t[i].line, "PROC GLMMOD: an effect whose crossed factor is also nesting, beside an effect with the same columns, is not implemented", .{});
+            };
             if (slash < end) {
                 j = slash + 1;
                 while (j < end) : (j += 1) {
@@ -273,6 +329,7 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
     result.input.ds = try by.withFormats(cx.arena, result.input.ds, formats.items);
     result.model.classes = classes.items;
     result.model.effects = model_effects.items;
+    result.effect_names = effect_names.items;
     const pb = try bys.resolve(cx.arena, result.input.ds, cx.diags);
     const cols = try cx.arena.alloc(usize, pb.names.len);
     for (pb.names, 0..) |n, k| cols[k] = result.input.ds.indexOf(n).?;
@@ -317,7 +374,14 @@ fn cell(a: A, x: f64, places: usize) ![]const u8 {
 
 /// One pass of the data (p.4239): the dependents sharing one missing-value
 /// pattern, the observations they use, and that pass's design matrix.
-const Pass = struct { deps: []const usize, rows: []const []const Value, design: matrix.Design };
+const Pass = struct {
+    deps: []const usize,
+    rows: []const []const Value,
+    design: matrix.Design,
+    /// Class Level Information for the whole BY group: with several passes
+    /// SAS lists the levels of every observation some pass uses (S3 probe).
+    info: []const matrix.Class = &.{},
+};
 
 fn depNames(a: A, ds: *const Dataset, deps: []const usize) ![]const u8 {
     var text: std.ArrayList(u8) = .empty;
@@ -363,12 +427,12 @@ fn counts(cx: proc.ProcCtx, out: *std.ArrayList(u8), s: Spec, all: []const []con
 fn render(cx: proc.ProcCtx, out: *std.ArrayList(u8), s: Spec, passes: []const Pass, all: []const []const Value) diag.Error!void {
     const a = cx.arena;
     const ds = s.input.ds;
-    const first = passes[0].design;
+    const info = if (passes.len > 1) passes[0].info else passes[0].design.classes;
     const multiple = passes.len > 1;
     try heading(cx, out, s, all[0], null);
-    if (first.classes.len > 0) {
+    if (info.len > 0) {
         try out.appendSlice(a, "\nClass Level Information\n\nClass Levels Values\n");
-        for (first.classes) |class| {
+        for (info) |class| {
             try out.print(a, "\n{s} {d}", .{ ds.columns.items[class.column].name, class.map.levels.len });
             for (class.map.levels) |level| try out.print(a, " {s}", .{level.label});
             try out.append(a, '\n');
@@ -450,6 +514,22 @@ fn sameColumns(x: matrix.Design, y: matrix.Design) bool {
     return true;
 }
 
+/// SAS writes a nesting list with asterisks, h*k(g*h) (S4 probe; GLM and
+/// MIXED listings print Batch(Temp*Lab)); the shared kernel spaces them.
+fn sasNames(a: A, columns: []const matrix.Column) ![]const matrix.Column {
+    const renamed = try a.alloc(matrix.Column, columns.len);
+    for (columns, renamed) |column, *r| {
+        r.* = column;
+        const open = std.mem.indexOfScalar(u8, column.effect_name, '(') orelse continue;
+        const name = try a.dupe(u8, column.effect_name);
+        for (name[open..]) |*ch| if (ch.* == ' ') {
+            ch.* = '*';
+        };
+        r.effect_name = name;
+    }
+    return renamed;
+}
+
 fn isMissing(v: Value) bool {
     return switch (v) {
         .num => |x| std.math.isNan(x),
@@ -507,12 +587,8 @@ fn buildPasses(cx: proc.ProcCtx, s: Spec, rows: []const []const Value) diag.Erro
             try groups.append(a, g);
         }
     }
-    // ponytail: the pass order and headings of a multi-dependent pattern group
-    // among several passes are not SAS-verified, so that shape fails loud.
-    if (groups.items.len > 1) for (groups.items) |g| if (g.items.len > 1)
-        return proc.failGap(cx.diags, 0, "PROC GLMMOD: several dependents sharing one missing-value pattern alongside other patterns are not implemented", .{});
-    if (groups.items.len > 1 and s.by_cols.len > 0)
-        return proc.failGap(cx.diags, 0, "PROC GLMMOD: BY groups with several dependent-variable passes are not implemented", .{});
+    // SAS 9.4 S1 probe: passes follow the first dependent of each pattern
+    // group, members keep MODEL order ("Dependent Variables: y1 y1").
     const result = try a.alloc(Pass, groups.items.len);
     for (groups.items, result) |g, *pass| {
         var kept: std.ArrayList([]const Value) = .empty;
@@ -531,20 +607,23 @@ fn buildPasses(cx: proc.ProcCtx, s: Spec, rows: []const []const Value) diag.Erro
             if (err == error.OutOfMemory) return err;
             return cx.diags.fail(error.ExecError, 0, "PROC GLMMOD: invalid effects, no complete observations, or nonfinite design value", .{});
         };
+        const columns = try a.dupe(matrix.Column, pass.design.columns);
+        for (columns) |*column| if (column.effect_index) |k| if (s.effect_names[k]) |name| {
+            column.effect_name = name;
+        };
+        pass.design.columns = try sasNames(a, columns);
     }
-    if (result.len > 1) for (result[1..]) |pass| {
-        if (!sameColumns(result[0].design, pass.design) or !sameLevels(result[0].design, pass.design))
-            return proc.failGap(cx.diags, 0, "PROC GLMMOD: dependent-variable passes with different CLASS levels or design columns are not implemented", .{});
-    };
+    if (result.len > 1) {
+        var union_rows: std.ArrayList([]const Value) = .empty;
+        for (complete.items) |i| for (s.responses) |dep| if (!isMissing(rows[i][dep])) {
+            try union_rows.append(a, rows[i]);
+            break;
+        };
+        const info = try a.alloc(matrix.Class, s.model.classes.len);
+        for (s.model.classes, info) |ci, *class| class.* = .{ .column = ci, .map = try class_levels.build(a, s.input.ds, union_rows.items, ci, .{ .order = s.model.order, .truncate = s.model.truncate }) };
+        result[0].info = info;
+    }
     return result;
-}
-
-fn sameLevels(x: matrix.Design, y: matrix.Design) bool {
-    for (x.classes, y.classes) |l, r| {
-        if (l.map.levels.len != r.map.levels.len) return false;
-        for (l.map.levels, r.map.levels) |p, q| if (!std.mem.eql(u8, p.label, q.label)) return false;
-    }
-    return true;
 }
 
 pub fn run(cx: proc.ProcCtx, out: *std.ArrayList(u8), t: []const lex.Token) diag.Error!void {
@@ -570,23 +649,30 @@ pub fn run(cx: proc.ProcCtx, out: *std.ArrayList(u8), t: []const lex.Token) diag
     const reference = designs[0][0].design;
     // ponytail: one OUTDESIGN/OUTPARM layout for all BY groups; groups whose
     // observed levels give different columns would need per-group layouts.
-    if ((s.outdesign != null or s.outparm != null) and designs.len > 1) for (designs[1..]) |d| if (!sameColumns(reference, d[0].design))
-        return proc.failGap(cx.diags, 0, "PROC GLMMOD: output data sets for BY groups with different design columns are not implemented", .{});
+    if (s.outdesign != null or s.outparm != null) for (designs) |d| for (d) |pass| if (!sameColumns(reference, pass.design))
+        return proc.failGap(cx.diags, 0, "PROC GLMMOD: output data sets for BY groups or passes with different design columns are not implemented", .{});
+    // SAS renames a repeated dependent in OUTDESIGN= (y1 -> y12, S1 probe);
+    // that naming rule is not established, so it stays a visible gap.
+    if (s.outdesign != null) for (s.responses, 0..) |dep, k| if (std.mem.indexOfScalar(usize, s.responses[0..k], dep) != null)
+        return proc.failGap(cx.diags, 0, "PROC GLMMOD: OUTDESIGN= with a repeated dependent variable is not implemented", .{});
     var body: std.ArrayList(u8) = .empty;
     if (!s.noprint) for (groups, designs) |group, d| try render(cx, &body, s, d, group.rows);
 
     const ds = s.input.ds;
     // p.4240: _YPASS_ appears only when the missing-value pattern needs passes.
-    const ypass = designs[0].len > 1;
+    var ypass = false;
+    for (designs) |d| if (d.len > 1) {
+        ypass = true;
+    };
     var design_output: ?*Dataset = null;
     var parm_output: ?*Dataset = null;
     if (s.outdesign) |name| {
         if (cx.lib.readonlyOut(name)) return cx.lib.failReadonly(name);
         const output = try a.create(Dataset);
         output.* = Dataset.init(a, name);
-        var roles: std.ArrayList(usize) = .empty;
-        try roles.appendSlice(a, s.by_cols);
+        for (s.by_cols) |c| _ = try output.addColumnLike(ds.columns.items[c].name, ds.columns.items[c]);
         if (ypass) _ = try outputColumn(cx, output, "_YPASS_", .num);
+        var roles: std.ArrayList(usize) = .empty;
         try roles.appendSlice(a, s.responses);
         if (s.freq) |c| try roles.append(a, c);
         if (s.weight) |c| try roles.append(a, c);
@@ -745,7 +831,7 @@ test "GLMMOD bar polynomial expansion noint names prefix and visible unsupported
     try std.testing.expectEqual(@as(f64, 1), ordered.rows.items[1][2].num);
     diag.resetGap();
     defer diag.resetGap();
-    try std.testing.expectError(error.ParseError, run(cx, &sink, try lex.tokenize(a, "proc glmmod data=design_input; class group h; model y=group*h(group); run;", &d)));
+    try std.testing.expectError(error.ParseError, run(cx, &sink, try lex.tokenize(a, "proc glmmod data=design_input outdesign=rep noprint; class group; model y y=group; run;", &d)));
     try std.testing.expect(diag.gapHit());
 }
 
@@ -963,11 +1049,13 @@ test "STAT-GLMMOD-003 dependents: one pass per missing pattern with _YPASS_, las
     try run(cx, &sink, try lex.tokenize(a, "proc glmmod data=t3 outdesign=d4 outparm=p4 noprint; model y1 = / noint; run;", &d));
     try std.testing.expectEqual(@as(usize, 1), lib.find("d4").?.columns.items.len);
     try std.testing.expectEqual(@as(usize, 0), lib.find("p4").?.rowCount());
-    // Pattern groups with several members beside another pattern stay a gap.
-    diag.resetGap();
-    defer diag.resetGap();
-    try std.testing.expectError(error.ParseError, run(cx, &sink, try lex.tokenize(a, "proc glmmod data=t3; class h; model y1 y2 x = h; run;", &d)));
-    try std.testing.expect(diag.gapHit());
+    // A pattern group with two members beside another pattern (S1 probe):
+    // pass 1 is y1 x (first-member order), pass 2 is y2.
+    sink.clearRetainingCapacity();
+    try run(cx, &sink, try lex.tokenize(a, "proc glmmod data=t3 outparm=p6; class h; model y1 y2 x = h; run;", &d));
+    try std.testing.expect(std.mem.indexOf(u8, sink.items, "Data for Analysis of y1 x\n") != null);
+    try std.testing.expect(std.mem.indexOf(u8, sink.items, "Dependent Variables: y2\n") != null);
+    try std.testing.expectEqual(@as(usize, 6), lib.find("p6").?.rowCount());
 }
 
 test "STAT-GLMMOD-003 invalid models report the SAS messages" {
@@ -1023,4 +1111,37 @@ test "STAT-GLMMOD-003 bar expansion follows the documented GLM equivalences" {
         for (left.rows.items, right.rows.items) |l, r| for (l[1..], r[1..]) |x, y| try std.testing.expectEqualStrings(y.str, x.str);
     }
     try std.testing.expectEqualStrings("", try d.render());
+}
+
+test "STAT-GLMMOD-003 crossed factor that is also nesting is built as the reduced effect" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var lib = @import("../exec.zig").Library.init(a);
+    try g3Data(a, &lib);
+    var d = diag.Diagnostics.init(a);
+    const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &d };
+    var sink: std.ArrayList(u8) = .empty;
+    // As the S4 probe (k*h(h g) -> h*k(g*h)): c*h(h) has the columns of c(h)
+    // and is named with its crossed list in CLASS order, h*c(h).
+    try run(cx, &sink, try lex.tokenize(a, "proc glmmod data=t3 outparm=cn noprint; class h c; model y1 = c*h(h) / noint; run;", &d));
+    const cn = lib.find("cn").?;
+    // c(h) observed cells (h,c): (1,1) (1,3) (2,1) (2,2) -- nesting h slowest.
+    try std.testing.expectEqual(@as(usize, 4), cn.rowCount());
+    for (cn.rows.items, [_][2][]const u8{ .{ "1", "1" }, .{ "1", "3" }, .{ "2", "1" }, .{ "2", "2" } }) |row, want| {
+        try std.testing.expectEqualStrings("h*c(h)", row[1].str);
+        try std.testing.expectEqualStrings(want[0], row[2].str);
+        try std.testing.expectEqualStrings(want[1], row[3].str);
+    }
+    // Multi-variable nesting lists print with asterisks.
+    try run(cx, &sink, try lex.tokenize(a, "proc glmmod data=t3 outparm=nn noprint; class h c k; model y1 = k(c h); run;", &d));
+    try std.testing.expectEqualStrings("k(h*c)", lib.find("nn").?.rows.items[1][1].str);
+    diag.resetGap();
+    defer diag.resetGap();
+    // Same columns as another effect, or inside a bar chain: visible gaps.
+    try std.testing.expectError(error.ParseError, run(cx, &sink, try lex.tokenize(a, "proc glmmod data=t3; class h c; model y1 = c*h(h) c(h); run;", &d)));
+    try std.testing.expect(diag.gapHit());
+    diag.resetGap();
+    try std.testing.expectError(error.ParseError, run(cx, &sink, try lex.tokenize(a, "proc glmmod data=t3; class h c; model y1 = c*h(h) | k; run;", &d)));
+    try std.testing.expect(diag.gapHit());
 }
