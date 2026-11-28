@@ -260,8 +260,10 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
         s.vars = vs.items;
     }
     if (s.vars.len == 0) return user(cx, l0, "there are no numeric variables to cluster", .{});
-    // ponytail: the TYPE=DISTANCE member attribute is not recorded by the
-    // data set layer, so distance input cannot be told apart from coordinates.
+    // STAT-COMMON-019: a TYPE=DISTANCE member (e.g. PROC DISTANCE OUT=) must
+    // not be clustered as coordinates; distance input is not implemented.
+    if (s.ds.ds_type) |ty| if (!eq(ty, "data"))
+        return gap(cx, l0, "an input data set of TYPE={s} is not implemented (distance input)", .{ty});
     return s;
 }
 

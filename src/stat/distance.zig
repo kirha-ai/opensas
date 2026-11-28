@@ -575,7 +575,10 @@ pub fn run(cx: proc.ProcCtx, out: *Out, t: []const lex.Token) diag.Error!void {
         if (o.indexOf(nm) != null) return gap(cx.diags, l0, "PROC DISTANCE: distance variable {s} collides with a carried variable; the rule is not verified", .{nm});
         _ = try o.addColumn(nm, .num);
     }
-    // ponytail: the TYPE=DISTANCE/SIMILAR member attribute is not recorded.
+    // STAT-COMMON-019: every implemented method (Table 43.3 coordinate
+    // distances) is a dissimilarity, so OUT= is TYPE=DISTANCE (p.2757); the
+    // TYPE=SIMILAR methods are gaps, so no similarity matrix is ever labelled.
+    o.ds_type = "DISTANCE";
 
     const p = s.vars.len;
     for (groups) |g| {

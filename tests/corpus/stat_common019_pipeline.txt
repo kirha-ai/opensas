@@ -1,0 +1,20 @@
+# corpus assertions
+stdout-count 1 Data Set Type  DISTANCE
+stdout-count 2 Mean Distance Between Observations    4.333333
+row 3 A B 2 0.6923 T
+row 2 C D 2 0.6923
+row 1 CL3 CL2 4 0.9231
+stdout-count 1 Mean Distance Between Observations    3.500649
+row 3 A B 2 0.6388
+row 2 C D 2 0.857
+row 1 CL3 CL2 4 0.9033
+row A 0 0.9166666667 1 2
+row B 0.9166666667 0 1.4166666667 1.0833333333
+row C 1 1.4166666667 0 1
+row D 2 1.0833333333 1 0
+row A 0 0.6666666667 1 1
+row B 0.6666666667 0 0.75 0.75
+row C 1 0.75 0 1
+row D 1 0.75 1 0
+stderr-count 1 Ties for minimum distance between clusters have been detected at 1 level(s) in the cluster history.
+stderr-count 1 WARNING

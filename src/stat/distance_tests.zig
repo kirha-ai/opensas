@@ -318,3 +318,43 @@ test "STAT-DISTANCE-001 rules settled by a SAS 9.4 run: ID errors, zero scale, e
     try expectEqualStrings("g", o.columns.items[0].name);
     try expectEqual(@as(usize, 0), o.rows.items.len);
 }
+
+test "STAT-COMMON-019 proximity kernel: symmetry, zero diagonal, hand-calculated non-Euclidean ties" {
+    // Invented points A(0,0) B(1,2) C(4,0) D(4,3); expected values are hand
+    // arithmetic (pp.2750-2751 formulas), never opensas output.
+    const pts = [_][2]f64{ .{ 0, 0 }, .{ 1, 2 }, .{ 4, 0 }, .{ 4, 3 } };
+    const vars = [_]distance.Variable{
+        .{ .col = 0, .level = .interval, .std = .none, .weight = 1 },
+        .{ .col = 1, .level = .interval, .std = .none, .weight = 1 },
+    };
+    const Case = struct { m: distance.Method, p: f64 = 2, r: f64 = 2, want: [6]f64 };
+    // Pair order: AB AC AD BC BD CD.
+    const cases = [_]Case{
+        .{ .m = .euclid, .want = .{ @sqrt(5.0), 4, 5, @sqrt(13.0), @sqrt(10.0), 3 } },
+        .{ .m = .sqeuclid, .want = .{ 5, 16, 25, 13, 10, 9 } },
+        .{ .m = .cityblock, .want = .{ 3, 4, 7, 5, 4, 3 } },
+        .{ .m = .chebychev, .want = .{ 2, 4, 4, 3, 3, 3 } },
+        .{ .m = .minkowski, .p = 3, .r = 3, .want = .{ std.math.cbrt(@as(f64, 9.0)), 4, std.math.cbrt(@as(f64, 91.0)), std.math.cbrt(@as(f64, 35.0)), std.math.cbrt(@as(f64, 28.0)), 3 } },
+        .{ .m = .power, .p = 2, .r = 1, .want = .{ 5, 16, 25, 13, 10, 9 } },
+    };
+    for (cases) |c| {
+        const s: distance.Spec = .{ .input = undefined, .method = c.m, .p = c.p, .r = c.r, .vars = &vars };
+        var k: usize = 0;
+        for (0..4) |i| {
+            try expectEqual(@as(f64, 0), distance.proximity(s, &pts[i], &pts[i]).?);
+            for (i + 1..4) |j| {
+                const dij = distance.proximity(s, &pts[i], &pts[j]).?;
+                const dji = distance.proximity(s, &pts[j], &pts[i]).?;
+                try expectEqual(dij, dji);
+                try std.testing.expectApproxEqRel(c.want[k], dij, 1e-14);
+                k += 1;
+            }
+        }
+    }
+    // The tie record depends on the measure: CITYBLOCK ties AB with CD (3 = 3),
+    // EUCLID does not (sqrt 5 < 3); CHEBYCHEV ties BC, BD and CD at 3.
+    const cb: distance.Spec = .{ .input = undefined, .method = .cityblock, .vars = &vars };
+    const eu: distance.Spec = .{ .input = undefined, .method = .euclid, .vars = &vars };
+    try expectEqual(distance.proximity(cb, &pts[0], &pts[1]).?, distance.proximity(cb, &pts[2], &pts[3]).?);
+    try expect(distance.proximity(eu, &pts[0], &pts[1]).? < distance.proximity(eu, &pts[2], &pts[3]).?);
+}

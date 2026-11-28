@@ -101,6 +101,7 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
     var name_at: ?usize = null; // first token of DATA=name
     var name_end: usize = 0; // after name and its option list
     var method_seen = false;
+    var type_option = false; // DATA=(TYPE=...) given explicitly
     var seen: std.StringHashMapUnmanaged(void) = .empty;
     var i: usize = 2;
     while (i < t.len and !at(t, i, .semicolon) and !at(t, i, .eof)) {
@@ -124,6 +125,7 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
                 const close = proc.skipParen(t, j);
                 var k = j + 1;
                 while (k + 2 < close) : (k += 1) if (kw(t, k, "type") and at(t, k + 1, .eq)) {
+                    type_option = true;
                     if (kw(t, k + 2, "distance")) s.distance = true else if (!kw(t, k + 2, "data"))
                         return gap(cx, l, "an input data set of TYPE={s} is not implemented", .{t[k + 2].text});
                 };
@@ -171,6 +173,14 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
     // p.2486: METHOD= is required.
     if (!method_seen) return cx.diags.fail(error.ParseError, line(t, 0), "PROC CLUSTER: the METHOD= option must be specified", .{});
     const raw = (if (name) |n| cx.lib.find(n) else proc.lastDataset(cx.lib)) orelse return cx.diags.fail(error.ParseError, line(t, 0), "PROC CLUSTER: input data set not found", .{});
+    // STAT-COMMON-019: without a TYPE= data set option the member's own TYPE=
+    // attribute decides (p.2488: a TYPE=DISTANCE data set is a distance
+    // matrix, e.g. PROC DISTANCE OUT=, p.2757); an explicit TYPE= overrides it.
+    // p.2489: TYPE=CORR input is not usable; any other member type is a gap.
+    if (!type_option) if (raw.ds_type) |ty| {
+        if (eq(ty, "distance")) s.distance = true else if (!eq(ty, "data"))
+            return gap(cx, line(t, 0), "an input data set of TYPE={s} is not implemented", .{ty});
+    };
     // Fold DATA=lib.member to one token and drop TYPE= (a member attribute,
     // handled above) so the shared selection code sees only selection options.
     var folded: std.ArrayList(lex.Token) = .empty;
