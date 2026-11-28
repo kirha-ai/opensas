@@ -91,6 +91,20 @@ Current counts: **48 DONE,19 PARK,7 DOING,1348 TODO**. All temporary reference f
 
 At exact c78ef7c6ca2b0b65ecf00e697687e906a887fc63, oracle-absent gate direct1:1989/1990unit,2361/2361corpus,11/11programs. Single failure is old REG parser-test substring `not implemented` after STEPWISE gained a real NOPRINT/OUTEST path; current explicit unsupported-listing diagnostic has changed. Repair378ce9bc retains all six invalid-syntax assertions, resets the gap flag before the supported-method/unsupported-listing path, and checks the exact captured message plus D-009 rc2. Targeted actual regression8/8 direct0; full rerun pending. Repair worktree `/Users/thomas/kirha/opensas-reg-gate-repair`, branch `codex/stat-reg-gate-repair`, created from c78ef7c6; ongoing REG009 source/evidence untouched. Supplemental not claimed for failedrun; oracle restored. Batchnotpushed.
 
+### Fresh-context active-time assignments
+
+Allsevenpriorworktrees/source/testareasverifiedclean; frozenbranches/history/evidence retained. Finished/idleoldcontexts areclosedorreplaced, neverduplicatedactivecoordinators. Newlogicaldev1..7 contexts runtheseexistingtickets, maxsevenactiveDEVslots. Source/startup mustcheckverifiedabsolutePythonmonotonicdeadline beforeeveryedit; noresetafterhandoff, nofeatureworkafter2700awake seconds.
+
+- dev1: STAT-REG-013; retained `opensas-dev1`, `codex/stat-b4-fresh-reg013`; assignedUTC 2026-11-28T00:52:39+00:00; initialUTCdeadline 2026-11-28T01:37:39+00:00; activeStart=358936.137009, activeDeadline=361636.137009.
+- dev2: STAT-GLM-010; retained `opensas-dev2`, `codex/stat-b4-fresh-glm010`; assignedUTC 2026-11-28T00:52:39+00:00; initialUTCdeadline 2026-11-28T01:37:39+00:00; activeStart=358936.137009, activeDeadline=361636.137009.
+- dev3: STAT-COMMON-033; retained `opensas-dev3`, `codex/stat-b4-fresh-common033`; assignedUTC 2026-11-28T00:52:39+00:00; initialUTCdeadline 2026-11-28T01:37:39+00:00; activeStart=358936.137009, activeDeadline=361636.137009.
+- dev4: STAT-LOGISTIC-017; retained `opensas-dev4`, `codex/stat-b4-fresh-logistic017`; assignedUTC 2026-11-28T00:52:39+00:00; initialUTCdeadline 2026-11-28T01:37:39+00:00; activeStart=358936.137009, activeDeadline=361636.137009.
+- dev5: STAT-COMMON-030; retained `opensas-dev5`, `codex/stat-b4-fresh-common030`; assignedUTC 2026-11-28T00:52:39+00:00; initialUTCdeadline 2026-11-28T01:37:39+00:00; activeStart=358936.137009, activeDeadline=361636.137009.
+- dev6: STAT-FREQ-013; retained `opensas-dev6`, `codex/stat-b4-fresh-freq013`; assignedUTC 2026-11-28T00:52:39+00:00; initialUTCdeadline 2026-11-28T01:37:39+00:00; activeStart=358936.137009, activeDeadline=361636.137009.
+- dev7: STAT-COMMON-028; retained `opensas-dev7`, `codex/stat-b4-fresh-common028`; assignedUTC 2026-11-28T00:52:39+00:00; initialUTCdeadline 2026-11-28T01:37:39+00:00; activeStart=358936.137009, activeDeadline=361636.137009.
+
+LOGISTIC017usesactualexistingfit/design/statuscontracts whilebroad002scope remainsopen. Sharedconvergence/STORE/NLOPTIONS musthonorprocedureapplicability andrealstate/optimizer/persistencecontracts, noacceptedstubs. Storedmodels mustberead inanewsession withallmetadata/covariance intact; unknownSASbinarycompatibility remainsgap, notmislabellednativeformat. No additionalbacklog/agents/QA/perf/doc-finder/intake/audit/CI/release/defaultgate changes.
+
 ### Same-ticket dev3 context recovery
 
 The dev3 context exhausted while starting MIXED011. Verified retained `opensas-dev3`/`codex/stat-b4-mixed-lsmestimate-dev3` clean at29761753, no source edits in that attempt. Replacement `/root/dev3r` continues the same logicaldev3 slot and same activeStart354826.533546/deadline357526.533546, no fresh45minutes or extra concurrentlyworkingdevslot. Originalhistory and workspace preserved; taskscope/rules unchanged.
@@ -906,7 +920,7 @@ Complete prerequisite shared contracts first, then each PROC's data input, model
 
 <a id="stat-common-028"></a>
 
-### [TODO] STAT-COMMON-028 — NLOPTIONS Statement
+### [DOING @dev7] STAT-COMMON-028 — NLOPTIONS Statement
 
 - Source: S154 / Chapter 20 / `NLOPTIONS Statement` (PDF pp. 522–539).
 - Scope: Implement shared semantics, defaults, and applicability checks for NLOPTIONS Statement; procedure-specific options and result integration belong to the corresponding PROC tickets.
@@ -934,7 +948,7 @@ Complete prerequisite shared contracts first, then each PROC's data input, model
 
 <a id="stat-common-030"></a>
 
-### [TODO] STAT-COMMON-030 — STORE Statement
+### [DOING @dev5] STAT-COMMON-030 — STORE Statement
 
 - Source: S154 / Chapter 20 / `STORE Statement` (PDF pp. 543–545).
 - Scope: Implement shared semantics, defaults, and applicability checks for STORE Statement; procedure-specific options and result integration belong to the corresponding PROC tickets.
@@ -971,7 +985,7 @@ Complete prerequisite shared contracts first, then each PROC's data input, model
 
 <a id="stat-common-033"></a>
 
-### [TODO] STAT-COMMON-033 — Convergence Status
+### [DOING @dev3] STAT-COMMON-033 — Convergence Status
 
 - Source: S154 / Chapter 20 / `Convergence Status` (PDF pp. 549–551).
 - Scope: Implement shared semantics, defaults, and applicability checks for convergence Status; procedure-specific options and result integration belong to the corresponding PROC tickets.
@@ -4192,7 +4206,7 @@ Source: S154, Chapter 47, `The FREQ Procedure`, PDF pp. 3069–3290. Tasks in th
 
 <a id="stat-freq-013"></a>
 
-### [TODO] STAT-FREQ-013 — FREQ — Jonckheere-Terpstra Test
+### [DOING @dev6] STAT-FREQ-013 — FREQ — Jonckheere-Terpstra Test
 
 - Source: S154 / Chapter 47 / `Jonckheere-Terpstra Test` (PDF pp. 3214–3216).
 - Scope: Implement Jonckheere-Terpstra Test. This ticket owns the feature's options, defaults, computation, and results as an extension of the basic computational path; the chapter's output tickets handle ODS descriptors and file presentation.
@@ -5377,7 +5391,7 @@ Source: S154, Chapter 53, `The GLM Procedure`, PDF pp. 4043–4230. Tasks in thi
 
 <a id="stat-glm-010"></a>
 
-### [TODO] STAT-GLM-010 — GLM — REPEATED / Repeated Measures Analysis of Variance
+### [DOING @dev2] STAT-GLM-010 — GLM — REPEATED / Repeated Measures Analysis of Variance
 
 - Source: S154 / Chapter 53 / `REPEATED Statement` (PDF pp. 4100–4104); S154 / Chapter 53 / `Repeated Measures Analysis of Variance` (PDF pp. 4149–4157).
 - Scope: Implement REPEATED; Repeated Measures Analysis of Variance. This ticket owns the feature's options, defaults, computation, and results as an extension of the basic computational path; the chapter's output tickets handle ODS descriptors and file presentation.
@@ -8892,7 +8906,7 @@ Source: S154, Chapter 79, `The LOGISTIC Procedure`, PDF pp. 5823–6080. Tasks i
 
 <a id="stat-logistic-017"></a>
 
-### [TODO] STAT-LOGISTIC-017 — LOGISTIC — Model Fitting Information / Regression Diagnostics
+### [DOING @dev4] STAT-LOGISTIC-017 — LOGISTIC — Model Fitting Information / Regression Diagnostics
 
 - Source: S154 / Chapter 79 / `Model Fitting Information` (PDF pp. 5914–5918); S154 / Chapter 79 / `Regression Diagnostics` (PDF pp. 5938–5941).
 - Scope: Implement Model Fitting Information; Regression Diagnostics. This ticket owns the feature's options, defaults, computation, and results as an extension of the basic computational path; the chapter's output tickets handle ODS descriptors and file presentation.
@@ -12669,7 +12683,7 @@ Source: S154, Chapter 105, `The REG Procedure`, PDF pp. 8539–8728. Tasks in th
 
 <a id="stat-reg-013"></a>
 
-### [TODO] STAT-REG-013 — REG — Testing for Heteroscedasticity / Testing for Lack of Fit / Autocorrelation in Time Series Data
+### [DOING @dev1] STAT-REG-013 — REG — Testing for Heteroscedasticity / Testing for Lack of Fit / Autocorrelation in Time Series Data
 
 - Source: S154 / Chapter 105 / `Testing for Heteroscedasticity` (PDF pp. 8642–8643); S154 / Chapter 105 / `Testing for Lack of Fit` (PDF pp. 8643–8644); S154 / Chapter 105 / `Autocorrelation in Time Series Data` (PDF pp. 8647–8648).
 - Scope: Implement Testing for Heteroscedasticity; Testing for Lack of Fit; Autocorrelation in Time Series Data. This ticket owns the feature's options, defaults, computation, and results as an extension of the basic computational path; the chapter's output tickets handle ODS descriptors and file presentation.
