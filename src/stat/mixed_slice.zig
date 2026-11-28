@@ -51,6 +51,67 @@ fn number(a: A, v: ?f64, format: []const u8) ![]const u8 {
 fn rowLevels(cx: proc.ProcCtx, out: *std.ArrayList(u8), m: model.Spec, x: fixed.Design, row: kernel.Row, classes: []const usize) !void {
     for (classes) |c| try out.print(cx.arena, " {s}", .{levelText(m, x, c, row.levels[c].?)});
 }
+/// Observed-cell X deliberately has no coefficient for an empty interaction
+/// cell (S154 pp.414-418). For a saturated two-factor CLASS model, every absent
+/// cell is an independent, unidentifiable population mean. Retain its identity
+/// with no coefficient vector; never invent a zero estimate or covariance.
+pub fn populationRows(cx: proc.ProcCtx, m: model.Spec, x: fixed.Design, effect_index: usize) diag.Error![]const kernel.Row {
+    const source_rows = try means.coefficients(cx, m, x, effect_index);
+    const effect = try coded.normalize(cx.arena, m.source, m.matrix.classes, m.matrix.effects[effect_index]);
+    var expected: usize = 1;
+    for (x.matrix.classes) |class| if (std.mem.indexOfScalar(usize, effect.crossed, class.column) != null) {
+        expected = std.math.mul(usize, expected, class.map.levels.len) catch return error.OutOfMemory;
+    };
+    if (source_rows.len == expected) {
+        const rows = try cx.arena.alloc(kernel.Row, source_rows.len);
+        for (source_rows, rows) |source, *row| row.* = .{ .levels = source.levels, .coefficients = source.l };
+        return rows;
+    }
+    var saturated = m.matrix.intercept and x.matrix.classes.len == 2 and effect.crossed.len == 2 and m.matrix.effects.len == 3;
+    var masks: u8 = 0;
+    for (m.matrix.effects) |term| {
+        const normalized = try coded.normalize(cx.arena, m.source, m.matrix.classes, term);
+        if (normalized.continuous.len > 0 or normalized.nested.len > 0) {
+            saturated = false;
+            continue;
+        }
+        var mask: u3 = 0;
+        for (normalized.crossed) |ci| {
+            const index = std.mem.indexOfScalar(usize, m.matrix.classes, ci).?;
+            if (index >= 2) {
+                saturated = false;
+                continue;
+            }
+            mask |= @as(u3, 1) << @intCast(index);
+        }
+        masks |= @as(u8, 1) << mask;
+    }
+    if (!saturated or masks != 14) return proc.failGap(cx.diags, m.line, "SLICE: missing CLASS-cell population margins outside saturated two-factor CLASS models are not implemented; no cells are silently dropped", .{});
+    const rows = try cx.arena.alloc(kernel.Row, expected);
+    const second = x.matrix.classes[1].map.levels.len;
+    for (rows, 0..) |*row, i| {
+        const levels = try cx.arena.alloc(?usize, 2);
+        levels[0] = i / second;
+        levels[1] = i % second;
+        row.* = .{ .levels = levels, .coefficients = &.{}, .available = false };
+        for (source_rows) |source| if (std.mem.eql(?usize, source.levels, levels)) {
+            row.* = .{ .levels = source.levels, .coefficients = source.l };
+            break;
+        };
+    }
+    return rows;
+}
+/// SLICE inherits the sliced source effect's denominator DF, not the last
+/// MODEL effect or the number of observations in an individual partition.
+/// S154 physical pp.6654-6656: REPEATED without RANDOM defaults to BETWITHIN.
+pub fn denominatorDF(cx: proc.ProcCtx, m: model.Spec, r: random.Spec, x: fixed.Design, z: random.Design, residual_df: usize, request: Request) diag.Error!f64 {
+    if (request.spec.options.df) |df| return df;
+    if (m.has_repeated and z.components.len == 0 and m.options.ddfm == .default)
+        return proc.failGap(cx.diags, request.spec.line, "SLICE: default between-within denominator degrees of freedom are not implemented", .{});
+    const df: f64 = if (m.options.ddfm == .residual or z.components.len == 0) @floatFromInt(residual_df) else @floatFromInt(try random.containmentDF(cx, r, x.matrix, z, request.effect, x.weights, m.options.singular));
+    if (!(df > 0)) return proc.failGap(cx.diags, request.spec.line, "SLICE: denominator degrees of freedom are unavailable", .{});
+    return df;
+}
 pub fn publishRouted(cx: proc.ProcCtx, out: *std.ArrayList(u8), m: model.Spec, r: random.Spec, x: fixed.Design, z: random.Design, fitted: anytype, requests: []const Request, route: ?*@import("mixed_ods_route.zig").Router) diag.Error!void {
     const a = cx.arena;
     const joint = linear.Joint{ .p = x.matrix.p, .q = 0, .coefficients = fitted.coefficients, .covariance = fitted.covariance, .aliases = fitted.alias_coefficients };
@@ -58,16 +119,11 @@ pub fn publishRouted(cx: proc.ProcCtx, out: *std.ArrayList(u8), m: model.Spec, r
         const spec = request.spec;
         const options = spec.options;
         const effect = try coded.normalize(a, m.source, m.matrix.classes, m.matrix.effects[request.effect]);
-        const source_rows = try means.coefficients(cx, m, x, request.effect);
-        const rows = try a.alloc(kernel.Row, source_rows.len);
-        for (source_rows, rows) |source, *row| row.* = .{ .levels = source.levels, .coefficients = source.l };
+        const rows = try populationRows(cx, m, x, request.effect);
         var target: std.ArrayList(usize) = .empty;
-        var expected: usize = 1;
         for (x.matrix.classes, 0..) |class, c| if (std.mem.indexOfScalar(usize, effect.crossed, class.column) != null) {
             try target.append(a, c);
-            expected = std.math.mul(usize, expected, class.map.levels.len) catch return error.OutOfMemory;
         };
-        if (rows.len != expected) return proc.failGap(cx.diags, spec.line, "SLICE: missing CLASS-cell population margins are not implemented; no cells are silently dropped", .{});
         var rules: std.ArrayList(syntax.Rule) = .empty;
         try rules.appendSlice(a, spec.rules);
         if (rules.items.len == 0) for (target.items) |c| {
@@ -75,8 +131,7 @@ pub fn publishRouted(cx: proc.ProcCtx, out: *std.ArrayList(u8), m: model.Spec, r
             names[0] = m.source.columns.items[x.matrix.classes[c].column].name;
             try rules.append(a, .{ .factors = names });
         };
-        const df: f64 = if (options.df) |v| v else if (m.options.ddfm == .residual or z.components.len == 0) @floatFromInt(fitted.df_error) else @floatFromInt(try random.containmentDF(cx, r, x.matrix, z, request.effect, x.weights, m.options.singular));
-        if (!(df > 0)) return proc.failGap(cx.diags, spec.line, "SLICE: denominator degrees of freedom are unavailable", .{});
+        const df = try denominatorDF(cx, m, r, x, z, fitted.df_error, request);
         for (rules.items) |rule| {
             const classes = try a.alloc(usize, rule.factors.len);
             for (rule.factors, classes) |name, *dest| {
@@ -128,7 +183,7 @@ pub fn publishRouted(cx: proc.ProcCtx, out: *std.ArrayList(u8), m: model.Spec, r
                     if (options.cl) try out.appendSlice(a, " Alpha Lower Upper");
                     try out.appendSlice(a, "\n\n");
                     for (partition.rows) |index| {
-                        const value = linear.estimate(joint, rows[index].coefficients, df, options.alpha, .two, options.singular) catch return proc.failGap(cx.diags, spec.line, "SLICE mean inference boundary", .{});
+                        const value: linear.Estimate = if (rows[index].available) linear.estimate(joint, rows[index].coefficients, df, options.alpha, .two, options.singular) catch return proc.failGap(cx.diags, spec.line, "SLICE mean inference boundary", .{}) else .{ .estimable = false, .df = df };
                         try out.appendSlice(a, label.items);
                         try rowLevels(cx, out, m, x, rows[index], varying.items);
                         if (!value.estimable) try out.appendSlice(a, " Non-est . . . .") else try out.print(a, " {s} {s} {d} {s} {s}", .{ try number(a, value.estimate, "12.4"), try number(a, value.se, "12.4"), df, try number(a, value.t, "12.2"), try number(a, value.p, "pvalue6.4") });

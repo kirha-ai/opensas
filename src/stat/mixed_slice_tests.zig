@@ -150,7 +150,7 @@ test "COMMON029 applicability and unavailable population margins fail visibly" {
     diag.resetGap();
     defer diag.resetGap();
     var out: std.ArrayList(u8) = .empty;
-    try t.expectError(error.ParseError, @import("mixed.zig").run(missing.cx, &out, try lex.tokenize(a, "proc mixed data=factorial;class group h;model y=group|h /notest;slice group*h /sliceby=h diff;run;", missing.cx.diags)));
+    try t.expectError(error.ParseError, @import("mixed.zig").run(missing.cx, &out, try lex.tokenize(a, "proc mixed data=factorial;class group h;model y=group|h x /notest;slice group*h /sliceby=h diff;run;", missing.cx.diags)));
     try t.expect(diag.gapHit());
 }
 
@@ -265,4 +265,301 @@ test "COMMON029 actual nuisance population coefficients remain fractional with G
         try t.expectApproxEqAbs(expected, result.test_result.f.?, 1e-8);
         try t.expectApproxEqAbs(@as(f64, 17.0 / 18.0), result.differences[0].value.se.? * result.differences[0].value.se.?, 1e-11);
     }
+}
+
+// MIXED012 uses the production MODEL/X/Z parser and actual known-covariance
+// GLS. Known variances are inputs to this mathematical check, never a stand-in
+// fit for an unsupported residual covariance structure.
+const SlicePrepared = struct {
+    m: @import("mixed_model.zig").Spec,
+    r: @import("mixed_random.zig").Spec,
+    x: @import("mixed_design.zig").Design,
+    z: @import("mixed_random.zig").Design,
+    requests: []const @import("mixed_slice.zig").Request,
+};
+fn slicePrepare(cx: proc.ProcCtx, source: []const u8) !SlicePrepared {
+    const s = try @import("mixed_parse.zig").parse(cx, try lex.tokenize(cx.arena, source, cx.diags));
+    const m = try @import("mixed_model.zig").parse(cx, s.input.ds, s.statements, s.options.order, 0.05);
+    const r = try @import("mixed_random.zig").parse(cx, s.input.ds, m.matrix, s.statements);
+    const groups = try @import("mixed_input.zig").prepare(cx, s, m.required_columns);
+    return .{ .m = m, .r = r, .x = try @import("mixed_design.zig").build(cx, m, groups[0].selected), .z = try @import("mixed_random.zig").build(cx, r, groups[0].selected), .requests = try @import("mixed_slice.zig").parse(cx, m, s.statements) };
+}
+fn sliceKnown(cx: proc.ProcCtx, p: SlicePrepared, variances: []const f64) !@import("mixed_fit.zig").GLS {
+    const math = @import("mixed_fit.zig");
+    const components = try cx.arena.alloc(math.Component, p.z.components.len);
+    for (p.z.components, components) |src, *dst| dst.* = .{ .name = src.name, .kernel = src.kernel, .columns = src.columns };
+    return math.knownCovariance(cx.arena, .{ .x = p.x.matrix.x, .y = p.x.y, .n = p.x.matrix.n, .p = p.x.matrix.p, .weights = p.x.weights, .components = components, .singular = p.m.options.singular }, variances);
+}
+fn sliceRows(cx: proc.ProcCtx, p: SlicePrepared) ![]const slice.Row {
+    const means = try @import("mixed_lsmeans.zig").coefficients(cx, p.m, p.x, p.requests[0].effect);
+    const rows = try cx.arena.alloc(slice.Row, means.len);
+    for (means, rows) |mean, *row| row.* = .{ .levels = mean.levels, .coefficients = mean.l };
+    return rows;
+}
+test "STAT-MIXED-012 unbalanced slices use actual cell GLS covariance and per-partition Bonferroni family" {
+    var arena = std.heap.ArenaAllocator.init(t.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var ds = @import("../dataset.zig").Dataset.init(a, "cells");
+    for ([_][]const u8{ "A", "B", "Y" }) |name| _ = try ds.addColumn(name, .num);
+    for ([_][3]f64{ .{ 1, 1, 0 }, .{ 1, 1, 2 }, .{ 1, 2, 5 }, .{ 1, 3, 7 }, .{ 1, 3, 9 }, .{ 1, 3, 11 }, .{ 2, 1, 3 }, .{ 2, 2, 6 }, .{ 2, 2, 8 }, .{ 2, 3, 10 }, .{ 2, 3, 12 } }) |row|
+        try ds.appendRow(&.{ .{ .num = row[0] }, .{ .num = row[1] }, .{ .num = row[2] } });
+    var lib = @import("../exec.zig").Library.init(a);
+    try lib.put("cells", &ds);
+    var diagnostics = diag.Diagnostics.init(a);
+    const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &diagnostics };
+    const p = try slicePrepare(cx, "proc mixed;class A B;model Y=A|B;slice A*B /sliceby=A adjust=bon cl df=6;run;");
+    const fit = try sliceKnown(cx, p, &.{2});
+    const rows = try sliceRows(cx, p);
+    const parts = try slice.partitions(a, rows, &.{0});
+    const joint = @import("mixed_contrasts_kernel.zig").Joint{ .p = p.x.matrix.p, .q = 0, .coefficients = fit.coefficients, .covariance = fit.covariance, .aliases = fit.alias_coefficients };
+    try t.expectEqual(@as(usize, 5), fit.df_error);
+    const df = try @import("mixed_slice.zig").denominatorDF(cx, p.m, p.r, p.x, p.z, fit.df_error, p.requests[0]);
+    try t.expectEqual(@as(f64, 6), df);
+    // Cell means=(1,5,9)/(3,7,11), n=(2,1,3)/(1,2,2), Var=2/n.
+    // Wald Q=sum n*(mean-weighted_mean)^2/2; F=Q/2.
+    const variances = [_][3]f64{ .{ 3, 5.0 / 3.0, 8.0 / 3.0 }, .{ 3, 3, 2 } };
+    for (parts, [_]f64{ 58.0 / 3.0, 56.0 / 5.0 }, variances) |part, expected_f, expected_variances| {
+        const result = try slice.compute(a, joint, rows, part, df, 0.05, 1e-4, p.m.options.singular, true, .bon, true);
+        try t.expectEqual(@as(usize, 2), result.test_result.num_df);
+        try t.expectApproxEqAbs(expected_f, result.test_result.f.?, 1e-10);
+        // F(2,6) survival=(3/(3+F))^3.
+        try t.expectApproxEqAbs(std.math.pow(f64, 3 / (3 + expected_f), 3), result.test_result.p.?, 1e-12);
+        try t.expectEqual(@as(usize, 3), result.differences.len);
+        for (result.differences, [_]f64{ -4, -8, -4 }, expected_variances) |d, expected, variance| {
+            try t.expectApproxEqAbs(expected, d.value.estimate.?, 1e-11);
+            try t.expectApproxEqAbs(variance, d.value.se.? * d.value.se.?, 1e-11);
+            try t.expectApproxEqAbs(@min(1, 3 * d.value.p.?), d.adjusted_p.?, 1e-14);
+            // Independent t6 CDF integral after u=t/sqrt(6+t^2).
+            const critical = (d.upper.? - expected) / @sqrt(variance);
+            const u = critical / @sqrt(6 + critical * critical);
+            const cdf = 0.5 + 15.0 / 16.0 * (u - 2.0 / 3.0 * u * u * u + 1.0 / 5.0 * u * u * u * u * u);
+            try t.expectApproxEqAbs(@as(f64, 1 - 0.05 / 6.0), cdf, 1e-11);
+            try t.expectApproxEqAbs(2 * expected - d.upper.?, d.lower.?, 1e-11);
+        }
+    }
+    var out: std.ArrayList(u8) = .empty;
+    try @import("mixed_slice.zig").publishRouted(cx, &out, p.m, p.r, p.x, p.z, fit, p.requests, null);
+    try t.expectEqual(@as(usize, 6), std.mem.count(u8, out.items, "Bonferroni"));
+    try t.expect(std.mem.indexOf(u8, out.items, "A 1 2 6 19.33") != null);
+    try t.expect(std.mem.indexOf(u8, out.items, "A 2 2 6 11.20") != null);
+    // End-to-end estimated residual variance is SSE/DF=14/5, so the
+    // same two F statistics scale by 2/(14/5), without changing source L.
+    var actual: std.ArrayList(u8) = .empty;
+    try @import("mixed.zig").run(cx, &actual, try lex.tokenize(a, "proc mixed;class A B;model Y=A|B;slice A*B /sliceby=A adjust=bon cl df=6;run;", &diagnostics));
+    try t.expect(std.mem.indexOf(u8, actual.items, "A 1 2 6 13.81") != null);
+    try t.expect(std.mem.indexOf(u8, actual.items, "A 2 2 6 8.00") != null);
+    try t.expect(!diagnostics.hasErrors());
+}
+
+test "STAT-MIXED-012 actual aliased nuisance margins retain nonestimable status but valid within-slice differences" {
+    var arena = std.heap.ArenaAllocator.init(t.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var ds = @import("../dataset.zig").Dataset.init(a, "aliased");
+    for ([_][]const u8{ "A", "B", "C", "Y" }) |name| _ = try ds.addColumn(name, .num);
+    // C=A: no observations for A1/C2 or A2/C1. All A*B target cells
+    // exist; balancing over C makes their means nonestimable. Within-A
+    // B contrasts cancel that missing nuisance direction, across-A do not.
+    for ([_][3]f64{ .{ 1, 1, 0 }, .{ 1, 1, 2 }, .{ 1, 2, 4 }, .{ 1, 2, 6 }, .{ 2, 1, 8 }, .{ 2, 1, 10 }, .{ 2, 2, 14 }, .{ 2, 2, 16 } }) |row|
+        try ds.appendRow(&.{ .{ .num = row[0] }, .{ .num = row[1] }, .{ .num = row[0] }, .{ .num = row[2] } });
+    var lib = @import("../exec.zig").Library.init(a);
+    try lib.put("aliased", &ds);
+    var diagnostics = diag.Diagnostics.init(a);
+    const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &diagnostics };
+    const p = try slicePrepare(cx, "proc mixed;class A B C;model Y=A|B C /notest;slice A*B /sliceby(A B) means diff;run;");
+    const fit = try sliceKnown(cx, p, &.{2});
+    const rows = try sliceRows(cx, p);
+    const linear = @import("mixed_contrasts_kernel.zig");
+    const joint = linear.Joint{ .p = p.x.matrix.p, .q = 0, .coefficients = fit.coefficients, .covariance = fit.covariance, .aliases = fit.alias_coefficients };
+    for (rows) |row| {
+        const mean = try linear.estimate(joint, row.coefficients, 4, 0.05, .two, 1e-4);
+        try t.expect(!mean.estimable);
+        try t.expect(mean.estimate == null and mean.se == null and mean.p == null);
+    }
+    const parts = try slice.partitions(a, rows, &.{0});
+    for (parts, [_]f64{ -4, -6 }) |part, expected| {
+        const result = try slice.compute(a, joint, rows, part, 4, 0.05, 1e-4, p.m.options.singular, true, .none, true);
+        try t.expect(result.test_result.estimable);
+        try t.expectApproxEqAbs(expected, result.differences[0].value.estimate.?, 1e-11);
+        try t.expectApproxEqAbs(@as(f64, 2), result.differences[0].value.se.? * result.differences[0].value.se.?, 1e-11);
+        try t.expectApproxEqAbs(expected * expected / 2, result.test_result.f.?, 1e-11);
+    }
+    for (try slice.partitions(a, rows, &.{1})) |part| {
+        const result = try slice.compute(a, joint, rows, part, 4, 0.05, 1e-4, p.m.options.singular, true, .none, false);
+        try t.expect(!result.test_result.estimable and result.test_result.f == null and result.test_result.p == null);
+        try t.expect(!result.differences[0].value.estimable);
+    }
+    var out: std.ArrayList(u8) = .empty;
+    try @import("mixed_slice.zig").publishRouted(cx, &out, p.m, p.r, p.x, p.z, fit, p.requests, null);
+    try t.expectEqual(@as(usize, 10), std.mem.count(u8, out.items, "Non-est"));
+    try t.expect(std.mem.indexOf(u8, out.items, "A 1 1 2 -4.0000 1.4142 4") != null);
+    try t.expect(std.mem.indexOf(u8, out.items, "B 1 . . . .") != null);
+}
+
+test "STAT-MIXED-012 split plot uses sliced effect containment DF and actual random covariance" {
+    var arena = std.heap.ArenaAllocator.init(t.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var ds = try @import("glm_persistence_tests.zig").data(a, "tests/fixtures/stat/mixed/split_plot.sas", "sp", &.{ "Block", "A", "B", "Y" }, &.{}, 0);
+    var lib = @import("../exec.zig").Library.init(a);
+    try lib.put("sp", &ds);
+    var diagnostics = diag.Diagnostics.init(a);
+    const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &diagnostics };
+    const p = try slicePrepare(cx, "proc mixed;class A B Block;model Y=A B A*B;random Block A*Block;slice A*B /sliceby=A diff cl;run;");
+    const fit = try sliceKnown(cx, p, &.{ 2995.0 / 48.0, 2215.0 / 144.0, 337.0 / 36.0 });
+    const df = try @import("mixed_slice.zig").denominatorDF(cx, p.m, p.r, p.x, p.z, fit.df_error, p.requests[0]);
+    // N=24, rankX=6; rank[X Z]=15. No RANDOM term contains A*B,
+    // so source DF=24-15=9, not residual18 or main-effect A's6.
+    try t.expectEqual(@as(usize, 18), fit.df_error);
+    try t.expectEqual(@as(f64, 9), df);
+    const rows = try sliceRows(cx, p);
+    const joint = @import("mixed_contrasts_kernel.zig").Joint{ .p = p.x.matrix.p, .q = 0, .coefficients = fit.coefficients, .covariance = fit.covariance, .aliases = fit.alias_coefficients };
+    const parts = try slice.partitions(a, rows, &.{0});
+    for (parts, [_]f64{ 8.25, 7.75, 0.5 }) |part, expected| {
+        const result = try slice.compute(a, joint, rows, part, df, 0.05, 1e-4, p.m.options.singular, true, .none, true);
+        const d = result.differences[0].value;
+        // Four-block B differences cancel both shared random components;
+        // variance=2*Residual/4=337/72, while cell means retain them.
+        try t.expectApproxEqAbs(expected, d.estimate.?, 1e-9);
+        try t.expectApproxEqAbs(@as(f64, 337.0 / 72.0), d.se.? * d.se.?, 1e-9);
+        try t.expectApproxEqAbs(expected * expected * 72 / 337, result.test_result.f.?, 1e-9);
+        try t.expectApproxEqAbs(result.test_result.p.?, d.p.?, 1e-13);
+        const radius = 2.2621571628540993 * @sqrt(@as(f64, 337.0 / 72.0)); // t9(.975)
+        try t.expectApproxEqAbs(expected - radius, d.lower.?, 1e-8);
+    }
+    var out: std.ArrayList(u8) = .empty;
+    try @import("mixed_slice.zig").publishRouted(cx, &out, p.m, p.r, p.x, p.z, fit, p.requests, null);
+    try t.expect(std.mem.indexOf(u8, out.items, "A 1 1 2 8.2500 2.1635 9") != null);
+    var residual_model = p.m;
+    residual_model.options.ddfm = .residual;
+    try t.expectEqual(@as(f64, 18), try @import("mixed_slice.zig").denominatorDF(cx, residual_model, p.r, p.x, p.z, fit.df_error, p.requests[0]));
+    var override = p.requests[0];
+    override.spec.options.df = 7.5;
+    try t.expectEqual(@as(f64, 7.5), try @import("mixed_slice.zig").denominatorDF(cx, p.m, p.r, p.x, p.z, fit.df_error, override));
+}
+
+test "STAT-MIXED-012 unavailable repeated default DF is diagnosed before inference" {
+    var arena = std.heap.ArenaAllocator.init(t.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const h = try H.init(a);
+    const p = try slicePrepare(h.cx, "proc mixed data=factorial;class group h;model y=group|h;repeated h /subject=group;slice group*h;run;");
+    try t.expect(p.m.has_repeated);
+    try t.expectEqual(@as(usize, 0), p.z.components.len);
+    // Only test DF dispatch here: no diagonal fit is substituted for the
+    // unsupported REPEATED covariance, and the full PROC remains fail-loud.
+    diag.resetGap();
+    defer diag.resetGap();
+    try t.expectError(error.ParseError, @import("mixed_slice.zig").denominatorDF(h.cx, p.m, p.r, p.x, p.z, 8, p.requests[0]));
+    try t.expectEqual(@as(u8, 2), diag.exitCode(diag.gapHit(), h.cx.diags.hasErrors()));
+    try t.expect(std.mem.indexOf(u8, h.cx.diags.list.items[h.cx.diags.list.items.len - 1].message, "between-within") != null);
+    var request = p.requests[0];
+    request.spec.options.df = 5;
+    try t.expectEqual(@as(f64, 5), try @import("mixed_slice.zig").denominatorDF(h.cx, p.m, p.r, p.x, p.z, 8, request));
+    var residual_model = p.m;
+    residual_model.options.ddfm = .residual;
+    try t.expectEqual(@as(f64, 8), try @import("mixed_slice.zig").denominatorDF(h.cx, residual_model, p.r, p.x, p.z, 8, p.requests[0]));
+}
+
+test "STAT-MIXED-012 WEIGHT and complete-case selection flow into slice GLS estimates and variance" {
+    var arena = std.heap.ArenaAllocator.init(t.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var ds = @import("../dataset.zig").Dataset.init(a, "weighted");
+    for ([_][]const u8{ "A", "B", "Y", "W" }) |name| _ = try ds.addColumn(name, .num);
+    for ([_][4]f64{ .{ 1, 1, 0, 1 }, .{ 1, 1, 4, 3 }, .{ 1, 2, 6, 1 }, .{ 1, 2, 8, 3 }, .{ 2, 1, 10, 1 }, .{ 2, 1, 14, 3 }, .{ 2, 2, 20, 1 }, .{ 2, 2, 22, 3 }, .{ 1, 1, 1000, 0 } }) |row|
+        try ds.appendRow(&.{ .{ .num = row[0] }, .{ .num = row[1] }, .{ .num = row[2] }, .{ .num = row[3] } });
+    try ds.appendRow(&.{ .{ .num = 1 }, .{ .num = 1 }, .{ .num = std.math.nan(f64) }, .{ .num = 100 } });
+    var lib = @import("../exec.zig").Library.init(a);
+    try lib.put("weighted", &ds);
+    var diagnostics = diag.Diagnostics.init(a);
+    const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &diagnostics };
+    const p = try slicePrepare(cx, "proc mixed;class A B;model Y=A|B;weight W;slice A*B /sliceby=A diff;run;");
+    try t.expectEqual(@as(usize, 8), p.x.matrix.n);
+    const fit = try sliceKnown(cx, p, &.{2});
+    const rows = try sliceRows(cx, p);
+    const joint = @import("mixed_contrasts_kernel.zig").Joint{ .p = p.x.matrix.p, .q = 0, .coefficients = fit.coefficients, .covariance = fit.covariance, .aliases = fit.alias_coefficients };
+    const parts = try slice.partitions(a, rows, &.{0});
+    const df = try @import("mixed_slice.zig").denominatorDF(cx, p.m, p.r, p.x, p.z, fit.df_error, p.requests[0]);
+    try t.expectEqual(@as(f64, 4), df);
+    // Known residual2 and each cell weight sum4: Var(mean)=1/2.
+    // Precision-weighted means=(3,7.5,13,21.5), not raw means=(2,7,12,21).
+    for (parts, [_]f64{ -4.5, -8.5 }) |part, expected| {
+        const result = try slice.compute(a, joint, rows, part, df, 0.05, 1e-4, p.m.options.singular, true, .none, false);
+        const d = result.differences[0].value;
+        try t.expectApproxEqAbs(expected, d.estimate.?, 1e-11);
+        try t.expectApproxEqAbs(@as(f64, 1), d.se.?, 1e-11);
+        try t.expectApproxEqAbs(expected * expected, result.test_result.f.?, 1e-10);
+        try t.expectApproxEqAbs(result.test_result.p.?, d.p.?, 1e-13);
+    }
+}
+
+test "STAT-MIXED-012 saturated missing cell remains explicit while complete slices and observed differences survive" {
+    var arena = std.heap.ArenaAllocator.init(t.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var ds = @import("../dataset.zig").Dataset.init(a, "incomplete");
+    for ([_][]const u8{ "A", "B", "Y" }) |name| _ = try ds.addColumn(name, .num);
+    // A1/B1 is absent, including the default first hypothesis anchor. Every
+    // observed cell has two responses mean +/-1, so REML MSE=10/5=2.
+    for ([_][3]f64{ .{ 1, 2, 4 }, .{ 1, 2, 6 }, .{ 1, 3, 8 }, .{ 1, 3, 10 }, .{ 2, 1, 2 }, .{ 2, 1, 4 }, .{ 2, 2, 6 }, .{ 2, 2, 8 }, .{ 2, 3, 10 }, .{ 2, 3, 12 } }) |row|
+        try ds.appendRow(&.{ .{ .num = row[0] }, .{ .num = row[1] }, .{ .num = row[2] } });
+    var lib = @import("../exec.zig").Library.init(a);
+    try lib.put("incomplete", &ds);
+    var diagnostics = diag.Diagnostics.init(a);
+    const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &diagnostics };
+    const p = try slicePrepare(cx, "proc mixed;class A B;model Y=A|B /notest;slice A*B /sliceby=A means diff cl;run;");
+    const fit = try sliceKnown(cx, p, &.{2});
+    const rows = try @import("mixed_slice.zig").populationRows(cx, p.m, p.x, p.requests[0].effect);
+    try t.expectEqual(@as(usize, 6), rows.len);
+    try t.expectEqual(@as(usize, 5), fit.df_error);
+    try t.expect(!rows[0].available);
+    try t.expectEqual(@as(usize, 0), rows[0].coefficients.len);
+    try t.expectEqualSlices(?usize, &.{ 0, 0 }, rows[0].levels);
+    for (rows[1..]) |row| {
+        try t.expect(row.available);
+        try t.expectEqual(p.x.matrix.p, row.coefficients.len);
+    }
+    const joint = @import("mixed_contrasts_kernel.zig").Joint{ .p = p.x.matrix.p, .q = 0, .coefficients = fit.coefficients, .covariance = fit.covariance, .aliases = fit.alias_coefficients };
+    const parts = try slice.partitions(a, rows, &.{0});
+    try t.expectError(error.InvalidInput, slice.compute(a, joint, rows, parts[0], 0, 0.05, 1e-4, p.m.options.singular, true, .none, true));
+    const absent = try slice.compute(a, joint, rows, parts[0], 5, 0.05, 1e-4, p.m.options.singular, true, .none, true);
+    // Equality of all three population cells is untestable, but B2-B3 is
+    // fully identified. Never drop B1 and relabel a one-df test as the full F.
+    try t.expect(!absent.test_result.estimable);
+    try t.expect(absent.test_result.f == null and absent.test_result.p == null);
+    try t.expectEqual(@as(usize, 0), absent.hypothesis.len);
+    try t.expectEqual(@as(usize, 3), absent.differences.len);
+    for (absent.differences[0..2]) |d| {
+        try t.expect(!d.value.estimable);
+        try t.expect(d.value.estimate == null and d.value.se == null and d.value.p == null);
+        try t.expect(d.lower == null and d.upper == null and d.adjusted_p == null);
+        try t.expectEqual(@as(usize, 0), d.coefficients.len);
+    }
+    try t.expect(absent.differences[2].value.estimable);
+    try t.expectApproxEqAbs(@as(f64, -4), absent.differences[2].value.estimate.?, 1e-11);
+    try t.expectApproxEqAbs(@sqrt(@as(f64, 2)), absent.differences[2].value.se.?, 1e-11);
+    const complete = try slice.compute(a, joint, rows, parts[1], 5, 0.05, 1e-4, p.m.options.singular, true, .none, true);
+    try t.expectEqual(@as(usize, 2), complete.test_result.num_df);
+    try t.expectApproxEqAbs(@as(f64, 16), complete.test_result.f.?, 1e-10);
+    try t.expectApproxEqAbs(std.math.pow(f64, 5.0 / 37.0, 2.5), complete.test_result.p.?, 1e-12);
+    for (complete.differences) |d| try t.expect(d.value.estimable);
+    var out: std.ArrayList(u8) = .empty;
+    try @import("mixed.zig").run(cx, &out, try lex.tokenize(a, "proc mixed;class A B;model Y=A|B /notest;slice A*B /sliceby=A means diff cl;run;", &diagnostics));
+    try t.expectEqual(@as(usize, 3), std.mem.count(u8, out.items, "Non-est"));
+    try t.expect(std.mem.indexOf(u8, out.items, "A 1 . . . .") != null);
+    try t.expect(std.mem.indexOf(u8, out.items, "A 2 2 5 16.00") != null);
+    try t.expect(std.mem.indexOf(u8, out.items, "A 1 2 3 -4.0000 1.4142 5") != null);
+    try t.expect(!diagnostics.hasErrors());
+    // Unknown multiplicity-family semantics are not guessed from the count
+    // of observed cells. Missing target cells with ADJUST stay explicit gaps.
+    diag.resetGap();
+    defer diag.resetGap();
+    var requests = try a.dupe(@import("mixed_slice.zig").Request, p.requests);
+    requests[0].spec.options.adjust = .bon;
+    out.clearRetainingCapacity();
+    try t.expectError(error.ParseError, @import("mixed_slice.zig").publishRouted(cx, &out, p.m, p.r, p.x, p.z, fit, requests, null));
+    try t.expectEqual(@as(u8, 2), diag.exitCode(diag.gapHit(), diagnostics.hasErrors()));
+    try t.expect(std.mem.indexOf(u8, diagnostics.list.items[diagnostics.list.items.len - 1].message, "UnavailableAdjustmentFamily") != null);
 }

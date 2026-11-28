@@ -6,7 +6,15 @@ const std = @import("std");
 const linear = @import("mixed_contrasts_kernel.zig");
 const adjust = @import("lsmeans_inference.zig");
 const A = std.mem.Allocator;
-pub const Row = struct { levels: []const ?usize, coefficients: []const f64 };
+pub const Row = struct {
+    levels: []const ?usize,
+    coefficients: []const f64,
+    /// False only when the consumer cannot construct a population function
+    /// in its observed-cell parameter space. Such rows have no coefficients.
+    /// A constructable but aliased L remains available: its differences can
+    /// still be estimable even when its individual mean is not.
+    available: bool = true,
+};
 pub const Partition = struct { classes: []const usize, levels: []const usize, rows: []const usize };
 pub const Difference = struct { left: usize, right: usize, coefficients: []const f64, value: linear.Estimate, adjusted_p: ?f64 = null, lower: ?f64 = null, upper: ?f64 = null };
 pub const TestResult = struct { hypotheses: []const @import("linear_hypothesis.zig").Row, result: @import("linear_hypothesis.zig").Result };
@@ -53,18 +61,41 @@ pub fn partitions(a: A, rows: []const Row, classes: []const usize) ![]const Part
 pub fn compute(a: A, j: linear.Joint, rows: []const Row, partition: Partition, df: f64, alpha: f64, singular: f64, rank_tolerance: f64, with_diff: bool, adjustment: adjust.Adjustment, with_cl: bool) !Result {
     if (j.q != 0) return error.InvalidInput;
     const width = j.p + j.q;
-    if (partition.rows.len == 0) return error.InvalidInput;
-    for (partition.rows) |i| if (i >= rows.len or rows[i].coefficients.len != width) return error.InvalidInput;
+    if (width == 0 or j.coefficients.len != width or j.covariance.len != width * width or j.aliases.len != width * width or
+        !std.math.isFinite(df) or df <= 0 or !std.math.isFinite(alpha) or alpha <= 0 or alpha >= 1 or
+        !std.math.isFinite(singular) or singular <= 0 or singular >= 1 or !std.math.isFinite(rank_tolerance) or rank_tolerance <= 0 or rank_tolerance >= 1 or
+        partition.rows.len == 0) return error.InvalidInput;
+    var available = true;
+    for (partition.rows) |i| {
+        if (i >= rows.len) return error.InvalidInput;
+        if (rows[i].available) {
+            if (rows[i].coefficients.len != width) return error.InvalidInput;
+        } else {
+            if (rows[i].coefficients.len != 0) return error.InvalidInput;
+            available = false;
+        }
+    }
     const count = partition.rows.len;
-
-    const all_rows = try a.alloc([]const f64, rows.len);
-    for (rows, all_rows) |row, *target| target.* = row.coefficients;
-    const tested = try testPartition(a, .{ .estimates = j.coefficients, .covariance_kernel = j.covariance, .alias_transpose = j.aliases, .scale = 1, .denominator_df = df, .estimability_tolerance = singular, .rank_tolerance = rank_tolerance }, all_rows, partition.rows);
-    const l = try a.alloc(f64, (count - 1) * width);
-    for (tested.hypotheses, 0..) |h, i| @memcpy(l[i * width ..][0..width], h.coefficients);
-    const test_result = linear.Contrast{ .estimable = tested.result.status == .estimable or tested.result.status == .zero_rank, .num_df = tested.result.rank, .den_df = df, .f = tested.result.f, .p = tested.result.f_probability };
+    // The multiplicity family with absent population cells needs a separate
+    // source contract. Do not silently count or drop unavailable comparisons.
+    if (!available and adjustment != .none) return error.UnavailableAdjustmentFamily;
+    var l: []const f64 = &.{};
+    var test_result = linear.Contrast{ .estimable = false, .num_df = 0, .den_df = df, .f = null, .p = null };
+    if (available) {
+        const all_rows = try a.alloc([]const f64, rows.len);
+        for (rows, all_rows) |row, *target| target.* = row.coefficients;
+        const tested = try testPartition(a, .{ .estimates = j.coefficients, .covariance_kernel = j.covariance, .alias_transpose = j.aliases, .scale = 1, .denominator_df = df, .estimability_tolerance = singular, .rank_tolerance = rank_tolerance }, all_rows, partition.rows);
+        const coefficients = try a.alloc(f64, (count - 1) * width);
+        for (tested.hypotheses, 0..) |h, i| @memcpy(coefficients[i * width ..][0..width], h.coefficients);
+        l = coefficients;
+        test_result = .{ .estimable = tested.result.status == .estimable or tested.result.status == .zero_rank, .num_df = tested.result.rank, .den_df = df, .f = tested.result.f, .p = tested.result.f_probability };
+    }
     var diffs: std.ArrayList(Difference) = .empty;
     if (with_diff) for (partition.rows, 0..) |left, i| for (partition.rows[i + 1 ..]) |right| {
+        if (!rows[left].available or !rows[right].available) {
+            try diffs.append(a, .{ .left = left, .right = right, .coefficients = &.{}, .value = .{ .estimable = false, .df = df } });
+            continue;
+        }
         const delta = try a.alloc(f64, width);
         for (rows[left].coefficients, rows[right].coefficients, delta) |u, v, *d| d.* = u - v;
         const value = try linear.estimate(j, delta, df, alpha, .two, singular);
