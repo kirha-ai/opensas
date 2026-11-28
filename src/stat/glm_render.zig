@@ -36,6 +36,9 @@ pub fn renderPrepared(cx: proc.ProcCtx, out: *std.ArrayList(u8), spec: parse.Spe
     if (spec.ss4 and (result.type_iv_basis == null or result.type_iv.len != spec.effects.len)) return proc.failGap(cx.diags, 0, "PROC GLM: Type IV hypotheses have not been validated", .{});
     const fitted = result.model.fit;
     const model = fitted.modelStats(spec.intercept);
+    // Computed before any output so an unsupported SOLUTION leaves no partial listing.
+    var solution_text: std.ArrayList(u8) = .empty;
+    if (spec.solution and spec.classes.len > 0) try solution(cx, &solution_text, spec, d, result);
     try heading(cx, out);
     if (d.classes.len > 0) {
         try out.appendSlice(a, "\nClass Level Information\n\nClass Levels Values\n");
@@ -81,7 +84,48 @@ pub fn renderPrepared(cx: proc.ProcCtx, out: *std.ArrayList(u8), spec: parse.Spe
             try out.print(a, "{s} {s} {s} {s} {s}\n", .{ name, try number(a, coefficient, places(maximum, 9)), try number(a, se, places(max_se, 8)), try number(a, fitted.coefficientT(j), 2), try probability(a, fitted.coefficientP(j)) });
         }
     }
+    try out.appendSlice(a, solution_text.items);
     try @import("glm_estimate.zig").renderResults(cx, out, estimates);
+}
+/// MODEL / SOLUTION for CLASS models (S154 PROC GLM "Parameter Estimates"):
+/// the singular parameterization is derived from the full-rank fit by
+/// plm_infer.parameters; shapes it cannot map exactly stay a loud gap.
+fn solution(cx: proc.ProcCtx, out: *std.ArrayList(u8), spec: parse.Spec, d: design.Design, result: math.Result) !void {
+    const a = cx.arena;
+    const fitted = result.model.fit;
+    const gap = "PROC GLM: SOLUTION is implemented only for full-rank CLASS-only models without BY, ABSORB, RANDOM, TEST, MANOVA or formatted CLASS variables";
+    if (fitted.rank != d.p or fitted.df_error == 0 or !std.math.isFinite(fitted.mse)) return proc.failGap(cx.diags, 0, gap, .{});
+    var plain = spec;
+    plain.store = .{ .name = "work._solution_" };
+    if (spec.responses.len != 1 or spec.by.len > 0 or spec.random != null or spec.test_requests.len > 0 or spec.manova) return proc.failGap(cx.diags, 0, gap, .{});
+    for (spec.classes) |ci| if (spec.input.ds.columns.items[ci].format != null) return proc.failGap(cx.diags, 0, gap, .{});
+    const model = try @import("store_glm.zig").model(cx, plain, d, result);
+    const parms = @import("plm_infer.zig").parameters(a, model) catch |err| switch (err) {
+        error.OutOfMemory => return error.OutOfMemory,
+        error.Unsupported => return proc.failGap(cx.diags, 0, gap, .{}),
+    };
+    var maximum: f64 = 0;
+    var max_se: f64 = 0;
+    var singular = false;
+    for (parms) |parm| {
+        maximum = @max(maximum, @abs(parm.estimate));
+        if (parm.stderr) |se| max_se = @max(max_se, se);
+        singular = singular or !parm.estimable;
+    }
+    try out.appendSlice(a, "\nStandard\nParameter Estimate Error t Value Pr > |t|\n\n");
+    for (parms) |parm| {
+        try out.appendSlice(a, if (parm.effect) |e| model.effects[e].name else "Intercept");
+        if (parm.effect) |e| for (model.effects[e].factors) |factor| {
+            const ci = factor.class_index.?;
+            try out.print(a, " {s}", .{std.mem.trim(u8, model.classes[ci].levels[parm.levels[ci].?].label, " ")});
+        };
+        try out.print(a, " {s}{s}", .{ try number(a, parm.estimate, places(maximum, 9)), if (parm.estimable) "" else " B" });
+        if (parm.stderr) |se| {
+            const t_value = parm.estimate / se;
+            try out.print(a, " {s} {s} {s}\n", .{ try number(a, se, places(max_se, 8)), try number(a, t_value, 2), try probability(a, @import("univ_inference.zig").tProbability(t_value, @floatFromInt(fitted.df_error))) });
+        } else try out.appendSlice(a, " . . .\n");
+    }
+    if (singular) try out.appendSlice(a, "\nNOTE: The X'X matrix has been found to be singular, and a generalized inverse was used to solve the normal equations. Terms whose estimates are followed by\nthe letter 'B' are not uniquely estimable.\n");
 }
 fn effects(a: A, out: *std.ArrayList(u8), spec: parse.Spec, kind: []const u8, tests: []const math.EffectTest) !void {
     var maximum: f64 = 0;

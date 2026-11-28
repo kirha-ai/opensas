@@ -1,7 +1,8 @@
 /* STAT-PLM-002: stored-model inference from PROC PLM. Data and expected
  * numbers: the published SAS/STAT 15.4 PLM "Getting Started" block design
- * (SHOW FIT PARMS; TEST a b a*b;). The GLM parameterization shown by SHOW
- * PARMS and the Type III tests are computed from the restored store only.
+ * (PROC GLM MODEL / SOLUTION with STORE, then SHOW FIT PARMS; TEST a b a*b;).
+ * The GLM parameterization shown by SOLUTION and SHOW PARMS and the Type III
+ * tests are computed from the full-rank fit / the restored store only.
  * NOINFO keeps the wall-clock Store Information table out of the fixture
  * (its layout is covered in src/stat/plm_tests.zig). */
 data BlockDesign;
@@ -20,9 +21,9 @@ datalines;
 4 2 1 35 4 2 2 30
 4 3 1 17 4 3 2 18
 ;
-proc glm data=BlockDesign noprint;
+proc glm data=BlockDesign;
 class block a b;
-model y = block a b a*b;
+model y = block a b a*b / solution;
 store work.BlockAnalysis / label='PLM: Getting Started';
 run;
 proc plm restore=work.BlockAnalysis noinfo;

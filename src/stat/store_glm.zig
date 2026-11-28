@@ -48,7 +48,7 @@ pub fn model(cx: proc.ProcCtx, spec: parsing.Spec, d: design.Design, result: mat
         }
         dest.* = .{ .name = source.name, .start = block.start, .len = block.len, .factors = factors };
     }
-    return .{ .procedure = "GLM", .input = spec.input.ds.name, .response = spec.input.ds.columns.items[d.response].name, .label = spec.store.?.label, .created_unix_seconds = @intCast(@divFloor(std.Io.Clock.real.now(std.Io.Threaded.global_single_threaded.io()).nanoseconds, std.time.ns_per_s)), .intercept = spec.intercept, .effects = effects, .classes = classes, .covariates = covariates.items, .coefficients = fit.coefficients, .covariance = fit.covariance, .df_error = fit.df_error, .mse = fit.mse, .n_used = fit.n_used };
+    return .{ .procedure = "GLM", .input = spec.input.ds.name, .response = spec.input.ds.columns.items[d.response].name, .label = if (spec.store) |request| request.label else "", .created_unix_seconds = @intCast(@divFloor(std.Io.Clock.real.now(std.Io.Threaded.global_single_threaded.io()).nanoseconds, std.time.ns_per_s)), .intercept = spec.intercept, .effects = effects, .classes = classes, .covariates = covariates.items, .coefficients = fit.coefficients, .covariance = fit.covariance, .df_error = fit.df_error, .mse = fit.mse, .n_used = fit.n_used };
 }
 pub fn save(cx: proc.ProcCtx, spec: parsing.Spec, d: design.Design, result: math.Result) diag.Error!void {
     if (spec.store) |request| try store.save(cx, request, try model(cx, spec, d, result));

@@ -1,3 +1,72 @@
+
+The GLM Procedure
+
+Class Level Information
+
+Class Levels Values
+
+block 4 1 2 3 4
+
+a 3 1 2 3
+
+b 2 1 2
+
+Number of Observations Read 24
+Number of Observations Used 24
+
+The GLM Procedure
+
+Dependent Variable: y
+
+Sum of
+Source DF Squares Mean Square F Value Pr > F
+
+Model 8                      1826.833333                       228.354167                            10.54 <.0001
+
+Error 15                       325.000000                        21.666667
+
+Corrected Total 23                      2151.833333
+
+R-Square Coeff Var Root MSE y Mean
+
+                        0.848966                         15.05578                         4.654747                         30.91667
+
+Source DF Type I SS Mean Square F Value Pr > F
+
+block 3                      1243.500000                       414.500000                            19.13 <.0001
+a 2                       326.583333                       163.291667                             7.54                           0.0054
+b 1                       181.500000                       181.500000                             8.38                           0.0111
+a*b 2                        75.250000                        37.625000                             1.74                           0.2097
+
+Source DF Type III SS Mean Square F Value Pr > F
+
+block 3                      1243.500000                       414.500000                            19.13 <.0001
+a 2                       326.583333                       163.291667                             7.54                           0.0054
+b 1                       181.500000                       181.500000                             8.38                           0.0111
+a*b 2                        75.250000                        37.625000                             1.74                           0.2097
+
+Standard
+Parameter Estimate Error t Value Pr > |t|
+
+Intercept                      20.41666667 B                       2.85043856                             7.16 <.0001
+block 1                      17.00000000 B                       2.68741925                             6.33 <.0001
+block 2                       4.50000000 B                       2.68741925                             1.67                           0.1148
+block 3                      -1.16666667 B                       2.68741925                            -0.43                           0.6704
+block 4                       0.00000000 B . . .
+a 1                       3.25000000 B                       3.29140294                             0.99                           0.3391
+a 2                       4.75000000 B                       3.29140294                             1.44                           0.1695
+a 3                       0.00000000 B . . .
+b 1                       0.50000000 B                       3.29140294                             0.15                           0.8813
+b 2                       0.00000000 B . . .
+a*b 1 1                       7.75000000 B                       4.65474668                             1.66                           0.1167
+a*b 1 2                       0.00000000 B . . .
+a*b 2 1                       7.25000000 B                       4.65474668                             1.56                           0.1402
+a*b 2 2                       0.00000000 B . . .
+a*b 3 1                       0.00000000 B . . .
+a*b 3 2                       0.00000000 B . . .
+
+NOTE: The X'X matrix has been found to be singular, and a generalized inverse was used to solve the normal equations. Terms whose estimates are followed by
+the letter 'B' are not uniquely estimable.
 The PLM Procedure
 
   Class Level Information

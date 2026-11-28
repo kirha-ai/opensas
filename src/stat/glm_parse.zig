@@ -39,6 +39,8 @@ pub const Spec = struct {
     manova: bool = false,
     multipass: bool = false,
     noprint: bool = false,
+    /// MODEL / SOLUTION: parameter table in the singular GLM parameterization.
+    solution: bool = false,
     plots_none: bool = false,
     intercept: bool = true,
     /// Explicit SS requests replace the default Type I + Type III tables.
@@ -239,7 +241,10 @@ pub fn parse(cx: proc.ProcCtx, tokens: []const lex.Token) diag.Error!Spec {
                 } else if (kw(tokens, j, "ss4")) {
                     result.ss4 = true;
                     j += 1;
-                } else if (kw(tokens, j, "alpha")) result.alpha = try real(cx, tokens[0..end], &j) else if (kw(tokens, j, "singular")) result.singular = try real(cx, tokens[0..end], &j) else return unsupported(cx, tokens[j], &.{ "solution", "e", "e1", "e2", "e3", "e4", "clparm", "cli", "clm", "p", "r", "nouni", "intercept", "tolerance", "inverse", "xpx", "effectsize" });
+                } else if (kw(tokens, j, "solution")) {
+                    result.solution = true;
+                    j += 1;
+                } else if (kw(tokens, j, "alpha")) result.alpha = try real(cx, tokens[0..end], &j) else if (kw(tokens, j, "singular")) result.singular = try real(cx, tokens[0..end], &j) else return unsupported(cx, tokens[j], &.{ "e", "e1", "e2", "e3", "e4", "clparm", "cli", "clm", "p", "r", "nouni", "intercept", "tolerance", "inverse", "xpx", "effectsize" });
             }
         } else if (kw(tokens, i, "repeated")) {
             if (!model_seen) return cx.diags.fail(error.ParseError, tokens[i].line, "PROC GLM: REPEATED must follow MODEL", .{});

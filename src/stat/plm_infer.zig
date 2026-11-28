@@ -25,6 +25,9 @@ pub const Parm = struct {
     estimate: f64,
     /// Null for a parameter the sweep sets to zero (printed as '.').
     stderr: ?f64,
+    /// False when the parameter is not uniquely estimable (PROC GLM's 'B'
+    /// flag): some null vector of the singular design has a nonzero entry here.
+    estimable: bool = true,
 };
 pub const EffectTest = struct { num_df: usize, den_df: usize, f: f64, p: f64 };
 
@@ -133,7 +136,20 @@ pub fn parameters(a: A, m: store.Model) Error![]const Parm {
         for (work) |w| norm += w * w;
         // 0/1 columns on an integer grid: a dependent column leaves rounding
         // noise ~1e-30 while an independent one keeps at least 1/n of its mass.
-        if (norm <= 1e-10 * norm0) continue;
+        if (norm <= 1e-10 * norm0) {
+            // S_j = S_K c with c = R^-1 (Q' S_j): (c, -1 at j) is a null vector,
+            // so j and every kept column with c != 0 are not estimable.
+            parms.items[j].estimable = false;
+            var u = rank;
+            while (u > 0) {
+                u -= 1;
+                var v = coef[u];
+                for (u + 1..rank) |w| v -= rm[u * p + w] * coef[w];
+                coef[u] = v / rm[u * p + u];
+                if (@abs(coef[u]) > 1e-9) parms.items[kept[u]].estimable = false;
+            }
+            continue;
+        }
         if (rank == p) return error.Unsupported;
         const scale = @sqrt(norm);
         for (work, 0..) |w, r| qm[r * p + rank] = w / scale;

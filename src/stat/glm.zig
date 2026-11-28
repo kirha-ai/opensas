@@ -48,6 +48,9 @@ pub fn run(cx: proc.ProcCtx, out: *std.ArrayList(u8), tokens: []const @import(".
 }
 pub fn execute(cx: proc.ProcCtx, out: *std.ArrayList(u8), spec: Spec) diag.Error!void {
     try @import("store_glm.zig").validate(cx, spec);
+    // SOLUTION is rendered only by the ordinary fixed-effects path; the ABSORB
+    // and REPEATED renderers would otherwise drop the request silently.
+    if (spec.solution and (spec.absorb.len > 0 or spec.repeated != null)) return proc.failGap(cx.diags, 0, "PROC GLM: SOLUTION with ABSORB or REPEATED is not implemented", .{});
     const view = try selection.View.init(cx.arena, spec.input, .{ .by = spec.by, .frequency = spec.freq, .weight = spec.weight, .id = spec.ids });
     const groups = try view.groups(cx.arena, spec.descending, spec.notsorted, cx.diags);
     if (groups.len == 0) return cx.diags.fail(error.ExecError, 0, "PROC GLM: no observations", .{});

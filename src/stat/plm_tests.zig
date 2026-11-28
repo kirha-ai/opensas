@@ -493,3 +493,59 @@ test "STAT-PLM-002 unsupported stored-model inference is a loud gap with no list
         try t.expectEqual(case[1], diag.exitCode(diag.gapHit(), s.d.hasErrors()));
     }
 }
+
+fn wordsOf(a: std.mem.Allocator, text: []const u8) ![]const u8 {
+    var words: std.ArrayList(u8) = .empty;
+    var it = std.mem.tokenizeAny(u8, text, " \n");
+    while (it.next()) |w| {
+        try words.appendSlice(a, w);
+        try words.append(a, ' ');
+    }
+    return words.items;
+}
+fn twoGroups(s: *Fitted, covariate: bool) !void {
+    const a = s.arena.allocator();
+    s.lib = Library.init(a);
+    s.d = diag.Diagnostics.init(a);
+    const ds = try a.create(Dataset);
+    ds.* = Dataset.init(a, "two");
+    for ([_][]const u8{ "g", "x", "y" }) |name| _ = try ds.addColumn(name, .num);
+    const rows: []const [3]f64 = if (covariate) &.{ .{ 1, 1, 1 }, .{ 1, 2, 3 }, .{ 2, 1, 4 }, .{ 2, 3, 8 }, .{ 2, 4, 9 } } else &.{ .{ 1, 0, 1 }, .{ 1, 0, 3 }, .{ 2, 0, 4 }, .{ 2, 0, 8 } };
+    for (rows) |r| try ds.appendRow(&.{ .{ .num = r[0] }, .{ .num = r[1] }, .{ .num = r[2] } });
+    try s.lib.put("two", ds);
+}
+
+test "STAT-PLM-002 GLM MODEL / SOLUTION for a CLASS model: manual one-way calculation" {
+    // Same data as the manual PLM case: Intercept = 6, SE sqrt(5/2) =
+    // 1.58113883, t = 3.79, Pr = 1 - t/sqrt(t^2+2) = 0.0630; g 1 = -4,
+    // SE sqrt(5) = 2.23606798, t = -1.79, Pr = 0.2155; g 2 = 0 (swept).
+    // Null vector (1,-1,-1) of [1 g1 g2] touches all three parameters: all 'B'.
+    var s: Fitted = .{ .arena = std.heap.ArenaAllocator.init(t.allocator) };
+    defer s.arena.deinit();
+    try twoGroups(&s, false);
+    const out = try wordsOf(s.arena.allocator(), try s.exec(.glm, "proc glm data=two; class g; model y = g / solution; run;"));
+    try t.expect(!s.d.hasErrors());
+    try t.expect(std.mem.endsWith(u8, out, "Standard Parameter Estimate Error t Value Pr > |t| Intercept 6.000000000 B 1.58113883 3.79 0.0630 g 1 -4.000000000 B 2.23606798 -1.79 0.2155 g 2 0.000000000 B . . . NOTE: The X'X matrix has been found to be singular, and a generalized inverse was used to solve the normal equations. Terms whose estimates are followed by the letter 'B' are not uniquely estimable. "));
+    // Without SOLUTION a CLASS model prints no parameter table.
+    const plain = try s.exec(.glm, "proc glm data=two; class g; model y = g; run;");
+    try t.expect(std.mem.indexOf(u8, plain, "Parameter") == null);
+}
+
+test "STAT-PLM-002 GLM SOLUTION outside the proven CLASS-only shape is a loud gap with no listing" {
+    for ([_][]const u8{
+        "proc glm data=two; class g; model y = g x / solution; run;",
+        "proc glm data=two; class g; absorb g; model y = x / solution; run;",
+    }) |source| {
+        var s: Fitted = .{ .arena = std.heap.ArenaAllocator.init(t.allocator) };
+        defer s.arena.deinit();
+        try twoGroups(&s, true);
+        diag.resetGap();
+        defer diag.resetGap();
+        var out: std.ArrayList(u8) = .empty;
+        const c = s.cx();
+        const result = glm.run(c, &out, try lex.tokenize(c.arena, source, c.diags));
+        try t.expect(std.meta.isError(result));
+        try t.expectEqual(@as(usize, 0), out.items.len);
+        try t.expectEqual(@as(u8, 2), diag.exitCode(diag.gapHit(), s.d.hasErrors()));
+    }
+}
