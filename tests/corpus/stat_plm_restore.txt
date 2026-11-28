@@ -1,0 +1,9 @@
+The PLM Procedure
+
+  Class Level Information
+
+Class    Levels    Values
+
+block         4    1 2 3 4
+a             3    1 2 3
+b             2    1 2

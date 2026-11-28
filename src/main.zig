@@ -3010,6 +3010,14 @@ fn runProc(a: std.mem.Allocator, listing_out: *std.ArrayList(u8), lib: *sas.exec
             try out.appendSlice(a, body.items);
             try g.emitFootnotes(a, out);
         }
+    } else if (eqi(proc, "plm")) {
+        var body: std.ArrayList(u8) = .empty;
+        try sas.plm.run(pcx, &body, toks);
+        if (body.items.len > 0) {
+            try g.emitTitles(a, out);
+            try out.appendSlice(a, body.items);
+            try g.emitFootnotes(a, out);
+        }
     } else if (eqi(proc, "npar1way")) {
         var body: std.ArrayList(u8) = .empty;
         try sas.npar1way.run(pcx, &body, toks);
