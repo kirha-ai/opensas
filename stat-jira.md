@@ -8,8 +8,9 @@ This section is the only current status summary; every section below it is a his
 - **Resumed 2026-11-28 about 07:20Z** after the 06:31Z account usage limit stopped all dev contexts. At the user's direction devs may compare with real SAS via `/Users/thomas/sas/bin/sasrun foo.sas -f text -o - -l /dev/null`, only when truly blocked. Coordinator keep-awake `caffeinate` PID 62218. Coordinator scripts and dev brief live in the session scratchpad `stat/` directory.
 - **Batch 41 verification at exact SHA `c1530bcaea0bb84c6255182384fe25da98ed9579` (2026-11-28):** `zig build install` direct 0; whole `tests/STAT15.4-oracle/` moved out of the checkout, then `zig build gate -j2 --summary all` direct 0 — **2823/2823 unit tests**, **2763/2763 corpus**, **11/11 programs**; `zig build install` direct 0; separate supplemental direct 0, **1113/1113**. Oracle restored unchanged, tree clean, HEAD unchanged. Pushed. **New DONE:** STAT-NESTED-002 (96/96, rc 0) and STAT-GLMMOD-002 (569/569, rc 0; fixed the Design Points listing precision); reference folders safe to delete, not deleted.
 - **User approvals (2026-11-28):** move CATMOD's TYPE=EST direct input to STAT-CATMOD-004; add the Base random-stream ticket STAT-RAND-001; public classic sample data, including rows exported from real SAS (Iris), may be committed; build caches (`.zig-cache`) may be deleted automatically when free disk falls to about 8 GB, only for idle worktrees (done twice: 41 GB free the first time; the second at 9.5 GB free with every worktree idle, just before a seven-dev round); the `best32.` display fix is approved as STAT-BEST-001. Earlier scope: SASHELP sample data taken from SAS's public sample material may be committed to this public repository, for STAT-SASHELP-001 and the later SASHELP tickets; record source and verification, never invent rows, ask before adding a data set above about 2 MB.
-- **Live slots (auto):** dev1 STAT-STDIZE-003, dev2 STAT-RAND-001, dev3 STAT-NESTED-003, dev4 STAT-GENMOD-001, dev5 STAT-CAUSALGRAPH-005, dev6 STAT-LIFETEST-001, dev7 STAT-ANOVA-001.
-- **Counts:** 70 DONE, 135 PARK, 7 DOING, 1213 TODO.
+- **Live slots (auto):** dev1 STAT-STDIZE-003, dev2 STAT-RAND-001, dev3 STAT-NESTED-003, dev4 STAT-SASHELP-005, dev5 STAT-CAUSALGRAPH-005, dev6 STAT-LIFETEST-001, dev7 STAT-ANOVA-001.
+- **Integrated locally, awaiting batch verification (auto):** STAT-GENMOD-001 (PARK).
+- **Counts:** 70 DONE, 136 PARK, 7 DOING, 1212 TODO.
 - **Next:** integrate each returned ticket and refill its slot, preferring close-out attempts on PARK tickets whose originals now match exactly (DISTANCE-001, PRINQUAL-001, VARCLUS-001, TPSPLINE-001, CATMOD-001, CANCORR-001, GEE-001, INBREED-001, then the open review in the batch 6 receipt), because a DONE ticket unlocks its dependents; then other eligible tickets.
 - **Working branch:** `feat/stat/batch-4`. Last tested and pushed code SHA `c1530bcaea0bb84c6255182384fe25da98ed9579` (batch 41; batch 40 was `d9e640ff1739af1ed30507471fd94c88a6320ba7`). The bullets below this one describe batch 5 and are historical. Later commits that touch only this file are documentation. No PR created or merged; `main` untouched.
 
@@ -1718,7 +1719,7 @@ Complete prerequisite shared contracts first, then each PROC's data input, model
 
 <a id="stat-sashelp-005"></a>
 
-### [TODO] STAT-SASHELP-005 — SASHELP example data — Fisher (1936) Iris Data / Junk Email Data / Leukemia Data Sets
+### [DOING @dev4] STAT-SASHELP-005 — SASHELP example data — Fisher (1936) Iris Data / Junk Email Data / Leukemia Data Sets
 
 - Source: S154 / Sashelp Data Sets / `Fisher (1936) Iris Data` (PDF pp. 10912–10914); S154 / Sashelp Data Sets / `Junk Email Data` (PDF pp. 10914–10916); S154 / Sashelp Data Sets / `Leukemia Data Sets` (PDF pp. 10916–10918).
 - Scope: For Fisher (1936) Iris Data; Junk Email Data; Leukemia Data Sets provide reproducible public example data or the compatible loading method explicitly documented in the source; use public or synthetic data only.
@@ -4946,7 +4947,7 @@ Source: S154, Chapter 51, `The GENMOD Procedure`, PDF pp. 3481–3686. Tasks in 
 
 <a id="stat-genmod-001"></a>
 
-### [DOING @dev4] STAT-GENMOD-001 — GENMOD — Data input, variable roles, and basic options
+### [PARK] STAT-GENMOD-001 — GENMOD — Data input, variable roles, and basic options
 
 - Source: S154 / Chapter 51 / `PROC GENMOD Statement` (PDF pp. 3509–3514); S154 / Chapter 51 / `BY Statement` (PDF pp. 3525–3526); S154 / Chapter 51 / `FREQ Statement` (PDF p. 3541); S154 / Chapter 51 / `STRATA Statement` (PDF pp. 3565–3567); S154 / Chapter 51 / `WEIGHT Statement` (PDF p. 3567); S154 / Chapter 51 / `Missing Values` (PDF p. 3616).
 - Scope: Integrate PROC GENMOD declarations, basic options, defaults, and execution boundaries; this ticket establishes parameter objects and result interfaces, while later feature tickets implement model-, algorithm-, and output-specific options. Also implement BY; FREQ; STRATA; WEIGHT; Missing Values; apply this procedure's rules for missing values, variable roles, and observation selection.
