@@ -261,3 +261,91 @@ test "stratified actual exact engine matches independent SAS tails" {
     try std.testing.expect(result == .complete);
     try std.testing.expectApproxEqAbs(@as(f64, 0.1150), result.complete.two_sided, 0.00005);
 }
+
+test "STAT-FREQ-013 JT agrees with every labeled allocation of unequal tied groups" {
+    // S154 physical pp.3214-3216: sum pairwise Mann-Whitney counts, with
+    // half credit for tied responses. Independently distribute responses
+    // {0,0,0,1,1,2} among six labeled slots in groups of sizes {1,2,3}.
+    // All 6!/(3!2!1!)=60 allocations are equally likely under H0; collapsing
+    // them to tables must retain multiplicities, not assign equal table mass.
+    // Their exact moments are E(J)=11/2 and Var(J)=201/40. The distribution
+    // is asymmetric, so doubling the smaller tail is not the two-sided test.
+    const t = std.testing;
+    const exact = @import("freq_exact_distribution.zig");
+    const execute = @import("freq_exact_execute.zig");
+    const groups = [_]usize{ 0, 1, 1, 2, 2, 2 };
+    const Sample = struct { counts: [9]f64, j: f64 };
+    var samples: [60]Sample = undefined;
+    var size: usize = 0;
+    var sum: f64 = 0;
+    var sum_squares: f64 = 0;
+    for (0..729) |code| {
+        var digits = code;
+        var responses: [6]usize = undefined;
+        var frequencies: [3]usize = @splat(0);
+        for (&responses) |*response| {
+            response.* = digits % 3;
+            digits /= 3;
+            frequencies[response.*] += 1;
+        }
+        if (!std.mem.eql(usize, &frequencies, &.{ 3, 2, 1 })) continue;
+        var sample = Sample{ .counts = @splat(0), .j = 0 };
+        for (responses, groups, 0..) |response, group, i| {
+            sample.counts[group * 3 + response] += 1;
+            for (i + 1..responses.len) |other| {
+                if (group == groups[other]) continue;
+                if (response < responses[other]) sample.j += 1;
+                if (response == responses[other]) sample.j += 0.5;
+            }
+        }
+        samples[size] = sample;
+        size += 1;
+        sum += sample.j;
+        sum_squares += sample.j * sample.j;
+    }
+    try t.expectEqual(samples.len, size);
+    const mean = sum / 60;
+    const variance = sum_squares / 60 - mean * mean;
+    try t.expectEqual(@as(f64, 5.5), mean);
+    try t.expectApproxEqAbs(@as(f64, 201.0 / 40.0), variance, 1e-14);
+    for (&samples) |*sample| {
+        const m = k.Matrix{
+            .rows = 3,
+            .cols = 3,
+            .counts = &sample.counts,
+            // JT uses ordered categories, not the distances between scores.
+            .row_scores = &.{ 100, -7, 1 },
+            .col_scores = &.{ 0, 1e50, -3 },
+        };
+        const actual = (try k.jonckheere(t.allocator, m)).?;
+        try t.expectEqual(sample.j, actual.statistic);
+        try t.expectApproxEqAbs((sample.j - mean) / @sqrt(variance), actual.z, 2e-15);
+        var point: f64 = 0;
+        var left: f64 = 0;
+        var right: f64 = 0;
+        var two: f64 = 0;
+        for (samples) |candidate| {
+            if (candidate.j == sample.j) point += 1;
+            if (candidate.j <= sample.j) left += 1;
+            if (candidate.j >= sample.j) right += 1;
+            if (@abs(candidate.j - mean) >= @abs(sample.j - mean)) two += 1;
+        }
+        // Exercise both the public exact execution route's integer ordering
+        // and the reusable J callback, using the same independent reference.
+        const result = try execute.run(t.allocator, .{ .rows = m.rows, .cols = m.cols, .counts = m.counts, .row_scores = m.row_scores, .col_scores = m.col_scores }, .jt, .{});
+        try t.expect(result == .exact_test);
+        const context = try Context.init(m, .jonckheere, null, 1);
+        const integers = try exact.Matrix.fromCounts(t.allocator, 3, 3, &sample.counts);
+        defer t.allocator.free(integers.cells);
+        const callback = (try exact.enumerate(t.allocator, integers, Adapters(exact).statistic(&context), .{})).complete;
+        for ([_]exact.Probabilities{ result.exact_test, callback }) |p| {
+            // At most 60 terms; 1e-13 allows log-mass/exponentiation rounding.
+            try t.expectApproxEqAbs(point / 60, p.point, 1e-13);
+            try t.expectApproxEqAbs(left / 60, p.left, 1e-13);
+            try t.expectApproxEqAbs(right / 60, p.right, 1e-13);
+            try t.expectApproxEqAbs(two / 60, p.two_sided, 1e-13);
+            try t.expectApproxEqAbs((if (sample.j > mean) right else left) / 60, p.one_sided, 1e-13);
+            try t.expectEqual(sample.j > mean, p.right_sided);
+        }
+    }
+}

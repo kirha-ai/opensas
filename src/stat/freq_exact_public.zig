@@ -504,6 +504,68 @@ const Harness = struct {
     }
 };
 
+test "STAT-FREQ-013 public JT ordering scores tails and captured inapplicability" {
+    // S154 physical pp.3214-3216: row order determines the alternative;
+    // score spacing does not enter J. The 60 labeled allocations enumerated
+    // in freq_stratified_exact.zig give J=10, E(J)=5.5, Var(J)=201/40.
+    // Integrating the standard normal density gives p1=.0223509477452600.
+    // Exact tails are 3/60 one-sided, 3/60 point, and 4/60 two-sided.
+    // Reversing rows changes J to 1 and Z's sign but preserves these tails.
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const check = struct {
+        fn tokens(expected: []const u8, actual: []const u8) !void {
+            var want = std.mem.tokenizeAny(u8, expected, " \t\r\n");
+            var got = std.mem.tokenizeAny(u8, actual, " \t\r\n");
+            while (want.next()) |word| try std.testing.expectEqualStrings(word, got.next() orelse return error.TestExpectedEqual);
+            try std.testing.expect(got.next() == null);
+        }
+    }.tokens;
+    var h = try Harness.init(a, &.{}, 3);
+    const ds = h.lib.sets.items[0];
+    for ([_]f64{ 1, 0, 0, 2, 0, 0, 0, 2, 1 }, 0..) |count, i|
+        try ds.appendRow(&.{ .{ .num = @floatFromInt(30 - 10 * (i / 3)) }, .{ .num = @floatFromInt(10 + 10 * (i % 3)) }, .{ .num = count } });
+    for ([_][]const u8{ "data", "internal" }) |order| {
+        for ([_][]const u8{ "table", "rank", "ridit", "modridit" }) |scores| {
+            var d = diag.Diagnostics.init(a);
+            const source = try std.fmt.allocPrint(a, "proc freq data=d order={s}; weight w / zeros; tables r*c / jt noprint scores={s}; exact jt / point; run;", .{ order, scores });
+            const out = try h.run(source, &d);
+            try std.testing.expectEqual(@as(usize, 0), d.list.items.len);
+            const start = std.mem.indexOf(u8, out, "Jonckheere-Terpstra Test") orelse return error.TestExpectedEqual;
+            const expected = if (std.mem.eql(u8, order, "data"))
+                "Jonckheere-Terpstra Test One-sided Pr >= Statistic 0.0500 Point Pr = Statistic 0.0500 Two-sided Pr >= |Statistic| 0.0667 " ++
+                    "Jonckheere-Terpstra Test Statistic 10.0000 Z 2.0074 One-sided Pr > Z 0.0224 Two-sided Pr > |Z| 0.0447 Sample Size = 6"
+            else
+                "Jonckheere-Terpstra Test One-sided Pr <= Statistic 0.0500 Point Pr = Statistic 0.0500 Two-sided Pr >= |Statistic| 0.0667 " ++
+                    "Jonckheere-Terpstra Test Statistic 1.0000 Z -2.0074 One-sided Pr < Z 0.0224 Two-sided Pr > |Z| 0.0447 Sample Size = 6";
+            try check(expected, out[start..]);
+        }
+    }
+    var central = try Harness.init(a, &.{ 1, 1, 1, 1 }, 2);
+    var d = diag.Diagnostics.init(a);
+    const out = try central.run("proc freq data=d; weight w; tables r*c / jt noprint; run;", &d);
+    const start = std.mem.indexOf(u8, out, "Jonckheere-Terpstra Test") orelse return error.TestExpectedEqual;
+    try check("Jonckheere-Terpstra Test Statistic 2.0000 Z 0.0000 One-sided Pr < Z 0.5000 Two-sided Pr > |Z| 1.0000 Sample Size = 4", out[start..]);
+    try std.testing.expectEqual(@as(usize, 0), d.list.items.len);
+
+    // Negative WEIGHT counts exclude inference (S154 physical pp.3157-3158).
+    // Exercise the real captured reporter, with no aborting child process.
+    var negative = try Harness.init(a, &.{ 1, -1, 1, 1 }, 2);
+    var notes = diag.Diagnostics.init(a);
+    const suppressed = try negative.run("proc freq data=d; weight w; tables r*c / jt noprint; run;", &notes);
+    try std.testing.expect(std.mem.indexOf(u8, suppressed, "Jonckheere-Terpstra Test") == null);
+    var found = false;
+    for (notes.list.items) |note| {
+        if (std.mem.indexOf(u8, note.message, "negative weights") != null) {
+            try std.testing.expectEqual(diag.Severity.note, note.severity);
+            found = true;
+        }
+    }
+    try std.testing.expect(found);
+    try std.testing.expectEqual(@as(u8, 0), diag.exitCode(false, notes.hasErrors() or notes.warning_status));
+}
+
 test "STAT-FREQ-004 exact comparison tables retain every field and listing order" {
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();

@@ -239,6 +239,31 @@ test "Jonckheere statistic retains signed departures and the fixed-margin permut
     try t.expectApproxEqRel(@as(f64, 0.09375) / @sqrt(@as(f64, 67.0 / 384.0)), fractional.z, 2e-15);
 }
 
+test "STAT-FREQ-013 JT minimal sample ties and undefined variance" {
+    // S154 physical pp.3214-3216. Two observations in distinct groups and
+    // response categories have J in {0,1}, E(J)=1/2 and Var(J)=1/4.
+    // Phi(-1) is the independent normal integral 0.15865525393145705.
+    const t = std.testing;
+    for ([_][4]f64{ .{ 1, 0, 0, 1 }, .{ 0, 1, 1, 0 } }, [_]f64{ 1, -1 }) |counts, sign| {
+        const result = (try jonckheere(t.allocator, .{ .rows = 2, .cols = 2, .counts = &counts })).?;
+        try t.expectEqual(sign, result.z);
+        try t.expectEqual((sign + 1) / 2, result.statistic);
+        try t.expectApproxEqAbs(@as(f64, 0.15865525393145705), result.p_one, 2e-15);
+        try t.expectApproxEqAbs(@as(f64, 0.31731050786291410), result.p_two, 4e-15);
+    }
+    // Constant responses or one occupied group have no permutation variance.
+    // Empty and singleton samples likewise cannot define standardized J.
+    for ([_][4]f64{ .{ 2, 0, 3, 0 }, .{ 2, 3, 0, 0 }, .{ 0, 0, 0, 0 }, .{ 0, 0, 0, 1 } }) |counts| {
+        try t.expect(try jonckheere(t.allocator, .{ .rows = 2, .cols = 2, .counts = &counts }) == null);
+    }
+    // Balanced ties give J=E(J), Z=0 and exact standard-normal tail limits.
+    const central = (try jonckheere(t.allocator, .{ .rows = 2, .cols = 2, .counts = &.{ 1, 1, 1, 1 } })).?;
+    try t.expectEqual(@as(f64, 2), central.statistic);
+    try t.expectEqual(@as(f64, 0), central.z);
+    try t.expectEqual(@as(f64, 0.5), central.p_one);
+    try t.expectEqual(@as(f64, 1), central.p_two);
+}
+
 pub fn mcnemar(m: Matrix, null_ratio: f64) Error!?Chi {
     _ = try validate(m);
     if (!(null_ratio > 0) or !std.math.isFinite(null_ratio)) return error.ExecError;
