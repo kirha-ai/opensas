@@ -1,0 +1,11 @@
+# corpus assertions
+stderr-count 1 The treatment variable X2 is not found in the model B.
+stderr-count 1 The treatment variable X2 is not found in the model M2.
+stderr-count 1 The outcome variable Y2 is not found in the model M2.
+stderr-count 1 The adjustment variable W is not found in the model M2.
+stderr-count 1 Variable Q specified in the IDENTIFY statement is not found in any model.
+stderr-count 1 Variable R specified in the IDENTIFY statement is not found in any model.
+stderr-count 6 WARNING
+stdout-count 1 NOTE: There are no adjustment sets satisfying the specified criteria for J3. Adjustment sets might exist for individual treatment effects.
+stdout-count 1 NOTE: There are no adjustment sets satisfying the specified criteria for S.
+stdout-count 1 Adjustment sets might exist

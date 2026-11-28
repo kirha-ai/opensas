@@ -11,7 +11,7 @@
 //! enumerated over the measured covariates and listed by increasing size.
 //! Layout and messages follow SAS 9.4 reference runs. Everything not proven
 //! against a reference listing (METHOD=BACKDOOR/IV, TESTID, IMAP, COMMON,
-//! NOSORT, CYCLES=, joint effects) is a
+//! NOSORT, CYCLES=) is a
 //! D-009 gap (rc 2) raised before any listing text is produced.
 const std = @import("std");
 const proc = @import("../proc.zig");
@@ -472,7 +472,8 @@ pub fn validate(cx: proc.ProcCtx, s: Spec) diag.Error!void {
     // Disconnected models: VariableInfo, summary, every ConnectedComponents
     // table, then (DISCONNECTED) every AdjustList (SAS 9.4 reference runs).
     if (s.opts.method != .adjustment) return gap(cx, 0, "METHOD={s} is not implemented", .{if (s.opts.method == .iv) "IV" else "BACKDOOR"});
-    if (s.treatments.len > 1 or s.outcomes.len > 1) return gap(cx, line, "joint causal effects (several treatment or outcome variables) are not implemented", .{});
+    // Joint effects (several treatments and/or outcomes, pp.2303/2317) use
+    // the same set-valued adjustment criterion (STAT-CAUSALGRAPH-004).
 }
 
 fn hasCycle(a: A, n: usize, edges: []const Edge) !bool {
@@ -831,6 +832,12 @@ pub fn run(cx: proc.ProcCtx, out: *Out, t: []const lex.Token) diag.Error!void {
                 try mc.append(a, c);
                 try pos.append(a, k);
             };
+            // Joint effect: a role variable missing from one model is dropped
+            // there with a warning, treatments, then outcomes, then
+            // adjustment variables (SAS 9.4 reference run); the isolated
+            // node then plays no part in that model's criterion.
+            for (s.treatments) |x| if (!contains(m.nodes, x)) try cx.diags.warn(s.identify_line, "The treatment variable {s} is not found in the model {s}.", .{ s.names[x], m.label });
+            for (s.outcomes) |y| if (!contains(m.nodes, y)) try cx.diags.warn(s.identify_line, "The outcome variable {s} is not found in the model {s}.", .{ s.names[y], m.label });
             var required: u64 = 0;
             for (s.adjust) |z| {
                 // A prescribed variable missing from this model is dropped
@@ -1027,7 +1034,10 @@ fn adjustTable(cx: proc.ProcCtx, out: *Out, s: Spec, m: Model, sets: []const Set
         try shown.append(a, st);
     }
     if (shown.items.len == 0) {
-        try out.appendSlice(a, try std.fmt.allocPrint(a, "NOTE: There are no adjustment sets satisfying the specified criteria for {s}.\n\n", .{m.label}));
+        // A joint effect adds a second sentence, also for one treatment with
+        // several outcomes (SAS 9.4 reference run).
+        const joint = s.treatments.len > 1 or s.outcomes.len > 1;
+        try out.appendSlice(a, try std.fmt.allocPrint(a, "NOTE: There are no adjustment sets satisfying the specified criteria for {s}.{s}\n\n", .{ m.label, if (joint) " Adjustment sets might exist for individual treatment effects." else "" }));
         return;
     }
     var used: std.ArrayList(usize) = .empty; // bit positions into cands
@@ -1079,8 +1089,25 @@ fn adjustTable(cx: proc.ProcCtx, out: *Out, s: Spec, m: Model, sets: []const Set
         }
     }
     const t1 = try std.fmt.allocPrint(a, "Covariate Adjustment Sets for {s}", .{m.label});
-    const t2 = try std.fmt.allocPrint(a, "Causal Effect of {s} on {s}", .{ s.names[s.treatments[0]], s.names[s.outcomes[0]] });
+    const t2 = try std.fmt.allocPrint(a, "Causal Effect of {s} on {s}", .{ try roleList(a, s.names, s.treatments), try roleList(a, s.names, s.outcomes) });
     try table(a, out, &.{ t1, t2 }, 1, cols.items, gaps, if (used.items.len > 0) Spanner{ .from = 3, .text = span_text } else null);
+}
+
+/// One role variable as written; several in braces, alphabetical (SAS 9.4
+/// reference runs: `identify B A ==> Q P` titles `{A B} on {P Q}`, also in
+/// a model that lacks some of them).
+fn roleList(a: A, names: []const []const u8, ids: []const usize) ![]const u8 {
+    if (ids.len == 1) return names[ids[0]];
+    const ord = try a.dupe(usize, ids);
+    sortedIds(names, ord);
+    var b: Out = .empty;
+    try b.append(a, '{');
+    for (ord, 0..) |id, k| {
+        if (k > 0) try b.append(a, ' ');
+        try b.appendSlice(a, names[id]);
+    }
+    try b.append(a, '}');
+    return b.items;
 }
 
 // ── tests ──────────────────────────────────────────────────────────────────
@@ -1214,4 +1241,42 @@ test "STAT-CAUSALGRAPH-002 hand-derived adjustment sets: descendant of the treat
     try std.testing.expectEqual(@as(u64, 0b1100), pres[0].mask);
     try std.testing.expectEqual(@as(u64, 0b1101), pres[1].mask);
     try std.testing.expect(pres[0].minimal and !pres[1].minimal);
+}
+
+test "STAT-CAUSALGRAPH-004 hand-derived joint-effect adjustment sets (pp.2303, 2317)" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    // Sequential treatments: 0 X1, 1 L, 2 X2, 3 Y, 4 U; X1 -> L -> X2 -> Y,
+    // X1 -> Y, U -> L, U -> Y. PCP = {Y} (L reaches Y only through X2), so
+    // L is not forbidden. X2 <- L <- U -> Y needs L or U; conditioning on L
+    // opens the collider X1 -> L <- U -> Y unless U is adjusted too: the
+    // sets over cands {L, U} are {U} (minimal) and {L,U}; with U unmeasured
+    // (cands {L}) there is none.
+    const seq = [_]Edge{ .{ .from = 0, .to = 1 }, .{ .from = 1, .to = 2 }, .{ .from = 2, .to = 3 }, .{ .from = 0, .to = 3 }, .{ .from = 4, .to = 1 }, .{ .from = 4, .to = 3 } };
+    const an = try analyse(a, 5, &seq, &.{ 0, 2 }, &.{3});
+    const s1 = try enumerate(a, 5, an, &.{ 1, 4 }, &.{ 0, 2 }, &.{3}, 0);
+    try std.testing.expectEqual(@as(usize, 2), s1.len);
+    try std.testing.expectEqual(@as(u64, 0b10), s1[0].mask);
+    try std.testing.expect(s1[0].minimal);
+    try std.testing.expectEqual(@as(u64, 0b11), s1[1].mask);
+    try std.testing.expect(!s1[1].minimal);
+    try std.testing.expectEqual(@as(usize, 0), (try enumerate(a, 5, an, &.{1}, &.{ 0, 2 }, &.{3}, 0)).len);
+    // Several outcomes (p.2317): 0 X, 1 Y1, 2 Y2, 3 Z1, 4 W, 5 V with
+    // W -> X Z1, Z1 -> Y1, V -> Z1 Y2, X -> Y1 Y2 (W, V latent). X on Y1
+    // needs Z1; Z1 opens X <- W -> Z1 <- V -> Y2 for Y2, so no set is valid
+    // for {Y1, Y2} although each outcome alone is identified.
+    const mo = [_]Edge{ .{ .from = 4, .to = 0 }, .{ .from = 4, .to = 3 }, .{ .from = 3, .to = 1 }, .{ .from = 5, .to = 3 }, .{ .from = 5, .to = 2 }, .{ .from = 0, .to = 1 }, .{ .from = 0, .to = 2 } };
+    const both = try analyse(a, 6, &mo, &.{0}, &.{ 1, 2 });
+    try std.testing.expectEqual(@as(usize, 0), (try enumerate(a, 6, both, &.{3}, &.{0}, &.{ 1, 2 }, 0)).len);
+    const y1 = try enumerate(a, 6, try analyse(a, 6, &mo, &.{0}, &.{1}), &.{3}, &.{0}, &.{1}, 0);
+    try std.testing.expectEqual(@as(usize, 1), y1.len);
+    try std.testing.expectEqual(@as(u64, 1), y1[0].mask);
+    const y2 = try enumerate(a, 6, try analyse(a, 6, &mo, &.{0}, &.{2}), &.{3}, &.{0}, &.{2}, 0);
+    try std.testing.expectEqual(@as(usize, 1), y2.len);
+    try std.testing.expectEqual(@as(u64, 0), y2[0].mask);
+    // Title lists: one name as written, several in braces, alphabetical.
+    const names = [_][]const u8{ "B", "A", "Q" };
+    try std.testing.expectEqualStrings("B", try roleList(a, &names, &.{0}));
+    try std.testing.expectEqualStrings("{A B}", try roleList(a, &names, &.{ 0, 1 }));
 }

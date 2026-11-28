@@ -3,7 +3,7 @@
  * scope fail visibly with no listing: METHOD=BACKDOOR and METHOD=IV, the
  * TESTID statement, the IMAP, COMMON, CYCLES and NOSORT options (PSUMMARY is implemented by
  * STAT-CAUSALGRAPH-002)
- * and a joint effect. Invented graphs.
+ * (joint effects are implemented by STAT-CAUSALGRAPH-004). Invented graphs.
  */
 options nosyntaxcheck;
 proc causalgraph method=backdoor; model 'M' X ==> Y, Z ==> X Y; identify X ==> Y; run;
@@ -13,4 +13,3 @@ proc causalgraph imap; model 'M' X ==> Y, Z ==> X Y; run;
 proc causalgraph common; model 'M' X ==> Y, Z ==> X Y; identify X ==> Y; run;
 proc causalgraph cycles=all; model 'M' X ==> Y, Z ==> X Y; identify X ==> Y; run;
 proc causalgraph nosort; model 'M' X ==> Y, Z ==> X Y; identify X ==> Y; run;
-proc causalgraph; model 'J' X1 X2 ==> Y, Z ==> X1 Y; identify X1 X2 ==> Y; run;
