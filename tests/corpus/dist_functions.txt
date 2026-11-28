@@ -4,4 +4,6 @@ n1=0.5 np=0.1875 nq=2
 h1=0.5236734081 hp=0.5 hq=1
 cc=1 cf=1 ct=1
 sw=0.7788007831 lg=-0.380391471
-rw=2.449575504 okg=1 okn=1 okh=1
+rw=2.449575504 rh=1
+okg=1 okn=1 okh=1
+opensas_pin rg=1 rn=2

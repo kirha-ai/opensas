@@ -16,4 +16,6 @@ data _null_;
      approximates CALL STREAM by reseeding, so only the range is pinned. */
   inrange = (0 < u3 < 1);
   put "stream99_in01=" inrange;
+  /* opensas regression pin, NOT a SAS expectation (SAS 9.4: 0.3087137). */
+  put "opensas_pin_stream99=" u3 hex16.;
 run;

@@ -7,3 +7,4 @@ allcombi6 =1 4
 streaminit= 0.5817001
 rewind= 0.5817001
 stream99_in01=1
+opensas_pin_stream99=3FDF246946FFFFFF
