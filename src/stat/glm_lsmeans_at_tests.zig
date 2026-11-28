@@ -245,3 +245,66 @@ test "GLM015 observed margins preserve nonestimability and BYLEVEL can restore a
     try close(1, conditional.means[1].coefficients[3]);
     try close(0, conditional.means[1].coefficients[4]);
 }
+
+// S154 physical4146–4147: conditional margins use precision weights and
+// FREQ multiplicity; AT is disabled. Weighted within-group residuals below
+// sum to zero and are orthogonal to x, hence the raw mean and its variance
+// MSE/sum(FREQ*WEIGHT) are independent closed-form checks.
+test "GLM015 weighted conditional covariate means retain frequency DF and ignore AT" {
+    var arena = std.heap.ArenaAllocator.init(t.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var ds = Dataset.init(a, "sample");
+    for ([_][]const u8{ "g", "x", "y", "w", "f" }) |name| _ = try ds.addColumn(name, .num);
+    for (0..2) |group| for ([_]f64{ -1, 0, 1 }, [_]f64{ 1, 1, 2 }, [_]f64{ 1, -2, 0.5 }) |delta, weight, residual| {
+        const g: f64 = @floatFromInt(group);
+        const x = 10 * g + delta;
+        try ds.appendRow(&.{ .{ .num = g }, .{ .num = x }, .{ .num = 1 + 4 * g + 2 * x + residual }, .{ .num = weight }, .{ .num = 2.9 } });
+    };
+    var lib = Library.init(a);
+    try lib.put("sample", &ds);
+    var diagnostics = diag.Diagnostics.init(a);
+    const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &diagnostics };
+    const spec = try parse(cx, "proc glm; class g; model y=g x; weight w; freq f; lsmeans g / om bylevel at x=100 stderr; lsmeans g / at means; run;");
+    const d = try design(cx, spec);
+    var fit = try glm.fitDesign(cx, spec, d);
+    defer fit.deinit(a);
+    const table = try lsmeans.computeWithFit(cx, spec, d, spec.lsmeans[0], fit);
+    try t.expectEqual(@as(usize, 9), table.df_error);
+    try close(22.0 / 9.0, fit.model.fit.mse);
+    for (table.means, [_]f64{ 0.25, 10.25 }, [_]f64{ 1.5, 25.5 }) |mean, x, expected| {
+        try close(x, mean.coefficients[3]);
+        try close(expected, mean.inference.estimate.?);
+        try close(@sqrt(@as(f64, 11.0 / 36.0)), mean.inference.standard_error.?);
+    }
+    const covariates = try at.compute(cx, spec, d, spec.lsmeans[1].at.?);
+    try close(16, covariates.total_weight);
+    try close(5.25, covariates.values[1]);
+    try t.expectEqualStrings("", try diagnostics.render());
+}
+
+test "GLM015 unproved observed-population domains emit captured gaps" {
+    var arena = std.heap.ArenaAllocator.init(t.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    for ([_]bool{ false, true }) |new_level| {
+        var ds = Dataset.init(a, "sample");
+        for ([_][]const u8{ "g", "x", "y" }) |name| _ = try ds.addColumn(name, .num);
+        for (0..2) |g| for (0..3) |i| try ds.appendRow(&.{ .{ .num = @floatFromInt(g) }, .{ .num = @floatFromInt(i) }, .{ .num = @floatFromInt(g * 4 + i * i) } });
+        try ds.appendRow(&.{ .{ .num = if (new_level) 2 else 0 }, .{ .num = 4 }, .{ .num = std.math.nan(f64) } });
+        var lib = Library.init(a);
+        try lib.put("sample", &ds);
+        var diagnostics = diag.Diagnostics.init(a);
+        const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &diagnostics };
+        diag.resetGap();
+        defer diag.resetGap();
+        const spec = try parse(cx, "proc glm; class g; model y=g x; lsmeans g / om bylevel; run;");
+        const d = try design(cx, spec);
+        var fit = try glm.fitDesign(cx, spec, d);
+        defer fit.deinit(a);
+        try t.expectError(error.ParseError, lsmeans.computeWithFit(cx, spec, d, spec.lsmeans[0], fit));
+        const message = if (new_level) "PROC GLM: observed margins with new unfitted CLASS levels are not implemented" else "PROC GLM: BYLEVEL covariate sampling with missing responses is not implemented";
+        try t.expectEqualStrings(try std.fmt.allocPrint(a, "ERROR: {s}\n", .{message}), try diagnostics.render());
+        try t.expectEqual(@as(u8, 2), diag.exitCode(diag.gapHit(), diagnostics.hasErrors()));
+    }
+}
