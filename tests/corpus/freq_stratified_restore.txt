@@ -133,6 +133,7 @@ ASE                            0.1265
 95% Upper Conf Limit           0.4053
 
 Sample Size = 54
+DF
                         The FREQ Procedure
 
 Summary Statistics for r by c
