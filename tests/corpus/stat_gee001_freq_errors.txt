@@ -1,0 +1,22 @@
+CASE12 empty
+
+The GEE Procedure
+
+         Model Information
+
+Data Set              WORK.CHILDREN
+Distribution               Binomial
+Link Function                 Logit
+Dependent Variable          Symptom
+CASE13 FREQ varies within subject
+
+The GEE Procedure
+
+      Model Information
+
+Data Set               WORK.F3
+Distribution          Binomial
+Link Function            Logit
+Dependent Variable     Symptom
+Frequency Variable           f
+

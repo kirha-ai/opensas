@@ -13,10 +13,14 @@
 //! Model-based covariance I0^-1, empirical I0^-1 I1 I0^-1 (sandwich);
 //! QIC = -2Q + 2 trace(Omega_I V_R), QICu = -2Q + 2p (Pan 2001).
 //!
+//! FREQ, WEIGHT, ORDER=, NAMELEN=, observations dropped for missing values,
+//! MAXITER= nonconvergence and the no-valid-observation / unequal-frequency
+//! ERRORs follow a batched SAS 9.4 reference run (tests/corpus/stat_gee001_*).
+//!
 //! ponytail: everything outside that verified slice — other DIST=/LINK=,
-//! TYPE= other than EXCH/CS, WITHIN=, LOGOR=, FREQ, WEIGHT, MISSMODEL,
-//! CLASS options, crossed/nested effects, observations dropped for missing
-//! values, the later statements — is a D-009 gap (exit 2) that prints nothing.
+//! TYPE= other than EXCH/CS, WITHIN=, LOGOR=, MISSMODEL, CLASS options,
+//! crossed/nested effects, the later statements — is a D-009 gap (exit 2)
+//! that prints nothing.
 const std = @import("std");
 const proc = @import("../proc.zig");
 const diag = @import("../diag.zig");
@@ -27,6 +31,7 @@ const by = @import("by_groups.zig");
 const classes = @import("class_levels.zig");
 const selection = @import("data_selection.zig");
 const kernel = @import("genmod_binomial.zig");
+const io = @import("../io.zig");
 const linalg = @import("genmod_fit.zig");
 const chiTail = @import("logistic_fit.zig").chiTail;
 const A = std.mem.Allocator;
@@ -312,7 +317,8 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
                 }
             } else if (j < end) return invalid(cx, t, j);
         } else if (eq(word, "freq") or eq(word, "frequency")) {
-            if (freq_seen) return proc.failGap(cx.diags, l, "PROC GEE: more than one FREQ statement is not verified", .{});
+            // SAS 9.4 (batched reference run): "ERROR: Only one FREQ statement is allowed."
+            if (freq_seen) return cx.diags.fail(error.ParseError, l, "Only one FREQ statement is allowed.", .{});
             freq_seen = true;
             s.frequency = try numericColumn(cx, ds, t, i + 1, "FREQ");
             if (end != i + 2) return invalid(cx, t, i + 2);
@@ -355,25 +361,139 @@ pub const Selection = struct {
     rows: []const usize,
     levels: []const classes.Levels,
     response: classes.Levels,
+    /// Per used row: truncated frequency (FREQ, else 1) and dispersion weight (WEIGHT, else 1).
+    freq: []const f64,
+    weight: []const f64,
+    /// Response Profile levels and per-level WEIGHT sums (see `prepare`).
+    profile: []const classes.Level = &.{},
+    profile_weights: []const f64 = &.{},
+    freq_read: f64 = 0,
+    freq_used: f64 = 0,
+    weight_sum: f64 = 0,
+    /// Subject levels with at least one dropped observation.
+    missing_clusters: usize = 0,
 };
 
+pub const PrepareError = diag.Error || error{UnequalFrequency};
+
 /// Missing response, effect, CLASS or SUBJECT values drop the observation
-/// (pp.3440–3442: without WITHIN= missing values are not used).
-pub fn prepare(cx: proc.ProcCtx, s: Spec, rows: []const []const Value) diag.Error!Selection {
+/// (pp.3440–3442: without WITHIN= missing values are not used), as do a
+/// missing or nonpositive FREQ value (p.3431) and a missing or nonpositive
+/// WEIGHT value (p.3444). The FREQ value is truncated to an integer.
+/// SAS 9.4 reference run: a FREQ value in (0,1) keeps the observation as
+/// "used" with frequency 0 (it then contributes nothing); the subject keeps
+/// every level, a dropped cluster counts as a cluster of size 0.
+/// ponytail: CLASS levels other than SUBJECT= come from the used rows; no
+/// reference distinguished that from levels over each variable's own
+/// nonmissing rows (they coincided in every replayed case).
+/// SAS 9.4 reference run: under ORDER=FREQ, levels with equal frequencies
+/// follow their formatted values compared as text (numeric ID: 1 10 11 ... 2).
+fn freqTies(a: A, lv: classes.Levels) !classes.Levels {
+    const n = lv.levels.len;
+    const perm = try a.alloc(usize, n);
+    for (perm, 0..) |*p, k| p.* = k;
+    const Ctx = struct {
+        l: []const classes.Level,
+        fn less(c: @This(), x: usize, y: usize) bool {
+            if (c.l[x].frequency != c.l[y].frequency) return c.l[x].frequency > c.l[y].frequency;
+            return std.mem.lessThan(u8, std.mem.trim(u8, c.l[x].label, " "), std.mem.trim(u8, c.l[y].label, " "));
+        }
+    };
+    std.mem.sort(usize, perm, Ctx{ .l = lv.levels }, Ctx.less);
+    const sorted = try a.alloc(classes.Level, n);
+    const rank = try a.alloc(usize, n);
+    for (perm, 0..) |old, new| {
+        sorted[new] = lv.levels[old];
+        rank[old] = new;
+    }
+    const map = try a.alloc(?usize, lv.row_to_level.len);
+    for (lv.row_to_level, map) |r, *m| m.* = if (r) |old| rank[old] else null;
+    return .{ .levels = sorted, .row_to_level = map, .storage = lv.storage };
+}
+
+pub fn prepare(cx: proc.ProcCtx, s: Spec, rows: []const []const Value) PrepareError!Selection {
     const a = cx.arena;
     var kept: std.ArrayList(usize) = .empty;
+    var freq: std.ArrayList(f64) = .empty;
+    var weight: std.ArrayList(f64) = .empty;
     const mask = try a.alloc(bool, rows.len);
+    const freqs = try a.alloc(f64, rows.len);
+    const profile = try a.alloc(bool, rows.len);
+    const profile_freq = try a.alloc(f64, rows.len);
+    const profile_weight = try a.alloc(f64, rows.len);
+    var freq_read: f64 = 0;
+    var weight_sum: f64 = 0;
+    var freq_used: f64 = 0;
     for (rows, 0..) |row, k| {
         var miss = selection.missing(row[s.response]) or selection.missing(row[s.subject]);
         for (s.effects) |ci| miss = miss or selection.missing(row[ci]);
         for (s.class) |ci| miss = miss or selection.missing(row[ci]);
+        var f: f64 = 1;
+        var bad_fw = false;
+        if (s.frequency) |ci| {
+            const v = row[ci];
+            if (selection.missing(v) or !(v.num > 0)) bad_fw = true else {
+                f = @trunc(v.num);
+                freq_read += f;
+            }
+        }
+        var w: f64 = 1;
+        if (s.weight) |ci| {
+            const v = row[ci];
+            if (selection.missing(v) or !(v.num > 0)) bad_fw = true else w = v.num;
+        }
+        miss = miss or bad_fw;
         mask[k] = !miss;
-        if (!miss) try kept.append(a, k);
+        freqs[k] = if (miss) 0 else f;
+        // Reference run: the Response Profile counts every observation with a
+        // response and a valid FREQ/WEIGHT, even when a covariate is missing.
+        profile[k] = !(selection.missing(row[s.response]) or bad_fw);
+        profile_freq[k] = if (profile[k]) f else 0;
+        profile_weight[k] = if (profile[k]) w else 0;
+        if (!miss) {
+            try kept.append(a, k);
+            try freq.append(a, f);
+            try weight.append(a, w);
+            freq_used += f;
+            weight_sum += w;
+        }
     }
     const levels = try a.alloc(classes.Levels, s.class.len);
-    for (s.class, 0..) |ci, k| levels[k] = try classes.build(a, s.input.ds, rows, ci, .{ .order = s.order, .include_rows = mask });
-    const response = try classes.build(a, s.input.ds, rows, s.response, .{ .order = .formatted, .include_rows = mask });
-    return .{ .read = rows.len, .used = kept.items.len, .rows = kept.items, .levels = levels, .response = response };
+    for (s.class, 0..) |ci, k| {
+        const all = ci == s.subject;
+        levels[k] = try classes.build(a, s.input.ds, rows, ci, .{ .order = s.order, .include_rows = if (all) null else mask });
+        if (s.order == .freq) levels[k] = try freqTies(a, levels[k]);
+    }
+    // Response levels: ORDER=FREQ orders them by frequency (reference run);
+    // FORMATTED/INTERNAL coincide for the replayed numeric responses.
+    const response_order: classes.Order = if (s.order == .freq) .freq else .formatted;
+    const response = try classes.build(a, s.input.ds, rows, s.response, .{ .order = response_order, .include_rows = mask, .frequencies = freqs });
+    const profile_levels = try classes.build(a, s.input.ds, rows, s.response, .{ .order = response_order, .include_rows = profile, .frequencies = profile_freq });
+    if (profile_levels.levels.len != response.levels.len) return proc.failGap(cx.diags, 0, "PROC GEE: a response level present only in observations dropped for missing values is not verified against SAS output", .{});
+    const level_weights = try a.alloc(f64, profile_levels.levels.len);
+    @memset(level_weights, 0);
+    for (profile_levels.row_to_level, 0..) |r, k| if (r) |lv| {
+        level_weights[lv] += profile_weight[k];
+    };
+    // p.3431: the frequencies must be equal within each subject.
+    const subject_levels = levels[classIndex(s, s.subject).?];
+    const first = try a.alloc(?f64, subject_levels.levels.len);
+    @memset(first, null);
+    const dropped = try a.alloc(bool, subject_levels.levels.len);
+    @memset(dropped, false);
+    for (rows, 0..) |_, k| {
+        const lv = subject_levels.row_to_level[k] orelse continue;
+        if (!mask[k]) {
+            dropped[lv] = true;
+            continue;
+        }
+        if (first[lv]) |f0| {
+            if (f0 != freqs[k]) return error.UnequalFrequency;
+        } else first[lv] = freqs[k];
+    }
+    var missing_clusters: usize = 0;
+    for (dropped) |d| missing_clusters += @intFromBool(d);
+    return .{ .read = rows.len, .used = kept.items.len, .rows = kept.items, .levels = levels, .response = response, .freq = freq.items, .weight = weight.items, .freq_read = freq_read, .freq_used = freq_used, .weight_sum = weight_sum, .missing_clusters = missing_clusters, .profile = profile_levels.levels, .profile_weights = level_weights };
 }
 
 const Column = struct { effect: usize, level: ?usize = null };
@@ -390,7 +510,16 @@ pub const Fit = struct {
     alpha: f64,
     qic: f64,
     qicu: f64,
+    /// False when MAXITER= updates ran out (SAS prints the last estimates).
+    converged: bool = true,
 };
+
+/// Per-row frequency (truncated FREQ) and dispersion weight (WEIGHT).
+pub const RowWeights = struct { freq: []const f64, weight: []const f64 };
+
+fn clusterFreq(rw: RowWeights, c: []const usize) f64 {
+    return if (c.len == 0) 0 else rw.freq[c[0]];
+}
 
 /// Inverse of a q*q symmetric positive definite matrix.
 fn inverse(a: A, m: []const f64, q: usize) error{ OutOfMemory, Singular }![]f64 {
@@ -412,26 +541,31 @@ fn expit(eta: f64) f64 {
 }
 
 /// Residual moments at `beta`: returns alpha (exchangeable).
-fn moments(x: []const f64, y: []const f64, q: usize, beta: []const f64, clusters: []const []const usize, mu: []f64, e: []f64) error{Degenerate}!f64 {
+/// Pearson residuals e = sqrt(w)(y - mu)/sqrt(v(mu)); a FREQ value f counts
+/// each observation (and, being constant within a subject, each cluster) f times.
+fn moments(x: []const f64, y: []const f64, q: usize, beta: []const f64, clusters: []const []const usize, rw: RowWeights, mu: []f64, e: []f64) error{Degenerate}!f64 {
     const n = y.len;
     var ss: f64 = 0;
+    var total: f64 = 0;
     for (0..n) |i| {
         var eta: f64 = 0;
         for (0..q) |j| eta += x[i * q + j] * beta[j];
         mu[i] = expit(eta);
-        e[i] = (y[i] - mu[i]) / @sqrt(mu[i] * (1 - mu[i]));
-        ss += e[i] * e[i];
+        e[i] = @sqrt(rw.weight[i]) * (y[i] - mu[i]) / @sqrt(mu[i] * (1 - mu[i]));
+        ss += rw.freq[i] * e[i] * e[i];
+        total += rw.freq[i];
     }
     const qf: f64 = @floatFromInt(q);
-    const phi = ss / (@as(f64, @floatFromInt(n)) - qf);
+    const phi = ss / (total - qf);
     var cross: f64 = 0;
     var pairs: f64 = 0;
     for (clusters) |c| {
+        const f = clusterFreq(rw, c);
         for (c, 0..) |r1, j| for (c[j + 1 ..]) |r2| {
-            cross += e[r1] * e[r2];
+            cross += f * e[r1] * e[r2];
         };
         const m: f64 = @floatFromInt(c.len);
-        pairs += m * (m - 1) / 2;
+        pairs += f * m * (m - 1) / 2;
     }
     if (!(pairs - qf > 0) or !(phi > 0)) return error.Degenerate;
     return cross / ((pairs - qf) * phi);
@@ -441,16 +575,19 @@ pub const FitError = error{ OutOfMemory, Singular, NotConverged, Degenerate };
 
 /// Accumulates I0 = sum D'V^-1 D and (optionally) the score and the sandwich
 /// meat for exchangeable working correlation `alpha` (scale cancels; phi=1).
-fn accumulate(a: A, x: []const f64, y: []const f64, q: usize, mu: []const f64, clusters: []const []const usize, alpha: f64, info: []f64, score: []f64, meat: []f64) FitError!void {
+fn accumulate(a: A, x: []const f64, y: []const f64, q: usize, mu: []const f64, clusters: []const []const usize, rw: RowWeights, alpha: f64, info: []f64, score: []f64, meat: []f64) FitError!void {
     @memset(info, 0);
     @memset(score, 0);
     @memset(meat, 0);
     for (clusters) |c| {
         const m = c.len;
+        const f = clusterFreq(rw, c);
+        if (m == 0 or f == 0) continue;
         const v = try a.alloc(f64, m * m);
+        // WEIGHT divides the dispersion: Var(y) = phi v(mu) / w (p.3444).
         for (c, 0..) |r1, j| for (c, 0..) |r2, k| {
             const corr: f64 = if (j == k) 1 else alpha;
-            v[j * m + k] = corr * @sqrt(mu[r1] * (1 - mu[r1]) * mu[r2] * (1 - mu[r2]));
+            v[j * m + k] = corr * @sqrt(mu[r1] * (1 - mu[r1]) / rw.weight[r1] * mu[r2] * (1 - mu[r2]) / rw.weight[r2]);
         };
         if (!linalg.cholesky(v, m)) return error.Singular;
         // W = V^-1 D, column by column (D = A X for the logit link).
@@ -467,12 +604,12 @@ fn accumulate(a: A, x: []const f64, y: []const f64, q: usize, mu: []const f64, c
             u[p] += w[j * q + p] * (y[r] - mu[r]);
         };
         for (0..q) |p| {
-            score[p] += u[p];
+            score[p] += f * u[p];
             for (0..q) |pp| {
                 var s: f64 = 0;
                 for (c, 0..) |r, j| s += w[j * q + p] * mu[r] * (1 - mu[r]) * x[r * q + pp];
-                info[p * q + pp] += s;
-                meat[p * q + pp] += u[p] * u[pp];
+                info[p * q + pp] += f * s;
+                meat[p * q + pp] += f * u[p] * u[pp];
             }
         }
     }
@@ -490,11 +627,16 @@ fn converged(old: []const f64, new: []const f64, tol: f64) bool {
 
 /// Standard GEE for a binary response with the logit link and exchangeable
 /// working correlation. `x` is the full-rank rows*q design.
-pub fn fitExchangeable(a: A, x: []const f64, y: []const f64, q: usize, clusters: []const []const usize, maxiter: usize, tol: f64) FitError!Fit {
+pub fn fitExchangeable(a: A, x: []const f64, y: []const f64, q: usize, clusters: []const []const usize, rw: RowWeights, maxiter: usize, tol: f64) FitError!Fit {
     const n = y.len;
-    const ones = try a.alloc(f64, n);
-    @memset(ones, 1);
-    const start = kernel.fitLogit(a, x, y, ones, q) catch |err| switch (err) {
+    // Independence start: logistic regression with prior weights f*w.
+    const trials = try a.alloc(f64, n);
+    const events = try a.alloc(f64, n);
+    for (trials, events, 0..) |*t, *r, i| {
+        t.* = rw.freq[i] * rw.weight[i];
+        r.* = y[i] * t.*;
+    }
+    const start = kernel.fitLogit(a, x, events, trials, q) catch |err| switch (err) {
         error.OutOfMemory => return error.OutOfMemory,
         error.Singular => return error.Singular,
         else => return error.NotConverged,
@@ -510,8 +652,8 @@ pub fn fitExchangeable(a: A, x: []const f64, y: []const f64, q: usize, clusters:
     var iter: usize = 0;
     var hits: usize = 0;
     while (iter < maxiter) : (iter += 1) {
-        alpha = try moments(x, y, q, beta, clusters, mu, e);
-        try accumulate(a, x, y, q, mu, clusters, alpha, info, score, meat);
+        alpha = try moments(x, y, q, beta, clusters, rw, mu, e);
+        try accumulate(a, x, y, q, mu, clusters, rw, alpha, info, score, meat);
         const l = try a.dupe(f64, info);
         if (!linalg.cholesky(l, q)) return error.Singular;
         const step = try a.dupe(f64, score);
@@ -528,10 +670,12 @@ pub fn fitExchangeable(a: A, x: []const f64, y: []const f64, q: usize, clusters:
             hits += 1;
         } else hits = 0;
     }
-    if (!done) return error.NotConverged;
-    // Covariances and the reported correlation at the final estimates.
-    alpha = try moments(x, y, q, beta, clusters, mu, e);
-    try accumulate(a, x, y, q, mu, clusters, alpha, info, score, meat);
+    // Covariances and the reported correlation at the final estimates. After
+    // MAXITER= updates without convergence the SAS reference keeps the last
+    // iteration's correlation (only mu is refreshed).
+    const final_alpha = try moments(x, y, q, beta, clusters, rw, mu, e);
+    if (done or iter == 0) alpha = final_alpha;
+    try accumulate(a, x, y, q, mu, clusters, rw, alpha, info, score, meat);
     const model_cov = try inverse(a, info, q);
     const emp_cov = try a.alloc(f64, q * q);
     for (0..q) |r| for (0..q) |c| {
@@ -547,8 +691,9 @@ pub fn fitExchangeable(a: A, x: []const f64, y: []const f64, q: usize, clusters:
     const omega = try a.alloc(f64, q * q);
     @memset(omega, 0);
     for (0..n) |i| {
-        quasi += y[i] * @log(mu[i]) + (1 - y[i]) * @log(1 - mu[i]);
-        const v = mu[i] * (1 - mu[i]);
+        const fw = rw.freq[i] * rw.weight[i];
+        quasi += fw * (y[i] * @log(mu[i]) + (1 - y[i]) * @log(1 - mu[i]));
+        const v = fw * mu[i] * (1 - mu[i]);
         for (0..q) |r| for (0..q) |c| {
             omega[r * q + c] += v * x[i * q + r] * x[i * q + c];
         };
@@ -558,7 +703,7 @@ pub fn fitExchangeable(a: A, x: []const f64, y: []const f64, q: usize, clusters:
         trace += omega[r * q + c] * emp_cov[c * q + r];
     };
     const qf: f64 = @floatFromInt(q);
-    return .{ .q = q, .beta = beta, .model_cov = model_cov, .emp_cov = emp_cov, .alpha = alpha, .qic = -2 * quasi + 2 * trace, .qicu = -2 * quasi + 2 * qf };
+    return .{ .q = q, .beta = beta, .model_cov = model_cov, .emp_cov = emp_cov, .alpha = alpha, .qic = -2 * quasi + 2 * trace, .qicu = -2 * quasi + 2 * qf, .converged = done };
 }
 
 // ---------------------------------------------------------------- listing
@@ -610,36 +755,98 @@ const Model = struct {
     max_size: usize,
     min_size: usize,
     event: usize,
-    events: usize,
+    events: f64,
 };
+
+/// NAMELEN= (p.3427): long effect names are shortened to that length.
+fn effectName(s: Spec, ci: usize) []const u8 {
+    const n = s.input.ds.columns.items[ci].name;
+    return n[0..@min(n.len, s.namelen)];
+}
 
 fn label(s: Spec, sel: Selection, c: Column) []const u8 {
     const lv = c.level orelse return "";
     return std.mem.trim(u8, sel.levels[classIndex(s, s.effects[c.effect]).?].levels[lv].label, " ");
 }
 
-fn render(a: A, out: *Out, s: Spec, sel: Selection, m: Model) !void {
+/// The procedure title and Model Information table (also printed by SAS
+/// ahead of a data ERROR).
+fn renderInfo(a: A, out: *Out, s: Spec) !void {
     const ds = s.input.ds;
     try out.appendSlice(a, "\nThe GEE Procedure\n\n");
     const upper = try std.ascii.allocUpperString(a, s.data_name);
     const data_name = if (std.mem.indexOfScalar(u8, upper, '.') == null) try std.fmt.allocPrint(a, "WORK.{s}", .{upper}) else upper;
-    const response_name = ds.columns.items[s.response].name;
-    const info = [_][2][]const u8{
+    var info: std.ArrayList([2][]const u8) = .empty;
+    try info.appendSlice(a, &.{
         .{ "Data Set", data_name },
         .{ "Distribution", "Binomial" },
         .{ "Link Function", "Logit" },
-        .{ "Dependent Variable", response_name },
-    };
+        .{ "Dependent Variable", ds.columns.items[s.response].name },
+    });
+    // Reference run order: Weight Variable before Frequency Variable.
+    if (s.weight) |ci| try info.append(a, .{ "Weight Variable", ds.columns.items[ci].name });
+    if (s.frequency) |ci| try info.append(a, .{ "Frequency Variable", ds.columns.items[ci].name });
     var value_width: usize = 0;
-    for (info) |row| value_width = @max(value_width, row[1].len);
+    for (info.items) |row| value_width = @max(value_width, row[1].len);
     try centered(a, out, "Model Information", 22 + value_width);
     try out.append(a, '\n');
-    for (info) |row| {
+    for (info.items) |row| {
         try padRight(a, out, row[0], 18);
         try padLeft(a, out, row[1], value_width + 4);
         try out.append(a, '\n');
     }
-    try out.print(a, "\n\nNumber of Observations Read{d:>12}\nNumber of Observations Used{d:>12}\nNumber of Events           {d:>12}\nNumber of Trials           {d:>12}\n\n\n", .{ sel.read, sel.used, m.events, sel.used });
+}
+
+/// SAS's BEST-style text for a frequency/weight total (e.g. 99.5, 56).
+fn totalText(a: A, x: f64) ![]const u8 {
+    return std.fmt.allocPrint(a, "{d}", .{x});
+}
+
+/// "PROC GEE is modeling the probability that Y='e'." Reference runs without
+/// DESCENDING (ORDER=INTERNAL, ORDER=FREQ) add the DESCENDING hint naming the
+/// other level. ponytail: the hint is assumed whenever DESCENDING is absent.
+fn modelingNote(a: A, s: Spec, sel: Selection) ![]const u8 {
+    const name = s.input.ds.columns.items[s.response].name;
+    const levels = sel.response.levels;
+    const event: usize = if (s.descending) 1 else 0;
+    const text = try std.fmt.allocPrint(a, "PROC GEE is modeling the probability that {s}='{s}'.", .{ name, std.mem.trim(u8, levels[event].label, " ") });
+    if (s.descending) return text;
+    return std.fmt.allocPrint(a, "{s} One way to change this to model the probability that {s}='{s}' is to specify the DESCENDING option in the PROC statement.", .{ text, name, std.mem.trim(u8, levels[1 - event].label, " ") });
+}
+
+/// Greedy word wrap: each line holds at most linesize-1 columns counting the
+/// blank after each word (reference listing at LINESIZE=160).
+pub fn wrapText(a: A, out: *Out, text: []const u8, linesize: usize) !void {
+    var width: usize = 0;
+    var it = std.mem.splitScalar(u8, text, ' ');
+    var first = true;
+    while (it.next()) |word| {
+        // linesize 0 (no OPTIONS LINESIZE=) only reaches here without a hint.
+        const limit = if (linesize == 0) std.math.maxInt(usize) else linesize - 1;
+        if (!first and width + word.len + 1 > limit) {
+            try out.append(a, '\n');
+            width = 0;
+        } else if (!first) {
+            try out.append(a, ' ');
+            width += 1;
+        }
+        first = false;
+        try out.appendSlice(a, word);
+        width += word.len;
+    }
+    try out.append(a, '\n');
+}
+
+fn render(a: A, out: *Out, s: Spec, sel: Selection, m: Model) !void {
+    const ds = s.input.ds;
+    try renderInfo(a, out, s);
+    const response_name = ds.columns.items[s.response].name;
+    try out.print(a, "\n\nNumber of Observations Read{d:>12}\nNumber of Observations Used{d:>12}\n", .{ sel.read, sel.used });
+    if (s.frequency != null) try out.print(a, "Sum of Frequencies Read    {s:>12}\nSum of Frequencies Used    {s:>12}\n", .{ try totalText(a, sel.freq_read), try totalText(a, sel.freq_used) });
+    if (s.weight != null) try out.print(a, "Sum of Weights             {s:>12}\n", .{try totalText(a, sel.weight_sum)});
+    try out.print(a, "Number of Events           {s:>12}\nNumber of Trials           {s:>12}\n", .{ try totalText(a, m.events), try totalText(a, sel.freq_used) });
+    if (sel.read != sel.used) try out.print(a, "Number of Missing Values   {d:>12}\n", .{sel.read - sel.used});
+    try out.appendSlice(a, "\n\n");
 
     // Class Level Information: values wrap at 50 columns (reference listing).
     var name_width: usize = 5;
@@ -675,35 +882,44 @@ fn render(a: A, out: *Out, s: Spec, sel: Selection, m: Model) !void {
     // Response Profile: ordered values, the event first (DESCENDING reverses).
     var rw: usize = response_name.len;
     for (sel.response.levels) |lv| rw = @max(rw, std.mem.trim(u8, lv.label, " ").len);
-    try centered(a, out, "Response Profile", 12 + rw + 13);
+    const weighted = s.weight != null;
+    // Reference runs: an odd surplus puts the extra blank on the left here.
+    const pw = 12 + rw + 13 + @as(usize, if (weighted) 12 else 0);
+    if (pw > 16) try out.appendNTimes(a, ' ', (pw - 16 + 1) / 2);
+    try out.appendSlice(a, "Response Profile\n");
     try out.appendSlice(a, " \n Ordered");
     try out.appendNTimes(a, ' ', rw + 12);
-    try out.appendSlice(a, "Total\n   Value    ");
+    try out.appendSlice(a, if (weighted) "Total       Total\n   Value    " else "Total\n   Value    ");
     try padLeft(a, out, response_name, rw);
-    try out.appendSlice(a, "    Frequency\n\n");
-    const levels = sel.response.levels;
+    try out.appendSlice(a, if (weighted) "    Frequency      Weight\n\n" else "    Frequency\n\n");
+    const levels = sel.profile;
     for (0..levels.len) |k| {
         const lv = if (s.descending) levels.len - 1 - k else k;
         try out.print(a, "{d:>8}    ", .{k + 1});
         try padLeft(a, out, std.mem.trim(u8, levels[lv].label, " "), rw);
-        try out.print(a, "{d:>13.0}\n", .{levels[lv].frequency});
+        try out.print(a, "{d:>13.0}", .{levels[lv].frequency});
+        if (weighted) try padLeft(a, out, try totalText(a, sel.profile_weights[lv]), 12);
+        try out.append(a, '\n');
     }
-    const event_label = std.mem.trim(u8, levels[m.event].label, " ");
-    try out.print(a, "\nPROC GEE is modeling the probability that {s}='{s}'.\n\n\n", .{ response_name, event_label });
+    try out.append(a, '\n');
+    try wrapText(a, out, try modelingNote(a, s, sel), io.global_linesize);
+    try out.appendSlice(a, "\n\n");
 
     // Parameter Information: one column per CLASS variable among the effects.
     var class_cols: std.ArrayList(usize) = .empty;
     for (s.effects) |ci| if (classIndex(s, ci) != null) try class_cols.append(a, ci);
     var effect_width: usize = 9;
-    for (s.effects) |ci| effect_width = @max(effect_width, ds.columns.items[ci].name.len);
+    for (s.effects) |ci| effect_width = @max(effect_width, effectName(s, ci).len);
     var level_widths = try a.alloc(usize, class_cols.items.len);
     for (class_cols.items, 0..) |ci, k| {
         level_widths[k] = ds.columns.items[ci].name.len;
         for (sel.levels[classIndex(s, ci).?].levels) |lv| level_widths[k] = @max(level_widths[k], std.mem.trim(u8, lv.label, " ").len);
     }
-    var total: usize = 16 + effect_width;
-    for (level_widths) |w| total += 4 + w;
-    try centered(a, out, "Parameter Information", total);
+    var pi_width: usize = 16 + effect_width;
+    for (level_widths) |w| pi_width += 4 + w;
+    // Reference runs: Parameter Information is listed only with COVB.
+    if (s.covb) {
+    try centered(a, out, "Parameter Information", pi_width);
     try out.appendSlice(a, " \nParameter       ");
     try padRight(a, out, "Effect", effect_width);
     for (class_cols.items, level_widths) |ci, w| {
@@ -714,7 +930,7 @@ fn render(a: A, out: *Out, s: Spec, sel: Selection, m: Model) !void {
     for (0..m.columns.len + 1) |j| {
         try padRight(a, out, try std.fmt.allocPrint(a, "Prm{d}", .{j + 1}), 16);
         const c: ?Column = if (j == 0) null else m.columns[j - 1];
-        try padRight(a, out, if (c) |cc| ds.columns.items[s.effects[cc.effect]].name else "Intercept", effect_width);
+        try padRight(a, out, if (c) |cc| effectName(s, s.effects[cc.effect]) else "Intercept", effect_width);
         for (class_cols.items, level_widths) |ci, w| {
             try out.appendSlice(a, "    ");
             const text = if (c != null and s.effects[c.?.effect] == ci) label(s, sel, c.?) else "";
@@ -723,21 +939,26 @@ fn render(a: A, out: *Out, s: Spec, sel: Selection, m: Model) !void {
         try out.append(a, '\n');
     }
     try out.appendSlice(a, "\n\n");
+    }
 
     try centered(a, out, "GEE Model Information", 45);
     try out.append(a, '\n');
     const subject = try std.fmt.allocPrint(a, "{s} ({d} levels)", .{ ds.columns.items[s.subject].name, m.clusters });
-    const gee_rows = [_][2][]const u8{
+    var gee_rows: std.ArrayList([2][]const u8) = .empty;
+    try gee_rows.appendSlice(a, &.{
         .{ "Correlation Structure", "Exchangeable" },
         .{ "Subject Effect", subject },
         .{ "Number of Clusters", try std.fmt.allocPrint(a, "{d}", .{m.clusters}) },
+    });
+    if (sel.missing_clusters > 0) try gee_rows.append(a, .{ "Clusters With Missing Values", try std.fmt.allocPrint(a, "{d}", .{sel.missing_clusters}) });
+    try gee_rows.appendSlice(a, &.{
         .{ "Correlation Matrix Dimension", try std.fmt.allocPrint(a, "{d}", .{m.max_size}) },
         .{ "Maximum Cluster Size", try std.fmt.allocPrint(a, "{d}", .{m.max_size}) },
         .{ "Minimum Cluster Size", try std.fmt.allocPrint(a, "{d}", .{m.min_size}) },
-    };
+    });
     var gw: usize = 0;
-    for (gee_rows) |row| gw = @max(gw, row[1].len);
-    for (gee_rows) |row| {
+    for (gee_rows.items) |row| gw = @max(gw, row[1].len);
+    for (gee_rows.items) |row| {
         try padRight(a, out, row[0], 28);
         try padLeft(a, out, row[1], gw + 4);
         try out.append(a, '\n');
@@ -794,7 +1015,7 @@ fn render(a: A, out: *Out, s: Spec, sel: Selection, m: Model) !void {
     try out.appendSlice(a, "    Estimate       Error           Limits                 Z    Pr > |Z|\n\n");
     for (0..m.columns.len + 1) |j| {
         const c: ?Column = if (j == 0) null else m.columns[j - 1];
-        try padRight(a, out, if (c) |cc| ds.columns.items[s.effects[cc.effect]].name else "Intercept", effect_width + 4);
+        try padRight(a, out, if (c) |cc| effectName(s, s.effects[cc.effect]) else "Intercept", effect_width + 4);
         try padRight(a, out, if (c) |cc| label(s, sel, cc) else "", level_width);
         if (m.alias[j]) {
             try out.appendSlice(a, "      0.0000      0.0000      0.0000      0.0000        .         .    \n");
@@ -829,30 +1050,54 @@ pub fn run(cx: proc.ProcCtx, out: *Out, t: []const lex.Token) diag.Error!void {
     if (!oneOf(d, &.{ "binomial", "bin", "b" })) return proc.failGap(cx.diags, l0, "PROC GEE: DIST={s} is not implemented (only DIST=BINOMIAL; STAT-GEE-003)", .{d});
     if (s.link) |v| if (!eq(v, "logit")) return proc.failGap(cx.diags, l0, "PROC GEE: LINK={s} is not implemented (only LINK=LOGIT; STAT-GEE-003)", .{v});
     if (!s.exchangeable) return proc.failGap(cx.diags, l0, "PROC GEE: the default independent working correlation (TYPE=IND) is not implemented (only TYPE=EXCH; STAT-GEE-005)", .{});
-    // pp.3431–3432, 3444: documented, but no SAS reference listing was replayed.
-    if (s.frequency != null) return proc.failGap(cx.diags, l0, "PROC GEE: the FREQ statement is not verified against SAS output (STAT-GEE-001 remaining gap)", .{});
-    if (s.weight != null) return proc.failGap(cx.diags, l0, "PROC GEE: the WEIGHT statement is not verified against SAS output (STAT-GEE-001 remaining gap)", .{});
-
-    // ponytail: ORDER= other than FORMATTED may also reorder the response
-    // levels, and NAMELEN= shortening was not replayed; both stay loud.
-    if (s.order != .formatted) return proc.failGap(cx.diags, l0, "PROC GEE: ORDER= other than FORMATTED is not verified against SAS output (STAT-GEE-001 remaining gap)", .{});
-    for (s.effects) |ci| if (ds.columns.items[ci].name.len > s.namelen) return proc.failGap(cx.diags, l0, "PROC GEE: effect names longer than NAMELEN={d} are not verified against SAS output (STAT-GEE-001 remaining gap)", .{s.namelen});
+    // ORDER= (Table 50.2) combinations replayed against SAS 9.4: FORMATTED,
+    // DATA with DESCENDING, INTERNAL and FREQ without it. ORDER=DATA leaves
+    // the response in formatted order there; the rest stays loud.
+    const verified_order = switch (s.order) {
+        .formatted => true,
+        .data => s.descending,
+        .internal, .freq => !s.descending,
+    };
+    if (!verified_order) return proc.failGap(cx.diags, l0, "PROC GEE: ORDER={s} {s} DESCENDING is not verified against SAS output", .{ @tagName(s.order), if (s.descending) "with" else "without" });
+    // ponytail: the DESCENDING hint wraps at LINESIZE; opensas has no verified
+    // default LINESIZE, so that listing needs an explicit OPTIONS LINESIZE=.
+    if (!s.descending and io.global_linesize == 0) return proc.failGap(cx.diags, l0, "PROC GEE: without DESCENDING the listing needs an explicit OPTIONS LINESIZE= (the default line size is not verified)", .{});
     const groups = try by.checkedSlices(a, ds, s.by_cols, s.by_desc, s.notsorted, cx.diags);
-    if (groups.len == 0) return proc.failGap(cx.diags, l0, "PROC GEE: an empty input data set is not verified", .{});
+    // SAS 9.4 reference run (empty WHERE= subset): Model Information, then this ERROR.
+    const no_valid = "No valid observations due to invalid or missing values in the response, explanatory, offset, frequency, or weight variable.";
+    if (groups.len == 0) {
+        try renderInfo(a, out, s);
+        return cx.diags.fail(error.ExecError, l0, no_valid, .{});
+    }
     var body: Out = .empty;
     var notes: std.ArrayList([]const u8) = .empty;
+    var unconverged: std.ArrayList(bool) = .empty;
     for (groups) |group| {
         const rows = group.rows;
-        const sel = try prepare(cx, s, rows);
-        if (sel.used != sel.read) return proc.failGap(cx.diags, l0, "PROC GEE: observations with missing values (dropped from clusters) are not verified against SAS output", .{});
+        const sel = prepare(cx, s, rows) catch |err| switch (err) {
+            error.UnequalFrequency => {
+                try renderInfo(a, out, s);
+                return cx.diags.fail(error.ExecError, l0, "A cluster has been detected with the frequency counts specified by the FREQ statement unequal within the cluster. The frequency counts must be equal within clusters.", .{});
+            },
+            else => |e| return e,
+        };
+        if (sel.used == 0) {
+            try renderInfo(a, out, s);
+            return cx.diags.fail(error.ExecError, l0, no_valid, .{});
+        }
         const levels = sel.response.levels;
         if (levels.len != 2) return proc.failGap(cx.diags, l0, "PROC GEE: a binomial response with {d} levels is not verified (STAT-GEE-003)", .{levels.len});
         const event: usize = if (s.descending) 1 else 0;
         const y = try a.alloc(f64, sel.used);
-        var events: usize = 0;
+        var events: f64 = 0;
         for (sel.rows, 0..) |ri, i| {
-            y[i] = if (sel.response.row_to_level[ri].? == event) 1 else 0;
-            if (y[i] == 1) events += 1;
+            // A zero frequency (FREQ in (0,1)) has no response level.
+            const lv = sel.response.row_to_level[ri] orelse {
+                y[i] = 0;
+                continue;
+            };
+            y[i] = if (lv == event) 1 else 0;
+            if (y[i] == 1) events += sel.freq[i];
         }
         // GLM parameterization design (intercept, one column per CLASS level).
         var columns: std.ArrayList(Column) = .empty;
@@ -901,10 +1146,10 @@ pub fn run(cx: proc.ProcCtx, out: *Out, t: []const lex.Token) diag.Error!void {
             max_size = @max(max_size, mb.items.len);
             min_size = @min(min_size, mb.items.len);
         }
-        const f = fitExchangeable(a, x, y, q, clusters, s.maxiter, s.converge) catch |err| switch (err) {
+        const f = fitExchangeable(a, x, y, q, clusters, .{ .freq = sel.freq, .weight = sel.weight }, s.maxiter, s.converge) catch |err| switch (err) {
             error.OutOfMemory => return error.OutOfMemory,
             error.Singular => return proc.failGap(cx.diags, l0, "PROC GEE: a singular GEE information or working covariance matrix is not implemented", .{}),
-            error.NotConverged => return proc.failGap(cx.diags, l0, "PROC GEE: the GEE iteration did not converge; nonconvergence reporting is not implemented", .{}),
+            error.NotConverged => return proc.failGap(cx.diags, l0, "PROC GEE: the independence (logistic) starting fit did not converge; that case is not verified against SAS output", .{}),
             error.Degenerate => return proc.failGap(cx.diags, l0, "PROC GEE: too few within-cluster pairs to estimate the exchangeable correlation are not verified", .{}),
         };
         if (s.by_cols.len > 0) {
@@ -921,10 +1166,13 @@ pub fn run(cx: proc.ProcCtx, out: *Out, t: []const lex.Token) diag.Error!void {
             }
         }
         try render(a, &body, s, sel, .{ .columns = columns.items, .alias = alias, .fit = f, .clusters = clusters.len, .max_size = max_size, .min_size = min_size, .event = event, .events = events });
-        try notes.append(a, try std.fmt.allocPrint(a, "{s}='{s}'", .{ ds.columns.items[s.response].name, std.mem.trim(u8, levels[event].label, " ") }));
+        try unconverged.append(a, !f.converged);
+        try notes.append(a, try modelingNote(a, s, sel));
     }
-    for (notes.items, groups) |n, group| {
-        try cx.diags.note(0, "PROC GEE is modeling the probability that {s}.", .{n});
+    for (notes.items, groups, unconverged.items) |n, group, nc| {
+        try cx.diags.note(0, "{s}", .{n});
+        // SAS 9.4 reference run (MAXITER=1): a NOTE; the last estimates are listed.
+        if (nc) try cx.diags.note(0, "No convergence of GEE parameter estimates after {d} iterations.", .{s.maxiter});
         if (s.by_cols.len > 0) try by.reportNote(a, cx.diags, ds, group.rows[0], s.by_cols);
     }
     try out.appendSlice(a, body.items);

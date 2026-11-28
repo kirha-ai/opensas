@@ -1,0 +1,358 @@
+CASE05 ORDER=DATA
+
+The GEE Procedure
+
+         Model Information
+
+Data Set              WORK.CHILDREN
+Distribution               Binomial
+Link Function                 Logit
+Dependent Variable          Symptom
+
+
+Number of Observations Read         100
+Number of Observations Used         100
+Number of Events                     42
+Number of Trials                    100
+
+
+                        Class Level Information
+ 
+Class      Levels    Values
+
+ID             25    1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20
+                     21 22 23 24 25                                    
+City            2    steelcit greenhil                                 
+
+
+        Response Profile
+ 
+ Ordered                   Total
+   Value    Symptom    Frequency
+
+       1          1           42
+       2          0           58
+
+PROC GEE is modeling the probability that Symptom='1'.
+
+
+            GEE Model Information
+
+Correlation Structure             Exchangeable
+Subject Effect                  ID (25 levels)
+Number of Clusters                          25
+Correlation Matrix Dimension                 4
+Maximum Cluster Size                         4
+Minimum Cluster Size                         4
+
+
+ Exchangeable Working
+     Correlation
+
+Correlation     0.0883
+
+
+  GEE Fit Criteria
+
+QIC          137.1373
+QICu         136.2173
+
+
+                           Parameter Estimates for Response Model
+                          with Empirical Standard Error Estimates
+ 
+                                     Standard       95% Confidence
+Parameter                Estimate       Error           Limits                 Z    Pr > |Z|
+
+Intercept                  2.3033      1.8132     -1.2506      5.8572       1.27      0.2040
+City         steelcit     -0.0418      0.5435     -1.1070      1.0234      -0.08      0.9387
+City         greenhil      0.0000      0.0000      0.0000      0.0000        .         .    
+Age                       -0.3201      0.1884     -0.6894      0.0492      -1.70      0.0893
+Smoke                      0.6506      0.2821      0.0978      1.2035       2.31      0.0211
+CASE06 ORDER=INTERNAL no descending
+
+The GEE Procedure
+
+      Model Information
+
+Data Set               WORK.O2
+Distribution          Binomial
+Link Function            Logit
+Dependent Variable    Symptom2
+
+
+Number of Observations Read         100
+Number of Observations Used         100
+Number of Events                     42
+Number of Trials                    100
+
+
+                        Class Level Information
+ 
+Class      Levels    Values
+
+ID             25    1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20
+                     21 22 23 24 25                                    
+City            2    greenhil steelcit                                 
+
+
+         Response Profile
+ 
+ Ordered                    Total
+   Value    Symptom2    Frequency
+
+       1           0           42
+       2           1           58
+
+PROC GEE is modeling the probability that Symptom2='0'. One way to change this to model the probability that Symptom2='1' is to specify the DESCENDING option 
+in the PROC statement.
+
+
+            GEE Model Information
+
+Correlation Structure             Exchangeable
+Subject Effect                  ID (25 levels)
+Number of Clusters                          25
+Correlation Matrix Dimension                 4
+Maximum Cluster Size                         4
+Minimum Cluster Size                         4
+
+
+ Exchangeable Working
+     Correlation
+
+Correlation     0.0883
+
+
+  GEE Fit Criteria
+
+QIC          137.1373
+QICu         136.2173
+
+
+                           Parameter Estimates for Response Model
+                          with Empirical Standard Error Estimates
+ 
+                                     Standard       95% Confidence
+Parameter                Estimate       Error           Limits                 Z    Pr > |Z|
+
+Intercept                  2.2615      2.0243     -1.7060      6.2290       1.12      0.2639
+City         greenhil      0.0418      0.5435     -1.0234      1.1070       0.08      0.9387
+City         steelcit      0.0000      0.0000      0.0000      0.0000        .         .    
+Age                       -0.3201      0.1884     -0.6894      0.0492      -1.70      0.0893
+Smoke                      0.6506      0.2821      0.0978      1.2035       2.31      0.0211
+CASE07 ORDER=FREQ
+
+The GEE Procedure
+
+         Model Information
+
+Data Set              WORK.CHILDREN
+Distribution               Binomial
+Link Function                 Logit
+Dependent Variable          Symptom
+
+
+Number of Observations Read         100
+Number of Observations Used         100
+Number of Events                     58
+Number of Trials                    100
+
+
+                        Class Level Information
+ 
+Class      Levels    Values
+
+ID             25    1 10 11 12 13 14 15 16 17 18 19 2 20 21 22 23 24  
+                     25 3 4 5 6 7 8 9                                  
+City            2    steelcit greenhil                                 
+
+
+        Response Profile
+ 
+ Ordered                   Total
+   Value    Symptom    Frequency
+
+       1          0           58
+       2          1           42
+
+PROC GEE is modeling the probability that Symptom='0'. One way to change this to model the probability that Symptom='1' is to specify the DESCENDING option in 
+the PROC statement.
+
+
+            GEE Model Information
+
+Correlation Structure             Exchangeable
+Subject Effect                  ID (25 levels)
+Number of Clusters                          25
+Correlation Matrix Dimension                 4
+Maximum Cluster Size                         4
+Minimum Cluster Size                         4
+
+
+ Exchangeable Working
+     Correlation
+
+Correlation     0.0883
+
+
+  GEE Fit Criteria
+
+QIC          137.1373
+QICu         136.2173
+
+
+                           Parameter Estimates for Response Model
+                          with Empirical Standard Error Estimates
+ 
+                                     Standard       95% Confidence
+Parameter                Estimate       Error           Limits                 Z    Pr > |Z|
+
+Intercept                 -2.3033      1.8132     -5.8572      1.2506      -1.27      0.2040
+City         steelcit      0.0418      0.5435     -1.0234      1.1070       0.08      0.9387
+City         greenhil      0.0000      0.0000      0.0000      0.0000        .         .    
+Age                        0.3201      0.1884     -0.0492      0.6894       1.70      0.0893
+Smoke                     -0.6506      0.2821     -1.2035     -0.0978      -2.31      0.0211
+CASE08 NAMELEN default long name
+
+The GEE Procedure
+
+      Model Information
+
+Data Set               WORK.N1
+Distribution          Binomial
+Link Function            Logit
+Dependent Variable     Symptom
+
+
+Number of Observations Read         100
+Number of Observations Used         100
+Number of Events                     42
+Number of Trials                    100
+
+
+                        Class Level Information
+ 
+Class      Levels    Values
+
+ID             25    1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20
+                     21 22 23 24 25                                    
+City            2    greenhil steelcit                                 
+
+
+        Response Profile
+ 
+ Ordered                   Total
+   Value    Symptom    Frequency
+
+       1          1           42
+       2          0           58
+
+PROC GEE is modeling the probability that Symptom='1'.
+
+
+            GEE Model Information
+
+Correlation Structure             Exchangeable
+Subject Effect                  ID (25 levels)
+Number of Clusters                          25
+Correlation Matrix Dimension                 4
+Maximum Cluster Size                         4
+Minimum Cluster Size                         4
+
+
+ Exchangeable Working
+     Correlation
+
+Correlation     0.0883
+
+
+  GEE Fit Criteria
+
+QIC          137.1373
+QICu         136.2173
+
+
+                                Parameter Estimates for Response Model
+                                with Empirical Standard Error Estimates
+ 
+                                                Standard       95% Confidence
+Parameter                           Estimate       Error           Limits                 Z    Pr > |Z|
+
+Intercept                             2.2615      2.0243     -1.7060      6.2290       1.12      0.2639
+City                    greenhil      0.0418      0.5435     -1.0234      1.1070       0.08      0.9387
+City                    steelcit      0.0000      0.0000      0.0000      0.0000        .         .    
+Age                                  -0.3201      0.1884     -0.6894      0.0492      -1.70      0.0893
+SmokingExposureLevel                  0.6506      0.2821      0.0978      1.2035       2.31      0.0211
+CASE09 NAMELEN=32 long name
+
+The GEE Procedure
+
+      Model Information
+
+Data Set               WORK.N1
+Distribution          Binomial
+Link Function            Logit
+Dependent Variable     Symptom
+
+
+Number of Observations Read         100
+Number of Observations Used         100
+Number of Events                     42
+Number of Trials                    100
+
+
+                        Class Level Information
+ 
+Class      Levels    Values
+
+ID             25    1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20
+                     21 22 23 24 25                                    
+City            2    greenhil steelcit                                 
+
+
+        Response Profile
+ 
+ Ordered                   Total
+   Value    Symptom    Frequency
+
+       1          1           42
+       2          0           58
+
+PROC GEE is modeling the probability that Symptom='1'.
+
+
+            GEE Model Information
+
+Correlation Structure             Exchangeable
+Subject Effect                  ID (25 levels)
+Number of Clusters                          25
+Correlation Matrix Dimension                 4
+Maximum Cluster Size                         4
+Minimum Cluster Size                         4
+
+
+ Exchangeable Working
+     Correlation
+
+Correlation     0.0883
+
+
+  GEE Fit Criteria
+
+QIC          137.1373
+QICu         136.2173
+
+
+                                    Parameter Estimates for Response Model
+                                   with Empirical Standard Error Estimates
+ 
+                                                       Standard       95% Confidence
+Parameter                                  Estimate       Error           Limits                 Z    Pr > |Z|
+
+Intercept                                    2.2615      2.0243     -1.7060      6.2290       1.12      0.2639
+City                           greenhil      0.0418      0.5435     -1.0234      1.1070       0.08      0.9387
+City                           steelcit      0.0000      0.0000      0.0000      0.0000        .         .    
+Age                                         -0.3201      0.1884     -0.6894      0.0492      -1.70      0.0893
+SmokingExposureLevelAtVisit                  0.6506      0.2821      0.0978      1.2035       2.31      0.0211
+

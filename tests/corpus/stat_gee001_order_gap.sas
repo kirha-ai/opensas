@@ -1,8 +1,9 @@
 /* expect-rc: 2
- * STAT-GEE-001: PROC GEE ORDER=DATA parses but its effect on the response
- * and CLASS levels is not verified against SAS output; the step must fail
- * visibly (D-009 gap) without a partial listing. Invented data.
+ * STAT-GEE-001: PROC GEE ORDER=DATA without DESCENDING is not verified
+ * against SAS output (only ORDER=DATA DESCENDING was replayed); the step
+ * must fail visibly (D-009 gap) without a partial listing. Invented data.
  */
+options linesize=160;
 data visits;
 input id grp $ t y w;
 datalines;
