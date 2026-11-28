@@ -10,9 +10,10 @@ This section is the only current status summary; every section below it is a his
 - **Unchanged original replays with the installed CLI at that SHA** (whitespace-normalised token lines produced/reference, differing lines, exit vs reference 0). Exact, rc 0: FREQ-014 220/220; FREQ-015 649/649; ANOVA-001 364/364 and 528/528; ANOVA-007 364/364; LIFETEST-001 and -002 341/341; PHREG-003 267/267; GENMOD-001 131/131 and 264/264; GENMOD-002 131/131; GENMOD-018 131/131; COMMON-015 113/113. Still rc 2 (loud gaps): PLM-001/002/007 545/869 (328 differ); GLIMMIX-001 0/379 and 0/706; GLIMMIX-002 0/379; GLIMMIX-003 0/896; FREQ-019 0/649; ANOVA-010 0/364; PHREG-001 146/434 and 146/562; PHREG-002 146/434; COMMON-022 0/176; COMMON-030 114/311; COMMON-028 0/207.
 - **Open review (not done):** the originals of GENMOD-001/002/018, ANOVA-001/007, FREQ-014, PHREG-003 and LIFETEST-001/002 now match exactly but the tickets stay PARK; check each against its full acceptance criteria and recorded remaining gaps before any is marked DONE.
 - **Interrupted by the full disk:** STAT-ANOVA-009 and STAT-PHREG-004 are TODO (no file changed; reading notes in the tickets). STAT-LIFETEST-003 and STAT-GENMOD-003 are PARK with UNCOMMITTED, NEVER-COMPILED source retained in `opensas-dev5` (`stat-b6/lifetest003-dev5`) and `opensas-dev7` (`stat-b6/genmod003-dev7`); do not integrate it before it is built, tested and committed there.
-- **Live slots (auto):** dev1 STAT-MI-001, dev2 STAT-GLMSELECT-001, dev3 STAT-SURVEYFREQ-001, dev4 STAT-SURVEYMEANS-001, dev5 STAT-STDRATE-001, dev6 STAT-NLIN-001, dev7 STAT-PRINCOMP-001.
+- **Returned, NOT yet integrated:** STAT-MI-001 (PARK) on `stat-b7/mi001-dev1` (code `c76173be`, tracker `c05189cc`, base `c28d819a`); cherry-pick it after the interim gate on the first six batch-7 tickets finishes, so that check keeps one source state.
+- **Live slots (auto):** dev1 STAT-QUANTREG-001, dev2 STAT-GLMSELECT-001, dev3 STAT-SURVEYFREQ-001, dev4 STAT-SURVEYMEANS-001, dev5 STAT-STDRATE-001, dev6 STAT-NLIN-001, dev7 STAT-PRINCOMP-001.
 - **Integrated locally, awaiting batch verification (auto):** STAT-LIFETEST-003 (PARK), STAT-LIFEREG-001 (PARK), STAT-MULTTEST-001 (PARK), STAT-MIANALYZE-001 (PARK), STAT-PROBIT-001 (PARK), STAT-GENMOD-003 (PARK).
-- **Counts:** 55 DONE, 86 PARK, 7 DOING, 1274 TODO.
+- **Counts:** 55 DONE, 87 PARK, 7 DOING, 1273 TODO.
 - **Next:** resume the two retained partial tickets or dispatch new eligible tickets from the current tip; run the open review above.
 - **Working branch:** `feat/stat/batch-4`. Last tested and pushed SHA `9c4780bff01fd8fecf5074ac7ae4b34f6888f3dd` (batch 6; batch 5 was `470bdc33c8b8e070e4a4d7c5fbbf3f26ccaec8b5`). The bullets below this one describe batch 5 and are historical. Later commits that touch only this file are documentation. No PR created or merged; `main` untouched.
 - **Batch 5 verification at that exact SHA (2026-11-28):** whole `tests/STAT15.4-oracle/` moved out of the checkout, then `zig build gate -j2 --summary all` direct exit 0 — **2380/2380 unit tests** (2262 + 102 + 13 + 3), **2409/2409 corpus**, **11/11 programs**; `zig build install` direct 0; separate supplemental direct 0, **1113/1113**. Oracle restored unchanged (1425 entries), tree clean.
@@ -9567,7 +9568,7 @@ Source: S154, Chapter 82, `The MI Procedure`, PDF pp. 6417–6554. Tasks in this
 
 <a id="stat-mi-001"></a>
 
-### [DOING @dev1] STAT-MI-001 — MI — Data input, variable roles, and basic options
+### [PARK] STAT-MI-001 — MI — Data input, variable roles, and basic options
 
 - Source: S154 / Chapter 82 / `PROC MI Statement` (PDF pp. 6425–6429); S154 / Chapter 82 / `BY Statement` (PDF p. 6429); S154 / Chapter 82 / `CLASS Statement` (PDF pp. 6429–6430); S154 / Chapter 82 / `FREQ Statement` (PDF p. 6436); S154 / Chapter 82 / `VAR Statement` (PDF pp. 6448–6449); S154 / Chapter 82 / `EM Algorithm for Data with Missing Values` (PDF pp. 6450–6451); S154 / Chapter 82 / `Missing Data Patterns` (PDF pp. 6452–6453); S154 / Chapter 82 / `Monotone Methods for Data Sets with Monotone Missing Patterns` (PDF pp. 6455–6456); S154 / Chapter 82 / `FCS Methods for Data Sets with Arbitrary Missing Patterns` (PDF pp. 6464–6466); S154 / Chapter 82 / `Input Data Sets` (PDF pp. 6476–6477).
 - Scope: Integrate PROC MI declarations, basic options, defaults, and execution boundaries; this ticket establishes parameter objects and result interfaces, while later feature tickets implement model-, algorithm-, and output-specific options. Also implement BY; CLASS; FREQ; VAR; EM Algorithm for Data with Missing Values; Missing Data Patterns; Monotone Methods for Data Sets with Monotone Missing Patterns; FCS Methods for Data Sets with Arbitrary Missing Patterns; Input Data Sets; apply this procedure's rules for missing values, variable roles, and observation selection.
@@ -12478,7 +12479,7 @@ Source: S154, Chapter 103, `The QUANTREG Procedure`, PDF pp. 8357–8454. Tasks 
 
 <a id="stat-quantreg-001"></a>
 
-### [TODO] STAT-QUANTREG-001 — QUANTREG — Data input, variable roles, and basic options
+### [DOING @dev1] STAT-QUANTREG-001 — QUANTREG — Data input, variable roles, and basic options
 
 - Source: S154 / Chapter 103 / `PROC QUANTREG Statement` (PDF pp. 8372–8378); S154 / Chapter 103 / `BY Statement` (PDF p. 8378); S154 / Chapter 103 / `ID Statement` (PDF pp. 8385–8386); S154 / Chapter 103 / `WEIGHT Statement` (PDF p. 8393).
 - Scope: Integrate PROC QUANTREG declarations, basic options, defaults, and execution boundaries; this ticket establishes parameter objects and result interfaces, while later feature tickets implement model-, algorithm-, and output-specific options. Also implement BY; ID; WEIGHT; apply this procedure's rules for missing values, variable roles, and observation selection.
