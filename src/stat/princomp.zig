@@ -225,6 +225,10 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
     s.data_name = name orelse raw.name;
     s.input = try proc.procInputObs(a, raw, if (qualified != null) folded.items else t, cx.diags);
     const ds = s.input.ds;
+    // STAT-REG-001: PRINCOMP reads TYPE=CORR/COV/SSCP/... sets as matrices
+    // (Input Data Sets); that mode is not implemented, so a typed set is loud
+    // instead of having its summary rows analysed as observations.
+    if (raw.ds_type orelse ds.ds_type) |ty| return gap(cx.diags, line(t, 0), "PROC PRINCOMP: TYPE={s} input data sets are not implemented", .{ty});
 
     var bys: by.Statements = .{};
     var vars: std.ArrayList(usize) = .empty;

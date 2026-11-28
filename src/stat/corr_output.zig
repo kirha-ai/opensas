@@ -111,6 +111,11 @@ pub fn write(cx: proc.ProcCtx, result: corr.Result) diag.Error!void {
                 }
             }
         }
+        // STAT-REG-001: every CORR output (OUTP=/OUTS=/OUTK=/OUTH=/OUTPLC=/
+        // OUTPLS=, also with COV, SSCP, CSSCP, ALPHA, PARTIAL, WITH) is TYPE=CORR
+        // (SAS 9.4 ATTRC run). Without it PROC REG fitted the summary rows as
+        // observations. A TYPE= data set option on the output still overrides.
+        ds.ds_type = "CORR";
         if (output.options.len > 0) try io.applyDatasetOptions(a, ds, output.options, cx.diags, false);
         try outputs.append(a, ds);
     }
