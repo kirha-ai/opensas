@@ -11,8 +11,8 @@
 //! enumerated over the measured covariates and listed by increasing size.
 //! Layout and messages follow SAS 9.4 reference runs. Everything not proven
 //! against a reference listing (METHOD=BACKDOOR/IV, TESTID, IMAP, COMMON,
-//! PSUMMARY, NOSORT, CYCLES=, bidirected edges, several MODEL statements,
-//! joint effects, disconnected models) is a
+//! PSUMMARY, NOSORT, CYCLES=, ORDERMODELS with several models, joint
+//! effects, disconnected models) is a
 //! D-009 gap (rc 2) raised before any listing text is produced.
 const std = @import("std");
 const proc = @import("../proc.zig");
@@ -39,7 +39,9 @@ pub const Options = struct {
     nthreads: ?usize = null,
 };
 
-pub const Edge = struct { from: usize, to: usize };
+/// `bi` marks a bidirected edge (latent confounding, p.2306); its
+/// `from`/`to` order is only the spelling order.
+pub const Edge = struct { from: usize, to: usize, bi: bool = false };
 
 pub const Model = struct {
     label: []const u8,
@@ -179,6 +181,51 @@ fn readGroup(cx: proc.ProcCtx, t: []const lex.Token, i: *usize, end: usize, out:
     if (out.items.len == start) return invalid(cx, t, i.*);
 }
 
+/// Edges of one MODEL statement with the SAS 9.4 diagnostics of p.2305
+/// (reference runs): a repeated edge of the same type is ignored with a
+/// warning, `X <==> X` is an ignored variance specification, `X ==> X` is an
+/// error. Variance warnings precede duplicate warnings in the SAS log.
+const ModelBuilder = struct {
+    cx: proc.ProcCtx,
+    label: []const u8,
+    line: usize,
+    names: *Names,
+    nodes: std.ArrayList(usize) = .empty,
+    edges: std.ArrayList(Edge) = .empty,
+    variance: std.ArrayList(usize) = .empty,
+    dups: std.ArrayList(Edge) = .empty,
+    track_empty: bool = false,
+
+    fn group(b: *ModelBuilder, grp: []const []const u8) ![]usize {
+        const ids = try b.cx.arena.alloc(usize, grp.len);
+        for (grp, ids) |n, *id| {
+            id.* = try b.names.intern(b.cx.arena, n);
+            if (std.mem.indexOfScalar(usize, b.nodes.items, id.*) == null) try b.nodes.append(b.cx.arena, id.*);
+        }
+        return ids;
+    }
+    fn directed(b: *ModelBuilder, p: usize, q: usize) !void {
+        const nm = b.names.list.items;
+        if (p == q) return user(b.cx, b.line, "You cannot specify {s} ===> {s} in the model {s}.", .{ nm[p], nm[q], b.label });
+        for (b.edges.items) |x| if (!x.bi and x.from == p and x.to == q) return b.dups.append(b.cx.arena, .{ .from = p, .to = q });
+        try b.edges.append(b.cx.arena, .{ .from = p, .to = q });
+    }
+    fn bidirected(b: *ModelBuilder, p: usize, q: usize) !void {
+        if (p == q) return b.variance.append(b.cx.arena, p);
+        for (b.edges.items) |x| if (x.bi and ((x.from == p and x.to == q) or (x.from == q and x.to == p)))
+            return b.dups.append(b.cx.arena, .{ .from = p, .to = q, .bi = true });
+        try b.edges.append(b.cx.arena, .{ .from = p, .to = q, .bi = true });
+    }
+    fn flush(b: *ModelBuilder) !void {
+        const nm = b.names.list.items;
+        for (b.variance.items) |v| try b.cx.diags.warn(b.line, "The variance specification {s} <==> {s} is ignored in the model {s}.", .{ nm[v], nm[v], b.label });
+        for (b.dups.items) |e| try b.cx.diags.warn(b.line, "The edge {s} {s} {s} appears more than once in the model {s}.", .{ nm[e.from], if (e.bi) "<===>" else "===>", nm[e.to], b.label });
+        // ponytail: order of this warning relative to the others is not
+        // reference-checked.
+        if (b.track_empty) try b.cx.diags.warn(b.line, "At least one track in the model {s} contains no edges and has been discarded.", .{b.label});
+    }
+};
+
 pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
     const a = cx.arena;
     var s: Spec = .{};
@@ -280,52 +327,57 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
             const label = t[i + 1].text;
             for (models.items) |m| if (eq(m.label, label))
                 return user(cx, line, "There is more than one model with the label {s}.", .{m.label});
-            var nodes: std.ArrayList(usize) = .empty;
-            var edges: std.ArrayList(Edge) = .empty;
+            var b: ModelBuilder = .{ .cx = cx, .label = label, .line = line, .names = &names };
             var j = i + 2;
             if (j == end) return invalid(cx, t, j);
             while (j < end) {
                 // One path, up to a comma.
-                var prev: ?[]const usize = null;
-                var pending: ?Arrow = null;
                 if (spell(t[j]) != null) {
+                    // Covariance path `<==> variables` (p.2305): one
+                    // bidirected edge per pair; nothing may follow the group
+                    // but a comma (SAS 9.4: ERROR 22-322).
                     const ar = (try readArrow(a, t, &j, end)).?;
                     if (ar.kind != .both) return invalid(cx, t, j - 1);
-                    return gap(cx, line, "bidirected edges (<==>) are not implemented", .{});
-                }
-                while (true) {
                     var grp: std.ArrayList([]const u8) = .empty;
                     try readGroup(cx, t, &j, end, &grp);
-                    const ids = try a.alloc(usize, grp.items.len);
-                    for (grp.items, ids) |n, *id| {
-                        id.* = try names.intern(a, n);
-                        if (std.mem.indexOfScalar(usize, nodes.items, id.*) == null) try nodes.append(a, id.*);
+                    if (j < end and !at(t, j, .comma)) return invalid(cx, t, j);
+                    if (grp.items.len < 2) {
+                        // ponytail: the discarded track's variables are not
+                        // added as nodes (only the in-model case is
+                        // reference-checked).
+                        b.track_empty = true;
+                    } else {
+                        const ids = try b.group(grp.items);
+                        // Pair order of the SAS duplicate warning: later
+                        // name first (reference run).
+                        for (ids, 0..) |p, k| for (ids[k + 1 ..]) |q| try b.bidirected(q, p);
                     }
-                    if (pending) |k| {
-                        for (prev.?) |p| for (ids) |q| {
-                            const e: Edge = if (k == .right) .{ .from = p, .to = q } else .{ .from = q, .to = p };
-                            // Repeated edges are ignored (p.2305).
-                            var dup = false;
-                            for (edges.items) |x| {
-                                if (x.from == e.from and x.to == e.to) dup = true;
-                            }
-                            if (!dup) try edges.append(a, e);
+                } else {
+                    var prev: ?[]const usize = null;
+                    var pending: ?Arrow = null;
+                    while (true) {
+                        var grp: std.ArrayList([]const u8) = .empty;
+                        try readGroup(cx, t, &j, end, &grp);
+                        const ids = try b.group(grp.items);
+                        if (pending) |k| for (prev.?) |p| for (ids) |q| switch (k) {
+                            .right => try b.directed(p, q),
+                            .left => try b.directed(q, p),
+                            .both => try b.bidirected(p, q),
                         };
+                        prev = ids;
+                        if (j >= end or at(t, j, .comma)) break;
+                        const ar = (try readArrow(a, t, &j, end)) orelse return invalid(cx, t, j);
+                        pending = ar.kind orelse return user(cx, line, "Invalid arrow {s} in the MODEL statement.", .{ar.text});
                     }
-                    prev = ids;
-                    if (j >= end or at(t, j, .comma)) break;
-                    const ar = (try readArrow(a, t, &j, end)) orelse return invalid(cx, t, j);
-                    const k = ar.kind orelse return user(cx, line, "Invalid arrow {s} in the MODEL statement.", .{ar.text});
-                    if (k == .both) return gap(cx, line, "bidirected edges (<==>) are not implemented", .{});
-                    pending = k;
+                    if (pending == null) return user(cx, line, "Each path in the MODEL statement must contain an arrow.", .{});
                 }
-                if (pending == null) return user(cx, line, "Each path in the MODEL statement must contain an arrow.", .{});
                 if (at(t, j, .comma)) {
                     j += 1;
                     if (j == end) return invalid(cx, t, j);
                 }
             }
-            try models.append(a, .{ .label = label, .line = line, .nodes = nodes.items, .edges = edges.items });
+            try b.flush();
+            try models.append(a, .{ .label = label, .line = line, .nodes = b.nodes.items, .edges = b.edges.items });
         } else if (kw(t, i, "identify")) {
             if (s.identify) return user(cx, line, "You cannot specify more than one IDENTIFY statement.", .{});
             s.identify = true;
@@ -412,7 +464,7 @@ pub fn validate(cx: proc.ProcCtx, s: Spec) diag.Error!void {
         // ponytail: the reference run also prints the DirectedCycles table
         // before this error; only the error is produced here.
     }
-    if (s.models.len > 1) return gap(cx, s.models[1].line, "more than one MODEL statement is not implemented", .{});
+    if (s.models.len > 1 and s.opts.ordermodels) return gap(cx, s.models[1].line, "ORDERMODELS with more than one MODEL statement is not implemented", .{});
     for (s.models) |m| if (try components(cx.arena, s.names.len, m) > 1)
         return gap(cx, m.line, "disconnected models (ConnectedComponents table) are not implemented", .{});
     if (s.opts.method != .adjustment) return gap(cx, 0, "METHOD={s} is not implemented", .{if (s.opts.method == .iv) "IV" else "BACKDOOR"});
@@ -422,13 +474,15 @@ pub fn validate(cx: proc.ProcCtx, s: Spec) diag.Error!void {
 fn hasCycle(a: A, n: usize, edges: []const Edge) !bool {
     const indeg = try a.alloc(usize, n);
     @memset(indeg, 0);
-    for (edges) |e| indeg[e.to] += 1;
+    for (edges) |e| if (!e.bi) {
+        indeg[e.to] += 1;
+    };
     var stack: std.ArrayList(usize) = .empty;
     for (indeg, 0..) |d, k| if (d == 0) try stack.append(a, k);
     var seen: usize = 0;
     while (stack.pop()) |v| {
         seen += 1;
-        for (edges) |e| if (e.from == v) {
+        for (edges) |e| if (!e.bi and e.from == v) {
             indeg[e.to] -= 1;
             if (indeg[e.to] == 0) try stack.append(a, e.to);
         };
@@ -455,6 +509,26 @@ fn components(a: A, n: usize, m: Model) !usize {
         count += 1;
     }
     return count;
+}
+
+/// Directed graph of a model in which each bidirected edge u <==> v becomes
+/// a fresh unmeasured parent L -> u, L -> v (p.2306: "equivalent to X1 <== L
+/// ==> X2; unmeasured L"). Latent nodes take indexes n.. and are never
+/// adjustment candidates; they have no parents, so the forbidden set and
+/// the d-separation of the observed nodes are those of the mixed graph.
+pub fn expandLatent(a: A, n: usize, edges: []const Edge) !struct { n: usize, edges: []const Edge } {
+    var out: std.ArrayList(Edge) = .empty;
+    var m = n;
+    for (edges) |e| {
+        if (!e.bi) {
+            try out.append(a, e);
+            continue;
+        }
+        try out.append(a, .{ .from = m, .to = e.from });
+        try out.append(a, .{ .from = m, .to = e.to });
+        m += 1;
+    }
+    return .{ .n = m, .edges = out.items };
 }
 
 /// Graph kernel over node indexes 0..n.
@@ -713,27 +787,55 @@ pub fn run(cx: proc.ProcCtx, out: *Out, t: []const lex.Token) diag.Error!void {
     const a = cx.arena;
     const s = try parse(cx, t);
     try validate(cx, s);
-    const m = s.models[0];
     const n = s.names.len;
     const list = s.opts.list orelse s.identify;
 
+    // Variables of all models (SAS 9.4 reference run with two MODEL
+    // statements: one VariableInfo table titled "Variables in Models").
+    var all_nodes: std.ArrayList(usize) = .empty;
+    for (s.models) |m| for (m.nodes) |v| if (!contains(all_nodes.items, v)) try all_nodes.append(a, v);
     var measured: std.ArrayList(usize) = .empty;
     var unmeasured: std.ArrayList(usize) = .empty;
-    for (m.nodes) |v| try (if (contains(s.unmeasured, v)) &unmeasured else &measured).append(a, v);
+    for (all_nodes.items) |v| try (if (contains(s.unmeasured, v)) &unmeasured else &measured).append(a, v);
     sortedIds(s.names, measured.items);
     sortedIds(s.names, unmeasured.items);
 
+    // Covariate columns are the union over the models; each model's sets
+    // range over its own measured covariates only (reference run: a
+    // covariate of another model is never starred).
     var cands: std.ArrayList(usize) = .empty;
-    var sets: []Set = &.{};
+    const sets = try a.alloc([]Set, s.models.len);
+    @memset(sets, &.{});
     if (list) {
         for (measured.items) |v| if (!contains(s.treatments, v) and !contains(s.outcomes, v)) try cands.append(a, v);
-        if (cands.items.len > max_candidates) return gap(cx, m.line, "more than {d} measured covariates (exhaustive adjustment-set enumeration) is not implemented", .{max_candidates});
-        const an = try analyse(a, n, m.edges, s.treatments, s.outcomes);
-        var required: u64 = 0;
-        for (cands.items, 0..) |c, k| if (contains(s.adjust, c)) {
-            required |= @as(u64, 1) << @intCast(k);
-        };
-        sets = try enumerate(a, n, an, cands.items, s.treatments, s.outcomes, required);
+        if (cands.items.len > max_candidates) return gap(cx, s.models[0].line, "more than {d} measured covariates (exhaustive adjustment-set enumeration) is not implemented", .{max_candidates});
+        for (s.models, sets) |m, *dst| {
+            var mc: std.ArrayList(usize) = .empty;
+            var pos: std.ArrayList(usize) = .empty;
+            for (cands.items, 0..) |c, k| if (contains(m.nodes, c)) {
+                try mc.append(a, c);
+                try pos.append(a, k);
+            };
+            var required: u64 = 0;
+            for (s.adjust) |z| {
+                const k = std.mem.indexOfScalar(usize, mc.items, z) orelse
+                    return gap(cx, m.line, "a prescribed adjustment variable that is not in every model is not implemented", .{});
+                required |= @as(u64, 1) << @intCast(k);
+            }
+            const g = try expandLatent(a, n, m.edges);
+            const an = try analyse(a, g.n, g.edges, s.treatments, s.outcomes);
+            const local = try enumerate(a, g.n, an, mc.items, s.treatments, s.outcomes, required);
+            // Re-key masks onto the union columns (order is preserved: both
+            // lists are alphabetical).
+            for (local) |*st| {
+                var mask: u64 = 0;
+                for (pos.items, 0..) |k, b| if ((st.mask >> @intCast(b)) & 1 == 1) {
+                    mask |= @as(u64, 1) << @intCast(k);
+                };
+                st.mask = mask;
+            }
+            dst.* = local;
+        }
     }
     if (s.opts.noprint) return;
 
@@ -757,34 +859,53 @@ pub fn run(cx: proc.ProcCtx, out: *Out, t: []const lex.Token) diag.Error!void {
             .{ .head = &.{"N"}, .al = .right, .width = 10, .cells = &.{ try num(a, measured.items.len), try num(a, unmeasured.items.len) } },
             .{ .head = &.{"Variables"}, .al = .left, .width = @max(9, @max(mv.len, uv.len)), .cells = &.{ mv, uv } },
         };
-        try table(a, out, &.{"Variables in Model"}, 0, &cols, try uniformGaps(a, cols.len), null);
+        try table(a, out, &.{if (s.models.len > 1) "Variables in Models" else "Variables in Model"}, 0, &cols, try uniformGaps(a, cols.len), null);
     }
     try out.appendSlice(a, "\n\n");
     {
-        var tr: usize = 0;
-        var oc: usize = 0;
-        for (m.nodes) |v| {
-            if (contains(s.treatments, v)) tr += 1;
-            if (contains(s.outcomes, v)) oc += 1;
-        }
         const heads = [_][]const u8{ "Nodes", "Edges", "Treatments", "Outcomes", "Measured", "Unmeasured" };
-        const vals = [_]usize{ m.nodes.len, m.edges.len, tr, oc, measured.items.len, unmeasured.items.len };
+        const rows = s.models.len;
         var cols: [7]Col = undefined;
-        cols[0] = .{ .head = &.{"Model"}, .al = .left, .width = @max(5, m.label.len), .cells = &.{m.label} };
-        for (heads, vals, 1..) |h, v, k| {
-            const cell = try a.alloc([]const u8, 1);
-            cell[0] = try num(a, v);
+        const labels = try a.alloc([]const u8, rows);
+        var lw: usize = 5;
+        for (s.models, labels) |m, *l| {
+            l.* = m.label;
+            lw = @max(lw, m.label.len);
+        }
+        cols[0] = .{ .head = &.{"Model"}, .al = .left, .width = lw, .cells = labels };
+        for (heads, 1..) |h, k| {
+            const cells = try a.alloc([]const u8, rows);
+            for (s.models, cells) |m, *cell| {
+                var tr: usize = 0;
+                var oc: usize = 0;
+                var um: usize = 0;
+                for (m.nodes) |v| {
+                    if (contains(s.treatments, v)) tr += 1;
+                    if (contains(s.outcomes, v)) oc += 1;
+                    if (contains(s.unmeasured, v)) um += 1;
+                }
+                const vals = [_]usize{ m.nodes.len, m.edges.len, tr, oc, m.nodes.len - um, um };
+                cell.* = try num(a, vals[k - 1]);
+            }
             const head = try a.alloc([]const u8, 1);
             head[0] = h;
-            cols[k] = .{ .head = head, .al = .right, .width = @max(8, h.len), .cells = cell };
+            cols[k] = .{ .head = head, .al = .right, .width = @max(8, h.len), .cells = cells };
         }
         try table(a, out, &.{"Graphical Model Summary"}, 0, &cols, try uniformGaps(a, cols.len), null);
     }
     if (!list) return endPage(cx, out);
 
-    // Page 2: AdjustList.
+    // One AdjustList page per model.
+    for (s.models, sets) |m, msets| {
+        try endPage(cx, out);
+        try page(cx, out);
+        try adjustTable(cx, out, s, m, msets, cands.items);
+    }
     try endPage(cx, out);
-    try page(cx, out);
+}
+
+fn adjustTable(cx: proc.ProcCtx, out: *Out, s: Spec, m: Model, sets: []const Set, cands: []const usize) !void {
+    const a = cx.arena;
     var shown: std.ArrayList(Set) = .empty;
     const min_size: usize = if (sets.len > 0) sets[0].size else 0;
     for (sets) |st| {
@@ -795,10 +916,10 @@ pub fn run(cx: proc.ProcCtx, out: *Out, t: []const lex.Token) diag.Error!void {
     }
     if (shown.items.len == 0) {
         try out.appendSlice(a, try std.fmt.allocPrint(a, "NOTE: There are no adjustment sets satisfying the specified criteria for {s}.\n\n", .{m.label}));
-        return endPage(cx, out);
+        return;
     }
     var used: std.ArrayList(usize) = .empty; // bit positions into cands
-    for (cands.items, 0..) |_, k| {
+    for (cands, 0..) |_, k| {
         var any = !s.opts.compact;
         for (shown.items) |st| {
             if ((st.mask >> @intCast(k)) & 1 == 1) any = true;
@@ -819,7 +940,7 @@ pub fn run(cx: proc.ProcCtx, out: *Out, t: []const lex.Token) diag.Error!void {
     try cols.append(a, .{ .head = &.{"Size"}, .al = .right, .width = 8, .cells = size });
     try cols.append(a, .{ .head = &.{"Minimal"}, .al = .left, .width = 8, .cells = mini });
     for (used.items) |k| {
-        const head = try splitHeader(a, s.names[cands.items[k]]);
+        const head = try splitHeader(a, s.names[cands[k]]);
         var w: usize = 1;
         for (head) |h| w = @max(w, h.len);
         const cells = try a.alloc([]const u8, rows);
@@ -848,7 +969,6 @@ pub fn run(cx: proc.ProcCtx, out: *Out, t: []const lex.Token) diag.Error!void {
     const t1 = try std.fmt.allocPrint(a, "Covariate Adjustment Sets for {s}", .{m.label});
     const t2 = try std.fmt.allocPrint(a, "Causal Effect of {s} on {s}", .{ s.names[s.treatments[0]], s.names[s.outcomes[0]] });
     try table(a, out, &.{ t1, t2 }, 1, cols.items, gaps, if (used.items.len > 0) Spanner{ .from = 3, .text = span_text } else null);
-    try endPage(cx, out);
 }
 
 // ── tests ──────────────────────────────────────────────────────────────────
@@ -900,4 +1020,46 @@ test "STAT-CAUSALGRAPH-001 arrow spellings (p.2316)" {
     try std.testing.expectEqual(Arrow.both, arrowKind("<->").?);
     try std.testing.expect(arrowKind("=") == null);
     try std.testing.expect(arrowKind("<=>>") == null);
+}
+
+fn testSets(a: A, n: usize, edges: []const Edge, cands: []const usize, x: usize, y: usize) ![]Set {
+    const g = try expandLatent(a, n, edges);
+    const an = try analyse(a, g.n, g.edges, &.{x}, &.{y});
+    return enumerate(a, g.n, an, cands, &.{x}, &.{y}, 0);
+}
+
+test "STAT-CAUSALGRAPH-003 bidirected edges as latent common parents (p.2306)" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    // 0 X, 1 Y, 2 Z. Z -> X -> Y, Z -> Y.
+    const base = [_]Edge{ .{ .from = 2, .to = 0 }, .{ .from = 0, .to = 1 }, .{ .from = 2, .to = 1 } };
+    // X <-> Z: {Z} blocks X<->Z->Y and X<-Z->Y; {} does not.
+    const c1 = base ++ [_]Edge{.{ .from = 0, .to = 2, .bi = true }};
+    const s1 = try testSets(a, 3, &c1, &.{2}, 0, 1);
+    try std.testing.expectEqual(@as(usize, 1), s1.len);
+    try std.testing.expectEqual(@as(u64, 1), s1[0].mask);
+    // X <-> Y: no set blocks the latent path (not identified by adjustment).
+    const c2 = base ++ [_]Edge{.{ .from = 0, .to = 1, .bi = true }};
+    try std.testing.expectEqual(@as(usize, 0), (try testSets(a, 3, &c2, &.{2}, 0, 1)).len);
+    // M-bias X <-> M <-> Y, X -> Y: only {} (M is a collider).
+    const c6 = [_]Edge{ .{ .from = 0, .to = 1 }, .{ .from = 0, .to = 2, .bi = true }, .{ .from = 2, .to = 1, .bi = true } };
+    const s6 = try testSets(a, 3, &c6, &.{2}, 0, 1);
+    try std.testing.expectEqual(@as(usize, 1), s6.len);
+    try std.testing.expectEqual(@as(u64, 0), s6[0].mask);
+    // W -> X -> Y, W -> Y, W <-> Y, X <-> W: W opens X<->W<->Y, {} leaves X<-W->Y.
+    const c8 = base ++ [_]Edge{ .{ .from = 2, .to = 1, .bi = true }, .{ .from = 0, .to = 2, .bi = true } };
+    try std.testing.expectEqual(@as(usize, 0), (try testSets(a, 3, &c8, &.{2}, 0, 1)).len);
+}
+
+test "STAT-CAUSALGRAPH-003 bidirected edges make no directed cycle and do connect" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const e = [_]Edge{ .{ .from = 0, .to = 1 }, .{ .from = 1, .to = 0, .bi = true }, .{ .from = 2, .to = 1, .bi = true } };
+    try std.testing.expect(!try hasCycle(a, 3, &e));
+    try std.testing.expectEqual(@as(usize, 1), try components(a, 3, .{ .label = "M", .line = 0, .nodes = &.{ 0, 1, 2 }, .edges = &e }));
+    const g = try expandLatent(a, 3, &e);
+    try std.testing.expectEqual(@as(usize, 5), g.n);
+    try std.testing.expectEqual(@as(usize, 5), g.edges.len);
 }

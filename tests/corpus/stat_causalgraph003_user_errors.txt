@@ -1,0 +1,4 @@
+# corpus assertions
+empty-listing
+stderr-count 1 You cannot specify A ===> A in the model D2.
+stderr-count 1 PROC CAUSALGRAPH: invalid statement or token

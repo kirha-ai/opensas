@@ -8,7 +8,5 @@ stderr-count 1 the COMMON option is not implemented
 stderr-count 1 the CYCLES option is not implemented
 stderr-count 1 the PSUMMARY option is not implemented
 stderr-count 1 the NOSORT option is not implemented
-stderr-count 1 bidirected edges (<==>) are not implemented
-stderr-count 1 more than one MODEL statement is not implemented
 stderr-count 1 disconnected models (ConnectedComponents table) are not implemented
 stderr-count 1 joint causal effects (several treatment or outcome variables) are not implemented

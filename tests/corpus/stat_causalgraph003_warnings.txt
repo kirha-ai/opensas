@@ -1,0 +1,6 @@
+# corpus assertions
+stderr-count 2 The edge A ===> B appears more than once in the model D1.
+stderr-count 2 The edge X5 <===> X4 appears more than once in the model C4.
+stderr-count 1 The edge X4 <===> X5 appears more than once in the model C4.
+stderr-count 1 At least one track in the model C9 contains no edges and has been discarded.
+stderr-count 1 The variance specification X <==> X is ignored in the model C10.

@@ -1,0 +1,335 @@
+C1 bidirected confounding of X and Z
+
+The CAUSALGRAPH Procedure
+
+         Variables in Model
+
+                       N    Variables
+
+Measured               3    X Y Z
+Unmeasured             0
+
+
+                             Graphical Model Summary
+
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+C1              3           4             1           1           3             0
+C1 bidirected confounding of X and Z
+
+The CAUSALGRAPH Procedure
+
+        Covariate Adjustment Sets for C1
+             Causal Effect of X on Y
+
+                                    -Covariates-
+                Size    Minimal          Z
+
+       1           1    Yes              *
+C2 nonidentified X<->Y
+
+The CAUSALGRAPH Procedure
+
+         Variables in Model
+
+                       N    Variables
+
+Measured               3    X Y Z
+Unmeasured             0
+
+
+                             Graphical Model Summary
+
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+C2              3           4             1           1           3             0
+C2 nonidentified X<->Y
+
+The CAUSALGRAPH Procedure
+
+NOTE: There are no adjustment sets satisfying the specified criteria for C2.
+
+C3 covariance path three vars, brackets
+
+The CAUSALGRAPH Procedure
+
+         Variables in Model
+
+                       N    Variables
+
+Measured               4    A B X Y
+Unmeasured             0
+
+
+                             Graphical Model Summary
+
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+C3              4           7             1           1           4             0
+C3 covariance path three vars, brackets
+
+The CAUSALGRAPH Procedure
+
+        Covariate Adjustment Sets for C3
+             Causal Effect of X on Y
+
+                                    -Covariates-
+                Size    Minimal     A          B
+
+       1           2    Yes         *          *
+C4 Example2 chain, duplicates
+
+The CAUSALGRAPH Procedure
+
+            Variables in Model
+
+                       N    Variables
+
+Measured               5    X1 X2 X3 X4 X5
+Unmeasured             0
+
+
+                             Graphical Model Summary
+
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+C4              5           5             1           1           5             0
+C4 Example2 chain, duplicates
+
+The CAUSALGRAPH Procedure
+
+         Covariate Adjustment Sets for C4
+             Causal Effect of X2 on X3
+
+                                    --Covariates--
+                Size    Minimal     X1    X4    X5
+
+       1           0    Yes
+       2           1    No          *
+       3           1    No                *
+       4           1    No                      *
+       5           2    No          *     *
+       6           2    No          *           *
+       7           2    No                *     *
+       8           3    No          *     *     *
+C5 bidirected and directed same pair, no identify
+
+The CAUSALGRAPH Procedure
+
+         Variables in Model
+
+                       N    Variables
+
+Measured               3    A B C
+Unmeasured             0
+
+
+                             Graphical Model Summary
+
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+C5              3           3             0           0           3             0
+C6 M-bias with bidirected
+
+The CAUSALGRAPH Procedure
+
+         Variables in Model
+
+                       N    Variables
+
+Measured               3    M X Y
+Unmeasured             0
+
+
+                             Graphical Model Summary
+
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+C6              3           3             1           1           3             0
+C6 M-bias with bidirected
+
+The CAUSALGRAPH Procedure
+
+        Covariate Adjustment Sets for C6
+             Causal Effect of X on Y
+
+                                    -Covariates-
+                Size    Minimal          M
+
+       1           0    Yes
+C7 bidirected vs latent expansion, unmeasured
+
+The CAUSALGRAPH Procedure
+
+         Variables in Model
+
+                       N    Variables
+
+Measured               3    M X Y
+Unmeasured             0
+
+
+                             Graphical Model Summary
+
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+C7              3           3             1           1           3             0
+C7 bidirected vs latent expansion, unmeasured
+
+The CAUSALGRAPH Procedure
+
+NOTE: There are no adjustment sets satisfying the specified criteria for C7.
+
+C8 front door style, M <-> Y
+
+The CAUSALGRAPH Procedure
+
+         Variables in Model
+
+                       N    Variables
+
+Measured               3    W X Y
+Unmeasured             0
+
+
+                             Graphical Model Summary
+
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+C8              3           5             1           1           3             0
+C8 front door style, M <-> Y
+
+The CAUSALGRAPH Procedure
+
+NOTE: There are no adjustment sets satisfying the specified criteria for C8.
+
+C9 cov path one var
+
+The CAUSALGRAPH Procedure
+
+         Variables in Model
+
+                       N    Variables
+
+Measured               2    X Y
+Unmeasured             0
+
+
+                             Graphical Model Summary
+
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+C9              2           1             1           1           2             0
+C9 cov path one var
+
+The CAUSALGRAPH Procedure
+
+Covariate Adjustment Sets for C9
+     Causal Effect of X on Y
+
+                Size    Minimal
+
+       1           0    Yes
+C10 self bidirected
+
+The CAUSALGRAPH Procedure
+
+         Variables in Model
+
+                       N    Variables
+
+Measured               2    X Y
+Unmeasured             0
+
+
+                             Graphical Model Summary
+
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+C10             2           1             1           1           2             0
+C10 self bidirected
+
+The CAUSALGRAPH Procedure
+
+Covariate Adjustment Sets for C10
+     Causal Effect of X on Y
+
+                Size    Minimal
+
+       1           0    Yes
+C11 connected only by bidirected
+
+The CAUSALGRAPH Procedure
+
+         Variables in Model
+
+                       N    Variables
+
+Measured               4    A B X Y
+Unmeasured             0
+
+
+                             Graphical Model Summary
+
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+C11             4           3             1           1           4             0
+C11 connected only by bidirected
+
+The CAUSALGRAPH Procedure
+
+        Covariate Adjustment Sets for C11
+             Causal Effect of X on Y
+
+                                    -Covariates-
+                Size    Minimal     A          B
+
+       1           0    Yes
+       2           1    No          *
+       3           1    No                     *
+       4           2    No          *          *
+C12 bidirected only model
+
+The CAUSALGRAPH Procedure
+
+         Variables in Model
+
+                       N    Variables
+
+Measured               3    X Y Z
+Unmeasured             0
+
+
+                             Graphical Model Summary
+
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+C12             3           3             1           1           3             0
+C12 bidirected only model
+
+The CAUSALGRAPH Procedure
+
+NOTE: There are no adjustment sets satisfying the specified criteria for C12.
+
+C14 unmeasured with bidirected
+
+The CAUSALGRAPH Procedure
+
+         Variables in Model
+
+                       N    Variables
+
+Measured               3    X Y Z
+Unmeasured             1    U
+
+
+                             Graphical Model Summary
+
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+C14             4           5             1           1           3             1
+C14 unmeasured with bidirected
+
+The CAUSALGRAPH Procedure
+
+NOTE: There are no adjustment sets satisfying the specified criteria for C14.

@@ -1,0 +1,14 @@
+# corpus assertions
+empty-listing
+stderr-count 1 The variance specification B <==> B is ignored in the model D3.
+stderr-count 1 The variance specification Y <==> Y is ignored in the model D3.
+stderr-count 1 The edge B <===> A appears more than once in the model D3.
+stderr-count 1 The edge C <===> A appears more than once in the model D3.
+stderr-count 1 The edge C <===> B appears more than once in the model D3.
+stderr-count 1 The edge A <===> B appears more than once in the model D3.
+stderr-count 1 The edge A <===> C appears more than once in the model D3.
+stderr-count 1 The edge B <===> C appears more than once in the model D3.
+stderr-count 1 The edge X <===> Y appears more than once in the model D3.
+stderr-count 1 disconnected models (ConnectedComponents table) are not implemented
+stderr-count 1 ORDERMODELS with more than one MODEL statement is not implemented
+stderr-count 1 a prescribed adjustment variable that is not in every model is not implemented
