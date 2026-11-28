@@ -16,6 +16,7 @@ const odds_kernel = @import("logistic_odds.zig");
 const roc = @import("logistic_roc.zig");
 const gof = @import("logistic_gof.zig");
 const exact = @import("logistic_exact.zig");
+const influence = @import("logistic_diagnostics.zig");
 const format = @import("../format.zig");
 const fns = @import("../functions.zig");
 const A = std.mem.Allocator;
@@ -26,6 +27,9 @@ pub const Spec = struct {
     input: proc.ProcInput,
     model: design.Spec,
     noprint: bool = false,
+    influence: bool = false,
+    standardized_residuals: bool = false,
+    rsquare: bool = false,
     code: ?@import("code.zig").Options = null,
     scores: []const @import("logistic_score.zig").Request = &.{},
     exact_only: bool = false,
@@ -446,6 +450,24 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
                 j += 1;
                 while (j < end) {
                     const option = t[j];
+                    if (kw(t, j, "rsquare") or kw(t, j, "rsq")) {
+                        s.rsquare = true;
+                        j += 1;
+                        continue;
+                    }
+                    if (kw(t, j, "influence")) {
+                        s.influence = true;
+                        j += 1;
+                        if (at(t, j, .lparen)) {
+                            j += 1;
+                            if (!kw(t, j, "stdres")) return unsupported(cx, t[j]);
+                            s.standardized_residuals = true;
+                            j += 1;
+                            if (!at(t, j, .rparen)) return invalid(cx, t, j);
+                            j += 1;
+                        }
+                        continue;
+                    }
                     if (kw(t, j, "ctable")) {
                         s.ctable = true;
                         j += 1;
@@ -944,6 +966,12 @@ fn renderCore(a: A, out: *std.ArrayList(u8), s: Spec, d: design.Design, r: kerne
         if (s.trials != null) try out.print(a, " {s}", .{try number(a, full - 2 * counts.full_constant, "10.3")});
         try out.appendSlice(a, "\n");
     }
+    if (s.rsquare) {
+        var mass: f64 = 0;
+        for (d.frequencies, d.weights) |frequency_, weight| mass += frequency_ * weight;
+        const info = try influence.information(r.log_likelihood, r.null_log_likelihood, counts.full_constant, d.p, nf, nf, mass);
+        try out.print(a, "\nR-Square {s} Max-rescaled R-Square {s}\n", .{ try number(a, info.rsquare, "8.4"), try number(a, info.max_rescaled, "8.4") });
+    }
     if (d.p > intercepts) {
         try out.appendSlice(a, "\nTesting Global Null Hypothesis: BETA=0\n\nTest Chi-Square DF Pr > ChiSq\n\n");
         try testRow(a, out, "Likelihood Ratio", @max(0, 2 * (r.log_likelihood - r.null_log_likelihood)), d.p - intercepts);
@@ -1019,7 +1047,7 @@ fn renderCore(a: A, out: *std.ArrayList(u8), s: Spec, d: design.Design, r: kerne
     if (report) |diagnostics| try gof.renderExtras(a, out, diagnostics, ds.columns.items[s.model.response].name, d.response.levels[d.event_index].label, d.response.levels[1 - d.event_index].label);
 }
 
-pub const Analysis = struct { data: *Dataset, design: design.Design, fit: kernel.Fit, counts: Counts, ordinal_fit: ?ordinal.Fit = null, original_rows: []const usize = &.{}, report: ?gof.Report = null };
+pub const Analysis = struct { data: *Dataset, design: design.Design, fit: kernel.Fit, counts: Counts, ordinal_fit: ?ordinal.Fit = null, original_rows: []const usize = &.{}, report: ?gof.Report = null, influence: []const influence.Row = &.{} };
 pub fn diagnosticOptions(s: Spec) bool {
     const scale_output = s.scale != .unspecified and (s.scale == .constant or s.trials != null or s.aggregate != null);
     return !s.nofit and (scale_output or s.ctable or s.lackfit != null);
@@ -1153,7 +1181,51 @@ pub fn analyze(cx: proc.ProcCtx, s: Spec) diag.Error!Analysis {
     const original_rows = try a.alloc(usize, d.n);
     for (d.source_rows, original_rows) |row, *original| original.* = origin.items[row];
     const report = try diagnosticReport(cx, s, work, d, r, original_rows);
-    return .{ .data = work, .design = d, .fit = r, .counts = counts, .ordinal_fit = ordinal_fit, .original_rows = original_rows, .report = report };
+    var diagnostic_rows: std.ArrayList(influence.Row) = .empty;
+    if (s.influence) {
+        if (s.nofit or ordinal_fit != null or s.scale != .unspecified and s.scale != .none) return proc.failGap(cx.diags, 0, "PROC LOGISTIC: INFLUENCE currently requires an unscaled binary LOGIT fit", .{});
+        const seen = try a.alloc(bool, ds.rows.items.len);
+        @memset(seen, false);
+        for (original_rows, 0..) |source, i| {
+            if (seen[source]) continue;
+            seen[source] = true;
+            const row = ds.rows.items[source];
+            const events = if (s.trials != null) row[s.model.response].num else d.y[i];
+            const trials = if (s.trials) |ci| row[ci].num else 1;
+            var result = influence.observation(a, d.x[i * d.p ..][0..d.p], r.covariance, events, trials, d.weights[i], r.probabilities[i]) catch |err| {
+                if (err == error.OutOfMemory) return err;
+                return proc.failGap(cx.diags, 0, "PROC LOGISTIC: INFLUENCE is unavailable at this probability or information boundary", .{});
+            };
+            result.source = source;
+            try diagnostic_rows.append(a, result);
+        }
+    }
+    return .{ .data = work, .design = d, .fit = r, .counts = counts, .ordinal_fit = ordinal_fit, .original_rows = original_rows, .report = report, .influence = diagnostic_rows.items };
+}
+fn influenceTable(a: A, out: *std.ArrayList(u8), s: Spec, result: Analysis) diag.Error!void {
+    try out.appendSlice(a, "\nRegression Diagnostics\n\nCase Number");
+    for (s.model.effects) |column| try out.print(a, " {s}", .{s.input.ds.columns.items[column].name});
+    try out.appendSlice(a, " Pearson Residual Deviance Residual Hat Matrix Diagonal");
+    for (result.design.parameters) |parameter| try out.print(a, " {s} {s} DfBeta", .{ parameter.name, parameter.level orelse "" });
+    try out.appendSlice(a, " Confidence Interval Displacement C Confidence Interval Displacement CBar Delta Deviance Delta Chi-Square");
+    if (s.standardized_residuals) try out.appendSlice(a, " Standardized Pearson Residual Standardized Deviance Residual Likelihood Residual");
+    try out.appendSlice(a, "\n\n");
+    for (result.influence) |row| {
+        try out.print(a, "{d}", .{row.source + 1});
+        for (s.model.effects) |column| {
+            const value = s.input.ds.rows.items[row.source][column];
+            const label = switch (value) {
+                .num => |v| try number(a, v, s.input.ds.columns.items[column].format orelse "10.4"),
+                .str => |v| v,
+            };
+            try out.print(a, " {s}", .{label});
+        }
+        for ([_]f64{ row.pearson, row.deviance, row.leverage }) |value| try out.print(a, " {s}", .{try number(a, value, "best12.")});
+        for (row.dfbetas) |value| try out.print(a, " {s}", .{try number(a, value, "best12.")});
+        for ([_]f64{ row.c, row.cbar, row.difdev, row.difchisq }) |value| try out.print(a, " {s}", .{try number(a, value, "best12.")});
+        if (s.standardized_residuals) for ([_]f64{ row.standardized_pearson, row.standardized_deviance, row.likelihood }) |value| try out.print(a, " {s}", .{try number(a, value, "best12.")});
+        try out.appendSlice(a, "\n");
+    }
 }
 fn oddsTable(a: A, out: *std.ArrayList(u8), rows: []const @import("logistic_plots.zig").Row, alpha: f64, method: odds_kernel.Confidence) diag.Error!void {
     try out.print(a, "\nOdds Ratio Estimates and {s} Confidence Intervals\n\nOdds Ratio Estimate {s}% Confidence Limits\n\n", .{ if (method == .pl) "Profile-Likelihood" else "Wald", try number(a, 100 * (1 - alpha), "best8.") });
@@ -1206,6 +1278,8 @@ pub fn run(cx: proc.ProcCtx, out: *std.ArrayList(u8), tokens: []const lex.Token)
         if (spec.exact_only or spec.exact_request != null or spec.strata.len > 0 or spec.nofit or spec.roc_plot or spec.roc_models.len > 0 or spec.roc_contrast != null or spec.by_columns.len > 0 or spec.link != .logit)
             return proc.failGap(cx.diags, 0, "PROC LOGISTIC CODE/SCORE: exact, conditional, ROC, BY and nonlogit execution paths are not implemented", .{});
     }
+    if ((spec.influence or spec.rsquare) and (spec.exact_only or spec.exact_request != null or spec.strata.len > 0 or spec.nofit or spec.roc_plot or spec.roc_models.len > 0 or spec.roc_contrast != null))
+        return proc.failGap(cx.diags, 0, "PROC LOGISTIC: INFLUENCE/RSQUARE with exact, conditional, NOFIT or ROC execution is not implemented", .{});
     if (spec.exact_only or spec.exact_request != null) return @import("logistic_exact_proc.zig").run(cx, out, spec);
     if (spec.strata.len > 0) return @import("logistic_conditional_proc.zig").run(cx, out, spec);
     if (spec.nofit or spec.roc_plot or spec.roc_models.len > 0 or spec.roc_contrast != null) return @import("logistic_roc_proc.zig").run(cx, out, spec);
@@ -1219,6 +1293,7 @@ pub fn run(cx: proc.ProcCtx, out: *std.ArrayList(u8), tokens: []const lex.Token)
         s.input.ds = &ds;
         const result = try analyze(cx, s);
         const graphics_active = !s.noprint and !s.plots_none and (if (cx.graphics) |g| (g.enabled == true or (g.enabled != false and g.cli_dir != null)) else false);
+        if (graphics_active and s.influence) return proc.failGap(cx.diags, 0, "PROC LOGISTIC: INFLUENCE plots are not implemented; use PLOTS=NONE or ODS GRAPHICS OFF", .{});
         if (graphics_active and (s.clodds != null or s.units_present)) return proc.failGap(cx.diags, 0, "PROC LOGISTIC: plots for customized odds-ratio intervals are not implemented; use PLOTS=NONE", .{});
         var body: std.ArrayList(u8) = .empty;
         if ((s.link != .logit and s.link != .alogit) and (s.odds_requests.len > 0 or s.units_present or s.clodds != null)) return proc.failGap(cx.diags, 0, "PROC LOGISTIC: odds ratios for nonlogit links are not implemented", .{});
@@ -1230,6 +1305,7 @@ pub fn run(cx: proc.ProcCtx, out: *std.ArrayList(u8), tokens: []const lex.Token)
         if (!s.noprint) {
             if (result.ordinal_fit) |fit| try renderOrdinal(a, &body, s, result.design, fit, result.counts) else try renderCore(a, &body, s, result.design, result.fit, result.counts, null, result.report);
         }
+        if (!s.noprint and s.influence) try influenceTable(a, &body, s, result);
         if (!s.noprint) unitTables(a, &body, s, result) catch |err| {
             if (err == error.OutOfMemory) return err;
             return proc.failGap(cx.diags, 0, "PROC LOGISTIC: customized odds-ratio computation failed; no results emitted", .{});
@@ -1308,6 +1384,7 @@ test {
     _ = @import("logistic_exact.zig");
     _ = @import("logistic_exact_tests.zig");
     _ = @import("logistic_gof_tests.zig");
+    _ = @import("logistic_diagnostics_tests.zig");
     _ = @import("logistic_roc_proc.zig");
 }
 
