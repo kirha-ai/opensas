@@ -746,11 +746,11 @@ pub fn run(cx: proc.ProcCtx, out: *Out, t: []const lex.Token) diag.Error!void {
     const o = &body;
     try pageStart(cx, o);
     try o.appendSlice(a, "\nThe HPLOGISTIC Procedure\n\n");
-    // ponytail: the Performance Information reports the SAS reference
-    // machine's single-machine mode with 2 threads.
+    // opensas computes on one thread (as PROC HPPRINCOMP, HPREG and
+    // HPGENSELECT report); thread semantics belong to STAT-HP-002.
     try infoTable(a, o, "Performance Information", &.{
         .{ .label = "Execution Mode", .value = "Single-Machine" },
-        .{ .label = "Number of Threads", .value = "2" },
+        .{ .label = "Number of Threads", .value = "1" },
     });
     {
         const dw = @max(4, s.data_name.len);

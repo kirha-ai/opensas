@@ -4,7 +4,9 @@
  * objective is normalized by the frequency sum; weights scale the
  * likelihood only), missing response / covariate / CLASS values excluded
  * (10 read, 7 used), an ID statement, and two identical BY groups whose
- * results repeat per group.
+ * results repeat per group. Edit against the SAS listing: "Number of
+ * Threads" is 1, not the reference machine's 2 (opensas runs on one
+ * thread; STAT-HP-002 owns threads).
  */
 options nodate nonumber nocenter linesize=160 pagesize=max;
 title; footnote;

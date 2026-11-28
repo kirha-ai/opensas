@@ -1,7 +1,9 @@
 /* STAT-HPLOGISTIC-001: the default PROC HPLOGISTIC listing for a binary
  * logit model with a GLM-parameterized CLASS effect and ten covariates
  * (published getStarted sample data, SAS/STAT 15.4 User's Guide Chapter 61
- * Getting Started). Expected text is the SAS 15.4 reference listing.
+ * Getting Started). Expected text is the SAS 15.4 reference listing with
+ * one edit: "Number of Threads" reads 1, not the reference machine's 2,
+ * because opensas computes on one thread (STAT-HP-002 owns threads).
  */
 options nodate nonumber nocenter linesize=160 pagesize=max;
 title; footnote;

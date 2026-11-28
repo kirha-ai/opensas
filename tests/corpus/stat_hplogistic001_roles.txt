@@ -83,5 +83,7 @@ stdout-count 3 0.4316      1.5735    Infty       0.27      0.7839
 stdout-count 4 Convergence criterion (GCONV=1E-8) satisfied.
 stdout-count 2 Data Source               WORK.TWICE
 stdout-count 6 Performance Information
+stdout-count 6 Number of Threads    1
+stdout-count 0 Number of Threads    2
 stderr-count 0 ERROR
 stderr-count 0 WARNING
