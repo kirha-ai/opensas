@@ -8,9 +8,10 @@ This section is the only current status summary; every section below it is a his
 - **Resumed 2026-11-28 about 07:20Z** after the 06:31Z account usage limit stopped all dev contexts. At the user's direction devs may compare with real SAS via `/Users/thomas/sas/bin/sasrun foo.sas -f text -o - -l /dev/null`, only when truly blocked. Coordinator keep-awake `caffeinate` PID 62218. Coordinator scripts and dev brief live in the session scratchpad `stat/` directory.
 - **Batch 62 verification at exact SHA `b58f0ca2d4d3539cebedebc6ea37882afcc9c7b0` (2026-11-28):** `zig build install` direct 0; whole `tests/STAT15.4-oracle/` moved out of the checkout, then `zig build gate -j2 --summary all` direct 0 — **2871/2871 unit tests**, **2868/2868 corpus**, **11/11 programs**; `zig build install` direct 0; separate supplemental direct 0, **1113/1113**. Oracle restored unchanged, tree clean, HEAD unchanged. Pushed. **Integrated, PARK:** STAT-HP-001.
 - **User approvals (2026-11-28):** move CATMOD's TYPE=EST direct input to STAT-CATMOD-004; add the Base random-stream ticket STAT-RAND-001; public classic sample data, including rows exported from real SAS (Iris), may be committed; build caches (`.zig-cache`) may be deleted automatically when free disk falls to about 8 GB, only for idle worktrees (done twice: 41 GB free the first time; the second at 9.5 GB free with every worktree idle, just before a seven-dev round); the `best32.` display fix is approved as STAT-BEST-001. Earlier scope: SASHELP sample data taken from SAS's public sample material may be committed to this public repository, for STAT-SASHELP-001 and the later SASHELP tickets; record source and verification, never invent rows, ask before adding a data set above about 2 MB.
-- **Live slots (auto):** dev1 STAT-SIMNORMAL-001, dev2 STAT-COMMON-023, dev3 STAT-COMMON-032, dev4 STAT-COMMON-021, dev5 STAT-TREE-001, dev6 STAT-REG-007, dev7 STAT-PLAN-001.
+- **Live slots (auto):** dev1 STAT-SIMNORMAL-001, dev2 STAT-COMMON-023, dev3 STAT-COMMON-032, dev4 STAT-SASHELP-003, dev5 STAT-TREE-001, dev6 STAT-REG-007, dev7 STAT-PLAN-001.
 - **Held, not integrated (needs a user decision):** STAT-SASHELP-005, branch `stat-b7/sashelp005-dev4` (`50a9f8d7` code and data, `c3d1db77` ticket note). It adds SASHELP.JUNKMAIL (708 KB text), LEUTRAIN and LEUTEST (2.24 MB and 1.99 MB as text, committed gzip-compressed at 857 KB and 766 KB), about 2.3 MB in the repository, above the size the user is asked about.
-- **Counts:** 78 DONE, 147 PARK, 7 DOING, 1193 TODO.
+- **Integrated locally, awaiting batch verification (auto):** STAT-COMMON-021 (PARK).
+- **Counts:** 78 DONE, 148 PARK, 7 DOING, 1192 TODO.
 - **Next:** integrate each returned ticket and refill its slot, preferring close-out attempts on PARK tickets whose originals now match exactly (DISTANCE-001, PRINQUAL-001, VARCLUS-001, TPSPLINE-001, CATMOD-001, CANCORR-001, GEE-001, INBREED-001, then the open review in the batch 6 receipt), because a DONE ticket unlocks its dependents; then other eligible tickets.
 - **Working branch:** `feat/stat/batch-4`. Last tested and pushed code SHA `b58f0ca2d4d3539cebedebc6ea37882afcc9c7b0` (batch 62; batch 61 was `7e3b24a6663f4af0f744b984a6b67535347b88cc`). The bullets below this one describe batch 5 and are historical. Later commits that touch only this file are documentation. No PR created or merged; `main` untouched.
 
@@ -936,7 +937,7 @@ Complete prerequisite shared contracts first, then each PROC's data input, model
 
 <a id="stat-common-021"></a>
 
-### [DOING @dev4] STAT-COMMON-021 — EFFECT — Collection Effects / Lag Effects
+### [PARK] STAT-COMMON-021 — EFFECT — Collection Effects / Lag Effects
 
 - Source: S154 / Chapter 20 / `Collection Effects` (PDF p. 426); S154 / Chapter 20 / `Lag Effects` (PDF pp. 426–429).
 - Scope: Implement shared semantics, defaults, and applicability checks for collection Effects; Lag Effects; procedure-specific options and result integration belong to the corresponding PROC tickets.
@@ -951,6 +952,7 @@ Complete prerequisite shared contracts first, then each PROC's data input, model
   - Permanent tests (none reads `tests/STAT15.4-oracle/`): `collection_effect.sas` → `tests/corpus/stat_effect_collection.sas`/`.txt`; `tests/corpus/stat_effect_collection_details.sas`/`.txt` (DETAILS + 10-char name, SAS listing, hand-checked exact solution 17/14, 3/2, 5/4); `tests/corpus/stat_effect_collection_gap.sas` (rc 2), `tests/corpus/stat_effect_collection_user.sas` (rc 1); `src/stat/effect_collection_tests.zig`, 6 tests named `STAT-COMMON-021 ...`.
   - Validation: `heavy.sh zig build install` exit 0; `heavy.sh zig test src/root.zig -lc --test-filter STAT-COMMON-021 --test-filter STAT-GLMSELECT-001 --test-filter COMMON022` exit 0, 93/93; corpus runner exit 0, 1/1 each for the four new fixtures and `stat_glmselect_stepwise`, `stat_glmselect_by`, `stat_glmselect_gap`; GLMSELECT-001 originals unchanged (rc 2, same SASHELP/ODS/PLOTS blockers). Not run (coordinator): `zig build gate`, supplemental suite, oracle-absent check.
   - Remaining: (1) the LAG DETAILS lag-design-matrix table is not rendered (layout not on the cited pages, not yet probed); (2) no PROC consumes LAG yet — GLMSELECT adoption (it also lists WITHIN=/PERIOD= variables in Class Level Information, as observed) belongs to STAT-GLMSELECT-003 and the other EFFECT procedures' tickets; (3) CLASS collection constituents are built but not adopted by GLMSELECT (aliased-column parameter rows: STAT-GLMSELECT-003/004). Lag column names follow p.427 (`Lag_A`); SAS parameter/OUTDESIGN labels read `L A` (consumer composes). Probe programs/outputs in ignored `output/c021sas/`.
+- Coordinator note (2026-11-28): the code commit subjects say `DONE STAT-COMMON-021`; the ticket is PARK.
 
 <a id="stat-common-022"></a>
 
@@ -1734,7 +1736,7 @@ Complete prerequisite shared contracts first, then each PROC's data input, model
 
 <a id="stat-sashelp-003"></a>
 
-### [TODO] STAT-SASHELP-003 — SASHELP example data — 1997 Birth Weight Data / Class Data / Comet Data
+### [DOING @dev4] STAT-SASHELP-003 — SASHELP example data — 1997 Birth Weight Data / Class Data / Comet Data
 
 - Source: S154 / Sashelp Data Sets / `1997 Birth Weight Data` (PDF pp. 10906–10907); S154 / Sashelp Data Sets / `Class Data` (PDF pp. 10907–10908); S154 / Sashelp Data Sets / `Comet Data` (PDF pp. 10908–10909).
 - Scope: For 1997 Birth Weight Data; Class Data; Comet Data provide reproducible public example data or the compatible loading method explicitly documented in the source; use public or synthetic data only.
