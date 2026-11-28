@@ -47,6 +47,7 @@ pub fn run(cx: proc.ProcCtx, out: *std.ArrayList(u8), tokens: []const @import(".
     try execute(cx, out, spec);
 }
 pub fn execute(cx: proc.ProcCtx, out: *std.ArrayList(u8), spec: Spec) diag.Error!void {
+    try @import("store_glm.zig").validate(cx, spec);
     const view = try selection.View.init(cx.arena, spec.input, .{ .by = spec.by, .frequency = spec.freq, .weight = spec.weight, .id = spec.ids });
     const groups = try view.groups(cx.arena, spec.descending, spec.notsorted, cx.diags);
     if (groups.len == 0) return cx.diags.fail(error.ExecError, 0, "PROC GLM: no observations", .{});
@@ -99,12 +100,14 @@ pub fn execute(cx: proc.ProcCtx, out: *std.ArrayList(u8), spec: Spec) diag.Error
             }
             try @import("glm_lsmeans.zig").executeWithFit(cx, out, spec, d, result);
             try @import("glm_plots.zig").emit(cx, spec, d, result, graph_order);
+            try @import("store_glm.zig").save(cx, spec, d, result);
             graph_order += 1;
         }
     }
 }
 
 test {
+    _ = @import("store_tests.zig");
     _ = @import("glm_computational_tests.zig");
     _ = @import("glm_repeated.zig");
     _ = @import("glm_effectsize.zig");

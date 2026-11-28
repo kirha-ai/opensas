@@ -138,6 +138,8 @@ pub var g_abort_rc: ?u8 = null;
 /// main.writeLibOutputs / PROC CONTENTS / vtable); `index` maps the case-folded,
 /// WORK-stripped name → slot for O(1) create/find/SET (PERF-libscan, was O(M²)).
 pub const Library = struct {
+    /// Session-owned native ITEMSTOR bytes; separate from DATA members.
+    item_stores: std.StringHashMapUnmanaged([]const u8) = .empty,
     arena: std.mem.Allocator,
     names: std.ArrayList([]const u8),
     sets: std.ArrayList(*Dataset),

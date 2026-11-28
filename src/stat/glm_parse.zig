@@ -10,6 +10,7 @@ const eq = std.ascii.eqlIgnoreCase;
 pub const Order = @import("class_levels.zig").Order;
 pub const Effect = struct { name: []const u8, variables: []const usize };
 pub const Spec = struct {
+    store: ?@import("store.zig").Request = null,
     input: proc.ProcInput,
     repeated: ?@import("glm_repeated.zig").Request = null,
     nouni: bool = false,
@@ -264,6 +265,9 @@ pub fn parse(cx: proc.ProcCtx, tokens: []const lex.Token) diag.Error!Spec {
                 if (result.hov != null) return proc.failGap(cx.diags, tokens[i].line, "PROC GLM: mixed HOVTEST and descriptive MEANS requests are not implemented", .{});
                 try @import("glm_means.zig").read(cx, tokens[i..end], result, effects.items, &means);
             }
+        } else if (kw(tokens, i, "store")) {
+            if (result.store != null) return proc.failGap(cx.diags, tokens[i].line, "PROC GLM: repeated STORE statements are not implemented", .{});
+            result.store = try @import("store.zig").parse(cx, tokens[i + 1 .. end]);
         } else if (kw(tokens, i, "random")) {
             if (!model_seen) return cx.diags.fail(error.ParseError, tokens[i].line, "PROC GLM: RANDOM must follow MODEL", .{});
             const request = try @import("glm_random.zig").read(cx, tokens[i..end], result, effects.items);
