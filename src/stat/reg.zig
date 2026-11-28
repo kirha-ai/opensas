@@ -829,4 +829,5 @@ test {
     _ = @import("reg_outest.zig");
     _ = @import("reg_interactive_tests.zig");
     _ = @import("reg_persistence_tests.zig");
+    _ = @import("reg_resources_tests.zig");
 }

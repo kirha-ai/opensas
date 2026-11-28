@@ -213,6 +213,10 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
         try input_tokens.appendSlice(cx.arena, t[start + 3 ..]);
     }
     const ds = try proc.procInput(cx.arena, raw, if (qualified_name_at != null) input_tokens.items else t, cx.diags);
+    // STAT-REG-019: TYPE=CORR/COV/SSCP summary input (the CPU-saving mode of
+    // "Computer Resources", p. 8650) is not implemented. Reading its rows as
+    // observations would print plausible wrong fits, so any typed set is loud.
+    if (raw.ds_type orelse ds.ds_type) |ty| return proc.failGap(cx.diags, t[0].line, "PROC REG: TYPE={s} input data sets are not implemented", .{ty});
     var models: std.ArrayList(Model) = .empty;
     var mtests: std.ArrayList(@import("reg_mtest.zig").Spec) = .empty;
     var tests: std.ArrayList(@import("reg_test.zig").Spec) = .empty;
