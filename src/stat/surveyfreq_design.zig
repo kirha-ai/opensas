@@ -35,8 +35,10 @@ pub const Design = struct {
     psu: []const usize,
     /// Per PSU: stratum index.
     psu_stratum: []const usize,
-    /// Per stratum: number of PSUs and the factor (1 - f_h).
+    /// Per stratum: number of PSUs, the factor (1 - f_h) and the index (into
+    /// the rows given to `build`) of its first observation.
     stratum_psus: []const usize,
+    stratum_rep: []const usize = &.{},
     stratum_fpc: []const f64,
     read: usize,
     /// Observations dropped for a missing or nonpositive WEIGHT value.
@@ -70,6 +72,21 @@ fn isMissing(v: Value) bool {
     };
 }
 
+/// Same STRATA category: equal numbers (missing equal), or equal text up to
+/// trailing blanks.
+pub fn sameValue(x: Value, y: Value) bool {
+    return switch (x) {
+        .num => |p| switch (y) {
+            .num => |q| p == q or (std.math.isNan(p) and std.math.isNan(q)),
+            .str => false,
+        },
+        .str => |p| switch (y) {
+            .str => |q| std.mem.eql(u8, std.mem.trimEnd(u8, p, " "), std.mem.trimEnd(u8, q, " ")),
+            .num => false,
+        },
+    };
+}
+
 fn appendKey(a: A, key: *std.ArrayList(u8), row: []const Value, cols: []const usize) !void {
     for (cols) |c| switch (row[c]) {
         // +0.0 folds -0.0 so the two zeros are one category.
@@ -97,6 +114,7 @@ pub fn build(a: A, rows: []const []const Value, r: Roles) !Design {
     var psu: std.ArrayList(usize) = .empty;
     var psu_stratum: std.ArrayList(usize) = .empty;
     var stratum_psus: std.ArrayList(usize) = .empty;
+    var stratum_rep: std.ArrayList(usize) = .empty;
     var stratum_ids = std.StringHashMap(usize).init(a);
     var psu_ids = std.StringHashMap(usize).init(a);
     var bad_weight: usize = 0;
@@ -128,6 +146,7 @@ pub fn build(a: A, rows: []const []const Value, r: Roles) !Design {
             sg.key_ptr.* = try a.dupe(u8, key.items);
             sg.value_ptr.* = stratum_psus.items.len;
             try stratum_psus.append(a, 0);
+            try stratum_rep.append(a, i);
         }
         const h = sg.value_ptr.*;
         var p: usize = psu_stratum.items.len;
@@ -155,7 +174,7 @@ pub fn build(a: A, rows: []const []const Value, r: Roles) !Design {
         .rate => |rate| 1 - rate,
         .total => |total| 1 - @as(f64, @floatFromInt(n)) / total,
     };
-    return .{ .kept = kept.items, .weight = weight.items, .psu = psu.items, .psu_stratum = psu_stratum.items, .stratum_psus = stratum_psus.items, .stratum_fpc = fpc, .read = rows.len, .bad_weight = bad_weight, .bad_design = bad_design, .sum_weights = sum };
+    return .{ .kept = kept.items, .weight = weight.items, .psu = psu.items, .psu_stratum = psu_stratum.items, .stratum_psus = stratum_psus.items, .stratum_rep = stratum_rep.items, .stratum_fpc = fpc, .read = rows.len, .bad_weight = bad_weight, .bad_design = bad_design, .sum_weights = sum };
 }
 
 /// Taylor-series variance of the total of `z` (one already weighted,

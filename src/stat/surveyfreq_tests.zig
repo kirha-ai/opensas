@@ -59,6 +59,15 @@ const Fixture = struct {
     }
     fn init(self: *Fixture) !void {
         self.lib = Library.init(self.a());
+        for ([_][]const u8{ "totals", "short" }) |name| {
+            const t = try self.a().create(Dataset);
+            t.* = Dataset.init(self.a(), name);
+            _ = try t.addColumn("h", .num);
+            _ = try t.addColumn("_total_", .num);
+            try t.appendRow(&.{ .{ .num = 1 }, .{ .num = 8 } });
+            if (std.mem.eql(u8, name, "totals")) try t.appendRow(&.{ .{ .num = 2 }, .{ .num = 4 } });
+            try self.lib.put(name, t);
+        }
         for ([_]*Dataset{ try dataset(self.a(), "dirty", &dirty), try dataset(self.a(), "clean", &clean), try dataset(self.a(), "holes", &holes), try dataset(self.a(), "cluster_hole", &cluster_hole), try dataset(self.a(), "level_hole", &level_hole) }) |ds| try self.lib.put(ds.name, ds);
     }
     fn cx(self: *Fixture, d: *diag.Diagnostics) proc.ProcCtx {
@@ -154,11 +163,14 @@ test "STAT-SURVEYFREQ-001 invalid declarations are user errors and unimplemented
         "proc surveyfreq data=clean; strata nope; tables a*b;",
         "proc surveyfreq data=clean; cluster; tables a*b;",
         "proc surveyfreq data=clean; nonsense a;",
+        "proc surveyfreq data=clean rate=absent; strata h; tables a*b;",
+        "proc surveyfreq data=clean total=clean; strata h; weight w; tables a*b;", // no _TOTAL_
+        "proc surveyfreq data=clean total=short; strata h; cluster c; weight w; tables a*b;", // stratum 2 absent
         // TOTAL= below the two sampled clusters of a stratum.
         "proc surveyfreq data=clean total=1; strata h; cluster c; weight w; tables a*b / row;",
     });
     try fx.expectRc(2, &.{
-        "proc surveyfreq data=clean page; tables a*b;",
+        "proc surveyfreq data=clean page; weight w; tables a*b / chisq;",
         "proc surveyfreq data=clean order=freq; tables a*b;",
         "proc surveyfreq data=clean nomcar; weight w; tables a*b / chisq;",
         "proc surveyfreq data=clean; format a 3.; weight w; tables a*b;",
@@ -166,8 +178,7 @@ test "STAT-SURVEYFREQ-001 invalid declarations are user errors and unimplemented
         "proc surveyfreq data=clean varmethod=jackknife; tables a*b;",
         "proc surveyfreq data=clean varmethod=bootstrap; tables a*b;",
         "proc surveyfreq data=clean varmethod=taylor(x); tables a*b;",
-        "proc surveyfreq data=clean rate=rates; tables a*b;",
-        "proc surveyfreq data=clean total=totals; tables a*b;",
+        "proc surveyfreq data=clean total=totals; weight w; tables a*b;", // no STRATA
         "proc surveyfreq data=clean; repweights w; tables a*b;",
         "proc surveyfreq data=clean; strata h / list; weight w; tables a*b;",
         "proc surveyfreq data=clean; weight w; tables a*b; tables a*b;",
@@ -382,4 +393,20 @@ test "STAT-SURVEYFREQ-001 NOMCAR, ORDER=DATA, VARHEADER and character TABLES col
     try expect(std.mem.indexOf(u8, cv.out, "s               a     Frequency") != null);
     try expect(std.mem.indexOf(u8, cv.out, "\nx               1") != null);
     try expect(std.mem.indexOf(u8, cv.out, "\nTotal           1") != null);
+}
+
+test "STAT-SURVEYFREQ-001 TOTAL= data set and PAGE" {
+    var fx = try fixture();
+    defer fx.arena.deinit();
+    try fx.init();
+    // Stratum totals 8 and 4: f = 2/8 and 2/4. Cell (1,1) PSU totals 2, 3 | 1, 0
+    // give 1 per stratum before the correction: V = .75 + .5 = 1.25, sd 1.11803.
+    const o = try fx.outcome("proc surveyfreq data=clean total=totals; strata h; cluster c; weight w; tables a*b;");
+    try expectEqual(@as(u8, 0), o.rc);
+    try expect(std.mem.indexOf(u8, o.out, "    1        1             3       6.00000       1.11803") != null);
+    // PAGE: the table restarts with the procedure title after the summary.
+    const pg = try fx.outcome("proc surveyfreq data=clean page; strata h; cluster c; weight w; tables a*b;");
+    try expectEqual(@as(u8, 0), pg.rc);
+    try expectEqual(@as(usize, 2), std.mem.count(u8, pg.out, "The SURVEYFREQ Procedure\n"));
+    try expect(std.mem.indexOf(u8, pg.out, "Sum of Weights                    20\n\n") != null);
 }

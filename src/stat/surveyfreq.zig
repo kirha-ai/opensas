@@ -38,6 +38,10 @@ pub const Spec = struct {
     /// ORDER=DATA: levels in order of first appearance in the input.
     order_data: bool = false,
     nomcar: bool = false,
+    /// PAGE: the Data Summary and the table on separate pages.
+    page: bool = false,
+    /// RATE= / TOTAL= stratum-level data set (_RATE_ / _TOTAL_).
+    fpc_table: ?struct { ds: *Dataset, rate: bool } = null,
 };
 
 fn at(t: []const lex.Token, i: usize, tag: lex.Tag) bool {
@@ -115,8 +119,9 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
         } else if (eq(word, "nomcar") and !valued) {
             s.nomcar = true;
             i += 1;
-        } else if (oneOf(word, &.{"page"}) and !valued) {
-            return gap(cx, t[i].line, "option {s} is not implemented", .{word});
+        } else if (eq(word, "page") and !valued) {
+            s.page = true;
+            i += 1;
         } else if (eq(word, "order") and valued) {
             if (!at(t, i + 2, .name)) return invalid(cx, t, i + 2);
             const v = t[i + 2].text;
@@ -138,8 +143,19 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
         } else if (oneOf(word, &.{ "rate", "r", "total", "n" }) and valued) {
             const is_rate = eq(word[0..1], "r");
             // RATE= and TOTAL= cannot both be specified (p.9596).
-            if (s.roles.fpc != .none) return cx.diags.fail(error.ParseError, t[i].line, "PROC SURVEYFREQ: only one of the RATE= and TOTAL= options can be specified", .{});
-            if (at(t, i + 2, .name)) return gap(cx, t[i].line, "{s}=SAS-data-set (stratum-level values) is not implemented", .{word});
+            if (s.roles.fpc != .none or s.fpc_table != null) return cx.diags.fail(error.ParseError, t[i].line, "PROC SURVEYFREQ: only one of the RATE= and TOTAL= options can be specified", .{});
+            if (at(t, i + 2, .name)) {
+                var dname = t[i + 2].text;
+                i += 3;
+                if (at(t, i, .dot) and at(t, i + 1, .name)) {
+                    dname = try std.fmt.allocPrint(cx.arena, "{s}.{s}", .{ dname, t[i + 1].text });
+                    i += 2;
+                }
+                if (at(t, i, .lparen)) return gap(cx, t[i].line, "data set options on {s}= are not implemented", .{word});
+                const fds = cx.lib.find(dname) orelse return cx.diags.fail(error.ParseError, t[i - 1].line, "PROC SURVEYFREQ: {s}= data set {s} not found", .{ word, dname });
+                s.fpc_table = .{ .ds = fds, .rate = is_rate };
+                continue;
+            }
             i += 2;
             const x = try number(cx, t, &i);
             if (is_rate) {
@@ -495,6 +511,43 @@ fn hasMissing(rows: []const []const Value, kept: []const usize, cols: []const us
 
 /// Per-BY-group designs and tables; raises every execution boundary before
 /// any text exists.
+/// Stratum-level RATE= / TOTAL= values (p.9590): the data set holds every
+/// STRATA variable and _RATE_ (or _TOTAL_); each stratum of the input must be
+/// present. Rates follow the RATE=value conventions.
+fn applyFpcTable(cx: proc.ProcCtx, s: Spec, d: *design.Design, rows: []const []const Value) diag.Error!void {
+    const ft = s.fpc_table orelse return;
+    const ds = s.input.ds;
+    const fds = ft.ds;
+    if (s.roles.strata.len == 0) return gap(cx, 0, "RATE= or TOTAL= data set without a STRATA statement is not implemented", .{});
+    const vname: []const u8 = if (ft.rate) "_rate_" else "_total_";
+    const vc = fds.indexOf(vname) orelse return cx.diags.fail(error.ParseError, 0, "PROC SURVEYFREQ: the {s}= data set must contain the variable {s}", .{ if (ft.rate) @as([]const u8, "RATE") else "TOTAL", vname });
+    const keys = try cx.arena.alloc(usize, s.roles.strata.len);
+    for (s.roles.strata, keys) |c, *k| {
+        const n = ds.columns.items[c].name;
+        k.* = fds.indexOf(n) orelse return cx.diags.fail(error.ParseError, 0, "PROC SURVEYFREQ: the RATE= or TOTAL= data set must contain the STRATA variable {s}", .{n});
+        if (fds.columns.items[k.*].type != ds.columns.items[c].type or ds.columns.items[c].format != null) return gap(cx, 0, "RATE= or TOTAL= data set with formatted or mismatched STRATA variables is not implemented", .{});
+    }
+    const fpc = try cx.arena.alloc(f64, d.strata());
+    for (fpc, d.stratum_rep, d.stratum_psus) |*f, rep, n| {
+        const row = rows[rep];
+        const hit = for (fds.rows.items) |fr| {
+            const same = for (s.roles.strata, keys) |c, k| {
+                if (!design.sameValue(row[c], fr[k])) break false;
+            } else true;
+            if (same) break fr;
+        } else return cx.diags.fail(error.ParseError, 0, "PROC SURVEYFREQ: a stratum of the input is missing from the RATE= or TOTAL= data set", .{});
+        const x = hit[vc].num;
+        if (ft.rate) {
+            if (!(x > 0 and x <= 100)) return cx.diags.fail(error.ParseError, 0, "PROC SURVEYFREQ: _RATE_ values must be positive numbers not above 100", .{});
+            f.* = 1 - (if (x == 1) 1 else if (x > 1) x / 100 else x);
+        } else {
+            if (!(x > 0)) return cx.diags.fail(error.ParseError, 0, "PROC SURVEYFREQ: _TOTAL_ values must be positive numbers", .{});
+            f.* = 1 - @as(f64, @floatFromInt(n)) / x;
+        }
+    }
+    d.stratum_fpc = fpc;
+}
+
 pub fn plan(cx: proc.ProcCtx, s: Spec) diag.Error![]Group {
     const a = cx.arena;
     const ds = s.input.ds;
@@ -513,13 +566,15 @@ pub fn plan(cx: proc.ProcCtx, s: Spec) diag.Error![]Group {
         };
     }
     if (s.nomcar and s.chisq) return gap(cx, 0, "CHISQ with NOMCAR is not implemented", .{});
-    if (s.chisq and s.roles.fpc != .none) return gap(cx, 0, "CHISQ with RATE= or TOTAL= is not implemented", .{});
+    if (s.page and (s.chisq or s.nomcar or s.nosummary)) return gap(cx, 0, "PAGE with CHISQ, NOMCAR or NOSUMMARY is not verified", .{});
+    if (s.chisq and (s.roles.fpc != .none or s.fpc_table != null)) return gap(cx, 0, "CHISQ with RATE= or TOTAL= is not implemented", .{});
     const slices = try by.checkedSlices(a, ds, s.by_cols, s.by_desc, s.notsorted, cx.diags);
     const groups = try a.alloc(Group, slices.len);
     const table_cols = [_]usize{ req.row, col };
     for (slices, groups) |slice, *group| {
         const group_rows = try codeRows(a, slice.rows, table_cols, dicts);
-        const d = try design.build(a, group_rows, s.roles);
+        var d = try design.build(a, group_rows, s.roles);
+        try applyFpcTable(cx, s, &d, group_rows);
         if (d.kept.len == 0) return gap(cx, 0, "the result for an input without valid observations is not verified", .{});
         if (d.invalidFpc()) return cx.diags.fail(error.ParseError, 0, "PROC SURVEYFREQ: TOTAL= is less than the number of sampled clusters in a stratum", .{});
         // Missing TABLES values: without MISSING the observations are excluded
@@ -546,6 +601,7 @@ pub fn plan(cx: proc.ProcCtx, s: Spec) diag.Error![]Group {
             freq_missing = d.kept.len - keep.items.len;
             if (keep.items.len == 0) return gap(cx, 0, "a table without nonmissing observations is not verified", .{});
             td = try design.build(a, keep.items, s.roles);
+            try applyFpcTable(cx, s, &td, keep.items);
             table_rows = keep.items;
         }
         // Single-cluster strata are left out of the variance (all of them:
@@ -694,7 +750,13 @@ fn render(cx: proc.ProcCtx, out: *Out, s: Spec, g: Group) diag.Error!void {
         if (excluded) try pair(a, &body, "Number of Observations Used", lw, try std.fmt.allocPrint(a, "{d}", .{g.d.kept.len}), 14);
         if (g.d.bad_weight > 0) try pair(a, &body, "Number of Obs with Nonpositive Weights", lw, try std.fmt.allocPrint(a, "{d}", .{g.d.bad_weight}), 14);
         if (s.roles.weight != null) try pair(a, &body, "Sum of Weights", lw, try format.bestNum(a, g.d.sum_weights), 14);
-        try body.appendSlice(a, "\n\n");
+        if (s.page) {
+            // SAS-verified: the table starts a new page (titles, procedure
+            // title) after one blank line.
+            try body.append(a, '\n');
+            if (cx.listing_titles) |titles| try titles.emitTitles(a, &body);
+            try body.appendSlice(a, "\nThe SURVEYFREQ Procedure\n\n");
+        } else try body.appendSlice(a, "\n\n");
     }
     if (s.nomcar) {
         // SAS-verified: NOMCAR adds the Variance Estimation table.
