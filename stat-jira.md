@@ -8,9 +8,10 @@ This section is the only current status summary; every section below it is a his
 - **Resumed 2026-11-28 about 07:20Z** after the 06:31Z account usage limit stopped all dev contexts. At the user's direction devs may compare with real SAS via `/Users/thomas/sas/bin/sasrun foo.sas -f text -o - -l /dev/null`, only when truly blocked. Coordinator keep-awake `caffeinate` PID 62218. Coordinator scripts and dev brief live in the session scratchpad `stat/` directory.
 - **Batch 58 verification at exact SHA `6eee13906ed72059ee690ea4acd8286a9aa5bd3c` (2026-11-28):** `zig build install` direct 0; whole `tests/STAT15.4-oracle/` moved out of the checkout, then `zig build gate -j2 --summary all` direct 0 — **2856/2856 unit tests**, **2835/2835 corpus**, **11/11 programs**; `zig build install` direct 0; separate supplemental direct 0, **1113/1113**. Oracle restored unchanged, tree clean, HEAD unchanged. Pushed. **Integrated, PARK:** STAT-PSMATCH-001 (REGION= forms; STRATA remains).
 - **User approvals (2026-11-28):** move CATMOD's TYPE=EST direct input to STAT-CATMOD-004; add the Base random-stream ticket STAT-RAND-001; public classic sample data, including rows exported from real SAS (Iris), may be committed; build caches (`.zig-cache`) may be deleted automatically when free disk falls to about 8 GB, only for idle worktrees (done twice: 41 GB free the first time; the second at 9.5 GB free with every worktree idle, just before a seven-dev round); the `best32.` display fix is approved as STAT-BEST-001. Earlier scope: SASHELP sample data taken from SAS's public sample material may be committed to this public repository, for STAT-SASHELP-001 and the later SASHELP tickets; record source and verification, never invent rows, ask before adding a data set above about 2 MB.
-- **Live slots (auto):** dev1 STAT-COMMON-016, dev2 STAT-ANOVA-003, dev3 STAT-CAUSALTRT-001, dev4 STAT-RMSTREG-001, dev5 STAT-COMMON-019, dev6 STAT-REG-001, dev7 STAT-CAUSALGRAPH-008.
+- **Live slots (auto):** dev1 STAT-COMMON-016, dev2 STAT-COMMON-023, dev3 STAT-CAUSALTRT-001, dev4 STAT-COMMON-021, dev4 STAT-RMSTREG-001, dev5 STAT-COMMON-019, dev6 STAT-REG-001, dev7 STAT-CAUSALGRAPH-008.
 - **Held, not integrated (needs a user decision):** STAT-SASHELP-005, branch `stat-b7/sashelp005-dev4` (`50a9f8d7` code and data, `c3d1db77` ticket note). It adds SASHELP.JUNKMAIL (708 KB text), LEUTRAIN and LEUTEST (2.24 MB and 1.99 MB as text, committed gzip-compressed at 857 KB and 766 KB), about 2.3 MB in the repository, above the size the user is asked about.
-- **Counts:** 75 DONE, 143 PARK, 7 DOING, 1200 TODO.
+- **Integrated locally, awaiting batch verification (auto):** STAT-ANOVA-003 (PARK), STAT-RMSTREG-001 (DONE candidate).
+- **Counts:** 75 DONE, 144 PARK, 8 DOING, 1198 TODO.
 - **Next:** integrate each returned ticket and refill its slot, preferring close-out attempts on PARK tickets whose originals now match exactly (DISTANCE-001, PRINQUAL-001, VARCLUS-001, TPSPLINE-001, CATMOD-001, CANCORR-001, GEE-001, INBREED-001, then the open review in the batch 6 receipt), because a DONE ticket unlocks its dependents; then other eligible tickets.
 - **Working branch:** `feat/stat/batch-4`. Last tested and pushed code SHA `6eee13906ed72059ee690ea4acd8286a9aa5bd3c` (batch 58; batch 57 was `e4a631565b9b5ddc033a9cb3c7ee7f555ec459f7`). The bullets below this one describe batch 5 and are historical. Later commits that touch only this file are documentation. No PR created or merged; `main` untouched.
 
@@ -926,7 +927,7 @@ Complete prerequisite shared contracts first, then each PROC's data input, model
 
 <a id="stat-common-021"></a>
 
-### [TODO] STAT-COMMON-021 — EFFECT — Collection Effects / Lag Effects
+### [DOING @dev4] STAT-COMMON-021 — EFFECT — Collection Effects / Lag Effects
 
 - Source: S154 / Chapter 20 / `Collection Effects` (PDF p. 426); S154 / Chapter 20 / `Lag Effects` (PDF pp. 426–429).
 - Scope: Implement shared semantics, defaults, and applicability checks for collection Effects; Lag Effects; procedure-specific options and result integration belong to the corresponding PROC tickets.
@@ -953,7 +954,7 @@ Complete prerequisite shared contracts first, then each PROC's data input, model
 
 <a id="stat-common-023"></a>
 
-### [TODO] STAT-COMMON-023 — EFFECT — Spline Effects / Splines and Spline Bases
+### [DOING @dev2] STAT-COMMON-023 — EFFECT — Spline Effects / Splines and Spline Bases
 
 - Source: S154 / Chapter 20 / `Spline Effects` (PDF pp. 434–438); S154 / Chapter 20 / `Splines and Spline Bases` (PDF pp. 438–443).
 - Scope: Implement shared semantics, defaults, and applicability checks for spline Effects; Splines and Spline Bases; procedure-specific options and result integration belong to the corresponding PROC tickets.
@@ -2016,7 +2017,7 @@ Source: S154, Chapter 29, `The ANOVA Procedure`, PDF pp. 1105–1162. Tasks in t
 
 <a id="stat-anova-003"></a>
 
-### [DOING @dev2] STAT-ANOVA-003 — ANOVA — CLASS / MODEL / Specification of Effects
+### [PARK] STAT-ANOVA-003 — ANOVA — CLASS / MODEL / Specification of Effects
 
 - Source: S154 / Chapter 29 / `CLASS Statement` (PDF pp. 1118–1119); S154 / Chapter 29 / `MODEL Statement` (PDF p. 1129); S154 / Chapter 29 / `Specification of Effects` (PDF pp. 1135–1138).
 - Scope: Implement CLASS; MODEL; Specification of Effects. Implement the syntax and model semantics allowed by this procedure, using shared effect/parameterization support only for forms documented as supported.
