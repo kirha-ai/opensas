@@ -1,0 +1,168 @@
+S1
+
+The CORRESP Procedure
+
+                           Inertia and Chi-Square Decomposition
+
+Singular    Principal       Chi-               Cumulative
+   Value      Inertia     Square    Percent       Percent       20   40   60   80  100
+                                                             ----+----+----+----+----+---
+ 0.37349      0.13949    5.30077      99.67         99.67    *************************
+ 0.02160      0.00047    0.01774       0.33        100.00
+
+   Total      0.13996    5.31851     100.00
+
+Degrees of Freedom = 4
+
+
+       Row Coordinates
+
+               Dim1       Dim2
+
+x1           0.4625     0.0001
+x2          -0.3038     0.0419
+x3          -0.3007    -0.0184
+
+
+Supplementary Row Coordinates
+
+               Dim1       Dim2
+
+s1           0.2342     0.1960
+s2           0.6525     0.9144
+
+
+  Summary Statistics for the Row Points
+
+            Quality       Mass    Inertia
+
+x1           1.0000     0.3947     0.6032
+x2           1.0000     0.1842     0.1237
+x3           1.0000     0.4211     0.2730
+
+
+Quality of Representation for the Supplementary Row Points
+
+s1           1.0000
+s2           1.0000
+
+
+Partial Contributions to Inertia for the Row Points
+
+               Dim1       Dim2
+
+x1           0.6053     0.0000
+x2           0.1218     0.6939
+x3           0.2729     0.3060
+
+
+Indices of the Coordinates That Contribute Most to Inertia for the Row Points
+
+               Dim1       Dim2       Best
+
+x1                1          0          1
+x2                0          2          2
+x3                2          2          2
+
+
+Squared Cosines for the Row Points
+
+               Dim1       Dim2
+
+x1           1.0000     0.0000
+x2           0.9813     0.0187
+x3           0.9963     0.0037
+
+
+Squared Cosines for the Supplementary Row Points
+
+               Dim1       Dim2
+
+s1           0.5882     0.4118
+s2           0.3374     0.6626
+
+
+      Column Coordinates
+
+               Dim1       Dim2
+
+a           -0.4240     0.0063
+b            0.4710     0.0317
+c            0.2154    -0.0254
+
+
+Summary Statistics for the Column Points
+
+            Quality       Mass    Inertia
+
+a            1.0000     0.4211     0.5409
+b            1.0000     0.2105     0.3352
+c            1.0000     0.3684     0.1239
+
+
+Partial Contributions to Inertia for the Column Points
+
+               Dim1       Dim2
+
+a            0.5426     0.0363
+b            0.3348     0.4547
+c            0.1226     0.5090
+
+
+Indices of the Coordinates That Contribute Most to Inertia for the Column Points
+
+               Dim1       Dim2       Best
+
+a                 1          0          1
+b                 2          2          2
+c                 0          2          2
+
+
+Squared Cosines for the Column Points
+
+               Dim1       Dim2
+
+a            0.9998     0.0002
+b            0.9955     0.0045
+c            0.9863     0.0137
+S2
+
+The CORRESP Procedure
+
+                           Inertia and Chi-Square Decomposition
+
+Singular    Principal       Chi-               Cumulative
+   Value      Inertia     Square    Percent       Percent       20   40   60   80  100
+                                                             ----+----+----+----+----+---
+ 0.37349      0.13949    5.30077      99.67         99.67    *************************
+ 0.02160      0.00047    0.01774       0.33        100.00
+
+   Total      0.13996    5.31851     100.00
+
+Degrees of Freedom = 4
+
+
+  Row Coordinates
+
+               Dim1
+
+Row1         0.4625
+Row2        -0.3038
+Row4        -0.3007
+
+
+Supplementary Row Coordinates
+
+               Dim1
+
+Row3         0.2342
+Row5         0.6525
+
+
+Column Coordinates
+
+               Dim1
+
+a           -0.4240
+b            0.4710
+c            0.2154
