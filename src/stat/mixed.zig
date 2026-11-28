@@ -77,7 +77,7 @@ pub fn run(cx: proc.ProcCtx, out: *std.ArrayList(u8), tokens: []const lex.Token)
             parameter_search = try parms.execute(cx, fit_model, parameters, fit_options, spec.options.noprofile);
             break :blk parameter_search.?.fit;
         } else math.fit(cx.arena, fit_model, fit_options) catch |err| return if (err == error.OutOfMemory) error.OutOfMemory else proc.failGap(cx.diags, spec.line, "PROC MIXED: this estimation boundary is not implemented ({t})", .{err});
-        const usable_inference = fit.converged or fit.status == .evaluated;
+        const usable_inference = math.statusInfo(fit.status).allowsInference(false);
         if (!usable_inference) try cx.diags.warnStatus(0, "Convergence criteria not met: {s} Last covariance estimates are retained; fixed-effect inference is not produced.", .{math.statusReason(fit.status)});
         var tests: std.ArrayList(render.NamedTest) = .empty;
         if (usable_inference and !m.options.notest) for (m.matrix.effects, 0..) |_, ei| {

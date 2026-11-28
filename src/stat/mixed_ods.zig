@@ -93,7 +93,7 @@ pub fn publish(cx: proc.ProcCtx, s: decl.Spec, m: model.Spec, g: input.Group, x:
         for (f.variances[0..z.components.len]) |v| {
             if (v <= 0) pd_g = false;
         }
-        try table.row(&.{ b.n(if (f.converged) 0 else 1), b.n(if (pd_g) 1 else 0), if (f.pd_h) |pd| b.n(if (pd) 1 else 0) else Value.missing, b.s(math.statusReason(f.status)) });
+        try table.row(&.{ if (math.statusInfo(f.status).sas_status) |code| b.n(@floatFromInt(code)) else Value.missing, b.n(if (pd_g) 1 else 0), if (f.pd_h) |pd| b.n(if (pd) 1 else 0) else Value.missing, b.s(math.statusReason(f.status)) });
         try send(cx, "ConvergenceStatus", &table);
     }
     if (c.wants("CovParms")) {

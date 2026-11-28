@@ -48,6 +48,9 @@ test "MIXED018 actual iteration and evaluation limits preserve last finite state
     const h = try H.init(a);
     const good = try math.fit(a, h.model, .{});
     try t.expect(good.converged);
+    try t.expect(math.statusInfo(good.status).attained());
+    try t.expect(!math.statusInfo(good.status).nonclean());
+    try t.expectEqual(@as(?u8, 0), math.statusInfo(good.status).sas_status);
     var count: usize = 0;
     for (good.iterations) |row| count += row.evaluations;
     try t.expectEqual(count, good.evaluation_count);
@@ -55,6 +58,9 @@ test "MIXED018 actual iteration and evaluation limits preserve last finite state
     const zero = try math.fit(a, h.model, .{ .maxiter = 0 });
     try t.expectEqual(math.Status.max_iterations, zero.status);
     try t.expect(!zero.converged);
+    try t.expect(!math.statusInfo(zero.status).attained());
+    try t.expect(!math.statusInfo(zero.status).allowsInference(false));
+    try t.expectEqual(@as(?u8, 1), math.statusInfo(zero.status).sas_status);
     try t.expectEqual(@as(usize, 0), zero.last_iteration);
     try t.expectEqual(@as(usize, 2), zero.evaluation_count);
     for (zero.variances) |v| try t.expect(std.math.isFinite(v) and v > 0);
@@ -64,8 +70,108 @@ test "MIXED018 actual iteration and evaluation limits preserve last finite state
         const limited = try math.fit(a, h.model, .{ .maxfunc = budget });
         try t.expect(!limited.converged);
         try t.expectEqual(math.Status.max_evaluations, limited.status);
+        try t.expect(math.statusInfo(limited.status).nonclean());
+        try t.expect(!math.statusInfo(limited.status).attained());
         try t.expect(limited.evaluation_count <= budget);
         try t.expect(std.math.isFinite(limited.minus2loglik));
+    }
+}
+
+test "COMMON033 MIXED evaluation limit and numerical termination retain status with hidden listing" {
+    var arena = std.heap.ArenaAllocator.init(t.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    // The second case asks for gradient precision far below machine epsilon;
+    // the actual finite-precision line search must stop, not claim convergence.
+    for ([_][]const u8{ "maxfunc=2", "convg=1e-30 maxiter=100 maxfunc=1000" }, [_][]const u8{ "Maximum number of likelihood evaluations reached.", "No improving feasible likelihood step was found." }) |options, reason| {
+        var h = try H.init(a);
+        var capture = @import("../ods.zig").Capture{};
+        var listing = @import("../ods_listing.zig").Listing{};
+        h.cx.capture = &capture;
+        h.cx.listing = &listing;
+        try capture.parse(a, h.cx.diags, try lex.tokenize(a, "ods output CovParms=cp ConvergenceStatus=cs Tests3=tt FitStatistics=fs;", h.cx.diags));
+        _ = try listing.parse(a, h.cx.diags, try lex.tokenize(a, "ods select none;", h.cx.diags));
+        diag.resetGap();
+        defer diag.resetGap();
+        var out: std.ArrayList(u8) = .empty;
+        const source = try std.fmt.allocPrint(a, "proc mixed data=heights {s};class Family Gender;model Height=Gender;random Family Family*Gender;run;", .{options});
+        try @import("mixed.zig").run(h.cx, &out, try lex.tokenize(a, source, h.cx.diags));
+        try capture.finish(h.cx.lib, h.cx.diags);
+        try t.expectEqual(@as(usize, 0), out.items.len);
+        const cs = h.cx.lib.find("cs").?;
+        try t.expectEqual(@as(usize, 1), cs.rowCount());
+        try t.expectEqual(@as(f64, 1), cs.rows.items[0][cs.indexOf("Status").?].num);
+        try t.expectEqualStrings(reason, cs.rows.items[0][cs.indexOf("Reason").?].str);
+        const cp = h.cx.lib.find("cp").?;
+        try t.expectEqual(@as(usize, 3), cp.rowCount());
+        for (cp.rows.items) |row| try t.expect(std.math.isFinite(row[cp.indexOf("Estimate").?].num));
+        try t.expect(h.cx.lib.find("tt") == null and h.cx.lib.find("fs") == null);
+        try t.expectEqual(@as(u8, 1), diag.exitCode(diag.gapHit(), h.cx.diags.hasErrors() or h.cx.diags.warning_status));
+        var failures: usize = 0;
+        for (h.cx.diags.list.items) |entry| {
+            try t.expect(std.mem.indexOf(u8, entry.message, "Convergence criteria met.") == null);
+            if (std.mem.indexOf(u8, entry.message, "Convergence criteria not met:") != null) failures += 1;
+        }
+        try t.expectEqual(@as(usize, 1), failures);
+    }
+}
+
+test "COMMON033 MIXED known covariance is an evaluation not a failed or converged optimization" {
+    var arena = std.heap.ArenaAllocator.init(t.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var h = try H.init(a);
+    var capture = @import("../ods.zig").Capture{};
+    h.cx.capture = &capture;
+    try capture.parse(a, h.cx.diags, try lex.tokenize(a, "ods output CovParms=cp ConvergenceStatus=cs IterHistory=ih Tests3=tt;", h.cx.diags));
+    diag.resetGap();
+    defer diag.resetGap();
+    var out: std.ArrayList(u8) = .empty;
+    try @import("mixed.zig").run(h.cx, &out, try lex.tokenize(a, "proc mixed data=heights;class Family Gender;model Height=Gender;random Family Family*Gender;parms (1)(1)(1) /noiter;run;", h.cx.diags));
+    try capture.finish(h.cx.lib, h.cx.diags);
+    try t.expect(h.cx.lib.find("cs") == null and h.cx.lib.find("ih") == null);
+    try t.expect(h.cx.lib.find("cp") != null and h.cx.lib.find("tt") != null);
+    try t.expect(std.mem.indexOf(u8, out.items, "Convergence criteria") == null);
+    try t.expectEqual(@as(u8, 0), diag.exitCode(diag.gapHit(), h.cx.diags.hasErrors() or h.cx.diags.warning_status));
+    const state = math.statusInfo(.evaluated);
+    try t.expect(!state.attained() and !state.nonclean());
+    try t.expect(state.sas_status == null and state.allowsInference(false));
+}
+
+test "COMMON033 MIXED infeasible covariance and arithmetic gap emit no successful results" {
+    var arena = std.heap.ArenaAllocator.init(t.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    for ([_]bool{ false, true }) |arithmetic_gap| {
+        var h = try H.init(a);
+        if (arithmetic_gap) {
+            const ds = h.cx.lib.find("heights").?;
+            for (ds.rows.items, 0..) |*row, i| {
+                const changed = try a.dupe(@import("../value.zig").Value, row.*);
+                changed[ds.indexOf("Height").?] = .{ .num = if (i % 2 == 0) 1e200 else -1e200 };
+                row.* = changed;
+            }
+        }
+        var capture = @import("../ods.zig").Capture{};
+        h.cx.capture = &capture;
+        try capture.parse(a, h.cx.diags, try lex.tokenize(a, "ods output CovParms=cp ConvergenceStatus=cs Tests3=tt FitStatistics=fs;", h.cx.diags));
+        diag.resetGap();
+        defer diag.resetGap();
+        var out: std.ArrayList(u8) = .empty;
+        const source = if (arithmetic_gap)
+            "proc mixed data=heights;model Height=;parms (1) /noiter;run;"
+        else
+            "proc mixed data=heights;class Family;model Height=;random Family;parms (-100)(1) /noiter nobound;run;";
+        try t.expectError(if (arithmetic_gap) error.ParseError else error.ExecError, @import("mixed.zig").run(h.cx, &out, try lex.tokenize(a, source, h.cx.diags)));
+        try capture.finish(h.cx.lib, h.cx.diags);
+        try t.expectEqual(@as(usize, 0), out.items.len);
+        for ([_][]const u8{ "cp", "cs", "tt", "fs" }) |name| try t.expect(h.cx.lib.find(name) == null);
+        try t.expectEqual(@as(u8, if (arithmetic_gap) 2 else 1), diag.exitCode(diag.gapHit(), h.cx.diags.hasErrors() or h.cx.diags.warning_status));
+        try t.expectEqual(diag.Severity.err, h.cx.diags.list.items[0].severity);
+        // The non-PD supplied covariance is a user/model failure. Finite but
+        // enormous responses exceed implemented arithmetic: retain D-009 gap2,
+        // not a fabricated SAS status or a claim that the model is invalid.
+        try t.expect(std.mem.indexOf(u8, h.cx.diags.list.items[0].message, if (arithmetic_gap) "PARMS point cannot be evaluated" else "no feasible PARMS grid point") != null);
     }
 }
 test "MIXED018 convergence controls follow independent profile derivatives" {

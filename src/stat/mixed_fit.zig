@@ -8,12 +8,28 @@ const A = std.mem.Allocator;
 const matrix = @import("mixed_fit_matrix.zig");
 const ranker = @import("reg_diagnostics.zig");
 const reg = @import("reg_fit.zig");
+const convergence = @import("convergence_status.zig");
 pub const Component = struct { name: []const u8, kernel: []const f64, columns: usize = 0 };
 pub const Model = struct { x: []const f64, y: []const f64, n: usize, p: usize, weights: ?[]const f64 = null, components: []const Component = &.{}, has_intercept: bool = true, singular: f64 = 1e-10 };
 pub const Method = enum { reml, ml };
 pub const Convergence = enum { hessian, gradient, function };
 pub const Options = struct { method: Method = .reml, maxiter: usize = 50, maxfunc: usize = 150, convergence: f64 = 1e-8, bic_n: ?f64 = null, start: ?[]const f64 = null, ols_start: bool = false, criterion: Convergence = .hessian, absolute: bool = false };
 pub const Status = enum { converged, evaluated, max_iterations, max_evaluations, line_search_failed };
+pub fn statusInfo(status: Status) convergence.State {
+    // MIXED's Status=1 for nonconvergence is documented at physical6721;
+    // physical550 shows the actual evaluation-limit example with the same code.
+    return .{
+        .outcome = switch (status) {
+            .converged => .converged,
+            .evaluated => .evaluated,
+            .max_iterations => .iteration_limit,
+            .max_evaluations => .evaluation_limit,
+            .line_search_failed => .numerical_failure,
+        },
+        .sas_status = if (status == .evaluated) null else if (status == .converged) 0 else 1,
+        .estimates = if (status == .converged or status == .evaluated) .solution else .last_iterate,
+    };
+}
 pub fn statusReason(status: Status) []const u8 {
     return switch (status) {
         .converged => "Convergence criteria met.",
@@ -294,7 +310,7 @@ pub fn fit(a: A, model: Model, options: Options) !Fit {
             reported_parameters[m] = starting.null_sigma;
         }
         if (i > 0 or !explicit_start) try history.append(a, .{ .iteration = i, .evaluations = if (i == 0) 1 else evaluations, .objective = if (i == 0) starting.null_objective else e.objective, .criterion = if (i == 0 or released) null else criterion, .parameters = reported_parameters });
-        if (criterion != null and criterion.? <= options.convergence) {
+        if (convergence.meets(criterion, options.convergence, false)) {
             if (i == 0 and (explicit_start or @abs(starting.null_objective - e.objective) > 1e-12)) try history.append(a, .{ .iteration = 1, .evaluations = evaluations, .objective = e.objective, .criterion = criterion, .parameters = try parameters(a, ratios, e.sigma) });
             status = .converged;
             break;

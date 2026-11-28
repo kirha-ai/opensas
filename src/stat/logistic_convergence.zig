@@ -2,7 +2,24 @@
 //! Explicit MODEL criteria replace the implicit GCONV default; enabled
 //! criteria are combined by OR. Previous states mean accepted iterations.
 const std = @import("std");
+const shared = @import("convergence_status.zig");
 pub const Reason = enum { gconv, absfconv, fconv, xconv, iteration_limit, not_fit };
+pub fn statusInfo(reason: Reason) shared.State {
+    // No LOGISTIC numeric Status code is established by the listing-only
+    // COMMON033 oracle. Do not borrow MIXED's or the shared chapter's examples.
+    return .{
+        .outcome = switch (reason) {
+            .iteration_limit => .iteration_limit,
+            .not_fit => .not_fitted,
+            else => .converged,
+        },
+        .estimates = switch (reason) {
+            .iteration_limit => .last_iterate,
+            .not_fit => .none,
+            else => .solution,
+        },
+    };
+}
 pub const Stop = struct { reason: Reason = .gconv, threshold: f64 = 1e-8, metric: f64 = 0 };
 pub const Metrics = struct { gradient: f64, absolute_function: ?f64 = null, relative_function: ?f64 = null, parameter: ?f64 = null };
 pub const Iteration = struct { index: usize, log_likelihood: f64, metrics: Metrics };
@@ -30,10 +47,10 @@ pub fn metrics(ll: f64, b: []const f64, norm: f64, previous_ll: ?f64, previous_b
     return result;
 }
 pub fn satisfied(options: anytype, state: Metrics) ?Stop {
-    if (options.absfconv) |threshold| if (state.absolute_function) |metric| if (metric < threshold) return .{ .reason = .absfconv, .threshold = threshold, .metric = metric };
-    if (options.fconv) |threshold| if (state.relative_function) |metric| if (metric < threshold) return .{ .reason = .fconv, .threshold = threshold, .metric = metric };
-    if (options.gconv > 0 and state.gradient >= 0 and state.gradient < options.gconv) return .{ .reason = .gconv, .threshold = options.gconv, .metric = state.gradient };
-    if (options.xconv) |threshold| if (state.parameter) |metric| if (metric < threshold) return .{ .reason = .xconv, .threshold = threshold, .metric = metric };
+    if (options.absfconv) |threshold| if (state.absolute_function) |metric| if (shared.meets(metric, threshold, true)) return .{ .reason = .absfconv, .threshold = threshold, .metric = metric };
+    if (options.fconv) |threshold| if (state.relative_function) |metric| if (shared.meets(metric, threshold, true)) return .{ .reason = .fconv, .threshold = threshold, .metric = metric };
+    if (shared.meets(state.gradient, options.gconv, true)) return .{ .reason = .gconv, .threshold = options.gconv, .metric = state.gradient };
+    if (options.xconv) |threshold| if (state.parameter) |metric| if (shared.meets(metric, threshold, true)) return .{ .reason = .xconv, .threshold = threshold, .metric = metric };
     return null;
 }
 pub fn valid(options: anytype) bool {

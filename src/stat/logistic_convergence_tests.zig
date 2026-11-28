@@ -76,6 +76,10 @@ test "LOGISTIC005 MAXITER retains actual last iterate and warns without false co
     const result = try l.analyze(cx, spec);
     const fit = result.fit;
     try t.expect(!fit.converged);
+    const shared_status = c.statusInfo(fit.stop.reason);
+    try t.expect(shared_status.nonclean() and !shared_status.attained());
+    try t.expect(shared_status.sas_status == null);
+    try t.expect(shared_status.allowsInference(true));
     try t.expectEqual(c.Reason.iteration_limit, fit.stop.reason);
     try t.expectEqual(@as(usize, 1), fit.iterations);
     // First Newton/Fisher increment at null p=9/20 is(-100/99,200/99).
@@ -116,6 +120,8 @@ test "LOGISTIC005 explicit criteria replace default and technique aliases use tr
         try t.expectEqual(@as(f64, 0), spec.fit_options.gconv);
         const result = try l.analyze(cx, spec);
         try t.expect(result.fit.converged);
+        try t.expect(c.statusInfo(result.fit.stop.reason).attained());
+        try t.expect(!c.statusInfo(result.fit.stop.reason).nonclean());
         try t.expectEqual(reason, result.fit.stop.reason);
         try t.expect(result.fit.stop.metric < result.fit.stop.threshold);
     }
@@ -136,6 +142,15 @@ test "LOGISTIC005 explicit criteria replace default and technique aliases use tr
     try t.expect(!score_only.fit.converged);
     try t.expectEqual(c.Reason.not_fit, score_only.fit.stop.reason);
     try t.expectEqual(@as(usize, 0), score_only.fit.coefficients.len);
+    try t.expect(!c.statusInfo(score_only.fit.stop.reason).nonclean());
+    try t.expect(!c.statusInfo(score_only.fit.stop.reason).allowsInference(true));
+}
+
+test "COMMON033 LOGISTIC invalid metric never reports a stopping rule satisfied" {
+    for ([_]f64{ -1, std.math.nan(f64), std.math.inf(f64), -std.math.inf(f64) }) |invalid| {
+        const metrics: c.Metrics = .{ .gradient = invalid, .absolute_function = invalid, .relative_function = invalid, .parameter = invalid };
+        try t.expect(c.satisfied(k.Options{ .gconv = 1, .absfconv = 1, .fconv = 1, .xconv = 1 }, metrics) == null);
+    }
 }
 
 test "LOGISTIC005 COMMON033 complete original pins warning status and last-iterate output" {

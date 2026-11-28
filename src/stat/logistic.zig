@@ -1135,7 +1135,7 @@ pub fn analyze(cx: proc.ProcCtx, s: Spec) diag.Error!Analysis {
         if (err == error.OutOfMemory) return err;
         return proc.failGap(cx.diags, 0, "PROC LOGISTIC: fitting failed (rank deficiency, separation, or nonconvergence); no results emitted", .{});
     };
-    if (!r.converged and !s.nofit) {
+    if (kernel.convergence.statusInfo(r.stop.reason).nonclean()) {
         try cx.diags.warnStatus(0, kernel.convergence.limit_warning, .{r.iterations});
         try cx.diags.warnStatus(0, kernel.convergence.limit_continuation, .{});
     }
