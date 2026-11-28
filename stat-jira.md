@@ -29,10 +29,10 @@ This section is the only current status summary; every section below it is a his
 - **Open review (not done):** the originals of GENMOD-001/002/018, ANOVA-001/007, FREQ-014, PHREG-003 and LIFETEST-001/002 now match exactly but the tickets stay PARK; check each against its full acceptance criteria and recorded remaining gaps before any is marked DONE.
 - **Interrupted by the full disk:** STAT-ANOVA-009 and STAT-PHREG-004 are TODO (no file changed; reading notes in the tickets). STAT-LIFETEST-003 and STAT-GENMOD-003 are PARK with UNCOMMITTED, NEVER-COMPILED source retained in `opensas-dev5` (`stat-b6/lifetest003-dev5`) and `opensas-dev7` (`stat-b6/genmod003-dev7`); do not integrate it before it is built, tested and committed there.
 - **User approval (2026-11-28):** SASHELP sample data taken from SAS's public sample material may be committed to this public repository, for STAT-SASHELP-001 and the later SASHELP tickets; record source and verification, never invent rows, ask before adding a data set above about 2 MB.
-- **Held, not integrated (needs a user decision):** STAT-FASTCLUS-001, branch `stat-b7/fastclus001-dev2` (`4d730ead` code and tests, `45dd37bd` ticket note). It adds SASHELP.IRIS (150 rows, Fisher 1936) taken from a SAS 9.4 dump, which is outside the approved SASHELP-ticket, public-sample-material scope.
-- **Live slots (auto):** dev1 STAT-HPPRINCOMP-001, dev2 STAT-RMSTREG-001, dev3 STAT-SURVEYPHREG-001, dev4 STAT-KRIGE2D-001, dev5 STAT-TPSPLINE-001, dev6 STAT-SEQTEST-001, dev7 STAT-VARCLUS-001.
+- **Held, not integrated (needs a user decision):** STAT-FASTCLUS-001, branch `stat-b7/fastclus001-dev2` (`4d730ead` code and tests, `45dd37bd` ticket note). It adds SASHELP.IRIS (150 rows, Fisher 1936) taken from a SAS 9.4 dump, which is outside the approved SASHELP-ticket, public-sample-material scope. Also held for the same question: STAT-VARCLUS-001, branch `stat-b7/varclus001-dev7` (`5dd2e52b`, note `090678d2`), which inlines the same 150 rows from a SAS dump in two corpus fixtures.
+- **Live slots (auto):** dev1 STAT-HPPRINCOMP-001, dev2 STAT-RMSTREG-001, dev3 STAT-SURVEYPHREG-001, dev4 STAT-KRIGE2D-001, dev5 STAT-TPSPLINE-001, dev6 STAT-SEQTEST-001, dev7 STAT-HPREG-001.
 - **Integrated locally, awaiting batch verification (auto):** STAT-PRINQUAL-001 (PARK).
-- **Counts:** 56 DONE, 116 PARK, 7 DOING, 1243 TODO.
+- **Counts:** 56 DONE, 117 PARK, 7 DOING, 1242 TODO.
 - **Next:** integrate each returned ticket, refill its slot, verify and push the next batch; run the open review above. Pending user decision: the `best32.` display fix found by STAT-STDIZE-001 changes five existing test expectations (patch kept in the coordinator scratchpad, not applied).
 - **Working branch:** `feat/stat/batch-4`. Last tested and pushed code SHA `b0e5f94c36bd1bf66424677fef7f98a93ed8f34a` (batch 14; batch 13 was `e6020e33f52b013d6374f356f8c959b102168290`). The bullets below this one describe batch 5 and are historical. Later commits that touch only this file are documentation. No PR created or merged; `main` untouched.
 - **Batch 5 verification at that exact SHA (2026-11-28):** whole `tests/STAT15.4-oracle/` moved out of the checkout, then `zig build gate -j2 --summary all` direct exit 0 — **2380/2380 unit tests** (2262 + 102 + 13 + 3), **2409/2409 corpus**, **11/11 programs**; `zig build install` direct 0; separate supplemental direct 0, **1113/1113**. Oracle restored unchanged (1425 entries), tree clean.
@@ -7430,7 +7430,7 @@ Source: S154, Chapter 67, `The HPREG Procedure`, PDF pp. 5019–5068. Tasks in t
 
 <a id="stat-hpreg-001"></a>
 
-### [TODO] STAT-HPREG-001 — HPREG — Data input, variable roles, and basic options
+### [DOING @dev7] STAT-HPREG-001 — HPREG — Data input, variable roles, and basic options
 
 - Source: S154 / Chapter 67 / `PROC HPREG Statement` (PDF pp. 5028–5029); S154 / Chapter 67 / `BY Statement` (PDF pp. 5029–5030); S154 / Chapter 67 / `FREQ Statement` (PDF p. 5031); S154 / Chapter 67 / `ID Statement` (PDF p. 5031); S154 / Chapter 67 / `WEIGHT Statement` (PDF p. 5038).
 - Scope: Integrate PROC HPREG declarations, basic options, defaults, and execution boundaries; this ticket establishes parameter objects and result interfaces, while later feature tickets implement model-, algorithm-, and output-specific options. Also implement BY; FREQ; ID; WEIGHT; apply this procedure's rules for missing values, variable roles, and observation selection.
@@ -16268,13 +16268,14 @@ Source: S154, Chapter 129, `The VARCLUS Procedure`, PDF pp. 10693–10724. Tasks
 
 <a id="stat-varclus-001"></a>
 
-### [DOING @dev7] STAT-VARCLUS-001 — VARCLUS — Data input, variable roles, and basic options
+### [PARK] STAT-VARCLUS-001 — VARCLUS — Data input, variable roles, and basic options
 
 - Source: S154 / Chapter 129 / `PROC VARCLUS Statement` (PDF pp. 10700–10707); S154 / Chapter 129 / `BY Statement` (PDF pp. 10707–10708); S154 / Chapter 129 / `FREQ Statement` (PDF p. 10708); S154 / Chapter 129 / `VAR Statement` (PDF pp. 10708–10709); S154 / Chapter 129 / `WEIGHT Statement` (PDF p. 10709); S154 / Chapter 129 / `Missing Values` (PDF p. 10709).
 - Scope: Integrate PROC VARCLUS declarations, basic options, defaults, and execution boundaries; this ticket establishes parameter objects and result interfaces, while later feature tickets implement model-, algorithm-, and output-specific options. Also implement BY; FREQ; VAR; WEIGHT; Missing Values; apply this procedure's rules for missing values, variable roles, and observation selection.
 - Dependencies: [STAT-COMMON-001](#stat-common-001), [STAT-COMMON-002](#stat-common-002).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-VARCLUS-001/](tests/STAT15.4-oracle/STAT-VARCLUS-001/).
 - Acceptance criteria: Create positive and negative parsing cases for the documented declarations and basic options; verify defaults, explicit settings, documented duplicate/conflicting declarations, and locations; valid but unimplemented features must not silently succeed. For BY / FREQ / VAR / WEIGHT / Missing Values, construct valid, missing, empty, and multiple-group inputs; verify included observation counts, variable roles, BY boundaries, level ordering, and the frequency/weight rules relevant to this ticket; assert documented invalid-input behavior.
+- Status (coordinator, 2026-11-28): PARK. Implementation on unintegrated branch `stat-b7/varclus001-dev7` (`5dd2e52b`, note `090678d2`), held for the user's decision on the inlined Iris rows. Reported there: all 276 VARCLUS tokens match with inline data; the unchanged original needs SASHELP.IRIS and differs in Base PROC PRINT.
 
 <a id="stat-varclus-002"></a>
 
