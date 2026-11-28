@@ -13,6 +13,7 @@ const format = @import("../format.zig");
 const Dataset = @import("../dataset.zig").Dataset;
 const Value = @import("../value.zig").Value;
 const by = @import("by_groups.zig");
+const variable_lists = @import("variable_lists.zig");
 const ods_table = @import("ods_table.zig");
 const design = @import("survey_design.zig");
 const tQuantile = @import("univ_inference.zig").tQuantile;
@@ -82,22 +83,29 @@ fn number(cx: proc.ProcCtx, t: []const lex.Token, i: usize) diag.Error!f64 {
     return std.fmt.parseFloat(f64, t[i].text) catch invalid(cx, t, i);
 }
 
-/// Plain variable names up to `end` or a slash. Name ranges and special lists
-/// are a gap, never silently one variable.
+/// Variable names up to `end` or a slash, with the SAS variable-list forms
+/// (a--b, a-numeric-b, x1-x3, prefix:, _NUMERIC_ ...) of the shared expander.
 fn columns(cx: proc.ProcCtx, ds: *const Dataset, t: []const lex.Token, start: usize, end: usize, stop: *usize) diag.Error![]const usize {
     var cols: std.ArrayList(usize) = .empty;
     var j = start;
-    while (j < end and !at(t, j, .slash)) : (j += 1) {
-        if (!at(t, j, .name)) {
-            if (at(t, j, .minus) or at(t, j, .colon)) return gap(cx, t[j].line, "variable list shorthand is not implemented", .{});
-            return invalid(cx, t, j);
+    while (j < end and !at(t, j, .slash)) {
+        if (!at(t, j, .name)) return invalid(cx, t, j);
+        const names = try variable_lists.next(cx.arena, ds, t[0..end], &j, cx.diags);
+        for (names) |nm| {
+            const c = ds.indexOf(nm) orelse return cx.diags.fail(error.ParseError, t[start].line, "Variable {s} not found.", .{nm});
+            if (std.mem.indexOfScalar(usize, cols.items, c) == null) try cols.append(cx.arena, c);
         }
-        if (t[j].text.len > 0 and t[j].text[0] == '_' and oneOf(t[j].text, &.{ "_numeric_", "_character_", "_all_" })) return gap(cx, t[j].line, "variable list shorthand is not implemented", .{});
-        const c = ds.indexOf(t[j].text) orelse return cx.diags.fail(error.ParseError, t[j].line, "Variable {s} not found.", .{t[j].text});
-        if (std.mem.indexOfScalar(usize, cols.items, c) == null) try cols.append(cx.arena, c);
     }
     stop.* = j;
     return cols.items;
+}
+
+/// `have` followed by the columns of `more` not already in it.
+fn appendNew(a: A, have: []const usize, more: []const usize) ![]const usize {
+    var list: std.ArrayList(usize) = .empty;
+    try list.appendSlice(a, have);
+    for (more) |c| if (std.mem.indexOfScalar(usize, list.items, c) == null) try list.append(a, c);
+    return list.items;
 }
 
 pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
@@ -201,15 +209,23 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
             if (stop != end or cols.len == 0) return invalid(cx, t, stop);
             for (cols) |c| if (std.mem.indexOfScalar(usize, classes.items, c) == null) try classes.append(cx.arena, c);
         } else if (kw(t, i, "weight")) {
-            if (s.weight != null) return gap(cx, t[i].line, "duplicate WEIGHT statement policy is not verified", .{});
+            // Physical p.9934: only the first WEIGHT statement is used; the
+            // warning wording is the SAS 9.4 log's.
+            if (s.weight != null) {
+                try cx.diags.warn(t[i].line, "Multiple WEIGHT statements. Only the first WEIGHT statement will be used.", .{});
+                i = end + 1;
+                continue;
+            }
             if (end != i + 2 or !at(t, i + 1, .name)) return invalid(cx, t, i + 1);
             const c = ds.indexOf(t[i + 1].text) orelse return cx.diags.fail(error.ParseError, t[i].line, "Variable {s} not found.", .{t[i + 1].text});
             if (ds.columns.items[c].type != .num) return cx.diags.fail(error.ParseError, t[i].line, "PROC SURVEYMEANS: WEIGHT variable {s} must be numeric", .{t[i + 1].text});
             s.weight = c;
         } else if (kw(t, i, "strata") or kw(t, i, "stratum")) {
-            if (s.strata.len > 0) return gap(cx, t[i].line, "duplicate STRATA statement policy is not verified", .{});
-            s.strata = try columns(cx, ds, t, i + 1, end, &stop);
-            if (s.strata.len == 0) return invalid(cx, t, stop);
+            // Physical p.9933: multiple STRATA statements are allowed; their
+            // variables together define the strata (as one statement would).
+            const cols = try columns(cx, ds, t, i + 1, end, &stop);
+            if (cols.len == 0) return invalid(cx, t, stop);
+            s.strata = try appendNew(cx.arena, s.strata, cols);
             if (stop != end) {
                 var j = stop + 1;
                 if (j == end) return invalid(cx, t, j);
@@ -218,9 +234,11 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
                 }
             }
         } else if (kw(t, i, "cluster") or kw(t, i, "clusters")) {
-            if (s.clusters.len > 0) return gap(cx, t[i].line, "duplicate CLUSTER statement policy is not verified", .{});
-            s.clusters = try columns(cx, ds, t, i + 1, end, &stop);
-            if (stop != end or s.clusters.len == 0) return invalid(cx, t, stop);
+            // Physical p.9925: variables of all CLUSTER statements together
+            // define the clusters.
+            const cols = try columns(cx, ds, t, i + 1, end, &stop);
+            if (stop != end or cols.len == 0) return invalid(cx, t, stop);
+            s.clusters = try appendNew(cx.arena, s.clusters, cols);
         } else if (kw(t, i, "by")) {
             var j = i;
             try bys.read(cx.arena, t, &j);
@@ -320,6 +338,8 @@ const Item = struct {
     /// Per-stratum counts for the Stratum Information table.
     stratum_n: []const usize,
     est: design.Estimate,
+    /// Degrees of freedom of the design the estimate used.
+    df: f64,
     lower: f64,
     upper: f64,
 };
@@ -344,31 +364,37 @@ fn count(a: A, n: usize) ![]const u8 {
     return std.fmt.allocPrint(a, "{d}", .{n});
 }
 /// Confidence-limit columns are 10 wide with one fixed number of decimals per
-/// column, chosen so that the largest value fills the width.
-fn limitDecimals(largest: f64) usize {
+/// column: the fewest any value of the column needs to fit the width, a minus
+/// sign taking one place (SAS 9.4 reference: -9.0191896 next to 3.01918955).
+fn limitDecimals(value: f64) usize {
     var digits: usize = 1;
-    var x = largest;
+    var x = @abs(value);
     while (x >= 10) : (x /= 10) digits += 1;
-    return 9 - digits;
+    return 9 - digits - @as(usize, if (value < 0) 1 else 0);
 }
 fn levelText(a: A, v: Value) ![]const u8 {
     return std.mem.trim(u8, try proc.cellText(a, v), " ");
 }
 
 /// One BY group (or the whole input): design, estimates, listing, ODS.
-fn analyze(cx: proc.ProcCtx, out: *Out, s: Spec, rows: []const []const Value, rep: ?[]const Value) diag.Error!void {
+const Built = struct {
+    d: design.Design,
+    /// One representative row (index into `rows`) per stratum, ascending.
+    stratum_rep: []const usize,
+    /// Observations and sampling units per stratum.
+    obs: []const usize,
+    units: []const usize,
+    totals: ?[]const f64,
+    rates: ?[]const f64,
+};
+
+/// Strata, sampling units, weights and the finite population correction of
+/// `rows` (already selected).
+fn build(cx: proc.ProcCtx, s: Spec, rows: []const []const Value) diag.Error!Built {
     const a = cx.arena;
     const ds = s.input.ds;
-    const sel = try select(a, s, rows);
-    // Execution boundary: how excluded observations are counted in the Data
-    // Summary and enter the variance has no reference yet.
-    if (sel.rows.len != sel.read) return gap(cx, 0, "the listing for input with observations excluded by missing or nonpositive WEIGHT, STRATA or CLUSTER values is not verified", .{});
-    const n = sel.rows.len;
-    if (n == 0) return gap(cx, 0, "the result for an input without usable observations is not verified", .{});
-    for (s.vars) |c| for (sel.rows) |row| {
-        if (isMissing(row[c])) return gap(cx, 0, "missing values of analysis variable {s} are not implemented", .{ds.columns.items[c].name});
-    };
-
+    const n = rows.len;
+    const sel = Selected{ .rows = rows, .read = rows.len };
     // Strata ascending by unformatted value; sampling units inside strata.
     const order = try a.alloc(usize, n);
     for (order, 0..) |*o, k| o.* = k;
@@ -403,7 +429,6 @@ fn analyze(cx: proc.ProcCtx, out: *Out, s: Spec, rows: []const []const Value, re
             }
         }
     }
-    for (units) |u| if (u < 2) return gap(cx, 0, "variance estimation with a single sampling unit in a stratum is not implemented", .{});
 
     // Finite population correction, physical p.9916: f_h = n_h / N_h.
     var totals: ?[]f64 = null;
@@ -450,9 +475,49 @@ fn analyze(cx: proc.ProcCtx, out: *Out, s: Spec, rows: []const []const Value, re
         }
     }
     const d: design.Design = .{ .stratum = stratum, .cluster = cluster, .weight = weight, .n_strata = n_strata, .n_clusters = n_clusters, .rate = rates };
-    const df = d.df();
-    if (!(df > 0)) return gap(cx, 0, "confidence limits without positive degrees of freedom are not implemented", .{});
-    const tq = tQuantile(1 - s.alpha / 2, df);
+    return .{ .d = d, .stratum_rep = stratum_rep.items, .obs = obs, .units = units, .totals = totals, .rates = rates };
+}
+
+fn analyze(cx: proc.ProcCtx, out: *Out, s: Spec, rows: []const []const Value, rep: ?[]const Value) diag.Error!void {
+    const a = cx.arena;
+    const ds = s.input.ds;
+    const sel = try select(a, s, rows);
+    const excluded = sel.read - sel.rows.len;
+    // SAS 9.4 reference runs: with a nonpositive or missing weight the Data
+    // Summary shows observations read, used (after every exclusion) and the
+    // nonpositive-weight count; otherwise only the used count, so an
+    // observation dropped for a missing STRATA or CLUSTER value alone is not
+    // shown.
+    var nonpositive: usize = 0;
+    if (s.weight) |w| for (rows) |row| {
+        if (!(row[w].num > 0)) nonpositive += 1;
+    };
+    std.debug.assert(nonpositive <= excluded);
+    if (nonpositive > 0) try cx.diags.note(0, "Due to nonpositive weights, {d} observation(s) were deleted.", .{nonpositive});
+    const n = sel.rows.len;
+    if (n == 0) {
+        // Physical p.9934 / SAS 9.4 log: nothing is analysed or printed.
+        try cx.diags.note(0, "No observations.", .{});
+        return;
+    }
+    for (s.vars) |c| {
+        const categorical = ds.columns.items[c].type != .num or std.mem.indexOfScalar(usize, s.classes, c) != null;
+        if (!categorical) continue;
+        for (sel.rows) |row| if (isMissing(row[c])) return gap(cx, 0, "missing values of categorical analysis variable {s} are not implemented", .{ds.columns.items[c].name});
+    }
+    const full = try build(cx, s, sel.rows);
+    const d = full.d;
+    const stratum_rep = full.stratum_rep;
+    const obs = full.obs;
+    const totals = full.totals;
+    const rates = full.rates;
+    const n_strata = d.n_strata;
+    // Variables whose design has a stratum with a single sampling unit; the
+    // kernel omits such a stratum from the variance (SAS 9.4 log NOTE).
+    var single: std.ArrayList([]const u8) = .empty;
+    const n_clusters = d.n_clusters;
+    const stratum = d.stratum;
+    const weight = d.weight;
 
     // Analysis items: one per numeric variable, one per level of a
     // categorical (character or CLASS) variable, levels ascending.
@@ -465,10 +530,37 @@ fn analyze(cx: proc.ProcCtx, out: *Out, s: Spec, rows: []const []const Value, re
     for (s.vars) |c| {
         const categorical = ds.columns.items[c].type != .num or std.mem.indexOfScalar(usize, s.classes, c) != null;
         if (!categorical) {
-            for (sel.rows, y) |row, *v| v.* = row[c].num;
-            try items.append(a, .{ .col = c, .level = null, .n = n, .stratum_n = obs, .est = try design.taylorMean(a, d, y), .lower = 0, .upper = 0 });
+            // Physical pp.9934-9935: each analysis variable uses only the
+            // observations where it is nonmissing (MCAR); strata, units and
+            // degrees of freedom are those of that subset.
+            var kept: std.ArrayList([]const Value) = .empty;
+            for (sel.rows) |row| if (!isMissing(row[c])) try kept.append(a, row);
+            const own = if (kept.items.len == n) full else blk: {
+                const name = ds.columns.items[c].name;
+                if (kept.items.len == 0) return gap(cx, 0, "an analysis variable ({s}) without nonmissing values is not implemented", .{name});
+                if (totals != null) return gap(cx, 0, "TOTAL= with missing values of analysis variable {s} is not verified", .{name});
+                break :blk try build(cx, s, kept.items);
+            };
+            const values = try a.alloc(f64, kept.items.len);
+            for (kept.items, values) |row, *v| v.* = row[c].num;
+            for (own.units) |u| if (u < 2) {
+                try single.append(a, ds.columns.items[c].name);
+                break;
+            };
+            // Stratum Information counts the nonmissing values per stratum
+            // of the whole design (SAS 9.4 reference run).
+            const per = try a.alloc(usize, n_strata);
+            @memset(per, 0);
+            for (sel.rows, stratum) |row, h| {
+                if (!isMissing(row[c])) per[h] += 1;
+            }
+            try items.append(a, .{ .col = c, .level = null, .n = kept.items.len, .stratum_n = per, .est = try design.taylorMean(a, own.d, values), .df = own.d.df(), .lower = 0, .upper = 0 });
             continue;
         }
+        for (full.units) |u| if (u < 2) {
+            try single.append(a, ds.columns.items[c].name);
+            break;
+        };
         if (ds.columns.items[c].format != null) return gap(cx, 0, "formatted categorical levels are not implemented", .{});
         const by_value = try a.alloc(usize, n);
         for (by_value, 0..) |*o, k| o.* = k;
@@ -488,33 +580,42 @@ fn analyze(cx: proc.ProcCtx, out: *Out, s: Spec, rows: []const []const Value, re
             }
             const text = try levelText(a, sel.rows[by_value[first]][c]);
             try names.append(a, text);
-            try items.append(a, .{ .col = c, .level = text, .n = next - first, .stratum_n = per, .est = try design.taylorMean(a, d, y), .lower = 0, .upper = 0 });
+            try items.append(a, .{ .col = c, .level = text, .n = next - first, .stratum_n = per, .est = try design.taylorMean(a, d, y), .df = d.df(), .lower = 0, .upper = 0 });
             first = next;
         }
         try class_info.append(a, .{ .col = c, .levels = names.items });
     }
-    var largest_lower: f64 = 0;
-    var largest_upper: f64 = 0;
+    if (single.items.len > 0) {
+        // SAS 9.4 log: the variables are joined with ", ".
+        const names = try std.mem.join(a, ", ", single.items);
+        try cx.diags.note(0, "Only one {s} in a stratum for variable(s) {s}. The estimate of variance for {s} will omit this stratum.", .{ if (s.clusters.len > 0) "cluster" else "observation", names, names });
+    }
+    var lower_dec: usize = 8;
+    var upper_dec: usize = 8;
     for (items.items) |*it| {
+        if (!(it.df > 0)) return gap(cx, 0, "confidence limits without positive degrees of freedom are not implemented", .{});
+        const tq = tQuantile(1 - s.alpha / 2, it.df);
         it.lower = it.est.mean - tq * it.est.stderr;
         it.upper = it.est.mean + tq * it.est.stderr;
         if (!std.math.isFinite(it.lower) or !std.math.isFinite(it.upper)) return gap(cx, 0, "non-finite estimates are not verified", .{});
-        // ponytail: the 12.6 / 10-wide displays are verified for nonnegative
-        // limits and moderate magnitudes only.
-        if (it.lower < 0) return gap(cx, 0, "display of negative confidence limits is not verified", .{});
+        // ponytail: the 12.6 / 10-wide displays are verified for moderate
+        // magnitudes only (negative limits down to one integer digit).
         if (@abs(it.est.mean) >= 1e5 or it.est.stderr >= 1e5 or it.upper >= 1e8) return gap(cx, 0, "display of estimates of this magnitude is not verified", .{});
-        largest_lower = @max(largest_lower, it.lower);
-        largest_upper = @max(largest_upper, it.upper);
+        if (it.lower <= -10 or it.upper < 0) return gap(cx, 0, "display of a negative confidence limit below -10 or a negative upper limit is not verified", .{});
+        // SAS 9.4 reference: proportion limits outside [0, 1] are truncated
+        // and displayed differently (a bare 0); not implemented.
+        if (it.level != null and (it.lower < 0 or it.upper > 1)) return gap(cx, 0, "truncated confidence limits of a proportion are not implemented", .{});
+        lower_dec = @min(lower_dec, limitDecimals(it.lower));
+        upper_dec = @min(upper_dec, limitDecimals(it.upper));
     }
-    const lower_dec = limitDecimals(largest_lower);
-    const upper_dec = limitDecimals(largest_upper);
     const percent = 100 * (1 - s.alpha);
-    if (@abs(percent - @round(percent)) > 1e-9) return gap(cx, 0, "confidence-level heading for a fractional percentage is not verified", .{});
+    // Verified headings: whole percentages and one decimal (97.5%).
+    if (@abs(10 * percent - @round(10 * percent)) > 1e-9) return gap(cx, 0, "confidence-level heading for a percentage with more than one decimal is not verified", .{});
     if (s.list) {
-        if (totals == null) return gap(cx, 0, "STRATA / LIST without TOTAL= is not implemented", .{});
+        if (rates != null and totals == null) return gap(cx, 0, "STRATA / LIST with RATE= is not implemented", .{});
         if (s.strata.len != 1 or ds.columns.items[s.strata[0]].type != .num or ds.columns.items[s.strata[0]].format != null) return gap(cx, 0, "STRATA / LIST for other than one unformatted numeric stratum variable is not implemented", .{});
         if (s.clusters.len > 0) return gap(cx, 0, "STRATA / LIST with CLUSTER is not implemented", .{});
-        for (totals.?) |x| if (x != @round(x)) return gap(cx, 0, "display of a fractional population total is not verified", .{});
+        if (totals) |list| for (list) |x| if (x != @round(x)) return gap(cx, 0, "display of a fractional population total is not verified", .{});
     }
 
     var vw: usize = 8;
@@ -526,22 +627,35 @@ fn analyze(cx: proc.ProcCtx, out: *Out, s: Spec, rows: []const []const Value, re
     const has_level = class_info.items.len > 0;
 
     var body: Out = .empty;
-    try body.appendSlice(a, "\nThe SURVEYMEANS Procedure\n\n            Data Summary\n\n");
+    // The label column widens to the longest label (SAS 9.4 reference run
+    // with nonpositive weights).
+    const label_w: usize = if (nonpositive > 0) 38 else 22;
+    try body.appendSlice(a, "\nThe SURVEYMEANS Procedure\n\n");
+    try centered(a, &body, "Data Summary", label_w + 14);
+    try body.append(a, '\n');
     if (s.strata.len > 0) {
-        try left(a, &body, "Number of Strata", 22);
+        try left(a, &body, "Number of Strata", label_w);
         try right(a, &body, try count(a, n_strata), 14);
         try body.append(a, '\n');
     }
     if (s.clusters.len > 0) {
-        try left(a, &body, "Number of Clusters", 22);
+        try left(a, &body, "Number of Clusters", label_w);
         try right(a, &body, try count(a, n_clusters), 14);
         try body.append(a, '\n');
     }
-    try left(a, &body, "Number of Observations", 22);
-    try right(a, &body, try count(a, n), 14);
+    try left(a, &body, "Number of Observations", label_w);
+    try right(a, &body, try count(a, if (nonpositive > 0) sel.read else n), 14);
     try body.append(a, '\n');
+    if (nonpositive > 0) {
+        try left(a, &body, "Number of Observations Used", label_w);
+        try right(a, &body, try count(a, n), 14);
+        try body.append(a, '\n');
+        try left(a, &body, "Number of Obs with Nonpositive Weights", label_w);
+        try right(a, &body, try count(a, nonpositive), 14);
+        try body.append(a, '\n');
+    }
     if (s.weight != null) {
-        try left(a, &body, "Sum of Weights", 22);
+        try left(a, &body, "Sum of Weights", label_w);
         try right(a, &body, std.mem.trim(u8, try format.apply(a, .{ .num = sum_weights }, "BEST12."), " "), 14);
         try body.append(a, '\n');
     }
@@ -570,12 +684,15 @@ fn analyze(cx: proc.ProcCtx, out: *Out, s: Spec, rows: []const []const Value, re
     if (s.list) {
         const sc = s.strata[0];
         const item_width = vw + (if (has_level) 4 + lw else 0) + 12;
-        const width = 59 + 4 + item_width;
+        // Without TOTAL= the Pop. Total and Rate columns are absent (SAS 9.4
+        // reference run).
+        const lead: usize = if (totals != null) 59 else 32;
+        const width = lead + 4 + item_width;
         try body.appendSlice(a, "\n\n");
         try centered(a, &body, "Stratum Information", width);
-        try body.appendSlice(a, " \nStratum                         Pop.       Samp\n Index");
+        try body.appendSlice(a, if (totals != null) " \nStratum                         Pop.       Samp\n Index" else " \nStratum\n Index");
         try right(a, &body, ds.columns.items[sc].name, 14);
-        try body.appendSlice(a, "           Total       Rate       N Obs    ");
+        try body.appendSlice(a, if (totals != null) "           Total       Rate       N Obs    " else "       N Obs    ");
         try left(a, &body, "Variable", vw);
         if (has_level) {
             try body.appendSlice(a, "    ");
@@ -585,17 +702,19 @@ fn analyze(cx: proc.ProcCtx, out: *Out, s: Spec, rows: []const []const Value, re
         try body.append(a, '\n');
         try body.appendNTimes(a, '-', width);
         try body.append(a, '\n');
-        for (stratum_rep.items, 0..) |row_ix, h| {
+        for (stratum_rep, 0..) |row_ix, h| {
             var previous: ?usize = null;
             for (items.items, 0..) |it, k| {
                 if (k == 0) {
                     try right(a, &body, try count(a, h + 1), 4);
                     try right(a, &body, try levelText(a, sel.rows[row_ix][sc]), 16);
-                    try right(a, &body, try fixed(a, totals.?[h], 0), 16);
-                    try right(a, &body, try std.fmt.allocPrint(a, "{d:.2}%", .{100 * rates.?[h]}), 11);
+                    if (totals) |list| {
+                        try right(a, &body, try fixed(a, list[h], 0), 16);
+                        try right(a, &body, try std.fmt.allocPrint(a, "{d:.2}%", .{100 * rates.?[h]}), 11);
+                    }
                     try right(a, &body, try count(a, obs[h]), 12);
                     try body.appendSlice(a, "    ");
-                } else try body.appendNTimes(a, ' ', 63);
+                } else try body.appendNTimes(a, ' ', lead + 4);
                 try left(a, &body, if (previous == it.col) "" else ds.columns.items[it.col].name, vw);
                 previous = it.col;
                 if (has_level) {
@@ -625,7 +744,7 @@ fn analyze(cx: proc.ProcCtx, out: *Out, s: Spec, rows: []const []const Value, re
         try right(a, &body, "N", 16);
         try right(a, &body, "Mean", 16);
         try right(a, &body, "of Mean", 16);
-        const heading = try std.fmt.allocPrint(a, "{d}% CL for Mean", .{@as(u64, @intFromFloat(@round(percent)))});
+        const heading = try std.fmt.allocPrint(a, "{d}% CL for Mean", .{@round(10 * percent) / 10});
         try body.appendNTimes(a, ' ', 4 + (21 - @min(21, heading.len)) / 2);
         try body.appendSlice(a, heading);
         try body.append(a, '\n');
@@ -739,4 +858,7 @@ test "STAT-SURVEYMEANS-001 confidence-limit columns fill ten characters" {
     try std.testing.expectEqual(@as(usize, 8), limitDecimals(7.04054539));
     try std.testing.expectEqual(@as(usize, 7), limitDecimals(10.4594546));
     try std.testing.expectEqual(@as(usize, 8), limitDecimals(0.7343101));
+    // SAS 9.4 reference: -9.0191896 and 3.01918955 in one row.
+    try std.testing.expectEqual(@as(usize, 7), limitDecimals(-9.01918955));
+    try std.testing.expectEqual(@as(usize, 8), limitDecimals(3.01918955));
 }

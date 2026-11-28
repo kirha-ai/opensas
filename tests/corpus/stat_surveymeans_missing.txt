@@ -1,0 +1,56 @@
+A excluded weight
+
+The SURVEYMEANS Procedure
+
+                    Data Summary
+
+Number of Observations                             8
+Number of Observations Used                        6
+Number of Obs with Nonpositive Weights             2
+Sum of Weights                                    10
+
+
+                                   Statistics
+ 
+                                               Std Error
+Variable               N            Mean         of Mean       95% CL for Mean
+---------------------------------------------------------------------------------
+y                      6       11.700000        2.783810    4.54398771 18.8560123
+z                      5        5.000000        0.993808    2.24074667  7.7592533
+---------------------------------------------------------------------------------
+B missing analysis var with strata cluster
+
+The SURVEYMEANS Procedure
+
+            Data Summary
+
+Number of Strata                   2
+Number of Clusters                 5
+Number of Observations             7
+
+
+                                   Statistics
+ 
+                                               Std Error
+Variable               N            Mean         of Mean       95% CL for Mean
+---------------------------------------------------------------------------------
+y                      6       13.500000        0.381881    12.2846832 14.7153168
+z                      6        4.500000        0.433013     2.6368967  6.3631033
+---------------------------------------------------------------------------------
+I missing option
+
+The SURVEYMEANS Procedure
+
+            Data Summary
+
+Number of Strata                   3
+Number of Observations             8
+
+
+                                   Statistics
+ 
+                                               Std Error
+Variable               N            Mean         of Mean       95% CL for Mean
+---------------------------------------------------------------------------------
+z                      7        4.000000        0.694977    2.07043418 5.92956582
+---------------------------------------------------------------------------------

@@ -1,0 +1,70 @@
+C two weight
+
+The SURVEYMEANS Procedure
+
+                    Data Summary
+
+Number of Observations                             8
+Number of Observations Used                        6
+Number of Obs with Nonpositive Weights             2
+Sum of Weights                                    10
+
+
+                                   Statistics
+ 
+                                               Std Error
+Variable               N            Mean         of Mean       95% CL for Mean
+---------------------------------------------------------------------------------
+z                      5        5.000000        0.993808    2.24074667 7.75925333
+---------------------------------------------------------------------------------
+D two strata
+
+The SURVEYMEANS Procedure
+
+            Data Summary
+
+Number of Strata                   5
+Number of Observations             7
+
+
+                                   Statistics
+ 
+                                               Std Error
+Variable               N            Mean         of Mean       95% CL for Mean
+---------------------------------------------------------------------------------
+z                      6        4.500000        0.849837    0.84344830 8.15655170
+---------------------------------------------------------------------------------
+D2 one strata two vars
+
+The SURVEYMEANS Procedure
+
+            Data Summary
+
+Number of Strata                   5
+Number of Observations             7
+
+
+                                   Statistics
+ 
+                                               Std Error
+Variable               N            Mean         of Mean       95% CL for Mean
+---------------------------------------------------------------------------------
+z                      6        4.500000        0.849837    0.84344830 8.15655170
+---------------------------------------------------------------------------------
+E two cluster
+
+The SURVEYMEANS Procedure
+
+            Data Summary
+
+Number of Clusters                 5
+Number of Observations             7
+
+
+                                   Statistics
+ 
+                                               Std Error
+Variable               N            Mean         of Mean       95% CL for Mean
+---------------------------------------------------------------------------------
+z                      6        4.500000        0.408248    3.20077174 5.79922826
+---------------------------------------------------------------------------------

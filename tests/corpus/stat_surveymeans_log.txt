@@ -1,0 +1,9 @@
+# corpus assertions
+stderr-count 1 Multiple WEIGHT statements. Only the first WEIGHT statement will be used.
+stderr-count 2 NOTE: Due to nonpositive weights, 2 observation(s) were deleted.
+stderr-count 1 NOTE: Only one cluster in a stratum for variable(s) z. The estimate of variance for z will omit this stratum.
+stderr-count 1 NOTE: Only one observation in a stratum for variable(s) z. The estimate of variance for z will omit this stratum.
+stderr-count 1 NOTE: No observations.
+stdout-count 4 The SURVEYMEANS Procedure
+stderr-count 0 ERROR
+stderr-count 1 NOTE: Only one observation in a stratum for variable(s) y, z. The estimate of variance for y, z will omit this stratum.

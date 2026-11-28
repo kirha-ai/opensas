@@ -1,0 +1,118 @@
+J weight plus strata exclusion
+
+The SURVEYMEANS Procedure
+
+                    Data Summary
+
+Number of Strata                                   2
+Number of Observations                             8
+Number of Observations Used                        5
+Number of Obs with Nonpositive Weights             2
+Sum of Weights                                     9
+
+
+                                   Statistics
+ 
+                                               Std Error
+Variable               N            Mean         of Mean       95% CL for Mean
+---------------------------------------------------------------------------------
+y                      5       14.000000        0.737028    11.6544488 16.3455512
+z                      4        5.500000        0.757772     2.2395693  8.7604307
+---------------------------------------------------------------------------------
+J2 weight plus cluster
+
+The SURVEYMEANS Procedure
+
+                    Data Summary
+
+Number of Clusters                                 5
+Number of Observations                             8
+Number of Observations Used                        6
+Number of Obs with Nonpositive Weights             2
+Sum of Weights                                    10
+
+
+                                   Statistics
+ 
+                                               Std Error
+Variable               N            Mean         of Mean       95% CL for Mean
+---------------------------------------------------------------------------------
+y                      6       11.700000        2.623404    4.41626204 18.9837380
+---------------------------------------------------------------------------------
+L single unit two vars
+
+The SURVEYMEANS Procedure
+
+            Data Summary
+
+Number of Strata                   5
+Number of Observations             7
+
+
+                                   Statistics
+ 
+                                               Std Error
+Variable               N            Mean         of Mean       95% CL for Mean
+---------------------------------------------------------------------------------
+y                      6       13.500000        0.333333    9.26459842 17.7354016
+z                      6        4.500000        0.849837    0.84344830  8.1565517
+---------------------------------------------------------------------------------
+M alpha 0.1
+
+The SURVEYMEANS Procedure
+
+            Data Summary
+
+Number of Observations             8
+
+
+                                   Statistics
+ 
+                                               Std Error
+Variable               N            Mean         of Mean       90% CL for Mean
+---------------------------------------------------------------------------------
+y                      7       10.285714        3.278460    3.91507566 16.6563529
+---------------------------------------------------------------------------------
+M2 alpha 0.025
+
+The SURVEYMEANS Procedure
+
+            Data Summary
+
+Number of Observations             8
+
+
+                                   Statistics
+ 
+                                               Std Error
+Variable               N            Mean         of Mean      97.5% CL for Mean
+---------------------------------------------------------------------------------
+y                      7       10.285714        3.278460    0.55299403 20.0184345
+---------------------------------------------------------------------------------
+N list without total
+
+The SURVEYMEANS Procedure
+
+            Data Summary
+
+Number of Strata                   2
+Number of Observations             7
+
+
+                  Stratum Information
+ 
+Stratum
+ Index             s       N Obs    Variable           N
+--------------------------------------------------------
+   1               1           3    y                  3
+   2               2           4    y                  3
+--------------------------------------------------------
+
+
+                                   Statistics
+ 
+                                               Std Error
+Variable               N            Mean         of Mean       95% CL for Mean
+---------------------------------------------------------------------------------
+y                      6       13.500000        0.408248    12.3665210 14.6334790
+---------------------------------------------------------------------------------

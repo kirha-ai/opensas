@@ -1,0 +1,16 @@
+F negative clm
+
+The SURVEYMEANS Procedure
+
+            Data Summary
+
+Number of Observations             5
+
+
+                                   Statistics
+ 
+                                               Std Error
+Variable               N            Mean         of Mean       95% CL for Mean
+---------------------------------------------------------------------------------
+y                      5       -3.000000        2.167948    -9.0191896 3.01918955
+---------------------------------------------------------------------------------

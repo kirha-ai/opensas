@@ -1,0 +1,20 @@
+A excluded weight
+
+The SURVEYMEANS Procedure
+
+                    Data Summary
+
+Number of Observations                             8
+Number of Observations Used                        6
+Number of Obs with Nonpositive Weights             2
+Sum of Weights                                    10
+
+
+                                   Statistics
+ 
+                                               Std Error
+Variable               N            Mean         of Mean       95% CL for Mean
+---------------------------------------------------------------------------------
+y                      6       11.700000        2.783810    4.54398771 18.8560123
+z                      5        5.000000        0.993808    2.24074667  7.7592533
+---------------------------------------------------------------------------------
