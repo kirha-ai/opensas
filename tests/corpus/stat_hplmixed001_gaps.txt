@@ -1,0 +1,8 @@
+# corpus assertions
+empty-listing
+stderr-count 1 METHOD=ML is not implemented
+stderr-count 1 option technique is not implemented
+stderr-count 1 RANDOM without SUBJECT= and TYPE=UN is not implemented
+stderr-count 1 RANDOM TYPE=vc is not implemented
+stderr-count 1 balanced random-coefficients shape
+stderr-count 1 repeated statement is not implemented

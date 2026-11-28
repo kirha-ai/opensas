@@ -31,6 +31,7 @@ pub const npar1way = @import("stat/npar1way.zig");
 pub const plm = @import("stat/plm.zig");
 pub const phreg = @import("stat/phreg.zig");
 pub const lifetest = @import("stat/lifetest.zig");
+pub const hplmixed = @import("stat/hplmixed.zig");
 pub const hplogistic = @import("stat/hplogistic.zig");
 pub const varclus = @import("stat/varclus.zig");
 pub const fastclus = @import("stat/fastclus.zig");
@@ -116,6 +117,7 @@ test {
     _ = @import("stat/plm.zig");
     _ = @import("stat/phreg.zig");
     _ = @import("stat/lifetest.zig");
+    _ = @import("stat/hplmixed.zig");
     _ = @import("stat/hplogistic.zig");
     _ = @import("stat/varclus.zig");
     _ = @import("stat/fastclus.zig");
