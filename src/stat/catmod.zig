@@ -1,5 +1,6 @@
 //! PROC CATMOD (STAT-CATMOD-001): data input, variable roles and basic
-//! options — PROC CATMOD DATA=/ORDER=DATA|INTERNAL, WEIGHT, POPULATION, BY,
+//! options — PROC CATMOD DATA=/ORDER=DATA|FORMATTED|FREQ|INTERNAL, WEIGHT,
+//! POPULATION, BY, WHERE, formatted classification and response variables,
 //! RESPONSE MEANS (weighted least squares) or the default generalized logits
 //! (maximum likelihood), MODEL response = class effects (main effects and
 //! crossings, deviation-from-the-mean coding) with / DESIGN, and interactive
@@ -50,13 +51,17 @@ pub const State = struct {
     population: ?[]const Token = null,
     by_stmt: ?[]const Token = null,
     model: ?[]const Token = null,
+    where: ?[]const Token = null,
 };
+
+/// ORDER= (p.2180): level order of classification and response variables.
+pub const Order = enum { internal, data, formatted, freq };
 
 pub const Effect = struct { name: []const u8, vars: []const usize };
 
 pub const Spec = struct {
     ds: *Dataset,
-    order_data: bool = false,
+    order: Order = .internal,
     noprint: bool = false,
     weight: ?usize = null,
     response: usize = 0,
@@ -95,15 +100,27 @@ fn parseProc(cx: proc.ProcCtx, s: *Spec, t: []const Token) diag.Error!void {
                 name = try std.fmt.allocPrint(cx.arena, "{s}.{s}", .{ name.?, t[i + 1].text });
                 i += 2;
             }
-            if (at(t, i, .lparen)) return gap(cx, t[i].line, "data set options on DATA= are not implemented", .{});
+            if (at(t, i, .lparen)) {
+                // Only a lone WHERE= data set option (applied by procInputObs,
+                // which reads options of a one-level name only); KEEP=/DROP=/
+                // RENAME= and the rest would change the variable roles.
+                if (std.mem.indexOfScalar(u8, name.?, '.') != null or !kw(t, i + 1, "where") or !at(t, i + 2, .eq) or !at(t, i + 3, .lparen))
+                    return gap(cx, t[i].line, "data set options other than WHERE= on DATA= are not implemented", .{});
+                var depth: usize = 0;
+                var j = i + 3;
+                while (j < t.len) : (j += 1) {
+                    if (at(t, j, .lparen)) depth += 1 else if (at(t, j, .rparen)) {
+                        depth -= 1;
+                        if (depth == 0) break;
+                    }
+                }
+                if (!at(t, j + 1, .rparen)) return gap(cx, t[i].line, "data set options other than WHERE= on DATA= are not implemented", .{});
+                i = j + 2;
+            }
         } else if (eq(word, "order") and valued) {
             if (!at(t, i + 2, .name)) return invalid(cx, t, i + 2);
             const v = t[i + 2].text;
-            // FORMATTED equals INTERNAL here: formatted classification
-            // variables are a gap, and unformatted values sort by value.
-            if (eq(v, "data")) s.order_data = true else if (eq(v, "internal") or eq(v, "formatted")) s.order_data = false else if (eq(v, "freq")) {
-                return gap(cx, t[i].line, "ORDER={s} is not implemented", .{v});
-            } else return invalid(cx, t, i + 2);
+            if (eq(v, "data")) s.order = .data else if (eq(v, "internal")) s.order = .internal else if (eq(v, "formatted")) s.order = .formatted else if (eq(v, "freq")) s.order = .freq else return invalid(cx, t, i + 2);
             i += 3;
         } else if (eq(word, "noprint") and !valued) {
             s.noprint = true;
@@ -230,8 +247,6 @@ pub fn resolve(cx: proc.ProcCtx, st: State) diag.Error!Spec {
         s.pop_vars = pv.items;
     }
     for (s.pop_vars) |v| if (v == s.response) return cx.diags.fail(error.ParseError, s.model_line, "PROC CATMOD: the response variable cannot also be an explanatory variable", .{});
-    for (s.pop_vars) |v| if (ds.columns.items[v].format != null) return gap(cx, s.model_line, "formatted classification variables are not implemented", .{});
-    if (ds.columns.items[s.response].format != null) return gap(cx, s.model_line, "a formatted response variable is not implemented", .{});
     if (s.means and ds.columns.items[s.response].type != .num) return cx.diags.fail(error.ParseError, s.model_line, "PROC CATMOD: RESPONSE MEANS requires a numeric response variable", .{});
     if (s.design and !s.means) return gap(cx, s.model_line, "MODEL / DESIGN with maximum likelihood is not implemented", .{});
     if (st.by_stmt) |b| {
@@ -266,30 +281,95 @@ fn sameValue(x: Value, y: Value) bool {
     };
 }
 
-/// Levels of one variable: order of appearance (ORDER=DATA) or ascending
-/// unformatted value (ORDER=INTERNAL, the default; p.2180).
-fn levels(a: A, rows: []const []const Value, c: usize, order_data: bool) ![]Value {
-    var out: std.ArrayList(Value) = .empty;
-    for (rows) |r| {
-        for (out.items) |v| {
-            if (sameValue(v, r[c])) break;
-        } else try out.append(a, r[c]);
-    }
-    if (!order_data) std.mem.sort(Value, out.items, {}, struct {
-        fn f(_: void, x: Value, y: Value) bool {
-            return lessValue(x, y);
-        }
-    }.f);
-    return out.items;
+/// Levels of one classification or response variable. A variable with a
+/// format is classified by its trimmed formatted value (values sharing a
+/// formatted value form one level, SAS reference run); `vals` keeps the
+/// smallest internal value of each level (the INTERNAL sort key, verified on
+/// a format merging 'a' and 'c' ahead of 'b') and `texts` the displayed value.
+pub const Levels = struct { vals: []Value, texts: [][]const u8, formatted: bool, merged: bool = false };
+
+fn keyText(a: A, ds: *const Dataset, c: usize, v: Value) ![]const u8 {
+    if (ds.columns.items[c].format) |f| return std.mem.trim(u8, try format.apply(a, v, f), " ");
+    return levelText(a, v);
 }
-fn levelIndex(ls: []const Value, v: Value) usize {
-    for (ls, 0..) |l, k| if (sameValue(l, v)) return k;
-    unreachable;
+
+/// Index of `v` among the levels (formatted variables match on the text).
+fn findLevel(a: A, ds: *const Dataset, c: usize, ls: Levels, v: Value) !?usize {
+    if (ls.formatted) {
+        const t = try keyText(a, ds, c, v);
+        for (ls.texts, 0..) |l, k| if (std.mem.eql(u8, l, t)) return k;
+        return null;
+    }
+    for (ls.vals, 0..) |l, k| if (sameValue(l, v)) return k;
+    return null;
+}
+
+/// Level order (p.2180, pp.2223-2224): DATA = order of appearance; INTERNAL
+/// (default) = ascending unformatted value; FORMATTED = ascending formatted
+/// value, except an unformatted numeric variable sorts by value; FREQ =
+/// descending weighted frequency, ties in order of appearance (two SAS
+/// reference runs: raw ties b,a,c and 2,1,3 kept their data order).
+fn levels(a: A, s: Spec, rows: []const []const Value, c: usize) !Levels {
+    const ds = s.ds;
+    var ls: Levels = .{ .vals = &.{}, .texts = &.{}, .formatted = ds.columns.items[c].format != null };
+    var vals: std.ArrayList(Value) = .empty;
+    var texts: std.ArrayList([]const u8) = .empty;
+    var freq: std.ArrayList(f64) = .empty;
+    for (rows) |r| {
+        ls.vals = vals.items;
+        ls.texts = texts.items;
+        const w: f64 = if (s.weight) |wc| r[wc].num else 1;
+        if (try findLevel(a, ds, c, ls, r[c])) |k| {
+            freq.items[k] += w;
+            if (!sameValue(vals.items[k], r[c])) {
+                ls.merged = true;
+                if (lessValue(r[c], vals.items[k])) vals.items[k] = r[c];
+            }
+            continue;
+        }
+        try vals.append(a, r[c]);
+        try texts.append(a, try keyText(a, ds, c, r[c]));
+        try freq.append(a, w);
+    }
+    const n = vals.items.len;
+    const perm = try a.alloc(usize, n);
+    for (perm, 0..) |*p, k| p.* = k;
+    const Ctx = struct {
+        vals: []const Value,
+        texts: []const []const u8,
+        freq: []const f64,
+        how: Order,
+        fn less(cx: @This(), x: usize, y: usize) bool {
+            return switch (cx.how) {
+                .data => x < y,
+                .internal => lessValue(cx.vals[x], cx.vals[y]),
+                .formatted => std.mem.lessThan(u8, cx.texts[x], cx.texts[y]),
+                .freq => if (cx.freq[x] != cx.freq[y]) cx.freq[x] > cx.freq[y] else x < y,
+            };
+        }
+    };
+    var how = s.order;
+    if (how == .formatted and !ls.formatted and ds.columns.items[c].type == .num) how = .internal;
+    std.sort.block(usize, perm, Ctx{ .vals = vals.items, .texts = texts.items, .freq = freq.items, .how = how }, Ctx.less);
+    const ov = try a.alloc(Value, n);
+    const ot = try a.alloc([]const u8, n);
+    for (perm, 0..) |p, k| {
+        ov[k] = vals.items[p];
+        ot[k] = texts.items[p];
+    }
+    ls.vals = ov;
+    ls.texts = ot;
+    return ls;
 }
 
 pub const Table = struct {
     /// Levels per population variable (parallel to Spec.pop_vars).
     pop_levels: []const []const Value,
+    /// Displayed level texts (parallel to pop_levels / resp_levels).
+    pop_text: []const []const []const u8 = &.{},
+    resp_text: []const []const u8 = &.{},
+    /// Some used or missing-counted weight is not a whole number.
+    frac_weights: bool = false,
     /// Level index tuple of each population, in population order.
     pops: []const []const usize,
     resp_levels: []const Value,
@@ -321,33 +401,53 @@ pub fn tabulate(cx: proc.ProcCtx, s: Spec, rows: []const []const Value) diag.Err
     };
     var kept: std.ArrayList([]const Value) = .empty;
     var freq_missing: f64 = 0;
+    var frac_missing = false;
     for (rows) |r| {
         const w: f64 = if (s.weight) |wc| (if (r[wc].isMissing()) continue else r[wc].num) else 1;
         var missing = isMissing(r[s.response]);
         for (s.pop_vars) |c| missing = missing or isMissing(r[c]);
         if (missing) {
             freq_missing += w;
+            frac_missing = frac_missing or w != @floor(w);
             continue;
         }
         if (w <= 0) continue;
         try kept.append(a, r);
     }
     const used = kept.items;
-    if (used.len == 0) return gap(cx, s.model_line, "an input with no usable observations is not implemented", .{});
-    return tabulateUsed(cx, s, used, freq_missing);
+    // An empty, fully excluded or WHERE-emptied input is the SAS user error
+    // (SAS reference runs: 0-observation data set, all weights missing, a
+    // WHERE selecting nothing; no listing).
+    if (used.len == 0) return cx.diags.fail(error.ParseError, s.model_line, "The data set contains 0 nonmissing observations with positive weight.", .{});
+    var tb = try tabulateUsed(cx, s, used, freq_missing);
+    tb.frac_weights = tb.frac_weights or frac_missing;
+    return tb;
 }
 
 fn tabulateUsed(cx: proc.ProcCtx, s: Spec, rows: []const []const Value, freq_missing: f64) diag.Error!Table {
     const a = cx.arena;
-    const pl = try a.alloc([]const Value, s.pop_vars.len);
-    for (s.pop_vars, pl) |c, *l| l.* = try levels(a, rows, c, s.order_data);
-    const rl = try levels(a, rows, s.response, s.order_data);
+    const ds = s.ds;
+    const pv = try a.alloc(Levels, s.pop_vars.len);
+    for (s.pop_vars, pv) |c, *l| l.* = try levels(a, s, rows, c);
+    const rv = try levels(a, s, rows, s.response);
+    // ponytail: RESPONSE MEANS scores a response level by its value; a format
+    // that merges several values has no verified score.
+    if (s.means and rv.merged) return gap(cx, s.model_line, "RESPONSE MEANS with a format that merges response values is not implemented", .{});
+    const pl = try a.alloc([]const Value, pv.len);
+    const pt = try a.alloc([]const []const u8, pv.len);
+    for (pv, pl, pt) |l, *v, *t| {
+        v.* = l.vals;
+        t.* = l.texts;
+    }
     // Populations that occur, ordered lexicographically by level index.
-    var pops: std.ArrayList([]const usize) = .empty;
     var keys: std.ArrayList([]usize) = .empty;
-    for (rows) |r| {
+    const row_key = try a.alloc([]usize, rows.len);
+    const row_resp = try a.alloc(usize, rows.len);
+    for (rows, row_key, row_resp) |r, *rk, *rr| {
         const key = try a.alloc(usize, s.pop_vars.len);
-        for (s.pop_vars, pl, key) |c, l, *k| k.* = levelIndex(l, r[c]);
+        for (s.pop_vars, pv, key) |c, l, *k| k.* = (try findLevel(a, ds, c, l, r[c])).?;
+        rk.* = key;
+        rr.* = (try findLevel(a, ds, s.response, rv, r[s.response])).?;
         for (keys.items) |o| {
             if (std.mem.eql(usize, o, key)) break;
         } else try keys.append(a, key);
@@ -357,22 +457,23 @@ fn tabulateUsed(cx: proc.ProcCtx, s: Spec, rows: []const []const Value, freq_mis
             return std.mem.order(usize, x, y) == .lt;
         }
     }.f);
-    for (keys.items) |k| try pops.append(a, k);
-    const J = rl.len;
-    const counts = try a.alloc(f64, pops.items.len * J);
+    const pops = try a.alloc([]const usize, keys.items.len);
+    for (keys.items, pops) |k, *p| p.* = k;
+    const J = rv.vals.len;
+    const counts = try a.alloc(f64, pops.len * J);
     @memset(counts, 0);
     var total: f64 = 0;
-    for (rows) |r| {
-        const key = try a.alloc(usize, s.pop_vars.len);
-        for (s.pop_vars, pl, key) |c, l, *k| k.* = levelIndex(l, r[c]);
-        const i = for (pops.items, 0..) |p, ix| {
+    var frac = false;
+    for (rows, row_key, row_resp) |r, key, j| {
+        const i = for (pops, 0..) |p, ix| {
             if (std.mem.eql(usize, p, key)) break ix;
         } else unreachable;
         const w: f64 = if (s.weight) |wc| r[wc].num else 1;
-        counts[i * J + levelIndex(rl, r[s.response])] += w;
+        frac = frac or w != @floor(w);
+        counts[i * J + j] += w;
         total += w;
     }
-    return .{ .pop_levels = pl, .pops = pops.items, .resp_levels = rl, .counts = counts, .n_obs = rows.len, .total = total, .freq_missing = freq_missing };
+    return .{ .pop_levels = pl, .pop_text = pt, .pops = pops, .resp_levels = rv.vals, .resp_text = rv.texts, .counts = counts, .n_obs = rows.len, .total = total, .freq_missing = freq_missing, .frac_weights = frac };
 }
 
 /// Deviation-from-the-mean design (the last level is coded -1; crossings
@@ -688,21 +789,34 @@ fn dataSummary(cx: proc.ProcCtx, out: *Out, s: Spec, tb: Table) !void {
     const cols = s.ds.columns.items;
     const upper = try std.ascii.allocUpperString(a, s.ds.name);
     const dsname = if (std.mem.indexOfScalar(u8, upper, '.')) |k| (if (std.mem.startsWith(u8, upper, "WORK.")) upper[k + 1 ..] else upper) else upper;
-    // ponytail: the Data Summary column widths are verified for whole-number
-    // frequencies only; a fractional total changes the template's widths.
-    if (tb.total != @floor(tb.total) or tb.freq_missing != @floor(tb.freq_missing)) return gap(cx, s.model_line, "the Data Summary for fractional frequencies is not implemented", .{});
-    const v1 = [_][]const u8{ cols[s.response].name, if (s.weight) |wc| cols[wc].name else "None", dsname, try format.bestNum(a, tb.freq_missing) };
-    var w1: usize = 0;
+    // Whole-number frequencies: the first value column is max(text, 3) + 5
+    // wide and the numbers max(text) wide. A fractional total or Frequency
+    // Missing switches SAS to BEST8. frequencies, a first value column of
+    // max(text, 7) + 5 and a 6-wide number field (8 after the 15-wide label)
+    // (SAS reference runs: first-column texts of 1..4 and 9 characters
+    // whole, 2, 3 and 9 fractional; totals 35.75, 4317.95, 10.5).
+    const fractional = tb.total != @floor(tb.total) or tb.freq_missing != @floor(tb.freq_missing);
+    // ponytail: fractional weights whose sums are whole have no verified layout.
+    if (!fractional and tb.frac_weights) return gap(cx, s.model_line, "the Data Summary for fractional weights with whole-number sums is not implemented", .{});
+    const fm = if (fractional) try format.bestNumW(a, tb.freq_missing, 8) else try format.bestNum(a, tb.freq_missing);
+    const v1 = [_][]const u8{ cols[s.response].name, if (s.weight) |wc| cols[wc].name else "None", dsname, fm };
+    var w1: usize = if (fractional) 7 else 3;
     for (v1) |v| w1 = @max(w1, v.len);
     w1 += 5;
     const n2 = [_][]const u8{
         try std.fmt.allocPrint(a, "{d}", .{tb.resp_levels.len}),
         try std.fmt.allocPrint(a, "{d}", .{tb.pops.len}),
-        try format.bestNum(a, tb.total),
+        if (fractional) try format.bestNumW(a, tb.total, 8) else try format.bestNum(a, tb.total),
         try std.fmt.allocPrint(a, "{d}", .{tb.n_obs}),
     };
     var nw: usize = 0;
     for (n2) |v| nw = @max(nw, v.len);
+    if (fractional) {
+        // SAS keeps the 6-wide field for a 7-character 4317.95 (one blank after
+        // the label); an 8-character value has no verified layout.
+        if (nw > 7) return gap(cx, s.model_line, "a fractional Data Summary frequency of 8 or more characters is not implemented", .{});
+        nw = 6;
+    }
     const l1 = [_][]const u8{ "Response", "Weight Variable", "Data Set", "Frequency Missing" };
     const l2 = [_][]const u8{ "Response Levels", "Populations", "Total Frequency", "Observations" };
     const width = 19 + w1 + 17 + nw;
@@ -724,9 +838,9 @@ fn profiles(cx: proc.ProcCtx, out: *Out, s: Spec, tb: Table) !void {
     const cols = s.ds.columns.items;
     const widths = try a.alloc(usize, s.pop_vars.len);
     var width: usize = 10;
-    for (s.pop_vars, tb.pop_levels, widths) |c, ls, *w| {
+    for (s.pop_vars, tb.pop_text, widths) |c, ls, *w| {
         w.* = cols[c].name.len;
-        for (ls) |l| w.* = @max(w.*, (try levelText(a, l)).len);
+        for (ls) |l| w.* = @max(w.*, l.len);
         width += w.* + 4;
     }
     width += 11;
@@ -746,19 +860,20 @@ fn profiles(cx: proc.ProcCtx, out: *Out, s: Spec, tb: Table) !void {
         b = try proc.line(a, width);
         proc.putRight(b, 5, try std.fmt.allocPrint(a, "{d}", .{i + 1}));
         col = 11;
-        for (pop, tb.pop_levels, widths) |k, ls, w| {
-            proc.putLeft(b, col, try levelText(a, ls[k]));
+        for (pop, tb.pop_text, widths) |k, ls, w| {
+            proc.putLeft(b, col, ls[k]);
             col += w + 4;
         }
         var n: f64 = 0;
         for (0..tb.resp_levels.len) |j| n += tb.counts[i * tb.resp_levels.len + j];
-        proc.putRight(b, width, try format.bestNum(a, n));
+        // Fractional sample sizes print as BEST8. (reference: 1233.700123 -> 1233.7).
+        proc.putRight(b, width, if (n != @floor(n)) try format.bestNumW(a, n, 8) else try format.bestNum(a, n));
         try emit(a, out, b);
     }
     try out.appendSlice(a, "\n\n");
     // Response Profiles.
     var rw: usize = cols[s.response].name.len;
-    for (tb.resp_levels) |l| rw = @max(rw, (try levelText(a, l)).len);
+    for (tb.resp_text) |l| rw = @max(rw, l.len);
     const width2 = 12 + rw;
     try centered(a, out, "Response Profiles", width2);
     try out.appendSlice(a, " \n");
@@ -767,10 +882,10 @@ fn profiles(cx: proc.ProcCtx, out: *Out, s: Spec, tb: Table) !void {
     proc.putLeft(b, 13, cols[s.response].name);
     try emit(a, out, b);
     try dashes(a, out, width2);
-    for (tb.resp_levels, 0..) |l, j| {
+    for (tb.resp_text, 0..) |l, j| {
         b = try proc.line(a, width2);
         proc.putRight(b, 5, try std.fmt.allocPrint(a, "{d}", .{j + 1}));
-        proc.putLeft(b, 13, try levelText(a, l));
+        proc.putLeft(b, 13, l);
         try emit(a, out, b);
     }
     try out.appendSlice(a, "\n\n");
@@ -859,7 +974,7 @@ fn paramLabels(a: A, s: Spec, tb: Table, d: Design) ![]Param {
                 vi -= 1;
                 const pp = popPos(s, e.vars[vi]);
                 const m = tb.pop_levels[pp].len - 1;
-                try parts.insert(a, 0, try levelText(a, tb.pop_levels[pp][rem % m]));
+                try parts.insert(a, 0, tb.pop_text[pp][rem % m]);
                 rem /= m;
             }
             out[off + k] = .{ .effect = e.name, .level = try std.mem.join(a, " ", parts.items) };
@@ -921,6 +1036,15 @@ pub fn analyze(cx: proc.ProcCtx, out: *Out, s: Spec, rows: []const []const Value
     const a = cx.arena;
     const tb = try tabulate(cx, s, rows);
     for (s.effects) |e| for (e.vars) |v| if (tb.pop_levels[popPos(s, v)].len < 2) return gap(cx, s.model_line, "an effect variable with a single level is not implemented", .{});
+    // ponytail: a (near-)zero cell gives maximum likelihood parameters SAS
+    // flags as infinite ('#') with redundant DF ('*'); a SAS reference run
+    // with a cell of weight 1E-6 shows both. Unverified, so loud.
+    if (!s.means) for (0..tb.pops.len) |i| {
+        const J = tb.resp_levels.len;
+        var n: f64 = 0;
+        for (0..J) |j| n += tb.counts[i * J + j];
+        for (0..J) |j| if (tb.counts[i * J + j] < 1e-4 * n) return gap(cx, s.model_line, "maximum likelihood with a zero or near-zero response cell (infinite parameters) is not implemented", .{});
+    };
     const d = try designMatrix(a, s, tb);
     const f = if (s.means) try fitMeans(cx, tb, d) else try fitLogits(cx, tb, d);
     var b: Out = .empty;
@@ -938,7 +1062,14 @@ pub fn analyze(cx: proc.ProcCtx, out: *Out, s: Spec, rows: []const []const Value
 
 fn execute(cx: proc.ProcCtx, out: *Out, st: State) diag.Error!void {
     const s = try resolve(cx, st);
-    const input = try proc.procInputObs(cx.arena, s.ds, st.proc_stmt, cx.diags);
+    var toks: std.ArrayList(Token) = .empty;
+    try toks.appendSlice(cx.arena, st.proc_stmt);
+    try toks.append(cx.arena, .{ .tag = .semicolon, .text = ";", .line = st.proc_stmt[0].line });
+    if (st.where) |w| {
+        try toks.appendSlice(cx.arena, w);
+        try toks.append(cx.arena, .{ .tag = .semicolon, .text = ";", .line = w[0].line });
+    }
+    const input = try proc.procInputObs(cx.arena, s.ds, toks.items, cx.diags);
     var sp = s;
     sp.ds = input.ds;
     const slices = try by.checkedSlices(cx.arena, sp.ds, sp.by_cols, sp.by_desc, sp.by_notsorted, cx.diags);
@@ -1018,7 +1149,8 @@ fn statements(cx: proc.ProcCtx, out: *Out, st: *State, t: []const Token, start: 
         } else if (oneOf(word, &later_statements)) {
             return gap(cx, t[i].line, "{s} statement is not implemented", .{word});
         } else if (eq(word, "where")) {
-            return gap(cx, t[i].line, "the WHERE statement is not implemented", .{});
+            // Applied to the input by procInputObs (last WHERE wins).
+            st.where = try keep(stmt);
         } else if (parser.isMidStepSkippable(word)) {
             try parser.noteUnexecuted(cx.diags, t[i..end]);
         } else return invalid(cx, t, i);
@@ -1122,4 +1254,39 @@ test "STAT-CATMOD-001 WLS means and ML logits by hand on a saturated two-populat
     try std.testing.expectApproxEqAbs(-@log(3.0) / 2.0, l.beta[0], 1e-9);
     try std.testing.expectApproxEqAbs(-@log(3.0) / 2.0, l.beta[1], 1e-9);
     try std.testing.expectApproxEqAbs(@as(f64, 0), l.resid, 1e-9);
+}
+
+test "STAT-CATMOD-001 level order: FREQ ties keep data order, formats merge levels" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var ds = Dataset.init(a, "t");
+    _ = try ds.addColumn("g", .char);
+    _ = try ds.addColumn("w", .num);
+    const r = [_][2]Value{
+        .{ .{ .str = "b" }, .{ .num = 2 } }, .{ .{ .str = "ac" }, .{ .num = 1 } },
+        .{ .{ .str = "c" }, .{ .num = 2 } }, .{ .{ .str = "ab" }, .{ .num = 1 } },
+    };
+    var rows: [4][]const Value = undefined;
+    for (&rows, &r) |*o, *x| o.* = x;
+    // FREQ: weighted counts b 2, ac 1, c 2, ab 1 -> b, c (tie: data order), ac, ab.
+    var s: Spec = .{ .ds = &ds, .weight = 1, .order = .freq };
+    var l = try levels(a, s, &rows, 0);
+    try std.testing.expectEqualStrings("b", l.texts[0]);
+    try std.testing.expectEqualStrings("c", l.texts[1]);
+    try std.testing.expectEqualStrings("ac", l.texts[2]);
+    // $1. merges ac and ab into 'a' (weight 2, smallest value ab): INTERNAL
+    // sorts a, b, c; FREQ puts the three ties in data order b, a, c.
+    ds.columns.items[0].format = "$1.";
+    s.order = .internal;
+    l = try levels(a, s, &rows, 0);
+    try std.testing.expect(l.merged);
+    try std.testing.expectEqual(@as(usize, 3), l.texts.len);
+    try std.testing.expectEqualStrings("a", l.texts[0]);
+    try std.testing.expectEqualStrings("ab", l.vals[0].str);
+    s.order = .freq;
+    l = try levels(a, s, &rows, 0);
+    try std.testing.expectEqualStrings("b", l.texts[0]);
+    try std.testing.expectEqualStrings("a", l.texts[1]);
+    try std.testing.expectEqualStrings("c", l.texts[2]);
 }

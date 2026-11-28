@@ -3,7 +3,10 @@
    table: an unknown variable, the response used as an explanatory variable,
    RESPONSE MEANS on a character response, a character WEIGHT variable, an
    invalid PROC option, an effect specified twice, an unknown statement and
-   negative weights (message as in SAS), and NAMELEN= outside 24-200.
+   negative weights (message as in SAS), NAMELEN= outside 24-200, and an
+   empty, fully excluded (all weights missing) or WHERE-emptied input
+   ("The data set contains 0 nonmissing observations with positive
+   weight.", as in SAS; no listing).
    Data: invented. */
 options nosyntaxcheck nodate nonumber nocenter linesize=160;
 title;
@@ -22,3 +25,8 @@ proc catmod data=t; weight w; frobnicate; model y=g; run;
 data n; set t; if _n_ = 2 then w = -1; run;
 proc catmod data=n; weight w; response means; model y=g; run;
 proc catmod data=t namelen=10; weight w; model y=g; run;
+data z; set t; stop; run;
+proc catmod data=z; weight w; model y=g; run;
+data x; set t; w = .; run;
+proc catmod data=x; weight w; model y=g; run;
+proc catmod data=t; weight w; where w > 100; model y=g; run;

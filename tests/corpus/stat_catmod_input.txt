@@ -1,0 +1,565 @@
+Q1 order=freq raw ties
+
+The CATMOD Procedure
+
+                 Data Summary
+
+Response           y        Response Levels   3
+Weight Variable    None     Populations       3
+Data Set           R        Total Frequency  15
+Frequency Missing  0        Observations     15
+
+
+   Population Profiles
+
+Sample    g    Sample Size
+--------------------------
+    1     b              5
+    2     a              5
+    3     c              5
+
+
+Response Profiles
+
+Response    y
+-------------
+    1       3
+    2       1
+    3       2
+
+
+           Analysis of Variance
+
+Source        DF   Chi-Square    Pr > ChiSq
+-------------------------------------------
+Intercept      1        96.10        <.0001
+g              2         1.53        0.4655
+
+Residual       0          .           .
+
+
+        Analysis of Weighted Least Squares Estimates
+
+                          Standard        Chi-
+Parameter      Estimate      Error      Square    Pr > ChiSq
+------------------------------------------------------------
+Intercept        2.0667     0.2108       96.10        <.0001
+g         b     -0.2667     0.2860        0.87        0.3511
+          a     -0.0667     0.3127        0.05        0.8312
+Q2 merged population format
+
+The CATMOD Procedure
+
+                 Data Summary
+
+Response           y        Response Levels   3
+Weight Variable    None     Populations       2
+Data Set           MG       Total Frequency  15
+Frequency Missing  0        Observations     15
+
+
+    Population Profiles
+
+Sample    g     Sample Size
+---------------------------
+    1     ac             10
+    2     b               5
+
+
+Response Profiles
+
+Response    y
+-------------
+    1       1
+    2       2
+    3       3
+
+
+           Analysis of Variance
+
+Source        DF   Chi-Square    Pr > ChiSq
+-------------------------------------------
+Intercept      1        85.11        <.0001
+g              1         0.85        0.3563
+
+Residual       0          .           .
+
+
+        Analysis of Weighted Least Squares Estimates
+
+                           Standard        Chi-
+Parameter       Estimate      Error      Square    Pr > ChiSq
+-------------------------------------------------------------
+Intercept         2.0000     0.2168       85.11        <.0001
+g         ac      0.2000     0.2168        0.85        0.3563
+Q3 fractional long names
+
+The CATMOD Procedure
+
+                      Data Summary
+
+Response           y             Response Levels       2
+Weight Variable    frequency     Populations           2
+Data Set           LONGNAME      Total Frequency    10.5
+Frequency Missing  0             Observations          4
+
+
+   Population Profiles
+
+Sample    g    Sample Size
+--------------------------
+    1     a            5.5
+    2     b              5
+
+
+Response Profiles
+
+Response    y
+-------------
+    1       1
+    2       2
+
+
+           Analysis of Variance
+
+Source        DF   Chi-Square    Pr > ChiSq
+-------------------------------------------
+Intercept      1        97.79        <.0001
+g              1         1.55        0.2134
+
+Residual       0          .           .
+
+
+        Analysis of Weighted Least Squares Estimates
+
+                          Standard        Chi-
+Parameter      Estimate      Error      Square    Pr > ChiSq
+------------------------------------------------------------
+Intercept        1.3727     0.1388       97.79        <.0001
+g         a      0.1727     0.1388        1.55        0.2134
+Q4 fractional 7 and big
+
+The CATMOD Procedure
+
+                     Data Summary
+
+Response           y             Response Levels      2
+Weight Variable    frequency     Populations          2
+Data Set           ABCDEFG       Total Frequency  10500
+Frequency Missing  0             Observations         4
+
+
+   Population Profiles
+
+Sample    g    Sample Size
+--------------------------
+    1     a           5500
+    2     b           5000
+
+
+Response Profiles
+
+Response    y
+-------------
+    1       1
+    2       2
+
+
+           Analysis of Variance
+
+Source        DF   Chi-Square    Pr > ChiSq
+-------------------------------------------
+Intercept      1     97789.69        <.0001
+g              1      1548.27        <.0001
+
+Residual       0          .           .
+
+
+        Analysis of Weighted Least Squares Estimates
+
+                          Standard        Chi-
+Parameter      Estimate      Error      Square    Pr > ChiSq
+------------------------------------------------------------
+Intercept        1.3727    0.00439    97789.69        <.0001
+g         a      0.1727    0.00439     1548.27        <.0001
+Q5 fractional weight only on excluded obs
+
+The CATMOD Procedure
+
+                     Data Summary
+
+Response           y           Response Levels       2
+Weight Variable    w           Populations           2
+Data Set           EXF         Total Frequency      10
+Frequency Missing  2.5         Observations          4
+
+
+   Population Profiles
+
+Sample    g    Sample Size
+--------------------------
+    1     a              5
+    2     b              5
+
+
+Response Profiles
+
+Response    y
+-------------
+    1       1
+    2       2
+
+
+           Analysis of Variance
+
+Source        DF   Chi-Square    Pr > ChiSq
+-------------------------------------------
+Intercept      1        98.00        <.0001
+g              1         2.00        0.1573
+
+Residual       0          .           .
+
+
+        Analysis of Weighted Least Squares Estimates
+
+                          Standard        Chi-
+Parameter      Estimate      Error      Square    Pr > ChiSq
+------------------------------------------------------------
+Intercept        1.4000     0.1414       98.00        <.0001
+g         a      0.2000     0.1414        2.00        0.1573
+P3 formatted internal
+
+The CATMOD Procedure
+
+                     Data Summary
+
+Response           y           Response Levels       3
+Weight Variable    w           Populations           3
+Data Set           F           Total Frequency      35
+Frequency Missing  0           Observations          9
+
+
+     Population Profiles
+
+Sample    g        Sample Size
+------------------------------
+    1     Zed               10
+    2     Alpha             15
+    3     Mid               10
+
+
+Response Profiles
+
+Response    y
+-----------------
+    1       one
+    2       two
+    3       three
+
+
+           Analysis of Variance
+
+Source        DF   Chi-Square    Pr > ChiSq
+-------------------------------------------
+Intercept      1       217.30        <.0001
+g              2         5.95        0.0511
+
+Residual       0          .           .
+
+
+          Analysis of Weighted Least Squares Estimates
+
+                              Standard        Chi-
+Parameter          Estimate      Error      Square    Pr > ChiSq
+----------------------------------------------------------------
+Intercept            1.8778     0.1274      217.30        <.0001
+g         Zed        0.1222     0.1903        0.41        0.5208
+          Alpha      0.2556     0.1912        1.79        0.1814
+P4 formatted order=formatted
+
+The CATMOD Procedure
+
+                     Data Summary
+
+Response           y           Response Levels       3
+Weight Variable    w           Populations           3
+Data Set           F           Total Frequency      35
+Frequency Missing  0           Observations          9
+
+
+     Population Profiles
+
+Sample    g        Sample Size
+------------------------------
+    1     Alpha             15
+    2     Mid               10
+    3     Zed               10
+
+
+Response Profiles
+
+Response    y
+-----------------
+    1       one
+    2       three
+    3       two
+
+
+           Analysis of Variance
+
+Source        DF   Chi-Square    Pr > ChiSq
+-------------------------------------------
+Intercept      1       217.30        <.0001
+g              2         5.95        0.0511
+
+Residual       0          .           .
+
+
+          Analysis of Weighted Least Squares Estimates
+
+                              Standard        Chi-
+Parameter          Estimate      Error      Square    Pr > ChiSq
+----------------------------------------------------------------
+Intercept            1.8778     0.1274      217.30        <.0001
+g         Alpha      0.2556     0.1912        1.79        0.1814
+          Mid       -0.3778     0.1567        5.81        0.0159
+P6 plain numeric format
+
+The CATMOD Procedure
+
+                     Data Summary
+
+Response           y           Response Levels       3
+Weight Variable    w           Populations           3
+Data Set           E           Total Frequency      35
+Frequency Missing  0           Observations          9
+
+
+   Population Profiles
+
+Sample    g    Sample Size
+--------------------------
+    1     a             10
+    2     b             15
+    3     c             10
+
+
+Response Profiles
+
+Response    y
+-------------
+    1       1
+    2       2
+    3       3
+
+
+           Analysis of Variance
+
+Source        DF   Chi-Square    Pr > ChiSq
+-------------------------------------------
+Intercept      1       217.30        <.0001
+g              2         5.95        0.0511
+
+Residual       0          .           .
+
+
+        Analysis of Weighted Least Squares Estimates
+
+                          Standard        Chi-
+Parameter      Estimate      Error      Square    Pr > ChiSq
+------------------------------------------------------------
+Intercept        1.8778     0.1274      217.30        <.0001
+g         a      0.1222     0.1903        0.41        0.5208
+          b      0.2556     0.1912        1.79        0.1814
+P7 fractional
+
+The CATMOD Procedure
+
+                     Data Summary
+
+Response           y           Response Levels       3
+Weight Variable    w           Populations           3
+Data Set           FR          Total Frequency   35.75
+Frequency Missing  0           Observations          9
+
+
+   Population Profiles
+
+Sample    g    Sample Size
+--------------------------
+    1     a          10.75
+    2     b             15
+    3     c             10
+
+
+Response Profiles
+
+Response    y
+-------------
+    1       1
+    2       2
+    3       3
+
+
+           Analysis of Variance
+
+Source        DF   Chi-Square    Pr > ChiSq
+-------------------------------------------
+Intercept      1       219.68        <.0001
+g              2         5.65        0.0594
+
+Residual       0          .           .
+
+
+        Analysis of Weighted Least Squares Estimates
+
+                          Standard        Chi-
+Parameter      Estimate      Error      Square    Pr > ChiSq
+------------------------------------------------------------
+Intercept        1.8623     0.1256      219.68        <.0001
+g         a      0.0912     0.1857        0.24        0.6232
+          b      0.2711     0.1901        2.03        0.1539
+P8 fractional big and missing
+
+The CATMOD Procedure
+
+                     Data Summary
+
+Response           y           Response Levels       3
+Weight Variable    w           Populations           3
+Data Set           FR2         Total Frequency 4317.95
+Frequency Missing  7.5         Observations          8
+
+
+   Population Profiles
+
+Sample    g    Sample Size
+--------------------------
+    1     a         1233.7
+    2     b        1850.55
+    3     c         1233.7
+
+
+Response Profiles
+
+Response    y
+-------------
+    1       1
+    2       2
+    3       3
+
+
+           Analysis of Variance
+
+Source        DF   Chi-Square    Pr > ChiSq
+-------------------------------------------
+Intercept      1     26808.80        <.0001
+g              2       733.61        <.0001
+
+Residual       0          .           .
+
+
+        Analysis of Weighted Least Squares Estimates
+
+                          Standard        Chi-
+Parameter      Estimate      Error      Square    Pr > ChiSq
+------------------------------------------------------------
+Intercept        1.8778     0.0115    26808.80        <.0001
+g         a      0.1222     0.0171       50.87        <.0001
+          b      0.2556     0.0172      220.31        <.0001
+P9 where
+
+The CATMOD Procedure
+
+                 Data Summary
+
+Response           y       Response Levels   3
+Weight Variable    w       Populations       3
+Data Set           T       Total Frequency  34
+Frequency Missing  0       Observations      7
+
+
+   Population Profiles
+
+Sample    g    Sample Size
+--------------------------
+    1     a             10
+    2     b             14
+    3     c             10
+
+
+Response Profiles
+
+Response    y
+-------------
+    1       1
+    2       2
+    3       3
+
+
+           Analysis of Variance
+
+Source        DF   Chi-Square    Pr > ChiSq
+-------------------------------------------
+Intercept      1       205.47        <.0001
+g              2         5.75        0.0565
+
+Residual       0          .           .
+
+
+        Analysis of Weighted Least Squares Estimates
+
+                          Standard        Chi-
+Parameter      Estimate      Error      Square    Pr > ChiSq
+------------------------------------------------------------
+Intercept        1.8810     0.1312      205.47        <.0001
+g         a      0.1190     0.1929        0.38        0.5372
+          b      0.2619     0.2014        1.69        0.1934
+P9 where= data set option
+
+The CATMOD Procedure
+
+                 Data Summary
+
+Response           y       Response Levels   3
+Weight Variable    w       Populations       3
+Data Set           T       Total Frequency  34
+Frequency Missing  0       Observations      7
+
+
+   Population Profiles
+
+Sample    g    Sample Size
+--------------------------
+    1     a             10
+    2     b             14
+    3     c             10
+
+
+Response Profiles
+
+Response    y
+-------------
+    1       1
+    2       2
+    3       3
+
+
+           Analysis of Variance
+
+Source        DF   Chi-Square    Pr > ChiSq
+-------------------------------------------
+Intercept      1       205.47        <.0001
+g              2         5.75        0.0565
+
+Residual       0          .           .
+
+
+        Analysis of Weighted Least Squares Estimates
+
+                          Standard        Chi-
+Parameter      Estimate      Error      Square    Pr > ChiSq
+------------------------------------------------------------
+Intercept        1.8810     0.1312      205.47        <.0001
+g         a      0.1190     0.1929        0.38        0.5372
+          b      0.2619     0.2014        1.69        0.1934
