@@ -49,6 +49,13 @@ pub const Spec = struct {
     missing: bool = false,
     alpha: f64 = 0.05,
     population: Population = .none,
+    /// False when the PROC statement selects statistics without NOBS (the
+    /// N column is then absent; STAT-COMMON-016 reference listing).
+    show_n: bool = true,
+    /// False for a MEAN STDERR selection without CLM.
+    show_clm: bool = true,
+    /// VARMETHOD= (physical p.9922); replication uses survey_design.zig.
+    varmethod: enum { taylor, jk, brr } = .taylor,
 };
 
 fn at(t: []const lex.Token, i: usize, tag: lex.Tag) bool {
@@ -75,6 +82,8 @@ fn oneOf(name: []const u8, list: []const []const u8) bool {
 /// default set NOBS MEAN STDERR CLM is what the listing shows; any explicit
 /// selection belongs to the statistic-keyword tickets.
 const statistic_keywords = [_][]const u8{ "all", "clm", "clsum", "cv", "cvsum", "df", "geomean", "gmclm", "gmstderr", "lclm", "lclsum", "lgmclm", "max", "mean", "median", "min", "nmiss", "nobs", "q1", "q3", "range", "ratio", "std", "stderr", "sum", "sumwgt", "t", "uclm", "uclsum", "ugmclm", "var", "varsum", "deciles", "quartiles", "percentile", "quantile", "pctl" };
+/// The default listing's columns, in bit order of the selection mask.
+const shown_keywords = [_][]const u8{ "nobs", "mean", "stderr", "clm" };
 const later_options = [_][]const u8{ "nomcar", "nosparse", "stacking", "plots", "plot", "varheader", "nonsymcl", "symcl", "order", "varmethod", "ncluster", "nclu", "nstrata", "nstr", "nmiss" };
 const later_statements = [_][]const u8{ "domain", "subgroup", "poststrata", "ratio", "repweights" };
 
@@ -114,6 +123,7 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
     var qualified: ?usize = null;
     var total_name: ?[]const u8 = null;
     var total_line: usize = 0;
+    var chosen: u4 = 0;
     var i: usize = 2;
     while (i < t.len and !at(t, i, .semicolon) and !at(t, i, .eof)) {
         if (!at(t, i, .name)) return invalid(cx, t, i);
@@ -168,13 +178,37 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
             i += 1;
         } else if (eq(word, "df") and at(t, i + 1, .eq)) {
             return gap(cx, t[i].line, "option DF= is not implemented", .{});
+        } else if (oneOf(word, &shown_keywords)) {
+            // ponytail: only selections of the default columns are verified
+            // (MEAN STDERR CLM, with or without NOBS); any other keyword is a
+            // gap below, and a selection lacking MEAN, STDERR or CLM after
+            // the loop.
+            for (shown_keywords, 0..) |k, b| if (eq(word, k)) {
+                chosen |= @as(u4, 1) << @intCast(b);
+            };
+            i += 1;
         } else if (oneOf(word, &statistic_keywords)) {
             return gap(cx, t[i].line, "statistic keyword {s} is not implemented", .{word});
+        } else if (eq(word, "varmethod") and at(t, i + 1, .eq)) {
+            if (!at(t, i + 2, .name)) return invalid(cx, t, i + 2);
+            const v = t[i + 2].text;
+            if (at(t, i + 3, .lparen)) return gap(cx, t[i].line, "VARMETHOD={s} method options are not implemented", .{v});
+            if (eq(v, "taylor")) s.varmethod = .taylor else if (eq(v, "jk") or eq(v, "jackknife")) s.varmethod = .jk else if (eq(v, "brr")) s.varmethod = .brr else if (eq(v, "bootstrap")) {
+                return gap(cx, t[i].line, "VARMETHOD=BOOTSTRAP is not implemented", .{});
+            } else return cx.diags.fail(error.ParseError, t[i].line, "PROC SURVEYMEANS: VARMETHOD={s} is not a valid variance estimation method", .{v});
+            i += 3;
         } else if (oneOf(word, &later_options)) {
             return gap(cx, t[i].line, "option {s} is not implemented", .{word});
         } else return invalid(cx, t, i);
     }
     if (!at(t, i, .semicolon)) return invalid(cx, t, i);
+    if (chosen != 0) {
+        // Verified selections: MEAN STDERR CLM with or without NOBS, and
+        // MEAN STDERR (SAS 9.4 reference listings, STAT-COMMON-016).
+        if (chosen != 0b1110 and chosen != 0b1111 and chosen != 0b0110) return gap(cx, t[0].line, "a statistic-keyword selection other than MEAN STDERR [CLM] (CLM with or without NOBS) is not implemented", .{});
+        s.show_n = chosen & 1 != 0;
+        s.show_clm = chosen & 0b1000 != 0;
+    }
     const raw = (if (name) |n| cx.lib.find(n) else proc.lastDataset(cx.lib)) orelse return cx.diags.fail(error.ParseError, 0, "PROC SURVEYMEANS: input dataset not found", .{});
     if (total_name) |n| s.population = .{ .total_data = cx.lib.find(n) orelse return cx.diags.fail(error.ParseError, total_line, "PROC SURVEYMEANS: TOTAL= data set {s} not found", .{n}) };
     var folded: std.ArrayList(lex.Token) = .empty;
@@ -585,6 +619,40 @@ fn analyze(cx: proc.ProcCtx, out: *Out, s: Spec, rows: []const []const Value, re
         }
         try class_info.append(a, .{ .col = c, .levels = names.items });
     }
+    // Replication variance (STAT-COMMON-016): the shared JK / BRR kernels of
+    // survey_design.zig. ponytail: verified for numeric analysis variables
+    // without missing values, CLASS levels, population information, STRATA
+    // LIST or ODS capture; each of those stays a gap.
+    var replicate_count: usize = 0;
+    if (s.varmethod != .taylor) {
+        const method = if (s.varmethod == .jk) "JK" else "BRR";
+        if (class_info.items.len > 0) return gap(cx, 0, "VARMETHOD={s} with categorical analysis variables is not implemented", .{method});
+        for (items.items) |it| if (it.n != n) return gap(cx, 0, "VARMETHOD={s} with missing analysis values is not implemented", .{method});
+        if (s.population != .none) return gap(cx, 0, "VARMETHOD={s} with TOTAL= or RATE= is not implemented", .{method});
+        if (s.list) return gap(cx, 0, "VARMETHOD={s} with STRATA / LIST is not implemented", .{method});
+        if (cx.capture) |capture| if (capture.requests.items.len > 0) return gap(cx, 0, "ODS OUTPUT with VARMETHOD={s} is not implemented", .{method});
+        const reps = switch (s.varmethod) {
+            .jk => design.jackknife(a, d) catch |e| switch (e) {
+                error.SinglePsuStratum => return gap(cx, 0, "VARMETHOD=JK with a single-PSU stratum is not implemented", .{}),
+                error.OutOfMemory => return error.OutOfMemory,
+            },
+            .brr => design.brr(a, d) catch |e| switch (e) {
+                error.NotTwoPsusPerStratum => return gap(cx, 0, "VARMETHOD=BRR for strata without exactly two PSUs is not implemented", .{}),
+                error.UnverifiedHadamardOrder => return gap(cx, 0, "VARMETHOD=BRR with more than three strata is not implemented", .{}),
+                error.OutOfMemory => return error.OutOfMemory,
+            },
+            .taylor => unreachable,
+        };
+        replicate_count = reps.count;
+        const values = try a.alloc(f64, n);
+        for (items.items) |*it| {
+            for (sel.rows, values) |row, *v| v.* = row[it.col].num;
+            it.est.stderr = @sqrt(design.replicateMeanVariance(reps, d.weight, values));
+            // Degrees of freedom: PSUs minus strata for JK, strata for BRR
+            // (SAS 9.4 reference confidence limits).
+            it.df = if (s.varmethod == .brr) @floatFromInt(d.n_strata) else d.df();
+        }
+    }
     if (single.items.len > 0) {
         // SAS 9.4 log: the variables are joined with ", ".
         const names = try std.mem.join(a, ", ", single.items);
@@ -611,6 +679,7 @@ fn analyze(cx: proc.ProcCtx, out: *Out, s: Spec, rows: []const []const Value, re
     const percent = 100 * (1 - s.alpha);
     // Verified headings: whole percentages and one decimal (97.5%).
     if (@abs(10 * percent - @round(10 * percent)) > 1e-9) return gap(cx, 0, "confidence-level heading for a percentage with more than one decimal is not verified", .{});
+    if (!s.show_n or !s.show_clm) if (cx.capture) |capture| if (capture.wants("Statistics")) return gap(cx, 0, "ODS OUTPUT of a Statistics table without NOBS is not implemented", .{});
     if (s.list) {
         if (rates != null and totals == null) return gap(cx, 0, "STRATA / LIST with RATE= is not implemented", .{});
         if (s.strata.len != 1 or ds.columns.items[s.strata[0]].type != .num or ds.columns.items[s.strata[0]].format != null) return gap(cx, 0, "STRATA / LIST for other than one unformatted numeric stratum variable is not implemented", .{});
@@ -657,6 +726,18 @@ fn analyze(cx: proc.ProcCtx, out: *Out, s: Spec, rows: []const []const Value, re
     if (s.weight != null) {
         try left(a, &body, "Sum of Weights", label_w);
         try right(a, &body, std.mem.trim(u8, try format.apply(a, .{ .num = sum_weights }, "BEST12."), " "), 14);
+        try body.append(a, '\n');
+    }
+    if (replicate_count > 0) {
+        // SAS 9.4 reference listing (STAT-COMMON-016 replication runs).
+        try body.appendSlice(a, "\n\n");
+        try centered(a, &body, "Variance Estimation", 34);
+        try body.append(a, '\n');
+        try left(a, &body, "Method", 22);
+        try right(a, &body, if (s.varmethod == .jk) "Jackknife" else "BRR", 12);
+        try body.append(a, '\n');
+        try left(a, &body, "Number of Replicates", 22);
+        try right(a, &body, try count(a, replicate_count), 12);
         try body.append(a, '\n');
     }
     if (has_level) {
@@ -730,23 +811,26 @@ fn analyze(cx: proc.ProcCtx, out: *Out, s: Spec, rows: []const []const Value, re
     }
     {
         const lead = vw + (if (has_level) 4 + lw else 0);
-        const width = lead + 16 + 16 + 16 + 25;
+        const n_w: usize = if (s.show_n) 16 else 0;
+        const width = lead + n_w + 16 + 16 + @as(usize, if (s.show_clm) 25 else 0);
         try body.appendSlice(a, "\n\n");
         try centered(a, &body, "Statistics", width);
         try body.appendSlice(a, " \n");
-        try right(a, &body, "Std Error", lead + 48);
+        try right(a, &body, "Std Error", lead + n_w + 32);
         try body.append(a, '\n');
         try left(a, &body, "Variable", vw);
         if (has_level) {
             try body.appendSlice(a, "    ");
             try left(a, &body, "Level", lw);
         }
-        try right(a, &body, "N", 16);
+        if (s.show_n) try right(a, &body, "N", 16);
         try right(a, &body, "Mean", 16);
         try right(a, &body, "of Mean", 16);
-        const heading = try std.fmt.allocPrint(a, "{d}% CL for Mean", .{@round(10 * percent) / 10});
-        try body.appendNTimes(a, ' ', 4 + (21 - @min(21, heading.len)) / 2);
-        try body.appendSlice(a, heading);
+        if (s.show_clm) {
+            const heading = try std.fmt.allocPrint(a, "{d}% CL for Mean", .{@round(10 * percent) / 10});
+            try body.appendNTimes(a, ' ', 4 + (21 - @min(21, heading.len)) / 2);
+            try body.appendSlice(a, heading);
+        }
         try body.append(a, '\n');
         try body.appendNTimes(a, '-', width);
         try body.append(a, '\n');
@@ -758,13 +842,15 @@ fn analyze(cx: proc.ProcCtx, out: *Out, s: Spec, rows: []const []const Value, re
                 try body.appendSlice(a, "    ");
                 try left(a, &body, it.level orelse "", lw);
             }
-            try right(a, &body, try count(a, it.n), 16);
+            if (s.show_n) try right(a, &body, try count(a, it.n), 16);
             try right(a, &body, try fixed(a, it.est.mean, 6), 16);
             try right(a, &body, try fixed(a, it.est.stderr, 6), 16);
-            try body.appendSlice(a, "    ");
-            try right(a, &body, try fixed(a, it.lower, lower_dec), 10);
-            try body.append(a, ' ');
-            try right(a, &body, try fixed(a, it.upper, upper_dec), 10);
+            if (s.show_clm) {
+                try body.appendSlice(a, "    ");
+                try right(a, &body, try fixed(a, it.lower, lower_dec), 10);
+                try body.append(a, ' ');
+                try right(a, &body, try fixed(a, it.upper, upper_dec), 10);
+            }
             try body.append(a, '\n');
         }
         try body.appendNTimes(a, '-', width);

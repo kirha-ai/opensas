@@ -1,0 +1,36 @@
+
+The SURVEYMEANS Procedure
+
+            Data Summary
+
+Number of Strata                   2
+Number of Clusters                 6
+Number of Observations            12
+Sum of Weights                    24
+
+
+                                   Statistics
+ 
+                                               Std Error
+Variable               N            Mean         of Mean       95% CL for Mean
+---------------------------------------------------------------------------------
+y                     12       14.916667        1.723783    10.1306789 19.7026545
+---------------------------------------------------------------------------------
+
+The SURVEYMEANS Procedure
+
+            Data Summary
+
+Number of Strata                   2
+Number of Clusters                 6
+Number of Observations            12
+Sum of Weights                    24
+
+
+                           Statistics
+ 
+                               Std Error
+Variable            Mean         of Mean       95% CL for Mean
+-----------------------------------------------------------------
+y              14.916667        1.723783    10.1306789 19.7026545
+-----------------------------------------------------------------

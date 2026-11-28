@@ -1,0 +1,73 @@
+
+The SURVEYMEANS Procedure
+
+            Data Summary
+
+Number of Strata                   2
+Number of Clusters                 6
+Number of Observations            12
+Sum of Weights                    24
+
+
+       Variance Estimation
+
+Method                   Jackknife
+Number of Replicates             6
+
+
+                                   Statistics
+ 
+                                               Std Error
+Variable               N            Mean         of Mean       95% CL for Mean
+---------------------------------------------------------------------------------
+y                     12       14.916667        1.781669    9.96995925 19.8633741
+x                     12        6.333333        0.922338    3.77251373  8.8941529
+---------------------------------------------------------------------------------
+
+The SURVEYMEANS Procedure
+
+            Data Summary
+
+Number of Strata                   2
+Number of Clusters                 6
+Number of Observations            12
+Sum of Weights                    24
+
+
+       Variance Estimation
+
+Method                   Jackknife
+Number of Replicates             6
+
+
+               Statistics
+ 
+                               Std Error
+Variable            Mean         of Mean
+----------------------------------------
+y              14.916667        1.781669
+----------------------------------------
+
+The SURVEYMEANS Procedure
+
+            Data Summary
+
+Number of Strata                   2
+Number of Clusters                 4
+Number of Observations            12
+Sum of Weights                    24
+
+
+       Variance Estimation
+
+Method                         BRR
+Number of Replicates             4
+
+
+                                   Statistics
+ 
+                                               Std Error
+Variable               N            Mean         of Mean       95% CL for Mean
+---------------------------------------------------------------------------------
+y                     12       14.916667        2.063236    6.03927694 23.7940564
+---------------------------------------------------------------------------------
