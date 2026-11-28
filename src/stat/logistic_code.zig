@@ -25,13 +25,18 @@ pub fn generate(a: std.mem.Allocator, s: logistic.Spec, r: logistic.Analysis, op
     if (options.impute or options.residual) return error.UnsupportedOptions;
     const outputs = try names(a, s, r);
     for (s.input.ds.columns.items) |column| if (std.ascii.eqlIgnoreCase(column.name, "P__LOGISTIC_LP") or std.ascii.eqlIgnoreCase(column.name, "_LOGISTIC_LP") or std.ascii.eqlIgnoreCase(column.name, outputs[0]) or std.ascii.eqlIgnoreCase(column.name, outputs[1])) return error.ReservedVariableCollision;
-    const classes = try a.alloc(code.Class, r.design.classes.len);
-    for (r.design.classes, classes) |c, *dest| {
+    var classes: std.ArrayList(code.Class) = .empty;
+    const class_map = try a.alloc(?usize, r.design.classes.len);
+    @memset(class_map, null);
+    for (r.design.effects) |effect| if (effect.class_index) |ci| {
+        if (class_map[ci] != null) continue;
+        const c = r.design.classes[ci];
         if (s.input.ds.columns.items[c.column].format != null) return error.UnsupportedClassFormat;
         const values = try a.alloc(Value, c.map.levels.len);
         for (c.map.levels, values) |level, *value| value.* = level.value;
-        dest.* = .{ .name = s.input.ds.columns.items[c.column].name, .values = values };
-    }
+        class_map[ci] = classes.items.len;
+        try classes.append(a, .{ .name = s.input.ds.columns.items[c.column].name, .values = values });
+    };
     var terms: std.ArrayList(code.Term) = .empty;
     for (r.design.effects) |effect| {
         if (effect.class_index) |ci| {
@@ -39,8 +44,8 @@ pub fn generate(a: std.mem.Allocator, s: logistic.Spec, r: logistic.Analysis, op
             var parameter = effect.start;
             for (c.map.levels, 0..) |_, level| if (level != c.reference) {
                 const coefficient = r.fit.coefficients[parameter];
-                try terms.append(a, .{ .coefficient = coefficient, .factors = try a.dupe(code.Factor, &.{.{ .class = .{ .index = ci, .level = level } }}), .label = effect.name });
-                if (c.coding == .effect) try terms.append(a, .{ .coefficient = -coefficient, .factors = try a.dupe(code.Factor, &.{.{ .class = .{ .index = ci, .level = c.reference } }}), .label = effect.name });
+                try terms.append(a, .{ .coefficient = coefficient, .factors = try a.dupe(code.Factor, &.{.{ .class = .{ .index = class_map[ci].?, .level = level } }}), .label = effect.name });
+                if (c.coding == .effect) try terms.append(a, .{ .coefficient = -coefficient, .factors = try a.dupe(code.Factor, &.{.{ .class = .{ .index = class_map[ci].?, .level = c.reference } }}), .label = effect.name });
                 parameter += 1;
             };
         } else {
@@ -50,7 +55,7 @@ pub fn generate(a: std.mem.Allocator, s: logistic.Spec, r: logistic.Analysis, op
         }
     }
     var text: std.ArrayList(u8) = .empty;
-    try text.appendSlice(a, try code.generate(a, .{ .procedure = "LOGISTIC", .response = "_LOGISTIC_LP", .intercept = r.fit.coefficients[0], .terms = terms.items, .classes = classes, .mean = 0 }, options));
+    try text.appendSlice(a, try code.generate(a, .{ .procedure = "LOGISTIC", .response = "_LOGISTIC_LP", .intercept = r.fit.coefficients[0], .terms = terms.items, .classes = classes.items, .mean = 0 }, options));
     // Stable inverse logit prevents exp overflow, and explicitly propagates missing.
     try text.print(a, "drop P__LOGISTIC_LP;\nif missing(P__LOGISTIC_LP) then {s}=.;\nelse if P__LOGISTIC_LP>=0 then\n {s}=1/(1+exp(-P__LOGISTIC_LP));\nelse {s}=\n exp(P__LOGISTIC_LP)/(1+exp(P__LOGISTIC_LP));\n{s}=1-{s};\n", .{ outputs[0], outputs[0], outputs[0], outputs[1], outputs[0] });
     return text.items;
@@ -231,4 +236,37 @@ test "LOGISTIC018 producer routes CODE and repeated SCORE and guards alternate e
         try std.testing.expect(lib.find("blocked") == null);
         try std.testing.expect(std.mem.indexOf(u8, try errors.render(), "CODE") != null or std.mem.indexOf(u8, try errors.render(), "SCORE") != null);
     }
+}
+
+test "LOGISTIC018 CODE never requires a declared CLASS absent from fitted effects" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var ds = try @import("logistic_design.zig").originalFixture(a);
+    var lib = @import("../exec.zig").Library.init(a);
+    try lib.put("binary", &ds);
+    var d = diag.Diagnostics.init(a);
+    const cx = proc.ProcCtx{ .arena = a, .lib = &lib, .diags = &d };
+    const s = try logistic.parse(cx, try @import("../lexer.zig").tokenize(a, "proc logistic data=binary; class group; model event(event='1')=x; run;", &d));
+    const fit = try logistic.analyze(cx, s);
+    const text = try generate(a, s, fit, .{});
+    try std.testing.expect(std.mem.indexOf(u8, text, "group") == null);
+    var incoming = @import("../dataset.zig").Dataset.init(a, "incoming");
+    _ = try incoming.addColumn("x", .num);
+    for ([_]f64{ 1, 3, 7 }) |x| try incoming.appendRow(&.{.{ .num = x }});
+    const result = try Testing.score(a, &incoming, text);
+    try std.testing.expectEqual(@as(usize, 3), result.rows.items.len);
+    try std.testing.expectEqual(@as(usize, 3), result.columns.items.len);
+    for (incoming.rows.items, result.rows.items) |row, scored| {
+        const eta = fit.fit.coefficients[0] + row[0].num * fit.fit.coefficients[1];
+        try std.testing.expectApproxEqAbs(1 / (1 + @exp(-eta)), scored[result.indexOf("P_1").?].num, 1e-12);
+    }
+    const shifted = try logistic.parse(cx, try @import("../lexer.zig").tokenize(a, "proc logistic data=binary; class x group; model event(event='1')=group / gconv=1e-14; run;", &d));
+    const shifted_fit = try logistic.analyze(cx, shifted);
+    var only_group = @import("../dataset.zig").Dataset.init(a, "incoming");
+    _ = try only_group.addColumn("group", .char);
+    try only_group.appendRow(&.{.{ .str = "A" }});
+    try only_group.appendRow(&.{.{ .str = "B" }});
+    const shifted_result = try Testing.score(a, &only_group, try generate(a, shifted, shifted_fit, .{}));
+    for (shifted_result.rows.items) |row| try std.testing.expectApproxEqAbs(@as(f64, 1.0 / 3.0), row[shifted_result.indexOf("P_1").?].num, 1e-8);
 }
