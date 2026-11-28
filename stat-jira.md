@@ -19,6 +19,7 @@ This section is the only current status summary; every section below it is a his
 - **Interrupted by the full disk:** STAT-ANOVA-009 and STAT-PHREG-004 are TODO (no file changed; reading notes in the tickets). STAT-LIFETEST-003 and STAT-GENMOD-003 are PARK with UNCOMMITTED, NEVER-COMPILED source retained in `opensas-dev5` (`stat-b6/lifetest003-dev5`) and `opensas-dev7` (`stat-b6/genmod003-dev7`); do not integrate it before it is built, tested and committed there.
 - **Live slots (auto):** dev1 STAT-GLMMOD-001, dev2 STAT-DISTANCE-001, dev3 STAT-ORTHOREG-001, dev4 STAT-CORRESP-001, dev5 STAT-NESTED-001, dev6 STAT-SCORE-001, dev7 STAT-STDIZE-001.
 - **User approval (2026-11-28):** SASHELP sample data taken from SAS's public sample material may be committed to this public repository, for STAT-SASHELP-001 and the later SASHELP tickets; record source and verification, never invent rows, ask before adding a data set above about 2 MB.
+- **Integrated locally, awaiting batch verification (auto):** STAT-SASHELP-001 (PARK).
 - **Counts:** 55 DONE, 100 PARK, 7 DOING, 1260 TODO.
 - **Next:** integrate each returned ticket, refill its slot from the current tip, verify and push the next batch; run the open review above.
 - **Working branch:** `feat/stat/batch-4`. Last tested and pushed code SHA `86b2d33ada09baa3aebe968febca3ffff8b5f625` (batch 8; batch 7 was `43c2bdef2e694a523f1f95f99bec9ebb4e7b1da4`). The bullets below this one describe batch 5 and are historical. Later commits that touch only this file are documentation. No PR created or merged; `main` untouched.
