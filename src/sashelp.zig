@@ -111,11 +111,75 @@ pub fn iris(a: std.mem.Allocator) error{OutOfMemory}!*Dataset {
     return ds;
 }
 
+const enso_rows = @import("sashelp_enso.zig").rows;
+
+/// SASHELP.ENSO (provenance and verification in sashelp_enso.zig).
+pub fn enso(a: std.mem.Allocator) error{OutOfMemory}!*Dataset {
+    const ds = try a.create(Dataset);
+    ds.* = Dataset.init(a, "sashelp.enso");
+    ds.label = "El Nino Southern Oscillation";
+    for ([_][]const u8{ "Month", "Year", "Pressure" }) |name| {
+        _ = try ds.addColumn(name, .num);
+        ds.setLen(name, 8);
+    }
+    for (enso_rows) |r| try ds.appendRow(&.{ .{ .num = r[0] }, .{ .num = r[1] }, .{ .num = r[2] } });
+    return ds;
+}
+
+const fish_rows = @import("sashelp_fish.zig").rows;
+
+/// SASHELP.FISH (provenance and verification in sashelp_fish.zig).
+pub fn fish(a: std.mem.Allocator) error{OutOfMemory}!*Dataset {
+    const ds = try a.create(Dataset);
+    ds.* = Dataset.init(a, "sashelp.fish");
+    ds.label = "Measurements of 159 Fish Caught in Lake Laengelmavesi, Finland";
+    _ = try ds.addColumn("Species", .char);
+    ds.setLen("Species", 9);
+    for ([_][]const u8{ "Weight", "Length1", "Length2", "Length3", "Height", "Width" }) |name| {
+        _ = try ds.addColumn(name, .num);
+        ds.setLen(name, 8);
+    }
+    for (fish_rows) |r| {
+        var v: [7]Value = undefined;
+        v[0] = .{ .str = r[0] };
+        for (r[1], 1..) |x, k| v[k] = if (x) |n| .{ .num = n } else Value.missing;
+        try ds.appendRow(&v);
+    }
+    return ds;
+}
+
+const gas_rows = @import("sashelp_gas.zig").rows;
+
+/// SASHELP.GAS (provenance and verification in sashelp_gas.zig).
+pub fn gas(a: std.mem.Allocator) error{OutOfMemory}!*Dataset {
+    const ds = try a.create(Dataset);
+    ds.* = Dataset.init(a, "sashelp.gas");
+    ds.label = "Nitrogen Oxide Emissions from a Single Cylinder Engine";
+    _ = try ds.addColumn("Fuel", .char);
+    ds.setLen("Fuel", 8);
+    const nums = [_][2][]const u8{ .{ "CpRatio", "Compression Ratio" }, .{ "EqRatio", "Equivalence Ratio" }, .{ "NOx", "Nitrogen Oxide" } };
+    for (nums) |c| {
+        _ = try ds.addColumn(c[0], .num);
+        ds.setLen(c[0], 8);
+        ds.setLabel(c[0], c[1]);
+    }
+    for (gas_rows) |r| {
+        var v: [4]Value = undefined;
+        v[0] = .{ .str = r[0] };
+        for (r[1], 1..) |x, k| v[k] = if (x) |n| .{ .num = n } else Value.missing;
+        try ds.appendRow(&v);
+    }
+    return ds;
+}
+
 const Builtin = struct { member: []const u8, full: []const u8, build: *const fn (std.mem.Allocator) error{OutOfMemory}!*Dataset };
 const builtins = [_]Builtin{
     .{ .member = "class", .full = "sashelp.class", .build = class },
     .{ .member = "baseball", .full = "sashelp.baseball", .build = baseball },
     .{ .member = "iris", .full = "sashelp.iris", .build = iris },
+    .{ .member = "enso", .full = "sashelp.enso", .build = enso },
+    .{ .member = "fish", .full = "sashelp.fish", .build = fish },
+    .{ .member = "gas", .full = "sashelp.gas", .build = gas },
 };
 
 /// True when `member` names a built-in SASHELP sample table.
@@ -219,4 +283,66 @@ test "SASHELP CLASS input descriptor and independent regression totals" {
     try loadReferenced(a, &lib, tokens);
     try std.testing.expectEqual(@as(usize, 19), lib.find("SASHELP.CLASS").?.rows.items.len);
     try std.testing.expect(lib.macroVar("syslast") == null);
+}
+
+test "STAT-SASHELP-004 ENSO, FISH and GAS descriptors, counts and sums from the SAS 9.4 export" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const T = std.testing;
+    const Sum = struct {
+        fn col(ds: *Dataset, c: usize, n: *usize) f64 {
+            var t: f64 = 0;
+            n.* = 0;
+            for (ds.rows.items) |row| if (!std.math.isNan(row[c].num)) {
+                n.* += 1;
+                t += row[c].num;
+            };
+            return t;
+        }
+    };
+    var n: usize = 0;
+    const e = try enso(a);
+    try T.expectEqual(@as(usize, 168), e.rows.items.len);
+    try T.expectEqual(@as(usize, 3), e.columns.items.len);
+    try T.expectApproxEqAbs(@as(f64, 1787.8), Sum.col(e, 2, &n), 1e-9);
+    try T.expectEqual(@as(u64, 0x3FB5555555555555), @as(u64, @bitCast(e.rows.items[0][1].num)));
+    const f = try fish(a);
+    try T.expectEqual(@as(usize, 159), f.rows.items.len);
+    try T.expectEqual(@as(?usize, 9), f.columns.items[0].len);
+    try T.expectEqualStrings("Width", f.columns.items[6].name);
+    // Independent totals from the HEX16. export (one missing Weight).
+    try T.expectApproxEqAbs(@as(f64, 62993.9), Sum.col(f, 1, &n), 1e-9);
+    try T.expectEqual(@as(usize, 158), n);
+    try T.expectApproxEqAbs(@as(f64, 4173.3), Sum.col(f, 2, &n), 1e-9);
+    try T.expectApproxEqAbs(@as(f64, 4518.1), Sum.col(f, 3, &n), 1e-9);
+    try T.expectApproxEqAbs(@as(f64, 4965.1), Sum.col(f, 4, &n), 1e-9);
+    try T.expectApproxEqAbs(@as(f64, 1426.388), Sum.col(f, 5, &n), 1e-9);
+    try T.expectApproxEqAbs(@as(f64, 702.3802), Sum.col(f, 6, &n), 1e-9);
+    try T.expectEqual(@as(u64, 0x4010147AE147AE14), @as(u64, @bitCast(f.rows.items[0][6].num)));
+    try T.expect(std.math.isNan(f.rows.items[13][1].num));
+    const species = [_]struct { []const u8, usize }{ .{ "Bream", 35 }, .{ "Parkki", 11 }, .{ "Perch", 56 }, .{ "Pike", 17 }, .{ "Roach", 20 }, .{ "Smelt", 14 }, .{ "Whitefish", 6 } };
+    for (species) |sp| {
+        var k: usize = 0;
+        for (f.rows.items) |row| if (std.mem.eql(u8, row[0].str, sp[0])) {
+            k += 1;
+        };
+        try T.expectEqual(sp[1], k);
+    }
+    const g = try gas(a);
+    try T.expectEqual(@as(usize, 171), g.rows.items.len);
+    try T.expectEqual(@as(?usize, 8), g.columns.items[0].len);
+    try T.expectApproxEqAbs(@as(f64, 1744.5), Sum.col(g, 1, &n), 1e-9);
+    try T.expectApproxEqAbs(@as(f64, 158.492), Sum.col(g, 2, &n), 1e-9);
+    try T.expectApproxEqAbs(@as(f64, 396.462), Sum.col(g, 3, &n), 1e-9);
+    try T.expectEqual(@as(usize, 169), n);
+    try T.expectEqual(@as(u64, 0x3FED0624DD2F1AA0), @as(u64, @bitCast(g.rows.items[0][2].num)));
+    var lib = Library.init(a);
+    var d = @import("diag.zig").Diagnostics.init(a);
+    const tokens = try @import("lexer.zig").tokenize(a, "proc candisc data=sashelp.fish;run;", &d);
+    try loadReferenced(a, &lib, tokens);
+    try T.expectEqual(@as(usize, 159), lib.find("SASHELP.FISH").?.rows.items.len);
+    try T.expect(lib.find("SASHELP.GAS") == null);
+    try T.expectEqualStrings("El Nino Southern Oscillation", e.label.?);
+    try T.expectEqualStrings("Nitrogen Oxide Emissions from a Single Cylinder Engine", g.label.?);
 }
