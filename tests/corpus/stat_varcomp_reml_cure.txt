@@ -15,8 +15,8 @@ row Var(Batch(Temp*Lab)) 2.07387
 row Var(Error) 0.60262
 row Asymptotic Covariance Matrix of Estimates
 row Var(Lab) Var(Temp*Lab) Var(Batch(Temp*Lab)) Var(Error)
-row Var(Lab) 0.32452 0 -0.04998 {any}
+row Var(Lab) 0.32452 0 -0.04998 0~1E-10
 row Var(Temp*Lab) 0 0 0 0
 row Var(Batch(Temp*Lab)) -0.04998 0 0.45042 -0.0022417
-row Var(Error) {any} 0 -0.0022417 0.0089668
+row Var(Error) 0~1E-10 0 -0.0022417 0.0089668
 stderr-count 1 the REML Iterations table (iteration history) is not implemented

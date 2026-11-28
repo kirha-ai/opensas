@@ -10,9 +10,9 @@ row Convergence criteria met.
 row Var(b) 1464.4
 row Var(a*b) 26.95885
 row Var(Error) 78.84239
-row Var(b) 4401703.8~0.2 1.29359 -273.39651~0.00003
+row Var(b) 4401703.8~2511 1.29359 -273.39651~0.155
 row Var(a*b) 1.29359 3559.1 -502.85157
-row Var(Error) -273.39651~0.00003 -502.85157 1249.7
+row Var(Error) -273.39651~0.155 -502.85157 1249.7
 row grp=2
 row Class Levels Values
 row a 3 1 2 3
@@ -24,7 +24,7 @@ row Convergence criteria met.
 row Var(b) 1464.4
 row Var(a*b) 26.95885
 row Var(Error) 78.84239
-row Var(b) 4401703.8~0.2 1.29359 -273.39651~0.00003
+row Var(b) 4401703.8~2511 1.29359 -273.39651~0.155
 row Var(a*b) 1.29359 3559.1 -502.85157
-row Var(Error) -273.39651~0.00003 -502.85157 1249.7
+row Var(Error) -273.39651~0.155 -502.85157 1249.7
 stderr-count 1 the REML Iterations table (iteration history) is not implemented

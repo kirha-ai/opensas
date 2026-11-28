@@ -3,6 +3,10 @@
  * cure example published in the SAS/STAT 15.4 guide (Chapter 130, PDF
  * p.10716). Expected rows are the SAS reference listing. The REML
  * Iterations table is a loud D-009 gap (rc 2); everything else is printed.
+ * Cov(Var(Lab), Var(Error)) is exactly 0 by balanced-design theory (SAS
+ * prints round-off 1.0258E-12); the 0~1E-10 bound covers the derived
+ * round-off bound 4 n u kappa_1(H) max|Cov|, proved and asserted in the Zig
+ * test "STAT-VARCOMP-001 balanced cure covariance" (src/stat/varcomp_fit.zig).
  */
 data Cure;
 input Lab Temp Batch $ Cure @@;

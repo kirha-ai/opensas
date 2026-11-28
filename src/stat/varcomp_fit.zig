@@ -472,3 +472,131 @@ test "STAT-VARCOMP-001 REML lets a zero start component re-enter (guide Output 1
     const cov = [_]f64{ 4401703.8, 1.29359, -273.39651, 1.29359, 3559.1, -502.85157, -273.39651, -502.85157, 1249.7 };
     for (cov, r.cov) |e, x| try std.testing.expectApproxEqAbs(e, x, @max(@abs(e) * 2e-5, 6e-5));
 }
+
+fn cureProblem(bufs: *[5][108]u32) Problem {
+    for (0..108) |o| {
+        const l: u32 = @intCast(o / 36);
+        const t: u32 = @intCast((o / 12) % 3);
+        const b: u32 = @intCast((o / 4) % 3);
+        bufs[0][o] = 0;
+        bufs[1][o] = t;
+        bufs[2][o] = l;
+        bufs[3][o] = t * 3 + l;
+        bufs[4][o] = (t * 3 + l) * 3 + b;
+    }
+    cure_fixed = .{ .{ .level = &bufs[0], .levels = 1 }, .{ .level = &bufs[1], .levels = 3 } };
+    cure_random = .{ .{ .level = &bufs[2], .levels = 3 }, .{ .level = &bufs[3], .levels = 9 }, .{ .level = &bufs[4], .levels = 27 } };
+    return .{ .y = &cure_y, .fixed = &cure_fixed, .random = &cure_random };
+}
+var cure_fixed: [2]Effect = undefined;
+var cure_random: [3]Effect = undefined;
+var cure_buf: [5][108]u32 = undefined;
+
+fn norm1(m: []const f64, k: usize) f64 {
+    var best: f64 = 0;
+    for (0..k) |j| {
+        var s: f64 = 0;
+        for (0..k) |i| s += @abs(m[i * k + j]);
+        best = @max(best, s);
+    }
+    return best;
+}
+
+// Balanced-design identity (independent of opensas output). With Var(Temp*Lab)
+// at its zero boundary, the cure design has three random-effect strata with
+// expected mean squares t1 = s_e (df 108-27 = 81), t2 = s_e + 4 s_b (Batch and
+// Temp*Lab pooled) and t3 = s_e + 4 s_b + 36 s_l (Lab). REML on balanced
+// data factors into independent strata, so the information in (t1,t2,t3) is
+// diagonal with Var(t_k) = 2 t_k^2 / df_k, and s_e = t1, s_b = (t2-t1)/4,
+// s_l = (t3-t2)/36. Hence Cov(s_l, s_e) = 0 exactly, Var(s_e) = 2 t1^2/81
+// and Cov(s_b, s_e) = -Var(s_e)/4. The SAS cell 1.0258E-12 is round-off.
+// The computed zero is bounded by the standard first-order error bound for
+// inverting the 3x3 Hessian, c * n * u * kappa_1(H) * max|Cov| with c = 4
+// (accumulation over n = 108 observations in the traces, then the solve);
+// the corpus fixture uses 0~1E-10, asserted here to cover that bound.
+test "STAT-VARCOMP-001 balanced cure covariance: Var(Lab) x Var(Error) is exactly zero" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const p = cureProblem(&cure_buf);
+    const r = try reml(a, p, 1e-8, 50);
+    const te = r.theta[3];
+    const var_e = 2 * te * te / 81.0;
+    try std.testing.expectApproxEqRel(var_e, r.cov[15], 1e-9);
+    try std.testing.expectApproxEqRel(-var_e / 4, r.cov[11], 1e-9);
+    try std.testing.expectApproxEqRel(-var_e / 4, r.cov[14], 1e-9);
+    const f = try prepare(a, p);
+    const active = [_]bool{ true, false, true, true };
+    const ev = try evaluate(a, f, p.y, r.theta, &active);
+    const inv = try mat.inverse(a, ev.hess, 3);
+    const kappa = norm1(ev.hess, 3) * norm1(inv.values, 3);
+    var maxc: f64 = 0;
+    for (r.cov) |c| maxc = @max(maxc, @abs(c));
+    const tol = 4 * 108 * std.math.floatEps(f64) * kappa * maxc;
+    try std.testing.expect(tol <= 1e-10);
+    try std.testing.expect(@abs(r.cov[3]) <= tol);
+    try std.testing.expect(@abs(r.cov[12]) <= tol);
+}
+
+// Unbalanced Hemmerle-Hartley data (Output 130.1.4). SAS stops its
+// Newton-Raphson at the first iterate whose objective change is below
+// EPSILON = 1E-8 (p.10717), so its printed covariance is evaluated at that
+// iterate, not at the exact optimum opensas reports. Two checks:
+// (1) evaluating the covariance at the guide's printed final iterate
+//     reproduces the guide's printed cells to their print precision, which
+//     identifies the stopping point as the whole cause of the last-digit
+//     differences (strict equality at the optimum is false);
+// (2) bound for the corpus fixture: near the optimum the -2 REML objective is
+//     quadratic with Hessian H = 2 Cov^-1, so a stop with objective gap <= eps
+//     gives d' Cov^-1 d <= eps, i.e. |d_k| <= sqrt(eps Cov_kk). Each cell's
+//     bound is sum_k |dCov/dtheta_k| sqrt(eps Cov_kk) (central differences),
+//     and the fixture tolerances must cover it (computed: 2510.53 for
+//     Var(b), 0.15419 for Var(b) x Var(Error); fixture uses 2511 / 0.155).
+test "STAT-VARCOMP-001 Output 130.1.4 covariance: stopping point explains the last digits" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const p = hemmerle(&ab_buf);
+    const f = try prepare(a, p);
+    const active = [_]bool{ true, true, true };
+    const covAt = struct {
+        fn go(al: A, fit: Fit, y: []const f64, th: []const f64, act: []const bool) ![9]f64 {
+            const ev = try evaluate(al, fit, y, th, act);
+            const iv = try mat.inverse(al, ev.hess, 3);
+            var c: [9]f64 = undefined;
+            for (0..9) |i| c[i] = 2 * iv.values[i];
+            return c;
+        }
+    }.go;
+    const guide_cov = [_]f64{ 4401703.8, 1.29359, -273.39651, 1.29359, 3559.1, -502.85157, -273.39651, -502.85157, 1249.7 };
+    const half = [_]f64{ 0.05, 5e-6, 5e-6, 5e-6, 0.05, 5e-6, 5e-6, 5e-6, 0.05 };
+    const sas_final = [_]f64{ 1464.36727, 26.9588525177, 78.8423898761 };
+    const at_sas = try covAt(a, f, p.y, &sas_final, &active);
+    // Every cell except Var(b) x Var(Error) matches at print precision. That
+    // cell evaluates to -273.396529 at both the SAS iterate and the optimum,
+    // versus the printed -273.39651: a 1.9E-5 residual whose cause is NOT
+    // explained (strict equality is false); it is covered only by bound (2).
+    for (guide_cov, at_sas, half, 0..) |e, x, h, i| {
+        if (i == 2 or i == 6) {
+            try std.testing.expect(@abs(e - x) > h);
+        } else try std.testing.expectApproxEqAbs(e, x, h);
+    }
+    const r = try reml(a, p, 1e-8, 50);
+    const corpus_tol = [_]f64{ 2511, 0, 0.155, 0, 0, 0, 0.155, 0, 0 };
+    var bound = [_]f64{0} ** 9;
+    for (0..3) |k| {
+        const d = std.math.sqrt(1e-8 * r.cov[k * 4]);
+        var hi: [3]f64 = r.theta[0..3].*;
+        var lo: [3]f64 = r.theta[0..3].*;
+        const h = 1e-4 * r.theta[k];
+        hi[k] += h;
+        lo[k] -= h;
+        const ch = try covAt(a, f, p.y, &hi, &active);
+        const cl = try covAt(a, f, p.y, &lo, &active);
+        for (0..9) |i| bound[i] += @abs((ch[i] - cl[i]) / (2 * h)) * d;
+    }
+    for (0..9) |i| {
+        try std.testing.expect(@abs(r.cov[i] - guide_cov[i]) <= bound[i] + half[i]);
+        if (corpus_tol[i] > 0) try std.testing.expect(corpus_tol[i] >= bound[i] + half[i]);
+    }
+}

@@ -6,6 +6,14 @@
  * Bar notation a|b with FIXED=1 makes a fixed and b, a*b random; Var(a*b)
  * starts at zero and re-enters. Expected values: guide Output 130.1.4.
  * The REML Iterations table is a loud D-009 gap (rc 2).
+ * Strict equality with the guide is FALSE for two covariance cells: SAS
+ * prints the covariance at its EPSILON=1E-8 stopping iterate, opensas at
+ * the optimum. Tolerances are the derived bound sum_k |dCov/dtheta_k|
+ * sqrt(eps Cov_kk) plus half a print unit (2510.53 -> 2511 for Var(b),
+ * 0.15419 -> 0.155 for Var(b) x Var(Error)), computed and asserted in the
+ * Zig test "STAT-VARCOMP-001 Output 130.1.4 covariance" in
+ * src/stat/varcomp_fit.zig. The Var(b) x Var(Error) residual (1.9E-5) is not
+ * explained by the stopping point.
  */
 data a;
 input grp a b y @@;
