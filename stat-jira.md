@@ -6,6 +6,16 @@
 
 At31729fd8, oracle-absentgate direct1:2188/2189unit,2384/2384corpus,11/11programs. Solefailure wasobsolete REG004 expectation that validREWEIGHTstillgaps. Isolatedrepair `7f47dc58` preservesotherinvalid/gapchecks and replacesonlythatobsoleteexpectation with actualprivateweights,unchangedDATA/stalefit,silentREFIT coefficients(7,3,0)/DF0,andunchangedOUTEST/listing checks. TargetedactualREG004+REG01125/25direct0. No productmath or corpusgolden changed. Retainedrepairworktree `/Users/thomas/kirha/opensas-reg-gate-repair`, newbranch `codex/stat-reg-interactive-repair`; priorrepairbranches/evidence preserved. Fullgate/separatesupplemental/absence rerunpending; no passingreceipt claimedforfailedrun.
 
+### Final combined batch7/batch8 verification and push
+
+Exacttested/pushed SHA `e6e44f54fbe89a9e4cc9538050d677d857e3558d`: wholeoracleunavailable for defaultgate direct0 (**2217/2217unit,2387/2387corpus,11/11programs**), install direct0, separate supplemental direct0 (**1113/1113**); oracle restoredunchanged. PriorREG004stale-negative failure was fixed by7f47dc58 positiveactualweight/DATA/refit invariants, not byweakeningnumericgoldens. Allreadybranchesincluded inthiscodewerevalidatedtogether; noCI/release/defaultgatecomposition changes orPR.
+
+NPAR007 DONE: original1417/1417tokensrc0 usesexistingpersist_npar_default; actualDSCFfullfixture/TRACE andindependentnormal-range/tied-rank/missing/degeneratedirectionproofs arein defaultgate. No finite-dfTukey/Bonferronisubstitution, no inventedCI; explicitwork/resource/numericalguards remain. Correspondingfolderdeletion-ready,notdeleted.
+
+Otherreceipts remain partial: GLM013/014 original136/659exactprefix thenSOLUTIONgap; MIXED018326/326rc0 withtruebudget/status/laststate tests, remainingcontrolsPARK; MIXED0130/1380rc2 unsupportedASYCov/advancedresidual/refits; MIXED0100/600rc2 REPEATED/Rgap; REG0111118/92fieldoriginalsretain2/20knownseed/residualdifferences andseverities1/0; LOGISTIC006167/295exactfirstPROC thenEXACTONLYgap (new011branchnotyetinthisvalidatedSHA). COMMON029248/248rc0 andCOMMON027165/165rc0 wholeoriginals match,broaderoptions/metadata PARK. COMMON020rc1/92of178 becauseTEMP/barefilerefbaseprerequisites; supportedquotedpathgeneratedcode→independentDATAstep fixturepassesallrows, neverclaimedrewrittenoriginalacceptance. Allpassingparts havepersistentmappingsintheirtickets.
+
+Snapshotafterclosure: **52 DONE,47 PARK,7 DOING,1316 TODO**. Activecontextsdev3r/dev5r/dev7rreplaceexhaustedcontextswithsameworktree/deadline; thisdoesnotcreateextraactiveDEVslotsorresettime. Allreferencefoldersremainretained.
+
 ### Final batch6 verification and push
 
 Exacttested/pushed SHA `eeec9a694e717254538962b32aeed93dfb270db4`: entireoracleunavailable for defaultgate direct0 (**2139/2139unit,2379/2379corpus,11/11programs**), install direct0, separate supplemental direct0 (**1113/1113**). Oracle restored unchanged; no CI/release/default-gate compositionchanges. Alloriginalsreplayedunchanged. MIXED016/017 each326/326tokensrc0 plus16completeTRACEobjects(allfields/order)exact;017correctlyproduceszero graphs withoutplotrequest, explicit6-panelnativegraphs retainindependentdata/visualproof. BothremainPARK fordescriptors/otherobjects/plotfamilies.
@@ -796,6 +806,8 @@ Complete prerequisite shared contracts first, then each PROC's data input, model
 - Retained state: worktree `/Users/thomas/kirha/opensas-dev5`, branch `codex/stat-b4-common020-dev5`. Initial base03035ea4 was safely advanced to REG011f06dd6fa with WIP source preserved in ignored scratch; CODE product frozen/committedcafec5c9 at awake clock353220.122729458, before original353737.381166 deadline (start351037.381166, no reset). Rebase onto dc367e57 was clean and retained all REG011 row overlays/session/main routes; current product310da5f9 is byte-identical in both code modules to cafec5c9. Targeted COMMON02014/14 direct0; initial broadREG97/98 had the known stale REG004 REWEIGHT negative assertion, inherited repair then gave **REG+COMMON020100/100 direct0**. Fresh CLI install4/4/direct0; approved supported-path corpus1/1/direct0; unchanged original remains rc1. Diff-check passed. Final integrated gate/separate supplemental/oracle-absent checks and push remain coordinator-owned; keep PARK and retain oracle.
 - Acceptance criteria: Execute generated scoring code in an independent DATA step and compare it row by row with in-model predictions; cover class levels, missing values, and transformations; diagnose invalid target languages or options as documented.
 
+- Finalpartiale6e44f54: default2217/2387/11+supplemental1113direct0wholeoracleabsent/restored,pushed. OriginalTEMP+barefileref remainsrc1/92of178; newpartialfixtureusesknownquotedFILENAME/path,generatedFILEandindependentDATAsteps, allmathunchanged. Originalnotrewritten,nofalseacceptance; requiredbaseintegrationnowownedbyLOGISTIC018. PARK.
+
 <a id="stat-common-021"></a>
 
 ### [TODO] STAT-COMMON-021 — EFFECT — Collection Effects / Lag Effects
@@ -890,6 +902,8 @@ Complete prerequisite shared contracts first, then each PROC's data input, model
 
 - Acceptance criteria: Create positive and negative cases for the syntax forms, defaults, and option combinations listed in this section; verify result names, dimensions, and numerical values. Cover nonestimable functions, complex coefficients, adjusted comparisons, and procedure applicability; successful parsing alone is insufficient.
 
+- Finalpartiale6e44f54: default2217/2387/11+supplemental1113direct0wholeoracleabsent/restored,pushed. Original165/165rc0, K*L/DF/cov/rank/null/CI/direction andlower-tailheader/usable-inference proofs persistent. Remainingadvancedoptions/metadata domainsPARK.
+
 <a id="stat-common-028"></a>
 
 ### [TODO] STAT-COMMON-028 — NLOPTIONS Statement
@@ -915,6 +929,8 @@ Complete prerequisite shared contracts first, then each PROC's data input, model
 - PARK / remaining scope: full population rows for missing CLASS interaction cells require the existing MIXED003/010 model-margin interface; current consumer diagnoses them rather than silently dropping cells. Nested/covariate-by-CLASS margins, joint formatted-value tuple selectors, unmatched-selector SAS diagnostics, control comparisons, general Tukey/studentized-range and other adjustments, E/COV/CORR/AT/OM/STEPDOWN/LINES/generalized transformations/plots, typed slice dataset descriptors and other procedure consumers remain explicit gaps. The successful original does not establish all shared-statement options. Folder **not deletion-ready**. Branch `codex/stat-b4-common029-dev3`, base `03035ea4`, retained `/Users/thomas/kirha/opensas-dev3`; original awake-clock start351037.381166/deadline353737.381166 unchanged. Feature work frozen before deadline; preserve dev7 LSMESTIMATE and dev2 GLM comparison integration intents.
 
 - Acceptance criteria: Create positive and negative cases for the syntax forms, defaults, and option combinations listed in this section; verify result names, dimensions, and numerical values. Cover nonestimable functions, complex coefficients, adjusted comparisons, and procedure applicability; successful parsing alone is insufficient.
+
+- Finalpartiale6e44f54: default2217/2387/11+supplemental1113direct0wholeoracleabsent/restored,pushed. Fulloriginal248/248rc0, actualL/cov/rank/DF andGLMconsumer reuse tested. Remainingadvanced/missingpopulation/metadata domainsPARK.
 
 <a id="stat-common-030"></a>
 
@@ -5437,6 +5453,8 @@ Source: S154, Chapter 53, `The GLM Procedure`, PDF pp. 4043–4230. Tasks in thi
 - Starting coordinator CLI (not a new-code acceptance substitute): actual isolated corpus runner for `stat_glm_plants_baseline.sas` exits0, **1/1**; untouched full original exits2 versus reference severity0, with **136/659** stdout tokens exactly matching the complete first-analysis prefix and `PROC GLM: solution is not implemented`. Raw outputs/logs remain ignored in `output/stat-glm013/`. Fresh integrated CLI replay, default gate, separate supplemental and absent-oracle verification remain coordinator batch requirements.
 - PARK handoff: full original still needs SOLUTION parameter display, interactive MEANS after RUN and independently validated WALLER/REGWQ seven-group inference/presentation. Additional AT/OM/BYLEVEL, TDIFF, control comparisons, output/graphics and advanced adjustment domains are not claimed. Preserve the explicit guards and use existing backlog owners/prerequisite tickets; do not expand the backlog or promote the failed659-token original into a partial-row golden. The reference directory is not deletion-ready and remains untouched.
 
+- Finalpartiale6e44f54: default2217/2387/11+supplemental1113direct0wholeoracleabsent/restored,pushed. Original136/659prefixrc2SOLUTION/interactivecomparisonprerequisites; realMEANS/AT/E/ETYPEpartialproofs persistent. PARK.
+
 <a id="stat-glm-014"></a>
 
 ### [PARK] STAT-GLM-014 — GLM — Multiple Comparisons / Simple Effects / Weighted Means
@@ -5454,6 +5472,8 @@ Source: S154, Chapter 53, `The GLM Procedure`, PDF pp. 4043–4230. Tasks in thi
 - Independent anchors: original simple-effect SS105709/150,2/25,1321/600 with errorMSE899/1350 and DF27; unbalanced covariance gives SS54/5 and24/5 with full DF6 rather than within-slice DF3. Scheffe rank2/DF4 gives adjusted p4/25 and exact finite-F confidence radii. Weighted cell means3,13,5,15 have each sumweights4; pooled MSE12/DF4 gives pair variance12*(1/4+1/4)=6, not a weight-sum-derived DF. These cell LS-means equal weighted arithmetic cell means in the proved complete factorial domain; general weighted MEANS descriptor conventions are not newly claimed.
 - Exact tracked-dependency receipt: `/Users/thomas/.local/bin/zig test --stack 67108864 --test-filter GLM --test-filter lsmeans --test-filter mixed --test-filter COMMON025 --dep build_options -Mroot=src/root.zig -Mbuild_options=/tmp/stat-b4-dev2-cache/c/8c1abc982d9089fb285de5048952325d/options.zig -lc --cache-dir /tmp/stat-b4-dev2-cache` at `e20a5ed6` direct exit0, **236/236** actual tests, including all new GLM014 cases and shared/MIXED SLICE consumers. The earlier137-test run used a disclosed temporary helper copy and was provisional; that copy was preserved in ignored `output/stat-glm014/` and never staged. All six own source/test paths are byte-identical across the rebase; shared helper/rank/inference and MIXED parent diffs are empty. `git diff --check` passes.
 - PARK/final acceptance: the whole659-token original still requires SOLUTION, interactive MEANS and proved WALLER/REGWQ computation/presentation; no original full-pass or deletion-ready claim. Fresh integrated CLI/original replay, default gate, separate supplemental and oracle-unavailable verification remain coordinator batch obligations. Broader slice factors, alternate-error combinations, general nonestimable-family Scheffe behavior, range/control methods and graphics are not claimed supported. The oracle is untouched; all new tests use permanent assets only.
+
+- Finalpartiale6e44f54: default2217/2387/11+supplemental1113direct0wholeoracleabsent/restored,pushed. Original136/659prefixrc2SOLUTION/interactiveWALLER/REGWQ gaps; realSLICE/Scheffe/weightedmean proofs persistent, no rangeapproxsubstitution. PARK.
 
 <a id="stat-glm-015"></a>
 
@@ -8716,6 +8736,8 @@ Source: S154, Chapter 79, `The LOGISTIC Procedure`, PDF pp. 5823–6080. Tasks i
 
 - Acceptance criteria: For Conditional Logistic Regression, use an independently calculable small sample and the source examples to verify targets, estimates/statistics, degrees of freedom, and applicable probabilities or intervals; include at least one relevant degenerate or boundary case, asserting documented diagnostics and result status.
 
+- Finalpartiale6e44f54: default2217/2387/11+supplemental1113direct0wholeoracleabsent/restored,pushed. Original167/295exactfirstPROCrc2EXACTONLYmissing inthisSHA. ConditionalDP/score/info/realinference verified, no unconditionalfallback. Later011candidatehasseparatereceipt,notyetfinalacceptedhere. PARK.
+
 <a id="stat-logistic-007"></a>
 
 ### [PARK] STAT-LOGISTIC-007 — LOGISTIC — Link Functions and the Corresponding Distributions / Determining Observations for Likelihood Contributions / Score Statistics and Tests
@@ -9716,6 +9738,8 @@ Source: S154, Chapter 84, `The MIXED Procedure`, PDF pp. 6613–6810. Tasks in t
 
 - Acceptance criteria: For LSMEANS, verify estimation functions, standard errors, degrees of freedom, intervals, and adjusted comparisons; use unbalanced designs and missing cells to check estimability and weighting, retaining nonestimable status.
 
+- Finalpartiale6e44f54: default2217/2387/11+supplemental1113direct0wholeoracleabsent/restored,pushed. Original0/600rc2REPEATED/R; actualpopulationL/GLS/effectDF tests andlimited-fitLSmeans suppression persistent. PARK.
+
 <a id="stat-mixed-011"></a>
 
 ### [DOING @dev3] STAT-MIXED-011 — MIXED — LSMESTIMATE
@@ -9751,6 +9775,8 @@ Source: S154, Chapter 84, `The MIXED Procedure`, PDF pp. 6613–6810. Tasks in t
 - Validation/state: branch `codex/stat-b4-mixed-influence-dev5`, base `162b1f9d`, code `a4afcb79cc0f715acb1d6ae3c4a4e19899b93892`, retained worktree `/Users/thomas/kirha/opensas-dev5`. Focused01323/23 and all-MIXED92/92 direct0; fresh install4/4/direct0. New independent influence corpus plus existing fixed/random Heights, BY Heights and MIVQUE0-gap fixtures each separately passed1/1/direct0. Evidence in ignored `.zig-cache/stat-mixed013/` and `.zig-cache/stat-b4-evidence/mixed013-*`. Awake-clock start346533.472655/deadline349233.472655 were not reset; feature freeze/commit occurred at348875.0304145, before deadline. The final lightweight validation ended349247.025532666 in the separate validation queue, not new feature work. Ready for serial integration, preserving MIXED-018 usable-inference/status gates and LSMEANS hooks. Final full gate/separate supplemental/oracle-absent checks and push remain coordinator-owned. Keep PARK, not DONE/deletion-ready.
 - Integration rebase: frozen013 rebased onto MIXED-018 `8c32c415`; core `a7896899`, handoff `1819e398`. Sole shared-entry conflict retained all budget/termination/last-state changes and gates Influence publishing on `usable_inference = converged or evaluated`, together with fixed tests/contrasts/plots. Core diagnostic modules and corpus assets are byte-identical to `a4afcb79`. One integration-only regression verifies MAXITER=0 retains covariance state and warning exit1 without Influence or fixed-effect inference. Diff-check passed; all-MIXED-or-ODS focused selection **105/105**, direct0. No product expansion or clock reset; final integrated full suites/absence/push remain coordinator-owned.
 - Acceptance criteria: For Residuals and Influence Diagnostics, use a manually calculable model to verify diagnostics, leave-one-out changes, and applicable thresholds; include high leverage, near collinearity, and degenerate cases; validate numerical values against the source formulas or an independent reference, following this file's precision conventions.
+
+- Finalpartiale6e44f54: default2217/2387/11+supplemental1113direct0wholeoracleabsent/restored,pushed. Original0/1380rc2ASYCov/refit/residual/outputs; actualdeletedGLS/profileScale diagnostics persistent; nofakerefitfields. PARK.
 
 <a id="stat-mixed-014"></a>
 
@@ -9830,6 +9856,8 @@ Source: S154, Chapter 84, `The MIXED Procedure`, PDF pp. 6613–6810. Tasks in t
 - Timing/handoff: same awake-time attempt, monotonic start346533.472655/deadline349233.472655 (no clock reset; sleep excluded). Feature source/test edits ended before the deadline; remaining replay/commit/integration is separately tracked. Branch `codex/stat-b4-mixed-issues-dev3`, base `162b1f9d`, retained `/Users/thomas/kirha/opensas-dev3`. Dev5 influence and dev7 LS-means callbacks must use the real usable_inference gate (converged or explicitly evaluated NOITER), not consume unconverged results as successful fits. Preserve both their hooks during rebase.
 
 - Acceptance criteria: For Computational Issues, construct boundary or counterexamples for each explicit applicability restriction; verify diagnostics, termination status, and result availability; record specific needs-oracle questions for undocumented behavior rather than inventing successful behavior.
+
+- Finalpartiale6e44f54: default2217/2387/11+supplemental1113direct0wholeoracleabsent/restored,pushed. Original326/326rc0; actualbudget/last-state/status1/RC1 andinferencesuppression proofs persistent. Othercontrols/SASfailure-layout questionsPARK.
 
 <a id="stat-mixed-019"></a>
 
@@ -10554,7 +10582,7 @@ Source: S154, Chapter 90, `The NPAR1WAY Procedure`, PDF pp. 7205–7282. Tasks i
 
 <a id="stat-npar1way-007"></a>
 
-### [DOING @dev6] STAT-NPAR1WAY-007 — NPAR1WAY — Multiple Comparisons Based on Pairwise Rankings
+### [DONE] STAT-NPAR1WAY-007 — NPAR1WAY — Multiple Comparisons Based on Pairwise Rankings
 
 - Source: S154 / Chapter 90 / `Multiple Comparisons Based on Pairwise Rankings` (PDF p. 7247).
 - Scope: Implement Multiple Comparisons Based on Pairwise Rankings. This ticket owns the feature's options, defaults, computation, and results as an extension of the basic computational path; the chapter's output tickets handle ODS descriptors and file presentation.
@@ -10571,6 +10599,8 @@ Source: S154, Chapter 90, `The NPAR1WAY Procedure`, PDF pp. 7205–7282. Tasks i
 - Supported-domain limits: DSCF requires at least three nonempty classes; empty/constant pair results remain explicitly nonestimable rather than fabricated probabilities. The consumer bounds class count to64 and selected-input work to1,000,000 class-observation units (n<=100000); the shared normal-range API validates2..256 levels and fails on unachieved numerical convergence. SAS-defined DSCF has no finite-df or confidence-interval output, so none is invented. ODS data-set capture remains owned by the output tickets; only the named table/TRACE consumer is added here. The original was already durably mapped; deletion-readiness awaits final acceptance, not deletion permission.
 
 - Final local receipt for frozen code `e8cc16ee43ad26ae45be9b7545ad2474ff92d0ec`: install direct0; unchanged original direct0, strict1417/1417tokens and one graph; original executable body is byte-identical to `persist_npar_default` apart from the provenance comment, and its graph is byte-identical to the previously visually inspected NPAR010 artifact. New DSCF fixture direct0 reproduces all three independent adjusted probabilities and its full named TRACE contract. Complete corpus2380/2380 direct0; focusedNPAR61/61 direct0. Product stayed frozen throughout validation; the final result was polled atmonotonic351727.424891 after the feature deadline, with no additional implementation. This receipt edit is documentation only; coordinator combined gate/supplemental/oracle-absent acceptance and push remain pending.
+
+- FinalDONEe6e44f54: default2217/2387/11+separatesupplemental1113direct0withentireoracleabsent/restored,pushed. Original1417strict/rc0 andactualDSCF/TRACE+independentrange/reranking/direction/nonestimability tests allcovered. Scope/publicresourceguardsdisclosed; folderdeletion-ready,notdeleted.
 
 <a id="stat-npar1way-008"></a>
 
@@ -12571,6 +12601,8 @@ Source: S154, Chapter 105, `The REG Procedure`, PDF pp. 8539–8728. Tasks in th
 - Full original comparison: documented case retains1118/1118 tokens; only the two known independently bounded residual sums differ. Targeted case retains92/92 listing tokens and has the known seeded-input numerical disagreement (SST430.16654 vs245.76974, F134.40 vs118.33); no RNG change or wrong-stream golden was introduced. All nine REWEIGHT deletion/reset/model-label note bodies match the SAS log in order, including observations1–5, the five-deletion count, all-observation RESET and MODEL1.1/MODEL1.2. Native NOTE(expanded L1) prefixes differ from SAS's plain log prefixes. REFIT produces no additional listing, as the original requires; real changed fits are separately proved by persistent tests.
 - Handoff/blockers: retain PARK and the oracle. Remaining acceptance includes the seeded RAND/STREAMINIT discrepancy, exact status/custom-weight/UNDO log presentation, the source P/ID/weighted-observation display paths under existing REG-014/REG-016, broader OUTPUT-statistic selectors, derived influence selectors with FREQ, multiple/repeated UNDO and selection reuse immediately after UNDO, initial pre-RUN REWEIGHT and matrix-input contracts. Unsupported variants remain explicit; no success-only oracle claim is made. Source is frozen and queued for serial integration, not active feature work. All historical branches/evidence/DATA are preserved; no dev push.
 - Acceptance criteria: For REWEIGHT / Reweighting Observations in an Analysis, use an independently calculable small sample and the source examples to verify targets, estimates/statistics, degrees of freedom, and applicable probabilities or intervals; include at least one relevant degenerate or boundary case, asserting documented diagnostics and result status.
+
+- Finalpartiale6e44f54: default2217/2387/11+supplemental1113direct0wholeoracleabsent/restored,pushed. Original1118/92fields retain2/20knownresidual/seed mismatches; realprivateweights/DATApreservation/REFIT results separatelyproved. OldnegativeREWEIGHTteststrengthened,notremoved. PARK.
 
 <a id="stat-reg-012"></a>
 
