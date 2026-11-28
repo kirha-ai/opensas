@@ -2,3 +2,5 @@
 empty-listing
 stderr-count 1 unbalanced nested designs are not implemented
 stderr-count 1 the analysis of covariation for more than one dependent variable is not implemented
+stderr-count 1 CLASS variable a listed more than once
+stderr-count 1 an F test with a zero denominator mean square is not implemented

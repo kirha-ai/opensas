@@ -53,7 +53,7 @@ fn gap(cx: proc.ProcCtx, line: usize, comptime text: []const u8, args: anytype) 
 }
 
 /// Variables of a CLASS/VAR list between `start` and `end` (ranges allowed).
-fn columns(cx: proc.ProcCtx, ds: *const Dataset, t: []const lex.Token, start: usize, end: usize, what: []const u8) diag.Error![]const usize {
+fn columns(cx: proc.ProcCtx, ds: *const Dataset, t: []const lex.Token, start: usize, end: usize) diag.Error![]const usize {
     const a = cx.arena;
     var cols: std.ArrayList(usize) = .empty;
     var j = start;
@@ -62,11 +62,88 @@ fn columns(cx: proc.ProcCtx, ds: *const Dataset, t: []const lex.Token, start: us
         const names = try lists.next(a, ds, t[0..end], &j, cx.diags);
         for (names) |n| {
             const c = ds.indexOf(n) orelse return cx.diags.fail(error.ParseError, line, "Variable {s} not found.", .{try std.ascii.allocUpperString(a, n)});
-            for (cols.items) |prev| if (prev == c) return user(cx, line, "variable {s} appears more than once in the {s} statement", .{ ds.columns.items[c].name, what });
+            // Repeated names are accepted by SAS 15.4 (reference run); the
+            // CLASS boundary is checked after every CLASS statement is read.
             try cols.append(a, c);
         }
     }
     return cols.items;
+}
+
+/// LABEL var='text' ... : labels do not appear in the NESTED listing (SAS
+/// 15.4 reference run); an unknown variable is a WARNING, as in SAS.
+fn labelStmt(cx: proc.ProcCtx, ds: *const Dataset, raw: *const Dataset, t: []const lex.Token, start: usize, end: usize) diag.Error!void {
+    var j = start;
+    if (j == end) return invalid(cx, t, j);
+    while (j < end) {
+        if (!at(t, j, .name)) return invalid(cx, t, j);
+        if (!at(t, j + 1, .eq)) return invalid(cx, t, j + 1);
+        if (ds.indexOf(t[j].text) == null)
+            try cx.diags.warnStatus(t[j].line, "Variable {s} not found in data set {s}.", .{ try std.ascii.allocUpperString(cx.arena, t[j].text), try memberName(cx.arena, raw.name) });
+        // Quoted or unquoted text (reference run: `label y=Yield of plot`)
+        // runs to the next `name =` pair.
+        j += 2;
+        if (j >= end) return invalid(cx, t, j);
+        j += 1;
+        while (j < end and !(at(t, j, .name) and at(t, j + 1, .eq))) j += 1;
+    }
+}
+
+fn memberName(a: A, name: []const u8) ![]const u8 {
+    const up = try std.ascii.allocUpperString(a, name);
+    return if (std.mem.indexOfScalar(u8, up, '.') != null) up else std.fmt.allocPrint(a, "WORK.{s}", .{up});
+}
+
+/// ATTRIB vars LABEL='text' FORMAT=fmt LENGTH=n INFORMAT=fmt ... : LABEL,
+/// LENGTH and INFORMAT have no listing effect and FORMAT= groups CLASS levels
+/// like the FORMAT statement; an unknown variable is a WARNING (SAS 15.4
+/// reference runs). TRANSCODE= is not verified.
+fn attribStmt(cx: proc.ProcCtx, ds: *const Dataset, raw: *const Dataset, t: []const lex.Token, start: usize, end: usize, formats: *std.ArrayList(proc.VarSpec)) diag.Error!void {
+    const a = cx.arena;
+    var j = start;
+    var names: std.ArrayList([]const u8) = .empty;
+    var attrs: usize = 0;
+    while (j < end) {
+        if (at(t, j, .name) and at(t, j + 1, .eq)) {
+            if (names.items.len == 0) return invalid(cx, t, j);
+            attrs += 1;
+            if (kw(t, j, "label")) {
+                if (!at(t, j + 2, .string)) return invalid(cx, t, j + 2);
+                j += 3;
+            } else if (kw(t, j, "length")) {
+                var n: usize = 2;
+                if (at(t, j + n, .dollar)) n += 1;
+                if (!at(t, j + n, .number)) return invalid(cx, t, j + n);
+                j += n + 1;
+            } else if (kw(t, j, "format") or kw(t, j, "informat")) {
+                var n: usize = 2;
+                if (at(t, j + n, .dollar)) n += 1;
+                if (at(t, j + n, .name) or at(t, j + n, .number)) n += 1;
+                if (at(t, j + n, .dot)) n += 1;
+                if (at(t, j + n, .number) and at(t, j + n - 1, .dot)) n += 1;
+                var spec: std.ArrayList(u8) = .empty;
+                for (t[j + 2 .. j + n]) |tk| switch (tk.tag) {
+                    .dot => try spec.append(a, '.'),
+                    .dollar => try spec.append(a, '$'),
+                    else => try spec.appendSlice(a, tk.text),
+                };
+                if (std.mem.indexOfScalar(u8, spec.items, '.') == null) return invalid(cx, t, j + 2);
+                if (kw(t, j, "format")) for (names.items) |nm| if (ds.indexOf(nm) != null)
+                    try formats.append(a, .{ .name = nm, .spec = spec.items });
+                j += n;
+            } else return gap(cx, t[j].line, "the ATTRIB attribute {s}= is not implemented", .{try std.ascii.allocUpperString(a, t[j].text)});
+        } else if (at(t, j, .name)) {
+            if (attrs > 0) {
+                names.clearRetainingCapacity();
+                attrs = 0;
+            }
+            if (ds.indexOf(t[j].text) == null)
+                try cx.diags.warnStatus(t[j].line, "Variable {s} not found in data set {s}.", .{ try std.ascii.allocUpperString(a, t[j].text), try memberName(a, raw.name) });
+            try names.append(a, t[j].text);
+            j += 1;
+        } else return invalid(cx, t, j);
+    }
+    if (names.items.len > 0 and attrs == 0) return invalid(cx, t, end);
 }
 
 pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
@@ -116,6 +193,8 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
     var bys: by.Statements = .{};
     var by_seen = false;
     var class_seen = false;
+    var class_list: std.ArrayList(usize) = .empty;
+    var var_list: std.ArrayList(usize) = .empty;
     var formats: std.ArrayList(proc.VarSpec) = .empty;
     i += 1;
     while (i < t.len and !at(t, i, .eof)) {
@@ -127,7 +206,8 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
         while (end < t.len and !at(t, end, .semicolon) and !at(t, end, .eof)) end += 1;
         if (!at(t, end, .semicolon)) return invalid(cx, t, i);
         if (kw(t, i, "class")) {
-            if (class_seen) return gap(cx, t[i].line, "more than one CLASS statement is not implemented", .{});
+            // Several CLASS statements concatenate in order (SAS 15.4
+            // reference run: `class a; class b;` lists as `class a b;`).
             class_seen = true;
             var slash = end;
             for (i + 1..end) |j| if (at(t, j, .slash)) {
@@ -135,7 +215,7 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
                 break;
             };
             if (slash == i + 1) return invalid(cx, t, slash);
-            s.class = try columns(cx, s.ds, t, i + 1, slash, "CLASS");
+            try class_list.appendSlice(a, try columns(cx, s.ds, t, i + 1, slash));
             if (slash < end) {
                 var j = slash + 1;
                 while (j < end) : (j += 1) {
@@ -143,10 +223,10 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
                 }
             }
         } else if (kw(t, i, "var")) {
-            if (s.var_given) return gap(cx, t[i].line, "more than one VAR statement is not implemented", .{});
+            // Several VAR statements concatenate (SAS 15.4 reference run).
             s.var_given = true;
             if (end == i + 1) return invalid(cx, t, end);
-            s.vars = try columns(cx, s.ds, t, i + 1, end, "VAR");
+            try var_list.appendSlice(a, try columns(cx, s.ds, t, i + 1, end));
         } else if (kw(t, i, "by")) {
             by_seen = true;
             var j = i;
@@ -158,11 +238,19 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
         } else if (kw(t, i, "format")) {
             var j = i;
             try proc.parseProcFormat(a, t, &j, &formats);
-        } else if (kw(t, i, "label") or kw(t, i, "attrib")) {
-            return gap(cx, t[i].line, "the {s} statement is not implemented", .{try std.ascii.allocUpperString(a, t[i].text)});
+        } else if (kw(t, i, "label")) {
+            try labelStmt(cx, s.ds, raw, t, i + 1, end);
+        } else if (kw(t, i, "attrib")) {
+            try attribStmt(cx, s.ds, raw, t, i + 1, end, &formats);
         } else return invalid(cx, t, i);
         i = end + 1;
     }
+    s.class = class_list.items;
+    s.vars = var_list.items;
+    // TRUNCATE on any CLASS statement applies to every CLASS variable (SAS
+    // 15.4 reference run with the option on the first or the second one).
+    for (s.class, 0..) |c, k| for (s.class[0..k]) |p| if (p == c)
+        return gap(cx, 0, "CLASS variable {s} listed more than once (a zero-degrees-of-freedom factor, STAT-NESTED-004) is not implemented", .{s.ds.columns.items[c].name});
     for (formats.items) |spec| if (s.ds.indexOf(spec.name) == null) return cx.diags.fail(error.ParseError, 0, "Variable {s} not found.", .{try std.ascii.allocUpperString(a, spec.name)});
     s.ds = try by.withFormats(a, s.ds, formats.items);
     if (by_seen) {
@@ -187,8 +275,8 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
         for (cols, 0..) |c, k| {
             if (c.type != .num) continue;
             if (std.mem.indexOfScalar(usize, s.class, k) != null) continue;
-            if (std.mem.indexOfScalar(usize, s.by_cols, k) != null)
-                return gap(cx, 0, "a default VAR list containing the numeric BY variable {s} is not verified", .{c.name});
+            // A numeric BY variable stays in the default list (SAS 15.4
+            // reference run: it is analysed with zero variation).
             try vs.append(a, k);
         }
         if (vs.items.len == 0) return user(cx, 0, "there are no numeric analysis variables (no VAR statement and no numeric non-CLASS variables)", .{});
@@ -465,7 +553,7 @@ fn row(a: A, out: *Out, term_width: usize, name: []const u8, df: usize, ss: f64,
     try out.append(a, '\n');
 }
 
-const Group = struct { design: Design, results: []const Anova, derived: []const Derived };
+const Group = struct { design: Design, results: []const Anova, derived: []const Derived, empty: bool = false };
 
 fn analyze(cx: proc.ProcCtx, s: Spec, rows_in: []const []const Value) diag.Error!Group {
     const a = cx.arena;
@@ -482,7 +570,9 @@ fn analyze(cx: proc.ProcCtx, s: Spec, rows_in: []const []const Value) diag.Error
         };
         if (!skip) try rows.append(a, r);
     }
-    if (rows.items.len == 0) return gap(cx, 0, "the result for a BY group or data set without usable observations is not verified", .{});
+    // Every observation omitted: SAS 15.4 warns, lists nothing for this
+    // BY group or data set, and goes on (reference run).
+    if (rows.items.len == 0) return .{ .design = undefined, .results = &.{}, .derived = &.{}, .empty = true };
     const keys = try a.alloc([]Value, rows.items.len);
     for (rows.items, keys) |r, *kk| {
         kk.* = try a.alloc(Value, s.class.len);
@@ -518,11 +608,18 @@ pub fn run(cx: proc.ProcCtx, out: *Out, t: []const lex.Token) diag.Error!void {
     if (s.ds.rows.items.len == 0) return;
     const slices = try by.checkedSlices(a, s.ds, s.by_cols, s.by_desc, s.notsorted, cx.diags);
     const groups = try a.alloc(Group, slices.len);
-    for (slices, groups) |slice, *g| g.* = try analyze(cx, s, slice.rows);
+    for (slices, groups) |slice, *g| {
+        g.* = try analyze(cx, s, slice.rows);
+        if (g.empty) {
+            try cx.diags.warnStatus(0, "All observations contain missing data.", .{});
+            if (s.by_cols.len > 0) try by.reportNote(a, cx.diags, s.ds, slice.rep.?, s.by_cols);
+        }
+    }
     const cols = s.ds.columns.items;
     const names = try a.alloc([]const u8, s.class.len);
     for (s.class, names) |c, *nm| nm.* = cols[c].name;
     for (slices, groups) |slice, g| {
+        if (g.empty) continue;
         if (cx.listing_titles) |titles| try titles.emitTitles(a, out);
         if (s.by_cols.len > 0) {
             var line: Out = .empty;

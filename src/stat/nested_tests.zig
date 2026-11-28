@@ -83,7 +83,6 @@ test "STAT-NESTED-001 user errors fail with rc 1 and gaps with rc 2" {
         "proc nested data=nosuch; class a; run;",
         "proc nested data=s; class a; var g; run;", // VAR must be numeric
         "proc nested data=s; class a b; var b; run;", // both roles
-        "proc nested data=s; class a a; run;",
         "proc nested data=s; class q; run;",
         "proc nested data=s bogus; class a; run;",
         "proc nested data=s; class a / bogus; run;",
@@ -91,6 +90,7 @@ test "STAT-NESTED-001 user errors fail with rc 1 and gaps with rc 2" {
         "proc nested data=s; class a b y z; run;", // no analysis variable
         "proc nested data=s; class a b; var y; freq z; run;", // FREQ is not a NESTED statement
         "proc nested data=s; class a b; var y; format q 3.; run;",
+        "proc nested data=s; by descending a; class b; var y; run;", // BY not sorted (SAS ERROR, no listing)
     };
     for (user_cases) |src| {
         var e: Env = .{ .arena = std.heap.ArenaAllocator.init(std.testing.allocator) };
@@ -101,8 +101,10 @@ test "STAT-NESTED-001 user errors fail with rc 1 and gaps with rc 2" {
     }
     const gap_cases = [_][]const u8{
         "proc nested data=s; class a b; run;", // two VAR variables without AOV: covariation
-        "proc nested data=s; class a b; var y; label a='x'; run;",
-        "proc nested data=s; class a b; var y; by g; class b; run;", // second CLASS
+        "proc nested data=s; class a a; var y; run;", // repeated CLASS variable: zero-df factor (STAT-NESTED-004)
+        "proc nested data=s; class a b; var y; by g; class b; run;", // CLASS a b b
+        "proc nested data=s; class a b; var y; attrib y transcode=no; run;",
+        "proc nested data=s; class a b; var y; var y; run;", // y with y covariation without AOV
         "proc nested data=s(where=(y>2)); class a b; var y; run;", // unbalanced after WHERE
     };
     for (gap_cases) |src| {
@@ -204,4 +206,40 @@ test "STAT-NESTED-001 FORMAT groups CLASS levels and an empty data set lists not
     const none = try e.run("proc nested data=none; class a; var y; run;");
     try expectEqual(@as(usize, 0), none.len);
     try expect(!diag.gapHit());
+}
+
+test "STAT-NESTED-001 repeated CLASS/VAR statements, LABEL, ATTRIB, all-missing groups" {
+    var e: Env = .{ .arena = std.heap.ArenaAllocator.init(std.testing.allocator) };
+    defer e.arena.deinit();
+    try e.init();
+    // Several CLASS and VAR statements concatenate (SAS 15.4 reference run).
+    const c = try e.parse("proc nested data=s aov; class a; class b; var y; var z y; run;");
+    try std.testing.expectEqualSlices(usize, &.{ 1, 2 }, c.class);
+    try std.testing.expectEqualSlices(usize, &.{ 3, 4, 3 }, c.vars);
+    // A numeric BY variable stays in the default VAR list.
+    const b = try e.parse("proc nested data=s; by a; class b; run;");
+    try std.testing.expectEqualSlices(usize, &.{ 1, 3, 4 }, b.vars);
+    // LABEL / ATTRIB LABEL= / ATTRIB FORMAT= leave the listing unchanged;
+    // an unknown LABEL variable is a WARNING (status rc 1, as the SAS run).
+    const row = "a                1        0.125000       0.02    0.9126    b            0.125000       -2.000000      0.0000";
+    const l = try e.run("proc nested data=s; class a b; var y; label y='Yield' q='x'; attrib a label='A' format=8.2; run;");
+    try expect(std.mem.indexOf(u8, l, row) != null);
+    try expect(!diag.gapHit());
+    try expect(e.diags.warning_status);
+    // Unquoted LABEL text, ATTRIB LENGTH=/INFORMAT= and an unknown ATTRIB
+    // variable (WARNING) are accepted, as in the SAS reference run; TRUNCATE
+    // on a later CLASS statement applies to every CLASS variable.
+    const u = try e.run("proc nested data=s; class a; class b / truncate; var y; label y=Yield of plot b=Bee; attrib y length=8 informat=best12. q label='x'; run;");
+    try expect(std.mem.indexOf(u8, u, row) != null);
+    try expect((try e.parse("proc nested data=s; class a; class b / truncate; var y; run;")).truncate);
+    // VAR y y under AOV: the analysis is listed twice.
+    const twice = try e.run("proc nested data=s aov; class a b; var y y; run;");
+    try expectEqual(@as(usize, 2), std.mem.count(u8, twice, "Analysis of Variance for Variable y"));
+    // All observations missing: a WARNING (status rc 1) and no listing.
+    const s0 = e.lib.find("s").?;
+    for (s0.rows.items) |r| @constCast(r)[3] = .{ .num = nan };
+    const none = try e.run("proc nested data=s; class a b; var y; run;");
+    try expectEqual(@as(usize, 0), none.len);
+    try expect(!diag.gapHit());
+    try expect(!e.diags.hasErrors());
 }
