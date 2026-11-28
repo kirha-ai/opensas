@@ -5,7 +5,10 @@
  * smoothing list, a variable in both roles, a character response, an
  * unknown variable, ALPHA= outside (0,1), a non-positive LAMBDA= value,
  * M= not a positive integer, a value list without parentheses, OUTPUT without OUT=, an unknown PROC option,
- * a missing input data set and BY data that are not sorted. Invented data.
+ * a missing input data set and BY data that are not sorted; and, as in SAS
+ * 15.4 reference runs, two FREQ statements, a character FREQ variable, an
+ * unknown plot request, unknown ID, BY and FREQ variables, an empty input data set, all responses missing and
+ * all FREQ values below one. Invented data.
  */
 options nosyntaxcheck;
 data pts;
@@ -13,6 +16,9 @@ input x1 x2 y g name $ @@;
 datalines;
 0 0 1 2 a  1 0 2 1 b  0 1 3 2 c  1 1 5 1 d  2 2 4 2 e  2 0 3 1 f
 ;
+data none; set pts; stop; run;
+data ymiss; set pts; y = .; run;
+data fzero; set pts; f = 0.5; run;
 proc tpspline data=pts; run;
 proc tpspline data=pts; model y = x1 x2; run;
 proc tpspline data=pts; model y = (x1 x2) g; run;
@@ -27,3 +33,12 @@ proc tpspline data=pts; model y = (x1 x2); output pred; run;
 proc tpspline data=pts bogus; model y = (x1 x2); run;
 proc tpspline data=nosuch; model y = (x1 x2); run;
 proc tpspline data=pts; by g; model y = (x1 x2); run;
+proc tpspline data=pts; freq g; freq x1; model y = (x1 x2); run;
+proc tpspline data=pts; freq name; model y = (x1 x2); run;
+proc tpspline data=pts plots=bogus; model y = (x1 x2); run;
+proc tpspline data=none; model y = (x1 x2); run;
+proc tpspline data=ymiss; model y = (x1 x2); run;
+proc tpspline data=fzero; freq f; model y = (x1 x2); run;
+proc tpspline data=pts; id zz1; model y = (x1 x2); run;
+proc tpspline data=pts; by zz2; model y = (x1 x2); run;
+proc tpspline data=pts; freq zz3; model y = (x1 x2); run;

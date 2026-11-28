@@ -253,19 +253,89 @@ fn parseOutput(cx: proc.ProcCtx, s: *Spec, t: []const lex.Token, start: usize, e
     if (!any) s.pred = true;
 }
 
+fn graphicsOn(cx: proc.ProcCtx) bool {
+    const g = cx.graphics orelse return false;
+    return g.enabled orelse false;
+}
+
+/// Plot requests of the PLOTS option (pp.10298-10302) with the aliases the
+/// SAS 15.4 syntax error lists (RESIDHIST, RHIST, SCOREPANEL).
+const plot_requests = [_][]const u8{
+    "all",                 "contourfit",         "contourfitpanel",   "criterionplot", "criterion",
+    "diagnosticspanel",    "diagnostics",        "fitpanel",          "fitplot",       "fit",
+    "none",                "observedbypredicted", "qqplot",           "qq",            "residualbysmooth",
+    "residualbypredicted", "residualhistogram",  "residhist",         "rhist",         "residualpanel",
+    "residuals",           "rfplot",             "rf",                "scoreplot",     "score",
+    "scorepanel",
+};
+
+fn isPlotRequest(w: []const u8) bool {
+    for (plot_requests) |r| if (eq(w, r)) return true;
+    return false;
+}
+
+/// One plot request and its documented suboptions. Returns true for NONE.
+fn plotRequest(cx: proc.ProcCtx, t: []const lex.Token, i: *usize) diag.Error!bool {
+    if (!at(t, i.*, .name) or !isPlotRequest(t[i.*].text)) return user(cx, lineOf(t, i.*), "Syntax error in the PLOTS option at {s}, expecting one of the following: (, ALL, CONTOURFIT, CONTOURFITPANEL, CRITERION, DIAGNOSTICS, FIT, FITPANEL, NONE, OBSERVEDBYPREDICTED, QQ, QQPLOT, RESIDHIST, RESIDUALBYPREDICTED, RESIDUALBYSMOOTH, RESIDUALHISTOGRAM, RESIDUALS, RF, RFPLOT, RHIST, SCORE, SCOREPANEL.", .{if (i.* < t.len) t[i.*].text else "<end>"});
+    const none = eq(t[i.*].text, "none");
+    i.* += 1;
+    if (!at(t, i.*, .lparen)) return none;
+    i.* += 1;
+    while (!at(t, i.*, .rparen)) {
+        if (kw(t, i.*, "clm") or kw(t, i.*, "unpack") or kw(t, i.*, "smooth") or kw(t, i.*, "nopath")) {
+            i.* += 1;
+        } else if (kw(t, i.*, "obs") and at(t, i.* + 1, .eq) and (kw(t, i.* + 2, "gradient") or kw(t, i.* + 2, "none") or kw(t, i.* + 2, "outline") or kw(t, i.* + 2, "outlinegradient"))) {
+            i.* += 3;
+        } else return gap(cx, lineOf(t, i.*), "the plot suboption {s} is not verified (STAT-TPSPLINE-008)", .{if (i.* < t.len) t[i.*].text else "<end>"});
+    }
+    i.* += 1;
+    return none;
+}
+
+/// PLOTS <(global-plot-options)> <= plot-request | =(plot-request ...)>.
+/// Returns true when the only request is NONE.
+fn parsePlots(cx: proc.ProcCtx, t: []const lex.Token, i: *usize) diag.Error!bool {
+    if (at(t, i.*, .lparen)) {
+        i.* += 1;
+        while (!at(t, i.*, .rparen)) {
+            if (kw(t, i.*, "only") or kw(t, i.*, "unpack")) {
+                i.* += 1;
+            } else return gap(cx, lineOf(t, i.*), "the global plot option {s} is not verified (STAT-TPSPLINE-008)", .{if (i.* < t.len) t[i.*].text else "<end>"});
+        }
+        i.* += 1;
+    }
+    if (!at(t, i.*, .eq)) return false;
+    i.* += 1;
+    if (!at(t, i.*, .lparen)) return plotRequest(cx, t, i);
+    i.* += 1;
+    var n: usize = 0;
+    var all_none = true;
+    while (!at(t, i.*, .rparen)) : (n += 1) {
+        if (!try plotRequest(cx, t, i)) all_none = false;
+    }
+    i.* += 1;
+    return n > 0 and all_none;
+}
+
 pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
     const a = cx.arena;
     var s: Spec = .{ .ds = undefined };
     var data: ?[]const u8 = null;
+    var plots_seen = false;
+    var plots_none = false;
+    var plots_line: usize = 0;
     var i: usize = 2;
     const l0 = lineOf(t, 0);
     while (i < t.len and !at(t, i, .semicolon) and !at(t, i, .eof)) {
         if (!at(t, i, .name)) return invalid(cx, t, i);
         const word = t[i].text;
         if (eq(word, "data") and at(t, i + 1, .eq)) {
-            if (data != null) return user(cx, t[i].line, "DATA= is specified more than once", .{});
+            // SAS 15.4 reference run: the first DATA= is used and a later one
+            // warns.
+            if (data != null) try cx.diags.warn(t[i].line, "Ignoring second data set reference.", .{});
             i += 2;
-            data = try dsName(a, cx, t, &i);
+            const name = try dsName(a, cx, t, &i);
+            if (data == null) data = name;
             if (at(t, i, .lparen)) {
                 var depth: usize = 0;
                 while (i < t.len and !at(t, i, .eof)) : (i += 1) {
@@ -279,14 +349,24 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
                 i += 1;
             }
         } else if (eq(word, "plots") or eq(word, "plot")) {
-            // PLOTS=NONE suppresses plots; plot requests need ODS Graphics
-            // (STAT-TPSPLINE-008).
-            if (at(t, i + 1, .eq) and kw(t, i + 2, "none")) {
-                i += 3;
-            } else return gap(cx, t[i].line, "PLOTS= requests are not implemented (STAT-TPSPLINE-008)", .{});
+            // SAS 15.4 reference run: with ODS Graphics off, several PLOTS
+            // options give one warning; which one wins with ODS Graphics on is
+            // not verified (STAT-TPSPLINE-008).
+            if (plots_seen and graphicsOn(cx)) return gap(cx, t[i].line, "more than one PLOTS option with ODS Graphics enabled is not verified (STAT-TPSPLINE-008)", .{});
+            if (!plots_seen) plots_line = t[i].line;
+            plots_seen = true;
+            i += 1;
+            plots_none = try parsePlots(cx, t, &i);
         } else return invalid(cx, t, i);
     }
     if (!at(t, i, .semicolon)) return invalid(cx, t, i);
+    // SAS 15.4 reference runs: with ODS Graphics disabled, any PLOTS option
+    // (PLOTS=NONE included) warns and the listing is unchanged; with ODS
+    // Graphics enabled, the default plots and every request but NONE are
+    // ODS Graphics output (STAT-TPSPLINE-008).
+    if (graphicsOn(cx)) {
+        if (!plots_none) return gap(cx, if (plots_seen) plots_line else l0, "ODS Graphics plots are not implemented (STAT-TPSPLINE-008); use PLOTS=NONE or ODS GRAPHICS OFF", .{});
+    } else if (plots_seen) try cx.diags.warn(plots_line, "You must enable ODS graphics before requesting plots.", .{});
     const raw = if (data) |name|
         cx.lib.find(name) orelse return user(cx, l0, "input data set {s} not found", .{name})
     else
@@ -317,9 +397,10 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
             try parseOutput(cx, &s, t, i, end);
         } else if (kw(t, i, "freq")) {
             if (end != i + 2) return user(cx, t[i].line, "the FREQ statement takes exactly one variable", .{});
-            if (s.freq != null) return gap(cx, t[i].line, "more than one FREQ statement is not verified", .{});
+            // SAS 15.4 reference run: a second FREQ statement is an error.
+            if (s.freq != null) return cx.diags.fail(error.ParseError, t[i].line, "Freq statement is used incorrectly.", .{});
             const c = try column(cx, s.ds, t, i + 1);
-            try numeric(cx, s.ds, c, t[i].line, "FREQ");
+            if (s.ds.columns.items[c].type != .num) return cx.diags.fail(error.ParseError, t[i].line, "Variable {s} in list does not match type prescribed for this list.", .{t[i + 1].text});
             s.freq = c;
         } else if (kw(t, i, "id")) {
             // "more than one ID statement can be used"; the values only label
@@ -621,8 +702,8 @@ pub fn outputVars(a: A, s: Spec, dname: []const u8) ![]const OutVar {
 pub fn run(cx: proc.ProcCtx, out: *Out, t: []const lex.Token) diag.Error!void {
     const a = cx.arena;
     const s = try parse(cx, t);
-    if (s.ds.rows.items.len == 0) return gap(cx, 0, "an input data set with no observations is not verified", .{});
     const slices = try by.checkedSlices(a, s.ds, s.by_cols, s.by_desc, s.notsorted, cx.diags);
+    if (s.ds.rows.items.len == 0 or slices.len == 0) return cx.diags.fail(error.ParseError, 0, "No valid observations in the input data set or one of the variables in the model statement contains all missing values.", .{});
     const cols = s.ds.columns.items;
     const dname = cols[s.dep].name;
     const d = s.smooth.len;
@@ -643,24 +724,48 @@ pub fn run(cx: proc.ProcCtx, out: *Out, t: []const lex.Token) diag.Error!void {
 
     // Validate every group before any listing text.
     var truncated = false;
+    var nonpositive = false;
     const Group = struct { keep: []usize, x: []f64, y: []f64, owner: []usize, missing: usize, unique: usize };
     const groups = try a.alloc(Group, slices.len);
     for (slices, groups) |slice, *g| {
         var keep: std.ArrayList(usize) = .empty;
         var miss: usize = 0;
+        var dropped: usize = 0;
         for (slice.rows, 0..) |row, r| {
-            var bad = isMissing(row[s.dep]);
+            // SAS 15.4 reference runs: a missing smoothing variable counts the
+            // observation as missing whatever its frequency; otherwise a
+            // missing FREQ value drops it silently and a FREQ value below one
+            // drops it with a NOTE ("less than one ... not used", p.10303),
+            // neither being counted as missing; only then does a missing
+            // response count as missing.
+            var bad = false;
             for (s.smooth) |c| if (isMissing(row[c])) {
                 bad = true;
             };
+            if (bad) {
+                miss += 1;
+                continue;
+            }
             if (s.freq) |fc| {
                 const fv = row[fc].num;
-                if (std.math.isNan(fv) or fv < 1) return gap(cx, 0, "a missing or less-than-one FREQ value is not verified", .{});
+                if (std.math.isNan(fv)) {
+                    dropped += 1;
+                    continue;
+                }
                 if (fv != @floor(fv)) truncated = true;
+                if (fv < 1) {
+                    nonpositive = true;
+                    dropped += 1;
+                    continue;
+                }
             }
-            if (bad) miss += 1 else try keep.append(a, r);
+            if (isMissing(row[s.dep])) miss += 1 else try keep.append(a, r);
         }
-        if (miss > 0 and o != null) return gap(cx, 0, "OUTPUT values for observations with missing values are not verified", .{});
+        if ((miss > 0 or dropped > 0) and o != null) return gap(cx, 0, "OUTPUT values for observations excluded by missing values or FREQ are not verified (STAT-TPSPLINE-006)", .{});
+        if (keep.items.len == 0) {
+            g.* = .{ .keep = keep.items, .x = &.{}, .y = &.{}, .owner = &.{}, .missing = miss, .unique = 0 };
+            continue;
+        }
         // FREQ: "treats the data as if each observation appears n times"
         // (p.10303); only the integer portion is used.
         var xs: std.ArrayList(f64) = .empty;
@@ -696,8 +801,18 @@ pub fn run(cx: proc.ProcCtx, out: *Out, t: []const lex.Token) diag.Error!void {
         g.* = .{ .keep = keep.items, .x = xs.items, .y = ys.items, .owner = owner.items, .missing = miss, .unique = unique };
     }
 
+    if (nonpositive) try cx.diags.note(0, "At least one observation was not used in computations because of non-positive frequency.", .{});
     if (truncated) try cx.diags.note(0, "At least one frequency has been truncated because of a non-integer value.", .{});
+    const no_valid = "No valid observations in the input data set or one of the variables in the model statement contains all missing values.";
     for (slices, groups) |slice, g| {
+        // SAS 15.4 reference runs: an empty input or a group with no usable
+        // observation is an ERROR; under BY the other groups still run.
+        if (g.y.len == 0) {
+            if (s.by_cols.len == 0) return cx.diags.fail(error.ParseError, 0, no_valid, .{});
+            try cx.diags.report(.err, 0, no_valid, .{});
+            try by.reportNote(a, cx.diags, s.ds, slice.rep.?, s.by_cols);
+            continue;
+        }
         const b = try basis(a, g.x, g.y, d);
         const lfin = minimize(b);
         const st = stats(b, lfin);

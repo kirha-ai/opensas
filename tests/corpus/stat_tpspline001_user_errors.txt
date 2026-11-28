@@ -14,3 +14,10 @@ stderr-count 1 OUT= is required in the OUTPUT statement
 stderr-count 1 invalid statement or token bogus
 stderr-count 1 input data set nosuch not found
 stderr-count 1 is not sorted in ascending sequence.
+stderr-count 1 Freq statement is used incorrectly.
+stderr-count 1 Variable name in list does not match type prescribed for this list.
+stderr-count 1 Syntax error in the PLOTS option at bogus
+stderr-count 3 No valid observations in the input data set or one of the variables in the model statement contains all missing values.
+stderr-count 1 Variable ZZ1 not found.
+stderr-count 1 Variable ZZ2 not found.
+stderr-count 1 Variable ZZ3 not found.

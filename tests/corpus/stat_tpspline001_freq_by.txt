@@ -1,0 +1,707 @@
+
+A freq below one, missing, truncated
+
+The TPSPLINE Procedure
+Dependent Variable:  y
+Frequency Variable:  f
+
+       Summary of Input Data Set
+
+Number of Non-Missing Observations    47
+Number of Missing Observations         0
+Unique Smoothing Design Points        25
+
+
+        Summary of Final Model
+
+Number of Regression Variables        0
+Number of Smoothing Variables         2
+Order of Derivative in the Penalty    2
+Dimension of Polynomial Space         3
+
+
+        Summary Statistics
+       of Final Estimation
+
+log10(n*Lambda)            -1.8567
+Smoothing Penalty           8.0933
+Residual SS                 0.0641
+Tr(I-A)                    30.6611
+Model DF                   16.3389
+Standard Deviation          0.0457
+GCV                         0.0032
+
+B unique points and combinations
+
+The TPSPLINE Procedure
+Dependent Variable:  y
+Frequency Variable:  f
+
+       Summary of Input Data Set
+
+Number of Non-Missing Observations    46
+Number of Missing Observations         1
+Unique Smoothing Design Points        24
+
+
+        Summary of Final Model
+
+Number of Regression Variables        0
+Number of Smoothing Variables         2
+Order of Derivative in the Penalty    2
+Dimension of Polynomial Space         3
+
+
+        Summary Statistics
+       of Final Estimation
+
+log10(n*Lambda)            -1.7800
+Smoothing Penalty           7.0997
+Residual SS                 0.0722
+Tr(I-A)                    30.8335
+Model DF                   15.1665
+Standard Deviation          0.0484
+GCV                         0.0035
+
+C x missing, freq missing
+
+The TPSPLINE Procedure
+Dependent Variable:  y
+Frequency Variable:  f
+
+       Summary of Input Data Set
+
+Number of Non-Missing Observations    49
+Number of Missing Observations         1
+Unique Smoothing Design Points        25
+
+
+        Summary of Final Model
+
+Number of Regression Variables        0
+Number of Smoothing Variables         2
+Order of Derivative in the Penalty    2
+Dimension of Polynomial Space         3
+
+
+        Summary Statistics
+       of Final Estimation
+
+log10(n*Lambda)            -1.7857
+Smoothing Penalty           7.7643
+Residual SS                 0.0737
+Tr(I-A)                    33.0881
+Model DF                   15.9119
+Standard Deviation          0.0472
+GCV                         0.0033
+
+D y missing, freq missing
+
+The TPSPLINE Procedure
+Dependent Variable:  y
+Frequency Variable:  f
+
+       Summary of Input Data Set
+
+Number of Non-Missing Observations    49
+Number of Missing Observations         0
+Unique Smoothing Design Points        25
+
+
+        Summary of Final Model
+
+Number of Regression Variables        0
+Number of Smoothing Variables         2
+Order of Derivative in the Penalty    2
+Dimension of Polynomial Space         3
+
+
+        Summary Statistics
+       of Final Estimation
+
+log10(n*Lambda)            -1.7857
+Smoothing Penalty           7.7643
+Residual SS                 0.0737
+Tr(I-A)                    33.0881
+Model DF                   15.9119
+Standard Deviation          0.0472
+GCV                         0.0033
+
+E y missing, freq 0.5
+
+The TPSPLINE Procedure
+Dependent Variable:  y
+Frequency Variable:  f
+
+       Summary of Input Data Set
+
+Number of Non-Missing Observations    49
+Number of Missing Observations         0
+Unique Smoothing Design Points        25
+
+
+        Summary of Final Model
+
+Number of Regression Variables        0
+Number of Smoothing Variables         2
+Order of Derivative in the Penalty    2
+Dimension of Polynomial Space         3
+
+
+        Summary Statistics
+       of Final Estimation
+
+log10(n*Lambda)            -1.7857
+Smoothing Penalty           7.7643
+Residual SS                 0.0737
+Tr(I-A)                    33.0881
+Model DF                   15.9119
+Standard Deviation          0.0472
+GCV                         0.0033
+
+F freq missing
+
+The TPSPLINE Procedure
+Dependent Variable:  y
+Frequency Variable:  f
+
+       Summary of Input Data Set
+
+Number of Non-Missing Observations    49
+Number of Missing Observations         0
+Unique Smoothing Design Points        25
+
+
+        Summary of Final Model
+
+Number of Regression Variables        0
+Number of Smoothing Variables         2
+Order of Derivative in the Penalty    2
+Dimension of Polynomial Space         3
+
+
+        Summary Statistics
+       of Final Estimation
+
+log10(n*Lambda)            -1.7857
+Smoothing Penalty           7.7643
+Residual SS                 0.0737
+Tr(I-A)                    33.0881
+Model DF                   15.9119
+Standard Deviation          0.0472
+GCV                         0.0033
+
+G x missing, freq 0
+
+The TPSPLINE Procedure
+Dependent Variable:  y
+Frequency Variable:  f
+
+       Summary of Input Data Set
+
+Number of Non-Missing Observations    49
+Number of Missing Observations         1
+Unique Smoothing Design Points        25
+
+
+        Summary of Final Model
+
+Number of Regression Variables        0
+Number of Smoothing Variables         2
+Order of Derivative in the Penalty    2
+Dimension of Polynomial Space         3
+
+
+        Summary Statistics
+       of Final Estimation
+
+log10(n*Lambda)            -1.7857
+Smoothing Penalty           7.7643
+Residual SS                 0.0737
+Tr(I-A)                    33.0881
+Model DF                   15.9119
+Standard Deviation          0.0472
+GCV                         0.0033
+
+H default data
+
+The TPSPLINE Procedure
+Dependent Variable:  y
+
+        Summary of Input Data Set
+
+Number of Non-Missing Observations    100
+Number of Missing Observations          0
+Unique Smoothing Design Points         25
+
+
+        Summary of Final Model
+
+Number of Regression Variables        0
+Number of Smoothing Variables         2
+Order of Derivative in the Penalty    2
+Dimension of Polynomial Space         3
+
+
+        Summary Statistics
+       of Final Estimation
+
+log10(n*Lambda)            -1.7580
+Smoothing Penalty           8.4095
+Residual SS                 0.1628
+Tr(I-A)                    81.3662
+Model DF                   18.6338
+Standard Deviation          0.0447
+GCV                         0.0025
+
+I two BY statements
+
+g=1
+
+The TPSPLINE Procedure
+Dependent Variable:  y
+
+       Summary of Input Data Set
+
+Number of Non-Missing Observations    50
+Number of Missing Observations         0
+Unique Smoothing Design Points        25
+
+
+        Summary of Final Model
+
+Number of Regression Variables        0
+Number of Smoothing Variables         2
+Order of Derivative in the Penalty    2
+Dimension of Polynomial Space         3
+
+
+        Summary Statistics
+       of Final Estimation
+
+log10(n*Lambda)            -1.7934
+Smoothing Penalty           7.7851
+Residual SS                 0.0734
+Tr(I-A)                    33.8835
+Model DF                   16.1165
+Standard Deviation          0.0465
+GCV                         0.0032
+
+I two BY statements
+
+g=2
+
+The TPSPLINE Procedure
+Dependent Variable:  y
+
+       Summary of Input Data Set
+
+Number of Non-Missing Observations    50
+Number of Missing Observations         0
+Unique Smoothing Design Points        25
+
+
+        Summary of Final Model
+
+Number of Regression Variables        0
+Number of Smoothing Variables         2
+Order of Derivative in the Penalty    2
+Dimension of Polynomial Space         3
+
+
+        Summary Statistics
+       of Final Estimation
+
+log10(n*Lambda)            -1.7934
+Smoothing Penalty           7.7851
+Residual SS                 0.0734
+Tr(I-A)                    33.8835
+Model DF                   16.1165
+Standard Deviation          0.0465
+GCV                         0.0032
+
+J BY DESCENDING
+
+g=2
+
+The TPSPLINE Procedure
+Dependent Variable:  y
+
+       Summary of Input Data Set
+
+Number of Non-Missing Observations    50
+Number of Missing Observations         0
+Unique Smoothing Design Points        25
+
+
+        Summary of Final Model
+
+Number of Regression Variables        0
+Number of Smoothing Variables         2
+Order of Derivative in the Penalty    2
+Dimension of Polynomial Space         3
+
+
+        Summary Statistics
+       of Final Estimation
+
+log10(n*Lambda)            -1.7934
+Smoothing Penalty           7.7851
+Residual SS                 0.0734
+Tr(I-A)                    33.8835
+Model DF                   16.1165
+Standard Deviation          0.0465
+GCV                         0.0032
+
+J BY DESCENDING
+
+g=1
+
+The TPSPLINE Procedure
+Dependent Variable:  y
+
+       Summary of Input Data Set
+
+Number of Non-Missing Observations    50
+Number of Missing Observations         0
+Unique Smoothing Design Points        25
+
+
+        Summary of Final Model
+
+Number of Regression Variables        0
+Number of Smoothing Variables         2
+Order of Derivative in the Penalty    2
+Dimension of Polynomial Space         3
+
+
+        Summary Statistics
+       of Final Estimation
+
+log10(n*Lambda)            -1.7934
+Smoothing Penalty           7.7851
+Residual SS                 0.0734
+Tr(I-A)                    33.8835
+Model DF                   16.1165
+Standard Deviation          0.0465
+GCV                         0.0032
+
+K BY NOTSORTED
+
+g=2
+
+The TPSPLINE Procedure
+Dependent Variable:  y
+
+       Summary of Input Data Set
+
+Number of Non-Missing Observations    50
+Number of Missing Observations         0
+Unique Smoothing Design Points        25
+
+
+        Summary of Final Model
+
+Number of Regression Variables        0
+Number of Smoothing Variables         2
+Order of Derivative in the Penalty    2
+Dimension of Polynomial Space         3
+
+
+        Summary Statistics
+       of Final Estimation
+
+log10(n*Lambda)            -1.7934
+Smoothing Penalty           7.7851
+Residual SS                 0.0734
+Tr(I-A)                    33.8835
+Model DF                   16.1165
+Standard Deviation          0.0465
+GCV                         0.0032
+
+K BY NOTSORTED
+
+g=1
+
+The TPSPLINE Procedure
+Dependent Variable:  y
+
+       Summary of Input Data Set
+
+Number of Non-Missing Observations    50
+Number of Missing Observations         0
+Unique Smoothing Design Points        25
+
+
+        Summary of Final Model
+
+Number of Regression Variables        0
+Number of Smoothing Variables         2
+Order of Derivative in the Penalty    2
+Dimension of Polynomial Space         3
+
+
+        Summary Statistics
+       of Final Estimation
+
+log10(n*Lambda)            -1.7934
+Smoothing Penalty           7.7851
+Residual SS                 0.0734
+Tr(I-A)                    33.8835
+Model DF                   16.1165
+Standard Deviation          0.0465
+GCV                         0.0032
+
+L PLOTS with ODS Graphics off
+
+The TPSPLINE Procedure
+Dependent Variable:  y
+
+       Summary of Input Data Set
+
+Number of Non-Missing Observations    50
+Number of Missing Observations         0
+Unique Smoothing Design Points        25
+
+
+        Summary of Final Model
+
+Number of Regression Variables        0
+Number of Smoothing Variables         2
+Order of Derivative in the Penalty    2
+Dimension of Polynomial Space         3
+
+
+        Summary Statistics
+       of Final Estimation
+
+log10(n*Lambda)            -1.7934
+Smoothing Penalty           7.7851
+Residual SS                 0.0734
+Tr(I-A)                    33.8835
+Model DF                   16.1165
+Standard Deviation          0.0465
+GCV                         0.0032
+
+M two DATA= options
+
+The TPSPLINE Procedure
+Dependent Variable:  y
+
+       Summary of Input Data Set
+
+Number of Non-Missing Observations    50
+Number of Missing Observations         0
+Unique Smoothing Design Points        25
+
+
+        Summary of Final Model
+
+Number of Regression Variables        0
+Number of Smoothing Variables         2
+Order of Derivative in the Penalty    2
+Dimension of Polynomial Space         3
+
+
+        Summary Statistics
+       of Final Estimation
+
+log10(n*Lambda)            -2.5411
+Smoothing Penalty          82.1843
+Residual SS                 0.0671
+Tr(I-A)                    27.8862
+Model DF                   22.1138
+Standard Deviation          0.0491
+GCV                         0.0043
+
+N data set options
+
+The TPSPLINE Procedure
+Dependent Variable:  yy
+
+       Summary of Input Data Set
+
+Number of Non-Missing Observations    40
+Number of Missing Observations         0
+Unique Smoothing Design Points        20
+
+
+        Summary of Final Model
+
+Number of Regression Variables        0
+Number of Smoothing Variables         2
+Order of Derivative in the Penalty    2
+Dimension of Polynomial Space         3
+
+
+        Summary Statistics
+       of Final Estimation
+
+log10(n*Lambda)            -1.8192
+Smoothing Penalty           6.0869
+Residual SS                 0.0612
+Tr(I-A)                    26.6884
+Model DF                   13.3116
+Standard Deviation          0.0479
+GCV                         0.0034
+
+O two PLOTS options
+
+The TPSPLINE Procedure
+Dependent Variable:  y
+
+       Summary of Input Data Set
+
+Number of Non-Missing Observations    50
+Number of Missing Observations         0
+Unique Smoothing Design Points        25
+
+
+        Summary of Final Model
+
+Number of Regression Variables        0
+Number of Smoothing Variables         2
+Order of Derivative in the Penalty    2
+Dimension of Polynomial Space         3
+
+
+        Summary Statistics
+       of Final Estimation
+
+log10(n*Lambda)            -1.7934
+Smoothing Penalty           7.7851
+Residual SS                 0.0734
+Tr(I-A)                    33.8835
+Model DF                   16.1165
+Standard Deviation          0.0465
+GCV                         0.0032
+
+P ID lists
+
+The TPSPLINE Procedure
+Dependent Variable:  y
+
+       Summary of Input Data Set
+
+Number of Non-Missing Observations    50
+Number of Missing Observations         0
+Unique Smoothing Design Points        25
+
+
+        Summary of Final Model
+
+Number of Regression Variables        0
+Number of Smoothing Variables         2
+Order of Derivative in the Penalty    2
+Dimension of Polynomial Space         3
+
+
+        Summary Statistics
+       of Final Estimation
+
+log10(n*Lambda)            -2.5411
+Smoothing Penalty          82.1843
+Residual SS                 0.0671
+Tr(I-A)                    27.8862
+Model DF                   22.1138
+Standard Deviation          0.0491
+GCV                         0.0043
+
+Q BY with a missing level and a format
+
+g=.
+
+The TPSPLINE Procedure
+Dependent Variable:  y
+
+       Summary of Input Data Set
+
+Number of Non-Missing Observations    50
+Number of Missing Observations         0
+Unique Smoothing Design Points        25
+
+
+        Summary of Final Model
+
+Number of Regression Variables        0
+Number of Smoothing Variables         2
+Order of Derivative in the Penalty    2
+Dimension of Polynomial Space         3
+
+
+        Summary Statistics
+       of Final Estimation
+
+log10(n*Lambda)            -1.7934
+Smoothing Penalty           7.7851
+Residual SS                 0.0734
+Tr(I-A)                    33.8835
+Model DF                   16.1165
+Standard Deviation          0.0465
+GCV                         0.0032
+
+Q BY with a missing level and a format
+
+g=first
+
+The TPSPLINE Procedure
+Dependent Variable:  y
+
+       Summary of Input Data Set
+
+Number of Non-Missing Observations    50
+Number of Missing Observations         0
+Unique Smoothing Design Points        25
+
+
+        Summary of Final Model
+
+Number of Regression Variables        0
+Number of Smoothing Variables         2
+Order of Derivative in the Penalty    2
+Dimension of Polynomial Space         3
+
+
+        Summary Statistics
+       of Final Estimation
+
+log10(n*Lambda)            -1.7934
+Smoothing Penalty           7.7851
+Residual SS                 0.0734
+Tr(I-A)                    33.8835
+Model DF                   16.1165
+Standard Deviation          0.0465
+GCV                         0.0032
+
+Q BY with a missing level and a format
+
+g=second
+
+The TPSPLINE Procedure
+Dependent Variable:  y
+
+       Summary of Input Data Set
+
+Number of Non-Missing Observations    50
+Number of Missing Observations         0
+Unique Smoothing Design Points        25
+
+
+        Summary of Final Model
+
+Number of Regression Variables        0
+Number of Smoothing Variables         2
+Order of Derivative in the Penalty    2
+Dimension of Polynomial Space         3
+
+
+        Summary Statistics
+       of Final Estimation
+
+log10(n*Lambda)            -1.7934
+Smoothing Penalty           7.7851
+Residual SS                 0.0734
+Tr(I-A)                    33.8835
+Model DF                   16.1165
+Standard Deviation          0.0465
+GCV                         0.0032

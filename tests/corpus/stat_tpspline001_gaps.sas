@@ -3,9 +3,11 @@
  * fail visibly with no listing: regression variables, one smoothing
  * variable, two dependent variables, LAMBDA0=, DF=, M=3, DISTANCE=1, a
  * LAMBDA= list (STAT-TPSPLINE-003), SCORE (STAT-TPSPLINE-005), the RESID
- * output keyword (STAT-TPSPLINE-006), PLOTS= requests (STAT-TPSPLINE-008),
- * a FREQ value below one, OUTPUT with a missing response, and an empty
- * input data set. Invented data.
+ * output keyword (STAT-TPSPLINE-006), ODS Graphics plots with ODS Graphics
+ * on, by default or by request, and an unverified plot suboption
+ * (STAT-TPSPLINE-008), and OUTPUT rows for observations excluded by a
+ * missing response or a FREQ value below one (STAT-TPSPLINE-006).
+ * Invented data.
  */
 options nosyntaxcheck;
 data pts;
@@ -17,10 +19,6 @@ data miss;
 set pts;
 if _n_ = 2 then y = .;
 run;
-data none;
-set pts;
-stop;
-run;
 proc tpspline data=pts; model y = z (x1 x2); run;
 proc tpspline data=pts; model y = (x1); run;
 proc tpspline data=pts; model y y2 = (x1 x2); run;
@@ -31,7 +29,10 @@ proc tpspline data=pts; model y = (x1 x2) / distance=1; run;
 proc tpspline data=pts; model y = (x1 x2) / lambda=(0.1 0.2); run;
 proc tpspline data=pts; model y = (x1 x2); score data=pts out=sc; run;
 proc tpspline data=pts; model y = (x1 x2); output out=o coef; run;
+ods graphics on;
 proc tpspline data=pts plots=fit; model y = (x1 x2); run;
-proc tpspline data=pts; freq f; model y = (x1 x2); run;
+proc tpspline data=pts; model y = (x1 x2); run;
+ods graphics off;
+proc tpspline data=pts plots=fit(bogus); model y = (x1 x2); run;
 proc tpspline data=miss; model y = (x1 x2); output out=o2; run;
-proc tpspline data=none; model y = (x1 x2); run;
+proc tpspline data=pts; freq f; model y = (x1 x2); output out=o3; run;
