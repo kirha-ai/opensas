@@ -3372,7 +3372,9 @@ fn runProc(a: std.mem.Allocator, listing_out: *std.ArrayList(u8), lib: *sas.exec
         }
     } else if (eqi(proc, "surveylogistic")) {
         var body: std.ArrayList(u8) = .empty;
-        try sas.surveylogistic.run(pcx, &body, toks);
+        var survey_context = pcx;
+        survey_context.listing_titles = g; // titles repeat before every BY group
+        try sas.surveylogistic.run(survey_context, &body, toks);
         if (body.items.len > 0) {
             try g.emitTitles(a, out);
             try out.appendSlice(a, body.items);

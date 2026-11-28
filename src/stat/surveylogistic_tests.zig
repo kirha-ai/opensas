@@ -92,13 +92,15 @@ test "STAT-SURVEYLOGISTIC-001 user errors are rc 1 and unimplemented features rc
         .{ "proc surveylogistic; model y=x / link=probit;", 2 },
         .{ "proc surveylogistic; model y=x / clodds;", 2 },
         .{ "proc surveylogistic; class g; model y=g;", 2 },
-        .{ "proc surveylogistic; model y=x; freq w;", 2 },
+        .{ "proc surveylogistic; model y=x; freq w;", 2 }, // FREQ without CLUSTER
+        .{ "proc surveylogistic; model y=x; cluster cl; freq g;", 1 }, // character FREQ
+        .{ "proc surveylogistic; model y=x; cluster cl; freq w; freq x;", 1 },
         .{ "proc surveylogistic; model y=x; domain st;", 2 },
         .{ "proc surveylogistic; model y=x*x;", 2 },
         .{ "proc surveylogistic; model y=x w; strata st; weight w;", 2 }, // two restrictions
-        .{ "proc surveylogistic; model y=x; strata st;", 2 }, // no WEIGHT
-        .{ "proc surveylogistic; model y=x; weight w;", 2 }, // no STRATA/CLUSTER
-        .{ "proc surveylogistic; model y=x; strata st; weight w; by st;", 2 },
+        .{ "proc surveylogistic missing; model y=x; strata st;", 2 },
+        .{ "proc surveylogistic; model y=x; cluster st cl;", 2 }, // several CLUSTER variables
+        .{ "proc surveylogistic; model y=x; repweights w;", 2 },
     }) |case| {
         const r = try fx.rc(case[0]);
         std.testing.expectEqual(case[1], r[0]) catch |err| {
@@ -107,7 +109,21 @@ test "STAT-SURVEYLOGISTIC-001 user errors are rc 1 and unimplemented features rc
         };
         try expectEqual(@as(usize, 0), r[1]);
     }
-    const ok = try fx.rc("proc surveylogistic; strata st; cluster cl; weight w; model y(event='1')=x;");
-    try expectEqual(@as(u8, 0), ok[0]);
-    try expect(ok[1] > 0);
+    for ([_][]const u8{
+        "proc surveylogistic; strata st; cluster cl; weight w; model y(event='1')=x;",
+        "proc surveylogistic; model y=x; strata st;", // no WEIGHT
+        "proc surveylogistic; model y=x; weight w;", // no STRATA/CLUSTER
+        "proc surveylogistic; model y=x; strata st; weight w; by st;", // BY groups
+        "proc surveylogistic; model y=x; strata st cl; weight w;", // several STRATA variables
+        "proc surveylogistic; strata st; cluster cl; weight w; freq w; model y(event='1')=x;", // FREQ
+        "proc surveylogistic; strata st; cluster cl; weight w; weight x; model y(event='1')=x;", // first WEIGHT used (p.9827)
+    }) |src| {
+        const ok = try fx.rc(src);
+        try expectEqual(@as(u8, 0), ok[0]);
+        try expect(ok[1] > 0);
+    }
+    // NOPRINT fits (every check runs) but prints nothing.
+    const quiet = try fx.rc("proc surveylogistic noprint; strata st; cluster cl; weight w; model y(event='1')=x;");
+    try expectEqual(@as(u8, 0), quiet[0]);
+    try expectEqual(@as(usize, 0), quiet[1]);
 }

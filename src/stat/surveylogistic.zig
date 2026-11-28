@@ -44,6 +44,8 @@ pub const Spec = struct {
     covariates: []const usize = &.{},
     model_line: usize = 0,
     by_cols: []const usize = &.{},
+    noprint: bool = false,
+    freq: ?usize = null,
 };
 
 fn at(t: []const lex.Token, i: usize, tag: lex.Tag) bool {
@@ -211,6 +213,9 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
             const x = try number(cx, t, &i);
             if (!(x > 0 and x < 1)) return cx.diags.fail(error.ParseError, t[i - 1].line, "PROC SURVEYLOGISTIC: ALPHA= must be between 0 and 1", .{});
             s.alpha = x;
+        } else if (eq(word, "noprint") and !valued) {
+            s.noprint = true;
+            i += 1;
         } else if (oneOf(word, &.{ "nomcar", "nosort", "namelen", "inest", "noprint", "plots", "plot", "ordinal" })) {
             return gap(cx, t[i].line, "option {s} is not implemented", .{word});
         } else if (eq(word, "order") and valued) {
@@ -271,12 +276,22 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
             model_seen = true;
             try parseModel(cx, &s, ds, t, i + 1, end);
         } else if (kw(t, i, "weight")) {
-            if (weight_seen) return cx.diags.fail(error.ParseError, t[i].line, "PROC SURVEYLOGISTIC: only one WEIGHT statement is allowed", .{});
-            weight_seen = true;
             if (end != i + 2) return invalid(cx, t, i + 2);
+            // Only the first WEIGHT statement is used; the rest are ignored (p.9827).
+            if (weight_seen) {
+                i = end + 1;
+                continue;
+            }
+            weight_seen = true;
             const c = try column(cx, ds, t, i + 1);
             if (ds.columns.items[c].type != .num) return cx.diags.fail(error.ParseError, t[i].line, "PROC SURVEYLOGISTIC: WEIGHT variable {s} must be numeric", .{t[i + 1].text});
             s.roles.weight = c;
+        } else if (kw(t, i, "freq")) {
+            if (s.freq != null) return cx.diags.fail(error.ParseError, t[i].line, "PROC SURVEYLOGISTIC: only one FREQ statement is allowed", .{});
+            if (end != i + 2) return invalid(cx, t, i + 2);
+            const c = try column(cx, ds, t, i + 1);
+            if (ds.columns.items[c].type != .num) return cx.diags.fail(error.ParseError, t[i].line, "PROC SURVEYLOGISTIC: FREQ variable {s} must be numeric", .{t[i + 1].text});
+            s.freq = c;
         } else if (kw(t, i, "strata") or kw(t, i, "stratum")) {
             if (s.roles.strata.len > 0) return gap(cx, t[i].line, "several STRATA statements are not implemented", .{});
             s.roles.strata = try roleColumns(cx, ds, t, i + 1, end, "STRATA");
@@ -286,7 +301,7 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
         } else if (kw(t, i, "by")) {
             var j = i;
             try bys.read(cx.arena, t, &j);
-        } else if (oneOf(t[i].text, &.{ "class", "freq", "domain", "repweights", "repweight", "contrast", "effect", "estimate", "lsmeans", "lsmestimate", "output", "slice", "store", "test", "units", "format" }) and at(t, i, .name)) {
+        } else if (oneOf(t[i].text, &.{ "class", "domain", "repweights", "repweight", "contrast", "effect", "estimate", "lsmeans", "lsmestimate", "output", "slice", "store", "test", "units", "format" }) and at(t, i, .name)) {
             return gap(cx, t[i].line, "{s} statement is not implemented", .{t[i].text});
         } else if (at(t, i, .name) and !kw(t, i, "x") and parser.isMidStepSkippable(t[i].text)) {
             try parser.noteUnexecuted(cx.diags, t[i..end]);
@@ -328,6 +343,17 @@ pub const Result = struct {
     score_f: f64,
     wald_f: f64,
     assoc: kernel.WeightedAssociation,
+    /// Observations read (before any exclusion) and sum of valid weights read.
+    read: usize = 0,
+    sum_weights_read: f64 = 0,
+    /// Exclusions reported by the listing notes (p.9839).
+    missing_model: usize = 0,
+    nonpositive_weight: usize = 0,
+    /// Rao-Scott correction applies only with STRATA or CLUSTER (p.9854).
+    rao_scott: bool = true,
+    /// Sum of frequencies used (n without FREQ) and read.
+    freq_total: f64 = 0,
+    freq_read: f64 = 0,
 };
 
 fn invert(a: A, m: []const f64, p: usize) diag.Error![]f64 {
@@ -359,7 +385,7 @@ fn invert(a: A, m: []const f64, p: usize) diag.Error![]f64 {
 
 /// G = (n-1)/(n-p) sum_h n_h (1-f_h)/(n_h-1) sum_i (e_hi - ebar_h)(e_hi - ebar_h)',
 /// e_hi = sum_j w_hij (y_hij - mu_hij) x_hij (p.9844, binary logit).
-fn meatMatrix(a: A, d: design.Design, x: []const f64, y: []const f64, mu: []const f64, p: usize) ![]f64 {
+fn meatMatrix(a: A, d: design.Design, x: []const f64, y: []const f64, mu: []const f64, p: usize, ntot: f64) ![]f64 {
     const e = try a.alloc(f64, d.clusters() * p);
     @memset(e, 0);
     for (0..d.kept.len) |k| for (0..p) |j| {
@@ -383,7 +409,7 @@ fn meatMatrix(a: A, d: design.Design, x: []const f64, y: []const f64, mu: []cons
             g[r * p + s] += factor * (e[c * p + r] - mean[h * p + r]) * (e[c * p + s] - mean[h * p + s]);
         };
     }
-    const n: f64 = @floatFromInt(d.kept.len);
+    const n = ntot;
     const pf: f64 = @floatFromInt(p);
     for (g) |*v| v.* *= (n - 1) / (n - pf);
     return g;
@@ -391,21 +417,23 @@ fn meatMatrix(a: A, d: design.Design, x: []const f64, y: []const f64, mu: []cons
 
 /// Meat of the simple-random-sampling Taylor covariance:
 /// n/(n-p) sum_i (e_i - ebar)(e_i - ebar)', e_i = w_i (y_i - mu_i) x_i.
-fn srsMeat(a: A, d: design.Design, x: []const f64, y: []const f64, mu: []const f64, p: usize) ![]f64 {
-    const n = d.kept.len;
+fn srsMeat(a: A, w: []const f64, fq: []const f64, x: []const f64, y: []const f64, mu: []const f64, p: usize) ![]f64 {
+    const n = w.len;
+    var total: f64 = 0;
+    for (fq) |f| total += f;
     const mean = try a.alloc(f64, p);
     @memset(mean, 0);
     for (0..n) |k| for (0..p) |j| {
-        mean[j] += d.weight[k] * (y[k] - mu[k]) * x[k * p + j] / @as(f64, @floatFromInt(n));
+        mean[j] += fq[k] * w[k] * (y[k] - mu[k]) * x[k * p + j] / total;
     };
     const g = try a.alloc(f64, p * p);
     @memset(g, 0);
     for (0..n) |k| for (0..p) |r| for (0..p) |c| {
-        const er = d.weight[k] * (y[k] - mu[k]) * x[k * p + r] - mean[r];
-        const ec = d.weight[k] * (y[k] - mu[k]) * x[k * p + c] - mean[c];
-        g[r * p + c] += er * ec;
+        const er = w[k] * (y[k] - mu[k]) * x[k * p + r] - mean[r];
+        const ec = w[k] * (y[k] - mu[k]) * x[k * p + c] - mean[c];
+        g[r * p + c] += fq[k] * er * ec;
     };
-    const nf: f64 = @floatFromInt(n);
+    const nf = total;
     const pf: f64 = @floatFromInt(p);
     for (g) |*v| v.* *= nf / (nf - pf);
     return g;
@@ -428,21 +456,39 @@ fn sandwich(a: A, bread: []const f64, meat: []const f64, p: usize) ![]f64 {
 }
 
 /// Fit and inference for one validated design. `rows` are the slice rows.
-pub fn analyze(cx: proc.ProcCtx, s: Spec, rows: []const []const Value, d: design.Design) diag.Error!Result {
+pub fn analyze(cx: proc.ProcCtx, s: Spec, rows: []const []const Value, d0: design.Design) diag.Error!Result {
     const a = cx.arena;
-    const n = d.kept.len;
+    const n = d0.kept.len;
+    // FREQ (p.9820): each observation counts f times, so the analysis weight
+    // is w*f and every observation total is a frequency total.
+    const fq = try a.alloc(f64, n);
+    var d = d0;
+    var ntot: f64 = @floatFromInt(n);
+    if (s.freq) |fc| {
+        const wf = try a.alloc(f64, n);
+        ntot = 0;
+        d.sum_weights = 0;
+        for (d0.kept, d0.weight, fq, wf) |r, w, *f, *v| {
+            f.* = @trunc(rows[r][fc].num);
+            v.* = w * f.*;
+            ntot += f.*;
+            d.sum_weights += v.*;
+        }
+        d.weight = wf;
+    } else @memset(fq, 1);
     const p = s.covariates.len + 1;
     const resp = s.response.?;
     var levels: std.ArrayList(Level) = .empty;
-    for (d.kept, d.weight) |r, w| {
+    for (d.kept, d.weight, fq) |r, w, f| {
         const v = rows[r][resp].num;
+        const c: usize = @intFromFloat(f);
         for (levels.items) |*l| {
             if (l.value == v) {
-                l.count += 1;
+                l.count += c;
                 l.weight += w;
                 break;
             }
-        } else try levels.append(a, .{ .value = v, .count = 1, .weight = w });
+        } else try levels.append(a, .{ .value = v, .count = c, .weight = w });
     }
     if (levels.items.len != 2) {
         if (levels.items.len > 2) return gap(cx, s.model_line, "response variables with more than two levels (cumulative logit model) are not implemented", .{});
@@ -476,19 +522,19 @@ pub fn analyze(cx: proc.ProcCtx, s: Spec, rows: []const []const Value, d: design
     const fit = kernel.fitWeighted(a, x, y, n, p, null, d.weight, .{ .technique = .fisher }) catch
         return gap(cx, s.model_line, "the listing for a model whose maximum likelihood fit does not converge or has separated or singular data is not implemented", .{});
     if (!fit.converged) return gap(cx, s.model_line, "the listing for a model without convergence is not implemented", .{});
-    const meat = try meatMatrix(a, d, x, y, fit.probabilities, p);
+    const meat = try meatMatrix(a, d, x, y, fit.probabilities, p, ntot);
     const cov = try sandwich(a, fit.covariance, meat, p);
     const df = if (s.roles.clusters.len > 0) d.clusters() - d.strata() else n - d.strata();
     // Wald, one restriction: F = b^2 / V (p.9856, r = 1).
     const wald_f = fit.coefficients[1] * fit.coefficients[1] / cov[p + 1];
     // Likelihood ratio with normalized weights (p.9854): Q = (n / sum w) LR.
-    const nf: f64 = @floatFromInt(n);
+    const nf = ntot;
     const lr = (nf / d.sum_weights) * 2 * (fit.log_likelihood - fit.null_log_likelihood);
     // Design effect of the slope (p.9854): V_rr / V_rr^srs, V^srs the
     // Taylor-series covariance of the same fit under simple random sampling
     // (one stratum, every observation its own PSU, no FPC). It reproduces the
     // reference correction; the inverse normalized information does not.
-    const srs = try sandwich(a, fit.covariance, try srsMeat(a, d, x, y, fit.probabilities, p), p);
+    const srs = try sandwich(a, fit.covariance, try srsMeat(a, d0.weight, fq, x, y, fit.probabilities, p), p);
     const correction = cov[p + 1] / srs[p + 1];
     // Score at the intercept-only fit: g' G~^-1 g with g the weighted score
     // vector and G~ the design meat matrix, both evaluated at the null fit.
@@ -501,13 +547,11 @@ pub fn analyze(cx: proc.ProcCtx, s: Spec, rows: []const []const Value, d: design
     for (0..n) |k| for (0..p) |j| {
         g[j] += d.weight[k] * (y[k] - mu0[k]) * x[k * p + j];
     };
-    const meat0 = try invert(a, try meatMatrix(a, d, x, y, mu0, p), p);
+    const meat0 = try invert(a, try meatMatrix(a, d, x, y, mu0, p, ntot), p);
     var score: f64 = 0;
     for (0..p) |r| for (0..p) |c| {
         score += g[r] * meat0[r * p + c] * g[c];
     };
-    const ones = try a.alloc(f64, n);
-    @memset(ones, 1);
     return .{
         .d = d,
         .levels = ordered,
@@ -520,45 +564,85 @@ pub fn analyze(cx: proc.ProcCtx, s: Spec, rows: []const []const Value, d: design
         .neg2ll_null = -2 * fit.null_log_likelihood,
         .sum_weights = d.sum_weights,
         .df = df,
-        .lr_f = lr / correction,
+        .lr_f = if (s.roles.strata.len > 0 or s.roles.clusters.len > 0) lr / correction else lr,
         .correction = correction,
         .score_f = score,
         .wald_f = wald_f,
-        .assoc = kernel.associationWeighted(y, fit.probabilities, ones),
+        .assoc = kernel.associationWeighted(y, fit.probabilities, fq),
+        .freq_total = ntot,
+        .read = d.read,
+        .sum_weights_read = d.sum_weights,
+        .rao_scott = s.roles.strata.len > 0 or s.roles.clusters.len > 0,
     };
 }
 
-pub fn plan(cx: proc.ProcCtx, s: Spec) diag.Error!Result {
-    const a = cx.arena;
+pub fn plan(cx: proc.ProcCtx, s: Spec) diag.Error!void {
     const ds = s.input.ds;
     const resp = s.response.?;
     const rv = ds.columns.items[resp];
     if (rv.type != .num or rv.format != null) return gap(cx, s.model_line, "character or formatted response variables are not implemented", .{});
     if (s.covariates.len == 0) return gap(cx, s.model_line, "the intercept-only model listing is not implemented", .{});
     if (s.covariates.len > 1) return gap(cx, s.model_line, "global tests with more than one restriction (second-order Rao-Scott default) are not implemented", .{});
-    if (s.roles.weight == null) return gap(cx, 0, "the listing without a WEIGHT statement is not verified", .{});
-    if (s.roles.strata.len == 0 and s.roles.clusters.len == 0) return gap(cx, 0, "the unadjusted likelihood ratio test of a design without STRATA or CLUSTER is not implemented", .{});
-    if (s.roles.strata.len > 1 or s.roles.clusters.len > 1) return gap(cx, 0, "Model Information for several STRATA or CLUSTER variables is not verified", .{});
+    if (s.roles.clusters.len > 1) return gap(cx, 0, "Model Information for several CLUSTER variables is not verified", .{});
     if (s.roles.fpc != .none) return gap(cx, 0, "the listing with RATE= or TOTAL= (finite population correction) is not verified", .{});
-    // Raised before per-group checks so a BY request never reports a group
-    // data error first.
-    if (s.by_cols.len > 0) return gap(cx, 0, "BY-group processing and listing layout are not verified", .{});
-    const slices = try by.checkedSlices(a, ds, s.by_cols, &.{}, false, cx.diags);
-    if (slices.len == 0) return gap(cx, 0, "the result for an empty input data set is not verified", .{});
-    const rows = slices[0].rows;
-    // Missing response or covariate values exclude the observation (MCAR, p.9828).
-    for (rows) |obs| {
+    if (s.roles.missing) return gap(cx, 0, "the MISSING option (missing STRATA/CLUSTER values as a valid level) listing is not verified", .{});
+}
+
+/// Fit one BY group (or the whole input). Every check runs before any text.
+pub fn planGroup(cx: proc.ProcCtx, s: Spec, all: []const []const Value) diag.Error!Result {
+    const a = cx.arena;
+    const resp = s.response.?;
+    if (all.len == 0) return cx.diags.fail(error.ParseError, 0, "No observations in the input data set.", .{});
+    // Missing response or covariate values exclude the observation (p.9839);
+    // the sum of weights read counts every valid weight.
+    var rows: std.ArrayList([]const Value) = .empty;
+    var missing_model: usize = 0;
+    var sum_read: f64 = 0;
+    var freq_read: f64 = 0;
+    var bad_freq: usize = 0;
+    for (all) |obs| {
+        // FREQ values are truncated; below 1 or missing excludes (p.9820).
+        // The sums read count valid frequencies, and weights times valid
+        // frequencies for positive weights (reference listing).
+        var f: f64 = 1;
+        var invalid_freq = false;
+        if (s.freq) |fc| {
+            f = @trunc(obs[fc].num);
+            if (f >= 1) freq_read += f else invalid_freq = true;
+        }
+        const w: f64 = if (s.roles.weight) |wc| obs[wc].num else 1;
+        const invalid_weight = !(w > 0);
+        if (!invalid_freq and !invalid_weight) sum_read += w * f;
         var missing = std.math.isNan(obs[resp].num);
         for (s.covariates) |c| missing = missing or std.math.isNan(obs[c].num);
-        if (missing) return gap(cx, 0, "the listing for observations excluded by missing MODEL values is not verified", .{});
+        // ponytail: the reference counts each exclusion once; an observation
+        // excluded for several reasons is not verified.
+        if (@as(u8, @intFromBool(missing)) + @intFromBool(invalid_freq) + @intFromBool(invalid_weight) > 1)
+            return gap(cx, 0, "an observation excluded for several reasons is not verified", .{});
+        if (invalid_freq) {
+            bad_freq += 1;
+            continue;
+        }
+        if (missing) {
+            missing_model += 1;
+            continue;
+        }
+        try rows.append(a, obs);
     }
-    const d = try design.build(a, rows, s.roles);
+    const d = try design.build(a, rows.items, s.roles);
     if (d.kept.len == 0) return gap(cx, 0, "the result for an input without valid observations is not verified", .{});
-    if (d.bad_weight + d.bad_design > 0) return gap(cx, 0, "the listing for input with observations excluded by missing or nonpositive WEIGHT, STRATA or CLUSTER values is not verified", .{});
     if (d.singlePsuStratum()) return gap(cx, 0, "variance estimation for a stratum with a single cluster is not implemented", .{});
     const df = if (s.roles.clusters.len > 0) d.clusters() - d.strata() else d.kept.len - d.strata();
     if (df == 0) return gap(cx, 0, "inference with zero design degrees of freedom is not implemented", .{});
-    return analyze(cx, s, rows, d);
+    var r = try analyze(cx, s, rows.items, d);
+    r.read = all.len;
+    r.sum_weights_read = sum_read;
+    r.freq_read = freq_read;
+    if (s.freq != null and s.roles.clusters.len == 0) return gap(cx, 0, "FREQ without a CLUSTER statement is not verified", .{});
+    if (s.freq != null and missing_model + d.bad_design > 0) return gap(cx, 0, "FREQ with observations excluded for missing MODEL or design values is not verified", .{});
+    r.missing_model = missing_model;
+    r.nonpositive_weight = d.bad_weight + bad_freq;
+    return r;
 }
 
 fn centered(a: A, out: *Out, text: []const u8, width: usize) !void {
@@ -619,15 +703,17 @@ pub fn render(cx: proc.ProcCtx, out: *Out, s: Spec, r: Result) diag.Error!void {
     try pair(cx, &b, "Data Set", dsname, 30, 53);
     try pair(cx, &b, "Response Variable", rname, 30, 53);
     try pair(cx, &b, "Number of Response Levels", "2", 30, 53);
+    if (s.freq) |fc| try pair(cx, &b, "Frequency Variable", ds.columns.items[fc].name, 30, 53);
     if (s.roles.strata.len > 0) {
-        try pair(cx, &b, "Stratum Variable", ds.columns.items[s.roles.strata[0]].name, 30, 53);
+        // Several STRATA variables: "Stratum Variables", one name per line.
+        for (s.roles.strata, 0..) |c, k| try pair(cx, &b, if (k > 0) "" else if (s.roles.strata.len > 1) "Stratum Variables" else "Stratum Variable", ds.columns.items[c].name, 30, 53);
         try pair(cx, &b, "Number of Strata", try count(a, r.d.strata()), 30, 53);
     }
     if (s.roles.clusters.len > 0) {
         try pair(cx, &b, "Cluster Variable", ds.columns.items[s.roles.clusters[0]].name, 30, 53);
         try pair(cx, &b, "Number of Clusters", try count(a, r.d.clusters()), 30, 53);
     }
-    try pair(cx, &b, "Weight Variable", ds.columns.items[s.roles.weight.?].name, 30, 53);
+    if (s.roles.weight) |wc| try pair(cx, &b, "Weight Variable", ds.columns.items[wc].name, 30, 53);
     try pair(cx, &b, "Model", "Binary Logit", 30, 53);
     try pair(cx, &b, "Optimization Technique", "Fisher's Scoring", 30, 53);
     try pair(cx, &b, "Variance Adjustment", "Degrees of Freedom (DF)", 30, 53);
@@ -635,19 +721,37 @@ pub fn render(cx: proc.ProcCtx, out: *Out, s: Spec, r: Result) diag.Error!void {
     try centered(a, &b, "Variance Estimation", 46);
     try b.append(a, '\n');
     try b.appendSlice(a, "Method                           Taylor Series\nVariance Adjustment    Degrees of Freedom (DF)\n\n\n");
-    const sw = try format.bestNum(a, r.sum_weights);
-    try row(cx, &b, 39, "Number of Observations Read", &.{try count(a, r.d.read)}, &.{39});
+    try row(cx, &b, 39, "Number of Observations Read", &.{try count(a, r.read)}, &.{39});
     try row(cx, &b, 39, "Number of Observations Used", &.{try count(a, r.n)}, &.{39});
-    try row(cx, &b, 39, "Sum of Weights Read", &.{sw}, &.{39});
-    try row(cx, &b, 39, "Sum of Weights Used", &.{sw}, &.{39});
+    if (s.freq != null) {
+        try row(cx, &b, 39, "Sum of Frequencies Read", &.{try format.bestNum(a, r.freq_read)}, &.{39});
+        try row(cx, &b, 39, "Sum of Frequencies Used", &.{try format.bestNum(a, r.freq_total)}, &.{39});
+    }
+    if (s.roles.weight != null) {
+        try row(cx, &b, 39, "Sum of Weights Read", &.{try format.bestNum(a, r.sum_weights_read)}, &.{39});
+        try row(cx, &b, 39, "Sum of Weights Used", &.{try format.bestNum(a, r.sum_weights)}, &.{39});
+    }
     try b.appendSlice(a, "\n\n");
-    try centered(a, &b, "Response Profile", 52);
-    try b.appendSlice(a, " \n Ordered                      Total            Total\n");
-    try row(cx, &b, 52, "   Value", &.{ rname, "Frequency", "Weight" }, &.{ 21, 35, 52 });
+    if (s.roles.weight != null) {
+        try centered(a, &b, "Response Profile", 52);
+        try b.appendSlice(a, " \n Ordered                      Total            Total\n");
+        try row(cx, &b, 52, "   Value", &.{ rname, "Frequency", "Weight" }, &.{ 21, 35, 52 });
+        try b.append(a, '\n');
+        for (r.levels, 0..) |l, k| try row(cx, &b, 52, "", &.{ try count(a, k + 1), try format.bestNum(a, l.value), try count(a, l.count), try fixed(a, l.weight, 5) }, &.{ 8, 21, 35, 52 });
+    } else {
+        try centered(a, &b, "Response Profile", 36);
+        try b.appendSlice(a, " \n Ordered                      Total\n");
+        try row(cx, &b, 35, "   Value", &.{ rname, "Frequency" }, &.{ 21, 35 });
+        try b.append(a, '\n');
+        for (r.levels, 0..) |l, k| try row(cx, &b, 35, "", &.{ try count(a, k + 1), try format.bestNum(a, l.value), try count(a, l.count) }, &.{ 8, 21, 35 });
+    }
     try b.append(a, '\n');
-    for (r.levels, 0..) |l, k| try row(cx, &b, 52, "", &.{ try count(a, k + 1), try format.bestNum(a, l.value), try count(a, l.count), try fixed(a, l.weight, 5) }, &.{ 8, 21, 35, 52 });
-    try b.append(a, '\n');
-    try b.print(a, "Probability modeled is {s}={s}.\n\n\n", .{ rname, try format.bestNum(a, r.levels[r.event].value) });
+    try b.print(a, "Probability modeled is {s}={s}.\n", .{ rname, try format.bestNum(a, r.levels[r.event].value) });
+    if (r.missing_model == 1) try b.appendSlice(a, "\nNOTE: 1 observation was deleted due to missing values for the response or explanatory variables.\n");
+    if (r.missing_model > 1) try b.print(a, "\nNOTE: {d} observations were deleted due to missing values for the response or explanatory variables.\n", .{r.missing_model});
+    if (r.nonpositive_weight == 1) try b.appendSlice(a, "\nNOTE: 1 observation having nonpositive frequency or weight was excluded since it does not contribute to the analysis.\n");
+    if (r.nonpositive_weight > 1) try b.print(a, "\nNOTE: {d} observations having nonpositive frequencies or weights were excluded since they do not contribute to the analysis.\n", .{r.nonpositive_weight});
+    try b.appendSlice(a, "\n\n");
     try centered(a, &b, "Model Convergence Status", 64);
     try b.append(a, '\n');
     try b.appendSlice(a, "         Convergence criterion (GCONV=1E-8) satisfied.          \n\n\n");
@@ -665,11 +769,14 @@ pub fn render(cx: proc.ProcCtx, out: *Out, s: Spec, r: Result) diag.Error!void {
     const tests = [_]struct { []const u8, f64 }{ .{ "Likelihood Ratio", r.lr_f }, .{ "Score", r.score_f }, .{ "Wald", r.wald_f } };
     for (tests) |te| try row(cx, &b, 65, te[0], &.{ try fixed(a, te[1], 2), "1", dfs, try pvalue(a, reg.fProbability(te[1], 1, r.df)) }, &.{ 28, 41, 54, 65 });
     try b.append(a, '\n');
-    const corr = try fixed(a, r.correction, 4);
-    if (corr.len != 6) return gap(cx, 0, "the Rao-Scott note for a design correction of 10 or more is not verified", .{});
-    try centered(a, &b, "NOTE: First-order Rao-Scott design correction", 65);
-    try centered(a, &b, try std.fmt.allocPrint(a, "{s} applied to the likelihood ratio test.", .{corr}), 65);
-    try b.appendSlice(a, "\n\n");
+    if (r.rao_scott) {
+        const corr = try fixed(a, r.correction, 4);
+        if (corr.len != 6) return gap(cx, 0, "the Rao-Scott note for a design correction of 10 or more is not verified", .{});
+        try centered(a, &b, "NOTE: First-order Rao-Scott design correction", 65);
+        try centered(a, &b, try std.fmt.allocPrint(a, "{s} applied to the likelihood ratio test.", .{corr}), 65);
+        try b.append(a, '\n');
+    }
+    try b.append(a, '\n');
     try centered(a, &b, "Analysis of Maximum Likelihood Estimates", 56);
     try b.appendSlice(a, " \n                         Standard\nParameter    Estimate       Error    t Value    Pr > |t|\n\n");
     for (0..r.p) |j| {
@@ -698,7 +805,7 @@ pub fn render(cx: proc.ProcCtx, out: *Out, s: Spec, r: Result) diag.Error!void {
     try centered(a, &b, try std.fmt.allocPrint(a, "the confidence limits is {d}.", .{r.df}), 42);
     try b.appendSlice(a, "\n\n");
     const as = r.assoc;
-    const nf: f64 = @floatFromInt(r.n);
+    const nf = r.freq_total;
     const gamma = if (as.concordant + as.discordant > 0) (as.concordant - as.discordant) / (as.concordant + as.discordant) else std.math.nan(f64);
     try b.appendSlice(a, "Association of Predicted Probabilities and Observed Responses\n\n");
     const lines = [_]struct { []const u8, []const u8, []const u8, []const u8 }{
@@ -724,8 +831,33 @@ pub fn render(cx: proc.ProcCtx, out: *Out, s: Spec, r: Result) diag.Error!void {
 
 pub fn run(cx: proc.ProcCtx, out: *Out, t: []const lex.Token) diag.Error!void {
     const s = try parse(cx, t);
-    const r = try plan(cx, s);
-    try render(cx, out, s, r);
+    try plan(cx, s);
+    const ds = s.input.ds;
+    const groups = try by.checkedSlices(cx.arena, ds, s.by_cols, &.{}, false, cx.diags);
+    if (groups.len == 0) return cx.diags.fail(error.ParseError, 0, "No observations in the input data set.", .{});
+    // Nothing is printed unless every BY group can be analysed.
+    const results = try cx.arena.alloc(Result, groups.len);
+    for (groups, results) |g, *r| r.* = try planGroup(cx, s, g.rows);
+    if (s.noprint) return;
+    var body: Out = .empty;
+    for (groups, results, 0..) |g, r, k| {
+        if (s.by_cols.len > 0) {
+            // Each BY group starts a new page with the titles repeated; the
+            // page-start blank line is not printed (as between steps).
+            if (k > 0) if (cx.listing_titles) |titles| try titles.emitTitles(cx.arena, &body);
+            // ponytail: the BY line starts at column 1 as under NOCENTER (the
+            // verified layout, like this listing's tables).
+            var tmp: Out = .empty;
+            try by.appendLine(cx.arena, &tmp, ds, g.rep.?, s.by_cols);
+            const text = std.mem.trimStart(u8, tmp.items, "\n");
+            if (text.len > 0) {
+                try body.append(cx.arena, '\n');
+                try body.appendSlice(cx.arena, std.mem.trimStart(u8, text, " "));
+            }
+        }
+        try render(cx, &body, s, r);
+    }
+    try out.appendSlice(cx.arena, body.items);
 }
 
 test {
