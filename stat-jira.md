@@ -6,13 +6,13 @@ This section is the only current status summary; every section below it is a his
 
 - **State:** ACTIVE on explicit user resume. Batch 5 is integrated, verified and pushed (below). Batch 6: seven dev slots assigned 2026-11-28T05:03:56+00:00; implementation deadline 2026-11-28T05:48:56+00:00 (45 minutes, not reset by handoff or steering). Heavy builds limited to two at a time machine-wide. Coordinator keep-awake: `caffeinate -i -s` PID 62218.
   - dev1: STAT-PLM-002; `/Users/thomas/kirha/opensas-dev1`; branch `stat-b6/plm002-dev1` from the tip that records this assignment.
-  - dev2: STAT-GLIMMIX-002; `/Users/thomas/kirha/opensas-dev2`; branch `stat-b6/glimmix002-dev2` from the tip that records this assignment.
+  - dev2: STAT-GLIMMIX-002 handed back PARK and integrated locally (`b82dbd21`, kernel only, step still a loud gap; final batch verification pending). Slot refilled: STAT-GLIMMIX-003; `/Users/thomas/kirha/opensas-dev2`; branch `stat-b6/glimmix003-dev2`; assigned 2026-11-28T05:13:31+00:00, own deadline 2026-11-28T05:58:31+00:00.
   - dev3: STAT-FREQ-015; `/Users/thomas/kirha/opensas-dev3`; branch `stat-b6/freq015-dev3` from the tip that records this assignment.
   - dev4: STAT-ANOVA-007; `/Users/thomas/kirha/opensas-dev4`; branch `stat-b6/anova007-dev4` from the tip that records this assignment.
   - dev5: STAT-LIFETEST-002; `/Users/thomas/kirha/opensas-dev5`; branch `stat-b6/lifetest002-dev5` from the tip that records this assignment.
   - dev6: STAT-PHREG-002; `/Users/thomas/kirha/opensas-dev6`; branch `stat-b6/phreg002-dev6` from the tip that records this assignment.
   - dev7: STAT-GENMOD-002; `/Users/thomas/kirha/opensas-dev7`; branch `stat-b6/genmod002-dev7` from the tip that records this assignment.
-- **Counts:** 53 DONE, 67 PARK, 7 DOING, 1295 TODO.
+- **Counts:** 53 DONE, 68 PARK, 7 DOING, 1294 TODO.
 - **Working branch:** `feat/stat/batch-4`. Tested and pushed code SHA `470bdc33c8b8e070e4a4d7c5fbbf3f26ccaec8b5` (origin moved `0095ed9b`/`bc9eb62d` → `470bdc33`). Later commits that touch only this file are documentation. No PR created or merged; `main` untouched.
 - **Verification at that exact SHA (2026-11-28):** whole `tests/STAT15.4-oracle/` moved out of the checkout, then `zig build gate -j2 --summary all` direct exit 0 — **2380/2380 unit tests** (2262 + 102 + 13 + 3), **2409/2409 corpus**, **11/11 programs**; `zig build install` direct 0; separate supplemental direct 0, **1113/1113**. Oracle restored unchanged (1425 entries), tree clean.
 - **Integration method:** seven branches `stat-b5/<ticket>-devN` from `bbf110dd`, applied serially by `git cherry-pick` (17 commits) in the order GENMOD-001, PLM-001, GLIMMIX-001, PHREG-001, ANOVA-001, FREQ-014, LIFETEST-001. Two additive conflicts (PHREG in `src/main.zig`/`src/root.zig`, LIFETEST in `src/root.zig`: adjacent registration lines) were resolved by keeping every line of both sides; nothing else was hand-edited.
@@ -5058,7 +5058,7 @@ Source: S154, Chapter 52, `The GLIMMIX Procedure`, PDF pp. 3687–4042. Tasks in
 
 <a id="stat-glimmix-003"></a>
 
-### [TODO] STAT-GLIMMIX-003 — GLIMMIX — Implications of the Non-Full-Rank Parameterization / Intercept / Interaction Effects / Nested Effects / Notes on the EFFECT / Positional and Nonpositional Syntax for Contrast Coefficients
+### [DOING @dev2] STAT-GLIMMIX-003 — GLIMMIX — Implications of the Non-Full-Rank Parameterization / Intercept / Interaction Effects / Nested Effects / Notes on the EFFECT / Positional and Nonpositional Syntax for Contrast Coefficients
 
 - Source: S154 / Chapter 52 / `Implications of the Non-Full-Rank Parameterization` (PDF p. 3876); S154 / Chapter 52 / `Intercept` (PDF p. 3875); S154 / Chapter 52 / `Interaction Effects` (PDF p. 3875); S154 / Chapter 52 / `Nested Effects` (PDF pp. 3875–3876); S154 / Chapter 52 / `Notes on the EFFECT Statement` (PDF pp. 3876–3878); S154 / Chapter 52 / `Positional and Nonpositional Syntax for Contrast Coefficients` (PDF pp. 3878–3881).
 - Scope: Implement Implications of the Non-Full-Rank Parameterization; Intercept; Interaction Effects; Nested Effects; Notes on the EFFECT; Positional and Nonpositional Syntax for Contrast Coefficients. Implement the syntax and model semantics allowed by this procedure, using shared effect/parameterization support only for forms documented as supported.
