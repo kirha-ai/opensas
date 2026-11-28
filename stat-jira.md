@@ -11,9 +11,9 @@ This section is the only current status summary; every section below it is a his
 - **Open review (not done):** the originals of GENMOD-001/002/018, ANOVA-001/007, FREQ-014, PHREG-003 and LIFETEST-001/002 now match exactly but the tickets stay PARK; check each against its full acceptance criteria and recorded remaining gaps before any is marked DONE.
 - **Interrupted by the full disk:** STAT-ANOVA-009 and STAT-PHREG-004 are TODO (no file changed; reading notes in the tickets). STAT-LIFETEST-003 and STAT-GENMOD-003 are PARK with UNCOMMITTED, NEVER-COMPILED source retained in `opensas-dev5` (`stat-b6/lifetest003-dev5`) and `opensas-dev7` (`stat-b6/genmod003-dev7`); do not integrate it before it is built, tested and committed there.
 - **Interim (not a receipt):** oracle-present `zig build install` 0 and `zig build gate -j2` 0 at `3e0f629f` (first six batch-7 tickets): 2492/2492 unit, 2441/2441 corpus, 11/11 programs. STAT-MI-001 was integrated after it. New dev subagents run on Opus 5.5 at the user's request (from STAT-QUANTREG-001 on).
-- **Live slots (auto):** dev1 STAT-QUANTREG-001, dev2 STAT-GLMSELECT-001, dev3 STAT-SURVEYFREQ-001, dev4 STAT-SURVEYREG-001, dev5 STAT-VARCOMP-001, dev6 STAT-GEE-001, dev7 STAT-PRINCOMP-001.
-- **Integrated locally, awaiting batch verification (auto):** STAT-LIFETEST-003 (PARK), STAT-LIFEREG-001 (PARK), STAT-MULTTEST-001 (PARK), STAT-MIANALYZE-001 (PARK), STAT-PROBIT-001 (PARK), STAT-GENMOD-003 (PARK), STAT-MI-001 (PARK), STAT-STDRATE-001 (PARK), STAT-SURVEYMEANS-001 (PARK), STAT-NLIN-001 (PARK).
-- **Counts:** 55 DONE, 90 PARK, 7 DOING, 1270 TODO.
+- **Live slots (auto):** dev1 STAT-QUANTREG-001, dev2 STAT-GLMSELECT-001, dev3 STAT-SURVEYFREQ-001, dev4 STAT-SURVEYREG-001, dev5 STAT-VARCOMP-001, dev6 STAT-GEE-001, dev7 STAT-FACTOR-001.
+- **Integrated locally, awaiting batch verification (auto):** STAT-LIFETEST-003 (PARK), STAT-LIFEREG-001 (PARK), STAT-MULTTEST-001 (PARK), STAT-MIANALYZE-001 (PARK), STAT-PROBIT-001 (PARK), STAT-GENMOD-003 (PARK), STAT-MI-001 (PARK), STAT-STDRATE-001 (PARK), STAT-SURVEYMEANS-001 (PARK), STAT-NLIN-001 (PARK), STAT-PRINCOMP-001 (PARK).
+- **Counts:** 55 DONE, 91 PARK, 7 DOING, 1269 TODO.
 - **Next:** resume the two retained partial tickets or dispatch new eligible tickets from the current tip; run the open review above.
 - **Working branch:** `feat/stat/batch-4`. Last tested and pushed SHA `9c4780bff01fd8fecf5074ac7ae4b34f6888f3dd` (batch 6; batch 5 was `470bdc33c8b8e070e4a4d7c5fbbf3f26ccaec8b5`). The bullets below this one describe batch 5 and are historical. Later commits that touch only this file are documentation. No PR created or merged; `main` untouched.
 - **Batch 5 verification at that exact SHA (2026-11-28):** whole `tests/STAT15.4-oracle/` moved out of the checkout, then `zig build gate -j2 --summary all` direct exit 0 — **2380/2380 unit tests** (2262 + 102 + 13 + 3), **2409/2409 corpus**, **11/11 programs**; `zig build install` direct 0; separate supplemental direct 0, **1113/1113**. Oracle restored unchanged (1425 entries), tree clean.
@@ -3754,7 +3754,7 @@ Source: S154, Chapter 44, `The FACTOR Procedure`, PDF pp. 2783–2892. Tasks in 
 
 <a id="stat-factor-001"></a>
 
-### [TODO] STAT-FACTOR-001 — FACTOR — Data input, variable roles, and basic options
+### [DOING @dev7] STAT-FACTOR-001 — FACTOR — Data input, variable roles, and basic options
 
 - Source: S154 / Chapter 44 / `PROC FACTOR Statement` (PDF pp. 2797–2816); S154 / Chapter 44 / `BY Statement` (PDF p. 2816); S154 / Chapter 44 / `FREQ Statement` (PDF pp. 2816–2817); S154 / Chapter 44 / `VAR Statement` (PDF p. 2823); S154 / Chapter 44 / `WEIGHT Statement` (PDF pp. 2823–2824); S154 / Chapter 44 / `Input Data Set` (PDF pp. 2824–2826); S154 / Chapter 44 / `Missing Values` (PDF pp. 2834–2835).
 - Scope: Integrate PROC FACTOR declarations, basic options, defaults, and execution boundaries; this ticket establishes parameter objects and result interfaces, while later feature tickets implement model-, algorithm-, and output-specific options. Also implement BY; FREQ; VAR; WEIGHT; Input Data Set; Missing Values; apply this procedure's rules for missing values, variable roles, and observation selection.
@@ -11906,7 +11906,7 @@ Source: S154, Chapter 98, `The PRINCOMP Procedure`, PDF pp. 7991–8032. Tasks i
 
 <a id="stat-princomp-001"></a>
 
-### [DOING @dev7] STAT-PRINCOMP-001 — PRINCOMP — Data input, variable roles, and basic options
+### [PARK] STAT-PRINCOMP-001 — PRINCOMP — Data input, variable roles, and basic options
 
 - Source: S154 / Chapter 98 / `PROC PRINCOMP Statement` (PDF pp. 7999–8005); S154 / Chapter 98 / `BY Statement` (PDF p. 8005); S154 / Chapter 98 / `FREQ Statement` (PDF pp. 8005–8006); S154 / Chapter 98 / `ID Statement` (PDF p. 8006); S154 / Chapter 98 / `VAR Statement` (PDF p. 8006); S154 / Chapter 98 / `WEIGHT Statement` (PDF pp. 8006–8007); S154 / Chapter 98 / `Missing Values` (PDF p. 8007).
 - Scope: Integrate PROC PRINCOMP declarations, basic options, defaults, and execution boundaries; this ticket establishes parameter objects and result interfaces, while later feature tickets implement model-, algorithm-, and output-specific options. Also implement BY; FREQ; ID; VAR; WEIGHT; Missing Values; apply this procedure's rules for missing values, variable roles, and observation selection.
