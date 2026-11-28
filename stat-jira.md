@@ -8,8 +8,8 @@ This section is the only current status summary; every section below it is a his
 - **Resumed 2026-11-28 about 07:20Z** after the 06:31Z account usage limit stopped all dev contexts. At the user's direction devs may compare with real SAS via `/Users/thomas/sas/bin/sasrun foo.sas -f text -o - -l /dev/null`, only when truly blocked. Coordinator keep-awake `caffeinate` PID 62218. Coordinator scripts and dev brief live in the session scratchpad `stat/` directory.
 - **Batch 38 verification at exact SHA `a8b8ba223ee41709f8bdd6a559724c103b810e6b` (2026-11-28):** `zig build install` direct 0; whole `tests/STAT15.4-oracle/` moved out of the checkout, then `zig build gate -j2 --summary all` direct 0 — **2817/2817 unit tests**, **2754/2754 corpus**, **11/11 programs**; `zig build install` direct 0; separate supplemental direct 0, **1113/1113**. Oracle restored unchanged, tree clean, HEAD unchanged. Pushed. **New DONE:** STAT-CAUSALGRAPH-002 (95/95, rc 0) and STAT-GLMMOD-003 (569/569, rc 0); reference folders safe to delete, not deleted. **Integrated, PARK:** STAT-SURVEYIMPUTE-001, STAT-SURVEYMEANS-001, STAT-LATTICE-002, STAT-SCORE-001, STAT-STDRATE-001, STAT-SURVEYFREQ-001.
 - **User approvals (2026-11-28):** public classic sample data, including rows exported from real SAS (Iris), may be committed; build caches (`.zig-cache`) may be deleted automatically when free disk falls to about 8 GB, only for idle worktrees (done once, 41 GB free); the `best32.` display fix is approved as STAT-BEST-001. Earlier scope: SASHELP sample data taken from SAS's public sample material may be committed to this public repository, for STAT-SASHELP-001 and the later SASHELP tickets; record source and verification, never invent rows, ask before adding a data set above about 2 MB.
-- **Live slots (auto):** none.
-- **Counts:** 65 DONE, 139 PARK, 0 DOING, 1220 TODO.
+- **Live slots (auto):** dev1 STAT-GLMMOD-002, dev2 STAT-STDIZE-002, dev3 STAT-NESTED-002, dev4 STAT-GENMOD-001, dev5 STAT-CAUSALGRAPH-004, dev6 STAT-LIFETEST-001, dev7 STAT-ANOVA-001.
+- **Counts:** 65 DONE, 136 PARK, 7 DOING, 1216 TODO.
 - **Next:** integrate each returned ticket and refill its slot, preferring close-out attempts on PARK tickets whose originals now match exactly (DISTANCE-001, PRINQUAL-001, VARCLUS-001, TPSPLINE-001, CATMOD-001, CANCORR-001, GEE-001, INBREED-001, then the open review in the batch 6 receipt), because a DONE ticket unlocks its dependents; then other eligible tickets.
 - **Working branch:** `feat/stat/batch-4`. Last tested and pushed code SHA `a8b8ba223ee41709f8bdd6a559724c103b810e6b` (batch 38; batch 37 was `8fa956235676963c14d5236700e35c2d0eb26db6`). The bullets below this one describe batch 5 and are historical. Later commits that touch only this file are documentation. No PR created or merged; `main` untouched.
 
@@ -1959,7 +1959,7 @@ Source: S154, Chapter 29, `The ANOVA Procedure`, PDF pp. 1105–1162. Tasks in t
 
 <a id="stat-anova-001"></a>
 
-### [PARK] STAT-ANOVA-001 — ANOVA — Data input, variable roles, and basic options
+### [DOING @dev7] STAT-ANOVA-001 — ANOVA — Data input, variable roles, and basic options
 
 - Source: S154 / Chapter 29 / `PROC ANOVA Statement` (PDF pp. 1115–1117); S154 / Chapter 29 / `BY Statement` (PDF pp. 1117–1118); S154 / Chapter 29 / `FREQ Statement` (PDF p. 1119); S154 / Chapter 29 / `Missing Values` (PDF pp. 1138–1139).
 - Scope: Integrate PROC ANOVA declarations, basic options, defaults, and execution boundaries; this ticket establishes parameter objects and result interfaces, while later feature tickets implement model-, algorithm-, and output-specific options. Also implement BY; FREQ; Missing Values; apply this procedure's rules for missing values, variable roles, and observation selection.
@@ -3164,7 +3164,7 @@ Source: S154, Chapter 37, `The CAUSALGRAPH Procedure`, PDF pp. 2303–2362. Task
 
 <a id="stat-causalgraph-004"></a>
 
-### [TODO] STAT-CAUSALGRAPH-004 — CAUSALGRAPH — IDENTIFY / Statistical and Causal Concepts
+### [DOING @dev5] STAT-CAUSALGRAPH-004 — CAUSALGRAPH — IDENTIFY / Statistical and Causal Concepts
 
 - Source: S154 / Chapter 37 / `IDENTIFY Statement` (PDF pp. 2314–2316); S154 / Chapter 37 / `Statistical and Causal Concepts` (PDF p. 2322).
 - Scope: Implement IDENTIFY; Statistical and Causal Concepts. This ticket owns the feature's options, defaults, computation, and results as an extension of the basic computational path; the chapter's output tickets handle ODS descriptors and file presentation.
@@ -4941,7 +4941,7 @@ Source: S154, Chapter 51, `The GENMOD Procedure`, PDF pp. 3481–3686. Tasks in 
 
 <a id="stat-genmod-001"></a>
 
-### [PARK] STAT-GENMOD-001 — GENMOD — Data input, variable roles, and basic options
+### [DOING @dev4] STAT-GENMOD-001 — GENMOD — Data input, variable roles, and basic options
 
 - Source: S154 / Chapter 51 / `PROC GENMOD Statement` (PDF pp. 3509–3514); S154 / Chapter 51 / `BY Statement` (PDF pp. 3525–3526); S154 / Chapter 51 / `FREQ Statement` (PDF p. 3541); S154 / Chapter 51 / `STRATA Statement` (PDF pp. 3565–3567); S154 / Chapter 51 / `WEIGHT Statement` (PDF p. 3567); S154 / Chapter 51 / `Missing Values` (PDF p. 3616).
 - Scope: Integrate PROC GENMOD declarations, basic options, defaults, and execution boundaries; this ticket establishes parameter objects and result interfaces, while later feature tickets implement model-, algorithm-, and output-specific options. Also implement BY; FREQ; STRATA; WEIGHT; Missing Values; apply this procedure's rules for missing values, variable roles, and observation selection.
@@ -5893,7 +5893,7 @@ Source: S154, Chapter 54, `The GLMMOD Procedure`, PDF pp. 4231–4250. Tasks in 
 
 <a id="stat-glmmod-002"></a>
 
-### [TODO] STAT-GLMMOD-002 — GLMMOD — Design matrix construction for model effects
+### [DOING @dev1] STAT-GLMMOD-002 — GLMMOD — Design matrix construction for model effects
 
 - Source: S154 / Chapter 54 / `Getting Started: GLMMOD Procedure` (PDF pp. 4232–4236); S154 / Chapter 54 / `Overview: GLMMOD Procedure` (PDF p. 4232).
 - Scope: Implement design matrix construction for model effects using the documented default path and establish the computational state needed by later extensions; implement specialized models, methods, and diagnostics outside that default example in their corresponding feature tickets.
@@ -8791,7 +8791,7 @@ Source: S154, Chapter 77, `The LIFETEST Procedure`, PDF pp. 5639–5754. Tasks i
 
 <a id="stat-lifetest-001"></a>
 
-### [PARK] STAT-LIFETEST-001 — LIFETEST — Data input, variable roles, and basic options
+### [DOING @dev6] STAT-LIFETEST-001 — LIFETEST — Data input, variable roles, and basic options
 
 - Source: S154 / Chapter 77 / `PROC LIFETEST Statement` (PDF pp. 5650–5662); S154 / Chapter 77 / `BY Statement` (PDF pp. 5662–5663); S154 / Chapter 77 / `FREQ Statement` (PDF p. 5663); S154 / Chapter 77 / `ID Statement` (PDF p. 5663); S154 / Chapter 77 / `STRATA Statement` (PDF pp. 5663–5668); S154 / Chapter 77 / `WEIGHT Statement` (PDF p. 5670); S154 / Chapter 77 / `Missing Values` (PDF pp. 5670–5671).
 - Scope: Integrate PROC LIFETEST declarations, basic options, defaults, and execution boundaries; this ticket establishes parameter objects and result interfaces, while later feature tickets implement model-, algorithm-, and output-specific options. Also implement BY; FREQ; ID; STRATA; WEIGHT; Missing Values; apply this procedure's rules for missing values, variable roles, and observation selection.
@@ -10552,7 +10552,7 @@ Source: S154, Chapter 87, `The NESTED Procedure`, PDF pp. 6965–6976. Tasks in 
 
 <a id="stat-nested-002"></a>
 
-### [TODO] STAT-NESTED-002 — NESTED — Variance component estimation for nested random-effect designs
+### [DOING @dev3] STAT-NESTED-002 — NESTED — Variance component estimation for nested random-effect designs
 
 - Source: S154 / Chapter 87 / `Getting Started: NESTED Procedure` (PDF pp. 6967–6969); S154 / Chapter 87 / `Overview: NESTED Procedure` (PDF pp. 6966–6967).
 - Scope: Implement variance component estimation for nested random-effect designs using the documented default path and establish the computational state needed by later extensions; implement specialized models, methods, and diagnostics outside that default example in their corresponding feature tickets.
@@ -14325,7 +14325,7 @@ Source: S154, Chapter 115, `The STDIZE Procedure`, PDF pp. 9447–9482. Tasks in
 
 <a id="stat-stdize-002"></a>
 
-### [TODO] STAT-STDIZE-002 — STDIZE — Variable standardization and location/scale estimation
+### [DOING @dev2] STAT-STDIZE-002 — STDIZE — Variable standardization and location/scale estimation
 
 - Source: S154 / Chapter 115 / `Getting Started: STDIZE Procedure` (PDF pp. 9448–9455); S154 / Chapter 115 / `Overview: STDIZE Procedure` (PDF p. 9448).
 - Scope: Implement variable standardization and location/scale estimation using the documented default path and establish the computational state needed by later extensions; implement specialized models, methods, and diagnostics outside that default example in their corresponding feature tickets.
