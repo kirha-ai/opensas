@@ -3083,6 +3083,13 @@ fn runProc(a: std.mem.Allocator, listing_out: *std.ArrayList(u8), lib: *sas.exec
         var body: std.ArrayList(u8) = .empty;
         try sas.orthoreg.run(orthoreg_context, &body, toks);
         try out.appendSlice(a, body.items);
+    } else if (eqi(proc, "lattice")) {
+        // Titles and BY lines are emitted per BY group by the procedure.
+        var lattice_context = pcx;
+        lattice_context.listing_titles = g;
+        var body: std.ArrayList(u8) = .empty;
+        try sas.lattice.run(lattice_context, &body, toks);
+        try out.appendSlice(a, body.items);
     } else if (eqi(proc, "lifetest")) {
         var body: std.ArrayList(u8) = .empty;
         try sas.lifetest.run(pcx, &body, toks);

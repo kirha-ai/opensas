@@ -1,0 +1,5 @@
+# corpus assertions
+empty-listing
+stderr-count 1 the COVARIANCE option with more than two response variables is not verified
+stderr-count 1 repetitions of the basic plan (Rep values above 1, Component A) are not implemented
+stderr-count 1 only balanced square lattices are implemented

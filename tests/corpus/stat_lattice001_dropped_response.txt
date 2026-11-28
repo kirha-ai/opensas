@@ -1,0 +1,41 @@
+Q
+C: one response missing
+
+The Lattice Procedure
+
+                  Analysis of Variance for Weight
+ 
+                                                 Sum of        Mean
+Source                                   DF     Squares      Square
+
+Replications                              3     0.07739     0.02580
+Blocks within Replications (Adj.)         8      1.4206      0.1776
+   Component B                            8      1.4206      0.1776
+Treatments (Unadj.)                       8      3.2261      0.4033
+Intra Block Error                        16      1.2368     0.07730
+Randomized Complete Block Error          24      2.6574      0.1107
+Total                                    35      5.9609      0.1703
+
+
+        Additional Statistics for Weight
+
+Variance of Means in Same Block           0.04593
+LSD at .01 Level                           0.6259
+LSD at .05 Level                           0.4543
+Efficiency Relative to RCBD                120.55
+
+
+  Adjusted Treatment
+   Means for Weight
+ 
+Treatment        Mean
+
+        1      1.8035
+        2      1.7544
+        3      1.9643
+        4      1.7267
+        5      0.9393
+        6      1.8448
+        7      1.3870
+        8      1.4347
+        9      1.5004

@@ -1,0 +1,7 @@
+# corpus assertions
+empty-listing
+stderr-count 1 Missing value(s) encountered for GROUP variable.
+stderr-count 1 must contain the numeric design variable Block
+stderr-count 1 VAR variable s must be numeric
+stderr-count 1 variable Weight appears more than once in the VAR statement
+stderr-count 1 the input data set has no observations
