@@ -3,6 +3,9 @@
  * (SAS/GRAPH, its TITLE kept), ODS GRAPHICS ON (plots, STAT-TPSPLINE-008),
  * SCORE (STAT-TPSPLINE-005) and the PROC TEMPLATE/SGRENDER surface plot.
  * The expected words are the SAS 15.4 reference listing of the original.
+ * Deviation: the two Smoothing Penalty values are asserted at the exactly
+ * rounded value, one unit above the SAS 15.4 print (see the .txt header and
+ * the STAT-TPSPLINE-003 independent-precision test).
  */
 options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7 validmemname=compatible locale=en_US;
 %let syscc=0;

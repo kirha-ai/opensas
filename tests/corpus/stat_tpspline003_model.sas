@@ -8,6 +8,9 @@
  * LAMBDA0=, LOGNLAMBDA0=, DF=, RANGE=, DISTANCE=, the precedence warnings
  * and OUTPUT with two dependents. Data: the Getting Started data of the
  * chapter (published sample data) with derived variables.
+ * Deviation: four Smoothing Penalty values are asserted at the exactly rounded
+ * value, one unit above the SAS 15.4 print (see the .txt header and the
+ * STAT-TPSPLINE-003 independent-precision test).
  */
 options nosyntaxcheck nodate nonumber nocenter linesize=160 pagesize=max;
 title; footnote;
