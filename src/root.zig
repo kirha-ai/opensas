@@ -120,6 +120,7 @@ test {
     _ = @import("stat/mixed_info.zig");
     _ = @import("stat/glimmix.zig");
     _ = @import("stat/effect_constructed.zig");
+    _ = @import("stat/effect_collection.zig");
     _ = @import("stat/npar1way_stats.zig");
     _ = @import("stat/npar1way.zig");
     _ = @import("stat/plm.zig");

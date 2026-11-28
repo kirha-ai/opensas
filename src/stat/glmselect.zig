@@ -14,6 +14,7 @@ const Dataset = @import("../dataset.zig").Dataset;
 const Value = @import("../value.zig").Value;
 const by = @import("by_groups.zig");
 const reg_fit = @import("reg_fit.zig");
+const ecol = @import("effect_collection.zig");
 const A = std.mem.Allocator;
 const eq = std.ascii.eqlIgnoreCase;
 const Out = std.ArrayList(u8);
@@ -34,9 +35,18 @@ pub const Spec = struct {
     noprint: bool = false,
     details_all: bool = false,
     stats_all: bool = false,
+    /// STAT-COMMON-021: EFFECT statements (COLLECTION of continuous
+    /// variables). A MODEL effect index >= the data set's column count names
+    /// `constructed[index - column count]`.
+    constructed: []const ecol.Spec = &.{},
+    selection_none: bool = false,
 
     pub fn isClass(self: Spec, index: usize) bool {
         return std.mem.indexOfScalar(usize, self.classes, index) != null;
+    }
+    pub fn constructedOf(self: Spec, index: usize) ?ecol.Collection {
+        const ncols = self.input.ds.columns.items.len;
+        return if (index >= ncols) self.constructed[index - ncols].body.collection else null;
     }
 };
 
@@ -127,6 +137,7 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
     var model_seen = false;
     var classes: std.ArrayList(usize) = .empty;
     var effects: std.ArrayList(usize) = .empty;
+    var constructed: std.ArrayList(ecol.Spec) = .empty;
     i += 1;
     while (i < t.len and !at(t, i, .eof)) {
         if (at(t, i, .semicolon)) {
@@ -154,7 +165,13 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
                 // Crossed, nested, bar and constructed effects and variable
                 // list abbreviations: STAT-GLMSELECT-003.
                 if (!at(t, j, .name)) return gap(cx, t[j].line, "MODEL effects other than single variable names are not implemented", .{});
-                const c = try column(cx, ds, t, j);
+                var c: usize = undefined;
+                for (constructed.items, 0..) |e, k| {
+                    if (eq(e.name, t[j].text)) {
+                        c = ds.columns.items.len + k;
+                        break;
+                    }
+                } else c = try column(cx, ds, t, j);
                 if (std.mem.indexOfScalar(usize, effects.items, c) != null) return gap(cx, t[j].line, "repeated MODEL effect policy is not verified", .{});
                 try effects.append(cx.arena, c);
             }
@@ -174,9 +191,10 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
                     } else if (eq(word, "selection") and at(t, j + 1, .eq)) {
                         if (!at(t, j + 2, .name)) return invalid(cx, t, j + 2);
                         const m = t[j + 2].text;
-                        if (oneOf(m, &.{ "none", "forward", "backward", "lar", "lasso", "elasticnet", "grouplasso" })) return gap(cx, t[j].line, "SELECTION={s} is not implemented", .{m});
-                        if (!eq(m, "stepwise")) return invalid(cx, t, j + 2);
-                        if (at(t, j + 3, .lparen)) return gap(cx, t[j].line, "SELECTION=STEPWISE suboptions are not implemented", .{});
+                        if (oneOf(m, &.{ "forward", "backward", "lar", "lasso", "elasticnet", "grouplasso" })) return gap(cx, t[j].line, "SELECTION={s} is not implemented", .{m});
+                        if (!eq(m, "stepwise") and !eq(m, "none")) return invalid(cx, t, j + 2);
+                        s.selection_none = eq(m, "none");
+                        if (at(t, j + 3, .lparen)) return gap(cx, t[j].line, "SELECTION={s} suboptions are not implemented", .{m});
                         j += 3;
                     } else if (oneOf(word, &later_model_options)) {
                         return gap(cx, t[j].line, "MODEL option {s} is not implemented", .{word});
@@ -194,6 +212,22 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
         } else if (kw(t, i, "by")) {
             var j = i;
             try bys.read(cx.arena, t, &j);
+        } else if (kw(t, i, "effect") and i + 3 < end and at(t, i + 3, .name) and ecol.owns(t[i + 3].text)) {
+            // STAT-COMMON-021 shared parsing; GLMSELECT adopts COLLECTION of
+            // continuous variables only (other forms: STAT-GLMSELECT-003).
+            if (model_seen) return cx.diags.fail(error.ParseError, t[i].line, "PROC GLMSELECT: all EFFECT statements must precede the MODEL statement", .{});
+            var names: std.ArrayList([]const u8) = .empty;
+            for (constructed.items) |e| try names.append(cx.arena, e.name);
+            const e = try ecol.parse(cx.arena, cx.diags, ds, classes.items, names.items, t[i + 1 .. end], t[i].line);
+            switch (e.body) {
+                .lag => return gap(cx, t[i].line, "LAG effects are not implemented", .{}),
+                .collection => |col| {
+                    if (col.details) return gap(cx, t[i].line, "the collection effect DETAILS table is not implemented", .{});
+                    for (col.vars) |v| if (std.mem.indexOfScalar(usize, classes.items, v) != null or ds.columns.items[v].type != .num)
+                        return gap(cx, t[i].line, "collection effects with CLASS variables are not implemented", .{});
+                },
+            }
+            try constructed.append(cx.arena, e);
         } else if (kw(t, i, "format")) {
             return gap(cx, t[i].line, "FORMAT statement (formatted CLASS levels) is not implemented", .{});
         } else if (at(t, i, .name) and oneOf(t[i].text, &later_statements)) {
@@ -206,8 +240,16 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
     if (!model_seen) return cx.diags.fail(error.ParseError, 0, "PROC GLMSELECT: MODEL statement required", .{});
     s.classes = classes.items;
     s.effects = effects.items;
+    s.constructed = constructed.items;
+    for (s.effects) |c| if (s.constructedOf(c)) |col| {
+        for (col.vars) |v| {
+            if (v == s.response) return gap(cx, 0, "the response variable inside a collection effect is not verified", .{});
+            if (s.isClass(v)) return gap(cx, 0, "collection effects with CLASS variables are not implemented", .{});
+        }
+    };
     if (s.isClass(s.response)) return cx.diags.fail(error.ParseError, 0, "PROC GLMSELECT: the response variable cannot be a CLASS variable", .{});
     for (s.effects) |c| {
+        if (s.constructedOf(c) != null) continue;
         if (c == s.response) return cx.diags.fail(error.ParseError, 0, "PROC GLMSELECT: the response variable cannot be a MODEL effect", .{});
         if (!s.isClass(c) and ds.columns.items[c].type != .num) return cx.diags.fail(error.ParseError, 0, "PROC GLMSELECT: character variable {s} must be a CLASS variable", .{ds.columns.items[c].name});
     }
@@ -259,7 +301,9 @@ pub fn prepare(cx: proc.ProcCtx, s: Spec, rows: []const []const Value) diag.Erro
     var used: std.ArrayList(usize) = .empty;
     rows: for (rows, 0..) |row, r| {
         if (missing(row[s.response])) continue;
-        for (s.effects) |c| if (missing(row[c])) continue :rows;
+        for (s.effects) |c| if (s.constructedOf(c)) |col| {
+            for (col.vars) |v| if (missing(row[v])) continue :rows;
+        } else if (missing(row[c])) continue :rows;
         for (s.classes) |c| if (missing(row[c])) continue :rows;
         try used.append(a, r);
     }
@@ -289,7 +333,19 @@ pub fn prepare(cx: proc.ProcCtx, s: Spec, rows: []const []const Value) diag.Erro
     const df = try a.alloc(usize, s.effects.len);
     for (s.effects, 0..) |c, e| {
         first[e] = cols.items.len;
-        if (std.mem.indexOfScalar(usize, s.classes, c)) |k| {
+        if (s.constructedOf(c)) |col| {
+            // p.426: the constituents' design columns in definition order.
+            const used_rows = try a.alloc([]const Value, n);
+            for (used.items, used_rows) |r, *u| u.* = rows[r];
+            const b = try ecol.buildCollection(a, ds, used_rows, s.classes, "", col);
+            g.parameters += b.p;
+            for (0..b.p) |j| {
+                const x = try a.alloc(f64, n);
+                for (x, 0..) |*v, r| v.* = b.at(r, j);
+                try means.append(a, center(x));
+                try cols.append(a, x);
+            }
+        } else if (std.mem.indexOfScalar(usize, s.classes, c)) |k| {
             g.parameters += levels[k].len;
             for (levels[k][0 .. levels[k].len - 1]) |label| {
                 const x = try a.alloc(f64, n);
@@ -565,7 +621,9 @@ fn title(a: A, out: *Out, text: []const u8, width: usize) !void {
 const Names = struct {
     s: Spec,
     fn of(self: Names, effect: usize) []const u8 {
-        return self.s.input.ds.columns.items[self.s.effects[effect]].name;
+        const c = self.s.effects[effect];
+        const ds = self.s.input.ds;
+        return if (c >= ds.columns.items.len) self.s.constructed[c - ds.columns.items.len].name else ds.columns.items[c].name;
     }
 };
 
@@ -651,6 +709,7 @@ fn check(cx: proc.ProcCtx, s: Spec, sel: Selection) diag.Error!void {
     for (sel.steps) |st| {
         // CLASS effects compete as candidates with their L-1 degrees of
         // freedom, but their parameter rows have no layout reference.
+        for (st.in, 0..) |yes, e| if (yes and s.constructedOf(s.effects[e]) != null) return gap(cx, 0, "stepwise selection of a constructed effect ({s}) is not implemented", .{names.of(e)});
         for (st.in, 0..) |yes, e| if (yes and s.isClass(s.effects[e])) return gap(cx, 0, "parameter estimates for a selected CLASS effect ({s}) are not implemented", .{names.of(e)});
         if (st.entered != null and st.candidates.len < 10) return gap(cx, 0, "the entry candidate table with fewer than 10 candidates is not verified", .{});
         const x = st.stats;
@@ -785,6 +844,7 @@ pub fn run(cx: proc.ProcCtx, out: *Out, t: []const lex.Token) diag.Error!void {
     const ds = s.input.ds;
     const slices = try by.checkedSlices(a, ds, s.by_cols, s.by_desc, s.notsorted, cx.diags);
     if (slices.len == 0) return gap(cx, 0, "the result for an empty input data set is not verified", .{});
+    if (s.selection_none) return runNone(cx, out, s, slices);
     const selections = try a.alloc(Selection, slices.len);
     for (slices, selections) |slice, *sel| {
         sel.* = try select(cx, try prepare(cx, s, slice.rows));
@@ -813,6 +873,149 @@ pub fn run(cx: proc.ProcCtx, out: *Out, t: []const lex.Token) diag.Error!void {
         try render(cx, &body, s, sel, label);
     }
     try out.appendSlice(a, body.items);
+}
+
+/// SELECTION=NONE (STAT-COMMON-021 reference listing): the full model as
+/// specified, a one-step Least Squares Summary and the fitted model's tables.
+/// ponytail: only the shape of the reference listing (no BY, no DETAILS= or
+/// STATS=, LINESIZE=160, values below 1000) is produced; the rest is a gap.
+fn runNone(cx: proc.ProcCtx, out: *Out, s: Spec, slices: []const proc.BySlice) diag.Error!void {
+    const a = cx.arena;
+    if (s.details_all or s.stats_all) return gap(cx, 0, "DETAILS= or STATS= with SELECTION=NONE is not implemented", .{});
+    if (s.by_cols.len > 0) return gap(cx, 0, "BY groups with SELECTION=NONE are not implemented", .{});
+    const g = try prepare(cx, s, slices[0].rows);
+    if (g.n == 0) return gap(cx, 0, "the result when no observation is used is not verified", .{});
+    const all = try a.alloc(bool, s.effects.len);
+    @memset(all, true);
+    const f = (try fit(a, g, all, true)) orelse return gap(cx, 0, "linearly dependent effects are not implemented", .{});
+    if (g.n <= f.p + 2) return gap(cx, 0, "a model without at least 3 error degrees of freedom is not verified", .{});
+    const x = statistics(g, f, f.sse / @as(f64, @floatFromInt(g.n - f.p)));
+    const sbc0 = sbcOf(g.n, g.sst, 1);
+    if (s.noprint) return;
+    if (io.global_linesize != 160) return gap(cx, 0, "the SELECTION=NONE listing is verified only for LINESIZE=160", .{});
+    const names: Names = .{ .s = s };
+    for (0..s.effects.len) |e| if (names.of(e).len > 9) return gap(cx, 0, "listing columns for effect names longer than 9 characters are not verified", .{});
+    if (!(g.sst < 1000 and @abs(g.ybar) < 1000)) return gap(cx, 0, "display of sums of squares or means of 1000 or more is not verified", .{});
+    for ([_]f64{ x.aic, x.aicc, x.sbc, sbc0 }) |v| if (!(@abs(v) < 1000)) return gap(cx, 0, "display of fit criteria of magnitude 1000 or more is not verified", .{});
+    for (f.beta, f.root) |b, r| if (!(@abs(b) < 1000 and r * @sqrt(x.mse) < 1000)) return gap(cx, 0, "display of parameter estimates of magnitude 1000 or more is not verified", .{});
+    for (s.effects) |c| if (s.isClass(c)) return gap(cx, 0, "parameter estimates of a CLASS effect with SELECTION=NONE are not implemented", .{});
+    const ds = s.input.ds;
+    var body: Out = .empty;
+    const response = ds.columns.items[s.response].name;
+    const width = @max(s.data_name.len, response.len, 4) + 4;
+    try body.appendSlice(a, "\nThe GLMSELECT Procedure\n\n");
+    const info = [_]struct { []const u8, []const u8 }{ .{ "Data Set", s.data_name }, .{ "Dependent Variable", response }, .{ "Selection Method", "None" } };
+    for (info) |line| {
+        try left(a, &body, line[0], 18);
+        try right(a, &body, line[1], width);
+        try body.append(a, '\n');
+    }
+    try body.print(a, "\n\nNumber of Observations Read{d:>12}\nNumber of Observations Used{d:>12}\n", .{ g.read, g.n });
+    const counts = [_]usize{ s.effects.len + 1, g.parameters };
+    var digits: usize = 1;
+    for (counts) |v| digits = @max(digits, std.fmt.count("{d}", .{v}));
+    try body.appendSlice(a, "\n\n");
+    try body.appendNTimes(a, ' ', (14 + digits) / 2); // centered over 24 + digits
+    try body.appendSlice(a, "Dimensions\n\n");
+    for ([_][]const u8{ "Number of Effects", "Number of Parameters" }, counts) |label, v| {
+        try left(a, &body, label, 20);
+        try right(a, &body, try std.fmt.allocPrint(a, "{d}", .{v}), digits + 4);
+        try body.append(a, '\n');
+    }
+    const page = "\nThe GLMSELECT Procedure\n";
+    // Least Squares Summary: step 0 (intercept) and step 1 (every effect).
+    var ew: usize = 9;
+    for (0..s.effects.len) |e| ew = @max(ew, names.of(e).len);
+    if (s.effects.len != 1) return gap(cx, 0, "the Least Squares Summary for more than one MODEL effect with SELECTION=NONE is not verified", .{});
+    try body.appendSlice(a, page);
+    try body.append(a, '\n');
+    try title(a, &body, "Least Squares Summary", 57);
+    try body.appendSlice(a, "         Effect         Number      Number\n Step    Entered    Effects In    Parms In           SBC \n\n");
+    const best0 = sbc0 < x.sbc;
+    try body.appendSlice(a, "    0    ");
+    try left(a, &body, "Intercept", 9);
+    try body.print(a, "{d:>12}{d:>12}", .{ 1, 1 });
+    try right(a, &body, try fixed(a, sbc0, 4), 14);
+    try body.append(a, if (best0) '*' else ' ');
+    try body.append(a, '\n');
+    try body.appendNTimes(a, '-', 57);
+    try body.appendSlice(a, "\n    1    ");
+    try left(a, &body, names.of(0), 9);
+    try body.print(a, "{d:>12}{d:>12}", .{ s.effects.len + 1, f.p });
+    try right(a, &body, try fixed(a, x.sbc, 4), 14);
+    try body.append(a, if (best0) ' ' else '*');
+    try body.appendSlice(a, "\n\n               * Optimal Value of Criterion\n");
+    // The fitted model.
+    try body.appendSlice(a, page);
+    try body.appendSlice(a, "Least Squares Model (No Selection)\n\n");
+    const dfm = f.p - 1;
+    const dfe = g.n - f.p;
+    const ssm = g.sst - f.sse;
+    const msm = ssm / @as(f64, @floatFromInt(dfm));
+    const fv = msm / x.mse;
+    try title(a, &body, "Analysis of Variance", 76);
+    try body.appendSlice(a, "                                  Sum of           Mean\nSource                 DF        Squares         Square    F Value    Pr > F\n\n");
+    try body.print(a, "Model          {d:>10}", .{dfm});
+    try right(a, &body, try fixed(a, ssm, 5), 15);
+    try right(a, &body, try fixed(a, msm, 5), 15);
+    try right(a, &body, try fixed(a, fv, 2), 11);
+    try right(a, &body, try pvalue(a, reg_fit.fProbability(fv, dfm, dfe)), 10);
+    try body.print(a, "\nError          {d:>10}", .{dfe});
+    try right(a, &body, try fixed(a, f.sse, 5), 15);
+    try right(a, &body, try fixed(a, x.mse, 5), 15);
+    try body.appendNTimes(a, ' ', 21);
+    try body.print(a, "\nCorrected Total{d:>10}", .{g.n - 1});
+    try right(a, &body, try fixed(a, g.sst, 5), 15);
+    try body.appendNTimes(a, ' ', 36);
+    try body.appendSlice(a, "\n\n\n");
+    const lines = [_]struct { []const u8, f64, usize }{
+        .{ "Root MSE", @sqrt(x.mse), 5 }, .{ "Dependent Mean", g.ybar, 5 }, .{ "R-Square", x.rsq, 4 }, .{ "Adj R-Sq", x.adj, 4 },
+        .{ "AIC", x.aic, 5 },             .{ "AICC", x.aicc, 5 },           .{ "SBC", x.sbc, 5 },
+    };
+    for (lines) |line| {
+        try left(a, &body, line[0], 14);
+        try right(a, &body, try fixed(a, line[1], line[2]), 15);
+        try body.append(a, '\n');
+    }
+    // Parameter labels: the effect name in a column as wide as "Intercept"
+    // and the longest effect name, then the constituent column name.
+    var labels: std.ArrayList([]const u8) = .empty;
+    for (s.effects, 0..) |c, e| {
+        if (s.constructedOf(c)) |col| {
+            for (col.vars) |v| {
+                var label: Out = .empty;
+                try left(a, &label, names.of(e), ew + 1);
+                try label.appendSlice(a, ds.columns.items[v].name);
+                try labels.append(a, label.items);
+            }
+        } else try labels.append(a, names.of(e));
+    }
+    var lw: usize = 9;
+    for (labels.items) |l| lw = @max(lw, l.len);
+    try body.appendSlice(a, "\n\n");
+    try title(a, &body, "Parameter Estimates", lw + 61);
+    try body.appendNTimes(a, ' ', lw + 30);
+    try body.appendSlice(a, "Standard\n");
+    try left(a, &body, "Parameter", lw);
+    try body.appendSlice(a, "    DF        Estimate           Error    t Value    Pr > |t|\n\n");
+    var intercept = g.ybar;
+    for (f.cols, f.beta) |c, b| intercept -= b * g.means[c];
+    const sigma = @sqrt(x.mse);
+    for (0..labels.items.len + 1) |k| {
+        const est = if (k == 0) intercept else f.beta[k - 1];
+        const se = sigma * (if (k == 0) f.intercept_root else f.root[k - 1]);
+        try left(a, &body, if (k == 0) "Intercept" else labels.items[k - 1], lw);
+        try body.appendSlice(a, "     1");
+        try right(a, &body, try fixed(a, est, 6), 16);
+        try right(a, &body, try fixed(a, se, 6), 16);
+        try right(a, &body, try fixed(a, est / se, 2), 11);
+        try right(a, &body, try pvalue(a, reg_fit.tProbability(est / se, dfe)), 12);
+        try body.append(a, '\n');
+    }
+    try out.appendSlice(a, body.items);
+}
+fn pvalue(a: A, p: f64) ![]const u8 {
+    return if (p < 0.0001) "<.0001" else fixed(a, p, 4);
 }
 
 test {
