@@ -1,0 +1,7 @@
+# corpus assertions
+empty-listing
+stderr-count 1 A CLASS statement must be specified.
+stderr-count 1 Expecting ;.
+stderr-count 1 Variable grp in list does not match type prescribed for this list.
+stderr-count 1 Variable NOSUCH not found.
+stderr-count 1 No observations in data set WORK.NUMS.

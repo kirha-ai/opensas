@@ -1,0 +1,131 @@
+Invented Plants
+
+The CANDISC Procedure
+
+Total Sample Size                   12          DF Total                            11
+Variables                            3          DF Within Classes                    9
+Classes                              3          DF Between Classes                   2
+
+
+Number of Observations Read             14
+Number of Observations Used             12
+
+
+                Class Level Information
+ 
+       Variable
+grp    Name        Frequency       Weight    Proportion
+
+A      A                   4       4.0000      0.333333
+B      B                   4       4.0000      0.333333
+C      C                   4       4.0000      0.333333
+Invented Plants
+
+The CANDISC Procedure
+
+                 Multivariate Statistics and F Approximations
+ 
+                              S=2    M=0    N=2.5
+ 
+Statistic                        Value    F Value    Num DF    Den DF    Pr > F
+
+Wilks' Lambda               0.00546487      29.23         6        14    <.0001
+Pillai's Trace              1.72598305      16.80         6        16    <.0001
+Hotelling-Lawley Trace     48.14148689      53.98         6    7.7895    <.0001
+Roy's Greatest Root        45.17892592     120.48         3         8    <.0001
+
+         NOTE: F Statistic for Roy's Greatest Root is an upper bound.
+                 NOTE: F Statistic for Wilks' Lambda is exact.
+Invented Plants
+
+The CANDISC Procedure
+
+                                                                                                                 Test of H0: The canonical correlations in the
+                                                                          Eigenvalues of Inv(E)*H                  current row and all that follow are zero
+                          Adjusted  Approximate      Squared                = CanRsq/(1-CanRsq)
+            Canonical    Canonical     Standard    Canonical                                                  Likelihood  Approximate
+          Correlation  Correlation        Error  Correlation  Eigenvalue  Difference  Proportion  Cumulative       Ratio      F Value  Num DF  Den DF  Pr > F
+
+       1     0.989113     0.986962     0.006529     0.978345     45.1789     42.2164      0.9385      0.9385  0.00546487        29.23       6      14  <.0001
+       2     0.864661     0.863175     0.076090     0.747638      2.9626                  0.0615      1.0000  0.25236205        11.85       2       8  0.0041
+Invented Plants
+
+The CANDISC Procedure
+
+         Total Canonical Structure
+ 
+Variable              Can1              Can2
+
+x1                0.910301         -0.413451
+x2                0.700158          0.691027
+x3               -0.389464         -0.901279
+
+
+        Between Canonical Structure
+ 
+Variable              Can1              Can2
+
+x1                0.929421         -0.369021
+x2                0.757145          0.653247
+x3               -0.443135         -0.896455
+
+
+     Pooled Within Canonical Structure
+ 
+Variable              Can1              Can2
+
+x1                0.540192         -0.837570
+x2                0.254900          0.858821
+x3               -0.115955         -0.916042
+Invented Plants
+
+The CANDISC Procedure
+
+Total-Sample Standardized Canonical Coefficients
+ 
+Variable              Can1              Can2
+
+x1             5.032146067      -1.020334531
+x2             1.660934217       0.829369484
+x3            -1.034970696      -0.893848553
+
+
+Pooled Within-Class Standardized Canonical Coefficients
+ 
+Variable              Can1              Can2
+
+x1             1.379569770      -0.279726116
+x2             0.742218335       0.370618674
+x3            -0.565534433      -0.488421688
+
+
+         Raw Canonical Coefficients
+ 
+Variable              Can1              Can2
+
+x1             3.362471466      -0.681785803
+x2             1.801616389       0.899617600
+x3            -1.225215890      -1.058153100
+
+
+  Class Means on Canonical Variables
+ 
+grp              Can1              Can2
+
+A        -5.052159722       1.664365020
+B        -3.102690277      -1.952583287
+C         8.154849999       0.288218267
+A  -5.38170   2.15374 c3_missing=1
+A  -5.24744   1.09792 c3_missing=1
+A  -5.08851   2.86157 c3_missing=1
+A  -4.49099   0.54423 c3_missing=1
+A no scores c3_missing=1
+B  -3.50918  -1.83021 c3_missing=1
+B  -2.67835  -2.77428 c3_missing=1
+B  -2.76670  -0.57268 c3_missing=1
+B  -3.45653  -2.63316 c3_missing=1
+C   5.87789   0.36834 c3_missing=1
+C   9.74503   0.86998 c3_missing=1
+C   8.54603  -1.07477 c3_missing=1
+C   8.45044   0.98932 c3_missing=1
+   -1.11903  -0.64962 c3_missing=1

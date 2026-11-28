@@ -1,0 +1,9 @@
+# corpus assertions
+empty-listing
+stderr-count 1 OUTSTAT= is not implemented
+stderr-count 1 the distance option is not implemented
+stderr-count 1 the anova option is not implemented
+stderr-count 1 NCAN= zero or negative (canonical analysis suppressed) is not implemented
+stderr-count 1 SINGULAR= is not implemented
+stderr-count 1 input data sets with a _TYPE_ variable
+stderr-count 1 a singular within-class SSCP matrix (or zero weights) is not implemented

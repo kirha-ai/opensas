@@ -190,8 +190,12 @@ fn identity(name: []const u8) ?Identity {
 // SAS/STAT15.4 physical pp.7267-7269. NPAR producers supply truthful names
 // and paths directly; template names are omitted until independently verified.
 const npar_names=[_][]const u8{"DSCF","KSExactTest","RMDDeviations","RMDTest","FPPlacements","FPTest","VarInfo","ABScores","ABTest","ABAnalysis","STScores","STTest","STAnalysis","KlotzScores","KlotzTest","KlotzAnalysis","MoodScores","MoodTest","MoodAnalysis","ConoverScores","ConoverTest","ConoverAnalysis","DataScores","DataScoresTest","DataScoresAnalysis","ClassMeans","ANOVA","WilcoxonScores","WilcoxonTest","KruskalWallisTest","MedianScores","MedianTest","MedianAnalysis","VWScores","VWTest","VWAnalysis","SavageScores","SavageTest","SavageAnalysis","KSTest","KSStats","KS2Stats","CVMTest","CVMStats","KuiperTest","KuiperStats","HodgesLehmann","StrataInfo","StrataMethod","WilcoxonStrata","WilcoxonStrataTest","MedianStrata","MedianStrataTest","VWStrata","VWStrataTest","SavageStrata","SavageStrataTest","DataScoresStrata","DataScoresStrataTest"};
+// SAS/STAT 15.4 Table 35.2 (PDF p.2168): the default PROC CANDISC tables;
+// the procedure filters each one through `Listing.accepts`.
+const candisc_names = [_][]const u8{ "Counts", "NObs", "Levels", "MultStat", "CanCorr", "TStruc", "BStruc", "PStruc", "TCoef", "PCoef", "RCoef", "CanonicalMeans" };
 fn known(name: []const u8) bool {
     if (@import("stat/mixed_ods_route.zig").known(name)) return true;
+    for (candisc_names) |n| if (eq(name, n)) return true;
     for(npar_names) |n| if(eq(name,n)) return true;
     return identity(name) != null or @import("stat/graph_ods.zig").known(name);
 }

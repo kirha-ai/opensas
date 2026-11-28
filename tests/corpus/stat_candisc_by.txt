@@ -1,0 +1,109 @@
+Invented Plants
+
+b=1
+
+The CANDISC Procedure
+
+Total Sample Size                   12          DF Total                            11
+Variables                            2          DF Within Classes                    9
+Classes                              3          DF Between Classes                   2
+
+
+Number of Observations Read             14
+Number of Observations Used             12
+
+
+                Class Level Information
+ 
+       Variable
+grp    Name        Frequency       Weight    Proportion
+
+A      A                   4       4.0000      0.333333
+B      B                   4       4.0000      0.333333
+C      C                   4       4.0000      0.333333
+Invented Plants
+
+b=1
+
+The CANDISC Procedure
+
+                 Multivariate Statistics and F Approximations
+ 
+                             S=2    M=-0.5    N=3
+ 
+Statistic                        Value    F Value    Num DF    Den DF    Pr > F
+
+Wilks' Lambda               0.00706673      43.58         4        16    <.0001
+Pillai's Trace              1.69508419      25.02         4        18    <.0001
+Hotelling-Lawley Trace     41.14808278      80.24         4    8.6667    <.0001
+Roy's Greatest Root        38.57212681     173.57         2         9    <.0001
+
+         NOTE: F Statistic for Roy's Greatest Root is an upper bound.
+                 NOTE: F Statistic for Wilks' Lambda is exact.
+Invented Plants
+
+b=1
+
+The CANDISC Procedure
+
+                                                                                                                 Test of H0: The canonical correlations in the
+                                                                          Eigenvalues of Inv(E)*H                  current row and all that follow are zero
+                          Adjusted  Approximate      Squared                = CanRsq/(1-CanRsq)
+            Canonical    Canonical     Standard    Canonical                                                  Likelihood  Approximate
+          Correlation  Correlation        Error  Correlation  Eigenvalue  Difference  Proportion  Cumulative       Ratio      F Value  Num DF  Den DF  Pr > F
+
+       1     0.987284     0.985925     0.007619     0.974730     38.5721     35.9962      0.9374      0.9374  0.00706673        43.58       4      16  <.0001
+       2     0.848737      .           0.084316     0.720354      2.5760                  0.0626      1.0000  0.27964550        23.18       1       9  0.0010
+Invented Plants
+
+b=2
+
+The CANDISC Procedure
+
+Total Sample Size                    8          DF Total                             7
+Variables                            2          DF Within Classes                    6
+Classes                              2          DF Between Classes                   1
+
+
+Number of Observations Read             10
+Number of Observations Used              8
+
+
+                Class Level Information
+ 
+       Variable
+grp    Name        Frequency       Weight    Proportion
+
+A      A                   4       4.0000      0.500000
+B      B                   4       4.0000      0.500000
+Invented Plants
+
+b=2
+
+The CANDISC Procedure
+
+                Multivariate Statistics and Exact F Statistics
+ 
+                              S=1    M=0    N=1.5
+ 
+Statistic                        Value    F Value    Num DF    Den DF    Pr > F
+
+Wilks' Lambda               0.11808586      18.67         2         5    0.0048
+Pillai's Trace              0.88191414      18.67         2         5    0.0048
+Hotelling-Lawley Trace      7.46841445      18.67         2         5    0.0048
+Roy's Greatest Root         7.46841445      18.67         2         5    0.0048
+Invented Plants
+
+b=2
+
+The CANDISC Procedure
+
+                                                                                                                 Test of H0: The canonical correlations in the
+                                                                          Eigenvalues of Inv(E)*H                  current row and all that follow are zero
+                          Adjusted  Approximate      Squared                = CanRsq/(1-CanRsq)
+            Canonical    Canonical     Standard    Canonical                                                  Likelihood  Approximate
+          Correlation  Correlation        Error  Correlation  Eigenvalue  Difference  Proportion  Cumulative       Ratio      F Value  Num DF  Den DF  Pr > F
+
+       1     0.939103     0.938042     0.044632     0.881914      7.4684                  1.0000      1.0000  0.11808586        18.67       2       5  0.0048
+
+NOTE: The F statistic is exact.
