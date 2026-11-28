@@ -1,9 +1,8 @@
 /* expect-rc: 2
  * STAT-TPSPLINE-001: valid PROC TPSPLINE requests outside the verified scope
- * fail visibly with no listing: regression variables, one smoothing
- * variable, two dependent variables, LAMBDA0=, DF=, M=3, DISTANCE=1, a
- * LAMBDA= list (STAT-TPSPLINE-003), SCORE (STAT-TPSPLINE-005), the RESID
- * output keyword (STAT-TPSPLINE-006), ODS Graphics plots with ODS Graphics
+ * fail visibly with no listing (the MODEL options and forms once listed
+ * here are implemented by STAT-TPSPLINE-003): SCORE (STAT-TPSPLINE-005), the
+ * COEF output keyword (STAT-TPSPLINE-006), ODS Graphics plots with ODS Graphics
  * on, by default or by request, and an unverified plot suboption
  * (STAT-TPSPLINE-008), and OUTPUT rows for observations excluded by a
  * missing response or a FREQ value below one (STAT-TPSPLINE-006).
@@ -19,14 +18,6 @@ data miss;
 set pts;
 if _n_ = 2 then y = .;
 run;
-proc tpspline data=pts; model y = z (x1 x2); run;
-proc tpspline data=pts; model y = (x1); run;
-proc tpspline data=pts; model y y2 = (x1 x2); run;
-proc tpspline data=pts; model y = (x1 x2) / lambda0=0.1; run;
-proc tpspline data=pts; model y = (x1 x2) / df=3; run;
-proc tpspline data=pts; model y = (x1 x2) / m=3; run;
-proc tpspline data=pts; model y = (x1 x2) / distance=1; run;
-proc tpspline data=pts; model y = (x1 x2) / lambda=(0.1 0.2); run;
 proc tpspline data=pts; model y = (x1 x2); score data=pts out=sc; run;
 proc tpspline data=pts; model y = (x1 x2); output out=o coef; run;
 ods graphics on;

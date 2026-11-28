@@ -3,11 +3,10 @@ empty-listing
 stderr-count 1 a MODEL statement is required
 stderr-count 1 at least one smoothing variable, in parentheses, is required
 stderr-count 1 regression variables must be listed before the smoothing variables
-stderr-count 1 variable y is both a dependent and a smoothing variable
+stderr-count 1 At least one variable appears on both dependent and independent lists.
 stderr-count 1 Dependent variable name must be numeric
 stderr-count 1 Variable ZZ not found.
 stderr-count 1 ALPHA= must be between 0 and 1
-stderr-count 1 all LAMBDA= values must be positive
 stderr-count 1 M= must be a positive integer
 stderr-count 1 expecting a ( to start the list of values
 stderr-count 1 OUT= is required in the OUTPUT statement

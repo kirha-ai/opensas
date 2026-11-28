@@ -73,3 +73,45 @@ test "STAT-TPSPLINE-001 OUTPUT variable order and labels follow the SAS referenc
     const s90: tp.Spec = .{ .ds = undefined, .uclm = true, .alpha = 0.1 };
     try std.testing.expectEqualStrings("Upper 90% Confidence Limit for Mean of y", (try tp.outputVars(a, s90, "y"))[0].label);
 }
+
+test "STAT-TPSPLINE-003 thin-plate basis constants and polynomial-space dimensions by hand" {
+    const pi = std.math.pi;
+    const r: f64 = 1.7;
+    // d=2, m=2: r^2 log r / (8 pi) (p.10309).
+    try std.testing.expectApproxEqRel(r * r * @log(r) / (8 * pi), tp.kernel(r, 2, 2), 1e-14);
+    // d=1, m=2: Gamma(-3/2) / (2^4 sqrt(pi)) r^3 = (4 sqrt(pi)/3) / (16 sqrt(pi)) r^3 = r^3/12.
+    try std.testing.expectApproxEqRel(r * r * r / 12, tp.kernel(r, 1, 2), 1e-14);
+    // d=3, m=2: Gamma(-1/2) / (2^4 pi^(3/2)) r = -r / (8 pi).
+    try std.testing.expectApproxEqRel(-r / (8 * pi), tp.kernel(r, 3, 2), 1e-14);
+    // d=2, m=3: (-1)^5 / (2^5 pi 2! 2!) r^4 log r.
+    try std.testing.expectApproxEqRel(-std.math.pow(f64, r, 4) * @log(r) / (128 * pi), tp.kernel(r, 2, 3), 1e-14);
+    // d=4, m=3: (-1)^6 / (2^5 pi^2 2! 1!) r^2 log r.
+    try std.testing.expectApproxEqRel(r * r * @log(r) / (64 * pi * pi), tp.kernel(r, 4, 3), 1e-14);
+    try std.testing.expectEqual(@as(f64, 0), tp.kernel(0, 2, 2));
+    // M = C(m+d-1, d): SAS 15.4 reference listings show 2, 3, 4, 6 and 15.
+    try std.testing.expectEqual(@as(usize, 2), tp.polyDim(1, 2));
+    try std.testing.expectEqual(@as(usize, 3), tp.polyDim(2, 2));
+    try std.testing.expectEqual(@as(usize, 4), tp.polyDim(3, 2));
+    try std.testing.expectEqual(@as(usize, 6), tp.polyDim(2, 3));
+    try std.testing.expectEqual(@as(usize, 15), tp.polyDim(4, 3));
+}
+
+test "STAT-TPSPLINE-003 DF= solves tr(A) = df and a regression variable enlarges the null space" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const d = try surface(a);
+    const b = try tp.basis(a, d.x, d.y, 2);
+    const l = tp.solveDf(b, 10).?;
+    try std.testing.expectApproxEqAbs(@as(f64, 40), tp.stats(b, l).tr, 1e-9);
+    // tr(A) cannot fall to the polynomial-space dimension 3.
+    try std.testing.expect(tp.solveDf(b, 3) == null);
+    // One regression variable: tr(I-A) -> n - 4 as lambda -> infinity.
+    const zr = try a.alloc(f64, 50);
+    for (zr, 0..) |*v, i| v.* = @as(f64, @floatFromInt(i % 5)) / 4;
+    const bz = try tp.basisFull(a, d.x, zr, 1, d.y, 2, 2);
+    try std.testing.expectApproxEqAbs(@as(f64, 46), tp.stats(bz, 15).tr, 1e-6);
+    // A regression variable equal to 2*x1 is rank deficient.
+    for (zr, 0..) |*v, i| v.* = 2 * d.x[2 * i];
+    try std.testing.expectError(error.LinearlyDependent, tp.basisFull(a, d.x, zr, 1, d.y, 2, 2));
+}

@@ -1,0 +1,11 @@
+# corpus assertions
+empty-listing
+stderr-count 1 the GCV minimum lies at the upper end of the smoothing-parameter search, whose SAS limit is not verified
+stderr-count 2 the smoothing-parameter search reached its lower end
+stderr-count 1 DF=2 at or below the polynomial-space dimension is not verified
+stderr-count 1 DISTANCE= greater than 0 with regression variables is not verified
+stderr-count 1 DF= together with RANGE= is not verified
+stderr-count 1 several dependent variables with BY groups are not verified
+stderr-count 1 missing regression-variable values are not verified
+stderr-count 1 M=11 is not verified (orders above 10)
+stderr-count 1 7 smoothing variables are not verified (at most 6)
