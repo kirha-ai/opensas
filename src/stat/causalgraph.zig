@@ -673,8 +673,9 @@ fn hasCycle(a: A, n: usize, edges: []const Edge) !bool {
 }
 
 /// The cycle SAS prints first for a model (DirectedCycles table; SAS 9.4
-/// reference runs of 16 invented graphs, STAT-CAUSALGRAPH-009): it starts at
-/// the alphabetically first node that lies on a directed cycle and follows
+/// reference runs of 23 invented graphs, STAT-CAUSALGRAPH-009): it starts at
+/// the case-insensitively alphabetically first node (mixed-case runs: `a`
+/// before `B`, `b` before `C`) that lies on a directed cycle and follows
 /// the alphabetically first successor that still leads back to that node.
 /// Returns the closed walk (start repeated at the end), or null for a DAG.
 pub fn firstCycle(a: A, names: []const []const u8, m: Model) !?[]const usize {
