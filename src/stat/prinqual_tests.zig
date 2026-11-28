@@ -295,6 +295,8 @@ test "STAT-PRINQUAL-001 invalid input is a user error and unimplemented valid sy
         .{ .source = "proc prinqual data=a; transform identity(x y); by nosuch; run;", .rc = 1 },
         .{ .source = "proc prinqual data=a; transform identity(x y); by descending g; run;", .rc = 1 }, // not sorted
         .{ .source = "proc prinqual data=a; transform identity(x y); model x = y; run;", .rc = 1 },
+        .{ .source = "proc prinqual data=a; transform identity(x y); freq f; freq nosuch; run;", .rc = 1 },
+        .{ .source = "proc prinqual data=a(type=corr); transform identity(x y); run;", .rc = 1 }, // TYPE= data set option (STAT-DATASET-001)
         // Valid SAS owned by later tickets or not verified (D-009 gap, rc 2).
         .{ .source = "proc prinqual data=a out=o; transform spline(x y); run;", .rc = 2 },
         .{ .source = "proc prinqual data=a out=o; transform opscore(id) identity(x y); run;", .rc = 2 },
@@ -311,12 +313,9 @@ test "STAT-PRINQUAL-001 invalid input is a user error and unimplemented valid sy
         .{ .source = "proc prinqual data=a out=o converge=-1; transform identity(x y); run;", .rc = 2 },
         .{ .source = "proc prinqual data=a out=o change=2; transform identity(x y); run;", .rc = 2 },
         .{ .source = "proc prinqual data=a out=o inititer=1; transform identity(x y); run;", .rc = 2 },
-        .{ .source = "proc prinqual data=a out=o n=1 n=2; transform identity(x y); run;", .rc = 2 },
         .{ .source = "proc prinqual data=a out=o tstandard=z; transform identity(x y); weight w; run;", .rc = 2 },
-        .{ .source = "proc prinqual data=a out=o; transform identity(x y); freq f; freq f; run;", .rc = 2 },
-        .{ .source = "proc prinqual data=a out=o; transform identity(x y); format x 8.2; run;", .rc = 2 },
+        .{ .source = "proc prinqual data=a; transform identity(x y); format nosuch 8.2; run;", .rc = 1 },
         .{ .source = "proc prinqual data=a out=o; transform identity(x g); by g; run;", .rc = 2 }, // constant in a group
-        .{ .source = "proc prinqual data=a out=o; transform identity(x y); where g = 2 and x > 7; run;", .rc = 2 }, // one active row
         .{ .source = "proc prinqual data=a out=o method=mac; transform identity(x y z); by g; freq f; weight w; run;", .rc = 2 },
     };
     for (cases) |case| {
@@ -337,4 +336,120 @@ test "STAT-PRINQUAL-001 invalid input is a user error and unimplemented valid sy
         try expectEqual(@as(usize, 0), output.items.len); // never a partial or fake table
         try expect(lib.find("o") == null and lib.find("DATA1") == null); // nor a data set
     }
+}
+
+/// Invented data of a SAS 9.4 probe run (2026-11-28): columns g x y z f w id.
+fn buildProbe(a: A, lib: *Library) !void {
+    const ds = try a.create(Dataset);
+    ds.* = Dataset.init(a, "p");
+    for ([_][]const u8{ "g", "x", "y", "z", "f", "w" }) |n| _ = try ds.addColumn(n, .num);
+    _ = try ds.addColumn("id", .char);
+    const rows = [_][6]f64{
+        .{ 1, 1, 2, 3, 1, 1 }, .{ 1, 2, 1, 5, 2, 1 }, .{ 1, 3, 5, 4, 1, 2 }, .{ 1, 4, 3, 7, 1, 1 },
+        .{ 2, 5, 6, 1, 1, 1 }, .{ 3, 1, nan, 2, 1, 1 }, .{ 3, 2, 3, nan, 1, 1 }, .{ 4, 2, 5, 6, 1, 1 },
+        .{ 4, 3, 1, 2, 0, 1 }, .{ 5, 1, 2, 3, 1, 1 },   .{ 5, 2, 4, 1, 1, 1 },   .{ 5, 4, 3, 9, 3, 1 },
+    };
+    const ids = "abcdefghijkl";
+    for (rows, 0..) |r, k| try ds.appendRow(&.{ .{ .num = r[0] }, .{ .num = r[1] }, .{ .num = r[2] }, .{ .num = r[3] }, .{ .num = r[4] }, .{ .num = r[5] }, .{ .str = ids[k .. k + 1] } });
+    try lib.put("p", ds);
+}
+
+fn errorCount(d: *const diag.Diagnostics, text: []const u8) usize {
+    var n: usize = 0;
+    for (d.list.items) |x| {
+        if (x.severity == .err and std.mem.eql(u8, x.message, text)) n += 1;
+    }
+    return n;
+}
+
+test "STAT-PRINQUAL-001 repeated options and statements, duplicate ID names, too few observations (SAS reference)" {
+    var e: Env = .{ .arena = std.heap.ArenaAllocator.init(std.testing.allocator) };
+    defer e.arena.deinit();
+    try e.init();
+    const a = e.arena.allocator();
+    try buildProbe(a, &e.lib);
+    // SAS 9.4: a repeated PROC option is silently replaced by the last one
+    // (N=1 N=3, TPREFIX=Q TPREFIX=R gave R-prefixed columns; METHOD=MAC
+    // METHOD=MTV printed the MTV history, criterion 0.84632).
+    const r = try e.parse("proc prinqual data=p n=1 n=3 tprefix=Q tprefix=R method=mac method=mtv; transform identity(x y z);");
+    try expectEqual(@as(usize, 3), r.n);
+    try expectEqualStrings("R", r.tprefix);
+    try expectEqual(prinqual.Method.mtv, r.method);
+    var out: std.ArrayList(u8) = .empty;
+    try e.run(&out, "proc prinqual data=p method=mac method=mtv out=o6; transform identity(x y z); run;");
+    try expect(std.mem.indexOf(u8, out.items, "MTV Algorithm") != null and std.mem.indexOf(u8, out.items, "0.84632") != null);
+    // SAS 9.4: with FREQ f; FREQ w; WEIGHT w; WEIGHT f; the first FREQ (f)
+    // and the first WEIGHT (w) are used: "1 observations were deleted ...
+    // due to nonpositive frequencies", criterion 0.92059, OUT= columns
+    // _TYPE_ _NAME_ f w x y z Tx Ty Tz id g (two ID statements accumulate).
+    out.clearRetainingCapacity();
+    try e.run(&out, "proc prinqual data=p out=o3; freq f; freq w; weight w; weight f; id id; id g; transform identity(x y z); run;");
+    try expect(!e.diags.hasErrors());
+    try expect(std.mem.indexOf(u8, out.items, "0.92059") != null);
+    const o3 = e.lib.find("o3").?;
+    try expectEqualStrings("_TYPE_ _NAME_ f w x y z Tx Ty Tz id g", try columnNames(a, o3));
+    try expectEqualStrings("a", o3.rows.items[0][1].str);
+    // SAS 9.4 BY run: g=2 (one observation) and g=3 (both observations
+    // missing) each log "ERROR: Too few observations.", print nothing and
+    // write no OUT= rows; g=1, 4 and 5 are analysed (0.99957, 1.00000,
+    // 1.00000) and OUT= has 9 observations and 10 variables.
+    out.clearRetainingCapacity();
+    try e.run(&out, "proc prinqual data=p out=o1; by g; transform identity(x y z); id id; run;");
+    try expectEqual(@as(usize, 2), errorCount(&e.diags, "Too few observations."));
+    try expect(std.mem.indexOf(u8, out.items, "\ng=1\n") != null and std.mem.indexOf(u8, out.items, "\ng=4\n") != null and std.mem.indexOf(u8, out.items, "\ng=5\n") != null);
+    try expect(std.mem.indexOf(u8, out.items, "g=2") == null and std.mem.indexOf(u8, out.items, "g=3") == null);
+    try expect(std.mem.indexOf(u8, out.items, "0.99957") != null);
+    const o1 = e.lib.find("o1").?;
+    try expectEqualStrings("g _TYPE_ _NAME_ x y z Tx Ty Tz id", try columnNames(a, o1));
+    try expectEqual(@as(usize, 9), o1.rows.items.len);
+    const names = "abcdhijkl";
+    for (o1.rows.items, 0..) |row, k| try expectEqualStrings(names[k .. k + 1], row[2].str);
+    // SAS 9.4 without BY: one observation, or one active observation after
+    // casewise deletion, logs the ERROR and stops; OUT= exists with 0
+    // observations (8 variables; 9 with ID x, which SAS renames to x2 with
+    // "NOTE: Variable x already exists on file WORK.Q2, using x2 instead.").
+    var d = diag.Diagnostics.init(a);
+    e.diags = d;
+    out.clearRetainingCapacity();
+    try e.run(&out, "proc prinqual data=p(where=(g=2)) out=q1; transform identity(x y z); run;");
+    try expectEqual(@as(usize, 1), errorCount(&e.diags, "Too few observations."));
+    try expectEqual(@as(usize, 0), out.items.len);
+    const q1 = e.lib.find("q1").?;
+    try expectEqual(@as(usize, 0), q1.rows.items.len);
+    try expectEqual(@as(usize, 8), q1.columns.items.len);
+    d = diag.Diagnostics.init(a);
+    e.diags = d;
+    try e.run(&out, "proc prinqual data=p(where=(g=3 or id='h')) out=q2; transform identity(x y z); id x; run;");
+    try expectEqual(@as(usize, 1), errorCount(&e.diags, "Too few observations."));
+    const q2 = e.lib.find("q2").?;
+    try expectEqualStrings("_TYPE_ _NAME_ x y z Tx Ty Tz x2", try columnNames(a, q2));
+    try expectEqual(@as(usize, 0), q2.rows.items.len);
+    var renamed = false;
+    for (e.diags.list.items) |x| {
+        if (x.severity == .note and std.mem.eql(u8, x.message, "Variable x already exists on file WORK.Q2, using x2 instead.")) renamed = true;
+    }
+    try expect(renamed);
+}
+
+test "STAT-PRINQUAL-001 FORMAT statement in the step (SAS reference)" {
+    var e: Env = .{ .arena = std.heap.ArenaAllocator.init(std.testing.allocator) };
+    defer e.arena.deinit();
+    try e.init();
+    const a = e.arena.allocator();
+    try buildProbe(a, &e.lib);
+    // SAS 9.4 PROC CONTENTS VARNUM of this step: x and Tx carry F8.3, id
+    // carries $UPCASE.; _NAME_ is the formatted ID ("A"); criterion 0.84632.
+    var out: std.ArrayList(u8) = .empty;
+    try e.run(&out, "proc prinqual data=p out=o4; format x 8.3 id $upcase.; id id; transform identity(x y z); run;");
+    try expect(std.mem.indexOf(u8, out.items, "0.84632") != null);
+    const o4 = e.lib.find("o4").?;
+    try expectEqualStrings("_TYPE_ _NAME_ x y z Tx Ty Tz id", try columnNames(a, o4));
+    try expectEqualStrings("8.3", o4.columns.items[2].format.?);
+    try expectEqualStrings("8.3", o4.columns.items[5].format.?);
+    try expect(o4.columns.items[3].format == null);
+    try expectEqualStrings("$upcase.", o4.columns.items[8].format.?);
+    try expectEqualStrings("A", o4.rows.items[0][1].str);
+    try expectEqualStrings("a", o4.rows.items[0][8].str); // stored value unchanged
+    // The input data set keeps its own (absent) formats.
+    try expect(e.lib.find("p").?.columns.items[1].format == null);
 }

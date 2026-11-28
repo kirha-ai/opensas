@@ -211,17 +211,15 @@ fn transformStatement(cx: proc.ProcCtx, ds: *const Dataset, t: []const lex.Token
 
 pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
     const a = cx.arena;
-    const gap = proc.failGap;
     var s: Spec = .{ .input = undefined };
     var name: ?[]const u8 = null;
     var qualified: ?usize = null;
-    var seen: std.StringHashMapUnmanaged(void) = .empty;
     var i: usize = 2;
     while (i < t.len and !at(t, i, .semicolon) and !at(t, i, .eof)) {
         if (!at(t, i, .name)) return invalid(cx, t, i);
         const option = canonical(try std.ascii.allocLowerString(a, t[i].text));
-        // The chapter states no rule for a repeated PROC option; do not guess one.
-        if ((try seen.getOrPut(a, option)).found_existing) return gap(cx.diags, t[i].line, "PROC PRINQUAL: repeated PROC statement option {s} is not verified", .{t[i].text});
+        // A repeated option: the last one is used (verified against SAS 9.4
+        // for N=, TPREFIX= and METHOD=; no note or warning is logged).
         const valued = at(t, i + 1, .eq);
         if (eq(option, "data") and valued) {
             const first = i + 2;
@@ -334,6 +332,7 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
     var vars: std.ArrayList(usize) = .empty;
     var ids: std.ArrayList(usize) = .empty;
     var transform_statements: usize = 0;
+    var formats: std.ArrayList(proc.VarSpec) = .empty;
     i += 1;
     while (i < t.len and !at(t, i, .eof)) {
         if (at(t, i, .semicolon)) {
@@ -357,13 +356,16 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
             if (end == i + 1) return invalid(cx, t, end);
             try columnList(cx, ds, t[i + 1 .. end], t[i].line, "ID", false, &ids);
         } else if (eq(word, "freq")) {
-            if (s.freq != null) return gap(cx.diags, t[i].line, "PROC PRINQUAL: more than one FREQ statement is not verified", .{});
-            s.freq = try oneNumeric(cx, ds, t, i, end, "FREQ");
+            // Verified against SAS 9.4: with two FREQ (or WEIGHT) statements the
+            // first one is used, silently (unlike BY, where the last one wins).
+            const ci = try oneNumeric(cx, ds, t, i, end, "FREQ");
+            if (s.freq == null) s.freq = ci;
         } else if (eq(word, "weight")) {
-            if (s.weight != null) return gap(cx.diags, t[i].line, "PROC PRINQUAL: more than one WEIGHT statement is not verified", .{});
-            s.weight = try oneNumeric(cx, ds, t, i, end, "WEIGHT");
+            const ci = try oneNumeric(cx, ds, t, i, end, "WEIGHT");
+            if (s.weight == null) s.weight = ci;
         } else if (eq(word, "format")) {
-            return gap(cx.diags, t[i].line, "PROC PRINQUAL: a FORMAT statement inside the step is not implemented", .{});
+            var j = i;
+            try proc.parseProcFormat(a, t, &j, &formats);
         } else if (eq(word, "where")) {
             // Applied by procInputObs above.
         } else if (parser.isMidStepSkippable(word)) {
@@ -375,6 +377,22 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
     // and (by its wording) a single variable.
     if (transform_statements != 1 or vars.items.len < 2)
         return cx.diags.fail(error.ParseError, line(t, 0), "A single TRANSFORM statement with at least one transformation name and at least two variables is required.", .{});
+    // FORMAT statement (verified against SAS 9.4): the formats attach to the
+    // variables for this step, so OUT= carries them on the original and the
+    // transformed variables and _NAME_ is the formatted ID value. The input
+    // data set itself is not changed (a shallow copy carries the formats).
+    if (formats.items.len > 0) {
+        const copy = try a.create(Dataset);
+        copy.* = Dataset.init(a, ds.name);
+        copy.sortseq_linguistic = ds.sortseq_linguistic;
+        try copy.columns.appendSlice(a, ds.columns.items);
+        try copy.rows.appendSlice(a, ds.rows.items);
+        for (formats.items) |f| {
+            const ci = copy.indexOf(f.name) orelse return cx.diags.fail(error.ParseError, line(t, 0), "PROC PRINQUAL: variable {s} in the FORMAT statement is not on the input data set", .{f.name});
+            copy.columns.items[ci].format = if (f.spec.len == 0) null else f.spec;
+        }
+        s.input.ds = copy;
+    }
     const pb = try bys.resolve(a, ds, cx.diags);
     const cols = try a.alloc(usize, pb.names.len);
     for (pb.names, 0..) |n, k| cols[k] = ds.indexOf(n).?;
@@ -516,6 +534,21 @@ pub fn render(a: A, out: *Out, method: Method, criterion: f64, few_obs: bool) !v
     if (few_obs) try out.appendSlice(a, "WARNING: The number of observations is less than or equal to the number of variables.\nWARNING: Multiple optimal solutions may exist.\n");
 }
 
+/// BY line of a group. Verified against SAS 9.4 under NOCENTER: a blank
+/// line, then `g=1` at column 1 (the shared statistical BY line is centred;
+/// opensas listings are uncentred, so this procedure strips the indent).
+fn byLine(a: A, out: *Out, ds: *Dataset, row: []const Value, cols: []const usize) !void {
+    var tmp: Out = .empty;
+    try by.appendLine(a, &tmp, ds, row, cols);
+    var it = std.mem.splitScalar(u8, tmp.items, '\n');
+    var first = true;
+    while (it.next()) |l| {
+        if (!first) try out.append(a, '\n');
+        first = false;
+        try out.appendSlice(a, std.mem.trimStart(u8, l, " "));
+    }
+}
+
 fn deletionNotes(cx: proc.ProcCtx, sel: Selection) !void {
     var reasons: usize = 0;
     if (sel.type_excluded > 0) try cx.diags.note(0, "{d} observations of nonblank _TYPE_ not equal 'SCORE' are excluded from the analysis and the output data set.", .{sel.type_excluded});
@@ -571,10 +604,13 @@ pub fn run(cx: proc.ProcCtx, out: *Out, t: []const lex.Token) diag.Error!void {
     const crits = try a.alloc(f64, groups.len);
     for (groups, sels, moms, crits) |group, *sel, *m, *c| {
         sel.* = try select(a, s, ds, group.rows);
-        // ponytail: SAS logs "ERROR: Too few observations." for a BY group
-        // without active observations and continues with the next group
-        // (verified); that per-group recovery is not implemented.
-        if (sel.rows < 2) return gap(cx.diags, l0, "PROC PRINQUAL: an analysis with fewer than two active observations (SAS: ERROR: Too few observations.) is not implemented (STAT-PRINQUAL-005)", .{});
+        // Verified against SAS 9.4: a BY group with fewer than two active
+        // observations logs "ERROR: Too few observations.", prints nothing,
+        // writes no OUT= rows (not even its passive ones) and the remaining
+        // groups are analysed. Skipped groups are marked by rows < 2 below.
+        // Without BY the step stops after that ERROR, leaving an empty OUT=
+        // data set with the usual variables (also verified).
+        if (sel.rows < 2) continue;
         if (sel.rows <= p and s.method == .mac) return gap(cx.diags, l0, "PROC PRINQUAL: METHOD=MAC with no more observations than variables is not verified against SAS output (STAT-PRINQUAL-003)", .{});
         m.* = (try moments(a, s, group.rows, sel.*)) orelse return gap(cx.diags, l0, "PROC PRINQUAL: a constant variable is not implemented (STAT-PRINQUAL-005)", .{});
         c.* = try proportion(a, m.*, p, ncomp);
@@ -614,14 +650,39 @@ pub fn run(cx: proc.ProcCtx, out: *Out, t: []const lex.Token) diag.Error!void {
         o.columns.items[o.columns.items.len - 1].label = try std.fmt.allocPrint(a, "{s} Transformation", .{ds.columns.items[ci].name});
         try src.append(a, null);
     }
-    for (s.ids) |ci| try add(a, o, &src, ds, ci);
+    // Verified against SAS 9.4: an ID variable already in OUT= (for example
+    // a TRANSFORM variable) is written again under a numbered name, with
+    // "NOTE: Variable x already exists on file WORK.O, using x2 instead.".
+    for (s.ids) |ci| {
+        if (std.mem.indexOfScalar(?usize, src.items, ci) == null) {
+            try add(a, o, &src, ds, ci);
+            continue;
+        }
+        const orig = ds.columns.items[ci].name;
+        var k: usize = 2;
+        var n = try std.fmt.allocPrint(a, "{s}{d}", .{ orig, k });
+        while (o.indexOf(n) != null) : (k += 1) n = try std.fmt.allocPrint(a, "{s}{d}", .{ orig, k + 1 });
+        try cx.diags.note(0, "Variable {s} already exists on file {s}{s}, using {s} instead.", .{ orig, if (std.mem.indexOfScalar(u8, member, '.') == null) "WORK." else "", try std.ascii.allocUpperString(a, member), n });
+        _ = try o.addColumnLike(n, ds.columns.items[ci]);
+        try src.append(a, ci);
+    }
 
     var body: Out = .empty;
     for (groups, sels, moms, crits) |group, sel, m, c| {
         var row_no: usize = 0; // verified: ROW1, ROW2, ... restart in each BY group
         try deletionNotes(cx, sel);
+        if (sel.rows < 2) {
+            try cx.diags.recoverableErr(0, "Too few observations.", .{});
+            if (s.by_cols.len > 0) {
+                try by.reportNote(a, cx.diags, ds, group.rows[0], s.by_cols);
+                continue;
+            }
+            try cx.lib.put(member, o);
+            try cx.diags.warn(0, "The data set {s}{s} may be incomplete.  When this step was stopped there were 0 observations and {d} variables.", .{ if (std.mem.indexOfScalar(u8, member, '.') == null) "WORK." else "", try std.ascii.allocUpperString(a, member), o.columns.items.len });
+            return;
+        }
         if (!s.noprint) {
-            if (s.by_cols.len > 0) try by.appendLine(a, &body, ds, group.rows[0], s.by_cols);
+            if (s.by_cols.len > 0) try byLine(a, &body, ds, group.rows[0], s.by_cols);
             try render(a, &body, s.method, c, sel.rows <= p and s.method == .mtv);
         }
         if (sel.rows <= p and s.method == .mtv) {
