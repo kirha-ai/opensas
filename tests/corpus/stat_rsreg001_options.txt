@@ -1,0 +1,146 @@
+P3 saddle
+
+The RSREG Procedure
+
+Coding Coefficients for the Independent Variables
+
+Factor Subtracted off Divided by
+
+x1 0 1.000000
+x2 0 1.000000
+P3 saddle
+
+The RSREG Procedure
+Canonical Analysis of Response Surface Based on Coded Data
+
+Critical Value
+Factor Coded Uncoded
+
+x1 0.066429 0.066429
+x2 -0.647687 -0.647687
+
+Predicted value at stationary point: 6.231966
+
+
+Eigenvectors
+Eigenvalues x1 x2
+
+1.203434 0.828067 -0.560629
+-1.489148 0.560629 0.828067
+
+Stationary point is a saddle point.
+P4 one factor
+
+The RSREG Procedure
+
+Coding Coefficients for the Independent Variables
+
+Factor Subtracted off Divided by
+
+x1 0 1.000000
+
+
+Response Surface for Variable y
+
+Response Mean 5.900000
+Root MSE 2.270410
+R-Square 0.3179
+Coefficient of Variation 38.4815
+
+
+Type I Sum
+Regression DF of Squares R-Square F Value Pr > F
+
+Linear 1 16.666667 0.3151 3.23 0.1152
+Quadratic 1 0.150000 0.0028 0.03 0.8694
+Crossproduct 0 0 0.0000 . .
+Total Model 2 16.816667 0.3179 1.63 0.2621
+
+
+Sum of
+Residual DF Squares Mean Square
+
+Total Error 7 36.083333 5.154762
+
+
+Parameter
+Estimate
+Standard from Coded
+Parameter DF Estimate Error t Value Pr > |t| Data
+
+Intercept 1 5.750000 1.135205 5.07 0.0015 5.750000
+x1 1 -1.666667 0.926891 -1.80 0.1152 -1.666667
+x1*x1 1 0.250000 1.465543 0.17 0.8694 0.250000
+
+
+Sum of
+Factor DF Squares Mean Square F Value Pr > F
+
+x1 2 16.816667 8.408333 1.63 0.2621
+P4 one factor
+
+The RSREG Procedure
+Canonical Analysis of Response Surface Based on Coded Data
+
+Critical Value
+Factor Coded Uncoded
+
+x1 3.333333 3.333333
+
+Predicted value at stationary point: 2.972222
+
+
+Eigenvectors
+Eigenvalues x1
+
+0.250000 1.000000
+
+Stationary point is a minimum.
+P5 nooptimal
+
+The RSREG Procedure
+
+Coding Coefficients for the Independent Variables
+
+Factor Subtracted off Divided by
+
+x1 0 1.000000
+
+
+Response Surface for Variable y
+
+Response Mean 5.900000
+Root MSE 2.270410
+R-Square 0.3179
+Coefficient of Variation 38.4815
+
+
+Type I Sum
+Regression DF of Squares R-Square F Value Pr > F
+
+Linear 1 16.666667 0.3151 3.23 0.1152
+Quadratic 1 0.150000 0.0028 0.03 0.8694
+Crossproduct 0 0 0.0000 . .
+Total Model 2 16.816667 0.3179 1.63 0.2621
+
+
+Sum of
+Residual DF Squares Mean Square
+
+Total Error 7 36.083333 5.154762
+
+
+Parameter
+Estimate
+Standard from Coded
+Parameter DF Estimate Error t Value Pr > |t| Data
+
+Intercept 1 5.750000 1.135205 5.07 0.0015 5.750000
+x1 1 -1.666667 0.926891 -1.80 0.1152 -1.666667
+x1*x1 1 0.250000 1.465543 0.17 0.8694 0.250000
+
+
+Sum of
+Factor DF Squares Mean Square F Value Pr > F
+
+x1 2 16.816667 8.408333 1.63 0.2621

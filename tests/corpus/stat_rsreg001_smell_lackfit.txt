@@ -1,0 +1,84 @@
+Response Surface with a Simple Optimum
+
+The RSREG Procedure
+
+Coding Coefficients for the Independent Variables
+
+Factor Subtracted off Divided by
+
+T 80.000000 40.000000
+R 0.500000 0.200000
+H 4.000000 2.000000
+
+
+Response Surface for Variable Odor
+
+Response Mean 15.200000
+Root MSE 22.478508
+R-Square 0.8820
+Coefficient of Variation 147.8849
+
+
+Type I Sum
+Regression DF of Squares R-Square F Value Pr > F
+
+Linear 3 7143.250000 0.3337 4.71 0.0641
+Quadratic 3 11445 0.5346 7.55 0.0264
+Crossproduct 3 293.500000 0.0137 0.19 0.8965
+Total Model 9 18882 0.8820 4.15 0.0657
+
+
+Sum of
+Residual DF Squares Mean Square F Value Pr > F
+
+Lack of Fit 3 2485.750000 828.583333 40.75 0.0240
+Pure Error 2 40.666667 20.333333
+Total Error 5 2526.416667 505.283333
+
+
+Parameter
+Estimate
+Standard from Coded
+Parameter DF Estimate Error t Value Pr > |t| Data
+
+Intercept 1 568.958333 134.609816 4.23 0.0083 -30.666667
+T 1 -4.102083 1.489024 -2.75 0.0401 -12.125000
+R 1 -1345.833333 335.220685 -4.01 0.0102 -17.000000
+H 1 -22.166667 29.780489 -0.74 0.4902 -21.375000
+T*T 1 0.020052 0.007311 2.74 0.0407 32.083333
+R*T 1 1.031250 1.404907 0.73 0.4959 8.250000
+R*R 1 1195.833333 292.454665 4.09 0.0095 47.833333
+H*T 1 0.018750 0.140491 0.13 0.8990 1.500000
+H*R 1 -4.375000 28.098135 -0.16 0.8824 -1.750000
+H*H 1 1.520833 2.924547 0.52 0.6252 6.083333
+
+
+Sum of
+Factor DF Squares Mean Square F Value Pr > F Label
+
+T 4 5258.016026 1314.504006 2.60 0.1613 Temperature
+R 4 11045 2761.150641 5.46 0.0454 Gas-Liquid Ratio
+H 4 3813.016026 953.254006 1.89 0.2510 Packing Height
+Response Surface with a Simple Optimum
+
+The RSREG Procedure
+Canonical Analysis of Response Surface Based on Coded Data
+
+Critical Value
+Factor Coded Uncoded Label
+
+T 0.121913 84.876502 Temperature
+R 0.199575 0.539915 Gas-Liquid Ratio
+H 1.770525 7.541050 Packing Height
+
+Predicted value at stationary point: -52.024631
+
+
+Eigenvectors
+Eigenvalues T R H
+
+48.858807 0.238091 0.971116 -0.015690
+31.103461 0.970696 -0.237384 0.037399
+6.037732 -0.032594 0.024135 0.999177
+
+Stationary point is a minimum.

@@ -31,6 +31,7 @@ pub const npar1way = @import("stat/npar1way.zig");
 pub const plm = @import("stat/plm.zig");
 pub const phreg = @import("stat/phreg.zig");
 pub const lifetest = @import("stat/lifetest.zig");
+pub const rsreg = @import("stat/rsreg.zig");
 pub const orthoreg = @import("stat/orthoreg.zig");
 pub const corresp = @import("stat/corresp.zig");
 pub const distance = @import("stat/distance.zig");
@@ -92,6 +93,7 @@ test {
     _ = @import("stat/plm.zig");
     _ = @import("stat/phreg.zig");
     _ = @import("stat/lifetest.zig");
+    _ = @import("stat/rsreg.zig");
     _ = @import("stat/orthoreg.zig");
     _ = @import("stat/corresp.zig");
     _ = @import("stat/distance.zig");

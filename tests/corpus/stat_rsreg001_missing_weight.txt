@@ -1,0 +1,150 @@
+P1 missing response row widens factor range
+
+The RSREG Procedure
+
+Coding Coefficients for the Independent Variables
+
+Factor Subtracted off Divided by
+
+x1 -1.000000 4.000000
+x2 2.000000 1.000000
+
+
+Response Surface for Variable y
+
+Response Mean 15.500000
+Root MSE 3.742334
+R-Square 0.4124
+Coefficient of Variation 24.1441
+
+
+Type I Sum
+Regression DF of Squares R-Square F Value Pr > F
+
+Linear 2 43.514730 0.3043 1.55 0.2860
+Quadratic 2 14.454885 0.1011 0.52 0.6211
+Crossproduct 1 1.000000 0.0070 0.07 0.7983
+Total Model 5 58.969615 0.4124 0.84 0.5654
+
+
+Sum of
+Residual DF Squares Mean Square
+
+Total Error 6 84.030385 14.005064
+
+
+Parameter
+Estimate
+Standard from Coded
+Parameter DF Estimate Error t Value Pr > |t| Data
+
+Intercept 1 9.044320 11.621198 0.78 0.4660 13.706565
+x1 1 1.106552 3.812604 0.29 0.7814 -1.444726
+x2 1 1.034931 9.902950 0.10 0.9202 4.000000
+x1*x1 1 0.233867 0.234492 1.00 0.3571 3.741868
+x2*x1 1 -0.500000 1.871167 -0.27 0.7983 -2.000000
+x2*x2 1 0.616267 2.260105 0.27 0.7942 0.616267
+
+
+Sum of
+Factor DF Squares Mean Square F Value Pr > F
+
+x1 3 21.469615 7.156538 0.51 0.6893
+x2 3 39.541277 13.180426 0.94 0.4774
+P1 missing response row widens factor range
+
+The RSREG Procedure
+Canonical Analysis of Response Surface Based on Coded Data
+
+Critical Value
+Factor Coded Uncoded
+
+x1 -1.190537 -5.762149
+x2 -5.177196 -3.177196
+
+Predicted value at stationary point: 4.212172
+
+
+Eigenvectors
+Eigenvalues x1 x2
+
+4.034424 0.959770 -0.280786
+0.323712 0.280786 0.959770
+
+Stationary point is a minimum.
+P2 weighted with lackfit
+
+The RSREG Procedure
+
+Coding Coefficients for the Independent Variables
+
+Factor Subtracted off Divided by
+
+x1 2.000000 1.000000
+x2 2.000000 1.000000
+
+
+Response Surface for Variable y
+
+Response Mean 15.000000
+Root MSE 3.199277
+R-Square 0.6851
+Coefficient of Variation 21.3285
+
+
+Type I Sum
+Regression DF of Squares R-Square F Value Pr > F
+
+Linear 2 77.324295 0.5948 3.78 0.1198
+Quadratic 2 11.552868 0.0889 0.56 0.6083
+Crossproduct 1 0.181356 0.0014 0.02 0.9005
+Total Model 5 89.058519 0.6851 1.74 0.3057
+
+
+Sum of
+Residual DF Squares Mean Square F Value Pr > F
+
+Lack of Fit 3 22.941481 7.647160 0.42 0.7775
+Pure Error 1 18.000000 18.000000
+Total Error 4 40.941481 10.235370
+
+
+Parameter
+Estimate
+Standard from Coded
+Parameter DF Estimate Error t Value Pr > |t| Data
+
+Intercept 1 14.059259 11.142318 1.26 0.2756 13.102963
+x1 1 0.623333 7.444765 0.08 0.9373 1.371481
+x2 1 -5.210370 8.186278 -0.64 0.5591 2.259259
+x1*x1 1 0.285556 1.757177 0.16 0.8788 0.285556
+x2*x1 1 -0.197037 1.480246 -0.13 0.9005 -0.197037
+x2*x2 1 1.965926 1.855294 1.06 0.3491 1.965926
+
+
+Sum of
+Factor DF Squares Mean Square F Value Pr > F
+
+x1 3 14.391852 4.797284 0.47 0.7201
+x2 3 60.641852 20.213951 1.97 0.2599
+P2 weighted with lackfit
+
+The RSREG Procedure
+Canonical Analysis of Response Surface Based on Coded Data
+
+Critical Value
+Factor Coded Uncoded
+
+x1 -2.645406 -0.645406
+x2 -0.707174 1.292826
+
+Predicted value at stationary point: 10.490056
+
+
+Eigenvectors
+Eigenvalues x1 x2
+
+1.971682 -0.058329 0.998297
+0.279799 0.998297 0.058329
+
+Stationary point is a minimum.

@@ -1,0 +1,29 @@
+
+The RSREG Procedure
+
+Coding Coefficients for the Independent Variables
+
+Factor Subtracted off Divided by
+
+x1 0 1.000000
+x2 0 1.000000
+
+The RSREG Procedure
+Canonical Analysis of Response Surface Based on Coded Data
+
+Critical Value
+Factor Coded Uncoded
+
+x1 0.066429 0.066429
+x2 -0.647687 -0.647687
+
+Predicted value at stationary point: 6.231966
+
+
+Eigenvectors
+Eigenvalues x1 x2
+
+1.203434 0.828067 -0.560629
+-1.489148 0.560629 0.828067
+
+Stationary point is a saddle point.
