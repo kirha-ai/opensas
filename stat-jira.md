@@ -33,9 +33,9 @@ This section is the only current status summary; every section below it is a his
 - **Interrupted by the full disk:** STAT-ANOVA-009 and STAT-PHREG-004 are TODO (no file changed; reading notes in the tickets). STAT-LIFETEST-003 and STAT-GENMOD-003 are PARK with UNCOMMITTED, NEVER-COMPILED source retained in `opensas-dev5` (`stat-b6/lifetest003-dev5`) and `opensas-dev7` (`stat-b6/genmod003-dev7`); do not integrate it before it is built, tested and committed there.
 - **User approval (2026-11-28):** SASHELP sample data taken from SAS's public sample material may be committed to this public repository, for STAT-SASHELP-001 and the later SASHELP tickets; record source and verification, never invent rows, ask before adding a data set above about 2 MB.
 - **Held, not integrated (needs a user decision):** STAT-FASTCLUS-001, branch `stat-b7/fastclus001-dev2` (`4d730ead` code and tests, `45dd37bd` ticket note). It adds SASHELP.IRIS (150 rows, Fisher 1936) taken from a SAS 9.4 dump, which is outside the approved SASHELP-ticket, public-sample-material scope. Also held for the same question: STAT-VARCLUS-001, branch `stat-b7/varclus001-dev7` (`5dd2e52b`, note `090678d2`), which inlines the same 150 rows from a SAS dump in two corpus fixtures.
-- **Live slots (auto):** dev1 STAT-HPPRINCOMP-001, dev2 STAT-ROBUSTREG-001, dev3 STAT-CATMOD-001, dev4 STAT-PRINT-001, dev5 STAT-HPLOGISTIC-001, dev6 STAT-HPGENSELECT-001, dev7 STAT-HPREG-001.
-- **Integrated locally, awaiting batch verification (auto):** STAT-SEQTEST-001 (PARK).
-- **Counts:** 56 DONE, 122 PARK, 7 DOING, 1238 TODO.
+- **Live slots (auto):** dev1 STAT-ICPHREG-001, dev2 STAT-ROBUSTREG-001, dev3 STAT-CATMOD-001, dev4 STAT-PRINT-001, dev5 STAT-HPLOGISTIC-001, dev6 STAT-HPGENSELECT-001, dev7 STAT-HPREG-001.
+- **Integrated locally, awaiting batch verification (auto):** STAT-SEQTEST-001 (PARK), STAT-HPPRINCOMP-001 (PARK).
+- **Counts:** 56 DONE, 123 PARK, 7 DOING, 1237 TODO.
 - **Next:** integrate each returned ticket, refill its slot, verify and push the next batch; run the open review above. Pending user decision: the `best32.` display fix found by STAT-STDIZE-001 changes five existing test expectations (patch kept in the coordinator scratchpad, not applied).
 - **Working branch:** `feat/stat/batch-4`. Last tested and pushed code SHA `0edd9657d00c612fad1b66104cee2c6e6f54cc18` (batch 17; batch 16 was `93ac350ae7105f5f293e6f76854c0142e31c8e31`). The bullets below this one describe batch 5 and are historical. Later commits that touch only this file are documentation. No PR created or merged; `main` untouched.
 - **Batch 5 verification at that exact SHA (2026-11-28):** whole `tests/STAT15.4-oracle/` moved out of the checkout, then `zig build gate -j2 --summary all` direct exit 0 — **2380/2380 unit tests** (2262 + 102 + 13 + 3), **2409/2409 corpus**, **11/11 programs**; `zig build install` direct 0; separate supplemental direct 0, **1113/1113**. Oracle restored unchanged (1425 entries), tree clean.
@@ -7191,7 +7191,7 @@ Source: S154, Chapter 65, `The HPPRINCOMP Procedure`, PDF pp. 4943–4970. Tasks
 
 <a id="stat-hpprincomp-001"></a>
 
-### [DOING @dev1] STAT-HPPRINCOMP-001 — HPPRINCOMP — Data input, variable roles, and basic options
+### [PARK] STAT-HPPRINCOMP-001 — HPPRINCOMP — Data input, variable roles, and basic options
 
 - Source: S154 / Chapter 65 / `PROC HPPRINCOMP Statement` (PDF pp. 4950–4954); S154 / Chapter 65 / `BY Statement` (PDF pp. 4954–4955); S154 / Chapter 65 / `FREQ Statement` (PDF pp. 4955–4956); S154 / Chapter 65 / `ID Statement` (PDF p. 4956); S154 / Chapter 65 / `VAR Statement` (PDF p. 4958); S154 / Chapter 65 / `WEIGHT Statement` (PDF p. 4958); S154 / Chapter 65 / `Missing Values` (PDF pp. 4959–4960).
 - Scope: Integrate PROC HPPRINCOMP declarations, basic options, defaults, and execution boundaries; this ticket establishes parameter objects and result interfaces, while later feature tickets implement model-, algorithm-, and output-specific options. Also implement BY; FREQ; ID; VAR; WEIGHT; Missing Values; apply this procedure's rules for missing values, variable roles, and observation selection.
@@ -7816,7 +7816,7 @@ Source: S154, Chapter 70, `The ICPHREG Procedure`, PDF pp. 5199–5268. Tasks in
 
 <a id="stat-icphreg-001"></a>
 
-### [TODO] STAT-ICPHREG-001 — ICPHREG — Data input, variable roles, and basic options
+### [DOING @dev1] STAT-ICPHREG-001 — ICPHREG — Data input, variable roles, and basic options
 
 - Source: S154 / Chapter 70 / `PROC ICPHREG Statement` (PDF pp. 5207–5214); S154 / Chapter 70 / `BY Statement` (PDF pp. 5217–5218); S154 / Chapter 70 / `FREQ Statement` (PDF p. 5221); S154 / Chapter 70 / `ID Statement` (PDF pp. 5223–5224); S154 / Chapter 70 / `STRATA Statement` (PDF pp. 5228–5229); S154 / Chapter 70 / `Missing Values` (PDF p. 5246).
 - Scope: Integrate PROC ICPHREG declarations, basic options, defaults, and execution boundaries; this ticket establishes parameter objects and result interfaces, while later feature tickets implement model-, algorithm-, and output-specific options. Also implement BY; FREQ; ID; STRATA; Missing Values; apply this procedure's rules for missing values, variable roles, and observation selection.
