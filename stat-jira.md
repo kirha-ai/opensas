@@ -1,16 +1,16 @@
 # OpenSAS — SAS/STAT 15.4 implementation backlog
 
-## CURRENT STATE — batch 6 verified and pushed, no live dev (2026-11-28)
+## CURRENT STATE — ACTIVE, batch 7 dispatched (2026-11-28)
 
 This section is the only current status summary; every section below it is a historical log. Update it after each integration, verification and handoff.
 
-- **State:** IDLE, no live dev agent. Batch 6 is integrated, verified and pushed. The earlier full-disk pause (ENOSPC about 05:33Z) is over: with the user's approval the dev worktrees' `.zig-cache` and the cache directories under their ignored `output/` were deleted (about 30 GiB free afterwards); logs, replay outputs, dev1's `.stat-*-evidence/` and the main tree were not touched. Every dev worktree's next build starts cold. Coordinator keep-awake: `caffeinate -i -s` PID 62218.
+- **State:** ACTIVE. Batch 7 dispatched 2026-11-28 from tip `c28d819a` (45-minute time box each), one branch `stat-b7/<ticket>-devN` per worktree `../opensas-devN`: dev1 STAT-MI-001, dev2 STAT-MIANALYZE-001, dev3 STAT-MULTTEST-001, dev4 STAT-LIFEREG-001, dev5 STAT-LIFETEST-003 (resumes its retained uncommitted source), dev6 STAT-PROBIT-001, dev7 STAT-GENMOD-003 (resumes its retained uncommitted source). Selection rule from the user: tickets with no dependencies or with all dependencies DONE first; keep every slot busy until the board is DONE. Batch 6 is integrated, verified and pushed. Disk: about 30 GiB free at dispatch after the dev caches were deleted with the user's approval; devs use only the default `.zig-cache`, no per-ticket cache directories, and stop building below 5 GiB free. Coordinator keep-awake: `caffeinate -i -s` PID 62218.
 - **Batch 6 verification at exact SHA `9c4780bff01fd8fecf5074ac7ae4b34f6888f3dd` (2026-11-28):** `zig build install` direct 0; whole `tests/STAT15.4-oracle/` moved out of the checkout, then `zig build gate -j2 --summary all` direct 0 — **2451/2451 unit tests** (2333 + 102 + 13 + 3), **2426/2426 corpus**, **11/11 programs**; `zig build install` direct 0; separate supplemental direct 0, **1113/1113**. Oracle restored unchanged (1425 entries), tree clean, HEAD unchanged. Pushed: origin `206c5161` → `9c4780bf`.
 - **Batch 6 — new DONE:** STAT-FREQ-015, STAT-COMMON-015 (reference folders are safe to delete; not deleted). **Integrated, PARK:** STAT-PLM-002, STAT-PLM-007, STAT-GLIMMIX-002, STAT-GLIMMIX-003, STAT-LIFETEST-002, STAT-PHREG-002, STAT-PHREG-003, STAT-ANOVA-007, STAT-ANOVA-010, STAT-GENMOD-002, STAT-GENMOD-018, STAT-FREQ-019, STAT-COMMON-022. Integration was by serial `git cherry-pick`; the only hand merge was additive in `src/stat/graph_ods.zig` `Name` (ANOVA `BoxPlot, LinesPlot` + FREQ `RelRiskPlot, ORPlot`).
 - **Unchanged original replays with the installed CLI at that SHA** (whitespace-normalised token lines produced/reference, differing lines, exit vs reference 0). Exact, rc 0: FREQ-014 220/220; FREQ-015 649/649; ANOVA-001 364/364 and 528/528; ANOVA-007 364/364; LIFETEST-001 and -002 341/341; PHREG-003 267/267; GENMOD-001 131/131 and 264/264; GENMOD-002 131/131; GENMOD-018 131/131; COMMON-015 113/113. Still rc 2 (loud gaps): PLM-001/002/007 545/869 (328 differ); GLIMMIX-001 0/379 and 0/706; GLIMMIX-002 0/379; GLIMMIX-003 0/896; FREQ-019 0/649; ANOVA-010 0/364; PHREG-001 146/434 and 146/562; PHREG-002 146/434; COMMON-022 0/176; COMMON-030 114/311; COMMON-028 0/207.
 - **Open review (not done):** the originals of GENMOD-001/002/018, ANOVA-001/007, FREQ-014, PHREG-003 and LIFETEST-001/002 now match exactly but the tickets stay PARK; check each against its full acceptance criteria and recorded remaining gaps before any is marked DONE.
 - **Interrupted by the full disk:** STAT-ANOVA-009 and STAT-PHREG-004 are TODO (no file changed; reading notes in the tickets). STAT-LIFETEST-003 and STAT-GENMOD-003 are PARK with UNCOMMITTED, NEVER-COMPILED source retained in `opensas-dev5` (`stat-b6/lifetest003-dev5`) and `opensas-dev7` (`stat-b6/genmod003-dev7`); do not integrate it before it is built, tested and committed there.
-- **Counts:** 55 DONE, 82 PARK, 0 DOING, 1285 TODO.
+- **Counts:** 55 DONE, 80 PARK, 7 DOING, 1280 TODO.
 - **Next:** resume the two retained partial tickets or dispatch new eligible tickets from the current tip; run the open review above.
 - **Working branch:** `feat/stat/batch-4`. Last tested and pushed SHA `9c4780bff01fd8fecf5074ac7ae4b34f6888f3dd` (batch 6; batch 5 was `470bdc33c8b8e070e4a4d7c5fbbf3f26ccaec8b5`). The bullets below this one describe batch 5 and are historical. Later commits that touch only this file are documentation. No PR created or merged; `main` untouched.
 - **Batch 5 verification at that exact SHA (2026-11-28):** whole `tests/STAT15.4-oracle/` moved out of the checkout, then `zig build gate -j2 --summary all` direct exit 0 — **2380/2380 unit tests** (2262 + 102 + 13 + 3), **2409/2409 corpus**, **11/11 programs**; `zig build install` direct 0; separate supplemental direct 0, **1113/1113**. Oracle restored unchanged (1425 entries), tree clean.
@@ -4869,7 +4869,7 @@ Source: S154, Chapter 51, `The GENMOD Procedure`, PDF pp. 3481–3686. Tasks in 
 
 <a id="stat-genmod-003"></a>
 
-### [PARK] STAT-GENMOD-003 — GENMOD — CLASS / MODEL / ZEROMODEL
+### [DOING @dev7] STAT-GENMOD-003 — GENMOD — CLASS / MODEL / ZEROMODEL
 
 - Source: S154 / Chapter 51 / `CLASS Statement` (PDF pp. 3526–3529); S154 / Chapter 51 / `MODEL Statement` (PDF pp. 3544–3555); S154 / Chapter 51 / `ZEROMODEL Statement` (PDF pp. 3567–3568).
 - Scope: Implement CLASS; MODEL; ZEROMODEL. Implement the syntax and model semantics allowed by this procedure, using shared effect/parameterization support only for forms documented as supported.
@@ -8420,7 +8420,7 @@ Source: S154, Chapter 76, `The LIFEREG Procedure`, PDF pp. 5521–5638. Tasks in
 
 <a id="stat-lifereg-001"></a>
 
-### [TODO] STAT-LIFEREG-001 — LIFEREG — Data input, variable roles, and basic options
+### [DOING @dev4] STAT-LIFEREG-001 — LIFEREG — Data input, variable roles, and basic options
 
 - Source: S154 / Chapter 76 / `PROC LIFEREG Statement` (PDF pp. 5536–5538); S154 / Chapter 76 / `BY Statement` (PDF p. 5548); S154 / Chapter 76 / `WEIGHT Statement` (PDF p. 5566); S154 / Chapter 76 / `Missing Values` (PDF p. 5566).
 - Scope: Integrate PROC LIFEREG declarations, basic options, defaults, and execution boundaries; this ticket establishes parameter objects and result interfaces, while later feature tickets implement model-, algorithm-, and output-specific options. Also implement BY; WEIGHT; Missing Values; apply this procedure's rules for missing values, variable roles, and observation selection.
@@ -8621,7 +8621,7 @@ Source: S154, Chapter 77, `The LIFETEST Procedure`, PDF pp. 5639–5754. Tasks i
 
 <a id="stat-lifetest-003"></a>
 
-### [PARK] STAT-LIFETEST-003 — LIFETEST — TIME / Breslow, Fleming-Harrington, and Kaplan-Meier Methods / Life-Table Method
+### [DOING @dev5] STAT-LIFETEST-003 — LIFETEST — TIME / Breslow, Fleming-Harrington, and Kaplan-Meier Methods / Life-Table Method
 
 - Source: S154 / Chapter 77 / `TIME Statement` (PDF pp. 5669–5670); S154 / Chapter 77 / `Breslow, Fleming-Harrington, and Kaplan-Meier Methods` (PDF pp. 5671–5674); S154 / Chapter 77 / `Life-Table Method` (PDF pp. 5674–5676).
 - Scope: Implement TIME; Breslow, Fleming-Harrington, and Kaplan-Meier Methods; Life-Table Method. This ticket owns the feature's options, defaults, computation, and results as an extension of the basic computational path; the chapter's output tickets handle ODS descriptors and file presentation.
@@ -9546,7 +9546,7 @@ Source: S154, Chapter 82, `The MI Procedure`, PDF pp. 6417–6554. Tasks in this
 
 <a id="stat-mi-001"></a>
 
-### [TODO] STAT-MI-001 — MI — Data input, variable roles, and basic options
+### [DOING @dev1] STAT-MI-001 — MI — Data input, variable roles, and basic options
 
 - Source: S154 / Chapter 82 / `PROC MI Statement` (PDF pp. 6425–6429); S154 / Chapter 82 / `BY Statement` (PDF p. 6429); S154 / Chapter 82 / `CLASS Statement` (PDF pp. 6429–6430); S154 / Chapter 82 / `FREQ Statement` (PDF p. 6436); S154 / Chapter 82 / `VAR Statement` (PDF pp. 6448–6449); S154 / Chapter 82 / `EM Algorithm for Data with Missing Values` (PDF pp. 6450–6451); S154 / Chapter 82 / `Missing Data Patterns` (PDF pp. 6452–6453); S154 / Chapter 82 / `Monotone Methods for Data Sets with Monotone Missing Patterns` (PDF pp. 6455–6456); S154 / Chapter 82 / `FCS Methods for Data Sets with Arbitrary Missing Patterns` (PDF pp. 6464–6466); S154 / Chapter 82 / `Input Data Sets` (PDF pp. 6476–6477).
 - Scope: Integrate PROC MI declarations, basic options, defaults, and execution boundaries; this ticket establishes parameter objects and result interfaces, while later feature tickets implement model-, algorithm-, and output-specific options. Also implement BY; CLASS; FREQ; VAR; EM Algorithm for Data with Missing Values; Missing Data Patterns; Monotone Methods for Data Sets with Monotone Missing Patterns; FCS Methods for Data Sets with Arbitrary Missing Patterns; Input Data Sets; apply this procedure's rules for missing values, variable roles, and observation selection.
@@ -9712,7 +9712,7 @@ Source: S154, Chapter 83, `The MIANALYZE Procedure`, PDF pp. 6555–6612. Tasks 
 
 <a id="stat-mianalyze-001"></a>
 
-### [TODO] STAT-MIANALYZE-001 — MIANALYZE — Data input, variable roles, and basic options
+### [DOING @dev2] STAT-MIANALYZE-001 — MIANALYZE — Data input, variable roles, and basic options
 
 - Source: S154 / Chapter 83 / `PROC MIANALYZE Statement` (PDF pp. 6560–6563); S154 / Chapter 83 / `BY Statement` (PDF p. 6563); S154 / Chapter 83 / `CLASS Statement` (PDF pp. 6563–6564); S154 / Chapter 83 / `Input Data Sets` (PDF pp. 6566–6571).
 - Scope: Integrate PROC MIANALYZE declarations, basic options, defaults, and execution boundaries; this ticket establishes parameter objects and result interfaces, while later feature tickets implement model-, algorithm-, and output-specific options. Also implement BY; CLASS; Input Data Sets; apply this procedure's rules for missing values, variable roles, and observation selection.
@@ -10206,7 +10206,7 @@ Source: S154, Chapter 86, `The MULTTEST Procedure`, PDF pp. 6891–6964. Tasks i
 
 <a id="stat-multtest-001"></a>
 
-### [TODO] STAT-MULTTEST-001 — MULTTEST — Data input, variable roles, and basic options
+### [DOING @dev3] STAT-MULTTEST-001 — MULTTEST — Data input, variable roles, and basic options
 
 - Source: S154 / Chapter 86 / `PROC MULTTEST Statement` (PDF pp. 6897–6909); S154 / Chapter 86 / `BY Statement` (PDF p. 6909); S154 / Chapter 86 / `CLASS Statement` (PDF pp. 6909–6910); S154 / Chapter 86 / `FREQ Statement` (PDF p. 6911); S154 / Chapter 86 / `ID Statement` (PDF pp. 6911–6912); S154 / Chapter 86 / `STRATA Statement` (PDF p. 6912); S154 / Chapter 86 / `Missing Values` (PDF p. 6930).
 - Scope: Integrate PROC MULTTEST declarations, basic options, defaults, and execution boundaries; this ticket establishes parameter objects and result interfaces, while later feature tickets implement model-, algorithm-, and output-specific options. Also implement BY; CLASS; FREQ; ID; STRATA; Missing Values; apply this procedure's rules for missing values, variable roles, and observation selection.
@@ -12065,7 +12065,7 @@ Source: S154, Chapter 100, `The PROBIT Procedure`, PDF pp. 8093–8198. Tasks in
 
 <a id="stat-probit-001"></a>
 
-### [TODO] STAT-PROBIT-001 — PROBIT — Data input, variable roles, and basic options
+### [DOING @dev6] STAT-PROBIT-001 — PROBIT — Data input, variable roles, and basic options
 
 - Source: S154 / Chapter 100 / `PROC PROBIT Statement` (PDF pp. 8100–8105); S154 / Chapter 100 / `BY Statement` (PDF pp. 8105–8106); S154 / Chapter 100 / `WEIGHT Statement` (PDF p. 8120); S154 / Chapter 100 / `Missing Values` (PDF p. 8120).
 - Scope: Integrate PROC PROBIT declarations, basic options, defaults, and execution boundaries; this ticket establishes parameter objects and result interfaces, while later feature tickets implement model-, algorithm-, and output-specific options. Also implement BY; WEIGHT; Missing Values; apply this procedure's rules for missing values, variable roles, and observation selection.
