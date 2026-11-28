@@ -11,7 +11,7 @@ This section is the only current status summary; every section below it is a his
 - **Open review (not done):** the originals of GENMOD-001/002/018, ANOVA-001/007, FREQ-014, PHREG-003 and LIFETEST-001/002 now match exactly but the tickets stay PARK; check each against its full acceptance criteria and recorded remaining gaps before any is marked DONE.
 - **Interrupted by the full disk:** STAT-ANOVA-009 and STAT-PHREG-004 are TODO (no file changed; reading notes in the tickets). STAT-LIFETEST-003 and STAT-GENMOD-003 are PARK with UNCOMMITTED, NEVER-COMPILED source retained in `opensas-dev5` (`stat-b6/lifetest003-dev5`) and `opensas-dev7` (`stat-b6/genmod003-dev7`); do not integrate it before it is built, tested and committed there.
 - **Live slots (auto):** dev1 STAT-MI-001, dev2 STAT-MIANALYZE-001, dev3 STAT-MULTTEST-001, dev4 STAT-SURVEYMEANS-001, dev5 STAT-STDRATE-001, dev6 STAT-PROBIT-001, dev7 STAT-GENMOD-003.
-- **Integrated locally, awaiting batch verification (auto):** STAT-LIFEREG-001 (PARK).
+- **Integrated locally, awaiting batch verification (auto):** STAT-LIFETEST-003 (PARK), STAT-LIFEREG-001 (PARK).
 - **Counts:** 55 DONE, 82 PARK, 7 DOING, 1278 TODO.
 - **Next:** resume the two retained partial tickets or dispatch new eligible tickets from the current tip; run the open review above.
 - **Working branch:** `feat/stat/batch-4`. Last tested and pushed SHA `9c4780bff01fd8fecf5074ac7ae4b34f6888f3dd` (batch 6; batch 5 was `470bdc33c8b8e070e4a4d7c5fbbf3f26ccaec8b5`). The bullets below this one describe batch 5 and are historical. Later commits that touch only this file are documentation. No PR created or merged; `main` untouched.
