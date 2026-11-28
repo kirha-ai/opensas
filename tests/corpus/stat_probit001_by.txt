@@ -1,0 +1,120 @@
+
+                                  _oracle_by=1
+
+The Probit Procedure
+
+                   Model Information
+
+Data Set                             WORK._ORACLE_INPUT
+Events Variable                                 Respond
+Trials Variable                                  Number
+Number of Observations                               12
+Number of Events                                     81
+Number of Trials                                    180
+Number of Events In Control Group                     3
+Number of Trials In Control Group                    15
+Name of Distribution                             Normal
+Log Likelihood                             -104.3945783
+
+
+Number of Observations Read          12
+Number of Observations Used          11
+Number of Events                     78
+Number of Trials                    165
+
+
+Algorithm converged.                                                       
+
+
+          Type III Analysis of Effects
+ 
+                               Wald
+Effect             DF    Chi-Square    Pr > ChiSq
+
+Log10(Dose)         1       10.7588        0.0010
+
+
+         Analysis of Maximum Likelihood Parameter Estimates
+ 
+                        Standard   95% Confidence     Chi-
+Parameter   DF Estimate    Error       Limits       Square Pr > ChiSq
+
+Intercept    1  -4.1438   1.3415  -6.7731  -1.5146    9.54     0.0020
+Log10(Dose)  1   6.2308   1.8996   2.5076   9.9539   10.76     0.0010
+_C_          1   0.2409   0.0523   0.1385   0.3433                   
+
+
+Probit Model in Terms of Tolerance Distribution
+ 
+        MU         SIGMA
+
+0.66506312    0.16049411
+
+
+   Estimated Covariance Matrix for Tolerance Parameters
+ 
+                     MU             SIGMA               _C_
+
+MU             0.001158         -0.000493          0.000954
+SIGMA         -0.000493          0.002394         -0.000999
+_C_            0.000954         -0.000999          0.002731
+
+                                  _oracle_by=2
+
+The Probit Procedure
+
+                   Model Information
+
+Data Set                             WORK._ORACLE_INPUT
+Events Variable                                 Respond
+Trials Variable                                  Number
+Number of Observations                               12
+Number of Events                                     81
+Number of Trials                                    180
+Number of Events In Control Group                     3
+Number of Trials In Control Group                    15
+Name of Distribution                             Normal
+Log Likelihood                             -104.3945783
+
+
+Number of Observations Read          12
+Number of Observations Used          11
+Number of Events                     78
+Number of Trials                    165
+
+
+Algorithm converged.                                                       
+
+
+          Type III Analysis of Effects
+ 
+                               Wald
+Effect             DF    Chi-Square    Pr > ChiSq
+
+Log10(Dose)         1       10.7588        0.0010
+
+
+         Analysis of Maximum Likelihood Parameter Estimates
+ 
+                        Standard   95% Confidence     Chi-
+Parameter   DF Estimate    Error       Limits       Square Pr > ChiSq
+
+Intercept    1  -4.1438   1.3415  -6.7731  -1.5146    9.54     0.0020
+Log10(Dose)  1   6.2308   1.8996   2.5076   9.9539   10.76     0.0010
+_C_          1   0.2409   0.0523   0.1385   0.3433                   
+
+
+Probit Model in Terms of Tolerance Distribution
+ 
+        MU         SIGMA
+
+0.66506312    0.16049411
+
+
+   Estimated Covariance Matrix for Tolerance Parameters
+ 
+                     MU             SIGMA               _C_
+
+MU             0.001158         -0.000493          0.000954
+SIGMA         -0.000493          0.002394         -0.000999
+_C_            0.000954         -0.000999          0.002731

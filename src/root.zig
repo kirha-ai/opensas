@@ -26,6 +26,7 @@ pub const anova = @import("stat/anova.zig");
 pub const glmmod = @import("stat/glmmod.zig");
 pub const logistic = @import("stat/logistic.zig");
 pub const genmod = @import("stat/genmod.zig");
+pub const probit = @import("stat/probit.zig");
 pub const npar1way = @import("stat/npar1way.zig");
 pub const plm = @import("stat/plm.zig");
 pub const phreg = @import("stat/phreg.zig");
@@ -85,6 +86,7 @@ test {
     _ = @import("stat/glmmod.zig");
     _ = @import("stat/logistic.zig");
     _ = @import("stat/genmod.zig");
+    _ = @import("stat/probit.zig");
     _ = @import("stat/sgscatter.zig");
     _ = @import("stat/ttest.zig");
     _ = @import("sashelp.zig");
