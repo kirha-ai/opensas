@@ -3117,6 +3117,8 @@ fn runProc(a: std.mem.Allocator, listing_out: *std.ArrayList(u8), lib: *sas.exec
         try sas.sgscatter.run(scatter_context, toks);
     } else if (eqi(proc, "glmmod")) {
         try sas.glmmod.run(pcx, toks);
+    } else if (eqi(proc, "mi")) {
+        var mi_context = pcx; mi_context.listing_titles = g; try sas.mi.run(mi_context, out, toks);
     } else if (eqi(proc, "anova")) {
         var anova_context = pcx; anova_context.listing_titles = g; try sas.anova.runStep(anova_context, out, toks);
     } else if (eqi(proc, "glm")) {

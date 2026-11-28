@@ -34,6 +34,7 @@ pub const lifetest = @import("stat/lifetest.zig");
 pub const lifereg = @import("stat/lifereg.zig");
 pub const multtest = @import("stat/multtest.zig");
 pub const mianalyze = @import("stat/mianalyze.zig");
+pub const mi = @import("stat/mi.zig");
 pub const power = @import("stat/power.zig");
 pub const mixed = @import("stat/mixed.zig");
 pub const glimmix = @import("stat/glimmix.zig");
@@ -76,6 +77,7 @@ test {
     _ = @import("stat/lifereg.zig");
     _ = @import("stat/multtest.zig");
     _ = @import("stat/mianalyze.zig");
+    _ = @import("stat/mi.zig");
     _ = @import("stat/survival_data.zig");
     _ = @import("stat/power.zig");
     _ = @import("stat/power_means.zig");

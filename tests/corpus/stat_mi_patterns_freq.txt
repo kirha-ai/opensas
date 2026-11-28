@@ -1,0 +1,25 @@
+
+The MI Procedure
+
+                     Model Information
+
+Data Set                             WORK.SIZES             
+Method                               MCMC                   
+Multiple Imputation Chain            Single Chain           
+Initial Estimates for MCMC           EM Posterior Mode      
+Start                                Starting Value         
+Prior                                Jeffreys               
+Number of Imputations                0                      
+Number of Burn-in Iterations         200                    
+Number of Iterations                 100                    
+Seed for random number generator     42                     
+
+
+                              Missing Data Patterns
+ 
+                                                     ---------Group Means--------
+Group    Height    Weight        Freq     Percent          Height          Weight
+
+    1    X         X                4       66.67       12.000000       24.000000
+    2    X         .                1       16.67       12.000000               .
+    3    .         X                1       16.67               .       30.000000
