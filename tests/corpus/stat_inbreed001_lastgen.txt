@@ -1,0 +1,382 @@
+
+The INBREED Procedure
+
+             Covariance Coefficients
+ 
+id    p1    p2           A           B           C
+
+A                   1.0000      0.4688      0.7344
+B                   0.4688      1.0000      0.7344
+C     A     B       0.7344      0.7344      1.2344
+
+
+Number of Individuals    3
+
+The INBREED Procedure
+
+             Covariance Coefficients
+ 
+id    p1    p2           A           B           C
+
+A                   1.0000      0.8750      0.9375
+B                   0.8750      1.0000      0.9375
+C     A     B       0.9375      0.9375      1.4375
+
+
+Number of Individuals    3
+
+The INBREED Procedure
+
+             Inbreeding Coefficients
+ 
+id    p1    p2           A           B           C
+
+A                    .          0.2344      0.3672
+B                   0.2344       .          0.3672
+C     A     B       0.3672      0.3672      0.2344
+
+
+Number of Individuals    3
+
+The INBREED Procedure
+
+             Inbreeding Coefficients
+ 
+id    p1    p2           A           B           C
+
+A                    .          0.4375      0.4688
+B                   0.4375       .          0.4688
+C     A     B       0.4688      0.4688      0.4375
+
+
+Number of Individuals    3
+
+The INBREED Procedure
+ 
+gen = 1
+
+Number of Individuals    3
+
+The INBREED Procedure
+ 
+gen = 2
+
+Number of Individuals    2
+
+The INBREED Procedure
+ 
+gen = 3
+
+                Covariance Coefficients
+ 
+id          p1          p2                 F           G
+
+F           D           E             1.1250      0.6250
+G           D           D             0.6250      1.5000
+
+
+Number of Individuals    2
+
+The INBREED Procedure
+ 
+gen = 1
+
+Number of Individuals    3
+
+The INBREED Procedure
+ 
+gen = 2
+
+Number of Individuals    2
+
+The INBREED Procedure
+ 
+gen = 3
+
+     Covariance Coefficients of Individuals
+ 
+id          p1          p2           Coefficient
+
+F           D           E                 1.1250
+G           D           D                 1.5000
+
+
+Number of Individuals    2
+
+The INBREED Procedure
+ 
+gen = 1
+
+Number of Individuals    3
+
+The INBREED Procedure
+ 
+gen = 2
+
+Number of Individuals    2
+
+The INBREED Procedure
+ 
+gen = 3
+
+                Covariance Coefficients
+ 
+id          p1          p2                 F           G
+
+F           D           E             1.1250      0.6250
+G           D           D             0.6250      1.5000
+
+The INBREED Procedure
+ 
+gen = 3
+
+     Covariance Coefficients of Individuals
+ 
+id          p1          p2           Coefficient
+
+F           D           E                 1.1250
+G           D           D                 1.5000
+
+
+Number of Individuals    2
+
+The INBREED Procedure
+ 
+gen = 1
+
+                      Covariance Coefficients
+ 
+id          p1          p2                 A           B           C
+
+A                                     1.0000       .           .    
+B                                      .          1.0000       .    
+C                                      .           .          1.0000
+
+
+Number of Individuals    3
+
+The INBREED Procedure
+ 
+gen = 2
+
+                Covariance Coefficients
+ 
+id          p1          p2                 D           E
+
+D           A           B             1.0000      0.2500
+E           B           C             0.2500      1.0000
+
+
+Number of Individuals    2
+
+The INBREED Procedure
+ 
+gen = 3
+
+                Covariance Coefficients
+ 
+id          p1          p2                 F           G
+
+F           D           E             1.1250      0.6250
+G           D           D             0.6250      1.5000
+
+The INBREED Procedure
+ 
+gen = 3
+
+     Covariance Coefficients of Individuals
+ 
+id          p1          p2           Coefficient
+
+F           D           E                 1.1250
+G           D           D                 1.5000
+
+
+Number of Individuals    2
+
+The INBREED Procedure
+ 
+gen = 1
+
+     Covariance Coefficients of Individuals
+ 
+id          p1          p2           Coefficient
+
+A                                         1.0000
+B                                         1.0000
+C                                         1.0000
+
+
+Number of Individuals    3
+
+The INBREED Procedure
+ 
+gen = 2
+
+     Covariance Coefficients of Individuals
+ 
+id          p1          p2           Coefficient
+
+D           A           B                 1.0000
+E           B           C                 1.0000
+
+
+Number of Individuals    2
+
+The INBREED Procedure
+ 
+gen = 3
+
+                Covariance Coefficients
+ 
+id          p1          p2                 F           G
+
+F           D           E             1.1250      0.6250
+G           D           D             0.6250      1.5000
+
+The INBREED Procedure
+ 
+gen = 3
+
+     Covariance Coefficients of Individuals
+ 
+id          p1          p2           Coefficient
+
+F           D           E                 1.1250
+G           D           D                 1.5000
+
+
+Number of Individuals    2
+
+The INBREED Procedure
+ 
+gen = 1
+
+                Covariance Coefficients
+ 
+id          p1          p2                 A           B
+
+A                                     1.0000       .    
+B                                      .          1.0000
+
+
+Number of Individuals    2
+
+The INBREED Procedure
+ 
+gen = 2
+
+                Covariance Coefficients
+ 
+id          p1          p2                 C           D
+
+C           A           B             1.0000      0.5000
+D           A           B             0.5000      1.0000
+
+
+Number of Individuals    2
+
+The INBREED Procedure
+ 
+gen = 1
+
+                Covariance Coefficients
+ 
+id          p1          p2                 E           F
+
+E           C           D             1.2500      0.7500
+F           C           D             0.7500      1.2500
+
+
+Number of Individuals    2
+
+The INBREED Procedure
+ 
+gen = 2
+
+          Covariance Coefficients
+ 
+id          p1          p2                 G
+
+G           E           F             1.3750
+
+
+Number of Individuals    1
+
+The INBREED Procedure
+ 
+gen = 1
+
+Number of Individuals    2
+
+The INBREED Procedure
+ 
+gen = 2
+
+                Covariance Coefficients
+ 
+id          p1          p2                 C           D
+
+C           A           B             1.0000      0.5000
+D           A           B             0.5000      1.0000
+
+
+Number of Individuals    2
+
+The INBREED Procedure
+ 
+gen = 1
+
+Number of Individuals    2
+
+The INBREED Procedure
+ 
+gen = 2
+
+          Covariance Coefficients
+ 
+id          p1          p2                 G
+
+G           E           F             1.3750
+
+
+Number of Individuals    1
+
+The INBREED Procedure
+ 
+gen = 1
+
+Number of Individuals    2
+
+The INBREED Procedure
+ 
+gen = 2
+
+     Covariance Coefficients of Individuals
+ 
+id          p1          p2           Coefficient
+
+C           A           B                 1.0000
+D           A           B                 1.0000
+
+
+Number of Individuals    2
+
+The INBREED Procedure
+ 
+gen = 1
+
+Number of Individuals    2
+
+The INBREED Procedure
+ 
+gen = 2
+
+     Covariance Coefficients of Individuals
+ 
+id          p1          p2           Coefficient
+
+G           E           F                 1.3750
+
+
+Number of Individuals    1

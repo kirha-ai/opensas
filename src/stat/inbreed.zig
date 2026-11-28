@@ -1,11 +1,12 @@
 //! PROC INBREED (SAS/STAT 15.4 ch.71, STAT-INBREED-001): PROC statement
-//! options DATA=, COVAR, MATRIX, IND, INIT=, NOPRINT; the VAR and BY roles,
+//! options DATA=, COVAR, MATRIX, IND, INDL, MATRIXL, INIT=, NOPRINT; the VAR and BY roles,
 //! the default (unaddressed) VAR variables, the documented missing-value
 //! rules (pp.5278-5279) and the overlapping-population coancestry recursion
 //! (pp.5280-5285), the CLASS nonoverlapping-generation recursion, the
 //! MATRIX / IND listings and "Number of Individuals". Everything the cited
 //! pages define but this file does not compute is a loud D-009 gap: GENDER,
-//! MATINGS, AVERAGE, INDL, MATRIXL, SELFDIAG and OUTCOV=.
+//! MATINGS, AVERAGE, SELFDIAG and OUTCOV=; non-dyadic covariance values
+//! (see checkCov) and populations over 5000 individuals.
 //!
 //! Coancestry f (overlapping mode, individuals in population order; for X
 //! older than Y with parents C, D): f_XY = (f_XC + f_XD)/2, f_XX =
@@ -34,6 +35,11 @@ pub const Spec = struct {
     matrix: bool = false,
     ind: bool = false,
     noprint: bool = false,
+    /// INDL / MATRIXL (p.5276): the IND / MATRIX tables for the last
+    /// generation only (every generation whose number equals the last one's,
+    /// p.5277); without CLASS the whole population is the last generation.
+    indl: bool = false,
+    matrixl: bool = false,
     /// INIT= value; null when the option is absent (unknown coancestry missing).
     init: ?f64 = null,
     /// Column indices: individual, parent1, parent2, optional covariance.
@@ -109,8 +115,12 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
             i += 1;
         } else if (eq(o, "average") or eq(o, "a")) {
             return gap(cx.diags, t[i].line, "PROC INBREED: the AVERAGE option is not implemented (STAT-INBREED-003)", .{});
-        } else if (eq(o, "indl") or eq(o, "matrixl")) {
-            return gap(cx.diags, t[i].line, "PROC INBREED: the {s} option (last generation only) is not implemented", .{o});
+        } else if (eq(o, "indl")) {
+            s.indl = true;
+            i += 1;
+        } else if (eq(o, "matrixl")) {
+            s.matrixl = true;
+            i += 1;
         } else if (eq(o, "selfdiag")) {
             return gap(cx.diags, t[i].line, "PROC INBREED: the SELFDIAG option is not implemented (STAT-INBREED-005)", .{});
         } else return invalid(cx, t, i);
@@ -194,6 +204,8 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
     s.by_desc = pb.desc;
     s.notsorted = pb.notsorted;
     if (!s.var_given) {
+        // SAS 9.4 reference run (2026-11-28): the log says so.
+        try cx.diags.warn(0, "The VAR statement was not specified.  All the variables in the {s} data set will be used instead.", .{try lists.datasetName(a, ds)});
         // p.5278/p.5280: the first three unaddressed variables, plus an
         // unaddressed fourth one as the covariance variable.
         for (0..ds.columns.items.len) |ci| {
@@ -216,7 +228,36 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
         // p.5278: the fourth variable, if specified, must be numeric.
         if (ds.columns.items[vars.items[3]].type != .num) return cx.diags.fail(error.ParseError, line(t, 0), "PROC INBREED: the covariance variable {s} must be numeric", .{ds.columns.items[vars.items[3]].name});
     }
+    if (s.init) |v| try checkCov(cx, v, "INIT=");
+    if (s.noprint) {
+        // SAS 9.4 reference run (2026-11-28): NOPRINT without OUTCOV= (OUTCOV=
+        // itself is a gap above) is an error and nothing is computed.
+        if (s.matrixl) try cx.diags.warn(0, "The MATRIXL option conflicts with the NOPRINT option. The MATRIXL option is ignored.", .{});
+        if (s.indl) return gap(cx.diags, line(t, 0), "PROC INBREED: the INDL option together with NOPRINT is not verified", .{});
+        return cx.diags.fail(error.ParseError, line(t, 0), "The NOPRINT option was specified without OUTCOV= option. Procedure output can not be viewed, unless either printing is enabled or OUTCOV= data set is given.  Computations will not be performed.", .{});
+    }
     return s;
+}
+
+/// A covariance value (INIT= or the covariance variable). ponytail: SAS 9.4
+/// prints coefficients derived from non-dyadic values one fourth-decimal
+/// unit low in a pattern not identified (reference runs 2026-11-28: 0.3 ->
+/// 0.2999, 0.65 -> 0.6499, 1.135 -> 1.1349, and 0.123456 gives
+/// Cov(parent, offspring) 0.5616 where (1 + 0.123456)/2 = 0.561728), while
+/// dyadic values (0.25, 0.46875, 0.875) print exactly rounded. So only
+/// values that are exact binary fractions (multiples of 2**-20) are
+/// computed; any other value fails loud instead of printing a plausible
+/// number SAS would not print; so are values below 0.001 (see below). Values
+/// outside [0, 2] are reset by SAS with a
+/// WARNING whose rule is not verified here.
+fn checkCov(cx: proc.ProcCtx, v: f64, what: []const u8) diag.Error!void {
+    if (v < 0 or v > 2) return proc.failGap(cx.diags, 0, "PROC INBREED: {s} covariance value {d} outside the range [0, 2] is not implemented", .{ what, v });
+    // Reference run: a covariance value 0.00005 displays as "." (treated as
+    // an unknown zero); where that threshold lies, and how an explicit 0 on
+    // the covariance variable displays, is not verified.
+    if (v < 0.001 and !(v == 0 and std.mem.eql(u8, what, "INIT="))) return proc.failGap(cx.diags, 0, "PROC INBREED: {s} covariance value {d} below 0.001 is not verified", .{ what, v });
+    const scaled = v * 1048576.0;
+    if (scaled != @round(scaled)) return proc.failGap(cx.diags, 0, "PROC INBREED: {s} covariance value {d} is not an exact binary fraction; SAS 9.4's fourth-decimal display for such values is not reproduced (STAT-INBREED-001 known divergence)", .{ what, v });
 }
 
 /// p.5278: only the first 12 characters of a character name are recognized;
@@ -328,6 +369,7 @@ pub fn build(cx: proc.ProcCtx, s: Spec, rows: []const []const Value, first_obs: 
         try dam.append(a, par[1]);
         if (!std.math.isNan(cov)) {
             if (par[0] == null or par[1] == null) return proc.failGap(cx.diags, 0, "PROC INBREED: a covariance value at observation {d} for an individual with a missing parent is not verified", .{obs});
+            try checkCov(cx, cov, "the covariance variable's");
             // p.5272: the latest specification overrides earlier ones.
             try fixed.put(a, pairKey(par[0].?, par[1].?), cov / 2);
         }
@@ -390,7 +432,6 @@ pub fn buildGenerations(cx: proc.ProcCtx, s: Spec, rows: []const []const Value, 
     const unknown: f64 = if (s.init) |v| (if (v != 0) v / 2 else nan) else nan;
     const self_unknown = (1 + (if (std.math.isNan(unknown)) 0 else unknown)) / 2;
     var gens: std.ArrayList(Generation) = .empty;
-    var seen_labels: std.ArrayList(f64) = .empty;
     // Previous generation: names, coancestry (row-major, width prev_w).
     var prev_index: std.StringHashMapUnmanaged(usize) = .empty;
     var prev_f: []const f64 = &.{};
@@ -404,8 +445,9 @@ pub fn buildGenerations(cx: proc.ProcCtx, s: Spec, rows: []const []const Value, 
             continue;
         }
         if (gv != @trunc(gv)) return cx.diags.fail(error.ParseError, 0, "PROC INBREED: generation number {d} is not an integer", .{gv});
-        for (seen_labels.items) |o| if (o == gv) return gap(cx.diags, 0, "PROC INBREED: generation {d} appears in more than one run of observations; that case is not verified", .{gv});
-        try seen_labels.append(a, gv);
+        // p.5277 and a SAS 9.4 reference run (2026-11-28): a generation
+        // number that recurs after another one starts a new generation whose
+        // parents are the previous run's individuals.
         var end = r;
         while (end < rows.len and (std.math.isNan(rows[end][gc].num) or rows[end][gc].num == gv)) end += 1;
 
@@ -429,6 +471,7 @@ pub fn buildGenerations(cx: proc.ProcCtx, s: Spec, rows: []const []const Value, 
                 if (std.math.isNan(cov) or k1 == null or k2 == null) return gap(cx.diags, 0, "PROC INBREED: an observation with a missing individual and no complete covariance assignment (observation {d}) is not verified for nonoverlapping generations", .{obs});
                 const x = index.get(k1.?) orelse return gap(cx.diags, 0, "PROC INBREED: covariance assignment at observation {d} names {s}, which is not defined earlier in its generation; that case is not verified", .{ obs, k1.? });
                 const y = index.get(k2.?) orelse return gap(cx.diags, 0, "PROC INBREED: covariance assignment at observation {d} names {s}, which is not defined earlier in its generation; that case is not verified", .{ obs, k2.? });
+                try checkCov(cx, cov, "the covariance variable's");
                 try assigns.append(a, .{ .x = x, .y = y, .f = cov / 2 });
                 continue;
             }
@@ -610,12 +653,16 @@ fn table(a: A, out: *Out, ds: *Dataset, s: Spec, p: Population, title: []const u
     }
 }
 
-fn render(a: A, out: *Out, s: Spec, p: Population, group: ?[]const Value, gen: ?[]const u8) !void {
+/// `last`: this generation's number equals the last generation's (always
+/// true without CLASS), so MATRIXL / INDL show their tables (reference runs,
+/// SAS 9.4, 2026-11-28: other generations print only their header and
+/// "Number of Individuals").
+fn render(a: A, out: *Out, s: Spec, p: Population, group: ?[]const Value, gen: ?[]const u8, last: bool) !void {
     const ds = s.input.ds;
     const kind: []const u8 = if (s.covar) "Covariance" else "Inbreeding";
     const n = p.n();
     var any = false;
-    if (s.matrix) {
+    if (s.matrix or (s.matrixl and last)) {
         try header(a, out, ds, s, group, gen);
         const widths = try a.alloc(usize, n);
         for (p.names, widths) |nm, *w| w.* = @max(8, nm.len);
@@ -628,7 +675,7 @@ fn render(a: A, out: *Out, s: Spec, p: Population, group: ?[]const Value, gen: ?
         try table(a, out, ds, s, p, try std.fmt.allocPrint(a, "{s} Coefficients", .{kind}), p.names, widths, rows);
         any = true;
     }
-    if (s.ind) {
+    if (s.ind or (s.indl and last)) {
         try header(a, out, ds, s, group, gen);
         const rows = try a.alloc([]const []const u8, n);
         for (0..n) |i| {
@@ -659,13 +706,14 @@ pub fn run(cx: proc.ProcCtx, out: *Out, t: []const lex.Token) diag.Error!void {
         if (s.class_col != null) {
             const gens = try buildGenerations(cx, s, g.rows, first);
             if (s.noprint) continue;
-            for (gens) |gen| if (gen.pop.n() > 0) try render(a, out, s, gen.pop, rep, gen.label);
+            const last_label = if (gens.len > 0) gens[gens.len - 1].label else "";
+            for (gens) |gen| if (gen.pop.n() > 0) try render(a, out, s, gen.pop, rep, gen.label, std.mem.eql(u8, gen.label, last_label));
             continue;
         }
         const p = try build(cx, s, g.rows, first);
         // A group whose observations all lack the individual prints nothing.
         if (s.noprint or p.n() == 0) continue;
-        try render(a, out, s, p, rep, null);
+        try render(a, out, s, p, rep, null, true);
     }
 }
 

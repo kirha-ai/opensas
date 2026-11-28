@@ -49,9 +49,9 @@ fn build(a: A, lib: *Library) !void {
     });
     // pop: unknown parents Q, R inserted; missing individual skipped;
     // duplicate X skipped; R defined after use skipped; covariance 0.5 for
-    // Q x R given on Y overrides the earlier 0.2 given on X.
+    // Q x R given on Y overrides the earlier 0.25 given on X.
     try put(a, lib, "pop", &.{ "id", "p1", "p2", "#cv", "#extra" }, &.{
-        &.{ str("X"), str("Q"), str("R"), num(0.2), num(9) },
+        &.{ str("X"), str("Q"), str("R"), num(0.25), num(9) },
         &.{ str(""), str("X"), str("Q"), num(0.5), num(9) },
         &.{ str("Y"), str("Q"), str("R"), num(0.5), num(9) },
         &.{ str("X"), str("R"), str("Q"), num(nan), num(9) },
@@ -172,12 +172,15 @@ test "STAT-INBREED-001 PROC statement defaults, aliases and explicit options" {
     // variable (p.5278); the fifth is unused.
     try expectEqual(@as(?usize, 3), d.cov_col);
     // Aliases C / M / I (pp.5275-5276).
-    const s = try e.parse("proc inbreed data=work.ped c m i init=0.25 noprint; var animal sire dam; run;");
-    try expect(s.covar and s.matrix and s.ind and s.noprint and s.var_given);
+    const s = try e.parse("proc inbreed data=work.ped c m i init=0.25; var animal sire dam; run;");
+    try expect(s.covar and s.matrix and s.ind and !s.noprint and s.var_given);
     try approx(@as(f64, 0.25), s.init.?, 1e-12);
-    const l = try e.parse("proc inbreed data=ped covar matrix ind init=-0.5; run;");
-    try expect(l.covar and l.matrix and l.ind);
-    try approx(@as(f64, -0.5), l.init.?, 1e-12);
+    const l = try e.parse("proc inbreed data=ped covar matrix ind init=0.5; run;");
+    try expect(l.covar and l.matrix and l.ind and !l.indl and !l.matrixl);
+    try approx(@as(f64, 0.5), l.init.?, 1e-12);
+    // INDL / MATRIXL (p.5276) are their own flags; they do not set IND / MATRIX.
+    const ml = try e.parse("proc inbreed data=gen indl matrixl; class gen; run;");
+    try expect(ml.indl and ml.matrixl and !ml.ind and !ml.matrix);
 }
 
 test "STAT-INBREED-001 VAR roles, default unaddressed variables and BY exclusion" {
@@ -220,6 +223,10 @@ test "STAT-INBREED-001 invalid input is a user error (rc 1)" {
         .{ .src = "proc inbreed data=nosuch; run;", .msg = "not found" },
         .{ .src = "proc inbreed data=ped init=abc; run;", .msg = "INIT=" },
         .{ .src = "proc inbreed data=ped bogus; run;", .msg = "invalid" },
+        // SAS 9.4 reference run (2026-11-28): NOPRINT without OUTCOV= is an
+        // ERROR and nothing is computed.
+        .{ .src = "proc inbreed data=ped matrix ind noprint; run;", .msg = "NOPRINT option was specified without OUTCOV=" },
+        .{ .src = "proc inbreed data=gen matrixl noprint; class gen; run;", .msg = "without OUTCOV=" },
         .{ .src = "proc inbreed data=ped; bogus x; run;", .msg = "invalid" },
     };
     for (cases) |c| {
@@ -243,14 +250,18 @@ test "STAT-INBREED-001 unimplemented valid features are loud D-009 gaps" {
     try e.init();
     const cases = [_][]const u8{
         "proc inbreed data=gen; class gen; class gen; run;",
-        "proc inbreed data=gen matrixl; class gen; run;",
+        "proc inbreed data=gen indl noprint; class gen; run;",
+        // checkCov: non-dyadic or out-of-range covariance values.
+        "proc inbreed data=ped init=0.3; run;",
+        "proc inbreed data=ped init=-0.5; run;",
+        "proc inbreed data=ped init=2.5; run;",
+        "proc inbreed data=ped init=0.00005; run;",
+        "proc inbreed data=ped init=0.0000152587890625; run;",
         "proc inbreed data=pop; gender p1; run;",
         "proc inbreed data=pop; matings X / Y; run;",
         "proc inbreed data=pop outcov=o; run;",
         "proc inbreed data=pop average; run;",
         "proc inbreed data=pop a; run;",
-        "proc inbreed data=pop indl; run;",
-        "proc inbreed data=pop matrixl; run;",
         "proc inbreed data=pop selfdiag; run;",
         "proc inbreed data=pop; var id p1 p2; var id p1 p2; run;",
         "proc inbreed data=chcov; run;",
@@ -316,7 +327,7 @@ test "STAT-INBREED-001 missing values, inserted parents, duplicates and covarian
     for (want, p.names) |w, n| try std.testing.expectEqualStrings(w, n);
     try std.testing.expectEqualStrings("", p.p1_text[0]);
     try std.testing.expectEqualStrings("Q", p.p1_text[2]);
-    // Latest covariance for Q x R wins (0.5 over 0.2), also for X defined
+    // Latest covariance for Q x R wins (0.5 over 0.25), also for X defined
     // before the assignment: f_QR = 1/4, F_X = 1/4 -> Cov(X,X) = 1.25.
     try approx(@as(f64, 0.5), p.value(true, 0, 1), 1e-12);
     try approx(@as(f64, 1.25), p.value(true, 2, 2), 1e-12);
@@ -351,8 +362,6 @@ test "STAT-INBREED-001 numeric names, 12-character names, empty, NOPRINT and BY 
     try approx(@as(f64, 1.0), l.value(true, 0, 1), 1e-12);
     // Empty input prints nothing.
     try expectEqual(@as(usize, 0), (try e.run("proc inbreed data=empty matrix covar; run;")).len);
-    // NOPRINT prints nothing.
-    try expectEqual(@as(usize, 0), (try e.run("proc inbreed data=ped matrix ind noprint; run;")).len);
     // BY g: g=1 is A, B = A x A (F_B = f_AA = 1/2); g=2 restarts with A (P
     // inserted), B = A x P, C = B x B: f_AP = (f_PP + missing)/2 = 1/4,
     // F_B = 1/4, F_C = f_BB = (1 + 1/4)/2 = 0.625.
@@ -404,10 +413,54 @@ test "STAT-INBREED-001 CLASS nonoverlapping generations" {
     try std.testing.expectError(error.ParseError, inbreed.buildGenerations(e.cx(), bad, bad.input.ds.rows.items, 0));
     try expect(has(e.lastError(), "not an integer") and !diag.gapHit());
     const rep = try e.parse("proc inbreed data=genrep; class gen; run;");
-    try std.testing.expectError(error.ParseError, inbreed.buildGenerations(e.cx(), rep, rep.input.ds.rows.items, 0));
-    try expect(diag.gapHit());
-    diag.resetGap();
+    // A recurring generation number starts a new generation (SAS 9.4
+    // reference run, 2026-11-28): three generations labelled 1, 2, 1.
+    const rg = try inbreed.buildGenerations(e.cx(), rep, rep.input.ds.rows.items, 0);
+    try expectEqual(@as(usize, 3), rg.len);
+    try std.testing.expectEqualStrings(rg[0].label, rg[2].label);
+    try expect(!diag.gapHit());
     const und = try e.parse("proc inbreed data=genundef; class gen; run;");
     try std.testing.expectError(error.ParseError, inbreed.buildGenerations(e.cx(), und, und.input.ds.rows.items, 0));
+    try expect(diag.gapHit());
+}
+
+test "STAT-INBREED-001 recurring generation numbers, MATRIXL / INDL and non-dyadic covariance gaps" {
+    var e: Env = .{ .arena = std.heap.ArenaAllocator.init(std.testing.allocator) };
+    defer e.arena.deinit();
+    try e.init();
+    const a = e.arena.allocator();
+    // SAS 9.4 reference run (2026-11-28): generation 1 recurs after 2 and is
+    // a new generation whose parents are the previous run's C and D.
+    try put(a, &e.lib, "rgen", &.{ "id", "p1", "p2", "#gen" }, &.{
+        &.{ str("A"), str(""), str(""), num(1) },
+        &.{ str("B"), str(""), str(""), num(1) },
+        &.{ str("C"), str("A"), str("B"), num(2) },
+        &.{ str("D"), str("A"), str("B"), num(2) },
+        &.{ str("E"), str("C"), str("D"), num(1) },
+        &.{ str("F"), str("C"), str("D"), num(1) },
+        &.{ str("G"), str("E"), str("F"), num(2) },
+    });
+    const all = try e.run("proc inbreed data=rgen covar matrix; class gen; run;");
+    try expectEqual(@as(usize, 4), std.mem.count(u8, all, "Covariance Coefficients"));
+    try expect(has(all, "1.2500") and has(all, "0.7500") and has(all, "1.3750"));
+    // MATRIXL: matrices for every generation numbered like the last (2).
+    const ml = try e.run("proc inbreed data=rgen covar matrixl; class gen; run;");
+    try expectEqual(@as(usize, 2), std.mem.count(u8, ml, "Covariance Coefficients"));
+    try expectEqual(@as(usize, 4), std.mem.count(u8, ml, "Number of Individuals"));
+    try expect(!has(ml, "1.2500") and has(ml, "1.3750"));
+    const il = try e.run("proc inbreed data=rgen covar indl; class gen; run;");
+    try expectEqual(@as(usize, 2), std.mem.count(u8, il, "Covariance Coefficients of Individuals"));
+    // Without CLASS the population is the last generation.
+    const nc = try e.run("proc inbreed data=ped covar matrixl indl; var animal sire dam; run;");
+    try expect(has(nc, "Covariance Coefficients\n") and has(nc, "Covariance Coefficients of Individuals"));
+    // A non-dyadic covariance-variable value fails loud (checkCov).
+    try put(a, &e.lib, "cv3", &.{ "id", "p1", "p2", "#c" }, &.{
+        &.{ str("A"), str(""), str(""), num(nan) },
+        &.{ str("B"), str(""), str(""), num(nan) },
+        &.{ str("C"), str("A"), str("B"), num(0.3) },
+    });
+    diag.resetGap();
+    defer diag.resetGap();
+    try std.testing.expectError(error.ParseError, e.run("proc inbreed data=cv3 covar matrix; run;"));
     try expect(diag.gapHit());
 }

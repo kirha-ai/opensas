@@ -1,18 +1,20 @@
 /* expect-rc: 2
-   STAT-INBREED-001 boundary: MATRIXL (coefficients for the last generation
-   only, p.5276) is valid SAS that opensas does not implement yet. The step
-   must fail visibly (D-009 gap), never print every generation instead.
-   Data: invented. */
+   STAT-INBREED-001 boundary: the User's Guide monoecious population
+   (Example 71.1; published sample data) assigns the non-dyadic covariance
+   1.135. SAS 9.4 prints coefficients derived from such values one unit low
+   in the fourth decimal (1.135 shows as 1.1349) by a rule opensas has not
+   identified, so the step must fail visibly (D-009 gap) instead of printing
+   the exactly rounded 1.1350. */
 options nocenter;
 title;
-data gen;
-input id $ p1 $ p2 $ gen;
-datalines;
-A . . 1
-B . . 1
-C A B 2
+data Monoecious;
+   input Generation Individual Parent1 Parent2 Covariance @@;
+   datalines;
+1 1 . . .      1 2 . . .       1 3 . . .
+2 1 1 1 .      2 2 1 2 .       2 3 2 3 .
+3 1 1 2 .      3 2 1 3 .       3 3 2 1 .
+3 4 1 3 .      3 . 2 3 0.50    3 . 4 3 1.135
 ;
-proc inbreed data=gen covar matrixl;
-var id p1 p2;
-class gen;
+proc inbreed ind covar matrix data=Monoecious;
+   class Generation;
 run;
