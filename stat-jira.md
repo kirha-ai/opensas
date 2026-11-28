@@ -8,9 +8,10 @@ This section is the only current status summary; every section below it is a his
 - **Resumed 2026-11-28 about 07:20Z** after the 06:31Z account usage limit stopped all dev contexts. At the user's direction devs may compare with real SAS via `/Users/thomas/sas/bin/sasrun foo.sas -f text -o - -l /dev/null`, only when truly blocked. Coordinator keep-awake `caffeinate` PID 62218. Coordinator scripts and dev brief live in the session scratchpad `stat/` directory.
 - **Batch 48 verification at exact SHA `7189125cca51718373ca11ea63dfee95503df573` (2026-11-28):** `zig build install` direct 0; whole `tests/STAT15.4-oracle/` moved out of the checkout, then `zig build gate -j2 --summary all` direct 0 — **2837/2837 unit tests**, **2793/2793 corpus**, **11/11 programs**; `zig build install` direct 0; separate supplemental direct 0, **1113/1113**. Oracle restored unchanged, tree clean, HEAD unchanged. Pushed. **New DONE:** STAT-CAUSALGRAPH-005 (original 139/139, rc 0; reference folder safe to delete, not deleted; disclosed: the instrument conditioning-set rule is inferred, matching 16 SAS cases, and TESTID sets above 20 variables fail loudly).
 - **User approvals (2026-11-28):** move CATMOD's TYPE=EST direct input to STAT-CATMOD-004; add the Base random-stream ticket STAT-RAND-001; public classic sample data, including rows exported from real SAS (Iris), may be committed; build caches (`.zig-cache`) may be deleted automatically when free disk falls to about 8 GB, only for idle worktrees (done twice: 41 GB free the first time; the second at 9.5 GB free with every worktree idle, just before a seven-dev round); the `best32.` display fix is approved as STAT-BEST-001. Earlier scope: SASHELP sample data taken from SAS's public sample material may be committed to this public repository, for STAT-SASHELP-001 and the later SASHELP tickets; record source and verification, never invent rows, ask before adding a data set above about 2 MB.
-- **Live slots (auto):** dev1 STAT-STDIZE-004, dev2 STAT-ANOVA-003, dev3 STAT-NESTED-003, dev4 STAT-SURVEYLOGISTIC-001, dev5 STAT-CAUSALGRAPH-005, dev5 STAT-CAUSALGRAPH-009, dev6 STAT-REG-019, dev7 STAT-CATMOD-003.
+- **Live slots (auto):** dev1 STAT-STDIZE-004, dev2 STAT-ANOVA-003, dev3 STAT-NESTED-003, dev3 STAT-NESTED-004, dev4 STAT-SURVEYLOGISTIC-001, dev5 STAT-CAUSALGRAPH-009, dev6 STAT-REG-019, dev7 STAT-CATMOD-003.
 - **Held, not integrated (needs a user decision):** STAT-SASHELP-005, branch `stat-b7/sashelp005-dev4` (`50a9f8d7` code and data, `c3d1db77` ticket note). It adds SASHELP.JUNKMAIL (708 KB text), LEUTRAIN and LEUTEST (2.24 MB and 1.99 MB as text, committed gzip-compressed at 857 KB and 766 KB), about 2.3 MB in the repository, above the size the user is asked about.
-- **Counts:** 73 DONE, 140 PARK, 7 DOING, 1205 TODO.
+- **Integrated locally, awaiting batch verification (auto):** STAT-NESTED-003 (DONE candidate).
+- **Counts:** 73 DONE, 140 PARK, 8 DOING, 1204 TODO.
 - **Next:** integrate each returned ticket and refill its slot, preferring close-out attempts on PARK tickets whose originals now match exactly (DISTANCE-001, PRINQUAL-001, VARCLUS-001, TPSPLINE-001, CATMOD-001, CANCORR-001, GEE-001, INBREED-001, then the open review in the batch 6 receipt), because a DONE ticket unlocks its dependents; then other eligible tickets.
 - **Working branch:** `feat/stat/batch-4`. Last tested and pushed code SHA `7189125cca51718373ca11ea63dfee95503df573` (batch 48; batch 47 was `c1e3470314022b1514f22d3f1531b5a0b64f00ec`). The bullets below this one describe batch 5 and are historical. Later commits that touch only this file are documentation. No PR created or merged; `main` untouched.
 
@@ -10605,6 +10606,7 @@ Source: S154, Chapter 87, `The NESTED Procedure`, PDF pp. 6965–6976. Tasks in 
   - Original replay: `documented_default.sas` unchanged: rc 0 (reference 0), 96/96 tokens, 0 differing; stdout identical except the leading blank line (page convention); no ERROR/WARNING lines.
   - Validation: `zig build install` exit 0; `zig test src/root.zig -lc --test-filter "STAT-NESTED"` exit 0, all 84 passed (9 NESTED blocks); corpus runner on `stat_nested002_getting_started`, `stat_nested002_small_hand`, `stat_nested002_gaps`, `stat_nested001_balanced_listing` each exit 0, 1/1 passing; STAT-NESTED-001 original rc 0 = reference, 96/96 tokens. Not run: `zig build gate`, supplemental suite, oracle-absent check (coordinator).
   - Remaining (outside this ticket, unchanged loud gaps): unbalanced designs and analysis of covariation (STAT-NESTED-003); zero-df/zero-denominator degenerate cases (STAT-NESTED-004); CLASS names over 8 characters and ODS tables (STAT-NESTED-005).
+- Coordinator note: STAT-NESTED-003 implemented the unbalanced case this ticket asserted as a gap; the fixture `stat_nested002_gaps` was renamed to `stat_nested003_auto_unbalanced` with the SAS listing.
 
 <a id="stat-nested-003"></a>
 
@@ -10624,7 +10626,7 @@ Source: S154, Chapter 87, `The NESTED Procedure`, PDF pp. 6965–6976. Tasks in 
 
 <a id="stat-nested-004"></a>
 
-### [TODO] STAT-NESTED-004 — NESTED — Error Terms in F Tests / Computational Method
+### [DOING @dev3] STAT-NESTED-004 — NESTED — Error Terms in F Tests / Computational Method
 
 - Source: S154 / Chapter 87 / `Error Terms in F Tests` (PDF pp. 6972–6973); S154 / Chapter 87 / `Computational Method` (PDF p. 6973).
 - Scope: Implement Error Terms in F Tests; Computational Method. This ticket owns the feature's options, defaults, computation, and results as an extension of the basic computational path; the chapter's output tickets handle ODS descriptors and file presentation.
