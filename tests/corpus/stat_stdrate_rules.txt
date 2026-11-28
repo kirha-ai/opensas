@@ -1,0 +1,272 @@
+
+site=1
+
+The STDRATE Procedure
+
+          Standardization Information
+
+Data Set                             WORK.STUDY
+Reference Data Set               WORK.REFERENCE
+Method                   Direct Standardization
+Statistic                                  Rate
+Number of Strata                              2
+Rate Multiplier                          100000
+
+site=1
+
+The STDRATE Procedure
+
+                             Directly Standardized Rate Estimates 
+                                    Rate Multiplier = 100000
+ 
+--------Study Population-------  -Reference Population-  -----------Standardized Rate----------
+Observed  Population-     Crude  Expected   Population-            Standard      95% Normal
+  Events         Time      Rate    Events          Time  Estimate     Error   Confidence Limits
+
+      40         2500    1600.0   400.000         30000    1333.3     243.4     856.2    1810.5
+
+site=2
+
+The STDRATE Procedure
+
+          Standardization Information
+
+Data Set                             WORK.STUDY
+Reference Data Set               WORK.REFERENCE
+Method                   Direct Standardization
+Statistic                                  Rate
+Number of Strata                              2
+Rate Multiplier                          100000
+
+site=2
+
+The STDRATE Procedure
+
+                             Directly Standardized Rate Estimates 
+                                    Rate Multiplier = 100000
+ 
+--------Study Population-------  -Reference Population-  -----------Standardized Rate----------
+Observed  Population-     Crude  Expected   Population-            Standard      95% Normal
+  Events         Time      Rate    Events          Time  Estimate     Error   Confidence Limits
+
+      37         2500    1480.0   396.753         30000    1322.5     241.3     849.5    1795.5
+
+The STDRATE Procedure
+
+          Standardization Information
+
+Data Set                             WORK.STUDY
+Reference Data Set               WORK.REFERENCE
+Method                   Direct Standardization
+Statistic                                  Rate
+Number of Strata                              2
+Rate Multiplier                          100000
+
+The STDRATE Procedure
+
+                             Directly Standardized Rate Estimates 
+                                    Rate Multiplier = 100000
+ 
+--------Study Population-------  -Reference Population-  -----------Standardized Rate----------
+Observed  Population-     Crude  Expected   Population-            Standard      95% Normal
+  Events         Time      Rate    Events          Time  Estimate     Error   Confidence Limits
+
+      77         5000    1540.0   399.179         30000    1330.6     171.6     994.3    1666.9
+
+The STDRATE Procedure
+
+          Standardization Information
+
+Data Set                                WORK.S1
+Reference Data Set               WORK.REFERENCE
+Method                   Direct Standardization
+Statistic                                  Rate
+Number of Strata                              1
+Rate Multiplier                          100000
+
+The STDRATE Procedure
+
+                             Directly Standardized Rate Estimates 
+                                    Rate Multiplier = 100000
+ 
+--------Study Population-------  -Reference Population-  -----------Standardized Rate----------
+Observed  Population-     Crude  Expected   Population-            Standard      95% Normal
+  Events         Time      Rate    Events          Time  Estimate     Error   Confidence Limits
+
+      40         2500    1600.0   480.000         30000    1600.0     253.0    1104.2    2095.8
+
+The STDRATE Procedure
+
+          Standardization Information
+
+Data Set                                WORK.S1
+Reference Data Set               WORK.REFERENCE
+Method                   Direct Standardization
+Statistic                                  Rate
+Number of Strata                              2
+Rate Multiplier                          100000
+
+The STDRATE Procedure
+
+                             Directly Standardized Rate Estimates 
+                                    Rate Multiplier = 100000
+ 
+--------Study Population-------  -Reference Population-  -----------Standardized Rate----------
+Observed  Population-     Crude  Expected   Population-            Standard      95% Normal
+  Events         Time      Rate    Events          Time  Estimate     Error   Confidence Limits
+
+      40         2500    1600.0   400.000         30000    1333.3     243.4     856.2    1810.5
+
+The STDRATE Procedure
+
+          Standardization Information
+
+Data Set                                WORK.S1
+Reference Data Set                      WORK.R6
+Method                   Direct Standardization
+Statistic                                  Rate
+Number of Strata                              3
+Rate Multiplier                          100000
+
+The STDRATE Procedure
+
+                             Directly Standardized Rate Estimates 
+                                    Rate Multiplier = 100000
+ 
+--------Study Population-------  -Reference Population-  -----------Standardized Rate----------
+Observed  Population-     Crude  Expected   Population-            Standard      95% Normal
+  Events         Time      Rate    Events          Time  Estimate     Error   Confidence Limits
+
+      40         2500    1600.0   400.000         30000    1333.3     243.4     856.2    1810.5
+
+The STDRATE Procedure
+
+          Standardization Information
+
+Data Set                                WORK.S1
+Reference Data Set               WORK.REFERENCE
+Method                   Direct Standardization
+Statistic                                  Rate
+Number of Strata                              2
+Rate Multiplier                            1000
+
+The STDRATE Procedure
+
+                             Directly Standardized Rate Estimates 
+                                     Rate Multiplier = 1000
+ 
+--------Study Population-------  -Reference Population-  -----------Standardized Rate----------
+Observed  Population-     Crude  Expected   Population-            Standard      95% Normal
+  Events         Time      Rate    Events          Time  Estimate     Error   Confidence Limits
+
+      40         2500   16.0000   400.000         30000   13.3333    2.4343    8.5621   18.1045
+
+The STDRATE Procedure
+
+          Standardization Information
+
+Data Set                                WORK.S9
+Reference Data Set               WORK.REFERENCE
+Method                   Direct Standardization
+Statistic                                  Rate
+Number of Strata                              2
+Rate Multiplier                          100000
+
+The STDRATE Procedure
+
+                             Directly Standardized Rate Estimates 
+                                    Rate Multiplier = 100000
+ 
+--------Study Population-------  -Reference Population-  -----------Standardized Rate----------
+Observed  Population-     Crude  Expected   Population-            Standard      95% Normal
+  Events         Time      Rate    Events          Time  Estimate     Error   Confidence Limits
+
+       .            .         .         .             .         .         .         .         .
+
+The STDRATE Procedure
+
+          Standardization Information
+
+Data Set                                WORK.S1
+Reference Data Set               WORK.REFERENCE
+Method                   Direct Standardization
+Statistic                                  Rate
+Number of Strata                              2
+Rate Multiplier                          100000
+
+The STDRATE Procedure
+
+                             Directly Standardized Rate Estimates 
+                                    Rate Multiplier = 100000
+ 
+--------Study Population-------  -Reference Population-  -----------Standardized Rate----------
+Observed  Population-     Crude  Expected   Population-            Standard      95% Normal
+  Events         Time      Rate    Events          Time  Estimate     Error   Confidence Limits
+
+      40         2500    1600.0   400.000         30000    1333.3     243.4     856.2    1810.5
+
+The STDRATE Procedure
+
+          Standardization Information
+
+Data Set                                WORK.S1
+Reference Data Set               WORK.REFERENCE
+Method                   Direct Standardization
+Statistic                                  Rate
+Number of Strata                              2
+Rate Multiplier                          100000
+
+The STDRATE Procedure
+
+                             Directly Standardized Rate Estimates 
+                                    Rate Multiplier = 100000
+ 
+--------Study Population-------  -Reference Population-  -----------Standardized Rate----------
+Observed  Population-     Crude  Expected   Population-            Standard      95% Normal
+  Events         Time      Rate    Events          Time  Estimate     Error   Confidence Limits
+
+      40         2500    1600.0   400.000         30000    1333.3     243.4     856.2    1810.5
+
+The STDRATE Procedure
+
+          Standardization Information
+
+Data Set                                WORK.S1
+Reference Data Set               WORK.REFERENCE
+Method                   Direct Standardization
+Statistic                                  Rate
+Number of Strata                              2
+Rate Multiplier                          100000
+
+The STDRATE Procedure
+
+                             Directly Standardized Rate Estimates 
+                                    Rate Multiplier = 100000
+ 
+--------Study Population-------  -Reference Population-  -----------Standardized Rate----------
+Observed  Population-     Crude  Expected   Population-            Standard      95% Normal
+  Events         Time      Rate    Events          Time  Estimate     Error   Confidence Limits
+
+      40         2500    1600.0   400.000         30000    1333.3     243.4     856.2    1810.5
+
+The STDRATE Procedure
+
+          Standardization Information
+
+Data Set                                WORK.S1
+Reference Data Set               WORK.REFERENCE
+Method                   Direct Standardization
+Statistic                                  Rate
+Number of Strata                              2
+Rate Multiplier                          100000
+
+The STDRATE Procedure
+
+                             Directly Standardized Rate Estimates 
+                                    Rate Multiplier = 100000
+ 
+--------Study Population-------  -Reference Population-  -----------Standardized Rate----------
+Observed  Population-     Crude  Expected   Population-            Standard      95% Normal
+  Events         Time      Rate    Events          Time  Estimate     Error   Confidence Limits
+
+      40         2500    1600.0   400.000         30000    1333.3     243.4     856.2    1810.5

@@ -89,8 +89,8 @@ const Fixture = struct {
             try expectEqual(error.ParseError, err);
             failed = true;
         };
-        const rc = diag.exitCode(diag.gapHit(), d.hasErrors());
-        try expectEqual(failed, rc != 0);
+        const rc = diag.exitCode(diag.gapHit(), d.hasErrors() or d.warning_status);
+        try expectEqual(failed, diag.gapHit() or d.hasErrors());
         return .{ .rc = rc, .out = out.items };
     }
     fn spec(self: *Fixture, d: *diag.Diagnostics, source: []const u8) !stdrate.Spec {
@@ -210,13 +210,11 @@ test "STAT-STDRATE-001 invalid declarations are user errors and unimplemented on
         .{ head ++ body ++ "; by nosuch;", 1 },
         .{ head ++ body ++ "; bogus age;", 1 },
         // Valid declarations whose results are not implemented.
-        .{ "proc stdrate refdata=reference method=direct" ++ body ++ ";", 2 }, // DATA= omitted
-        .{ "proc stdrate data=study(obs=1) refdata=reference method=direct" ++ body ++ ";", 2 },
+        .{ "proc stdrate data=study refdata=reference(obs=1) method=direct" ++ body ++ ";", 2 }, // REFDATA= options
         .{ "proc stdrate data=study refdata=reference method=indirect" ++ body ++ ";", 2 },
         .{ "proc stdrate data=study refdata=reference method=indirect(af)" ++ body ++ ";", 2 },
         .{ "proc stdrate data=study method=mh; population event=event total=total group=grp; strata age;", 2 },
         .{ head ++ " stat=risk" ++ body ++ ";", 2 },
-        .{ head ++ " stat=rate(mult=1000)" ++ body ++ ";", 2 },
         .{ head ++ " alpha=0.1" ++ body ++ ";", 2 },
         .{ head ++ " cl=lognormal" ++ body ++ ";", 2 },
         .{ head ++ " cl=gamma" ++ body ++ ";", 2 },
@@ -231,23 +229,16 @@ test "STAT-STDRATE-001 invalid declarations are user errors and unimplemented on
         .{ head ++ "; population event=event total=total; reference event=event total=total; strata age;", 2 },
         .{ head ++ "; population event=event total=total; reference total=total reftotal=30000; strata age;", 2 },
         .{ head ++ "; population event=event total=total; reference refevent=12; strata age;", 2 },
-        .{ head ++ "; population event=event total=total; population event=event total=total; reference total=total;", 2 },
-        .{ head ++ "; population event=event total=total; reference total=total; reference total=total;", 2 },
-        .{ head ++ body ++ "; strata age;", 2 },
-        .{ head ++ body ++ " age;", 2 },
         .{ head ++ body ++ " / effect;", 2 },
         .{ head ++ body ++ " / stats;", 2 },
         .{ head ++ body ++ " / smr(cl=none);", 2 },
         .{ head ++ body ++ " / order=formatted;", 2 },
-        .{ head ++ body ++ "; format age $3.;", 2 },
-        .{ head ++ body ++ "; where total > 0;", 2 },
-        .{ head ++ body ++ "; by n;", 2 }, // sorted ascending by n: the BY listing is a gap
+        .{ head ++ body ++ "; by n;", 2 }, // BY variable also in REFDATA=: unverified
         .{ head ++ body ++ "; by n notsorted;", 2 },
+        .{ head ++ body ++ "; strata b;", 2 }, // a second, different STRATA statement
+        .{ head ++ body ++ "; reference total=n;", 2 }, // a second, different REFERENCE statement
         // Execution boundaries on data.
-        .{ head ++ "; population event=event total=total; reference total=total;", 2 }, // no STRATA
-        .{ head ++ "; population event=event total=total; reference total=total; strata;", 2 },
-        .{ "proc stdrate data=none refdata=reference method=direct" ++ body ++ ";", 2 }, // empty study
-        .{ "proc stdrate data=study refdata=study method=direct; population event=event total=total; reference total=total; strata grp;", 2 }, // two observations in one stratum
+        .{ "proc stdrate data=study refdata=study method=direct; population event=event total=total; reference total=total; strata grp;", 2 }, // expected events 40: display outside the verified band
     }) |case| {
         const result = try fx.outcome(case[0]);
         std.testing.expectEqual(case[1], result.rc) catch |err| {
@@ -255,6 +246,31 @@ test "STAT-STDRATE-001 invalid declarations are user errors and unimplemented on
             return err;
         };
         try expectEqual(@as(usize, 0), result.out.len);
+    }
+    // Declarations settled by SAS 9.4 reference runs (2026-11-28): each
+    // runs and prints both tables (rc 0, or rc 1 after a WARNING), or is the
+    // documented ERROR (rc 1, no listing).
+    for ([_]Case{
+        .{ "proc stdrate refdata=reference method=direct" ++ body ++ ";", 1 }, // DATA= omitted: the last data set, the empty `none`
+        .{ head ++ " stat=rate(mult=1000)" ++ body ++ ";", 0 },
+        .{ head ++ "; population event=event total=total; reference total=total; reference total=total; strata age;", 0 },
+        .{ head ++ body ++ "; strata age;", 0 }, // identical STRATA statement
+        .{ head ++ body ++ " age;", 0 }, // repeated STRATA variable
+        .{ head ++ body ++ "; format age $3.;", 0 },
+        .{ head ++ body ++ "; where total > 0;", 0 },
+        .{ head ++ "; population event=event total=total; reference total=total;", 0 }, // no STRATA
+        .{ head ++ "; population event=event total=total; reference total=total; strata;", 0 },
+        .{ "proc stdrate data=none refdata=reference method=direct" ++ body ++ ";", 1 }, // empty study: WARNING per reference stratum, listing of missing values
+        .{ head ++ "; population event=event total=total; population event=event total=total; reference total=total; strata age;", 1 },
+        .{ head ++ body ++ "; where grp = 'A';", 1 }, // WHERE variable absent from REFDATA=
+        .{ "proc stdrate data=study(where=(age='young')) refdata=reference method=direct" ++ body ++ ";", 1 }, // DATA= options; WARNING for `old`
+    }) |case| {
+        const result = try fx.outcome(case[0]);
+        std.testing.expectEqual(case[1], result.rc) catch |err| {
+            std.debug.print("case: {s}\n", .{case[0]});
+            return err;
+        };
+        try expectEqual(case[1] == 0 or std.mem.indexOf(u8, case[0], "data=none") != null or std.mem.startsWith(u8, case[0], "proc stdrate refdata=") or std.mem.indexOf(u8, case[0], "(where=") != null, result.out.len > 0);
     }
     // BY boundary: the study is in descending order of b, so ascending BY b
     // is the documented sort error (rc 1), not a gap.

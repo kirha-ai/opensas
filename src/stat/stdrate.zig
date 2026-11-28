@@ -12,6 +12,7 @@ const lex = @import("../lexer.zig");
 const Dataset = @import("../dataset.zig").Dataset;
 const Value = @import("../value.zig").Value;
 const by = @import("by_groups.zig");
+const format = @import("../format.zig");
 const A = std.mem.Allocator;
 const eq = std.ascii.eqlIgnoreCase;
 const Out = std.ArrayList(u8);
@@ -135,7 +136,12 @@ fn member(cx: proc.ProcCtx, t: []const lex.Token, i: *usize, option: []const u8)
         name = try std.fmt.allocPrint(cx.arena, "{s}.{s}", .{ name, t[i.* + 1].text });
         i.* += 2;
     }
-    if (at(t, i.*, .lparen)) return gap(cx, t[i.*].line, "data set options on {s}= are not implemented", .{option});
+    if (at(t, i.*, .lparen)) {
+        // DATA= options are applied by procInput (SAS 9.4 reference run:
+        // DATA=(WHERE=) selects study observations); REFDATA= options are open.
+        if (!eq(option, "DATA")) return gap(cx, t[i.*].line, "data set options on {s}= are not implemented", .{option});
+        i.* = proc.skipParen(t, i.*);
+    }
     return name;
 }
 
@@ -178,6 +184,12 @@ fn strataCl(cx: proc.ProcCtx, t: []const lex.Token, i: *usize) diag.Error!Strata
     }
     i.* = j;
     return cl;
+}
+
+fn sameTokens(x: []const lex.Token, y: []const lex.Token) bool {
+    if (x.len != y.len) return false;
+    for (x, y) |p, q| if (p.tag != q.tag or !eq(p.text, q.text)) return false;
+    return true;
 }
 
 pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
@@ -254,20 +266,29 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
     }
     if (!at(t, i, .semicolon)) return invalid(cx, t, i);
     s.method = method orelse return user(cx, lineOf(t, 0), "the METHOD= option is required", .{});
-    // "names the required SAS data set" (p.9495): whether an omitted DATA=
-    // falls back to the most recent data set is not settled by the guide.
-    s.study_name = data orelse return gap(cx, lineOf(t, 0), "the input data set when DATA= is omitted is not verified", .{});
-    const raw = cx.lib.find(s.study_name) orelse return user(cx, 0, "input data set {s} not found", .{s.study_name});
-    // Only the global OBS=/FIRSTOBS= window applies: data set options are
-    // rejected above and WHERE is recorded as a boundary below.
-    s.study = try proc.procInput(cx.arena, raw, t[0..2], cx.diags);
+    // An omitted DATA= reads the most recently created data set (SAS 9.4
+    // reference run, 2026-11-28: the listing names that data set).
+    const raw = if (data) |name| cx.lib.find(name) orelse return user(cx, 0, "input data set {s} not found", .{name}) else proc.lastDataset(cx.lib) orelse return user(cx, 0, "there is no most recently created data set for DATA=", .{});
+    s.study_name = data orelse raw.name;
+    // The global OBS=/FIRSTOBS= window and the WHERE statement apply to the
+    // study and to the reference data set alike (SAS 9.4 reference run: a
+    // WHERE variable absent from REFDATA= is an ERROR); data set options are
+    // rejected above.
+    s.study = try proc.procInput(cx.arena, raw, t, cx.diags);
     if (s.reference_name) |name| {
         const ref = cx.lib.find(name) orelse return user(cx, 0, "reference data set {s} not found", .{name});
-        s.reference = try proc.procInput(cx.arena, ref, t[0..2], cx.diags);
+        // The reference sees the WHERE statement but not the DATA= options.
+        var h: usize = 2;
+        while (h < t.len and !at(t, h, .semicolon)) h += 1;
+        const ref_tokens = try std.mem.concat(cx.arena, lex.Token, &.{ t[0..2], t[h..] });
+        s.reference = try proc.procInput(cx.arena, ref, ref_tokens, cx.diags);
     }
+    var formats: std.ArrayList(proc.VarSpec) = .empty;
     var bys: by.Statements = .{};
     var population_seen = false;
     var strata_names: std.ArrayList(lex.Token) = .empty;
+    var reference_tokens: []const lex.Token = &.{};
+    var strata_tokens: []const lex.Token = &.{};
     i += 1;
     while (i < t.len and !at(t, i, .eof)) {
         if (at(t, i, .semicolon)) {
@@ -278,6 +299,9 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
         while (end < t.len and !at(t, end, .semicolon) and !at(t, end, .eof)) end += 1;
         if (!at(t, end, .semicolon)) return invalid(cx, t, i);
         if (kw(t, i, "population")) {
+            // SAS 9.4 reference run: a second POPULATION statement under
+            // METHOD=DIRECT stops the step with this ERROR (even when identical).
+            if (population_seen and s.method == .direct) return cx.diags.fail(error.ParseError, t[i].line, "The population stratum-specific rates or risks must be available for METHOD=DIRECT or METHOD=MH.", .{});
             if (population_seen) return gap(cx, t[i].line, "duplicate POPULATION statement policy is not verified", .{});
             population_seen = true;
             var j = i + 1;
@@ -309,8 +333,17 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
                 } else return invalid(cx, t, j);
             }
         } else if (kw(t, i, "reference")) {
-            if (s.reference_statement) return gap(cx, t[i].line, "duplicate REFERENCE statement policy is not verified", .{});
+            // An identical repeated REFERENCE statement is accepted (SAS 9.4
+            // reference run); a differing one has an unverified precedence.
+            if (s.reference_statement) {
+                if (sameTokens(reference_tokens, t[i..end])) {
+                    i = end + 1;
+                    continue;
+                }
+                return gap(cx, t[i].line, "a second, different REFERENCE statement is not verified", .{});
+            }
             s.reference_statement = true;
+            reference_tokens = t[i..end];
             var j = i + 1;
             while (j < end) {
                 if (!at(t, j, .name)) return invalid(cx, t, j);
@@ -333,8 +366,15 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
                 } else return invalid(cx, t, j);
             }
         } else if (kw(t, i, "strata")) {
-            if (s.strata_statement) return gap(cx, t[i].line, "duplicate STRATA statement policy is not verified", .{});
+            if (s.strata_statement) {
+                if (sameTokens(strata_tokens, t[i..end])) {
+                    i = end + 1;
+                    continue;
+                }
+                return gap(cx, t[i].line, "a second, different STRATA statement is not verified", .{});
+            }
             s.strata_statement = true;
+            strata_tokens = t[i..end];
             var j = i + 1;
             while (j < end and !at(t, j, .slash)) : (j += 1) {
                 if (!at(t, j, .name)) return invalid(cx, t, j);
@@ -363,21 +403,34 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
         } else if (kw(t, i, "where")) {
             s.where = true;
         } else if (kw(t, i, "format")) {
-            return gap(cx, t[i].line, "FORMAT statement (formatted STRATA levels) is not implemented", .{});
+            // Formatted values determine the STRATA levels (p.9500); the
+            // statement applies to both data sets (SAS 9.4 reference run).
+            var j = i;
+            try proc.parseProcFormat(cx.arena, t, &j, &formats);
         } else if (at(t, i, .name) and !kw(t, i, "x") and parser.isMidStepSkippable(t[i].text)) {
             try parser.noteUnexecuted(cx.diags, t[i..end]);
         } else return invalid(cx, t, i);
         i = end + 1;
     }
     if (!population_seen) return user(cx, 0, "the POPULATION statement is required", .{});
+    for (formats.items) |f| if (s.study.indexOf(f.name) == null) return cx.diags.fail(error.ParseError, 0, "Variable {s} not found.", .{f.name});
+    s.study = try by.withFormats(cx.arena, s.study, formats.items);
+    if (s.reference) |ref| s.reference = try by.withFormats(cx.arena, ref, formats.items);
     if (s.method != .mh and !s.reference_statement) return user(cx, 0, "the REFERENCE statement is required with METHOD=DIRECT and METHOD=INDIRECT", .{});
     if (s.method == .mh and s.group == null) return user(cx, 0, "the GROUP= option in the POPULATION statement is required with METHOD=MH", .{});
     // STRATA variables are "in all input data sets" (p.9500).
-    const cols = try cx.arena.alloc(usize, strata_names.items.len);
+    // A repeated STRATA variable forms the same strata as one occurrence
+    // (SAS 9.4 reference run: `strata age age;` gives 2 strata).
+    var unique: std.ArrayList(lex.Token) = .empty;
+    for (strata_names.items) |token| {
+        for (unique.items) |u| {
+            if (eq(u.text, token.text)) break;
+        } else try unique.append(cx.arena, token);
+    }
+    const cols = try cx.arena.alloc(usize, unique.items.len);
     const ref_cols = try cx.arena.alloc(usize, if (s.reference != null) cols.len else 0);
-    for (strata_names.items, 0..) |token, k| {
+    for (unique.items, 0..) |token, k| {
         cols[k] = s.study.indexOf(token.text) orelse return cx.diags.fail(error.ParseError, token.line, "Variable {s} not found.", .{token.text});
-        if (std.mem.indexOfScalar(usize, cols[0..k], cols[k]) != null) return gap(cx, token.line, "repeated STRATA variable policy is not verified", .{});
         if (s.reference) |ref| {
             ref_cols[k] = ref.indexOf(token.text) orelse return user(cx, token.line, "STRATA variable {s} not found in the reference data set", .{token.text});
             if (ref.columns.items[ref_cols[k]].type != s.study.columns.items[cols[k]].type) return user(cx, token.line, "STRATA variable {s} has different types in the study and reference data sets", .{token.text});
@@ -400,7 +453,6 @@ pub fn boundary(cx: proc.ProcCtx, s: Spec) diag.Error!void {
     if (s.method == .indirect) return gap(cx, 0, "METHOD=INDIRECT is not implemented", .{});
     if (s.method == .mh) return gap(cx, 0, "METHOD=MH is not implemented", .{});
     if (s.stat == .risk) return gap(cx, 0, "STAT=RISK is not implemented", .{});
-    if (s.mult != 100000) return gap(cx, 0, "listing for a rate multiplier other than 100000 is not verified", .{});
     if (s.alpha != 0.05) return gap(cx, 0, "ALPHA= other than 0.05 is not implemented", .{});
     if (s.cl != .normal) return gap(cx, 0, "CL= other than NORMAL is not implemented", .{});
     if (s.effect != null) return gap(cx, 0, "the EFFECT option is not implemented", .{});
@@ -408,8 +460,6 @@ pub fn boundary(cx: proc.ProcCtx, s: Spec) diag.Error!void {
     // The CLI always carries a graphics session; only ODS GRAPHICS ON makes
     // SAS draw the default stratum-specific rate plot.
     if (!s.plots_none) if (cx.graphics) |g| if (g.enabled == true) return gap(cx, 0, "stratum-specific rate plots under ODS GRAPHICS are not implemented", .{});
-    if (s.where) return gap(cx, 0, "WHERE with study and reference data sets is not verified", .{});
-    if (s.by_cols.len > 0) return gap(cx, 0, "BY-group analysis and listing are not verified", .{});
     if (s.group != null) return gap(cx, 0, "POPULATION GROUP= (several study populations) is not implemented", .{});
     if (s.popevent != null) return gap(cx, 0, "POPULATION POPEVENT= is not implemented", .{});
     if (s.population.rate != null or s.population.risk != null) return gap(cx, 0, "POPULATION RATE= and RISK= input is not implemented", .{});
@@ -419,10 +469,6 @@ pub fn boundary(cx: proc.ProcCtx, s: Spec) diag.Error!void {
     if (s.refevent != null or s.refrate != null or s.refrisk != null or s.reftotal != null) return gap(cx, 0, "REFERENCE REFEVENT=, REFRATE=, REFRISK= and REFTOTAL= are not implemented", .{});
     if (s.ref.total == null) return gap(cx, 0, "REFERENCE without TOTAL= is not implemented", .{});
     if (s.strata_effect or s.stats != null or s.smr != null) return gap(cx, 0, "STRATA options EFFECT, STATS and SMR are not implemented", .{});
-    if (s.strata.len == 0) return gap(cx, 0, "the listing without STRATA variables is not verified", .{});
-    for (s.strata, s.ref_strata) |c, r| {
-        if (s.study.columns.items[c].format != null or s.reference.?.columns.items[r].format != null) return gap(cx, 0, "formatted STRATA levels are not implemented", .{});
-    }
 }
 
 pub const Stratum = struct {
@@ -433,16 +479,21 @@ pub const Stratum = struct {
     ref_time: f64 = 0,
     in_study: bool = false,
     in_reference: bool = false,
+    study_obs: usize = 0,
+    missing_events: usize = 0,
+    missing_total: bool = false,
 };
 pub const Selected = struct {
+    /// Strata present in both data sets, in display order.
     strata: []const Stratum,
+    /// Distinct reference strata ("Number of Strata" in the listing).
+    reference_strata: usize,
     /// Observations read and used, per data set.
     study_read: usize,
     study_used: usize,
     reference_read: usize,
     reference_used: usize,
 };
-
 fn missingValue(v: Value) bool {
     return switch (v) {
         .num => |x| std.math.isNan(x),
@@ -482,12 +533,19 @@ const KeyOrder = struct {
 
 /// Observation selection for direct standardization (STRATA MISSING,
 /// physical p.9500): an observation with a missing STRATA value is excluded
-/// unless MISSING, which makes missing a level of its own. Levels are matched
+/// unless MISSING, which makes missing a level of its own; without STRATA
+/// variables every observation is in one stratum (p.9500). Levels are matched
 /// between the study and reference data sets by unformatted value and
 /// returned in ORDER=INTERNAL order unless ORDER=DATA (study order, then
-/// reference-only levels). Data whose treatment the guide leaves open
-/// (missing or out-of-range EVENT/TOTAL values, several observations in one
-/// stratum, a stratum absent from one data set) is a gap.
+/// reference-only levels). Rules verified by SAS 9.4 reference runs
+/// (2026-11-28, invented data): several study observations in one stratum
+/// add up their events and population-times, and several reference
+/// observations their population-times (verified without STRATA variables); a study stratum whose only
+/// observation has a missing EVENT= value is an ERROR ("The population rate
+/// is missing ..."); a study stratum absent from the reference is an ERROR
+/// ("The reference total is missing ..."); a reference stratum absent from
+/// the study draws a WARNING, counts in "Number of Strata" and is left out
+/// of the estimate. Other data whose treatment is open is a gap.
 pub fn select(cx: proc.ProcCtx, s: Spec, study_rows: []const []const Value) diag.Error!Selected {
     const a = cx.arena;
     const ref = s.reference.?;
@@ -495,16 +553,19 @@ pub fn select(cx: proc.ProcCtx, s: Spec, study_rows: []const []const Value) diag
     const total = s.population.total.?;
     const ref_total = s.ref.total.?;
     var list: std.ArrayList(Stratum) = .empty;
-    var result: Selected = .{ .strata = &.{}, .study_read = study_rows.len, .study_used = 0, .reference_read = ref.rowCount(), .reference_used = 0 };
+    var result: Selected = .{ .strata = &.{}, .reference_strata = 0, .study_read = study_rows.len, .study_used = 0, .reference_read = ref.rowCount(), .reference_used = 0 };
     for ([_]bool{ false, true }) |is_ref| {
         const cols = if (is_ref) s.ref_strata else s.strata;
         const count = if (is_ref) ref.rowCount() else study_rows.len;
         rows: for (0..count) |r| {
             const row = if (is_ref) ref.row(r) else study_rows[r];
             const key = try a.alloc(Value, cols.len);
+            const ds = if (is_ref) ref else s.study;
             for (cols, key) |c, *k| {
                 if (missingValue(row[c]) and !s.missing) continue :rows;
                 k.* = row[c];
+                // A formatted STRATA variable's level is its formatted value.
+                if (ds.columns.items[c].format) |spec| k.* = .{ .str = std.mem.trim(u8, try format.apply(a, row[c], spec), " ") };
             }
             var found: ?*Stratum = null;
             for (list.items) |*st| {
@@ -516,31 +577,80 @@ pub fn select(cx: proc.ProcCtx, s: Spec, study_rows: []const []const Value) diag
                 try list.append(a, .{ .key = key });
                 break :blk &list.items[list.items.len - 1];
             };
-            if (if (is_ref) st.in_reference else st.in_study) return gap(cx, 0, "several observations in one stratum of a data set are not verified", .{});
             if (is_ref) {
                 const x = row[ref_total].num;
                 if (!(x > 0)) return gap(cx, 0, "missing or nonpositive REFERENCE TOTAL= values are not verified", .{});
-                st.ref_time = x;
+                st.ref_time += x;
+                if (!st.in_reference) result.reference_strata += 1;
                 st.in_reference = true;
                 result.reference_used += 1;
             } else {
+                st.in_study = true;
+                st.study_obs += 1;
                 const d = row[event].num;
                 const time = row[total].num;
-                if (!(d >= 0)) return gap(cx, 0, "missing or negative POPULATION EVENT= values are not verified", .{});
-                if (!(time > 0)) return gap(cx, 0, "missing or nonpositive POPULATION TOTAL= values are not verified", .{});
-                st.events = d;
-                st.time = time;
-                st.in_study = true;
+                // A missing EVENT= value adds nothing to the stratum's events
+                // while its TOTAL= still counts (SAS 9.4 reference run); a
+                // missing TOTAL= is verified only as a stratum's only value.
+                if (std.math.isNan(time)) {
+                    st.missing_total = true;
+                    continue :rows;
+                }
+                if (!(time > 0)) return gap(cx, 0, "nonpositive POPULATION TOTAL= values are not verified", .{});
+                st.time += time;
+                if (std.math.isNan(d)) {
+                    st.missing_events += 1;
+                    continue :rows;
+                }
+                if (!(d >= 0)) return gap(cx, 0, "negative POPULATION EVENT= values are not verified", .{});
+                st.events += d;
                 result.study_used += 1;
             }
         }
     }
-    for (list.items) |st| if (!st.in_study or !st.in_reference) return gap(cx, 0, "a stratum that is absent from the study or the reference data set is not verified", .{});
-    if (list.items.len == 0) return gap(cx, 0, "the result for an input without usable observations is not verified", .{});
+    for (list.items) |st| {
+        if (st.missing_total and st.study_obs > 1) return gap(cx, 0, "a missing TOTAL= value beside other observations of its stratum is not verified", .{});
+        if (st.in_study and (st.missing_total or st.missing_events == st.study_obs)) {
+            return cx.diags.fail(error.ParseError, 0, "The population rate is missing in the stratum {s}.", .{try stratumLabel(cx, s, st)});
+        }
+        if (st.in_study and !st.in_reference) return cx.diags.fail(error.ParseError, 0, "The reference total is missing in the stratum {s}.", .{try stratumLabel(cx, s, st)});
+    }
+    var matched: std.ArrayList(Stratum) = .empty;
+    for (list.items) |st| {
+        if (st.in_study) {
+            try matched.append(a, st);
+        } else try cx.diags.warnStatus(0, "The stratum in the REFDATA= data set, {s}, does not have a matched stratum in the DATA= data set.", .{try stratumLabel(cx, s, st)});
+    }
+    // An empty study data set prints the table with missing values (SAS
+    // 9.4 reference run); a study whose observations are all excluded is open.
+    if (matched.items.len == 0 and study_rows.len > 0) return gap(cx, 0, "the result for a study without usable observations is not verified", .{});
     if (s.order == .formatted) return gap(cx, 0, "STRATA ORDER=FORMATTED is not implemented", .{});
-    if (s.order == .internal) std.mem.sort(Stratum, list.items, KeyOrder{ .n = s.strata.len }, KeyOrder.less);
-    result.strata = list.items;
+    if (s.order == .internal) std.mem.sort(Stratum, matched.items, KeyOrder{ .n = s.strata.len }, KeyOrder.less);
+    result.strata = matched.items;
     return result;
+}
+
+/// `name=value ...` as the SAS stratum messages print it (SAS 9.4
+/// reference runs): character values trimmed, numeric values in BEST16.
+/// right-aligned, several STRATA variables separated by blanks.
+fn stratumLabel(cx: proc.ProcCtx, s: Spec, st: Stratum) diag.Error![]const u8 {
+    var text: Out = .empty;
+    for (s.strata, st.key, 0..) |c, v, k| {
+        const col = s.study.columns.items[c];
+        if (col.format != null or missingValue(v)) return gap(cx, 0, "stratum messages for formatted or missing STRATA levels are not verified", .{});
+        if (k > 0) try text.append(cx.arena, ' ');
+        try text.print(cx.arena, "{s}=", .{col.name});
+        switch (v) {
+            .str => |x| try text.appendSlice(cx.arena, std.mem.trimEnd(u8, x, " ")),
+            .num => |x| {
+                const num = std.mem.trim(u8, try format.bestNumW(cx.arena, x, 16), " ");
+                try text.appendNTimes(cx.arena, ' ', 16 -| num.len);
+                try text.appendSlice(cx.arena, num);
+            },
+        }
+    }
+    if (s.strata.len == 0) return gap(cx, 0, "stratum messages without STRATA variables are not verified", .{});
+    return text.items;
 }
 
 pub const Direct = struct {
@@ -600,37 +710,77 @@ fn infoLine(cx: proc.ProcCtx, out: *Out, label: []const u8, value: []const u8) d
     try out.append(cx.arena, '\n');
 }
 
-fn render(cx: proc.ProcCtx, out: *Out, s: Spec, sel: Selected) diag.Error!void {
+fn pageStart(cx: proc.ProcCtx, out: *Out, first: *bool, byline: []const u8) !void {
+    if (!first.*) if (cx.listing_titles) |titles| try titles.emitTitles(cx.arena, out);
+    first.* = false;
+    try out.append(cx.arena, '\n');
+    if (byline.len > 0) try out.print(cx.arena, "{s}\n\n", .{byline});
+    try out.appendSlice(cx.arena, "The STDRATE Procedure\n\n");
+}
+
+/// `text` centered over the 95-column estimates table, the odd column on
+/// the left (SAS reference listings for MULT=100000 and MULT=1000).
+fn centered(a: A, out: *Out, text: []const u8) !void {
+    if (text.len < 95) try out.appendNTimes(a, ' ', (96 - text.len) / 2);
+    try out.appendSlice(a, text);
+    try out.append(a, '\n');
+}
+
+fn render(cx: proc.ProcCtx, out: *Out, first: *bool, byline: []const u8, s: Spec, sel: Selected) diag.Error!void {
     const a = cx.arena;
+    const empty = sel.strata.len == 0;
     const r = direct(sel.strata);
-    // Display boundary: only the magnitudes shown by the SAS reference
-    // listing are printed; the template's decimal rule elsewhere is unknown.
-    for ([_]f64{ r.events, r.time, r.ref_time }) |x| if (x != @floor(x)) return gap(cx, 0, "display of nonintegral event counts or population-times is not verified", .{});
-    if (r.events >= 1e8 or r.time >= 1e11 or r.ref_time >= 1e11) return gap(cx, 0, "display of totals wider than the reference columns is not verified", .{});
-    if (!(r.expected >= 99.9995 and r.expected < 999.9995)) return gap(cx, 0, "expected-events display outside 100 <= x < 1000 is not verified", .{});
     const rates = [_]f64{ r.crude * s.mult, r.estimate * s.mult, r.se * s.mult, r.lower * s.mult, r.upper * s.mult };
-    for (rates) |x| if (!(x >= 99.95 and x < 9999.95)) return gap(cx, 0, "rate display outside 100 <= x < 10000 (per 100000) is not verified", .{});
+    // Display boundary: only the magnitudes shown by SAS reference listings
+    // are printed (rates 100-10000 with one decimal, 1-100 with four); the
+    // template's decimal rule elsewhere is unknown.
+    var decimals: usize = 1;
+    if (!empty) {
+        for ([_]f64{ r.events, r.time, r.ref_time }) |x| if (x != @floor(x)) return gap(cx, 0, "display of nonintegral event counts or population-times is not verified", .{});
+        if (r.events >= 1e8 or r.time >= 1e11 or r.ref_time >= 1e11) return gap(cx, 0, "display of totals wider than the reference columns is not verified", .{});
+        if (!(r.expected >= 99.9995 and r.expected < 999.9995)) return gap(cx, 0, "expected-events display outside 100 <= x < 1000 is not verified", .{});
+        var high = true;
+        var low = true;
+        for (rates) |x| {
+            high = high and x >= 99.95 and x < 9999.95;
+            low = low and x >= 1 and x < 99.99995;
+        }
+        if (low) decimals = 4 else if (!high) return gap(cx, 0, "rate display outside 1 <= x < 10000 (one magnitude band per row) is not verified", .{});
+    }
+    const mult = try std.fmt.allocPrint(a, "{d}", .{s.mult});
 
     var body: Out = .empty;
-    try body.appendSlice(a, "\nThe STDRATE Procedure\n\n          Standardization Information\n\n");
+    try pageStart(cx, &body, first, byline);
+    try body.appendSlice(a, "          Standardization Information\n\n");
     try infoLine(cx, &body, "Data Set", try displayName(a, s.study_name));
     try infoLine(cx, &body, "Reference Data Set", try displayName(a, s.reference_name.?));
     try infoLine(cx, &body, "Method", "Direct Standardization");
     try infoLine(cx, &body, "Statistic", "Rate");
-    try infoLine(cx, &body, "Number of Strata", try std.fmt.allocPrint(a, "{d}", .{sel.strata.len}));
-    try infoLine(cx, &body, "Rate Multiplier", "100000");
-    try body.appendSlice(a, "\nThe STDRATE Procedure\n\n" ++
-        "                             Directly Standardized Rate Estimates \n" ++
-        "                                    Rate Multiplier = 100000\n \n" ++
+    try infoLine(cx, &body, "Number of Strata", try std.fmt.allocPrint(a, "{d}", .{sel.reference_strata}));
+    try infoLine(cx, &body, "Rate Multiplier", mult);
+    try pageStart(cx, &body, first, byline);
+    try centered(a, &body, "Directly Standardized Rate Estimates ");
+    try centered(a, &body, try std.fmt.allocPrint(a, "Rate Multiplier = {s}", .{mult}));
+    try body.appendSlice(a, " \n" ++
         "--------Study Population-------  -Reference Population-  -----------Standardized Rate----------\n" ++
         "Observed  Population-     Crude  Expected   Population-            Standard      95% Normal\n" ++
         "  Events         Time      Rate    Events          Time  Estimate     Error   Confidence Limits\n\n");
-    try right(a, &body, try std.fmt.allocPrint(a, "{d:.0}", .{r.events}), 8);
-    try right(a, &body, try std.fmt.allocPrint(a, "{d:.0}", .{r.time}), 13);
-    try right(a, &body, try std.fmt.allocPrint(a, "{d:.1}", .{rates[0]}), 10);
-    try right(a, &body, try std.fmt.allocPrint(a, "{d:.3}", .{r.expected}), 10);
-    try right(a, &body, try std.fmt.allocPrint(a, "{d:.0}", .{r.ref_time}), 14);
-    for (rates[1..]) |x| try right(a, &body, try std.fmt.allocPrint(a, "{d:.1}", .{x}), 10);
+    const widths = [_]usize{ 8, 13, 10, 10, 14, 10, 10, 10, 10 };
+    if (empty) {
+        for (widths) |w| try right(a, &body, ".", w);
+    } else {
+        const rate_text = struct {
+            fn f(al: A, x: f64, d: usize) ![]const u8 {
+                return if (d == 4) std.fmt.allocPrint(al, "{d:.4}", .{x}) else std.fmt.allocPrint(al, "{d:.1}", .{x});
+            }
+        }.f;
+        try right(a, &body, try std.fmt.allocPrint(a, "{d:.0}", .{r.events}), widths[0]);
+        try right(a, &body, try std.fmt.allocPrint(a, "{d:.0}", .{r.time}), widths[1]);
+        try right(a, &body, try rate_text(a, rates[0], decimals), widths[2]);
+        try right(a, &body, try std.fmt.allocPrint(a, "{d:.3}", .{r.expected}), widths[3]);
+        try right(a, &body, try std.fmt.allocPrint(a, "{d:.0}", .{r.ref_time}), widths[4]);
+        for (rates[1..], widths[5..]) |x, w| try right(a, &body, try rate_text(a, x, decimals), w);
+    }
     try body.append(a, '\n');
     try out.appendSlice(a, body.items);
 }
@@ -641,8 +791,23 @@ pub fn run(cx: proc.ProcCtx, out: *Out, t: []const lex.Token) diag.Error!void {
     // the execution boundary reports what is not implemented.
     const slices = try by.checkedSlices(cx.arena, s.study, s.by_cols, s.by_desc, s.notsorted, cx.diags);
     try boundary(cx, s);
-    if (slices.len == 0) return gap(cx, 0, "the result for an empty input data set is not verified", .{});
-    for (slices) |slice| try render(cx, out, s, try select(cx, s, slice.rows));
+    // BY groups split the study data set only; the whole reference data set
+    // serves every group (SAS 9.4 reference run, BY variable absent from it).
+    for (s.by_cols) |c| if (s.reference.?.indexOf(s.study.columns.items[c].name) != null) return gap(cx, 0, "a BY variable that is also in the REFDATA= data set is not verified", .{});
+    var first = true;
+    if (slices.len == 0) {
+        if (s.by_cols.len > 0) return gap(cx, 0, "BY-group processing of an empty input data set is not verified", .{});
+        return render(cx, out, &first, "", s, try select(cx, s, &.{}));
+    }
+    for (slices) |slice| {
+        var byline: []const u8 = "";
+        if (s.by_cols.len > 0) {
+            var tmp: Out = .empty;
+            try by.appendLine(cx.arena, &tmp, s.study, slice.rows[0], s.by_cols);
+            byline = std.mem.trim(u8, tmp.items, " \n");
+        }
+        try render(cx, out, &first, byline, s, try select(cx, s, slice.rows));
+    }
 }
 
 test {

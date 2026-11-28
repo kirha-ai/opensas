@@ -3467,7 +3467,9 @@ fn runProc(a: std.mem.Allocator, listing_out: *std.ArrayList(u8), lib: *sas.exec
         }
     } else if (eqi(proc, "stdrate")) {
         var body: std.ArrayList(u8) = .empty;
-        try sas.stdrate.run(pcx, &body, toks);
+        var stdrate_context = pcx;
+        stdrate_context.listing_titles = g; // titles repeat before every page
+        try sas.stdrate.run(stdrate_context, &body, toks);
         if (body.items.len > 0) {
             try g.emitTitles(a, out);
             try out.appendSlice(a, body.items);
