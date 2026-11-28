@@ -237,3 +237,50 @@ test "LOGISTIC018 SCORE linear predictor covariance identity and finite boundari
     try std.testing.expectError(error.InvalidInput, prediction(&.{1}, &.{0}, &.{-1}, 0.05));
     try std.testing.expectError(error.InvalidInput, prediction(&.{std.math.inf(f64)}, &.{1}, &.{1}, 0.05));
 }
+
+test "LOGISTIC018 valid MODEL ranges are gaps independent of GLOGIT and optional SCORE DATA" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var ds = Dataset.init(a, "crops");
+    _ = try ds.addColumn("Crop", .char);
+    for ([_][]const u8{ "x1", "x2", "x3", "x4" }) |name| _ = try ds.addColumn(name, .num);
+    var lib = @import("../exec.zig").Library.init(a);
+    try lib.put("crops", &ds);
+    for ([_][]const u8{
+        "model Crop=x1-x4 / link=glogit; score out=Score1; effectplot slicefit(x=x3);",
+        "model Crop=x1-x4; score out=Score1;",
+        "model Crop=x1 x2 x3 x4 / link=glogit; score out=Score1;",
+    }, 0..) |body, index| {
+        var d = diag.Diagnostics.init(a);
+        var out: std.ArrayList(u8) = .empty;
+        diag.resetGap();
+        defer diag.resetGap();
+        const source = try std.fmt.allocPrint(a, "proc logistic data=crops; {s} run;", .{body});
+        try std.testing.expectError(error.ParseError, logistic.run(.{ .arena = a, .lib = &lib, .diags = &d }, &out, try lex.tokenize(a, source, &d)));
+        try std.testing.expectEqual(@as(u8, 2), diag.exitCode(diag.gapHit(), d.hasErrors()));
+        try std.testing.expectEqual(@as(usize, 0), out.items.len);
+        const log = try d.render();
+        try std.testing.expect(std.mem.indexOf(u8, log, if (index < 2) "MODEL variable ranges are not implemented" else "glogit is not implemented") != null);
+        try std.testing.expect(lib.find("Score1") == null);
+    }
+    // DATA= is optional in SCORE; it is unrelated to the MODEL-range failure.
+    for ([_][]const u8{ "score out=Score1;", "score data=crops out=Score1;" }, 0..) |statement, i| {
+        var d = diag.Diagnostics.init(a);
+        const source = try std.fmt.allocPrint(a, "proc logistic data=crops; model Crop=x1; {s} run;", .{statement});
+        const spec = try logistic.parse(.{ .arena = a, .lib = &lib, .diags = &d }, try lex.tokenize(a, source, &d));
+        try std.testing.expectEqual(@as(usize, 1), spec.scores.len);
+        try std.testing.expectEqualStrings("Score1", spec.scores[0].output);
+        if (i == 0) try std.testing.expect(spec.scores[0].input == null) else try std.testing.expectEqualStrings("crops", spec.scores[0].input.?);
+        try std.testing.expect(!d.hasErrors());
+    }
+    // Invalid range endpoints and genuinely incomplete syntax remain user errors.
+    for ([_][]const u8{ "x1-x5", "x1-", "x1-Crop" }) |term| {
+        var d = diag.Diagnostics.init(a);
+        diag.resetGap();
+        defer diag.resetGap();
+        const source = try std.fmt.allocPrint(a, "proc logistic data=crops; model Crop={s}; run;", .{term});
+        try std.testing.expectError(error.ParseError, logistic.parse(.{ .arena = a, .lib = &lib, .diags = &d }, try lex.tokenize(a, source, &d)));
+        try std.testing.expectEqual(@as(u8, 1), diag.exitCode(diag.gapHit(), d.hasErrors()));
+    }
+}

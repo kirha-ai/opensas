@@ -120,16 +120,26 @@ fn coding(cx: proc.ProcCtx, t: []const lex.Token, i: *usize) diag.Error!design.C
     }
     return invalid(cx, t, i.*);
 }
+// Diagnose valid SAS ranges as implementation gaps, not empty '-' syntax errors.
+// Shared validation preserves user errors for missing/malformed range endpoints.
+fn modelVariable(cx: proc.ProcCtx, ds: *const Dataset, tokens: []const lex.Token, i: *usize) diag.Error!usize {
+    if (at(tokens, i.*, .name) and at(tokens, i.* + 1, .minus)) {
+        var end = i.*;
+        _ = try lists.next(cx.arena, ds, tokens, &end, cx.diags);
+        return proc.failGap(cx.diags, tokens[i.*].line, "PROC LOGISTIC: MODEL variable ranges are not implemented", .{});
+    }
+    return variable(cx, ds, tokens, i);
+}
 fn modelTerms(cx: proc.ProcCtx, ds: *const Dataset, tokens: []const lex.Token, variables: *std.ArrayList(usize), terms: *std.ArrayList([]const usize)) diag.Error!void {
     var i: usize = 0;
     while (i < tokens.len) {
         var chain: std.ArrayList([]const usize) = .empty;
         while (true) {
             var factors: std.ArrayList(usize) = .empty;
-            try factors.append(cx.arena, try variable(cx, ds, tokens, &i));
+            try factors.append(cx.arena, try modelVariable(cx, ds, tokens, &i));
             while (at(tokens, i, .star)) {
                 i += 1;
-                try factors.append(cx.arena, try variable(cx, ds, tokens, &i));
+                try factors.append(cx.arena, try modelVariable(cx, ds, tokens, &i));
             }
             for (factors.items) |ci| if (std.mem.indexOfScalar(usize, variables.items, ci) == null) try variables.append(cx.arena, ci);
             try chain.append(cx.arena, factors.items);
