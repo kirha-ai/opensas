@@ -7,6 +7,7 @@
    Ordinary t4 two-sided tail is 1-(3*s-s^3)/2, s=t/sqrt(t*t+4).
    Robust slope Wald=441/52; chi1 tail=erfc(sqrt(441/104)).
    These exact identities determine the complete expected listing independently. */
+ods graphics off;
 data sample;
 input x y;
 datalines;
