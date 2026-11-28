@@ -1,0 +1,15 @@
+# corpus assertions
+empty-listing
+stderr-count 1 The treatment variable X must be observed.
+stderr-count 1 You cannot specify both the LIST and NOLIST options.
+stderr-count 1 There is more than one model with the label D.
+stderr-count 1 The model E contains at least 1 directed cycle.
+stderr-count 1 Variable Q specified in the IDENTIFY statement is not found in any model.
+stderr-count 1 The model G must contain at least one outcome variable.
+stderr-count 1 You must specify at least one MODEL statement.
+stderr-count 1 You cannot specify more than one IDENTIFY statement.
+stderr-count 1 You cannot specify more than one UNMEASURED statement.
+stderr-count 1 The variable X cannot be both a treatment and an outcome variable.
+stderr-count 1 The adjustment variable U must be observed.
+stderr-count 1 The MAXLIST= value must be a positive integer.
+stderr-count 1 Invalid arrow =>> in the MODEL statement.

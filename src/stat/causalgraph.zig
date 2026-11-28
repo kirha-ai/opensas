@@ -1,0 +1,903 @@
+//! PROC CAUSALGRAPH declarations, basic options and the default
+//! identification listing, SAS/STAT 15.4 Chapter 37 (PROC CAUSALGRAPH
+//! statement pp.2298-2302, IDENTIFY pp.2302-2303, MODEL pp.2304-2306,
+//! UNMEASURED p.2309, Identification and Adjustment pp.2314-2315, Arrow or
+//! Edge Specification p.2316, ODS Table Names p.2319).
+//!
+//! The procedure reads no data: its input is the causal graph of each MODEL
+//! statement. The default path is METHOD=ADJUSTMENT with LIST: every valid
+//! adjustment set (Shpitser/VanderWeele/Robins adjustment criterion in the
+//! constructive form of van der Zander, Liskiewicz and Textor 2014) is
+//! enumerated over the measured covariates and listed by increasing size.
+//! Layout and messages follow SAS 9.4 reference runs. Everything not proven
+//! against a reference listing (METHOD=BACKDOOR/IV, TESTID, IMAP, COMMON,
+//! PSUMMARY, NOSORT, CYCLES=, bidirected edges, several MODEL statements,
+//! joint effects, disconnected models) is a
+//! D-009 gap (rc 2) raised before any listing text is produced.
+const std = @import("std");
+const proc = @import("../proc.zig");
+const diag = @import("../diag.zig");
+const lex = @import("../lexer.zig");
+const A = std.mem.Allocator;
+const eq = std.ascii.eqlIgnoreCase;
+const Out = std.ArrayList(u8);
+
+pub const Method = enum { adjustment, backdoor, iv };
+
+pub const Options = struct {
+    method: Method = .adjustment,
+    list: ?bool = null,
+    /// null = MAXLIST=ALL; default 100 (p.2300).
+    maxlist: ?usize = 100,
+    /// null = no limit; 0 = MAXSIZE=MIN.
+    maxsize: ?usize = null,
+    minimal: bool = false,
+    compact: bool = false,
+    noprint: bool = false,
+    disconnected: bool = false,
+    ordermodels: bool = false,
+    nthreads: ?usize = null,
+};
+
+pub const Edge = struct { from: usize, to: usize };
+
+pub const Model = struct {
+    label: []const u8,
+    line: usize,
+    /// Node indexes into `Spec.names`, in first-appearance order.
+    nodes: []const usize,
+    edges: []const Edge,
+};
+
+pub const Spec = struct {
+    opts: Options = .{},
+    /// Every variable name seen, spelled as first written (names are not
+    /// case-sensitive, p.2305).
+    names: []const []const u8 = &.{},
+    models: []const Model = &.{},
+    treatments: []const usize = &.{},
+    outcomes: []const usize = &.{},
+    adjust: []const usize = &.{},
+    identify: bool = false,
+    identify_line: usize = 0,
+    unmeasured: []const usize = &.{},
+};
+
+fn at(t: []const lex.Token, i: usize, tag: lex.Tag) bool {
+    return i < t.len and t[i].tag == tag;
+}
+fn kw(t: []const lex.Token, i: usize, text: []const u8) bool {
+    return at(t, i, .name) and eq(t[i].text, text);
+}
+fn lineOf(t: []const lex.Token, i: usize) usize {
+    return if (i < t.len) t[i].line else 0;
+}
+fn invalid(cx: proc.ProcCtx, t: []const lex.Token, i: usize) diag.Error {
+    return cx.diags.fail(error.ParseError, lineOf(t, i), "PROC CAUSALGRAPH: invalid statement or token {s}", .{if (i < t.len and t[i].text.len > 0) t[i].text else if (i < t.len) @tagName(t[i].tag) else "<end>"});
+}
+fn user(cx: proc.ProcCtx, line: usize, comptime text: []const u8, args: anytype) diag.Error {
+    return cx.diags.fail(error.ParseError, line, text, args);
+}
+fn gap(cx: proc.ProcCtx, line: usize, comptime text: []const u8, args: anytype) diag.Error {
+    return proc.failGap(cx.diags, line, "PROC CAUSALGRAPH: " ++ text, args);
+}
+
+/// Source spelling of an operator token; the lexer leaves most texts empty.
+fn spell(tok: lex.Token) ?[]const u8 {
+    return switch (tok.tag) {
+        .eq => "=",
+        .lt => "<",
+        .gt => ">",
+        .minus => "-",
+        .max_op => "<>",
+        .le => if (tok.text.len > 0) tok.text else "<=",
+        .ge => if (tok.text.len > 0) tok.text else ">=",
+        else => null,
+    };
+}
+
+pub const Arrow = enum { right, left, both };
+
+fn arrowKind(s: []const u8) ?Arrow {
+    // Arrow or Edge Specification table, p.2316.
+    for ([_][]const u8{ ">", "->", "-->", "=>", "==>", "===>" }) |r| if (std.mem.eql(u8, s, r)) return .right;
+    for ([_][]const u8{ "<", "<-", "<--", "<=", "<==", "<===" }) |r| if (std.mem.eql(u8, s, r)) return .left;
+    for ([_][]const u8{ "<>", "<->", "<-->", "<=>", "<==>", "<===>" }) |r| if (std.mem.eql(u8, s, r)) return .both;
+    return null;
+}
+
+/// Read one arrow starting at `i.*` (a run of operator tokens). Returns null
+/// and leaves `i` when no operator token is there.
+// ponytail: tokens carry no column, so `- ->` with blanks also reads as an
+// arrow; SAS spells arrows without inner blanks.
+fn readArrow(a: A, t: []const lex.Token, i: *usize, end: usize) !?struct { kind: ?Arrow, text: []const u8 } {
+    var buf: Out = .empty;
+    var j = i.*;
+    while (j < end) : (j += 1) {
+        const s = spell(t[j]) orelse break;
+        try buf.appendSlice(a, s);
+    }
+    if (j == i.*) return null;
+    i.* = j;
+    return .{ .kind = arrowKind(buf.items), .text = buf.items };
+}
+
+const Names = struct {
+    list: std.ArrayList([]const u8) = .empty,
+    fn intern(self: *Names, a: A, n: []const u8) !usize {
+        for (self.list.items, 0..) |x, k| if (eq(x, n)) return k;
+        try self.list.append(a, n);
+        return self.list.items.len - 1;
+    }
+    fn find(self: *const Names, n: []const u8) ?usize {
+        for (self.list.items, 0..) |x, k| if (eq(x, n)) return k;
+        return null;
+    }
+};
+
+fn splitNum(n: []const u8) ?struct { stem: []const u8, num: u64, digits: usize } {
+    var k = n.len;
+    while (k > 0 and std.ascii.isDigit(n[k - 1])) k -= 1;
+    if (k == n.len or k == 0) return null;
+    return .{ .stem = n[0..k], .num = std.fmt.parseInt(u64, n[k..], 10) catch return null, .digits = n.len - k };
+}
+
+/// One variable group: names (with X1-X3 numbered ranges), optionally
+/// enclosed in braces or parentheses. Square brackets are not tokens of the
+/// shared lexer (reported, not added here).
+fn readGroup(cx: proc.ProcCtx, t: []const lex.Token, i: *usize, end: usize, out: *std.ArrayList([]const u8)) diag.Error!void {
+    const a = cx.arena;
+    var close: ?lex.Tag = null;
+    if (at(t, i.*, .lbrace)) close = .rbrace else if (at(t, i.*, .lparen)) close = .rparen;
+    if (close != null) i.* += 1;
+    const start = out.items.len;
+    while (i.* < end) {
+        if (close) |c| if (at(t, i.*, c)) {
+            i.* += 1;
+            break;
+        };
+        if (!at(t, i.*, .name)) {
+            if (close != null) return invalid(cx, t, i.*);
+            break;
+        }
+        const n = t[i.*].text;
+        // `X1-X3`: a lone minus between two names is a numbered range.
+        if (i.* + 2 < end and at(t, i.* + 1, .minus) and at(t, i.* + 2, .name)) {
+            const lo = splitNum(n);
+            const hi = splitNum(t[i.* + 2].text);
+            if (lo == null or hi == null or !eq(lo.?.stem, hi.?.stem) or hi.?.num < lo.?.num)
+                return user(cx, t[i.*].line, "Invalid variable range {s}-{s}.", .{ n, t[i.* + 2].text });
+            var v = lo.?.num;
+            while (v <= hi.?.num) : (v += 1) try out.append(a, try std.fmt.allocPrint(a, "{s}{d}", .{ lo.?.stem, v }));
+            i.* += 3;
+            continue;
+        }
+        try out.append(a, n);
+        i.* += 1;
+    }
+    if (close != null and i.* > end) return invalid(cx, t, end);
+    if (out.items.len == start) return invalid(cx, t, i.*);
+}
+
+pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
+    const a = cx.arena;
+    var s: Spec = .{};
+    var o: Options = .{};
+    var i: usize = 2;
+    var list_given = false;
+    var nolist_given = false;
+    while (i < t.len and !at(t, i, .semicolon) and !at(t, i, .eof)) {
+        if (!at(t, i, .name)) return invalid(cx, t, i);
+        const w = t[i].text;
+        const line = t[i].line;
+        if (eq(w, "data") and at(t, i + 1, .eq)) {
+            // The procedure reads no data (Table 37.1 lists no DATA=); SAS
+            // 9.4 accepts and ignores the option (reference run).
+            i += 3;
+            if (at(t, i, .dot)) i += 2;
+            if (at(t, i, .lparen)) {
+                var depth: usize = 0;
+                while (i < t.len and !at(t, i, .eof)) : (i += 1) {
+                    if (at(t, i, .lparen)) depth += 1;
+                    if (at(t, i, .rparen)) {
+                        depth -= 1;
+                        if (depth == 0) break;
+                    }
+                }
+                i += 1;
+            }
+            continue;
+        }
+        i += 1;
+        if (eq(w, "list")) {
+            list_given = true;
+        } else if (eq(w, "nolist")) {
+            nolist_given = true;
+        } else if (eq(w, "minimal") or eq(w, "min")) {
+            o.minimal = true;
+        } else if (eq(w, "compact")) {
+            o.compact = true;
+        } else if (eq(w, "noprint")) {
+            o.noprint = true;
+        } else if (eq(w, "disconnected") or eq(w, "disconnect")) {
+            o.disconnected = true;
+        } else if (eq(w, "ordermodels")) {
+            o.ordermodels = true;
+        } else if (eq(w, "maxlist") or eq(w, "maxsize") or eq(w, "nthreads") or eq(w, "method")) {
+            if (!at(t, i, .eq)) return invalid(cx, t, i);
+            i += 1;
+            if (eq(w, "method")) {
+                if (kw(t, i, "adjustment")) o.method = .adjustment else if (kw(t, i, "backdoor")) o.method = .backdoor else if (kw(t, i, "iv")) o.method = .iv else return invalid(cx, t, i);
+                i += 1;
+                continue;
+            }
+            if (eq(w, "maxlist") and kw(t, i, "all")) {
+                o.maxlist = null;
+                i += 1;
+                continue;
+            }
+            if (eq(w, "maxsize") and kw(t, i, "min")) {
+                o.maxsize = 0;
+                i += 1;
+                continue;
+            }
+            if (!at(t, i, .number)) return invalid(cx, t, i);
+            const n = std.fmt.parseInt(usize, t[i].text, 10) catch return user(cx, line, "The {s}= value must be a positive integer.", .{try std.ascii.allocUpperString(a, w)});
+            if (n == 0) return user(cx, line, "The {s}= value must be a positive integer.", .{try std.ascii.allocUpperString(a, w)});
+            i += 1;
+            if (eq(w, "maxlist")) o.maxlist = n else if (eq(w, "maxsize")) o.maxsize = n else o.nthreads = n;
+        } else if (eq(w, "common") or eq(w, "imap") or eq(w, "cycles") or eq(w, "psummary") or eq(w, "nosort")) {
+            return gap(cx, line, "the {s} option is not implemented", .{try std.ascii.allocUpperString(a, w)});
+        } else return invalid(cx, t, i - 1);
+    }
+    if (!at(t, i, .semicolon)) return invalid(cx, t, i);
+    // "You cannot specify both the LIST and NOLIST options" (p.2300; message
+    // text of a SAS 9.4 reference run).
+    if (list_given and nolist_given) return user(cx, lineOf(t, 0), "You cannot specify both the LIST and NOLIST options.", .{});
+    if (list_given) o.list = true;
+    if (nolist_given) o.list = false;
+    s.opts = o;
+
+    var names: Names = .{};
+    var models: std.ArrayList(Model) = .empty;
+    var unmeasured_seen = false;
+    var treat_names: std.ArrayList([]const u8) = .empty;
+    var out_names: std.ArrayList([]const u8) = .empty;
+    var adj_names: std.ArrayList([]const u8) = .empty;
+    var unm_names: std.ArrayList([]const u8) = .empty;
+    i += 1;
+    while (i < t.len and !at(t, i, .eof)) {
+        if (at(t, i, .semicolon)) {
+            i += 1;
+            continue;
+        }
+        var end = i;
+        while (end < t.len and !at(t, end, .semicolon) and !at(t, end, .eof)) end += 1;
+        if (!at(t, end, .semicolon)) return invalid(cx, t, i);
+        const line = t[i].line;
+        if (kw(t, i, "model")) {
+            if (!at(t, i + 1, .string)) return user(cx, line, "The MODEL statement must begin with a quoted model label.", .{});
+            const label = t[i + 1].text;
+            for (models.items) |m| if (eq(m.label, label))
+                return user(cx, line, "There is more than one model with the label {s}.", .{m.label});
+            var nodes: std.ArrayList(usize) = .empty;
+            var edges: std.ArrayList(Edge) = .empty;
+            var j = i + 2;
+            if (j == end) return invalid(cx, t, j);
+            while (j < end) {
+                // One path, up to a comma.
+                var prev: ?[]const usize = null;
+                var pending: ?Arrow = null;
+                if (spell(t[j]) != null) {
+                    const ar = (try readArrow(a, t, &j, end)).?;
+                    if (ar.kind != .both) return invalid(cx, t, j - 1);
+                    return gap(cx, line, "bidirected edges (<==>) are not implemented", .{});
+                }
+                while (true) {
+                    var grp: std.ArrayList([]const u8) = .empty;
+                    try readGroup(cx, t, &j, end, &grp);
+                    const ids = try a.alloc(usize, grp.items.len);
+                    for (grp.items, ids) |n, *id| {
+                        id.* = try names.intern(a, n);
+                        if (std.mem.indexOfScalar(usize, nodes.items, id.*) == null) try nodes.append(a, id.*);
+                    }
+                    if (pending) |k| {
+                        for (prev.?) |p| for (ids) |q| {
+                            const e: Edge = if (k == .right) .{ .from = p, .to = q } else .{ .from = q, .to = p };
+                            // Repeated edges are ignored (p.2305).
+                            var dup = false;
+                            for (edges.items) |x| {
+                                if (x.from == e.from and x.to == e.to) dup = true;
+                            }
+                            if (!dup) try edges.append(a, e);
+                        };
+                    }
+                    prev = ids;
+                    if (j >= end or at(t, j, .comma)) break;
+                    const ar = (try readArrow(a, t, &j, end)) orelse return invalid(cx, t, j);
+                    const k = ar.kind orelse return user(cx, line, "Invalid arrow {s} in the MODEL statement.", .{ar.text});
+                    if (k == .both) return gap(cx, line, "bidirected edges (<==>) are not implemented", .{});
+                    pending = k;
+                }
+                if (pending == null) return user(cx, line, "Each path in the MODEL statement must contain an arrow.", .{});
+                if (at(t, j, .comma)) {
+                    j += 1;
+                    if (j == end) return invalid(cx, t, j);
+                }
+            }
+            try models.append(a, .{ .label = label, .line = line, .nodes = nodes.items, .edges = edges.items });
+        } else if (kw(t, i, "identify")) {
+            if (s.identify) return user(cx, line, "You cannot specify more than one IDENTIFY statement.", .{});
+            s.identify = true;
+            s.identify_line = line;
+            var j = i + 1;
+            try readGroup(cx, t, &j, end, &treat_names);
+            while (j < end and (at(t, j, .name) or at(t, j, .lbrace) or at(t, j, .lparen))) try readGroup(cx, t, &j, end, &treat_names);
+            const ar = (try readArrow(a, t, &j, end)) orelse return invalid(cx, t, j);
+            if (ar.kind != .right) return user(cx, line, "The IDENTIFY statement requires a right arrow between the treatment and outcome variables.", .{});
+            try readGroup(cx, t, &j, end, &out_names);
+            while (j < end and (at(t, j, .name) or at(t, j, .lbrace) or at(t, j, .lparen))) try readGroup(cx, t, &j, end, &out_names);
+            if (at(t, j, .pipe)) {
+                j += 1;
+                try readGroup(cx, t, &j, end, &adj_names);
+                while (j < end and (at(t, j, .name) or at(t, j, .lbrace) or at(t, j, .lparen))) try readGroup(cx, t, &j, end, &adj_names);
+            }
+            if (j != end) return invalid(cx, t, j);
+        } else if (kw(t, i, "unmeasured")) {
+            if (unmeasured_seen) return user(cx, line, "You cannot specify more than one UNMEASURED statement.", .{});
+            unmeasured_seen = true;
+            var j = i + 1;
+            while (j < end) try readGroup(cx, t, &j, end, &unm_names);
+            if (unm_names.items.len == 0) return invalid(cx, t, end);
+        } else if (kw(t, i, "testid")) {
+            return gap(cx, line, "the TESTID statement is not implemented", .{});
+        } else if (kw(t, i, "run") or kw(t, i, "quit")) {
+            // Step boundary tokens may reach the body.
+        } else return invalid(cx, t, i);
+        i = end + 1;
+    }
+    if (models.items.len == 0) return user(cx, lineOf(t, 0), "You must specify at least one MODEL statement.", .{});
+
+    // Resolve role names against the model variables. A role variable that
+    // is in no model is ignored with a warning (p.2303; SAS 9.4 message).
+    const roles = [_]struct { src: *std.ArrayList([]const u8), stmt: []const u8 }{
+        .{ .src = &treat_names, .stmt = "IDENTIFY" }, .{ .src = &out_names, .stmt = "IDENTIFY" }, .{ .src = &adj_names, .stmt = "IDENTIFY" }, .{ .src = &unm_names, .stmt = "UNMEASURED" },
+    };
+    var resolved: [4]std.ArrayList(usize) = .{ .empty, .empty, .empty, .empty };
+    for (roles, &resolved) |r, *dst| for (r.src.items) |n| {
+        const id = names.find(n) orelse {
+            try cx.diags.warn(s.identify_line, "Variable {s} specified in the {s} statement is not found in any model.", .{ n, r.stmt });
+            continue;
+        };
+        if (std.mem.indexOfScalar(usize, dst.items, id) == null) try dst.append(a, id);
+    };
+    s.names = names.list.items;
+    s.models = models.items;
+    s.treatments = resolved[0].items;
+    s.outcomes = resolved[1].items;
+    s.adjust = resolved[2].items;
+    s.unmeasured = resolved[3].items;
+    return s;
+}
+
+fn contains(xs: []const usize, x: usize) bool {
+    return std.mem.indexOfScalar(usize, xs, x) != null;
+}
+
+/// Validation and D-009 scope boundary; runs before any output.
+pub fn validate(cx: proc.ProcCtx, s: Spec) diag.Error!void {
+    const line = s.identify_line;
+    for (s.treatments) |x| {
+        if (contains(s.outcomes, x)) return user(cx, line, "The variable {s} cannot be both a treatment and an outcome variable.", .{s.names[x]});
+        if (contains(s.unmeasured, x)) return user(cx, line, "The treatment variable {s} must be observed.", .{s.names[x]});
+    }
+    for (s.outcomes) |y| if (contains(s.unmeasured, y)) return user(cx, line, "The outcome variable {s} must be observed.", .{s.names[y]});
+    for (s.adjust) |z| {
+        if (contains(s.treatments, z) or contains(s.outcomes, z)) return user(cx, line, "The adjustment variable {s} cannot also be a treatment or an outcome variable.", .{s.names[z]});
+        if (contains(s.unmeasured, z)) return user(cx, line, "The adjustment variable {s} must be observed.", .{s.names[z]});
+    }
+    if ((s.opts.list orelse false) and !s.identify) return user(cx, 0, "The LIST option requires an IDENTIFY statement.", .{});
+    for (s.models) |m| {
+        if (s.identify) {
+            var tr = false;
+            var oc = false;
+            for (m.nodes) |n| {
+                if (contains(s.treatments, n)) tr = true;
+                if (contains(s.outcomes, n)) oc = true;
+            }
+            if (!tr) return user(cx, m.line, "The model {s} must contain at least one treatment variable.", .{m.label});
+            if (!oc) return user(cx, m.line, "The model {s} must contain at least one outcome variable.", .{m.label});
+        }
+        if (try hasCycle(cx.arena, s.names.len, m.edges)) return user(cx, m.line, "The model {s} contains at least 1 directed cycle.", .{m.label});
+        // ponytail: the reference run also prints the DirectedCycles table
+        // before this error; only the error is produced here.
+    }
+    if (s.models.len > 1) return gap(cx, s.models[1].line, "more than one MODEL statement is not implemented", .{});
+    for (s.models) |m| if (try components(cx.arena, s.names.len, m) > 1)
+        return gap(cx, m.line, "disconnected models (ConnectedComponents table) are not implemented", .{});
+    if (s.opts.method != .adjustment) return gap(cx, 0, "METHOD={s} is not implemented", .{if (s.opts.method == .iv) "IV" else "BACKDOOR"});
+    if (s.treatments.len > 1 or s.outcomes.len > 1) return gap(cx, line, "joint causal effects (several treatment or outcome variables) are not implemented", .{});
+}
+
+fn hasCycle(a: A, n: usize, edges: []const Edge) !bool {
+    const indeg = try a.alloc(usize, n);
+    @memset(indeg, 0);
+    for (edges) |e| indeg[e.to] += 1;
+    var stack: std.ArrayList(usize) = .empty;
+    for (indeg, 0..) |d, k| if (d == 0) try stack.append(a, k);
+    var seen: usize = 0;
+    while (stack.pop()) |v| {
+        seen += 1;
+        for (edges) |e| if (e.from == v) {
+            indeg[e.to] -= 1;
+            if (indeg[e.to] == 0) try stack.append(a, e.to);
+        };
+    }
+    return seen < n;
+}
+
+fn components(a: A, n: usize, m: Model) !usize {
+    const comp = try a.alloc(usize, n);
+    @memset(comp, std.math.maxInt(usize));
+    var count: usize = 0;
+    for (m.nodes) |start| {
+        if (comp[start] != std.math.maxInt(usize)) continue;
+        var stack: std.ArrayList(usize) = .empty;
+        try stack.append(a, start);
+        comp[start] = count;
+        while (stack.pop()) |v| for (m.edges) |e| {
+            const w = if (e.from == v) e.to else if (e.to == v) e.from else continue;
+            if (comp[w] == std.math.maxInt(usize)) {
+                comp[w] = count;
+                try stack.append(a, w);
+            }
+        };
+        count += 1;
+    }
+    return count;
+}
+
+/// Graph kernel over node indexes 0..n.
+pub const Graph = struct {
+    n: usize,
+    edges: []const Edge,
+
+    fn closure(g: Graph, a: A, seeds: []const usize, down: bool, skip_out_of: []const bool, skip_into: []const bool) ![]bool {
+        const r = try a.alloc(bool, g.n);
+        @memset(r, false);
+        var stack: std.ArrayList(usize) = .empty;
+        for (seeds) |x| if (!r[x]) {
+            r[x] = true;
+            try stack.append(a, x);
+        };
+        while (stack.pop()) |v| for (g.edges) |e| {
+            if (skip_out_of[e.from] or skip_into[e.to]) continue;
+            const w = if (down and e.from == v) e.to else if (!down and e.to == v) e.from else continue;
+            if (!r[w]) {
+                r[w] = true;
+                try stack.append(a, w);
+            }
+        };
+        return r;
+    }
+
+    /// d-separation of X and Y given Z (reachability with active colliders,
+    /// Koller and Friedman 2009 Algorithm 3.1).
+    pub fn dSeparated(g: Graph, a: A, xs: []const usize, ys: []const usize, z: []const bool) !bool {
+        const none = try a.alloc(bool, g.n);
+        @memset(none, false);
+        var zs: std.ArrayList(usize) = .empty;
+        for (z, 0..) |b, k| if (b) try zs.append(a, k);
+        const anc = try g.closure(a, zs.items, false, none, none);
+        // visited[v][0] = arrived from a child (up), [1] = from a parent (down)
+        const vis = try a.alloc([2]bool, g.n);
+        @memset(vis, .{ false, false });
+        var stack: std.ArrayList(struct { v: usize, down: bool }) = .empty;
+        for (xs) |x| try stack.append(a, .{ .v = x, .down = false });
+        while (stack.pop()) |cur| {
+            const d: usize = @intFromBool(cur.down);
+            if (vis[cur.v][d]) continue;
+            vis[cur.v][d] = true;
+            if (!z[cur.v] and contains(ys, cur.v)) return false;
+            if (!cur.down) {
+                if (z[cur.v]) continue;
+                for (g.edges) |e| {
+                    if (e.to == cur.v) try stack.append(a, .{ .v = e.from, .down = false });
+                    if (e.from == cur.v) try stack.append(a, .{ .v = e.to, .down = true });
+                }
+            } else {
+                if (!z[cur.v]) {
+                    for (g.edges) |e| if (e.from == cur.v) try stack.append(a, .{ .v = e.to, .down = true });
+                }
+                if (anc[cur.v]) {
+                    for (g.edges) |e| if (e.to == cur.v) try stack.append(a, .{ .v = e.from, .down = false });
+                }
+            }
+        }
+        return true;
+    }
+};
+
+pub const Analysis = struct {
+    /// Candidate covariates (measured, not X/Y), alphabetical.
+    candidates: []const usize,
+    forbidden: []const bool,
+    pbd: Graph,
+};
+
+/// Constructive back-door setup (van der Zander et al. 2014): proper causal
+/// path nodes PCP = (De_{G-in(X)}(X) \ X) ∩ An_{G-out(X)}(Y), forbidden set
+/// De(PCP) ∪ X, proper back-door graph = G without X -> PCP edges.
+pub fn analyse(a: A, n: usize, edges: []const Edge, xs: []const usize, ys: []const usize) !Analysis {
+    const none = try a.alloc(bool, n);
+    @memset(none, false);
+    const isx = try a.alloc(bool, n);
+    @memset(isx, false);
+    for (xs) |x| isx[x] = true;
+    const g: Graph = .{ .n = n, .edges = edges };
+    const de_x = try g.closure(a, xs, true, none, isx);
+    const an_y = try g.closure(a, ys, false, isx, none);
+    var pcp: std.ArrayList(usize) = .empty;
+    for (0..n) |v| if (de_x[v] and an_y[v] and !isx[v]) try pcp.append(a, v);
+    const forb = try g.closure(a, pcp.items, true, none, none);
+    for (xs) |x| forb[x] = true;
+    var pbd: std.ArrayList(Edge) = .empty;
+    for (edges) |e| if (!(isx[e.from] and contains(pcp.items, e.to))) try pbd.append(a, e);
+    return .{ .candidates = &.{}, .forbidden = forb, .pbd = .{ .n = n, .edges = pbd.items } };
+}
+
+pub fn validAdjustment(a: A, an: Analysis, xs: []const usize, ys: []const usize, z: []const bool) !bool {
+    for (z, 0..) |b, k| if (b and an.forbidden[k]) return false;
+    return an.pbd.dSeparated(a, xs, ys, z);
+}
+
+fn lessName(names: []const []const u8, l: usize, r: usize) bool {
+    return std.ascii.lessThanIgnoreCase(names[l], names[r]);
+}
+
+pub const Set = struct { mask: u64, size: usize, minimal: bool = false };
+
+fn setLess(_: void, l: Set, r: Set) bool {
+    if (l.size != r.size) return l.size < r.size;
+    // Same size: lexicographic over the alphabetical covariate order (the
+    // lowest-indexed differing covariate present first).
+    const diff = l.mask ^ r.mask;
+    if (diff == 0) return false;
+    const low: u6 = @intCast(@ctz(diff));
+    return (l.mask >> low) & 1 == 1;
+}
+
+const max_candidates = 20;
+
+/// All valid adjustment sets over `cands` (bit k = cands[k]), sorted by size.
+/// `required` holds the prescribed adjustment variables (p.2303): every set
+/// contains them, and minimality is judged among such sets only (p.2301).
+pub fn enumerate(a: A, n: usize, an: Analysis, cands: []const usize, xs: []const usize, ys: []const usize, required: u64) ![]Set {
+    var sets: std.ArrayList(Set) = .empty;
+    const z = try a.alloc(bool, n);
+    const total: u64 = @as(u64, 1) << @intCast(cands.len);
+    var mask: u64 = 0;
+    while (mask < total) : (mask += 1) {
+        if (mask & required != required) continue;
+        @memset(z, false);
+        for (cands, 0..) |c, k| if ((mask >> @intCast(k)) & 1 == 1) {
+            z[c] = true;
+        };
+        var scratch = std.heap.ArenaAllocator.init(a);
+        defer scratch.deinit();
+        if (try validAdjustment(scratch.allocator(), an, xs, ys, z)) try sets.append(a, .{ .mask = mask, .size = @popCount(mask) });
+    }
+    for (sets.items) |*s| {
+        s.minimal = true;
+        for (sets.items) |o| if (o.mask != s.mask and o.mask & s.mask == o.mask) {
+            s.minimal = false;
+            break;
+        };
+    }
+    std.mem.sort(Set, sets.items, {}, setLess);
+    return sets.items;
+}
+
+// ── listing ────────────────────────────────────────────────────────────────
+
+const Align = enum { left, right, center };
+const Col = struct { head: []const []const u8, al: Align, width: usize, cells: []const []const u8, head_al: ?Align = null };
+
+fn pad(a: A, o: *Out, s: []const u8, w: usize, al: Align) !void {
+    const extra = w -| s.len;
+    const lead = switch (al) {
+        .left => 0,
+        .right => extra,
+        .center => extra / 2,
+    };
+    try o.appendNTimes(a, ' ', lead);
+    try o.appendSlice(a, s);
+    try o.appendNTimes(a, ' ', extra - lead);
+}
+
+fn rstripLine(a: A, o: *Out, line: []const u8) !void {
+    try o.appendSlice(a, std.mem.trimEnd(u8, line, " "));
+    try o.append(a, '\n');
+}
+
+/// Render one listing table: centered titles, optional spanner over columns
+/// [span_from..], bottom-aligned multi-line headers, padded data rows.
+/// `gaps[k]` is the blank count before column k (k > 0).
+const Spanner = struct { from: usize, text: []const u8 };
+
+fn table(a: A, o: *Out, titles: []const []const u8, center_extra: usize, cols: []const Col, gaps: []const usize, spanner: ?Spanner) !void {
+    var width: usize = 0;
+    for (cols, 0..) |c, k| width += c.width + (if (k > 0) gaps[k] else 0);
+    for (titles) |tl| {
+        try o.appendNTimes(a, ' ', (width + center_extra -| tl.len) / 2);
+        try o.appendSlice(a, tl);
+        try o.append(a, '\n');
+    }
+    try o.appendSlice(a, " \n");
+    var line: Out = .empty;
+    if (spanner) |sp| {
+        var start: usize = 0;
+        for (cols[0..sp.from], 0..) |c, k| start += c.width + (if (k > 0) gaps[k] else 0);
+        start += gaps[sp.from];
+        const span = width - start;
+        try line.appendNTimes(a, ' ', start);
+        const dashes = span -| sp.text.len;
+        try line.appendNTimes(a, '-', dashes / 2);
+        try line.appendSlice(a, sp.text);
+        try line.appendNTimes(a, '-', dashes - dashes / 2);
+        try rstripLine(a, o, line.items);
+    }
+    var hl: usize = 1;
+    for (cols) |c| hl = @max(hl, c.head.len);
+    for (0..hl) |r| {
+        line.clearRetainingCapacity();
+        for (cols, 0..) |c, k| {
+            if (k > 0) try line.appendNTimes(a, ' ', gaps[k]);
+            const off = hl - c.head.len;
+            const txt = if (r >= off) c.head[r - off] else "";
+            try pad(a, &line, txt, c.width, c.head_al orelse c.al);
+        }
+        try rstripLine(a, o, line.items);
+    }
+    try o.append(a, '\n');
+    const rows = cols[0].cells.len;
+    for (0..rows) |r| {
+        for (cols, 0..) |c, k| {
+            if (k > 0) try o.appendNTimes(a, ' ', gaps[k]);
+            try pad(a, o, c.cells[r], c.width, c.al);
+        }
+        try o.append(a, '\n');
+    }
+}
+
+fn uniformGaps(a: A, n: usize) ![]usize {
+    const g = try a.alloc(usize, n);
+    @memset(g, 4);
+    g[0] = 0;
+    return g;
+}
+
+fn num(a: A, v: usize) ![]const u8 {
+    return std.fmt.allocPrint(a, "{d}", .{v});
+}
+
+/// Header pieces of a covariate column: split at each lower-to-upper case
+/// transition (reference run: PrevBF prints as Prev / BF).
+// ponytail: the split rule is inferred from one reference name (PrevBF);
+// names without a case transition stay whole.
+fn splitHeader(a: A, n: []const u8) ![]const []const u8 {
+    var parts: std.ArrayList([]const u8) = .empty;
+    var start: usize = 0;
+    for (1..n.len) |k| if (std.ascii.isLower(n[k - 1]) and std.ascii.isUpper(n[k])) {
+        try parts.append(a, n[start..k]);
+        start = k;
+    };
+    try parts.append(a, n[start..]);
+    return parts.items;
+}
+
+fn page(cx: proc.ProcCtx, o: *Out) !void {
+    if (cx.listing_titles) |titles| try titles.emitTitles(cx.arena, o);
+    try o.appendSlice(cx.arena, "\nThe CAUSALGRAPH Procedure\n\n");
+}
+
+fn endPage(cx: proc.ProcCtx, o: *Out) !void {
+    if (cx.listing_titles) |titles| try titles.emitFootnotes(cx.arena, o);
+}
+
+fn sortedIds(names: []const []const u8, ids: []usize) void {
+    std.mem.sort(usize, ids, names, lessName);
+}
+
+pub fn run(cx: proc.ProcCtx, out: *Out, t: []const lex.Token) diag.Error!void {
+    const a = cx.arena;
+    const s = try parse(cx, t);
+    try validate(cx, s);
+    const m = s.models[0];
+    const n = s.names.len;
+    const list = s.opts.list orelse s.identify;
+
+    var measured: std.ArrayList(usize) = .empty;
+    var unmeasured: std.ArrayList(usize) = .empty;
+    for (m.nodes) |v| try (if (contains(s.unmeasured, v)) &unmeasured else &measured).append(a, v);
+    sortedIds(s.names, measured.items);
+    sortedIds(s.names, unmeasured.items);
+
+    var cands: std.ArrayList(usize) = .empty;
+    var sets: []Set = &.{};
+    if (list) {
+        for (measured.items) |v| if (!contains(s.treatments, v) and !contains(s.outcomes, v)) try cands.append(a, v);
+        if (cands.items.len > max_candidates) return gap(cx, m.line, "more than {d} measured covariates (exhaustive adjustment-set enumeration) is not implemented", .{max_candidates});
+        const an = try analyse(a, n, m.edges, s.treatments, s.outcomes);
+        var required: u64 = 0;
+        for (cands.items, 0..) |c, k| if (contains(s.adjust, c)) {
+            required |= @as(u64, 1) << @intCast(k);
+        };
+        sets = try enumerate(a, n, an, cands.items, s.treatments, s.outcomes, required);
+    }
+    if (s.opts.noprint) return;
+
+    // Page 1: VariableInfo and GraphicalModelSummary.
+    try page(cx, out);
+    {
+        const join = struct {
+            fn f(al: A, names: []const []const u8, ids: []const usize) ![]const u8 {
+                var b: Out = .empty;
+                for (ids, 0..) |id, k| {
+                    if (k > 0) try b.append(al, ' ');
+                    try b.appendSlice(al, names[id]);
+                }
+                return b.items;
+            }
+        }.f;
+        const mv = try join(a, s.names, measured.items);
+        const uv = try join(a, s.names, unmeasured.items);
+        const cols = [_]Col{
+            .{ .head = &.{""}, .al = .left, .width = 10, .cells = &.{ "Measured", "Unmeasured" } },
+            .{ .head = &.{"N"}, .al = .right, .width = 10, .cells = &.{ try num(a, measured.items.len), try num(a, unmeasured.items.len) } },
+            .{ .head = &.{"Variables"}, .al = .left, .width = @max(9, @max(mv.len, uv.len)), .cells = &.{ mv, uv } },
+        };
+        try table(a, out, &.{"Variables in Model"}, 0, &cols, try uniformGaps(a, cols.len), null);
+    }
+    try out.appendSlice(a, "\n\n");
+    {
+        var tr: usize = 0;
+        var oc: usize = 0;
+        for (m.nodes) |v| {
+            if (contains(s.treatments, v)) tr += 1;
+            if (contains(s.outcomes, v)) oc += 1;
+        }
+        const heads = [_][]const u8{ "Nodes", "Edges", "Treatments", "Outcomes", "Measured", "Unmeasured" };
+        const vals = [_]usize{ m.nodes.len, m.edges.len, tr, oc, measured.items.len, unmeasured.items.len };
+        var cols: [7]Col = undefined;
+        cols[0] = .{ .head = &.{"Model"}, .al = .left, .width = @max(5, m.label.len), .cells = &.{m.label} };
+        for (heads, vals, 1..) |h, v, k| {
+            const cell = try a.alloc([]const u8, 1);
+            cell[0] = try num(a, v);
+            const head = try a.alloc([]const u8, 1);
+            head[0] = h;
+            cols[k] = .{ .head = head, .al = .right, .width = @max(8, h.len), .cells = cell };
+        }
+        try table(a, out, &.{"Graphical Model Summary"}, 0, &cols, try uniformGaps(a, cols.len), null);
+    }
+    if (!list) return endPage(cx, out);
+
+    // Page 2: AdjustList.
+    try endPage(cx, out);
+    try page(cx, out);
+    var shown: std.ArrayList(Set) = .empty;
+    const min_size: usize = if (sets.len > 0) sets[0].size else 0;
+    for (sets) |st| {
+        if (s.opts.minimal and !st.minimal) continue;
+        if (s.opts.maxsize) |ms| if ((ms == 0 and st.size != min_size) or (ms > 0 and st.size > ms)) continue;
+        if (s.opts.maxlist) |ml| if (shown.items.len >= ml) break;
+        try shown.append(a, st);
+    }
+    if (shown.items.len == 0) {
+        try out.appendSlice(a, try std.fmt.allocPrint(a, "NOTE: There are no adjustment sets satisfying the specified criteria for {s}.\n\n", .{m.label}));
+        return endPage(cx, out);
+    }
+    var used: std.ArrayList(usize) = .empty; // bit positions into cands
+    for (cands.items, 0..) |_, k| {
+        var any = !s.opts.compact;
+        for (shown.items) |st| {
+            if ((st.mask >> @intCast(k)) & 1 == 1) any = true;
+        }
+        if (any) try used.append(a, k);
+    }
+    var cols: std.ArrayList(Col) = .empty;
+    const rows = shown.items.len;
+    const obs = try a.alloc([]const u8, rows);
+    const size = try a.alloc([]const u8, rows);
+    const mini = try a.alloc([]const u8, rows);
+    for (shown.items, 0..) |st, r| {
+        obs[r] = try num(a, r + 1);
+        size[r] = try num(a, st.size);
+        mini[r] = if (st.minimal) "Yes" else "No";
+    }
+    try cols.append(a, .{ .head = &.{""}, .al = .right, .width = 8, .cells = obs });
+    try cols.append(a, .{ .head = &.{"Size"}, .al = .right, .width = 8, .cells = size });
+    try cols.append(a, .{ .head = &.{"Minimal"}, .al = .left, .width = 8, .cells = mini });
+    for (used.items) |k| {
+        const head = try splitHeader(a, s.names[cands.items[k]]);
+        var w: usize = 1;
+        for (head) |h| w = @max(w, h.len);
+        const cells = try a.alloc([]const u8, rows);
+        for (shown.items, cells) |st, *c| c.* = if ((st.mask >> @intCast(k)) & 1 == 1) "*" else "";
+        try cols.append(a, .{ .head = head, .al = .center, .width = w, .cells = cells });
+    }
+    const gaps = try uniformGaps(a, cols.items.len);
+    const span_text = "Covariates";
+    if (used.items.len > 0) {
+        // The spanner needs its text plus one dash on each side; a single
+        // covariate column widens, several columns widen their gaps evenly
+        // (SAS 9.4 reference runs).
+        var natural: usize = 0;
+        for (cols.items[3..], 3..) |c, k| natural += c.width + (if (k > 3) gaps[k] else 0);
+        const need = span_text.len + 2;
+        if (natural < need) {
+            const extra = need - natural;
+            if (used.items.len == 1) {
+                cols.items[3].width += extra;
+            } else {
+                const per = (extra + used.items.len - 2) / (used.items.len - 1);
+                for (gaps[4..]) |*g| g.* += per;
+            }
+        }
+    }
+    const t1 = try std.fmt.allocPrint(a, "Covariate Adjustment Sets for {s}", .{m.label});
+    const t2 = try std.fmt.allocPrint(a, "Causal Effect of {s} on {s}", .{ s.names[s.treatments[0]], s.names[s.outcomes[0]] });
+    try table(a, out, &.{ t1, t2 }, 1, cols.items, gaps, if (used.items.len > 0) Spanner{ .from = 3, .text = span_text } else null);
+    try endPage(cx, out);
+}
+
+// ── tests ──────────────────────────────────────────────────────────────────
+
+test "STAT-CAUSALGRAPH-001 adjustment sets of the Getting Started model (p.2297)" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    // 0 Age 1 Parity 2 PFAS 3 Education 4 PrevBF 5 Duration 6 Employment
+    // 7 BMI 8 Alcohol 9 Smoking
+    const E = Edge;
+    const edges = [_]Edge{
+        E{ .from = 0, .to = 1 }, E{ .from = 0, .to = 2 }, E{ .from = 0, .to = 3 },
+        E{ .from = 1, .to = 4 }, E{ .from = 1, .to = 5 }, E{ .from = 1, .to = 2 },
+        E{ .from = 4, .to = 2 }, E{ .from = 4, .to = 5 }, E{ .from = 2, .to = 5 },
+        E{ .from = 3, .to = 5 }, E{ .from = 3, .to = 6 }, E{ .from = 3, .to = 2 },
+        E{ .from = 3, .to = 7 }, E{ .from = 3, .to = 8 }, E{ .from = 3, .to = 9 },
+        E{ .from = 6, .to = 5 }, E{ .from = 6, .to = 2 }, E{ .from = 6, .to = 7 },
+        E{ .from = 6, .to = 8 }, E{ .from = 6, .to = 9 }, E{ .from = 7, .to = 5 },
+        E{ .from = 8, .to = 5 }, E{ .from = 9, .to = 5 },
+    };
+    const an = try analyse(a, 10, &edges, &.{2}, &.{5});
+    // Alphabetical candidates: Age BMI Education Employment Parity PrevBF.
+    const cands = [_]usize{ 0, 7, 3, 6, 1, 4 };
+    const sets = try enumerate(a, 10, an, &cands, &.{2}, &.{5}, 0);
+    try std.testing.expectEqual(@as(usize, 4), sets.len);
+    const want = [_]u64{ 0b111100, 0b111101, 0b111110, 0b111111 };
+    for (sets, want) |st, w| try std.testing.expectEqual(w, st.mask);
+    try std.testing.expect(sets[0].minimal and !sets[1].minimal and !sets[3].minimal);
+}
+
+test "STAT-CAUSALGRAPH-001 d-separation: chain, fork and collider" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    // 0 -> 1 -> 2 ; 0 <- 3 -> 2 ; 0 -> 4 <- 2
+    const g: Graph = .{ .n = 5, .edges = &.{ .{ .from = 0, .to = 1 }, .{ .from = 1, .to = 2 } } };
+    try std.testing.expect(!try g.dSeparated(a, &.{0}, &.{2}, &.{ false, false, false, false, false }));
+    try std.testing.expect(try g.dSeparated(a, &.{0}, &.{2}, &.{ false, true, false, false, false }));
+    const c: Graph = .{ .n = 5, .edges = &.{ .{ .from = 0, .to = 4 }, .{ .from = 2, .to = 4 } } };
+    try std.testing.expect(try c.dSeparated(a, &.{0}, &.{2}, &.{ false, false, false, false, false }));
+    try std.testing.expect(!try c.dSeparated(a, &.{0}, &.{2}, &.{ false, false, false, false, true }));
+}
+
+test "STAT-CAUSALGRAPH-001 arrow spellings (p.2316)" {
+    try std.testing.expectEqual(Arrow.right, arrowKind("==>").?);
+    try std.testing.expectEqual(Arrow.right, arrowKind("-->").?);
+    try std.testing.expectEqual(Arrow.left, arrowKind("<===").?);
+    try std.testing.expectEqual(Arrow.both, arrowKind("<->").?);
+    try std.testing.expect(arrowKind("=") == null);
+    try std.testing.expect(arrowKind("<=>>") == null);
+}

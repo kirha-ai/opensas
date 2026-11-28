@@ -3250,6 +3250,13 @@ fn runProc(a: std.mem.Allocator, listing_out: *std.ArrayList(u8), lib: *sas.exec
             try out.appendSlice(a, body.items);
             try g.emitFootnotes(a, out);
         }
+    } else if (eqi(proc, "causalgraph")) {
+        // Titles are emitted per page by the procedure.
+        var causalgraph_context = pcx;
+        causalgraph_context.listing_titles = g;
+        var body: std.ArrayList(u8) = .empty;
+        try sas.causalgraph.run(causalgraph_context, &body, toks);
+        try out.appendSlice(a, body.items);
     } else if (eqi(proc, "lifetest")) {
         var body: std.ArrayList(u8) = .empty;
         try sas.lifetest.run(pcx, &body, toks);
