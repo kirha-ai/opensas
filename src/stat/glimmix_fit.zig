@@ -1,7 +1,7 @@
 //! PROC GLIMMIX default estimation kernel (STAT-GLIMMIX-002): binomial
 //! events/trials response, logit link, one G-side random intercept per
-//! subject, METHOD=RSPL. S154 physical pp.3818-3820 ("Pseudo-likelihood
-//! Estimation Based on Linearization"), p.3723 (PCONV=), p.3874 (generalized
+//! subject, METHOD=RSPL. S154 physical pp.3830-3832 ("Pseudo-likelihood
+//! Estimation Based on Linearization"), p.3720 (PCONV=), p.3890 (generalized
 //! chi-square).
 //!
 //! The linearized pseudo-model is P = X beta + Z gamma + e with
@@ -109,7 +109,7 @@ const Lmm = struct {
     const Profile = struct { objective: f64, gradient: f64, hessian: f64, quadratic: f64 };
 
     /// Profiles beta at `s2`; leaves beta in l.beta and (X'V^-1X)^-1 in l.c.
-    /// objective = -2 l_R (p.3819), gradient/hessian = its derivatives in s2.
+    /// objective = -2 l_R (p.3831), gradient/hessian = its derivatives in s2.
     fn profile(l: *Lmm, s2: f64) Error!Profile {
         const p = l.in.p;
         const n = l.pseudo.len;
@@ -178,7 +178,7 @@ const Lmm = struct {
         return .{ .objective = log_v + log_det + quadratic + f * @log(2.0 * std.math.pi), .gradient = gradient, .hessian = hessian, .quadratic = quadratic };
     }
 
-    /// Minimizes -2 l_R over s2 >= 0 (lower boundary 0, p.3819).
+    /// Minimizes -2 l_R over s2 >= 0 (lower boundary 0; objective p.3831).
     fn optimize(l: *Lmm) Error!f64 {
         if ((try l.profile(0)).gradient >= 0) return 0;
         var lo: f64 = 0;
@@ -286,7 +286,7 @@ pub fn fit(arena: std.mem.Allocator, in: Input) Error!Fit {
             eta[j] = dot(in.x[j * p ..][0..p], l.beta) + gamma[in.subject[j]];
             mu[j] = expit(eta[j]);
         }
-        // p.3723: largest 2 |b(u) - b(u-1)| / (|b(u)| + |b(u-1)|) over fixed
+        // p.3720: largest 2 |b(u) - b(u-1)| / (|b(u)| + |b(u-1)|) over fixed
         // effects and covariance parameters.
         var change: f64 = if (result.updates == 0) std.math.inf(f64) else 0;
         for (0..p + 1) |k| {
