@@ -18,6 +18,13 @@ const lists = @import("variable_lists.zig");
 const classes = @import("class_levels.zig");
 const nlo = @import("nloptions.zig");
 const eq = std.ascii.eqlIgnoreCase;
+/// RSPL estimation kernel (STAT-GLIMMIX-002). ponytail: not yet called from
+/// `run` -- the listing needs SAS's dual quasi-Newton iteration history, which
+/// the kernel does not reproduce, so every step still ends in the D-009 gap.
+pub const estimation = @import("glimmix_fit.zig");
+test {
+    _ = estimation;
+}
 
 pub const Method = enum { rspl, mspl, rmpl, mmpl, laplace, quad };
 pub const InfoCrit = enum { none, pq, q };
