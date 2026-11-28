@@ -405,6 +405,7 @@ fn runExpanded(ctx: *StepCtx, text: []const u8, allow_anon: bool) sas.diag.Error
     // preload in `interpret` never saw it. Load any still-missing members now.
     if (ctx.io) |iov| try loadLibInputs(a, iov, ctx.lib, ctx.librefs.items, toks, ctx.loaded_ro, ctx.damaged, ctx.diags);
     if (try sas.anova.continuation(.{ .resolve_fileref = &findFileref, .arena = a, .lib = ctx.lib, .diags = ctx.diags, .capture = &ods_capture, .listing = &ods_listing, .graphics = native_graphics_session, .listing_titles = ctx.globals }, ctx.out, toks)) return;
+    if (try sas.catmod.continuation(.{ .resolve_fileref = &findFileref, .arena = a, .lib = ctx.lib, .diags = ctx.diags, .capture = &ods_capture, .listing = &ods_listing, .graphics = native_graphics_session, .listing_titles = ctx.globals }, ctx.out, toks)) return;
     if (ctx.glm_session) |*session| {
         if (toks.len > 0 and toks[0].tag == .name and sas.glm.continuationKeyword(toks[0].text)) {
             const pcx: sas.proc.ProcCtx = .{ .resolve_fileref = &findFileref, .arena = a, .lib = ctx.lib, .diags = ctx.diags, .capture = &ods_capture, .listing = &ods_listing, .graphics = native_graphics_session };
@@ -3205,6 +3206,14 @@ fn runProc(a: std.mem.Allocator, listing_out: *std.ArrayList(u8), lib: *sas.exec
     } else if (eqi(proc, "nlmixed")) {
         var body: std.ArrayList(u8) = .empty;
         try sas.nlmixed.run(pcx, &body, toks);
+        if (body.items.len > 0) {
+            try g.emitTitles(a, out);
+            try out.appendSlice(a, body.items);
+            try g.emitFootnotes(a, out);
+        }
+    } else if (eqi(proc, "catmod")) {
+        var body: std.ArrayList(u8) = .empty;
+        try sas.catmod.runStep(pcx, &body, toks);
         if (body.items.len > 0) {
             try g.emitTitles(a, out);
             try out.appendSlice(a, body.items);

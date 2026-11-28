@@ -1,0 +1,132 @@
+
+The CATMOD Procedure
+
+                 Data Summary
+
+Response           y        Response Levels   2
+Weight Variable    None     Populations       2
+Data Set           RAW      Total Frequency  13
+Frequency Missing  0        Observations     13
+
+
+   Population Profiles
+ 
+Sample    g    Sample Size
+--------------------------
+    1     a              6
+    2     b              7
+
+
+Response Profiles
+ 
+Response    y
+-------------
+    1       1
+    2       2
+
+
+           Analysis of Variance
+ 
+Source        DF   Chi-Square    Pr > ChiSq
+-------------------------------------------
+Intercept      1       111.89        <.0001
+g              1         0.07        0.7964
+
+Residual       0          .           .
+
+
+        Analysis of Weighted Least Squares Estimates
+ 
+                          Standard        Chi-
+Parameter      Estimate      Error      Square    Pr > ChiSq
+------------------------------------------------------------
+Intercept        1.4643     0.1384      111.89        <.0001
+g         a      0.0357     0.1384        0.07        0.7964
+
+The CATMOD Procedure
+
+                 Data Summary
+
+Response           y       Response Levels   2
+Weight Variable    w       Populations       2
+Data Set           MIS     Total Frequency  15
+Frequency Missing  9       Observations      5
+
+
+   Population Profiles
+ 
+Sample    g    Sample Size
+--------------------------
+    1     a              8
+    2     b              7
+
+
+Response Profiles
+ 
+Response    y
+-------------
+    1       1
+    2       2
+
+
+           Analysis of Variance
+ 
+Source        DF   Chi-Square    Pr > ChiSq
+-------------------------------------------
+Intercept      1       171.04        <.0001
+g              1         0.76        0.3833
+
+Residual       0          .           .
+
+
+        Analysis of Weighted Least Squares Estimates
+ 
+                          Standard        Chi-
+Parameter      Estimate      Error      Square    Pr > ChiSq
+------------------------------------------------------------
+Intercept        1.6071     0.1229      171.04        <.0001
+g         a     -0.1071     0.1229        0.76        0.3833
+
+The CATMOD Procedure
+
+                 Data Summary
+
+Response           y       Response Levels   2
+Weight Variable    w       Populations       2
+Data Set           MIS     Total Frequency  15
+Frequency Missing  9       Observations      5
+
+
+   Population Profiles
+ 
+Sample    g    Sample Size
+--------------------------
+    1     a              8
+    2     b              7
+
+
+Response Profiles
+ 
+Response    y
+-------------
+    1       1
+    2       2
+
+
+           Analysis of Variance
+ 
+Source        DF   Chi-Square    Pr > ChiSq
+-------------------------------------------
+Intercept      1       171.04        <.0001
+g              1         0.76        0.3833
+
+Residual       0          .           .
+
+
+        Analysis of Weighted Least Squares Estimates
+ 
+                          Standard        Chi-
+Parameter      Estimate      Error      Square    Pr > ChiSq
+------------------------------------------------------------
+Intercept        1.6071     0.1229      171.04        <.0001
+g         a     -0.1071     0.1229        0.76        0.3833

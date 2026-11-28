@@ -1,0 +1,128 @@
+
+                                    cohort=1
+
+The CATMOD Procedure
+
+                    Data Summary
+
+Response           periods     Response Levels     3
+Weight Variable    count       Populations         4
+Data Set           GROUPED     Total Frequency  1080
+Frequency Missing  0           Observations       12
+
+
+            Population Profiles
+
+Sample    sex       residence    Sample Size
+--------------------------------------------
+    1     female    rural                180
+    2     female    urban                300
+    3     male      rural                290
+    4     male      urban                310
+
+
+ Response Profiles
+
+Response    periods
+-------------------
+    1       0
+    2       1
+    3       2
+
+
+          Response Functions and Design Matrix
+
+            Response              Design Matrix
+Sample      Function        1        2        3        4
+--------------------------------------------------------
+    1        1.14444        1        1        1        1
+    2        1.12000        1        1       -1       -1
+    3        0.99310        1       -1        1       -1
+    4        0.93871        1       -1       -1        1
+
+
+             Analysis of Variance
+
+Source            DF   Chi-Square    Pr > ChiSq
+-----------------------------------------------
+Intercept          1      1841.13        <.0001
+sex                1        11.57        0.0007
+residence          1         0.65        0.4202
+sex*residence      1         0.09        0.7594
+
+Residual           0          .           .
+
+
+               Analysis of Weighted Least Squares Estimates
+
+                                         Standard        Chi-
+Parameter                     Estimate      Error      Square    Pr > ChiSq
+---------------------------------------------------------------------------
+Intercept                       1.0491     0.0244     1841.13        <.0001
+sex           female            0.0832     0.0244       11.57        0.0007
+residence     rural             0.0197     0.0244        0.65        0.4202
+sex*residence female rural    -0.00749     0.0244        0.09        0.7594
+
+                                    cohort=2
+
+The CATMOD Procedure
+
+                    Data Summary
+
+Response           periods     Response Levels     3
+Weight Variable    count       Populations         4
+Data Set           GROUPED     Total Frequency  1080
+Frequency Missing  0           Observations       12
+
+
+            Population Profiles
+
+Sample    sex       residence    Sample Size
+--------------------------------------------
+    1     female    rural                180
+    2     female    urban                300
+    3     male      rural                290
+    4     male      urban                310
+
+
+ Response Profiles
+
+Response    periods
+-------------------
+    1       0
+    2       1
+    3       2
+
+
+          Response Functions and Design Matrix
+
+            Response              Design Matrix
+Sample      Function        1        2        3        4
+--------------------------------------------------------
+    1        1.14444        1        1        1        1
+    2        1.12000        1        1       -1       -1
+    3        0.99310        1       -1        1       -1
+    4        0.93871        1       -1       -1        1
+
+
+             Analysis of Variance
+
+Source            DF   Chi-Square    Pr > ChiSq
+-----------------------------------------------
+Intercept          1      1841.13        <.0001
+sex                1        11.57        0.0007
+residence          1         0.65        0.4202
+sex*residence      1         0.09        0.7594
+
+Residual           0          .           .
+
+
+               Analysis of Weighted Least Squares Estimates
+
+                                         Standard        Chi-
+Parameter                     Estimate      Error      Square    Pr > ChiSq
+---------------------------------------------------------------------------
+Intercept                       1.0491     0.0244     1841.13        <.0001
+sex           female            0.0832     0.0244       11.57        0.0007
+residence     rural             0.0197     0.0244        0.65        0.4202
+sex*residence female rural    -0.00749     0.0244        0.09        0.7594
