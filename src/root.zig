@@ -31,6 +31,7 @@ pub const npar1way = @import("stat/npar1way.zig");
 pub const plm = @import("stat/plm.zig");
 pub const phreg = @import("stat/phreg.zig");
 pub const lifetest = @import("stat/lifetest.zig");
+pub const inbreed = @import("stat/inbreed.zig");
 pub const kde = @import("stat/kde.zig");
 pub const lattice = @import("stat/lattice.zig");
 pub const rsreg = @import("stat/rsreg.zig");
@@ -95,6 +96,7 @@ test {
     _ = @import("stat/plm.zig");
     _ = @import("stat/phreg.zig");
     _ = @import("stat/lifetest.zig");
+    _ = @import("stat/inbreed.zig");
     _ = @import("stat/kde.zig");
     _ = @import("stat/lattice.zig");
     _ = @import("stat/rsreg.zig");

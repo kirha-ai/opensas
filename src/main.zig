@@ -3099,6 +3099,14 @@ fn runProc(a: std.mem.Allocator, listing_out: *std.ArrayList(u8), lib: *sas.exec
             try g.emitFootnotes(a, out);
         }
         try result;
+    } else if (eqi(proc, "inbreed")) {
+        var body: std.ArrayList(u8) = .empty;
+        try sas.inbreed.run(pcx, &body, toks);
+        if (body.items.len > 0) {
+            try g.emitTitles(a, out);
+            try out.appendSlice(a, body.items);
+            try g.emitFootnotes(a, out);
+        }
     } else if (eqi(proc, "lifetest")) {
         var body: std.ArrayList(u8) = .empty;
         try sas.lifetest.run(pcx, &body, toks);
