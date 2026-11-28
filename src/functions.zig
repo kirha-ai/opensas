@@ -3607,36 +3607,28 @@ pub fn classicUniform(state: *u64) f64 {
 }
 
 // ── MT19937 (Mersenne-Twister) for RAND / CALL STREAMINIT ────────────────────
-// SAS's RAND uses MT19937 (init_by_array seeding + genrand_res53), so a seeded
-// RAND stream reproduces SAS bit-for-bit (streaminit(1) -> 0.13436424…, the
-// value SAS and reference MT19937 emit). RANUNI-family keeps the Lehmer
-// nextUniform above.
+// STAT-RAND-001: derived from SAS 9.4 hex16. dumps (seeds 218, 722, 193, 419,
+// 1, 5; 600 draws per distribution plus interleaved runs), bit for bit:
+//   * seeding is the 1998 MT `sgenrand` form mt[0]=seed, mt[i]=69069*mt[i-1]
+//     (NOT init_by_array / init_genrand); outputs are tempered MT19937 words;
+//   * RAND('UNIFORM') consumes ONE word w and returns the double just below
+//     w/2^32 (streaminit(218) -> 3FE292F66DBFFFFF, w = 0x9497B36E);
+//   * RAND('NORMAL') is the Marsaglia polar method (below, `drawNormal`).
+// RANUNI-family keeps the Lehmer nextUniform above.
 // ponytail: the 624-word state is (de)serialised through the shared lag Value
 //   FIFO each draw — fine at validation scale; lift to an Evaluator field only
 //   if a step draws enough randoms for the copy to dominate.
+// ponytail: a word w = 0 (probability 2^-32) would give U = 0; SAS's handling of
+//   that word is unobserved.
 const MT_N = 624;
 const MT_M = 397;
+/// FIFO layout of "\x00mtstream": [seed, mti, mt[0..624], has-normal, normal].
+const MT_ST_LEN = MT_N + 4;
 
 fn mtSeed(mt: *[MT_N]u32, key: u32) void {
-    mt[0] = 19650218;
+    mt[0] = key;
     var i: usize = 1;
-    while (i < MT_N) : (i += 1)
-        mt[i] = 1812433253 *% (mt[i - 1] ^ (mt[i - 1] >> 30)) +% @as(u32, @intCast(i));
-    // init_by_array, single-word key [key] (key_length 1 -> j stays 0)
-    var ii: usize = 1;
-    var k: usize = MT_N;
-    while (k > 0) : (k -= 1) {
-        mt[ii] = (mt[ii] ^ ((mt[ii - 1] ^ (mt[ii - 1] >> 30)) *% 1664525)) +% key;
-        ii += 1;
-        if (ii >= MT_N) { mt[0] = mt[MT_N - 1]; ii = 1; }
-    }
-    k = MT_N - 1;
-    while (k > 0) : (k -= 1) {
-        mt[ii] = (mt[ii] ^ ((mt[ii - 1] ^ (mt[ii - 1] >> 30)) *% 1566083941)) -% @as(u32, @intCast(ii));
-        ii += 1;
-        if (ii >= MT_N) { mt[0] = mt[MT_N - 1]; ii = 1; }
-    }
-    mt[0] = 0x80000000;
+    while (i < MT_N) : (i += 1) mt[i] = 69069 *% mt[i - 1];
 }
 
 fn mtNext(mt: *[MT_N]u32, mti: *usize) u32 {
@@ -3663,35 +3655,86 @@ fn mtNext(mt: *[MT_N]u32, mti: *usize) u32 {
     return y;
 }
 
-/// One U(0,1) draw from the MT19937 stream seeded by CALL STREAMINIT (genrand_res53).
-pub fn nextRandUniform(ev: *eval.Evaluator) f64 {
+/// The RAND stream state FIFO, (re)seeded from CALL STREAMINIT's seed when it is
+/// absent, emptied (STREAMINIT/STREAMREWIND) or seeded differently.
+fn mtState(ev: *eval.Evaluator) ?*std.ArrayList(Value) {
     var seed: u32 = 1; // no STREAMINIT -> deterministic default (SAS uses a clock seed)
     if (ev.lag.get("\x00rnginit")) |iv| {
         if (iv.items.len > 0 and iv.items[0].num > 0) {
             seed = @intFromFloat(@min(iv.items[0].num, 4294967295.0));
         }
     }
-    const gop = ev.lag.getOrPut(ev.stateArena(), "\x00mtstream") catch return 0.5;
+    const gop = ev.lag.getOrPut(ev.stateArena(), "\x00mtstream") catch return null;
     const st = gop.value_ptr;
-    var mt: [MT_N]u32 = undefined;
-    var mti: usize = MT_N;
-    const fresh = !gop.found_existing or st.items.len < MT_N + 2 or
+    const fresh = !gop.found_existing or st.items.len < MT_ST_LEN or
         @as(u32, @intFromFloat(st.items[0].num)) != seed;
     if (fresh) {
+        var mt: [MT_N]u32 = undefined;
         mtSeed(&mt, seed);
         st.* = .empty;
-        st.append(ev.stateArena(), .{ .num = @floatFromInt(seed) }) catch return 0.5;
-        st.append(ev.stateArena(), .{ .num = @floatFromInt(mti) }) catch return 0.5;
-        for (mt) |w| st.append(ev.stateArena(), .{ .num = @floatFromInt(w) }) catch return 0.5;
-    } else {
-        mti = @intFromFloat(st.items[1].num);
-        for (&mt, 0..) |*w, i| w.* = @intFromFloat(st.items[2 + i].num);
+        st.ensureTotalCapacity(ev.stateArena(), MT_ST_LEN) catch return null;
+        st.appendAssumeCapacity(.{ .num = @floatFromInt(seed) });
+        st.appendAssumeCapacity(.{ .num = @floatFromInt(MT_N) });
+        for (mt) |w| st.appendAssumeCapacity(.{ .num = @floatFromInt(w) });
+        st.appendAssumeCapacity(.{ .num = 0 });
+        st.appendAssumeCapacity(.{ .num = 0 });
     }
-    const a = mtNext(&mt, &mti) >> 5;
-    const b = mtNext(&mt, &mti) >> 6;
+    return st;
+}
+
+/// One tempered MT19937 word from the RAND stream.
+fn nextRandWord(st: *std.ArrayList(Value)) u32 {
+    var mt: [MT_N]u32 = undefined;
+    var mti: usize = @intFromFloat(st.items[1].num);
+    for (&mt, 0..) |*w, i| w.* = @intFromFloat(st.items[2 + i].num);
+    const w = mtNext(&mt, &mti);
     st.items[1] = .{ .num = @floatFromInt(mti) };
-    for (mt, 0..) |w, i| st.items[2 + i] = .{ .num = @floatFromInt(w) };
-    return (@as(f64, @floatFromInt(a)) * 67108864.0 + @as(f64, @floatFromInt(b))) / 9007199254740992.0;
+    for (mt, 0..) |x, i| st.items[2 + i] = .{ .num = @floatFromInt(x) };
+    return w;
+}
+
+/// Natural log for the RAND transforms. Zig's `@log` (compiler-rt, an fdlibm
+/// port) reproduces all 3,000 dumped SAS NORMAL draws but differs from SAS in
+/// the last bit on 3 of 3,000 EXPONENTIAL draws (SAS there equals the
+/// correctly rounded -log U, and the macOS libm value). Linking libc does not
+/// help: compiler-rt's `log` symbol wins over libSystem's.
+/// ponytail: rare 1-ulp EXPONENTIAL difference, bounded in the STAT-RAND-001
+///   test; port a glibc-grade log only if a listing ever shows it.
+pub fn randLog(x: f64) f64 {
+    return @log(x);
+}
+
+fn wordUniform(w: u32) f64 {
+    return std.math.nextAfter(f64, @as(f64, @floatFromInt(w)) / 4294967296.0, 0.0);
+}
+
+/// One U(0,1) draw from the RAND stream seeded by CALL STREAMINIT (one word).
+pub fn nextRandUniform(ev: *eval.Evaluator) f64 {
+    const st = mtState(ev) orelse return std.math.nan(f64);
+    return wordUniform(nextRandWord(st));
+}
+
+/// RAND('NORMAL') standard deviate, Marsaglia polar method as SAS 9.4 does it:
+/// pairs of uniforms v = 2U-1 until 0 < q = fma(v1, v1, v2*v2) < 1; returns
+/// v1*f and keeps v2*f (f = sqrt(-2 log q / q)) for the next NORMAL call, even
+/// across calls to other distributions (STREAMINIT drops it with the stream).
+fn randNormal(ev: *eval.Evaluator) f64 {
+    const st = mtState(ev) orelse return std.math.nan(f64);
+    if (st.items[MT_N + 2].num != 0) {
+        st.items[MT_N + 2] = .{ .num = 0 };
+        return st.items[MT_N + 3].num;
+    }
+    while (true) {
+        const v1 = 2.0 * wordUniform(nextRandWord(st)) - 1.0;
+        const v2 = 2.0 * wordUniform(nextRandWord(st)) - 1.0;
+        const q = @mulAdd(f64, v1, v1, v2 * v2);
+        if (q > 0 and q < 1) {
+            const f = @sqrt(-2.0 * randLog(q) / q);
+            st.items[MT_N + 2] = .{ .num = 1 };
+            st.items[MT_N + 3] = .{ .num = v2 * f };
+            return v1 * f;
+        }
+    }
 }
 
 /// Uniform draw for a variate generator: MT19937 for RAND, Lehmer for RANUNI-family.
@@ -3699,9 +3742,10 @@ inline fn randU(ev: *eval.Evaluator, seed: f64, mt: bool) f64 {
     return if (mt) nextRandUniform(ev) else nextUniform(ev, seed);
 }
 
-/// One standard-normal draw (Box-Muller). `mt` selects the RAND MT19937 stream
-/// over the RANUNI Lehmer stream.
+/// One standard-normal draw. `mt` selects the RAND stream (SAS polar method,
+/// `randNormal`); otherwise Box-Muller over the RANUNI Lehmer stream (RANNOR).
 pub fn drawNormal(ev: *eval.Evaluator, seed: f64, mt: bool) f64 {
+    if (mt) return randNormal(ev);
     return @sqrt(-2.0 * @log(randU(ev, seed, mt))) * @cos(2.0 * std.math.pi * randU(ev, seed, mt));
 }
 
@@ -7844,4 +7888,71 @@ test "NOTE-informatlow-tick245: INPUT() fn routes Z/BEST/E/D + COMMA/DOLLAR to f
     try t.expect(format.formatErrored());
     try t.expect(std.mem.indexOf(u8, format.g_test_last_err, "negparen") != null);
     format.g_fmt_error = false; // reset module state for other tests
+}
+
+test "STAT-RAND-001 RAND streams after CALL STREAMINIT match SAS 9.4 bit for bit" {
+    // Expected values: hex16. dumps from a SAS 9.4 run (default generator).
+    const Case = struct {
+        fn seed(e: *eval.Evaluator, s: f64) !void {
+            const gop = try e.lag.getOrPut(e.stateArena(), "\x00rnginit");
+            gop.value_ptr.* = .empty;
+            try gop.value_ptr.append(e.stateArena(), .{ .num = s });
+            if (e.lag.getPtr("\x00mtstream")) |mt| mt.* = .empty;
+        }
+        fn draw(e: *eval.Evaluator, args: []const Value) !u64 {
+            return @bitCast((try dispatch(e, "rand", args)).num);
+        }
+        fn hex(s: []const u8) u64 {
+            return std.fmt.parseInt(u64, s, 16) catch unreachable;
+        }
+    };
+    var h = harness();
+    defer h.deinit();
+    h.prime();
+    var e = h.ev();
+    const U = &.{strV("UNIFORM")};
+    const N = &.{strV("NORMAL")};
+    const E = &.{strV("EXPONENTIAL")};
+
+    try Case.seed(&e, 218);
+    for ([_][]const u8{ "3FE292F66DBFFFFF", "3FBAC34FC4FFFFFF", "3FA4945509FFFFFF" }) |x|
+        try t.expectEqual(Case.hex(x), try Case.draw(&e, U));
+    try Case.seed(&e, 218); // polar pairs: 1st, 3rd, 5th draws start a pair
+    for ([_][]const u8{ "3FC79F2D4A2F70A5", "BFED0844E6F06B07", "BFC5742AD4E301EB", "3FB156EBEF9DFCE7", "BFF46DFFF41D35C5", "BFF0F7E4CD95D80A" }) |x|
+        try t.expectEqual(Case.hex(x), try Case.draw(&e, N));
+    try Case.seed(&e, 722); // SURVEYPHREG-001's seed: first draw 1.15995184
+    for ([_][]const u8{ "3FF28F29A8334C7D", "3FB3338ABC512B5D", "40029A36CCEAFC36", "3FB472A2960F7DB2", "3FCB9993416755F4", "3FEEDBB8FE07F23D" }) |x|
+        try t.expectEqual(Case.hex(x), try Case.draw(&e, E));
+    try Case.seed(&e, 419); // BERNOULLI(0.3): one uniform each, 1 when U < p
+    for ("000010100110100000011011") |c|
+        try t.expectEqual(@as(f64, @floatFromInt(c - '0')), (try dispatch(&e, "rand", &.{ strV("BERNOULLI"), numV(0.3) })).num);
+    // Interleaved: NORMAL keeps its pair partner across other distributions.
+    try Case.seed(&e, 193);
+    const rows = [_][6][]const u8{
+        .{ "BFF07F7885A063AC", "3FEBB932FEFFFFFF", "3F97653CD5386862", "3FE2845864BFFFFF", "0", "3FE99AB4E13FFFFF" },
+        .{ "3FE65341DB8EDDB4", "3FE48ABE787FFFFF", "400AA03315A3F79C", "3FE274B7E1DFFFFF", "0", "3FD6BA53377FFFFF" },
+        .{ "BFC156D564A8BE1F", "3FCB3DD7E57FFFFF", "3FECF4805E5F4A75", "3FA5217BD5FFFFFF", "0", "3FCE1A80707FFFFF" },
+    };
+    for (rows) |r| {
+        try t.expectEqual(Case.hex(r[0]), try Case.draw(&e, N));
+        try t.expectEqual(Case.hex(r[1]), try Case.draw(&e, U));
+        try t.expectEqual(Case.hex(r[2]), try Case.draw(&e, E));
+        try t.expectEqual(Case.hex(r[3]), try Case.draw(&e, U));
+        try t.expectEqual(@as(f64, @floatFromInt(r[4][0] - '0')), (try dispatch(&e, "rand", &.{ strV("BERNOULLI"), numV(0.5) })).num);
+        try t.expectEqual(Case.hex(r[5]), try Case.draw(&e, U));
+    }
+    // Parameters: mu + sigma*z, scale*E (seed 5).
+    try Case.seed(&e, 5);
+    try t.expectEqual(Case.hex("40251614457CB138"), try Case.draw(&e, &.{ strV("NORMAL"), numV(10), numV(2) }));
+    try t.expectEqual(Case.hex("3FD4185CB2F1C42C"), try Case.draw(&e, &.{ strV("EXPONENTIAL"), numV(3) }));
+    try t.expectEqual(@as(f64, 0), (try dispatch(&e, "rand", &.{ strV("BERNOULLI"), numV(0.83) })).num);
+    try t.expectEqual(Case.hex("BFF488E80A8CB654"), try Case.draw(&e, &.{ strV("NORMAL"), numV(-1.5), numV(0.25) }));
+    // Last-bit bound: SAS's 90th EXPONENTIAL after STREAMINIT(218) is
+    // 3FB4855309A22066 (correctly rounded); `randLog` gives ...65 (1 ulp).
+    try Case.seed(&e, 218);
+    var i: usize = 1;
+    while (i < 90) : (i += 1) _ = try Case.draw(&e, E);
+    const got = try Case.draw(&e, E);
+    const want = Case.hex("3FB4855309A22066");
+    try t.expect(@max(got, want) - @min(got, want) <= 1);
 }

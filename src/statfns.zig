@@ -642,7 +642,7 @@ pub fn dispatch(ev: *eval.Evaluator, name: []const u8, args: []const Value) eval
         if (distIs(dist, "NORMAL") or distIs(dist, "GAUSSIAN"))
             return numVal(par(args, 0, 0) + par(args, 1, 1) * drawNormal(ev, sd, true));
         if (distIs(dist, "EXPONENTIAL"))
-            return numVal(-par(args, 0, 1) * @log(nextRandUniform(ev)));
+            return numVal(-par(args, 0, 1) * fns.randLog(nextRandUniform(ev))); // STAT-RAND-001: matches SAS
         if (distIs(dist, "CAUCHY"))
             return numVal(@tan(std.math.pi * (nextRandUniform(ev) - 0.5)));
         if (distIs(dist, "BERNOULLI"))

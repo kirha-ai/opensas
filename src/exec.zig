@@ -5850,6 +5850,10 @@ pub const Executor = struct {
     fn callStreamInit(self: *Executor, c: ast.Call) Error!void {
         if (c.args.len < 1) return;
         const v = try self.ev.eval(&c.args[0]);
+        // STAT-RAND-001: SAS 9.4 ignores every STREAMINIT after the first one in
+        // a DATA step, silently (a real run of `streaminit(5); z1=rand('normal');
+        // streaminit(5); z2=rand('normal');` gives z2 = z1's polar partner).
+        if (self.ev.lag.get("\x00rnginit")) |iv| if (iv.items.len > 0) return;
         if (v == .num and !std.math.isNan(v.num)) try self.setRngStream(@intFromFloat(@trunc(v.num)));
     }
 
