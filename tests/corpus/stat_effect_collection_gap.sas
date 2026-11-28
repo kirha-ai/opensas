@@ -1,6 +1,7 @@
 /* expect-rc: 2
  * STAT-COMMON-021: EFFECT forms parsed by the shared module but not adopted
- * by PROC GLMSELECT yet (LAG effects, collection DETAILS, CLASS constituents)
+ * by PROC GLMSELECT yet (LAG effects, BY groups with SELECTION=NONE, CLASS
+ * constituents, effect names longer than 10 characters)
  * must fail visibly (D-009 gap) without printing a partial analysis.
  * Invented data.
  */
@@ -22,8 +23,13 @@ proc glmselect data=lagd;
  model y = L / selection=none;
 run;
 proc glmselect data=lagd;
- effect c = collection(x period / details);
+ by period;
+ effect c = collection(x / details);
  model y = c / selection=none;
+run;
+proc glmselect data=lagd;
+ effect elevenchars = collection(x period);
+ model y = elevenchars / selection=none;
 run;
 proc glmselect data=lagd;
  class treatment;

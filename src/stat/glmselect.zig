@@ -222,7 +222,6 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
             switch (e.body) {
                 .lag => return gap(cx, t[i].line, "LAG effects are not implemented", .{}),
                 .collection => |col| {
-                    if (col.details) return gap(cx, t[i].line, "the collection effect DETAILS table is not implemented", .{});
                     for (col.vars) |v| if (std.mem.indexOfScalar(usize, classes.items, v) != null or ds.columns.items[v].type != .num)
                         return gap(cx, t[i].line, "collection effects with CLASS variables are not implemented", .{});
                 },
@@ -894,7 +893,11 @@ fn runNone(cx: proc.ProcCtx, out: *Out, s: Spec, slices: []const proc.BySlice) d
     if (s.noprint) return;
     if (io.global_linesize != 160) return gap(cx, 0, "the SELECTION=NONE listing is verified only for LINESIZE=160", .{});
     const names: Names = .{ .s = s };
-    for (0..s.effects.len) |e| if (names.of(e).len > 9) return gap(cx, 0, "listing columns for effect names longer than 9 characters are not verified", .{});
+    // Effect names of 9 and 10 characters are verified against SAS.
+    for (0..s.effects.len) |e| if (names.of(e).len > 10) return gap(cx, 0, "listing columns for effect names longer than 10 characters with SELECTION=NONE are not verified", .{});
+    var detailed: usize = 0;
+    for (s.constructed) |e| detailed += @intFromBool(e.body.collection.details);
+    if (detailed > 1) return gap(cx, 0, "more than one collection effect DETAILS table is not verified", .{});
     if (!(g.sst < 1000 and @abs(g.ybar) < 1000)) return gap(cx, 0, "display of sums of squares or means of 1000 or more is not verified", .{});
     for ([_]f64{ x.aic, x.aicc, x.sbc, sbc0 }) |v| if (!(@abs(v) < 1000)) return gap(cx, 0, "display of fit criteria of magnitude 1000 or more is not verified", .{});
     for (f.beta, f.root) |b, r| if (!(@abs(b) < 1000 and r * @sqrt(x.mse) < 1000)) return gap(cx, 0, "display of parameter estimates of magnitude 1000 or more is not verified", .{});
@@ -911,6 +914,18 @@ fn runNone(cx: proc.ProcCtx, out: *Out, s: Spec, slices: []const proc.BySlice) d
         try body.append(a, '\n');
     }
     try body.print(a, "\n\nNumber of Observations Read{d:>12}\nNumber of Observations Used{d:>12}\n", .{ g.read, g.n });
+    for (s.constructed) |e| if (e.body.collection.details) {
+        // Collection DETAILS (p.426), layout as SAS/STAT 15.4 prints it.
+        var values: Out = .empty;
+        for (e.body.collection.vars) |v| try values.print(a, "{s} ", .{ds.columns.items[v].name});
+        const vw = @max(values.items.len, 6);
+        const heading = try std.fmt.allocPrint(a, "Level Details for Collection Effect {s}", .{e.name});
+        try body.appendSlice(a, "\nThe GLMSELECT Procedure\n\n");
+        try title(a, &body, heading, 12 + vw);
+        try body.print(a, "  Levels    Values\n\n{d:>8}    ", .{e.body.collection.vars.len});
+        try left(a, &body, values.items, vw);
+        try body.append(a, '\n');
+    };
     const counts = [_]usize{ s.effects.len + 1, g.parameters };
     var digits: usize = 1;
     for (counts) |v| digits = @max(digits, std.fmt.count("{d}", .{v}));
@@ -929,18 +944,22 @@ fn runNone(cx: proc.ProcCtx, out: *Out, s: Spec, slices: []const proc.BySlice) d
     if (s.effects.len != 1) return gap(cx, 0, "the Least Squares Summary for more than one MODEL effect with SELECTION=NONE is not verified", .{});
     try body.appendSlice(a, page);
     try body.append(a, '\n');
-    try title(a, &body, "Least Squares Summary", 57);
-    try body.appendSlice(a, "         Effect         Number      Number\n Step    Entered    Effects In    Parms In           SBC \n\n");
+    try body.appendNTimes(a, ' ', (ew + 28) / 2);
+    try body.appendSlice(a, "Least Squares Summary\n \n         ");
+    try left(a, &body, "Effect", ew);
+    try body.appendSlice(a, "      Number      Number\n Step    ");
+    try left(a, &body, "Entered", ew);
+    try body.appendSlice(a, "  Effects In    Parms In           SBC \n\n");
     const best0 = sbc0 < x.sbc;
     try body.appendSlice(a, "    0    ");
-    try left(a, &body, "Intercept", 9);
+    try left(a, &body, "Intercept", ew);
     try body.print(a, "{d:>12}{d:>12}", .{ 1, 1 });
     try right(a, &body, try fixed(a, sbc0, 4), 14);
     try body.append(a, if (best0) '*' else ' ');
     try body.append(a, '\n');
-    try body.appendNTimes(a, '-', 57);
+    try body.appendNTimes(a, '-', 48 + ew);
     try body.appendSlice(a, "\n    1    ");
-    try left(a, &body, names.of(0), 9);
+    try left(a, &body, names.of(0), ew);
     try body.print(a, "{d:>12}{d:>12}", .{ s.effects.len + 1, f.p });
     try right(a, &body, try fixed(a, x.sbc, 4), 14);
     try body.append(a, if (best0) ' ' else '*');
