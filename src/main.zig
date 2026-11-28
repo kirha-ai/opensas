@@ -3272,6 +3272,13 @@ fn runProc(a: std.mem.Allocator, listing_out: *std.ArrayList(u8), lib: *sas.exec
             try out.appendSlice(a, body.items);
             try g.emitFootnotes(a, out);
         }
+    } else if (eqi(proc, "discrim")) {
+        // Titles and BY lines are emitted per listing page by the procedure.
+        var discrim_context = pcx;
+        discrim_context.listing_titles = g;
+        var body: std.ArrayList(u8) = .empty;
+        try sas.discrim.run(discrim_context, &body, toks);
+        try out.appendSlice(a, body.items);
     } else if (eqi(proc, "hpnlmod")) {
         var body: std.ArrayList(u8) = .empty;
         try sas.hpnlmod.run(pcx, &body, toks);

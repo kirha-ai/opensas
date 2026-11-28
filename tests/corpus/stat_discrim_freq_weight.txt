@@ -1,0 +1,229 @@
+Invented Plants
+
+The DISCRIM Procedure
+
+Total Sample Size                   16          DF Total                            15
+Variables                            3          DF Within Classes                   13
+Classes                              3          DF Between Classes                   2
+
+
+Number of Observations Read             14
+Number of Observations Used             12
+Sum of Frequencies Read                 17
+Sum of Frequencies Used                 16
+Sum of Weights Read                   17.5
+Sum of Weights Used                   16.5
+
+
+                       Class Level Information
+ 
+       Variable                                                  Prior
+grp    Name        Frequency       Weight    Proportion    Probability
+
+A      A                   5       4.5000      0.312500       0.333333
+B      B                   6       6.5000      0.375000       0.333333
+C      C                   5       5.5000      0.312500       0.333333
+
+
+Pooled Covariance Matrix Information
+ 
+               Natural Log of the
+ Covariance    Determinant of the
+Matrix Rank     Covariance Matrix
+
+          3              -6.92667
+Invented Plants
+
+The DISCRIM Procedure
+
+Pairwise Generalized Squared Distances Between Groups
+
+ 2         _   _       -1  _   _  
+D (i|j) = (X - X )' COV   (X - X )
+            i   j           i   j 
+
+
+      Generalized Squared Distance to grp
+ 
+From
+grp                A             B             C
+
+A                  0      19.88236     154.93257
+B           19.88236             0     122.99385
+C          154.93257     122.99385             0
+
+Linear Discriminant Function
+
+               _     -1 _                              -1 _ 
+Constant = -.5 X' COV   X      Coefficient Vector = COV   X 
+                j        j                                 j
+
+
+       Linear Discriminant Function for grp
+ 
+Variable             A             B             C
+
+Constant    -167.38393    -192.65184    -383.77501
+x1            26.36032      34.34229      67.57455
+x2            66.23005      64.62610      85.12159
+x3            35.11614      37.37384      17.87506
+Invented Plants
+
+The DISCRIM Procedure
+Classification Summary for Calibration Data: WORK.PLANTS
+Resubstitution Summary using Linear Discriminant Function
+
+Generalized Squared Distance Function
+
+ 2         _       -1   _  
+D (X) = (X-X )' COV  (X-X )
+ j          j            j 
+
+Posterior Probability of Membership in Each grp
+
+                   2                    2    
+Pr(j|X) = exp(-.5 D (X)) / SUM exp(-.5 D (X))
+                   j        k           k    
+
+
+  Number of Observations and Percent Classified into grp
+ 
+From
+grp               A            B            C        Total
+
+                  0            1            0            1
+               0.00       100.00         0.00       100.00
+
+A                 5            0            0            5
+             100.00         0.00         0.00       100.00
+
+B                 0            6            0            6
+               0.00       100.00         0.00       100.00
+
+C                 0            0            5            5
+               0.00         0.00       100.00       100.00
+
+Total             5            7            5           17
+              29.41        41.18        29.41       100.00
+
+Priors      0.33333      0.33333      0.33333             
+                                                          
+
+               Error Count Estimates for grp
+ 
+                       A           B           C       Total
+
+Rate              0.0000      0.0000      0.0000      0.0000
+Priors            0.3333      0.3333      0.3333            
+Invented Plants
+
+The DISCRIM Procedure
+
+Total Sample Size                   12          DF Total                            11
+Variables                            2          DF Within Classes                    9
+Classes                              3          DF Between Classes                   2
+
+
+Number of Observations Read             14
+Number of Observations Used             12
+
+
+                       Class Level Information
+ 
+       Variable                                                  Prior
+grp    Name        Frequency       Weight    Proportion    Probability
+
+A      A                   4       4.0000      0.333333       0.333333
+B      B                   4       4.0000      0.333333       0.333333
+C      C                   4       4.0000      0.333333       0.333333
+
+
+Pooled Covariance Matrix Information
+ 
+               Natural Log of the
+ Covariance    Determinant of the
+Matrix Rank     Covariance Matrix
+
+          2              -4.03638
+Invented Plants
+
+The DISCRIM Procedure
+
+Pairwise Generalized Squared Distances Between Groups
+
+ 2         _   _       -1  _   _  
+D (i|j) = (X - X )' COV   (X - X )
+            i   j           i   j 
+
+
+      Generalized Squared Distance to grp
+ 
+From
+grp                A             B             C
+
+A                  0      16.67924     155.00242
+B           16.67924             0     106.06789
+C          155.00242     106.06789             0
+
+Linear Discriminant Function
+
+               _     -1 _                              -1 _ 
+Constant = -.5 X' COV   X      Coefficient Vector = COV   X 
+                j        j                                 j
+
+
+       Linear Discriminant Function for grp
+ 
+Variable             A             B             C
+
+Constant    -130.13202    -159.94056    -394.93648
+x1            42.74538      52.48460      80.74127
+x2            46.63218      46.29167      75.31705
+Invented Plants
+
+The DISCRIM Procedure
+Classification Summary for Calibration Data: WORK.PLANTS
+Resubstitution Summary using Linear Discriminant Function
+
+Generalized Squared Distance Function
+
+ 2         _       -1   _  
+D (X) = (X-X )' COV  (X-X )
+ j          j            j 
+
+Posterior Probability of Membership in Each grp
+
+                   2                    2    
+Pr(j|X) = exp(-.5 D (X)) / SUM exp(-.5 D (X))
+                   j        k           k    
+
+
+  Number of Observations and Percent Classified into grp
+ 
+From
+grp               A            B            C        Total
+
+                  0            1            0            1
+               0.00       100.00         0.00       100.00
+
+A                 4            0            0            4
+             100.00         0.00         0.00       100.00
+
+B                 0            4            0            4
+               0.00       100.00         0.00       100.00
+
+C                 0            0            4            4
+               0.00         0.00       100.00       100.00
+
+Total             4            5            4           13
+              30.77        38.46        30.77       100.00
+
+Priors      0.33333      0.33333      0.33333             
+                                                          
+
+               Error Count Estimates for grp
+ 
+                       A           B           C       Total
+
+Rate              0.0000      0.0000      0.0000      0.0000
+Priors            0.3333      0.3333      0.3333            

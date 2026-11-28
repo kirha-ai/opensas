@@ -1,0 +1,11 @@
+# corpus assertions
+empty-listing
+stderr-count 1 POOL=no (quadratic discrimination) is not implemented
+stderr-count 1 METHOD=NPAR (nonparametric discrimination) is not implemented
+stderr-count 1 the crossvalidate option is not implemented
+stderr-count 1 the out option is not implemented
+stderr-count 1 PRIORS other than EQUAL is not implemented
+stderr-count 1 the testclass statement is not implemented
+stderr-count 1 input data sets with a _TYPE_ variable
+stderr-count 1 a singular pooled covariance matrix (or zero weights) is not implemented
+stderr-count 1 observations with a missing CLASS value are not implemented
