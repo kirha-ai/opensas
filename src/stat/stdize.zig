@@ -1074,6 +1074,10 @@ pub fn run(cx: proc.ProcCtx, out: *Out, t: []const lex.Token) diag.Error!void {
                 }
                 m.* = .{ .location = mean / nn, .scale = std.math.nan(f64), .n = nn, .empty = true };
             } else m.* = (try measures(a, s, obs)) orelse return gap(cx.diags, l0, "PROC STDIZE: variable {s}: a missing INITIAL= scale for the A estimates is not verified", .{vname});
+            // ponytail: only VARDEF=DF with one value is SAS-verified for a
+            // divisor <= 0; VARDEF=WDF with a weight sum <= 1 stays a gap.
+            if (s.method == .std and s.vardef == .wdf and !m.empty and std.math.isNan(m.scale))
+                return gap(cx.diags, l0, "PROC STDIZE: VARDEF=WDF with a sum of weights <= 1 is not verified", .{});
             if (s.method == .agk and !m.empty and std.math.isNan(m.scale)) return cx.diags.fail(error.ParseError, l0, "The value of METHOD= (or INITIAL= and MISSING= ) AGK() is too small to have at least one pair.", .{});
             if (m.empty and isAEstimate(s.method)) m.fallback = true;
             if (m.fallback) try cx.diags.note(l0, "After centered by the initial location estimate, all observations of variable {s} are outside the acceptance interval. Consequently, the original method chosen cannot be performed. Instead, the initial estimates of the location and the scale (specified from the INITIAL= option or by default) will be used as the location and scale measures.", .{vname});

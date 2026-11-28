@@ -3,7 +3,8 @@
  * PCTLMTD=ONEPASS / P2 (the one-pass estimator modifies the P2 algorithm in
  * ways the guide does not specify: real SAS gives 8 / 58.2222 for METHOD=IQR
  * NMARKERS=7 on ten values where order statistics give 17 / 50) and
- * PCTLDEF= with the default INITIAL=MAD of an A-estimate (not verified).
+ * PCTLDEF= with the default INITIAL=MAD of an A-estimate and METHOD=STD
+ * VARDEF=WDF with a sum of weights <= 1 (both not verified).
  * Nothing is printed for these steps. Invented data.
  */
 options nosyntaxcheck nodate nonumber nocenter linesize=120;
@@ -15,3 +16,9 @@ datalines;
 proc stdize data=a method=iqr pctlmtd=onepass nmarkers=7 pstat; var x; run;
 proc stdize data=a method=median pctlmtd=p2 pstat; var x; run;
 proc stdize data=a method=abw(4) pctldef=1 pstat; var x; run;
+data b;
+input x w @@;
+datalines;
+1 0.25 2 0.5
+;
+proc stdize data=b method=std vardef=wdf out=o; var x; weight w; run;
