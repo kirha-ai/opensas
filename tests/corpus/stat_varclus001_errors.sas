@@ -1,7 +1,9 @@
 /* expect-rc: 1
  * STAT-VARCLUS-001: documented invalid input is a user error (rc 1):
  * MAXCLUSTERS= must be a positive integer, CENTROID cannot be combined with
- * MAXEIGEN= (p.10689), VAR variables must be numeric and exist. The valid
+ * MAXEIGEN= (p.10689), VAR variables must be numeric and exist, and a data
+ * set of one observation is rejected ("There must be at least 2
+ * observations", verified against SAS 9.4: nothing printed). The valid
  * step at the end still runs: NOPRINT with OUTSTAT= creates the data set.
  * Invented data: x = 1..4, y = 2 1 4 3, so mean 2.5, StD sqrt(5/3) =
  * 1.2910 and r = 0.6. Hand mathematics for one cluster: eigenvalue 1.6
@@ -24,6 +26,12 @@ var name x;
 run;
 proc varclus data=t;
 var nosuch;
+run;
+data one;
+set t(obs=1);
+run;
+proc varclus data=one;
+var x y;
 run;
 proc varclus data=t maxc=1 noprint outstat=s;
 var x y;

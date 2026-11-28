@@ -122,7 +122,11 @@ test "STAT-VARCLUS-001 two variables: one cluster, then two singletons (hand mat
     try expect(std.math.isNan(two.comps[1].second)); // one member: no second eigenvalue
     // Each singleton component is its variable; their correlation is r.
     try approx(0.6, two.ccorr[1], 1e-12);
-    try approx(0.6, two.structure[1], 1e-12);
+    // Tied split: the first variable moves to the new cluster 2 (as SAS does
+    // for PetalLength/PetalWidth with PROPORTION=1, stat_varclus001_criteria).
+    try expectEqual(@as(usize, 1), two.group[0]);
+    try approx(0.6, two.structure[0], 1e-12);
+    try approx(1, two.structure[1], 1e-12);
     // MAXEIGEN=0.5 > 0.4: no cluster qualifies, splitting stops at one cluster.
     const stop = try varclus.cluster(a, &r, 2, .{ .maxc = 2, .maxeigen = 0.5, .proportion = null, .maxiter = 10, .maxsearch = 500 });
     try expectEqual(@as(usize, 1), stop.levels.len);
@@ -137,10 +141,10 @@ test "STAT-VARCLUS-001 block correlation matrix splits into its blocks" {
     // Whole set: eigenvalues 1.8, 1.5, 0.5, 0.2. Two clusters: {0,2}, {1,3}
     // explaining 1.8 + 1.5 = 3.3 with zero inter-cluster correlation.
     const r = [_]f64{
-        1, 0,   0.8, 0,
-        0, 1,   0,   0.5,
-        0.8, 0, 1,   0,
-        0, 0.5, 0,   1,
+        1,   0,   0.8, 0,
+        0,   1,   0,   0.5,
+        0.8, 0,   1,   0,
+        0,   0.5, 0,   1,
     };
     const h = try varclus.cluster(a, &r, 4, .{ .maxc = 2, .maxeigen = 0, .proportion = null, .maxiter = 10, .maxsearch = 250 });
     try expectEqual(@as(usize, 2), h.levels.len);
@@ -201,6 +205,16 @@ test "STAT-VARCLUS-001 invalid input is a user error and unimplemented valid syn
     const a = arena.allocator();
     var lib = Library.init(a);
     try build(a, &lib);
+    {
+        // A _TYPE_ variable marks TYPE=CORR-like matrix input (not implemented).
+        const typed = try a.create(Dataset);
+        typed.* = Dataset.init(a, "typed");
+        _ = try typed.addColumn("_TYPE_", .char);
+        _ = try typed.addColumn("x", .num);
+        _ = try typed.addColumn("y", .num);
+        for ([_][2]f64{ .{ 1, 2 }, .{ 2, 1 }, .{ 3, 4 } }) |xy| try typed.appendRow(&.{ .{ .str = "CORR" }, .{ .num = xy[0] }, .{ .num = xy[1] } });
+        try lib.put("typed", typed);
+    }
     const Case = struct { source: []const u8, rc: u8 };
     const cases = [_]Case{
         .{ .source = "proc varclus data=nosuch; run;", .rc = 1 },
@@ -231,14 +245,10 @@ test "STAT-VARCLUS-001 invalid input is a user error and unimplemented valid syn
         .{ .source = "proc varclus data=sample plots=dendrogram; var x y; run;", .rc = 2 },
         .{ .source = "proc varclus data=sample; var x y; partial z; run;", .rc = 2 },
         .{ .source = "proc varclus data=sample; var x y; seed x; run;", .rc = 2 },
-        .{ .source = "proc varclus data=sample maxc=2 maxc=3; var x y; run;", .rc = 2 },
-        .{ .source = "proc varclus data=sample; var x; var y; run;", .rc = 2 },
-        // Listings not verified against SAS.
-        .{ .source = "proc varclus data=sample maxeigen=0.5; var x y z; run;", .rc = 2 },
-        .{ .source = "proc varclus data=sample proportion=0.9; var x y z; run;", .rc = 2 },
-        .{ .source = "proc varclus data=sample maxc=1; var x y z; run;", .rc = 2 },
-        // Degenerate: one usable observation.
-        .{ .source = "proc varclus data=sample outstat=st maxc=2 noprint; var x y; where g = 1 and x > 4; run;", .rc = 2 },
+        .{ .source = "proc varclus data=sample maxeigen=0.5 proportion=0.9; var x y z; run;", .rc = 2 },
+        .{ .source = "proc varclus data=typed; var x y; run;", .rc = 2 },
+        // SAS 9.4: one observation is an error (verified with a one-row data set).
+        .{ .source = "proc varclus data=sample outstat=st maxc=2 noprint; var x y; where g = 1 and x > 4; run;", .rc = 1 },
     };
     for (cases) |case| {
         diag.resetGap();
@@ -257,4 +267,20 @@ test "STAT-VARCLUS-001 invalid input is a user error and unimplemented valid syn
         try expectEqual(@as(usize, 0), output.items.len);
         try expect(lib.find("st") == null and lib.find("tr") == null);
     }
+}
+
+test "STAT-VARCLUS-001 repeated options and statements follow SAS" {
+    var e: Env = .{ .arena = std.heap.ArenaAllocator.init(std.testing.allocator) };
+    defer e.arena.deinit();
+    try e.init();
+    // SAS 9.4 (tests/corpus/stat_varclus001_criteria.sas, _statements.sas):
+    // the last repeated PROC option wins, VAR statements accumulate, the
+    // first FREQ and the first WEIGHT statement are used.
+    const s = try e.parse("proc varclus data=sample maxc=2 maxc=3 maxeigen=0.4 maxeigen=0.2; var x; var y z; freq f; freq w; weight w; weight f; run;");
+    try expectEqual(@as(?usize, 3), s.maxc);
+    try expectEqual(@as(?f64, 0.2), s.maxeigen);
+    try expectEqual(@as(usize, 3), s.vars.len);
+    const ds = s.input.ds;
+    try std.testing.expectEqualStrings("f", ds.columns.items[s.freq.?].name);
+    try std.testing.expectEqualStrings("w", ds.columns.items[s.weight.?].name);
 }

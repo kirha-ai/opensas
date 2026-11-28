@@ -78,9 +78,9 @@ fn memberName(cx: proc.ProcCtx, t: []const lex.Token, i: usize, into: *?[]const 
 /// Canonical spelling of a PROC statement option (aliases of pp.10689-10695).
 fn canonical(lower: []const u8) []const u8 {
     const pairs = [_][2][]const u8{
-        .{ "covariance", "cov" },    .{ "maxc", "maxclusters" }, .{ "minc", "minclusters" },
+        .{ "covariance", "cov" },     .{ "maxc", "maxclusters" }, .{ "minc", "minclusters" },
         .{ "percent", "proportion" }, .{ "hi", "hierarchy" },     .{ "mg", "multiplegroup" },
-        .{ "c", "corr" },            .{ "s", "simple" },          .{ "plot", "plots" },
+        .{ "c", "corr" },             .{ "s", "simple" },         .{ "plot", "plots" },
     };
     for (pairs) |p| if (eq(lower, p[0])) return p[1];
     return lower;
@@ -125,14 +125,13 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
     var s: Spec = .{ .input = undefined };
     var name: ?[]const u8 = null;
     var qualified: ?usize = null;
-    var seen: std.StringHashMapUnmanaged(void) = .empty;
     var centroid = false;
     var i: usize = 2;
     while (i < t.len and !at(t, i, .semicolon) and !at(t, i, .eof)) {
         if (!at(t, i, .name)) return invalid(cx, t, i);
         const option = canonical(try std.ascii.allocLowerString(a, t[i].text));
-        // The chapter states no rule for a repeated PROC option; do not guess one.
-        if ((try seen.getOrPut(a, option)).found_existing) return gap(cx.diags, t[i].line, "PROC VARCLUS: repeated PROC statement option {s} is not verified", .{t[i].text});
+        // SAS 9.4 (verified with MAXCLUSTERS=2 MAXCLUSTERS=3): the last
+        // occurrence of a repeated PROC option is used.
         const valued = at(t, i + 1, .eq);
         const l = t[i].line;
         if (eq(option, "data") and valued) {
@@ -235,6 +234,7 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
     var bys: by.Statements = .{};
     var vars: std.ArrayList(usize) = .empty;
     var var_seen = false;
+    var formats: std.ArrayList(proc.VarSpec) = .empty;
     i += 1;
     while (i < t.len and !at(t, i, .eof)) {
         if (at(t, i, .semicolon)) {
@@ -252,24 +252,31 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
             var j = i;
             try bys.read(a, t, &j);
         } else if (eq(word, "var")) {
-            if (var_seen) return gap(cx.diags, t[i].line, "PROC VARCLUS: more than one VAR statement is not verified", .{});
+            // SAS 9.4 (verified): the variables of several VAR statements accumulate.
             var_seen = true;
             try columnList(cx, ds, t, i, end, "VAR", &vars);
         } else if (eq(word, "partial") or eq(word, "seed")) {
             return gap(cx.diags, t[i].line, "PROC VARCLUS: the {s} statement is not implemented (STAT-VARCLUS-003)", .{word});
         } else if (eq(word, "freq")) {
-            if (s.freq != null) return gap(cx.diags, t[i].line, "PROC VARCLUS: more than one FREQ statement is not verified", .{});
-            s.freq = try oneNumeric(cx, ds, t, i, end, "FREQ");
+            // SAS 9.4 (verified): with several FREQ statements the first is used.
+            const f = try oneNumeric(cx, ds, t, i, end, "FREQ");
+            if (s.freq == null) s.freq = f;
         } else if (eq(word, "weight")) {
-            if (s.weight != null) return gap(cx.diags, t[i].line, "PROC VARCLUS: more than one WEIGHT statement is not verified", .{});
-            s.weight = try oneNumeric(cx, ds, t, i, end, "WEIGHT");
+            // SAS 9.4 (verified): with several WEIGHT statements the first is used.
+            const w = try oneNumeric(cx, ds, t, i, end, "WEIGHT");
+            if (s.weight == null) s.weight = w;
         } else if (eq(word, "where")) {
             // Applied by procInputObs above.
+        } else if (eq(word, "format")) {
+            var j = i;
+            try proc.parseProcFormat(a, t, &j, &formats);
         } else if (parser.isMidStepSkippable(word)) {
             try parser.noteUnexecuted(cx.diags, t[i..end]);
         } else return invalid(cx, t, i);
         i = end + 1;
     }
+    for (formats.items) |spec| if (ds.indexOf(spec.name) == null) return cx.diags.fail(error.ParseError, 0, "Variable {s} not found.", .{try std.ascii.allocUpperString(a, spec.name)});
+    s.input.ds = try by.withFormats(a, ds, formats.items);
     const pb = try bys.resolve(a, ds, cx.diags);
     const cols = try a.alloc(usize, pb.names.len);
     for (pb.names, 0..) |n, k| cols[k] = ds.indexOf(n).?;
@@ -401,10 +408,12 @@ fn split(a: A, r: []const f64, p: usize, group: []usize, c: usize, k: usize) !vo
     for (m, side) |x, sd| group[x] = if (sd) k else c;
     // The part whose component explains more variance keeps the old cluster
     // number (SAS listings: {SL,PL,PW} -> {PL,PW} stays cluster 1, {SL} is
-    // the new cluster 3). ponytail: ties keep the part with the first member.
+    // the new cluster 3). On a tie the first member moves to the new cluster
+    // (SAS listing, PROPORTION=1: {PL,PW} -> PW stays cluster 1, PL is the
+    // new cluster 4). ponytail: one verified tie; the rule is not documented.
     const keep = try component(a, r, p, group, c);
     const moved = try component(a, r, p, group, k);
-    if (moved.explained > keep.explained + 1e-12 or (@abs(moved.explained - keep.explained) <= 1e-12 and side[0]))
+    if (moved.explained > keep.explained + 1e-12 or (@abs(moved.explained - keep.explained) <= 1e-12 and !side[0]))
         for (m, side) |x, sd| {
             group[x] = if (sd) c else k;
         };
@@ -483,12 +492,21 @@ pub const Options = struct { maxc: usize, maxeigen: ?f64, proportion: ?f64, maxi
 /// Why splitting stopped after the last level.
 pub const Stop = enum { maxclusters, criterion, empty };
 
-pub const History = struct { levels: []Level, stop: Stop, split_second: []f64 };
+pub const History = struct {
+    levels: []Level,
+    stop: Stop,
+    split_second: []f64,
+    /// Per split: the cluster split (0-based) and whether PROPORTION= chose it.
+    split_cluster: []usize = &.{},
+    split_by_proportion: []bool = &.{},
+};
 
 /// The divisive history from one cluster (pp.10682-10683, 10689).
 pub fn cluster(a: A, r: []const f64, p: usize, o: Options) !History {
     var levels: std.ArrayList(Level) = .empty;
     var seconds: std.ArrayList(f64) = .empty;
+    var picked: std.ArrayList(usize) = .empty;
+    var by_prop: std.ArrayList(bool) = .empty;
     const group = try a.alloc(usize, p);
     @memset(group, 0);
     try levels.append(a, try finish(a, r, p, group, 1, true));
@@ -498,6 +516,7 @@ pub fn cluster(a: A, r: []const f64, p: usize, o: Options) !History {
         if (k >= o.maxc) break;
         const last = levels.items[k - 1];
         var pick: ?usize = null;
+        var chosen_by_prop = false;
         if (o.maxeigen) |me| {
             for (last.comps, 0..) |c, ci| if (!std.math.isNan(c.second) and c.second > me and (pick == null or c.second > last.comps[pick.?].second)) {
                 pick = ci;
@@ -508,12 +527,15 @@ pub fn cluster(a: A, r: []const f64, p: usize, o: Options) !History {
                 const n: f64 = @floatFromInt((try members(a, last.group, ci)).len);
                 if (n > 1 and c.explained / n < pr and (pick == null or c.explained / n < last.comps[pick.?].explained / @as(f64, @floatFromInt((try members(a, last.group, pick.?)).len)))) pick = ci;
             }
+            chosen_by_prop = pick != null;
         };
         const c = pick orelse {
             stop = .criterion;
             break;
         };
         try seconds.append(a, last.comps[c].second);
+        try picked.append(a, c);
+        try by_prop.append(a, chosen_by_prop);
         @memcpy(group, last.group);
         try split(a, r, p, group, c, k);
         const conv = reassign(a, r, p, group, k + 1, o.maxiter, o.maxsearch) catch |err| switch (err) {
@@ -525,7 +547,7 @@ pub fn cluster(a: A, r: []const f64, p: usize, o: Options) !History {
         };
         try levels.append(a, try finish(a, r, p, group, k + 1, conv));
     }
-    return .{ .levels = levels.items, .stop = stop, .split_second = seconds.items };
+    return .{ .levels = levels.items, .stop = stop, .split_second = seconds.items, .split_cluster = picked.items, .split_by_proportion = by_prop.items };
 }
 
 fn pad(a: A, out: *Out, n: usize) !void {
@@ -738,7 +760,9 @@ fn renderHistory(a: A, out: *Out, h: History, p: usize) !void {
         try right(a, out, try dec(a, st.total, 6), 14);
         try right(a, out, try dec(a, st.prop, 4), 15);
         try right(a, out, try dec(a, st.min_prop, 4), 14);
-        try right(a, out, if (std.math.isNan(st.max_second)) "" else try dec(a, st.max_second, 6), 14);
+        // Verified (PROPORTION=1, four single-variable clusters): a level of
+        // only single-variable clusters shows a maximum second eigenvalue of 0.
+        try right(a, out, try dec(a, if (std.math.isNan(st.max_second)) 0 else st.max_second, 6), 14);
         try right(a, out, try dec(a, st.min_r2, 4), 13);
         try right(a, out, if (std.math.isNan(st.max_ratio)) "" else try dec(a, st.max_ratio, 4), 12);
         try out.appendSlice(a, "\n");
@@ -765,17 +789,18 @@ fn render(a: A, out: *Out, h: History, nm: Names, n: f64, o: Options, maxeigen_s
         // Verified: the matrices follow every level with two or more clusters.
         if (lv.comps.len >= 2) try renderMatrices(a, out, lv, nm);
         if (li + 1 < h.levels.len) {
-            var c: usize = 0;
-            for (lv.comps, 0..) |cp, ci| if (!std.math.isNan(cp.second) and cp.second == h.split_second[li]) {
-                c = ci;
-            };
-            try out.appendSlice(a, try std.fmt.allocPrint(a, "\nCluster {d} will be split because it has the largest second eigenvalue, {s}, which is greater than the MAXEIGEN={s} value.\n", .{ c + 1, try best8(a, h.split_second[li]), try best8(a, maxeigen_shown) }));
+            const c = h.split_cluster[li];
+            if (h.split_by_proportion[li]) {
+                const cp = lv.comps[c];
+                const n_members: f64 = @floatFromInt((try members(a, lv.group, c)).len);
+                try out.appendSlice(a, try std.fmt.allocPrint(a, "\nCluster {d} will be split because it has the smallest proportion of variation explained, {s}, which is less than the PROPORTION={s} value.\n", .{ c + 1, try best8(a, cp.explained / n_members), try best8(a, proportion_shown) }));
+            } else try out.appendSlice(a, try std.fmt.allocPrint(a, "\nCluster {d} will be split because it has the largest second eigenvalue, {s}, which is greater than the MAXEIGEN={s} value.\n", .{ c + 1, try best8(a, h.split_second[li]), try best8(a, maxeigen_shown) }));
         }
     }
-    if (h.stop == .criterion) {
-        // Verified (default options, one cluster): no history table follows.
-        try out.appendSlice(a, "\nNo cluster meets the criterion for splitting.\n");
-    } else try renderHistory(a, out, h, nm.names.len);
+    // Verified: with one cluster (criterion or MAXCLUSTERS=1) no history
+    // table follows; after two or more clusters it does.
+    if (h.stop == .criterion) try out.appendSlice(a, "\nNo cluster meets the criterion for splitting.\n");
+    if (h.levels.len > 1) try renderHistory(a, out, h, nm.names.len);
 }
 
 const Stat = struct {
@@ -840,9 +865,16 @@ pub fn run(cx: proc.ProcCtx, out: *Out, t: []const lex.Token) diag.Error!void {
     if (s.unsupported) |what| return gap(cx.diags, s.unsupported_line, "PROC VARCLUS: {s} is not implemented", .{what});
     if (s.plots) return gap(cx.diags, l0, "PROC VARCLUS: PLOTS= graphs are not implemented (STAT-VARCLUS-007)", .{});
     if (!s.noprint) if (cx.graphics) |g| if (g.enabled == true) return gap(cx.diags, l0, "PROC VARCLUS: the default dendrogram under ODS GRAPHICS is not implemented (STAT-VARCLUS-007)", .{});
+    // p.10686: DATA= may be TYPE=CORR, COV, UCORR, UCOV, FACTOR, SSCP; opensas
+    // keeps no data set TYPE= attribute, so such input is not read as a matrix.
+    if (ds.indexOf("_type_") != null) return gap(cx.diags, l0, "PROC VARCLUS: input data sets with a _TYPE_ variable (TYPE=CORR, COV, UCORR, UCOV, FACTOR, SSCP) are not implemented", .{});
+    // SAS 9.4 (verified): an empty input prints nothing, notes it and does not fail.
+    if (ds.rows.items.len == 0) {
+        const upper = try std.ascii.allocUpperString(a, ds.name);
+        const lib_prefix: []const u8 = if (std.mem.indexOfScalar(u8, ds.name, '.') == null) "WORK." else "";
+        return cx.diags.note(l0, "No observations were selected from data set {s}{s}.", .{ lib_prefix, upper });
+    }
     const groups = try by.checkedSlices(a, ds, s.by_cols, s.by_desc, s.notsorted, cx.diags);
-    for (s.by_cols) |c| if (ds.columns.items[c].format != null and !s.noprint)
-        return gap(cx.diags, l0, "PROC VARCLUS: the BY line for a formatted BY variable is not verified against SAS output", .{});
     const p = s.vars.len;
     // p.10691: MAXCLUSTERS= defaults to the number of variables. MAXEIGEN=
     // defaults to 0 with MAXCLUSTERS= and to 1 (correlations) otherwise,
@@ -921,6 +953,11 @@ pub fn run(cx: proc.ProcCtx, out: *Out, t: []const lex.Token) diag.Error!void {
             if (missing > 0) try cx.diags.warnStatus(l0, "{d} of {d} observations in data set {s}{s} omitted due to missing values.", .{ missing, group.rows.len, lib_prefix, upper });
             if (dropped > 0) try cx.diags.warnStatus(l0, "{d} of {d} observations in data set {s}{s} omitted due to nonpositive weight or truncated frequency.", .{ dropped, group.rows.len, lib_prefix, upper });
         }
+        if (group.rows.len == 1 and s.by_cols.len == 0) {
+            const upper = try std.ascii.allocUpperString(a, ds.name);
+            const lib_prefix: []const u8 = if (std.mem.indexOfScalar(u8, ds.name, '.') == null) "WORK." else "";
+            return cx.diags.fail(error.ParseError, l0, "There must be at least 2 observations in data set {s}{s}.", .{ lib_prefix, upper });
+        }
         if (sel.n < 2) return gap(cx.diags, l0, "PROC VARCLUS: an analysis with fewer than two usable observations is not verified against SAS output", .{});
         const m = (try pc.moments(a, ps, group.rows, sel)) orelse return gap(cx.diags, l0, "PROC VARCLUS: a variable with zero variance is not verified against SAS output", .{});
         const h = cluster(a, m.corr, p, opts) catch return error.OutOfMemory;
@@ -928,30 +965,30 @@ pub fn run(cx: proc.ProcCtx, out: *Out, t: []const lex.Token) diag.Error!void {
         if (h.stop == .empty) return gap(cx.diags, l0, "PROC VARCLUS: a split that leaves a cluster without members is not verified against SAS output", .{});
         for (h.levels) |_| try cx.diags.note(0, "Clustering algorithm converged.", .{});
         if (!s.noprint) {
-            // Verified listings (SAS, four labelled or unlabelled variables):
-            // default options stopping at one cluster, and MAXCLUSTERS= alone
-            // (Proportion 1, Maxeigen 0) stopping at MAXCLUSTERS= after two
-            // or three clusters.
-            if (s.maxeigen != null or s.proportion != null)
-                return gap(cx.diags, l0, "PROC VARCLUS: the listing with MAXEIGEN= or PROPORTION= is not verified against SAS output (STAT-VARCLUS-006); use NOPRINT with OUTSTAT=", .{});
-            if (h.stop == .criterion and h.levels.len > 1)
-                return gap(cx.diags, l0, "PROC VARCLUS: the listing when splitting stops by the MAXEIGEN= criterion after more than one cluster is not verified against SAS output (STAT-VARCLUS-006); use NOPRINT with OUTSTAT=", .{});
-            if (h.stop == .maxclusters and h.levels.len == 1)
-                return gap(cx.diags, l0, "PROC VARCLUS: the listing for MAXCLUSTERS=1 is not verified against SAS output (STAT-VARCLUS-006); use NOPRINT with OUTSTAT=", .{});
+            if (s.maxeigen != null and s.proportion != null)
+                return gap(cx.diags, l0, "PROC VARCLUS: the listing with both MAXEIGEN= and PROPORTION= is not verified against SAS output; use NOPRINT with OUTSTAT=", .{});
+            // Listings verified against SAS 9.4: default options, MAXCLUSTERS=
+            // (1, 2, 3), MAXEIGEN=, PROPORTION=/PERCENT= and their
+            // combination, stopping by MAXCLUSTERS= or by the criterion.
             if (s.by_cols.len > 0 and !io.global_nobyline) {
-                // Verified (NOCENTER): the BY line starts in column 1.
-                // ponytail: the CENTER option is not tracked; formatted BY
-                // values are a gap above.
+                // Verified (NOCENTER): the BY line starts in column 1, with
+                // the formatted value of a formatted BY variable.
+                // ponytail: the CENTER option is not tracked.
                 try body.append(a, '\n');
                 for (s.by_cols, 0..) |c, bi| {
                     if (bi > 0) try body.append(a, ' ');
                     try body.appendSlice(a, ds.columns.items[c].name);
                     try body.append(a, '=');
-                    try body.appendSlice(a, try proc.cellText(a, group.rows[0][c]));
+                    const v = group.rows[0][c];
+                    try body.appendSlice(a, if (ds.columns.items[c].format) |spec| std.mem.trim(u8, try fmt.apply(a, v, spec), " ") else try proc.cellText(a, v));
                 }
                 try body.append(a, '\n');
             }
-            try render(a, &body, h, nm, sel.n, opts, maxeigen.?, if (s.maxc != null) 1 else 0);
+            // Verified header values: MAXEIGEN= alone shows Proportion 0;
+            // PROPORTION= alone shows Maxeigen 0; MAXCLUSTERS= alone shows
+            // Proportion 1, Maxeigen 0; defaults show Proportion 0, Maxeigen 1.
+            const prop_shown: f64 = s.proportion orelse if (s.maxeigen != null) 0 else if (s.maxc != null) 1 else 0;
+            try render(a, &body, h, nm, sel.n, opts, maxeigen orelse 0, prop_shown);
         }
         if (created) |o| {
             const cells = try a.alloc(Value, o.columns.items.len);
