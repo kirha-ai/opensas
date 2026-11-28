@@ -161,8 +161,8 @@ pub fn build(a: A, rows: []const []const Value, r: Roles) !Design {
 /// Taylor-series variance of the total of `z` (one already weighted,
 /// linearized value per valid observation), p.9633:
 /// V = sum_h (1 - f_h) n_h / (n_h - 1) sum_i (z_hi. - zbar_h..)^2,
-/// with z_hi. the PSU sums. A single-PSU stratum contributes nothing here;
-/// callers decide whether that case may be reported at all.
+/// with z_hi. the PSU sums. A single-PSU stratum contributes nothing; with no
+/// stratum of two or more PSUs the result is NaN (missing).
 pub fn variance(a: A, d: Design, z: []const f64) !f64 {
     const sums = try a.alloc(f64, d.clusters());
     defer a.free(sums);
@@ -178,10 +178,14 @@ pub fn variance(a: A, d: Design, z: []const f64) !f64 {
     for (mean, d.stratum_psus) |*m, n| m.* /= @floatFromInt(n);
     for (sums, d.psu_stratum) |x, h| ss[h] += (x - mean[h]) * (x - mean[h]);
     var v: f64 = 0;
+    var any = false;
     for (ss, d.stratum_psus, d.stratum_fpc) |s, n, f| {
         if (n < 2) continue;
+        any = true;
         const nh: f64 = @floatFromInt(n);
         v += f * nh / (nh - 1) * s;
     }
-    return v;
+    // SAS-verified: when every stratum has a single cluster the variance is
+    // missing (single-cluster strata are left out of the estimate).
+    return if (any) v else std.math.nan(f64);
 }

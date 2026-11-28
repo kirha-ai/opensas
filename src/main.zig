@@ -3412,7 +3412,9 @@ fn runProc(a: std.mem.Allocator, listing_out: *std.ArrayList(u8), lib: *sas.exec
         }
     } else if (eqi(proc, "surveyfreq")) {
         var body: std.ArrayList(u8) = .empty;
-        try sas.surveyfreq.run(pcx, &body, toks);
+        var surveyfreq_context = pcx;
+        surveyfreq_context.listing_titles = g; // titles repeat before every BY group
+        try sas.surveyfreq.run(surveyfreq_context, &body, toks);
         if (body.items.len > 0) {
             try g.emitTitles(a, out);
             try out.appendSlice(a, body.items);
