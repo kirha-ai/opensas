@@ -6,6 +6,8 @@ This section is the only current status summary; every section below it is a his
 
 - **State:** ACTIVE. Seven dev slots run the tickets under Live slots, one branch `stat-b7/<ticket>-devN` per worktree `../opensas-devN`. Selection rule from the user: tickets with no dependencies or with all dependencies DONE first; keep every slot busy until the board is DONE. New dev subagents run on Opus 5.5 at the user's request. Devs use only the default `.zig-cache` and stop building below 5 GiB free (24 GiB free after batch 9 verification).
 - **Resumed 2026-11-28 about 07:20Z** after the 06:31Z account usage limit stopped all dev contexts. At the user's direction devs may compare with real SAS via `/Users/thomas/sas/bin/sasrun foo.sas -f text -o - -l /dev/null`, only when truly blocked. Coordinator keep-awake `caffeinate` PID 62218. Coordinator scripts and dev brief live in the session scratchpad `stat/` directory.
+- **Batch 12 verification at exact SHA `56853ce983df02fcc8f8a07d491c734825808fd8` (2026-11-28):** `zig build install` direct 0; whole `tests/STAT15.4-oracle/` moved out of the checkout, then `zig build gate -j2 --summary all` direct 0 — **2637/2637 unit tests**, **2548/2548 corpus**, **11/11 programs**; `zig build install` direct 0; separate supplemental direct 0, **1113/1113**. Oracle restored unchanged, tree clean, HEAD unchanged. Pushed: origin `b9a3dd4e` → `56853ce9`.
+- **Batch 12 — new DONE:** none. **Integrated, PARK:** STAT-INBREED-001 (53/53 exact, rc 0), STAT-CANCORR-001 (419/419 and 846/846 exact, rc 0).
 - **Batch 11 verification at exact SHA `b9a3dd4e7838cc9475a4d8184ff88883ef9a0a5c` (2026-11-28):** `zig build install` direct 0; whole `tests/STAT15.4-oracle/` moved out of the checkout, then `zig build gate -j2 --summary all` direct 0 — **2621/2621 unit tests**, **2537/2537 corpus**, **11/11 programs**; `zig build install` direct 0; separate supplemental direct 0, **1113/1113**. Oracle restored unchanged, tree clean, HEAD unchanged. Pushed: origin `f99879d7` → `b9a3dd4e`.
 - **Batch 11 — new DONE:** none. **Integrated, PARK:** STAT-RSREG-001 (tokens exact, rc 1 vs 0), STAT-LATTICE-001 (110/110 and 222/222 exact, rc 0), STAT-KDE-001 (rc 2: PLOTS=).
 - **Batch 10 verification at exact SHA `f99879d722b7653d6a51198bf48ea8915fccc1e0` (2026-11-28):** `zig build install` direct 0; whole `tests/STAT15.4-oracle/` moved out of the checkout, then `zig build gate -j2 --summary all` direct 0 — **2600/2600 unit tests**, **2520/2520 corpus**, **11/11 programs**; `zig build install` direct 0; separate supplemental direct 0, **1113/1113**. Oracle restored unchanged (1425 entries), tree clean, HEAD unchanged. Pushed: origin `85671880` → `f99879d7`.
@@ -25,11 +27,11 @@ This section is the only current status summary; every section below it is a his
 - **Open review (not done):** the originals of GENMOD-001/002/018, ANOVA-001/007, FREQ-014, PHREG-003 and LIFETEST-001/002 now match exactly but the tickets stay PARK; check each against its full acceptance criteria and recorded remaining gaps before any is marked DONE.
 - **Interrupted by the full disk:** STAT-ANOVA-009 and STAT-PHREG-004 are TODO (no file changed; reading notes in the tickets). STAT-LIFETEST-003 and STAT-GENMOD-003 are PARK with UNCOMMITTED, NEVER-COMPILED source retained in `opensas-dev5` (`stat-b6/lifetest003-dev5`) and `opensas-dev7` (`stat-b6/genmod003-dev7`); do not integrate it before it is built, tested and committed there.
 - **User approval (2026-11-28):** SASHELP sample data taken from SAS's public sample material may be committed to this public repository, for STAT-SASHELP-001 and the later SASHELP tickets; record source and verification, never invent rows, ask before adding a data set above about 2 MB.
-- **Live slots (auto):** dev1 STAT-CLUSTER-001, dev2 STAT-FASTCLUS-001, dev3 STAT-CANDISC-001, dev4 STAT-KRIGE2D-001, dev5 STAT-MODECLUS-001, dev6 STAT-PRINQUAL-001, dev7 STAT-VARCLUS-001.
-- **Integrated locally, awaiting batch verification (auto):** STAT-INBREED-001 (PARK), STAT-CANCORR-001 (PARK).
-- **Counts:** 56 DONE, 111 PARK, 7 DOING, 1248 TODO.
+- **Live slots (auto):** dev1 STAT-CLUSTER-001, dev2 STAT-RMSTREG-001, dev3 STAT-CANDISC-001, dev4 STAT-KRIGE2D-001, dev5 STAT-MODECLUS-001, dev6 STAT-PRINQUAL-001, dev7 STAT-VARCLUS-001.
+- **Held, not integrated (needs a user decision):** STAT-FASTCLUS-001, branch `stat-b7/fastclus001-dev2` (`4d730ead` code and tests, `45dd37bd` ticket note). It adds SASHELP.IRIS (150 rows, Fisher 1936) taken from a SAS 9.4 dump, which is outside the approved SASHELP-ticket, public-sample-material scope.
+- **Counts:** 56 DONE, 112 PARK, 7 DOING, 1247 TODO.
 - **Next:** integrate each returned ticket, refill its slot, verify and push the next batch; run the open review above. Pending user decision: the `best32.` display fix found by STAT-STDIZE-001 changes five existing test expectations (patch kept in the coordinator scratchpad, not applied).
-- **Working branch:** `feat/stat/batch-4`. Last tested and pushed code SHA `b9a3dd4e7838cc9475a4d8184ff88883ef9a0a5c` (batch 11; batch 10 was `f99879d722b7653d6a51198bf48ea8915fccc1e0`). The bullets below this one describe batch 5 and are historical. Later commits that touch only this file are documentation. No PR created or merged; `main` untouched.
+- **Working branch:** `feat/stat/batch-4`. Last tested and pushed code SHA `56853ce983df02fcc8f8a07d491c734825808fd8` (batch 12; batch 11 was `b9a3dd4e7838cc9475a4d8184ff88883ef9a0a5c`). The bullets below this one describe batch 5 and are historical. Later commits that touch only this file are documentation. No PR created or merged; `main` untouched.
 - **Batch 5 verification at that exact SHA (2026-11-28):** whole `tests/STAT15.4-oracle/` moved out of the checkout, then `zig build gate -j2 --summary all` direct exit 0 — **2380/2380 unit tests** (2262 + 102 + 13 + 3), **2409/2409 corpus**, **11/11 programs**; `zig build install` direct 0; separate supplemental direct 0, **1113/1113**. Oracle restored unchanged (1425 entries), tree clean.
 - **Integration method:** seven branches `stat-b5/<ticket>-devN` from `bbf110dd`, applied serially by `git cherry-pick` (17 commits) in the order GENMOD-001, PLM-001, GLIMMIX-001, PHREG-001, ANOVA-001, FREQ-014, LIFETEST-001. Two additive conflicts (PHREG in `src/main.zig`/`src/root.zig`, LIFETEST in `src/root.zig`: adjacent registration lines) were resolved by keeping every line of both sides; nothing else was hand-edited.
 - **Batch 5 — new DONE:** none. **Integrated, PARK:** STAT-PLM-001, STAT-GLIMMIX-001, STAT-FREQ-014, STAT-ANOVA-001, STAT-LIFETEST-001, STAT-PHREG-001, STAT-GENMOD-001. No reference folder became deletion-ready.
@@ -3924,13 +3926,14 @@ Source: S154, Chapter 45, `The FASTCLUS Procedure`, PDF pp. 2893–2942. Tasks i
 
 <a id="stat-fastclus-001"></a>
 
-### [DOING @dev2] STAT-FASTCLUS-001 — FASTCLUS — Data input, variable roles, and basic options
+### [PARK] STAT-FASTCLUS-001 — FASTCLUS — Data input, variable roles, and basic options
 
 - Source: S154 / Chapter 45 / `PROC FASTCLUS Statement` (PDF pp. 2903–2910); S154 / Chapter 45 / `BY Statement` (PDF pp. 2910–2911); S154 / Chapter 45 / `FREQ Statement` (PDF pp. 2911–2912); S154 / Chapter 45 / `ID Statement` (PDF p. 2912); S154 / Chapter 45 / `VAR Statement` (PDF p. 2912); S154 / Chapter 45 / `WEIGHT Statement` (PDF p. 2912); S154 / Chapter 45 / `Missing Values` (PDF p. 2913).
 - Scope: Integrate PROC FASTCLUS declarations, basic options, defaults, and execution boundaries; this ticket establishes parameter objects and result interfaces, while later feature tickets implement model-, algorithm-, and output-specific options. Also implement BY; FREQ; ID; VAR; WEIGHT; Missing Values; apply this procedure's rules for missing values, variable roles, and observation selection.
 - Dependencies: [STAT-COMMON-001](#stat-common-001), [STAT-COMMON-002](#stat-common-002).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-FASTCLUS-001/](tests/STAT15.4-oracle/STAT-FASTCLUS-001/).
 - Acceptance criteria: Create positive and negative parsing cases for the documented declarations and basic options; verify defaults, explicit settings, documented duplicate/conflicting declarations, and locations; valid but unimplemented features must not silently succeed. For BY / FREQ / ID / VAR / WEIGHT / Missing Values, construct valid, missing, empty, and multiple-group inputs; verify included observation counts, variable roles, BY boundaries, level ordering, and the frequency/weight rules relevant to this ticket; assert documented invalid-input behavior.
+- Status (coordinator, 2026-11-28): PARK. Implementation on unintegrated branch `stat-b7/fastclus001-dev2` (`4d730ead`, note `45dd37bd`), held for the user's decision on its SASHELP.IRIS data. Reported there: the FASTCLUS listing of the original is byte-identical, 6 tokens differ in the following Base PROC FREQ step; WEIGHT listing, noninteger FREQ listing, RADIUS= > 0 and MAXITER=0 stay gaps.
 
 <a id="stat-fastclus-002"></a>
 
@@ -13138,7 +13141,7 @@ Source: S154, Chapter 106, `The RMSTREG Procedure`, PDF pp. 8729–8770. Tasks i
 
 <a id="stat-rmstreg-001"></a>
 
-### [TODO] STAT-RMSTREG-001 — RMSTREG — Data input, variable roles, and basic options
+### [DOING @dev2] STAT-RMSTREG-001 — RMSTREG — Data input, variable roles, and basic options
 
 - Source: S154 / Chapter 106 / `PROC RMSTREG Statement` (PDF pp. 8735–8737); S154 / Chapter 106 / `BY Statement` (PDF p. 8737); S154 / Chapter 106 / `FREQ Statement` (PDF p. 8742); S154 / Chapter 106 / `Missing Values` (PDF p. 8757).
 - Scope: Integrate PROC RMSTREG declarations, basic options, defaults, and execution boundaries; this ticket establishes parameter objects and result interfaces, while later feature tickets implement model-, algorithm-, and output-specific options. Also implement BY; FREQ; Missing Values; apply this procedure's rules for missing values, variable roles, and observation selection.
