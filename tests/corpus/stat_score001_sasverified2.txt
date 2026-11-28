@@ -1,0 +1,60 @@
+R1 empty score
+Obs   x1   x2   y
+
+  1    1    2   3
+  2    4    6   5
+  3    2    .   7
+R2 repeated data
+Obs   x1   x2   y   s1   s2
+
+  1    1    2   3    3    1
+  2    4    6   5   10    4
+  3    2    .   7    .    2
+R3 repeated score
+Obs   x1   x2   y   s1   s2
+
+  1    1    2   3    3    1
+  2    4    6   5   10    4
+  3    2    .   7    .    2
+R4 uscore no ustd
+Obs   x1   x2   y   s1
+
+  1    1    2   3    3
+  2    4    6   5   10
+  3    2    .   7    .
+R5 missing mean
+Obs   x1   x2   y    s1     s2
+
+  1    1    2   3   0.5   -0.5
+  2    4    6   5   4.0    1.0
+  3    2    .   7     .    0.0
+R8 score with ustd
+Obs   x1   x2   y     s1     s2
+
+  1    1    2   3   -1.5   -0.5
+  2    4    6   5    2.0    1.0
+  3    2    .   7      .    0.0
+R9 two mean rows
+Obs   x1   x2   y     s1    s2
+
+  1    1    2   3   -0.5   0.5
+  2    4    6   5    3.0   2.0
+  3    2    .   7      .   1.0
+T3 zero ustd
+Obs   x1   x2   y    s1
+
+  1    1    2   3   0.5
+  2    4    6   5   2.0
+  3    2    .   7     .
+T4 missing ustd
+Obs   x1   x2   y    s1
+
+  1    1    2   3   2.5
+  2    4    6   5   8.0
+  3    2    .   7     .
+T6 two std rows
+Obs   x1   x2   y   s1   s2
+
+  1    1    2   3   -2   -1
+  2    4    6   5    3    2
+  3    2    .   7    .    0

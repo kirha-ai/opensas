@@ -1,0 +1,93 @@
+Q1 DATAn
+Obs   x1   x2   y     s1     s2
+
+  1    1    2   3   -1.5   -0.5
+  2    4    6   5    2.0    1.0
+  3    2    .   7      .    0.0
+Q1b DATAn second
+Obs   x1   x2   y     s1     s2
+
+  1    1    2   3   -1.5   -0.5
+  2    4    6   5    2.0    1.0
+  3    2    .   7      .    0.0
+Q2 USCORE USTD
+Obs   x1   x2   y    s1
+
+  1    1    2   3   1.5
+  2    4    6   5   5.0
+  3    2    .   7     .
+Q2b USCORE nostd
+Obs   x1   x2   y   s1
+
+  1    1    2   3    3
+  2    4    6   5   10
+  3    2    .   7    .
+Q4 repeated type
+Obs   x1   x2   y   s1   s2
+
+  1    1    2   3    3    1
+  2    4    6   5   10    4
+  3    2    .   7    .    2
+Q4b repeated out
+Obs   x1   x2   y   s1   s2
+
+  1    1    2   3    3    1
+  2    4    6   5   10    4
+  3    2    .   7    .    2
+Q5 two var
+Obs   x1   x2   y   s1   s2
+
+  1    1    2   3    3    1
+  2    4    6   5   10    4
+  3    2    .   7    .    2
+Q6 mean only
+Obs   x1   x2   y   s1   s2
+
+  1    1    2   3   -3   -1
+  2    4    6   5    4    2
+  3    2    .   7    .    0
+Q6b std only
+Obs   x1   x2   y    s1    s2
+
+  1    1    2   3   1.5   0.5
+  2    4    6   5   5.0   2.0
+  3    2    .   7     .   1.0
+Q7 zero std
+Obs   x1   x2   y     s1     s2
+
+  1    1    2   3   -0.5   -0.5
+  2    4    6   5    1.0    1.0
+  3    2    .   7      .    0.0
+Q7b missing std
+Obs   x1   x2   y     s1     s2
+
+  1    1    2   3   -2.5   -0.5
+  2    4    6   5    3.0    1.0
+  3    2    .   7      .    0.0
+Q8b blank name
+Obs   x1   x2   y   s1
+
+  1    1    2   3    3
+  2    4    6   5   10
+  3    2    .   7    .
+Q10 name on output
+Obs   x1   x2   y   s1   y2
+
+  1    1    2   3    3    1
+  2    4    6   5   10    4
+  3    2    .   7    .    2
+Q12 dsopt score
+Obs   x1   s1
+
+  1    1    3
+  2    4   10
+  3    2    .
+Q14 by diff names
+Obs   x1   x2   y   g   s1   s2   s3
+
+  1    1    2   3   1    3    1    .
+  2    4    6   5   1   10    4    .
+  3    2    .   7   1    .    2    .
+  4    1    2   3   2    3    .    1
+  5    4    6   5   2   10    .    4
+  6    2    .   7   2    .    .    2
