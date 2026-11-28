@@ -3233,7 +3233,14 @@ fn runProc(a: std.mem.Allocator, listing_out: *std.ArrayList(u8), lib: *sas.exec
         scatter_context.graphics = native_graphics_session;
         try sas.sgscatter.run(scatter_context, toks);
     } else if (eqi(proc, "glmmod")) {
-        try sas.glmmod.run(pcx, toks);
+        var glmmod_context = pcx;
+        glmmod_context.listing_titles = g;
+        var body: std.ArrayList(u8) = .empty;
+        try sas.glmmod.run(glmmod_context, &body, toks);
+        if (body.items.len > 0) {
+            try out.appendSlice(a, body.items);
+            try g.emitFootnotes(a, out);
+        }
     } else if (eqi(proc, "mi")) {
         var mi_context = pcx; mi_context.listing_titles = g; try sas.mi.run(mi_context, out, toks);
     } else if (eqi(proc, "anova")) {

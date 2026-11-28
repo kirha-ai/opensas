@@ -236,7 +236,9 @@ fn executePrepared(cx: proc.ProcCtx, out: *std.ArrayList(u8), spec: Spec, prepar
                     if (coefficient == 0) continue;
                     if (terms > 0) try dependencies.appendSlice(cx.arena, if (coefficient < 0) " - " else " + ");
                     const displayed = if (terms > 0) @abs(coefficient) else coefficient;
-                    try dependencies.print(cx.arena, "{s} * {s}", .{ std.mem.trim(u8, try @import("../format.zig").apply(cx.arena, .{ .num = displayed }, "best12."), " "), parameterName(spec, model, k) });
+                    // SAS omits a unit multiplier: "Col7 = Intercept - Col2" (STAT-GLMMOD-001 reference).
+                    const multiplier = std.mem.trim(u8, try @import("../format.zig").apply(cx.arena, .{ .num = displayed }, "best12."), " ");
+                    if (std.mem.eql(u8, multiplier, "1")) try dependencies.appendSlice(cx.arena, parameterName(spec, model, k)) else try dependencies.print(cx.arena, "{s} * {s}", .{ multiplier, parameterName(spec, model, k) });
                     terms += 1;
                 }
                 if (terms == 0) try dependencies.appendSlice(cx.arena, "0");

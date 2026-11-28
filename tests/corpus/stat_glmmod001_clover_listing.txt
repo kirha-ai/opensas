@@ -1,0 +1,110 @@
+Nitrogen Content of Red Clover Plants
+
+The GLMMOD Procedure
+
+Class Level Information
+
+Class Levels Values
+
+Strain 6 3DOK1 3DOK13 3DOK4 3DOK5 3DOK7 COMPOS
+
+
+Number of Observations Read 30
+Number of Observations Used 30
+Nitrogen Content of Red Clover Plants
+
+The GLMMOD Procedure
+
+Parameter Definitions
+
+Name of
+Column Associated CLASS Variable Values
+Number Effect Strain
+
+1 Intercept
+2 Strain 3DOK1
+3 Strain 3DOK13
+4 Strain 3DOK4
+5 Strain 3DOK5
+6 Strain 3DOK7
+7 Strain COMPOS
+Nitrogen Content of Red Clover Plants
+
+The GLMMOD Procedure
+
+Design Points
+
+Observation Column Number
+Number Nitrogen 1 2 3 4 5 6 7
+
+1 19.4 1 1 0 0 0 0 0
+2 32.6 1 1 0 0 0 0 0
+3 27.0 1 1 0 0 0 0 0
+4 32.1 1 1 0 0 0 0 0
+5 33.0 1 1 0 0 0 0 0
+6 17.7 1 0 0 0 1 0 0
+7 24.8 1 0 0 0 1 0 0
+8 27.9 1 0 0 0 1 0 0
+9 25.2 1 0 0 0 1 0 0
+10 24.3 1 0 0 0 1 0 0
+11 17.0 1 0 0 1 0 0 0
+12 19.4 1 0 0 1 0 0 0
+13 9.1 1 0 0 1 0 0 0
+14 11.9 1 0 0 1 0 0 0
+15 15.8 1 0 0 1 0 0 0
+16 20.7 1 0 0 0 0 1 0
+17 21.0 1 0 0 0 0 1 0
+18 20.5 1 0 0 0 0 1 0
+19 18.8 1 0 0 0 0 1 0
+20 18.6 1 0 0 0 0 1 0
+21 14.3 1 0 1 0 0 0 0
+22 14.4 1 0 1 0 0 0 0
+23 11.8 1 0 1 0 0 0 0
+24 11.6 1 0 1 0 0 0 0
+25 14.2 1 0 1 0 0 0 0
+26 17.3 1 0 0 0 0 0 1
+27 19.4 1 0 0 0 0 0 1
+28 19.1 1 0 0 0 0 0 1
+29 16.9 1 0 0 0 0 0 1
+30 20.8 1 0 0 0 0 0 1
+Nitrogen Content of Red Clover Plants
+
+The REG Procedure
+Model: MODEL1
+Dependent Variable: Nitrogen
+
+Number of Observations Read 30
+Number of Observations Used 30
+
+Analysis of Variance
+
+Sum of Mean
+Source DF Squares Square F Value Pr > F
+
+Model 5 847.04667 169.40933 14.37 <.0001
+Error 24 282.92800 11.78867
+Corrected Total 29 1129.97467
+
+Root MSE 3.43346 R-Square 0.7496
+Dependent Mean 19.88667 Adj R-Sq 0.6975
+Coeff Var 17.26515
+
+NOTE: Model is not full rank. Least-squares solutions for the parameters are not unique. Some statistics will be misleading. A reported DF of 0 or B means that
+      the estimate is biased.
+NOTE: The following parameters have been set to 0, since the variables are a linear combination of other variables as shown.
+
+Col7 = Intercept - Col2 - Col3 - Col4 - Col5 - Col6
+
+
+Parameter Estimates
+
+Parameter Standard
+Variable Label DF Estimate Error t Value Pr > |t|
+
+Intercept Intercept B 18.70000 1.53549 12.18 <.0001
+Col2 Strain 3DOK1 B 10.12000 2.17151 4.66 <.0001
+Col3 Strain 3DOK13 B -5.44000 2.17151 -2.51 0.0194
+Col4 Strain 3DOK4 B -4.06000 2.17151 -1.87 0.0738
+Col5 Strain 3DOK5 B 5.28000 2.17151 2.43 0.0229
+Col6 Strain 3DOK7 B 1.22000 2.17151 0.56 0.5794
+Col7 Strain COMPOS 0 0 . . .

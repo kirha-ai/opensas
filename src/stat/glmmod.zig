@@ -22,6 +22,11 @@ pub const Spec = struct {
     namelen: usize = 20,
     zerobased: bool = false,
     noprint: bool = false,
+    by_cols: []const usize = &.{},
+    by_desc: []const bool = &.{},
+    notsorted: bool = false,
+    freq: ?usize = null,
+    weight: ?usize = null,
 };
 fn at(t: []const lex.Token, i: usize, tag: lex.Tag) bool {
     return i < t.len and t[i].tag == tag;
@@ -159,6 +164,7 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
     var model_effects: std.ArrayList(matrix.Effect) = .empty;
     var formats: std.ArrayList(proc.VarSpec) = .empty;
     var model_seen = false;
+    var bys: by.Statements = .{};
     i += 1;
     while (i < t.len and !at(t, i, .eof)) {
         if (at(t, i, .semicolon)) {
@@ -197,8 +203,16 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
         } else if (kw(t, i, "format")) {
             var j = i;
             try proc.parseProcFormat(cx.arena, t, &j, &formats);
-        } else if (kw(t, i, "by") or kw(t, i, "freq") or kw(t, i, "weight")) {
-            return proc.failGap(cx.diags, t[i].line, "PROC GLMMOD: {s} output roles are not implemented", .{t[i].text});
+        } else if (kw(t, i, "by")) {
+            var j = i;
+            try bys.read(cx.arena, t, &j);
+        } else if (kw(t, i, "freq") or kw(t, i, "weight")) {
+            // p.4239: one numeric variable, transferred to the outputs unchanged.
+            if (end != i + 2) return invalid(cx, t, if (end == i + 1) end else i + 2);
+            var j = i + 1;
+            const ci = try variable(cx, result.input.ds, t[0..end], &j);
+            if (result.input.ds.columns.items[ci].type != .num) return cx.diags.fail(error.ParseError, t[i].line, "PROC GLMMOD: {s} variable {s} must be numeric", .{ t[i].text, t[i + 1].text });
+            if (kw(t, i, "freq")) result.freq = ci else result.weight = ci;
         } else if (!kw(t, i, "run") and !kw(t, i, "quit") and !kw(t, i, "where")) return invalid(cx, t, i);
         i = end + 1;
     }
@@ -206,7 +220,12 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
     result.input.ds = try by.withFormats(cx.arena, result.input.ds, formats.items);
     result.model.classes = classes.items;
     result.model.effects = model_effects.items;
-    if (!result.noprint) return proc.failGap(cx.diags, 0, "PROC GLMMOD: direct listing is not implemented; use NOPRINT with OUTDESIGN/OUTPARM", .{});
+    const pb = try bys.resolve(cx.arena, result.input.ds, cx.diags);
+    const cols = try cx.arena.alloc(usize, pb.names.len);
+    for (pb.names, 0..) |n, k| cols[k] = result.input.ds.indexOf(n).?;
+    result.by_cols = cols;
+    result.by_desc = pb.desc;
+    result.notsorted = pb.notsorted;
     return result;
 }
 
@@ -215,59 +234,206 @@ fn outputColumn(cx: proc.ProcCtx, ds: *Dataset, name: []const u8, t: @import("..
     return ds.addColumn(name, t);
 }
 
-pub fn run(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!void {
-    const s = try parse(cx, t);
-    const d = matrix.build(cx.arena, s.input.ds, s.input.ds.rows.items, s.model) catch |err| {
-        if (err == error.OutOfMemory) return err;
-        return cx.diags.fail(error.ExecError, 0, "PROC GLMMOD: invalid effects, no complete observations, or nonfinite design value", .{});
-    };
+fn finiteNumber(v: Value) ?f64 {
+    return if (v == .num and std.math.isFinite(v.num)) v.num else null;
+}
+
+/// Decimal places a listing column needs: the most any value shows under
+/// BEST12., so 27.0 prints beside 19.4 and an integer column prints bare.
+fn decimals(a: A, values: []const f64) !usize {
+    var most: usize = 0;
+    for (values) |x| {
+        if (!std.math.isFinite(x)) continue;
+        const text = std.mem.trim(u8, try @import("../format.zig").apply(a, .{ .num = x }, "best12."), " ");
+        if (std.mem.indexOfAny(u8, text, "eE") != null) return error.Unsupported;
+        if (std.mem.indexOfScalar(u8, text, '.')) |dot| most = @max(most, text.len - dot - 1);
+    }
+    return most;
+}
+fn cell(a: A, x: f64, places: usize) ![]const u8 {
+    if (!std.math.isFinite(x)) return ".";
+    return std.fmt.allocPrint(a, "{d:.[1]}", .{ x, places });
+}
+
+fn heading(cx: proc.ProcCtx, out: *std.ArrayList(u8), s: Spec, first: []const Value) !void {
+    if (cx.listing_titles) |titles| try titles.emitTitles(cx.arena, out) else if (cx.graph_title) |text| try out.print(cx.arena, "\n{s}\n", .{text});
+    if (s.by_cols.len > 0) try by.appendLine(cx.arena, out, s.input.ds, first, s.by_cols);
+    try out.appendSlice(cx.arena, "\nThe GLMMOD Procedure\n");
+}
+
+/// S154 p.4239 "Displayed Output", layout from the SAS reference listing:
+/// class levels and counts, parameter definitions, then the design points.
+fn render(cx: proc.ProcCtx, out: *std.ArrayList(u8), s: Spec, d: matrix.Design, rows: []const []const Value) diag.Error!void {
     const a = cx.arena;
+    const ds = s.input.ds;
+    // FREQ/WEIGHT only decide "Used" (GLM rules: truncated FREQ >= 1, WEIGHT > 0);
+    // the design points list every observation complete in the model variables.
+    var used: usize = 0;
+    var freq_read: f64 = 0;
+    var freq_used: f64 = 0;
+    if (s.freq) |fc| for (rows) |row| if (finiteNumber(row[fc])) |f| if (@trunc(f) >= 1) {
+        freq_read += @trunc(f);
+    };
+    for (d.source_rows) |source| {
+        const row = rows[source];
+        const f: ?f64 = if (s.freq) |fc| finiteNumber(row[fc]) else 1;
+        const w: ?f64 = if (s.weight) |wc| finiteNumber(row[wc]) else 1;
+        if (f == null or @trunc(f.?) < 1 or w == null or !(w.? > 0)) continue;
+        used += 1;
+        freq_used += @trunc(f.?);
+    }
+    try heading(cx, out, s, rows[0]);
+    if (d.classes.len > 0) {
+        try out.appendSlice(a, "\nClass Level Information\n\nClass Levels Values\n");
+        for (d.classes) |class| {
+            try out.print(a, "\n{s} {d}", .{ ds.columns.items[class.column].name, class.map.levels.len });
+            for (class.map.levels) |level| try out.print(a, " {s}", .{level.label});
+            try out.append(a, '\n');
+        }
+        try out.append(a, '\n');
+    }
+    try out.print(a, "\nNumber of Observations Read {d}\nNumber of Observations Used {d}\n", .{ rows.len, used });
+    if (s.freq != null) try out.print(a, "Sum of Frequencies Read {d}\nSum of Frequencies Used {d}\n", .{ freq_read, freq_used });
+
+    try heading(cx, out, s, rows[0]);
+    try out.appendSlice(a, "\nParameter Definitions\n\nName of\nColumn Associated");
+    if (d.classes.len > 0) try out.appendSlice(a, " CLASS Variable Values");
+    try out.appendSlice(a, "\nNumber Effect");
+    for (d.classes) |class| try out.print(a, " {s}", .{ds.columns.items[class.column].name});
+    try out.appendSlice(a, "\n\n");
+    for (d.columns, 0..) |column, j| {
+        try out.print(a, "{d} {s}", .{ j + @as(usize, if (s.zerobased) 0 else 1), column.effect_name[0..@min(s.namelen, column.effect_name.len)] });
+        for (d.classes, 0..) |class, k| if (column.class_values[k]) |level| try out.print(a, " {s}", .{class.map.levels[level].label});
+        try out.append(a, '\n');
+    }
+
+    try heading(cx, out, s, rows[0]);
+    try out.appendSlice(a, "\nDesign Points\n\nObservation Column Number\nNumber");
+    var roles: std.ArrayList(usize) = .empty;
+    try roles.append(a, s.model.response);
+    if (s.freq) |c| try roles.append(a, c);
+    if (s.weight) |c| try roles.append(a, c);
+    for (roles.items) |c| try out.print(a, " {s}", .{ds.columns.items[c].name});
+    for (0..d.p) |j| try out.print(a, " {d}", .{j + @as(usize, if (s.zerobased) 0 else 1)});
+    try out.appendSlice(a, "\n\n");
+    const column = try a.alloc(f64, d.n);
+    const role_places = try a.alloc(usize, roles.items.len);
+    for (roles.items, role_places) |c, *places| {
+        for (d.source_rows, column) |source, *x| x.* = if (rows[source][c] == .num) rows[source][c].num else std.math.nan(f64);
+        places.* = decimals(a, column) catch return proc.failGap(cx.diags, 0, "PROC GLMMOD: design points with exponent-notation values are not implemented", .{});
+    }
+    const design_places = try a.alloc(usize, d.p);
+    for (design_places, 0..) |*places, j| {
+        for (column, 0..) |*x, i| x.* = d.x[i * d.p + j];
+        places.* = decimals(a, column) catch return proc.failGap(cx.diags, 0, "PROC GLMMOD: design points with exponent-notation values are not implemented", .{});
+    }
+    for (d.source_rows, 0..) |source, i| {
+        try out.print(a, "{d}", .{i + 1});
+        for (roles.items, role_places) |c, places| try out.print(a, " {s}", .{try cell(a, if (rows[source][c] == .num) rows[source][c].num else std.math.nan(f64), places)});
+        for (design_places, 0..) |places, j| try out.print(a, " {s}", .{try cell(a, d.x[i * d.p + j], places)});
+        try out.append(a, '\n');
+    }
+}
+
+fn columnLabel(a: A, d: matrix.Design, column: matrix.Column) ![]const u8 {
+    var label: std.ArrayList(u8) = .empty;
+    try label.appendSlice(a, column.effect_name);
+    for (d.classes, 0..) |class, k| if (column.class_values[k]) |level| try label.print(a, " {s}", .{class.map.levels[level].label});
+    return label.items;
+}
+
+fn sameColumns(x: matrix.Design, y: matrix.Design) bool {
+    if (x.p != y.p) return false;
+    for (x.columns, y.columns) |l, r| if (!std.mem.eql(u8, l.effect_name, r.effect_name)) return false;
+    return true;
+}
+
+pub fn run(cx: proc.ProcCtx, out: *std.ArrayList(u8), t: []const lex.Token) diag.Error!void {
+    const s = try parse(cx, t);
+    const a = cx.arena;
+    const groups = try by.checkedSlices(a, s.input.ds, s.by_cols, s.by_desc, s.notsorted, cx.diags);
+    if (groups.len == 0) return cx.diags.fail(error.ExecError, 0, "PROC GLMMOD: no observations in the input data set", .{});
+    const designs = try a.alloc(matrix.Design, groups.len);
+    for (groups, designs) |group, *d| {
+        if (s.freq orelse s.weight) |_| for (group.rows) |row| for ([_]?usize{ s.freq, s.weight }) |role| if (role) |c| {
+            if (row[c] == .num and !std.math.isNan(row[c].num) and !std.math.isFinite(row[c].num)) return cx.diags.fail(error.ExecError, 0, "PROC GLMMOD: nonfinite FREQ or WEIGHT value", .{});
+        };
+        d.* = matrix.build(a, s.input.ds, group.rows, s.model) catch |err| {
+            if (err == error.OutOfMemory) return err;
+            return cx.diags.fail(error.ExecError, 0, "PROC GLMMOD: invalid effects, no complete observations, or nonfinite design value", .{});
+        };
+    }
+    // ponytail: one OUTDESIGN/OUTPARM layout for all BY groups; groups whose
+    // observed levels give different columns would need per-group layouts.
+    if ((s.outdesign != null or s.outparm != null) and designs.len > 1) for (designs[1..]) |d| if (!sameColumns(designs[0], d))
+        return proc.failGap(cx.diags, 0, "PROC GLMMOD: output data sets for BY groups with different design columns are not implemented", .{});
+    var body: std.ArrayList(u8) = .empty;
+    if (!s.noprint) for (groups, designs) |group, d| try render(cx, &body, s, d, group.rows);
+
+    const ds = s.input.ds;
     var design_output: ?*Dataset = null;
     var parm_output: ?*Dataset = null;
     if (s.outdesign) |name| {
         if (cx.lib.readonlyOut(name)) return cx.lib.failReadonly(name);
         const output = try a.create(Dataset);
         output.* = Dataset.init(a, name);
-        const response = s.input.ds.columns.items[s.model.response];
-        _ = try output.addColumnLike(response.name, response);
-        for (0..d.p) |j| {
+        var roles: std.ArrayList(usize) = .empty;
+        try roles.appendSlice(a, s.by_cols);
+        try roles.append(a, s.model.response);
+        if (s.freq) |c| try roles.append(a, c);
+        if (s.weight) |c| try roles.append(a, c);
+        for (roles.items) |c| if (output.indexOf(ds.columns.items[c].name) == null) {
+            _ = try output.addColumnLike(ds.columns.items[c].name, ds.columns.items[c]);
+        };
+        const first = designs[0];
+        for (0..first.p) |j| {
             const colname = try std.fmt.allocPrint(a, "{s}{d}", .{ s.prefix, j + @as(usize, if (s.zerobased) 0 else 1) });
             if (colname.len > 32) return cx.diags.fail(error.ParseError, 0, "PROC GLMMOD: design column name exceeds 32 characters", .{});
             _ = try outputColumn(cx, output, colname, .num);
+            output.setLabel(colname, try columnLabel(a, first, first.columns[j]));
         }
-        const cells = try a.alloc(Value, d.p + 1);
-        for (d.source_rows, 0..) |source, i| {
-            cells[0] = s.input.ds.rows.items[source][s.model.response];
-            for (0..d.p) |j| cells[j + 1] = .{ .num = d.x[i * d.p + j] };
+        const width = output.columns.items.len;
+        const cells = try a.alloc(Value, width);
+        for (groups, designs) |group, d| for (d.source_rows, 0..) |source, i| {
+            const row = group.rows[source];
+            for (output.columns.items[0 .. width - d.p], 0..) |col, k| cells[k] = row[ds.indexOf(col.name).?];
+            for (0..d.p) |j| cells[width - d.p + j] = .{ .num = d.x[i * d.p + j] };
             try output.appendRow(cells);
-        }
+        };
         design_output = output;
     }
     if (s.outparm) |name| {
         if (cx.lib.readonlyOut(name)) return cx.lib.failReadonly(name);
         const output = try a.create(Dataset);
         output.* = Dataset.init(a, name);
+        for (s.by_cols) |c| _ = try outputColumn(cx, output, ds.columns.items[c].name, ds.columns.items[c].type);
+        for (s.by_cols, 0..) |c, k| output.columns.items[k] = ds.columns.items[c];
         _ = try outputColumn(cx, output, "_COLNUM_", .num);
         output.setLabel("_COLNUM_", "Design matrix column number");
         _ = try outputColumn(cx, output, "EFFNAME", .char);
         output.setLen("EFFNAME", s.namelen);
         output.setLabel("EFFNAME", "Effect name");
-        for (d.classes) |class| {
-            const original = s.input.ds.columns.items[class.column];
+        for (designs[0].classes) |class| {
+            const original = ds.columns.items[class.column];
             _ = try outputColumn(cx, output, original.name, .char);
             var width = if (original.type == .char) original.len orelse 8 else @as(usize, 12);
-            for (class.map.levels) |level| width = @max(width, level.label.len);
+            for (designs) |d| for (d.classes) |c| if (c.column == class.column) {
+                for (c.map.levels) |level| width = @max(width, level.label.len);
+            };
             output.setLen(original.name, width);
         }
-        const cells = try a.alloc(Value, d.classes.len + 2);
-        for (d.columns, 0..) |column, j| {
-            cells[0] = .{ .num = @floatFromInt(j + @as(usize, if (s.zerobased) 0 else 1)) };
-            cells[1] = .{ .str = column.effect_name[0..@min(s.namelen, column.effect_name.len)] };
-            for (d.classes, 0..) |class, k| cells[k + 2] = .{ .str = if (column.class_values[k]) |level| class.map.levels[level].label else "" };
+        const nb = s.by_cols.len;
+        const cells = try a.alloc(Value, designs[0].classes.len + 2 + nb);
+        for (groups, designs) |group, d| for (d.columns, 0..) |column, j| {
+            for (s.by_cols, 0..) |c, k| cells[k] = group.rows[0][c];
+            cells[nb] = .{ .num = @floatFromInt(j + @as(usize, if (s.zerobased) 0 else 1)) };
+            cells[nb + 1] = .{ .str = column.effect_name[0..@min(s.namelen, column.effect_name.len)] };
+            for (d.classes, 0..) |class, k| cells[nb + k + 2] = .{ .str = if (column.class_values[k]) |level| class.map.levels[level].label else "" };
             try output.appendRow(cells);
-        }
+        };
         parm_output = output;
     }
+    try out.appendSlice(a, body.items);
     if (design_output) |output| try cx.lib.put(output.name, output);
     if (parm_output) |output| try cx.lib.put(output.name, output);
 }
@@ -291,7 +457,8 @@ test "GLMMOD actual OUTPARM and OUTDESIGN data match all original oracle fields"
     try fixture(a, &lib);
     var diags = diag.Diagnostics.init(a);
     const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &diags };
-    try run(cx, try lex.tokenize(a, "proc glmmod data=design_input outdesign=matrix outparm=columns noprint; class group h; model y=group h group*h x group*x; run;", &diags));
+    var sink: std.ArrayList(u8) = .empty;
+    try run(cx, &sink, try lex.tokenize(a, "proc glmmod data=design_input outdesign=matrix outparm=columns noprint; class group h; model y=group h group*h x group*x; run;", &diags));
     const x = lib.find("matrix").?;
     const p = lib.find("columns").?;
     try std.testing.expectEqual(@as(usize, 12), x.rowCount());
@@ -337,7 +504,8 @@ test "GLMMOD bar polynomial expansion noint names prefix and visible unsupported
     try fixture(a, &lib);
     var d = diag.Diagnostics.init(a);
     const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &d };
-    try run(cx, try lex.tokenize(a, "proc glmmod data=design_input outdesign=d outparm=p prefix=X zerobased noprint; model y=x|x|x / noint; run;", &d));
+    var sink: std.ArrayList(u8) = .empty;
+    try run(cx, &sink, try lex.tokenize(a, "proc glmmod data=design_input outdesign=d outparm=p prefix=X zerobased noprint; model y=x|x|x / noint; run;", &d));
     const p = lib.find("p").?;
     const x = lib.find("d").?;
     try std.testing.expectEqual(@as(usize, 3), p.rowCount());
@@ -345,7 +513,7 @@ test "GLMMOD bar polynomial expansion noint names prefix and visible unsupported
     try std.testing.expectEqualStrings("X0", x.columns.items[1].name);
     try std.testing.expectEqual(@as(f64, 0), p.rows.items[0][0].num);
     try std.testing.expectEqual(@as(f64, 1728), x.rows.items[11][3].num);
-    try run(cx, try lex.tokenize(a, "proc glmmod data=design_input order=data outdesign=ordered outparm=ordered_parm noprint; class group h; model y=h*group / noint; run;", &d));
+    try run(cx, &sink, try lex.tokenize(a, "proc glmmod data=design_input order=data outdesign=ordered outparm=ordered_parm noprint; class group h; model y=h*group / noint; run;", &d));
     const ordered = lib.find("ordered").?;
     const ordered_parm = lib.find("ordered_parm").?;
     try std.testing.expectEqual(@as(usize, 6), ordered_parm.rowCount());
@@ -356,7 +524,7 @@ test "GLMMOD bar polynomial expansion noint names prefix and visible unsupported
     try std.testing.expectEqual(@as(f64, 1), ordered.rows.items[1][2].num);
     diag.resetGap();
     defer diag.resetGap();
-    try std.testing.expectError(error.ParseError, run(cx, try lex.tokenize(a, "proc glmmod data=design_input; model y=x; run;", &d)));
+    try std.testing.expectError(error.ParseError, run(cx, &sink, try lex.tokenize(a, "proc glmmod data=design_input; class group / truncate; model y=group; run;", &d)));
     try std.testing.expect(diag.gapHit());
 }
 
@@ -368,13 +536,57 @@ test "GLMMOD failures are captured before output publication" {
     try fixture(a, &lib);
     var d = diag.Diagnostics.init(a);
     const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &d };
-    try std.testing.expectError(error.ExecError, run(cx, try lex.tokenize(a, "proc glmmod data=design_input outdesign=bad noprint; model y=group; run;", &d)));
+    var sink: std.ArrayList(u8) = .empty;
+    try std.testing.expectError(error.ExecError, run(cx, &sink, try lex.tokenize(a, "proc glmmod data=design_input outdesign=bad noprint; model y=group; run;", &d)));
     try std.testing.expect(d.hasErrors());
     try std.testing.expect(lib.find("bad") == null);
-    try std.testing.expectError(error.ParseError, run(cx, try lex.tokenize(a, "proc glmmod data=design_input noprint; class group; run;", &d)));
+    try std.testing.expectError(error.ParseError, run(cx, &sink, try lex.tokenize(a, "proc glmmod data=design_input noprint; class group; run;", &d)));
     diag.resetGap();
     defer diag.resetGap();
-    try std.testing.expectError(error.ParseError, run(cx, try lex.tokenize(a, "proc glmmod data=design_input outdesign=bad noprint; by group; model y=x; run;", &d)));
-    try std.testing.expect(diag.gapHit());
+    try std.testing.expectError(error.ParseError, run(cx, &sink, try lex.tokenize(a, "proc glmmod data=design_input outdesign=bad noprint; by descending group; model y=x; run;", &d)));
     try std.testing.expect(lib.find("bad") == null);
+}
+
+test "STAT-GLMMOD-001 listing counts, FREQ/WEIGHT roles, labels and BY outputs" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var lib = @import("../exec.zig").Library.init(a);
+    var d = diag.Diagnostics.init(a);
+    const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &d };
+    // Rows: missing CLASS; complete; missing y; missing FREQ; zero FREQ; negative WEIGHT.
+    const ds = try a.create(Dataset);
+    ds.* = Dataset.init(a, "roles");
+    _ = try ds.addColumn("g", .char);
+    for ([_][]const u8{ "y", "f", "w" }) |nm| _ = try ds.addColumn(nm, .num);
+    const nan = std.math.nan(f64);
+    const g = [_][]const u8{ "", "A", "A", "A", "B", "B" };
+    const y = [_]f64{ 6, 1.5, nan, 3, 4, 5 };
+    const f = [_]f64{ 1, 2, 1, nan, 0, 1 };
+    const w = [_]f64{ 1, 1, 1, 1, 1, -1 };
+    for (0..6) |i| try ds.appendRow(&.{ .{ .str = g[i] }, .{ .num = y[i] }, .{ .num = f[i] }, .{ .num = w[i] } });
+    try lib.put("roles", ds);
+    var out: std.ArrayList(u8) = .empty;
+    try run(cx, &out, try lex.tokenize(a, "proc glmmod data=roles outdesign=od outparm=op; class g; freq f; weight w; model y=g; run;", &d));
+    const text = out.items;
+    // Read 6, design rows 4 (y, g complete), Used 1 (only row 1 has FREQ>=1 and WEIGHT>0).
+    try std.testing.expect(std.mem.indexOf(u8, text, "Number of Observations Read 6\nNumber of Observations Used 1\nSum of Frequencies Read 5\nSum of Frequencies Used 2\n") != null);
+    try std.testing.expect(std.mem.indexOf(u8, text, "Number y f w 1 2 3\n\n1 1.5 2 1 1 1 0\n2 3.0 . 1 1 1 0\n3 4.0 0 1 1 0 1\n4 5.0 1 -1 1 0 1\n") != null);
+    const od = lib.find("od").?;
+    try std.testing.expectEqual(@as(usize, 4), od.rowCount());
+    for (od.columns.items, [_][]const u8{ "y", "f", "w", "Col1", "Col2", "Col3" }) |col, name| try std.testing.expectEqualStrings(name, col.name);
+    try std.testing.expectEqualStrings("Intercept", od.columns.items[3].label.?);
+    try std.testing.expectEqualStrings("g B", od.columns.items[5].label.?);
+    // BY: variables lead both outputs; parameter rows repeat per group.
+    try run(cx, &out, try lex.tokenize(a, "proc glmmod data=roles outdesign=bd outparm=bp noprint; by g; model y=w; run;", &d));
+    const bp = lib.find("bp").?;
+    try std.testing.expectEqualStrings("g", bp.columns.items[0].name);
+    try std.testing.expectEqual(@as(usize, 6), bp.rowCount());
+    try std.testing.expectEqualStrings("A", bp.rows.items[2][0].str);
+    try std.testing.expectEqualStrings("w", bp.rows.items[3][2].str);
+    try std.testing.expectEqualStrings("g", lib.find("bd").?.columns.items[0].name);
+    try std.testing.expectEqual(@as(usize, 5), lib.find("bd").?.rowCount());
+    // Unsorted BY is a user error that publishes nothing.
+    try std.testing.expectError(error.ParseError, run(cx, &out, try lex.tokenize(a, "proc glmmod data=roles outdesign=never; by descending g; model y=w; run;", &d)));
+    try std.testing.expect(lib.find("never") == null);
 }
