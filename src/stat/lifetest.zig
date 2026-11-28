@@ -403,9 +403,13 @@ pub fn productLimit(a: A, input: []const Obs) !Stratum {
         var first: ?usize = null;
         var last: ?usize = null;
         for (surv.items, ses.items, 0..) |value, se, k| {
-            // At S = 0 the statistic is undefined, so the point cannot be
-            // excluded; it may only extend the upper end of the set.
-            const inside = if (se) |e| (e > 0 and @abs((@log(-@log(value)) - @log(-@log(target))) / (e / (value * @log(value)))) <= z975) else first != null;
+            // At S = 0 the statistic is undefined. The SAS listing behind the
+            // default stratified fixture leaves the upper limit missing when
+            // the event time just before it is in the set, and the guide's
+            // Figure 77.4 median (upper 253 although S reaches 0 at 323)
+            // shows the point does not rejoin a set that has already ended:
+            // it only extends a set that reaches the preceding event time.
+            const inside = if (se) |e| (e > 0 and @abs((@log(-@log(value)) - @log(-@log(target))) / (e / (value * @log(value)))) <= z975) else (k > 0 and last != null and last.? == k - 1);
             if (se == null and first == null) st.unverified = "quartile limits when the first eligible event time has survival 0";
             if (inside) {
                 if (first == null) first = k;
@@ -508,8 +512,36 @@ pub fn homogeneity(a: A, obs: []const Obs, k: usize) !Homogeneity {
     return result;
 }
 
-fn chiProbability(x: f64, df: f64) f64 {
+pub fn chiProbability(x: f64, df: f64) f64 {
     return 1 - fns.gammaP(df / 2, x / 2);
+}
+
+pub const Equality = struct { chi: f64, df: usize };
+/// ponytail: a pivot below 1e-9 of its original diagonal is treated as a
+/// linear dependency. The K x K rank covariance has zero row sums, so its
+/// dependent pivot is pure rounding (about 1e-16 relative); a matrix that is
+/// merely ill conditioned to 1e-9 would need a scaled decomposition.
+const singular_tolerance: f64 = 1e-9;
+
+/// Homogeneity statistic v' V^- v, physical p.5682: V^- is the generalized
+/// inverse obtained by eliminating the diagonal pivots in order and skipping
+/// linearly dependent ones; the degrees of freedom are the rank of V.
+pub fn quadraticForm(a: A, v: []const f64, cov: []const f64, k: usize) !Equality {
+    const m = try a.dupe(f64, cov);
+    const y = try a.dupe(f64, v);
+    var result: Equality = .{ .chi = 0, .df = 0 };
+    for (0..k) |p| {
+        const pivot = m[p * k + p];
+        if (!(pivot > singular_tolerance * cov[p * k + p])) continue;
+        result.chi += y[p] * y[p] / pivot;
+        result.df += 1;
+        for (p + 1..k) |i| {
+            const f = m[i * k + p] / pivot;
+            y[i] -= f * y[p];
+            for (p..k) |j| m[i * k + j] -= f * m[p * k + j];
+        }
+    }
+    return result;
 }
 
 /// Per-BY-group selections; raises the documented data errors.
@@ -574,7 +606,6 @@ fn render(cx: proc.ProcCtx, out: *Out, s: Spec, sel: Selected) diag.Error!void {
         for (sel.obs) |o| if (o.stratum == k) try members.append(a, o);
         st.* = try productLimit(a, members.items);
         if (st.unverified) |reason| return gap(cx, 0, "{s} is not verified", .{reason});
-        if (st.tied_events) return gap(cx, 0, "listing of tied event times within a stratum is not verified", .{});
     }
     const h = try homogeneity(a, sel.obs, 2);
     for ([_]f64{ h.logrank[0], h.wilcoxon[0] }) |x| if (!(@abs(x) >= 0.1 and @abs(x) < 10)) return gap(cx, 0, "rank statistic display outside 0.1 <= |x| < 10 is not verified", .{});
@@ -656,9 +687,13 @@ fn render(cx: proc.ProcCtx, out: *Out, s: Spec, sel: Selected) diag.Error!void {
         }
     }
     try body.appendSlice(a, "\n\n       Test of Equality over Strata\n \n                                   Pr >\nTest      Chi-Square      DF    Chi-Square\n\n");
+    const logrank = try quadraticForm(a, h.logrank, h.logrank_cov, 2);
+    const wilcoxon = try quadraticForm(a, h.wilcoxon, h.wilcoxon_cov, 2);
+    // The covariance range checks above guarantee rank 1 for two strata.
+    if (logrank.df != 1 or wilcoxon.df != 1) return gap(cx, 0, "equality tests with a singular two-stratum covariance are not verified", .{});
     const tests = [_]struct { name: []const u8, chi: f64 }{
-        .{ .name = "Log-Rank", .chi = h.logrank[0] * h.logrank[0] / h.logrank_cov[0] },
-        .{ .name = "Wilcoxon", .chi = h.wilcoxon[0] * h.wilcoxon[0] / h.wilcoxon_cov[0] },
+        .{ .name = "Log-Rank", .chi = logrank.chi },
+        .{ .name = "Wilcoxon", .chi = wilcoxon.chi },
         .{ .name = "-2Log(LR)", .chi = h.lr },
     };
     for (tests) |tst| {

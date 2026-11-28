@@ -1,7 +1,7 @@
 //! STAT-LIFETEST-001 permanent checks: declarations, roles, observation
 //! selection, BY boundaries, execution boundaries, and the hand-derived
 //! product-limit and homogeneity numbers behind the default stratified listing.
-//! All data are invented.
+//! Data are invented, except the published guide sample named where used.
 const std = @import("std");
 const proc = @import("../proc.zig");
 const diag = @import("../diag.zig");
@@ -351,4 +351,198 @@ test "STAT-LIFETEST-001 default stratified listing NOTABLE and all-censored prod
     const tied = try lifetest.productLimit(fx.a(), &.{ .{ .time = 1, .event = true, .stratum = 0 }, .{ .time = 1, .event = true, .stratum = 0 }, .{ .time = 2, .event = false, .stratum = 0 }, .{ .time = 3, .event = true, .stratum = 0 } });
     try expect(tied.tied_events and tied.rows[0].survival == null);
     try close(0.5, tied.rows[1].survival.?); // (4 - 2) / 4
+}
+
+// ---------------------------------------------------------------------------
+// STAT-LIFETEST-002: generalised estimator and K-sample comparison checks.
+
+fn ob(time: f64, event: bool, stratum: usize) lifetest.Obs {
+    return .{ .time = time, .event = event, .stratum = stratum };
+}
+
+/// Three invented strata with tied events within and across strata.
+/// Pooled event times 1, 2, 3, 4 with (n; n_k; d; d_k):
+///   t=1: 9; 3,3,3; 2; 1,1,0     t=2: 7; 2,2,3; 3; 1,0,2
+///   t=3: 4; 1,2,1; 1; 0,1,0     t=4: 2; 0,1,1; 1; 0,1,0
+const three = [_]lifetest.Obs{
+    ob(1, true, 0), ob(2, true, 0), ob(3, false, 0),
+    ob(1, true, 1), ob(3, true, 1), ob(4, true, 1),
+    ob(2, true, 2), ob(2, true, 2), ob(5, false, 2),
+};
+
+test "STAT-LIFETEST-002 three strata with ties match exact rational scores covariances and K-1 df tests" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const h = try lifetest.homogeneity(a, &three, 3);
+    // Observed minus expected d*n_k/n summed over the four event times.
+    const u = [_]f64{ 19.0 / 84.0, 40.0 / 84.0, -59.0 / 84.0 };
+    for (u, h.logrank) |e, x| try close(e, x);
+    // Weighted by n = 9, 7, 4, 2: (3+1-1, 3-6+2+1, -6+5-1-1).
+    try close(3, h.wilcoxon[0]);
+    try std.testing.expectApproxEqAbs(@as(f64, 0), h.wilcoxon[1], 1e-12); // exact cancellation; absolute bound of a few ulps of the summands (<= 6)
+    try close(-3, h.wilcoxon[2]);
+    // d(n-d)/(n-1) = 7/4, 2, 1, 1 times (n_k/n)(delta - n_h/n).
+    const v = [_]f64{
+        7.0 / 18.0 + 20.0 / 49.0 + 3.0 / 16.0,  -7.0 / 36.0 - 8.0 / 49.0 - 1.0 / 8.0,              -7.0 / 36.0 - 12.0 / 49.0 - 1.0 / 16.0,
+        -7.0 / 36.0 - 8.0 / 49.0 - 1.0 / 8.0,   7.0 / 18.0 + 20.0 / 49.0 + 1.0 / 4.0 + 1.0 / 4.0,  -7.0 / 36.0 - 12.0 / 49.0 - 1.0 / 8.0 - 1.0 / 4.0,
+        -7.0 / 36.0 - 12.0 / 49.0 - 1.0 / 16.0, -7.0 / 36.0 - 12.0 / 49.0 - 1.0 / 8.0 - 1.0 / 4.0, 7.0 / 18.0 + 24.0 / 49.0 + 3.0 / 16.0 + 1.0 / 4.0,
+    };
+    for (v, h.logrank_cov) |e, x| try close(e, x);
+    // Squared weights 81, 49, 16, 4.
+    const w = [_]f64{ 54.5, -25.75, -28.75, -25.75, 56.5, -30.75, -28.75, -30.75, 59.5 };
+    for (w, h.wilcoxon_cov) |e, x| try close(e, x);
+    // Rank 2: the statistic equals the closed-form 2x2 quadratic form on any
+    // two groups; the hand value uses groups 1 and 2.
+    const lr = try lifetest.quadraticForm(a, h.logrank, h.logrank_cov, 3);
+    try expectEqual(@as(usize, 2), lr.df);
+    try close((u[0] * u[0] * v[4] - 2 * u[0] * u[1] * v[1] + u[1] * u[1] * v[0]) / (v[0] * v[4] - v[1] * v[1]), lr.chi);
+    const wx = try lifetest.quadraticForm(a, h.wilcoxon, h.wilcoxon_cov, 3);
+    try expectEqual(@as(usize, 2), wx.df);
+    // 9 * 56.5 / (54.5 * 56.5 - 25.75^2); 1e-12 relative still exceeds the
+    // rounding of the residual 0 score by three orders of magnitude.
+    try close(508.5 / 2416.1875, wx.chi);
+    // Exponential model: events 2, 3, 2 in 6, 8 and 9 time units.
+    try close(2 * 7 * @log(23.0 / 7.0) - 2 * (2 * @log(6.0 / 2.0) + 3 * @log(8.0 / 3.0) + 2 * @log(9.0 / 2.0)), h.lr);
+
+    // Relabelling the strata permutes scores and leaves the statistics alone.
+    var relabelled = three;
+    const map = [_]usize{ 2, 0, 1 };
+    for (&relabelled) |*o| o.stratum = map[o.stratum];
+    const hp = try lifetest.homogeneity(a, &relabelled, 3);
+    for (0..3) |g| {
+        try close(h.logrank[g], hp.logrank[map[g]]);
+        for (0..3) |l| try close(h.wilcoxon_cov[g * 3 + l], hp.wilcoxon_cov[map[g] * 3 + map[l]]);
+    }
+    const lrp = try lifetest.quadraticForm(a, hp.logrank, hp.logrank_cov, 3);
+    try expectEqual(@as(usize, 2), lrp.df);
+    // Different elimination order: agreement to 1e-9 follows from the
+    // condition number of the 2x2 blocks (below 10) times f64 rounding.
+    try std.testing.expectApproxEqRel(lr.chi, lrp.chi, 1e-9);
+    try close(h.lr, hp.lr);
+
+    // A stratum never at risk at an event time has a zero covariance row: the
+    // rank, and so the degrees of freedom, drops to that of the other strata.
+    var with_idle: [10]lifetest.Obs = undefined;
+    @memcpy(with_idle[0..9], &three);
+    with_idle[9] = ob(0.5, false, 3);
+    const hi = try lifetest.homogeneity(a, &with_idle, 4);
+    try expectEqual(@as(f64, 0), hi.logrank[3]);
+    try expectEqual(@as(f64, 0), hi.logrank_cov[15]);
+    const lri = try lifetest.quadraticForm(a, hi.logrank, hi.logrank_cov, 4);
+    try expectEqual(@as(usize, 2), lri.df);
+    try close(lr.chi, lri.chi);
+
+    // Tied events in one stratum: S = 1/3 after 2 of 3 fail at t=2.
+    const tied = try lifetest.productLimit(a, three[6..9]);
+    try expect(tied.tied_events);
+    try close(1.0 / 3.0, tied.survival[0]);
+    try close(1.0 / 3.0 * @sqrt(2.0 / 3.0), tied.se[0].?); // Greenwood d/(n(n-d)) = 2/(3*1)
+}
+
+/// Published sample: the rat carcinogen trial of the SAS/STAT 15.4 LIFETEST
+/// "Getting Started" section (Days, Status; 0 = censored).
+const drug_x = [_][2]f64{ .{ 179, 1 }, .{ 378, 0 }, .{ 256, 1 }, .{ 355, 1 }, .{ 262, 1 }, .{ 319, 1 }, .{ 256, 1 }, .{ 256, 1 }, .{ 255, 1 }, .{ 171, 1 }, .{ 224, 0 }, .{ 325, 1 }, .{ 225, 1 }, .{ 325, 1 }, .{ 287, 1 }, .{ 217, 1 }, .{ 319, 1 }, .{ 255, 1 }, .{ 264, 1 }, .{ 256, 1 } };
+const placebo = [_][2]f64{ .{ 237, 0 }, .{ 291, 1 }, .{ 156, 1 }, .{ 323, 1 }, .{ 270, 1 }, .{ 253, 1 }, .{ 257, 1 }, .{ 206, 1 }, .{ 242, 1 }, .{ 206, 1 }, .{ 157, 1 }, .{ 237, 1 }, .{ 249, 1 }, .{ 211, 1 }, .{ 180, 1 }, .{ 229, 1 }, .{ 226, 1 }, .{ 234, 1 }, .{ 268, 0 }, .{ 209, 1 } };
+
+/// A published figure rounded to `decimals` places bounds the true value to
+/// half a unit of the last printed place.
+fn printed(expected: f64, actual: f64, decimals: f64) !void {
+    try std.testing.expectApproxEqAbs(expected, actual, 0.5 * std.math.pow(f64, 10, -decimals) * (1 + 1e-9));
+}
+
+test "STAT-LIFETEST-002 published two-treatment sample reproduces the documented estimates and tests" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var all: std.ArrayList(lifetest.Obs) = .empty;
+    for (drug_x) |r| try all.append(a, ob(r[0], r[1] == 1, 0));
+    for (placebo) |r| try all.append(a, ob(r[0], r[1] == 1, 1));
+    const x = try lifetest.productLimit(a, all.items[0..20]);
+    try std.testing.expectEqualSlices(f64, &.{ 171, 179, 217, 225, 255, 256, 262, 264, 287, 319, 325, 355 }, x.event_times);
+    for ([_]f64{ 0.95, 0.9, 0.85, 0.7969, 0.6906, 0.4781, 0.425, 0.3719, 0.3187, 0.2125, 0.1062, 0.0531 }, x.survival) |e, s| try printed(e, s, 4);
+    for ([_]f64{ 0.0487, 0.0671, 0.0798, 0.0908, 0.1053, 0.1146, 0.1135, 0.1111, 0.1071, 0.0942, 0.0710, 0.0517 }, x.se) |e, s| try printed(e, s.?, 4);
+    try expectEqual(@as(usize, 18), x.failed);
+    try expect(x.last_censored and x.tied_events and x.unverified == null);
+    // Row counters of the tied block at 256 (Figure 77.1): failed 7..10,
+    // left 12..9; these are the 8th to 11th rows after the time-0 line.
+    try expect(x.rows[7].time == 256 and x.rows[7].survival == null and x.rows[7].failed == 7 and x.rows[7].left == 12);
+    try expect(x.rows[10].time == 256 and x.rows[10].survival != null and x.rows[10].failed == 10 and x.rows[10].left == 9);
+    try expect(x.rows[3].censored and x.rows[3].time == 224 and x.rows[3].failed == 3 and x.rows[3].left == 16);
+    for ([_][3]f64{ .{ 319, 256, 355 }, .{ 256, 255, 319 }, .{ 255, 171, 256 } }, x.quartiles) |e, q| {
+        try expectEqual(@as(?f64, e[0]), q.estimate);
+        try expectEqual(@as(?f64, e[1]), q.lower);
+        try expectEqual(@as(?f64, e[2]), q.upper);
+    }
+    try printed(271.131, x.mean, 3);
+    try printed(11.877, x.mean_se.?, 3);
+
+    const p = try lifetest.productLimit(a, all.items[20..40]);
+    for ([_]f64{ 0.95, 0.9, 0.85, 0.75, 0.7, 0.65, 0.6, 0.55, 0.5, 0.45, 0.3938, 0.3375, 0.2813, 0.225, 0.15, 0.075 }, p.survival[0..16]) |e, s| try printed(e, s, 4);
+    try expectEqual(@as(f64, 0), p.survival[16]);
+    try expect(p.se[16] == null and !p.last_censored);
+    for ([_]f64{ 0.0487, 0.0671, 0.0798, 0.0968, 0.1025, 0.1067, 0.1095, 0.1112, 0.1118, 0.1112, 0.1106, 0.1082, 0.1038, 0.0971, 0.0891, 0.0693 }, p.se[0..16]) |e, s| try printed(e, s.?, 4);
+    // The upper limit of the 75th percentile is deliberately not asserted:
+    // the guide prints 323 (the event time where the estimate reaches 0)
+    // while the SAS listing behind the default stratified fixture leaves the
+    // limit missing in the same configuration.
+    for ([_][2]f64{ .{ 257, 237 }, .{ 235.5, 206 }, .{ 207.5, 156 } }, p.quartiles) |e, q| {
+        try expectEqual(@as(?f64, e[0]), q.estimate);
+        try expectEqual(@as(?f64, e[1]), q.lower);
+    }
+    try expectEqual(@as(?f64, 253), p.quartiles[1].upper);
+    try expectEqual(@as(?f64, 229), p.quartiles[2].upper);
+    try printed(235.156, p.mean, 3);
+    try printed(10.211, p.mean_se.?, 3);
+
+    const h = try lifetest.homogeneity(a, all.items, 2);
+    const lr = try lifetest.quadraticForm(a, h.logrank, h.logrank_cov, 2);
+    const wx = try lifetest.quadraticForm(a, h.wilcoxon, h.wilcoxon_cov, 2);
+    try expectEqual(@as(usize, 1), lr.df);
+    try expectEqual(@as(usize, 1), wx.df);
+    try printed(5.6485, lr.chi, 4);
+    try printed(5.0312, wx.chi, 4);
+    try printed(0.1983, h.lr, 4);
+    try printed(0.0175, lifetest.chiProbability(lr.chi, 1), 4);
+    try printed(0.0249, lifetest.chiProbability(wx.chi, 1), 4);
+    try printed(0.6561, lifetest.chiProbability(h.lr, 1), 4);
+}
+
+/// Invented two-stratum data with tied events in each stratum.
+fn tiedGroups(a: A) !*Dataset {
+    const ds = try a.create(Dataset);
+    ds.* = Dataset.init(a, "tied");
+    _ = try ds.addColumn("time", .num);
+    _ = try ds.addColumn("status", .num);
+    _ = try ds.addColumn("group", .char);
+    const rows = [_]struct { f64, f64, []const u8 }{ .{ 1, 1, "A" }, .{ 1, 1, "A" }, .{ 3, 1, "A" }, .{ 4, 1, "A" }, .{ 5, 0, "A" }, .{ 2, 1, "B" }, .{ 2, 1, "B" }, .{ 4, 1, "B" }, .{ 6, 1, "B" }, .{ 7, 0, "B" } };
+    for (rows) |r| try ds.appendRow(&.{ .{ .num = r[0] }, .{ .num = r[1] }, .{ .str = r[2] } });
+    return ds;
+}
+
+test "STAT-LIFETEST-002 tied event rows in the listing and still-unsupported shapes stay loud" {
+    var fx: Fixture = .{ .arena = std.heap.ArenaAllocator.init(std.testing.allocator) };
+    defer fx.arena.deinit();
+    try fx.init(tiedGroups);
+    const listing = try fx.outcome("proc lifetest data=tied; time time*status(0); strata group;");
+    try expectEqual(@as(u8, 0), listing.rc);
+    // Stratum A: S(1) = 3/5 with Greenwood 2/(5*3); only the last tied row
+    // carries the estimate (Figure 77.1 of the guide shows the same rows).
+    for ([_][]const u8{
+        " 1.00000            .           .           .      1         4   \n",
+        " 1.00000       0.6000      0.4000      0.2191      2         3   \n",
+        " 2.00000            .           .           .      1         4   \n",
+        " 2.00000       0.6000      0.4000      0.2191      2         3   \n",
+    }) |line| try expect(std.mem.indexOf(u8, listing.out, line) != null);
+    // No STRATA, numeric STRATA and several STRATA variables have no listing
+    // reference and remain visible gaps.
+    for ([_][]const u8{
+        "proc lifetest data=tied; time time*status(0);",
+        "proc lifetest data=tied; time time*status(0); strata status;",
+        "proc lifetest data=tied; time time*status(0); strata group status;",
+    }) |source| {
+        const r = try fx.outcome(source);
+        try expectEqual(@as(u8, 2), r.rc);
+        try expectEqual(@as(usize, 0), r.out.len);
+    }
 }
