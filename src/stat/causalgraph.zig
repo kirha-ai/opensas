@@ -465,8 +465,18 @@ pub fn validate(cx: proc.ProcCtx, s: Spec) diag.Error!void {
         // before this error; only the error is produced here.
     }
     if (s.models.len > 1 and s.opts.ordermodels) return gap(cx, s.models[1].line, "ORDERMODELS with more than one MODEL statement is not implemented", .{});
-    for (s.models) |m| if (try components(cx.arena, s.names.len, m) > 1)
-        return gap(cx, m.line, "disconnected models (ConnectedComponents table) are not implemented", .{});
+    // Disconnected models: VariableInfo, summary and the ConnectedComponents
+    // table (SAS 9.4 reference runs). Forms without a reference run stay
+    // gaps.
+    var ndisc: usize = 0;
+    for (s.models) |m| if (try components(cx.arena, s.names.len, m) > 1) {
+        ndisc += 1;
+        for (m.nodes) |v| if (contains(s.unmeasured, v))
+            return gap(cx, m.line, "a disconnected model with unmeasured variables (ConnectedComponents table) is not implemented", .{});
+        if (s.opts.disconnected and s.models.len > 1)
+            return gap(cx, m.line, "the DISCONNECTED option with more than one MODEL statement is not implemented", .{});
+    };
+    if (ndisc > 1) return gap(cx, s.models[0].line, "more than one disconnected model is not implemented", .{});
     if (s.opts.method != .adjustment) return gap(cx, 0, "METHOD={s} is not implemented", .{if (s.opts.method == .iv) "IV" else "BACKDOOR"});
     if (s.treatments.len > 1 or s.outcomes.len > 1) return gap(cx, line, "joint causal effects (several treatment or outcome variables) are not implemented", .{});
 }
@@ -837,7 +847,13 @@ pub fn run(cx: proc.ProcCtx, out: *Out, t: []const lex.Token) diag.Error!void {
             dst.* = local;
         }
     }
-    if (s.opts.noprint) return;
+    if (s.opts.noprint) {
+        for (s.models) |m| {
+            const cc = try componentIds(a, s.names, m);
+            if (cc.count > 1 and !s.opts.disconnected) try cx.diags.warn(m.line, "The model {s} contains {d} disconnected DAGs.", .{ m.label, cc.count });
+        }
+        return;
+    }
 
     // Page 1: VariableInfo and GraphicalModelSummary.
     try page(cx, out);
@@ -893,7 +909,19 @@ pub fn run(cx: proc.ProcCtx, out: *Out, t: []const lex.Token) diag.Error!void {
         }
         try table(a, out, &.{"Graphical Model Summary"}, 0, &cols, try uniformGaps(a, cols.len), null);
     }
-    if (!list) return endPage(cx, out);
+    // ConnectedComponents (reference runs): without the DISCONNECTED option
+    // a disconnected model is warned about and no model gets an AdjustList.
+    var any_disc = false;
+    for (s.models) |m| {
+        const cc = try componentIds(a, s.names, m);
+        if (cc.count < 2) continue;
+        any_disc = true;
+        if (!s.opts.disconnected) try cx.diags.warn(m.line, "The model {s} contains {d} disconnected DAGs.", .{ m.label, cc.count });
+        try endPage(cx, out);
+        try page(cx, out);
+        try componentsTable(a, out, s.names, m, cc);
+    }
+    if (!list or (any_disc and !s.opts.disconnected)) return endPage(cx, out);
 
     // One AdjustList page per model.
     for (s.models, sets) |m, msets| {
@@ -902,6 +930,64 @@ pub fn run(cx: proc.ProcCtx, out: *Out, t: []const lex.Token) diag.Error!void {
         try adjustTable(cx, out, s, m, msets, cands.items);
     }
     try endPage(cx, out);
+}
+
+const Components = struct { ids: []const usize, count: usize, sorted: []const usize };
+
+/// Component number of each model node; components are numbered in the
+/// order of their alphabetically first node (reference runs: {A,B,C} before
+/// {X,Y}, {P,Q} before {X,Y}, {A,B} before {X,Y,Z}).
+fn componentIds(a: A, names: []const []const u8, m: Model) !Components {
+    const sorted = try a.dupe(usize, m.nodes);
+    sortedIds(names, sorted);
+    const comp = try a.alloc(usize, names.len);
+    @memset(comp, std.math.maxInt(usize));
+    var count: usize = 0;
+    for (sorted) |start| {
+        if (comp[start] != std.math.maxInt(usize)) continue;
+        var stack: std.ArrayList(usize) = .empty;
+        try stack.append(a, start);
+        comp[start] = count;
+        while (stack.pop()) |v| for (m.edges) |e| {
+            const w = if (e.from == v) e.to else if (e.to == v) e.from else continue;
+            if (comp[w] == std.math.maxInt(usize)) {
+                comp[w] = count;
+                try stack.append(a, w);
+            }
+        };
+        count += 1;
+    }
+    return .{ .ids = comp, .count = count, .sorted = sorted };
+}
+
+fn componentsTable(a: A, out: *Out, names: []const []const u8, m: Model, cc: Components) !void {
+    const rows = cc.count;
+    const idc = try a.alloc([]const u8, rows);
+    const szc = try a.alloc([]const u8, rows);
+    for (0..rows) |r| {
+        var size: usize = 0;
+        for (cc.sorted) |v| {
+            if (cc.ids[v] == r) size += 1;
+        }
+        idc[r] = try num(a, r + 1);
+        szc[r] = try num(a, size);
+    }
+    var cols: std.ArrayList(Col) = .empty;
+    try cols.append(a, .{ .head = &.{"Component"}, .al = .right, .width = 9, .cells = idc });
+    try cols.append(a, .{ .head = &.{"Size"}, .al = .right, .width = 8, .cells = szc });
+    for (cc.sorted) |v| {
+        const head = try splitHeader(a, names[v]);
+        var w: usize = 1;
+        for (head) |h| w = @max(w, h.len);
+        const cells = try a.alloc([]const u8, rows);
+        for (cells, 0..) |*c, r| c.* = if (cc.ids[v] == r) "*" else "";
+        try cols.append(a, .{ .head = head, .al = .center, .width = w, .cells = cells });
+    }
+    // ponytail: header splitting and spanner widening follow the AdjustList
+    // rules; the reference runs only had one-letter node names.
+    const gaps = try uniformGaps(a, cols.items.len);
+    const title = try std.fmt.allocPrint(a, "Connected Components for {s}", .{m.label});
+    try table(a, out, &.{title}, 1, cols.items, gaps, Spanner{ .from = 2, .text = "Nodes" });
 }
 
 fn adjustTable(cx: proc.ProcCtx, out: *Out, s: Spec, m: Model, sets: []const Set, cands: []const usize) !void {
@@ -1062,4 +1148,18 @@ test "STAT-CAUSALGRAPH-003 bidirected edges make no directed cycle and do connec
     const g = try expandLatent(a, 3, &e);
     try std.testing.expectEqual(@as(usize, 5), g.n);
     try std.testing.expectEqual(@as(usize, 5), g.edges.len);
+}
+
+test "STAT-CAUSALGRAPH-003 components numbered by their alphabetically first node" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    // X ==> Y, Z ==> X Y, A ==> B (E4 of the reference run): {A,B} is 1.
+    const names = [_][]const u8{ "X", "Y", "Z", "A", "B" };
+    const e = [_]Edge{ .{ .from = 0, .to = 1 }, .{ .from = 2, .to = 0 }, .{ .from = 2, .to = 1 }, .{ .from = 3, .to = 4 } };
+    const cc = try componentIds(a, &names, .{ .label = "E4", .line = 0, .nodes = &.{ 0, 1, 2, 3, 4 }, .edges = &e });
+    try std.testing.expectEqual(@as(usize, 2), cc.count);
+    try std.testing.expectEqual(@as(usize, 0), cc.ids[3]);
+    try std.testing.expectEqual(@as(usize, 1), cc.ids[0]);
+    try std.testing.expectEqual(@as(usize, 1), cc.ids[2]);
 }

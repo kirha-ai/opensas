@@ -1,0 +1,183 @@
+E1 order by size?
+
+The CAUSALGRAPH Procedure
+
+         Variables in Model
+
+                       N    Variables
+
+Measured               5    A B C X Y
+Unmeasured             0
+
+
+                             Graphical Model Summary
+
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+E1              5           3             1           1           5             0
+E1 order by size?
+
+The CAUSALGRAPH Procedure
+
+          Connected Components for E1
+
+                         --------Nodes--------
+Component        Size    A    B    C    X    Y
+
+        1           3    *    *    *
+        2           2                   *    *
+E2 tie
+
+The CAUSALGRAPH Procedure
+
+         Variables in Model
+
+                       N    Variables
+
+Measured               4    P Q X Y
+Unmeasured             0
+
+
+                             Graphical Model Summary
+
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+E2              4           2             1           1           4             0
+E2 tie
+
+The CAUSALGRAPH Procedure
+
+       Connected Components for E2
+
+                         -----Nodes------
+Component        Size    P    Q    X    Y
+
+        1           2    *    *
+        2           2              *    *
+E3 no identify
+
+The CAUSALGRAPH Procedure
+
+         Variables in Model
+
+                       N    Variables
+
+Measured               4    A B X Y
+Unmeasured             0
+
+
+                             Graphical Model Summary
+
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+E3              4           2             0           0           4             0
+E3 no identify
+
+The CAUSALGRAPH Procedure
+
+       Connected Components for E3
+
+                         -----Nodes------
+Component        Size    A    B    X    Y
+
+        1           2    *    *
+        2           2              *    *
+E4 disconnected option
+
+The CAUSALGRAPH Procedure
+
+         Variables in Model
+
+                       N    Variables
+
+Measured               5    A B X Y Z
+Unmeasured             0
+
+
+                             Graphical Model Summary
+
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+E4              5           4             1           1           5             0
+E4 disconnected option
+
+The CAUSALGRAPH Procedure
+
+          Connected Components for E4
+
+                         --------Nodes--------
+Component        Size    A    B    X    Y    Z
+
+        1           2    *    *
+        2           3              *    *    *
+E4 disconnected option
+
+The CAUSALGRAPH Procedure
+
+         Covariate Adjustment Sets for E4
+             Causal Effect of X on Y
+
+                                    -Covariates--
+                Size    Minimal     A     B     Z
+
+       1           1    Yes                     *
+       2           2    No          *           *
+       3           2    No                *     *
+       4           3    No          *     *     *
+E5 two models one disconnected
+
+The CAUSALGRAPH Procedure
+
+         Variables in Models
+
+                       N    Variables
+
+Measured               5    A B X Y Z
+Unmeasured             0
+
+
+                             Graphical Model Summary
+
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+E5a             3           3             1           1           3             0
+E5b             4           2             1           1           4             0
+E5 two models one disconnected
+
+The CAUSALGRAPH Procedure
+
+       Connected Components for E5b
+
+                         -----Nodes------
+Component        Size    A    B    X    Y
+
+        1           2    *    *
+        2           2              *    *
+D3 cov path duplicates and group bidirected
+
+The CAUSALGRAPH Procedure
+
+         Variables in Model
+
+                       N    Variables
+
+Measured               5    A B C X Y
+Unmeasured             0
+
+
+                             Graphical Model Summary
+
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+D3              5           5             1           1           5             0
+D3 cov path duplicates and group bidirected
+
+The CAUSALGRAPH Procedure
+
+          Connected Components for D3
+
+                         --------Nodes--------
+Component        Size    A    B    C    X    Y
+
+        1           3    *    *    *
+        2           2                   *    *
