@@ -1,0 +1,8 @@
+# corpus assertions
+# Complete listing tokens, derived by exact rational arithmetic in the fixture header (not from OpenSAS output).
+# Steps 5 (one stratum) and 6 (2x3 strata) contribute no tokens: exactly four Gail-Simon tables.
+words The FREQ Procedure Summary Statistics for r by c Controlling for s Gail-Simon Test for Qualitative Interactions Statistic Value Prob Q+ (Positive Risk Differences) 3.2381 0.1458 Q- (Negative Risk Differences) 2.0000 0.2685 Q (Two-Sided) 2.0000 0.1706 Total Sample Size = 26 The FREQ Procedure Summary Statistics for r by c Controlling for s Gail-Simon Test for Qualitative Interactions Statistic Value Prob Q+ (Positive Risk Differences) 2.0000 0.2685 Q- (Negative Risk Differences) 3.2381 0.1458 Q (Two-Sided) 2.0000 0.1706 Total Sample Size = 26 The FREQ Procedure Summary Statistics for r by c Controlling for s Gail-Simon Test for Qualitative Interactions Statistic Value Prob Q+ (Positive Risk Differences) 3.2381 0.1458 Q- (Negative Risk Differences) 2.0000 0.2685 Q (Two-Sided) 2.0000 0.1706 Total Sample Size = 26 The FREQ Procedure Summary Statistics for r by c Controlling for s Gail-Simon Test for Qualitative Interactions Statistic Value Prob Q+ (Positive Risk Differences) 0.0000 0.7500 Q- (Negative Risk Differences) 2.0000 0.1706 Q (Two-Sided) 0.0000 0.5000 Total Sample Size = 20
+stdout-count 4 Gail-Simon Test for Qualitative Interactions
+stderr-count 0 ERROR
+stderr-count 0 WARNING
+stderr-count 0 UNSUPPORTED

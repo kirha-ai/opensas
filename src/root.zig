@@ -100,6 +100,7 @@ test {
     _ = @import("stat/freq_exact_parse.zig");
     _ = @import("stat/freq_stratified.zig");
     _ = @import("stat/freq_cmh_tests.zig");
+    _ = @import("stat/freq_gailsimon_tests.zig");
     _ = @import("stat/freq_stratified_exact.zig");
     _ = @import("stat/freq_exact_unconditional.zig");
     _ = @import("stat/freq_exact_polynomial.zig");
