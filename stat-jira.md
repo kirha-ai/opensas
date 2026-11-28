@@ -25,8 +25,9 @@ This section is the only current status summary; every section below it is a his
 - **Open review (not done):** the originals of GENMOD-001/002/018, ANOVA-001/007, FREQ-014, PHREG-003 and LIFETEST-001/002 now match exactly but the tickets stay PARK; check each against its full acceptance criteria and recorded remaining gaps before any is marked DONE.
 - **Interrupted by the full disk:** STAT-ANOVA-009 and STAT-PHREG-004 are TODO (no file changed; reading notes in the tickets). STAT-LIFETEST-003 and STAT-GENMOD-003 are PARK with UNCOMMITTED, NEVER-COMPILED source retained in `opensas-dev5` (`stat-b6/lifetest003-dev5`) and `opensas-dev7` (`stat-b6/genmod003-dev7`); do not integrate it before it is built, tested and committed there.
 - **User approval (2026-11-28):** SASHELP sample data taken from SAS's public sample material may be committed to this public repository, for STAT-SASHELP-001 and the later SASHELP tickets; record source and verification, never invent rows, ask before adding a data set above about 2 MB.
-- **Live slots (auto):** dev1 STAT-CLUSTER-001, dev2 STAT-FASTCLUS-001, dev3 STAT-CANDISC-001, dev4 STAT-CANCORR-001, dev5 STAT-MODECLUS-001, dev6 STAT-INBREED-001, dev7 STAT-VARCLUS-001.
-- **Counts:** 56 DONE, 109 PARK, 7 DOING, 1250 TODO.
+- **Live slots (auto):** dev1 STAT-CLUSTER-001, dev2 STAT-FASTCLUS-001, dev3 STAT-CANDISC-001, dev4 STAT-CANCORR-001, dev5 STAT-MODECLUS-001, dev6 STAT-PRINQUAL-001, dev7 STAT-VARCLUS-001.
+- **Integrated locally, awaiting batch verification (auto):** STAT-INBREED-001 (PARK).
+- **Counts:** 56 DONE, 110 PARK, 7 DOING, 1249 TODO.
 - **Next:** integrate each returned ticket, refill its slot, verify and push the next batch; run the open review above. Pending user decision: the `best32.` display fix found by STAT-STDIZE-001 changes five existing test expectations (patch kept in the coordinator scratchpad, not applied).
 - **Working branch:** `feat/stat/batch-4`. Last tested and pushed code SHA `b9a3dd4e7838cc9475a4d8184ff88883ef9a0a5c` (batch 11; batch 10 was `f99879d722b7653d6a51198bf48ea8915fccc1e0`). The bullets below this one describe batch 5 and are historical. Later commits that touch only this file are documentation. No PR created or merged; `main` untouched.
 - **Batch 5 verification at that exact SHA (2026-11-28):** whole `tests/STAT15.4-oracle/` moved out of the checkout, then `zig build gate -j2 --summary all` direct exit 0 — **2380/2380 unit tests** (2262 + 102 + 13 + 3), **2409/2409 corpus**, **11/11 programs**; `zig build install` direct 0; separate supplemental direct 0, **1113/1113**. Oracle restored unchanged (1425 entries), tree clean.
@@ -7930,7 +7931,7 @@ Source: S154, Chapter 71, `The INBREED Procedure`, PDF pp. 5269–5294. Tasks in
 
 <a id="stat-inbreed-001"></a>
 
-### [DOING @dev6] STAT-INBREED-001 — INBREED — Data input, variable roles, and basic options
+### [PARK] STAT-INBREED-001 — INBREED — Data input, variable roles, and basic options
 
 - Source: S154 / Chapter 71 / `PROC INBREED Statement` (PDF pp. 5274–5276); S154 / Chapter 71 / `BY Statement` (PDF pp. 5276–5277); S154 / Chapter 71 / `CLASS Statement` (PDF p. 5277); S154 / Chapter 71 / `VAR Statement` (PDF p. 5278); S154 / Chapter 71 / `Missing Values` (PDF pp. 5278–5279).
 - Scope: Integrate PROC INBREED declarations, basic options, defaults, and execution boundaries; this ticket establishes parameter objects and result interfaces, while later feature tickets implement model-, algorithm-, and output-specific options. Also implement BY; CLASS; VAR; Missing Values; apply this procedure's rules for missing values, variable roles, and observation selection.
@@ -12059,7 +12060,7 @@ Source: S154, Chapter 99, `The PRINQUAL Procedure`, PDF pp. 8033–8092. Tasks i
 
 <a id="stat-prinqual-001"></a>
 
-### [TODO] STAT-PRINQUAL-001 — PRINQUAL — Data input, variable roles, and basic options
+### [DOING @dev6] STAT-PRINQUAL-001 — PRINQUAL — Data input, variable roles, and basic options
 
 - Source: S154 / Chapter 99 / `PROC PRINQUAL Statement` (PDF pp. 8040–8048); S154 / Chapter 99 / `BY Statement` (PDF pp. 8048–8049); S154 / Chapter 99 / `FREQ Statement` (PDF p. 8049); S154 / Chapter 99 / `ID Statement` (PDF p. 8049); S154 / Chapter 99 / `WEIGHT Statement` (PDF p. 8057); S154 / Chapter 99 / `Missing Values` (PDF p. 8063).
 - Scope: Integrate PROC PRINQUAL declarations, basic options, defaults, and execution boundaries; this ticket establishes parameter objects and result interfaces, while later feature tickets implement model-, algorithm-, and output-specific options. Also implement BY; FREQ; ID; WEIGHT; Missing Values; apply this procedure's rules for missing values, variable roles, and observation selection.
