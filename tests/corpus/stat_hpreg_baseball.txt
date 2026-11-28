@@ -1,0 +1,86 @@
+
+The HPREG Procedure
+
+      Performance Information
+
+Execution Mode       Single-Machine
+Number of Threads    2             
+
+
+            Data Access Information
+ 
+Data                Engine    Role     Path
+
+SASHELP.BASEBALL    V9        Input    On Client
+
+
+            Model Information
+
+Data Source               SASHELP.BASEBALL
+Dependent Variable        logSalary       
+Class Parameterization    GLM             
+
+
+Number of Observations Read             322
+Number of Observations Used             263
+
+
+        Class Level Information
+ 
+Class       Levels    Values
+
+League           2    American National 
+Division         2    East West         
+
+
+           Dimensions
+
+Number of Effects             19
+Number of Parameters          21
+
+
+                            Analysis of Variance
+ 
+                                  Sum of           Mean
+Source                 DF        Squares         Square    F Value    Pr > F
+
+Model                  18      127.79539        7.09974      21.83    <.0001
+Error                 244       79.35834        0.32524                     
+Corrected Total       262      207.15373                                    
+
+
+Root MSE        0.57030
+R-Square        0.61691
+Adj R-Sq        0.58865
+AIC           -12.12146
+AICC           -8.65039
+SBC          -209.25054
+ASE             0.30174
+
+
+                            Parameter Estimates
+ 
+                                             Standard
+Parameter          DF        Estimate           Error    t Value    Pr > |t|
+
+Intercept           1        4.275103        0.162221      26.35      <.0001
+nAtBat              1       -0.002070        0.001151      -1.80      0.0734
+nHits               1        0.012979        0.004275       3.04      0.0027
+nHome               1        0.010597        0.011191       0.95      0.3446
+nRuns               1       -0.002985        0.005384      -0.55      0.5797
+nRBI                1       -0.001748        0.004688      -0.37      0.7097
+nBB                 1        0.011339        0.003280       3.46      0.0006
+YrMajor             1        0.071935        0.022548       3.19      0.0016
+CrAtBat             1        0.000179        0.000243       0.74      0.4621
+CrHits              1       -0.000687        0.001212      -0.57      0.5710
+CrHome              1       -0.000430        0.002898      -0.15      0.8822
+CrRuns              1        0.001385        0.001344       1.03      0.3038
+CrRbi               1        0.000188        0.001245       0.15      0.8801
+CrBB                1       -0.001324        0.000588      -2.25      0.0253
+League American     1       -0.109077        0.074432      -1.47      0.1441
+League National     0               0               .        .         .    
+Division East       1        0.147969        0.073245       2.02      0.0445
+Division West       0               0               .        .         .    
+nOuts               1        0.000247        0.000141       1.75      0.0821
+nAssts              1        0.000245        0.000401       0.61      0.5422
+nError              1       -0.009079        0.007936      -1.14      0.2537

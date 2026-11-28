@@ -3179,6 +3179,14 @@ fn runProc(a: std.mem.Allocator, listing_out: *std.ArrayList(u8), lib: *sas.exec
         // Writes straight to `out`: SAS keeps the tables printed before an
         // all-observations-missing ERROR.
         try sas.hpprincomp.run(hpprincomp_context, out, toks);
+    } else if (eqi(proc, "hpreg")) {
+        var body: std.ArrayList(u8) = .empty;
+        try sas.hpreg.run(pcx, &body, toks);
+        if (body.items.len > 0) {
+            try g.emitTitles(a, out);
+            try out.appendSlice(a, body.items);
+            try g.emitFootnotes(a, out);
+        }
     } else if (eqi(proc, "lifetest")) {
         var body: std.ArrayList(u8) = .empty;
         try sas.lifetest.run(pcx, &body, toks);

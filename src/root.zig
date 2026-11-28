@@ -31,6 +31,7 @@ pub const npar1way = @import("stat/npar1way.zig");
 pub const plm = @import("stat/plm.zig");
 pub const phreg = @import("stat/phreg.zig");
 pub const lifetest = @import("stat/lifetest.zig");
+pub const hpreg = @import("stat/hpreg.zig");
 pub const hpprincomp = @import("stat/hpprincomp.zig");
 pub const seqtest = @import("stat/seqtest.zig");
 pub const tpspline = @import("stat/tpspline.zig");
@@ -107,6 +108,7 @@ test {
     _ = @import("stat/plm.zig");
     _ = @import("stat/phreg.zig");
     _ = @import("stat/lifetest.zig");
+    _ = @import("stat/hpreg.zig");
     _ = @import("stat/hpprincomp.zig");
     _ = @import("stat/seqtest.zig");
     _ = @import("stat/tpspline.zig");

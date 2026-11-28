@@ -1,0 +1,373 @@
+
+The HPREG Procedure
+
+      Performance Information
+
+Execution Mode       Single-Machine
+Number of Threads    2             
+
+
+         Data Access Information
+ 
+Data         Engine    Role     Path
+
+WORK.INV2    V9        Input    On Client
+
+
+       Model Information
+
+Data Source           WORK.INV2
+Dependent Variable    y        
+Weight Variable       w        
+Frequency Variable    f        
+
+b=1
+
+The HPREG Procedure
+
+Number of Observations Read              10
+Number of Observations Used               5
+Sum of Frequencies Read                  12
+Sum of Frequencies Used                   9
+
+
+           Dimensions
+
+Number of Effects              3
+Number of Parameters           3
+
+
+                            Analysis of Variance
+ 
+                                  Sum of           Mean
+Source                 DF        Squares         Square    F Value    Pr > F
+
+Model                   2       49.60729       24.80364     564.69    <.0001
+Error                   6        0.26355        0.04392                     
+Corrected Total         8       49.87083                                    
+
+
+Root MSE        0.20958
+R-Square        0.99472
+Adj R-Sq        0.99295
+AIC           -14.77670
+AICC           -4.77670
+SBC           -25.18503
+ASE             0.01757
+
+
+                         Parameter Estimates
+ 
+                                       Standard
+Parameter    DF        Estimate           Error    t Value    Pr > |t|
+
+Intercept     1        5.898542        0.539407      10.94      <.0001
+x1            1        0.614216        0.073963       8.30      0.0002
+x2            1       -0.743378        0.120509      -6.17      0.0008
+
+b=2
+
+The HPREG Procedure
+
+Number of Observations Read               8
+Number of Observations Used               8
+Sum of Frequencies Read                  10
+Sum of Frequencies Used                  10
+
+
+           Dimensions
+
+Number of Effects              3
+Number of Parameters           3
+
+
+                            Analysis of Variance
+ 
+                                  Sum of           Mean
+Source                 DF        Squares         Square    F Value    Pr > F
+
+Model                   2       96.45363       48.22681     227.04    <.0001
+Error                   7        1.48691        0.21242                     
+Corrected Total         9       97.94054                                    
+
+
+Root MSE        0.46089
+R-Square        0.98482
+Adj R-Sq        0.98048
+AIC            -1.05886
+AICC            6.94114
+SBC           -12.15110
+ASE             0.10621
+
+
+                         Parameter Estimates
+ 
+                                       Standard
+Parameter    DF        Estimate           Error    t Value    Pr > |t|
+
+Intercept     1        0.063761        0.332275       0.19      0.8533
+x1            1        0.937711        0.056071      16.72      <.0001
+x2            1        0.483933        0.047310      10.23      <.0001
+
+The HPREG Procedure
+
+      Performance Information
+
+Execution Mode       Single-Machine
+Number of Threads    2             
+
+
+         Data Access Information
+ 
+Data         Engine    Role     Path
+
+WORK.INV2    V9        Input    On Client
+
+
+       Model Information
+
+Data Source           WORK.INV2
+Dependent Variable    y        
+Frequency Variable    f        
+
+
+Number of Observations Read              18
+Number of Observations Used              15
+Sum of Frequencies Read                  22
+Sum of Frequencies Used                  21
+
+
+           Dimensions
+
+Number of Effects              3
+Number of Parameters           3
+
+
+                            Analysis of Variance
+ 
+                                  Sum of           Mean
+Source                 DF        Squares         Square    F Value    Pr > F
+
+Model                   2       81.74218       40.87109      27.05    <.0001
+Error                  18       27.20068        1.51115                     
+Corrected Total        20      108.94286                                    
+
+
+Root MSE        1.22929
+R-Square        0.75032
+Adj R-Sq        0.72258
+AIC            34.43311
+AICC           36.93311
+SBC            14.56667
+ASE             1.29527
+
+
+                         Parameter Estimates
+ 
+                                       Standard
+Parameter    DF        Estimate           Error    t Value    Pr > |t|
+
+Intercept     1        1.858035        0.700055       2.65      0.0161
+x1            1        0.857309        0.126340       6.79      <.0001
+x2            1        0.217930        0.123637       1.76      0.0949
+
+The HPREG Procedure
+
+      Performance Information
+
+Execution Mode       Single-Machine
+Number of Threads    2             
+
+
+         Data Access Information
+ 
+Data         Engine    Role     Path
+
+WORK.INV2    V9        Input    On Client
+
+
+       Model Information
+
+Data Source           WORK.INV2
+Dependent Variable    y        
+Weight Variable       w        
+
+
+Number of Observations Read              18
+Number of Observations Used              15
+
+
+           Dimensions
+
+Number of Effects              3
+Number of Parameters           3
+
+
+                            Analysis of Variance
+ 
+                                  Sum of           Mean
+Source                 DF        Squares         Square    F Value    Pr > F
+
+Model                   2       94.26504       47.13252      31.55    <.0001
+Error                  12       17.92935        1.49411                     
+Corrected Total        14      112.19439                                    
+
+
+Root MSE        1.22234
+R-Square        0.84019
+Adj R-Sq        0.81356
+AIC            25.67583
+AICC           29.67583
+SBC            10.79998
+ASE             0.87460
+
+
+                         Parameter Estimates
+ 
+                                       Standard
+Parameter    DF        Estimate           Error    t Value    Pr > |t|
+
+Intercept     1        1.982876        0.744860       2.66      0.0207
+x1            1        0.897911        0.114156       7.87      <.0001
+x2            1        0.164178        0.122349       1.34      0.2045
+
+The HPREG Procedure
+
+      Performance Information
+
+Execution Mode       Single-Machine
+Number of Threads    2             
+
+
+         Data Access Information
+ 
+Data         Engine    Role     Path
+
+WORK.INV2    V9        Input    On Client
+
+
+         Model Information
+
+Data Source               WORK.INV2
+Dependent Variable        y        
+Weight Variable           w        
+Frequency Variable        f        
+Class Parameterization    GLM      
+
+
+Number of Observations Read              18
+Number of Observations Used              13
+Sum of Frequencies Read                  22
+Sum of Frequencies Used                  19
+
+
+ Class Level Information
+ 
+Class    Levels    Values
+
+g             2    A B   
+
+
+           Dimensions
+
+Number of Effects              4
+Number of Parameters           5
+
+
+                            Analysis of Variance
+ 
+                                  Sum of           Mean
+Source                 DF        Squares         Square    F Value    Pr > F
+
+Model                   3      141.66696       47.22232     113.91    <.0001
+Error                  15        6.21856        0.41457                     
+Corrected Total        18      147.88552                                    
+
+
+Root MSE        0.64387
+R-Square        0.95795
+Adj R-Sq        0.94954
+AIC             7.77887
+AICC           12.39426
+SBC            -9.44337
+ASE             0.21443
+
+
+                         Parameter Estimates
+ 
+                                       Standard
+Parameter    DF        Estimate           Error    t Value    Pr > |t|
+
+Intercept     1        2.813053        0.361902       7.77      <.0001
+x1            1        0.910201        0.061185      14.88      <.0001
+g A           1       -1.942658        0.299309      -6.49      <.0001
+g B           0               0               .        .         .    
+x2            1        0.129892        0.051161       2.54      0.0227
+
+The HPREG Procedure
+
+      Performance Information
+
+Execution Mode       Single-Machine
+Number of Threads    2             
+
+
+          Data Access Information
+ 
+Data           Engine    Role     Path
+
+WORK.LONGNM    V9        Input    On Client
+
+
+          Model Information
+
+Data Source               WORK.LONGNM
+Dependent Variable        y          
+Class Parameterization    GLM        
+
+
+Number of Observations Read              18
+Number of Observations Used              17
+
+
+     Class Level Information
+ 
+Class       Levels    Values
+
+category         2    alpha beta 
+
+
+           Dimensions
+
+Number of Effects              3
+Number of Parameters           4
+
+
+                            Analysis of Variance
+ 
+                                  Sum of           Mean
+Source                 DF        Squares         Square    F Value    Pr > F
+
+Model                   2       77.83921       38.91961      37.37    <.0001
+Error                  14       14.57961        1.04140                     
+Corrected Total        16       92.41882                                    
+
+
+Root MSE        1.02049
+R-Square        0.84224
+Adj R-Sq        0.81971
+AIC            22.38898
+AICC           25.72231
+SBC             5.88862
+ASE             0.85762
+
+
+                            Parameter Estimates
+ 
+                                            Standard
+Parameter         DF        Estimate           Error    t Value    Pr > |t|
+
+Intercept          1        3.265217        0.620375       5.26      0.0001
+longername1        1        0.809457        0.100934       8.02      <.0001
+category alpha     1       -1.241630        0.497894      -2.49      0.0258
+category beta      0               0               .        .         .    

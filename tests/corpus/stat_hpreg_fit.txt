@@ -1,0 +1,128 @@
+
+The HPREG Procedure
+
+      Performance Information
+
+Execution Mode       Single-Machine
+Number of Threads    2             
+
+
+        Data Access Information
+ 
+Data        Engine    Role     Path
+
+WORK.INV    V9        Input    On Client
+
+
+      Model Information
+
+Data Source           WORK.INV
+Dependent Variable    y       
+
+
+Number of Observations Read              15
+Number of Observations Used              14
+
+
+           Dimensions
+
+Number of Effects              3
+Number of Parameters           3
+
+
+                            Analysis of Variance
+ 
+                                  Sum of           Mean
+Source                 DF        Squares         Square    F Value    Pr > F
+
+Model                   2       69.63030       34.81515     599.33    <.0001
+Error                  11        0.63899        0.05809                     
+Corrected Total        13       70.26929                                    
+
+
+Root MSE        0.24102
+R-Square        0.99091
+Adj R-Sq        0.98925
+AIC           -21.21695
+AICC          -16.77251
+SBC           -35.29978
+ASE             0.04564
+
+
+                         Parameter Estimates
+ 
+                                       Standard
+Parameter    DF        Estimate           Error    t Value    Pr > |t|
+
+Intercept     1        1.166281        0.169219       6.89      <.0001
+x1            1        1.058609        0.033799      31.32      <.0001
+x2            1        0.145438        0.031884       4.56      0.0008
+
+The HPREG Procedure
+
+      Performance Information
+
+Execution Mode       Single-Machine
+Number of Threads    2             
+
+
+        Data Access Information
+ 
+Data        Engine    Role     Path
+
+WORK.INV    V9        Input    On Client
+
+
+        Model Information
+
+Data Source               WORK.INV
+Dependent Variable        y       
+Class Parameterization    GLM     
+
+
+Number of Observations Read              15
+Number of Observations Used              14
+
+
+ Class Level Information
+ 
+Class    Levels    Values
+
+g             2    A B   
+
+
+           Dimensions
+
+Number of Effects              4
+Number of Parameters           5
+
+
+                            Analysis of Variance
+ 
+                                  Sum of           Mean
+Source                 DF        Squares         Square    F Value    Pr > F
+
+Model                   3       69.66811       23.22270     386.29    <.0001
+Error                  10        0.60118        0.06012                     
+Corrected Total        13       70.26929                                    
+
+
+Root MSE        0.24519
+R-Square        0.99144
+Adj R-Sq        0.98888
+AIC           -20.07089
+AICC          -12.57089
+SBC           -33.51466
+ASE             0.04294
+
+
+                         Parameter Estimates
+ 
+                                       Standard
+Parameter    DF        Estimate           Error    t Value    Pr > |t|
+
+Intercept     1        1.229268        0.189586       6.48      <.0001
+x1            1        1.058947        0.034386      30.80      <.0001
+g A           1       -0.105102        0.132528      -0.79      0.4462
+g B           0               0               .        .         .    
+x2            1        0.144386        0.032463       4.45      0.0012
