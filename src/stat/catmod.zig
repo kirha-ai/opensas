@@ -5,6 +5,8 @@
 //! (maximum likelihood), MODEL response = class effects (main effects and
 //! crossings, deviation-from-the-mean coding) with / DESIGN, and interactive
 //! RUN groups (S154 Chapter 36, PDF pp. 2191–2193, 2208–2211, 2220–2224).
+//! DIRECT (STAT-CATMOD-003, PDF pp. 2196-2197): numeric variables entered
+//! by their values, alone or crossed. FACTORS and LOGLIN stay gaps.
 //! Everything else is a loud D-009 gap.
 const std = @import("std");
 const proc = @import("../proc.zig");
@@ -52,6 +54,8 @@ pub const State = struct {
     by_stmt: ?[]const Token = null,
     model: ?[]const Token = null,
     where: ?[]const Token = null,
+    /// DIRECT (p. 2196): numeric variables entered by their values.
+    direct: ?[]const Token = null,
 };
 
 /// ORDER= (p.2180): level order of classification and response variables.
@@ -77,10 +81,16 @@ pub const Spec = struct {
     by_desc: []const bool = &.{},
     by_notsorted: bool = false,
     model_line: usize = 0,
+    /// DIRECT variables (STAT-CATMOD-003): one design column of values each.
+    direct: []const usize = &.{},
 };
 
+fn isDirect(s: Spec, v: usize) bool {
+    return std.mem.indexOfScalar(usize, s.direct, v) != null;
+}
+
 /// Later CATMOD statements owned by other tickets.
-const later_statements = [_][]const u8{ "contrast", "direct", "factors", "loglin", "repeated", "restrict" };
+const later_statements = [_][]const u8{ "contrast", "factors", "loglin", "repeated", "restrict" };
 
 fn column(cx: proc.ProcCtx, ds: *const Dataset, t: []const Token, i: usize) diag.Error!usize {
     if (!at(t, i, .name)) return invalid(cx, t, i);
@@ -218,6 +228,15 @@ fn parseModel(cx: proc.ProcCtx, s: *Spec, t: []const Token) diag.Error!void {
             i += 1;
         }
         if (at(t, i, .lparen) or at(t, i, .pipe) or at(t, i, .at)) return gap(cx, t[i].line, "nested, bar and @ effects are not implemented", .{});
+        // SAS names a crossing with its DIRECT variables first (reference
+        // run: a*x with DIRECT x is the effect x*a), class variables after.
+        if (s.direct.len > 0) {
+            var ordered: std.ArrayList(usize) = .empty;
+            for (vars.items) |c| if (isDirect(s.*, c)) try ordered.append(cx.arena, c);
+            for (vars.items) |c| if (!isDirect(s.*, c)) try ordered.append(cx.arena, c);
+            vars = ordered;
+            if (nest) |n| if (isDirect(s.*, n.v) or isDirect(s.*, vars.items[0])) return gap(cx, t[first].line, "DIRECT variables in nested effects are not implemented", .{});
+        }
         var nm: Out = .empty;
         for (vars.items, 0..) |c, k| {
             if (k > 0) try nm.append(cx.arena, '*');
@@ -277,8 +296,22 @@ pub fn resolve(cx: proc.ProcCtx, st: State) diag.Error!Spec {
             return gap(cx, r[1].line, "RESPONSE {s} is not implemented", .{r[1].text});
         } else return gap(cx, r[0].line, "RESPONSE functions other than MEANS are not implemented", .{});
     }
+    if (st.direct) |d| if (d.len > 1) {
+        var cols: std.ArrayList(usize) = .empty;
+        for (d[1..]) |tk| {
+            if (tk.tag != .name) return gap(cx, tk.line, "variable lists other than plain names in DIRECT are not implemented", .{});
+            const c = ds.indexOf(tk.text) orelse {
+                const up = try std.ascii.allocUpperString(cx.arena, tk.text);
+                return cx.diags.fail(error.ParseError, tk.line, "Variable {s} not found.", .{up});
+            };
+            if (ds.columns.items[c].type != .num) return cx.diags.fail(error.ParseError, tk.line, "Variable {s} in list does not match type prescribed for this list.", .{ds.columns.items[c].name});
+            if (std.mem.indexOfScalar(usize, cols.items, c) == null) try cols.append(cx.arena, c);
+        }
+        s.direct = cols.items;
+    };
     try parseModel(cx, &s, st.model.?);
     if (st.population) |p| {
+        if (s.direct.len > 0) return gap(cx, p[0].line, "DIRECT variables with a POPULATION statement are not implemented", .{});
         s.pop_vars = try varList(cx, ds, p, 1);
         for (s.effects) |e| for (try effectVars(cx.arena, e)) |v| {
             for (s.pop_vars) |pv| {
@@ -286,13 +319,19 @@ pub fn resolve(cx: proc.ProcCtx, st: State) diag.Error!Spec {
             } else return gap(cx, s.model_line, "model effect variables outside the POPULATION statement are not implemented", .{});
         };
     } else {
+        // Class variables first, DIRECT variables after them (SAS reference
+        // runs: MODEL y=x a and y=x z x*z with DIRECT x list a or z first).
         var pv: std.ArrayList(usize) = .empty;
-        for (s.effects) |e| for (try effectVars(cx.arena, e)) |v| {
+        for ([_]bool{ false, true }) |want_direct| for (s.effects) |e| for (try effectVars(cx.arena, e)) |v| {
+            if (isDirect(s, v) != want_direct) continue;
             for (pv.items) |o| {
                 if (o == v) break;
             } else try pv.append(cx.arena, v);
         };
         s.pop_vars = pv.items;
+        for (s.direct) |dv| for (s.pop_vars) |v| {
+            if (v == dv) break;
+        } else if (dv == s.response) return cx.diags.fail(error.ParseError, s.model_line, "PROC CATMOD: the response variable cannot also be an explanatory variable", .{});
     }
     for (s.pop_vars) |v| if (v == s.response) return cx.diags.fail(error.ParseError, s.model_line, "PROC CATMOD: the response variable cannot also be an explanatory variable", .{});
     if (s.means and ds.columns.items[s.response].type != .num) return cx.diags.fail(error.ParseError, s.model_line, "PROC CATMOD: RESPONSE MEANS requires a numeric response variable", .{});
@@ -477,6 +516,10 @@ fn tabulateUsed(cx: proc.ProcCtx, s: Spec, rows: []const []const Value, freq_mis
     const pv = try a.alloc(Levels, s.pop_vars.len);
     for (s.pop_vars, pv) |c, *l| l.* = try levels(a, s, rows, c);
     const rv = try levels(a, s, rows, s.response);
+    // ponytail: a format grouping several internal values of a DIRECT
+    // variable uses the FIRST internal value (p. 2196); levels keep the
+    // smallest, so the grouped case stays loud.
+    for (s.pop_vars, pv) |c, l| if (l.merged and isDirect(s, c)) return gap(cx, s.model_line, "a DIRECT variable whose format groups several values is not implemented", .{});
     // ponytail: RESPONSE MEANS scores a response level by its value; a format
     // that merges several values has no verified score.
     if (s.means and rv.merged) return gap(cx, s.model_line, "RESPONSE MEANS with a format that merges response values is not implemented", .{});
@@ -553,6 +596,11 @@ pub fn designMatrix(a: A, s: Spec, tb: Table) !Design {
                 while (vi > 0) {
                     vi -= 1;
                     const pp = popPos(s, e.vars[vi]);
+                    // A DIRECT variable enters by its internal value (p. 2196).
+                    if (isDirect(s, e.vars[vi])) {
+                        value *= tb.pop_levels[pp][pop[pp]].num;
+                        continue;
+                    }
                     const m = tb.pop_levels[pp].len - 1;
                     const level = rem % m;
                     rem /= m;
@@ -573,7 +621,9 @@ pub fn designMatrix(a: A, s: Spec, tb: Table) !Design {
 
 fn crossedCols(s: Spec, tb: Table, e: Effect) usize {
     var n: usize = 1;
-    for (e.vars) |v| n *= tb.pop_levels[popPos(s, v)].len - 1;
+    for (e.vars) |v| {
+        if (!isDirect(s, v)) n *= tb.pop_levels[popPos(s, v)].len - 1;
+    }
     return n;
 }
 fn nestCols(s: Spec, tb: Table, e: Effect) usize {
@@ -947,8 +997,11 @@ fn profiles(cx: proc.ProcCtx, out: *Out, s: Spec, tb: Table) !void {
         b = try proc.line(a, width);
         proc.putRight(b, 5, try std.fmt.allocPrint(a, "{d}", .{i + 1}));
         col = 11;
-        for (pop, tb.pop_text, widths) |k, ls, w| {
-            proc.putLeft(b, col, ls[k]);
+        for (pop, tb.pop_text, widths, s.pop_vars) |k, ls, w, c| {
+            // Unformatted DIRECT values are right-aligned (SAS reference
+            // run: 0.5, 1.25, 2.125); formatted DIRECT values (one, three)
+            // and class levels are left-aligned.
+            if (isDirect(s, c) and cols[c].format == null) proc.putRight(b, col + w - 1, ls[k]) else proc.putLeft(b, col, ls[k]);
             col += w + 4;
         }
         var n: f64 = 0;
@@ -1009,7 +1062,9 @@ fn designTable(cx: proc.ProcCtx, out: *Out, s: Spec, tb: Table, d: Design, f: Fi
             const v = if (s.means) f.funcs[i] else @log(tb.counts[i * J + j] / tb.counts[i * J + J - 1]);
             proc.putRight(b, 20 + 14 * j, try fixed(a, v, 5));
         }
-        for (0..d.q) |k| proc.putRight(b, base + 9 * (k + 1), try fixed(a, d.x[i * d.q + k], 0));
+        // Cells print as BEST5. (SAS reference run: DIRECT values 0.5,
+        // 1.25, 2.125 and -2.125 print as 0.5, 1.25, 2.125, -2.13).
+        for (0..d.q) |k| proc.putRight(b, base + 9 * (k + 1), std.mem.trim(u8, try format.apply(a, .{ .num = d.x[i * d.q + k] }, "best5."), " "));
         try emit(a, out, b);
     }
     try out.appendSlice(a, "\n\n");
@@ -1071,6 +1126,7 @@ fn paramLabels(a: A, s: Spec, tb: Table, d: Design) ![]Param {
             var vi = e.vars.len;
             while (vi > 0) {
                 vi -= 1;
+                if (isDirect(s, e.vars[vi])) continue;
                 const pp = popPos(s, e.vars[vi]);
                 const m = tb.pop_levels[pp].len - 1;
                 try parts.insert(a, 0, tb.pop_text[pp][rem % m]);
@@ -1095,7 +1151,9 @@ fn estimatesTable(cx: proc.ProcCtx, out: *Out, s: Spec, tb: Table, d: Design, f:
         ew = @max(ew, l.effect.len);
         lw = @max(lw, l.level.len);
     }
-    const pw = ew + 1 + lw;
+    // No level labels (only DIRECT effects) drops the label column (SAS
+    // reference run: Estimate ends 12 past "Parameter").
+    const pw = if (lw == 0) ew else ew + 1 + lw;
     // One function per population (a two-level response under maximum
     // likelihood) drops the Function Number column (SAS reference run).
     const fn_w: usize = if (s.means or f.nf == 1) 0 else 9;
@@ -1247,6 +1305,18 @@ fn statements(cx: proc.ProcCtx, out: *Out, st: *State, t: []const Token, start: 
         } else if (eq(word, "model")) {
             st.model = try keep(stmt);
             pending = true;
+        } else if (eq(word, "direct")) {
+            // p. 2196: DIRECT must precede the MODEL it applies to (SAS
+            // reference run: a MODEL earlier in the same RUN group is this
+            // error). A new DIRECT deletes the prior DIRECT and MODEL
+            // (SAS log NOTEs), so a bare DIRECT returns X to a class variable.
+            if (pending) return cx.diags.fail(error.ParseError, t[i].line, "The DIRECT statement must precede the MODEL statement.", .{});
+            if (st.model != null) {
+                if (st.direct != null) try cx.diags.note(t[i].line, "Prior DIRECT statement(s) deleted.", .{});
+                try cx.diags.note(t[i].line, "Prior MODEL statement(s) deleted.", .{});
+                st.model = null;
+            }
+            st.direct = try keep(stmt);
         } else if (eq(word, "weight")) {
             st.weight = try keep(stmt);
         } else if (eq(word, "response")) {
@@ -1440,4 +1510,34 @@ test "STAT-CATMOD-001 level order: FREQ ties keep data order, formats merge leve
     try std.testing.expectEqualStrings("b", l.texts[0]);
     try std.testing.expectEqualStrings("a", l.texts[1]);
     try std.testing.expectEqualStrings("c", l.texts[2]);
+}
+
+test "STAT-CATMOD-003 DIRECT design columns: values, value times deviation, value products (guide p. 2196)" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var ds = Dataset.init(a, "t");
+    _ = try ds.addColumn("a", .char);
+    _ = try ds.addColumn("x", .num);
+    _ = try ds.addColumn("z", .num);
+    const la = [_]Value{ .{ .str = "p" }, .{ .str = "q" } };
+    const lx = [_]Value{ .{ .num = 0.5 }, .{ .num = 1.25 }, .{ .num = 2.125 } };
+    const lz = [_]Value{ .{ .num = 0 }, .{ .num = 3 } };
+    // Populations ordered a (class) then x then z (DIRECT last).
+    const pops = [_][]const usize{ &.{ 0, 0, 1 }, &.{ 0, 2, 0 }, &.{ 1, 1, 1 } };
+    const tb: Table = .{ .pop_levels = &.{ &la, &lx, &lz }, .pop_text = &.{ &.{ "p", "q" }, &.{ "0.5", "1.25", "2.125" }, &.{ "0", "3" } }, .pops = &pops, .resp_levels = &.{}, .counts = &.{}, .n_obs = 0, .total = 0 };
+    const effects = [_]Effect{ .{ .name = "a", .vars = &.{0} }, .{ .name = "x", .vars = &.{1} }, .{ .name = "x*a", .vars = &.{ 1, 0 } }, .{ .name = "x*z", .vars = &.{ 1, 2 } } };
+    const s: Spec = .{ .ds = &ds, .pop_vars = &.{ 0, 1, 2 }, .effects = &effects, .direct = &.{ 1, 2 } };
+    const d = try designMatrix(a, s, tb);
+    // One column per DIRECT effect: 1 | a | x | x*a | x*z.
+    try std.testing.expectEqual(@as(usize, 5), d.q);
+    try std.testing.expectEqualSlices(usize, &.{ 1, 1, 1, 1 }, d.cols);
+    try std.testing.expectEqualSlices(f64, &.{ 1, 1, 0.5, 0.5, 1.5 }, d.x[0..5]);
+    try std.testing.expectEqualSlices(f64, &.{ 1, 1, 2.125, 2.125, 0 }, d.x[5..10]);
+    try std.testing.expectEqualSlices(f64, &.{ 1, -1, 1.25, -1.25, 3.75 }, d.x[10..15]);
+    // DIRECT variables add no level text: x and x*z unlabeled, x*a "p".
+    const l = try paramLabels(a, s, tb, d);
+    try std.testing.expectEqualStrings("", l[2].level);
+    try std.testing.expectEqualStrings("p", l[3].level);
+    try std.testing.expectEqualStrings("", l[4].level);
 }

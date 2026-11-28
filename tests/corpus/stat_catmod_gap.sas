@@ -1,8 +1,9 @@
 /* expect-rc: 2
    STAT-CATMOD-001 boundary: PROC CATMOD features owned by later CATMOD
    tickets or not yet verified must fail visibly (D-009 gap) and print no
-   table: other RESPONSE functions, CONTRAST/DIRECT/FACTORS/LOGLIN/REPEATED/
-   RESTRICT, effect names longer than 24 characters, MODEL options other
+   table: other RESPONSE functions, CONTRAST/FACTORS/LOGLIN/REPEATED/
+   RESTRICT (a character DIRECT variable is a user error since
+   STAT-CATMOD-003), effect names longer than 24 characters, MODEL options other
    than DESIGN, bar effects, a direct design matrix, multiple responses, fractional weights with
    whole-number sums, a fractional Data Summary value of 8 characters,
    RESPONSE MEANS on a format that merges response values, DATA= options

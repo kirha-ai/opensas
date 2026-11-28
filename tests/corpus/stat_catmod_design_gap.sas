@@ -5,7 +5,8 @@
    variables (A(B C)), both Specification of Effects (STAT-CATMOD-004); an
    unquoted name as a nested-by-value value; an effect nested within itself;
    an absent nested level combination (SAS marks redundant parameters, '*');
-   DIRECT effects and LOGLIN design matrices (STAT-CATMOD-003); _RESPONSE_
+   DIRECT with a POPULATION statement and LOGLIN design matrices
+   (STAT-CATMOD-003); _RESPONSE_
    and the AVERAGED, NOINT and PARAM=REF design forms (STAT-CATMOD-004);
    REPEATED (later CATMOD ticket).
    Data: invented. */
@@ -23,7 +24,7 @@ proc catmod data=t; weight w; response means; model y=a(b=one); run;
 proc catmod data=t; weight w; response means; model y=a(a); run;
 data t2; set t; if b = 2 and a = 2 then delete; run;
 proc catmod data=t2; weight w; response means; model y=a b(a); run;
-proc catmod data=t; weight w; direct c; response means; model y=c; run;
+proc catmod data=t; weight w; direct c; population a c; response means; model y=c; run;
 proc catmod data=t; weight w; model a*y=_response_; loglin a y; run;
 proc catmod data=t; weight w; model y=_response_; run;
 proc catmod data=t; weight w; model y=a / averaged; run;
