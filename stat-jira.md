@@ -5420,6 +5420,8 @@ Source: S154, Chapter 53, `The GLM Procedure`, PDF pp. 4043–4230. Tasks in thi
 - The manual's p.4155 quartic coefficient0.3743 is outside the correct half-last-decimal rounding bin: exact normalized barycentric weights give0.374387769563… (rounds0.3744). The permanent test preserves the printed discrepancy and independently proves all five exact quartic coefficients rather than enlarging tolerance or pinning the wrong value. This is separate from the complete original listing, whose761 tokens all match exactly.
 - Remaining scope: multiple within-subject factors/Kronecker effects and more than17 levels, IDENTITY/doubly multivariate analyses, individual-response listing without MODEL NOUNI, general multivariate table presentation beyond rank-one exact tests, CANONICAL/PRINTRV/MEAN, non-Type-III hypotheses, WEIGHT/FREQ/ABSORB/NOINT and additional analysis-statement integration, interactive REPEATED, graphics, rank-deficient/low-DF/singular covariance and numerically unresolved polynomial spacing remain explicit gaps. Keep the reference directory and retain PARK; the successful complete original does not establish full ticket completion.
 
+- Integration wait ended because the coordinator reported a context-window error. Source remains frozen and the retained branch is clean; serial rebase/integration, final shared checks and push require a resumed coordinator. No developer push or oracle modification occurred.
+
 <a id="stat-glm-011"></a>
 
 ### [PARK] STAT-GLM-011 — GLM — CONTRAST / ESTIMATE / MANOVA
