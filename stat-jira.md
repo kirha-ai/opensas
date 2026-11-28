@@ -8,8 +8,8 @@ This section is the only current status summary; every section below it is a his
 - **Resumed 2026-11-28 about 07:20Z** after the 06:31Z account usage limit stopped all dev contexts. At the user's direction devs may compare with real SAS via `/Users/thomas/sas/bin/sasrun foo.sas -f text -o - -l /dev/null`, only when truly blocked. Coordinator keep-awake `caffeinate` PID 62218. Coordinator scripts and dev brief live in the session scratchpad `stat/` directory.
 - **Batch 23 verification at exact SHA `fcfdac29b6c60f7f27185e5ae4c2594e376e3b6e` (2026-11-28):** `zig build install` direct 0; whole `tests/STAT15.4-oracle/` moved out of the checkout, then `zig build gate -j2 --summary all` direct 0 — **2748/2748 unit tests**, **2644/2644 corpus**, **11/11 programs**; `zig build install` direct 0; separate supplemental direct 0, **1113/1113**. Oracle restored unchanged, tree clean, HEAD unchanged. Pushed. **Integrated, PARK:** STAT-HPLMIXED-001.
 - **User approvals (2026-11-28):** public classic sample data, including rows exported from real SAS (Iris), may be committed; build caches (`.zig-cache`) may be deleted automatically when free disk falls to about 8 GB, only for idle worktrees (done once, 41 GB free); the `best32.` display fix is approved as STAT-BEST-001. Earlier scope: SASHELP sample data taken from SAS's public sample material may be committed to this public repository, for STAT-SASHELP-001 and the later SASHELP tickets; record source and verification, never invent rows, ask before adding a data set above about 2 MB.
-- **Live slots (auto):** dev1 STAT-CATMOD-001, dev2 STAT-PRINQUAL-001, dev3 STAT-CANCORR-001, dev4 STAT-TPSPLINE-001, dev5 STAT-CAUSALGRAPH-001, dev5 STAT-INBREED-001, dev6 STAT-PSMATCH-001, dev7 STAT-BEST-001.
-- **Integrated locally, awaiting batch verification (auto):** STAT-CAUSALTRT-001 (PARK), STAT-CAUSALGRAPH-001 (DONE candidate).
+- **Live slots (auto):** dev1 STAT-CATMOD-001, dev2 STAT-PRINQUAL-001, dev3 STAT-CANCORR-001, dev4 STAT-TPSPLINE-001, dev5 STAT-CAUSALGRAPH-001, dev5 STAT-INBREED-001, dev6 STAT-VARCLUS-001, dev7 STAT-BEST-001.
+- **Integrated locally, awaiting batch verification (auto):** STAT-CAUSALTRT-001 (PARK), STAT-CAUSALGRAPH-001 (DONE candidate), STAT-PSMATCH-001 (PARK).
 - **Counts:** 56 DONE, 130 PARK, 8 DOING, 1230 TODO.
 - **Next:** integrate each returned ticket and refill its slot, preferring close-out attempts on PARK tickets whose originals now match exactly (DISTANCE-001, PRINQUAL-001, VARCLUS-001, TPSPLINE-001, CATMOD-001, CANCORR-001, GEE-001, INBREED-001, then the open review in the batch 6 receipt), because a DONE ticket unlocks its dependents; then other eligible tickets.
 - **Working branch:** `feat/stat/batch-4`. Last tested and pushed code SHA `fcfdac29b6c60f7f27185e5ae4c2594e376e3b6e` (batch 23; batch 22 was `7ead2e784bcf074b5903487670563931c41985f1`). The bullets below this one describe batch 5 and are historical. Later commits that touch only this file are documentation. No PR created or merged; `main` untouched.
@@ -12398,7 +12398,7 @@ Source: S154, Chapter 101, `The PSMATCH Procedure`, PDF pp. 8199–8324. Tasks i
 
 <a id="stat-psmatch-001"></a>
 
-### [DOING @dev6] STAT-PSMATCH-001 — PSMATCH — Data input, variable roles, and basic options
+### [PARK] STAT-PSMATCH-001 — PSMATCH — Data input, variable roles, and basic options
 
 - Source: S154 / Chapter 101 / `PROC PSMATCH Statement` (PDF pp. 8214–8217); S154 / Chapter 101 / `BY Statement` (PDF pp. 8222–8223); S154 / Chapter 101 / `CLASS Statement` (PDF p. 8223); S154 / Chapter 101 / `FREQ Statement` (PDF p. 8223); S154 / Chapter 101 / `ID Statement` (PDF p. 8223); S154 / Chapter 101 / `STRATA Statement` (PDF pp. 8234–8235); S154 / Chapter 101 / `Weighting after Stratification` (PDF pp. 8243–8244); S154 / Chapter 101 / `Weighting after Matching` (PDF pp. 8248–8250).
 - Scope: Integrate PROC PSMATCH declarations, basic options, defaults, and execution boundaries; this ticket establishes parameter objects and result interfaces, while later feature tickets implement model-, algorithm-, and output-specific options. Also implement BY; CLASS; FREQ; ID; STRATA; Weighting after Stratification; Weighting after Matching; apply this procedure's rules for missing values, variable roles, and observation selection.
@@ -16358,7 +16358,7 @@ Source: S154, Chapter 129, `The VARCLUS Procedure`, PDF pp. 10693–10724. Tasks
 
 <a id="stat-varclus-001"></a>
 
-### [PARK] STAT-VARCLUS-001 — VARCLUS — Data input, variable roles, and basic options
+### [DOING @dev6] STAT-VARCLUS-001 — VARCLUS — Data input, variable roles, and basic options
 
 - Source: S154 / Chapter 129 / `PROC VARCLUS Statement` (PDF pp. 10700–10707); S154 / Chapter 129 / `BY Statement` (PDF pp. 10707–10708); S154 / Chapter 129 / `FREQ Statement` (PDF p. 10708); S154 / Chapter 129 / `VAR Statement` (PDF pp. 10708–10709); S154 / Chapter 129 / `WEIGHT Statement` (PDF p. 10709); S154 / Chapter 129 / `Missing Values` (PDF p. 10709).
 - Scope: Integrate PROC VARCLUS declarations, basic options, defaults, and execution boundaries; this ticket establishes parameter objects and result interfaces, while later feature tickets implement model-, algorithm-, and output-specific options. Also implement BY; FREQ; VAR; WEIGHT; Missing Values; apply this procedure's rules for missing values, variable roles, and observation selection.
