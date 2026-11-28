@@ -1,0 +1,16 @@
+# corpus assertions
+empty-listing
+stderr-count 1 the GCONV option is not implemented
+stderr-count 1 the TECHNIQUE option is not implemented
+stderr-count 1 the ITDETAILS option is not implemented
+stderr-count 1 the SELECTION statement is not implemented
+stderr-count 1 the OUTPUT statement is not implemented
+stderr-count 1 the PERFORMANCE statement is not implemented
+stderr-count 1 MODEL statement options are not implemented
+stderr-count 1 interaction, nested and polynomial effects are not implemented
+stderr-count 1 the events/trials response syntax is not implemented
+stderr-count 1 a response with more than two levels (multinomial models) is not implemented
+stderr-count 1 a character response variable is not verified
+stderr-count 1 the Sum of Frequencies Read with a missing or less-than-one FREQ value is not verified
+stderr-count 1 a CLASS variable that is not in the MODEL statement is not verified
+stderr-count 1 an input data set with no observations is not verified

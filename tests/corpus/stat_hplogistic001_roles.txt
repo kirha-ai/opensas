@@ -1,0 +1,87 @@
+# corpus assertions
+row Number of Observations Read 8
+row Number of Observations Used 8
+row 0 4 0.6880897889 . 0.048213
+row 1 2 0.6871739354 0.00091585 0.00051
+row 2 2 0.6871738342 0.00000010 4.428E-8
+stdout-count 3 Convergence criterion (ABSGCONV=1E-7) satisfied.
+row -2 Log Likelihood 10.9948
+row AIC (smaller is better) 14.9948
+row AICC (smaller is better) 17.3948
+row BIC (smaller is better) 15.1537
+row Likelihood Ratio 0.0956 1 0.7572
+row Intercept 0.4316 1.5735 Infty 0.27 0.7839
+row x -0.09591 0.3119 Infty -0.31 0.7584
+row Weight Variable w
+row Frequency Variable f
+row g 2 a b
+row Sum of Frequencies Read 11
+row Sum of Frequencies Used 11
+row 1 0 5
+row 2 1 6
+row 0 4 0.8609412684 . 0.06388
+row 1 2 0.8538579196 0.00708335 0.005821
+row 2 2 0.8538281656 0.00002975 0.000082
+row 3 2 0.853828164 0.00000000 6.244E-9
+row Columns in X 4
+row Number of Effects 3
+row Max Effect Columns 2
+row Rank of Cross-product Matrix 3
+row -2 Log Likelihood 18.7842
+row AIC (smaller is better) 24.7842
+row AICC (smaller is better) 28.2128
+row BIC (smaller is better) 25.9779
+row Likelihood Ratio 1.9435 2 0.3784
+row Intercept -1.2229 1.8950 Infty -0.65 0.5187
+row g a 1.6876 1.3214 Infty 1.28 0.2015
+row g b 0 . . . .
+row x 0.1235 0.3021 Infty 0.41 0.6828
+row c 2 a b
+row Number of Observations Read 10
+row Number of Observations Used 7
+row 1 0 4
+row 2 1 3
+row 0 4 0.66422501 . 0.159411
+row 1 2 0.6611940363 0.00303097 0.010329
+row 2 2 0.6611815012 0.00001254 0.000033
+row 3 2 0.6611815011 0.00000000 3.59E-10
+row -2 Log Likelihood 9.2565
+row AIC (smaller is better) 15.2565
+row AICC (smaller is better) 23.2565
+row BIC (smaller is better) 15.0943
+row Likelihood Ratio 0.3042 2 0.8589
+row Intercept 0.1795 1.9734 Infty 0.09 0.9275
+row x 0.09268 0.2841 Infty 0.33 0.7443
+row c a -0.6669 1.5940 Infty -0.42 0.6756
+row c b 0 . . . .
+row k=1
+row k=2
+row Sum of Frequencies Read 7500
+row Sum of Frequencies Used 7500
+row 1 0 3536
+row 2 1 3964
+row 0 4 0.6917759038 . 6.826629
+row 1 2 0.691510606 0.00026530 0.011382
+row 2 2 0.6915106053 0.00000000 2.618E-8
+row -2 Log Likelihood 10373
+row AIC (smaller is better) 10379
+row AICC (smaller is better) 10379
+row BIC (smaller is better) 10399
+row Likelihood Ratio 0.1108 2 0.9461
+row Intercept -0.1273 0.05464 Infty -2.33 0.0199
+row x 3.815E-6 0.000062 Infty 0.06 0.9508
+row z 5.3517 16.3568 Infty 0.33 0.7435
+row Number of Observations Read 400
+row 0 4 0.6919907664 . 5.131655
+row 2 2 0.6917673626 0.00000000 1.76E-8
+row -2 Log Likelihood 553.41
+row AICC (smaller is better) 559.47
+row BIC (smaller is better) 571.39
+row x 0.000065 0.000268 Infty 0.24 0.8092
+row z 15.0406 70.8111 Infty 0.21 0.8318
+stdout-count 3 0.4316      1.5735    Infty       0.27      0.7839
+stdout-count 4 Convergence criterion (GCONV=1E-8) satisfied.
+stdout-count 2 Data Source               WORK.TWICE
+stdout-count 6 Performance Information
+stderr-count 0 ERROR
+stderr-count 0 WARNING

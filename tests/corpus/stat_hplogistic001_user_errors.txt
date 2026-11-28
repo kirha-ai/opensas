@@ -1,0 +1,14 @@
+# corpus assertions
+empty-listing
+stderr-count 1 a MODEL statement is required
+stderr-count 1 Variable ZZ not found.
+stderr-count 1 variable c in the MODEL statement must be numeric or listed in the CLASS statement
+stderr-count 1 FREQ variable c must be numeric
+stderr-count 1 the WEIGHT statement takes exactly one variable
+stderr-count 1 the CLASS statement must precede the MODEL statement
+stderr-count 1 DATA= is specified more than once
+stderr-count 1 ALPHA= must be between 0 and 1
+stderr-count 1 invalid statement or token bogus
+stderr-count 1 CLASS variable c is listed more than once
+stderr-count 1 the response variable y cannot also be an explanatory effect
+stderr-count 1 input data set nosuch not found
