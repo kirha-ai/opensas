@@ -8,8 +8,9 @@ This section is the only current status summary; every section below it is a his
 - **Resumed 2026-11-28 about 07:20Z** after the 06:31Z account usage limit stopped all dev contexts. At the user's direction devs may compare with real SAS via `/Users/thomas/sas/bin/sasrun foo.sas -f text -o - -l /dev/null`, only when truly blocked. Coordinator keep-awake `caffeinate` PID 62218. Coordinator scripts and dev brief live in the session scratchpad `stat/` directory.
 - **Batch 35 verification at exact SHA `508e687d3e31bb6f0ed133f0352f92ee61e4d0be` (2026-11-28):** `zig build install` direct 0; whole `tests/STAT15.4-oracle/` moved out of the checkout, then `zig build gate -j2 --summary all` direct 0 — **2792/2792 unit tests**, **2707/2707 corpus**, **11/11 programs**; `zig build install` direct 0; separate supplemental direct 0, **1113/1113**. Oracle restored unchanged, tree clean, HEAD unchanged. Pushed. **New DONE:** STAT-LATTICE-001 (originals 110/110 and 222/222 tokens, rc 0; reference folder safe to delete, not deleted). **Integrated, PARK:** STAT-TPSPLINE-003, STAT-HPMIXED-001.
 - **User approvals (2026-11-28):** public classic sample data, including rows exported from real SAS (Iris), may be committed; build caches (`.zig-cache`) may be deleted automatically when free disk falls to about 8 GB, only for idle worktrees (done once, 41 GB free); the `best32.` display fix is approved as STAT-BEST-001. Earlier scope: SASHELP sample data taken from SAS's public sample material may be committed to this public repository, for STAT-SASHELP-001 and the later SASHELP tickets; record source and verification, never invent rows, ask before adding a data set above about 2 MB.
-- **Live slots (auto):** dev1 STAT-SCORE-001, dev2 STAT-CAUSALGRAPH-002, dev3 STAT-SURVEYMEANS-001, dev4 STAT-SURVEYIMPUTE-001, dev5 STAT-GLMMOD-003, dev6 STAT-STDRATE-001, dev7 STAT-STEPDISC-001.
-- **Counts:** 63 DONE, 133 PARK, 7 DOING, 1221 TODO.
+- **Live slots (auto):** dev1 STAT-SCORE-001, dev2 STAT-CAUSALGRAPH-002, dev3 STAT-SURVEYMEANS-001, dev4 STAT-SURVEYIMPUTE-001, dev5 STAT-GLMMOD-003, dev6 STAT-STDRATE-001, dev7 STAT-LATTICE-002.
+- **Integrated locally, awaiting batch verification (auto):** STAT-STEPDISC-001 (PARK).
+- **Counts:** 63 DONE, 134 PARK, 7 DOING, 1220 TODO.
 - **Next:** integrate each returned ticket and refill its slot, preferring close-out attempts on PARK tickets whose originals now match exactly (DISTANCE-001, PRINQUAL-001, VARCLUS-001, TPSPLINE-001, CATMOD-001, CANCORR-001, GEE-001, INBREED-001, then the open review in the batch 6 receipt), because a DONE ticket unlocks its dependents; then other eligible tickets.
 - **Working branch:** `feat/stat/batch-4`. Last tested and pushed code SHA `508e687d3e31bb6f0ed133f0352f92ee61e4d0be` (batch 35; batch 34 was `ef2a2cce11a37957bc3754d4a669919560e655d2`). The bullets below this one describe batch 5 and are historical. Later commits that touch only this file are documentation. No PR created or merged; `main` untouched.
 
@@ -8571,7 +8572,7 @@ Source: S154, Chapter 75, `The LATTICE Procedure`, PDF pp. 5511–5520. Tasks in
 
 <a id="stat-lattice-002"></a>
 
-### [TODO] STAT-LATTICE-002 — LATTICE — Analysis of variance for lattice designs
+### [DOING @dev7] STAT-LATTICE-002 — LATTICE — Analysis of variance for lattice designs
 
 - Source: S154 / Chapter 75 / `Getting Started: LATTICE Procedure` (PDF pp. 5512–5514); S154 / Chapter 75 / `Overview: LATTICE Procedure` (PDF pp. 5511–5512).
 - Scope: Implement analysis of variance for lattice designs using the documented default path and establish the computational state needed by later extensions; implement specialized models, methods, and diagnostics outside that default example in their corresponding feature tickets.
@@ -14470,7 +14471,7 @@ Source: S154, Chapter 117, `The STEPDISC Procedure`, PDF pp. 9553–9576. Tasks 
 
 <a id="stat-stepdisc-001"></a>
 
-### [DOING @dev7] STAT-STEPDISC-001 — STEPDISC — Data input, variable roles, and basic options
+### [PARK] STAT-STEPDISC-001 — STEPDISC — Data input, variable roles, and basic options
 
 - Source: S154 / Chapter 117 / `PROC STEPDISC Statement` (PDF pp. 9559–9563); S154 / Chapter 117 / `BY Statement` (PDF pp. 9563–9564); S154 / Chapter 117 / `CLASS Statement` (PDF p. 9564); S154 / Chapter 117 / `FREQ Statement` (PDF p. 9564); S154 / Chapter 117 / `VAR Statement` (PDF p. 9564); S154 / Chapter 117 / `WEIGHT Statement` (PDF pp. 9564–9565); S154 / Chapter 117 / `Missing Values` (PDF p. 9565); S154 / Chapter 117 / `Input Data Sets` (PDF pp. 9565–9566).
 - Scope: Integrate PROC STEPDISC declarations, basic options, defaults, and execution boundaries; this ticket establishes parameter objects and result interfaces, while later feature tickets implement model-, algorithm-, and output-specific options. Also implement BY; CLASS; FREQ; VAR; WEIGHT; Missing Values; Input Data Sets; apply this procedure's rules for missing values, variable roles, and observation selection.
