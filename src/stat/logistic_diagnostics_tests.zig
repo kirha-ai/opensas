@@ -238,7 +238,6 @@ test "LOGISTIC017 option guards suppression and incomplete fit status are captur
         "proc logistic; model Response=LogRate LogVolume / influence link=probit; run;",
         "proc logistic; model Response=LogRate LogVolume / influence nofit; run;",
         "proc logistic; model Response=LogRate LogVolume / influence scale=2; run;",
-        "proc logistic; model Response=LogRate LogVolume / influence(other); run;",
         "proc logistic plots(only label)=(phat leverage dpc); model Response=LogRate LogVolume; run;",
     }) |source| {
         diag.resetGap();
@@ -338,4 +337,22 @@ test "LOGISTIC017 complete numeric diagnostic listing preserves all row fields" 
     }
     try t.expectEqual(@as(usize, 39 * 13), fields);
     try t.expect(actual.next() == null);
+}
+
+test "LOGISTIC017 unknown INFLUENCE suboption is a user error not an implementation gap" {
+    var arena = std.heap.ArenaAllocator.init(t.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var ds = try vaso(a);
+    var lib = Library.init(a);
+    try lib.put("vaso", &ds);
+    var d = diag.Diagnostics.init(a);
+    const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &d };
+    diag.resetGap();
+    defer diag.resetGap();
+    var out: std.ArrayList(u8) = .empty;
+    try t.expectError(error.ParseError, l.run(cx, &out, try lex.tokenize(a, "proc logistic; model Response=LogRate LogVolume / influence(other); run;", &d)));
+    try t.expectEqual(@as(u8, 1), diag.exitCode(diag.gapHit(), d.hasErrors()));
+    try t.expectEqual(@as(usize, 0), out.items.len);
+    try t.expect(std.mem.indexOf(u8, try d.render(), "invalid syntax near other") != null);
 }

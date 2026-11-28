@@ -460,7 +460,7 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
                         j += 1;
                         if (at(t, j, .lparen)) {
                             j += 1;
-                            if (!kw(t, j, "stdres")) return unsupported(cx, t[j]);
+                            if (!kw(t, j, "stdres")) return invalid(cx, t, j);
                             s.standardized_residuals = true;
                             j += 1;
                             if (!at(t, j, .rparen)) return invalid(cx, t, j);
