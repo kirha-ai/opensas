@@ -8,9 +8,9 @@ This section is the only current status summary; every section below it is a his
 - **Resumed 2026-11-28 about 07:20Z** after the 06:31Z account usage limit stopped all dev contexts. At the user's direction devs may compare with real SAS via `/Users/thomas/sas/bin/sasrun foo.sas -f text -o - -l /dev/null`, only when truly blocked. Coordinator keep-awake `caffeinate` PID 62218. Coordinator scripts and dev brief live in the session scratchpad `stat/` directory.
 - **Batch 34 verification at exact SHA `ef2a2cce11a37957bc3754d4a669919560e655d2` (2026-11-28):** `zig build install` direct 0; whole `tests/STAT15.4-oracle/` moved out of the checkout, then `zig build gate -j2 --summary all` direct 0 — **2783/2783 unit tests**, **2696/2696 corpus**, **11/11 programs**; `zig build install` direct 0; separate supplemental direct 0, **1113/1113**. Oracle restored unchanged, tree clean, HEAD unchanged. Pushed. **New DONE:** STAT-CAUSALGRAPH-003 (original 95/95 tokens, rc 0; reference folder safe to delete, not deleted).
 - **User approvals (2026-11-28):** public classic sample data, including rows exported from real SAS (Iris), may be committed; build caches (`.zig-cache`) may be deleted automatically when free disk falls to about 8 GB, only for idle worktrees (done once, 41 GB free); the `best32.` display fix is approved as STAT-BEST-001. Earlier scope: SASHELP sample data taken from SAS's public sample material may be committed to this public repository, for STAT-SASHELP-001 and the later SASHELP tickets; record source and verification, never invent rows, ask before adding a data set above about 2 MB.
-- **Live slots (auto):** dev1 STAT-LATTICE-001, dev1 STAT-SCORE-001, dev3 STAT-SURVEYMEANS-001, dev4 STAT-SURVEYIMPUTE-001, dev5 STAT-GLMMOD-003, dev6 STAT-STDRATE-001, dev7 STAT-STEPDISC-001.
+- **Live slots (auto):** dev1 STAT-LATTICE-001, dev1 STAT-SCORE-001, dev2 STAT-CAUSALGRAPH-002, dev3 STAT-SURVEYMEANS-001, dev4 STAT-SURVEYIMPUTE-001, dev5 STAT-GLMMOD-003, dev6 STAT-STDRATE-001, dev7 STAT-STEPDISC-001.
 - **Integrated locally, awaiting batch verification (auto):** STAT-LATTICE-001 (DONE candidate), STAT-TPSPLINE-003 (PARK), STAT-HPMIXED-001 (PARK).
-- **Counts:** 62 DONE, 133 PARK, 7 DOING, 1222 TODO.
+- **Counts:** 62 DONE, 133 PARK, 8 DOING, 1221 TODO.
 - **Next:** integrate each returned ticket and refill its slot, preferring close-out attempts on PARK tickets whose originals now match exactly (DISTANCE-001, PRINQUAL-001, VARCLUS-001, TPSPLINE-001, CATMOD-001, CANCORR-001, GEE-001, INBREED-001, then the open review in the batch 6 receipt), because a DONE ticket unlocks its dependents; then other eligible tickets.
 - **Working branch:** `feat/stat/batch-4`. Last tested and pushed code SHA `ef2a2cce11a37957bc3754d4a669919560e655d2` (batch 34; batch 33 was `04af013c84de7d38d855b563eb74a3034f644b0c`). The bullets below this one describe batch 5 and are historical. Later commits that touch only this file are documentation. No PR created or merged; `main` untouched.
 
@@ -3139,7 +3139,7 @@ Source: S154, Chapter 37, `The CAUSALGRAPH Procedure`, PDF pp. 2303–2362. Task
 
 <a id="stat-causalgraph-002"></a>
 
-### [TODO] STAT-CAUSALGRAPH-002 — CAUSALGRAPH — Causal graph parsing and identification analysis
+### [DOING @dev2] STAT-CAUSALGRAPH-002 — CAUSALGRAPH — Causal graph parsing and identification analysis
 
 - Source: S154 / Chapter 37 / `Getting Started: CAUSALGRAPH Procedure` (PDF pp. 2307–2310); S154 / Chapter 37 / `Overview: CAUSALGRAPH Procedure` (PDF pp. 2304–2307).
 - Scope: Implement causal graph parsing and identification analysis using the documented default path and establish the computational state needed by later extensions; implement specialized models, methods, and diagnostics outside that default example in their corresponding feature tickets.
