@@ -800,6 +800,112 @@ fn weightCell(a: A, out: *Out, x: f64) !void {
     try padRight(a, out, if (@abs(x) < 1e-9) "0" else try fixed(a, x, 4), 12);
 }
 
+/// One estimates page: product-limit table, quartiles and restricted mean.
+/// `two_digit`: the largest stratum has 10-99 observations, which moves the
+/// Number Failed/Left columns one place right (SAS listings).
+fn stratumPage(a: A, body: *Out, s: Spec, sel: Selected, st: Stratum, stratum_line: ?[]const u8, byline: []const u8, indent: usize, two_digit: bool) !void {
+    const ds = s.input.ds;
+    const time_name = ds.columns.items[s.time].name;
+    const weighted = s.weight != null;
+    const id_col: ?usize = if (s.ids.len == 1) s.ids[0] else null;
+    try pageHead(a, body, byline);
+    // Without STRATA the page has no stratum line (SAS listing).
+    if (stratum_line) |line| try body.print(a, " \n{s}\n\n", .{line}) else try body.append(a, '\n');
+    {
+        try body.appendNTimes(a, ' ', indent);
+        try body.appendSlice(a, "Product-Limit Survival Estimates\n \n");
+        try body.appendSlice(a, if (weighted) "                                     Survival          Weighted\n                                     Standard     Number      Number\n" else "                                     Survival\n                                     Standard    Number    Number\n");
+        try padRight(a, body, time_name, 8);
+        try body.appendSlice(a, if (weighted) "     Survival    Failure      Error       Failed       Left        Weight" else "     Survival    Failure      Error      Failed     Left");
+        if (s.frequency != null) try body.appendSlice(a, "     Freq");
+        if (id_col) |c| try body.print(a, "     {s}", .{ds.columns.items[c].name});
+        try body.appendSlice(a, "\n\n");
+        if (weighted) {
+            var sum: f64 = 0;
+            for (st.rows) |row| sum += row.weight;
+            try body.appendSlice(a, " 0.00000       1.0000           0           0");
+            try weightCell(a, body, 0);
+            try weightCell(a, body, sum);
+            try weightCell(a, body, 0);
+            try body.append(a, '\n');
+        } else if (two_digit) try body.print(a, " 0.00000       1.0000           0           0       0{d:>10}", .{st.total}) else try body.print(a, " 0.00000       1.0000           0           0      0{d:>10}", .{st.total});
+        if (weighted) {} else if (s.frequency != null) try body.print(a, "{d:>11}\n", .{0}) else if (id_col != null) try body.appendSlice(a, "               \n") else try body.appendSlice(a, if (two_digit) "  \n" else "   \n");
+        var any_censored = false;
+        for (st.rows) |row| {
+            any_censored = any_censored or row.censored;
+            try padRight(a, body, try fixed(a, row.time, 5), 8);
+            try body.append(a, if (row.censored) '*' else ' ');
+            try probability(a, body, row.survival);
+            try probability(a, body, if (row.survival) |x| 1 - x else null);
+            // The standard error is undefined once the estimate reaches 0.
+            try probability(a, body, if (row.censored) null else row.se);
+            if (weighted) {
+                try weightCell(a, body, row.failed_w);
+                try weightCell(a, body, row.left_w);
+                try weightCell(a, body, row.weight);
+                try body.append(a, '\n');
+                continue;
+            }
+            if (two_digit) try body.print(a, "{d:>8}{d:>10}", .{ row.failed, row.left }) else try body.print(a, "{d:>7}{d:>10}", .{ row.failed, row.left });
+            if (s.frequency != null) {
+                try body.print(a, "{d:>11}\n", .{row.freq});
+            } else if (id_col) |c| {
+                try body.appendSlice(a, "       ");
+                try padLeft(a, body, std.mem.trimEnd(u8, sel.rows[row.row][c].str, " "), 8);
+                try body.append(a, '\n');
+            } else try body.appendSlice(a, if (two_digit) "  \n" else "   \n");
+        }
+        if (any_censored) try body.appendSlice(a, "\nNOTE: The marked survival times are censored observations.\n");
+        try body.appendSlice(a, "\n\n");
+    }
+    try body.print(a, "Summary Statistics for Time Variable {s}\n\n                   Quartile Estimates\n \n              Point         95% Confidence Interval\nPercent    Estimate    Transform      [Lower      Upper)\n\n", .{time_name});
+    for ([_]usize{ 75, 50, 25 }, st.quartiles) |percent, q| {
+        try body.print(a, "{d:>7}", .{percent});
+        try timeCell(a, body, q.estimate);
+        try body.appendSlice(a, "    LOGLOG   ");
+        try timeCell(a, body, q.lower);
+        try timeCell(a, body, q.upper);
+        try body.append(a, '\n');
+    }
+    try body.appendSlice(a, "\n\n            Standard\n    Mean       Error\n\n");
+    try padRight(a, body, try fixed(a, st.mean, 5), 8);
+    try padRight(a, body, try fixed(a, st.mean_se.?, 5), 12);
+    try body.append(a, '\n');
+    // ponytail: the note is wrapped as the reference wraps it at LINESIZE=160.
+    if (st.last_censored) try body.appendSlice(a, "\nNOTE: The mean survival time and its standard error were underestimated because the largest observation was censored and the estimation was restricted to the \n      largest event time.\n");
+}
+
+/// Number Failed/Left layout from the largest stratum size: below 10 the
+/// reference layout, 10-99 one place right; larger sizes and the FREQ, ID and
+/// WEIGHT variants of the wider layout have no SAS listing.
+fn countColumns(cx: proc.ProcCtx, s: Spec, strata: []const Stratum) diag.Error!bool {
+    var largest: usize = 0;
+    for (strata) |st| largest = @max(largest, st.total);
+    if (largest < 10) return false;
+    if (largest >= 100) return gap(cx, 0, "survival listing for a stratum of 100 or more observations is not verified", .{});
+    if (s.frequency != null or s.weight != null or s.ids.len > 0) return gap(cx, 0, "FREQ, WEIGHT or ID listing for a stratum of 10 or more observations is not verified", .{});
+    return true;
+}
+
+/// One-sample analysis (no STRATA): one estimates page and the censoring
+/// summary, no homogeneity tests (SAS listings).
+fn renderSingle(cx: proc.ProcCtx, out: *Out, s: Spec, sel: Selected) diag.Error!void {
+    const a = cx.arena;
+    if (s.by_cols.len > 0 or s.frequency != null or s.weight != null or s.ids.len > 0 or s.notable) return gap(cx, 0, "BY, FREQ, WEIGHT, ID or NOTABLE without STRATA is not verified", .{});
+    const time_name = s.input.ds.columns.items[s.time].name;
+    if (time_name.len > 8) return gap(cx, 0, "listing columns for variable names longer than 8 characters are not verified", .{});
+    for (sel.obs) |o| if (o.time < 0 or o.time >= 10) return gap(cx, 0, "survival time display outside [0, 10) is not verified", .{});
+    const st = try productLimit(a, sel.obs);
+    if (st.unverified) |reason| return gap(cx, 0, "{s} is not verified", .{reason});
+    const two_digit = try countColumns(cx, s, &.{st});
+    var body: Out = .empty;
+    try stratumPage(a, &body, s, sel, st, null, "", 17, two_digit);
+    try body.appendSlice(a, "\n\nSummary of the Number of Censored and Uncensored Values\n \n                                 Percent\n   Total  Failed    Censored    Censored\n\n");
+    try body.print(a, "{d:>8}{d:>8}{d:>12}{s:>12}\n", .{ st.total, st.failed, st.total - st.failed, try fixed(a, 100 * @as(f64, @floatFromInt(st.total - st.failed)) / @as(f64, @floatFromInt(st.total)), 2) });
+    try cx.diags.note(0, "The LOGLOG transform is used to compute the confidence limits for the quartiles of the survivor distribution. To suppress using this transform, specify CONFTYPE=LINEAR in the PROC LIFETEST statement.", .{});
+    try out.appendSlice(a, body.items);
+}
+
 fn render(cx: proc.ProcCtx, out: *Out, s: Spec, sel: Selected) diag.Error!void {
     const a = cx.arena;
     const ds = s.input.ds;
@@ -818,7 +924,8 @@ fn render(cx: proc.ProcCtx, out: *Out, s: Spec, sel: Selected) diag.Error!void {
     }
     for (sel.obs) |o| if (o.freq != @floor(o.freq)) return gap(cx, 0, "noninteger FREQ values (NOTRUNCATE) are not implemented", .{});
     if (sel.obs.len == 0) return gap(cx, 0, "the result for an input without usable observations is not verified", .{});
-    if (s.strata.len != 1) return gap(cx, 0, "listing without STRATA or with several STRATA variables is not implemented", .{});
+    if (s.strata.len > 1) return gap(cx, 0, "listing with several STRATA variables is not implemented", .{});
+    if (s.strata.len == 0) return renderSingle(cx, out, s, sel);
     const strata_info = ds.columns.items[s.strata[0]];
     if (strata_info.format != null) return gap(cx, 0, "formatted STRATA levels are not implemented", .{});
     // An unformatted numeric STRATA variable prints in a 12-wide BEST12.
@@ -855,6 +962,7 @@ fn render(cx: proc.ProcCtx, out: *Out, s: Spec, sel: Selected) diag.Error!void {
             if (!(sum < 100)) return gap(cx, 0, "weighted number display of 100 or more is not verified", .{});
         }
     }
+    const two_digit = try countColumns(cx, s, strata);
     const h = if (weighted) try weightedHomogeneity(a, sel.obs, K) else try homogeneity(a, sel.obs, K);
     // Column decimals (see columnDecimals); each column must agree with the
     // per-value rule except where a SAS listing shows the column rule.
@@ -893,70 +1001,7 @@ fn render(cx: proc.ProcCtx, out: *Out, s: Spec, sel: Selected) diag.Error!void {
     // tests: the SAS listing drops each stratum's page (estimates, quartiles,
     // mean) and the log drops the quartile-transform note.
     if (!s.notable) for (strata, 0..) |st, k| {
-        try pageHead(a, &body, byline);
-        try body.print(a, " \nStratum {d}: {s} = {s}\n\n", .{ k + 1, strata_name, labels[k] });
-        {
-            try body.appendNTimes(a, ' ', indent);
-            try body.appendSlice(a, "Product-Limit Survival Estimates\n \n");
-            try body.appendSlice(a, if (weighted) "                                     Survival          Weighted\n                                     Standard     Number      Number\n" else "                                     Survival\n                                     Standard    Number    Number\n");
-            try padRight(a, &body, time_name, 8);
-            try body.appendSlice(a, if (weighted) "     Survival    Failure      Error       Failed       Left        Weight" else "     Survival    Failure      Error      Failed     Left");
-            if (s.frequency != null) try body.appendSlice(a, "     Freq");
-            if (id_col) |c| try body.print(a, "     {s}", .{ds.columns.items[c].name});
-            try body.appendSlice(a, "\n\n");
-            if (weighted) {
-                var sum: f64 = 0;
-                for (st.rows) |row| sum += row.weight;
-                try body.appendSlice(a, " 0.00000       1.0000           0           0");
-                try weightCell(a, &body, 0);
-                try weightCell(a, &body, sum);
-                try weightCell(a, &body, 0);
-                try body.append(a, '\n');
-            } else try body.print(a, " 0.00000       1.0000           0           0      0{d:>10}", .{st.total});
-            if (weighted) {} else if (s.frequency != null) try body.print(a, "{d:>11}\n", .{0}) else if (id_col != null) try body.appendSlice(a, "               \n") else try body.appendSlice(a, "   \n");
-            var any_censored = false;
-            for (st.rows) |row| {
-                any_censored = any_censored or row.censored;
-                try padRight(a, &body, try fixed(a, row.time, 5), 8);
-                try body.append(a, if (row.censored) '*' else ' ');
-                try probability(a, &body, row.survival);
-                try probability(a, &body, if (row.survival) |x| 1 - x else null);
-                // The standard error is undefined once the estimate reaches 0.
-                try probability(a, &body, if (row.censored) null else row.se);
-                if (weighted) {
-                    try weightCell(a, &body, row.failed_w);
-                    try weightCell(a, &body, row.left_w);
-                    try weightCell(a, &body, row.weight);
-                    try body.append(a, '\n');
-                    continue;
-                }
-                try body.print(a, "{d:>7}{d:>10}", .{ row.failed, row.left });
-                if (s.frequency != null) {
-                    try body.print(a, "{d:>11}\n", .{row.freq});
-                } else if (id_col) |c| {
-                    try body.appendSlice(a, "       ");
-                    try padLeft(a, &body, std.mem.trimEnd(u8, sel.rows[row.row][c].str, " "), 8);
-                    try body.append(a, '\n');
-                } else try body.appendSlice(a, "   \n");
-            }
-            if (any_censored) try body.appendSlice(a, "\nNOTE: The marked survival times are censored observations.\n");
-            try body.appendSlice(a, "\n\n");
-        }
-        try body.print(a, "Summary Statistics for Time Variable {s}\n\n                   Quartile Estimates\n \n              Point         95% Confidence Interval\nPercent    Estimate    Transform      [Lower      Upper)\n\n", .{time_name});
-        for ([_]usize{ 75, 50, 25 }, st.quartiles) |percent, q| {
-            try body.print(a, "{d:>7}", .{percent});
-            try timeCell(a, &body, q.estimate);
-            try body.appendSlice(a, "    LOGLOG   ");
-            try timeCell(a, &body, q.lower);
-            try timeCell(a, &body, q.upper);
-            try body.append(a, '\n');
-        }
-        try body.appendSlice(a, "\n\n            Standard\n    Mean       Error\n\n");
-        try padRight(a, &body, try fixed(a, st.mean, 5), 8);
-        try padRight(a, &body, try fixed(a, st.mean_se.?, 5), 12);
-        try body.append(a, '\n');
-        // ponytail: the note is wrapped as the reference wraps it at LINESIZE=160.
-        if (st.last_censored) try body.appendSlice(a, "\nNOTE: The mean survival time and its standard error were underestimated because the largest observation was censored and the estimation was restricted to the \n      largest event time.\n");
+        try stratumPage(a, &body, s, sel, st, try std.fmt.allocPrint(a, "Stratum {d}: {s} = {s}", .{ k + 1, strata_name, labels[k] }), byline, indent, two_digit);
     };
     if (s.notable) try pageHead(a, &body, byline) else try body.appendSlice(a, "\n");
     // A numeric STRATA column is 12 wide instead of 8; the centred title and

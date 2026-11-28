@@ -153,7 +153,7 @@ test "STAT-LIFETEST-001 invalid declarations are user errors and unimplemented o
         .{ "proc lifetest; time t; freq f; freq f;", 2 },
         .{ "proc lifetest; time t; weight w; weight w;", 2 },
         // Execution boundaries: valid roles whose results are not implemented.
-        .{ "proc lifetest; time t*c(0);", 2 },
+        .{ "proc lifetest notable; time t*c(0);", 2 }, // NOTABLE without STRATA
         .{ "proc lifetest; time t*c(0); strata w;", 2 }, // noninteger numeric levels (integer ones: stat_lifetest_numeric_strata)
         .{ "proc lifetest; time t*c(0); strata g n;", 2 },
         // BY, FREQ, WEIGHT, ID and MISSING each execute (corpus fixtures
@@ -544,10 +544,12 @@ test "STAT-LIFETEST-002 tied event rows in the listing and still-unsupported sha
         " 2.00000            .           .           .      1         4   \n",
         " 2.00000       0.6000      0.4000      0.2191      2         3   \n",
     }) |line| try expect(std.mem.indexOf(u8, listing.out, line) != null);
-    // No STRATA, numeric STRATA and several STRATA variables have no listing
-    // reference and remain visible gaps.
+    // NOTABLE without STRATA, a numeric STRATA level without events and
+    // several STRATA variables have no listing reference and remain visible
+    // gaps (plain one-sample and integer numeric STRATA listings are corpus
+    // fixtures stat_lifetest_no_strata*, stat_lifetest_numeric_strata).
     for ([_][]const u8{
-        "proc lifetest data=tied; time time*status(0);",
+        "proc lifetest data=tied notable; time time*status(0);",
         "proc lifetest data=tied; time time*status(0); strata status;",
         "proc lifetest data=tied; time time*status(0); strata group status;",
     }) |source| {

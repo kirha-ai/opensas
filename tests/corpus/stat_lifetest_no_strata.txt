@@ -1,0 +1,48 @@
+
+The LIFETEST Procedure
+
+                 Product-Limit Survival Estimates
+ 
+                                     Survival
+                                     Standard    Number    Number
+    time     Survival    Failure      Error      Failed     Left
+
+ 0.00000       1.0000           0           0       0        10  
+ 1.00000       0.9000      0.1000      0.0949       1         9  
+ 1.00000*           .           .           .       1         8  
+ 2.00000       0.7875      0.2125      0.1340       2         7  
+ 2.00000*           .           .           .       2         6  
+ 3.00000       0.6563      0.3438      0.1638       3         5  
+ 4.00000            .           .           .       4         4  
+ 4.00000       0.3938      0.6063      0.1742       5         3  
+ 5.00000*           .           .           .       5         2  
+ 6.00000*           .           .           .       5         1  
+ 7.00000            0      1.0000           .       6         0  
+
+NOTE: The marked survival times are censored observations.
+
+
+Summary Statistics for Time Variable time
+
+                   Quartile Estimates
+ 
+              Point         95% Confidence Interval
+Percent    Estimate    Transform      [Lower      Upper)
+
+     75     7.00000    LOGLOG        4.00000      .     
+     50     4.00000    LOGLOG        1.00000      .     
+     25     3.00000    LOGLOG        1.00000     4.00000
+
+
+            Standard
+    Mean       Error
+
+ 4.52500     0.81954
+
+
+Summary of the Number of Censored and Uncensored Values
+ 
+                                 Percent
+   Total  Failed    Censored    Censored
+
+      10       6           4       40.00
