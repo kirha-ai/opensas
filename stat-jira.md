@@ -8,9 +8,9 @@ This section is the only current status summary; every section below it is a his
 - **Resumed 2026-11-28 about 07:20Z** after the 06:31Z account usage limit stopped all dev contexts. At the user's direction devs may compare with real SAS via `/Users/thomas/sas/bin/sasrun foo.sas -f text -o - -l /dev/null`, only when truly blocked. Coordinator keep-awake `caffeinate` PID 62218. Coordinator scripts and dev brief live in the session scratchpad `stat/` directory.
 - **Batch 40 verification at exact SHA `d9e640ff1739af1ed30507471fd94c88a6320ba7` (2026-11-28):** `zig build install` direct 0; whole `tests/STAT15.4-oracle/` moved out of the checkout, then `zig build gate -j2 --summary all` direct 0 — **2819/2819 unit tests**, **2758/2758 corpus**, **11/11 programs**; `zig build install` direct 0; separate supplemental direct 0, **1113/1113**. Oracle restored unchanged, tree clean, HEAD unchanged. Pushed. **New DONE:** STAT-CAUSALGRAPH-004 (original 95/95, rc 0; reference folder safe to delete, not deleted).
 - **User approvals (2026-11-28):** move CATMOD's TYPE=EST direct input to STAT-CATMOD-004; add the Base random-stream ticket STAT-RAND-001; public classic sample data, including rows exported from real SAS (Iris), may be committed; build caches (`.zig-cache`) may be deleted automatically when free disk falls to about 8 GB, only for idle worktrees (done twice: 41 GB free the first time; the second at 9.5 GB free with every worktree idle, just before a seven-dev round); the `best32.` display fix is approved as STAT-BEST-001. Earlier scope: SASHELP sample data taken from SAS's public sample material may be committed to this public repository, for STAT-SASHELP-001 and the later SASHELP tickets; record source and verification, never invent rows, ask before adding a data set above about 2 MB.
-- **Live slots (auto):** dev1 STAT-GLMMOD-002, dev2 STAT-RAND-001, dev3 STAT-NESTED-002, dev4 STAT-GENMOD-001, dev6 STAT-LIFETEST-001, dev7 STAT-ANOVA-001.
+- **Live slots (auto):** dev1 STAT-GLMMOD-002, dev2 STAT-RAND-001, dev3 STAT-NESTED-002, dev4 STAT-GENMOD-001, dev5 STAT-CAUSALGRAPH-005, dev6 STAT-LIFETEST-001, dev7 STAT-ANOVA-001.
 - **Integrated locally, awaiting batch verification (auto):** STAT-NESTED-002 (DONE candidate), STAT-GLMMOD-002 (DONE candidate).
-- **Counts:** 68 DONE, 135 PARK, 6 DOING, 1216 TODO.
+- **Counts:** 68 DONE, 135 PARK, 7 DOING, 1215 TODO.
 - **Next:** integrate each returned ticket and refill its slot, preferring close-out attempts on PARK tickets whose originals now match exactly (DISTANCE-001, PRINQUAL-001, VARCLUS-001, TPSPLINE-001, CATMOD-001, CANCORR-001, GEE-001, INBREED-001, then the open review in the batch 6 receipt), because a DONE ticket unlocks its dependents; then other eligible tickets.
 - **Working branch:** `feat/stat/batch-4`. Last tested and pushed code SHA `d9e640ff1739af1ed30507471fd94c88a6320ba7` (batch 40; batch 39 was `79a8ebafd540c50b02851a7759bc2391c9cbed7c`). The bullets below this one describe batch 5 and are historical. Later commits that touch only this file are documentation. No PR created or merged; `main` untouched.
 
@@ -3179,7 +3179,7 @@ Source: S154, Chapter 37, `The CAUSALGRAPH Procedure`, PDF pp. 2303–2362. Task
 
 <a id="stat-causalgraph-005"></a>
 
-### [TODO] STAT-CAUSALGRAPH-005 — CAUSALGRAPH — TESTID
+### [DOING @dev5] STAT-CAUSALGRAPH-005 — CAUSALGRAPH — TESTID
 
 - Source: S154 / Chapter 37 / `TESTID Statement` (PDF pp. 2319–2321).
 - Scope: Implement TESTID. Cover the source suboptions, defaults, and applicability restrictions; implement only this feature group, without extending to languages or runtime environments outside the cited scope.
