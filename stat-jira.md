@@ -8,7 +8,8 @@ This section is the only current status summary; every section below it is a his
 - **Resumed 2026-11-28 about 07:20Z** after the 06:31Z account usage limit stopped all dev contexts. At the user's direction devs may compare with real SAS via `/Users/thomas/sas/bin/sasrun foo.sas -f text -o - -l /dev/null`, only when truly blocked. Coordinator keep-awake `caffeinate` PID 62218. Coordinator scripts and dev brief live in the session scratchpad `stat/` directory.
 - **Batch 44 verification at exact SHA `c0b92684d6e9457f36e182aed70bffa6e3d2a3f3` (2026-11-28):** `zig build install` direct 0; whole `tests/STAT15.4-oracle/` moved out of the checkout, then `zig build gate -j2 --summary all` direct 0 — **2831/2831 unit tests**, **2782/2782 corpus**, **11/11 programs**; `zig build install` direct 0; separate supplemental direct 0, **1113/1113**. Oracle restored unchanged, tree clean, HEAD unchanged. Pushed. **New DONE:** STAT-RAND-001 (UNIFORM, NORMAL, EXPONENTIAL, BERNOULLI match SAS after STREAMINIT; originals of SURVEYLOGISTIC-001, SURVEYPHREG-001, RMSTREG-001, CAUSALTRT-001, PSMATCH-001 and GLM-005 now replay with 0 differing tokens; disclosed: EXPONENTIAL differs by 1 ulp on about 0.1% of draws, CALL STREAM substreams and several other distributions still differ; changed expectations are in commit `ede6a888` and its follow-up).
 - **User approvals (2026-11-28):** move CATMOD's TYPE=EST direct input to STAT-CATMOD-004; add the Base random-stream ticket STAT-RAND-001; public classic sample data, including rows exported from real SAS (Iris), may be committed; build caches (`.zig-cache`) may be deleted automatically when free disk falls to about 8 GB, only for idle worktrees (done twice: 41 GB free the first time; the second at 9.5 GB free with every worktree idle, just before a seven-dev round); the `best32.` display fix is approved as STAT-BEST-001. Earlier scope: SASHELP sample data taken from SAS's public sample material may be committed to this public repository, for STAT-SASHELP-001 and the later SASHELP tickets; record source and verification, never invent rows, ask before adding a data set above about 2 MB.
-- **Live slots (auto):** dev1 STAT-STDIZE-003, dev2 STAT-ANOVA-003, dev3 STAT-NESTED-003, dev4 STAT-SASHELP-005, dev5 STAT-CAUSALGRAPH-005, dev6 STAT-DATASET-001, dev7 STAT-CATMOD-005.
+- **Live slots (auto):** dev1 STAT-STDIZE-003, dev2 STAT-ANOVA-003, dev3 STAT-NESTED-003, dev4 STAT-SURVEYLOGISTIC-001, dev5 STAT-CAUSALGRAPH-005, dev6 STAT-DATASET-001, dev7 STAT-CATMOD-005.
+- **Held, not integrated (needs a user decision):** STAT-SASHELP-005, branch `stat-b7/sashelp005-dev4` (`50a9f8d7` code and data, `c3d1db77` ticket note). It adds SASHELP.JUNKMAIL (708 KB text), LEUTRAIN and LEUTEST (2.24 MB and 1.99 MB as text, committed gzip-compressed at 857 KB and 766 KB), about 2.3 MB in the repository, above the size the user is asked about.
 - **Counts:** 72 DONE, 137 PARK, 7 DOING, 1209 TODO.
 - **Next:** integrate each returned ticket and refill its slot, preferring close-out attempts on PARK tickets whose originals now match exactly (DISTANCE-001, PRINQUAL-001, VARCLUS-001, TPSPLINE-001, CATMOD-001, CANCORR-001, GEE-001, INBREED-001, then the open review in the batch 6 receipt), because a DONE ticket unlocks its dependents; then other eligible tickets.
 - **Working branch:** `feat/stat/batch-4`. Last tested and pushed code SHA `c0b92684d6e9457f36e182aed70bffa6e3d2a3f3` (batch 44; batch 43 was `5ef2e0332591c571655b45ab66898bfe36f26785`). The bullets below this one describe batch 5 and are historical. Later commits that touch only this file are documentation. No PR created or merged; `main` untouched.
@@ -1721,13 +1722,14 @@ Complete prerequisite shared contracts first, then each PROC's data input, model
 
 <a id="stat-sashelp-005"></a>
 
-### [DOING @dev4] STAT-SASHELP-005 — SASHELP example data — Fisher (1936) Iris Data / Junk Email Data / Leukemia Data Sets
+### [PARK] STAT-SASHELP-005 — SASHELP example data — Fisher (1936) Iris Data / Junk Email Data / Leukemia Data Sets
 
 - Source: S154 / Sashelp Data Sets / `Fisher (1936) Iris Data` (PDF pp. 10912–10914); S154 / Sashelp Data Sets / `Junk Email Data` (PDF pp. 10914–10916); S154 / Sashelp Data Sets / `Leukemia Data Sets` (PDF pp. 10916–10918).
 - Scope: For Fisher (1936) Iris Data; Junk Email Data; Leukemia Data Sets provide reproducible public example data or the compatible loading method explicitly documented in the source; use public or synthetic data only.
 - Dependencies: [STAT-COMMON-002](#stat-common-002).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-SASHELP-005/](tests/STAT15.4-oracle/STAT-SASHELP-005/).
 - Acceptance criteria: Verify observation counts, variable names/types/labels, class levels, and key summaries against the source; examples must run independently; record data provenance and version rather than substituting randomly similar data for the published data.
+- Status (coordinator, 2026-11-28): PARK, held for the user's decision on data size; not on the working branch. Reported: data values, counts and attributes match; PROC PRINT layout, the PROC SQL underline and decimal-tie rounding differ.
 
 <a id="stat-sashelp-006"></a>
 
@@ -14887,7 +14889,7 @@ Source: S154, Chapter 120, `The SURVEYLOGISTIC Procedure`, PDF pp. 9795–9898. 
 
 <a id="stat-surveylogistic-001"></a>
 
-### [PARK] STAT-SURVEYLOGISTIC-001 — SURVEYLOGISTIC — Data input, variable roles, and basic options
+### [DOING @dev4] STAT-SURVEYLOGISTIC-001 — SURVEYLOGISTIC — Data input, variable roles, and basic options
 
 - Source: S154 / Chapter 120 / `PROC SURVEYLOGISTIC Statement` (PDF pp. 9803–9811); S154 / Chapter 120 / `BY Statement` (PDF pp. 9811–9812); S154 / Chapter 120 / `CLUSTER Statement` (PDF p. 9814); S154 / Chapter 120 / `FREQ Statement` (PDF p. 9820); S154 / Chapter 120 / `REPWEIGHTS Statement` (PDF pp. 9834–9836); S154 / Chapter 120 / `STRATA Statement` (PDF p. 9837); S154 / Chapter 120 / `WEIGHT Statement` (PDF p. 9839); S154 / Chapter 120 / `Missing Values` (PDF pp. 9839–9840).
 - Scope: Integrate PROC SURVEYLOGISTIC declarations, basic options, defaults, and execution boundaries; this ticket establishes parameter objects and result interfaces, while later feature tickets implement model-, algorithm-, and output-specific options. Also implement BY; CLUSTER; FREQ; REPWEIGHTS; STRATA; WEIGHT; Missing Values; apply this procedure's rules for missing values, variable roles, and observation selection.
