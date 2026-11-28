@@ -11,7 +11,7 @@
 //! enumerated over the measured covariates and listed by increasing size.
 //! Layout and messages follow SAS 9.4 reference runs. Everything not proven
 //! against a reference listing (METHOD=BACKDOOR/IV, TESTID, IMAP, COMMON,
-//! PSUMMARY, NOSORT, CYCLES=, joint effects) is a
+//! NOSORT, CYCLES=, joint effects) is a
 //! D-009 gap (rc 2) raised before any listing text is produced.
 const std = @import("std");
 const proc = @import("../proc.zig");
@@ -36,6 +36,10 @@ pub const Options = struct {
     disconnected: bool = false,
     ordermodels: bool = false,
     nthreads: ?usize = null,
+    /// PSUMMARY: only the identification summary (AdjustList pages or the
+    /// no-set NOTE); VariableInfo and GraphicalModelSummary are suppressed
+    /// (p.2297/p.2302; SAS 9.4 reference run).
+    psummary: bool = false,
 };
 
 /// `bi` marks a bidirected edge (latent confounding, p.2306); its
@@ -269,6 +273,8 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
             o.disconnected = true;
         } else if (eq(w, "ordermodels")) {
             o.ordermodels = true;
+        } else if (eq(w, "psummary")) {
+            o.psummary = true;
         } else if (eq(w, "maxlist") or eq(w, "maxsize") or eq(w, "nthreads") or eq(w, "method")) {
             if (!at(t, i, .eq)) return invalid(cx, t, i);
             i += 1;
@@ -292,7 +298,7 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
             if (n == 0) return user(cx, line, "The {s}= value must be a positive integer.", .{try std.ascii.allocUpperString(a, w)});
             i += 1;
             if (eq(w, "maxlist")) o.maxlist = n else if (eq(w, "maxsize")) o.maxsize = n else o.nthreads = n;
-        } else if (eq(w, "common") or eq(w, "imap") or eq(w, "cycles") or eq(w, "psummary") or eq(w, "nosort")) {
+        } else if (eq(w, "common") or eq(w, "imap") or eq(w, "cycles") or eq(w, "nosort")) {
             return gap(cx, line, "the {s} option is not implemented", .{try std.ascii.allocUpperString(a, w)});
         } else return invalid(cx, t, i - 1);
     }
@@ -857,6 +863,23 @@ pub fn run(cx: proc.ProcCtx, out: *Out, t: []const lex.Token) diag.Error!void {
         }
         return;
     }
+    if (s.opts.psummary) {
+        // SAS 9.4 reference run: PSUMMARY prints one AdjustList page (or the
+        // no-set NOTE) per model and nothing at all without LIST.
+        for (s.models) |m| {
+            const cc = try componentIds(a, s.names, m);
+            // ponytail: whether PSUMMARY keeps the ConnectedComponents table
+            // has no reference run; refuse rather than guess the layout.
+            if (cc.count > 1) return gap(cx, m.line, "the PSUMMARY option with a disconnected model is not implemented", .{});
+        }
+        if (!list) return;
+        for (s.models, sets) |m, msets| {
+            try page(cx, out);
+            try adjustTable(cx, out, s, m, msets, cands.items);
+            try endPage(cx, out);
+        }
+        return;
+    }
 
     // Page 1: VariableInfo and GraphicalModelSummary.
     try page(cx, out);
@@ -1165,4 +1188,30 @@ test "STAT-CAUSALGRAPH-003 components numbered by their alphabetically first nod
     try std.testing.expectEqual(@as(usize, 0), cc.ids[3]);
     try std.testing.expectEqual(@as(usize, 1), cc.ids[0]);
     try std.testing.expectEqual(@as(usize, 1), cc.ids[2]);
+}
+
+test "STAT-CAUSALGRAPH-002 hand-derived adjustment sets: descendant of the treatment off the causal path" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    // 0 Z 1 X 2 Y 3 M 4 W 5 D: Z->X, Z->Y, X->M, M->Y, W->Y, X->D.
+    // Forbidden De({M,Y}) = {M,Y}; Z blocks X <- Z -> Y; D and W free.
+    const edges = [_]Edge{
+        .{ .from = 0, .to = 1 }, .{ .from = 0, .to = 2 }, .{ .from = 1, .to = 3 },
+        .{ .from = 3, .to = 2 }, .{ .from = 4, .to = 2 }, .{ .from = 1, .to = 5 },
+    };
+    const an = try analyse(a, 6, &edges, &.{1}, &.{2});
+    // Alphabetical candidates: D M W Z (bits 0..3).
+    const cands = [_]usize{ 5, 3, 4, 0 };
+    const sets = try enumerate(a, 6, an, &cands, &.{1}, &.{2}, 0);
+    const want = [_]u64{ 0b1000, 0b1001, 0b1100, 0b1101 };
+    try std.testing.expectEqual(want.len, sets.len);
+    for (sets, want) |st, w| try std.testing.expectEqual(w, st.mask);
+    try std.testing.expect(sets[0].minimal and !sets[1].minimal and !sets[2].minimal and !sets[3].minimal);
+    // Prescribed W (bit 2): {W,Z} minimal among the sets containing W.
+    const pres = try enumerate(a, 6, an, &cands, &.{1}, &.{2}, 0b0100);
+    try std.testing.expectEqual(@as(usize, 2), pres.len);
+    try std.testing.expectEqual(@as(u64, 0b1100), pres[0].mask);
+    try std.testing.expectEqual(@as(u64, 0b1101), pres[1].mask);
+    try std.testing.expect(pres[0].minimal and !pres[1].minimal);
 }

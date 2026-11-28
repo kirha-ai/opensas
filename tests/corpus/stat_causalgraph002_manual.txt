@@ -1,0 +1,122 @@
+G1
+
+The CAUSALGRAPH Procedure
+
+          Variables in Model
+ 
+                       N    Variables
+
+Measured               6    D M W X Y Z
+Unmeasured             0               
+
+
+                             Graphical Model Summary
+ 
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+G1              6           6             1           1           6             0
+G1
+
+The CAUSALGRAPH Procedure
+
+          Covariate Adjustment Sets for G1
+               Causal Effect of X on Y
+ 
+                                    ---Covariates---
+                Size    Minimal     D    M    W    Z
+
+       1           1    Yes                        *
+       2           2    No          *              *
+       3           2    No                    *    *
+       4           3    No          *         *    *
+G2
+
+The CAUSALGRAPH Procedure
+
+         Variables in Model
+ 
+                       N    Variables
+
+Measured               5    D M W X Y
+Unmeasured             1    Z        
+
+
+                             Graphical Model Summary
+ 
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+G2              6           6             1           1           5             1
+G2
+
+The CAUSALGRAPH Procedure
+
+NOTE: There are no adjustment sets satisfying the specified criteria for G2.
+
+G3
+
+The CAUSALGRAPH Procedure
+
+         Variables in Model
+ 
+                       N    Variables
+
+Measured               3    C X Y    
+Unmeasured             1    U        
+
+
+                             Graphical Model Summary
+ 
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+G3              4           4             1           1           3             1
+G3
+
+The CAUSALGRAPH Procedure
+
+        Covariate Adjustment Sets for G3
+             Causal Effect of X on Y
+ 
+                                    -Covariates-
+                Size    Minimal          C
+
+       1           1    Yes              *      
+G4
+
+The CAUSALGRAPH Procedure
+
+          Variables in Model
+ 
+                       N    Variables
+
+Measured               6    D M W X Y Z
+Unmeasured             0               
+
+
+                             Graphical Model Summary
+ 
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+G4              6           6             1           1           6             0
+G4
+
+The CAUSALGRAPH Procedure
+
+          Covariate Adjustment Sets for G4
+               Causal Effect of X on Y
+ 
+                                    ---Covariates---
+                Size    Minimal     D    M    W    Z
+
+       1           2    Yes                   *    *
+       2           3    No          *         *    *
+G5
+
+The CAUSALGRAPH Procedure
+
+          Covariate Adjustment Sets for G5
+               Causal Effect of X on Y
+ 
+                                    ---Covariates---
+                Size    Minimal     D    M    W    Z
+
+       1           1    Yes                        *
