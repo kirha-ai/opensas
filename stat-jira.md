@@ -14,9 +14,9 @@ This section is the only current status summary; every section below it is a his
 - **Unchanged original replays with the installed CLI at that SHA** (whitespace-normalised token lines produced/reference, differing lines, exit vs reference 0). Exact, rc 0: FREQ-014 220/220; FREQ-015 649/649; ANOVA-001 364/364 and 528/528; ANOVA-007 364/364; LIFETEST-001 and -002 341/341; PHREG-003 267/267; GENMOD-001 131/131 and 264/264; GENMOD-002 131/131; GENMOD-018 131/131; COMMON-015 113/113. Still rc 2 (loud gaps): PLM-001/002/007 545/869 (328 differ); GLIMMIX-001 0/379 and 0/706; GLIMMIX-002 0/379; GLIMMIX-003 0/896; FREQ-019 0/649; ANOVA-010 0/364; PHREG-001 146/434 and 146/562; PHREG-002 146/434; COMMON-022 0/176; COMMON-030 114/311; COMMON-028 0/207.
 - **Open review (not done):** the originals of GENMOD-001/002/018, ANOVA-001/007, FREQ-014, PHREG-003 and LIFETEST-001/002 now match exactly but the tickets stay PARK; check each against its full acceptance criteria and recorded remaining gaps before any is marked DONE.
 - **Interrupted by the full disk:** STAT-ANOVA-009 and STAT-PHREG-004 are TODO (no file changed; reading notes in the tickets). STAT-LIFETEST-003 and STAT-GENMOD-003 are PARK with UNCOMMITTED, NEVER-COMPILED source retained in `opensas-dev5` (`stat-b6/lifetest003-dev5`) and `opensas-dev7` (`stat-b6/genmod003-dev7`); do not integrate it before it is built, tested and committed there.
-- **Live slots (auto):** dev1 STAT-GLMMOD-001, dev2 STAT-SASHELP-001, dev3 STAT-SURVEYLOGISTIC-001, dev4 STAT-CORRESP-001, dev5 STAT-NESTED-001, dev6 STAT-GEE-001, dev7 STAT-STDIZE-001.
-- **Integrated locally, awaiting batch verification (auto):** STAT-QUANTREG-001 (PARK), STAT-FACTOR-001 (PARK), STAT-SURVEYREG-001 (PARK), STAT-VARCOMP-001 (PARK).
-- **Counts:** 55 DONE, 97 PARK, 7 DOING, 1263 TODO.
+- **Live slots (auto):** dev1 STAT-GLMMOD-001, dev2 STAT-SASHELP-001, dev3 STAT-ORTHOREG-001, dev4 STAT-CORRESP-001, dev5 STAT-NESTED-001, dev6 STAT-GEE-001, dev7 STAT-STDIZE-001.
+- **Integrated locally, awaiting batch verification (auto):** STAT-QUANTREG-001 (PARK), STAT-FACTOR-001 (PARK), STAT-SURVEYREG-001 (PARK), STAT-VARCOMP-001 (PARK), STAT-SURVEYLOGISTIC-001 (PARK).
+- **Counts:** 55 DONE, 98 PARK, 7 DOING, 1262 TODO.
 - **Next:** integrate each returned ticket, refill its slot from the current tip, verify and push the next batch; run the open review above.
 - **Working branch:** `feat/stat/batch-4`. Last tested and pushed code SHA `43c2bdef2e694a523f1f95f99bec9ebb4e7b1da4` (batch 7; batch 6 was `9c4780bff01fd8fecf5074ac7ae4b34f6888f3dd`, batch 5 `470bdc33c8b8e070e4a4d7c5fbbf3f26ccaec8b5`). The bullets below this one describe batch 5 and are historical. Later commits that touch only this file are documentation. No PR created or merged; `main` untouched.
 - **Batch 5 verification at that exact SHA (2026-11-28):** whole `tests/STAT15.4-oracle/` moved out of the checkout, then `zig build gate -j2 --summary all` direct exit 0 — **2380/2380 unit tests** (2262 + 102 + 13 + 3), **2409/2409 corpus**, **11/11 programs**; `zig build install` direct 0; separate supplemental direct 0, **1113/1113**. Oracle restored unchanged (1425 entries), tree clean.
@@ -10986,7 +10986,7 @@ Source: S154, Chapter 91, `The ORTHOREG Procedure`, PDF pp. 7283–7310. Tasks i
 
 <a id="stat-orthoreg-001"></a>
 
-### [TODO] STAT-ORTHOREG-001 — ORTHOREG — Data input, variable roles, and basic options
+### [DOING @dev3] STAT-ORTHOREG-001 — ORTHOREG — Data input, variable roles, and basic options
 
 - Source: S154 / Chapter 91 / `PROC ORTHOREG Statement` (PDF pp. 7288–7289); S154 / Chapter 91 / `BY Statement` (PDF pp. 7289–7290); S154 / Chapter 91 / `WEIGHT Statement` (PDF pp. 7297–7298); S154 / Chapter 91 / `Missing Values` (PDF p. 7298).
 - Scope: Integrate PROC ORTHOREG declarations, basic options, defaults, and execution boundaries; this ticket establishes parameter objects and result interfaces, while later feature tickets implement model-, algorithm-, and output-specific options. Also implement BY; WEIGHT; Missing Values; apply this procedure's rules for missing values, variable roles, and observation selection.
@@ -14605,7 +14605,7 @@ Source: S154, Chapter 120, `The SURVEYLOGISTIC Procedure`, PDF pp. 9795–9898. 
 
 <a id="stat-surveylogistic-001"></a>
 
-### [DOING @dev3] STAT-SURVEYLOGISTIC-001 — SURVEYLOGISTIC — Data input, variable roles, and basic options
+### [PARK] STAT-SURVEYLOGISTIC-001 — SURVEYLOGISTIC — Data input, variable roles, and basic options
 
 - Source: S154 / Chapter 120 / `PROC SURVEYLOGISTIC Statement` (PDF pp. 9803–9811); S154 / Chapter 120 / `BY Statement` (PDF pp. 9811–9812); S154 / Chapter 120 / `CLUSTER Statement` (PDF p. 9814); S154 / Chapter 120 / `FREQ Statement` (PDF p. 9820); S154 / Chapter 120 / `REPWEIGHTS Statement` (PDF pp. 9834–9836); S154 / Chapter 120 / `STRATA Statement` (PDF p. 9837); S154 / Chapter 120 / `WEIGHT Statement` (PDF p. 9839); S154 / Chapter 120 / `Missing Values` (PDF pp. 9839–9840).
 - Scope: Integrate PROC SURVEYLOGISTIC declarations, basic options, defaults, and execution boundaries; this ticket establishes parameter objects and result interfaces, while later feature tickets implement model-, algorithm-, and output-specific options. Also implement BY; CLUSTER; FREQ; REPWEIGHTS; STRATA; WEIGHT; Missing Values; apply this procedure's rules for missing values, variable roles, and observation selection.
