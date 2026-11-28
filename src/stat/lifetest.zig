@@ -14,6 +14,7 @@ const Value = @import("../value.zig").Value;
 const fns = @import("../functions.zig");
 const by = @import("by_groups.zig");
 const survival = @import("survival_data.zig");
+const lt = @import("lifetest_lt.zig");
 const A = std.mem.Allocator;
 const eq = std.ascii.eqlIgnoreCase;
 const Out = std.ArrayList(u8);
@@ -34,7 +35,13 @@ pub const Spec = struct {
     missing: bool = false,
     noprint: bool = false,
     notable: bool = false,
+    method: Method = .km,
+    /// Life-table interval starts, ascending and beginning at 0 (INTERVALS=).
+    intervals: ?[]const f64 = null,
+    ninterval: ?f64 = null,
+    width: ?f64 = null,
 };
+pub const Method = enum { km, lt };
 
 fn at(t: []const lex.Token, i: usize, tag: lex.Tag) bool {
     return i < t.len and t[i].tag == tag;
@@ -104,8 +111,19 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
         } else if (eq(word, "method") and at(t, i + 1, .eq)) {
             if (!at(t, i + 2, .name)) return invalid(cx, t, i + 2);
             const m = t[i + 2].text;
-            if (oneOf(m, &.{ "breslow", "b", "fh", "lt", "life", "lifetable", "act", "actuarial" })) return gap(cx, t[i].line, "METHOD={s} is not implemented", .{m});
-            if (!oneOf(m, &.{ "km", "pl" })) return invalid(cx, t, i + 2);
+            // The Breslow and Fleming-Harrington estimates are computed
+            // (lifetest_lt.zig) but their listing has no layout reference.
+            if (oneOf(m, &.{ "breslow", "b", "fh", "lifetable", "actuarial" })) return gap(cx, t[i].line, "METHOD={s} is not implemented", .{m});
+            if (oneOf(m, &.{ "lt", "life", "act" })) s.method = .lt else if (oneOf(m, &.{ "km", "pl" })) s.method = .km else return invalid(cx, t, i + 2);
+            i += 3;
+        } else if (eq(word, "intervals") and at(t, i + 1, .eq)) {
+            if (s.intervals != null) return invalid(cx, t, i);
+            s.intervals = try intervalList(cx, t, &i);
+        } else if ((eq(word, "ninterval") or eq(word, "width")) and at(t, i + 1, .eq)) {
+            if (!at(t, i + 2, .number)) return invalid(cx, t, i + 2);
+            const x = std.fmt.parseFloat(f64, t[i + 2].text) catch return invalid(cx, t, i + 2);
+            if (!(x > 0)) return cx.diags.fail(error.ParseError, t[i].line, "PROC LIFETEST: {s}= must be positive", .{word});
+            if (eq(word, "width")) s.width = x else s.ninterval = x;
             i += 3;
         } else if (eq(word, "conftype") and at(t, i + 1, .eq)) {
             if (!at(t, i + 2, .name)) return invalid(cx, t, i + 2);
@@ -118,6 +136,12 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
         } else return invalid(cx, t, i);
     }
     if (!at(t, i, .semicolon)) return invalid(cx, t, i);
+    if (s.method != .lt) {
+        // With the product-limit method INTERVALS= only thins the display.
+        if (s.intervals != null) return gap(cx, 0, "option intervals is not implemented", .{});
+        if (s.ninterval != null) return gap(cx, 0, "option ninterval is not implemented", .{});
+        if (s.width != null) return gap(cx, 0, "option width is not implemented", .{});
+    }
     const raw = (if (name) |n| cx.lib.find(n) else proc.lastDataset(cx.lib)) orelse return cx.diags.fail(error.ParseError, 0, "PROC LIFETEST: input dataset not found", .{});
     var folded: std.ArrayList(lex.Token) = .empty;
     if (qualified) |q| {
@@ -144,6 +168,12 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
             if (time_seen) return gap(cx, t[i].line, "duplicate TIME statement policy is not verified", .{});
             time_seen = true;
             s.time = try numericColumn(cx, ds, t, i + 1, "TIME");
+            // TIME options (physical p.5669): FAILCODE/EVENTCODE request a
+            // competing-risks analysis; nothing else may follow the slash.
+            for (i + 1..end) |j| if (at(t, j, .slash)) {
+                if (kw(t, j + 1, "failcode") or kw(t, j + 1, "eventcode")) return gap(cx, t[j].line, "TIME option {s} (competing-risks analysis) is not implemented", .{t[j + 1].text});
+                return invalid(cx, t, j + 1);
+            };
             if (end != i + 2) {
                 if (!at(t, i + 2, .star)) return invalid(cx, t, i + 2);
                 s.censor = try numericColumn(cx, ds, t, i + 3, "censoring");
@@ -217,6 +247,64 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
     s.by_desc = pb.desc;
     s.notsorted = pb.notsorted;
     return s;
+}
+
+/// INTERVALS= endpoints, physical p.5653: blank or comma separated values and
+/// `x to y <by z>` ranges, optionally parenthesized. The result is ascending,
+/// without duplicates, and always starts at 0.
+fn intervalList(cx: proc.ProcCtx, t: []const lex.Token, index: *usize) diag.Error![]const f64 {
+    var i = index.* + 2;
+    const paren = at(t, i, .lparen);
+    if (paren) i += 1;
+    var list: std.ArrayList(f64) = .empty;
+    try list.append(cx.arena, 0);
+    var seen = false;
+    while (true) {
+        if (at(t, i, .comma)) {
+            i += 1;
+            continue;
+        }
+        if (at(t, i, .minus)) return cx.diags.fail(error.ParseError, t[i].line, "PROC LIFETEST: INTERVALS= endpoints must be nonnegative", .{});
+        if (!at(t, i, .number)) break;
+        const first = std.fmt.parseFloat(f64, t[i].text) catch return invalid(cx, t, i);
+        i += 1;
+        seen = true;
+        if (!kw(t, i, "to")) {
+            try list.append(cx.arena, first);
+            continue;
+        }
+        if (!at(t, i + 1, .number)) return invalid(cx, t, i + 1);
+        const last = std.fmt.parseFloat(f64, t[i + 1].text) catch return invalid(cx, t, i + 1);
+        i += 2;
+        var step: f64 = 1;
+        if (kw(t, i, "by")) {
+            if (!at(t, i + 1, .number)) return invalid(cx, t, i + 1);
+            step = std.fmt.parseFloat(f64, t[i + 1].text) catch return invalid(cx, t, i + 1);
+            if (!(step > 0)) return cx.diags.fail(error.ParseError, t[i].line, "PROC LIFETEST: INTERVALS= increment must be positive", .{});
+            i += 2;
+        }
+        // ponytail: 1e-9 relative slack so that a decimal increment whose
+        // multiples round just above the stop value still includes it.
+        const count = @floor((last - first) / step * (1 + 1e-9) + 1e-9);
+        if (!(count >= 0 and count < 100000)) return cx.diags.fail(error.ParseError, t[i - 1].line, "PROC LIFETEST: invalid INTERVALS= range", .{});
+        var k: f64 = 0;
+        while (k <= count) : (k += 1) try list.append(cx.arena, first + k * step);
+    }
+    if (!seen) return invalid(cx, t, i);
+    if (paren) {
+        if (!at(t, i, .rparen)) return invalid(cx, t, i);
+        i += 1;
+    }
+    std.mem.sort(f64, list.items, {}, std.sort.asc(f64));
+    var n: usize = 1;
+    for (list.items[1..]) |x| {
+        if (x != list.items[n - 1]) {
+            list.items[n] = x;
+            n += 1;
+        }
+    }
+    index.* = i;
+    return list.items[0..n];
 }
 
 pub const Obs = survival.Obs;
@@ -662,12 +750,30 @@ fn render(cx: proc.ProcCtx, out: *Out, s: Spec, sel: Selected) diag.Error!void {
     try out.appendSlice(a, body.items);
 }
 
+/// Life-table execution boundary: one sample with FREQ, explicit INTERVALS=.
+fn renderLifeTable(cx: proc.ProcCtx, out: *Out, s: Spec, sel: Selected) diag.Error!void {
+    // The CLI always carries a graphics session; only ODS GRAPHICS ON makes
+    // SAS draw the default life-table survival plot.
+    if (cx.graphics) |g| if (g.enabled == true) return gap(cx, 0, "life-table graphs under ODS GRAPHICS are not implemented", .{});
+    if (s.by_cols.len > 0) return gap(cx, 0, "BY-group listing layout is not verified", .{});
+    if (s.strata.len > 0) return gap(cx, 0, "life-table listing with STRATA is not implemented", .{});
+    if (s.weight != null) return gap(cx, 0, "WEIGHT with the life-table method is not verified", .{});
+    if (s.ids.len > 0) return gap(cx, 0, "ID with the life-table method is not verified", .{});
+    if (s.notable) return gap(cx, 0, "NOTABLE with the life-table method is not verified", .{});
+    // The guide gives the default width (lifetest_lt.defaultWidth) but not
+    // how many intervals of that width are formed.
+    const endpoints = s.intervals orelse return gap(cx, 0, "life-table intervals from WIDTH=, NINTERVAL= or the default are not implemented; specify INTERVALS=", .{});
+    try lt.render(cx, out, sel.obs, endpoints, sel.read);
+}
+
 pub fn run(cx: proc.ProcCtx, out: *Out, t: []const lex.Token) diag.Error!void {
     const s = try parse(cx, t);
     const groups = try plan(cx, s);
     if (s.noprint) return;
     if (groups.len == 0) return gap(cx, 0, "the result for an empty input data set is not verified", .{});
-    for (groups) |group| try render(cx, out, s, group);
+    for (groups) |group| {
+        if (s.method == .lt) try renderLifeTable(cx, out, s, group) else try render(cx, out, s, group);
+    }
 }
 
 test {

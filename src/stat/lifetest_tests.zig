@@ -552,3 +552,267 @@ test "STAT-LIFETEST-002 tied event rows in the listing and still-unsupported sha
         try expectEqual(@as(usize, 0), r.out.len);
     }
 }
+
+// ---- STAT-LIFETEST-003: life table, Breslow and Fleming-Harrington ----
+const lt = @import("lifetest_lt.zig");
+const survival_data = @import("survival_data.zig");
+
+fn near(expected: f64, actual: ?f64) !void {
+    try std.testing.expectApproxEqAbs(expected, actual.?, 1e-12);
+}
+
+/// Columns t c f g. Ten usable units (FREQ) plus two rows that are deleted.
+fn grouped(a: A) !*Dataset {
+    const ds = try a.create(Dataset);
+    ds.* = Dataset.init(a, "grouped");
+    for ([_][]const u8{ "t", "c", "f" }) |name| _ = try ds.addColumn(name, .num);
+    _ = try ds.addColumn("g", .char);
+    const rows = [_]struct { f64, f64, f64 }{
+        .{ 0.5, 1, 2 }, .{ 1, 0, 2 }, .{ 2, 1, 1 }, .{ 3, 1, 2 },
+        .{ 4, 1, 1 }, .{ 4, 0, 1 }, .{ 9, 0, 1 },
+        .{ 5, 1, 0 }, // zero frequency: deleted
+        .{ nan, 1, 1 }, // missing time: deleted
+    };
+    for (rows) |r| try ds.appendRow(&.{ .{ .num = r[0] }, .{ .num = r[1] }, .{ .num = r[2] }, .{ .str = "A" } });
+    return ds;
+}
+
+test "STAT-LIFETEST-003 life table matches hand calculation with endpoint ties and coincident censoring" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    // Intervals [0,2) [2,4) [4,inf). The event at 2 belongs to [2,4); an
+    // event and a censoring coincide at 4.
+    const obs = [_]lifetest.Obs{
+        .{ .time = 0.5, .event = true, .freq = 2 }, .{ .time = 1, .event = false, .freq = 2 },
+        .{ .time = 2, .event = true }, .{ .time = 3, .event = true, .freq = 2 },
+        .{ .time = 4, .event = true }, .{ .time = 4, .event = false },
+        .{ .time = 9, .event = false },
+    };
+    const table = try lt.lifeTable(a, &obs, &.{ 0, 2, 4 });
+    try expect(table.unverified == null);
+    try expectEqual(@as(f64, 10), table.total);
+    try expectEqual(@as(f64, 6), table.failed);
+    try expectEqual(@as(f64, 4), table.censored);
+    const r = table.rows;
+    try expectEqual(@as(usize, 3), r.len);
+    // n = 10, 6, 3; d = 2, 3, 1; w = 2, 0, 2; n' = 9, 6, 2.
+    try std.testing.expectEqualSlices(f64, &.{ 10, 6, 3 }, &.{ r[0].entering, r[1].entering, r[2].entering });
+    try std.testing.expectEqualSlices(f64, &.{ 2, 3, 1 }, &.{ r[0].failed, r[1].failed, r[2].failed });
+    try std.testing.expectEqualSlices(f64, &.{ 2, 0, 2 }, &.{ r[0].censored, r[1].censored, r[2].censored });
+    try std.testing.expectEqualSlices(f64, &.{ 9, 6, 2 }, &.{ r[0].effective, r[1].effective, r[2].effective });
+    // q = 2/9, 1/2, 1/2 with se sqrt(q p / n').
+    try near(2.0 / 9.0, r[0].q);
+    try near(0.5, r[1].q);
+    try near(0.5, r[2].q);
+    try near(@sqrt(14.0) / 27.0, r[0].q_se);
+    try near(@sqrt(0.25 / 6.0), r[1].q_se);
+    try near(@sqrt(0.25 / 2.0), r[2].q_se);
+    // S = 1, 7/9, 7/18; se = S sqrt(sum q/(n' p)): terms 2/63 and 1/6.
+    try near(1, r[0].survival);
+    try near(7.0 / 9.0, r[1].survival);
+    try near(7.0 / 18.0, r[2].survival);
+    try near(0, r[0].survival_se);
+    try near(7.0 / 9.0 * @sqrt(2.0 / 63.0), r[1].survival_se);
+    try near(7.0 / 18.0 * @sqrt(2.0 / 63.0 + 1.0 / 6.0), r[2].survival_se);
+    // f = S q / b; se = f sqrt(sum + p/(n' q)).
+    try near(1.0 / 9.0, r[0].pdf);
+    try near(1.0 / 9.0 * @sqrt(7.0 / 18.0), r[0].pdf_se);
+    try near(7.0 / 36.0, r[1].pdf);
+    try near(7.0 / 36.0 * @sqrt(2.0 / 63.0 + 1.0 / 6.0), r[1].pdf_se);
+    // h = 2q/(b(1+p)); se = h sqrt((1-(bh/2)^2)/(n' q)).
+    try near(1.0 / 8.0, r[0].hazard);
+    try near(1.0 / 8.0 * @sqrt(63.0 / 64.0 / 2.0), r[0].hazard_se);
+    try near(1.0 / 3.0, r[1].hazard);
+    try near(1.0 / 3.0 * @sqrt(8.0 / 9.0 / 3.0), r[1].hazard_se);
+    // The open interval has no width: density and hazard are undefined.
+    try expect(r[2].upper == null and r[2].pdf == null and r[2].pdf_se == null and r[2].hazard == null and r[2].hazard_se == null);
+    // Median residual lifetime at 0: S(2) = 7/9 >= 1/2 > S(4) = 7/18, so
+    // M = 2 - 0 + 2 (7/9 - 1/2)/(7/9 - 7/18) = 24/7, se = 1/(2 (7/36) sqrt 9) = 6/7.
+    try near(24.0 / 7.0, r[0].median);
+    try near(6.0 / 7.0, r[0].median_se);
+    // At 2 the half value 7/18 is not strictly above S(4); no later interval.
+    try expect(r[1].median == null and r[1].median_se == null and r[2].median == null);
+}
+
+test "STAT-LIFETEST-003 entirely censored and degenerate life tables" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const censored = [_]lifetest.Obs{ .{ .time = 1, .event = false, .freq = 3 }, .{ .time = 2, .event = false }, .{ .time = 5, .event = false, .freq = 2 } };
+    const table = try lt.lifeTable(a, &censored, &.{ 0, 2, 4 });
+    try expectEqual(@as(f64, 6), table.total);
+    try expectEqual(@as(f64, 0), table.failed);
+    // n' = 6 - 3/2, 3 - 1/2, 2 - 2/2; no failure anywhere.
+    try std.testing.expectEqualSlices(f64, &.{ 4.5, 2.5, 1 }, &.{ table.rows[0].effective, table.rows[1].effective, table.rows[2].effective });
+    for (table.rows) |r| {
+        try near(0, r.q);
+        try near(0, r.q_se);
+        try near(1, r.survival);
+        try near(0, r.survival_se);
+        // The standard errors divide by q = 0 and the median is never bracketed.
+        try expect(r.pdf_se == null and r.hazard_se == null and r.median == null);
+    }
+    try near(0, table.rows[0].pdf);
+    try near(0, table.rows[0].hazard);
+    // Every unit of an interval fails: the survival estimate is 0 afterwards
+    // and its standard error (division by p = 0) is undefined, not 0.
+    const all = [_]lifetest.Obs{ .{ .time = 1, .event = true, .freq = 2 }, .{ .time = 3, .event = true } };
+    const dead = try lt.lifeTable(a, &all, &.{ 0, 2, 4 });
+    try near(2.0 / 3.0, dead.rows[0].q);
+    try near(1, dead.rows[1].q);
+    try near(0, dead.rows[2].survival);
+    try expect(dead.rows[2].survival_se == null);
+    // No unit enters the last interval: flagged, not silently estimated.
+    try expect(dead.unverified != null and dead.rows[2].q == null);
+    // A time below the first interval is flagged.
+    try expect((try lt.lifeTable(a, &.{.{ .time = 1, .event = true }}, &.{ 2, 4 })).unverified != null);
+}
+
+test "STAT-LIFETEST-003 default interval width rule" {
+    // c = log10(max/n), b = floor(c), d = 10^(c-b): 2 if d <= 2, 5 if d <= 5, else 10.
+    try near(2, lt.defaultWidth(15.5, 10)); // d = 1.55
+    try near(5, lt.defaultWidth(40, 10)); // d = 4
+    try near(10, lt.defaultWidth(70, 10)); // d = 7
+    try near(2, lt.defaultWidth(20, 10)); // d = 2 exactly
+    try near(5, lt.defaultWidth(50, 10)); // d = 5 exactly
+    try near(0.05, lt.defaultWidth(0.3, 10)); // b = -2, d = 3
+    try near(200, lt.defaultWidth(600, 4)); // b = 2, d = 1.5
+}
+
+test "STAT-LIFETEST-003 Breslow and Fleming-Harrington estimates match hand calculation" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    // Two tied events at 1 (Y = 5), censoring at 2, an event tied with a
+    // censoring at 3 (Y = 2), censoring only afterwards.
+    const obs = [_]lifetest.Obs{ .{ .time = 1, .event = true }, .{ .time = 1, .event = true }, .{ .time = 2, .event = false }, .{ .time = 3, .event = true }, .{ .time = 3, .event = false } };
+    const risk = try survival_data.riskTable(a, &obs, 0);
+    const b = try lt.breslow(a, risk);
+    try expectEqual(@as(usize, 2), b.len);
+    try expectEqual(@as(f64, 1), b[0].time);
+    try expectEqual(@as(f64, 3), b[1].time);
+    try near(@exp(-2.0 / 5.0), b[0].survival);
+    try near(@exp(-(2.0 / 5.0 + 1.0 / 2.0)), b[1].survival);
+    const fh = (try lt.flemingHarrington(a, risk)).?;
+    try expectEqual(@as(usize, 2), fh.len);
+    try near(@exp(-(1.0 / 5.0 + 1.0 / 4.0)), fh[0].survival);
+    try near(@exp(-(1.0 / 5.0 + 1.0 / 4.0 + 1.0 / 2.0)), fh[1].survival);
+    // Without ties the two estimates coincide.
+    const plain = [_]lifetest.Obs{ .{ .time = 1, .event = true }, .{ .time = 2, .event = true }, .{ .time = 4, .event = false } };
+    const risk2 = try survival_data.riskTable(a, &plain, 0);
+    const b2 = try lt.breslow(a, risk2);
+    const fh2 = (try lt.flemingHarrington(a, risk2)).?;
+    try near(@exp(-(1.0 / 3.0 + 1.0 / 2.0)), b2[1].survival);
+    try near(b2[1].survival, fh2[1].survival);
+    // Entirely censored: no event time, no estimate rows.
+    const none = [_]lifetest.Obs{ .{ .time = 1, .event = false }, .{ .time = 2, .event = false } };
+    try expectEqual(@as(usize, 0), (try lt.breslow(a, try survival_data.riskTable(a, &none, 0))).len);
+    // Noninteger frequencies: Fleming-Harrington cannot be computed.
+    const frac = [_]lifetest.Obs{ .{ .time = 1, .event = true, .freq = 1.5 }, .{ .time = 2, .event = false } };
+    try expect((try lt.flemingHarrington(a, try survival_data.riskTable(a, &frac, 0))) == null);
+}
+
+test "STAT-LIFETEST-003 METHOD INTERVALS WIDTH NINTERVAL and TIME declarations" {
+    var fx: Fixture = .{ .arena = std.heap.ArenaAllocator.init(std.testing.allocator) };
+    defer fx.arena.deinit();
+    try fx.init(grouped);
+    var d = diag.Diagnostics.init(fx.a());
+    try expectEqual(lifetest.Method.km, (try fx.spec(&d, "proc lifetest; time t*c(0);")).method);
+    for ([_][]const u8{ "lt", "LIFE", "act" }) |m| {
+        const s = try fx.spec(&d, try std.fmt.allocPrint(fx.a(), "proc lifetest method={s} intervals=(0 to 15 by 1); time t*c(0);", .{m}));
+        try expectEqual(lifetest.Method.lt, s.method);
+        try expectEqual(@as(usize, 16), s.intervals.?.len);
+        try expectEqual(@as(f64, 15), s.intervals.?[15]);
+    }
+    // The first interval always starts at 0; lists, commas and ranges mix.
+    try std.testing.expectEqualSlices(f64, &.{ 0, 5, 10, 20, 30 }, (try fx.spec(&d, "proc lifetest method=lt intervals=5,10 to 30 by 10; time t;")).intervals.?);
+    try std.testing.expectEqualSlices(f64, &.{ 0, 1, 3, 5, 7 }, (try fx.spec(&d, "proc lifetest intervals=7 1 3 5 3 method=lt; time t;")).intervals.?);
+    try std.testing.expectEqualSlices(f64, &.{ 0, 1, 2, 3 }, (try fx.spec(&d, "proc lifetest method=lt intervals=1 to 3; time t;")).intervals.?);
+    try std.testing.expectEqualSlices(f64, &.{ 0, 0.5, 1, 1.5 }, (try fx.spec(&d, "proc lifetest method=lt intervals=(0.5 to 1.5 by 0.5); time t;")).intervals.?);
+    const w = try fx.spec(&d, "proc lifetest method=lt width=2 ninterval=4; time t;");
+    try expect(w.width.? == 2 and w.ninterval.? == 4 and w.intervals == null);
+    try expect(!d.hasErrors());
+    const Case = struct { []const u8, u8 };
+    for ([_]Case{
+        .{ "proc lifetest method=lt intervals=(-1 2); time t;", 1 },
+        .{ "proc lifetest method=lt intervals=(1 to 5 by 0); time t;", 1 },
+        .{ "proc lifetest method=lt intervals=(1 2; time t;", 1 },
+        .{ "proc lifetest method=lt intervals=; time t;", 1 },
+        .{ "proc lifetest method=lt width=0; time t;", 1 },
+        .{ "proc lifetest method=lt ninterval=x; time t;", 1 },
+        .{ "proc lifetest; time t*c(0) / bogus;", 1 },
+        // Valid SAS that stays a visible gap.
+        .{ "proc lifetest method=breslow; time t*c(0);", 2 },
+        .{ "proc lifetest method=fh; time t*c(0);", 2 },
+        .{ "proc lifetest intervals=(0 to 4 by 2); time t*c(0); strata g;", 2 }, // display thinning with KM
+        .{ "proc lifetest width=2; time t*c(0); strata g;", 2 },
+        .{ "proc lifetest ninterval=3; time t*c(0); strata g;", 2 },
+        .{ "proc lifetest; time t*c(0) / failcode=1;", 2 },
+        .{ "proc lifetest; time t*c(0) / eventcode;", 2 },
+        .{ "proc lifetest method=lt; time t*c(0); freq f;", 2 }, // default intervals
+        .{ "proc lifetest method=lt width=2; time t*c(0); freq f;", 2 },
+        .{ "proc lifetest method=lt ninterval=3; time t*c(0); freq f;", 2 },
+        .{ "proc lifetest method=lt intervals=(0 to 4 by 2); time t*c(0); strata g;", 2 },
+        .{ "proc lifetest method=lt intervals=(0 to 4 by 2) notable; time t*c(0);", 2 },
+        .{ "proc lifetest method=lt intervals=(0 to 4 by 2) plots=(s); time t*c(0);", 2 },
+        // Small-sample standard errors (>= 0.1) and noninteger endpoints
+        // have no SAS display reference: no partial listing.
+        .{ "proc lifetest method=lt intervals=(0 to 4 by 2); time t*c(0); freq f;", 2 },
+        .{ "proc lifetest method=lt intervals=(0.5 4); time t*c(0); freq f;", 2 },
+    }) |case| {
+        const result = try fx.outcome(case[0]);
+        std.testing.expectEqual(case[1], result.rc) catch |err| {
+            std.debug.print("case: {s}\n", .{case[0]});
+            return err;
+        };
+        try expectEqual(@as(usize, 0), result.out.len);
+    }
+    // NOPRINT validates the life-table request and prints nothing.
+    const quiet = try fx.outcome("proc lifetest method=lt intervals=(0 to 4 by 2) noprint; time t*c(0); freq f;");
+    try expectEqual(@as(u8, 0), quiet.rc);
+    try expectEqual(@as(usize, 0), quiet.out.len);
+}
+
+/// Published guide sample (SAS/STAT 15.4 Example 77.3): yearly failures and
+/// withdrawals, expanded as the example's DATA step does (Years = k + 0.5).
+fn angina(a: A) !*Dataset {
+    const ds = try a.create(Dataset);
+    ds.* = Dataset.init(a, "males");
+    for ([_][]const u8{ "years", "censored", "freq" }) |name| _ = try ds.addColumn(name, .num);
+    const counts = [_][2]f64{ .{ 456, 0 }, .{ 226, 39 }, .{ 152, 22 }, .{ 171, 23 }, .{ 135, 24 }, .{ 125, 107 }, .{ 83, 133 }, .{ 74, 102 }, .{ 51, 68 }, .{ 42, 64 }, .{ 43, 45 }, .{ 34, 53 }, .{ 18, 33 }, .{ 9, 27 }, .{ 6, 23 }, .{ 0, 30 } };
+    for (counts, 0..) |c, k| {
+        const years = @as(f64, @floatFromInt(k)) + 0.5;
+        try ds.appendRow(&.{ .{ .num = years }, .{ .num = 0 }, .{ .num = c[0] } });
+        try ds.appendRow(&.{ .{ .num = years }, .{ .num = 1 }, .{ .num = c[1] } });
+    }
+    return ds;
+}
+
+test "STAT-LIFETEST-003 life-table listing layout for the published sample matches the SAS listing lines" {
+    var fx: Fixture = .{ .arena = std.heap.ArenaAllocator.init(std.testing.allocator) };
+    defer fx.arena.deinit();
+    try fx.init(angina);
+    const listing = try fx.outcome("proc lifetest data=males method=lt intervals=(0 to 15 by 1); time years*censored(1); freq freq;");
+    try expectEqual(@as(u8, 0), listing.rc);
+    // Lines copied from the SAS reference listing of the example.
+    for ([_][]const u8{
+        "\nThe LIFETEST Procedure\n\n                                                     Life Table Survival Estimates\n",
+        " [Lower,     Upper)   Failed   Censored      Size     of Failure        Error     Survival   Failure     Error     Lifetime    Error\n",
+        "       0          1     456         0      2418.0        0.1886       0.00796       1.0000          0          0     5.3313     0.1749\n",
+        "       4          5     135        24      1317.0        0.1025       0.00836       0.5786     0.4214     0.0101     6.2185     0.1853\n",
+        "      10         11      43        45       298.5        0.1441        0.0203       0.2987     0.7013     0.0109     4.6888     0.4183\n",
+        "      11         12      34        53       206.5        0.1646        0.0258       0.2557     0.7443     0.0111          .          .\n",
+        "      15          .       0        30        15.0             0             0       0.1429     0.8571     0.0133          .          .\n",
+        " [Lower,     Upper)     PDF       Error      Hazard     Error\n",
+        "       0          1     0.1886    0.00796   0.208219   0.009698\n",
+        "       6          7     0.0439    0.00469        0.1   0.010963\n",
+        "      12         13     0.0297    0.00668   0.149378    0.03511\n",
+        "      15          .          .          .          .          .\n",
+        "   Total  Failed    Censored    Censored\n\n    2418    1625         793       32.80\n",
+        "\nNOTE: 2 observations with invalid time, censoring, or frequency values were deleted.\n",
+    }) |line| std.testing.expect(std.mem.indexOf(u8, listing.out, line) != null) catch |err| {
+        std.debug.print("missing: {s}\n", .{line});
+        return err;
+    };
+}
