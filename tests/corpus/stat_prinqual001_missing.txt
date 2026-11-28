@@ -1,0 +1,22 @@
+
+The PRINQUAL Procedure
+
+                  PRINQUAL MTV Algorithm Iteration History
+ 
+Iteration    Average    Maximum     Proportion    Criterion
+   Number     Change     Change    of Variance       Change    Note
+----------------------------------------------------------------------------
+        1    0.00000    0.00000        1.00000                 Converged    
+
+Algorithm converged.                                                      
+
+The PRINQUAL Procedure
+
+                  PRINQUAL MTV Algorithm Iteration History
+ 
+Iteration    Average    Maximum     Proportion    Criterion
+   Number     Change     Change    of Variance       Change    Note
+----------------------------------------------------------------------------
+        1    0.00000    0.00000        0.98212                 Converged    
+
+Algorithm converged.                                                      
