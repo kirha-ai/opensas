@@ -1,9 +1,12 @@
 /* expect-rc: 1
  * STAT-SURVEYLOGISTIC-001: more design rules of PROC SURVEYLOGISTIC (SAS/STAT
- * 15.4 Ch.120 pp.9803-9840): I two STRATA variables (Stratum Variables
- * header, strata crossed); K FREQ values truncated, zero/missing FREQ and a
+ * 15.4 Ch.120 pp.9803-9840): H MISSING (missing STRATA/CLUSTER values form
+ * levels, a single-cluster stratum omitted from the variance); I two STRATA variables (Stratum Variables
+ * header, strata crossed); J RATE= (finite population correction rows);
+ * K FREQ values truncated, zero/missing FREQ and a
  * negative WEIGHT excluded (sums of frequencies and weights read/used, one
- * combined note); M singular exclusion notes and a second WEIGHT statement
+ * combined note); L FREQ without CLUSTER (each replicated observation its
+ * own PSU, df = sum of frequencies - 1); M singular exclusion notes and a second WEIGHT statement
  * ignored (p.9827); N an empty input data set: ERROR, no listing, rc 1.
  * Expected output is the SAS 9.4 listing of this exact program (one real-SAS
  * run, 2026-11-28); the blank page-start line before each new page's title
@@ -29,10 +32,29 @@ end;
 end;
 drop k;
 run;
+data m2; set survey;
+if _n_=40 then stratum=.;
+if _n_=50 then cluster=.;
+if _n_=60 then event=.;
+run;
+title 'H';
+proc surveylogistic data=m2 missing;
+strata stratum;
+cluster cluster;
+weight weight;
+model event(event='1')=age;
+run;
 data s2; set survey; half=(id>6); run;
 title 'I';
 proc surveylogistic data=s2;
 strata stratum half;
+cluster cluster;
+weight weight;
+model event(event='1')=age;
+run;
+title 'J';
+proc surveylogistic data=survey rate=0.1;
+strata stratum;
 cluster cluster;
 weight weight;
 model event(event='1')=age;
@@ -42,6 +64,13 @@ title 'K';
 proc surveylogistic data=fr2;
 strata stratum;
 cluster cluster;
+weight weight;
+freq f;
+model event(event='1')=age;
+run;
+data fr3; set survey; f=1+mod(_n_,3); run;
+title 'L';
+proc surveylogistic data=fr3;
 weight weight;
 freq f;
 model event(event='1')=age;

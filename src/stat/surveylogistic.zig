@@ -46,6 +46,8 @@ pub const Spec = struct {
     by_cols: []const usize = &.{},
     noprint: bool = false,
     freq: ?usize = null,
+    by_desc: []const bool = &.{},
+    notsorted: bool = false,
 };
 
 fn at(t: []const lex.Token, i: usize, tag: lex.Tag) bool {
@@ -317,6 +319,8 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
     const cols = try cx.arena.alloc(usize, pb.names.len);
     for (pb.names, 0..) |n, k| cols[k] = ds.indexOf(n).?;
     s.by_cols = cols;
+    s.by_desc = pb.desc;
+    s.notsorted = pb.notsorted;
     return s;
 }
 
@@ -385,26 +389,33 @@ fn invert(a: A, m: []const f64, p: usize) diag.Error![]f64 {
 
 /// G = (n-1)/(n-p) sum_h n_h (1-f_h)/(n_h-1) sum_i (e_hi - ebar_h)(e_hi - ebar_h)',
 /// e_hi = sum_j w_hij (y_hij - mu_hij) x_hij (p.9844, binary logit).
-fn meatMatrix(a: A, d: design.Design, x: []const f64, y: []const f64, mu: []const f64, p: usize, ntot: f64) ![]f64 {
+/// `copies[c]` is the number of identical PSUs PSU c stands for: its FREQ
+/// value without CLUSTER (every replicated observation its own PSU), else 1.
+fn meatMatrix(a: A, d: design.Design, x: []const f64, y: []const f64, mu: []const f64, p: usize, ntot: f64, copies: []const f64) ![]f64 {
     const e = try a.alloc(f64, d.clusters() * p);
     @memset(e, 0);
     for (0..d.kept.len) |k| for (0..p) |j| {
-        e[d.psu[k] * p + j] += d.weight[k] * (y[k] - mu[k]) * x[k * p + j];
+        e[d.psu[k] * p + j] += d.weight[k] * (y[k] - mu[k]) * x[k * p + j] / copies[d.psu[k]];
     };
     const mean = try a.alloc(f64, d.strata() * p);
     @memset(mean, 0);
-    for (0..d.clusters()) |c| for (0..p) |j| {
-        mean[d.psu_stratum[c] * p + j] += e[c * p + j];
-    };
+    const count = try a.alloc(f64, d.strata());
+    @memset(count, 0);
+    for (0..d.clusters()) |c| {
+        count[d.psu_stratum[c]] += copies[c];
+        for (0..p) |j| mean[d.psu_stratum[c] * p + j] += copies[c] * e[c * p + j];
+    }
     for (0..d.strata()) |h| for (0..p) |j| {
-        mean[h * p + j] /= @floatFromInt(d.stratum_psus[h]);
+        mean[h * p + j] /= count[h];
     };
     const g = try a.alloc(f64, p * p);
     @memset(g, 0);
     for (0..d.clusters()) |c| {
         const h = d.psu_stratum[c];
-        const nh: f64 = @floatFromInt(d.stratum_psus[h]);
-        const factor = nh * d.stratum_fpc[h] / (nh - 1);
+        const nh = count[h];
+        // A single-PSU stratum is omitted from the variance (log NOTE).
+        if (nh < 2) continue;
+        const factor = copies[c] * nh * d.stratum_fpc[h] / (nh - 1);
         for (0..p) |r| for (0..p) |s| {
             g[r * p + s] += factor * (e[c * p + r] - mean[h * p + r]) * (e[c * p + s] - mean[h * p + s]);
         };
@@ -476,6 +487,11 @@ pub fn analyze(cx: proc.ProcCtx, s: Spec, rows: []const []const Value, d0: desig
         }
         d.weight = wf;
     } else @memset(fq, 1);
+    const copies = try a.alloc(f64, d0.clusters());
+    @memset(copies, 1);
+    if (s.freq != null and s.roles.clusters.len == 0) for (d0.psu, fq) |c, f| {
+        copies[c] = f;
+    };
     const p = s.covariates.len + 1;
     const resp = s.response.?;
     var levels: std.ArrayList(Level) = .empty;
@@ -522,9 +538,9 @@ pub fn analyze(cx: proc.ProcCtx, s: Spec, rows: []const []const Value, d0: desig
     const fit = kernel.fitWeighted(a, x, y, n, p, null, d.weight, .{ .technique = .fisher }) catch
         return gap(cx, s.model_line, "the listing for a model whose maximum likelihood fit does not converge or has separated or singular data is not implemented", .{});
     if (!fit.converged) return gap(cx, s.model_line, "the listing for a model without convergence is not implemented", .{});
-    const meat = try meatMatrix(a, d, x, y, fit.probabilities, p, ntot);
+    const meat = try meatMatrix(a, d, x, y, fit.probabilities, p, ntot, copies);
     const cov = try sandwich(a, fit.covariance, meat, p);
-    const df = if (s.roles.clusters.len > 0) d.clusters() - d.strata() else n - d.strata();
+    const df = if (s.roles.clusters.len > 0) d.clusters() - d.strata() else @as(usize, @intFromFloat(ntot)) - d.strata();
     // Wald, one restriction: F = b^2 / V (p.9856, r = 1).
     const wald_f = fit.coefficients[1] * fit.coefficients[1] / cov[p + 1];
     // Likelihood ratio with normalized weights (p.9854): Q = (n / sum w) LR.
@@ -547,7 +563,7 @@ pub fn analyze(cx: proc.ProcCtx, s: Spec, rows: []const []const Value, d0: desig
     for (0..n) |k| for (0..p) |j| {
         g[j] += d.weight[k] * (y[k] - mu0[k]) * x[k * p + j];
     };
-    const meat0 = try invert(a, try meatMatrix(a, d, x, y, mu0, p, ntot), p);
+    const meat0 = try invert(a, try meatMatrix(a, d, x, y, mu0, p, ntot, copies), p);
     var score: f64 = 0;
     for (0..p) |r| for (0..p) |c| {
         score += g[r] * meat0[r * p + c] * g[c];
@@ -584,8 +600,16 @@ pub fn plan(cx: proc.ProcCtx, s: Spec) diag.Error!void {
     if (s.covariates.len == 0) return gap(cx, s.model_line, "the intercept-only model listing is not implemented", .{});
     if (s.covariates.len > 1) return gap(cx, s.model_line, "global tests with more than one restriction (second-order Rao-Scott default) are not implemented", .{});
     if (s.roles.clusters.len > 1) return gap(cx, 0, "Model Information for several CLUSTER variables is not verified", .{});
-    if (s.roles.fpc != .none) return gap(cx, 0, "the listing with RATE= or TOTAL= (finite population correction) is not verified", .{});
-    if (s.roles.missing) return gap(cx, 0, "the MISSING option (missing STRATA/CLUSTER values as a valid level) listing is not verified", .{});
+    if (s.roles.missing and s.roles.fpc != .none) return gap(cx, 0, "the Variance Estimation table with MISSING and RATE= is not verified", .{});
+    if (s.roles.fpc == .total) return gap(cx, 0, "the listing with TOTAL= (finite population correction) is not verified", .{});
+}
+
+/// Missing design value, as in surveyfreq_design (blank text or missing number).
+fn designMissing(v: Value) bool {
+    return switch (v) {
+        .num => |x| std.math.isNan(x),
+        .str => |text| std.mem.trim(u8, text, " ").len == 0,
+    };
 }
 
 /// Fit one BY group (or the whole input). Every check runs before any text.
@@ -629,16 +653,26 @@ pub fn planGroup(cx: proc.ProcCtx, s: Spec, all: []const []const Value) diag.Err
         }
         try rows.append(a, obs);
     }
+    if (s.roles.missing) {
+        var any = false;
+        for (rows.items) |obs| {
+            for (s.roles.strata) |c| any = any or designMissing(obs[c]);
+            for (s.roles.clusters) |c| any = any or designMissing(obs[c]);
+        }
+        if (!any) return gap(cx, 0, "the MISSING option listing without missing STRATA or CLUSTER values is not verified", .{});
+    }
     const d = try design.build(a, rows.items, s.roles);
     if (d.kept.len == 0) return gap(cx, 0, "the result for an input without valid observations is not verified", .{});
-    if (d.singlePsuStratum()) return gap(cx, 0, "variance estimation for a stratum with a single cluster is not implemented", .{});
+    if (d.singlePsuStratum()) {
+        if (d.strata() < 2) return gap(cx, 0, "variance estimation without any stratum of two or more clusters is not implemented", .{});
+        try cx.diags.note(0, "Only one cluster in a stratum. The estimate of variance will omit this stratum.", .{});
+    }
     const df = if (s.roles.clusters.len > 0) d.clusters() - d.strata() else d.kept.len - d.strata();
     if (df == 0) return gap(cx, 0, "inference with zero design degrees of freedom is not implemented", .{});
     var r = try analyze(cx, s, rows.items, d);
     r.read = all.len;
     r.sum_weights_read = sum_read;
     r.freq_read = freq_read;
-    if (s.freq != null and s.roles.clusters.len == 0) return gap(cx, 0, "FREQ without a CLUSTER statement is not verified", .{});
     if (s.freq != null and missing_model + d.bad_design > 0) return gap(cx, 0, "FREQ with observations excluded for missing MODEL or design values is not verified", .{});
     r.missing_model = missing_model;
     r.nonpositive_weight = d.bad_weight + bad_freq;
@@ -691,7 +725,11 @@ pub fn render(cx: proc.ProcCtx, out: *Out, s: Spec, r: Result) diag.Error!void {
     const rname = ds.columns.items[s.response.?].name;
     var b: Out = .empty;
     try b.appendSlice(a, "\nThe SURVEYLOGISTIC Procedure\n\n");
-    try centered(a, &b, "Model Information", 53);
+    // With a finite population correction the labels widen (reference listing).
+    const fpc = s.roles.fpc != .none;
+    const lw: usize = if (fpc) 33 else 30;
+    const mw: usize = if (fpc) 56 else 53;
+    try centered(a, &b, "Model Information", mw);
     try b.append(a, '\n');
     const upper = try std.ascii.allocUpperString(a, s.data_name);
     const dsname = if (std.mem.indexOfScalar(u8, upper, '.') == null) try std.fmt.allocPrint(a, "WORK.{s}", .{upper}) else upper;
@@ -700,27 +738,36 @@ pub fn render(cx: proc.ProcCtx, out: *Out, s: Spec, r: Result) diag.Error!void {
             return std.fmt.allocPrint(al, "{d}", .{v});
         }
     }.f;
-    try pair(cx, &b, "Data Set", dsname, 30, 53);
-    try pair(cx, &b, "Response Variable", rname, 30, 53);
-    try pair(cx, &b, "Number of Response Levels", "2", 30, 53);
-    if (s.freq) |fc| try pair(cx, &b, "Frequency Variable", ds.columns.items[fc].name, 30, 53);
+    try pair(cx, &b, "Data Set", dsname, lw, mw);
+    try pair(cx, &b, "Response Variable", rname, lw, mw);
+    try pair(cx, &b, "Number of Response Levels", "2", lw, mw);
+    if (s.freq) |fc| try pair(cx, &b, "Frequency Variable", ds.columns.items[fc].name, lw, mw);
     if (s.roles.strata.len > 0) {
         // Several STRATA variables: "Stratum Variables", one name per line.
-        for (s.roles.strata, 0..) |c, k| try pair(cx, &b, if (k > 0) "" else if (s.roles.strata.len > 1) "Stratum Variables" else "Stratum Variable", ds.columns.items[c].name, 30, 53);
-        try pair(cx, &b, "Number of Strata", try count(a, r.d.strata()), 30, 53);
+        for (s.roles.strata, 0..) |c, k| try pair(cx, &b, if (k > 0) "" else if (s.roles.strata.len > 1) "Stratum Variables" else "Stratum Variable", ds.columns.items[c].name, lw, mw);
+        try pair(cx, &b, "Number of Strata", try count(a, r.d.strata()), lw, mw);
     }
     if (s.roles.clusters.len > 0) {
-        try pair(cx, &b, "Cluster Variable", ds.columns.items[s.roles.clusters[0]].name, 30, 53);
-        try pair(cx, &b, "Number of Clusters", try count(a, r.d.clusters()), 30, 53);
+        try pair(cx, &b, "Cluster Variable", ds.columns.items[s.roles.clusters[0]].name, lw, mw);
+        try pair(cx, &b, "Number of Clusters", try count(a, r.d.clusters()), lw, mw);
     }
-    if (s.roles.weight) |wc| try pair(cx, &b, "Weight Variable", ds.columns.items[wc].name, 30, 53);
-    try pair(cx, &b, "Model", "Binary Logit", 30, 53);
-    try pair(cx, &b, "Optimization Technique", "Fisher's Scoring", 30, 53);
-    try pair(cx, &b, "Variance Adjustment", "Degrees of Freedom (DF)", 30, 53);
+    if (s.roles.weight) |wc| try pair(cx, &b, "Weight Variable", ds.columns.items[wc].name, lw, mw);
+    try pair(cx, &b, "Model", "Binary Logit", lw, mw);
+    try pair(cx, &b, "Optimization Technique", "Fisher's Scoring", lw, mw);
+    try pair(cx, &b, "Variance Adjustment", "Degrees of Freedom (DF)", lw, mw);
+    if (fpc) try pair(cx, &b, "Finite Population Correction", "Used", lw, mw);
     try b.appendSlice(a, "\n\n");
-    try centered(a, &b, "Variance Estimation", 46);
-    try b.append(a, '\n');
-    try b.appendSlice(a, "Method                           Taylor Series\nVariance Adjustment    Degrees of Freedom (DF)\n\n\n");
+    if (fpc) {
+        try centered(a, &b, "Variance Estimation", 55);
+        try b.append(a, '\n');
+        try b.appendSlice(a, "Method                                    Taylor Series\nVariance Adjustment             Degrees of Freedom (DF)\nFinite Population Correction                       Used\n\n\n");
+    } else {
+        try centered(a, &b, "Variance Estimation", 46);
+        try b.append(a, '\n');
+        try b.appendSlice(a, "Method                           Taylor Series\n");
+        if (s.roles.missing) try b.appendSlice(a, "Missing Levels              Included (MISSING)\n");
+        try b.appendSlice(a, "Variance Adjustment    Degrees of Freedom (DF)\n\n\n");
+    }
     try row(cx, &b, 39, "Number of Observations Read", &.{try count(a, r.read)}, &.{39});
     try row(cx, &b, 39, "Number of Observations Used", &.{try count(a, r.n)}, &.{39});
     if (s.freq != null) {
@@ -833,7 +880,7 @@ pub fn run(cx: proc.ProcCtx, out: *Out, t: []const lex.Token) diag.Error!void {
     const s = try parse(cx, t);
     try plan(cx, s);
     const ds = s.input.ds;
-    const groups = try by.checkedSlices(cx.arena, ds, s.by_cols, &.{}, false, cx.diags);
+    const groups = try by.checkedSlices(cx.arena, ds, s.by_cols, s.by_desc, s.notsorted, cx.diags);
     if (groups.len == 0) return cx.diags.fail(error.ParseError, 0, "No observations in the input data set.", .{});
     // Nothing is printed unless every BY group can be analysed.
     const results = try cx.arena.alloc(Result, groups.len);

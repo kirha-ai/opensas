@@ -92,7 +92,9 @@ test "STAT-SURVEYLOGISTIC-001 user errors are rc 1 and unimplemented features rc
         .{ "proc surveylogistic; model y=x / link=probit;", 2 },
         .{ "proc surveylogistic; model y=x / clodds;", 2 },
         .{ "proc surveylogistic; class g; model y=g;", 2 },
-        .{ "proc surveylogistic; model y=x; freq w;", 2 }, // FREQ without CLUSTER
+        .{ "proc surveylogistic total=50; model y=x; strata st; cluster cl; weight w;", 2 }, // TOTAL= listing
+        .{ "proc surveylogistic; model y=x; weight w; by descending st;", 1 }, // BY order violated
+        .{ "proc surveylogistic; model y=x; weight w; by cl;", 1 }, // not sorted by cl
         .{ "proc surveylogistic; model y=x; cluster cl; freq g;", 1 }, // character FREQ
         .{ "proc surveylogistic; model y=x; cluster cl; freq w; freq x;", 1 },
         .{ "proc surveylogistic; model y=x; domain st;", 2 },
@@ -115,6 +117,9 @@ test "STAT-SURVEYLOGISTIC-001 user errors are rc 1 and unimplemented features rc
         "proc surveylogistic; model y=x; weight w;", // no STRATA/CLUSTER
         "proc surveylogistic; model y=x; strata st; weight w; by st;", // BY groups
         "proc surveylogistic; model y=x; strata st cl; weight w;", // several STRATA variables
+        "proc surveylogistic; model y=x; freq w;", // FREQ without CLUSTER
+        "proc surveylogistic; model y=x; weight w; by notsorted st;", // BY NOTSORTED
+        "proc surveylogistic rate=0.1; model y=x; strata st; cluster cl; weight w;", // RATE=
         "proc surveylogistic; strata st; cluster cl; weight w; freq w; model y(event='1')=x;", // FREQ
         "proc surveylogistic; strata st; cluster cl; weight w; weight x; model y(event='1')=x;", // first WEIGHT used (p.9827)
     }) |src| {
