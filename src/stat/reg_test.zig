@@ -140,3 +140,36 @@ pub fn execute(cx: proc.ProcCtx, out: *std.ArrayList(u8), model_label: []const u
     }
     if (!noprint) try render(cx.arena, out, model_label, response, spec, result, model.fit.mse);
 }
+
+/// REG013: asymptotic Wald inference uses the actual selected HC covariance,
+/// not MSE*G or residual-denominator F. S154 physical pp.8642–8643,8599.
+pub fn heteroGeometry(model: @import("reg_diagnostics.zig").Result, covariance: []const f64) hypothesis.Model {
+    var geometry = hypothesis.fromRegression(model, model.singular);
+    geometry.covariance_kernel = covariance;
+    geometry.scale = 1;
+    geometry.denominator_df = null;
+    return geometry;
+}
+pub fn executeHetero(cx: proc.ProcCtx, out: *std.ArrayList(u8), model_label: []const u8, response: []const u8, spec: Spec, model: @import("reg_diagnostics.zig").Result, covariance: []const f64, noprint: bool) diag.Error!void {
+    const geometry = heteroGeometry(model, covariance);
+    const result = hypothesis.evaluate(cx.arena, geometry, spec.rows, null) catch |err| {
+        if (err == error.OutOfMemory) return err;
+        return proc.failGap(cx.diags, 0, "PROC REG TEST: heteroscedasticity-consistent covariance or rank is numerically unavailable", .{});
+    };
+    if (result.status != .estimable or result.wald == null or result.chi_square_probability == null) return proc.failGap(cx.diags, 0, "PROC REG TEST: singular or inconsistent heteroscedasticity-consistent inference is not implemented", .{});
+    if (spec.print) {
+        if (result.rank != spec.rows.len) return proc.failGap(cx.diags, 0, "PROC REG TEST: PRINT for dependent heteroscedasticity-consistent hypothesis rows is not implemented", .{});
+        const values = intermediate(cx.arena, geometry, spec.rows) catch |err| {
+            if (err == error.OutOfMemory) return err;
+            return proc.failGap(cx.diags, 0, "PROC REG TEST: heteroscedasticity-consistent PRINT inverse is numerically unavailable", .{});
+        };
+        if (!noprint) {
+            try out.appendSlice(cx.arena, "\nHeteroscedasticity Consistent Intermediate Calculations\n");
+            try renderIntermediate(cx.arena, out, model_label, response, spec, values);
+        }
+    }
+    if (noprint) return;
+    const name = spec.label orelse try std.fmt.allocPrint(cx.arena, "{d}", .{spec.number});
+    const probability = result.chi_square_probability.?;
+    try out.print(cx.arena, "\nThe REG Procedure\nModel: {s}\n\nTest {s} Results for Dependent Variable {s}\nUsing Heteroscedasticity Consistent Covariance Matrix\n\nDF Chi-Square Pr > ChiSq\n{d} {d:.2} {s}\n", .{ model_label, name, response, result.rank, result.wald.?, if (probability < 0.0001) @as([]const u8, "<.0001") else try std.fmt.allocPrint(cx.arena, "{d:.4}", .{probability}) });
+}

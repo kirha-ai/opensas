@@ -62,6 +62,7 @@ pub const FittedModel = struct {
 
 /// Shared computation for listing execution and silent interactive REFIT.
 fn fitModel(cx: proc.ProcCtx, spec: Spec, model: Model, rows: []const []const Value) diag.Error!FittedModel {
+    if ((model.dw or model.lackfit or model.hcc) and spec.row_weights != null) return proc.failGap(cx.diags, 0, "PROC REG: REWEIGHT specification diagnostic conventions are not implemented", .{});
     const input = try select(cx, spec, model, rows);
     if (input.y.len == 0) return cx.diags.fail(error.ExecError, 0, "PROC REG: no usable observations", .{});
     // The solver accepts precision weights. Multiplying by frequency
@@ -148,6 +149,17 @@ fn executePrepared(cx: proc.ProcCtx, out: *std.ArrayList(u8), spec: Spec, prepar
             const collinearity = if (model.collin or model.collinoint) @import("reg_collinearity.zig").compute(cx.arena, input.x, input.y.len, input.columns, w, model.intercept, model.collinoint) catch |err| {
                 if (err == error.OutOfMemory) return err;
                 return proc.failGap(cx.diags, 0, "PROC REG: collinearity diagnostics require nonzero independent columns and at most16 parameters", .{});
+            } else null;
+            const serial = if (model.dw) @import("reg_specification.zig").serial(fit.residuals) catch {
+                return proc.failGap(cx.diags, 0, "PROC REG: nonfinite serial residual diagnostics are not implemented", .{});
+            } else null;
+            const lackfit = if (model.lackfit) @import("reg_specification.zig").lackFit(cx.arena, input.x, input.y, fit) catch |err| {
+                if (err == error.OutOfMemory) return err;
+                return proc.failGap(cx.diags, 0, "PROC REG: lack-of-fit decomposition is numerically unavailable", .{});
+            } else null;
+            const hetero = if (model.hcc) @import("reg_specification.zig").hetero(cx.arena, input.x, fit, model.hccmethod) catch |err| {
+                if (err == error.OutOfMemory) return err;
+                return proc.failGap(cx.diags, 0, "PROC REG: heteroscedasticity-consistent inference requires full rank, positive error DF, and nonunit leverage for HC2/3", .{});
             } else null;
             var ipc_points: []const @import("reg_ipc.zig").Point = &.{};
             var ridge_path: ?@import("reg_ridge.zig").Path = null;
@@ -258,8 +270,12 @@ fn executePrepared(cx: proc.ProcCtx, out: *std.ArrayList(u8), spec: Spec, prepar
                 .tolerance = tolerances,
                 .vif = vifs,
                 .restrictions = computed.restrictions,
+                .robust_errors = if (hetero) |result| result.errors else &.{},
             });
             if (!spec.noprint) {
+                if (serial) |result| try @import("reg_diagnostic_render.zig").serial(cx.arena, out, result);
+                if (lackfit) |result| try @import("reg_diagnostic_render.zig").lackFit(cx.arena, out, result);
+                if (model.acov) try @import("reg_diagnostic_render.zig").hetero(cx.arena, out, spec, model, hetero.?);
                 if (collinearity) |result| try @import("reg_diagnostic_render.zig").collinearity(cx.arena, out, spec, model, result);
                 if (influence) |result| try @import("reg_diagnostic_render.zig").influence(cx.arena, out, spec, model, input.source_rows, fit, result);
             }
@@ -273,6 +289,7 @@ fn executePrepared(cx: proc.ProcCtx, out: *std.ArrayList(u8), spec: Spec, prepar
             for (spec.tests) |test_spec| {
                 if (test_spec.statement_index != model.statement_index) continue;
                 try @import("reg_test.zig").execute(cx, out, model.label, spec.ds.columns.items[model.dependent].name, test_spec, diagnostics, spec.noprint);
+                if (hetero) |result| try @import("reg_test.zig").executeHetero(cx, out, model.label, spec.ds.columns.items[model.dependent].name, test_spec, diagnostics, result.covariance, spec.noprint);
             }
             if (model_index + 1 == spec.models.len or spec.models[model_index + 1].statement_index != model.statement_index) {
                 var first = model_index;
@@ -613,7 +630,16 @@ pub const Session = struct {
         const request = try @import("reg_test.zig").parse(cx, tokens[1..], names, current_model.statement_index, number, label);
         const fits = try compute(cx, selected);
         var pending: std.ArrayList(u8) = .empty;
-        for (fits) |fit| try @import("reg_test.zig").execute(cx, &pending, fit.model.label, selected.ds.columns.items[fit.model.dependent].name, request, fit.diagnostics, selected.noprint);
+        for (fits) |fit| {
+            try @import("reg_test.zig").execute(cx, &pending, fit.model.label, selected.ds.columns.items[fit.model.dependent].name, request, fit.diagnostics, selected.noprint);
+            if (fit.model.hcc) {
+                const result = @import("reg_specification.zig").hetero(cx.arena, fit.input.x, fit.diagnostics.fit, fit.model.hccmethod) catch |err| {
+                    if (err == error.OutOfMemory) return err;
+                    return proc.failGap(cx.diags, 0, "PROC REG: heteroscedasticity-consistent inference is numerically unavailable", .{});
+                };
+                try @import("reg_test.zig").executeHetero(cx, &pending, fit.model.label, selected.ds.columns.items[fit.model.dependent].name, request, fit.diagnostics, result.covariance, selected.noprint);
+            }
+        }
         try out.appendSlice(cx.arena, pending.items);
         self.fitted = fits;
         self.next_test_number = number + 1;
@@ -789,6 +815,7 @@ test "STAT-COMMON-004 weighted listing identifies weight without changing observ
 
 test {
     _ = @import("reg_influence_tests.zig");
+    _ = @import("reg_specification_tests.zig");
     _ = @import("reg_reweight_tests.zig");
     _ = @import("reg_test_tests.zig");
     _ = @import("linear_hypothesis_tests.zig");

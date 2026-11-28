@@ -25,6 +25,7 @@ pub const Result = struct {
     dependencies: []const u8,
     estimates: []const f64,
     errors: []const f64,
+    robust_errors: []const f64 = &.{},
     t: []const f64,
     probabilities: []const f64,
     tolerance: []const f64 = &.{},
@@ -67,6 +68,7 @@ pub fn render(a: A, out: *std.ArrayList(u8), spec: parse.Spec, model: parse.Mode
         if (spec.ds.columns.items[ci].label != null) break true;
     } else false;
     try out.appendSlice(a, if (labels) "\nVariable Label DF Estimate Error t Value Pr > |t|" else "\nVariable DF Estimate Error t Value Pr > |t|");
+    if (r.robust_errors.len > 0) try out.appendSlice(a, " Heteroscedasticity Consistent Standard Error");
     if (model.tol) try out.appendSlice(a, " Tolerance");
     if (model.vif) try out.appendSlice(a, " Inflation");
     try out.appendSlice(a, "\n\n");
@@ -78,6 +80,7 @@ pub fn render(a: A, out: *std.ArrayList(u8), spec: parse.Spec, model: parse.Mode
             try out.print(a, " {s}", .{label});
         }
         try out.print(a, " {s} {s} {s} {s} {s}", .{ if (r.aliased[i]) @as([]const u8, "0") else if (r.biased[i]) "B" else "1", if (r.aliased[i]) @as([]const u8, "0") else try statistic(a, estimate), try statistic(a, r.errors[i]), try number(a, r.t[i], 2), try probability(a, r.probabilities[i]) });
+        if (r.robust_errors.len > 0) try out.print(a, " {s}", .{try statistic(a, r.robust_errors[i])});
         if (model.tol) try out.print(a, " {s}", .{try statistic(a, r.tolerance[i])});
         if (model.vif) try out.print(a, " {s}", .{if (model.intercept and i == 0) @as([]const u8, "0") else try statistic(a, r.vif[i])});
         try out.append(a, '\n');

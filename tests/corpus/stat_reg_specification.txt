@@ -1,0 +1,44 @@
+The REG Procedure
+Model: MODEL1
+Dependent Variable: y
+Number of Observations Read 6
+Number of Observations Used 6
+Analysis of Variance
+Sum of Mean
+Source DF Squares Square F Value Pr > F
+Model 1 36.00000 36.00000 12.71 0.0235
+Error 4 11.33333 2.83333
+Corrected Total 5 47.33333
+Root MSE 1.68325 R-Square 0.7606
+Dependent Mean 4.33333 Adj R-Sq 0.7007
+Coeff Var 38.84425
+Parameter Estimates
+Parameter Standard
+Variable DF Estimate Error t Value Pr > |t| Heteroscedasticity Consistent Standard Error
+Intercept 1 1.33333 1.08653 1.23 0.2871 1.32480
+x 1 3.00000 0.84163 3.56 0.0235 1.03016
+Durbin-Watson D 2.471
+Number of Observations 6
+1st Order Autocorrelation -0.363
+Lack of Fit Test
+Source DF Sum of Squares Mean Square F Value Pr > F
+Lack of Fit 1 5.33333 5.33333 2.67 0.2010
+Pure Error 3 6.00000 2.00000
+Heteroscedasticity Consistent Covariance Matrix
+HCCMETHOD=3
+Variable Intercept x
+Intercept 1.75510 -1.06122
+x -1.06122 1.06122
+The REG Procedure
+Model: MODEL1
+Test slope Results for Dependent Variable y
+Mean
+Source DF Square F Value Pr > F
+Numerator 1 36.00000 12.71 0.0235
+Denominator 4 2.83333
+The REG Procedure
+Model: MODEL1
+Test slope Results for Dependent Variable y
+Using Heteroscedasticity Consistent Covariance Matrix
+DF Chi-Square Pr > ChiSq
+1 8.48 0.0036

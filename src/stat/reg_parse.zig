@@ -22,6 +22,11 @@ pub const Model = struct {
     tol: bool = false,
     vif: bool = false,
     influence: bool = false,
+    dw: bool = false,
+    lackfit: bool = false,
+    hcc: bool = false,
+    acov: bool = false,
+    hccmethod: u2 = 0,
     collin: bool = false,
     collinoint: bool = false,
     restrictions: []const @import("reg_restrict.zig").Constraint = &.{},
@@ -299,6 +304,20 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
                 } else if (kw(t, j, "edf") or kw(t, j, "rsquare") or kw(t, j, "adjrsq") or kw(t, j, "cp") or kw(t, j, "sse") or kw(t, j, "mse")) {
                     if (kw(t, j, "edf")) model.selection_output.edf = true else if (kw(t, j, "rsquare")) model.selection_output.rsquare = true else if (kw(t, j, "adjrsq")) model.selection_output.adjrsq = true else if (kw(t, j, "cp")) model.selection_output.cp = true else if (kw(t, j, "sse")) model.selection_output.sse = true else model.selection_output.mse = true;
                     j += 1;
+                } else if (kw(t, j, "dw")) {
+                    model.dw = true;
+                    j += 1;
+                } else if (kw(t, j, "lackfit")) {
+                    model.lackfit = true;
+                    j += 1;
+                } else if (kw(t, j, "acov") or kw(t, j, "hcc") or kw(t, j, "white")) {
+                    model.hcc = true;
+                    if (kw(t, j, "acov")) model.acov = true;
+                    j += 1;
+                } else if (kw(t, j, "hccmethod") or kw(t, j, "acovmethod")) {
+                    const value = try selectionNumber(cx, t[0..end], &j, true);
+                    if (value > 3) return cx.diags.fail(error.ParseError, 0, "PROC REG HCCMETHOD must be 0, 1, 2, or 3", .{});
+                    model.hccmethod = @intFromFloat(value);
                 } else if (kw(t, j, "influence")) {
                     model.influence = true;
                     j += 1;
@@ -312,7 +331,7 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
                     model.alpha = try numeric(cx, t[0..end], &j);
                 } else if (kw(t, j, "singular")) {
                     model.singular = try numeric(cx, t[0..end], &j);
-                } else return unsupported(cx, t[j], &.{ "r", "p", "clm", "cli", "clb", "selection", "sle", "slentry", "sls", "slstay", "maxstep", "details", "groupnames", "noprint", "influence", "dw", "dwprob", "acov", "hcc", "white", "stb", "covb", "corrb", "collin", "collinoint", "ss1", "ss2", "scorr1", "scorr2", "pcorr1", "pcorr2", "partial", "partialdata", "all", "press", "aic", "bic", "sbc", "gmsep", "jp", "pc", "sp", "rmse", "cp", "mse", "edf", "rsquare", "adjrsq", "b", "seb" });
+                } else return unsupported(cx, t[j], &.{ "r", "p", "clm", "cli", "clb", "selection", "sle", "slentry", "sls", "slstay", "maxstep", "details", "groupnames", "noprint", "influence", "dw", "dwprob", "spec", "lackfit", "acov", "hcc", "white", "stb", "covb", "corrb", "collin", "collinoint", "ss1", "ss2", "scorr1", "scorr2", "pcorr1", "pcorr2", "partial", "partialdata", "all", "press", "aic", "bic", "sbc", "gmsep", "jp", "pc", "sp", "rmse", "cp", "mse", "edf", "rsquare", "adjrsq", "b", "seb" });
             }
             if (model.collin and model.collinoint) return proc.failGap(cx.diags, 0, "PROC REG: combined COLLIN/COLLINOINT output is not implemented", .{});
             if (model.influence and (model.residual or model.clm or model.cli)) return proc.failGap(cx.diags, 0, "PROC REG: combined INFLUENCE and interval/residual listings are not implemented", .{});
@@ -414,6 +433,10 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
         if (covout or ridge.len > 0 or pcomit.len > 0 or model.restrictions.len > 0) return proc.failGap(cx.diags, 0, "PROC REG: subset selection with COVOUT, RIDGE, PCOMIT, or RESTRICT is not implemented", .{});
     }
     for (models.items) |model| {
+        if (model.dw or model.lackfit or model.hcc) {
+            if (weight != null or freq != null) return proc.failGap(cx.diags, 0, "PROC REG: WEIGHT/FREQ specification diagnostic conventions are not implemented", .{});
+            if (model.selection.method != .none or model.restrictions.len > 0 or ridge.len > 0 or pcomit.len > 0) return proc.failGap(cx.diags, 0, "PROC REG: specification diagnostics with selection, RESTRICT, RIDGE, or PCOMIT are not implemented", .{});
+        }
         if ((model.influence or model.collin or model.collinoint) and (model.selection.method != .none or model.restrictions.len > 0 or ridge.len > 0 or pcomit.len > 0)) return proc.failGap(cx.diags, 0, "PROC REG: these diagnostics combined with selection, RESTRICT, RIDGE, or PCOMIT are not implemented", .{});
         if (model.influence and (weight != null or freq != null)) return proc.failGap(cx.diags, 0, "PROC REG: WEIGHT/FREQ INFLUENCE listing conventions are not implemented", .{});
         if (model.collinoint and !model.intercept) return proc.failGap(cx.diags, 0, "PROC REG: COLLINOINT with NOINT is not implemented", .{});
@@ -424,6 +447,7 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
     };
     for (mtests.items) |test_spec| for (models.items) |model| {
         if (model.statement_index != test_spec.statement_index) continue;
+        if (model.hcc) return proc.failGap(cx.diags, 0, "PROC REG: heteroscedasticity-consistent hypothesis tests are not implemented", .{});
         if (model.restrictions.len > 0 or model.selection.method != .none or ridge.len > 0 or pcomit.len > 0) return proc.failGap(cx.diags, 0, "PROC REG: MTEST with RESTRICT, selection, RIDGE, or PCOMIT is not implemented", .{});
     };
     const by = try by_statements.resolve(cx.arena, ds, cx.diags);

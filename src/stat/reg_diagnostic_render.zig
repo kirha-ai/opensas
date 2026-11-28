@@ -38,3 +38,22 @@ pub fn influence(a: A, out: *std.ArrayList(u8), spec: parse.Spec, model: parse.M
     for (fit.residuals) |r| residual_sum += r;
     try out.print(a, "\nSum of Residuals {s}\nSum of Squared Residuals {s}\nPredicted Residual SS (PRESS) {s}\n", .{ std.mem.trim(u8, try @import("../format.zig").apply(a, .{ .num = residual_sum }, "best12."), " "), try statistic(a, fit.sse), if (result.press) |v| try statistic(a, v) else @as([]const u8, ".") });
 }
+
+pub fn serial(a: A, out: *std.ArrayList(u8), result: @import("reg_specification.zig").Serial) !void {
+    try out.print(a, "\nDurbin-Watson D {s}\nNumber of Observations {d}\n1st Order Autocorrelation {s}\n", .{ try fixed(a, result.d, 3), result.n, try fixed(a, result.correlation, 3) });
+}
+pub fn lackFit(a: A, out: *std.ArrayList(u8), result: @import("reg_specification.zig").LackFit) !void {
+    const probability = if (result.probability < 0.0001) @as([]const u8, "<.0001") else try fixed(a, result.probability, 4);
+    try out.print(a, "\nLack of Fit Test\nSource DF Sum of Squares Mean Square F Value Pr > F\nLack of Fit {d} {s} {s} {s} {s}\nPure Error {d} {s} {s}\n", .{ result.lack_df, try statistic(a, result.lack_ss), try statistic(a, result.lack_ms), try fixed(a, result.f, 2), probability, result.pure_df, try statistic(a, result.pure_ss), try statistic(a, result.pure_ms) });
+}
+pub fn hetero(a: A, out: *std.ArrayList(u8), spec: parse.Spec, model: parse.Model, result: @import("reg_specification.zig").Hetero) !void {
+    try out.print(a, "\nHeteroscedasticity Consistent Covariance Matrix\nHCCMETHOD={d}\nVariable", .{result.method});
+    const p = result.errors.len;
+    for (0..p) |j| try out.print(a, " {s}", .{parameter(spec, model, j)});
+    try out.append(a, '\n');
+    for (0..p) |i| {
+        try out.print(a, "{s}", .{parameter(spec, model, i)});
+        for (0..p) |j| try out.print(a, " {s}", .{try statistic(a, result.covariance[i * p + j])});
+        try out.append(a, '\n');
+    }
+}
