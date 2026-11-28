@@ -1,0 +1,81 @@
+
+The CANCORR Procedure
+ 
+Canonical Correlation Analysis
+
+                                                                                                                 Test of H0: The canonical correlations in the
+                                                                          Eigenvalues of Inv(E)*H                  current row and all that follow are zero
+                          Adjusted  Approximate      Squared                = CanRsq/(1-CanRsq)
+            Canonical    Canonical     Standard    Canonical                                                  Likelihood  Approximate
+          Correlation  Correlation        Error  Correlation  Eigenvalue  Difference  Proportion  Cumulative       Ratio      F Value  Num DF  Den DF  Pr > F
+
+       1     0.557007     0.471595     0.308463     0.310256      0.4498                  1.0000      1.0000  0.68974359         0.67       2       3  0.5728
+
+NOTE: The F statistic is exact.
+
+
+
+                Multivariate Statistics and Exact F Statistics
+ 
+                              S=1    M=0    N=0.5
+ 
+Statistic                        Value    F Value    Num DF    Den DF    Pr > F
+
+Wilks' Lambda               0.68974359       0.67         2         3    0.5728
+Pillai's Trace              0.31025641       0.67         2         3    0.5728
+Hotelling-Lawley Trace      0.44981413       0.67         2         3    0.5728
+Roy's Greatest Root         0.44981413       0.67         2         3    0.5728
+
+The CANCORR Procedure
+ 
+Canonical Correlation Analysis
+
+                                                                                                                 Test of H0: The canonical correlations in the
+                                                                          Eigenvalues of Inv(E)*H                  current row and all that follow are zero
+                          Adjusted  Approximate      Squared                = CanRsq/(1-CanRsq)
+            Canonical    Canonical     Standard    Canonical                                                  Likelihood  Approximate
+          Correlation  Correlation        Error  Correlation  Eigenvalue  Difference  Proportion  Cumulative       Ratio      F Value  Num DF  Den DF  Pr > F
+
+       1     0.424236     0.265730     0.366726     0.179976      0.2195                  1.0000      1.0000  0.82002391         0.33       2       3  0.7426
+
+NOTE: The F statistic is exact.
+
+
+
+                Multivariate Statistics and Exact F Statistics
+ 
+                              S=1    M=0    N=0.5
+ 
+Statistic                        Value    F Value    Num DF    Den DF    Pr > F
+
+Wilks' Lambda               0.82002391       0.33         2         3    0.7426
+Pillai's Trace              0.17997609       0.33         2         3    0.7426
+Hotelling-Lawley Trace      0.21947664       0.33         2         3    0.7426
+Roy's Greatest Root         0.21947664       0.33         2         3    0.7426
+
+The CANCORR Procedure
+ 
+Canonical Correlation Analysis
+
+                                                                                                                 Test of H0: The canonical correlations in the
+                                                                          Eigenvalues of Inv(E)*H                  current row and all that follow are zero
+                          Adjusted  Approximate      Squared                = CanRsq/(1-CanRsq)
+            Canonical    Canonical     Standard    Canonical                                                  Likelihood  Approximate
+          Correlation  Correlation        Error  Correlation  Eigenvalue  Difference  Proportion  Cumulative       Ratio      F Value  Num DF  Den DF  Pr > F
+
+       1     0.654654      .           0.404061     0.428571      0.7500                  1.0000      1.0000  0.57142857         0.75       1       1  0.5456
+
+NOTE: The F statistic is exact.
+
+
+
+                Multivariate Statistics and Exact F Statistics
+ 
+                            S=1    M=-0.5    N=-0.5
+ 
+Statistic                        Value    F Value    Num DF    Den DF    Pr > F
+
+Wilks' Lambda               0.57142857       0.75         1         1    0.5456
+Pillai's Trace              0.42857143       0.75         1         1    0.5456
+Hotelling-Lawley Trace      0.75000000       0.75         1         1    0.5456
+Roy's Greatest Root         0.75000000       0.75         1         1    0.5456

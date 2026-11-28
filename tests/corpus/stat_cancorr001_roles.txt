@@ -1,0 +1,231 @@
+
+The CANCORR Procedure
+ 
+Canonical Correlation Analysis
+
+                                                                                                                 Test of H0: The canonical correlations in the
+                                                                          Eigenvalues of Inv(E)*H                  current row and all that follow are zero
+                          Adjusted  Approximate      Squared                = CanRsq/(1-CanRsq)
+            Canonical    Canonical     Standard    Canonical                                                  Likelihood  Approximate
+          Correlation  Correlation        Error  Correlation  Eigenvalue  Difference  Proportion  Cumulative       Ratio      F Value  Num DF  Den DF  Pr > F
+
+       1     0.884594     0.854677     0.065577     0.782507      3.5978      2.9257      0.8426      0.8426  0.13006425         4.14       6      14  0.0134
+       2     0.634022     0.628084     0.180309     0.401984      0.6722                  0.1574      1.0000  0.59801576         2.69       2       8  0.1279
+
+
+
+                 Multivariate Statistics and F Approximations
+ 
+                              S=2    M=0    N=2.5
+ 
+Statistic                        Value    F Value    Num DF    Den DF    Pr > F
+
+Wilks' Lambda               0.13006425       4.14         6        14    0.0134
+Pillai's Trace              1.18449123       3.87         6        16    0.0140
+Hotelling-Lawley Trace      4.27004569       4.79         6    7.7895    0.0243
+Roy's Greatest Root         3.59784896       9.59         3         8    0.0050
+
+         NOTE: F Statistic for Roy's Greatest Root is an upper bound.
+                 NOTE: F Statistic for Wilks' Lambda is exact.
+
+The CANCORR Procedure
+ 
+Canonical Correlation Analysis
+
+Raw Canonical Coefficients for the VAR Variables
+ 
+                  V1                V2
+
+x1      0.0594806769       -0.42172696
+x2      -0.360192796      -0.227272369
+
+Raw Canonical Coefficients for the WITH Variables
+ 
+                  W1                W2
+
+y1      0.2547588772      0.1005256226
+y2      -0.071677952      0.4371102013
+y3      0.1114065239      0.2958611823
+
+The CANCORR Procedure
+ 
+Canonical Correlation Analysis
+
+Standardized Canonical Coefficients for the VAR Variables
+ 
+              V1            V2
+
+x1        0.1531       -1.0858
+x2       -0.9274       -0.5851
+
+Standardized Canonical Coefficients for the WITH Variables
+ 
+              W1            W2
+
+y1        0.6824        0.2693
+y2       -0.1953        1.1910
+y3        0.2645        0.7024
+
+The CANCORR Procedure
+ 
+Canonical Structure
+
+Correlations Between the VAR Variables and Their Canonical Variables
+ 
+              V1            V2
+
+x1        0.5336       -0.8457
+x2       -0.9902       -0.1397
+
+Correlations Between the WITH Variables and Their Canonical Variables
+ 
+              W1            W2
+
+y1        0.9543        0.1005
+y2       -0.6921        0.6756
+y3        0.8078        0.2396
+
+Correlations Between the VAR Variables and the Canonical Variables of the WITH Variables
+ 
+              W1            W2
+
+x1        0.4720       -0.5362
+x2       -0.8759       -0.0885
+
+Correlations Between the WITH Variables and the Canonical Variables of the VAR Variables
+ 
+              V1            V2
+
+y1        0.8442        0.0637
+y2       -0.6123        0.4283
+y3        0.7146        0.1519
+
+The CANCORR Procedure
+ 
+Canonical Correlation Analysis
+
+                                                                                                                 Test of H0: The canonical correlations in the
+                                                                          Eigenvalues of Inv(E)*H                  current row and all that follow are zero
+                          Adjusted  Approximate      Squared                = CanRsq/(1-CanRsq)
+            Canonical    Canonical     Standard    Canonical                                                  Likelihood  Approximate
+          Correlation  Correlation        Error  Correlation  Eigenvalue  Difference  Proportion  Cumulative       Ratio      F Value  Num DF  Den DF  Pr > F
+
+       1     0.910256     0.896450     0.041579     0.828566      4.8331      4.1648      0.8785      0.8785  0.10275760         9.18       6      26  <.0001
+       2     0.632930     0.625174     0.145376     0.400601      0.6683                  0.1215      1.0000  0.59939944         4.68       2      14  0.0278
+
+
+
+                 Multivariate Statistics and F Approximations
+ 
+                              S=2    M=0    N=5.5
+ 
+Statistic                        Value    F Value    Num DF    Den DF    Pr > F
+
+Wilks' Lambda               0.10275760       9.18         6        26    <.0001
+Pillai's Trace              1.22916630       7.44         6        28    <.0001
+Hotelling-Lawley Trace      5.50147609      11.56         6    15.676    <.0001
+Roy's Greatest Root         4.83313952      22.55         3        14    <.0001
+
+         NOTE: F Statistic for Roy's Greatest Root is an upper bound.
+                 NOTE: F Statistic for Wilks' Lambda is exact.
+
+The CANCORR Procedure
+ 
+Canonical Correlation Analysis
+
+Raw Canonical Coefficients for the Left
+ 
+                  A1                A2
+
+y1      0.2789457303      0.0586095019
+y2      -0.054675453      0.4001578656
+y3      -0.039050624      0.4158557664
+
+Raw Canonical Coefficients for the Right
+ 
+                  B1                B2
+
+x1      0.0692723089       -0.38946613
+x2       -0.33130823       -0.22692181
+
+The CANCORR Procedure
+ 
+Canonical Correlation Analysis
+
+Standardized Canonical Coefficients for the Left
+ 
+              A1            A2
+
+y1        0.9475        0.1991
+y2       -0.1695        1.2406
+y3       -0.1088        1.1586
+
+Standardized Canonical Coefficients for the Right
+ 
+              B1            B2
+
+x1        0.1922       -1.0804
+x2       -0.9054       -0.6201
+
+The CANCORR Procedure
+ 
+Canonical Structure
+
+Correlations Between the Left and Their Canonical Variables
+ 
+              A1            A2
+
+y1        0.9928        0.1158
+y2       -0.7677        0.3390
+y3        0.6515        0.4802
+
+Correlations Between the Right and Their Canonical Variables
+ 
+              B1            B2
+
+x1        0.5651       -0.8250
+x2       -0.9845       -0.1751
+
+Correlations Between the Left and the Canonical Variables of the Right
+ 
+              B1            B2
+
+y1        0.9037        0.0733
+y2       -0.6988        0.2146
+y3        0.5930        0.3039
+
+Correlations Between the Right and the Canonical Variables of the Left
+ 
+              A1            A2
+
+x1        0.5144       -0.5222
+x2       -0.8962       -0.1108
+
+The CANCORR Procedure
+ 
+Canonical Correlation Analysis
+
+                                                                                                                 Test of H0: The canonical correlations in the
+                                                                          Eigenvalues of Inv(E)*H                  current row and all that follow are zero
+                          Adjusted  Approximate      Squared                = CanRsq/(1-CanRsq)
+            Canonical    Canonical     Standard    Canonical                                                  Likelihood  Approximate
+          Correlation  Correlation        Error  Correlation  Eigenvalue  Difference  Proportion  Cumulative       Ratio      F Value  Num DF  Den DF  Pr > F
+
+       1     0.880778     0.827867     0.067608     0.775770      3.4597      2.9468      0.8709      0.8709  0.14820647         1.60      10      10  0.2360
+       2     0.582273     0.462939     0.199286     0.339042      0.5130                  0.1291      1.0000  0.66095807         0.77       4       6  0.5824
+
+
+
+                 Multivariate Statistics and F Approximations
+ 
+                              S=2    M=1    N=1.5
+ 
+Statistic                        Value    F Value    Num DF    Den DF    Pr > F
+
+Wilks' Lambda               0.14820647       1.60        10        10    0.2360
+Pillai's Trace              1.11481217       1.51        10        12    0.2460
+Hotelling-Lawley Trace      3.97266653       1.91        10    5.3333    0.2377
+Roy's Greatest Root         3.45971125       4.15         5         6    0.0562
+
+         NOTE: F Statistic for Roy's Greatest Root is an upper bound.
+                 NOTE: F Statistic for Wilks' Lambda is exact.
