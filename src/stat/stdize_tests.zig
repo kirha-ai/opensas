@@ -98,6 +98,11 @@ test "STAT-STDIZE-001 invalid input is a user error and documented unimplemented
         "proc stdize data=nosuch; run;",
         "proc stdize data=d vardef=xx; run;",
         "proc stdize data=d nonsense; run;",
+        "proc stdize data=d initial=abw; run;", // p.9445, SAS ERROR 79-322
+        "proc stdize data=d initial=in; run;", // SAS ERROR 22-322
+        "proc stdize data=d initial=bogus; run;",
+        "proc stdize data=d missing=bogus; run;",
+        "proc stdize data=d; freq f / bogus; run;",
     };
     for (user) |src| try std.testing.expectError(error.ParseError, e.parse(src));
     const gaps = [_][]const u8{
@@ -106,16 +111,18 @@ test "STAT-STDIZE-001 invalid input is a user error and documented unimplemented
         "proc stdize data=d outstat=st; run;",
         "proc stdize data=d oprefix sprefix=s_; run;",
         "proc stdize data=d pctlmtd=onepass; run;",
-        "proc stdize data=d missing=mean; run;",
+        "proc stdize data=d missing=abw; run;",
         "proc stdize data=d out=o(keep=x); run;",
-        "proc stdize data=d method=std method=std; run;",
+        "proc stdize data=d initial=spacing snorm; run;",
         "proc stdize data=d; location x; run;",
-        "proc stdize data=d norm; run;",
+        "proc stdize data=d pctlpts=10 to 90 by 10; run;",
     };
     for (gaps) |src| try std.testing.expectError(error.ParseError, e.parse(src));
     var out: std.ArrayList(u8) = .empty;
     const run_gaps = [_][]const u8{
         "proc stdize data=d method=iqr out=o; var x; weight w; run;",
+        "proc stdize data=d method=std missing=median out=o; var x; weight w; run;", // weighted median
+        "proc stdize data=d method=mad out=o; var x; freq f / notruncate; run;",
         "proc stdize data=d method=mean pstat out=o; var x; run;", // label not verified
         "proc stdize data=d pstat out=o; var x; weight w; run;", // Sum of Weights column
     };
@@ -220,4 +227,50 @@ test "STAT-STDIZE-001 closed-form measures, WEIGHT, VARDEF, ADD/MULT and REPONLY
     // Without OUT= the DATAn convention names the output.
     try e.run(&out, "proc stdize data=d method=maxabs; var x; run;");
     try approx(@as(f64, 1.0 / 20.0), (try e.col("data1", "x"))[0], 1e-15);
+}
+
+// SAS-verified rules (real SAS 9.4 runs on the sample of the corpus fixture
+// tests/corpus/stat_stdize001_rules.sas; here on grp 1 of the test data,
+// x = 1, 2, 3, 6 with f = 1, 1, 2, 1, w = 1, 2, 1, 1, y = 4, ., 8, 0).
+test "STAT-STDIZE-001 repeated declarations, NORM, MISSING=method, NOTRUNCATE and ignored options" {
+    var e = fresh();
+    defer e.arena.deinit();
+    try e.init();
+    // Last repeated PROC option wins; VAR statements accumulate; the first
+    // FREQ and the first WEIGHT statement are used.
+    const s = try e.parse("proc stdize data=d method=mean method=range add=1 add=5 unstd nmarkers=3 pctlpts=10, 150; var x; var y; freq f; freq w; weight w; weight f; run;");
+    try expectEqual(stdize.Method.range, s.method);
+    try expectEqual(@as(f64, 5), s.add);
+    try expectEqual(@as(usize, 2), s.vars.len);
+    try expectEqual(@as(?usize, 3), s.freq);
+    try expectEqual(@as(?usize, 4), s.weight);
+    var out: std.ArrayList(u8) = .empty;
+    // NORM: IQR / (2 z.75), MAD / z.75. grp 1 x: median 2.5, IQR 3 -> 2.2239;
+    // MAD 1 -> 1.482602.
+    try e.run(&out, "proc stdize data=d out=n1 method=mad norm; where grp = 1; var x; run;");
+    const n1 = try e.col("n1", "x");
+    try approx(@as(f64, -1.5 * 0.6744897501960817), n1[0], 1e-12);
+    try e.run(&out, "proc stdize data=d out=n2 method=iqr norm; where grp = 1; var x; run;");
+    try approx(@as(f64, (6.0 - 2.5) / (3.0 / (2.0 * 0.6744897501960817))), (try e.col("n2", "x"))[3], 1e-12);
+    // NORM with STD: SAS WARNING, ignored.
+    try e.run(&out, "proc stdize data=d out=n3 method=std norm; where grp = 1; var x; run;");
+    try approx(@as(f64, -2.0 / @sqrt(14.0 / 3.0)), (try e.col("n3", "x"))[0], 1e-12);
+    try expect(e.diags.warning_status);
+    // MISSING=RANGE with METHOD=STD and REPLACE: y = 4, 8, 0, mean 4, std 4,
+    // minimum 0 -> the missing y becomes (0 - 4) / 4 = -1 (MISSING= wins over
+    // REPLACE); with REPONLY it becomes the minimum 0.
+    try e.run(&out, "proc stdize data=d out=m1 replace missing=range; where grp = 1; var y; run;");
+    try approx(@as(f64, -1), (try e.col("m1", "y"))[1], 1e-12);
+    try e.run(&out, "proc stdize data=d out=m2 reponly missing=range; where grp = 1; var y; run;");
+    try approx(@as(f64, 0), (try e.col("m2", "y"))[1], 1e-12);
+    // REPLACE with ADD=10: a missing value still becomes 0.
+    try e.run(&out, "proc stdize data=d out=m3 replace add=10; where grp = 1; var y; run;");
+    try approx(@as(f64, 0), (try e.col("m3", "y"))[1], 1e-12);
+    try approx(@as(f64, 10), (try e.col("m3", "y"))[0], 1e-12);
+    // REPLACE with MISSING=99: 99.
+    try e.run(&out, "proc stdize data=d out=m4 replace missing=99; where grp = 1; var y; run;");
+    try approx(@as(f64, 99), (try e.col("m4", "y"))[1], 1e-12);
+    // WEIGHT with RANGE is ignored: (x - 1) / 5.
+    try e.run(&out, "proc stdize data=d out=w1 method=range; where grp = 1; var x; weight w; run;");
+    try approx(@as(f64, 0.2), (try e.col("w1", "x"))[1], 1e-12);
 }

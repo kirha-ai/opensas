@@ -1,0 +1,10 @@
+
+The STDIZE Procedure
+
+Location and Scale Measures
+ 
+Location = median     Scale = interquartile range
+ 
+Name        Location           Scale            Norm           N
+
+x           3.000000        4.000000        2.965204           5

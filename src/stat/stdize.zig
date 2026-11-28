@@ -38,12 +38,23 @@ pub const Spec = struct {
     reponly: bool = false,
     /// MISSING=value: replaces missing values after standardizing.
     missing: ?f64 = null,
+    /// MISSING=method: that method's location replaces missing values
+    /// before standardizing (p.9446).
+    missing_method: ?Method = null,
+    /// NORM (p.9446): IQR and MAD scales made consistent for a normal sigma.
+    norm: bool = false,
+    /// SNORM (p.9448): only meaningful for METHOD=SPACING.
+    snorm: bool = false,
+    /// INITIAL= was given (only meaningful for ABW, AHUBER, AWAVE).
+    initial: bool = false,
     pstat: bool = false,
     /// OUT= member; null means the DATAn convention.
     out: ?[]const u8 = null,
     // Roles.
     vars: []const usize = &.{},
     freq: ?usize = null,
+    /// FREQ / NOTRUNCATE (p.9450): frequencies used as given (> 0).
+    notruncate: bool = false,
     weight: ?usize = null,
     by_cols: []const usize = &.{},
     by_desc: []const bool = &.{},
@@ -101,7 +112,24 @@ const method_names = [_]struct { []const u8, Method }{
 const method_gaps = [_][]const u8{ "abw", "ahuber", "awave", "agk", "spacing", "l", "in" };
 
 /// Documented PROC STDIZE options (Table 115.1) this ticket does not implement.
-const option_gaps = [_][]const u8{ "initial", "unstd", "unstdize", "keeplen", "oprefix", "sprefix", "outstat", "nmarkers", "pctldef", "pctlpts", "norm", "snorm" };
+const option_gaps = [_][]const u8{ "keeplen", "oprefix", "sprefix", "outstat", "pctldef" };
+
+fn methodByName(m: []const u8) ?Method {
+    for (method_names) |p| if (eq(m, p[0])) return p[1];
+    return null;
+}
+/// The PROC STDIZE location of `m` with that method's own WEIGHT rule:
+/// RANGE, MIDRANGE and MAXABS ignore the WEIGHT variable (p.9450, SAS
+/// warning "The WEIGHT variable does not apply").
+fn ignoresWeight(m: Method) bool {
+    return m == .range or m == .midrange or m == .maxabs;
+}
+fn isPercentile(m: Method) bool {
+    return m == .median or m == .iqr or m == .mad;
+}
+/// 1 / Phi^-1(0.75): NORM divides IQR by 2*z(0.75) and MAD by z(0.75)
+/// (SAS-verified: IQR 4 -> 2.965204, MAD 2 -> 2.965204).
+const z75: f64 = 0.6744897501960817;
 
 pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
     const a = cx.arena;
@@ -115,7 +143,9 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
         if (!at(t, i, .name)) return invalid(cx, t, i);
         const option = try std.ascii.allocLowerString(a, t[i].text);
         const l = t[i].line;
-        if ((try seen.getOrPut(a, option)).found_existing) return gap(cx.diags, l, "PROC STDIZE: repeated PROC statement option {s} is not verified", .{t[i].text});
+        // A repeated PROC statement option: the last one wins (SAS-verified
+        // for METHOD=, ADD= and MULT=; flags are idempotent).
+        _ = try seen.getOrPut(a, option);
         const valued = at(t, i + 1, .eq);
         if (eq(option, "data") and valued) {
             const first = i + 2;
@@ -130,10 +160,7 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
         } else if (eq(option, "method") and valued) {
             if (!at(t, i + 2, .name)) return cx.diags.fail(error.ParseError, l, "PROC STDIZE: METHOD= must be a method name", .{});
             const m = t[i + 2].text;
-            const found = for (method_names) |p| {
-                if (eq(m, p[0])) break p[1];
-            } else null;
-            if (found) |f| {
+            if (methodByName(m)) |f| {
                 s.method = f;
             } else {
                 for (method_gaps) |g| if (eq(m, g)) return gap(cx.diags, l, "PROC STDIZE: METHOD={s} is not implemented (STAT-STDIZE-003)", .{m});
@@ -163,8 +190,56 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
             i += 3;
         } else if (eq(option, "missing") and valued) {
             i += 2;
-            if (at(t, i, .name)) return gap(cx.diags, l, "PROC STDIZE: MISSING={s} (a replacement method) is not implemented", .{t[i].text});
-            s.missing = number(t, &i) orelse return cx.diags.fail(error.ParseError, l, "PROC STDIZE: MISSING= must be a method or a number", .{});
+            if (at(t, i, .name)) {
+                const m = t[i].text;
+                const f = methodByName(m) orelse {
+                    for (method_gaps) |g| if (eq(m, g)) return gap(cx.diags, l, "PROC STDIZE: MISSING={s} is not implemented (STAT-STDIZE-003)", .{m});
+                    return cx.diags.fail(error.ParseError, l, "PROC STDIZE: MISSING={s} is not a valid standardization method", .{m});
+                };
+                i += 1;
+                if (at(t, i, .lparen)) return gap(cx.diags, l, "PROC STDIZE: a MISSING= method argument is not implemented", .{});
+                s.missing_method = f;
+                s.missing = null;
+            } else {
+                s.missing = number(t, &i) orelse return cx.diags.fail(error.ParseError, l, "PROC STDIZE: MISSING= must be a method or a number", .{});
+                s.missing_method = null;
+            }
+        } else if (eq(option, "initial") and valued) {
+            // p.9445: INITIAL=ABW, AHUBER, AWAVE and IN are not allowed (SAS:
+            // ERROR 22-322 / 79-322); any other method name is accepted.
+            if (!at(t, i + 2, .name)) return cx.diags.fail(error.ParseError, l, "PROC STDIZE: INITIAL= must be a method name", .{});
+            const m = t[i + 2].text;
+            const ok = methodByName(m) != null or eq(m, "agk") or eq(m, "spacing") or eq(m, "l") or eq(m, "least");
+            if (!ok) return cx.diags.fail(error.ParseError, l, "PROC STDIZE: INITIAL={s} is not valid; expecting one of AGK, EUCLEN, IQR, LEAST, MAD, MAXABS, MEAN, MEDIAN, MIDRANGE, RANGE, SPACING, STD, SUM, USTD", .{m});
+            if (eq(m, "spacing")) return gap(cx.diags, l, "PROC STDIZE: INITIAL=SPACING is not implemented (STAT-STDIZE-003)", .{});
+            s.initial = true;
+            i += 3;
+            if (at(t, i, .lparen)) i = proc.skipParen(t, i);
+        } else if (eq(option, "nmarkers") and valued) {
+            // Only used by PCTLMTD=ONEPASS (itself a STAT-STDIZE-004 gap); SAS
+            // accepts and ignores it otherwise (verified with NMARKERS=3).
+            i += 2;
+            _ = number(t, &i) orelse return cx.diags.fail(error.ParseError, l, "PROC STDIZE: NMARKERS= must be a number", .{});
+        } else if (eq(option, "pctlpts") and valued) {
+            // Only written to OUTSTAT= (itself a STAT-STDIZE-005 gap); SAS
+            // accepts and ignores it otherwise (verified with PCTLPTS=10, 150).
+            i += 2;
+            _ = number(t, &i) orelse return cx.diags.fail(error.ParseError, l, "PROC STDIZE: PCTLPTS= must be a list of numbers", .{});
+            while (at(t, i, .comma) or at(t, i, .number)) {
+                if (at(t, i, .comma)) i += 1;
+                _ = number(t, &i) orelse return cx.diags.fail(error.ParseError, l, "PROC STDIZE: PCTLPTS= must be a list of numbers", .{});
+            }
+            if (at(t, i, .name) and eq(t[i].text, "to")) return gap(cx.diags, l, "PROC STDIZE: PCTLPTS= TO/BY ranges are not implemented", .{});
+        } else if (!valued and (eq(option, "unstd") or eq(option, "unstdize"))) {
+            // Only used with METHOD=IN (a STAT-STDIZE-003 gap); SAS accepts
+            // and ignores it otherwise (verified: plain METHOD=STD output).
+            i += 1;
+        } else if (!valued and eq(option, "norm")) {
+            s.norm = true;
+            i += 1;
+        } else if (!valued and eq(option, "snorm")) {
+            s.snorm = true;
+            i += 1;
         } else if (!valued and eq(option, "nomiss")) {
             s.nomiss = true;
             i += 1;
@@ -216,16 +291,28 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
             var j = i;
             try bys.read(a, t, &j);
         } else if (eq(word, "var")) {
-            if (var_seen) return gap(cx.diags, t[i].line, "PROC STDIZE: more than one VAR statement is not verified", .{});
+            // SAS-verified: several VAR statements accumulate.
             var_seen = true;
             try columnList(cx, ds, t, i, end, "VAR", &vars);
         } else if (eq(word, "freq")) {
-            if (s.freq != null) return gap(cx.diags, t[i].line, "PROC STDIZE: more than one FREQ statement is not verified", .{});
-            if (end > i + 2 and at(t, i + 2, .slash)) return gap(cx.diags, t[i].line, "PROC STDIZE: FREQ statement options (NOTRUNCATE) are not implemented", .{});
-            s.freq = try oneNumeric(cx, ds, t, i, end, "FREQ");
+            // SAS-verified: with several FREQ statements the first is used.
+            var stop = end;
+            var notrunc = false;
+            if (end > i + 2 and at(t, i + 2, .slash)) {
+                stop = i + 2;
+                for (t[i + 3 .. end]) |o| {
+                    if (o.tag == .name and (eq(o.text, "notruncate") or eq(o.text, "notrunc"))) notrunc = true else return invalid(cx, t, i + 3);
+                }
+            }
+            const f = try oneNumeric(cx, ds, t, i, stop, "FREQ");
+            if (s.freq == null) {
+                s.freq = f;
+                s.notruncate = notrunc;
+            }
         } else if (eq(word, "weight") or eq(word, "wgt")) {
-            if (s.weight != null) return gap(cx.diags, t[i].line, "PROC STDIZE: more than one WEIGHT statement is not verified", .{});
-            s.weight = try oneNumeric(cx, ds, t, i, end, "WEIGHT");
+            // SAS-verified: with several WEIGHT statements the first is used.
+            const w = try oneNumeric(cx, ds, t, i, end, "WEIGHT");
+            if (s.weight == null) s.weight = w;
         } else if (eq(word, "location") or eq(word, "scale")) {
             return gap(cx.diags, t[i].line, "PROC STDIZE: the {s} statement (METHOD=IN) is not implemented (STAT-STDIZE-003)", .{word});
         } else if (eq(word, "where")) {
@@ -290,8 +377,14 @@ pub fn usable(a: A, s: Spec, rows: []const []const Value, ci: usize) ![]Obs {
         if (s.nomiss) for (s.vars) |v| if (std.math.isNan(row[v].num)) continue :rows;
         var f: f64 = 1;
         if (s.freq) |fc| {
-            f = @floor(row[fc].num);
-            if (!(f >= 1)) continue;
+            if (s.notruncate) {
+                // NOTRUNCATE (SAS-verified): a frequency 0.5 is used as is.
+                f = row[fc].num;
+                if (!(f > 0)) continue;
+            } else {
+                f = @floor(row[fc].num);
+                if (!(f >= 1)) continue;
+            }
         }
         var w: f64 = 1;
         if (s.weight) |wc| {
@@ -328,7 +421,13 @@ pub fn percentile(a: A, obs: []const Obs, p: f64) !f64 {
     return orderStat(sorted, j + 1);
 }
 
-pub const Measures = struct { location: f64, scale: f64, n: f64 };
+pub const Measures = struct {
+    location: f64,
+    scale: f64,
+    n: f64,
+    /// NORM: the normalized scale used to standardize (PSTAT "Norm" column).
+    norm: ?f64 = null,
+};
 
 /// Location and scale of Table 115.2 for one variable (Computation of the
 /// Statistics, p.9454; weighted moments, p.9451). Null when the sample does
@@ -386,13 +485,18 @@ pub fn measures(a: A, s: Spec, obs: []const Obs) !?Measures {
     var scale = loc_scale[1];
     // FUZZ= (p.9445) for the location and scale values.
     if (scale < @abs(location) * s.fuzz) scale = 0 else if (@abs(location) < @abs(s.mult) * s.fuzz) location = 0;
-    return .{ .location = location, .scale = scale, .n = n };
+    const normed: ?f64 = if (!s.norm) null else switch (s.method) {
+        .iqr => scale / (2 * z75),
+        .mad => scale / z75,
+        else => null,
+    };
+    return .{ .location = location, .scale = scale, .n = n, .norm = normed };
 }
 
 /// Final OUT= value (p.9448): add + mult * (x - location) / scale, with the
 /// FUZZ= rule |result| < mult * fuzz -> 0.
 pub fn standardize(s: Spec, m: Measures, x: f64) f64 {
-    const r = s.add + s.mult * (x - m.location) / m.scale;
+    const r = s.add + s.mult * (x - m.location) / (m.norm orelse m.scale);
     return if (@abs(r) < @abs(s.mult) * s.fuzz) 0 else r;
 }
 
@@ -421,17 +525,20 @@ fn left(a: A, out: *Out, text: []const u8, width: usize) !void {
 /// The PSTAT table, laid out as in the SAS listing: a Name column as wide as
 /// the longest name (at least 4), then Location and Scale right-aligned in 16
 /// columns with six decimals and N in 12.
-fn table(a: A, out: *Out, names: []const []const u8, label: usize, lab: [2][]const u8, values: []const Measures) !void {
+fn table(a: A, out: *Out, names: []const []const u8, label: usize, lab: [2][]const u8, values: []const Measures, norm: bool) !void {
     try out.print(a, "\nThe STDIZE Procedure\n\nLocation and Scale Measures\n \nLocation = {s}     Scale = {s}\n \n", .{ lab[0], lab[1] });
     try left(a, out, "Name", label);
     try right(a, out, "Location", 16);
     try right(a, out, "Scale", 16);
+    // SAS-verified: NORM with IQR/MAD adds a Norm column after Scale.
+    if (norm) try right(a, out, "Norm", 16);
     try right(a, out, "N", 12);
     try out.appendSlice(a, "\n\n");
     for (names, values) |n, m| {
         try left(a, out, n, label);
         try right(a, out, try std.fmt.allocPrint(a, "{d:.6}", .{m.location}), 16);
         try right(a, out, try std.fmt.allocPrint(a, "{d:.6}", .{m.scale}), 16);
+        if (norm) try right(a, out, try std.fmt.allocPrint(a, "{d:.6}", .{m.norm.?}), 16);
         try right(a, out, try std.fmt.allocPrint(a, "{d}", .{m.n}), 12);
         try out.appendSlice(a, "\n");
     }
@@ -455,22 +562,45 @@ fn anyLine(lines: []const ?[]const u8) bool {
 
 pub fn run(cx: proc.ProcCtx, out: *Out, t: []const lex.Token) diag.Error!void {
     const a = cx.arena;
-    const s = try parse(cx, t);
+    var s = try parse(cx, t);
     const ds = s.input.ds;
     const l0 = line(t, 0);
     const gap = proc.failGap;
     const groups = try by.checkedSlices(a, ds, s.by_cols, s.by_desc, s.notsorted, cx.diags);
     const p = s.vars.len;
 
-    // p.9450: the WEIGHT variable applies only to some methods; for the others
-    // its role is not documented precisely enough to reproduce.
-    if (s.weight != null) switch (s.method) {
-        .range, .midrange, .maxabs => return gap(cx.diags, l0, "PROC STDIZE: a WEIGHT statement with METHOD=RANGE, MIDRANGE or MAXABS is not verified", .{}),
-        .median, .iqr, .mad => return gap(cx.diags, l0, "PROC STDIZE: weighted percentiles (WEIGHT with METHOD=MEDIAN, IQR or MAD) are not implemented (STAT-STDIZE-004)", .{}),
-        else => {},
-    };
-    if (s.replace and s.missing != null) return gap(cx.diags, l0, "PROC STDIZE: REPLACE combined with MISSING= is not verified", .{});
-    if (s.replace and s.add != 0) return gap(cx.diags, l0, "PROC STDIZE: REPLACE with a nonzero ADD= is not verified", .{});
+    // p.9450: the WEIGHT variable and NOTRUNCATE apply only to some methods.
+    // SAS-verified: when METHOD= or MISSING= names RANGE, MIDRANGE or MAXABS
+    // the WEIGHT statement (WARNING + NOTE) and NOTRUNCATE (WARNING) are
+    // ignored for the whole step, including the other method.
+    const mm_range = if (s.missing_method) |mm| ignoresWeight(mm) else false;
+    if (s.weight != null and (ignoresWeight(s.method) or mm_range)) {
+        const which: []const u8 = if (ignoresWeight(s.method)) "METHOD" else "MISSING";
+        const name = @tagName(if (ignoresWeight(s.method)) s.method else s.missing_method.?);
+        try cx.diags.warnStatus(l0, "The WEIGHT variable does not apply to {s}= {s}.", .{ which, try std.ascii.allocUpperString(a, name) });
+        try cx.diags.note(l0, "The WEIGHT statement is ignored.", .{});
+        s.weight = null;
+    }
+    if (s.notruncate and (ignoresWeight(s.method) or mm_range)) {
+        try cx.diags.warnStatus(l0, "The NOTRUNCATE option in the FREQ statement is ignored when the RANGE, MIDRANGE, or MAXABS method is specified.", .{});
+        s.notruncate = false;
+    }
+    const pct = isPercentile(s.method) or (s.missing_method != null and isPercentile(s.missing_method.?));
+    if (s.weight != null and pct)
+        return gap(cx.diags, l0, "PROC STDIZE: weighted percentiles (WEIGHT with MEDIAN, IQR or MAD) are not implemented (STAT-STDIZE-004)", .{});
+    if (s.notruncate and pct)
+        return gap(cx.diags, l0, "PROC STDIZE: nonintegral FREQ / NOTRUNCATE frequencies in percentiles (MEDIAN, IQR, MAD) are not implemented (STAT-STDIZE-004)", .{});
+    if (s.norm and s.method != .iqr and s.method != .mad) {
+        try cx.diags.warnStatus(l0, "The option NORM will be ignored since none of the standardization methods including MAD, IQR, AGK and SPACING has been specified for METHOD= .", .{});
+        s.norm = false;
+    }
+    if (s.initial) try cx.diags.note(l0, "INITIAL= will be ignored.", .{});
+    if (s.snorm) try cx.diags.warnStatus(l0, "The option SNORM will be ignored since SPACING has not been specified for either METHOD= or INITIAL=.", .{});
+    if (ds.rows.items.len == 0) {
+        try cx.diags.note(l0, "No observations in the DATA= data set.", .{});
+        const dn = try std.ascii.allocUpperString(a, ds.name);
+        try cx.diags.note(l0, "No observations in data set {s}{s}.", .{ if (std.mem.indexOfScalar(u8, dn, '.') == null) @as([]const u8, "WORK.") else "", dn });
+    }
     if (s.pstat) {
         if (labels(s.method) == null) return gap(cx.diags, l0, "PROC STDIZE: the PSTAT listing for METHOD={s} is not verified against SAS output (STAT-STDIZE-006)", .{@tagName(s.method)});
         if (s.weight != null) return gap(cx.diags, l0, "PROC STDIZE: the PSTAT Sum of Weights column is not verified against SAS output (STAT-STDIZE-006)", .{});
@@ -499,9 +629,25 @@ pub fn run(cx: proc.ProcCtx, out: *Out, t: []const lex.Token) diag.Error!void {
 
     var body: Out = .empty;
     const ms = try a.alloc(Measures, p);
+    // MISSING=method: that method's location, computed like METHOD=method
+    // from the same usable values (p.9446; SAS-verified for MEDIAN, MEAN,
+    // RANGE with METHOD=STD/IQR and REPLACE/REPONLY).
+    const fill = try a.alloc(f64, p);
+    var ms_spec = s;
+    if (s.missing_method) |mm| {
+        ms_spec.method = mm;
+        ms_spec.norm = false;
+    }
     for (groups, 0..) |group, gi| {
-        for (s.vars, ms) |ci, *m| {
+        // SAS-verified: an empty DATA= set gives the two NOTEs above, an empty
+        // OUT= data set and no PSTAT table.
+        if (group.rows.len == 0) continue;
+        for (s.vars, ms, fill) |ci, *m, *fv| {
             const obs = try usable(a, s, group.rows, ci);
+            if (s.missing_method != null) {
+                const mm = (try measures(a, ms_spec, obs)) orelse return gap(cx.diags, l0, "PROC STDIZE: variable {s} has too few usable values for the MISSING= method (STAT-STDIZE-004)", .{ds.columns.items[ci].name});
+                fv.* = mm.location;
+            }
             m.* = (try measures(a, s, obs)) orelse return gap(cx.diags, l0, "PROC STDIZE: variable {s} has too few usable values in a BY group; the missing location/scale handling is not verified (STAT-STDIZE-004)", .{ds.columns.items[ci].name});
             if (m.scale == 0 and !s.reponly) return gap(cx.diags, l0, "PROC STDIZE: constant data (variable {s} has zero scale) are not implemented (STAT-STDIZE-004)", .{ds.columns.items[ci].name});
             if (s.pstat) {
@@ -517,17 +663,21 @@ pub fn run(cx: proc.ProcCtx, out: *Out, t: []const lex.Token) diag.Error!void {
                 try titles.emitTitles(a, &body);
             };
             if (s.by_cols.len > 0) try byLine(a, &body, ds, group.rows[0], s.by_cols);
-            try table(a, &body, names, label, labels(s.method).?, ms);
+            try table(a, &body, names, label, labels(s.method).?, ms, s.norm);
         }
         for (group.rows) |row| {
             const values = try a.dupe(Value, row);
-            for (s.vars, ms) |ci, m| {
+            for (s.vars, ms, fill) |ci, m, fv| {
                 const x = row[ci].num;
                 if (std.math.isNan(x)) {
-                    // Missing Values (p.9457): REPLACE -> 0 after standardizing
-                    // (= the location before it); REPONLY -> the location;
-                    // MISSING=value -> value after standardizing.
-                    if (s.missing) |v| values[ci] = .{ .num = v } else if (s.replace) {
+                    // Missing Values (p.9457): MISSING=value -> value after
+                    // standardizing; MISSING=method -> that location before
+                    // standardizing (both win over REPLACE, SAS-verified);
+                    // REPLACE -> 0 even with ADD= (SAS-verified); REPONLY ->
+                    // the location.
+                    if (s.missing_method != null) {
+                        values[ci] = .{ .num = if (s.reponly) fv else standardize(s, m, fv) };
+                    } else if (s.missing) |v| values[ci] = .{ .num = v } else if (s.replace) {
                         values[ci] = .{ .num = 0 };
                     } else if (s.reponly) values[ci] = .{ .num = m.location };
                 } else if (!s.reponly) values[ci] = .{ .num = standardize(s, m, x) };
