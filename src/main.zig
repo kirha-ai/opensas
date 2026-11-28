@@ -3257,6 +3257,13 @@ fn runProc(a: std.mem.Allocator, listing_out: *std.ArrayList(u8), lib: *sas.exec
         var body: std.ArrayList(u8) = .empty;
         try sas.causalgraph.run(causalgraph_context, &body, toks);
         try out.appendSlice(a, body.items);
+    } else if (eqi(proc, "psmatch")) {
+        // Titles and BY lines are emitted per page by the procedure.
+        var psmatch_context = pcx;
+        psmatch_context.listing_titles = g;
+        var body: std.ArrayList(u8) = .empty;
+        try sas.psmatch.run(psmatch_context, &body, toks);
+        try out.appendSlice(a, body.items);
     } else if (eqi(proc, "lifetest")) {
         var body: std.ArrayList(u8) = .empty;
         try sas.lifetest.run(pcx, &body, toks);

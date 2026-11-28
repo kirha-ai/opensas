@@ -1,0 +1,75 @@
+MISS
+
+The PSMATCH Procedure
+
+                   Data Information
+
+Data Set                                     WORK.PMISS
+Output Data Set                                 WORK.M2
+Treatment Variable                                 drug
+Treated Group                                         1
+All Obs (Treated)                                    53
+All Obs (Control)                                    47
+Support Region                  Extended Common Support
+Lower PS Support                               0.353261
+Upper PS Support                               0.687613
+Support Region Obs (Treated)                         52
+Support Region Obs (Control)                         47
+
+
+                                                             Propensity Score Information
+ 
+                                                                                                                                              Treated -
+                   --------------------Treated (drug = 1)--------------------   --------------------Control (drug = 0)--------------------     Control
+                                                 Standard                                                     Standard                             Mean
+Observations            N     Weight     Mean   Deviation   Minimum   Maximum        N     Weight     Mean   Deviation   Minimum   Maximum   Difference
+
+All                    53              0.5409      0.0767    0.3713    0.6922       47              0.5177      0.0756    0.3655    0.6706        0.023
+Region                 52              0.5380      0.0744    0.3713    0.6815       47              0.5177      0.0756    0.3655    0.6706        0.020
+Matched                41              0.5133      0.0616    0.3713    0.6370       41              0.5302      0.0716    0.3655    0.6706       -0.017
+Weighted Matched       41      41.00   0.5133      0.0616    0.3713    0.6370       41      41.00   0.5302      0.0716    0.3655    0.6706       -0.017
+
+
+                 Matching Information
+
+Distance Metric              Logit of Propensity Score
+Method                                 Greedy Matching
+Control/Treated Ratio                                1
+Order                                        Ascending
+Caliper (Logit PS)                            0.155793
+Matched Sets                                        41
+Matched Obs (Treated)                               41
+Matched Obs (Control)                               41
+Total Absolute Difference                     3.063304
+
+MISS
+The PSMATCH Procedure
+
+                           Standardized Mean Differences (Treated - Control)
+ 
+                                              Mean     Standard    Standardized      Percent    Variance
+Variable            Observations        Difference    Deviation      Difference    Reduction       Ratio
+
+Logit Prop Score    All                    0.09567      0.31159         0.30704                   1.0429
+                    Region                 0.08332                      0.26740        12.91      0.9766
+                    Matched               -0.06953                     -0.22316        27.32      0.7306
+                    Weighted Matched      -0.06953                     -0.22316        27.32      0.7306
+age                 All                   -1.36692     12.97146        -0.10538                   1.0136
+                    Region                -0.99755                     -0.07690        27.02      0.9894
+                    Matched                1.02439                      0.07897        25.06      1.0366
+                    Weighted Matched       1.02439                      0.07897        25.06      1.0366
+bmi                 All                    0.79727      3.45004         0.23109                   1.0357
+                    Region                 0.69640                      0.20185        12.65      1.0090
+                    Matched               -0.43902                     -0.12725        44.93      0.9269
+                    Weighted Matched      -0.43902                     -0.12725        44.93      0.9269
+
+            Standard deviation of All observations used to compute standardized differences
+MISS
+patientid   gender   age   bmi   drug   grp      _PS_   _MATCHWGT_   mid
+
+        1        1    37    21      1     0   0.53630            1    27
+        2        0    44    22      0     0   0.45131            1     5
+        3        1    51    23      0     0   0.53852            1    21
+        4        0    58    24      0     0   0.45352            1     6
+        5        1    65    25      1     0   0.54073            1    28
+        6        0    72    26      1     0   0.45573            1     9
