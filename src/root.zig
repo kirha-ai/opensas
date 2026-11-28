@@ -29,6 +29,7 @@ pub const genmod = @import("stat/genmod.zig");
 pub const npar1way = @import("stat/npar1way.zig");
 pub const plm = @import("stat/plm.zig");
 pub const phreg = @import("stat/phreg.zig");
+pub const lifetest = @import("stat/lifetest.zig");
 pub const power = @import("stat/power.zig");
 pub const mixed = @import("stat/mixed.zig");
 pub const glimmix = @import("stat/glimmix.zig");
@@ -66,6 +67,7 @@ test {
     _ = @import("stat/npar1way.zig");
     _ = @import("stat/plm.zig");
     _ = @import("stat/phreg.zig");
+    _ = @import("stat/lifetest.zig");
     _ = @import("stat/power.zig");
     _ = @import("stat/power_means.zig");
     _ = @import("stat/power_solver.zig");
