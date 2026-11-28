@@ -37,9 +37,13 @@ pub const Spec = struct {
     varheader: enum { name, label, namelabel } = .name,
     /// ORDER=DATA: levels in order of first appearance in the input.
     order_data: bool = false,
+    /// ORDER=FREQ: descending frequency, ties in order of first appearance.
+    order_freq: bool = false,
     nomcar: bool = false,
     /// PAGE: the Data Summary and the table on separate pages.
     page: bool = false,
+    /// STRATA / LIST: the Stratum Information table.
+    strata_list: bool = false,
     /// RATE= / TOTAL= stratum-level data set (_RATE_ / _TOTAL_).
     fpc_table: ?struct { ds: *Dataset, rate: bool } = null,
 };
@@ -125,8 +129,8 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
         } else if (eq(word, "order") and valued) {
             if (!at(t, i + 2, .name)) return invalid(cx, t, i + 2);
             const v = t[i + 2].text;
-            if (eq(v, "data")) s.order_data = true else if (oneOf(v, &.{ "formatted", "freq" })) return gap(cx, t[i].line, "ORDER={s} is not implemented", .{v});
-            if (!eq(v, "internal") and !eq(v, "data")) return invalid(cx, t, i + 2);
+            if (eq(v, "data")) s.order_data = true else if (eq(v, "freq")) s.order_freq = true else if (oneOf(v, &.{"formatted"})) return gap(cx, t[i].line, "ORDER={s} is not implemented", .{v});
+            if (!oneOf(v, &.{ "internal", "data", "freq" })) return invalid(cx, t, i + 2);
             i += 3;
         } else if (eq(word, "varheader") and valued) {
             if (!at(t, i + 2, .name)) return invalid(cx, t, i + 2);
@@ -237,7 +241,15 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
             // SAS-verified (batched real-SAS run): several STRATA (or CLUSTER)
             // statements accumulate their variables, e.g. `strata school;
             // strata state;` gives the school x state strata.
-            s.roles.strata = try std.mem.concat(cx.arena, usize, &.{ s.roles.strata, try roleColumns(cx, ds, t, i + 1, end, "STRATA") });
+            var stop = end;
+            for (i + 1..end) |j| if (at(t, j, .slash)) {
+                // LIST is the only STRATA option (p.9601).
+                if (end != j + 2 or !kw(t, j + 1, "list")) return invalid(cx, t, j + 1);
+                s.strata_list = true;
+                stop = j;
+                break;
+            };
+            s.roles.strata = try std.mem.concat(cx.arena, usize, &.{ s.roles.strata, try roleColumns(cx, ds, t, i + 1, stop, "STRATA") });
         } else if (kw(t, i, "cluster") or kw(t, i, "clusters")) {
             s.roles.clusters = try std.mem.concat(cx.arena, usize, &.{ s.roles.clusters, try roleColumns(cx, ds, t, i + 1, end, "CLUSTER") });
         } else if (kw(t, i, "repweights") or kw(t, i, "repweight")) {
@@ -449,6 +461,8 @@ pub const Group = struct {
     /// Some stratum of the table has a single cluster (left out of variances).
     single_psu: bool,
     rep: ?[]const Value,
+    /// The (coded) rows the summary design `d` indexes.
+    rows: []const []const Value,
     /// Per TABLES variable: level texts when the table holds level codes
     /// (character variables, ORDER=DATA), else null (unformatted numbers).
     labels: [2]?[]const []const u8,
@@ -457,15 +471,36 @@ pub const Group = struct {
 /// Level dictionary of a TABLES variable over the whole input: character
 /// values (trailing blanks dropped) ascending, or ORDER=DATA first appearance.
 /// Missing values (blank, or numeric missing) are not levels.
-fn levelDict(a: A, ds: *const Dataset, c: usize, order_data: bool) !?[]const []const u8 {
+fn levelDict(a: A, ds: *const Dataset, c: usize, order_data: bool, order_freq: bool) !?[]const []const u8 {
     const char = ds.columns.items[c].type != .num;
-    if (!char and !order_data) return null;
+    if (!char and !order_data and !order_freq) return null;
     var list: std.ArrayList([]const u8) = .empty;
+    var counts: std.ArrayList(usize) = .empty;
     for (ds.rows.items) |row| {
         const text = try levelText(a, row[c]) orelse continue;
-        for (list.items) |l| {
-            if (std.mem.eql(u8, l, text)) break;
-        } else try list.append(a, text);
+        for (list.items, counts.items) |l, *n| {
+            if (std.mem.eql(u8, l, text)) {
+                n.* += 1;
+                break;
+            }
+        } else {
+            try list.append(a, text);
+            try counts.append(a, 1);
+        }
+    }
+    if (order_freq) {
+        // SAS-verified: descending (unweighted) frequency; ties keep the
+        // order of first appearance (a stable sort of the data order).
+        const idx = try a.alloc(usize, list.items.len);
+        for (idx, 0..) |*x, k| x.* = k;
+        std.sort.insertion(usize, idx, counts.items, struct {
+            fn gt(n: []const usize, x: usize, y: usize) bool {
+                return n[x] > n[y];
+            }
+        }.gt);
+        const sorted = try a.alloc([]const u8, idx.len);
+        for (idx, sorted) |k, *t| t.* = list.items[k];
+        return sorted;
     }
     if (char and !order_data) std.mem.sort([]const u8, list.items, {}, struct {
         fn lt(_: void, x: []const u8, y: []const u8) bool {
@@ -559,15 +594,28 @@ pub fn plan(cx: proc.ProcCtx, s: Spec) diag.Error![]Group {
     for ([_]usize{ req.row, col }, &dicts) |c, *dict| {
         const v = ds.columns.items[c];
         if (v.format != null) return gap(cx, req.line, "formatted TABLES variables are not implemented", .{});
-        dict.* = try levelDict(a, ds, c, s.order_data);
+        dict.* = try levelDict(a, ds, c, s.order_data, s.order_freq);
+        // Frequencies are counted over the whole input: verified only when
+        // every observation is in the table.
+        if (s.order_freq) for (ds.rows.items) |row| {
+            if (try levelText(a, row[c]) == null) return gap(cx, req.line, "ORDER=FREQ with missing TABLES values is not implemented", .{});
+        };
         // Missing levels are verified only as numeric '.' in internal order.
         if (s.roles.missing and dict.* != null) for (ds.rows.items) |row| {
             if (try levelText(a, row[c]) == null) return gap(cx, req.line, "MISSING levels of character or ORDER=DATA TABLES variables are not implemented", .{});
         };
     }
+    if (s.strata_list) {
+        // SAS-verified for one numeric STRATA variable with a CLUSTER
+        // statement (two samples); other shapes have unknown column rules.
+        const v = ds.columns.items[s.roles.strata[0]];
+        if (s.roles.strata.len != 1 or v.type != .num or v.format != null or v.name.len > 12 or s.roles.clusters.len == 0 or s.nosummary or s.page)
+            return gap(cx, 0, "STRATA / LIST for this design (several, character or formatted STRATA variables, no CLUSTER, NOSUMMARY or PAGE) is not implemented", .{});
+    }
     if (s.nomcar and s.chisq) return gap(cx, 0, "CHISQ with NOMCAR is not implemented", .{});
     if (s.page and (s.chisq or s.nomcar or s.nosummary)) return gap(cx, 0, "PAGE with CHISQ, NOMCAR or NOSUMMARY is not verified", .{});
     if (s.chisq and (s.roles.fpc != .none or s.fpc_table != null)) return gap(cx, 0, "CHISQ with RATE= or TOTAL= is not implemented", .{});
+    if (s.order_freq and s.by_cols.len > 0) return gap(cx, 0, "ORDER=FREQ with BY groups is not implemented", .{});
     const slices = try by.checkedSlices(a, ds, s.by_cols, s.by_desc, s.notsorted, cx.diags);
     const groups = try a.alloc(Group, slices.len);
     const table_cols = [_]usize{ req.row, col };
@@ -576,6 +624,7 @@ pub fn plan(cx: proc.ProcCtx, s: Spec) diag.Error![]Group {
         var d = try design.build(a, group_rows, s.roles);
         try applyFpcTable(cx, s, &d, group_rows);
         if (d.kept.len == 0) return gap(cx, 0, "the result for an input without valid observations is not verified", .{});
+        if (s.order_freq and d.kept.len != d.read) return gap(cx, 0, "ORDER=FREQ with excluded observations is not implemented", .{});
         if (d.invalidFpc()) return cx.diags.fail(error.ParseError, 0, "PROC SURVEYFREQ: TOTAL= is less than the number of sampled clusters in a stratum", .{});
         // Missing TABLES values: without MISSING the observations are excluded
         // from the table and all its analyses (MCAR, p.9631), so the table's
@@ -619,7 +668,7 @@ pub fn plan(cx: proc.ProcCtx, s: Spec) diag.Error![]Group {
             // table (test not computable) is verified here.
             if (rs.?.positive) return gap(cx, 0, "the Rao-Scott chi-square test with a positive design correction is not implemented", .{});
         }
-        group.* = .{ .d = d, .table = tb, .rs = rs, .freq_missing = freq_missing, .single_psu = single, .rep = slice.rep, .labels = dicts };
+        group.* = .{ .d = d, .table = tb, .rs = rs, .freq_missing = freq_missing, .single_psu = single, .rep = slice.rep, .labels = dicts, .rows = group_rows };
     }
     return groups;
 }
@@ -699,6 +748,55 @@ fn tableLine(cx: proc.ProcCtx, a: A, out: *Out, vc: [2]VarColumn, cols: []const 
     try out.append(a, '\n');
 }
 
+/// Stratum Information (STRATA / LIST), SAS-verified layout for one numeric
+/// STRATA variable: strata ascending by value, their valid observations and
+/// clusters.
+fn stratumInfo(a: A, out: *Out, s: Spec, g: Group) !void {
+    const ds = s.input.ds;
+    const sc = s.roles.strata[0];
+    const rows = g.rows;
+    const H = g.d.strata();
+    const order = try a.alloc(usize, H);
+    for (order, 0..) |*o, h| o.* = h;
+    const Ctx = struct {
+        rows: []const []const Value,
+        reps: []const usize,
+        c: usize,
+        fn lt(cx: @This(), x: usize, y: usize) bool {
+            return levelLess({}, cx.rows[cx.reps[x]][cx.c].num, cx.rows[cx.reps[y]][cx.c].num);
+        }
+    };
+    std.mem.sort(usize, order, Ctx{ .rows = rows, .reps = g.d.stratum_rep, .c = sc }, Ctx.lt);
+    const obs = try a.alloc(usize, H);
+    @memset(obs, 0);
+    for (g.d.psu) |p| obs[g.d.psu_stratum[p]] += 1;
+    try centered(a, out, "Stratum Information", 49);
+    try out.appendSlice(a, " \n");
+    const heads = [_][2][]const u8{ .{ "Stratum", " Index" }, .{ "", ds.columns.items[sc].name }, .{ "Number of", "Obs" }, .{ "Number of", "Clusters" } };
+    const right = [_]usize{ 7, 23, 36, 49 };
+    for (0..2) |n| {
+        const b = try proc.line(a, 49);
+        for (heads, right, 0..) |h, e, k| {
+            if (k == 0) @memcpy(b[0..h[n].len], h[n]) else proc.putRight(b, e, h[n]);
+        }
+        try out.appendSlice(a, b);
+        try out.append(a, '\n');
+    }
+    const rule = "-" ** 49 ++ "\n";
+    try out.appendSlice(a, rule);
+    for (order, 1..) |h, k| {
+        const b = try proc.line(a, 49);
+        proc.putRight(b, 4, try std.fmt.allocPrint(a, "{d}", .{k}));
+        proc.putRight(b, 23, try format.bestNum(a, rows[g.d.stratum_rep[h]][sc].num));
+        proc.putRight(b, 36, try std.fmt.allocPrint(a, "{d}", .{obs[h]}));
+        proc.putRight(b, 49, try std.fmt.allocPrint(a, "{d}", .{g.d.stratum_psus[h]}));
+        try out.appendSlice(a, b);
+        try out.append(a, '\n');
+    }
+    try out.appendSlice(a, rule);
+    try out.appendSlice(a, "\n\n");
+}
+
 fn render(cx: proc.ProcCtx, out: *Out, s: Spec, g: Group) diag.Error!void {
     const a = cx.arena;
     const ds = s.input.ds;
@@ -758,6 +856,7 @@ fn render(cx: proc.ProcCtx, out: *Out, s: Spec, g: Group) diag.Error!void {
             try body.appendSlice(a, "\nThe SURVEYFREQ Procedure\n\n");
         } else try body.appendSlice(a, "\n\n");
     }
+    if (s.strata_list) try stratumInfo(a, &body, s, g);
     if (s.nomcar) {
         // SAS-verified: NOMCAR adds the Variance Estimation table.
         try centered(a, &body, "Variance Estimation", 31);

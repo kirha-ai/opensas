@@ -163,6 +163,7 @@ test "STAT-SURVEYFREQ-001 invalid declarations are user errors and unimplemented
         "proc surveyfreq data=clean; strata nope; tables a*b;",
         "proc surveyfreq data=clean; cluster; tables a*b;",
         "proc surveyfreq data=clean; nonsense a;",
+        "proc surveyfreq data=clean; strata h / bogus; tables a*b;",
         "proc surveyfreq data=clean rate=absent; strata h; tables a*b;",
         "proc surveyfreq data=clean total=clean; strata h; weight w; tables a*b;", // no _TOTAL_
         "proc surveyfreq data=clean total=short; strata h; cluster c; weight w; tables a*b;", // stratum 2 absent
@@ -171,7 +172,9 @@ test "STAT-SURVEYFREQ-001 invalid declarations are user errors and unimplemented
     });
     try fx.expectRc(2, &.{
         "proc surveyfreq data=clean page; weight w; tables a*b / chisq;",
-        "proc surveyfreq data=clean order=freq; tables a*b;",
+        "proc surveyfreq data=clean order=formatted; tables a*b;",
+        "proc surveyfreq data=dirty order=freq; strata h; cluster c; weight w; tables a*b;", // exclusions
+        "proc surveyfreq data=clean; strata h s / list; cluster c; weight w; tables a*b;",
         "proc surveyfreq data=clean nomcar; weight w; tables a*b / chisq;",
         "proc surveyfreq data=clean; format a 3.; weight w; tables a*b;",
         "proc surveyfreq data=clean varmethod=brr; tables a*b;",
