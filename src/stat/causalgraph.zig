@@ -463,14 +463,8 @@ pub fn validate(cx: proc.ProcCtx, s: Spec) diag.Error!void {
         // ponytail: the reference run also prints the DirectedCycles table
         // before this error; only the error is produced here.
     }
-    // Disconnected models: VariableInfo, summary and the ConnectedComponents
-    // table (SAS 9.4 reference runs). Forms without a reference run stay
-    // gaps.
-    for (s.models, 0..) |m, k| if (k > 0 and s.opts.disconnected and try components(cx.arena, s.names.len, m) > 1)
-        // ponytail: the reference run had only the first model disconnected;
-        // whether a later model's table precedes the first AdjustList is
-        // unverified.
-        return gap(cx, m.line, "the DISCONNECTED option with a disconnected model after the first MODEL statement is not implemented", .{});
+    // Disconnected models: VariableInfo, summary, every ConnectedComponents
+    // table, then (DISCONNECTED) every AdjustList (SAS 9.4 reference runs).
     if (s.opts.method != .adjustment) return gap(cx, 0, "METHOD={s} is not implemented", .{if (s.opts.method == .iv) "IV" else "BACKDOOR"});
     if (s.treatments.len > 1 or s.outcomes.len > 1) return gap(cx, line, "joint causal effects (several treatment or outcome variables) are not implemented", .{});
 }

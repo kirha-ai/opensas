@@ -7,7 +7,8 @@
  * and range over the nodes of every component. The last step is disconnected
  * only once its bidirected edges are taken into account; later steps: an
  * unmeasured node (listed among the component nodes), DISCONNECTED with two
- * models, two disconnected models (one table each, no sets). The expected
+ * models, two disconnected models (one table each, no sets), DISCONNECTED
+ * with a later or several disconnected models (all tables, then all sets). The expected
  * listing is a SAS 9.4 reference run of these steps, the blank line SAS
  * writes before each new page title dropped.
  */
@@ -58,5 +59,18 @@ title "F3 two disconnected models";
 proc causalgraph;
   model "P" X ==> Y, A ==> B;
   model "Q" X ==> Y, C ==> D;
+  identify X ==> Y;
+run;
+title "G1 second disconnected";
+proc causalgraph disconnected;
+  model "P" X ==> Y, Z ==> X Y;
+  model "Q" X ==> Y, A ==> B;
+  identify X ==> Y;
+run;
+title "G2 both disconnected";
+proc causalgraph disconnected;
+  model "P" X ==> Y, A ==> B;
+  model "Q" X ==> Y, Z ==> X Y;
+  model "R" X ==> Y, C ==> D;
   identify X ==> Y;
 run;

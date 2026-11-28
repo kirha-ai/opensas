@@ -1,3 +1,3 @@
 # corpus assertions
 empty-listing
-stderr-count 1 the DISCONNECTED option with a disconnected model after the first MODEL statement is not implemented
+stderr-count 1 the TESTID statement is not implemented
