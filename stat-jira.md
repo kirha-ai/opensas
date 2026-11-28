@@ -8,7 +8,7 @@ This section is the only current status summary; every section below it is a his
 - **Resumed 2026-11-28 about 07:20Z** after the 06:31Z account usage limit stopped all dev contexts. At the user's direction devs may compare with real SAS via `/Users/thomas/sas/bin/sasrun foo.sas -f text -o - -l /dev/null`, only when truly blocked. Coordinator keep-awake `caffeinate` PID 62218. Coordinator scripts and dev brief live in the session scratchpad `stat/` directory.
 - **Batch 26 verification at exact SHA `50e253a9610a2d6cbe3276012e6c99e31671250f` (2026-11-28):** `zig build install` direct 0; whole `tests/STAT15.4-oracle/` moved out of the checkout, then `zig build gate -j2 --summary all` direct 0 — **2763/2763 unit tests**, **2664/2664 corpus**, **11/11 programs**; `zig build install` direct 0; separate supplemental direct 0, **1113/1113**. Oracle restored unchanged, tree clean, HEAD unchanged. Pushed. **New DONE:** STAT-TPSPLINE-001 (original 184/184 tokens, rc 0; reference folder safe to delete, not deleted).
 - **User approvals (2026-11-28):** public classic sample data, including rows exported from real SAS (Iris), may be committed; build caches (`.zig-cache`) may be deleted automatically when free disk falls to about 8 GB, only for idle worktrees (done once, 41 GB free); the `best32.` display fix is approved as STAT-BEST-001. Earlier scope: SASHELP sample data taken from SAS's public sample material may be committed to this public repository, for STAT-SASHELP-001 and the later SASHELP tickets; record source and verification, never invent rows, ask before adding a data set above about 2 MB.
-- **Live slots (auto):** dev1 STAT-HPNLMOD-001, dev2 STAT-DISTANCE-001, dev3 STAT-CANCORR-001, dev4 STAT-NESTED-001, dev5 STAT-GLMMOD-002, dev6 STAT-VARCLUS-001, dev7 STAT-GEE-001.
+- **Live slots (auto):** dev1 STAT-HPNLMOD-001, dev2 STAT-DISTANCE-001, dev3 STAT-CANCORR-001, dev4 STAT-NESTED-001, dev5 STAT-GLMMOD-003, dev6 STAT-VARCLUS-001, dev7 STAT-GEE-001.
 - **Integrated locally, awaiting batch verification (auto):** STAT-INBREED-001 (PARK).
 - **Counts:** 59 DONE, 130 PARK, 7 DOING, 1228 TODO.
 - **Next:** integrate each returned ticket and refill its slot, preferring close-out attempts on PARK tickets whose originals now match exactly (DISTANCE-001, PRINQUAL-001, VARCLUS-001, TPSPLINE-001, CATMOD-001, CANCORR-001, GEE-001, INBREED-001, then the open review in the batch 6 receipt), because a DONE ticket unlocks its dependents; then other eligible tickets.
@@ -5863,7 +5863,7 @@ Source: S154, Chapter 54, `The GLMMOD Procedure`, PDF pp. 4231–4250. Tasks in 
 
 <a id="stat-glmmod-002"></a>
 
-### [DOING @dev5] STAT-GLMMOD-002 — GLMMOD — Design matrix construction for model effects
+### [TODO] STAT-GLMMOD-002 — GLMMOD — Design matrix construction for model effects
 
 - Source: S154 / Chapter 54 / `Getting Started: GLMMOD Procedure` (PDF pp. 4232–4236); S154 / Chapter 54 / `Overview: GLMMOD Procedure` (PDF p. 4232).
 - Scope: Implement design matrix construction for model effects using the documented default path and establish the computational state needed by later extensions; implement specialized models, methods, and diagnostics outside that default example in their corresponding feature tickets.
@@ -5873,7 +5873,7 @@ Source: S154, Chapter 54, `The GLMMOD Procedure`, PDF pp. 4231–4250. Tasks in 
 
 <a id="stat-glmmod-003"></a>
 
-### [TODO] STAT-GLMMOD-003 — GLMMOD — CLASS / MODEL
+### [DOING @dev5] STAT-GLMMOD-003 — GLMMOD — CLASS / MODEL
 
 - Source: S154 / Chapter 54 / `CLASS Statement` (PDF pp. 4238–4239); S154 / Chapter 54 / `MODEL Statement` (PDF p. 4239).
 - Scope: Implement CLASS; MODEL. Implement the syntax and model semantics allowed by this procedure, using shared effect/parameterization support only for forms documented as supported.
