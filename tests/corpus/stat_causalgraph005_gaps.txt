@@ -1,0 +1,7 @@
+# corpus assertions
+empty-listing
+stderr-count 1 METHOD=IV with bidirected edges is not implemented
+stderr-count 1 TESTID with a disconnected model is not implemented
+stderr-count 1 a TESTID instrument missing from a model is not implemented
+stderr-count 1 a treatment or outcome variable as the TESTID instrument is not implemented
+stderr-count 1 the PATHS option with METHOD=BACKDOOR and a descendant of the treatment in the set is not implemented

@@ -1,0 +1,13 @@
+# corpus assertions
+empty-listing
+stderr-count 1 The instrumental variables analysis requires a direct edge X -> Y in the model A.
+stderr-count 2 The control variable U must be observed.
+stderr-count 1 You cannot specify a TESTID statement without an IDENTIFY statement.
+stderr-count 2 You must specify a single variable on the TESTID statement when METHOD=IV.
+stderr-count 1 The variable X is both a treatment and a control.
+stderr-count 1 The treatment variable X cannot be conditioned upon.
+stderr-count 1 The labels for the TESTID statements must be unique.
+stderr-count 1 The instrumental variable Z must be observed.
+stderr-count 1 The outcome variable Y cannot be conditioned upon.
+stderr-count 1 The conditioning variable U must be observed.
+stderr-count 2 PROC CAUSALGRAPH: invalid statement or token

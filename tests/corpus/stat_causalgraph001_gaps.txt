@@ -1,8 +1,5 @@
 # corpus assertions
 empty-listing
-stderr-count 1 METHOD=BACKDOOR is not implemented
-stderr-count 1 METHOD=IV is not implemented
-stderr-count 1 the TESTID statement is not implemented
 stderr-count 1 the IMAP option is not implemented
 stderr-count 1 the COMMON option is not implemented
 stderr-count 1 the CYCLES option is not implemented

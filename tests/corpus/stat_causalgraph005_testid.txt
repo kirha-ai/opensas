@@ -1,0 +1,980 @@
+S01
+
+The CAUSALGRAPH Procedure
+
+         Variables in Model
+ 
+                       N    Variables
+
+Measured               5    U W X Y Z
+Unmeasured             0             
+
+
+                                Graphical Model Summary
+ 
+Model             Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+TESTID Demo           5           6             1           1           5             0
+S01
+
+The CAUSALGRAPH Procedure
+
+                Covariate Adjustment Test: Test1
+ 
+                     Causal Effect of X on Y
+ 
+                                                   -Covariates--
+Model              Size    Valid       Minimal     U     W     Z
+
+TESTID Demo           1    Yes         Yes         *            
+
+
+                Covariate Adjustment Test: Test2
+ 
+                     Causal Effect of X on Y
+ 
+                                                   -Covariates--
+Model              Size    Valid       Minimal     U     W     Z
+
+TESTID Demo           2    Yes         No          *     *      
+S02
+
+The CAUSALGRAPH Procedure
+
+         Variables in Model
+ 
+                       N    Variables
+
+Measured               5    U W X Y Z
+Unmeasured             0             
+
+
+                                Graphical Model Summary
+ 
+Model             Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+TESTID Demo           5           6             1           1           5             0
+S02
+
+The CAUSALGRAPH Procedure
+
+                Covariate Adjustment Test: Test2
+ 
+                     Causal Effect of X on Y
+ 
+                                                   -Covariates--
+Model              Size    Valid       Minimal     U     W     Z
+
+TESTID Demo           0    No          No                       
+
+
+                Covariate Adjustment Test: Test1
+ 
+                     Causal Effect of X on Y
+ 
+                                                   -Covariates--
+Model              Size    Valid       Minimal     U     W     Z
+
+TESTID Demo           1    No          No                      *
+
+
+                Covariate Adjustment Test: Test3
+ 
+                     Causal Effect of X on Y
+ 
+                                                   -Covariates--
+Model              Size    Valid       Minimal     U     W     Z
+
+TESTID Demo           1    No          No                *      
+
+
+               Covariate Adjustment Test: Lab two
+ 
+                     Causal Effect of X on Y
+ 
+                                                   -Covariates--
+Model              Size    Valid       Minimal     U     W     Z
+
+TESTID Demo           3    Yes         No          *     *     *
+S03
+
+The CAUSALGRAPH Procedure
+
+         Variables in Model
+ 
+                       N    Variables
+
+Measured               4    W X Y Z  
+Unmeasured             1    U        
+
+
+                                Graphical Model Summary
+ 
+Model             Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+TESTID Demo           5           6             1           1           4             1
+S03
+
+The CAUSALGRAPH Procedure
+
+           Instrumental Variable Test: Test1
+                Causal Effect of X on Y
+ 
+                                         -Conditionals-
+Model          Instrument    Valid       W            Z
+
+TESTID Demo    Z             No                        
+S04
+
+The CAUSALGRAPH Procedure
+
+         Variables in Model
+ 
+                       N    Variables
+
+Measured               4    W X Y Z  
+Unmeasured             1    U        
+
+
+                                Graphical Model Summary
+ 
+Model             Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+TESTID Demo           5           6             1           1           4             1
+S04
+
+The CAUSALGRAPH Procedure
+
+ Instrumental Variables for TESTID Demo
+         Causal Effect of X on Y
+ 
+                          -Conditionals-
+            Instrument    W            Z
+
+       1    Z             *             
+S05
+
+The CAUSALGRAPH Procedure
+
+         Variables in Model
+ 
+                       N    Variables
+
+Measured               4    W X Y Z  
+Unmeasured             1    U        
+
+
+                                Graphical Model Summary
+ 
+Model             Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+TESTID Demo           5           6             1           1           4             1
+S05
+
+The CAUSALGRAPH Procedure
+
+           Instrumental Variable Test: Test1
+                Causal Effect of X on Y
+ 
+                                         -Conditionals-
+Model          Instrument    Valid       W            Z
+
+TESTID Demo    Z             Yes         *             
+
+
+           Instrumental Variable Test: Test2
+                Causal Effect of X on Y
+ 
+                                         -Conditionals-
+Model          Instrument    Valid       W            Z
+
+TESTID Demo    W             No                        
+
+
+           Instrumental Variable Test: Test3
+                Causal Effect of X on Y
+ 
+                                         -Conditionals-
+Model          Instrument    Valid       W            Z
+
+TESTID Demo    W             No                       *
+
+
+            Instrumental Variable Test: none
+                Causal Effect of X on Y
+ 
+                                         -Conditionals-
+Model          Instrument    Valid       W            Z
+
+TESTID Demo    Z             No                        
+S06
+
+The CAUSALGRAPH Procedure
+
+         Variables in Model
+ 
+                       N    Variables
+
+Measured               5    C D M X Y
+Unmeasured             0             
+
+
+                             Graphical Model Summary
+ 
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+P               5           6             1           1           5             0
+S06
+
+The CAUSALGRAPH Procedure
+
+             Covariate Adjustment Test: Test1
+ 
+                  Causal Effect of X on Y
+ 
+                                             -Covariates--
+Model        Size    Valid       Minimal     C     D     M
+
+P               1    Yes         Yes         *            
+S06
+
+The CAUSALGRAPH Procedure
+
+            Treatment-to-Outcome Paths
+              Test Test1 for Model P
+      Causal Effect of X on Y Adjusted for C
+ 
+             Causal      Blocked     Paths
+
+       1     No          Yes         X <== C ==> Y
+       2     Yes         No          X ==> Y      
+       3     Yes         No          X ==> M ==> Y
+S06
+
+The CAUSALGRAPH Procedure
+
+             Covariate Adjustment Test: Test2
+ 
+                  Causal Effect of X on Y
+ 
+                                             -Covariates--
+Model        Size    Valid       Minimal     C     D     M
+
+P               0    No          No                       
+S06
+
+The CAUSALGRAPH Procedure
+
+NOTE: There are no paths satisfying the specified criteria for test Test2 applied to model P.
+
+S06
+
+The CAUSALGRAPH Procedure
+
+             Covariate Adjustment Test: Test3
+ 
+                  Causal Effect of X on Y
+ 
+                                             -Covariates--
+Model        Size    Valid       Minimal     C     D     M
+
+P               2    Yes         No          *     *      
+S06
+
+The CAUSALGRAPH Procedure
+
+            Treatment-to-Outcome Paths
+              Test Test3 for Model P
+    Causal Effect of X on Y Adjusted for {C D}
+ 
+             Causal      Blocked     Paths
+
+       1     Yes         No          X ==> Y      
+       2     Yes         No          X ==> M ==> Y
+S06
+
+The CAUSALGRAPH Procedure
+
+               Covariate Adjustment Test: nc
+ 
+                  Causal Effect of X on Y
+ 
+                                             -Covariates--
+Model        Size    Valid       Minimal     C     D     M
+
+P               0    No          No                       
+S06
+
+The CAUSALGRAPH Procedure
+
+            Treatment-to-Outcome Paths
+                Test nc for Model P
+       Causal Effect of X on Y Adjusted for 
+ 
+             Causal      Blocked     Paths
+
+       1*    No          No          X <== C ==> Y
+
+            * indicates a biasing path
+S06
+
+The CAUSALGRAPH Procedure
+
+               Covariate Adjustment Test: bl
+ 
+                  Causal Effect of X on Y
+ 
+                                             -Covariates--
+Model        Size    Valid       Minimal     C     D     M
+
+P               1    Yes         Yes         *            
+S06
+
+The CAUSALGRAPH Procedure
+
+            Treatment-to-Outcome Paths
+                Test bl for Model P
+      Causal Effect of X on Y Adjusted for C
+ 
+             Causal      Blocked     Paths
+
+       1     No          Yes         X <== C ==> Y
+S07
+
+The CAUSALGRAPH Procedure
+
+         Variables in Model
+ 
+                       N    Variables
+
+Measured               5    C D M X Y
+Unmeasured             0             
+
+
+                             Graphical Model Summary
+ 
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+P               5           6             1           1           5             0
+S07
+
+The CAUSALGRAPH Procedure
+
+             Covariate Adjustment Test: Test1
+ 
+                  Causal Effect of X on Y
+ 
+                                             -Covariates--
+Model        Size    Valid       Minimal     C     D     M
+
+P               2    No          No          *     *      
+
+
+             Covariate Adjustment Test: Test2
+ 
+                  Causal Effect of X on Y
+ 
+                                             -Covariates--
+Model        Size    Valid       Minimal     C     D     M
+
+P               1    Yes         Yes         *            
+S08
+
+The CAUSALGRAPH Procedure
+
+         Variables in Model
+ 
+                       N    Variables
+
+Measured               5    C D M X Y
+Unmeasured             0             
+
+
+                             Graphical Model Summary
+ 
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+P               5           6             1           1           5             0
+S08
+
+The CAUSALGRAPH Procedure
+
+         Covariate Adjustment Sets for P
+             Causal Effect of X on Y
+ 
+                                    -Covariates--
+                Size    Minimal     C     D     M
+
+       1           1    Yes         *            
+S09
+
+The CAUSALGRAPH Procedure
+
+         Variables in Models
+ 
+                       N    Variables
+
+Measured               5    C D M X Y
+Unmeasured             0             
+
+
+                             Graphical Model Summary
+ 
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+P               5           6             1           1           5             0
+Q               3           2             1           1           3             0
+S09
+
+The CAUSALGRAPH Procedure
+
+             Covariate Adjustment Test: Test1
+ 
+                  Causal Effect of X on Y
+ 
+                                             -Covariates--
+Model        Size    Valid       Minimal     C     D     M
+
+P               2    Yes         No          *     *      
+Q               2    Yes         No          *     *      
+
+
+             Covariate Adjustment Test: Test2
+ 
+                  Causal Effect of X on Y
+ 
+                                             -Covariates--
+Model        Size    Valid       Minimal     C     D     M
+
+P               2    No          No          *           *
+Q               2    Yes         No          *           *
+S09
+
+The CAUSALGRAPH Procedure
+
+         Covariate Adjustment Sets for P
+             Causal Effect of X on Y
+ 
+                                    -Covariates--
+                Size    Minimal     C     D     M
+
+       1           1    Yes         *            
+       2           2    No          *     *      
+S09
+
+The CAUSALGRAPH Procedure
+
+         Covariate Adjustment Sets for Q
+             Causal Effect of X on Y
+ 
+                                    -Covariates--
+                Size    Minimal     C     D     M
+
+       1           1    Yes         *            
+S10
+
+The CAUSALGRAPH Procedure
+
+                                     Variables in Model
+ 
+                       N    Variables
+
+Measured               9    Age Alcohol BMI Duration Education Employment Parity PFAS Smoking
+Unmeasured             2    HealthBehavior PrevBF                                            
+
+
+                             Graphical Model Summary
+ 
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+H              11          22             1           1           9             2
+S10
+
+The CAUSALGRAPH Procedure
+
+                                    Instrumental Variables for H
+                                 Causal Effect of PFAS on Duration
+ 
+                              ----------------------------Conditionals-----------------------------
+            Instrument        Age    Alcohol    BMI    Education    Employment    Parity    Smoking
+
+       1    Age                         *        *         *            *           *              
+S11
+
+The CAUSALGRAPH Procedure
+
+                                       Variables in Model
+ 
+                       N    Variables
+
+Measured              10    Age Alcohol BMI Duration Education Employment Parity PFAS Smoking Zed
+Unmeasured             2    HealthBehavior PrevBF                                                
+
+
+                             Graphical Model Summary
+ 
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+H              12          23             1           1          10             2
+S11
+
+The CAUSALGRAPH Procedure
+
+                                         Instrumental Variable Test: Test1
+                                         Causal Effect of PFAS on Duration
+ 
+                                       --------------------------------Conditionals--------------------------------
+Model    Instrument        Valid       Age    Alcohol    BMI    Education    Employment    Parity    Smoking    Zed
+
+H        Age               No                                                                                      
+
+
+                                         Instrumental Variable Test: Test2
+                                         Causal Effect of PFAS on Duration
+ 
+                                       --------------------------------Conditionals--------------------------------
+Model    Instrument        Valid       Age    Alcohol    BMI    Education    Employment    Parity    Smoking    Zed
+
+H        Education         No                                                                                      
+
+
+                                         Instrumental Variable Test: Test3
+                                         Causal Effect of PFAS on Duration
+ 
+                                       --------------------------------Conditionals--------------------------------
+Model    Instrument        Valid       Age    Alcohol    BMI    Education    Employment    Parity    Smoking    Zed
+
+H        Parity            No           *                                                                          
+
+
+                                         Instrumental Variable Test: Test4
+                                         Causal Effect of PFAS on Duration
+ 
+                                       --------------------------------Conditionals--------------------------------
+Model    Instrument        Valid       Age    Alcohol    BMI    Education    Employment    Parity    Smoking    Zed
+
+H        Age               Yes                                      *                        *          *          
+S12
+
+The CAUSALGRAPH Procedure
+
+            Variables in Model
+ 
+                       N    Variables
+
+Measured               6    C X Y Z1 Z2 Z3
+Unmeasured             1    U             
+
+
+                             Graphical Model Summary
+ 
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+A               7           9             1           1           6             1
+S12
+
+The CAUSALGRAPH Procedure
+
+           Instrumental Variable Test: Test1
+                Causal Effect of X on Y
+ 
+                                   ---Conditionals----
+Model    Instrument    Valid       C    Z1    Z2    Z3
+
+A        Z2            Yes         *                  
+S13
+
+The CAUSALGRAPH Procedure
+
+         Variables in Model
+ 
+                       N    Variables
+
+Measured               2    X Y      
+Unmeasured             1    U        
+
+
+                             Graphical Model Summary
+ 
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+A               3           3             1           1           2             1
+S13
+
+The CAUSALGRAPH Procedure
+
+There are no instrumental variables for A.
+
+S15
+
+The CAUSALGRAPH Procedure
+
+         Variables in Models
+ 
+                       N    Variables
+
+Measured               3    X Y Z    
+Unmeasured             1    U        
+
+
+                             Graphical Model Summary
+ 
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+A               4           4             1           1           3             1
+B               4           5             1           1           3             1
+S15
+
+The CAUSALGRAPH Procedure
+
+        Instrumental Variable Test: Test1
+             Causal Effect of X on Y
+ 
+                                   -Conditionals-
+Model    Instrument    Valid             Z
+
+A        Z             Yes                       
+B        Z             No                        
+S16
+
+The CAUSALGRAPH Procedure
+
+         Variables in Model
+ 
+                       N    Variables
+
+Measured               3    X Y Z    
+Unmeasured             1    U        
+
+
+                             Graphical Model Summary
+ 
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+A               4           4             1           1           3             1
+S17
+
+The CAUSALGRAPH Procedure
+
+         Variables in Model
+ 
+                       N    Variables
+
+Measured               5    U W X Y Z
+Unmeasured             0             
+
+
+                                Graphical Model Summary
+ 
+Model             Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+TESTID Demo           5           6             1           1           5             0
+S17
+
+The CAUSALGRAPH Procedure
+
+                Covariate Adjustment Test: Test1
+ 
+                     Causal Effect of X on Y
+ 
+                                                   -Covariates--
+Model              Size    Valid       Minimal     U     W     Z
+
+TESTID Demo           1    Yes         Yes         *            
+S17
+
+The CAUSALGRAPH Procedure
+
+    Covariate Adjustment Sets for TESTID Demo
+             Causal Effect of X on Y
+ 
+                                    -Covariates--
+                Size    Minimal     U     W     Z
+
+       1           1    Yes         *            
+       2           2    No          *     *      
+       3           2    No          *           *
+       4           3    No          *     *     *
+S20
+
+The CAUSALGRAPH Procedure
+
+         Variables in Model
+ 
+                       N    Variables
+
+Measured               5    U W X Y Z
+Unmeasured             0             
+
+
+                                Graphical Model Summary
+ 
+Model             Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+TESTID Demo           5           6             1           1           5             0
+S20
+
+The CAUSALGRAPH Procedure
+
+                Covariate Adjustment Test: Test1
+ 
+                     Causal Effect of X on Y
+ 
+                                                   -Covariates--
+Model              Size    Valid       Minimal     U     W     Z
+
+TESTID Demo           1    Yes         Yes         *            
+S21
+
+The CAUSALGRAPH Procedure
+
+         Variables in Model
+ 
+                       N    Variables
+
+Measured               5    U W X Y Z
+Unmeasured             0             
+
+
+                                Graphical Model Summary
+ 
+Model             Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+TESTID Demo           5           6             1           1           5             0
+S21
+
+The CAUSALGRAPH Procedure
+
+            Instrumental Variable Test: Test1
+                 Causal Effect of X on Y
+ 
+                                         -Conditionals--
+Model          Instrument    Valid       U      W      Z
+
+TESTID Demo    Z             No                         
+S24
+
+The CAUSALGRAPH Procedure
+
+         Variables in Model
+ 
+                       N    Variables
+
+Measured               5    U W X Y Z
+Unmeasured             0             
+
+
+                                Graphical Model Summary
+ 
+Model             Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+TESTID Demo           5           6             1           1           5             0
+S24
+
+The CAUSALGRAPH Procedure
+
+                Covariate Adjustment Test: Test1
+ 
+                     Causal Effect of X on Y
+ 
+                                                   -Covariates--
+Model              Size    Valid       Minimal     U     W     Z
+
+TESTID Demo           0    No          No                       
+S25
+
+The CAUSALGRAPH Procedure
+
+         Variables in Model
+ 
+                       N    Variables
+
+Measured               5    U W X Y Z
+Unmeasured             0             
+
+
+                                Graphical Model Summary
+ 
+Model             Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+TESTID Demo           5           6             1           1           5             0
+S25
+
+The CAUSALGRAPH Procedure
+
+                  Covariate Adjustment Test: a
+ 
+                     Causal Effect of X on Y
+ 
+                                                   -Covariates--
+Model              Size    Valid       Minimal     U     W     Z
+
+TESTID Demo           1    Yes         Yes         *            
+
+
+                  Covariate Adjustment Test: A
+ 
+                     Causal Effect of X on Y
+ 
+                                                   -Covariates--
+Model              Size    Valid       Minimal     U     W     Z
+
+TESTID Demo           1    No          No                *      
+S26
+
+The CAUSALGRAPH Procedure
+
+           Variables in Model
+ 
+                       N    Variables
+
+Measured               5    C X1 X2 Y1 Y2
+Unmeasured             0                 
+
+
+                             Graphical Model Summary
+ 
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+J               5           7             2           2           5             0
+S26
+
+The CAUSALGRAPH Procedure
+
+             Covariate Adjustment Test: Test1
+ 
+           Causal Effect of {X1 X2} on {Y1 Y2}
+ 
+                                             -Covariates-
+Model        Size    Valid       Minimal          C
+
+J               1    Yes         Yes              *      
+S26
+
+The CAUSALGRAPH Procedure
+
+                 Treatment-to-Outcome Paths
+                   Test Test1 for Model J
+     Causal Effect of {X1 X2} on {Y1 Y2} Adjusted for C
+ 
+             Causal      Blocked     Paths
+
+       1     No          Yes         X2 <== C ==> Y2       
+       2     No          Yes         X2 <== C ==> Y1       
+       3     No          Yes         X2 ==> Y1 <== C ==> Y2
+       4     Yes         No          X2 ==> Y1             
+       5     No          Yes         X1 <== C ==> Y2       
+       6     No          Yes         X1 <== C ==> Y1       
+       7     No          Yes         X1 ==> Y2 <== C ==> Y1
+       8     Yes         No          X1 ==> Y2             
+       9     No          Yes         X1 ==> Y1 <== C ==> Y2
+      10     Yes         No          X1 ==> Y1             
+
+
+             Covariate Adjustment Test: Test2
+ 
+           Causal Effect of {X1 X2} on {Y1 Y2}
+ 
+                                             -Covariates-
+Model        Size    Valid       Minimal          C
+
+J               0    No          No                      
+S27
+
+The CAUSALGRAPH Procedure
+
+           Variables in Model
+ 
+                       N    Variables
+
+Measured               5    C X1 X2 Y1 Y2
+Unmeasured             0                 
+
+
+                             Graphical Model Summary
+ 
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+J               5           7             2           2           5             0
+S27
+
+The CAUSALGRAPH Procedure
+
+             Covariate Adjustment Test: Test1
+ 
+           Causal Effect of {X1 X2} on {Y1 Y2}
+ 
+                                             -Covariates-
+Model        Size    Valid       Minimal          C
+
+J               1    Yes         Yes              *      
+S30
+
+The CAUSALGRAPH Procedure
+
+             Variables in Model
+ 
+                       N    Variables
+
+Measured               7    C E X Y Z1 Z2 Z3
+Unmeasured             1    U               
+
+
+                             Graphical Model Summary
+ 
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+A               8          10             1           1           7             1
+S30
+
+The CAUSALGRAPH Procedure
+
+        Instrumental Variable Test: Test1
+             Causal Effect of X on Y
+ 
+                                   -Conditionals-
+Model    Instrument    Valid             C
+
+A        Z2            Yes               *       
+S31
+
+The CAUSALGRAPH Procedure
+
+             Variables in Model
+ 
+                       N    Variables
+
+Measured               7    C E X Y Z1 Z2 Z3
+Unmeasured             1    U               
+
+
+                             Graphical Model Summary
+ 
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+A               8          10             1           1           7             1
+S31
+
+The CAUSALGRAPH Procedure
+
+           Instrumental Variables for A
+              Causal Effect of X on Y
+ 
+                          ------Conditionals------
+            Instrument    C    E    Z1    Z2    Z3
+
+       1    Z1                                    
+       2    Z2            *                       
+       3    Z3            *                       
+S33
+
+The CAUSALGRAPH Procedure
+
+                Covariate Adjustment Test: Test1
+ 
+                     Causal Effect of X on Y
+ 
+                                                   -Covariates--
+Model              Size    Valid       Minimal     U     W     Z
+
+TESTID Demo           1    Yes         Yes         *            

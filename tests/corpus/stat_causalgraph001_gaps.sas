@@ -1,14 +1,11 @@
 /* expect-rc: 2
  * STAT-CAUSALGRAPH-001: valid PROC CAUSALGRAPH requests outside the verified
- * scope fail visibly with no listing: METHOD=BACKDOOR and METHOD=IV, the
- * TESTID statement, the IMAP, COMMON, CYCLES and NOSORT options (PSUMMARY is implemented by
- * STAT-CAUSALGRAPH-002)
+ * scope fail visibly with no listing: the IMAP, COMMON, CYCLES and NOSORT
+ * options (PSUMMARY is implemented by STAT-CAUSALGRAPH-002; METHOD=BACKDOOR,
+ * METHOD=IV and TESTID by STAT-CAUSALGRAPH-005)
  * (joint effects are implemented by STAT-CAUSALGRAPH-004). Invented graphs.
  */
 options nosyntaxcheck;
-proc causalgraph method=backdoor; model 'M' X ==> Y, Z ==> X Y; identify X ==> Y; run;
-proc causalgraph method=iv; model 'M' Z ==> X ==> Y, U ==> X Y; identify X ==> Y; unmeasured U; run;
-proc causalgraph; model 'M' X ==> Y, Z ==> X Y; identify X ==> Y; testid Z; run;
 proc causalgraph imap; model 'M' X ==> Y, Z ==> X Y; run;
 proc causalgraph common; model 'M' X ==> Y, Z ==> X Y; identify X ==> Y; run;
 proc causalgraph cycles=all; model 'M' X ==> Y, Z ==> X Y; identify X ==> Y; run;

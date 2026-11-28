@@ -66,7 +66,25 @@ pub const Spec = struct {
     identify: bool = false,
     identify_line: usize = 0,
     unmeasured: []const usize = &.{},
+    tests: []const Test = &.{},
 };
+
+/// PATHS=(path-types) of a TESTID statement (p.2320): every requested type
+/// must hold; ALL (or no type) shows every proper path.
+pub const PathFilter = struct { causal: bool = false, noncausal: bool = false, blocked: bool = false, nonblocked: bool = false };
+
+/// One TESTID statement (pp.2319-2320): an adjustment set (ADJUSTMENT /
+/// BACKDOOR) or one instrument with its CONDITIONAL= set (IV).
+pub const Test = struct {
+    label: []const u8,
+    line: usize,
+    vars: []const usize,
+    cond: []const usize = &.{},
+    cond_given: bool = false,
+    paths: ?PathFilter = null,
+};
+
+const RawTest = struct { label: ?[]const u8, line: usize, vars: []const []const u8, cond: []const []const u8, cond_given: bool, paths: ?PathFilter };
 
 fn at(t: []const lex.Token, i: usize, tag: lex.Tag) bool {
     return i < t.len and t[i].tag == tag;
@@ -317,6 +335,7 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
     var out_names: std.ArrayList([]const u8) = .empty;
     var adj_names: std.ArrayList([]const u8) = .empty;
     var unm_names: std.ArrayList([]const u8) = .empty;
+    var raw_tests: std.ArrayList(RawTest) = .empty;
     i += 1;
     while (i < t.len and !at(t, i, .eof)) {
         if (at(t, i, .semicolon)) {
@@ -407,7 +426,64 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
             while (j < end) try readGroup(cx, t, &j, end, &unm_names);
             if (unm_names.items.len == 0) return invalid(cx, t, end);
         } else if (kw(t, i, "testid")) {
-            return gap(cx, line, "the TESTID statement is not implemented", .{});
+            var j = i + 1;
+            var label: ?[]const u8 = null;
+            if (at(t, j, .string)) {
+                label = t[j].text;
+                j += 1;
+            }
+            var vn: std.ArrayList([]const u8) = .empty;
+            while (j < end and !at(t, j, .slash)) try readGroup(cx, t, &j, end, &vn);
+            var cn: std.ArrayList([]const u8) = .empty;
+            var cond_given = false;
+            var paths: ?PathFilter = null;
+            if (at(t, j, .slash)) {
+                j += 1;
+                while (j < end) {
+                    if (kw(t, j, "conditional") and at(t, j + 1, .eq)) {
+                        j += 2;
+                        cond_given = true;
+                        if ((at(t, j, .lbrace) and at(t, j + 1, .rbrace)) or (at(t, j, .lparen) and at(t, j + 1, .rparen))) {
+                            j += 2;
+                        } else if (at(t, j, .name)) {
+                            // CONDITIONAL=variable: one name only (p.2320).
+                            try cn.append(a, t[j].text);
+                            j += 1;
+                        } else try readGroup(cx, t, &j, end, &cn);
+                    } else if (kw(t, j, "paths") or kw(t, j, "path")) {
+                        j += 1;
+                        var f: PathFilter = .{};
+                        if (at(t, j, .eq)) {
+                            j += 1;
+                            const paren = at(t, j, .lparen);
+                            if (paren) j += 1;
+                            var count: usize = 0;
+                            while (j < end) {
+                                if (paren and at(t, j, .rparen)) {
+                                    j += 1;
+                                    break;
+                                }
+                                if (kw(t, j, "all")) {} else if (kw(t, j, "causal")) {
+                                    f.causal = true;
+                                } else if (kw(t, j, "noncausal")) {
+                                    f.noncausal = true;
+                                } else if (kw(t, j, "blocked")) {
+                                    f.blocked = true;
+                                } else if (kw(t, j, "nonblocked")) {
+                                    f.nonblocked = true;
+                                } else return invalid(cx, t, j);
+                                j += 1;
+                                count += 1;
+                                if (!paren) break;
+                            }
+                            if (count == 0) return invalid(cx, t, j);
+                        }
+                        paths = f;
+                    } else return invalid(cx, t, j);
+                }
+            }
+            if (j != end) return invalid(cx, t, j);
+            try raw_tests.append(a, .{ .label = label, .line = line, .vars = vn.items, .cond = cn.items, .cond_given = cond_given, .paths = paths });
         } else if (kw(t, i, "run") or kw(t, i, "quit")) {
             // Step boundary tokens may reach the body.
         } else return invalid(cx, t, i);
@@ -434,6 +510,44 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
     s.outcomes = resolved[1].items;
     s.adjust = resolved[2].items;
     s.unmeasured = resolved[3].items;
+
+    // TESTID labels (p.2320): explicit labels must be unique (case-sensitive:
+    // 'a' and 'A' coexist, SAS 9.4 reference run); an unlabeled test gets the
+    // smallest unused `Testi`, explicit labels counted wherever they appear
+    // (reference run: unlabeled, 'Test1', unlabeled -> Test2, Test1, Test3).
+    var labels: std.ArrayList([]const u8) = .empty;
+    for (raw_tests.items, 0..) |rt, k| if (rt.label) |l| {
+        for (raw_tests.items[0..k]) |prev| if (prev.label) |ol| if (std.mem.eql(u8, ol, l))
+            return user(cx, rt.line, "The labels for the TESTID statements must be unique.", .{});
+        try labels.append(a, l);
+    };
+    var tests: std.ArrayList(Test) = .empty;
+    for (raw_tests.items) |rt| {
+        const label = rt.label orelse blk: {
+            var k: usize = 1;
+            while (true) : (k += 1) {
+                const cand = try std.fmt.allocPrint(a, "Test{d}", .{k});
+                var used = false;
+                for (labels.items) |l| if (std.mem.eql(u8, l, cand)) {
+                    used = true;
+                };
+                if (!used) {
+                    try labels.append(a, cand);
+                    break :blk cand;
+                }
+            }
+        };
+        var ids: [2]std.ArrayList(usize) = .{ .empty, .empty };
+        for ([_][]const []const u8{ rt.vars, rt.cond }, &ids) |src, *dst| for (src) |nm| {
+            const id = names.find(nm) orelse {
+                try cx.diags.warn(rt.line, "Variable {s} specified in the TESTID statement is not found in any model.", .{nm});
+                continue;
+            };
+            if (!contains(dst.items, id)) try dst.append(a, id);
+        };
+        try tests.append(a, .{ .label = label, .line = rt.line, .vars = ids[0].items, .cond = ids[1].items, .cond_given = rt.cond_given, .paths = rt.paths });
+    }
+    s.tests = tests.items;
     return s;
 }
 
@@ -471,7 +585,66 @@ pub fn validate(cx: proc.ProcCtx, s: Spec) diag.Error!void {
     }
     // Disconnected models: VariableInfo, summary, every ConnectedComponents
     // table, then (DISCONNECTED) every AdjustList (SAS 9.4 reference runs).
-    if (s.opts.method != .adjustment) return gap(cx, 0, "METHOD={s} is not implemented", .{if (s.opts.method == .iv) "IV" else "BACKDOOR"});
+    // TESTID (pp.2319-2320); message texts from SAS 9.4 reference runs.
+    if (s.tests.len > 0 and !s.identify) return user(cx, s.tests[0].line, "You cannot specify a TESTID statement without an IDENTIFY statement.", .{});
+    const iv = s.opts.method == .iv;
+    for (s.tests) |t| {
+        if (iv) {
+            if (t.vars.len != 1) return user(cx, t.line, "You must specify a single variable on the TESTID statement when METHOD=IV.", .{});
+            const z = t.vars[0];
+            if (contains(s.unmeasured, z)) return user(cx, t.line, "The instrumental variable {s} must be observed.", .{s.names[z]});
+            // ponytail: the SAS text for a treatment/outcome named as the
+            // instrument has no reference run.
+            if (contains(s.treatments, z) or contains(s.outcomes, z)) return gap(cx, t.line, "a treatment or outcome variable as the TESTID instrument is not implemented", .{});
+            for (t.cond) |c| {
+                if (contains(s.treatments, c)) return user(cx, t.line, "The treatment variable {s} cannot be conditioned upon.", .{s.names[c]});
+                if (contains(s.outcomes, c)) return user(cx, t.line, "The outcome variable {s} cannot be conditioned upon.", .{s.names[c]});
+                if (contains(s.unmeasured, c)) return user(cx, t.line, "The conditioning variable {s} must be observed.", .{s.names[c]});
+            }
+            if (t.paths != null) try cx.diags.warn(t.line, "The PATHS option is ignored when METHOD=IV.", .{});
+        } else {
+            if (t.cond_given) try cx.diags.warn(t.line, "The CONDITIONAL= option is ignored when METHOD=ADJUSTMENT or METHOD=BACKDOOR.", .{});
+            for (t.vars) |v| {
+                if (contains(s.treatments, v)) return user(cx, t.line, "The variable {s} is both a treatment and a control.", .{s.names[v]});
+                // ponytail: outcome wording mirrors the treatment message
+                // (no reference run for an outcome named in TESTID).
+                if (contains(s.outcomes, v)) return user(cx, t.line, "The variable {s} is both an outcome and a control.", .{s.names[v]});
+                if (contains(s.unmeasured, v)) return user(cx, t.line, "The control variable {s} must be observed.", .{s.names[v]});
+            }
+        }
+    }
+    if (iv) {
+        // p.2303: METHOD=IV takes one treatment and one outcome; the
+        // SAS text for several has no reference run.
+        if (s.treatments.len > 1 or s.outcomes.len > 1) return gap(cx, line, "METHOD=IV with several treatment or outcome variables is not implemented", .{});
+        if (s.identify and s.adjust.len > 0) try cx.diags.warn(line, "The adjustment variables in the IDENTIFY statement are ignored when METHOD=IV.", .{});
+        if (s.identify) for (s.models) |m| {
+            // ponytail: the instrument search order over latent nodes of
+            // bidirected edges has no reference run.
+            for (m.edges) |e| if (e.bi) return gap(cx, m.line, "METHOD=IV with bidirected edges is not implemented", .{});
+            var direct = false;
+            for (m.edges) |e| if (!e.bi and e.from == s.treatments[0] and e.to == s.outcomes[0]) {
+                direct = true;
+            };
+            if (!direct) return user(cx, m.line, "The instrumental variables analysis requires a direct edge {s} -> {s} in the model {s}.", .{ s.names[s.treatments[0]], s.names[s.outcomes[0]], m.label });
+        };
+    }
+    if (s.tests.len > 0) for (s.models) |m| {
+        for (s.treatments) |x| if (!contains(m.nodes, x)) return gap(cx, m.line, "TESTID with a treatment variable missing from a model is not implemented", .{});
+        for (s.outcomes) |y| if (!contains(m.nodes, y)) return gap(cx, m.line, "TESTID with an outcome variable missing from a model is not implemented", .{});
+        if ((try componentIds(cx.arena, s.names, m)).count > 1) return gap(cx, m.line, "TESTID with a disconnected model is not implemented", .{});
+        for (s.tests) |t| {
+            if (iv and t.vars.len == 1 and !contains(m.nodes, t.vars[0])) return gap(cx, t.line, "a TESTID instrument missing from a model is not implemented", .{});
+            // ponytail: the PATHS footnote for a backdoor set holding a
+            // descendant of the treatment has no reference run.
+            if (s.opts.method == .backdoor and t.paths != null) {
+                const g = try expandLatent(cx.arena, s.names.len, m.edges);
+                const an = try analyseMethod(cx.arena, g.n, g.edges, s.treatments, s.outcomes, .backdoor);
+                for (t.vars) |v| if (an.backdoor.?.de_x[v] and contains(m.nodes, v)) return gap(cx, t.line, "the PATHS option with METHOD=BACKDOOR and a descendant of the treatment in the set is not implemented", .{});
+                for (s.adjust) |v| if (an.backdoor.?.de_x[v] and contains(m.nodes, v)) return gap(cx, t.line, "the PATHS option with METHOD=BACKDOOR and a descendant of the treatment in the set is not implemented", .{});
+            }
+        }
+    };
     // Joint effects (several treatments and/or outcomes, pp.2303/2317) use
     // the same set-valued adjustment criterion (STAT-CAUSALGRAPH-004).
 }
@@ -602,7 +775,24 @@ pub const Analysis = struct {
     candidates: []const usize,
     forbidden: []const bool,
     pbd: Graph,
+    /// METHOD=BACKDOOR (Pearl 2009b, p.2315): no descendant of a treatment
+    /// in the set, which must d-separate X and Y once the edges out of X are
+    /// removed.
+    backdoor: ?struct { de_x: []const bool, g: Graph } = null,
 };
+
+pub fn analyseMethod(a: A, n: usize, edges: []const Edge, xs: []const usize, ys: []const usize, method: Method) !Analysis {
+    var an = try analyse(a, n, edges, xs, ys);
+    if (method != .backdoor) return an;
+    const none = try a.alloc(bool, n);
+    @memset(none, false);
+    const g: Graph = .{ .n = n, .edges = edges };
+    const de = try g.closure(a, xs, true, none, none);
+    var out: std.ArrayList(Edge) = .empty;
+    for (edges) |e| if (!contains(xs, e.from)) try out.append(a, e);
+    an.backdoor = .{ .de_x = de, .g = .{ .n = n, .edges = out.items } };
+    return an;
+}
 
 /// Constructive back-door setup (van der Zander et al. 2014): proper causal
 /// path nodes PCP = (De_{G-in(X)}(X) \ X) ∩ An_{G-out(X)}(Y), forbidden set
@@ -626,6 +816,10 @@ pub fn analyse(a: A, n: usize, edges: []const Edge, xs: []const usize, ys: []con
 }
 
 pub fn validAdjustment(a: A, an: Analysis, xs: []const usize, ys: []const usize, z: []const bool) !bool {
+    if (an.backdoor) |bd| {
+        for (z, 0..) |b, k| if (b and bd.de_x[k]) return false;
+        return bd.g.dSeparated(a, xs, ys, z);
+    }
     for (z, 0..) |b, k| if (b and an.forbidden[k]) return false;
     return an.pbd.dSeparated(a, xs, ys, z);
 }
@@ -804,7 +998,9 @@ pub fn run(cx: proc.ProcCtx, out: *Out, t: []const lex.Token) diag.Error!void {
         s.models = ms;
     }
     const n = s.names.len;
-    const list = s.opts.list orelse s.identify;
+    // LIST is the default with IDENTIFY and no TESTID (p.2300).
+    const list = s.opts.list orelse (s.identify and s.tests.len == 0);
+    const iv = s.opts.method == .iv;
 
     // Variables of all models (SAS 9.4 reference run with two MODEL
     // statements: one VariableInfo table titled "Variables in Models").
@@ -822,8 +1018,8 @@ pub fn run(cx: proc.ProcCtx, out: *Out, t: []const lex.Token) diag.Error!void {
     var cands: std.ArrayList(usize) = .empty;
     const sets = try a.alloc([]Set, s.models.len);
     @memset(sets, &.{});
-    if (list) {
-        for (measured.items) |v| if (!contains(s.treatments, v) and !contains(s.outcomes, v)) try cands.append(a, v);
+    for (measured.items) |v| if (!contains(s.treatments, v) and !contains(s.outcomes, v)) try cands.append(a, v);
+    if (list and !iv) {
         if (cands.items.len > max_candidates) return gap(cx, s.models[0].line, "more than {d} measured covariates (exhaustive adjustment-set enumeration) is not implemented", .{max_candidates});
         for (s.models, sets) |m, *dst| {
             var mc: std.ArrayList(usize) = .empty;
@@ -849,7 +1045,7 @@ pub fn run(cx: proc.ProcCtx, out: *Out, t: []const lex.Token) diag.Error!void {
                 required |= @as(u64, 1) << @intCast(k);
             }
             const g = try expandLatent(a, n, m.edges);
-            const an = try analyse(a, g.n, g.edges, s.treatments, s.outcomes);
+            const an = try analyseMethod(a, g.n, g.edges, s.treatments, s.outcomes, s.opts.method);
             const local = try enumerate(a, g.n, an, mc.items, s.treatments, s.outcomes, required);
             // Re-key masks onto the union columns (order is preserved: both
             // lists are alphabetical).
@@ -879,10 +1075,13 @@ pub fn run(cx: proc.ProcCtx, out: *Out, t: []const lex.Token) diag.Error!void {
             // has no reference run; refuse rather than guess the layout.
             if (cc.count > 1) return gap(cx, m.line, "the PSUMMARY option with a disconnected model is not implemented", .{});
         }
+        var open = false;
+        try emitTests(cx, out, s, cands.items, &open);
+        if (open) try endPage(cx, out);
         if (!list) return;
         for (s.models, sets) |m, msets| {
             try page(cx, out);
-            try adjustTable(cx, out, s, m, msets, cands.items);
+            if (iv) try ivListTable(cx, out, s, m, cands.items) else try adjustTable(cx, out, s, m, msets, cands.items);
             try endPage(cx, out);
         }
         return;
@@ -954,13 +1153,15 @@ pub fn run(cx: proc.ProcCtx, out: *Out, t: []const lex.Token) diag.Error!void {
         try page(cx, out);
         try componentsTable(a, out, s.names, m, cc);
     }
+    var open = true;
+    try emitTests(cx, out, s, cands.items, &open);
     if (!list or (any_disc and !s.opts.disconnected)) return endPage(cx, out);
 
-    // One AdjustList page per model.
+    // One AdjustList (InstrumentList) page per model.
     for (s.models, sets) |m, msets| {
         try endPage(cx, out);
         try page(cx, out);
-        try adjustTable(cx, out, s, m, msets, cands.items);
+        if (iv) try ivListTable(cx, out, s, m, cands.items) else try adjustTable(cx, out, s, m, msets, cands.items);
     }
     try endPage(cx, out);
 }
@@ -1108,6 +1309,519 @@ fn roleList(a: A, names: []const []const u8, ids: []const usize) ![]const u8 {
     }
     try b.append(a, '}');
     return b.items;
+}
+
+// ── TESTID, METHOD=IV and PATHS (STAT-CAUSALGRAPH-005) ─────────────────────
+
+fn withoutEdge(a: A, g: Graph, x: usize, y: usize) !Graph {
+    var out: std.ArrayList(Edge) = .empty;
+    for (g.edges) |e| if (e.bi or e.from != x or e.to != y) try out.append(a, e);
+    return .{ .n = g.n, .edges = out.items };
+}
+
+/// Conditional instrument (Brito and Pearl 2002; ancestral instrument
+/// criterion of Van der Zander, Textor and Liskiewicz 2015, cited p.2301):
+/// `z` instruments x -> y given `w` when w holds neither z nor a descendant
+/// of y, z and x are d-connected given w, and z and y are d-separated given
+/// w once the edge x -> y is removed.
+pub fn ivValid(a: A, g: Graph, x: usize, y: usize, z: usize, w: []const bool) !bool {
+    if (w[z]) return false;
+    const none = try a.alloc(bool, g.n);
+    @memset(none, false);
+    const de_y = try g.closure(a, &.{y}, true, none, none);
+    for (w, 0..) |b, k| if (b and de_y[k]) return false;
+    if (try g.dSeparated(a, &.{z}, &.{x}, w)) return false;
+    return (try withoutEdge(a, g, x, y)).dSeparated(a, &.{z}, &.{y}, w);
+}
+
+/// Conditioning set METHOD=IV LIST reports for candidate `z`, or null.
+// ponytail: the selection rule is inferred from SAS 9.4 reference runs, not
+// documented: an unconditional instrument gets the empty set; otherwise a
+// greedy nearest separator, depth first from y over the moral graph of
+// An({y, z}) without x -> y, neighbours in alphabetical order, entering an
+// unobserved node at once, adding every observed node met and stopping once
+// z and y are separated (an unneeded alphabetically earlier parent of y is
+// kept, a later one is not: Example 37.5 lists Alcohol BMI Education
+// Employment Parity, not Smoking; A1 U ZZ parents of Y with W -> U give
+// {A1, W}).
+pub fn ivFind(a: A, g: Graph, names: []const []const u8, observed: []const bool, x: usize, y: usize, z: usize) !?[]bool {
+    const w = try a.alloc(bool, g.n);
+    @memset(w, false);
+    if (try ivValid(a, g, x, y, z, w)) return w;
+    const gc = try withoutEdge(a, g, x, y);
+    const none = try a.alloc(bool, g.n);
+    @memset(none, false);
+    const anc = try gc.closure(a, &.{ y, z }, false, none, none);
+    const adj = try a.alloc(std.ArrayList(usize), g.n);
+    for (adj) |*l| l.* = .empty;
+    const link = struct {
+        fn f(al: A, lists: []std.ArrayList(usize), u: usize, v: usize) !void {
+            if (u == v) return;
+            if (!contains(lists[u].items, v)) try lists[u].append(al, v);
+            if (!contains(lists[v].items, u)) try lists[v].append(al, u);
+        }
+    }.f;
+    for (gc.edges) |e| if (anc[e.from] and anc[e.to]) try link(a, adj, e.from, e.to);
+    for (0..g.n) |v| if (anc[v]) {
+        var ps: std.ArrayList(usize) = .empty;
+        for (gc.edges) |e| if (e.to == v and anc[e.from]) try ps.append(a, e.from);
+        for (ps.items, 0..) |p, k| for (ps.items[k + 1 ..]) |q| try link(a, adj, p, q);
+    };
+    for (adj) |l| std.mem.sort(usize, l.items, names, lessName);
+    const vis = try a.alloc(bool, g.n);
+    @memset(vis, false);
+    vis[y] = true;
+    vis[z] = true;
+    const Walk = struct {
+        a: A,
+        gc: Graph,
+        adj: []const std.ArrayList(usize),
+        vis: []bool,
+        w: []bool,
+        observed: []const bool,
+        x: usize,
+        y: usize,
+        z: usize,
+        fn go(k: *@This(), v: usize) A.Error!bool {
+            for (k.adj[v].items) |u| {
+                if (k.vis[u]) continue;
+                k.vis[u] = true;
+                if (k.observed[u] and u != k.x) {
+                    k.w[u] = true;
+                    if (try k.gc.dSeparated(k.a, &.{k.z}, &.{k.y}, k.w)) return true;
+                } else if (try k.go(u)) return true;
+            }
+            return false;
+        }
+    };
+    var walk: Walk = .{ .a = a, .gc = gc, .adj = adj, .vis = vis, .w = w, .observed = observed, .x = x, .y = y, .z = z };
+    if (!try walk.go(y)) return null;
+    return if (try ivValid(a, g, x, y, z, w)) w else null;
+}
+
+const Step = enum { fwd, back, bi };
+pub const PathRow = struct { text: []const u8, causal: bool, blocked: bool };
+
+/// Proper paths (p.2320): from a treatment, never through another treatment,
+/// each time an outcome is reached. Order of the SAS 9.4 reference runs:
+/// treatments alphabetically, depth first with children, then parents, then
+/// bidirected partners, each alphabetically, and the whole list reversed.
+const PathWalk = struct {
+    a: A,
+    names: []const []const u8,
+    xs: []const usize,
+    ys: []const usize,
+    z: []const bool,
+    anc_z: []const bool,
+    nbr: [3][]const []const usize,
+    on: []bool,
+    nodes: std.ArrayList(usize) = .empty,
+    steps: std.ArrayList(Step) = .empty,
+    rows: std.ArrayList(PathRow) = .empty,
+
+    fn walk(w: *PathWalk, v: usize) A.Error!void {
+        for ([_]Step{ .fwd, .back, .bi }, 0..) |st, kind| for (w.nbr[kind][v]) |u| {
+            if (w.on[u] or contains(w.xs, u)) continue;
+            w.on[u] = true;
+            try w.nodes.append(w.a, u);
+            try w.steps.append(w.a, st);
+            if (contains(w.ys, u)) try w.emit();
+            try w.walk(u);
+            _ = w.nodes.pop();
+            _ = w.steps.pop();
+            w.on[u] = false;
+        };
+    }
+
+    fn emit(w: *PathWalk) !void {
+        var b: Out = .empty;
+        var causal = true;
+        var blocked = false;
+        for (w.nodes.items, 0..) |v, k| {
+            if (k > 0) {
+                const st = w.steps.items[k - 1];
+                if (st != .fwd) causal = false;
+                try b.appendSlice(w.a, switch (st) {
+                    .fwd => " ==> ",
+                    .back => " <== ",
+                    .bi => " <=> ",
+                });
+            }
+            try b.appendSlice(w.a, w.names[v]);
+            if (k == 0 or k + 1 == w.nodes.items.len) continue;
+            const left = w.steps.items[k - 1] != .back;
+            const right = w.steps.items[k] != .fwd;
+            if (left and right) {
+                if (!w.anc_z[v]) blocked = true;
+            } else if (w.z[v]) blocked = true;
+        }
+        try w.rows.append(w.a, .{ .text = b.items, .causal = causal, .blocked = blocked });
+    }
+};
+
+pub fn properPaths(a: A, names: []const []const u8, m: Model, xs: []const usize, ys: []const usize, z: []const bool) ![]PathRow {
+    const n = names.len;
+    var directed: std.ArrayList(Edge) = .empty;
+    for (m.edges) |e| if (!e.bi) try directed.append(a, e);
+    const g: Graph = .{ .n = n, .edges = directed.items };
+    const none = try a.alloc(bool, n);
+    @memset(none, false);
+    var zs: std.ArrayList(usize) = .empty;
+    for (z, 0..) |b, k| if (b) try zs.append(a, k);
+    var nbr: [3][]const []const usize = undefined;
+    for (0..3) |kind| {
+        const lists = try a.alloc([]const usize, n);
+        for (lists, 0..) |*l, v| {
+            var xs_: std.ArrayList(usize) = .empty;
+            for (m.edges) |e| {
+                const u: ?usize = switch (kind) {
+                    0 => if (!e.bi and e.from == v) e.to else null,
+                    1 => if (!e.bi and e.to == v) e.from else null,
+                    else => if (e.bi and e.from == v) e.to else if (e.bi and e.to == v) e.from else null,
+                };
+                if (u) |uu| if (!contains(xs_.items, uu)) try xs_.append(a, uu);
+            }
+            sortedIds(names, xs_.items);
+            l.* = xs_.items;
+        }
+        nbr[kind] = lists;
+    }
+    var w: PathWalk = .{ .a = a, .names = names, .xs = xs, .ys = ys, .z = z, .anc_z = try g.closure(a, zs.items, false, none, none), .nbr = nbr, .on = try a.alloc(bool, n) };
+    @memset(w.on, false);
+    const tx = try a.dupe(usize, xs);
+    sortedIds(names, tx);
+    for (tx) |x| if (contains(m.nodes, x)) {
+        w.on[x] = true;
+        try w.nodes.append(a, x);
+        try w.walk(x);
+        _ = w.nodes.pop();
+        w.on[x] = false;
+    };
+    std.mem.reverse(PathRow, w.rows.items);
+    return w.rows.items;
+}
+
+/// Spanner widening of the SAS 9.4 reference runs: the spanned columns need
+/// the text plus one dash on each side; one column widens, several widen
+/// their gaps evenly.
+fn widen(cols: []Col, gaps: []usize, from: usize, text: []const u8) void {
+    const k = cols.len - from;
+    if (k == 0) return;
+    var natural: usize = 0;
+    for (cols[from..], from..) |c, j| natural += c.width + (if (j > from) gaps[j] else 0);
+    const need = text.len + 2;
+    if (natural >= need) return;
+    const extra = need - natural;
+    if (k == 1) {
+        cols[from].width += extra;
+    } else {
+        const per = (extra + k - 2) / (k - 1);
+        for (gaps[from + 1 ..]) |*g| g.* += per;
+    }
+}
+
+fn tableWidth(cols: []const Col, gaps: []const usize) usize {
+    var width: usize = 0;
+    for (cols, 0..) |c, k| width += c.width + (if (k > 0) gaps[k] else 0);
+    return width;
+}
+
+fn centered(a: A, o: *Out, width: usize, text: []const u8) !void {
+    try o.appendNTimes(a, ' ', (width + 1 -| text.len) / 2);
+    try o.appendSlice(a, text);
+    try o.append(a, '\n');
+}
+
+fn maxNameLen(names: []const []const u8) usize {
+    var w: usize = 10;
+    for (names) |nm| w = @max(w, nm.len);
+    return w;
+}
+
+/// The tested set: TESTID variables plus the prescribed ones (p.2319).
+fn testSet(a: A, s: Spec, t: Test) ![]usize {
+    var set: std.ArrayList(usize) = .empty;
+    for (t.vars) |v| try set.append(a, v);
+    if (s.opts.method != .iv) for (s.adjust) |v| if (!contains(set.items, v)) try set.append(a, v);
+    return set.items;
+}
+
+fn markColumns(a: A, s: Spec, cands: []const usize, set: []const usize) ![]usize {
+    var used: std.ArrayList(usize) = .empty;
+    for (cands, 0..) |c, k| if (!s.opts.compact or contains(set, c)) try used.append(a, k);
+    return used.items;
+}
+
+fn starCols(a: A, s: Spec, cols: *std.ArrayList(Col), cands: []const usize, used: []const usize, rows: usize, set: []const usize) !void {
+    for (used) |k| {
+        const head = try splitHeader(a, s.names[cands[k]]);
+        var w: usize = 1;
+        for (head) |h| w = @max(w, h.len);
+        const cells = try a.alloc([]const u8, rows);
+        for (cells) |*c| c.* = if (contains(set, cands[k])) "*" else "";
+        try cols.append(a, .{ .head = head, .al = .center, .width = w, .cells = cells });
+    }
+}
+
+fn modelColumn(a: A, s: Spec) !Col {
+    const labels = try a.alloc([]const u8, s.models.len);
+    var lw: usize = 5;
+    for (s.models, labels) |m, *l| {
+        l.* = m.label;
+        lw = @max(lw, m.label.len);
+    }
+    return .{ .head = &.{"Model"}, .al = .left, .width = lw, .cells = labels };
+}
+
+fn effectTitle(a: A, s: Spec) ![]const u8 {
+    return std.fmt.allocPrint(a, "Causal Effect of {s} on {s}", .{ try roleList(a, s.names, s.treatments), try roleList(a, s.names, s.outcomes) });
+}
+
+/// AdjustTest (Table 37.2): one row per model.
+fn adjustTestTable(cx: proc.ProcCtx, out: *Out, s: Spec, t: Test, cands: []const usize) !void {
+    const a = cx.arena;
+    const set = try testSet(a, s, t);
+    const rows = s.models.len;
+    const size = try a.alloc([]const u8, rows);
+    const valid = try a.alloc([]const u8, rows);
+    const mini = try a.alloc([]const u8, rows);
+    for (s.models, 0..) |m, r| {
+        const g = try expandLatent(a, s.names.len, m.edges);
+        const an = try analyseMethod(a, g.n, g.edges, s.treatments, s.outcomes, s.opts.method);
+        const z = try a.alloc(bool, g.n);
+        @memset(z, false);
+        var optional: std.ArrayList(usize) = .empty;
+        var has_out = false;
+        for (set) |v| {
+            if (!contains(m.nodes, v)) {
+                if (!contains(s.adjust, v)) has_out = true;
+                continue;
+            }
+            z[v] = true;
+            if (!contains(s.adjust, v)) try optional.append(a, v);
+        }
+        const ok = try validAdjustment(a, an, s.treatments, s.outcomes, z);
+        // Minimal: no proper subset that keeps the prescribed variables is
+        // valid (p.2301); dropping a variable absent from the model leaves
+        // the same set, so such a set is never minimal (reference run).
+        var minimal = ok and !has_out;
+        if (minimal and optional.items.len > 0) {
+            if (optional.items.len > max_candidates) return gap(cx, t.line, "a TESTID set of more than {d} variables is not implemented", .{max_candidates});
+            const full = (@as(u64, 1) << @intCast(optional.items.len)) - 1;
+            var mask: u64 = 0;
+            while (mask < full) : (mask += 1) {
+                for (optional.items, 0..) |v, k| z[v] = (mask >> @intCast(k)) & 1 == 1;
+                if (try validAdjustment(a, an, s.treatments, s.outcomes, z)) {
+                    minimal = false;
+                    break;
+                }
+            }
+        }
+        size[r] = try num(a, set.len);
+        valid[r] = if (ok) "Yes" else "No";
+        mini[r] = if (minimal) "Yes" else "No";
+    }
+    var cols: std.ArrayList(Col) = .empty;
+    try cols.append(a, try modelColumn(a, s));
+    try cols.append(a, .{ .head = &.{"Size"}, .al = .right, .width = 8, .cells = size });
+    try cols.append(a, .{ .head = &.{"Valid"}, .al = .left, .width = 8, .cells = valid });
+    try cols.append(a, .{ .head = &.{"Minimal"}, .al = .left, .width = 8, .cells = mini });
+    const used = try markColumns(a, s, cands, set);
+    try starCols(a, s, &cols, cands, used, rows, set);
+    const gaps = try uniformGaps(a, cols.items.len);
+    widen(cols.items, gaps, 4, "Covariates");
+    // Reference runs: the two titles are separated by a blank line.
+    const width = tableWidth(cols.items, gaps);
+    try centered(a, out, width, try std.fmt.allocPrint(a, "Covariate Adjustment Test: {s}", .{t.label}));
+    try out.appendSlice(a, " \n");
+    try centered(a, out, width, try effectTitle(a, s));
+    try table(a, out, &.{}, 1, cols.items, gaps, if (used.len > 0) Spanner{ .from = 4, .text = "Covariates" } else null);
+}
+
+/// InstrumentTest (Table 37.2): one row per model.
+fn ivTestTable(cx: proc.ProcCtx, out: *Out, s: Spec, t: Test, cands: []const usize) !void {
+    const a = cx.arena;
+    const rows = s.models.len;
+    const z = t.vars[0];
+    const inst = try a.alloc([]const u8, rows);
+    const valid = try a.alloc([]const u8, rows);
+    for (s.models, 0..) |m, r| {
+        if (!contains(m.nodes, z)) return gap(cx, t.line, "a TESTID instrument missing from a model is not implemented", .{});
+        const g = try expandLatent(a, s.names.len, m.edges);
+        const w = try a.alloc(bool, g.n);
+        @memset(w, false);
+        for (t.cond) |c| if (contains(m.nodes, c)) {
+            w[c] = true;
+        };
+        inst[r] = s.names[z];
+        valid[r] = if (try ivValid(a, .{ .n = g.n, .edges = g.edges }, s.treatments[0], s.outcomes[0], z, w)) "Yes" else "No";
+    }
+    var cols: std.ArrayList(Col) = .empty;
+    try cols.append(a, try modelColumn(a, s));
+    try cols.append(a, .{ .head = &.{"Instrument"}, .al = .left, .width = maxNameLen(s.names), .cells = inst });
+    try cols.append(a, .{ .head = &.{"Valid"}, .al = .left, .width = 8, .cells = valid });
+    const used = try markColumns(a, s, cands, t.cond);
+    try starCols(a, s, &cols, cands, used, rows, t.cond);
+    const gaps = try uniformGaps(a, cols.items.len);
+    widen(cols.items, gaps, 3, "Conditionals");
+    const t1 = try std.fmt.allocPrint(a, "Instrumental Variable Test: {s}", .{t.label});
+    try table(a, out, &.{ t1, try effectTitle(a, s) }, 1, cols.items, gaps, if (used.len > 0) Spanner{ .from = 3, .text = "Conditionals" } else null);
+}
+
+pub const IvRow = struct { z: usize, w: []const bool };
+
+fn ivList(a: A, s: Spec, m: Model, cands: []const usize) ![]IvRow {
+    const g = try expandLatent(a, s.names.len, m.edges);
+    const observed = try a.alloc(bool, g.n);
+    @memset(observed, false);
+    for (m.nodes) |v| observed[v] = !contains(s.unmeasured, v);
+    var rows: std.ArrayList(IvRow) = .empty;
+    for (cands) |c| if (contains(m.nodes, c)) {
+        if (try ivFind(a, .{ .n = g.n, .edges = g.edges }, s.names, observed, s.treatments[0], s.outcomes[0], c)) |w| try rows.append(a, .{ .z = c, .w = w });
+    };
+    return rows.items;
+}
+
+/// InstrumentList (Table 37.2) or the SAS 9.4 no-instrument line.
+fn ivListTable(cx: proc.ProcCtx, out: *Out, s: Spec, m: Model, cands: []const usize) !void {
+    const a = cx.arena;
+    var rows = try ivList(a, s, m, cands);
+    if (s.opts.maxlist) |ml| if (rows.len > ml) {
+        rows = rows[0..ml];
+    };
+    if (rows.len == 0) {
+        try out.appendSlice(a, try std.fmt.allocPrint(a, "There are no instrumental variables for {s}.\n\n", .{m.label}));
+        return;
+    }
+    var used: std.ArrayList(usize) = .empty;
+    for (cands, 0..) |c, k| {
+        var any = !s.opts.compact;
+        for (rows) |r| {
+            if (r.w[c]) any = true;
+        }
+        if (any) try used.append(a, k);
+    }
+    const obs = try a.alloc([]const u8, rows.len);
+    const inst = try a.alloc([]const u8, rows.len);
+    for (rows, 0..) |r, k| {
+        obs[k] = try num(a, k + 1);
+        inst[k] = s.names[r.z];
+    }
+    var cols: std.ArrayList(Col) = .empty;
+    try cols.append(a, .{ .head = &.{""}, .al = .right, .width = 8, .cells = obs });
+    try cols.append(a, .{ .head = &.{"Instrument"}, .al = .left, .width = maxNameLen(s.names), .cells = inst });
+    for (used.items) |k| {
+        const head = try splitHeader(a, s.names[cands[k]]);
+        var w: usize = 1;
+        for (head) |h| w = @max(w, h.len);
+        const cells = try a.alloc([]const u8, rows.len);
+        for (rows, cells) |r, *cell| cell.* = if (r.w[cands[k]]) "*" else "";
+        try cols.append(a, .{ .head = head, .al = .center, .width = w, .cells = cells });
+    }
+    const gaps = try uniformGaps(a, cols.items.len);
+    widen(cols.items, gaps, 2, "Conditionals");
+    const t1 = try std.fmt.allocPrint(a, "Instrumental Variables for {s}", .{m.label});
+    try table(a, out, &.{ t1, try effectTitle(a, s) }, 1, cols.items, gaps, if (used.items.len > 0) Spanner{ .from = 2, .text = "Conditionals" } else null);
+}
+
+/// Paths (Table 37.2, PATHS option): one table per model.
+fn pathsTable(cx: proc.ProcCtx, out: *Out, s: Spec, t: Test, m: Model) !void {
+    const a = cx.arena;
+    const set = try testSet(a, s, t);
+    const z = try a.alloc(bool, s.names.len);
+    @memset(z, false);
+    for (set) |v| if (contains(m.nodes, v)) {
+        z[v] = true;
+    };
+    const g = try expandLatent(a, s.names.len, m.edges);
+    const an = try analyseMethod(a, g.n, g.edges, s.treatments, s.outcomes, s.opts.method);
+    var overcontrol = false;
+    for (set) |v| if (contains(m.nodes, v)) {
+        if (an.forbidden[v]) overcontrol = true;
+        if (an.backdoor) |bd| if (bd.de_x[v]) return gap(cx, t.line, "the PATHS option with METHOD=BACKDOOR and a descendant of the treatment in the set is not implemented", .{});
+    };
+    const f = t.paths.?;
+    var shown: std.ArrayList(PathRow) = .empty;
+    for (try properPaths(a, s.names, m, s.treatments, s.outcomes, z)) |p| {
+        if (f.causal and !p.causal) continue;
+        if (f.noncausal and p.causal) continue;
+        if (f.blocked and !p.blocked) continue;
+        if (f.nonblocked and p.blocked) continue;
+        try shown.append(a, p);
+    }
+    if (shown.items.len == 0) {
+        try out.appendSlice(a, try std.fmt.allocPrint(a, "NOTE: There are no paths satisfying the specified criteria for test {s} applied to model {s}.\n\n", .{ t.label, m.label }));
+        return;
+    }
+    const rows = shown.items.len;
+    const obs = try a.alloc([]const u8, rows);
+    const flag = try a.alloc([]const u8, rows);
+    const causal = try a.alloc([]const u8, rows);
+    const blocked = try a.alloc([]const u8, rows);
+    const text = try a.alloc([]const u8, rows);
+    var pw: usize = 5;
+    var biasing = false;
+    for (shown.items, 0..) |p, r| {
+        obs[r] = try num(a, r + 1);
+        const bias = !p.causal and !p.blocked;
+        if (bias) biasing = true;
+        flag[r] = if (bias) "*" else "";
+        causal[r] = if (p.causal) "Yes" else "No";
+        blocked[r] = if (p.blocked) "Yes" else "No";
+        text[r] = p.text;
+        pw = @max(pw, p.text.len);
+    }
+    const cols = [_]Col{
+        .{ .head = &.{""}, .al = .right, .width = 8, .cells = obs },
+        .{ .head = &.{""}, .al = .left, .width = 1, .cells = flag },
+        .{ .head = &.{"Causal"}, .al = .left, .width = 8, .cells = causal },
+        .{ .head = &.{"Blocked"}, .al = .left, .width = 8, .cells = blocked },
+        .{ .head = &.{"Paths"}, .al = .left, .width = pw, .cells = text },
+    };
+    const gaps = [_]usize{ 0, 0, 4, 4, 4 };
+    const adj_text = if (set.len == 0) "" else try roleList(a, s.names, set);
+    const t3 = try std.fmt.allocPrint(a, "{s} Adjusted for {s}", .{ try effectTitle(a, s), adj_text });
+    const t2 = try std.fmt.allocPrint(a, "Test {s} for Model {s}", .{ t.label, m.label });
+    try table(a, out, &.{ "Treatment-to-Outcome Paths", t2, t3 }, 1, &cols, &gaps, null);
+    if (overcontrol or biasing) {
+        const width = tableWidth(&cols, &gaps);
+        try out.append(a, '\n');
+        if (overcontrol) {
+            try centered(a, out, width, "At least one variable in the adjustment set");
+            try centered(a, out, width, "lies on or descends from a causal path.");
+        }
+        if (biasing) try centered(a, out, width, "* indicates a biasing path");
+    }
+}
+
+/// TESTID output (SAS 9.4 reference runs): consecutive tests share a page;
+/// a test with PATHS starts a page and is followed by a page of path tables,
+/// one per model.
+fn emitTests(cx: proc.ProcCtx, out: *Out, s: Spec, cands: []const usize, open: *bool) !void {
+    const iv = s.opts.method == .iv;
+    var fresh = true;
+    for (s.tests) |t| {
+        // A test with PATHS starts a page; one without continues the page
+        // of the previous test or its paths (reference runs).
+        if (fresh or t.paths != null) {
+            if (open.*) try endPage(cx, out);
+            try page(cx, out);
+            open.* = true;
+        } else try out.appendSlice(cx.arena, "\n\n");
+        fresh = false;
+        if (iv) {
+            try ivTestTable(cx, out, s, t, cands);
+            continue;
+        }
+        try adjustTestTable(cx, out, s, t, cands);
+        if (t.paths == null) continue;
+        try endPage(cx, out);
+        try page(cx, out);
+        for (s.models, 0..) |m, k| {
+            if (k > 0) try out.appendSlice(cx.arena, "\n\n");
+            try pathsTable(cx, out, s, t, m);
+        }
+    }
 }
 
 // ── tests ──────────────────────────────────────────────────────────────────
@@ -1279,4 +1993,56 @@ test "STAT-CAUSALGRAPH-004 hand-derived joint-effect adjustment sets (pp.2303, 2
     const names = [_][]const u8{ "B", "A", "Q" };
     try std.testing.expectEqualStrings("B", try roleList(a, &names, &.{0}));
     try std.testing.expectEqualStrings("{A B}", try roleList(a, &names, &.{ 0, 1 }));
+}
+
+test "STAT-CAUSALGRAPH-005 hand-derived instruments, backdoor sets and proper paths" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    // 0 Z1 1 X 2 Y 3 Z2 4 U 5 C 6 Z3 7 E: Z1 -> X -> Y, Z2 -> X, U -> X Y,
+    // C -> Z2 Y, Z3 -> C X, E -> Y; U unmeasured. Z1 is a classical
+    // instrument; Z2 <- C -> Y is open until C is conditioned on; E -> Y.
+    const names = [_][]const u8{ "Z1", "X", "Y", "Z2", "U", "C", "Z3", "E" };
+    const e = [_]Edge{
+        .{ .from = 0, .to = 1 }, .{ .from = 1, .to = 2 }, .{ .from = 3, .to = 1 }, .{ .from = 4, .to = 1 }, .{ .from = 4, .to = 2 },
+        .{ .from = 5, .to = 3 }, .{ .from = 5, .to = 2 }, .{ .from = 6, .to = 5 }, .{ .from = 6, .to = 1 }, .{ .from = 7, .to = 2 },
+    };
+    const g: Graph = .{ .n = 8, .edges = &e };
+    var w = [_]bool{false} ** 8;
+    try std.testing.expect(try ivValid(a, g, 1, 2, 0, &w));
+    try std.testing.expect(!try ivValid(a, g, 1, 2, 3, &w));
+    w[5] = true;
+    try std.testing.expect(try ivValid(a, g, 1, 2, 3, &w));
+    // Conditioning on the outcome's descendant or the instrument is invalid.
+    try std.testing.expect(!try ivValid(a, g, 1, 2, 5, &w));
+    const obs = [_]bool{ true, true, true, true, false, true, true, true };
+    const found = (try ivFind(a, g, &names, &obs, 1, 2, 3)).?;
+    for (found, 0..) |b, k| try std.testing.expectEqual(k == 5, b);
+    try std.testing.expect((try ivFind(a, g, &names, &obs, 1, 2, 7)) == null);
+    // 0 C 1 X 2 M 3 Y 4 D: C -> X -> M -> Y, C -> Y, X -> D, X -> Y. {C, D}
+    // is a valid adjustment set (D descends from X off the causal path) but
+    // not a backdoor set (no descendant of X); {C} is both.
+    const p = [_]Edge{ .{ .from = 0, .to = 1 }, .{ .from = 1, .to = 2 }, .{ .from = 2, .to = 3 }, .{ .from = 0, .to = 3 }, .{ .from = 1, .to = 4 }, .{ .from = 1, .to = 3 } };
+    const cd = [_]bool{ true, false, false, false, true };
+    const c = [_]bool{ true, false, false, false, false };
+    try std.testing.expect(try validAdjustment(a, try analyseMethod(a, 5, &p, &.{1}, &.{3}, .adjustment), &.{1}, &.{3}, &cd));
+    const bd = try analyseMethod(a, 5, &p, &.{1}, &.{3}, .backdoor);
+    try std.testing.expect(!try validAdjustment(a, bd, &.{1}, &.{3}, &cd));
+    try std.testing.expect(try validAdjustment(a, bd, &.{1}, &.{3}, &c));
+    // Proper paths given {C}: the back-door path is blocked at the fork C.
+    const pn = [_][]const u8{ "C", "X", "M", "Y", "D" };
+    const rows = try properPaths(a, &pn, .{ .label = "P", .line = 0, .nodes = &.{ 0, 1, 2, 3, 4 }, .edges = &p }, &.{1}, &.{3}, &c);
+    try std.testing.expectEqual(@as(usize, 3), rows.len);
+    try std.testing.expectEqualStrings("X <== C ==> Y", rows[0].text);
+    try std.testing.expect(!rows[0].causal and rows[0].blocked);
+    try std.testing.expectEqualStrings("X ==> Y", rows[1].text);
+    try std.testing.expectEqualStrings("X ==> M ==> Y", rows[2].text);
+    try std.testing.expect(rows[2].causal and !rows[2].blocked);
+    // A conditioned collider opens a noncausal path: X -> K <- Y given K.
+    const k = [_]Edge{ .{ .from = 0, .to = 1 }, .{ .from = 0, .to = 2 }, .{ .from = 1, .to = 2 } };
+    const kr = try properPaths(a, &.{ "X", "Y", "K" }, .{ .label = "K", .line = 0, .nodes = &.{ 0, 1, 2 }, .edges = &k }, &.{0}, &.{1}, &.{ false, false, true });
+    try std.testing.expectEqual(@as(usize, 2), kr.len);
+    try std.testing.expectEqualStrings("X ==> Y", kr[0].text);
+    try std.testing.expectEqualStrings("X ==> K <== Y", kr[1].text);
+    try std.testing.expect(!kr[1].causal and !kr[1].blocked);
 }

@@ -1,5 +1,3 @@
 # corpus assertions
 empty-listing
-stderr-count 2 METHOD=IV is not implemented
-stderr-count 1 METHOD=BACKDOOR is not implemented
-stderr-count 1 the TESTID statement is not implemented
+stderr-count 1 METHOD=IV with several treatment or outcome variables is not implemented
