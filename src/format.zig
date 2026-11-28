@@ -3834,15 +3834,145 @@ pub fn bestNumW(arena: std.mem.Allocator, x: f64, w_in: usize) Error![]const u8 
     // f64 directly ({d} prints a whole double as a plain integer) — casting to
     // i64 first panicked for magnitudes ≥ 2^63 that still fit the field at wide
     // w (e.g. `put(1e20, best32.)`) (BUG-bestint-i64-overflow).
-    if (x == @trunc(x) and ax < pow10f(@intCast(w - sign)))
+    // Past 2^53 `{d}` prints the SHORTEST round-trip digits (87916805672492940);
+    // SAS prints the double's exact integer (87916805672492944) — STAT-BEST-001.
+    if (x == @trunc(x) and ax < pow10f(@intCast(w - sign))) {
+        if (ax < 0x1p126) return std.fmt.allocPrint(arena, "{d}", .{@as(i128, @intFromFloat(x))});
         return std.fmt.allocPrint(arena, "{d}", .{x});
+    }
 
     const e = @as(i32, @intFromFloat(@floor(@log10(ax)))); // decimal exponent
+    if (w - sign > 16) {
+        if (try wideFixed(arena, ax, sign)) |s| return s;
+        return wideE(arena, x, w, sign, e);
+    }
     const fixed = try fixedStr(arena, x, w, sign, e);
     const estr = try eStr(arena, x, w, sign, e);
     // pick the notation showing more significant digits; a tie prefers fixed
     if (fixed) |fs| return if (sigDigits(estr) > sigDigits(fs)) estr else fs;
     return estr;
+}
+
+/// BESTw. with more than 16 columns besides the sign (STAT-BEST-001, fitted to
+/// SAS 9.4 BEST17.-BEST32. on 3,400+ (value, width) pairs): SAS never shows more
+/// than 16 characters of a non-integer besides the sign. The text is the exact
+/// decimal of x·(1+1.0625·2⁻⁵²) TRUNCATED to 16 characters, zeros dropped:
+/// 2/3 → 0.66666666666666, 953.0788245481568 → 953.078824548157 (one-epsilon
+/// fuzz carries), 0.0127392655261689 → 0.01273926552616.
+/// ponytail: this rule reproduces ~99% of the SAS sample; the rest (mostly at
+/// exactly 17 columns) differ in the last shown digit because SAS's own digit
+/// generation is not an exact-decimal truncation. Applies to non-integers with
+/// 1e-5 <= |x| < 1e15 (SAS shows fixed notation there); other magnitudes, and
+/// x with 16 integer digits (rounded like BEST16.), return null → generic path.
+fn wideFixed(arena: std.mem.Allocator, ax: f64, sign: usize) Error!?[]const u8 {
+    const neg0 = if (sign == 1) "-" else "";
+    // 16 integer digits leave no room for a decimal: SAS rounds to the integer
+    // (1234567890123456.75 → 1234567890123457 at BEST17.-BEST32.).
+    if (ax >= 1e15 and ax < 1e16)
+        return try std.fmt.allocPrint(arena, "{s}{d}", .{ neg0, @as(i128, @intFromFloat(@round(ax))) });
+    if (!(ax >= 1e-5 and ax < 1e15)) return null;
+    var intdig: usize = 1; // integer digits (1 for 0.xxx)
+    while (intdig < 16 and ax >= pow10f(@intCast(intdig))) intdig += 1;
+    const d: u8 = @intCast(15 - intdig); // decimals that fit in 16 characters
+    // ax = m · 2^q exactly (normal doubles only in this range)
+    const bits: u64 = @bitCast(ax);
+    const m: u256 = (bits & ((@as(u64, 1) << 52) - 1)) | (@as(u64, 1) << 52);
+    const q: i32 = @as(i32, @intCast((bits >> 52) & 0x7ff)) - 1075;
+    // floor(ax·(1+k·2⁻⁵²)·10^d) with k = 17/16 = floor(m·(2⁵⁶+17)·10^d / 2^(56-q));
+    // q < 0 here. k is the fuzz that best fits the SAS sample: any k in
+    // (1, 1.1] fits equally and k > 1 is needed for 0.09999999999999998 → 0.1.
+    var p10: u256 = 1;
+    for (0..d) |_| p10 *= 10;
+    const num: u256 = m * ((@as(u256, 1) << 56) + 17) * p10;
+    const sh: u32 = @intCast(56 - q);
+    const tr: u256 = num >> @intCast(sh);
+    var digits = try std.fmt.allocPrint(arena, "{d}", .{tr});
+    if (digits.len <= d) { // 0.000xx → left-pad so a digit sits before the point
+        const pad = try arena.alloc(u8, d + 1 - digits.len);
+        @memset(pad, '0');
+        digits = try std.mem.concat(arena, u8, &.{ pad, digits });
+    }
+    const ip = digits[0 .. digits.len - d];
+    var frac: []const u8 = digits[digits.len - d ..];
+    frac = std.mem.trimEnd(u8, frac, "0");
+    const neg = if (sign == 1) "-" else "";
+    if (frac.len == 0) return try std.mem.concat(arena, u8, &.{ neg, ip });
+    return try std.mem.concat(arena, u8, &.{ neg, ip, ".", frac });
+}
+
+/// Wide BESTw. in E-notation (STAT-BEST-001, SAS 9.4 BEST17.-BEST32.): the
+/// mantissa never exceeds 15 characters (`d.` + 13 decimals). When the field
+/// leaves room for at most that, the usual rounded E form is used; when it
+/// leaves more, the mantissa is TRUNCATED to 13 decimals with a one-epsilon
+/// fuzz and trailing zeros are dropped: 1.5390406264696903e-300 →
+/// 1.5390406264697E-300 at BEST20., 1.5390406264696E-300 at BEST21.
+/// ponytail: the mantissa comes from an f64 division x/10^e, so a value within
+/// an ulp of a truncation boundary can differ from SAS in the last digit.
+fn wideE(arena: std.mem.Allocator, x: f64, w: usize, sign: usize, e_in: i32) Error![]const u8 {
+    var e = e_in;
+    var mant = @abs(x) / pow10f(e);
+    if (mant >= 10) {
+        e += 1;
+        mant = @abs(x) / pow10f(e);
+    } else if (mant < 1) {
+        e -= 1;
+        mant = @abs(x) / pow10f(e);
+    }
+    var ebuf: [16]u8 = undefined;
+    const es = std.fmt.bufPrint(&ebuf, "E{d}", .{e}) catch unreachable;
+    if (w - sign <= 15 + es.len) return eStr(arena, x, w, sign, e_in);
+    const tr = @floor(mant * 1e13 * (1 + 1.0625 * std.math.floatEps(f64)));
+    var digits = try std.fmt.allocPrint(arena, "{d}", .{@as(u64, @intFromFloat(tr))});
+    var ee = e;
+    if (digits.len > 14) { // fuzz carried 9.99..→10: renormalise
+        digits = digits[0..14];
+        ee += 1;
+    }
+    const frac = std.mem.trimEnd(u8, digits[1..], "0");
+    const neg = if (sign == 1) "-" else "";
+    if (frac.len == 0) return std.fmt.allocPrint(arena, "{s}{s}E{d}", .{ neg, digits[0..1], ee });
+    return std.fmt.allocPrint(arena, "{s}{s}.{s}E{d}", .{ neg, digits[0..1], frac, ee });
+}
+
+test "STAT-BEST-001 wide BEST truncates to 16 characters besides the sign (SAS 9.4 BEST17.-BEST32.)" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const Case = struct { v: f64, w: usize, text: []const u8 };
+    // every expected text below was printed by SAS 9.4 (put x bestW.)
+    const cases = [_]Case{
+        .{ .v = -0.42447635997800853, .w = 32, .text = "-0.424476359978" },
+        .{ .v = 1.2345678901234567, .w = 17, .text = "1.23456789012345" },
+        .{ .v = 12345.678901234567, .w = 20, .text = "12345.6789012345" },
+        .{ .v = 0.012345678901234567, .w = 18, .text = "0.01234567890123" },
+        .{ .v = 123456789012.34567, .w = 20, .text = "123456789012.345" },
+        .{ .v = -0.0000123456789012345, .w = 20, .text = "-0.0000123456789" },
+        .{ .v = 2.0 / 3.0, .w = 17, .text = "0.66666666666666" },
+        .{ .v = -2.0 / 3.0, .w = 18, .text = "-0.66666666666666" },
+        .{ .v = 36.59999990463257, .w = 17, .text = "36.5999999046325" },
+        .{ .v = 71.96925382994998, .w = 20, .text = "71.9692538299499" },
+        .{ .v = 0.012739265526168914, .w = 20, .text = "0.01273926552616" },
+        .{ .v = 123456789012345.67, .w = 20, .text = "123456789012345" },
+        .{ .v = 953.0788245481568, .w = 32, .text = "953.078824548157" }, // fuzz carry
+        .{ .v = 0.4996873045653594, .w = 20, .text = "0.49968730456535" },
+        .{ .v = -5.199337582150739, .w = 20, .text = "-5.19933758215073" },
+        .{ .v = 0.1 + 0.2, .w = 32, .text = "0.3" },
+        .{ .v = 123.5, .w = 32, .text = "123.5" },
+        .{ .v = 0.09999999999999998, .w = 20, .text = "0.1" }, // fuzz must exceed 1 eps
+        .{ .v = 1234567890123456.75, .w = 20, .text = "1234567890123457" },
+        .{ .v = 87916805672492944.0, .w = 17, .text = "87916805672492944" }, // exact integer
+        .{ .v = 1e30, .w = 32, .text = "1000000000000000019884624838656" },
+        .{ .v = 1e20, .w = 20, .text = "1E20" },
+        .{ .v = 1.6519265800078847e-07, .w = 18, .text = "1.6519265800079E-7" },
+        .{ .v = 1.6519265800078847e-07, .w = 32, .text = "1.6519265800078E-7" },
+        .{ .v = 1.5390406264696903e-300, .w = 20, .text = "1.5390406264697E-300" },
+        .{ .v = 1.5390406264696903e-300, .w = 21, .text = "1.5390406264696E-300" },
+        .{ .v = -3.4279802816512846e+25, .w = 24, .text = "-3.4279802816512E25" },
+    };
+    for (cases) |c| try std.testing.expectEqualStrings(c.text, try bestNumW(a, c.v, c.w));
+    // 16 columns besides the sign keeps the rounding path (BEST16., signed BEST17.)
+    try std.testing.expectEqualStrings("-0.42447635997801", try bestNumW(a, -0.42447635997800853, 17));
+    try std.testing.expectEqualStrings("0.66666666666667", try bestNumW(a, 2.0 / 3.0, 16));
 }
 
 /// Fixed-notation candidate within `w` columns, or null when the value can't be
