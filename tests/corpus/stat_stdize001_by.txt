@@ -1,0 +1,43 @@
+
+group=A
+
+The STDIZE Procedure
+
+Location and Scale Measures
+ 
+Location = mean     Scale = standard deviation
+ 
+Name        Location           Scale           N
+
+x           3.500000        1.870829           6
+z           1.666667        0.816497           6
+y           8.500000        3.507136           6
+
+group=B
+
+The STDIZE Procedure
+
+Location and Scale Measures
+ 
+Location = mean     Scale = standard deviation
+ 
+Name        Location           Scale           N
+
+x           9.500000        1.870829           6
+z           4.000000        0.894427           6
+y          21.333333        3.141125           6
+
+         x            z            y   group   weight   freq
+
+ -1.336306    -0.816497    -1.283098   A            1      1
+ -0.801784    -0.816497    -0.712832   A            2      1
+ -0.267261     0.408248    -0.427699   A            1      2
+  0.267261    -0.816497     0.142566   A            1      1
+  0.801784     1.632993     1.283098   A            2      1
+  1.336306     0.408248     0.997965   A            1      1
+ -1.336306     0.000000    -1.379548   B            1      1
+ -0.801784    -1.118034    -0.742834   B            2      2
+ -0.267261     1.118034    -0.424476   B            1      1
+  0.267261    -1.118034     0.530595   B            1      1
+  0.801784     1.118034     1.167310   B            2      1
+  1.336306     0.000000     0.848953   B            1      1

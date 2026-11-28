@@ -1,0 +1,90 @@
+High School Scores Data
+METHOD=STD
+
+Type=rural
+
+The STDIZE Procedure
+
+Location and Scale Measures
+ 
+Location = mean     Scale = standard deviation
+ 
+Name         Location           Scale           N
+
+total      167.050000       41.956713          20
+
+High School Scores Data
+METHOD=STD
+
+Type=urban
+
+The STDIZE Procedure
+
+Location and Scale Measures
+ 
+Location = mean     Scale = standard deviation
+ 
+Name         Location           Scale           N
+
+total      153.300000       30.066768          20
+
+High School Scores Data
+METHOD=MAD
+
+Type=rural
+
+The STDIZE Procedure
+
+Location and Scale Measures
+ 
+Location = median     Scale = median abs dev from median
+ 
+Name         Location           Scale           N
+
+total      166.000000       32.000000          20
+
+High School Scores Data
+METHOD=MAD
+
+Type=urban
+
+The STDIZE Procedure
+
+Location and Scale Measures
+ 
+Location = median     Scale = median abs dev from median
+ 
+Name         Location           Scale           N
+
+total      153.000000       15.500000          20
+
+High School Scores Data
+METHOD=IQR
+
+Type=rural
+
+The STDIZE Procedure
+
+Location and Scale Measures
+ 
+Location = median     Scale = interquartile range
+ 
+Name         Location           Scale           N
+
+total      166.000000       61.000000          20
+
+High School Scores Data
+METHOD=IQR
+
+Type=urban
+
+The STDIZE Procedure
+
+Location and Scale Measures
+ 
+Location = median     Scale = interquartile range
+ 
+Name         Location           Scale           N
+
+total      153.000000       30.000000          20
+

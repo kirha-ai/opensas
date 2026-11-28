@@ -3048,6 +3048,16 @@ fn runProc(a: std.mem.Allocator, listing_out: *std.ArrayList(u8), lib: *sas.exec
             try out.appendSlice(a, body.items);
             try g.emitFootnotes(a, out);
         }
+    } else if (eqi(proc, "stdize")) {
+        var body: std.ArrayList(u8) = .empty;
+        var stdize_context = pcx;
+        stdize_context.listing_titles = g; // titles repeat before every BY group
+        try sas.stdize.run(stdize_context, &body, toks);
+        if (body.items.len > 0) {
+            try g.emitTitles(a, out);
+            try out.appendSlice(a, body.items);
+            try g.emitFootnotes(a, out);
+        }
     } else if (eqi(proc, "lifetest")) {
         var body: std.ArrayList(u8) = .empty;
         try sas.lifetest.run(pcx, &body, toks);
