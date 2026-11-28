@@ -12,6 +12,7 @@ const diag = @import("../diag.zig");
 const lex = @import("../lexer.zig");
 const store = @import("store.zig");
 const infer = @import("plm_infer.zig");
+const ls = @import("plm_lsmeans.zig");
 const format = @import("../format.zig");
 const eq = std.ascii.eqlIgnoreCase;
 const A = std.mem.Allocator;
@@ -49,10 +50,14 @@ pub const Statement = union(enum) {
     show: struct { fit: bool, parms: bool },
     /// Effect names exactly as stored (resolved case-insensitively at run time).
     type3: struct { effects: []const []const u8, line: usize },
+    /// STAT-PLM-007 (S154 physical pp.7636–7639, 7643–7644).
+    lsmeans: ls.Lsmeans,
+    lsmestimate: ls.Lsmestimate,
+    slice: ls.Slice,
 };
 
 /// Statements documented for PROC PLM (S154 ch.94) that later tickets own.
-const later_statements = [_][]const u8{ "code", "effectplot", "estimate", "filter", "lsmeans", "lsmestimate", "score", "slice", "where", "by" };
+const later_statements = [_][]const u8{ "code", "effectplot", "estimate", "filter", "score", "where", "by" };
 
 const P = struct {
     cx: proc.ProcCtx,
@@ -96,6 +101,18 @@ const P = struct {
         p.i += 1;
         try p.equals(name);
         return p.number(name);
+    }
+    /// A model effect: name joined by * (a*b).
+    fn effect(p: *P) diag.Error![]const u8 {
+        var name: []const u8 = p.t[p.i].text;
+        p.i += 1;
+        while (p.at(.star)) {
+            p.i += 1;
+            if (!p.at(.name)) return p.bad("an effect expects a variable after *");
+            name = try std.fmt.allocPrint(p.cx.arena, "{s}*{s}", .{ name, p.t[p.i].text });
+            p.i += 1;
+        }
+        return name;
     }
     fn word(p: *P, comptime name: []const u8) diag.Error![]const u8 {
         try p.once(name);
@@ -276,6 +293,116 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Options {
             try statements.append(cx.arena, .{ .type3 = .{ .effects = effects.items, .line = s.line } });
             continue;
         }
+        if (s.tag == .name and eq(s.text, "lsmeans")) {
+            p.i += 1;
+            var request: ls.Lsmeans = .{ .effects = &.{}, .line = s.line };
+            var effects: std.ArrayList([]const u8) = .empty;
+            while (p.at(.name)) try effects.append(cx.arena, try p.effect());
+            if (effects.items.len == 0) return p.bad("LSMEANS requires at least one model effect");
+            request.effects = effects.items;
+            if (p.at(.slash)) {
+                p.i += 1;
+                while (p.i < t.len and t[p.i].tag != .semicolon and t[p.i].tag != .eof) {
+                    const w = t[p.i];
+                    if (w.tag != .name) return p.bad("LSMEANS expects an option");
+                    const valued_option = p.i + 1 < t.len and t[p.i + 1].tag == .eq;
+                    if (any(w.text, &.{ "diff", "pdiff" }) and !valued_option) {
+                        request.diff = true;
+                        p.i += 1;
+                    } else if (eq(w.text, "cl") and !valued_option) {
+                        request.cl = true;
+                        p.i += 1;
+                    } else if (eq(w.text, "alpha") and valued_option) {
+                        p.i += 2;
+                        const v = try p.number("ALPHA");
+                        if (!(v > 0 and v < 1)) return p.bad("ALPHA= must be between 0 and 1");
+                        request.alpha = v;
+                    } else return proc.failGap(cx.diags, w.line, "PROC PLM: LSMEANS option {s} is not implemented", .{w.text});
+                }
+            } else if (p.i < t.len and t[p.i].tag != .semicolon and t[p.i].tag != .eof) return p.bad("LSMEANS expects an effect or / options");
+            try statements.append(cx.arena, .{ .lsmeans = request });
+            continue;
+        }
+        if (s.tag == .name and eq(s.text, "lsmestimate")) {
+            p.i += 1;
+            if (!p.at(.name)) return p.bad("LSMESTIMATE requires a model effect");
+            const effect = try p.effect();
+            var rows: std.ArrayList(ls.EstimateRow) = .empty;
+            while (true) {
+                var row_label: ?[]const u8 = null;
+                if (p.at(.string)) {
+                    row_label = t[p.i].text;
+                    p.i += 1;
+                }
+                var values: std.ArrayList(f64) = .empty;
+                while (p.at(.number) or p.at(.minus) or p.at(.plus)) try values.append(cx.arena, try p.number("LSMESTIMATE"));
+                // Bracketed [value, level...] coefficients are not implemented.
+                if (p.i < t.len and (t[p.i].tag == .lbrace or t[p.i].tag == .name)) return proc.failGap(cx.diags, s.line, "PROC PLM: LSMESTIMATE operand {s} (non-positional coefficient syntax) is not implemented", .{t[p.i].text});
+                if (values.items.len == 0) return p.bad("LSMESTIMATE requires coefficients");
+                try rows.append(cx.arena, .{ .label = row_label, .values = values.items });
+                if (!p.at(.comma)) break;
+                p.i += 1;
+            }
+            var tail: ?ls.Tail = null;
+            if (p.at(.slash)) {
+                p.i += 1;
+                while (p.i < t.len and t[p.i].tag != .semicolon and t[p.i].tag != .eof) : (p.i += 1) {
+                    const w = t[p.i];
+                    if (w.tag != .name) return p.bad("LSMESTIMATE expects an option");
+                    if (any(w.text, &.{ "uppertailed", "upper" }) and tail == null) {
+                        tail = .upper;
+                    } else if (any(w.text, &.{ "lowertailed", "lower" }) and tail == null) {
+                        tail = .lower;
+                    } else if (any(w.text, &.{ "ftest", "joint", "chisq" })) {
+                        // pp.7638: with one-sided rows the joint test reports a
+                        // simulated chi-bar-square p-value drawn from SAS's
+                        // SEED= stream, which is not reproduced here.
+                        return proc.failGap(cx.diags, w.line, "PROC PLM: LSMESTIMATE {s} (joint test; its chi-bar-square p-value is simulation-based) is not implemented", .{w.text});
+                    } else return proc.failGap(cx.diags, w.line, "PROC PLM: LSMESTIMATE option {s} is not implemented", .{w.text});
+                }
+            } else if (p.i < t.len and t[p.i].tag != .semicolon and t[p.i].tag != .eof) return p.bad("LSMESTIMATE expects coefficients or / options");
+            // The two-sided table layout has no SAS reference in this ticket.
+            const side = tail orelse return proc.failGap(cx.diags, s.line, "PROC PLM: LSMESTIMATE without UPPERTAILED or LOWERTAILED is not implemented", .{});
+            try statements.append(cx.arena, .{ .lsmestimate = .{ .effect = effect, .rows = rows.items, .tail = side, .line = s.line } });
+            continue;
+        }
+        if (s.tag == .name and eq(s.text, "slice")) {
+            p.i += 1;
+            if (!p.at(.name)) return p.bad("SLICE requires a model effect");
+            var request: ls.Slice = .{ .effect = try p.effect(), .by = "", .line = s.line };
+            if (p.at(.slash)) {
+                p.i += 1;
+                while (p.i < t.len and t[p.i].tag != .semicolon and t[p.i].tag != .eof) {
+                    const w = t[p.i];
+                    if (w.tag != .name) return p.bad("SLICE expects an option");
+                    const next: lex.Tag = if (p.i + 1 < t.len) t[p.i + 1].tag else .eof;
+                    if (any(w.text, &.{ "diff", "pdiff" }) and next != .eq) {
+                        request.diff = true;
+                        p.i += 1;
+                    } else if (eq(w.text, "sliceby") and request.by.len == 0 and (next == .eq or next == .lparen)) {
+                        p.i += 2;
+                        if (next == .eq and p.at(.lparen)) return proc.failGap(cx.diags, w.line, "PROC PLM: SLICEBY=(list) is not implemented", .{});
+                        if (!p.at(.name)) return p.bad("SLICEBY requires a CLASS variable");
+                        request.by = t[p.i].text;
+                        p.i += 1;
+                        if (next == .lparen) {
+                            if (p.at(.eq)) {
+                                p.i += 1;
+                                if (!p.at(.string) and !p.at(.number)) return p.bad("SLICEBY(variable=) requires a level");
+                                request.level = t[p.i].text;
+                                p.i += 1;
+                            }
+                            if (!p.at(.rparen)) return proc.failGap(cx.diags, w.line, "PROC PLM: SLICEBY with several variables or levels is not implemented", .{});
+                            p.i += 1;
+                        }
+                    } else return proc.failGap(cx.diags, w.line, "PROC PLM: SLICE option {s} is not implemented", .{w.text});
+                }
+            } else if (p.i < t.len and t[p.i].tag != .semicolon and t[p.i].tag != .eof) return p.bad("SLICE expects one effect and / options");
+            // The default partition set (no SLICEBY) has no SAS reference here.
+            if (request.by.len == 0) return proc.failGap(cx.diags, s.line, "PROC PLM: SLICE without SLICEBY is not implemented", .{});
+            try statements.append(cx.arena, .{ .slice = request });
+            continue;
+        }
         if (s.tag == .name) for (later_statements) |name| {
             if (eq(s.text, name)) return proc.failGap(cx.diags, s.line, "PROC PLM: the {s} statement is not implemented", .{name});
         };
@@ -406,10 +533,23 @@ pub fn run(cx: proc.ProcCtx, out: *std.ArrayList(u8), t: []const lex.Token) diag
     };
     // NOINFO NOCLPRINT leaves no default table; the procedure title still heads the analysis tables.
     if (o.statements.len > 0 and body.items.len == 0) try body.appendSlice(cx.arena, "The PLM Procedure\n");
-    for (o.statements) |statement| analysis(cx.arena, &body, m, statement) catch |err| switch (err) {
+    // LSMEANS and SLICE request default plots when ODS Graphics is enabled
+    // (pp.7636, 7643); those graphs are not produced, so the step is refused
+    // rather than silently printing tables only.
+    for (o.statements) |statement| switch (statement) {
+        .lsmeans, .slice => if (cx.graphics) |g| if (g.enabled == true and (o.plots == null or o.plots.? != .none))
+            return proc.failGap(cx.diags, o.line, "PROC PLM: LSMEANS / SLICE graphics under ODS GRAPHICS ON are not implemented; specify ODS GRAPHICS OFF", .{}),
+        else => {},
+    };
+    for (o.statements) |statement| analysis(cx.arena, &body, m, statement, o.alpha orelse 0.05) catch |err| switch (err) {
         error.OutOfMemory => return error.OutOfMemory,
         error.Unsupported => return proc.failGap(cx.diags, o.line, "PROC PLM: stored-model inference is implemented only for full-rank CLASS-only GLM stores whose effects span the GLM parameterization", .{}),
         error.UnknownEffect => return cx.diags.fail(error.ExecError, o.line, "PROC PLM: a TEST effect is not in the stored model", .{}),
+        error.UnknownLsEffect => return cx.diags.fail(error.ExecError, o.line, "PROC PLM: an LSMEANS / LSMESTIMATE / SLICE effect or SLICEBY variable is not in the stored model", .{}),
+        error.UnknownLevel => return cx.diags.fail(error.ExecError, o.line, "PROC PLM: the SLICEBY level is not a level of the stored CLASS variable", .{}),
+        error.TooManyCoefficients => return cx.diags.fail(error.ExecError, o.line, "PROC PLM: LSMESTIMATE has more coefficients than the effect has least squares means", .{}),
+        error.SliceNeedsInteraction => return cx.diags.fail(error.ExecError, o.line, "PROC PLM: the SLICE effect must be an interaction of CLASS variables", .{}),
+        error.Singular => return proc.failGap(cx.diags, o.line, "PROC PLM: a linearly dependent set of least squares means contrasts is not implemented", .{}),
         error.FormatError => return cx.diags.fail(error.ExecError, o.line, "PROC PLM: cannot format a stored-model statistic", .{}),
     };
     try out.appendSlice(cx.arena, body.items);
@@ -424,8 +564,11 @@ fn probability(a: A, p: f64) ![]const u8 {
 }
 /// Column layout follows the retained SAS listing of the Getting Started
 /// store: 4-blank gutters, 8-wide numeric cells, titles centred on the table.
-fn analysis(a: A, out: *std.ArrayList(u8), m: store.Model, statement: Statement) !void {
+fn analysis(a: A, out: *std.ArrayList(u8), m: store.Model, statement: Statement, alpha: f64) !void {
     switch (statement) {
+        .lsmeans => |request| try ls.renderLsmeans(a, out, m, request, alpha),
+        .lsmestimate => |request| try ls.renderLsmestimate(a, out, m, request),
+        .slice => |request| try ls.renderSlice(a, out, m, request),
         .show => |show| {
             if (show.fit) {
                 try out.append(a, '\n');

@@ -250,9 +250,9 @@ test "STAT-PLM-001 valid but unimplemented requests are loud gaps (rc 2) with no
         "proc plm restore=BlockAnalysis; test a / chisq; run;",
         "proc plm restore=BlockAnalysis stmtorder=group; test a; run;",
         "proc plm restore=BlockAnalysis noprint; show fit; run;",
-        "proc plm restore=BlockAnalysis; lsmeans a / diff; run;",
+        "proc plm restore=BlockAnalysis; lsmeans a / adjust=tukey; run;",
         "proc plm restore=BlockAnalysis; lsmestimate a -1 1; run;",
-        "proc plm restore=BlockAnalysis; slice a*b / sliceby(b='1') diff; run;",
+        "proc plm restore=BlockAnalysis; slice a*b / diff; run;",
         "proc plm restore=BlockAnalysis; estimate 'a1' a 1 -1; run;",
         "proc plm restore=BlockAnalysis; score data=x out=y; run;",
         "proc plm restore=BlockAnalysis; effectplot; run;",
@@ -548,4 +548,215 @@ test "STAT-PLM-002 GLM SOLUTION outside the proven CLASS-only shape is a loud ga
         try t.expectEqual(@as(usize, 0), out.items.len);
         try t.expectEqual(@as(u8, 2), diag.exitCode(diag.gapHit(), s.d.hasErrors()));
     }
+}
+
+// ---- STAT-PLM-007: LSMEANS / LSMESTIMATE / SLICE (S154 physical pp.7636–7639, 7643–7644) ----
+// Listing values below are the SAS listing of the published Getting Started
+// block design (ODS GRAPHICS OFF tables), held as whitespace-separated tokens.
+test "STAT-PLM-007 Getting Started: LSMEANS DIFF, one-sided LSMESTIMATE and SLICE DIFF match the SAS listing values" {
+    var s: Fitted = .{ .arena = std.heap.ArenaAllocator.init(t.allocator) };
+    defer s.arena.deinit();
+    try blockFit(&s);
+    const a = s.arena.allocator();
+    const means = try s.exec(.plm, "proc plm restore=work.BlockAnalysis noinfo noclprint seed=3; lsmeans a / diff; run;");
+    try t.expect(!s.d.hasErrors());
+    try t.expectEqualStrings("The PLM Procedure a Least Squares Means Standard a Estimate Error DF t Value Pr > |t| " ++
+        "1 32.8750 1.6457 15 19.98 <.0001 2 34.1250 1.6457 15 20.74 <.0001 3 25.7500 1.6457 15 15.65 <.0001 " ++
+        "Differences of a Least Squares Means Standard a _a Estimate Error DF t Value Pr > |t| " ++
+        "1 2 -1.2500 2.3274 15 -0.54 0.5991 1 3 7.1250 2.3274 15 3.06 0.0079 2 3 8.3750 2.3274 15 3.60 0.0026 ", try wordsOf(a, means));
+    // Exact column layout of the first table (SAS listing, verbatim).
+    try t.expect(std.mem.indexOf(u8, means, "\n                  a Least Squares Means\n \n                 Standard\na    Estimate       Error       DF    t Value    Pr > |t|\n\n1     32.8750      1.6457       15      19.98      <.0001\n") != null);
+    try t.expect(std.mem.indexOf(u8, means, "\n             Differences of a Least Squares Means\n \n                       Standard\na    _a    Estimate       Error       DF    t Value    Pr > |t|\n\n1    2      -1.2500      2.3274       15      -0.54      0.5991\n") != null);
+    const est = try s.exec(.plm, "proc plm restore=work.BlockAnalysis noinfo noclprint; lsmestimate a -1 1, 1 1 -2 / uppertailed; run;");
+    try t.expect(!s.d.hasErrors());
+    try t.expect(std.mem.indexOf(u8, est, "\n                         Least Squares Means Estimates\n \n                               Standard\nEffect    Label    Estimate       Error       DF    t Value    Tails      Pr > t\n\na         Row 1      1.2500      2.3274       15       0.54    Upper      0.2995\na         Row 2     15.5000      4.0311       15       3.85    Upper      0.0008\n") != null);
+    const slice = try s.exec(.plm, "proc plm restore=work.BlockAnalysis noinfo noclprint; slice a*b / sliceby(b='1') diff; run;");
+    try t.expect(!s.d.hasErrors());
+    try t.expect(std.mem.indexOf(u8, slice, "\n F Test for a*b Least Squares Means Slice\n \n          Num      Den\nSlice      DF       DF    F Value    Pr > F\n\nb 1         2       15       8.18    0.0040\n") != null);
+    try t.expect(std.mem.indexOf(u8, slice, "\n             Simple Differences of a*b Least Squares Means\n \n                                Standard\nSlice    a    _a    Estimate       Error       DF    t Value    Pr > |t|\n\nb 1      1    2      -1.0000      3.2914       15      -0.30      0.7654\nb 1      1    3      11.0000      3.2914       15       3.34      0.0045\nb 1      2    3      12.0000      3.2914       15       3.65      0.0024\n") != null);
+}
+
+test "STAT-PLM-007 balanced block design: LS-means, differences, slices against exact rational values" {
+    // Balanced, so every LS-mean is a marginal/cell mean of the data and its
+    // variance is MSE/n: MSE = 325/15; each a level has 8 observations, each
+    // a*b cell 4. a means 263/8, 273/8, 206/8; cells (a,b=1) 37, 38, 26.
+    // Slice b=1: SS = 4*((37-101/3)^2+(38-101/3)^2+(26-101/3)^2) = 1064/3,
+    // F = (1064/3)/2/MSE = 532/65.
+    var s: Fitted = .{ .arena = std.heap.ArenaAllocator.init(t.allocator) };
+    defer s.arena.deinit();
+    try blockFit(&s);
+    const a = s.arena.allocator();
+    const ls = @import("plm_lsmeans.zig");
+    const m = try store.restore(s.cx(), "work.BlockAnalysis");
+    const mse = 325.0 / 15.0;
+    // 1e-9 absolute: O(10) values from a 9-parameter solve, rounding ~1e-13.
+    const tol = 1e-9;
+    const lm = try ls.means(a, m, try ls.effectIndex(m, "a"));
+    try t.expectEqual(@as(usize, 3), lm.rows.len);
+    for ([_]f64{ 263.0 / 8.0, 273.0 / 8.0, 206.0 / 8.0 }, lm.rows) |want, row| {
+        const r = try ls.stat(m, row);
+        try t.expectApproxEqAbs(want, r.estimate, tol);
+        try t.expectApproxEqAbs(@sqrt(mse / 8.0), r.stderr, tol);
+        try t.expectApproxEqAbs(want / @sqrt(mse / 8.0), r.t, 1e-8);
+        try t.expectEqual(@as(usize, 15), r.df);
+    }
+    const d = try ls.stat(m, try ls.combine(a, lm.rows, &.{ 1, 0, -1 }));
+    try t.expectApproxEqAbs(@as(f64, 57.0 / 8.0), d.estimate, tol);
+    try t.expectApproxEqAbs(@sqrt(2.0 * mse / 8.0), d.stderr, tol);
+    const e = try ls.stat(m, try ls.combine(a, lm.rows, &.{ 1, 1, -2 }));
+    try t.expectApproxEqAbs(@as(f64, 15.5), e.estimate, tol);
+    try t.expectApproxEqAbs(@sqrt(6.0 * mse / 8.0), e.stderr, tol);
+    try t.expectError(error.TooManyCoefficients, ls.combine(a, lm.rows, &.{ 1, 1, 1, 1 }));
+    const plan = try ls.slicePlan(a, m, .{ .effect = "a*b", .by = "b", .level = "1" });
+    const rows = try ls.sliceRows(a, m, plan, plan.levels[0]);
+    for ([_]f64{ 37, 38, 26 }, rows) |want, row| {
+        const r = try ls.stat(m, row);
+        try t.expectApproxEqAbs(want, r.estimate, tol);
+        try t.expectApproxEqAbs(@sqrt(mse / 4.0), r.stderr, tol);
+    }
+    const f = try ls.sliceTest(a, m, rows);
+    try t.expectEqual(@as(usize, 2), f.num_df);
+    try t.expectEqual(@as(usize, 15), f.den_df);
+    try t.expectApproxEqAbs(@as(f64, 532.0 / 65.0), f.f, tol);
+    // SLICEBY=b without a level gives one slice per level of b.
+    try t.expectEqual(@as(usize, 2), (try ls.slicePlan(a, m, .{ .effect = "a*b", .by = "b" })).levels.len);
+}
+
+fn unbalanced(s: *Fitted) !void {
+    const a = s.arena.allocator();
+    s.lib = Library.init(a);
+    s.d = diag.Diagnostics.init(a);
+    const ds = try a.create(Dataset);
+    ds.* = Dataset.init(a, "ub");
+    for ([_][]const u8{ "g", "h", "y" }) |name| _ = try ds.addColumn(name, .num);
+    for ([_][3]f64{ .{ 1, 1, 1 }, .{ 1, 1, 3 }, .{ 1, 2, 6 }, .{ 2, 1, 5 }, .{ 2, 2, 8 }, .{ 2, 2, 12 } }) |r| try ds.appendRow(&.{ .{ .num = r[0] }, .{ .num = r[1] }, .{ .num = r[2] } });
+    try s.lib.put("ub", ds);
+    _ = try s.exec(.glm, "proc glm data=ub noprint; class g h; model y = g h; store ubfit; run;");
+}
+
+test "STAT-PLM-007 unbalanced additive design: LS-means, difference, SE, t and limits by hand" {
+    // Invented data, cells (g,h): (1,1)={1,3}, (1,2)={6}, (2,1)={5}, (2,2)={8,12}.
+    // Cell-reference normal equations for (mu, alpha_g2, beta_h2):
+    //   [6 3 3; 3 3 2; 3 2 3] theta = (35, 25, 26)  =>  theta = (11/6, 7/2, 9/2),
+    // det = 12, inverse diagonal (5/12, 3/4, 3/4), inv[mu,beta] = -1/4.
+    // SSE = 372/36 = 31/3 on 3 df, MSE = 31/9.
+    // LS-mean g=1 = mu + beta/2 = 49/12 (the raw mean of g=1 is 10/3: the
+    // LS-mean weights the h levels equally), g=2 = 91/12, difference -7/2.
+    // Var(LS-mean) = MSE*(5/12 - 1/4 + 3/16) = MSE*17/48; Var(diff) = MSE*3/4.
+    var s: Fitted = .{ .arena = std.heap.ArenaAllocator.init(t.allocator) };
+    defer s.arena.deinit();
+    try unbalanced(&s);
+    const a = s.arena.allocator();
+    const ls = @import("plm_lsmeans.zig");
+    const m = try store.restore(s.cx(), "ubfit");
+    const mse = 31.0 / 9.0;
+    const tol = 1e-10;
+    const lm = try ls.means(a, m, try ls.effectIndex(m, "g"));
+    const g1 = try ls.stat(m, lm.rows[0]);
+    const g2 = try ls.stat(m, lm.rows[1]);
+    try t.expectApproxEqAbs(@as(f64, 49.0 / 12.0), g1.estimate, tol);
+    try t.expectApproxEqAbs(@as(f64, 91.0 / 12.0), g2.estimate, tol);
+    try t.expectApproxEqAbs(@sqrt(mse * 17.0 / 48.0), g1.stderr, tol);
+    try t.expectApproxEqAbs(@sqrt(mse * 17.0 / 48.0), g2.stderr, tol);
+    try t.expectEqual(@as(usize, 3), g1.df);
+    const d = try ls.stat(m, try ls.combine(a, lm.rows, &.{ 1, -1 }));
+    try t.expectApproxEqAbs(@as(f64, -3.5), d.estimate, tol);
+    try t.expectApproxEqAbs(@sqrt(mse * 0.75), d.stderr, tol);
+    try t.expectApproxEqAbs(-3.5 / @sqrt(mse * 0.75), d.t, tol);
+    // Two-sided t probability on 3 df in closed form:
+    // P(|T|>t) = 1 - (2/pi)*(atan(u) + u/(1+u^2)), u = t/sqrt(3).
+    const u = @abs(d.t) / @sqrt(3.0);
+    try t.expectApproxEqAbs(1.0 - 2.0 / std.math.pi * (std.math.atan(u) + u / (1 + u * u)), d.p, 1e-10);
+    // Listing: 49/12 = 4.0833, SE sqrt(31*17/432) = 1.1045, t 3.70; diff SE
+    // sqrt(31/12) = 1.6073, t -2.18. CL at ALPHA=0.5: the t(3) quartile is the
+    // root of the closed form above at probability 0.5, t = 0.76489 (5 s.f.),
+    // so limits = -3.5 -/+ 0.76489*1.60728 = -4.7294, -2.2706.
+    const out = try wordsOf(a, try s.exec(.plm, "proc plm restore=ubfit noinfo noclprint; lsmeans g / pdiff cl alpha=0.5; run;"));
+    try t.expect(!s.d.hasErrors());
+    try t.expect(std.mem.indexOf(u8, out, "g Estimate Error DF t Value Pr > |t| Alpha Lower Upper 1 4.0833 1.1045 3 3.70 ") != null);
+    try t.expect(std.mem.indexOf(u8, out, "Differences of g Least Squares Means Standard g _g Estimate Error DF t Value Pr > |t| Alpha Lower Upper 1 2 -3.5000 1.6073 3 -2.18 ") != null);
+    try t.expect(std.mem.endsWith(u8, out, " 0.5 -4.7294 -2.2706 "));
+}
+
+test "STAT-PLM-007 unfinished requests are loud gaps and invalid requests are user errors, with no listing" {
+    for ([_]struct { []const u8, u8 }{
+        // Simulation-based chi-bar-square p-value: not reproduced.
+        .{ "proc plm restore=ubfit seed=3; lsmestimate g -1 1 / uppertailed ftest; run;", 2 },
+        .{ "proc plm restore=ubfit; lsmestimate g -1 1 / joint; run;", 2 },
+        .{ "proc plm restore=ubfit; lsmestimate g -1 1; run;", 2 },
+        .{ "proc plm restore=ubfit; lsmestimate g [1, 1] / upper; run;", 2 },
+        .{ "proc plm restore=ubfit; lsmeans g / adjust=tukey; run;", 2 },
+        .{ "proc plm restore=ubfit; lsmeans g / diff=control; run;", 2 },
+        .{ "proc plm restore=ubfit; lsmeans g; slice g*h; run;", 2 },
+        .{ "proc plm restore=ubfit; lsmeans nosuch; run;", 1 },
+        .{ "proc plm restore=ubfit; lsmeans / diff; run;", 1 },
+        .{ "proc plm restore=ubfit; lsmeans g / alpha=2; run;", 1 },
+        .{ "proc plm restore=ubfit; lsmestimate g 1 1 1 / upper; run;", 1 },
+        .{ "proc plm restore=ubfit; lsmestimate nosuch 1 -1 / upper; run;", 1 },
+        // The additive store has no interaction to slice.
+        .{ "proc plm restore=ubfit; slice g / sliceby=g; run;", 1 },
+        .{ "proc plm restore=ubfit; slice g*h / sliceby=h; run;", 1 },
+    }) |case| {
+        var s: Fitted = .{ .arena = std.heap.ArenaAllocator.init(t.allocator) };
+        defer s.arena.deinit();
+        try unbalanced(&s);
+        diag.resetGap();
+        defer diag.resetGap();
+        var out: std.ArrayList(u8) = .empty;
+        const c = s.cx();
+        const result = plm.run(c, &out, try lex.tokenize(c.arena, case[0], c.diags));
+        try t.expect(std.meta.isError(result));
+        try t.expect(s.d.hasErrors());
+        try t.expectEqual(@as(usize, 0), out.items.len);
+        try t.expectEqual(case[1], diag.exitCode(diag.gapHit(), s.d.hasErrors()));
+    }
+    // Block store: interaction LS-means layout, unknown slice level, graphics.
+    for ([_]struct { []const u8, u8, bool }{
+        .{ "proc plm restore=BlockAnalysis; lsmeans a*b; run;", 2, false },
+        .{ "proc plm restore=BlockAnalysis; slice a*b / sliceby(b='9'); run;", 1, false },
+        .{ "proc plm restore=BlockAnalysis; slice a*b / sliceby(block='1'); run;", 1, false },
+        .{ "proc plm restore=BlockAnalysis; slice a*b / sliceby(b='1') diff; run;", 2, true },
+        .{ "proc plm restore=BlockAnalysis; lsmeans a / diff; run;", 2, true },
+    }) |case| {
+        var s: Fitted = .{ .arena = std.heap.ArenaAllocator.init(t.allocator) };
+        defer s.arena.deinit();
+        try blockFit(&s);
+        diag.resetGap();
+        defer diag.resetGap();
+        var graphs: proc.native_graphics.Session = .{ .arena = s.arena.allocator(), .io = t.io, .diags = &s.d, .enabled = true };
+        var out: std.ArrayList(u8) = .empty;
+        var c = s.cx();
+        if (case[2]) c.graphics = &graphs;
+        const result = plm.run(c, &out, try lex.tokenize(c.arena, case[0], c.diags));
+        try t.expect(std.meta.isError(result));
+        try t.expectEqual(@as(usize, 0), out.items.len);
+        try t.expectEqual(case[1], diag.exitCode(diag.gapHit(), s.d.hasErrors()));
+    }
+}
+
+test "STAT-PLM-007 missing-cell interaction model: non-estimable LS-means are refused, never printed" {
+    // Invented data with the (g=1,h=2) cell empty and model g h g*h: the
+    // LS-mean of g=1 averages over a cell the model cannot estimate. SAS
+    // reports it as Non-est; OpenSAS has no rank-deficient store, so the
+    // request must end as a loud gap with no LS-means listing at all.
+    var s: Fitted = .{ .arena = std.heap.ArenaAllocator.init(t.allocator) };
+    defer s.arena.deinit();
+    const a = s.arena.allocator();
+    s.lib = Library.init(a);
+    s.d = diag.Diagnostics.init(a);
+    const ds = try a.create(Dataset);
+    ds.* = Dataset.init(a, "hole");
+    for ([_][]const u8{ "g", "h", "y" }) |name| _ = try ds.addColumn(name, .num);
+    for ([_][3]f64{ .{ 1, 1, 1 }, .{ 1, 1, 3 }, .{ 2, 1, 5 }, .{ 2, 1, 6 }, .{ 2, 2, 8 }, .{ 2, 2, 12 } }) |r| try ds.appendRow(&.{ .{ .num = r[0] }, .{ .num = r[1] }, .{ .num = r[2] } });
+    try s.lib.put("hole", ds);
+    diag.resetGap();
+    defer diag.resetGap();
+    _ = s.exec(.glm, "proc glm data=hole noprint; class g h; model y = g h g*h; store holefit; run;") catch {};
+    var out: std.ArrayList(u8) = .empty;
+    const c = s.cx();
+    const result = plm.run(c, &out, try lex.tokenize(c.arena, "proc plm restore=holefit; lsmeans g / diff; run;", c.diags));
+    try t.expect(std.meta.isError(result));
+    try t.expect(s.d.hasErrors());
+    try t.expectEqual(@as(usize, 0), out.items.len);
+    try t.expect(diag.gapHit());
 }

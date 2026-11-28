@@ -1,0 +1,67 @@
+The PLM Procedure
+
+  Class Level Information
+ 
+Class    Levels    Values
+
+block         4    1 2 3 4 
+a             3    1 2 3   
+b             2    1 2     
+
+
+                  a Least Squares Means
+ 
+                 Standard
+a    Estimate       Error       DF    t Value    Pr > |t|
+
+1     32.8750      1.6457       15      19.98      <.0001
+2     34.1250      1.6457       15      20.74      <.0001
+3     25.7500      1.6457       15      15.65      <.0001
+
+
+             Differences of a Least Squares Means
+ 
+                       Standard
+a    _a    Estimate       Error       DF    t Value    Pr > |t|
+
+1    2      -1.2500      2.3274       15      -0.54      0.5991
+1    3       7.1250      2.3274       15       3.06      0.0079
+2    3       8.3750      2.3274       15       3.60      0.0026
+
+
+                         Least Squares Means Estimates
+ 
+                               Standard
+Effect    Label    Estimate       Error       DF    t Value    Tails      Pr > t
+
+a         Row 1      1.2500      2.3274       15       0.54    Upper      0.2995
+a         Row 2     15.5000      4.0311       15       3.85    Upper      0.0008
+
+The PLM Procedure
+
+  Class Level Information
+ 
+Class    Levels    Values
+
+block         4    1 2 3 4 
+a             3    1 2 3   
+b             2    1 2     
+
+
+ F Test for a*b Least Squares Means Slice
+ 
+          Num      Den
+Slice      DF       DF    F Value    Pr > F
+
+b 1         2       15       8.18    0.0040
+
+
+             Simple Differences of a*b Least Squares Means
+ 
+                                Standard
+Slice    a    _a    Estimate       Error       DF    t Value    Pr > |t|
+
+b 1      1    2      -1.0000      3.2914       15      -0.30      0.7654
+b 1      1    3      11.0000      3.2914       15       3.34      0.0045
+b 1      2    3      12.0000      3.2914       15       3.65      0.0024
+
