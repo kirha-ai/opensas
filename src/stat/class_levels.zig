@@ -24,6 +24,9 @@ pub const Options = struct {
     /// excludes a row. Caller performs PROC-specific FREQ truncation/exclusion;
     /// this helper deliberately does not truncate or normalize these counts.
     frequencies: ?[]const f64 = null,
+    /// CLASS / TRUNCATE (GLMMOD p.4238): levels use at most the first 16
+    /// characters of the formatted value. Default keeps full labels.
+    truncate: bool = false,
 };
 pub const Level = struct {
     /// Minimum internal value of this formatted group (owned if character).
@@ -152,7 +155,8 @@ pub fn buildValues(a: A, values: []const Value, column: data.Column, o: Options)
         if (original == .num and !std.math.isNan(original.num) and !std.math.isFinite(original.num)) return error.ExecError;
         const value: Value = if (original == .num and original.num == 0) .{ .num = 0 } else original;
         _ = text_scratch.reset(.retain_capacity);
-        const label = try labelFor(text_scratch.allocator(), column, value);
+        const full = try labelFor(text_scratch.allocator(), column, value);
+        const label = if (o.truncate) full[0..@min(full.len, 16)] else full;
         const found = if (raw_numeric) numeric.get(numericKey(value.num)) else labels.get(label);
         if (found) |index| {
             const level = &discovered.items[index];

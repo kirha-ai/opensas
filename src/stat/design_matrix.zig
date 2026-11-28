@@ -9,7 +9,7 @@ const Value = @import("../value.zig").Value;
 const levels = @import("class_levels.zig");
 const A = std.mem.Allocator;
 pub const Effect = struct { factors: []const usize, nested: []const usize = &.{} };
-pub const Spec = struct { response: usize, classes: []const usize = &.{}, effects: []const Effect, intercept: bool = true, order: levels.Order = .formatted, references: []const ?levels.Reference = &.{} };
+pub const Spec = struct { response: usize, classes: []const usize = &.{}, effects: []const Effect, intercept: bool = true, order: levels.Order = .formatted, references: []const ?levels.Reference = &.{}, truncate: bool = false };
 pub const Class = struct { column: usize, map: levels.Levels };
 pub const Column = struct {
     effect_name: []const u8,
@@ -133,7 +133,7 @@ pub fn build(a: A, ds: *const Dataset, rows: []const []const Value, s: Spec) dia
     const classes = try a.alloc(Class, s.classes.len);
     if (s.references.len != 0 and s.references.len != s.classes.len) return error.ExecError;
     for (s.classes, 0..) |ci, i| {
-        var map = try levels.build(a, ds, selected.items, ci, .{ .order = s.order });
+        var map = try levels.build(a, ds, selected.items, ci, .{ .order = s.order, .truncate = s.truncate });
         // MIXED REF= reorders a full-level singular design, never drops a
         // column. Empty references preserves every existing caller's order.
         if (s.references.len != 0) if (s.references[i]) |reference| {
