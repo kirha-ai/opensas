@@ -205,6 +205,19 @@ test "STAT-DISTANCE-001 user errors and loud gaps via captured diagnostics" {
         "proc distance data=s(where=(g='B' or x=1)) out=o; var interval(x); by g; id id; run;", // ID with a later BY group larger than the first
         "proc distance data=s(where=(x=1 or g='B')) out=o; var interval(x / std=std); by g; run;", // undefined scale inside a BY group (group A has one obs)
         "proc distance data=s out=o; var interval(x / std=std weights=2 to 1 by 1); run;", // non-increasing TO/BY list
+        "proc distance data=s out=o rankscore=index; var interval(x); run;",
+        "proc distance data=s out=o; var interval(x / order=desc); run;",
+        "proc distance data=s out=o absent=0; var interval(x); run;",
+        "proc distance data=s out=o; var anominal(c / absent='NA'); run;",
+        "proc distance data=s out=o reponly; var interval(x); run;",
+        "proc distance data=s out=o initial=mad; var interval(x); run;",
+        "proc distance data=s out=o; var interval(x); format id $8.; run;", // FORMAT statement in the step
+        "proc distance data=s out=o; var interval(x); freq f; freq w; run;", // repeated FREQ
+        "proc distance data=s out=o; var interval(x); weight w; weight f; run;", // repeated WEIGHT
+        "proc distance data=s out=o; var interval(x); id id; id c; run;", // repeated ID
+        "proc distance data=s out=o; var interval(x z / weights=-1 2); run;", // negative WEIGHTS=
+        "proc distance data=s out=o nostd nostd; var interval(x); run;", // repeated PROC option other than METHOD=/PREFIX=
+        "proc distance data=s(where=(x>100)) out=o; var interval(x); by g; copy c; run;", // empty BY input with COPY
     };
     for (gaps) |src| {
         diag.resetGap();
