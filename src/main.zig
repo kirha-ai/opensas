@@ -3194,6 +3194,14 @@ fn runProc(a: std.mem.Allocator, listing_out: *std.ArrayList(u8), lib: *sas.exec
         const robustreg_start = out.items.len;
         try sas.robustreg.run(robustreg_context, out, toks);
         if (out.items.len > robustreg_start) try g.emitFootnotes(a, out);
+    } else if (eqi(proc, "icphreg")) {
+        var body: std.ArrayList(u8) = .empty;
+        try sas.icphreg.run(pcx, &body, toks);
+        if (body.items.len > 0) {
+            try g.emitTitles(a, out);
+            try out.appendSlice(a, body.items);
+            try g.emitFootnotes(a, out);
+        }
     } else if (eqi(proc, "lifetest")) {
         var body: std.ArrayList(u8) = .empty;
         try sas.lifetest.run(pcx, &body, toks);

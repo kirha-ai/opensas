@@ -1,0 +1,67 @@
+
+The ICPHREG Procedure
+
+          Model Information
+
+Data Set                     WORK.HIV
+Left Boundary                    Left
+Right Boundary                  Right
+Baseline Hazard    Piecewise Constant
+
+
+Number of Observations Read             31
+Number of Observations Used             31
+Right Censored Observations             13
+Interval Censored Observations           5
+Left Censored Observations              13
+
+
+  Class Level Information
+ 
+Name       Levels    Values
+
+Stage           2    1 0   
+
+
+  Constant Hazard Time Intervals
+ 
+      Interval          Hazard
+  [Lower      Upper)    Parameter
+
+       0          10    Haz1     
+      10       Infty    Haz2     
+
+
+          Optimization Information
+
+Optimization Technique        Newton-Raphson
+Parameters in Optimization    3             
+
+      Convergence criterion (ABSGCONV=0.00001) satisfied.       
+
+
+                 Fit Statistics
+
+-2 Log Likelihood                         31.801
+AIC (Smaller is Better)                   37.801
+AICC (Smaller is Better)                  38.690
+BIC (Smaller is Better)                   42.103
+
+
+                       Analysis of Maximum Likelihood Parameter Estimates
+ 
+                                        Standard       95% Confidence          Chi-
+Effect       Stage    DF    Estimate       Error           Limits            Square    Pr > ChiSq
+
+Haz1                   1      0.0128      0.0110      0.0000      0.0344                         
+Haz2                   1      0.1068      0.0489      0.0109      0.2027                         
+Stage        1         1      1.7270      0.6003      0.5504      2.9037       8.28        0.0040
+Stage        0         0      0.0000                                                             
+
+
+            Hazard Ratios for Stage
+ 
+                   Point     95% Wald Confidence
+Description     Estimate           Limits
+
+Stage 1 vs 0       5.624       1.734      18.241
