@@ -1,6 +1,10 @@
 # corpus assertions
 row FREQHAND|overflow-bound-rev|S_COMOR|1312.0~1e-12
-row FREQHAND|overflow-bound-rev|M0_COMOR|1312.000938086304~1e-12
+# STAT-BEST-001: BEST32. of a value with 4 integer digits shows 16 characters
+# = 10 decimals, truncated (SAS 9.4 prints 1312.000938086304 as 1312.0009380863),
+# so the printable bound is one unit of the 10th decimal: 1e-10. The 1e-12
+# check moves to the exact difference M0_COMOR-1312 (last row).
+row FREQHAND|overflow-bound-rev|M0_COMOR|1312.000938086304~1e-10
 row FREQHAND|overflow-bound-rev|XPL_COMOR|0.7495309568480323~1e-12
 row FREQHAND|overflow-bound-rev|XPT_COMOR|0.4996873045653457~1e-12
 row FREQHAND|overflow-bound-rev|XMP_COMOR|0.4996873045653594~1e-12
@@ -9,3 +13,4 @@ row FREQHAND|overflow-bound-rev|XP2B_COMOR|1.0~1e-12
 row FREQHAND|overflow-bound-rev|XP2C_COMOR|1.0~1e-12
 row FREQHAND|overflow-bound-rev|XL_COMOR|0.012739265526168914~1.273926553e-10
 row FREQHAND|overflow-bound-rev|XU_COMOR|71.96925382994998~7.196925383e-07
+row FREQHAND|overflow-bound-rev|M0_COMOR-1312|0.000938086304~1e-12

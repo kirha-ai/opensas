@@ -6,6 +6,10 @@
 data _null_;
   big = comb(1000,500);
   put big= best20.;        /* representable ~2.7e299, not missing */
+  /* STAT-BEST-001: SAS 9.4 BEST20. prints the correctly rounded binomial
+     (7E19D4965077DFEB) as 2.7028824094543E299 (15-character mantissa). SAS's
+     own COMB returns 7E19D4965077E402 (printed ...547E299), ~1.4e-13 relative
+     off the true value; the expectation pins the true binomial's text. */
   a = comb(5,2);  put a=;  /* 10 */
   b = comb(52,5); put b=;  /* 2598960 */
   c = comb(10,10); put c=; /* 1 */
