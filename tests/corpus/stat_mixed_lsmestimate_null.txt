@@ -1,0 +1,4 @@
+# corpus assertions
+words The Mixed Procedure Least Squares Means Estimates Standard Effect Label Estimate Error DF t Value Pr > |t| Alpha Lower Upper group A 2.0000 1.2910 1 1.55 0.3649 0.05 -14.4036 18.4036 group B 6.0000 1.0541 1 4.74 0.1323 0.05 -7.3935 19.3935 Contrasts Num Den Label DF DF F Value Pr > F A 2 1 12.45 0.1965
+stderr-count 0 ERROR:
+stderr-count 0 WARNING:

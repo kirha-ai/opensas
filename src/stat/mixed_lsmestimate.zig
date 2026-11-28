@@ -12,7 +12,7 @@ const coded = @import("design_matrix.zig");
 const linear = @import("mixed_contrasts_kernel.zig");
 const eq = std.ascii.eqlIgnoreCase;
 pub const Row = struct { label: []const u8, values: []const f64, divisor: f64 = 1, explicit_label: bool = false };
-pub const Request = struct { effect: usize, name: []const u8, line: usize, rows: []const Row, divisors: []const f64 = &.{1}, df: ?f64 = null, alpha: f64 = 0.05, cl: bool = false, singular: f64 = 1e-4, adjust: enum { none, bon, sidak } = .none, tail: linear.Tail = .two, joint: bool = false, joint_only: bool = false, joint_label: ?[]const u8 = null };
+pub const Request = struct { effect: usize, name: []const u8, line: usize, rows: []const Row, divisors: []const f64 = &.{1}, test_values: []const f64 = &.{0}, df: ?f64 = null, alpha: f64 = 0.05, cl: bool = false, singular: f64 = 1e-4, adjust: enum { none, bon, sidak } = .none, tail: linear.Tail = .two, joint: bool = false, joint_only: bool = false, joint_label: ?[]const u8 = null };
 pub const Estimate = struct { label: []const u8, k: []const f64, l: []const f64, inference: linear.Estimate, adjusted_p: ?f64 = null, adjusted_lower: ?f64 = null, adjusted_upper: ?f64 = null };
 pub const Result = struct { request: Request, rows: []const Estimate, joint: ?linear.Contrast = null };
 fn at(t: []const lex.Token, i: usize, tag: lex.Tag) bool {
@@ -135,6 +135,21 @@ pub fn parse(cx: proc.ProcCtx, m: model.Spec, statements: anytype) diag.Error![]
                 };
                 continue;
             }
+            if (eq(option, "testvalue") or eq(option, "testmean")) {
+                if (!at(t, i, .eq)) return bad(cx, statement.line, "TESTVALUE requires a list");
+                i += 1;
+                var values: std.ArrayList(f64) = .empty;
+                while (at(t, i, .number) or at(t, i, .minus) or at(t, i, .plus) or at(t, i, .dot)) {
+                    try values.append(cx.arena, (try numeric(cx, t, &i, statement.line, true)) orelse 0);
+                    if (at(t, i, .comma)) {
+                        i += 1;
+                        if (!(at(t, i, .number) or at(t, i, .minus) or at(t, i, .plus) or at(t, i, .dot))) return bad(cx, statement.line, "missing test value after comma");
+                    }
+                }
+                if (values.items.len == 0) return bad(cx, statement.line, "empty TESTVALUE list");
+                request.test_values = values.items;
+                continue;
+            }
             if (eq(option, "divisor")) {
                 if (!at(t, i, .eq)) return bad(cx, statement.line, "DIVISOR requires a list");
                 i += 1;
@@ -163,7 +178,7 @@ pub fn parse(cx: proc.ProcCtx, m: model.Spec, statements: anytype) diag.Error![]
                 } else request.singular = v;
                 continue;
             }
-            for ([_][]const u8{ "adjdfe", "at", "bylevel", "om", "obsmargins", "e", "elsm", "stepdown", "testvalue", "testmean", "chisq", "cov", "corr", "seed", "plot", "plots" }) |known| if (eq(option, known)) return proc.failGap(cx.diags, statement.line, "PROC MIXED: LSMESTIMATE option {s} is not implemented", .{option});
+            for ([_][]const u8{ "adjdfe", "at", "bylevel", "om", "obsmargins", "e", "elsm", "stepdown", "chisq", "cov", "corr", "seed", "plot", "plots" }) |known| if (eq(option, known)) return proc.failGap(cx.diags, statement.line, "PROC MIXED: LSMESTIMATE option {s} is not implemented", .{option});
             // The common chapter explicitly excludes MIXED from EXP/ILINK/CATEGORY.
             // PLOTS remains a gap: the MIXED summary lists it, while common
             // graphical details describe only Bayesian consumers.
@@ -200,6 +215,21 @@ pub fn compute(cx: proc.ProcCtx, m: model.Spec, r: random.Spec, x: fixed.Design,
             if (request.tail != .lower) inferred.lower = inferred.estimate;
             if (request.tail != .upper) inferred.upper = inferred.estimate;
         }
+        // S154 physical p.520: TESTVALUE changes the null hypothesis, never
+        // the estimate or its confidence limits. Missing/list carry-forward
+        // semantics are independent of DIVISOR scaling of K.
+        const null_value = request.test_values[@min(index, request.test_values.len - 1)];
+        if (inferred.estimable and inferred.se != null and inferred.se.? > 0 and null_value != 0) {
+            const statistic = (inferred.estimate.? - null_value) / inferred.se.?;
+            if (!std.math.isFinite(statistic)) return proc.failGap(cx.diags, request.line, "PROC MIXED: LSMESTIMATE null hypothesis exceeds numerical range", .{});
+            const two = @import("../functions.zig").betaI(df / (df + statistic * statistic), df / 2, 0.5);
+            inferred.t = statistic;
+            inferred.p = switch (request.tail) {
+                .two => two,
+                .lower => if (statistic < 0) two / 2 else 1 - two / 2,
+                .upper => if (statistic > 0) two / 2 else 1 - two / 2,
+            };
+        }
         rows[index] = .{ .label = row.label, .k = k, .l = l, .inference = inferred };
         if (request.adjust != .none) {
             if (!inferred.estimable) return proc.failGap(cx.diags, request.line, "PROC MIXED: multiplicity with nonestimable LSMESTIMATE rows is not verified", .{});
@@ -215,8 +245,31 @@ pub fn compute(cx: proc.ProcCtx, m: model.Spec, r: random.Spec, x: fixed.Design,
             }
         }
     }
-    const combined = if (request.joint) linear.contrast(cx.arena, joint, joint_l, rows.len, df, request.singular) catch |err| return proc.failGap(cx.diags, request.line, "PROC MIXED: joint LSMESTIMATE boundary is unavailable ({t})", .{err}) else null;
+    const combined = if (request.joint and hasNonzeroNull(request)) try jointNull(cx, joint, joint_l, rows.len, df, request, m.options.singular) else if (request.joint) linear.contrast(cx.arena, joint, joint_l, rows.len, df, request.singular) catch |err| return proc.failGap(cx.diags, request.line, "PROC MIXED: joint LSMESTIMATE boundary is unavailable ({t})", .{err}) else null;
     return .{ .request = request, .rows = rows, .joint = combined };
+}
+
+fn hasNonzeroNull(request: Request) bool {
+    for (0..request.rows.len) |i| if (request.test_values[@min(i, request.test_values.len - 1)] != 0) return true;
+    return false;
+}
+fn jointNull(cx: proc.ProcCtx, fitted: linear.Joint, coefficients: []const f64, count: usize, df: f64, request: Request, rank_tolerance: f64) diag.Error!linear.Contrast {
+    const hypothesis = @import("linear_hypothesis.zig");
+    const rows = try cx.arena.alloc(hypothesis.Row, count);
+    for (rows, 0..) |*row, i| {
+        const l = coefficients[i * fitted.p ..][0..fitted.p];
+        // Keep the MIXED-specific estimability policy, before the shared
+        // covariance/rank solver checks consistency of dependent hypotheses.
+        if (!linear.estimable(fitted, l, request.singular)) return .{ .estimable = false, .den_df = df };
+        row.* = .{ .coefficients = l, .rhs = request.test_values[@min(i, request.test_values.len - 1)] };
+    }
+    const result = hypothesis.evaluate(cx.arena, .{ .estimates = fitted.coefficients, .covariance_kernel = fitted.covariance, .alias_transpose = fitted.aliases, .scale = 1, .denominator_df = df, .estimability_tolerance = request.singular, .rank_tolerance = rank_tolerance }, rows, null) catch return proc.failGap(cx.diags, request.line, "PROC MIXED: joint LSMESTIMATE null hypothesis is numerically unavailable", .{});
+    return switch (result.status) {
+        .estimable => .{ .estimable = true, .num_df = result.rank, .den_df = df, .f = result.f, .p = result.f_probability },
+        .nonestimable => .{ .estimable = false, .den_df = df },
+        .zero_rank => .{ .estimable = true, .den_df = df },
+        .inconsistent => proc.failGap(cx.diags, request.line, "PROC MIXED: inconsistent dependent LSMESTIMATE null hypotheses are not implemented", .{}),
+    };
 }
 
 pub fn publishRouted(cx: proc.ProcCtx, out: *std.ArrayList(u8), m: model.Spec, r: random.Spec, x: fixed.Design, z: random.Design, fitted: anytype, requests: []const Request, route: ?*@import("mixed_ods_route.zig").Router) diag.Error!void {
