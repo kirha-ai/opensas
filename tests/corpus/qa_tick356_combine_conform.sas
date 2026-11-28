@@ -57,8 +57,9 @@ data _null_; merge a3 b3; put "S3 " x= y= z=; run;
 data _null_; set a3; set b3; put "S4 " x= y= z=; run;
 
 /* S5 UPDATE: a MISSING value in the transaction does not overwrite the master,
-   a present value does. A lone "." read into a CHARACTER variable is the
-   one-byte value ".", NOT a missing, so it does overwrite. */
+   a present value does. A lone "." read by list input into a $ (not
+   $CHAR) CHARACTER variable is a blank, i.e. missing (BUG-inputcharperiod,
+   verified against a SAS 9.4 run), so it does not overwrite. */
 data m5; input id x y $; datalines;
 1 10 aa
 2 20 bb

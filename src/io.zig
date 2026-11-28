@@ -227,11 +227,12 @@ fn listCharValue(pdv: *Pdv, slot: usize, informat: ?[]const u8, tok: []const u8)
     // fails loud instead of copying the token verbatim (D-002).
     format.checkCharInformat(informatName(informat orelse ""));
     const w = format.parseSpec(informat orelse "").w;
-    if (w > 0) {
-        if (vr.len == 0) vr.len = w;
-        return if (tok.len > w) tok[0..w] else tok;
-    }
-    if (vr.len == 0) vr.len = 8; // BUG-inputlistlen default
+    if (vr.len == 0) vr.len = if (w > 0) w else 8; // BUG-inputlistlen default
+    // BUG-inputcharperiod: the $w. informat (and bare `$` list input) reads a
+    // field that is a single period as a blank (missing) value; only
+    // $CHARw. keeps the period verbatim.
+    if (std.mem.eql(u8, tok, ".") and !eqi(informatName(informat orelse ""), "char")) return "";
+    if (w > 0) return if (tok.len > w) tok[0..w] else tok;
     return tok;
 }
 
@@ -3214,6 +3215,14 @@ test "list input from datalines into the PDV" {
     try std.testing.expectEqualStrings("Bo", pdv.get("name").?.str);
     try std.testing.expect(pdv.get("age").?.isMissing());
     try std.testing.expect(pdv.get("height").?.isMissing());
+
+    // BUG-inputcharperiod (STAT-INBREED-001): a lone `.` for a `$` variable
+    // is a blank; $CHAR keeps it.
+    _ = try readList(&pdv, &items, &[_][]const u8{". 1 2"}, 0, null, false, false, null);
+    try std.testing.expectEqualStrings("", pdv.get("name").?.str);
+    const keep = [_]ast.InputItem{.{ .name = "raw", .type = .char, .informat = "$char8." }};
+    _ = try readList(&pdv, &keep, &[_][]const u8{"."}, 0, null, false, false, null);
+    try std.testing.expectEqualStrings(".", pdv.get("raw").?.str);
 }
 
 test "delimited (DLM/DSD) infile input (G-infile)" {

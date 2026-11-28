@@ -11,7 +11,7 @@ S3 x=3 y=4 z=.
 S3 x=5 y=6 z=.
 S4 x=9 y=2 z=8
 S5 id=1 x=10 y=[cc ]
-S5 id=2 x=99 y=[. ]
+S5 id=2 x=99 y=[bb ]
 S6 D g=3 v=1  f=1  l=0
 S6 D g=3 v=2  f=0  l=1
 S6 D g=1 v=3  f=1  l=1
