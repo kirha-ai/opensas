@@ -1,0 +1,9 @@
+# corpus assertions
+empty-listing
+stderr-count 1 PROC CLUSTER: the METHOD= option must be specified
+stderr-count 1 PROC CLUSTER: missing values are not permitted in the lower triangle of a TYPE=DISTANCE data set (row 3, variable Chicago)
+stderr-count 1 PROC CLUSTER: a TYPE=DISTANCE data set needs as many rows as distance variables (9 rows, 10 variables)
+stderr-count 1 PROC CLUSTER: variable City in the VAR statement must be numeric
+stderr-count 1 PROC CLUSTER: variable Town in the ID statement is not on the input data set
+stderr-count 1 PROC CLUSTER: the RMSSTD statement requires a FREQ statement
+stderr-count 0 not implemented

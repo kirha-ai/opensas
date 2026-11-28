@@ -1,0 +1,3 @@
+# corpus assertions
+empty-listing
+stderr-count 1 PROC CLUSTER: METHOD=density is not implemented (STAT-CLUSTER-003)

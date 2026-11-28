@@ -31,6 +31,7 @@ pub const npar1way = @import("stat/npar1way.zig");
 pub const plm = @import("stat/plm.zig");
 pub const phreg = @import("stat/phreg.zig");
 pub const lifetest = @import("stat/lifetest.zig");
+pub const cluster = @import("stat/cluster.zig");
 pub const modeclus = @import("stat/modeclus.zig");
 pub const candisc = @import("stat/candisc.zig");
 pub const cancorr = @import("stat/cancorr.zig");
@@ -99,6 +100,7 @@ test {
     _ = @import("stat/plm.zig");
     _ = @import("stat/phreg.zig");
     _ = @import("stat/lifetest.zig");
+    _ = @import("stat/cluster.zig");
     _ = @import("stat/modeclus.zig");
     _ = @import("stat/candisc.zig");
     _ = @import("stat/cancorr.zig");
