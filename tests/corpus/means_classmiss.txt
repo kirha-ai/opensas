@@ -6,9 +6,9 @@ g   _TYPE_   _FREQ_    m    s   cnt
 g   _TYPE_   _FREQ_        m      s   cnt
 
 .        0        4   264.75   1059     4
-.        1        1      999    999     1
-1        1        2       15     30     2
-2        1        1       30     30     1
+.        1        1   999.00    999     1
+1        1        2    15.00     30     2
+2        1        1    30.00     30     1
                                        The MEANS Procedure
 
                               Analysis Variable : x

@@ -52,6 +52,6 @@ Obs   a    b    c    count_   PERCENT
   2   a1   b1   c2        1      12.5
   3   a1   b2   c1        1      12.5
   4   a1   b2   c2        1      12.5
-  5   a2   b1   c1        2        25
+  5   a2   b1   c1        2      25.0
   6   a2   b2   c1        1      12.5
   7   a2   b2   c2        1      12.5

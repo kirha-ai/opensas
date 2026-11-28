@@ -1,6 +1,6 @@
 mean_of_means
 
- 36.666666667
+      36.6667
 trt   n_subj
 
 A          4

@@ -12,9 +12,9 @@ _TYPE_   _FREQ_   x     y
 _TYPE_   _FREQ_   x_Mean   x_Max
 
      0        3        2       3
-_TYPE_   _FREQ_              x
+_TYPE_   _FREQ_         x
 
-     0        6   1.8333333333
+     0        6   1.83333
 g   _TYPE_   _FREQ_   mx    x
 
 .        0        5   30   50

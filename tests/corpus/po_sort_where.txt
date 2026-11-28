@@ -1,4 +1,4 @@
 usubjid   aval
 
 S02       12.4
-S04         15
+S04       15.0
