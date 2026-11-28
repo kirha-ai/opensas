@@ -1,0 +1,5 @@
+# corpus assertions
+empty-listing
+stderr-count 2 only balanced square lattices (optionally repeated
+stderr-count 1 rectangular lattices (block mean square above
+stderr-count 1 listing format for value 0.00000199

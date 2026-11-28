@@ -1,0 +1,310 @@
+Q1 soy
+
+The Lattice Procedure
+
+                  Analysis of Variance for Yield
+ 
+                                                 Sum of        Mean
+Source                                   DF     Squares      Square
+
+Replications                              1      212.18      212.18
+Blocks within Replications (Adj.)         8      501.84     62.7300
+   Component B                            8      501.84     62.7300
+Treatments (Unadj.)                      24      559.28     23.3033
+Intra Block Error                        16      218.48     13.6550
+Randomized Complete Block Error          24      720.32     30.0133
+Total                                    49     1491.78     30.4445
+
+
+         Additional Statistics for Yield
+
+Variance of Means in Same Block           15.7915
+Variance of Means in Different Blocks     17.9280
+Average of Variance                       17.2159
+LSD at .01 Level                          12.1189
+LSD at .05 Level                           8.7959
+Efficiency Relative to RCBD                174.34
+
+
+  Adjusted Treatment
+   Means for Yield
+ 
+Treatment        Mean
+
+        1     19.0681
+        2     16.9728
+        3     14.6463
+        4     14.7687
+        5     12.8470
+        6     13.1701
+        7      9.0748
+        8      6.7483
+        9      8.3707
+       10      8.4489
+       11     23.5511
+       12     12.4558
+       13     12.6293
+       14     20.7517
+       15     19.3299
+       16     12.6224
+       17     10.5272
+       18     10.7007
+       19      7.3231
+       20     11.4013
+       21     11.6259
+       22     18.5306
+       23     12.2041
+       24     17.3265
+       25     15.4048
+Q2 triple 3x3
+
+The Lattice Procedure
+
+                  Analysis of Variance for Weight
+ 
+                                                 Sum of        Mean
+Source                                   DF     Squares      Square
+
+Replications                              2     0.06269     0.03134
+Blocks within Replications (Adj.)         6      1.0256      0.1709
+   Component B                            6      1.0256      0.1709
+Treatments (Unadj.)                       8      2.9981      0.3748
+Intra Block Error                        10      1.0983      0.1098
+Randomized Complete Block Error          16      2.1238      0.1327
+Total                                    26      5.1846      0.1994
+
+
+        Additional Statistics for Weight
+
+Variance of Means in Same Block           0.08194
+Variance of Means in Different Blocks     0.08630
+Average of Variance                       0.08303
+LSD at .01 Level                           0.9132
+LSD at .05 Level                           0.6420
+Efficiency Relative to RCBD                106.58
+
+
+  Adjusted Treatment
+   Means for Weight
+ 
+Treatment        Mean
+
+        1      1.7737
+        2      1.8663
+        3      1.9916
+        4      1.6966
+        5      1.0066
+        6      1.9634
+        7      1.2584
+        8      1.4062
+        9      1.4970
+Q3 simple 3x3 groups 1 and 2
+
+The Lattice Procedure
+
+                  Analysis of Variance for Weight
+ 
+                                                 Sum of        Mean
+Source                                   DF     Squares      Square
+
+Replications                              1     0.05227     0.05227
+Blocks within Replications (Adj.)         4      0.3901     0.09752
+   Component B                            4      0.3901     0.09752
+Treatments (Unadj.)                       8      2.9794      0.3724
+Intra Block Error                         4      0.6655      0.1664
+Randomized Complete Block Error           8      1.0556      0.1319
+Total                                    17      4.0873      0.2404
+
+
+        Additional Statistics for Weight
+
+Variance of Difference                     0.1664
+LSD at .01 Level                           1.3686
+LSD at .05 Level                           0.9406
+Efficiency Relative to RCBD               79.3084
+
+
+   Treatment Means
+      for Weight
+ 
+Treatment        Mean
+
+        1      1.6950
+        2      2.0500
+        3      2.1500
+        4      1.6250
+        5      0.9600
+        6      1.9450
+        7      0.9400
+        8      1.5250
+        9      1.6950
+Q4 simple 3x3 groups 2 and 4 renumbered
+
+The Lattice Procedure
+
+                  Analysis of Variance for Weight
+ 
+                                                 Sum of        Mean
+Source                                   DF     Squares      Square
+
+Replications                              1    0.000200    0.000200
+Blocks within Replications (Adj.)         4      0.7503      0.1876
+   Component B                            4      0.7503      0.1876
+Treatments (Unadj.)                       8      1.6011      0.2001
+Intra Block Error                         4      0.1260     0.03151
+Randomized Complete Block Error           8      0.8763      0.1095
+Total                                    17      2.4776      0.1457
+
+
+        Additional Statistics for Weight
+
+Variance of Means in Same Block           0.04025
+Variance of Means in Different Blocks     0.04899
+Average of Variance                       0.04462
+LSD at .01 Level                           0.9725
+LSD at .05 Level                           0.5865
+Efficiency Relative to RCBD                245.51
+
+
+  Adjusted Treatment
+   Means for Weight
+ 
+Treatment        Mean
+
+        1      1.6894
+        2      1.8315
+        3      1.9191
+        4      1.7023
+        5      0.8156
+        6      1.6821
+        7      1.6314
+        8      1.2986
+        9      1.5000
+R1 soy cov
+
+The Lattice Procedure
+
+                  Analysis of Variance for Yield
+ 
+                                                 Sum of        Mean
+Source                                   DF     Squares      Square
+
+Replications                              1      212.18      212.18
+Blocks within Replications (Adj.)         8      501.84     62.7300
+   Component B                            8      501.84     62.7300
+Treatments (Unadj.)                      24      559.28     23.3033
+Intra Block Error                        16      218.48     13.6550
+Randomized Complete Block Error          24      720.32     30.0133
+Total                                    49     1491.78     30.4445
+
+
+         Additional Statistics for Yield
+
+Variance of Means in Same Block           15.7915
+Variance of Means in Different Blocks     17.9280
+Average of Variance                       17.2159
+LSD at .01 Level                          12.1189
+LSD at .05 Level                           8.7959
+Efficiency Relative to RCBD                174.34
+
+
+  Adjusted Treatment
+   Means for Yield
+ 
+Treatment        Mean
+
+        1     19.0681
+        2     16.9728
+        3     14.6463
+        4     14.7687
+        5     12.8470
+        6     13.1701
+        7      9.0748
+        8      6.7483
+        9      8.3707
+       10      8.4489
+       11     23.5511
+       12     12.4558
+       13     12.6293
+       14     20.7517
+       15     19.3299
+       16     12.6224
+       17     10.5272
+       18     10.7007
+       19      7.3231
+       20     11.4013
+       21     11.6259
+       22     18.5306
+       23     12.2041
+       24     17.3265
+       25     15.4048
+
+
+              Analysis of Covariance for Yield and Y3
+ 
+                                                 Sum of        Mean
+Source                                   DF    Products     Product
+
+Replications                              1      106.38      106.38
+Blocks within Replications (Adj.)         8      250.25     31.2807
+   Component B                            8      250.25     31.2807
+Treatments (Unadj.)                      24      280.48     11.6867
+Intra Block Error                        16      109.55      6.8468
+Randomized Complete Block Error          24      359.79     14.9914
+Total                                    49      746.66     15.2379
+
+
+                    Analysis of Variance for Y3
+ 
+                                                 Sum of        Mean
+Source                                   DF     Squares      Square
+
+Replications                              1     53.3397     53.3397
+Blocks within Replications (Adj.)         8      124.80     15.5996
+   Component B                            8      124.80     15.5996
+Treatments (Unadj.)                      24      141.16      5.8816
+Intra Block Error                        16     55.0902      3.4431
+Randomized Complete Block Error          24      179.89      7.4953
+Total                                    49      374.39      7.6405
+
+
+          Additional Statistics for Y3
+
+Variance of Means in Same Block            3.9798
+Variance of Means in Different Blocks      4.5164
+Average of Variance                        4.3375
+LSD at .01 Level                           6.0830
+LSD at .05 Level                           4.4151
+Efficiency Relative to RCBD                172.80
+
+
+  Adjusted Treatment
+     Means for Y3
+ 
+Treatment        Mean
+
+        1      9.7293
+        2      8.6949
+        3      7.3262
+        4      7.5831
+        5      6.6332
+        6      6.5876
+        7      4.7675
+        8      3.6131
+        9      4.1914
+       10      4.4558
+       11     11.9616
+       12      6.2130
+       13      6.5228
+       14     10.5654
+       15      9.6513
+       16      6.5180
+       17      5.4837
+       18      5.3650
+       19      3.8718
+       20      5.9219
+       21      5.8117
+       22      9.4916
+       23      6.3372
+       24      8.6655
+       25      7.9299

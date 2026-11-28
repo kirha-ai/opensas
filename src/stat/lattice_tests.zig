@@ -244,8 +244,8 @@ test "STAT-LATTICE-001 design validation and missing values" {
     bad = pigs;
     bad[4][2] = 1.5;
     try std.testing.expectError(error.InvalidDesignValue, lattice.design(a, try column(a, 0, &bad), try column(a, 1, &bad), try column(a, 2, &bad)));
-    // Two groups only: partially balanced, not implemented here.
-    try std.testing.expectError(error.NotBalancedSquare, lattice.design(a, try column(a, 0, pigs[0..18]), try column(a, 1, pigs[0..18]), try column(a, 2, pigs[0..18])));
+    // Two groups only: a partially balanced square lattice (STAT-LATTICE-002).
+    try expectEqual(@as(usize, 2), (try lattice.design(a, try column(a, 0, pigs[0..18]), try column(a, 1, pigs[0..18]), try column(a, 2, pigs[0..18]))).m);
     // A treatment twice in one group.
     bad = pigs;
     bad[1][2] = 1;
@@ -437,4 +437,160 @@ test "STAT-LATTICE-001 no recovery when the block mean square is below the intra
     try approx(73.7633, r.efficiency, 0.00005);
     const means = [_]f64{ 1.1500, 2.2750, 3.1500, 4.2750, 5.0750, 6.2500, 7.3250, 8.1250, 9.1750 };
     for (means, r.means) |want, got| try approx(want, got, 0.00005);
+}
+
+// Example 75.1 (p.5505): Treatment Yield pairs, Group 1..2, Block 1..5, five
+// plots per block in input order (Cochran and Cox 1957, p.406).
+const soy = [_]f64{
+    1,  6,  2,  7,  3,  5,  4,  8,  5,  6,  6,  16, 7,  12, 8,  12, 9,  13, 10, 8,
+    11, 17, 12, 7,  13, 7,  14, 9,  15, 14, 16, 18, 17, 16, 18, 13, 19, 13, 20, 14,
+    21, 14, 22, 15, 23, 11, 24, 14, 25, 14, 1,  24, 6,  13, 11, 24, 16, 11, 21, 8,
+    2,  21, 7,  11, 12, 14, 17, 11, 22, 23, 3,  16, 8,  4,  13, 12, 18, 12, 23, 12,
+    4,  17, 9,  10, 14, 30, 19, 9,  24, 23, 5,  15, 10, 15, 15, 22, 20, 16, 25, 19,
+};
+
+test "STAT-LATTICE-002 partially balanced square lattice matches Example 75.1" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var rows: [50][4]f64 = undefined;
+    for (&rows, 0..) |*r, i| r.* = .{ @floatFromInt(i / 25 + 1), @floatFromInt(i % 25 / 5 + 1), soy[2 * i], soy[2 * i + 1] };
+    const d = try lattice.design(a, try column(a, 0, &rows), try column(a, 1, &rows), try column(a, 2, &rows));
+    try expectEqual(@as(usize, 5), d.k);
+    try expectEqual(@as(usize, 2), d.m);
+    const y = try a.alloc(f64, rows.len);
+    for (rows, y) |p, *v| v.* = p[3];
+    const r = try lattice.analyze(a, d, y);
+    try expect(r.partial and r.adjusted);
+    try std.testing.expectEqualSlices(usize, &.{ 1, 8, 8, 24, 16, 24, 49 }, &r.df);
+    const ss = [_]f64{ 212.18, 501.84, 501.84, 559.28, 218.48, 720.32, 1491.78 };
+    for (ss, r.ss) |want, got| try approx(want, got, 0.005);
+    const ms = [_]f64{ 212.18, 62.7300, 62.7300, 23.3033, 13.6550, 30.0133, 30.4445 };
+    for (ms, r.ms) |want, got| try approx(want, got, 0.00005);
+    try approx(15.7915, r.var_same, 0.00005);
+    try approx(17.9280, r.var_diff, 0.00005);
+    try approx(17.2159, r.var_avg, 0.00005);
+    try approx(12.1189, r.lsd01, 0.00005);
+    try approx(8.7959, r.lsd05, 0.00005);
+    try approx(174.34, r.efficiency, 0.005);
+    const means = [_]f64{ 19.0681, 16.9728, 14.6463, 14.7687, 12.8470, 13.1701, 9.0748, 6.7483, 8.3707, 8.4489, 23.5511, 12.4558, 12.6293, 20.7517, 19.3299, 12.6224, 10.5272, 10.7007, 7.3231, 11.4013, 11.6259, 18.5306, 12.2041, 17.3265, 15.4048 };
+    for (means, r.means) |want, got| try approx(want, got, 0.00005);
+}
+
+test "STAT-LATTICE-002 simple 2x2 lattice hand calculation" {
+    // k = 2, m = 2: groups {1,2|3,4} and {1,3|2,4}. Invented y.
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const rows = [_][4]f64{
+        .{ 1, 1, 1, 10 }, .{ 1, 1, 2, 12 }, .{ 1, 2, 3, 9 }, .{ 1, 2, 4, 15 },
+        .{ 2, 1, 1, 11 }, .{ 2, 1, 3, 7 },  .{ 2, 2, 2, 14 }, .{ 2, 2, 4, 16 },
+    };
+    const d = try lattice.design(a, try column(a, 0, &rows), try column(a, 1, &rows), try column(a, 2, &rows));
+    const y = try a.alloc(f64, rows.len);
+    for (rows, y) |p, *v| v.* = p[3];
+    const r = try lattice.analyze(a, d, y);
+    // G = 94, CF = 1104.5, sum y^2 = 1172 -> total 67.5. Reps 46, 48:
+    // 4420/4 - CF = 0.5. Treatments 21, 26, 16, 31: 2334/2 - CF = 62.5.
+    // Blocks 22, 24 | 18, 30; C_b = sum T - 2B: 3, -1 | 1, -3; blocks adj =
+    // 20/(2*2*1) - (2^2 + 2^2)/(4*2*1) = 5 - 1 = 4; intra = 67.5 - 0.5 -
+    // 62.5 - 4 = 0.5 on (k-1)(mk-k-1) = 1 df.
+    try std.testing.expectEqualSlices(usize, &.{ 1, 2, 2, 3, 1, 3, 7 }, &r.df);
+    for ([_]f64{ 0.5, 4, 4, 62.5, 0.5, 4.5, 67.5 }, r.ss) |want, got| try approx(want, got, 1e-9);
+    // Eb = 2, Ee = 0.5: w = 2, w' = 1/(2*2 - 0.5) = 2/7, mu = (12/7) /
+    // (2 (2 + 2/7)) = 3/8. 2Ee/m = 0.5: same block 0.5(1 + 3/8) = 0.6875,
+    // different 0.5(1 + 3/4) = 0.875, average 0.5(1 + 4(3/8)/3) = 0.75;
+    // efficiency = 1.5 / (m/2 * 0.75) = 200%.
+    try expect(r.partial and r.adjusted);
+    try approx(0.6875, r.var_same, 1e-12);
+    try approx(0.875, r.var_diff, 1e-12);
+    try approx(0.75, r.var_avg, 1e-12);
+    try approx(200, r.efficiency, 1e-9);
+    // t(0.975, 1) = 12.706205: LSD.05 = 12.706205 * sqrt(0.75) = 11.003893.
+    try approx(11.003893, r.lsd05, 1e-5);
+    // W_t = sum of C_b over the blocks holding t: C11 + C21 = 4,
+    // C11 + C22 = 0, C12 + C21 = 0, C12 + C22 = -4 -> (T + 3/8 W)/2.
+    for ([_]f64{ 11.25, 13, 8, 14.75 }, r.means) |want, got| try approx(want, got, 1e-12);
+}
+
+test "STAT-LATTICE-002 simple 3x3 lattice of groups 2 and 4 (SAS 15.4 reference run)" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var rows: [18][4]f64 = undefined;
+    var n: usize = 0;
+    for (pigs) |p| if (p[0] == 2 or p[0] == 4) {
+        rows[n] = p;
+        if (p[0] == 4) rows[n][0] = 1;
+        n += 1;
+    };
+    const d = try lattice.design(a, try column(a, 0, &rows), try column(a, 1, &rows), try column(a, 2, &rows));
+    const y = try a.alloc(f64, rows.len);
+    for (rows, y) |p, *v| v.* = p[3];
+    const r = try lattice.analyze(a, d, y);
+    try expect(r.partial and r.adjusted);
+    for ([_]f64{ 0.000200, 0.7503, 0.7503, 1.6011, 0.1260, 0.8763, 2.4776 }, r.ss) |want, got| try approx(want, got, 0.00005);
+    try approx(0.03151, r.ms[4], 0.000005);
+    try approx(0.04025, r.var_same, 0.000005);
+    try approx(0.04899, r.var_diff, 0.000005);
+    try approx(0.04462, r.var_avg, 0.000005);
+    try approx(0.9725, r.lsd01, 0.00005);
+    try approx(0.5865, r.lsd05, 0.00005);
+    try approx(245.51, r.efficiency, 0.005);
+    for ([_]f64{ 1.6894, 1.8315, 1.9191, 1.7023, 0.8156, 1.6821, 1.6314, 1.2986, 1.5000 }, r.means) |want, got| try approx(want, got, 0.00005);
+}
+
+test "STAT-LATTICE-002 simple rectangular lattice without recovery (SAS 15.4 reference run)" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    // k = 3, 12 treatments, rows and columns of a 4x4 grid without its
+    // diagonal (stat_lattice002_rectangular, invented data).
+    const rect = [_][4]f64{
+        .{ 1, 1, 1, 10.2 }, .{ 1, 1, 2, 11.5 }, .{ 1, 1, 3, 9.8 },  .{ 1, 2, 4, 12.1 },  .{ 1, 2, 5, 13.0 },  .{ 1, 2, 6, 11.7 },
+        .{ 1, 3, 7, 8.9 },  .{ 1, 3, 8, 10.4 }, .{ 1, 3, 9, 9.5 },  .{ 1, 4, 10, 12.8 }, .{ 1, 4, 11, 11.1 }, .{ 1, 4, 12, 13.6 },
+        .{ 2, 1, 4, 11.4 }, .{ 2, 1, 7, 9.9 },  .{ 2, 1, 10, 12.2 }, .{ 2, 2, 1, 10.9 }, .{ 2, 2, 8, 9.7 },   .{ 2, 2, 11, 12.5 },
+        .{ 2, 3, 2, 12.0 }, .{ 2, 3, 5, 12.4 }, .{ 2, 3, 12, 14.1 }, .{ 2, 4, 3, 9.1 },  .{ 2, 4, 6, 10.8 },  .{ 2, 4, 9, 10.3 },
+    };
+    const d = try lattice.design(a, try column(a, 0, &rect), try column(a, 1, &rect), try column(a, 2, &rect));
+    try expect(d.rect and d.k == 3 and d.m == 2);
+    const y = try a.alloc(f64, rect.len);
+    for (rect, y) |p, *v| v.* = p[3];
+    const r = try lattice.analyze(a, d, y);
+    try expect(!r.unverified and !r.adjusted and !r.partial);
+    try std.testing.expectEqualSlices(usize, &.{ 1, 6, 6, 11, 5, 11, 23 }, &r.df);
+    for ([_]f64{ 0.02042, 1.4925, 1.4925, 43.2846, 2.2821, 3.7746, 47.0796 }, r.ss) |want, got| try approx(want, got, 0.00005);
+    try approx(0.4564, r.var_same, 0.00005);
+    try approx(2.0982, r.lsd01, 0.00005);
+    try approx(1.4870, r.lsd05, 0.00005);
+    try approx(75.1822, r.efficiency, 0.00005);
+    try approx(10.55, r.means[0], 1e-9);
+    // Strong block effects in group 1 (Eb > Ee): rectangular recovery is
+    // not verified and is flagged for the caller's gap.
+    for (rect, y) |p, *v| v.* = p[3] + if (p[0] == 1) 3 * p[1] else 0;
+    try expect((try lattice.analyze(a, d, y)).unverified);
+}
+
+test "STAT-LATTICE-002 designs outside the implemented lattices stay loud" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    // A partially balanced plan repeated through Rep.
+    const n = 36;
+    const g = try a.alloc(Value, n);
+    const b = try a.alloc(Value, n);
+    const tr = try a.alloc(Value, n);
+    const rp = try a.alloc(Value, n);
+    for (0..n) |i| {
+        const p = pigs[i % 18];
+        g[i] = .{ .num = p[0] };
+        b[i] = .{ .num = p[1] };
+        tr[i] = .{ .num = p[2] };
+        rp[i] = .{ .num = @floatFromInt(i / 18 + 1) };
+    }
+    try std.testing.expectError(error.NotBalancedSquare, lattice.designRep(a, g, b, tr, rp, null));
+    // The same pair twice in one block of two groups.
+    var twice = pigs;
+    for (twice[9..18], pigs[0..9]) |*r, p| r.* = .{ 2, p[1], p[2], p[3] };
+    try std.testing.expectError(error.NotBalancedSquare, lattice.design(a, try column(a, 0, twice[0..18]), try column(a, 1, twice[0..18]), try column(a, 2, twice[0..18])));
 }

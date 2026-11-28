@@ -3,4 +3,4 @@ empty-listing
 stderr-count 1 listing format for value 7738888
 stderr-count 1 listing format for value 0.0000000000077
 stderr-count 1 response names longer than 11 characters (Weightgain12)
-stderr-count 2 only balanced square lattices (optionally repeated
+stderr-count 1 only balanced square lattices (optionally repeated

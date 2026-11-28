@@ -5,8 +5,9 @@
  * response name longer than 11,
  * a treatment number beyond the plan (SAS 15.4 stops with "The Number of
  * BLOCKs do not agree with the number of TREATMENTs", a design check this
- * slice does not generalize), and a partially balanced lattice (only two
- * of the four replicates, STAT-LATTICE-002).
+ * slice does not generalize). Partially balanced lattices are analyzed
+ * since STAT-LATTICE-002 (stat_lattice002_partial; its gaps in
+ * stat_lattice002_gaps).
  * Published Getting Started sample data.
  */
 options nosyntaxcheck;
@@ -29,5 +30,3 @@ data ln; set Pigs; Weightgain12=Weight; run;
 proc lattice data=ln; run;
 data v; set Pigs; if _n_=3 then Treatment=10; run;
 proc lattice data=v; var Weight; run;
-data p; set Pigs; if Group <= 2; run;
-proc lattice data=p; run;
