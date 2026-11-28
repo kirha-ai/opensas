@@ -2,7 +2,7 @@
  * causal/blocked flags and the biasing-path and over-control footnotes),
  * METHOD=IV searches and tests, COMPACT and PSUMMARY with TESTID. Invented
  * graphs; listing tokens equal a batched SAS 9.4 reference run of exactly
- * these steps (2266 tokens over four runs, 0 differing). Hand checks: T01 nothing adjusted, both forks
+ * these steps (2571 tokens over five runs, 0 differing). Hand checks: T01 nothing adjusted, both forks
  * open (biasing); T04 K is a collider descending from X (over-control
  * footnote, X ==> K <== Y opened), X <=> Y is never blocked; T05 C blocks
  * X <== C <== U ==> Y and X <== C ==> Y; T16-T18 instrument Z needs W
@@ -14,6 +14,10 @@
  * X ==> M ==> Y: starred as biasing, no footnote. V02-V05 METHOD=IV with
  * bidirected edges: W <==> Y makes W a direct neighbour of Y in the search
  * ({A1 W}, {B W}, {W} not ZZ); Z is an instrument given W only.
+ * W01 ADJUSTMENT {C M}: the blocked causal path is starred and the
+ * over-control footnote printed. W04-W06 discriminate the IV search rule:
+ * {A} (B unneeded, later), {B C W} (unneeded earlier parents kept), {Q}
+ * nearest Y rather than {P} nearest Z, also for instrument P.
  */
 options nodate nonumber nocenter linesize=160 pagesize=max;
 title; footnote;
@@ -40,3 +44,7 @@ title 'V02'; proc causalgraph method=iv; model 'A' Z ==> X ==> Y, X <==> Y, W ==
 title 'V03'; proc causalgraph method=iv; model 'A' Z ==> X ==> Y, X <==> Y, W ==> Z, W <==> Y, B ==> Y; identify X ==> Y; run;
 title 'V04'; proc causalgraph method=iv; model 'A' Z ==> X ==> Y, X <==> Y, W ==> Z, W <==> Y, ZZ ==> Y; identify X ==> Y; run;
 title 'V05'; proc causalgraph method=iv; model 'A' Z ==> X ==> Y, X <==> Y, W ==> Z, W <==> Y, ZZ ==> Y; identify X ==> Y; testid Z / conditional=W; testid Z; run;
+title 'W01'; proc causalgraph; model 'P' C ==> X ==> M ==> Y, C ==> Y; identify X ==> Y; testid C M / paths; run;
+title 'W04'; proc causalgraph method=iv; model 'A' Z ==> X ==> Y, U ==> X Y, A ==> Z Y, B ==> Y; identify X ==> Y; unmeasured U; run;
+title 'W05'; proc causalgraph method=iv; model 'A' Z ==> X ==> Y, U ==> X Y, W ==> Z U1, U1 ==> U2, U2 ==> Y, B ==> Y, C ==> Y; identify X ==> Y; unmeasured U U1 U2; run;
+title 'W06'; proc causalgraph method=iv; model 'A' Z ==> X ==> Y, U ==> X Y, P ==> Z Q, Q ==> Y; identify X ==> Y; unmeasured U; run;

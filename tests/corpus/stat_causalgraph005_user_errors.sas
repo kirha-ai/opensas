@@ -30,3 +30,5 @@ proc causalgraph method=iv; model 'M' Z ==> X1 ==> Y, X2 ==> Y, U ==> X1 Y; iden
 proc causalgraph method=iv; model 'A' Z ==> X ==> Y, U ==> X Y; identify X ==> Y; unmeasured U; testid X; run;
 proc causalgraph; model 'P' X ==> Y, C ==> X Y; identify X ==> Y; testid C Y; run;
 proc causalgraph method=iv; model 'A' Z ==> X ==> Y, U ==> X Y; model 'B' X ==> Y, U ==> X Y; identify X ==> Y; unmeasured U; testid Z; run;
+proc causalgraph method=iv; model 'A' Z ==> X ==> Y1 Y2; identify X ==> Y1 Y2; run;
+proc causalgraph method=iv; model 'A' Z ==> X ==> Y, U ==> X Y; identify X ==> Y; unmeasured U; testid Y; run;

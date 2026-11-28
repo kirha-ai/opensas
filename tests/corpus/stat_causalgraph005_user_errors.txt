@@ -15,3 +15,5 @@ stderr-count 1 The IDENTIFY statement must contain a single treatment variable w
 stderr-count 1 The variable X is both a treatment and an instrument.
 stderr-count 1 The variable Y is both an outcome and a control.
 stderr-count 1 The instrumental variable Z in the TESTID statement is not found in the model B.
+stderr-count 1 The IDENTIFY statement must contain a single outcome variable when METHOD=IV.
+stderr-count 1 The variable Y is both an outcome and an instrument.

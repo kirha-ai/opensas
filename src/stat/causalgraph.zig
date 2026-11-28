@@ -593,8 +593,7 @@ pub fn validate(cx: proc.ProcCtx, s: Spec) diag.Error!void {
             if (t.vars.len != 1) return user(cx, t.line, "You must specify a single variable on the TESTID statement when METHOD=IV.", .{});
             const z = t.vars[0];
             if (contains(s.unmeasured, z)) return user(cx, t.line, "The instrumental variable {s} must be observed.", .{s.names[z]});
-            // ponytail: the outcome wording mirrors the reference-run
-            // treatment message.
+            // Message texts of SAS 9.4 reference runs.
             if (contains(s.treatments, z)) return user(cx, t.line, "The variable {s} is both a treatment and an instrument.", .{s.names[z]});
             if (contains(s.outcomes, z)) return user(cx, t.line, "The variable {s} is both an outcome and an instrument.", .{s.names[z]});
             for (t.cond) |c| {
@@ -616,7 +615,7 @@ pub fn validate(cx: proc.ProcCtx, s: Spec) diag.Error!void {
     }
     if (iv) {
         // p.2303: METHOD=IV takes one treatment and one outcome (reference
-        // run text; ponytail: the outcome wording mirrors it).
+        // run texts).
         if (s.treatments.len > 1) return user(cx, line, "The IDENTIFY statement must contain a single treatment variable when METHOD=IV.", .{});
         if (s.outcomes.len > 1) return user(cx, line, "The IDENTIFY statement must contain a single outcome variable when METHOD=IV.", .{});
         if (s.identify and s.adjust.len > 0) try cx.diags.warn(line, "The adjustment variables in the IDENTIFY statement are ignored when METHOD=IV.", .{});
@@ -1741,9 +1740,8 @@ fn pathsTable(cx: proc.ProcCtx, out: *Out, s: Spec, t: Test, m: Model) !void {
     const an = try analyseMethod(a, g.n, g.edges, s.treatments, s.outcomes, s.opts.method);
     var overcontrol = false;
     for (set) |v| if (contains(m.nodes, v)) {
-        // Over-control footnote: METHOD=ADJUSTMENT only (reference runs; a
-        // BACKDOOR set with M on X ==> M ==> Y stars the blocked causal path
-        // and prints no footnote).
+        // Over-control footnote: METHOD=ADJUSTMENT only (reference runs: a
+        // BACKDOOR set with M on X ==> M ==> Y prints none).
         if (an.forbidden[v] and an.backdoor == null) overcontrol = true;
     };
     const f = t.paths.?;
@@ -1769,8 +1767,8 @@ fn pathsTable(cx: proc.ProcCtx, out: *Out, s: Spec, t: Test, m: Model) !void {
     var biasing = false;
     for (shown.items, 0..) |p, r| {
         obs[r] = try num(a, r + 1);
-        // ponytail: a blocked causal path is starred as biasing under
-        // BACKDOOR (reference run); the ADJUSTMENT case is assumed alike.
+        // A blocked causal path is starred as biasing under both methods
+        // (reference runs).
         const bias = p.causal == p.blocked;
         if (bias) biasing = true;
         flag[r] = if (bias) "*" else "";
