@@ -31,13 +31,13 @@ test "GLM015 AT means replace mean products and explicit values affect every cov
     try lib.put("sample", &ds);
     var diagnostics = diag.Diagnostics.init(a);
     const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &diagnostics };
-    const spec = try parse(cx, "proc glm; class g; model y=g x z x*z; lsmeans g; lsmeans g / at means; lsmeans g / at x=1.2; lsmeans g / at (x z)=(1.2 .3); run;");
+    const spec = try parse(cx, "proc glm; class g; model y=g x z x*z; lsmeans g; lsmeans g / at means; lsmeans g / at x=1.2; lsmeans g / at (x z)=(1.2 .3); lsmeans g / om bylevel at x=100; run;");
     const d = try design(cx, spec);
     var fit = try glm.fitDesign(cx, spec, d);
     defer fit.deinit(a);
     // xbar=zbar=3/4, mean(xz)=1; AT MEANS uses9/16, not1.
-    const expected = [_][3]f64{ .{ 0.75, 0.75, 1 }, .{ 0.75, 0.75, 0.5625 }, .{ 1.2, 0.75, 0.9 }, .{ 1.2, 0.3, 0.36 } };
-    for (spec.lsmeans, expected, [_]f64{ 10.5, 8.3125, 10.9, 6.4 }) |request, coefficients, first_mean| {
+    const expected = [_][3]f64{ .{ 0.75, 0.75, 1 }, .{ 0.75, 0.75, 0.5625 }, .{ 1.2, 0.75, 0.9 }, .{ 1.2, 0.3, 0.36 }, .{ 0.75, 0.75, 1 } };
+    for (spec.lsmeans, expected, [_]f64{ 10.5, 8.3125, 10.9, 6.4, 10.5 }) |request, coefficients, first_mean| {
         const table = try lsmeans.computeWithFit(cx, spec, d, request, fit);
         for (table.means, 0..) |mean, index| {
             for (coefficients, 3..) |coefficient, column| try close(coefficient, mean.coefficients[column]);
@@ -46,7 +46,7 @@ test "GLM015 AT means replace mean products and explicit values affect every cov
     }
     var output: std.ArrayList(u8) = .empty;
     try glm.execute(cx, &output, spec);
-    try t.expectEqual(@as(usize, 4), std.mem.count(u8, output.items, "Least Squares Means"));
+    try t.expectEqual(@as(usize, 5), std.mem.count(u8, output.items, "Least Squares Means"));
     try t.expectEqualStrings("", try diagnostics.render());
 }
 
@@ -168,4 +168,80 @@ test "GLM015 AT invalid assignments and unproved response domains remain explici
     var output: std.ArrayList(u8) = .empty;
     try t.expectError(error.ParseError, glm.run(cx, &output, try lex.tokenize(a, "proc glm; class g; model y z=g x; lsmeans g / at means; run;", &diagnostics)));
     try t.expectEqual(@as(u8, 2), diag.exitCode(diag.gapHit(), diagnostics.hasErrors()));
+}
+
+
+test "GLM015 OM and BYLEVEL use global and conditional observed CLASS margins" {
+    var arena = std.heap.ArenaAllocator.init(t.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var ds = Dataset.init(a, "sample");
+    for ([_][]const u8{ "A", "B", "y", "w", "f" }) |name| _ = try ds.addColumn(name, .num);
+    for ([_][3]f64{ .{ 1, 1, 1 }, .{ 1, 1, 3 }, .{ 1, 2, 6 }, .{ 2, 1, 10 }, .{ 2, 2, 12 }, .{ 2, 2, 14 }, .{ 2, 2, 16 }, .{ 2, 2, 18 } }) |values| try ds.appendRow(&.{ .{ .num = values[0] }, .{ .num = values[1] }, .{ .num = values[2] }, .{ .num = 1 }, .{ .num = 1 } });
+    var lib = Library.init(a);
+    try lib.put("sample", &ds);
+    var diagnostics = diag.Diagnostics.init(a);
+    const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &diagnostics };
+    const spec = try parse(cx, "proc glm; class A B; model y=A B A*B; lsmeans A; lsmeans A / om stderr; lsmeans A / om bylevel stderr; run;");
+    const d = try design(cx, spec);
+    var fit = try glm.fitDesign(cx, spec, d);
+    defer fit.deinit(a);
+    const balanced = try lsmeans.computeWithFit(cx, spec, d, spec.lsmeans[0], fit);
+    const observed = try lsmeans.computeWithFit(cx, spec, d, spec.lsmeans[1], fit);
+    const within = try lsmeans.computeWithFit(cx, spec, d, spec.lsmeans[2], fit);
+    for (balanced.means, [_]f64{ 4, 12.5 }) |mean, expected| try close(expected, mean.inference.estimate.?);
+    for (observed.means, [_]f64{ 4.5, 13.125 }, [_]f64{ 649.0 / 256.0, 671.0 / 512.0 }) |mean, expected, variance| {
+        try close(expected, mean.inference.estimate.?);
+        try close(@sqrt(variance), mean.inference.standard_error.?);
+        try close(3.0 / 8.0, mean.coefficients[3]);
+        try close(5.0 / 8.0, mean.coefficients[4]);
+    }
+    for (within.means, [_]f64{ 10.0 / 3.0, 14 }, [_]f64{ 11.0 / 6.0, 11.0 / 10.0 }) |mean, expected, variance| {
+        try close(expected, mean.inference.estimate.?);
+        try close(@sqrt(variance), mean.inference.standard_error.?);
+    }
+    // Missing dependent values still contribute observed margins, with the
+    // precision weight and truncated FREQ. They do not change model fitting DF.
+    try ds.appendRow(&.{ .{ .num = 1 }, .{ .num = 2 }, .{ .num = std.math.nan(f64) }, .{ .num = 4 }, .{ .num = 2.9 } });
+    const weighted = try parse(cx, "proc glm; class A B; model y=A B A*B; weight w; freq f; lsmeans A / obsmargins stderr; run;");
+    const wd = try design(cx, weighted);
+    var wf = try glm.fitDesign(cx, weighted, wd);
+    defer wf.deinit(a);
+    const wt = try lsmeans.computeWithFit(cx, weighted, wd, weighted.lsmeans[0], wf);
+    try t.expectEqual(@as(usize, 8), wd.n);
+    try t.expectEqual(@as(usize, 4), wt.df_error);
+    for (wt.means, [_]f64{ 21.0 / 4.0, 225.0 / 16.0 }) |mean, expected| {
+        try close(expected, mean.inference.estimate.?);
+        try close(3.0 / 16.0, mean.coefficients[3]);
+        try close(13.0 / 16.0, mean.coefficients[4]);
+    }
+    try close(@sqrt(@as(f64, 3817.0 / 1024.0)), wt.means[0].inference.standard_error.?);
+}
+
+test "GLM015 observed margins preserve nonestimability and BYLEVEL can restore an estimable target" {
+    var arena = std.heap.ArenaAllocator.init(t.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var ds = Dataset.init(a, "sample");
+    for ([_][]const u8{ "A", "B", "y" }) |name| _ = try ds.addColumn(name, .num);
+    for ([_][3]f64{ .{ 1, 1, 1 }, .{ 1, 1, 3 }, .{ 1, 2, 5 }, .{ 1, 2, 7 }, .{ 2, 1, 9 }, .{ 2, 1, 11 } }) |values| try ds.appendRow(&.{ .{ .num = values[0] }, .{ .num = values[1] }, .{ .num = values[2] } });
+    var lib = Library.init(a);
+    try lib.put("sample", &ds);
+    var diagnostics = diag.Diagnostics.init(a);
+    const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &diagnostics };
+    const spec = try parse(cx, "proc glm; class A B; model y=A B A*B / ss1; lsmeans A; lsmeans A / om; lsmeans A / om bylevel stderr; run;");
+    const d = try design(cx, spec);
+    var fit = try glm.fitDesign(cx, spec, d);
+    defer fit.deinit(a);
+    const standard = try lsmeans.computeWithFit(cx, spec, d, spec.lsmeans[0], fit);
+    const observed = try lsmeans.computeWithFit(cx, spec, d, spec.lsmeans[1], fit);
+    const conditional = try lsmeans.computeWithFit(cx, spec, d, spec.lsmeans[2], fit);
+    try t.expectEqual(@import("glm_estimability.zig").Status.nonestimable, standard.means[1].inference.status);
+    try t.expectEqual(@import("glm_estimability.zig").Status.nonestimable, observed.means[1].inference.status);
+    try t.expect(observed.means[1].inference.estimate == null and observed.means[1].inference.standard_error == null);
+    try t.expectEqual(@import("glm_estimability.zig").Status.estimable, conditional.means[1].inference.status);
+    try close(10, conditional.means[1].inference.estimate.?);
+    try close(1, conditional.means[1].inference.standard_error.?);
+    try close(1, conditional.means[1].coefficients[3]);
+    try close(0, conditional.means[1].coefficients[4]);
 }

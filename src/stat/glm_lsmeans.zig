@@ -11,7 +11,7 @@ const estimability = @import("glm_estimability.zig");
 const A = std.mem.Allocator;
 const eq = std.ascii.eqlIgnoreCase;
 const inference = @import("lsmeans_inference.zig");
-pub const Request = struct { effect: usize, at: ?@import("glm_lsmeans_at.zig").Request = null, scheffe: bool = false, slice_columns: []const usize = &.{}, error_effect: ?usize = null, error_kind: ?@import("glm_test_statement.zig").Kind = null, e: bool = false, stderr: bool = false, singular: f64 = 1e-4, pdiff: bool = false, cl: bool = false, alpha: f64 = 0.05, adjust: inference.Adjustment = .none, adjust_explicit: bool = false };
+pub const Request = struct { effect: usize, observed_margins: bool = false, bylevel: bool = false, at: ?@import("glm_lsmeans_at.zig").Request = null, scheffe: bool = false, slice_columns: []const usize = &.{}, error_effect: ?usize = null, error_kind: ?@import("glm_test_statement.zig").Kind = null, e: bool = false, stderr: bool = false, singular: f64 = 1e-4, pdiff: bool = false, cl: bool = false, alpha: f64 = 0.05, adjust: inference.Adjustment = .none, adjust_explicit: bool = false };
 pub const Mean = struct { levels: []const ?usize, coefficients: []const f64, inference: estimability.Result };
 pub const Table = struct { slices: []const @import("glm_lsmeans_slice.zig").Result = &.{}, effect: []const u8, classes: []const coded.Class, columns: []const coded.Column, means: []const Mean, comparisons: []const inference.Difference = &.{}, mean_limits: []const inference.Interval = &.{}, df_error: usize = 0 };
 
@@ -97,6 +97,12 @@ pub fn read(cx: proc.ProcCtx, tokens: []const lex.Token, spec: parse.Spec, effec
             if (columns.items.len == 0 or (parenthesized and (i >= tokens.len or tokens[i].tag != .rparen))) return cx.diags.fail(error.ParseError, token.line, "PROC GLM: malformed SLICE factor list", .{});
             if (parenthesized) i += 1;
             options.slice_columns = columns.items;
+        } else if (eq(token.text, "om") or eq(token.text, "obsmargins")) {
+            options.observed_margins = true;
+            i += 1;
+        } else if (eq(token.text, "bylevel")) {
+            options.bylevel = true;
+            i += 1;
         } else if (eq(token.text, "at")) {
             if (options.at != null) return proc.failGap(cx.diags, token.line, "PROC GLM: multiple AT specifications are not implemented", .{});
             options.at = try @import("glm_lsmeans_at.zig").read(cx, tokens, &i, spec, effects);
@@ -138,6 +144,7 @@ pub fn read(cx: proc.ProcCtx, tokens: []const lex.Token, spec: parse.Spec, effec
             return cx.diags.fail(error.ParseError, token.line, "PROC GLM: invalid LSMEANS option {s}", .{token.text});
         }
     }
+    if (options.bylevel and !options.observed_margins) return proc.failGap(cx.diags, 0, "PROC GLM: BYLEVEL currently requires explicit OM", .{});
     if (options.pdiff and options.stderr) return proc.failGap(cx.diags, 0, "PROC GLM: combined PDIFF and STDERR presentation is not implemented", .{});
     for (requests.items[first..]) |*request| {
         const effect = request.effect;
@@ -187,7 +194,11 @@ fn computeResolved(cx: proc.ProcCtx, spec: parse.Spec, d: design.Design, request
     defer model.deinit(a);
     model.fit.mse = mse;
     model.fit.df_error = df_error;
-    const at = if (request.at) |setting| try @import("glm_lsmeans_at.zig").compute(cx, spec, d, setting) else null;
+    const at = if (request.at != null and !request.bylevel) try @import("glm_lsmeans_at.zig").compute(cx, spec, d, request.at.?) else null;
+    const population = if (request.observed_margins) try @import("glm_lsmeans_at.zig").population(cx, spec, d, false) else null;
+    if (request.bylevel and population.?.covariates.len > 0) for (population.?.observations) |row| {
+        if (row.isMissing(d.response)) return proc.failGap(cx.diags, 0, "PROC GLM: BYLEVEL covariate sampling with missing responses is not implemented", .{});
+    };
     var means: std.ArrayList(Mean) = .empty;
     var name: []const u8 = spec.effects[request.effect].name;
     for (matrix.columns) |target| {
@@ -216,6 +227,7 @@ fn computeResolved(cx: proc.ProcCtx, spec: parse.Spec, d: design.Design, request
                     count += d.frequencies[r];
                 }
                 l[j] = sum / count;
+                if (request.bylevel) l[j] = try @import("glm_lsmeans_margins.zig").covariateCoefficient(cx, population.?, matrix.classes, target.class_values, effect.variables);
                 if (at) |setting| {
                     l[j] = 1;
                     for (effect.variables) |col| l[j] *= setting.values[col];
@@ -223,6 +235,8 @@ fn computeResolved(cx: proc.ProcCtx, spec: parse.Spec, d: design.Design, request
                 }
             } else if (!compatible(target.class_values, column.class_values)) {
                 l[j] = 0;
+            } else if (population) |pop| {
+                l[j] = try @import("glm_lsmeans_margins.zig").classCoefficient(cx, pop, matrix.classes, target.class_values, column.class_values, request.bylevel);
             } else {
                 var count: usize = 0;
                 for (matrix.columns) |other| if (other.effect_index == column.effect_index and compatible(target.class_values, other.class_values)) {

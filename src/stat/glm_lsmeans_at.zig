@@ -63,64 +63,82 @@ const Sum = struct {
     fn add(self: *Sum, x: f64) void { const next = self.value + x; self.correction += if (@abs(self.value) >= @abs(x)) (self.value - next) + x else (x - next) + self.value; self.value = next; }
     fn total(self: Sum) f64 { return self.value + self.correction; }
 };
-pub fn compute(cx: proc.ProcCtx, spec: parse.Spec, d: design.Design, request: Request) diag.Error!Covariates {
-    if (spec.responses.len != 1) return proc.failGap(cx.diags, 0, "PROC GLM: multivariate AT sampling is not implemented", .{});
+pub const Population = struct { observations: []const selection.Observation, map_rows: []const usize, maps: []const @import("class_levels.zig").Levels, covariates: []const usize };
+/// Use only the caller's original BY slice. AT excludes all-response-missing
+/// cells; observed CLASS margins include those cells when all levels are fitted.
+pub fn population(cx: proc.ProcCtx, spec: parse.Spec, d: design.Design, exclude_missing_cells: bool) diag.Error!Population {
+    if (spec.responses.len != 1) return proc.failGap(cx.diags, 0, "PROC GLM: multivariate marginal-population sampling is not implemented", .{});
     const a = cx.arena;
     var required: std.ArrayList(usize) = .empty;
     var covariates: std.ArrayList(usize) = .empty;
     for (spec.classes) |col| {
         const used = for (spec.effects) |effect| { if (std.mem.indexOfScalar(usize, effect.variables, col) != null) break true; } else false;
-        if (!used) return proc.failGap(cx.diags, 0, "PROC GLM: AT with unused CLASS declarations is not implemented", .{});
+        if (!used) return proc.failGap(cx.diags, 0, "PROC GLM: marginal populations with unused CLASS declarations are not implemented", .{});
         try required.append(a, col);
     }
     for (spec.effects) |effect| for (effect.variables) |col| {
         if (std.mem.indexOfScalar(usize, required.items, col) == null) try required.append(a, col);
         if (std.mem.indexOfScalar(usize, spec.classes, col) == null and std.mem.indexOfScalar(usize, covariates.items, col) == null) try covariates.append(a, col);
     };
-    if (d.input_observations.len == 0 and d.read != d.n) return proc.failGap(cx.diags, 0, "PROC GLM: AT population rows are unavailable", .{});
+    if (d.input_observations.len == 0 and d.read != d.n) return proc.failGap(cx.diags, 0, "PROC GLM: marginal-population rows are unavailable", .{});
     const original: selection.View = .{ .source = spec.input.ds, .roles = .{ .frequency = spec.freq, .weight = spec.weight }, .observations = if (d.input_observations.len > 0) d.input_observations else d.observations };
-    const population = try original.select(a, .{ .missing_columns = required.items, .frequency = .truncate_positive, .weight = .positive_only });
-    const all_rows = try a.alloc([]const Value, d.n + population.observations.len);
+    const eligible = try original.select(a, .{ .missing_columns = required.items, .frequency = .truncate_positive, .weight = .positive_only });
+    const all_rows = try a.alloc([]const Value, d.n + eligible.observations.len);
     for (d.observations, all_rows[0..d.n]) |row, *target| target.* = row.cells;
-    for (population.observations, all_rows[d.n..]) |row, *target| target.* = row.cells;
-    // Combined levelization is used ONLY for equality. It preserves formatted
-    // membership without changing the fitted CLASS order or introducing levels.
-    const levels = try a.alloc(@import("class_levels.zig").Levels, spec.classes.len);
-    for (spec.classes, levels) |col, *map| map.* = try @import("class_levels.zig").build(a, spec.input.ds, all_rows, col, .{ .order = .data });
+    for (eligible.observations, all_rows[d.n..]) |row, *target| target.* = row.cells;
+    const maps = try a.alloc(@import("class_levels.zig").Levels, spec.classes.len);
+    for (spec.classes, maps) |col, *map| map.* = try @import("class_levels.zig").build(a, spec.input.ds, all_rows, col, .{ .order = .data });
     const key = try a.alloc(usize, spec.classes.len);
     var cells: std.StringHashMapUnmanaged(void) = .empty;
     for (0..d.n) |row| {
-        for (levels, key) |map, *part| part.* = map.row_to_level[row] orelse return error.ExecError;
+        for (maps, key) |map, *part| part.* = map.row_to_level[row] orelse return error.ExecError;
         try cells.put(a, try a.dupe(u8, std.mem.sliceAsBytes(key)), {});
     }
-    const sums = try a.alloc(Sum, covariates.items.len);
+    var rows: std.ArrayList(selection.Observation) = .empty;
+    var map_rows: std.ArrayList(usize) = .empty;
+    for (eligible.observations, 0..) |row, index| {
+        var valid = true;
+        for (maps, key) |map, *part| { part.* = map.row_to_level[d.n + index] orelse blk: { valid = false; break :blk 0; }; }
+        if (!valid) continue;
+        if (exclude_missing_cells) {
+            if (!cells.contains(std.mem.sliceAsBytes(key))) continue;
+        } else {
+            for (maps, key) |map, value| {
+                const known = for (map.row_to_level[0..d.n]) |level| { if (level != null and level.? == value) break true; } else false;
+                if (!known) return proc.failGap(cx.diags, 0, "PROC GLM: observed margins with new unfitted CLASS levels are not implemented", .{});
+            }
+        }
+        try rows.append(a, row);
+        try map_rows.append(a, d.n + index);
+    }
+    return .{ .observations = rows.items, .map_rows = map_rows.items, .maps = maps, .covariates = covariates.items };
+}
+pub fn compute(cx: proc.ProcCtx, spec: parse.Spec, d: design.Design, request: Request) diag.Error!Covariates {
+    const a = cx.arena;
+    const pop = try population(cx, spec, d, true);
+    const sums = try a.alloc(Sum, pop.covariates.len);
     @memset(sums, .{});
-    const anchors = try a.alloc(?f64, covariates.items.len);
+    const anchors = try a.alloc(?f64, pop.covariates.len);
     @memset(anchors, null);
     var total_weight: Sum = .{};
-    var included: usize = 0;
-    for (population.observations, 0..) |row, index| {
-        var valid = true;
-        for (levels, key) |map, *part| { part.* = map.row_to_level[d.n + index] orelse blk: { valid = false; break :blk 0; }; }
-        if (!valid or !cells.contains(std.mem.sliceAsBytes(key))) continue;
+    for (pop.observations) |row| {
         const weight = row.frequency.num * row.weight.num;
         if (!std.math.isFinite(weight) or !(weight > 0)) return proc.failGap(cx.diags, 0, "PROC GLM: AT weighting exceeds the supported numerical domain", .{});
         total_weight.add(weight);
-        included += 1;
-        for (covariates.items, sums, anchors) |col, *sum, *anchor| {
+        for (pop.covariates, sums, anchors) |col, *sum, *anchor| {
             const value = row.cells[col].num;
             if (!std.math.isFinite(value)) return cx.diags.fail(error.ExecError, 0, "PROC GLM: nonfinite AT population covariate", .{});
             if (anchor.* == null) anchor.* = value;
             sum.add(weight * (value - anchor.*.?));
         }
     }
-    if (included == 0 or !std.math.isFinite(total_weight.total())) return proc.failGap(cx.diags, 0, "PROC GLM: no supported AT population", .{});
+    if (pop.observations.len == 0 or !std.math.isFinite(total_weight.total())) return proc.failGap(cx.diags, 0, "PROC GLM: no supported AT population", .{});
     const values = try a.alloc(f64, spec.input.ds.columns.items.len);
     @memset(values, std.math.nan(f64));
-    for (covariates.items, sums, anchors) |col, sum, anchor| {
+    for (pop.covariates, sums, anchors) |col, sum, anchor| {
         values[col] = anchor.? + sum.total() / total_weight.total();
         if (!std.math.isFinite(values[col])) return cx.diags.fail(error.ExecError, 0, "PROC GLM: AT covariate mean overflow", .{});
     }
     for (request.settings) |setting| values[setting.column] = setting.value;
-    return .{ .values = values, .population_rows = included, .total_weight = total_weight.total() };
+    return .{ .values = values, .population_rows = pop.observations.len, .total_weight = total_weight.total() };
 }
