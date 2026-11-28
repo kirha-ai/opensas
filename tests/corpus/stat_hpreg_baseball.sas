@@ -4,6 +4,8 @@
  * parameterization, 59 observations with missing values excluded.
  * Expected listing: SAS 9.4 (SAS/STAT 15.4) output of this program (summary
  * statistics only, no data rows).
+ * Single edit against the SAS listing: "Number of Threads" is 1 (opensas
+ * computes on one thread) where the SAS reference machine printed 2.
  */
 options nosyntaxcheck obs=max firstobs=1 nodate nonumber nocenter linesize=160 pagesize=max nostimer nofullstimer validvarname=v7 validmemname=compatible locale=en_US;
 proc hpreg data=sashelp.baseball;

@@ -4,7 +4,7 @@ The HPREG Procedure
       Performance Information
 
 Execution Mode       Single-Machine
-Number of Threads    2             
+Number of Threads    1             
 
 
         Data Access Information
@@ -63,7 +63,7 @@ The HPREG Procedure
       Performance Information
 
 Execution Mode       Single-Machine
-Number of Threads    2             
+Number of Threads    1             
 
 
         Data Access Information

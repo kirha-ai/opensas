@@ -5,6 +5,8 @@
  * fit statistics and parameter estimates; NOPRINT prints nothing.
  * Expected listing: SAS 9.4 (SAS/STAT 15.4) output of this program.
  * Invented data.
+ * Single edit against the SAS listing: "Number of Threads" is 1 (opensas
+ * computes on one thread) where the SAS reference machine printed 2.
  */
 options nodate nonumber nocenter linesize=160 pagesize=max;
 data work.inv;

@@ -437,9 +437,9 @@ fn header(cx: proc.ProcCtx, out: *Out, s: Spec) !void {
     const a = cx.arena;
     const ds = s.input.ds;
     try out.appendSlice(a, "\nThe HPREG Procedure\n\n");
-    // ponytail: the reference listing's single-machine, two-thread values;
-    // opensas executes serially and has no PERFORMANCE statement yet.
-    try out.appendSlice(a, "      Performance Information\n\nExecution Mode       Single-Machine\nNumber of Threads    2             \n\n\n");
+    // opensas computes on one thread, so it reports 1 where the SAS reference
+    // machine reports its own thread count; thread semantics: STAT-HP-002.
+    try out.appendSlice(a, "      Performance Information\n\nExecution Mode       Single-Machine\nNumber of Threads    1             \n\n\n");
     const dw = @max(4, s.data_name.len);
     try title(a, out, "Data Access Information", dw + 32, true);
     try left(a, out, "Data", dw);
