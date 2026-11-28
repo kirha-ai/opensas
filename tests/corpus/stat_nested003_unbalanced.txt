@@ -1,0 +1,235 @@
+C1 unbalanced two-factor
+
+The NESTED Procedure
+
+          Coefficients of Expected Mean Squares
+ 
+Source                A                B            Error
+
+A            4.93333333       2.38333333       1.00000000
+B            0.00000000       1.97500000       1.00000000
+Error        0.00000000       0.00000000       1.00000000
+
+
+                         Nested Random Effects Analysis of Variance for Variable y
+ 
+Variance                    Sum of                         Error                        Variance     Percent
+Source          DF         Squares    F Value    Pr > F    Term      Mean Square       Component    of Total
+
+Total           14       62.933333                                      4.495238        6.092036    100.0000
+A                2        4.300000                                      2.150000       -1.788762      0.0000
+B                4       38.133333                                      9.533333        3.529536     57.9369
+Error            8       20.500000                                      2.562500        2.562500     42.0631
+
+
+y Mean                          5.93333333
+Standard Error of y Mean        0.32820428
+C2 covariation unbalanced two vars
+
+The NESTED Procedure
+
+          Coefficients of Expected Mean Squares
+ 
+Source                A                B            Error
+
+A            4.93333333       2.38333333       1.00000000
+B            0.00000000       1.97500000       1.00000000
+Error        0.00000000       0.00000000       1.00000000
+
+
+                         Nested Random Effects Analysis of Variance for Variable y
+ 
+Variance                    Sum of                         Error                        Variance     Percent
+Source          DF         Squares    F Value    Pr > F    Term      Mean Square       Component    of Total
+
+Total           14       62.933333                                      4.495238        6.092036    100.0000
+A                2        4.300000                                      2.150000       -1.788762      0.0000
+B                4       38.133333                                      9.533333        3.529536     57.9369
+Error            8       20.500000                                      2.562500        2.562500     42.0631
+
+
+y Mean                          5.93333333
+Standard Error of y Mean        0.32820428
+
+
+                         Nested Random Effects Analysis of Variance for Variable z
+ 
+Variance                    Sum of                         Error                        Variance     Percent
+Source          DF         Squares    F Value    Pr > F    Term      Mean Square       Component    of Total
+
+Total           14       83.333333                                      5.952381        7.298259    100.0000
+A                2        6.800000                                      3.400000       -1.545626      0.0000
+B                4       39.700000                                      9.925000        2.694093     36.9142
+Error            8       36.833333                                      4.604167        4.604167     63.0858
+
+
+z Mean                          4.33333333
+Standard Error of z Mean        0.44393469
+
+
+                                 Covariance of Variable y with z
+ 
+                                                                           Variance
+Covariance                    Sum of                      Covariance      Component    Mean Square
+Source            DF        Products    Mean Product       Component    Correlation    Correlation
+
+Total             14       56.333333        4.023810        3.899568         0.7838         0.7779
+A                  2        5.400000        2.700000       -1.704335         0.0000         0.9986
+B                  4       37.933333        9.483333        3.978903         1.2903         0.9749
+Error              8       13.000000        1.625000        1.625000         0.4731         0.4731
+C3 unbalanced three-factor
+
+The NESTED Procedure
+
+                  Coefficients of Expected Mean Squares
+ 
+Source                P                Q                R            Error
+
+P            6.46153846       3.00000000       2.11355311       1.00000000
+Q            0.00000000       2.33333333       1.82539683       1.00000000
+R            0.00000000       0.00000000       1.66666667       1.00000000
+Error        0.00000000       0.00000000       0.00000000       1.00000000
+
+
+                         Nested Random Effects Analysis of Variance for Variable y
+ 
+Variance                    Sum of                         Error                        Variance     Percent
+Source          DF         Squares    F Value    Pr > F    Term      Mean Square       Component    of Total
+
+Total           12      182.000000                                     15.166667       26.247287    100.0000
+P                1      136.500000                                    136.500000       19.892695     75.7895
+Q                3       20.250000                                      6.750000        2.521259      9.6058
+R                2        2.250000                                      1.125000       -1.625000      0.0000
+Error            6       23.000000                                      3.833333        3.833333     14.6047
+
+
+y Mean                         16.00000000
+Standard Error of y Mean        3.25918502
+C6 unbalanced negative component
+
+The NESTED Procedure
+
+          Coefficients of Expected Mean Squares
+ 
+Source                A                B            Error
+
+A            3.91666667       2.55000000       1.00000000
+B            0.00000000       2.20000000       1.00000000
+Error        0.00000000       0.00000000       1.00000000
+
+
+                         Nested Random Effects Analysis of Variance for Variable y
+ 
+Variance                    Sum of                         Error                        Variance     Percent
+Source          DF         Squares    F Value    Pr > F    Term      Mean Square       Component    of Total
+
+Total           11        2.916667                                      0.265152        0.422654    100.0000
+A                2        0.050000                                      0.025000        0.017892      4.2332
+B                2        0.033333                                      0.016667       -0.176407      0.0000
+Error            7        2.833333                                      0.404762        0.404762     95.7668
+
+
+y Mean                          5.41666667
+Standard Error of y Mean        0.05648987
+C7 y with y
+
+The NESTED Procedure
+
+          Coefficients of Expected Mean Squares
+ 
+Source                A                B            Error
+
+A            4.93333333       2.38333333       1.00000000
+B            0.00000000       1.97500000       1.00000000
+Error        0.00000000       0.00000000       1.00000000
+
+
+                         Nested Random Effects Analysis of Variance for Variable y
+ 
+Variance                    Sum of                         Error                        Variance     Percent
+Source          DF         Squares    F Value    Pr > F    Term      Mean Square       Component    of Total
+
+Total           14       62.933333                                      4.495238        6.092036    100.0000
+A                2        4.300000                                      2.150000       -1.788762      0.0000
+B                4       38.133333                                      9.533333        3.529536     57.9369
+Error            8       20.500000                                      2.562500        2.562500     42.0631
+
+
+y Mean                          5.93333333
+Standard Error of y Mean        0.32820428
+
+
+                         Nested Random Effects Analysis of Variance for Variable y
+ 
+Variance                    Sum of                         Error                        Variance     Percent
+Source          DF         Squares    F Value    Pr > F    Term      Mean Square       Component    of Total
+
+Total           14       62.933333                                      4.495238        6.092036    100.0000
+A                2        4.300000                                      2.150000       -1.788762      0.0000
+B                4       38.133333                                      9.533333        3.529536     57.9369
+Error            8       20.500000                                      2.562500        2.562500     42.0631
+
+
+y Mean                          5.93333333
+Standard Error of y Mean        0.32820428
+
+
+                                 Covariance of Variable y with y
+ 
+                                                                           Variance
+Covariance                    Sum of                      Covariance      Component    Mean Square
+Source            DF        Products    Mean Product       Component    Correlation    Correlation
+
+Total             14       62.933333        4.495238        4.303274         1.0000         1.0000
+A                  2        4.300000        2.150000       -1.788762         0.0000         1.0000
+B                  4       38.133333        9.533333        3.529536         1.0000         1.0000
+Error              8       20.500000        2.562500        2.562500         1.0000         1.0000
+C8 one factor unbalanced
+
+The NESTED Procedure
+
+ Coefficients of Expected Mean Squares
+ 
+Source                A            Error
+
+A            4.93333333       1.00000000
+Error        0.00000000       1.00000000
+
+
+                         Nested Random Effects Analysis of Variance for Variable y
+ 
+Variance                    Sum of                         Error                        Variance     Percent
+Source          DF         Squares    F Value    Pr > F    Term      Mean Square       Component    of Total
+
+Total           14       62.933333                                      4.495238        4.886111    100.0000
+A                2        4.300000                                      2.150000       -0.554617      0.0000
+Error           12       58.633333                                      4.886111        4.886111    100.0000
+
+
+y Mean                          5.93333333
+Standard Error of y Mean        0.36869830
+
+
+                         Nested Random Effects Analysis of Variance for Variable z
+ 
+Variance                    Sum of                         Error                        Variance     Percent
+Source          DF         Squares    F Value    Pr > F    Term      Mean Square       Component    of Total
+
+Total           14       83.333333                                      5.952381        6.377778    100.0000
+A                2        6.800000                                      3.400000       -0.603604      0.0000
+Error           12       76.533333                                      6.377778        6.377778    100.0000
+
+
+z Mean                          4.33333333
+Standard Error of z Mean        0.46756670
+
+
+                                 Covariance of Variable y with z
+ 
+                                                                           Variance
+Covariance                    Sum of                      Covariance      Component    Mean Square
+Source            DF        Products    Mean Product       Component    Correlation    Correlation
+
+Total             14       56.333333        4.023810        3.931381         0.7861         0.7779
+A                  2        5.400000        2.700000       -0.313063         0.0000         0.9986
+Error             12       50.933333        4.244444        4.244444         0.7603         0.7603

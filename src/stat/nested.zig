@@ -3,7 +3,8 @@
 //! pp.6970-6971, VAR p.6971, Missing Values p.6971, Computational Method and
 //! Displayed Output pp.6973-6975). `parse` records every documented
 //! declaration; whatever has not been proven against a SAS reference listing
-//! (unbalanced designs, the analysis of covariation, long names) is a D-009
+//! (long names, zero-df factors; STAT-NESTED-003 added unbalanced designs and
+//! the analysis of covariation, verified against SAS 15.4 runs) is a D-009
 //! gap (rc 2) raised before any listing text is produced.
 const std = @import("std");
 const proc = @import("../proc.zig");
@@ -287,7 +288,6 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
 
 /// Execution boundary: only what the SAS reference listings prove.
 fn boundary(cx: proc.ProcCtx, s: Spec) diag.Error!void {
-    if (s.vars.len > 1 and !s.aov) return gap(cx, 0, "the analysis of covariation for more than one dependent variable is not implemented (STAT-NESTED-003); specify AOV or one VAR variable", .{});
     const cols = s.ds.columns.items;
     for (s.class) |c| if (cols[c].name.len > 8) return gap(cx, 0, "listing layout for CLASS variable names longer than 8 characters ({s}) is not verified", .{cols[c].name});
 }
@@ -323,7 +323,13 @@ pub const Anova = struct {
     ss: []const f64, // k factors then error
     total_ss: f64,
     mean: f64,
-    coef: []const f64, // C_jj = n / levels[j]
+    coef: []const f64, // C_jj (diagonal of ems)
+    /// Full EMS coefficient matrix: ems[i][j] is the coefficient of factor
+    /// j's component in the expected mean square of factor i (0 for j < i).
+    ems: []const []const f64 = &.{},
+    balanced: bool = true,
+    /// Sum over the cells of factor j of the squared cell size.
+    sumsq: []const f64 = &.{},
 };
 
 pub const Design = struct {
@@ -404,9 +410,60 @@ pub fn anova(a: A, d: Design, y: []const f64) !Anova {
         prev = d.levels[j];
     }
     df[k] = n -| prev;
+    const ems = try emsCoefficients(a, d, df);
     const coef = try a.alloc(f64, k);
-    for (coef, d.levels) |*c, l| c.* = @as(f64, @floatFromInt(n)) / @as(f64, @floatFromInt(l));
-    return .{ .n = n, .levels = d.levels, .df = df, .ss = ss, .total_ss = total_ss, .mean = mean, .coef = coef };
+    for (coef, 0..) |*c, j| c.* = ems[j][j];
+    const sumsq = try a.alloc(f64, k);
+    for (0..k) |j| {
+        const cnt = try a.alloc(f64, d.levels[j]);
+        @memset(cnt, 0);
+        for (d.cell[j]) |c| cnt[c] += 1;
+        sumsq[j] = 0;
+        for (cnt) |x| sumsq[j] += x * x;
+    }
+    return .{ .sumsq = sumsq, .n = n, .levels = d.levels, .df = df, .ss = ss, .total_ss = total_ss, .mean = mean, .coef = coef, .ems = ems, .balanced = d.balanced };
+}
+
+/// General (unbalanced) EMS coefficients (Computational Method, p.6973):
+/// E[SS_i] = sum_{j>=i} (S(i,j) - S(i-1,j)) s2_j + df_i s2, where
+/// S(i,j) = sum over level-i cells c of (sum over level-j cells d in c of
+/// n_d^2) / n_c and S(-1,j) = sum_d n_d^2 / n. Dividing by df_i gives the
+/// coefficient of the mean square; balanced designs reduce to n / levels[j].
+pub fn emsCoefficients(a: A, d: Design, df: []const usize) ![]const []const f64 {
+    const k = d.levels.len;
+    const counts = try a.alloc([]f64, k);
+    const rep = try a.alloc([]usize, k);
+    for (0..k) |j| {
+        counts[j] = try a.alloc(f64, d.levels[j]);
+        rep[j] = try a.alloc(usize, d.levels[j]);
+        @memset(counts[j], 0);
+        for (d.cell[j], 0..) |c, r| {
+            if (counts[j][c] == 0) rep[j][c] = r;
+            counts[j][c] += 1;
+        }
+    }
+    const nf: f64 = @floatFromInt(d.n);
+    const ems = try a.alloc([]f64, k);
+    for (0..k) |i| {
+        ems[i] = try a.alloc(f64, k);
+        @memset(ems[i], 0);
+    }
+    for (0..k) |j| {
+        // s_prev = S(i-1, j), starting at the whole sample.
+        var sq: f64 = 0;
+        for (counts[j]) |x| sq += x * x;
+        var s_prev = sq / nf;
+        for (0..j + 1) |i| {
+            const acc = try a.alloc(f64, d.levels[i]);
+            @memset(acc, 0);
+            for (counts[j], rep[j]) |x, r| acc[d.cell[i][r]] += x * x;
+            var s_cur: f64 = 0;
+            for (acc, counts[i]) |x, nc| s_cur += x / nc;
+            ems[i][j] = if (df[i] == 0) 0 else (s_cur - s_prev) / @as(f64, @floatFromInt(df[i]));
+            s_prev = s_cur;
+        }
+    }
+    return @ptrCast(ems);
 }
 
 pub const Derived = struct {
@@ -426,13 +483,7 @@ pub fn derive(a: A, r: Anova) !Derived {
     const k = r.coef.len;
     const ms = try a.alloc(f64, k + 1);
     for (ms, r.ss, r.df) |*m, s, d| m.* = s / @as(f64, @floatFromInt(d));
-    const comp = try a.alloc(f64, k + 1);
-    comp[k] = ms[k];
-    var i = k;
-    while (i > 0) {
-        i -= 1;
-        comp[i] = (ms[i] - ms[i + 1]) / r.coef[i];
-    }
+    const comp = try components(a, r, ms);
     var total: f64 = 0;
     for (comp) |c| if (c > 0) {
         total += c;
@@ -443,7 +494,145 @@ pub fn derive(a: A, r: Anova) !Derived {
         f[j] = ms[j] / ms[j + 1];
         p[j] = reg_fit.fProbability(f[j], r.df[j], r.df[j + 1]);
     }
-    return .{ .ms = ms, .comp = comp, .total_comp = total, .f = f, .p = p, .se_mean = @sqrt(ms[0] / @as(f64, @floatFromInt(r.n))) };
+    const nf: f64 = @floatFromInt(r.n);
+    var se = @sqrt(ms[0] / nf);
+    if (!r.balanced) {
+        // Var(mean) = sum_j s2_j sum_d n_d^2 / n^2 + s2 / n with the signed
+        // component estimates (matches SAS 15.4 reference runs; reduces to
+        // MS_1 / n when balanced).
+        var v = comp[k] / nf;
+        for (0..k) |j| v += comp[j] * r.sumsq[j] / (nf * nf);
+        se = @sqrt(v);
+    }
+    return .{ .ms = ms, .comp = comp, .total_comp = total, .f = f, .p = p, .se_mean = se };
+}
+
+/// Components from mean squares (or mean products): balanced closed form
+/// s2_i = (MS_i - MS_{i+1}) / C_ii; otherwise back substitution of
+/// MS_i = sum_{j>=i} C_ij s2_j + s2 (p.6973).
+pub fn components(a: A, r: Anova, ms: []const f64) ![]f64 {
+    const k = r.coef.len;
+    const comp = try a.alloc(f64, k + 1);
+    comp[k] = ms[k];
+    var i = k;
+    while (i > 0) {
+        i -= 1;
+        if (r.balanced or r.ems.len == 0) {
+            comp[i] = (ms[i] - ms[i + 1]) / r.coef[i];
+        } else {
+            var rest = ms[i] - ms[k];
+            for (i + 1..k) |j| rest -= r.ems[i][j] * comp[j];
+            comp[i] = rest / r.ems[i][i];
+        }
+    }
+    return comp;
+}
+
+/// Analysis of covariation for one (y, z) pair (p.6972, p.6975).
+pub const Covariation = struct {
+    total_sp: f64,
+    sp: []const f64, // k factors then error
+    mp: []const f64,
+    comp: []const f64,
+    total_comp: f64, // signed sum of the covariance components
+    vc_corr: []const f64, // k factors then error
+    total_vc_corr: f64,
+    ms_corr: []const f64,
+    total_ms_corr: f64,
+};
+
+/// Sums of crossproducts with the same partition as the sums of squares of
+/// `anova` (cell-mean deviations from the parent cell mean).
+pub fn crossproducts(a: A, d: Design, y: []const f64, z: []const f64) !struct { total: f64, sp: []f64 } {
+    const k = d.levels.len;
+    const ym = try cellMeans(a, d, y);
+    const zm = try cellMeans(a, d, z);
+    var my: f64 = 0;
+    var mz: f64 = 0;
+    for (y, z) |u, v| {
+        my += u;
+        mz += v;
+    }
+    const nf: f64 = @floatFromInt(d.n);
+    my /= nf;
+    mz /= nf;
+    const sp = try a.alloc(f64, k + 1);
+    @memset(sp, 0);
+    var total: f64 = 0;
+    for (y, z, 0..) |u, v, r| {
+        total += (u - my) * (v - mz);
+        var py = my;
+        var pz = mz;
+        for (0..k) |j| {
+            const cy = ym[j][d.cell[j][r]];
+            const cz = zm[j][d.cell[j][r]];
+            sp[j] += (cy - py) * (cz - pz);
+            py = cy;
+            pz = cz;
+        }
+        sp[k] += (u - py) * (v - pz);
+    }
+    return .{ .total = total, .sp = sp };
+}
+
+fn cellMeans(a: A, d: Design, y: []const f64) ![]const []const f64 {
+    const means = try a.alloc([]f64, d.levels.len);
+    for (0..d.levels.len) |j| {
+        const sums = try a.alloc(f64, d.levels[j]);
+        const counts = try a.alloc(f64, d.levels[j]);
+        @memset(sums, 0);
+        @memset(counts, 0);
+        for (y, d.cell[j]) |v, c| {
+            sums[c] += v;
+            counts[c] += 1;
+        }
+        for (sums, counts) |*x, c| x.* /= c;
+        means[j] = sums;
+    }
+    return @ptrCast(means);
+}
+
+/// Covariance components from mean products under the same EMS
+/// coefficients; the variance-component correlation is 0 when either
+/// variance component is not positive, and the Total row uses the signed
+/// sums of all components (SAS 15.4 reference runs).
+pub fn covariation(a: A, d: Design, ry: Anova, dy: Derived, rz: Anova, dz: Derived, y: []const f64, z: []const f64) !Covariation {
+    const k = d.levels.len;
+    const x = try crossproducts(a, d, y, z);
+    const mp = try a.alloc(f64, k + 1);
+    for (mp, x.sp, ry.df) |*m, s, df| m.* = s / @as(f64, @floatFromInt(df));
+    const comp = try components(a, ry, mp);
+    var total_comp: f64 = 0;
+    var ty: f64 = 0;
+    var tz: f64 = 0;
+    for (comp, dy.comp, dz.comp) |c, cy, cz| {
+        total_comp += c;
+        ty += cy;
+        tz += cz;
+    }
+    const vc = try a.alloc(f64, k + 1);
+    const msc = try a.alloc(f64, k + 1);
+    for (0..k + 1) |i| {
+        vc[i] = vcCorr(comp[i], dy.comp[i], dz.comp[i]);
+        msc[i] = if (dy.ms[i] * dz.ms[i] > 0) mp[i] / @sqrt(dy.ms[i] * dz.ms[i]) else 0;
+    }
+    const nm1: f64 = @floatFromInt(d.n - 1);
+    return .{
+        .total_sp = x.total,
+        .sp = x.sp,
+        .mp = mp,
+        .comp = comp,
+        .total_comp = total_comp,
+        .vc_corr = vc,
+        .total_vc_corr = vcCorr(total_comp, ty, tz),
+        .ms_corr = msc,
+        .total_ms_corr = (x.total / nm1) / @sqrt(ry.total_ss / nm1 * (rz.total_ss / nm1)),
+    };
+}
+
+fn vcCorr(c: f64, vy: f64, vz: f64) f64 {
+    if (!(vy > 0) or !(vz > 0)) return 0;
+    return c / @sqrt(vy * vz);
 }
 
 fn pad(a: A, out: *Out, text: []const u8, width: usize, left: bool) !void {
@@ -463,7 +652,9 @@ fn pvalue(a: A, p: f64) ![]const u8 {
     return std.fmt.allocPrint(a, "{d:.4}", .{p});
 }
 
-fn renderEms(a: A, out: *Out, names: []const []const u8, coef: []const f64) !void {
+fn renderEms(a: A, out: *Out, names: []const []const u8, r: Anova) !void {
+    if (!r.balanced) return renderEmsGeneral(a, out, names, r.ems);
+    const coef = r.coef;
     // Column widths inferred from the SAS 15.4 reference listings: the
     // Source column is at least 6 wide; each coefficient column is the name
     // (at least 2) plus 6.
@@ -498,6 +689,85 @@ fn renderEms(a: A, out: *Out, names: []const []const u8, coef: []const f64) !voi
     }
 }
 
+/// Unbalanced EMS table (SAS 15.4 reference runs): every value uses the
+/// fewest decimals d <= 8 that show all coefficients exactly (8 otherwise);
+/// with w the widest value, factor columns are max(w + 7, name + 6) wide, the
+/// Error column max(w + 7, 11), the Source column max(6, longest name).
+fn renderEmsGeneral(a: A, out: *Out, names: []const []const u8, ems: []const []const f64) !void {
+    var src: usize = 6;
+    for (names) |nm| src = @max(src, nm.len);
+    const k = names.len;
+    var d: usize = 0;
+    while (d < 8) : (d += 1) {
+        const scale = std.math.pow(f64, 10, @floatFromInt(d));
+        var exact = true;
+        for (0..k) |i| for (i..k) |j| {
+            const x = ems[i][j] * scale;
+            if (@abs(x - @round(x)) > 1e-6) exact = false;
+        };
+        if (exact) break;
+    }
+    var w: usize = 0;
+    for (0..k) |i| for (i..k) |j| {
+        w = @max(w, (try std.fmt.allocPrint(a, "{[0]d:.[1]}", .{ ems[i][j], d })).len);
+    };
+    w = @max(w, (try std.fmt.allocPrint(a, "{[0]d:.[1]}", .{ @as(f64, 1), d })).len);
+    const widths = try a.alloc(usize, k);
+    var total = src;
+    for (names, widths) |nm, *x| {
+        x.* = @max(w + 7, nm.len + 6);
+        total += x.*;
+    }
+    const ew = @max(w + 7, 11);
+    total += ew;
+    try centered(a, out, "Coefficients of Expected Mean Squares", total);
+    try out.appendSlice(a, " \n");
+    try pad(a, out, "Source", src, true);
+    for (names, widths) |nm, x| try pad(a, out, nm, x, false);
+    try pad(a, out, "Error", ew, false);
+    try out.appendSlice(a, "\n\n");
+    for (0..k + 1) |i| {
+        try pad(a, out, if (i < k) names[i] else "Error", src, true);
+        for (0..k) |j| {
+            const c: f64 = if (i < k and i <= j) ems[i][j] else 0;
+            try pad(a, out, try std.fmt.allocPrint(a, "{[0]d:.[1]}", .{ c, d }), widths[j], false);
+        }
+        try pad(a, out, try std.fmt.allocPrint(a, "{[0]d:.[1]}", .{ @as(f64, 1), d }), ew, false);
+        try out.append(a, '\n');
+    }
+}
+
+/// Six-decimal listing cell; an exact zero prints as `0` (SAS 15.4
+/// reference runs of unbalanced designs with a zero sum of squares).
+/// ponytail: exact float zero only, no fuzz.
+fn six(a: A, x: f64) ![]const u8 {
+    if (x == 0) return "0";
+    return std.fmt.allocPrint(a, "{d:.6}", .{x});
+}
+
+fn renderCovariation(a: A, out: *Out, names: []const []const u8, ny: []const u8, nz: []const u8, df: []const usize, n: usize, c: Covariation) !void {
+    try out.appendSlice(a, "\n\n");
+    try centered(a, out, try std.fmt.allocPrint(a, "Covariance of Variable {s} with {s}", .{ ny, nz }), 98);
+    try out.appendSlice(a, " \n");
+    try out.appendSlice(a, "                                                                           Variance\n");
+    try out.appendSlice(a, "Covariance                    Sum of                      Covariance      Component    Mean Square\n");
+    try out.appendSlice(a, "Source            DF        Products    Mean Product       Component    Correlation    Correlation\n\n");
+    const k = names.len;
+    try covRow(a, out, "Total", n - 1, c.total_sp, c.total_sp / @as(f64, @floatFromInt(n - 1)), c.total_comp, c.total_vc_corr, c.total_ms_corr);
+    for (0..k + 1) |i| try covRow(a, out, if (i < k) names[i] else "Error", df[i], c.sp[i], c.mp[i], c.comp[i], c.vc_corr[i], c.ms_corr[i]);
+}
+
+fn covRow(a: A, out: *Out, name: []const u8, df: usize, sp: f64, mp: f64, comp: f64, vc: f64, msc: f64) !void {
+    try pad(a, out, name, 12, true);
+    try pad(a, out, try std.fmt.allocPrint(a, "{d}", .{df}), 8, false);
+    try pad(a, out, try six(a, sp), 16, false);
+    try pad(a, out, try six(a, mp), 16, false);
+    try pad(a, out, try six(a, comp), 16, false);
+    try pad(a, out, try std.fmt.allocPrint(a, "{d:.4}", .{vc}), 15, false);
+    try pad(a, out, try std.fmt.allocPrint(a, "{d:.4}", .{msc}), 15, false);
+    try out.append(a, '\n');
+}
+
 fn renderAnova(a: A, out: *Out, names: []const []const u8, dep: []const u8, r: Anova, d: Derived) !void {
     const k = names.len;
     // The Error Term column is the longest CLASS name (at least 5) plus 3
@@ -518,8 +788,10 @@ fn renderAnova(a: A, out: *Out, names: []const []const u8, dep: []const u8, r: A
     try row(a, out, term, "Total", r.n - 1, r.total_ss, null, null, total_ms, d.total_comp, 100);
     for (0..k + 1) |i| {
         const pct = if (d.comp[i] > 0) 100 * d.comp[i] / d.total_comp else 0;
-        const test_: ?Test = if (i < k) .{ .f = d.f[i], .p = d.p[i] } else null;
-        try row(a, out, term, if (i < k) names[i] else "Error", r.df[i], r.ss[i], test_, if (i < k) (if (i + 1 < k) names[i + 1] else "Error") else null, d.ms[i], d.comp[i], pct);
+        // Unbalanced Data (p.6971): the F test columns are left blank.
+        const tested = i < k and r.balanced;
+        const test_: ?Test = if (tested) .{ .f = d.f[i], .p = d.p[i] } else null;
+        try row(a, out, term, if (i < k) names[i] else "Error", r.df[i], r.ss[i], test_, if (tested) (if (i + 1 < k) names[i + 1] else "Error") else null, d.ms[i], d.comp[i], pct);
     }
     try out.appendSlice(a, "\n\n");
     const se_label = try std.fmt.allocPrint(a, "Standard Error of {s} Mean", .{dep});
@@ -540,20 +812,20 @@ const Test = struct { f: f64, p: f64 };
 fn row(a: A, out: *Out, term_width: usize, name: []const u8, df: usize, ss: f64, t: ?Test, term: ?[]const u8, ms: f64, comp: f64, pct: f64) !void {
     try pad(a, out, name, 12, true);
     try pad(a, out, try std.fmt.allocPrint(a, "{d}", .{df}), 6, false);
-    try pad(a, out, try std.fmt.allocPrint(a, "{d:.6}", .{ss}), 16, false);
+    try pad(a, out, try six(a, ss), 16, false);
     if (t) |x| {
         try pad(a, out, try std.fmt.allocPrint(a, "{d:.2}", .{x.f}), 11, false);
         try pad(a, out, try pvalue(a, x.p), 10, false);
     } else try out.appendNTimes(a, ' ', 21);
     try out.appendSlice(a, "    ");
     try pad(a, out, term orelse "", term_width, true);
-    try pad(a, out, try std.fmt.allocPrint(a, "{d:.6}", .{ms}), 13, false);
-    try pad(a, out, try std.fmt.allocPrint(a, "{d:.6}", .{comp}), 16, false);
+    try pad(a, out, try six(a, ms), 13, false);
+    try pad(a, out, try six(a, comp), 16, false);
     try pad(a, out, try std.fmt.allocPrint(a, "{d:.4}", .{pct}), 12, false);
     try out.append(a, '\n');
 }
 
-const Group = struct { design: Design, results: []const Anova, derived: []const Derived, empty: bool = false };
+const Group = struct { design: Design, results: []const Anova, derived: []const Derived, ys: []const []const f64 = &.{}, empty: bool = false };
 
 fn analyze(cx: proc.ProcCtx, s: Spec, rows_in: []const []const Value) diag.Error!Group {
     const a = cx.arena;
@@ -579,7 +851,10 @@ fn analyze(cx: proc.ProcCtx, s: Spec, rows_in: []const []const Value) diag.Error
         for (s.class, kk.*) |c, *v| v.* = try levelKey(a, s.ds, c, r[c], s.truncate);
     }
     const d = try design(a, @ptrCast(keys));
-    if (!d.balanced) return gap(cx, 0, "unbalanced nested designs are not implemented (STAT-NESTED-003)", .{});
+    // Unbalanced Data (p.6971): warn in the log, estimate the components,
+    // leave the F test columns blank.
+    // (The WARNING itself is issued by `run`, with the BY-group NOTE.)
+
     var prev: usize = 1;
     for (d.levels) |l| {
         if (l <= prev) return gap(cx, 0, "a classification factor with zero degrees of freedom is not implemented", .{});
@@ -588,15 +863,19 @@ fn analyze(cx: proc.ProcCtx, s: Spec, rows_in: []const []const Value) diag.Error
     if (d.n <= prev) return gap(cx, 0, "a design with zero error degrees of freedom is not implemented", .{});
     const results = try a.alloc(Anova, s.vars.len);
     const derived = try a.alloc(Derived, s.vars.len);
-    for (s.vars, results, derived) |v, *res, *der| {
+    const ys = try a.alloc([]f64, s.vars.len);
+    for (s.vars, results, derived, ys) |v, *res, *der, *yv| {
         const y = try a.alloc(f64, d.n);
+        yv.* = y;
         for (rows.items, y) |r, *x| x.* = r[v].num;
         res.* = try anova(a, d, y);
         der.* = try derive(a, res.*);
-        for (der.ms[1..]) |m| if (!(m > 0)) return gap(cx, 0, "an F test with a zero denominator mean square is not implemented", .{});
+        if (d.balanced) for (der.ms[1..]) |m| if (!(m > 0)) return gap(cx, 0, "an F test with a zero denominator mean square is not implemented", .{});
         if (!(der.total_comp > 0)) return gap(cx, 0, "a zero total variance component is not implemented", .{});
+        if (!(res.total_ss > 0)) return gap(cx, 0, "a zero total sum of squares is not implemented", .{});
+        if (!(der.se_mean >= 0)) return gap(cx, 0, "an unbalanced design whose estimated variance of the mean is negative is not implemented", .{});
     }
-    return .{ .design = d, .results = results, .derived = derived };
+    return .{ .design = d, .results = results, .derived = derived, .ys = @ptrCast(ys) };
 }
 
 pub fn run(cx: proc.ProcCtx, out: *Out, t: []const lex.Token) diag.Error!void {
@@ -612,6 +891,9 @@ pub fn run(cx: proc.ProcCtx, out: *Out, t: []const lex.Token) diag.Error!void {
         g.* = try analyze(cx, s, slice.rows);
         if (g.empty) {
             try cx.diags.warnStatus(0, "All observations contain missing data.", .{});
+            if (s.by_cols.len > 0) try by.reportNote(a, cx.diags, s.ds, slice.rep.?, s.by_cols);
+        } else if (!g.design.balanced) {
+            try cx.diags.warnStatus(0, "The design is not balanced--F tests cannot be computed.", .{});
             if (s.by_cols.len > 0) try by.reportNote(a, cx.diags, s.ds, slice.rep.?, s.by_cols);
         }
     }
@@ -630,8 +912,13 @@ pub fn run(cx: proc.ProcCtx, out: *Out, t: []const lex.Token) diag.Error!void {
             }
         }
         try out.appendSlice(a, "\nThe NESTED Procedure\n\n");
-        try renderEms(a, out, names, g.results[0].coef);
+        try renderEms(a, out, names, g.results[0]);
         for (s.vars, g.results, g.derived) |v, r, d| try renderAnova(a, out, names, cols[v].name, r, d);
+        // Analysis of Covariation (p.6972): every pair in VAR order, unless AOV.
+        if (!s.aov) for (0..s.vars.len) |i| for (i + 1..s.vars.len) |j| {
+            const c = try covariation(a, g.design, g.results[i], g.derived[i], g.results[j], g.derived[j], g.ys[i], g.ys[j]);
+            try renderCovariation(a, out, names, cols[s.vars[i]].name, cols[s.vars[j]].name, g.results[i].df, g.design.n, c);
+        };
         if (cx.listing_titles) |titles| try titles.emitFootnotes(a, out);
     }
 }

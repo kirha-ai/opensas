@@ -1,0 +1,25 @@
+
+The NESTED Procedure
+
+          Coefficients of Expected Mean Squares
+ 
+Source             Make            Model            Error
+
+Make         8.74285714       2.93571429       1.00000000
+Model        0.00000000       2.90625000       1.00000000
+Error        0.00000000       0.00000000       1.00000000
+
+
+                       Nested Random Effects Analysis of Variance for Variable Score
+ 
+Variance                    Sum of                         Error                        Variance     Percent
+Source          DF         Squares    F Value    Pr > F    Term      Mean Square       Component    of Total
+
+Total           34     4168.971429                                    122.616807      135.766510    100.0000
+Make             3     1743.638095                                    581.212698       36.282015     26.7238
+Model            8     2092.000000                                    261.500000       84.991741     62.6014
+Error           23      333.333333                                     14.492754       14.492754     10.6748
+
+
+Score Mean                         76.02857143
+Standard Error of Score Mean        4.08081368

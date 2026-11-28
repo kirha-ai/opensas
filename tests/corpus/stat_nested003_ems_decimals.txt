@@ -1,0 +1,52 @@
+S1 two decimals
+
+The NESTED Procedure
+
+ Coefficients of Expected Mean Squares
+ 
+Source          A          B      Error
+
+A            4.00       2.25       1.00
+B            0.00       1.75       1.00
+Error        0.00       0.00       1.00
+
+
+                         Nested Random Effects Analysis of Variance for Variable y
+ 
+Variance                    Sum of                         Error                        Variance     Percent
+Source          DF         Squares    F Value    Pr > F    Term      Mean Square       Component    of Total
+
+Total            7       28.000000                                      4.000000        6.205357    100.0000
+A                1        0.500000                                      0.500000        0.080357      1.2950
+B                2        3.000000                                      1.500000       -2.642857      0.0000
+Error            4       24.500000                                      6.125000        6.125000     98.7050
+
+
+y Mean                          5.00000000
+Standard Error of y Mean        0.25000000
+S2 coefficient above ten
+
+The NESTED Procedure
+
+           Coefficients of Expected Mean Squares
+ 
+Source                 A                 B             Error
+
+A            11.47826087        5.76284585        1.00000000
+B             0.00000000        5.72727273        1.00000000
+Error         0.00000000        0.00000000        1.00000000
+
+
+                         Nested Random Effects Analysis of Variance for Variable y
+ 
+Variance                    Sum of                         Error                        Variance     Percent
+Source          DF         Squares    F Value    Pr > F    Term      Mean Square       Component    of Total
+
+Total           22      374.250000                                     17.011364       19.532542    100.0000
+A                1       19.210227                                     19.210227       -2.425197      0.0000
+B                2       93.683523                                     46.841761        5.776950     29.5760
+Error           19      261.356250                                     13.755592       13.755592     70.4240
+
+
+y Mean                          9.00000000
+Standard Error of y Mean        0.91411523

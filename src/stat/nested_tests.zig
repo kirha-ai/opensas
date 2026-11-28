@@ -100,12 +100,9 @@ test "STAT-NESTED-001 user errors fail with rc 1 and gaps with rc 2" {
         try expect(!diag.gapHit());
     }
     const gap_cases = [_][]const u8{
-        "proc nested data=s; class a b; run;", // two VAR variables without AOV: covariation
         "proc nested data=s; class a a; var y; run;", // repeated CLASS variable: zero-df factor (STAT-NESTED-004)
         "proc nested data=s; class a b; var y; by g; class b; run;", // CLASS a b b
         "proc nested data=s; class a b; var y; attrib y transcode=no; run;",
-        "proc nested data=s; class a b; var y; var y; run;", // y with y covariation without AOV
-        "proc nested data=s(where=(y>2)); class a b; var y; run;", // unbalanced after WHERE
     };
     for (gap_cases) |src| {
         var e: Env = .{ .arena = std.heap.ArenaAllocator.init(std.testing.allocator) };
@@ -301,4 +298,59 @@ test "STAT-NESTED-002 listing precision conventions of the default analysis" {
     try expect(std.mem.indexOf(u8, out, "b                2       16.250000       2.60    0.1890    Error        8.125000        2.500000     44.4444") != null);
     try expect(std.mem.indexOf(u8, out, "y Mean                          4.87500000") != null);
     try expect(std.mem.indexOf(u8, out, "Standard Error of y Mean        0.12500000") != null);
+}
+
+test "STAT-NESTED-003 unbalanced EMS coefficients and components match a hand calculation" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    // A(3) / B within A with cell sizes 2,3 | 3,1 | 2,2,2 (invented data).
+    const ab = [_][2]f64{ .{ 1, 1 }, .{ 1, 1 }, .{ 1, 2 }, .{ 1, 2 }, .{ 1, 2 }, .{ 2, 1 }, .{ 2, 1 }, .{ 2, 1 }, .{ 2, 2 }, .{ 3, 1 }, .{ 3, 1 }, .{ 3, 2 }, .{ 3, 2 }, .{ 3, 3 }, .{ 3, 3 } };
+    const ys = [_]f64{ 3, 5, 4, 6, 8, 7, 9, 8, 2, 6, 4, 5, 7, 9, 6 };
+    var keys: [15][]const Value = undefined;
+    for (ab, 0..) |x, i| keys[i] = try a.dupe(Value, &.{ .{ .num = x[0] }, .{ .num = x[1] } });
+    const d = try nested.design(a, &keys);
+    try expect(!d.balanced);
+    const r = try nested.anova(a, d, &ys);
+    try std.testing.expectEqualSlices(usize, &.{ 2, 4, 8 }, r.df);
+    // Hand: C_AA = (15 - (25+16+36)/15)/2; C_AB = ((4+9)/5 + (9+1)/4 + 12/6
+    // - 35/15)/2; C_BB = (15 - 7.1)/4.
+    try approx(@as(f64, (15.0 - 77.0 / 15.0) / 2.0), r.ems[0][0], 1e-12);
+    try approx(@as(f64, (7.1 - 35.0 / 15.0) / 2.0), r.ems[0][1], 1e-12);
+    try approx(@as(f64, 1.975), r.ems[1][1], 1e-12);
+    try approx(@as(f64, 0), r.ems[1][0], 0);
+    // SS: A 4.3, B 38.133333..., error 20.5 (cell means by hand).
+    try approx(@as(f64, 4.3), r.ss[0], 1e-10);
+    try approx(@as(f64, 38.13333333333333), r.ss[1], 1e-10);
+    try approx(@as(f64, 20.5), r.ss[2], 1e-10);
+    const x = try nested.derive(a, r);
+    const msb = 38.13333333333333 / 4.0;
+    const sb = (msb - 2.5625) / 1.975;
+    try approx(sb, x.comp[1], 1e-10);
+    try approx((2.15 - 2.5625 - r.ems[0][1] * sb) / r.ems[0][0], x.comp[0], 1e-10);
+}
+
+test "STAT-NESTED-003 unbalanced runs and covariation list with a WARNING, no gap" {
+    // Unbalanced after WHERE, y with y and the default two-variable list
+    // (analysis of covariation) now list; one WARNING per unbalanced design.
+    const cases = [_]struct { src: []const u8, warnings: usize }{
+        .{ .src = "proc nested data=s(where=(y>2)); class a b; var y; run;", .warnings = 1 },
+        .{ .src = "proc nested data=s; class a b; var y; var y; run;", .warnings = 0 },
+        .{ .src = "proc nested data=s; class a b; var y z; run;", .warnings = 0 },
+    };
+    for (cases) |c| {
+        var e: Env = .{ .arena = std.heap.ArenaAllocator.init(std.testing.allocator) };
+        defer e.arena.deinit();
+        try e.init();
+        const listing = try e.run(c.src);
+        try expect(!diag.gapHit());
+        try expect(!e.diags.hasErrors());
+        try expect(std.mem.indexOf(u8, listing, "Nested Random Effects Analysis of Variance") != null);
+        if (c.warnings == 0) try expect(std.mem.indexOf(u8, listing, "Covariance of Variable y with") != null);
+        var n: usize = 0;
+        for (e.diags.list.items) |m| {
+            if (std.mem.indexOf(u8, m.message, "The design is not balanced--F tests cannot be computed.") != null) n += 1;
+        }
+        try expectEqual(c.warnings, n);
+    }
 }

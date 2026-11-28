@@ -1,3 +1,0 @@
-# corpus assertions
-empty-listing
-stderr-count 1 unbalanced nested designs are not implemented
