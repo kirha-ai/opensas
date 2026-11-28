@@ -1,9 +1,10 @@
 /* STAT-SURVEYLOGISTIC-001: PROC SURVEYLOGISTIC binary logit with STRATA,
  * CLUSTER and WEIGHT under Taylor-series variance (SAS/STAT 15.4 Ch.120).
- * The 0/1 responses are the published draws of the chapter-style example
- * (streaminit 722, rand('bernoulli',0.3)) written out literally, so the
- * expected listing is the SAS reference listing independent of the RNG.
- * Data: invented design. */
+ * The 0/1 responses are the 96 values that SAS 9.4 itself draws for
+ * streaminit 722, rand('bernoulli',0.3) (dumped by one real SAS run,
+ * 2026-11-28), written out literally, so the expected listing (the SAS
+ * reference listing of STAT-SURVEYLOGISTIC-001) does not depend on the
+ * opensas random stream, which still differs. Data: invented design. */
 options nodate nonumber nocenter linesize=160;
 title;
 data survey;
