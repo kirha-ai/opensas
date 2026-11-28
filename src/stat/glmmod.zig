@@ -323,17 +323,24 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
             var slash = j;
             while (slash < end and !at(t, slash, .slash)) slash += 1;
             try effects(cx, result.input.ds, classes.items, t[j..slash], &model_effects, &effect_names);
-            // A named crossed-and-nesting effect lists its covariates in written
-            // order; other effects use model-wide first appearance. Only the
-            // case where both agree (every probe) is accepted.
+            // Covariates of a named crossed-and-nesting effect follow their
+            // model-wide first appearance, like every other effect (V1-V3
+            // probes: x z*x*h(h g) -> x*z*h(g*h); z x*z*h(h) -> z*x*h(h)).
             var order: std.ArrayList(usize) = .empty;
             for (model_effects.items) |e| for (e.factors) |f| if (std.mem.indexOfScalar(usize, classes.items, f) == null and std.mem.indexOfScalar(usize, order.items, f) == null) try order.append(cx.arena, f);
-            for (model_effects.items) |e| if (e.name != null) {
-                var last: usize = 0;
-                for (e.factors) |f| if (std.mem.indexOfScalar(usize, order.items, f)) |rank| {
-                    if (rank < last) return proc.failGap(cx.diags, t[i].line, "PROC GLMMOD: covariates of a crossed-and-nesting effect written against their model order are not implemented", .{});
-                    last = rank;
-                };
+            for (model_effects.items) |*e| if (e.name) |old| {
+                var covariates: std.ArrayList(usize) = .empty;
+                for (e.factors) |f| if (std.mem.indexOfScalar(usize, classes.items, f) == null) try covariates.append(cx.arena, f);
+                if (covariates.items.len < 2) continue;
+                std.mem.sort(usize, covariates.items, order.items, classOrder);
+                const open = std.mem.indexOfScalar(u8, old, '(').?;
+                var parts = std.mem.splitScalar(u8, old[0..open], '*');
+                for (covariates.items) |_| _ = parts.next();
+                var renamed: std.ArrayList(u8) = .empty;
+                try renamed.appendSlice(cx.arena, try joined(cx.arena, result.input.ds, covariates.items));
+                while (parts.next()) |part| try renamed.print(cx.arena, "*{s}", .{part});
+                try renamed.appendSlice(cx.arena, old[open..]);
+                e.name = renamed.items;
             };
             if (slash < end) {
                 j = slash + 1;
@@ -1190,6 +1197,11 @@ test "STAT-GLMMOD-003 crossed factor that is also nesting is built as the reduce
     try std.testing.expectEqual(@as(usize, 4), self.rowCount());
     try std.testing.expectEqualStrings("h(h)", self.rows.items[0][1].str);
     try std.testing.expectEqualStrings("x*h(h)", self.rows.items[2][1].str);
+    // Covariates follow model-wide first appearance (V1/V3 probes).
+    try run(cx, &sink, try lex.tokenize(a, "proc glmmod data=t3 outparm=cov noprint; class h; model y1 = x c*x*h(h); run;", &d));
+    try std.testing.expectEqualStrings("x*c*h(h)", lib.find("cov").?.rows.items[2][1].str);
+    try run(cx, &sink, try lex.tokenize(a, "proc glmmod data=t3 outparm=cov2 noprint; class h; model y1 = c x*c*h(h); run;", &d));
+    try std.testing.expectEqualStrings("c*x*h(h)", lib.find("cov2").?.rows.items[2][1].str);
     // @n counts written variables (U1 probe): c*h(h) has three, so @2 drops it.
     try run(cx, &sink, try lex.tokenize(a, "proc glmmod data=t3 outparm=at2 noprint; class h c; model y1 = c*h(h) | k@2 / noint; run;", &d));
     try std.testing.expectEqual(@as(usize, 1), lib.find("at2").?.rowCount());
