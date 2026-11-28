@@ -1,0 +1,48 @@
+
+g=1
+
+The ORTHOREG Procedure
+ 
+Dependent Variable: y
+
+                                   Sum of
+Source                 DF         Squares     Mean Square    F Value    Pr > F
+
+Model                   1     5.607692308     5.607692308       3.51    0.2017
+Error                   2     3.192307692     1.596153846                     
+Corrected Total         3     8.800000000                                     
+
+
+Root MSE    1.2633898235
+R-Square    0.6372377622
+
+
+                                             Standard
+Parameter    DF    Parameter Estimate           Error    t Value    Pr > |t|
+
+Intercept     1        1.346153846154     0.959613458       1.40      0.2958
+x             1        1.038461538462     0.554033088       1.87      0.2017
+
+g=2
+
+The ORTHOREG Procedure
+ 
+Dependent Variable: y
+
+                                   Sum of
+Source                 DF         Squares     Mean Square    F Value    Pr > F
+
+Model                   1     14.40000000     14.40000000       4.91    0.1135
+Error                   3     8.800000000     2.933333333                     
+Corrected Total         4     23.20000000                                     
+
+
+Root MSE    1.7126976772
+R-Square    0.6206896552
+
+
+                                             Standard
+Parameter    DF    Parameter Estimate           Error    t Value    Pr > |t|
+
+Intercept     1        1.200000000000     1.326649916       0.90      0.4324
+x             1        1.200000000000     0.541602560       2.22      0.1135

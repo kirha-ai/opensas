@@ -1,0 +1,7 @@
+# corpus assertions
+empty-listing
+stderr-count 1 NAMELEN= must be an integer between 20 and 2000
+stderr-count 1 only one MODEL statement is allowed
+stderr-count 1 dependent variable c must be numeric
+stderr-count 1 WEIGHT variable c must be numeric
+stderr-count 1 effect x appears more than once in the MODEL statement

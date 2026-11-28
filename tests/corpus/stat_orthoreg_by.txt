@@ -1,0 +1,72 @@
+PROC ORTHOREG used with Longley data
+
+g=1
+
+The ORTHOREG Procedure
+ 
+Dependent Variable: Employment
+
+                                   Sum of
+Source                 DF         Squares     Mean Square    F Value    Pr > F
+
+Model                  12     184864508.5     15405375.71     320.24    0.0003
+Error                   3     144317.4957     48105.83189                     
+Corrected Total        15     185008826.0                                     
+
+
+Root MSE    219.33041717
+R-Square    0.9992199426
+
+
+                                               Standard
+Parameter      DF    Parameter Estimate           Error    t Value    Pr > |t|
+
+Intercept       1       186931078.64012     154201839.7       1.21      0.3122
+Prices          1     1324.506793624720     916.1745583       1.45      0.2440
+Prices**2       1       -6.619239228454     4.789144565      -1.38      0.2609
+GNP             1       -0.127686421562    0.0738897784      -1.73      0.1824
+GNP**2          1    3.1369569286216E-8    8.7167753E-8       0.36      0.7428
+Jobless         1       -4.355076535587     1.385179240      -3.14      0.0515
+Jobless**2      1        0.000221329441    0.0001763541       1.26      0.2983
+Military        1        4.911620145608     1.826715856       2.69      0.0745
+Military**2     1       -0.001137071467    0.0003539971      -3.21      0.0489
+PopSize         1       -0.030399723432     5.927253824      -0.01      0.9962
+PopSize**2      1    -0.000001212511415    0.0000237262      -0.05      0.9625
+Year            1         -194907.13904     157739.2876      -1.24      0.3045
+Year**2         1       50.806760353826     40.27987894       1.26      0.2963
+PROC ORTHOREG used with Longley data
+
+g=2
+
+The ORTHOREG Procedure
+ 
+Dependent Variable: Employment
+
+                                   Sum of
+Source                 DF         Squares     Mean Square    F Value    Pr > F
+
+Model                  12     184864508.5     15405375.71     320.24    0.0003
+Error                   3     144317.4957     48105.83189                     
+Corrected Total        15     185008826.0                                     
+
+
+Root MSE    219.33041717
+R-Square    0.9992199426
+
+
+                                               Standard
+Parameter      DF    Parameter Estimate           Error    t Value    Pr > |t|
+
+Intercept       1       186931078.64012     154201839.7       1.21      0.3122
+Prices          1     1324.506793624720     916.1745583       1.45      0.2440
+Prices**2       1       -6.619239228454     4.789144565      -1.38      0.2609
+GNP             1       -0.127686421562    0.0738897784      -1.73      0.1824
+GNP**2          1    3.1369569286216E-8    8.7167753E-8       0.36      0.7428
+Jobless         1       -4.355076535587     1.385179240      -3.14      0.0515
+Jobless**2      1        0.000221329441    0.0001763541       1.26      0.2983
+Military        1        4.911620145608     1.826715856       2.69      0.0745
+Military**2     1       -0.001137071467    0.0003539971      -3.21      0.0489
+PopSize         1       -0.030399723432     5.927253824      -0.01      0.9962
+PopSize**2      1    -0.000001212511415    0.0000237262      -0.05      0.9625
+Year            1         -194907.13904     157739.2876      -1.24      0.3045
+Year**2         1       50.806760353826     40.27987894       1.26      0.2963
