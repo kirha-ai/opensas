@@ -10,8 +10,7 @@
 //! constructive form of van der Zander, Liskiewicz and Textor 2014) is
 //! enumerated over the measured covariates and listed by increasing size.
 //! Layout and messages follow SAS 9.4 reference runs. Everything not proven
-//! against a reference listing (METHOD=BACKDOOR/IV, TESTID, IMAP, COMMON,
-//! NOSORT, CYCLES=) is a
+//! against a reference listing (IMAP, COMMON, CYCLES=) is a
 //! D-009 gap (rc 2) raised before any listing text is produced.
 const std = @import("std");
 const proc = @import("../proc.zig");
@@ -31,6 +30,10 @@ pub const Options = struct {
     /// null = no limit; 0 = MAXSIZE=MIN.
     maxsize: ?usize = null,
     minimal: bool = false,
+    /// NOSORT (p.2301, Time Requirements p.2331): listing order of the
+    /// search instead of size order; cleared (with a warning) under
+    /// MAXSIZE=MIN or METHOD=IV.
+    nosort: bool = false,
     compact: bool = false,
     noprint: bool = false,
     disconnected: bool = false,
@@ -316,7 +319,9 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
             if (n == 0) return user(cx, line, "The {s}= value must be a positive integer.", .{try std.ascii.allocUpperString(a, w)});
             i += 1;
             if (eq(w, "maxlist")) o.maxlist = n else if (eq(w, "maxsize")) o.maxsize = n else o.nthreads = n;
-        } else if (eq(w, "common") or eq(w, "imap") or eq(w, "cycles") or eq(w, "nosort")) {
+        } else if (eq(w, "nosort")) {
+            o.nosort = true;
+        } else if (eq(w, "common") or eq(w, "imap") or eq(w, "cycles")) {
             return gap(cx, line, "the {s} option is not implemented", .{try std.ascii.allocUpperString(a, w)});
         } else return invalid(cx, t, i - 1);
     }
@@ -906,6 +911,132 @@ fn setLess(_: void, l: Set, r: Set) bool {
 }
 
 const max_candidates = 20;
+/// Set masks are u64: the pruned search (`Search`) lists sets over at most
+/// 64 covariates.
+const max_search_candidates = 64;
+/// ponytail: a listing that must hold more sets than this (sorted order, or
+/// NOSORT MINIMAL) fails loud instead of exhausting memory; SAS itself ran
+/// more than 300 s on 2^22 sets (reference run, STAT-CAUSALGRAPH-008).
+const max_listed_sets = 1 << 20;
+
+/// Pruned listing of adjustment sets (Takata 2010; van der Zander,
+/// Liskiewicz and Textor 2014, ListAdj): a branch I <= Z <= R is explored
+/// only if An(X u Y u I) n R is valid, which holds iff some valid set lies
+/// in the branch, so every output costs polynomial time. Branching includes
+/// the lowest (alphabetically first) free covariate first, the order SAS's
+/// NOSORT listing walks backwards (reference runs).
+pub const Search = struct {
+    a: A,
+    n: usize,
+    g: Graph,
+    an: Analysis,
+    cands: []const usize,
+    xs: []const usize,
+    ys: []const usize,
+    /// Allowed covariates (not forbidden for the method).
+    allowed: u64,
+    required: u64,
+    out: std.ArrayList(Set) = .empty,
+    /// Stop after this many outputs (null = all, capped by max_listed_sets).
+    limit: ?usize = null,
+    maxsize: ?usize = null,
+    cap: usize = max_listed_sets,
+    overflow: bool = false,
+
+    pub fn init(a: A, n: usize, edges: []const Edge, an: Analysis, cands: []const usize, xs: []const usize, ys: []const usize, required: u64) !Search {
+        var allowed: u64 = 0;
+        for (cands, 0..) |c, k| {
+            const banned = if (an.backdoor) |bd| bd.de_x[c] else an.forbidden[c];
+            if (!banned) allowed |= @as(u64, 1) << @intCast(k);
+        }
+        return .{ .a = a, .n = n, .g = .{ .n = n, .edges = edges }, .an = an, .cands = cands, .xs = xs, .ys = ys, .allowed = allowed, .required = required };
+    }
+
+    /// Covariates of `r` that are ancestors of X, Y or the covariates `i`.
+    fn ancIn(self: *Search, sa: A, i: u64, r: u64) !u64 {
+        const none = try sa.alloc(bool, self.n);
+        @memset(none, false);
+        var seeds: std.ArrayList(usize) = .empty;
+        try seeds.appendSlice(sa, self.xs);
+        try seeds.appendSlice(sa, self.ys);
+        for (self.cands, 0..) |c, k| if ((i >> @intCast(k)) & 1 == 1) try seeds.append(sa, c);
+        const anc = try self.g.closure(sa, seeds.items, false, none, none);
+        var mask: u64 = 0;
+        for (self.cands, 0..) |c, k| if (anc[c] and (r >> @intCast(k)) & 1 == 1) {
+            mask |= @as(u64, 1) << @intCast(k);
+        };
+        return mask;
+    }
+
+    pub fn valid(self: *Search, mask: u64) !bool {
+        var scratch = std.heap.ArenaAllocator.init(self.a);
+        defer scratch.deinit();
+        const sa = scratch.allocator();
+        const z = try sa.alloc(bool, self.n);
+        @memset(z, false);
+        for (self.cands, 0..) |c, k| if ((mask >> @intCast(k)) & 1 == 1) {
+            z[c] = true;
+        };
+        return validAdjustment(sa, self.an, self.xs, self.ys, z);
+    }
+
+    /// Some valid set Z with i <= Z <= r exists.
+    fn exists(self: *Search, i: u64, r: u64) !bool {
+        if (i & ~r != 0) return false;
+        var scratch = std.heap.ArenaAllocator.init(self.a);
+        defer scratch.deinit();
+        return self.valid(try self.ancIn(scratch.allocator(), i, r));
+    }
+
+    /// The direct search of NOSORT MAXLIST=1 (p.2331): An(X u Y u I) over
+    /// the allowed covariates, valid iff any adjustment set exists.
+    pub fn direct(self: *Search) !?Set {
+        if (self.required & ~self.allowed != 0) return null;
+        var scratch = std.heap.ArenaAllocator.init(self.a);
+        defer scratch.deinit();
+        const z0 = try self.ancIn(scratch.allocator(), self.required, self.allowed);
+        if (!try self.valid(z0)) return null;
+        return .{ .mask = z0, .size = @popCount(z0), .minimal = try self.isMinimal(z0) };
+    }
+
+    /// Minimal among valid sets containing the prescribed ones (p.2301):
+    /// no valid set lies between I and Z minus one free member.
+    pub fn isMinimal(self: *Search, z: u64) !bool {
+        var free = z & ~self.required;
+        while (free != 0) {
+            const b = free & (~free + 1);
+            free &= ~b;
+            if (try self.exists(self.required, z & ~b)) return false;
+        }
+        return true;
+    }
+
+    fn rec(self: *Search, i: u64, r: u64) !void {
+        if (self.overflow) return;
+        if (self.limit) |l| if (self.out.items.len >= l) return;
+        if (!try self.exists(i, r)) return;
+        if (i == r) {
+            if (self.maxsize) |ms| if (@popCount(i) > ms) return;
+            if (self.out.items.len >= self.cap) {
+                self.overflow = true;
+                return;
+            }
+            try self.out.append(self.a, .{ .mask = i, .size = @popCount(i) });
+            return;
+        }
+        const freeb = r & ~i;
+        const b = freeb & (~freeb + 1);
+        try self.rec(i | b, r);
+        try self.rec(i, r & ~b);
+    }
+
+    /// Valid sets in inclusion-first order with minimal flags.
+    pub fn list(self: *Search) ![]Set {
+        try self.rec(self.required, self.allowed);
+        for (self.out.items) |*st| st.minimal = try self.isMinimal(st.mask);
+        return self.out.items;
+    }
+};
 
 /// All valid adjustment sets over `cands` (bit k = cands[k]), sorted by size.
 /// `required` holds the prescribed adjustment variables (p.2303): every set
@@ -934,6 +1065,44 @@ pub fn enumerate(a: A, n: usize, an: Analysis, cands: []const usize, xs: []const
     }
     std.mem.sort(Set, sets.items, {}, setLess);
     return sets.items;
+}
+
+/// Inclusion-first search order over the alphabetical covariates: at the
+/// lowest covariate where two sets differ, the set containing it comes first.
+fn inclusionFirst(_: void, l: Set, r: Set) bool {
+    const diff = l.mask ^ r.mask;
+    if (diff == 0) return false;
+    const low: u6 = @intCast(@ctz(diff));
+    return (l.mask >> low) & 1 == 1;
+}
+
+/// NOSORT listing (SAS 9.4 reference runs, batch of 5 runs for
+/// STAT-CAUSALGRAPH-008). The MINIMAL/MAXSIZE= filters apply first. Order L:
+/// minimal sets in inclusion-first order, otherwise its reverse (exclusion
+/// first). MAXLIST=m keeps the last m sets of L, as a search that walks L
+/// backwards and stops after m sets would. MAXLIST=1 instead reports the
+/// direct-search set `one` (no MINIMAL) or the first minimal set of L.
+// ponytail: the MAXLIST=1 MINIMAL rule (first of L) matches 4 reference
+// graphs; SAS's FindMinAdj walk might differ on graphs not yet compared.
+fn nosortList(a: A, shown: *std.ArrayList(Set), o: Options, sets: []const Set, one: ?Set) !void {
+    var f: std.ArrayList(Set) = .empty;
+    for (sets) |st| {
+        if (o.minimal and !st.minimal) continue;
+        if (o.maxsize) |ms| if (st.size > ms) continue;
+        try f.append(a, st);
+    }
+    std.mem.sort(Set, f.items, {}, inclusionFirst);
+    if (!o.minimal) std.mem.reverse(Set, f.items);
+    if (o.maxlist != null and o.maxlist.? == 1) {
+        if (o.minimal) {
+            if (f.items.len > 0) try shown.append(a, f.items[0]);
+        } else if (one) |st| {
+            if (o.maxsize == null or st.size <= o.maxsize.?) try shown.append(a, st);
+        }
+        return;
+    }
+    const keep = if (o.maxlist) |ml| @min(ml, f.items.len) else f.items.len;
+    try shown.appendSlice(a, f.items[f.items.len - keep ..]);
 }
 
 // ── listing ────────────────────────────────────────────────────────────────
@@ -1060,6 +1229,16 @@ pub fn runKeeping(cx: proc.ProcCtx, out: *Out, t: []const lex.Token, keep: *bool
     const a = cx.arena;
     var s = try parse(cx, t);
     try validate(cx, s);
+    // NOSORT is dropped under MAXSIZE=MIN, else under METHOD=IV (SAS 9.4
+    // reference runs: one warning, MAXSIZE=MIN checked first, also with
+    // NOLIST or NOPRINT).
+    if (s.opts.nosort and s.opts.maxsize != null and s.opts.maxsize.? == 0) {
+        try cx.diags.warn(lineOf(t, 0), "The NOSORT option is ignored when MAXSIZE=MIN.", .{});
+        s.opts.nosort = false;
+    } else if (s.opts.nosort and s.opts.method == .iv) {
+        try cx.diags.warn(lineOf(t, 0), "The NOSORT option is ignored when METHOD=IV.", .{});
+        s.opts.nosort = false;
+    }
     if (s.opts.ordermodels) {
         // ORDERMODELS: models in label order (reference run: Alpha, Mid,
         // Zeta for models written Zeta, Alpha, Mid).
@@ -1099,10 +1278,13 @@ pub fn runKeeping(cx: proc.ProcCtx, out: *Out, t: []const lex.Token, keep: *bool
     var cands: std.ArrayList(usize) = .empty;
     const sets = try a.alloc([]Set, s.models.len);
     @memset(sets, &.{});
+    // NOSORT MAXLIST=1: the one set of the direct search, per model.
+    const ones = try a.alloc(?Set, s.models.len);
+    @memset(ones, null);
     for (measured.items) |v| if (!contains(s.treatments, v) and !contains(s.outcomes, v)) try cands.append(a, v);
     if (list and !iv and !any_cycle) {
-        if (cands.items.len > max_candidates) return gap(cx, s.models[0].line, "more than {d} measured covariates (exhaustive adjustment-set enumeration) is not implemented", .{max_candidates});
-        for (s.models, sets) |m, *dst| {
+        if (cands.items.len > max_search_candidates) return gap(cx, s.models[0].line, "more than {d} measured covariates in an adjustment-set listing is not implemented", .{max_search_candidates});
+        for (s.models, sets, ones) |m, *dst, *one| {
             var mc: std.ArrayList(usize) = .empty;
             var pos: std.ArrayList(usize) = .empty;
             for (cands.items, 0..) |c, k| if (contains(m.nodes, c)) {
@@ -1127,7 +1309,32 @@ pub fn runKeeping(cx: proc.ProcCtx, out: *Out, t: []const lex.Token, keep: *bool
             }
             const g = try expandLatent(a, n, m.edges);
             const an = try analyseMethod(a, g.n, g.edges, s.treatments, s.outcomes, s.opts.method);
-            const local = try enumerate(a, g.n, an, mc.items, s.treatments, s.outcomes, required);
+            var search = try Search.init(a, g.n, g.edges, an, mc.items, s.treatments, s.outcomes, required);
+            const o = s.opts;
+            const one_only = o.nosort and !o.minimal and o.maxlist != null and o.maxlist.? == 1;
+            if (one_only) {
+                one.* = try search.direct();
+            } else {
+                // NOSORT without MINIMAL walks the search order and stops
+                // after MAXLIST= sets within MAXSIZE= (Time Requirements
+                // p.2331); sorting or MINIMAL needs every set.
+                if (o.nosort and !o.minimal) {
+                    search.limit = o.maxlist;
+                    search.maxsize = o.maxsize;
+                }
+                const listed = try search.list();
+                if (search.overflow) return gap(cx, m.line, "listing more than {d} adjustment sets is not implemented", .{max_listed_sets});
+                if (!o.nosort) std.mem.sort(Set, listed, {}, setLess);
+                dst.* = listed;
+            }
+            const local = dst.*;
+            if (one.*) |*o1| {
+                var mask: u64 = 0;
+                for (pos.items, 0..) |k, b| if ((o1.mask >> @intCast(b)) & 1 == 1) {
+                    mask |= @as(u64, 1) << @intCast(k);
+                };
+                o1.mask = mask;
+            }
             // Re-key masks onto the union columns (order is preserved: both
             // lists are alphabetical).
             for (local) |*st| {
@@ -1171,9 +1378,9 @@ pub fn runKeeping(cx: proc.ProcCtx, out: *Out, t: []const lex.Token, keep: *bool
         try emitTests(cx, out, s, cands.items, &open);
         if (open) try endPage(cx, out);
         if (!list) return;
-        for (s.models, sets) |m, msets| {
+        for (s.models, sets, ones) |m, msets, one| {
             try page(cx, out);
-            if (iv) try ivListTable(cx, out, s, m, cands.items) else try adjustTable(cx, out, s, m, msets, cands.items);
+            if (iv) try ivListTable(cx, out, s, m, cands.items) else try adjustTable(cx, out, s, m, msets, one, cands.items);
             try endPage(cx, out);
         }
         return;
@@ -1278,10 +1485,10 @@ pub fn runKeeping(cx: proc.ProcCtx, out: *Out, t: []const lex.Token, keep: *bool
     if (!list or (any_disc and !s.opts.disconnected)) return endPage(cx, out);
 
     // One AdjustList (InstrumentList) page per model.
-    for (s.models, sets) |m, msets| {
+    for (s.models, sets, ones) |m, msets, one| {
         try endPage(cx, out);
         try page(cx, out);
-        if (iv) try ivListTable(cx, out, s, m, cands.items) else try adjustTable(cx, out, s, m, msets, cands.items);
+        if (iv) try ivListTable(cx, out, s, m, cands.items) else try adjustTable(cx, out, s, m, msets, one, cands.items);
     }
     try endPage(cx, out);
 }
@@ -1350,15 +1557,19 @@ fn componentsTable(a: A, out: *Out, names: []const []const u8, m: Model, cc: Com
     try table(a, out, &.{title}, 1, cols.items, gaps, Spanner{ .from = 2, .text = "Nodes" });
 }
 
-fn adjustTable(cx: proc.ProcCtx, out: *Out, s: Spec, m: Model, sets: []const Set, cands: []const usize) !void {
+fn adjustTable(cx: proc.ProcCtx, out: *Out, s: Spec, m: Model, sets: []const Set, one: ?Set, cands: []const usize) !void {
     const a = cx.arena;
     var shown: std.ArrayList(Set) = .empty;
-    const min_size: usize = if (sets.len > 0) sets[0].size else 0;
-    for (sets) |st| {
-        if (s.opts.minimal and !st.minimal) continue;
-        if (s.opts.maxsize) |ms| if ((ms == 0 and st.size != min_size) or (ms > 0 and st.size > ms)) continue;
-        if (s.opts.maxlist) |ml| if (shown.items.len >= ml) break;
-        try shown.append(a, st);
+    if (s.opts.nosort) {
+        try nosortList(a, &shown, s.opts, sets, one);
+    } else {
+        const min_size: usize = if (sets.len > 0) sets[0].size else 0;
+        for (sets) |st| {
+            if (s.opts.minimal and !st.minimal) continue;
+            if (s.opts.maxsize) |ms| if ((ms == 0 and st.size != min_size) or (ms > 0 and st.size > ms)) continue;
+            if (s.opts.maxlist) |ml| if (shown.items.len >= ml) break;
+            try shown.append(a, st);
+        }
     }
     if (shown.items.len == 0) {
         // A joint effect adds a second sentence, also for one treatment with
@@ -1397,6 +1608,18 @@ fn adjustTable(cx: proc.ProcCtx, out: *Out, s: Spec, m: Model, sets: []const Set
         try cols.append(a, .{ .head = head, .al = .center, .width = w, .cells = cells });
     }
     const gaps = try uniformGaps(a, cols.items.len);
+    // A table wider than LINESIZE= narrows every column gap to 3, then 2
+    // (SAS 9.4 reference runs with 23 and 25 covariates at LS=160).
+    // ponytail: narrower gaps and page-wise splitting have no reference run.
+    const ls = @import("../io.zig").global_linesize;
+    if (ls > 0) {
+        var total: usize = 0;
+        for (cols.items) |c| total += c.width;
+        var g: usize = 4;
+        while (total + g * (cols.items.len - 1) > ls and g > 2) g -= 1;
+        if (total + g * (cols.items.len - 1) > ls) return gap(cx, m.line, "an adjustment-set table wider than LINESIZE={d} is not implemented", .{ls});
+        for (gaps[1..]) |*gp| gp.* = g;
+    }
     const span_text = "Covariates";
     if (used.items.len > 0) {
         // The spanner needs its text plus one dash on each side; a single
@@ -2262,4 +2485,117 @@ test "STAT-CAUSALGRAPH-009 adding an edge never makes an adjustment set appear (
         }
     }
     try std.testing.expect(checked > 9000);
+}
+
+test "STAT-CAUSALGRAPH-008 pruned search equals the exhaustive enumeration" {
+    // Time Requirements (p.2330): the polynomial-delay listing must return
+    // exactly the sets of the exhaustive subset scan, with the same minimal
+    // flags, and the direct search must find a set iff one exists. 3000
+    // random DAGs on 7 nodes (one possibly latent node, random prescribed
+    // variables), both METHOD=ADJUSTMENT and METHOD=BACKDOOR.
+    var prng = std.Random.DefaultPrng.init(0x5a5008);
+    const r = prng.random();
+    var checked_sets: usize = 0;
+    for (0..3000) |_| {
+        var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+        defer arena.deinit();
+        const a = arena.allocator();
+        const n = 7;
+        var perm: [n]usize = .{ 0, 1, 2, 3, 4, 5, 6 };
+        r.shuffle(usize, &perm);
+        var edges: std.ArrayList(Edge) = .empty;
+        for (0..n) |i| for (i + 1..n) |j| if (r.uintLessThan(u8, 100) < 35) try edges.append(a, .{ .from = perm[i], .to = perm[j] });
+        const x: usize = 0;
+        const y: usize = 1;
+        const latent: ?usize = if (r.boolean()) 2 else null;
+        var cands: std.ArrayList(usize) = .empty;
+        for (2..n) |v| if (latent == null or v != latent.?) try cands.append(a, v);
+        var required: u64 = 0;
+        if (r.uintLessThan(u8, 4) == 0) required = @as(u64, 1) << @intCast(r.uintLessThan(usize, cands.items.len));
+        for ([_]Method{ .adjustment, .backdoor }) |method| {
+            const an = try analyseMethod(a, n, edges.items, &.{x}, &.{y}, method);
+            // The exhaustive scan does not exclude forbidden prescribed
+            // variables up front; validate() rejects those before listing.
+            var forb_req = false;
+            for (cands.items, 0..) |c, k| if ((required >> @intCast(k)) & 1 == 1) {
+                if (if (an.backdoor) |bd| bd.de_x[c] else an.forbidden[c]) forb_req = true;
+            };
+            const ex = try enumerate(a, n, an, cands.items, &.{x}, &.{y}, required);
+            var se = try Search.init(a, n, edges.items, an, cands.items, &.{x}, &.{y}, required);
+            const got = try se.list();
+            std.mem.sort(Set, got, {}, setLess);
+            if (forb_req) {
+                try std.testing.expectEqual(@as(usize, 0), got.len);
+                continue;
+            }
+            try std.testing.expectEqual(ex.len, got.len);
+            for (ex, got) |e, g| {
+                try std.testing.expectEqual(e.mask, g.mask);
+                try std.testing.expectEqual(e.minimal, g.minimal);
+            }
+            const d = try se.direct();
+            try std.testing.expectEqual(ex.len > 0, d != null);
+            if (d) |st| {
+                // The direct set is valid and contains every listed set's
+                // ancestral part: it is the largest valid ancestral set.
+                var found = false;
+                for (ex) |e| if (e.mask == st.mask) {
+                    found = true;
+                    try std.testing.expectEqual(e.minimal, st.minimal);
+                };
+                try std.testing.expect(found);
+            }
+            checked_sets += ex.len;
+        }
+    }
+    try std.testing.expect(checked_sets > 1000);
+}
+
+test "STAT-CAUSALGRAPH-008 NOSORT order and MAXLIST= truncation (SAS reference runs)" {
+    // Graph M3 of the reference run (X -> Y; A -> X, B; B -> Y; C -> X, D;
+    // D -> Y; E -> X, F; F -> Y): 27 sets, 8 minimal. NOSORT lists in
+    // exclusion-first order (BDF, BDE, BDEF, ...); MAXLIST=3 keeps the last
+    // three (ABCDF, ABCDE, ABCDEF); MINIMAL lists in inclusion-first order.
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    // 0 X, 1 Y, 2 A, 3 B, 4 C, 5 D, 6 E, 7 F
+    const e = [_]Edge{ .{ .from = 0, .to = 1 }, .{ .from = 2, .to = 0 }, .{ .from = 2, .to = 3 }, .{ .from = 3, .to = 1 }, .{ .from = 4, .to = 0 }, .{ .from = 4, .to = 5 }, .{ .from = 5, .to = 1 }, .{ .from = 6, .to = 0 }, .{ .from = 6, .to = 7 }, .{ .from = 7, .to = 1 } };
+    const cands = [_]usize{ 2, 3, 4, 5, 6, 7 };
+    const an = try analyse(a, 8, &e, &.{0}, &.{1});
+    var se = try Search.init(a, 8, &e, an, &cands, &.{0}, &.{1}, 0);
+    const all = try se.list();
+    try std.testing.expectEqual(@as(usize, 27), all.len);
+    var shown: std.ArrayList(Set) = .empty;
+    try nosortList(a, &shown, .{ .nosort = true, .maxlist = null }, all, null);
+    // bits: A=1, B=2, C=4, D=8, E=16, F=32
+    try std.testing.expectEqual(@as(u64, 2 | 8 | 32), shown.items[0].mask);
+    try std.testing.expectEqual(@as(u64, 2 | 8 | 16), shown.items[1].mask);
+    try std.testing.expectEqual(@as(u64, 63), shown.items[26].mask);
+    var se3 = try Search.init(a, 8, &e, an, &cands, &.{0}, &.{1}, 0);
+    se3.limit = 3;
+    const first3 = try se3.list();
+    shown.clearRetainingCapacity();
+    try nosortList(a, &shown, .{ .nosort = true, .maxlist = 3 }, first3, null);
+    try std.testing.expectEqual(@as(u64, 1 | 2 | 4 | 8 | 32), shown.items[0].mask);
+    try std.testing.expectEqual(@as(u64, 1 | 2 | 4 | 8 | 16), shown.items[1].mask);
+    try std.testing.expectEqual(@as(u64, 63), shown.items[2].mask);
+    shown.clearRetainingCapacity();
+    try nosortList(a, &shown, .{ .nosort = true, .minimal = true, .maxlist = null }, all, null);
+    try std.testing.expectEqual(@as(usize, 8), shown.items.len);
+    try std.testing.expectEqual(@as(u64, 1 | 4 | 16), shown.items[0].mask);
+    try std.testing.expectEqual(@as(u64, 2 | 8 | 32), shown.items[7].mask);
+    // The listing cap fails loud (overflow) instead of truncating.
+    var capped = try Search.init(a, 8, &e, an, &cands, &.{0}, &.{1}, 0);
+    capped.cap = 26;
+    _ = try capped.list();
+    try std.testing.expect(capped.overflow);
+    capped = try Search.init(a, 8, &e, an, &cands, &.{0}, &.{1}, 0);
+    capped.cap = 27;
+    _ = try capped.list();
+    try std.testing.expect(!capped.overflow);
+    // Direct search: every allowed ancestor, ABCDEF, not minimal.
+    const d = (try se.direct()).?;
+    try std.testing.expectEqual(@as(u64, 63), d.mask);
+    try std.testing.expect(!d.minimal);
 }

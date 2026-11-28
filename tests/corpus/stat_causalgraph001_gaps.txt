@@ -3,4 +3,3 @@ empty-listing
 stderr-count 1 the IMAP option is not implemented
 stderr-count 1 the COMMON option is not implemented
 stderr-count 1 the CYCLES option is not implemented
-stderr-count 1 the NOSORT option is not implemented

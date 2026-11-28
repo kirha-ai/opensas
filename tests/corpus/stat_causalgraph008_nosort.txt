@@ -1,0 +1,2173 @@
+CASE a1
+
+The CAUSALGRAPH Procedure
+
+         Variables in Model
+
+                       N    Variables
+
+Measured               5    V W X Y Z
+Unmeasured             0
+
+
+                             Graphical Model Summary
+
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+S               5           5             1           1           5             0
+CASE a1
+
+The CAUSALGRAPH Procedure
+
+         Covariate Adjustment Sets for S
+             Causal Effect of X on Y
+
+                                    -Covariates--
+                Size    Minimal     V     W     Z
+
+       1           1    Yes                     *
+CASE a2
+
+The CAUSALGRAPH Procedure
+
+         Variables in Model
+
+                       N    Variables
+
+Measured               5    V W X Y Z
+Unmeasured             0
+
+
+                             Graphical Model Summary
+
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+S               5           5             1           1           5             0
+CASE a2
+
+The CAUSALGRAPH Procedure
+
+         Covariate Adjustment Sets for S
+             Causal Effect of X on Y
+
+                                    -Covariates--
+                Size    Minimal     V     W     Z
+
+       1           2    No          *           *
+       2           3    No          *     *     *
+CASE a3
+
+The CAUSALGRAPH Procedure
+
+         Variables in Model
+
+                       N    Variables
+
+Measured               5    V W X Y Z
+Unmeasured             0
+
+
+                             Graphical Model Summary
+
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+S               5           5             1           1           5             0
+CASE a3
+
+The CAUSALGRAPH Procedure
+
+         Covariate Adjustment Sets for S
+             Causal Effect of X on Y
+
+                                    -Covariates--
+                Size    Minimal     V     W     Z
+
+       1           2    No                *     *
+       2           2    No          *           *
+       3           3    No          *     *     *
+CASE b1
+
+The CAUSALGRAPH Procedure
+
+          Variables in Model
+
+                       N    Variables
+
+Measured               6    A D M X Y Z
+Unmeasured             0
+
+
+                             Graphical Model Summary
+
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+D               6           7             1           1           6             0
+CASE b1
+
+The CAUSALGRAPH Procedure
+
+           Covariate Adjustment Sets for D
+               Causal Effect of X on Y
+
+                                    ---Covariates---
+                Size    Minimal     A    D    M    Z
+
+       1           2    No          *              *
+       2           3    No          *    *         *
+CASE b2
+
+The CAUSALGRAPH Procedure
+
+           Variables in Model
+
+                       N    Variables
+
+Measured               7    A D M Q X Y Z
+Unmeasured             0
+
+
+                             Graphical Model Summary
+
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+Q               7           8             1           1           7             0
+CASE b2
+
+The CAUSALGRAPH Procedure
+
+             Covariate Adjustment Sets for Q
+                 Causal Effect of X on Y
+
+                                    -----Covariates------
+                Size    Minimal     A    D    M    Q    Z
+
+       1           2    No          *                   *
+CASE b3
+
+The CAUSALGRAPH Procedure
+
+           Variables in Model
+
+                       N    Variables
+
+Measured               7    A D M Q X Y Z
+Unmeasured             0
+
+
+                             Graphical Model Summary
+
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+Q               7           8             1           1           7             0
+CASE b3
+
+The CAUSALGRAPH Procedure
+
+             Covariate Adjustment Sets for Q
+                 Causal Effect of X on Y
+
+                                    -----Covariates------
+                Size    Minimal     A    D    M    Q    Z
+
+       1           2    No          *                   *
+CASE b4
+
+The CAUSALGRAPH Procedure
+
+           Variables in Model
+
+                       N    Variables
+
+Measured               7    A D M Q X Y Z
+Unmeasured             0
+
+
+                             Graphical Model Summary
+
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+Q               7           8             1           1           7             0
+CASE b4
+
+The CAUSALGRAPH Procedure
+
+             Covariate Adjustment Sets for Q
+                 Causal Effect of X on Y
+
+                                    -----Covariates------
+                Size    Minimal     A    D    M    Q    Z
+
+       1           1    Yes                             *
+       2           2    No                         *    *
+       3           2    No          *                   *
+       4           3    No          *              *    *
+CASE c1
+
+The CAUSALGRAPH Procedure
+
+         Variables in Model
+
+                       N    Variables
+
+Measured               5    A B C X Y
+Unmeasured             0
+
+
+                             Graphical Model Summary
+
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+MM              5           6             1           1           5             0
+CASE c1
+
+The CAUSALGRAPH Procedure
+
+         Covariate Adjustment Sets for MM
+             Causal Effect of X on Y
+
+                                    -Covariates--
+                Size    Minimal     A     B     C
+
+       1           2    Yes               *     *
+       2           2    Yes         *           *
+       3           3    No          *     *     *
+CASE c2
+
+The CAUSALGRAPH Procedure
+
+         Variables in Model
+
+                       N    Variables
+
+Measured               5    A B C X Y
+Unmeasured             0
+
+
+                             Graphical Model Summary
+
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+MM              5           6             1           1           5             0
+CASE c2
+
+The CAUSALGRAPH Procedure
+
+         Covariate Adjustment Sets for MM
+             Causal Effect of X on Y
+
+                                    -Covariates--
+                Size    Minimal     A     B     C
+
+       1           2    Yes         *           *
+       2           2    Yes               *     *
+       3           3    No          *     *     *
+CASE c3
+
+The CAUSALGRAPH Procedure
+
+         Variables in Model
+
+                       N    Variables
+
+Measured               5    A B C X Y
+Unmeasured             0
+
+
+                             Graphical Model Summary
+
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+MM              5           6             1           1           5             0
+CASE c3
+
+The CAUSALGRAPH Procedure
+
+         Covariate Adjustment Sets for MM
+             Causal Effect of X on Y
+
+                                    -Covariates--
+                Size    Minimal     A     B     C
+
+       1           2    Yes         *           *
+       2           2    Yes               *     *
+CASE c4
+
+The CAUSALGRAPH Procedure
+
+         Variables in Model
+
+                       N    Variables
+
+Measured               5    A B C X Y
+Unmeasured             0
+
+
+                             Graphical Model Summary
+
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+MM              5           6             1           1           5             0
+CASE c4
+
+The CAUSALGRAPH Procedure
+
+         Covariate Adjustment Sets for MM
+             Causal Effect of X on Y
+
+                                    -Covariates--
+                Size    Minimal     A     B     C
+
+       1           2    Yes         *           *
+CASE c5
+
+The CAUSALGRAPH Procedure
+
+         Variables in Model
+
+                       N    Variables
+
+Measured               5    A B C X Y
+Unmeasured             0
+
+
+                             Graphical Model Summary
+
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+MM              5           6             1           1           5             0
+CASE c5
+
+The CAUSALGRAPH Procedure
+
+         Covariate Adjustment Sets for MM
+             Causal Effect of X on Y
+
+                                    -Covariates--
+                Size    Minimal     A     B     C
+
+       1           3    No          *     *     *
+CASE c6
+
+The CAUSALGRAPH Procedure
+
+         Variables in Model
+
+                       N    Variables
+
+Measured               5    A B C X Y
+Unmeasured             0
+
+
+                             Graphical Model Summary
+
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+MM              5           6             1           1           5             0
+CASE c6
+
+The CAUSALGRAPH Procedure
+
+         Covariate Adjustment Sets for MM
+             Causal Effect of X on Y
+
+                                    -Covariates--
+                Size    Minimal     A     B     C
+
+       1           2    Yes         *           *
+       2           3    No          *     *     *
+CASE c7
+
+The CAUSALGRAPH Procedure
+
+         Variables in Model
+
+                       N    Variables
+
+Measured               5    A B C X Y
+Unmeasured             0
+
+
+                             Graphical Model Summary
+
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+MM              5           6             1           1           5             0
+CASE c7
+
+The CAUSALGRAPH Procedure
+
+         Covariate Adjustment Sets for MM
+             Causal Effect of X on Y
+
+                                    -Covariates--
+                Size    Minimal     A     B     C
+
+       1           2    Yes         *           *
+       2           2    Yes               *     *
+CASE c8
+
+The CAUSALGRAPH Procedure
+
+         Variables in Model
+
+                       N    Variables
+
+Measured               5    A B C X Y
+Unmeasured             0
+
+
+                             Graphical Model Summary
+
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+MM              5           6             1           1           5             0
+CASE c8
+
+The CAUSALGRAPH Procedure
+
+         Covariate Adjustment Sets for MM
+             Causal Effect of X on Y
+
+                                    -Covariates--
+                Size    Minimal     A     B     C
+
+       1           2    Yes               *     *
+       2           2    Yes         *           *
+CASE d1
+
+The CAUSALGRAPH Procedure
+
+            Variables in Model
+
+                       N    Variables
+
+Measured               8    A B C D E F X Y
+Unmeasured             0
+
+
+                             Graphical Model Summary
+
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+M3              8          10             1           1           8             0
+CASE d1
+
+The CAUSALGRAPH Procedure
+
+               Covariate Adjustment Sets for M3
+                    Causal Effect of X on Y
+
+                                    --------Covariates--------
+                Size    Minimal     A    B    C    D    E    F
+
+       1           3    Yes         *         *         *
+       2           3    Yes         *         *              *
+       3           3    Yes         *              *    *
+       4           3    Yes         *              *         *
+       5           3    Yes              *    *         *
+       6           3    Yes              *    *              *
+       7           3    Yes              *         *    *
+       8           3    Yes              *         *         *
+CASE d2
+
+The CAUSALGRAPH Procedure
+
+            Variables in Model
+
+                       N    Variables
+
+Measured               8    A B C D E F X Y
+Unmeasured             0
+
+
+                             Graphical Model Summary
+
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+M3              8          10             1           1           8             0
+CASE d2
+
+The CAUSALGRAPH Procedure
+
+               Covariate Adjustment Sets for M3
+                    Causal Effect of X on Y
+
+                                    --------Covariates--------
+                Size    Minimal     A    B    C    D    E    F
+
+       1           3    Yes         *         *         *
+       2           3    Yes         *         *              *
+       3           3    Yes         *              *    *
+       4           3    Yes         *              *         *
+       5           3    Yes              *    *         *
+       6           3    Yes              *    *              *
+       7           3    Yes              *         *    *
+       8           3    Yes              *         *         *
+CASE d3
+
+The CAUSALGRAPH Procedure
+
+            Variables in Model
+
+                       N    Variables
+
+Measured               8    A B C D E F X Y
+Unmeasured             0
+
+
+                             Graphical Model Summary
+
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+M3              8          10             1           1           8             0
+CASE d3
+
+The CAUSALGRAPH Procedure
+
+               Covariate Adjustment Sets for M3
+                    Causal Effect of X on Y
+
+                                    --------Covariates--------
+                Size    Minimal     A    B    C    D    E    F
+
+       1           5    No          *    *    *    *         *
+       2           5    No          *    *    *    *    *
+       3           6    No          *    *    *    *    *    *
+CASE d4
+
+The CAUSALGRAPH Procedure
+
+            Variables in Model
+
+                       N    Variables
+
+Measured               8    A B C D E F X Y
+Unmeasured             0
+
+
+                             Graphical Model Summary
+
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+M3              8          10             1           1           8             0
+CASE d4
+
+The CAUSALGRAPH Procedure
+
+               Covariate Adjustment Sets for M3
+                    Causal Effect of X on Y
+
+                                    --------Covariates--------
+                Size    Minimal     A    B    C    D    E    F
+
+       1           3    Yes              *         *         *
+       2           3    Yes              *         *    *
+       3           4    No               *         *    *    *
+       4           3    Yes              *    *              *
+       5           3    Yes              *    *         *
+       6           4    No               *    *         *    *
+       7           4    No               *    *    *         *
+       8           4    No               *    *    *    *
+       9           5    No               *    *    *    *    *
+      10           3    Yes         *              *         *
+      11           3    Yes         *              *    *
+      12           4    No          *              *    *    *
+      13           3    Yes         *         *              *
+      14           3    Yes         *         *         *
+      15           4    No          *         *         *    *
+      16           4    No          *         *    *         *
+      17           4    No          *         *    *    *
+      18           5    No          *         *    *    *    *
+      19           4    No          *    *         *         *
+      20           4    No          *    *         *    *
+      21           5    No          *    *         *    *    *
+      22           4    No          *    *    *              *
+      23           4    No          *    *    *         *
+      24           5    No          *    *    *         *    *
+      25           5    No          *    *    *    *         *
+      26           5    No          *    *    *    *    *
+      27           6    No          *    *    *    *    *    *
+CASE e1
+
+The CAUSALGRAPH Procedure
+
+         Variables in Model
+
+                       N    Variables
+
+Measured               5    V W X Y Z
+Unmeasured             0
+
+
+                             Graphical Model Summary
+
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+S               5           5             1           1           5             0
+CASE e2
+
+The CAUSALGRAPH Procedure
+
+         Variables in Models
+
+                       N    Variables
+
+Measured               5    V W X Y Z
+Unmeasured             0
+
+
+                             Graphical Model Summary
+
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+S               5           5             1           1           5             0
+T               3           3             1           1           3             0
+CASE e2
+
+The CAUSALGRAPH Procedure
+
+         Covariate Adjustment Sets for S
+             Causal Effect of X on Y
+
+                                    -Covariates--
+                Size    Minimal     V     W     Z
+
+       1           3    No          *     *     *
+CASE e2
+
+The CAUSALGRAPH Procedure
+
+         Covariate Adjustment Sets for T
+             Causal Effect of X on Y
+
+                                    -Covariates--
+                Size    Minimal     V     W     Z
+
+       1           1    Yes                     *
+CASE f1
+
+The CAUSALGRAPH Procedure
+
+           Variables in Model
+
+                       N    Variables
+
+Measured               7    A B Q R X Y Z
+Unmeasured             0
+
+
+                             Graphical Model Summary
+
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+M5              7          10             1           1           7             0
+CASE f1
+
+The CAUSALGRAPH Procedure
+
+             Covariate Adjustment Sets for M5
+                 Causal Effect of X on Y
+
+                                    -----Covariates------
+                Size    Minimal     A    B    Q    R    Z
+
+       1           2    Yes         *                   *
+       2           2    Yes              *              *
+CASE f2
+
+The CAUSALGRAPH Procedure
+
+           Variables in Model
+
+                       N    Variables
+
+Measured               7    A B Q R X Y Z
+Unmeasured             0
+
+
+                             Graphical Model Summary
+
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+M5              7          10             1           1           7             0
+CASE f2
+
+The CAUSALGRAPH Procedure
+
+             Covariate Adjustment Sets for M5
+                 Causal Effect of X on Y
+
+                                    -----Covariates------
+                Size    Minimal     A    B    Q    R    Z
+
+       1           2    Yes         *                   *
+       2           2    Yes              *              *
+CASE f3
+
+The CAUSALGRAPH Procedure
+
+           Variables in Model
+
+                       N    Variables
+
+Measured               7    A B Q R X Y Z
+Unmeasured             0
+
+
+                             Graphical Model Summary
+
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+M5              7          10             1           1           7             0
+CASE f3
+
+The CAUSALGRAPH Procedure
+
+             Covariate Adjustment Sets for M5
+                 Causal Effect of X on Y
+
+                                    -----Covariates------
+                Size    Minimal     A    B    Q    R    Z
+
+       1           2    Yes         *                   *
+       2           2    Yes              *              *
+CASE f4
+
+The CAUSALGRAPH Procedure
+
+           Variables in Model
+
+                       N    Variables
+
+Measured               7    A B Q R X Y Z
+Unmeasured             0
+
+
+                             Graphical Model Summary
+
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+M5              7          10             1           1           7             0
+CASE f4
+
+The CAUSALGRAPH Procedure
+
+             Covariate Adjustment Sets for M5
+                 Causal Effect of X on Y
+
+                                    -----Covariates------
+                Size    Minimal     A    B    Q    R    Z
+
+       1           2    Yes         *                   *
+CASE f5
+
+The CAUSALGRAPH Procedure
+
+           Variables in Model
+
+                       N    Variables
+
+Measured               7    A B Q R X Y Z
+Unmeasured             0
+
+
+                             Graphical Model Summary
+
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+M5              7          10             1           1           7             0
+CASE f5
+
+The CAUSALGRAPH Procedure
+
+             Covariate Adjustment Sets for M5
+                 Causal Effect of X on Y
+
+                                    -----Covariates------
+                Size    Minimal     A    B    Q    R    Z
+
+       1           2    Yes              *              *
+       2           3    No               *         *    *
+       3           3    No               *    *         *
+       4           4    No               *    *    *    *
+       5           2    Yes         *                   *
+       6           3    No          *              *    *
+       7           3    No          *         *         *
+       8           4    No          *         *    *    *
+       9           3    No          *    *              *
+      10           4    No          *    *         *    *
+      11           4    No          *    *    *         *
+      12           5    No          *    *    *    *    *
+CASE f6
+
+The CAUSALGRAPH Procedure
+
+           Variables in Model
+
+                       N    Variables
+
+Measured               7    A B Q R X Y Z
+Unmeasured             0
+
+
+                             Graphical Model Summary
+
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+M5              7          10             1           1           7             0
+CASE f6
+
+The CAUSALGRAPH Procedure
+
+             Covariate Adjustment Sets for M5
+                 Causal Effect of X on Y
+
+                                    -----Covariates------
+                Size    Minimal     A    B    Q    R    Z
+
+       1           5    No          *    *    *    *    *
+CASE f7
+
+The CAUSALGRAPH Procedure
+
+           Variables in Model
+
+                       N    Variables
+
+Measured               7    A B Q R X Y Z
+Unmeasured             0
+
+
+                             Graphical Model Summary
+
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+M5              7          10             1           1           7             0
+CASE f7
+
+The CAUSALGRAPH Procedure
+
+             Covariate Adjustment Sets for M5
+                 Causal Effect of X on Y
+
+                                    -----Covariates------
+                Size    Minimal     A    B    Q    R    Z
+
+       1           2    Yes         *                   *
+       2           2    Yes              *              *
+CASE f8
+
+The CAUSALGRAPH Procedure
+
+           Variables in Model
+
+                       N    Variables
+
+Measured               7    A B Q R X Y Z
+Unmeasured             0
+
+
+                             Graphical Model Summary
+
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+M5              7          10             1           1           7             0
+CASE f8
+
+The CAUSALGRAPH Procedure
+
+             Covariate Adjustment Sets for M5
+                 Causal Effect of X on Y
+
+                                    -----Covariates------
+                Size    Minimal     A    B    Q    R    Z
+
+       1           2    Yes         *                   *
+       2           2    Yes              *              *
+CASE g1
+
+The CAUSALGRAPH Procedure
+
+         Variables in Model
+
+                       N    Variables
+
+Measured               5    V W X Y Z
+Unmeasured             0
+
+
+                             Graphical Model Summary
+
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+S               5           5             1           1           5             0
+CASE g3
+
+The CAUSALGRAPH Procedure
+
+         Variables in Model
+
+                       N    Variables
+
+Measured               3    I X Y
+Unmeasured             1    U
+
+
+                             Graphical Model Summary
+
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+V               4           4             1           1           3             1
+CASE g4
+
+The CAUSALGRAPH Procedure
+
+         Variables in Model
+
+                       N    Variables
+
+Measured               5    V W X Y Z
+Unmeasured             0
+
+
+                             Graphical Model Summary
+
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+S               5           5             1           1           5             0
+CASE g4
+
+The CAUSALGRAPH Procedure
+
+         Covariate Adjustment Sets for S
+             Causal Effect of X on Y
+
+                                    -Covariates--
+                Size    Minimal     V     W     Z
+
+       1           1    Yes                     *
+CASE g5
+
+The CAUSALGRAPH Procedure
+
+         Variables in Model
+
+                       N    Variables
+
+Measured               3    I X Y
+Unmeasured             1    U
+
+
+                             Graphical Model Summary
+
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+V               4           4             1           1           3             1
+CASE g5
+
+The CAUSALGRAPH Procedure
+
+      Instrumental Variables for V
+         Causal Effect of X on Y
+
+                          -Conditionals-
+            Instrument          I
+
+       1    I
+CASE g6
+
+The CAUSALGRAPH Procedure
+
+         Variables in Model
+
+                       N    Variables
+
+Measured               5    V W X Y Z
+Unmeasured             0
+
+
+                             Graphical Model Summary
+
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+S               5           5             1           1           5             0
+CASE g6
+
+The CAUSALGRAPH Procedure
+
+         Covariate Adjustment Sets for S
+             Causal Effect of X on Y
+
+                                    -Covariates--
+                Size    Minimal     V     W     Z
+
+       1           3    No          *     *     *
+CASE g7
+
+The CAUSALGRAPH Procedure
+
+          Variables in Model
+
+                       N    Variables
+
+Measured               6    K V W X Y Z
+Unmeasured             0
+
+
+                             Graphical Model Summary
+
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+S               6           6             1           1           6             0
+CASE g7
+
+The CAUSALGRAPH Procedure
+
+           Covariate Adjustment Sets for S
+               Causal Effect of X on Y
+
+                                    ---Covariates---
+                Size    Minimal     K    V    W    Z
+
+       1           4    No          *    *    *    *
+CASE h1
+
+The CAUSALGRAPH Procedure
+
+           Variables in Model
+
+                       N    Variables
+
+Measured               7    A B P Q X Y Z
+Unmeasured             0
+
+
+                             Graphical Model Summary
+
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+M6              7           9             1           1           7             0
+CASE h1
+
+The CAUSALGRAPH Procedure
+
+             Covariate Adjustment Sets for M6
+                 Causal Effect of X on Y
+
+                                    -----Covariates------
+                Size    Minimal     A    B    P    Q    Z
+
+       1           3    Yes         *         *    *
+       2           2    Yes         *                   *
+       3           3    Yes              *    *    *
+       4           2    Yes              *              *
+CASE h2
+
+The CAUSALGRAPH Procedure
+
+           Variables in Model
+
+                       N    Variables
+
+Measured               7    A B P Q X Y Z
+Unmeasured             0
+
+
+                             Graphical Model Summary
+
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+M6              7           9             1           1           7             0
+CASE h2
+
+The CAUSALGRAPH Procedure
+
+             Covariate Adjustment Sets for M6
+                 Causal Effect of X on Y
+
+                                    -----Covariates------
+                Size    Minimal     A    B    P    Q    Z
+
+       1           2    Yes         *                   *
+       2           2    Yes              *              *
+       3           3    Yes         *         *    *
+       4           3    Yes              *    *    *
+CASE h3
+
+The CAUSALGRAPH Procedure
+
+           Variables in Model
+
+                       N    Variables
+
+Measured               7    A B P Q X Y Z
+Unmeasured             0
+
+
+                             Graphical Model Summary
+
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+M6              7           9             1           1           7             0
+CASE h3
+
+The CAUSALGRAPH Procedure
+
+             Covariate Adjustment Sets for M6
+                 Causal Effect of X on Y
+
+                                    -----Covariates------
+                Size    Minimal     A    B    P    Q    Z
+
+       1           3    Yes         *         *    *
+CASE h4
+
+The CAUSALGRAPH Procedure
+
+           Variables in Model
+
+                       N    Variables
+
+Measured               7    A B P Q X Y Z
+Unmeasured             0
+
+
+                             Graphical Model Summary
+
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+M6              7           9             1           1           7             0
+CASE h4
+
+The CAUSALGRAPH Procedure
+
+             Covariate Adjustment Sets for M6
+                 Causal Effect of X on Y
+
+                                    -----Covariates------
+                Size    Minimal     A    B    P    Q    Z
+
+       1           2    Yes         *                   *
+       2           3    Yes              *    *    *
+       3           2    Yes              *              *
+CASE h5
+
+The CAUSALGRAPH Procedure
+
+           Variables in Model
+
+                       N    Variables
+
+Measured               7    A B P Q X Y Z
+Unmeasured             0
+
+
+                             Graphical Model Summary
+
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+M6              7           9             1           1           7             0
+CASE h5
+
+The CAUSALGRAPH Procedure
+
+             Covariate Adjustment Sets for M6
+                 Causal Effect of X on Y
+
+                                    -----Covariates------
+                Size    Minimal     A    B    P    Q    Z
+
+       1           3    Yes         *         *    *
+       2           2    Yes         *                   *
+       3           3    Yes              *    *    *
+       4           2    Yes              *              *
+CASE h6
+
+The CAUSALGRAPH Procedure
+
+           Variables in Model
+
+                       N    Variables
+
+Measured               7    A B P Q X Y Z
+Unmeasured             0
+
+
+                             Graphical Model Summary
+
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+M6              7           9             1           1           7             0
+CASE h6
+
+The CAUSALGRAPH Procedure
+
+             Covariate Adjustment Sets for M6
+                 Causal Effect of X on Y
+
+                                    -----Covariates------
+                Size    Minimal     A    B    P    Q    Z
+
+       1           2    Yes         *                   *
+       2           2    Yes              *              *
+CASE h7
+
+The CAUSALGRAPH Procedure
+
+           Variables in Model
+
+                       N    Variables
+
+Measured               7    A B P Q X Y Z
+Unmeasured             0
+
+
+                             Graphical Model Summary
+
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+M6              7           9             1           1           7             0
+CASE h7
+
+The CAUSALGRAPH Procedure
+
+             Covariate Adjustment Sets for M6
+                 Causal Effect of X on Y
+
+                                    -----Covariates------
+                Size    Minimal     A    B    P    Q    Z
+
+       1           3    Yes         *              *    *
+       2           3    Yes              *    *    *
+       3           3    Yes              *         *    *
+CASE A
+
+The CAUSALGRAPH Procedure
+
+                                 Variables in Model
+
+                       N    Variables
+
+Measured               8    Age BMI Duration Education Employment Parity PFAS PrevBF
+Unmeasured             2    Alcohol Smoking
+
+
+                             Graphical Model Summary
+
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+GS             10          23             1           1           8             2
+CASE A
+
+The CAUSALGRAPH Procedure
+
+                              Covariate Adjustment Sets for GS
+                             Causal Effect of PFAS on Duration
+
+                                    ----------------------Covariates-----------------------
+                                                                                       Prev
+                Size    Minimal     Age    BMI    Education    Employment    Parity     BF
+
+       1           4    Yes                           *            *           *        *
+       2           5    No                  *         *            *           *        *
+       3           5    No           *                *            *           *        *
+       4           6    No           *      *         *            *           *        *
+CASE B
+
+The CAUSALGRAPH Procedure
+
+                                 Variables in Model
+
+                       N    Variables
+
+Measured               8    Age BMI Duration Education Employment Parity PFAS PrevBF
+Unmeasured             2    Alcohol Smoking
+
+
+                             Graphical Model Summary
+
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+GS             10          23             1           1           8             2
+CASE B
+
+The CAUSALGRAPH Procedure
+
+                              Covariate Adjustment Sets for GS
+                             Causal Effect of PFAS on Duration
+
+                                    ----------------------Covariates-----------------------
+                                                                                       Prev
+                Size    Minimal     Age    BMI    Education    Employment    Parity     BF
+
+       1           6    No           *      *         *            *           *        *
+CASE C
+
+The CAUSALGRAPH Procedure
+
+                                 Variables in Model
+
+                       N    Variables
+
+Measured               8    Age BMI Duration Education Employment Parity PFAS PrevBF
+Unmeasured             2    Alcohol Smoking
+
+
+                             Graphical Model Summary
+
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+GS             10          23             1           1           8             2
+CASE C
+
+The CAUSALGRAPH Procedure
+
+                              Covariate Adjustment Sets for GS
+                             Causal Effect of PFAS on Duration
+
+                                    ----------------------Covariates-----------------------
+                                                                                       Prev
+                Size    Minimal     Age    BMI    Education    Employment    Parity     BF
+
+       1           6    No           *      *         *            *           *        *
+CASE D
+
+The CAUSALGRAPH Procedure
+
+                                 Variables in Model
+
+                       N    Variables
+
+Measured               8    Age BMI Duration Education Employment Parity PFAS PrevBF
+Unmeasured             2    Alcohol Smoking
+
+
+                             Graphical Model Summary
+
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+GS             10          23             1           1           8             2
+CASE D
+
+The CAUSALGRAPH Procedure
+
+                              Covariate Adjustment Sets for GS
+                             Causal Effect of PFAS on Duration
+
+                                    ----------------------Covariates-----------------------
+                                                                                       Prev
+                Size    Minimal     Age    BMI    Education    Employment    Parity     BF
+
+       1           5    No           *                *            *           *        *
+       2           6    No           *      *         *            *           *        *
+CASE E
+
+The CAUSALGRAPH Procedure
+
+                                 Variables in Model
+
+                       N    Variables
+
+Measured               8    Age BMI Duration Education Employment Parity PFAS PrevBF
+Unmeasured             2    Alcohol Smoking
+
+
+                             Graphical Model Summary
+
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+GS             10          23             1           1           8             2
+CASE E
+
+The CAUSALGRAPH Procedure
+
+                              Covariate Adjustment Sets for GS
+                             Causal Effect of PFAS on Duration
+
+                                    ----------------------Covariates-----------------------
+                                                                                       Prev
+                Size    Minimal     Age    BMI    Education    Employment    Parity     BF
+
+       1           6    No           *      *         *            *           *        *
+CASE F
+
+The CAUSALGRAPH Procedure
+
+                                 Variables in Model
+
+                       N    Variables
+
+Measured               8    Age BMI Duration Education Employment Parity PFAS PrevBF
+Unmeasured             2    Alcohol Smoking
+
+
+                             Graphical Model Summary
+
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+GS             10          23             1           1           8             2
+CASE F
+
+The CAUSALGRAPH Procedure
+
+                              Covariate Adjustment Sets for GS
+                             Causal Effect of PFAS on Duration
+
+                                    ----------------------Covariates-----------------------
+                                                                                       Prev
+                Size    Minimal     Age    BMI    Education    Employment    Parity     BF
+
+       1           4    Yes                           *            *           *        *
+CASE G
+
+The CAUSALGRAPH Procedure
+
+                                 Variables in Model
+
+                       N    Variables
+
+Measured               8    Age BMI Duration Education Employment Parity PFAS PrevBF
+Unmeasured             2    Alcohol Smoking
+
+
+                             Graphical Model Summary
+
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+GS             10          23             1           1           8             2
+CASE G
+
+The CAUSALGRAPH Procedure
+
+                              Covariate Adjustment Sets for GS
+                             Causal Effect of PFAS on Duration
+
+                                    ----------------------Covariates-----------------------
+                                                                                       Prev
+                Size    Minimal     Age    BMI    Education    Employment    Parity     BF
+
+       1           4    Yes                           *            *           *        *
+CASE H
+
+The CAUSALGRAPH Procedure
+
+                                             Variables in Model
+
+                       N    Variables
+
+Measured              10    Age Alcohol BMI Duration Education Employment HealthBehavior Parity PFAS Smoking
+Unmeasured             1    PrevBF
+
+
+                             Graphical Model Summary
+
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+HB             11          22             1           1          10             1
+CASE H
+
+The CAUSALGRAPH Procedure
+
+NOTE: There are no adjustment sets satisfying the specified criteria for HB.
+
+CASE H2
+
+The CAUSALGRAPH Procedure
+
+                                             Variables in Model
+
+                       N    Variables
+
+Measured              10    Age Alcohol BMI Duration Education Employment HealthBehavior Parity PFAS Smoking
+Unmeasured             1    PrevBF
+
+
+                             Graphical Model Summary
+
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+HB             11          22             1           1          10             1
+CASE H2
+
+The CAUSALGRAPH Procedure
+
+NOTE: There are no adjustment sets satisfying the specified criteria for HB.
+
+CASE I
+
+The CAUSALGRAPH Procedure
+
+         Variables in Model
+
+                       N    Variables
+
+Measured               5    V W X Y Z
+Unmeasured             0
+
+
+                             Graphical Model Summary
+
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+S               5           5             1           1           5             0
+CASE I
+
+The CAUSALGRAPH Procedure
+
+         Covariate Adjustment Sets for S
+             Causal Effect of X on Y
+
+                                    -Covariates--
+                Size    Minimal     V     W     Z
+
+       1           1    Yes                     *
+       2           2    No                *     *
+       3           2    No          *           *
+       4           3    No          *     *     *
+CASE I2
+
+The CAUSALGRAPH Procedure
+
+         Variables in Model
+
+                       N    Variables
+
+Measured               5    V W X Y Z
+Unmeasured             0
+
+
+                             Graphical Model Summary
+
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+S               5           5             1           1           5             0
+CASE I2
+
+The CAUSALGRAPH Procedure
+
+         Covariate Adjustment Sets for S
+             Causal Effect of X on Y
+
+                                    -Covariates--
+                Size    Minimal     V     W     Z
+
+       1           3    No          *     *     *
+CASE I3
+
+The CAUSALGRAPH Procedure
+
+         Variables in Model
+
+                       N    Variables
+
+Measured               5    V W X Y Z
+Unmeasured             0
+
+
+                             Graphical Model Summary
+
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+S               5           5             1           1           5             0
+CASE I3
+
+The CAUSALGRAPH Procedure
+
+         Covariate Adjustment Sets for S
+             Causal Effect of X on Y
+
+                                    -Covariates--
+                Size    Minimal     V     W     Z
+
+       1           1    Yes                     *
+       2           2    No                *     *
+       3           2    No          *           *
+       4           3    No          *     *     *
+CASE J
+
+The CAUSALGRAPH Procedure
+
+         Variables in Model
+
+                       N    Variables
+
+Measured               5    V W X Y Z
+Unmeasured             0
+
+
+                             Graphical Model Summary
+
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+S               5           5             1           1           5             0
+CASE J
+
+The CAUSALGRAPH Procedure
+
+         Covariate Adjustment Sets for S
+             Causal Effect of X on Y
+
+                                    -Covariates--
+                Size    Minimal     V     W     Z
+
+       1           3    No          *     *     *
+CASE J2
+
+The CAUSALGRAPH Procedure
+
+         Variables in Model
+
+                       N    Variables
+
+Measured               5    V W X Y Z
+Unmeasured             0
+
+
+                             Graphical Model Summary
+
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+S               5           5             1           1           5             0
+CASE J2
+
+The CAUSALGRAPH Procedure
+
+         Covariate Adjustment Sets for S
+             Causal Effect of X on Y
+
+                                    -Covariates--
+                Size    Minimal     V     W     Z
+
+       1           2    Yes               *     *
+       2           3    No          *     *     *
+CASE K
+
+The CAUSALGRAPH Procedure
+
+         Variables in Model
+
+                       N    Variables
+
+Measured               5    V W X Y Z
+Unmeasured             0
+
+
+                             Graphical Model Summary
+
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+S               5           5             1           1           5             0
+CASE K
+
+The CAUSALGRAPH Procedure
+
+NOTE: There are no adjustment sets satisfying the specified criteria for S.
+
+CASE K2
+
+The CAUSALGRAPH Procedure
+
+         Variables in Model
+
+                       N    Variables
+
+Measured               5    V W X Y Z
+Unmeasured             0
+
+
+                             Graphical Model Summary
+
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+S               5           5             1           1           5             0
+CASE K2
+
+The CAUSALGRAPH Procedure
+
+         Covariate Adjustment Sets for S
+             Causal Effect of X on Y
+
+                                    -Covariates--
+                Size    Minimal     V     W     Z
+
+       1           1    Yes                     *
+CASE M
+
+The CAUSALGRAPH Procedure
+
+         Variables in Model
+
+                       N    Variables
+
+Measured               3    I X Y
+Unmeasured             1    U
+
+
+                             Graphical Model Summary
+
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+V               4           4             1           1           3             1
+CASE M
+
+The CAUSALGRAPH Procedure
+
+      Instrumental Variables for V
+         Causal Effect of X on Y
+
+                          -Conditionals-
+            Instrument          I
+
+       1    I
+CASE N
+
+The CAUSALGRAPH Procedure
+
+         Variables in Models
+
+                       N    Variables
+
+Measured               4    W X Y Z
+Unmeasured             0
+
+
+                             Graphical Model Summary
+
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+M1              4           4             1           1           4             0
+M2              4           4             1           1           4             0
+CASE N
+
+The CAUSALGRAPH Procedure
+
+        Covariate Adjustment Sets for M1
+             Causal Effect of X on Y
+
+                                    -Covariates-
+                Size    Minimal     W          Z
+
+       1           2    No          *          *
+CASE N
+
+The CAUSALGRAPH Procedure
+
+        Covariate Adjustment Sets for M2
+             Causal Effect of X on Y
+
+                                    -Covariates-
+                Size    Minimal     W          Z
+
+       1           2    No          *          *
+CASE O
+
+The CAUSALGRAPH Procedure
+
+         Covariate Adjustment Sets for S
+             Causal Effect of X on Y
+
+                                    -Covariates--
+                Size    Minimal     V     W     Z
+
+       1           3    No          *     *     *
+CASE P
+
+The CAUSALGRAPH Procedure
+
+         Variables in Model
+
+                       N    Variables
+
+Measured               5    V W X Y Z
+Unmeasured             0
+
+
+                             Graphical Model Summary
+
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+S               5           5             1           1           5             0
+CASE P
+
+The CAUSALGRAPH Procedure
+
+         Covariate Adjustment Sets for S
+             Causal Effect of X on Y
+
+                                    -Covariates--
+                Size    Minimal     V     W     Z
+
+       1           3    No          *     *     *
+CASE Q
+
+The CAUSALGRAPH Procedure
+
+         Variables in Model
+
+                       N    Variables
+
+Measured               4    X1 X2 Y Z
+Unmeasured             0
+
+
+                             Graphical Model Summary
+
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+J               4           6             2           1           4             0
+CASE Q
+
+The CAUSALGRAPH Procedure
+
+         Covariate Adjustment Sets for J
+          Causal Effect of {X1 X2} on Y
+
+                                    -Covariates-
+                Size    Minimal          Z
+
+       1           1    Yes              *
+CASE R
+
+The CAUSALGRAPH Procedure
+
+         Variables in Model
+
+                       N    Variables
+
+Measured               2    X Y
+Unmeasured             1    U
+
+
+                             Graphical Model Summary
+
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+U               3           3             1           1           2             1
+CASE R
+
+The CAUSALGRAPH Procedure
+
+NOTE: There are no adjustment sets satisfying the specified criteria for U.
+
+CASE R2
+
+The CAUSALGRAPH Procedure
+
+         Variables in Model
+
+                       N    Variables
+
+Measured               3    W X Y
+Unmeasured             1    U
+
+
+                             Graphical Model Summary
+
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+U               4           4             1           1           3             1
+CASE R2
+
+The CAUSALGRAPH Procedure
+
+NOTE: There are no adjustment sets satisfying the specified criteria for U.
+
+CASE S
+
+The CAUSALGRAPH Procedure
+
+          Variables in Model
+
+                       N    Variables
+
+Measured               6    A D M X Y Z
+Unmeasured             0
+
+
+                             Graphical Model Summary
+
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+D               6           7             1           1           6             0
+CASE S
+
+The CAUSALGRAPH Procedure
+
+           Covariate Adjustment Sets for D
+               Causal Effect of X on Y
+
+                                    ---Covariates---
+                Size    Minimal     A    D    M    Z
+
+       1           2    No          *              *
+CASE S2
+
+The CAUSALGRAPH Procedure
+
+          Variables in Model
+
+                       N    Variables
+
+Measured               6    A D M X Y Z
+Unmeasured             0
+
+
+                             Graphical Model Summary
+
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+D               6           7             1           1           6             0
+CASE S2
+
+The CAUSALGRAPH Procedure
+
+           Covariate Adjustment Sets for D
+               Causal Effect of X on Y
+
+                                    ---Covariates---
+                Size    Minimal     A    D    M    Z
+
+       1           1    Yes                        *
+       2           2    No               *         *
+       3           2    No          *              *
+       4           3    No          *    *         *
+CASE T
+
+The CAUSALGRAPH Procedure
+
+                                                    Variables in Model
+
+                       N    Variables
+
+Measured              27    C1 C10 C11 C12 C13 C14 C15 C16 C17 C18 C19 C2 C20 C21 C22 C23 C24 C25 C3 C4 C5 C6 C7 C8 C9 X Y
+Unmeasured             0
+
+
+                             Graphical Model Summary
+
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+B              27          51             1           1          27             0
+CASE T
+
+The CAUSALGRAPH Procedure
+
+                                                         Covariate Adjustment Sets for B
+                                                             Causal Effect of X on Y
+
+                              ----------------------------------------------------Covariates----------------------------------------------------
+              Size  Minimal   C1  C10  C11  C12  C13  C14  C15  C16  C17  C18  C19  C2  C20  C21  C22  C23  C24  C25  C3  C4  C5  C6  C7  C8  C9
+
+       1        25  Yes       *    *    *    *    *    *    *    *    *    *    *   *    *    *    *    *    *    *   *   *   *   *   *   *   *
+CASE T2
+
+The CAUSALGRAPH Procedure
+
+                                                    Variables in Model
+
+                       N    Variables
+
+Measured              27    C1 C10 C11 C12 C13 C14 C15 C16 C17 C18 C19 C2 C20 C21 C22 C23 C24 C25 C3 C4 C5 C6 C7 C8 C9 X Y
+Unmeasured             0
+
+
+                             Graphical Model Summary
+
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+B              27          51             1           1          27             0
+CASE T2
+
+The CAUSALGRAPH Procedure
+
+                                                         Covariate Adjustment Sets for B
+                                                             Causal Effect of X on Y
+
+                              ----------------------------------------------------Covariates----------------------------------------------------
+              Size  Minimal   C1  C10  C11  C12  C13  C14  C15  C16  C17  C18  C19  C2  C20  C21  C22  C23  C24  C25  C3  C4  C5  C6  C7  C8  C9
+
+       1        25  Yes       *    *    *    *    *    *    *    *    *    *    *   *    *    *    *    *    *    *   *   *   *   *   *   *   *
+CASE T3
+
+The CAUSALGRAPH Procedure
+
+                                                    Variables in Model
+
+                       N    Variables
+
+Measured              27    C1 C10 C11 C12 C13 C14 C15 C16 C17 C18 C19 C2 C20 C21 C22 C23 C24 C25 C3 C4 C5 C6 C7 C8 C9 X Y
+Unmeasured             0
+
+
+                             Graphical Model Summary
+
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+B              27          51             1           1          27             0
+CASE T3
+
+The CAUSALGRAPH Procedure
+
+                                                         Covariate Adjustment Sets for B
+                                                             Causal Effect of X on Y
+
+                              ----------------------------------------------------Covariates----------------------------------------------------
+              Size  Minimal   C1  C10  C11  C12  C13  C14  C15  C16  C17  C18  C19  C2  C20  C21  C22  C23  C24  C25  C3  C4  C5  C6  C7  C8  C9
+
+       1        25  Yes       *    *    *    *    *    *    *    *    *    *    *   *    *    *    *    *    *    *   *   *   *   *   *   *   *
+CASE U2
+
+The CAUSALGRAPH Procedure
+
+                                               Variables in Model
+
+                       N    Variables
+
+Measured              25    W1 W10 W11 W12 W13 W14 W15 W16 W17 W18 W19 W2 W20 W21 W22 W3 W4 W5 W6 W7 W8 W9 X Y Z
+Unmeasured             0
+
+
+                             Graphical Model Summary
+
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+B22            25          25             1           1          25             0
+CASE U2
+
+The CAUSALGRAPH Procedure
+
+                                                              Covariate Adjustment Sets for B22
+                                                                   Causal Effect of X on Y
+
+                                 ---------------------------------------------------------Covariates---------------------------------------------------------
+               Size   Minimal    W1   W10   W11   W12   W13   W14   W15   W16   W17   W18   W19   W2   W20   W21   W22   W3   W4   W5   W6   W7   W8   W9   Z
+
+       1         23   No         *     *     *     *     *     *     *     *     *     *     *    *     *     *     *    *    *    *    *    *    *    *    *
+CASE V1
+
+The CAUSALGRAPH Procedure
+
+                           Variables in Model
+
+                       N    Variables
+
+Measured              15    W1 W10 W11 W12 W2 W3 W4 W5 W6 W7 W8 W9 X Y Z
+Unmeasured             0
+
+
+                             Graphical Model Summary
+
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+B12            15          15             1           1          15             0
+CASE V1
+
+The CAUSALGRAPH Procedure
+
+                                        Covariate Adjustment Sets for B12
+                                             Causal Effect of X on Y
+
+                                    ---------------------------------Covariates---------------------------------
+                Size    Minimal     W1    W10    W11    W12    W2    W3    W4    W5    W6    W7    W8    W9    Z
+
+       1          12    No          *      *      *      *     *     *     *     *     *           *     *     *
+       2          11    No          *      *      *      *     *     *     *     *     *     *                 *
+       3          12    No          *      *      *      *     *     *     *     *     *     *           *     *
+       4          12    No          *      *      *      *     *     *     *     *     *     *     *           *
+       5          13    No          *      *      *      *     *     *     *     *     *     *     *     *     *
+CASE V2
+
+The CAUSALGRAPH Procedure
+
+                           Variables in Model
+
+                       N    Variables
+
+Measured              15    W1 W10 W11 W12 W2 W3 W4 W5 W6 W7 W8 W9 X Y Z
+Unmeasured             0
+
+
+                             Graphical Model Summary
+
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+B12            15          15             1           1          15             0
+CASE V2
+
+The CAUSALGRAPH Procedure
+
+                                        Covariate Adjustment Sets for B12
+                                             Causal Effect of X on Y
+
+                                    ---------------------------------Covariates---------------------------------
+                Size    Minimal     W1    W10    W11    W12    W2    W3    W4    W5    W6    W7    W8    W9    Z
+
+       1           1    Yes                                                                                    *
+       2           2    No          *                                                                          *
+       3           2    No                 *                                                                   *
+       4           2    No                        *                                                            *
+       5           2    No                               *                                                     *
+CASE V3
+
+The CAUSALGRAPH Procedure
+
+                               Variables in Model
+
+                       N    Variables
+
+Measured              17    W1 W10 W11 W12 W13 W14 W2 W3 W4 W5 W6 W7 W8 W9 X Y Z
+Unmeasured             0
+
+
+                             Graphical Model Summary
+
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+B14            17          17             1           1          17             0
+CASE V3
+
+The CAUSALGRAPH Procedure
+
+                                               Covariate Adjustment Sets for B14
+                                                    Causal Effect of X on Y
+
+                                    ----------------------------------------Covariates----------------------------------------
+                Size    Minimal     W1    W10    W11    W12    W13    W14    W2    W3    W4    W5    W6    W7    W8    W9    Z
+
+       1          14    No          *      *      *      *      *      *     *     *     *     *     *           *     *     *
+       2          13    No          *      *      *      *      *      *     *     *     *     *     *     *                 *
+       3          14    No          *      *      *      *      *      *     *     *     *     *     *     *           *     *
+       4          14    No          *      *      *      *      *      *     *     *     *     *     *     *     *           *
+       5          15    No          *      *      *      *      *      *     *     *     *     *     *     *     *     *     *
+CASE V4
+
+The CAUSALGRAPH Procedure
+
+                               Variables in Model
+
+                       N    Variables
+
+Measured              17    W1 W10 W11 W12 W13 W14 W2 W3 W4 W5 W6 W7 W8 W9 X Y Z
+Unmeasured             0
+
+
+                             Graphical Model Summary
+
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+B14            17          17             1           1          17             0
+CASE V4
+
+The CAUSALGRAPH Procedure
+
+                                               Covariate Adjustment Sets for B14
+                                                    Causal Effect of X on Y
+
+                                    ----------------------------------------Covariates----------------------------------------
+                Size    Minimal     W1    W10    W11    W12    W13    W14    W2    W3    W4    W5    W6    W7    W8    W9    Z
+
+       1           1    Yes                                                                                                  *
+       2           2    No          *                                                                                        *
+       3           2    No                 *                                                                                 *
+       4           2    No                        *                                                                          *
+       5           2    No                               *                                                                   *

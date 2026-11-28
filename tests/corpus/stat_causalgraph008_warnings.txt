@@ -1,0 +1,4 @@
+# corpus assertions
+stderr-count 4 The NOSORT option is ignored when MAXSIZE=MIN.
+stderr-count 2 The NOSORT option is ignored when METHOD=IV.
+stderr-count 0 ERROR

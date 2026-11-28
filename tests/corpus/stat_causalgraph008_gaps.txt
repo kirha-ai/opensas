@@ -1,0 +1,4 @@
+# corpus assertions
+empty-listing
+stderr-count 1 more than 64 measured covariates in an adjustment-set listing is not implemented
+stderr-count 1 an adjustment-set table wider than LINESIZE=64 is not implemented
