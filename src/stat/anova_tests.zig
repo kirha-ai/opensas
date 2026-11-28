@@ -455,3 +455,185 @@ test "ANOVA007 interactive MEANS after RUN uses the retained model and prints on
     try anova.runStep(e.cx(a), &out, try lex.tokenize(a, "proc anova data=s; by g; class g; model y=g; run;", &e.diags));
     try t.expect(!try anova.continuation(e.cx(a), &out, try lex.tokenize(a, "means g; run;", &e.diags)));
 }
+
+// ---- STAT-ANOVA-010: ODS Graphics (S154 physical pp.1115–1117, 1143–1144) ----
+const anova_plots = @import("anova_plots.zig");
+// Published Clover sample (S154 ch.29 Getting Started), levels in formatted
+// order 3DOK1, 3DOK13, 3DOK4, 3DOK5, 3DOK7, COMPOS.
+const clover_labels = [_][]const u8{ "3DOK1", "3DOK13", "3DOK4", "3DOK5", "3DOK7", "COMPOS" };
+const clover_values = [_]f64{ 19.4, 32.6, 27.0, 32.1, 33.0, 17.7, 24.8, 27.9, 25.2, 24.3, 17.0, 19.4, 9.1, 11.9, 15.8, 20.7, 21.0, 20.5, 18.8, 18.6, 14.3, 14.4, 11.8, 11.6, 14.2, 17.3, 19.4, 19.1, 16.9, 20.8 };
+const clover_groups = [_]usize{ 0, 0, 0, 0, 0, 3, 3, 3, 3, 3, 2, 2, 2, 2, 2, 4, 4, 4, 4, 4, 1, 1, 1, 1, 1, 5, 5, 5, 5, 5 };
+
+fn graphEnv(a: std.mem.Allocator, ds: *Dataset, enabled: ?bool) !struct { e: *Env, session: *proc.native_graphics.Session } {
+    const e = try env(a, ds);
+    const session = try a.create(proc.native_graphics.Session);
+    session.* = .{ .arena = a, .io = t.io, .diags = &e.diags, .enabled = enabled };
+    return .{ .e = e, .session = session };
+}
+/// Kinds of the graphs a program queues, in order, joined by spaces.
+fn queued(a: std.mem.Allocator, ds: *Dataset, enabled: ?bool, text: []const u8) ![]const u8 {
+    const g = try graphEnv(a, ds, enabled);
+    var cx = g.e.cx(a);
+    cx.graphics = g.session;
+    var out: std.ArrayList(u8) = .empty;
+    try anova.run(cx, &out, try lex.tokenize(a, text, &g.e.diags));
+    try t.expect(!g.e.diags.hasErrors());
+    var kinds: std.ArrayList(u8) = .empty;
+    for (g.session.prepared.items, 0..) |artifact, i| {
+        try t.expectEqual(i, artifact.order);
+        if (i != 0) try kinds.append(a, ' ');
+        try kinds.appendSlice(a, artifact.kind);
+    }
+    return kinds.items;
+}
+
+test "ANOVA010 box plot statistics, plotted coordinates and inset for the published Clover data" {
+    var arena = std.heap.ArenaAllocator.init(t.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const image = try anova_plots.boxSvg(a, .model, &clover_values, &clover_groups, &clover_labels, "Nitrogen", "Strain", .{ .f = 14.37, .p = 0.00000128 });
+    try has(image, "data-kind=\"anova-boxplot\"><title>Distribution of Nitrogen</title>");
+    try t.expectEqual(@as(usize, 6), std.mem.count(u8, image, "class=\"anova-box\""));
+    try t.expectEqual(@as(usize, 30), std.mem.count(u8, image, "class=\"anova-data\""));
+    // QNTLDEF=5 on five sorted values: Q1 = 2nd, median = 3rd, Q3 = 4th.
+    // 3DOK1 sorted 19.4 27.0 32.1 32.6 33.0; fences 27-1.5*5.6 .. 32.6+8.4.
+    try has(image, "data-group=\"0\" data-n=\"5\" data-q1=\"27\" data-median=\"32.1\" data-q3=\"32.6\"");
+    try has(image, "data-lower=\"19.4\" data-upper=\"33\"><title>3DOK1</title>");
+    try has(image, "data-group=\"1\" data-n=\"5\" data-q1=\"11.8\" data-median=\"14.2\" data-q3=\"14.3\"");
+    try has(image, "data-group=\"2\" data-n=\"5\" data-q1=\"11.9\" data-median=\"15.8\" data-q3=\"17\"");
+    // 3DOK5 sorted 17.7 24.3 24.8 25.2 27.9: IQR 0.9, fences 22.95..26.55,
+    // so 17.7 and 27.9 are outliers and the whiskers stop at the quartiles.
+    try has(image, "data-group=\"3\" data-n=\"5\" data-q1=\"24.3\" data-median=\"24.8\" data-q3=\"25.2\"");
+    try has(image, "data-lower=\"24.3\" data-upper=\"25.2\"><title>3DOK5</title>");
+    try has(image, "class=\"outlier\" data-value=\"17.7\"");
+    try has(image, "class=\"outlier\" data-value=\"27.9\"");
+    try t.expectEqual(@as(usize, 2), std.mem.count(u8, image, "class=\"outlier\""));
+    try has(image, "data-group=\"4\" data-n=\"5\" data-q1=\"18.8\" data-median=\"20.5\" data-q3=\"20.7\"");
+    try has(image, "data-group=\"5\" data-n=\"5\" data-q1=\"17.3\" data-median=\"19.1\" data-q3=\"19.4\"");
+    // Means 144.1/5, 66.3/5, 73.2/5, 119.9/5, 99.6/5, 93.5/5.
+    const summary = try @import("npar1way_plots.zig").summarize(a, &clover_values, &clover_groups, 6);
+    for ([_]f64{ 28.82, 13.26, 14.64, 23.98, 19.92, 18.7 }, summary) |mean, box| try t.expectApproxEqAbs(mean, box.mean, 1e-12);
+    // Axis: data range 9.1..33.0 padded by 5% = 7.905..34.195 on y 420..60;
+    // level i sits at x = 88 + 572*(i+0.5)/6, box half-width 28.
+    // 3DOK1 median 32.1: y = 420 - 360*(32.1-7.905)/26.29 = 88.69; x = 135.67.
+    try has(image, "<line class=\"median\" x1=\"107.67\" x2=\"163.67\" y1=\"88.69\" y2=\"88.69\"/>");
+    // 3DOK5 outlier 17.7 at x = 88 + 572*3.5/6 = 421.67, y = 420 - 360*9.795/26.29 = 285.87.
+    try has(image, "data-value=\"17.7\" cx=\"421.67\" cy=\"285.87\"");
+    try has(image, "<text x=\"374\" y=\"465\" text-anchor=\"middle\">Strain</text>");
+    try has(image, "data-f=\"14.37\"><text x=\"650\" y=\"76\" text-anchor=\"end\">F 14.37</text>");
+    try has(image, "Prob &gt; F &lt;.0001</text>");
+    // The MEANS graph has its own kind and no model inset.
+    const means = try anova_plots.boxSvg(a, .means, &clover_values, &clover_groups, &clover_labels, "Nitrogen", "Strain", null);
+    try has(means, "data-kind=\"anova-means-boxplot\"");
+    try t.expect(std.mem.indexOf(u8, means, "anova-inset") == null);
+    try t.expectError(error.InvalidInput, anova_plots.boxSvg(a, .model, &.{ 1, 2 }, &.{ 0, 0 }, &.{ "a", "b" }, "y", "g", null));
+}
+
+test "ANOVA010 Tukey lines: sorted means, groups and bar coordinates (Clover and an invented balanced set)" {
+    var arena = std.heap.ArenaAllocator.init(t.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    // Clover: MSE = 282.928/24, n = 5; MSD = 6.7142 (SAS listing). Sorted
+    // 28.82 23.98 19.92 18.70 14.64 13.26: A = {1,2} (4.84), B = {2,3,4}
+    // (5.28; 28.82-19.92 = 8.90 > MSD), C = {3,4,5,6} (6.66; 23.98-14.64 = 9.34 > MSD).
+    const lines = (try anova.tukeyLines(a, &clover_labels, &.{ 28.82, 13.26, 14.64, 23.98, 19.92, 18.70 }, &.{ 5, 5, 5, 5, 5, 5 }, 0.05, 24, 282.928 / 24.0)).?;
+    for ([_][]const u8{ "3DOK1", "3DOK5", "3DOK7", "COMPOS", "3DOK4", "3DOK13" }, lines.labels) |expected, label| try t.expectEqualStrings(expected, label);
+    try t.expectEqualSlices(f64, &.{ 28.82, 23.98, 19.92, 18.70, 14.64, 13.26 }, lines.means);
+    try t.expectEqualSlices(u32, &.{ 1, 3, 6, 6, 4, 4 }, lines.masks);
+    try t.expectApproxEqAbs(@as(f64, 6.7142), lines.info.msd, 5e-5);
+    const image = try anova_plots.linesSvg(a, lines.labels, lines.means, lines.masks, "Nitrogen", "Strain", 0.05);
+    try has(image, "data-kind=\"anova-linesplot\"><title>Nitrogen Tukey Grouping for Means of Strain (Alpha = 0.05)</title>");
+    try has(image, "Means covered by the same bar are not significantly different.");
+    try has(image, "data-row=\"0\" data-mean=\"28.82\" data-groups=\"A\"");
+    try has(image, "data-row=\"1\" data-mean=\"23.98\" data-groups=\"AB\"");
+    try has(image, "data-row=\"3\" data-mean=\"18.7\" data-groups=\"BC\"");
+    try has(image, "data-row=\"5\" data-mean=\"13.26\" data-groups=\"C\"");
+    try has(image, ">3DOK13</text>");
+    // Row i is centred at y = 110 + 44*i; a bar spans first-9 .. last+9 at x = 340 + 26*group.
+    try has(image, "<line class=\"lines-bar\" data-group=\"A\" data-first=\"0\" data-last=\"1\" x1=\"340\" x2=\"340\" y1=\"101.00\" y2=\"163.00\"/>");
+    try has(image, "<line class=\"lines-bar\" data-group=\"B\" data-first=\"1\" data-last=\"3\" x1=\"366\" x2=\"366\" y1=\"145.00\" y2=\"251.00\"/>");
+    try has(image, "<line class=\"lines-bar\" data-group=\"C\" data-first=\"2\" data-last=\"5\" x1=\"392\" x2=\"392\" y1=\"189.00\" y2=\"339.00\"/>");
+    try t.expectEqual(@as(usize, 3), std.mem.count(u8, image, "class=\"lines-bar\""));
+    // Invented balanced set: level means 2, 13, 6 with n = 2, MSE = 2, df = 3:
+    // MSD = q(.05;3,3)*sqrt(2/2) = 5.91 (ANOVA007 test); 13-6 = 7 > MSD, 6-2 = 4 <= MSD.
+    const tiny = (try anova.tukeyLines(a, &.{ "a", "b", "c" }, &.{ 2, 13, 6 }, &.{ 2, 2, 2 }, 0.05, 3, 2)).?;
+    for ([_][]const u8{ "b", "c", "a" }, tiny.labels) |expected, label| try t.expectEqualStrings(expected, label);
+    try t.expectEqualSlices(u32, &.{ 1, 2, 2 }, tiny.masks);
+    // Unequal cells need the harmonic-mean form: not produced.
+    try t.expect((try anova.tukeyLines(a, &.{ "a", "b", "c" }, &.{ 2, 13, 6 }, &.{ 2, 3, 2 }, 0.05, 3, 2)) == null);
+    try t.expectError(error.InvalidInput, anova_plots.linesSvg(a, &.{"a"}, &.{ 1, 2 }, &.{1}, "y", "g", 0.05));
+}
+
+test "ANOVA010 graph identities follow the SAS ODS trace of the Getting Started program" {
+    var arena = std.heap.ArenaAllocator.init(t.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const model = try anova_plots.boxObject(a, .model, null, "Nitrogen", "Strain");
+    try t.expectEqualStrings("BoxPlot", model.name);
+    try t.expectEqualStrings("Box Plot", model.label.?);
+    try t.expectEqualStrings("Stat.GLM.Graphics.BoxPlot", model.template);
+    try t.expectEqualStrings("ANOVA.ANOVA.Nitrogen.BoxPlot", model.path);
+    const means = try anova_plots.boxObject(a, .means, null, "Yield", "Treatment");
+    try t.expectEqualStrings("BoxPlot", means.name);
+    try t.expectEqualStrings("Distribution of Yield by Treatment", means.label.?);
+    try t.expectEqualStrings("Stat.GLM.Graphics.MeansBoxPlot", means.template);
+    try t.expectEqualStrings("ANOVA.Means.Treatment.Yield.BoxPlot", means.path);
+    const lines = try anova_plots.linesObject(a, null, "Nitrogen", "Strain");
+    try t.expectEqualStrings("LinesPlot", lines.name);
+    try t.expect(lines.label == null);
+    try t.expectEqualStrings("Stat.GLM.Graphics.MeanLinesPlot", lines.template);
+    try t.expectEqualStrings("ANOVA.Means.Strain.Nitrogen.MCLines.Tukey.LinesPlot", lines.path);
+    try t.expect(@import("graph_ods.zig").known("BoxPlot") and @import("graph_ods.zig").known("LinesPlot"));
+}
+
+test "ANOVA010 graph triggers and suppression: one-way model, MEANS, PLOTS=NONE, NOPRINT, ODS GRAPHICS OFF" {
+    var arena = std.heap.ArenaAllocator.init(t.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const one = try table(a, "s", &.{ "g", "y" }, &.{ .{ 1, 1 }, .{ 1, 3 }, .{ 2, 5 }, .{ 2, 7 }, .{ 3, 12 }, .{ 3, 14 } });
+    try t.expectEqualStrings("anova-boxplot", try queued(a, one, true, "proc anova; class g; model y=g; run;"));
+    try t.expectEqualStrings("anova-boxplot anova-means-boxplot", try queued(a, one, true, "proc anova; class g; model y=g; means g; run;"));
+    try t.expectEqualStrings("anova-boxplot anova-means-boxplot anova-linesplot", try queued(a, one, true, "proc anova; class g; model y=g; means g / tukey; run;"));
+    try t.expectEqualStrings("", try queued(a, one, true, "proc anova plots=none; class g; model y=g; means g; run;"));
+    try t.expectEqualStrings("", try queued(a, one, true, "proc anova noprint; class g; model y=g; means g / tukey; run;"));
+    try t.expectEqualStrings("", try queued(a, one, false, "proc anova; class g; model y=g; means g; run;"));
+    try t.expectEqualStrings("", try queued(a, one, null, "proc anova; class g; model y=g; means g; run;"));
+    // Two-way main-effects model: no default plot; MEANS draws one per response.
+    const two = try table(a, "s", &.{ "a", "b", "y", "z" }, &.{ .{ 1, 1, 1, 2 }, .{ 1, 2, 2, 5 }, .{ 2, 1, 5, 4 }, .{ 2, 2, 8, 9 } });
+    try t.expectEqualStrings("", try queued(a, two, true, "proc anova; class a b; model y=a b; run;"));
+    try t.expectEqualStrings("anova-means-boxplot anova-means-boxplot", try queued(a, two, true, "proc anova; class a b; model y z=a b; means a; run;"));
+    // The Tukey page under ODS Graphics: information table, no Means table.
+    const g = try graphEnv(a, one, true);
+    var cx = g.e.cx(a);
+    cx.graphics = g.session;
+    var out: std.ArrayList(u8) = .empty;
+    try anova.run(cx, &out, try lex.tokenize(a, "proc anova; class g; model y=g; means g / tukey; run;", &g.e.diags));
+    try has(out.items, "Tukey's Studentized Range (HSD) Test for y\n");
+    try has(out.items, "Error Degrees of Freedom 3\nError Mean Square 2.000000\n");
+    try t.expect(std.mem.indexOf(u8, out.items, "Level of") == null);
+    // Loud gaps (exit 2): LINES table without graphics, other comparison
+    // options, FREQ-weighted box plots; unknown options stay user errors.
+    for ([_]struct { code: u8, enabled: ?bool, text: []const u8 }{
+        .{ .code = 2, .enabled = false, .text = "proc anova; class g; model y=g; means g / tukey; run;" },
+        .{ .code = 2, .enabled = true, .text = "proc anova plots=none; class g; model y=g; means g / tukey; run;" },
+        .{ .code = 2, .enabled = true, .text = "proc anova; class g; model y=g; means g / tukey lines; run;" },
+        .{ .code = 2, .enabled = true, .text = "proc anova; class g; model y=g; means g / tukey cldiff; run;" },
+        .{ .code = 2, .enabled = true, .text = "proc anova plots(maxpoints=none); class g; model y=g; run;" },
+        .{ .code = 2, .enabled = true, .text = "proc anova; class g; model x=g; freq y; run;" },
+        .{ .code = 1, .enabled = true, .text = "proc anova plots=bogus; class g; model y=g; run;" },
+        .{ .code = 1, .enabled = true, .text = "proc anova; class g; model y=g; means g / tukeyplot; run;" },
+    }) |case| {
+        const three = try table(a, "s", &.{ "g", "y", "x" }, &.{ .{ 1, 1, 1 }, .{ 1, 3, 2 }, .{ 2, 5, 3 }, .{ 2, 7, 5 } });
+        const ge = try graphEnv(a, three, case.enabled);
+        var gcx = ge.e.cx(a);
+        gcx.graphics = ge.session;
+        diag.resetGap();
+        defer diag.resetGap();
+        var sink: std.ArrayList(u8) = .empty;
+        try t.expect(if (anova.run(gcx, &sink, try lex.tokenize(a, case.text, &ge.e.diags))) |_| false else |_| true);
+        const code = diag.exitCode(diag.gapHit(), ge.e.diags.hasErrors());
+        if (code != case.code) std.debug.print("exit {d} for: {s}\n", .{ code, case.text });
+        try t.expectEqual(case.code, code);
+        try t.expectEqual(@as(usize, 0), ge.session.prepared.items.len);
+    }
+}

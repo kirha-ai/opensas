@@ -54,7 +54,13 @@ fn check(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!void {
         } else if (kw(t, i, "outstat")) {
             return proc.failGap(cx.diags, line, "PROC ANOVA: OUTSTAT= is not implemented", .{});
         } else if (kw(t, i, "plots")) {
-            if (!at(t, i + 1, .eq) or !kw(t, i + 2, "none")) return proc.failGap(cx.diags, line, "PROC ANOVA: PLOTS requests other than PLOTS=NONE are not implemented", .{});
+            // p.1116: PLOTS <(MAXPOINTS=NONE | number)> <=NONE> is the whole grammar.
+            if (at(t, i + 1, .eq)) {
+                if (!kw(t, i + 2, "none")) return cx.diags.fail(error.ParseError, line, "PROC ANOVA: PLOTS= accepts only NONE", .{});
+            } else if (at(t, i + 1, .lparen)) {
+                if (!kw(t, i + 2, "maxpoints") or !at(t, i + 3, .eq) or !(kw(t, i + 4, "none") or at(t, i + 4, .number)) or !at(t, i + 5, .rparen)) return cx.diags.fail(error.ParseError, line, "PROC ANOVA: PLOTS accepts only the MAXPOINTS=NONE | number option", .{});
+                return proc.failGap(cx.diags, line, "PROC ANOVA: PLOTS(MAXPOINTS=) is not implemented", .{});
+            } else return proc.failGap(cx.diags, line, "PROC ANOVA: PLOTS without =NONE is not implemented", .{});
             i += 3;
         } else return cx.diags.fail(error.ParseError, line, "PROC ANOVA: invalid PROC statement option {s}", .{t[i].text});
     }
@@ -341,18 +347,23 @@ pub fn execute(cx: proc.ProcCtx, out: *std.ArrayList(u8), spec: Spec) diag.Error
 /// rebuilt and validated but the ANOVA tables are not printed again.
 pub fn executeAll(cx: proc.ProcCtx, out: *std.ArrayList(u8), parsed: Parsed, means_only: bool) diag.Error!void {
     const spec = parsed.spec;
-    // ponytail: TUKEY's numbers (tukeyInfo/tukeyGroups) are implemented and
-    // tested, but its LINES display is not: the listing table layout has no
-    // SAS reference here and the graphical form belongs to STAT-ANOVA-010.
-    for (parsed.means) |request| if (request.tukey) return proc.failGap(cx.diags, request.line, "PROC ANOVA: the MEANS TUKEY LINES display is not implemented", .{});
     const a = cx.arena;
+    const graphs = !spec.noprint and !spec.plots_none and if (cx.graphics) |g| g.enabled == true else false;
+    // ponytail: with ODS Graphics the Tukey grouping is the LinesPlot graph
+    // (STAT-ANOVA-010). The listing LINES table printed otherwise has no SAS
+    // layout reference and stays a loud gap.
+    for (parsed.means) |request| if (request.tukey and !graphs and !spec.noprint) return proc.failGap(cx.diags, request.line, "PROC ANOVA: the MEANS TUKEY LINES table is not implemented without ODS Graphics", .{});
+    // ponytail: box plots of FREQ-weighted data are not validated.
+    if (graphs and spec.freq != null and (parsed.means.len != 0 or oneWay(spec))) return proc.failGap(cx.diags, 0, "PROC ANOVA: ODS Graphics box plots with a FREQ statement are not implemented; specify PLOTS=NONE", .{});
+    var order: usize = 0;
     const view = try selection.View.init(a, spec.input, .{ .by = spec.by, .frequency = spec.freq });
     const groups = try view.groups(a, spec.descending, spec.notsorted, cx.diags);
     if (groups.len == 0) return cx.diags.fail(error.ExecError, 0, "PROC ANOVA: no observations in the input data set", .{});
-    const graphics_on = if (cx.graphics) |g| g.enabled == true else false;
-    for (groups) |group| {
+    for (groups, 0..) |group, group_index| {
+        const by: ?usize = if (spec.by.len != 0) group_index + 1 else null;
         var first: ?Design = null;
         var designs: std.ArrayList(Design) = .empty;
+        var errors: std.ArrayList(ErrorTerm) = .empty;
         for (spec.responses) |response| {
             const d = try build(cx, spec, group, response);
             if (d.n == 0) return cx.diags.fail(error.ExecError, 0, "PROC ANOVA: no valid observations for dependent variable {s}", .{spec.input.ds.columns.items[response].name});
@@ -366,8 +377,8 @@ pub fn executeAll(cx: proc.ProcCtx, out: *std.ArrayList(u8), parsed: Parsed, mea
             defer result.deinit(a);
             if (result.model.fit.rank < d.p) return proc.failGap(cx.diags, 0, "PROC ANOVA: rank-deficient models are not implemented", .{});
             try designs.append(a, d);
+            try errors.append(a, .{ .df = @floatFromInt(result.model.fit.df_error), .mse = result.model.fit.mse });
             if (spec.noprint or means_only) continue;
-            if (graphics_on and !spec.plots_none and spec.effects.len == 1 and spec.effects[0].variables.len == 1) return proc.failGap(cx.diags, 0, "PROC ANOVA: the default one-way box plot is not implemented; specify PLOTS=NONE or ODS GRAPHICS OFF", .{});
             const fitted = result.model.fit;
             if (first.?.response == response) {
                 try heading(cx, out, spec, group);
@@ -402,9 +413,102 @@ pub fn executeAll(cx: proc.ProcCtx, out: *std.ArrayList(u8), parsed: Parsed, mea
             for (spec.effects, result.type_i) |effect, value| try out.print(a, "{s} {d} {s} {s} {s} {s}\n", .{
                 effect.name, value.df, try number(a, value.ss, effect_decimals), try number(a, value.ms, effect_decimals), try number(a, value.f_value, 2), try probability(a, value.p_value),
             });
+            // pp.1116, 1143: default grouped box plot of a one-way model.
+            if (graphs and oneWay(spec)) try boxPlot(cx, spec, d, 0, .model, by, .{ .f = model.f_value, .p = model.p_value }, &order);
         }
-        if (!spec.noprint) for (parsed.means) |request| try renderMeans(cx, out, spec, group, designs.items, request);
+        if (!spec.noprint) for (parsed.means) |request| {
+            // pp.1116, 1143: every MEANS effect gets a box plot per response.
+            if (graphs) for (designs.items) |d| try boxPlot(cx, spec, d, request.effect, .means, by, null, &order);
+            if (request.tukey) {
+                for (designs.items, errors.items) |d, term| try tukeyPage(cx, out, spec, group, d, term, request, by, &order);
+            } else try renderMeans(cx, out, spec, group, designs.items, request);
+        };
     }
+}
+
+const ErrorTerm = struct { df: f64, mse: f64 };
+const plots = @import("anova_plots.zig");
+
+fn oneWay(spec: Spec) bool {
+    return spec.effects.len == 1 and spec.effects[0].variables.len == 1 and spec.classes.len == 1;
+}
+
+/// p.1117: plots needing more than MAXPOINTS=5000 points are suppressed.
+pub const max_points = 5000;
+
+fn boxPlot(cx: proc.ProcCtx, spec: Spec, d: Design, effect: usize, kind: plots.Kind, by: ?usize, inset: ?plots.Inset, order: *usize) diag.Error!void {
+    const session = cx.graphics orelse return;
+    if (d.n > max_points) return;
+    const a = cx.arena;
+    const column = spec.effects[effect].variables[0];
+    const class = for (d.classes) |class| {
+        if (class.column == column) break class;
+    } else return error.ExecError;
+    const groups = try a.alloc(usize, d.n);
+    for (groups, 0..) |*g, row| g.* = class.row_levels[row] orelse return error.ExecError;
+    const labels = try a.alloc([]const u8, class.levels.len);
+    for (labels, class.levels) |*label, level| label.* = level.label;
+    const response = spec.input.ds.columns.items[d.response].name;
+    const name = spec.input.ds.columns.items[column].name;
+    const bytes = plots.boxSvg(a, kind, d.y[0..d.n], groups, labels, response, name, inset) catch |err| switch (err) {
+        error.OutOfMemory => return error.OutOfMemory,
+        else => return proc.failGap(cx.diags, 0, "PROC ANOVA: the box plot for {s} by {s} cannot be drawn (empty level or non-finite value)", .{ response, name }),
+    };
+    try plots.queue(session, order.*, try plots.boxObject(a, kind, by, response, name), bytes);
+    order.* += 1;
+}
+
+pub const TukeyLines = struct { labels: []const []const u8, means: []const f64, masks: []const u32, info: TukeyInfo };
+
+/// Level means sorted high to low (ties keep level order) with their Tukey
+/// groups. Null when the cells are unequal (harmonic-mean form: gap).
+pub fn tukeyLines(a: A, labels: []const []const u8, means: []const f64, counts: []const usize, alpha: f64, df_error: f64, mse: f64) !?TukeyLines {
+    for (counts) |n| if (n != counts[0]) return null;
+    const index = try a.alloc(usize, means.len);
+    for (index, 0..) |*x, i| x.* = i;
+    std.mem.sort(usize, index, means, struct {
+        fn before(m: []const f64, l: usize, r: usize) bool {
+            return m[l] > m[r] or (m[l] == m[r] and l < r);
+        }
+    }.before);
+    const sorted_labels = try a.alloc([]const u8, means.len);
+    const sorted = try a.alloc(f64, means.len);
+    for (index, sorted_labels, sorted) |source, *label, *mean| {
+        label.* = labels[source];
+        mean.* = means[source];
+    }
+    const info = try tukeyInfo(alpha, means.len, df_error, mse, @floatFromInt(counts[0]));
+    return .{ .labels = sorted_labels, .means = sorted, .masks = try tukeyGroups(a, sorted, info.msd), .info = info };
+}
+
+fn tukeyPage(cx: proc.ProcCtx, out: *std.ArrayList(u8), spec: Spec, group: selection.View, d: Design, term: ErrorTerm, request: MeansRequest, by: ?usize, order: *usize) diag.Error!void {
+    const a = cx.arena;
+    const session = cx.graphics orelse return error.ExecError;
+    const table = try @import("glm_means.zig").compute(cx, spec, d, .{ .effect = request.effect, .deponly = true });
+    const class = d.classes[table.class_positions[0]];
+    const labels = try a.alloc([]const u8, table.groups.len);
+    const means = try a.alloc(f64, table.groups.len);
+    const counts = try a.alloc(usize, table.groups.len);
+    for (table.groups, labels, means, counts) |g, *label, *mean, *count| {
+        label.* = class.levels[g.levels[0]].label;
+        mean.* = g.means[0];
+        count.* = g.count;
+    }
+    if (labels.len < 2) return proc.failGap(cx.diags, request.line, "PROC ANOVA: MEANS TUKEY for a single level is not implemented", .{});
+    const lines = (tukeyLines(a, labels, means, counts, request.alpha, term.df, term.mse) catch |err| switch (err) {
+        error.OutOfMemory => return error.OutOfMemory,
+        else => return proc.failGap(cx.diags, request.line, "PROC ANOVA: this MEANS TUKEY grouping cannot be computed (studentized range arguments or more than 24 groups)", .{}),
+    }) orelse return proc.failGap(cx.diags, request.line, "PROC ANOVA: MEANS TUKEY with unequal cell sizes is not implemented", .{});
+    const response = spec.input.ds.columns.items[d.response].name;
+    const effect = spec.input.ds.columns.items[class.column].name;
+    try heading(cx, out, spec, group);
+    try renderTukeyInfo(a, out, response, lines.info);
+    const bytes = plots.linesSvg(a, lines.labels, lines.means, lines.masks, response, effect, request.alpha) catch |err| switch (err) {
+        error.OutOfMemory => return error.OutOfMemory,
+        else => return error.ExecError,
+    };
+    try plots.queue(session, order.*, try plots.linesObject(a, by, response, effect), bytes);
+    order.* += 1;
 }
 
 pub fn run(cx: proc.ProcCtx, out: *std.ArrayList(u8), tokens: []const lex.Token) diag.Error!void {
@@ -487,7 +591,11 @@ pub fn continuation(cx: proc.ProcCtx, out: *std.ArrayList(u8), tokens: []const l
         }
         try all.append(cx.arena, .{ .tag = .eof });
         // A failed request leaves the procedure open, as in SAS.
+        // The step runner flushes graphs only at step end; an interactive
+        // MEANS writes its own box plots now (and drops them on failure).
+        errdefer if (cx.graphics) |session| session.clear();
         try executeAll(cx, out, try parseAll(cx, all.items), true);
+        if (cx.graphics) |session| try session.flush();
         if (quit) forget();
         return true;
     }
