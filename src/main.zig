@@ -405,6 +405,7 @@ fn runExpanded(ctx: *StepCtx, text: []const u8, allow_anon: bool) sas.diag.Error
     // preload in `interpret` never saw it. Load any still-missing members now.
     if (ctx.io) |iov| try loadLibInputs(a, iov, ctx.lib, ctx.librefs.items, toks, ctx.loaded_ro, ctx.damaged, ctx.diags);
     if (try sas.anova.continuation(.{ .resolve_fileref = &findFileref, .arena = a, .lib = ctx.lib, .diags = ctx.diags, .capture = &ods_capture, .listing = &ods_listing, .graphics = native_graphics_session, .listing_titles = ctx.globals }, ctx.out, toks)) return;
+    try sas.catmod.applyTitles(a, ctx.globals, ctx.diags, toks);
     if (try sas.catmod.continuation(.{ .resolve_fileref = &findFileref, .arena = a, .lib = ctx.lib, .diags = ctx.diags, .capture = &ods_capture, .listing = &ods_listing, .graphics = native_graphics_session, .listing_titles = ctx.globals }, ctx.out, toks)) return;
     if (ctx.glm_session) |*session| {
         if (toks.len > 0 and toks[0].tag == .name and sas.glm.continuationKeyword(toks[0].text)) {

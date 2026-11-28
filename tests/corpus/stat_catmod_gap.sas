@@ -3,12 +3,12 @@
    tickets or not yet verified must fail visibly (D-009 gap) and print no
    table: other RESPONSE functions, CONTRAST/FACTORS/LOGLIN/REPEATED/
    RESTRICT (a character DIRECT variable is a user error since
-   STAT-CATMOD-003), effect names longer than 24 characters, MODEL options other
-   than DESIGN, bar effects, a direct design matrix, multiple responses, fractional weights with
+   STAT-CATMOD-003), effect names longer than 24 characters with NAMELEN=, MODEL options other
+   than DESIGN, bar effects with @, a direct design matrix, multiple responses, fractional weights with
    whole-number sums, a fractional Data Summary value of 8 characters,
    RESPONSE MEANS on a format that merges response values, DATA= options
    other than WHERE=, maximum likelihood with a near-zero cell (SAS marks
-   such parameters infinite) and an estimate below 0.001 in magnitude.
+   such parameters infinite) and an estimate below 0.0001 in magnitude.
    Data: invented. */
 options nosyntaxcheck nodate nonumber nocenter linesize=160;
 title;
@@ -24,7 +24,7 @@ proc catmod data=t; weight w; loglin g; model y=g; run;
 data ln; set t; rename g=a_very_long_variable_name_x h=b_long; run;
 proc catmod data=ln namelen=30; weight w; model y=a_very_long_variable_name_x*b_long; run;
 proc catmod data=t; weight w; model y=g / pred; run;
-proc catmod data=t; weight w; model y=g|h; run;
+proc catmod data=t; weight w; model y=g|h@1; run;
 proc catmod data=t; weight w; model y=(1 0, 1 1, 1 0, 1 1); run;
 proc catmod data=t; weight w; model y*g=h; run;
 data f; set t; if _n_ <= 2 then w = w + 0.5; run;

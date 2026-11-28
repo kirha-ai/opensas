@@ -83,6 +83,16 @@ pub const Spec = struct {
     model_line: usize = 0,
     /// DIRECT variables (STAT-CATMOD-003): one design column of values each.
     direct: []const usize = &.{},
+    /// NAMELEN= when given (effect names over 24 stay a gap then).
+    namelen: ?usize = null,
+    /// RESPONSE with one row of coefficients (p. 2212): the linear function
+    /// sum_j a_j p_ij per population, analysed by WLS like MEANS.
+    scores: ?[]const f64 = null,
+    /// MODEL options FREQ, PROB, CLPARM, NOPROFILE (pp. 2203-2207).
+    freq: bool = false,
+    prob: bool = false,
+    clparm: bool = false,
+    noprofile: bool = false,
 };
 
 fn isDirect(s: Spec, v: usize) bool {
@@ -145,6 +155,7 @@ fn parseProc(cx: proc.ProcCtx, s: *Spec, t: []const Token) diag.Error!void {
             if (!at(t, i + 2, .number)) return invalid(cx, t, i + 2);
             const n = std.fmt.parseFloat(f64, t[i + 2].text) catch return invalid(cx, t, i + 2);
             if (n < 24 or n > 200 or n != @floor(n)) return cx.diags.fail(error.ParseError, t[i].line, "PROC CATMOD: NAMELEN= must be an integer between 24 and 200", .{});
+            s.namelen = @intFromFloat(n);
             i += 3;
         } else return invalid(cx, t, i);
     }
@@ -179,6 +190,7 @@ fn parseModel(cx: proc.ProcCtx, s: *Spec, t: []const Token) diag.Error!void {
     var i: usize = 3;
     if (at(t, i, .lparen)) return gap(cx, t[i].line, "a direct design matrix in MODEL is not implemented", .{});
     var effects: std.ArrayList(Effect) = .empty;
+    var full_names: std.ArrayList([]const u8) = .empty;
     while (i < t.len and !at(t, i, .slash)) {
         var vars: std.ArrayList(usize) = .empty;
         const first = i;
@@ -227,44 +239,129 @@ fn parseModel(cx: proc.ProcCtx, s: *Spec, t: []const Token) diag.Error!void {
             }
             i += 1;
         }
-        if (at(t, i, .lparen) or at(t, i, .pipe) or at(t, i, .at)) return gap(cx, t[i].line, "nested, bar and @ effects are not implemented", .{});
-        // SAS names a crossing with its DIRECT variables first (reference
-        // run: a*x with DIRECT x is the effect x*a), class variables after.
-        if (s.direct.len > 0) {
-            var ordered: std.ArrayList(usize) = .empty;
-            for (vars.items) |c| if (isDirect(s.*, c)) try ordered.append(cx.arena, c);
-            for (vars.items) |c| if (!isDirect(s.*, c)) try ordered.append(cx.arena, c);
-            vars = ordered;
-            if (nest) |n| if (isDirect(s.*, n.v) or isDirect(s.*, vars.items[0])) return gap(cx, t[first].line, "DIRECT variables in nested effects are not implemented", .{});
+        if (at(t, i, .lparen) or at(t, i, .at)) return gap(cx, t[i].line, "nested and @ effects are not implemented", .{});
+        if (at(t, i, .pipe)) {
+            // Bar notation (Specification of Effects, p. 2225): A|B|C is
+            // A B A*B C A*C B*C A*B*C, each new term followed by its
+            // crossings with every effect so far (SAS reference listing,
+            // Example 36.1). ponytail: bars of crossed-free class terms only.
+            if (nest != null) return gap(cx, t[i].line, "bar notation with nested effects is not implemented", .{});
+            var terms: std.ArrayList([]const usize) = .empty;
+            try terms.append(cx.arena, vars.items);
+            while (at(t, i, .pipe)) {
+                i += 1;
+                var term: std.ArrayList(usize) = .empty;
+                while (true) {
+                    if (!at(t, i, .name)) return invalid(cx, t, i);
+                    if (kw(t, i, "_response_")) return gap(cx, t[i].line, "_RESPONSE_ effects are not implemented", .{});
+                    try term.append(cx.arena, try column(cx, ds, t, i));
+                    i += 1;
+                    if (!at(t, i, .star)) break;
+                    i += 1;
+                }
+                if (at(t, i, .lparen) or at(t, i, .at)) return gap(cx, t[i].line, "nested and @ effects in bar notation are not implemented", .{});
+                try terms.append(cx.arena, term.items);
+            }
+            var expanded: std.ArrayList([]const usize) = .empty;
+            for (terms.items) |term| {
+                const before = expanded.items.len;
+                try expanded.append(cx.arena, term);
+                for (expanded.items[0..before]) |e| {
+                    for (e) |v| if (std.mem.indexOfScalar(usize, term, v) != null) return gap(cx, t[first].line, "bar notation repeating a variable is not implemented", .{});
+                    const both = try cx.arena.alloc(usize, e.len + term.len);
+                    @memcpy(both[0..e.len], e);
+                    @memcpy(both[e.len..], term);
+                    try expanded.append(cx.arena, both);
+                }
+            }
+            for (expanded.items) |e| try addEffect(cx, s, &effects, &full_names, e, null, t[first].line);
+            continue;
         }
-        var nm: Out = .empty;
-        for (vars.items, 0..) |c, k| {
-            if (k > 0) try nm.append(cx.arena, '*');
-            try nm.appendSlice(cx.arena, ds.columns.items[c].name);
-        }
-        if (nest) |n| {
-            try nm.append(cx.arena, '(');
-            try nm.appendSlice(cx.arena, ds.columns.items[n.v].name);
-            if (n.value) |v| try nm.print(cx.arena, "={s}", .{v});
-            try nm.append(cx.arena, ')');
-        }
-        for (effects.items) |e| if (eq(e.name, nm.items)) return cx.diags.fail(error.ParseError, t[first].line, "PROC CATMOD: effect {s} is specified twice", .{nm.items});
-        try effects.append(cx.arena, .{ .name = nm.items, .vars = vars.items, .nest = nest });
+        try addEffect(cx, s, &effects, &full_names, vars.items, nest, t[first].line);
     }
     if (effects.items.len == 0) return gap(cx, lineOf(t, i), "an intercept-only MODEL is not implemented", .{});
     s.effects = effects.items;
-    for (s.effects) |e| if (e.name.len > 24) return gap(cx, s.model_line, "effect names longer than 24 characters (NAMELEN=) are not implemented", .{});
     if (at(t, i, .slash)) {
         i += 1;
         while (i < t.len) : (i += 1) {
             if (!at(t, i, .name)) return invalid(cx, t, i);
             if (eq(t[i].text, "design")) {
                 s.design = true;
-            } else if (oneOf(t[i].text, &.{ "averaged", "param", "cov", "missing", "nopredvar", "addcell", "alpha", "avgdesign", "clparm", "corrb", "covb", "epsilon", "freq", "maxiter", "ml", "gls", "wls", "noiter", "noint", "noprofile", "noresponse", "nodesign", "noparm", "nogls", "noprint", "onefactor", "oneway", "pred", "predict", "prob", "pcov", "profile", "title", "xpx", "zero" })) {
+            } else if (eq(t[i].text, "freq")) {
+                s.freq = true;
+            } else if (eq(t[i].text, "prob")) {
+                s.prob = true;
+            } else if (eq(t[i].text, "clparm")) {
+                s.clparm = true;
+            } else if (eq(t[i].text, "noprofile")) {
+                s.noprofile = true;
+            } else if (oneOf(t[i].text, &.{ "averaged", "param", "cov", "missing", "nopredvar", "addcell", "alpha", "avgdesign", "corrb", "covb", "epsilon", "maxiter", "ml", "gls", "wls", "noiter", "noint", "noresponse", "nodesign", "noparm", "nogls", "noprint", "onefactor", "oneway", "pred", "predict", "pcov", "profile", "title", "xpx", "zero" })) {
                 return gap(cx, t[i].line, "MODEL option {s} is not implemented", .{t[i].text});
             } else return invalid(cx, t, i);
         }
     }
+}
+
+/// Adds one effect: DIRECT variables first in a crossing, the display name
+/// shortened to 24 characters, a repeated effect the user error.
+fn addEffect(cx: proc.ProcCtx, s: *Spec, effects: *std.ArrayList(Effect), full_names: *std.ArrayList([]const u8), vars_in: []const usize, nest: ?Nest, line: usize) diag.Error!void {
+    const ds = s.ds;
+    var vars = vars_in;
+    // SAS names a crossing with its DIRECT variables first (reference
+    // run: a*x with DIRECT x is the effect x*a), class variables after.
+    if (s.direct.len > 0) {
+        var ordered: std.ArrayList(usize) = .empty;
+        for (vars) |c| if (isDirect(s.*, c)) try ordered.append(cx.arena, c);
+        for (vars) |c| if (!isDirect(s.*, c)) try ordered.append(cx.arena, c);
+        vars = ordered.items;
+        if (nest) |n| if (isDirect(s.*, n.v) or isDirect(s.*, vars[0])) return gap(cx, line, "DIRECT variables in nested effects are not implemented", .{});
+    }
+    var nm: Out = .empty;
+    for (vars, 0..) |c, k| {
+        if (k > 0) try nm.append(cx.arena, '*');
+        try nm.appendSlice(cx.arena, ds.columns.items[c].name);
+    }
+    if (nest) |n| {
+        try nm.append(cx.arena, '(');
+        try nm.appendSlice(cx.arena, ds.columns.items[n.v].name);
+        if (n.value) |v| try nm.print(cx.arena, "={s}", .{v});
+        try nm.append(cx.arena, ')');
+    }
+    for (full_names.items) |e| if (eq(e, nm.items)) return cx.diags.fail(error.ParseError, line, "PROC CATMOD: effect {s} is specified twice", .{nm.items});
+    try full_names.append(cx.arena, nm.items);
+    var name: []const u8 = nm.items;
+    if (name.len > 24) {
+        if (s.namelen != null) return gap(cx, line, "effect names longer than 24 characters with NAMELEN= are not implemented", .{});
+        if (nest != null) return gap(cx, line, "nested effect names longer than 24 characters are not implemented", .{});
+        name = try shortName(cx.arena, ds, vars);
+    }
+    try effects.append(cx.arena, .{ .name = name, .vars = vars, .nest = nest });
+}
+
+/// A crossed effect name over 24 characters: the longest variable name
+/// (the leftmost of equals) loses its last character until the name fits
+/// (SAS reference runs: Softnes*Previou*Temperat, LongVarName*LongerVariab,
+/// Bb*LongerVariableNameBet, LongVarNam*Bb*LongerVari).
+pub fn shortName(a: A, ds: *const Dataset, vars: []const usize) ![]const u8 {
+    const lens = try a.alloc(usize, vars.len);
+    var total: usize = vars.len - 1;
+    for (vars, lens) |c, *l| {
+        l.* = ds.columns.items[c].name.len;
+        total += l.*;
+    }
+    while (total > 24) : (total -= 1) {
+        var k: usize = 0;
+        for (lens, 0..) |l, j| if (l > lens[k]) {
+            k = j;
+        };
+        lens[k] -= 1;
+    }
+    var nm: Out = .empty;
+    for (vars, lens, 0..) |c, l, k| {
+        if (k > 0) try nm.append(a, '*');
+        try nm.appendSlice(a, ds.columns.items[c].name[0..l]);
+    }
+    return nm.items;
 }
 
 /// The crossed variables of an effect followed by its nesting variable.
@@ -292,6 +389,26 @@ pub fn resolve(cx: proc.ProcCtx, st: State) diag.Error!Spec {
             s.means = false;
         } else if (r.len == 2 and kw(r, 1, "means")) {
             s.means = true;
+        } else if (r.len >= 2 and (at(r, 1, .number) or at(r, 1, .minus))) {
+            // One row of numeric coefficients: a linear response function
+            // (p. 2212). ponytail: several rows (comma-separated) give
+            // several functions per population, a gap.
+            var sc: std.ArrayList(f64) = .empty;
+            var j: usize = 1;
+            while (j < r.len) {
+                var sign: f64 = 1;
+                if (at(r, j, .minus)) {
+                    sign = -1;
+                    j += 1;
+                }
+                if (at(r, j, .comma)) return gap(cx, r[j].line, "RESPONSE with several rows of coefficients is not implemented", .{});
+                if (!at(r, j, .number)) return invalid(cx, r, j);
+                const x = std.fmt.parseFloat(f64, r[j].text) catch return invalid(cx, r, j);
+                try sc.append(cx.arena, sign * x);
+                j += 1;
+            }
+            s.means = true;
+            s.scores = sc.items;
         } else if (r.len >= 2 and at(r, 1, .name) and oneOf(r[1].text, &.{ "logits", "logit", "clogits", "alogits", "joint", "marginals", "marginal", "mean", "readcell", "exp", "log", "identity" })) {
             return gap(cx, r[1].line, "RESPONSE {s} is not implemented", .{r[1].text});
         } else return gap(cx, r[0].line, "RESPONSE functions other than MEANS are not implemented", .{});
@@ -334,7 +451,7 @@ pub fn resolve(cx: proc.ProcCtx, st: State) diag.Error!Spec {
         } else if (dv == s.response) return cx.diags.fail(error.ParseError, s.model_line, "PROC CATMOD: the response variable cannot also be an explanatory variable", .{});
     }
     for (s.pop_vars) |v| if (v == s.response) return cx.diags.fail(error.ParseError, s.model_line, "PROC CATMOD: the response variable cannot also be an explanatory variable", .{});
-    if (s.means and ds.columns.items[s.response].type != .num) return cx.diags.fail(error.ParseError, s.model_line, "PROC CATMOD: RESPONSE MEANS requires a numeric response variable", .{});
+    if (s.means and s.scores == null and ds.columns.items[s.response].type != .num) return cx.diags.fail(error.ParseError, s.model_line, "PROC CATMOD: RESPONSE MEANS requires a numeric response variable", .{});
     if (st.by_stmt) |b| {
         var bys: by.Statements = .{};
         var j: usize = 0;
@@ -522,7 +639,7 @@ fn tabulateUsed(cx: proc.ProcCtx, s: Spec, rows: []const []const Value, freq_mis
     for (s.pop_vars, pv) |c, l| if (l.merged and isDirect(s, c)) return gap(cx, s.model_line, "a DIRECT variable whose format groups several values is not implemented", .{});
     // ponytail: RESPONSE MEANS scores a response level by its value; a format
     // that merges several values has no verified score.
-    if (s.means and rv.merged) return gap(cx, s.model_line, "RESPONSE MEANS with a format that merges response values is not implemented", .{});
+    if (s.means and s.scores == null and rv.merged) return gap(cx, s.model_line, "RESPONSE MEANS with a format that merges response values is not implemented", .{});
     const pl = try a.alloc([]const Value, pv.len);
     const pt = try a.alloc([]const []const u8, pv.len);
     for (pv, pl, pt) |l, *v, *t| {
@@ -677,7 +794,7 @@ fn invert(cx: proc.ProcCtx, m: []const f64, n: usize) diag.Error![]f64 {
 
 /// Weighted least squares on response means (p.2208 WLS): F_i = sum_j s_j p_ij,
 /// V_i = (sum_j s_j^2 p_ij - F_i^2) / n_i, b = (X'V^-1 X)^-1 X'V^-1 F.
-pub fn fitMeans(cx: proc.ProcCtx, tb: Table, d: Design) diag.Error!Fit {
+pub fn fitMeans(cx: proc.ProcCtx, tb: Table, d: Design, scores: ?[]const f64) diag.Error!Fit {
     const a = cx.arena;
     const r = tb.pops.len;
     const J = tb.resp_levels.len;
@@ -690,7 +807,9 @@ pub fn fitMeans(cx: proc.ProcCtx, tb: Table, d: Design) diag.Error!Fit {
         var m2: f64 = 0;
         for (0..J) |j| {
             const c = tb.counts[i * J + j];
-            const sc = tb.resp_levels[j].num;
+            // A linear function scores level j by its coefficient: then
+            // V_i = (a' diag(p) a - (a'p)^2) / n_i is the same formula.
+            const sc = if (scores) |a_| a_[j] else tb.resp_levels[j].num;
             n += c;
             m1 += c * sc;
             m2 += c * sc * sc;
@@ -886,12 +1005,18 @@ fn pvalue(a: A, p: f64) ![]const u8 {
     return fixed(a, p, 4);
 }
 /// Estimates and standard errors: four decimals, more for |x| < 0.01 so that
-/// three significant digits show (reference: -0.00749 beside 1.0491).
-// ponytail: the template's D10.4-like rule, verified only for |x| >= 0.001.
+/// three significant digits show (reference: -0.00749 beside 1.0491), at
+/// most 8 characters (SAS reference listings: -0.00073 and -0.00345 as
+/// estimates, 0.000446 and 0.00248 as confidence limits).
+// ponytail: verified down to |x| >= 0.0001; smaller values stay loud.
 fn estimate(cx: proc.ProcCtx, x: f64) diag.Error![]const u8 {
     const ax = @abs(x);
-    if (ax != 0 and ax < 0.001) return gap(cx, 0, "displaying estimates below 0.001 in magnitude is not implemented", .{});
+    if (ax != 0 and ax < 0.0001) return gap(cx, 0, "displaying estimates below 0.0001 in magnitude is not implemented", .{});
     if (ax >= 10000) return gap(cx, 0, "displaying estimates of 10000 or more is not implemented", .{});
+    if (ax != 0 and ax < 0.001) {
+        const six = try fixed(cx.arena, x, 6);
+        return if (six.len <= 8) six else fixed(cx.arena, x, 5);
+    }
     if (ax != 0 and ax < 0.01) return fixed(cx.arena, x, 5);
     return fixed(cx.arena, x, 4);
 }
@@ -1031,6 +1156,41 @@ fn profiles(cx: proc.ProcCtx, out: *Out, s: Spec, tb: Table) !void {
     try out.appendSlice(a, "\n\n");
 }
 
+/// FREQ / PROB (p. 2204): weighted response counts or proportions per
+/// population. Fields of 9 (counts) or 11 (BEST-free 5-decimal
+/// proportions) after the 6-wide Sample column; "Response Number" starts
+/// at 0-based column 7 (8) + ceil((J*field - 15) / 2) (SAS reference runs, J = 2, 3, 4).
+fn responseTable(cx: proc.ProcCtx, out: *Out, tb: Table, prob: bool) !void {
+    const a = cx.arena;
+    const J = tb.resp_levels.len;
+    const fw: usize = if (prob) 11 else 9;
+    const width = 6 + fw * J;
+    try centered(a, out, if (prob) "Response Probabilities" else "Response Frequencies", width);
+    try out.appendSlice(a, " \n");
+    var b = try proc.line(a, width);
+    proc.putLeft(b, (if (prob) @as(usize, 9) else 8) + (fw * J - 15 + 1) / 2, "Response Number");
+    try emit(a, out, b);
+    b = try proc.line(a, width);
+    proc.putLeft(b, 1, "Sample");
+    for (0..J) |j| proc.putRight(b, 6 + fw * (j + 1), try std.fmt.allocPrint(a, "{d}", .{j + 1}));
+    try emit(a, out, b);
+    try dashes(a, out, width);
+    for (0..tb.pops.len) |i| {
+        b = try proc.line(a, width);
+        proc.putRight(b, 5, try std.fmt.allocPrint(a, "{d}", .{i + 1}));
+        var n: f64 = 0;
+        for (0..J) |j| n += tb.counts[i * J + j];
+        for (0..J) |j| {
+            const c = tb.counts[i * J + j];
+            // ponytail: fractional counts have no verified FREQ layout.
+            if (!prob and c != @floor(c)) return gap(cx, 0, "MODEL / FREQ with fractional frequencies is not implemented", .{});
+            proc.putRight(b, 6 + fw * (j + 1), if (prob) try fixed(a, c / n, 5) else try std.fmt.allocPrint(a, "{d}", .{@as(u64, @intFromFloat(c))}));
+        }
+        try emit(a, out, b);
+    }
+    try out.appendSlice(a, "\n\n");
+}
+
 /// With q > 1 functions per population (generalized logits of a response
 /// with q + 1 levels) only the submatrix shared by the functions is shown,
 /// beside the observed functions log(n_j / n_last) (p. 2226; SAS reference
@@ -1157,7 +1317,9 @@ fn estimatesTable(cx: proc.ProcCtx, out: *Out, s: Spec, tb: Table, d: Design, f:
     // One function per population (a two-level response under maximum
     // likelihood) drops the Function Number column (SAS reference run).
     const fn_w: usize = if (s.means or f.nf == 1) 0 else 9;
-    const width = pw + fn_w + 12 + 11 + 12 + 14;
+    const base_w = pw + fn_w + 12 + 11 + 12 + 14;
+    // CLPARM (p. 2203): two 12-wide limit columns (SAS reference listings).
+    const width = if (s.clparm) base_w + 24 else base_w;
     const est = pw + fn_w + 12;
     try centered(a, out, if (s.means) "Analysis of Weighted Least Squares Estimates" else "Analysis of Maximum Likelihood Estimates", width);
     try out.appendSlice(a, " \n");
@@ -1165,6 +1327,7 @@ fn estimatesTable(cx: proc.ProcCtx, out: *Out, s: Spec, tb: Table, d: Design, f:
     if (fn_w > 0) proc.putRight(b, pw + 9, "Function");
     proc.putRight(b, est + 11, "Standard");
     proc.putRight(b, est + 23, "Chi-");
+    if (s.clparm) proc.putRight(b, base_w + 21, "95% Confidence");
     try emit(a, out, b);
     b = try proc.line(a, width);
     proc.putLeft(b, 1, "Parameter");
@@ -1172,7 +1335,8 @@ fn estimatesTable(cx: proc.ProcCtx, out: *Out, s: Spec, tb: Table, d: Design, f:
     proc.putRight(b, est, "Estimate");
     proc.putRight(b, est + 11, "Error");
     proc.putRight(b, est + 23, "Square");
-    proc.putRight(b, width, "Pr > ChiSq");
+    proc.putRight(b, base_w, "Pr > ChiSq");
+    if (s.clparm) proc.putRight(b, base_w + 17, "Limits");
     try emit(a, out, b);
     try dashes(a, out, width);
     const p = f.beta.len;
@@ -1188,7 +1352,13 @@ fn estimatesTable(cx: proc.ProcCtx, out: *Out, s: Spec, tb: Table, d: Design, f:
         proc.putRight(b, est, try estimate(cx, f.beta[ix]));
         proc.putRight(b, est + 11, try estimate(cx, se));
         proc.putRight(b, est + 23, try chisq(cx, w));
-        proc.putRight(b, width, try pvalue(a, lifetest.chiProbability(w, 1)));
+        proc.putRight(b, base_w, try pvalue(a, lifetest.chiProbability(w, 1)));
+        if (s.clparm) {
+            // Wald limits b -/+ z(0.975) se (p. 2203, ALPHA=0.05 default).
+            const z = 1.959963984540054;
+            proc.putRight(b, base_w + 12, try estimate(cx, f.beta[ix] - z * se));
+            proc.putRight(b, base_w + 24, try estimate(cx, f.beta[ix] + z * se));
+        }
         try emit(a, out, b);
     };
 }
@@ -1209,16 +1379,21 @@ pub fn analyze(cx: proc.ProcCtx, out: *Out, s: Spec, rows: []const []const Value
     };
     for (s.effects) |e| if (e.nest) |ns| if (ns.value != null and byValueLevel(s, tb, ns) == null)
         return cx.diags.fail(error.ParseError, s.model_line, "The formatted value specified as a nested level for variable {s} is not in the data.", .{s.ds.columns.items[ns.v].name});
+    if (s.scores) |sc| if (sc.len != tb.resp_levels.len) return cx.diags.fail(error.ParseError, s.model_line, "PROC CATMOD: the RESPONSE statement has {d} coefficients but the response has {d} levels", .{ sc.len, tb.resp_levels.len });
+    // ponytail: FREQ/PROB/CLPARM listings are verified under WLS only.
+    if (!s.means and (s.freq or s.prob or s.clparm)) return gap(cx, s.model_line, "MODEL options FREQ, PROB and CLPARM with maximum likelihood are not implemented", .{});
     const d = try designMatrix(a, s, tb);
     // ponytail: an absent nested level combination makes the design rank
     // deficient; SAS then marks redundant parameters ('*' DF, '.' estimates,
     // SAS reference run). That stays loud through the more-parameters-than-
     // functions and singular-matrix gaps of the fits.
-    const f = if (s.means) try fitMeans(cx, tb, d) else try fitLogits(cx, tb, d);
+    const f = if (s.means) try fitMeans(cx, tb, d, s.scores) else try fitLogits(cx, tb, d);
     var b: Out = .empty;
     try b.appendSlice(a, "\nThe CATMOD Procedure\n\n");
     try dataSummary(cx, &b, s, tb);
-    try profiles(cx, &b, s, tb);
+    if (!s.noprofile) try profiles(cx, &b, s, tb);
+    if (s.freq) try responseTable(cx, &b, tb, false);
+    if (s.prob) try responseTable(cx, &b, tb, true);
     if (s.design) try designTable(cx, &b, s, tb, d, f);
     if (!s.means) {
         try b.appendSlice(a, "                   Maximum Likelihood Analysis\n\n           Maximum likelihood computations converged.\n\n\n");
@@ -1363,20 +1538,45 @@ pub fn runStep(cx: proc.ProcCtx, out: *Out, t: []const Token) diag.Error!void {
     open = true;
 }
 
+const continuation_words = [_][]const u8{ "model", "weight", "response", "population", "run", "quit", "by", "where", "contrast", "direct", "factors", "loglin", "repeated", "restrict" };
+
+/// TITLE/FOOTNOTE statements of a statement group for an open PROC CATMOD
+/// take effect before its RUN group runs (global statements execute when
+/// encountered; SAS reference listing, Example 36.1: a TITLE2 between RUN
+/// groups heads the second analysis). Called by main before continuation.
+pub fn applyTitles(a: A, titles: *@import("../sql.zig").Titles, diags: *diag.Diagnostics, t: []const Token) diag.Error!void {
+    if (!open or t.len == 0 or t[0].tag != .name or !oneOf(t[0].text, &continuation_words)) return;
+    var i: usize = 0;
+    while (i < t.len) {
+        var end = i;
+        while (end < t.len and !at(t, end, .semicolon) and !at(t, end, .eof)) end += 1;
+        if (end > i and at(t, i, .name) and (i == 0 or at(t, i - 1, .semicolon))) _ = try titles.set(a, diags, t[i..end]);
+        i = end + 1;
+    }
+}
+
 /// Statement group arriving after an open PROC CATMOD step. Returns true when
 /// consumed here; any other step closes the procedure.
 pub fn continuation(cx: proc.ProcCtx, out: *Out, t: []const Token) diag.Error!bool {
     if (!open) return false;
     if (t.len == 0 or t[0].tag != .name) return false;
-    if (!oneOf(t[0].text, &.{ "model", "weight", "response", "population", "run", "quit", "by", "where", "contrast", "direct", "factors", "loglin", "repeated", "restrict" })) {
+    if (!oneOf(t[0].text, &continuation_words)) {
         forget();
         return false;
     }
     var st = retained;
-    const stays = statements(cx, out, &st, t, 0) catch |e| {
+    // A later RUN group's listing repeats the titles in effect (SAS
+    // reference listing, Example 36.1: TITLE2 changed between RUN groups).
+    var body: Out = .empty;
+    const stays = statements(cx, &body, &st, t, 0) catch |e| {
         retained = st;
         return e;
     };
+    if (body.items.len > 0) {
+        if (cx.listing_titles) |g| try g.emitTitles(cx.arena, out);
+        try out.appendSlice(cx.arena, body.items);
+        if (cx.listing_titles) |g| try g.emitFootnotes(cx.arena, out);
+    }
     if (!stays) {
         forget();
         return true;
@@ -1463,7 +1663,7 @@ test "STAT-CATMOD-001 WLS means and ML logits by hand on a saturated two-populat
     const pops = [_][]const usize{ &.{0}, &.{1} };
     const tb: Table = .{ .pop_levels = &.{&lv}, .pops = &pops, .resp_levels = &rl, .counts = &.{ 10, 30, 20, 20 }, .n_obs = 4, .total = 80 };
     const d: Design = .{ .x = @constCast(&[_]f64{ 1, 1, 1, -1 }), .q = 2, .cols = &.{1} };
-    const m = try fitMeans(cx, tb, d);
+    const m = try fitMeans(cx, tb, d, null);
     // F = 0.75, 0.5: b0 = 0.625, b1 = 0.125; saturated residual 0.
     try std.testing.expectApproxEqAbs(@as(f64, 0.625), m.beta[0], 1e-12);
     try std.testing.expectApproxEqAbs(@as(f64, 0.125), m.beta[1], 1e-12);
@@ -1540,4 +1740,45 @@ test "STAT-CATMOD-003 DIRECT design columns: values, value times deviation, valu
     try std.testing.expectEqualStrings("", l[2].level);
     try std.testing.expectEqualStrings("p", l[3].level);
     try std.testing.expectEqualStrings("", l[4].level);
+}
+
+test "STAT-CATMOD-004 linear RESPONSE 1 0 by hand and effect name shortening" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var d0 = diag.Diagnostics.init(a);
+    const cx: proc.ProcCtx = .{ .arena = a, .lib = undefined, .diags = &d0 };
+    // Character response levels scored 1 0: F_i = p_i1, V_i = p(1-p)/n_i.
+    // Counts (30, 42) and (42, 68): Example 36.1 samples 1 and 2.
+    const lv = [_]Value{ .{ .num = 1 }, .{ .num = 2 } };
+    const rl = [_]Value{ .{ .str = "M" }, .{ .str = "X" } };
+    const pops = [_][]const usize{ &.{0}, &.{1} };
+    const tb: Table = .{ .pop_levels = &.{&lv}, .pops = &pops, .resp_levels = &rl, .counts = &.{ 30, 42, 42, 68 }, .n_obs = 4, .total = 182 };
+    const d: Design = .{ .x = @constCast(&[_]f64{ 1, 1, 1, -1 }), .q = 2, .cols = &.{1} };
+    const m = try fitMeans(cx, tb, d, &.{ 1, 0 });
+    const f1: f64 = 30.0 / 72.0;
+    const f2: f64 = 42.0 / 110.0;
+    const v1 = f1 * (1 - f1) / 72.0;
+    const v2 = f2 * (1 - f2) / 110.0;
+    // Saturated deviation design: b0 = (f1+f2)/2, b1 = (f1-f2)/2,
+    // Var(b0) = Var(b1) = (v1+v2)/4, residual 0 on 0 DF.
+    try std.testing.expectApproxEqAbs((f1 + f2) / 2, m.beta[0], 1e-12);
+    try std.testing.expectApproxEqAbs((f1 - f2) / 2, m.beta[1], 1e-12);
+    try std.testing.expectApproxEqAbs((v1 + v2) / 4, m.cov[0], 1e-12);
+    try std.testing.expectEqual(@as(usize, 0), m.resid_df);
+    // Name shortening: the longest name (leftmost of equals) loses a character.
+    var ds = Dataset.init(a, "t");
+    _ = try ds.addColumn("Softness", .char);
+    _ = try ds.addColumn("Previous", .char);
+    _ = try ds.addColumn("Temperature", .char);
+    _ = try ds.addColumn("LongVarNameAlpha", .char);
+    _ = try ds.addColumn("Bb", .char);
+    _ = try ds.addColumn("LongerVariableNameBeta", .char);
+    try std.testing.expectEqualStrings("Softnes*Previou*Temperat", try shortName(a, &ds, &.{ 0, 1, 2 }));
+    try std.testing.expectEqualStrings("LongVarName*LongerVariab", try shortName(a, &ds, &.{ 3, 5 }));
+    try std.testing.expectEqualStrings("Bb*LongerVariableNameBet", try shortName(a, &ds, &.{ 4, 5 }));
+    try std.testing.expectEqualStrings("LongVarNam*Bb*LongerVari", try shortName(a, &ds, &.{ 3, 4, 5 }));
+    // A row of the wrong length is caught after tabulation; display rule:
+    try std.testing.expectEqualStrings("-0.00073", try estimate(cx, -0.000731));
+    try std.testing.expectEqualStrings("0.000446", try estimate(cx, 0.000446));
 }
