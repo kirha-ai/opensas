@@ -8,8 +8,8 @@ This section is the only current status summary; every section below it is a his
 - **Resumed 2026-11-28 about 07:20Z** after the 06:31Z account usage limit stopped all dev contexts. At the user's direction devs may compare with real SAS via `/Users/thomas/sas/bin/sasrun foo.sas -f text -o - -l /dev/null`, only when truly blocked. Coordinator keep-awake `caffeinate` PID 62218. Coordinator scripts and dev brief live in the session scratchpad `stat/` directory.
 - **Batch 37 verification at exact SHA `8fa956235676963c14d5236700e35c2d0eb26db6` (2026-11-28):** `zig build install` direct 0; whole `tests/STAT15.4-oracle/` moved out of the checkout, then `zig build gate -j2 --summary all` direct 0 — **2802/2802 unit tests**, **2716/2716 corpus**, **11/11 programs**; `zig build install` direct 0; separate supplemental direct 0, **1113/1113**. Oracle restored unchanged, tree clean, HEAD unchanged. Pushed. **Integrated, PARK:** STAT-GLMMOD-003.
 - **User approvals (2026-11-28):** public classic sample data, including rows exported from real SAS (Iris), may be committed; build caches (`.zig-cache`) may be deleted automatically when free disk falls to about 8 GB, only for idle worktrees (done once, 41 GB free); the `best32.` display fix is approved as STAT-BEST-001. Earlier scope: SASHELP sample data taken from SAS's public sample material may be committed to this public repository, for STAT-SASHELP-001 and the later SASHELP tickets; record source and verification, never invent rows, ask before adding a data set above about 2 MB.
-- **Live slots (auto):** dev1 STAT-SCORE-001, dev2 STAT-CAUSALGRAPH-002, dev3 STAT-SURVEYMEANS-001, dev4 STAT-SURVEYIMPUTE-001, dev5 STAT-GLMMOD-003, dev6 STAT-STDRATE-001, dev7 STAT-LATTICE-002.
-- **Integrated locally, awaiting batch verification (auto):** STAT-CAUSALGRAPH-002 (DONE candidate).
+- **Live slots (auto):** dev1 STAT-SCORE-001, dev2 STAT-CAUSALGRAPH-002, dev3 STAT-SURVEYMEANS-001, dev4 STAT-SURVEYFREQ-001, dev5 STAT-GLMMOD-003, dev6 STAT-STDRATE-001, dev7 STAT-LATTICE-002.
+- **Integrated locally, awaiting batch verification (auto):** STAT-CAUSALGRAPH-002 (DONE candidate), STAT-SURVEYIMPUTE-001 (PARK).
 - **Counts:** 63 DONE, 134 PARK, 7 DOING, 1220 TODO.
 - **Next:** integrate each returned ticket and refill its slot, preferring close-out attempts on PARK tickets whose originals now match exactly (DISTANCE-001, PRINQUAL-001, VARCLUS-001, TPSPLINE-001, CATMOD-001, CANCORR-001, GEE-001, INBREED-001, then the open review in the batch 6 receipt), because a DONE ticket unlocks its dependents; then other eligible tickets.
 - **Working branch:** `feat/stat/batch-4`. Last tested and pushed code SHA `8fa956235676963c14d5236700e35c2d0eb26db6` (batch 37; batch 36 was `b95331e3356f5874793233581b7f1f04cf8dcc76`). The bullets below this one describe batch 5 and are historical. Later commits that touch only this file are documentation. No PR created or merged; `main` untouched.
@@ -14533,7 +14533,7 @@ Source: S154, Chapter 118, `The SURVEYFREQ Procedure`, PDF pp. 9577–9694. Task
 
 <a id="stat-surveyfreq-001"></a>
 
-### [PARK] STAT-SURVEYFREQ-001 — SURVEYFREQ — Data input, variable roles, and basic options
+### [DOING @dev4] STAT-SURVEYFREQ-001 — SURVEYFREQ — Data input, variable roles, and basic options
 
 - Source: S154 / Chapter 118 / `PROC SURVEYFREQ Statement` (PDF pp. 9587–9598); S154 / Chapter 118 / `BY Statement` (PDF p. 9598); S154 / Chapter 118 / `CLUSTER Statement` (PDF pp. 9598–9599); S154 / Chapter 118 / `REPWEIGHTS Statement` (PDF pp. 9599–9601); S154 / Chapter 118 / `STRATA Statement` (PDF pp. 9601–9602); S154 / Chapter 118 / `WEIGHT Statement` (PDF pp. 9626–9627); S154 / Chapter 118 / `Missing Values` (PDF pp. 9630–9632).
 - Scope: Integrate PROC SURVEYFREQ declarations, basic options, defaults, and execution boundaries; this ticket establishes parameter objects and result interfaces, while later feature tickets implement model-, algorithm-, and output-specific options. Also implement BY; CLUSTER; REPWEIGHTS; STRATA; WEIGHT; Missing Values; apply this procedure's rules for missing values, variable roles, and observation selection.
@@ -14740,7 +14740,7 @@ Source: S154, Chapter 119, `The SURVEYIMPUTE Procedure`, PDF pp. 9695–9794. Ta
 
 <a id="stat-surveyimpute-001"></a>
 
-### [DOING @dev4] STAT-SURVEYIMPUTE-001 — SURVEYIMPUTE — Data input, variable roles, and basic options
+### [PARK] STAT-SURVEYIMPUTE-001 — SURVEYIMPUTE — Data input, variable roles, and basic options
 
 - Source: S154 / Chapter 119 / `PROC SURVEYIMPUTE Statement` (PDF pp. 9704–9713); S154 / Chapter 119 / `BY Statement` (PDF pp. 9713–9714); S154 / Chapter 119 / `CLASS Statement` (PDF pp. 9714–9715); S154 / Chapter 119 / `CLUSTER Statement` (PDF p. 9715); S154 / Chapter 119 / `ID Statement` (PDF pp. 9715–9716); S154 / Chapter 119 / `REPWEIGHTS Statement` (PDF pp. 9718–9719); S154 / Chapter 119 / `STRATA Statement` (PDF p. 9719); S154 / Chapter 119 / `VAR Statement` (PDF pp. 9719–9720); S154 / Chapter 119 / `WEIGHT Statement` (PDF p. 9720); S154 / Chapter 119 / `Missing Values` (PDF pp. 9723–9725); S154 / Chapter 119 / `Missing Data Patterns` (PDF p. 9725).
 - Scope: Integrate PROC SURVEYIMPUTE declarations, basic options, defaults, and execution boundaries; this ticket establishes parameter objects and result interfaces, while later feature tickets implement model-, algorithm-, and output-specific options. Also implement BY; CLASS; CLUSTER; ID; REPWEIGHTS; STRATA; VAR; WEIGHT; Missing Values; Missing Data Patterns; apply this procedure's rules for missing values, variable roles, and observation selection.
