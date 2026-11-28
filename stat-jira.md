@@ -8936,6 +8936,8 @@ Source: S154, Chapter 79, `The LOGISTIC Procedure`, PDF pp. 5823–6080. Tasks i
 
 - Frozen source `4815f27a` CLI receipt: first ordinary install direct1 from stale/missing cached build runner (`FileNotFound`), then `/Users/thomas/.local/bin/zig build install --cache-dir output/stat-logistic017/build-cache` direct0 with no source changes or cache deletions. Unchanged full original direct2, exactly three explicit unsupported diagnostics (implicit influence graphics, second PROC PLOTS, third PROC PLOTS); all expected1153 listing tokens remain unproduced, so no full-original pass is claimed. `/Users/thomas/.local/bin/zig run tests/corpus_runner.zig -- zig-out/bin/opensas tests/corpus` direct0,2392/2392. Raw receipts in ignored `output/stat-logistic017/` (`install-isolated.log`, `original.stdout`, `original.stderr`, `original-comparison.json`, `corpus.log`). Heavy slot released at monotonic360010; source frozen, waiting serial integration/rebase and coordinator final checks.
 
+- Coordinator-approved narrow post-freeze review repair `8beeaa35`: an unknown `INFLUENCE(...)` suboption is invalid source syntax and now reports captured user1, rather than gap2. STDRES remains implemented and documented unsupported combinations retain gap2. New default-gate regression resets the global gap flag and checks message, empty output and classification. Focused017 direct0,23/23 (11 named017 plus12anchors), `output/stat-logistic017/review-repair.log`. Earlier92-test/CLI/corpus receipts apply to frozen4815f27a before this parser-only repair; coordinator final rebuilt gate/replays remain required.
+
 <a id="stat-logistic-018"></a>
 
 ### [PARK] STAT-LOGISTIC-018 — LOGISTIC — CODE / SCORE / Linear Predictor, Predicted Probability, and Confidence Limits
