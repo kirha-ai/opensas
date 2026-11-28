@@ -1,0 +1,20 @@
+# corpus assertions
+# The third step runs under ODS GRAPHICS OFF and must add no graph.
+svg-count 2
+svg-has 1 data-kind="relriskplot"
+svg-has 1 <title>Relative Risks with 95% Wald Confidence Limits</title>
+svg-has 1 data-scale="linear"
+svg-has 1 data-label="1" data-value="3"
+svg-has 1 data-label="2" data-value="2"
+svg-has 1 class="estimate common" data-label="Common" data-value="2.5"
+svg-has 1 >17.9539<
+svg-has 1 >8.8591<
+svg-has 1 >Relative Risk (Column 1)</text>
+svg-count-text 1 9 class="stat"
+svg-count-text 1 3 class="limits"
+svg-has 2 data-scale="two"
+svg-has 2 data-label="2" data-value="0.5"
+svg-has 2 >Relative Risk (Column 2)</text>
+svg-count-text 2 2 class="limits"
+svg-count-text 2 0 class="estimate common"
+svg-count-text 2 0 class="stat"

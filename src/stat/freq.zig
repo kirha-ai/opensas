@@ -35,6 +35,7 @@ const failGap = p.failGap;
 
 test {
     _ = @import("freq_persistence_tests.zig");
+    _ = @import("freq_ratio_plot_tests.zig");
 }
 
 pub fn isMissing(v: Value) bool {

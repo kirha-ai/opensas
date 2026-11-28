@@ -2,7 +2,7 @@
 const std = @import("std");
 const pathPart = @import("../ods_listing.zig").pathPart;
 const A = std.mem.Allocator;
-pub const Name = enum { CDFPlot, PPPlot, QQPlot, ProbPlot, Histogram, ScatterPlot, FitPlot, IntPlot, MatrixPlot, FreqPlot, CumFreqPlot, DeviationPlot, MosaicPlot, AgreePlot, DiagnosticsPanel, ResidualPlot, RidgePanel, RidgePlot, VIFPlot, OddsRatioPlot, ROCCurve, ROCOverlay, Interval, WilcoxonBoxPlot, FPBoxPlot, EDFPlot, ANOVABoxPlot, MedianPlot, VWBoxPlot, SavageBoxPlot, ABBoxPlot, STBoxPlot, KlotzBoxPlot, MoodBoxPlot, ConoverBoxPlot, DataScoresBoxPlot, ResidualPanel, StudentPanel, PearsonPanel, ResidualByPredicted, StudentByPredicted, PearsonByPredicted, ResidualHistogram, StudentHistogram, PearsonHistogram, ResidualQQplot, StudentQQplot, PearsonQQplot, BoxPlot, LinesPlot };
+pub const Name = enum { CDFPlot, PPPlot, QQPlot, ProbPlot, Histogram, ScatterPlot, FitPlot, IntPlot, MatrixPlot, FreqPlot, CumFreqPlot, DeviationPlot, MosaicPlot, AgreePlot, DiagnosticsPanel, ResidualPlot, RidgePanel, RidgePlot, VIFPlot, OddsRatioPlot, ROCCurve, ROCOverlay, Interval, WilcoxonBoxPlot, FPBoxPlot, EDFPlot, ANOVABoxPlot, MedianPlot, VWBoxPlot, SavageBoxPlot, ABBoxPlot, STBoxPlot, KlotzBoxPlot, MoodBoxPlot, ConoverBoxPlot, DataScoresBoxPlot, ResidualPanel, StudentPanel, PearsonPanel, ResidualByPredicted, StudentByPredicted, PearsonByPredicted, ResidualHistogram, StudentHistogram, PearsonHistogram, ResidualQQplot, StudentQQplot, PearsonQQplot, BoxPlot, LinesPlot, RelRiskPlot, ORPlot };
 pub const Object = struct { name: Name, label: []const u8, template: ?[]const u8, path: []const u8 };
 pub fn known(name: []const u8) bool {
     for (std.meta.tags(Name)) |tag| if (std.ascii.eqlIgnoreCase(@tagName(tag), name)) return true;
@@ -30,6 +30,8 @@ pub fn freq(a: A, name: Name, by: ?usize, table: usize, one: bool, dot: bool, st
         .DeviationPlot => "Deviation Plot",
         .MosaicPlot => "Mosaic Plot",
         .AgreePlot => "Agreement Plot",
+        .RelRiskPlot => "Relative Risk Plot",
+        .ORPlot => "Odds Ratio Plot",
         else => unreachable,
     };
     // M9 uses different templates for different plot layouts. Supply the names
@@ -39,6 +41,8 @@ pub fn freq(a: A, name: Name, by: ?usize, table: usize, one: bool, dot: bool, st
         .AgreePlot => "Base.Freq.Graphics.AgreePlot",
         .DeviationPlot => if (dot) null else "Base.Freq.Graphics.OneWayDeviationChart",
         .FreqPlot, .CumFreqPlot => if (dot) null else if (one) "Base.Freq.Graphics.OneWayFreqChart" else if (stacked) "Base.Freq.Graphics.StackedFreqChart" else null,
+        // S154 Table 47.23 names only; no template was captured for these.
+        .RelRiskPlot, .ORPlot => null,
         else => unreachable,
     };
     const path = try std.fmt.allocPrint(a, "{s}.Table{d}{s}.{s}", .{ try prefix(a, "Freq", by), table, group, n });

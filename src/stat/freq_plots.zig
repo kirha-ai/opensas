@@ -8,13 +8,17 @@ const tm = @import("freq_table.zig");
 const stat = @import("freq_tests.zig");
 const lex = @import("../lexer.zig");
 const svg = @import("graphics_svg.zig");
+const risk = @import("freq_risk.zig");
+const strat = @import("freq_stratified.zig");
 const A = std.mem.Allocator;
 const W = std.Io.Writer;
 const eq = std.ascii.eqlIgnoreCase;
-const Kind = enum { freqplot, cumfreqplot, deviationplot, mosaicplot, agreeplot };
+const Kind = enum { freqplot, cumfreqplot, deviationplot, mosaicplot, agreeplot, relriskplot, oddsratioplot };
+pub const LogBase = enum { none, two, e, ten };
+const Order = enum { table, ascending, descending };
 const Layout = enum { cluster, groupvertical, grouphorizontal, stacked };
 const Scale = enum { freq, percent, grouppercent };
-const Plot = struct { kind: Kind, scale: Scale = .freq, layout: Layout = .groupvertical, dot: bool = false, horizontal: bool = false, byrow: bool = false, nostat: bool = false, legend: bool = true, partial: bool = true, showscale: bool = true, square: bool = false };
+const Plot = struct { kind: Kind, scale: Scale = .freq, layout: Layout = .groupvertical, dot: bool = false, horizontal: bool = false, byrow: bool = false, nostat: bool = false, legend: bool = true, partial: bool = true, showscale: bool = true, square: bool = false, stats: bool = false, second_column: bool = false, common: bool = true, logbase: LogBase = .none, order: Order = .table };
 pub const Options = struct {
     plots: []const Plot = &.{},
     only: bool = false,
@@ -48,13 +52,21 @@ pub fn parse(a: A, d: *diag.Diagnostics, t: []const lex.Token, i: *usize) diag.E
             list.clearRetainingCapacity();
         } else {
             var orientation: ?bool = null;
-            var p = Plot{ .kind = tagOf(Kind, name) orelse return proc.failGap(d, 0, "PROC FREQ: unsupported plot request {s}", .{name}) };
+            var p = Plot{ .kind = tagOf(Kind, name) orelse {
+                // S154 Table 47.23 graphs without a renderer are gaps; any other name is the user's error.
+                for ([_][]const u8{ "all", "kappaplot", "wtkappaplot", "riskdiffplot" }) |documented| if (eq(name, documented)) return proc.failGap(d, 0, "PROC FREQ: unsupported plot request {s}", .{name});
+                return d.fail(error.ParseError, 0, "PROC FREQ: unknown plot request {s}", .{name});
+            } };
             if (token(t, i.*, .lparen)) {
                 i.* += 1;
                 while (!token(t, i.*, .rparen)) {
                     if (!token(t, i.*, .name)) return d.fail(error.ParseError, 0, "PROC FREQ: expected plot option", .{});
                     const key = t[i.*].text;
                     i.* += 1;
+                    if (isRatio(p.kind)) {
+                        try ratioOption(d, t, i, &p, name, key);
+                        continue;
+                    }
                     if (p.kind == .deviationplot and eq(key, "nostat")) {
                         p.nostat = true;
                         continue;
@@ -85,6 +97,38 @@ pub fn parse(a: A, d: *diag.Diagnostics, t: []const lex.Token, i: *usize) diag.E
     }
     opt.plots = list.items;
     return opt;
+}
+
+fn isRatio(kind: Kind) bool {
+    return kind == .relriskplot or kind == .oddsratioplot;
+}
+/// Plot options of S154 Table 47.17 (physical p.3136). Documented options
+/// without a renderer are loud gaps; anything else is a user error.
+fn ratioOption(d: *diag.Diagnostics, t: []const lex.Token, i: *usize, p: *Plot, name: []const u8, key: []const u8) diag.Error!void {
+    if (eq(key, "stats")) {
+        p.stats = true;
+        return;
+    }
+    if (eq(key, "exact")) return proc.failGap(d, 0, "PROC FREQ: unsupported {s} plot option EXACT", .{name});
+    if (!token(t, i.*, .eq)) return d.fail(error.ParseError, 0, "PROC FREQ: invalid {s} plot option {s}", .{ name, key });
+    i.* += 1;
+    if (eq(key, "range") or eq(key, "cldisplay") or eq(key, "npanelpos")) return proc.failGap(d, 0, "PROC FREQ: unsupported {s} plot option {s}=", .{ name, key });
+    if (!token(t, i.*, .name) and !token(t, i.*, .number)) return d.fail(error.ParseError, 0, "PROC FREQ: invalid {s} plot option {s}", .{ name, key });
+    const v = t[i.*].text;
+    i.* += 1;
+    if (eq(key, "column") and p.kind == .relriskplot and (eq(v, "1") or eq(v, "2"))) {
+        p.second_column = eq(v, "2");
+    } else if (eq(key, "logbase") and (eq(v, "2") or eq(v, "e") or eq(v, "10"))) {
+        p.logbase = if (eq(v, "2")) .two else if (eq(v, "e")) .e else .ten;
+    } else if (eq(key, "order") and (eq(v, "ascending") or eq(v, "descending"))) {
+        p.order = if (eq(v, "ascending")) .ascending else .descending;
+    } else if (eq(key, "common") and (eq(v, "yes") or eq(v, "no"))) {
+        p.common = eq(v, "yes");
+    } else if (eq(key, "cl") and eq(v, "wald")) {
+        // The default limit type.
+    } else if (eq(key, "cl") and (eq(v, "exact") or eq(v, "lr") or eq(v, "score") or eq(v, "waldmodified") or (eq(v, "midp") and p.kind == .oddsratioplot))) {
+        return proc.failGap(d, 0, "PROC FREQ: unsupported {s} plot option CL={s}", .{ name, v });
+    } else return d.fail(error.ParseError, 0, "PROC FREQ: invalid {s} plot option {s}={s}", .{ name, key, v });
 }
 
 const palette = [_][]const u8{ "#829dc5", "#d89883", "#81b0a3", "#c9ad66", "#ad97bd", "#a0a19c" };
@@ -165,6 +209,7 @@ fn standardHeading(a: A, kind: Kind, rows: tm.Dimension, columns: ?tm.Dimension)
         .cumfreqplot => "Cumulative Distribution of",
         .deviationplot => "Deviations of",
         .agreeplot => "Agreement of",
+        .relriskplot, .oddsratioplot => unreachable,
     };
     if (columns) |col| return std.fmt.allocPrint(a, "{s} {s} {s} {s}", .{ lead, rows.name, if (kind == .agreeplot) "and" else "by", col.name });
     return std.fmt.allocPrint(a, "{s} {s}", .{ lead, rows.name });
@@ -418,7 +463,169 @@ fn applicable(kind: Kind, req: freq.Request, n: usize) bool {
         .deviationplot => n == 1 and req.statistics.chisq,
         .mosaicplot => n >= 2,
         .agreeplot => n >= 2 and req.stratified.agreement.enabled,
+        // Summary graphs: one per multiway table, never per stratum.
+        .relriskplot, .oddsratioplot => false,
     };
+}
+pub const RatioRow = struct { label: []const u8, value: ?f64 = null, lower: ?f64 = null, upper: ?f64 = null, common: bool = false };
+/// Stratum Wald ratios plus, optionally, the Mantel-Haenszel common ratio.
+/// Both come unchanged from the listing kernels (S154 physical pp.3204-3207,
+/// 3234-3236); no estimate is recomputed here.
+pub fn ratioRows(a: A, p: Plot, labels: []const []const u8, matrices: []const strat.Matrix, alpha: f64, with_common: bool) diag.Error![]RatioRow {
+    var rows: std.ArrayList(RatioRow) = .empty;
+    const column: risk.Column = if (p.second_column) .second else .first;
+    for (labels, matrices) |name, m| {
+        if (m.rows != 2 or m.cols != 2) return error.ExecError;
+        var row = RatioRow{ .label = name };
+        if (risk.ratio(.{ .cells = m.counts[0..4].* }, column, if (p.kind == .oddsratioplot) .odds_ratio else .relative_risk, alpha, .wald, false)) |v| {
+            if (v.estimate) |e| if (std.math.isFinite(e)) {
+                row.value = e;
+                row.lower = v.limits.lower;
+                row.upper = v.limits.upper;
+            };
+        } else |_| {}
+        try rows.append(a, row);
+    }
+    if (p.order != .table) std.mem.sort(RatioRow, rows.items, p.order, struct {
+        fn before(order: Order, x: RatioRow, y: RatioRow) bool {
+            const u = x.value orelse return false;
+            const v = y.value orelse return true;
+            return if (order == .ascending) u < v else u > v;
+        }
+    }.before);
+    if (with_common) {
+        const mh = try strat.mantelHaenszelRatios(matrices, alpha);
+        const common = if (p.kind == .oddsratioplot) mh.odds else if (p.second_column) mh.column2 else mh.column1;
+        if (common) |v| try rows.append(a, .{ .label = "Common", .value = v.value, .lower = v.lower, .upper = v.upper, .common = true });
+    }
+    return rows.toOwnedSlice(a);
+}
+fn axisValue(v: f64, base: LogBase) f64 {
+    return switch (base) {
+        .none => v,
+        .two => @log2(v),
+        .e => @log(v),
+        .ten => @log10(v),
+    };
+}
+/// Axis extent in axis units: data units, or exponents on a LOGBASE= axis.
+/// The null value one is always inside the extent.
+pub fn ratioRange(rows: []const RatioRow, base: LogBase) svg.Range {
+    var range = svg.Range{ .lo = axisValue(1, base), .hi = axisValue(1, base) };
+    for (rows) |row| for ([_]?f64{ row.value, row.lower, row.upper }) |item| {
+        const v = item orelse continue;
+        if (!std.math.isFinite(v) or (base != .none and v <= 0)) continue;
+        range.add(axisValue(v, base));
+    };
+    if (base == .none) {
+        range.lo = @min(range.lo, 0);
+        if (range.hi == range.lo) range.hi = range.lo + 1;
+        return roundedRange(range);
+    }
+    range = .{ .lo = @floor(range.lo), .hi = @ceil(range.hi) };
+    if (range.hi == range.lo) range.hi += 1;
+    return range;
+}
+/// Fraction of the axis length at which a ratio is drawn.
+pub fn ratioPosition(v: f64, range: svg.Range, base: LogBase) f64 {
+    if (base != .none and v <= 0) return 0;
+    return std.math.clamp((axisValue(v, base) - range.lo) / (range.hi - range.lo), 0, 1);
+}
+const ratio_row_height: f64 = 34;
+fn ratioRect(p: Plot, count: usize) Rect {
+    return .{ .x = 150, .y = 62, .w = if (p.stats) 300 else 490, .h = ratio_row_height * @as(f64, @floatFromInt(@max(count, 1))) };
+}
+pub fn ratioSvg(a: A, p: Plot, rows: []const RatioRow, sub: []const u8, alpha: f64) ![]const u8 {
+    const odds = p.kind == .oddsratioplot;
+    const statistic: []const u8 = if (odds) "Odds Ratio" else "Relative Risk";
+    const percent = try svg.label(a, 100 * (1 - alpha));
+    const r = ratioRect(p, rows.len);
+    const range = ratioRange(rows, p.logbase);
+    var out: W.Allocating = .init(a);
+    const w = &out.writer;
+    try title(w, p.kind, try std.fmt.allocPrint(a, "{s}s with {s}% Wald Confidence Limits", .{ statistic, percent }), sub, 690, r.y + r.h + 70);
+    try w.print("<g class=\"axes\" data-scale=\"{s}\"><path d=\"M{d} {d}v{d}h{d}\"/>", .{ if (p.logbase == .none) "linear" else @tagName(p.logbase), r.x, r.y, r.h, r.w });
+    const step: f64 = if (p.logbase == .none) tickStep(range) else @max(1, @ceil((range.hi - range.lo) / 8));
+    var tick = @ceil(range.lo / step) * step;
+    while (tick <= range.hi + step * 1e-10) : (tick += step) {
+        const x = r.x + r.w * (tick - range.lo) / (range.hi - range.lo);
+        const shown = switch (p.logbase) {
+            .none => tick,
+            .two => std.math.pow(f64, 2, tick),
+            .e => @exp(tick),
+            .ten => std.math.pow(f64, 10, tick),
+        };
+        try w.print("<line class=\"grid\" x1=\"{d:.2}\" y1=\"{d:.2}\" x2=\"{d:.2}\" y2=\"{d:.2}\"/>", .{ x, r.y, x, r.y + r.h });
+        try text(w, x, r.y + r.h + 16, try svg.label(a, shown), "middle");
+    }
+    try w.writeAll("</g>");
+    const one_x = r.x + r.w * ratioPosition(1, range, p.logbase);
+    try w.print("<line class=\"reference\" data-value=\"1\" x1=\"{d:.2}\" y1=\"{d:.2}\" x2=\"{d:.2}\" y2=\"{d:.2}\" stroke=\"#84909c\" stroke-dasharray=\"4 3\"/>", .{ one_x, r.y, one_x, r.y + r.h });
+    if (p.stats) {
+        try text(w, r.x + r.w + 62, r.y - 8, statistic, "end");
+        try text(w, r.x + r.w + 200, r.y - 8, try std.fmt.allocPrint(a, "{s}% Confidence Limits", .{percent}), "end");
+    }
+    for (rows, 0..) |row, i| {
+        const y = r.y + ratio_row_height * (@as(f64, @floatFromInt(i)) + 0.5);
+        try text(w, r.x - 8, y + 4, row.label, "end");
+        try w.print("<g class=\"{s}\" data-label=\"", .{if (row.common) "estimate common" else "estimate"});
+        try svg.escaped(w, row.label);
+        try w.writeAll("\"");
+        if (row.value) |v| try w.print(" data-value=\"{d}\"", .{v});
+        if (row.lower) |v| try w.print(" data-lower=\"{d}\"", .{v});
+        if (row.upper) |v| try w.print(" data-upper=\"{d}\"", .{v});
+        try w.writeAll(">");
+        if (row.lower != null and row.upper != null) {
+            const lo = r.x + r.w * ratioPosition(row.lower.?, range, p.logbase);
+            const hi = r.x + r.w * ratioPosition(row.upper.?, range, p.logbase);
+            try w.print("<path class=\"limits\" d=\"M{d:.2} {d:.2}H{d:.2}M{d:.2} {d:.2}v10M{d:.2} {d:.2}v10\" stroke=\"#445b73\" fill=\"none\"/>", .{ lo, y, hi, lo, y - 5, hi, y - 5 });
+        }
+        if (row.value) |v| {
+            const x = r.x + r.w * ratioPosition(v, range, p.logbase);
+            if (row.common) try w.print("<path class=\"diamond\" d=\"M{d:.2} {d:.2}l6 6l-6 6l-6 -6z\" fill=\"{s}\"/>", .{ x, y - 6, palette[1] }) else try w.print("<circle class=\"dot\" cx=\"{d:.2}\" cy=\"{d:.2}\" r=\"4\" fill=\"{s}\"/>", .{ x, y, palette[0] });
+        }
+        try w.writeAll("</g>");
+        if (p.stats) for ([_]?f64{ row.value, row.lower, row.upper }, [_]f64{ 62, 130, 200 }) |item, dx| if (item) |v| {
+            try w.print("<text class=\"stat\" x=\"{d:.2}\" y=\"{d:.2}\" text-anchor=\"end\">{d:.4}</text>", .{ r.x + r.w + dx, y + 4, v });
+        };
+    }
+    try text(w, r.x + r.w / 2, r.y + r.h + 45, if (odds) statistic else if (p.second_column) "Relative Risk (Column 2)" else "Relative Risk (Column 1)", "middle");
+    try w.writeAll("</svg>");
+    return out.written();
+}
+/// S154 Table 47.23 (physical p.3257): h x 2 x 2 tables only, and only with the
+/// TABLES option that computes the ratios. COMMON needs CMH (physical p.3137).
+fn ratioGraphs(cx: proc.ProcCtx, session: *svg.Session, tab: *tm.Table, req: freq.Request, plots: []const Plot, strata: []const usize, by: []const u8, by_number: ?usize, table_number: usize) diag.Error!void {
+    const a = cx.arena;
+    const n = tab.dimensions.len;
+    if (n < 3) return;
+    const measures = req.statistics.measures and !req.statistics.measures_only_implied;
+    var labels: std.ArrayList([]const u8) = .empty;
+    var matrices: std.ArrayList(strat.Matrix) = .empty;
+    const size = tab.dimensions[n - 1].levels.len * tab.dimensions[n - 2].levels.len;
+    for (strata) |id| {
+        const sc = (try tab.matrix(a, id)) orelse continue;
+        var total: f64 = 0;
+        for (sc.matrix.counts) |c| total += c;
+        if (!(total > 0)) continue;
+        if (sc.matrix.rows != 2 or sc.matrix.cols != 2) return;
+        var name: W.Allocating = .init(a);
+        for (0..n - 2) |j| {
+            if (j > 0) name.writer.writeByte(' ') catch return error.OutOfMemory;
+            name.writer.writeAll(level(a, tab.level(id * size, j)) catch return error.OutOfMemory) catch return error.OutOfMemory;
+        }
+        try labels.append(a, name.written());
+        try matrices.append(a, sc.matrix);
+    }
+    if (matrices.items.len == 0) return;
+    for (plots) |p| {
+        if (!isRatio(p.kind)) continue;
+        const odds = p.kind == .oddsratioplot;
+        if (!(measures or req.risk.relative_risk != null or (odds and req.risk.odds_ratio != null))) continue;
+        const rows = try ratioRows(a, p, labels.items, matrices.items, req.statistics.alpha, p.common and req.stratified.cmh > 0);
+        const bytes = ratioSvg(a, p, rows, by, req.statistics.alpha) catch return error.OutOfMemory;
+        try session.queue(0, @tagName(p.kind), bytes, try svg.graph_ods.freq(a, if (odds) .ORPlot else .RelRiskPlot, by_number, table_number, false, false, false));
+    }
 }
 pub fn execute(cx: proc.ProcCtx, tab: *tm.Table, req: freq.Request, by: []const u8, by_number: ?usize, table_number: usize) diag.Error!void {
     const opt = req.plots;
@@ -463,6 +670,7 @@ pub fn execute(cx: proc.ProcCtx, tab: *tm.Table, req: freq.Request, by: []const 
                 .mosaicplot => .MosaicPlot,
                 .agreeplot => .AgreePlot,
                 .deviationplot => .DeviationPlot,
+                .relriskplot, .oddsratioplot => unreachable,
             };
             const object = try svg.graph_ods.freq(a, name, by_number, table_number, n == 1, p.dot, p.layout == .cluster or p.layout == .stacked);
             if (n == 1) {
@@ -493,4 +701,5 @@ pub fn execute(cx: proc.ProcCtx, tab: *tm.Table, req: freq.Request, by: []const 
             }
         }
     }
+    try ratioGraphs(cx, session, tab, req, requested.items, strata, by, by_number, table_number);
 }
