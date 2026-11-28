@@ -1,3 +1,6 @@
+/* RAND uniforms after CALL STREAMINIT. Expected text: a SAS 9.4 run of this
+   program (STAT-RAND-001). SAS ignores the second and third STREAMINIT of the
+   step, so r1 is the 3rd draw and v1 the 4th draw of the seed-1 stream. */
 data _null_;
   call streaminit(1);
   u1 = rand("uniform");

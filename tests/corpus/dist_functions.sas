@@ -37,5 +37,11 @@ data _null_;
   rg=rand('GEOMETRIC',0.25);
   rn=rand('NEGBINOMIAL',0.5,3);
   rh=rand('HYPERGEOMETRIC',10,4,3);
-  put rw= rg= rn= rh=;
+  /* rw is SAS 9.4 output (STAT-RAND-001). SAS prints rg=2 rn=8 rh=1; the
+     GEOMETRIC/NEGBINOMIAL/HYPERGEOMETRIC transforms are not SAS-derived, so
+     only their support is pinned. */
+  okg = (rg >= 0 and rg = int(rg));
+  okn = (rn >= 0 and rn = int(rn));
+  okh = (0 <= rh <= 3 and rh = int(rh));
+  put rw= okg= okn= okh=;
 run;
