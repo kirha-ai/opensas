@@ -14,9 +14,10 @@ This section is the only current status summary; every section below it is a his
 - **Unchanged original replays with the installed CLI at that SHA** (whitespace-normalised token lines produced/reference, differing lines, exit vs reference 0). Exact, rc 0: FREQ-014 220/220; FREQ-015 649/649; ANOVA-001 364/364 and 528/528; ANOVA-007 364/364; LIFETEST-001 and -002 341/341; PHREG-003 267/267; GENMOD-001 131/131 and 264/264; GENMOD-002 131/131; GENMOD-018 131/131; COMMON-015 113/113. Still rc 2 (loud gaps): PLM-001/002/007 545/869 (328 differ); GLIMMIX-001 0/379 and 0/706; GLIMMIX-002 0/379; GLIMMIX-003 0/896; FREQ-019 0/649; ANOVA-010 0/364; PHREG-001 146/434 and 146/562; PHREG-002 146/434; COMMON-022 0/176; COMMON-030 114/311; COMMON-028 0/207.
 - **Open review (not done):** the originals of GENMOD-001/002/018, ANOVA-001/007, FREQ-014, PHREG-003 and LIFETEST-001/002 now match exactly but the tickets stay PARK; check each against its full acceptance criteria and recorded remaining gaps before any is marked DONE.
 - **Interrupted by the full disk:** STAT-ANOVA-009 and STAT-PHREG-004 are TODO (no file changed; reading notes in the tickets). STAT-LIFETEST-003 and STAT-GENMOD-003 are PARK with UNCOMMITTED, NEVER-COMPILED source retained in `opensas-dev5` (`stat-b6/lifetest003-dev5`) and `opensas-dev7` (`stat-b6/genmod003-dev7`); do not integrate it before it is built, tested and committed there.
-- **Live slots (auto):** dev1 STAT-GLMMOD-001, dev2 STAT-SASHELP-001, dev3 STAT-ORTHOREG-001, dev4 STAT-CORRESP-001, dev5 STAT-NESTED-001, dev6 STAT-SCORE-001, dev7 STAT-STDIZE-001.
+- **Live slots (auto):** dev1 STAT-GLMMOD-001, dev2 STAT-DISTANCE-001, dev3 STAT-ORTHOREG-001, dev4 STAT-CORRESP-001, dev5 STAT-NESTED-001, dev6 STAT-SCORE-001, dev7 STAT-STDIZE-001.
 - **Integrated locally, awaiting batch verification (auto):** STAT-QUANTREG-001 (PARK), STAT-FACTOR-001 (PARK), STAT-SURVEYREG-001 (PARK), STAT-VARCOMP-001 (PARK), STAT-SURVEYLOGISTIC-001 (PARK), STAT-GEE-001 (PARK).
-- **Counts:** 55 DONE, 99 PARK, 7 DOING, 1261 TODO.
+- **Held, not integrated (needs a user decision):** STAT-SASHELP-001, branch `stat-b7/sashelp001-dev2` (`6629dc55` code and tests, `65dca327` ticket note). It adds all 322 rows of SASHELP.BASEBALL (about 48 KB), taken from the DATALINES of SAS Institute's public SAS/STAT 12.1 sample program and verified against a SAS 9.4M9 dump; no licence is stated and this repository is public. Do not integrate or push it until the user approves.
+- **Counts:** 55 DONE, 100 PARK, 7 DOING, 1260 TODO.
 - **Next:** integrate each returned ticket, refill its slot from the current tip, verify and push the next batch; run the open review above.
 - **Working branch:** `feat/stat/batch-4`. Last tested and pushed code SHA `43c2bdef2e694a523f1f95f99bec9ebb4e7b1da4` (batch 7; batch 6 was `9c4780bff01fd8fecf5074ac7ae4b34f6888f3dd`, batch 5 `470bdc33c8b8e070e4a4d7c5fbbf3f26ccaec8b5`). The bullets below this one describe batch 5 and are historical. Later commits that touch only this file are documentation. No PR created or merged; `main` untouched.
 - **Batch 5 verification at that exact SHA (2026-11-28):** whole `tests/STAT15.4-oracle/` moved out of the checkout, then `zig build gate -j2 --summary all` direct exit 0 — **2380/2380 unit tests** (2262 + 102 + 13 + 3), **2409/2409 corpus**, **11/11 programs**; `zig build install` direct 0; separate supplemental direct 0, **1113/1113**. Oracle restored unchanged (1425 entries), tree clean.
@@ -1630,13 +1631,14 @@ Complete prerequisite shared contracts first, then each PROC's data input, model
 
 <a id="stat-sashelp-001"></a>
 
-### [DOING @dev2] STAT-SASHELP-001 — SASHELP example data — Baseball Data / Tropical Rain Forest Tree Data / 2003 Birth Weight Data Set
+### [PARK] STAT-SASHELP-001 — SASHELP example data — Baseball Data / Tropical Rain Forest Tree Data / 2003 Birth Weight Data Set
 
 - Source: S154 / Sashelp Data Sets / `Baseball Data` (PDF pp. 10897–10899); S154 / Sashelp Data Sets / `Tropical Rain Forest Tree Data` (PDF pp. 10899–10901); S154 / Sashelp Data Sets / `2003 Birth Weight Data Set` (PDF pp. 10901–10902).
 - Scope: For Baseball Data; Tropical Rain Forest Tree Data; 2003 Birth Weight Data Set provide reproducible public example data or the compatible loading method explicitly documented in the source; use public or synthetic data only.
 - Dependencies: [STAT-COMMON-002](#stat-common-002).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-SASHELP-001/](tests/STAT15.4-oracle/STAT-SASHELP-001/).
 - Acceptance criteria: Verify observation counts, variable names/types/labels, class levels, and key summaries against the source; examples must run independently; record data provenance and version rather than substituting randomly similar data for the published data.
+- Status (coordinator, 2026-11-28): PARK. BASEBALL implemented and verified on unintegrated branch `stat-b7/sashelp001-dev2` (`6629dc55`, note `65dca327`), held for the user's decision on shipping the data in this public repository. BEI and BIRTHWGT are not obtained or verified. `native_contract.sas` stays rc 2 (reference 0).
 
 <a id="stat-sashelp-002"></a>
 
@@ -3701,7 +3703,7 @@ Source: S154, Chapter 43, `The DISTANCE Procedure`, PDF pp. 2739–2782. Tasks i
 
 <a id="stat-distance-001"></a>
 
-### [TODO] STAT-DISTANCE-001 — DISTANCE — Data input, variable roles, and basic options
+### [DOING @dev2] STAT-DISTANCE-001 — DISTANCE — Data input, variable roles, and basic options
 
 - Source: S154 / Chapter 43 / `PROC DISTANCE Statement` (PDF pp. 2747–2754); S154 / Chapter 43 / `VAR Statement` (PDF pp. 2754–2759); S154 / Chapter 43 / `ID Statement` (PDF p. 2759); S154 / Chapter 43 / `COPY Statement` (PDF p. 2759); S154 / Chapter 43 / `BY Statement` (PDF pp. 2759–2760); S154 / Chapter 43 / `FREQ Statement` (PDF p. 2760); S154 / Chapter 43 / `WEIGHT Statement` (PDF pp. 2760–2761); S154 / Chapter 43 / `Missing Values` (PDF p. 2768); S154 / Chapter 43 / `Formatted versus Unformatted Values` (PDF pp. 2768–2769).
 - Scope: Integrate PROC DISTANCE declarations, basic options, defaults, and execution boundaries; this ticket establishes parameter objects and result interfaces, while later feature tickets implement model-, algorithm-, and output-specific options. Also implement VAR; ID; COPY; BY; FREQ; WEIGHT; Missing Values; Formatted versus Unformatted Values; apply this procedure's rules for missing values, variable roles, and observation selection.
