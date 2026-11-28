@@ -1,0 +1,332 @@
+
+The SURVEYPHREG Procedure
+
+       Model Information
+
+Data Set                WORK.S  
+Dependent Variable      time    
+Censoring Variable      status  
+Censoring Value(s)      0       
+Stratum Variable        stratum 
+Cluster Variable        cluster 
+Ties Handling           BRESLOW 
+
+
+Number of Observations Read               48
+Number of Observations Used               48
+
+
+         Design Summary
+
+Number of Strata               2
+Number of Clusters             6
+
+
+Summary of the Number of Event and Censored Values
+ 
+                                     Percent
+   Total       Event    Censored    Censored
+
+      48          36          12       25.00
+
+
+  Variance Estimation
+
+Method    Taylor Series
+
+
+         Model Fit Statistics
+ 
+                 Without           With
+Criterion     Covariates     Covariates
+
+-2 LOG L         213.662        211.610
+AIC              213.662        213.610
+
+
+                 Testing Global Null Hypothesis: BETA=0
+ 
+                                    Test       Num       Den
+Test                           Statistic        DF        DF     p-Value
+
+Likelihood Ratio (Unadj.)         2.0518         1     Infty      0.1520
+Likelihood Ratio (Adj.)           1.1446         1     Infty      0.2847
+Wald                              1.1537         1         4      0.3432
+
+
+                      Analysis of Maximum Likelihood Estimates
+ 
+                                          Standard                             Hazard
+Parameter       DF        Estimate           Error    t Value    Pr > |t|       Ratio
+
+age              4       -0.025339        0.023590      -1.07      0.3432       0.975
+
+The SURVEYPHREG Procedure
+
+       Model Information
+
+Data Set                WORK.S  
+Dependent Variable      time    
+Censoring Variable      status  
+Censoring Value(s)      0       
+Weight Variable         weight  
+Stratum Variable        stratum 
+Ties Handling           BRESLOW 
+
+
+Number of Observations Read               48
+Number of Observations Used               48
+Sum of Weights Read                      144
+Sum of Weights Used                      144
+
+
+        Design Summary
+
+Number of Strata             2
+
+
+Summary of the Number of Event and Censored Values
+ 
+                                     Percent
+   Total       Event    Censored    Censored
+
+      48          36          12       25.00
+
+
+Summary of the Weighted Number of Event and Censored Values
+ 
+                                     Percent
+   Total       Event    Censored    Censored
+
+     144         108          36       25.00
+
+
+  Variance Estimation
+
+Method    Taylor Series
+
+
+         Model Fit Statistics
+ 
+                 Without           With
+Criterion     Covariates     Covariates
+
+-2 LOG L         882.405        873.882
+AIC              882.405        875.882
+
+
+                 Testing Global Null Hypothesis: BETA=0
+ 
+                                    Test       Num       Den
+Test                           Statistic        DF        DF     p-Value
+
+Likelihood Ratio (Unadj.)         8.5229         1     Infty      0.0035
+Likelihood Ratio (Adj.)           2.7287         1     Infty      0.0986
+Wald                              2.7565         1        46      0.1037
+
+
+                      Analysis of Maximum Likelihood Estimates
+ 
+                                          Standard                             Hazard
+Parameter       DF        Estimate           Error    t Value    Pr > |t|       Ratio
+
+age             46       -0.030012        0.018076      -1.66      0.1037       0.970
+
+The SURVEYPHREG Procedure
+
+       Model Information
+
+Data Set                WORK.S  
+Dependent Variable      time    
+Censoring Variable      status  
+Censoring Value(s)      0       
+Weight Variable         weight  
+Cluster Variable        cluster 
+Ties Handling           BRESLOW 
+
+
+Number of Observations Read               48
+Number of Observations Used               48
+Sum of Weights Read                      144
+Sum of Weights Used                      144
+
+
+         Design Summary
+
+Number of Clusters             3
+
+
+Summary of the Number of Event and Censored Values
+ 
+                                     Percent
+   Total       Event    Censored    Censored
+
+      48          36          12       25.00
+
+
+Summary of the Weighted Number of Event and Censored Values
+ 
+                                     Percent
+   Total       Event    Censored    Censored
+
+     144         108          36       25.00
+
+
+  Variance Estimation
+
+Method    Taylor Series
+
+
+         Model Fit Statistics
+ 
+                 Without           With
+Criterion     Covariates     Covariates
+
+-2 LOG L         882.405        873.882
+AIC              882.405        875.882
+
+
+                 Testing Global Null Hypothesis: BETA=0
+ 
+                                    Test       Num       Den
+Test                           Statistic        DF        DF     p-Value
+
+Likelihood Ratio (Unadj.)         8.5229         1     Infty      0.0035
+Likelihood Ratio (Adj.)           1.8408         1     Infty      0.1749
+Wald                              1.8596         1         2      0.3059
+
+
+                      Analysis of Maximum Likelihood Estimates
+ 
+                                          Standard                             Hazard
+Parameter       DF        Estimate           Error    t Value    Pr > |t|       Ratio
+
+age              2       -0.030012        0.022008      -1.36      0.3059       0.970
+
+The SURVEYPHREG Procedure
+
+       Model Information
+
+Data Set                WORK.S  
+Dependent Variable      time    
+Censoring Variable      status  
+Censoring Value(s)      0       
+Ties Handling           BRESLOW 
+
+
+Number of Observations Read               48
+Number of Observations Used               48
+
+
+Summary of the Number of Event and Censored Values
+ 
+                                     Percent
+   Total       Event    Censored    Censored
+
+      48          36          12       25.00
+
+
+  Variance Estimation
+
+Method    Taylor Series
+
+
+         Model Fit Statistics
+ 
+                 Without           With
+Criterion     Covariates     Covariates
+
+-2 LOG L         213.662        211.610
+AIC              213.662        213.610
+
+
+                 Testing Global Null Hypothesis: BETA=0
+ 
+                                    Test       Num       Den
+Test                           Statistic        DF        DF     p-Value
+
+Likelihood Ratio (Unadj.)         2.0518         1     Infty      0.1520
+Likelihood Ratio (Adj.)           1.8314         1     Infty      0.1760
+Wald                              1.8460         1        47      0.1807
+
+
+                      Analysis of Maximum Likelihood Estimates
+ 
+                                          Standard                             Hazard
+Parameter       DF        Estimate           Error    t Value    Pr > |t|       Ratio
+
+age             47       -0.025339        0.018650      -1.36      0.1807       0.975
+
+The SURVEYPHREG Procedure
+
+       Model Information
+
+Data Set                WORK.S2 
+Dependent Variable      time    
+Censoring Variable      status  
+Censoring Value(s)      0       
+Weight Variable         weight  
+Stratum Variable        stratum 
+Cluster Variable        cluster 
+Ties Handling           BRESLOW 
+
+
+Number of Observations Read               48
+Number of Observations Used               47
+Sum of Weights Read                   141.75
+Sum of Weights Used                   141.75
+
+
+         Design Summary
+
+Number of Strata               2
+Number of Clusters             6
+
+
+Summary of the Number of Event and Censored Values
+ 
+                                     Percent
+   Total       Event    Censored    Censored
+
+      47          35          12       25.53
+
+
+Summary of the Weighted Number of Event and Censored Values
+ 
+                                     Percent
+   Total       Event    Censored    Censored
+
+  141.75      105.75          36       25.40
+
+
+      Variance Estimation
+
+Method            Taylor Series
+Missing Values         Excluded
+
+
+         Model Fit Statistics
+ 
+                 Without           With
+Criterion     Covariates     Covariates
+
+-2 LOG L         860.512        852.711
+AIC              860.512        854.711
+
+
+                 Testing Global Null Hypothesis: BETA=0
+ 
+                                    Test       Num       Den
+Test                           Statistic        DF        DF     p-Value
+
+Likelihood Ratio (Unadj.)         7.8008         1     Infty      0.0052
+Likelihood Ratio (Adj.)           1.9569         1     Infty      0.1618
+Wald                              1.9805         1         4      0.2321
+
+
+                      Analysis of Maximum Likelihood Estimates
+ 
+                                          Standard                             Hazard
+Parameter       DF        Estimate           Error    t Value    Pr > |t|       Ratio
+
+age              4       -0.028989        0.020598      -1.41      0.2321       0.971

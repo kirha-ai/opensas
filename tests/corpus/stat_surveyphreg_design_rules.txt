@@ -1,0 +1,745 @@
+
+The SURVEYPHREG Procedure
+
+       Model Information
+
+Data Set                WORK.S  
+Dependent Variable      time    
+Censoring Variable      status  
+Censoring Value(s)      0  2    
+Weight Variable         weight  
+Stratum Variable        stratum 
+Cluster Variable        cluster 
+Ties Handling           BRESLOW 
+
+
+Number of Observations Read               48
+Number of Observations Used               48
+Sum of Weights Read                      144
+Sum of Weights Used                      144
+
+
+         Design Summary
+
+Number of Strata               2
+Number of Clusters             6
+
+
+Summary of the Number of Event and Censored Values
+ 
+                                     Percent
+   Total       Event    Censored    Censored
+
+      48          18          30       62.50
+
+
+Summary of the Weighted Number of Event and Censored Values
+ 
+                                     Percent
+   Total       Event    Censored    Censored
+
+     144          54          90       62.50
+
+
+  Variance Estimation
+
+Method    Taylor Series
+
+
+         Model Fit Statistics
+ 
+                 Without           With
+Criterion     Covariates     Covariates
+
+-2 LOG L         451.108        447.037
+AIC              451.108        449.037
+
+
+                 Testing Global Null Hypothesis: BETA=0
+ 
+                                    Test       Num       Den
+Test                           Statistic        DF        DF     p-Value
+
+Likelihood Ratio (Unadj.)         4.0708         1     Infty      0.0436
+Likelihood Ratio (Adj.)           1.5635         1     Infty      0.2112
+Wald                              1.5839         1         4      0.2766
+
+
+                      Analysis of Maximum Likelihood Estimates
+ 
+                                          Standard                             Hazard
+Parameter       DF        Estimate           Error    t Value    Pr > |t|       Ratio
+
+age              4       -0.029518        0.023454      -1.26      0.2766       0.971
+
+The SURVEYPHREG Procedure
+
+       Model Information
+
+Data Set                WORK.S  
+Dependent Variable      time    
+Censoring Variable      status  
+Censoring Value(s)      0       
+Weight Variable         weight  
+Stratum Variables       stratum 
+                        sub     
+Cluster Variables       cluster 
+                        id      
+Ties Handling           BRESLOW 
+
+
+Number of Observations Read               48
+Number of Observations Used               48
+Sum of Weights Read                      144
+Sum of Weights Used                      144
+
+
+         Design Summary
+
+Number of Strata               4
+Number of Clusters            48
+
+
+Summary of the Number of Event and Censored Values
+ 
+                                     Percent
+   Total       Event    Censored    Censored
+
+      48          36          12       25.00
+
+
+Summary of the Weighted Number of Event and Censored Values
+ 
+                                     Percent
+   Total       Event    Censored    Censored
+
+     144         108          36       25.00
+
+
+  Variance Estimation
+
+Method    Taylor Series
+
+
+         Model Fit Statistics
+ 
+                 Without           With
+Criterion     Covariates     Covariates
+
+-2 LOG L         882.405        873.882
+AIC              882.405        875.882
+
+
+                 Testing Global Null Hypothesis: BETA=0
+ 
+                                    Test       Num       Den
+Test                           Statistic        DF        DF     p-Value
+
+Likelihood Ratio (Unadj.)         8.5229         1     Infty      0.0035
+Likelihood Ratio (Adj.)           2.7174         1     Infty      0.0993
+Wald                              2.7451         1        44      0.1047
+
+
+                      Analysis of Maximum Likelihood Estimates
+ 
+                                          Standard                             Hazard
+Parameter       DF        Estimate           Error    t Value    Pr > |t|       Ratio
+
+age             44       -0.030012        0.018114      -1.66      0.1047       0.970
+
+The SURVEYPHREG Procedure
+
+       Model Information
+
+Data Set                WORK.Z  
+Dependent Variable      time    
+Censoring Variable      status  
+Censoring Value(s)      0       
+Weight Variable         weight  
+Stratum Variable        stratum 
+Cluster Variable        cluster 
+Ties Handling           BRESLOW 
+
+
+Number of Observations Read               48
+Number of Observations Used               47
+Sum of Weights Read                   141.75
+Sum of Weights Used                   141.75
+
+
+         Design Summary
+
+Number of Strata               2
+Number of Clusters             6
+
+
+Summary of the Number of Event and Censored Values
+ 
+                                     Percent
+   Total       Event    Censored    Censored
+
+      47          36          11       23.40
+
+
+Summary of the Weighted Number of Event and Censored Values
+ 
+                                     Percent
+   Total       Event    Censored    Censored
+
+  141.75         108       33.75       23.81
+
+
+      Variance Estimation
+
+Method            Taylor Series
+Missing Values         Excluded
+
+
+         Model Fit Statistics
+ 
+                 Without           With
+Criterion     Covariates     Covariates
+
+-2 LOG L         876.818        869.575
+AIC              876.818        871.575
+
+
+                 Testing Global Null Hypothesis: BETA=0
+ 
+                                    Test       Num       Den
+Test                           Statistic        DF        DF     p-Value
+
+Likelihood Ratio (Unadj.)         7.2436         1     Infty      0.0071
+Likelihood Ratio (Adj.)           1.8463         1     Infty      0.1742
+Wald                              1.8609         1         4      0.2442
+
+
+                      Analysis of Maximum Likelihood Estimates
+ 
+                                          Standard                             Hazard
+Parameter       DF        Estimate           Error    t Value    Pr > |t|       Ratio
+
+age              4       -0.027696        0.020303      -1.36      0.2442       0.973
+
+The SURVEYPHREG Procedure
+
+       Model Information
+
+Data Set                WORK.MC 
+Dependent Variable      time    
+Censoring Variable      status  
+Censoring Value(s)      0       
+Weight Variable         weight  
+Stratum Variable        stratum 
+Cluster Variable        cluster 
+Ties Handling           BRESLOW 
+
+
+Number of Observations Read               48
+Number of Observations Used               47
+Sum of Weights Read                      144
+Sum of Weights Used                   141.75
+
+
+         Design Summary
+
+Number of Strata               2
+Number of Clusters             6
+
+
+Summary of the Number of Event and Censored Values
+ 
+                                     Percent
+   Total       Event    Censored    Censored
+
+      47          36          11       23.40
+
+
+Summary of the Weighted Number of Event and Censored Values
+ 
+                                     Percent
+   Total       Event    Censored    Censored
+
+  141.75         108       33.75       23.81
+
+
+      Variance Estimation
+
+Method            Taylor Series
+Missing Values         Excluded
+
+
+         Model Fit Statistics
+ 
+                 Without           With
+Criterion     Covariates     Covariates
+
+-2 LOG L         876.818        869.575
+AIC              876.818        871.575
+
+
+                 Testing Global Null Hypothesis: BETA=0
+ 
+                                    Test       Num       Den
+Test                           Statistic        DF        DF     p-Value
+
+Likelihood Ratio (Unadj.)         7.2436         1     Infty      0.0071
+Likelihood Ratio (Adj.)           1.8463         1     Infty      0.1742
+Wald                              1.8609         1         4      0.2442
+
+
+                      Analysis of Maximum Likelihood Estimates
+ 
+                                          Standard                             Hazard
+Parameter       DF        Estimate           Error    t Value    Pr > |t|       Ratio
+
+age              4       -0.027696        0.020303      -1.36      0.2442       0.973
+
+The SURVEYPHREG Procedure
+
+       Model Information
+
+Data Set                WORK.MS 
+Dependent Variable      time    
+Censoring Variable      status  
+Censoring Value(s)      0       
+Weight Variable         weight  
+Stratum Variable        stratum 
+Cluster Variable        cluster 
+Ties Handling           BRESLOW 
+
+
+Number of Observations Read               48
+Number of Observations Used               48
+Sum of Weights Read                      144
+Sum of Weights Used                      144
+
+
+         Design Summary
+
+Number of Strata               3
+Number of Clusters             7
+
+
+Summary of the Number of Event and Censored Values
+ 
+                                     Percent
+   Total       Event    Censored    Censored
+
+      48          36          12       25.00
+
+
+Summary of the Weighted Number of Event and Censored Values
+ 
+                                     Percent
+   Total       Event    Censored    Censored
+
+     144         108          36       25.00
+
+
+  Variance Estimation
+
+Method    Taylor Series
+
+
+         Model Fit Statistics
+ 
+                 Without           With
+Criterion     Covariates     Covariates
+
+-2 LOG L         882.405        873.882
+AIC              882.405        875.882
+
+
+                 Testing Global Null Hypothesis: BETA=0
+ 
+                                    Test       Num       Den
+Test                           Statistic        DF        DF     p-Value
+
+Likelihood Ratio (Unadj.)         8.5229         1     Infty      0.0035
+Likelihood Ratio (Adj.)           2.2008         1     Infty      0.1379
+Wald                              2.2232         1         4      0.2102
+
+
+                      Analysis of Maximum Likelihood Estimates
+ 
+                                          Standard                             Hazard
+Parameter       DF        Estimate           Error    t Value    Pr > |t|       Ratio
+
+age              4       -0.030012        0.020128      -1.49      0.2102       0.970
+
+The SURVEYPHREG Procedure
+
+       Model Information
+
+Data Set                WORK.MF 
+Dependent Variable      time    
+Censoring Variable      status  
+Censoring Value(s)      0       
+Weight Variable         weight  
+Frequency Variable      fq      
+Stratum Variable        stratum 
+Cluster Variable        cluster 
+Ties Handling           BRESLOW 
+
+
+Number of Observations Read               48
+Number of Observations Used               46
+Sum of Weights Read                      144
+Sum of Weights Used                    139.5
+Sum of Frequencies Read                   99
+Sum of Frequencies Used                   99
+Sum of Weighted Frequencies Read      299.25
+Sum of Weighted Frequencies Used      299.25
+
+
+         Design Summary
+
+Number of Strata               2
+Number of Clusters             6
+
+
+Summary of the Number of Event and Censored Values
+ 
+                                     Percent
+   Total       Event    Censored    Censored
+
+      99          88          11       11.11
+
+
+Summary of the Weighted Number of Event and Censored Values
+ 
+                                     Percent
+   Total       Event    Censored    Censored
+
+  299.25       265.5       33.75       11.28
+
+
+      Variance Estimation
+
+Method            Taylor Series
+Missing Values         Excluded
+
+
+         Model Fit Statistics
+ 
+                 Without           With
+Criterion     Covariates     Covariates
+
+-2 LOG L        2545.593       2541.260
+AIC             2545.593       2543.260
+
+
+                 Testing Global Null Hypothesis: BETA=0
+ 
+                                    Test       Num       Den
+Test                           Statistic        DF        DF     p-Value
+
+Likelihood Ratio (Unadj.)         4.3325         1     Infty      0.0374
+Likelihood Ratio (Adj.)           0.3876         1     Infty      0.5336
+Wald                              0.3877         1         4      0.5673
+
+
+                      Analysis of Maximum Likelihood Estimates
+ 
+                                          Standard                             Hazard
+Parameter       DF        Estimate           Error    t Value    Pr > |t|       Ratio
+
+age              4       -0.013891        0.022310      -0.62      0.5673       0.986
+
+The SURVEYPHREG Procedure
+
+       Model Information
+
+Data Set                WORK.ONE
+Dependent Variable      time    
+Censoring Variable      status  
+Censoring Value(s)      0       
+Weight Variable         weight  
+Stratum Variable        stratum 
+Cluster Variable        cluster 
+Ties Handling           BRESLOW 
+
+
+Number of Observations Read               32
+Number of Observations Used               32
+Sum of Weights Read                       86
+Sum of Weights Used                       86
+
+
+         Design Summary
+
+Number of Strata               2
+Number of Clusters             4
+
+
+Summary of the Number of Event and Censored Values
+ 
+                                     Percent
+   Total       Event    Censored    Censored
+
+      32          24           8       25.00
+
+
+Summary of the Weighted Number of Event and Censored Values
+ 
+                                     Percent
+   Total       Event    Censored    Censored
+
+      86        64.5        21.5       25.00
+
+
+  Variance Estimation
+
+Method    Taylor Series
+
+
+         Model Fit Statistics
+ 
+                 Without           With
+Criterion     Covariates     Covariates
+
+-2 LOG L         459.287        458.115
+AIC              459.287        460.115
+
+
+                 Testing Global Null Hypothesis: BETA=0
+ 
+                                    Test       Num       Den
+Test                           Statistic        DF        DF     p-Value
+
+Likelihood Ratio (Unadj.)         1.1719         1     Infty      0.2790
+Likelihood Ratio (Adj.)           0.2913         1     Infty      0.5894
+Wald                              0.2928         1         2      0.6426
+
+
+                      Analysis of Maximum Likelihood Estimates
+ 
+                                          Standard                             Hazard
+Parameter       DF        Estimate           Error    t Value    Pr > |t|       Ratio
+
+age              2       -0.013753        0.025416      -0.54      0.6426       0.986
+
+The SURVEYPHREG Procedure
+
+       Model Information
+
+Data Set                WORK.NG 
+Dependent Variable      time    
+Censoring Variable      status  
+Censoring Value(s)      0       
+Weight Variable         weight  
+Stratum Variable        stratum 
+Cluster Variable        cluster 
+Ties Handling           BRESLOW 
+
+
+Number of Observations Read               48
+Number of Observations Used               47
+Sum of Weights Read                   141.75
+Sum of Weights Used                   141.75
+
+
+         Design Summary
+
+Number of Strata               2
+Number of Clusters             6
+
+
+Summary of the Number of Event and Censored Values
+ 
+                                     Percent
+   Total       Event    Censored    Censored
+
+      47          36          11       23.40
+
+
+Summary of the Weighted Number of Event and Censored Values
+ 
+                                     Percent
+   Total       Event    Censored    Censored
+
+  141.75         108       33.75       23.81
+
+
+      Variance Estimation
+
+Method            Taylor Series
+Missing Values         Excluded
+
+
+         Model Fit Statistics
+ 
+                 Without           With
+Criterion     Covariates     Covariates
+
+-2 LOG L         876.818        869.575
+AIC              876.818        871.575
+
+
+                 Testing Global Null Hypothesis: BETA=0
+ 
+                                    Test       Num       Den
+Test                           Statistic        DF        DF     p-Value
+
+Likelihood Ratio (Unadj.)         7.2436         1     Infty      0.0071
+Likelihood Ratio (Adj.)           1.8463         1     Infty      0.1742
+Wald                              1.8609         1         4      0.2442
+
+
+                      Analysis of Maximum Likelihood Estimates
+ 
+                                          Standard                             Hazard
+Parameter       DF        Estimate           Error    t Value    Pr > |t|       Ratio
+
+age              4       -0.027696        0.020303      -1.36      0.2442       0.973
+
+The SURVEYPHREG Procedure
+
+       Model Information
+
+Data Set                WORK.S  
+Dependent Variable      time    
+Weight Variable         weight  
+Stratum Variable        stratum 
+Cluster Variable        cluster 
+Ties Handling           BRESLOW 
+
+
+Number of Observations Read               48
+Number of Observations Used               48
+Sum of Weights Read                      144
+Sum of Weights Used                      144
+
+
+         Design Summary
+
+Number of Strata               2
+Number of Clusters             6
+
+
+Summary of the Number of Event and Censored Values
+ 
+                                     Percent
+   Total       Event    Censored    Censored
+
+      48          48           0        0.00
+
+
+Summary of the Weighted Number of Event and Censored Values
+ 
+                                     Percent
+   Total       Event    Censored    Censored
+
+     144         144           0        0.00
+
+
+  Variance Estimation
+
+Method    Taylor Series
+
+
+         Model Fit Statistics
+ 
+                 Without           With
+Criterion     Covariates     Covariates
+
+-2 LOG L        1160.658       1159.845
+AIC             1160.658       1161.845
+
+
+                 Testing Global Null Hypothesis: BETA=0
+ 
+                                    Test       Num       Den
+Test                           Statistic        DF        DF     p-Value
+
+Likelihood Ratio (Unadj.)         0.8131         1     Infty      0.3672
+Likelihood Ratio (Adj.)           0.1627         1     Infty      0.6867
+Wald                              0.1641         1         4      0.7062
+
+
+                      Analysis of Maximum Likelihood Estimates
+ 
+                                          Standard                             Hazard
+Parameter       DF        Estimate           Error    t Value    Pr > |t|       Ratio
+
+age              4       -0.008275        0.020429      -0.41      0.7062       0.992
+
+The SURVEYPHREG Procedure
+
+       Model Information
+
+Data Set                WORK.FM 
+Dependent Variable      time    
+Censoring Variable      status  
+Censoring Value(s)      0       
+Weight Variable         weight  
+Frequency Variable      fq      
+Stratum Variable        stratum 
+Cluster Variable        cluster 
+Ties Handling           BRESLOW 
+
+
+Number of Observations Read               48
+Number of Observations Used               46
+Sum of Weights Read                      144
+Sum of Weights Used                    139.5
+Sum of Frequencies Read                  100
+Sum of Frequencies Used                   99
+Sum of Weighted Frequencies Read       301.5
+Sum of Weighted Frequencies Used      299.25
+
+
+         Design Summary
+
+Number of Strata               2
+Number of Clusters             6
+
+
+Summary of the Number of Event and Censored Values
+ 
+                                     Percent
+   Total       Event    Censored    Censored
+
+      99          88          11       11.11
+
+
+Summary of the Weighted Number of Event and Censored Values
+ 
+                                     Percent
+   Total       Event    Censored    Censored
+
+  299.25       265.5       33.75       11.28
+
+
+      Variance Estimation
+
+Method            Taylor Series
+Missing Values         Excluded
+
+
+         Model Fit Statistics
+ 
+                 Without           With
+Criterion     Covariates     Covariates
+
+-2 LOG L        2545.593       2541.260
+AIC             2545.593       2543.260
+
+
+                 Testing Global Null Hypothesis: BETA=0
+ 
+                                    Test       Num       Den
+Test                           Statistic        DF        DF     p-Value
+
+Likelihood Ratio (Unadj.)         4.3325         1     Infty      0.0374
+Likelihood Ratio (Adj.)           0.3876         1     Infty      0.5336
+Wald                              0.3877         1         4      0.5673
+
+
+                      Analysis of Maximum Likelihood Estimates
+ 
+                                          Standard                             Hazard
+Parameter       DF        Estimate           Error    t Value    Pr > |t|       Ratio
+
+age              4       -0.013891        0.022310      -0.62      0.5673       0.986

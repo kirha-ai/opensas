@@ -45,6 +45,8 @@ pub const Spec = struct {
     by_cols: []const usize = &.{},
     by_desc: []const bool = &.{},
     by_notsorted: bool = false,
+    /// NOPRINT suppresses every displayed table (p.10014); the fit still runs.
+    noprint: bool = false,
 };
 
 fn at(t: []const lex.Token, i: usize, tag: lex.Tag) bool {
@@ -205,6 +207,16 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
         } else if (eq(word, "missing") and !valued) {
             s.roles.missing = true;
             i += 1;
+        } else if (eq(word, "noprint") and !valued) {
+            s.noprint = true;
+            i += 1;
+        } else if (eq(word, "namelen") and valued) {
+            // NAMELEN=n, 20 <= n <= 200 (p.10013; SAS 9.4 run for the range
+            // message). It only truncates effect names longer than n; names
+            // wider than the verified Parameter column already fail loudly.
+            i += 2;
+            const v = try number(cx, t, &i);
+            if (!(v >= 20 and v <= 200)) return cx.diags.fail(error.ParseError, t[i - 1].line, "The parameter value {d} is not within the required range of 20 and 200.", .{v});
         } else if (oneOf(word, &.{ "atrisk", "nomcar", "noprint", "namelen", "plots", "plot" })) {
             return gap(cx, t[i].line, "option {s} is not implemented", .{word});
         } else if (eq(word, "order") and valued) {
@@ -480,7 +492,7 @@ pub fn meatMatrix(a: A, d: design.Design, res: []const f64, p: usize, units: f64
     for (0..d.clusters()) |c| {
         const h = d.psu_stratum[c];
         const nh: f64 = @floatFromInt(d.stratum_psus[h]);
-        const factor = nh * d.stratum_fpc[h] / (nh - 1);
+        const factor = if (nh > 1) nh * d.stratum_fpc[h] / (nh - 1) else 0;
         for (0..p) |r| for (0..p) |s| {
             g[r * p + s] += factor * (e[c * p + r] - mean[h * p + r]) * (e[c * p + s] - mean[h * p + s]);
         };
@@ -516,6 +528,10 @@ pub const Result = struct {
     n: usize,
     units: f64,
     weighted_units: f64,
+    /// FREQ totals read: every row with a valid frequency, including rows
+    /// excluded by MODEL values (SAS 9.4 run).
+    freq_read: f64 = 0,
+    wfreq_read: f64 = 0,
     /// Observations excluded for missing values (Variance Estimation note).
     excluded: bool,
     events: f64,
@@ -610,12 +626,28 @@ pub fn analyze(cx: proc.ProcCtx, s: Spec, rows: []const []const Value, d: design
 fn checkSupported(cx: proc.ProcCtx, s: Spec) diag.Error!void {
     if (s.covariates.len == 0) return gap(cx, s.model_line, "the model without covariates is not implemented", .{});
     if (s.covariates.len > 1) return gap(cx, s.model_line, "models with more than one parameter (eigenvalue adjusted likelihood ratio and PARMADJ Wald tests) are not implemented", .{});
-    if (s.censor == null) return gap(cx, s.model_line, "the listing without a censoring variable is not verified", .{});
-    if (s.roles.weight == null) return gap(cx, 0, "the listing without a WEIGHT statement is not verified", .{});
-    if (s.roles.strata.len == 0 or s.roles.clusters.len == 0) return gap(cx, 0, "the listing of a design without both STRATA and CLUSTER statements is not verified", .{});
-    if (s.roles.strata.len > 1 or s.roles.clusters.len > 1) return gap(cx, 0, "Model Information for several STRATA or CLUSTER variables is not verified", .{});
-    if (s.censor_values.len > 1) return gap(cx, s.model_line, "Model Information for several censoring values is not verified", .{});
-    if (s.roles.missing) return gap(cx, 0, "the MISSING option listing is not verified", .{});
+    // Without WEIGHT every weight is 1; without STRATA one stratum; without
+    // CLUSTER every observation is its own PSU (p.10052). FREQ is verified
+    // only with both WEIGHT and CLUSTER (its copies stay inside one PSU).
+    if (s.freq != null and (s.roles.weight == null or s.roles.clusters.len == 0)) return gap(cx, 0, "FREQ without both WEIGHT and CLUSTER statements is not verified", .{});
+}
+
+/// A stratum with one cluster contributes no variance (meatMatrix) and SAS
+/// warns per stratum, numbering the levels in sorted order (SAS 9.4 runs).
+fn warnSinglePsu(cx: proc.ProcCtx, s: Spec, rows: []const []const Value, d: design.Design) diag.Error!void {
+    if (s.roles.strata.len != 1 or std.meta.activeTag(rows[0][s.roles.strata[0]]) != .num) return gap(cx, 0, "the single-cluster stratum warning for character or several STRATA variables is not implemented", .{});
+    const c = s.roles.strata[0];
+    for (d.stratum_psus, 0..) |n, h| {
+        if (n != 1) continue;
+        const v = rows[d.stratum_rep[h]][c].num;
+        var level: usize = 1;
+        for (d.stratum_rep) |o| {
+            const u = rows[o][c].num;
+            if (std.math.isNan(v)) break;
+            if (std.math.isNan(u) or u < v) level += 1;
+        }
+        try cx.diags.warn(0, "Stratum level {d} contains only a single cluster. Single-cluster strata are not included in the variance estimates.", .{level});
+    }
 }
 
 /// One analysis group (the whole input, or one BY group).
@@ -625,18 +657,29 @@ pub fn plan(cx: proc.ProcCtx, s: Spec, rows: []const []const Value) diag.Error!R
     var kept: std.ArrayList([]const Value) = .empty;
     var freq_of: std.ArrayList(f64) = .empty;
     var model_missing: usize = 0;
+    var freq_bad: usize = 0;
+    var freq_read: f64 = 0;
+    var wfreq_read: f64 = 0;
     for (rows) |obs| {
-        const w = obs[s.roles.weight.?].num;
-        if (w < 0) return gap(cx, 0, "the listing for negative WEIGHT values is not verified", .{});
-        if (!std.math.isNan(w)) sum_read += w;
+        const w = if (s.roles.weight) |c| obs[c].num else 1;
+        // Sum of Weights Read counts the positive weights only (SAS 9.4 run:
+        // a negative weight is excluded and not read).
+        if (w > 0) sum_read += w;
         if (obs[s.time.?].num < 0) return gap(cx, 0, "the listing for observations excluded by negative failure times is not verified", .{});
         // Missing MODEL values exclude the observation (p.10043).
-        var bad = std.math.isNan(obs[s.time.?].num) or std.math.isNan(obs[s.censor.?].num);
+        var bad = std.math.isNan(obs[s.time.?].num) or (if (s.censor) |c| std.math.isNan(obs[c].num) else false);
         for (s.covariates) |c| bad = bad or std.math.isNan(obs[c].num);
         var f: f64 = 1;
         if (s.freq) |c| {
             f = @trunc(obs[c].num);
-            if (!(f >= 1)) return gap(cx, 0, "the listing for missing or nonpositive FREQ values is not verified", .{});
+            // A missing or nonpositive frequency excludes the observation
+            // (p.10024); its weight is still read (SAS 9.4 run).
+            if (!(f >= 1)) {
+                freq_bad += 1;
+                continue;
+            }
+            freq_read += f;
+            wfreq_read += w * f;
         }
         if (bad) {
             model_missing += 1;
@@ -646,19 +689,24 @@ pub fn plan(cx: proc.ProcCtx, s: Spec, rows: []const []const Value) diag.Error!R
         try freq_of.append(a, f);
     }
     const d = try design.build(a, kept.items, s.roles);
+    // Every observation excluded by its WEIGHT: SAS 9.4 writes this ERROR
+    // and no listing; other all-excluded inputs are not verified.
+    if (d.kept.len == 0 and d.bad_weight == rows.len and s.by_cols.len == 0) return cx.diags.fail(error.ParseError, 0, "PROC SURVEYPHREG: No nonmissing observations.", .{});
     if (d.kept.len == 0) return gap(cx, 0, "the result for an input without valid observations is not verified", .{});
-    const excluded = model_missing + d.bad_weight + d.bad_design;
-    // ponytail: the verified exclusion listing mixes missing MODEL, WEIGHT,
-    // CLUSTER and nonpositive WEIGHT values; FREQ with exclusions is not.
-    if (excluded > 0 and s.freq != null) return gap(cx, 0, "the FREQ listing with excluded observations is not verified", .{});
-    if (excluded > 0 and model_missing == 0) return gap(cx, 0, "the listing for observations excluded only by WEIGHT, STRATA or CLUSTER values is not verified", .{});
-    if (d.singlePsuStratum()) return gap(cx, 0, "variance estimation for a stratum with a single cluster is not implemented", .{});
+    const excluded = model_missing + d.bad_weight + d.bad_design + freq_bad;
+    // Every exclusion (MODEL, WEIGHT, STRATA, CLUSTER, FREQ) gives the
+    // "Missing Values Excluded" row (SAS 9.4 runs). With FREQ, exclusions by
+    // FREQ and MODEL values are verified; by WEIGHT or design values not.
+    if (s.freq != null and d.bad_weight + d.bad_design > 0) return gap(cx, 0, "the FREQ listing with observations excluded by WEIGHT, STRATA or CLUSTER values is not verified", .{});
+    if (d.singlePsuStratum()) try warnSinglePsu(cx, s, kept.items, d);
     if (d.clusters() == d.strata()) return gap(cx, 0, "inference with zero design degrees of freedom is not implemented", .{});
     const freq = try a.alloc(f64, d.kept.len);
     for (d.kept, 0..) |r, k| freq[k] = freq_of.items[r];
     var r = try analyze(cx, s, kept.items, d, freq);
     r.read = rows.len;
     r.sum_weights_read = sum_read;
+    r.freq_read = freq_read;
+    r.wfreq_read = wfreq_read;
     r.excluded = excluded > 0;
     return r;
 }
@@ -717,44 +765,72 @@ pub fn render(cx: proc.ProcCtx, out: *Out, s: Spec, r: Result) diag.Error!void {
     // Value column at least 8 wide (the reference's WORK.FQ / BRESLOW rows).
     var width: usize = @max(32, 24 + dsname.len);
     const fname = if (s.freq) |c| cols[c].name else "";
-    const names = [_][]const u8{ cols[s.time.?].name, cols[s.censor.?].name, cols[s.roles.weight.?].name, cols[s.roles.strata[0]].name, cols[s.roles.clusters[0]].name, "BRESLOW", fname };
+    const wname = if (s.roles.weight) |c| cols[c].name else "";
+    const sname = if (s.roles.strata.len > 0) cols[s.roles.strata[0]].name else "";
+    const cname = if (s.roles.clusters.len > 0) cols[s.roles.clusters[0]].name else "";
+    const names = [_][]const u8{ cols[s.time.?].name, if (s.censor) |c| cols[c].name else "", wname, sname, cname, "BRESLOW", fname };
     for (names) |nm| width = @max(width, 24 + nm.len);
-    const cv = try format.bestNum(a, s.censor_values[0]);
+    var cvb: Out = .empty;
+    for (s.censor_values, 0..) |v, k| {
+        if (k > 0) try cvb.appendSlice(a, "  ");
+        try cvb.appendSlice(a, try format.bestNum(a, v));
+    }
+    const cv = cvb.items;
+    for (s.roles.strata) |c| width = @max(width, 24 + cols[c].name.len);
+    for (s.roles.clusters) |c| width = @max(width, 24 + cols[c].name.len);
     width = @max(width, 24 + cv.len);
     try centered(a, &b, "Model Information", width);
     try b.append(a, '\n');
     try pair(cx, &b, "Data Set", dsname, 24, width);
     try pair(cx, &b, "Dependent Variable", names[0], 24, width);
-    try pair(cx, &b, "Censoring Variable", names[1], 24, width);
-    try pair(cx, &b, "Censoring Value(s)", cv, 24, width);
-    try pair(cx, &b, "Weight Variable", names[2], 24, width);
+    // Without a censoring variable every time is an event and both rows
+    // are omitted (SAS 9.4 run).
+    if (s.censor != null) {
+        try pair(cx, &b, "Censoring Variable", names[1], 24, width);
+        try pair(cx, &b, "Censoring Value(s)", cv, 24, width);
+    }
+    if (s.roles.weight != null) try pair(cx, &b, "Weight Variable", names[2], 24, width);
     if (s.freq != null) try pair(cx, &b, "Frequency Variable", fname, 24, width);
-    try pair(cx, &b, "Stratum Variable", names[3], 24, width);
-    try pair(cx, &b, "Cluster Variable", names[4], 24, width);
+    // Several variables: plural label, one name per line (SAS 9.4 run).
+    for (s.roles.strata, 0..) |c, k| try pair(cx, &b, if (k > 0) "" else if (s.roles.strata.len > 1) "Stratum Variables" else "Stratum Variable", cols[c].name, 24, width);
+    for (s.roles.clusters, 0..) |c, k| try pair(cx, &b, if (k > 0) "" else if (s.roles.clusters.len > 1) "Cluster Variables" else "Cluster Variable", cols[c].name, 24, width);
     try pair(cx, &b, "Ties Handling", names[5], 24, width);
     try b.appendSlice(a, "\n\n");
     const sw = try format.bestNum(a, r.d.sum_weights);
     try row(cx, &b, 44, "Number of Observations Read", &.{try count(a, r.read)}, &.{44});
     try row(cx, &b, 44, "Number of Observations Used", &.{try count(a, r.n)}, &.{44});
-    try row(cx, &b, 44, "Sum of Weights Read", &.{try format.bestNum(a, r.sum_weights_read)}, &.{44});
-    try row(cx, &b, 44, "Sum of Weights Used", &.{sw}, &.{44});
+    if (s.roles.weight != null) {
+        try row(cx, &b, 44, "Sum of Weights Read", &.{try format.bestNum(a, r.sum_weights_read)}, &.{44});
+        try row(cx, &b, 44, "Sum of Weights Used", &.{sw}, &.{44});
+    }
     if (s.freq != null) {
-        // FREQ with exclusions is a gap, so read and used totals agree.
         const fu = try format.bestNum(a, r.units);
         const wu = try format.bestNum(a, r.weighted_units);
-        try row(cx, &b, 44, "Sum of Frequencies Read", &.{fu}, &.{44});
+        try row(cx, &b, 44, "Sum of Frequencies Read", &.{try format.bestNum(a, r.freq_read)}, &.{44});
         try row(cx, &b, 44, "Sum of Frequencies Used", &.{fu}, &.{44});
-        try row(cx, &b, 44, "Sum of Weighted Frequencies Read", &.{wu}, &.{44});
+        try row(cx, &b, 44, "Sum of Weighted Frequencies Read", &.{try format.bestNum(a, r.wfreq_read)}, &.{44});
         try row(cx, &b, 44, "Sum of Weighted Frequencies Used", &.{wu}, &.{44});
     }
-    try b.appendSlice(a, "\n\n         Design Summary\n\n");
-    try row(cx, &b, 32, "Number of Strata", &.{try count(a, r.d.strata())}, &.{32});
-    try row(cx, &b, 32, "Number of Clusters", &.{try count(a, r.d.clusters())}, &.{32});
+    // Design Summary (SAS 9.4 runs): both rows in 32 columns; a single row
+    // is label + 14 columns wide; without STRATA and CLUSTER no table.
+    const has_s = s.roles.strata.len > 0;
+    const has_c = s.roles.clusters.len > 0;
+    if (has_s and has_c) {
+        try b.appendSlice(a, "\n\n         Design Summary\n\n");
+        try row(cx, &b, 32, "Number of Strata", &.{try count(a, r.d.strata())}, &.{32});
+        try row(cx, &b, 32, "Number of Clusters", &.{try count(a, r.d.clusters())}, &.{32});
+    } else if (has_s) {
+        try b.appendSlice(a, "\n\n        Design Summary\n\n");
+        try row(cx, &b, 30, "Number of Strata", &.{try count(a, r.d.strata())}, &.{30});
+    } else if (has_c) {
+        try b.appendSlice(a, "\n\n         Design Summary\n\n");
+        try row(cx, &b, 32, "Number of Clusters", &.{try count(a, r.d.clusters())}, &.{32});
+    }
     try b.appendSlice(a, "\n\nSummary of the Number of Event and Censored Values\n \n                                     Percent\n   Total       Event    Censored    Censored\n\n");
     try row(cx, &b, 44, "", &.{ try format.bestNum(a, r.units), try format.bestNum(a, r.events), try format.bestNum(a, r.units - r.events), try fixed(a, 100 * (r.units - r.events) / r.units, 2) }, &.{ 8, 20, 32, 44 });
-    try b.appendSlice(a, "\n\nSummary of the Weighted Number of Event and Censored Values\n \n                                     Percent\n   Total       Event    Censored    Censored\n\n");
     const sumw = r.weighted_units;
-    try row(cx, &b, 44, "", &.{ try format.bestNum(a, sumw), try format.bestNum(a, r.weighted_events), try format.bestNum(a, sumw - r.weighted_events), try fixed(a, 100 * (sumw - r.weighted_events) / sumw, 2) }, &.{ 8, 20, 32, 44 });
+    if (s.roles.weight != null) try b.appendSlice(a, "\n\nSummary of the Weighted Number of Event and Censored Values\n \n                                     Percent\n   Total       Event    Censored    Censored\n\n");
+    if (s.roles.weight != null) try row(cx, &b, 44, "", &.{ try format.bestNum(a, sumw), try format.bestNum(a, r.weighted_events), try format.bestNum(a, sumw - r.weighted_events), try fixed(a, 100 * (sumw - r.weighted_events) / sumw, 2) }, &.{ 8, 20, 32, 44 });
     if (r.excluded) {
         try b.appendSlice(a, "\n\n      Variance Estimation\n\nMethod            Taylor Series\nMissing Values         Excluded\n\n\n");
     } else try b.appendSlice(a, "\n\n  Variance Estimation\n\nMethod    Taylor Series\n\n\n");
@@ -784,11 +860,15 @@ pub fn run(cx: proc.ProcCtx, out: *Out, t: []const lex.Token) diag.Error!void {
     try checkSupported(cx, s);
     const ds = s.input.ds;
     const slices = try by.checkedSlices(cx.arena, ds, s.by_cols, s.by_desc, s.by_notsorted, cx.diags);
-    if (slices.len == 0 or slices[0].rows.len == 0) return gap(cx, 0, "the result for an empty input data set is not verified", .{});
+    // An empty input without BY is a data error (SAS 9.4 run: ERROR, no
+    // listing); empty BY input is not verified.
+    if ((slices.len == 0 or slices[0].rows.len == 0) and s.by_cols.len == 0) return cx.diags.fail(error.ParseError, 0, "PROC SURVEYPHREG: No valid observations present.", .{});
+    if (slices.len == 0 or slices[0].rows.len == 0) return gap(cx, 0, "the result for an empty BY input data set is not verified", .{});
     // Every group is computed before any text exists.
     const results = try cx.arena.alloc(Result, slices.len);
     for (slices, results) |slice, *r| r.* = try plan(cx, s, slice.rows);
     for (slices, results) |slice, r| {
+        if (s.noprint) break;
         if (s.by_cols.len > 0) try by.appendLine(cx.arena, out, ds, slice.rep.?, s.by_cols);
         try render(cx, out, s, r);
     }
