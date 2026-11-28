@@ -1,0 +1,12 @@
+# corpus assertions
+empty-listing
+stderr-count 1 the K option is not implemented
+stderr-count 1 METHOD=3 is not implemented (STAT-MODECLUS-003)
+stderr-count 1 the TEST option is not implemented
+stderr-count 1 the OUTCLUS option is not implemented
+stderr-count 1 the LIST option is not implemented
+stderr-count 1 density estimation without METHOD= (no cluster analysis) is not implemented
+stderr-count 1 the TYPE= data set option (TYPE=DISTANCE input) is not implemented
+stderr-count 1 the Cluster Summary layout for DR=/CR= is not verified
+stderr-count 1 a missing or less-than-one FREQ value is not verified
+stderr-count 1 _OBS_ numbering with WHERE or FIRSTOBS=/OBS= selection is not verified

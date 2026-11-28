@@ -1,0 +1,11 @@
+# corpus assertions
+empty-listing
+stderr-count 1 METHOD= must be an integer from 0 to 6
+stderr-count 1 the R= radius must be positive
+stderr-count 1 invalid statement or token bogus
+stderr-count 1 VAR variable name must be numeric
+stderr-count 1 lists of smoothing parameters must have one value or the same number of values
+stderr-count 1 Variable Z not found.
+stderr-count 1 the ID statement takes exactly one variable
+stderr-count 1 input data set nosuch not found
+stderr-count 1 is not sorted in ascending sequence.
