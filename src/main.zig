@@ -3272,6 +3272,14 @@ fn runProc(a: std.mem.Allocator, listing_out: *std.ArrayList(u8), lib: *sas.exec
             try out.appendSlice(a, body.items);
             try g.emitFootnotes(a, out);
         }
+    } else if (eqi(proc, "hpnlmod")) {
+        var body: std.ArrayList(u8) = .empty;
+        try sas.hpnlmod.run(pcx, &body, toks);
+        if (body.items.len > 0) {
+            try g.emitTitles(a, out);
+            try out.appendSlice(a, body.items);
+            try g.emitFootnotes(a, out);
+        }
     } else if (eqi(proc, "hplmixed")) {
         var body: std.ArrayList(u8) = .empty;
         try sas.hplmixed.run(pcx, &body, toks);

@@ -1,0 +1,143 @@
+
+The HPNLMOD Procedure
+
+      Performance Information
+
+Execution Mode       Single-Machine
+Number of Threads    1             
+
+
+        Data Access Information
+ 
+Data       Engine    Role     Path
+
+WORK.E2    V9        Input    On Client
+
+
+                         Specifications
+
+Data Source                                 E2                  
+Dependent Variable                          rate                
+Distribution                                None (Nonlinear     
+                                            Least Squares)      
+Optimization Technique                      Levenberg-Marquardt 
+
+g=a
+
+The HPNLMOD Procedure
+
+Number of Observations Read               7
+Number of Observations Used               7
+
+
+               Dimensions
+
+Parameters                             2
+
+
+     Initial Parameter Values
+ 
+  theta1      theta2     Objective
+
+     160         0.1    15.6290019
+
+
+                          Iteration History
+ 
+                               Objective                         Max
+Iteration    Evaluations        Function          Change    Gradient
+
+        0              5    15.629001926                    1182.482
+        1              2     1.104183431     14.52481849    97.86435
+        2              2    1.0233481397      0.08083529    0.835167
+        3              2    1.0233403507      0.00000779    0.003578
+        4              2    1.0233403505      0.00000000    0.000019
+
+         Convergence criterion (GCONV=1E-8) satisfied.          
+
+
+              Fit Statistics
+
+SS(Error)                           7.1634
+Error Variance                      1.4327
+
+
+                          Analysis of Variance
+ 
+                                  Sum of        Mean               Approx
+Source                    DF     Squares      Square    F Value    Pr > F
+
+Model                      2      151541     75770.4    52887.3    <.0001
+Error                      5      7.1634      1.4327                     
+Uncorrected Total          7      151548                                 
+
+An intercept was not specified for this model.
+
+
+                                  Parameter Estimates
+ 
+                         Standard                         Approx
+Parameter    Estimate       Error      DF    t Value    Pr > |t|    Approximate 95% Confidence Limits
+
+theta1          158.5      0.7202       1     220.08      <.0001       156.7       160.4
+theta2         0.0721     0.00371       1      19.43      <.0001      0.0626      0.0817
+
+g=b
+
+The HPNLMOD Procedure
+
+Number of Observations Read               9
+Number of Observations Used               7
+
+
+               Dimensions
+
+Parameters                             2
+
+
+     Initial Parameter Values
+ 
+  theta1      theta2     Objective
+
+     160         0.1    23.9193609
+
+
+                          Iteration History
+ 
+                               Objective                         Max
+Iteration    Evaluations        Function          Change    Gradient
+
+        0              5    23.919360899                    2042.639
+        1              2    0.8647592392     23.05460166     233.484
+        2              2    0.6230806083      0.24167863     2.34356
+        3              2    0.6230493463      0.00003126    0.003319
+        4              2    0.6230493461      0.00000000     9.72E-6
+
+         Convergence criterion (GCONV=1E-8) satisfied.          
+
+
+              Fit Statistics
+
+SS(Error)                           4.3613
+Error Variance                      0.8723
+
+
+                          Analysis of Variance
+ 
+                                  Sum of        Mean               Approx
+Source                    DF     Squares      Square    F Value    Pr > F
+
+Model                      2      131693     65846.6    75488.8    <.0001
+Error                      5      4.3613      0.8723                     
+Uncorrected Total          7      131697                                 
+
+An intercept was not specified for this model.
+
+
+                                  Parameter Estimates
+ 
+                         Standard                         Approx
+Parameter    Estimate       Error      DF    t Value    Pr > |t|    Approximate 95% Confidence Limits
+
+theta1          155.1      1.0046       1     154.40      <.0001       152.5       157.7
+theta2         0.0651     0.00347       1      18.77      <.0001      0.0561      0.0740

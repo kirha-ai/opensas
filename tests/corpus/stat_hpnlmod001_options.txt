@@ -1,0 +1,228 @@
+
+The HPNLMOD Procedure
+
+      Performance Information
+
+Execution Mode       Single-Machine
+Number of Threads    1             
+
+
+          Data Access Information
+ 
+Data           Engine    Role     Path
+
+WORK.ENZYME    V9        Input    On Client
+
+
+                         Specifications
+
+Data Source                                 ENZYME              
+Dependent Variable                          rate                
+Distribution                                None (Nonlinear     
+                                            Least Squares)      
+Optimization Technique                      Levenberg-Marquardt 
+
+
+Number of Observations Read              14
+Number of Observations Used              14
+
+
+               Dimensions
+
+Parameters                             2
+
+
+     Initial Parameter Values
+ 
+  theta1      theta2     Objective
+
+     160         0.1    13.9401055
+
+         Convergence criterion (GCONV=1E-8) satisfied.          
+
+
+              Fit Statistics
+
+SS(Error)                          19.6606
+Error Variance                      1.6384
+
+
+                          Analysis of Variance
+ 
+                                  Sum of        Mean               Approx
+Source                    DF     Squares      Square    F Value    Pr > F
+
+Model                      2      290116      145058    88537.2    <.0001
+Error                     12     19.6606      1.6384                     
+Uncorrected Total         14      290135                                 
+
+An intercept was not specified for this model.
+
+
+                                  Parameter Estimates
+ 
+                         Standard                         Approx
+Parameter    Estimate       Error      DF    t Value    Pr > |t|    Approximate 95% Confidence Limits
+
+theta1          158.1      0.6737       1     234.67      <.0001       156.6       159.6
+theta2         0.0741     0.00313       1      23.69      <.0001      0.0673      0.0809
+
+The HPNLMOD Procedure
+
+      Performance Information
+
+Execution Mode       Single-Machine
+Number of Threads    1             
+
+
+          Data Access Information
+ 
+Data           Engine    Role     Path
+
+WORK.ENZYME    V9        Input    On Client
+
+
+                         Specifications
+
+Data Source                                 ENZYME              
+Dependent Variable                          rate                
+Distribution                                None (Nonlinear     
+                                            Least Squares)      
+Optimization Technique                      Levenberg-Marquardt 
+
+
+Number of Observations Read              14
+Number of Observations Used              14
+
+
+               Dimensions
+
+Parameters                             2
+
+
+     Initial Parameter Values
+ 
+  theta1      theta2     Objective
+
+     160         0.1    13.9401055
+
+
+                          Iteration History
+ 
+                               Objective                         Max
+Iteration    Evaluations        Function          Change    Gradient
+
+        0              5    13.940105522                    1214.657
+        1              2    1.4437568364     12.49634869    74.98021
+        2              2    1.4043329995      0.03942384    0.593933
+        3              2    1.4043280406      0.00000496    0.005261
+        4              2    1.4043280401      0.00000000    0.000057
+
+         Convergence criterion (GCONV=1E-9) satisfied.          
+
+
+              Fit Statistics
+
+SS(Error)                          19.6606
+Error Variance                      1.6384
+
+
+                          Analysis of Variance
+ 
+                                  Sum of        Mean               Approx
+Source                    DF     Squares      Square    F Value    Pr > F
+
+Model                      2      290116      145058    88537.2    <.0001
+Error                     12     19.6606      1.6384                     
+Uncorrected Total         14      290135                                 
+
+An intercept was not specified for this model.
+
+
+                                  Parameter Estimates
+ 
+                         Standard                         Approx
+Parameter    Estimate       Error      DF    t Value    Pr > |t|    Approximate 95% Confidence Limits
+
+theta1          158.1      0.6737       1     234.67      <.0001       156.6       159.6
+theta2         0.0741     0.00313       1      23.69      <.0001      0.0673      0.0809
+
+The HPNLMOD Procedure
+
+      Performance Information
+
+Execution Mode       Single-Machine
+Number of Threads    1             
+
+
+          Data Access Information
+ 
+Data           Engine    Role     Path
+
+WORK.ENZYME    V9        Input    On Client
+
+
+                         Specifications
+
+Data Source                                 ENZYME              
+Dependent Variable                          rate                
+Distribution                                None (Nonlinear     
+                                            Least Squares)      
+Optimization Technique                      Levenberg-Marquardt 
+
+
+Number of Observations Read              14
+Number of Observations Used              14
+
+
+               Dimensions
+
+Parameters                             2
+
+
+     Initial Parameter Values
+ 
+  theta1      theta2     Objective
+
+     160         0.1    13.9401055
+
+
+                          Iteration History
+ 
+                               Objective                         Max
+Iteration    Evaluations        Function          Change    Gradient
+
+        0              5    13.940105522                    1214.657
+        1              2    1.4437568364     12.49634869    74.98021
+        2              2    1.4043329995      0.03942384    0.593933
+        3              2    1.4043280406      0.00000496    0.005261
+        4              2    1.4043280401      0.00000000    0.000057
+
+         Convergence criterion (GCONV=1E-8) satisfied.          
+
+
+              Fit Statistics
+
+SS(Error)                          19.6606
+Error Variance                      1.6384
+
+
+                          Analysis of Variance
+ 
+                                  Sum of        Mean               Approx
+Source                    DF     Squares      Square    F Value    Pr > F
+
+Model                      2      290116      145058    88537.2    <.0001
+Error                     12     19.6606      1.6384                     
+Uncorrected Total         14      290135                                 
+
+An intercept was not specified for this model.
+
+
+                                  Parameter Estimates
+ 
+                         Standard                         Approx
+Parameter    Estimate       Error      DF    t Value    Pr > |t|    Approximate 95% Confidence Limits
+
+theta1          158.1      0.6737       1     234.67      <.0001       156.6       159.6
+theta2         0.0741     0.00313       1      23.69      <.0001      0.0673      0.0809
