@@ -1,0 +1,340 @@
+
+g=1
+
+Oblique Principal Component Cluster Analysis
+
+Observations              8    Proportion          1
+Variables                 4    Maxeigen            0
+
+
+Clustering algorithm converged.                                            
+
+
+                      Cluster Summary for 1 Cluster
+ 
+                        Cluster    Variation    Proportion        Second
+Cluster    Members    Variation    Explained     Explained    Eigenvalue
+------------------------------------------------------------------------
+      1          4            4     2.137703        0.5344        1.2268
+
+Total variation explained = 2.137703 Proportion = 0.5344
+
+Cluster 1 will be split because it has the largest second eigenvalue, 1.226827, which is greater than the MAXEIGEN=0 value.
+
+
+Clustering algorithm converged.                                            
+
+
+                     Cluster Summary for 2 Clusters
+ 
+                        Cluster    Variation    Proportion        Second
+Cluster    Members    Variation    Explained     Explained    Eigenvalue
+------------------------------------------------------------------------
+      1          2            2     1.865004        0.9325        0.1350
+      2          2            2     1.202939        0.6015        0.7971
+
+Total variation explained = 3.067943 Proportion = 0.7670
+
+
+                            R-squared with
+2 Clusters                ------------------
+                              Own       Next    1-R**2    Variable
+Cluster       Variable    Cluster    Closest     Ratio    Label
+---------------------------------------------------------------------
+Cluster 1     a            0.9325     0.0095    0.0681    Alpha score
+              b            0.9325     0.0123    0.0683    Beta score 
+---------------------------------------------------------------------
+Cluster 2     c            0.6015     0.1014    0.4435    Gamma score
+              d            0.6015     0.0946    0.4402    Delta score
+
+
+         Standardized Scoring Coefficients
+ 
+Cluster                              1             2
+----------------------------------------------------
+a            Alpha score      0.517780      0.000000
+b            Beta score       0.517780      0.000000
+c            Gamma score      0.000000      0.644708
+d            Delta score      0.000000      0.644708
+
+
+                 Cluster Structure
+ 
+Cluster                              1             2
+----------------------------------------------------
+a            Alpha score      0.965661      0.097514
+b            Beta score       0.965661      -.111015
+c            Gamma score      -.318425      0.775544
+d            Delta score      0.307582      0.775544
+
+
+    Inter-Cluster Correlations
+ 
+Cluster             1             2
+
+1             1.00000      -0.00699
+2            -0.00699       1.00000
+
+
+                 Total     Proportion       Minimum       Maximum                  Maximum
+             Variation             of    Proportion        Second      Minimum      1-R**2
+  Number     Explained      Variation     Explained    Eigenvalue    R-squared       Ratio
+      of            by      Explained          by a          in a        for a       for a
+Clusters      Clusters    by Clusters       Cluster       Cluster     Variable    Variable
+------------------------------------------------------------------------------------------
+       1      2.137703         0.5344        0.5344      1.226827       0.1717            
+       2      3.067943         0.7670        0.6015      0.797061       0.6015      0.4435
+
+g=2
+
+Oblique Principal Component Cluster Analysis
+
+Observations              7    Proportion          1
+Variables                 4    Maxeigen            0
+
+
+Clustering algorithm converged.                                            
+
+
+                      Cluster Summary for 1 Cluster
+ 
+                        Cluster    Variation    Proportion        Second
+Cluster    Members    Variation    Explained     Explained    Eigenvalue
+------------------------------------------------------------------------
+      1          4            4     3.413453        0.8534        0.3710
+
+Total variation explained = 3.413453 Proportion = 0.8534
+
+Cluster 1 will be split because it has the largest second eigenvalue, 0.37104, which is greater than the MAXEIGEN=0 value.
+
+
+Clustering algorithm converged.                                            
+
+
+                     Cluster Summary for 2 Clusters
+ 
+                        Cluster    Variation    Proportion        Second
+Cluster    Members    Variation    Explained     Explained    Eigenvalue
+------------------------------------------------------------------------
+      1          3            3     2.738649        0.9129        0.2143
+      2          1            1            1        1.0000              
+
+Total variation explained = 3.738649 Proportion = 0.9347
+
+
+                            R-squared with
+2 Clusters                ------------------
+                              Own       Next    1-R**2    Variable
+Cluster       Variable    Cluster    Closest     Ratio    Label
+---------------------------------------------------------------------
+Cluster 1     a            0.8845     0.4136    0.1969    Alpha score
+              b            0.8845     0.5956    0.2855    Beta score 
+              c            0.9696     0.6273    0.0816    Gamma score
+---------------------------------------------------------------------
+Cluster 2     d            1.0000     0.5939    0.0000    Delta score
+
+
+         Standardized Scoring Coefficients
+ 
+Cluster                              1             2
+----------------------------------------------------
+a            Alpha score       0.34341       0.00000
+b            Beta score        0.34341       0.00000
+c            Gamma score      -0.35955       0.00000
+d            Delta score       0.00000       1.00000
+
+
+                 Cluster Structure
+ 
+Cluster                              1             2
+----------------------------------------------------
+a            Alpha score       0.94049       0.64312
+b            Beta score        0.94049       0.77174
+c            Gamma score      -0.98468      -0.79203
+d            Delta score       0.77066       1.00000
+
+
+    Inter-Cluster Correlations
+ 
+Cluster             1             2
+
+1             1.00000       0.77066
+2             0.77066       1.00000
+
+
+                 Total     Proportion       Minimum       Maximum                  Maximum
+             Variation             of    Proportion        Second      Minimum      1-R**2
+  Number     Explained      Variation     Explained    Eigenvalue    R-squared       Ratio
+      of            by      Explained          by a          in a        for a       for a
+Clusters      Clusters    by Clusters       Cluster       Cluster     Variable    Variable
+------------------------------------------------------------------------------------------
+       1      3.413453         0.8534        0.8534      0.371040       0.7465            
+       2      3.738649         0.9347        0.9129      0.214286       0.8845      0.2855
+
+Oblique Principal Component Cluster Analysis
+
+Observations             18    Proportion          1
+Variables                 4    Maxeigen            0
+
+
+Clustering algorithm converged.                                            
+
+
+                      Cluster Summary for 1 Cluster
+ 
+                        Cluster    Variation    Proportion        Second
+Cluster    Members    Variation    Explained     Explained    Eigenvalue
+------------------------------------------------------------------------
+      1          4            4     2.696699        0.6742        0.7319
+
+Total variation explained = 2.696699 Proportion = 0.6742
+
+Cluster 1 will be split because it has the largest second eigenvalue, 0.731872, which is greater than the MAXEIGEN=0 value.
+
+
+Clustering algorithm converged.                                            
+
+
+                     Cluster Summary for 2 Clusters
+ 
+                        Cluster    Variation    Proportion        Second
+Cluster    Members    Variation    Explained     Explained    Eigenvalue
+------------------------------------------------------------------------
+      1          2            2     1.850837        0.9254        0.1492
+      2          2            2     1.573613        0.7868        0.4264
+
+Total variation explained = 3.42445 Proportion = 0.8561
+
+
+                            R-squared with
+2 Clusters                ------------------
+                              Own       Next    1-R**2    Variable
+Cluster       Variable    Cluster    Closest     Ratio    Label
+---------------------------------------------------------------------
+Cluster 1     a            0.9254     0.2761    0.1030    Alpha score
+              b            0.9254     0.3279    0.1110    Beta score 
+---------------------------------------------------------------------
+Cluster 2     c            0.7868     0.2753    0.2942    Gamma score
+              d            0.7868     0.2380    0.2798    Delta score
+
+
+         Standardized Scoring Coefficients
+ 
+Cluster                              1             2
+----------------------------------------------------
+a            Alpha score      0.519758      0.000000
+b            Beta score       0.519758      0.000000
+c            Gamma score      0.000000      0.563684
+d            Delta score      0.000000      -.563684
+
+
+                 Cluster Structure
+ 
+Cluster                              1             2
+----------------------------------------------------
+a            Alpha score      0.961987      -.525465
+b            Beta score       0.961987      -.572648
+c            Gamma score      -.524720      0.887021
+d            Delta score      0.487819      -.887021
+
+
+    Inter-Cluster Correlations
+ 
+Cluster             1             2
+
+1             1.00000      -0.57075
+2            -0.57075       1.00000
+
+
+                 Total     Proportion       Minimum       Maximum                  Maximum
+             Variation             of    Proportion        Second      Minimum      1-R**2
+  Number     Explained      Variation     Explained    Eigenvalue    R-squared       Ratio
+      of            by      Explained          by a          in a        for a       for a
+Clusters      Clusters    by Clusters       Cluster       Cluster     Variable    Variable
+------------------------------------------------------------------------------------------
+       1      2.696699         0.6742        0.6742      0.731872       0.5584            
+       2      3.424450         0.8561        0.7868      0.426387       0.7868      0.2942
+
+Oblique Principal Component Cluster Analysis
+
+Observations             14    Proportion          1
+Variables                 4    Maxeigen            0
+
+
+Clustering algorithm converged.                                            
+
+
+                      Cluster Summary for 1 Cluster
+ 
+                        Cluster    Variation    Proportion        Second
+Cluster    Members    Variation    Explained     Explained    Eigenvalue
+------------------------------------------------------------------------
+      1          4            4      2.68382        0.6710        0.7088
+
+Total variation explained = 2.68382 Proportion = 0.6710
+
+Cluster 1 will be split because it has the largest second eigenvalue, 0.708755, which is greater than the MAXEIGEN=0 value.
+
+
+Clustering algorithm converged.                                            
+
+
+                     Cluster Summary for 2 Clusters
+ 
+                        Cluster    Variation    Proportion        Second
+Cluster    Members    Variation    Explained     Explained    Eigenvalue
+------------------------------------------------------------------------
+      1          3            3     2.389204        0.7964        0.4381
+      2          1            1            1        1.0000              
+
+Total variation explained = 3.389204 Proportion = 0.8473
+
+
+                            R-squared with
+2 Clusters                ------------------
+                              Own       Next    1-R**2    Variable
+Cluster       Variable    Cluster    Closest     Ratio    Label
+---------------------------------------------------------------------
+Cluster 1     a            0.8287     0.1882    0.2111    Alpha score
+              b            0.8682     0.1524    0.1555    Beta score 
+              c            0.6923     0.1571    0.3650    Gamma score
+---------------------------------------------------------------------
+Cluster 2     d            1.0000     0.2075    0.0000    Delta score
+
+
+         Standardized Scoring Coefficients
+ 
+Cluster                              1             2
+----------------------------------------------------
+a            Alpha score       0.38101       0.00000
+b            Beta score        0.39000       0.00000
+c            Gamma score      -0.34826       0.00000
+d            Delta score       0.00000       1.00000
+
+
+                 Cluster Structure
+ 
+Cluster                              1             2
+----------------------------------------------------
+a            Alpha score       0.91031       0.43385
+b            Beta score        0.93178       0.39038
+c            Gamma score      -0.83206      -0.39632
+d            Delta score       0.45557       1.00000
+
+
+    Inter-Cluster Correlations
+ 
+Cluster             1             2
+
+1             1.00000       0.45557
+2             0.45557       1.00000
+
+
+                 Total     Proportion       Minimum       Maximum                  Maximum
+             Variation             of    Proportion        Second      Minimum      1-R**2
+  Number     Explained      Variation     Explained    Eigenvalue    R-squared       Ratio
+      of            by      Explained          by a          in a        for a       for a
+Clusters      Clusters    by Clusters       Cluster       Cluster     Variable    Variable
+------------------------------------------------------------------------------------------
+       1      2.683820         0.6710        0.6710      0.708755       0.3998            
+       2      3.389204         0.8473        0.7964      0.438087       0.6923      0.3650
