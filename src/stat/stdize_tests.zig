@@ -106,14 +106,14 @@ test "STAT-STDIZE-001 invalid input is a user error and documented unimplemented
     };
     for (user) |src| try std.testing.expectError(error.ParseError, e.parse(src));
     const gaps = [_][]const u8{
-        "proc stdize data=d method=abw(4); run;",
+        "proc stdize data=d method=l(1.5); run;",
         "proc stdize data=d method=in(x); run;",
         "proc stdize data=d outstat=st; run;",
         "proc stdize data=d oprefix sprefix=s_; run;",
         "proc stdize data=d pctlmtd=onepass; run;",
         "proc stdize data=d missing=abw; run;",
         "proc stdize data=d out=o(keep=x); run;",
-        "proc stdize data=d initial=spacing snorm; run;",
+        "proc stdize data=d method=abw(4) initial=l(2); run;",
         "proc stdize data=d; location x; run;",
         "proc stdize data=d pctlpts=10 to 90 by 10; run;",
     };
@@ -313,4 +313,110 @@ test "STAT-STDIZE-002 default path: METHOD=STD location, scale, N and standardiz
     try expect(std.mem.indexOf(u8, out.items, "Location = mean     Scale = standard deviation") != null);
     try expect(std.mem.indexOf(u8, out.items, "x          12.500000        5.000000           4\n") != null);
     try expect(!e.diags.hasErrors());
+}
+
+// STAT-STDIZE-003. Independent values (Python double precision, formulas in
+// stdize.zig): Getting Started High School Scores, METHOD=ABW(4) by Type =
+// SAS Figure values 162.889603 / 56.662855 and 156.014608 / 28.615980.
+fn sample(a: A, lib: *Library, name: []const u8, xs: []const f64) !void {
+    const d = try a.create(Dataset);
+    d.* = Dataset.init(a, name);
+    _ = try d.addColumn("x", .num);
+    for (xs) |v| try d.appendRow(&.{.{ .num = v }});
+    try lib.put(name, d);
+}
+fn measuresOf(e: *Env, name: []const u8, source: []const u8) !stdize.Measures {
+    const a = e.arena.allocator();
+    const s = try e.parse(source);
+    const obs = try stdize.usable(a, s, e.lib.find(name).?.rows.items, 0);
+    return (try stdize.measures(a, s, obs)).?;
+}
+
+test "STAT-STDIZE-003 ABW/AHUBER/AWAVE one-step M and A estimates, INITIAL=, fallback" {
+    var e: Env = .{ .arena = std.heap.ArenaAllocator.init(std.testing.allocator) };
+    defer e.arena.deinit();
+    try e.init();
+    const a = e.arena.allocator();
+    try sample(a, &e.lib, "rural", &.{ 135, 125, 223, 224, 133, 253, 144, 193, 152, 178, 120, 180, 154, 184, 187, 111, 190, 128, 110, 217 });
+    try sample(a, &e.lib, "urban", &.{ 192, 186, 64, 159, 133, 163, 130, 163, 189, 144, 154, 198, 150, 151, 152, 151, 127, 167, 170, 123 });
+    try sample(a, &e.lib, "q", &.{ 1, 2, 3, 4, 5, 7, 9, 12, 20, 6 });
+    const cases = [_]struct { []const u8, []const u8, f64, f64 }{
+        .{ "rural", "proc stdize data=rural method=abw(4); run;", 162.88960266660072, 56.66285509704131 },
+        .{ "urban", "proc stdize data=urban method=abw(4); run;", 156.0146076037435, 28.61598005998426 },
+        .{ "q", "proc stdize data=q method=abw(4); run;", 5.071408874698923, 4.214243872240831 },
+        .{ "q", "proc stdize data=q method=ahuber(1.5); run;", 5.75, 4.093100563414271 },
+        .{ "q", "proc stdize data=q method=awave(2); run;", 4.157533702259344, 5.631540598176874 },
+        .{ "q", "proc stdize data=q method=abw(4) initial=std; run;", 6.034944708146367, 5.270738112216381 },
+        .{ "q", "proc stdize data=q method=ahuber(1.5) initial=iqr; run;", 6.444444444444445, 4.958676977405883 },
+        .{ "q", "proc stdize data=q method=abw(3) initial=agk(0.3); run;", 2.979695884661954, 14.57040803412282 },
+        .{ "q", "proc stdize data=q method=ahuber(2) initial=spacing(0.4); run;", 6.571428571428571, 5.866040473692818 },
+        .{ "q", "proc stdize data=q method=abw(0.5); run;", 5.5, 2.357022603955158 },
+        // No accepted value: median and raw MAD, flagged for the SAS NOTE.
+        .{ "q", "proc stdize data=q method=ahuber(0.1); run;", 5.5, 3 },
+        // Hand: SPACING(0.5), k = 4: min x(i+4) - x(i) = 5 - 1, mid 3.
+        .{ "q", "proc stdize data=q method=spacing(0.5); run;", 3, 4 },
+        // k = ceil(5.5) - 1 = 5: 6 - 1 = 5, mid 3.5.
+        .{ "q", "proc stdize data=q method=spacing(0.55); run;", 3.5, 5 },
+        // k = ceil(3) - 1 = 2 (3 = 0.3 * 10 despite rounding): 3 - 1, mid 2.
+        .{ "q", "proc stdize data=q method=spacing(0.3); run;", 2, 2 },
+        // Hand: AGK(0.2): m = 9 of 45 pairs, threshold 2, the 12 pairs with
+        // d <= 2 (6 ones, 6 twos): sqrt(30 / 24) = sqrt(1.25).
+        .{ "q", "proc stdize data=q method=agk(0.2); run;", 6.9, @sqrt(1.25) },
+        // AGK(1): all pairs, sum d^2 = n * CSS = 2889; sqrt(2889 / 90) = std.
+        .{ "q", "proc stdize data=q method=agk(1); run;", 6.9, @sqrt(32.1) },
+    };
+    for (cases) |c| {
+        const m = try measuresOf(&e, c[0], c[1]);
+        try approx(c[2], m.location, 1e-12);
+        try approx(c[3], m.scale, 1e-12);
+    }
+    try expect((try measuresOf(&e, "q", "proc stdize data=q method=ahuber(0.1); run;")).fallback);
+    try expect(!(try measuresOf(&e, "q", "proc stdize data=q method=ahuber(1.5); run;")).fallback);
+    // SPACING NORM: 2 / (2 z(0.65)) = 2.595242 (SAS PSTAT).
+    try approx(2.595242, (try measuresOf(&e, "q", "proc stdize data=q method=spacing(0.3) norm; run;")).norm.?, 5e-7);
+    // Boundary arguments are user errors (SAS-verified texts) or loud gaps.
+    const user = [_][]const u8{
+        "proc stdize data=q method=abw(-1); run;",
+        "proc stdize data=q method=ahuber(0); run;",
+        "proc stdize data=q method=spacing(0); run;",
+        "proc stdize data=q method=agk(0); run;",
+        "proc stdize data=q method=awave; run;",
+        "proc stdize data=q method=in(nosuch); run;",
+        "proc stdize data=q method=std; location x; run;",
+    };
+    for (user) |src| try std.testing.expectError(error.ParseError, e.parse(src));
+}
+
+test "STAT-STDIZE-003 METHOD=IN(ds): _TYPE_ rows, LOCATION/SCALE, ADD/MULT and UNSTD" {
+    var e: Env = .{ .arena = std.heap.ArenaAllocator.init(std.testing.allocator) };
+    defer e.arena.deinit();
+    try e.init();
+    const a = e.arena.allocator();
+    try sample(a, &e.lib, "q", &.{ 1, 6 });
+    const ins = try a.create(Dataset);
+    ins.* = Dataset.init(a, "ins");
+    _ = try ins.addColumn("_type_", .char);
+    _ = try ins.addColumn("x", .num);
+    for ([_][]const u8{ "LOCATION", "SCALE", "ADD", "MULT" }, [_]f64{ 2, 4, 1, 2 }) |k, v| try ins.appendRow(&.{ .{ .str = k }, .{ .num = v } });
+    try e.lib.put("ins", ins);
+    var out: std.ArrayList(u8) = .empty;
+    try e.run(&out, "proc stdize data=q method=in(ins) out=o; var x; run;");
+    // Hand: 1 + 2 (x - 2) / 4 -> 0.5, 3.
+    const z = try e.col("o", "x");
+    try approx(0.5, z[0], 1e-15);
+    try approx(3.0, z[1], 1e-15);
+    try e.run(&out, "proc stdize data=o method=in(ins) unstd out=back; var x; run;");
+    const b = try e.col("back", "x");
+    try approx(1.0, b[0], 1e-15);
+    try approx(6.0, b[1], 1e-15);
+    const ls = try a.create(Dataset);
+    ls.* = Dataset.init(a, "ls");
+    for ([_][]const u8{ "lx", "sx" }) |n| _ = try ls.addColumn(n, .num);
+    try ls.appendRow(&.{ .{ .num = 2 }, .{ .num = 4 } });
+    try e.lib.put("ls", ls);
+    try e.run(&out, "proc stdize data=q method=in(ls) out=o3; var x; location lx; scale sx; run;");
+    const c = try e.col("o3", "x");
+    try approx(-0.25, c[0], 1e-15);
+    try approx(1.0, c[1], 1e-15);
+    try std.testing.expectError(error.ParseError, e.run(&out, "proc stdize data=q method=in(ls) out=o4; var x; run;"));
 }
