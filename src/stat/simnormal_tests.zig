@@ -11,9 +11,17 @@ fn normal(state: *u64) f64 {
 
 test "STAT-SIMNORMAL-001 classic normal stream and OUTSEED states match SAS 9.4" {
     // SAS 9.4: rannor(54321) x8 printed in best16.
+    // Bound per value = half a unit in the last decimal of SAS's best16. text
+    // (print rounding only, plus 4 ulp for parsing the literal): 14 printed
+    // decimals -> 5e-15; 13 printed decimals -> 5e-14 (conservative where
+    // best16. dropped a trailing zero).
     const want = [_]f64{ 0.53954455787141, 0.1515140630646, 1.05304516429687, 1.85220545878213, 0.53068241694995, 0.85303186627684, -1.6710145098835, 0.83212760433719 };
+    const decimals = [_]u8{ 14, 13, 14, 14, 14, 14, 13, 14 };
     var st: u64 = 54321;
-    for (want) |w| try std.testing.expectApproxEqAbs(w, normal(&st), 5e-14);
+    for (want, decimals) |w, dp| {
+        const bound = 0.5 * std.math.pow(f64, 10, -@as(f64, @floatFromInt(dp))) + 4 * std.math.floatEps(f64);
+        try std.testing.expectApproxEqAbs(w, normal(&st), bound);
+    }
     // SAS 9.4 OUTSEED (two VAR variables): 54321, 1704705799, 55996226, 366353659.
     st = 54321;
     const seeds = [_]u64{ 54321, 1704705799, 55996226, 366353659 };
@@ -107,8 +115,9 @@ test "STAT-SIMNORMAL-001 identity moments give the raw stream, Rnum and the SAS 
     const names = [_][]const u8{ "x", "y", "Rnum", "Seed" };
     for (names, o.columns.items) |n, c| try std.testing.expectEqualStrings(n, c.name);
     // Identity covariance and no MEAN row: Y = W (SAS 9.4 RANNOR(54321) values).
-    try std.testing.expectApproxEqAbs(@as(f64, 0.53954455787141), o.rows.items[0][0].num, 5e-14);
-    try std.testing.expectApproxEqAbs(@as(f64, 1.85220545878213), o.rows.items[1][1].num, 5e-14);
+    // Bounds: half a unit in the 14th printed decimal (print rounding only).
+    try std.testing.expectApproxEqAbs(@as(f64, 0.53954455787141), o.rows.items[0][0].num, 5e-15 + 4 * std.math.floatEps(f64));
+    try std.testing.expectApproxEqAbs(@as(f64, 1.85220545878213), o.rows.items[1][1].num, 5e-15 + 4 * std.math.floatEps(f64));
     try std.testing.expectEqual(@as(f64, 2), o.rows.items[1][2].num);
     try std.testing.expectEqual(@as(f64, 1704705799), o.rows.items[1][3].num);
 }
