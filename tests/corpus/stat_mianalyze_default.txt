@@ -1,0 +1,78 @@
+
+The MIANALYZE Procedure
+
+          Model Information
+
+Data Set                  WORK.OUTEST 
+Number of Imputations     4           
+
+
+                                    Variance Information (4 Imputations)
+ 
+                                                                       Relative       Fraction
+             -----------------Variance-----------------                Increase        Missing       Relative
+Parameter         Between         Within          Total       DF    in Variance    Information     Efficiency
+
+Intercept       11.500000      76.875000      91.250000   120.88       0.186992       0.171135       0.958972
+Dose             0.049167       0.123000       0.184458   27.024       0.499661       0.377601       0.913742
+
+
+                                                         Parameter Estimates (4 Imputations)
+ 
+                                                                                                                                  t for H0:
+Parameter        Estimate      Std Error    95% Confidence Limits        DF        Minimum        Maximum         Theta0   Parameter=Theta0   Pr > |t|
+
+Intercept       92.500000       9.552487     73.58815     111.4118   120.88      89.000000      96.500000              0               9.68     <.0001
+Dose            -3.025000       0.429486     -3.90620      -2.1438   27.024      -3.300000      -2.800000              0              -7.04     <.0001
+
+The MIANALYZE Procedure
+
+         Model Information
+
+Data Set                  WORK.FITS 
+Number of Imputations     4         
+
+
+                                    Variance Information (4 Imputations)
+ 
+                                                                       Relative       Fraction
+             -----------------Variance-----------------                Increase        Missing       Relative
+Parameter         Between         Within          Total       DF    in Variance    Information     Efficiency
+
+Intercept       11.500000      76.875000      91.250000   120.88       0.186992       0.171135       0.958972
+Dose             0.049167       0.123000       0.184458   27.024       0.499661       0.377601       0.913742
+
+
+                                                         Parameter Estimates (4 Imputations)
+ 
+                                                                                                                                  t for H0:
+Parameter        Estimate      Std Error    95% Confidence Limits        DF        Minimum        Maximum         Theta0   Parameter=Theta0   Pr > |t|
+
+Intercept       92.500000       9.552487     73.58815     111.4118   120.88      89.000000      96.500000              0               9.68     <.0001
+Dose            -3.025000       0.429486     -3.90620      -2.1438   27.024      -3.300000      -2.800000              0              -7.04     <.0001
+
+The MIANALYZE Procedure
+
+         Model Information
+
+Data Set                  WORK.FITS 
+Number of Imputations     4         
+
+
+                                    Variance Information (4 Imputations)
+ 
+                                                                       Relative       Fraction
+             -----------------Variance-----------------                Increase        Missing       Relative
+Parameter         Between         Within          Total       DF    in Variance    Information     Efficiency
+
+Intercept       11.500000      76.875000      91.250000   18.661       0.186992       0.171135       0.958972
+Dose             0.049167       0.123000       0.184458   10.609       0.499661       0.377601       0.913742
+
+
+                                                         Parameter Estimates (4 Imputations)
+ 
+                                                                                                                                  t for H0:
+Parameter        Estimate      Std Error    90% Confidence Limits        DF        Minimum        Maximum         Theta0   Parameter=Theta0   Pr > |t|
+
+Intercept       92.500000       9.552487     75.96710     109.0329   18.661      89.000000      96.500000             90               0.26     0.7964
+Dose            -3.025000       0.429486     -3.79891      -2.2511   10.609      -3.300000      -2.800000             -3              -0.06     0.9547
