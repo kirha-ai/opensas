@@ -8,9 +8,10 @@ This section is the only current status summary; every section below it is a his
 - **Resumed 2026-11-28 about 07:20Z** after the 06:31Z account usage limit stopped all dev contexts. At the user's direction devs may compare with real SAS via `/Users/thomas/sas/bin/sasrun foo.sas -f text -o - -l /dev/null`, only when truly blocked. Coordinator keep-awake `caffeinate` PID 62218. Coordinator scripts and dev brief live in the session scratchpad `stat/` directory.
 - **Batch 46 verification at exact SHA `c14674090ea7c0c0de39b20345ce9978a8df808a` (2026-11-28):** `zig build install` direct 0; whole `tests/STAT15.4-oracle/` moved out of the checkout, then `zig build gate -j2 --summary all` direct 0 — **2834/2834 unit tests**, **2788/2788 corpus**, **11/11 programs**; `zig build install` direct 0; separate supplemental direct 0, **1113/1113**. Oracle restored unchanged, tree clean, HEAD unchanged. Pushed. **Integrated, PARK:** STAT-CATMOD-005.
 - **User approvals (2026-11-28):** move CATMOD's TYPE=EST direct input to STAT-CATMOD-004; add the Base random-stream ticket STAT-RAND-001; public classic sample data, including rows exported from real SAS (Iris), may be committed; build caches (`.zig-cache`) may be deleted automatically when free disk falls to about 8 GB, only for idle worktrees (done twice: 41 GB free the first time; the second at 9.5 GB free with every worktree idle, just before a seven-dev round); the `best32.` display fix is approved as STAT-BEST-001. Earlier scope: SASHELP sample data taken from SAS's public sample material may be committed to this public repository, for STAT-SASHELP-001 and the later SASHELP tickets; record source and verification, never invent rows, ask before adding a data set above about 2 MB.
-- **Live slots (auto):** dev1 STAT-STDIZE-004, dev2 STAT-ANOVA-003, dev3 STAT-NESTED-003, dev4 STAT-SURVEYLOGISTIC-001, dev5 STAT-CAUSALGRAPH-005, dev6 STAT-DATASET-001, dev7 STAT-CATMOD-003.
+- **Live slots (auto):** dev1 STAT-STDIZE-004, dev2 STAT-ANOVA-003, dev3 STAT-NESTED-003, dev4 STAT-SURVEYLOGISTIC-001, dev5 STAT-CAUSALGRAPH-005, dev6 STAT-REG-019, dev7 STAT-CATMOD-003.
 - **Held, not integrated (needs a user decision):** STAT-SASHELP-005, branch `stat-b7/sashelp005-dev4` (`50a9f8d7` code and data, `c3d1db77` ticket note). It adds SASHELP.JUNKMAIL (708 KB text), LEUTRAIN and LEUTEST (2.24 MB and 1.99 MB as text, committed gzip-compressed at 857 KB and 766 KB), about 2.3 MB in the repository, above the size the user is asked about.
-- **Counts:** 72 DONE, 139 PARK, 7 DOING, 1207 TODO.
+- **Integrated locally, awaiting batch verification (auto):** STAT-DATASET-001 (PARK).
+- **Counts:** 72 DONE, 140 PARK, 7 DOING, 1206 TODO.
 - **Next:** integrate each returned ticket and refill its slot, preferring close-out attempts on PARK tickets whose originals now match exactly (DISTANCE-001, PRINQUAL-001, VARCLUS-001, TPSPLINE-001, CATMOD-001, CANCORR-001, GEE-001, INBREED-001, then the open review in the batch 6 receipt), because a DONE ticket unlocks its dependents; then other eligible tickets.
 - **Working branch:** `feat/stat/batch-4`. Last tested and pushed code SHA `c14674090ea7c0c0de39b20345ce9978a8df808a` (batch 46; batch 45 was `87cb100c545b1cf0fb1309eb7df12a29e70cc188`). The bullets below this one describe batch 5 and are historical. Later commits that touch only this file are documentation. No PR created or merged; `main` untouched.
 
@@ -1596,7 +1597,7 @@ Complete prerequisite shared contracts first, then each PROC's data input, model
 
 <a id="stat-dataset-001"></a>
 
-### [DOING @dev6] STAT-DATASET-001 — Statistical data set types, matrices, and reserved metadata contracts
+### [PARK] STAT-DATASET-001 — Statistical data set types, matrices, and reserved metadata contracts
 
 - Source: S154 / Special SAS Data Sets / `Introduction to Special SAS Data Sets` (PDF pp. 10880–10883).
 - Scope: Represent statistical data set TYPE= attributes, matrix row identifiers, and reserved metadata consistently; subsequent type-specific tickets define the fields and formulas for each TYPE=.
@@ -13310,7 +13311,7 @@ Source: S154, Chapter 105, `The REG Procedure`, PDF pp. 8539–8728. Tasks in th
 
 <a id="stat-reg-019"></a>
 
-### [TODO] STAT-REG-019 — REG — Computer Resources in Regression Analysis
+### [DOING @dev6] STAT-REG-019 — REG — Computer Resources in Regression Analysis
 
 - Source: S154 / Chapter 105 / `Computer Resources in Regression Analysis` (PDF p. 8650).
 - Scope: Implement Computer Resources in Regression Analysis. Cover the source suboptions, defaults, and applicability restrictions; implement only this feature group, without extending to languages or runtime environments outside the cited scope.
