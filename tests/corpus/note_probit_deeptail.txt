@@ -1,3 +1,4 @@
 ref_quantiles=               -1.95996398454005-5.199337582
 deep_tail=               -6.36134091220171
 median=                               0
+pin_bits=BFFF5C0331EEFF84 C014CC1F26B0CDF7 C01972035A2273E4

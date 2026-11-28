@@ -10,4 +10,9 @@ data _null_;
   put 'best12=' x best12.;
   put 'best6=' x best6.;
   put 'best17=' x best17.;
+  /* OPENSAS REGRESSION PIN, not a SAS expectation (STAT-BEST-001): BEST17. now
+     shows 16 characters, so the full LENGTH-5 double is pinned by its bits
+     (36.59999990463257). SAS 9.4 does not shorten a DATA _NULL_ PDV value, so
+     real SAS prints 36.6 here and 40424CCCCCCCCCCD. */
+  put 'bits=' x hex16.;
 run;

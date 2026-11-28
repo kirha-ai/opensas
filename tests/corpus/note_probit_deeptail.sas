@@ -23,4 +23,13 @@ data _null_;
   put "ref_quantiles=" q_lo best32. q_tail best12.;
   put "deep_tail=" q_deep best32.;
   put "median=" q_mid best32.;
+  /* OPENSAS REGRESSION PINS, not SAS expectations: the exact bits of the values
+     this fixture pinned before STAT-BEST-001, so no precision is lost now that
+     BEST32. shows only 16 characters. The old texts -1.9599639845400538 and
+     -6.361340912201716 were the old f64 round(x*1e29)/1e29 rendering of
+     BFFF5C0331EEFF84 and C01972035A2273E4 (one ulp off when parsed back);
+     q_tail C014CC1F26B0CDF7 is exactly -5.199337582150739. q_tail differs from SAS 9.4
+     (-5.19933758219281) by 4.2e-11 and q_deep from SAS (-6.36134090240405) by
+     9.8e-9: known accuracy differences, reported separately. */
+  put "pin_bits=" q_lo hex16. " " q_tail hex16. " " q_deep hex16.;
 run;

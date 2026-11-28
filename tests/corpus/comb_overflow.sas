@@ -10,6 +10,9 @@ data _null_;
      (7E19D4965077DFEB) as 2.7028824094543E299 (15-character mantissa). SAS's
      own COMB returns 7E19D4965077E402 (printed ...547E299), ~1.4e-13 relative
      off the true value; the expectation pins the true binomial's text. */
+  put 'big_bits=' big hex16.; /* OPENSAS REGRESSION PIN, not a SAS expectation:
+     opensas's value (3 ulp above the true 7E19D4965077DFEB), keeping the full
+     precision the old 15-digit BEST20. line carried */
   a = comb(5,2);  put a=;  /* 10 */
   b = comb(52,5); put b=;  /* 2598960 */
   c = comb(10,10); put c=; /* 1 */
