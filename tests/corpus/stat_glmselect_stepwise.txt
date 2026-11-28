@@ -1,0 +1,312 @@
+
+The GLMSELECT Procedure
+
+Data Set                     WORK.TRIAL
+Dependent Variable                    y
+Selection Method               Stepwise
+Select Criterion                    SBC
+Stop Criterion                      SBC
+Effect Hierarchy Enforced          None
+
+
+The GLMSELECT Procedure
+
+Number of Observations Read          32
+Number of Observations Used          30
+
+
+    Class Level Information
+ 
+Class      Levels    Values
+
+grp             2    East West 
+
+
+        Dimensions
+
+Number of Effects       14
+Number of Parameters    15
+
+The GLMSELECT Procedure
+Stepwise Selection: Step 0
+Effect Entered: Intercept 
+
+                       Analysis of Variance
+ 
+                                  Sum of           Mean
+Source                 DF        Squares         Square    F Value
+
+Model                   0              0              .        .  
+Error                  29      329.52330       11.36287           
+Corrected Total        29      329.52330                          
+
+
+Root MSE              3.37089
+Dependent Mean       12.01367
+R-Square               0.0000
+Adj R-Sq               0.0000
+AIC                 105.89349
+AICC                106.33793
+BIC                  72.09129
+C(p)                871.91740
+PRESS               352.64086
+SBC                  75.29469
+ASE                  10.98411
+
+
+                   Parameter Estimates
+ 
+                                       Standard
+Parameter    DF        Estimate           Error    t Value
+
+Intercept     1       12.013667        0.615437      19.52
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+The GLMSELECT Procedure
+Stepwise Selection: Step 1
+Effect Entered: x3
+
+                       Analysis of Variance
+ 
+                                  Sum of           Mean
+Source                 DF        Squares         Square    F Value
+
+Model                   1      230.53682      230.53682      65.21
+Error                  28       98.98647        3.53523           
+Corrected Total        29      329.52330                          
+
+
+Root MSE              1.88022
+Dependent Mean       12.01367
+R-Square               0.6996
+Adj R-Sq               0.6889
+AIC                  71.81358
+AICC                 72.73665
+BIC                  36.67675
+C(p)                244.32884
+PRESS               115.36429
+SBC                  42.61597
+ASE                   3.29955
+
+
+                   Parameter Estimates
+ 
+                                       Standard
+Parameter    DF        Estimate           Error    t Value
+
+Intercept     1        8.396559        0.564334      14.88
+x3            1        0.441111        0.054624       8.08
+
+
+   Best 10 Entry Candidates
+ 
+ Rank    Effect           SBC
+
+    1    x3           42.6160
+    2    x7           71.3319
+    3    x11          74.7580
+    4    x6           77.0618
+    5    x9           77.1340
+    6    x10          77.2038
+    7    x8           77.2201
+    8    x1           77.3837
+    9    grp          77.4164
+   10    x4           78.0129
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+The GLMSELECT Procedure
+Stepwise Selection: Step 2
+Effect Entered: x7
+
+                       Analysis of Variance
+ 
+                                  Sum of           Mean
+Source                 DF        Squares         Square    F Value
+
+Model                   2      299.54301      149.77150     134.88
+Error                  27       29.98029        1.11038           
+Corrected Total        29      329.52330                          
+
+
+Root MSE              1.05375
+Dependent Mean       12.01367
+R-Square               0.9090
+Adj R-Sq               0.9023
+AIC                  37.98028
+AICC                 39.58028
+BIC                   3.37588
+C(p)                 57.87519
+PRESS                37.61670
+SBC                  10.18387
+ASE                   0.99934
+
+
+                   Parameter Estimates
+ 
+                                       Standard
+Parameter    DF        Estimate           Error    t Value
+
+Intercept     1        5.661949        0.469425      12.06
+x3            1        0.438528        0.030615      14.32
+x7            1        0.268421        0.034049       7.88
+
+
+   Best 10 Entry Candidates
+ 
+ Rank    Effect           SBC
+
+    1    x7           10.1839
+    2    x11          27.7917
+    3    x10          40.4674
+    4    x5           44.2429
+    5    x9           44.4706
+    6    x4           45.0335
+    7    x12          45.2689
+    8    x1           45.3348
+    9    grp          45.4571
+   10    x8           45.8942
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+The GLMSELECT Procedure
+Stepwise Selection: Step 3
+Effect Entered: x11
+
+                       Analysis of Variance
+ 
+                                  Sum of           Mean
+Source                 DF        Squares         Square    F Value
+
+Model                   3      321.35719      107.11906     341.06
+Error                  26        8.16611        0.31408           
+Corrected Total        29      329.52330                          
+
+
+Root MSE              0.56043
+Dependent Mean       12.01367
+R-Square               0.9752
+Adj R-Sq               0.9724
+AIC                   0.96386
+AICC                  3.46386
+BIC                 -26.51282
+C(p)                  0.30138
+PRESS                11.08545
+SBC                 -25.43135
+ASE                   0.27220
+
+
+                   Parameter Estimates
+ 
+                                       Standard
+Parameter    DF        Estimate           Error    t Value
+
+Intercept     1        4.578795        0.281465      16.27
+x3            1        0.442127        0.016288      27.14
+x7            1        0.226744        0.018787      12.07
+x11           1        0.145724        0.017486       8.33
+
+
+   Best 10 Entry Candidates
+ 
+ Rank    Effect           SBC
+
+    1    x11         -25.4314
+    2    x10           3.3408
+    3    x9           12.0114
+    4    x6           12.4498
+    5    x1           12.7939
+    6    x8           12.9140
+    7    grp          13.0592
+    8    x12          13.1868
+    9    x4           13.2365
+   10    x2           13.3508
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+The GLMSELECT Procedure
+
+                                                                  Stepwise Selection Summary
+ 
+      Effect     Effect         Number   Number    Model Adjusted 
+ Step Entered    Removed    Effects In Parms In R-Square R-Square         AIC        AICC         BIC          CP         SBC       PRESS         ASE F Value
+
+    0 Intercept                      1        1   0.0000   0.0000    105.8935    106.3379     72.0913    871.9174     75.2947    352.6409     10.9841    0.00
+-------------------------------------------------------------------------------------------------------------------------------------------------------------
+    1 x3                             2        2   0.6996   0.6889     71.8136     72.7367     36.6768    244.3288     42.6160    115.3643      3.2995   65.21
+    2 x7                             3        3   0.9090   0.9023     37.9803     39.5803      3.3759     57.8752     10.1839     37.6167      0.9993   62.15
+    3 x11                            4        4   0.9752   0.9724*     0.9639*     3.4639*   -26.5128*     0.3014*   -25.4314*    11.0855*     0.2722   69.45
+
+                                                                 * Optimal Value of Criterion
+
+    Stepwise Selection Summary
+ 
+      Effect     Effect
+ Step Entered    Removed    Pr > F
+
+    0 Intercept             1.0000
+----------------------------------
+    1 x3                    <.0001
+    2 x7                    <.0001
+    3 x11                   <.0001
+
+   * Optimal Value of Criterion
+
+
+Selection stopped at a local minimum of the SBC criterion.
+
+
+                    Stop Details
+ 
+Candidate               Candidate         Compare
+For          Effect           SBC         SBC
+
+Entry        x9          -24.8522    >    -25.4314  
+Removal      x11          10.1839    >    -25.4314  
+
+The GLMSELECT Procedure
+Selected Model
+
+The selected model is the model at the last step (Step 3).
+
+
+Effects: Intercept x3 x7 x11 
+
+
+                       Analysis of Variance
+ 
+                                  Sum of           Mean
+Source                 DF        Squares         Square    F Value
+
+Model                   3      321.35719      107.11906     341.06
+Error                  26        8.16611        0.31408           
+Corrected Total        29      329.52330                          
+
+
+Root MSE              0.56043
+Dependent Mean       12.01367
+R-Square               0.9752
+Adj R-Sq               0.9724
+AIC                   0.96386
+AICC                  3.46386
+BIC                 -26.51282
+C(p)                  0.30138
+PRESS                11.08545
+SBC                 -25.43135
+ASE                   0.27220
+
+
+                   Parameter Estimates
+ 
+                                       Standard
+Parameter    DF        Estimate           Error    t Value
+
+Intercept     1        4.578795        0.281465      16.27
+x3            1        0.442127        0.016288      27.14
+x7            1        0.226744        0.018787      12.07
+x11           1        0.145724        0.017486       8.33
