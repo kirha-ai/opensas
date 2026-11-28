@@ -402,21 +402,54 @@ fn finiteNumber(v: Value) ?f64 {
     return if (v == .num and std.math.isFinite(v.num)) v.num else null;
 }
 
-/// Decimal places a listing column needs: the most any value shows under
-/// BEST12., so 27.0 prints beside 19.4 and an integer column prints bare.
-fn decimals(a: A, values: []const f64) !usize {
-    var most: usize = 0;
-    for (values) |x| {
-        if (!std.math.isFinite(x)) continue;
-        const text = std.mem.trim(u8, try @import("../format.zig").apply(a, .{ .num = x }, "best12."), " ");
-        if (std.mem.indexOfAny(u8, text, "eE") != null) return error.Unsupported;
-        if (std.mem.indexOfScalar(u8, text, '.')) |dot| most = @max(most, text.len - dot - 1);
+/// Fewest decimals that write `x` exactly (to binary noise), at most 15.
+fn exactDecimals(x: f64) usize {
+    var d: usize = 0;
+    while (d < 15) : (d += 1) {
+        const scaled = x * std.math.pow(f64, 10, @floatFromInt(d));
+        if (@abs(scaled - @round(scaled)) <= 1e-9 * @max(1, @abs(scaled))) break;
     }
-    return most;
+    return d;
 }
-fn cell(a: A, x: f64, places: usize) ![]const u8 {
+
+/// Decimals one value asks for: those of the value rounded to three
+/// significant digits (7.125 -> 7.13 -> 2, 0.00012 -> 5, 123.456 -> 0,
+/// 9.996 -> 10.0 -> 0).
+fn valueDecimals(x: f64) usize {
+    if (x == 0 or !std.math.isFinite(x)) return 0;
+    const e: i64 = @as(i64, @intFromFloat(@floor(std.math.log10(@abs(x))))) + 1;
+    const scale = std.math.pow(f64, 10, @floatFromInt(3 - e));
+    return exactDecimals(@round(x * scale) / scale);
+}
+
+/// The w.d format GLMMOD gives one Design Points column (no format in the
+/// Stat.GLMMod.DesignPoints template; ODS OUTPUT + PROC CONTENTS on SAS 9.4,
+/// 16 probe columns): d = the most decimals any value asks for, w = the widest
+/// value written with d decimals (its own sign counted). A column with
+/// decimals wider than 8 is written E8.2 (w 9 and 10 probed); an integer
+/// column stays w. (w 9 probed).
+const ColumnFormat = struct { w: usize, d: usize, exp: bool };
+fn columnFormat(a: A, values: []const f64) !ColumnFormat {
+    var d: usize = 0;
+    for (values) |x| if (std.math.isFinite(x)) {
+        d = @max(d, valueDecimals(x));
+    };
+    var w: usize = 1;
+    for (values) |x| if (std.math.isFinite(x)) {
+        const text = try std.fmt.allocPrint(a, "{d:.0}", .{@trunc(@abs(x) + 0.5 * std.math.pow(f64, 10, -@as(f64, @floatFromInt(d))))});
+        w = @max(w, @as(usize, @intFromBool(x < 0)) + text.len + (if (d > 0) d + 1 else 0));
+    };
+    if (w <= 8 or (d == 0 and w <= 9)) return .{ .w = w, .d = d, .exp = false };
+    // ponytail: wider integer columns were not probed, and E8.2 is
+    // SAS-verified for positive and zero values only: both stay visible gaps.
+    if (d == 0) return error.Unsupported;
+    for (values) |x| if (std.math.isFinite(x) and x < 0) return error.Unsupported;
+    return .{ .w = 8, .d = 2, .exp = true };
+}
+fn cell(a: A, x: f64, f: ColumnFormat) ![]const u8 {
     if (!std.math.isFinite(x)) return ".";
-    return std.fmt.allocPrint(a, "{d:.[1]}", .{ x, places });
+    const spec = if (f.exp) "e8.2" else try std.fmt.allocPrint(a, "{d}.{d}", .{ f.w, f.d });
+    return std.mem.trim(u8, try @import("../format.zig").apply(a, .{ .num = x }, spec), " ");
 }
 
 /// One pass of the data (p.4239): the dependents sharing one missing-value
@@ -529,15 +562,15 @@ fn render(cx: proc.ProcCtx, out: *std.ArrayList(u8), s: Spec, passes: []const Pa
         for (0..d.p) |j| try out.print(a, " {d}", .{j + @as(usize, if (s.zerobased) 0 else 1)});
         try out.appendSlice(a, "\n\n");
         const column = try a.alloc(f64, d.n);
-        const role_places = try a.alloc(usize, roles.items.len);
+        const role_places = try a.alloc(ColumnFormat, roles.items.len);
         for (roles.items, role_places) |c, *places| {
             for (d.source_rows, column) |source, *x| x.* = roleValue(s, pass.rows[source], c);
-            places.* = decimals(a, column) catch return proc.failGap(cx.diags, 0, "PROC GLMMOD: design points with exponent-notation values are not implemented", .{});
+            places.* = columnFormat(a, column) catch return proc.failGap(cx.diags, 0, "PROC GLMMOD: design points columns wider than nine digits or negative in exponent notation are not implemented", .{});
         }
-        const design_places = try a.alloc(usize, d.p);
+        const design_places = try a.alloc(ColumnFormat, d.p);
         for (design_places, 0..) |*places, j| {
             for (column, 0..) |*x, i| x.* = d.x[i * d.p + j];
-            places.* = decimals(a, column) catch return proc.failGap(cx.diags, 0, "PROC GLMMOD: design points with exponent-notation values are not implemented", .{});
+            places.* = columnFormat(a, column) catch return proc.failGap(cx.diags, 0, "PROC GLMMOD: design points columns wider than nine digits or negative in exponent notation are not implemented", .{});
         }
         for (d.source_rows, 0..) |source, i| {
             try out.print(a, "{d}", .{i + 1});
@@ -1205,4 +1238,78 @@ test "STAT-GLMMOD-003 crossed factor that is also nesting is built as the reduce
     // @n counts written variables (U1 probe): c*h(h) has three, so @2 drops it.
     try run(cx, &sink, try lex.tokenize(a, "proc glmmod data=t3 outparm=at2 noprint; class h c; model y1 = c*h(h) | k@2 / noint; run;", &d));
     try std.testing.expectEqual(@as(usize, 1), lib.find("at2").?.rowCount());
+}
+
+test "STAT-GLMMOD-002 design columns for main, covariate, polynomial, continuous-by-class and nested effects match a hand calculation" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var lib = @import("../exec.zig").Library.init(a);
+    var d = diag.Diagnostics.init(a);
+    const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &d };
+    var sink: std.ArrayList(u8) = .empty;
+    const ds = try a.create(Dataset);
+    ds.* = Dataset.init(a, "s");
+    _ = try ds.addColumn("a", .char);
+    for ([_][]const u8{ "b", "x", "y" }) |nm| _ = try ds.addColumn(nm, .num);
+    const av = [_][]const u8{ "p", "q", "p", "q", "p", "q" };
+    const bv = [_]f64{ 1, 1, 2, 2, 1, 1 };
+    const xv = [_]f64{ 0.5, 1.25, 2, -1, 3, 0.1 };
+    for (0..6) |i| try ds.appendRow(&.{ .{ .str = av[i] }, .{ .num = bv[i] }, .{ .num = xv[i] }, .{ .num = @floatFromInt(i) } });
+    try lib.put("s", ds);
+    try run(cx, &sink, try lex.tokenize(a, "proc glmmod data=s outdesign=d noprint; class a b; model y = a x x*x a*x b(a); run;", &d));
+    try std.testing.expect(!d.hasErrors());
+    const out = lib.find("d").?;
+    try std.testing.expectEqual(@as(usize, 6), out.rowCount());
+    try std.testing.expectEqual(@as(usize, 12), out.columns.items.len);
+    // Hand calculation: 1, [a=p], [a=q], x, x^2, x[a=p], x[a=q], then the
+    // b(a) indicators in (p,1) (p,2) (q,1) (q,2) order.
+    for (0..6) |i| {
+        const p: f64 = if (av[i][0] == 'p') 1 else 0;
+        const q = 1 - p;
+        const x = xv[i];
+        const want = [_]f64{ 1, p, q, x, x * x, x * p, x * q, p * @intFromBool(bv[i] == 1), p * @intFromBool(bv[i] == 2), q * @intFromBool(bv[i] == 1), q * @intFromBool(bv[i] == 2) };
+        try std.testing.expectEqual(@as(f64, @floatFromInt(i)), out.rows.items[i][0].num);
+        for (want, 0..) |w, j| try std.testing.expectEqual(w, out.rows.items[i][j + 1].num);
+    }
+}
+
+test "STAT-GLMMOD-002 Design Points column formats follow the SAS-probed w.d rule" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    // Columns and formats from ODS OUTPUT DesignPoints + PROC CONTENTS on SAS 9.4.
+    const Case = struct { v: []const f64, w: usize, d: usize, exp: bool };
+    const cases = [_]Case{
+        .{ .v = &.{ 3.2, 4.75, 5, 2.5, 7.125, 1 }, .w = 4, .d = 2, .exp = false },
+        .{ .v = &.{ 0.333333333333, 0.00012, 12, 2.5 }, .w = 8, .d = 5, .exp = false },
+        .{ .v = &.{ 2.123456789, -3.5, 7, 0.1 }, .w = 5, .d = 2, .exp = false },
+        .{ .v = &.{ 1, 2, 3, 4, 5, 6 }, .w = 1, .d = 0, .exp = false },
+        .{ .v = &.{ 123.456, 1 }, .w = 3, .d = 0, .exp = false },
+        .{ .v = &.{ 1234567.5, 0.25, 100, 1 }, .w = 8, .d = 2, .exp = true },
+        .{ .v = &.{ 0.001, 1 }, .w = 5, .d = 3, .exp = false },
+        .{ .v = &.{ 99999, 0.5, 1 }, .w = 7, .d = 1, .exp = false },
+        .{ .v = &.{ 12345.678, 1 }, .w = 5, .d = 0, .exp = false },
+        .{ .v = &.{ 0.123456, 0.5, 1 }, .w = 5, .d = 3, .exp = false },
+        .{ .v = &.{ -0.5, -12.25, 1 }, .w = 5, .d = 1, .exp = false },
+        .{ .v = &.{ 1000000, 1 }, .w = 7, .d = 0, .exp = false },
+        .{ .v = &.{ 0.0000001, 1 }, .w = 8, .d = 2, .exp = true },
+        .{ .v = &.{ 1.5, 1.5 }, .w = 3, .d = 1, .exp = false },
+        .{ .v = &.{ 33.3333333, 1 }, .w = 4, .d = 1, .exp = false },
+        .{ .v = &.{ 0.05, 1 }, .w = 4, .d = 2, .exp = false },
+        .{ .v = &.{ 0.70781893, -0.00042, 84, 0.25 }, .w = 8, .d = 5, .exp = false },
+    };
+    for (cases) |c| {
+        const f = try columnFormat(a, c.v);
+        try std.testing.expectEqual(c.exp, f.exp);
+        try std.testing.expectEqual(c.w, f.w);
+        try std.testing.expectEqual(c.d, f.d);
+    }
+    try std.testing.expectEqualStrings("7.13", try cell(a, 7.125, .{ .w = 4, .d = 2, .exp = false }));
+    try std.testing.expectEqualStrings("1.23E+06", try cell(a, 1234567.5, .{ .w = 8, .d = 2, .exp = true }));
+    try std.testing.expectEqualStrings(".", try cell(a, std.math.nan(f64), .{ .w = 4, .d = 2, .exp = false }));
+    try std.testing.expectError(error.Unsupported, columnFormat(a, &.{ -1234567.5, 0.25 }));
+    try std.testing.expectError(error.Unsupported, columnFormat(a, &.{ 1234567890, 1 }));
+    const nine = try columnFormat(a, &.{ 123456789, 1 });
+    try std.testing.expect(!nine.exp and nine.w == 9);
 }
