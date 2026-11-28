@@ -6,6 +6,10 @@
 //! STAT-GENMOD-002 adds the default listing for the Normal model with an
 //! identity or log link and ML scale (kernel in genmod_fit.zig).
 //!
+//! STAT-GENMOD-003 adds the events/trials binomial-logit model with CLASS main
+//! effects and LRCI/WALDCI (genmod_logit.zig, kernel genmod_binomial.zig) and
+//! the MODEL option table (unknown option: user error; documented: gap).
+//!
 //! ponytail: every other valid step (other DIST=/LINK=, CLASS designs, FREQ,
 //! WEIGHT, MODEL options, unfinished OUTPUT keywords and all later statements) still ends in a
 //! D-009 gap (exit 2) with NOTHING printed, so a GENMOD step can never
@@ -23,6 +27,7 @@ const classes = @import("class_levels.zig");
 const selection = @import("data_selection.zig");
 const fit = @import("genmod_fit.zig");
 const output = @import("genmod_output.zig");
+const logit = @import("genmod_logit.zig");
 const chiTail = @import("logistic_fit.zig").chiTail;
 const A = std.mem.Allocator;
 const Out = std.ArrayList(u8);
@@ -277,6 +282,8 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
                 if (ds.columns.items[s.response].type != .num) return cx.diags.fail(error.ParseError, t[j].line, "PROC GENMOD: the events variable in events/trials syntax must be numeric", .{});
                 j += 2;
             }
+            // p.3544: MODEL response <(variable-options)> = ...
+            if (at(t, j, .lparen)) return proc.failGap(cx.diags, t[j].line, "PROC GENMOD: response variable options are not implemented (STAT-GENMOD-004)", .{});
             if (!at(t, j, .eq)) return invalid(cx, t, j);
             j += 1;
             while (j < end and !at(t, j, .slash)) : (j += 1) {
@@ -580,6 +587,16 @@ pub fn run(cx: proc.ProcCtx, out: *Out, t: []const lex.Token) diag.Error!void {
     for (groups, selections) |group, *sel| sel.* = try prepare(cx, s, group.rows);
     if (s.later.len > 0) return proc.failGap(cx.diags, l0, "PROC GENMOD: the {s} statement is not implemented", .{s.later[0]});
     if (s.exact or s.exact_only or s.strata.len > 0) return proc.failGap(cx.diags, l0, "PROC GENMOD: exact analysis is not implemented (STAT-GENMOD-010)", .{});
+    // STAT-GENMOD-003: an option outside Table 51.7 is a user error everywhere.
+    for (s.model_options) |name| if (logit.modelOption(name) == null)
+        return cx.diags.fail(error.ParseError, l0, "PROC GENMOD: {s} is not a valid MODEL statement option", .{name});
+    // STAT-GENMOD-003: events/trials binomial-logit model with CLASS main effects.
+    if (s.trials != null and s.dist != null) {
+        if (groups.len != 1) return proc.failGap(cx.diags, l0, "PROC GENMOD: BY groups or an empty input with a binomial model are not verified (STAT-GENMOD-003 remaining gap)", .{});
+        var body: Out = .empty;
+        try logit.run(cx, &body, s, selections[0], groups[0].rows, l0);
+        return out.appendSlice(a, body.items);
+    }
     // STAT-GENMOD-002 fits the Normal model with an identity or log link.
     // Everything else stays a loud gap: nothing is printed for the step.
     if (s.dist) |d| if (!eq(d, "normal") and !eq(d, "nor") and !eq(d, "n"))
@@ -679,4 +696,5 @@ pub fn run(cx: proc.ProcCtx, out: *Out, t: []const lex.Token) diag.Error!void {
 test {
     _ = @import("genmod_tests.zig");
     _ = @import("genmod_fit.zig");
+    _ = @import("genmod_binomial.zig");
 }
