@@ -34,8 +34,9 @@ This section is the only current status summary; every section below it is a his
 - **Open review (not done):** the originals of GENMOD-001/002/018, ANOVA-001/007, FREQ-014, PHREG-003 and LIFETEST-001/002 now match exactly but the tickets stay PARK; check each against its full acceptance criteria and recorded remaining gaps before any is marked DONE.
 - **Interrupted by the full disk:** STAT-ANOVA-009 and STAT-PHREG-004 are TODO (no file changed; reading notes in the tickets). STAT-LIFETEST-003 and STAT-GENMOD-003 are PARK with UNCOMMITTED, NEVER-COMPILED source retained in `opensas-dev5` (`stat-b6/lifetest003-dev5`) and `opensas-dev7` (`stat-b6/genmod003-dev7`); do not integrate it before it is built, tested and committed there.
 - **User approvals (2026-11-28):** public classic sample data, including rows exported from real SAS (Iris), may be committed; build caches (`.zig-cache`) may be deleted automatically when free disk falls to about 8 GB, only for idle worktrees (done once, 41 GB free); the `best32.` display fix is approved as STAT-BEST-001. Earlier scope: SASHELP sample data taken from SAS's public sample material may be committed to this public repository, for STAT-SASHELP-001 and the later SASHELP tickets; record source and verification, never invent rows, ask before adding a data set above about 2 MB.
-- **Live slots (auto):** dev1 STAT-SASHELP-004, dev2 STAT-SASHELP-006, dev3 STAT-CAUSALTRT-001, dev4 STAT-HPLMIXED-001, dev4 STAT-PRINT-001, dev5 STAT-HPLOGISTIC-001, dev6 STAT-PSMATCH-001, dev7 STAT-BEST-001.
-- **Counts:** 56 DONE, 129 PARK, 8 DOING, 1231 TODO.
+- **Live slots (auto):** dev1 STAT-SASHELP-004, dev2 STAT-SASHELP-006, dev3 STAT-CAUSALTRT-001, dev4 STAT-HPLMIXED-001, dev5 STAT-CAUSALGRAPH-001, dev6 STAT-PSMATCH-001, dev7 STAT-BEST-001.
+- **Integrated locally, awaiting batch verification (auto):** STAT-HPLOGISTIC-001 (PARK), STAT-PRINT-001 (PARK).
+- **Counts:** 56 DONE, 131 PARK, 7 DOING, 1230 TODO.
 - **Next:** integrate each returned ticket, refill its slot, verify and push the next batch; run the open review above. The `best32.` fix is assigned as STAT-BEST-001.
 - **Working branch:** `feat/stat/batch-4`. Last tested and pushed code SHA `af1936a6d7cdaf004cebbcd684019978bbfc3100` (batch 19; batch 18 was `6b2bfb79619e238219aab0a713ca3849d5c73d4d`). The bullets below this one describe batch 5 and are historical. Later commits that touch only this file are documentation. No PR created or merged; `main` untouched.
 - **Batch 5 verification at that exact SHA (2026-11-28):** whole `tests/STAT15.4-oracle/` moved out of the checkout, then `zig build gate -j2 --summary all` direct exit 0 — **2380/2380 unit tests** (2262 + 102 + 13 + 3), **2409/2409 corpus**, **11/11 programs**; `zig build install` direct 0; separate supplemental direct 0, **1113/1113**. Oracle restored unchanged (1425 entries), tree clean.
@@ -3098,7 +3099,7 @@ Source: S154, Chapter 37, `The CAUSALGRAPH Procedure`, PDF pp. 2303–2362. Task
 
 <a id="stat-causalgraph-001"></a>
 
-### [TODO] STAT-CAUSALGRAPH-001 — CAUSALGRAPH — Data input, variable roles, and basic options
+### [DOING @dev5] STAT-CAUSALGRAPH-001 — CAUSALGRAPH — Data input, variable roles, and basic options
 
 - Source: S154 / Chapter 37 / `PROC CAUSALGRAPH Statement` (PDF pp. 2310–2314).
 - Scope: Integrate PROC CAUSALGRAPH declarations, basic options, defaults, and execution boundaries; this ticket establishes parameter objects and result interfaces, while later feature tickets implement model-, algorithm-, and output-specific options. Also implement the default input data contract for this procedure; apply this procedure's rules for missing values, variable roles, and observation selection.
@@ -6701,7 +6702,7 @@ Source: S154, Chapter 61, `The HPLOGISTIC Procedure`, PDF pp. 4737–4802. Tasks
 
 <a id="stat-hplogistic-001"></a>
 
-### [DOING @dev5] STAT-HPLOGISTIC-001 — HPLOGISTIC — Data input, variable roles, and basic options
+### [PARK] STAT-HPLOGISTIC-001 — HPLOGISTIC — Data input, variable roles, and basic options
 
 - Source: S154 / Chapter 61 / `PROC HPLOGISTIC Statement` (PDF pp. 4746–4751); S154 / Chapter 61 / `BY Statement` (PDF pp. 4751–4752); S154 / Chapter 61 / `FREQ Statement` (PDF p. 4753); S154 / Chapter 61 / `ID Statement` (PDF p. 4753); S154 / Chapter 61 / `WEIGHT Statement` (PDF p. 4764); S154 / Chapter 61 / `Missing Values` (PDF pp. 4764–4765).
 - Scope: Integrate PROC HPLOGISTIC declarations, basic options, defaults, and execution boundaries; this ticket establishes parameter objects and result interfaces, while later feature tickets implement model-, algorithm-, and output-specific options. Also implement BY; FREQ; ID; WEIGHT; Missing Values; apply this procedure's rules for missing values, variable roles, and observation selection.
@@ -16721,7 +16722,7 @@ Source: S154, Chapter 131, `The VARIOGRAM Procedure`, PDF pp. 10751–10878. Tas
 
 ## Base prerequisites added with user approval
 
-### [DOING @dev4] STAT-PRINT-001 — Base PROC PRINT listing layout needed by STAT originals
+### [PARK] STAT-PRINT-001 — Base PROC PRINT listing layout needed by STAT originals
 
 - Source: added 2026-11-28 with the user's approval; blockers reported while implementing STAT tickets. The evidence is the reference listings under the oracle folders named below (SAS 9.4).
 - Scope: PROC PRINT listing layout where STAT originals differ from SAS: (1) splitting column headers at blanks, underscores and lower-to-upper case changes (`RunTime` shown as `Run` / `Time`); (2) one number format per unformatted numeric column, with aligned decimals (`375.50`, `69.0`, `0.00000`), instead of independent BEST12. cells; (3) stacking headers so that columns fit one page before splitting into panels. The `best32.` display width is NOT in this ticket (separate pending user decision). PROC FREQ column alignment and BY-line placement under NOCENTER are not in this ticket.
@@ -16729,6 +16730,8 @@ Source: S154, Chapter 131, `The VARIOGRAM Procedure`, PDF pp. 10751–10878. Tas
 - Oracle fixtures (read-only, owned by other tickets; use them as references, do not edit): STAT-SCORE-001, STAT-DISTANCE-001, STAT-PRINQUAL-001, STAT-VARCLUS-001, STAT-SASHELP-001 (PROC PRINT sections).
 - Acceptance criteria: derive each layout rule from SAS listings (reference files or real SAS runs on invented data), not from opensas output; the PROC PRINT sections of the listed originals match the references token for token; permanent corpus fixtures cover each rule with its boundary cases. Any existing expected output that changes needs specific SAS evidence, preserved coverage and a separate commit from the code change; list every changed expectation.
 - Status 2026-11-28 (dev4): PARK. Branch stat-b7/print001-dev4, base 0173acb7, code c1fc3044, expected-result corrections 055897c9. Implemented in `src/main.zig` PRINT only: (1) one fixed-decimal format per unformatted numeric column, d = min(most BEST12. decimals, max(6 - widest integer part, 2)) over all printed rows (`375.50`, `69.0`, `0.00000`, `123456789012.00`); (2) unformatted numeric names split at lower-to-upper case changes when the values are narrower (`RunTime` → `Run`/`Time`, `LosAngeles`, `SalesQ1Total` → `Sales`/`Q1Total`; not `aB`, `HTTPServer`). Rules derived from the SCORE/DISTANCE/PRINQUAL references and real SAS runs on invented data. Originals: STAT-SCORE-001 documented_feature 178/178 tokens, 0 differ, rc 0/0; STAT-DISTANCE-001 156/156, 0 differ, rc 0/0; STAT-PRINQUAL-001 76/76, 0 differ, rc 0/0; STAT-SCORE-001 statement_by still differs (PROC SCORE BY output, not PRINT layout); STAT-VARCLUS-001 blocked by PROC VARCLUS (rc 2); STAT-SASHELP-001 blocked by missing SASHELP members (rc 2). Permanent tests: tests/corpus/stat_print_layout.sas (+.txt, tokens identical to a SAS 9.4 run); main.zig tests "STAT-PRINT-001 ...". Validation: `zig build test` exit 0 (2668/2668); corpus exit 0 (2576/2576); supplemental exit 0 (1113/1113). 39 corpus expected files changed (decimal alignment, plus the `RunTotal` header split in sum_varorder_input), each changed line checked against SAS output of the same fixture, except lines SAS itself did not print (noted in the dev4 report). Remaining gaps: (a) columns whose values are all below 0.1 (SAS `.009261697`) or that hold E-notation values keep per-cell BEST12.; (b) underscore header breaks (`x_SumWgt` → `x_`/`Sum`/`Wgt`, `Big_Value_`/`Name`, char `First_`/`Name`) not modelled; (c) header stacking to avoid panel splits (rule 3) not implemented; (d) SAS column spacing/centering differs (tokens only match).
+
+- Coordinator note: 39 expected results changed in a separate commit. In 35 files every changed line matches real SAS; in `freq_tests_gap_output`, `qa_tick357_lexer_eq_munch`, `informat_numx` and `means_prt_alias` some changed lines rest only on the verified rule (SAS printed no such table, or an older unrelated difference remains). Remaining: columns entirely below 0.1 or in E notation, underscore/character header splitting, header stacking before panel splits.
 
 <a id="stat-print-001"></a>
 
