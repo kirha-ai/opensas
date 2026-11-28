@@ -1,20 +1,18 @@
 # OpenSAS — SAS/STAT 15.4 implementation backlog
 
-## CURRENT STATE — ACTIVE (resumed 2026-11-28)
+## CURRENT STATE — PAUSED on full disk (2026-11-28)
 
 This section is the only current status summary; every section below it is a historical log. Update it after each integration, verification and handoff.
 
-- **State:** ACTIVE on explicit user resume. Batch 5 is integrated, verified and pushed (below). Batch 6: seven dev slots assigned 2026-11-28T05:03:56+00:00; implementation deadline 2026-11-28T05:48:56+00:00 (45 minutes, not reset by handoff or steering). Heavy builds limited to two at a time machine-wide. Coordinator keep-awake: `caffeinate -i -s` PID 62218.
-  - dev1: STAT-PLM-002 handed back PARK and integrated locally (`6e827e54`; GLM SOLUTION for full-rank CLASS-only models, PLM SHOW FIT/PARMS and TEST; original 543/869 then LSMEANS/SLICE gaps; final batch verification pending). Slot refilled: STAT-PLM-007; `/Users/thomas/kirha/opensas-dev1`; branch `stat-b6/plm007-dev1`; assigned 2026-11-28T05:18:49+00:00, own deadline 2026-11-28T06:03:49+00:00.
-  - dev2: STAT-GLIMMIX-002 handed back PARK and integrated locally (`b82dbd21`, kernel only, step still a loud gap; final batch verification pending). STAT-GLIMMIX-003 then handed back PARK and integrated locally (`62754f49`; MODEL design matrix and coefficient resolver, step still a loud gap). Slot refilled: STAT-COMMON-022; `/Users/thomas/kirha/opensas-dev2`; branch `stat-b6/common022-dev2`; assigned 2026-11-28T05:22:59+00:00, own deadline 2026-11-28T06:07:59+00:00.
-  - dev3: STAT-FREQ-015 handed back as DONE candidate and integrated locally (`ed20f87a`, tests only, no production change; heading stays DOING until the final batch verification and push). Slot refilled: STAT-FREQ-019; `/Users/thomas/kirha/opensas-dev3`; branch `stat-b6/freq019-dev3`; assigned 2026-11-28T05:14:26+00:00, own deadline 2026-11-28T05:59:26+00:00.
-  - dev4: STAT-ANOVA-007 handed back PARK and integrated locally (`b123294e`; MEANS tables in-step and interactive, TUKEY display still a loud gap; final batch verification pending). STAT-ANOVA-010 then handed back PARK and integrated locally (`79761251`; BoxPlot, MEANS BoxPlots and Tukey LinesPlot; dev replay: ANOVA-007 364/364, ANOVA-001 364/364 and 528/528 rc 0/0, ANOVA-010 original blocked by the ODS TRACE gate; coordinator replay pending). Slot refilled: STAT-ANOVA-009; `/Users/thomas/kirha/opensas-dev4`; branch `stat-b6/anova009-dev4`; assigned 2026-11-28T05:31:24+00:00, own deadline 2026-11-28T06:16:24+00:00.
-  - dev5: STAT-LIFETEST-002 handed back PARK and integrated locally (`0407ff83`; its original is the same program/expected as LIFETEST-001's and passes 341/341; final batch verification pending). STAT-COMMON-015 then handed back as DONE candidate and integrated locally (`11d27897`; original 113/113 rc 0/0; heading stays DOING until the final batch verification and push). Slot refilled: STAT-LIFETEST-003; `/Users/thomas/kirha/opensas-dev5`; branch `stat-b6/lifetest003-dev5`; assigned 2026-11-28T05:25:44+00:00, own deadline 2026-11-28T06:10:44+00:00.
-  - dev6: STAT-PHREG-002 handed back PARK and integrated locally (`9af5aab8`; time-dependent programmed covariates, PHREG-001 page check done; final batch verification pending). STAT-PHREG-003 then handed back PARK and integrated locally (`94adcddf`; IF/ELSE/DO programming statements, counting-process and ENTRY= risk sets; dev replay: PHREG-003 original 267/267 rc 0/0; coordinator replay pending). Slot refilled: STAT-PHREG-004; `/Users/thomas/kirha/opensas-dev6`; branch `stat-b6/phreg004-dev6`; assigned 2026-11-28T05:31:24+00:00, own deadline 2026-11-28T06:16:24+00:00.
-  - dev7: STAT-GENMOD-002 handed back PARK and integrated locally (`834913ea`; Normal identity/log ML fit and listing, originals blocked only by OUTPUT; final batch verification pending). STAT-GENMOD-018 then handed back PARK and integrated locally (`d4de7ecc`; OUTPUT OUT= for the Normal fit; dev replay: GENMOD-018/002/001 originals 131/131, 131/131, 131/131, 264/264 rc 0/0, coordinator replay pending). Slot refilled: STAT-GENMOD-003; `/Users/thomas/kirha/opensas-dev7`; branch `stat-b6/genmod003-dev7`; assigned 2026-11-28T05:28:56+00:00, own deadline 2026-11-28T06:13:56+00:00.
-- **Counts:** 53 DONE, 77 PARK, 9 DOING (seven live devs plus FREQ-015 and COMMON-015 awaiting final verification), 1283 TODO.
-- **Working branch:** `feat/stat/batch-4`. Tested and pushed code SHA `470bdc33c8b8e070e4a4d7c5fbbf3f26ccaec8b5` (origin moved `0095ed9b`/`bc9eb62d` → `470bdc33`). Later commits that touch only this file are documentation. No PR created or merged; `main` untouched.
-- **Verification at that exact SHA (2026-11-28):** whole `tests/STAT15.4-oracle/` moved out of the checkout, then `zig build gate -j2 --summary all` direct exit 0 — **2380/2380 unit tests** (2262 + 102 + 13 + 3), **2409/2409 corpus**, **11/11 programs**; `zig build install` direct 0; separate supplemental direct 0, **1113/1113**. Oracle restored unchanged (1425 entries), tree clean.
+- **State:** PAUSED, no live dev agent. At about 05:33Z the Data volume filled (ENOSPC); every shell command was refused and the four running devs stopped. After the user freed space only 2.7 GiB is available, so no build or verification has been run since. Batch 6 is integrated LOCALLY ONLY on `feat/stat/batch-4` (46 commits ahead of origin, tip is the commit that records this note's parent `d77fe6f2`); it has NOT had the final oracle-absent gate, supplemental or coordinator replays and is NOT pushed. Coordinator keep-awake: `caffeinate -i -s` PID 62218.
+- **Batch 6 integrated locally (cherry-picked, awaiting final verification):** DONE candidates STAT-FREQ-015 and STAT-COMMON-015 (headings stay DOING until verified and pushed). PARK: STAT-PLM-002, STAT-PLM-007, STAT-GLIMMIX-002, STAT-GLIMMIX-003, STAT-LIFETEST-002, STAT-PHREG-002, STAT-PHREG-003, STAT-ANOVA-007, STAT-ANOVA-010, STAT-GENMOD-002, STAT-GENMOD-018, STAT-FREQ-019, STAT-COMMON-022. Hand merges, all additive, both sides kept: `src/stat/graph_ods.zig` `Name` enum (ANOVA `BoxPlot, LinesPlot` + FREQ `RelRiskPlot, ORPlot`). The FREQ-019 tracker commit was interrupted by ENOSPC and re-committed unchanged (`c9e0f875`, verified identical to dev3 `14b2b22c`).
+- **Last interim (not a receipt):** oracle-present gate at `be7a4736` direct 0, 2412/2418/11. Everything integrated after that (GLIMMIX-003, COMMON-015, GENMOD-018, PHREG-003, ANOVA-010, FREQ-019, PLM-007, COMMON-022) has never been compiled together.
+- **Interrupted by the full disk:** STAT-ANOVA-009 and STAT-PHREG-004 returned to TODO (no file changed; reading notes in the tickets). STAT-LIFETEST-003 and STAT-GENMOD-003 are PARK with UNCOMMITTED, NEVER-COMPILED source retained in the dev5/dev7 worktrees (details in the tickets); do not integrate it before it is built, tested and committed there.
+- **Dev-reported replays to confirm in the final verification:** GENMOD-018/002/001 originals 131/131, 131/131, 131/131, 264/264 rc 0; ANOVA-007 364/364 and ANOVA-001 364/364, 528/528 rc 0 (with graphics dir); PHREG-003 267/267 rc 0; FREQ-014 220/220 rc 0; COMMON-015 113/113 rc 0; LIFETEST-001/002 341/341 rc 0; FREQ-015 649/649 rc 0. If confirmed, review GENMOD-001/002, ANOVA-001/007, FREQ-014, PHREG-003 headings against their full acceptance criteria.
+- **Counts:** 53 DONE, 82 PARK, 2 DOING (the two DONE candidates, no live worker), 1285 TODO.
+- **Next:** free disk space (dev worktrees hold about 11 GiB of ignored `output/` and 14 GiB of `.zig-cache`; main `.zig-cache` 6.7 GiB; nothing deleted without the user's say), then `zig build install`, coordinator replays, oracle-absent gate + supplemental at the exact tip, push, mark the DONE candidates.
+- **Working branch:** `feat/stat/batch-4`. Last tested and pushed code SHA (batch 5) `470bdc33c8b8e070e4a4d7c5fbbf3f26ccaec8b5` (origin moved `0095ed9b`/`bc9eb62d` → `470bdc33`). Later commits that touch only this file are documentation. No PR created or merged; `main` untouched.
+- **Batch 5 verification at that exact SHA (2026-11-28):** whole `tests/STAT15.4-oracle/` moved out of the checkout, then `zig build gate -j2 --summary all` direct exit 0 — **2380/2380 unit tests** (2262 + 102 + 13 + 3), **2409/2409 corpus**, **11/11 programs**; `zig build install` direct 0; separate supplemental direct 0, **1113/1113**. Oracle restored unchanged (1425 entries), tree clean.
 - **Integration method:** seven branches `stat-b5/<ticket>-devN` from `bbf110dd`, applied serially by `git cherry-pick` (17 commits) in the order GENMOD-001, PLM-001, GLIMMIX-001, PHREG-001, ANOVA-001, FREQ-014, LIFETEST-001. Two additive conflicts (PHREG in `src/main.zig`/`src/root.zig`, LIFETEST in `src/root.zig`: adjacent registration lines) were resolved by keeping every line of both sides; nothing else was hand-edited.
 - **Batch 5 — new DONE:** none. **Integrated, PARK:** STAT-PLM-001, STAT-GLIMMIX-001, STAT-FREQ-014, STAT-ANOVA-001, STAT-LIFETEST-001, STAT-PHREG-001, STAT-GENMOD-001. No reference folder became deletion-ready.
 - **Unchanged original replays with the installed CLI at that SHA** (whitespace-normalised tokens matched or produced/reference; exit vs reference severity): LIFETEST-001 341/341 exact, rc 0/0 (PARK because BY/FREQ/WEIGHT/ID listings are gapped). ANOVA-001 documented_feature 170/364 and statement_by 170/528, rc 2/0 (MEANS/TUKEY and interactive MEANS unsupported). PHREG-001 rc 2/0, no PHREG listing (PLOTS, programming statements, BAYES unsupported; 13 tokens of trailing MEANS output only). FREQ-014 0/220, rc 2/0 (`PLOTS=RELRISKPLOT` unsupported; plot-free variant is the 220-token permanent fixture). PLM-001 0/869, GLIMMIX-001 0/379 and 0/706, GENMOD-001 0/131 and 0/264, all rc 2/0 (estimation or consumers unsupported, loud). COMMON-030 still 114/311 rc 2/0 (now stops at GLM SOLUTION+STORE / PLM SHOW/LSMEANS/SLICE gaps); COMMON-028 still 0/207 rc 2/0 (GLIMMIX estimation).
@@ -2005,13 +2003,14 @@ Source: S154, Chapter 29, `The ANOVA Procedure`, PDF pp. 1105–1162. Tasks in t
 
 <a id="stat-anova-009"></a>
 
-### [DOING @dev4] STAT-ANOVA-009 — ANOVA — Displayed Output / ODS Table Names
+### [TODO] STAT-ANOVA-009 — ANOVA — Displayed Output / ODS Table Names
 
 - Source: S154 / Chapter 29 / `Displayed Output` (PDF pp. 1140–1142); S154 / Chapter 29 / `ODS Table Names` (PDF pp. 1142–1143).
 - Scope: Implement Displayed Output; ODS Table Names. Cover all triggering options, content, and naming specified by this section; computational tickets supply numerical values, while other output types are handled separately.
 - Dependencies: [STAT-ANOVA-001](#stat-anova-001), [STAT-ANOVA-002](#stat-anova-002), [STAT-ANOVA-004](#stat-anova-004), [STAT-ANOVA-005](#stat-anova-005), [STAT-ANOVA-006](#stat-anova-006), [STAT-ANOVA-007](#stat-anova-007), [STAT-ODS-007](#stat-ods-007).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-ANOVA-009/](tests/STAT15.4-oracle/STAT-ANOVA-009/).
 - Acceptance criteria: For Displayed Output / ODS Table Names, verify table names, labels, triggering conditions, rows, columns, degrees of freedom, statistics, and missing representations; exercise selection and capture with ODS TRACE/OUTPUT; unrelated options must not create extra tables.
+- Coordinator note (2026-11-28): one attempt by dev4 was stopped by a full disk before any edit; no code exists. Reading notes for the next attempt (unverified, nothing compiled): add `anova` to the `routed` list in `src/main.zig` `runProc`, then filter and trace each table inside `anova.zig` as `npar1way.finishTable` does; interactive MEANS bypasses `runProc` and needs its own listing-open check; `ods_listing.known()` lacks OverallANOVA, ModelANOVA, Means, MCLinesInfo. SAS trace identities are in the reference log; the reference program has no ODS OUTPUT/SELECT, so typed-data evidence must come from PDF pp. 1140–1143. This also unblocks the STAT-ANOVA-010 original (ODS TRACE gate).
 
 <a id="stat-anova-010"></a>
 
@@ -4867,13 +4866,14 @@ Source: S154, Chapter 51, `The GENMOD Procedure`, PDF pp. 3481–3686. Tasks in 
 
 <a id="stat-genmod-003"></a>
 
-### [DOING @dev7] STAT-GENMOD-003 — GENMOD — CLASS / MODEL / ZEROMODEL
+### [PARK] STAT-GENMOD-003 — GENMOD — CLASS / MODEL / ZEROMODEL
 
 - Source: S154 / Chapter 51 / `CLASS Statement` (PDF pp. 3526–3529); S154 / Chapter 51 / `MODEL Statement` (PDF pp. 3544–3555); S154 / Chapter 51 / `ZEROMODEL Statement` (PDF pp. 3567–3568).
 - Scope: Implement CLASS; MODEL; ZEROMODEL. Implement the syntax and model semantics allowed by this procedure, using shared effect/parameterization support only for forms documented as supported.
 - Dependencies: [STAT-GENMOD-001](#stat-genmod-001), [STAT-COMMON-007](#stat-common-007).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-GENMOD-003/](tests/STAT15.4-oracle/STAT-GENMOD-003/).
 - Acceptance criteria: For CLASS / MODEL / ZEROMODEL, verify the parsed response/effect/parameter representation against the documented design matrix or model structure; cover applicable reference levels, interactions, missing levels, and invalid models; successful parsing alone is insufficient.
+- Coordinator handoff (2026-11-28, PARK): dev7 was stopped by a full disk. Nothing is committed, built or tested. Retained UNCOMMITTED in `/Users/thomas/kirha/opensas-dev7` on `stat-b6/genmod003-dev7` (HEAD `dba1106d`): untracked `src/stat/genmod_binomial.zig` (events/trials binomial-logit kernel, aliasing check, profile-likelihood limits by bisection), referenced by nothing; it imports a not-yet-written `genmod_binomial_tests.zig`. Not integrated. Hand arithmetic from the reference listing (unverified in code): GoF DF 18−6=12; AIC/AICC/BIC use the full log likelihood with p excluding the fixed scale and n = observations; LRCI only replaces the limit columns and heading, no separate table. Original not run. Resume: write the tests, MODEL option table, CLASS in the fit, listing, then replay GENMOD-003 and re-run the GENMOD-018/002/001 originals.
 
 <a id="stat-genmod-004"></a>
 
@@ -8618,13 +8618,14 @@ Source: S154, Chapter 77, `The LIFETEST Procedure`, PDF pp. 5639–5754. Tasks i
 
 <a id="stat-lifetest-003"></a>
 
-### [DOING @dev5] STAT-LIFETEST-003 — LIFETEST — TIME / Breslow, Fleming-Harrington, and Kaplan-Meier Methods / Life-Table Method
+### [PARK] STAT-LIFETEST-003 — LIFETEST — TIME / Breslow, Fleming-Harrington, and Kaplan-Meier Methods / Life-Table Method
 
 - Source: S154 / Chapter 77 / `TIME Statement` (PDF pp. 5669–5670); S154 / Chapter 77 / `Breslow, Fleming-Harrington, and Kaplan-Meier Methods` (PDF pp. 5671–5674); S154 / Chapter 77 / `Life-Table Method` (PDF pp. 5674–5676).
 - Scope: Implement TIME; Breslow, Fleming-Harrington, and Kaplan-Meier Methods; Life-Table Method. This ticket owns the feature's options, defaults, computation, and results as an extension of the basic computational path; the chapter's output tickets handle ODS descriptors and file presentation.
 - Dependencies: [STAT-LIFETEST-001](#stat-lifetest-001), [STAT-LIFETEST-002](#stat-lifetest-002).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-LIFETEST-003/](tests/STAT15.4-oracle/STAT-LIFETEST-003/).
 - Acceptance criteria: For TIME / Breslow, Fleming-Harrington, and Kaplan-Meier Methods / Life-Table Method, use a manually calculable event table to verify risk sets, survival estimates, variances, and intervals; include coincident events/censoring and entirely censored samples; validate numerical values against the source formulas or an independent reference, following this file's precision conventions.
+- Coordinator handoff (2026-11-28, PARK): dev5 was stopped by a full disk. Nothing is committed, built or tested. Retained UNCOMMITTED in `/Users/thomas/kirha/opensas-dev5` on `stat-b6/lifetest003-dev5` (HEAD `5621bc3d`): new untracked `src/stat/lifetest_lt.zig` (life table per pp. 5674–5676, default width rule, Breslow/FH estimates, listing renderer) and modified `src/stat/lifetest.zig` (METHOD=LT/LIFE/ACT, INTERVALS=/NINTERVAL=/WIDTH= parsing); only `zig ast-check` passed. Planned tests were not written. Not integrated. The unchanged original cannot pass yet in any case: it runs under ODS GRAPHICS ON with `plots=(s,ls,lls,h,p)` (LIFETEST graph ticket STAT-LIFETEST-010). Resume: build, add the planned `STAT-LIFETEST-003` tests and a plot-free fixture from the SAS listing, re-run LIFETEST-001/002 and COMMON-015 originals, commit by pathspec.
 
 <a id="stat-lifetest-004"></a>
 
@@ -11082,13 +11083,14 @@ Source: S154, Chapter 92, `The PHREG Procedure`, PDF pp. 7311–7582. Tasks in t
 
 <a id="stat-phreg-004"></a>
 
-### [DOING @dev6] STAT-PHREG-004 — PHREG — CLASS / EFFECT / MODEL
+### [TODO] STAT-PHREG-004 — PHREG — CLASS / EFFECT / MODEL
 
 - Source: S154 / Chapter 92 / `CLASS Statement` (PDF pp. 7355–7359); S154 / Chapter 92 / `EFFECT Statement` (PDF p. 7362); S154 / Chapter 92 / `MODEL Statement` (PDF pp. 7370–7380).
 - Scope: Implement CLASS; EFFECT; MODEL. Implement the syntax and model semantics allowed by this procedure, using shared effect/parameterization support only for forms documented as supported.
 - Dependencies: [STAT-PHREG-001](#stat-phreg-001), [STAT-COMMON-007](#stat-common-007), [STAT-COMMON-021](#stat-common-021), [STAT-COMMON-022](#stat-common-022), [STAT-COMMON-023](#stat-common-023).
 - Oracle fixtures: [tests/STAT15.4-oracle/STAT-PHREG-004/](tests/STAT15.4-oracle/STAT-PHREG-004/).
 - Acceptance criteria: For CLASS / EFFECT / MODEL, verify the parsed response/effect/parameter representation against the documented design matrix or model structure; cover applicable reference levels, interactions, missing levels, and invalid models; successful parsing alone is insufficient.
+- Coordinator note (2026-11-28): one attempt by dev6 was stopped by a full disk before any edit; no code exists. Reading notes (pp. 7355–7359 and 7370–7376 read, rest not): CLASS defaults PARAM=REF, REF=LAST, ORDER=FORMATTED; per-variable PARAM= without a global one makes the other variables EFFECT-coded. MODEL option names CONVERGELIKE, HIER, PLCONV, NODUMMYPRINT/NODESIGNPRINT/NODP, ROCLABEL are documented but currently rejected as rc 1 instead of an rc 2 gap in `phreg.zig`. The original also needs EVENTCODE=/Fine-Gray, HAZARDRATIO, BASELINE CIF and PLOTS=CIF (STAT-PHREG-006 and baseline/plot tickets).
 
 <a id="stat-phreg-005"></a>
 
