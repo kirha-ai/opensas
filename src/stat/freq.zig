@@ -52,6 +52,9 @@ pub fn percent(count: f64, denominator: f64) f64 {
 const ONEWAY_TITLE = (" " ** 38) ++ "The FREQ Procedure\n";
 const ONEWAY_NOCUM_TITLE = (" " ** 22) ++ "The FREQ Procedure\n";
 const TWOWAY_TITLE = (" " ** 24) ++ "The FREQ Procedure\n";
+/// Internal marker for the summary page break; replaced by the title lines
+/// (or nothing) before the listing leaves the procedure.
+const SUMMARY_PAGE = "\x0c";
 const NLEVELS_TITLE = (" " ** 21) ++ "The FREQ Procedure\n"; // narrow NLEVELS table (BUG-freqnlevels)
 
 /// Remaining named inference families outside FEAT-freq-tests fail loud.
@@ -656,8 +659,8 @@ pub fn runFreq(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) diag.E
             }
             if (req.risk.binomial != null and tab.dimensions.len == 1 and out.items.len > request_start) binomial_rendered = true;
         }
+        var heading: std.ArrayList(u8) = .empty;
         if (out.items.len > listing_start) if (cx.listing_titles) |titles| {
-            var heading: std.ArrayList(u8) = .empty;
             if (bc.len > 0 and group.rep != null) {
                 const byvars = try a.alloc(@import("../sql.zig").Titles.ByVar, bc.len);
                 for (bc, 0..) |ci, i| {
@@ -673,6 +676,17 @@ pub fn runFreq(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) diag.E
             } else try titles.emitTitles(a, &heading);
             try out.insertSlice(a, listing_start, heading.items);
         };
+        // STAT-FREQ-014: the stratified summary starts a new listing page, and
+        // SAS repeats the active TITLE lines there (Example 47.7 listing).
+        // A summary that opens the listing already follows the first heading.
+        const body_start = @min(out.items.len, listing_start + heading.items.len);
+        var page_scan = body_start;
+        while (std.mem.indexOfPos(u8, out.items, page_scan, SUMMARY_PAGE)) |at| {
+            const first_page = std.mem.trim(u8, out.items[body_start..at], " \n").len == 0;
+            const repeat: []const u8 = if (first_page) "" else heading.items;
+            try out.replaceRange(a, at, SUMMARY_PAGE.len, repeat);
+            page_scan = at + repeat.len;
+        }
         if (bc.len > 0 and (cx.diags.errSince(messages) or noted_newcombe != analysis.noted_newcombe)) if (group.rep) |row|
             try by_groups.reportNote(a, cx.diags, &view, row, bc);
     }
@@ -2133,6 +2147,7 @@ fn analyzeTable(cx: ProcCtx, out: *std.ArrayList(u8), tab: *Table, req: Request,
         var summary: std.ArrayList(u8) = .empty;
         try strat_exec.renderSummary(a, &summary, stratified, req.stratified, stratScope(req, opts), req.scores);
         if (summary.items.len > 0) {
+            try out.appendSlice(a, SUMMARY_PAGE);
             try out.appendSlice(a, TWOWAY_TITLE);
             try out.appendSlice(a, try std.fmt.allocPrint(a, "\nSummary Statistics for {s} by {s}\n", .{ tab.dimensions[n - 2].name, tab.dimensions[n - 1].name }));
             if (n > 2) {

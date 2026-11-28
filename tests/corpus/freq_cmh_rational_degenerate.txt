@@ -1,0 +1,3 @@
+# corpus assertions
+# Values derived by exact rational arithmetic in the fixture header, not from OpenSAS output.
+words The FREQ Procedure Summary Statistics for r by c Controlling for s Cochran-Mantel-Haenszel Statistics (Based on Table Scores) Statistic Alternative Hypothesis DF Value Prob --------------------------------------------------------------- 1 Nonzero Correlation 1 0.0000 1.0000 2 Row Mean Scores Differ 2 5.0286 0.0809 3 General Association 2 5.0286 0.0809 Total Sample Size = 31

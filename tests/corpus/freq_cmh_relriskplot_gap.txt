@@ -1,0 +1,4 @@
+# corpus assertions
+# No listing may be produced; the unsupported plot is reported as an error.
+words
+log-words ERROR: PROC FREQ: unsupported plot request relriskplot
