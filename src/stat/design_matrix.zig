@@ -8,7 +8,14 @@ const Dataset = @import("../dataset.zig").Dataset;
 const Value = @import("../value.zig").Value;
 const levels = @import("class_levels.zig");
 const A = std.mem.Allocator;
-pub const Effect = struct { factors: []const usize, nested: []const usize = &.{} };
+pub const Effect = struct {
+    factors: []const usize,
+    nested: []const usize = &.{},
+    /// Caller-supplied SAS effect name (GLMMOD crossed-and-nesting forms such
+    /// as g*h(g)); it replaces the normalized name, so it also keys duplicate
+    /// effect removal. Null keeps every existing caller's behaviour.
+    name: ?[]const u8 = null,
+};
 pub const Spec = struct { response: usize, classes: []const usize = &.{}, effects: []const Effect, intercept: bool = true, order: levels.Order = .formatted, references: []const ?levels.Reference = &.{}, truncate: bool = false };
 pub const Class = struct { column: usize, map: levels.Levels };
 pub const Column = struct {
@@ -103,7 +110,8 @@ pub fn build(a: A, ds: *const Dataset, rows: []const []const Value, s: Spec) dia
     var effects: std.ArrayList(Normalized) = .empty;
     var effect_sources: std.ArrayList(usize) = .empty;
     for (s.effects, 0..) |e, source_index| {
-        const normalized = try normalizeOrdered(a, ds, s.classes, e, continuous_order.items);
+        var normalized = try normalizeOrdered(a, ds, s.classes, e, continuous_order.items);
+        if (e.name) |name| normalized.name = name;
         var duplicate = false;
         for (effects.items) |old| if (std.mem.eql(u8, old.name, normalized.name)) {
             duplicate = true;
