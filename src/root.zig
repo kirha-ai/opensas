@@ -22,6 +22,7 @@ pub const corr = @import("stat/corr.zig");
 pub const ttest = @import("stat/ttest.zig");
 pub const reg = @import("stat/reg.zig");
 pub const glm = @import("stat/glm.zig");
+pub const anova = @import("stat/anova.zig");
 pub const glmmod = @import("stat/glmmod.zig");
 pub const logistic = @import("stat/logistic.zig");
 pub const genmod = @import("stat/genmod.zig");
@@ -70,6 +71,7 @@ test {
     _ = @import("stat/power_solver.zig");
     _ = @import("stat/reg_model_tests.zig");
     _ = @import("stat/glm.zig");
+    _ = @import("stat/anova.zig");
     _ = @import("stat/glmmod.zig");
     _ = @import("stat/logistic.zig");
     _ = @import("stat/genmod.zig");

@@ -1,0 +1,94 @@
+Nitrogen Content of Red Clover Plants
+
+The ANOVA Procedure
+
+Class Level Information
+
+Class Levels Values
+
+Strain 6 3DOK1 3DOK13 3DOK4 3DOK5 3DOK7 COMPOS
+
+Number of Observations Read 30
+Number of Observations Used 30
+Nitrogen Content of Red Clover Plants
+
+The ANOVA Procedure
+
+Dependent Variable: Nitrogen
+
+Sum of
+Source DF Squares Mean Square F Value Pr > F
+
+Model 5                       847.046667                       169.409333                            14.37 <.0001
+
+Error 24                       282.928000                        11.788667
+
+Corrected Total 29                      1129.974667
+
+R-Square Coeff Var Root MSE Nitrogen Mean
+
+                        0.749616                         17.26515                         3.433463                         19.88667
+
+Source DF Anova SS Mean Square F Value Pr > F
+
+Strain 5                      847.0466667                      169.4093333                            14.37 <.0001
+Randomized Complete Block
+
+The ANOVA Procedure
+
+Class Level Information
+
+Class Levels Values
+
+Block 3 1 2 3
+
+Treatment 3 A B C
+
+Number of Observations Read 9
+Number of Observations Used 9
+Randomized Complete Block
+
+The ANOVA Procedure
+
+Dependent Variable: Yield
+
+Sum of
+Source DF Squares Mean Square F Value Pr > F
+
+Model 4                      225.2777778                       56.3194444                             8.94                           0.0283
+
+Error 4                       25.1911111                        6.2977778
+
+Corrected Total 8                      250.4688889
+
+R-Square Coeff Var Root MSE Yield Mean
+
+                        0.899424                         6.840047                         2.509537                         36.68889
+
+Source DF Anova SS Mean Square F Value Pr > F
+
+Block 2                       98.1755556                       49.0877778                             7.79                           0.0417
+Treatment 2                      127.1022222                       63.5511111                            10.09                           0.0274
+Randomized Complete Block
+
+The ANOVA Procedure
+
+Dependent Variable: Worth
+
+Sum of
+Source DF Squares Mean Square F Value Pr > F
+
+Model 4                      1247.333333                       311.833333                             8.28                           0.0323
+
+Error 4                       150.666667                        37.666667
+
+Corrected Total 8                      1398.000000
+
+R-Square Coeff Var Root MSE Worth Mean
+
+                        0.892227                         4.949450                         6.137318                         124.0000
+
+Source DF Anova SS Mean Square F Value Pr > F
+
+Block 2                      354.6666667                      177.3333333                             4.71                           0.0889
+Treatment 2                      892.6666667                      446.3333333                            11.85                           0.0209

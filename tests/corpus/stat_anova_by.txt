@@ -1,0 +1,76 @@
+Nitrogen Content of Red Clover Plants
+
+                                  _oracle_by=1
+
+The ANOVA Procedure
+
+Class Level Information
+
+Class Levels Values
+
+Strain 6 3DOK1 3DOK13 3DOK4 3DOK5 3DOK7 COMPOS
+
+Number of Observations Read 30
+Number of Observations Used 30
+Nitrogen Content of Red Clover Plants
+
+                                  _oracle_by=1
+
+The ANOVA Procedure
+
+Dependent Variable: Nitrogen
+
+Sum of
+Source DF Squares Mean Square F Value Pr > F
+
+Model 5                       847.046667                       169.409333                            14.37 <.0001
+
+Error 24                       282.928000                        11.788667
+
+Corrected Total 29                      1129.974667
+
+R-Square Coeff Var Root MSE Nitrogen Mean
+
+                        0.749616                         17.26515                         3.433463                         19.88667
+
+Source DF Anova SS Mean Square F Value Pr > F
+
+Strain 5                      847.0466667                      169.4093333                            14.37 <.0001
+Nitrogen Content of Red Clover Plants
+
+                                  _oracle_by=2
+
+The ANOVA Procedure
+
+Class Level Information
+
+Class Levels Values
+
+Strain 6 3DOK1 3DOK13 3DOK4 3DOK5 3DOK7 COMPOS
+
+Number of Observations Read 30
+Number of Observations Used 30
+Nitrogen Content of Red Clover Plants
+
+                                  _oracle_by=2
+
+The ANOVA Procedure
+
+Dependent Variable: Nitrogen
+
+Sum of
+Source DF Squares Mean Square F Value Pr > F
+
+Model 5                       847.046667                       169.409333                            14.37 <.0001
+
+Error 24                       282.928000                        11.788667
+
+Corrected Total 29                      1129.974667
+
+R-Square Coeff Var Root MSE Nitrogen Mean
+
+                        0.749616                         17.26515                         3.433463                         19.88667
+
+Source DF Anova SS Mean Square F Value Pr > F
+
+Strain 5                      847.0466667                      169.4093333                            14.37 <.0001
