@@ -3149,6 +3149,13 @@ fn runProc(a: std.mem.Allocator, listing_out: *std.ArrayList(u8), lib: *sas.exec
             try out.appendSlice(a, body.items);
             try g.emitFootnotes(a, out);
         }
+    } else if (eqi(proc, "rmstreg")) {
+        // Writes straight to `out`: SAS keeps BY pages printed before a step ERROR.
+        var rmstreg_context = pcx;
+        rmstreg_context.listing_titles = g;
+        const rmstreg_start = out.items.len;
+        try sas.rmstreg.run(rmstreg_context, out, toks);
+        if (out.items.len > rmstreg_start) try g.emitFootnotes(a, out);
     } else if (eqi(proc, "lifetest")) {
         var body: std.ArrayList(u8) = .empty;
         try sas.lifetest.run(pcx, &body, toks);

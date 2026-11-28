@@ -1,0 +1,402 @@
+
+The RMSTREG Procedure
+
+        Model Information
+
+Data Set                    WORK.D
+Time Variable                 time
+Censoring Variable          status
+Censoring Value(s)               0
+Link Function                  Log
+Estimation Method     Pseudo Value
+Tau Value             6.5169610971
+
+
+Number of Observations Read          60
+Number of Observations Used          60
+
+
+Summary of the Number of Event and Censored Values
+ 
+   Total       Event    Censored
+
+      60          45          15
+
+
+                       Convergence Status
+
+                      Algorithm converged.                      
+
+
+        Type 3 Analysis of Effects
+ 
+Effect      DF    Chi-Square    Pr > ChiSq
+
+age          1        3.7734        0.0521
+x            1        1.2548        0.2626
+
+
+                            Analysis of Parameter Estimates
+ 
+                               Standard       95% Confidence          Chi-
+Parameter    DF    Estimate       Error           Limits            Square    Pr > ChiSq
+
+Intercept     1      0.8621      0.2684      0.3360      1.3882      10.32        0.0013
+age           1      0.0110      0.0057     -0.0001      0.0222       3.77        0.0521
+x             1     -0.1451      0.1296     -0.3990      0.1088       1.25        0.2626
+
+The RMSTREG Procedure
+
+        Model Information
+
+Data Set                    WORK.D
+Time Variable                 time
+Censoring Variable          status
+Censoring Value(s)               0
+Link Function               Linear
+Estimation Method     Pseudo Value
+Tau Value                        4
+
+
+Number of Observations Read          60
+Number of Observations Used          60
+
+
+Summary of the Number of Event and Censored Values
+ 
+   Total       Event    Censored
+
+      60          45          15
+
+
+                       Convergence Status
+
+                      Algorithm converged.                      
+
+
+        Type 3 Analysis of Effects
+ 
+Effect      DF    Chi-Square    Pr > ChiSq
+
+age          1      215.4494        <.0001
+x            1        0.0001        0.9934
+
+
+                            Analysis of Parameter Estimates
+ 
+                               Standard       90% Confidence          Chi-
+Parameter    DF    Estimate       Error           Limits            Square    Pr > ChiSq
+
+age           1      0.0643      0.0044      0.0571      0.0715     215.45        <.0001
+x             1      0.0026      0.3148     -0.5152      0.5205       0.00        0.9934
+
+The RMSTREG Procedure
+
+        Model Information
+
+Data Set                   WORK.D
+Time Variable                time
+Link Function              Linear
+Estimation Method    Pseudo Value
+Tau Value                       4
+
+
+Number of Observations Read          60
+Number of Observations Used          60
+
+
+Summary of the Number of Event and Censored Values
+ 
+   Total       Event    Censored
+
+      60          60           0
+
+
+                       Convergence Status
+
+                      Algorithm converged.                      
+
+
+        Type 3 Analysis of Effects
+ 
+Effect      DF    Chi-Square    Pr > ChiSq
+
+age          1        2.4396        0.1183
+x            1        0.8073        0.3689
+
+
+                            Analysis of Parameter Estimates
+ 
+                               Standard       95% Confidence          Chi-
+Parameter    DF    Estimate       Error           Limits            Square    Pr > ChiSq
+
+Intercept     1      1.8926      0.5404      0.8334      2.9517      12.27        0.0005
+age           1      0.0179      0.0114     -0.0046      0.0403       2.44        0.1183
+x             1      0.2433      0.2708     -0.2874      0.7740       0.81        0.3689
+
+The RMSTREG Procedure
+
+        Model Information
+
+Data Set                    WORK.D
+Time Variable                 time
+Censoring Variable               f
+Censoring Value(s)            1  3
+Link Function               Linear
+Estimation Method     Pseudo Value
+Tau Value                        4
+
+
+Number of Observations Read          60
+Number of Observations Used          60
+
+
+Summary of the Number of Event and Censored Values
+ 
+   Total       Event    Censored
+
+      60          20          40
+
+
+                       Convergence Status
+
+                      Algorithm converged.                      
+
+
+        Type 3 Analysis of Effects
+ 
+Effect      DF    Chi-Square    Pr > ChiSq
+
+age          1        1.8584        0.1728
+
+
+                            Analysis of Parameter Estimates
+ 
+                               Standard       95% Confidence          Chi-
+Parameter    DF    Estimate       Error           Limits            Square    Pr > ChiSq
+
+Intercept     1      2.7854      0.5395      1.7280      3.8429      26.65        <.0001
+age           1      0.0155      0.0114     -0.0068      0.0378       1.86        0.1728
+
+The RMSTREG Procedure
+
+        Model Information
+
+Data Set                    WORK.E
+Time Variable                 time
+Censoring Variable          status
+Censoring Value(s)               0
+Frequency Variable               f
+Link Function               Linear
+Estimation Method     Pseudo Value
+Tau Value                        4
+
+
+Number of Observations Read          60
+Number of Observations Used          55
+Sum of Frequencies Read             115
+Sum of Frequencies Used             111
+
+
+Summary of the Number of Event and Censored Values
+ 
+   Total       Event    Censored
+
+     111          84          27
+
+
+                       Convergence Status
+
+                      Algorithm converged.                      
+
+
+        Type 3 Analysis of Effects
+ 
+Effect      DF    Chi-Square    Pr > ChiSq
+
+age          1        0.9155        0.3387
+x            1        0.7497        0.3866
+
+
+                            Analysis of Parameter Estimates
+ 
+                               Standard       95% Confidence          Chi-
+Parameter    DF    Estimate       Error           Limits            Square    Pr > ChiSq
+
+Intercept     1      2.7174      0.4068      1.9201      3.5147      44.62        <.0001
+age           1      0.0078      0.0082     -0.0082      0.0238       0.92        0.3387
+x             1     -0.1723      0.1990     -0.5623      0.2177       0.75        0.3866
+
+The RMSTREG Procedure
+
+        Model Information
+
+Data Set                    WORK.D
+Time Variable                 time
+Censoring Variable          status
+Censoring Value(s)               0
+Link Function               Linear
+Estimation Method     Pseudo Value
+Tau Value                       30
+
+
+Number of Observations Read          60
+Number of Observations Used          60
+
+
+Summary of the Number of Event and Censored Values
+ 
+   Total       Event    Censored
+
+      60          45          15
+
+
+                       Convergence Status
+
+                      Algorithm converged.                      
+
+
+        Type 3 Analysis of Effects
+ 
+Effect      DF    Chi-Square    Pr > ChiSq
+
+age          1        3.6229        0.0570
+x            1        1.2626        0.2612
+
+
+                            Analysis of Parameter Estimates
+ 
+                               Standard       95% Confidence          Chi-
+Parameter    DF    Estimate       Error           Limits            Square    Pr > ChiSq
+
+Intercept     1      2.1163      0.9439      0.2663      3.9664       5.03        0.0250
+age           1      0.0400      0.0210     -0.0012      0.0811       3.62        0.0570
+x             1     -0.5246      0.4668     -1.4395      0.3904       1.26        0.2612
+
+The RMSTREG Procedure
+
+        Model Information
+
+Data Set                    WORK.G
+Time Variable                 time
+Censoring Variable          status
+Censoring Value(s)               0
+Link Function               Linear
+Estimation Method     Pseudo Value
+Tau Value                        4
+
+
+Number of Observations Read          60
+Number of Observations Used          60
+
+
+Summary of the Number of Event and Censored Values
+ 
+   Total       Event    Censored
+
+      60          45          15
+
+
+                       Convergence Status
+
+                      Algorithm converged.                      
+
+
+               Type 3 Analysis of Effects
+ 
+Effect                    DF    Chi-Square    Pr > ChiSq
+
+averylongcovariatena       1        1.5413        0.2144
+x                          1        0.3974        0.5285
+
+
+                                  Analysis of Parameter Estimates
+ 
+                                          Standard       90% Confidence          Chi-
+Parameter               DF    Estimate       Error           Limits            Square    Pr > ChiSq
+
+Intercept                1      2.4427      0.5702      1.5048      3.3806      18.35        <.0001
+averylongcovariatena     1      0.0148      0.0119     -0.0048      0.0343       1.54        0.2144
+x                        1     -0.1759      0.2790     -0.6348      0.2831       0.40        0.5285
+
+The RMSTREG Procedure
+
+        Model Information
+
+Data Set                    WORK.D
+Time Variable                 time
+Censoring Variable          status
+Censoring Value(s)               0
+Link Function               Linear
+Estimation Method     Pseudo Value
+Tau Value                        4
+
+
+Number of Observations Read          60
+Number of Observations Used          60
+
+
+Summary of the Number of Event and Censored Values
+ 
+   Total       Event    Censored
+
+      60          45          15
+
+
+                       Convergence Status
+
+                      Algorithm converged.                      
+
+
+        Type 3 Analysis of Effects
+ 
+Effect      DF    Chi-Square    Pr > ChiSq
+
+age          1        1.3980        0.2371
+
+
+                            Analysis of Parameter Estimates
+ 
+                               Standard       95% Confidence          Chi-
+Parameter    DF    Estimate       Error           Limits            Square    Pr > ChiSq
+
+Intercept     1      2.3899      0.5636      1.2852      3.4946      17.98        <.0001
+age           1      0.0140      0.0118     -0.0092      0.0371       1.40        0.2371
+
+The RMSTREG Procedure
+
+        Model Information
+
+Data Set                    WORK.D
+Time Variable                 time
+Censoring Variable          status
+Censoring Value(s)               0
+Link Function               Linear
+Estimation Method     Pseudo Value
+Tau Value                        4
+
+
+Number of Observations Read          60
+Number of Observations Used          60
+
+
+Summary of the Number of Event and Censored Values
+ 
+   Total       Event    Censored
+
+      60          45          15
+
+
+                       Convergence Status
+
+                      Algorithm converged.                      
+
+
+
+
+                            Analysis of Parameter Estimates
+ 
+                               Standard       95% Confidence          Chi-
+Parameter    DF    Estimate       Error           Limits            Square    Pr > ChiSq
+
+Intercept     1      3.0114      0.1407      2.7357      3.2871     458.26        <.0001
