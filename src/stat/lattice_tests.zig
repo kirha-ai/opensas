@@ -134,10 +134,12 @@ test "STAT-LATTICE-001 user errors fail with rc 1 and gaps with rc 2" {
         "proc lattice data=pigs data=pigs; run;",
         "proc lattice data=pigs bogus; run;",
         "proc lattice data=pigs; var g; run;",
-        "proc lattice data=pigs; var Weight Weight; run;",
+        "proc lattice data=pigs; var Group; run;", // design variables only: no response
         "proc lattice data=pigs; var nosuch; run;",
         "proc lattice data=pigs; var; run;",
         "proc lattice data=pigs; class Group; run;",
+        "proc lattice data=pigs; by By; var Weight; freq Other; run;", // ERROR 180-322 in SAS 15.4
+        "proc lattice data=pigs; by By; var Weight; weight Other; run;",
     };
     for (user_errors) |src| {
         diag.resetGap();
@@ -145,13 +147,8 @@ test "STAT-LATTICE-001 user errors fail with rc 1 and gaps with rc 2" {
         try expect(!diag.gapHit());
     }
     const gaps = [_][]const u8{
-        "proc lattice data=pigs cov; by By; var Weight Other; run;", // COV with a dropped response
-        "proc lattice data=pigs cov; by By; var Weight Other By; run;", // COV beyond two responses
-        "proc lattice data=pigs; var Weight; var Other; run;",
         "proc lattice data=pigs; var Weight; run;", // no BY: each treatment twice per group
-        "proc lattice data=pigs; var Weight; freq Other; run;",
-        "proc lattice data=pigs; var Group; run;",
-        "proc lattice data=pigs; by By; var Weight; format Weight 8.2; run;",
+        "proc lattice data=pigs cov; var Weight Other; run;", // no BY: each treatment twice per group
     };
     for (gaps) |src| {
         diag.resetGap();
@@ -331,8 +328,8 @@ test "STAT-LATTICE-001 Rep variable" {
     defer done(e);
     const a = e.arena.allocator();
     const src = e.lib.find("pigs").?;
-    // Rep constant 1 is the basic plan; a missing Rep is a user error; Rep 2
-    // (a repeated basic plan) is a loud gap.
+    // Rep constant 1 is the basic plan; a missing Rep is a user error; a
+    // single observation with Rep 2 is an incomplete repetition.
     for ([_]f64{ 1, nan, 2 }, 0..) |second, case| {
         const r = try a.create(Dataset);
         r.* = Dataset.init(a, "r");
@@ -348,9 +345,96 @@ test "STAT-LATTICE-001 Rep variable" {
                 try expect(std.mem.indexOf(u8, try e.messages(), "Missing value(s) encountered for REP variable.") != null);
             },
             else => {
+                // A Rep 2 holding one observation leaves empty cells: a user
+                // error as in the SAS 15.4 reference run with an emptied group.
                 try std.testing.expectError(error.ParseError, e.run("proc lattice data=r; run;"));
-                try expect(diag.gapHit());
+                try expect(!diag.gapHit());
+                try expect(std.mem.indexOf(u8, try e.messages(), "There are 0 observations in the GROUP 1 TREATMENT 8 REP 1 Cell.") != null);
             },
         }
     }
+}
+
+test "STAT-LATTICE-001 repeated basic plan matches the SAS 15.4 reference run" {
+    // Rep 1 = published sample, Rep 2 = Weight*1.1 + mod(3t+b,5)/10 - g/20
+    // (tests/corpus/stat_lattice001_repeated.sas); expected values are the
+    // SAS 15.4 listing of that program.
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const n = 2 * pigs.len;
+    const g = try a.alloc(Value, n);
+    const b = try a.alloc(Value, n);
+    const tr = try a.alloc(Value, n);
+    const rp = try a.alloc(Value, n);
+    const y = try a.alloc(f64, n);
+    for (0..2) |rep| for (pigs, 0..) |p, i| {
+        const o = rep * pigs.len + i;
+        g[o] = .{ .num = p[0] };
+        b[o] = .{ .num = p[1] };
+        tr[o] = .{ .num = p[2] };
+        rp[o] = .{ .num = @floatFromInt(rep + 1) };
+        y[o] = if (rep == 0) p[3] else p[3] * 1.1 + @mod(p[2] * 3 + p[1], 5) / 10 - p[0] / 20;
+    };
+    const d = try lattice.designRep(a, g, b, tr, rp, null);
+    try expectEqual(@as(usize, 2), d.p);
+    const r = try lattice.analyze(a, d, y);
+    try std.testing.expectEqualSlices(usize, &.{ 7, 16, 8, 8, 40, 56, 71 }, &r.df);
+    try expectEqual(@as(usize, 8), r.df_a);
+    const ss = [_]f64{ 1.5420, 3.1214, 3.0855, 7.2039, 2.7698, 5.8912, 14.6370 };
+    for (ss, r.ss) |want, got| try approx(want, got, 0.00005);
+    try approx(0.03587, r.ss_a, 0.000005);
+    try approx(0.004484, r.ms_a, 0.0000005);
+    try approx(0.02083, r.var_same, 0.000005);
+    try approx(0.3903, r.lsd01, 0.00005);
+    try approx(0.2917, r.lsd05, 0.00005);
+    try approx(126.29, r.efficiency, 0.005);
+    const means = [_]f64{ 2.0413, 1.9092, 2.0812, 1.8939, 1.0101, 1.9363, 1.5590, 1.5099, 1.5945 };
+    for (means, r.means) |want, got| try approx(want, got, 0.00005);
+    // Independent identity: an exact copy as Rep 2 has no variation among
+    // blocks holding the same treatments (Component A = 0) and doubles every
+    // other sum of squares except Replications/Total, which gain the copy too.
+    @memcpy(y[pigs.len..], y[0..pigs.len]);
+    for (pigs, 0..) |p, i| y[pigs.len + i] = p[3];
+    const c = try lattice.analyze(a, d, y);
+    try approx(0, c.ss_a, 1e-10);
+    try approx(2 * 3.2261, c.ss[3], 0.0001);
+    try approx(2 * 1.4206, c.ss[1], 0.0001);
+    // A Rep 2 whose blocks carry other labels is not the same basic plan
+    // (SAS 15.4: "TREATMENT 1 has been placed into two different cells in
+    // GROUP 1 REP 2.").
+    for (pigs, 0..) |p, i| if (p[0] == 1) {
+        b[pigs.len + i] = .{ .num = @mod(p[1], 3) + 1 };
+    };
+    var cell: lattice.Cell = .{};
+    try std.testing.expectError(error.RepeatedCellConflict, lattice.designRep(a, g, b, tr, rp, &cell));
+    try expectEqual(lattice.Cell{ .group = 1, .treatment = 1, .rep = 2 }, cell);
+    // Rep 2 without Group 4: "There are 0 observations in the GROUP 4
+    // TREATMENT 1 REP 2 Cell."
+    for (pigs, 0..) |p, i| b[pigs.len + i] = .{ .num = p[1] };
+    try std.testing.expectError(error.RepeatedCellMissing, lattice.designRep(a, g[0 .. n - 9], b[0 .. n - 9], tr[0 .. n - 9], rp[0 .. n - 9], &cell));
+    try expectEqual(lattice.Cell{ .group = 4, .treatment = 1, .rep = 2 }, cell);
+}
+
+test "STAT-LATTICE-001 no recovery when the block mean square is below the intra-block error" {
+    // Y1 = Treatment + mod(7n,5)/10 (stat_lattice001_options_roles case G1);
+    // SAS 15.4: Ee 0.02620, Variance of Difference 0.01310 = 2 Ee / r, LSDs
+    // on the 24 randomized complete block df, efficiency 73.7633,
+    // unadjusted means T / r.
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const d = try lattice.design(a, try column(a, 0, &pigs), try column(a, 1, &pigs), try column(a, 2, &pigs));
+    const y = try a.alloc(f64, pigs.len);
+    for (pigs, y, 1..) |p, *v, obs| v.* = p[2] + @as(f64, @floatFromInt((obs * 7) % 5)) / 10;
+    const r = try lattice.analyze(a, d, y);
+    try expect(r.ms[1] < r.ms[4] and !r.adjusted);
+    try approx(0.02620, r.ms[4], 0.000005);
+    try approx(2 * r.ms[4] / 4, r.var_same, 1e-12);
+    try approx(0.01310, r.var_same, 0.000005);
+    try approx(0.3201, r.lsd01, 0.00005);
+    try approx(0.2362, r.lsd05, 0.00005);
+    try approx(73.7633, r.efficiency, 0.00005);
+    const means = [_]f64{ 1.1500, 2.2750, 3.1500, 4.2750, 5.0750, 6.2500, 7.3250, 8.1250, 9.1750 };
+    for (means, r.means) |want, got| try approx(want, got, 0.00005);
 }

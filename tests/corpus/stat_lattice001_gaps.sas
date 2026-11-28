@@ -1,9 +1,13 @@
 /* expect-rc: 2
  * STAT-LATTICE-001: valid PROC LATTICE requests outside the verified scope
- * fail visibly with no listing: COVARIANCE with three responses, repetition
- * of the basic plan (Rep 1 and 2, Component A), and a partially balanced
- * lattice (only two of the four replicates, STAT-LATTICE-002). Published
- * Getting Started sample data.
+ * fail visibly with no listing: values beyond the verified number formats
+ * (10000 and above, below 0.0001: Displayed Output, STAT-LATTICE-003), a
+ * response name longer than 11,
+ * a treatment number beyond the plan (SAS 15.4 stops with "The Number of
+ * BLOCKs do not agree with the number of TREATMENTs", a design check this
+ * slice does not generalize), and a partially balanced lattice (only two
+ * of the four replicates, STAT-LATTICE-002).
+ * Published Getting Started sample data.
  */
 options nosyntaxcheck;
 data Pigs;
@@ -18,9 +22,12 @@ datalines;
 4 1 1 1.77 4 1 6 1.57 4 1 8 1.43 4 2 2 1.50 4 2 4 1.60
 4 2 9 1.42 4 3 3 2.04 4 3 5 0.93 4 3 7 1.78
 ;
-data w; set Pigs; W2=Weight*2; W3=Weight*3; run;
-proc lattice data=w covariance; var Weight W2 W3; run;
-data r; set Pigs Pigs(in=second); Rep=1+second; run;
-proc lattice data=r; var Weight; run;
+data big; set Pigs; Big=Weight*10000; Tiny=Weight/100000; run;
+proc lattice data=big; var Big; run;
+proc lattice data=big; var Tiny; run;
+data ln; set Pigs; Weightgain12=Weight; run;
+proc lattice data=ln; run;
+data v; set Pigs; if _n_=3 then Treatment=10; run;
+proc lattice data=v; var Weight; run;
 data p; set Pigs; if Group <= 2; run;
 proc lattice data=p; run;

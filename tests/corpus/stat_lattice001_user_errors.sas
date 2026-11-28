@@ -2,8 +2,12 @@
  * STAT-LATTICE-001: documented invalid input is a user error with no
  * listing: a missing Group value stops the analysis (p.5516; message text of
  * a SAS 15.4 reference run), Block is a required design variable (p.5515),
- * VAR variables must be numeric, a VAR variable may not repeat, and an empty
- * input data set (SAS 15.4 stops with an internal exception). Published
+ * VAR variables must be numeric, a VAR list of design variables only
+ * leaves no response (SAS 15.4 NOTE + ERROR), an empty
+ * input data set (SAS 15.4 stops with an internal exception); FREQ and
+ * WEIGHT are not LATTICE statements (SAS 15.4 reference run: ERROR 180-322,
+ * step stopped); a repeated plan whose Rep 2 relabels the blocks or lacks a
+ * group (SAS 15.4 reference-run ERROR texts). Published
  * Getting Started sample data.
  */
 options nosyntaxcheck;
@@ -25,6 +29,12 @@ data nb; set Pigs; drop Block; run;
 proc lattice data=nb; run;
 data c; set Pigs; length s $ 2; s='a'; run;
 proc lattice data=c; var s; run;
-proc lattice data=Pigs; var Weight Weight; run;
+proc lattice data=Pigs; var Group; run;
 data e; set Pigs; stop; run;
 proc lattice data=e; run;
+proc lattice data=Pigs; var Weight; freq Block; run;
+proc lattice data=Pigs; var Weight; weight Block; run;
+data m; set Pigs Pigs(in=second); Rep=1+second; if second and Group=1 then Block=mod(Block,3)+1; run;
+proc lattice data=m; var Weight; run;
+data i; set Pigs Pigs(in=second); Rep=1+second; if second and Group=4 then delete; run;
+proc lattice data=i; var Weight; run;

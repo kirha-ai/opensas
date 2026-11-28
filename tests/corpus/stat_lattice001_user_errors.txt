@@ -3,5 +3,9 @@ empty-listing
 stderr-count 1 Missing value(s) encountered for GROUP variable.
 stderr-count 1 must contain the numeric design variable Block
 stderr-count 1 VAR variable s must be numeric
-stderr-count 1 variable Weight appears more than once in the VAR statement
+stderr-count 1 No numeric response variables on VAR Statement.
 stderr-count 1 the input data set has no observations
+stderr-count 1 Statement is not valid or it is used out of proper order (FREQ).
+stderr-count 1 Statement is not valid or it is used out of proper order (WEIGHT).
+stderr-count 1 TREATMENT 1 has been placed into two different cells in GROUP 1 REP 2.
+stderr-count 1 There are 0 observations in the GROUP 4 TREATMENT 1 REP 2 Cell. There should be one.
